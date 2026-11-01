@@ -56,6 +56,7 @@
 #include <QQuickRenderTarget>
 #include <QQuickWindow>
 #include <QResource>
+#include <QUrlQuery>
 #include <QSGRendererInterface>
 #include <QVulkanInstance>
 
@@ -183,6 +184,9 @@ QtUiImageRequestKind CategorizeQtUiImageRequest(const QString& baseId)
         return QtUiImageRequestKind::Collection;
     }
     if (baseId.startsWith(QStringLiteral("illust/"))) {
+        return QtUiImageRequestKind::Illust;
+    }
+    if (baseId == QStringLiteral("cutin")) {
         return QtUiImageRequestKind::Illust;
     }
     if (baseId.startsWith(QStringLiteral("skill/"))) {
@@ -568,6 +572,44 @@ bool TryBuildGameImageWithBitmapRes(const std::string& path, bool applyTranspare
     return true;
 }
 
+bool TryBuildCutinImage(const std::string& imageName, QImage* outImage)
+{
+    if (!outImage || imageName.empty()) {
+        return false;
+    }
+
+    static std::unordered_map<std::string, QImage> cache;
+    const auto cached = cache.find(imageName);
+    if (cached != cache.end()) {
+        *outImage = cached->second;
+        return !outImage->isNull();
+    }
+
+    // Ref/GameMode.cpp: DrawIllustImage uses UIIllustWnd::SendMsg(78),
+    // which checks texture/<locale>/Illust first, then texture/<locale>/cardbmp.
+    const std::string localeTexture = "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\";
+    std::string path = localeTexture + "Illust\\" + imageName;
+    if (!g_fileMgr.IsDataExist(path.c_str())) {
+        path = localeTexture + "cardbmp\\" + imageName;
+        if (!g_fileMgr.IsDataExist(path.c_str())) {
+            DbgLog("[QtUiCutin] image asset missing name='%s' paths='%s' and '%s'\n",
+                imageName.c_str(),
+                (localeTexture + "Illust\\" + imageName).c_str(),
+                path.c_str());
+            return false;
+        }
+    }
+
+    if (!TryBuildGameImageWithBitmapRes(path, true, outImage)) {
+        DbgLog("[QtUiCutin] image decode failed name='%s' path='%s'\n", imageName.c_str(), path.c_str());
+        return false;
+    }
+    DbgLog("[QtUiCutin] image loaded name='%s' path='%s' size=%dx%d\n",
+        imageName.c_str(), path.c_str(), outImage->width(), outImage->height());
+    cache.emplace(imageName, *outImage);
+    return true;
+}
+
 void AddUniqueStatusPathCandidate(std::vector<std::string>* out, const std::string& raw)
 {
     if (!out || raw.empty()) {
@@ -651,6 +693,7 @@ bool TryBuildStatusIconImage(int statusType, QImage* outImage)
         *outImage = cached->second;
         return !outImage->isNull();
     }
+
     if (s_statusIconFailures.find(cacheKey) != s_statusIconFailures.end()) {
         return false;
     }
@@ -731,7 +774,13 @@ public:
         const QtUiImageRequestKind requestKind = CategorizeQtUiImageRequest(baseId);
 
         QImage image;
-        if (baseId == QStringLiteral("minimap")) {
+        if (baseId == QStringLiteral("cutin")) {
+            if (CGameMode* const mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_showImageInfo.type >= 0) {
+                    TryBuildCutinImage(mode->m_showImageInfo.name, &image);
+                }
+            }
+        } else if (baseId == QStringLiteral("minimap")) {
             const UIRoMapWnd* const minimapWnd = g_windowMgr.m_roMapWnd;
             if (minimapWnd && minimapWnd->m_show != 0) {
                 minimapWnd->BuildQtMinimapImage(&image);
@@ -911,6 +960,30 @@ public:
             const int skillId = baseId.mid(QStringLiteral("skill/").size()).toInt(&ok);
             if (ok) {
                 TryBuildSkillIconImage(skillId, &image);
+                const QUrlQuery query(queryPos >= 0 ? id.mid(queryPos + 1) : QString());
+                const QString symbol = query.queryItemValue(QStringLiteral("symbol"));
+                if (image.isNull() && !symbol.isEmpty() && std::all_of(symbol.begin(), symbol.end(), [](QChar c) {
+                    return (c.isLetterOrNumber() && c.unicode() < 128) || c == QLatin1Char('_');
+                })) {
+                    const std::string file = "texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\"
+                        + symbol.toLower().toStdString() + ".bmp";
+                    TryBuildGameImageWithBitmapRes(file, true, &image);
+                    if (image.isNull()) TryBuildGameImageWithBitmapRes("data\\" + file, true, &image);
+                }
+                if (image.isNull() && !symbol.isEmpty()) {
+                    image = QImage(32,32,QImage::Format_ARGB32); image.fill(Qt::transparent);
+                    QPainter painter(&image); painter.setPen(QColor(120,130,140));
+                    painter.drawRoundedRect(2,2,27,27,4,4); painter.drawText(image.rect(),Qt::AlignCenter,QStringLiteral("?"));
+                }
+                if (!image.isNull() && query.queryItemValue(QStringLiteral("grey")) == QStringLiteral("1")) {
+                    image = image.convertToFormat(QImage::Format_ARGB32);
+                    for (int y = 0; y < image.height(); ++y) {
+                        auto* row = reinterpret_cast<QRgb*>(image.scanLine(y));
+                        for (int x = 0; x < image.width(); ++x) {
+                            const int grey = qGray(row[x]); row[x] = qRgba(grey,grey,grey,qAlpha(row[x]));
+                        }
+                    }
+                }
             }
         } else if (baseId.startsWith(QStringLiteral("status/"))) {
             bool ok = false;

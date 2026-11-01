@@ -1168,7 +1168,13 @@ void CRenderer::SetMultiTextureMode(int nMode) {
         return;
     }
 
+    // Ref Device.cpp:1272 uses clamp for projected ground overlays. Restore
+    // wrap on every other preset so this state cannot leak into tiled effects.
+    m_renderDevice->SetTextureStageState(0, D3DTSS_ADDRESS,
+        nMode == kClampedGroundTextureMode ? D3DTADDRESS_CLAMP : D3DTADDRESS_WRAP);
+
     switch (nMode) {
+    case kClampedGroundTextureMode:
     case 0:
         m_renderDevice->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
         m_renderDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
@@ -1432,11 +1438,15 @@ void CRenderer::FlushRenderList() {
         SetMultiTextureMode(0);
     }
 
+    // AlphaOP below shares this cache. Restoring only the device state can
+    // suppress a required blend change on its first additive face (e.g. Heal).
     if (activeSrcBlend != D3DBLEND_SRCALPHA) {
         m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+        activeSrcBlend = D3DBLEND_SRCALPHA;
     }
     if (activeDestBlend != D3DBLEND_INVSRCALPHA) {
         m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        activeDestBlend = D3DBLEND_INVSRCALPHA;
     }
 
     auto resolveAlphaSortKey = [](RPFace* face) {

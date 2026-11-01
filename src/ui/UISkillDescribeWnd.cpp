@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UISkillDescribeWnd.h"
 
 #include "UIWindowMgr.h"
@@ -19,7 +20,7 @@
 namespace {
 constexpr int kWindowWidth = 292;
 constexpr int kWindowHeight = 220;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kCloseButtonSize = 12;
 constexpr int kPadding = 8;
 constexpr int kIconBoxSize = 52;

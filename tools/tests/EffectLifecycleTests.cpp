@@ -4676,7 +4676,7 @@ int main()
                 "TANJI variants emit exact primitive, resource, and caller audio");
             check(gi&&gi->life==1&&gi->process==-15&&gi->maxHeight==horizontal
                 &&gi->distance==4.0f&&gi->height[8]==0&&gi->alphaB==5
-                &&gi->vecTNowX==3&&gi->vecTNowY==2&&gi->vecTNowZ==4&&gi->rotStart==0
+                &&gi->sparkX==3&&gi->sparkY==2&&gi->sparkZ==4&&gi->rotStart==0
                 &&gi->height[1]==2&&std::abs(gi->height[2]-(80.0f*2.0f/horizontal))<0.0001f
                 &&gi->fullDisplayAngle==0&&gi->flag[0]==0&&gi->flag[1]==0&&gi->flag[2]==1
                 &&gi->flag[3]==0&&gi->height[7]==0
@@ -5892,9 +5892,9 @@ int main()
         EffectGi& gi=prim.m_gi[0];gi.life=1;gi.height[7]=2;gi.alphaB=0;gi.process=0;gi.rotStart=100;
         gi.sparkX=1;gi.sparkY=2;gi.sparkZ=3;gi.height[0]=10;gi.height[1]=40;gi.height[2]=20;gi.height[3]=10;gi.height[8]=359;
         testView.longitude=15.5f;
-        check(UpdateWeatherCloudPrimitive(&prim)&&prim.m_pos.x==100&&prim.m_pos.y==20&&prim.m_pos.z==200
+        check(UpdateWeatherCloudPrimitive(&prim)&&prim.m_pos.x==0&&prim.m_pos.y==0&&prim.m_pos.z==0
             &&gi.alphaT==345&&prim.m_gi[1].alphaT==135,
-            "PrimCloud refreshes master position and wraps the source camera latitude while storing longitude");
+            "PrimCloud keeps its source origin and wraps the source camera latitude while storing longitude");
         check(gi.process==1&&gi.alphaB==2&&gi.height[0]==11&&gi.height[2]==19&&gi.height[8]==0,
             "PrimCloud mode two rises alpha by two, advances both bounded oscillators, wraps phase, and survives expiry");
         check(std::fabs(gi.sparkX-(1.0f+g_sinTable[11]*0.05f))<0.00001f
@@ -9117,9 +9117,9 @@ int main()
         check(effect.m_primList.size()==20 && rngDraws==laterDraws && actor.lastSentMsg==0,
             "SummonSlave does nothing at intermediate states beyond refreshing its screen anchor");
         effect.m_stateCnt=35;effect.SpawnSummonSlave();
-        check(effect.m_primList.size()==20 && rngDraws==laterDraws && actor.lastSentMsg==0
-            && actor.lastSentArg==63,
-            "SummonSlave sends the source smoke-effect message exactly at state 35");
+        check(effect.m_primList.size()==20 && rngDraws==laterDraws && actor.lastSentMsg==63
+            && actor.lastSentArg==0 && actor.lastSentArg2==0 && actor.lastSentArg3==0,
+            "SummonSlave sends smoke message 63, never movement message 0 with an invalid pointer, at state 35");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
     }
     {

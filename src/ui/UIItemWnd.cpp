@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIItemWnd.h"
 
 #include "gamemode/GameMode.h"
@@ -44,7 +45,7 @@ namespace {
 constexpr int kWindowWidth = 280;
 constexpr int kWindowHeight = 134;
 constexpr int kMiniHeight = 34;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kGridLeft = 36;
 constexpr int kGridTop = 17;
 constexpr int kGridCell = 32;
@@ -888,7 +889,7 @@ void UIItemWnd::OnLBtnDblClk(int x, int y)
                         0) != 0) {
                     return;
                 }
-            } else if (item && IsEquipTabType(item->m_itemType)) {
+            } else if (item && (IsEquipTabType(item->m_itemType) || item->m_itemType == 10)) {
                 if (item->m_wearLocation != 0) {
                     if (g_modeMgr.SendMsg(
                             CGameMode::GameMsg_RequestUnequipInventoryItem,
@@ -948,7 +949,7 @@ void UIItemWnd::TryActivateItemAtPoint(int x, int y)
         return;
     }
 
-    if (IsEquipTabType(item->m_itemType)) {
+    if (IsEquipTabType(item->m_itemType) || item->m_itemType == 10) {
         if (item->m_wearLocation != 0) {
             g_modeMgr.SendMsg(
                 CGameMode::GameMsg_RequestUnequipInventoryItem,
@@ -1575,7 +1576,7 @@ int UIItemWnd::GetInventoryItemCount() const
     int count = 0;
     const std::list<ITEM_INFO>& items = g_session.GetInventoryItems();
     for (const ITEM_INFO& item : items) {
-        if (item.m_wearLocation == 0) {
+        if (item.m_wearLocation == 0 || item.m_itemType == 10) {
             ++count;
         }
     }
@@ -1605,7 +1606,7 @@ std::vector<const ITEM_INFO*> UIItemWnd::GetFilteredItems() const
     const std::list<ITEM_INFO>& items = g_session.GetInventoryItems();
     out.reserve(items.size());
     for (const ITEM_INFO& item : items) {
-        if (item.m_wearLocation != 0) {
+        if (item.m_wearLocation != 0 && item.m_itemType != 10) {
             continue;
         }
         if (ItemBelongsToTab(item, m_currentTab)) {

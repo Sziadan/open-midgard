@@ -25,12 +25,15 @@ namespace {
 
 constexpr int kDefaultWindowWidth = 275;
 constexpr int kDefaultWindowHeight = 31;
+constexpr int kShortcutWindowWidth = 295;
+constexpr int kShortcutRowHeight = 29;
+constexpr int kShortcutControlLeft = 270;
+constexpr int kShortcutControlRight = 295;
+constexpr int kMaximumVisibleRows = kShortcutPageCount;
 constexpr int kSlotLeft = 5;
 constexpr int kSlotTop = 4;
 constexpr int kSlotStride = 29;
 constexpr int kSlotSize = 24;
-constexpr int kPageTextInsetX = 13;
-constexpr int kPageTextInsetY = 16;
 
 void DrawBitmapFit(HDC hdc, const shopui::BitmapPixels& bitmap, const RECT& rect)
 {
@@ -145,23 +148,18 @@ std::string ResolveShortcutSkillIconPath(int skillId)
     return g_skillMgr.GetSkillIconPath(skillId);
 }
 
-std::string BuildShortcutSlotKeyLabel(int visibleSlot)
+std::string BuildShortcutSlotKeyLabel(int absoluteSlot)
 {
-    if (visibleSlot < 0 || visibleSlot >= kShortcutSlotsPerPage) {
+    if (absoluteSlot < 0) {
         return std::string();
     }
-    return "F" + std::to_string(visibleSlot + 1);
+    return g_windowMgr.GetShortcutKeyBindingLabel(absoluteSlot);
 }
 
 int ResolveShortcutSkillUseLevel(const SHORTCUT_SLOT& slot, const PLAYER_SKILL_INFO* skill)
 {
-    if (slot.count > 0) {
-        return static_cast<int>(slot.count);
-    }
-    if (skill && skill->level > 0) {
-        return skill->level;
-    }
-    return 1;
+    if (!skill || skill->level <= 0) return 0;
+    return std::clamp(slot.count > 0 ? static_cast<int>(slot.count) : skill->level, 1, skill->level);
 }
 
 int ResolveShortcutSkillSpCost(int skillId, int useLevel, const PLAYER_SKILL_INFO* skill)
@@ -253,6 +251,7 @@ UIShortCutWnd::UIShortCutWnd()
     : m_backgroundBitmap(),
       m_slotButtonBitmap(),
       m_hoverSlot(-1),
+      m_visibleRowCount(1),
       m_pressedSlot(-1),
       m_pressedSlotAbsoluteIndex(-1),
       m_slotPressArmed(0),
@@ -266,6 +265,7 @@ UIShortCutWnd::UIShortCutWnd()
 {
     Create(kDefaultWindowWidth, kDefaultWindowHeight);
     LoadAssets();
+    Resize(kShortcutWindowWidth, kDefaultWindowHeight);
 
     int x = 0;
     int y = 0;
@@ -315,7 +315,10 @@ void UIShortCutWnd::DragAndDrop(int x, int y, const DRAG_INFO* const info)
     bool changed = false;
     if (info->source == static_cast<int>(DragSource::ShortcutWindow)
         && info->shortcutSlotAbsoluteIndex >= 0) {
-        const int targetAbsoluteSlot = g_session.GetShortcutSlotAbsoluteIndex(visibleSlot);
+        const int targetAbsoluteSlot = GetAbsoluteSlotIndex(visibleSlot);
+        if (targetAbsoluteSlot < 0) {
+            return;
+        }
         if (targetAbsoluteSlot == info->shortcutSlotAbsoluteIndex) {
             return;
         }
@@ -344,14 +347,14 @@ void UIShortCutWnd::DragAndDrop(int x, int y, const DRAG_INFO* const info)
     }
 
     if (info->type == static_cast<int>(DragType::ShortcutItem) && info->itemId != 0) {
-        changed = g_session.SetShortcutSlotByVisibleIndex(visibleSlot, 0, info->itemId, 0);
+        changed = g_session.SetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(visibleSlot), 0, info->itemId, 0);
     } else if (info->type == static_cast<int>(DragType::ShortcutSkill) && info->skillId != 0) {
         const unsigned short skillLevel = static_cast<unsigned short>((std::max)(1, info->skillLevel));
-        changed = g_session.SetShortcutSlotByVisibleIndex(visibleSlot, 1, static_cast<unsigned int>(info->skillId), skillLevel);
+        changed = g_session.SetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(visibleSlot), 1, static_cast<unsigned int>(info->skillId), skillLevel);
     }
 
     if (changed) {
-        const int absoluteSlot = g_session.GetShortcutSlotAbsoluteIndex(visibleSlot);
+        const int absoluteSlot = GetAbsoluteSlotIndex(visibleSlot);
         g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUpdate, absoluteSlot, 0, 0);
         Invalidate();
     }
@@ -388,13 +391,13 @@ void UIShortCutWnd::OnDraw()
         DrawBitmapFit(hdc, m_slotButtonBitmap, GetSlotRect(m_hoverSlot));
     }
 
-    for (int slotIndex = 0; slotIndex < kShortcutSlotsPerPage; ++slotIndex) {
-        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(slotIndex);
+    for (int slotIndex = 0; slotIndex < m_visibleRowCount * kShortcutSlotsPerPage; ++slotIndex) {
+        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(slotIndex));
         if (!slot || slot->id == 0) {
             continue;
         }
 
-        const int absoluteSlot = g_session.GetShortcutSlotAbsoluteIndex(slotIndex);
+        const int absoluteSlot = GetAbsoluteSlotIndex(slotIndex);
         const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
         if (gameMode
             && gameMode->m_dragType != static_cast<int>(DragType::None)
@@ -411,7 +414,7 @@ void UIShortCutWnd::OnDraw()
             }
 
             const PLAYER_SKILL_INFO* skill = g_session.GetSkillItemBySkillId(static_cast<int>(slot->id));
-            const int displayedLevel = skill ? skill->level : static_cast<int>(slot->count);
+            const int displayedLevel = ResolveShortcutSkillUseLevel(*slot, skill);
             if (displayedLevel > 0) {
                 DrawSlotOverlayText(hdc, slotRect, displayedLevel);
             }
@@ -432,9 +435,6 @@ void UIShortCutWnd::OnDraw()
         }
     }
 
-    RECT pageRect{ m_x + m_w - kPageTextInsetX - 12, m_y + m_h - kPageTextInsetY, m_x + m_w - 2, m_y + m_h - 2 };
-    DrawOutlinedText(hdc, pageRect, std::to_string(g_session.GetShortcutPage() + 1), RGB(255, 255, 255));
-
     ReleaseDrawTarget(hdc);
 
     m_lastDrawStateToken = BuildDisplayStateToken();
@@ -444,12 +444,28 @@ void UIShortCutWnd::OnDraw()
 
 void UIShortCutWnd::OnLBtnDown(int x, int y)
 {
+    const int localX = x - m_x;
+    const int localY = y - m_y;
+    if (localX >= kShortcutControlLeft && localX < kShortcutControlRight) {
+        if (localY >= 0 && localY < kShortcutRowHeight && m_visibleRowCount < kMaximumVisibleRows) {
+            ++m_visibleRowCount;
+            Resize(kShortcutWindowWidth, m_visibleRowCount * kShortcutRowHeight + 2);
+            Invalidate();
+        } else if (m_visibleRowCount > 1
+            && localY >= (m_visibleRowCount - 1) * kShortcutRowHeight
+            && localY < m_visibleRowCount * kShortcutRowHeight) {
+            --m_visibleRowCount;
+            Resize(kShortcutWindowWidth, m_visibleRowCount * kShortcutRowHeight + 2);
+            Invalidate();
+        }
+        return;
+    }
     const int visibleSlot = GetSlotAtGlobalPoint(x, y);
     if (visibleSlot >= 0) {
-        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(visibleSlot);
+        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(visibleSlot));
         if (slot && slot->id != 0) {
             m_pressedSlot = visibleSlot;
-            m_pressedSlotAbsoluteIndex = g_session.GetShortcutSlotAbsoluteIndex(visibleSlot);
+            m_pressedSlotAbsoluteIndex = GetAbsoluteSlotIndex(visibleSlot);
             m_slotPressArmed = 1;
             m_startGlobalX = x;
             m_startGlobalY = y;
@@ -547,7 +563,7 @@ void UIShortCutWnd::OnRBtnDown(int x, int y)
         return;
     }
 
-    const SHORTCUT_SLOT* const slot = g_session.GetShortcutSlotByVisibleIndex(visibleSlot);
+    const SHORTCUT_SLOT* const slot = g_session.GetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(visibleSlot));
     if (!slot || slot->id == 0) {
         return;
     }
@@ -569,17 +585,8 @@ void UIShortCutWnd::OnRBtnDown(int x, int y)
 
 void UIShortCutWnd::OnWheel(int delta)
 {
-    const int oldPage = g_session.GetShortcutPage();
-    int newPage = oldPage;
-    if (delta > 0) {
-        newPage = oldPage - 1;
-    } else if (delta < 0) {
-        newPage = oldPage + 1;
-    }
-    g_session.SetShortcutPage(newPage);
-    if (g_session.GetShortcutPage() != oldPage) {
-        Invalidate();
-    }
+    // Rows are fixed banks; scrolling must not rotate their contents.
+    (void)delta;
 }
 
 int UIShortCutWnd::GetHoverSlot() const
@@ -593,7 +600,7 @@ bool UIShortCutWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
         return false;
     }
 
-    const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(m_hoverSlot);
+    const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(m_hoverSlot));
     if (!slot) {
         return false;
     }
@@ -603,12 +610,12 @@ bool UIShortCutWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
     outData->identified = true;
 
     if (slot->id == 0) {
-        outData->text = BuildShortcutSlotKeyLabel(m_hoverSlot);
+        outData->text = BuildShortcutSlotKeyLabel(GetAbsoluteSlotIndex(m_hoverSlot));
         return outData->IsValid();
     }
 
     if (slot->isSkill != 0) {
-        outData->text = BuildShortcutSkillHoverText(m_hoverSlot, *slot);
+        outData->text = BuildShortcutSkillHoverText(GetAbsoluteSlotIndex(m_hoverSlot), *slot);
         return outData->IsValid();
     }
 
@@ -618,7 +625,7 @@ bool UIShortCutWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
     const ITEM_INFO* item = g_session.GetInventoryItemByItemId(slot->id);
     const ITEM_INFO& hoverItem = item ? *item : fallbackItem;
 
-    outData->text = BuildShortcutItemHoverText(m_hoverSlot, hoverItem);
+    outData->text = BuildShortcutItemHoverText(GetAbsoluteSlotIndex(m_hoverSlot), hoverItem);
     outData->itemId = hoverItem.GetItemId();
     outData->identified = hoverItem.m_isIdentified != 0;
     return outData->IsValid();
@@ -656,38 +663,50 @@ int UIShortCutWnd::GetSlotAtGlobalPoint(int globalX, int globalY) const
 {
     const int localX = globalX - m_x;
     const int localY = globalY - m_y;
-    if (localY < 0 || localY >= 24 || localX <= 3) {
+    if (localY < 0 || localY >= m_visibleRowCount * kShortcutRowHeight
+        || (localY % kShortcutRowHeight) >= kSlotSize || localX <= 3 || localX >= kShortcutControlLeft) {
         return -1;
     }
-
+    const int row = localY / kShortcutRowHeight;
     const int adjustedX = localX - 4;
     if (adjustedX < 0) {
         return -1;
     }
 
     const int slot = adjustedX / kSlotStride;
-    if (slot < 0 || slot >= kShortcutSlotsPerPage) {
+    if (slot < 0 || slot >= kShortcutSlotsPerPage || adjustedX >= (slot + 1) * kSlotStride) {
         return -1;
     }
-    if (adjustedX >= ((slot + 1) * kSlotStride)) {
-        return -1;
-    }
-    return slot;
+    return row * kShortcutSlotsPerPage + slot;
 }
 
 RECT UIShortCutWnd::GetSlotRect(int visibleSlot) const
 {
+    const int row = visibleSlot / kShortcutSlotsPerPage;
+    const int column = visibleSlot % kShortcutSlotsPerPage;
     return RECT{
-        m_x + kSlotLeft + visibleSlot * kSlotStride,
-        m_y + kSlotTop,
-        m_x + kSlotLeft + visibleSlot * kSlotStride + kSlotSize,
-        m_y + kSlotTop + kSlotSize
+        m_x + kSlotLeft + column * kSlotStride,
+        m_y + kSlotTop + row * kShortcutRowHeight,
+        m_x + kSlotLeft + column * kSlotStride + kSlotSize,
+        m_y + kSlotTop + row * kShortcutRowHeight + kSlotSize
     };
 }
 
 void UIShortCutWnd::ActivateSlot(int visibleSlot)
 {
-    g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUse, visibleSlot, 0, 0);
+    const int absoluteSlot = GetAbsoluteSlotIndex(visibleSlot);
+    if (absoluteSlot >= 0) {
+        g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUse, absoluteSlot, 0, 0);
+    }
+}
+
+int UIShortCutWnd::GetAbsoluteSlotIndex(int visibleSlot) const
+{
+    if (visibleSlot < 0 || visibleSlot >= m_visibleRowCount * kShortcutSlotsPerPage) {
+        return -1;
+    }
+    const int page = visibleSlot / kShortcutSlotsPerPage;
+    return page * kShortcutSlotsPerPage + visibleSlot % kShortcutSlotsPerPage;
 }
 
 void UIShortCutWnd::DrawSlotOverlayText(HDC hdc, const RECT& slotRect, int value) const
@@ -748,6 +767,7 @@ unsigned long long UIShortCutWnd::BuildDisplayStateToken() const
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(m_y));
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(m_w));
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(m_h));
+    shopui::HashTokenValue(&hash, static_cast<unsigned long long>(m_visibleRowCount));
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(m_hoverSlot + 1));
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(g_session.GetShortcutPage()));
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(m_pressedSlot + 1));
@@ -762,8 +782,8 @@ unsigned long long UIShortCutWnd::BuildDisplayStateToken() const
         shopui::HashTokenValue(&hash, static_cast<unsigned long long>(static_cast<unsigned int>(gameMode->m_dragInfo.skillLevel)));
     }
 
-    for (int slotIndex = 0; slotIndex < kShortcutSlotsPerPage; ++slotIndex) {
-        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(slotIndex);
+    for (int slotIndex = 0; slotIndex < m_visibleRowCount * kShortcutSlotsPerPage; ++slotIndex) {
+        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(slotIndex));
         const unsigned char isSkill = slot ? slot->isSkill : 0;
         const unsigned int id = slot ? slot->id : 0;
         const unsigned short count = slot ? slot->count : 0;

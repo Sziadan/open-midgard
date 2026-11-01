@@ -3,6 +3,8 @@
 set(RO_MAIN_SOURCE WinMain.cpp)
 if(NOT WIN32)
     set(RO_MAIN_SOURCE AppMain_stub.cpp)
+else()
+    list(APPEND RO_MAIN_SOURCE HealRenderPreview.cpp)
 endif()
 
 add_library(ro_main STATIC

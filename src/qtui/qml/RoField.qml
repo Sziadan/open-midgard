@@ -15,11 +15,11 @@ Rectangle {
 
     radius: theme.buttonRadius
     color: emphasize
-        ? (editing ? "#ffffff" : "#f6f1e7")
+        ? (editing ? "#ffffff" : theme.bodyTop)
         : fade(theme.fieldFill)
     border.width: emphasize && editing ? 2 : 1
     border.color: emphasize
-        ? (editing ? "#a6843a" : "#6f6252")
-        : fade(editing ? theme.gold : theme.fieldBorder)
+        ? (editing ? theme.focus : theme.fieldBorder)
+        : fade(editing ? theme.focus : theme.fieldBorder)
     antialiasing: true
 }

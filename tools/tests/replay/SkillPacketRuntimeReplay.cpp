@@ -1255,23 +1255,20 @@ void ReplaySkillUnitLifecycle(const std::string& path)
                 "skill-unit is missing from CWorld game-object ownership list");
             if (unitJob == 127) {
                 const u32 unitStartTick = unit->m_SkillStartTime;
-                u32 previousElapsedMs = 0;
-                bool active = true;
-                while (active && previousElapsedMs <= 3200) {
+                Require(unit->m_serverOwnedUnit, "network Firewall must retain server lifetime ownership");
+                while (lifetimeElapsedMs <= 3200) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(24));
                     lifetimeElapsedMs = timeGetTime() - unitStartTick;
-                    active = unit->OnProcess() != 0;
+                    Require(unit->OnProcess() != 0,
+                        "server-owned Firewall must await removal instead of expiring at three seconds");
                     ++processSteps;
-                    if (!active) {
-                        const u32 measuredStepMs = lifetimeElapsedMs - previousElapsedMs;
-                        Require(lifetimeElapsedMs > 3000
-                            && lifetimeElapsedMs <= 3000 + measuredStepMs + 24,
-                            "Firewall unit expiry falls outside the measured 24 ms process-step window");
-                    }
-                    previousElapsedMs = lifetimeElapsedMs;
                 }
-                Require(!active && processSteps >= 100,
-                    "Firewall unit did not expire after nominal 24 ms CSkill::OnProcess steps");
+                Require(processSteps >= 100, "Firewall persistence did not cross the legacy expiry threshold");
+                CSkill synthetic;
+                synthetic.m_job = 127;
+                synthetic.m_SkillStartTime = unitStartTick;
+                Require(synthetic.OnProcess() == 0,
+                    "synthetic legacy Firewall must retain its Ref three-second timeout");
             } else if (unitJob == 142) {
                 for (; processSteps < 140; ++processSteps) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(24));

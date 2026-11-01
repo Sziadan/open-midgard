@@ -1,12 +1,18 @@
 <RCC>
     <qresource prefix="/qtui">
         <file>qml/GameOverlay.qml</file>
+        <file>qml/RoSkillTree.qml</file>
+        <file>data/skill_tree_catalog.json</file>
         <file>qml/SpikeOverlay.qml</file>
         <file>qml/RoTheme.qml</file>
         <file>qml/RoFrame.qml</file>
+        <file>qml/RoHeader.qml</file>
+        <file>qml/RoGauge.qml</file>
+        <file>qml/RoBasicInfo.qml</file>
         <file>qml/RoChromeButton.qml</file>
         <file>qml/RoBasicMenuIcon.qml</file>
         <file>qml/RoTextButton.qml</file>
+        <file>qml/RoTabButton.qml</file>
         <file>qml/RoScrollBar.qml</file>
         <file>qml/RoField.qml</file>
     </qresource>

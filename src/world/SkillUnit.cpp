@@ -365,7 +365,7 @@ u8 CSkill::OnProcess()
     // another Warp Portal (effect 317) while the previous one is still
     // alive, so the opening burst repeats and the portal comes back.
     if (g_isSkipFrame <= 0) {
-        if (m_job == 127 && m_SkillStartTime + 3000u < timeGetTime()) {
+        if (!m_serverOwnedUnit && m_job == 127 && m_SkillStartTime + 3000u < timeGetTime()) {
             return 0;
         }
         return 1;
@@ -376,7 +376,7 @@ u8 CSkill::OnProcess()
         LaunchPeriodic(315, 7);
         return 1;
     case 127:
-        if (m_SkillStartTime + 3000u < timeGetTime()) {
+        if (!m_serverOwnedUnit && m_SkillStartTime + 3000u < timeGetTime()) {
             return 0;
         }
         LaunchPeriodic(25, 7);

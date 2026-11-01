@@ -65,6 +65,18 @@ public:
         std::string value;
     };
 
+    struct DisplayKeybinding {
+        int x = 0;
+        int y = 0;
+        int width = 0;
+        int height = 0;
+        int barIndex = 0;
+        int column = 0;
+        bool capturing = false;
+        std::string label;
+        std::string value;
+    };
+
     struct DisplayTab {
         int x = 0;
         int y = 0;
@@ -77,6 +89,7 @@ public:
     struct DisplayData {
         bool collapsed = false;
         int activeTab = 0;
+        int keybindingBar = 0;
         int contentX = 0;
         int contentY = 0;
         int contentWidth = 0;
@@ -88,6 +101,7 @@ public:
         std::vector<DisplayToggle> toggles;
         std::vector<DisplaySlider> sliders;
         std::vector<DisplayGraphicsRow> graphicsRows;
+        std::vector<DisplayKeybinding> keybindings;
     };
 
     UIOptionWnd();
@@ -102,6 +116,8 @@ public:
     void Move(int x, int y) override;
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     void OnKeyDown(int virtualKey) override;
+    bool IsCapturingShortcutKeyBinding() const { return m_captureShortcutBinding >= 0; }
+    bool CaptureShortcutKey(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown);
     bool GetDisplayDataForQt(DisplayData* outData) const;
 
 private:
@@ -109,6 +125,7 @@ private:
         TabId_Game = 0,
         TabId_Graphics,
         TabId_Audio,
+        TabId_Keybindings,
         TabId_Count,
     };
 
@@ -153,6 +170,8 @@ private:
     RECT GetMiniButtonRect() const;
     RECT GetCloseButtonRect() const;
     RECT GetTabRect(int tabIndex) const;
+    RECT GetShortcutBindingRect(int slotIndex) const;
+    RECT GetKeybindingBarRect(int barIndex) const;
     RECT GetContentRect() const;
     RECT GetRowRect(int rowIndex) const;
     RECT GetRowPrevButtonRect(int rowIndex) const;
@@ -222,6 +241,8 @@ private:
     int m_appliedGuiScalePercent;
     int m_collapsed;
     int m_activeTab;
+    int m_captureShortcutBinding;
+    int m_keybindingBar = 0;
     int m_dragMode;
     int m_dragAnchorX;
     int m_dragAnchorY;

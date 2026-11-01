@@ -351,7 +351,10 @@ public:
         int screenY,
         CGameActor** outActor,
         int* outLabelX,
-        int* outLabelY) const;
+        int* outLabelY,
+        bool includeLocalPlayer = false) const;
+    bool ResolveCursorSnap(const matrix& viewMatrix, float cameraLongitude,
+        int screenX, int screenY, bool allowItems, int* outX, int* outY) const;
     bool FindHoveredSkillScreen(const matrix& viewMatrix,
         int screenX,
         int screenY,

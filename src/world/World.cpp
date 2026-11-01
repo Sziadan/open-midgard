@@ -1,4 +1,5 @@
 #include "World.h"
+#include "world/CursorSnap.h"
 #include "world/GameActor.h"
 #include "world/ActorTint.h"
 #include "world/MsgEffect.h"
@@ -128,7 +129,6 @@ constexpr int kJobWarpPortal = 0x80;
 constexpr int kJobPreWarpPortal = 0x81;
 constexpr float kActorShadowPixelRatioScale = 0.14285715f;
 constexpr float kActorShadowSortBias = 0.00001f;
-constexpr float kEnemyHoverStickyPadding = 24.0f;
 
 enum class PortalVisualStyle {
     Ready,
@@ -246,7 +246,7 @@ bool GetGroundItemScreenRect(const matrix& viewMatrix,
     }
 
     tlvertex3d projectedBase{};
-    if (!ProjectPoint(g_renderer, viewMatrix, item.m_pos, &projectedBase)) {
+    if (!ProjectPoint(g_renderer, viewMatrix, item.GetBillboardPosition(), &projectedBase)) {
         return false;
     }
 
@@ -254,10 +254,18 @@ bool GetGroundItemScreenRect(const matrix& viewMatrix,
     const float scaledAnchorY = static_cast<float>(item.m_billboardAnchorY) * kGroundItemScreenScale;
     const float scaledWidth = static_cast<float>(item.m_billboardTextureWidth) * kGroundItemScreenScale;
     const float scaledHeight = static_cast<float>(item.m_billboardTextureHeight) * kGroundItemScreenScale;
-    const float left = projectedBase.x - scaledAnchorX;
-    const float top = projectedBase.y - scaledAnchorY;
-    const float right = left + scaledWidth;
-    const float bottom = top + scaledHeight;
+    float left = projectedBase.x - scaledAnchorX;
+    float top = projectedBase.y - scaledAnchorY;
+    float right = left + scaledWidth;
+    float bottom = top + scaledHeight;
+    // Ignore transparent composition padding when anchoring labels/picking.
+    const auto& opaque = item.m_billboardOpaqueBounds;
+    if (opaque.right > opaque.left && opaque.bottom > opaque.top) {
+        right = left + opaque.right * kGroundItemScreenScale;
+        bottom = top + opaque.bottom * kGroundItemScreenScale;
+        left += opaque.left * kGroundItemScreenScale;
+        top += opaque.top * kGroundItemScreenScale;
+    }
     if (!std::isfinite(left) || !std::isfinite(top) || !std::isfinite(right) || !std::isfinite(bottom)) {
         return false;
     }
@@ -5198,7 +5206,7 @@ void C3dGround::RenderGroundTile(const matrix& viewMatrix, int attrX, int attrY,
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = texture;
-    face->mtPreset = 0;
+    face->mtPreset = kClampedGroundTextureMode;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -5209,7 +5217,9 @@ void C3dGround::RenderGroundTile(const matrix& viewMatrix, int attrX, int attrY,
         if (!ProjectPoint(g_renderer, viewMatrix, worldVerts[i], &verts[i])) {
             return;
         }
-        verts[i].z -= 0.000030517578f;
+        // Ground targeting overlays need the same clearance as ground VFX
+        // over biased RSW floors. Leave the model/GND depth relationship intact.
+        verts[i].z = (std::max)(0.0f, verts[i].z - 0.0006f);
         verts[i].color = color;
         verts[i].specular = 0xFF000000u;
     }
@@ -6960,7 +6970,8 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
     int screenY,
     CGameActor** outActor,
     int* outLabelX,
-    int* outLabelY) const
+    int* outLabelY,
+    bool includeLocalPlayer) const
 {
     if (outActor) {
         *outActor = nullptr;
@@ -6975,27 +6986,28 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
     const float mouseX = static_cast<float>(screenX);
     const float mouseY = static_cast<float>(screenY);
 
-    if (CPc* playerPc = dynamic_cast<CPc*>(m_player)) {
-        const float zoom = m_ground ? m_ground->m_zoom : static_cast<float>(m_attr ? m_attr->m_zoom : 5);
-        BillboardScreenEntry playerEntry{};
-        if (BuildBillboardRenderEntry(playerPc, viewMatrix, cameraLongitude, zoom, &playerEntry)
-            && mouseX >= playerEntry.left
-            && mouseX <= playerEntry.right
-            && mouseY >= playerEntry.top
-            && mouseY <= playerEntry.bottom) {
-            if (outActor) {
-                *outActor = playerPc;
+    // Actor-targeted spells must be able to select the caster. Keep this
+    // separate from normal movement picking, which excludes the local sprite.
+    if (includeLocalPlayer) {
+        if (CPc* playerPc = dynamic_cast<CPc*>(m_player)) {
+            const float zoom = m_ground ? m_ground->m_zoom : static_cast<float>(m_attr ? m_attr->m_zoom : 5);
+            BillboardScreenEntry playerEntry{};
+            if (playerPc->m_isVisible && !IsUntargetableDeadHoverActor(playerPc)
+                && BuildBillboardRenderEntry(playerPc, viewMatrix, cameraLongitude, zoom, &playerEntry)
+                && mouseX >= playerEntry.left && mouseX <= playerEntry.right
+                && mouseY >= playerEntry.top && mouseY <= playerEntry.bottom) {
+                if (outActor) *outActor = playerPc;
+                if (outLabelX) *outLabelX = static_cast<int>(std::lround(playerEntry.baseX));
+                if (outLabelY) *outLabelY = static_cast<int>(std::lround(playerEntry.baseY)) + kActorLabelBaseYOffset;
+                return true;
             }
-            if (outLabelX) {
-                *outLabelX = static_cast<int>(std::lround(playerEntry.baseX));
-            }
-            if (outLabelY) {
-                *outLabelY = static_cast<int>(std::lround(playerEntry.baseY)) + kActorLabelBaseYOffset;
-            }
-            return true;
         }
     }
 
+    // The local player is intentionally absent from m_billboardFrameEntries.
+    // Ref's actor picker does not give the player's sprite priority over the
+    // ground or other pick records, so clicks covered only by our own sprite
+    // must fall through to the normal world hit test below.
     EnsureBillboardFrameCache(viewMatrix, cameraLongitude);
     const BillboardScreenEntry* stickyEntry = nullptr;
     CPc* stickyActor = nullptr;
@@ -7028,10 +7040,12 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
             continue;
         }
 
-        const float stickyLeft = it->left - kEnemyHoverStickyPadding;
-        const float stickyTop = it->top - kEnemyHoverStickyPadding;
-        const float stickyRight = it->right + kEnemyHoverStickyPadding;
-        const float stickyBottom = it->bottom + kEnemyHoverStickyPadding;
+        const auto pick = ro::cursor::ExpandPickRect(
+            {it->left, it->top, it->right, it->bottom}, g_renderer.m_screenXFactor, 40);
+        const float stickyLeft = pick.left;
+        const float stickyTop = pick.top;
+        const float stickyRight = pick.right;
+        const float stickyBottom = pick.bottom;
         if (mouseX < stickyLeft || mouseX > stickyRight || mouseY < stickyTop || mouseY > stickyBottom) {
             continue;
         }
@@ -7059,6 +7073,31 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
     }
 
     return false;
+}
+
+bool CWorld::ResolveCursorSnap(const matrix& viewMatrix, float cameraLongitude,
+    int screenX, int screenY, bool allowItems, int* outX, int* outY) const
+{
+    if (!outX || !outY) return false;
+    CGameActor* actor = nullptr;
+    if (FindHoveredActorScreen(viewMatrix, cameraLongitude, screenX, screenY, &actor, nullptr, nullptr)) {
+        // Ref ProcessMouseSnap's monster job gate; keep NPCs and PCs unsnapped.
+        if (!actor || actor->m_job <= 1000 || actor->m_job >= 1986) return false;
+        for (const auto& entry : m_billboardFrameEntries) {
+            if (entry.actor != actor) continue;
+            *outX = static_cast<int>((entry.left + entry.right) * 0.5f);
+            *outY = static_cast<int>((entry.top + entry.bottom) * 0.5f);
+            return true;
+        }
+        return false;
+    }
+    CItem* item = nullptr;
+    if (!allowItems || !FindHoveredGroundItemScreen(viewMatrix, screenX, screenY, &item, nullptr, nullptr)) return false;
+    RECT rect{};
+    if (!GetGroundItemScreenRect(viewMatrix, *item, &rect, nullptr, nullptr, nullptr, nullptr)) return false;
+    *outX = static_cast<int>((rect.left + rect.right) / 2);
+    *outY = static_cast<int>((rect.top + rect.bottom) / 2);
+    return true;
 }
 
 bool CWorld::FindHoveredSkillScreen(const matrix& viewMatrix,
@@ -7170,7 +7209,11 @@ bool CWorld::FindHoveredGroundItemScreen(const matrix& viewMatrix,
         if (!GetGroundItemScreenRect(viewMatrix, *item, &rect, &centerX, &topY, &topY, &depth)) {
             continue;
         }
-        if (!PtInRect(&rect, mousePoint)) {
+        const auto pick = ro::cursor::ExpandPickRect(
+            {static_cast<float>(rect.left), static_cast<float>(rect.top),
+             static_cast<float>(rect.right), static_cast<float>(rect.bottom)}, g_renderer.m_screenXFactor, 34);
+        if (mousePoint.x <= pick.left || mousePoint.x >= pick.right
+            || mousePoint.y <= pick.top || mousePoint.y >= pick.bottom) {
             continue;
         }
 

@@ -44,6 +44,7 @@
 #include "qtui/QtUiRuntime.h"
 
 #include "core/File.h"
+#include "core/SettingsIni.h"
 #include "res/Bitmap.h"
 #include "render3d/Device.h"
 #include "render3d/RenderDevice.h"
@@ -62,6 +63,50 @@
 #include <vector>
 
 namespace {
+std::string ShortcutVirtualKeyLabel(int virtualKey)
+{
+    if (virtualKey >= '0' && virtualKey <= '9') {
+        return std::string(1, static_cast<char>(virtualKey));
+    }
+    if (virtualKey >= 'A' && virtualKey <= 'Z') {
+        return std::string(1, static_cast<char>(virtualKey));
+    }
+    if (virtualKey >= VK_F1 && virtualKey <= VK_F24) {
+        return "F" + std::to_string(virtualKey - VK_F1 + 1);
+    }
+    if (virtualKey >= VK_NUMPAD0 && virtualKey <= VK_NUMPAD9) {
+        return "Num" + std::to_string(virtualKey - VK_NUMPAD0);
+    }
+    switch (virtualKey) {
+    case VK_SPACE: return "Space";
+    case VK_TAB: return "Tab";
+    case VK_RETURN: return "Enter";
+    case VK_ESCAPE: return "Esc";
+    case VK_BACK: return "Backspace";
+    case VK_DELETE: return "Delete";
+    case VK_INSERT: return "Insert";
+    case VK_HOME: return "Home";
+    case VK_END: return "End";
+    case VK_PRIOR: return "PgUp";
+    case VK_NEXT: return "PgDn";
+    case VK_LEFT: return "Left";
+    case VK_RIGHT: return "Right";
+    case VK_UP: return "Up";
+    case VK_DOWN: return "Down";
+    default: return "Key " + std::to_string(virtualKey);
+    }
+}
+
+std::string ShortcutBindingLabel(const ShortcutKeyBinding& binding)
+{
+    std::string label;
+    if (binding.modifiers & kShortcutKeyModifierControl) label += "Ctrl+";
+    if (binding.modifiers & kShortcutKeyModifierShift) label += "Shift+";
+    if (binding.modifiers & kShortcutKeyModifierAlt) label += "Alt+";
+    return label + ShortcutVirtualKeyLabel(binding.virtualKey);
+}
+
+
 constexpr int kUiChatEventMsg = 101;
 constexpr size_t kMaxChatEvents = 256;
 constexpr bool kLogWallpaperLoad = false;
@@ -602,6 +647,72 @@ UIWindowMgr::UIWindowMgr()
                         m_wallpaperSurface(nullptr), m_uiComposeSurface(), m_chatActiveInputField(0), m_chatScrollLineOffset(0)
 {
     m_loginStatus = "Login: idle";
+    LoadShortcutKeyBindings();
+}
+
+void UIWindowMgr::LoadShortcutKeyBindings()
+{
+    for (int slot = 0; slot < kShortcutKeyBindingCount; ++slot) {
+        const int column = slot % 9;
+        ShortcutKeyBinding defaults{};
+        if (slot < 9) {
+            defaults.virtualKey = VK_F1 + column;
+        } else {
+            defaults.virtualKey = '1' + column;
+            defaults.modifiers = slot < 18 ? kShortcutKeyModifierControl : kShortcutKeyModifierShift;
+        }
+
+        const std::string keyName = "Slot" + std::to_string(slot) + "Key";
+        const std::string modifiersName = "Slot" + std::to_string(slot) + "Modifiers";
+        ShortcutKeyBinding binding{};
+        binding.virtualKey = LoadSettingsIniInt("ShortcutKeys", keyName.c_str(), defaults.virtualKey);
+        binding.modifiers = static_cast<unsigned char>(LoadSettingsIniInt(
+            "ShortcutKeys", modifiersName.c_str(), defaults.modifiers) & 0x07);
+        if (binding.virtualKey <= 0 || binding.virtualKey > 0xFF) {
+            binding = defaults;
+        }
+        m_shortcutKeyBindings[static_cast<size_t>(slot)] = binding;
+    }
+}
+
+ShortcutKeyBinding UIWindowMgr::GetShortcutKeyBinding(int slotIndex) const
+{
+    if (slotIndex < 0 || slotIndex >= kShortcutKeyBindingCount) {
+        return {};
+    }
+    return m_shortcutKeyBindings[static_cast<size_t>(slotIndex)];
+}
+
+bool UIWindowMgr::SetShortcutKeyBinding(int slotIndex, const ShortcutKeyBinding& binding)
+{
+    if (slotIndex < 0 || slotIndex >= kShortcutKeyBindingCount
+        || binding.virtualKey <= 0 || binding.virtualKey > 0xFF) {
+        return false;
+    }
+    const ShortcutKeyBinding normalized{
+        binding.virtualKey,
+        static_cast<unsigned char>(binding.modifiers & 0x07)
+    };
+    if (m_shortcutKeyBindings[static_cast<size_t>(slotIndex)].virtualKey == normalized.virtualKey
+        && m_shortcutKeyBindings[static_cast<size_t>(slotIndex)].modifiers == normalized.modifiers) {
+        return false;
+    }
+    m_shortcutKeyBindings[static_cast<size_t>(slotIndex)] = normalized;
+    const std::string keyName = "Slot" + std::to_string(slotIndex) + "Key";
+    const std::string modifiersName = "Slot" + std::to_string(slotIndex) + "Modifiers";
+    SaveSettingsIniInt("ShortcutKeys", keyName.c_str(), normalized.virtualKey);
+    SaveSettingsIniInt("ShortcutKeys", modifiersName.c_str(), normalized.modifiers);
+    return true;
+}
+
+std::string UIWindowMgr::GetShortcutKeyBindingLabel(int slotIndex) const
+{
+    return ShortcutBindingLabel(GetShortcutKeyBinding(slotIndex));
+}
+
+bool UIWindowMgr::IsCapturingShortcutKeyBinding() const
+{
+    return m_optionWnd && m_optionWnd->m_show != 0 && m_optionWnd->IsCapturingShortcutKeyBinding();
 }
 
 UIWindowMgr::~UIWindowMgr() {
@@ -2301,6 +2412,12 @@ bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bo
 
     if (isAltDown && !hasFrontMenuUi) {
         switch (virtualKey) {
+        case 'O':
+            ToggleWindow(WID_OPTIONWND);
+            return true;
+        case 'C':
+            EnsureChatWindowVisible();
+            return true;
         case 'A':
             ToggleWindow(WID_STATUSWND);
             return true;
@@ -2324,11 +2441,21 @@ bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bo
     return false;
 }
 
-bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool hasFrontMenuUi)
+bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown, bool hasFrontMenuUi)
 {
-    if (!hasFrontMenuUi && virtualKey >= VK_F1 && virtualKey <= VK_F9) {
-        g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUse, virtualKey - VK_F1, 0, 0);
-        return true;
+    if (!hasFrontMenuUi) {
+        const unsigned char modifiers = static_cast<unsigned char>(
+            (isCtrlDown ? kShortcutKeyModifierControl : 0)
+            | (isShiftDown ? kShortcutKeyModifierShift : 0)
+            | (isAltDown ? kShortcutKeyModifierAlt : 0));
+        for (int slot = 0; slot < kShortcutKeyBindingCount; ++slot) {
+            const ShortcutKeyBinding& binding = m_shortcutKeyBindings[static_cast<size_t>(slot)];
+            if (binding.virtualKey != virtualKey || binding.modifiers != modifiers) {
+                continue;
+            }
+            g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUse, slot, 0, 0);
+            return true;
+        }
     }
 
     if (virtualKey == VK_ESCAPE && !hasFrontMenuUi) {
@@ -2366,7 +2493,9 @@ bool UIWindowMgr::HasBlockingUiForGameplayHotkeys() const
 
 bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown)
 {
-    (void)isShiftDown;
+    if (IsCapturingShortcutKeyBinding()) {
+        return m_optionWnd->CaptureShortcutKey(virtualKey, isAltDown, isCtrlDown, isShiftDown);
+    }
 
     const bool hasFrontMenuUi = HasFrontMenuUiVisible();
     if (HandleHotkeyBeforeFocusedUi(virtualKey, isAltDown, isCtrlDown, hasFrontMenuUi)) {
@@ -2385,7 +2514,7 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
         return false;
     }
 
-    return HandleHotkeyAfterFocusedUi(virtualKey, hasFrontMenuUi);
+    return HandleHotkeyAfterFocusedUi(virtualKey, isAltDown, isCtrlDown, isShiftDown, hasFrontMenuUi);
 }
 
 void UIWindowMgr::OnKeyDown(int virtualKey)
@@ -2393,6 +2522,12 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
     const bool hasFrontMenuUi = HasFrontMenuUiVisible();
     const bool isAltDown = (GetKeyState(VK_MENU) & 0x8000) != 0;
     const bool isCtrlDown = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+    const bool isShiftDown = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+
+    if (IsCapturingShortcutKeyBinding()) {
+        m_optionWnd->CaptureShortcutKey(virtualKey, isAltDown, isCtrlDown, isShiftDown);
+        return;
+    }
 
     if (HandleHotkeyBeforeFocusedUi(virtualKey, isAltDown, isCtrlDown, hasFrontMenuUi)) {
         return;
@@ -2495,7 +2630,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         return;
     }
 
-    if (HandleHotkeyAfterFocusedUi(virtualKey, hasFrontMenuUi)) {
+    if (HandleHotkeyAfterFocusedUi(virtualKey, isAltDown, isCtrlDown, isShiftDown, hasFrontMenuUi)) {
         return;
     }
 

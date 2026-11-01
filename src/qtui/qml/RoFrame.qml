@@ -19,8 +19,8 @@ Item {
 
     Rectangle {
         z: -2
-        x: 1
-        y: 5
+        x: 0
+        y: 3
         width: frame.width
         height: frame.height
         radius: frame.frameRadius
@@ -44,25 +44,13 @@ Item {
         }
     }
 
-    Item {
+    RoHeader {
         visible: frame.showTitle
         x: 1
         y: 1
         width: Math.max(0, frame.width - 2)
         height: Math.max(0, theme.titleHeight - 1)
-        clip: true
-
-        Rectangle {
-            width: parent.width
-            height: parent.height + theme.radius
-            radius: frame.frameRadius
-            antialiasing: true
-
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: frame.fade(theme.titleTop) }
-                GradientStop { position: 1.0; color: frame.fade(theme.titleBottom) }
-            }
-        }
+        chromeOpacity: frame.chromeOpacity
     }
 
     Rectangle {
@@ -75,13 +63,4 @@ Item {
         antialiasing: true
     }
 
-    Rectangle {
-        visible: frame.showTitle
-        x: 1
-        y: theme.titleHeight
-        z: 1
-        width: Math.max(0, frame.width - 2)
-        height: 1
-        color: frame.fade(theme.gold)
-    }
 }

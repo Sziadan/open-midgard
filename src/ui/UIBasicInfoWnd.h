@@ -60,6 +60,7 @@ public:
     bool GetDisplayDataForQt(DisplayData* outData) const;
     int GetQtSystemButtonCount() const;
     bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out) const;
+    bool GetHoveredItemForQt(shopui::ItemHoverInfo* info) const;
     int GetQtMenuButtonCount() const;
     bool GetQtMenuButtonDisplayForQt(int index, QtButtonDisplay* out) const;
 
@@ -107,6 +108,7 @@ private:
     shopui::BitmapPixels m_blueRight;
     unsigned long long m_lastDrawStateToken;
     bool m_hasDrawStateToken;
+    bool m_hoverIdentity = false;
     int m_hotButtonId;
     int m_armedButtonId;
     int m_pressedButtonId;

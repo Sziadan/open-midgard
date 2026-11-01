@@ -355,6 +355,7 @@ public:
     CMsgEffect();
     ~CMsgEffect() override;
 
+    void ProcessFalcon();
     u8 OnProcess() override;
     void OnActorDeleted(const CGameActor* actor) override;
     void SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
@@ -560,6 +561,7 @@ public:
     void SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3) override;
 
     u32 m_launchCnt = 0;
+    bool m_serverOwnedUnit = false;
     u32 m_SkillStartTime = 0;
     u32 m_aid = 0;
     C3dActor* m_3dactor = nullptr;
@@ -654,6 +656,7 @@ public:
     void Render(matrix* viewMatrix) override;
     int Get8Dir(float rot) override;
 
+    vector3d GetBillboardPosition() const;
     bool EnsureBillboardTexture();
     void InvalidateBillboard();
     void TriggerDropAnimation();

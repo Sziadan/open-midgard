@@ -176,9 +176,6 @@ constexpr float kLockedTargetArrowBouncePerMs = 0.0045f;
 constexpr float kLockedTargetArrowBouncePixels = 4.0f;
 constexpr u32 kHoverNameRequestCooldownMs = 1000;
 constexpr u32 kMovingOverlayRefreshMs = 200;
-constexpr int kEnemyCursorMagnetRadius = 36;
-constexpr int kEnemyCursorMagnetMaxStep = 5;
-constexpr int kEnemyCursorMagnetDeadzone = 4;
 constexpr size_t kNearbyBackgroundLogCount = 12;
 constexpr float kRefCloseCameraDistance = 150.0f;
 constexpr float kRefIndoorCameraDistance = 420.0f;
@@ -539,7 +536,6 @@ bool QueueHoverLabelsOverlayQuad(CGameMode& mode);
 bool QueueMsgEffectsOverlayQuad();
 bool QueuePlayerVitalsOverlayQuad(CGameMode& mode);
 bool IsMapLoadingActive(const CGameMode& mode);
-void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos);
 bool IsMonsterLikeHoverActor(const CGameActor* actor);
 bool IsWalkableAttrCell(const CGameMode& mode, int tileX, int tileY);
 bool IsAttackTargetWithinRange(CGameMode& mode, const CGameActor& target, int attackRange);
@@ -2218,67 +2214,6 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
     return true;
 }
 
-void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos)
-{
-    if (!cursorPos || !mode.m_world || !mode.m_view || !g_hMainWnd) {
-        return;
-    }
-    if (mode.m_isLeftButtonHeld || mode.m_canRotateView) {
-        return;
-    }
-    if (IsWorldHoverBlockedByUi(cursorPos->x, cursorPos->y)) {
-        return;
-    }
-
-    CGameActor* hoveredActor = nullptr;
-    if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
-        mode.m_view->GetCameraLongitude(),
-        cursorPos->x,
-        cursorPos->y,
-        &hoveredActor,
-        nullptr,
-        nullptr)
-        || !IsMonsterLikeHoverActor(hoveredActor)) {
-        return;
-    }
-
-    int centerX = 0;
-    int topY = 0;
-    int labelY = 0;
-    if (!mode.m_world->GetActorScreenMarker(mode.m_view->GetViewMatrix(),
-        mode.m_view->GetCameraLongitude(),
-        hoveredActor->m_gid,
-        &centerX,
-        &topY,
-        &labelY)) {
-        return;
-    }
-
-    const int targetY = (topY + labelY) / 2;
-    const int deltaX = centerX - cursorPos->x;
-    const int deltaY = targetY - cursorPos->y;
-    const int absX = (std::abs)(deltaX);
-    const int absY = (std::abs)(deltaY);
-    if (absX <= kEnemyCursorMagnetDeadzone && absY <= kEnemyCursorMagnetDeadzone) {
-        return;
-    }
-    if (absX > kEnemyCursorMagnetRadius || absY > kEnemyCursorMagnetRadius) {
-        return;
-    }
-
-    const int moveX = deltaX == 0 ? 0 : ((std::max)(1, (std::min)(kEnemyCursorMagnetMaxStep, absX / 3 + 1)) * (deltaX > 0 ? 1 : -1));
-    const int moveY = deltaY == 0 ? 0 : ((std::max)(1, (std::min)(kEnemyCursorMagnetMaxStep, absY / 3 + 1)) * (deltaY > 0 ? 1 : -1));
-    if (moveX == 0 && moveY == 0) {
-        return;
-    }
-
-    // Keep the magnet as a logical gameplay assist only. Moving the real OS
-    // cursor every frame causes heavy WM_MOUSEMOVE churn and tanks perf once
-    // moving targets start dragging the cursor around.
-    cursorPos->x += moveX;
-    cursorPos->y += moveY;
-}
-
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc)
 {
     if (!targetDc) {
@@ -3184,7 +3119,9 @@ void UpdateGameplayCursor(CGameMode& mode)
         mode.m_oldMouseY,
         &hoveredActor,
         nullptr,
-        nullptr);
+        nullptr,
+        mode.m_skillUseInfo.id != 0 && mode.m_skillUseInfo.level > 0
+            && ResolveShortcutSkillUseMode(static_cast<u16>(mode.m_skillUseInfo.id & 0xFFFF)) == ShortcutSkillUseMode::ActorTarget);
 
     if (mode.m_skillUseInfo.id != 0 && mode.m_skillUseInfo.level > 0) {
         const ShortcutSkillUseMode skillUseMode = ResolveShortcutSkillUseMode(
@@ -5814,7 +5751,8 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
             screenY,
             &hoveredActor,
             nullptr,
-            nullptr)
+            nullptr,
+            true)
             && hoveredActor
             && !IsNpcLikeHoverActor(hoveredActor)) {
             const bool isSelfTarget = hoveredActor == mode.m_world->m_player
@@ -5901,6 +5839,14 @@ bool RequestUseInventoryItem(u16 itemIndex)
     const ITEM_INFO* item = g_session.GetInventoryItemByIndex(itemIndex);
     if (!item || item->m_itemIndex == 0) {
         return false;
+    }
+
+    // Ref inventory/shortcut equipment commands both send CZ_REQ_WEAR_EQUIP.
+    // Ammo is stackable, but uses EQP_AMMO rather than a consumable-use packet.
+    if (item->m_location != 0 && (item->m_itemType == 4 || item->m_itemType == 5
+        || (item->m_itemType >= 8 && item->m_itemType <= 17))) {
+        if (item->m_wearLocation != 0) return true;
+        return RequestEquipInventoryItem(itemIndex, static_cast<u16>(item->m_location));
     }
 
     if (g_ttemmgr.IsCardItem(item->GetItemId())) {
@@ -6061,9 +6007,10 @@ bool RequestDropInventoryItem(u16 itemIndex, u16 amount)
     return sent;
 }
 
-bool RequestShortcutSlotUse(int visibleSlot)
+bool RequestShortcutSlotUse(int absoluteSlot)
 {
-    const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(visibleSlot);
+    // Every caller supplies the fixed bank/column index (0..26).
+    const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByAbsoluteIndex(absoluteSlot);
     if (!slot || slot->id == 0) {
         return false;
     }
@@ -6076,7 +6023,7 @@ bool RequestShortcutSlotUse(int visibleSlot)
 
         const bool sent = RequestUseInventoryItem(static_cast<u16>(item->m_itemIndex));
         DbgLog("[GameMode] shortcut item use slot=%d itemId=%u index=%u sent=%d\n",
-            visibleSlot,
+            absoluteSlot,
             static_cast<unsigned int>(slot->id),
             static_cast<unsigned int>(item->m_itemIndex),
             sent ? 1 : 0);
@@ -6084,9 +6031,9 @@ bool RequestShortcutSlotUse(int visibleSlot)
     }
 
     const PLAYER_SKILL_INFO* skill = g_session.GetSkillItemBySkillId(static_cast<int>(slot->id));
-    const u16 skillLevel = static_cast<u16>(skill && skill->level > 0
-        ? skill->level
-        : (slot->count > 0 ? slot->count : 1));
+    if (!skill || skill->level <= 0) return false;
+    const u16 skillLevel = static_cast<u16>(std::clamp(
+        slot->count > 0 ? static_cast<int>(slot->count) : skill->level, 1, skill->level));
     if (slot->id == 0 || skillLevel == 0) {
         return false;
     }
@@ -6098,7 +6045,7 @@ bool RequestShortcutSlotUse(int visibleSlot)
             skillLevel,
             ResolveShortcutSkillTargetId(nullptr));
         DbgLog("[GameMode] shortcut skill fallback slot=%d skillId=%u level=%u sent=%d\n",
-            visibleSlot,
+            absoluteSlot,
             static_cast<unsigned int>(slot->id),
             static_cast<unsigned int>(skillLevel),
             sent ? 1 : 0);
@@ -6116,7 +6063,7 @@ bool RequestShortcutSlotUse(int visibleSlot)
         ClearAttackChaseHint(*gameMode);
         const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, ResolveSelfSkillTargetId());
         DbgLog("[GameMode] shortcut self-skill use slot=%d skillId=%u level=%u sent=%d\n",
-            visibleSlot,
+            absoluteSlot,
             static_cast<unsigned int>(slot->id),
             static_cast<unsigned int>(skillLevel),
             sent ? 1 : 0);
@@ -6132,7 +6079,7 @@ bool RequestShortcutSlotUse(int visibleSlot)
         gameMode->m_skillUseInfo.id = static_cast<int>(skillId);
         gameMode->m_skillUseInfo.level = static_cast<int>(skillLevel);
         DbgLog("[GameMode] shortcut skill armed slot=%d skillId=%u level=%u useMode=%d\n",
-            visibleSlot,
+            absoluteSlot,
             static_cast<unsigned int>(slot->id),
             static_cast<unsigned int>(skillLevel),
             static_cast<int>(ResolveShortcutSkillUseMode(skillId)));
@@ -6239,6 +6186,12 @@ bool RequestNpcMenuSelection(u32 npcId, u8 choice)
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
+    if (sent && choice == 0xFF) {
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->m_isOnQuest = 0;
+            gameMode->m_lastNaid = 0;
+        }
+    }
     DbgLog("[GameMode] npc menu npc=%u choice=%u sent=%d\n",
         static_cast<unsigned int>(npcId),
         static_cast<unsigned int>(choice),
@@ -9860,6 +9813,22 @@ bool CGameMode::SendMakingArrowSelection(u16 itemId)
     return sent;
 }
 
+bool CGameMode::ResolveCursorDrawPosition(int rawX, int rawY, int* drawX, int* drawY) const
+{
+    if (!m_world || !m_view || m_mapLoadingStage != MapLoading_None
+        || m_canRotateView || m_isLeftButtonHeld || m_dragType != 0
+        || IsWorldHoverBlockedByUi(rawX, rawY)) return false;
+    const bool pendingSkill = m_skillUseInfo.id != 0 && m_skillUseInfo.level > 0;
+    if (pendingSkill) {
+        const auto useMode = ResolveShortcutSkillUseMode(static_cast<u16>(m_skillUseInfo.id & 0xFFFF));
+        if (useMode != ShortcutSkillUseMode::ActorTarget) return false;
+    }
+    // Ref ProcessMouseSnap changes the drawn cursor only. Never feed this
+    // coordinate back into physical mouse movement, ground aiming or UI input.
+    return m_world->ResolveCursorSnap(m_view->GetViewMatrix(), m_view->GetCameraLongitude(),
+        rawX, rawY, !pendingSkill, drawX, drawY);
+}
+
 CGameMode::CGameMode() 
     : m_areaLeft(0), m_areaRight(0), m_areaTop(0), m_areaBottom(0),
       m_world(nullptr), m_view(nullptr), m_mousePointer(nullptr),
@@ -10135,11 +10104,6 @@ int  CGameMode::OnRun() {
         if (trackMovePerfFrame) {
             g_overlayMovePerfStats.queueLockedTargetMs += QpcNowMs() - lockedTargetStartMs;
         }
-        const double msgStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
-        QueueMsgEffectsOverlayQuad();
-        if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.queueMsgMs += QpcNowMs() - msgStartMs;
-        }
         QueuePlayerVitalsOverlayQuad(*this);
         if (!IsQtUiRuntimeEnabled()) {
             QueueHoverLabelsOverlayQuad(*this);
@@ -10156,6 +10120,14 @@ int  CGameMode::OnRun() {
     // only after that work has finished. Render queues still put UI last.
     const DWORD renderPrepStart = GetTickCount();
     m_view->OnRender();
+    // World rendering produces healing/damage digits and Miss sprite draws.
+    // Flush them in this frame, after production and before DrawScene; the next
+    // OnRun deliberately clears leftover queues before rendering.
+    if (!hasLegacyDevice) {
+        const double msgStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
+        QueueMsgEffectsOverlayQuad();
+        if (trackMovePerfFrame) g_overlayMovePerfStats.queueMsgMs += QpcNowMs() - msgStartMs;
+    }
     const DWORD renderPrepEnd = GetTickCount();
     const DWORD drawSceneStart = GetTickCount();
     g_renderer.DrawScene();
@@ -10366,7 +10338,9 @@ void CGameMode::OnUpdate() {
 
     const DWORD bootstrapStart = GetTickCount();
     EnsureBootstrapWorldAssets(*this);
-    SyncBootstrapSelfActorWorldPos(*this);
+    // The session cell can be the destination of an unfinished walk. Initial
+    // placement belongs to AdvanceMapLoading; gameplay positions come from
+    // actor movement and authoritative position packets, including skill stops.
     SyncGroundItemsToWorld(*this);
     const DWORD bootstrapEnd = GetTickCount();
 
@@ -10433,10 +10407,14 @@ void CGameMode::OnUpdate() {
     bool refreshedHoverThisFrame = false;
     bool playerMovingForHover = false;
     bool needsPreciseHover = false;
+    m_hasCursorSnap = false;
     if (m_view && !m_canRotateView && g_hMainWnd) {
         POINT cursorPos{};
         if (GetCursorPos(&cursorPos) && ScreenToClient(g_hMainWnd, &cursorPos)) {
-            ApplyEnemyCursorMagnet(*this, &cursorPos);
+            m_cursorSnapRawX = cursorPos.x;
+            m_cursorSnapRawY = cursorPos.y;
+            m_hasCursorSnap = ResolveCursorDrawPosition(cursorPos.x, cursorPos.y,
+                &m_cursorSnapDrawX, &m_cursorSnapDrawY);
             const int prevMouseX = m_oldMouseX;
             const int prevMouseY = m_oldMouseY;
             const bool cursorMoved = cursorPos.x != prevMouseX || cursorPos.y != prevMouseY;

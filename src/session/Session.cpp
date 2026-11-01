@@ -1497,7 +1497,10 @@ void CSession::ClearInventoryItems()
 void CSession::ClearEquipmentInventoryItems()
 {
     for (auto it = m_inventoryItems.begin(); it != m_inventoryItems.end(); ) {
-        if (it->m_location != 0) {
+        // Ammo has an equipment destination, but arrives in the stackable
+        // list. Preserve it (and its equip ack) when replacing equipment.
+        const bool ammunition = it->m_itemType == 10 || it->m_itemType == 16 || it->m_itemType == 17;
+        if (it->m_location != 0 && !ammunition) {
             it = m_inventoryItems.erase(it);
         } else {
             ++it;

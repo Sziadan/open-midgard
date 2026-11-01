@@ -8,6 +8,10 @@ Item {
     property bool loginCaretVisible: true
     property real uiScale: Math.max(0.5, uiState.uiScale || 1.0)
 
+    function objectOrEmpty(value) {
+        return value || ({})
+    }
+
     function rgbaColor(red, green, blue, alpha) {
         return Qt.rgba(red / 255.0, green / 255.0, blue / 255.0, Math.max(0.0, Math.min(1.0, alpha)))
     }
@@ -207,12 +211,15 @@ Item {
         delegate: Item {
             required property var modelData
             property bool isPartyHpBar: modelData.kind === "partyHpBar"
+            property bool isUiTooltip: modelData.kind === "uiTooltip"
             property int bubblePaddingX: modelData.showBubble === false ? 0 : (modelData.paddingX || 12)
             property int bubblePaddingY: modelData.showBubble === false ? 0 : (modelData.paddingY || 8)
-            property int maxTextWidth: modelData.maxTextWidth || 0
-            property bool wrapText: modelData.wrap === true
+            property int maxTextWidth: isUiTooltip
+                ? Math.max(1, Math.min(modelData.maxTextWidth || root.width, root.width - bubblePaddingX - 16))
+                : (modelData.maxTextWidth || 0)
+            property bool wrapText: isUiTooltip || modelData.wrap === true
             property int textWidth: {
-                const measured = Math.max(1, Math.ceil(label.contentWidth || label.implicitWidth || 1))
+                const measured = Math.max(1, Math.ceil(isUiTooltip ? tooltipMetrics.advanceWidth : (label.contentWidth || label.implicitWidth || 1)))
                 return maxTextWidth > 0 ? Math.min(maxTextWidth, measured) : measured
             }
             property int anchorX: modelData.centerX !== undefined
@@ -227,42 +234,29 @@ Item {
             width: isPartyHpBar ? (modelData.width || 60) : (textWidth + bubblePaddingX)
             height: isPartyHpBar ? (modelData.height || 5) : (Math.max(1, Math.ceil(label.implicitHeight)) + bubblePaddingY)
 
-            Rectangle {
+            TextMetrics {
+                id: tooltipMetrics
+                text: modelData.text || ""
+                font: label.font
+            }
+
+            RoGauge {
                 visible: parent.isPartyHpBar
-                x: 0
-                y: 0
-                width: parent.width
-                height: parent.height
-                color: "#14199b"
-
-                Rectangle {
-                    x: 1
-                    y: 1
-                    width: parent.width - 2
-                    height: parent.height - 2
-                    color: "#1e243a"
-                }
-
-                Rectangle {
-                    x: 1
-                    y: 1
-                    width: {
-                        const maxHp = Math.max(1, modelData.maxHp || 0)
-                        const currentHp = Math.max(0, Math.min(modelData.currentHp || 0, maxHp))
-                        return Math.max(0, Math.floor((parent.width - 2) * currentHp / maxHp))
-                    }
-                    height: parent.height - 2
-                    color: (modelData.maxHp > 0 && (modelData.currentHp || 0) * 4 < (modelData.maxHp || 0)) ? "#ea1616" : "#16ea25"
-                }
+                anchors.fill: parent
+                radius: 2
+                value: modelData.currentHp || 0
+                maximum: modelData.maxHp || 0
+                fillColor: maximum > 0 && value * 4 < maximum ? theme.warning : theme.hp
+                showText: false
             }
 
             Rectangle {
                 anchors.fill: parent
                 radius: modelData.radius || 6
-                color: modelData.background
+                color: modelData.kind === "uiTooltip" ? theme.tooltipBackground : modelData.background
                 visible: !parent.isPartyHpBar && modelData.showBubble !== false
                 border.width: 1
-                border.color: modelData.borderColor || "#80ffffff"
+                border.color: modelData.borderColor || theme.tooltipBorder
             }
 
             Text {
@@ -307,7 +301,7 @@ Item {
                 ? (uiState.rechargeGaugeAmount || 0) / uiState.rechargeGaugeTotal : 0))
             height: parent.height - 2
             radius: 2
-            color: theme.gold
+            color: theme.focus
         }
     }
 
@@ -368,7 +362,7 @@ Item {
                 radius: theme.buttonRadius
                 color: theme.scrollTrack
                 border.width: 1
-                border.color: theme.gold
+                border.color: theme.focus
                 visible: uiState.loadingProgress > 0
 
                 Rectangle {
@@ -378,7 +372,7 @@ Item {
                     width: Math.max(0, (parent.width - 4) * uiState.loadingProgress)
                     height: parent.height - 4
                     radius: 3
-                    color: theme.gold
+                    color: theme.focus
                 }
             }
         }
@@ -446,12 +440,12 @@ Item {
                         ? theme.rowSelected
                         : (index === uiState.npcMenuHoverIndex ? theme.rowHover : "transparent")
                     border.width: (index === uiState.npcMenuSelectedIndex || index === uiState.npcMenuHoverIndex) ? 1 : 0
-                    border.color: theme.gold
+                    border.color: theme.focus
 
                     Rectangle {
                         width: index === uiState.npcMenuSelectedIndex ? 3 : 0
                         height: parent.height
-                        color: theme.gold
+                        color: theme.focus
                     }
 
                     Text {
@@ -593,7 +587,7 @@ Item {
                     ? theme.buttonPressed
                     : (index === uiState.chooseMenuSelectedIndex ? theme.rowSelected : theme.button)
                 border.width: 1
-                border.color: index === uiState.chooseMenuSelectedIndex ? theme.gold : theme.buttonBorder
+                border.color: index === uiState.chooseMenuSelectedIndex ? theme.focus : theme.buttonBorder
 
                 Text {
                     anchors.centerIn: parent
@@ -613,13 +607,13 @@ Item {
         height: uiState.itemShopHeight
         visible: uiState.itemShopVisible
         Text {
-            x: 6
-            y: 1
+            x: 12
+            y: 2
             text: uiState.itemShopData.title || uiState.itemShopTitle
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Rectangle {
@@ -688,7 +682,7 @@ Item {
                         Rectangle {
                             width: modelData.selected ? 3 : 0
                             height: parent.height
-                            color: theme.gold
+                            color: theme.focus
                         }
 
                         Image {
@@ -751,13 +745,13 @@ Item {
         height: uiState.itemPurchaseHeight
         visible: uiState.itemPurchaseVisible
         Text {
-            x: 6
-            y: 1
+            x: 12
+            y: 2
             text: uiState.itemPurchaseData.title || ""
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Rectangle {
@@ -824,7 +818,7 @@ Item {
                         Rectangle {
                             width: modelData.selected ? 3 : 0
                             height: parent.height
-                            color: theme.gold
+                            color: theme.focus
                         }
 
                         Text {
@@ -909,13 +903,13 @@ Item {
         height: uiState.itemSellHeight
         visible: uiState.itemSellVisible
         Text {
-            x: 6
-            y: 1
+            x: 12
+            y: 2
             text: uiState.itemSellData.title || ""
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Rectangle {
@@ -982,7 +976,7 @@ Item {
                         Rectangle {
                             width: modelData.selected ? 3 : 0
                             height: parent.height
-                            color: theme.gold
+                            color: theme.focus
                         }
 
                         Text {
@@ -1067,19 +1061,20 @@ Item {
         width: uiState.shortCutWidth
         height: uiState.shortCutHeight
         visible: uiState.shortCutVisible
+        clip: true
         Repeater {
             model: uiState.shortCutSlots
 
             delegate: Rectangle {
                 required property int index
                 required property var modelData
-                x: 5 + index * 29
-                y: 4
+                x: 5 + modelData.column * 29
+                y: 4 + modelData.row * 29
                 width: 24
                 height: 24
                 color: modelData.hover ? theme.rowHover : theme.fieldFill
                 border.width: 1
-                border.color: modelData.hover ? theme.gold : (modelData.isSkill ? theme.titleBottom : theme.buttonBorder)
+                border.color: modelData.hover ? theme.focus : (modelData.isSkill ? theme.titleBottom : theme.buttonBorder)
                 radius: theme.buttonRadius
 
                 Image {
@@ -1120,300 +1115,55 @@ Item {
             }
         }
 
-        Text {
-            x: width - 25
-            y: 16
-            width: 12
-            text: uiState.shortCutPage
-            color: "#ffffff"
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-            font.bold: true
-            style: Text.Outline
-            styleColor: "#000000"
-            horizontalAlignment: Text.AlignRight
+        Rectangle {
+            x: parent.width - 24
+            y: 5
+            width: 18
+            height: 18
+            radius: 3
+            visible: uiState.shortCutRows < 3
+            color: theme.button
+            border.width: 1
+            border.color: theme.buttonBorder
+            Text {
+                anchors.centerIn: parent
+                text: "+"
+                color: theme.ink
+                font.family: theme.fontFamily
+                font.pixelSize: 15
+                font.bold: true
+            }
+        }
+
+        Rectangle {
+            x: parent.width - 24
+            y: (uiState.shortCutRows - 1) * 29 + 5
+            width: 18
+            height: 18
+            radius: 3
+            visible: uiState.shortCutRows > 1
+            color: theme.button
+            border.width: 1
+            border.color: theme.buttonBorder
+            Text {
+                anchors.centerIn: parent
+                text: "−"
+                color: theme.ink
+                font.family: theme.fontFamily
+                font.pixelSize: 15
+                font.bold: true
+            }
         }
     }
 
-    RoFrame {
+    RoBasicInfo {
         x: uiState.basicInfoX
         y: uiState.basicInfoY
         width: uiState.basicInfoWidth
         height: uiState.basicInfoHeight
         visible: uiState.basicInfoVisible
-        Text {
-            x: uiState.basicInfoMini ? 9 : 17
-            y: 3
-            text: uiState.basicInfoMini ? (uiState.basicInfoData.name || "") : "Basic Info"
-            color: theme.titleText
-            font.family: theme.fontFamily
-            font.pixelSize: theme.titleSize
-            font.bold: true
-        }
-
-        Repeater {
-            model: uiState.basicInfoData.systemButtons || []
-
-            delegate: RoChromeButton {
-                required property var modelData
-                x: (modelData.x || 0) - uiState.basicInfoX
-                y: (modelData.y || 0) - uiState.basicInfoY
-                width: modelData.width || 0
-                height: modelData.height || 0
-                visible: modelData.visible || false
-                label: modelData.label || ""
-                hovered: modelData.hovered || false
-                pressed: modelData.pressed || false
-            }
-        }
-
-        Text {
-            x: 17
-            y: 18
-            visible: uiState.basicInfoMini
-            text: uiState.basicInfoData.miniHeaderText || ""
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-        }
-
-        Text {
-            x: 17
-            y: 33
-            visible: uiState.basicInfoMini
-            text: uiState.basicInfoData.miniStatusText || ""
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-        }
-
-        Text {
-            x: 8
-            y: 22
-            width: 76
-            visible: !uiState.basicInfoMini
-            text: uiState.basicInfoData.name || ""
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 13
-            font.bold: true
-            elide: Text.ElideRight
-        }
-
-        Text {
-            x: 8
-            y: 37
-            width: 76
-            visible: !uiState.basicInfoMini
-            text: uiState.basicInfoData.jobName || ""
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-            elide: Text.ElideRight
-        }
-
-        Rectangle {
-            x: 86
-            y: 20
-            width: 117
-            height: 16
-            visible: !uiState.basicInfoMini
-            radius: 3
-            clip: true
-            color: "#2e2924"
-            border.width: 1
-            border.color: "#6d6154"
-
-            Rectangle {
-                width: Math.max(0, parent.width * ((uiState.basicInfoData.maxHp || 0) > 0 ? (uiState.basicInfoData.hp || 0) / uiState.basicInfoData.maxHp : 0))
-                height: parent.height
-                color: ((uiState.basicInfoData.maxHp || 0) > 0 && (uiState.basicInfoData.hp || 0) * 100 < uiState.basicInfoData.maxHp * 25) ? "#c43434" : "#e15b55"
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 5
-                color: "#18ffffff"
-            }
-
-            Text {
-                x: 6
-                anchors.verticalCenter: parent.verticalCenter
-                text: "HP"
-                color: "#fff6ec"
-                font.family: theme.fontFamily
-                font.pixelSize: 10
-                font.bold: true
-                style: Text.Outline
-                styleColor: "#1a120e"
-            }
-
-            Text {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: 26
-                anchors.rightMargin: 6
-                anchors.verticalCenter: parent.verticalCenter
-                text: (uiState.basicInfoData.hp || 0) + " / " + (uiState.basicInfoData.maxHp || 0)
-                color: "#fff8f2"
-                font.family: theme.fontFamily
-                font.pixelSize: 11
-                font.bold: true
-                horizontalAlignment: Text.AlignRight
-                elide: Text.ElideLeft
-                style: Text.Outline
-                styleColor: "#1a120e"
-            }
-        }
-
-        Rectangle {
-            x: 86
-            y: 44
-            width: 117
-            height: 16
-            visible: !uiState.basicInfoMini
-            radius: 3
-            clip: true
-            color: "#2e2924"
-            border.width: 1
-            border.color: "#6d6154"
-
-            Rectangle {
-                width: Math.max(0, parent.width * ((uiState.basicInfoData.maxSp || 0) > 0 ? (uiState.basicInfoData.sp || 0) / uiState.basicInfoData.maxSp : 0))
-                height: parent.height
-                color: "#4d86e0"
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 5
-                color: "#18ffffff"
-            }
-
-            Text {
-                x: 6
-                anchors.verticalCenter: parent.verticalCenter
-                text: "SP"
-                color: "#f4f8ff"
-                font.family: theme.fontFamily
-                font.pixelSize: 10
-                font.bold: true
-                style: Text.Outline
-                styleColor: "#101820"
-            }
-
-            Text {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: 26
-                anchors.rightMargin: 6
-                anchors.verticalCenter: parent.verticalCenter
-                text: (uiState.basicInfoData.sp || 0) + " / " + (uiState.basicInfoData.maxSp || 0)
-                color: "#f7fbff"
-                font.family: theme.fontFamily
-                font.pixelSize: 11
-                font.bold: true
-                horizontalAlignment: Text.AlignRight
-                elide: Text.ElideLeft
-                style: Text.Outline
-                styleColor: "#101820"
-            }
-        }
-
-        Text {
-            x: 17
-            y: 72
-            visible: !uiState.basicInfoMini
-            text: uiState.basicInfoData.baseLevelText || ""
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-        }
-
-        Rectangle {
-            x: 84
-            y: 77
-            width: 102
-            height: 6
-            visible: !uiState.basicInfoMini
-            color: theme.fieldFill
-            border.width: 1
-            border.color: theme.buttonBorder
-
-            Rectangle {
-                x: 1
-                y: 1
-                width: Math.max(0, (parent.width - 2) * ((uiState.basicInfoData.expPercent || 0) / 100.0))
-                height: parent.height - 2
-                color: "#4fd17f"
-            }
-        }
-
-        Text {
-            x: 17
-            y: 84
-            visible: !uiState.basicInfoMini
-            text: uiState.basicInfoData.jobLevelText || ""
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-        }
-
-        Rectangle {
-            x: 84
-            y: 87
-            width: 102
-            height: 6
-            visible: !uiState.basicInfoMini
-            color: theme.fieldFill
-            border.width: 1
-            border.color: theme.buttonBorder
-
-            Rectangle {
-                x: 1
-                y: 1
-                width: Math.max(0, (parent.width - 2) * ((uiState.basicInfoData.jobExpPercent || 0) / 100.0))
-                height: parent.height - 2
-                color: "#6aa8ff"
-            }
-        }
-
-        Text {
-            x: 5
-            y: 103
-            visible: !uiState.basicInfoMini
-            text: uiState.basicInfoData.weightText || ""
-            color: ((uiState.basicInfoData.maxWeight || 0) > 0 && (uiState.basicInfoData.weight || 0) * 100 >= uiState.basicInfoData.maxWeight * 50) ? "#c44848" : theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-        }
-
-        Text {
-            x: 107
-            y: 103
-            visible: !uiState.basicInfoMini
-            text: uiState.basicInfoData.moneyText || ""
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-        }
-
-        Repeater {
-            model: uiState.basicInfoData.menuButtons || []
-
-            delegate: RoChromeButton {
-                required property var modelData
-                x: (modelData.x || 0) - uiState.basicInfoX
-                y: (modelData.y || 0) - uiState.basicInfoY
-                width: modelData.width || 0
-                height: modelData.height || 0
-                visible: modelData.visible || false
-                label: modelData.icon ? "" : (modelData.label || "")
-                icon: modelData.icon || ""
-                hovered: modelData.hovered || false
-                pressed: modelData.pressed || false
-            }
-        }
+        mini: uiState.basicInfoMini
+        info: uiState.basicInfoData
     }
 
     RoFrame {
@@ -1423,13 +1173,13 @@ Item {
         height: uiState.statusHeight
         visible: uiState.statusVisible
         Text {
-            x: 17
-            y: 3
+            x: 12
+            y: 2
             text: uiState.statusData.title || ""
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Repeater {
@@ -1465,36 +1215,19 @@ Item {
             border.width: 0
             visible: !uiState.statusMini
 
-            Rectangle {
-                x: 0
-                y: 0
-                width: 20
-                height: parent.height
-                color: theme.rowAlt
-            }
-
             Repeater {
                 model: uiState.statusData.pageTabs || []
 
-                delegate: Rectangle {
+                delegate: RoTabButton {
                     required property var modelData
                     x: (modelData.x || 0) - uiState.statusX
                     y: (modelData.y || 0) - uiState.statusY - 17
                     width: modelData.width || 0
                     height: modelData.height || 0
-                    color: modelData.active ? theme.button : theme.rowAlt
-                    border.width: 1
-                    border.color: modelData.active ? theme.gold : theme.buttonBorder
                     visible: modelData.visible || false
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: modelData.label || ""
-                        color: theme.ink
-                        font.family: theme.fontFamily
-                        font.pixelSize: 10
-                        font.bold: modelData.active || false
-                    }
+                    selected: modelData.active || false
+                    label: modelData.label || ""
+                    labelSize: 10
                 }
             }
 
@@ -1796,7 +1529,7 @@ Item {
             y: 40
             width: parent.width - 16
             height: 1
-            color: theme.gold
+            color: theme.focus
         }
 
         Row {
@@ -1809,23 +1542,13 @@ Item {
             Repeater {
                 model: parent.parent.chatUi.tabs || []
 
-                delegate: Rectangle {
+                delegate: RoTabButton {
                     required property var modelData
                     width: Math.max(68, Math.floor((parent.width - ((parent.spacing || 0) * Math.max(0, ((parent.parent.chatUi.tabs || []).length || 1) - 1))) / Math.max(1, ((parent.parent.chatUi.tabs || []).length || 1))))
                     height: 22
-                    radius: theme.buttonRadius
-                    color: modelData.active ? theme.button : theme.titleBottom
-                    border.width: 1
-                    border.color: modelData.active ? theme.gold : theme.buttonBorder
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: modelData.label
-                        color: modelData.active ? theme.ink : theme.titleText
-                        font.family: theme.fontFamily
-                        font.pixelSize: 12
-                        font.bold: true
-                    }
+                    selected: modelData.active
+                    label: modelData.label
+                    labelSize: 12
                 }
             }
         }
@@ -1836,7 +1559,7 @@ Item {
             width: 18
             height: 18
             pressed: parent.chatUi.configVisible || false
-            label: "\u2699"
+            icon: "option"
             labelSize: 12
             labelBold: false
             labelFont: "Segoe UI Symbol"
@@ -1850,7 +1573,7 @@ Item {
             radius: theme.buttonRadius
             color: "#14110e"
             border.width: 1
-            border.color: theme.gold
+            border.color: theme.focus
             clip: true
 
             readonly property int chatTextWidth: width - 10 - parent.scrollBarWidth - parent.scrollBarGap
@@ -1962,7 +1685,7 @@ Item {
             y: 42
             width: parent.width - 16
             height: 1
-            color: theme.gold
+            color: theme.focus
         }
 
         Text {
@@ -2110,7 +1833,7 @@ Item {
                 width: Math.max(8, parent.width * (((uiState.chatWindowUi.windowOpacityPercent || 84) - 20) / 80))
                 height: parent.height
                 radius: 4
-                color: theme.gold
+                color: theme.focus
             }
 
             Rectangle {
@@ -2121,7 +1844,7 @@ Item {
                 radius: 7
                 color: theme.button
                 border.width: 1
-                border.color: theme.gold
+                border.color: theme.focus
             }
         }
 
@@ -2169,7 +1892,7 @@ Item {
                 width: Math.max(8, parent.width * (((uiState.chatWindowUi.idleOpacityPercent || 45) - 20) / 80))
                 height: parent.height
                 radius: 4
-                color: theme.gold
+                color: theme.focus
             }
 
             Rectangle {
@@ -2180,7 +1903,7 @@ Item {
                 radius: 7
                 color: theme.button
                 border.width: 1
-                border.color: theme.gold
+                border.color: theme.focus
             }
         }
 
@@ -2304,14 +2027,14 @@ Item {
         }
 
         Text {
-            x: 18
+            x: 12
             y: 2
             width: Math.max(0, parent.width - 40)
             text: uiState.minimapData.title || ""
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
             elide: Text.ElideRight
         }
 
@@ -2415,13 +2138,13 @@ Item {
         height: uiState.inventoryHeight
         visible: uiState.inventoryVisible
         Text {
-            x: 17
-            y: 3
+            x: 12
+            y: 2
             text: uiState.inventoryData.title || "Inventory"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Repeater {
@@ -2457,7 +2180,7 @@ Item {
                     height: modelData.height || 0
                     color: modelData.active ? theme.button : theme.rowAlt
                     border.width: 1
-                    border.color: modelData.active ? theme.gold : theme.buttonBorder
+                    border.color: modelData.active ? theme.focus : theme.buttonBorder
                     visible: modelData.visible || false
 
                     Text {
@@ -2482,7 +2205,7 @@ Item {
                     height: modelData.height
                     color: modelData.hovered ? theme.rowHover : theme.fieldFill
                     border.width: 1
-                    border.color: modelData.hovered ? theme.gold : theme.buttonBorder
+                    border.color: modelData.hovered ? theme.focus : theme.buttonBorder
 
                     Image {
                         id: inventoryIcon
@@ -2563,13 +2286,13 @@ Item {
         height: uiState.storageHeight
         visible: uiState.storageVisible
         Text {
-            x: 17
-            y: 3
+            x: 12
+            y: 2
             text: uiState.storageData.title || "Kafra Storage"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Repeater {
@@ -2607,7 +2330,7 @@ Item {
                     height: modelData.height || 0
                     color: modelData.active ? theme.button : theme.rowAlt
                     border.width: 1
-                    border.color: modelData.active ? theme.gold : theme.buttonBorder
+                    border.color: modelData.active ? theme.focus : theme.buttonBorder
                     visible: modelData.visible || false
 
                     Text {
@@ -2663,7 +2386,7 @@ Item {
                     height: modelData.height
                     color: modelData.hovered ? theme.rowHover : theme.fieldFill
                     border.width: 1
-                    border.color: modelData.hovered ? theme.gold : theme.buttonBorder
+                    border.color: modelData.hovered ? theme.focus : theme.buttonBorder
 
                     Image {
                         id: storageIcon
@@ -2771,13 +2494,13 @@ Item {
         height: uiState.equipHeight
         visible: uiState.equipVisible
         Text {
-            x: 17
-            y: 3
+            x: 12
+            y: 2
             text: uiState.equipData.title || ""
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Repeater {
@@ -2785,6 +2508,8 @@ Item {
 
             delegate: RoChromeButton {
                 required property var modelData
+                // Keep release controls above the preview and equipment body.
+                z: 1
                 x: (modelData.x || 0) - uiState.equipX
                 y: (modelData.y || 0) - uiState.equipY
                 width: modelData.width || 0
@@ -2806,7 +2531,7 @@ Item {
                 x: 98
                 y: 15
                 width: Math.max(1, 182 - 98)
-                // Reserve the bottom strip for the Falcon release control.
+                // Reserve the bottom strip for falcon/cart/mount removal.
                 height: Math.max(1, parent.height - y - 49)
                 color: theme.rowAlt
                 border.width: 1
@@ -2846,7 +2571,7 @@ Item {
                         height: modelData.height
                         color: modelData.hovered ? theme.rowHover : (modelData.occupied ? theme.rowSelected : theme.fieldFill)
                         border.width: 1
-                        border.color: (modelData.hovered || modelData.occupied) ? theme.gold : theme.buttonBorder
+                        border.color: (modelData.hovered || modelData.occupied) ? theme.focus : theme.buttonBorder
 
                         Image {
                             id: equipIcon
@@ -2888,13 +2613,13 @@ Item {
         height: uiState.friendPartyHeight
         visible: uiState.friendPartyVisible
         Text {
-            x: 10
+            x: 12
             y: 2
             text: uiState.friendPartyData.title || "Friend / Party"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Repeater {
@@ -2932,7 +2657,7 @@ Item {
                     radius: 3
                     color: modelData.active ? theme.button : theme.rowAlt
                     border.width: 1
-                    border.color: modelData.active ? theme.gold : theme.buttonBorder
+                    border.color: modelData.active ? theme.focus : theme.buttonBorder
 
                     Text {
                         anchors.centerIn: parent
@@ -3131,13 +2856,13 @@ Item {
         height: uiState.partySetupHeight
         visible: uiState.partySetupVisible
         Text {
-            x: 10
+            x: 12
             y: 2
             text: uiState.partySetupData.title || "Party Setup"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Repeater {
@@ -3182,7 +2907,7 @@ Item {
             height: uiState.partySetupData.nameFieldHeight || 0
             color: (uiState.partySetupData.showNameEdit || false) ? theme.fieldFill : "transparent"
             border.width: (uiState.partySetupData.showNameEdit || false) ? 1 : 0
-            border.color: (uiState.partySetupData.nameFocused || false) ? theme.gold : theme.fieldBorder
+            border.color: (uiState.partySetupData.nameFocused || false) ? theme.focus : theme.fieldBorder
 
             Text {
                 x: (uiState.partySetupData.showNameEdit || false) ? 6 : 0
@@ -3297,13 +3022,13 @@ Item {
         }
 
         Text {
-            x: 10
+            x: 12
             y: 2
             text: uiState.partyInviteData.title || "Party Invitation"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Text {
@@ -3336,20 +3061,27 @@ Item {
         }
     }
 
+    RoSkillTree {
+        x: uiState.skillListX; y: uiState.skillListY
+        width: uiState.skillListWidth; height: uiState.skillListHeight
+        visible: uiState.skillListVisible && !!uiState.skillListData.treeMode
+        tree: uiState.skillListData
+    }
+
     RoFrame {
         x: uiState.skillListX
         y: uiState.skillListY
         width: uiState.skillListWidth
         height: uiState.skillListHeight
-        visible: uiState.skillListVisible
+        visible: uiState.skillListVisible && !uiState.skillListData.treeMode
         Text {
-            x: 17
-            y: 3
+            x: 12
+            y: 2
             text: uiState.skillListData.title || ""
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Repeater {
@@ -3391,13 +3123,13 @@ Item {
                     anchors.fill: parent
                     color: modelData.selected ? theme.rowSelected : (modelData.hovered ? theme.rowHover : "transparent")
                     border.width: 1
-                    border.color: modelData.selected ? theme.gold : (modelData.hovered ? theme.buttonBorder : "transparent")
+                    border.color: modelData.selected ? theme.focus : (modelData.hovered ? theme.buttonBorder : "transparent")
                 }
 
                 Rectangle {
                     width: modelData.selected ? 3 : 0
                     height: parent.height
-                    color: theme.gold
+                    color: theme.focus
                 }
 
                 Rectangle {
@@ -3491,7 +3223,7 @@ Item {
             x: 13
             y: parent.height - 18
             text: uiState.skillListData.skillPointText || ""
-            color: theme.gold
+            color: theme.focus
             font.family: theme.fontFamily
             font.pixelSize: 11
             font.bold: true
@@ -3522,23 +3254,23 @@ Item {
         visible: uiState.itemInfoVisible
         z: 40
         Text {
-            x: 8
-            y: 3
+            x: 12
+            y: 2
             text: uiState.itemInfoData.title || "Item Information"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         RoChromeButton {
-            x: (uiState.itemInfoData.closeButton.x || 0) - uiState.itemInfoX
-            y: (uiState.itemInfoData.closeButton.y || 0) - uiState.itemInfoY
-            width: uiState.itemInfoData.closeButton.width || 0
-            height: uiState.itemInfoData.closeButton.height || 0
-            pressed: uiState.itemInfoData.closeButton.pressed || false
-            hovered: uiState.itemInfoData.closeButton.hovered || false
-            label: uiState.itemInfoData.closeButton.label || "X"
+            x: (root.objectOrEmpty(uiState.itemInfoData.closeButton).x || 0) - uiState.itemInfoX
+            y: (root.objectOrEmpty(uiState.itemInfoData.closeButton).y || 0) - uiState.itemInfoY
+            width: root.objectOrEmpty(uiState.itemInfoData.closeButton).width || 0
+            height: root.objectOrEmpty(uiState.itemInfoData.closeButton).height || 0
+            pressed: root.objectOrEmpty(uiState.itemInfoData.closeButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.itemInfoData.closeButton).hovered || false
+            label: root.objectOrEmpty(uiState.itemInfoData.closeButton).label || "X"
         }
 
         Rectangle {
@@ -3564,12 +3296,12 @@ Item {
             RoChromeButton {
                 x: 4
                 y: 4
-                width: (uiState.itemInfoData.graphicsButton.width || 0)
-                height: (uiState.itemInfoData.graphicsButton.height || 0)
-                visible: uiState.itemInfoData.graphicsButton.visible || false
-                pressed: uiState.itemInfoData.graphicsButton.pressed || false
-                hovered: uiState.itemInfoData.graphicsButton.hovered || false
-                label: uiState.itemInfoData.graphicsButton.label || "View"
+                width: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).width || 0)
+                height: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).height || 0)
+                visible: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).visible || false
+                pressed: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).pressed || false
+                hovered: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).hovered || false
+                label: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).label || "View"
                 labelSize: 9
             }
         }
@@ -3635,7 +3367,7 @@ Item {
                     ? theme.rowAlt
                     : ((modelData.occupied || false) ? theme.rowSelected : theme.fieldFill)
                 border.width: 1
-                border.color: (modelData.occupied || false) ? theme.gold : theme.buttonBorder
+                border.color: (modelData.occupied || false) ? theme.focus : theme.buttonBorder
 
                 Image {
                     anchors.fill: parent
@@ -3658,7 +3390,7 @@ Item {
                     radius: theme.buttonRadius
                     color: theme.ink
                     border.width: 1
-                    border.color: theme.gold
+                    border.color: theme.focus
 
                     Text {
                         id: cardTooltipLabel
@@ -3681,23 +3413,23 @@ Item {
         visible: uiState.skillDescribeVisible
         z: 41
         Text {
-            x: 8
-            y: 3
+            x: 12
+            y: 2
             text: uiState.skillDescribeData.title || "Skill Information"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         RoChromeButton {
-            x: (uiState.skillDescribeData.closeButton.x || 0) - uiState.skillDescribeX
-            y: (uiState.skillDescribeData.closeButton.y || 0) - uiState.skillDescribeY
-            width: uiState.skillDescribeData.closeButton.width || 0
-            height: uiState.skillDescribeData.closeButton.height || 0
-            pressed: uiState.skillDescribeData.closeButton.pressed || false
-            hovered: uiState.skillDescribeData.closeButton.hovered || false
-            label: uiState.skillDescribeData.closeButton.label || "X"
+            x: (root.objectOrEmpty(uiState.skillDescribeData.closeButton).x || 0) - uiState.skillDescribeX
+            y: (root.objectOrEmpty(uiState.skillDescribeData.closeButton).y || 0) - uiState.skillDescribeY
+            width: root.objectOrEmpty(uiState.skillDescribeData.closeButton).width || 0
+            height: root.objectOrEmpty(uiState.skillDescribeData.closeButton).height || 0
+            pressed: root.objectOrEmpty(uiState.skillDescribeData.closeButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.skillDescribeData.closeButton).hovered || false
+            label: root.objectOrEmpty(uiState.skillDescribeData.closeButton).label || "X"
         }
 
         Rectangle {
@@ -3777,15 +3509,15 @@ Item {
         }
 
         RoScrollBar {
-            x: (uiState.skillDescribeData.descriptionScrollBar.trackX || 0) - uiState.skillDescribeX
-            y: (uiState.skillDescribeData.descriptionScrollBar.trackY || 0) - uiState.skillDescribeY
-            width: uiState.skillDescribeData.descriptionScrollBar.trackWidth || 0
-            height: uiState.skillDescribeData.descriptionScrollBar.trackHeight || 0
-            visible: uiState.skillDescribeData.descriptionScrollBar.visible || false
-            thumbX: (uiState.skillDescribeData.descriptionScrollBar.thumbX || 0) - (uiState.skillDescribeData.descriptionScrollBar.trackX || 0)
-            thumbY: (uiState.skillDescribeData.descriptionScrollBar.thumbY || 0) - (uiState.skillDescribeData.descriptionScrollBar.trackY || 0)
-            thumbWidth: uiState.skillDescribeData.descriptionScrollBar.thumbWidth || 0
-            thumbHeight: uiState.skillDescribeData.descriptionScrollBar.thumbHeight || 0
+            x: (root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).trackX || 0) - uiState.skillDescribeX
+            y: (root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).trackY || 0) - uiState.skillDescribeY
+            width: root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).trackWidth || 0
+            height: root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).trackHeight || 0
+            visible: root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).visible || false
+            thumbX: (root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).thumbX || 0) - (root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).trackX || 0)
+            thumbY: (root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).thumbY || 0) - (root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).trackY || 0)
+            thumbWidth: root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).thumbWidth || 0
+            thumbHeight: root.objectOrEmpty(uiState.skillDescribeData.descriptionScrollBar).thumbHeight || 0
         }
     }
 
@@ -3797,23 +3529,23 @@ Item {
         visible: uiState.itemCollectionVisible
         z: 42
         Text {
-            x: 8
-            y: 3
+            x: 12
+            y: 2
             text: uiState.itemCollectionData.title || "Card illustration"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         RoChromeButton {
-            x: (uiState.itemCollectionData.closeButton.x || 0) - uiState.itemCollectionX
-            y: (uiState.itemCollectionData.closeButton.y || 0) - uiState.itemCollectionY
-            width: uiState.itemCollectionData.closeButton.width || 0
-            height: uiState.itemCollectionData.closeButton.height || 0
-            pressed: uiState.itemCollectionData.closeButton.pressed || false
-            hovered: uiState.itemCollectionData.closeButton.hovered || false
-            label: uiState.itemCollectionData.closeButton.label || "X"
+            x: (root.objectOrEmpty(uiState.itemCollectionData.closeButton).x || 0) - uiState.itemCollectionX
+            y: (root.objectOrEmpty(uiState.itemCollectionData.closeButton).y || 0) - uiState.itemCollectionY
+            width: root.objectOrEmpty(uiState.itemCollectionData.closeButton).width || 0
+            height: root.objectOrEmpty(uiState.itemCollectionData.closeButton).height || 0
+            pressed: root.objectOrEmpty(uiState.itemCollectionData.closeButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.itemCollectionData.closeButton).hovered || false
+            label: root.objectOrEmpty(uiState.itemCollectionData.closeButton).label || "X"
         }
 
         Rectangle {
@@ -3848,23 +3580,23 @@ Item {
         visible: uiState.itemIdentifyVisible
         z: 43
         Text {
-            x: 8
-            y: 3
+            x: 12
+            y: 2
             text: uiState.itemIdentifyData.title || "Identify Item"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         RoChromeButton {
-            x: (uiState.itemIdentifyData.closeButton.x || 0) - uiState.itemIdentifyX
-            y: (uiState.itemIdentifyData.closeButton.y || 0) - uiState.itemIdentifyY
-            width: uiState.itemIdentifyData.closeButton.width || 0
-            height: uiState.itemIdentifyData.closeButton.height || 0
-            pressed: uiState.itemIdentifyData.closeButton.pressed || false
-            hovered: uiState.itemIdentifyData.closeButton.hovered || false
-            label: uiState.itemIdentifyData.closeButton.label || "X"
+            x: (root.objectOrEmpty(uiState.itemIdentifyData.closeButton).x || 0) - uiState.itemIdentifyX
+            y: (root.objectOrEmpty(uiState.itemIdentifyData.closeButton).y || 0) - uiState.itemIdentifyY
+            width: root.objectOrEmpty(uiState.itemIdentifyData.closeButton).width || 0
+            height: root.objectOrEmpty(uiState.itemIdentifyData.closeButton).height || 0
+            pressed: root.objectOrEmpty(uiState.itemIdentifyData.closeButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.itemIdentifyData.closeButton).hovered || false
+            label: root.objectOrEmpty(uiState.itemIdentifyData.closeButton).label || "X"
         }
 
         Rectangle {
@@ -3898,7 +3630,7 @@ Item {
                     height: modelData.height || 0
                     color: (modelData.selected || false) ? theme.rowSelected : ((modelData.hovered || false) ? theme.rowHover : theme.fieldFill)
                     border.width: 1
-                    border.color: (modelData.selected || false) ? theme.gold : theme.buttonBorder
+                    border.color: (modelData.selected || false) ? theme.focus : theme.buttonBorder
 
                     Rectangle {
                         x: 4
@@ -3946,37 +3678,37 @@ Item {
         }
 
         RoScrollBar {
-            x: (uiState.itemIdentifyData.scrollBar.trackX || 0) - uiState.itemIdentifyX
-            y: (uiState.itemIdentifyData.scrollBar.trackY || 0) - uiState.itemIdentifyY
-            width: uiState.itemIdentifyData.scrollBar.trackWidth || 0
-            height: uiState.itemIdentifyData.scrollBar.trackHeight || 0
-            visible: uiState.itemIdentifyData.scrollBar.visible || false
-            thumbX: (uiState.itemIdentifyData.scrollBar.thumbX || 0) - (uiState.itemIdentifyData.scrollBar.trackX || 0)
-            thumbY: (uiState.itemIdentifyData.scrollBar.thumbY || 0) - (uiState.itemIdentifyData.scrollBar.trackY || 0)
-            thumbWidth: uiState.itemIdentifyData.scrollBar.thumbWidth || 0
-            thumbHeight: uiState.itemIdentifyData.scrollBar.thumbHeight || 0
+            x: (root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).trackX || 0) - uiState.itemIdentifyX
+            y: (root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).trackY || 0) - uiState.itemIdentifyY
+            width: root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).trackWidth || 0
+            height: root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).trackHeight || 0
+            visible: root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).visible || false
+            thumbX: (root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).thumbX || 0) - (root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).trackX || 0)
+            thumbY: (root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).thumbY || 0) - (root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).trackY || 0)
+            thumbWidth: root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).thumbWidth || 0
+            thumbHeight: root.objectOrEmpty(uiState.itemIdentifyData.scrollBar).thumbHeight || 0
         }
 
         RoChromeButton {
-            x: (uiState.itemIdentifyData.okButton.x || 0) - uiState.itemIdentifyX
-            y: (uiState.itemIdentifyData.okButton.y || 0) - uiState.itemIdentifyY
-            width: uiState.itemIdentifyData.okButton.width || 0
-            height: uiState.itemIdentifyData.okButton.height || 0
-            enabled: uiState.itemIdentifyData.okButton.enabled || false
-            pressed: uiState.itemIdentifyData.okButton.pressed || false
-            hovered: uiState.itemIdentifyData.okButton.hovered || false
-            label: uiState.itemIdentifyData.okButton.label || "OK"
+            x: (root.objectOrEmpty(uiState.itemIdentifyData.okButton).x || 0) - uiState.itemIdentifyX
+            y: (root.objectOrEmpty(uiState.itemIdentifyData.okButton).y || 0) - uiState.itemIdentifyY
+            width: root.objectOrEmpty(uiState.itemIdentifyData.okButton).width || 0
+            height: root.objectOrEmpty(uiState.itemIdentifyData.okButton).height || 0
+            enabled: root.objectOrEmpty(uiState.itemIdentifyData.okButton).enabled || false
+            pressed: root.objectOrEmpty(uiState.itemIdentifyData.okButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.itemIdentifyData.okButton).hovered || false
+            label: root.objectOrEmpty(uiState.itemIdentifyData.okButton).label || "OK"
             labelSize: 10
         }
 
         RoChromeButton {
-            x: (uiState.itemIdentifyData.cancelButton.x || 0) - uiState.itemIdentifyX
-            y: (uiState.itemIdentifyData.cancelButton.y || 0) - uiState.itemIdentifyY
-            width: uiState.itemIdentifyData.cancelButton.width || 0
-            height: uiState.itemIdentifyData.cancelButton.height || 0
-            pressed: uiState.itemIdentifyData.cancelButton.pressed || false
-            hovered: uiState.itemIdentifyData.cancelButton.hovered || false
-            label: uiState.itemIdentifyData.cancelButton.label || "Cancel"
+            x: (root.objectOrEmpty(uiState.itemIdentifyData.cancelButton).x || 0) - uiState.itemIdentifyX
+            y: (root.objectOrEmpty(uiState.itemIdentifyData.cancelButton).y || 0) - uiState.itemIdentifyY
+            width: root.objectOrEmpty(uiState.itemIdentifyData.cancelButton).width || 0
+            height: root.objectOrEmpty(uiState.itemIdentifyData.cancelButton).height || 0
+            pressed: root.objectOrEmpty(uiState.itemIdentifyData.cancelButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.itemIdentifyData.cancelButton).hovered || false
+            label: root.objectOrEmpty(uiState.itemIdentifyData.cancelButton).label || "Cancel"
             labelSize: 10
         }
     }
@@ -3989,23 +3721,23 @@ Item {
         visible: uiState.skillSelectVisible
         z: 44
         Text {
-            x: 8
-            y: 3
+            x: 12
+            y: 2
             text: uiState.skillSelectData.title || "Select"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         RoChromeButton {
-            x: (uiState.skillSelectData.closeButton.x || 0) - uiState.skillSelectX
-            y: (uiState.skillSelectData.closeButton.y || 0) - uiState.skillSelectY
-            width: uiState.skillSelectData.closeButton.width || 0
-            height: uiState.skillSelectData.closeButton.height || 0
-            pressed: uiState.skillSelectData.closeButton.pressed || false
-            hovered: uiState.skillSelectData.closeButton.hovered || false
-            label: uiState.skillSelectData.closeButton.label || "X"
+            x: (root.objectOrEmpty(uiState.skillSelectData.closeButton).x || 0) - uiState.skillSelectX
+            y: (root.objectOrEmpty(uiState.skillSelectData.closeButton).y || 0) - uiState.skillSelectY
+            width: root.objectOrEmpty(uiState.skillSelectData.closeButton).width || 0
+            height: root.objectOrEmpty(uiState.skillSelectData.closeButton).height || 0
+            pressed: root.objectOrEmpty(uiState.skillSelectData.closeButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.skillSelectData.closeButton).hovered || false
+            label: root.objectOrEmpty(uiState.skillSelectData.closeButton).label || "X"
         }
 
         Rectangle {
@@ -4039,7 +3771,7 @@ Item {
                     height: modelData.height || 0
                     color: (modelData.selected || false) ? theme.rowSelected : ((modelData.hovered || false) ? theme.rowHover : theme.fieldFill)
                     border.width: 1
-                    border.color: (modelData.selected || false) ? theme.gold : theme.buttonBorder
+                    border.color: (modelData.selected || false) ? theme.focus : theme.buttonBorder
 
                     Rectangle {
                         x: 4
@@ -4088,37 +3820,37 @@ Item {
         }
 
         RoScrollBar {
-            x: (uiState.skillSelectData.scrollBar.trackX || 0) - uiState.skillSelectX
-            y: (uiState.skillSelectData.scrollBar.trackY || 0) - uiState.skillSelectY
-            width: uiState.skillSelectData.scrollBar.trackWidth || 0
-            height: uiState.skillSelectData.scrollBar.trackHeight || 0
-            visible: uiState.skillSelectData.scrollBar.visible || false
-            thumbX: (uiState.skillSelectData.scrollBar.thumbX || 0) - (uiState.skillSelectData.scrollBar.trackX || 0)
-            thumbY: (uiState.skillSelectData.scrollBar.thumbY || 0) - (uiState.skillSelectData.scrollBar.trackY || 0)
-            thumbWidth: uiState.skillSelectData.scrollBar.thumbWidth || 0
-            thumbHeight: uiState.skillSelectData.scrollBar.thumbHeight || 0
+            x: (root.objectOrEmpty(uiState.skillSelectData.scrollBar).trackX || 0) - uiState.skillSelectX
+            y: (root.objectOrEmpty(uiState.skillSelectData.scrollBar).trackY || 0) - uiState.skillSelectY
+            width: root.objectOrEmpty(uiState.skillSelectData.scrollBar).trackWidth || 0
+            height: root.objectOrEmpty(uiState.skillSelectData.scrollBar).trackHeight || 0
+            visible: root.objectOrEmpty(uiState.skillSelectData.scrollBar).visible || false
+            thumbX: (root.objectOrEmpty(uiState.skillSelectData.scrollBar).thumbX || 0) - (root.objectOrEmpty(uiState.skillSelectData.scrollBar).trackX || 0)
+            thumbY: (root.objectOrEmpty(uiState.skillSelectData.scrollBar).thumbY || 0) - (root.objectOrEmpty(uiState.skillSelectData.scrollBar).trackY || 0)
+            thumbWidth: root.objectOrEmpty(uiState.skillSelectData.scrollBar).thumbWidth || 0
+            thumbHeight: root.objectOrEmpty(uiState.skillSelectData.scrollBar).thumbHeight || 0
         }
 
         RoChromeButton {
-            x: (uiState.skillSelectData.okButton.x || 0) - uiState.skillSelectX
-            y: (uiState.skillSelectData.okButton.y || 0) - uiState.skillSelectY
-            width: uiState.skillSelectData.okButton.width || 0
-            height: uiState.skillSelectData.okButton.height || 0
-            enabled: uiState.skillSelectData.okButton.enabled || false
-            pressed: uiState.skillSelectData.okButton.pressed || false
-            hovered: uiState.skillSelectData.okButton.hovered || false
-            label: uiState.skillSelectData.okButton.label || "OK"
+            x: (root.objectOrEmpty(uiState.skillSelectData.okButton).x || 0) - uiState.skillSelectX
+            y: (root.objectOrEmpty(uiState.skillSelectData.okButton).y || 0) - uiState.skillSelectY
+            width: root.objectOrEmpty(uiState.skillSelectData.okButton).width || 0
+            height: root.objectOrEmpty(uiState.skillSelectData.okButton).height || 0
+            enabled: root.objectOrEmpty(uiState.skillSelectData.okButton).enabled || false
+            pressed: root.objectOrEmpty(uiState.skillSelectData.okButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.skillSelectData.okButton).hovered || false
+            label: root.objectOrEmpty(uiState.skillSelectData.okButton).label || "OK"
             labelSize: 10
         }
 
         RoChromeButton {
-            x: (uiState.skillSelectData.cancelButton.x || 0) - uiState.skillSelectX
-            y: (uiState.skillSelectData.cancelButton.y || 0) - uiState.skillSelectY
-            width: uiState.skillSelectData.cancelButton.width || 0
-            height: uiState.skillSelectData.cancelButton.height || 0
-            pressed: uiState.skillSelectData.cancelButton.pressed || false
-            hovered: uiState.skillSelectData.cancelButton.hovered || false
-            label: uiState.skillSelectData.cancelButton.label || "Cancel"
+            x: (root.objectOrEmpty(uiState.skillSelectData.cancelButton).x || 0) - uiState.skillSelectX
+            y: (root.objectOrEmpty(uiState.skillSelectData.cancelButton).y || 0) - uiState.skillSelectY
+            width: root.objectOrEmpty(uiState.skillSelectData.cancelButton).width || 0
+            height: root.objectOrEmpty(uiState.skillSelectData.cancelButton).height || 0
+            pressed: root.objectOrEmpty(uiState.skillSelectData.cancelButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.skillSelectData.cancelButton).hovered || false
+            label: root.objectOrEmpty(uiState.skillSelectData.cancelButton).label || "Cancel"
             labelSize: 10
         }
     }
@@ -4131,23 +3863,23 @@ Item {
         visible: uiState.itemCompositionVisible
         z: 43
         Text {
-            x: 8
-            y: 3
+            x: 12
+            y: 2
             text: uiState.itemCompositionData.title || "Compound Item"
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         RoChromeButton {
-            x: (uiState.itemCompositionData.closeButton.x || 0) - uiState.itemCompositionX
-            y: (uiState.itemCompositionData.closeButton.y || 0) - uiState.itemCompositionY
-            width: uiState.itemCompositionData.closeButton.width || 0
-            height: uiState.itemCompositionData.closeButton.height || 0
-            pressed: uiState.itemCompositionData.closeButton.pressed || false
-            hovered: uiState.itemCompositionData.closeButton.hovered || false
-            label: uiState.itemCompositionData.closeButton.label || "X"
+            x: (root.objectOrEmpty(uiState.itemCompositionData.closeButton).x || 0) - uiState.itemCompositionX
+            y: (root.objectOrEmpty(uiState.itemCompositionData.closeButton).y || 0) - uiState.itemCompositionY
+            width: root.objectOrEmpty(uiState.itemCompositionData.closeButton).width || 0
+            height: root.objectOrEmpty(uiState.itemCompositionData.closeButton).height || 0
+            pressed: root.objectOrEmpty(uiState.itemCompositionData.closeButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.itemCompositionData.closeButton).hovered || false
+            label: root.objectOrEmpty(uiState.itemCompositionData.closeButton).label || "X"
         }
 
         Rectangle {
@@ -4181,7 +3913,7 @@ Item {
                     height: modelData.height || 0
                     color: (modelData.selected || false) ? theme.rowSelected : ((modelData.hovered || false) ? theme.rowHover : theme.fieldFill)
                     border.width: 1
-                    border.color: (modelData.selected || false) ? theme.gold : theme.buttonBorder
+                    border.color: (modelData.selected || false) ? theme.focus : theme.buttonBorder
 
                     Rectangle {
                         x: 4
@@ -4229,37 +3961,37 @@ Item {
         }
 
         RoScrollBar {
-            x: (uiState.itemCompositionData.scrollBar.trackX || 0) - uiState.itemCompositionX
-            y: (uiState.itemCompositionData.scrollBar.trackY || 0) - uiState.itemCompositionY
-            width: uiState.itemCompositionData.scrollBar.trackWidth || 0
-            height: uiState.itemCompositionData.scrollBar.trackHeight || 0
-            visible: uiState.itemCompositionData.scrollBar.visible || false
-            thumbX: (uiState.itemCompositionData.scrollBar.thumbX || 0) - (uiState.itemCompositionData.scrollBar.trackX || 0)
-            thumbY: (uiState.itemCompositionData.scrollBar.thumbY || 0) - (uiState.itemCompositionData.scrollBar.trackY || 0)
-            thumbWidth: uiState.itemCompositionData.scrollBar.thumbWidth || 0
-            thumbHeight: uiState.itemCompositionData.scrollBar.thumbHeight || 0
+            x: (root.objectOrEmpty(uiState.itemCompositionData.scrollBar).trackX || 0) - uiState.itemCompositionX
+            y: (root.objectOrEmpty(uiState.itemCompositionData.scrollBar).trackY || 0) - uiState.itemCompositionY
+            width: root.objectOrEmpty(uiState.itemCompositionData.scrollBar).trackWidth || 0
+            height: root.objectOrEmpty(uiState.itemCompositionData.scrollBar).trackHeight || 0
+            visible: root.objectOrEmpty(uiState.itemCompositionData.scrollBar).visible || false
+            thumbX: (root.objectOrEmpty(uiState.itemCompositionData.scrollBar).thumbX || 0) - (root.objectOrEmpty(uiState.itemCompositionData.scrollBar).trackX || 0)
+            thumbY: (root.objectOrEmpty(uiState.itemCompositionData.scrollBar).thumbY || 0) - (root.objectOrEmpty(uiState.itemCompositionData.scrollBar).trackY || 0)
+            thumbWidth: root.objectOrEmpty(uiState.itemCompositionData.scrollBar).thumbWidth || 0
+            thumbHeight: root.objectOrEmpty(uiState.itemCompositionData.scrollBar).thumbHeight || 0
         }
 
         RoChromeButton {
-            x: (uiState.itemCompositionData.okButton.x || 0) - uiState.itemCompositionX
-            y: (uiState.itemCompositionData.okButton.y || 0) - uiState.itemCompositionY
-            width: uiState.itemCompositionData.okButton.width || 0
-            height: uiState.itemCompositionData.okButton.height || 0
-            enabled: uiState.itemCompositionData.okButton.enabled || false
-            pressed: uiState.itemCompositionData.okButton.pressed || false
-            hovered: uiState.itemCompositionData.okButton.hovered || false
-            label: uiState.itemCompositionData.okButton.label || "OK"
+            x: (root.objectOrEmpty(uiState.itemCompositionData.okButton).x || 0) - uiState.itemCompositionX
+            y: (root.objectOrEmpty(uiState.itemCompositionData.okButton).y || 0) - uiState.itemCompositionY
+            width: root.objectOrEmpty(uiState.itemCompositionData.okButton).width || 0
+            height: root.objectOrEmpty(uiState.itemCompositionData.okButton).height || 0
+            enabled: root.objectOrEmpty(uiState.itemCompositionData.okButton).enabled || false
+            pressed: root.objectOrEmpty(uiState.itemCompositionData.okButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.itemCompositionData.okButton).hovered || false
+            label: root.objectOrEmpty(uiState.itemCompositionData.okButton).label || "OK"
             labelSize: 10
         }
 
         RoChromeButton {
-            x: (uiState.itemCompositionData.cancelButton.x || 0) - uiState.itemCompositionX
-            y: (uiState.itemCompositionData.cancelButton.y || 0) - uiState.itemCompositionY
-            width: uiState.itemCompositionData.cancelButton.width || 0
-            height: uiState.itemCompositionData.cancelButton.height || 0
-            pressed: uiState.itemCompositionData.cancelButton.pressed || false
-            hovered: uiState.itemCompositionData.cancelButton.hovered || false
-            label: uiState.itemCompositionData.cancelButton.label || "Cancel"
+            x: (root.objectOrEmpty(uiState.itemCompositionData.cancelButton).x || 0) - uiState.itemCompositionX
+            y: (root.objectOrEmpty(uiState.itemCompositionData.cancelButton).y || 0) - uiState.itemCompositionY
+            width: root.objectOrEmpty(uiState.itemCompositionData.cancelButton).width || 0
+            height: root.objectOrEmpty(uiState.itemCompositionData.cancelButton).height || 0
+            pressed: root.objectOrEmpty(uiState.itemCompositionData.cancelButton).pressed || false
+            hovered: root.objectOrEmpty(uiState.itemCompositionData.cancelButton).hovered || false
+            label: root.objectOrEmpty(uiState.itemCompositionData.cancelButton).label || "Cancel"
             labelSize: 10
         }
     }
@@ -4271,13 +4003,13 @@ Item {
         height: uiState.optionHeight
         visible: uiState.optionVisible
         Text {
-            x: 17
+            x: 12
             y: 2
             text: uiState.optionData.title || ""
             color: theme.titleText
             font.family: theme.fontFamily
             font.pixelSize: theme.titleSize
-            font.bold: true
+            font.weight: Font.DemiBold
         }
 
         Repeater {
@@ -4309,25 +4041,15 @@ Item {
         Repeater {
             model: uiState.optionData.tabs || []
 
-            delegate: Rectangle {
+            delegate: RoTabButton {
                 required property var modelData
                 x: modelData.x - uiState.optionX
                 y: modelData.y - uiState.optionY
                 width: modelData.width
                 height: modelData.height
-                radius: theme.buttonRadius
                 visible: !(uiState.optionData.collapsed || false)
-                color: modelData.active ? theme.button : theme.rowAlt
-                border.width: 1
-                border.color: modelData.active ? theme.gold : theme.buttonBorder
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label
-                    color: theme.ink
-                    font.family: theme.fontFamily
-                    font.pixelSize: 11
-                }
+                selected: modelData.active
+                label: modelData.label
             }
         }
 
@@ -4417,7 +4139,7 @@ Item {
                     radius: 4
                     color: theme.button
                     border.width: 1
-                    border.color: theme.gold
+                    border.color: theme.focus
                 }
 
                 Text {
@@ -4485,6 +4207,110 @@ Item {
                     label: modelData.nextLabel || ""
                     labelSize: 10
                     labelBold: true
+                }
+            }
+        }
+
+        Item {
+            id: keybindingPanel
+            x: (uiState.optionData.contentX || 0) - uiState.optionX
+            y: (uiState.optionData.contentY || 0) - uiState.optionY
+            width: uiState.optionData.contentWidth || 0
+            height: uiState.optionData.contentHeight || 0
+            visible: !(uiState.optionData.collapsed || false) && uiState.optionData.activeTab === 3
+
+            Text {
+                x: 12; y: 10
+                text: "Shortcut keys"
+                color: theme.ink
+                font.family: theme.fontFamily
+                font.pixelSize: 15
+                font.bold: true
+            }
+            Text {
+                x: 12; y: 29
+                text: "Choose a bar, then select a key to change."
+                color: theme.muted
+                font.family: theme.fontFamily
+                font.pixelSize: 10
+            }
+            Rectangle {
+                x: 12; y: 45
+                width: parent.width - 24; height: 32
+                radius: 6
+                color: theme.rowAlt
+            }
+            Repeater {
+                model: 3
+                delegate: Rectangle {
+                    required property int index
+                    x: 12 + index * Math.floor((keybindingPanel.width - 24) / 3)
+                    y: 45
+                    width: Math.floor((keybindingPanel.width - 24) / 3)
+                    height: 32
+                    radius: 6
+                    color: uiState.optionData.keybindingBar === index ? theme.titleBottom : "transparent"
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Bar " + (index + 1)
+                        color: uiState.optionData.keybindingBar === index ? theme.titleText : theme.muted
+                        font.family: theme.fontFamily
+                        font.pixelSize: 11
+                        font.bold: true
+                    }
+                }
+            }
+            Text {
+                x: 12; y: 263
+                width: parent.width - 24
+                text: "Changes save automatically.\nPress Esc to cancel an assignment."
+                color: theme.muted
+                font.family: theme.fontFamily
+                font.pixelSize: 10
+                lineHeight: 1.3
+            }
+        }
+
+        Repeater {
+            model: uiState.optionData.keybindings || []
+
+            delegate: Item {
+                required property var modelData
+                x: modelData.x - uiState.optionX
+                y: modelData.y - uiState.optionY
+                width: modelData.width
+                height: modelData.height
+                visible: !(uiState.optionData.collapsed || false) && uiState.optionData.activeTab === 3
+
+                Text {
+                    z: 1
+                    x: 9; y: 6
+                    text: "SLOT " + (modelData.column + 1)
+                    color: theme.ink
+                    font.family: theme.fontFamily
+                    font.pixelSize: 8
+                    opacity: 0.55
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 6
+                    color: modelData.capturing ? theme.rowSelected : theme.fieldFill
+                    border.width: 1
+                    border.color: modelData.capturing ? theme.focus : theme.buttonBorder
+
+                    Text {
+                        x: 9; y: 21
+                        width: parent.width - 18
+                        text: modelData.capturing ? "Press a key…" : (modelData.value || "")
+                        color: theme.ink
+                        font.family: theme.fontFamily
+                        font.pixelSize: 11
+                        font.bold: true
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
                 }
             }
         }
@@ -4613,7 +4439,7 @@ Item {
                         ? theme.rowSelected
                         : (isHovered ? theme.rowHover : theme.fieldFill)
                     border.width: 1
-                    border.color: isSelected ? theme.gold : theme.buttonBorder
+                    border.color: isSelected ? theme.focus : theme.buttonBorder
                     clip: true
 
                     Rectangle {
@@ -4621,7 +4447,7 @@ Item {
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         width: isSelected ? 3 : 0
-                        color: theme.gold
+                        color: theme.focus
                         visible: isSelected
                     }
 
@@ -4935,5 +4761,73 @@ Item {
             }
         }
     }
+
+    }
+
+    Item {
+        id: cutinWindow
+        z: 10000
+        visible: uiState.cutinType >= 0 && cutinImage.status === Image.Ready
+        width: cutinImage.implicitWidth
+        height: cutinImage.implicitHeight + (uiState.cutinType === 3 ? 24 : 0)
+        x: uiState.cutinType === 0 ? 200 - width / 2
+            : (uiState.cutinType === 2 ? root.width - 200 - width / 2 : (root.width - width) / 2)
+        y: uiState.cutinType <= 2 ? root.height - height : (root.height - height) / 2
+
+        Rectangle {
+            visible: uiState.cutinType === 3
+            width: parent.width
+            height: 24
+            color: theme.titleBottom
+            border.color: theme.buttonBorder
+            MouseArea {
+                anchors.fill: parent
+                drag.target: cutinWindow
+                drag.axis: Drag.XAndYAxis
+            }
+        }
+
+        Image {
+            id: cutinImage
+            x: 0
+            y: uiState.cutinType === 3 ? 24 : 0
+            width: implicitWidth
+            height: implicitHeight
+            source: uiState.cutinType >= 0
+                ? ("image://openmidgard/cutin?rev=" + uiState.cutinRevision)
+                : ""
+            fillMode: Image.Stretch
+            asynchronous: false
+        }
+
+        MouseArea {
+            visible: uiState.cutinType === 4
+            anchors.fill: cutinImage
+            drag.target: cutinWindow
+            drag.axis: Drag.XAndYAxis
+        }
+
+        Rectangle {
+            visible: uiState.cutinType === 4
+            x: parent.width - 21
+            y: 3
+            width: 18
+            height: 18
+            radius: 2
+            color: closeCutinMouse.containsMouse ? theme.buttonHover : theme.button
+            border.color: theme.buttonBorder
+            Text {
+                anchors.centerIn: parent
+                text: "×"
+                color: theme.ink
+                font.pixelSize: 15
+            }
+            MouseArea {
+                id: closeCutinMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: uiState.closeCutinRequested()
+            }
+        }
     }
 }

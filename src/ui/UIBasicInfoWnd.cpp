@@ -1,4 +1,6 @@
+#include "UiMetrics.h"
 #include "UIBasicInfoWnd.h"
+#include "BasicInfoLayout.h"
 
 #include "UIWindowMgr.h"
 #include "core/File.h"
@@ -29,21 +31,21 @@
 
 namespace {
 
-constexpr int kFullWidth = 280;
-constexpr int kFullHeight = 120;
-constexpr int kMiniHeight = 34;
-constexpr int kTitleBarHeight = 17;
+int BasicFullWidth() { return IsQtUiRuntimeEnabled() ? basicInfoLayout::width : 280; }
+int BasicFullHeight() { return IsQtUiRuntimeEnabled() ? basicInfoLayout::height : 120; }
+int BasicMiniHeight() { return IsQtUiRuntimeEnabled() ? basicInfoLayout::miniHeight : 34; }
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kBarWidth = 85;
 constexpr int kBarHeight = 9;
 constexpr int kExpBarWidth = 102;
 constexpr int kExpBarHeight = 6;
-constexpr int kQtMenuButtonWidth = 32;
-constexpr int kQtMenuButtonHeight = 20;
+constexpr int kQtMenuButtonWidth = basicInfoLayout::menuWidth;
+constexpr int kQtMenuButtonHeight = basicInfoLayout::menuHeight;
 constexpr int kQtTopButtonWidth = 11;
 constexpr int kQtTopButtonHeight = 11;
 constexpr int kTopButtonY = 3;
 constexpr int kBaseButtonX = 3;
-constexpr int kMiniButtonX = 266;
+int MiniButtonX() { return IsQtUiRuntimeEnabled() ? 306 : 266; }
 constexpr int kButtonIdStatus = 126;
 constexpr int kButtonIdOption = 127;
 constexpr int kButtonIdItems = 128;
@@ -395,7 +397,7 @@ UIBasicInfoWnd::UIBasicInfoWnd()
       m_armedButtonId(0),
       m_pressedButtonId(0)
 {
-    Create(kFullWidth, kFullHeight);
+    Create(BasicFullWidth(), BasicFullHeight());
     Move(0, 0);
     int savedX = m_x;
     int savedY = m_y;
@@ -472,6 +474,9 @@ msgresult_t UIBasicInfoWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam
         return 1;
     case kButtonIdMap:
         g_windowMgr.ToggleWindow(UIWindowMgr::WID_ROMAPWND);
+        return 1;
+    case kButtonIdComm:
+        g_windowMgr.EnsureChatWindowVisible();
         return 1;
     case kButtonIdFriend:
         g_windowMgr.ToggleWindow(UIWindowMgr::WID_MESSENGERGROUPWND);
@@ -555,7 +560,7 @@ void UIBasicInfoWnd::OnDraw()
     }
 
     const DisplayData data = BuildDisplayData();
-    if (m_h == kMiniHeight) {
+    if (m_h == BasicMiniHeight()) {
         DrawCachedBitmap(hdc, m_backgroundMini, m_x, m_y);
 
         if (m_titleBarBitmap.IsValid()) {
@@ -636,6 +641,7 @@ void UIBasicInfoWnd::OnLBtnDown(int x, int y)
             m_armedButtonId = hitButton;
             m_hotButtonId = hitButton;
             m_pressedButtonId = hitButton;
+            Invalidate();
             UIWindow::OnLBtnDown(x, y);
             return;
         }
@@ -648,40 +654,13 @@ void UIBasicInfoWnd::OnLBtnUp(int x, int y)
 {
     if (IsQtUiRuntimeEnabled()) {
         const bool wasDragging = m_isDragging != 0;
+        const int armedButton = m_armedButtonId;
         m_armedButtonId = 0;
         m_pressedButtonId = 0;
         UIFrameWnd::OnLBtnUp(x, y);
         UpdateQtButtonInteraction(x, y);
-        if (wasDragging) {
-            return;
-        }
-
-        if (m_h == kMiniHeight) {
-            const RECT baseRect = MakeBasicInfoRect(m_x, m_y, kBaseButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
-            if (IsPointInRect(baseRect, x, y)) {
-                SendMsg(this, 6, kButtonIdBase, 0, 0);
-            }
-            return;
-        }
-
-        const RECT miniRect = MakeBasicInfoRect(m_x, m_y, kMiniButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
-        if (IsPointInRect(miniRect, x, y)) {
-            SendMsg(this, 6, kButtonIdMini, 0, 0);
-            return;
-        }
-
-        for (size_t index = 0; index < kMenuButtonIds.size(); ++index) {
-            const RECT buttonRect = MakeBasicInfoRect(
-                m_x,
-                m_y,
-                207 + static_cast<int>(36 * (index % 2)),
-                22 + static_cast<int>(24 * (index / 2)),
-                kQtMenuButtonWidth,
-                kQtMenuButtonHeight);
-            if (IsPointInRect(buttonRect, x, y)) {
-                SendMsg(this, 6, kMenuButtonIds[index], 0, 0);
-                return;
-            }
+        if (!wasDragging && armedButton != 0 && HitQtButton(x, y) == armedButton) {
+            SendMsg(this, 6, armedButton, 0, 0);
         }
         return;
     }
@@ -692,7 +671,7 @@ void UIBasicInfoWnd::OnLBtnUp(int x, int y)
 void UIBasicInfoWnd::OnLBtnDblClk(int x, int y)
 {
     if (y >= m_y && y < m_y + kTitleBarHeight) {
-        SetMiniMode(m_h != kMiniHeight);
+        SetMiniMode(m_h != BasicMiniHeight());
         return;
     }
     UIFrameWnd::OnLBtnDblClk(x, y);
@@ -721,24 +700,19 @@ int UIBasicInfoWnd::HitQtButton(int x, int y) const
         return 0;
     }
 
-    if (m_h == kMiniHeight) {
+    if (m_h == BasicMiniHeight()) {
         const RECT baseRect = MakeBasicInfoRect(m_x, m_y, kBaseButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
         return IsPointInRect(baseRect, x, y) ? kButtonIdBase : 0;
     }
 
-    const RECT miniRect = MakeBasicInfoRect(m_x, m_y, kMiniButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
+    const RECT miniRect = MakeBasicInfoRect(m_x, m_y, MiniButtonX(), kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
     if (IsPointInRect(miniRect, x, y)) {
         return kButtonIdMini;
     }
 
     for (size_t index = 0; index < kMenuButtonIds.size(); ++index) {
-        const RECT buttonRect = MakeBasicInfoRect(
-            m_x,
-            m_y,
-            207 + static_cast<int>(36 * (index % 2)),
-            22 + static_cast<int>(24 * (index / 2)),
-            kQtMenuButtonWidth,
-            kQtMenuButtonHeight);
+        const auto layout = basicInfoLayout::menuButton(static_cast<int>(index));
+        const RECT buttonRect = MakeBasicInfoRect(m_x, m_y, layout.x, layout.y, layout.width, layout.height);
         if (IsPointInRect(buttonRect, x, y)) {
             return kMenuButtonIds[index];
         }
@@ -750,8 +724,37 @@ void UIBasicInfoWnd::UpdateQtButtonInteraction(int x, int y)
 {
     const int hotButton = (m_isDragging != 0 || x < 0 || y < 0) ? 0 : HitQtButton(x, y);
     const int pressedButton = (m_armedButtonId != 0 && hotButton == m_armedButtonId) ? m_armedButtonId : 0;
+    const bool hoverIdentity = x >= m_x + 12 && x < m_x + 220 && y >= m_y + 24 && y < m_y + 61;
+    if (m_hoverIdentity != hoverIdentity || m_hotButtonId != hotButton || m_pressedButtonId != pressedButton) {
+        Invalidate();
+    }
+    m_hoverIdentity = hoverIdentity;
     m_hotButtonId = hotButton;
     m_pressedButtonId = pressedButton;
+}
+
+bool UIBasicInfoWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* info) const
+{
+    if (!info || !m_show || m_isDragging) return false;
+    if (m_hoverIdentity && !IsMiniMode()) {
+        const DisplayData display = BuildDisplayData();
+        info->text = display.name + " - " + display.jobName;
+        info->anchorRect = RECT{m_x + 12, m_y + 25, m_x + 220, m_y + 60};
+        return info->IsValid();
+    }
+    static const std::array<const char*, 8> labels = {
+        "Character status - Alt+A", "Options - Alt+O", "Inventory - Alt+E", "Equipment - Alt+Q",
+        "Skills - Alt+S", "World map - Ctrl+Tab", "Chat - Alt+C", "Friends / messenger - Alt+Z"
+    };
+    for (int index = 0; index < GetQtMenuButtonCount(); ++index) {
+        QtButtonDisplay button{};
+        if (GetQtMenuButtonDisplayForQt(index, &button) && button.visible && button.hovered) {
+            info->text = labels[index];
+            info->anchorRect = RECT{button.x, button.y, button.x + button.width, button.y + button.height};
+            return true;
+        }
+    }
+    return false;
 }
 
 void UIBasicInfoWnd::StoreInfo()
@@ -761,13 +764,16 @@ void UIBasicInfoWnd::StoreInfo()
 
 void UIBasicInfoWnd::NewHeight(int height)
 {
-    Resize(kFullWidth, height == kMiniHeight ? kMiniHeight : kFullHeight);
+    Resize(BasicFullWidth(), height == BasicMiniHeight() ? BasicMiniHeight() : BasicFullHeight());
+    int x = m_x, y = m_y;
+    g_windowMgr.ClampWindowToClient(&x, &y, m_w, m_h);
+    Move(x, y);
     LayoutChildren();
 }
 
 bool UIBasicInfoWnd::IsMiniMode() const
 {
-    return m_h == kMiniHeight;
+    return m_h == BasicMiniHeight();
 }
 
 bool UIBasicInfoWnd::GetDisplayDataForQt(DisplayData* outData) const
@@ -805,7 +811,7 @@ bool UIBasicInfoWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* o
         return true;
     case 1:
         out->id = kButtonIdMini;
-        out->x = m_x + kMiniButtonX;
+        out->x = m_x + MiniButtonX();
         out->y = m_y + kTopButtonY;
         out->width = kQtTopButtonWidth;
         out->height = kQtTopButtonHeight;
@@ -835,8 +841,9 @@ bool UIBasicInfoWnd::GetQtMenuButtonDisplayForQt(int index, QtButtonDisplay* out
     };
 
     out->id = kMenuButtonIds[static_cast<size_t>(index)];
-    out->x = m_x + 207 + 36 * (index % 2);
-    out->y = m_y + 22 + 24 * (index / 2);
+    const auto layout = basicInfoLayout::menuButton(index);
+    out->x = m_x + layout.x;
+    out->y = m_y + layout.y;
     out->width = kQtMenuButtonWidth;
     out->height = kQtMenuButtonHeight;
     out->label = kMenuLabels[static_cast<size_t>(index)];
@@ -865,22 +872,22 @@ void UIBasicInfoWnd::LayoutChildren()
             continue;
         }
         m_menuButtons[index]->Move(m_x + 207 + static_cast<int>(36 * (index % 2)), m_y + 22 + static_cast<int>(24 * (index / 2)));
-        m_menuButtons[index]->SetShow(m_h == kFullHeight ? 1 : 0);
+        m_menuButtons[index]->SetShow(m_h == BasicFullHeight() ? 1 : 0);
     }
 
     if (m_baseButton) {
         m_baseButton->Move(m_x + kBaseButtonX, m_y + kTopButtonY);
-        m_baseButton->SetShow(m_h == kMiniHeight ? 1 : 0);
+        m_baseButton->SetShow(m_h == BasicMiniHeight() ? 1 : 0);
     }
     if (m_miniButton) {
-        m_miniButton->Move(m_x + kMiniButtonX, m_y + kTopButtonY);
-        m_miniButton->SetShow(m_h == kFullHeight ? 1 : 0);
+        m_miniButton->Move(m_x + MiniButtonX(), m_y + kTopButtonY);
+        m_miniButton->SetShow(m_h == BasicFullHeight() ? 1 : 0);
     }
 }
 
 void UIBasicInfoWnd::SetMiniMode(bool miniMode)
 {
-    NewHeight(miniMode ? kMiniHeight : kFullHeight);
+    NewHeight(miniMode ? BasicMiniHeight() : BasicFullHeight());
 }
 
 UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
@@ -961,6 +968,9 @@ unsigned long long UIBasicInfoWnd::BuildDisplayStateToken() const
     mixValue(static_cast<unsigned long long>(m_y));
     mixValue(static_cast<unsigned long long>(m_w));
     mixValue(static_cast<unsigned long long>(m_h));
+    mixValue(static_cast<unsigned long long>(m_hoverIdentity));
+    mixValue(static_cast<unsigned long long>(m_hotButtonId));
+    mixValue(static_cast<unsigned long long>(m_pressedButtonId));
     mixString(data.name);
     mixString(data.jobName);
     mixValue(static_cast<unsigned long long>(data.level));

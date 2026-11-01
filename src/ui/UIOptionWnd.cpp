@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIOptionWnd.h"
 
 #include "audio/Audio.h"
@@ -57,7 +58,7 @@ constexpr char kOptionWndTabValue[] = "Tab";
 constexpr int kDefaultWidth = 308;
 constexpr int kDefaultHeight = 374;
 constexpr int kCollapsedHeight = 17;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kDefaultX = 185;
 constexpr int kDefaultY = 300;
 constexpr int kSliderMin = 0;
@@ -585,6 +586,7 @@ UIOptionWnd::UIOptionWnd()
             m_appliedGuiScalePercent(GetConfiguredUiScalePercent()),
       m_collapsed(0),
       m_activeTab(TabId_Game),
+      m_captureShortcutBinding(-1),
       m_dragMode(DragMode_None),
       m_dragAnchorX(0),
       m_dragAnchorY(0),
@@ -995,6 +997,7 @@ void UIOptionWnd::LayoutControls()
 
 void UIOptionWnd::SetCollapsed(bool collapsed)
 {
+    m_captureShortcutBinding = -1;
     m_collapsed = collapsed ? 1 : 0;
     m_h = m_collapsed ? kCollapsedHeight : m_orgHeight;
     LayoutControls();
@@ -1102,6 +1105,24 @@ RECT UIOptionWnd::GetTabRect(int tabIndex) const
         bodyRect.top + 6 + kTabHeight + 5,
     };
     return rc;
+}
+
+RECT UIOptionWnd::GetShortcutBindingRect(int slotIndex) const
+{
+    const RECT contentRect = GetContentRect();
+    const int column = slotIndex % 9;
+    const int cellWidth = (contentRect.right - contentRect.left - 32) / 3;
+    const int left = contentRect.left + 12 + (column % 3) * (cellWidth + 4);
+    const int top = contentRect.top + 90 + (column / 3) * 56;
+    return RECT{ left, top, left + cellWidth, top + 48 };
+}
+
+RECT UIOptionWnd::GetKeybindingBarRect(int barIndex) const
+{
+    const RECT contentRect = GetContentRect();
+    const int width = (contentRect.right - contentRect.left - 24) / 3;
+    const int left = contentRect.left + 12 + barIndex * width;
+    return RECT{ left, contentRect.top + 45, left + width, contentRect.top + 77 };
 }
 
 RECT UIOptionWnd::GetContentRect() const
@@ -1584,6 +1605,7 @@ void UIOptionWnd::OnDraw()
         DrawTabButton(hdc, GetTabRect(TabId_Game), "Game", m_activeTab == TabId_Game);
         DrawTabButton(hdc, GetTabRect(TabId_Graphics), "Graphics", m_activeTab == TabId_Graphics);
         DrawTabButton(hdc, GetTabRect(TabId_Audio), "Audio", m_activeTab == TabId_Audio);
+        DrawTabButton(hdc, GetTabRect(TabId_Keybindings), "Keybinding", m_activeTab == TabId_Keybindings);
 
         if (m_activeTab == TabId_Audio) {
             DrawSlider(hdc, GetBgmSliderRect(), m_bgmVolume, kSliderMin, kSliderMax, "BGM");
@@ -1643,6 +1665,18 @@ void UIOptionWnd::OnDraw()
 
             if (HasPendingUiScaleApply()) {
                 DrawHeaderButton(hdc, GetApplyButtonRect(), "Apply");
+            }
+        } else if (m_activeTab == TabId_Keybindings) {
+            DrawUiOptionText(hdc, contentRect.left + 8, contentRect.top + 10,
+                "Select a slot, then press a key combination.", RGB(0, 0, 0));
+            for (int bar = 0; bar < 3; ++bar) {
+                DrawTabButton(hdc, GetKeybindingBarRect(bar),
+                    ("Bar " + std::to_string(bar + 1)).c_str(), m_keybindingBar == bar);
+            }
+            for (int slot = m_keybindingBar * 9; slot < (m_keybindingBar + 1) * 9; ++slot) {
+                const RECT bindingRect = GetShortcutBindingRect(slot);
+                DrawHeaderButton(hdc, bindingRect,
+                    m_captureShortcutBinding == slot ? "..." : g_windowMgr.GetShortcutKeyBindingLabel(slot).c_str());
             }
         } else if (m_activeTab == TabId_Graphics) {
             const std::vector<GraphicsRowId> rows = GetVisibleGraphicsRows();
@@ -1717,6 +1751,7 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
     }
 
     if (PointInRectXY(GetCloseButtonRect(), x, y)) {
+        m_captureShortcutBinding = -1;
         DiscardPendingUiScale();
         SetShow(0);
         SaveSettings();
@@ -1731,6 +1766,7 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
     if (!m_collapsed) {
         for (int tabIndex = 0; tabIndex < TabId_Count; ++tabIndex) {
             if (PointInRectXY(GetTabRect(tabIndex), x, y)) {
+                m_captureShortcutBinding = -1;
                 m_activeTab = tabIndex;
                 LayoutControls();
                 Invalidate();
@@ -1800,6 +1836,24 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
 
         if (HandleQtToggleClick(x, y)) {
             return;
+        }
+
+        if (m_activeTab == TabId_Keybindings) {
+            for (int bar = 0; bar < 3; ++bar) {
+                if (PointInRectXY(GetKeybindingBarRect(bar), x, y)) {
+                    m_keybindingBar = bar;
+                    m_captureShortcutBinding = -1;
+                    Invalidate();
+                    return;
+                }
+            }
+            for (int slot = m_keybindingBar * 9; slot < (m_keybindingBar + 1) * 9; ++slot) {
+                if (PointInRectXY(GetShortcutBindingRect(slot), x, y)) {
+                    m_captureShortcutBinding = slot;
+                    Invalidate();
+                    return;
+                }
+            }
         }
     }
 
@@ -1988,6 +2042,14 @@ msgresult_t UIOptionWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, m
 
 void UIOptionWnd::OnKeyDown(int virtualKey)
 {
+    if (IsCapturingShortcutKeyBinding()) {
+        CaptureShortcutKey(virtualKey,
+            (GetKeyState(VK_MENU) & 0x8000) != 0,
+            (GetKeyState(VK_CONTROL) & 0x8000) != 0,
+            (GetKeyState(VK_SHIFT) & 0x8000) != 0);
+        return;
+    }
+
     if (virtualKey == VK_RETURN && HasPendingUiScaleApply()) {
         ApplyPendingUiScale();
         return;
@@ -2000,6 +2062,35 @@ void UIOptionWnd::OnKeyDown(int virtualKey)
     }
 }
 
+bool UIOptionWnd::CaptureShortcutKey(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown)
+{
+    if (!IsCapturingShortcutKeyBinding()) {
+        return false;
+    }
+    if (virtualKey == VK_ESCAPE) {
+        m_captureShortcutBinding = -1;
+        Invalidate();
+        return true;
+    }
+    if (virtualKey == VK_SHIFT || virtualKey == VK_CONTROL || virtualKey == VK_MENU
+        || virtualKey == VK_LSHIFT || virtualKey == VK_RSHIFT
+        || virtualKey == VK_LCONTROL || virtualKey == VK_RCONTROL
+        || virtualKey == VK_LMENU || virtualKey == VK_RMENU) {
+        return true;
+    }
+
+    ShortcutKeyBinding binding{};
+    binding.virtualKey = virtualKey;
+    binding.modifiers = static_cast<unsigned char>(
+        (isCtrlDown ? kShortcutKeyModifierControl : 0)
+        | (isShiftDown ? kShortcutKeyModifierShift : 0)
+        | (isAltDown ? kShortcutKeyModifierAlt : 0));
+    g_windowMgr.SetShortcutKeyBinding(m_captureShortcutBinding, binding);
+    m_captureShortcutBinding = -1;
+    Invalidate();
+    return true;
+}
+
 bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
 {
     if (!outData) {
@@ -2009,6 +2100,7 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
     DisplayData data{};
     data.collapsed = m_collapsed != 0;
     data.activeTab = m_activeTab;
+    data.keybindingBar = m_keybindingBar;
     data.restartButton.visible = false;
     data.applyButton.visible = false;
 
@@ -2039,7 +2131,7 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
     data.systemButtons.push_back(std::move(closeButton));
 
     data.tabs.reserve(TabId_Count);
-    static const char* const kTabLabels[TabId_Count] = { "Game", "Graphics", "Audio" };
+    static const char* const kTabLabels[TabId_Count] = { "Game", "Graphics", "Audio", "Keybinding" };
     for (int tabIndex = 0; tabIndex < TabId_Count; ++tabIndex) {
         const RECT tabRect = GetTabRect(tabIndex);
         DisplayTab tab{};
@@ -2152,6 +2244,25 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
                 data.applyButton.width = applyRect.right - applyRect.left;
                 data.applyButton.height = applyRect.bottom - applyRect.top;
                 data.applyButton.label = "Apply";
+            }
+        } else if (m_activeTab == TabId_Keybindings) {
+            data.keybindings.reserve(9);
+            for (int slot = m_keybindingBar * 9; slot < (m_keybindingBar + 1) * 9; ++slot) {
+                const RECT bindingRect = GetShortcutBindingRect(slot);
+                const ShortcutKeyBinding binding = g_windowMgr.GetShortcutKeyBinding(slot);
+                DisplayKeybinding entry{};
+                entry.x = bindingRect.left;
+                entry.y = bindingRect.top;
+                entry.width = bindingRect.right - bindingRect.left;
+                entry.height = bindingRect.bottom - bindingRect.top;
+                entry.barIndex = slot / 9;
+                entry.column = slot % 9;
+                entry.capturing = m_captureShortcutBinding == slot;
+                if (entry.column == 0) {
+                    entry.label = "Bar " + std::to_string(entry.barIndex + 1);
+                }
+                entry.value = entry.capturing ? "Press..." : g_windowMgr.GetShortcutKeyBindingLabel(slot);
+                data.keybindings.push_back(std::move(entry));
             }
         } else if (m_activeTab == TabId_Graphics) {
             const std::vector<GraphicsRowId> rows = GetVisibleGraphicsRows();

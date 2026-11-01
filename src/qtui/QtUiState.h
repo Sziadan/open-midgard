@@ -67,6 +67,9 @@ class QtUiState : public QObject {
     Q_PROPERTY(bool loadingVisible READ loadingVisible NOTIFY loadingVisibleChanged)
     Q_PROPERTY(QString loadingMessage READ loadingMessage NOTIFY loadingMessageChanged)
     Q_PROPERTY(double loadingProgress READ loadingProgress NOTIFY loadingProgressChanged)
+    Q_PROPERTY(QString cutinImageName READ cutinImageName NOTIFY cutinChanged)
+    Q_PROPERTY(int cutinType READ cutinType NOTIFY cutinChanged)
+    Q_PROPERTY(int cutinRevision READ cutinRevision NOTIFY cutinChanged)
     Q_PROPERTY(bool npcMenuVisible READ npcMenuVisible NOTIFY npcMenuVisibleChanged)
     Q_PROPERTY(int npcMenuX READ npcMenuX NOTIFY npcMenuGeometryChanged)
     Q_PROPERTY(int npcMenuY READ npcMenuY NOTIFY npcMenuGeometryChanged)
@@ -140,6 +143,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int shortCutWidth READ shortCutWidth NOTIFY shortCutGeometryChanged)
     Q_PROPERTY(int shortCutHeight READ shortCutHeight NOTIFY shortCutGeometryChanged)
     Q_PROPERTY(int shortCutPage READ shortCutPage NOTIFY shortCutPageChanged)
+    Q_PROPERTY(int shortCutRows READ shortCutRows NOTIFY shortCutRowsChanged)
     Q_PROPERTY(int shortCutHoverSlot READ shortCutHoverSlot NOTIFY shortCutHoverSlotChanged)
     Q_PROPERTY(QVariantList shortCutSlots READ shortCutSlots NOTIFY shortCutSlotsChanged)
     Q_PROPERTY(bool basicInfoVisible READ basicInfoVisible NOTIFY basicInfoVisibleChanged)
@@ -349,6 +353,9 @@ public:
     bool loadingVisible() const { return m_loadingVisible; }
     const QString& loadingMessage() const { return m_loadingMessage; }
     double loadingProgress() const { return m_loadingProgress; }
+    const QString& cutinImageName() const { return m_cutinImageName; }
+    int cutinType() const { return m_cutinType; }
+    int cutinRevision() const { return m_cutinRevision; }
     bool npcMenuVisible() const { return m_npcMenuVisible; }
     int npcMenuX() const { return m_npcMenuX; }
     int npcMenuY() const { return m_npcMenuY; }
@@ -422,6 +429,7 @@ public:
     int shortCutWidth() const { return m_shortCutWidth; }
     int shortCutHeight() const { return m_shortCutHeight; }
     int shortCutPage() const { return m_shortCutPage; }
+    int shortCutRows() const { return m_shortCutRows; }
     int shortCutHoverSlot() const { return m_shortCutHoverSlot; }
     const QVariantList& shortCutSlots() const { return m_shortCutSlots; }
     bool basicInfoVisible() const { return m_basicInfoVisible; }
@@ -902,6 +910,16 @@ public:
         emit loadingProgressChanged();
     }
 
+    void setCutinInfo(const QString& imageName, int type) {
+        if (m_cutinImageName == imageName && m_cutinType == type) {
+            return;
+        }
+        m_cutinImageName = imageName;
+        m_cutinType = type;
+        ++m_cutinRevision;
+        emit cutinChanged();
+    }
+
     void setNpcMenuVisible(bool value) {
         if (m_npcMenuVisible == value) {
             return;
@@ -1264,6 +1282,14 @@ public:
         }
         m_shortCutPage = value;
         emit shortCutPageChanged();
+    }
+
+    void setShortCutRows(int value) {
+        if (m_shortCutRows == value) {
+            return;
+        }
+        m_shortCutRows = value;
+        emit shortCutRowsChanged();
     }
 
     void setShortCutHoverSlot(int value) {
@@ -2001,6 +2027,8 @@ signals:
     void loadingVisibleChanged();
     void loadingMessageChanged();
     void loadingProgressChanged();
+    void cutinChanged();
+    void closeCutinRequested();
     void npcMenuVisibleChanged();
     void npcMenuGeometryChanged();
     void npcMenuSelectionChanged();
@@ -2040,6 +2068,7 @@ signals:
     void shortCutVisibleChanged();
     void shortCutGeometryChanged();
     void shortCutPageChanged();
+    void shortCutRowsChanged();
     void shortCutHoverSlotChanged();
     void shortCutSlotsChanged();
     void basicInfoVisibleChanged();
@@ -2182,6 +2211,9 @@ private:
     bool m_loadingVisible = false;
     QString m_loadingMessage;
     double m_loadingProgress = 0.0;
+    QString m_cutinImageName;
+    int m_cutinType = -1;
+    int m_cutinRevision = 0;
     bool m_npcMenuVisible = false;
     int m_npcMenuX = 0;
     int m_npcMenuY = 0;
@@ -2255,6 +2287,7 @@ private:
     int m_shortCutWidth = 0;
     int m_shortCutHeight = 0;
     int m_shortCutPage = 0;
+    int m_shortCutRows = 1;
     int m_shortCutHoverSlot = -1;
     QVariantList m_shortCutSlots;
     bool m_basicInfoVisible = false;

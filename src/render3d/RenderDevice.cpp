@@ -334,6 +334,7 @@ PFN_vkCmdPipelineBarrier vkCmdPipelineBarrier = nullptr;
 PFN_vkCmdCopyImage vkCmdCopyImage = nullptr;
 PFN_vkCmdBlitImage vkCmdBlitImage = nullptr;
 PFN_vkCmdCopyBufferToImage vkCmdCopyBufferToImage = nullptr;
+PFN_vkCmdCopyImageToBuffer vkCmdCopyImageToBuffer = nullptr;
 PFN_vkDestroySurfaceKHR vkDestroySurfaceKHR = nullptr;
 PFN_vkGetPhysicalDeviceSurfaceSupportKHR vkGetPhysicalDeviceSurfaceSupportKHR = nullptr;
 PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR = nullptr;
@@ -531,6 +532,7 @@ bool LoadVulkanDeviceFunctions(VkDevice device)
     vkCmdCopyImage = reinterpret_cast<PFN_vkCmdCopyImage>(vkGetDeviceProcAddr(device, "vkCmdCopyImage"));
     vkCmdBlitImage = reinterpret_cast<PFN_vkCmdBlitImage>(vkGetDeviceProcAddr(device, "vkCmdBlitImage"));
     vkCmdCopyBufferToImage = reinterpret_cast<PFN_vkCmdCopyBufferToImage>(vkGetDeviceProcAddr(device, "vkCmdCopyBufferToImage"));
+    vkCmdCopyImageToBuffer = reinterpret_cast<PFN_vkCmdCopyImageToBuffer>(vkGetDeviceProcAddr(device, "vkCmdCopyImageToBuffer"));
     vkCreateSwapchainKHR = reinterpret_cast<PFN_vkCreateSwapchainKHR>(vkGetDeviceProcAddr(device, "vkCreateSwapchainKHR"));
     vkDestroySwapchainKHR = reinterpret_cast<PFN_vkDestroySwapchainKHR>(vkGetDeviceProcAddr(device, "vkDestroySwapchainKHR"));
     vkGetSwapchainImagesKHR = reinterpret_cast<PFN_vkGetSwapchainImagesKHR>(vkGetDeviceProcAddr(device, "vkGetSwapchainImagesKHR"));
@@ -2645,8 +2647,8 @@ private:
     {
         const ModernTextureStageState& stage0 = m_pipelineState.textureStages[0];
         D3D11_SAMPLER_DESC desc{};
-        desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-        desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+        desc.AddressU = stage0.address == D3DTADDRESS_CLAMP ? D3D11_TEXTURE_ADDRESS_CLAMP : D3D11_TEXTURE_ADDRESS_WRAP;
+        desc.AddressV = desc.AddressU;
         desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
         desc.MaxLOD = D3D11_FLOAT32_MAX;
 
@@ -3187,7 +3189,7 @@ public:
                       m_rtvHeap(nullptr), m_dsvHeap(nullptr), m_srvHeap(nullptr), m_depthStencil(nullptr), m_postPipelineState(nullptr), m_smaaEdgePipelineState(nullptr), m_smaaBlendWeightPipelineState(nullptr), m_smaaNeighborhoodPipelineState(nullptr),
           m_commandAllocator(nullptr), m_commandList(nullptr), m_fence(nullptr),
           m_fenceEvent(nullptr), m_fenceValue(0), m_frameIndex(0), m_rtvDescriptorSize(0), m_srvDescriptorSize(0), m_srvHeapCursor(0),
-          m_rootSignature(nullptr),
+          m_rootSignature(nullptr), m_clampRootSignature(nullptr),
                     m_vertexShaderTlBlob(nullptr), m_vertexShaderLmBlob(nullptr), m_pixelShaderBlob(nullptr), m_postVertexShaderBlob(nullptr), m_fxaaPixelShaderBlob(nullptr), m_smaaEdgePixelShaderBlob(nullptr), m_smaaBlendWeightPixelShaderBlob(nullptr), m_smaaNeighborhoodPixelShaderBlob(nullptr),
                     m_frameCommandsOpen(false), m_loggedSrvHeapExhausted(false), m_scenePresentDirty(false)
     {
@@ -3517,6 +3519,7 @@ public:
         SafeRelease(m_pixelShaderBlob);
         SafeRelease(m_vertexShaderLmBlob);
         SafeRelease(m_vertexShaderTlBlob);
+        SafeRelease(m_clampRootSignature);
         SafeRelease(m_rootSignature);
         SafeRelease(m_commandList);
         SafeRelease(m_commandAllocator);
@@ -3936,6 +3939,7 @@ public:
 private:
     struct PipelineStateEntry {
         bool isLightmap;
+        bool clampAddress;
         D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType;
         D3D12_BLEND_DESC blendDesc;
         D3D12_DEPTH_STENCIL_DESC depthStencilDesc;
@@ -4099,6 +4103,19 @@ private:
         if (FAILED(hr) || !m_rootSignature) {
             return false;
         }
+
+        samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        rootSignatureBlob = nullptr;
+        errorBlob = nullptr;
+        hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, &errorBlob);
+        if (SUCCEEDED(hr) && rootSignatureBlob) {
+            hr = m_device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
+                rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_clampRootSignature));
+        }
+        SafeRelease(errorBlob);
+        SafeRelease(rootSignatureBlob);
+        if (FAILED(hr) || !m_clampRootSignature) return false;
 
         if (!CreateNullSrvDescriptors()) {
             return false;
@@ -4733,11 +4750,13 @@ private:
             return nullptr;
         }
 
+        const bool clampAddress = m_pipelineState.textureStages[0].address == D3DTADDRESS_CLAMP;
         const D3D12_BLEND_DESC blendDesc = BuildBlendDesc();
         const D3D12_DEPTH_STENCIL_DESC depthStencilDesc = BuildDepthStencilDesc();
         const D3D12_RASTERIZER_DESC rasterizerDesc = BuildRasterizerDesc();
         for (PipelineStateEntry& entry : m_pipelineStates) {
             if (entry.isLightmap == isLightmap
+                && entry.clampAddress == clampAddress
                 && entry.topologyType == topologyType
                 && std::memcmp(&entry.blendDesc, &blendDesc, sizeof(blendDesc)) == 0
                 && std::memcmp(&entry.depthStencilDesc, &depthStencilDesc, sizeof(depthStencilDesc)) == 0
@@ -4759,7 +4778,7 @@ private:
         };
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
-        desc.pRootSignature = m_rootSignature;
+        desc.pRootSignature = clampAddress ? m_clampRootSignature : m_rootSignature;
         desc.VS = { isLightmap ? m_vertexShaderLmBlob->GetBufferPointer() : m_vertexShaderTlBlob->GetBufferPointer(),
             isLightmap ? m_vertexShaderLmBlob->GetBufferSize() : m_vertexShaderTlBlob->GetBufferSize() };
         desc.PS = { m_pixelShaderBlob->GetBufferPointer(), m_pixelShaderBlob->GetBufferSize() };
@@ -4783,7 +4802,7 @@ private:
             return nullptr;
         }
 
-        m_pipelineStates.push_back({ isLightmap, topologyType, blendDesc, depthStencilDesc, rasterizerDesc, state });
+        m_pipelineStates.push_back({ isLightmap, clampAddress, topologyType, blendDesc, depthStencilDesc, rasterizerDesc, state });
         return state;
     }
 
@@ -4884,7 +4903,8 @@ private:
 
         ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvHeap };
         m_commandList->SetDescriptorHeaps(1, descriptorHeaps);
-        m_commandList->SetGraphicsRootSignature(m_rootSignature);
+        m_commandList->SetGraphicsRootSignature(m_pipelineState.textureStages[0].address == D3DTADDRESS_CLAMP
+            ? m_clampRootSignature : m_rootSignature);
         m_commandList->SetPipelineState(pipelineState);
         m_commandList->SetGraphicsRootConstantBufferView(0, constantGpuAddress);
         m_commandList->SetGraphicsRootDescriptorTable(1, GetSrvGpuHandle(srvBaseIndex));
@@ -5101,6 +5121,7 @@ private:
     UINT m_srvDescriptorSize;
     UINT m_srvHeapCursor;
     ID3D12RootSignature* m_rootSignature;
+    ID3D12RootSignature* m_clampRootSignature;
     ID3DBlob* m_vertexShaderTlBlob;
     ID3DBlob* m_vertexShaderLmBlob;
     ID3DBlob* m_pixelShaderBlob;
@@ -5516,8 +5537,25 @@ public:
             }
         }
 
+        // Opt-in GPU fixture capture; normal gameplay never allocates readback.
+        VkBuffer captureBuffer=VK_NULL_HANDLE;VkDeviceMemory captureMemory=VK_NULL_HANDLE;
+        const char* capturePath=std::getenv("RO_HEAL_PREVIEW_OUT");
+        const auto releaseCapture=[&] {
+            if(captureBuffer!=VK_NULL_HANDLE)vkDestroyBuffer(m_device,captureBuffer,nullptr);
+            if(captureMemory!=VK_NULL_HANDLE)vkFreeMemory(m_device,captureMemory,nullptr);
+            captureBuffer=VK_NULL_HANDLE;captureMemory=VK_NULL_HANDLE;
+        };
+        const VkDeviceSize captureBytes=static_cast<VkDeviceSize>(m_swapChainExtent.width)*m_swapChainExtent.height*4;
+        if (capturePath && m_fixtureCaptureSupported && vkCmdCopyImageToBuffer && CreateHostVisibleBuffer(captureBytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT,&captureBuffer,&captureMemory)) {
+            TransitionCurrentSwapChainImage(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,VK_ACCESS_TRANSFER_READ_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT);
+            VkBufferImageCopy copy{};copy.imageSubresource.aspectMask=VK_IMAGE_ASPECT_COLOR_BIT;copy.imageSubresource.layerCount=1;
+            copy.imageExtent={m_swapChainExtent.width,m_swapChainExtent.height,1};
+            vkCmdCopyImageToBuffer(GetCurrentCommandBuffer(),m_swapChainImages[m_currentImageIndex],VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,captureBuffer,1,&copy);
+            TransitionCurrentSwapChainImage(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,0,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+        }
         const VkResult endResult = vkEndCommandBuffer(GetCurrentCommandBuffer());
         if (endResult != VK_SUCCESS) {
+            releaseCapture();
             DbgLog("[Render][Vulkan] vkEndCommandBuffer failed: %d\n", static_cast<int>(endResult));
             m_bootstrap.initHr = static_cast<int>(endResult);
             m_frameBegun = false;
@@ -5540,12 +5578,30 @@ public:
         VkResult result = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_inFlightFence);
         g_vulkanPerfStats.presentSubmitMs += VulkanNowMs() - submitStartMs;
         if (result != VK_SUCCESS) {
+            releaseCapture();
             DbgLog("[Render][Vulkan] vkQueueSubmit failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             m_frameBegun = false;
             return -1;
         }
 
+        if (captureBuffer != VK_NULL_HANDLE) {
+            vkWaitForFences(m_device,1,&m_inFlightFence,VK_TRUE,UINT64_MAX);void* pixels=nullptr;
+            if (vkMapMemory(m_device,captureMemory,0,captureBytes,0,&pixels)==VK_SUCCESS) {
+                FILE* file=std::fopen(capturePath,"wb");
+                if (file) {
+                    BITMAPFILEHEADER header{};header.bfType=0x4D42;header.bfOffBits=54;header.bfSize=54+static_cast<DWORD>(captureBytes);
+                    BITMAPINFOHEADER info{};info.biSize=40;info.biWidth=m_swapChainExtent.width;info.biHeight=-static_cast<LONG>(m_swapChainExtent.height);info.biPlanes=1;info.biBitCount=32;
+                    std::vector<unsigned int> colors(static_cast<size_t>(captureBytes/4));std::memcpy(colors.data(),pixels,static_cast<size_t>(captureBytes));
+                    if (m_swapChainFormat==VK_FORMAT_R8G8B8A8_UNORM||m_swapChainFormat==VK_FORMAT_R8G8B8A8_SRGB)
+                        for(auto& color:colors)color=(color&0xFF00FF00u)|((color&255u)<<16)|((color>>16)&255u);
+                    std::fwrite(&header,sizeof(header),1,file);std::fwrite(&info,sizeof(info),1,file);std::fwrite(colors.data(),static_cast<size_t>(captureBytes),1,file);std::fclose(file);
+                    DbgLog("[HealPreview] captured GPU frame '%s'\n",capturePath);
+                }
+                vkUnmapMemory(m_device,captureMemory);
+            }
+            releaseCapture();
+        }
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
@@ -7311,6 +7367,7 @@ private:
         VkFilter minFilter;
         VkFilter magFilter;
         VkSamplerMipmapMode mipmapMode;
+        VkSamplerAddressMode address;
         VkSampler sampler;
     };
 
@@ -7323,10 +7380,13 @@ private:
             ? VK_SAMPLER_MIPMAP_MODE_LINEAR
             : VK_SAMPLER_MIPMAP_MODE_NEAREST;
 
+        const VkSamplerAddressMode address = stage0.address == D3DTADDRESS_CLAMP
+            ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT;
         for (const SamplerCacheEntry& entry : m_samplerCache) {
             if (entry.minFilter == filter
                 && entry.magFilter == filter
-                && entry.mipmapMode == mipmapMode) {
+                && entry.mipmapMode == mipmapMode
+                && entry.address == address) {
                 return entry.sampler;
             }
         }
@@ -7336,8 +7396,8 @@ private:
         samplerInfo.magFilter = filter;
         samplerInfo.minFilter = filter;
         samplerInfo.mipmapMode = mipmapMode;
-        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        samplerInfo.addressModeU = address;
+        samplerInfo.addressModeV = address;
         samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         samplerInfo.minLod = 0.0f;
         samplerInfo.maxLod = 0.0f;
@@ -7349,7 +7409,7 @@ private:
             return VK_NULL_HANDLE;
         }
 
-        m_samplerCache.push_back({ filter, filter, mipmapMode, sampler });
+        m_samplerCache.push_back({ filter, filter, mipmapMode, address, sampler });
         return sampler;
     }
 
@@ -7803,6 +7863,19 @@ private:
         const bool hasTexture0 = texture0 && texture0->m_view != VK_NULL_HANDLE && texture0->m_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         const bool hasTexture1 = texture1 && texture1->m_view != VK_NULL_HANDLE && texture1->m_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         constants.flags = BuildModernDrawFlags(vertexFormat, m_pipelineState, hasTexture0, hasTexture1);
+
+        // Bounded live diagnostic for the Heal ring's actual Vulkan draw state.
+        static unsigned healDrawLogs = 0;
+        if (healDrawLogs < 4 && !isLightmap && m_boundTextures[0]
+            && std::strstr(m_boundTextures[0]->m_texName, "alpha_down")
+            && (static_cast<const tlvertex3d*>(vertices)[0].color >> 24) >= 40u) {
+            ++healDrawLogs;
+            const auto& vertex = static_cast<const tlvertex3d*>(vertices)[0];
+            DbgLog("[HealDraw] flags=%u src=%u dst=%u depth=%u write=%u alphaTest=%u texture=%d vertex=(%.2f,%.2f,%.6f) color=%08X\n",
+                constants.flags,static_cast<unsigned>(m_pipelineState.srcBlend),static_cast<unsigned>(m_pipelineState.destBlend),
+                static_cast<unsigned>(m_pipelineState.depthEnable),static_cast<unsigned>(m_pipelineState.depthWriteEnable),
+                static_cast<unsigned>(m_pipelineState.alphaTestEnable),hasTexture0?1:0,vertex.x,vertex.y,vertex.z,vertex.color);
+        }
 
         VkCommandBuffer commandBuffer = GetCurrentCommandBuffer();
         const VkImageView texture0View = hasTexture0 ? texture0->m_view : m_defaultTexture->m_view;
@@ -8311,6 +8384,9 @@ private:
         createInfo.imageExtent = extent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        m_fixtureCaptureSupported=std::getenv("RO_HEAL_PREVIEW_OUT") && (support.capabilities.supportedUsageFlags&VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+        if (m_fixtureCaptureSupported)
+            createInfo.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         if (m_graphicsQueueFamilyIndex != m_presentQueueFamilyIndex) {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             createInfo.queueFamilyIndexCount = 2;
@@ -9379,6 +9455,7 @@ private:
     VkQueue m_presentQueue;
     VkSwapchainKHR m_swapChain;
     VkFormat m_swapChainFormat;
+    bool m_fixtureCaptureSupported=false;
     VkExtent2D m_swapChainExtent;
     VkExtent2D m_sceneExtent{};
     int m_failedSceneRecreateKey = -1;

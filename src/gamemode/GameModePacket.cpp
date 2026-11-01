@@ -1834,6 +1834,10 @@ bool BuildNormalInventoryItem(const PacketView& packet, const u8* entry, ITEM_IN
     outItem.m_isIdentified = entry[5];
     outItem.m_num = ReadLE16(entry + 6);
     outItem.m_wearLocation = ReadLE16(entry + 8);
+    // Stackable ammunition still has an equipment destination (EQP_AMMO).
+    if (outItem.m_itemType == 10 || outItem.m_itemType == 16 || outItem.m_itemType == 17) {
+        outItem.m_location = 0x8000;
+    }
 
     const int entrySizeValue = ro::net::GetActiveStackableItemListEntrySize(packet.packetId);
     if (entrySizeValue <= 0) {
@@ -2488,7 +2492,7 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
     itemInfo.m_wearLocation = 0;
     itemInfo.m_itemType = packet.data[21];
     if (itemInfo.m_itemType == 10 || itemInfo.m_itemType == 16 || itemInfo.m_itemType == 17) {
-        itemInfo.m_wearLocation = 0x8000;
+        itemInfo.m_location = 0x8000;
     }
     if (packet.packetLength >= 27) {
         itemInfo.m_deleteTime = static_cast<int>(ReadLE32(packet.data + 23));
@@ -2684,6 +2688,53 @@ void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
         itemIndex,
         static_cast<unsigned int>(wearLocation),
         result);
+}
+
+void HandleEquipAmmo(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 4) return;
+    const unsigned int itemIndex = ReadLE16(packet.data + 2);
+    g_session.ClearInventoryWearLocationMask(0x8000, itemIndex);
+    if (itemIndex != 0) g_session.SetInventoryItemWearLocation(itemIndex, 0x8000);
+    mode.m_waitingWearEquipAck = 0;
+    DbgLog("[GameMode] ammunition equip ack index=%u\n", itemIndex);
+}
+
+void HandleActionFailure(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 4) return;
+    const unsigned int type = ReadLE16(packet.data + 2);
+    const char* message = nullptr;
+    int color = 16777060;
+    // Ref/GameModePacket.cpp Zc_action_failure, MsgStringTable 242..245.
+    switch (type) {
+    case 0: message = "Please equip the proper ammunition first."; color = 255; break;
+    case 1: message = "You can't Attack or use Skills because your Weight Limit has been exceeded."; break;
+    case 2: message = "You can't use Skills because Weight Limit has been exceeded."; break;
+    case 3:
+        if (g_session.m_playerJob == 12 || g_session.m_playerJob == 4035 || g_session.m_playerJob == 4013)
+            message = "You have equipped throwing daggers.";
+        else if (g_session.m_playerJob == 24) message = "Bullets have been equipped.";
+        else if (g_session.m_playerJob != 25) message = "Ammunition has been equipped.";
+        break;
+    default: return;
+    }
+    if (type <= 2) {
+        // Stop retrying a server-rejected action until the user tries again.
+        mode.m_lastMonGid = 0;
+        mode.m_lastLockOnMonGid = 0;
+        mode.m_hasAttackChaseHint = 0;
+        mode.m_attackChaseTargetGid = 0;
+        mode.m_hasSkillChase = 0;
+        mode.m_hasGroundSkillChase = 0;
+        if (mode.m_world && mode.m_world->m_player) {
+            CPlayer* player = mode.m_world->m_player;
+            player->m_targetGid = 0;
+            player->m_proceedTargetGid = 0;
+        }
+    }
+    if (message) g_windowMgr.SendMsg(kUiChatEventMsg, reinterpret_cast<msgparam_t>(message), color);
+    DbgLog("[GameMode] action failure type=%u message='%s'\n", type, message ? message : "");
 }
 
 void HandleUnequipItemAck(CGameMode& mode, const PacketView& packet)
@@ -4452,6 +4503,14 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    // Modern servers can announce a zero-time cast before checking ammunition.
+    // The cast announcement is not a successful use: wait for the skill result
+    // to animate instant local skills. Real timed casts keep their wind-up.
+    if (castTimeMs <= 0 && mode.m_world && sourceActor == mode.m_world->m_player) {
+        DbgLog("[GameMode] instant cast announcement deferred src=%u skill=%u\n", srcGid, skillId);
+        return;
+    }
+
     int beginEffectId = 16;
     int motionType = 8;
     GetSkillActionInfo2(static_cast<int>(skillId), beginEffectId, motionType, static_cast<int>(property), sourceActor->m_job);
@@ -4972,6 +5031,9 @@ void PlaceSkillUnit(CGameMode& mode, u32 unitAid, u32 creatorAid, int job, int c
         mode.m_world->m_gameObjectList.push_back(skill);
         mode.m_world->m_skillList.push_back(skill);
     }
+    // Modern rAthena owns this unit's lifetime through ZC_SKILL_DISAPPEAR.
+    // The legacy three-second fire-wall timer applies only to synthetic units.
+    skill->m_serverOwnedUnit = true;
     SkillStandEntry entry;
     entry.aid = unitAid;
     entry.creatorAid = creatorAid;
@@ -5238,6 +5300,23 @@ void HandleShowImage(CGameMode& mode, const PacketView& packet)
     if (imageType == 255) {
         imageType = -1;
     }
+    mode.SendMsg(113, reinterpret_cast<msgparam_t>(imageName), imageType, 0);
+}
+
+void HandleShowImage2(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 67) {
+        return;
+    }
+
+    char imageName[65]{};
+    std::memcpy(imageName, packet.data + 2, 64);
+    imageName[64] = '\0';
+    int imageType = packet.data[66];
+    if (imageType == 255) {
+        imageType = -1;
+    }
+    DbgLog("[GameMode] show image2 name='%s' type=%d\n", imageName, imageType);
     mode.SendMsg(113, reinterpret_cast<msgparam_t>(imageName), imageType, 0);
 }
 
@@ -6837,51 +6916,6 @@ void ApplyRuntimeActorFixPosition(CGameMode& mode, u32 gid, int tileX, int tileY
     actor->ReapplyConcealmentVisibility();
 }
 
-bool FindPathCellIndex(const CPathInfo& path, int tileX, int tileY, size_t* outIndex)
-{
-    if (!outIndex) {
-        return false;
-    }
-
-    for (size_t index = 0; index < path.m_cells.size(); ++index) {
-        if (path.m_cells[index].x == tileX && path.m_cells[index].y == tileY) {
-            *outIndex = index;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool ShouldIgnoreRedundantLocalFixPosition(const CGameActor& actor, int tileX, int tileY, size_t* outFixIndex, size_t* outActiveIndex)
-{
-    if (!actor.m_isMoving || actor.m_path.m_cells.size() < 2) {
-        return false;
-    }
-
-    size_t fixIndex = 0;
-    if (!FindPathCellIndex(actor.m_path, tileX, tileY, &fixIndex)) {
-        return false;
-    }
-
-    size_t activeIndex = 0;
-    if (!FindActivePathSegmentForPacketView(actor.m_path, g_session.GetServerTime(), &activeIndex)) {
-        return false;
-    }
-
-    if (outFixIndex) {
-        *outFixIndex = fixIndex;
-    }
-    if (outActiveIndex) {
-        *outActiveIndex = activeIndex;
-    }
-
-    // Treat fixpos as correction only when it is meaningfully ahead of the
-    // client's current path progress. If the packet lands on or behind the
-    // current segment, keep local motion to avoid visible step-back jitter.
-    return fixIndex <= activeIndex + 1;
-}
-
 void RemoveRuntimeActor(CGameMode& mode, u32 gid)
 {
     mode.m_actorPosList.erase(gid);
@@ -7980,14 +8014,8 @@ void HandleActorSetPosition(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    if (IsLocalPlayerActor(mode, gid)) {
-        size_t fixIndex = 0;
-        size_t activeIndex = 0;
-        if (ShouldIgnoreRedundantLocalFixPosition(*actor, x, y, &fixIndex, &activeIndex)) {
-            return;
-        }
-    }
-
+    // ZC_STOPMOVE is authoritative even on the current/previous path cell.
+    // rAthena sends it before casting; dropping it leaves the old walk alive.
     mode.m_lastPcGid = gid;
     mode.m_aidList[gid] = GetTickCount();
     mode.m_actorPosList[gid] = CellPos{x, y};
@@ -8572,6 +8600,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0191, HandleTalkboxChatContents);
     router.Register(0x01B4, HandleChangeGuild);
     router.Register(0x0145, HandleShowImage);
+    router.Register(0x01B3, HandleShowImage2);
     router.Register(0x0162, HandleGuildSkillInfo);
     router.Register(0x01CD, HandleAutoSpellList);
     RegisterHandlerIfValid(router, receiveProfile.itemRemoveExtended, HandleItemRemove);
@@ -8591,6 +8620,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00C0, HandleIgnorePacket);
     router.Register(0x0101, HandlePartyOptionChanged);
     router.Register(0x013D, HandleRecovery);
+    router.Register(0x013B, HandleActionFailure);
+    router.Register(0x013C, HandleEquipAmmo);
     router.Register(0x013E, HandleSkillCastAck);
     router.Register(0x01B0, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.partyHpUpdateBasic, HandlePartyHpUpdate);

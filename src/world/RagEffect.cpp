@@ -41,6 +41,29 @@ constexpr float kPi = 3.14159265f;
 constexpr float kEffectTickMs = 24.0f;
 constexpr float kEffectPixelRatioScale = 0.14285715f;
 constexpr float kEffectSpriteDepthBias = 0.0002f;
+// Keep ground VFX in front of model floors without moving the floor's depth
+// relative to GND. Scope this to a primitive render so other effects retain
+// their scene occlusion, including when a renderer returns early.
+constexpr float kGroundVisualDepthBias = 0.0006f;
+thread_local float g_groundVisualDepthBias = 0.0f;
+thread_local float g_groundVisualDepthOffset = 0.0f;
+struct GroundVisualDepthScope {
+    float previous;
+    float previousWorldOffset;
+    explicit GroundVisualDepthScope(bool groundVisual, float worldDepthOffset = 0.0f)
+        : previous(g_groundVisualDepthBias), previousWorldOffset(g_groundVisualDepthOffset)
+    {
+        g_groundVisualDepthBias = groundVisual ? kGroundVisualDepthBias : 0.0f;
+        g_groundVisualDepthOffset = worldDepthOffset;
+    }
+    ~GroundVisualDepthScope()
+    {
+        g_groundVisualDepthBias = previous;
+        g_groundVisualDepthOffset = previousWorldOffset;
+    }
+};
+
+
 constexpr float kWaterfallSegmentHeight = 40.0f;
 constexpr int kWaterfallVisibleSegments = 5;
 constexpr int kWaterfallTextureCycle = 3;
@@ -228,7 +251,9 @@ bool ProjectPoint(const vector3d& point, const matrix& viewMatrix, tlvertex3d* o
     outVertex->x = g_renderer.m_xoffset + projectedX * g_renderer.m_hpc * oow;
     outVertex->y = g_renderer.m_yoffset + projectedY * g_renderer.m_vpc * oow;
     const float depth = (1500.0f / (1500.0f - kNearPlane)) * ((1.0f / oow) - kNearPlane) * oow;
-    outVertex->z = (std::min)(1.0f, (std::max)(0.0f, depth));
+    const float worldDepthBias = (1500.0f / (1500.0f - kNearPlane)) * kNearPlane
+        * g_groundVisualDepthOffset * oow * oow;
+    outVertex->z = (std::min)(1.0f, (std::max)(0.0f, depth - g_groundVisualDepthBias - worldDepthBias));
     outVertex->oow = oow;
     outVertex->specular = 0xFF000000u;
     return std::isfinite(outVertex->x) && std::isfinite(outVertex->y) && std::isfinite(outVertex->z);
@@ -757,13 +782,11 @@ void SubmitTeiHit1Rect(const vector3d corners[4], const vector3d& translation,
 }
 
 void SubmitCloudRect(const vector3d corners[4], const matrix& viewMatrix, CTexture* texture,
-    unsigned int color, int texturePart, bool reverse, bool inverseSourceAlpha, int renderFlags)
+    unsigned int color, bool reverse, bool inverseSourceAlpha, int renderFlags)
 {
     if (!texture || texture == &CTexMgr::s_dummy_texture) {
         return;
     }
-    const float frame0 = static_cast<float>(static_cast<double>(texturePart) * 0.047619049);
-    const float frame1 = static_cast<float>(static_cast<double>(texturePart + 1) * 0.047619049);
     const int order[2][4] = { { 0, 1, 2, 3 }, { 1, 0, 3, 2 } };
     const int* indices = order[reverse ? 1 : 0];
     const vector3d positions[2][3] = {
@@ -771,8 +794,8 @@ void SubmitCloudRect(const vector3d corners[4], const matrix& viewMatrix, CTextu
         { corners[indices[3]], corners[indices[2]], corners[indices[0]] },
     };
     const float uvs[2][3][2] = {
-        { { 1.0f, frame0 }, { 1.0f, frame1 }, { 0.0f, frame1 } },
-        { { 0.0f, frame0 }, { 0.0f, frame1 }, { 1.0f, frame0 } },
+        { { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } },
+        { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f } },
     };
     for (int triangle = 0; triangle < 2; ++triangle) {
         RPFace* face = g_renderer.BorrowNullRP();
@@ -1178,8 +1201,6 @@ bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)
         if (latitudeAngle >= 360) latitudeAngle = static_cast<short>(latitudeAngle - 360);
         second.alphaT = latitudeAngle;
     }
-    if (prim->m_master) prim->m_pos = prim->m_master->ResolveBasePosition();
-
     for (EffectGi& gi : prim->m_gi) {
         if (gi.life != 1) continue;
         if (gi.height[7] < 99.0f) {
@@ -2081,6 +2102,9 @@ void ProjectReferenceEffectVertex(const vector3d& point, const matrix& view, tlv
         + static_cast<double>(view.m[1][1]) * point.y + static_cast<double>(view.m[0][1]) * point.x + view.m[3][1])
         * g_renderer.m_vpc * vertex.oow + g_renderer.m_halfHeight);
     vertex.z = static_cast<float>(1500.0 / (1500.0 - 10.0) * (1.0 / vertex.oow - 10.0) * vertex.oow);
+    const float worldDepthBias = (1500.0f / (1500.0f - 10.0f)) * 10.0f
+        * g_groundVisualDepthOffset * vertex.oow * vertex.oow;
+    vertex.z = (std::max)(0.0f, vertex.z - g_groundVisualDepthBias - worldDepthBias);
 }
 
 void SubmitReferenceEffectTriangle(const vector3d (&points)[3], const matrix& view,
@@ -3745,6 +3769,7 @@ void RenderHealCasting(const CEffectPrim& prim, const matrix& viewMatrix)
         }
 
         const int basicAngle = gi.fullDisplayAngle / 20;
+        if (basicAngle <= 0) continue;
         int count = 0;
         int sample = 0;
         bool havePrevious = false;
@@ -8599,7 +8624,7 @@ void RenderReferenceCloud(CEffectPrim& prim, const matrix& viewMatrix)
             continue;
         }
         const unsigned int color=(static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB))<<24)|style.rgb;
-        SubmitCloudRect(corners,viewMatrix,texture,color,style.texturePart,style.reverse,gi.flag[0]!=0,
+        SubmitCloudRect(corners,viewMatrix,texture,color,style.reverse,gi.flag[0]!=0,
             static_cast<int>(prim.m_renderFlag));
     }
 }
@@ -12857,7 +12882,7 @@ bool CEffectPrim::UsesReferenceScreenQuad() const
 
 bool CEffectPrim::UsesReferenceParticle() const
 {
-    return m_type == PP_KOUENKA || m_type == PP_SUPERANGEL
+    return m_type == PP_CHIMTO || m_type == PP_KOUENKA || m_type == PP_SUPERANGEL
         || (m_type == PP_3DPARTICLEGRAVITY && m_master
             && (m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
@@ -13518,6 +13543,18 @@ void RenderChookGi(CEffectPrim& prim, const matrix& viewMatrix)
 
 void CEffectPrim::Render(matrix* viewMatrix)
 {
+    const bool level99GroundRing = m_type == PP_3DAURA && m_master != nullptr
+        && (m_master->GetEffectType() == 201 || m_master->GetEffectType() == 398 || m_master->GetEffectType() == 680);
+    const GroundVisualDepthScope groundDepth(
+        (m_type == PP_3DAURA && !level99GroundRing) || m_type == PP_3DAURA_2
+        || m_type == PP_MAPMAGICZONE || m_type == PP_GROUNDSHAKE
+        || m_type == PP_LANDPROTECTOR || m_type == PP_FOOT
+        || m_type == PP_3DCASTING_4 || m_type == PP_3DCASTING_5
+        || m_type == PP_PORTAL
+        || m_type == PP_HEAL || m_type == PP_HEAL_LOW
+        || (m_type == PP_3DCIRCLE && std::fabs(m_latitude - 90.0f) <= 0.5f),
+        level99GroundRing ? 0.5f : 0.0f);
+
     if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER && m_type != PP_MAPPARTICLE
         && m_type != PP_PEONG && m_type != PP_PEONGUP
         && m_type != PP_SOULBREAKER && m_type != PP_SOULBREAKER2) || !viewMatrix) {
@@ -13651,7 +13688,19 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if ((m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)
         || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeTeleport2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi2)) && !UsesLegacyBandPayload()) {
+        const size_t queuedBefore = g_renderer.m_rpAlphaOPList.size();
         RenderHealCasting(*this, *viewMatrix);
+        if (m_type == PP_HEAL && m_stateCnt == 8) {
+            static int healRenderLogs = 0;
+            if (healRenderLogs++ < 8) {
+                DbgLog("[HealRender] effect=%d state=%d bands=%u/%u alpha=%d height=%.2f texture=%d faces=%u pos=(%.2f,%.2f,%.2f)\n",
+                    m_master ? m_master->GetEffectType() : -1, m_stateCnt,
+                    static_cast<unsigned>(m_gi[0].life), static_cast<unsigned>(m_gi[1].life),
+                    static_cast<int>(m_gi[0].alphaB), m_gi[0].height[10],
+                    !m_texture.empty() && m_texture[0] && m_texture[0] != &CTexMgr::s_dummy_texture ? 1 : 0,
+                    static_cast<unsigned>(g_renderer.m_rpAlphaOPList.size()-queuedBefore),m_pos.x,m_pos.y,m_pos.z);
+            }
+        }
         return;
     }
     if (m_type == PP_GI_3) {
@@ -15622,6 +15671,9 @@ void CRagEffect::SpawnWeatherCloud()
             continue;
         }
 
+        // The reference Cloud emitter launches PP_CLOUD at the origin; its
+        // GI positions already contain the player's world X/Z coordinates.
+        prim->m_pos = {};
         prim->m_renderFlag = 5u;
         prim->m_duration = m_duration;
         prim->m_totalTexture = 3;
@@ -16304,7 +16356,8 @@ void CRagEffect::SpawnSummonSlave()
             prim->m_texture.push_back(g_texMgr.GetTexture("EFFECT\\alpha_center.tga", false));
         }
     } else if (m_stateCnt == 35 && master) {
-        master->SendMsg(nullptr, 0, 63, 0, 0);
+        // Ref's explicit first argument is `this`; sender=0, message=63.
+        master->SendMsg(nullptr, 63, 0, 0, 0);
     }
 }
 
@@ -21361,9 +21414,9 @@ bool CRagEffect::ProcessTanji(bool tanji2)
     gi.distance = static_cast<float>(static_cast<double>(m_count) * 0.40000001 + 2.0);
     gi.height[8] = 0.0f;
     gi.alphaB = 5;
-    gi.vecTNowX = m_effectPos.x;
-    gi.vecTNowY = m_effectPos.y - 8.0f;
-    gi.vecTNowZ = m_effectPos.z;
+    gi.sparkX = m_effectPos.x;
+    gi.sparkY = m_effectPos.y - 8.0f;
+    gi.sparkZ = m_effectPos.z;
     gi.rotStart = 0;
     gi.height[1] = 2.0f;
     gi.height[2] = (m_deltaPos.y - m_effectPos.y) * (gi.height[1] / horizontalDistance);
@@ -27270,7 +27323,12 @@ u8 CRagEffect::OnProcess()
     }
     m_cachedPos = master->m_pos;
     m_longitude = master->m_roty;
-    if (!EffectTicksWhenNoFrameTime(m_type) && !g_isSkipFrame) {
+    // The rising Heal bands are logic-ticked primitives. Their parent must use
+    // the same clock: at high render FPS, advancing the parent on render-only
+    // frames deletes the bands before they have grown above the caster's feet.
+    const bool risingHeal=m_type==312||m_type==313||m_type==325;
+    const bool groundUnit = dynamic_cast<CSkill*>(master) != nullptr;
+    if ((!EffectTicksWhenNoFrameTime(m_type) || risingHeal || groundUnit) && !g_isSkipFrame) {
         return 1;
     }
     if (g_isSkipFrame > 0 && master->m_BeZero == 1) {

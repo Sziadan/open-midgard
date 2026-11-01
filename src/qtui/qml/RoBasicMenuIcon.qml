@@ -1,167 +1,30 @@
 import QtQuick 2.15
 
-Canvas {
-    id: canvas
-
+Item {
+    id: glyph
     property string icon: ""
-    property color ink: "#1c1914"
-    property color paper: "#f7f1e6"
-
-    onIconChanged: requestPaint()
-    onInkChanged: requestPaint()
-    onPaperChanged: requestPaint()
-    onWidthChanged: requestPaint()
-    onHeightChanged: requestPaint()
-    Component.onCompleted: requestPaint()
-
-    onPaint: {
-        const ctx = getContext("2d")
-        ctx.clearRect(0, 0, width, height)
-        if (!icon || width < 4 || height < 4) {
-            return
-        }
-
-        const span = Math.min(width, height) - 2
-        const originX = (width - span) / 2
-        const originY = (height - span) / 2
-        function px(unit) { return originX + unit / 16 * span }
-        function py(unit) { return originY + unit / 16 * span }
-        function dot(unitX, unitY, radius) {
-            ctx.beginPath()
-            ctx.arc(px(unitX), py(unitY), radius, 0, Math.PI * 2)
-            ctx.fill()
-        }
-
-        ctx.strokeStyle = ink
-        ctx.fillStyle = ink
-        ctx.lineWidth = Math.max(1.15, span / 14)
-        ctx.lineCap = "round"
-        ctx.lineJoin = "round"
-
-        if (icon === "status") {
-            dot(8, 4.6, span * 0.16)
-            ctx.beginPath()
-            ctx.moveTo(px(3.1), py(14.6))
-            ctx.quadraticCurveTo(px(8), py(8.2), px(12.9), py(14.6))
-            ctx.closePath()
-            ctx.fill()
-        } else if (icon === "option") {
-            const rows = [4.1, 8, 11.9]
-            const knobs = [10.6, 5.2, 8.4]
-            for (let index = 0; index < rows.length; ++index) {
-                ctx.beginPath()
-                ctx.moveTo(px(2.3), py(rows[index]))
-                ctx.lineTo(px(13.7), py(rows[index]))
-                ctx.stroke()
-                dot(knobs[index], rows[index], span * 0.13)
-                ctx.fillStyle = paper
-                dot(knobs[index], rows[index], span * 0.055)
-                ctx.fillStyle = ink
-            }
-        } else if (icon === "items") {
-            ctx.beginPath()
-            ctx.moveTo(px(5.8), py(6.1))
-            ctx.quadraticCurveTo(px(8), py(2.4), px(10.2), py(6.1))
-            ctx.stroke()
-            ctx.beginPath()
-            ctx.moveTo(px(4.2), py(6.4))
-            ctx.lineTo(px(11.8), py(6.4))
-            ctx.quadraticCurveTo(px(13.6), py(6.4), px(13.6), py(8.2))
-            ctx.lineTo(px(13.6), py(12.6))
-            ctx.quadraticCurveTo(px(13.6), py(14.4), px(11.8), py(14.4))
-            ctx.lineTo(px(4.2), py(14.4))
-            ctx.quadraticCurveTo(px(2.4), py(14.4), px(2.4), py(12.6))
-            ctx.lineTo(px(2.4), py(8.2))
-            ctx.quadraticCurveTo(px(2.4), py(6.4), px(4.2), py(6.4))
-            ctx.closePath()
-            ctx.fill()
-            ctx.strokeStyle = paper
-            ctx.beginPath()
-            ctx.moveTo(px(3.2), py(9.1))
-            ctx.lineTo(px(12.8), py(9.1))
-            ctx.stroke()
-        } else if (icon === "equip") {
-            ctx.beginPath()
-            ctx.moveTo(px(8), py(2.1))
-            ctx.lineTo(px(13.3), py(4.7))
-            ctx.lineTo(px(13.3), py(8.5))
-            ctx.quadraticCurveTo(px(13.3), py(12.1), px(8), py(14.5))
-            ctx.quadraticCurveTo(px(2.7), py(12.1), px(2.7), py(8.5))
-            ctx.lineTo(px(2.7), py(4.7))
-            ctx.closePath()
-            ctx.fill()
-            ctx.strokeStyle = paper
-            ctx.beginPath()
-            ctx.moveTo(px(8), py(5.2))
-            ctx.lineTo(px(8), py(11.4))
-            ctx.moveTo(px(5.4), py(7.4))
-            ctx.lineTo(px(10.6), py(7.4))
-            ctx.stroke()
-        } else if (icon === "skill") {
-            ctx.beginPath()
-            ctx.moveTo(px(8), py(4.4))
-            ctx.lineTo(px(4.1), py(11.4))
-            ctx.moveTo(px(8), py(4.4))
-            ctx.lineTo(px(11.9), py(11.4))
-            ctx.moveTo(px(4.1), py(11.4))
-            ctx.lineTo(px(11.9), py(11.4))
-            ctx.stroke()
-            dot(8, 4.2, span * 0.13)
-            dot(4.1, 11.6, span * 0.13)
-            dot(11.9, 11.6, span * 0.13)
-            dot(8, 8.2, span * 0.1)
-        } else if (icon === "map") {
-            ctx.beginPath()
-            ctx.moveTo(px(2.3), py(3.1))
-            ctx.lineTo(px(10.1), py(3.1))
-            ctx.lineTo(px(13.7), py(6.5))
-            ctx.lineTo(px(13.7), py(13.7))
-            ctx.lineTo(px(2.3), py(13.7))
-            ctx.closePath()
-            ctx.stroke()
-            ctx.beginPath()
-            ctx.moveTo(px(10.1), py(3.1))
-            ctx.lineTo(px(10.1), py(6.5))
-            ctx.lineTo(px(13.7), py(6.5))
-            ctx.stroke()
-            dot(7.1, 8.3, span * 0.12)
-            ctx.beginPath()
-            ctx.moveTo(px(7.1), py(9.3))
-            ctx.lineTo(px(7.1), py(12.2))
-            ctx.stroke()
-        } else if (icon === "comm") {
-            ctx.beginPath()
-            ctx.moveTo(px(4.2), py(2.4))
-            ctx.lineTo(px(11.8), py(2.4))
-            ctx.quadraticCurveTo(px(13.8), py(2.4), px(13.8), py(4.4))
-            ctx.lineTo(px(13.8), py(8.2))
-            ctx.quadraticCurveTo(px(13.8), py(10.2), px(11.8), py(10.2))
-            ctx.lineTo(px(7.4), py(10.2))
-            ctx.lineTo(px(3.6), py(13.6))
-            ctx.lineTo(px(4.6), py(10.2))
-            ctx.lineTo(px(4.2), py(10.2))
-            ctx.quadraticCurveTo(px(2.2), py(10.2), px(2.2), py(8.2))
-            ctx.lineTo(px(2.2), py(4.4))
-            ctx.quadraticCurveTo(px(2.2), py(2.4), px(4.2), py(2.4))
-            ctx.closePath()
-            ctx.fill()
-            ctx.fillStyle = paper
-            dot(6.2, 6.3, span * 0.055)
-            dot(8.1, 6.3, span * 0.055)
-            dot(10, 6.3, span * 0.055)
-        } else if (icon === "friend") {
-            function person(centerX, headY) {
-                dot(centerX, headY, span * 0.13)
-                ctx.beginPath()
-                ctx.moveTo(px(centerX - 2.7), py(14.6))
-                ctx.quadraticCurveTo(px(centerX), py(headY + 2.4), px(centerX + 2.7), py(14.6))
-                ctx.closePath()
-                ctx.fill()
-            }
-            ctx.globalAlpha = 0.55
-            person(10.4, 5.1)
-            ctx.globalAlpha = 1
-            person(6.2, 4.6)
-        }
+    property color ink: "#25313c"
+    property color paper: "#fafaf8"
+    readonly property real rasterScale: typeof uiState !== "undefined" ? Math.max(1, uiState.uiScale || 1) : 1
+    readonly property var paths: ({
+        close: '<path d="m4 4 8 8M12 4l-8 8"/>',
+        minimize: '<path d="M3 9h10"/>',
+        expand: '<path d="m3 5 5 5 5-5"/>',
+        status: '<rect x="1" y="2" width="14" height="12" rx="1.5"/><circle cx="5" cy="6" r="1.5"/><path d="M3 12v-1a2 2 0 0 1 4 0v1M10 5h3M10 8h3M10 11h2"/>',
+        option: '<path d="m6.5 1-.4 1.8-1.5.9-1.8-.6-1.5 2.6 1.4 1.2v1.9l-1.4 1.3 1.5 2.6 1.8-.6 1.5.9.4 1.8h3l.4-1.8 1.5-.9 1.8.6 1.5-2.6-1.4-1.3V6.9l1.4-1.2-1.5-2.6-1.8.6-1.5-.9L9.5 1z"/><circle cx="8" cy="8" r="2.3"/>',
+        items: '<path d="M5 3V1.5h6V3M3 14V6c0-4 10-4 10 0v8zM3 6l5 2 5-2"/><rect x="5" y="10" width="6" height="3" rx=".5"/>',
+        equip: '<path d="m5 1.5 1.5 1.5h3L11 1.5 15 5l-2.5 3-1-1v7.5h-7V7l-1 1L1 5zM6 5l2 1 2-1M6 12h4"/>',
+        skill: '<path d="m8 4-3-1-4 .3v10L5 13l3 1 3-1 4 .3v-10L11 3zM8 4v10M3 6l2.5.5M3 9l2.5.5M11.5 5.5v5M9.5 8h4"/>',
+        map: '<path d="m1 3.5 4.5-2 4.5 2 5-2v11l-5 2-4.5-2-4.5 2zM5.5 2v10"/><path d="M7.5 7a2.5 2.5 0 0 1 5 0c0 1.5-2.5 4-2.5 4S7.5 8.5 7.5 7z" fill="PAPER"/><circle cx="10" cy="7" r=".6"/>',
+        comm: '<path d="M5 5V1.5h10V9h-3M1 5h10v7H6l-4 3v-3H1zM3.5 8.5h.1M6 8.5h.1M8.5 8.5h.1"/>',
+        friend: '<circle cx="5" cy="5" r="2"/><circle cx="11.5" cy="6" r="1.5"/><path d="M1 14v-2c0-4 8-4 8 0v2M11 10c3-.5 4 1.5 4 4M10 1h4v2"/>'
+    })
+    Image {
+        anchors.fill: parent
+        sourceSize: Qt.size(Math.ceil(width * glyph.rasterScale), Math.ceil(height * glyph.rasterScale))
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+        source: !glyph.paths[glyph.icon] ? "" : "data:image/svg+xml;utf8," + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 18 18"><g fill="none" stroke="' + glyph.ink + '" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">' + glyph.paths[glyph.icon].replace('PAPER', glyph.paper) + '</g></svg>')
     }
 }

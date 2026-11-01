@@ -21,6 +21,7 @@ std::string ResolveTexturePath(const char* name);
 
 // Actor, item, arrow, and floating-text sprites. Ground and effects stay on mode 0.
 constexpr int kSpriteTextureMode = 4;
+constexpr int kClampedGroundTextureMode = 5;
 
 struct tlvertex3d {
     float x, y, z;

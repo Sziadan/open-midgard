@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.20)
+project(QtGuiPreview LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_AUTOMOC ON)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Quick Qml)
+add_executable(gui_preview main.cpp ../../src/qtui/QtUiState.h ../../src/ui/SkillTreeModel.cpp)
+target_link_libraries(gui_preview PRIVATE Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml)

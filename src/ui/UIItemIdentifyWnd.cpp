@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIItemIdentifyWnd.h"
 
 #include "gamemode/GameMode.h"
@@ -12,7 +13,7 @@
 namespace {
 constexpr int kWindowWidth = 244;
 constexpr int kWindowHeight = 221;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kCloseButtonSize = 12;
 constexpr int kPadding = 8;
 constexpr int kListTop = 27;

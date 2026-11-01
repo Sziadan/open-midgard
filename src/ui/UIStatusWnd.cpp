@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIStatusWnd.h"
 
 #include "render/DC.h"
@@ -37,7 +38,7 @@ namespace {
 constexpr int kWindowWidth = 280;
 constexpr int kWindowHeight = 120;
 constexpr int kMiniHeight = 17;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kBodyHeight = 103;
 constexpr int kButtonIdBase = 134;
 constexpr int kButtonIdClose = 135;

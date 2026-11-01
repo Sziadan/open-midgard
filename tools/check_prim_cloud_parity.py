@@ -38,12 +38,12 @@ check("Ref and executable updater bodies are identical",
       re.sub(r"\s+", " ", ref) == re.sub(r"\s+", " ", exe))
 check("canonical executable PP_CLOUD update route",
       re.search(r"case 0x21:\s*CEffectPrim::PrimCloud\(this\);", dispatch) is not None)
-check("view angle writes and master position refresh match source",
+check("view angle writes match source and cloud bands retain source world coordinates",
       "v1->m_GI[0].alphaT = 360 - (__int64)m_view->m_cur.longitude" in ref
       and "v3 = 450 - (__int64)m_view->m_cur.latitude" in ref
       and "first.alphaT = static_cast<short>(360 - static_cast<int>(mode->m_view->GetCameraLongitude()))" in impl
       and "second.alphaT = latitudeAngle" in impl
-      and "prim->m_pos = prim->m_master->ResolveBasePosition()" in impl)
+      and "prim->m_pos = prim->m_master->ResolveBasePosition()" not in impl)
 check("four live GI bands and alpha-at-99 fast path",
       "v35 = 4" in ref and "p_alphaB += 90" in ref
       and "for (EffectGi& gi : prim->m_gi)" in impl

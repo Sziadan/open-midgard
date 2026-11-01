@@ -224,6 +224,8 @@ constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
 #include "CircleRenderBodies.inc"
 #include "CastingColorBodies.inc"
 #include "CastingLowRiseBody.inc"
+u32 FloatBits(float value){u32 bits=0;std::memcpy(&bits,&value,sizeof(bits));return bits;}
+#include "HealCastingRendererBody.inc"
 #include "ElectricPathBody.inc"
 #include "Electric2PathBody.inc"
 #include "WindSampleBody.inc"
@@ -718,6 +720,34 @@ int main() {
     for(const auto& item:castingColors) check(CastingSizeRgb(item.first)==item.second,"casting size tint matches original RenderTeiRect case table");
     check(CastingSizeAlpha(2,175)==175 && CastingSizeAlpha(3,175)==80,
         "casting size three fixes alpha to80 while other sizes retain band alpha");
+    {
+        CEffectPrim heal;CTexture texture;matrix view;
+        heal.m_size=9;heal.m_renderFlag=5;heal.m_pos={10,20,30};heal.m_texture.push_back(&texture);
+        for(int band=0;band<2;++band) {
+            auto& gi=heal.m_gi[band];gi.life=1;gi.fullDisplayAngle=360;
+            gi.rotStart=band*90;gi.riseAngle=90;gi.distance=4.6f+band*0.2f;
+            gi.alphaB=60;gi.maxHeight=40;gi.height.fill(20);
+        }
+        airTextureQuadCalls.clear();RenderHealCasting(heal,view);
+        bool visible=airTextureQuadCalls.size()==38;
+        for(const auto& quad:airTextureQuadCalls)visible=visible&&quad.texture==&texture
+            &&quad.color==0x3C8CD28Cu&&quad.flags==5&&quad.blend==D3DBLEND_ONE
+            &&std::isfinite(quad.c.y)&&quad.a.y==20&&near(quad.c.y,0)
+            &&quad.u1>quad.u0&&quad.vBottom==1&&quad.vTop==0;
+        check(visible,"Heal renders both live rising bands with visible green alpha and nondegenerate geometry");
+        airTextureQuadCalls.clear();
+        CEffectPrim cast=heal;cast.m_size=0;
+        for(int band=0;band<4;++band) {
+            auto& gi=cast.m_gi[band];gi.life=1;gi.fullDisplayAngle=band==3?360:315;
+            gi.riseAngle=70;gi.maxHeight=25;gi.distance=5;gi.alphaB=60;gi.height.fill(20);
+        }
+        RenderHealCasting(cast,view);
+        bool casting=airTextureQuadCalls.size()==79;
+        for(const auto& quad:airTextureQuadCalls)casting=casting&&quad.u1>quad.u0
+            &&quad.vBottom==1&&quad.vTop==0&&quad.color==0x3CFFFFFFu&&quad.blend==D3DBLEND_INVSRCALPHA;
+        check(casting,"White casting rings preserve the established band sampling and texture orientation");
+        airTextureQuadCalls.clear();
+    }
     for(const auto& item:std::array<std::pair<int,float>,4>{{{0,100.0f},{22,10.0f},{45,5.0f},{90,3.0f}}}) {
         double radialExtended=0;float radialStored=0,vertical=0;
         CastingLowPolygonRise(item.first,item.second,&radialExtended,&radialStored,&vertical);

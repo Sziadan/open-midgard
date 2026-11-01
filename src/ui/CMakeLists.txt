@@ -1,4 +1,10 @@
 add_library(ro_ui STATIC
+    SkillTreeModel.h
+    SkillTreeModel.cpp
+    QtSkillTree.h
+    QtSkillTree.cpp
+    UiMetrics.h
+    BasicInfoLayout.h
     GuildSkillWndRows.h
     GuildSkillWndRows.cpp
     UISpellListWnd.h

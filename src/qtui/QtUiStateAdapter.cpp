@@ -153,6 +153,7 @@ void ClearGameplayUiState(QtUiState* state)
     state->setShortCutVisible(false);
     state->setShortCutGeometry(0, 0, 0, 0);
     state->setShortCutPage(0);
+    state->setShortCutRows(1);
     state->setShortCutHoverSlot(-1);
     state->setShortCutSlots(QVariantList{});
 
@@ -1570,6 +1571,7 @@ void PopulateShortCutState(QtUiState* state)
     if (!visible) {
         state->setShortCutGeometry(0, 0, 0, 0);
         state->setShortCutPage(0);
+        state->setShortCutRows(1);
         state->setShortCutHoverSlot(-1);
         state->setShortCutSlots(QVariantList{});
         return;
@@ -1577,23 +1579,35 @@ void PopulateShortCutState(QtUiState* state)
 
     state->setShortCutGeometry(shortCutWnd->m_x, shortCutWnd->m_y, shortCutWnd->m_w, shortCutWnd->m_h);
     state->setShortCutPage(g_session.GetShortcutPage() + 1);
+    state->setShortCutRows(shortCutWnd->GetVisibleRowCount());
     state->setShortCutHoverSlot(shortCutWnd->GetHoverSlot());
 
     QVariantList shortcutSlots;
-    shortcutSlots.reserve(kShortcutSlotsPerPage);
-    for (int slotIndex = 0; slotIndex < kShortcutSlotsPerPage; ++slotIndex) {
+    shortcutSlots.reserve(kShortcutSlotCount);
+    for (int slotIndex = 0; slotIndex < kShortcutSlotCount; ++slotIndex) {
+        const int row = slotIndex / kShortcutSlotsPerPage;
+        const int column = slotIndex % kShortcutSlotsPerPage;
+        const int page = row;
+        const int absoluteIndex = page * kShortcutSlotsPerPage + column;
         QVariantMap slotEntry;
         slotEntry.insert(QStringLiteral("index"), slotIndex);
+        slotEntry.insert(QStringLiteral("row"), row);
+        slotEntry.insert(QStringLiteral("column"), column);
         slotEntry.insert(QStringLiteral("hover"), shortCutWnd->GetHoverSlot() == slotIndex);
 
-        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(slotIndex);
+        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByAbsoluteIndex(absoluteIndex);
         if (slot && slot->id != 0) {
             slotEntry.insert(QStringLiteral("occupied"), true);
             slotEntry.insert(QStringLiteral("isSkill"), slot->isSkill != 0);
             slotEntry.insert(QStringLiteral("skillId"), slot->isSkill != 0 ? static_cast<int>(slot->id) : 0);
             slotEntry.insert(QStringLiteral("itemId"), slot->isSkill != 0 ? 0u : slot->id);
             slotEntry.insert(QStringLiteral("label"), ResolveShortcutSlotLabel(slot));
-            slotEntry.insert(QStringLiteral("count"), static_cast<int>(slot->count));
+            int count = static_cast<int>(slot->count);
+            if (slot->isSkill) {
+                const auto* learned = g_session.GetSkillItemBySkillId(static_cast<int>(slot->id));
+                count = learned && learned->level > 0 ? std::clamp(count > 0 ? count : learned->level, 1, learned->level) : 0;
+            }
+            slotEntry.insert(QStringLiteral("count"), count);
         } else {
             slotEntry.insert(QStringLiteral("occupied"), false);
             slotEntry.insert(QStringLiteral("isSkill"), false);
@@ -2504,6 +2518,9 @@ void PopulateSkillListState(QtUiState* state)
 
     state->setSkillListGeometry(skillWnd->m_x, skillWnd->m_y, skillWnd->m_w, skillWnd->m_h);
 
+    const QVariantMap treeData = skillWnd->GetTreeDataForQt();
+    if (!treeData.isEmpty()) { state->setSkillListData(treeData); return; }
+
     UISkillListWnd::DisplayData display{};
     QVariantMap data;
     if (skillWnd->GetDisplayDataForQt(&display)) {
@@ -3052,6 +3069,7 @@ void PopulateOptionState(QtUiState* state)
         data.insert(QStringLiteral("title"), QStringLiteral("Options"));
         data.insert(QStringLiteral("collapsed"), display.collapsed);
         data.insert(QStringLiteral("activeTab"), display.activeTab);
+        data.insert(QStringLiteral("keybindingBar"), display.keybindingBar);
         data.insert(QStringLiteral("contentX"), display.contentX);
         data.insert(QStringLiteral("contentY"), display.contentY);
         data.insert(QStringLiteral("contentWidth"), display.contentWidth);
@@ -3157,6 +3175,23 @@ void PopulateOptionState(QtUiState* state)
             graphicsRows.push_back(entry);
         }
         data.insert(QStringLiteral("graphicsRows"), graphicsRows);
+
+        QVariantList keybindings;
+        keybindings.reserve(static_cast<qsizetype>(display.keybindings.size()));
+        for (const UIOptionWnd::DisplayKeybinding& keybinding : display.keybindings) {
+            QVariantMap entry;
+            entry.insert(QStringLiteral("x"), keybinding.x);
+            entry.insert(QStringLiteral("y"), keybinding.y);
+            entry.insert(QStringLiteral("width"), keybinding.width);
+            entry.insert(QStringLiteral("height"), keybinding.height);
+            entry.insert(QStringLiteral("barIndex"), keybinding.barIndex);
+            entry.insert(QStringLiteral("column"), keybinding.column);
+            entry.insert(QStringLiteral("capturing"), keybinding.capturing);
+            entry.insert(QStringLiteral("label"), ToQString(keybinding.label));
+            entry.insert(QStringLiteral("value"), ToQString(keybinding.value));
+            keybindings.push_back(entry);
+        }
+        data.insert(QStringLiteral("keybindings"), keybindings);
     }
     state->setOptionData(data);
 }
@@ -3597,11 +3632,13 @@ QVariantMap MakeUiItemAnchor(const shopui::ItemHoverInfo& hoverInfo)
 {
     const int logicalCenterX = hoverInfo.anchorRect.left + ((hoverInfo.anchorRect.right - hoverInfo.anchorRect.left) / 2);
     const int logicalTopY = hoverInfo.anchorRect.top - 26;
-    return MakeCenteredAnchor(ToQString(hoverInfo.text),
+    QVariantMap anchor = MakeCenteredAnchor(ToQString(hoverInfo.text),
         UiScaleLogicalToRawCoordinate(logicalCenterX),
         UiScaleLogicalToRawCoordinate(logicalTopY),
-    QStringLiteral("#c0087f5b"),
+    QStringLiteral("#f0363b42"),
     hoverInfo.identified ? QStringLiteral("#ffffff") : QStringLiteral("#b8b8b8"));
+    anchor.insert(QStringLiteral("kind"), QStringLiteral("uiTooltip"));
+    return anchor;
 }
 
 bool TryAppendHoveredUiItemAnchor(QVariantList* anchors)
@@ -3611,6 +3648,11 @@ bool TryAppendHoveredUiItemAnchor(QVariantList* anchors)
     }
 
     shopui::ItemHoverInfo hoverInfo{};
+    if (g_windowMgr.m_basicInfoWnd && g_windowMgr.m_basicInfoWnd->GetHoveredItemForQt(&hoverInfo) && hoverInfo.IsValid()) {
+        anchors->push_back(MakeUiItemAnchor(hoverInfo));
+        return true;
+    }
+
     if (g_windowMgr.m_storageWnd && g_windowMgr.m_storageWnd->GetHoveredItemForQt(&hoverInfo) && hoverInfo.IsValid()) {
         anchors->push_back(MakeUiItemAnchor(hoverInfo));
         return true;
@@ -3643,6 +3685,11 @@ QtUiStateAdapter::QtUiStateAdapter()
     : m_state(new QtUiState())
 {
     m_state->setLastInput(QStringLiteral("No routed input yet."));
+    QObject::connect(m_state, &QtUiState::closeCutinRequested, [] {
+        if (CGameMode* const mode = g_modeMgr.GetCurrentGameMode()) {
+            mode->SendMsg(113, reinterpret_cast<msgparam_t>(""), static_cast<msgparam_t>(-1), 0);
+        }
+    });
 }
 
 QtUiStateAdapter::~QtUiStateAdapter()
@@ -3681,6 +3728,7 @@ bool QtUiStateAdapter::syncMenu(RenderBackendType activeBackend,
     m_state->setBackendName(backendName);
     m_state->setModeName(modeName);
     m_state->setWallpaperRevision(wallpaperRevision);
+    m_state->setCutinInfo(QString(), -1);
     m_state->setRenderPath(renderPath);
     m_state->setArchitectureNote(BuildArchitectureNote(nativeOverlayBackend));
     m_state->setLoginStatus(loginStatus);
@@ -3723,6 +3771,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     m_state->setBackendName(backendName);
     m_state->setModeName(modeName);
     m_state->setWallpaperRevision(wallpaperRevision);
+    m_state->setCutinInfo(QString::fromLocal8Bit(mode.m_showImageInfo.name.c_str()), mode.m_showImageInfo.type);
     m_state->setRenderPath(renderPath);
     m_state->setArchitectureNote(BuildArchitectureNote(nativeOverlayBackend));
     m_state->setLoginStatus(loginStatus);
@@ -3892,11 +3941,13 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
                     &hoveredItem,
                     &labelX,
                     &labelY)) {
-                anchors.push_back(MakeAnchor(ToQString(ResolveGroundItemLabel(hoveredItem)),
-                    labelX,
-                    labelY,
-                    QStringLiteral("#c0087f5b"),
-                    (hoveredItem && hoveredItem->m_identified != 0) ? QStringLiteral("#ffffff") : QStringLiteral("#b8b8b8")));
+                QVariantMap anchor = MakeAnchor(ToQString(ResolveGroundItemLabel(hoveredItem)),
+                    labelX, labelY, QStringLiteral("#c0087f5b"),
+                    (hoveredItem && hoveredItem->m_identified != 0) ? QStringLiteral("#ffffff") : QStringLiteral("#b8b8b8"));
+                // QML centers using the actual rendered text width and height.
+                anchor.insert(QStringLiteral("centerX"), labelX);
+                anchor.insert(QStringLiteral("bottomY"), labelY);
+                anchors.push_back(anchor);
             }
         }
 

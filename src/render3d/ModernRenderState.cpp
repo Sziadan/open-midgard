@@ -73,6 +73,7 @@ void ApplyModernTextureStageState(ModernFixedFunctionState* state, DWORD stage, 
     case D3DTSS_MINFILTER: stageState.minFilter = value; break;
     case D3DTSS_MAGFILTER: stageState.magFilter = value; break;
     case D3DTSS_MIPFILTER: stageState.mipFilter = value; break;
+    case D3DTSS_ADDRESS: stageState.address = value; break;
     default: break;
     }
 }

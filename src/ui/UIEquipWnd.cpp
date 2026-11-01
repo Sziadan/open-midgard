@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIEquipWnd.h"
 
 #include "DebugLog.h"
@@ -49,17 +50,15 @@
 namespace {
 
 constexpr int kWindowWidth = 280;
-constexpr int kWindowHeight = 232;
+constexpr int kWindowHeight = 269;
 constexpr int kMiniHeight = 34;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kQtButtonWidth = 12;
 constexpr int kQtButtonHeight = 11;
-constexpr int kQtCartOffButtonWidth = 30;
 constexpr int kButtonIdBase = 134;
 constexpr int kButtonIdClose = 135;
 constexpr int kButtonIdMini = 136;
-constexpr int kButtonIdCartOff = 137;
-constexpr int kButtonIdFalconOff = 138;
+constexpr int kButtonIdRemoveOption = 138;
 constexpr const char* kUiKorPrefix =
     "texture\\"
     "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA"
@@ -67,7 +66,7 @@ constexpr const char* kUiKorPrefix =
 
 constexpr int kSlotIconSize = 32;
 constexpr int kSlotVerticalSpacing = 5;
-constexpr int kEquipSlotRowCount = 5;
+constexpr int kEquipSlotRowCount = 6;
 constexpr int kEquipSlotBaseY = 19;
 constexpr int kEquipSlotLegacyStep = 32;
 constexpr int kCenterPanelLeft = 98;
@@ -81,7 +80,7 @@ struct EquipSlotDefLocal {
     int iconY;
 };
 
-constexpr std::array<EquipSlotDefLocal, 10> kEquipSlots = {{
+constexpr std::array<EquipSlotDefLocal, 11> kEquipSlots = {{
     { 256, 8, 19 },    // head upper
     { 1, 8, 51 },      // head lower
     { 4, 8, 115 },     // garment
@@ -92,6 +91,7 @@ constexpr std::array<EquipSlotDefLocal, 10> kEquipSlots = {{
     { 64, 240, 115 },  // shoes
     { 128, 240, 147 }, // accessory right
     { 2, 8, 83 },      // weapon
+    { 0x8000, 8, 179 }, // ammunition
 }};
 
 bool IsLeftEquipSlot(const EquipSlotDefLocal& slot)
@@ -184,17 +184,22 @@ bool IsLocalPlayerPushCartEquipped()
     return IsKnownLocalCartActive();
 }
 
-bool IsLocalPlayerFalconEquipped()
+const char* GetLocalPlayerRemoveOptionLabel()
 {
     constexpr int kFalconOption = 0x0010;
+    constexpr int kRidingOption = 0x0020;
     const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
     const CGameActor* player = gameMode && gameMode->m_world ? gameMode->m_world->m_player : nullptr;
-    return player && (player->m_effectState & kFalconOption) != 0;
+    // CZ_REQ_CARTOFF removes riding/falcon before a cart, matching the server.
+    if (player && (player->m_effectState & kRidingOption) != 0) return "Unmount";
+    if (player && (player->m_effectState & kFalconOption) != 0) return "Release Falcon";
+    if (IsLocalPlayerPushCartEquipped()) return "Remove cart";
+    return nullptr;
 }
 
-RECT GetCartOffButtonRect(int x, int y)
+RECT GetRemoveOptionButtonRect(int x, int y, int height)
 {
-    return MakeEquipRect(x, y, 213, 2, kQtCartOffButtonWidth, 13);
+    return MakeEquipRect(x, y, 101, height - 46, 78, 14);
 }
 
 void AddUniqueCandidate(std::vector<std::string>& out, const std::string& raw)
@@ -459,11 +464,14 @@ bool IsEquipTabType(int itemType)
     case 5:
     case 8:
     case 9:
+    case 10:
     case 11:
     case 12:
     case 13:
     case 14:
     case 15:
+    case 16:
+    case 17:
         return true;
     default:
         return false;
@@ -1137,9 +1145,7 @@ msgresult_t UIEquipWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, ms
     case kButtonIdMini:
         SetMiniMode(true);
         return 1;
-    case kButtonIdCartOff:
-        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestCartOff, 0, 0, 0);
-    case kButtonIdFalconOff:
+    case kButtonIdRemoveOption:
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestCartOff, 0, 0, 0);
     case kButtonIdClose:
         SetShow(0);
@@ -1280,13 +1286,6 @@ void UIEquipWnd::OnDraw()
     DrawWindowText(hdc, m_x + 18, m_y + 3, "Equipment", RGB(255, 255, 255));
     DrawWindowText(hdc, m_x + 17, m_y + 2, "Equipment", RGB(0, 0, 0));
 
-    if (IsLocalPlayerPushCartEquipped()) {
-        const RECT cartOffRect = GetCartOffButtonRect(m_x, m_y);
-        FillRectColor(hdc, cartOffRect, RGB(170, 76, 58));
-        FrameRectColor(hdc, cartOffRect, RGB(88, 34, 26));
-        DrawWindowTextRect(hdc, cartOffRect, "OFF", RGB(255, 250, 236), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-    }
-
     if (m_h > kMiniHeight) {
         const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
         const bool hideDraggedItem = gameMode
@@ -1304,16 +1303,11 @@ void UIEquipWnd::OnDraw()
             DrawWindowText(hdc, centerPanel.left + 14, centerPanel.top + 68, "No Preview", RGB(90, 90, 90));
         }
 
-        if (IsLocalPlayerFalconEquipped()) {
-            const RECT falconOffRect{
-                centerPanel.left + (centerPanel.right - centerPanel.left - 78) / 2,
-                centerPanel.bottom - 16,
-                centerPanel.left + (centerPanel.right - centerPanel.left + 78) / 2,
-                centerPanel.bottom - 2
-            };
-            FillRectColor(hdc, falconOffRect, RGB(170, 76, 58));
-            FrameRectColor(hdc, falconOffRect, RGB(88, 34, 26));
-            DrawWindowTextRect(hdc, falconOffRect, "Release Falcon", RGB(255, 250, 236), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        if (GetLocalPlayerRemoveOptionLabel()) {
+            const RECT removeOptionRect = GetRemoveOptionButtonRect(m_x, m_y, m_h);
+            FillRectColor(hdc, removeOptionRect, RGB(170, 76, 58));
+            FrameRectColor(hdc, removeOptionRect, RGB(88, 34, 26));
+            DrawWindowTextRect(hdc, removeOptionRect, GetLocalPlayerRemoveOptionLabel(), RGB(255, 250, 236), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
 
         for (size_t i = 0; i < kEquipSlots.size(); ++i) {
@@ -1373,20 +1367,19 @@ void UIEquipWnd::OnLBtnDown(int x, int y)
     if (IsQtUiRuntimeEnabled()) {
         const RECT baseRect = MakeEquipRect(m_x, m_y, 3, 3, kQtButtonWidth, kQtButtonHeight);
         const RECT miniRect = MakeEquipRect(m_x, m_y, 247, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT cartOffRect = GetCartOffButtonRect(m_x, m_y);
-        const RECT falconOffRect = MakeEquipRect(m_x, m_y, 101, 186, 78, 14);
+        const RECT removeOptionRect = GetRemoveOptionButtonRect(m_x, m_y, m_h);
         const RECT closeRect = MakeEquipRect(m_x, m_y, 265, 3, kQtButtonWidth, kQtButtonHeight);
         if (IsPointInRect(baseRect, x, y)
             || IsPointInRect(miniRect, x, y)
-            || (IsLocalPlayerPushCartEquipped() && IsPointInRect(cartOffRect, x, y))
-            || (IsLocalPlayerFalconEquipped() && IsPointInRect(falconOffRect, x, y))
+            || (GetLocalPlayerRemoveOptionLabel() && IsPointInRect(removeOptionRect, x, y))
             || IsPointInRect(closeRect, x, y)) {
             UIWindow::OnLBtnDown(x, y);
             return;
         }
     }
 
-    if (IsLocalPlayerPushCartEquipped() && IsPointInRect(GetCartOffButtonRect(m_x, m_y), x, y)) {
+    if (m_h > kMiniHeight && GetLocalPlayerRemoveOptionLabel()
+        && IsPointInRect(GetRemoveOptionButtonRect(m_x, m_y, m_h), x, y)) {
         return;
     }
 
@@ -1439,8 +1432,7 @@ void UIEquipWnd::OnLBtnUp(int x, int y)
 
         const RECT baseRect = MakeEquipRect(m_x, m_y, 3, 3, kQtButtonWidth, kQtButtonHeight);
         const RECT miniRect = MakeEquipRect(m_x, m_y, 247, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT cartOffRect = GetCartOffButtonRect(m_x, m_y);
-        const RECT falconOffRect = MakeEquipRect(m_x, m_y, 101, 186, 78, 14);
+        const RECT removeOptionRect = GetRemoveOptionButtonRect(m_x, m_y, m_h);
         const RECT closeRect = MakeEquipRect(m_x, m_y, 265, 3, kQtButtonWidth, kQtButtonHeight);
 
         if (m_h == kMiniHeight && IsPointInRect(baseRect, x, y)) {
@@ -1451,12 +1443,8 @@ void UIEquipWnd::OnLBtnUp(int x, int y)
             SendMsg(this, 6, kButtonIdMini, 0, 0);
             return;
         }
-        if (IsLocalPlayerPushCartEquipped() && IsPointInRect(cartOffRect, x, y)) {
-            SendMsg(this, 6, kButtonIdCartOff, 0, 0);
-            return;
-        }
-        if (IsLocalPlayerFalconEquipped() && IsPointInRect(falconOffRect, x, y)) {
-            SendMsg(this, 6, kButtonIdFalconOff, 0, 0);
+        if (m_h > kMiniHeight && GetLocalPlayerRemoveOptionLabel() && IsPointInRect(removeOptionRect, x, y)) {
+            SendMsg(this, 6, kButtonIdRemoveOption, 0, 0);
             return;
         }
         if (IsPointInRect(closeRect, x, y)) {
@@ -1469,13 +1457,9 @@ void UIEquipWnd::OnLBtnUp(int x, int y)
 
     const bool wasDragging = m_isDragging != 0;
     UIFrameWnd::OnLBtnUp(x, y);
-    if (!wasDragging && IsLocalPlayerPushCartEquipped() && IsPointInRect(GetCartOffButtonRect(m_x, m_y), x, y)) {
-        SendMsg(this, 6, kButtonIdCartOff, 0, 0);
-        return;
-    }
-    if (!wasDragging && IsLocalPlayerFalconEquipped()
-        && IsPointInRect(MakeEquipRect(m_x, m_y, 101, 186, 78, 14), x, y)) {
-        SendMsg(this, 6, kButtonIdFalconOff, 0, 0);
+    if (!wasDragging && m_h > kMiniHeight && GetLocalPlayerRemoveOptionLabel()
+        && IsPointInRect(GetRemoveOptionButtonRect(m_x, m_y, m_h), x, y)) {
+        SendMsg(this, 6, kButtonIdRemoveOption, 0, 0);
     }
 }
 
@@ -1690,7 +1674,7 @@ bool UIEquipWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
 
 int UIEquipWnd::GetQtSystemButtonCount() const
 {
-    return 5;
+    return 4;
 }
 
 bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const
@@ -1719,15 +1703,6 @@ bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDa
         outData->visible = !IsMiniMode();
         return true;
     case 2:
-        outData->id = kButtonIdCartOff;
-        outData->x = m_x + 213;
-        outData->y = m_y + 2;
-        outData->width = kQtCartOffButtonWidth;
-        outData->height = 13;
-        outData->label = "OFF";
-        outData->visible = IsLocalPlayerPushCartEquipped();
-        return true;
-    case 3:
         outData->id = kButtonIdClose;
         outData->x = m_x + 265;
         outData->y = m_y + 3;
@@ -1736,15 +1711,19 @@ bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDa
         outData->label = "X";
         outData->visible = true;
         return true;
-    case 4:
-        outData->id = kButtonIdFalconOff;
-        outData->x = m_x + 101;
-        outData->y = m_y + 186;
-        outData->width = 78;
-        outData->height = 14;
-        outData->label = "Release Falcon";
-        outData->visible = m_h > kMiniHeight && IsLocalPlayerFalconEquipped();
+    case 3:
+    {
+        const RECT rect = GetRemoveOptionButtonRect(m_x, m_y, m_h);
+        outData->id = kButtonIdRemoveOption;
+        outData->x = rect.left;
+        outData->y = rect.top;
+        outData->width = rect.right - rect.left;
+        outData->height = rect.bottom - rect.top;
+        const char* label = GetLocalPlayerRemoveOptionLabel();
+        outData->label = label ? label : "";
+        outData->visible = m_h > kMiniHeight && label;
         return true;
+    }
     default:
         return false;
     }
@@ -1965,6 +1944,7 @@ std::vector<const ITEM_INFO*> UIEquipWnd::BuildSlotAssignments() const
     assignByMask(16);
     assignByMask(64);
     assignByMask(128);
+    assignByMask(0x8000);
 
     // Fallback fill for uncommon masks that still overlap known slots.
     for (const ITEM_INFO* item : equipped) {

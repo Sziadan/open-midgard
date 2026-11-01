@@ -3,6 +3,7 @@
 #include "World.h"
 #include "audio/Audio.h"
 #include "DebugLog.h"
+#include "core/Timer.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
@@ -26,7 +27,6 @@ namespace {
 
 constexpr float kMsgEffectNearPlane = 10.0f;
 constexpr float kMsgEffectSubmitNearPlane = 80.0f;
-constexpr u32 kFalconAnimationStepMs = 24;
 constexpr const char* kDamageNumberSpritePath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\\xBC\xFD\xC0\xDA.spr";
 constexpr const char* kDamageNumberActPath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\\xBC\xFD\xC0\xDA.act";
 constexpr const char* kMissEffectSpritePath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\msg.spr";
@@ -84,6 +84,8 @@ struct QueuedMsgSpriteEffectDraw {
     float desiredWorldWidthCells = 0.0f;
     bool useProjectedDepth = false;
     bool usePerspectiveScale = false;
+    bool useReferencePixelRatio = false;
+    float referencePixelRatio = 1.0f;
     bool bypassZoomClamp = false;
 };
 
@@ -422,6 +424,7 @@ float ResolveProjectedTilePixels(const matrix& viewMatrix, const vector3d& origi
 
 float ResolveQueuedMsgSpriteScale(const QueuedMsgSpriteEffectDraw& draw, int referenceWidth)
 {
+    if (draw.useReferencePixelRatio) return draw.zoom * draw.referencePixelRatio;
     if (draw.usePerspectiveScale && draw.pixelsPerTile > 0.0f && referenceWidth > 0) {
         const float desiredWidthPixels = draw.pixelsPerTile * (std::max)(0.5f, draw.desiredWorldWidthCells);
         return (std::max)(0.2f, desiredWidthPixels / static_cast<float>(referenceWidth));
@@ -952,8 +955,10 @@ bool QueueMsgSpriteQuad(const QueuedMsgSpriteEffectDraw& draw)
     const float scale = ResolveQueuedMsgSpriteScale(draw, referenceWidth);
     const int outWidth = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeWidth) * scale)));
     const int outHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeHeight) * scale)));
-    const float originX = OverlayScreenEdge(draw.screenX - outWidth / 2);
-    const float originY = OverlayScreenEdge(draw.screenY - outHeight / 2);
+    const float originX = OverlayScreenEdge(draw.useReferencePixelRatio
+        ? static_cast<int>(std::lround(draw.screenX + clipBox.left * scale)) : draw.screenX - outWidth / 2);
+    const float originY = OverlayScreenEdge(draw.useReferencePixelRatio
+        ? static_cast<int>(std::lround(draw.screenY + clipBox.top * scale)) : draw.screenY - outHeight / 2);
 
     bool queuedAny = false;
     float clipSortOffset = 0.0f;
@@ -1046,8 +1051,8 @@ bool GetMsgSpriteDrawBounds(const QueuedMsgSpriteEffectDraw& draw, RECT* outRect
     const float scale = ResolveQueuedMsgSpriteScale(draw, referenceWidth);
     const int outWidth = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeWidth) * scale)));
     const int outHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeHeight) * scale)));
-    const int originX = draw.screenX - outWidth / 2;
-    const int originY = draw.screenY - outHeight / 2;
+    const int originX = draw.useReferencePixelRatio ? static_cast<int>(std::lround(draw.screenX + clipBox.left * scale)) : draw.screenX - outWidth / 2;
+    const int originY = draw.useReferencePixelRatio ? static_cast<int>(std::lround(draw.screenY + clipBox.top * scale)) : draw.screenY - outHeight / 2;
     outRect->left = originX - 1;
     outRect->top = originY - 1;
     outRect->right = originX + outWidth + 1;
@@ -1867,8 +1872,74 @@ void CMsgEffect::OnActorDeleted(const CGameActor* actor)
     m_removedFromOwner = 1;
 }
 
+void CMsgEffect::ProcessFalcon()
+{
+    if (m_falconIsAttackTarget && m_masterActor) {
+        const float dx = m_masterActor->m_pos.x - m_pos.x;
+        const float dz = m_masterActor->m_pos.z - m_pos.z;
+        m_falconRotation = std::atan2(dx, -dz) * 57.29577951308232f;
+        if (m_falconRotation < 0.0f) m_falconRotation += 360.0f;
+        // Ref uses Get8Dir2(..., true), which rounds to the nearest
+        // direction instead of flooring into the previous 45-degree bin.
+        m_spriteActionIndex = Get8Dir(m_falconRotation - 202.5f) + 8;
+        m_pos.x += m_destPos2.x;
+        if (m_falconStateCnt <= 10 || m_falconStateCnt >= 25) {
+            m_pos.y += m_destPos2.y;
+        }
+        m_pos.z += m_destPos2.z;
+        if (m_falconStateCnt >= 25) {
+            m_isDisappear = 1;
+            m_destPos2.y *= -1.9f;
+        }
+        ++m_falconStateCnt;
+        m_spriteMotionIndex = 0;
+    } else {
+        if (m_masterActor) {
+            const float dx = m_masterActor->m_pos.x - m_pos.x;
+            const float dz = m_masterActor->m_pos.z - m_pos.z;
+            const float distance = std::sqrt(dx * dx + dz * dz);
+            // Ref: Skill.cpp:3953-4035. The source moves the falcon toward
+            // its owner by 4%/5% per process step depending on range.
+            if (!m_falconIsAnimation && distance <= 25.0f) {
+                m_falconIsAnimation = 1;
+                m_spriteMotionIndex = 8;
+                m_pos.x += dx * 0.039999999f;
+                m_pos.z += dz * 0.039999999f;
+            } else if (!m_falconIsAnimation && distance > 25.0f) {
+                m_spriteMotionIndex = 8;
+                m_pos.x += dx * 0.039999999f;
+                m_pos.z += dz * 0.039999999f;
+            } else if (distance > 3.0f) {
+                const float factor = (distance <= 12.0f || m_falconIsAttackTarget) ? 0.050000001f : 1.0f / distance;
+                m_pos.x += dx * factor;
+                m_pos.z += dz * factor;
+            }
+            m_falconRotation = std::atan2(dx, -dz) * 57.29577951308232f;
+            if (m_falconRotation < 0.0f) m_falconRotation += 360.0f;
+            m_spriteActionIndex = Get8Dir(m_falconRotation - 22.5f);
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world && mode->m_world->m_attr) {
+                    m_pos.y = mode->m_world->m_attr->GetHeight(m_pos.x, m_pos.z) - 25.0f;
+                }
+            }
+        }
+        const int motionCount = ResolveMsgSpriteMotionCountForEffect(*this, m_spriteActionIndex);
+        const int animationSpeed = (std::max)(1, static_cast<int>(m_falconMotionSpeed));
+        // Ref/Skill.cpp CMsgEffect::OnProcess: the idle animation counter
+        // resets each motion. It must not accumulate into attack recovery.
+        if (m_falconStateCnt % animationSpeed == 0) {
+            if (m_falconIsAnimation) ++m_spriteMotionIndex;
+            m_falconStateCnt = 0;
+        }
+        if (motionCount <= 0 || m_spriteMotionIndex >= motionCount) m_spriteMotionIndex = 0;
+        ++m_falconStateCnt;
+    }
+}
+
 u8 CMsgEffect::OnProcess()
 {
+    // Falcon trajectories are simulation steps, not rendered frames.
+    if (m_msgEffectType == 18 && g_isSkipFrame <= 0) return 1;
     if (m_isDisappear) {
         if (m_msgEffectType == 18 && m_falconIsAttackTarget) {
             // Ref keeps the Falcon alive through its attack recovery, then
@@ -2033,73 +2104,9 @@ u8 CMsgEffect::OnProcess()
         }
         break;
     }
-    case 18: {
-        if (m_falconIsAttackTarget && m_masterActor) {
-            const float dx = m_masterActor->m_pos.x - m_pos.x;
-            const float dz = m_masterActor->m_pos.z - m_pos.z;
-            m_falconRotation = std::atan2(dx, -dz) * 57.29577951308232f;
-            if (m_falconRotation < 0.0f) m_falconRotation += 360.0f;
-            // Ref uses Get8Dir2(..., true), which rounds to the nearest
-            // direction instead of flooring into the previous 45-degree bin.
-            m_spriteActionIndex = Get8Dir(m_falconRotation - 202.5f) + 8;
-            m_pos.x += m_destPos2.x;
-            if (m_falconStateCnt <= 10 || m_falconStateCnt >= 25) {
-                m_pos.y += m_destPos2.y;
-            }
-            m_pos.z += m_destPos2.z;
-            if (m_falconStateCnt >= 25) {
-                m_isDisappear = 1;
-                m_destPos2.y *= -1.9f;
-            }
-            ++m_falconStateCnt;
-            m_spriteMotionIndex = 0;
-        } else {
-            if (m_masterActor) {
-                const float dx = m_masterActor->m_pos.x - m_pos.x;
-                const float dz = m_masterActor->m_pos.z - m_pos.z;
-                const float distance = std::sqrt(dx * dx + dz * dz);
-                // Ref: Skill.cpp:3953-4035. The source moves the falcon toward
-                // its owner by 4%/5% per process step depending on range.
-                if (!m_falconIsAnimation && distance <= 25.0f) {
-                    m_falconIsAnimation = 1;
-                    m_spriteMotionIndex = 8;
-                    m_pos.x += dx * 0.039999999f;
-                    m_pos.z += dz * 0.039999999f;
-                } else if (!m_falconIsAnimation && distance > 25.0f) {
-                    m_spriteMotionIndex = 8;
-                    m_pos.x += dx * 0.039999999f;
-                    m_pos.z += dz * 0.039999999f;
-                } else if (distance > 3.0f) {
-                    const float factor = (distance <= 12.0f || m_falconIsAttackTarget) ? 0.050000001f : 1.0f / distance;
-                    m_pos.x += dx * factor;
-                    m_pos.z += dz * factor;
-                }
-                m_falconRotation = std::atan2(dx, -dz) * 57.29577951308232f;
-                if (m_falconRotation < 0.0f) m_falconRotation += 360.0f;
-                m_spriteActionIndex = Get8Dir(m_falconRotation - 22.5f);
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world && mode->m_world->m_attr) {
-                        m_pos.y = mode->m_world->m_attr->GetHeight(m_pos.x, m_pos.z) - 25.0f;
-                    }
-                }
-            }
-            const int motionCount = ResolveMsgSpriteMotionCountForEffect(*this, m_spriteActionIndex);
-            const int animationSpeed = (std::max)(1, static_cast<int>(m_falconMotionSpeed));
-            const u32 now = timeGetTime();
-            const u32 animationIntervalMs = static_cast<u32>(animationSpeed) * kFalconAnimationStepMs;
-            const u32 elapsedMs = now - m_falconLastMotionTick;
-            if (animationIntervalMs > 0 && elapsedMs >= animationIntervalMs) {
-                const u32 animationSteps = elapsedMs / animationIntervalMs;
-                m_falconLastMotionTick += animationSteps * animationIntervalMs;
-                if (m_falconIsAnimation && motionCount > 0) {
-                    m_spriteMotionIndex = static_cast<int>(
-                        (static_cast<u32>(m_spriteMotionIndex) + animationSteps) % static_cast<u32>(motionCount));
-                }
-            }
-            ++m_falconStateCnt;
-        }
+    case 18:
+        ProcessFalcon();
         break;
-    }
     case 5:
     case 7:
     case 8:
@@ -2117,7 +2124,8 @@ u8 CMsgEffect::OnProcess()
             }
         }
         m_alpha = 255;
-        m_zoom = m_msgEffectType == 18 ? 6.0f : (m_orgZoom > 0.0f ? m_orgZoom : 1.0f);
+        m_zoom = m_msgEffectType == 5 && m_masterActor
+            ? m_masterActor->m_zoom : (m_orgZoom > 0.0f ? m_orgZoom : 1.0f);
         break;
     case 6:
     case 25:
@@ -2315,6 +2323,15 @@ void CMsgEffect::Render(matrix* viewMatrix)
         draw.colorArgb = m_colorArgb;
         draw.alpha = m_alpha;
         draw.zoom = m_zoom;
+        if (m_msgEffectType == 18 || m_msgEffectType == 5) {
+            // Ref CRenderObject::RenderBody uses zoom * GetPixelRatio(oow).
+            // Preserve ACT clip offsets below; these are world sprites.
+            draw.useReferencePixelRatio = true;
+            draw.referencePixelRatio = projected.oow * g_renderer.m_hpc * 0.14285715f;
+            draw.projectedZ = projected.z;
+            draw.projectedOow = projected.oow;
+            draw.useProjectedDepth = true;
+        }
         draw.alphaSortBase = m_msgEffectType == kAttachedActorSpriteMsgEffectType
             ? projected.oow
             : (m_msgEffectType == kCriticalMsgEffectType ? 1.6f : 1.7f);

@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIFrameWnd.h"
 #include "UIWindowMgr.h"
 
@@ -16,7 +17,7 @@ msgresult_t UIFrameWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, ms
 
 void UIFrameWnd::OnLBtnDown(int x, int y)
 {
-    constexpr int kTitleBarHeight = 17;
+    constexpr int kTitleBarHeight = uiMetrics::titleHeight;
     if (m_show == 0) {
         return;
     }

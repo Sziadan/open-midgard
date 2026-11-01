@@ -34,6 +34,11 @@ build_output*.txt
 tools/*
 !tools/ro_exe_resolve.py
 !tools/generate_skill_tables.py
+!tools/export_skill_tree.py
+!tools/qtui_preview/
+!tools/qtui_preview/CMakeLists.txt
+!tools/qtui_preview/main.cpp
+!tools/qtui_preview/README.md
 !tools/generate_rageffect_catalog.py
 !tools/generate_use_skill_effect.py
 !tools/gen_skill_enum_table.py

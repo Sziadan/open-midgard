@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIMessengerGroupWnd.h"
 
 #include "UIPartyOptionWnd.h"
@@ -17,7 +18,7 @@ namespace {
 
 constexpr int kWindowWidth = 290;
 constexpr int kWindowHeight = 278;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kContentTop = 24;
 constexpr int kTabWidth = 72;
 constexpr int kTabHeight = 22;

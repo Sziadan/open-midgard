@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UISelectCartWnd.h"
 
 #include "gamemode/GameMode.h"
@@ -18,7 +19,7 @@ namespace {
 
 constexpr int kWindowWidth = 332;
 constexpr int kWindowHeight = 126;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kOptionWidth = 56;
 constexpr int kOptionHeight = 52;
 constexpr int kOptionSpacing = 8;

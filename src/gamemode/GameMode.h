@@ -69,6 +69,10 @@ struct GroundItemState {
 //===========================================================================
 class CGameMode : public CMode {
 public:
+    bool ResolveCursorDrawPosition(int rawX, int rawY, int* drawX, int* drawY) const;
+    bool m_hasCursorSnap = false;
+    int m_cursorSnapRawX = 0, m_cursorSnapRawY = 0;
+    int m_cursorSnapDrawX = 0, m_cursorSnapDrawY = 0;
     bool SendSkillToGroundWithText(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents);
     bool SendWarpMapSelection(const std::string& mapName);
     bool CancelWarpMapSelection();

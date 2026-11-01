@@ -873,6 +873,11 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     // Several world/effect paths still rely on these helpers.
     CreateTrigonometricTable();
 
+    if (std::getenv("RO_HEAL_PREVIEW_OUT")) {
+        nCmdShow=SW_HIDE;
+        if (const char* assets=std::getenv("RO_HEAL_PREVIEW_ASSETS")) SetCurrentDirectoryA(assets);
+    }
+
     // Create the game window
     if (!InitApp(hInstance, nCmdShow))
     {
@@ -899,7 +904,12 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     }
     else
     {
-        g_fileMgr.AddPak("data.grf");
+        if (std::getenv("RO_HEAL_PREVIEW_OUT") && std::getenv("RO_HEAL_PREVIEW_ASSETS")) {
+            const std::string previewPak=std::string(std::getenv("RO_HEAL_PREVIEW_ASSETS"))+"/data.grf";
+            g_fileMgr.AddPak(previewPak.c_str());
+        } else {
+            g_fileMgr.AddPak("data.grf");
+        }
     }
     g_fileMgr.AddPak("data_hp.grf");
     g_fileMgr.AddPak("event.grf");
@@ -922,11 +932,17 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     // Initialise frame timer (60 fps target)
     InitTimer(60);
 
-    SetFocus(g_hMainWnd);
+    const bool healRenderPreview = std::getenv("RO_HEAL_PREVIEW_OUT") != nullptr;
+    if (!healRenderPreview) SetFocus(g_hMainWnd);
 
     // --- Enter the main game loop ---
     // Mode 0 = Login, Mode 1 = Game.
-    g_modeMgr.Run(0, "");
+    if (healRenderPreview) {
+        extern void RunHealRenderPreview();
+        RunHealRenderPreview();
+    } else {
+        g_modeMgr.Run(0, "");
+    }
 
     // --- Cleanup ---
     // CDllMgr cleanup will happen automatically if we add it to a destructor or call it explicitly

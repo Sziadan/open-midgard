@@ -1,0 +1,11 @@
+# Monster summon crash — 2026-11-01
+
+Evidence: `D:/Spel/OldRO/debug_hp_53352.log` and `crash-dumps/open-midgard-crash-20261101-082158-pid53352.dmp`. Both deployed and build executables matched SHA-256 A341B89ACE107DF69C028A8A45C2FF511A0B3A70C4D25CB2D967D06151CEDE78 before rebuilding. The original executable is preserved in the ignored build directory as `open-midgard-crash-53352.exe`.
+
+Exception C0000005 at 0x7ff735d9a888, executable base 0x7ff735ce0000 (RVA 0xba888). Disassembly resolves this to the path-finding lambda in `CGameActor::SendMsg`, message 0: loading `pathArgs[6]`. The saved exception record on the stack identifies a read at 0x57, exactly 63 + 6*sizeof(int). This dump has no exception stream; LLDB's default thread context is inside the dump writer, not the fault. The fault address and stack's exception record are the useful evidence.
+
+`CRagEffect::SpawnSummonSlave` (effect 215) incorrectly called `master->SendMsg(nullptr, 0, 63, 0, 0)` at state 35. Actor message 0 treats parameter 1 as a movement-array pointer. The decompilation explicitly includes the receiver as its first argument: `CGameObject::SendMsg(master, 0, 63, 0, 0, 0)` means sender=null, message=63, and three zero parameters. Corrected the call to `master->SendMsg(nullptr, 63, 0, 0, 0)`. Message 63 creates the smoke sprite.
+
+Reference anchors: `HighPriest.exe.c:430334` SummonSlave and `Ref/RagEffect.cpp:8531` SummonSlave. The helper's existing reference comment uses historical line numbers; the named function is the stable anchor. Only the completion dispatch changes; projection, particles, RNG order and state timing are unchanged.
+
+Validation: `SummonSlaveMessageTests.cpp` compiles the production helper and traverses states 0–40, verifying 20 initial particles, projection updates, no early dispatch, and one smoke message with null sender and all zero parameters at state 35. It passes with the correction; a generated copy containing the old dispatch fails. Updated the older lifecycle expectation, which had encoded the incorrect argument order. The full lifecycle test currently fails to compile due to a pre-existing duplicate `FindStatusStateIcon` definition, so no full-suite pass is claimed. MinGW Qt client build succeeded; executable copied to `D:/Spel/OldRO/open-midgard.exe` and hashes verified. Live combat validation remains with the user.

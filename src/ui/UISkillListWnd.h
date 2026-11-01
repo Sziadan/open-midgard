@@ -4,6 +4,11 @@
 #include "UIShopCommon.h"
 
 #include <array>
+#include <memory>
+#if RO_ENABLE_QT6_UI
+#include <QVariantMap>
+class QtSkillTree;
+#endif
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -79,6 +84,11 @@ public:
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     void OnCreate(int x, int y) override;
     void OnDestroy() override;
+    void OnProcess() override;
+    void OnMouseHover(int x, int y) override;
+#if RO_ENABLE_QT6_UI
+    QVariantMap GetTreeDataForQt() const;
+#endif
     void OnDraw() override;
     void OnLBtnDown(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
@@ -123,6 +133,9 @@ private:
     const PLAYER_SKILL_INFO* GetSelectedSkill() const;
     unsigned long long BuildVisualStateToken() const;
 
+#if RO_ENABLE_QT6_UI
+    std::unique_ptr<QtSkillTree> m_tree;
+#endif
     bool m_controlsCreated;
     int m_hoveredRow;
     int m_viewOffset;

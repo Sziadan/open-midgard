@@ -14,6 +14,7 @@ struct ModernTextureStageState {
     DWORD minFilter;
     DWORD magFilter;
     DWORD mipFilter;
+    DWORD address = D3DTADDRESS_WRAP;
 };
 
 struct ModernFixedFunctionState {

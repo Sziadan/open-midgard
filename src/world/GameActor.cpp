@@ -1600,6 +1600,9 @@ int ResolvePcMotionIndex(const CPc* actor, int action, const std::string& bodyAc
     }
 
     const int motionCount = bodyActRes->GetMotionCount(action);
+    if (actor->m_isMotionFreezed) {
+        return std::clamp(actor->m_curMotion, 0, (std::max)(0, motionCount - 1));
+    }
     if (motionCount <= 1) {
         return 0;
     }
@@ -1648,6 +1651,9 @@ int ResolveTimedMotionIndex(const CGameActor& actor, CActRes* actRes, int action
     }
 
     const int motionCount = actRes->GetMotionCount(resolvedAction);
+    if (actor.m_isMotionFreezed) {
+        return std::clamp(actor.m_curMotion, 0, (std::max)(0, motionCount - 1));
+    }
     if (motionCount <= 1) {
         return 0;
     }
@@ -1758,6 +1764,9 @@ int ResolveSpriteMotionIndex(const CGameActor& actor, CActRes* actRes, int actio
     if (motionCount <= 1 && resolvedAction >= 8) {
         resolvedAction -= 8;
         motionCount = actRes->GetMotionCount(resolvedAction);
+    }
+    if (actor.m_isMotionFreezed) {
+        return std::clamp(actor.m_curMotion, 0, (std::max)(0, motionCount - 1));
     }
     if (motionCount <= 1) {
         return 0;
@@ -4873,7 +4882,7 @@ u8 CGameActor::ProcessState() {
         const float dz = m_pos.z - prevPos.z;
         m_dist += std::sqrt(dx * dx + dz * dz);
 
-        if (!m_isNeverAnimation) {
+        if (!m_isNeverAnimation && !m_isMotionFreezed) {
             m_curAction = m_baseAction + Get8Dir(m_roty);
             const auto ProcessMotionWithDist = [this]() {
                 const int motionCount = m_actRes ? m_actRes->GetMotionCount(m_curAction) : 0;
@@ -6179,7 +6188,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
                 sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\lude.spr";
                 act = "\xB8\xF3\xBD\xBA\xC5\xCD\\lude.act";
             }
-            m_birdEffect = SpawnMsgSprite(18, sprite, act, 0, 6.0f);
+            m_birdEffect = SpawnMsgSprite(18, sprite, act, 0, 1.0f);
         }
         return;
     case 102:
@@ -7707,6 +7716,9 @@ CItem::~CItem()
 
 u8 CItem::OnProcess()
 {
+    // HighPriest.exe.c CItem::OnProcess (0x5ce5e0), Ref/Item.cpp:63.
+    const double ticks = static_cast<double>(timeGetTime() - m_stateStartTick) * 0.041666668;
+    m_isSingleColor = static_cast<int>(static_cast<long long>(ticks)) % 92 >= 90;
     if (m_isJumping) {
         m_sfallingSpeed += 0.18f;
         m_sPosY -= m_sfallingSpeed;
@@ -7731,17 +7743,23 @@ u8 CItem::OnProcess()
     return 1;
 }
 
+vector3d CItem::GetBillboardPosition() const
+{
+    vector3d base = m_pos;
+    if (g_world.m_attr) {
+        base.y = g_world.m_attr->GetHeight(base.x, base.z);
+    }
+    base.y += m_sPosY;
+    return base;
+}
+
 void CItem::Render(matrix* viewMatrix)
 {
     if (!viewMatrix || !m_isVisible || !EnsureBillboardTexture()) {
         return;
     }
 
-    vector3d base = m_pos;
-    if (g_world.m_attr) {
-        base.y = g_world.m_attr->GetHeight(base.x, base.z);
-    }
-    base.y += m_sPosY;
+    const vector3d base = GetBillboardPosition();
 
     tlvertex3d projectedBase{};
     if (!ProjectItemPoint(*viewMatrix, base, &projectedBase)) {
@@ -7789,7 +7807,9 @@ void CItem::Render(matrix* viewMatrix)
     if (g_world.m_ground) {
         g_world.m_ground->GetActorLightIntensity(m_pos.x, m_pos.z, lightRed, lightGreen, lightBlue);
     }
-    const u32 itemColor = ro::actor::ApplyLightIntensity(0xFFFFFFFFu, lightRed, lightGreen, lightBlue);
+    // Ref CItem sets its single-color flash to -256 (opaque yellow).
+    const u32 itemColor = m_isSingleColor ? 0xFFFFFF00u
+        : ro::actor::ApplyLightIntensity(0xFFFFFFFFu, lightRed, lightGreen, lightBlue);
     for (int index = 0; index < 4; ++index) {
         face->m_verts[index].z = (std::max)(0.0f, projectedBase.z - kItemBillboardDepthBias);
         face->m_verts[index].oow = projectedBase.oow;

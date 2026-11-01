@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIItemInfoWnd.h"
 
 #include "NpcDialogColoredText.h"
@@ -12,7 +13,7 @@ namespace {
 constexpr int kWindowWidth = 332;
 constexpr int kWindowHeight = 308;
 constexpr int kWindowMinHeight = 129;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kCloseButtonSize = 12;
 constexpr int kPadding = 8;
 constexpr int kPreviewBoxSize = 96;

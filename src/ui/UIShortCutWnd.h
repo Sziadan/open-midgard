@@ -25,6 +25,7 @@ public:
     void OnRBtnDown(int x, int y) override;
     void OnWheel(int delta) override;
     int GetHoverSlot() const;
+    int GetVisibleRowCount() const { return m_visibleRowCount; }
     bool GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const;
 
 private:
@@ -32,6 +33,7 @@ private:
     void ReleaseAssets();
     void UpdateHoverSlot(int globalX, int globalY);
     int GetSlotAtGlobalPoint(int globalX, int globalY) const;
+    int GetAbsoluteSlotIndex(int visibleSlot) const;
     RECT GetSlotRect(int visibleSlot) const;
     void ActivateSlot(int visibleSlot);
     void DrawSlotOverlayText(HDC hdc, const RECT& slotRect, int value) const;
@@ -44,6 +46,7 @@ private:
     std::unordered_map<unsigned int, shopui::BitmapPixels> m_itemIconCache;
     std::unordered_map<int, shopui::BitmapPixels> m_skillIconCache;
     int m_hoverSlot;
+    int m_visibleRowCount;
     int m_pressedSlot;
     int m_pressedSlotAbsoluteIndex;
     int m_slotPressArmed;

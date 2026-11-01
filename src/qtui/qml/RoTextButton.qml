@@ -14,13 +14,13 @@ Rectangle {
     radius: theme.buttonRadius
     color: !enabled ? theme.rowAlt : (pressed ? theme.buttonPressed : (hovered ? theme.buttonHover : theme.button))
     border.width: 1
-    border.color: theme.buttonBorder
+    border.color: (hovered || pressed) ? theme.focus : theme.buttonBorder
     antialiasing: true
 
     Text {
         anchors.centerIn: parent
         text: button.label
-        color: theme.ink
+        color: enabled ? theme.ink : theme.disabledText
         font.family: theme.fontFamily
         font.pixelSize: button.labelSize
         font.bold: button.labelBold

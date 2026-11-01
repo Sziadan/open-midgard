@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIMinimapWnd.h"
 
 #include "UIWindowMgr.h"
@@ -37,7 +38,7 @@ namespace {
 
 constexpr int kWindowWidth = 184;
 constexpr int kWindowHeight = 212;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kBodyInset = 10;
 constexpr int kMapTop = 20;
 constexpr int kMapSize = 164;

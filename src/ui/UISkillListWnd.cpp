@@ -1,4 +1,6 @@
+#include "UiMetrics.h"
 #include "UISkillListWnd.h"
+#include "QtSkillTree.h"
 
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
@@ -35,7 +37,7 @@ namespace {
 
 constexpr int kWindowWidth = 317;
 constexpr int kWindowHeight = 291;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kBottomBarHeight = 50;
 constexpr int kLeftGutterWidth = 41;
 constexpr int kListTop = 20;
@@ -434,6 +436,15 @@ UISkillListWnd::~UISkillListWnd()
 
 void UISkillListWnd::SetShow(int show)
 {
+#if RO_ENABLE_QT6_UI
+    if (IsQtUiRuntimeEnabled()) {
+        if (!m_tree) m_tree = std::make_unique<QtSkillTree>(*this);
+        UIWindow::SetShow(show);
+        if (!show) m_tree->CancelCapture();
+        m_tree->Tick();
+        return;
+    }
+#endif
     UIWindow::SetShow(show);
     if (show != 0) {
         EnsureCreated();
@@ -453,6 +464,9 @@ void UISkillListWnd::Move(int x, int y)
 
 bool UISkillListWnd::IsUpdateNeed()
 {
+#if RO_ENABLE_QT6_UI
+    if (m_tree) return m_show != 0;
+#endif
     if (m_show == 0) {
         return false;
     }
@@ -533,6 +547,9 @@ void UISkillListWnd::OnDestroy()
 
 void UISkillListWnd::OnDraw()
 {
+#if RO_ENABLE_QT6_UI
+    if (m_tree) { m_isDirty=0; return; }
+#endif
     if (m_show == 0) {
         return;
     }
@@ -644,6 +661,9 @@ void UISkillListWnd::OnDraw()
 
 void UISkillListWnd::OnLBtnDown(int x, int y)
 {
+#if RO_ENABLE_QT6_UI
+    if (m_tree) { if (!m_tree->Press(x,y)) UIFrameWnd::OnLBtnDown(x,y); Invalidate(); return; }
+#endif
     EnsureCreated();
     if (IsQtUiRuntimeEnabled()) {
         RefreshVisibleSkillsForInteractionState();
@@ -721,6 +741,9 @@ void UISkillListWnd::OnLBtnDown(int x, int y)
 
 void UISkillListWnd::OnLBtnUp(int x, int y)
 {
+#if RO_ENABLE_QT6_UI
+    if (m_tree) { m_tree->Release(x,y); UIFrameWnd::OnLBtnUp(x,y); Invalidate(); return; }
+#endif
     if (IsQtUiRuntimeEnabled()) {
         RefreshVisibleSkillsForInteractionState();
     }
@@ -790,6 +813,9 @@ void UISkillListWnd::OnLBtnUp(int x, int y)
 
 void UISkillListWnd::OnRBtnDown(int x, int y)
 {
+#if RO_ENABLE_QT6_UI
+    if (m_tree) { m_tree->Describe(x,y); return; }
+#endif
     EnsureCreated();
     RefreshVisibleSkillsForInteractionState();
     UpdateHover(x, y);
@@ -808,6 +834,9 @@ void UISkillListWnd::OnRBtnDown(int x, int y)
 
 void UISkillListWnd::OnMouseMove(int x, int y)
 {
+#if RO_ENABLE_QT6_UI
+    if (m_tree) { UIFrameWnd::OnMouseMove(x,y); m_tree->Move(x,y); Invalidate(); return; }
+#endif
     if (IsQtUiRuntimeEnabled()) {
         RefreshVisibleSkillsForInteractionState();
     }
@@ -843,6 +872,9 @@ void UISkillListWnd::OnMouseMove(int x, int y)
 
 void UISkillListWnd::OnWheel(int delta)
 {
+#if RO_ENABLE_QT6_UI
+    if (m_tree) { m_tree->Wheel(delta); Invalidate(); return; }
+#endif
     const int skillCount = static_cast<int>(GetSortedSkills().size());
     const int maxOffset = GetMaxViewOffset(skillCount);
     if (delta > 0) {
@@ -1327,3 +1359,23 @@ unsigned long long UISkillListWnd::BuildVisualStateToken() const
 
     return hash;
 }
+
+void UISkillListWnd::OnProcess()
+{
+#if RO_ENABLE_QT6_UI
+    if (m_tree) m_tree->Tick();
+#endif
+}
+void UISkillListWnd::OnMouseHover(int x, int y)
+{
+#if RO_ENABLE_QT6_UI
+    if (m_tree) { m_tree->Move(x,y); Invalidate(); return; }
+#endif
+    UIWindow::OnMouseHover(x,y);
+}
+#if RO_ENABLE_QT6_UI
+QVariantMap UISkillListWnd::GetTreeDataForQt() const
+{
+    return m_tree ? m_tree->Data() : QVariantMap{};
+}
+#endif

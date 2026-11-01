@@ -923,7 +923,7 @@ u32 GetCursorActionVisualFrame(int cursorActNum, u32 mouseAnimStartTick, const C
 bool DrawModeCursorToHdc(HDC hdc, int cursorActNum, u32 mouseAnimStartTick)
 {
     POINT pt{};
-    if (!GetClientCursorPosInternal(&pt)) {
+    if (!GetModeCursorClientPos(&pt)) {
         return false;
     }
     return DrawModeCursorAtToHdc(hdc, pt.x, pt.y, cursorActNum, mouseAnimStartTick);
@@ -1001,7 +1001,19 @@ void UpdateModeCursorClientPos(int x, int y)
 
 bool GetModeCursorClientPos(POINT* outPoint)
 {
-    return GetClientCursorPosInternal(outPoint);
+    if (!GetClientCursorPosInternal(outPoint)) return false;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        // Picking happens before scene submission. Drawing must not rebuild
+        // sprite textures already referenced by queued world faces.
+        // Use the position picked for this frame throughout composition. A new
+        // WM_MOUSEMOVE or a newer OS sample must not switch this frame back to
+        // the raw pointer between scene picking and cursor rendering.
+        if (mode->m_hasCursorSnap) {
+            outPoint->x = mode->m_cursorSnapDrawX;
+            outPoint->y = mode->m_cursorSnapDrawY;
+        }
+    }
+    return true;
 }
 
 bool GetModeCursorDrawBounds(int cursorActNum, u32 mouseAnimStartTick, RECT* outBounds)

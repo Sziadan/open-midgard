@@ -1,7 +1,18 @@
 #pragma once
 #include "render/DC.h"
 #include "UIWindow.h"
+#include <array>
 #include <map>
+
+constexpr int kShortcutKeyBindingCount = 27;
+constexpr unsigned char kShortcutKeyModifierControl = 1u << 0;
+constexpr unsigned char kShortcutKeyModifierShift = 1u << 1;
+constexpr unsigned char kShortcutKeyModifierAlt = 1u << 2;
+
+struct ShortcutKeyBinding {
+    int virtualKey = 0;
+    unsigned char modifiers = 0;
+};
 
 // Forward declarations for all windows managed by UIWindowMgr
 class UILoadingWnd;
@@ -156,6 +167,10 @@ public:
     void OnChar(char c);
     void OnKeyDown(int virtualKey);
     bool OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown);
+    ShortcutKeyBinding GetShortcutKeyBinding(int slotIndex) const;
+    std::string GetShortcutKeyBindingLabel(int slotIndex) const;
+    bool SetShortcutKeyBinding(int slotIndex, const ShortcutKeyBinding& binding);
+    bool IsCapturingShortcutKeyBinding() const;
     bool HasWindowAtPoint(int x, int y) const;
     void ClampWindowToClient(int* x, int* y, int w, int h) const;
     void RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent);
@@ -246,12 +261,14 @@ public:
     std::string m_chatInputText;
     int m_chatActiveInputField;
     int m_chatScrollLineOffset;
+    std::array<ShortcutKeyBinding, kShortcutKeyBindingCount> m_shortcutKeyBindings{};
 
 private:
     UIWindow* HitTestWindow(int x, int y) const;
     bool HasFrontMenuUiVisible() const;
     bool HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi);
-    bool HandleHotkeyAfterFocusedUi(int virtualKey, bool hasFrontMenuUi);
+    bool HandleHotkeyAfterFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown, bool hasFrontMenuUi);
+    void LoadShortcutKeyBindings();
     bool HasBlockingUiForGameplayHotkeys() const;
     void ReleaseComposeSurface();
     bool EnsureComposeSurface(int width, int height);

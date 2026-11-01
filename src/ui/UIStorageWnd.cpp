@@ -1,3 +1,4 @@
+#include "UiMetrics.h"
 #include "UIStorageWnd.h"
 
 #include "gamemode/GameMode.h"
@@ -44,7 +45,7 @@ namespace {
 constexpr int kWindowWidth = 360;
 constexpr int kWindowHeight = 318;
 constexpr int kMiniHeight = 34;
-constexpr int kTitleBarHeight = 17;
+constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kGridLeft = 36;
 constexpr int kGridTop = 17;
 constexpr int kGridCell = 26;
