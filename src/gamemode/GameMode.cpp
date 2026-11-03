@@ -2299,14 +2299,29 @@ bool RequestReturnToCharSelect()
     packet.PacketType = PACKETID_CZ_RESTART;
     packet.Type = 1;
 
-    SetPendingDisconnectAction(PendingDisconnectAction::ReturnToCharSelect);
+    if (!BeginPendingDisconnectAction(PendingDisconnectAction::ReturnToCharSelect)) {
+        g_windowMgr.PushChatEvent(
+            "A disconnect request is already pending.",
+            0x00FF4040u,
+            6);
+        return false;
+    }
+
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
     if (!sent) {
         ClearPendingDisconnectAction();
+        g_windowMgr.PushChatEvent(
+            "Unable to send the character-select request.",
+            0x00FF4040u,
+            6);
+        DbgLog("[GameMode] failed to send return-to-character-select request\n");
+        return false;
     }
-    return sent;
+
+    MarkPendingDisconnectActionSent(GetTickCount());
+    return true;
 }
 
 bool RequestReturnToSavePoint()
@@ -2320,16 +2335,35 @@ bool RequestReturnToSavePoint()
         static_cast<int>(sizeof(packet)));
 }
 
-void RequestExitToWindows()
+bool RequestExitToWindows()
 {
     PACKET_CZ_QUITGAME packet{};
     packet.PacketType = PACKETID_CZ_QUITGAME;
     packet.Type = 0;
-    CRagConnection::instance()->SendPacket(
+
+    if (!BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows)) {
+        g_windowMgr.PushChatEvent(
+            "A disconnect request is already pending.",
+            0x00FF4040u,
+            6);
+        return false;
+    }
+
+    const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
-    CRagConnection::instance()->Disconnect();
-    g_modeMgr.Quit();
+    if (!sent) {
+        ClearPendingDisconnectAction();
+        g_windowMgr.PushChatEvent(
+            "Unable to send the exit request.",
+            0x00FF4040u,
+            6);
+        DbgLog("[GameMode] failed to send exit-to-Windows request\n");
+        return false;
+    }
+
+    MarkPendingDisconnectActionSent(GetTickCount());
+    return true;
 }
 
 void TraceGamePacketFirstSeen(const PacketView& packet)
@@ -9855,7 +9889,8 @@ CGameMode::~CGameMode() {
 }
 
 void CGameMode::OnInit(const char* worldName) {
-    RegisterDefaultGameModePacketHandlers(g_gameModePacketRouter);
+    ClearPendingDisconnectAction();
+    RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
     ClearRuntimeActors(*this);
     m_groundItemList.clear();
     m_playWaveList.clear();
@@ -9956,8 +9991,9 @@ void CGameMode::MakeFog(int fogOn)
 }
 
 void CGameMode::OnExit() {
+    ClearPendingDisconnectAction();
     g_renderer.FogSwitch(0);
-    g_gameModePacketRouter.Clear();
+    GetProductionGameModePacketRouter().Clear();
     ClearRuntimeActors(*this);
     g_windowMgr.RemoveAllWindows();
     m_groundItemList.clear();
@@ -10254,6 +10290,42 @@ void CGameMode::PlaceEffect(const vector3d& pos, int effectId, int lastTime, int
 #endif
 }
 
+CGameModePacketRouter& GetProductionGameModePacketRouter()
+{
+    return g_gameModePacketRouter;
+}
+
+GameModePacketLoopResult ProcessGameModePacketLoop(
+    CGameMode& mode,
+    CRagConnection& connection,
+    CGameModePacketRouter& router,
+    int packetBudget)
+{
+    GameModePacketLoopResult result{};
+    std::vector<u8> rawPacket;
+    while (packetBudget-- > 0) {
+        if (!connection.RecvPacket(rawPacket)) {
+            result.receiveDrained = true;
+            break;
+        }
+
+        PacketView packet{};
+        int consumed = 0;
+        if (!TryReadPacket(rawPacket.data(), static_cast<int>(rawPacket.size()), packet, consumed)) {
+            continue;
+        }
+        TraceGamePacketFirstSeen(packet);
+        ++result.packetsProcessed;
+        if (router.Dispatch(mode, packet)) {
+            ++result.packetsDispatched;
+        } else {
+            ++result.packetsUnhandled;
+            LogFirstSeenUnhandledGamePacket(packet.packetId, packet.packetLength);
+        }
+    }
+    return result;
+}
+
 void CGameMode::OnUpdate() {
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);
@@ -10265,24 +10337,18 @@ void CGameMode::OnUpdate() {
 
     // Poll a bounded number of packets per frame to avoid starvation.
     CRagConnection* conn = CRagConnection::instance();
-    std::vector<u8> rawPacket;
-    int packetBudget = (m_mapLoadingStage != MapLoading_None) ? 128 : 64;
-    int packetsProcessed = 0;
-
+    const int packetBudget = (m_mapLoadingStage != MapLoading_None) ? 128 : 64;
     const DWORD packetStart = GetTickCount();
-    while (packetBudget-- > 0 && conn->RecvPacket(rawPacket)) {
-        PacketView packet{};
-        int consumed = 0;
-        if (!TryReadPacket(rawPacket.data(), static_cast<int>(rawPacket.size()), packet, consumed)) {
-            continue;
-        }
-        TraceGamePacketFirstSeen(packet);
-        ++packetsProcessed;
-        if (!g_gameModePacketRouter.Dispatch(*this, packet)) {
-            LogFirstSeenUnhandledGamePacket(packet.packetId, packet.packetLength);
-        }
-    }
+    const GameModePacketLoopResult packetLoop = ProcessGameModePacketLoop(
+        *this, *conn, GetProductionGameModePacketRouter(), packetBudget);
     const DWORD packetEnd = GetTickCount();
+    const PendingDisconnectAction expiredAction = GetExpiredDisconnectAction(
+        packetLoop.receiveDrained,
+        GetTickCount());
+    if (ApplyDisconnectTimeoutFallback(expiredAction)) {
+        return;
+    }
+    const int packetsProcessed = packetLoop.packetsProcessed;
 
     const DWORD actorSummaryStart = GetTickCount();
     LogRuntimeActorSummary(*this);
@@ -10894,8 +10960,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         return RequestReturnToCharSelect() ? 1 : 0;
 
     case GameMsg_RequestExitToWindows:
-        RequestExitToWindows();
-        return 1;
+        return RequestExitToWindows() ? 1 : 0;
 
     case GameMsg_RequestReturnToSavePoint:
         return RequestReturnToSavePoint() ? 1 : 0;

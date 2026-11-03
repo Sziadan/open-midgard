@@ -7,6 +7,10 @@
 // Forward declarations
 class UIWaitWnd;
 
+void SetPendingLoginStatus(const char* status);
+void AdoptPendingLoginStatus(std::string& deferredStatus);
+std::string ConsumeDeferredLoginStatus(std::string& deferredStatus, const char* normalStatus);
+
 // Internal account-list entry used by the login UI (distinct from session::accountInfo).
 struct LoginAccountInfo {
     int  accountId;
@@ -115,6 +119,7 @@ public:
 
 private:
     void SetLoginStatus(const char* status);
+    std::string m_deferredLoginStatus;
     bool LoadClientInfoCandidates();
 
     // Network polling — called each frame while connected

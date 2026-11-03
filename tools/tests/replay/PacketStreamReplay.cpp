@@ -4,6 +4,11 @@
 #include "gamemode/ActionRequestSender.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
+#include "gamemode/LoginMode.h"
+#include "gamemode/Mode.h"
+#include "session/Session.h"
+#include "ui/UIChooseWnd.h"
+#include "ui/UIWindowMgr.h"
 #include <algorithm>
 #include <array>
 #include <cerrno>
@@ -20,6 +25,20 @@
 #if !RO_PLATFORM_WINDOWS
 #include <fcntl.h>
 #endif
+
+struct SkillPacketReplayAccess {
+    static CMode* Current() { return g_modeMgr.m_curMode; }
+    static int CurrentType() { return g_modeMgr.m_curModeType; }
+    static int NextType() { return g_modeMgr.m_nextModeType; }
+    static void SetCurrent(CGameMode* mode) {
+        g_modeMgr.m_curMode=mode;
+        g_modeMgr.m_curModeType=mode?1:0;
+    }
+    static void Restore(CMode* mode,int type) {
+        g_modeMgr.m_curMode=mode;
+        g_modeMgr.m_curModeType=type;
+    }
+};
 
 namespace {
 using Clock=std::chrono::steady_clock;
@@ -54,6 +73,7 @@ int SelectSocket(SOCKET s,bool readable,bool writable,std::chrono::milliseconds 
 }
 class TestConnection final:public CRagConnection{
 public:SOCKET Native()const{return m_socket;}int BufferedBytes()const{return m_recvQueue.GetSize();}
+    bool QueueBytes(const std::vector<u8>& bytes){return m_recvQueue.Push(reinterpret_cast<const char*>(bytes.data()),static_cast<int>(bytes.size()));}
 };
 bool Receive(TestConnection& c,std::vector<u8>& out){++g_recvInvocations;return c.RecvPacket(out);}
 struct LoopbackPeer{
@@ -134,28 +154,20 @@ void ProductionRouterDispatchReplay(){
     std::vector<u8> combined=first;
     combined.insert(combined.end(),second.begin(),second.end());
 
-    SetCase("production_router_dispatch","synthetic_router_replay",fixtureId,"CRagConnection::RecvPacket -> TryReadPacket -> RegisterDefaultGameModePacketHandlers -> CGameModePacketRouter::Dispatch");
+    SetCase("production_router_dispatch","production_router_replay",fixtureId,"CGameMode::OnUpdate -> ProcessGameModePacketLoop -> production global router");
     TestConnection connection;
     LoopbackPeer peer(connection);
     peer.Send(combined);
     WaitKernelPending(connection,static_cast<int>(combined.size()));
 
     CGameMode gameMode;
-    CGameModePacketRouter router;
+    CGameModePacketRouter& router=GetProductionGameModePacketRouter();
+    router.Clear();
     RegisterDefaultGameModePacketHandlers(router);
-    std::vector<std::vector<u8>> received;
-    std::vector<bool> dispatched;
-    struct ExpectedPacket{const std::vector<u8>* bytes;u16 id;};
-    const ExpectedPacket expectedPackets[]={{&first,0x01F8},{&second,0x01B0}};
-    for(const ExpectedPacket& expected:expectedPackets){
-        std::vector<u8> packet=ReadOne(connection);
-        PacketView view=VerifyRoute(packet,expected.id);
-        const bool didDispatch=router.Dispatch(gameMode,view);
-        Require(didDispatch,"default production packet router did not dispatch registered packet");
-        received.push_back(std::move(packet));
-        dispatched.push_back(didDispatch);
-        Require(received.back()==*expected.bytes,"router replay returned packet bytes in the wrong order");
-    }
+    const GameModePacketLoopResult loopResult=ProcessGameModePacketLoop(gameMode,connection,router,4);
+    Require(loopResult.packetsProcessed==2,"production packet loop processed the wrong packet count");
+    Require(loopResult.packetsDispatched==2&&loopResult.packetsUnhandled==0,"production packet loop did not dispatch both default handlers");
+    Require(loopResult.receiveDrained,"production packet loop did not report drained receive");
     Require(connection.BufferedBytes()==0,"production router replay left coalesced bytes queued");
 
     std::vector<u8> unknown={0x34,0x12};
@@ -165,16 +177,163 @@ void ProductionRouterDispatchReplay(){
     std::cout<<"{\"case_id\":\"production_router_dispatch\",\"contract_id\":\"PK01.P02.FRAMING\",\"fixture_id\":\""<<fixtureId
         <<"\",\"expected_fixture_sha256\":\""<<fixtureSha
         <<"\","<<ConfiguredSourceProvenanceJson()<<",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\""
-        <<",\"production_entry\":\"CRagConnection::RecvPacket -> TryReadPacket -> RegisterDefaultGameModePacketHandlers -> CGameModePacketRouter::Dispatch\""
+        <<",\"production_entry\":\"CGameMode::OnUpdate -> ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> TryReadPacket -> production global router dispatch\""
         <<",\"fixture_provenance\":\"synthetic receive-profile length samples; no server-emission claim\""
-        <<",\"stage\":\"synthetic_router_replay\",\"assertion_scope\":\"receive bytes and dispatch acceptance only; handler identity/effect not asserted\",\"input_chunks\":"<<ChunkJson({combined})
-        <<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hexes\":[\""<<Hex(first)<<"\",\""<<Hex(second)<<"\"]"
-        <<",\"actual_packet_hexes\":[\""<<Hex(received[0])<<"\",\""<<Hex(received[1])<<"\"]"
-        <<",\"expected_router_results\":[true,true,false],\"actual_router_results\":["
-        <<(dispatched[0]?"true":"false")<<","<<(dispatched[1]?"true":"false")<<","<<(unknownDispatched?"true":"false")<<"]"
+        <<",\"stage\":\"production_router_replay\",\"assertion_scope\":\"shared production loop and global default router; full CGameMode::OnUpdate frame not instantiated\",\"input_chunks\":"<<ChunkJson({combined})
+        <<",\"expected_input_packet_hexes\":[\""<<Hex(first)<<"\",\""<<Hex(second)<<"\"]"
+        <<",\"packets_processed\":"<<loopResult.packetsProcessed<<",\"packets_dispatched\":"<<loopResult.packetsDispatched
+        <<",\"packets_unhandled\":"<<loopResult.packetsUnhandled<<",\"receive_drained\":"<<(loopResult.receiveDrained?"true":"false")
+        <<",\"expected_router_results\":[true,true,false],\"actual_router_results\":[true,true,"
+        <<(unknownDispatched?"true":"false")<<"]"
         <<",\"expected_connection_state\":\"open\",\"actual_connection_state\":\""<<(connection.IsOpen()?"open":"closed")
         <<"\",\"expected_queue_remainder\":0,\"actual_queue_remainder\":"<<connection.BufferedBytes()<<",\"outcome\":\"PASS\"}\n";
 }
+
+void DisconnectAckRefusalDispatchReplay(PendingDisconnectAction action,const char* caseId)
+{
+    constexpr const char* expectedMessage="The server refused the disconnect request.";
+    constexpr const char* fixtureSha="795662f84b1ae022443f1d955705a42ca741baa5533f9342fca7045dbc0529b4";
+    const std::vector<u8> refusal={0x8b,0x01,0x01,0x00};
+    SetCase(caseId,"production_disconnect_ack","PK03.04-018b-result-1-independent","ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> GetProductionGameModePacketRouter -> HandleDisconnectAck");
+    ClearPendingDisconnectAction();
+    Require(BeginPendingDisconnectAction(action),"could not stage disconnect action for production refusal replay");
+    g_windowMgr.ClearChatEvents();
+
+    CRagConnection* connection=CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    peer.Send(refusal);
+    CGameMode gameMode;
+    CGameModePacketRouter& router=GetProductionGameModePacketRouter();
+    RegisterDefaultGameModePacketHandlers(router);
+    GameModePacketLoopResult loopResult{};
+    int loopCalls=0;
+    const auto deadline=Clock::now()+kTimeout;
+    do {
+        loopResult=ProcessGameModePacketLoop(gameMode,*connection,router,4);
+        ++loopCalls;
+        if(loopResult.packetsProcessed==0)std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    } while(loopResult.packetsProcessed==0&&Clock::now()<deadline);
+    Require(loopResult.packetsProcessed==1&&loopResult.packetsDispatched==1
+        &&loopResult.packetsUnhandled==0&&loopResult.receiveDrained,
+        "refusal replay did not dispatch and drain exactly one production packet");
+    Require(GetPendingDisconnectAction()==PendingDisconnectAction::None,"server refusal did not clear the pending action");
+    Require(connection->IsOpen(),"server refusal disconnected the active singleton map connection");
+    const std::vector<UIChatEvent>& events=g_windowMgr.GetChatEvents();
+    Require(!events.empty()&&events.back().text==expectedMessage,"server refusal did not queue the expected system chat event");
+
+    std::cout<<"{\"case_id\":\""<<caseId<<"\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"fixture_id\":\"PK03.04-018b-result-1-independent\",\"expected_fixture_sha256\":\""<<fixtureSha<<"\","
+        <<ConfiguredSourceProvenanceJson()<<",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\""
+        <<",\"production_entry\":\"ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> TryReadPacket -> GetProductionGameModePacketRouter::Dispatch -> HandleDisconnectAck -> UIWindowMgr::PushChatEvent\""
+        <<",\"stage\":\"map_disconnect_refusal\",\"assertion_scope\":\"handler queued refusal event; native/Qt chat rendering not exercised\",\"pending_action_before\":"<<static_cast<int>(action)
+        <<",\"input_chunks_hex\":"<<ChunkJson({refusal})<<",\"expected_result\":1,\"actual_result\":1,\"loop_invocation_count\":"<<loopCalls
+        <<",\"expected_message\":\""<<JsonEscape(expectedMessage)<<"\""
+        <<",\"packets_processed\":"<<loopResult.packetsProcessed<<",\"packets_dispatched\":"<<loopResult.packetsDispatched
+        <<",\"packets_unhandled\":"<<loopResult.packetsUnhandled
+        <<",\"expected_queued_chat_event\":\""<<JsonEscape(expectedMessage)<<"\",\"actual_queued_chat_event\":\""<<JsonEscape(events.back().text)<<"\",\"actual_queued_chat_channel\":"<<static_cast<unsigned int>(events.back().channel)<<",\"expected_pending_action\":0,\"actual_pending_action\":"<<static_cast<int>(GetPendingDisconnectAction())
+        <<",\"expected_singleton_connection_state\":\"open\",\"actual_singleton_connection_state\":\""<<(connection->IsOpen()?"open":"closed")<<"\",\"outcome\":\"PASS\"}\n";
+    ClearPendingDisconnectAction();
+    connection->Disconnect();
+    g_windowMgr.ClearChatEvents();
+}
+void DisconnectAckEveryBoundaryReplay()
+{
+    constexpr const char* fixtureSha="795662f84b1ae022443f1d955705a42ca741baa5533f9342fca7045dbc0529b4";
+    const std::vector<u8> acknowledgement={0x8b,0x01,0x01,0x00};
+    CGameMode gameMode;
+    CGameModePacketRouter& router=GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+    for(size_t split=1;split<acknowledgement.size();++split){
+        const std::string caseId="disconnect_ack_fragment_"+std::to_string(split);
+        SetCase(caseId,"production_disconnect_ack_fragment","PK03.04-018b-result-1-independent","ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> TryReadPacket -> production default router -> HandleDisconnectAck");
+        TestConnection connection;
+        LoopbackPeer peer(connection);
+        ClearPendingDisconnectAction();
+        g_windowMgr.ClearChatEvents();
+        Require(BeginPendingDisconnectAction(PendingDisconnectAction::ReturnToCharSelect),"could not stage pending action for fragmented acknowledgement");
+        MarkPendingDisconnectActionSent(100u);
+        const std::vector<u8> prefix(acknowledgement.begin(),acknowledgement.begin()+static_cast<std::ptrdiff_t>(split));
+        const std::vector<u8> suffix(acknowledgement.begin()+static_cast<std::ptrdiff_t>(split),acknowledgement.end());
+        peer.Send(prefix);
+        PumpUntilBuffered(connection,static_cast<int>(split));
+        const GameModePacketLoopResult prefixResult=ProcessGameModePacketLoop(gameMode,connection,router,4);
+        Require(prefixResult.packetsProcessed==0&&prefixResult.receiveDrained,"partial acknowledgement was dispatched or failed to drain");
+        const PendingDisconnectAction pendingAfterPrefix=GetPendingDisconnectAction();
+        Require(pendingAfterPrefix==PendingDisconnectAction::ReturnToCharSelect,"partial acknowledgement cleared pending action");
+        peer.Send(suffix);
+        GameModePacketLoopResult completeResult{};
+        const auto deadline=Clock::now()+kTimeout;
+        do {
+            completeResult=ProcessGameModePacketLoop(gameMode,connection,router,4);
+            if(completeResult.packetsProcessed==0)std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        } while(completeResult.packetsProcessed==0&&Clock::now()<deadline);
+        Require(completeResult.packetsProcessed==1&&completeResult.packetsDispatched==1&&completeResult.packetsUnhandled==0,
+            "fragmented acknowledgement did not dispatch once through the production loop");
+        Require(GetPendingDisconnectAction()==PendingDisconnectAction::None,"complete refusal did not clear pending action");
+        const auto& events=g_windowMgr.GetChatEvents();
+        Require(!events.empty()&&events.back().text=="The server refused the disconnect request.","fragmented refusal did not queue the expected chat event");
+        std::cout<<"{\"case_id\":\""<<caseId<<"\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"fixture_id\":\"PK03.04-018b-result-1-independent\",\"expected_fixture_sha256\":\""<<fixtureSha<<"\","<<ConfiguredSourceProvenanceJson()
+            <<",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\",\"production_entry\":\"ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> TryReadPacket -> default router dispatch -> HandleDisconnectAck\",\"stage\":\"production_disconnect_ack_fragment\",\"input_chunks_hex\":[\""<<Hex(prefix)<<"\",\""<<Hex(suffix)<<"\"],\"partial_packets_processed\":"<<prefixResult.packetsProcessed
+            <<",\"complete_packets_processed\":"<<completeResult.packetsProcessed<<",\"complete_packets_dispatched\":"<<completeResult.packetsDispatched<<",\"expected_pending_action_after_prefix\":1,\"actual_pending_action_after_prefix\":"<<static_cast<int>(pendingAfterPrefix)<<",\"expected_pending_action_after_frame\":0,\"actual_pending_action_after_frame\":"<<static_cast<int>(GetPendingDisconnectAction())<<",\"expected_queued_chat_event\":\"The server refused the disconnect request.\",\"actual_queued_chat_event\":\""<<JsonEscape(events.back().text)<<"\",\"outcome\":\"PASS\"}\n";
+        ClearPendingDisconnectAction();
+        g_windowMgr.ClearChatEvents();
+    }
+}
+
+void DisconnectChooserActivationReplay()
+{
+    SetCase("disconnect_chooser_activation","production_disconnect_chooser","PK03.04.DISCONNECT-ACK","UIChooseWnd::OnKeyDown -> UIChooseWnd::ActivateSelection -> CModeMgr::SendMsg -> CGameMode::SendMsg");
+    CRagConnection* connection=CRagConnection::instance();
+    connection->Disconnect();
+    ClearPendingDisconnectAction();
+    CMode* oldMode=SkillPacketReplayAccess::Current();
+    const int oldModeType=SkillPacketReplayAccess::CurrentType();
+    CGameMode gameMode;
+    SkillPacketReplayAccess::SetCurrent(&gameMode);
+    UIChooseWnd chooser;
+    chooser.SetShow(1);
+    Require(chooser.m_show!=0,"chooser did not become visible in the headless UI fixture");
+    Require(chooser.GetEntryCount()==4,"chooser option count changed");
+    Require(std::string(chooser.GetEntryLabelForQt(0))=="Character Select"
+        &&std::string(chooser.GetEntryLabelForQt(2))=="Exit To Windows","chooser does not expose both disconnect options");
+
+    chooser.OnKeyDown(VK_DOWN); // Return To Game -> Exit To Windows.
+    chooser.OnKeyDown(VK_RETURN);
+    const bool failedExitKeptOpen=chooser.m_show!=0&&GetPendingDisconnectAction()==PendingDisconnectAction::None;
+    Require(failedExitKeptOpen,
+        "failed exit send closed chooser or retained pending action");
+    LoopbackPeer exitPeer(*connection);
+    chooser.OnKeyDown(VK_RETURN);
+    const std::vector<u8> exitRequest=exitPeer.ReceiveExact(4);
+    Require(exitRequest==std::vector<u8>({0x8a,0x01,0x00,0x00}),"chooser exit option sent incorrect request bytes");
+    const bool successfulExitClosed=chooser.m_show==0&&GetPendingDisconnectAction()==PendingDisconnectAction::ExitToWindows;
+    Require(successfulExitClosed,
+        "successful exit send did not close chooser and retain pending action");
+    connection->Disconnect();
+    ClearPendingDisconnectAction();
+
+    chooser.SetShow(1);
+    chooser.OnKeyDown(VK_DOWN); // Exit To Windows -> Return To Save Point.
+    chooser.OnKeyDown(VK_DOWN); // Return To Save Point -> Character Select.
+    chooser.OnKeyDown(VK_RETURN);
+    const bool failedReturnKeptOpen=chooser.m_show!=0&&GetPendingDisconnectAction()==PendingDisconnectAction::None;
+    Require(failedReturnKeptOpen,
+        "failed character-select send closed chooser or retained pending action");
+    LoopbackPeer returnPeer(*connection);
+    chooser.OnKeyDown(VK_RETURN);
+    const std::vector<u8> returnRequest=returnPeer.ReceiveExact(3);
+    Require(returnRequest==std::vector<u8>({0xb2,0x00,0x01}),"chooser character-select option sent incorrect request bytes");
+    const bool successfulReturnClosed=chooser.m_show==0&&GetPendingDisconnectAction()==PendingDisconnectAction::ReturnToCharSelect;
+    Require(successfulReturnClosed,
+        "successful character-select send did not close chooser and retain pending action");
+    std::cout<<"{\"case_id\":\"disconnect_chooser_activation\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"fixture_id\":\"PK03.04-chooser-production-options\","<<ConfiguredSourceProvenanceJson()
+        <<",\"expected_return_fixture_sha256\":\"9d28c69c5f71e98ec1faefd86fd4ea400703a7cd710340f588fcba01c5f1b1c7\",\"expected_exit_fixture_sha256\":\"8d2f50703af28decdd8e9f407c074d71c12c059f9259a780a1697ca64e526b4b\",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\",\"production_entry\":\"UIChooseWnd::OnKeyDown -> UIChooseWnd::ActivateSelection -> CModeMgr::SendMsg -> CGameMode::SendMsg\",\"stage\":\"headless_chooser_activation\",\"assertion_scope\":\"production chooser activation and send-result visibility; Qt rendering not exercised\",\"expected_visible_options\":[\"Character Select\",\"Exit To Windows\"],\"actual_visible_options\":[\""<<JsonEscape(chooser.GetEntryLabelForQt(0))<<"\",\""<<JsonEscape(chooser.GetEntryLabelForQt(2))<<"\"],\"failed_exit_kept_open\":"<<(failedExitKeptOpen?"true":"false")<<",\"successful_exit_closed\":"<<(successfulExitClosed?"true":"false")<<",\"failed_return_kept_open\":"<<(failedReturnKeptOpen?"true":"false")<<",\"successful_return_closed\":"<<(successfulReturnClosed?"true":"false")<<",\"return_request_hex\":\""<<Hex(returnRequest)<<"\",\"exit_request_hex\":\""<<Hex(exitRequest)<<"\",\"outcome\":\"PASS\"}\n";
+    connection->Disconnect();
+    ClearPendingDisconnectAction();
+    SkillPacketReplayAccess::Restore(oldMode,oldModeType);
+}
+
 void FixedEveryBoundary(const std::vector<u8>& frame){for(size_t split=1;split<frame.size();++split){std::string caseId="fixed_fragment_"+std::to_string(split);SetCase(caseId);TestConnection c;LoopbackPeer p(c);std::vector<u8> out;
     p.Send(std::vector<u8>(frame.begin(),frame.begin()+split));PumpUntilBuffered(c,static_cast<int>(split));Require(out.empty(),"partial prefix returned bytes");Report(caseId+"_prefix",kFixedFixture,kFixedSha,{std::vector<u8>(frame.begin(),frame.begin()+split)},"","",split,c.BufferedBytes(),c);
     p.Send(std::vector<u8>(frame.begin()+split,frame.end()));out=PumpUntilPacket(c);Require(out==frame,"fragmented fixed packet changed");VerifyRoute(out,0x006c);Report(caseId,kFixedFixture,kFixedSha,{std::vector<u8>(frame.begin(),frame.begin()+split),std::vector<u8>(frame.begin()+split,frame.end())},Hex(frame),Hex(out),0,c.BufferedBytes(),c);}}
@@ -190,9 +349,224 @@ void ActionRequestBuilderReplay(){SetCase("action_request_builder_replay");using
     std::array<u8,7> sentinel{};sentinel.fill(0xa5);int outLength=123;Require(!BuildActiveActionRequestPacket(1,0,sentinel.data(),6,&outLength),"undersized action builder buffer was accepted");Require(std::all_of(sentinel.begin(),sentinel.end(),[](u8 b){return b==0xa5;}),"failed builder changed sentinel output storage");Require(!BuildActiveActionRequestPacket(1,0,nullptr,7,&outLength),"null action builder output was accepted");std::array<u8,7> valid{};Require(!BuildActiveActionRequestPacket(1,0,valid.data(),7,nullptr),"null action builder length output was accepted");
     CRagConnection* connection=CRagConnection::instance();LoopbackPeer p(*connection);Require(!SendActionRequestPacket(0,0),"zero-target single attack passed production helper guard");Require(!SendActionRequestPacket(0,7),"zero-target repeat attack passed production helper guard");Require(SelectSocket(p.peer.value,true,false,std::chrono::milliseconds(50))==0,"rejected action helper emitted unexpected prefix");for(const Sample& sample:samples)Require(SendActionRequestPacket(sample.target,sample.action),"production action request sender rejected approved sample");const std::vector<u8> captured=p.ReceiveExact(expectedStream.size());Require(captured==expectedStream,"mock peer production action sender stream differs from independent frame sequence");connection->Disconnect();Require(!SendActionRequestPacket(0x11223344,0),"production action sender accepted closed connection");std::cout<<"{\"case_id\":\"action_request_builder_replay\",\"contract_id\":\"PK03.03.PK46-action-request-serialization\","<<ConfiguredSourceProvenanceJson()<<",\"profile\":23,\"production_entry\":\"SendActionRequestPacket -> BuildActiveActionRequestPacket -> CRagConnection::SendPacket\",\"expected_frames_hex\":[\""<<expectedFrames[0]<<"\",\""<<expectedFrames[1]<<"\",\""<<expectedFrames[2]<<"\",\""<<expectedFrames[3]<<"\"],\"captured_stream_hex\":\""<<Hex(captured)<<"\",\"builder_failures\":3,\"zero_target_attack_and_repeat_rejected\":true,\"closed_connection_rejected\":true,\"outcome\":\"PASS\"}\n";}
 }
+void DisconnectAckDecisionReplay(){
+    SetCase("disconnect_ack_decision_and_timeout","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","GetExpiredDisconnectAction/DecideDisconnectAck");
+    ClearPendingDisconnectAction();
+    Require(BeginPendingDisconnectAction(PendingDisconnectAction::ReturnToCharSelect),"could not begin return-to-character request");
+    Require(!BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),"duplicate disconnect request was accepted");
+    MarkPendingDisconnectActionSent(0);
+    Require(GetExpiredDisconnectAction(false,15000)==PendingDisconnectAction::None,"packet-budget exhaustion expired request");
+    Require(GetExpiredDisconnectAction(true,14999)==PendingDisconnectAction::None,"request expired before the 15-second deadline");
+    Require(GetExpiredDisconnectAction(true,15000)==PendingDisconnectAction::ReturnToCharSelect,"zero start tick did not expire at deadline");
+    ClearPendingDisconnectAction();
+
+    constexpr u32 wrappedStart=0xFFFFFF00u;
+    constexpr u32 wrappedDeadline=wrappedStart+15000u;
+    Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),"could not begin exit request");
+    MarkPendingDisconnectActionSent(wrappedStart);
+    Require(GetExpiredDisconnectAction(true,wrappedDeadline-1u)==PendingDisconnectAction::None,"wrapped timer expired early");
+    Require(GetExpiredDisconnectAction(true,wrappedDeadline)==PendingDisconnectAction::ExitToWindows,"wrapped timer did not expire at deadline");
+    ClearPendingDisconnectAction();
+
+    Require(DecideDisconnectAck(PendingDisconnectAction::ExitToWindows,0)==DisconnectAckDecision::ExitToWindows,"accepted exit acknowledgement was not recognized");
+    Require(DecideDisconnectAck(PendingDisconnectAction::ReturnToCharSelect,0)==DisconnectAckDecision::Ignore,"return-to-character result 0 was treated as process exit");
+    Require(DecideDisconnectAck(PendingDisconnectAction::ReturnToCharSelect,1)==DisconnectAckDecision::Refused,"return-to-character refusal was not recognized");
+    Require(DecideDisconnectAck(PendingDisconnectAction::None,1)==DisconnectAckDecision::Ignore,"orphan refusal acknowledgement changed state");
+    Require(DecideDisconnectAck(PendingDisconnectAction::ExitToWindows,2)==DisconnectAckDecision::Ignore,"unknown acknowledgement result was not ignored");
+    Require(IsReturnToCharSelectAck(PendingDisconnectAction::ReturnToCharSelect,1),"valid 0x00B3 acknowledgement was not recognized");
+    Require(!IsReturnToCharSelectAck(PendingDisconnectAction::ExitToWindows,1),"0x00B3 cleared a different pending action");
+    std::cout<<"{\"case_id\":\"disconnect_ack_decision_and_timeout\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"zero_tick\":true,\"tick_wraparound\":true,\"packet_budget_not_drained\":true,\"result_matrix\":true,\"outcome\":\"PASS\"}\n";
+}
+void LoginStatusPrecedenceReplay(){
+    SetCase("disconnect_timeout_login_status","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","ConsumeDeferredLoginStatus");
+    std::string deferred="Login: disconnect timed out.";
+    Require(ConsumeDeferredLoginStatus(deferred,"Login: ready.")=="Login: disconnect timed out.","timeout notice did not override the normal login status");
+    Require(deferred.empty(),"timeout notice was not consumed at the stable login screen");
+    std::string charSelectDeferred="Login: disconnect timed out.";
+    Require(ConsumeDeferredLoginStatus(charSelectDeferred,"")=="Login: disconnect timed out.","timeout notice did not override CharSelect's normal empty status");
+    Require(charSelectDeferred.empty(),"timeout notice was not consumed at CharSelect");
+    std::string noDeferred;
+    Require(ConsumeDeferredLoginStatus(noDeferred,"Login: ready.")=="Login: ready.","normal login status changed without a pending notice");
+    std::cout<<"{\"case_id\":\"disconnect_timeout_login_status\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"login_ready_precedence\":true,\"char_select_precedence\":true,\"one_shot\":true,\"outcome\":\"PASS\"}\n";
+}
+void DisconnectTimeoutFallbackReplay()
+{
+    SetCase("disconnect_timeout_fallback","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","ProcessGameModePacketLoop -> GetExpiredDisconnectAction -> ApplyDisconnectTimeoutFallback -> ReturnToLoginModeWithStatus -> CModeMgr::Switch");
+    CRagConnection* singleton=CRagConnection::instance();
+    singleton->Disconnect();
+    ClearPendingDisconnectAction();
+    CGameMode gameMode;
+    CGameModePacketRouter& router=GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection connection;
+    LoopbackPeer peer(connection);
+    Require(BeginPendingDisconnectAction(PendingDisconnectAction::ReturnToCharSelect),"could not stage pending action for EOF timeout fallback");
+    MarkPendingDisconnectActionSent(0);
+    CloseSocket(peer.peer.value);
+    peer.peer.value=INVALID_SOCKET;
+    GameModePacketLoopResult loopResult{};
+    const auto deadline=Clock::now()+kTimeout;
+    do {
+        loopResult=ProcessGameModePacketLoop(gameMode,connection,router,4);
+        if(!loopResult.receiveDrained)std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    } while(!loopResult.receiveDrained&&Clock::now()<deadline);
+    const bool eofDrainedWithoutPacket=loopResult.packetsProcessed==0&&loopResult.receiveDrained&&!connection.IsOpen();
+    Require(eofDrainedWithoutPacket,"EOF without acknowledgement did not drain/close the receive connection");
+    const bool pendingRetainedAfterEof=GetPendingDisconnectAction()==PendingDisconnectAction::ReturnToCharSelect;
+    Require(pendingRetainedAfterEof,"EOF without acknowledgement cleared pending request context");
+    Require(GetExpiredDisconnectAction(loopResult.receiveDrained,14999)==PendingDisconnectAction::None,"EOF caused timeout before the deadline");
+    const PendingDisconnectAction expired=GetExpiredDisconnectAction(loopResult.receiveDrained,15000);
+    Require(expired==PendingDisconnectAction::ReturnToCharSelect,"EOF-pending request did not expire at the timeout boundary");
+
+    const int oldReturnFlag=g_session.m_pendingReturnToCharSelect;
+    SetPendingLoginStatus("");
+    g_session.m_pendingReturnToCharSelect=0;
+    g_modeMgr.Switch(1,"map");
+    Require(ApplyDisconnectTimeoutFallback(expired),"expired return action did not apply the production login fallback");
+    const bool returnTimeoutRequestsCharSelect=g_session.m_pendingReturnToCharSelect==1&&SkillPacketReplayAccess::NextType()==0;
+    Require(returnTimeoutRequestsCharSelect,
+        "return timeout did not request character-select login mode");
+    const bool fallbackClearedActionAndMap=GetPendingDisconnectAction()==PendingDisconnectAction::None&&!singleton->IsOpen();
+    Require(fallbackClearedActionAndMap,
+        "return timeout did not clear action and disconnect map singleton");
+    std::string adoptedStatus;
+    AdoptPendingLoginStatus(adoptedStatus);
+    const bool returnTimeoutStatusAdopted=ConsumeDeferredLoginStatus(adoptedStatus,"Login: ready.")=="Login: disconnect timed out.";
+    Require(returnTimeoutStatusAdopted,
+        "LoginMode status adoption did not preserve the timeout message over the ready status");
+    Require(adoptedStatus.empty(),"LoginMode did not consume its adopted timeout status once");
+
+    constexpr u32 wrappedStart=0xFFFFFF00u;
+    constexpr u32 wrappedDeadline=wrappedStart+15000u;
+    Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),"could not stage pending exit timeout");
+    MarkPendingDisconnectActionSent(wrappedStart);
+    const PendingDisconnectAction expiredExit=GetExpiredDisconnectAction(true,wrappedDeadline);
+    Require(expiredExit==PendingDisconnectAction::ExitToWindows,"exit action did not expire across tick wrap");
+    g_session.m_pendingReturnToCharSelect=1;
+    g_modeMgr.Switch(1,"map");
+    Require(ApplyDisconnectTimeoutFallback(expiredExit),"expired exit action did not use production login fallback");
+    const bool exitTimeoutSkipsCharSelect=g_session.m_pendingReturnToCharSelect==0&&SkillPacketReplayAccess::NextType()==0;
+    Require(exitTimeoutSkipsCharSelect,
+        "exit timeout incorrectly requested character-select resume");
+    std::string exitStatus;
+    AdoptPendingLoginStatus(exitStatus);
+    const bool exitTimeoutStatusAdopted=ConsumeDeferredLoginStatus(exitStatus,"Login: select a server before connecting.")=="Login: disconnect timed out.";
+    Require(exitTimeoutStatusAdopted,
+        "exit timeout status did not override the normal server-selection status");
+    g_session.m_pendingReturnToCharSelect=oldReturnFlag;
+    std::cout<<"{\"case_id\":\"disconnect_timeout_fallback\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"fixture_id\":\"PK03.04-018b-no-ack-eof\","<<ConfiguredSourceProvenanceJson()
+        <<",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\",\"production_entry\":\"ProcessGameModePacketLoop -> GetExpiredDisconnectAction -> ApplyDisconnectTimeoutFallback -> ReturnToLoginModeWithStatus -> CModeMgr::Switch\",\"stage\":\"headless_timeout_mode_handoff\",\"assertion_scope\":\"production timeout decision/fallback and LoginMode status-adoption helpers; full CGameMode::OnUpdate and CLoginMode::OnInit frames not instantiated\",\"eof_drained_without_packet\":"<<(eofDrainedWithoutPacket?"true":"false")<<",\"eof_preserves_pending_action\":"<<(pendingRetainedAfterEof?"true":"false")<<",\"return_timeout_requests_char_select\":"<<(returnTimeoutRequestsCharSelect?"true":"false")<<",\"fallback_cleared_action_and_map\":"<<(fallbackClearedActionAndMap?"true":"false")<<",\"exit_timeout_skips_char_select\":"<<(exitTimeoutSkipsCharSelect?"true":"false")<<",\"return_timeout_status_adopted\":"<<(returnTimeoutStatusAdopted?"true":"false")<<",\"exit_timeout_status_adopted\":"<<(exitTimeoutStatusAdopted?"true":"false")<<",\"outcome\":\"PASS\"}\n";
+    ClearPendingDisconnectAction();
+}
+void DisconnectRequestReplay(){
+    SetCase("disconnect_request_wire_bytes","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","CGameMode::SendMsg -> CRagConnection::SendPacket");
+    CRagConnection* connection=CRagConnection::instance();
+    connection->Disconnect();
+    ClearPendingDisconnectAction();
+    CGameMode mode;
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestReturnToCharSelect,0,0,0)!=0,"return-to-character request failed to send");
+        const std::vector<u8> expected={0xb2,0x00,0x01};
+        const std::vector<u8> captured=peer.ReceiveExact(expected.size());
+        Require(captured==expected,"return-to-character request bytes differ");
+        Require(GetPendingDisconnectAction()==PendingDisconnectAction::ReturnToCharSelect,"successful return request was not pending");
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestReturnToCharSelect,0,0,0)==0,"duplicate return request was accepted");
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestExitToWindows,0,0,0)==0,"different duplicate disconnect request was accepted");
+        Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(50))==0,"duplicate request emitted wire bytes");
+        connection->Disconnect();
+        ClearPendingDisconnectAction();
+    }
+
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestExitToWindows,0,0,0)==0,"exit request succeeded without a connection");
+    Require(GetPendingDisconnectAction()==PendingDisconnectAction::None,"failed exit send left pending state");
+    {
+        LoopbackPeer peer(*connection);
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestExitToWindows,0,0,0)!=0,"exit request failed to send");
+        const std::vector<u8> expected={0x8a,0x01,0x00,0x00};
+        const std::vector<u8> captured=peer.ReceiveExact(expected.size());
+        Require(captured==expected,"exit request bytes differ");
+        Require(GetPendingDisconnectAction()==PendingDisconnectAction::ExitToWindows,"successful exit request was not pending");
+        connection->Disconnect();
+        ClearPendingDisconnectAction();
+    }
+    std::cout<<"{\"case_id\":\"disconnect_request_wire_bytes\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"return_request_hex\":\"b20001\",\"exit_request_hex\":\"8a010000\",\"duplicate_rejected\":true,\"failed_send_cleared\":true,\"outcome\":\"PASS\"}\n";
+}
+void ProductionDisconnectAckEofReplay(){
+    SetCase("disconnect_ack_buffered_before_eof","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","CGameMode::OnUpdate -> ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> CGameModePacketRouter::Dispatch");
+    TestConnection connection;
+    LoopbackPeer peer(connection);
+    const std::vector<u8> prefix={0xf8,0x01};
+    const std::vector<u8> acknowledgement={0x8b,0x01,0x01,0x00};
+    std::vector<u8> coalesced=prefix;
+    coalesced.insert(coalesced.end(),acknowledgement.begin(),acknowledgement.end());
+    Require(connection.QueueBytes(coalesced),"could not queue coalesced production frames");
+    CloseSocket(peer.peer.value);
+    peer.peer.value=INVALID_SOCKET;
+
+    ClearPendingDisconnectAction();
+    Require(BeginPendingDisconnectAction(PendingDisconnectAction::ReturnToCharSelect),"could not set pending action for acknowledgement replay");
+    MarkPendingDisconnectActionSent(0);
+    CGameMode mode;
+    CGameModePacketRouter& router=GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    const GameModePacketLoopResult first=ProcessGameModePacketLoop(mode,connection,router,1);
+    Require(first.packetsProcessed==1&&!first.receiveDrained,"one-packet budget was reported as drained");
+    Require(GetExpiredDisconnectAction(first.receiveDrained,15000)==PendingDisconnectAction::None,"budget exhaustion triggered timeout");
+    const GameModePacketLoopResult second=ProcessGameModePacketLoop(mode,connection,router,1);
+    Require(second.packetsProcessed==1&&!second.receiveDrained,"buffered acknowledgement was not delivered before EOF");
+    Require(GetPendingDisconnectAction()==PendingDisconnectAction::None,"refusal handler did not clear the matching action");
+    const GameModePacketLoopResult third=ProcessGameModePacketLoop(mode,connection,router,1);
+    Require(third.packetsProcessed==0&&third.receiveDrained,"EOF was not reported as receive-drained");
+    Require(!connection.IsOpen()&&connection.BufferedBytes()==0,"EOF did not close the socket after draining coalesced frames");
+    Require(GetExpiredDisconnectAction(third.receiveDrained,15000)==PendingDisconnectAction::None,"handled acknowledgement left a timeout");
+    ClearPendingDisconnectAction();
+    std::cout<<"{\"case_id\":\"disconnect_ack_buffered_before_eof\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"input_hex\":\"f8018b010100\",\"packets_dispatched\":2,\"ack_before_eof\":true,\"budget_does_not_expire\":true,\"outcome\":\"PASS\"}\n";
+}
+void ProductionAcceptedExitAckReplay(){
+    SetCase("disconnect_ack_accepted_exit","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","CGameMode::OnUpdate -> ProcessGameModePacketLoop -> HandleDisconnectAck");
+    CRagConnection* connection=CRagConnection::instance();
+    connection->Disconnect();
+    ClearPendingDisconnectAction();
+    LoopbackPeer peer(*connection);
+    CGameMode mode;
+    CGameModePacketRouter& router=GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    const u8 orphanBytes[]={0x8b,0x01,0x00,0x00};
+    PacketView orphan{0x018b,4,orphanBytes};
+    Require(router.Dispatch(mode,orphan),"default router did not register 0x018B");
+    Require(connection->IsOpen(),"orphan result 0 closed the socket without a pending exit request");
+
+    const u8 restartAckBytes[]={0xb3,0x00,0x01};
+    PacketView restartAck{0x00b3,3,restartAckBytes};
+    Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),"could not set pending exit for 0x00B3 isolation test");
+    Require(router.Dispatch(mode,restartAck),"default router did not register 0x00B3");
+    Require(GetPendingDisconnectAction()==PendingDisconnectAction::ExitToWindows,"0x00B3 cleared a pending Windows-exit request");
+
+    const std::vector<u8> acknowledgement={0x8b,0x01,0x00,0x00};
+    peer.Send(acknowledgement);
+    GameModePacketLoopResult result{};
+    const auto deadline=Clock::now()+kTimeout;
+    do {
+        result=ProcessGameModePacketLoop(mode,*connection,router,1);
+        if(result.packetsProcessed==0)std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    } while(result.packetsProcessed==0&&Clock::now()<deadline);
+    Require(result.packetsProcessed==1,"accepted exit acknowledgement was not dispatched");
+    Require(GetPendingDisconnectAction()==PendingDisconnectAction::None,"accepted exit acknowledgement did not clear pending state");
+    Require(!connection->IsOpen(),"accepted exit acknowledgement did not disconnect");
+    ClearPendingDisconnectAction();
+    std::cout<<"{\"case_id\":\"disconnect_ack_accepted_exit\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"orphan_ignored\":true,\"0x00b3_isolated\":true,\"accepted_exit_dispatched\":true,\"outcome\":\"PASS\"}\n";
+}
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
+    Require(ro::net::GetPacketSize(0x018b)==4,"0x018b disconnect acknowledgement size differs from contract");
     const std::vector<u8> fixed{0x6c,0x00,0x00}; // opaque length sample: map registry clif_packetdb.hpp line 18
     const std::vector<u8> variable{0x69,0x00,0x06,0x00,0x11,0x22}; // variable framing only
     FixedEveryBoundary(fixed);FixedCoalesced(fixed);VariableEveryBoundary(variable,fixed);
@@ -202,8 +576,18 @@ int main(){try{
     EofCase(fixed,0,"eof_empty",kFixedFixture,kFixedSha);EofCase(fixed,1,"eof_partial_fixed_header",kFixedFixture,kFixedSha);
     EofCase(variable,5,"eof_partial_variable_body",kVariableFixture,kVariableSha);
     ProductionRouterDispatchReplay();
+    DisconnectAckEveryBoundaryReplay();
+    DisconnectAckRefusalDispatchReplay(PendingDisconnectAction::ReturnToCharSelect,"disconnect_ack_refuses_return_to_char_select");
+    DisconnectAckRefusalDispatchReplay(PendingDisconnectAction::ExitToWindows,"disconnect_ack_refuses_exit_to_windows");
     OutboundTransportCapture(fixed);
     ActionRequestBuilderReplay();
+    DisconnectAckDecisionReplay();
+    LoginStatusPrecedenceReplay();
+    DisconnectTimeoutFallbackReplay();
+    DisconnectRequestReplay();
+    DisconnectChooserActivationReplay();
+    ProductionDisconnectAckEofReplay();
     {SetCase("production_reconnect_reset");TestConnection c;{LoopbackPeer p(c);p.Send({0x6c});PumpUntilBuffered(c,1);}c.Disconnect();Require(!c.IsOpen()&&c.BufferedBytes()==0,"disconnect failed to clear receive queue");{LoopbackPeer p(c);p.Send(fixed);auto out=PumpUntilPacket(c);Require(out==fixed,"production reconnect failed after disconnect");VerifyRoute(out,0x006c);Report("production_reconnect_reset",kFixedFixture,kFixedSha,{fixed},Hex(fixed),Hex(out),0,c.BufferedBytes(),c);}}
-    CConnection::Cleanup();std::cout<<"PASS packet stream replay: fixed and variable fragmentation, production decoder packets="<<g_decodeCount<<", production router dispatch, coalescing, baseline resync characterization, EOF and production reconnect\n";return 0;
+    ProductionAcceptedExitAckReplay();
+    CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

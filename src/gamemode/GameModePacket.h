@@ -8,10 +8,25 @@
 #include <unordered_map>
 
 class CGameMode;
+class CRagConnection;
 
 enum class PendingDisconnectAction {
     None = 0,
     ReturnToCharSelect = 1,
+    ExitToWindows = 2,
+};
+
+enum class DisconnectAckDecision {
+    Ignore = 0,
+    Refused = 1,
+    ExitToWindows = 2,
+};
+
+struct GameModePacketLoopResult {
+    int packetsProcessed = 0;
+    int packetsDispatched = 0;
+    int packetsUnhandled = 0;
+    bool receiveDrained = false;
 };
 
 struct PacketView
@@ -43,6 +58,12 @@ private:
 
 // Registers first-pass handlers (login/map/spawn/move skeleton packets).
 void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router);
+CGameModePacketRouter& GetProductionGameModePacketRouter();
+GameModePacketLoopResult ProcessGameModePacketLoop(
+    CGameMode& mode,
+    CRagConnection& connection,
+    CGameModePacketRouter& router,
+    int packetBudget);
 
 // Removes runtime actors whose delayed despawn timer has expired.
 void CleanupPendingActorDespawns(CGameMode& mode);
@@ -53,6 +74,12 @@ void ApplyPendingLocalCartState(CGameMode& mode);
 void PrimeLocalCartStateFromEffectState(int effectState);
 bool IsKnownLocalCartActive();
 
-void SetPendingDisconnectAction(PendingDisconnectAction action);
+bool BeginPendingDisconnectAction(PendingDisconnectAction action);
+void MarkPendingDisconnectActionSent(u32 startTick);
 PendingDisconnectAction GetPendingDisconnectAction();
+PendingDisconnectAction GetExpiredDisconnectAction(bool receiveDrained, u32 nowTick);
 void ClearPendingDisconnectAction();
+bool ApplyDisconnectTimeoutFallback(PendingDisconnectAction expiredAction);
+DisconnectAckDecision DecideDisconnectAck(PendingDisconnectAction action, u16 result);
+bool IsReturnToCharSelectAck(PendingDisconnectAction action, u8 result);
+void ReturnToLoginModeWithStatus(const char* status);

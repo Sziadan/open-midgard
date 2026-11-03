@@ -1,5 +1,6 @@
 #include "GameModePacket.h"
 #include "Commerce.h"
+#include "LoginMode.h"
 
 #include "network/GronPacket.h"
 #include "network/MapSendProfile.h"
@@ -78,8 +79,10 @@ constexpr u32 kActorChatBubblePerCharLifetimeMs = 90;
 constexpr u32 kActorChatBubbleMinLifetimeMs = 4500;
 constexpr u32 kActorChatBubbleMaxLifetimeMs = 12000;
 constexpr u32 kActorNameRequestCooldownMs = 1000;
+constexpr u32 kDisconnectAckTimeoutMs = 15000;
 
 PendingDisconnectAction g_pendingDisconnectAction = PendingDisconnectAction::None;
+u32 g_pendingDisconnectStartTick = 0;
 u32 g_lastLocalLevelUpEffectId = 0;
 u32 g_lastLocalLevelUpEffectTick = 0;
 u32 g_lastSelfLevelUpStatusTick = 0;
@@ -4321,6 +4324,7 @@ bool ReconnectForServerMove(const MapChangeInfo& info)
         static_cast<unsigned int>((info.ip >> 16) & 0xFFu),
         static_cast<unsigned int>((info.ip >> 24) & 0xFFu));
 
+    ClearPendingDisconnectAction();
     CRagConnection::instance()->Disconnect();
     if (!CRagConnection::instance()->Connect(serverHost, static_cast<int>(info.port))) {
         DbgLog("[GameMode] map change reconnect failed zone=%s:%u map='%s'\n",
@@ -7799,6 +7803,7 @@ void HandleBroadcast(CGameMode& mode, const PacketView& packet)
 
 void ReturnToLoginMode()
 {
+    ClearPendingDisconnectAction();
     g_session.ClearInventoryItems();
     g_windowMgr.ClearChatEvents();
     CRagConnection::instance()->Disconnect();
@@ -7806,6 +7811,26 @@ void ReturnToLoginMode()
 }
 
 } // namespace
+
+void ReturnToLoginModeWithStatus(const char* status)
+{
+    if (status && status[0] != '\0') {
+        SetPendingLoginStatus(status);
+    }
+    ReturnToLoginMode();
+}
+
+bool ApplyDisconnectTimeoutFallback(PendingDisconnectAction expiredAction)
+{
+    if (expiredAction == PendingDisconnectAction::None) {
+        return false;
+    }
+    ClearPendingDisconnectAction();
+    g_session.m_pendingReturnToCharSelect =
+        expiredAction == PendingDisconnectAction::ReturnToCharSelect ? 1 : 0;
+    ReturnToLoginModeWithStatus("Login: disconnect timed out.");
+    return true;
+}
 
 void ApplyPendingLocalCartState(CGameMode& mode)
 {
@@ -7826,9 +7851,22 @@ bool IsKnownLocalCartActive()
     return g_localCartInfoKnown && (g_localCartEffectStateMask & kEffectStatePushCartMask) != 0;
 }
 
-void SetPendingDisconnectAction(PendingDisconnectAction action)
+bool BeginPendingDisconnectAction(PendingDisconnectAction action)
 {
+    if (action == PendingDisconnectAction::None
+        || g_pendingDisconnectAction != PendingDisconnectAction::None) {
+        return false;
+    }
     g_pendingDisconnectAction = action;
+    g_pendingDisconnectStartTick = 0;
+    return true;
+}
+
+void MarkPendingDisconnectActionSent(u32 startTick)
+{
+    if (g_pendingDisconnectAction != PendingDisconnectAction::None) {
+        g_pendingDisconnectStartTick = startTick;
+    }
 }
 
 PendingDisconnectAction GetPendingDisconnectAction()
@@ -7836,9 +7874,37 @@ PendingDisconnectAction GetPendingDisconnectAction()
     return g_pendingDisconnectAction;
 }
 
+PendingDisconnectAction GetExpiredDisconnectAction(bool receiveDrained, u32 nowTick)
+{
+    if (!receiveDrained || g_pendingDisconnectAction == PendingDisconnectAction::None) {
+        return PendingDisconnectAction::None;
+    }
+    if (static_cast<u32>(nowTick - g_pendingDisconnectStartTick) < kDisconnectAckTimeoutMs) {
+        return PendingDisconnectAction::None;
+    }
+    return g_pendingDisconnectAction;
+}
+
 void ClearPendingDisconnectAction()
 {
     g_pendingDisconnectAction = PendingDisconnectAction::None;
+    g_pendingDisconnectStartTick = 0;
+}
+
+DisconnectAckDecision DecideDisconnectAck(PendingDisconnectAction action, u16 result)
+{
+    if (result == 1 && action != PendingDisconnectAction::None) {
+        return DisconnectAckDecision::Refused;
+    }
+    if (result == 0 && action == PendingDisconnectAction::ExitToWindows) {
+        return DisconnectAckDecision::ExitToWindows;
+    }
+    return DisconnectAckDecision::Ignore;
+}
+
+bool IsReturnToCharSelectAck(PendingDisconnectAction action, u8 result)
+{
+    return action == PendingDisconnectAction::ReturnToCharSelect && result == 1;
 }
 
 namespace {
@@ -7859,19 +7925,48 @@ void HandleDisconnectCharacterAck(CGameMode&, const PacketView& packet)
         return;
     }
 
-    const bool accepted = (packet.data[2] == 1);
     const PendingDisconnectAction pendingAction = GetPendingDisconnectAction();
-    ClearPendingDisconnectAction();
+    if (!IsReturnToCharSelectAck(pendingAction, packet.data[2])) {
+        DbgLog("[GameMode] ignored 0x00B3 type=%u pending=%d\n",
+            static_cast<unsigned int>(packet.data[2]),
+            static_cast<int>(pendingAction));
+        return;
+    }
 
-    if (accepted) {
-        if (pendingAction == PendingDisconnectAction::ReturnToCharSelect) {
-            g_session.m_pendingReturnToCharSelect = 1;
-        } else {
-            g_session.m_pendingReturnToCharSelect = 0;
-        }
-        ReturnToLoginMode();
-    } else {
+    ClearPendingDisconnectAction();
+    g_session.m_pendingReturnToCharSelect = 1;
+    ReturnToLoginMode();
+}
+
+void HandleDisconnectAck(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 4) {
+        DbgLog("[GameMode] ignored truncated 0x018B packet len=%u\n",
+            static_cast<unsigned int>(packet.packetLength));
+        return;
+    }
+
+    const u16 result = ReadLE16(packet.data + 2);
+    const PendingDisconnectAction action = GetPendingDisconnectAction();
+    switch (DecideDisconnectAck(action, result)) {
+    case DisconnectAckDecision::Refused:
+        ClearPendingDisconnectAction();
+        g_windowMgr.PushChatEvent(
+            "The server refused the disconnect request.",
+            0x00FF4040u,
+            kChatChannelSystem);
+        break;
+    case DisconnectAckDecision::ExitToWindows:
+        ClearPendingDisconnectAction();
         g_session.m_pendingReturnToCharSelect = 0;
+        CRagConnection::instance()->Disconnect();
+        g_modeMgr.Quit();
+        break;
+    case DisconnectAckDecision::Ignore:
+        DbgLog("[GameMode] ignored 0x018B result=%u pending=%d\n",
+            static_cast<unsigned int>(result),
+            static_cast<int>(action));
+        break;
     }
 }
 
@@ -8744,6 +8839,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     // Quit/return-to-login transitions.
     router.Register(0x0081, HandleBanDisconnect);
     router.Register(0x00B3, HandleDisconnectCharacterAck);
+    router.Register(0x018B, HandleDisconnectAck);
 
     // Common server-side status/config packets that are safe to ignore for now,
     // but must stay in sync so later actor packets are framed correctly.

@@ -2107,7 +2107,8 @@ void UIWindowMgr::PushChatEvent(const char* text, u32 color, u8 channel, u32 tic
     m_chatEvents.push_back(std::move(event));
 
     if (m_chatWnd) {
-        m_chatWnd->AddChatLine(event.text.c_str(), color, channel, event.tick);
+        const UIChatEvent& storedEvent = m_chatEvents.back();
+        m_chatWnd->AddChatLine(storedEvent.text.c_str(), color, channel, storedEvent.tick);
     }
 }
 

@@ -134,12 +134,13 @@
       "commit_subject": "packet(PK03.03): replay reviewed 0437 action sender"
     },
     "PK03.04": {
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK03.04-replay-audit.md",
+        "docs/packets/evidence/PK03.04-global-router-refusal.jsonl",
         "docs/packets/contracts/PK03.04.DISCONNECT-ACK.md"
       ],
-      "commit_subject": "packet(PK03.04): add default-router dispatch replay"
+      "commit_subject": "packet(PK03.04): implement disconnect acknowledgement lifecycle"
     },
     "PK04.01": {
       "status": "NOT_STARTED",

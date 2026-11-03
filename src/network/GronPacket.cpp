@@ -200,6 +200,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x015E,6);SetPacketSize(0x015F,42);
     SetPacketSize(0x0176,106);SetPacketSize(0x017F,kVariablePacketSize);
     SetPacketSize(0x0181,3);SetPacketSize(0x0182,106);SetPacketSize(0x0184,10);SetPacketSize(0x0185,34);
+    SetPacketSize(0x018B, 4); // ZC_ACK_REQ_DISCONNECT
     SetPacketSize(0x016a,30);SetPacketSize(0x0169,3);SetPacketSize(0x0249,3);
     SetPacketSize(0x012B, 2);              // ZC_CLEAR_CART
     SetPacketSize(0x012F, kVariablePacketSize);

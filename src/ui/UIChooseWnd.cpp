@@ -323,8 +323,11 @@ msgresult_t UIChooseWnd::ActivateSelection()
         return 1;
 
     case MenuEntry_ExitToWindows:
-        CloseMenu();
-        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestExitToWindows, 0, 0, 0);
+        if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestExitToWindows, 0, 0, 0) != 0) {
+            CloseMenu();
+            return 1;
+        }
+        return 0;
 
     case MenuEntry_ReturnToSavePoint:
         if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestReturnToSavePoint, 0, 0, 0) != 0) {

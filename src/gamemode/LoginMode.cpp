@@ -45,6 +45,7 @@ constexpr u32 kPasswordHashFallbackDelayMs = 1500;
 constexpr size_t kCompactCharListHeaderSize = 4;
 constexpr size_t kLegacyCharListHeaderSize = 24;
 constexpr size_t kExpandedCharListHeaderSize = 27;
+std::string g_pendingLoginStatus;
 
 void FormatPacketBytes(const u8* data, int len, char* out, size_t outSize)
 {
@@ -1250,6 +1251,30 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
 
 } // namespace
 
+void SetPendingLoginStatus(const char* status)
+{
+    g_pendingLoginStatus = status ? status : "";
+}
+
+void AdoptPendingLoginStatus(std::string& deferredStatus)
+{
+    if (!g_pendingLoginStatus.empty()) {
+        deferredStatus.swap(g_pendingLoginStatus);
+    }
+    g_pendingLoginStatus.clear();
+}
+
+std::string ConsumeDeferredLoginStatus(std::string& deferredStatus, const char* normalStatus)
+{
+    if (deferredStatus.empty()) {
+        return normalStatus ? normalStatus : "";
+    }
+
+    std::string status;
+    status.swap(deferredStatus);
+    return status;
+}
+
 CLoginMode::CLoginMode() 
         : m_numServer(0), m_serverSelected(0), m_numChar(0),
             m_selectedCharIndex(0), m_selectedCharSlot(0), m_pendingDeleteCharGid(0), m_pendingDeleteCharSlot(-1), m_subModeStartTime(0),
@@ -1273,6 +1298,7 @@ CLoginMode::~CLoginMode() {
 void CLoginMode::OnInit(const char* worldName) {
     (void)worldName;
 
+    AdoptPendingLoginStatus(m_deferredLoginStatus);
     m_loopCond = 1;
     m_isConnected = 0;
     m_nextSubMode = -1;
@@ -1294,9 +1320,10 @@ void CLoginMode::OnInit(const char* worldName) {
     g_windowMgr.SetLoginWallpaper(m_wallPaperBmpName);
 
     m_subMode = LoginSubMode_Login;
-    if (g_session.m_pendingReturnToCharSelect != 0 && CanReturnToCharacterSelect()) {
+    const bool pendingReturnToCharSelect = g_session.m_pendingReturnToCharSelect != 0;
+    g_session.m_pendingReturnToCharSelect = 0;
+    if (pendingReturnToCharSelect && CanReturnToCharacterSelect()) {
         m_subMode = LoginSubMode_ConnectChar;
-        g_session.m_pendingReturnToCharSelect = 0;
     }
     m_selectedCharIndex = 0;
     m_selectedCharSlot = 0;
@@ -1592,15 +1619,17 @@ void CLoginMode::OnChangeState(int newState) {
         if (loginWnd) {
             loginWnd->SetShow(1);
         }
+        const char* normalStatus = "Login: ready.";
         if (GetClientInfoConnectionCount() > 1) {
             UIWindow* serverWnd = g_windowMgr.MakeWindow(UIWindowMgr::WID_SELECTSERVERWND);
             if (serverWnd) {
                 serverWnd->SetShow(1);
             }
-            SetLoginStatus("Login: select a server before connecting.");
-        } else {
-            SetLoginStatus("Login: ready.");
+            normalStatus = "Login: select a server before connecting.";
         }
+        SetLoginStatus(normalStatus);
+        const std::string stableStatus = ConsumeDeferredLoginStatus(m_deferredLoginStatus, normalStatus);
+        SetLoginStatus(stableStatus.c_str());
         break;
     }
 
@@ -1705,7 +1734,9 @@ void CLoginMode::OnChangeState(int newState) {
             charSelectWnd->SetShow(1);
             DbgLog("[Login] Select char window show enabled\n");
         }
-        g_windowMgr.SetLoginStatus("");
+        SetLoginStatus("");
+        const std::string stableStatus = ConsumeDeferredLoginStatus(m_deferredLoginStatus, "");
+        SetLoginStatus(stableStatus.c_str());
         DbgLog("[Login] LoginSubMode_CharSelect ready\n");
         break;
     }

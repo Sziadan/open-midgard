@@ -485,6 +485,69 @@ bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)
 {
     outPacket.clear();
 
+    const auto extractBufferedPacket = [&]() {
+        while (true) {
+            if (m_recvQueue.GetSize() < 2) {
+                return false;
+            }
+
+            char hdr[4] = {};
+            if (!m_recvQueue.Peek(hdr, 2)) {
+                return false;
+            }
+
+            const u16 packetId = static_cast<u16>(
+                static_cast<unsigned char>(hdr[0]) |
+                (static_cast<u16>(static_cast<unsigned char>(hdr[1])) << 8));
+
+            const s16 knownSize = ro::net::GetPacketSize(packetId);
+            if (packetId == 0x0077) {
+                LogFirstSeenRecvPacket0077(m_recvQueue.GetSize(), knownSize, m_recvQueue);
+            }
+
+            if (knownSize == 0) {
+                // Unknown packet id: drop this header and keep scanning so one unsupported
+                // packet doesn't stall the whole login/game receive pipeline.
+                LogFirstSeenUnknownRecvPacket(packetId, m_recvQueue.GetSize(), m_recvQueue);
+                m_recvQueue.RemoveData(2);
+                continue;
+            }
+
+            int packetSize = knownSize;
+            if (knownSize == ro::net::kVariablePacketSize) {
+                if (m_recvQueue.GetSize() < 4 || !m_recvQueue.Peek(hdr, 4)) {
+                    return false;
+                }
+
+                packetSize = static_cast<int>(
+                    static_cast<unsigned char>(hdr[2]) |
+                    (static_cast<u16>(static_cast<unsigned char>(hdr[3])) << 8));
+                if (packetSize < 4 || packetSize > 0x7FFF) {
+                    LogFirstSeenInvalidVariablePacket(packetId, packetSize, m_recvQueue);
+                    m_recvQueue.RemoveData(2);
+                    continue;
+                }
+            }
+
+            if (m_recvQueue.GetSize() < packetSize) {
+                return false;
+            }
+
+            outPacket.resize(static_cast<size_t>(packetSize));
+            const bool popped = m_recvQueue.Pop(reinterpret_cast<char*>(outPacket.data()), packetSize);
+            if (popped) {
+                RememberRecvPacket(packetId, packetSize);
+                LogConnectionRecvTrace(packetId, packetSize);
+            }
+            return popped;
+        }
+    };
+
+    // Drain queued complete frames before socket operations can close and clear it.
+    if (extractBufferedPacket()) {
+        return true;
+    }
+
     if (m_socket == INVALID_SOCKET) {
         return false;
     }
@@ -511,61 +574,7 @@ bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)
         }
     }
 
-    while (true) {
-        if (m_recvQueue.GetSize() < 2) {
-            return false;
-        }
-
-        char hdr[4] = {};
-        if (!m_recvQueue.Peek(hdr, 2)) {
-            return false;
-        }
-
-        const u16 packetId = static_cast<u16>(
-            static_cast<unsigned char>(hdr[0]) |
-            (static_cast<u16>(static_cast<unsigned char>(hdr[1])) << 8));
-
-        const s16 knownSize = ro::net::GetPacketSize(packetId);
-        if (packetId == 0x0077) {
-            LogFirstSeenRecvPacket0077(m_recvQueue.GetSize(), knownSize, m_recvQueue);
-        }
-
-        if (knownSize == 0) {
-            // Unknown packet id: drop this header and keep scanning so one unsupported
-            // packet doesn't stall the whole login/game receive pipeline.
-            LogFirstSeenUnknownRecvPacket(packetId, m_recvQueue.GetSize(), m_recvQueue);
-            m_recvQueue.RemoveData(2);
-            continue;
-        }
-
-        int packetSize = knownSize;
-        if (knownSize == ro::net::kVariablePacketSize) {
-            if (m_recvQueue.GetSize() < 4 || !m_recvQueue.Peek(hdr, 4)) {
-                return false;
-            }
-
-            packetSize = static_cast<int>(
-                static_cast<unsigned char>(hdr[2]) |
-                (static_cast<u16>(static_cast<unsigned char>(hdr[3])) << 8));
-            if (packetSize < 4 || packetSize > 0x7FFF) {
-                LogFirstSeenInvalidVariablePacket(packetId, packetSize, m_recvQueue);
-                m_recvQueue.RemoveData(2);
-                continue;
-            }
-        }
-
-        if (m_recvQueue.GetSize() < packetSize) {
-            return false;
-        }
-
-        outPacket.resize(static_cast<size_t>(packetSize));
-        const bool popped = m_recvQueue.Pop(reinterpret_cast<char*>(outPacket.data()), packetSize);
-        if (popped) {
-            RememberRecvPacket(packetId, packetSize);
-            LogConnectionRecvTrace(packetId, packetSize);
-        }
-        return popped;
-    }
+    return extractBufferedPacket();
 }
 
 bool CRagConnection::RecvPacket(char* buffer)
