@@ -89,7 +89,7 @@ Tier: **S**. Dependencies: PK03.
 - **PK04.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK04.02 [S]** Model character connection raw-prefix state and remove fake opcode assumptions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK04.03 [S]** Validate fragmented account echo before allowing framed packets. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK04.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK04.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -114,7 +114,7 @@ Tier: **S**. Dependencies: PK04.
 - **PK05.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK05.02 [S]** Replace destructive two-byte skipping with profile-derived bounded framing. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK05.03 [S]** Define explicit protocol-error/connection cleanup and malformed-frame reporting. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK05.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK05.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -137,7 +137,7 @@ Tier: **M**. Dependencies: PK05.
 - **PK06.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK06.02 [M]** Add exact 20-byte active layout and membership state update. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK06.03 [M]** Propagate online/member status to guild UI and map lifecycle. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK06.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK06.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -161,7 +161,7 @@ Tier: **M**. Dependencies: PK05.
 - **PK07.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK07.02 [M]** Select 35-byte layout for active20080910 profile. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK07.03 [M]** Decode all pet status fields and connect state through pet package. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK07.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK07.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -185,7 +185,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK08.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK08.02 [S]** Replace mismatched0190 request with active server MoreInfo contract. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK08.03 [S]** Correct production serializer and independent old test expectations. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK08.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK08.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -210,7 +210,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK09.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.02 [S]** Resolve01EF duplicate router registration per profile. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.03 [S]** Verify active normal/equipment/cart routes independently. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK09.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -234,7 +234,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK10.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK10.02 [S]** Verify login/char failures and map connection confirmation including0283. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK10.03 [S]** Implement server-directed disconnect02D5 and quit/reconnect state cleanup. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK10.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK10.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -258,7 +258,7 @@ Tier: **M**. Dependencies: PK06.
 - **PK11.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK11.02 [M]** Reconcile0156/0160/0166/0174 with016C local rank/permissions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK11.03 [M]** Apply014E menuFlags and current permission gates to Qt controls. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK11.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK11.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -289,7 +289,7 @@ Tier: **S**. Dependencies: PK11.
 - **PK12.02 [S]** Implement expulsion015B and disband015D with result/state paths. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK12.03 [S]** Implement alliance0170 opposition0180 and relation removal0183. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK12.04 [S]** Implement guild-member actions and all rejection/cancel paths in Qt. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK12.05 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK12.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -314,7 +314,7 @@ Tier: **S**. Dependencies: PK03, PK10.
 - **PK13.02 [S]** Document trade_tradeack acceptance-distance result delivery to both peers. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK13.03 [S]** Implement client pending-state lifecycle and honest timeout/cancel handling. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK13.04 [S]** Prepare separately authorized minimal server correction with independent two-client replay. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK13.05 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK13.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -338,7 +338,7 @@ Tier: **M**. Dependencies: PK05.
 - **PK14.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK14.02 [M]** Implement0107 by account ID with source-proven units/sentinels. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK14.03 [M]** Render/update/remove party minimap markers through existing party position state. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK14.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK14.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -363,7 +363,7 @@ Tier: **M**. Dependencies: PK14, PK10.
 - **PK15.02 [M]** Audit roster invitations leave leader and HP transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK15.03 [M]** Implement party invite settings02C8/02C9 and party loot02B8. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK15.04 [M]** Remove incorrect receive assumption for0100 and verify its leave-party send path. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK15.05 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK15.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -387,7 +387,7 @@ Tier: **M**. Dependencies: PK05.
 - **PK16.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK16.02 [M]** Implement02D8/02D9/02DA request/ack server-confirmed settings. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK16.03 [M]** Audit friends whispers blocklists user counts and their failure notices. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK16.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK16.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -411,7 +411,7 @@ Tier: **M**. Dependencies: PK12, PK15.
 - **PK17.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK17.02 [M]** Add distinct guild channel state and receive filtering for017F. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK17.03 [M]** Wire0108 party and017E guild text sends through real Qt input paths. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK17.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK17.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -436,7 +436,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK18.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK18.02 [S]** Implement0192 updates in collision/pathfinding and rendered cell state. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK18.03 [S]** Reset and reapply changes safely during map reload. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK18.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK18.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -460,7 +460,7 @@ Tier: **S**. Dependencies: PK18.
 - **PK19.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK19.02 [S]** Implement0199/01D6/02E7 per active layout. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK19.03 [S]** Propagate map rules to relevant UI/actions and presentation. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK19.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK19.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -484,7 +484,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK20.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK20.02 [S]** Implement01B0 distinct from01D7 and rebuild actor representation. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK20.03 [S]** Verify sprite/GR2 resource ownership picking and effects during replacement. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK20.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK20.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -508,7 +508,7 @@ Tier: **S**. Dependencies: PK10, PK25.
 - **PK21.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK21.02 [S]** Implement02F0/02F2 progress start/abort state and02F1 reply. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK21.03 [S]** Wire input locks cancellation expiration and map/disconnect teardown. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK21.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK21.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -528,7 +528,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK22.02 [S]** Port028A branches and flag lifetimes beyond level99/Assumptio. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK22.03 [S]** Decode043F remaining value fields only under proven layout. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK22.04 [S]** Apply per-status start refresh end and actor teardown semantics. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK22.05 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK22.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -556,7 +556,7 @@ Tier: **S**. Dependencies: PK08, PK22.
 - **PK23.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK23.02 [S]** Enumerate every skill handler branch and connect to skill plan ownership. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK23.03 [S]** Verify damage cast target ground effect duration cancel and rejection semantics per contract. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK23.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK23.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -575,7 +575,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK24.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK24.02 [S]** Audit signed widths HP/SP EXP stats and status increments. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK24.03 [S]** Verify actor state transitions and lifecycle ordering with extreme values. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK24.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK24.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -594,7 +594,7 @@ Tier: **M**. Dependencies: PK10.
 - **PK25.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK25.02 [M]** Audit message menu input next close and shop handoffs. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK25.03 [M]** Implement missing compass0144 map notifications0189 and script choices. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK25.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK25.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -613,7 +613,7 @@ Tier: **M**. Dependencies: PK23, PK25.
 - **PK26.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK26.02 [M]** Implement memo011E monster estimate018C and special skill choices. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK26.03 [M]** Audit StarGladiator020E/0253 and source-gated choice requests. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK26.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK26.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -632,7 +632,7 @@ Tier: **S**. Dependencies: PK07, PK20.
 - **PK27.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK27.02 [S]** Implement capture019E/01A0 and feed/name/status01A3/01A4/01A6/01AA. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK27.03 [S]** Implement pet inventory/dialogue and follow/actor synchronization. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK27.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK27.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -656,7 +656,7 @@ Tier: **S**. Dependencies: PK23, PK24.
 - **PK28.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK28.02 [S]** Implement022E/022F/0230 status and skill0235/0239 contracts. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK28.03 [S]** Wire summon death rename feeding skill UI and actor reset paths. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK28.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK28.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -675,7 +675,7 @@ Tier: **S**. Dependencies: PK23, PK24.
 - **PK29.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK29.02 [S]** Implement active mercenary029B/02A2 and skill family. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK29.03 [S]** Classify elemental and newer companion variants then implement applicable branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK29.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK29.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -694,7 +694,7 @@ Tier: **S**. Dependencies: PK16, PK25.
 - **PK30.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK30.02 [S]** Implement01E6/01EA/01F6/01F8/0205/0216 applicable events. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK30.03 [S]** Wire request/consent/rejection and relationship state transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK30.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK30.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -713,7 +713,7 @@ Tier: **S**. Dependencies: PK10, PK16.
 - **PK31.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK31.02 [S]** Implement00D5–00E3 room list create join owner/password/membership flows. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK31.03 [S]** Implement room bubble click entry removal capacity and disconnect cleanup. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK31.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK31.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -733,7 +733,7 @@ Tier: **S**. Dependencies: PK03, PK10.
 - **PK32.02 [S]** Implement inbox0240 read0242 and new-mail024A. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK32.03 [S]** Implement attachment0245/0255 claim and zeny/item state. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK32.04 [S]** Implement delete0257 return0274 and full compose/send results. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK32.05 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK32.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -757,7 +757,7 @@ Tier: **M**. Dependencies: PK09, PK24.
 - **PK33.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK33.02 [M]** Implement0298/0299 rental notices and expiry state. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK33.03 [M]** Implement02D3 bind-on-equip and02BB damaged gear lifecycle. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK33.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK33.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -776,7 +776,7 @@ Tier: **S**. Dependencies: PK09.
 - **PK34.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK34.02 [S]** Validate full normal/equipment/cart/storage/friend arrays before mutation. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK34.03 [S]** Replace snapshots atomically and preserve state on malformed input. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK34.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK34.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -802,7 +802,7 @@ Tier: **S**. Dependencies: PK25, PK34.
 - **PK35.02 [S]** Implement0188/018F refine and018D selection contracts. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK35.03 [S]** Implement01FC/01FE repair item choices/results. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK35.04 [S]** Implement025A cooking and remaining active crafting branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK35.05 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK35.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -821,7 +821,7 @@ Tier: **S**. Dependencies: PK03, PK10, PK34.
 - **PK36.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK36.02 [S]** Determine023A/023B/023C exact challenge and password algorithm. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK36.03 [S]** Implement secure entry/retry/change/unlock state and server failure branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK36.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK36.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -845,7 +845,7 @@ Tier: **S**. Dependencies: PK13, PK34.
 - **PK37.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK37.02 [S]** Audit NPC shops cart transfers and vending setup/bubbles/buying lists. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK37.03 [S]** Audit trade both peers lock accept cancel results and transaction ownership. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK37.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK37.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -864,7 +864,7 @@ Tier: **M**. Dependencies: PK33, PK34.
 - **PK38.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK38.02 [M]** Audit use equip unequip drop pickup and storage transfers. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK38.03 [M]** Implement missing card identification and selection result handling. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK38.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK38.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -883,7 +883,7 @@ Tier: **M**. Dependencies: PK05, PK24.
 - **PK39.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK39.02 [M]** Implement MVP010A–010D and rankings0219/021A/021B/021C/0224/0226/0236/0238. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK39.03 [M]** Implement014A/014B/01AB manner and02C1 colored messages. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK39.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK39.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -903,7 +903,7 @@ Tier: **S**. Dependencies: PK03, PK34.
 - **PK40.02 [S]** Implement active0250/0252/0256/025D/025F auction branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK40.03 [S]** Implement0287/0289 cash shop state and balances. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK40.04 [S]** Classify09A6 and related bank requests then implement applicable contracts. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK40.05 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK40.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -922,7 +922,7 @@ Tier: **S**. Dependencies: PK14, PK19, PK24.
 - **PK41.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK41.02 [S]** Implement02DD team/emblem and02DE/02DF/02E0 markers/HP/scores. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK41.03 [S]** Implement actual team chat membership and teardown paths. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK41.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK41.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -941,7 +941,7 @@ Tier: **S**. Dependencies: PK10, PK25.
 - **PK42.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK42.02 [S]** Implement02CB–02CE creation state queue/wait and result branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK42.03 [S]** Wire instance UI entry restriction expiry and map/reconnect cleanup. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK42.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK42.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -960,7 +960,7 @@ Tier: **S**. Dependencies: PK03, PK37.
 - **PK43.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK43.02 [S]** Classify/implement0810-family buying stores including0814/0816 board lifecycle. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK43.03 [S]** Classify/implement0837-family search and0803-family party booking. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK43.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK43.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -979,7 +979,7 @@ Tier: **S**. Dependencies: PK01, PK02.
 - **PK44.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.02 [S]** Classify clans0988 achievements0A23 roulette0A1A attendance0AF0 dressroom0A02 guild storage09DA reputation0B8D and related variants. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03 [S]** Audit login/char rename028E/0290 delete PIN slots billing and other stage variants. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK44.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -998,7 +998,7 @@ Tier: **S**. Dependencies: PK20, PK22, PK24.
 - **PK45.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK45.02 [S]** Audit every actor spawn move action name and resource lifecycle handler. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK45.03 [S]** Audit every remaining registered handler field/branch through state/UI/replies. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK45.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK45.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -1017,7 +1017,7 @@ Tier: **S**. Dependencies: PK02, PK03.
 - **PK46.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK46.02 [S]** Trace all177 accepted map requests through profile/raw-buffer/Qt user actions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK46.03 [S]** Verify login/char outbound requests and unsupported action gates. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK46.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK46.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -1036,7 +1036,7 @@ Tier: **S**. Dependencies: PK01, PK02.
 - **PK47.01 [S]** Specify this package's bounded research/harness/review scope, exact source inputs, output schema and evidence criteria. Record source-backed runtime contracts; independent review follows the implementation run. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK47.02 [S]** Review all unresolved990-row discoveries and1384 historical definitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK47.03 [S]** Adjudicate remaining collisions aliases inactive guards and source gaps with explicit evidence. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK47.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK47.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -1074,7 +1074,7 @@ Tier: **S**. Dependencies: PK48.
 - **PK49.01 [S]** Specify this package's bounded research/harness/review scope, exact source inputs, output schema and evidence criteria. Record source-backed runtime contracts; independent review follows the implementation run. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK49.02 [S]** Prepare exact build/test/source manifest and user-run live scenarios. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK49.03 [S]** Record acceptance results unresolved limitations and release readiness. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK49.04 [S]** Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK49.04 [S]** Verify the final reproducible build/test/source manifest and acceptance checklist, record unresolved limitations and release readiness, and commit the final handoff. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -1093,7 +1093,7 @@ Tier: **S**. Dependencies: PK03, PK10.
 - **PK50.01 [S]** Document source-backed contracts for 02B1/02B2/02B3/02B4/02B5/02B7 and every related active request/emitter, identifying mission record versions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK50.02 [M]** Implement complete quest list and mission snapshots atomically, preserving IDs, counts, target types and time units. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK50.03 [M]** Implement add/remove/status/kill progress updates and Qt journal/actions with map and reconnect lifecycle. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK50.04 [S]** Independently verify quest ordering, expiry, duplicate updates, malformed arrays, completion and rejection paths, then commit evidence. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK50.04 [S]** Self-verify quest ordering, expiry, duplicate updates, malformed arrays, completion and rejection paths, then commit evidence. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 

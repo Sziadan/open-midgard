@@ -146,7 +146,7 @@
       },
       {
         "id": "PK04.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -177,7 +177,7 @@
       },
       {
         "id": "PK05.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -208,7 +208,7 @@
       },
       {
         "id": "PK06.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -239,7 +239,7 @@
       },
       {
         "id": "PK07.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -270,7 +270,7 @@
       },
       {
         "id": "PK08.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -301,7 +301,7 @@
       },
       {
         "id": "PK09.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -332,7 +332,7 @@
       },
       {
         "id": "PK10.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -363,7 +363,7 @@
       },
       {
         "id": "PK11.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -399,7 +399,7 @@
       },
       {
         "id": "PK12.05",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -436,7 +436,7 @@
       },
       {
         "id": "PK13.05",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -467,7 +467,7 @@
       },
       {
         "id": "PK14.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -504,7 +504,7 @@
       },
       {
         "id": "PK15.05",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -535,7 +535,7 @@
       },
       {
         "id": "PK16.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -567,7 +567,7 @@
       },
       {
         "id": "PK17.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -598,7 +598,7 @@
       },
       {
         "id": "PK18.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -629,7 +629,7 @@
       },
       {
         "id": "PK19.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -660,7 +660,7 @@
       },
       {
         "id": "PK20.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -692,7 +692,7 @@
       },
       {
         "id": "PK21.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -728,7 +728,7 @@
       },
       {
         "id": "PK22.05",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -760,7 +760,7 @@
       },
       {
         "id": "PK23.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -791,7 +791,7 @@
       },
       {
         "id": "PK24.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -822,7 +822,7 @@
       },
       {
         "id": "PK25.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -854,7 +854,7 @@
       },
       {
         "id": "PK26.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -886,7 +886,7 @@
       },
       {
         "id": "PK27.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -918,7 +918,7 @@
       },
       {
         "id": "PK28.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -950,7 +950,7 @@
       },
       {
         "id": "PK29.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -982,7 +982,7 @@
       },
       {
         "id": "PK30.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1014,7 +1014,7 @@
       },
       {
         "id": "PK31.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1051,7 +1051,7 @@
       },
       {
         "id": "PK32.05",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1083,7 +1083,7 @@
       },
       {
         "id": "PK33.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1114,7 +1114,7 @@
       },
       {
         "id": "PK34.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1151,7 +1151,7 @@
       },
       {
         "id": "PK35.05",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1184,7 +1184,7 @@
       },
       {
         "id": "PK36.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1216,7 +1216,7 @@
       },
       {
         "id": "PK37.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1248,7 +1248,7 @@
       },
       {
         "id": "PK38.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1280,7 +1280,7 @@
       },
       {
         "id": "PK39.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1317,7 +1317,7 @@
       },
       {
         "id": "PK40.05",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1350,7 +1350,7 @@
       },
       {
         "id": "PK41.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1382,7 +1382,7 @@
       },
       {
         "id": "PK42.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1414,7 +1414,7 @@
       },
       {
         "id": "PK43.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1446,7 +1446,7 @@
       },
       {
         "id": "PK44.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1479,7 +1479,7 @@
       },
       {
         "id": "PK45.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1511,7 +1511,7 @@
       },
       {
         "id": "PK46.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1543,7 +1543,7 @@
       },
       {
         "id": "PK47.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
       }
     ],
@@ -1653,7 +1653,7 @@
       },
       {
         "id": "PK49.04",
-        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "action": "Verify the final reproducible build/test/source manifest and acceptance checklist, record unresolved limitations and release readiness, and commit the final handoff.",
         "tier": "S"
       }
     ],
@@ -1686,7 +1686,7 @@
       {
         "id": "PK50.04",
         "tier": "S",
-        "action": "Independently verify quest ordering, expiry, duplicate updates, malformed arrays, completion and rejection paths, then commit evidence."
+        "action": "Self-verify quest ordering, expiry, duplicate updates, malformed arrays, completion and rejection paths, then commit evidence. PK48 performs the later independent review."
       }
     ],
     "acceptance": "No quest packet may remain a consume-only handler. Full snapshots and incremental updates must converge. Enumerate remaining family members from active server guards; do not assume seeds exhaustive."
