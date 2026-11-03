@@ -1,0 +1,92 @@
+{
+  "P01": {
+    "primary": "PK04",
+    "secondary": []
+  },
+  "P02": {
+    "primary": "PK05",
+    "secondary": []
+  },
+  "P03": {
+    "primary": "PK06",
+    "secondary": []
+  },
+  "P04": {
+    "primary": "PK07",
+    "secondary": [
+      "PK27"
+    ]
+  },
+  "P05": {
+    "primary": "PK08",
+    "secondary": []
+  },
+  "P06": {
+    "primary": "PK09",
+    "secondary": []
+  },
+  "P07": {
+    "primary": "PK14",
+    "secondary": []
+  },
+  "P08": {
+    "primary": "PK18",
+    "secondary": [
+      "PK19"
+    ]
+  },
+  "P09": {
+    "primary": "PK20",
+    "secondary": []
+  },
+  "P10": {
+    "primary": "PK36",
+    "secondary": []
+  },
+  "P11": {
+    "primary": "PK16",
+    "secondary": [
+      "PK15"
+    ]
+  },
+  "P12": {
+    "primary": "PK10",
+    "secondary": []
+  },
+  "P13": {
+    "primary": "PK22",
+    "secondary": []
+  },
+  "P14": {
+    "primary": "PK22",
+    "secondary": []
+  },
+  "P15": {
+    "primary": "PK11",
+    "secondary": []
+  },
+  "P16": {
+    "primary": "PK11",
+    "secondary": []
+  },
+  "P17": {
+    "primary": "PK12",
+    "secondary": []
+  },
+  "P18": {
+    "primary": "PK17",
+    "secondary": []
+  },
+  "P19": {
+    "primary": "PK32",
+    "secondary": []
+  },
+  "P20": {
+    "primary": "PK34",
+    "secondary": []
+  },
+  "P21": {
+    "primary": "PK13",
+    "secondary": []
+  }
+}

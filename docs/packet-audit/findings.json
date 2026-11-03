@@ -1,0 +1,541 @@
+[
+  {
+    "id": "P01",
+    "priority": "P0",
+    "title": "Account-ID handshake is represented as fake opcodes",
+    "opcodes": [
+      "0x8482",
+      "0x8483"
+    ],
+    "issue": "The character server sends a raw four-byte account ID before normal packets. The client instead special-cases 0x8482/0x8483 as four-byte packets and ignores them. Other account IDs can be mistaken for real packet headers; this is not a general handshake implementation.",
+    "expected": "Consume and validate the raw account-ID prefix in the correct connection state, including fragmented reads, before starting ordinary framing.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp",
+        "line": 323,
+        "needle": "SetPacketSize(0x8482"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/LoginMode.cpp",
+        "line": 1935,
+        "needle": "case 0x8482"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/char/char_clif.cpp",
+        "line": 850,
+        "needle": "// send back account_id"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P02",
+    "priority": "P0",
+    "title": "Unknown packet recovery can destroy stream alignment",
+    "opcodes": [],
+    "issue": "RecvPacket drops two bytes for an unknown opcode and scans the remaining payload as headers. Missing implementations therefore affect unrelated later packets, rather than only losing one feature.",
+    "expected": "Implement correct framing for supported packets and use explicit connection-state/error recovery when a boundary cannot be determined. Never pretend a payload scan is successful decoding.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/Connection.cpp",
+        "line": 533,
+        "needle": "if (knownSize == 0)"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P03",
+    "priority": "P0",
+    "title": "Guild member status is still unframed and unhandled",
+    "opcodes": [
+      "0x01F2"
+    ],
+    "issue": "rAthena sends a 20-byte ZC_UPDATE_CHARSTAT on guild member login/logout. It is absent from the client size table and router. The newly added 0x016D/0x01EB handlers do not replace it.",
+    "expected": "Decode account/character/status/appearance fields, update the guild roster and visible-member/minimap state, and consume the exact 2008 layout.",
+    "evidence": [
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp",
+        "line": 8682,
+        "needle": "void clif_guild_memberlogin_notice"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp",
+        "line": 25,
+        "needle": "void FillPacketSizeTable"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P04",
+    "priority": "P0",
+    "title": "Pet status length is wrong for the configured server",
+    "opcodes": [
+      "0x01A2"
+    ],
+    "issue": "The client frames 37 bytes. The compiled 20080910 server struct is 35 bytes; its extra job word is enabled only from 20081126. The client also has no pet-status handler. This can consume two bytes of the next packet.",
+    "expected": "Use the profile-correct 35-byte layout and implement pet state/UI, with different lengths only under the appropriate newer profile.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp",
+        "line": 260,
+        "needle": "SetPacketSize(0x01A2, 37)"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/packets_struct.hpp",
+        "line": 5441,
+        "needle": "struct PACKET_ZC_PROPERTY_PET"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P05",
+    "priority": "P0",
+    "title": "Ground-skill text request uses the wrong active contract",
+    "opcodes": [
+      "0x0190",
+      "0x007E"
+    ],
+    "issue": "The client emits PACKET_CZ_USESKILLTOPOSINFO as opcode 0x0190, 90 bytes. The evaluated server database ends with 0x0190 as a 19-byte ActionRequest; UseSkillToPosMoreInfo is 0x007E, 102 bytes with padding/offsets. Sending the current request can corrupt the server receive stream.",
+    "expected": "Build this request from the actual 20080910 server opcode, length and field offsets; test the real request against the server parser rather than only the old Ref layout.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/Packet.h",
+        "line": 444,
+        "needle": "struct PACKET_CZ_USESKILLTOPOSINFO"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/MapSendProfile.cpp",
+        "line": 942,
+        "needle": "bool BuildActiveUseSkillToPosInfoPacket"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/clif_packetdb.hpp",
+        "line": 531,
+        "needle": "parseable_packet(0x007e,102"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P06",
+    "priority": "P2",
+    "title": "Duplicate registration hides an advertised inventory handler",
+    "opcodes": [
+      "0x01EF"
+    ],
+    "issue": "Actual final registration replaces HandleEquipInventoryList with commerce cart handling. The receive profile advertises 0x01EF as timed equipment inventory while commerce interprets it as a normal cart list. For the active 2008 server the inventory opcode is 0x02D0, so this is primarily a conflicting compatibility claim, not proof that live inventory currently breaks.",
+    "expected": "Make aliases profile-specific and ensure one unambiguous layout and owner per opcode. Remove unsupported compatibility claims or provide a tested route.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/MapSendProfile.cpp",
+        "line": 215,
+        "needle": "profile.equipInventoryListTimed = 0x01EF"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 8765,
+        "needle": "for(u16 id:{0x0122"
+      }
+    ],
+    "confidence": "Confirmed registration/profile conflict; active impact is version-dependent"
+  },
+  {
+    "id": "P07",
+    "priority": "P1",
+    "title": "Party positions are discarded",
+    "opcodes": [
+      "0x0107"
+    ],
+    "issue": "A real server-generated party minimap position packet reaches an empty handler. The minimap has m_partyPosList rendering support, but this notification does not feed it.",
+    "expected": "Update/remove party markers by account ID and honor the server removal sentinel and map changes.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 8801,
+        "needle": "router.Register(0x0107"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp",
+        "line": 8065,
+        "needle": "void clif_party_xy("
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P08",
+    "priority": "P1",
+    "title": "Map cell and map-property changes are discarded",
+    "opcodes": [
+      "0x0192",
+      "0x0199",
+      "0x01D6",
+      "0x02E7"
+    ],
+    "issue": "These registrations all use HandleIgnorePacket. Dynamic map cell changes and map mode/restriction/property updates cannot be represented by consuming their bytes.",
+    "expected": "Apply cell flags/appearance and the profile-specific map-property fields to world state, restrictions and indicators; verify each family against Ref and active rAthena senders.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 8811,
+        "needle": "router.Register(0x0192"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp",
+        "line": 5363,
+        "needle": "void clif_changemapcell"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P09",
+    "priority": "P1",
+    "title": "NPC class-change notification is discarded",
+    "opcodes": [
+      "0x01B0"
+    ],
+    "issue": "ZC_NPCSPRITE_CHANGE is registered to the empty handler. Handling other sprite-change opcodes does not implement this wire contract.",
+    "expected": "Decode the target and class/view change, rebuild the correct sprite or model, and invalidate render/picking caches.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 8799,
+        "needle": "router.Register(0x01B0"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp",
+        "line": 1471,
+        "needle": "void clif_class_change"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P10",
+    "priority": "P1",
+    "title": "Storage password flow is a message/log stub",
+    "opcodes": [
+      "0x023A",
+      "0x023B",
+      "0x023C"
+    ],
+    "issue": "The request handler explicitly says the flow is not implemented; the result handler only logs result/error count. No complete prompt/reply/retry state machine exists.",
+    "expected": "Provide the proper password UI and protocol response, handle success/failure/retry counts, and resume storage only when authorized.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 2416,
+        "needle": "void HandleStoragePasswordRequest"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 2427,
+        "needle": "void HandleStoragePasswordResult"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P11",
+    "priority": "P1",
+    "title": "Equipment/privacy and party-invite settings are discarded",
+    "opcodes": [
+      "0x02C8",
+      "0x02C9",
+      "0x02D8",
+      "0x02D9",
+      "0x02DA"
+    ],
+    "issue": "The server configuration and party invitation-state notifications use empty handlers. Request/acknowledgement state is not reflected in client preferences and privacy controls.",
+    "expected": "Implement the supported 2008 settings fields, related commands/UI requests, and server acknowledgements without assuming a local toggle succeeded.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 8832,
+        "needle": "router.Register(0x02D9"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp",
+        "line": 17719,
+        "needle": "void clif_parse_configuration"
+      }
+    ],
+    "confidence": "Confirmed source defect"
+  },
+  {
+    "id": "P12",
+    "priority": "P1",
+    "title": "Server-directed disconnect is ignored",
+    "opcodes": [
+      "0x02D5"
+    ],
+    "issue": "The client registers this to an empty handler. Ref dispatches it to Zc_Isvr_Disconnect. The currently configured rAthena sender was not established by the scan, so event reachability is a separate question from the missing implementation.",
+    "expected": "Implement the appropriate disconnect/transition and UI/network cleanup for the supported family.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 8842,
+        "needle": "router.Register(0x02D5"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/Ref/GameModePacket.cpp",
+        "line": 2384,
+        "needle": "CGameMode::Zc_Isvr_Disconnect"
+      }
+    ],
+    "confidence": "Confirmed client stub; server reachability needs testing"
+  },
+  {
+    "id": "P13",
+    "priority": "P1",
+    "title": "Show-EFST notification is only partially implemented",
+    "opcodes": [
+      "0x028A"
+    ],
+    "issue": "The handler implements level-99 aura and the PC Assumptio bit, but not the other Ref GameModeShowEFST cases. A registered status/effect packet is therefore not full visual support.",
+    "expected": "Implement the remaining supported PC/NPC effect flags and removal/lifetime semantics, with visual tests for each effect family.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 599,
+        "needle": "void HandleNpcShowEfstUpdate"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/Ref/GameModePacket.cpp",
+        "line": 4595,
+        "needle": "int showEFST)"
+      }
+    ],
+    "confidence": "Confirmed partial implementation"
+  },
+  {
+    "id": "P14",
+    "priority": "P2",
+    "title": "Extended status values are parsed only as icon timing",
+    "opcodes": [
+      "0x043F"
+    ],
+    "issue": "HandlePacket043F reads status, actor, flag and remaining time, but ignores the remaining value fields. Those fields can carry status-specific behavior. This newer receive family is supported by client code but is not the configured 2008 status packet.",
+    "expected": "Associate value fields with the relevant status semantics before calling the extended packet implemented.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 1109,
+        "needle": "void HandlePacket043F"
+      }
+    ],
+    "confidence": "Confirmed unused fields; per-status impact needs review"
+  },
+  {
+    "id": "P15",
+    "priority": "P1",
+    "title": "Guild rank changes do not refresh local authority",
+    "opcodes": [
+      "0x0156",
+      "0x0160",
+      "0x0166",
+      "0x0174"
+    ],
+    "issue": "Guild packets update WindowState and the local rank title, while localGuild.permissions remains sourced from the belong packet. A changed rank or rank mode can leave invite/expel controls and guards stale until another refresh/login.",
+    "expected": "Recompute local permissions/title from the current member position after both member-position and position-definition changes.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 5261,
+        "needle": "void HandleGuildWindowPacket"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtCommerce.cpp",
+        "line": 39,
+        "needle": "m_localGuild.permissions&1"
+      }
+    ],
+    "confidence": "Confirmed state propagation gap"
+  },
+  {
+    "id": "P16",
+    "priority": "P2",
+    "title": "Guild menu permissions are stored but not applied",
+    "opcodes": [
+      "0x014E"
+    ],
+    "issue": "The menuFlags value is stored by the decoder, but the Qt adapter does not expose it and the guild UI always offers its six tabs.",
+    "expected": "Apply the server menu capability mask to tabs/actions while preserving server authority.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/core/GuildState.h",
+        "line": 47,
+        "needle": "if(op==0x14e)"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtUiStateAdapter.cpp",
+        "line": 3820,
+        "needle": "const auto& guild=g_session.m_localGuild;const auto& info="
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/qml/RoGuild.qml",
+        "line": 50,
+        "needle": "model: [\"Overview\""
+      }
+    ],
+    "confidence": "Confirmed partial implementation"
+  },
+  {
+    "id": "P17",
+    "priority": "P1",
+    "title": "Guild receive support is not complete guild functionality",
+    "opcodes": [
+      "0x015B",
+      "0x015D",
+      "0x0170",
+      "0x017E",
+      "0x0180",
+      "0x0183"
+    ],
+    "issue": "The guild window implements notices, ranks, skills, emblem upload and leaving, but has no corresponding actions for expulsion, disbanding, initiating an alliance/opposition, removing a relation, or guild-chat sending.",
+    "expected": "Add permission-gated actions, proper confirmation where needed, request builders and acknowledgement-driven updates.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtUiStateAdapter.cpp",
+        "line": 3851,
+        "needle": "QObject::connect(m_state,&QtUiState::guildActionRequested"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp",
+        "line": 14584,
+        "needle": "void clif_parse_GuildMessage"
+      }
+    ],
+    "confidence": "Confirmed feature/request gaps from UI and send-path review"
+  },
+  {
+    "id": "P18",
+    "priority": "P1",
+    "title": "Group chat transport and filtering are incomplete",
+    "opcodes": [
+      "0x0108",
+      "0x0109",
+      "0x017E",
+      "0x017F"
+    ],
+    "issue": "Incoming party chat exists, but outbound chat paths provide global and whisper sends rather than party/guild requests. Guild messages are currently recorded with the party channel, so guild and party filtering cannot be independent.",
+    "expected": "Implement distinct party/guild send modes and channels, with the server-specific request headers and separate filtering/history behavior.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameMode.cpp",
+        "line": 4736,
+        "needle": "bool SendGlobalChatMessage"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 7217,
+        "needle": "if(op==0x17f)"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/ui/UINewChatWnd.cpp",
+        "line": 142,
+        "needle": "kChatFilterLabels"
+      }
+    ],
+    "confidence": "Confirmed partial group-chat feature"
+  },
+  {
+    "id": "P19",
+    "priority": "P1",
+    "title": "Legacy mail is compose/send only",
+    "opcodes": [
+      "0x023F",
+      "0x0240",
+      "0x0241",
+      "0x0242",
+      "0x0243",
+      "0x0244",
+      "0x0245",
+      "0x0247",
+      "0x024A",
+      "0x0255",
+      "0x0257",
+      "0x0273",
+      "0x0274"
+    ],
+    "issue": "The recent implementation handles composing/sending and its result, but not inbox listing, reading, attachments, deletion, new-mail notification or return handling. Most of their incoming packets are unframed.",
+    "expected": "Implement the full legacy-mail state machine and UI, rather than treating a working send acknowledgement as complete mail support.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/Commerce.cpp",
+        "line": 146,
+        "needle": "if(c.action==\"mail\")"
+      },
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp",
+        "line": 16070,
+        "needle": "void clif_Mail_refreshinbox"
+      }
+    ],
+    "confidence": "Confirmed subsystem gap"
+  },
+  {
+    "id": "P20",
+    "priority": "P2",
+    "title": "Snapshot parsers accept partial record arrays",
+    "opcodes": [
+      "0x00A3",
+      "0x00A4",
+      "0x00A5",
+      "0x00A6",
+      "0x0201",
+      "0x02D0",
+      "0x02D1",
+      "0x02E8",
+      "0x02EA"
+    ],
+    "issue": "Several inventory/storage/friend list handlers loop over complete records without first rejecting a trailing partial record. Some clear the previous snapshot first, so a malformed list can replace good state with a truncated list. Commerce and GuildState already reject partial arrays more consistently.",
+    "expected": "Validate the complete payload and decode into temporary state before replacing snapshots; add malformed/empty/fragmentation cases.",
+    "evidence": [
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 2204,
+        "needle": "void HandleNormalInventoryList"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 2242,
+        "needle": "void HandleEquipInventoryList"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp",
+        "line": 7673,
+        "needle": "void HandleFriendsList"
+      }
+    ],
+    "confidence": "Confirmed validation gap; malformed input required"
+  },
+  {
+    "id": "P21",
+    "priority": "P1",
+    "title": "Server trade distance failure notifies only one peer",
+    "opcodes": [
+      "0x00E7",
+      "0x01F5"
+    ],
+    "issue": "In trade_tradeack, the acceptance-distance failure sends TRADE_ACK_TOOFAR only to the accepting client and clears both partners. The requester gets no failure packet. Client preflight/expiry guards mitigate this but do not repair that server behavior.",
+    "expected": "For a server-side fix, send the failure/cancellation to both clients before clearing partners, and test different GM permissions and movement between request/accept.",
+    "evidence": [
+      {
+        "path": "C:/Users/sziad/source/repos/rathena-master/src/map/trade.cpp",
+        "line": 108,
+        "needle": "void trade_tradeack"
+      },
+      {
+        "path": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/Commerce.cpp",
+        "line": 38,
+        "needle": "void UpdateTradeContext"
+      }
+    ],
+    "confidence": "Confirmed server behavior defect; client mitigation exists"
+  }
+]

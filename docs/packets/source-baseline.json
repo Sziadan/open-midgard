@@ -1,0 +1,16 @@
+{
+  "planning_date": "2026-11-03",
+  "client_head": "9c158616e311842dcebbeb48f3b6ec67a975d3a3",
+  "server_root": "C:/Users/sziad/source/repos/rathena-master",
+  "audit_source_sha256": {
+    "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp": "cce1ccda951e1de0dd3537947f26e8653f78baa4e9c8b57fe1d4ac6970100aaa",
+    "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/MapSendProfile.cpp": "0cba1b025ba4b9154a9f6b574b6f0cc28658d5d7457dc3d66b435c07f344e8c3",
+    "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp": "3926bc3d1175abb067c0e6d12b067f9b285976ed6f6608743f7e079edcf7f584",
+    "C:/Users/sziad/source/repos/rathena-master/src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "C:/Users/sziad/source/repos/rathena-master/src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "C:/Users/sziad/source/repos/rathena-master/src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "C:/Users/sziad/source/repos/rathena-master/src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "note": "Reconfirm in PK00/PK01. Hashes establish discovery baseline, not semantic certification."
+}

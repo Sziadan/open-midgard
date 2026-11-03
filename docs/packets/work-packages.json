@@ -1,0 +1,1694 @@
+[
+  {
+    "id": "PK00",
+    "tier": "S",
+    "title": "Reconcile and preserve the implementation baseline",
+    "dependencies": [],
+    "steps": [
+      {
+        "id": "PK00.01",
+        "action": "Define baseline ownership boundaries and safe snapshot strategy from git status, HEAD and all tracked/untracked runtime dependencies; no packet contract or runtime test is needed for this research step.",
+        "tier": "S"
+      },
+      {
+        "id": "PK00.02",
+        "action": "Record HEAD and every tracked/untracked runtime dependency without changing them.",
+        "tier": "S"
+      },
+      {
+        "id": "PK00.03",
+        "action": "Agree an owned baseline snapshot or existing commits and record exact reproduction instructions.",
+        "tier": "S"
+      },
+      {
+        "id": "PK00.04",
+        "action": "Verify baseline artifacts reproduce the intended runtime sources and have no missing untracked dependencies; commit baseline provenance and resumable handoff. Record any build gate honestly.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Do not stage all current work. Planning commit alone does not capture runtime dependencies. If ownership is unclear block runtime work, not source research."
+  },
+  {
+    "id": "PK01",
+    "tier": "S",
+    "title": "Resolve active protocol identities",
+    "dependencies": [
+      "PK00"
+    ],
+    "steps": [
+      {
+        "id": "PK01.01",
+        "action": "Approve this package's bounded research/harness/review specification, exact source inputs, output schema and evidence gate. For runtime contracts encountered, require independent strong approval before implementation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK01.02",
+        "action": "Reproduce effective server defines and final registration order.",
+        "tier": "S"
+      },
+      {
+        "id": "PK01.03",
+        "action": "Establish canonical stage/direction/profile/layout identity rules and approve the initial P0 packet applicability contracts. Allocate per-row reachability research leaves to feature owners and PK47; do not require all historical classification before framing work.",
+        "tier": "S"
+      },
+      {
+        "id": "PK01.04",
+        "action": "Independently verify configuration probes, override order, initial P0 identities and full ownership coverage; commit the source-research checkpoint. Runtime feature tests are not a prerequisite to this infrastructure step.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Profiles22/23 currently share a table: determine their supported contract, do not assume equality is intended. Record server revision/hash and unresolved deployed-binary provenance."
+  },
+  {
+    "id": "PK02",
+    "tier": "S",
+    "title": "Create server contract manifest and byte oracles",
+    "dependencies": [
+      "PK01"
+    ],
+    "steps": [
+      {
+        "id": "PK02.01",
+        "action": "Approve this package's bounded research/harness/review specification, exact source inputs, output schema and evidence gate. For runtime contracts encountered, require independent strong approval before implementation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK02.02",
+        "action": "Build sizeof/offsetof and registry probes using actual server guards.",
+        "tier": "S"
+      },
+      {
+        "id": "PK02.03",
+        "action": "Create independently derived raw byte fixtures and schema validation for the initial P0 contracts; define how feature owners add their own source-backed oracles incrementally.",
+        "tier": "S"
+      },
+      {
+        "id": "PK02.04",
+        "action": "Independently compare initial oracle offsets and sizes with effective server source, check manifest reproducibility, and commit the infrastructure verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Expected request offsets must come from final server parser registration. No client struct as test oracle."
+  },
+  {
+    "id": "PK03",
+    "tier": "S",
+    "title": "Production replay and test harness",
+    "dependencies": [
+      "PK02"
+    ],
+    "steps": [
+      {
+        "id": "PK03.01",
+        "action": "Approve this package's bounded research/harness/review specification, exact source inputs, output schema and evidence gate. For runtime contracts encountered, require independent strong approval before implementation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK03.02",
+        "action": "Exercise actual Connection framing and router with fragmented concatenated streams.",
+        "tier": "S"
+      },
+      {
+        "id": "PK03.03",
+        "action": "Exercise outbound builders and session/Qt transitions with local mock peers.",
+        "tier": "S"
+      },
+      {
+        "id": "PK03.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Document confirmed MinGW test commands. Detect stale binaries, use deployment OFF, no live installed client. Add regression ratchets without treating registered handlers as implemented."
+  },
+  {
+    "id": "PK04",
+    "tier": "S",
+    "title": "Raw account-ID handshake",
+    "dependencies": [
+      "PK03"
+    ],
+    "steps": [
+      {
+        "id": "PK04.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK04.02",
+        "action": "Model character connection raw-prefix state and remove fake opcode assumptions.",
+        "tier": "S"
+      },
+      {
+        "id": "PK04.03",
+        "action": "Validate fragmented account echo before allowing framed packets.",
+        "tier": "S"
+      },
+      {
+        "id": "PK04.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P01: AIDs whose low words resemble real opcodes, mismatch, disconnect, reconnect and every split of four bytes. Follow char_clif.cpp send-back-account_id path."
+  },
+  {
+    "id": "PK05",
+    "tier": "S",
+    "title": "Framing and unknown-opcode behavior",
+    "dependencies": [
+      "PK04"
+    ],
+    "steps": [
+      {
+        "id": "PK05.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK05.02",
+        "action": "Replace destructive two-byte skipping with profile-derived bounded framing.",
+        "tier": "S"
+      },
+      {
+        "id": "PK05.03",
+        "action": "Define explicit protocol-error/connection cleanup and malformed-frame reporting.",
+        "tier": "S"
+      },
+      {
+        "id": "PK05.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P02: preserve alignment for valid concatenated packets. Never resynchronize by scanning payload. Known but missing handlers stay open feature tasks. Unknown size cannot safely be guessed."
+  },
+  {
+    "id": "PK06",
+    "tier": "M",
+    "title": "Guild member login notice 01F2",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK06.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK06.02",
+        "action": "Add exact 20-byte active layout and membership state update.",
+        "tier": "M"
+      },
+      {
+        "id": "PK06.03",
+        "action": "Propagate online/member status to guild UI and map lifecycle.",
+        "tier": "M"
+      },
+      {
+        "id": "PK06.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P03: clif_guild_memberlogin_notice and ZC_UPDATE_CHARSTAT. Newer016D/01EB do not replace it. L candidate: approved fixed-layout decoding only."
+  },
+  {
+    "id": "PK07",
+    "tier": "M",
+    "title": "Pet 01A2 framing repair",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK07.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK07.02",
+        "action": "Select 35-byte layout for active20080910 profile.",
+        "tier": "M"
+      },
+      {
+        "id": "PK07.03",
+        "action": "Decode all pet status fields and connect state through pet package.",
+        "tier": "M"
+      },
+      {
+        "id": "PK07.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P04: extra job word only from20081126. Test next packet remains aligned. This step alone does not certify pet feature completion; PK27 owns lifecycle."
+  },
+  {
+    "id": "PK08",
+    "tier": "S",
+    "title": "Ground skill text request contract",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK08.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK08.02",
+        "action": "Replace mismatched0190 request with active server MoreInfo contract.",
+        "tier": "S"
+      },
+      {
+        "id": "PK08.03",
+        "action": "Correct production serializer and independent old test expectations.",
+        "tier": "S"
+      },
+      {
+        "id": "PK08.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P05: verify007E 102 bytes offsets5,9,12,20,22 against active parser.0190 is19-byte action request offsets5,18. Do not generalize these values to other profiles."
+  },
+  {
+    "id": "PK09",
+    "tier": "S",
+    "title": "Inventory/cart receive alias ownership",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK09.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK09.02",
+        "action": "Resolve01EF duplicate router registration per profile.",
+        "tier": "S"
+      },
+      {
+        "id": "PK09.03",
+        "action": "Verify active normal/equipment/cart routes independently.",
+        "tier": "S"
+      },
+      {
+        "id": "PK09.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."
+  },
+  {
+    "id": "PK10",
+    "tier": "S",
+    "title": "Connection transitions and confirmations",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK10.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK10.02",
+        "action": "Verify login/char failures and map connection confirmation including0283.",
+        "tier": "S"
+      },
+      {
+        "id": "PK10.03",
+        "action": "Implement server-directed disconnect02D5 and quit/reconnect state cleanup.",
+        "tier": "S"
+      },
+      {
+        "id": "PK10.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P12: verify reachability separately. Validate echoed AID. Do not preserve fake8482/8483 aliases. Every pending modal/action must unwind once."
+  },
+  {
+    "id": "PK11",
+    "tier": "M",
+    "title": "Guild incremental permissions and menu state",
+    "dependencies": [
+      "PK06"
+    ],
+    "steps": [
+      {
+        "id": "PK11.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK11.02",
+        "action": "Reconcile0156/0160/0166/0174 with016C local rank/permissions.",
+        "tier": "M"
+      },
+      {
+        "id": "PK11.03",
+        "action": "Apply014E menuFlags and current permission gates to Qt controls.",
+        "tier": "M"
+      },
+      {
+        "id": "PK11.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P15/P16: downgrades revoke controls immediately, promotions restore only server-granted actions. Do not guess rank-to-permission meanings."
+  },
+  {
+    "id": "PK12",
+    "tier": "S",
+    "title": "Guild management requests and responses",
+    "dependencies": [
+      "PK11"
+    ],
+    "steps": [
+      {
+        "id": "PK12.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK12.02",
+        "action": "Implement expulsion015B and disband015D with result/state paths.",
+        "tier": "S"
+      },
+      {
+        "id": "PK12.03",
+        "action": "Implement alliance0170 opposition0180 and relation removal0183.",
+        "tier": "S"
+      },
+      {
+        "id": "PK12.04",
+        "action": "Implement guild-member actions and all rejection/cancel paths in Qt.",
+        "tier": "S"
+      },
+      {
+        "id": "PK12.05",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P17: verify guild IDs versus account/character IDs, fixed string encoding, master/permission checks, confirmation and server notice order. Guild chat belongs toPK17."
+  },
+  {
+    "id": "PK13",
+    "tier": "S",
+    "title": "Trade asymmetry and pending transactions",
+    "dependencies": [
+      "PK03",
+      "PK10"
+    ],
+    "steps": [
+      {
+        "id": "PK13.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK13.02",
+        "action": "Document trade_tradeack acceptance-distance result delivery to both peers.",
+        "tier": "S"
+      },
+      {
+        "id": "PK13.03",
+        "action": "Implement client pending-state lifecycle and honest timeout/cancel handling.",
+        "tier": "S"
+      },
+      {
+        "id": "PK13.04",
+        "action": "Prepare separately authorized minimal server correction with independent two-client replay.",
+        "tier": "S"
+      },
+      {
+        "id": "PK13.05",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P21: current server notifies only acceptor then clears both trades. A client cannot invent a packet for uninformed requester. No external edit/rebuild/restart without server-patch authorization. Do not mark server bug fixed by timeout."
+  },
+  {
+    "id": "PK14",
+    "tier": "M",
+    "title": "Party map positions",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK14.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK14.02",
+        "action": "Implement0107 by account ID with source-proven units/sentinels.",
+        "tier": "M"
+      },
+      {
+        "id": "PK14.03",
+        "action": "Render/update/remove party minimap markers through existing party position state.",
+        "tier": "M"
+      },
+      {
+        "id": "PK14.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P07: removal(-1) semantics, remote-map movement, roster loss, reconnect. L candidate after contract approval: marker state update."
+  },
+  {
+    "id": "PK15",
+    "tier": "M",
+    "title": "Party lifecycle and configuration",
+    "dependencies": [
+      "PK14",
+      "PK10"
+    ],
+    "steps": [
+      {
+        "id": "PK15.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK15.02",
+        "action": "Audit roster invitations leave leader and HP transitions.",
+        "tier": "M"
+      },
+      {
+        "id": "PK15.03",
+        "action": "Implement party invite settings02C8/02C9 and party loot02B8.",
+        "tier": "M"
+      },
+      {
+        "id": "PK15.04",
+        "action": "Remove incorrect receive assumption for0100 and verify its leave-party send path.",
+        "tier": "M"
+      },
+      {
+        "id": "PK15.05",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Local/remote bars and names must share layering and anchor rules. Reject/reinvite, cross-map and double notices cannot leave stale membership. New leader07FC requires version proof."
+  },
+  {
+    "id": "PK16",
+    "tier": "M",
+    "title": "Privacy settings and social state",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK16.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK16.02",
+        "action": "Implement02D8/02D9/02DA request/ack server-confirmed settings.",
+        "tier": "M"
+      },
+      {
+        "id": "PK16.03",
+        "action": "Audit friends whispers blocklists user counts and their failure notices.",
+        "tier": "M"
+      },
+      {
+        "id": "PK16.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P11: UI must reflect a rejected change and server restore after reconnect. Friend snapshots additionally requirePK34 atomic validation. L candidate: approved boolean display ack."
+  },
+  {
+    "id": "PK17",
+    "tier": "M",
+    "title": "Party and guild chat transport",
+    "dependencies": [
+      "PK12",
+      "PK15"
+    ],
+    "steps": [
+      {
+        "id": "PK17.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK17.02",
+        "action": "Add distinct guild channel state and receive filtering for017F.",
+        "tier": "M"
+      },
+      {
+        "id": "PK17.03",
+        "action": "Wire0108 party and017E guild text sends through real Qt input paths.",
+        "tier": "M"
+      },
+      {
+        "id": "PK17.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P18: no sending to public channel, preserve encoding/message limits/permissions, no duplicate optimistic echo. Test guild-only and party-only tabs plus combined history copy behavior."
+  },
+  {
+    "id": "PK18",
+    "tier": "S",
+    "title": "Dynamic map cells",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK18.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK18.02",
+        "action": "Implement0192 updates in collision/pathfinding and rendered cell state.",
+        "tier": "S"
+      },
+      {
+        "id": "PK18.03",
+        "action": "Reset and reapply changes safely during map reload.",
+        "tier": "S"
+      },
+      {
+        "id": "PK18.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P08: terrain type semantics and world coordinate units must come from server and Ref; test walking/pathfinding across changed cells and map teardown."
+  },
+  {
+    "id": "PK19",
+    "tier": "S",
+    "title": "Map properties and restrictions",
+    "dependencies": [
+      "PK18"
+    ],
+    "steps": [
+      {
+        "id": "PK19.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK19.02",
+        "action": "Implement0199/01D6/02E7 per active layout.",
+        "tier": "S"
+      },
+      {
+        "id": "PK19.03",
+        "action": "Propagate map rules to relevant UI/actions and presentation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK19.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P08: no guessed global night/light flags. Preserve bit namespaces and old/new variants. Restrictions apply to actual actions, not only labels; inactive variants need proof."
+  },
+  {
+    "id": "PK20",
+    "tier": "S",
+    "title": "NPC class and resource replacement",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK20.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK20.02",
+        "action": "Implement01B0 distinct from01D7 and rebuild actor representation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK20.03",
+        "action": "Verify sprite/GR2 resource ownership picking and effects during replacement.",
+        "tier": "S"
+      },
+      {
+        "id": "PK20.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P09: visible-to-invisible-to-visible, missing actor, repeated change, map teardown and resource release. No special guessed NPC class exceptions."
+  },
+  {
+    "id": "PK21",
+    "tier": "S",
+    "title": "NPC progress interaction",
+    "dependencies": [
+      "PK10",
+      "PK25"
+    ],
+    "steps": [
+      {
+        "id": "PK21.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK21.02",
+        "action": "Implement02F0/02F2 progress start/abort state and02F1 reply.",
+        "tier": "S"
+      },
+      {
+        "id": "PK21.03",
+        "action": "Wire input locks cancellation expiration and map/disconnect teardown.",
+        "tier": "S"
+      },
+      {
+        "id": "PK21.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Use server units/timers and Ref lifecycle; no guessed completion delay or duplicate ack. Verify active guard before registering."
+  },
+  {
+    "id": "PK22",
+    "tier": "S",
+    "title": "Extended status and ShowEFST",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK22.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK22.02",
+        "action": "Port028A branches and flag lifetimes beyond level99/Assumptio.",
+        "tier": "S"
+      },
+      {
+        "id": "PK22.03",
+        "action": "Decode043F remaining value fields only under proven layout.",
+        "tier": "S"
+      },
+      {
+        "id": "PK22.04",
+        "action": "Apply per-status start refresh end and actor teardown semantics.",
+        "tier": "S"
+      },
+      {
+        "id": "PK22.05",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P13/P14: compare each Ref branch and server status enum. Do not OR unrelated bit namespaces or merely store unexplained fields. Newer043F is not default2008 proof."
+  },
+  {
+    "id": "PK23",
+    "tier": "S",
+    "title": "Existing skill packet semantic audit",
+    "dependencies": [
+      "PK08",
+      "PK22"
+    ],
+    "steps": [
+      {
+        "id": "PK23.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK23.02",
+        "action": "Enumerate every skill handler branch and connect to skill plan ownership.",
+        "tier": "S"
+      },
+      {
+        "id": "PK23.03",
+        "action": "Verify damage cast target ground effect duration cancel and rejection semantics per contract.",
+        "tier": "S"
+      },
+      {
+        "id": "PK23.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "All registered skill handlers need field/branch evidence. Existing skill plan cannot override server wire truth. Break into named handler leaf steps before coding, avoid generic effect fallbacks."
+  },
+  {
+    "id": "PK24",
+    "tier": "S",
+    "title": "Stats resources and actor state invariants",
+    "dependencies": [
+      "PK05"
+    ],
+    "steps": [
+      {
+        "id": "PK24.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK24.02",
+        "action": "Audit signed widths HP/SP EXP stats and status increments.",
+        "tier": "S"
+      },
+      {
+        "id": "PK24.03",
+        "action": "Verify actor state transitions and lifecycle ordering with extreme values.",
+        "tier": "S"
+      },
+      {
+        "id": "PK24.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Do not truncate HP or use overflow-prone percentage arithmetic. Source distinguishes display from authoritative resources. Hallucination display must not mutate actual damage state."
+  },
+  {
+    "id": "PK25",
+    "tier": "M",
+    "title": "NPC dialogue and script messages",
+    "dependencies": [
+      "PK10"
+    ],
+    "steps": [
+      {
+        "id": "PK25.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK25.02",
+        "action": "Audit message menu input next close and shop handoffs.",
+        "tier": "M"
+      },
+      {
+        "id": "PK25.03",
+        "action": "Implement missing compass0144 map notifications0189 and script choices.",
+        "tier": "M"
+      },
+      {
+        "id": "PK25.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Honor server selection indexes, cancel values, string limits and input lifetime. L candidate: already specified text-only result notice. Merchant shop and vending are separate protocols."
+  },
+  {
+    "id": "PK26",
+    "tier": "M",
+    "title": "Special skill information and choices",
+    "dependencies": [
+      "PK23",
+      "PK25"
+    ],
+    "steps": [
+      {
+        "id": "PK26.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK26.02",
+        "action": "Implement memo011E monster estimate018C and special skill choices.",
+        "tier": "M"
+      },
+      {
+        "id": "PK26.03",
+        "action": "Audit StarGladiator020E/0253 and source-gated choice requests.",
+        "tier": "M"
+      },
+      {
+        "id": "PK26.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Selections need server-valid values and failure UI. Do not synthesize unsupported skills from Ref-only branches."
+  },
+  {
+    "id": "PK27",
+    "tier": "S",
+    "title": "Complete pet lifecycle",
+    "dependencies": [
+      "PK07",
+      "PK20"
+    ],
+    "steps": [
+      {
+        "id": "PK27.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK27.02",
+        "action": "Implement capture019E/01A0 and feed/name/status01A3/01A4/01A6/01AA.",
+        "tier": "S"
+      },
+      {
+        "id": "PK27.03",
+        "action": "Implement pet inventory/dialogue and follow/actor synchronization.",
+        "tier": "S"
+      },
+      {
+        "id": "PK27.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Inspect every pet emitter/parser including failure cases, IDs/egg linkage/hunger/intimacy and cleanup. A35-byte framing fix is not completion."
+  },
+  {
+    "id": "PK28",
+    "tier": "S",
+    "title": "Homunculus lifecycle",
+    "dependencies": [
+      "PK23",
+      "PK24"
+    ],
+    "steps": [
+      {
+        "id": "PK28.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK28.02",
+        "action": "Implement022E/022F/0230 status and skill0235/0239 contracts.",
+        "tier": "S"
+      },
+      {
+        "id": "PK28.03",
+        "action": "Wire summon death rename feeding skill UI and actor reset paths.",
+        "tier": "S"
+      },
+      {
+        "id": "PK28.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Enumerate actual active family from server rather than assuming listed seeds exhaustive. Test owner/companion IDs and HP/SP ordering."
+  },
+  {
+    "id": "PK29",
+    "tier": "S",
+    "title": "Mercenary and elemental lifecycle",
+    "dependencies": [
+      "PK23",
+      "PK24"
+    ],
+    "steps": [
+      {
+        "id": "PK29.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK29.02",
+        "action": "Implement active mercenary029B/02A2 and skill family.",
+        "tier": "S"
+      },
+      {
+        "id": "PK29.03",
+        "action": "Classify elemental and newer companion variants then implement applicable branches.",
+        "tier": "S"
+      },
+      {
+        "id": "PK29.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "No blanket exclusion based on feature age; prove guards/call sites. Different companions cannot share guessed status layouts."
+  },
+  {
+    "id": "PK30",
+    "tier": "S",
+    "title": "Marriage adoption and relationship state",
+    "dependencies": [
+      "PK16",
+      "PK25"
+    ],
+    "steps": [
+      {
+        "id": "PK30.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK30.02",
+        "action": "Implement01E6/01EA/01F6/01F8/0205/0216 applicable events.",
+        "tier": "S"
+      },
+      {
+        "id": "PK30.03",
+        "action": "Wire request/consent/rejection and relationship state transitions.",
+        "tier": "S"
+      },
+      {
+        "id": "PK30.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "01F8 Ref arms adoption skill: consuming bytes is insufficient. Verify active server meaning before copying Ref behavior."
+  },
+  {
+    "id": "PK31",
+    "tier": "S",
+    "title": "Player chat rooms",
+    "dependencies": [
+      "PK10",
+      "PK16"
+    ],
+    "steps": [
+      {
+        "id": "PK31.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK31.02",
+        "action": "Implement00D5\u201300E3 room list create join owner/password/membership flows.",
+        "tier": "S"
+      },
+      {
+        "id": "PK31.03",
+        "action": "Implement room bubble click entry removal capacity and disconnect cleanup.",
+        "tier": "S"
+      },
+      {
+        "id": "PK31.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Not vending shops. Verify room IDs versus owner IDs and rejected password/join behavior. No fake room state while awaiting server."
+  },
+  {
+    "id": "PK32",
+    "tier": "S",
+    "title": "Legacy mail complete workflow",
+    "dependencies": [
+      "PK03",
+      "PK10"
+    ],
+    "steps": [
+      {
+        "id": "PK32.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK32.02",
+        "action": "Implement inbox0240 read0242 and new-mail024A.",
+        "tier": "S"
+      },
+      {
+        "id": "PK32.03",
+        "action": "Implement attachment0245/0255 claim and zeny/item state.",
+        "tier": "S"
+      },
+      {
+        "id": "PK32.04",
+        "action": "Implement delete0257 return0274 and full compose/send results.",
+        "tier": "S"
+      },
+      {
+        "id": "PK32.05",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P19: requests023F/0241/0243/0244/0247/0273 verified individually. Prevent duplicate claim/send and handle full inventory, stale mail IDs, denial and cancel. Composer0248/0249 alone is not done."
+  },
+  {
+    "id": "PK33",
+    "tier": "M",
+    "title": "Rental binding and broken equipment",
+    "dependencies": [
+      "PK09",
+      "PK24"
+    ],
+    "steps": [
+      {
+        "id": "PK33.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK33.02",
+        "action": "Implement0298/0299 rental notices and expiry state.",
+        "tier": "M"
+      },
+      {
+        "id": "PK33.03",
+        "action": "Implement02D3 bind-on-equip and02BB damaged gear lifecycle.",
+        "tier": "M"
+      },
+      {
+        "id": "PK33.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "No removing equipment optimistically without server semantics. Verify units and item identity/index conventions. L candidate: approved expiry notice rendering."
+  },
+  {
+    "id": "PK34",
+    "tier": "S",
+    "title": "Atomic inventory storage and friend snapshots",
+    "dependencies": [
+      "PK09"
+    ],
+    "steps": [
+      {
+        "id": "PK34.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK34.02",
+        "action": "Validate full normal/equipment/cart/storage/friend arrays before mutation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK34.03",
+        "action": "Replace snapshots atomically and preserve state on malformed input.",
+        "tier": "S"
+      },
+      {
+        "id": "PK34.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P20: exact header/count/record size, remainder rejection, bounds and maximum counts. Never clear state before validation. Test partial trailing record and subsequent valid snapshot."
+  },
+  {
+    "id": "PK35",
+    "tier": "S",
+    "title": "Craft refine repair and cooking",
+    "dependencies": [
+      "PK25",
+      "PK34"
+    ],
+    "steps": [
+      {
+        "id": "PK35.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK35.02",
+        "action": "Implement0188/018F refine and018D selection contracts.",
+        "tier": "S"
+      },
+      {
+        "id": "PK35.03",
+        "action": "Implement01FC/01FE repair item choices/results.",
+        "tier": "S"
+      },
+      {
+        "id": "PK35.04",
+        "action": "Implement025A cooking and remaining active crafting branches.",
+        "tier": "S"
+      },
+      {
+        "id": "PK35.05",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Source-prove list record sizes, slots/card options, selection indexes and material consumption authority. Rejection/cancel paths release modal locks without inventing items."
+  },
+  {
+    "id": "PK36",
+    "tier": "S",
+    "title": "Storage password challenge",
+    "dependencies": [
+      "PK03",
+      "PK10",
+      "PK34"
+    ],
+    "steps": [
+      {
+        "id": "PK36.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK36.02",
+        "action": "Determine023A/023B/023C exact challenge and password algorithm.",
+        "tier": "S"
+      },
+      {
+        "id": "PK36.03",
+        "action": "Implement secure entry/retry/change/unlock state and server failure branches.",
+        "tier": "S"
+      },
+      {
+        "id": "PK36.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "P10: no guessed encryption, plaintext shortcut, logged passwords or UI-only pretend unlock. Source ambiguity is a strong-agent blocker, not permission to disable authentication."
+  },
+  {
+    "id": "PK37",
+    "tier": "S",
+    "title": "Existing commerce and trade consistency",
+    "dependencies": [
+      "PK13",
+      "PK34"
+    ],
+    "steps": [
+      {
+        "id": "PK37.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK37.02",
+        "action": "Audit NPC shops cart transfers and vending setup/bubbles/buying lists.",
+        "tier": "S"
+      },
+      {
+        "id": "PK37.03",
+        "action": "Audit trade both peers lock accept cancel results and transaction ownership.",
+        "tier": "S"
+      },
+      {
+        "id": "PK37.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Verify every production sender/server parser, partial purchases, quantities/prices, stale indices, insufficient funds, capacity and teardown. Server confirms mutations; UI drag/drop must use verified request paths."
+  },
+  {
+    "id": "PK38",
+    "tier": "M",
+    "title": "Item use and equipment action parity",
+    "dependencies": [
+      "PK33",
+      "PK34"
+    ],
+    "steps": [
+      {
+        "id": "PK38.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK38.02",
+        "action": "Audit use equip unequip drop pickup and storage transfers.",
+        "tier": "M"
+      },
+      {
+        "id": "PK38.03",
+        "action": "Implement missing card identification and selection result handling.",
+        "tier": "M"
+      },
+      {
+        "id": "PK38.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Per-action source-derived requests/results, inventory indices and quantities. Verify rejection and rapid repeat do not duplicate or silently delete items."
+  },
+  {
+    "id": "PK39",
+    "tier": "M",
+    "title": "MVP rankings PvP manner and messages",
+    "dependencies": [
+      "PK05",
+      "PK24"
+    ],
+    "steps": [
+      {
+        "id": "PK39.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK39.02",
+        "action": "Implement MVP010A\u2013010D and rankings0219/021A/021B/021C/0224/0226/0236/0238.",
+        "tier": "M"
+      },
+      {
+        "id": "PK39.03",
+        "action": "Implement014A/014B/01AB manner and02C1 colored messages.",
+        "tier": "M"
+      },
+      {
+        "id": "PK39.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Units, ID/name encoding, color and duration from sources. L candidates: approved single-result notices. Do not reuse guild/party chat channels for global results."
+  },
+  {
+    "id": "PK40",
+    "tier": "S",
+    "title": "Auction cash shop and banking",
+    "dependencies": [
+      "PK03",
+      "PK34"
+    ],
+    "steps": [
+      {
+        "id": "PK40.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK40.02",
+        "action": "Implement active0250/0252/0256/025D/025F auction branches.",
+        "tier": "S"
+      },
+      {
+        "id": "PK40.03",
+        "action": "Implement0287/0289 cash shop state and balances.",
+        "tier": "S"
+      },
+      {
+        "id": "PK40.04",
+        "action": "Classify09A6 and related bank requests then implement applicable contracts.",
+        "tier": "S"
+      },
+      {
+        "id": "PK40.05",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Each financial flow is a separate strong-reviewed child step. No modern bank request on2008 without proof. Reject overflows, stale quotes, duplicate responses and malformed lists."
+  },
+  {
+    "id": "PK41",
+    "tier": "S",
+    "title": "Battleground identity and state",
+    "dependencies": [
+      "PK14",
+      "PK19",
+      "PK24"
+    ],
+    "steps": [
+      {
+        "id": "PK41.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK41.02",
+        "action": "Implement02DD team/emblem and02DE/02DF/02E0 markers/HP/scores.",
+        "tier": "S"
+      },
+      {
+        "id": "PK41.03",
+        "action": "Implement actual team chat membership and teardown paths.",
+        "tier": "S"
+      },
+      {
+        "id": "PK41.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Distinguish battleground IDs and guild emblems. Full server-family enumeration required, not only listed seeds."
+  },
+  {
+    "id": "PK42",
+    "tier": "S",
+    "title": "Instance metadata lifecycle",
+    "dependencies": [
+      "PK10",
+      "PK25"
+    ],
+    "steps": [
+      {
+        "id": "PK42.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK42.02",
+        "action": "Implement02CB\u201302CE creation state queue/wait and result branches.",
+        "tier": "S"
+      },
+      {
+        "id": "PK42.03",
+        "action": "Wire instance UI entry restriction expiry and map/reconnect cleanup.",
+        "tier": "S"
+      },
+      {
+        "id": "PK42.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Inspect active server guards/call sites first; no invented dungeon launch or unsupported requests. Timers and ownership must be source-backed."
+  },
+  {
+    "id": "PK43",
+    "tier": "S",
+    "title": "Buying store search and party booking",
+    "dependencies": [
+      "PK03",
+      "PK37"
+    ],
+    "steps": [
+      {
+        "id": "PK43.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK43.02",
+        "action": "Classify/implement0810-family buying stores including0814/0816 board lifecycle.",
+        "tier": "S"
+      },
+      {
+        "id": "PK43.03",
+        "action": "Classify/implement0837-family search and0803-family party booking.",
+        "tier": "S"
+      },
+      {
+        "id": "PK43.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Per-contract configuration evidence; modern opcode presence in client table is not server support. Inspect legacy vending separately. Pending unsupported features stay open applicability work, not silent discard."
+  },
+  {
+    "id": "PK44",
+    "tier": "S",
+    "title": "Later feature and login-character applicability",
+    "dependencies": [
+      "PK01",
+      "PK02"
+    ],
+    "steps": [
+      {
+        "id": "PK44.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.02",
+        "action": "Classify clans0988 achievements0A23 roulette0A1A attendance0AF0 dressroom0A02 guild storage09DA reputation0B8D and related variants.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.03",
+        "action": "Audit login/char rename028E/0290 delete PIN slots billing and other stage variants.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "For every row prove active/inactive/alias, then split applicable features into approved implementation leaf IDs. Do not blanket-dismiss newer-looking opcodes or conflate login/map reuse."
+  },
+  {
+    "id": "PK45",
+    "tier": "S",
+    "title": "All existing actor and receive-handler semantics",
+    "dependencies": [
+      "PK20",
+      "PK22",
+      "PK24"
+    ],
+    "steps": [
+      {
+        "id": "PK45.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK45.02",
+        "action": "Audit every actor spawn move action name and resource lifecycle handler.",
+        "tier": "S"
+      },
+      {
+        "id": "PK45.03",
+        "action": "Audit every remaining registered handler field/branch through state/UI/replies.",
+        "tier": "S"
+      },
+      {
+        "id": "PK45.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "240 registered entries and136 indexed handler functions need explicit contract references, not a global pass assertion. Expand per handler/variant into numbered leaves; sitting/desync/picking/cart depth are regression scenarios when relevant."
+  },
+  {
+    "id": "PK46",
+    "tier": "S",
+    "title": "Exhaustive outbound parser parity",
+    "dependencies": [
+      "PK02",
+      "PK03"
+    ],
+    "steps": [
+      {
+        "id": "PK46.01",
+        "action": "Approve the exact source contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks.",
+        "tier": "S"
+      },
+      {
+        "id": "PK46.02",
+        "action": "Trace all177 accepted map requests through profile/raw-buffer/Qt user actions.",
+        "tier": "S"
+      },
+      {
+        "id": "PK46.03",
+        "action": "Verify login/char outbound requests and unsupported action gates.",
+        "tier": "S"
+      },
+      {
+        "id": "PK46.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "49 constructor matches do not certify correctness;128 unproven need real trace. Compare opcode length every offset to final server parser, including failure/cancel payloads. No send-only packet requires fake receive handler."
+  },
+  {
+    "id": "PK47",
+    "tier": "S",
+    "title": "Residual and historical classification closure",
+    "dependencies": [
+      "PK01",
+      "PK02"
+    ],
+    "steps": [
+      {
+        "id": "PK47.01",
+        "action": "Approve this package's bounded research/harness/review specification, exact source inputs, output schema and evidence gate. For runtime contracts encountered, require independent strong approval before implementation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK47.02",
+        "action": "Review all unresolved990-row discoveries and1384 historical definitions.",
+        "tier": "S"
+      },
+      {
+        "id": "PK47.03",
+        "action": "Adjudicate remaining collisions aliases inactive guards and source gaps with explicit evidence.",
+        "tier": "S"
+      },
+      {
+        "id": "PK47.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "No catch-all task completion without per-row contracts/classification. Add newly discovered packets/feature leaves and their dependencies; residual routing is provisional ownership, never approval to ignore."
+  },
+  {
+    "id": "PK48",
+    "tier": "S",
+    "title": "Independent certification review",
+    "dependencies": [
+      "PK00",
+      "PK01",
+      "PK02",
+      "PK03",
+      "PK04",
+      "PK05",
+      "PK06",
+      "PK07",
+      "PK08",
+      "PK09",
+      "PK10",
+      "PK11",
+      "PK12",
+      "PK13",
+      "PK14",
+      "PK15",
+      "PK16",
+      "PK17",
+      "PK18",
+      "PK19",
+      "PK20",
+      "PK21",
+      "PK22",
+      "PK23",
+      "PK24",
+      "PK25",
+      "PK26",
+      "PK27",
+      "PK28",
+      "PK29",
+      "PK30",
+      "PK31",
+      "PK32",
+      "PK33",
+      "PK34",
+      "PK35",
+      "PK36",
+      "PK37",
+      "PK38",
+      "PK39",
+      "PK40",
+      "PK41",
+      "PK42",
+      "PK43",
+      "PK44",
+      "PK45",
+      "PK46",
+      "PK47",
+      "PK50"
+    ],
+    "steps": [
+      {
+        "id": "PK48.01",
+        "action": "Approve this package's bounded research/harness/review specification, exact source inputs, output schema and evidence gate. For runtime contracts encountered, require independent strong approval before implementation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK48.02",
+        "action": "Cross-check every contract against independent server bytes and Ref behavior.",
+        "tier": "S"
+      },
+      {
+        "id": "PK48.03",
+        "action": "Run fresh build production replay negative lifecycle and UI acceptance suites.",
+        "tier": "S"
+      },
+      {
+        "id": "PK48.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "Requires all applicable feature leaves across packages complete or explicitly recorded pending gates. Reviewer must not bless self-generated fixtures. No unsupported100% claim; counts by evidence level and open items."
+  },
+  {
+    "id": "PK49",
+    "tier": "S",
+    "title": "Final reproducible handoff and acceptance",
+    "dependencies": [
+      "PK48"
+    ],
+    "steps": [
+      {
+        "id": "PK49.01",
+        "action": "Approve this package's bounded research/harness/review specification, exact source inputs, output schema and evidence gate. For runtime contracts encountered, require independent strong approval before implementation.",
+        "tier": "S"
+      },
+      {
+        "id": "PK49.02",
+        "action": "Prepare exact build/test/source manifest and user-run live scenarios.",
+        "tier": "S"
+      },
+      {
+        "id": "PK49.03",
+        "action": "Record acceptance results unresolved limitations and release readiness.",
+        "tier": "S"
+      },
+      {
+        "id": "PK49.04",
+        "action": "Independently review source/field/branch parity, run relevant production replay and UI lifecycle checks, close only evidence-backed rows, and commit the verification checkpoint.",
+        "tier": "S"
+      }
+    ],
+    "acceptance": "No automatic deployment/server restart. Final report lists every unresolved gate and commits. Live validation pending means live parity not certified."
+  },
+  {
+    "id": "PK50",
+    "tier": "S",
+    "title": "Quest journal and mission lifecycle",
+    "dependencies": [
+      "PK03",
+      "PK10"
+    ],
+    "steps": [
+      {
+        "id": "PK50.01",
+        "tier": "S",
+        "action": "Approve02B1/02B2/02B3/02B4/02B5/02B7 and every related active request/emitter contract, identifying mission record versions."
+      },
+      {
+        "id": "PK50.02",
+        "tier": "M",
+        "action": "Implement complete quest list and mission snapshots atomically, preserving IDs, counts, target types and time units."
+      },
+      {
+        "id": "PK50.03",
+        "tier": "M",
+        "action": "Implement add/remove/status/kill progress updates and Qt journal/actions with map and reconnect lifecycle."
+      },
+      {
+        "id": "PK50.04",
+        "tier": "S",
+        "action": "Independently verify quest ordering, expiry, duplicate updates, malformed arrays, completion and rejection paths, then commit evidence."
+      }
+    ],
+    "acceptance": "No quest packet may remain a consume-only handler. Full snapshots and incremental updates must converge. Enumerate remaining family members from active server guards; do not assume seeds exhaustive."
+  }
+]
