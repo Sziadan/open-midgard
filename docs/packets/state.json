@@ -140,7 +140,7 @@
         "docs/packets/evidence/PK03.04-global-router-refusal.jsonl",
         "docs/packets/contracts/PK03.04.DISCONNECT-ACK.md"
       ],
-      "commit_subject": "packet(PK03.04): implement disconnect acknowledgement lifecycle"
+      "commit_subject": "packet(PK03.04): replay LoginMode failure fallback"
     },
     "PK04.01": {
       "status": "NOT_STARTED",

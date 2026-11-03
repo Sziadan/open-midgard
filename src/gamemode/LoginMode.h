@@ -118,6 +118,7 @@ public:
     std::string m_strErrorInfo;
 
 private:
+    friend struct LoginModeReplayAccess;
     void SetLoginStatus(const char* status);
     std::string m_deferredLoginStatus;
     bool LoadClientInfoCandidates();

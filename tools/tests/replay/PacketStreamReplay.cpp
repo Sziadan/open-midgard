@@ -13,6 +13,7 @@
 #include <array>
 #include <cerrno>
 #include <chrono>
+#include <cstring>
 #include <iostream>
 #if !RO_PLATFORM_WINDOWS
 #include <sys/ioctl.h>
@@ -37,6 +38,29 @@ struct SkillPacketReplayAccess {
     static void Restore(CMode* mode,int type) {
         g_modeMgr.m_curMode=mode;
         g_modeMgr.m_curModeType=type;
+    }
+};
+
+struct LoginModeReplayAccess : CLoginMode {
+    int NextSubMode() const { return m_nextSubMode; }
+    static void AdoptDeferredStatus(LoginModeReplayAccess& mode, const char* status) {
+        SetPendingLoginStatus(status);
+        AdoptPendingLoginStatus(mode.m_deferredLoginStatus);
+    }
+    static const std::string& DeferredStatus(const LoginModeReplayAccess& mode) {
+        return mode.m_deferredLoginStatus;
+    }
+    static void SetStatus(LoginModeReplayAccess& mode, const char* status) {
+        mode.SetLoginStatus(status);
+    }
+    static std::string ConsumeStableStatus(LoginModeReplayAccess& mode, const char* normalStatus) {
+        return ConsumeDeferredLoginStatus(mode.m_deferredLoginStatus,normalStatus);
+    }
+    static void SetConnected(LoginModeReplayAccess& mode, bool connected) {
+        mode.m_isConnected=connected?1:0;
+    }
+    static void RunPollNetwork(LoginModeReplayAccess& mode) {
+        mode.PollNetwork();
     }
 };
 
@@ -378,16 +402,96 @@ void DisconnectAckDecisionReplay(){
     std::cout<<"{\"case_id\":\"disconnect_ack_decision_and_timeout\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"zero_tick\":true,\"tick_wraparound\":true,\"packet_budget_not_drained\":true,\"result_matrix\":true,\"outcome\":\"PASS\"}\n";
 }
 void LoginStatusPrecedenceReplay(){
-    SetCase("disconnect_timeout_login_status","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","ConsumeDeferredLoginStatus");
-    std::string deferred="Login: disconnect timed out.";
-    Require(ConsumeDeferredLoginStatus(deferred,"Login: ready.")=="Login: disconnect timed out.","timeout notice did not override the normal login status");
-    Require(deferred.empty(),"timeout notice was not consumed at the stable login screen");
+    SetCase("disconnect_timeout_login_status","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","CLoginMode::SetLoginStatus -> ConsumeDeferredLoginStatus");
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::AdoptDeferredStatus(mode,"Login: disconnect timed out.");
+    // ConnectChar and PollNetwork update the visible status during the
+    // fallback path. They must not consume the notice; only a stable Login or
+    // CharSelect state does that.
+    const std::string transientStatuses[]={
+        "Login: char server connection failed.",
+        "Login: received packet 0x0069 (6 bytes)",
+        "Login: no char server to connect to."
+    };
+    for (const std::string& transient : transientStatuses) {
+        LoginModeReplayAccess::SetStatus(mode,transient.c_str());
+        Require(LoginModeReplayAccess::DeferredStatus(mode)=="Login: disconnect timed out.","transient LoginMode status consumed the deferred timeout notice");
+    }
+    const std::string stableLoginStatus=LoginModeReplayAccess::ConsumeStableStatus(mode,"Login: ready.");
+    Require(stableLoginStatus=="Login: disconnect timed out.","timeout notice did not override the normal login status");
+    Require(LoginModeReplayAccess::DeferredStatus(mode).empty(),"timeout notice was not consumed at the stable login screen");
+    LoginModeReplayAccess::SetStatus(mode,stableLoginStatus.c_str());
+    Require(g_windowMgr.GetLoginStatus()=="Login: disconnect timed out.","stable LoginMode status writer did not display the adopted timeout notice");
     std::string charSelectDeferred="Login: disconnect timed out.";
     Require(ConsumeDeferredLoginStatus(charSelectDeferred,"")=="Login: disconnect timed out.","timeout notice did not override CharSelect's normal empty status");
     Require(charSelectDeferred.empty(),"timeout notice was not consumed at CharSelect");
     std::string noDeferred;
     Require(ConsumeDeferredLoginStatus(noDeferred,"Login: ready.")=="Login: ready.","normal login status changed without a pending notice");
-    std::cout<<"{\"case_id\":\"disconnect_timeout_login_status\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"login_ready_precedence\":true,\"char_select_precedence\":true,\"one_shot\":true,\"outcome\":\"PASS\"}\n";
+    std::cout<<"{\"case_id\":\"disconnect_timeout_login_status\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"production_entry\":\"CLoginMode::SetLoginStatus / ConsumeDeferredLoginStatus\",\"deferred_notice_survives_transient_setloginstatus_writes\":true,\"login_ready_precedence\":true,\"char_select_precedence\":true,\"one_shot\":true,\"outcome\":\"PASS\"}\n";
+}
+void LoginCharConnectionFailureReplay()
+{
+    SetCase("login_char_connection_failure","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","CLoginMode::OnChangeState(LoginSubMode_ConnectChar) -> CRagConnection::Connect -> ShowConnectionFailedDialog");
+    CRagConnection* connection=CRagConnection::instance();
+    connection->Disconnect();
+
+    char oldAddress[sizeof(g_session.m_charServerAddr)]{};
+    std::memcpy(oldAddress,g_session.m_charServerAddr,sizeof(oldAddress));
+    const int oldPort=g_session.m_charServerPort;
+    std::memset(g_session.m_charServerAddr,0,sizeof(g_session.m_charServerAddr));
+    std::memcpy(g_session.m_charServerAddr,"127.0.0.1",sizeof("127.0.0.1"));
+    g_session.m_charServerPort=1; // loopback refusal; no server or account transaction
+
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::AdoptDeferredStatus(mode,"Login: disconnect timed out.");
+    mode.OnChangeState(CLoginMode::LoginSubMode_ConnectChar);
+    const bool failedStatus=g_windowMgr.GetLoginStatus()=="Login: char server connection failed.";
+    const bool schedulesLogin=mode.NextSubMode()==CLoginMode::LoginSubMode_Login;
+    const bool socketClosed=!connection->IsOpen();
+    const bool timeoutNoticePreserved=LoginModeReplayAccess::DeferredStatus(mode)=="Login: disconnect timed out.";
+    Require(failedStatus,"failed char-server connect did not write its existing failure status");
+    Require(schedulesLogin,"failed char-server connect did not schedule return to Login");
+    Require(socketClosed,"failed char-server connect left the transport open");
+    Require(timeoutNoticePreserved,"failed char-server connection consumed the deferred timeout notice");
+
+    mode.OnChangeState(CLoginMode::LoginSubMode_Login);
+    const bool timeoutNoticeDisplayed=g_windowMgr.GetLoginStatus()=="Login: disconnect timed out.";
+    const bool timeoutNoticeConsumed=LoginModeReplayAccess::DeferredStatus(mode).empty();
+    Require(timeoutNoticeDisplayed,"stable Login state did not display the timeout notice after the existing connection failure path");
+    Require(timeoutNoticeConsumed,"stable Login state did not consume the timeout notice exactly once");
+
+    connection->Disconnect();
+    std::memcpy(g_session.m_charServerAddr,oldAddress,sizeof(oldAddress));
+    g_session.m_charServerPort=oldPort;
+    g_windowMgr.RemoveAllWindows();
+    std::cout<<"{\"case_id\":\"login_char_connection_failure\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectChar) -> CRagConnection::Connect -> ShowConnectionFailedDialog -> OnChangeState(Login)\",\"failure_status\":true,\"existing_connection_failed_dialog_branch_reached\":true,\"returns_to_login\":true,\"timeout_notice_preserved_then_displayed\":true,\"timeout_notice_consumed_once\":true,\"socket_closed\":true,\"network_scope\":\"loopback refusal only\",\"outcome\":\"PASS\"}\n";
+}
+void LoginPollTransientStatusReplay()
+{
+    SetCase("login_poll_transient_status","disconnect_ack_contract","PK03.04-poll-0283-status-sample","CLoginMode::PollNetwork -> CRagConnection::RecvPacket -> CLoginMode::SetLoginStatus");
+    CRagConnection* connection=CRagConnection::instance();
+    connection->Disconnect();
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::AdoptDeferredStatus(mode,"Login: disconnect timed out.");
+    LoginModeReplayAccess::SetConnected(mode,true);
+    LoopbackPeer peer(*connection);
+    const std::vector<u8> ignoredPacket{0x83,0x02,0x00,0x00,0x00,0x00};
+    peer.Send(ignoredPacket);
+    LoginModeReplayAccess::RunPollNetwork(mode);
+    const bool pollStatus=g_windowMgr.GetLoginStatus()=="Login: received packet 0x0283 (6 bytes)";
+    const bool noticePreserved=LoginModeReplayAccess::DeferredStatus(mode)=="Login: disconnect timed out.";
+    Require(pollStatus,"production PollNetwork did not write its transient receive status");
+    Require(noticePreserved,"production PollNetwork consumed the deferred timeout notice");
+
+    LoginModeReplayAccess::SetConnected(mode,false);
+    connection->Disconnect();
+    mode.OnChangeState(CLoginMode::LoginSubMode_Login);
+    const bool timeoutDisplayed=g_windowMgr.GetLoginStatus()=="Login: disconnect timed out.";
+    const bool noticeConsumed=LoginModeReplayAccess::DeferredStatus(mode).empty();
+    Require(timeoutDisplayed,"stable Login did not supersede actual PollNetwork status with the timeout notice");
+    Require(noticeConsumed,"stable Login did not consume the notice after actual PollNetwork status");
+    g_windowMgr.RemoveAllWindows();
+    std::cout<<"{\"case_id\":\"login_poll_transient_status\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"fixture_id\":\"PK03.04-poll-0283-status-sample\",\"production_entry\":\"CLoginMode::PollNetwork -> CRagConnection::RecvPacket -> CLoginMode::SetLoginStatus -> OnChangeState(Login)\",\"input_packet_hex\":\"830200000000\",\"fixture_provenance\":\"synthetic fixed-length receive sample; no server-emission or semantic claim\",\"poll_status_written\":true,\"deferred_notice_preserved\":true,\"stable_login_notice_displayed_and_consumed\":true,\"network_scope\":\"loopback mock peer only\",\"outcome\":\"PASS\"}\n";
 }
 void DisconnectTimeoutFallbackReplay()
 {
@@ -589,5 +693,7 @@ int main(){try{
     ProductionDisconnectAckEofReplay();
     {SetCase("production_reconnect_reset");TestConnection c;{LoopbackPeer p(c);p.Send({0x6c});PumpUntilBuffered(c,1);}c.Disconnect();Require(!c.IsOpen()&&c.BufferedBytes()==0,"disconnect failed to clear receive queue");{LoopbackPeer p(c);p.Send(fixed);auto out=PumpUntilPacket(c);Require(out==fixed,"production reconnect failed after disconnect");VerifyRoute(out,0x006c);Report("production_reconnect_reset",kFixedFixture,kFixedSha,{fixed},Hex(fixed),Hex(out),0,c.BufferedBytes(),c);}}
     ProductionAcceptedExitAckReplay();
+    LoginCharConnectionFailureReplay();
+    LoginPollTransientStatusReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}
