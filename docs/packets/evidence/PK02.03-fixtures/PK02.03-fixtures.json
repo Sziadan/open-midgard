@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "manifest_sha256": "b74f2560cb2c1afa010ac204c1b565f2716f0ac8edb28e4d598984909c069efe",
+  "fixtures": [
+    {
+      "fixture_id": "P01-account-echo-synthetic",
+      "contract_id": "PK01.P01.HANDSHAKE",
+      "provenance": "No opcode; synthetic account ID, server echo field.",
+      "direction": "S2C",
+      "stage": "char",
+      "profile": 23,
+      "expected_length": 4,
+      "hex_file": "P01-account-echo-synthetic.hex",
+      "sha256": "c832fbe8a69c8694f85d3f3d6bdace5b99c4c4153c4f5ca5e3d21e22eb218ce3",
+      "synthetic_data": true,
+      "fields": [
+        {
+          "name": "account_id",
+          "offset": 0,
+          "width_bytes": 4,
+          "expected_hex": "44332211",
+          "decoded_value": "0x11223344",
+          "source_basis": "src/char/char_clif.cpp:850-853 raw account echo"
+        }
+      ]
+    },
+    {
+      "fixture_id": "P03-guild-status-synthetic",
+      "contract_id": "PK01.P03.01F2",
+      "provenance": "Synthetic values packed using server PACKET_ZC_UPDATE_CHARSTAT field order and measured 20-byte size.",
+      "direction": "S2C",
+      "stage": "map",
+      "profile": 23,
+      "expected_length": 20,
+      "hex_file": "P03-guild-status-synthetic.hex",
+      "sha256": "d64602db4bd775fe3668cba561d81f61a8534f007a4b78497968aafbba089135",
+      "synthetic_data": true,
+      "fields": [
+        {
+          "name": "PacketType",
+          "offset": 0,
+          "width_bytes": 2,
+          "expected_hex": "f201",
+          "decoded_value": "0x01F2",
+          "source_basis": "src/map/packets.hpp:868 opcode"
+        },
+        {
+          "name": "aid",
+          "offset": 2,
+          "width_bytes": 4,
+          "expected_hex": "44332211",
+          "decoded_value": "0x11223344",
+          "source_basis": "src/map/packets.hpp:870"
+        },
+        {
+          "name": "cid",
+          "offset": 6,
+          "width_bytes": 4,
+          "expected_hex": "88776655",
+          "decoded_value": "0x55667788",
+          "source_basis": "src/map/packets.hpp:871"
+        },
+        {
+          "name": "status",
+          "offset": 10,
+          "width_bytes": 4,
+          "expected_hex": "d4c3b2a1",
+          "decoded_value": "0xA1B2C3D4",
+          "source_basis": "src/map/packets.hpp:872"
+        },
+        {
+          "name": "gender",
+          "offset": 14,
+          "width_bytes": 2,
+          "expected_hex": "0100",
+          "decoded_value": "1",
+          "source_basis": "src/map/packets.hpp:873"
+        },
+        {
+          "name": "hairStyle",
+          "offset": 16,
+          "width_bytes": 2,
+          "expected_hex": "0c00",
+          "decoded_value": "12",
+          "source_basis": "src/map/packets.hpp:874"
+        },
+        {
+          "name": "hairColor",
+          "offset": 18,
+          "width_bytes": 2,
+          "expected_hex": "0300",
+          "decoded_value": "3",
+          "source_basis": "src/map/packets.hpp:875"
+        }
+      ]
+    },
+    {
+      "fixture_id": "P04-pet-status-synthetic",
+      "contract_id": "PK01.P04.01A2-20080910",
+      "provenance": "Synthetic values packed using server PACKET_ZC_PROPERTY_PET fields; later job field is absent under PACKETVER=20080910.",
+      "direction": "S2C",
+      "stage": "map",
+      "profile": 23,
+      "expected_length": 35,
+      "hex_file": "P04-pet-status-synthetic.hex",
+      "sha256": "d50092b24e1154c1bf38e823cb301b4dcfd949c3fe35ca5ded21938ab49b4e6b",
+      "synthetic_data": true,
+      "fields": [
+        {
+          "name": "PacketType",
+          "offset": 0,
+          "width_bytes": 2,
+          "expected_hex": "a201",
+          "decoded_value": "0x01A2",
+          "source_basis": "src/map/packets_struct.hpp:5442"
+        },
+        {
+          "name": "szName",
+          "offset": 2,
+          "width_bytes": 24,
+          "expected_hex": "4d6f63686900000000000000000000000000000000000000",
+          "decoded_value": "Mochi; NUL padded to 24 bytes",
+          "source_basis": "src/map/packets_struct.hpp:5443 NAME_LENGTH=24"
+        },
+        {
+          "name": "bModified",
+          "offset": 26,
+          "width_bytes": 1,
+          "expected_hex": "01",
+          "decoded_value": "1",
+          "source_basis": "src/map/packets_struct.hpp:5444"
+        },
+        {
+          "name": "nLevel",
+          "offset": 27,
+          "width_bytes": 2,
+          "expected_hex": "1900",
+          "decoded_value": "25",
+          "source_basis": "src/map/packets_struct.hpp:5445"
+        },
+        {
+          "name": "nFullness",
+          "offset": 29,
+          "width_bytes": 2,
+          "expected_hex": "5000",
+          "decoded_value": "80",
+          "source_basis": "src/map/packets_struct.hpp:5446"
+        },
+        {
+          "name": "nRelationship",
+          "offset": 31,
+          "width_bytes": 2,
+          "expected_hex": "e803",
+          "decoded_value": "1000",
+          "source_basis": "src/map/packets_struct.hpp:5447"
+        },
+        {
+          "name": "ITID",
+          "offset": 33,
+          "width_bytes": 2,
+          "expected_hex": "3412",
+          "decoded_value": "0x1234",
+          "source_basis": "src/map/packets_struct.hpp:5448"
+        }
+      ]
+    },
+    {
+      "fixture_id": "P05-action-0190-synthetic",
+      "contract_id": "PK01.P05.0190",
+      "provenance": "Synthetic padded ActionRequest; parser-consumed positions are from final active registration.",
+      "direction": "C2S",
+      "stage": "map",
+      "profile": 22,
+      "expected_length": 19,
+      "hex_file": "P05-action-0190-synthetic.hex",
+      "sha256": "1bc7517d909dd7d4ef448348b1c35726a347f063691c22abe670b759209c48ec",
+      "synthetic_data": true,
+      "fields": [
+        {
+          "name": "opcode",
+          "offset": 0,
+          "width_bytes": 2,
+          "expected_hex": "9001",
+          "decoded_value": "0x0190",
+          "source_basis": "src/map/clif_packetdb.hpp:881"
+        },
+        {
+          "name": "target_id",
+          "offset": 5,
+          "width_bytes": 4,
+          "expected_hex": "44332211",
+          "decoded_value": "0x11223344",
+          "source_basis": "final registration parser offset 5"
+        },
+        {
+          "name": "action",
+          "offset": 18,
+          "width_bytes": 1,
+          "expected_hex": "07",
+          "decoded_value": "7",
+          "source_basis": "final registration parser offset 18"
+        }
+      ]
+    },
+    {
+      "fixture_id": "P05-skill-ground-text-synthetic",
+      "contract_id": "PK01.P05.007E",
+      "provenance": "Synthetic request payload; padding bytes are zero. Coordinates and text are synthetic, not live user data.",
+      "direction": "C2S",
+      "stage": "map",
+      "profile": 23,
+      "expected_length": 102,
+      "hex_file": "P05-skill-ground-text-synthetic.hex",
+      "sha256": "6964f423166f13b756fc9b47180d16243873390f38e5c9aef2a912738c3efbd6",
+      "synthetic_data": true,
+      "fields": [
+        {
+          "name": "opcode",
+          "offset": 0,
+          "width_bytes": 2,
+          "expected_hex": "7e00",
+          "decoded_value": "0x007E",
+          "source_basis": "src/map/clif_packetdb.hpp:868"
+        },
+        {
+          "name": "skill_level",
+          "offset": 5,
+          "width_bytes": 2,
+          "expected_hex": "0300",
+          "decoded_value": "3",
+          "source_basis": "final registration parser offset 5"
+        },
+        {
+          "name": "skill_id",
+          "offset": 9,
+          "width_bytes": 2,
+          "expected_hex": "2301",
+          "decoded_value": "0x0123",
+          "source_basis": "final registration parser offset 9"
+        },
+        {
+          "name": "x",
+          "offset": 12,
+          "width_bytes": 2,
+          "expected_hex": "6400",
+          "decoded_value": "100",
+          "source_basis": "final registration parser offset 12"
+        },
+        {
+          "name": "y",
+          "offset": 20,
+          "width_bytes": 2,
+          "expected_hex": "c800",
+          "decoded_value": "200",
+          "source_basis": "final registration parser offset 20"
+        },
+        {
+          "name": "text",
+          "offset": 22,
+          "width_bytes": 80,
+          "expected_hex": "6669787475726500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "decoded_value": "fixture; NUL padded to 80 bytes",
+          "source_basis": "final registration parser offset 22"
+        }
+      ]
+    },
+    {
+      "fixture_id": "P05-action-0437-synthetic",
+      "contract_id": "PK01.P05.0437",
+      "provenance": "Synthetic compact ActionRequest; parser-consumed positions are from final active registration.",
+      "direction": "C2S",
+      "stage": "map",
+      "profile": 23,
+      "expected_length": 7,
+      "hex_file": "P05-action-0437-synthetic.hex",
+      "sha256": "f195941123e8aec89b01bfcf5c6c6dd2fdc63f400f1f2b2c1def79637804b6b3",
+      "synthetic_data": true,
+      "fields": [
+        {
+          "name": "opcode",
+          "offset": 0,
+          "width_bytes": 2,
+          "expected_hex": "3704",
+          "decoded_value": "0x0437",
+          "source_basis": "src/map/clif_packetdb.hpp:1149"
+        },
+        {
+          "name": "target_id",
+          "offset": 2,
+          "width_bytes": 4,
+          "expected_hex": "44332211",
+          "decoded_value": "0x11223344",
+          "source_basis": "final registration parser offset 2"
+        },
+        {
+          "name": "action",
+          "offset": 6,
+          "width_bytes": 1,
+          "expected_hex": "07",
+          "decoded_value": "7",
+          "source_basis": "final registration parser offset 6"
+        }
+      ]
+    }
+  ]
+}

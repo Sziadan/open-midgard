@@ -1,6 +1,6 @@
 # Resume packet implementation
 
-Next action: **PK02.03 independent fixtures**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, `BLOCKED.md`, `evidence/PK02.01-specification.md`, `evidence/PK02.02-probes.md`, the manifest, and the PK02 card in `WORK_PACKAGES.md`. Create server-derived raw fixtures and a validator; derive expected bytes from server facts, never the client serializers.
+Next action: **PK02.04 independent review**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, `BLOCKED.md`, and PK02.01–PK02.03 evidence. Independently compare the manifest fields/offsets and raw fixtures to the hash-pinned server source; rerun generation/validation and record any corrections before downstream use.
 
 Completed checkpoint: PK00.01 at baseline `af41f6484cb7ff31825296babe4b913aa36c4c67` (`main`, tracking `origin/main`, clean tree). Evidence: `evidence/PK00.01.md`. The old handoff's `9c158616` HEAD and approximately 80 dirty/untracked paths no longer describe this checkout. The current runtime commit already contains the guild/commerce changes previously noted as dirty.
 

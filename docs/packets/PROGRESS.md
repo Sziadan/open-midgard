@@ -50,3 +50,8 @@ Specified exact hash-pinned server inputs, active P0 applicability set, determin
 ## 2026-11-03 — PK02.02 probes
 
 Recompiled the active guarded registry and reproduced 886 assignments/603 final registrations. Compiled `tools/packet_contract_layout_probe.cpp` using the actual PACKETVER-guarded server packet declarations: guild status is 20 bytes and pet status is 35 bytes with source-backed offsets. Generated a seven-contract manifest after checking all 15 pinned server source hashes. Evidence includes probe commands/output and hashes. This does not certify emitter reachability or runtime semantics; byte fixtures remain PK02.03. Stable subject: `packet(PK02.02): probe guarded server packet layouts`. Next: PK02.03.
+
+
+## 2026-11-03 — PK02.03 fixtures
+
+Created six synthetic raw fixtures for the handshake, 0x01F2, 0x01A2, 0x0190, 0x007E, and 0x0437. Added a generator/validator that checks contract links and manifest field offsets, exact lengths, hashes, field slices, bounds, overlap, and synthetic-data marking; its negative corruption check rejects invalid expectations. Framing is explicitly a state machine, not a fabricated fixed packet. These bytes are independent source-derived expectations, not production path tests. Evidence: `evidence/PK02.03-fixtures.md` and its JSON/hex files. Stable subject: `packet(PK02.03): create server-derived byte fixtures`. Next: PK02.04 independent review.

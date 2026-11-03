@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK02.02",
+  "active_step": "PK02.03",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -89,9 +89,18 @@
       "commit_subject": "packet(PK02.02): probe guarded server packet layouts"
     },
     "PK02.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK02.03-fixtures.md",
+        "docs/packets/evidence/PK02.03-fixtures/PK02.03-fixtures.json",
+        "docs/packets/evidence/PK02.03-fixtures/P01-account-echo-synthetic.hex",
+        "docs/packets/evidence/PK02.03-fixtures/P03-guild-status-synthetic.hex",
+        "docs/packets/evidence/PK02.03-fixtures/P04-pet-status-synthetic.hex",
+        "docs/packets/evidence/PK02.03-fixtures/P05-action-0190-synthetic.hex",
+        "docs/packets/evidence/PK02.03-fixtures/P05-skill-ground-text-synthetic.hex",
+        "docs/packets/evidence/PK02.03-fixtures/P05-action-0437-synthetic.hex"
+      ],
+      "commit_subject": "packet(PK02.03): create server-derived byte fixtures"
     },
     "PK02.04": {
       "status": "NOT_STARTED",
