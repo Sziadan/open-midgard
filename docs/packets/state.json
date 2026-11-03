@@ -136,9 +136,10 @@
     "PK03.04": {
       "status": "BLOCKED",
       "evidence": [
-        "docs/packets/evidence/PK03.04-replay-audit.md"
+        "docs/packets/evidence/PK03.04-replay-audit.md",
+        "docs/packets/contracts/PK03.04.DISCONNECT-ACK.md"
       ],
-      "commit_subject": "packet(PK03.04): trace disconnect refusal branches"
+      "commit_subject": "packet(PK03.04): draft disconnect acknowledgement contract"
     },
     "PK04.01": {
       "status": "NOT_STARTED",
