@@ -2,6 +2,7 @@
 #include "GronPacket.h"
 #include "MapSendProfile.h"
 #include "gamemode/ActionRequestSender.h"
+#include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
 #include <algorithm>
 #include <array>
@@ -113,6 +114,58 @@ void Report(const std::string& id,const char* fixture,const char* sha,const std:
 }
 std::vector<u8> ReadOne(TestConnection& c){return PumpUntilPacket(c);}
 void VerifyRoute(const std::vector<u8>& packet,u16 id){PacketView view{};int consumed=0;Require(TryReadPacket(packet.data(),static_cast<int>(packet.size()),view,consumed),"production packet decoder rejected framed packet");Require(view.packetId==id&&view.packetLength==packet.size()&&consumed==static_cast<int>(packet.size()),"production packet decoder returned wrong boundary");++g_decodeCount;}
+void ProductionRouterDispatchReplay(){
+    constexpr const char* fixtureId="PK03.04-router-01f8-01b0";
+    constexpr const char* fixtureSha="f5ef8e6a3ff7b85b522b6a38c5e8e0d3f76e92a4bbcbfead36c838ff91ac8d10";
+    const std::vector<u8> first={0xf8,0x01};
+    const std::vector<u8> second={0xb0,0x01,0,0,0,0,0,0,0,0,0};
+    std::vector<u8> combined=first;
+    combined.insert(combined.end(),second.begin(),second.end());
+
+    SetCase("production_router_dispatch");
+    TestConnection connection;
+    LoopbackPeer peer(connection);
+    peer.Send(combined);
+    WaitKernelPending(connection,static_cast<int>(combined.size()));
+
+    CGameMode gameMode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    std::vector<std::vector<u8>> received;
+    std::vector<bool> dispatched;
+    struct ExpectedPacket{const std::vector<u8>* bytes;u16 id;};
+    const ExpectedPacket expectedPackets[]={{&first,0x01F8},{&second,0x01B0}};
+    for(const ExpectedPacket& expected:expectedPackets){
+        std::vector<u8> packet=ReadOne(connection);
+        VerifyRoute(packet,expected.id);
+        PacketView view{};
+        int consumed=0;
+        Require(TryReadPacket(packet.data(),static_cast<int>(packet.size()),view,consumed),"production router replay could not decode packet");
+        const bool didDispatch=router.Dispatch(gameMode,view);
+        Require(didDispatch,"default production packet router did not dispatch registered packet");
+        received.push_back(std::move(packet));
+        dispatched.push_back(didDispatch);
+        Require(received.back()==*expected.bytes,"router replay returned packet bytes in the wrong order");
+    }
+    Require(connection.BufferedBytes()==0,"production router replay left coalesced bytes queued");
+
+    std::vector<u8> unknown={0x34,0x12};
+    PacketView unknownView{0x1234,static_cast<u16>(unknown.size()),unknown.data()};
+    const bool unknownDispatched=router.Dispatch(gameMode,unknownView);
+    Require(!unknownDispatched,"production packet router dispatched an unregistered opcode");
+    std::cout<<"{\"case_id\":\"production_router_dispatch\",\"contract_id\":\"PK03.01.replay-harness\",\"fixture_id\":\""<<fixtureId
+        <<"\",\"fixture_sha256\":\""<<fixtureSha
+        <<"\",\"client_commit\":\"af41f6484cb7ff31825296babe4b913aa36c4c67\",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\""
+        <<",\"production_entry\":\"CRagConnection::RecvPacket -> TryReadPacket -> RegisterDefaultGameModePacketHandlers -> CGameModePacketRouter::Dispatch\""
+        <<",\"fixture_provenance\":\"synthetic receive-profile length samples; no server-emission claim\""
+        <<",\"stage_profile\":\"map-active-receive\",\"input_chunks\":"<<ChunkJson({combined})
+        <<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hexes\":[\""<<Hex(first)<<"\",\""<<Hex(second)<<"\"]"
+        <<",\"actual_packet_hexes\":[\""<<Hex(received[0])<<"\",\""<<Hex(received[1])<<"\"]"
+        <<",\"expected_router_results\":[true,true,false],\"actual_router_results\":["
+        <<(dispatched[0]?"true":"false")<<","<<(dispatched[1]?"true":"false")<<","<<(unknownDispatched?"true":"false")<<"]"
+        <<",\"expected_connection_state\":\"open\",\"actual_connection_state\":\""<<(connection.IsOpen()?"open":"closed")
+        <<"\",\"expected_queue_remainder\":0,\"actual_queue_remainder\":"<<connection.BufferedBytes()<<",\"outcome\":\"PASS\"}\n";
+}
 void FixedEveryBoundary(const std::vector<u8>& frame){for(size_t split=1;split<frame.size();++split){std::string caseId="fixed_fragment_"+std::to_string(split);SetCase(caseId);TestConnection c;LoopbackPeer p(c);std::vector<u8> out;
     p.Send(std::vector<u8>(frame.begin(),frame.begin()+split));PumpUntilBuffered(c,static_cast<int>(split));Require(out.empty(),"partial prefix returned bytes");Report(caseId+"_prefix",kFixedFixture,kFixedSha,{std::vector<u8>(frame.begin(),frame.begin()+split)},"","",split,c.BufferedBytes(),c);
     p.Send(std::vector<u8>(frame.begin()+split,frame.end()));out=PumpUntilPacket(c);Require(out==frame,"fragmented fixed packet changed");VerifyRoute(out,0x006c);Report(caseId,kFixedFixture,kFixedSha,{std::vector<u8>(frame.begin(),frame.begin()+split),std::vector<u8>(frame.begin()+split,frame.end())},Hex(frame),Hex(out),0,c.BufferedBytes(),c);}}
@@ -139,10 +192,9 @@ int main(){try{
     BaselineResync(fixed,{0x69,0x00,0x00,0x80},"oversized_variable_baseline_resync");
     EofCase(fixed,0,"eof_empty",kFixedFixture,kFixedSha);EofCase(fixed,1,"eof_partial_fixed_header",kFixedFixture,kFixedSha);
     EofCase(variable,5,"eof_partial_variable_body",kVariableFixture,kVariableSha);
+    ProductionRouterDispatchReplay();
     OutboundTransportCapture(fixed);
     ActionRequestBuilderReplay();
     {SetCase("production_reconnect_reset");TestConnection c;{LoopbackPeer p(c);p.Send({0x6c});PumpUntilBuffered(c,1);}c.Disconnect();Require(!c.IsOpen()&&c.BufferedBytes()==0,"disconnect failed to clear receive queue");{LoopbackPeer p(c);p.Send(fixed);auto out=PumpUntilPacket(c);Require(out==fixed,"production reconnect failed after disconnect");VerifyRoute(out,0x006c);Report("production_reconnect_reset",kFixedFixture,kFixedSha,{fixed},Hex(fixed),Hex(out),0,c.BufferedBytes(),c);}}
-    CConnection::Cleanup();std::cout<<"PASS packet stream replay: fixed and variable fragmentation, production decoder packets="<<g_decodeCount<<", coalescing, baseline resync characterization, EOF and production reconnect\n";return 0;
+    CConnection::Cleanup();std::cout<<"PASS packet stream replay: fixed and variable fragmentation, production decoder packets="<<g_decodeCount<<", production router dispatch, coalescing, baseline resync characterization, EOF and production reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::string error=e.what();std::replace(error.begin(),error.end(),'"','\'');std::cerr<<"{\"case_id\":\""<<g_currentCase<<"\",\"client_commit\":\"af41f6484cb7ff31825296babe4b913aa36c4c67\",\"production_entry\":\"CRagConnection::Connect/RecvPacket -> TryReadPacket\",\"invocation_count\":"<<g_recvInvocations<<",\"outcome\":\"FAIL\",\"error\":\""<<error<<"\"}\n";return 1;}}
-
-

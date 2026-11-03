@@ -268,13 +268,23 @@ endif()
 if(RO_BUILD_PACKET_REPLAY_TESTS)
     enable_testing()
     add_executable(packet_stream_replay_checks
-        tools/tests/replay/PacketStreamReplay.cpp
-        src/gamemode/PacketStreamDecoder.cpp
-        src/gamemode/ActionRequestSender.cpp)
+        tools/tests/replay/PacketStreamReplay.cpp)
     target_compile_features(packet_stream_replay_checks PRIVATE cxx_std_17)
-    target_link_libraries(packet_stream_replay_checks PRIVATE ro_network ro_core)
+    target_link_libraries(packet_stream_replay_checks PRIVATE
+        ro_gamemode ro_session ro_world ro_skill ro_item ro_pathfinder
+        ro_network ro_res ro_audio ro_render3d ro_render ro_ui ro_input
+        ro_cipher ro_core ro_security ro_lua ro_main)
+    if(RO_ENABLE_QT6_UI)
+        target_link_libraries(packet_stream_replay_checks PRIVATE ro_qtui)
+    endif()
     if(WIN32)
-        target_link_libraries(packet_stream_replay_checks PRIVATE ws2_32)
+        target_link_libraries(packet_stream_replay_checks PRIVATE
+            ws2_32 winmm.lib dxguid.lib ole32.lib oleaut32.lib psapi.lib)
+        if(MINGW)
+            target_link_libraries(packet_stream_replay_checks PRIVATE msimg32)
+        else()
+            target_link_libraries(packet_stream_replay_checks PRIVATE msimg32.lib)
+        endif()
     endif()
     add_test(NAME packet_stream_replay_checks COMMAND packet_stream_replay_checks)
     set_tests_properties(packet_stream_replay_checks PROPERTIES
