@@ -22,11 +22,19 @@ add_library(ro_world STATIC
     Gr2Monster.cpp
     ../res/Gr2Reader.cpp
     ../res/Gr2Pose.cpp
+    ../res/gr2/Gr2File.cpp
+    ../res/gr2/Gr2Oodle0.cpp
+    ../res/gr2/Gr2TypeTree.cpp
+    ../res/gr2/Gr2Igc.cpp
+    ../res/gr2/Gr2IgcArith.cpp
+    ../res/gr2/Gr2IgcPlane.cpp
+    ../res/gr2/Gr2IgcIdwt.cpp
+    ../res/gr2/Gr2IgcYuv.cpp
+    ../res/gr2/Gr2Extract.cpp
+    ../res/gr2/Gr2ExtractMesh.cpp
+    ../res/gr2/Gr2ExtractAnim.cpp
+    ../res/gr2/Gr2Decode.cpp
 )
-
-if(RO_ENABLE_QT6_UI)
-    target_link_libraries(ro_world PRIVATE Qt6::Core Qt6::Qml)
-endif()
 
 target_include_directories(ro_world PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(ro_world PUBLIC

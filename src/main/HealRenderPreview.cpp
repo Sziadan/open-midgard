@@ -84,6 +84,8 @@ void RunHealRenderPreview()
             CPc monster;
             if (const char* job=std::getenv("RO_HEAL_PREVIEW_MONSTER")) {
                 monster.m_gid=17;monster.m_job=std::atoi(job);monster.m_isPc=0;monster.m_isVisible=1;
+                if(const char* rotation=std::getenv("RO_HEAL_PREVIEW_MONSTER_ROTATION"))monster.m_roty=std::atof(rotation);
+                if(const char* zoom=std::getenv("RO_HEAL_PREVIEW_MONSTER_ZOOM"))monster.m_zoom=std::atof(zoom);
                 monster.m_pos=player.m_pos;monster.m_pos.x+=25;
                 monster.m_stateId=std::getenv("RO_HEAL_PREVIEW_MONSTER_STATE")?std::atoi(std::getenv("RO_HEAL_PREVIEW_MONSTER_STATE")):0;
                 monster.m_stateStartTick=timeGetTime()-(std::getenv("RO_HEAL_PREVIEW_MONSTER_AGE")?std::atoi(std::getenv("RO_HEAL_PREVIEW_MONSTER_AGE")):0);

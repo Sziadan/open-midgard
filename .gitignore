@@ -1,4 +1,6 @@
-Ref/
+Ref/*
+!Ref/JsGranny/
+/dump_sdk_textures.obj
 HighPriest.exe.h
 HighPriest.exe.utf8.h
 HighPriest.exe.c
@@ -64,7 +66,6 @@ tools/tests/*
 !tools/tests/chat_unicode/
 !tools/tests/chat_unicode/CMakeLists.txt
 !tools/tests/gr2_pose_reference.json
-!tools/build_gr2_reader.py
 !tools/tests/replay/
 tools/tests/__pycache__/
 !tools/tests/check_prim3dquadhorn.py

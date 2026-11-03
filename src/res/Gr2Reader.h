@@ -52,8 +52,8 @@ struct Asset {
     std::vector<Animation> animations;
 };
 
-// Pure data in/out. Decoding is run off the render thread. The embedded
-// independent reader uses Qt's existing engine, never a Granny SDK or process.
+// Pure data in/out. Decoding is run off the render thread via the native C++
+// GR2/IGC port (third_party/gr2-reader algorithms). No Granny SDK or process.
 bool Decode(const std::vector<unsigned char>& bytes,Asset& asset,std::string& error,bool animationOnly=false);
 std::vector<Matrix> Sample(const Asset& asset,const Animation* animation,double time,bool loop);
 void Skin(const Mesh& mesh,const std::vector<Matrix>& matrices,

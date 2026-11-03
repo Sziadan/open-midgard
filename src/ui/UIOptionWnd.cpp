@@ -1688,8 +1688,13 @@ void UIOptionWnd::OnDraw()
                 DrawHeaderButton(hdc, GetApplyButtonRect(), "Apply");
             }
         } else if (m_activeTab == TabId_Keybindings) {
+#if RO_ENABLE_QT6_UI
             DrawUiOptionText(hdc, contentRect.left + 8, contentRect.top + 10,
                 "Select a slot, then press a key combination.", RGB(0, 0, 0));
+#else
+            TextOutA(hdc, contentRect.left + 8, contentRect.top + 10,
+                "Select a slot, then press a key combination.", 46);
+#endif
             for (int bar = 0; bar < 3; ++bar) {
                 DrawTabButton(hdc, GetKeybindingBarRect(bar),
                     ("Bar " + std::to_string(bar + 1)).c_str(), m_keybindingBar == bar);

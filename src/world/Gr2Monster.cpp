@@ -25,6 +25,7 @@ struct Asset {
     std::unique_ptr<CpuAsset> cpu;
     std::vector<std::unique_ptr<CTexture>> textures;
 };
+
 struct Instance {
     Asset* asset=nullptr;
     int state=-1;
@@ -57,15 +58,20 @@ void StartAsset(int job)
     if(model.empty()) {DbgLog("[Gr2Monster] missing model %s\n",modelPath);assets.emplace(modelPath,nullptr);return;}
     const int type=std::atoi(std::strrchr(modelPath,'_')+1);
     std::map<int,std::vector<unsigned char>> animationBytes;
+    // Guardians (7–9) ship move/attack/dead/damage. Emperium (0) is idle-only.
+    // Guild flag (1) has attack; treasure box (2) has dead/damage. Match on-disk
+    // 3dmob_bone banks and skip missing ones rather than failing the asset.
     const std::pair<int,const char*> names[]={{1,"move"},{2,"attack"},{3,"dead"},{4,"damage"}};
     // Resource-manager access stays on the calling/main thread. Only isolated
     // byte buffers are passed to the decoder worker; no engine/GPU state is shared.
-    for(const auto& name:names)animationBytes.emplace(name.first,ReadBytes("data\\model\\3dmob_bone\\"+std::to_string(type)+"_"+name.second+".gr2"));
+    for(const auto& name:names) {
+        auto bytes=ReadBytes("data\\model\\3dmob_bone\\"+std::to_string(type)+"_"+name.second+".gr2");
+        if(!bytes.empty())animationBytes.emplace(name.first,std::move(bytes));
+    }
     pending.emplace(modelPath,std::async(std::launch::async,[model=std::move(model),animations=std::move(animationBytes)]() mutable {
         auto result=std::make_unique<CpuAsset>();
         if(!ro::gr2::Decode(model,result->model,result->error))return result;
         for(auto& animation:animations) {
-            if(animation.second.empty()) {result->error="Missing GR2 animation bank "+std::to_string(animation.first);return result;}
             ro::gr2::Asset decoded;
             if(!ro::gr2::Decode(animation.second,decoded,result->error,true))return result;
             if(decoded.animations.empty()) {result->error="Empty GR2 animation bank";return result;}
@@ -93,8 +99,11 @@ Asset* GetAsset(int job)
     auto asset=std::make_unique<Asset>();asset->cpu=std::move(cpu);
     for(auto& image:asset->cpu->model.images) {
         auto texture=std::make_unique<CTexture>();
-        if(!texture->Create(image.width,image.height,PF_A8R8G8B8)) {assets.emplace(path,nullptr);return nullptr;}
-        texture->Update(0,0,image.width,image.height,image.pixels.data(),false,image.width*4);
+        // Ref/Model.cpp preserves authored RGBA. Sprite magenta-key heuristics
+        // and low-alpha wipes destroy legitimate GR2 texels and soft edges.
+        // Keep native model textures out of the sprite upscaler as well.
+        if(!texture->Create(image.width,image.height,PF_A8R8G8B8,false)) {assets.emplace(path,nullptr);return nullptr;}
+        texture->Update(0,0,image.width,image.height,image.pixels.data(),true,image.width*4);
         asset->textures.push_back(std::move(texture));
     }
     DbgLog("[Gr2Monster] independent reader ready path=%s meshes=%u bones=%u textures=%u animationBanks=%u\n",path,
@@ -157,7 +166,13 @@ bool RenderGr2Monster(const Gr2MonsterState& state,const matrix& view)
     instance.matrices=ro::gr2::Sample(cpu.model,animation,sampleTime,loop);
     float minX=1e9f,minY=1e9f,maxX=-1e9f,maxY=-1e9f;
     unsigned triangles=0;
-    for(const auto& mesh:cpu.model.meshes) {
+    for(size_t meshIndex=0;meshIndex<cpu.model.meshes.size();++meshIndex) {
+        const auto& mesh=cpu.model.meshes[meshIndex];
+        // Ref/GameActor3d.cpp RenderGuildMark replaces mesh 1 with the guild's
+        // emblem. Its embedded green emblem.tif is an authoring placeholder.
+        // Until an emblem resource is available, Ref uses a transparent image;
+        // omitting that surface is equivalent and leaves the banner intact.
+        if(state.job==722 && meshIndex==1)continue;
         if(mesh.batches.empty())continue;
         ro::gr2::Skin(mesh,instance.matrices,instance.positions,instance.normals);
         instance.projected.resize(mesh.vertices.size());instance.valid.assign(mesh.vertices.size(),0);
@@ -186,11 +201,24 @@ bool RenderGr2Monster(const Gr2MonsterState& state,const matrix& view)
                 if(!valid)continue;
                 RPFace* face=g_renderer.BorrowNullRP();if(!face)continue;
                 face->primType=D3DPT_TRIANGLELIST;face->verts=face->m_verts;face->numVerts=3;face->indices=nullptr;face->numIndices=0;
-                face->tex=asset->textures[batch.texture].get();face->mtPreset=0;face->cullMode=D3DCULL_NONE;
+                CTexture* texture=asset->textures[batch.texture].get();
+                face->tex=texture;face->mtPreset=0;face->cullMode=D3DCULL_NONE;
                 face->srcAlphaMode=D3DBLEND_SRCALPHA;face->destAlphaMode=D3DBLEND_INVSRCALPHA;
-                for(int corner=0;corner<3;++corner)face->m_verts[corner]=instance.projected[indices[corner]];
+                const unsigned contentW=texture->m_surfaceUpdateWidth?texture->m_surfaceUpdateWidth:texture->m_w;
+                const unsigned contentH=texture->m_surfaceUpdateHeight?texture->m_surfaceUpdateHeight:texture->m_h;
+                const float uScale=(texture->m_w>0)?static_cast<float>(contentW)/static_cast<float>(texture->m_w):1.0f;
+                const float vScale=(texture->m_h>0)?static_cast<float>(contentH)/static_cast<float>(texture->m_h):1.0f;
+                for(int corner=0;corner<3;++corner){
+                    face->m_verts[corner]=instance.projected[indices[corner]];
+                    face->m_verts[corner].tu*=uScale;
+                    face->m_verts[corner].tv*=vScale;
+                }
                 face->alphaSortKey=(face->m_verts[0].oow+face->m_verts[1].oow+face->m_verts[2].oow)/3;
-                g_renderer.AddRP(face,cpu.model.images[batch.texture].alpha || (state.color>>24)<255?1:0);++triangles;
+                // Ref RenderNormal/RenderGuildMark submit models with flag 0:
+                // cutout alpha with depth writes, including alpha-bearing maps.
+                // Sorting individual translucent triangles cannot resolve the
+                // flag's overlapping front/back strips and frame correctly.
+                g_renderer.AddRP(face,(state.color>>24)<255?1:0);++triangles;
             }
         }
     }
@@ -215,5 +243,5 @@ bool Gr2MonsterMotionFinished(u32 gid,int state,u32 start)
 }
 void ReleaseGr2Monster(u32 gid) {instances.erase(gid);}
 void ClearGr2Monsters() {pending.clear();instances.clear();assets.clear();}
-void PreloadGr2Monsters() {for(int job:{1285,1286,1287})StartAsset(job);}
+void PreloadGr2Monsters() {for(int job:{1288,722,1324,1285,1286,1287})StartAsset(job);}
 void WaitForGr2Monsters() {for(auto& load:pending)load.second.wait();}
