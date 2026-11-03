@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "active_step": null,
-  "baseline": "PK00.03: runtime sources pinned to origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; local ignored refs inventoried; authoritative external server checkout inaccessible.",
+  "baseline": "PK00.04: client source at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67 clean-built with deploy OFF; authoritative external server checkout inaccessible.",
   "steps": {
     "PK00.01": {
       "status": "COMPLETED",
@@ -19,9 +19,9 @@
       "commit_subject": "packet(PK00.03): select reproducible client baseline"
     },
     "PK00.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK00.04.md"],
+      "commit_subject": "packet(PK00.04): verify reproducible client baseline"
     },
     "PK01.01": {
       "status": "NOT_STARTED",

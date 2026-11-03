@@ -19,3 +19,7 @@ At HEAD `8c81549bb9d4bf89ac59f53b99827ce07ccc3377`, recorded 1,198 tracked file 
 ## 2026-11-03 — PK00.03
 
 Selected existing runtime commit `af41f6484cb7ff31825296babe4b913aa36c4c67` at `origin/main`; only `docs/packets/*` differs in this evidence branch. Recorded exact MinGW Qt configure/build commands with deploy explicitly OFF, compiler/Qt paths, and prerequisite cache check. No build was run. Server source remains inaccessible and is carried to PK01; PK00.04 will establish the local client build gate. Evidence: `evidence/PK00.03.md`. Stable subject: `packet(PK00.03): select reproducible client baseline`. Next: PK00.04.
+
+## 2026-11-03 — PK00.04
+
+Reconfigured and clean-built the selected client baseline using the MinGW Qt preset with deploy OFF; both configure and clean build exited 0. Fresh output is `build-mingw-preset/open-midgard.exe` (19,655,065 bytes; SHA-256 `0EC74E399EBB3CC8CB7F7EB27139D5CF299911E78B77D1497D2B3A6688FAC7BA`, timestamp 2026-11-03T19:06:37.7481701Z). Qt deployment stayed in the build directory; `D:/Spel/OldRO/open-midgard.exe` timestamp predates the build and has a different hash. CMake/MinGW warnings are recorded in evidence. No tests or client runtime were run. External rAthena checkout remains inaccessible, so server contracts remain gated. Evidence: `evidence/PK00.04.md`. Stable subject: `packet(PK00.04): verify reproducible client baseline`. Next: PK01.01.
