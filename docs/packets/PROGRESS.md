@@ -60,3 +60,8 @@ Created six synthetic raw fixtures for the handshake, 0x01F2, 0x01A2, 0x0190, 0x
 ## 2026-11-03 — PK02.04 independent verification
 
 Independent strong review reran manifest generation, fixture generation/negative validation, and the plan checker. The reviewer confirmed fresh probe compilation, source-hash checks, rebuilt generated header, effective macro values, measured layout comparisons, C2S parser offsets/lengths, fixture field derivation and deterministic regeneration. Initial validator gaps were corrected: manifest/opcode/profile/length/schema/suite/provenance checks now reject the reviewed bad cases; explicit opcode/padding fields and unresolved semantic metadata are recorded. All evidence hashes/output have been refreshed. This approves only the bounded manifest/byte-oracle infrastructure. Evidence: `evidence/PK02.04-independent-review.md`. Stable subject: `packet(PK02.04): independently verify contract byte oracles`. Next: PK03.01.
+
+
+## 2026-11-03 — PK03.01 specification
+
+Mapped production receive, queue, profile, send and UI entry points; specified a loopback-only harness, deterministic fragmentation/concatenation/error cases, evidence JSONL and opt-in deploy-off CMake commands. Flagged the existing 0x0190 helper test as an incompatible client-derived oracle (profile 23/90 bytes) against the server contracts; it remains a PK08 correction gate. No tests or runtime files changed in this specification leaf. Evidence: `evidence/PK03.01-replay-specification.md`. Stable subject: `packet(PK03.01): specify production replay harness`. Next: PK03.02.

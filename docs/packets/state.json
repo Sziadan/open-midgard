@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK02.04",
+  "active_step": "PK03.01",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -110,9 +110,11 @@
       "commit_subject": "packet(PK02.04): independently verify contract byte oracles"
     },
     "PK03.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK03.01-replay-specification.md"
+      ],
+      "commit_subject": "packet(PK03.01): specify production replay harness"
     },
     "PK03.02": {
       "status": "NOT_STARTED",

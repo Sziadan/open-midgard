@@ -1,6 +1,6 @@
 # Resume packet implementation
 
-Next action: **PK03.01 specification**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, `BLOCKED.md`, PK02.01–PK02.04 evidence, and the PK03 card in `WORK_PACKAGES.md`. Define production replay entry points, mocks, cases, build/test commands, evidence schema, and independent review gate before exercising production code.
+Next action: **PK03.02 receive/framing replay**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, `BLOCKED.md`, and `evidence/PK03.01-replay-specification.md`. Add the opt-in deploy-off production receive harness and structural loopback cases; keep feature-semantic assertions gated by strong-approved contracts.
 
 Completed checkpoint: PK00.01 at baseline `af41f6484cb7ff31825296babe4b913aa36c4c67` (`main`, tracking `origin/main`, clean tree). Evidence: `evidence/PK00.01.md`. The old handoff's `9c158616` HEAD and approximately 80 dirty/untracked paths no longer describe this checkout. The current runtime commit already contains the guild/commerce changes previously noted as dirty.
 
