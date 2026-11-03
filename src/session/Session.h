@@ -1,5 +1,6 @@
 #pragma once
 #include "core/Vitals.h"
+#include "core/GuildState.h"
 #include <array>
 #include <mutex>
 #include <unordered_map>
@@ -19,6 +20,17 @@ struct accountInfo {
     std::string balloon;
     std::string address;
     std::string port;
+};
+
+// Local membership is session state, not part of the current map's actor cache.
+struct LocalGuildInfo {
+    u32 characterId=0;
+    u32 guildId=0;
+    u32 emblemVersion=0;
+    std::string name;
+    std::string title;
+    bool isMaster=false;
+    u32 permissions=0;
 };
 
 constexpr int JT_G_MASTER = 20002;
@@ -174,6 +186,8 @@ public:
     std::list<FRIEND_INFO> m_partyList;
     std::list<FRIEND_INFO> m_friendList;
     std::string m_partyName;
+    LocalGuildInfo m_localGuild;
+    ro::guild::WindowState m_guildWindow;
     bool m_amIPartyMaster = false;
     bool m_partyExpShare = false;
     bool m_itemDivType = false;

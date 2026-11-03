@@ -84,7 +84,7 @@ checks={
     "TowardScreen uses shared GI rotations":(r"Tei_TowardScreen\(this,.*?m_GI\[0\]\.alphaT, this->m_GI\[1\]\.alphaT",r"IntimidateTowardScreen\(corners,prim\.m_gi\[0\]\.alphaT,prim\.m_gi\[1\]\.alphaT"),
     "world-space band offsets added once to all corners":(r"vec1\.x = vec1\.x \+ \*\(\(float \*\)flag1 \+ 7\).*?vec4\.z = vec4\.z \+ \*\(\(float \*\)flag1 \+ 9\)",r"corner\.x=.*?gi\.sparkX.*?corner\.y=.*?gi\.sparkY.*?corner\.z=.*?gi\.sparkZ"),
     "pattern selector is GI0 across bands":(r"v16 = this->m_GI\[0\]\.flag1\[2\];.*?v17 = this->m_GI\[0\]\.flag1\[3\]",r"CloudStyle\(prim\.m_gi\[0\]\)"),
-    "blend flag maps to ONE/inverse alpha":(r"\*flag1,\s*1,",r"gi\.flag\[0\]\s*!=\s*0.*?D3DBLEND_INVSRCALPHA.*?D3DBLEND_ONE"),
+    "pattern PW maps to ONE/inverse alpha independently of texture TN":(r"v18 = 1;.*?wtm,\s*v18,\s*v19,",r"style\.blendMode!=0.*?D3DBLEND_INVSRCALPHA.*?D3DBLEND_ONE"),
     "world-space overload keeps source primitive translation disabled":(r"wtm,\s*0,\s*\*flag1,\s*1,",r"SubmitCloudRect\(corners,viewMatrix"),
     "cloud calls use the complete texture UV range":(r"0\.0,\s*1\.0,\s*0\.0,\s*1\.0",r"\{ \{ 1\.0f, 0\.0f \}, \{ 1\.0f, 1\.0f \}, \{ 0\.0f, 1\.0f \} \}.*?\{ \{ 0\.0f, 0\.0f \}, \{ 0\.0f, 1\.0f \}, \{ 1\.0f, 0\.0f \} \}"),
 }
@@ -99,6 +99,10 @@ assert re.search(r"0\.0,\s*1\.0,\s*0\.0,\s*1\.0",ref)
 assert "{ { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } }" in cloud_submit
 assert "{ { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f } }" in cloud_submit
 print("PASS exact two-triangle full-texture UV layout")
+assert "const size_t textureIndex=gi.flag[0]" in cloud_render
+assert "textureIndex<prim.m_texture.size()?prim.m_texture[textureIndex]:nullptr" in cloud_render
+assert "style.blendMode!=0" in cloud_render
+print("PASS per-band TN selects texture independently of pattern PW blend mode")
 
 # Branch colors are compared as source channel triples against the literal ARGB table.
 colors={0:"FFFFFF",1:"9696FA",2:"8282FA",3:"C8C864",4:"FFFFFF",7:"FFFFFF",8:"87FF87",

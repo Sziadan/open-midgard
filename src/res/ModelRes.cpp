@@ -239,7 +239,10 @@ void C3dMesh::UpdateNormal()
             continue;
         }
 
-        const vector3d edgeA = Subtract(m_vert[face.vertindex[1]], m_vert[face.vertindex[0]]);
+        // Ref/Mesh.cpp UpdateNormal uses cross(v2-v1, v2-v0), the
+        // opposite of cross(v1-v0, v2-v0). Match the authored RSM winding
+        // so sun-facing surfaces do not receive underside/ambient shading.
+        const vector3d edgeA = Subtract(m_vert[face.vertindex[2]], m_vert[face.vertindex[1]]);
         const vector3d edgeB = Subtract(m_vert[face.vertindex[2]], m_vert[face.vertindex[0]]);
         vector3d normal = Cross(edgeA, edgeB);
         NormalizeVector(&normal);

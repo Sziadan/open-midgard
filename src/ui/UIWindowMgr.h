@@ -48,6 +48,7 @@ class UIPlayerContextMenuWnd;
 class UIJoinPartyAcceptWnd;
 class UIMessengerGroupWnd;
 class UIPartyOptionWnd;
+class UIGuildWnd;
 class UINpcInputWnd;
 class UIChooseWnd;
 class UIChooseSellBuyWnd;
@@ -99,6 +100,7 @@ public:
         WID_PLAYERCONTEXTMENUWND = 0x94,
         WID_MESSENGERGROUPWND = 0x22,
         WID_PARTYOPTIONWND    = 0x95,
+        WID_GUILDWND          = 0x96,
         WID_OPTIONWND         = 13,
         WID_EQUIPWND          = 14,
         WID_SKILLLISTWND      = 15,
@@ -172,6 +174,8 @@ public:
     bool SetShortcutKeyBinding(int slotIndex, const ShortcutKeyBinding& binding);
     bool IsCapturingShortcutKeyBinding() const;
     bool HasWindowAtPoint(int x, int y) const;
+    bool HasGameplayInputModal() const;
+    bool HasNativePopupAtPoint(int x,int y) const;
     void ClampWindowToClient(int* x, int* y, int w, int h) const;
     void RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent);
     void SnapWindowToNearby(UIWindow* window, int* x, int* y) const;
@@ -221,6 +225,7 @@ public:
     UIJoinPartyAcceptWnd* m_joinPartyAcceptWnd;
     UIMessengerGroupWnd* m_messengerGroupWnd;
     UIPartyOptionWnd* m_partyOptionWnd;
+    UIGuildWnd* m_guildWnd=nullptr;
     UINpcInputWnd* m_npcInputWnd;
     UIChooseSellBuyWnd* m_chooseSellBuyWnd;
     UIItemShopWnd* m_itemShopWnd;

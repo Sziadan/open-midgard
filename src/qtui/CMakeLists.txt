@@ -7,6 +7,7 @@ set(RO_QTUI_SOURCES
     QtUiSpikeState.h
     QtUiStateAdapter.h
     QtUiStateAdapter.cpp
+    QtCommerce.cpp
     QtUiSpikeAssets.qrc
     QtPlatformWindow.h
     QtPlatformWindow.cpp
@@ -14,7 +15,7 @@ set(RO_QTUI_SOURCES
 
 add_library(ro_qtui STATIC ${RO_QTUI_SOURCES})
 if(WIN32)
-    target_link_libraries(ro_qtui PUBLIC imm32)
+    target_link_libraries(ro_qtui PUBLIC imm32 comdlg32)
 endif()
 
 set_target_properties(ro_qtui PROPERTIES

@@ -6,11 +6,13 @@
 #include "network/MapSendProfile.h"
 #include "CursorRenderer.h"
 #include "GameMode.h"
+#include "Commerce.h"
 #include "PacketPadding.h"
 #include "View.h"
 #include "qtui/QtUiRuntime.h"
 #include "audio/Audio.h"
 #include "GameModePacket.h"
+#include "GuildCreation.h"
 #include "pathfinder/PathFinder.h"
 #include "core/ClientInfoLocale.h"
 #include "core/File.h"
@@ -7554,6 +7556,11 @@ void EnsureBootstrapSelfActor(CGameMode& mode)
         mode.m_world->m_player = static_cast<CPlayer*>(actor);
     }
 
+    if(g_session.m_localGuild.characterId==g_session.m_gid) {
+        actor->m_gdid=static_cast<int>(g_session.m_localGuild.guildId);
+        actor->m_emblemVersion=static_cast<int>(g_session.m_localGuild.emblemVersion);
+    }
+
     if (CPc* pc = dynamic_cast<CPc*>(actor)) {
         pc->m_job = g_session.m_playerJob;
         pc->m_sex = g_session.GetSex();
@@ -10020,6 +10027,17 @@ void CGameMode::OnExit() {
     m_loadingWallpaperName.clear();
 }
 int  CGameMode::OnRun() {
+    if(m_world && m_world->m_player){
+        int x=0,y=0;GetServerCoor(m_world->m_player->m_pos.x,m_world->m_player->m_pos.z,x,y);
+        std::map<u32,ro::commerce::TradePeer> peers;
+        for(const auto& entry:m_runtimeActors)if(entry.second&&entry.second->m_isPc&&entry.second->m_isVisible){
+            int px=0,py=0;GetServerCoor(entry.second->m_pos.x,entry.second->m_pos.z,px,py);
+            auto name=m_actorNameListByGID.find(entry.first);
+            peers[entry.first]={name==m_actorNameListByGID.end()?std::string():name->second.name,(std::max)(std::abs(px-x),std::abs(py-y))};
+        }
+        ro::commerce::UpdateTradeContext(GetTickCount(),std::move(peers));
+    }
+
     SyncRendererToWindowSize();
 
     const bool mapLoadingWasActive = IsMapLoadingActive(*this);
@@ -10839,6 +10857,21 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             return sent ? 1 : 0;
         }
 
+        std::string guildName;
+        const auto guildCommand=ro::guild::ParseCreateCommand(text,guildName);
+        if(guildCommand!=ro::guild::CommandResult::NotCommand) {
+            if(guildCommand==ro::guild::CommandResult::Invalid) {
+                g_windowMgr.PushChatEvent("Usage: /guild \"Guild Name\" (1-23 bytes).",0x00FF4040u,6);
+                return 0;
+            }
+            if(!m_world || !m_world->m_player || !g_session.m_gid)return 0;
+            const auto packet=ro::guild::CreatePacket(g_session.m_gid,guildName);
+            const bool sent=CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()));
+            if(!sent)g_windowMgr.PushChatEvent("Unable to send the guild creation request.",0x00FF4040u,6);
+            DbgLog("[GameMode] guild create request name='%s' sent=%d\n",guildName.c_str(),sent?1:0);
+            return sent?1:0;
+        }
+
         std::string command = text;
         std::transform(command.begin(), command.end(), command.begin(), [](unsigned char ch) {
             return static_cast<char>(std::tolower(ch));
@@ -11035,11 +11068,15 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             return SendMsg(GameMsg_RequestPartyInvite, targetAid, 0, 0);
         }
 
-        DbgLog("[GameMode] player context action stub targetAid=%u action=%d (%s)\n",
+        const auto entry=m_actorNameListByGID.find(targetAid);
+        const std::string targetName=entry!=m_actorNameListByGID.end()?entry->second.name:std::string();
+        const bool handled=ro::commerce::PlayerAction(static_cast<int>(action),targetAid,targetName);
+        if(!handled&&ro::commerce::state.status.empty())g_windowMgr.PushChatEvent("That player action is unavailable right now.",0x00FF8080u,6);
+        DbgLog("[GameMode] player context action targetAid=%u action=%d (%s)\n",
             static_cast<unsigned int>(targetAid),
             static_cast<int>(action),
             GetPlayerContextActionName(action));
-        return 1;
+        return handled?1:0;
     }
 
     case GameMsg_RButtonUp:

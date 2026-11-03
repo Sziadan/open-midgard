@@ -2,11 +2,15 @@
 #include "QtUiStateAdapter.h"
 
 #include "QtUiState.h"
+#include "QtCommerce.h"
+#include "GuildEmblemUpload.h"
+#include "GuildEmblemPicker.h"
 
 #include "QtUiStatusIconCatalog.h"
 #include "world/StatusStateIconMap.h"
 
 #include "network/Connection.h"
+#include "DebugLog.h"
 #include "network/MapSendProfile.h"
 #include "network/Packet.h"
 #include "core/ClientInfoLocale.h"
@@ -58,20 +62,98 @@
 #include "ui/UIShopCommon.h"
 #include "ui/UIWaitWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIGuildWnd.h"
 #include "world/GameActor.h"
 #include "world/World.h"
 
 #include <QChar>
 #include <QFont>
 #include <QFontMetrics>
+#include <QImage>
+#include <QBuffer>
 #include <QStringList>
 #include <QVariantMap>
+#include <QFile>
+#include <QImageReader>
+#include <QCoreApplication>
+#ifdef _WIN32
+#include <commdlg.h>
+#endif
 
 #include <cstdio>
+#include <algorithm>
+#include <cstring>
 #include <string>
 #include <vector>
 
 namespace {
+
+void RequestGuildEmblemUpload()
+{
+    const auto guildId = g_session.m_localGuild.guildId;
+    const auto characterId = g_session.m_gid;
+    if (!guildId || !g_session.m_localGuild.isMaster) return;
+#ifdef _WIN32
+    // The main loop owns socket pumping and heartbeats. A synchronous file
+    // dialog here suspends both for as long as the user browses their files.
+    const bool started=ro::guild::PickEmblemAsync(QCoreApplication::instance(), [] {
+        const HRESULT initialized=CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        wchar_t path[32768]{};
+        OPENFILENAMEW dialog{};
+        dialog.lStructSize = sizeof(dialog);
+        // No cross-thread owner: disabling the game window would also interrupt
+        // native input while the independent picker is open.
+        dialog.hwndOwner = nullptr;
+        dialog.lpstrFilter = L"Guild emblems (24 x 24 BMP or PNG)\0*.bmp;*.png\0\0";
+        dialog.lpstrFile = path;
+        dialog.nMaxFile = static_cast<DWORD>(std::size(path));
+        dialog.lpstrTitle = L"Choose guild emblem (24 x 24 pixels)";
+        dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR | OFN_EXPLORER;
+        const bool selected=GetOpenFileNameW(&dialog)!=FALSE;
+        const bool failed=!selected && CommDlgExtendedError()!=0;
+        if(SUCCEEDED(initialized))CoUninitialize();
+        return ro::guild::EmblemSelection{selected?QString::fromWCharArray(path):QString(),failed};
+    }, [guildId,characterId](const ro::guild::EmblemSelection& selection) {
+        if (selection.failed) {g_windowMgr.PushChatEvent("Unable to open the guild emblem picker.",0x00FF4040u,6);return;}
+        if (selection.path.isEmpty()) return; // Cancel sends nothing.
+        if (g_session.m_gid!=characterId || !g_session.m_localGuild.isMaster || g_session.m_localGuild.guildId!=guildId) return;
+        auto* mode=g_modeMgr.GetCurrentGameMode();
+        if (!mode || !CRagConnection::instance()->IsOpen()) {
+            g_windowMgr.PushChatEvent("Guild emblem was not uploaded: connection lost. Please reconnect and try again.",0x00FF4040u,6);
+            return;
+        }
+        QFile file(selection.path);
+        if (!file.open(QIODevice::ReadOnly) || file.size() > 1024 * 1024) {
+            g_windowMgr.PushChatEvent("Unable to read emblem. Choose a BMP or PNG smaller than 1 MB.", 0x00FF4040u, 6);
+            return;
+        }
+        QImageReader reader(&file);
+        const auto format = reader.format().toLower();
+        if ((format != "bmp" && format != "png") || reader.size() != QSize(24, 24)) {
+            g_windowMgr.PushChatEvent("Choose a 24 x 24 pixel BMP or PNG guild emblem.", 0x00FF4040u, 6);
+            return;
+        }
+        QString error;
+        const QByteArray packet = ro::guild::EmblemUploadPacket(reader.read(), error);
+        if (packet.isEmpty()) {
+            g_windowMgr.PushChatEvent(error.toUtf8().constData(), 0x00FF4040u, 6);
+            return;
+        }
+        if (!g_session.m_localGuild.isMaster || g_session.m_localGuild.guildId != guildId) return;
+        if (CRagConnection::instance()->SendPacket(packet.constData(), static_cast<int>(packet.size()))) {
+            mode->m_pendingEmblemGuild=guildId;
+            mode->m_pendingEmblemVersion=g_session.m_localGuild.emblemVersion;
+            mode->m_pendingEmblemTick=GetTickCount();
+            mode->m_pendingEmblemData.assign(packet.begin()+4,packet.end());
+            DbgLog("[GuildEmblem] request guild=%u bytes=%d version=%u\n",guildId,static_cast<int>(packet.size()),mode->m_pendingEmblemVersion);
+            g_windowMgr.PushChatEvent("Guild emblem request sent; waiting for server confirmation.", 0x0080C0FFu, 6);
+        } else g_windowMgr.PushChatEvent("Unable to upload guild emblem. Please check your connection.", 0x00FF4040u, 6);
+    });
+    if(!started)g_windowMgr.PushChatEvent("The guild emblem picker is already open.",0x0080C0FFu,6);
+#else
+        g_windowMgr.PushChatEvent("Guild emblem file selection is unavailable on this platform.", 0x00FF4040u, 6);
+#endif
+}
 
 constexpr DWORD kHoverNameRequestCooldownMs = 1000;
 constexpr int kQtActorLabelVerticalOffset = 10;
@@ -184,6 +266,7 @@ void ClearGameplayUiState(QtUiState* state)
     state->setRechargeGaugeProgress(0, 0);
 
     state->setInventoryVisible(false);
+    state->setCommerceData({});
     state->setInventoryGeometry(0, 0, 0, 0);
     state->setInventoryMini(false);
     state->setInventoryTab(0);
@@ -196,6 +279,7 @@ void ClearGameplayUiState(QtUiState* state)
     state->setStorageData(QVariantMap{});
 
     state->setFriendPartyVisible(false);
+    state->setGuildWindow(QVariantMap{});
     state->setFriendPartyGeometry(0, 0, 0, 0);
     state->setFriendPartyData(QVariantMap{});
 
@@ -1178,7 +1262,7 @@ void PopulateNpcMenuState(QtUiState* state)
     }
 
     const UIPlayerContextMenuWnd* const playerMenuWnd = g_windowMgr.m_playerContextMenuWnd;
-    const bool playerMenuVisible = IsGameplayWindowVisible(state, playerMenuWnd);
+    const bool playerMenuVisible = false; // Rendered separately by RoCommerce.
     if (playerMenuVisible) {
         state->setNpcMenuVisible(true);
         state->setNpcMenuGeometry(playerMenuWnd->m_x, playerMenuWnd->m_y, playerMenuWnd->m_w, playerMenuWnd->m_h);
@@ -3408,12 +3492,14 @@ std::string BuildHoverActorLabel(const std::string& actorName, const NamePair* c
         label += ")";
     }
 
-    const std::string guildName = cachedEntry ? cachedEntry->guildName : std::string();
+    const bool localGuild=actor && (actor->m_gid==g_session.m_gid || actor->m_gid==g_session.m_aid)
+        && g_session.m_localGuild.characterId==g_session.m_gid;
+    const std::string guildName = localGuild?g_session.m_localGuild.name:cachedEntry ? cachedEntry->guildName : std::string();
     if (!guildName.empty()) {
         label += "\n";
         label += guildName;
 
-        const std::string guildTitle = cachedEntry ? cachedEntry->guildTitle : std::string();
+        const std::string guildTitle = localGuild?g_session.m_localGuild.title:cachedEntry ? cachedEntry->guildTitle : std::string();
         if (!guildTitle.empty()) {
             label += " [";
             label += guildTitle;
@@ -3426,7 +3512,7 @@ std::string BuildHoverActorLabel(const std::string& actorName, const NamePair* c
 
 void SendActorNameRequest(CGameMode& mode, u32 gid)
 {
-    if (gid == 0 || gid == g_session.m_gid) {
+    if (gid == 0) {
         return;
     }
 
@@ -3463,6 +3549,9 @@ std::string ResolveActorLabel(const CGameMode& mode, CGameActor* actor)
     const NamePair* const cachedEntry = FindCachedHoverActorNameEntry(mode, actor);
 
     if (actor->m_gid == g_session.m_gid) {
+        // The local name is known, but party/guild/rank still need the full
+        // server name reply. Self-hover must not bypass that request.
+        if(!cachedEntry || cachedEntry->name.empty())SendActorNameRequest(const_cast<CGameMode&>(mode),actor->m_gid);
         const char* playerName = g_session.GetPlayerName();
         if (playerName && *playerName) {
             return BuildHoverActorLabel(playerName, cachedEntry, actor);
@@ -3490,6 +3579,37 @@ std::string ResolveActorLabel(const CGameMode& mode, CGameActor* actor)
     }
 
     return "Entity";
+}
+
+QString ResolveGuildEmblem(CGameMode& mode,const CGameActor* actor)
+{
+    if(!actor)return {};
+    const bool self=(actor->m_gid==g_session.m_gid || actor->m_gid==g_session.m_aid)
+        && g_session.m_localGuild.characterId==g_session.m_gid;
+    const u32 guild=self?g_session.m_localGuild.guildId:static_cast<u32>(actor->m_gdid);
+    const u32 version=self?g_session.m_localGuild.emblemVersion:static_cast<u32>(actor->m_emblemVersion);
+    if(!guild || !version)return {};
+    const auto found=mode.m_guildEmblems.find(guild);
+    if(found!=mode.m_guildEmblems.end() && found->second.version==version) {
+        auto& cached=found->second;
+        if(!cached.decoded) {
+            cached.decoded=true;
+            QImage image=QImage::fromData(cached.bitmap.data(),static_cast<int>(cached.bitmap.size()),"BMP");
+            if(image.width()==24 && image.height()==24) {
+                image=ro::guild::TransparentEmblemImage(image);
+                QByteArray png;QBuffer buffer(&png);buffer.open(QIODevice::WriteOnly);
+                if(image.save(&buffer,"PNG"))cached.imageUri="data:image/png;base64,"+png.toBase64().toStdString();
+            }
+        }
+        return QString::fromStdString(cached.imageUri);
+    }
+    const u32 now=GetTickCount();
+    const auto timer=mode.m_emblemRequestTicks.find(guild);
+    if(timer==mode.m_emblemRequestTicks.end() || now-timer->second>=5000) {
+        const u8 request[6]={0x51,0x01,static_cast<u8>(guild),static_cast<u8>(guild>>8),static_cast<u8>(guild>>16),static_cast<u8>(guild>>24)};
+        if(CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(request),6))mode.m_emblemRequestTicks[guild]=now;
+    }
+    return {};
 }
 
 std::string ResolveGroundItemLabel(const CItem* item)
@@ -3618,17 +3738,19 @@ QVariantMap MakeSkillTalkboxAnchor(const QString& text, int centerX, int bottomY
     return anchor;
 }
 
-QVariantMap MakePartyHpBarAnchor(int centerX, int topY, long long currentHp, long long maxHp)
+QVariantMap MakePartyHpBarAnchor(int centerX, int topY, long long currentHp, long long maxHp, const PlayerVitalsScreenMetrics& metrics)
 {
     QVariantMap anchor;
     anchor.insert(QStringLiteral("kind"), QStringLiteral("partyHpBar"));
-    anchor.insert(QStringLiteral("x"), centerX - 30);
+    const int width=metrics.barWidth+metrics.border*2;
+    anchor.insert(QStringLiteral("x"), centerX - width/2);
     anchor.insert(QStringLiteral("y"), topY);
-    anchor.insert(QStringLiteral("width"), 60);
-    anchor.insert(QStringLiteral("height"), 5);
+    anchor.insert(QStringLiteral("width"), width);
+    anchor.insert(QStringLiteral("height"), metrics.barHeight+metrics.border*2);
+    anchor.insert(QStringLiteral("border"), metrics.border);
     anchor.insert(QStringLiteral("currentHp"), currentHp);
     anchor.insert(QStringLiteral("maxHp"), maxHp);
-    anchor.insert(QStringLiteral("z"), 2050);
+    anchor.insert(QStringLiteral("z"), -1);
     return anchor;
 }
 
@@ -3685,10 +3807,77 @@ bool TryAppendHoveredUiItemAnchor(QVariantList* anchors)
 
 } // namespace
 
+static void PopulateGuildWindow(QtUiState* state,CGameMode& mode)
+{
+    if(mode.m_pendingEmblemGuild && (!CRagConnection::instance()->IsOpen() || GetTickCount()-mode.m_pendingEmblemTick>=15000)) {
+        g_windowMgr.PushChatEvent("Guild emblem update was not confirmed. Check the server message or reconnect and try again.",0x00FF4040u,6);
+        DbgLog("[GuildEmblem] unconfirmed guild=%u connected=%d\n",mode.m_pendingEmblemGuild,CRagConnection::instance()->IsOpen());
+        mode.m_pendingEmblemGuild=0;mode.m_pendingEmblemData.clear();
+    }
+    auto* window=g_windowMgr.m_guildWnd;
+    QVariantMap data;data["visible"]=window && IsGameplayWindowVisible(state,window);
+    if(!data["visible"].toBool()){state->setGuildWindow(data);return;}
+    const auto& guild=g_session.m_localGuild;const auto& info=g_session.m_guildWindow;
+    data["x"]=window->m_x;data["y"]=window->m_y;data["width"]=window->m_w;data["height"]=window->m_h;data["tab"]=window->tab;
+    data["joined"]=guild.guildId!=0;data["name"]=ToQString(guild.name);data["master"]=ToQString(info.master);data["isMaster"]=guild.isMaster;
+    data["loaded"]=info.loaded;data["level"]=info.level;data["online"]=info.online;data["capacity"]=info.capacity;data["averageLevel"]=info.averageLevel;
+    data["exp"]=info.exp;data["nextExp"]=info.nextExp;data["territory"]=ToQString(info.territory);
+    data["subject"]=ToQString(info.noticeTitle);data["notice"]=ToQString(info.notice);data["skillPoints"]=g_session.GetGuildSkillPoint();
+    data["emblem"]=ResolveGuildEmblem(mode,mode.m_world?mode.m_world->m_player:nullptr);
+    QVariantList members,positions,skills,relations,bans;
+    for(const auto& m:info.members){
+        QVariantMap row;row["name"]=ToQString(m.name);row["character"]=m.character;row["account"]=m.account;row["job"]=ToQString(g_session.GetJobDisplayName(m.job));
+        row["level"]=m.level;row["online"]=m.online;row["exp"]=m.exp;row["position"]=m.position;
+        const auto pos=info.positions.find(m.position);row["rank"]=pos==info.positions.end()?QString():ToQString(pos->second.name);members.push_back(row);
+    }
+    for(const auto& entry:info.positions){const auto& p=entry.second;QVariantMap row;row["id"]=p.id;row["name"]=ToQString(p.name);row["tax"]=p.tax;row["invite"]=(p.mode&1)!=0;row["expel"]=(p.mode&16)!=0;positions.push_back(row);}
+    static const char* const skillNames[]={"Official Guild Approval","Kafra Contract","Guardian Research","Strengthen Guardians","Guild Extension","Guild's Glory","Great Leadership","Glorious Wounds","Cold Heart","Sharp Gaze","Battle Orders","Regeneration","Restoration","Urgent Call","Permanent Development","Item Emergency Call"};
+    for(const auto& skill:g_session.GetGuildSkillItems()){
+        if(!skill.m_isValid || (!skill.level && !skill.upgradable))continue;
+        QVariantMap row;row["id"]=skill.SKID;row["name"]=skill.SKID>=10000&&skill.SKID<10016?ToQString(skillNames[skill.SKID-10000]):ToQString(skill.skillName);
+        row["level"]=skill.level;row["upgrade"]=skill.upgradable!=0;skills.push_back(row);
+    }
+    for(const auto& r:info.relations){QVariantMap row;row["name"]=ToQString(r.name);row["hostile"]=r.hostile;relations.push_back(row);}
+    for(const auto& ban:info.bans){QVariantMap row;row["name"]=ToQString(ban.name);row["reason"]=ToQString(ban.reason);bans.push_back(row);}
+    data["members"]=members;data["positions"]=positions;data["skills"]=skills;data["relations"]=relations;data["bans"]=bans;
+    state->setGuildWindow(data);
+}
+
 QtUiStateAdapter::QtUiStateAdapter()
     : m_state(new QtUiState())
 {
     m_state->setLastInput(QStringLiteral("No routed input yet."));
+    BindCommerceUi(m_state);
+    QObject::connect(m_state,&QtUiState::guildActionRequested,[](const QString& action,const QVariantMap& args){
+        auto* window=g_windowMgr.m_guildWnd;if(!window)return;
+        if(action=="close"){window->SetShow(0);window->StoreInfo();return;}
+        if(action=="move"){int x=args.value("x").toInt(),y=args.value("y").toInt();g_windowMgr.ClampWindowToClient(&x,&y,window->m_w,window->m_h);window->Move(x,y);return;}
+        if(action=="tab"){window->tab=std::clamp(args.value("tab").toInt(),0,5);return;}
+        if(action=="refresh"){window->Refresh();return;}
+        const auto& guild=g_session.m_localGuild;if(!guild.guildId)return;
+        if(action=="emblem" && guild.isMaster){RequestGuildEmblemUpload();return;}
+        std::vector<u8> packet;
+        auto put=[&](int at,u32 value){for(int i=0;i<4;++i)packet[at+i]=static_cast<u8>(value>>(8*i));};
+        auto begin=[&](u16 op,int size){packet.assign(size,0);packet[0]=static_cast<u8>(op);packet[1]=static_cast<u8>(op>>8);};
+        auto text=[&](int at,int max,const QString& value){const auto bytes=value.toUtf8();if(bytes.size()>=max){g_windowMgr.PushChatEvent("Guild text is too long for the server. Please shorten it.",0x00FF4040u,6);return false;}std::memcpy(packet.data()+at,bytes.constData(),bytes.size());return true;};
+        if(action=="notice" && guild.isMaster){begin(0x16e,186);put(2,guild.guildId);if(!text(6,60,args.value("subject").toString())||!text(66,120,args.value("body").toString()))return;}
+        else if(action=="position" && guild.isMaster){
+            const int id=args.value("id").toInt(),tax=args.value("tax").toInt();if(id<0||id>=20||tax<0||tax>50)return;
+            begin(0x161,44);packet[2]=44;put(4,id);put(8,(args.value("invite").toBool()?1:0)|(args.value("expel").toBool()?16:0));put(12,id);put(16,tax);
+            if(!text(20,24,args.value("name").toString()))return;
+        } else if(action=="skill" && guild.isMaster && g_session.GetGuildSkillPoint()>0){
+            const int id=args.value("id").toInt();bool allowed=false;for(const auto& skill:g_session.GetGuildSkillItems())if(skill.SKID==id&&skill.upgradable)allowed=true;
+            if(!allowed)return;begin(0x112,4);packet[2]=static_cast<u8>(id);packet[3]=static_cast<u8>(id>>8);
+        } else if(action=="memberPosition" && guild.isMaster){
+            const u32 cid=args.value("character").toUInt(),position=args.value("position").toUInt();
+            if(position>=20)return;
+            const auto& members=g_session.m_guildWindow.members;const auto found=std::find_if(members.begin(),members.end(),[&](const auto& m){return m.character==cid;});
+            if(found==members.end())return;begin(0x155,16);packet[2]=16;put(4,found->account);put(8,cid);put(12,position);
+        } else if(action=="leave" && !guild.isMaster && args.value("confirmed").toBool()){
+            begin(0x159,54);put(2,guild.guildId);put(6,g_session.m_aid);put(10,g_session.m_gid);if(!text(14,40,args.value("reason").toString()))return;
+        } else return;
+        if(!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size())))g_windowMgr.PushChatEvent("Unable to send guild request.",0x00FF4040u,6);
+    });
     QObject::connect(m_state, &QtUiState::chatFocusRequested, [this](int field) {
         if(auto* chat=g_windowMgr.m_chatWnd)chat->FocusQtInput(field);
         syncChat();
@@ -3820,8 +4009,10 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     PopulateChatWindowState(m_state);
     PopulateRechargeGaugeState(m_state);
     PopulateInventoryState(m_state);
+    PopulateCommerceUi(m_state,mode,IsGameplayUiSuppressed(m_state));
     PopulateStorageState(m_state);
     PopulateFriendPartyState(m_state);
+    PopulateGuildWindow(m_state,mode);
     PopulatePartySetupState(m_state);
     PopulatePartyInviteState(m_state);
     PopulateEquipState(m_state);
@@ -3881,7 +4072,8 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
                 return;
             }
 
-            anchors.push_back(MakePartyHpBarAnchor(centerX, labelY + 8, matchedMember->partyHp, matchedMember->partyMaxHp));
+            const auto metrics=ResolvePlayerVitalsScreenMetrics(mode.m_view);
+            anchors.push_back(MakePartyHpBarAnchor(centerX, labelY + metrics.topDelta, matchedMember->partyHp, matchedMember->partyMaxHp,metrics));
         };
 
         auto appendChatBubbleAnchor = [&](CGameActor* actor) {
@@ -3934,22 +4126,31 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
                 mouseY,
                 &hoveredActor,
                 &labelX,
-                &labelY)) {
+                &labelY,true)) {
             if (!hoveredActor || hoveredActor->m_gid != mode.m_lastLockOnMonGid) {
                 int anchorX = labelX;
                 int anchorY = labelY + kQtActorLabelVerticalOffset;
                 if (hoveredActor == mode.m_world->m_player || hoveredActor->m_gid == g_session.m_gid) {
                     mode.m_world->GetPlayerScreenLabel(viewMatrix, cameraLongitude, &anchorX, &anchorY);
-                    anchorY += kQtActorLabelVerticalOffset + ResolvePlayerVitalsScreenMetrics(mode.m_view).qtNameExtra;
                 } else {
                     mode.m_world->GetActorScreenMarker(viewMatrix, cameraLongitude, hoveredActor->m_gid, &anchorX, nullptr, &anchorY);
-                    anchorY += kQtActorLabelVerticalOffset;
                 }
-                anchors.push_back(MakeCenteredAnchor(ToQString(ResolveActorLabel(mode, hoveredActor)),
+                if(hoveredActor->m_isPc) {
+                    const auto metrics=ResolvePlayerVitalsScreenMetrics(mode.m_view);
+                    anchorY += metrics.topDelta+metrics.totalHeight+metrics.namePadding;
+                } else anchorY += kQtActorLabelVerticalOffset;
+                const QStringList lines=ToQString(ResolveActorLabel(mode,hoveredActor)).split('\n');
+                auto nameplate=MakeCenteredAnchor(lines.value(0),
                     anchorX,
                     anchorY,
                     ResolveHoverBackground(hoveredActor),
-                    ResolveHoverForeground(hoveredActor)));
+                    ResolveHoverForeground(hoveredActor));
+                nameplate.insert(QStringLiteral("centerX"),anchorX);
+                if(lines.size()>1) {
+                    nameplate.insert(QStringLiteral("guildText"),lines.mid(1).join('\n'));
+                    nameplate.insert(QStringLiteral("emblemSource"),ResolveGuildEmblem(mode,hoveredActor));
+                }
+                anchors.push_back(nameplate);
             }
         } else if (!blocksGameplayHover) {
             CItem* hoveredItem = nullptr;

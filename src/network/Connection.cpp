@@ -392,16 +392,12 @@ int CConnection::FlushSendQueue()
     }
 
     int totalSent = 0;
-    char tmp[1024];
     while (m_sendQueue.GetSize() > 0) {
-        const int toSend = (std::min)(m_sendQueue.GetSize(), static_cast<int>(sizeof(tmp)));
-        if (toSend <= 0 || !m_sendQueue.Peek(tmp, toSend)) {
-            break;
-        }
-
-        const int sent = send(m_socket, tmp, toSend, 0);
+        // Offer the complete contiguous queue to the socket. The old 1 KB
+        // scratch buffer split valid large packets such as guild emblems.
+        const int sent = send(m_socket, m_sendQueue.ReadData(), m_sendQueue.GetSize(), 0);
         if (sent > 0) {
-            m_sendQueue.Pop(tmp, sent);
+            m_sendQueue.RemoveData(sent);
             totalSent += sent;
             continue;
         }

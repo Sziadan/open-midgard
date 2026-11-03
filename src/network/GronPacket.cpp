@@ -192,6 +192,15 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x011F, 16);
     SetPacketSize(0x0120, 6);
     SetPacketSize(0x0121, 14);             // ZC_UPDATE_CARTINFO
+    for(u16 op:{0x0122,0x0123,0x01ef,0x0297,0x02d2,0x02e9,0x0133,0x0136})SetPacketSize(op,kVariablePacketSize);
+    SetPacketSize(0x0124,21);SetPacketSize(0x01c5,22);SetPacketSize(0x0125,8);SetPacketSize(0x012c,3);
+    SetPacketSize(0x012d,4);SetPacketSize(0x0135,7);SetPacketSize(0x0137,6);SetPacketSize(0x0138,3);
+    SetPacketSize(0x01f4,32);SetPacketSize(0x01f5,9);SetPacketSize(0x00f0,3);SetPacketSize(0x00f1,2);
+    SetPacketSize(0x01EB,10); // Guild member map position: AID.L, x.W, y.W.
+    SetPacketSize(0x015E,6);SetPacketSize(0x015F,42);
+    SetPacketSize(0x0176,106);SetPacketSize(0x017F,kVariablePacketSize);
+    SetPacketSize(0x0181,3);SetPacketSize(0x0182,106);SetPacketSize(0x0184,10);SetPacketSize(0x0185,34);
+    SetPacketSize(0x016a,30);SetPacketSize(0x0169,3);SetPacketSize(0x0249,3);
     SetPacketSize(0x012B, 2);              // ZC_CLEAR_CART
     SetPacketSize(0x012F, kVariablePacketSize);
     SetPacketSize(0x0147, 39);              // ZC_AUTORUN_SKILL (e.g. Magnifier -> MC_IDENTIFY)
@@ -209,6 +218,19 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0141, 14);
     SetPacketSize(0x0142, 6);
     SetPacketSize(0x0148, 8);
+    SetPacketSize(0x014C, kVariablePacketSize);
+    SetPacketSize(0x014E, 6);
+    SetPacketSize(0x0150, 110);
+    SetPacketSize(0x0154, kVariablePacketSize);
+    SetPacketSize(0x0156, kVariablePacketSize);
+    SetPacketSize(0x015A, 66);
+    SetPacketSize(0x015C, 90);
+    SetPacketSize(0x0160, kVariablePacketSize);
+    SetPacketSize(0x0162, kVariablePacketSize);
+    SetPacketSize(0x016D, 14);
+    SetPacketSize(0x016F, 182);
+    SetPacketSize(0x0152, kVariablePacketSize); // ZC_GUILD_EMBLEM_IMG
+    SetPacketSize(0x016C, 43);             // ZC_UPDATE_GDID
     SetPacketSize(0x0163, kVariablePacketSize);
     SetPacketSize(0x0164, kVariablePacketSize);
     SetPacketSize(0x0165, 30);

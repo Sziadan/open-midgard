@@ -1,9 +1,11 @@
 #include "GameModePacket.h"
+#include "Commerce.h"
 
 #include "network/GronPacket.h"
 #include "network/MapSendProfile.h"
 #include "network/Packet.h"
 #include "GameMode.h"
+#include "GuildCreation.h"
 #include "PacketPadding.h"
 #include "core/Globals.h"
 #include "Types.h"
@@ -53,6 +55,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <zlib.h>
 
 class CConnection {
 public:
@@ -412,17 +415,6 @@ void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
     }
     if (hasFalcon && !suppressFalcon && !actor->m_birdEffect) {
         actor->SendMsg(actor, 101, 0, 0, 0);
-    }
-
-    // Ref GameModeShowEFST starts effect 375 for a PC when showEFST has
-    // OPT3_ASSUMPTIO (0x800). Actor bootstrap/state packets fold opt3 into
-    // m_effectState in this client, so reconcile that status here as well.
-    if (actor->m_isPc
-        && HasEffectStateFlag(effectState, kShowEfstAssumptioMask)
-        && !hiding
-        && !burrow
-        && !EffectExists(actor, 375)) {
-        actor->LaunchEffect(375, vector3d{}, 0.0f);
     }
 
     const bool hadRuwach = HasEffectStateFlag(oldEffectState, kEffectStateRuwachMask);
@@ -4132,6 +4124,7 @@ SkillFailNoticeSet ResolveSkillFailNotices(u16 skillId, u32 btype, u8 cause, boo
 
 void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
 {
+    ro::commerce::Receive(mode,packet);
     if (!packet.data || packet.packetLength < 10) {
         return;
     }
@@ -5221,6 +5214,64 @@ void HandleTalkboxChatContents(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleGuildEmblem(CGameMode& mode, const PacketView& packet)
+{
+    // ZC_GUILD_EMBLEM_IMG: header, guild id, version, zlib-compressed BMP.
+    if(!packet.data || packet.packetLength<=12)return;
+    const u32 guild=ReadLE32(packet.data+4),version=ReadLE32(packet.data+8);
+    if(!guild)return;
+    std::vector<unsigned char> bitmap(65536);
+    uLongf size=static_cast<uLongf>(bitmap.size());
+    if(uncompress(bitmap.data(),&size,packet.data+12,packet.packetLength-12)!=Z_OK
+        || size<54 || bitmap[0]!='B' || bitmap[1]!='M'
+        || ReadLE32(bitmap.data()+18)!=24
+        || (ReadLE32(bitmap.data()+22)!=24 && ReadLE32(bitmap.data()+22)!=static_cast<u32>(-24)))return;
+    bitmap.resize(size);
+    mode.m_guildEmblems[guild]={version,std::move(bitmap)};
+    DbgLog("[GuildEmblem] received guild=%u version=%u bytes=%u\n",guild,version,static_cast<unsigned>(size));
+    mode.m_emblemRequestTicks.erase(guild);
+    if(mode.m_pendingEmblemGuild==guild && version!=mode.m_pendingEmblemVersion
+        && mode.m_pendingEmblemData.size()==packet.packetLength-12
+        && std::equal(mode.m_pendingEmblemData.begin(),mode.m_pendingEmblemData.end(),packet.data+12)) {
+        mode.m_pendingEmblemGuild=0;mode.m_pendingEmblemData.clear();
+        g_windowMgr.PushChatEvent("Guild emblem updated by the server.",0x0080C0FFu,6);
+        DbgLog("[GuildEmblem] confirmed guild=%u version=%u\n",guild,version);
+    }
+}
+
+void HandleGuildBelong(CGameMode& mode, const PacketView& packet)
+{
+    // ZC_UPDATE_GDID supplies the local guild even before hovering anyone.
+    if(!packet.data || packet.packetLength<43)return;
+    auto& guild=g_session.m_localGuild;
+    const u32 guildId=ReadLE32(packet.data+2);
+    if(guild.characterId!=g_session.m_gid || guild.guildId!=guildId){guild={};g_session.m_guildWindow={};g_session.ClearGuildSkillItems();}
+    guild.characterId=g_session.m_gid;
+    guild.guildId=guildId;
+    guild.emblemVersion=ReadLE32(packet.data+6);
+    guild.name=ExtractFixedPacketString(packet,19,24);
+    guild.permissions=ReadLE32(packet.data+10);guild.isMaster=packet.data[14]!=0;
+    if(!mode.m_world || !mode.m_world->m_player)return;
+    auto* player=mode.m_world->m_player;
+    player->m_gdid=static_cast<int>(ReadLE32(packet.data+2));
+    player->m_emblemVersion=static_cast<int>(ReadLE32(packet.data+6));
+    mode.m_actorNameListByGID[player->m_gid].guildName=ExtractFixedPacketString(packet,19,24);
+}
+
+void HandleGuildWindowPacket(CGameMode& mode,const PacketView& packet)
+{
+    if(!ro::guild::ReadWindowPacket(g_session.m_guildWindow,packet.packetId,packet.data,packet.packetLength))return;
+    if(packet.packetId==0x16d && ReadLE32(packet.data+10)==0)mode.m_guildPosList.erase(ReadLE32(packet.data+2));
+    if(packet.packetId==0x150 || packet.packetId==0x1b6) {
+        auto& guild=g_session.m_localGuild;guild.characterId=g_session.m_gid;
+        guild.guildId=g_session.m_guildWindow.id;guild.name=g_session.m_guildWindow.name;guild.emblemVersion=g_session.m_guildWindow.emblemVersion;
+    }
+    for(const auto& member:g_session.m_guildWindow.members)if(member.character==g_session.m_gid) {
+        const auto pos=g_session.m_guildWindow.positions.find(member.position);
+        if(pos!=g_session.m_guildWindow.positions.end())g_session.m_localGuild.title=pos->second.name;
+    }
+}
+
 void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 12 || mode.m_world == nullptr) {
@@ -5228,6 +5279,14 @@ void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
     }
 
     CGameActor* actor = ResolveSkillPacketActor(mode, ReadLE32(packet.data + 2));
+    const u32 gid=ReadLE32(packet.data+2);
+    if(gid==g_session.m_gid || gid==g_session.m_aid) {
+        auto& guild=g_session.m_localGuild;
+        const u32 guildId=ReadLE32(packet.data+6);
+        if(guild.characterId!=g_session.m_gid || guild.guildId!=guildId)guild={};
+        guild.characterId=g_session.m_gid;guild.guildId=guildId;
+        guild.emblemVersion=ReadLE16(packet.data+10);
+    }
     if (actor != nullptr) {
         actor->SetGuildInfo(ReadLE32(packet.data + 6), static_cast<s16>(ReadLE16(packet.data + 10)));
     }
@@ -5479,6 +5538,8 @@ struct RuntimeActorState {
     int bodyState = 0;
     int healthState = 0;
     int effectState = 0;
+    u32 showEfst = 0; // OPT3 is a separate namespace from OPTION.
+
     int pkState = 0;
     int clevel = 0;
     int xSize = 0;
@@ -5874,6 +5935,14 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
     actor->m_headType = state.headType;
     actor->m_gdid = state.guildId;
     actor->m_emblemVersion = state.emblemVersion;
+    // Flag NPCs carry the owner in the two head accessory words and the
+    // emblem version in the bottom accessory (shield on old 007c spawns).
+    // Their legacy NPC packet has no ordinary guild fields.
+    if(state.job==722) {
+        actor->m_gdid=static_cast<int>((static_cast<u32>(state.headTop)<<16)|static_cast<u32>(state.headMid));
+        actor->m_emblemVersion=state.packetId==ro::net::GetActiveMapReceiveProfile().actorSpawnLegacyNpc?state.shield:state.headBottom;
+        DbgLog("[GuildFlag] actor=%u guild=%d emblemVersion=%d\n",state.gid,actor->m_gdid,actor->m_emblemVersion);
+    }
     actor->m_charfont = static_cast<u16>(state.charfont);
     actor->m_objectType = state.objectType;
     actor->m_actorType = state.objectType;
@@ -5910,6 +5979,14 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
     }
 
     RefreshActorEffectStatePresentation(actor, oldEffectState);
+    // OPT3_OVERTHRUST is 0x2, which means burrow in OPTION. Combining
+    // these fields makes buffed blacksmiths invisible (and confuses carts).
+    if (isPc && (state.showEfst & kShowEfstAssumptioMask)
+        && !(state.effectState & (kEffectStateHidingMask | kEffectStateBurrowMask | kEffectStateSpecialHidingMask))
+        && !EffectExists(actor, 375)) {
+        actor->LaunchEffect(375, vector3d{}, 0.0f);
+    }
+
     // Ref/GameModePacket.cpp GameModeShowEFST: clevel 99 starts message 126
     // unless the actor is in cloak. Hiding and burrow are handled inside 126.
     if (state.clevel == 99 && !HasEffectStateFlag(state.effectState, kEffectStateSpecialHidingMask)) {
@@ -6064,7 +6141,8 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
             state.speed = ReadLE16(packet.data + 6 + shift);
             state.bodyState = ReadLE16(packet.data + 8 + shift);
             state.healthState = ReadLE16(packet.data + 10 + shift);
-            state.effectState = static_cast<int>(option | opt3);
+            state.effectState = static_cast<int>(option);
+            state.showEfst = opt3;
             state.job = ReadLE16(packet.data + 14 + shift);
             state.hairStyle = ReadLE16(packet.data + 16 + shift);
             state.weapon = ReadLE16(packet.data + 18 + shift);
@@ -6151,7 +6229,8 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
         outState.speed = ReadLE16(packet.data + 9);
         outState.bodyState = ReadLE16(packet.data + 11);
         outState.healthState = ReadLE16(packet.data + 13);
-        outState.effectState = static_cast<int>(option | opt3);
+        outState.effectState = static_cast<int>(option);
+        outState.showEfst = opt3;
         outState.job = ReadLE16(packet.data + 19);
         outState.hairStyle = ReadLE16(packet.data + 21);
         outState.weapon = ReadLE16(packet.data + 23);
@@ -6234,7 +6313,8 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
     outState.speed = ReadLE16(packet.data + speedOffset);
     outState.bodyState = ReadLE16(packet.data + opt1Offset);
     outState.healthState = ReadLE16(packet.data + opt2Offset);
-    outState.effectState = static_cast<int>(option | opt3);
+    outState.effectState = static_cast<int>(option);
+    outState.showEfst = opt3;
     outState.pkState = packet.data[karmaOffset];
     outState.job = ReadLE16(packet.data + jobOffset);
     outState.hairStyle = ReadLE16(packet.data + hairStyleOffset);
@@ -6382,7 +6462,8 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
         outState.speed = ReadLE16(packet.data + 9);
         outState.bodyState = ReadLE16(packet.data + 11);
         outState.healthState = ReadLE16(packet.data + 13);
-        outState.effectState = static_cast<int>(option | opt3);
+        outState.effectState = static_cast<int>(option);
+        outState.showEfst = opt3;
         outState.job = ReadLE16(packet.data + 19);
         outState.hairStyle = ReadLE16(packet.data + 21);
         outState.weapon = ReadLE16(packet.data + 23);
@@ -6447,7 +6528,8 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
     outState.healthState = ReadLE16(packet.data + 11);
     const u32 option = ReadLE32(packet.data + 13);
     const u32 opt3 = ReadLE32(packet.data + 49);
-        outState.effectState = static_cast<int>(option | opt3);
+    outState.effectState = static_cast<int>(option);
+    outState.showEfst = opt3;
     outState.job = ReadLE16(packet.data + 17);
     outState.hairStyle = ReadLE16(packet.data + 19);
     outState.weapon = ReadLE16(packet.data + 21);
@@ -6535,6 +6617,7 @@ void HandleActorDirection(CGameMode& mode, const PacketView& packet)
 
 void HandleCartInfo(CGameMode& mode, const PacketView& packet)
 {
+    ro::commerce::Receive(mode,packet);
     if (!packet.data || packet.packetLength < 14) {
         return;
     }
@@ -6554,6 +6637,7 @@ void HandleCartInfo(CGameMode& mode, const PacketView& packet)
 
 void HandleCartOff(CGameMode& mode, const PacketView& packet)
 {
+    ro::commerce::Receive(mode,packet);
     if (!packet.data || packet.packetLength < 2) {
         return;
     }
@@ -7121,6 +7205,33 @@ void RecordChat(CGameMode& mode, const std::string& text, u32 color, u8 channel)
     mode.m_recordChatTime[slot] = GetTickCount();
 }
 
+// Guild notifications in the Ref/2008 protocol. Position removal is (-1,-1).
+void HandleGuildNotification(CGameMode& mode,const PacketView& packet){
+    if(!packet.data)return;
+    const auto* p=packet.data;const auto n=packet.packetLength;const auto op=packet.packetId;
+    if(op==0x1eb){
+        if(n<10)return;const u32 aid=ReadLE32(p+2);const int x=static_cast<s16>(ReadLE16(p+6)),y=static_cast<s16>(ReadLE16(p+8));
+        if(aid==g_session.m_aid)return;
+        if(x<0||y<0)mode.m_guildPosList.erase(aid);else mode.m_guildPosList[aid]={x,y,0x0080FF80u};return;
+    }
+    if(op==0x17f){if(n>=4)RecordChat(mode,ExtractPacketString(packet,4),0x00B4FFB4u,kChatChannelParty);return;}
+    if(op==0x171){if(n<30)return;auto& state=ro::commerce::state;state.promptKind="alliance";state.promptId=ReadLE32(p+2);state.promptName=ExtractFixedPacketString(packet,6,24);return;}
+    std::string message;
+    if(op==0x173){if(n<3)return;const char* messages[]={"Guilds are already allied.","Guild alliance invitation declined.","Guild alliance invitation accepted.","The other guild has too many alliances.","Your guild has too many alliances.","Guild alliances are disabled."};message=p[2]<6?messages[p[2]]:"Guild alliance request failed.";}
+    else if(op==0x181){if(n<3)return;const char* messages[]={"Guild opposition registered.","Your guild has too many opposing guilds.","Guild opposition is already registered.","Guild opposition is disabled."};message=p[2]<4?messages[p[2]]:"Guild opposition request failed.";}
+    else if(op==0x15f){if(n<42)return;message="Guild disbanded: "+ExtractFixedPacketString(packet,2,40);}
+    else if(op==0x15e){
+        if(n<6)return;const u32 result=ReadLE32(p+2);
+        if(!result){
+            g_session.m_localGuild={};g_session.m_guildWindow={};g_session.ClearGuildSkillItems();mode.m_guildPosList.clear();
+            for(auto& entry:mode.m_actorNameListByGID){if(entry.first==g_session.m_gid||entry.first==g_session.m_aid){entry.second.guildName.clear();entry.second.guildTitle.clear();}}
+            if(mode.m_world&&mode.m_world->m_player){mode.m_world->m_player->m_gdid=0;mode.m_world->m_player->m_emblemVersion=0;}
+            message="Guild disbanded.";
+        }else message=result==1?"Cannot disband guild: the guild name is incorrect.":"Cannot disband guild while it still has members.";
+    }
+    if(!message.empty())RecordChat(mode,message,0x0080C0FFu,kChatChannelSystem);
+}
+
 void HandleNotifyChat(CGameMode& mode, const PacketView& packet)
 {
     // Ref: Zc_Notify_Chat (0x008D)
@@ -7231,6 +7342,35 @@ void ApplyCachedPartyHpToVisibleActor(CGameMode& mode, u32 aid, const std::strin
         if (tryMatchActor(runtimeEntry.second)) {
             break;
         }
+    }
+}
+
+void HandleGuildDeparture(CGameMode& mode,const PacketView& packet)
+{
+    if(!packet.data || packet.packetLength<(packet.packetId==0x15c?90:66))return;
+    const std::string name=ExtractFixedPacketString(packet,2,24);
+    if(name.empty())return;
+    auto& members=g_session.m_guildWindow.members;
+    for(const auto& member:members)if(member.name==name)mode.m_guildPosList.erase(member.account);
+    members.erase(std::remove_if(members.begin(),members.end(),[&](const auto& m){return m.name==name;}),members.end());
+    if(name==g_session.GetPlayerName()) {
+        g_session.m_localGuild={};g_session.m_guildWindow={};g_session.ClearGuildSkillItems();
+        mode.m_actorNameListByGID.erase(g_session.m_gid);
+        if(mode.m_world && mode.m_world->m_player){mode.m_world->m_player->m_gdid=0;mode.m_world->m_player->m_emblemVersion=0;}
+        RecordChat(mode,packet.packetId==0x15c?"You were expelled from the guild.":"You have left the guild.",0x00FFFFFFu,kChatChannelSystem);
+    }
+}
+
+void HandleGuildCreateAck(CGameMode& mode,const PacketView& packet)
+{
+    if(!packet.data || packet.packetLength<3)return;
+    const u8 result=packet.data[2];
+    RecordChat(mode,ro::guild::CreateResultMessage(result),result==0?0x0000C000u:0x00FF4040u,kChatChannelSystem);
+    if(result==0) {
+        // Membership/ID comes from ZC_UPDATE_GDID, not this acknowledgement.
+        // Refresh the full name reply so self-hover gets the new guild/rank.
+        mode.m_actorNameListByGID.erase(g_session.m_gid);
+        mode.m_actorNameByGIDReqTimer.erase(g_session.m_gid);
     }
 }
 
@@ -7562,8 +7702,9 @@ void HandleFriendState(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleFriendAdd(CGameMode&, const PacketView& packet)
+void HandleFriendAdd(CGameMode& mode, const PacketView& packet)
 {
+    ro::commerce::Receive(mode,packet);
     if (!packet.data || packet.packetLength < 36) {
         return;
     }
@@ -7595,6 +7736,7 @@ void HandleFriendDelete(CGameMode&, const PacketView& packet)
 
 void HandleFriendRequest(CGameMode& mode, const PacketView& packet)
 {
+    ro::commerce::Receive(mode,packet);
     if (!packet.data || packet.packetLength < 34) {
         return;
     }
@@ -7761,6 +7903,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     }
 
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
+    ro::commerce::CloseTransactions();
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",
@@ -8390,6 +8533,14 @@ void HandleActorNameAck(CGameMode& mode, const PacketView& packet)
     updateEntry(mode.m_actorNameList[gid]);
 
     const NamePair& entry = mode.m_actorNameListByGID[gid];
+    if((gid==g_session.m_gid || gid==g_session.m_aid)
+        && ro::net::IsActiveActorNameAckFullPacket(packet.packetId) && packet.packetLength>=102) {
+        auto& guild=g_session.m_localGuild;
+        if(guild.characterId!=g_session.m_gid)guild={};
+        guild.characterId=g_session.m_gid;
+        guild.name=entry.guildName;guild.title=entry.guildTitle;
+        if(guild.name.empty()){guild.guildId=0;guild.emblemVersion=0;}
+    }
     mode.m_actorNameByGIDReqTimer.erase(gid);
 
     DbgLog("[GameMode] name ack gid=%u name='%s' party='%s' guild='%s' title='%s'\n",
@@ -8609,6 +8760,18 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0284, HandleNotifyEffect3);
     router.Register(0x0191, HandleTalkboxChatContents);
     router.Register(0x01B4, HandleChangeGuild);
+    for(u16 id:{0x01eb,0x017f,0x0171,0x0173,0x0181,0x015e,0x015f})router.Register(id,HandleGuildNotification);
+    router.Register(0x0152, HandleGuildEmblem);
+    for(u16 id:{0x0122,0x0123,0x01ef,0x0297,0x02d2,0x02e9,0x0124,0x01c5,0x0125,0x012c,
+        0x012d,0x0131,0x0132,0x0133,0x0135,0x0136,0x0137,0x0138,
+        0x00e5,0x01f4,0x00e7,0x01f5,0x00e9,0x00ea,0x00ec,0x00ee,0x00f0,0x00f1,
+        0x016a,0x0169,0x00d1,0x0249,0x02d7})
+        router.Register(id,[](CGameMode& mode,const PacketView& packet){ro::commerce::Receive(mode,packet);});
+    router.Register(0x0167, HandleGuildCreateAck);
+    router.Register(0x016C, HandleGuildBelong);
+    router.Register(0x015A,HandleGuildDeparture);
+    router.Register(0x015C,HandleGuildDeparture);
+    for(u16 id:{0x014c,0x014e,0x0150,0x0154,0x0156,0x0160,0x0163,0x0166,0x016d,0x016f,0x0174,0x01b6,0x0176,0x0182,0x0184,0x0185})router.Register(id,HandleGuildWindowPacket);
     router.Register(0x0145, HandleShowImage);
     router.Register(0x01B3, HandleShowImage2);
     router.Register(0x0162, HandleGuildSkillInfo);
@@ -8641,8 +8804,6 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     RegisterHandlerIfValid(router, receiveProfile.partyMemberAddedExtended, HandlePartyMemberAdded);
     RegisterHandlerIfValid(router, receiveProfile.skillUnitSetBasic, HandleSkillUnitSet);
     router.Register(0x0120, HandleSkillDisappear);
-    router.Register(0x0131, HandleIgnorePacket);
-    router.Register(0x0132, HandleIgnorePacket);
     router.Register(0x0141, HandleSelfStatInfo);
     router.Register(0x0148, HandleActorResurrection);
     RegisterHandlerIfValid(router, receiveProfile.notifyEffectBasic, HandleNotifyEffect);
@@ -8677,14 +8838,11 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02B1, HandleIgnorePacket);
     router.Register(0x02B2, HandleIgnorePacket);
     router.Register(0x02B9, HandleShortcutKeyList);
-    router.Register(0x02D2, HandleIgnorePacket);
     router.Register(0x02D3, HandleIgnorePacket);
     router.Register(0x02D5, HandleIgnorePacket);
-    router.Register(0x02D7, HandleIgnorePacket);
     router.Register(0x02DA, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.actorActionNotifyExtended, HandleActorActionNotify);
     router.Register(0x02E7, HandleIgnorePacket);
-    router.Register(0x02E9, HandleIgnorePacket);
     router.Register(0x0196, HandlePacket0196);
     router.Register(0x043F, HandlePacket043F);
     router.Register(0x028A, HandleNpcShowEfstUpdate);

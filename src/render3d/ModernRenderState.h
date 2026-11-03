@@ -56,6 +56,7 @@ enum ModernDrawFlags : unsigned int {
     ModernDrawFlag_Stage0AlphaModulate = 1u << 5,
     ModernDrawFlag_Stage1LightmapAlpha = 1u << 6,
     ModernDrawFlag_FogEnabled = 1u << 7,
+    ModernDrawFlag_Stage1LightmapAddColor = 1u << 8,
 };
 
 constexpr DWORD kModernLightmapFvf = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2;

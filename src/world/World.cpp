@@ -6,6 +6,7 @@
 #include "world/MsgEffect.h"
 #include "world/3dActor.h"
 #include "world/Gr2Monster.h"
+#include "world/MapLighting.h"
 #include "world/RagEffect.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/View.h"
@@ -127,6 +128,7 @@ constexpr int kLightmapsPerAtlas = kLightmapsPerAtlasRow * kLightmapsPerAtlasRow
 constexpr float kGroundCullWidthFactor = 6.0f;
 constexpr float kGroundCullHeightFactor = 6.0f;
 constexpr int kGroundCullMarginTiles = 14;
+constexpr int kLiquidDrawDistanceScale = 2;
 constexpr int kJobWarpNpc = 0x2D;
 constexpr int kJobWarpPortal = 0x80;
 constexpr int kJobPreWarpPortal = 0x81;
@@ -2923,7 +2925,8 @@ bool BuildBillboardRenderEntry(CPc* actor,
     const matrix& viewMatrix,
     float cameraLongitude,
     float zoom,
-    CWorld::BillboardScreenEntry* outEntry)
+    CWorld::BillboardScreenEntry* outEntry,
+    bool picking = false)
 {
     if (!actor || !outEntry) {
         return false;
@@ -2931,6 +2934,29 @@ bool BuildBillboardRenderEntry(CPc* actor,
 
     if (!actor->ShouldDrawSprite(timeGetTime())) {
         return false;
+    }
+    if(actor->m_job==111) {
+        // HIDDEN_NPC is an interaction hotspot for map-authored objects such
+        // as castle levers. It has no sprite and must not submit a shadow.
+        if(!picking)return false;
+        tlvertex3d base{};
+        if(!ProjectPoint(g_renderer,viewMatrix,actor->m_pos,&base))return false;
+        float left=base.x-6,right=base.x+6,top=base.y-6,bottom=base.y+6;
+        const float tile=(std::max)(1.0f,zoom);
+        const float halfX=(std::max)(1,actor->m_xSize)*tile*0.5f;
+        const float halfZ=(std::max)(1,actor->m_ySize)*tile*0.5f;
+        for(int x:{-1,1})for(int z:{-1,1}) {
+            vector3d corner{actor->m_pos.x+x*halfX,actor->m_pos.y,actor->m_pos.z+z*halfZ};tlvertex3d projected{};
+            if(ProjectPoint(g_renderer,viewMatrix,corner,&projected)) {
+                left=(std::min)(left,projected.x);right=(std::max)(right,projected.x);
+                top=(std::min)(top,projected.y);bottom=(std::max)(bottom,projected.y);
+            }
+        }
+        *outEntry={};outEntry->actor=actor;
+        outEntry->left=left;outEntry->top=top;outEntry->right=right;outEntry->bottom=bottom;
+        outEntry->baseX=base.x;outEntry->baseY=base.y;outEntry->baseZ=base.z;outEntry->baseOow=base.oow;
+        outEntry->screenY=base.y;outEntry->depthKey=base.oow;outEntry->labelX=base.x;outEntry->labelY=base.y+kActorLabelBaseYOffset;
+        return true;
     }
     if (Gr2MonsterModel(actor->m_job)) {
         RECT bounds{};tlvertex3d base{};
@@ -3456,6 +3482,14 @@ void SubmitWaterQuad(C3dGround& ground,
         vector3d{ x0, h2, z1 },
         vector3d{ x1, h3, z1 },
     };
+
+    // Cull the liquid surface itself, not the terrain underneath it. Deep
+    // water/magma beds can be offscreen while their surface is still visible.
+    const float minHeight=(std::min)((std::min)(h0,h1),(std::min)(h2,h3));
+    const float maxHeight=(std::max)((std::max)(h0,h1),(std::max)(h2,h3));
+    const float halfX=(x1-x0)*0.5f,halfZ=(z1-z0)*0.5f,halfY=(maxHeight-minHeight)*0.5f;
+    const vector3d center{(x0+x1)*0.5f,(minHeight+maxHeight)*0.5f,(z0+z1)*0.5f};
+    if(!IsWorldSphereVisible(center,std::sqrt(halfX*halfX+halfZ*halfZ+halfY*halfY),viewMatrix))return;
 
     RPFace* face = g_renderer.BorrowNullRP();
     if (!face) {
@@ -4066,11 +4100,7 @@ u32 MakeGroundVertexColor(u32 surfaceColor)
 
 vector3d ComputeGroundEnvDiff(const vector3d& ambientCol, const vector3d& diffuseCol)
 {
-    return vector3d{
-        ClampUnitFloat(1.0f - (1.0f - ambientCol.x) * (1.0f - diffuseCol.x)),
-        ClampUnitFloat(1.0f - (1.0f - ambientCol.y) * (1.0f - diffuseCol.y)),
-        ClampUnitFloat(1.0f - (1.0f - ambientCol.z) * (1.0f - diffuseCol.z))
-    };
+    return ro::lighting::Environment(ambientCol,diffuseCol);
 }
 
 u32 MakeGroundVertexColor(u32 surfaceColor, const vector3d& envDiff)
@@ -4788,7 +4818,9 @@ bool C3dGround::AssignGnd(const CGndRes& gnd, const vector3d& lightDir, const ve
 
 void C3dGround::BuildGroundCornerColors()
 {
-    const vector3d envDiff = ComputeGroundEnvDiff(m_ambientCol, m_diffuseCol);
+    // Preserve authored corner colors; weather tint is applied in FlushGround
+    // so changing night/day lighting does not leave stale baked terrain colors.
+    const vector3d envDiff{1,1,1};
     for (CGroundSurface& surface : m_surfaces) {
         const u32 shaded = ShadeGroundCornerColor(surface.color, envDiff);
         for (int corner = 0; corner < 4; ++corner) {
@@ -5267,6 +5299,7 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
     }
 
     UpdateGroundWater(*this);
+    const vector3d environment=ComputeGroundEnvDiff(m_ambientCol,m_diffuseCol);
 
     int minTileX = 0;
     int maxTileX = m_width - 1;
@@ -5357,7 +5390,7 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
             if (kDebugGroundFlatColors) {
                 dstVert->color = DebugGroundColor(surface->textureId);
             } else {
-                dstVert->color = surface->cornerColor[i];
+                dstVert->color = ro::lighting::Tint(surface->cornerColor[i],environment);
             }
             if (kDebugGroundCanonicalUvs || kDebugGroundTestTexture) {
                 static const float kCanonicalU[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
@@ -5471,6 +5504,19 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
         }
     };
 
+    // Liquids need a wider scan than terrain, especially with a zoomed-out
+    // camera. Keep their visibility independent of the submerged ground and
+    // missing top surfaces; SubmitWaterQuad checks actual liquid coverage.
+    const int liquidMinX=focusTileX>=0?(std::max)(0,focusTileX-(focusTileX-minTileX)*kLiquidDrawDistanceScale):minTileX;
+    const int liquidMaxX=focusTileX>=0?(std::min)(m_width-1,focusTileX+(maxTileX-focusTileX)*kLiquidDrawDistanceScale):maxTileX;
+    const int liquidMinY=focusTileY>=0?(std::max)(0,focusTileY-(focusTileY-minTileY)*kLiquidDrawDistanceScale):minTileY;
+    const int liquidMaxY=focusTileY>=0?(std::min)(m_height-1,focusTileY+(maxTileY-focusTileY)*kLiquidDrawDistanceScale):maxTileY;
+    if(m_waterTex)for(int y=liquidMinY;y<=liquidMaxY;++y) {
+        for(int x=liquidMinX;x<=liquidMaxX;++x) {
+            if(const CGroundCell* cell=GetCell(x,y))SubmitWaterQuad(*this,viewMatrix,x,y,*cell);
+        }
+    }
+
     for (int y = minTileY; y <= maxTileY; ++y) {
         for (int x = minTileX; x <= maxTileX; ++x) {
             ++totalCells;
@@ -5528,7 +5574,6 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
                 vector3d{ x0, cell->h[2], z1 },
                 vector3d{ x1, cell->h[3], z1 },
             };
-            SubmitWaterQuad(*this, viewMatrix, x, y, *cell);
             submitSurface(surface, topVerts, &submittedTopFaces);
 
             if (kSubmitGroundSideFaces && cell->frontSurfaceId >= 0 && y < m_height - 1) {
@@ -5916,7 +5961,7 @@ void CWorld::EnsureBillboardFrameCache(const matrix& viewMatrix, float cameraLon
         }
 
         BillboardScreenEntry entry{};
-        if (!BuildBillboardRenderEntry(pc, viewMatrix, cameraLongitude, zoom, &entry)) {
+        if (!BuildBillboardRenderEntry(pc, viewMatrix, cameraLongitude, zoom, &entry, true)) {
             return;
         }
 
@@ -6743,6 +6788,10 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
         }
 
         if (Gr2MonsterModel(pc->m_job)) {
+            u32 flagVersion=static_cast<u32>(pc->m_emblemVersion);
+            if(pc->m_job==722 && pc->m_gdid>0) {
+                if(auto* mode=g_modeMgr.GetCurrentGameMode())flagVersion=PrepareGr2FlagEmblem(*mode,static_cast<u32>(pc->m_gdid),flagVersion);
+            }
             const u32 now=timeGetTime();
             u32 alpha=pc->IsHideFadeActive(now)?pc->GetHideFadeAlpha(now):255u;
             if(pc->m_vanishTime) {
@@ -6755,8 +6804,8 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
                 pc->m_isSingleColor!=0,pc->m_colorOfSingleColor);
             const Gr2MonsterState state{pc->m_gid,pc->m_job,pc->m_stateId,pc->m_stateStartTick,
                 pc->m_pos,pc->m_roty,pc->m_zoom,pc->m_isMotionFreezed!=0,
-                color,m_bgLightDir,m_bgDiffuseCol,m_bgAmbientCol,pc->m_modifyFactorOfmotionSpeed2};
-            RenderGr2Monster(state,viewMatrix);
+                color,m_bgLightDir,m_bgDiffuseCol,m_bgAmbientCol,pc->m_modifyFactorOfmotionSpeed2,static_cast<u32>(pc->m_gdid),flagVersion};
+            if(RenderGr2Monster(state,viewMatrix))m_billboardFrameCacheDirty=true;
         }
         BillboardScreenEntry entry{};
         if (!BuildBillboardRenderEntry(pc, viewMatrix, cameraLongitude, zoom, &entry)) {
@@ -6904,7 +6953,8 @@ bool CWorld::GetActorScreenMarker(const matrix& viewMatrix,
                 *outTopY = static_cast<int>(std::lround(liveEntry.top));
             }
             if (outLabelY) {
-                *outLabelY = static_cast<int>(std::lround(liveEntry.baseY)) + kActorLabelBaseYOffset;
+                *outLabelY = static_cast<int>(std::lround(liveEntry.baseY))
+                    + (actor->m_isPc ? kPlayerLabelBaseYOffset : kActorLabelBaseYOffset);
             }
             return true;
         }
@@ -6922,7 +6972,8 @@ bool CWorld::GetActorScreenMarker(const matrix& viewMatrix,
         *outTopY = static_cast<int>(std::lround(projectedBase.y)) - 48;
     }
     if (outLabelY) {
-        *outLabelY = static_cast<int>(std::lround(projectedBase.y)) + kActorLabelBaseYOffset;
+        *outLabelY = static_cast<int>(std::lround(projectedBase.y))
+            + (actor->m_isPc ? kPlayerLabelBaseYOffset : kActorLabelBaseYOffset);
     }
     return true;
 }

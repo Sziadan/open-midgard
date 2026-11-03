@@ -1368,6 +1368,9 @@ void CSession::SetPlayerPosDir(int x, int y, int dir)
 void CSession::SetSelectedCharacterAppearance(const CHARACTER_INFO& info)
 {
     m_selectedCharacterInfo = info;
+    // Character-list speed belongs to the selected character. Do not retain
+    // another character's buffed speed when returning to character selection.
+    m_speed = info.speed > 0 ? static_cast<u32>(info.speed) : 150u;
     m_characterVitals = { static_cast<u16>(info.hp), static_cast<u16>(info.maxhp),
         static_cast<u16>(info.sp), static_cast<u16>(info.maxsp) };
     m_hasSelectedCharacterInfo = true;

@@ -8528,7 +8528,7 @@ void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 // TEST_BODY_BEGIN cloud_render_family
 struct CloudRenderStyle {
     unsigned int rgb=0;
-    int texturePart=0;
+    int blendMode=0; // Ref RenderTeiRect PW: 0 additive, 1 inverse source alpha.
     bool reverse=false;
     bool valid=false;
 };
@@ -8610,7 +8610,6 @@ bool IsCloudRendererType(EFFECTPRIMID type)
 
 void RenderReferenceCloud(CEffectPrim& prim, const matrix& viewMatrix)
 {
-    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
     for (int band=0;band<4;++band) {
         EffectGi& gi=prim.m_gi[static_cast<size_t>(band)];
         if (gi.life != 1 || gi.alphaB <= 0) {
@@ -8628,8 +8627,12 @@ void RenderReferenceCloud(CEffectPrim& prim, const matrix& viewMatrix)
         if (!style.valid) {
             continue;
         }
+        // Ref passes PW from the pattern table and TN from this band's flag[0].
+        // Confusing TN with PW makes Einbroch fog (pattern 12, TN 0) additive.
+        const size_t textureIndex=gi.flag[0];
+        CTexture* texture=textureIndex<prim.m_texture.size()?prim.m_texture[textureIndex]:nullptr;
         const unsigned int color=(static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB))<<24)|style.rgb;
-        SubmitCloudRect(corners,viewMatrix,texture,color,style.reverse,gi.flag[0]!=0,
+        SubmitCloudRect(corners,viewMatrix,texture,color,style.reverse,style.blendMode!=0,
             static_cast<int>(prim.m_renderFlag));
     }
 }

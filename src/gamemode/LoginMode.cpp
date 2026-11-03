@@ -1,6 +1,7 @@
 #include <winsock2.h>
 #include "CursorRenderer.h"
 #include "LoginMode.h"
+#include "Commerce.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UILoginWnd.h"
 #include "ui/UIMakeCharWnd.h"
@@ -1287,6 +1288,7 @@ void CLoginMode::OnInit(const char* worldName) {
 
     m_wallPaperBmpName = ChooseLoginWallpaperName();
     g_session.ClearInventoryItems();
+    ro::commerce::Reset();
     g_windowMgr.ClearChatEvents();
     g_windowMgr.RemoveAllWindows();
     g_windowMgr.SetLoginWallpaper(m_wallPaperBmpName);
@@ -2553,6 +2555,8 @@ void CLoginMode::OnNotifyZonesvr(const std::vector<u8>& raw)
     const u8* p = raw.data();
 
     g_session.m_gid = u32(p[2])|(u32(p[3])<<8)|(u32(p[4])<<16)|(u32(p[5])<<24);
+    g_session.m_localGuild={}; // A character login starts a fresh membership session.
+    g_session.m_guildWindow={};
 
     // Map name: 16 bytes starting at offset 6, may include .gat extension.
     char mapName[17] = {};

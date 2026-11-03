@@ -7,6 +7,7 @@
 
 #include "DebugLog.h"
 #include "gamemode/GameMode.h"
+#include "gamemode/Commerce.h"
 #include "gamemode/View.h"
 #include "render3d/RenderBackend.h"
 #include "render3d/RenderDevice.h"
@@ -24,6 +25,7 @@
 #include "ui/UISelectServerWnd.h"
 #include "ui/UIShopCommon.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIGuildWnd.h"
 #include "world/GameActor.h"
 #include "world/World.h"
 
@@ -1197,14 +1199,23 @@ public:
             return false;
         }
 
-        const bool chatEnabled=!HasFrontMenuUiVisible() && g_windowMgr.CanRouteQtChatInput() && g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->m_show!=0;
+        const bool chatEnabled=!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal() && g_windowMgr.CanRouteQtChatInput() && g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->m_show!=0;
+        const bool commerceEnabled=!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal() && ro::commerce::HasInput();
+        const bool guildEnabled=commerceEnabled || (!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal() && g_windowMgr.CanRouteQtChatInput() && g_windowMgr.m_guildWnd && g_windowMgr.m_guildWnd->m_show!=0);
+        if(g_windowMgr.m_guildWnd && guildEnabled && (msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK) && g_windowMgr.m_chatWnd) {
+            const auto* guild=g_windowMgr.m_guildWnd;
+            const int x=GetUiLogicalX(lParam),y=GetUiLogicalY(lParam);
+            if(x>=guild->m_x && x<guild->m_x+guild->m_w && y>=guild->m_y && y<guild->m_y+guild->m_h)
+                g_windowMgr.m_chatWnd->ClearInputFocus();
+        }
         if(!chatEnabled && g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->IsInputActive()) {
             g_windowMgr.m_chatWnd->ClearInputFocus();
             if(m_stateAdapter)m_stateAdapter->syncChat();
         }
         const bool nativePointerCapture=chatEnabled && (g_windowMgr.m_chatWnd->IsQtPointerCaptured() || g_windowMgr.m_captureWindow);
-        const bool pointerMessage=msg==WM_MOUSEMOVE || msg==WM_LBUTTONDOWN || msg==WM_LBUTTONUP || msg==WM_LBUTTONDBLCLK || msg==WM_MOUSEWHEEL;
-        if(!(nativePointerCapture && pointerMessage) && m_chatInput.handle(m_mainWindow,msg,wParam,lParam,chatEnabled)) {
+        const bool pointerMessage=msg==WM_MOUSEMOVE || msg==WM_LBUTTONDOWN || msg==WM_LBUTTONUP || msg==WM_LBUTTONDBLCLK || msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP || msg==WM_MOUSEWHEEL;
+        const bool nativePopup=pointerMessage && g_windowMgr.HasNativePopupAtPoint(GetUiLogicalX(lParam),GetUiLogicalY(lParam));
+        if(!(nativePopup && !m_chatInput.pointerCaptured()) && !(nativePointerCapture && pointerMessage) && m_chatInput.handle(m_mainWindow,msg,wParam,lParam,chatEnabled,guildEnabled)) {
             if(m_stateAdapter)m_stateAdapter->syncChat();
             return true;
         }

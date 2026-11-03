@@ -20,6 +20,21 @@ float g_sinTable[360];
 int main(){
     for(int i=0;i<360;++i)g_sinTable[i]=std::sin(i*3.141592653589793/180);
     assert(!UpdateWeatherCloudPrimitive(nullptr));
+    // Einbroch's source envelope rises for 169 ticks, holds until RotStart,
+    // then fades one alpha unit per tick and recycles at zero. The long-lived
+    // weather primitive must not mean a permanently opaque individual patch.
+    {
+        CEffectPrim cloud;
+        for(auto& band:cloud.m_gi){band.life=1;band.height[7]=3;band.rotStart=300;}
+        for(int step=1;step<=469;++step){
+            assert(UpdateWeatherCloudPrimitive(&cloud));
+            const int expected=step<170?step:step<=300?169:469-step;
+            for(const auto& band:cloud.m_gi){
+                assert(band.alphaB==expected);
+                assert(band.process==(step==469?0:step));
+            }
+        }
+    }
     for(int variant:{0,1,2,3,4,5,7,8}){
         parent.pos={-1200,-200,-2300};CEffectPrim cloud;
         for(auto& band:cloud.m_gi){

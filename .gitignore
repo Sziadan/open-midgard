@@ -35,6 +35,7 @@ build_output*.txt
 tools/*
 !tools/ro_exe_resolve.py
 !tools/generate_skill_tables.py
+!tools/generate_vulkan_world_shader.py
 !tools/export_skill_tree.py
 !tools/qtui_preview/
 !tools/qtui_preview/CMakeLists.txt

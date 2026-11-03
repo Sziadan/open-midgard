@@ -10,6 +10,8 @@
 #include <QWheelEvent>
 #include <array>
 #include <algorithm>
+#include <functional>
+#include <vector>
 
 #if RO_PLATFORM_WINDOWS
 #include <windows.h>
@@ -46,17 +48,23 @@ QString Composition(HIMC context,DWORD kind) {
 }
 #endif
 
-bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,RoWindowWParam wParam,RoWindowLParam lParam,bool enabled)
+bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,RoWindowWParam wParam,RoWindowLParam lParam,bool enabled,bool guildEnabled)
 {
 #if RO_PLATFORM_WINDOWS
     if(!m_window || !m_root)return false;
     const std::array<const char*,3> editors={"chatHistoryEditor","chatWhisperEditor","chatMessageEditor"};
+    std::vector<QQuickItem*> panels;
+    std::function<void(QQuickItem*)> collect=[&](QQuickItem* item){if(item->isVisible() && item->property("nativeInteractive").toBool())panels.push_back(item);for(auto* child:item->childItems())collect(child);};
+    collect(m_root);
+    auto inGuild=[&](QQuickItem* item){for(auto* parent=item;parent;parent=parent->parentItem())if(parent->isVisible() && parent->property("nativeInteractive").toBool())return true;return false;};
+    auto panelAt=[&](const QPointF& p)->QQuickItem*{QQuickItem* best=nullptr;double bestZ=-1e30;for(auto* item:panels)if(item->contains(item->mapFromScene(p))){double z=0;for(auto* parent=item;parent;parent=parent->parentItem())z+=parent->z();if(z>=bestZ){bestZ=z;best=item;}}return best;};
     auto editor=[&](int index) {return m_root->findChild<QQuickItem*>(editors[index]);};
     auto focused=[&]() -> QQuickItem* {
-        for(int i=0;i<3;++i)if(auto* item=editor(i);item && item->isVisible() && item->hasActiveFocus())return item;
+        if(guildEnabled && inGuild(m_window->activeFocusItem()))return m_window->activeFocusItem();
+        if(enabled)for(int i=0;i<3;++i)if(auto* item=editor(i);item && item->isVisible() && item->hasActiveFocus())return item;
         return nullptr;
     };
-    if(!enabled) {
+    if(!enabled && !guildEnabled) {
         for(int i=0;i<3;++i)if(auto* item=editor(i))item->setFocus(false);
         if(m_pointerGrab && GetCapture()==nativeWindow)ReleaseCapture();
         m_pointerGrab=false;m_composing=false;m_highSurrogate={};return false;
@@ -64,10 +72,13 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
     const QPointF point(static_cast<short>(lParam&0xFFFF),static_cast<short>((lParam>>16)&0xFFFF));
     const std::array<const char*,3> regions={"chatHistoryPane","chatWhisperField","chatMessageField"};
     int hit=-1;
-    for(int i=0;i<3;++i)if(auto* item=m_root->findChild<QQuickItem*>(regions[i]);item && item->isVisible() && item->contains(item->mapFromScene(point)))hit=i;
-    if(msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK || msg==WM_LBUTTONUP || msg==WM_MOUSEMOVE) {
-        const bool down=msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK;
+    if(enabled)for(int i=0;i<3;++i)if(auto* item=m_root->findChild<QQuickItem*>(regions[i]);item && item->isVisible() && item->contains(item->mapFromScene(point)))hit=i;
+    auto* guild=guildEnabled?panelAt(point):nullptr;
+    if(guild)hit=3;
+    if(msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK || msg==WM_LBUTTONUP || msg==WM_MOUSEMOVE || msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP) {
+        const bool down=msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK || msg==WM_RBUTTONDOWN;
         if(down && hit<0) {
+            if(inGuild(m_window->activeFocusItem()))m_window->activeFocusItem()->setFocus(false);
             // Header/tab/resize gestures keep the current editor focused.
             // Clicks outside the chat panel relinquish keyboard focus.
             auto* panel=m_root->findChild<QQuickItem*>("chatWindowPanel");
@@ -78,27 +89,35 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
         }
         if(hit<0 && !m_pointerGrab)return false;
         if(down) {
-            if(auto* item=editor(hit))item->forceActiveFocus();
+            if(hit==3)guild->forceActiveFocus();
+            else if(auto* item=editor(hit))item->forceActiveFocus();
             SetCapture(nativeWindow);m_pointerGrab=true;
         }
-        const auto type=msg==WM_MOUSEMOVE?QEvent::MouseMove:msg==WM_LBUTTONUP?QEvent::MouseButtonRelease:msg==WM_LBUTTONDBLCLK?QEvent::MouseButtonDblClick:QEvent::MouseButtonPress;
-        const auto button=msg==WM_MOUSEMOVE?Qt::NoButton:Qt::LeftButton;
-        QMouseEvent event(type,point,point,button,(wParam&MK_LBUTTON)?Qt::LeftButton:Qt::NoButton,Modifiers());
+        const auto type=msg==WM_MOUSEMOVE?QEvent::MouseMove:(msg==WM_LBUTTONUP||msg==WM_RBUTTONUP)?QEvent::MouseButtonRelease:msg==WM_LBUTTONDBLCLK?QEvent::MouseButtonDblClick:QEvent::MouseButtonPress;
+        const auto button=msg==WM_MOUSEMOVE?Qt::NoButton:(msg==WM_RBUTTONDOWN||msg==WM_RBUTTONUP)?Qt::RightButton:Qt::LeftButton;
+        Qt::MouseButtons buttons=Qt::NoButton;if(wParam&MK_LBUTTON)buttons|=Qt::LeftButton;if(wParam&MK_RBUTTON)buttons|=Qt::RightButton;
+        QMouseEvent event(type,point,point,button,buttons,Modifiers());
         QCoreApplication::sendEvent(m_window,&event);
-        if(msg==WM_LBUTTONUP) {m_pointerGrab=false;if(GetCapture()==nativeWindow)ReleaseCapture();}
+        if(msg==WM_LBUTTONUP||msg==WM_RBUTTONUP) {m_pointerGrab=false;if(GetCapture()==nativeWindow)ReleaseCapture();}
         return true;
     }
     if(msg==WM_CAPTURECHANGED) {m_pointerGrab=false;return false;}
     if(msg==WM_MOUSEWHEEL) {
         POINT client{static_cast<LONG>(point.x()),static_cast<LONG>(point.y())};ScreenToClient(nativeWindow,&client);
         auto* pane=m_root->findChild<QQuickItem*>("chatHistoryPane");
-        if(!pane || !pane->isVisible() || !pane->contains(pane->mapFromScene({static_cast<qreal>(client.x),static_cast<qreal>(client.y)})))return false;
+        const QPointF clientPoint(client.x,client.y);
+        const bool guildHit=guildEnabled && panelAt(clientPoint);
+        const bool chatHit=enabled && pane && pane->isVisible() && pane->contains(pane->mapFromScene(clientPoint));
+        if(!guildHit && !chatHit)return false;
         QWheelEvent event(QPointF(client.x,client.y),point,{},QPoint(0,static_cast<short>((wParam>>16)&0xFFFF)),Qt::NoButton,Modifiers(),Qt::NoScrollPhase,false);
         QCoreApplication::sendEvent(m_window,&event);return true;
     }
     auto* focus=focused();if(!focus)return false;
     auto commit=[&](const QString& text) {QInputMethodEvent event;event.setCommitString(text);QCoreApplication::sendEvent(m_window,&event);};
     if(msg==WM_KEYDOWN || msg==WM_SYSKEYDOWN || msg==WM_KEYUP || msg==WM_SYSKEYUP) {
+        // Keep Alt+G and the other native gameplay shortcuts available while
+        // a guild editor has focus. Ctrl+Alt (AltGr) still belongs to text input.
+        if((Modifiers()&Qt::AltModifier) && !(Modifiers()&Qt::ControlModifier))return false;
         if(wParam==VK_PROCESSKEY)return false;
         if(m_composing)return true;
         const auto type=msg==WM_KEYUP || msg==WM_SYSKEYUP?QEvent::KeyRelease:QEvent::KeyPress;
@@ -149,7 +168,7 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
     }
     if(msg==WM_KILLFOCUS) {QInputMethodEvent event;QCoreApplication::sendEvent(m_window,&event);m_composing=false;m_highSurrogate={};}
 #else
-    (void)nativeWindow;(void)msg;(void)wParam;(void)lParam;(void)enabled;
+    (void)nativeWindow;(void)msg;(void)wParam;(void)lParam;(void)enabled;(void)guildEnabled;
 #endif
     return false;
 }

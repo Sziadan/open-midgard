@@ -3,6 +3,8 @@ import QtQuick 2.15
 Item {
     id: root
     RoTheme { id: theme }
+    RoGuild { }
+    RoCommerce { }
     width: parent ? parent.width : 1280
     height: parent ? parent.height : 720
     property bool loginCaretVisible: true
@@ -212,6 +214,11 @@ Item {
             required property var modelData
             property bool isPartyHpBar: modelData.kind === "partyHpBar"
             property bool isUiTooltip: modelData.kind === "uiTooltip"
+            property bool hasEmblem: !!modelData.emblemSource
+            property bool hasGuild: !!modelData.guildText
+            property int nameplateTextHeight: Math.max(1, Math.ceil(label.implicitHeight)) + (hasGuild ? 2 + Math.ceil(guildLabel.implicitHeight) : 0)
+            property int emblemExtent: hasEmblem && hasGuild ? nameplateTextHeight : 0
+            property int emblemSlot: emblemExtent > 0 ? emblemExtent + 6 : 0
             property int bubblePaddingX: modelData.showBubble === false ? 0 : (modelData.paddingX || 12)
             property int bubblePaddingY: modelData.showBubble === false ? 0 : (modelData.paddingY || 8)
             property int maxTextWidth: isUiTooltip
@@ -219,7 +226,7 @@ Item {
                 : (modelData.maxTextWidth || 0)
             property bool wrapText: isUiTooltip || modelData.wrap === true
             property int textWidth: {
-                const measured = Math.max(1, Math.ceil(isUiTooltip ? tooltipMetrics.advanceWidth : (label.contentWidth || label.implicitWidth || 1)))
+                const measured = Math.max(1, Math.ceil(isUiTooltip ? tooltipMetrics.advanceWidth : Math.max(label.implicitWidth || 1, hasGuild ? guildRow.width : 0) + emblemSlot))
                 return maxTextWidth > 0 ? Math.min(maxTextWidth, measured) : measured
             }
             property int anchorX: modelData.centerX !== undefined
@@ -230,9 +237,9 @@ Item {
                 : (modelData.y || 0)
             x: root.clampOverlayX(anchorX, width)
             y: root.clampOverlayY(anchorY, height)
-            z: modelData.z || 2000
+            z: isPartyHpBar ? -1 : (modelData.z || 2000)
             width: isPartyHpBar ? (modelData.width || 60) : (textWidth + bubblePaddingX)
-            height: isPartyHpBar ? (modelData.height || 5) : (Math.max(1, Math.ceil(label.implicitHeight)) + bubblePaddingY)
+            height: isPartyHpBar ? (modelData.height || 5) : (nameplateTextHeight + bubblePaddingY)
 
             TextMetrics {
                 id: tooltipMetrics
@@ -240,14 +247,18 @@ Item {
                 font: label.font
             }
 
-            RoGauge {
+            Rectangle {
                 visible: parent.isPartyHpBar
                 anchors.fill: parent
-                radius: 2
-                value: modelData.currentHp || 0
-                maximum: modelData.maxHp || 0
-                fillColor: maximum > 0 && value * 4 < maximum ? theme.warning : theme.hp
-                showText: false
+                color: "#000000"
+                Rectangle {
+                    anchors.fill:parent; anchors.margins:modelData.border || 1; color:"#ffffff"
+                    Rectangle {
+                        height:parent.height
+                        width:Math.floor(parent.width*Math.max(0,Math.min(1,(modelData.currentHp||0)/Math.max(1,modelData.maxHp||0))))
+                        color:(modelData.currentHp||0)*4<(modelData.maxHp||0)?"#dc2020":"#30c030"
+                    }
+                }
             }
 
             Rectangle {
@@ -259,11 +270,42 @@ Item {
                 border.color: modelData.borderColor || theme.tooltipBorder
             }
 
-            Text {
-                id: label
+            Image {
+                objectName: "hoverGuildEmblem"
+                visible: parent.emblemExtent > 0
                 x: Math.floor(parent.bubblePaddingX / 2)
                 y: Math.floor(parent.bubblePaddingY / 2)
-                width: parent.textWidth
+                width: parent.emblemExtent
+                height: parent.emblemExtent
+                source: modelData.emblemSource || ""
+                smooth: false
+            }
+
+            Item {
+                id: guildRow
+                visible: parent.hasGuild
+                width: Math.ceil(guildLabel.implicitWidth)
+                height: Math.ceil(guildLabel.implicitHeight)
+                x: parent.emblemSlot + Math.round((parent.width - parent.emblemSlot - width) / 2)
+                y: Math.floor(parent.bubblePaddingY / 2) + Math.ceil(label.implicitHeight) + 2
+
+                Text {
+                    id: guildLabel
+                    objectName: "hoverGuildName"
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: modelData.guildText || ""
+                    color: modelData.foreground
+                    font: label.font
+                    horizontalAlignment: Text.AlignHCenter
+                }
+            }
+
+            Text {
+                id: label
+                objectName: "hoverPlayerName"
+                x: Math.floor(parent.bubblePaddingX / 2) + parent.emblemSlot
+                y: Math.floor(parent.bubblePaddingY / 2)
+                width: parent.textWidth - parent.emblemSlot
                 text: modelData.text
                 visible: !parent.isPartyHpBar
                 color: modelData.foreground
@@ -1670,7 +1712,7 @@ Item {
         y: uiState.inventoryY
         width: uiState.inventoryWidth
         height: uiState.inventoryHeight
-        visible: uiState.inventoryVisible
+        visible: false // Inventory is rendered and operated by RoCommerce.
         Text {
             x: 12
             y: 2
@@ -3426,6 +3468,7 @@ Item {
         width: uiState.optionWidth
         height: uiState.optionHeight
         visible: uiState.optionVisible
+        z: 90
         Text {
             x: 12
             y: 2

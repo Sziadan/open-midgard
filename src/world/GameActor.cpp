@@ -4682,6 +4682,7 @@ void CGameActor::SetChatBubbleText(const std::string& text, u32 untilTick)
 
 void CGameActor::SetGuildInfo(int guildId, int emblemVersion)
 {
+    if(m_job==722 && guildId==0){m_gdid=0;m_emblemVersion=0;return;}
     if (guildId < 1 || (emblemVersion < 1 && m_job != 722)) {
         return;
     }

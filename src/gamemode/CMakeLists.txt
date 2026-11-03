@@ -11,6 +11,8 @@ add_library(ro_gamemode STATIC
     View.cpp
     GameModePacket.h
     GameModePacket.cpp
+    Commerce.h
+    Commerce.cpp
 )
 
 target_include_directories(ro_gamemode PUBLIC 

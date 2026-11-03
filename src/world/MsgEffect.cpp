@@ -1703,21 +1703,13 @@ bool RenderAttachedActorSpriteWorldBillboard(const CMsgEffect& effect,
         face->srcAlphaMode = D3DBLEND_SRCALPHA;
         face->destAlphaMode = D3DBLEND_INVSRCALPHA;
 
-        projectedVerts[0].z = afterOwner
-            ? 0.0f
-            : (std::max)(0.0f, projectedDepthTop.z - kAttachedActorSpriteDepthBias);
+        projectedVerts[0].z = (std::max)(0.0f, projectedDepthTop.z - kAttachedActorSpriteDepthBias);
         projectedVerts[0].oow = projectedDepthTop.oow;
-        projectedVerts[1].z = afterOwner
-            ? 0.0f
-            : (std::max)(0.0f, projectedDepthTop.z - kAttachedActorSpriteDepthBias);
+        projectedVerts[1].z = (std::max)(0.0f, projectedDepthTop.z - kAttachedActorSpriteDepthBias);
         projectedVerts[1].oow = projectedDepthTop.oow;
-        projectedVerts[2].z = afterOwner
-            ? 0.0f
-            : (std::max)(0.0f, projectedDepthBottom.z - kAttachedActorSpriteDepthBias);
+        projectedVerts[2].z = (std::max)(0.0f, projectedDepthBottom.z - kAttachedActorSpriteDepthBias);
         projectedVerts[2].oow = projectedDepthBottom.oow;
-        projectedVerts[3].z = afterOwner
-            ? 0.0f
-            : (std::max)(0.0f, projectedDepthBottom.z - kAttachedActorSpriteDepthBias);
+        projectedVerts[3].z = (std::max)(0.0f, projectedDepthBottom.z - kAttachedActorSpriteDepthBias);
         projectedVerts[3].oow = projectedDepthBottom.oow;
         for (int index = 0; index < 4; ++index) {
             projectedVerts[index].color = color;
@@ -1782,9 +1774,8 @@ bool QueueAttachedActorSpriteProjectedFallback(const CMsgEffect& effect,
     draw.alpha = effect.m_alpha;
     draw.zoom = effect.m_zoom;
     draw.alphaSortBase = alphaSortBase;
-    // QueueMsgSpriteQuad subtracts kAttachedActorSpriteDepthBias, so this
-    // value makes the after-owner fallback pass depth-test in front too.
-    draw.projectedZ = afterOwner ? kAttachedActorSpriteDepthBias : projectedBase.z;
+    // Keep world depth on both sides of the owner; z=0 draws through walls.
+    draw.projectedZ = projectedBase.z;
     draw.projectedOow = projectedBase.oow;
     draw.useProjectedDepth = true;
     draw.usePerspectiveScale = true;

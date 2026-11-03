@@ -876,7 +876,7 @@ int main() {
             && near(corners[i].z,static_cast<float>(static_cast<double>(static_cast<float>(x[i]))*sr)),
             "TeiHit1 corner matches source offset, perpendicular, and rise rotations");
     }
-    struct ExpectedCloudStyle { int pattern,variant,frame;bool reverse;unsigned int rgb;bool valid; };
+    struct ExpectedCloudStyle { int pattern,variant,blend;bool reverse;unsigned int rgb;bool valid; };
     const ExpectedCloudStyle cloudStyles[]={
         {0,0,1,false,0x00FFFFFFu,true},{1,0,0,false,0x009696FAu,true},
         {2,0,0,true,0x008282FAu,true},{3,0,0,true,0x00C8C864u,true},
@@ -894,8 +894,8 @@ int main() {
     for(const auto& expected:cloudStyles) {
         EffectGi gi{};gi.flag[2]=static_cast<unsigned char>(expected.pattern);gi.flag[3]=static_cast<unsigned char>(expected.variant);
         const auto style=CloudStyle(gi);
-        check(style.valid==expected.valid && style.texturePart==expected.frame && style.reverse==expected.reverse
-            && style.rgb==expected.rgb,"RenderCloud pattern and nested color/frame dispatch matches source switch");
+        check(style.valid==expected.valid && style.blendMode==expected.blend && style.reverse==expected.reverse
+            && style.rgb==expected.rgb,"RenderCloud pattern and nested color/blend dispatch matches source switch");
     }
     for(int fullAngle:{0,45,180,315}) for(int phase:{0,45,270}) {
         EffectGi gi{};gi.distance=12.5f;gi.fullDisplayAngle=static_cast<short>(fullAngle);gi.height[8]=static_cast<float>(phase);

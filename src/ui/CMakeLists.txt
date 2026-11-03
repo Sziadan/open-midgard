@@ -1,4 +1,6 @@
 add_library(ro_ui STATIC
+    UIGuildWnd.h
+    UIGuildWnd.cpp
     SkillTreeModel.h
     SkillTreeModel.cpp
     QtSkillTree.h

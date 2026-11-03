@@ -42,8 +42,8 @@
 
 namespace {
 
-constexpr int kWindowWidth = 280;
-constexpr int kWindowHeight = 134;
+constexpr int kWindowWidth = 360;
+constexpr int kWindowHeight = 300;
 constexpr int kMiniHeight = 34;
 constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kGridLeft = 36;

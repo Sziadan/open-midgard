@@ -9,7 +9,9 @@ struct DrawConstants
     float fogColorG;
     float fogColorB;
     uint flags;
-    float3 padding;
+    float padding0;
+    float padding1;
+    float padding2;
 };
 
 [[vk::push_constant]] DrawConstants g_drawConstants;
@@ -87,6 +89,10 @@ float4 PSMain(VSOutput input) : SV_Target
     if ((g_drawConstants.flags & 64u) != 0u) {
         float lightmapAlpha = g_texture1.Sample(g_sampler0, input.uv1).a;
         color.rgb *= lightmapAlpha.xxx;
+    }
+    if ((g_drawConstants.flags & 256u) != 0u) {
+        float4 lightmap = g_texture1.Sample(g_sampler0, input.uv1);
+        color.rgb = saturate(color.rgb * lightmap.a + lightmap.rgb);
     }
 
     if ((g_drawConstants.flags & 128u) != 0u) {

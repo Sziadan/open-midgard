@@ -104,6 +104,12 @@ unsigned int BuildModernDrawFlags(DWORD vertexFormat,
         && state.textureStages[1].colorArg2 == D3DTA_CURRENT) {
         flags |= ModernDrawFlag_Texture1Enabled | ModernDrawFlag_Stage1LightmapAlpha;
     }
+    if(hasTexture1 && vertexFormat==kModernLightmapFvf
+        && state.textureStages[1].colorOp==D3DTOP_MODULATEALPHA_ADDCOLOR
+        && state.textureStages[1].colorArg1==D3DTA_TEXTURE
+        && state.textureStages[1].colorArg2==D3DTA_CURRENT) {
+        flags|=ModernDrawFlag_Texture1Enabled|ModernDrawFlag_Stage1LightmapAddColor;
+    }
     if (state.alphaTestEnable != FALSE) {
         flags |= ModernDrawFlag_AlphaTestEnabled;
     }

@@ -1,5 +1,8 @@
 #pragma once
 #include "Types.h"
+#include <vector>
+class CTexture;
+class CGameMode;
 
 // Ref/Session.cpp uses these same GR2 resources for the original and Thor
 // guardian classes, including their battlefield/instance variants.
@@ -28,7 +31,13 @@ struct Gr2MonsterState {
     u32 color;
     vector3d light, diffuse, ambient;
     float attackSpeedFactor=1.0f;
+    u32 guildId=0, emblemVersion=0;
 };
+
+// Shared by all flag instances owned by this guild. A new version replaces the
+// cached texture; missing data never exposes the model's green placeholder.
+CTexture* Gr2GuildEmblemTexture(u32 guildId,u32 version,const std::vector<unsigned char>* bitmap=nullptr);
+u32 PrepareGr2FlagEmblem(CGameMode& mode,u32 guildId,u32 advertisedVersion);
 
 bool RenderGr2Monster(const Gr2MonsterState& state, const matrix& view);
 bool GetGr2MonsterBounds(u32 gid, RECT* bounds);

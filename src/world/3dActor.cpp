@@ -3,6 +3,7 @@
 #include "render/Prim.h"
 #include "render/Renderer.h"
 #include "world/World.h"
+#include "world/MapLighting.h"
 
 #include <algorithm>
 #include <cmath>
@@ -461,13 +462,7 @@ u32 MakeLitColor(const vector3d& light, float alpha, bool dimmed)
 
 vector3d ComputeLightColor(const vector3d& normal, const vector3d& lightDir, const vector3d& diffuseCol, const vector3d& ambientCol)
 {
-    (void)normal;
-    (void)lightDir;
-    return vector3d{
-        ClampFloat(ambientCol.x + diffuseCol.x, 0.0f, 1.0f),
-        ClampFloat(ambientCol.y + diffuseCol.y, 0.0f, 1.0f),
-        ClampFloat(ambientCol.z + diffuseCol.z, 0.0f, 1.0f)
-    };
+    return ro::lighting::Directional(normal,lightDir,diffuseCol,ambientCol);
 }
 
 void ExpandBounds(vector3d* minBounds, vector3d* maxBounds, const vector3d& point)
@@ -635,16 +630,14 @@ void C3dNode::UpdateVertexColor(const matrix& parentWorld,
                     const size_t normalIndex = faceIndex * 3u + static_cast<size_t>(corner);
                     if (m_shadeType == 2 && normalIndex < m_mesh->m_vertNormal.size()) {
                         const vector3d& vertexNormal = m_mesh->m_vertNormal[normalIndex];
-                        normal = NormalizeVec3(vector3d{
-                            vertexNormal.x * nodeWorld.m[0][0] + vertexNormal.y * nodeWorld.m[1][0] + vertexNormal.z * nodeWorld.m[2][0],
-                            vertexNormal.x * nodeWorld.m[0][1] + vertexNormal.y * nodeWorld.m[1][1] + vertexNormal.z * nodeWorld.m[2][1],
-                            vertexNormal.x * nodeWorld.m[0][2] + vertexNormal.y * nodeWorld.m[1][2] + vertexNormal.z * nodeWorld.m[2][2]
-                        });
+                        normal = ro::lighting::TransformNormal(vertexNormal,nodeWorld);
                     } else {
-                        const vector3d worldA = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[0]]);
-                        const vector3d worldB = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[1]]);
-                        const vector3d worldC = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[2]]);
-                        normal = NormalizeVec3(CrossVec3(SubtractVec3(worldB, worldA), SubtractVec3(worldC, worldA)));
+                        const vector3d localA=m_mesh->m_vert[face.vertindex[0]];
+                        const vector3d localB=m_mesh->m_vert[face.vertindex[1]];
+                        const vector3d localC=m_mesh->m_vert[face.vertindex[2]];
+                        const vector3d faceNormal=faceIndex<m_mesh->m_faceNormal.size()?m_mesh->m_faceNormal[faceIndex]:
+                            NormalizeVec3(CrossVec3(SubtractVec3(localC,localB),SubtractVec3(localC,localA)));
+                        normal = ro::lighting::TransformNormal(faceNormal,nodeWorld);
                     }
 
                     litColor = MakeLitColor(
@@ -671,6 +664,7 @@ void C3dNode::UpdateVertexColor(const matrix& parentWorld,
 
 void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool forceDoubleSided, float depthBias) const
 {
+    const vector3d environment=ro::lighting::Environment(g_world.m_bgAmbientCol,g_world.m_bgDiffuseCol);
     matrix nodeWorld{};
     MatrixMult(nodeWorld, m_ltm, parentWorld);
     const bool flipNormal = Matrix3x3Determinant(nodeWorld) < 0.0f;
@@ -727,7 +721,8 @@ void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool f
                     projected[corner].tv = 0.0f;
                 }
 
-                projected[corner].color = faceIndex < m_colorInfo.size() ? m_colorInfo[faceIndex].color[corner] : 0xFFFFFFFFu;
+                const u32 baseColor=faceIndex < m_colorInfo.size()?m_colorInfo[faceIndex].color[corner]:0xFFFFFFFFu;
+                projected[corner].color=ro::lighting::Tint(baseColor,environment);
             }
 
             if (!ShouldRenderFace(projected, flipNormal, forceDoubleSided || face.twoSide)) {

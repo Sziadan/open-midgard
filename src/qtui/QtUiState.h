@@ -286,8 +286,16 @@ class QtUiState : public QObject {
     Q_PROPERTY(QVariantList shopChoiceButtons READ shopChoiceButtons NOTIFY shopChoiceButtonsChanged)
     Q_PROPERTY(QVariantList notifications READ notifications NOTIFY notificationsChanged)
     Q_PROPERTY(QVariantList anchors READ anchors NOTIFY anchorsChanged)
+    Q_PROPERTY(QVariantMap guildWindow READ guildWindow NOTIFY guildWindowChanged)
+    Q_PROPERTY(QVariantMap commerceData READ commerceData NOTIFY commerceDataChanged)
 
 public:
+    const QVariantMap& commerceData() const{return m_commerceData;}
+    void setCommerceData(const QVariantMap& data){if(m_commerceData==data)return;m_commerceData=data;emit commerceDataChanged();}
+    Q_INVOKABLE void commerceAction(const QString& action,const QVariantMap& args){emit commerceActionRequested(action,args);}
+    const QVariantMap& guildWindow() const{return m_guildWindow;}
+    void setGuildWindow(const QVariantMap& data){if(m_guildWindow==data)return;m_guildWindow=data;emit guildWindowChanged();}
+    Q_INVOKABLE void guildAction(const QString& action,const QVariantMap& args){emit guildActionRequested(action,args);}
     Q_INVOKABLE void focusChat(int field) { emit chatFocusRequested(field); }
     Q_INVOKABLE QString editChat(int field,const QString& text) {
         emit chatEditRequested(field,text);
@@ -1986,6 +1994,10 @@ public:
     }
 
 signals:
+    void commerceDataChanged();
+    void commerceActionRequested(const QString& action,const QVariantMap& args);
+    void guildWindowChanged();
+    void guildActionRequested(const QString& action,const QVariantMap& args);
     void chatFocusRequested(int field);
     void chatEditRequested(int field,const QString& text);
     void chatKeyRequested(int key);
@@ -2150,6 +2162,8 @@ signals:
     void anchorsChanged();
 
 private:
+    QVariantMap m_guildWindow;
+    QVariantMap m_commerceData;
     QString m_backendName;
     QString m_modeName;
     QString m_wallpaperRevision;

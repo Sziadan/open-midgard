@@ -23,11 +23,11 @@
 
 namespace {
 
-constexpr int kMenuWidth = 320;
+constexpr int kMenuWidth = 264;
 constexpr int kMenuBorder = 1;
 constexpr int kMenuPaddingX = 8;
-constexpr int kMenuPaddingY = 6;
-constexpr int kMenuRowHeight = 20;
+constexpr int kMenuPaddingY = 24;
+constexpr int kMenuRowHeight = 30;
 constexpr int kMenuCornerRadius = 8;
 
 int GetMenuHeightForOptionCount(int optionCount)

@@ -4,6 +4,9 @@
         <file alias="fonts/NotoSansJP.ttf">../../third_party/fonts/NotoSansJP.ttf</file>
         <file>qml/RoChatContent.qml</file>
         <file>qml/GameOverlay.qml</file>
+        <file>qml/RoGuild.qml</file>
+        <file>qml/RoCommerce.qml</file>
+        <file>qml/RoCommercePanel.qml</file>
         <file>qml/RoSkillTree.qml</file>
         <file>data/skill_tree_catalog.json</file>
         <file>qml/SpikeOverlay.qml</file>

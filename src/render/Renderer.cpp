@@ -1360,8 +1360,10 @@ void CRenderer::FlushRenderList() {
         m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE);
         m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
         m_renderDevice->SetTextureStageState(1, D3DTSS_TEXCOORDINDEX, 1);
-        m_renderDevice->SetTextureStageState(1, D3DTSS_COLORARG1, D3DTA_TEXTURE | D3DTA_ALPHAREPLICATE);
-        m_renderDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_MODULATE);
+        // Ref/Renderer.cpp uses MODULATEALPHA_ADDCOLOR (18): baked shadow
+        // alpha multiplies the base, while RGB adds authored colored lights.
+        m_renderDevice->SetTextureStageState(1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+        m_renderDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_MODULATEALPHA_ADDCOLOR);
         m_renderDevice->SetTextureStageState(1, D3DTSS_COLORARG2, D3DTA_CURRENT);
         m_renderDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
         m_oldTexture = nullptr;

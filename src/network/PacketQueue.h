@@ -17,6 +17,9 @@ public:
     bool PeekData(int len, char* dst) const;
     bool RemoveData(int len);
     int  GetSize() const;
+    // Valid until the next queue mutation; lets send() consume queued bytes
+    // without imposing an artificial chunk size on application packets.
+    const char* ReadData() const { return GetSize() > 0 ? m_buf + m_frontPos : nullptr; }
     void InsertData(int len, const char* src);
 
     // Compatibility wrappers used by current connection code.

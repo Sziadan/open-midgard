@@ -1,5 +1,10 @@
 #include "Gr2Monster.h"
 #include "res/Gr2Reader.h"
+#include "res/Bitmap.h"
+#include "core/GuildEmblemKey.h"
+#include "core/GuildFlagTexture.h"
+#include "gamemode/GameMode.h"
+#include "network/Connection.h"
 #include "core/File.h"
 #include "core/Timer.h"
 #include "render/Renderer.h"
@@ -33,6 +38,7 @@ struct Instance {
     float clock=0,facing=0,idleStart=0;
     bool resumedIdle=false,finished=false,hasBounds=false;
     RECT bounds{};
+    u32 loggedGuild=0,loggedEmblemVersion=0;
     std::vector<ro::gr2::Matrix> matrices;
     std::vector<std::array<float,3>> positions,normals;
     std::vector<tlvertex3d> projected;
@@ -41,6 +47,8 @@ struct Instance {
 std::map<std::string,std::unique_ptr<Asset>> assets;
 std::map<std::string,std::future<std::unique_ptr<CpuAsset>>> pending;
 std::map<u32,std::unique_ptr<Instance>> instances;
+struct GuildTexture {u32 version;std::unique_ptr<CTexture> texture;};
+std::map<u32,GuildTexture> guildTextures;
 
 std::vector<unsigned char> ReadBytes(const std::string& path)
 {
@@ -172,7 +180,10 @@ bool RenderGr2Monster(const Gr2MonsterState& state,const matrix& view)
         // emblem. Its embedded green emblem.tif is an authoring placeholder.
         // Until an emblem resource is available, Ref uses a transparent image;
         // omitting that surface is equivalent and leaves the banner intact.
-        if(state.job==722 && meshIndex==1)continue;
+        const bool guildMark=state.job==722 && meshIndex==1;
+        CTexture* emblem=guildMark?Gr2GuildEmblemTexture(state.guildId,state.emblemVersion):nullptr;
+        if(guildMark && !emblem)continue;
+        const unsigned before=triangles;
         if(mesh.batches.empty())continue;
         ro::gr2::Skin(mesh,instance.matrices,instance.positions,instance.normals);
         instance.projected.resize(mesh.vertices.size());instance.valid.assign(mesh.vertices.size(),0);
@@ -193,7 +204,7 @@ bool RenderGr2Monster(const Gr2MonsterState& state,const matrix& view)
             minX=(std::min)(minX,out.x);maxX=(std::max)(maxX,out.x);minY=(std::min)(minY,out.y);maxY=(std::max)(maxY,out.y);
         }
         for(const auto& batch:mesh.batches) {
-            if(batch.texture<0 || batch.texture>=static_cast<int>(asset->textures.size()))continue;
+            if(!guildMark && (batch.texture<0 || batch.texture>=static_cast<int>(asset->textures.size())))continue;
             for(int triangle=0;triangle<batch.count;++triangle) {
                 const size_t first=static_cast<size_t>(batch.first+triangle)*3;
                 const int indices[3]={mesh.indices[first],mesh.indices[first+1],mesh.indices[first+2]};
@@ -201,7 +212,7 @@ bool RenderGr2Monster(const Gr2MonsterState& state,const matrix& view)
                 if(!valid)continue;
                 RPFace* face=g_renderer.BorrowNullRP();if(!face)continue;
                 face->primType=D3DPT_TRIANGLELIST;face->verts=face->m_verts;face->numVerts=3;face->indices=nullptr;face->numIndices=0;
-                CTexture* texture=asset->textures[batch.texture].get();
+                CTexture* texture=guildMark?emblem:asset->textures[batch.texture].get();
                 face->tex=texture;face->mtPreset=0;face->cullMode=D3DCULL_NONE;
                 face->srcAlphaMode=D3DBLEND_SRCALPHA;face->destAlphaMode=D3DBLEND_INVSRCALPHA;
                 const unsigned contentW=texture->m_surfaceUpdateWidth?texture->m_surfaceUpdateWidth:texture->m_w;
@@ -220,6 +231,10 @@ bool RenderGr2Monster(const Gr2MonsterState& state,const matrix& view)
                 // flag's overlapping front/back strips and frame correctly.
                 g_renderer.AddRP(face,(state.color>>24)<255?1:0);++triangles;
             }
+        }
+        if(guildMark && triangles>before && (instance.loggedGuild!=state.guildId || instance.loggedEmblemVersion!=state.emblemVersion)) {
+            instance.loggedGuild=state.guildId;instance.loggedEmblemVersion=state.emblemVersion;
+            DbgLog("[GuildFlag] rendered emblem actor=%u guild=%u version=%u triangles=%u\n",state.gid,state.guildId,state.emblemVersion,triangles-before);
         }
     }
     instance.hasBounds=minX<maxX && minY<maxY;
@@ -242,6 +257,46 @@ bool Gr2MonsterMotionFinished(u32 gid,int state,u32 start)
     return found!=instances.end() && found->second->state==state && found->second->start==start && found->second->finished;
 }
 void ReleaseGr2Monster(u32 gid) {instances.erase(gid);}
-void ClearGr2Monsters() {pending.clear();instances.clear();assets.clear();}
+void ClearGr2Monsters() {pending.clear();instances.clear();assets.clear();guildTextures.clear();}
 void PreloadGr2Monsters() {for(int job:{1288,722,1324,1285,1286,1287})StartAsset(job);}
 void WaitForGr2Monsters() {for(auto& load:pending)load.second.wait();}
+
+CTexture* Gr2GuildEmblemTexture(u32 guildId,u32 version,const std::vector<unsigned char>* bitmap)
+{
+    if(!guildId || !version)return nullptr;
+    const auto found=guildTextures.find(guildId);
+    if(found!=guildTextures.end() && found->second.version==version)return found->second.texture.get();
+    if(!bitmap || bitmap->empty())return nullptr;
+    CBitmapRes decoded;
+    if(!decoded.LoadFromBuffer("guild-emblem.bmp",bitmap->data(),static_cast<int>(bitmap->size())) || decoded.m_width!=24 || decoded.m_height!=24 || !decoded.m_data)return nullptr;
+    auto pixels=ro::guild::FlagEmblemCanvas(decoded.m_data);
+    auto texture=std::make_unique<CTexture>();
+    constexpr int extent=ro::guild::FlagTextureSize;
+    if(!texture->Create(extent,extent,PF_A8R8G8B8,false))return nullptr;
+    texture->Update(0,0,extent,extent,pixels.data(),true,extent*4);
+    CTexture* result=texture.get();guildTextures[guildId]={version,std::move(texture)};
+    DbgLog("[GuildFlag] cached emblem guild=%u version=%u\n",guildId,version);
+    return result;
+}
+
+u32 PrepareGr2FlagEmblem(CGameMode& mode,u32 guildId,u32 advertisedVersion)
+{
+    if(!guildId)return 0;
+    const auto cached=mode.m_guildEmblems.find(guildId);
+    // Zero in a flag spawn is an unspecified version, not an absent emblem.
+    // The server's 0152 download supplies its actual current version.
+    if(cached!=mode.m_guildEmblems.end() && (!advertisedVersion || cached->second.version==advertisedVersion)) {
+        const u32 version=cached->second.version;
+        Gr2GuildEmblemTexture(guildId,version,&cached->second.bitmap);
+        return version;
+    }
+    const u32 now=GetTickCount();const auto requested=mode.m_emblemRequestTicks.find(guildId);
+    if(requested==mode.m_emblemRequestTicks.end() || now-requested->second>=5000) {
+        const u8 packet[6]={0x51,1,static_cast<u8>(guildId),static_cast<u8>(guildId>>8),static_cast<u8>(guildId>>16),static_cast<u8>(guildId>>24)};
+        if(CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),6)) {
+            mode.m_emblemRequestTicks[guildId]=now;
+            DbgLog("[GuildFlag] request guild=%u advertisedVersion=%u\n",guildId,advertisedVersion);
+        }
+    }
+    return 0;
+}

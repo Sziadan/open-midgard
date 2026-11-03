@@ -1056,7 +1056,9 @@ cbuffer DrawConstants : register(b0)
     float g_fogColorG;
     float g_fogColorB;
     uint g_flags;
-    float3 g_padding;
+    float g_padding0;
+    float g_padding1;
+    float g_padding2;
 };
 
 Texture2D g_texture0 : register(t0);
@@ -1133,6 +1135,10 @@ float4 PSMain(VSOutput input) : SV_Target
     if ((g_flags & 64u) != 0u) {
         float lightmapAlpha = g_texture1.Sample(g_sampler0, input.uv1).a;
         color.rgb *= lightmapAlpha.xxx;
+    }
+    if ((g_flags & 256u) != 0u) {
+        float4 lightmap = g_texture1.Sample(g_sampler0, input.uv1);
+        color.rgb = saturate(color.rgb * lightmap.a + lightmap.rgb);
     }
 
     if ((g_flags & 128u) != 0u) {

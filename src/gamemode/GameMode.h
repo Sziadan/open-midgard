@@ -21,6 +21,13 @@ struct NamePair {
     std::string guildTitle;
 };
 
+struct GuildEmblemImage {
+    u32 version=0;
+    std::vector<unsigned char> bitmap;
+    bool decoded=false;
+    std::string imageUri;
+};
+
 struct CellPos {
     int x, y;
 };
@@ -210,6 +217,10 @@ public:
     std::vector<std::string> m_warpMapDestinations;
     std::list<u32> m_visibleTrapList;
     std::list<u32> m_emblemReqGdidQueue;
+    std::map<u32, GuildEmblemImage> m_guildEmblems;
+    std::map<u32, u32> m_emblemRequestTicks;
+    u32 m_pendingEmblemGuild=0, m_pendingEmblemVersion=0, m_pendingEmblemTick=0;
+    std::vector<unsigned char> m_pendingEmblemData;
     u32 m_lastEmblemReqTick;
     u32 m_lastNameWaitingListTick;
     

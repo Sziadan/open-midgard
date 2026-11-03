@@ -1,4 +1,5 @@
 #include "UIWindowMgr.h"
+#include "gamemode/Commerce.h"
 #include "UILoadingWnd.h"
 #include "UINewChatWnd.h"
 #include "UIBasicInfoWnd.h"
@@ -9,6 +10,7 @@
 #include "UIJoinPartyAcceptWnd.h"
 #include "UIMessengerGroupWnd.h"
 #include "UIPartyOptionWnd.h"
+#include "UIGuildWnd.h"
 #include "UINpcInputWnd.h"
 #include "UIChooseWnd.h"
 #include "UISelectCartWnd.h"
@@ -1005,6 +1007,11 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_partyOptionWnd->SetShow(1);
         return m_partyOptionWnd;
 
+    case WID_GUILDWND:
+        if(!m_guildWnd){m_guildWnd=new UIGuildWnd();m_children.push_back(m_guildWnd);}
+        m_children.remove(m_guildWnd);m_children.push_back(m_guildWnd);
+        m_guildWnd->SetShow(1);return m_guildWnd;
+
     case WID_CHOOSESELLBUYWND:
         if (!m_chooseSellBuyWnd) {
             m_chooseSellBuyWnd = new UIChooseSellBuyWnd();
@@ -1307,6 +1314,9 @@ bool UIWindowMgr::ToggleWindow(int windowId)
     case WID_STATUSWND:
         window = m_statusWnd;
         break;
+    case WID_GUILDWND:
+        window = m_guildWnd;
+        break;
     case WID_ITEMWND:
         window = m_itemWnd;
         break;
@@ -1434,6 +1444,7 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     if (window == m_partyOptionWnd) {
         m_partyOptionWnd = nullptr;
     }
+    if(window==m_guildWnd)m_guildWnd=nullptr;
     if (window == m_npcInputWnd) {
         m_npcInputWnd = nullptr;
     }
@@ -1530,6 +1541,7 @@ void UIWindowMgr::RemoveAllWindows()
     m_joinPartyAcceptWnd = nullptr;
     m_messengerGroupWnd = nullptr;
     m_partyOptionWnd = nullptr;
+    m_guildWnd = nullptr;
     m_npcInputWnd = nullptr;
     m_chooseSellBuyWnd = nullptr;
     m_itemShopWnd = nullptr;
@@ -2364,7 +2376,21 @@ UIWindow* UIWindowMgr::HitTestWindow(int x, int y) const
 
 bool UIWindowMgr::HasWindowAtPoint(int x, int y) const
 {
-    return HitTestWindow(x, y) != nullptr;
+    return ro::commerce::HitTest(x,y) || HitTestWindow(x, y) != nullptr;
+}
+
+bool UIWindowMgr::HasGameplayInputModal() const
+{
+    if(HasActiveNpcDialog()||IsCapturingShortcutKeyBinding())return true;
+    const UIWindow* windows[]={m_optionWnd,m_waitWnd,m_loadingWnd,m_joinPartyAcceptWnd,m_skillSelectWnd,m_chooseSellBuyWnd};
+    for(const auto* w:windows)if(w&&w->m_show)return true;
+    return false;
+}
+bool UIWindowMgr::HasNativePopupAtPoint(int x,int y) const
+{
+    const UIWindow* windows[]={m_itemInfoWnd,m_skillDescribeWnd};
+    for(const auto* w:windows)if(w&&w->m_show&&x>=w->m_x&&y>=w->m_y&&x<w->m_x+w->m_w&&y<w->m_y+w->m_h)return true;
+    return false;
 }
 
 void UIWindowMgr::OnChar(char c)
@@ -2442,6 +2468,9 @@ bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bo
             return true;
         case 'Z':
             ToggleWindow(WID_MESSENGERGROUPWND);
+            return true;
+        case 'G':
+            ToggleWindow(WID_GUILDWND);
             return true;
         default:
             break;
