@@ -84,3 +84,7 @@ Found the replay build cache had `RO_ENABLE_DEV_DEPLOY=ON`, contrary to the earl
 ## 2026-11-03 — PK44.01 applicability scope draft (blocked)
 
 Because PK44 depends only on completed PK01/PK02, recorded an independent scope draft for its 59 provisional primary parents (48 login/character, 11 map) while PK03.04 remains blocked. Reverified all 15 pinned server-source hashes and traced the visible later guards for roulette, achievements/title, attendance and clan emitters; did not classify or close any row, and left dressroom, guild storage, reputation and all login/character variants open. A separate code-review agent could not access the workspace/source files and gave no approval. PK44.01 remains BLOCKED. Evidence: `evidence/PK44.01-scope.md`. Stable checkpoint subject: `packet(PK44.01): scope later applicability review`.
+
+## 2026-11-03 — PK03.04 disconnect refusal source trace
+
+Traced server `0x00B2` restart type 1 and `0x018A` quit requests to their common `0x018B` reply. The `0x018B` result is request-context dependent: a type-1 return-to-character refusal is one case, while the separate quit-to-Windows action also receives this reply. Confirmed Ref has a receive route and branch behavior, while the rebuilt client currently frames/routes only `0x00B3`; the pending-action flow therefore needs a reviewed contract covering both requests and response branches. This source trace is not independent approval and closes no row. Evidence: `evidence/PK03.04-replay-audit.md`.
