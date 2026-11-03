@@ -147,6 +147,9 @@ void UISelectServerWnd::SyncGeometry()
     int y = (logicalH - m_h) / 2;
     if (g_windowMgr.m_loginWnd) {
         x = g_windowMgr.m_loginWnd->m_x;
+        if (IsQtUiRuntimeEnabled()) {
+            x += (g_windowMgr.m_loginWnd->m_w - m_w) / 2;
+        }
         y = g_windowMgr.m_loginWnd->m_y - m_h - kWindowGapAboveLogin;
     }
 

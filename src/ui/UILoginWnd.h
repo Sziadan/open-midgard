@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIFrameWnd.h"
+#include "LoginLayout.h"
 #include "UIShopCommon.h"
 #include "render/DC.h"
 #include "platform/WindowsCompat.h"
@@ -28,7 +29,7 @@ public:
     void SetWallpaperName(const std::string& wallpaperName);
     bool HandleQtMouseDown(int x, int y);
     void EnsureQtLayout();
-    bool GetQtPanelBitmap(const unsigned int** pixels, int* width, int* height);
+    loginLayout::Layout GetQtLayout() const;
     void RefreshRememberedUserIdStorage();
     const char* GetLoginText() const;
     int GetPasswordLength() const;

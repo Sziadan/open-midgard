@@ -2,6 +2,7 @@ set(RO_QTUI_SOURCES
     QtUiRuntime.h
     QtUiSpikeBridge.h
     QtUiSpikeBridge.cpp
+    QtChatInput.cpp
     QtUiState.h
     QtUiSpikeState.h
     QtUiStateAdapter.h
@@ -12,6 +13,9 @@ set(RO_QTUI_SOURCES
 )
 
 add_library(ro_qtui STATIC ${RO_QTUI_SOURCES})
+if(WIN32)
+    target_link_libraries(ro_qtui PUBLIC imm32)
+endif()
 
 set_target_properties(ro_qtui PROPERTIES
     AUTOMOC ON

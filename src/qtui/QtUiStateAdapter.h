@@ -14,6 +14,7 @@ public:
 
     QObject* stateObject() const;
     void setLastInput(const QString& value);
+    void syncChat();
     bool syncMenu(RenderBackendType activeBackend,
         RenderBackendType nativeOverlayBackend);
     bool syncGameplay(CGameMode& mode,

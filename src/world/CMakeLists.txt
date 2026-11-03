@@ -19,7 +19,14 @@ add_library(ro_world STATIC
     MsgEffect.cpp
     Granny.h
     Granny.cpp
+    Gr2Monster.cpp
+    ../res/Gr2Reader.cpp
+    ../res/Gr2Pose.cpp
 )
+
+if(RO_ENABLE_QT6_UI)
+    target_link_libraries(ro_world PRIVATE Qt6::Core Qt6::Qml)
+endif()
 
 target_include_directories(ro_world PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(ro_world PUBLIC

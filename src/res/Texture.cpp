@@ -4,10 +4,15 @@
 #include "render3d/Device.h"
 #include "render3d/GraphicsSettings.h"
 #include "render3d/RenderDevice.h"
+#include "xbrz.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <cstdint>
+#include <list>
+#include <mutex>
+#include <unordered_map>
 #include <vector>
 #include "../DebugLog.h"
 
@@ -448,7 +453,7 @@ void BuildSmoothUpscale(const unsigned int* src, int srcWidth, int srcHeight, in
     }
 }
 
-bool BuildTextureUpscale(const unsigned int* src, int srcWidth, int srcHeight, int srcPitch, int scale, const char* textureName,
+bool BuildTextureUpscaleUncached(const unsigned int* src, int srcWidth, int srcHeight, int srcPitch, int scale, const char* textureName,
     bool convertColorKey, std::vector<unsigned int>* dst)
 {
     if (!src || !dst || srcWidth <= 0 || srcHeight <= 0 || scale <= 1) {
@@ -465,6 +470,30 @@ bool BuildTextureUpscale(const unsigned int* src, int srcWidth, int srcHeight, i
             std::memcpy(packed.data() + static_cast<size_t>(y) * static_cast<size_t>(srcWidth), srcRow, static_cast<size_t>(packedPitch));
         }
         packedSrc = packed.data();
+    }
+
+    const bool isLightmap = IsLightmapAtlasName(textureName);
+    if (!isLightmap && GetCachedGraphicsSettings().textureUpscaleAlgorithm == TextureUpscaleAlgorithm::Xbrz
+        && scale >= 2 && scale <= 4) {
+        std::vector<unsigned int> xbrzSource;
+        const unsigned int* xbrzInput = packedSrc;
+        if (convertColorKey) {
+            xbrzSource.resize(static_cast<size_t>(srcWidth) * static_cast<size_t>(srcHeight));
+            for (size_t index = 0; index < xbrzSource.size(); ++index) {
+                xbrzSource[index] = PixelForUpscale(packedSrc[index], true);
+            }
+            xbrzInput = xbrzSource.data();
+        }
+        dst->resize(static_cast<size_t>(srcWidth * scale) * static_cast<size_t>(srcHeight * scale));
+        xbrz::scale(static_cast<size_t>(scale), xbrzInput, dst->data(), srcWidth, srcHeight, xbrz::ColorFormat::ARGB);
+        if (convertColorKey) {
+            for (unsigned int& pixel : *dst) {
+                if (((pixel >> 24) & 0xFFu) == 0u) {
+                    pixel = 0x00FF00FFu;
+                }
+            }
+        }
+        return true;
     }
 
     const TextureUpscaleKind kind = ChooseTextureUpscaleKind(textureName, packedSrc, srcWidth, srcHeight, convertColorKey);
@@ -489,6 +518,84 @@ bool BuildTextureUpscale(const unsigned int* src, int srcWidth, int srcHeight, i
     }
 
     BuildSmoothUpscale(packedSrc, srcWidth, srcHeight, scale, convertColorKey, convertColorKey, dst);
+    return true;
+}
+
+// Cache by pixels, rather than resource names: sprite frames, palettes, and
+// partial uploads can change while retaining the same texture name.
+bool BuildTextureUpscale(const unsigned int* src, int width, int height, int pitch, int scale, const char* name,
+    bool colorKey, std::vector<unsigned int>* dst)
+{
+    if (!src || !dst || width <= 0 || height <= 0 || scale <= 1) {
+        return false;
+    }
+    // Lightmaps change frequently and should not evict reusable asset images.
+    if (IsLightmapAtlasName(name)) {
+        return BuildTextureUpscaleUncached(src, width, height, pitch, scale, name, colorKey, dst);
+    }
+    struct Entry {
+        std::uint64_t hash;
+        int width, height, scale;
+        TextureUpscaleAlgorithm algorithm;
+        bool colorKey;
+        std::vector<unsigned int> source, result;
+        size_t Bytes() const { return (source.size() + result.size()) * sizeof(unsigned int); }
+    };
+    static std::list<Entry> entries;
+    static std::unordered_map<std::uint64_t, std::list<Entry>::iterator> index;
+    static size_t bytes = 0;
+    static std::mutex mutex;
+    constexpr size_t budget = 64u * 1024u * 1024u;
+    const auto algorithm = GetCachedGraphicsSettings().textureUpscaleAlgorithm;
+    std::vector<unsigned int> packed(static_cast<size_t>(width) * height);
+    std::uint64_t hash = 14695981039346656037ull;
+    for (int y = 0; y < height; ++y) {
+        const auto* row = reinterpret_cast<const unsigned int*>(reinterpret_cast<const unsigned char*>(src) + static_cast<size_t>(y) * pitch);
+        auto* out = packed.data() + static_cast<size_t>(y) * width;
+        std::memcpy(out, row, static_cast<size_t>(width) * sizeof(unsigned int));
+        for (int x = 0; x < width; ++x) {
+            hash = (hash ^ out[x]) * 1099511628211ull;
+        }
+    }
+    for (unsigned int value : { static_cast<unsigned int>(width), static_cast<unsigned int>(height),
+        static_cast<unsigned int>(scale), static_cast<unsigned int>(algorithm), static_cast<unsigned int>(colorKey) }) {
+        hash = (hash ^ value) * 1099511628211ull;
+    }
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        const auto found = index.find(hash);
+        if (found != index.end()) {
+            const auto entry = found->second;
+            if (entry->width == width && entry->height == height && entry->scale == scale
+                && entry->algorithm == algorithm && entry->colorKey == colorKey && entry->source == packed) {
+                *dst = entry->result;
+                entries.splice(entries.begin(), entries, entry);
+                return true;
+            }
+        }
+    }
+    if (!BuildTextureUpscaleUncached(packed.data(), width, height, width * sizeof(unsigned int), scale, name, colorKey, dst)) {
+        return false;
+    }
+    const size_t cost = (packed.size() + dst->size()) * sizeof(unsigned int);
+    if (cost <= budget) {
+        std::lock_guard<std::mutex> lock(mutex);
+        // Replacement also handles hash collisions and simultaneous requests.
+        const auto old = index.find(hash);
+        if (old != index.end()) {
+            bytes -= old->second->Bytes();
+            entries.erase(old->second);
+            index.erase(old);
+        }
+        while (!entries.empty() && (bytes + cost > budget || entries.size() >= 512)) {
+            bytes -= entries.back().Bytes();
+            index.erase(entries.back().hash);
+            entries.pop_back();
+        }
+        entries.push_front({ hash, width, height, scale, algorithm, colorKey, std::move(packed), *dst });
+        index[hash] = entries.begin();
+        bytes += cost;
+    }
     return true;
 }
 

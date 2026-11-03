@@ -9166,6 +9166,9 @@ bool UpdateReferenceMapMagicZone(CEffectPrim* prim)
 bool UpdateReferenceMapParticle(CEffectPrim* prim)
 {
     CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    // Map effects can tick while the loading stages have not created the view
+    // yet. Preserve their state until camera-dependent updates can resume.
+    if (!mode || !mode->m_view) return true;
     CView* view = mode->m_view;
     const short longitude = static_cast<short>(view->GetCameraLongitude());
     prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);

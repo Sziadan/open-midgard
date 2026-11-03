@@ -177,6 +177,7 @@ public:
     void SnapWindowToNearby(UIWindow* window, int* x, int* y) const;
     void EnsureChatWindowVisible();
     bool HasActiveNpcDialog() const;
+    bool CanRouteQtChatInput() const;
     void CloseNpcDialogWindows();
     void ClosePlayerContextMenu();
     void CloseNpcShopWindows();

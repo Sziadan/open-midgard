@@ -8,6 +8,7 @@
 //===========================================================================
 #include <map>
 #include <winsock2.h>
+#include "world/Gr2Monster.h"
 #include <windowsx.h>
 #include "WinMain.h"
 #include "Types.h"
@@ -508,6 +509,7 @@ int ReadRegistry()
 // ---------------------------------------------------------------------------
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if(msg==WM_UNICHAR && wParam==UNICODE_NOCHAR)return TRUE;
     switch (msg) {
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
@@ -657,15 +659,20 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     case WM_CHAR:
-        g_windowMgr.OnChar(static_cast<char>(wParam));
+    {
+        const wchar_t character=static_cast<wchar_t>(wParam);
+        char bytes[8]{};
+        const int count=WideCharToMultiByte(CP_ACP,0,&character,1,bytes,sizeof(bytes),nullptr,nullptr);
+        for(int i=0;i<count;++i)g_windowMgr.OnChar(bytes[i]);
         return 0;
+    }
 
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
         g_windowMgr.OnKeyDown(static_cast<int>(wParam));
         return 0;
     }
-    return DefWindowProcA(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
 // ---------------------------------------------------------------------------
@@ -679,15 +686,15 @@ bool InitApp(HINSTANCE hInstance, int nCmdShow)
     if (FindWindowA(WINDOW_NAME, nullptr))
         g_multiSTOP = true;
 
-    WNDCLASSA wc    = {};
+    WNDCLASSW wc    = {};
     wc.style        = CS_DBLCLKS;
     wc.lpfnWndProc  = WindowProc;
     wc.hInstance    = hInstance;
     wc.hIcon        = LoadIconA(hInstance, MAKEINTRESOURCEA(kAppIconResourceId));
     wc.hCursor      = nullptr;
     wc.hbrBackground= nullptr;
-    wc.lpszClassName= WINDOW_NAME;
-    RegisterClassA(&wc);
+    wc.lpszClassName= L"open-midgard";
+    RegisterClassW(&wc);
 
     const WindowMode windowMode = GetStartupWindowMode();
     const RECT monitorRect = GetPrimaryMonitorRect();
@@ -712,8 +719,8 @@ bool InitApp(HINSTANCE hInstance, int nCmdShow)
         windowHeight = monitorRect.bottom - monitorRect.top;
     }
 
-    g_hMainWnd = CreateWindowExA(
-        0, WINDOW_NAME, WINDOW_NAME,
+    g_hMainWnd = CreateWindowExW(
+        0, L"open-midgard", L"open-midgard",
         windowStyle,
         winLeft, winTop,
         windowWidth,
@@ -742,10 +749,10 @@ bool InitApp(HINSTANCE hInstance, int nCmdShow)
 void CheckSystemMessage()
 {
     MSG msg;
-    while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+    while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
     {
         TranslateMessage(&msg);
-        DispatchMessageA(&msg);
+        DispatchMessageW(&msg);
     }
 }
 
@@ -935,6 +942,8 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     const bool healRenderPreview = std::getenv("RO_HEAL_PREVIEW_OUT") != nullptr;
     if (!healRenderPreview) SetFocus(g_hMainWnd);
 
+    PreloadGr2Monsters();
+
     // --- Enter the main game loop ---
     // Mode 0 = Login, Mode 1 = Game.
     if (healRenderPreview) {
@@ -957,6 +966,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     g_buabridge.Shutdown();
     DbgLog("[Shutdown] Lua shutdown done\n");
     DbgLog("[Shutdown] Qt UI runtime shutdown start\n");
+    ClearGr2Monsters();
     ShutdownQtUiRuntime();
     DbgLog("[Shutdown] Qt UI runtime shutdown done\n");
     DbgLog("[Shutdown] Resource manager unload start\n");

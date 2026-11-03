@@ -143,11 +143,14 @@ private:
         GraphicsRow_WindowMode,
         GraphicsRow_AntiAliasing,
         GraphicsRow_TextureUpscale,
+        GraphicsRow_TextureUpscaleAlgorithm,
         GraphicsRow_AnisotropicFiltering,
         GraphicsRow_VerticalSync,
         GraphicsRow_FrameLimit,
         GraphicsRow_RenderScale,
         GraphicsRow_SpriteFiltering,
+        GraphicsRow_Ssao,
+        GraphicsRow_ConfusionWaves,
     };
 
     struct ResolutionEntry {

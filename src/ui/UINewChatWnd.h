@@ -63,6 +63,9 @@ public:
     void ClearInputFocus();
     const std::vector<ChatLine>& GetLines() const;
     const std::vector<ChatLine>& GetVisibleLines() const;
+    std::vector<ChatLine> GetFilteredLines() const;
+    void FocusQtInput(int field);
+    void SetQtInputText(int field, const std::string& text);
     const std::string& GetWhisperTargetText() const;
     const std::string& GetInputText() const;
     const std::vector<std::string>& GetInputHistory() const;

@@ -1,5 +1,15 @@
 # Qt GUI rendering checks
 
+Login/loading fixtures use a synthetic gradient wallpaper and no game assets.
+Run `gui_preview.exe <scale> <case> [small]` for `login`, `login-password`,
+`login-long`, `loading`, `loading-long`, `loading-zero` and `loading-full`.
+Use scales 1, 1.25, 1.5 and 2; the normal viewport is 1280 x 720 and `small`
+uses 640 x 480. Login checks compare all fields, the remember row and every
+button with production LoginLayout.h rectangles. Loading checks require the
+message and track to remain inside the card and the fill inside the track,
+including indeterminate progress and a value above 100%. Output names include
+the case and `-small` suffix. The full matrix contains 56 fixtures.
+
 This standalone Windows tool loads the real `GameOverlay.qml` with the real `QtUiState` class and synthetic character/options/status/shortcut data. It does not log in, read account data, or change client settings.
 
 Run from the repository root with the installed MinGW Qt kit:

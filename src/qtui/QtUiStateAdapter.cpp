@@ -292,7 +292,7 @@ QString FormatBaseStatusText(int baseValue, int plusValue)
     return QString::number(baseValue);
 }
 
-QString FormatBasicGaugeText(const char* label, int current, int maximum)
+QString FormatBasicGaugeText(const char* label, long long current, long long maximum)
 {
     return QStringLiteral("%1      %2  /  %3")
         .arg(ToQString(label))
@@ -332,7 +332,7 @@ QString FormatGroupedNumber(int value)
     return grouped;
 }
 
-QString FormatBasicInfoMiniStatusText(int hp, int maxHp, int sp, int maxSp, int money)
+QString FormatBasicInfoMiniStatusText(long long hp, long long maxHp, long long sp, long long maxSp, int money)
 {
     return QStringLiteral("HP %1 / %2  |  SP %3 / %4  |  %5 Z")
         .arg(hp)
@@ -793,8 +793,16 @@ void PopulateLoginPanelState(QtUiState* state)
         loginWnd->IsSaveAccountChecked(),
         loginWnd->IsPasswordFocused());
     QVariantMap loginPanelLabels;
-    loginPanelLabels.insert(QStringLiteral("title"), QStringLiteral("Login"));
-    loginPanelLabels.insert(QStringLiteral("saveLabel"), QStringLiteral("Save"));
+    loginPanelLabels.insert(QStringLiteral("title"), QStringLiteral("OpenMidgard"));
+    loginPanelLabels.insert(QStringLiteral("saveLabel"), QStringLiteral("Remember account ID"));
+    const auto layout = loginWnd->GetQtLayout();
+    const auto rectangle = [](const loginLayout::Rect& rect) {
+        return QVariantMap{{"x", rect.x}, {"y", rect.y}, {"width", rect.width}, {"height", rect.height}};
+    };
+    loginPanelLabels.insert(QStringLiteral("compact"), layout.compact);
+    loginPanelLabels.insert(QStringLiteral("account"), rectangle(layout.account));
+    loginPanelLabels.insert(QStringLiteral("password"), rectangle(layout.password));
+    loginPanelLabels.insert(QStringLiteral("remember"), rectangle(layout.remember));
     state->setLoginPanelLabels(loginPanelLabels);
 
     QVariantList buttons;
@@ -1841,7 +1849,7 @@ void PopulateChatWindowState(QtUiState* state)
     state->setChatWindowInputText(ToQString(chatWnd->GetInputText()));
 
     QVariantList lines;
-    const std::vector<ChatLine>& visibleLines = chatWnd->GetVisibleLines();
+    const std::vector<ChatLine> visibleLines = chatWnd->GetFilteredLines();
     lines.reserve(static_cast<qsizetype>(visibleLines.size()));
     for (const ChatLine& line : visibleLines) {
         QVariantMap entry;
@@ -3610,7 +3618,7 @@ QVariantMap MakeSkillTalkboxAnchor(const QString& text, int centerX, int bottomY
     return anchor;
 }
 
-QVariantMap MakePartyHpBarAnchor(int centerX, int topY, int currentHp, int maxHp)
+QVariantMap MakePartyHpBarAnchor(int centerX, int topY, long long currentHp, long long maxHp)
 {
     QVariantMap anchor;
     anchor.insert(QStringLiteral("kind"), QStringLiteral("partyHpBar"));
@@ -3681,6 +3689,18 @@ QtUiStateAdapter::QtUiStateAdapter()
     : m_state(new QtUiState())
 {
     m_state->setLastInput(QStringLiteral("No routed input yet."));
+    QObject::connect(m_state, &QtUiState::chatFocusRequested, [this](int field) {
+        if(auto* chat=g_windowMgr.m_chatWnd)chat->FocusQtInput(field);
+        syncChat();
+    });
+    QObject::connect(m_state, &QtUiState::chatEditRequested, [this](int field,const QString& text) {
+        if(auto* chat=g_windowMgr.m_chatWnd)chat->SetQtInputText(field,text.toUtf8().toStdString());
+        syncChat();
+    });
+    QObject::connect(m_state, &QtUiState::chatKeyRequested, [this](int key) {
+        if(auto* chat=g_windowMgr.m_chatWnd)chat->HandleKeyDown(key);
+        syncChat();
+    });
     QObject::connect(m_state, &QtUiState::closeCutinRequested, [] {
         if (CGameMode* const mode = g_modeMgr.GetCurrentGameMode()) {
             mode->SendMsg(113, reinterpret_cast<msgparam_t>(""), static_cast<msgparam_t>(-1), 0);
@@ -3698,6 +3718,8 @@ QObject* QtUiStateAdapter::stateObject() const
 {
     return m_state;
 }
+
+void QtUiStateAdapter::syncChat() { PopulateChatWindowState(m_state); }
 
 void QtUiStateAdapter::setLastInput(const QString& value)
 {

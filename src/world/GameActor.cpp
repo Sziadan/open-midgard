@@ -1,5 +1,7 @@
 #include "GameActor.h"
+#include "Gr2Monster.h"
 #include "ActorTint.h"
+#include "Emotion.h"
 #include "MsgEffect.h"
 #include "RagEffect.h"
 #include "World.h"
@@ -4087,6 +4089,12 @@ void CRenderObject::SetAction(int act, int mot, int type) {
 }
 
 void CRenderObject::ProcessMotion() {
+    if (const CGameActor* actor = dynamic_cast<const CGameActor*>(this)) {
+        if (Gr2MonsterModel(actor->m_job)) {
+            m_isMotionFinished = Gr2MonsterMotionFinished(actor->m_gid,actor->m_stateId,actor->m_stateStartTick);
+            return;
+        }
+    }
     CActRes* actRes = ResolveRuntimeActorActRes(this);
     if (CGameActor* actor = dynamic_cast<CGameActor*>(this)) {
         if (actor->m_isPc != 0) {
@@ -4631,6 +4639,7 @@ void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, m
 
 CGameActor::~CGameActor()
 {
+    if (Gr2MonsterModel(m_job)) ReleaseGr2Monster(m_gid);
     DestroySkillRechargeGage();
     DetachEffects();
     const std::vector<CMsgEffect*> ownedMsgEffects(m_msgEffectList.begin(), m_msgEffectList.end());
@@ -5219,7 +5228,7 @@ bool CGameActor::ProcessStatusMsgEffectMessage(int msg)
     case 58:
         if (!m_iceEffect) {
             m_iceEffect = SpawnMsgSprite(5,
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr",
                 "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
                 0,
                 1.0f);
@@ -5231,7 +5240,7 @@ bool CGameActor::ProcessStatusMsgEffectMessage(int msg)
         return true;
     case 62:
         SpawnMsgSprite(6,
-            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr",
             "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
             1,
             1.0f);
@@ -5348,30 +5357,8 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             return;
         }
 
-        int action = 0;
-        switch (emotion) {
-        case 1: action = 1; break;
-        case 2: action = 2; break;
-        case 3: action = 3; break;
-        case 4: action = 5; break;
-        case 5: action = 6; break;
-        case 6: action = 7; break;
-        case 7: action = 8; break;
-        case 8: action = 9; break;
-        case 9: action = 10; break;
-        case 10: action = 12; break;
-        case 11: action = 11; break;
-        case 12: action = 13; break;
-        case 13: action = 14; break;
-        case 14: action = 4; break;
-        default:
-            if (emotion >= 15 && emotion <= 33) {
-                action = emotion;
-            } else if (emotion >= 35 && emotion <= 80) {
-                action = emotion - 1;
-            }
-            break;
-        }
+        const int action = EmotionAction(emotion);
+        if (action < 0) return;
 
         CMsgEffect* effect = new CMsgEffect();
         if (!effect) {
@@ -5379,7 +5366,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         effect->m_msgEffectType = 1;
         effect->m_masterGid = m_gid;
-        effect->m_customSpritePath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr";
+        effect->m_customSpritePath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr";
         effect->m_customActPath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.act";
         effect->m_spriteActionIndex = chatProhibit ? 10 : action;
         effect->m_spriteMotionIndex = chatProhibit ? 15 : 0;
@@ -6003,12 +5990,12 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
 
         if (pcActor->m_gage) {
             pcActor->m_gage->SetMode(0);
-            pcActor->m_gage->SetHp(static_cast<int>(par1), static_cast<int>(par2));
+            pcActor->m_gage->SetHp(static_cast<u32>(par1), static_cast<u32>(par2));
             pcActor->m_gage->SetSp(0, 0);
         }
 
-        m_Hp = static_cast<u16>((std::max)(0, static_cast<int>(par1)));
-        m_MaxHp = static_cast<u16>((std::max)(0, static_cast<int>(par2)));
+        m_Hp = static_cast<u32>(par1);
+        m_MaxHp = static_cast<u32>(par2);
         return;
     }
     case 35: {

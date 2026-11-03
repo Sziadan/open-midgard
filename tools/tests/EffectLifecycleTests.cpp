@@ -6881,6 +6881,19 @@ int main()
         mapBand.height[2] = 5.5f; mapBand.height[3] = 5.25f;
         const int drawsBeforeMapParticle = rngDraws;
         rngValues = {23, 15}; rngCursor = 0;
+        CView* savedMapParticleView = gameMode.m_view;
+        gameMode.m_view = nullptr;
+        check(UpdateReferenceMapParticle(&texturePrim)
+            && mapBand.height[0] == 5.5f && mapBand.height[2] == 5.5f
+            && rngDraws == drawsBeforeMapParticle && rngCursor == 0,
+            "Map particles defer without changing bands or consuming randomness before the loading view exists");
+        gameMode.m_view = savedMapParticleView;
+        CGameMode* savedMapParticleMode = g_modeMgr.current;
+        g_modeMgr.current = nullptr;
+        check(UpdateReferenceMapParticle(&texturePrim)
+            && mapBand.height[0] == 5.5f && rngDraws == drawsBeforeMapParticle,
+            "Map particles tolerate the gap between game modes");
+        g_modeMgr.current = savedMapParticleMode;
         check(UpdateReferenceMapParticle(&texturePrim)
             && mapBand.height[0] == 6.5f && mapBand.height[1] == 5.0f
             && mapBand.height[2] == 4.5f && mapBand.height[3] == 356.0f

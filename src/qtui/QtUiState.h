@@ -288,6 +288,12 @@ class QtUiState : public QObject {
     Q_PROPERTY(QVariantList anchors READ anchors NOTIFY anchorsChanged)
 
 public:
+    Q_INVOKABLE void focusChat(int field) { emit chatFocusRequested(field); }
+    Q_INVOKABLE QString editChat(int field,const QString& text) {
+        emit chatEditRequested(field,text);
+        return field==1?m_chatWindowWhisperTargetText:m_chatWindowInputText;
+    }
+    Q_INVOKABLE void chatKey(int key) { emit chatKeyRequested(key); }
     explicit QtUiState(QObject* parent = nullptr)
         : QObject(parent)
     {
@@ -1980,6 +1986,9 @@ public:
     }
 
 signals:
+    void chatFocusRequested(int field);
+    void chatEditRequested(int field,const QString& text);
+    void chatKeyRequested(int key);
     void backendNameChanged();
     void modeNameChanged();
     void wallpaperRevisionChanged();

@@ -18,7 +18,7 @@ endif()
 
 option(RO_ENABLE_MILES_AUDIO "Enable Miles Sound System runtime loading" ON)
 option(RO_ENABLE_BINK_VIDEO "Enable Bink video runtime loading" ON)
-option(RO_ENABLE_GRANNY "Enable Granny runtime loading" ON)
+set(RO_ENABLE_GRANNY OFF CACHE BOOL "Legacy Granny SDK loading is retired; the client uses its independent GR2 reader" FORCE)
 option(RO_ENABLE_IJL "Enable Intel JPEG Library runtime loading" OFF)
 # Off by default: only the documented preset flow (`-DRO_ENABLE_DEV_DEPLOY=ON`)
 # may overwrite the playable exe in OldRO. Ad-hoc build directories (Win32,
@@ -198,6 +198,7 @@ set_target_properties(open_midgard PROPERTIES OUTPUT_NAME "open-midgard")
 if(RO_ENABLE_DEV_DEPLOY)
     target_compile_definitions(open_midgard PRIVATE RO_DEV_DEPLOY_DIR="D:/Spel/OldRO")
 endif()
+
 
 target_link_libraries(open_midgard PRIVATE
     ro_main

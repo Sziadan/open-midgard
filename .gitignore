@@ -61,6 +61,10 @@ tools/tests/*
 !tools/tests/*.h
 !tools/tests/*.inc
 !tools/tests/*.tsv
+!tools/tests/chat_unicode/
+!tools/tests/chat_unicode/CMakeLists.txt
+!tools/tests/gr2_pose_reference.json
+!tools/build_gr2_reader.py
 !tools/tests/replay/
 tools/tests/__pycache__/
 !tools/tests/check_prim3dquadhorn.py

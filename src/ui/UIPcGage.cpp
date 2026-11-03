@@ -1,4 +1,5 @@
 #include "UIPcGage.h"
+#include "core/Vitals.h"
 
 #include "main/WinMain.h"
 #include "qtui/QtUiRuntime.h"
@@ -15,21 +16,21 @@ void FillRectColor(HDC hdc, const RECT& rect, COLORREF color)
     DeleteObject(brush);
 }
 
-void DrawBar(HDC hdc, const RECT& rect, int amount, int totalAmount, COLORREF fillColor)
+void DrawBar(HDC hdc, const RECT& rect, long long amount, long long totalAmount, COLORREF fillColor)
 {
     FillRectColor(hdc, rect, RGB(20, 25, 155));
 
     RECT inner{ rect.left + 1, rect.top + 1, rect.right - 1, rect.bottom - 1 };
     FillRectColor(hdc, inner, RGB(30, 36, 58));
 
-    const int total = (std::max)(1, totalAmount);
-    const int clampedAmount = (std::max)(0, (std::min)(amount, total));
+    const long long total = (std::max)(1LL, totalAmount);
+    const long long clampedAmount = (std::max)(0LL, (std::min)(amount, total));
     const int innerWidth = inner.right - inner.left;
     if (innerWidth <= 0 || clampedAmount <= 0) {
         return;
     }
 
-    const int fillWidth = (innerWidth * clampedAmount) / total;
+    const int fillWidth = VitalBarFill(clampedAmount, total, innerWidth);
     if (fillWidth <= 0) {
         return;
     }
@@ -42,14 +43,14 @@ void DrawBar(HDC hdc, const RECT& rect, int amount, int totalAmount, COLORREF fi
 
 UIPcGage::UIPcGage() = default;
 
-void UIPcGage::SetHp(int amount, int totalAmount)
+void UIPcGage::SetHp(long long amount, long long totalAmount)
 {
     m_hp = amount;
     m_maxHp = totalAmount;
     Invalidate();
 }
 
-void UIPcGage::SetSp(int amount, int totalAmount)
+void UIPcGage::SetSp(long long amount, long long totalAmount)
 {
     m_sp = amount;
     m_maxSp = totalAmount;
@@ -62,22 +63,22 @@ void UIPcGage::SetMode(int mode)
     Invalidate();
 }
 
-int UIPcGage::GetHp() const
+long long UIPcGage::GetHp() const
 {
     return m_hp;
 }
 
-int UIPcGage::GetMaxHp() const
+long long UIPcGage::GetMaxHp() const
 {
     return m_maxHp;
 }
 
-int UIPcGage::GetSp() const
+long long UIPcGage::GetSp() const
 {
     return m_sp;
 }
 
-int UIPcGage::GetMaxSp() const
+long long UIPcGage::GetMaxSp() const
 {
     return m_maxSp;
 }

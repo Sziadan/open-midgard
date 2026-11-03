@@ -6,22 +6,22 @@ class UIPcGage : public UIWindow {
 public:
     UIPcGage();
 
-    void SetHp(int amount, int totalAmount);
-    void SetSp(int amount, int totalAmount);
+    void SetHp(long long amount, long long totalAmount);
+    void SetSp(long long amount, long long totalAmount);
     void SetMode(int mode);
 
-    int GetHp() const;
-    int GetMaxHp() const;
-    int GetSp() const;
-    int GetMaxSp() const;
+    long long GetHp() const;
+    long long GetMaxHp() const;
+    long long GetSp() const;
+    long long GetMaxSp() const;
     int GetMode() const;
 
     void OnDraw() override;
 
 private:
-    int m_hp = 0;
-    int m_maxHp = 0;
-    int m_sp = 0;
-    int m_maxSp = 0;
+    long long m_hp = 0;
+    long long m_maxHp = 0;
+    long long m_sp = 0;
+    long long m_maxSp = 0;
     int m_mode = 0;
 };

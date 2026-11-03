@@ -1,4 +1,5 @@
 #pragma once
+#include "core/Vitals.h"
 #include <array>
 #include <mutex>
 #include <unordered_map>
@@ -47,8 +48,8 @@ struct FRIEND_INFO {
     int role = 0;
     int state = 0;
     u32 color = 0;
-    int partyHp = 0;
-    int partyMaxHp = 0;
+    long long partyHp = 0;
+    long long partyMaxHp = 0;
 };
 
 enum class NpcShopMode : int {
@@ -194,6 +195,8 @@ public:
     void SetSelectedCharacterAppearance(const CHARACTER_INFO& info);
     const CHARACTER_INFO* GetSelectedCharacterInfo() const;
     CHARACTER_INFO* GetMutableSelectedCharacterInfo();
+    const CharacterVitals& GetCharacterVitals() const { return m_characterVitals; }
+    bool UpdateCharacterVital(u32 type, u32 value) { return m_characterVitals.Update(type, value); }
     void SetBaseExpValue(int value);
     void SetNextBaseExpValue(int value);
     void SetJobExpValue(int value);
@@ -252,7 +255,7 @@ public:
     unsigned int GetMemberAidFromParty(const char* characterName) const;
     void DeleteMemberFromParty(const char* characterName);
     void ChangeRoleFromParty(unsigned int aid, int role);
-    bool SetPartyMemberHp(unsigned int aid, int hp, int maxHp);
+    bool SetPartyMemberHp(unsigned int aid, long long hp, long long maxHp);
     const FRIEND_INFO* FindPartyMemberByAid(unsigned int aid) const;
     void RefreshPartyUI();
     const std::list<FRIEND_INFO>& GetPartyList() const;
@@ -280,6 +283,7 @@ public:
     int FindShortcutSlotByItemId(unsigned int itemId) const;
     int FindShortcutSlotBySkillId(int skillId) const;
     const std::vector<ACTIVE_STATUS_ICON>& GetActiveStatusIcons() const;
+    bool IsStatusIconActive(int statusType) const;
     int GetPlayerSkillPointCount() const;
     int GetWeaponTypeByItemId(int itemId) const;
     u32 GetForceAnimEndTick(u32 aid) const;
@@ -330,6 +334,7 @@ private:
     std::list<u32> m_pingTimeList;
     u32 m_averagePingTime;
     CHARACTER_INFO m_selectedCharacterInfo;
+    CharacterVitals m_characterVitals;
     bool m_hasSelectedCharacterInfo;
     int m_baseExpValue;
     int m_nextBaseExpValue;

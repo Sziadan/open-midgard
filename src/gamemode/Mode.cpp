@@ -239,7 +239,13 @@ void CModeMgr::Run(int startMode, const char* worldName)
     while (m_loopCond)
     {
         MainLoopWatchdogSetStage("PeekMessage");
-        if (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+        if (
+#if RO_PLATFORM_WINDOWS
+            PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)
+#else
+            PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE)
+#endif
+        )
         {
             if (msg.message == WM_QUIT) {
                 m_loopCond = 0;
@@ -247,7 +253,11 @@ void CModeMgr::Run(int startMode, const char* worldName)
             }
             MainLoopWatchdogSetStage("DispatchMessage");
             TranslateMessage(&msg);
+#if RO_PLATFORM_WINDOWS
+            DispatchMessageW(&msg);
+#else
             DispatchMessageA(&msg);
+#endif
         }
         else {
             const bool reloadCurrentMode = m_curMode

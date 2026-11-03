@@ -1,3 +1,4 @@
+#include "world/Gr2Monster.h"
 #include "Session.h"
 #include "../core/File.h"
 #include "../core/ClientInfoLocale.h"
@@ -1367,6 +1368,8 @@ void CSession::SetPlayerPosDir(int x, int y, int dir)
 void CSession::SetSelectedCharacterAppearance(const CHARACTER_INFO& info)
 {
     m_selectedCharacterInfo = info;
+    m_characterVitals = { static_cast<u16>(info.hp), static_cast<u16>(info.maxhp),
+        static_cast<u16>(info.sp), static_cast<u16>(info.maxsp) };
     m_hasSelectedCharacterInfo = true;
     m_skillItems.clear();
     ClearActiveStatusIcons();
@@ -1570,6 +1573,14 @@ void CSession::PruneExpiredStatusIcons(u32 serverTime)
             return entry.hasTimer && entry.expireServerTime <= serverTime;
         }),
         m_activeStatusIcons.end());
+}
+
+bool CSession::IsStatusIconActive(int statusType) const
+{
+    const u32 now=GetServerTime();
+    return std::any_of(m_activeStatusIcons.begin(),m_activeStatusIcons.end(),[&](const ACTIVE_STATUS_ICON& icon) {
+        return icon.statusType==statusType && (!icon.hasTimer || icon.expireServerTime>now);
+    });
 }
 
 void CSession::ClearHomunSkillItems()
@@ -2120,12 +2131,12 @@ void CSession::ChangeRoleFromParty(unsigned int aid, int role)
     }
 }
 
-bool CSession::SetPartyMemberHp(unsigned int aid, int hp, int maxHp)
+bool CSession::SetPartyMemberHp(unsigned int aid, long long hp, long long maxHp)
 {
     for (FRIEND_INFO& member : m_partyList) {
         if (member.AID == aid) {
-            member.partyHp = (std::max)(0, hp);
-            member.partyMaxHp = (std::max)(0, maxHp);
+            member.partyHp = (std::max)(0LL, hp);
+            member.partyMaxHp = (std::max)(0LL, maxHp);
             return true;
         }
     }
@@ -2449,6 +2460,7 @@ const char* CSession::GetJobDisplayName(int job) const
 
 const char* CSession::GetJobName(int job) const
 {
+    if (const char* model=Gr2MonsterModel(job)) return std::strrchr(model,'\\')+1;
     if (job == JT_G_MASTER) {
         return "JT_G_MASTER";
     }

@@ -14,6 +14,9 @@ add_library(ro_res STATIC
     Ijl.h Ijl.cpp
 )
 
+target_sources(ro_res PRIVATE ${CMAKE_SOURCE_DIR}/third_party/xbrz/xbrz.cpp)
+target_include_directories(ro_res PRIVATE ${CMAKE_SOURCE_DIR}/third_party/xbrz)
+
 target_include_directories(ro_res PUBLIC ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(ro_res PUBLIC
     ro_core

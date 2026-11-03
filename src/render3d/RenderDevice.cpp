@@ -5,12 +5,19 @@
 #include "DebugLog.h"
 #include "GraphicsSettings.h"
 #include "ModernRenderState.h"
+#include "ScreenEffects.h"
 #include "platform/WindowsCompat.h"
 #include "qtui/QtPlatformWindow.h"
 #include "render/Renderer.h"
 #include "res/Texture.h"
+#include "world/World.h"
+#include "world/GameActor.h"
+#include "session/Session.h"
+#include "gamemode/GameMode.h"
+#include "gamemode/View.h"
 #include "VulkanFxaaShaders.generated.h"
 #include "VulkanSmaaShaders.generated.h"
+#include "VulkanSsaoShaders.generated.h"
 #include "VulkanShaders.generated.h"
 
 #if RO_HAS_NATIVE_D3D12
@@ -25,6 +32,7 @@
 #endif
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -5163,12 +5171,12 @@ public:
           m_device(VK_NULL_HANDLE), m_graphicsQueue(VK_NULL_HANDLE), m_presentQueue(VK_NULL_HANDLE),
           m_swapChain(VK_NULL_HANDLE), m_swapChainFormat(VK_FORMAT_UNDEFINED),
                     m_renderPass(VK_NULL_HANDLE), m_overlayRenderPass(VK_NULL_HANDLE), m_depthFormat(VK_FORMAT_D16_UNORM),
-                                        m_sceneImage(VK_NULL_HANDLE), m_sceneMemory(VK_NULL_HANDLE), m_sceneImageView(VK_NULL_HANDLE), m_sceneFramebuffer(VK_NULL_HANDLE), m_smaaEdgeImage(VK_NULL_HANDLE), m_smaaEdgeMemory(VK_NULL_HANDLE), m_smaaEdgeImageView(VK_NULL_HANDLE), m_smaaEdgeFramebuffer(VK_NULL_HANDLE), m_smaaBlendWeightImage(VK_NULL_HANDLE), m_smaaBlendWeightMemory(VK_NULL_HANDLE), m_smaaBlendWeightImageView(VK_NULL_HANDLE), m_smaaBlendWeightFramebuffer(VK_NULL_HANDLE),
+                                        m_sceneImage(VK_NULL_HANDLE), m_sceneMemory(VK_NULL_HANDLE), m_sceneImageView(VK_NULL_HANDLE), m_sceneFramebuffer(VK_NULL_HANDLE), m_ssaoImage(VK_NULL_HANDLE), m_ssaoMemory(VK_NULL_HANDLE), m_ssaoImageView(VK_NULL_HANDLE), m_ssaoFramebuffer(VK_NULL_HANDLE), m_ssaoReady(false), m_smaaEdgeImage(VK_NULL_HANDLE), m_smaaEdgeMemory(VK_NULL_HANDLE), m_smaaEdgeImageView(VK_NULL_HANDLE), m_smaaEdgeFramebuffer(VK_NULL_HANDLE), m_smaaBlendWeightImage(VK_NULL_HANDLE), m_smaaBlendWeightMemory(VK_NULL_HANDLE), m_smaaBlendWeightImageView(VK_NULL_HANDLE), m_smaaBlendWeightFramebuffer(VK_NULL_HANDLE),
           m_depthImage(VK_NULL_HANDLE), m_depthMemory(VK_NULL_HANDLE), m_depthImageView(VK_NULL_HANDLE),
                     m_descriptorSetLayout(VK_NULL_HANDLE), m_postDescriptorSetLayout(VK_NULL_HANDLE),
                                         m_descriptorPool(VK_NULL_HANDLE), m_sampler(VK_NULL_HANDLE), m_postSampler(VK_NULL_HANDLE),
-                                                                                m_pipelineLayout(VK_NULL_HANDLE), m_postPipelineLayout(VK_NULL_HANDLE), m_postPipeline(VK_NULL_HANDLE), m_postSmaaEdgePipeline(VK_NULL_HANDLE), m_postSmaaBlendWeightPipeline(VK_NULL_HANDLE), m_postSmaaNeighborhoodPipeline(VK_NULL_HANDLE), m_vertexShaderTlModule(VK_NULL_HANDLE),
-                                                                                m_vertexShaderLmModule(VK_NULL_HANDLE), m_fragmentShaderModule(VK_NULL_HANDLE), m_postVertexShaderModule(VK_NULL_HANDLE), m_postFxaaFragmentShaderModule(VK_NULL_HANDLE), m_postSmaaEdgeFragmentShaderModule(VK_NULL_HANDLE), m_postSmaaBlendWeightFragmentShaderModule(VK_NULL_HANDLE), m_postSmaaNeighborhoodFragmentShaderModule(VK_NULL_HANDLE),
+                                        m_pipelineLayout(VK_NULL_HANDLE), m_postPipelineLayout(VK_NULL_HANDLE), m_postPipeline(VK_NULL_HANDLE), m_postSsaoPipeline(VK_NULL_HANDLE), m_postSmaaEdgePipeline(VK_NULL_HANDLE), m_postSmaaBlendWeightPipeline(VK_NULL_HANDLE), m_postSmaaNeighborhoodPipeline(VK_NULL_HANDLE), m_vertexShaderTlModule(VK_NULL_HANDLE),
+                                                                                m_vertexShaderLmModule(VK_NULL_HANDLE), m_fragmentShaderModule(VK_NULL_HANDLE), m_postVertexShaderModule(VK_NULL_HANDLE), m_postFxaaFragmentShaderModule(VK_NULL_HANDLE), m_postSmaaEdgeFragmentShaderModule(VK_NULL_HANDLE), m_postSmaaBlendWeightFragmentShaderModule(VK_NULL_HANDLE), m_postSmaaNeighborhoodFragmentShaderModule(VK_NULL_HANDLE), m_postSsaoFragmentShaderModule(VK_NULL_HANDLE),
                     m_commandPool(VK_NULL_HANDLE), m_immediateCommandPool(VK_NULL_HANDLE), m_pendingImmediateUploadCommandBuffer(VK_NULL_HANDLE),
           m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE),
           m_inFlightFence(VK_NULL_HANDLE), m_immediateFence(VK_NULL_HANDLE), m_graphicsQueueFamilyIndex(kInvalidQueueFamilyIndex),
@@ -5753,11 +5761,80 @@ public:
         vkCmdEndRenderPass(commandBuffer);
         m_renderPassActive = false;
 
+        VkImage postSourceImage = m_sceneImage;
+        VkImageView postSourceView = m_sceneImageView;
+        const GraphicsSettings& screenSettings = GetCachedGraphicsSettings();
+        const unsigned int screenFlags = ResolveScreenEffectFlags(screenSettings.ssaoEnabled,
+            screenSettings.confusionWaves, g_session.m_isEffectOn, g_world.m_player ? g_world.m_player->m_healthState : 0,
+            g_world.m_player && g_session.IsStatusIconActive(34));
+        const bool useScreenPass = m_ssaoReady && screenFlags != 0;
+        if (useScreenPass) {
+            if (!TransitionImage(
+                    m_sceneImage,
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    VK_ACCESS_SHADER_READ_BIT,
+                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)) {
+                return false;
+            }
+            VkDescriptorSet ssaoDescriptorSet = AllocatePostDescriptorSet(m_sceneImageView, m_depthImageView, true);
+            if (ssaoDescriptorSet == VK_NULL_HANDLE
+                || !BeginFullscreenPostRenderPass(m_renderPass, m_ssaoFramebuffer, m_sceneExtent)) {
+                return false;
+            }
+            ModernDrawConstants ssaoConstants{};
+            ssaoConstants.screenWidth = static_cast<float>((std::max)(1u, m_sceneExtent.width));
+            ssaoConstants.screenHeight = static_cast<float>((std::max)(1u, m_sceneExtent.height));
+            ssaoConstants.flags = screenFlags;
+            ssaoConstants.alphaRef = static_cast<float>(timeGetTime() % 8640u) * (7.0f / 24.0f) * (3.14159265f / 180.0f);
+            ssaoConstants.fogStart = 0.5f; // Blindness center, normalized to the world viewport.
+            ssaoConstants.fogEnd = 0.5f;
+            ssaoConstants.fogColorR = (std::min)(ssaoConstants.screenWidth, ssaoConstants.screenHeight) * 0.25f;
+            CGameMode* gameMode = dynamic_cast<CGameMode*>(g_world.m_curMode);
+            if ((screenFlags & 4u) && g_world.m_player && gameMode && gameMode->m_view) {
+                const matrix& view = gameMode->m_view->GetViewMatrix();
+                const auto project = [&](const vector3d& pos, float* x, float* y) {
+                    const float z = pos.x*view.m[0][2]+pos.y*view.m[1][2]+pos.z*view.m[2][2]+view.m[3][2];
+                    if (!std::isfinite(z) || z <= 10.0f) return false;
+                    *x = g_renderer.m_xoffset + (pos.x*view.m[0][0]+pos.y*view.m[1][0]+pos.z*view.m[2][0]+view.m[3][0])*g_renderer.m_hpc/z;
+                    *y = g_renderer.m_yoffset + (pos.x*view.m[0][1]+pos.y*view.m[1][1]+pos.z*view.m[2][1]+view.m[3][1])*g_renderer.m_vpc/z;
+                    return std::isfinite(*x) && std::isfinite(*y);
+                };
+                const vector3d pos = g_world.m_player->m_pos;
+                float cx=0, cy=0;
+                if (project(pos, &cx, &cy)) {
+                    const float width = static_cast<float>((std::max)(1, m_renderWidth));
+                    const float height = static_cast<float>((std::max)(1, m_renderHeight));
+                    ssaoConstants.fogStart = cx / width;
+                    ssaoConstants.fogEnd = cy / height;
+                    const float cell = g_world.m_attr ? static_cast<float>(g_world.m_attr->m_zoom) : 5.0f;
+                    float cellPixels = 0.0f;
+                    for (const vector3d offset : { vector3d{pos.x+cell,pos.y,pos.z}, vector3d{pos.x,pos.y,pos.z+cell} }) {
+                        float x=0, y=0;
+                        if (project(offset, &x, &y)) cellPixels = (std::max)(cellPixels, std::hypot(x-cx,y-cy));
+                    }
+                    if (cellPixels > 0) ssaoConstants.fogColorR = 5.0f * cellPixels * ssaoConstants.screenWidth / width;
+                }
+            }
+            DrawFullscreenPostPass(m_postSsaoPipeline, ssaoDescriptorSet, ssaoConstants);
+            vkCmdEndRenderPass(commandBuffer);
+            if (!TransitionImage(
+                    m_ssaoImage,
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    VK_ACCESS_SHADER_READ_BIT,
+                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)) {
+                return false;
+            }
+            postSourceImage = m_ssaoImage;
+            postSourceView = m_ssaoImageView;
+        }
+
         if (!IsFxaaEnabled() && !IsSmaaEnabled()) {
             if (vkCmdBlitImage == nullptr
                 || !TransitionImage(
-                    m_sceneImage,
-                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    postSourceImage,
+                    useScreenPass ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                     VK_ACCESS_TRANSFER_READ_BIT,
                     VK_PIPELINE_STAGE_TRANSFER_BIT)
@@ -5781,7 +5858,7 @@ public:
             blitRegion.dstOffsets[1].z = 1;
             vkCmdBlitImage(
                 commandBuffer,
-                m_sceneImage,
+                postSourceImage,
                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                 m_swapChainImages[m_currentImageIndex],
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -5800,7 +5877,7 @@ public:
             return true;
         }
 
-        if (!TransitionImage(
+        if (!useScreenPass && !TransitionImage(
                 m_sceneImage,
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -5828,7 +5905,7 @@ public:
                 return false;
             }
 
-            VkDescriptorSet edgeDescriptorSet = AllocatePostDescriptorSet(m_sceneImageView, VK_NULL_HANDLE);
+            VkDescriptorSet edgeDescriptorSet = AllocatePostDescriptorSet(postSourceView, VK_NULL_HANDLE);
             if (edgeDescriptorSet == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_renderPass, m_smaaEdgeFramebuffer, m_sceneExtent)) {
                 return false;
             }
@@ -5860,13 +5937,13 @@ public:
                 return false;
             }
 
-            VkDescriptorSet neighborhoodDescriptorSet = AllocatePostDescriptorSet(m_sceneImageView, m_smaaBlendWeightImageView);
+            VkDescriptorSet neighborhoodDescriptorSet = AllocatePostDescriptorSet(postSourceView, m_smaaBlendWeightImageView);
             if (neighborhoodDescriptorSet == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_overlayRenderPass, m_framebuffers[m_currentImageIndex], m_swapChainExtent)) {
                 return false;
             }
             DrawFullscreenPostPass(m_postSmaaNeighborhoodPipeline, neighborhoodDescriptorSet, constants);
         } else {
-            VkDescriptorSet postDescriptorSet = AllocatePostDescriptorSet(m_sceneImageView, VK_NULL_HANDLE);
+            VkDescriptorSet postDescriptorSet = AllocatePostDescriptorSet(postSourceView, VK_NULL_HANDLE);
             if (postDescriptorSet == VK_NULL_HANDLE || m_postPipeline == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_overlayRenderPass, m_framebuffers[m_currentImageIndex], m_swapChainExtent)) {
                 return false;
             }
@@ -6032,6 +6109,10 @@ private:
         case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
             return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+            return VK_ACCESS_SHADER_READ_BIT;
+
         default:
             return 0;
         }
@@ -6048,6 +6129,10 @@ private:
 
         case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
             return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+            return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
         case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
             return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -6322,6 +6407,7 @@ private:
             || !GetVulkanPostShaderProgram(AntiAliasingMode::SMAA, &postSmaaProgram)
             || !CreateShaderModuleFromBytes(postFxaaProgram.vertexBytes, postFxaaProgram.vertexByteCount, &m_postVertexShaderModule)
             || !CreateShaderModuleFromBytes(postFxaaProgram.fragmentBytes, postFxaaProgram.fragmentByteCount, &m_postFxaaFragmentShaderModule)
+            || !CreateShaderModuleFromBytes(kVulkanPostSsaoPsSpirv, kVulkanPostSsaoPsSpirvSize, &m_postSsaoFragmentShaderModule)
             || !CreateShaderModuleFromBytes(postSmaaProgram.fragmentBytes, postSmaaProgram.fragmentByteCount, &m_postSmaaEdgeFragmentShaderModule)
             || !CreateShaderModuleFromBytes(kVulkanPostSmaaBlendWeightPsSpirv, kVulkanPostSmaaBlendWeightPsSpirvSize, &m_postSmaaBlendWeightFragmentShaderModule)
             || !CreateShaderModuleFromBytes(kVulkanPostSmaaNeighborhoodPsSpirv, kVulkanPostSmaaNeighborhoodPsSpirvSize, &m_postSmaaNeighborhoodFragmentShaderModule)) {
@@ -6451,6 +6537,10 @@ private:
         if (m_device != VK_NULL_HANDLE && m_postFxaaFragmentShaderModule != VK_NULL_HANDLE) {
             vkDestroyShaderModule(m_device, m_postFxaaFragmentShaderModule, nullptr);
             m_postFxaaFragmentShaderModule = VK_NULL_HANDLE;
+        }
+        if (m_device != VK_NULL_HANDLE && m_postSsaoFragmentShaderModule != VK_NULL_HANDLE) {
+            vkDestroyShaderModule(m_device, m_postSsaoFragmentShaderModule, nullptr);
+            m_postSsaoFragmentShaderModule = VK_NULL_HANDLE;
         }
         if (m_device != VK_NULL_HANDLE && m_postSmaaNeighborhoodFragmentShaderModule != VK_NULL_HANDLE) {
             vkDestroyShaderModule(m_device, m_postSmaaNeighborhoodFragmentShaderModule, nullptr);
@@ -6776,7 +6866,7 @@ private:
         return pipeline;
     }
 
-    bool CreateDepthResources(const VkExtent2D& extent, VkImage* outImage, VkDeviceMemory* outMemory, VkImageView* outImageView)
+    bool CreateDepthResources(const VkExtent2D& extent, VkImage* outImage, VkDeviceMemory* outMemory, VkImageView* outImageView, bool sampled = false)
     {
         if (!outImage || !outMemory || !outImageView || m_device == VK_NULL_HANDLE || extent.width == 0 || extent.height == 0) {
             return false;
@@ -6797,7 +6887,8 @@ private:
         imageInfo.arrayLayers = 1;
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-        imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+            | (sampled ? VK_IMAGE_USAGE_SAMPLED_BIT : 0u);
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -7215,18 +7306,6 @@ private:
         }
 
         const UINT srcPitch = static_cast<UINT>(pitch > 0 ? pitch : w * static_cast<int>(sizeof(unsigned int)));
-        std::vector<unsigned int> uploadPixels(static_cast<size_t>(w) * static_cast<size_t>(h));
-        for (int row = 0; row < h; ++row) {
-            const unsigned int* srcRow = reinterpret_cast<const unsigned int*>(reinterpret_cast<const unsigned char*>(data) + static_cast<size_t>(row) * srcPitch);
-            unsigned int* dstRow = uploadPixels.data() + static_cast<size_t>(row) * static_cast<size_t>(w);
-            for (int col = 0; col < w; ++col) {
-                unsigned int pixel = srcRow[col];
-                if (!skipColorKey && (pixel & 0x00FFFFFFu) == 0x00FF00FFu) {
-                    pixel = 0x00000000u;
-                }
-                dstRow[col] = pixel;
-            }
-        }
 
         const VkDeviceSize uploadSize = static_cast<VkDeviceSize>(w) * static_cast<VkDeviceSize>(h) * sizeof(unsigned int);
         VkBuffer stagingBuffer = VK_NULL_HANDLE;
@@ -7250,7 +7329,20 @@ private:
             return false;
         }
 
-        std::memcpy(mapped, uploadPixels.data(), static_cast<size_t>(uploadSize));
+        // Convert directly into staging memory instead of allocating and copying
+        // another enlarged image for every upload.
+        for (int row = 0; row < h; ++row) {
+            const auto* srcRow = reinterpret_cast<const unsigned int*>(reinterpret_cast<const unsigned char*>(data) + static_cast<size_t>(row) * srcPitch);
+            auto* dstRow = static_cast<unsigned int*>(mapped) + static_cast<size_t>(row) * w;
+            if (skipColorKey) {
+                std::memcpy(dstRow, srcRow, static_cast<size_t>(w) * sizeof(unsigned int));
+            } else {
+                for (int col = 0; col < w; ++col) {
+                    const unsigned int pixel = srcRow[col];
+                    dstRow[col] = (pixel & 0x00FFFFFFu) == 0x00FF00FFu ? 0u : pixel;
+                }
+            }
+        }
         vkUnmapMemory(m_device, stagingMemory);
     g_vulkanPerfStats.textureMapCopyMs += VulkanNowMs() - mapCopyStartMs;
 
@@ -7488,7 +7580,7 @@ private:
         return descriptorSet;
     }
 
-    VkDescriptorSet AllocatePostDescriptorSet(VkImageView texture0View, VkImageView texture1View)
+    VkDescriptorSet AllocatePostDescriptorSet(VkImageView texture0View, VkImageView texture1View, bool texture1IsDepth = false)
     {
         if (texture0View == VK_NULL_HANDLE || m_device == VK_NULL_HANDLE || m_descriptorPool == VK_NULL_HANDLE
             || m_postDescriptorSetLayout == VK_NULL_HANDLE || m_postSampler == VK_NULL_HANDLE) {
@@ -7514,7 +7606,9 @@ private:
         VkDescriptorImageInfo imageInfos[2]{};
         imageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfos[0].imageView = texture0View;
-        imageInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfos[1].imageLayout = texture1IsDepth
+            ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+            : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfos[1].imageView = texture1View;
 
         VkDescriptorImageInfo samplerInfo{};
@@ -8427,7 +8521,8 @@ private:
         VkImage newDepthImage = VK_NULL_HANDLE;
         VkDeviceMemory newDepthMemory = VK_NULL_HANDLE;
         VkImageView newDepthImageView = VK_NULL_HANDLE;
-        if (!CreateDepthResources(depthExtent, &newDepthImage, &newDepthMemory, &newDepthImageView)) {
+        const bool needsScreenResources = true; // Blindness must work regardless of cosmetic options.
+        if (!CreateDepthResources(depthExtent, &newDepthImage, &newDepthMemory, &newDepthImageView, needsScreenResources)) {
             vkDestroySwapchainKHR(m_device, newSwapChain, nullptr);
             return false;
         }
@@ -8566,8 +8661,15 @@ private:
             }
         } overlayDepthGuard(m_device, &newOverlayDepthImage, &newOverlayDepthMemory, &newOverlayDepthImageView);
         VkImageView framebufferDepthView = newDepthImageView;
-        if (offscreenScene && (sceneExtent.width != extent.width || sceneExtent.height != extent.height)) {
-            if (!CreateDepthResources(extent, &newOverlayDepthImage, &newOverlayDepthMemory, &newOverlayDepthImageView)) {
+        if (offscreenScene && (sceneExtent.width != extent.width || sceneExtent.height != extent.height
+            || needsScreenResources)) {
+            // SSAO also attaches this depth image to its scene-sized framebuffer.
+            // Supersampling can make that framebuffer larger than the swapchain.
+            const VkExtent2D overlayDepthExtent{
+                (std::max)(extent.width, needsScreenResources ? sceneExtent.width : extent.width),
+                (std::max)(extent.height, needsScreenResources ? sceneExtent.height : extent.height)
+            };
+            if (!CreateDepthResources(overlayDepthExtent, &newOverlayDepthImage, &newOverlayDepthMemory, &newOverlayDepthImageView)) {
                 DestroyImageViews(newImageViews);
                 if (newPostPipeline != VK_NULL_HANDLE) {
                     vkDestroyPipeline(m_device, newPostPipeline, nullptr);
@@ -8765,6 +8867,10 @@ private:
         m_commandBuffers = std::move(newCommandBuffers);
         m_currentImageIndex = 0;
         m_overlayPassPrepared = false;
+        if (needsScreenResources && !CreateSsaoSceneResources()) {
+            DbgLog("[Render][Vulkan] Screen effect resources unavailable; continuing without SSAO/distortion.\n");
+            m_bootstrap.initHr = static_cast<int>(VK_SUCCESS);
+        }
         return true;
     }
 
@@ -8793,11 +8899,11 @@ private:
         depthAttachment.format = m_depthFormat;
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
         VkAttachmentReference depthRef{};
         depthRef.attachment = 1;
@@ -8816,6 +8922,14 @@ private:
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
+        VkSubpassDependency depthReadDependency{};
+        depthReadDependency.srcSubpass = 0;
+        depthReadDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+        depthReadDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        depthReadDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        depthReadDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        depthReadDependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
         const VkAttachmentDescription attachments[] = {
             colorAttachment,
             depthAttachment,
@@ -8827,8 +8941,9 @@ private:
         renderPassInfo.pAttachments = attachments;
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
-        renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &dependency;
+        const VkSubpassDependency dependencies[] = { dependency, depthReadDependency };
+        renderPassInfo.dependencyCount = static_cast<uint32_t>(std::size(dependencies));
+        renderPassInfo.pDependencies = dependencies;
 
         const VkResult result = vkCreateRenderPass(m_device, &renderPassInfo, nullptr, outRenderPass);
         if (result != VK_SUCCESS) {
@@ -8867,6 +8982,47 @@ private:
             return false;
         }
         return true;
+    }
+
+    bool CreateSsaoSceneResources()
+    {
+        if (m_sceneImage == VK_NULL_HANDLE || m_depthImageView == VK_NULL_HANDLE
+            || m_overlayDepthImageView == VK_NULL_HANDLE || m_sceneExtent.width == 0 || m_sceneExtent.height == 0) {
+            return false;
+        }
+        if (!CreateSceneColorResources(m_sceneExtent, &m_ssaoImage, &m_ssaoMemory, &m_ssaoImageView)
+            || !CreateSceneFramebuffer(m_renderPass, m_ssaoImageView, m_overlayDepthImageView, m_sceneExtent, &m_ssaoFramebuffer)
+            || !CreatePostPipeline(m_renderPass, m_postSsaoFragmentShaderModule, "main", &m_postSsaoPipeline)) {
+            DestroySsaoSceneResources();
+            return false;
+        }
+        m_ssaoReady = true;
+        return true;
+    }
+
+    void DestroySsaoSceneResources()
+    {
+        m_ssaoReady = false;
+        if (m_device != VK_NULL_HANDLE && m_ssaoFramebuffer != VK_NULL_HANDLE) {
+            vkDestroyFramebuffer(m_device, m_ssaoFramebuffer, nullptr);
+            m_ssaoFramebuffer = VK_NULL_HANDLE;
+        }
+        if (m_device != VK_NULL_HANDLE && m_postSsaoPipeline != VK_NULL_HANDLE) {
+            vkDestroyPipeline(m_device, m_postSsaoPipeline, nullptr);
+            m_postSsaoPipeline = VK_NULL_HANDLE;
+        }
+        if (m_device != VK_NULL_HANDLE && m_ssaoImageView != VK_NULL_HANDLE) {
+            vkDestroyImageView(m_device, m_ssaoImageView, nullptr);
+            m_ssaoImageView = VK_NULL_HANDLE;
+        }
+        if (m_device != VK_NULL_HANDLE && m_ssaoMemory != VK_NULL_HANDLE) {
+            vkFreeMemory(m_device, m_ssaoMemory, nullptr);
+            m_ssaoMemory = VK_NULL_HANDLE;
+        }
+        if (m_device != VK_NULL_HANDLE && m_ssaoImage != VK_NULL_HANDLE) {
+            vkDestroyImage(m_device, m_ssaoImage, nullptr);
+            m_ssaoImage = VK_NULL_HANDLE;
+        }
     }
 
     bool CreateImageViews(const std::vector<VkImage>& images, VkFormat format, std::vector<VkImageView>* outViews)
@@ -8995,6 +9151,10 @@ private:
             vkDestroyPipeline(m_device, m_postPipeline, nullptr);
             m_postPipeline = VK_NULL_HANDLE;
         }
+        if (m_postSsaoPipeline != VK_NULL_HANDLE) {
+            vkDestroyPipeline(m_device, m_postSsaoPipeline, nullptr);
+            m_postSsaoPipeline = VK_NULL_HANDLE;
+        }
         if (m_postSmaaEdgePipeline != VK_NULL_HANDLE) {
             vkDestroyPipeline(m_device, m_postSmaaEdgePipeline, nullptr);
             m_postSmaaEdgePipeline = VK_NULL_HANDLE;
@@ -9008,6 +9168,7 @@ private:
             m_postSmaaNeighborhoodPipeline = VK_NULL_HANDLE;
         }
         DestroyFramebuffers(m_framebuffers);
+        DestroySsaoSceneResources();
         DestroyImageViews(m_swapChainImageViews);
         if (m_smaaBlendWeightFramebuffer != VK_NULL_HANDLE) {
             vkDestroyFramebuffer(m_device, m_smaaBlendWeightFramebuffer, nullptr);
@@ -9466,6 +9627,11 @@ private:
     VkDeviceMemory m_sceneMemory;
     VkImageView m_sceneImageView;
     VkFramebuffer m_sceneFramebuffer;
+    VkImage m_ssaoImage;
+    VkDeviceMemory m_ssaoMemory;
+    VkImageView m_ssaoImageView;
+    VkFramebuffer m_ssaoFramebuffer;
+    bool m_ssaoReady;
     VkImage m_smaaEdgeImage;
     VkDeviceMemory m_smaaEdgeMemory;
     VkImageView m_smaaEdgeImageView;
@@ -9488,6 +9654,7 @@ private:
     VkPipelineLayout m_pipelineLayout;
     VkPipelineLayout m_postPipelineLayout;
     VkPipeline m_postPipeline;
+    VkPipeline m_postSsaoPipeline;
     VkPipeline m_postSmaaEdgePipeline;
     VkPipeline m_postSmaaBlendWeightPipeline;
     VkPipeline m_postSmaaNeighborhoodPipeline;
@@ -9499,6 +9666,7 @@ private:
     VkShaderModule m_postSmaaEdgeFragmentShaderModule;
     VkShaderModule m_postSmaaBlendWeightFragmentShaderModule;
     VkShaderModule m_postSmaaNeighborhoodFragmentShaderModule;
+    VkShaderModule m_postSsaoFragmentShaderModule;
     VkCommandPool m_commandPool;
     VkCommandPool m_immediateCommandPool;
     VkCommandBuffer m_pendingImmediateUploadCommandBuffer;

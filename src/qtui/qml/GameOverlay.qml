@@ -305,78 +305,7 @@ Item {
         }
     }
 
-    RoFrame {
-        showTitle: false
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 42
-        width: Math.min(540, parent.width - 80)
-        height: 92
-        visible: uiState.loadingVisible
 
-        Column {
-            anchors.fill: parent
-            anchors.margins: 16
-            spacing: 8
-
-            Row {
-                width: parent.width
-
-                Text {
-                    id: loadingTitle
-                    text: uiState.loadingProgress > 0 ? "Entering World" : uiState.modeName
-                    color: theme.ink
-                    font.family: theme.fontFamily
-                    font.pixelSize: 22
-                    font.bold: true
-                }
-
-                Item {
-                    width: Math.max(0, parent.width - loadingTitle.implicitWidth - loadingPercent.implicitWidth)
-                    height: 1
-                }
-
-                Text {
-                    id: loadingPercent
-                    text: Math.round(uiState.loadingProgress * 100) + "%"
-                    color: theme.ink
-                    font.family: theme.fontFamily
-                    font.pixelSize: 22
-                    font.bold: true
-                    visible: uiState.loadingProgress > 0
-                }
-            }
-
-            Text {
-                width: parent.width
-                text: uiState.loadingMessage
-                color: theme.ink
-                font.family: theme.fontFamily
-                font.pixelSize: 16
-                elide: Text.ElideRight
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 20
-                radius: theme.buttonRadius
-                color: theme.scrollTrack
-                border.width: 1
-                border.color: theme.focus
-                visible: uiState.loadingProgress > 0
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Math.max(0, (parent.width - 4) * uiState.loadingProgress)
-                    height: parent.height - 4
-                    radius: 3
-                    color: theme.focus
-                }
-            }
-        }
-    }
 
     Item {
         id: uiLayer
@@ -386,6 +315,18 @@ Item {
         height: root.uiScale > 0 ? root.height / root.uiScale : root.height
         scale: root.uiScale
         transformOrigin: Item.TopLeft
+
+        RoLoading {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 24
+            width: Math.max(0, Math.min(540, parent.width - 32))
+            visible: uiState.loadingVisible
+            title: uiState.loadingProgress > 0 ? "Entering world" : "Please wait"
+            message: uiState.loadingMessage
+            progress: uiState.loadingProgress
+            z: 90
+        }
 
     Repeater {
         model: uiState.notifications
@@ -1178,6 +1119,7 @@ Item {
         showTitle: false
         showShadow: false
         id: chatWindowChrome
+        objectName: "chatWindowPanel"
         x: uiState.chatWindowX
         y: uiState.chatWindowY
         width: uiState.chatWindowWidth
@@ -1247,102 +1189,12 @@ Item {
             labelFont: "Segoe UI Symbol"
         }
 
-        Rectangle {
+        RoChatContent {
             x: 10
             y: 46
             width: parent.width - 20
-            height: parent.height - 96
-            radius: theme.buttonRadius
-            color: "#14110e"
-            border.width: 1
-            border.color: theme.focus
-            clip: true
-
-            readonly property int chatTextWidth: width - 10 - parent.scrollBarWidth - parent.scrollBarGap
-
-            Column {
-                id: chatLinesColumn
-                x: 5
-                y: Math.max(6, parent.height - height - 6)
-                width: parent.chatTextWidth
-                spacing: 2
-
-                Repeater {
-                    model: uiState.chatWindowLines
-
-                    delegate: Text {
-                        required property var modelData
-                        width: chatLinesColumn.width
-                        text: modelData.text
-                        textFormat: Text.PlainText
-                        color: modelData.color
-                        font.family: "Segoe UI"
-                        font.pixelSize: parent.parent.parent.chatFontSize
-                        wrapMode: Text.WordWrap
-                    }
-                }
-            }
-
-            RoScrollBar {
-                readonly property int totalLines: Math.max(1, parent.parent.scrollBar.totalLines || 0)
-                readonly property int visibleLineCount: Math.max(1, parent.parent.scrollBar.visibleLineCount || 0)
-                readonly property int firstVisibleLine: Math.max(0, parent.parent.scrollBar.firstVisibleLine || 0)
-                readonly property int scrollDenominator: Math.max(1, totalLines - visibleLineCount)
-                x: parent.width - 5 - width
-                y: 5
-                width: chatWindowChrome.scrollBarWidth
-                height: parent.height - 10
-                visible: chatWindowChrome.scrollBarVisible
-                thumbWidth: Math.max(4, width - 2)
-                thumbHeight: Math.max(18, Math.round(height * visibleLineCount / totalLines))
-                thumbX: 1
-                thumbY: Math.round(Math.max(0, height - thumbHeight) * firstVisibleLine / scrollDenominator)
-            }
-        }
-
-        RoField {
-            x: 10
-            y: parent.height - 38
-            width: 126
-            height: 28
-            emphasize: true
-            editing: uiState.chatWindowWhisperInputActive
-
-            Text {
-                x: 8
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 16
-                text: {
-                    const baseText = uiState.chatWindowWhisperTargetText.length > 0 || uiState.chatWindowWhisperInputActive
-                        ? uiState.chatWindowWhisperTargetText
-                        : "To"
-                    return baseText + (uiState.chatWindowWhisperInputActive ? "_" : "")
-                }
-                color: uiState.chatWindowWhisperInputActive ? theme.ink : theme.muted
-                font.family: "Segoe UI"
-                font.pixelSize: 13
-                elide: Text.ElideLeft
-            }
-        }
-
-        RoField {
-            x: 144
-            y: parent.height - 38
-            width: parent.width - 154
-            height: 28
-            emphasize: true
-            editing: uiState.chatWindowMessageInputActive
-
-            Text {
-                x: 8
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 16
-                text: uiState.chatWindowInputText + (uiState.chatWindowMessageInputActive ? "_" : "")
-                color: uiState.chatWindowMessageInputActive ? theme.ink : theme.muted
-                font.family: "Segoe UI"
-                font.pixelSize: 13
-                elide: Text.ElideLeft
-            }
+            height: parent.height - 56
+            fontPixelSize: chatWindowChrome.chatFontSize
         }
     }
 
@@ -4058,101 +3910,19 @@ Item {
         }
     }
 
-    Rectangle {
+    RoLogin {
         x: uiState.loginPanelX
         y: uiState.loginPanelY
         width: uiState.loginPanelWidth
         height: uiState.loginPanelHeight
-        color: "transparent"
-        border.width: 0
         visible: uiState.loginPanelVisible
-
-        Image {
-            anchors.fill: parent
-            fillMode: Image.Stretch
-            smooth: false
-            cache: false
-            source: parent.visible ? "image://openmidgard/loginpanel" : ""
-        }
-
-        RoField {
-            x: 92
-            y: 29
-            width: 125
-            height: 18
-            editing: !uiState.loginPasswordFocused
-        }
-
-        Text {
-            x: 98
-            y: 31
-            width: 112
-            text: uiState.loginUserId + (!uiState.loginPasswordFocused && root.loginCaretVisible ? "|" : "")
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 12
-            elide: Text.ElideRight
-        }
-
-        RoField {
-            x: 92
-            y: 61
-            width: 125
-            height: 18
-            editing: uiState.loginPasswordFocused
-        }
-
-        Text {
-            x: 98
-            y: 63
-            width: 112
-            text: uiState.loginPasswordMask + (uiState.loginPasswordFocused && root.loginCaretVisible ? "|" : "")
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 12
-            elide: Text.ElideRight
-        }
-
-        RoField {
-            x: 232
-            y: 33
-            width: 16
-            height: 16
-            editing: uiState.loginSaveAccountChecked
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.loginSaveAccountChecked ? "X" : ""
-                color: theme.ink
-                font.family: theme.fontFamily
-                font.pixelSize: 11
-                font.bold: true
-            }
-        }
-
-        Text {
-            x: 250
-            y: 31
-            text: uiState.loginPanelLabels.saveLabel || ""
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 11
-        }
-
-        Repeater {
-            model: uiState.loginButtons
-
-            delegate: RoTextButton {
-                required property var modelData
-                x: (modelData.x || 0) - uiState.loginPanelX
-                y: (modelData.y || 0) - uiState.loginPanelY
-                width: modelData.width || 0
-                height: modelData.height || 0
-                label: modelData.label || ""
-                labelSize: 11
-                labelBold: true
-            }
-        }
+        info: uiState.loginPanelLabels
+        buttons: uiState.loginButtons
+        accountId: uiState.loginUserId
+        passwordMask: uiState.loginPasswordMask
+        passwordFocused: uiState.loginPasswordFocused
+        rememberAccount: uiState.loginSaveAccountChecked
+        caretVisible: root.loginCaretVisible
     }
 
     Rectangle {

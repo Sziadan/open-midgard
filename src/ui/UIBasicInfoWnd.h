@@ -28,10 +28,10 @@ public:
         std::string jobName;
         int level = 0;
         int jobLevel = 0;
-        int hp = 0;
-        int maxHp = 0;
-        int sp = 0;
-        int maxSp = 0;
+        long long hp = 0;
+        long long maxHp = 0;
+        long long sp = 0;
+        long long maxSp = 0;
         int money = 0;
         int weight = 0;
         int maxWeight = 0;

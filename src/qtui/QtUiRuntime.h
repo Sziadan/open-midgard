@@ -21,6 +21,7 @@ class CTexture;
 #if RO_ENABLE_QT6_UI
 bool IsQtUiRuntimeCompiled();
 bool IsQtUiRuntimeEnabled();
+bool QtUiRuntimeNeedsRender();
 void InitializeQtUiRuntime(RoNativeWindowHandle mainWindow);
 void ShutdownQtUiRuntime();
 void ProcessQtUiRuntimeEvents();
@@ -33,6 +34,7 @@ bool RenderQtUiGameplayOverlayTexture(CGameMode& mode, CTexture* texture, int wi
 #else
 inline bool IsQtUiRuntimeCompiled() { return false; }
 inline bool IsQtUiRuntimeEnabled() { return false; }
+inline bool QtUiRuntimeNeedsRender() { return false; }
 inline void InitializeQtUiRuntime(RoNativeWindowHandle) {}
 inline void ShutdownQtUiRuntime() {}
 inline void ProcessQtUiRuntimeEvents() {}

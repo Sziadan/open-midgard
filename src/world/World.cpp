@@ -5,6 +5,7 @@
 #include "world/ActorTint.h"
 #include "world/MsgEffect.h"
 #include "world/3dActor.h"
+#include "world/Gr2Monster.h"
 #include "world/RagEffect.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/View.h"
@@ -15,6 +16,7 @@
 #include "render3d/Device.h"
 #include "render3d/RenderDevice.h"
 #include "core/File.h"
+#include "core/Timer.h"
 #include "res/ActRes.h"
 #include "res/GndRes.h"
 #include "res/ModelRes.h"
@@ -1738,9 +1740,10 @@ public:
         : m_source(source)
         , m_spawnTick(timeGetTime())
         , m_effect(nullptr)
-        , m_useEmitter(source.type == 44 || source.type == 231 || source.type == 247)
-        , m_emitFrames((std::max)(1, static_cast<int>(source.emitSpeed)))
+        , m_useEmitter(source.type >= 0)
+        , m_emitFrames(std::isfinite(source.emitSpeed) ? static_cast<int>((std::max)(0.0f, (std::min)(source.emitSpeed, 1000000.0f))) : 0)
         , m_processCnt(0)
+        , m_emitted(false)
     {
         m_pos = source.pos;
         if (m_useEmitter) {
@@ -1758,22 +1761,33 @@ public:
     u8 OnProcess() override
     {
         if (m_useEmitter) {
-            if (g_world.m_player) {
-                const float dx = g_world.m_player->m_pos.x - m_source.pos.x;
-                const float dz = g_world.m_player->m_pos.z - m_source.pos.z;
-                if (std::sqrt(dx * dx + dz * dz) < 130.0f && m_processCnt >= m_emitFrames) {
-                    m_processCnt = 0;
-                    if (CRagEffect* effect = LaunchEffect(m_source.type, vector3d{}, 0.0f)) {
-                        const vector3d params[2] = {
-                            vector3d{ m_source.param[0], m_source.param[1], m_source.param[2] },
-                            vector3d{ m_source.param[3], 0.0f, 0.0f }
-                        };
-                        effect->SendMsg(effect,
-                            46,
-                            reinterpret_cast<msgparam_t>(params),
-                            0,
-                            0);
-                    }
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (!mode || !mode->m_view || !mode->m_world || !mode->m_world->m_player || !g_isSkipFrame) return 1;
+            const vector3d& playerPos = mode->m_world->m_player->m_pos;
+            const float dx = playerPos.x - m_source.pos.x;
+            const float dz = playerPos.z - m_source.pos.z;
+            if (!g_session.m_isEffectOn || dx * dx + dz * dz >= 130.0f * 130.0f) {
+                if (m_emitted) DetachEffects();
+                m_emitted = false;
+                m_processCnt = m_emitFrames;
+                return 1;
+            }
+            // Ref CEffectMaker: positive intervals repeat; zero launches once
+            // while in range. Use the real effect id, not the RSW editor label.
+            if ((m_emitFrames == 0 && !m_emitted)
+                || (m_emitFrames > 0 && m_processCnt >= m_emitFrames)) {
+                m_processCnt = 0;
+                if (CRagEffect* effect = LaunchEffect(m_source.type, vector3d{}, 0.0f)) {
+                    const vector3d params[2] = {
+                        vector3d{ m_source.param[0], m_source.param[1], m_source.param[2] },
+                        vector3d{ m_source.param[3], 0.0f, 0.0f }
+                    };
+                    effect->SendMsg(effect,
+                        46,
+                        reinterpret_cast<msgparam_t>(params),
+                        0,
+                        0);
+                    m_emitted = true;
                 }
             }
             ++m_processCnt;
@@ -1927,6 +1941,7 @@ private:
     bool m_useEmitter;
     int m_emitFrames;
     int m_processCnt;
+    bool m_emitted;
 };
 
 vector3d LerpVec3(const vector3d& a, const vector3d& b, float t)
@@ -2706,7 +2721,7 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
 
     CPc* actor = entry.actor;
     const u32 now = timeGetTime();
-    if (!actor || !actor->ShouldDrawSprite(now) || !actor->m_billboardTexture) {
+    if (!actor || Gr2MonsterModel(actor->m_job) || !actor->ShouldDrawSprite(now) || !actor->m_billboardTexture) {
         return false;
     }
 
@@ -2916,6 +2931,16 @@ bool BuildBillboardRenderEntry(CPc* actor,
 
     if (!actor->ShouldDrawSprite(timeGetTime())) {
         return false;
+    }
+    if (Gr2MonsterModel(actor->m_job)) {
+        RECT bounds{};tlvertex3d base{};
+        if (!GetGr2MonsterBounds(actor->m_gid,&bounds) || !ProjectPoint(g_renderer,viewMatrix,actor->m_pos,&base)) return false;
+        *outEntry={};outEntry->actor=actor;
+        outEntry->left=bounds.left;outEntry->top=bounds.top;outEntry->right=bounds.right;outEntry->bottom=bounds.bottom;
+        outEntry->baseX=base.x;outEntry->baseY=base.y;outEntry->baseZ=base.z;outEntry->baseOow=base.oow;
+        outEntry->screenY=base.y;outEntry->depthKey=base.oow;
+        outEntry->labelX=base.x;outEntry->labelY=base.y+kActorLabelBaseYOffset;
+        return true;
     }
     if (!actor->EnsureBillboardTexture(cameraLongitude) || !actor->m_billboardTexture) {
         return false;
@@ -3319,7 +3344,8 @@ u32 ResolveWaterColor(const C3dGround& ground)
         const u8 r = static_cast<u8>((std::max)(0.0f, (std::min)(255.0f, ground.m_ambientCol.x * 255.0f)));
         const u8 g = static_cast<u8>((std::max)(0.0f, (std::min)(255.0f, ground.m_ambientCol.y * 255.0f)));
         const u8 b = static_cast<u8>((std::max)(0.0f, (std::min)(255.0f, ground.m_ambientCol.z * 255.0f)));
-        return 0x90000000u | (static_cast<u32>(r) << 16) | (static_cast<u32>(g) << 8) | static_cast<u32>(b);
+        // Ref/3dGround.cpp: lava (set 4) is opaque and uses ambient tint.
+        return 0xFF000000u | (static_cast<u32>(r) << 16) | (static_cast<u32>(g) << 8) | static_cast<u32>(b);
     }
 
     return kWaterDefaultColor;
@@ -6716,6 +6742,22 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
             return;
         }
 
+        if (Gr2MonsterModel(pc->m_job)) {
+            const u32 now=timeGetTime();
+            u32 alpha=pc->IsHideFadeActive(now)?pc->GetHideFadeAlpha(now):255u;
+            if(pc->m_vanishTime) {
+                const u32 fade=now<pc->m_vanishTime?(std::min)(255u,(pc->m_vanishTime-now)>>1):0u;
+                alpha=(std::min)(alpha,fade);
+            }
+            const u32 color=ro::actor::ResolveBillboardColor(alpha,
+                pc->m_u28.m_sprColor.u.s.a,pc->m_u28.m_sprColor.u.s.r,
+                pc->m_u28.m_sprColor.u.s.g,pc->m_u28.m_sprColor.u.s.b,
+                pc->m_isSingleColor!=0,pc->m_colorOfSingleColor);
+            const Gr2MonsterState state{pc->m_gid,pc->m_job,pc->m_stateId,pc->m_stateStartTick,
+                pc->m_pos,pc->m_roty,pc->m_zoom,pc->m_isMotionFreezed!=0,
+                color,m_bgLightDir,m_bgDiffuseCol,m_bgAmbientCol,pc->m_modifyFactorOfmotionSpeed2};
+            RenderGr2Monster(state,viewMatrix);
+        }
         BillboardScreenEntry entry{};
         if (!BuildBillboardRenderEntry(pc, viewMatrix, cameraLongitude, zoom, &entry)) {
             return;

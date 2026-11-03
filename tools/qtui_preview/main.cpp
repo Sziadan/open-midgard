@@ -1,6 +1,7 @@
 #include "../../src/qtui/QtUiState.h"
 #include "../../src/ui/BasicInfoLayout.h"
 #include "../../src/ui/StatusLayout.h"
+#include "../../src/ui/LoginLayout.h"
 #include "../../src/qtui/EquipmentLayoutForQt.h"
 #include "../../src/qtui/SkillTreeGeometry.h"
 #include <QGuiApplication>
@@ -46,6 +47,9 @@ int main(int argc, char** argv) {
     const bool gatedTree=argc>2&&QString(argv[2])=="tree-gated";
     const bool statusCase=argc>2&&QString(argv[2]).startsWith("status");
     const bool equipCase=argc>2&&QString(argv[2]).startsWith("equipment");
+    const bool loginCase=argc>2&&QString(argv[2]).startsWith("login");
+    const bool loadingCase=argc>2&&QString(argv[2]).startsWith("loading");
+    const bool authCase=loginCase||loadingCase;
     const bool equipCompact=equipCase&&QString(argv[2]).startsWith("equipment-compact");
     const bool equipExtreme=equipCase&&QString(argv[2])=="equipment-extreme";
     const bool equipEmpty=equipCase&&QString(argv[2]).endsWith("empty");
@@ -206,17 +210,47 @@ int main(int argc, char** argv) {
             {"status",gatedTree?"Apply earlier-job points to unlock Priest skills":"Planned Heal Lv. 2 for Decrease Agility"},
             {"tooltip",gatedTree?"Magnificat | Not available from server yet. Apply earlier-job points first.":"Decrease Agility | Heal 2 / 3 required | Increase Agility 0 / 1 required"}});
     }
+    const int authWidth=small?640:1280, authHeight=small?480:720;
+    const auto loginPreviewLayout=loginLayout::Place(qRound(authWidth/scale),qRound(authHeight/scale));
+    if(authCase) {
+        state.setBasicInfoVisible(false);state.setStatusVisible(false);state.setOptionVisible(false);state.setShortCutVisible(false);
+        state.setAnchors(QVariantList{});state.setModeName("Login");
+        state.setLoginPanelVisible(loginCase);
+        state.setLoginPanelGeometry(loginPreviewLayout.x,loginPreviewLayout.y,loginPreviewLayout.width,loginPreviewLayout.height);
+        auto rect=[](const loginLayout::Rect& r){return QVariantMap{{"x",r.x},{"y",r.y},{"width",r.width},{"height",r.height}};};
+        state.setLoginPanelLabels(QVariantMap{{"title","OpenMidgard"},{"saveLabel","Remember account ID"},
+            {"compact",loginPreviewLayout.compact},{"account",rect(loginPreviewLayout.account)},
+            {"password",rect(loginPreviewLayout.password)},{"remember",rect(loginPreviewLayout.remember)}});
+        const bool passwordFocus=QString(argv[2])=="login-password";
+        state.setLoginPanelData(QString(argv[2])=="login-long"?"A_very_long_account_name":"Sziadan",passwordFocus?"************":"",passwordFocus,passwordFocus);
+        QVariantList loginButtons;
+        for(const auto& b:loginPreviewLayout.buttons)loginButtons.append(QVariantMap{{"id",b.id},{"x",loginPreviewLayout.x+b.rect.x},{"y",loginPreviewLayout.y+b.rect.y},
+            {"width",b.rect.width},{"height",b.rect.height},{"label",b.label}});
+        state.setLoginButtons(loginButtons);
+        state.setLoadingVisible(loadingCase);
+        state.setLoadingProgress(QString(argv[2])=="loading-zero"?0:QString(argv[2])=="loading-full"?1.5:0.62);
+        state.setLoadingMessage(QString(argv[2])=="loading-long"
+            ?"Preparing map geometry, textures and character resources for a very long map name that must stay inside the loading card."
+            :"Preparing the world and nearby characters...");
+    }
     QQuickView view;
     view.setColor(QColor("#b9c5cd"));view.resize(small?640:large?1920:qRound(710*scale),small?480:large?1080:qRound(550*scale));
     if(treeCase)view.resize(qRound(828*scale),qRound(628*scale));
     if(statusCase)view.resize(qRound(456*scale),qRound((mini?50:284)*scale));
     if(equipCase)view.resize(qRound((equipLayout.width+24)*scale),qRound((mini?42:equipLayout.height+24)*scale));
+    if(authCase)view.resize(authWidth,authHeight);
     view.setResizeMode(QQuickView::SizeRootObjectToView);
     view.rootContext()->setContextProperty("uiState", &state);
-    if(treeCase||equipCase) {
+    if(treeCase||equipCase||authCase) {
         class Icons : public QQuickImageProvider {
         public: Icons():QQuickImageProvider(QQuickImageProvider::Image){}
             QImage requestImage(const QString& id,QSize* size,const QSize&)override {
+                if(id.startsWith("wallpaper")) {
+                    QImage image(1280,720,QImage::Format_ARGB32);
+                    QPainter p(&image);QLinearGradient gradient(0,0,1280,720);
+                    gradient.setColorAt(0,QColor("#b3c6cd"));gradient.setColorAt(1,QColor("#647f8d"));
+                    p.fillRect(image.rect(),gradient);if(size)*size=image.size();return image;
+                }
                 if(id.startsWith("equippreview")) {
                     QImage image(72,154,QImage::Format_ARGB32);image.fill(Qt::transparent);
                     QPainter p(&image);p.setPen(QColor("#47596a"));
@@ -242,6 +276,37 @@ int main(int argc, char** argv) {
     if (!themeObject || themeObject->property("titleHeight").toInt() != uiMetrics::titleHeight) return 7;
     view.show();
     QTimer::singleShot(600,[&]{
+        if(authCase) {
+            const auto contains=[](QQuickItem* outer,QQuickItem* inner) {
+                const auto p=inner->mapToItem(outer,QPointF(0,0));
+                return p.x()>=-0.1&&p.y()>=-0.1&&p.x()+inner->width()<=outer->width()+0.1&&p.y()+inner->height()<=outer->height()+0.1;
+            };
+            auto* panel=FindVisualItem(view.rootObject(),loginCase?"loginPanel":"loadingPanel");
+            if(!panel){app.exit(17);return;}
+            const auto pos=panel->mapToScene(QPointF(0,0));
+            if(pos.x()<0||pos.y()<0||pos.x()+panel->width()*scale>view.width()+0.1||pos.y()+panel->height()*scale>view.height()+0.1){
+                qCritical()<<"Authentication/loading panel outside viewport";app.exit(18);return;
+            }
+            if(loginCase) {
+                std::vector<std::pair<QString,loginLayout::Rect>> controls{{"loginAccount",loginPreviewLayout.account},
+                    {"loginPassword",loginPreviewLayout.password},{"loginRemember",loginPreviewLayout.remember}};
+                for(const auto& b:loginPreviewLayout.buttons)controls.push_back({QString("loginButton%1").arg(b.id),b.rect});
+                for(const auto& control:controls) {
+                    auto* item=FindVisualItem(view.rootObject(),control.first);
+                    if(!item||!contains(panel,item)){qCritical()<<"Login control out of bounds"<<control.first;app.exit(19);return;}
+                    const auto p=item->mapToItem(panel,QPointF(0,0));const auto& r=control.second;
+                    if(std::abs(p.x()-r.x)>0.1||std::abs(p.y()-r.y)>0.1||item->width()!=r.width||item->height()!=r.height){
+                        qCritical()<<"Login native/QML hit rectangle mismatch"<<control.first;app.exit(20);return;
+                    }
+                }
+            } else {
+                auto* track=FindVisualItem(view.rootObject(),"loadingTrack");auto* fill=FindVisualItem(view.rootObject(),"loadingFill");
+                auto* message=FindVisualItem(view.rootObject(),"loadingMessage");
+                if(!track||!fill||!message||!contains(panel,track)||!contains(track,fill)||!contains(panel,message)){
+                    qCritical()<<"Loading content escapes card or track";app.exit(21);return;
+                }
+            }
+        }
         if (statusCase && !mini) {
             // Inspect the actual QML items against the native click rectangles.
             for (int i=0;i<6;++i) {
@@ -282,7 +347,7 @@ int main(int argc, char** argv) {
             }
         }
         QDir().mkpath("build-qt-preview/renders");
-        const QString out=QString("build-qt-preview/renders/gui-%1-%2.png").arg(scale).arg((statusCase||equipCase)?QString(argv[2]):gatedTree?"tree-gated":treeCase?"tree":small?"small":large?"large":mini?"mini":extreme?"extreme":"normal");
+        const QString out=QString("build-qt-preview/renders/gui-%1-%2%3.png").arg(scale).arg((statusCase||equipCase||authCase)?QString(argv[2]):gatedTree?"tree-gated":treeCase?"tree":small?"small":large?"large":mini?"mini":extreme?"extreme":"normal").arg(authCase&&small?"-small":"");
         QImage image=view.grabWindow();
         if(image.isNull()||!image.save(out)){qCritical()<<"Unable to render";app.exit(3);return;}
         qInfo()<<"Saved"<<out;app.exit(qmlErrors ? 5 : 0);

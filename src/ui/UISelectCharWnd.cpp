@@ -814,8 +814,8 @@ bool UISelectCharWnd::GetSelectedCharacterDisplay(SelectedCharacterDisplay* out)
     out->job = ResolveJobName(info.job);
     out->level = info.level;
     out->exp = info.exp;
-    out->hp = info.hp;
-    out->sp = info.sp;
+    out->hp = static_cast<u16>(info.hp);
+    out->sp = static_cast<u16>(info.sp);
     out->str = info.Str;
     out->agi = info.Agi;
     out->vit = info.Vit;

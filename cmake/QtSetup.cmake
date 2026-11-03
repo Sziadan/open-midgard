@@ -127,6 +127,15 @@ function(ro_add_qt_runtime_deploy target output_dir)
             "-DQT_DEPLOY_QML_DIR=${CMAKE_SOURCE_DIR}/src/qtui/qml"
             "-DQT_DEPLOY_LICENSES_DIR=${CMAKE_SOURCE_DIR}/third_party/qt"
             -P "${CMAKE_SOURCE_DIR}/cmake/DeployQtRuntime.cmake"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${output_dir}/licenses/gr2-reader"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/third_party/gr2-reader/LICENSE"
+            "${output_dir}/licenses/gr2-reader/LICENSE"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${output_dir}/licenses/fonts"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/third_party/fonts/NotoSans-OFL.txt"
+            "${CMAKE_SOURCE_DIR}/third_party/fonts/NotoSansJP-OFL.txt"
+            "${output_dir}/licenses/fonts"
         VERBATIM
         COMMENT "Deploying Qt runtime and notices to ${output_dir}"
     )

@@ -1,4 +1,5 @@
 #include "MsgEffect.h"
+#include "OverheadEffect.h"
 #include "ActorSpriteDepth.h"
 
 #include "World.h"
@@ -6,6 +7,7 @@
 #include "DebugLog.h"
 #include "core/Timer.h"
 #include "gamemode/GameMode.h"
+#include "gamemode/View.h"
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
 #include "render/Renderer.h"
@@ -23,6 +25,8 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <map>
+#include <tuple>
 
 namespace {
 
@@ -89,6 +93,8 @@ struct QueuedMsgSpriteEffectDraw {
     float referencePixelRatio = 1.0f;
     bool bypassZoomClamp = false;
     bool useOwnerDepth = false;
+    bool anchorAboveHead = false;
+    bool normalizeEmotionAnchor = false;
     float ownerTopY = 0.0f;
     float ownerBottomY = 0.0f;
     float ownerTopZ = 0.0f;
@@ -440,7 +446,7 @@ float ResolveQueuedMsgSpriteScale(const QueuedMsgSpriteEffectDraw& draw, int ref
         return (std::max)(0.2f, draw.zoom);
     }
 
-    return ResolveMsgSpriteScale(draw.zoom);
+    return ResolveMsgSpriteScale(draw.zoom) * (draw.anchorAboveHead ? kOverheadIconScale : 1.0f);
 }
 
 int ResolveDigitShiftPixels(const QueuedMsgEffectDraw& draw)
@@ -929,6 +935,57 @@ u32 BuildMsgSpriteClipColor(const QueuedMsgSpriteEffectDraw& draw, const CSprCli
         | clipBlue;
 }
 
+auto OverheadClipPoints(const CSprClip& clip, const SprImg& image)
+{
+    return OverheadClipQuad(static_cast<float>(clip.x), static_cast<float>(clip.y),
+        static_cast<float>(image.width * (image.isHalfW + 1)),
+        static_cast<float>(image.height * (image.isHalfH + 1)), clip.zoomX, clip.zoomY, clip.angle);
+}
+
+bool ResolveOverheadSpriteLayout(const QueuedMsgSpriteEffectDraw& draw, CSprRes* sprite, CActRes* act,
+    float scale, float* originX, float* originY, RECT* bounds)
+{
+    // Keep the ACT origin fixed for the entire action. Recentring each frame
+    // cancels intentional movement and makes changing frame sizes wobble.
+    static std::map<std::tuple<CSprRes*,CActRes*,int,bool>,float> actionBottoms;
+    const auto key=std::make_tuple(sprite,act,draw.actionIndex,draw.normalizeEmotionAnchor);
+    auto found=actionBottoms.find(key);
+    if (found==actionBottoms.end()) {
+        std::vector<float> frameBottoms;
+        for (int index=0;index<act->GetMotionCount(draw.actionIndex);++index) {
+            const CMotion* motion=act->GetMotion(draw.actionIndex,index);
+            float bottom=-1e9f;
+            for (const auto& clip : motion->sprClips) {
+                const SprImg* image=sprite->GetSprite(clip.clipType,clip.sprIndex);
+                if (!image || clip.a==0) continue;
+                for (const auto& point : OverheadClipPoints(clip,*image)) bottom=(std::max)(bottom,point.y);
+            }
+            if (bottom!=-1e9f) frameBottoms.push_back(bottom);
+        }
+        if (frameBottoms.empty()) return false;
+        found=actionBottoms.emplace(key,OverheadAnchorBottom(std::move(frameBottoms),draw.normalizeEmotionAnchor)).first;
+    }
+    *originX=static_cast<float>(draw.screenX);
+    *originY=static_cast<float>(draw.screenY-6)-found->second*scale;
+    const CMotion* motion=act->GetMotion(draw.actionIndex,draw.motionIndex);
+    if (!motion) motion=act->GetMotion(draw.actionIndex,0);
+    if (!motion) return false;
+    float left=1e9f,top=1e9f,right=-1e9f,bottom=-1e9f;
+    for (const auto& clip : motion->sprClips) {
+        const SprImg* image=sprite->GetSprite(clip.clipType,clip.sprIndex);
+        if (!image || clip.a==0) continue;
+        for (const auto& point : OverheadClipPoints(clip,*image)) {
+            const float x=*originX+point.x*scale,y=*originY+point.y*scale;
+            left=(std::min)(left,x);right=(std::max)(right,x);
+            top=(std::min)(top,y);bottom=(std::max)(bottom,y);
+        }
+    }
+    if (left==1e9f) return false;
+    *bounds={static_cast<LONG>(std::floor(left))-1,static_cast<LONG>(std::floor(top))-1,
+        static_cast<LONG>(std::ceil(right))+1,static_cast<LONG>(std::ceil(bottom))+1};
+    return true;
+}
+
 bool QueueMsgSpriteQuad(const QueuedMsgSpriteEffectDraw& draw)
 {
     CSprRes* sprite = nullptr;
@@ -961,11 +1018,16 @@ bool QueueMsgSpriteQuad(const QueuedMsgSpriteEffectDraw& draw)
     const float scale = ResolveQueuedMsgSpriteScale(draw, referenceWidth);
     const int outWidth = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeWidth) * scale)));
     const int outHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeHeight) * scale)));
-    const float originX = OverlayScreenEdge(draw.useReferencePixelRatio
+    float originX = OverlayScreenEdge(draw.useReferencePixelRatio
         ? static_cast<int>(std::lround(draw.screenX + clipBox.left * scale)) : draw.screenX - outWidth / 2);
-    const float originY = OverlayScreenEdge(draw.useReferencePixelRatio
-        ? static_cast<int>(std::lround(draw.screenY + clipBox.top * scale)) : draw.screenY - outHeight / 2);
+    float originY = OverlayScreenEdge(draw.anchorAboveHead ? OverheadIconTop(draw.screenY, outHeight) : (draw.useReferencePixelRatio
+        ? static_cast<int>(std::lround(draw.screenY + clipBox.top * scale)) : draw.screenY - outHeight / 2));
 
+    if (draw.anchorAboveHead) {
+        RECT bounds{};
+        if (!ResolveOverheadSpriteLayout(draw,sprite,act,scale,&originX,&originY,&bounds)) return false;
+        originX=OverlayScreenEdge(originX);originY=OverlayScreenEdge(originY);
+    }
     bool queuedAny = false;
     float clipSortOffset = 0.0f;
     for (const CSprClip& clip : motion->sprClips) {
@@ -1022,6 +1084,13 @@ bool QueueMsgSpriteQuad(const QueuedMsgSpriteEffectDraw& draw)
         face->m_verts[1] = { drawRight, drawTop,    depth, oow, color, 0xFF000000u, flipX ? 0.0f : maxU, 0.0f };
         face->m_verts[2] = { drawLeft,  drawBottom, depth, oow, color, 0xFF000000u, flipX ? maxU : 0.0f, maxV };
         face->m_verts[3] = { drawRight, drawBottom, depth, oow, color, 0xFF000000u, flipX ? 0.0f : maxU, maxV };
+        if (draw.anchorAboveHead) {
+            const auto points=OverheadClipPoints(clip,*image);
+            for (int index=0;index<4;++index) {
+                face->m_verts[index].x=originX+points[index].x*scale;
+                face->m_verts[index].y=originY+points[index].y*scale;
+            }
+        }
         if (draw.useOwnerDepth) {
             for (int index = 0; index < 4; ++index) {
                 auto& vertex = face->m_verts[index];
@@ -1064,10 +1133,14 @@ bool GetMsgSpriteDrawBounds(const QueuedMsgSpriteEffectDraw& draw, RECT* outRect
     const int nativeHeight = (std::max)(1, static_cast<int>(clipBox.bottom - clipBox.top));
     const int referenceWidth = (std::max)(1, static_cast<int>(referenceClipBox.right - referenceClipBox.left));
     const float scale = ResolveQueuedMsgSpriteScale(draw, referenceWidth);
+    if (draw.anchorAboveHead) {
+        float originX=0,originY=0;
+        return ResolveOverheadSpriteLayout(draw,sprite,act,scale,&originX,&originY,outRect);
+    }
     const int outWidth = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeWidth) * scale)));
     const int outHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeHeight) * scale)));
     const int originX = draw.useReferencePixelRatio ? static_cast<int>(std::lround(draw.screenX + clipBox.left * scale)) : draw.screenX - outWidth / 2;
-    const int originY = draw.useReferencePixelRatio ? static_cast<int>(std::lround(draw.screenY + clipBox.top * scale)) : draw.screenY - outHeight / 2;
+    const int originY = draw.anchorAboveHead ? OverheadIconTop(draw.screenY, outHeight) : (draw.useReferencePixelRatio ? static_cast<int>(std::lround(draw.screenY + clipBox.top * scale)) : draw.screenY - outHeight / 2);
     outRect->left = originX - 1;
     outRect->top = originY - 1;
     outRect->right = originX + outWidth + 1;
@@ -1973,7 +2046,14 @@ u8 CMsgEffect::OnProcess()
         }
     }
 
-    const float stateCount = static_cast<float>(timeGetTime() - m_stateStartTick) * 0.041666668f;
+    const unsigned int elapsedMs = timeGetTime() - m_stateStartTick;
+    float stateCount = static_cast<float>(elapsedMs) * 0.041666668f;
+    if (IsOverheadMsgEffect(m_msgEffectType)) {
+        CSprRes* sprite = nullptr;
+        CActRes* act = nullptr;
+        ResolveMsgSpriteResources(m_customSpritePath, m_customActPath, &sprite, &act);
+        stateCount = OverheadAnimationPosition(elapsedMs, act ? act->GetDelay(m_spriteActionIndex) : 4.0f);
+    }
     switch (m_msgEffectType) {
     case 12:
         if (m_masterActor) {
@@ -1999,6 +2079,7 @@ u8 CMsgEffect::OnProcess()
         break;
     }
     case 1: {
+        if (m_masterActor) { m_pos = m_masterActor->m_pos; m_orgPos = m_pos; }
         if (m_masterActor && m_masterActor->m_chatProhibitEffect == this) {
             m_spriteMotionIndex = 15;
             m_colorArgb = 0xFFFA5050u;
@@ -2006,7 +2087,8 @@ u8 CMsgEffect::OnProcess()
         }
         const int motionCount = ResolveMsgSpriteMotionCountForEffect(*this, m_spriteActionIndex);
         if (motionCount <= 0) {
-            return 1;
+            m_isDisappear = 1;
+            break;
         }
         m_spriteMotionIndex = static_cast<int>(stateCount) % motionCount;
         if (stateCount / static_cast<float>(motionCount) >= 1.0f) {
@@ -2339,6 +2421,23 @@ void CMsgEffect::Render(matrix* viewMatrix)
         draw.colorArgb = m_colorArgb;
         draw.alpha = m_alpha;
         draw.zoom = m_zoom;
+        if (m_masterActor && IsOverheadMsgEffect(m_msgEffectType)) {
+            int headX=0, headTop=0;
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            const float longitude = mode && mode->m_view ? mode->m_view->GetCameraLongitude() : 0.0f;
+            if (g_world.GetActorScreenMarker(*viewMatrix, longitude, m_masterActor->m_gid, &headX, &headTop)) {
+                draw.screenX = headX;
+                draw.screenY = headTop;
+            } else {
+                tlvertex3d feet{};
+                if (ProjectMsgEffectPoint(*viewMatrix, m_masterActor->m_pos, &feet)) {
+                    draw.screenX = static_cast<int>(std::lround(feet.x));
+                    draw.screenY = static_cast<int>(std::lround(feet.y)) - 48;
+                }
+            }
+            draw.anchorAboveHead = true;
+            draw.normalizeEmotionAnchor = m_msgEffectType == 1 || m_msgEffectType == 10;
+        }
         if (m_msgEffectType == 18 || m_msgEffectType == 5) {
             // Ref CRenderObject::RenderBody uses zoom * GetPixelRatio(oow).
             // Preserve ACT clip offsets below; these are world sprites.

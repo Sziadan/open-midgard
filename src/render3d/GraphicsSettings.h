@@ -25,14 +25,22 @@ enum class SpriteFilterMode {
     Sharp,
 };
 
+enum class TextureUpscaleAlgorithm {
+    Automatic = 0,
+    Xbrz,
+};
+
 struct GraphicsSettings {
     int width;
     int height;
     WindowMode windowMode;
     int textureUpscaleFactor;
+    TextureUpscaleAlgorithm textureUpscaleAlgorithm;
     int anisotropicLevel;
     AntiAliasingMode antiAliasing;
     bool verticalSync;
+    bool ssaoEnabled;
+    bool confusionWaves;
     SpriteFilterMode spriteFilter;
     int frameLimit;
     int renderScalePercent;
@@ -48,6 +56,7 @@ void SanitizeGraphicsSettings(GraphicsSettings* settings);
 bool DoesBackendSupportWindowMode(RenderBackendType backend, WindowMode mode);
 bool DoesBackendSupportResolutionSelection(RenderBackendType backend);
 bool DoesBackendSupportTextureUpscaling(RenderBackendType backend);
+bool DoesBackendSupportSsao(RenderBackendType backend);
 bool DoesBackendSupportAnisotropicFiltering(RenderBackendType backend);
 bool DoesBackendSupportAntiAliasing(RenderBackendType backend);
 bool DoesBackendSupportRenderScale(RenderBackendType backend);

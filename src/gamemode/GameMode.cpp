@@ -45,6 +45,7 @@
 #include "world/RagEffect.h"
 #include "world/3dActor.h"
 #include "world/World.h"
+#include "world/Emotion.h"
 #include "main/WinMain.h"
 
 #include <windows.h>
@@ -431,7 +432,9 @@ void LaunchMapWeatherEffect(CGameMode& mode)
         return;
     }
 
-    const int effectId = ResolveRefWeatherCloudEffectId(mode.m_rswName);
+    const std::string mapName = ToLowerAsciiMapName(mode.m_rswName);
+    const int effectId = (mapName == "xmas.rsw" || mapName == "xmas_fild01.rsw")
+        ? 162 : ResolveRefWeatherCloudEffectId(mode.m_rswName);
     if (effectId == 0) {
         return;
     }
@@ -1005,7 +1008,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         }
     }
 
-    const bool overlayIsAnimated = false;
+    const bool overlayIsAnimated = qtRuntimeEnabled && QtUiRuntimeNeedsRender();
     const bool uiDirty = qtRuntimeEnabled
         ? g_windowMgr.HasDirtyVisualState()
         : g_windowMgr.HasDirtyVisualStateExcludingRoMap();
@@ -2053,8 +2056,8 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
     }
 
     CPlayer* player = mode.m_world->m_player;
-    const int maxHp = static_cast<int>(player->m_MaxHp);
-    const int maxSp = static_cast<int>(player->m_MaxSp);
+    const s64 maxHp = player->m_MaxHp;
+    const s64 maxSp = player->m_MaxSp;
     if (maxHp <= 0 && maxSp <= 0) {
         return false;
     }
@@ -2146,8 +2149,8 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
     FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, spRect, RGB(255, 255, 255));
 
     if (maxHp > 0) {
-        const int hp = (std::max)(0, (std::min)(static_cast<int>(player->m_Hp), maxHp));
-        const int hpFillWidth = metrics.barWidth * hp / maxHp;
+        const s64 hp = (std::min)(static_cast<s64>(player->m_Hp), maxHp);
+        const int hpFillWidth = VitalBarFill(hp, maxHp, metrics.barWidth);
         if (hpFillWidth > 0) {
             RECT hpFillRect{ hpRect.left, hpRect.top, hpRect.left + hpFillWidth, hpRect.bottom };
             const bool lowHp = hp * 4 < maxHp;
@@ -2161,8 +2164,8 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
     }
 
     if (maxSp > 0) {
-        const int sp = (std::max)(0, (std::min)(static_cast<int>(player->m_Sp), maxSp));
-        const int spFillWidth = metrics.barWidth * sp / maxSp;
+        const s64 sp = (std::min)(static_cast<s64>(player->m_Sp), maxSp);
+        const int spFillWidth = VitalBarFill(sp, maxSp, metrics.barWidth);
         if (spFillWidth > 0) {
             RECT spFillRect{ spRect.left, spRect.top, spRect.left + spFillWidth, spRect.bottom };
             FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, spFillRect, RGB(48, 96, 220));
@@ -3889,8 +3892,8 @@ void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc)
     }
 
     CPlayer* player = mode.m_world->m_player;
-    const int maxHp = static_cast<int>(player->m_MaxHp);
-    const int maxSp = static_cast<int>(player->m_MaxSp);
+    const s64 maxHp = player->m_MaxHp;
+    const s64 maxSp = player->m_MaxSp;
     if (maxHp <= 0 && maxSp <= 0) {
         return;
     }
@@ -3922,8 +3925,8 @@ void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc)
     FillSolidRect(hdc, spRect, RGB(255, 255, 255));
 
     if (maxHp > 0) {
-        const int hp = (std::max)(0, (std::min)(static_cast<int>(player->m_Hp), maxHp));
-        const int hpFillWidth = metrics.barWidth * hp / maxHp;
+        const s64 hp = (std::min)(static_cast<s64>(player->m_Hp), maxHp);
+        const int hpFillWidth = VitalBarFill(hp, maxHp, metrics.barWidth);
         if (hpFillWidth > 0) {
             RECT hpFillRect{ hpRect.left, hpRect.top, hpRect.left + hpFillWidth, hpRect.bottom };
             const bool lowHp = hp * 4 < maxHp;
@@ -3932,8 +3935,8 @@ void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc)
     }
 
     if (maxSp > 0) {
-        const int sp = (std::max)(0, (std::min)(static_cast<int>(player->m_Sp), maxSp));
-        const int spFillWidth = metrics.barWidth * sp / maxSp;
+        const s64 sp = (std::min)(static_cast<s64>(player->m_Sp), maxSp);
+        const int spFillWidth = VitalBarFill(sp, maxSp, metrics.barWidth);
         if (spFillWidth > 0) {
             RECT spFillRect{ spRect.left, spRect.top, spRect.left + spFillWidth, spRect.bottom };
             FillSolidRect(hdc, spFillRect, RGB(48, 96, 220));
@@ -7566,10 +7569,10 @@ void EnsureBootstrapSelfActor(CGameMode& mode)
 
     if (const CHARACTER_INFO* info = g_session.GetSelectedCharacterInfo()) {
         actor->m_clevel = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->level), 0xFFFF)));
-        actor->m_Hp = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->hp), 0xFFFF)));
-        actor->m_MaxHp = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->maxhp), 0xFFFF)));
-        actor->m_Sp = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->sp), 0xFFFF)));
-        actor->m_MaxSp = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->maxsp), 0xFFFF)));
+        actor->m_Hp = g_session.GetCharacterVitals().hp;
+        actor->m_MaxHp = g_session.GetCharacterVitals().maxHp;
+        actor->m_Sp = g_session.GetCharacterVitals().sp;
+        actor->m_MaxSp = g_session.GetCharacterVitals().maxSp;
 
         if (createdActor) {
             actor->m_bodyState = info->bodystate;
@@ -7589,12 +7592,7 @@ void EnsureBootstrapSelfActor(CGameMode& mode)
                 info->effectstate);
         }
 
-        if (actor->m_Hp > actor->m_MaxHp) {
-            actor->m_Hp = actor->m_MaxHp;
-        }
-        if (actor->m_Sp > actor->m_MaxSp) {
-            actor->m_Sp = actor->m_MaxSp;
-        }
+        // Preserve independent server values while status packets arrive.
     }
 
     actor->m_lastTlvertX = g_session.m_playerPosX;
@@ -10845,6 +10843,16 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         std::transform(command.begin(), command.end(), command.begin(), [](unsigned char ch) {
             return static_cast<char>(std::tolower(ch));
         });
+        const int emotion = ResolveEmotionCommand(command);
+        if (emotion == -2) return 0;
+        if (emotion >= 0) {
+            const DWORD now = timeGetTime();
+            if (m_reqEmotionTick != 0 && now - m_reqEmotionTick < 1000) return 0;
+            const unsigned char packet[] = {0xBF, 0x00, static_cast<unsigned char>(emotion)};
+            const bool sent = CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
+            if (sent) { m_reqEmotionTick = now; m_isReqEmotion = 1; }
+            return sent ? 1 : 0;
+        }
         if (command == "/sit") {
             return SendSitStandToggleRequest(*this) ? 1 : 0;
         }

@@ -1,4 +1,5 @@
 #include "UINewChatWnd.h"
+#include "ChatText.h"
 
 #include "UIWindowMgr.h"
 #include "UiScale.h"
@@ -229,7 +230,8 @@ void DrawBitmapPixelsTransparent(HDC target, const shopui::BitmapPixels& bitmap,
 #if RO_ENABLE_QT6_UI
 QFont BuildChatUiFont(int pixelSize)
 {
-    QFont font(QStringLiteral("Segoe UI"));
+    QFont font;
+    font.setFamilies({QStringLiteral("Noto Sans"),QStringLiteral("Noto Sans JP"),QStringLiteral("Segoe UI")});
     font.setPixelSize(ClampChatFontPixelSize(pixelSize));
     font.setStyleStrategy(QFont::PreferAntialias);
     return font;
@@ -243,7 +245,7 @@ int MeasureWrappedTextHeightQt(const std::string& text, int width, int pixelSize
 
     const QFont font = BuildChatUiFont(pixelSize);
     const QFontMetrics metrics(font);
-    const QString label = QString::fromLocal8Bit(text.c_str());
+    const QString label = QString::fromUtf8(text.c_str());
     const QRect bounds = metrics.boundingRect(QRect(0, 0, width, 4096), Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, label);
     return (std::max)(kChatLineHeight, bounds.height());
 }
@@ -254,7 +256,7 @@ void DrawChatTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF
         return;
     }
 
-    QString label = QString::fromLocal8Bit(text.c_str());
+    QString label = QString::fromUtf8(text.c_str());
     const int width = rect.right - rect.left;
     const int height = rect.bottom - rect.top;
     const QFont font = BuildChatUiFont(pixelSize);
@@ -840,6 +842,28 @@ const std::vector<ChatLine>& UINewChatWnd::GetLines() const
 const std::vector<ChatLine>& UINewChatWnd::GetVisibleLines() const
 {
     return m_visibleLines;
+}
+
+std::vector<ChatLine> UINewChatWnd::GetFilteredLines() const
+{
+    std::vector<ChatLine> result;
+    const u32 mask=m_tabChannelMasks[static_cast<size_t>(m_activeTab)];
+    for(const auto& line:m_lines)if(mask & ChatChannelBit(line.channel))result.push_back(line);
+    return result;
+}
+
+void UINewChatWnd::FocusQtInput(int field)
+{
+    SetWindowFocused(true);
+    SetActiveInputField(field==1?InputField_WhisperTarget:field==2?InputField_Message:InputField_None);
+}
+
+void UINewChatWnd::SetQtInputText(int field,const std::string& text)
+{
+    if(field!=1 && field!=2)return;
+    auto& buffer=field==1?m_whisperTargetText:m_inputText;
+    buffer=ro::chat::CleanInput(text,field==1?kMaxWhisperTargetChars:kMaxInputChars,field==1?24:kMaxInputChars);
+    m_historyBrowseIndex=-1;m_historyDraft.clear();Invalidate();
 }
 
 const std::string& UINewChatWnd::GetWhisperTargetText() const
@@ -1587,7 +1611,7 @@ bool UINewChatWnd::HandleKeyDown(int virtualKey)
                 m_historyBrowseIndex = -1;
                 m_historyDraft.clear();
             }
-            activeBuffer->pop_back();
+            ro::chat::EraseLastCharacter(*activeBuffer);
             Invalidate();
         }
         return true;
@@ -1878,8 +1902,8 @@ void UINewChatWnd::RestorePersistentState(const std::vector<std::string>& inputH
     if (m_inputHistory.size() > kMaxInputHistory) {
         m_inputHistory.resize(kMaxInputHistory);
     }
-    m_whisperTargetText = whisperTargetText.substr(0, kMaxWhisperTargetChars);
-    m_inputText = inputText;
+    m_whisperTargetText = ro::chat::CleanInput(whisperTargetText,kMaxWhisperTargetChars,24);
+    m_inputText = ro::chat::CleanInput(inputText,kMaxInputChars,kMaxInputChars);
     switch (activeInputField) {
     case InputField_WhisperTarget:
         m_activeInputField = InputField_WhisperTarget;

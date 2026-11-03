@@ -579,7 +579,7 @@ void UIBasicInfoWnd::OnDraw()
         char bottomLine[160] = {};
         std::snprintf(bottomLine,
             sizeof(bottomLine),
-            "HP %3d / %3d  |  SP %3d / %3d  |  %s Z",
+            "HP %3lld / %3lld  |  SP %3lld / %3lld  |  %s Z",
             data.hp,
             data.maxHp,
             data.sp,
@@ -598,15 +598,15 @@ void UIBasicInfoWnd::OnDraw()
         DrawWindowText(hdc, m_x + 9, m_y + 23, data.name.c_str(), RGB(0, 0, 0));
         DrawWindowText(hdc, m_x + 9, m_y + 36, data.jobName.c_str(), RGB(0, 0, 0));
 
-        const int hpPercent = data.maxHp > 0 ? (data.hp * 100) / data.maxHp : 0;
+        const int hpPercent = VitalBarFill(data.hp, data.maxHp, 100);
         DrawBar(hdc, m_x + 110, m_y + 22, hpPercent, hpPercent < 25);
-        DrawBar(hdc, m_x + 110, m_y + 43, data.maxSp > 0 ? (data.sp * 100) / data.maxSp : 0, false);
+        DrawBar(hdc, m_x + 110, m_y + 43, VitalBarFill(data.sp, data.maxSp, 100), false);
 
         char text[128] = {};
-        std::snprintf(text, sizeof(text), "HP      %3d  /  %3d", data.hp, data.maxHp);
+        std::snprintf(text, sizeof(text), "HP      %3lld  /  %3lld", data.hp, data.maxHp);
         DrawWindowText(hdc, m_x + 95, m_y + 30, text, RGB(0, 0, 0), DT_LEFT | DT_TOP | DT_SINGLELINE, GetBasicInfoSmallFont(), 15);
 
-        std::snprintf(text, sizeof(text), "SP      %3d  /  %3d", data.sp, data.maxSp);
+        std::snprintf(text, sizeof(text), "SP      %3lld  /  %3lld", data.sp, data.maxSp);
         DrawWindowText(hdc, m_x + 95, m_y + 51, text, RGB(0, 0, 0), DT_LEFT | DT_TOP | DT_SINGLELINE, GetBasicInfoSmallFont(), 15);
 
         std::snprintf(text, sizeof(text), "Base Lv. %d", data.level);
@@ -903,20 +903,20 @@ UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
         data.jobName = g_session.GetJobDisplayName(info->job) ? g_session.GetJobDisplayName(info->job) : data.jobName;
         data.level = info->level;
         data.jobLevel = info->joblevel;
-        data.hp = info->hp;
-        data.maxHp = info->maxhp;
-        data.sp = info->sp;
-        data.maxSp = info->maxsp;
+        data.hp = g_session.GetCharacterVitals().hp;
+        data.maxHp = g_session.GetCharacterVitals().maxHp;
+        data.sp = g_session.GetCharacterVitals().sp;
+        data.maxSp = g_session.GetCharacterVitals().maxSp;
         data.money = info->money;
         data.expPercent = ClampPercent(info->exp);
         data.jobExpPercent = ClampPercent(info->jobexp);
     }
 
     if (g_world.m_player) {
-        data.hp = static_cast<int>(g_world.m_player->m_Hp);
-        data.maxHp = static_cast<int>(g_world.m_player->m_MaxHp);
-        data.sp = static_cast<int>(g_world.m_player->m_Sp);
-        data.maxSp = static_cast<int>(g_world.m_player->m_MaxSp);
+        data.hp = g_world.m_player->m_Hp;
+        data.maxHp = g_world.m_player->m_MaxHp;
+        data.sp = g_world.m_player->m_Sp;
+        data.maxSp = g_world.m_player->m_MaxSp;
         if (data.level <= 0) {
             data.level = static_cast<int>(g_world.m_player->m_clevel);
         }
@@ -937,9 +937,9 @@ UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
 
     data.level = (std::max)(data.level, 0);
     data.jobLevel = (std::max)(data.jobLevel, 0);
-    data.hp = (std::max)(data.hp, 0);
+    data.hp = (std::max)(data.hp, 0LL);
     data.maxHp = (std::max)(data.maxHp, data.hp);
-    data.sp = (std::max)(data.sp, 0);
+    data.sp = (std::max)(data.sp, 0LL);
     data.maxSp = (std::max)(data.maxSp, data.sp);
     data.jobName = NormalizeJobDisplayName(data.jobName);
     data.weight = 0;

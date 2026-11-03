@@ -848,6 +848,16 @@ bool UIWindowMgr::HasActiveNpcDialog() const
         || (m_npcInputWnd && m_npcInputWnd->m_show != 0);
 }
 
+bool UIWindowMgr::CanRouteQtChatInput() const
+{
+    if(HasFrontMenuUiVisible() || HasActiveNpcDialog() || IsCapturingShortcutKeyBinding())return false;
+    // These dialogs already take keyboard priority over chat in OnKeyDown.
+    const UIWindow* dialogs[]={m_joinPartyAcceptWnd,m_skillSelectWnd,m_playerContextMenuWnd,
+        m_itemPurchaseWnd,m_itemSellWnd,m_itemShopWnd,m_storageWnd,m_chooseSellBuyWnd,m_loadingWnd,m_waitWnd};
+    for(const auto* dialog:dialogs)if(dialog && dialog->m_show)return false;
+    return true;
+}
+
 void UIWindowMgr::CloseNpcDialogWindows()
 {
     if (m_sayDialogWnd) {

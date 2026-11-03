@@ -56,7 +56,7 @@ constexpr char kOptionWndCollapsedValue[] = "Collapsed";
 constexpr char kOptionWndTabValue[] = "Tab";
 
 constexpr int kDefaultWidth = 308;
-constexpr int kDefaultHeight = 374;
+constexpr int kDefaultHeight = 422;
 constexpr int kCollapsedHeight = 17;
 constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kDefaultX = 185;
@@ -733,6 +733,7 @@ std::vector<UIOptionWnd::GraphicsRowId> UIOptionWnd::GetVisibleGraphicsRows() co
     }
     if (DoesBackendSupportTextureUpscaling(backend)) {
         rows.push_back(GraphicsRow_TextureUpscale);
+        rows.push_back(GraphicsRow_TextureUpscaleAlgorithm);
     }
     if (!GetSupportedAnisotropicLevels().empty()) {
         rows.push_back(GraphicsRow_AnisotropicFiltering);
@@ -741,6 +742,10 @@ std::vector<UIOptionWnd::GraphicsRowId> UIOptionWnd::GetVisibleGraphicsRows() co
     rows.push_back(GraphicsRow_FrameLimit);
     if (DoesBackendSupportRenderScale(backend)) {
         rows.push_back(GraphicsRow_RenderScale);
+    }
+    if (DoesBackendSupportSsao(backend)) {
+        rows.push_back(GraphicsRow_Ssao);
+        rows.push_back(GraphicsRow_ConfusionWaves);
     }
     rows.push_back(GraphicsRow_SpriteFiltering);
     return rows;
@@ -1439,6 +1444,12 @@ void UIOptionWnd::CycleGraphicsSetting(GraphicsRowId rowId, int direction)
             nextValue = 1;
         }
         m_graphicsSettings.textureUpscaleFactor = nextValue;
+    } else if (rowId == GraphicsRow_TextureUpscaleAlgorithm) {
+        const std::vector<TextureUpscaleAlgorithm> algorithms = {
+            TextureUpscaleAlgorithm::Automatic,
+            TextureUpscaleAlgorithm::Xbrz,
+        };
+        m_graphicsSettings.textureUpscaleAlgorithm = CycleListedValue(algorithms, m_graphicsSettings.textureUpscaleAlgorithm, direction);
     } else if (rowId == GraphicsRow_AnisotropicFiltering) {
         const std::vector<int> levels = GetSupportedAnisotropicLevels();
         for (size_t index = 0; index < levels.size(); ++index) {
@@ -1455,6 +1466,10 @@ void UIOptionWnd::CycleGraphicsSetting(GraphicsRowId rowId, int direction)
         }
     } else if (rowId == GraphicsRow_VerticalSync) {
         m_graphicsSettings.verticalSync = !m_graphicsSettings.verticalSync;
+    } else if (rowId == GraphicsRow_Ssao) {
+        m_graphicsSettings.ssaoEnabled = !m_graphicsSettings.ssaoEnabled;
+    } else if (rowId == GraphicsRow_ConfusionWaves) {
+        m_graphicsSettings.confusionWaves = !m_graphicsSettings.confusionWaves;
     } else if (rowId == GraphicsRow_FrameLimit) {
         const std::vector<int> limits = { 0, 60, 120 };
         m_graphicsSettings.frameLimit = CycleListedValue(limits, m_graphicsSettings.frameLimit, direction);
@@ -1483,6 +1498,8 @@ std::string UIOptionWnd::GetGraphicsRowValue(GraphicsRowId rowId) const
         return std::string(GetAntiAliasingName(m_graphicsSettings.antiAliasing));
     case GraphicsRow_TextureUpscale:
         return FormatMultiplierText(m_graphicsSettings.textureUpscaleFactor);
+    case GraphicsRow_TextureUpscaleAlgorithm:
+        return m_graphicsSettings.textureUpscaleAlgorithm == TextureUpscaleAlgorithm::Xbrz ? "xBRZ" : "Automatic";
     case GraphicsRow_AnisotropicFiltering:
         return FormatAnisotropicText(m_graphicsSettings.anisotropicLevel);
     case GraphicsRow_VerticalSync:
@@ -1493,6 +1510,10 @@ std::string UIOptionWnd::GetGraphicsRowValue(GraphicsRowId rowId) const
         return FormatPercentText(m_graphicsSettings.renderScalePercent);
     case GraphicsRow_SpriteFiltering:
         return std::string(GetSpriteFilterName(m_graphicsSettings.spriteFilter));
+    case GraphicsRow_Ssao:
+        return m_graphicsSettings.ssaoEnabled ? "On" : "Off";
+    case GraphicsRow_ConfusionWaves:
+        return m_graphicsSettings.confusionWaves ? "On" : "Off";
     default:
         return std::string();
     }
@@ -1698,6 +1719,9 @@ void UIOptionWnd::OnDraw()
                 case GraphicsRow_TextureUpscale:
                     label = "Texture upscale";
                     break;
+                case GraphicsRow_TextureUpscaleAlgorithm:
+                    label = "Upscale algorithm";
+                    break;
                 case GraphicsRow_AnisotropicFiltering:
                     label = "Anisotropic";
                     break;
@@ -1712,6 +1736,12 @@ void UIOptionWnd::OnDraw()
                     break;
                 case GraphicsRow_SpriteFiltering:
                     label = "Sprite filtering";
+                    break;
+                case GraphicsRow_Ssao:
+                    label = "SSAO";
+                    break;
+                case GraphicsRow_ConfusionWaves:
+                    label = "Hallucination waves";
                     break;
                 }
                 DrawSettingRow(hdc, static_cast<int>(index), label, GetGraphicsRowValue(rows[index]));
@@ -2302,6 +2332,9 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
                 case GraphicsRow_TextureUpscale:
                     row.label = "Texture upscale";
                     break;
+                case GraphicsRow_TextureUpscaleAlgorithm:
+                    row.label = "Upscale algorithm";
+                    break;
                 case GraphicsRow_AnisotropicFiltering:
                     row.label = "Anisotropic";
                     break;
@@ -2316,6 +2349,12 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
                     break;
                 case GraphicsRow_SpriteFiltering:
                     row.label = "Sprite filtering";
+                    break;
+                case GraphicsRow_Ssao:
+                    row.label = "SSAO";
+                    break;
+                case GraphicsRow_ConfusionWaves:
+                    row.label = "Hallucination waves";
                     break;
                 default:
                     break;

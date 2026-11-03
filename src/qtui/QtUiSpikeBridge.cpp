@@ -39,6 +39,8 @@
 #if RO_ENABLE_QT6_UI
 
 #include <QByteArray>
+#include "QtChatInput.h"
+#include <QFontDatabase>
 #include <QChar>
 #include <QCoreApplication>
 #include <QEventLoop>
@@ -70,6 +72,10 @@ void EnsureQtUiResourcesInitialized()
     static bool initialized = false;
     if (!initialized) {
         Q_INIT_RESOURCE(QtUiSpikeAssets);
+        QFontDatabase::addApplicationFont(QStringLiteral(":/qtui/fonts/NotoSans.ttf"));
+        QFontDatabase::addApplicationFont(QStringLiteral(":/qtui/fonts/NotoSansJP.ttf"));
+        for(auto script:{QChar::Script_Han,QChar::Script_Hiragana,QChar::Script_Katakana})
+            QFontDatabase::addApplicationFallbackFontFamily(script,QStringLiteral("Noto Sans JP"));
         initialized = true;
     }
 }
@@ -909,32 +915,6 @@ public:
                     image = source.copy();
                 }
             }
-        } else if (baseId == QStringLiteral("loginpanel")) {
-            if (g_windowMgr.m_loginWnd && g_windowMgr.m_loginWnd->m_show != 0) {
-                const unsigned int* pixels = nullptr;
-                int width = 0;
-                int height = 0;
-                if (g_windowMgr.m_loginWnd->GetQtPanelBitmap(&pixels, &width, &height)
-                    && pixels && width > 0 && height > 0) {
-                    const QImage source(
-                        reinterpret_cast<const uchar*>(pixels),
-                        width,
-                        height,
-                        width * static_cast<int>(sizeof(unsigned int)),
-                        QImage::Format_ARGB32);
-                    image = source.copy();
-                } else {
-                    width = (std::max)(g_windowMgr.m_loginWnd->m_w, 1);
-                    height = (std::max)(g_windowMgr.m_loginWnd->m_h, 1);
-                    image = QImage(width, height, QImage::Format_ARGB32_Premultiplied);
-                    image.fill(QColor(243, 240, 231, 224));
-
-                    QPainter painter(&image);
-                    painter.setRenderHint(QPainter::Antialiasing, false);
-                    painter.setPen(QColor(120, 112, 96));
-                    painter.drawRect(0, 0, width - 1, height - 1);
-                }
-            }
         } else if (baseId.startsWith(QStringLiteral("item/"))) {
             bool ok = false;
             const unsigned int itemId = baseId.mid(QStringLiteral("item/").size()).toUInt(&ok);
@@ -1092,6 +1072,7 @@ void BlendQtImageOntoBgraBuffer(const QImage& source, void* bgraPixels, int widt
 
 class QtUiRuntimeHost {
 public:
+    bool needsRender() const { return m_active && m_sceneDirty; }
     bool initialize(RoNativeWindowHandle mainWindow)
     {
         if (m_active) {
@@ -1214,6 +1195,18 @@ public:
         notifyWindowMessage(msg, wParam, lParam);
         if (!m_active) {
             return false;
+        }
+
+        const bool chatEnabled=!HasFrontMenuUiVisible() && g_windowMgr.CanRouteQtChatInput() && g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->m_show!=0;
+        if(!chatEnabled && g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->IsInputActive()) {
+            g_windowMgr.m_chatWnd->ClearInputFocus();
+            if(m_stateAdapter)m_stateAdapter->syncChat();
+        }
+        const bool nativePointerCapture=chatEnabled && (g_windowMgr.m_chatWnd->IsQtPointerCaptured() || g_windowMgr.m_captureWindow);
+        const bool pointerMessage=msg==WM_MOUSEMOVE || msg==WM_LBUTTONDOWN || msg==WM_LBUTTONUP || msg==WM_LBUTTONDBLCLK || msg==WM_MOUSEWHEEL;
+        if(!(nativePointerCapture && pointerMessage) && m_chatInput.handle(m_mainWindow,msg,wParam,lParam,chatEnabled)) {
+            if(m_stateAdapter)m_stateAdapter->syncChat();
+            return true;
         }
 
         switch (msg) {
@@ -1390,7 +1383,8 @@ public:
 
         case WM_CHAR:
             if (HasFrontMenuUiVisible()) {
-                g_windowMgr.OnChar(static_cast<char>(wParam));
+                const auto bytes=QString(QChar(static_cast<ushort>(wParam))).toLocal8Bit();
+                for(char byte:bytes)g_windowMgr.OnChar(byte);
                 return true;
             }
             return false;
@@ -1670,6 +1664,8 @@ private:
 
         m_stateAdapter = new QtUiStateAdapter();
         m_renderControl = new QQuickRenderControl();
+        QObject::connect(m_renderControl,&QQuickRenderControl::renderRequested,m_renderControl,[this] {m_sceneDirty=true;});
+        QObject::connect(m_renderControl,&QQuickRenderControl::sceneChanged,m_renderControl,[this] {m_sceneDirty=true;});
         m_quickWindow = new QQuickWindow(m_renderControl);
         m_quickWindow->setColor(Qt::transparent);
         m_quickWindow->setTitle(QStringLiteral("open-midgard-qt-ui"));
@@ -1698,6 +1694,7 @@ private:
         m_rootItem->setParent(m_quickWindow);
         m_rootItem->setParentItem(m_quickWindow->contentItem());
         m_rootItem->setVisible(true);
+        m_chatInput.setScene(m_quickWindow,m_rootItem);
         return true;
     }
 
@@ -1743,6 +1740,7 @@ private:
         m_rootItem->setSize(QSizeF(static_cast<qreal>(width), static_cast<qreal>(height)));
 
         processEvents();
+        m_sceneDirty=false;
         m_renderControl->polishItems();
         m_renderControl->sync();
         m_renderControl->render();
@@ -1876,6 +1874,7 @@ private:
         m_rootItem->setSize(QSizeF(static_cast<qreal>(width), static_cast<qreal>(height)));
 
         processEvents();
+        m_sceneDirty=false;
         m_renderControl->polishItems();
         m_renderControl->beginFrame();
         m_renderControl->sync();
@@ -1910,6 +1909,7 @@ private:
         m_rootItem->setSize(QSizeF(static_cast<qreal>(width), static_cast<qreal>(height)));
 
         processEvents();
+        m_sceneDirty=false;
         m_renderControl->polishItems();
         m_renderControl->beginFrame();
         m_renderControl->sync();
@@ -1946,6 +1946,7 @@ private:
         m_rootItem->setSize(QSizeF(static_cast<qreal>(width), static_cast<qreal>(height)));
 
         processEvents();
+        m_sceneDirty=false;
         m_renderControl->polishItems();
         m_renderControl->beginFrame();
         m_renderControl->sync();
@@ -1956,6 +1957,7 @@ private:
 #endif
 
     bool m_active = false;
+    bool m_sceneDirty = true;
     bool m_ownedApplication = false;
     bool m_nativeGraphicsInitialized = false;
     bool m_nativeTargetMirrorVertically = false;
@@ -1970,6 +1972,7 @@ private:
     int m_mouseY = 0;
     MenuPointerCaptureTarget m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
     QString m_lastInput;
+    QtChatInput m_chatInput;
 
     int m_argc = 1;
     char m_arg0[32] = "open-midgard";
@@ -2015,6 +2018,14 @@ bool IsQtUiRuntimeEnabled()
 {
 #if RO_ENABLE_QT6_UI
     return IsEnabledInEnvironment();
+#else
+    return false;
+#endif
+}
+
+bool QtUiRuntimeNeedsRender() {
+#if RO_ENABLE_QT6_UI
+    return Runtime().needsRender();
 #else
     return false;
 #endif

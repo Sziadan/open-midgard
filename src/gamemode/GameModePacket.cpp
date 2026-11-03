@@ -897,12 +897,14 @@ void HandleNotifyEffect3(CGameMode& mode, const PacketView& packet)
     if (actorId == g_session.m_aid && (effectId == 331 || effectId == 332)) {
         AdvanceEffectStatusRandomState();
         const u32 previousValue = effectId == 331 ? actor->m_Hp : actor->m_Sp;
-        const u32 updatedValue = previousValue + value;
+        const u32 updatedValue = AddVital(previousValue, value);
         if (updatedValue != previousValue) {
             if (effectId == 331) {
-                actor->m_Hp = static_cast<u16>(updatedValue);
+                actor->m_Hp = updatedValue;
+                g_session.UpdateCharacterVital(5, updatedValue);
             } else {
-                actor->m_Sp = static_cast<u16>(updatedValue);
+                actor->m_Sp = updatedValue;
+                g_session.UpdateCharacterVital(7, updatedValue);
             }
             InvalidateBasicInfoWindow();
         }
@@ -1094,6 +1096,10 @@ void ApplySelfStatusIconPacket(CGameMode& mode, int statusType, u32 actorId, boo
     }
 
     g_session.SetActiveStatusIcon(statusType, active, remainingMs);
+    if (statusType==34) {
+        DbgLog("[Status] local Hallucination active=%d duration=%u ms (damage display values are supplied by the server)\n",
+            active?1:0,remainingMs);
+    }
 }
 
 void HandlePacket0196(CGameMode& mode, const PacketView& packet)
@@ -1548,18 +1554,19 @@ void HandleRecovery(CGameMode& mode, const PacketView& packet)
             currentValue = player->m_Sp;
             maxValue = player->m_MaxSp;
         }
-    } else if (const CHARACTER_INFO* info = g_session.GetSelectedCharacterInfo()) {
+    } else if (g_session.GetSelectedCharacterInfo()) {
+        const auto& vitals = g_session.GetCharacterVitals();
         if (statusType == kStatusHp) {
-            currentValue = static_cast<u32>((std::max)(0, static_cast<int>(info->hp)));
-            maxValue = static_cast<u32>((std::max)(0, static_cast<int>(info->maxhp)));
+            currentValue = vitals.hp;
+            maxValue = vitals.maxHp;
         } else if (statusType == kStatusSp) {
-            currentValue = static_cast<u32>((std::max)(0, static_cast<int>(info->sp)));
-            maxValue = static_cast<u32>((std::max)(0, static_cast<int>(info->maxsp)));
+            currentValue = vitals.sp;
+            maxValue = vitals.maxSp;
         }
     }
 
     if (statusType == kStatusHp || statusType == kStatusSp) {
-        const u32 healedValue = maxValue > 0 ? (std::min)(maxValue, currentValue + amount) : (currentValue + amount);
+        const u32 healedValue = maxValue > 0 ? (std::min)(maxValue, AddVital(currentValue, amount)) : AddVital(currentValue, amount);
         ApplySelfStatusUpdate(mode, statusType, healedValue);
     }
 
@@ -1754,6 +1761,7 @@ void ApplyCombatStatusSummary(CGameMode& mode,
 
 bool ApplySelfStatusUpdateToSession(u32 statusType, u32 value)
 {
+    const bool updatedVital = g_session.UpdateCharacterVital(statusType, value);
     if (ApplyCombatStatusParamToSession(statusType, static_cast<int>(value), true)) {
         return true;
     }
@@ -1777,33 +1785,21 @@ bool ApplySelfStatusUpdateToSession(u32 statusType, u32 value)
     }
 
     if (!info) {
-        return false;
+        return updatedVital;
     }
 
     switch (statusType) {
     case kStatusHp:
-        info->hp = static_cast<s16>(ClampToU16(value));
-        if (info->maxhp < info->hp) {
-            info->maxhp = info->hp;
-        }
+        info->hp = static_cast<s16>((std::min)(value, 32767u));
         return true;
     case kStatusMaxHp:
-        info->maxhp = static_cast<s16>(ClampToU16(value));
-        if (info->hp > info->maxhp) {
-            info->hp = info->maxhp;
-        }
+        info->maxhp = static_cast<s16>((std::min)(value, 32767u));
         return true;
     case kStatusSp:
-        info->sp = static_cast<s16>(ClampToU16(value));
-        if (info->maxsp < info->sp) {
-            info->maxsp = info->sp;
-        }
+        info->sp = static_cast<s16>((std::min)(value, 32767u));
         return true;
     case kStatusMaxSp:
-        info->maxsp = static_cast<s16>(ClampToU16(value));
-        if (info->sp > info->maxsp) {
-            info->sp = info->maxsp;
-        }
+        info->maxsp = static_cast<s16>((std::min)(value, 32767u));
         return true;
     case kStatusBaseLevel:
         info->level = static_cast<s16>(ClampToU16(value));
@@ -2822,22 +2818,16 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
     CPlayer* player = mode.m_world->m_player;
     switch (statusType) {
     case kStatusHp:
-        player->m_Hp = ClampToU16(value);
+        player->m_Hp = value;
         return true;
     case kStatusMaxHp:
-        player->m_MaxHp = ClampToU16(value);
-        if (player->m_Hp > player->m_MaxHp) {
-            player->m_Hp = player->m_MaxHp;
-        }
+        player->m_MaxHp = value;
         return true;
     case kStatusSp:
-        player->m_Sp = ClampToU16(value);
+        player->m_Sp = value;
         return true;
     case kStatusMaxSp:
-        player->m_MaxSp = ClampToU16(value);
-        if (player->m_Sp > player->m_MaxSp) {
-            player->m_Sp = player->m_MaxSp;
-        }
+        player->m_MaxSp = value;
         return true;
     case kStatusBaseLevel:
         player->m_clevel = ClampToU16(value);
@@ -6574,6 +6564,16 @@ void HandleCartOff(CGameMode& mode, const PacketView& packet)
     DbgLog("[GameMode] cart cleared\n");
 }
 
+void HandleEmotion(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 7 || packet.data[6] > 80) return;
+    const u32 gid = ReadLE32(packet.data + 2);
+    if (CGameActor* actor = ResolveSkillPacketActor(mode, gid)) {
+        actor->SendMsg(actor, 21, packet.data[6], 0, 0);
+        if (IsLocalPlayerActor(mode, gid)) mode.m_isReqEmotion = 0;
+    }
+}
+
 void HandleActorStateChange(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data) {
@@ -6620,6 +6620,9 @@ void HandleActorStateChange(CGameMode& mode, const PacketView& packet)
     }
 
     const int oldEffectState = actor->m_effectState;
+    if (IsLocalPlayerActor(mode, gid) && (actor->m_healthState != healthState || actor->m_bodyState != bodyState)) {
+        DbgLog("[Status] local body=%d health=0x%04X (previous body=%d health=0x%04X)\n", bodyState, healthState, actor->m_bodyState, actor->m_healthState);
+    }
     AttrStateArgs state{};
     state.bodyState = bodyState;
     state.effectState = effectState;
@@ -7376,7 +7379,7 @@ void HandlePartyList(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    std::map<u32, std::pair<int, int>> cachedPartyHpByAid;
+    std::map<u32, std::pair<long long, long long>> cachedPartyHpByAid;
     for (const FRIEND_INFO& existing : g_session.GetPartyList()) {
         if (existing.AID != 0 && existing.partyMaxHp > 0) {
             cachedPartyHpByAid[existing.AID] = std::make_pair(existing.partyHp, existing.partyMaxHp);
@@ -7500,14 +7503,14 @@ void HandlePartyHpUpdate(CGameMode& mode, const PacketView& packet)
     }
 
     const u32 aid = ReadLE32(packet.data + 2);
-    int hp = 0;
-    int maxHp = 0;
+    long long hp = 0;
+    long long maxHp = 0;
     if (ro::net::IsActivePartyHpUpdateExtendedPacket(packet.packetId)) {
         if (packet.packetLength < 14) {
             return;
         }
-        hp = static_cast<int>(ReadLE32(packet.data + 6));
-        maxHp = static_cast<int>(ReadLE32(packet.data + 10));
+        hp = static_cast<long long>(ReadLE32(packet.data + 6));
+        maxHp = static_cast<long long>(ReadLE32(packet.data + 10));
     } else {
         if (packet.packetLength < 10) {
             return;
@@ -8624,7 +8627,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00BC, HandleStatusChangeAck);
     router.Register(0x00BD, HandleInitialStatusSummary);
     router.Register(0x00BE, HandleStatusPointCostUpdate);
-    router.Register(0x00C0, HandleIgnorePacket);
+    router.Register(0x00C0, HandleEmotion);
     router.Register(0x0101, HandlePartyOptionChanged);
     router.Register(0x013D, HandleRecovery);
     router.Register(0x013B, HandleActionFailure);

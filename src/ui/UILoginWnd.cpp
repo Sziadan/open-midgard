@@ -1,6 +1,7 @@
 #include "UILoginWnd.h"
 
 #include "core/File.h"
+#include "core/ClientInfoLocale.h"
 #include "core/SettingsIni.h"
 #include "gamemode/LoginMode.h"
 #include "gamemode/Mode.h"
@@ -9,6 +10,7 @@
 #include "res/Bitmap.h"
 #include "ui/UiScale.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UISelectServerWnd.h"
 #include "DebugLog.h"
 
 #include <windows.h>
@@ -24,20 +26,8 @@ namespace {
 constexpr int kLoginFieldLeft = 92;
 constexpr int kLoginFieldTop = 29;
 constexpr int kPasswordFieldTop = 61;
-constexpr int kFieldWidth = 125;
-constexpr int kFieldHeight = 18;
 constexpr int kSaveCheckLeft = 232;
 constexpr int kSaveCheckTop = 33;
-constexpr int kSaveCheckSize = 16;
-
-struct LoginButtonHitArea {
-    int id;
-    int x;
-    int y;
-    int width;
-    int height;
-    const char* label;
-};
 
 struct LoginButtonSpec {
     const char* normal;
@@ -46,13 +36,6 @@ struct LoginButtonSpec {
     int id;
     int x;
     int y;
-};
-
-constexpr LoginButtonHitArea kQtLoginButtonAreas[] = {
-    { 201, 4, 96, 52, 20, "Request" },
-    { 219, 137, 96, 44, 20, "Intro" },
-    { 120, 189, 96, 40, 20, "Connect" },
-    { 155, 234, 96, 40, 20, "Exit" },
 };
 
 constexpr LoginButtonSpec kLoginButtonSpecs[] = {
@@ -78,10 +61,7 @@ shopui::BitmapPixels LoadBitmapPixelsFromGameData(const char* path)
     return shopui::LoadBitmapPixelsFromGameData(path ? path : "", false);
 }
 
-bool ContainsPoint(int left, int top, int width, int height, int x, int y)
-{
-    return x >= left && x < left + width && y >= top && y < top + height;
-}
+
 
 std::string GetNormalizedFileNameLower(std::string value)
 {
@@ -574,7 +554,12 @@ bool UILoginWnd::IsPasswordFocused() const
 
 int UILoginWnd::GetQtButtonCount() const
 {
-    return static_cast<int>(std::size(kQtLoginButtonAreas));
+    return static_cast<int>(GetQtLayout().buttons.size());
+}
+
+loginLayout::Layout UILoginWnd::GetQtLayout() const
+{
+    return loginLayout::Build(m_w, m_h <= 228);
 }
 
 bool UILoginWnd::GetQtButtonDisplayForQt(int index, QtButtonDisplay* outButton) const
@@ -583,12 +568,13 @@ bool UILoginWnd::GetQtButtonDisplayForQt(int index, QtButtonDisplay* outButton) 
         return false;
     }
 
-    const LoginButtonHitArea& button = kQtLoginButtonAreas[index];
+    const auto layout = GetQtLayout();
+    const auto& button = layout.buttons[index];
     outButton->id = button.id;
-    outButton->x = m_x + button.x;
-    outButton->y = m_y + button.y;
-    outButton->width = button.width;
-    outButton->height = button.height;
+    outButton->x = m_x + button.rect.x;
+    outButton->y = m_y + button.rect.y;
+    outButton->width = button.rect.width;
+    outButton->height = button.rect.height;
     outButton->label = button.label;
     return true;
 }
@@ -611,17 +597,18 @@ bool UILoginWnd::HandleQtMouseDown(int x, int y)
         return false;
     }
 
-    if (ContainsPoint(kLoginFieldLeft, kLoginFieldTop, kFieldWidth, kFieldHeight, localX, localY)) {
+    const auto layout = GetQtLayout();
+    if (layout.account.Contains(localX, localY)) {
         SetLoginFieldFocus(m_login, m_password, false);
         return true;
     }
 
-    if (ContainsPoint(kLoginFieldLeft, kPasswordFieldTop, kFieldWidth, kFieldHeight, localX, localY)) {
+    if (layout.password.Contains(localX, localY)) {
         SetLoginFieldFocus(m_login, m_password, true);
         return true;
     }
 
-    if (ContainsPoint(kSaveCheckLeft, kSaveCheckTop, kSaveCheckSize, kSaveCheckSize, localX, localY)) {
+    if (layout.remember.Contains(localX, localY)) {
         m_saveAccountChecked = !m_saveAccountChecked;
         if (m_saveAccountCheck) {
             m_saveAccountCheck->SetCheck(m_saveAccountChecked ? 1 : 0);
@@ -631,8 +618,8 @@ bool UILoginWnd::HandleQtMouseDown(int x, int y)
         return true;
     }
 
-    for (const LoginButtonHitArea& button : kQtLoginButtonAreas) {
-        if (ContainsPoint(button.x, button.y, button.width, button.height, localX, localY)) {
+    for (const auto& button : layout.buttons) {
+        if (button.rect.Contains(localX, localY)) {
             SendMsg(nullptr, 6, button.id, 0, 0);
             return true;
         }
@@ -657,6 +644,18 @@ void UILoginWnd::EnsureQtLayout()
 
 void UILoginWnd::LayoutControls()
 {
+    if (IsQtUiRuntimeEnabled()) {
+        const auto layout = GetQtLayout();
+        if (m_login) {
+            m_login->Move(m_x + layout.account.x, m_y + layout.account.y);
+            m_login->Resize(layout.account.width, layout.account.height);
+        }
+        if (m_password) {
+            m_password->Move(m_x + layout.password.x, m_y + layout.password.y);
+            m_password->Resize(layout.password.width, layout.password.height);
+        }
+        return;
+    }
     if (m_login) {
         m_login->Move(m_x + kLoginFieldLeft, m_y + kLoginFieldTop);
     }
@@ -682,27 +681,7 @@ void UILoginWnd::LayoutControls()
     }
 }
 
-bool UILoginWnd::GetQtPanelBitmap(const unsigned int** pixels, int* width, int* height)
-{
-    if (!pixels || !width || !height) {
-        return false;
-    }
 
-    *pixels = nullptr;
-    *width = 0;
-    *height = 0;
-
-    EnsureResourceCache();
-    const shopui::BitmapPixels& panel = m_uiAssets[UiPanel];
-    if (!panel.IsValid() || panel.pixels.empty()) {
-        return false;
-    }
-
-    *pixels = panel.pixels.data();
-    *width = panel.width;
-    *height = panel.height;
-    return true;
-}
 
 void UILoginWnd::RefreshRememberedUserIdStorage()
 {
@@ -728,7 +707,12 @@ void UILoginWnd::OnCreate(int cx, int cy)
     if (!m_controlsCreated) {
         m_controlsCreated = true;
 
-        Create(280, 120);
+        if (IsQtUiRuntimeEnabled()) {
+            const auto layout = loginLayout::Place(logicalCx, logicalCy);
+            Create(layout.width, layout.height);
+        } else {
+            Create(280, 120);
+        }
 
         if (!IsQtUiRuntimeEnabled()) {
             for (const LoginButtonSpec& spec : kLoginButtonSpecs) {
@@ -797,7 +781,15 @@ void UILoginWnd::OnCreate(int cx, int cy)
         SetLoginFieldFocus(m_login, m_password, focusPassword);
     }
 
-    Move((logicalCx - 640) / 2 + 185, (300 * logicalCy) / 480);
+    if (IsQtUiRuntimeEnabled()) {
+        const int reservedTop = GetClientInfoConnectionCount() > 1 && g_windowMgr.m_selectServerWnd
+            ? g_windowMgr.m_selectServerWnd->m_h + 12 : 0;
+        const auto layout = loginLayout::Place(logicalCx, logicalCy, reservedTop);
+        Resize(layout.width, layout.height);
+        Move(layout.x, layout.y);
+    } else {
+        Move((logicalCx - 640) / 2 + 185, (300 * logicalCy) / 480);
+    }
     LayoutControls();
 }
 
@@ -929,8 +921,6 @@ void UILoginWnd::OnDraw()
         return;
     }
 
-    EnsureResourceCache();
-
     RECT rcClient{};
     GetClientRect(g_hMainWnd, &rcClient);
 
@@ -945,6 +935,8 @@ void UILoginWnd::OnDraw()
     if (IsQtUiRuntimeEnabled()) {
         return;
     }
+
+    EnsureResourceCache();
 
     const bool useCompose = EnsureComposeSurface(clientW, clientH);
     HDC targetDC = nullptr;

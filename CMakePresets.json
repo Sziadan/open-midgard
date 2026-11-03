@@ -39,6 +39,7 @@
         "PATH": "C:/Qt/Tools/mingw1310_64/bin;C:/Qt/6.11.0/mingw_64/bin;$penv{PATH}"
       },
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_C_COMPILER": "C:/Qt/Tools/mingw1310_64/bin/gcc.exe",
         "CMAKE_CXX_COMPILER": "C:/Qt/Tools/mingw1310_64/bin/g++.exe",
         "CMAKE_MAKE_PROGRAM": "C:/Qt/Tools/mingw1310_64/bin/mingw32-make.exe",
@@ -81,6 +82,7 @@
       "generator": "MinGW Makefiles",
       "binaryDir": "${sourceDir}/build-mingw-preset",
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_STANDARD": "17",
         "CMAKE_CXX_STANDARD_REQUIRED": "ON",
         "CMAKE_CXX_EXTENSIONS": "OFF",

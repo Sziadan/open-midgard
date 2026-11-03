@@ -15,6 +15,9 @@ constexpr char kGraphicsWidthValue[] = "Width";
 constexpr char kGraphicsHeightValue[] = "Height";
 constexpr char kGraphicsWindowModeValue[] = "WindowMode";
 constexpr char kGraphicsTextureUpscaleValue[] = "TextureUpscale";
+constexpr char kGraphicsTextureUpscaleAlgorithmValue[] = "TextureUpscaleAlgorithm";
+constexpr char kGraphicsSsaoValue[] = "SSAO";
+constexpr char kGraphicsConfusionWavesValue[] = "ConfusionWaves";
 constexpr char kGraphicsAnisotropicValue[] = "AnisotropicLevel";
 constexpr char kGraphicsAntiAliasingValue[] = "AntiAliasing";
 constexpr char kGraphicsVerticalSyncValue[] = "VSync";
@@ -87,9 +90,12 @@ GraphicsSettings GetDefaultGraphicsSettings()
     settings.height = kMinHeight;
     settings.windowMode = WindowMode::Windowed;
     settings.textureUpscaleFactor = 1;
+    settings.textureUpscaleAlgorithm = TextureUpscaleAlgorithm::Automatic;
     settings.anisotropicLevel = 1;
     settings.antiAliasing = AntiAliasingMode::None;
     settings.verticalSync = false;
+    settings.ssaoEnabled = false;
+    settings.confusionWaves = true;
     settings.spriteFilter = SpriteFilterMode::Smooth;
     settings.frameLimit = 0;
     settings.renderScalePercent = 100;
@@ -112,6 +118,10 @@ void SanitizeGraphicsSettings(GraphicsSettings* settings)
     }
 
     settings->textureUpscaleFactor = (std::max)(1, (std::min)(4, settings->textureUpscaleFactor));
+    if (settings->textureUpscaleAlgorithm != TextureUpscaleAlgorithm::Automatic
+        && settings->textureUpscaleAlgorithm != TextureUpscaleAlgorithm::Xbrz) {
+        settings->textureUpscaleAlgorithm = TextureUpscaleAlgorithm::Automatic;
+    }
     settings->anisotropicLevel = ClampToAllowedAnisotropy(settings->anisotropicLevel);
     if (settings->antiAliasing != AntiAliasingMode::None
         && settings->antiAliasing != AntiAliasingMode::FXAA
@@ -135,9 +145,12 @@ GraphicsSettings LoadGraphicsSettings()
     settings.height = LoadSettingsIniInt(kGraphicsSection, kGraphicsHeightValue, settings.height);
     settings.windowMode = static_cast<WindowMode>(LoadSettingsIniInt(kGraphicsSection, kGraphicsWindowModeValue, static_cast<int>(settings.windowMode)));
     settings.textureUpscaleFactor = LoadSettingsIniInt(kGraphicsSection, kGraphicsTextureUpscaleValue, settings.textureUpscaleFactor);
+    settings.textureUpscaleAlgorithm = static_cast<TextureUpscaleAlgorithm>(LoadSettingsIniInt(kGraphicsSection, kGraphicsTextureUpscaleAlgorithmValue, static_cast<int>(settings.textureUpscaleAlgorithm)));
     settings.anisotropicLevel = LoadSettingsIniInt(kGraphicsSection, kGraphicsAnisotropicValue, settings.anisotropicLevel);
     settings.antiAliasing = static_cast<AntiAliasingMode>(LoadSettingsIniInt(kGraphicsSection, kGraphicsAntiAliasingValue, static_cast<int>(settings.antiAliasing)));
     settings.verticalSync = LoadSettingsIniInt(kGraphicsSection, kGraphicsVerticalSyncValue, settings.verticalSync ? 1 : 0) != 0;
+    settings.ssaoEnabled = LoadSettingsIniInt(kGraphicsSection, kGraphicsSsaoValue, settings.ssaoEnabled ? 1 : 0) != 0;
+    settings.confusionWaves = LoadSettingsIniInt(kGraphicsSection, kGraphicsConfusionWavesValue, settings.confusionWaves ? 1 : 0) != 0;
     settings.spriteFilter = static_cast<SpriteFilterMode>(LoadSettingsIniInt(kGraphicsSection, kGraphicsSpriteFilterValue, static_cast<int>(settings.spriteFilter)));
     settings.frameLimit = LoadSettingsIniInt(kGraphicsSection, kGraphicsFrameLimitValue, settings.frameLimit);
     settings.renderScalePercent = LoadSettingsIniInt(kGraphicsSection, kGraphicsRenderScaleValue, settings.renderScalePercent);
@@ -155,9 +168,12 @@ bool SaveGraphicsSettings(const GraphicsSettings& rawSettings)
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsHeightValue, settings.height)
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsWindowModeValue, static_cast<int>(settings.windowMode))
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsTextureUpscaleValue, settings.textureUpscaleFactor)
+        && SaveSettingsIniInt(kGraphicsSection, kGraphicsTextureUpscaleAlgorithmValue, static_cast<int>(settings.textureUpscaleAlgorithm))
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsAnisotropicValue, settings.anisotropicLevel)
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsAntiAliasingValue, static_cast<int>(settings.antiAliasing))
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsVerticalSyncValue, settings.verticalSync ? 1 : 0)
+        && SaveSettingsIniInt(kGraphicsSection, kGraphicsSsaoValue, settings.ssaoEnabled ? 1 : 0)
+        && SaveSettingsIniInt(kGraphicsSection, kGraphicsConfusionWavesValue, settings.confusionWaves ? 1 : 0)
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsSpriteFilterValue, static_cast<int>(settings.spriteFilter))
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsFrameLimitValue, settings.frameLimit)
         && SaveSettingsIniInt(kGraphicsSection, kGraphicsRenderScaleValue, settings.renderScalePercent);
@@ -216,6 +232,11 @@ bool DoesBackendSupportTextureUpscaling(RenderBackendType backend)
         || backend == RenderBackendType::Vulkan;
 }
 
+bool DoesBackendSupportSsao(RenderBackendType backend)
+{
+    return backend == RenderBackendType::Vulkan;
+}
+
 bool DoesBackendSupportAnisotropicFiltering(RenderBackendType backend)
 {
     return backend == RenderBackendType::Direct3D11
@@ -264,6 +285,10 @@ void GetSceneRenderSize(int windowWidth, int windowHeight, int* outWidth, int* o
 bool GraphicsSettingsUseOffscreenScene(RenderBackendType backend)
 {
     const GraphicsSettings& settings = GetCachedGraphicsSettings();
+    // Blindness can start during gameplay even with cosmetic effects disabled.
+    if (backend == RenderBackendType::Vulkan) {
+        return true;
+    }
     if (DoesBackendSupportRenderScale(backend) && settings.renderScalePercent != 100) {
         return true;
     }
@@ -340,6 +365,9 @@ bool GraphicsSettingsRequireRestart(const GraphicsSettings& current, const Graph
         || current.height != pending.height
         || current.windowMode != pending.windowMode
         || current.textureUpscaleFactor != pending.textureUpscaleFactor
+        || current.textureUpscaleAlgorithm != pending.textureUpscaleAlgorithm
+        || current.ssaoEnabled != pending.ssaoEnabled
+        || current.confusionWaves != pending.confusionWaves
         || current.anisotropicLevel != pending.anisotropicLevel
         || current.antiAliasing != pending.antiAliasing;
 }
