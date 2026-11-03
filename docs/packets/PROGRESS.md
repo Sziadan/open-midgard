@@ -35,3 +35,8 @@ Authorized read-only source access succeeded. Reproduced the effective 20080910 
 ## 2026-11-03 — PK01.03 applicability approval
 
 Strong reviewer `/root/pk01_p0_review` approved applicability only and confirmed permanent child identities for raw character account-ID handshake, cross-stage framing, map S2C 0x01F2 and 0x01A2, and distinct map C2S 0x0190, 0x007E, and profile-23 0x0437. Corrected 0x8482/0x8483 stage/direction and moved 0x0437 ownership from PK50 to PK46. Added eight contract records and linked discovery rows; classifications remain UNREVIEWED. Semantic implementation, historical variant reachability, independent fixtures, and server provenance remain open. Evidence: `evidence/PK01.03-applicability-approval.md` and `contracts/`. Stable subject: `packet(PK01.03): approve P0 applicability identities`. Next: PK01.04 independent verification of config, registry assignment order, contracts, and 990 coverage rows.
+
+
+## 2026-11-03 — PK01.04 independent verification
+
+Independent strong review reproduced the effective 20080910 preprocessor configuration and validated all 886 ordered registrations against the source, then reduced them to the same 603 final assignments. All 15 source hashes matched. All 990 unique discovery rows match the audit inventory, have valid owners, and all eight populated contract links resolve; classifications remain UNREVIEWED. Corrected stale source-access/count statements and reviewer-report provenance. This closes configuration/override/P0 applicability plus structural ownership only, not semantic packet validation. Evidence: `evidence/PK01.04-independent-verification.md`. Stable subject: `packet(PK01.04): independently verify packet identities and coverage`. Next: PK02.01 specification.

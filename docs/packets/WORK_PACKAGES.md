@@ -21,7 +21,7 @@ Do not stage all current work. Planning commit alone does not capture runtime de
 
 ### Discovery ownership
 
-0 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+1 provisional primary row. Also review secondary assignments; a low primary count does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 ## PK01 — Resolve active protocol identities
 
@@ -1101,4 +1101,4 @@ No quest packet may remain a consume-only handler. Full snapshots and incrementa
 
 ### Discovery ownership
 
-22 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+21 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
