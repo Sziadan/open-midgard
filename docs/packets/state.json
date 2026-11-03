@@ -34,9 +34,9 @@
       "commit_subject": "packet(PK01.02): reproduce effective server packet registry"
     },
     "PK01.03": {
-      "status": "BLOCKED",
-      "evidence": ["docs/packets/evidence/PK01.03-review-needed.md"],
-      "commit_subject": "packet(PK01.03): record P0 contract review requirements"
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK01.03-applicability-approval.md", "docs/packets/contracts/INDEX.md", "docs/packets/contracts/PK01.P01.HANDSHAKE.md", "docs/packets/contracts/PK01.P02.FRAMING.md", "docs/packets/contracts/PK01.P03.01F2.md", "docs/packets/contracts/PK01.P04.01A2-20080910.md", "docs/packets/contracts/PK47.P04.01A2-later.md", "docs/packets/contracts/PK01.P05.007E.md", "docs/packets/contracts/PK01.P05.0190.md", "docs/packets/contracts/PK01.P05.0437.md"],
+      "commit_subject": "packet(PK01.03): approve P0 applicability identities"
     },
     "PK01.04": {
       "status": "NOT_STARTED",

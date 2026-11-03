@@ -25,7 +25,7 @@ AUDIT-0x007A,0x007A,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional sou
 AUDIT-0x007B,0x007B,map,unresolved,PK45,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x007C,0x007C,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x007D,0x007D,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: strong-agent source adjudication required,UNREVIEWED,
-AUDIT-0x007E,0x007E,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x007E,0x007E,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,PK01.P05.007E
 AUDIT-0x007F,0x007F,map,S2C,PK45,PK01;PK02;PK47;PK48,Existing handler semantic review; not certified implemented,UNREVIEWED,
 AUDIT-0x0080,0x0080,map,S2C,PK45,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0081,0x0081,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Connection-stage applicability and handshake review,UNREVIEWED,
@@ -296,7 +296,7 @@ AUDIT-0x018C,0x018C,map,S2C,PK26,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x018D,0x018D,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x018E,0x018E,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x018F,0x018F,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0190,0x0190,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0190,0x0190,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,PK01.P05.0190
 AUDIT-0x0191,0x0191,map,S2C,PK45,PK01;PK02;PK47;PK48,Existing handler semantic review; not certified implemented,UNREVIEWED,
 AUDIT-0x0192,0x0192,map,S2C,PK18,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0193,0x0193,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: strong-agent source adjudication required,UNREVIEWED,
@@ -314,7 +314,7 @@ AUDIT-0x019E,0x019E,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x019F,0x019F,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01A0,0x01A0,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01A1,0x01A1,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01A2,0x01A2,map,S2C,PK07,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x01A2,0x01A2,map,S2C,PK07,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,PK01.P04.01A2-20080910;PK47.P04.01A2-later
 AUDIT-0x01A3,0x01A3,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01A4,0x01A4,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01A5,0x01A5,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -394,7 +394,7 @@ AUDIT-0x01EE,0x01EE,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,Provisional sou
 AUDIT-0x01EF,0x01EF,map,unresolved,PK09,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01F0,0x01F0,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01F1,0x01F1,map,unresolved,PK45,PK01;PK02;PK47;PK48,Existing handler semantic review; not certified implemented,UNREVIEWED,
-AUDIT-0x01F2,0x01F2,map,S2C,PK06,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x01F2,0x01F2,map,S2C,PK06,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,PK01.P03.01F2
 AUDIT-0x01F3,0x01F3,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01F4,0x01F4,map,S2C,PK50,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01F5,0x01F5,map,S2C,PK13,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
@@ -790,7 +790,7 @@ AUDIT-0x0433,0x0433,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x0434,0x0434,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: strong-agent source adjudication required,UNREVIEWED,
 AUDIT-0x0435,0x0435,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: strong-agent source adjudication required,UNREVIEWED,
 AUDIT-0x0436,0x0436,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: strong-agent source adjudication required,UNREVIEWED,
-AUDIT-0x0437,0x0437,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0437,0x0437,map,C2S,PK46,PK01;PK02;PK08;PK47;PK48,Source-confirmed profile-23 ActionRequest; see applicability contract,UNREVIEWED,PK01.P05.0437
 AUDIT-0x0438,0x0438,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0439,0x0439,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x043F,0x043F,map,unresolved,PK22,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
@@ -987,5 +987,5 @@ AUDIT-0x0BF3,0x0BF3,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x0C0B,0x0C0B,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: strong-agent source adjudication required,UNREVIEWED,
 AUDIT-0x0C0C,0x0C0C,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: strong-agent source adjudication required,UNREVIEWED,
 AUDIT-0x0C22,0x0C22,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x8482,0x8482,map,unresolved,PK04,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x8483,0x8483,map,unresolved,PK04,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x8482,0x8482,login/char,S2C,PK04,PK01;PK02;PK47;PK48,Raw character-server account-ID echo; see applicability contract,UNREVIEWED,PK01.P01.HANDSHAKE
+AUDIT-0x8483,0x8483,login/char,S2C,PK04,PK01;PK02;PK47;PK48,Raw character-server account-ID echo; see applicability contract,UNREVIEWED,PK01.P01.HANDSHAKE

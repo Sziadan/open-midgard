@@ -20,7 +20,11 @@
     "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
     "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
     "src/login/loginclif.cpp": "a0eea56f5a41286674ae27caad5b57e192b298e20c0fddc38f015b0c2ece5e3f",
-    "src/char/char_clif.cpp": "5fcc31adcf30d0192be8e2dbb825efa1a0a0cde74eae5ebe9b0f7615ee3175d7"
+    "src/char/char_clif.cpp": "5fcc31adcf30d0192be8e2dbb825efa1a0a0cde74eae5ebe9b0f7615ee3175d7",
+    "src/map/guild.cpp": "3221684BFFA937F06E59EF1E6E7DE678F329FE1BF436F64B3CF9BBCFAF053683",
+    "src/map/pet.cpp": "43EE63394F4E5301E032AD006FB4C3DD87F717E0EFB935AB33D4FA9758B85065",
+    "src/map/intif.cpp": "D2B2D980230237D6A03C714B50D911C3B21BDC7F52A8C334B2D949B5EDC37AC0",
+    "src/map/map.hpp": "1CB428D1145EC9C4045B2AE58C163BE24BF1BD374FC8EEA07EAF0C266621FE2B"
   },
   "audit_source_sha256": {
     "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp": "cce1ccda951e1de0dd3537947f26e8653f78baa4e9c8b57fe1d4ac6970100aaa",
