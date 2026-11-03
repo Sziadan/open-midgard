@@ -1,10 +1,12 @@
 # Resume packet implementation
 
-Next action: **PK00.02 (S)**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, and `state.json` first. Do not start protocol edits until the baseline is reproducible.
+Next action: **PK00.03 (S)**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, and `state.json` first. Do not start protocol edits until the baseline is reproducible.
 
 Completed checkpoint: PK00.01 at baseline `af41f6484cb7ff31825296babe4b913aa36c4c67` (`main`, tracking `origin/main`, clean tree). Evidence: `evidence/PK00.01.md`. The old handoff's `9c158616` HEAD and approximately 80 dirty/untracked paths no longer describe this checkout. The current runtime commit already contains the guild/commerce changes previously noted as dirty.
 
-PK00.02 must inventory tracked and ignored runtime dependencies read-only. Preserve ignored inputs, especially `Ref/`, `tools/index_skill_packet_emitters.py`, `tools/patches/rathena-wait-for-complete-packet.patch`, `tools/GuildSkillWndRefreshTests.cpp`, build directories, and installed/runtime artifacts. Their relevance/ownership is not yet established. Do not broadly stage, reset, clean, deploy, or run the installed client.
+PK00.02 completed read-only inventory at HEAD `8c81549bb9d4bf89ac59f53b99827ce07ccc3377`; see `evidence/PK00.02.md` and `evidence/PK00.02-manifest.json`. It records hashes for all tracked files and ignored source inputs, plus path/size metadata for all Ref GRF assets. Preserve ignored inputs; do not broadly stage, reset, clean, deploy, or run the installed client. Existing build caches are inconsistent; only `build-mingw-preset` currently shows `RO_ENABLE_DEV_DEPLOY=OFF`, and its output is not fresh evidence.
+
+The expected authoritative rAthena checkout path exists, but Git status/revision reads failed with `Permission denied`. PK00.03 should define reproducible local-client build inputs and carry this external-source gate forward; PK01 must resolve authoritative server revision/hashes before approving server-derived packet contracts. Do not substitute Ref's eAthena or RunningServer sources.
 
 Effective server source baseline in the audit is PACKETVER/PACKETVER_SAK_NUM `20080910`, source `C:/Users/sziad/source/repos/rathena-master`; client default profile 23. Reconfirm later. Running server binary provenance is not established.
 
