@@ -201,7 +201,7 @@ if(RO_ENABLE_DEV_DEPLOY)
 endif()
 
 
-target_link_libraries(open_midgard PRIVATE
+set(RO_CLIENT_RUNTIME_LIBRARIES
     ro_main
     ro_gamemode
     ro_session
@@ -221,6 +221,7 @@ target_link_libraries(open_midgard PRIVATE
     ro_security
     ro_lua
 )
+target_link_libraries(open_midgard PRIVATE ${RO_CLIENT_RUNTIME_LIBRARIES})
 
 if(WIN32)
     target_link_libraries(open_midgard PRIVATE
@@ -267,13 +268,47 @@ endif()
 
 if(RO_BUILD_PACKET_REPLAY_TESTS)
     enable_testing()
+    find_package(Threads REQUIRED)
+    find_package(Git QUIET)
+
+    set(RO_PACKET_REPLAY_SOURCE_COMMIT "unknown")
+    set(RO_PACKET_REPLAY_SOURCE_TREE_DIRTY 1)
+    if(GIT_FOUND)
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" rev-parse --verify HEAD
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            OUTPUT_VARIABLE RO_PACKET_REPLAY_SOURCE_COMMIT
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE RO_PACKET_REPLAY_GIT_COMMIT_RESULT)
+        if(RO_PACKET_REPLAY_GIT_COMMIT_RESULT EQUAL 0)
+            execute_process(
+                COMMAND "${GIT_EXECUTABLE}" status --porcelain --untracked-files=no
+                WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                OUTPUT_VARIABLE RO_PACKET_REPLAY_GIT_STATUS
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                RESULT_VARIABLE RO_PACKET_REPLAY_GIT_STATUS_RESULT)
+            if(RO_PACKET_REPLAY_GIT_STATUS_RESULT EQUAL 0)
+                if(RO_PACKET_REPLAY_GIT_STATUS STREQUAL "")
+                    set(RO_PACKET_REPLAY_SOURCE_TREE_DIRTY 0)
+                else()
+                    set(RO_PACKET_REPLAY_SOURCE_TREE_DIRTY 1)
+                endif()
+            endif()
+        endif()
+    endif()
+
     add_executable(packet_stream_replay_checks
         tools/tests/replay/PacketStreamReplay.cpp)
     target_compile_features(packet_stream_replay_checks PRIVATE cxx_std_17)
+    target_compile_definitions(packet_stream_replay_checks PRIVATE
+        RO_PACKET_REPLAY_SOURCE_COMMIT="${RO_PACKET_REPLAY_SOURCE_COMMIT}"
+        RO_PACKET_REPLAY_SOURCE_TREE_DIRTY=${RO_PACKET_REPLAY_SOURCE_TREE_DIRTY})
+    set(RO_PACKET_REPLAY_RUNTIME_LIBRARIES ${RO_CLIENT_RUNTIME_LIBRARIES})
+    list(REMOVE_ITEM RO_PACKET_REPLAY_RUNTIME_LIBRARIES ro_main)
+    list(APPEND RO_PACKET_REPLAY_RUNTIME_LIBRARIES ro_main)
     target_link_libraries(packet_stream_replay_checks PRIVATE
-        ro_gamemode ro_session ro_world ro_skill ro_item ro_pathfinder
-        ro_network ro_res ro_audio ro_render3d ro_render ro_ui ro_input
-        ro_cipher ro_core ro_security ro_lua ro_main)
+        ${RO_PACKET_REPLAY_RUNTIME_LIBRARIES}
+        Threads::Threads)
     if(RO_ENABLE_QT6_UI)
         target_link_libraries(packet_stream_replay_checks PRIVATE ro_qtui)
     endif()
