@@ -31,3 +31,7 @@ Specified exact authoritative server/client/reference inputs, canonical contract
 ## 2026-11-03 — PK01.02
 
 Authorized read-only source access succeeded. Reproduced the effective 20080910 config via actual include order/preprocessor and compiled the active `clif_packetdb.hpp` registry: 886 assignments, 603 final opcodes (last assignment wins). The refreshed packet audit reproduced all baseline counts and rendered review annotations back unchanged. Saved line-aware assignment output, final registry CSV, effective macro transcript, and hashes for 11 packet/config source inputs. The source directory has no `.git` metadata; deployed-server provenance remains unresolved. Evidence: `evidence/PK01.02.md` and the paired output files. Stable subject: `packet(PK01.02): reproduce effective server packet registry`. Next: PK01.03.
+
+## 2026-11-03 — PK01.03 review checkpoint
+
+Applied the canonical identity key to P01–P05 and documented candidate splits: raw character account-ID handshake, cross-cutting connection framing, map S2C 0x01F2 and 0x01A2, and separate map C2S 0x0190/0x007E layouts. The exact strong-review decisions are recorded in `evidence/PK01.03-review-needed.md`. This step remains BLOCKED: candidate identities are not approved contracts, no permanent child IDs were allocated, and no dependent implementation may start. Stable subject: `packet(PK01.03): record P0 contract review requirements`. Next: strong protocol review, then finish PK01.03 and PK01.04.

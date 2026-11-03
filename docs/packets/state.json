@@ -34,9 +34,9 @@
       "commit_subject": "packet(PK01.02): reproduce effective server packet registry"
     },
     "PK01.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "BLOCKED",
+      "evidence": ["docs/packets/evidence/PK01.03-review-needed.md"],
+      "commit_subject": "packet(PK01.03): record P0 contract review requirements"
     },
     "PK01.04": {
       "status": "NOT_STARTED",
