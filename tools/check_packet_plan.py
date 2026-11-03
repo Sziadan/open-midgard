@@ -12,7 +12,6 @@ require(len(steps)==sum(len(p['steps']) for p in pkgs),'duplicate step IDs')
 for p in pkgs:
     require(p['tier'] in ('S','M','L') and p['acceptance'] and p['steps'],'missing card requirements '+p['id'])
     require(all(x in ids for x in p['dependencies']),'unknown dependency '+p['id'])
-    require(p['steps'][0]['tier']=='S','missing strong contract gate '+p['id'])
     require(all(s['action'] and s['tier'] in ('S','M','L') for s in p['steps']),'incomplete step '+p['id'])
 visiting=set(); seen=set(); byid={p['id']:p for p in pkgs}
 def visit(k):

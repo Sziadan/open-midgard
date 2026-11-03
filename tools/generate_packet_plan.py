@@ -27,7 +27,7 @@ def generate():
             if hit: pid=hit[0]; why='Provisional source-symbol family routing; manually confirm canonical identity'
             elif int(op,16) in range(0xD5,0xE4): pid='PK31'; why='Legacy chat-room seed range; confirm active contract'
             elif r.get('client_handler') and r.get('client_handler')!='HandleIgnorePacket': pid='PK45'; why='Existing handler semantic review; not certified implemented'
-            else: pid='PK47'; why='Unresolved direction/version/family: strong-agent source adjudication required'
+            else: pid='PK47'; why='Unresolved direction/version/family: authoritative source adjudication required'
         secondary=['PK01','PK02','PK47','PK48']
         if r['direction'] in ('C2S','both/reused') or r.get('server_parser') or r.get('outbound_evidence'): secondary.append('PK46')
         if r.get('client_handler'): secondary.append('PK45')

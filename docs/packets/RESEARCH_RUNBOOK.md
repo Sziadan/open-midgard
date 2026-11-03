@@ -15,14 +15,14 @@ rg -n 'HandleIgnorePacket|RegisterPacket|SetPacketSize' src/gamemode/GameModePac
 
 The audit compiler probes demonstrate effective configuration and packed layouts. Inspect `tools/audit_packets.py` before copying its commands. Follow definitions/includes and final registrations; a grep hit from an inactive guard proves nothing. For a feature, find all server emitters, all parser registrations, their callers and associated module result branches. Find the Ref receiver and follow all Session/actor/UI calls. Record exact field/branch evidence in a contract; the plan's seed opcodes are navigation aids, not a replacement for that work.
 
-## Example: PK07 pet framing (bounded M task after strong approval)
+## Example: PK07 pet framing (bounded M task)
 
-1. Strong researcher checks the packed pet status structure under20080910, including the >=20081126 extra-field guard; verifies active emitter size35, current client37 and router behavior. Approve a35-byte fixture independently from server bytes. Record fields individually, IDs/units and layout guards.
-2. Assign the implementer only the active profile's length/decoder/state handoff and associated regression fixtures. Do not ask them to infer all pet actor/UI behavior in this leaf. Confirm allowed files and exact state ownership from the contract.
+1. Check the packed pet status structure under20080910, including the >=20081126 extra-field guard; verify active emitter size35, current client37 and router behavior. Derive a35-byte fixture independently from server bytes. Record fields individually, IDs/units and layout guards.
+2. Implement only the active profile's length/decoder/state handoff and associated regression fixtures. Do not infer all pet actor/UI behavior in this leaf. Confirm allowed files and exact state ownership from the source-backed contract; independent review follows the implementation run.
 3. Replay the35-byte pet packet followed immediately by a known packet through production framing/router. Assert both decoded states and no remaining stream displacement; repeat with fragmented header/body and invalid/truncated input. Check unsupported variants are not accepted under the wrong profile.
 4. Commit verified leaf behavior with evidence and handoff. P04's framing subproblem is fixed only if tests pass; full pet parity remains PK27. Do not claim the entire pet feature is complete.
 
-## Example: PK08 text-skill request (strong agent)
+## Example: PK08 text-skill request (source-led implementation)
 
 Inspect final active registrations for0190 and007E, not Ref's packet struct alone. The audit identifies0190 as a19-byte action request with parser offsets5,18;007E MoreInfo is102 bytes with offsets5,9,12,20,22. Revalidate those against effective server configuration. Annotate every byte, including unused/padding/text regions, from the actual server registration and parser. Replace incorrect90-byte expectations in old tests. Assert production sends exactly what the server parser consumes, including text bounds and destination fields. Replay unrelated action requests too, because changing a shared profile can break them. A test comparing serializer output with the same client struct proves nothing.
 
@@ -30,9 +30,9 @@ Inspect final active registrations for0190 and007E, not Ref's packet struct alon
 
 Read trade_tradeack's acceptance-distance failure path and each clif result recipient. Make a two-client timeline: requester pending, acceptor invited, accept arrives after distance changes, acceptor receives TOOFAR, requester receives no result, both server trade states clear. Confirm with source-backed replay. Record exactly what a client can observe. Client cancellation/timeout must not invent peer notifications or report a definitive server reason that was never received. Prepare a minimal server fix specification that sends the correct result to both peers and tests both states; external source modification/build/restart needs separate authorization. Split the client and server outcomes in status so a mitigation never closes the actual server defect.
 
-## Example: weak-agent UI leaf
+## Example: bounded UI leaf
 
-A strong agent first specifies exact Session field, server ack/reject meanings, Qt signal/window, accepted text and tests. Delegate only binding the approved field to the approved widget behavior with those tests. The weak agent cannot decide wire constants, encrypt storage passwords, reinterpret map flags, or infer missing feature state. On disagreement, capture expected/actual with source locations in BLOCKED and hand back to a strong agent.
+Specify the Session field, server ack/reject meanings, Qt signal/window, accepted text and tests from authoritative sources. The implementer must not invent wire constants, encrypt storage passwords, reinterpret map flags, or infer missing feature state. On unresolved source evidence, capture expected/actual with source locations in BLOCKED and stop only that dependent work; otherwise implement and verify the bounded leaf. Independent review follows the implementation run.
 
 ## Expanding broad packages safely
 
