@@ -27,3 +27,7 @@ Reconfigured and clean-built the selected client baseline using the MinGW Qt pre
 ## 2026-11-03 — PK01.01
 
 Specified exact authoritative server/client/reference inputs, canonical contract identity fields, independent oracle outputs, and approval/evidence gates. Corrected `source-baseline.json` to the selected client commit and added current hashes from PK00.02 while clearly marking historical server hashes unverified. PK01.01 approves the research structure only; no packet contract is approved. The rAthena checkout remains inaccessible, so PK01.02 and server-derived contracts are gated. Evidence: `evidence/PK01.01.md`; blocker recorded in `BLOCKED.md`. Stable subject: `packet(PK01.01): specify active protocol research evidence`. Next: PK01.02.
+
+## 2026-11-03 — PK01.02
+
+Authorized read-only source access succeeded. Reproduced the effective 20080910 config via actual include order/preprocessor and compiled the active `clif_packetdb.hpp` registry: 886 assignments, 603 final opcodes (last assignment wins). The refreshed packet audit reproduced all baseline counts and rendered review annotations back unchanged. Saved line-aware assignment output, final registry CSV, effective macro transcript, and hashes for 11 packet/config source inputs. The source directory has no `.git` metadata; deployed-server provenance remains unresolved. Evidence: `evidence/PK01.02.md` and the paired output files. Stable subject: `packet(PK01.02): reproduce effective server packet registry`. Next: PK01.03.

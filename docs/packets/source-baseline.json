@@ -7,6 +7,21 @@
     "src/network/MapSendProfile.cpp": "0cba1b025ba4b9154a9f6b574b6f0cc28658d5d7457dc3d66b435c07f344e8c3",
     "src/gamemode/GameModePacket.cpp": "3926bc3d1175abb067c0e6d12b067f9b285976ed6f6608743f7e079edcf7f584"
   },
+  "server_git_revision": null,
+  "server_git_metadata_present": false,
+  "server_source_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/core.hpp": "ba04ee9f32d9d334f59b345326105864ddc5fed296ebbaF9D599C26E48AEA7AE",
+    "src/config/packets.hpp": "180f7ddaF5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "src/common/packets.hpp": "07b47b66a41ed05433f852e399ba1d714ba728074f76633ad77bc2f7720d79ef",
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/login/loginclif.cpp": "a0eea56f5a41286674ae27caad5b57e192b298e20c0fddc38f015b0c2ece5e3f",
+    "src/char/char_clif.cpp": "5fcc31adcf30d0192be8e2dbb825efa1a0a0cde74eae5ebe9b0f7615ee3175d7"
+  },
   "audit_source_sha256": {
     "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp": "cce1ccda951e1de0dd3537947f26e8653f78baa4e9c8b57fe1d4ac6970100aaa",
     "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/MapSendProfile.cpp": "0cba1b025ba4b9154a9f6b574b6f0cc28658d5d7457dc3d66b435c07f344e8c3",
@@ -17,6 +32,6 @@
     "C:/Users/sziad/source/repos/rathena-master/src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
     "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
   },
-  "server_hashes_status": "Historical planning-audit hashes; not reconfirmed because the external server checkout is denied to this execution context.",
-  "note": "Client hashes are from PK00.02's tracked manifest and match source commit af41f648. Historical server hashes establish only the discovery baseline, not the current source checkout or semantic certification."
+  "server_hashes_status": "Relevant current files were readable and hash-pinned in PK01.02; the external directory has no Git metadata, so its commit/origin are unknown.",
+  "note": "Client hashes are from PK00.02's tracked manifest and match source commit af41f648. Server source hashes identify this unversioned snapshot only; they do not establish that a deployed server binary matches it or certify packet semantics."
 }

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "active_step": null,
-  "baseline": "PK01.01: client source at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67 clean-built with deploy OFF; authoritative external server checkout inaccessible.",
+  "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
       "status": "COMPLETED",
@@ -29,9 +29,9 @@
       "commit_subject": "packet(PK01.01): specify active protocol research evidence"
     },
     "PK01.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK01.02.md", "docs/packets/evidence/PK01.02-effective-defines.txt", "docs/packets/evidence/PK01.02-server-registry-assignments.txt", "docs/packets/evidence/PK01.02-server-registry-final.csv"],
+      "commit_subject": "packet(PK01.02): reproduce effective server packet registry"
     },
     "PK01.03": {
       "status": "NOT_STARTED",
