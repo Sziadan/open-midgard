@@ -139,7 +139,7 @@
         "docs/packets/evidence/PK03.04-replay-audit.md",
         "docs/packets/contracts/PK03.04.DISCONNECT-ACK.md"
       ],
-      "commit_subject": "packet(PK03.04): draft disconnect acknowledgement contract"
+      "commit_subject": "packet(PK03.04): record contract review access blocker"
     },
     "PK04.01": {
       "status": "NOT_STARTED",
