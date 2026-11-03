@@ -1,0 +1,519 @@
+{
+  "schema_version": 1,
+  "baseline": {
+    "client_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+    "server_root": "C:/Users/sziad/source/repos/rathena-master",
+    "server_revision": null,
+    "server_snapshot_state": "unversioned; no .git metadata",
+    "effective_defines": {
+      "PACKETVER": 20080910,
+      "PACKETVER_SAK_NUM": 20080910,
+      "PACKETVER_MAIN_NUM": "PACKETVER"
+    },
+    "deployed_server_provenance": "unknown"
+  },
+  "source_sha256": {
+    "src/char/char_clif.cpp": "5fcc31adcf30d0192be8e2dbb825efa1a0a0cde74eae5ebe9b0f7615ee3175d7",
+    "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "src/common/packets.hpp": "07b47b66a41ed05433f852e399ba1d714ba728074f76633ad77bc2f7720d79ef",
+    "src/config/core.hpp": "ba04ee9f32d9d334f59b345326105864ddc5fed296ebbaF9D599C26E48AEA7AE",
+    "src/config/packets.hpp": "180f7ddaF5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/login/loginclif.cpp": "a0eea56f5a41286674ae27caad5b57e192b298e20c0fddc38f015b0c2ece5e3f",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/map/guild.cpp": "3221684BFFA937F06E59EF1E6E7DE678F329FE1BF436F64B3CF9BBCFAF053683",
+    "src/map/intif.cpp": "D2B2D980230237D6A03C714B50D911C3B21BDC7F52A8C334B2D949B5EDC37AC0",
+    "src/map/map.hpp": "1CB428D1145EC9C4045B2AE58C163BE24BF1BD374FC8EEA07EAF0C266621FE2B",
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/pet.cpp": "43EE63394F4E5301E032AD006FB4C3DD87F717E0EFB935AB33D4FA9758B85065"
+  },
+  "contracts": [
+    {
+      "contract_id": "PK01.P01.HANDSHAKE",
+      "discovery_parents": [
+        "AUDIT-0x8482",
+        "AUDIT-0x8483"
+      ],
+      "stage": "char",
+      "direction": "S2C",
+      "server_packetver": 20080910,
+      "client_profile": 23,
+      "opcode": null,
+      "layout_variant": "raw four-byte account ID echo",
+      "applicability_status": "approved_for_applicability_only",
+      "registration": null,
+      "fields": [
+        {
+          "name": "account_id",
+          "offset": 0,
+          "width_bytes": 4,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/char/char_clif.cpp",
+          "source_line": 850,
+          "guard": "raw handshake",
+          "meaning": "account identifier echoed from request"
+        }
+      ],
+      "probe": {
+        "result": "raw prefix, not opcode registration"
+      }
+    },
+    {
+      "contract_id": "PK01.P02.FRAMING",
+      "discovery_parents": [],
+      "stage": "login/char/map connections",
+      "direction": "receive framing",
+      "server_packetver": 20080910,
+      "client_profile": 23,
+      "opcode": null,
+      "layout_variant": "cross-stage receive state machine",
+      "applicability_status": "approved_for_applicability_boundary_only",
+      "registration": null,
+      "fields": [],
+      "probe": {
+        "result": "state machine; fixed-layout probe not applicable"
+      }
+    },
+    {
+      "contract_id": "PK01.P03.01F2",
+      "discovery_parents": [
+        "AUDIT-0x01F2"
+      ],
+      "stage": "map",
+      "direction": "S2C",
+      "server_packetver": 20080910,
+      "client_profile": 23,
+      "opcode": "0x01F2",
+      "layout_variant": "PACKET_ZC_UPDATE_CHARSTAT under defined(PACKETVER)",
+      "applicability_status": "approved_for_applicability_only",
+      "registration": {
+        "kind": "emitter",
+        "source_path": "src/map/clif.cpp",
+        "source_line": 8682,
+        "symbol": "clif_guild_memberlogin_notice",
+        "emitted_length": 20
+      },
+      "fields": [
+        {
+          "name": "PacketType",
+          "offset": 0,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/packets.hpp",
+          "source_line": 868,
+          "guard": "defined(PACKETVER)",
+          "meaning": "opcode"
+        },
+        {
+          "name": "aid",
+          "offset": 2,
+          "width_bytes": 4,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/packets.hpp",
+          "source_line": 870,
+          "guard": "defined(PACKETVER)",
+          "meaning": "account ID"
+        },
+        {
+          "name": "cid",
+          "offset": 6,
+          "width_bytes": 4,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/packets.hpp",
+          "source_line": 871,
+          "guard": "defined(PACKETVER)",
+          "meaning": "character ID"
+        },
+        {
+          "name": "status",
+          "offset": 10,
+          "width_bytes": 4,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/packets.hpp",
+          "source_line": 872,
+          "guard": "defined(PACKETVER)",
+          "meaning": "status value"
+        },
+        {
+          "name": "gender",
+          "offset": 14,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/packets.hpp",
+          "source_line": 873,
+          "guard": "defined(PACKETVER)",
+          "meaning": "gender"
+        },
+        {
+          "name": "hairStyle",
+          "offset": 16,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/packets.hpp",
+          "source_line": 874,
+          "guard": "defined(PACKETVER)",
+          "meaning": "hair style"
+        },
+        {
+          "name": "hairColor",
+          "offset": 18,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/packets.hpp",
+          "source_line": 875,
+          "guard": "defined(PACKETVER)",
+          "meaning": "hair color"
+        }
+      ],
+      "probe": {
+        "sizeof": 20,
+        "offsets": {
+          "PacketType": 0,
+          "aid": 2,
+          "cid": 6,
+          "status": 10,
+          "gender": 14,
+          "hairStyle": 16,
+          "hairColor": 18
+        }
+      }
+    },
+    {
+      "contract_id": "PK01.P04.01A2-20080910",
+      "discovery_parents": [
+        "AUDIT-0x01A2"
+      ],
+      "stage": "map",
+      "direction": "S2C",
+      "server_packetver": 20080910,
+      "client_profile": 23,
+      "opcode": "0x01A2",
+      "layout_variant": "35-byte PACKET_ZC_PROPERTY_PET",
+      "applicability_status": "approved_for_applicability_only",
+      "registration": {
+        "kind": "emitter",
+        "source_path": "src/map/clif.cpp",
+        "source_line": 8335,
+        "symbol": "clif_send_petstatus",
+        "emitted_length": 35
+      },
+      "fields": [
+        {
+          "name": "PacketType",
+          "offset": 0,
+          "width_bytes": 2,
+          "signed": true,
+          "endian": "little",
+          "source_path": "src/map/packets_struct.hpp",
+          "source_line": 5442,
+          "guard": "PACKETVER < 20081126",
+          "meaning": "opcode"
+        },
+        {
+          "name": "szName",
+          "offset": 2,
+          "width_bytes": 24,
+          "signed": null,
+          "endian": "little",
+          "source_path": "src/map/packets_struct.hpp",
+          "source_line": 5443,
+          "guard": "PACKETVER < 20081126",
+          "meaning": "name bytes"
+        },
+        {
+          "name": "bModified",
+          "offset": 26,
+          "width_bytes": 1,
+          "signed": true,
+          "endian": "little",
+          "source_path": "src/map/packets_struct.hpp",
+          "source_line": 5444,
+          "guard": "PACKETVER < 20081126",
+          "meaning": "rename flag"
+        },
+        {
+          "name": "nLevel",
+          "offset": 27,
+          "width_bytes": 2,
+          "signed": true,
+          "endian": "little",
+          "source_path": "src/map/packets_struct.hpp",
+          "source_line": 5445,
+          "guard": "PACKETVER < 20081126",
+          "meaning": "level"
+        },
+        {
+          "name": "nFullness",
+          "offset": 29,
+          "width_bytes": 2,
+          "signed": true,
+          "endian": "little",
+          "source_path": "src/map/packets_struct.hpp",
+          "source_line": 5446,
+          "guard": "PACKETVER < 20081126",
+          "meaning": "fullness"
+        },
+        {
+          "name": "nRelationship",
+          "offset": 31,
+          "width_bytes": 2,
+          "signed": true,
+          "endian": "little",
+          "source_path": "src/map/packets_struct.hpp",
+          "source_line": 5447,
+          "guard": "PACKETVER < 20081126",
+          "meaning": "relationship"
+        },
+        {
+          "name": "ITID",
+          "offset": 33,
+          "width_bytes": 2,
+          "signed": true,
+          "endian": "little",
+          "source_path": "src/map/packets_struct.hpp",
+          "source_line": 5448,
+          "guard": "PACKETVER < 20081126",
+          "meaning": "accessory item ID"
+        }
+      ],
+      "probe": {
+        "sizeof": 35,
+        "offsets": {
+          "PacketType": 0,
+          "szName": 2,
+          "modified": 26,
+          "level": 27,
+          "fullness": 29,
+          "relationship": 31,
+          "ITID": 33
+        }
+      }
+    },
+    {
+      "contract_id": "PK01.P05.007E",
+      "discovery_parents": [
+        "AUDIT-0x007E"
+      ],
+      "stage": "map",
+      "direction": "C2S",
+      "server_packetver": 20080910,
+      "client_profile": 23,
+      "opcode": "0x007E",
+      "layout_variant": "102-byte UseSkillToPosMoreInfo",
+      "applicability_status": "approved_for_applicability_only",
+      "registration": {
+        "guard": "effective PACKETVER=20080910; see source assignment order",
+        "source_path": "src/map/clif_packetdb.hpp",
+        "source_line": 868,
+        "accepted_length": 102,
+        "parser": "clif_parse_UseSkillToPosMoreInfo",
+        "field_positions": [
+          5,
+          9,
+          12,
+          20,
+          22,
+          0
+        ],
+        "assignment_count": 16
+      },
+      "fields": [
+        {
+          "name": "skill_level",
+          "offset": 5,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "effective registration",
+          "meaning": "skill level"
+        },
+        {
+          "name": "skill_id",
+          "offset": 9,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "effective registration",
+          "meaning": "skill ID"
+        },
+        {
+          "name": "x",
+          "offset": 12,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "effective registration",
+          "meaning": "target X"
+        },
+        {
+          "name": "y",
+          "offset": 20,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "effective registration",
+          "meaning": "target Y"
+        },
+        {
+          "name": "text",
+          "offset": 22,
+          "width_bytes": 80,
+          "signed": null,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "effective registration",
+          "meaning": "skill text"
+        }
+      ],
+      "probe": {
+        "result": "registry parser offsets independently compiled by audit_packets.py"
+      }
+    },
+    {
+      "contract_id": "PK01.P05.0190",
+      "discovery_parents": [
+        "AUDIT-0x0190"
+      ],
+      "stage": "map",
+      "direction": "C2S",
+      "server_packetver": 20080910,
+      "client_profile": 22,
+      "opcode": "0x0190",
+      "layout_variant": "19-byte padded ActionRequest",
+      "applicability_status": "approved_for_applicability_only",
+      "registration": {
+        "guard": "effective PACKETVER=20080910; see source assignment order",
+        "source_path": "src/map/clif_packetdb.hpp",
+        "source_line": 881,
+        "accepted_length": 19,
+        "parser": "clif_parse_ActionRequest",
+        "field_positions": [
+          5,
+          18,
+          0
+        ],
+        "assignment_count": 18
+      },
+      "fields": [
+        {
+          "name": "target_id",
+          "offset": 5,
+          "width_bytes": 4,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 881,
+          "guard": "effective registration",
+          "meaning": "action target"
+        },
+        {
+          "name": "action",
+          "offset": 18,
+          "width_bytes": 1,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 881,
+          "guard": "effective registration",
+          "meaning": "action kind"
+        }
+      ],
+      "probe": {
+        "result": "registry parser offsets independently compiled by audit_packets.py"
+      }
+    },
+    {
+      "contract_id": "PK01.P05.0437",
+      "discovery_parents": [
+        "AUDIT-0x0437"
+      ],
+      "stage": "map",
+      "direction": "C2S",
+      "server_packetver": 20080910,
+      "client_profile": 23,
+      "opcode": "0x0437",
+      "layout_variant": "7-byte ActionRequest",
+      "applicability_status": "approved_for_applicability_only",
+      "registration": {
+        "guard": "effective PACKETVER=20080910; see source assignment order",
+        "source_path": "src/map/clif_packetdb.hpp",
+        "source_line": 1149,
+        "accepted_length": 7,
+        "parser": "clif_parse_ActionRequest",
+        "field_positions": [
+          2,
+          6,
+          0
+        ],
+        "assignment_count": 1
+      },
+      "fields": [
+        {
+          "name": "target_id",
+          "offset": 2,
+          "width_bytes": 4,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 1149,
+          "guard": "PACKETVER >= 20080910",
+          "meaning": "action target"
+        },
+        {
+          "name": "action",
+          "offset": 6,
+          "width_bytes": 1,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 1149,
+          "guard": "PACKETVER >= 20080910",
+          "meaning": "action kind"
+        }
+      ],
+      "probe": {
+        "result": "registry parser offsets independently compiled by audit_packets.py"
+      }
+    }
+  ],
+  "registry_probe": {
+    "active_assignments": 886,
+    "final_registrations": 603,
+    "assignment_file_sha256": "505963e5fa04b2dfe2d703adac58b62e77c43e08ebb73d55ece0340776e37455",
+    "final_file_sha256": "faba011b15f10020297efb371312019729a2580a6662b3cd1164bed51fbd276f",
+    "generator": "tools/audit_packets.py",
+    "command": "python tools/audit_packets.py --server C:/Users/sziad/source/repos/rathena-master"
+  },
+  "layout_probe": {
+    "source": "tools/packet_contract_layout_probe.cpp",
+    "source_sha256": "d2738d3e205e28e29339a0fdad944957b134e8c0e28a34fe2757e6a9ff358cba",
+    "command": "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -Ibuild-mingw-preset/packet-audit -IC:/Users/sziad/source/repos/rathena-master/src -IC:/Users/sziad/source/repos/rathena-master/3rdparty -IC:/Users/sziad/source/repos/rathena-master/3rdparty/libconfig tools/packet_contract_layout_probe.cpp -o build-mingw-preset/packet-audit/p0_layout_probe.exe",
+    "compiler": "MinGW G++ 13.1.0",
+    "exit_code": 0,
+    "output": [
+      "PACKETVER=20080910",
+      "PACKETVER_SAK_NUM=20080910",
+      "PACKET_ZC_UPDATE_CHARSTAT sizeof=20 PacketType=0 aid=2 cid=6 status=10 gender=14 hairStyle=16 hairColor=18",
+      "PACKET_ZC_PROPERTY_PET sizeof=35 PacketType=0 szName=2 modified=26 level=27 fullness=29 relationship=31 ITID=33"
+    ]
+  }
+}

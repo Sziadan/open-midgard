@@ -2,8 +2,8 @@
 
 Planning checkpoint prepared 2026-11-03. **No runtime work package is certified complete.** PK00.01 completed a research-only baseline ownership checkpoint; no runtime code is certified.
 
-- Canonical task state: state.json. Current active step: PK02.01.
-- PK02.01 specification is complete; next: PK02.02 build actual-guard registry and sizeof/offsetof probes.
+- Canonical task state: state.json. Current active step: PK02.02.
+- PK02.01 specification and PK02.02 actual-guard registry/sizeof/offsetof probes are complete; next: PK02.03 independent byte fixtures and schema validation.
 - PK00.02 inventoried 1,198 tracked files with hashes and ignored references/assets; the authoritative external rAthena checkout was inaccessible during that checkpoint. It became readable for PK01.02, which recorded source hashes. See `evidence/PK00.02.md`, `evidence/PK00.02-manifest.json`, and `evidence/PK01.02.md`.
 - PK00.03 selected runtime commit `af41f6484cb7ff31825296babe4b913aa36c4c67`, already at `origin/main`; only packet-plan documentation differs in the working branch. Exact deploy-off build instructions are recorded in `evidence/PK00.03.md`.
 - PK00.04 clean-built the client with `RO_ENABLE_DEV_DEPLOY=OFF`; see `evidence/PK00.04.md` for commands, fresh binary hash, and warnings. This does not certify packet behavior.

@@ -45,3 +45,8 @@ Independent strong review reproduced the effective 20080910 preprocessor configu
 ## 2026-11-03 — PK02.01 specification
 
 Specified exact hash-pinned server inputs, active P0 applicability set, deterministic JSON manifest schema, independent fixture schema, validation rules, reproducibility expectations, and strong-review gate. Kept framing as a state machine and excluded the later pet layout from the active 20080910 fixtures. No probe or runtime behavior is certified by this planning leaf. Evidence: `evidence/PK02.01-specification.md`. Stable subject: `packet(PK02.01): specify server manifest and byte oracle`. Next: PK02.02 actual-guard registry and sizeof/offsetof probes.
+
+
+## 2026-11-03 — PK02.02 probes
+
+Recompiled the active guarded registry and reproduced 886 assignments/603 final registrations. Compiled `tools/packet_contract_layout_probe.cpp` using the actual PACKETVER-guarded server packet declarations: guild status is 20 bytes and pet status is 35 bytes with source-backed offsets. Generated a seven-contract manifest after checking all 15 pinned server source hashes. Evidence includes probe commands/output and hashes. This does not certify emitter reachability or runtime semantics; byte fixtures remain PK02.03. Stable subject: `packet(PK02.02): probe guarded server packet layouts`. Next: PK02.03.
