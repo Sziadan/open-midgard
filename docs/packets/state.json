@@ -976,9 +976,11 @@
       "commit_subject": null
     },
     "PK44.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "BLOCKED",
+      "evidence": [
+        "docs/packets/evidence/PK44.01-scope.md"
+      ],
+      "commit_subject": "packet(PK44.01): scope later applicability review"
     },
     "PK44.02": {
       "status": "NOT_STARTED",
