@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "manifest_sha256": "b74f2560cb2c1afa010ac204c1b565f2716f0ac8edb28e4d598984909c069efe",
+  "manifest_sha256": "5e121c7e42344d7e8bc843f656eae6b2633a852995eb7a13419fafae460d7a44",
   "fixtures": [
     {
       "fixture_id": "P01-account-echo-synthetic",
       "contract_id": "PK01.P01.HANDSHAKE",
-      "provenance": "No opcode; synthetic account ID, server echo field.",
+      "provenance": "Synthetic raw account echo; no opcode.",
       "direction": "S2C",
       "stage": "char",
       "profile": 23,
@@ -20,14 +20,14 @@
           "width_bytes": 4,
           "expected_hex": "44332211",
           "decoded_value": "0x11223344",
-          "source_basis": "src/char/char_clif.cpp:850-853 raw account echo"
+          "source_basis": "src/char/char_clif.cpp:850-853"
         }
       ]
     },
     {
       "fixture_id": "P03-guild-status-synthetic",
       "contract_id": "PK01.P03.01F2",
-      "provenance": "Synthetic values packed using server PACKET_ZC_UPDATE_CHARSTAT field order and measured 20-byte size.",
+      "provenance": "Synthetic packed layout sample; status value is a raw marker and is not asserted valid for online/offline state.",
       "direction": "S2C",
       "stage": "map",
       "profile": 23,
@@ -42,7 +42,7 @@
           "width_bytes": 2,
           "expected_hex": "f201",
           "decoded_value": "0x01F2",
-          "source_basis": "src/map/packets.hpp:868 opcode"
+          "source_basis": "src/map/packets.hpp:868"
         },
         {
           "name": "aid",
@@ -65,7 +65,7 @@
           "offset": 10,
           "width_bytes": 4,
           "expected_hex": "d4c3b2a1",
-          "decoded_value": "0xA1B2C3D4",
+          "decoded_value": "0xA1B2C3D4 synthetic raw marker; valid status semantics not asserted",
           "source_basis": "src/map/packets.hpp:872"
         },
         {
@@ -73,7 +73,7 @@
           "offset": 14,
           "width_bytes": 2,
           "expected_hex": "0100",
-          "decoded_value": "1",
+          "decoded_value": "1 synthetic",
           "source_basis": "src/map/packets.hpp:873"
         },
         {
@@ -81,7 +81,7 @@
           "offset": 16,
           "width_bytes": 2,
           "expected_hex": "0c00",
-          "decoded_value": "12",
+          "decoded_value": "12 synthetic",
           "source_basis": "src/map/packets.hpp:874"
         },
         {
@@ -89,7 +89,7 @@
           "offset": 18,
           "width_bytes": 2,
           "expected_hex": "0300",
-          "decoded_value": "3",
+          "decoded_value": "3 synthetic",
           "source_basis": "src/map/packets.hpp:875"
         }
       ]
@@ -97,7 +97,7 @@
     {
       "fixture_id": "P04-pet-status-synthetic",
       "contract_id": "PK01.P04.01A2-20080910",
-      "provenance": "Synthetic values packed using server PACKET_ZC_PROPERTY_PET fields; later job field is absent under PACKETVER=20080910.",
+      "provenance": "Synthetic 35-byte packed layout; the later job field is absent for PACKETVER=20080910.",
       "direction": "S2C",
       "stage": "map",
       "profile": 23,
@@ -120,14 +120,14 @@
           "width_bytes": 24,
           "expected_hex": "4d6f63686900000000000000000000000000000000000000",
           "decoded_value": "Mochi; NUL padded to 24 bytes",
-          "source_basis": "src/map/packets_struct.hpp:5443 NAME_LENGTH=24"
+          "source_basis": "src/map/packets_struct.hpp:5443"
         },
         {
           "name": "bModified",
           "offset": 26,
           "width_bytes": 1,
           "expected_hex": "01",
-          "decoded_value": "1",
+          "decoded_value": "1 synthetic",
           "source_basis": "src/map/packets_struct.hpp:5444"
         },
         {
@@ -135,7 +135,7 @@
           "offset": 27,
           "width_bytes": 2,
           "expected_hex": "1900",
-          "decoded_value": "25",
+          "decoded_value": "25 synthetic",
           "source_basis": "src/map/packets_struct.hpp:5445"
         },
         {
@@ -143,7 +143,7 @@
           "offset": 29,
           "width_bytes": 2,
           "expected_hex": "5000",
-          "decoded_value": "80",
+          "decoded_value": "80 synthetic",
           "source_basis": "src/map/packets_struct.hpp:5446"
         },
         {
@@ -151,7 +151,7 @@
           "offset": 31,
           "width_bytes": 2,
           "expected_hex": "e803",
-          "decoded_value": "1000",
+          "decoded_value": "1000 synthetic",
           "source_basis": "src/map/packets_struct.hpp:5447"
         },
         {
@@ -159,7 +159,7 @@
           "offset": 33,
           "width_bytes": 2,
           "expected_hex": "3412",
-          "decoded_value": "0x1234",
+          "decoded_value": "0x1234 synthetic",
           "source_basis": "src/map/packets_struct.hpp:5448"
         }
       ]
@@ -167,7 +167,7 @@
     {
       "fixture_id": "P05-action-0190-synthetic",
       "contract_id": "PK01.P05.0190",
-      "provenance": "Synthetic padded ActionRequest; parser-consumed positions are from final active registration.",
+      "provenance": "Synthetic padded ActionRequest; target ID and action use final parser offsets, padding is a chosen zero pattern.",
       "direction": "C2S",
       "stage": "map",
       "profile": 22,
@@ -185,27 +185,43 @@
           "source_basis": "src/map/clif_packetdb.hpp:881"
         },
         {
+          "name": "padding_2_5",
+          "offset": 2,
+          "width_bytes": 3,
+          "expected_hex": "000000",
+          "decoded_value": "zero-filled synthetic padding",
+          "source_basis": "src/map/clif_packetdb.hpp:881 accepted length"
+        },
+        {
           "name": "target_id",
           "offset": 5,
           "width_bytes": 4,
           "expected_hex": "44332211",
           "decoded_value": "0x11223344",
-          "source_basis": "final registration parser offset 5"
+          "source_basis": "src/map/clif_packetdb.hpp:881 parser offset 5"
+        },
+        {
+          "name": "padding_9_18",
+          "offset": 9,
+          "width_bytes": 9,
+          "expected_hex": "000000000000000000",
+          "decoded_value": "zero-filled synthetic padding",
+          "source_basis": "src/map/clif_packetdb.hpp:881 accepted length"
         },
         {
           "name": "action",
           "offset": 18,
           "width_bytes": 1,
           "expected_hex": "07",
-          "decoded_value": "7",
-          "source_basis": "final registration parser offset 18"
+          "decoded_value": "7 synthetic",
+          "source_basis": "src/map/clif_packetdb.hpp:881 parser offset 18"
         }
       ]
     },
     {
       "fixture_id": "P05-skill-ground-text-synthetic",
       "contract_id": "PK01.P05.007E",
-      "provenance": "Synthetic request payload; padding bytes are zero. Coordinates and text are synthetic, not live user data.",
+      "provenance": "Synthetic request; padding is zero by fixture choice. Text is a short ASCII example, not a general encoding claim.",
       "direction": "C2S",
       "stage": "map",
       "profile": 23,
@@ -223,36 +239,68 @@
           "source_basis": "src/map/clif_packetdb.hpp:868"
         },
         {
+          "name": "padding_2_5",
+          "offset": 2,
+          "width_bytes": 3,
+          "expected_hex": "000000",
+          "decoded_value": "zero-filled synthetic padding",
+          "source_basis": "src/map/clif_packetdb.hpp:868 accepted length"
+        },
+        {
           "name": "skill_level",
           "offset": 5,
           "width_bytes": 2,
           "expected_hex": "0300",
-          "decoded_value": "3",
-          "source_basis": "final registration parser offset 5"
+          "decoded_value": "3 synthetic",
+          "source_basis": "src/map/clif_packetdb.hpp:868 parser offset 5"
+        },
+        {
+          "name": "padding_7_9",
+          "offset": 7,
+          "width_bytes": 2,
+          "expected_hex": "0000",
+          "decoded_value": "zero-filled synthetic padding",
+          "source_basis": "src/map/clif_packetdb.hpp:868 accepted length"
         },
         {
           "name": "skill_id",
           "offset": 9,
           "width_bytes": 2,
           "expected_hex": "2301",
-          "decoded_value": "0x0123",
-          "source_basis": "final registration parser offset 9"
+          "decoded_value": "0x0123 synthetic",
+          "source_basis": "src/map/clif_packetdb.hpp:868 parser offset 9"
+        },
+        {
+          "name": "padding_11_12",
+          "offset": 11,
+          "width_bytes": 1,
+          "expected_hex": "00",
+          "decoded_value": "zero-filled synthetic padding",
+          "source_basis": "src/map/clif_packetdb.hpp:868 accepted length"
         },
         {
           "name": "x",
           "offset": 12,
           "width_bytes": 2,
           "expected_hex": "6400",
-          "decoded_value": "100",
-          "source_basis": "final registration parser offset 12"
+          "decoded_value": "100 wire bits; consumer interprets int16",
+          "source_basis": "src/map/clif_packetdb.hpp:868 parser offset 12"
+        },
+        {
+          "name": "padding_14_20",
+          "offset": 14,
+          "width_bytes": 6,
+          "expected_hex": "000000000000",
+          "decoded_value": "zero-filled synthetic padding",
+          "source_basis": "src/map/clif_packetdb.hpp:868 accepted length"
         },
         {
           "name": "y",
           "offset": 20,
           "width_bytes": 2,
           "expected_hex": "c800",
-          "decoded_value": "200",
-          "source_basis": "final registration parser offset 20"
+          "decoded_value": "200 wire bits; consumer interprets int16",
+          "source_basis": "src/map/clif_packetdb.hpp:868 parser offset 20"
         },
         {
           "name": "text",
@@ -260,14 +308,14 @@
           "width_bytes": 80,
           "expected_hex": "6669787475726500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
           "decoded_value": "fixture; NUL padded to 80 bytes",
-          "source_basis": "final registration parser offset 22"
+          "source_basis": "src/map/clif_packetdb.hpp:868 parser offset 22"
         }
       ]
     },
     {
       "fixture_id": "P05-action-0437-synthetic",
       "contract_id": "PK01.P05.0437",
-      "provenance": "Synthetic compact ActionRequest; parser-consumed positions are from final active registration.",
+      "provenance": "Synthetic compact ActionRequest; parser-consumed fields use final active offsets.",
       "direction": "C2S",
       "stage": "map",
       "profile": 23,
@@ -289,16 +337,16 @@
           "offset": 2,
           "width_bytes": 4,
           "expected_hex": "44332211",
-          "decoded_value": "0x11223344",
-          "source_basis": "final registration parser offset 2"
+          "decoded_value": "0x11223344 synthetic",
+          "source_basis": "src/map/clif_packetdb.hpp:1149 parser offset 2"
         },
         {
           "name": "action",
           "offset": 6,
           "width_bytes": 1,
           "expected_hex": "07",
-          "decoded_value": "7",
-          "source_basis": "final registration parser offset 6"
+          "decoded_value": "7 synthetic",
+          "source_basis": "src/map/clif_packetdb.hpp:1149 parser offset 6"
         }
       ]
     }

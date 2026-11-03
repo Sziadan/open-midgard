@@ -1,4 +1,5 @@
 PACKETVER=20080910
 PACKETVER_SAK_NUM=20080910
+PACKETVER_MAIN_NUM=20080910
 PACKET_ZC_UPDATE_CHARSTAT sizeof=20 PacketType=0 aid=2 cid=6 status=10 gender=14 hairStyle=16 hairColor=18
-PACKET_ZC_PROPERTY_PET sizeof=35 PacketType=0 szName=2 modified=26 level=27 fullness=29 relationship=31 ITID=33
+PACKET_ZC_PROPERTY_PET sizeof=35 PacketType=0 szName=2 bModified=26 nLevel=27 nFullness=29 nRelationship=31 ITID=33

@@ -1,6 +1,6 @@
 # Resume packet implementation
 
-Next action: **PK02.04 independent review**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, `BLOCKED.md`, and PK02.01–PK02.03 evidence. Independently compare the manifest fields/offsets and raw fixtures to the hash-pinned server source; rerun generation/validation and record any corrections before downstream use.
+Next action: **PK03.01 specification**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, `BLOCKED.md`, PK02.01–PK02.04 evidence, and the PK03 card in `WORK_PACKAGES.md`. Define production replay entry points, mocks, cases, build/test commands, evidence schema, and independent review gate before exercising production code.
 
 Completed checkpoint: PK00.01 at baseline `af41f6484cb7ff31825296babe4b913aa36c4c67` (`main`, tracking `origin/main`, clean tree). Evidence: `evidence/PK00.01.md`. The old handoff's `9c158616` HEAD and approximately 80 dirty/untracked paths no longer describe this checkout. The current runtime commit already contains the guild/commerce changes previously noted as dirty.
 

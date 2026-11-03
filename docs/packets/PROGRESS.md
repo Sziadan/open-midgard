@@ -55,3 +55,8 @@ Recompiled the active guarded registry and reproduced 886 assignments/603 final 
 ## 2026-11-03 — PK02.03 fixtures
 
 Created six synthetic raw fixtures for the handshake, 0x01F2, 0x01A2, 0x0190, 0x007E, and 0x0437. Added a generator/validator that checks contract links and manifest field offsets, exact lengths, hashes, field slices, bounds, overlap, and synthetic-data marking; its negative corruption check rejects invalid expectations. Framing is explicitly a state machine, not a fabricated fixed packet. These bytes are independent source-derived expectations, not production path tests. Evidence: `evidence/PK02.03-fixtures.md` and its JSON/hex files. Stable subject: `packet(PK02.03): create server-derived byte fixtures`. Next: PK02.04 independent review.
+
+
+## 2026-11-03 — PK02.04 independent verification
+
+Independent strong review reran manifest generation, fixture generation/negative validation, and the plan checker. The reviewer confirmed fresh probe compilation, source-hash checks, rebuilt generated header, effective macro values, measured layout comparisons, C2S parser offsets/lengths, fixture field derivation and deterministic regeneration. Initial validator gaps were corrected: manifest/opcode/profile/length/schema/suite/provenance checks now reject the reviewed bad cases; explicit opcode/padding fields and unresolved semantic metadata are recorded. All evidence hashes/output have been refreshed. This approves only the bounded manifest/byte-oracle infrastructure. Evidence: `evidence/PK02.04-independent-review.md`. Stable subject: `packet(PK02.04): independently verify contract byte oracles`. Next: PK03.01.

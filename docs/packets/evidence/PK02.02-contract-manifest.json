@@ -16,18 +16,18 @@
     "src/char/char_clif.cpp": "5fcc31adcf30d0192be8e2dbb825efa1a0a0cde74eae5ebe9b0f7615ee3175d7",
     "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
     "src/common/packets.hpp": "07b47b66a41ed05433f852e399ba1d714ba728074f76633ad77bc2f7720d79ef",
-    "src/config/core.hpp": "ba04ee9f32d9d334f59b345326105864ddc5fed296ebbaF9D599C26E48AEA7AE",
-    "src/config/packets.hpp": "180f7ddaF5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/config/core.hpp": "ba04ee9f32d9d334f59b345326105864ddc5fed296ebbaf9d599c26e48aea7ae",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
     "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
     "src/login/loginclif.cpp": "a0eea56f5a41286674ae27caad5b57e192b298e20c0fddc38f015b0c2ece5e3f",
     "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
     "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
-    "src/map/guild.cpp": "3221684BFFA937F06E59EF1E6E7DE678F329FE1BF436F64B3CF9BBCFAF053683",
-    "src/map/intif.cpp": "D2B2D980230237D6A03C714B50D911C3B21BDC7F52A8C334B2D949B5EDC37AC0",
-    "src/map/map.hpp": "1CB428D1145EC9C4045B2AE58C163BE24BF1BD374FC8EEA07EAF0C266621FE2B",
+    "src/map/guild.cpp": "3221684bffa937f06e59ef1e6e7de678f329fe1bf436f64b3cf9bbcfaf053683",
+    "src/map/intif.cpp": "d2b2d980230237d6a03c714b50d911c3b21bdc7f52a8c334b2d949b5edc37ac0",
+    "src/map/map.hpp": "1cb428d1145ec9c4045b2ae58c163be24bf1bd374fc8eea07eaf0c266621fe2b",
     "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
     "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
-    "src/map/pet.cpp": "43EE63394F4E5301E032AD006FB4C3DD87F717E0EFB935AB33D4FA9758B85065"
+    "src/map/pet.cpp": "43ee63394f4e5301e032ad006fb4c3dd87f717e0efb935ab33d4fa9758b85065"
   },
   "contracts": [
     {
@@ -43,7 +43,13 @@
       "opcode": null,
       "layout_variant": "raw four-byte account ID echo",
       "applicability_status": "approved_for_applicability_only",
-      "registration": null,
+      "registration": {
+        "kind": "raw_handshake",
+        "source_path": "src/char/char_clif.cpp",
+        "source_line": 850,
+        "symbol": "chclif_parse_reqtoconnect",
+        "emitted_length": 4
+      },
       "fields": [
         {
           "name": "account_id",
@@ -54,10 +60,14 @@
           "source_path": "src/char/char_clif.cpp",
           "source_line": 850,
           "guard": "raw handshake",
-          "meaning": "account identifier echoed from request"
+          "meaning": "echoed account identifier",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         }
       ],
       "probe": {
+        "kind": "source_field",
         "result": "raw prefix, not opcode registration"
       }
     },
@@ -74,7 +84,8 @@
       "registration": null,
       "fields": [],
       "probe": {
-        "result": "state machine; fixed-layout probe not applicable"
+        "kind": "not_applicable",
+        "result": "state machine has no fixed byte layout"
       }
     },
     {
@@ -106,7 +117,10 @@
           "source_path": "src/map/packets.hpp",
           "source_line": 868,
           "guard": "defined(PACKETVER)",
-          "meaning": "opcode"
+          "meaning": "opcode",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "aid",
@@ -117,7 +131,10 @@
           "source_path": "src/map/packets.hpp",
           "source_line": 870,
           "guard": "defined(PACKETVER)",
-          "meaning": "account ID"
+          "meaning": "account ID",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "cid",
@@ -128,7 +145,10 @@
           "source_path": "src/map/packets.hpp",
           "source_line": 871,
           "guard": "defined(PACKETVER)",
-          "meaning": "character ID"
+          "meaning": "character ID",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "status",
@@ -139,7 +159,10 @@
           "source_path": "src/map/packets.hpp",
           "source_line": 872,
           "guard": "defined(PACKETVER)",
-          "meaning": "status value"
+          "meaning": "status",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "gender",
@@ -150,7 +173,10 @@
           "source_path": "src/map/packets.hpp",
           "source_line": 873,
           "guard": "defined(PACKETVER)",
-          "meaning": "gender"
+          "meaning": "gender",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "hairStyle",
@@ -161,7 +187,10 @@
           "source_path": "src/map/packets.hpp",
           "source_line": 874,
           "guard": "defined(PACKETVER)",
-          "meaning": "hair style"
+          "meaning": "hair style",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "hairColor",
@@ -172,19 +201,26 @@
           "source_path": "src/map/packets.hpp",
           "source_line": 875,
           "guard": "defined(PACKETVER)",
-          "meaning": "hair color"
+          "meaning": "hair color",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         }
       ],
       "probe": {
-        "sizeof": 20,
-        "offsets": {
-          "PacketType": 0,
-          "aid": 2,
-          "cid": 6,
-          "status": 10,
-          "gender": 14,
-          "hairStyle": 16,
-          "hairColor": 18
+        "kind": "compiled_sizeof_offsetof",
+        "record": "PACKET_ZC_UPDATE_CHARSTAT",
+        "result": {
+          "sizeof": 20,
+          "offsets": {
+            "PacketType": 0,
+            "aid": 2,
+            "cid": 6,
+            "status": 10,
+            "gender": 14,
+            "hairStyle": 16,
+            "hairColor": 18
+          }
         }
       }
     },
@@ -217,7 +253,10 @@
           "source_path": "src/map/packets_struct.hpp",
           "source_line": 5442,
           "guard": "PACKETVER < 20081126",
-          "meaning": "opcode"
+          "meaning": "opcode",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "szName",
@@ -228,7 +267,10 @@
           "source_path": "src/map/packets_struct.hpp",
           "source_line": 5443,
           "guard": "PACKETVER < 20081126",
-          "meaning": "name bytes"
+          "meaning": "name bytes",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "bModified",
@@ -239,7 +281,10 @@
           "source_path": "src/map/packets_struct.hpp",
           "source_line": 5444,
           "guard": "PACKETVER < 20081126",
-          "meaning": "rename flag"
+          "meaning": "rename flag",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "nLevel",
@@ -250,7 +295,10 @@
           "source_path": "src/map/packets_struct.hpp",
           "source_line": 5445,
           "guard": "PACKETVER < 20081126",
-          "meaning": "level"
+          "meaning": "level",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "nFullness",
@@ -261,7 +309,10 @@
           "source_path": "src/map/packets_struct.hpp",
           "source_line": 5446,
           "guard": "PACKETVER < 20081126",
-          "meaning": "fullness"
+          "meaning": "fullness",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "nRelationship",
@@ -272,7 +323,10 @@
           "source_path": "src/map/packets_struct.hpp",
           "source_line": 5447,
           "guard": "PACKETVER < 20081126",
-          "meaning": "relationship"
+          "meaning": "relationship",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         },
         {
           "name": "ITID",
@@ -283,19 +337,26 @@
           "source_path": "src/map/packets_struct.hpp",
           "source_line": 5448,
           "guard": "PACKETVER < 20081126",
-          "meaning": "accessory item ID"
+          "meaning": "accessory item ID",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         }
       ],
       "probe": {
-        "sizeof": 35,
-        "offsets": {
-          "PacketType": 0,
-          "szName": 2,
-          "modified": 26,
-          "level": 27,
-          "fullness": 29,
-          "relationship": 31,
-          "ITID": 33
+        "kind": "compiled_sizeof_offsetof",
+        "record": "PACKET_ZC_PROPERTY_PET",
+        "result": {
+          "sizeof": 35,
+          "offsets": {
+            "PacketType": 0,
+            "szName": 2,
+            "bModified": 26,
+            "nLevel": 27,
+            "nFullness": 29,
+            "nRelationship": 31,
+            "ITID": 33
+          }
         }
       }
     },
@@ -312,7 +373,8 @@
       "layout_variant": "102-byte UseSkillToPosMoreInfo",
       "applicability_status": "approved_for_applicability_only",
       "registration": {
-        "guard": "effective PACKETVER=20080910; see source assignment order",
+        "kind": "parser_registration",
+        "guard": "effective PACKETVER=20080910; source-order last assignment wins",
         "source_path": "src/map/clif_packetdb.hpp",
         "source_line": 868,
         "accepted_length": 102,
@@ -322,12 +384,39 @@
           9,
           12,
           20,
-          22,
-          0
+          22
         ],
         "assignment_count": 16
       },
       "fields": [
+        {
+          "name": "opcode",
+          "offset": 0,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "effective registration",
+          "meaning": "opcode",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
+        },
+        {
+          "name": "padding_2_5",
+          "offset": 2,
+          "width_bytes": 3,
+          "signed": null,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "opaque padding",
+          "meaning": "padding",
+          "semantic_type": "opaque padding bytes",
+          "units": "unresolved pending semantic contract",
+          "validity": "padding byte convention unresolved"
+        },
         {
           "name": "skill_level",
           "offset": 5,
@@ -337,7 +426,24 @@
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 868,
           "guard": "effective registration",
-          "meaning": "skill level"
+          "meaning": "skill level",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
+        },
+        {
+          "name": "padding_7_9",
+          "offset": 7,
+          "width_bytes": 2,
+          "signed": null,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "opaque padding",
+          "meaning": "padding",
+          "semantic_type": "opaque padding bytes",
+          "units": "unresolved pending semantic contract",
+          "validity": "padding byte convention unresolved"
         },
         {
           "name": "skill_id",
@@ -348,7 +454,24 @@
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 868,
           "guard": "effective registration",
-          "meaning": "skill ID"
+          "meaning": "skill ID",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
+        },
+        {
+          "name": "padding_11_12",
+          "offset": 11,
+          "width_bytes": 1,
+          "signed": null,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "opaque padding",
+          "meaning": "padding",
+          "semantic_type": "opaque padding bytes",
+          "units": "unresolved pending semantic contract",
+          "validity": "padding byte convention unresolved"
         },
         {
           "name": "x",
@@ -359,7 +482,25 @@
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 868,
           "guard": "effective registration",
-          "meaning": "target X"
+          "meaning": "target X",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract",
+          "consumer_signed": true
+        },
+        {
+          "name": "padding_14_20",
+          "offset": 14,
+          "width_bytes": 6,
+          "signed": null,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 868,
+          "guard": "opaque padding",
+          "meaning": "padding",
+          "semantic_type": "opaque padding bytes",
+          "units": "unresolved pending semantic contract",
+          "validity": "padding byte convention unresolved"
         },
         {
           "name": "y",
@@ -370,7 +511,11 @@
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 868,
           "guard": "effective registration",
-          "meaning": "target Y"
+          "meaning": "target Y",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract",
+          "consumer_signed": true
         },
         {
           "name": "text",
@@ -381,11 +526,22 @@
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 868,
           "guard": "effective registration",
-          "meaning": "skill text"
+          "meaning": "skill text",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         }
       ],
       "probe": {
-        "result": "registry parser offsets independently compiled by audit_packets.py"
+        "kind": "compiled_registry",
+        "accepted_length": 102,
+        "parser_positions": [
+          5,
+          9,
+          12,
+          20,
+          22
+        ]
       }
     },
     {
@@ -401,19 +557,47 @@
       "layout_variant": "19-byte padded ActionRequest",
       "applicability_status": "approved_for_applicability_only",
       "registration": {
-        "guard": "effective PACKETVER=20080910; see source assignment order",
+        "kind": "parser_registration",
+        "guard": "effective PACKETVER=20080910; source-order last assignment wins",
         "source_path": "src/map/clif_packetdb.hpp",
         "source_line": 881,
         "accepted_length": 19,
         "parser": "clif_parse_ActionRequest",
         "field_positions": [
           5,
-          18,
-          0
+          18
         ],
         "assignment_count": 18
       },
       "fields": [
+        {
+          "name": "opcode",
+          "offset": 0,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 881,
+          "guard": "effective registration",
+          "meaning": "opcode",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
+        },
+        {
+          "name": "padding_2_5",
+          "offset": 2,
+          "width_bytes": 3,
+          "signed": null,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 881,
+          "guard": "opaque padding",
+          "meaning": "padding",
+          "semantic_type": "opaque padding bytes",
+          "units": "unresolved pending semantic contract",
+          "validity": "padding byte convention unresolved"
+        },
         {
           "name": "target_id",
           "offset": 5,
@@ -423,7 +607,25 @@
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 881,
           "guard": "effective registration",
-          "meaning": "action target"
+          "meaning": "action target",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract",
+          "consumer_signed": true
+        },
+        {
+          "name": "padding_9_18",
+          "offset": 9,
+          "width_bytes": 9,
+          "signed": null,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 881,
+          "guard": "opaque padding",
+          "meaning": "padding",
+          "semantic_type": "opaque padding bytes",
+          "units": "unresolved pending semantic contract",
+          "validity": "padding byte convention unresolved"
         },
         {
           "name": "action",
@@ -434,11 +636,19 @@
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 881,
           "guard": "effective registration",
-          "meaning": "action kind"
+          "meaning": "action kind",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         }
       ],
       "probe": {
-        "result": "registry parser offsets independently compiled by audit_packets.py"
+        "kind": "compiled_registry",
+        "accepted_length": 19,
+        "parser_positions": [
+          5,
+          18
+        ]
       }
     },
     {
@@ -454,19 +664,33 @@
       "layout_variant": "7-byte ActionRequest",
       "applicability_status": "approved_for_applicability_only",
       "registration": {
-        "guard": "effective PACKETVER=20080910; see source assignment order",
+        "kind": "parser_registration",
+        "guard": "effective PACKETVER=20080910; source-order last assignment wins",
         "source_path": "src/map/clif_packetdb.hpp",
         "source_line": 1149,
         "accepted_length": 7,
         "parser": "clif_parse_ActionRequest",
         "field_positions": [
           2,
-          6,
-          0
+          6
         ],
         "assignment_count": 1
       },
       "fields": [
+        {
+          "name": "opcode",
+          "offset": 0,
+          "width_bytes": 2,
+          "signed": false,
+          "endian": "little",
+          "source_path": "src/map/clif_packetdb.hpp",
+          "source_line": 1149,
+          "guard": "PACKETVER >= 20080910",
+          "meaning": "opcode",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
+        },
         {
           "name": "target_id",
           "offset": 2,
@@ -475,8 +699,12 @@
           "endian": "little",
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 1149,
-          "guard": "PACKETVER >= 20080910",
-          "meaning": "action target"
+          "guard": "effective registration",
+          "meaning": "action target",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract",
+          "consumer_signed": true
         },
         {
           "name": "action",
@@ -486,12 +714,20 @@
           "endian": "little",
           "source_path": "src/map/clif_packetdb.hpp",
           "source_line": 1149,
-          "guard": "PACKETVER >= 20080910",
-          "meaning": "action kind"
+          "guard": "effective registration",
+          "meaning": "action kind",
+          "semantic_type": "wire field; feature meaning not adjudicated here",
+          "units": "unresolved pending semantic contract",
+          "validity": "unresolved pending semantic contract"
         }
       ],
       "probe": {
-        "result": "registry parser offsets independently compiled by audit_packets.py"
+        "kind": "compiled_registry",
+        "accepted_length": 7,
+        "parser_positions": [
+          2,
+          6
+        ]
       }
     }
   ],
@@ -505,15 +741,25 @@
   },
   "layout_probe": {
     "source": "tools/packet_contract_layout_probe.cpp",
-    "source_sha256": "d2738d3e205e28e29339a0fdad944957b134e8c0e28a34fe2757e6a9ff358cba",
-    "command": "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -Ibuild-mingw-preset/packet-audit -IC:/Users/sziad/source/repos/rathena-master/src -IC:/Users/sziad/source/repos/rathena-master/3rdparty -IC:/Users/sziad/source/repos/rathena-master/3rdparty/libconfig tools/packet_contract_layout_probe.cpp -o build-mingw-preset/packet-audit/p0_layout_probe.exe",
-    "compiler": "MinGW G++ 13.1.0",
-    "exit_code": 0,
+    "source_sha256": "bd4f40034a74318c8ed7fc3a92a00e1ac22bd73bc33ae894afe7165da3a9740e",
+    "generated_header_sha256": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c",
+    "header_source_sha256": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "struct_header_source_sha256": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "command": "C:\\Qt\\Tools\\mingw1310_64\\bin\\g++.exe -std=c++17 -ID:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\packet-audit -IC:\\Users\\sziad\\source\\repos\\rathena-master\\src -IC:\\Users\\sziad\\source\\repos\\rathena-master\\3rdparty -IC:\\Users\\sziad\\source\\repos\\rathena-master\\3rdparty\\libconfig D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\tools\\packet_contract_layout_probe.cpp -o D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\packet-audit\\p0_layout_probe.exe",
+    "compiler": "g++.exe (x86_64-posix-seh-rev1, Built by MinGW-Builds project) 13.1.0",
+    "compile_exit_code": 0,
+    "run_exit_code": 0,
     "output": [
       "PACKETVER=20080910",
       "PACKETVER_SAK_NUM=20080910",
+      "PACKETVER_MAIN_NUM=20080910",
       "PACKET_ZC_UPDATE_CHARSTAT sizeof=20 PacketType=0 aid=2 cid=6 status=10 gender=14 hairStyle=16 hairColor=18",
-      "PACKET_ZC_PROPERTY_PET sizeof=35 PacketType=0 szName=2 modified=26 level=27 fullness=29 relationship=31 ITID=33"
+      "PACKET_ZC_PROPERTY_PET sizeof=35 PacketType=0 szName=2 bModified=26 nLevel=27 nFullness=29 nRelationship=31 ITID=33"
     ]
+  },
+  "generator": {
+    "path": "tools/build_packet_contract_manifest.py",
+    "source_sha256": "681106fa63df3dce6ee77333404fd6ba3421e3663172ca2d98cebd078178d253",
+    "command": "python tools/build_packet_contract_manifest.py"
   }
 }
