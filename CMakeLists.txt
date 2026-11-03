@@ -25,6 +25,7 @@ option(RO_ENABLE_IJL "Enable Intel JPEG Library runtime loading" OFF)
 # replay, test probes) must never deploy implicitly.
 option(RO_ENABLE_DEV_DEPLOY "Copy build output to the local OldRO folder" OFF)
 option(RO_BUILD_SKILL_REPLAY_TESTS "Build production-linked skill packet replay tests" OFF)
+option(RO_BUILD_PACKET_REPLAY_TESTS "Build offline production packet stream replay tests" OFF)
 option(RO_ENABLE_QT6_UI "Enable the Qt 6 / QML GPU UI runtime" OFF)
 option(RO_ENABLE_QT6_UI_SPIKE "Deprecated alias for RO_ENABLE_QT6_UI" OFF)
 option(RO_QT_UI_DEFAULT_ENABLED "Enable the Qt UI runtime by default unless OPEN_MIDGARD_QT_UI overrides it" OFF)
@@ -262,6 +263,20 @@ if(RO_ENABLE_DEV_DEPLOY)
         COMMENT "Copying executable to local OldRO folder"
     )
     ro_add_qt_runtime_deploy(open_midgard "D:/Spel/OldRO")
+endif()
+
+if(RO_BUILD_PACKET_REPLAY_TESTS)
+    enable_testing()
+    add_executable(packet_stream_replay_checks
+        tools/tests/replay/PacketStreamReplay.cpp
+        src/gamemode/PacketStreamDecoder.cpp)
+    target_compile_features(packet_stream_replay_checks PRIVATE cxx_std_17)
+    target_link_libraries(packet_stream_replay_checks PRIVATE ro_network ro_core)
+    if(WIN32)
+        target_link_libraries(packet_stream_replay_checks PRIVATE ws2_32)
+    endif()
+    add_test(NAME packet_stream_replay_checks COMMAND packet_stream_replay_checks)
+    set_tests_properties(packet_stream_replay_checks PROPERTIES TIMEOUT 30)
 endif()
 
 if(RO_BUILD_SKILL_REPLAY_TESTS)

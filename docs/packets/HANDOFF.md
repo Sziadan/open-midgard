@@ -1,6 +1,6 @@
 # Resume packet implementation
 
-Next action: **PK03.02 receive/framing replay**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, `BLOCKED.md`, and `evidence/PK03.01-replay-specification.md`. Add the opt-in deploy-off production receive harness and structural loopback cases; keep feature-semantic assertions gated by strong-approved contracts.
+Next action: **PK03.03 outbound/UI replay**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, `BLOCKED.md`, and PK03.01–PK03.02 evidence. Add outbound production-entry capture and Session/Qt transition tests only under strong-approved feature contracts. Router dispatch, raw handshake, stage/profile rules and the legacy buffer wrapper remain open with named owners.
 
 Completed checkpoint: PK00.01 at baseline `af41f6484cb7ff31825296babe4b913aa36c4c67` (`main`, tracking `origin/main`, clean tree). Evidence: `evidence/PK00.01.md`. The old handoff's `9c158616` HEAD and approximately 80 dirty/untracked paths no longer describe this checkout. The current runtime commit already contains the guild/commerce changes previously noted as dirty.
 

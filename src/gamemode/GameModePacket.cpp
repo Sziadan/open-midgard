@@ -8560,44 +8560,6 @@ void HandleActorNameAck(CGameMode& mode, const PacketView& packet)
 
 } // namespace
 
-bool TryReadPacket(const u8* stream, int availableBytes, PacketView& outPacket, int& consumedBytes)
-{
-    consumedBytes = 0;
-    outPacket = {};
-
-    if (!stream || availableBytes < 2) {
-        return false;
-    }
-
-    const u16 packetId = ReadLE16(stream);
-    const s16 knownSize = ro::net::GetPacketSize(packetId);
-
-    if (knownSize == 0) {
-        return false;
-    }
-
-    int packetSize = knownSize;
-    if (knownSize == ro::net::kVariablePacketSize) {
-        if (availableBytes < 4) {
-            return false;
-        }
-        packetSize = ReadLE16(stream + 2);
-        if (packetSize < 4 || packetSize > 0x7FFF) {
-            return false;
-        }
-    }
-
-    if (availableBytes < packetSize) {
-        return false;
-    }
-
-    outPacket.packetId = packetId;
-    outPacket.packetLength = static_cast<u16>(packetSize);
-    outPacket.data = stream;
-    consumedBytes = packetSize;
-    return true;
-}
-
 void DecodeSrcDst(const u8* src, int& srcX, int& srcY, int& dstX, int& dstY, int& srcDir, int& dstDir)
 {
     if (!src) {

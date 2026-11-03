@@ -7,6 +7,8 @@ These are gates, not completed findings. Independently source-proven work may co
 
 - Deployed server provenance: still unknown; record whether the running server was built with this hash-pinned effective 20080910 source configuration. Live-match claims remain pending.
 - Trade asymmetry P21: PK13 must separate verified client behavior from the server trade_tradeack branch that clears both peers but notifies only acceptor. A real server correction requires separately authorized external repository changes/build/restart. Do not label timeout as corrected server behavior.
+- Active receive-table gap found during PK03.02: the current client `GronPacket.cpp` has no receive size for server-emitted map S2C 0x01F2 (`GetPacketSize` returned unknown in the initial production replay prototype). PK06 owns field/handler repair; do not treat the generic framing harness result as closing this packet. Evidence: `docs/packets/evidence/PK03.02-replay.md`.
+- Framing behavior requiring PK05: unknown opcodes and invalid variable lengths currently discard two bytes and rescan; PK03.02 records this as baseline characterization only. PK05 must decide and test the approved boundary-failure behavior.
 - Version/applicability residuals: PK01/PK44/PK47 must resolve each row and historical entry with guards/call sites. Unknown is not inactive. Unresolved storage password algorithm/extended status meanings likewise block only affected leaves until strong source review.
 
 For new blocker: permanent step/contract IDs; exact source symbols/guards/values; smallest unresolved question; attempted probes and outputs; dependent steps; independent work available; owner/required evidence to unblock. A failed attempt may get a checkpoint commit but cannot get COMPLETED state.

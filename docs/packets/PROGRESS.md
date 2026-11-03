@@ -65,3 +65,8 @@ Independent strong review reran manifest generation, fixture generation/negative
 ## 2026-11-03 — PK03.01 specification
 
 Mapped production receive, queue, profile, send and UI entry points; specified a loopback-only harness, deterministic fragmentation/concatenation/error cases, evidence JSONL and opt-in deploy-off CMake commands. Flagged the existing 0x0190 helper test as an incompatible client-derived oracle (profile 23/90 bytes) against the server contracts; it remains a PK08 correction gate. No tests or runtime files changed in this specification leaf. Evidence: `evidence/PK03.01-replay-specification.md`. Stable subject: `packet(PK03.01): specify production replay harness`. Next: PK03.02.
+
+
+## 2026-11-03 — PK03.02 production stream replay
+
+Added opt-in deploy-off loopback CTest for production `Connect`/`RecvPacket` and the exact `TryReadPacket` boundary decoder; extracted the unchanged decoder into an isolated production source so the test avoids unrelated app startup globals. Added bounded pumps, queue/state assertions and 28 per-case JSONL outcomes for fixed/variable splits, coalescing, EOF and reconnect. Strong review approved; final CTest passed 1/1 with replay ON/deploy OFF. Ordinary sandbox loopback was denied with WSA 10013; elevated local-only replay passed. The first fixture prototype exposed that client `GetPacketSize(0x01F2)` is unknown despite server emit layout; owner PK06. Unknown/malformed scanning is logged as baseline defect characterization for PK05, not approved recovery. Router handler dispatch, raw handshake, stage/profile and legacy buffer safety remain open. Evidence: `evidence/PK03.02-replay.md` and `PK03.02-replay.jsonl`. Stable subject: `packet(PK03.02): replay production packet stream framing`. Next: PK03.03.

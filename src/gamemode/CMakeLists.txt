@@ -11,6 +11,7 @@ add_library(ro_gamemode STATIC
     View.cpp
     GameModePacket.h
     GameModePacket.cpp
+    PacketStreamDecoder.cpp
     Commerce.h
     Commerce.cpp
 )
