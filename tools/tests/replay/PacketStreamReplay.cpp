@@ -28,8 +28,8 @@ constexpr const char* kFixedFixture="PK03.02-map-006c-synthetic";
 constexpr const char* kFixedSha="a8649967f8ca13630d18e21c07eaad14b309a54534f1cd9f633b692c3b2f341f";
 constexpr const char* kVariableFixture="PK03.02-variable-0069-synthetic";
 constexpr const char* kVariableSha="d5eb153194bad9d1ab1c303bb77da191fedc51db5728e646153b92cf302df42b";
-int g_decodeCount=0;int g_recvInvocations=0;std::string g_currentCase="startup";
-void SetCase(const std::string& name){g_currentCase=name;g_recvInvocations=0;}
+int g_decodeCount=0;int g_recvInvocations=0;std::string g_currentCase="startup";std::string g_currentStage="setup";std::string g_currentFixture="unknown";std::string g_currentProductionEntry="unknown";
+void SetCase(const std::string& name,const char* stage="generic_transport",const char* fixture="unknown",const char* productionEntry="unknown"){g_currentCase=name;g_currentStage=stage;g_currentFixture=fixture;g_currentProductionEntry=productionEntry;g_recvInvocations=0;}
 void Require(bool condition,const std::string& message){if(!condition)throw std::runtime_error(message);}
 void CloseSocket(SOCKET s){if(s==INVALID_SOCKET)return;
 #if RO_PLATFORM_WINDOWS
@@ -108,6 +108,7 @@ void WaitKernelPending(const TestConnection& c,int bytes){auto deadline=Clock::n
     if(pending>=bytes)return;std::this_thread::sleep_for(std::chrono::milliseconds(1));}throw std::runtime_error("coalesced bytes did not reach receive socket before deadline");}
 std::string Hex(const std::vector<u8>& bytes){static const char* d="0123456789abcdef";std::string out;for(u8 b:bytes){out.push_back(d[b>>4]);out.push_back(d[b&15]);}return out;}
 std::string ChunkJson(const std::vector<std::vector<u8>>& chunks){std::string out="[";for(size_t i=0;i<chunks.size();++i){if(i)out+=",";out+="\""+Hex(chunks[i])+"\"";}return out+"]";}
+std::string JsonEscape(const std::string& value){static const char* hex="0123456789abcdef";std::string out;for(unsigned char ch:value){if(ch=='"'||ch=='\\'){out.push_back('\\');out.push_back(static_cast<char>(ch));}else if(ch<0x20){out+="\\u00";out.push_back(hex[ch>>4]);out.push_back(hex[ch&0x0f]);}else out.push_back(static_cast<char>(ch));}return out;}
 #ifndef RO_PACKET_REPLAY_SOURCE_COMMIT_AT_CONFIGURE
 #define RO_PACKET_REPLAY_SOURCE_COMMIT_AT_CONFIGURE "unknown"
 #endif
@@ -116,10 +117,12 @@ std::string ChunkJson(const std::vector<std::vector<u8>>& chunks){std::string ou
 #endif
 std::string ConfiguredSourceProvenanceJson(){return "\"runtime_baseline_commit\":\"af41f6484cb7ff31825296babe4b913aa36c4c67\",\"source_commit_at_configure\":\""+std::string(RO_PACKET_REPLAY_SOURCE_COMMIT_AT_CONFIGURE)+"\",\"source_tree_status_at_configure\":\""+RO_PACKET_REPLAY_SOURCE_TREE_STATUS_AT_CONFIGURE+"\"";}
 void Report(const std::string& id,const char* fixture,const char* sha,const std::vector<std::vector<u8>>& chunks,const std::string& expected,const std::string& actual,int expectedQueue,int actualQueue,const TestConnection& connection,const char* expectedState="open",const char* classification="asserted",int maxExpectedQueue=-1){
-    if(expectedQueue>=0)Require(actualQueue==expectedQueue,"reported queue remainder differs from asserted expectation");
-    if(maxExpectedQueue>=0)Require(actualQueue<=maxExpectedQueue,"reported queue remainder exceeds asserted maximum");
-    const char* actualState=connection.IsOpen()?"open":"closed";Require(std::string(expectedState)==actualState,"reported connection state differs from expectation");
-    std::cout<<"{\"case_id\":\""<<id<<"\",\"contract_id\":\"PK01.P02.FRAMING\",\"fixture_id\":\""<<fixture<<"\",\"expected_fixture_sha256\":\""<<sha<<"\","<<ConfiguredSourceProvenanceJson()<<",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\",\"production_entry\":\"CRagConnection::Connect/RecvPacket -> TryReadPacket\",\"stage\":\"generic_transport\",\"profile\":23,\"input_chunks_hex\":"<<ChunkJson(chunks)<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_delivery\":\""<<(expected.empty()?"no_packet":"packet")<<"\",\"expected_packet_hex\":\""<<expected<<"\",\"actual_packet_hex\":\""<<actual<<"\",\"expected_connection_state\":\""<<expectedState<<"\",\"actual_connection_state\":\""<<actualState<<"\",\"expected_queue_remainder\":"<<(expectedQueue<0?"null":std::to_string(expectedQueue))<<",\"expected_queue_remainder_max\":"<<(maxExpectedQueue<0?"null":std::to_string(maxExpectedQueue))<<",\"queue_remainder\":"<<actualQueue<<",\"classification\":\""<<classification<<"\",\"outcome\":\"PASS\"}\n";
+    g_currentStage="generic_transport";g_currentFixture=fixture;g_currentProductionEntry="CRagConnection::Connect/RecvPacket -> TryReadPacket";
+    if(expectedQueue>=0)Require(actualQueue==expectedQueue,"queue remainder mismatch: expected "+std::to_string(expectedQueue)+", actual "+std::to_string(actualQueue));
+    if(maxExpectedQueue>=0)Require(actualQueue<=maxExpectedQueue,"queue remainder exceeds maximum "+std::to_string(maxExpectedQueue)+": actual "+std::to_string(actualQueue));
+    const char* actualState=connection.IsOpen()?"open":"closed";Require(std::string(expectedState)==actualState,"connection state mismatch: expected "+std::string(expectedState)+", actual "+actualState);
+    const char* queueAssertion=expectedQueue>=0?"exact":maxExpectedQueue>=0?"upper_bound":"not_asserted";
+    std::cout<<"{\"case_id\":\""<<id<<"\",\"contract_id\":\"PK01.P02.FRAMING\",\"fixture_id\":\""<<fixture<<"\",\"expected_fixture_sha256\":\""<<sha<<"\","<<ConfiguredSourceProvenanceJson()<<",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\",\"production_entry\":\"CRagConnection::Connect/RecvPacket -> TryReadPacket\",\"stage\":\"generic_transport\",\"profile\":23,\"input_chunks_hex\":"<<ChunkJson(chunks)<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_delivery\":\""<<(expected.empty()?"no_packet":"packet")<<"\",\"expected_packet_hex\":\""<<expected<<"\",\"actual_packet_hex\":\""<<actual<<"\",\"expected_connection_state\":\""<<expectedState<<"\",\"actual_connection_state\":\""<<actualState<<"\",\"queue_remainder_assertion\":\""<<queueAssertion<<"\",\"expected_queue_remainder\":"<<(expectedQueue<0?"null":std::to_string(expectedQueue))<<",\"expected_queue_remainder_max\":"<<(maxExpectedQueue<0?"null":std::to_string(maxExpectedQueue))<<",\"queue_remainder\":"<<actualQueue<<",\"classification\":\""<<classification<<"\",\"outcome\":\"PASS\"}\n";
 }
 std::vector<u8> ReadOne(TestConnection& c){return PumpUntilPacket(c);}
 PacketView VerifyRoute(const std::vector<u8>& packet,u16 id){PacketView view{};int consumed=0;Require(TryReadPacket(packet.data(),static_cast<int>(packet.size()),view,consumed),"production packet decoder rejected framed packet");Require(view.packetId==id&&view.packetLength==packet.size()&&consumed==static_cast<int>(packet.size()),"production packet decoder returned wrong boundary");++g_decodeCount;return view;}
@@ -131,7 +134,7 @@ void ProductionRouterDispatchReplay(){
     std::vector<u8> combined=first;
     combined.insert(combined.end(),second.begin(),second.end());
 
-    SetCase("production_router_dispatch");
+    SetCase("production_router_dispatch","synthetic_router_replay",fixtureId,"CRagConnection::RecvPacket -> TryReadPacket -> RegisterDefaultGameModePacketHandlers -> CGameModePacketRouter::Dispatch");
     TestConnection connection;
     LoopbackPeer peer(connection);
     peer.Send(combined);
@@ -203,4 +206,4 @@ int main(){try{
     ActionRequestBuilderReplay();
     {SetCase("production_reconnect_reset");TestConnection c;{LoopbackPeer p(c);p.Send({0x6c});PumpUntilBuffered(c,1);}c.Disconnect();Require(!c.IsOpen()&&c.BufferedBytes()==0,"disconnect failed to clear receive queue");{LoopbackPeer p(c);p.Send(fixed);auto out=PumpUntilPacket(c);Require(out==fixed,"production reconnect failed after disconnect");VerifyRoute(out,0x006c);Report("production_reconnect_reset",kFixedFixture,kFixedSha,{fixed},Hex(fixed),Hex(out),0,c.BufferedBytes(),c);}}
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: fixed and variable fragmentation, production decoder packets="<<g_decodeCount<<", production router dispatch, coalescing, baseline resync characterization, EOF and production reconnect\n";return 0;
-}catch(const std::exception& e){CConnection::Cleanup();std::string error=e.what();std::replace(error.begin(),error.end(),'"','\'');std::cerr<<"{\"case_id\":\""<<g_currentCase<<"\",\"stage\":\"case_execution\",\"fixture_id\":null,"<<ConfiguredSourceProvenanceJson()<<",\"production_entry\":\"CRagConnection::Connect/RecvPacket -> TryReadPacket\",\"invocation_count\":"<<g_recvInvocations<<",\"outcome\":\"FAIL\",\"error\":\""<<error<<"\"}\n";return 1;}}
+}catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}
