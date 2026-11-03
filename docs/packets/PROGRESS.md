@@ -23,3 +23,7 @@ Selected existing runtime commit `af41f6484cb7ff31825296babe4b913aa36c4c67` at `
 ## 2026-11-03 — PK00.04
 
 Reconfigured and clean-built the selected client baseline using the MinGW Qt preset with deploy OFF; both configure and clean build exited 0. Fresh output is `build-mingw-preset/open-midgard.exe` (19,655,065 bytes; SHA-256 `0EC74E399EBB3CC8CB7F7EB27139D5CF299911E78B77D1497D2B3A6688FAC7BA`, timestamp 2026-11-03T19:06:37.7481701Z). Qt deployment stayed in the build directory; `D:/Spel/OldRO/open-midgard.exe` timestamp predates the build and has a different hash. CMake/MinGW warnings are recorded in evidence. No tests or client runtime were run. External rAthena checkout remains inaccessible, so server contracts remain gated. Evidence: `evidence/PK00.04.md`. Stable subject: `packet(PK00.04): verify reproducible client baseline`. Next: PK01.01.
+
+## 2026-11-03 — PK01.01
+
+Specified exact authoritative server/client/reference inputs, canonical contract identity fields, independent oracle outputs, and approval/evidence gates. Corrected `source-baseline.json` to the selected client commit and added current hashes from PK00.02 while clearly marking historical server hashes unverified. PK01.01 approves the research structure only; no packet contract is approved. The rAthena checkout remains inaccessible, so PK01.02 and server-derived contracts are gated. Evidence: `evidence/PK01.01.md`; blocker recorded in `BLOCKED.md`. Stable subject: `packet(PK01.01): specify active protocol research evidence`. Next: PK01.02.

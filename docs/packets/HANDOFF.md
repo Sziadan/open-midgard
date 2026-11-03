@@ -1,12 +1,12 @@
 # Resume packet implementation
 
-Next action: **PK01.01 (S)**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, and `state.json` first. Do not start protocol edits until the baseline is reproducible.
+Next action: **PK01.02 (S)**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, `state.json`, and `BLOCKED.md` first. Do not start protocol edits until server applicability evidence exists.
 
 Completed checkpoint: PK00.01 at baseline `af41f6484cb7ff31825296babe4b913aa36c4c67` (`main`, tracking `origin/main`, clean tree). Evidence: `evidence/PK00.01.md`. The old handoff's `9c158616` HEAD and approximately 80 dirty/untracked paths no longer describe this checkout. The current runtime commit already contains the guild/commerce changes previously noted as dirty.
 
 PK00.02 completed read-only inventory at HEAD `8c81549bb9d4bf89ac59f53b99827ce07ccc3377`; see `evidence/PK00.02.md` and `evidence/PK00.02-manifest.json`. It records hashes for all tracked files and ignored source inputs, plus path/size metadata for all Ref GRF assets. Preserve ignored inputs; do not broadly stage, reset, clean, deploy, or run the installed client. Existing build caches are inconsistent; only `build-mingw-preset` currently shows `RO_ENABLE_DEV_DEPLOY=OFF`, and its output is not fresh evidence.
 
-PK00.03 selected runtime commit `af41f6484cb7ff31825296babe4b913aa36c4c67` already present at `origin/main`; the later local commits contain only packet-plan documentation. PK00.04 clean-built it using `build-mingw-preset` with `RO_ENABLE_DEV_DEPLOY=OFF`; evidence is in `evidence/PK00.04.md`. The expected authoritative rAthena checkout path exists, but Git status/revision reads failed with `Permission denied`. PK01.01 can specify the research harness, but PK01 must resolve authoritative source revision/hashes before approving server-derived packet contracts. Do not substitute Ref's eAthena or RunningServer sources.
+PK00.03 selected runtime commit `af41f6484cb7ff31825296babe4b913aa36c4c67` already present at `origin/main`; PK00.04 clean-built it using `build-mingw-preset` with `RO_ENABLE_DEV_DEPLOY=OFF`. PK01.01 specified contract inputs, output and oracle gates; it approved research structure only. The authoritative rAthena checkout path exists but Git status/revision reads fail with `Permission denied`. PK01.02 is blocked; do not substitute Ref's eAthena or RunningServer sources. Client-side work independent of server packet claims may continue.
 
 Effective server source baseline in the audit is PACKETVER/PACKETVER_SAK_NUM `20080910`, source `C:/Users/sziad/source/repos/rathena-master`; client default profile 23. Reconfirm later. Running server binary provenance is not established.
 

@@ -1,7 +1,12 @@
 {
   "planning_date": "2026-11-03",
-  "client_head": "9c158616e311842dcebbeb48f3b6ec67a975d3a3",
+  "client_head": "af41f6484cb7ff31825296babe4b913aa36c4c67",
   "server_root": "C:/Users/sziad/source/repos/rathena-master",
+  "client_source_sha256": {
+    "src/network/GronPacket.cpp": "cce1ccda951e1de0dd3537947f26e8653f78baa4e9c8b57fe1d4ac6970100aaa",
+    "src/network/MapSendProfile.cpp": "0cba1b025ba4b9154a9f6b574b6f0cc28658d5d7457dc3d66b435c07f344e8c3",
+    "src/gamemode/GameModePacket.cpp": "3926bc3d1175abb067c0e6d12b067f9b285976ed6f6608743f7e079edcf7f584"
+  },
   "audit_source_sha256": {
     "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp": "cce1ccda951e1de0dd3537947f26e8653f78baa4e9c8b57fe1d4ac6970100aaa",
     "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/MapSendProfile.cpp": "0cba1b025ba4b9154a9f6b574b6f0cc28658d5d7457dc3d66b435c07f344e8c3",
@@ -12,5 +17,6 @@
     "C:/Users/sziad/source/repos/rathena-master/src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
     "C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
   },
-  "note": "Reconfirm in PK00/PK01. Hashes establish discovery baseline, not semantic certification."
+  "server_hashes_status": "Historical planning-audit hashes; not reconfirmed because the external server checkout is denied to this execution context.",
+  "note": "Client hashes are from PK00.02's tracked manifest and match source commit af41f648. Historical server hashes establish only the discovery baseline, not the current source checkout or semantic certification."
 }
