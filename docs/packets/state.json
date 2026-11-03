@@ -128,9 +128,10 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK03.03-outbound-transport.md",
-        "docs/packets/evidence/PK03.03-outbound-transport.jsonl"
+        "docs/packets/evidence/PK03.03-outbound-transport.jsonl",
+        "docs/packets/evidence/PK03.03-0437-contract-review.md"
       ],
-      "commit_subject": "packet(PK03.03): capture production outbound transport bytes"
+      "commit_subject": "packet(PK03.03): replay reviewed 0437 action sender"
     },
     "PK03.04": {
       "status": "NOT_STARTED",

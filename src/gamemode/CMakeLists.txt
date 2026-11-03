@@ -7,6 +7,8 @@ add_library(ro_gamemode STATIC
     LoginMode.cpp
     GameMode.h
     GameMode.cpp
+    ActionRequestSender.h
+    ActionRequestSender.cpp
     View.h
     View.cpp
     GameModePacket.h

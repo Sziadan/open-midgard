@@ -269,14 +269,17 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     enable_testing()
     add_executable(packet_stream_replay_checks
         tools/tests/replay/PacketStreamReplay.cpp
-        src/gamemode/PacketStreamDecoder.cpp)
+        src/gamemode/PacketStreamDecoder.cpp
+        src/gamemode/ActionRequestSender.cpp)
     target_compile_features(packet_stream_replay_checks PRIVATE cxx_std_17)
     target_link_libraries(packet_stream_replay_checks PRIVATE ro_network ro_core)
     if(WIN32)
         target_link_libraries(packet_stream_replay_checks PRIVATE ws2_32)
     endif()
     add_test(NAME packet_stream_replay_checks COMMAND packet_stream_replay_checks)
-    set_tests_properties(packet_stream_replay_checks PROPERTIES TIMEOUT 30)
+    set_tests_properties(packet_stream_replay_checks PROPERTIES
+        TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-replay-settings")
 endif()
 
 if(RO_BUILD_SKILL_REPLAY_TESTS)
