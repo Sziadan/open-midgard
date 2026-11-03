@@ -138,7 +138,7 @@
       "evidence": [
         "docs/packets/evidence/PK03.04-replay-audit.md"
       ],
-      "commit_subject": "packet(PK03.04): refresh deploy-off replay audit"
+      "commit_subject": "packet(PK03.04): trace disconnect refusal branches"
     },
     "PK04.01": {
       "status": "NOT_STARTED",

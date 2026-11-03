@@ -88,3 +88,5 @@ Because PK44 depends only on completed PK01/PK02, recorded an independent scope 
 ## 2026-11-03 — PK03.04 disconnect refusal source trace
 
 Traced server `0x00B2` restart type 1 and `0x018A` quit requests to their common `0x018B` reply. The `0x018B` result is request-context dependent: a type-1 return-to-character refusal is one case, while the separate quit-to-Windows action also receives this reply. Confirmed Ref has a receive route and branch behavior, while the rebuilt client currently frames/routes only `0x00B3`; the pending-action flow therefore needs a reviewed contract covering both requests and response branches. This source trace is not independent approval and closes no row. Evidence: `evidence/PK03.04-replay-audit.md`.
+
+Stable checkpoint subject: `packet(PK03.04): trace disconnect refusal branches`.
