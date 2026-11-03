@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "active_step": null,
-  "baseline": "Planning only; runtime working tree not yet reconciled.",
+  "baseline": "PK00.01: clean main at af41f6484cb7ff31825296babe4b913aa36c4c67; ignored dependencies remain to be inventoried.",
   "steps": {
     "PK00.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK00.01.md"],
+      "commit_subject": "packet(PK00.01): define baseline ownership boundaries"
     },
     "PK00.02": {
       "status": "NOT_STARTED",

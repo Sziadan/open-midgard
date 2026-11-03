@@ -1,15 +1,15 @@
 # Resume packet implementation
 
-Next action: **PK00.01 (S)**. Read ../PACKET_IMPLEMENTATION_PLAN.md and WORK_PACKAGES.md. Do not start protocol edits until the baseline is reproducible.
+Next action: **PK00.02 (S)**. Read `../PACKET_IMPLEMENTATION_PLAN.md`, this file, `STATUS.md`, and `state.json` first. Do not start protocol edits until the baseline is reproducible.
 
-At planning time: branch main, HEAD9c158616, about80 dirty/untracked paths, including Commerce, GuildState and Qt guild/commerce implementation. The planning commit tracks documentation/audit tooling only and deliberately does not absorb runtime changes. First inspect `git status --short`, `git diff`, existing commits and all untracked dependencies. Preserve user work. Document an agreed baseline snapshot/commits with owned paths; do not reset/clean/stage all. If ownership is unclear, record that blocker and continue only source research that does not depend on the baseline.
+Completed checkpoint: PK00.01 at baseline `af41f6484cb7ff31825296babe4b913aa36c4c67` (`main`, tracking `origin/main`, clean tree). Evidence: `evidence/PK00.01.md`. The old handoff's `9c158616` HEAD and approximately 80 dirty/untracked paths no longer describe this checkout. The current runtime commit already contains the guild/commerce changes previously noted as dirty.
 
-Effective source baseline in audit: rAthena PACKETVER/PACKETVER_SAK_NUM20080910, source at C:/Users/sziad/source/repos/rathena-master; client default profile23. Reconfirm rather than assume. Current server runtime binary provenance is not established. Ref is ignored and read-only.
+PK00.02 must inventory tracked and ignored runtime dependencies read-only. Preserve ignored inputs, especially `Ref/`, `tools/index_skill_packet_emitters.py`, `tools/patches/rathena-wait-for-complete-packet.patch`, `tools/GuildSkillWndRefreshTests.cpp`, build directories, and installed/runtime artifacts. Their relevance/ownership is not yet established. Do not broadly stage, reset, clean, deploy, or run the installed client.
 
-No packet feature is certified complete by this plan. After PK00, follow PK01→PK02→PK03, then framing repairs PK04–PK09. PK50 quests is appended numerically but scheduled by dependencies. PK48 depends on all feature/audit packages, so it cannot bypass quests or unresolved older/later families. Server-side trade correction in PK13 requires separate explicit authorization; client-only timeout is not the fix.
+Effective server source baseline in the audit is PACKETVER/PACKETVER_SAK_NUM `20080910`, source `C:/Users/sziad/source/repos/rathena-master`; client default profile 23. Reconfirm later. Running server binary provenance is not established.
 
-Validate plan: `python tools/check_packet_plan.py`. Refresh generator: `python tools/generate_packet_plan.py --refresh-coverage` preserves progress and adjudicated coverage. Audit regeneration first overwrites annotations; run render_packet_audit.py afterward and review diff. Work packages are broad specifications: create per-contract child IDs before assigning any broad implementation/review step. Complete approved L leaves only; unresolved protocol inference needs S.
+After PK00, follow PK01→PK02→PK03, then framing repairs PK04–PK09. PK50 quests is scheduled by dependencies. Server-side trade correction in PK13 requires separate explicit authorization; client-only timeout is not the fix.
 
-Build: configure mingw-qt-x64 with -DRO_ENABLE_DEV_DEPLOY=OFF; confirm cache OFF; build build-mingw-qt-x64. Focused production replay commands must be established in PK03, not guessed. Do not run installed OldRO client, deploy, restart server or do live account transactions automatically.
+Validate plan/tracker with `python tools/check_packet_plan.py`. Before builds use the documented MinGW Qt preset with `-DRO_ENABLE_DEV_DEPLOY=OFF` and verify the cache. Focused replay commands must be established in PK03. No automatic deployment/server restart or live account transactions.
 
-After every completed numbered leaf: own evidence + state/STATUS + appended PROGRESS + replacement HANDOFF + separate reviewed commit + user update with SHA. Replace this handoff with exact next leaf and context, including dirty paths and unresolved tests.
+After each completed leaf, commit its evidence, state/STATUS, progress and handoff with only explicit owned paths. Report the leaf, concrete result, verification limits, commit SHA, and next exact step.
