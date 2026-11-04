@@ -695,3 +695,6 @@ Reviewed status-first session/actor updates and 0x0284 effect 331/332 recovery m
 ## 2026-11-04 — PK25.01 scope NPC dialogue/script messages
 
 Scoped 21 provisional owners; bound existing dialogue and input packet family, and identified missing 23-byte 0x0144 compass and 4-byte 0x0189 map-notice handlers from the available server packet structures. PK25.02 audits menu indexes/cancel/string/input/shop lifetime; PK25.03 implements missing markers/notices/script choices; PK25.04 owns replay/UI verification. No rows closed. Evidence: `evidence/PK25.01-dialogue-script-scope.md`. Stable subject: `packet(PK25.01): scope NPC dialogue and messages`. Next: PK25.02 audit input/menu/close/shop handoffs.
+## 2026-11-04 — PK25.02 audit menu/input/handoff
+
+Audited menu ordinal/cancel and conversation routing; current choice mapping matches candidate server values 1–254 and 255 cancel. Found that 0x01D5 accepts any u16-sized string while available server parser caps at 70 bytes, silently truncating overlong input; target profile identity remains open. Shop flows are separate mode-gated packet functions. No runtime edits or rows closed. Evidence: `evidence/PK25.02-input-handoff-audit.md`. Stable subject: `packet(PK25.02): audit dialogue input handoffs`. Next: PK25.03 implement missing 0144/0189 and source-backed script choice behavior.

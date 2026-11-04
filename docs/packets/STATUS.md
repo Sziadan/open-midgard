@@ -134,3 +134,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK24.03 deferred: 0x0284 effect values are effect-dependent visual data, but client currently adds 331/332 to actual HP/SP without max cap or Hallucination branch; target sender/profile relation is unproven. PK24.04 awaits actor/resource replay. No rows closed; PK25.01 is next independent package.
 
 - PK25.01 scoped 21 provisional owners, existing dialog input family, and missing 0144/0189 layouts. No rows closed. PK25.02 is next.
+
+- PK25.02 menu choices/cancel align with candidate server contract; 01D5 string length currently lacks the available parser's 70-byte limit. Target profile and UI rejection lifetime remain open. Shop handoffs are distinct. No rows closed; PK25.03 is next.
