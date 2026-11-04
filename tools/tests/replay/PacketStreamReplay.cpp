@@ -66,6 +66,12 @@ struct LoginModeReplayAccess : CLoginMode {
     static void RunRefusal(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnRefuseLogin(packet);
     }
+    static void RunCharRefusal(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnRefuseChar(packet);
+    }
+    static bool IsConnected(const LoginModeReplayAccess& mode) {
+        return mode.m_isConnected != 0;
+    }
     static void RunAcceptLogin(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnAcceptLogin(packet);
     }
@@ -967,6 +973,26 @@ void LoginAcceptCharacterListReplay()
     std::cout << "{\"case_id\":\"login_accept_make_character\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006d-make-character-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptMakeChar\",\"frame_length\":110,\"opcode\":\"0x006D\",\"character_record_length\":108,\"input_frame_hex\":\"" << Hex(makePacket) << "\",\"character_gid\":305419896,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginCharacterRefusalReplay()
+{
+    SetCase("login_character_refusal", "PK44.CHAR-LIST-ENTRY", "PK44-006c-refuse-enter-selected-source", "CLoginMode::OnRefuseChar");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::SetConnected(mode, true);
+    const std::vector<u8> packet{0x6c, 0x00, 0x00};
+    LoginModeReplayAccess::RunCharRefusal(mode, packet);
+    Require(g_windowMgr.GetLoginStatus() == "Char server refused entry (code 0).",
+        "selected-source 0x006C result 0 did not retain its generic refusal status");
+    Require(mode.NextSubMode() == CLoginMode::LoginSubMode_Login,
+        "0x006C refusal did not schedule return to Login");
+    Require(!LoginModeReplayAccess::IsConnected(mode), "0x006C refusal did not clear char-server connected state");
+    Require(!connection->IsOpen(), "0x006C refusal did not close the active char-server connection");
+    g_windowMgr.RemoveAllWindows();
+    std::cout << "{\"case_id\":\"login_character_refusal\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006c-refuse-enter-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseChar -> ShowLoginErrorDialog -> Disconnect -> Login\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":3,\"result\":0,\"status\":\"Char server refused entry (code 0).\",\"connected_state_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"visible_modal_not_verified\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginPasswordHashChallengeReplay()
 {
     SetCase("login_password_hash_challenge", "PK44.LOGIN-REPLIES", "PK44-01dc-md5-challenge-selected-source", "CLoginMode::OnAckHash -> active 0x01DD builder -> CRagConnection::SendPacket");
@@ -1051,6 +1077,7 @@ int main(){try{
     LoginDisconnectResultReplay();
     LoginAcceptReplyReplay();
     LoginAcceptCharacterListReplay();
+    LoginCharacterRefusalReplay();
     LoginPasswordHashChallengeReplay();
     LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();

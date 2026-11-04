@@ -1131,9 +1131,11 @@
         "docs/packets/evidence/PK44.04-login-accept-reply.md",
         "docs/packets/evidence/PK44.04-login-accept-reply.jsonl",
         "docs/packets/evidence/PK44.04-character-record-conversion.md",
-        "docs/packets/evidence/PK44.04-character-record-conversion.jsonl"
+        "docs/packets/evidence/PK44.04-character-record-conversion.jsonl",
+        "docs/packets/evidence/PK44.04-character-refusal.md",
+        "docs/packets/evidence/PK44.04-character-refusal.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): translate legacy character reply fields"
+      "commit_subject": "packet(PK44.04): verify character refusal cleanup"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
