@@ -87,6 +87,9 @@ struct LoginModeReplayAccess : CLoginMode {
     static void RunAcceptMakeChar(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnAcceptMakeChar(packet);
     }
+    static void RunMakeCharRefusal(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnRefuseMakeChar(packet);
+    }
     static bool AcceptedCharacterFieldsMatch(const LoginModeReplayAccess& mode) {
         const CHARACTER_INFO* const characters = mode.GetCharInfo();
         return mode.GetCharCount() == 1 && characters != nullptr
@@ -1055,6 +1058,45 @@ void LoginZoneServerNotificationReplay()
     std::cout << "{\"case_id\":\"login_zone_server_notification\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0071-zonesvr-selected-source\",\"production_entry\":\"CLoginMode::OnNotifyZonesvr -> Disconnect -> ZoneConnect\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":28,\"character_id\":270544960,\"map_wire_name\":\"prontera.gat\",\"map_result\":\"prontera\",\"ip_wire_bytes_hex\":\"0a000001\",\"zone_ip\":\"10.0.0.1\",\"port_wire_bytes_hex\":\"e917\",\"zone_port\":6121,\"stale_guild_state_cleared\":true,\"zone_connect_transition\":true,\"char_connection_closed\":true,\"visible_zone_ui_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginCharacterCreationRefusalReplay()
+{
+    SetCase("login_character_creation_refusal", "PK44.CHAR-CREATE", "PK44-006e-create-refusal-results-selected-source", "CLoginMode::OnRefuseMakeChar");
+    struct Sample { u8 code; const char* expected; };
+    const Sample samples[] = {
+        {0, "Login: character creation failed (character name already exists, code 0)."},
+        {1, "Login: character creation failed (age restriction, code 1)."},
+        {3, "Login: character creation failed (invalid character slot, code 3)."},
+        {255, "Login: character creation failed (character creation denied, code 255)."},
+        {2, "Login: character creation failed (unrecognized result, code 2)."},
+        {11, "Login: character creation failed (unrecognized result, code 11)."},
+    };
+    std::vector<std::string> frameHex;
+    std::vector<std::string> messages;
+    for (const Sample& sample : samples) {
+        const std::vector<u8> packet{0x6e, 0x00, sample.code};
+        LoginModeReplayAccess mode;
+        LoginModeReplayAccess::RunMakeCharRefusal(mode, packet);
+        const std::string message = g_windowMgr.GetLoginStatus();
+        Require(message == sample.expected, "0x006E result message differs from selected source meanings or unknown fallback");
+        Require(mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
+            "0x006E refusal did not return to character selection");
+        frameHex.push_back(Hex(packet));
+        messages.push_back(message);
+    }
+    g_windowMgr.RemoveAllWindows();
+    std::cout << "{\"case_id\":\"login_character_creation_refusal\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006e-create-refusal-results-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseMakeChar -> SetLoginStatus/ErrorMsg -> CharSelect\",\"input_frames_hex\":[";
+    for (size_t index = 0; index < frameHex.size(); ++index) {
+        if (index != 0) std::cout << ",";
+        std::cout << "\"" << frameHex[index] << "\"";
+    }
+    std::cout << "],\"result_codes\":[0,1,3,255,2,11],\"actual_messages\":[";
+    for (size_t index = 0; index < messages.size(); ++index) {
+        if (index != 0) std::cout << ",";
+        std::cout << "\"" << JsonEscape(messages[index]) << "\"";
+    }
+    std::cout << "],\"all_results_return_to_char_select\":true,\"visible_modal_not_verified\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginPasswordHashChallengeReplay()
 {
     SetCase("login_password_hash_challenge", "PK44.LOGIN-REPLIES", "PK44-01dc-md5-challenge-selected-source", "CLoginMode::OnAckHash -> active 0x01DD builder -> CRagConnection::SendPacket");
@@ -1141,6 +1183,7 @@ int main(){try{
     LoginAcceptCharacterListReplay();
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
+    LoginCharacterCreationRefusalReplay();
     LoginPasswordHashChallengeReplay();
     LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();

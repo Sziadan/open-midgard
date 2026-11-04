@@ -1135,9 +1135,11 @@
         "docs/packets/evidence/PK44.04-character-refusal.md",
         "docs/packets/evidence/PK44.04-character-refusal.jsonl",
         "docs/packets/evidence/PK44.04-zone-notification.md",
-        "docs/packets/evidence/PK44.04-zone-notification.jsonl"
+        "docs/packets/evidence/PK44.04-zone-notification.jsonl",
+        "docs/packets/evidence/PK44.04-character-create-refusal.md",
+        "docs/packets/evidence/PK44.04-character-create-refusal.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): replay zone-server notification"
+      "commit_subject": "packet(PK44.04): correct character create refusal results"
     },
     "PK45.01": {
       "status": "NOT_STARTED",

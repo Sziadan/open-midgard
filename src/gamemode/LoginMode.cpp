@@ -2561,17 +2561,14 @@ void CLoginMode::OnRefuseMakeChar(const std::vector<u8>& raw)
     case 1:
         reason = "age restriction";
         break;
-    case 2:
-        reason = "character deletion restriction";
-        break;
     case 3:
         reason = "invalid character slot";
         break;
-    case 11:
-        reason = "premium service required";
+    case 255:
+        reason = "character creation denied";
         break;
     default:
-        reason = "character creation denied";
+        reason = "unrecognized result";
         break;
     }
 
