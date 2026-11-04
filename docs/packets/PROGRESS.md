@@ -752,3 +752,7 @@ Traced selected 20080910 server 0x0195 player name/party/guild/position and 0x00
 ## 2026-11-04 — PK45.02 trace actor vanish lifecycle
 
 Traced selected-source 7-byte 0x0080 (GID@2, reason@6) from server emitters into the client handler. Reasons 0/1/other map to remove/death transition/remove; name and chase caches clear on final actor removal. Timing, replay, idempotence and rendered lifecycle remain open. One handler family only; no rows closed. Evidence: evidence/PK45.02-actor-vanish.md.
+
+## 2026-11-04 — PK45.02 trace self-movement acknowledgment
+
+Traced selected-source 12-byte 0x0087 from clif_walkok through HandleSelfMoveAck. Tick@2 and packed path@6 update session/actor positions and clear pending move acknowledgment. Self-only path; remote movement/spawn, correlation, malformed bounds, and rendered interpolation remain open. No rows closed. Evidence: evidence/PK45.02-self-movement-ack.md.
