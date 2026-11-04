@@ -72,6 +72,12 @@ struct LoginModeReplayAccess : CLoginMode {
     static bool IsConnected(const LoginModeReplayAccess& mode) {
         return mode.m_isConnected != 0;
     }
+    static void RunNotifyZonesvr(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnNotifyZonesvr(packet);
+    }
+    static bool ZoneEndpointMatches(const LoginModeReplayAccess& mode) {
+        return std::string(mode.m_zoneAddr) == "10.0.0.1" && mode.m_zonePort == 6121;
+    }
     static void RunAcceptLogin(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnAcceptLogin(packet);
     }
@@ -993,6 +999,62 @@ void LoginCharacterRefusalReplay()
     std::cout << "{\"case_id\":\"login_character_refusal\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006c-refuse-enter-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseChar -> ShowLoginErrorDialog -> Disconnect -> Login\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":3,\"result\":0,\"status\":\"Char server refused entry (code 0).\",\"connected_state_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"visible_modal_not_verified\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginZoneServerNotificationReplay()
+{
+    SetCase("login_zone_server_notification", "PK44.CHAR-LIST-ENTRY", "PK44-0071-zonesvr-selected-source", "CLoginMode::OnNotifyZonesvr");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::SetConnected(mode, true);
+    std::vector<u8> packet(28, 0);
+    packet[0] = 0x71;
+    packet[1] = 0x00;
+    packet[2] = 0x40;
+    packet[3] = 0x30;
+    packet[4] = 0x20;
+    packet[5] = 0x10;
+    std::memcpy(packet.data() + 6, "prontera.gat", 12);
+    packet[22] = 10;
+    packet[23] = 0;
+    packet[24] = 0;
+    packet[25] = 1;
+    packet[26] = 0xe9;
+    packet[27] = 0x17;
+
+    const u32 oldGid = g_session.m_gid;
+    char oldMap[sizeof(g_session.m_curMap)]{};
+    std::memcpy(oldMap, g_session.m_curMap, sizeof(oldMap));
+    const LocalGuildInfo oldLocalGuild = g_session.m_localGuild;
+    const ro::guild::WindowState oldGuildWindow = g_session.m_guildWindow;
+    g_session.m_localGuild.guildId = 99;
+    g_session.m_localGuild.name = "stale-guild";
+    g_session.m_guildWindow.id = 99;
+    g_session.m_guildWindow.loaded = true;
+    g_session.m_guildWindow.name = "stale-window";
+
+    LoginModeReplayAccess::RunNotifyZonesvr(mode, packet);
+    Require(g_session.m_gid == 0x10203040u && std::string(g_session.m_curMap) == "prontera",
+        "0x0071 character ID or map extension parsing differs from the selected-source fixture");
+    Require(LoginModeReplayAccess::ZoneEndpointMatches(mode),
+        "0x0071 zone IP or port conversion differs from selected-source wire bytes");
+    Require(g_session.m_localGuild.guildId == 0 && g_session.m_localGuild.name.empty()
+            && g_session.m_guildWindow.id == 0 && !g_session.m_guildWindow.loaded
+            && g_session.m_guildWindow.name.empty(),
+        "0x0071 map-session transition retained stale local guild state");
+    Require(mode.NextSubMode() == CLoginMode::LoginSubMode_ZoneConnect,
+        "0x0071 did not transition to ZoneConnect");
+    Require(!LoginModeReplayAccess::IsConnected(mode) && !connection->IsOpen(),
+        "0x0071 did not clear char-server connection state");
+
+    g_session.m_gid = oldGid;
+    std::memcpy(g_session.m_curMap, oldMap, sizeof(oldMap));
+    g_session.m_localGuild = oldLocalGuild;
+    g_session.m_guildWindow = oldGuildWindow;
+    g_windowMgr.RemoveAllWindows();
+    std::cout << "{\"case_id\":\"login_zone_server_notification\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0071-zonesvr-selected-source\",\"production_entry\":\"CLoginMode::OnNotifyZonesvr -> Disconnect -> ZoneConnect\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":28,\"character_id\":270544960,\"map_wire_name\":\"prontera.gat\",\"map_result\":\"prontera\",\"ip_wire_bytes_hex\":\"0a000001\",\"zone_ip\":\"10.0.0.1\",\"port_wire_bytes_hex\":\"e917\",\"zone_port\":6121,\"stale_guild_state_cleared\":true,\"zone_connect_transition\":true,\"char_connection_closed\":true,\"visible_zone_ui_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginPasswordHashChallengeReplay()
 {
     SetCase("login_password_hash_challenge", "PK44.LOGIN-REPLIES", "PK44-01dc-md5-challenge-selected-source", "CLoginMode::OnAckHash -> active 0x01DD builder -> CRagConnection::SendPacket");
@@ -1078,6 +1140,7 @@ int main(){try{
     LoginAcceptReplyReplay();
     LoginAcceptCharacterListReplay();
     LoginCharacterRefusalReplay();
+    LoginZoneServerNotificationReplay();
     LoginPasswordHashChallengeReplay();
     LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();
