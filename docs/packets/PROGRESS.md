@@ -662,3 +662,6 @@ Confirmed the current receive registrations and ignored handlers; searched for c
 ## 2026-11-04 — PK16.03 audit social paths
 
 Audited friend roster/state/add/delete/request handlers, whisper send/receive/ack state, candidate ignore commands, user-count packet framing, and failure notices. Found a malformed 0x0201 snapshot atomicity risk owned by PK34, a single-slot whisper correlation risk, and silent friend-add/delete outcomes. 0x00D2/0x00D7 semantics and complete block-list behavior remain unverified. No discovery rows closed. Evidence: `evidence/PK16.03-social-path-audit.md`. Stable subject: `packet(PK16.03): audit social state paths`. Next: PK16.04 production replay/UI verification; keep profile gates open.
+## 2026-11-04 — PK16.04 verification deferred
+
+Reviewed PK16.02/03 source evidence and confirmed the profile and replay gaps. Planning consistency passes, but no production replay or visible UI lifecycle check can prove behavior; the existing replay source is dirty with unresolved ownership. Defer for stronger review after replay ownership and target profile are established. No audit rows closed. Evidence: `evidence/PK16.04-verification-boundary.md`. Continue next independent PK18.01 scope.

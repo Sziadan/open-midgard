@@ -112,3 +112,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK16.02 deferred: 02D8/02D9 candidate contract lacks an identity-matched target profile, and no corresponding request/UI call site is present. No rows closed; PK16.03 social audit is next.
 
 - PK16.03 source audit records friend snapshot atomicity under PK34, whisper single-slot correlation risk, silent friend-add/delete paths, and unresolved block-list/user-count packet semantics. No rows closed. PK16.04 verification is next.
+
+- PK16.04 deferred: target profile and production replay/UI evidence are unavailable; preserve dirty replay source and close no rows. PK18.01 is the next independent eligible scope task; PK17 remains dependent on PK12/PK15.
