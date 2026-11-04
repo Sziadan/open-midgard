@@ -1289,9 +1289,10 @@
       "evidence": [
         "docs/packets/evidence/PK45.02-actor-name-ack.md",
         "docs/packets/evidence/PK45.02-actor-vanish.md",
-        "docs/packets/evidence/PK45.02-self-movement-ack.md"
+        "docs/packets/evidence/PK45.02-self-movement-ack.md",
+        "docs/packets/evidence/PK45.02-actor-action-notify.md"
       ],
-      "commit_subject": "packet(PK45.02): trace self movement acknowledgment"
+      "commit_subject": "packet(PK45.02): trace actor action packet"
     },
     "PK45.03": {
       "status": "NOT_STARTED",
