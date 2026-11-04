@@ -1077,7 +1077,7 @@ void LoginCharacterRefusalReplay()
 
 void LoginZoneServerNotificationReplay()
 {
-    SetCase("login_zone_server_notification", "PK44.CHAR-LIST-ENTRY", "PK44-0071-zonesvr-selected-source", "CLoginMode::OnNotifyZonesvr");
+    SetCase("login_zone_server_notification", "PK44.CHAR-LIST-ENTRY", "PK44-0071-zonesvr-selected-source", "CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnNotifyZonesvr");
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
     LoopbackPeer peer(*connection);
@@ -1109,7 +1109,14 @@ void LoginZoneServerNotificationReplay()
     g_session.m_guildWindow.loaded = true;
     g_session.m_guildWindow.name = "stale-window";
 
-    LoginModeReplayAccess::RunNotifyZonesvr(mode, packet);
+    peer.Send(packet);
+    const auto receiveDeadline = Clock::now() + kTimeout;
+    while (connection->IsOpen() && Clock::now() < receiveDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(mode);
+        if (connection->IsOpen()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
     Require(g_session.m_gid == 0x10203040u && std::string(g_session.m_curMap) == "prontera",
         "0x0071 character ID or map extension parsing differs from the selected-source fixture");
     Require(LoginModeReplayAccess::ZoneEndpointMatches(mode),
@@ -1128,12 +1135,12 @@ void LoginZoneServerNotificationReplay()
     g_session.m_localGuild = oldLocalGuild;
     g_session.m_guildWindow = oldGuildWindow;
     g_windowMgr.RemoveAllWindows();
-    std::cout << "{\"case_id\":\"login_zone_server_notification\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0071-zonesvr-selected-source\",\"production_entry\":\"CLoginMode::OnNotifyZonesvr -> Disconnect -> ZoneConnect\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":28,\"character_id\":270544960,\"map_wire_name\":\"prontera.gat\",\"map_result\":\"prontera\",\"ip_wire_bytes_hex\":\"0a000001\",\"zone_ip\":\"10.0.0.1\",\"port_wire_bytes_hex\":\"e917\",\"zone_port\":6121,\"stale_guild_state_cleared\":true,\"zone_connect_transition\":true,\"char_connection_closed\":true,\"visible_zone_ui_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_zone_server_notification\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0071-zonesvr-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnNotifyZonesvr\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":28,\"character_id\":270544960,\"map_wire_name\":\"prontera.gat\",\"map_result\":\"prontera\",\"ip_wire_bytes_hex\":\"0a000001\",\"zone_ip\":\"10.0.0.1\",\"port_wire_bytes_hex\":\"e917\",\"zone_port\":6121,\"stale_guild_state_cleared\":true,\"zone_connect_transition\":true,\"char_connection_closed\":true,\"production_framing_dispatch\":true,\"visible_zone_ui_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginCharacterCreationRefusalReplay()
 {
-    SetCase("login_character_creation_refusal", "PK44.CHAR-CREATE", "PK44-006e-create-refusal-results-selected-source", "CLoginMode::OnRefuseMakeChar");
+    SetCase("login_character_creation_refusal", "PK44.CHAR-CREATE", "PK44-006e-create-refusal-results-selected-source", "CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnRefuseMakeChar");
     struct Sample { u8 code; const char* expected; };
     const Sample samples[] = {
         {0, "Login: character creation failed (character name already exists, code 0)."},
@@ -1145,10 +1152,21 @@ void LoginCharacterCreationRefusalReplay()
     };
     std::vector<std::string> frameHex;
     std::vector<std::string> messages;
+    CRagConnection* const connection = CRagConnection::instance();
     for (const Sample& sample : samples) {
+        connection->Disconnect();
+        LoopbackPeer peer(*connection);
         const std::vector<u8> packet{0x6e, 0x00, sample.code};
         LoginModeReplayAccess mode;
-        LoginModeReplayAccess::RunMakeCharRefusal(mode, packet);
+        LoginModeReplayAccess::SetStatus(mode, "Login: awaiting replay packet.");
+        peer.Send(packet);
+        const auto receiveDeadline = Clock::now() + kTimeout;
+        while (g_windowMgr.GetLoginStatus() != sample.expected && Clock::now() < receiveDeadline) {
+            LoginModeReplayAccess::RunPollNetwork(mode);
+            if (g_windowMgr.GetLoginStatus() != sample.expected) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
         const std::string message = g_windowMgr.GetLoginStatus();
         Require(message == sample.expected, "0x006E result message differs from selected source meanings or unknown fallback");
         Require(mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
@@ -1157,17 +1175,17 @@ void LoginCharacterCreationRefusalReplay()
         messages.push_back(message);
     }
     g_windowMgr.RemoveAllWindows();
-    std::cout << "{\"case_id\":\"login_character_creation_refusal\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006e-create-refusal-results-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseMakeChar -> SetLoginStatus/ErrorMsg -> CharSelect\",\"input_frames_hex\":[";
+    std::cout << "{\"case_id\":\"login_character_creation_refusal\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006e-create-refusal-results-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnRefuseMakeChar\",\"input_frames_hex\":[";
     for (size_t index = 0; index < frameHex.size(); ++index) {
         if (index != 0) std::cout << ",";
         std::cout << "\"" << frameHex[index] << "\"";
     }
-    std::cout << "],\"result_codes\":[0,1,3,255,2,11],\"actual_messages\":[";
+    std::cout << "],\"frame_length\":3,\"opcode\":\"0x006E\",\"result_codes\":[0,1,3,255,2,11],\"actual_messages\":[";
     for (size_t index = 0; index < messages.size(); ++index) {
         if (index != 0) std::cout << ",";
         std::cout << "\"" << JsonEscape(messages[index]) << "\"";
     }
-    std::cout << "],\"all_results_return_to_char_select\":true,\"visible_modal_not_verified\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "],\"production_framing_dispatch\":true,\"all_results_return_to_char_select\":true,\"visible_modal_not_verified\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginPasswordHashChallengeReplay()
