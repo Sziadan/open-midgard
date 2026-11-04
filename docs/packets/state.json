@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK44.04",
+  "active_step": "PK04.01",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -144,9 +144,13 @@
       "commit_subject": "packet(PK03.04): exercise shared timeout preamble"
     },
     "PK04.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "READY_TO_COMMIT",
+      "evidence": [
+        "docs/packets/evidence/PK04.01-raw-aid-spec.md",
+        "docs/packets/contracts/PK01.P01.HANDSHAKE.md",
+        "docs/packets/work-items/PK04.02.md"
+      ],
+      "commit_subject": "packet(PK04.01): specify raw account-id handshake leaves"
     },
     "PK04.02": {
       "status": "NOT_STARTED",
