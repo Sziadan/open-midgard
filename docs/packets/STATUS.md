@@ -91,3 +91,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK10.01 scope is recorded for two discovery parents, `0x0283` and `0x02D5`; PK10.02 is next. PK09.02 remains blocked on 0x01EF server/profile identity.
 
 - PK10.02 is blocked for stronger review at the cross-stage `0x0283` map-auth lifecycle and login/character failure UI boundary; source facts are recorded, with no row closure. Work proceeds to PK11.01.
+
+- PK11.01 scope is recorded for five guild menu/permission parents and a 0x016C cross-review; PK11.02 is next.

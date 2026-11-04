@@ -624,3 +624,7 @@ Specified source inputs, packet families, branch/lifecycle checks and bounded sp
 ## 2026-11-04 — PK10.02 record 0x0283 stage boundary
 
 Confirmed selected server `0x0283` is six bytes and carries `sd->id` at offset 2 before `chrif_authreq`; the earlier raw four-byte form is gated to PACKETVER < 20070521. Client LoginMode currently ignores this opcode, and PK03.04's synthetic ignored-packet replay proves framing only. Full map transition/authentication and login/character failure UI branches are S-complex and not safely certified by current replay. Recorded exact facts and stronger-review gap. No code change or row closure. Evidence: `evidence/PK10.02-0283-transition-boundary.md`. Stable subject: `packet(PK10.02): record 0283 stage boundary`. Next independent task: PK11.01.
+
+## 2026-11-04 — PK11.01 bound guild permission review
+
+Scoped five primary discovery parents `0x014E/0x0156/0x0160/0x0166/0x0174`, with `0x016C` retained as a cross-review dependency for local rank/permissions. Split incremental state reconciliation from Qt menu/action gating and end-to-end visible review. Existing `GuildState.menuFlags` and router landmarks are discovery only. No runtime behavior or rows certified. Evidence: `evidence/PK11.01-scope.md`. Stable subject: `packet(PK11.01): bound guild permission review`. Next: PK11.02 reconcile incremental updates with 0x016C state.
