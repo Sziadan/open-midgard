@@ -120,6 +120,23 @@ struct LoginModeReplayAccess : CLoginMode {
             && characters[0].haircolor == 18
             && characters[0].bIsChangedCharName == 1;
     }
+    static bool AcceptedCharacterListFieldsMatch(const LoginModeReplayAccess& mode) {
+        const CHARACTER_INFO* const characters = mode.GetCharInfo();
+        return mode.GetCharCount() == 2 && characters != nullptr
+            && characters[0].GID == 0x12345678u
+            && std::string(reinterpret_cast<const char*>(characters[0].name)) == "RuneA"
+            && characters[0].job == 7 && characters[0].headpalette == 18
+            && characters[0].CharNum == 7 && characters[0].haircolor == 18
+            && characters[0].bIsChangedCharName == 1
+            && characters[1].GID == 0x87654321u
+            && std::string(reinterpret_cast<const char*>(characters[1].name)) == "RuneB"
+            && characters[1].job == 8 && characters[1].headpalette == 9
+            && characters[1].CharNum == 3 && characters[1].haircolor == 7
+            && characters[1].bIsChangedCharName == 1;
+    }
+    static bool FirstCharacterSelected(const LoginModeReplayAccess& mode) {
+        return mode.m_selectedCharIndex == 0;
+    }
     static bool AcceptLoginFieldsMatch(const LoginModeReplayAccess& mode) {
         if (mode.m_numServer != 2 || mode.m_serverSelected != 0
             || mode.m_serverInfo[0].ip != 0x0a01a8c0u
@@ -1013,10 +1030,11 @@ void LoginAcceptReplyReplay()
 
 void LoginAcceptCharacterListReplay()
 {
-    SetCase("login_accept_character_list", "PK44.CHAR-LIST-ENTRY", "PK44-006b-character-record-selected-source", "CLoginMode::OnAcceptChar");
+    SetCase("login_accept_character_list", "PK44.CHAR-LIST-ENTRY", "PK44-006b-two-character-records-selected-source", "CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar");
     constexpr size_t kHeaderLength = 24;
     constexpr size_t kCharacterRecordLength = 108;
-    constexpr size_t kPacketLength = kHeaderLength + kCharacterRecordLength;
+    constexpr size_t kCharacterRecordCount = 2;
+    constexpr size_t kPacketLength = kHeaderLength + kCharacterRecordLength * kCharacterRecordCount;
     std::vector<u8> packet(kPacketLength, 0);
     packet[0] = 0x6b;
     packet[1] = 0x00;
@@ -1041,6 +1059,16 @@ void LoginAcceptCharacterListReplay()
     record[103] = 60;
     record[104] = 7; // selected server's 16-bit CharNum
     record[106] = 18; // selected server's 16-bit hairColor
+    u8* const secondRecord = record + kCharacterRecordLength;
+    secondRecord[0] = 0x21;
+    secondRecord[1] = 0x43;
+    secondRecord[2] = 0x65;
+    secondRecord[3] = 0x87; // GID 0x87654321
+    secondRecord[52] = 8;
+    secondRecord[70] = 9;
+    std::memcpy(secondRecord + 74, "RuneB", 5);
+    secondRecord[104] = 3;
+    secondRecord[106] = 7;
 
     CRagConnection* const connection = CRagConnection::instance();
     const auto receiveThroughPollNetwork = [connection](LoginModeReplayAccess& replayMode,
@@ -1064,8 +1092,10 @@ void LoginAcceptCharacterListReplay()
 
     LoginModeReplayAccess mode;
     receiveThroughPollNetwork(mode, packet, "Login: character list received from char server.");
-    Require(LoginModeReplayAccess::AcceptedCharacterFieldsMatch(mode),
-        "selected-source 0x006B slot/hair-color values were not translated into the client character record");
+    Require(LoginModeReplayAccess::AcceptedCharacterListFieldsMatch(mode),
+        "selected-source 0x006B records were not both preserved and translated into client character records");
+    Require(LoginModeReplayAccess::FirstCharacterSelected(mode),
+        "selected-source 0x006B response did not select the first character by default");
     Require(mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
         "0x006B character response did not transition to CharSelect");
     Require(g_windowMgr.GetLoginStatus() == "Login: character list received from char server.",
@@ -1094,7 +1124,7 @@ void LoginAcceptCharacterListReplay()
     Require(g_windowMgr.GetLoginStatus() == "Login: character created successfully.",
         "0x006D character creation status differs from expected");
 
-    std::cout << "{\"case_id\":\"login_accept_character_list\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-character-record-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":132,\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"input_frame_hex\":\"" << Hex(packet) << "\",\"character_gid\":305419896,\"character_name\":\"RuneA\",\"job\":7,\"headpalette\":18,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"rename_flag_default\":1,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_accept_character_list\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-two-character-records-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":" << packet.size() << ",\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"record_count\":2,\"input_frame_hex\":\"" << Hex(packet) << "\",\"records\":[{\"gid\":305419896,\"name\":\"RuneA\",\"job\":7,\"headpalette\":18,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"rename_flag_default\":1},{\"gid\":2271560481,\"name\":\"RuneB\",\"job\":8,\"headpalette\":9,\"wire_slot_u16\":3,\"wire_hair_color_u16\":7,\"parsed_slot\":3,\"parsed_hair_color\":7,\"rename_flag_default\":1}],\"first_character_selected\":true,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_character_list_empty\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-empty-list-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":24,\"opcode\":\"0x006B\",\"header_length\":24,\"record_count\":0,\"input_frame_hex\":\"" << Hex(emptyPacket) << "\",\"empty_list_status\":\"Login: no characters on account.\",\"char_select_transition\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_make_character\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006d-make-character-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptMakeChar\",\"frame_length\":110,\"opcode\":\"0x006D\",\"character_record_length\":108,\"input_frame_hex\":\"" << Hex(makePacket) << "\",\"character_gid\":305419896,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
