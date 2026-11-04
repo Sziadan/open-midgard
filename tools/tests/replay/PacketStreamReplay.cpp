@@ -822,6 +822,7 @@ void LoginRefusalResultMappingReplay()
         {2, "Login refused: account expired."},
         {3, "Login refused: rejected by the server."},
         {4, "Login refused: blocked by the GM team."},
+        {5, "Login refused: client version is not accepted by the server."},
         {7, "Login refused: server is busy due to high population."},
         {8, "Login refused: too many accounts are connected from this company."},
         {9, "Login refused: ban by DBA."},
@@ -893,7 +894,7 @@ void LoginRefusalResultMappingReplay()
         if (i != 0) std::cout << ",";
         std::cout << "\"" << inputFrames[i] << "\"";
     }
-    std::cout << "],\"result_codes\":[0,1,2,3,4,7,8,9,10,11,12,13,14,15,99,100,101,102,103,104],\"actual_messages\":[";
+    std::cout << "],\"result_codes\":[0,1,2,3,4,5,7,8,9,10,11,12,13,14,15,99,100,101,102,103,104],\"actual_messages\":[";
     for (size_t i = 0; i < actualMessages.size(); ++i) {
         if (i != 0) std::cout << ",";
         std::cout << "\"" << JsonEscape(actualMessages[i]) << "\"";
