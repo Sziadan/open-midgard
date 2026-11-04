@@ -5610,14 +5610,14 @@ bool SendUseSkillToPosPacket(u16 skillId, u16 skillLevel, int cellX, int cellY)
 
 bool SendUseSkillToPosInfoPacket(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents)
 {
-    if (skillId == 0 || skillLevel == 0 || cellX < 0 || cellY < 0 || cellX > 0xFFFF || cellY > 0xFFFF) {
+    if (skillId == 0 || skillLevel == 0 || cellX < 0 || cellY < 0 || cellX > 0x7FFF || cellY > 0x7FFF) {
         return false;
     }
 
     std::array<u8, sizeof(PACKET_CZ_USESKILLTOPOSINFO)> packetBuffer{};
     int packetLength = 0;
     if (!ro::net::BuildActiveUseSkillToPosInfoPacket(skillId, skillLevel,
-            static_cast<u16>(cellX), static_cast<u16>(cellY),
+            static_cast<s16>(cellX), static_cast<s16>(cellY),
             std::string_view(contents.data(), contents.size()),
             packetBuffer.data(), static_cast<int>(packetBuffer.size()), &packetLength)) {
         return false;

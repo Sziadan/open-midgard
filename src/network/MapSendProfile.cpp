@@ -941,14 +941,14 @@ bool BuildActiveUseSkillMapPacket(u16 skillId,
 
 bool BuildActiveUseSkillToPosInfoPacket(u16 skillId,
     u16 skillLevel,
-    u16 cellX,
-    u16 cellY,
+    s16 cellX,
+    s16 cellY,
     std::string_view contents,
     void* outBuffer,
     int outBufferSize,
     int* outPacketLength)
 {
-    if (!outBuffer || !outPacketLength || contents.size() > sizeof(PACKET_CZ_USESKILLTOPOSINFO::Contents)
+    if (!outBuffer || !outPacketLength || contents.size() >= sizeof(PACKET_CZ_USESKILLTOPOSINFO::Contents)
         || outBufferSize < static_cast<int>(sizeof(PACKET_CZ_USESKILLTOPOSINFO))) {
         return false;
     }
