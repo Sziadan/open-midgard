@@ -2,6 +2,7 @@
 #include "core/Vitals.h"
 #include "core/GuildState.h"
 #include "core/PetState.h"
+#include <algorithm>
 #include <array>
 #include <mutex>
 #include <unordered_map>
@@ -63,7 +64,28 @@ struct FRIEND_INFO {
     u32 color = 0;
     long long partyHp = 0;
     long long partyMaxHp = 0;
+    s16 partyX = 0;
+    s16 partyY = 0;
+    bool partyPositionValid = false;
 };
+
+inline bool ApplyPartyMapPosition(std::list<FRIEND_INFO>& members,u32 aid,int x,int y)
+{
+    if(aid==0)return false;
+    auto member=std::find_if(members.begin(),members.end(),[&](const FRIEND_INFO& item){return item.AID==aid;});
+    if(member==members.end())return false;
+    if(x==-1&&y==-1){member->partyPositionValid=false;member->partyX=0;member->partyY=0;return true;}
+    if(x<0||y<0||x>0x7fff||y>0x7fff)return false;
+    member->partyX=static_cast<s16>(x);member->partyY=static_cast<s16>(y);member->partyPositionValid=true;
+    return true;
+}
+
+inline void PreservePartyMapPosition(const FRIEND_INFO& existing,FRIEND_INFO& updated)
+{
+    if(existing.AID!=0&&existing.AID==updated.AID&&existing.mapName==updated.mapName&&existing.partyPositionValid){
+        updated.partyX=existing.partyX;updated.partyY=existing.partyY;updated.partyPositionValid=true;
+    }
+}
 
 enum class NpcShopMode : int {
     None = 0,
@@ -272,6 +294,7 @@ public:
     void DeleteMemberFromParty(const char* characterName);
     void ChangeRoleFromParty(unsigned int aid, int role);
     bool SetPartyMemberHp(unsigned int aid, long long hp, long long maxHp);
+    bool SetPartyMemberPosition(unsigned int aid, int x, int y);
     const FRIEND_INFO* FindPartyMemberByAid(unsigned int aid) const;
     void RefreshPartyUI();
     const std::list<FRIEND_INFO>& GetPartyList() const;

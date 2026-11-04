@@ -2089,6 +2089,7 @@ void CSession::AddMemberToParty(const FRIEND_INFO& info)
     int index = 0;
     for (FRIEND_INFO& existing : m_partyList) {
         if (existing.characterName == member.characterName) {
+            PreservePartyMapPosition(existing,member);
             if (member.partyHp <= 0 && member.partyMaxHp <= 0) {
                 member.partyHp = existing.partyHp;
                 member.partyMaxHp = existing.partyMaxHp;
@@ -2145,6 +2146,11 @@ bool CSession::SetPartyMemberHp(unsigned int aid, long long hp, long long maxHp)
     }
 
     return false;
+}
+
+bool CSession::SetPartyMemberPosition(unsigned int aid,int x,int y)
+{
+    return ApplyPartyMapPosition(m_partyList,aid,x,y);
 }
 
 const FRIEND_INFO* CSession::FindPartyMemberByAid(unsigned int aid) const

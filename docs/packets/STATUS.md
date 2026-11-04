@@ -99,3 +99,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK11.03 known 0x014E flags are applied and focused UI/action checks pass; blocked only on mapping the custom Qt Relations tab to unknown 0x40 semantics. PK12 depends on PK11; next independent work is PK14.01.
 
 - PK14.01 is scoped from server emitter, packed layout, same-map callsites and removal sentinel; PK14.02 is next. PK11.03 known menu gates are committed, with 0x40 relation mapping deferred for review.
+
+- PK14.02 position-state implementation and focused unit cases pass; production handler compiled. No row closed. PK14.03 is next.

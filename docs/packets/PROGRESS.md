@@ -640,3 +640,7 @@ Propagated 0x014E menu flags into Qt state, gated known tabs and outbound notice
 ## 2026-11-04 — PK14.01 bound party position contract
 
 Traced the sole parent `AUDIT-0x0107`: 10-byte S2C packet with AID and signed 16-bit map-cell X/Y; server sends `(-1,-1)` to remove the dot, broadcasts only among same-map party members, and invokes removal on map departure. Specified session update, roster/map/reconnect teardown, and minimap-rendering leaf boundaries. Scope only; no runtime rows closed. Evidence: `evidence/PK14.01-party-position-scope.md`. Stable subject: `packet(PK14.01): bound party position contract`. Next: PK14.02 implement account-ID state and sentinel lifecycle.
+
+## 2026-11-04 — PK14.02 implement party position state
+
+Replaced the ignored 0x0107 route with exact 10-byte AID/signed-cell decoding. Added AID-only roster updates, atomic (-1,-1) removal, bounds/unknown-member rejection, same-map refresh preservation, and remote-map invalidation. Standalone focused state cases pass; fresh deploy-off `open_midgard` target compiles production handler/session integration. Production framing-router replay and minimap rendering remain PK14.04/03. No row closed. Evidence: `evidence/PK14.02-party-position-state.md`. Stable subject: `packet(PK14.02): implement party position state`. Next: PK14.03 render markers through existing minimap state.

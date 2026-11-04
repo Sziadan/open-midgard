@@ -7681,6 +7681,15 @@ void HandlePartyHpUpdate(CGameMode& mode, const PacketView& packet)
     ApplyCachedPartyHpToVisibleActor(mode, aid, member->characterName);
 }
 
+void HandlePartyPosition(CGameMode&,const PacketView& packet)
+{
+    if(!packet.data||packet.packetLength!=10)return;
+    const u32 aid=ReadLE32(packet.data+2);
+    const s16 x=static_cast<s16>(ReadLE16(packet.data+6));
+    const s16 y=static_cast<s16>(ReadLE16(packet.data+8));
+    g_session.SetPartyMemberPosition(aid,x,y);
+}
+
 void HandleFriendsList(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 4) {
@@ -8872,7 +8881,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x013E, HandleSkillCastAck);
     router.Register(0x01B0, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.partyHpUpdateBasic, HandlePartyHpUpdate);
-    router.Register(0x0107, HandleIgnorePacket); // party minimap position (account id); framing only
+    router.Register(0x0107, HandlePartyPosition);
     RegisterHandlerIfValid(router, receiveProfile.partyMemberAddedBasic, HandlePartyMemberAdded);
     router.Register(0x0105, HandlePartyMemberRemoved);
     RegisterHandlerIfValid(router, receiveProfile.partyMemberAddedExtended, HandlePartyMemberAdded);
