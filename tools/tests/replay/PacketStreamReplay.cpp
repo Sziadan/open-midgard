@@ -45,6 +45,15 @@ struct SkillPacketReplayAccess {
 
 struct LoginModeReplayAccess : CLoginMode {
     int NextSubMode() const { return m_nextSubMode; }
+    static void PrepareHandshakeOnly(LoginModeReplayAccess& mode) {
+        mode.m_syncRequestTime = 123;
+        mode.m_waitingForPasswordHash = true;
+        mode.m_plainAccountLoginSent = true;
+    }
+    static bool HandshakeCleared(const LoginModeReplayAccess& mode) {
+        return mode.m_syncRequestTime == 0 && !mode.m_waitingForPasswordHash
+            && !mode.m_plainAccountLoginSent;
+    }
     static void SendHashRequest(LoginModeReplayAccess& mode) {
         mode.SendPasswordHashRequest();
     }
@@ -56,6 +65,21 @@ struct LoginModeReplayAccess : CLoginMode {
     }
     static void RunRefusal(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnRefuseLogin(packet);
+    }
+    static void RunAcceptLogin(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnAcceptLogin(packet);
+    }
+    static bool AcceptLoginFieldsMatch(const LoginModeReplayAccess& mode) {
+        if (mode.m_numServer != 1 || mode.m_serverSelected != 0
+            || mode.m_serverInfo[0].ip != 0x0a01a8c0u
+            || static_cast<u16>(mode.m_serverInfo[0].port) != 6121u
+            || std::string(reinterpret_cast<const char*>(mode.m_serverInfo[0].name)) != "char-main"
+            || mode.m_serverInfo[0].usercount != 3
+            || mode.m_serverInfo[0].state != 0x1234
+            || mode.m_serverInfo[0].property != 2) {
+            return false;
+        }
+        return true;
     }
     static std::string FormatDisconnect(const std::vector<u8>& packet) {
         return FormatLoginDisconnectMessage(packet);
@@ -815,6 +839,61 @@ void LoginDisconnectResultReplay()
     std::cout << "{\"case_id\":\"login_disconnect_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0081-auth-result-selected-source\",\"production_entry\":\"CLoginMode::OnDisconnectMsg -> FormatLoginDisconnectMessage -> SetLoginStatus/ErrorMsg -> Disconnect -> Login\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":3,\"opcode\":\"0x0081\",\"result_byte_offset\":2,\"input_frames_hex\":[\"" << frames[0] << "\",\"" << frames[1] << "\"],\"result_codes\":[1,8],\"actual_messages\":[\"" << JsonEscape(messages[0]) << "\",\"" << JsonEscape(messages[1]) << "\"],\"login_status_matches_expected\":true,\"account_hash_handshake_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"numeric_fallback_code2_preserved\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginAcceptReplyReplay()
+{
+    SetCase("login_accept_reply", "PK44.LOGIN-REPLIES", "PK44-0069-accept-login-selected-source", "CLoginMode::OnAcceptLogin");
+    constexpr size_t kAcceptLoginPrefixLength = 47;
+    constexpr size_t kServerRecordLength = 32;
+    constexpr size_t kPacketLength = kAcceptLoginPrefixLength + kServerRecordLength;
+    Require(sizeof(SERVER_ADDR) == kServerRecordLength, "client server-address record size differs from selected source layout");
+
+    std::vector<u8> packet(kPacketLength, 0);
+    packet[0] = 0x69;
+    packet[1] = 0x00;
+    packet[2] = static_cast<u8>(kPacketLength & 0xff);
+    packet[3] = static_cast<u8>(kPacketLength >> 8);
+    const auto PutU32Le = [&packet](size_t offset, u32 value) {
+        packet[offset] = static_cast<u8>(value & 0xff);
+        packet[offset + 1] = static_cast<u8>((value >> 8) & 0xff);
+        packet[offset + 2] = static_cast<u8>((value >> 16) & 0xff);
+        packet[offset + 3] = static_cast<u8>((value >> 24) & 0xff);
+    };
+    PutU32Le(4, 0x11223344u);
+    PutU32Le(8, 0x55667788u);
+    PutU32Le(12, 0xaabbccddu);
+    packet[46] = 11;
+    std::array<u8, kServerRecordLength> serverRecord{};
+    serverRecord[0] = 192;
+    serverRecord[1] = 168;
+    serverRecord[2] = 1;
+    serverRecord[3] = 10;
+    serverRecord[4] = 0xe9;
+    serverRecord[5] = 0x17;
+    std::memcpy(serverRecord.data() + 6, "char-main", 9);
+    serverRecord[26] = 3;
+    serverRecord[28] = 0x34;
+    serverRecord[29] = 0x12;
+    serverRecord[30] = 2;
+    Require(sizeof(serverRecord) == kServerRecordLength, "independent selected-source server record fixture is not 32 bytes");
+    std::memcpy(packet.data() + kAcceptLoginPrefixLength, serverRecord.data(), serverRecord.size());
+
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::PrepareHandshakeOnly(mode);
+    LoginModeReplayAccess::RunAcceptLogin(mode, packet);
+    Require(g_session.m_authCode == 0x11223344u && g_session.m_aid == 0x55667788u
+            && g_session.m_userLevel == 0xaabbccddu && g_session.m_sex == 1,
+        "0x0069 fixed-prefix fields or regional-sex normalization differ from the selected wire fixture");
+    Require(LoginModeReplayAccess::AcceptLoginFieldsMatch(mode),
+        "0x0069 server record fields were not preserved from the source-derived byte fixture");
+    Require(mode.NextSubMode() == CLoginMode::LoginSubMode_ConnectChar,
+        "0x0069 with one char server did not transition to ConnectChar");
+    Require(g_windowMgr.GetLoginStatus() == "Login: account accepted by server.",
+        "0x0069 acceptance status was not written");
+    Require(LoginModeReplayAccess::HandshakeCleared(mode), "0x0069 acceptance did not clear login handshake state");
+
+    std::cout << "{\"case_id\":\"login_accept_reply\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-login-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptLogin\",\"frame_length\":79,\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"input_frame_hex\":\"" << Hex(packet) << "\",\"auth_code\":287454020,\"account_id\":1432778632,\"login_id2\":2864434397,\"raw_sex\":11,\"normalized_sex\":1,\"server_ip_bytes_hex\":\"c0a8010a\",\"server_port\":6121,\"server_name\":\"char-main\",\"server_users\":3,\"server_type\":4660,\"server_new_flag\":2,\"one_server_auto_selected\":true,\"transitions_to_connect_char\":true,\"login_handshake_cleared\":true,\"visible_ui_and_socket_connect_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginPasswordHashChallengeReplay()
 {
     SetCase("login_password_hash_challenge", "PK44.LOGIN-REPLIES", "PK44-01dc-md5-challenge-selected-source", "CLoginMode::OnAckHash -> active 0x01DD builder -> CRagConnection::SendPacket");
@@ -897,6 +976,7 @@ int main(){try{
     ProductionAcceptedExitAckReplay();
     LoginRefusalResultMappingReplay();
     LoginDisconnectResultReplay();
+    LoginAcceptReplyReplay();
     LoginPasswordHashChallengeReplay();
     LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();
