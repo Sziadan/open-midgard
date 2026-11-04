@@ -23,5 +23,11 @@ These are **source-backed applicability records only** for hash-pinned rAthena s
 | PK44.ROULETTE.0A20-S2C-GENERATE | Map S2C 0x0A20 generate result; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
 | PK44.ROULETTE.0A22-C2S-INPUT | Map C2S 0x0A22 null-parser framing; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
 | PK44.ROULETTE.0A22-S2C-ITEM-RESULT | Map S2C 0x0A22 item result; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
+| PK44.ACH.0A23-C2S-INPUT | Map C2S 0x0A23 null-parser framing; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
+| PK44.ACH.0A23-S2C-LIST | Map S2C 0x0A23 achievement list; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
+| PK44.ACH.0A24-C2S-INPUT | Map C2S 0x0A24 null-parser framing; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
+| PK44.ACH.0A24-S2C-UPDATE | Map S2C 0x0A24 achievement update; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
+| PK44.ACH.0A26-C2S-INPUT | Map C2S 0x0A26 null-parser framing; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
+| PK44.ACH.0A26-S2C-REWARD-RESULT | Map S2C 0x0A26 achievement reward result; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
 
 Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Review summary and limits: [PK01.03 applicability approval](../evidence/PK01.03-applicability-approval.md). Server source file hashes, no-Git-metadata limitation, and effective registry evidence: [PK01.02 evidence](../evidence/PK01.02.md).

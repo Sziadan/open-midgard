@@ -951,9 +951,9 @@ AUDIT-0x0A1A,0x0A1A,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.002 source-
 AUDIT-0x0A1C,0x0A1C,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.002 source-confirmed reused C2S/S2C identity and selected-config gates,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ROULETTE.0A1C-C2S-INPUT;PK44.ROULETTE.0A1C-S2C-INFO
 AUDIT-0x0A20,0x0A20,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.002 source-confirmed reused C2S/S2C identity and selected-config gates,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ROULETTE.0A20-C2S-INPUT;PK44.ROULETTE.0A20-S2C-GENERATE
 AUDIT-0x0A22,0x0A22,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.002 source-confirmed reused C2S/S2C identity and selected-config gates,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ROULETTE.0A22-C2S-INPUT;PK44.ROULETTE.0A22-S2C-ITEM-RESULT
-AUDIT-0x0A23,0x0A23,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0A24,0x0A24,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0A26,0x0A26,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0A23,0x0A23,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.003 source-confirmed reused C2S/S2C identity and selected-config feature disable,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ACH.0A23-C2S-INPUT;PK44.ACH.0A23-S2C-LIST
+AUDIT-0x0A24,0x0A24,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.003 source-confirmed reused C2S/S2C identity and selected-config feature disable,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ACH.0A24-C2S-INPUT;PK44.ACH.0A24-S2C-UPDATE
+AUDIT-0x0A26,0x0A26,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.003 source-confirmed reused C2S/S2C identity and selected-config feature disable,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ACH.0A26-C2S-INPUT;PK44.ACH.0A26-S2C-REWARD-RESULT
 AUDIT-0x0A28,0x0A28,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0A3D,0x0A3D,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0A46,0x0A46,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
