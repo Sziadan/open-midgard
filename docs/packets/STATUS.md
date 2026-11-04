@@ -174,3 +174,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK45.02 actor-spawn variants are deferred: current client has legacy/shifted/modern/font layouts, but selected 20080910 emitter-to-decoder parity and actor resource lifecycle are unproven. Stronger profile review and an independent fixture are required; no rows closed.
 
 - PK45.03 corrected 0x0189 type 1 to the selected server's saved-point memo restriction; previous client text said teleport was possible. ro_gamemode built successfully. Color/UI and remaining handler parity are open; no rows closed.
+
+- PK45.03 traces the NPC number prompt/reply/cancel packets (0x0142/0x0143/0x0146); layouts match, but unsigned client parsing versus signed server value leaves negative/overflow semantics open. No rows closed.

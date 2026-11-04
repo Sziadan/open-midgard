@@ -768,3 +768,7 @@ The client receive profile exposes legacy, shifted, modern, and font spawn varia
 ## 2026-11-04 — PK45.03 correct 0x0189 type-1 meaning
 
 Cross-checking PK25.03 against authoritative rAthena found type 1 is CANT_MEMO, emitted for MF_NOMEMO/MF_NOWARPTO, while the client said teleport was possible based on Ref wording. Corrected the message to “Saved point cannot be memorized.” Preserved the packet length/type-3 ack behavior; display color remains unverified. ro_gamemode build passed. One handler correction only; no rows closed. Evidence: evidence/PK45.03-map-info-semantics.md.
+
+## 2026-11-04 — PK45.03 trace NPC number input
+
+Traced 0x0142 prompt through HandleNpcDialogNumberInput and UINpcInputWnd to the 10-byte 0x0143 response and 0x0146 cancel request; selected server parser field offsets and script continuation match. Client value is u32/strtoul while server reads int32, and the UI does not visibly clamp this path to INT32_MAX. Defer numeric-domain parity for stronger review; no rows closed. Evidence: evidence/PK45.03-npc-number-input.md.
