@@ -1166,9 +1166,10 @@
         "docs/packets/evidence/PK44.04-qt-event-dispatch-boundary.md",
         "docs/packets/evidence/PK44.04-login-hash-response-direction.md",
         "docs/packets/evidence/PK44.04-login-027c-request.md",
-        "docs/packets/evidence/PK44.04-login-027c-request.jsonl"
+        "docs/packets/evidence/PK44.04-login-027c-request.jsonl",
+        "docs/packets/evidence/PK44.04-character-request-directions.md"
       ],
-      "commit_subject": "packet(PK44.04): capture configured 027c login request"
+      "commit_subject": "packet(PK44.04): reconcile character request directions"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
