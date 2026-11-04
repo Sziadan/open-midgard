@@ -1298,9 +1298,10 @@
     "PK45.03": {
       "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK45.03-map-info-semantics.md"
+        "docs/packets/evidence/PK45.03-map-info-semantics.md",
+        "docs/packets/evidence/PK45.03-npc-number-input.md"
       ],
-      "commit_subject": "packet(PK45.03): correct map info semantics"
+      "commit_subject": "packet(PK45.03): trace NPC number input"
     },
     "PK45.04": {
       "status": "NOT_STARTED",
