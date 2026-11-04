@@ -1170,7 +1170,7 @@
         "docs/packets/evidence/PK44.04-login-027c-request.jsonl",
         "docs/packets/evidence/PK44.04-character-request-directions.md"
       ],
-      "commit_subject": "packet(PK44.04): retain 0081 ui evidence gate"
+      "commit_subject": "packet(PK44.04): correct 0081 modal evidence boundary"
     },
     "PK45.01": {
       "status": "NOT_STARTED",

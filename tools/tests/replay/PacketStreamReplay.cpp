@@ -889,7 +889,7 @@ void LoginRefusalResultMappingReplay()
         "0x006A handler did not return to stable Login");
     Require(!connection->IsOpen(), "0x006A handler did not close the connection");
 
-    std::cout << "{\"case_id\":\"login_refusal_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-006a-auth-result-map-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnRefuseLogin -> FormatLoginRefusalMessage\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":23,\"opcode\":\"0x006A\",\"result_byte_offset\":2,\"block_date_bytes_zero\":true,\"input_frames_hex\":[";
+    std::cout << "{\"case_id\":\"login_refusal_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-006a-auth-result-map-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnRefuseLogin -> FormatLoginRefusalMessage\",\"assertion_scope\":\"Windows WinMain.cpp ErrorMsg -> MessageBoxA path; visible modal not captured\",\"frame_length\":23,\"opcode\":\"0x006A\",\"result_byte_offset\":2,\"block_date_bytes_zero\":true,\"input_frames_hex\":[";
     for (size_t i = 0; i < inputFrames.size(); ++i) {
         if (i != 0) std::cout << ",";
         std::cout << "\"" << inputFrames[i] << "\"";
@@ -947,7 +947,7 @@ void LoginDisconnectResultReplay()
     Require(LoginModeReplayAccess::FormatDisconnect(unassigned) == "Disconnected by server (code 2).",
         "0x0081 result without an active selected-source sender lost its numeric fallback");
 
-    std::cout << "{\"case_id\":\"login_disconnect_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0081-auth-result-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnDisconnectMsg -> FormatLoginDisconnectMessage\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":3,\"opcode\":\"0x0081\",\"result_byte_offset\":2,\"input_frames_hex\":[\"" << frames[0] << "\",\"" << frames[1] << "\"],\"result_codes\":[1,8],\"actual_messages\":[\"" << JsonEscape(messages[0]) << "\",\"" << JsonEscape(messages[1]) << "\"],\"login_status_matches_expected\":true,\"account_hash_handshake_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"numeric_fallback_code2_preserved\":true,\"production_framing_dispatch\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_disconnect_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0081-auth-result-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnDisconnectMsg -> FormatLoginDisconnectMessage\",\"assertion_scope\":\"Windows WinMain.cpp ErrorMsg -> MessageBoxA path; visible modal not captured\",\"frame_length\":3,\"opcode\":\"0x0081\",\"result_byte_offset\":2,\"input_frames_hex\":[\"" << frames[0] << "\",\"" << frames[1] << "\"],\"result_codes\":[1,8],\"actual_messages\":[\"" << JsonEscape(messages[0]) << "\",\"" << JsonEscape(messages[1]) << "\"],\"login_status_matches_expected\":true,\"account_hash_handshake_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"numeric_fallback_code2_preserved\":true,\"production_framing_dispatch\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginAcceptReplyReplay()
