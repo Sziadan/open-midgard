@@ -140,3 +140,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK25.03 implements 0189 based on target Ref and passes `ro_gamemode`; existing script choices are aligned. 0144 compass marker lifecycle remains deferred; PK25.04 cannot close until that is implemented and verified. No rows closed. PK32.01 is next independent package.
 
 - PK25.04 deferred: .03 lacks 0144 compass lifecycle, so package replay/UI acceptance cannot be closed. Preserve dirty replay source; no rows closed. PK32.01 is next independent package.
+
+- PK32.01 scoped 18 provisional mail owners and candidate sizes, with no local inbox/model/handlers in targeted paths. Claims must remain server-confirmed/idempotent. No rows closed.

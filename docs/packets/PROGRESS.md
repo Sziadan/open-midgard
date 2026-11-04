@@ -704,3 +704,6 @@ Added exact 4-byte 0x0189 handler using target Ref type 0–3 messages and item-
 ## 2026-11-04 — PK25.04 verification deferred
 
 PK25.03 remains partial because the 0x0144 compass lifecycle is not implemented. PK25.04 cannot prove expiry/removal/map/death and native/Qt redraw, nor production replay. Preserve the dirty replay source. No discovery rows closed. Evidence: `evidence/PK25.04-verification-boundary.md`. Continue independent PK32.01.
+## 2026-11-04 — PK32.01 scope legacy mail workflow
+
+Bound 18 provisional owners across inbox/read/new-mail, attachments/claims, delete/return, and compose/send. Selected registry has candidate request/result sizes; target profile and variable-list fields remain to adjudicate. Targeted client search found no dedicated mail UI/session model and only a 0249 ignore registration. Claim semantics require idempotent server-confirmed state. No rows closed. Evidence: `evidence/PK32.01-legacy-mail-scope.md`. Stable subject: `packet(PK32.01): scope legacy mail workflow`. Next: adjudicate source/profile and client state before PK32.02 inbox implementation.
