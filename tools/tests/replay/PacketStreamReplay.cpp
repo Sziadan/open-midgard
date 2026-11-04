@@ -1029,6 +1029,66 @@ void LoginAcceptReplyReplay()
         "0x0069 acceptance status was not written");
     Require(LoginModeReplayAccess::HandshakeCleared(mode), "0x0069 acceptance did not clear login handshake state");
 
+    SocketOwner charListener(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+    Require(charListener.value != INVALID_SOCKET, "0x0069 transition mock char-server socket creation failed");
+    sockaddr_in charAddress{};
+    charAddress.sin_family = AF_INET;
+    charAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    charAddress.sin_port = 0;
+    Require(bind(charListener.value, reinterpret_cast<sockaddr*>(&charAddress), sizeof(charAddress)) == 0,
+        "0x0069 transition mock char-server bind failed");
+    socklen_t charAddressLength = sizeof(charAddress);
+    Require(getsockname(charListener.value, reinterpret_cast<sockaddr*>(&charAddress), &charAddressLength) == 0,
+        "0x0069 transition mock char-server port query failed");
+    Require(listen(charListener.value, 1) == 0,
+        "0x0069 transition mock char-server listen failed");
+    std::vector<u8> transitionPacket = packet;
+    const size_t firstServerOffset = kAcceptLoginPrefixLength;
+    transitionPacket[firstServerOffset] = 127;
+    transitionPacket[firstServerOffset + 1] = 0;
+    transitionPacket[firstServerOffset + 2] = 0;
+    transitionPacket[firstServerOffset + 3] = 1;
+    const u16 charPort = ntohs(charAddress.sin_port);
+    transitionPacket[firstServerOffset + 4] = static_cast<u8>(charPort & 0xff);
+    transitionPacket[firstServerOffset + 5] = static_cast<u8>(charPort >> 8);
+    connection->Disconnect();
+    LoopbackPeer transitionPeer(*connection);
+    LoginModeReplayAccess transitionMode;
+    LoginModeReplayAccess::PrepareHandshakeOnly(transitionMode);
+    LoginModeReplayAccess::SetStatus(transitionMode, "Login: awaiting accepted char endpoint.");
+    transitionPeer.Send(transitionPacket);
+    const auto transitionDeadline = Clock::now() + kTimeout;
+    while (g_windowMgr.GetLoginStatus() != "Login: account accepted by server."
+           && Clock::now() < transitionDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(transitionMode);
+        if (g_windowMgr.GetLoginStatus() != "Login: account accepted by server.") {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    Require(g_windowMgr.GetLoginStatus() == "Login: account accepted by server."
+            && transitionMode.NextSubMode() == CLoginMode::LoginSubMode_ConnectChar,
+        "production 0x0069 acceptance did not schedule the character-server transition");
+    transitionMode.OnChangeState(CLoginMode::LoginSubMode_ConnectChar);
+    Require(connection->IsOpen() && LoginModeReplayAccess::IsConnected(transitionMode),
+        "accepted 0x0069 character-server endpoint did not establish the production connection");
+    Require(SelectSocket(charListener.value, true, false,
+            std::chrono::duration_cast<std::chrono::milliseconds>(kTimeout)) > 0,
+        "accepted 0x0069 endpoint did not reach the mock character server");
+    SocketOwner acceptedChar(accept(charListener.value, nullptr, nullptr));
+    Require(acceptedChar.value != INVALID_SOCKET,
+        "accepted 0x0069 endpoint did not produce a mock character-server socket");
+    const std::vector<u8> expectedEnter{
+        0x65, 0x00, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22,
+        0x11, 0xdd, 0xcc, 0xbb, 0xaa, 0x00, 0x00, 0x01};
+    const std::vector<u8> capturedEnter = ReceiveExactSocket(acceptedChar.value, expectedEnter.size());
+    Require(capturedEnter == expectedEnter,
+        "accepted 0x0069 endpoint did not send the selected-source 17-byte CA_ENTER frame");
+    Require(g_windowMgr.GetLoginStatus() == "Login: waiting for character list...",
+        "accepted 0x0069 endpoint did not enter the character-list wait state");
+    connection->Disconnect();
+    g_windowMgr.RemoveAllWindows();
+    std::cout << "{\"case_id\":\"login_accept_to_char_server_transition\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-to-0065-loopback-transition\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin -> OnChangeState(ConnectChar) -> Connect/SendPacket\",\"login_frame_hex\":\"" << Hex(transitionPacket) << "\",\"char_enter_expected_hex\":\"" << Hex(expectedEnter) << "\",\"char_enter_captured_hex\":\"" << Hex(capturedEnter) << "\",\"server_endpoint_from_0069_reached\":true,\"char_server_connected\":true,\"character_list_wait_status\":true,\"visible_acceptance_ui_not_verified\":true,\"network_scope\":\"loopback mock char server only\",\"outcome\":\"PASS\"}\n";
+
     std::vector<u8> partialRecordPacket(packet.begin(), packet.begin() + kAcceptLoginPrefixLength + kServerRecordLength);
     partialRecordPacket.push_back(0xee);
     partialRecordPacket[2] = static_cast<u8>(partialRecordPacket.size() & 0xff);
