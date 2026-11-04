@@ -656,3 +656,6 @@ Reviewed PK14.01–PK14.03 source and state lifecycle. Production app build and 
 ## 2026-11-04 — PK16.01 bound privacy and social state
 
 Scoped P11 across 0x02C8 party-invite settings, 0x02D8/0x02D9 server-confirmed configuration, 0x02DA notification, and separate friends/whispers/blocklists/count/failure-notice audit. Registry evidence supports candidate lengths/offsets; available server parser snapshot documents config request/ack flow but its exact 2008 profile identity is unresolved, and the client has no 0x02D8 framing registration. PK34 owns atomic friend snapshots. No rows closed. Evidence: `evidence/PK16.01-privacy-social-scope.md`. Stable subject: `packet(PK16.01): bound privacy and social state`. Next: PK16.02 adjudicate profile and implement proven settings only.
+## 2026-11-04 — PK16.02 profile identity blocker
+
+Confirmed the current receive registrations and ignored handlers; searched for client 0x02D8 framing, serializer, and setting UI call sites. The selected server registry and available external parser snapshot provide a candidate layout and setting enum but not an identity-matched 2008 profile; repository commit identity could not be read. Do not guess IDs or wire behavior. No rows closed. Evidence: `evidence/PK16.02-profile-blocker.md`. Continue with independent PK16.03 social-path audit.

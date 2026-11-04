@@ -108,3 +108,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK14.04 source/state self-review and focused state tests pass. Production-framed replay and visible lifecycle checks are deferred; the existing replay source is dirty with ownership unresolved. No rows closed; stronger follow-up needed. PK16.01 is active independently.
 
 - PK16.01 scoped P11 settings and social audit leaves; candidate 02D8/02D9 offsets are recorded with unresolved profile identity and 02D8 client framing gap. PK34 atomic friend snapshot remains prerequisite for list behavior. PK16.02 is next.
+
+- PK16.02 deferred: 02D8/02D9 candidate contract lacks an identity-matched target profile, and no corresponding request/UI call site is present. No rows closed; PK16.03 social audit is next.
