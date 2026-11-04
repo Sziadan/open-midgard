@@ -707,3 +707,6 @@ PK25.03 remains partial because the 0x0144 compass lifecycle is not implemented.
 ## 2026-11-04 — PK32.01 scope legacy mail workflow
 
 Bound 18 provisional owners across inbox/read/new-mail, attachments/claims, delete/return, and compose/send. Selected registry has candidate request/result sizes; target profile and variable-list fields remain to adjudicate. Targeted client search found no dedicated mail UI/session model and only a 0249 ignore registration. Claim semantics require idempotent server-confirmed state. No rows closed. Evidence: `evidence/PK32.01-legacy-mail-scope.md`. Stable subject: `packet(PK32.01): scope legacy mail workflow`. Next: adjudicate source/profile and client state before PK32.02 inbox implementation.
+## 2026-11-04 — PK32.02 deferred on full mail state machine
+
+Ref confirms distinct inbox/read/attachment/send/delete/return/result UI routines and inventory/gold mutation on claim ack. Current client lacks the required mail model/UI, and the 18-row workflow requires coherent variable-list parsing, stale IDs, duplicate claims/sends, denial/full inventory, and cancel semantics. No safe isolated inbox handler; replay source remains dirty. Defer PK32.02–.05 for stronger implementation review. No rows closed. Evidence: `evidence/PK32.02-full-mail-state-blocker.md`. Continue PK50.01 independently.

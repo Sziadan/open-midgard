@@ -142,3 +142,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK25.04 deferred: .03 lacks 0144 compass lifecycle, so package replay/UI acceptance cannot be closed. Preserve dirty replay source; no rows closed. PK32.01 is next independent package.
 
 - PK32.01 scoped 18 provisional mail owners and candidate sizes, with no local inbox/model/handlers in targeted paths. Claims must remain server-confirmed/idempotent. No rows closed.
+
+- PK32.02–.05 deferred for full mail state/UI reconstruction and transactional claim/send semantics; current client lacks a mail model and no replay can be safely added. No rows closed. PK50.01 is next independent package.
