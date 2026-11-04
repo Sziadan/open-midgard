@@ -371,7 +371,7 @@ AUDIT-0x01D7,0x01D7,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x01D8,0x01D8,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01D9,0x01D9,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01DA,0x01DA,map,unresolved,PK45,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01DB,0x01DB,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.01DB-C2S-REQ-HASH
+AUDIT-0x01DB,0x01DB,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase C2S parser and current-client forced-request sender are source/replay-confirmed; real challenge reachability and deployed profile intent remain open,C2S_ONLY,PK44.LOGIN.01DB-C2S-REQ-HASH
 AUDIT-0x01DC,0x01DC,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Login-server sender/layout traced in PK44.LOGIN-REPLIES.md; stage and result branches documented; runtime/client parity unresolved.,UNREVIEWED,PK44.LOGIN.01DC-S2C-ACK-HASH
 AUDIT-0x01DD,0x01DD,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.01DD-C2S-MD5
 AUDIT-0x01DE,0x01DE,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -412,7 +412,7 @@ AUDIT-0x0200,0x0200,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketData
 AUDIT-0x0201,0x0201,map,S2C,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0202,0x0202,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0203,0x0203,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0204,0x0204,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.0204-C2S-EXE-HASH
+AUDIT-0x0204,0x0204,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase C2S parser and current-client gated sender are source/replay-confirmed; deployed hash policy and profile intent remain open,C2S_ONLY,PK44.LOGIN.0204-C2S-EXE-HASH
 AUDIT-0x0205,0x0205,map,S2C,PK30,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0206,0x0206,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0207,0x0207,map,S2C,PK50,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -521,7 +521,7 @@ AUDIT-0x0271,0x0271,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x0272,0x0272,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0273,0x0273,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0274,0x0274,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0277,0x0277,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.0277-C2S-PCBANG-RAW
+AUDIT-0x0277,0x0277,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase C2S parser and explicitly configured current-client sender are source/replay-confirmed; deployed profile intent remains open,C2S_ONLY,PK44.LOGIN.0277-C2S-PCBANG-RAW
 AUDIT-0x0278,0x0278,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0279,0x0279,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x027A,0x027A,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -573,7 +573,7 @@ AUDIT-0x02AA,0x02AA,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x02AB,0x02AB,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02AC,0x02AC,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02AD,0x02AD,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x02B0,0x02B0,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.02B0-C2S-CHANNEL-RAW
+AUDIT-0x02B0,0x02B0,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase C2S parser and explicitly configured current-client sender are source/replay-confirmed; deployed profile intent remains open,C2S_ONLY,PK44.LOGIN.02B0-C2S-CHANNEL-RAW
 AUDIT-0x02B1,0x02B1,map,S2C,PK50,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02B2,0x02B2,map,S2C,PK50,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02B3,0x02B3,map,S2C,PK50,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
