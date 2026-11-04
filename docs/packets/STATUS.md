@@ -116,3 +116,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK16.04 deferred: target profile and production replay/UI evidence are unavailable; preserve dirty replay source and close no rows. PK18.01 is the next independent eligible scope task; PK17 remains dependent on PK12/PK15.
 
 - PK18.01 scoped exact 24-byte 0x0192 candidate fields and sender paths; target cell-type mapping/profile remains unresolved because internal enum values contradict wire sender value and Ref evidence is absent. PK18.02 may not guess. No rows closed.
+
+- PK18.02 deferred: 0x0192 type mapping is unproven and internal enum ordinal conflicts with wire sender value; no dynamic overlay exists. PK18.03/04 await stronger source/profile review and a safe implementation. PK20.01 is next independent package.

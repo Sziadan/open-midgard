@@ -668,3 +668,6 @@ Reviewed PK16.02/03 source evidence and confirmed the profile and replay gaps. P
 ## 2026-11-04 — PK18.01 scope dynamic map cells
 
 Bound 0x0192 to a 24-byte map-cell update carrying signed cell coordinates, type and a 16-byte map name. The available rAthena sender snapshot shows Ice Wall and permission-gated map-cell call paths, but its internal cell enum does not match the wire value and no target 2008 profile/Ref definition is available. Require a proven type mapping before world/pathfinding/render changes; 0x0199/01D6/02E7 remain PK19. No rows closed. Evidence: `evidence/PK18.01-dynamic-map-cell-scope.md`. Stable subject: `packet(PK18.01): bound dynamic map cell scope`. Next: adjudicate PK18.02 type mapping before implementation.
+## 2026-11-04 — PK18.02 deferred on cell type mapping
+
+No runtime change: the available sender's 0x0192 type field cannot be mapped reliably to client collision/render semantics. Wire value 5 for Ice Wall conflicts with internal enum ordinal 9, and no identity-matched 2008 Ref/profile mapping or dynamic overlay exists. PK18.03/04 remain dependent and deferred. No rows closed. Evidence: `evidence/PK18.02-type-mapping-blocker.md`. Continue next independent eligible package PK20.01.
