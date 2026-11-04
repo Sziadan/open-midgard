@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK09.02",
+  "active_step": "PK10.01",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -337,9 +337,11 @@
       "commit_subject": "packet(PK09.01): bound inventory cart alias review"
     },
     "PK09.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "BLOCKED",
+      "evidence": [
+        "docs/packets/evidence/PK09.02-01ef-ownership-conflict.md"
+      ],
+      "commit_subject": "packet(PK09.02): document 01ef ownership conflict"
     },
     "PK09.03": {
       "status": "NOT_STARTED",

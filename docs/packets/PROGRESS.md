@@ -612,3 +612,7 @@ Self-reviewed the production `0x007E` send helper: it validates skill and coordi
 ## 2026-11-04 — PK09.01 bound inventory/cart alias review
 
 Defined PK09 scope for the sole assigned parent `AUDIT-0x01EF` and its selected `0x02D0` equipment interaction. Identified variable-length framing and profile-based shared equipment-list handler landmarks; retained final server registration/layout and parser semantics as open work for PK09.02/09.03. Specified profile22/23 variants, duplicate route ownership, cart-clear invariant, state teardown and validation boundaries. Scope-only checkpoint; no runtime behavior or discovery row certified. Evidence: `evidence/PK09.01-scope.md`. Stable subject: `packet(PK09.01): bound inventory cart alias review`. Next: PK09.02 resolve 0x01EF duplicate router registration per profile.
+
+## 2026-11-04 — PK09.02 document 0x01EF ownership conflict
+
+Traced a duplicate client registration: profile routing assigns `0x01EF` to equipment inventory, then Commerce registration overwrites it; Commerce parses it as 18-byte cart entries. Because the effective 2008 server identity and active profile binding are not yet resolved, changing either route would risk corrupting cart/equipment state. Recorded the exact source paths and required resolution evidence. PK09.02 is blocked; PK09.03 remains dependent. No runtime change or discovery closure. Evidence: `evidence/PK09.02-01ef-ownership-conflict.md`. Stable subject: `packet(PK09.02): document 01ef ownership conflict`. Next independent task: PK10.01.

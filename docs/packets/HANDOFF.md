@@ -1,3 +1,5 @@
+PK09.02 is blocked on source-backed resolution of the `0x01EF` cart/equipment identity conflict; do not modify either route speculatively. Active independent step: PK10.01 connection transition contract scope. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
+
 PK09.01 scope checkpoint is committed. Active next step: PK09.02 resolve `0x01EF` receive registration ownership per profile, using effective profile and router registration order. PK08.04 send-path replay remains documented as blocked for stronger review. Preserve the unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp` change.
 
 PK08.04 is committed as a blocked review boundary; no send replay, UI reachability, or discovery closure claimed. Current active step: PK09.01 inventory/cart alias contract scope. Preserve the unrelated dirty edit in `tools/tests/replay/PacketStreamReplay.cpp`. PK48 should review the PK08 harness gap.

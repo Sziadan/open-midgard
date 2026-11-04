@@ -85,3 +85,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK08.04 committed as a blocked send-path self-review: serializer bytes are covered by PK08.03, while production transport capture and UI reachability require a broader harness seam. No discovery rows closed. PK09.01 is the active independent package step.
 
 - PK09.01 committed: bounded inventory/cart alias scope for `AUDIT-0x01EF` and `0x02D0` equipment interaction. Registration/layout semantics remain open; PK09.02 is active.
+
+- PK09.02 is blocked on authoritative 0x01EF server/profile identity: current client registration collides between equipment inventory and cart parsing. PK09.03 is dependent and remains open; work proceeds at PK10.01.
