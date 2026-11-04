@@ -845,8 +845,10 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
     };
 
     if (gameMode) {
-        for (const auto& entry : gameMode->m_partyPosList) {
-            drawWorldPoint(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, RGB(24, 24, 24), 2);
+        for (const FRIEND_INFO& member : g_session.GetPartyList()) {
+            if (member.partyPositionValid) {
+                drawWorldPoint(member.partyX, member.partyY, member.color & 0x00FFFFFFu, RGB(24, 24, 24), 2);
+            }
         }
         for (const auto& entry : gameMode->m_guildPosList) {
             drawWorldPoint(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, RGB(24, 24, 24), 2);
@@ -1069,8 +1071,10 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
     };
 
     if (gameMode) {
-        for (const auto& entry : gameMode->m_partyPosList) {
-            appendMarker(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, 2);
+        for (const FRIEND_INFO& member : g_session.GetPartyList()) {
+            if (member.partyPositionValid) {
+                appendMarker(member.partyX, member.partyY, member.color & 0x00FFFFFFu, 2);
+            }
         }
         for (const auto& entry : gameMode->m_guildPosList) {
             appendMarker(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, 2);
@@ -1508,6 +1512,15 @@ unsigned long long UIRoMapWnd::BuildVisualStateToken() const
     mixValue(static_cast<unsigned long long>(g_windowMgr.m_miniMapZoomFactor * 100.0f));
     mixString(GetCurrentMinimapBitmapName());
     mixString(m_loadedBitmapPath);
+    for (const FRIEND_INFO& member : g_session.GetPartyList()) {
+        mixValue(member.AID);
+        mixValue(member.partyPositionValid ? 1ull : 0ull);
+        if (member.partyPositionValid) {
+            mixValue(static_cast<unsigned long long>(static_cast<unsigned short>(member.partyX)));
+            mixValue(static_cast<unsigned long long>(static_cast<unsigned short>(member.partyY)));
+            mixValue(member.color & 0x00FFFFFFu);
+        }
+    }
 
     return hash;
 }

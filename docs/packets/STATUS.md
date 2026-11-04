@@ -101,3 +101,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK14.01 is scoped from server emitter, packed layout, same-map callsites and removal sentinel; PK14.02 is next. PK11.03 known menu gates are committed, with 0x40 relation mapping deferred for review.
 
 - PK14.02 position-state implementation and focused unit cases pass; production handler compiled. No row closed. PK14.03 is next.
+
+- PK14.03 marker rendering is implemented in native and Qt minimap paths, with party-state redraw invalidation and a successful deploy-off app build. Visible behavior and production lifecycle replay remain PK14.04; no rows closed.
