@@ -674,3 +674,6 @@ No runtime change: the available sender's 0x0192 type field cannot be mapped rel
 ## 2026-11-04 — PK20.01 scope NPC class replacement
 
 Bound fixed 11-byte 0x01B0 (GID, unused type byte, class ID) separately from 0x01D7's look selector/value contract. Available server snapshot shows class change excludes player classes and is used for mobs/homunculi, but target profile identity remains unverified. Listed model/resource, missing actor, repeated change, picking, visibility, and map teardown cases. No rows closed. Evidence: `evidence/PK20.01-npc-class-replacement-scope.md`. Stable subject: `packet(PK20.01): scope NPC class replacement`. Next: PK20.02 distinct class handler/rebuild.
+## 2026-11-04 — PK20.02 deferred on actor resource lifecycle
+
+Did not make a runtime change: 0x01D7's base-look update does not prove class-specific NPC model/resource replacement, and replacing/upgrading actors transfers effect/message ownership. PK20 acceptance requires render, picking, visibility, repeated-change, release, and teardown checks unavailable through the established actor API. Defer PK20.02 and dependent .03/.04 for stronger actor/resource review. No rows closed. Evidence: `evidence/PK20.02-resource-rebuild-blocker.md`. Continue independent PK22.01.

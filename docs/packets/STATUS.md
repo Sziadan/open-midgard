@@ -120,3 +120,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK18.02 deferred: 0x0192 type mapping is unproven and internal enum ordinal conflicts with wire sender value; no dynamic overlay exists. PK18.03/04 await stronger source/profile review and a safe implementation. PK20.01 is next independent package.
 
 - PK20.01 scoped 0x01B0 separately from 0x01D7; profile identity remains a gate. PK20.02 is next; 0x01B0 class resource replacement must not be implemented through the look selector handler.
+
+- PK20.02 deferred: no proven NPC class resource rebuild lifecycle; 01D7's job mutation is insufficient evidence. PK20.03/04 await a safe actor/resource design and lifecycle tests. PK22.01 is next independent package.
