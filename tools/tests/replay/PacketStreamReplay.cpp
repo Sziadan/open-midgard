@@ -973,7 +973,7 @@ void LoginAcceptCharacterListReplay()
             }
         }
         Require(g_windowMgr.GetLoginStatus() == expectedStatus,
-            "production PollNetwork did not frame and dispatch selected-source 0x006B");
+            "production PollNetwork did not frame and dispatch the expected login response");
         connection->Disconnect();
     };
 
@@ -1001,7 +1001,7 @@ void LoginAcceptCharacterListReplay()
     makePacket[0] = 0x6d;
     std::memcpy(makePacket.data() + sizeof(u16), record, kCharacterRecordLength);
     LoginModeReplayAccess createMode;
-    LoginModeReplayAccess::RunAcceptMakeChar(createMode, makePacket);
+    receiveThroughPollNetwork(createMode, makePacket, "Login: character created successfully.");
     Require(LoginModeReplayAccess::AcceptedCharacterFieldsMatch(createMode),
         "selected-source 0x006D slot/hair-color values were not translated into the client character record");
     Require(createMode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
@@ -1011,7 +1011,7 @@ void LoginAcceptCharacterListReplay()
 
     std::cout << "{\"case_id\":\"login_accept_character_list\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-character-record-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":132,\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"input_frame_hex\":\"" << Hex(packet) << "\",\"character_gid\":305419896,\"character_name\":\"RuneA\",\"job\":7,\"headpalette\":18,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"rename_flag_default\":1,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_character_list_empty\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-empty-list-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":24,\"opcode\":\"0x006B\",\"header_length\":24,\"record_count\":0,\"input_frame_hex\":\"" << Hex(emptyPacket) << "\",\"empty_list_status\":\"Login: no characters on account.\",\"char_select_transition\":true,\"outcome\":\"PASS\"}\n";
-    std::cout << "{\"case_id\":\"login_accept_make_character\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006d-make-character-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptMakeChar\",\"frame_length\":110,\"opcode\":\"0x006D\",\"character_record_length\":108,\"input_frame_hex\":\"" << Hex(makePacket) << "\",\"character_gid\":305419896,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_accept_make_character\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006d-make-character-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptMakeChar\",\"frame_length\":110,\"opcode\":\"0x006D\",\"character_record_length\":108,\"input_frame_hex\":\"" << Hex(makePacket) << "\",\"character_gid\":305419896,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginCharacterRefusalReplay()
