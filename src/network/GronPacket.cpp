@@ -229,6 +229,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0160, kVariablePacketSize);
     SetPacketSize(0x0162, kVariablePacketSize);
     SetPacketSize(0x016D, 14);
+    SetPacketSize(0x01F2, 20);             // ZC_UPDATE_CHARSTAT2 (guild member status)
     SetPacketSize(0x016F, 182);
     SetPacketSize(0x0152, kVariablePacketSize); // ZC_GUILD_EMBLEM_IMG
     SetPacketSize(0x016C, 43);             // ZC_UPDATE_GDID

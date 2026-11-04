@@ -6,7 +6,7 @@
 #include <algorithm>
 
 namespace ro::guild {
-struct Member {std::uint32_t account=0,character=0,exp=0,position=0;int job=0,level=0;bool online=false;std::string name;};
+struct Member {std::uint32_t account=0,character=0,exp=0,position=0;int job=0,level=0;bool online=false;std::string name;std::uint16_t gender=0,hairStyle=0,hairColor=0;};
 struct Position {std::uint32_t id=0,mode=0,tax=0;std::string name;};
 struct Relation {std::uint32_t id=0;bool hostile=false;std::string name;};
 struct Ban {std::string name,reason;};
@@ -46,6 +46,18 @@ inline bool ReadWindowPacket(WindowState& state,unsigned short op,const unsigned
     }
     if(op==0x14e){if(size<6)return false;state.menuFlags=Read(p+2);return true;}
     if(op==0x16f){if(size<182)return false;state.noticeTitle=Text(p+2,60);state.notice=Text(p+62,120);return true;}
+    if(op==0x1f2){
+        if(size!=20)return false;
+        const std::uint32_t account=Read(p+2),character=Read(p+6),status=Read(p+10);
+        if(status>1)return false;
+        const std::uint16_t gender=ReadShort(p+14),hairStyle=ReadShort(p+16),hairColor=ReadShort(p+18);
+        auto member=std::find_if(state.members.begin(),state.members.end(),[&](const auto& m){return m.account==account&&m.character==character;});
+        if(member!=state.members.end()){
+            member->online=status==1;member->gender=gender;member->hairStyle=hairStyle;member->hairColor=hairColor;
+            state.online=std::count_if(state.members.begin(),state.members.end(),[](const auto& m){return m.online;});
+        }
+        return true;
+    }
     if(op==0x16d){if(size<14)return false;for(auto& m:state.members)if(m.account==Read(p+2)&&m.character==Read(p+6))m.online=Read(p+10)!=0;state.online=std::count_if(state.members.begin(),state.members.end(),[](const auto& m){return m.online;});return true;}
     std::size_t stride=0;
     switch(op){case 0x154:stride=104;break;case 0x166:stride=28;break;case 0x160:stride=16;break;

@@ -2265,6 +2265,41 @@ void Login3ClientInfoHashRequestReplay()
     std::cout << "{\"case_id\":\"login3_clientinfo_hash_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-01fa-md5-clientinfo-selected-source\",\"production_entry\":\"ConnectAccount -> 0x01DB -> 0x01DC -> OnAckHash -> 0x01FA\",\"request_01db_hex\":\"" << Hex(capturedHashRequest) << "\",\"challenge_hex\":\"" << Hex(challenge) << "\",\"expected_01fa_hex\":\"" << Hex(expectedLogin) << "\",\"captured_01fa_hex\":\"" << Hex(capturedLogin) << "\",\"clientinfo_from_selected_profile\":1,\"challenge_digest_matches_independent_vector\":true,\"challenge_request_automatic_for_login3\":true,\"handshake_cleared\":true,\"network_scope\":\"loopback mock account server only\",\"outcome\":\"PASS\"}\n";
 }
 
+void GuildMemberLoginNoticeReplay(){
+    SetCase("guild_member_login_notice_01f2","PK06.GUILD-MEMBER-LOGIN","PK06-01f2-selected-source-literal","ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ReadWindowPacket");
+    Require(ro::net::GetPacketSize(0x01f2)==20,"selected 0x01F2 receive size is not 20 bytes");
+    Require(ro::net::GetPacketSize(0x016d)==14,"legacy 0x016D receive size changed");
+    const auto previousState=g_session.m_guildWindow;
+    g_session.m_guildWindow={};
+    ro::guild::Member target;target.account=0x11223344;target.character=0x55667788;target.online=false;
+    ro::guild::Member other;other.account=0x01020304;other.character=0x05060708;other.online=true;
+    g_session.m_guildWindow.members={target,other};g_session.m_guildWindow.online=1;
+    const std::vector<u8> online{0xf2,0x01,0x44,0x33,0x22,0x11,0x88,0x77,0x66,0x55,0x01,0x00,0x00,0x00,0x01,0x00,0x34,0x12,0x78,0x56};
+    auto malformedState=g_session.m_guildWindow;
+    auto shortFrame=online;shortFrame.pop_back();
+    Require(!ro::guild::ReadWindowPacket(malformedState,0x01f2,shortFrame.data(),shortFrame.size()),"short 0x01F2 frame was accepted");
+    auto invalidStatus=online;invalidStatus[10]=2;
+    Require(!ro::guild::ReadWindowPacket(malformedState,0x01f2,invalidStatus.data(),invalidStatus.size()),"undocumented 0x01F2 status value was accepted");
+    Require(!malformedState.members[0].online&&malformedState.members[0].gender==0&&malformedState.online==1,"rejected 0x01F2 input partially mutated member state");
+
+    TestConnection connection;LoopbackPeer peer(connection);peer.Send(online);
+    CGameMode mode;auto& router=GetProductionGameModePacketRouter();router.Clear();RegisterDefaultGameModePacketHandlers(router);
+    const auto loginResult=ProcessGameModePacketLoop(mode,connection,router,4);
+    Require(loginResult.packetsProcessed==1&&loginResult.packetsDispatched==1,"production router did not dispatch the 0x01F2 notice");
+    const auto& onlineMember=g_session.m_guildWindow.members[0];
+    Require(onlineMember.online&&onlineMember.gender==1&&onlineMember.hairStyle==0x1234&&onlineMember.hairColor==0x5678&&g_session.m_guildWindow.online==2,"0x01F2 online state or appearance fields decoded incorrectly");
+    std::cout<<"{\"case_id\":\"guild_member_login_notice_01f2_online\",\"contract_id\":\"PK06.GUILD-MEMBER-LOGIN\",\"fixture_id\":\"PK06-01f2-selected-source-literal\",\"production_entry\":\"ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ReadWindowPacket\",\"input_frame_hex\":\""<<Hex(online)<<"\",\"packet_size\":20,\"member_online\":true,\"gender\":1,\"hair_style\":4660,\"hair_color\":22136,\"online_count\":2,\"outcome\":\"PASS\"}\n";
+
+    const std::vector<u8> offline{0xf2,0x01,0x44,0x33,0x22,0x11,0x88,0x77,0x66,0x55,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+    peer.Send(offline);const auto logoutResult=ProcessGameModePacketLoop(mode,connection,router,4);
+    const auto& offlineMember=g_session.m_guildWindow.members[0];
+    Require(logoutResult.packetsProcessed==1&&logoutResult.packetsDispatched==1,"production router did not dispatch the offline 0x01F2 notice");
+    Require(!offlineMember.online&&offlineMember.gender==0&&offlineMember.hairStyle==0&&offlineMember.hairColor==0&&g_session.m_guildWindow.online==1,"0x01F2 offline branch or zeroed appearance fields decoded incorrectly");
+    Require(g_session.m_guildWindow.members.size()==2&&g_session.m_guildWindow.members[1].online,"0x01F2 update changed an unrelated member or inserted a phantom member");
+    std::cout<<"{\"case_id\":\"guild_member_login_notice_01f2_offline\",\"contract_id\":\"PK06.GUILD-MEMBER-LOGIN\",\"fixture_id\":\"PK06-01f2-selected-source-literal\",\"input_frame_hex\":\""<<Hex(offline)<<"\",\"member_online\":false,\"appearance_zeroed\":true,\"online_count\":1,\"other_member_unchanged\":true,\"outcome\":\"PASS\"}\n";
+    g_session.m_guildWindow=previousState;router.Clear();RegisterDefaultGameModePacketHandlers(router);
+}
+
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
@@ -2316,5 +2351,6 @@ int main(){try{
     LoginPollTransientStatusReplay();
     LoginCharConnectionFailureReplay();
     Login3ClientInfoHashRequestReplay();
+    GuildMemberLoginNoticeReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}
