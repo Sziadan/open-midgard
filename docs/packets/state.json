@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK47.02.001",
+  "active_step": "PK47.02.002",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -1172,7 +1172,7 @@
       "commit_subject": "packet(PK47.01): specify residual review scope"
     },
     "PK47.02": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     },
@@ -1247,12 +1247,15 @@
       "commit_subject": null
     },
     "PK47.02.001": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK47.02.001-discovery-reconciliation.md",
+        "docs/packets/evidence/PK47.02.001-discovery-reconciliation.csv"
+      ],
+      "commit_subject": "packet(PK47.02.001): reconcile discovery ownership and evidence links"
     },
     "PK47.02.002": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     }

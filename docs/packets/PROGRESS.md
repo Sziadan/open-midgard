@@ -303,3 +303,8 @@ PK44.04 self-review checkpoint (2026-11-04) is recorded in `evidence/PK44.04-sel
 ## 2026-11-04 — PK47.01 residual/historical review specification
 
 Specified authoritative inputs, baseline/hash provenance, canonical identity, row dispositions, historical-ledger schema, per-row evidence thresholds and the boundary between 990 discovery rows and 1,384 historical definitions. Split the original broad PK47.02 into permanent `.001` discovery-ledger reconciliation and `.002` historical-catalog reconciliation children because their keys and proof requirements differ. No classifications or runtime code changed. Stable subject: `packet(PK47.01): specify residual review scope`. Next: `PK47.02.001`.
+
+
+## 2026-11-04 — PK47.02.001 discovery ownership and evidence-link reconciliation
+
+Reconciled all 990 unique discovery IDs against primary/secondary owner assignments, canonical contract links, owner step statuses, assignment-basis file references and existing classifications. The ledger contains 990 rows across 43 primary owners. It reports 62 rows with resolvable contract links and 928 without canonical links; the latter remain open for their existing owners. All 48 assignment-basis file references resolve. Existing classifications remain 968 UNREVIEWED, 20 INACTIVE_FOR_SELECTED_SOURCE_CONFIG and 2 C2S_ONLY; no row was closed, and no runtime behavior was inferred. Per-owner status summaries count all numbered package steps. Evidence: `evidence/PK47.02.001-discovery-reconciliation.md` and `.csv`. Plan metadata check and whitespace check passed. Stable subject: `packet(PK47.02.001): reconcile discovery ownership and evidence links`. Next: `PK47.02.002` historical-catalog reconciliation.
