@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK45.02",
+  "active_step": "PK45.03",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -1290,14 +1290,17 @@
         "docs/packets/evidence/PK45.02-actor-name-ack.md",
         "docs/packets/evidence/PK45.02-actor-vanish.md",
         "docs/packets/evidence/PK45.02-self-movement-ack.md",
-        "docs/packets/evidence/PK45.02-actor-action-notify.md"
+        "docs/packets/evidence/PK45.02-actor-action-notify.md",
+        "docs/packets/evidence/PK45.02-spawn-variant-boundary.md"
       ],
-      "commit_subject": "packet(PK45.02): trace actor action packet"
+      "commit_subject": "packet(PK45.02): defer spawn variant audit"
     },
     "PK45.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK45.03-map-info-semantics.md"
+      ],
+      "commit_subject": "packet(PK45.03): correct map info semantics"
     },
     "PK45.04": {
       "status": "NOT_STARTED",
