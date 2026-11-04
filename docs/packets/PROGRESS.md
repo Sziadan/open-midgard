@@ -692,3 +692,6 @@ Audited resource/status widths and fixed unsigned EXP narrowing from u32 packet 
 ## 2026-11-04 — PK24.03 deferred on resource/effect ordering
 
 Reviewed status-first session/actor updates and 0x0284 effect 331/332 recovery mutation. The generic server packet describes effect-dependent visual data; target 2008 call sites do not prove those values are authoritative recovery under Hallucination. Current path also adds without max-HP/SP clamping. Changing either side without sender proof risks incorrect resources. Broader 44-row actor lifecycle and production replay remain open. Defer PK24.03/04 for stronger source/replay review; no rows closed. Evidence: `evidence/PK24.03-actor-state-boundary.md`. Continue PK25.01 independently.
+## 2026-11-04 — PK25.01 scope NPC dialogue/script messages
+
+Scoped 21 provisional owners; bound existing dialogue and input packet family, and identified missing 23-byte 0x0144 compass and 4-byte 0x0189 map-notice handlers from the available server packet structures. PK25.02 audits menu indexes/cancel/string/input/shop lifetime; PK25.03 implements missing markers/notices/script choices; PK25.04 owns replay/UI verification. No rows closed. Evidence: `evidence/PK25.01-dialogue-script-scope.md`. Stable subject: `packet(PK25.01): scope NPC dialogue and messages`. Next: PK25.02 audit input/menu/close/shop handoffs.

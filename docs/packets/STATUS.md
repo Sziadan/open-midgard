@@ -132,3 +132,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK24.02 fixed signed-int EXP narrowing to u32 and added extreme unsigned percentage checks; high-vitals script and ro_gamemode target pass. Full app link was blocked by output executable permission. No rows closed. PK24.03 is next.
 
 - PK24.03 deferred: 0x0284 effect values are effect-dependent visual data, but client currently adds 331/332 to actual HP/SP without max cap or Hallucination branch; target sender/profile relation is unproven. PK24.04 awaits actor/resource replay. No rows closed; PK25.01 is next independent package.
+
+- PK25.01 scoped 21 provisional owners, existing dialog input family, and missing 0144/0189 layouts. No rows closed. PK25.02 is next.
