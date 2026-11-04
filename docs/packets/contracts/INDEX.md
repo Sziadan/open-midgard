@@ -38,3 +38,13 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 | PK44.GSTORAGE.09DA-S2C-USAGE-LOG | Map S2C 0x09DA guild-storage usage log; inactive in selected 20080910 source config | PK12 primary; PK44; review PK48 | Source-config applicability only; later item/card width variants traced |
 | PK44.REPUTE.0B8D-S2C-LIST | Map S2C 0x0B8D variable reputation list; inactive in selected 20080910 source config | PK47 primary; PK44; review PK48 | Source-config applicability only |
 | PK44.REPUTE.0B8D-S2C-UPDATE | Map S2C 0x0B8D single reputation type/points update; inactive in selected 20080910 source config | PK47 primary; PK44; review PK48 | Source-config applicability only |
+| PK44.LOGIN.0064-C2S-RAW | Login-server C2S X0064 request; Ref send path confirmed | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.01DB-C2S-REQ-HASH | Login-server C2S X01DB request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.01DD-C2S-MD5 | Login-server C2S X01DD request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.01FA-C2S-MD5-CLIENTINFO | Login-server C2S X01FA request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.0200-C2S-CONNECT-INFO | Login-server C2S X0200 request; Ref send path confirmed | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.0204-C2S-EXE-HASH | Login-server C2S X0204 request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.0277-C2S-PCBANG-RAW | Login-server C2S X0277 request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.027C-C2S-MD5-MAC | Login-server C2S X027C request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.02B0-C2S-CHANNEL-RAW | Login-server C2S X02B0 request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
+| PK44.LOGIN.0825-C2S-SSO-VARIABLE | Login-server C2S X0825 request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
