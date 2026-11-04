@@ -698,3 +698,6 @@ Scoped 21 provisional owners; bound existing dialogue and input packet family, a
 ## 2026-11-04 — PK25.02 audit menu/input/handoff
 
 Audited menu ordinal/cancel and conversation routing; current choice mapping matches candidate server values 1–254 and 255 cancel. Found that 0x01D5 accepts any u16-sized string while available server parser caps at 70 bytes, silently truncating overlong input; target profile identity remains open. Shop flows are separate mode-gated packet functions. No runtime edits or rows closed. Evidence: `evidence/PK25.02-input-handoff-audit.md`. Stable subject: `packet(PK25.02): audit dialogue input handoffs`. Next: PK25.03 implement missing 0144/0189 and source-backed script choice behavior.
+## 2026-11-04 — PK25.03 implement 0189; defer compass lifecycle
+
+Added exact 4-byte 0x0189 handler using target Ref type 0–3 messages and item-ack reset; `ro_gamemode` builds. Existing script choice path preserves indexes and 255 cancel. Deferred 0x0144 because expiry, remove/persistent lifecycle, map transitions, native/Qt redraw state, and replay verification need a focused design. PK25.03 remains partial and .04 cannot close. No rows closed. Evidence: `evidence/PK25.03-map-notice-and-compass-boundary.md`. Continue independent PK32.01 legacy mail scope.

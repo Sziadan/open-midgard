@@ -72,6 +72,8 @@ public:
 
 namespace {
 
+void RecordChat(CGameMode& mode, const std::string& text, u32 color, u8 channel);
+
 constexpr int kUiChatEventMsg = 101;
 constexpr u32 kSystemNoticeColor = 0x0080C0FFu;
 constexpr u32 kActorChatBubbleBaseLifetimeMs = 3200;
@@ -3674,6 +3676,37 @@ enum : u8 {
     kChatChannelBattlefield = 5,
     kChatChannelSystem = 6,
 };
+
+void HandleNotifyMapInfo(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 4) {
+        return;
+    }
+
+    const u16 type = ReadLE16(packet.data + 2);
+    const char* message = nullptr;
+    u32 color = 0x00FFFF00u;
+    switch (type) {
+    case 0:
+        message = "Teleport is not allowed in this area.";
+        color = 0x00FF0000u;
+        break;
+    case 1:
+        message = "Teleport is possible in this area.";
+        break;
+    case 2:
+        message = "Skills cannot be used in this area.";
+        break;
+    case 3:
+        mode.m_waitingUseItemAck = 0;
+        message = "Items cannot be used in this area.";
+        break;
+    default:
+        return;
+    }
+
+    RecordChat(mode, message, color, kChatChannelSystem);
+}
 
 struct ChatEntry {
     std::string text;
@@ -8795,6 +8828,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00CB, HandleNpcShopSellResult);
     router.Register(0x0142, HandleNpcDialogNumberInput);
     router.Register(0x01D4, HandleNpcDialogStringInput);
+    router.Register(0x0189, HandleNotifyMapInfo);
     RegisterHandlerIfValid(router, receiveProfile.broadcastColored, HandleBroadcast);
     router.Register(0x02DC, HandleBattlefieldChat);
     RegisterHandlerIfValid(router, receiveProfile.actorNameAckBasic, HandleActorNameAck);
