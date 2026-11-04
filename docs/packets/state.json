@@ -1133,7 +1133,7 @@
         "docs/packets/evidence/PK44.04-character-record-conversion.md",
         "docs/packets/evidence/PK44.04-character-record-conversion.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): map login refusal and disconnect results"
+      "commit_subject": "packet(PK44.04): translate legacy character reply fields"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
