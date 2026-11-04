@@ -1263,6 +1263,14 @@
         "docs/packets/evidence/PK47.02.002-historical-reconciliation.csv"
       ],
       "commit_subject": "packet(PK47.02.002): reconcile historical catalog identities"
+    },
+    "PK47.03.001": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK47.03.001-guarded-map-registration-audit.md",
+        "docs/packets/evidence/PK47.03.001-guarded-map-registration-audit.csv"
+      ],
+      "commit_subject": "packet(PK47.03.001): trace guarded catalog-only map registrations"
     }
   }
 }
