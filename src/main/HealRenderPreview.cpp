@@ -360,6 +360,7 @@ void RunHealRenderPreview()
                 bool allFramed=true;
                 auto deliver=[&](const std::vector<u8>& p){PacketView view{};int consumed=0;const bool framed=TryReadPacket(p.data(),static_cast<int>(p.size()),view,consumed)&&consumed==static_cast<int>(p.size());allFramed &= framed;if(framed)router.Dispatch(mode,view);};
                 g_session.m_localGuild.isMaster=true;
+                auto menu=make(0x14e,6);put(menu,2,std::strcmp(tab,"member")==0?0x57:0xd7);deliver(menu);
                 auto basic=make(0x1b6,114);put(basic,2,7);put(basic,6,12);put(basic,10,3);put(basic,14,36);put(basic,18,88);put(basic,22,120000);put(basic,26,250000);put(basic,42,1);
                 text(basic,46,"Test Guild");text(basic,70,"Test Player");text(basic,94,"No castles");deliver(basic);
                 auto names=make(0x166,4+28*3);auto positions=make(0x160,4+16*3);

@@ -53,6 +53,7 @@ RoFrame {
                 required property string modelData
                 objectName: "guildTab" + index
                 width: 108; label: modelData; primary: (panel.guildData.tab || 0) === index
+                enabled: index === 0 || index === 4 || (index === 1 && !!(panel.guildData.menuFlags & 0x01)) || (index === 2 && !!(panel.guildData.menuFlags & 0x02)) || (index === 3 && !!(panel.guildData.menuFlags & 0x04)) || (index === 5 && !!(panel.guildData.menuFlags & 0x10))
                 onClicked: { panel.feedback = ""; uiState.guildAction("tab", {tab: index}) }
             }
         }
@@ -100,12 +101,12 @@ RoFrame {
                     Text { text: "Guild experience  " + (panel.guildData.exp || 0) + " / " + (panel.guildData.nextExp || 0) + "     ·     Territory: " + (panel.guildData.territory || "None"); color: theme.muted; font.pixelSize: 11 }
                     Text { text: "Guild notice"; color: theme.ink; font.bold: true; font.pixelSize: 13 }
                     RoField { width: parent.width; height: 30
-                        TextInput { id: noticeSubject; objectName: "guildNoticeSubject"; anchors.fill: parent; anchors.margins: 7; text: panel.guildData.subject || ""; readOnly: !panel.guildData.isMaster; color: theme.ink; font.family: theme.fontFamily; font.pixelSize: 12; clip: true; selectByMouse: true; maximumLength: 59 }
+                        TextInput { id: noticeSubject; objectName: "guildNoticeSubject"; anchors.fill: parent; anchors.margins: 7; text: panel.guildData.subject || ""; readOnly: !panel.guildData.isMaster || !(panel.guildData.menuFlags & 0x80); color: theme.ink; font.family: theme.fontFamily; font.pixelSize: 12; clip: true; selectByMouse: true; maximumLength: 59 }
                     }
                     RoField { width: parent.width; height: 84
-                        TextEdit { id: noticeBody; objectName: "guildNoticeBody"; anchors.fill: parent; anchors.margins: 7; text: panel.guildData.notice || ""; readOnly: !panel.guildData.isMaster; color: theme.ink; font.family: theme.fontFamily; font.pixelSize: 12; wrapMode: TextEdit.Wrap; selectByMouse: true; clip: true }
+                        TextEdit { id: noticeBody; objectName: "guildNoticeBody"; anchors.fill: parent; anchors.margins: 7; text: panel.guildData.notice || ""; readOnly: !panel.guildData.isMaster || !(panel.guildData.menuFlags & 0x80); color: theme.ink; font.family: theme.fontFamily; font.pixelSize: 12; wrapMode: TextEdit.Wrap; selectByMouse: true; clip: true }
                     }
-                    GuildButton { visible: !!panel.guildData.isMaster; label: "Save notice"; onClicked: { uiState.guildAction("notice", {subject: noticeSubject.text, body: noticeBody.text}); panel.feedback = "Notice requested; waiting for the server." } }
+                    GuildButton { visible: !!panel.guildData.isMaster && !!(panel.guildData.menuFlags & 0x80); label: "Save notice"; onClicked: { uiState.guildAction("notice", {subject: noticeSubject.text, body: noticeBody.text}); panel.feedback = "Notice requested; waiting for the server." } }
                     Text { visible: !panel.guildData.loaded; text: "Loading guild information…"; color: theme.muted; font.pixelSize: 12 }
                 }
                 Column {
@@ -137,7 +138,7 @@ RoFrame {
                         RoField { width: 44; height: 26
                             TextInput { id: memberRank; anchors.centerIn: parent; width: 32; text: "1"; validator: IntValidator { bottom: 0; top: 19 } color: theme.ink; selectByMouse: true }
                         }
-                        GuildButton { label: "Assign rank"; enabled: panel.selectedCharacter !== 0; onClicked: uiState.guildAction("memberPosition", {character: panel.selectedCharacter, position: Number(memberRank.text)}) }
+                        GuildButton { label: "Assign rank"; enabled: panel.selectedCharacter !== 0 && !!panel.guildData.isMaster && !!(panel.guildData.menuFlags & 0x02); onClicked: uiState.guildAction("memberPosition", {character: panel.selectedCharacter, position: Number(memberRank.text)}) }
                     }
                     Text { visible: !(panel.guildData.members || []).length; text: "No member list received yet. Use Refresh to request it."; color: theme.muted }
                 }
@@ -151,12 +152,12 @@ RoFrame {
                             id: positionRow
                             Row { x: 6; y: 6; spacing: 8
                                 Text { width: 26; text: "#" + modelData.id; color: theme.muted; anchors.verticalCenter: parent.verticalCenter }
-                                RoField { width: 228; height: 26; TextInput { id: rankName; anchors.fill: parent; anchors.margins: 5; text: modelData.name; readOnly: !panel.guildData.isMaster; maximumLength: 23; color: theme.ink; selectByMouse: true; clip: true } }
-                                GuildButton { label: positionRow.invite ? "Invite ✓" : "Invite —"; enabled: !!panel.guildData.isMaster; onClicked: positionRow.invite = !positionRow.invite }
-                                GuildButton { label: positionRow.expel ? "Expel ✓" : "Expel —"; enabled: !!panel.guildData.isMaster; onClicked: positionRow.expel = !positionRow.expel }
-                                RoField { width: 42; height: 26; TextInput { id: rankTax; anchors.centerIn: parent; width: 32; text: modelData.tax; readOnly: !panel.guildData.isMaster; validator: IntValidator { bottom: 0; top: 50 } color: theme.ink; selectByMouse: true } }
+                                RoField { width: 228; height: 26; TextInput { id: rankName; anchors.fill: parent; anchors.margins: 5; text: modelData.name; readOnly: !panel.guildData.isMaster || !(panel.guildData.menuFlags & 0x02); maximumLength: 23; color: theme.ink; selectByMouse: true; clip: true } }
+                                GuildButton { label: positionRow.invite ? "Invite ✓" : "Invite —"; enabled: !!panel.guildData.isMaster && !!(panel.guildData.menuFlags & 0x02); onClicked: positionRow.invite = !positionRow.invite }
+                                GuildButton { label: positionRow.expel ? "Expel ✓" : "Expel —"; enabled: !!panel.guildData.isMaster && !!(panel.guildData.menuFlags & 0x02); onClicked: positionRow.expel = !positionRow.expel }
+                                RoField { width: 42; height: 26; TextInput { id: rankTax; anchors.centerIn: parent; width: 32; text: modelData.tax; readOnly: !panel.guildData.isMaster || !(panel.guildData.menuFlags & 0x02); validator: IntValidator { bottom: 0; top: 50 } color: theme.ink; selectByMouse: true } }
                                 Text { text: "%"; color: theme.muted; anchors.verticalCenter: parent.verticalCenter }
-                                GuildButton { width: 64; label: "Save"; visible: !!panel.guildData.isMaster; onClicked: uiState.guildAction("position", {id: modelData.id, name: rankName.text, invite: positionRow.invite, expel: positionRow.expel, tax: Number(rankTax.text)}) }
+                                GuildButton { width: 64; label: "Save"; visible: !!panel.guildData.isMaster && !!(panel.guildData.menuFlags & 0x02); onClicked: uiState.guildAction("position", {id: modelData.id, name: rankName.text, invite: positionRow.invite, expel: positionRow.expel, tax: Number(rankTax.text)}) }
                             }
                         }
                     }
@@ -168,7 +169,7 @@ RoFrame {
                         Rectangle { required property var modelData; width: content.width; height: 42; color: theme.rowAlt; radius: 4
                             Text { x: 10; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; color: theme.ink; font.pixelSize: 13 }
                             Text { x: parent.width - 178; anchors.verticalCenter: parent.verticalCenter; text: "Level " + modelData.level; color: theme.muted }
-                            GuildButton { x: parent.width - width - 8; y: 8; label: "Level up"; visible: !!panel.guildData.isMaster; enabled: !!modelData.upgrade && panel.guildData.skillPoints > 0; onClicked: uiState.guildAction("skill", {id: modelData.id}) }
+                            GuildButton { x: parent.width - width - 8; y: 8; label: "Level up"; visible: !!panel.guildData.isMaster && !!(panel.guildData.menuFlags & 0x04); enabled: !!modelData.upgrade && panel.guildData.skillPoints > 0; onClicked: uiState.guildAction("skill", {id: modelData.id}) }
                         }
                     }
                     Text { visible: !(panel.guildData.skills || []).length; text: "No guild skills received yet."; color: theme.muted }

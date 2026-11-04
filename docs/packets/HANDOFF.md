@@ -1,4 +1,4 @@
-PK11.02 implementation is ready for checkpoint commit. Active next leaf after commit: PK11.03 apply menu flags/current permission gates to Qt controls. PK09.02 and PK10.02 remain blocked at their documented S-complexity protocol identity/lifecycle gaps. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
+PK11.03 known menu-flag gates are implemented and tested; blocked on the Qt Relations tab mapping to 0x40. Active independent step: PK14.01 party-position contract scope. PK12 depends on completion of PK11. PK09.02 and PK10.02 remain blocked at their documented S-complexity protocol identity/lifecycle gaps. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
 
 PK10.02 is blocked for stronger review: server `0x0283` carries map player ID before auth, while client stage routing/replay does not establish the complete lifecycle. Active independent step: PK11.01. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
 

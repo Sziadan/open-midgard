@@ -3827,7 +3827,7 @@ static void PopulateGuildWindow(QtUiState* state,CGameMode& mode)
     if(!data["visible"].toBool()){state->setGuildWindow(data);return;}
     const auto& guild=g_session.m_localGuild;const auto& info=g_session.m_guildWindow;
     data["x"]=window->m_x;data["y"]=window->m_y;data["width"]=window->m_w;data["height"]=window->m_h;data["tab"]=window->tab;
-    data["joined"]=guild.guildId!=0;data["name"]=ToQString(guild.name);data["master"]=ToQString(info.master);data["isMaster"]=guild.isMaster;
+    data["joined"]=guild.guildId!=0;data["name"]=ToQString(guild.name);data["master"]=ToQString(info.master);data["isMaster"]=guild.isMaster;data["menuFlags"]=info.menuFlags;data["permissions"]=guild.permissions;
     data["loaded"]=info.loaded;data["level"]=info.level;data["online"]=info.online;data["capacity"]=info.capacity;data["averageLevel"]=info.averageLevel;
     data["exp"]=info.exp;data["nextExp"]=info.nextExp;data["territory"]=ToQString(info.territory);
     data["subject"]=ToQString(info.noticeTitle);data["notice"]=ToQString(info.notice);data["skillPoints"]=g_session.GetGuildSkillPoint();
@@ -3860,7 +3860,13 @@ QtUiStateAdapter::QtUiStateAdapter()
         auto* window=g_windowMgr.m_guildWnd;if(!window)return;
         if(action=="close"){window->SetShow(0);window->StoreInfo();return;}
         if(action=="move"){int x=args.value("x").toInt(),y=args.value("y").toInt();g_windowMgr.ClampWindowToClient(&x,&y,window->m_w,window->m_h);window->Move(x,y);return;}
-        if(action=="tab"){window->tab=std::clamp(args.value("tab").toInt(),0,5);return;}
+        if(action=="tab"){
+            const int tab=std::clamp(args.value("tab").toInt(),0,5);
+            const u32 flags=g_session.m_guildWindow.menuFlags;
+            const u32 required=tab==1?0x01u:tab==2?0x02u:tab==3?0x04u:tab==5?0x10u:0u;
+            if(required==0 || (flags&required)!=0)window->tab=tab;
+            return;
+        }
         if(action=="refresh"){window->Refresh();return;}
         const auto& guild=g_session.m_localGuild;if(!guild.guildId)return;
         if(action=="emblem" && guild.isMaster){RequestGuildEmblemUpload();return;}
@@ -3868,15 +3874,15 @@ QtUiStateAdapter::QtUiStateAdapter()
         auto put=[&](int at,u32 value){for(int i=0;i<4;++i)packet[at+i]=static_cast<u8>(value>>(8*i));};
         auto begin=[&](u16 op,int size){packet.assign(size,0);packet[0]=static_cast<u8>(op);packet[1]=static_cast<u8>(op>>8);};
         auto text=[&](int at,int max,const QString& value){const auto bytes=value.toUtf8();if(bytes.size()>=max){g_windowMgr.PushChatEvent("Guild text is too long for the server. Please shorten it.",0x00FF4040u,6);return false;}std::memcpy(packet.data()+at,bytes.constData(),bytes.size());return true;};
-        if(action=="notice" && guild.isMaster){begin(0x16e,186);put(2,guild.guildId);if(!text(6,60,args.value("subject").toString())||!text(66,120,args.value("body").toString()))return;}
-        else if(action=="position" && guild.isMaster){
+        if(action=="notice" && guild.isMaster && (g_session.m_guildWindow.menuFlags&0x80u)){begin(0x16e,186);put(2,guild.guildId);if(!text(6,60,args.value("subject").toString())||!text(66,120,args.value("body").toString()))return;}
+        else if(action=="position" && guild.isMaster && (g_session.m_guildWindow.menuFlags&0x02u)){
             const int id=args.value("id").toInt(),tax=args.value("tax").toInt();if(id<0||id>=20||tax<0||tax>50)return;
             begin(0x161,44);packet[2]=44;put(4,id);put(8,(args.value("invite").toBool()?1:0)|(args.value("expel").toBool()?16:0));put(12,id);put(16,tax);
             if(!text(20,24,args.value("name").toString()))return;
-        } else if(action=="skill" && guild.isMaster && g_session.GetGuildSkillPoint()>0){
+        } else if(action=="skill" && guild.isMaster && (g_session.m_guildWindow.menuFlags&0x04u) && g_session.GetGuildSkillPoint()>0){
             const int id=args.value("id").toInt();bool allowed=false;for(const auto& skill:g_session.GetGuildSkillItems())if(skill.SKID==id&&skill.upgradable)allowed=true;
             if(!allowed)return;begin(0x112,4);packet[2]=static_cast<u8>(id);packet[3]=static_cast<u8>(id>>8);
-        } else if(action=="memberPosition" && guild.isMaster){
+        } else if(action=="memberPosition" && guild.isMaster && (g_session.m_guildWindow.menuFlags&0x02u)){
             const u32 cid=args.value("character").toUInt(),position=args.value("position").toUInt();
             if(position>=20)return;
             const auto& members=g_session.m_guildWindow.members;const auto found=std::find_if(members.begin(),members.end(),[&](const auto& m){return m.character==cid;});

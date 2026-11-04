@@ -95,3 +95,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK11.01 scope is recorded for five guild menu/permission parents and a 0x016C cross-review; PK11.02 is next.
 
 - PK11.02 implementation and focused parser/Qt fixture pass; full build command has an unrelated runtime-test linker failure, documented with fresh app binary provenance. No rows closed. PK11.03 is next.
+
+- PK11.03 known 0x014E flags are applied and focused UI/action checks pass; blocked only on mapping the custom Qt Relations tab to unknown 0x40 semantics. PK12 depends on PK11; next independent work is PK14.01.

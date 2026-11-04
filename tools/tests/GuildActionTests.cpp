@@ -98,10 +98,14 @@ int main(int argc,char** argv){
     assert(static_cast<unsigned char>(bmp[topLeft+3])==255 && bmp[topLeft+4]==0 && static_cast<unsigned char>(bmp[topLeft+5])==255);
     assert(static_cast<unsigned char>(bmp[54])==255 && bmp[55]==0 && static_cast<unsigned char>(bmp[56])==255);
     auto& sent=CRagConnection::instance()->sent;
+    g_session.m_guildWindow.menuFlags=0xd7;
     GuildAction("emblem",{});assert(emblemPickers==1 && sent.empty());
     window.Refresh();assert(sent.size()==6 && sent[0]==std::vector<u8>({0x4d,1}));
     for(int i=0;i<5;++i)assert(sent[i+1]==std::vector<u8>({0x4f,1,static_cast<u8>(i),0,0,0}));
     sent.clear();g_session.m_localGuild.guildId=0;window.Refresh();assert(sent.size()==1);g_session.m_localGuild.guildId=77;sent.clear();
+    g_session.m_guildWindow.menuFlags=0x57;const auto beforeDeniedNotice=sent.size();
+    GuildAction("notice",{{"subject","No notice permission"}});assert(sent.size()==beforeDeniedNotice);
+    g_session.m_guildWindow.menuFlags=0xd7;
     GuildAction("notice",{{"subject","Meeting"},{"body","Tonight in Prontera"}});
     assert(sent.back().size()==186 && sent.back()[0]==0x6e && sent.back()[1]==1 && ro::guild::Read(sent.back().data()+2)==77);
     assert(ro::guild::Text(sent.back().data()+6,60)=="Meeting"&&ro::guild::Text(sent.back().data()+66,120)=="Tonight in Prontera");
@@ -118,6 +122,8 @@ int main(int argc,char** argv){
     GuildAction("leave",{{"confirmed",false}});assert(sent.size()==before);
     GuildAction("leave",{{"confirmed",true},{"reason","Goodbye"}});
     assert(sent.back().size()==54&&sent.back()[0]==0x59&&ro::guild::Read(sent.back().data()+2)==77&&ro::guild::Read(sent.back().data()+6)==101&&ro::guild::Read(sent.back().data()+10)==202&&ro::guild::Text(sent.back().data()+14,40)=="Goodbye");
-    GuildAction("tab",{{"tab",99}});assert(window.tab==5);GuildAction("close",{});assert(!window.shown);
+    g_session.m_guildWindow.menuFlags=0xc7;GuildAction("tab",{{"tab",5}});assert(window.tab!=5);
+    g_session.m_guildWindow.menuFlags=0xd7;GuildAction("tab",{{"tab",5}});assert(window.tab==5);
+    GuildAction("tab",{{"tab",3}});assert(window.tab==3);GuildAction("close",{});assert(!window.shown);
     std::cout<<"PASS: production guild requests and edits match Ref/rAthena wire layouts; role guards, field limits, skill gates and leave confirmation hold\n";
 }
