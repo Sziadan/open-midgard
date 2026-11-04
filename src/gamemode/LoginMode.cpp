@@ -2287,6 +2287,7 @@ void CLoginMode::OnAcceptLogin(const std::vector<u8>& raw)
     const u16 packetLen = static_cast<u16>(p[2]) | (static_cast<u16>(p[3]) << 8);
     constexpr size_t kAcceptLoginPrefixLength = 47;
     constexpr size_t kServerRecordLength = sizeof(SERVER_ADDR);
+    constexpr size_t kServerRecordCapacity = sizeof(m_serverInfo) / sizeof(m_serverInfo[0]);
     if (packetLen != raw.size()
         || packetLen < kAcceptLoginPrefixLength
         || (static_cast<size_t>(packetLen) - kAcceptLoginPrefixLength) % kServerRecordLength != 0) {
@@ -2294,6 +2295,14 @@ void CLoginMode::OnAcceptLogin(const std::vector<u8>& raw)
         m_serverSelected = -1;
         std::memset(m_serverInfo, 0, sizeof(m_serverInfo));
         SetLoginStatus("Login error: malformed AC_ACCEPT_LOGIN server list.");
+        m_nextSubMode = LoginSubMode_Login;
+        return;
+    }
+    if ((static_cast<size_t>(packetLen) - kAcceptLoginPrefixLength) / kServerRecordLength > kServerRecordCapacity) {
+        m_numServer = 0;
+        m_serverSelected = -1;
+        std::memset(m_serverInfo, 0, sizeof(m_serverInfo));
+        SetLoginStatus("Login error: too many AC_ACCEPT_LOGIN server records.");
         m_nextSubMode = LoginSubMode_Login;
         return;
     }
@@ -2311,7 +2320,7 @@ void CLoginMode::OnAcceptLogin(const std::vector<u8>& raw)
     const int serverListBytes = static_cast<int>(packetLen) - 47;
     if (serverListBytes > 0) {
         const int count = serverListBytes / 32;
-        const int toRead = (count < 100) ? count : 100;
+        const int toRead = count;
         // Direct memcpy: SERVER_ADDR fields are in network byte order in the packet,
         // and Types.h/SERVER_ADDR matches the on-wire layout (32 bytes).
         std::memcpy(m_serverInfo, p + 47, static_cast<size_t>(toRead) * 32);

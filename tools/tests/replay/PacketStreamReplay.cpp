@@ -1059,6 +1059,36 @@ void LoginAcceptReplyReplay()
 
     std::cout << "{\"case_id\":\"login_accept_reply\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-login-two-servers-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin\",\"frame_length\":" << packet.size() << ",\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"server_record_count\":2,\"input_frame_hex\":\"" << Hex(packet) << "\",\"auth_code\":287454020,\"account_id\":1432778632,\"login_id2\":2864434397,\"raw_sex\":11,\"normalized_sex\":1,\"first_server\":{\"ip_bytes_hex\":\"c0a8010a\",\"port\":6121,\"name\":\"char-main\",\"users\":3,\"type\":4660,\"new_flag\":2},\"second_server\":{\"ip_bytes_hex\":\"cb007107\",\"port\":6122,\"name\":\"char-backup\",\"users\":9,\"type\":22136,\"new_flag\":1},\"selected_server_index\":0,\"multiple_servers_preserved\":true,\"transitions_to_connect_char\":true,\"login_handshake_cleared\":true,\"production_framing_dispatch\":true,\"visible_ui_and_socket_connect_not_exercised\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_reply_partial_server_record\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-reject-partial-server-record\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin\",\"frame_length\":" << partialRecordPacket.size() << ",\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"complete_record_count\":1,\"partial_tail_bytes\":1,\"input_frame_hex\":\"" << Hex(partialRecordPacket) << "\",\"malformed_status\":\"" << malformedStatus << "\",\"returns_to_login\":true,\"server_list_cleared\":true,\"handshake_cleared\":true,\"session_credentials_preserved\":true,\"production_framing_dispatch\":true,\"outcome\":\"PASS\"}\n";
+
+    constexpr size_t kServerRecordCapacity = 100;
+    std::vector<u8> oversizedPacket(kAcceptLoginPrefixLength + kServerRecordLength * (kServerRecordCapacity + 1), 0);
+    oversizedPacket[0] = 0x69;
+    oversizedPacket[1] = 0x00;
+    oversizedPacket[2] = static_cast<u8>(oversizedPacket.size() & 0xff);
+    oversizedPacket[3] = static_cast<u8>(oversizedPacket.size() >> 8);
+    connection->Disconnect();
+    LoopbackPeer oversizedPeer(*connection);
+    LoginModeReplayAccess oversizedMode;
+    LoginModeReplayAccess::PrepareHandshakeOnly(oversizedMode);
+    LoginModeReplayAccess::SetStatus(oversizedMode, "Login: awaiting oversized replay packet.");
+    oversizedPeer.Send(oversizedPacket);
+    const std::string oversizedStatus = "Login error: too many AC_ACCEPT_LOGIN server records.";
+    const auto oversizedDeadline = Clock::now() + kTimeout;
+    while (g_windowMgr.GetLoginStatus() != oversizedStatus && Clock::now() < oversizedDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(oversizedMode);
+        if (g_windowMgr.GetLoginStatus() != oversizedStatus) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    Require(g_windowMgr.GetLoginStatus() == oversizedStatus
+            && oversizedMode.NextSubMode() == CLoginMode::LoginSubMode_Login
+            && LoginModeReplayAccess::MalformedAcceptLoginClearedList(oversizedMode)
+            && LoginModeReplayAccess::HandshakeCleared(oversizedMode),
+        "0x0069 server list beyond the 100-entry client capacity was not rejected");
+    Require(g_session.m_authCode == acceptedAuthCode && g_session.m_aid == acceptedAid,
+        "0x0069 oversized response overwrote accepted session credentials");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"login_accept_reply_over_capacity_server_list\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-reject-101-server-records\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin\",\"frame_length\":" << oversizedPacket.size() << ",\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"client_capacity\":100,\"record_count\":101,\"malformed_status\":\"" << oversizedStatus << "\",\"returns_to_login\":true,\"server_list_cleared\":true,\"handshake_cleared\":true,\"session_credentials_preserved\":true,\"production_framing_dispatch\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginAcceptCharacterListReplay()

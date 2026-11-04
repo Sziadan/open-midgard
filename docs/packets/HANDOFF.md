@@ -18,3 +18,5 @@ After PK00, follow PK01→PK02→PK03, then framing repairs PK04–PK09. PK50 qu
 Validate plan/tracker with `python tools/check_packet_plan.py`. Before builds use the documented MinGW Qt preset with `-DRO_ENABLE_DEV_DEPLOY=OFF` and verify the cache. Focused replay commands must be established in PK03. No automatic deployment/server restart or live account transactions.
 
 After each completed leaf, commit its evidence, state/STATUS, progress and handoff with only explicit owned paths. Report the leaf, concrete result, verification limits, commit SHA, and next exact step.
+
+Latest PK44.04 increment (`packet(PK44.04): reject over-capacity login server list`): `0x0069` now rejects partial record arrays and arrays beyond the client's 100-entry storage capacity rather than truncating them. Deploy-off replay build and focused CTest passed 1/1; see `evidence/PK44.04-login-accept-reply.md` and `.jsonl`. Continue PK44.04 with another bounded source-backed login/character branch.
