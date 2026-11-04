@@ -701,3 +701,6 @@ Audited menu ordinal/cancel and conversation routing; current choice mapping mat
 ## 2026-11-04 — PK25.03 implement 0189; defer compass lifecycle
 
 Added exact 4-byte 0x0189 handler using target Ref type 0–3 messages and item-ack reset; `ro_gamemode` builds. Existing script choice path preserves indexes and 255 cancel. Deferred 0x0144 because expiry, remove/persistent lifecycle, map transitions, native/Qt redraw state, and replay verification need a focused design. PK25.03 remains partial and .04 cannot close. No rows closed. Evidence: `evidence/PK25.03-map-notice-and-compass-boundary.md`. Continue independent PK32.01 legacy mail scope.
+## 2026-11-04 — PK25.04 verification deferred
+
+PK25.03 remains partial because the 0x0144 compass lifecycle is not implemented. PK25.04 cannot prove expiry/removal/map/death and native/Qt redraw, nor production replay. Preserve the dirty replay source. No discovery rows closed. Evidence: `evidence/PK25.04-verification-boundary.md`. Continue independent PK32.01.
