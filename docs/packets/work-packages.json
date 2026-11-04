@@ -1618,7 +1618,17 @@
       },
       {
         "id": "PK47.02",
-        "action": "Review all unresolved990-row discoveries and1384 historical definitions.",
+        "action": "Aggregate the discovery-ledger and historical-catalog reconciliation children; preserve unresolved rows for PK47.03 adjudication.",
+        "tier": "S"
+      },
+      {
+        "id": "PK47.02.001",
+        "action": "Reconcile all 990 current discovery IDs with provisional owners, existing contract links and step statuses; report per-owner evidence gaps without duplicate source research or metadata-only closure.",
+        "tier": "S"
+      },
+      {
+        "id": "PK47.02.002",
+        "action": "Reconcile all 1,384 historical catalog definitions against the 990-row union, active registry/declarations and known contracts; produce the per-definition historical reconciliation ledger.",
         "tier": "S"
       },
       {

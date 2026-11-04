@@ -1051,7 +1051,9 @@ Tier: **S**. Dependencies: PK01, PK02.
 ### Bounded steps
 
 - **PK47.01 [S]** Specify this package's bounded research/harness/review scope, exact source inputs, output schema and evidence criteria. Record source-backed runtime contracts; independent review follows the implementation run. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK47.02 [S]** Review all unresolved990-row discoveries and1384 historical definitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK47.02 [S]** Aggregate the discovery-ledger and historical-catalog reconciliation children; preserve unresolved rows for PK47.03 adjudication. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK47.02.001 [S]** Reconcile all 990 current discovery IDs with provisional owners, existing contract links and step statuses; report per-owner evidence gaps without duplicate source research or metadata-only closure. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK47.02.002 [S]** Reconcile all 1,384 historical catalog definitions against the 990-row union, active registry/declarations and known contracts; produce the per-definition historical reconciliation ledger. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK47.03 [S]** Adjudicate remaining collisions aliases inactive guards and source gaps with explicit evidence. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK47.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 

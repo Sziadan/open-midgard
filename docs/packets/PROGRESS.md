@@ -298,3 +298,8 @@ PK44.04 remains IN_PROGRESS: it calls for production replay and UI lifecycle che
 
 
 PK44.04 self-review checkpoint (2026-11-04) is recorded in `evidence/PK44.04-self-review.md`; its status is IN_PROGRESS. The 0x0069 `userLevel` concern was only a local naming mismatch: those bytes are copied unchanged into the character-enter login_id2 slot. Corrected the live contract/aggregate/blocker/status; historical progress remains annotated with this correction. The 0x006A code-map mismatch remains confirmed. PK44.04 still lacks PK44-specific server-derived fixtures, semantic production replay, bounded implementation leaves and applicable UI lifecycle evidence, so it cannot honestly close this checkpoint. PK47 is independently eligible from completed PK01/PK02; next: PK47.01.
+
+
+## 2026-11-04 — PK47.01 residual/historical review specification
+
+Specified authoritative inputs, baseline/hash provenance, canonical identity, row dispositions, historical-ledger schema, per-row evidence thresholds and the boundary between 990 discovery rows and 1,384 historical definitions. Split the original broad PK47.02 into permanent `.001` discovery-ledger reconciliation and `.002` historical-catalog reconciliation children because their keys and proof requirements differ. No classifications or runtime code changed. Stable subject: `packet(PK47.01): specify residual review scope`. Next: `PK47.02.001`.
