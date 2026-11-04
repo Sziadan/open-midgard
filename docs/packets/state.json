@@ -1124,10 +1124,12 @@
         "docs/packets/evidence/PK44.04-self-review.md",
         "docs/packets/evidence/PK44.04-login-refusal-mapping.md",
         "docs/packets/evidence/PK44.04-login-refusal-mapping.jsonl",
+        "docs/packets/evidence/PK44.04-login-disconnect-mapping.md",
+        "docs/packets/evidence/PK44.04-login-disconnect-mapping.jsonl",
         "docs/packets/evidence/PK44.04-login-hash-challenge.md",
         "docs/packets/evidence/PK44.04-login-hash-challenge.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): cover documented login refusal results"
+      "commit_subject": "packet(PK44.04): map login refusal and disconnect results"
     },
     "PK45.01": {
       "status": "NOT_STARTED",

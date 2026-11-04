@@ -54,6 +54,25 @@ struct LoginModeReplayAccess : CLoginMode {
     static std::string FormatRefusal(const std::vector<u8>& packet) {
         return FormatLoginRefusalMessage(packet);
     }
+    static void RunRefusal(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnRefuseLogin(packet);
+    }
+    static std::string FormatDisconnect(const std::vector<u8>& packet) {
+        return FormatLoginDisconnectMessage(packet);
+    }
+    static void RunDisconnect(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnDisconnectMsg(packet);
+    }
+    static void PrepareDisconnectState(LoginModeReplayAccess& mode) {
+        mode.m_syncRequestTime = 123;
+        mode.m_waitingForPasswordHash = true;
+        mode.m_plainAccountLoginSent = true;
+        mode.m_isConnected = 1;
+    }
+    static bool DisconnectStateCleared(const LoginModeReplayAccess& mode) {
+        return mode.m_syncRequestTime == 0 && !mode.m_waitingForPasswordHash
+            && !mode.m_plainAccountLoginSent && mode.m_isConnected == 0;
+    }
     static void AdoptDeferredStatus(LoginModeReplayAccess& mode, const char* status) {
         SetPendingLoginStatus(status);
         AdoptPendingLoginStatus(mode.m_deferredLoginStatus);
@@ -730,7 +749,22 @@ void LoginRefusalResultMappingReplay()
     Require(LoginModeReplayAccess::FormatRefusal(unknownResult) == "Login refused (code 16).",
         "unknown 0x006A result no longer preserves its numeric code");
 
-    std::cout << "{\"case_id\":\"login_refusal_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-006a-auth-result-map-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseLogin -> FormatLoginRefusalMessage\",\"frame_length\":23,\"opcode\":\"0x006A\",\"result_byte_offset\":2,\"block_date_bytes_zero\":true,\"input_frames_hex\":[";
+    CRagConnection* connection = CRagConnection::instance();
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::PrepareDisconnectState(mode);
+    std::vector<u8> refusalPacket(sizeof(PACKET_AC_REFUSE_LOGIN), 0);
+    refusalPacket[0] = 0x6a;
+    refusalPacket[2] = 1;
+    LoginModeReplayAccess::RunRefusal(mode, refusalPacket);
+    Require(g_windowMgr.GetLoginStatus() == "Login refused: incorrect password.",
+        "0x006A handler did not write the mapped refusal status");
+    Require(LoginModeReplayAccess::DisconnectStateCleared(mode),
+        "0x006A handler did not clear connection/hash state");
+    Require(mode.NextSubMode() == CLoginMode::LoginSubMode_Login,
+        "0x006A handler did not return to stable Login");
+    Require(!connection->IsOpen(), "0x006A handler did not close the connection");
+
+    std::cout << "{\"case_id\":\"login_refusal_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-006a-auth-result-map-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseLogin -> FormatLoginRefusalMessage -> SetLoginStatus/ErrorMsg -> Disconnect -> Login\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":23,\"opcode\":\"0x006A\",\"result_byte_offset\":2,\"block_date_bytes_zero\":true,\"input_frames_hex\":[";
     for (size_t i = 0; i < inputFrames.size(); ++i) {
         if (i != 0) std::cout << ",";
         std::cout << "\"" << inputFrames[i] << "\"";
@@ -740,7 +774,45 @@ void LoginRefusalResultMappingReplay()
         if (i != 0) std::cout << ",";
         std::cout << "\"" << JsonEscape(actualMessages[i]) << "\"";
     }
-    std::cout << "],\"result_6_empty_detail_fallback\":true,\"numeric_fallback_code16_preserved\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "],\"result_6_empty_detail_fallback\":true,\"numeric_fallback_code16_preserved\":true,\"handler_status_and_cleanup_verified\":true,\"returns_to_login\":true,\"connection_closed\":true,\"outcome\":\"PASS\"}\n";
+}
+
+void LoginDisconnectResultReplay()
+{
+    SetCase("login_disconnect_result_mapping", "PK44.LOGIN-REPLIES", "PK44-0081-auth-result-selected-source", "CLoginMode::OnDisconnectMsg -> FormatLoginDisconnectMessage");
+    struct Sample { u8 code; const char* expected; };
+    const Sample samples[] = {
+        {1, "Disconnected by server: login service unavailable or access restricted."},
+        {8, "Disconnected by server: the previous login session is still online."},
+    };
+    constexpr size_t kNotifyBanPacketLength = sizeof(u16) + sizeof(u8);
+    Require(kNotifyBanPacketLength == 3, "selected 0x0081 fixed packet layout is not three bytes");
+    CRagConnection* connection = CRagConnection::instance();
+    LoginModeReplayAccess mode;
+    std::vector<std::string> frames;
+    std::vector<std::string> messages;
+    for (const Sample& sample : samples) {
+        std::vector<u8> packet(kNotifyBanPacketLength, 0);
+        packet[0] = 0x81;
+        packet[2] = sample.code;
+        LoginModeReplayAccess::PrepareDisconnectState(mode);
+        LoginModeReplayAccess::RunDisconnect(mode, packet);
+        const std::string message = g_windowMgr.GetLoginStatus();
+        Require(message == sample.expected, "0x0081 result did not map to its selected source meaning");
+        Require(LoginModeReplayAccess::DisconnectStateCleared(mode), "0x0081 handler did not clear connection/hash state");
+        Require(mode.NextSubMode() == CLoginMode::LoginSubMode_Login,
+            "0x0081 handler did not return to stable Login");
+        Require(!connection->IsOpen(), "0x0081 handler did not close the connection");
+        frames.push_back(Hex(packet));
+        messages.push_back(message);
+    }
+    std::vector<u8> unassigned(kNotifyBanPacketLength, 0);
+    unassigned[0] = 0x81;
+    unassigned[2] = 2;
+    Require(LoginModeReplayAccess::FormatDisconnect(unassigned) == "Disconnected by server (code 2).",
+        "0x0081 result without an active selected-source sender lost its numeric fallback");
+
+    std::cout << "{\"case_id\":\"login_disconnect_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0081-auth-result-selected-source\",\"production_entry\":\"CLoginMode::OnDisconnectMsg -> FormatLoginDisconnectMessage -> SetLoginStatus/ErrorMsg -> Disconnect -> Login\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":3,\"opcode\":\"0x0081\",\"result_byte_offset\":2,\"input_frames_hex\":[\"" << frames[0] << "\",\"" << frames[1] << "\"],\"result_codes\":[1,8],\"actual_messages\":[\"" << JsonEscape(messages[0]) << "\",\"" << JsonEscape(messages[1]) << "\"],\"login_status_matches_expected\":true,\"account_hash_handshake_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"numeric_fallback_code2_preserved\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginPasswordHashChallengeReplay()
@@ -824,6 +896,7 @@ int main(){try{
     {SetCase("production_reconnect_reset");TestConnection c;{LoopbackPeer p(c);p.Send({0x6c});PumpUntilBuffered(c,1);}c.Disconnect();Require(!c.IsOpen()&&c.BufferedBytes()==0,"disconnect failed to clear receive queue");{LoopbackPeer p(c);p.Send(fixed);auto out=PumpUntilPacket(c);Require(out==fixed,"production reconnect failed after disconnect");VerifyRoute(out,0x006c);Report("production_reconnect_reset",kFixedFixture,kFixedSha,{fixed},Hex(fixed),Hex(out),0,c.BufferedBytes(),c);}}
     ProductionAcceptedExitAckReplay();
     LoginRefusalResultMappingReplay();
+    LoginDisconnectResultReplay();
     LoginPasswordHashChallengeReplay();
     LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();

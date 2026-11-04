@@ -120,6 +120,7 @@ public:
 private:
     friend struct LoginModeReplayAccess;
     void SetLoginStatus(const char* status);
+    static std::string FormatLoginDisconnectMessage(const std::vector<u8>& packet);
     static std::string FormatLoginRefusalMessage(const std::vector<u8>& packet);
     std::string m_deferredLoginStatus;
     bool LoadClientInfoCandidates();

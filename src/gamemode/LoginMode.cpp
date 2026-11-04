@@ -2674,15 +2674,24 @@ void CLoginMode::OnZcAcceptEnter(const std::vector<u8>& raw)
 void CLoginMode::OnDisconnectMsg(const std::vector<u8>& raw)
 {
     ResetAccountLoginHandshake();
+    const std::string message = FormatLoginDisconnectMessage(raw);
     const u8 code = (raw.size() > 2) ? raw[2] : 0;
-    char msg[64];
-    std::snprintf(msg, sizeof(msg), "Disconnected by server (code %d).", (int)code);
     DbgLog("[Login] SC_NOTIFY_BAN: code=%d\n", (int)code);
-    SetLoginStatus(msg);
-    ShowLoginErrorDialog(msg);
+    SetLoginStatus(message.c_str());
+    ShowLoginErrorDialog(message.c_str());
     CRagConnection::instance()->Disconnect();
     m_isConnected = 0;
     m_nextSubMode = LoginSubMode_Login;
+}
+
+std::string CLoginMode::FormatLoginDisconnectMessage(const std::vector<u8>& packet)
+{
+    const u8 code = (packet.size() > 2) ? packet[2] : 0;
+    switch (code) {
+    case 1: return "Disconnected by server: login service unavailable or access restricted.";
+    case 8: return "Disconnected by server: the previous login session is still online.";
+    default: return "Disconnected by server (code " + std::to_string(static_cast<unsigned int>(code)) + ").";
+    }
 }
 
 void CLoginMode::OnNotifyError(const std::vector<u8>& raw)
