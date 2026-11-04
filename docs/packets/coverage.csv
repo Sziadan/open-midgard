@@ -2,14 +2,14 @@ discovery_id,opcode,stage_hint,direction_hint,primary_package,secondary_packages
 AUDIT-0x0064,0x0064,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,C2S_ONLY,PK44.LOGIN.0064-C2S-RAW
 AUDIT-0x0065,0x0065,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0066,0x0066,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
-AUDIT-0x0067,0x0067,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Connection-stage applicability and handshake review,UNREVIEWED,
+AUDIT-0x0067,0x0067,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Legacy character creation registration/layout and current-client path traced in PK44.CHAR-CREATE.md; full result and profile parity remain open.,UNREVIEWED,PK44.CHAR-CREATE
 AUDIT-0x0068,0x0068,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0069,0x0069,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Login-server sender/layout traced in PK44.LOGIN-REPLIES.md; stage and result branches documented; runtime/client parity unresolved.,UNREVIEWED,PK44.LOGIN.0069-S2C-ACCEPT
 AUDIT-0x006A,0x006A,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Login-server sender/layout traced in PK44.LOGIN-REPLIES.md; stage and result branches documented; runtime/client parity unresolved.,UNREVIEWED,PK44.LOGIN.006A-S2C-REFUSE
 AUDIT-0x006B,0x006B,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
 AUDIT-0x006C,0x006C,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
-AUDIT-0x006D,0x006D,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Connection-stage applicability and handshake review,UNREVIEWED,
-AUDIT-0x006E,0x006E,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Connection-stage applicability and handshake review,UNREVIEWED,
+AUDIT-0x006D,0x006D,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Legacy character creation registration/layout and current-client path traced in PK44.CHAR-CREATE.md; full result and profile parity remain open.,UNREVIEWED,PK44.CHAR-CREATE
+AUDIT-0x006E,0x006E,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Legacy character creation registration/layout and current-client path traced in PK44.CHAR-CREATE.md; full result and profile parity remain open.,UNREVIEWED,PK44.CHAR-CREATE
 AUDIT-0x006F,0x006F,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Connection-stage applicability and handshake review,UNREVIEWED,
 AUDIT-0x0070,0x0070,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Connection-stage applicability and handshake review,UNREVIEWED,
 AUDIT-0x0071,0x0071,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
@@ -403,7 +403,7 @@ AUDIT-0x01F7,0x01F7,map,C2S,PK30,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x01F8,0x01F8,map,unresolved,PK30,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01F9,0x01F9,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01FA,0x01FA,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.01FA-C2S-MD5-CLIENTINFO
-AUDIT-0x01FB,0x01FB,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Connection-stage applicability and handshake review,UNREVIEWED,
+AUDIT-0x01FB,0x01FB,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,PK44.01 provisional creation routing corrected from authoritative packed symbols: these are character-deletion identities and are assigned to PK44.03.006; deletion trace pending.,UNREVIEWED,
 AUDIT-0x01FC,0x01FC,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01FD,0x01FD,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01FE,0x01FE,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
@@ -859,12 +859,12 @@ AUDIT-0x081D,0x081D,map,S2C,PK29,PK01;PK02;PK47;PK48,Provisional source-symbol f
 AUDIT-0x081E,0x081E,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0824,0x0824,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0825,0x0825,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.0825-C2S-SSO-VARIABLE
-AUDIT-0x0827,0x0827,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Connection-stage applicability and handshake review,UNREVIEWED,
-AUDIT-0x0828,0x0828,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Connection-stage applicability and handshake review,UNREVIEWED,
-AUDIT-0x0829,0x0829,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Connection-stage applicability and handshake review,UNREVIEWED,
-AUDIT-0x082A,0x082A,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Connection-stage applicability and handshake review,UNREVIEWED,
-AUDIT-0x082B,0x082B,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Connection-stage applicability and handshake review,UNREVIEWED,
-AUDIT-0x082C,0x082C,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Connection-stage applicability and handshake review,UNREVIEWED,
+AUDIT-0x0827,0x0827,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,PK44.01 provisional creation routing corrected from authoritative packed symbols: these are character-deletion identities and are assigned to PK44.03.006; deletion trace pending.,UNREVIEWED,
+AUDIT-0x0828,0x0828,login/char,S2C,PK44,PK01;PK02;PK47;PK48,PK44.01 provisional creation routing corrected from authoritative packed symbols: these are character-deletion identities and are assigned to PK44.03.006; deletion trace pending.,UNREVIEWED,
+AUDIT-0x0829,0x0829,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,PK44.01 provisional creation routing corrected from authoritative packed symbols: these are character-deletion identities and are assigned to PK44.03.006; deletion trace pending.,UNREVIEWED,
+AUDIT-0x082A,0x082A,login/char,S2C,PK44,PK01;PK02;PK47;PK48,PK44.01 provisional creation routing corrected from authoritative packed symbols: these are character-deletion identities and are assigned to PK44.03.006; deletion trace pending.,UNREVIEWED,
+AUDIT-0x082B,0x082B,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,PK44.01 provisional creation routing corrected from authoritative packed symbols: these are character-deletion identities and are assigned to PK44.03.006; deletion trace pending.,UNREVIEWED,
+AUDIT-0x082C,0x082C,login/char,S2C,PK44,PK01;PK02;PK47;PK48,PK44.01 provisional creation routing corrected from authoritative packed symbols: these are character-deletion identities and are assigned to PK44.03.006; deletion trace pending.,UNREVIEWED,
 AUDIT-0x082D,0x082D,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
 AUDIT-0x0837,0x0837,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x083A,0x083A,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

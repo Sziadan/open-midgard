@@ -57,3 +57,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 | PK44.CHAR-RAW-AID-HANDSHAKE | Character-stage raw four-byte account-ID echo (non-opcode; cross-package trace) | PK44; PK04 primary; review PK48 | Source identity and client receive gap; PK04 implementation/replay remains open |
 
 | PK44.CHAR-LIST-ENTRY | Character list, character selection, refusal and zone handoff | PK44; review PK48 | Selected legacy path traced; guarded/paged variants and historical reachability remain open |
+
+| PK44.CHAR-CREATE | Selected legacy character creation request and response | PK44; review PK48 | Source registration and current-client paths; result-code mismatch and character record layout remain open |

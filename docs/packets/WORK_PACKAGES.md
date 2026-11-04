@@ -991,7 +991,7 @@ Tier: **S**. Dependencies: PK01, PK02.
 - **PK44.03.003 [S]** Trace raw account-ID handshake/echo framing and client behavior as a distinct non-opcode contract. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.004 [S]** Trace character list, selection and entry requests/responses, split by connection stage and layout variant. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.005 [S]** Trace character creation request/results, field variants, rejection paths and Ref behavior. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK44.03.006 [M]** Trace character deletion request/confirmation/results and stage transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.006 [M]** Trace legacy and scheduled character deletion requests, confirmations, cancellation and results (including `0x01FB` and `0x0827`–`0x082C`) across stage transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.007 [M]** Trace character rename request/results, supported variants and failure behavior. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.008 [S]** Trace PIN/security requests and responses by stage, variant and result branch. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.009 [M]** Trace character slot requests/responses, limits and state transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**

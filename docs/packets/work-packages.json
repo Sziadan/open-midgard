@@ -1004,7 +1004,7 @@
       },
       {
         "id": "PK31.02",
-        "action": "Implement00D5\u201300E3 room list create join owner/password/membership flows.",
+        "action": "Implement00D5–00E3 room list create join owner/password/membership flows.",
         "tier": "S"
       },
       {
@@ -1270,7 +1270,7 @@
       },
       {
         "id": "PK39.02",
-        "action": "Implement MVP010A\u2013010D and rankings0219/021A/021B/021C/0224/0226/0236/0238.",
+        "action": "Implement MVP010A–010D and rankings0219/021A/021B/021C/0224/0226/0236/0238.",
         "tier": "M"
       },
       {
@@ -1372,7 +1372,7 @@
       },
       {
         "id": "PK42.02",
-        "action": "Implement02CB\u201302CE creation state queue/wait and result branches.",
+        "action": "Implement02CB–02CE creation state queue/wait and result branches.",
         "tier": "S"
       },
       {
@@ -1506,7 +1506,7 @@
       },
       {
         "id": "PK44.03.006",
-        "action": "Trace character deletion request/confirmation/results and stage transitions.",
+        "action": "Trace legacy and scheduled character deletion requests, confirmations, cancellation and results (including 0x01FB and 0x0827–0x082C) across stage transitions.",
         "tier": "M"
       },
       {
