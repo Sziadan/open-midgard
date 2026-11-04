@@ -650,3 +650,6 @@ Native minimap drawing and Qt marker publication now consume valid party positio
 ## 2026-11-04 — PK14.03 checkpoint finalized
 
 PK14.03 implementation checkpoint `3ff44a3e` is recorded; marker rendering is complete at the source/build level. Visible marker/lifecycle behavior remains an explicit PK14.04 gate. Next: PK14.04 production replay and applicable UI lifecycle checks.
+## 2026-11-04 — PK14.04 self-review; integration checks deferred
+
+Reviewed PK14.01–PK14.03 source and state lifecycle. Production app build and focused party position state executable pass; plan validator passes. Deferred production-framed replay and visible lifecycle verification because the replay source is already dirty with ownership unresolved, and no standalone visible assertion is available. No discovery row closed; no end-to-end parity claim. Evidence: `evidence/PK14.04-verification-boundary.md`. PK14.04 needs stronger follow-up after replay-file ownership/reconciliation. Continue with independent PK16.01 scope.

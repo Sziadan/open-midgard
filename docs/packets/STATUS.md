@@ -104,3 +104,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 
 - PK14.03 marker rendering is implemented in native and Qt minimap paths, with party-state redraw invalidation and a successful deploy-off app build. Visible behavior and production lifecycle replay remain PK14.04; no rows closed.
 - PK14.03 party marker rendering is implemented in native and Qt minimap paths, with party-state redraw invalidation. Deploy-off app build passed. Visible behavior and production lifecycle replay remain PK14.04; no discovery rows closed. PK14.04 is next.
+
+- PK14.04 source/state self-review and focused state tests pass. Production-framed replay and visible lifecycle checks are deferred; the existing replay source is dirty with ownership unresolved. No rows closed; stronger follow-up needed. PK16.01 is active independently.
