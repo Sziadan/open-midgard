@@ -732,3 +732,7 @@ Specified source inputs, per-request trace fields, review leaves, and evidence g
 ## 2026-11-04 — PK46.02 trace map movement request
 
 Traced WinMain mouse messages through held-click GameMode movement to the 8-byte 0x00A7 request. PacketVer22/23 encode the packed destination at offset 5, matching the selected 20080910 server registration/parser; explicit Legacy profile uses 0x0085/5 bytes and does not match. Active deployment profile and packet-specific replay remain open. One wire path only; no rows closed. Evidence: `evidence/PK46.02-map-movement.md`.
+
+## 2026-11-04 — PK46.02 identify change-direction profile mismatch
+
+Traced the mouse direction action to the 11-byte PacketVer22/23 0x0085 sender (HeadDir@7, Dir@10). The selected 20080910 server expects 14 bytes with fields at 10/13. Shared profile changes are unsafe without a selected 2008 outbound profile and production replay; defer correction for stronger profile review. Together with movement, this is only two bounded paths; PK46.02 remains incomplete and no rows closed. Evidence: `evidence/PK46.02-map-change-direction.md`. Proceed to PK46.03 login/character requests while retaining the open map inventory.

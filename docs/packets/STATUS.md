@@ -156,3 +156,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK46.01 scopes outbound parity as per-request path and field verification. 177 map requests remain (49 constructor matches, 128 unproven); 237 discovery rows are secondary assignments with no primary PK46 rows. PK46.02 must trace in bounded batches; no rows closed.
 
 - PK46.02 has an initial movement request trace: PacketVer22/23 0x00A7/8 bytes/destination@5 matches the selected 20080910 server parser. Explicit Legacy profile mismatches; deployed profile and packet-specific replay remain open. Only one of 177 requests is traced; no rows closed.
+
+- PK46.02 change-direction path is mismatched under PacketVer22/23: client 0x0085 is 11 bytes, fields 7/10; selected 20080910 server expects 14 bytes, fields 10/13. Needs profile-specific review and replay before correction. PK46.02 remains incomplete; no rows closed.
