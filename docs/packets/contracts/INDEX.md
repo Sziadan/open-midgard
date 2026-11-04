@@ -48,3 +48,8 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 | PK44.LOGIN.027C-C2S-MD5-MAC | Login-server C2S X027C request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
 | PK44.LOGIN.02B0-C2S-CHANNEL-RAW | Login-server C2S X02B0 request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
 | PK44.LOGIN.0825-C2S-SSO-VARIABLE | Login-server C2S X0825 request; selected source registers it; client reachability remains open | PK44; review PK48 | Source identity/applicability only |
+
+| PK44.LOGIN.0069-S2C-ACCEPT | Login-server successful authentication and character-server list | PK44; review PK48 | Source identity/layout; runtime semantic mismatch recorded |
+| PK44.LOGIN.006A-S2C-REFUSE | Login-server authentication refusal and result codes | PK44; review PK48 | Source identity/layout; client result-code mismatch recorded |
+| PK44.LOGIN.0081-S2C-NOTIFY-BAN | Login-server operational refusal/disconnect result | PK44; review PK48 | Source identity/layout only |
+| PK44.LOGIN.01DC-S2C-ACK-HASH | Login-server variable salt response to X01DB | PK44; review PK48 | Source identity/layout only |
