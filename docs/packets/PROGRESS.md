@@ -736,3 +736,7 @@ Traced WinMain mouse messages through held-click GameMode movement to the 8-byte
 ## 2026-11-04 — PK46.02 identify change-direction profile mismatch
 
 Traced the mouse direction action to the 11-byte PacketVer22/23 0x0085 sender (HeadDir@7, Dir@10). The selected 20080910 server expects 14 bytes with fields at 10/13. Shared profile changes are unsafe without a selected 2008 outbound profile and production replay; defer correction for stronger profile review. Together with movement, this is only two bounded paths; PK46.02 remains incomplete and no rows closed. Evidence: `evidence/PK46.02-map-change-direction.md`. Proceed to PK46.03 login/character requests while retaining the open map inventory.
+
+## 2026-11-04 — PK46.03 cross-check login/character sends
+
+Cross-referenced current login sends and legacy character select/create captures with PK44 contracts/evidence. Confirmed request-direction evidence only for recorded settings/branches; native Qt delivery and full lifecycle remain open. Preserved the 0x0068/0x01FB deletion mismatch, 0x0825 SSO security gate, and unproven rename/scheduled/paged actions. PK46.03 remains partial; PK46.04 cannot certify while PK46.02 and these gates remain open. No rows closed. Evidence: `evidence/PK46.03-login-character-crosswalk.md`.

@@ -158,3 +158,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK46.02 has an initial movement request trace: PacketVer22/23 0x00A7/8 bytes/destination@5 matches the selected 20080910 server parser. Explicit Legacy profile mismatches; deployed profile and packet-specific replay remain open. Only one of 177 requests is traced; no rows closed.
 
 - PK46.02 change-direction path is mismatched under PacketVer22/23: client 0x0085 is 11 bytes, fields 7/10; selected 20080910 server expects 14 bytes, fields 10/13. Needs profile-specific review and replay before correction. PK46.02 remains incomplete; no rows closed.
+
+- PK46.03 cross-checked existing login request captures plus 0x0066/0x0067 character select/create evidence. Remaining gates include profile-specific 0x0068/0x01FB deletion mismatch, 0x0825 SSO security, native Qt lifecycle, and unverified rename/scheduled/paged paths. Partial only; no rows closed.
