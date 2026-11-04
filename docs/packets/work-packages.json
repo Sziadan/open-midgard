@@ -1436,13 +1436,98 @@
       },
       {
         "id": "PK44.02",
-        "action": "Classify clans0988 achievements0A23 roulette0A1A attendance0AF0 dressroom0A02 guild storage09DA reputation0B8D and related variants.",
+        "action": "Aggregate the seven bounded PK44.02 map-family research children; preserve provisional ownership and leave rows open until each child has source-backed applicability evidence.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.02.001",
+        "action": "Trace clan protocol contracts, guarded registrations, emitters/callers and Ref behavior; begin with the 0x0988/0x0989/0x098E discovery parents.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.02.002",
+        "action": "Trace roulette request/reply variants, exact layouts, direction and Ref behavior for the 0x0A1A/0x0A1C/0x0A20/0x0A22 discovery parents.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.02.003",
+        "action": "Trace achievement and title list/update/reward contracts and Ref behavior for the 0x0A23/0x0A24/0x0A26 parents and related variants.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.02.004",
+        "action": "Establish authoritative attendance request/reply identity, configuration guards and current cross-package ownership; do not presume PK44 owns a discovery row.",
+        "tier": "M"
+      },
+      {
+        "id": "PK44.02.005",
+        "action": "Establish the actual dressroom identity, registration/emitter path, layouts and Ref behavior for the 0x0A02 parent.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.02.006",
+        "action": "Cross-review guild storage identity and variants, preserving PK12 primary ownership for 0x09DA unless source evidence warrants an explicit update.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.02.007",
+        "action": "Cross-review reputation identity and variants, preserving PK47 primary ownership for 0x0B8D unless source evidence warrants an explicit update.",
         "tier": "S"
       },
       {
         "id": "PK44.03",
-        "action": "Audit login/char rename028E/0290 delete PIN slots billing and other stage variants.",
+        "action": "Aggregate the ten bounded PK44.03 login/character stage-family research children; keep raw handshake separate and split reused opcodes by stage/profile/layout.",
         "tier": "S"
+      },
+      {
+        "id": "PK44.03.001",
+        "action": "Trace account login request/negotiation opcodes and configuration variants for the assigned discovery parents.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.03.002",
+        "action": "Trace account authentication/status responses and all results for the assigned discovery parents.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.03.003",
+        "action": "Trace raw account-ID handshake/echo framing and client behavior as a distinct non-opcode contract.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.03.004",
+        "action": "Trace character list, selection and entry requests/responses, split by connection stage and layout variant.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.03.005",
+        "action": "Trace character creation request/results, field variants, rejection paths and Ref behavior.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.03.006",
+        "action": "Trace character deletion request/confirmation/results and stage transitions.",
+        "tier": "M"
+      },
+      {
+        "id": "PK44.03.007",
+        "action": "Trace character rename request/results, supported variants and failure behavior.",
+        "tier": "M"
+      },
+      {
+        "id": "PK44.03.008",
+        "action": "Trace PIN/security requests and responses by stage, variant and result branch.",
+        "tier": "S"
+      },
+      {
+        "id": "PK44.03.009",
+        "action": "Trace character slot requests/responses, limits and state transitions.",
+        "tier": "M"
+      },
+      {
+        "id": "PK44.03.010",
+        "action": "Trace the 0x020D character block/status contract and its actual stage and client-visible transition.",
+        "tier": "M"
       },
       {
         "id": "PK44.04",

@@ -977,8 +977,25 @@ Tier: **S**. Dependencies: PK01, PK02.
 ### Bounded steps
 
 - **PK44.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK44.02 [S]** Classify clans0988 achievements0A23 roulette0A1A attendance0AF0 dressroom0A02 guild storage09DA reputation0B8D and related variants. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK44.03 [S]** Audit login/char rename028E/0290 delete PIN slots billing and other stage variants. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.02 [S]** Aggregate the seven bounded PK44.02 map-family research children; preserve provisional ownership and leave rows open until each child has source-backed applicability evidence. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.02.001 [S]** Trace clan protocol contracts, guarded registrations, emitters/callers and Ref behavior; begin with the 0x0988/0x0989/0x098E discovery parents. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.02.002 [S]** Trace roulette request/reply variants, exact layouts, direction and Ref behavior for the 0x0A1A/0x0A1C/0x0A20/0x0A22 discovery parents. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.02.003 [S]** Trace achievement and title list/update/reward contracts and Ref behavior for the 0x0A23/0x0A24/0x0A26 parents and related variants. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.02.004 [M]** Establish authoritative attendance request/reply identity, configuration guards and current cross-package ownership; do not presume PK44 owns a discovery row. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.02.005 [S]** Establish the actual dressroom identity, registration/emitter path, layouts and Ref behavior for the 0x0A02 parent. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.02.006 [S]** Cross-review guild storage identity and variants, preserving PK12 primary ownership for 0x09DA unless source evidence warrants an explicit update. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.02.007 [S]** Cross-review reputation identity and variants, preserving PK47 primary ownership for 0x0B8D unless source evidence warrants an explicit update. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03 [S]** Aggregate the ten bounded PK44.03 login/character stage-family research children; keep raw handshake separate and split reused opcodes by stage/profile/layout. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.001 [S]** Trace account login request/negotiation opcodes and configuration variants for the assigned discovery parents. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.002 [S]** Trace account authentication/status responses and all results for the assigned discovery parents. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.003 [S]** Trace raw account-ID handshake/echo framing and client behavior as a distinct non-opcode contract. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.004 [S]** Trace character list, selection and entry requests/responses, split by connection stage and layout variant. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.005 [S]** Trace character creation request/results, field variants, rejection paths and Ref behavior. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.006 [M]** Trace character deletion request/confirmation/results and stage transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.007 [M]** Trace character rename request/results, supported variants and failure behavior. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.008 [S]** Trace PIN/security requests and responses by stage, variant and result branch. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.009 [M]** Trace character slot requests/responses, limits and state transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.010 [M]** Trace the 0x020D character block/status contract and its actual stage and client-visible transition. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
