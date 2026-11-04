@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK44.02.005",
+  "active_step": "PK44.02.006",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -1018,12 +1018,14 @@
       "commit_subject": "packet(PK44.02.004): trace attendance date and ownership"
     },
     "PK44.02.005": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK44.DRESSROOM-MAP.md"
+      ],
+      "commit_subject": "packet(PK44.02.005): trace dressroom source-date guard"
     },
     "PK44.02.006": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     },

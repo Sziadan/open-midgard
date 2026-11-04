@@ -944,7 +944,7 @@ AUDIT-0x09F0,0x09F0,map,unresolved,PK32,PK01;PK02;PK47;PK48,Provisional source-s
 AUDIT-0x09F2,0x09F2,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x09F4,0x09F4,map,unresolved,PK38,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x09F6,0x09F6,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0A02,0x0A02,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0A02,0x0A02,map,S2C,PK44,PK01;PK02;PK47;PK48,Dressroom S2C open sender and opendressroom script path require PACKETVER 20140212; selected source date is 20080910,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.DRESSROOM.0A02-S2C-OPEN
 AUDIT-0x0A07,0x0A07,map,unresolved,PK38,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0A12,0x0A12,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0A1A,0x0A1A,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.002 source-confirmed reused C2S/S2C identity and selected-config gates,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ROULETTE.0A1A-C2S-INPUT;PK44.ROULETTE.0A1A-S2C-OPEN
