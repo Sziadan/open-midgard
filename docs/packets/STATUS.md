@@ -103,3 +103,4 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK14.02 position-state implementation and focused unit cases pass; production handler compiled. No row closed. PK14.03 is next.
 
 - PK14.03 marker rendering is implemented in native and Qt minimap paths, with party-state redraw invalidation and a successful deploy-off app build. Visible behavior and production lifecycle replay remain PK14.04; no rows closed.
+- PK14.03 party marker rendering is implemented in native and Qt minimap paths, with party-state redraw invalidation. Deploy-off app build passed. Visible behavior and production lifecycle replay remain PK14.04; no discovery rows closed. PK14.04 is next.

@@ -647,3 +647,6 @@ Replaced the ignored 0x0107 route with exact 10-byte AID/signed-cell decoding. A
 ## 2026-11-04 — PK14.03 render party minimap markers
 
 Native minimap drawing and Qt marker publication now consume valid party positions from session roster state, retain the existing coordinate transform/color/size, and include party marker state in minimap redraw invalidation. Deploy-off `open_midgard` build and `git diff --check` pass. Visual marker behavior and full packet lifecycle remain PK14.04; no discovery row closed. Evidence: `evidence/PK14.03-party-minimap-markers.md`. Stable subject: `packet(PK14.03): render party minimap markers`. Next: PK14.04 production replay and applicable UI lifecycle checks.
+## 2026-11-04 — PK14.03 checkpoint finalized
+
+PK14.03 implementation checkpoint `3ff44a3e` is recorded; marker rendering is complete at the source/build level. Visible marker/lifecycle behavior remains an explicit PK14.04 gate. Next: PK14.04 production replay and applicable UI lifecycle checks.
