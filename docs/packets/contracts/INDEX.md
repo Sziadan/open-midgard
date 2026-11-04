@@ -53,3 +53,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 | PK44.LOGIN.006A-S2C-REFUSE | Login-server authentication refusal and result codes | PK44; review PK48 | Source identity/layout; client result-code mismatch recorded |
 | PK44.LOGIN.0081-S2C-NOTIFY-BAN | Login-server operational refusal/disconnect result | PK44; review PK48 | Source identity/layout only |
 | PK44.LOGIN.01DC-S2C-ACK-HASH | Login-server variable salt response to X01DB | PK44; review PK48 | Source identity/layout only |
+
+| PK44.CHAR-RAW-AID-HANDSHAKE | Character-stage raw four-byte account-ID echo (non-opcode; cross-package trace) | PK44; PK04 primary; review PK48 | Source identity and client receive gap; PK04 implementation/replay remains open |
