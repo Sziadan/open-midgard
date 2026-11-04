@@ -1139,7 +1139,7 @@
         "docs/packets/evidence/PK44.04-character-create-refusal.md",
         "docs/packets/evidence/PK44.04-character-create-refusal.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): route remaining login-character replies"
+      "commit_subject": "packet(PK44.04): route hash challenge through receive loop"
     },
     "PK45.01": {
       "status": "NOT_STARTED",

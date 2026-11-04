@@ -1190,7 +1190,7 @@ void LoginCharacterCreationRefusalReplay()
 
 void LoginPasswordHashChallengeReplay()
 {
-    SetCase("login_password_hash_challenge", "PK44.LOGIN-REPLIES", "PK44-01dc-md5-challenge-selected-source", "CLoginMode::OnAckHash -> active 0x01DD builder -> CRagConnection::SendPacket");
+    SetCase("login_password_hash_challenge", "PK44.LOGIN-REPLIES", "PK44-01dc-md5-challenge-selected-source", "CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAckHash -> active 0x01DD builder");
     const std::vector<u8> challenge = {
         0xdc, 0x01, 0x18, 0x00,
         0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
@@ -1219,7 +1219,8 @@ void LoginPasswordHashChallengeReplay()
         LoginModeReplayAccess::SendHashRequest(mode);
         const std::vector<u8> hashRequest = peer.ReceiveExact(sizeof(PACKET_CA_REQ_HASH));
         Require(hashRequest == std::vector<u8>({0xdb, 0x01}), "production password-hash request bytes differ from 0x01DB");
-        LoginModeReplayAccess::RunAckHash(mode, challenge);
+        peer.Send(challenge);
+        LoginModeReplayAccess::RunPollNetwork(mode);
         const std::vector<u8> request = peer.ReceiveExact(sizeof(PACKET_CA_LOGIN_HASH));
         Require(request.size() == 47 && request[0] == 0xdd && request[1] == 0x01,
             "0x01DC production handler did not send a 47-byte 0x01DD login request");
