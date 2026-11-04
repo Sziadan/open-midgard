@@ -716,3 +716,7 @@ Bound legacy list/mission/add/remove/progress/state packets and related 02B6 req
 ## 2026-11-04 — PK50.02 deferred on journal model/time contract
 
 Ref confirms legacy 02B1/02B2 behavior, but list handling clears before validating, mission snapshots update in place, and time/objective conversions need exact field review. Current client lacks a typed quest model/UI; newer PACKETVER branches use different layouts. Defer PK50.02–.04 for stronger profile/model work; do not copy non-atomic Ref behavior. No rows closed. Evidence: `evidence/PK50.02-snapshot-model-boundary.md`. Resume existing independent PK44.04 review after the login3 implementation checkpoint.
+
+## 2026-11-04 — PK48.01 define independent certification scope
+
+Recorded authoritative inputs, per-contract review and replay evidence requirements, summary schema, and entry gates. Certification is not ready: feature leaves remain deferred, PK44.04 lifecycle/UI work is incomplete, PK47.04 lacks row-level evidence, and replay-file ownership remains unresolved. Scope only; no runtime changes or rows closed. Evidence: `evidence/PK48.01-scope-boundary.md`. Resume PK44.04 implementation/evidence work before PK48.02.
