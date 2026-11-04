@@ -221,9 +221,13 @@
       "commit_subject": "packet(PK05.04): self-review receive framing changes"
     },
     "PK06.01": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "READY_TO_COMMIT",
+      "evidence": [
+        "docs/packets/evidence/PK06.01-source-contract.md",
+        "docs/packets/contracts/PK06.GUILD-MEMBER-LOGIN.md",
+        "docs/packets/work-items/PK06.01.md"
+      ],
+      "commit_subject": "packet(PK06.01): specify guild member status notice"
     },
     "PK06.02": {
       "status": "NOT_STARTED",
