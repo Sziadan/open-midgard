@@ -710,3 +710,6 @@ Bound 18 provisional owners across inbox/read/new-mail, attachments/claims, dele
 ## 2026-11-04 — PK32.02 deferred on full mail state machine
 
 Ref confirms distinct inbox/read/attachment/send/delete/return/result UI routines and inventory/gold mutation on claim ack. Current client lacks the required mail model/UI, and the 18-row workflow requires coherent variable-list parsing, stale IDs, duplicate claims/sends, denial/full inventory, and cancel semantics. No safe isolated inbox handler; replay source remains dirty. Defer PK32.02–.05 for stronger implementation review. No rows closed. Evidence: `evidence/PK32.02-full-mail-state-blocker.md`. Continue PK50.01 independently.
+## 2026-11-04 — PK50.01 scope quest journal and missions
+
+Bound legacy list/mission/add/remove/progress/state packets and related 02B6 request; recorded 104-byte mission records and 107-byte add entries from the available sender. Captured newer 097A/09F8/08FE/09F9 branches as conditional variants, not default-2008 evidence. Time units and source identity remain open; client has no quest journal model/handlers in inspected paths. No rows closed. Evidence: `evidence/PK50.01-quest-mission-scope.md`. Stable subject: `packet(PK50.01): scope quest mission lifecycle`. Next: adjudicate target profile/time units before implementing atomic snapshots.
