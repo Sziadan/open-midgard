@@ -87,6 +87,13 @@ struct LoginModeReplayAccess : CLoginMode {
     static void RunAcceptMakeChar(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnAcceptMakeChar(packet);
     }
+    static void SeedCharacterForSelection(LoginModeReplayAccess& mode, u8 slot) {
+        mode.m_numChar = 1;
+        std::memset(&mode.m_charInfo[0], 0, sizeof(mode.m_charInfo[0]));
+        mode.m_charInfo[0].CharNum = slot;
+        mode.m_charInfo[0].GID = 0x12345678u;
+        std::memcpy(mode.m_charInfo[0].name, "RuneA", 5);
+    }
     static void RunMakeCharRefusal(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnRefuseMakeChar(packet);
     }
@@ -1047,6 +1054,27 @@ void LoginAcceptCharacterListReplay()
     std::cout << "{\"case_id\":\"login_accept_make_character\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006d-make-character-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptMakeChar\",\"frame_length\":110,\"opcode\":\"0x006D\",\"character_record_length\":108,\"input_frame_hex\":\"" << Hex(makePacket) << "\",\"character_gid\":305419896,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginSelectCharacterRequestReplay()
+{
+    SetCase("login_select_character_request", "PK44.LOGIN-REPLIES", "PK44-0066-select-character-selected-source", "CLoginMode::SendMsg -> OnChangeState(SelectChar) -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::SeedCharacterForSelection(mode, 7);
+    const msgresult_t accepted = mode.SendMsg(CLoginMode::LoginMsg_SelectCharacter, 0, 0, 0);
+    Require(accepted != 0 && mode.NextSubMode() == CLoginMode::LoginSubMode_SelectChar,
+        "character selection message did not select the valid local record");
+    mode.OnChangeState(CLoginMode::LoginSubMode_SelectChar);
+    const std::vector<u8> expected{0x66, 0x00, 0x07};
+    const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+    Require(captured == expected,
+        "selected-source 0x0066 outbound request did not encode the selected character slot");
+    Require(g_windowMgr.GetLoginStatus() == "Login: selecting character...",
+        "character selection request did not report its production status");
+    std::cout << "{\"case_id\":\"login_select_character_request\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0066-select-character-selected-source\",\"production_entry\":\"CLoginMode::SendMsg(LoginMsg_SelectCharacter) -> OnChangeState(SelectChar) -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"660007\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":3,\"opcode\":\"0x0066\",\"selected_slot\":7,\"selection_message_accepted\":true,\"next_submode_select_char\":true,\"production_framing_dispatch\":true,\"onrun_state_dispatch_not_exercised\":true,\"qt_click_lifecycle_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginCharacterRefusalReplay()
 {
     SetCase("login_character_refusal", "PK44.CHAR-LIST-ENTRY", "PK44-006c-refuse-enter-selected-source", "CLoginMode::OnRefuseChar");
@@ -1273,6 +1301,7 @@ int main(){try{
     LoginDisconnectResultReplay();
     LoginAcceptReplyReplay();
     LoginAcceptCharacterListReplay();
+    LoginSelectCharacterRequestReplay();
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();

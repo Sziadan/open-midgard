@@ -1137,9 +1137,11 @@
         "docs/packets/evidence/PK44.04-zone-notification.md",
         "docs/packets/evidence/PK44.04-zone-notification.jsonl",
         "docs/packets/evidence/PK44.04-character-create-refusal.md",
-        "docs/packets/evidence/PK44.04-character-create-refusal.jsonl"
+        "docs/packets/evidence/PK44.04-character-create-refusal.jsonl",
+        "docs/packets/evidence/PK44.04-character-selection-request.md",
+        "docs/packets/evidence/PK44.04-character-selection-request.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): route hash challenge through receive loop"
+      "commit_subject": "packet(PK44.04): capture character selection request"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
