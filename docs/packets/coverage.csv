@@ -987,5 +987,5 @@ AUDIT-0x0BF3,0x0BF3,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x0C0B,0x0C0B,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0C0C,0x0C0C,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0C22,0x0C22,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x8482,0x8482,map,unresolved,PK04,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x8483,0x8483,map,unresolved,PK04,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x8482,0x8482,login/char handshake,S2C raw prefix,PK04,PK01;PK02;PK47;PK48,"Fake receive-size identity: this value can only be the raw AID's low word; no server opcode 0x8482 is emitted. Mapped to the independently verified non-opcode handshake contract.",ALIAS,PK04.RAW-AID
+AUDIT-0x8483,0x8483,login/char handshake,S2C raw prefix,PK04,PK01;PK02;PK47;PK48,"Fake receive-size identity: this value can only be the raw AID's low word; no server opcode 0x8483 is emitted. Mapped to the independently verified non-opcode handshake contract.",ALIAS,PK04.RAW-AID

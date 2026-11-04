@@ -1,10 +1,11 @@
-# PK01 P0 applicability contract index
+# Packet contract index
 
-These are **source-backed applicability records only** for hash-pinned rAthena snapshots and named configurations. They do not certify client semantics, reachability beyond the cited call paths, UI/lifecycle, fixtures, live behavior, or implementation completeness. Independent review is deferred to PK48 and is not a prerequisite to implementation; each feature package still establishes bounded contracts and evidence in its own steps.
+This index includes both source-backed PK01 applicability contracts and package-owned implementation contracts. Applicability approval alone does not certify client semantics or UI/runtime behavior. Where implementation evidence exists, the package contract and linked replay define its limits. Independent review is deferred to PK48 and is not a prerequisite to implementation.
 
 | Permanent ID | Identity | Owner | Status |
 |---|---|---|---|
 | PK01.P01.HANDSHAKE | Character S2C raw four-byte account ID | PK04; review PK44/PK47 | Approved for applicability only |
+| PK04.RAW-AID | Character S2C raw four-byte account ID, compared before framing | PK04; cross-review PK44/PK47 | Implementation verified; PK48 pending |
 | PK01.P02.FRAMING | Cross-stage receive framing state machine | PK05 | Approved for applicability boundary only |
 | PK01.P03.01F2 | Map S2C 0x01F2, 20-byte guild status | PK06; review PK47 | Approved for applicability only |
 | PK01.P04.01A2-20080910 | Map S2C 0x01A2, 35-byte pet status | PK07; lifecycle PK27; review PK47 | Approved for applicability only |
