@@ -976,7 +976,7 @@ AUDIT-0x0B46,0x0B46,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/versio
 AUDIT-0x0B68,0x0B68,map,S2C,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0B6B,0x0B6B,map,S2C,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0B6C,0x0B6C,map,S2C,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0B8D,0x0B8D,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0B8D,0x0B8D,map,S2C,PK47,PK01;PK02;PK48;PK44,PK47 primary reputation owner; PK44 source-confirmed cross-review finds 0B8D reused for list and single-update S2C shapes under modern MAIN/RE guards,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.REPUTE.0B8D-S2C-LIST;PK44.REPUTE.0B8D-S2C-UPDATE
 AUDIT-0x0B98,0x0B98,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0B9A,0x0B9A,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0BB1,0x0BB1,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

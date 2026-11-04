@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK44.02.007",
+  "active_step": "PK44.02",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -1032,9 +1032,11 @@
       "commit_subject": "packet(PK44.02.006): trace guild storage log identity"
     },
     "PK44.02.007": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK44.REPUTATION-MAP.md"
+      ],
+      "commit_subject": "packet(PK44.02.007): trace reputation identity and guards"
     },
     "PK44.03": {
       "status": "NOT_STARTED",
