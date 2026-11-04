@@ -197,7 +197,7 @@ def main():
       '- `python tools/render_packet_audit.py` reapplies the reviewed findings and generates this report and the canvas source.',
       '- `inventory.json` retains sender and constructor evidence, source hashes, uncertainty and final handler registration.',
       '- `inventory.csv` is the filterable full inventory; `findings.json` is the reviewed implementation backlog.',
-      '- `historical-catalog.csv` scans numeric packet definitions from four files in the selected rAthena source snapshot (`src/map/clif_packetdb.hpp`, `src/map/packets.hpp`, `src/map/packets_struct.hpp`, `src/common/packets.hpp`), including profile-guarded definitions. It is not a multi-revision archive; absence from the selected 20080910 registry alone does not prove a historical protocol or inactive feature.',
+      '- `historical-catalog.csv` scans numeric packet definitions from four files in the selected rAthena source snapshot (`src/map/clif_packetdb.hpp`, `src/map/packets.hpp`, `src/map/packets_struct.hpp`, `src/common/packets.hpp`), including profile-guarded definitions while excluding comments and string literals. It is not a multi-revision archive; absence from the selected 20080910 registry alone does not prove a historical protocol or inactive feature.',
       '- Intermediate probes and preprocessed server files are in the ignored build directory `build-mingw-preset/packet-audit/`.', '']
     (OUT / 'README.md').write_text('\n'.join(lines),encoding='utf-8')
     write_canvas(data,findings,dict(union=len(rows),missing=len(missing),ignored=len(ignored_rows),findings=len(findings)))

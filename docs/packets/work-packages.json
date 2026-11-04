@@ -1628,7 +1628,7 @@
       },
       {
         "id": "PK47.02.002",
-        "action": "Reconcile all 1,384 historical catalog definitions against the 990-row union, active registry/declarations and known contracts; produce the per-definition historical reconciliation ledger.",
+        "action": "Reconcile all 1,380 snapshot-local catalog opcode rows against the discovery union, active registry/declarations and known contracts; produce the per-opcode historical reconciliation ledger.",
         "tier": "S"
       },
       {
@@ -1645,6 +1645,11 @@
         "id": "PK47.03.001",
         "action": "Trace every guarded map packet-database registration for catalog-only opcodes outside the 990-row union; record source line, guard context, length/parser, selected registry absence and remaining client/semantic questions. Do not close registration-only or null-parser rows.",
         "tier": "S"
+      },
+      {
+        "id": "PK47.03.002",
+        "action": "Exclude comments and string literals from the snapshot-local packet-definition catalog; regenerate and reconcile the historical ledger, recording every removed comment-only opcode/name. Preserve all surviving semantic identities as unresolved.",
+        "tier": "M"
       }
     ],
     "acceptance": "No catch-all task completion without per-row contracts/classification. Add newly discovered packets/feature leaves and their dependencies; residual routing is provisional ownership, never approval to ignore."

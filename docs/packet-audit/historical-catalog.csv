@@ -1,4 +1,4 @@
-﻿opcode,definitions_all_versions,in_configured_registry,in_client_table
+﻿opcode,definitions_in_source_snapshot,in_configured_registry,in_client_table
 0x0064,CA_LOGIN; clif_packetdb.hpp,True,True
 0x0065,clif_packetdb.hpp,True,True
 0x0066,CH_SELECT_CHAR; clif_packetdb.hpp,True,True
@@ -32,7 +32,6 @@
 0x0083,clif_packetdb.hpp,True,False
 0x0084,clif_packetdb.hpp,True,False
 0x0085,clif_packetdb.hpp,True,True
-0x0086,ZC_NOTIFY_MOVE,False,True
 0x0087,ZC_NOTIFY_PLAYERMOVE,False,True
 0x0088,ZC_STOPMOVE,False,True
 0x0089,clif_packetdb.hpp,True,True
@@ -998,9 +997,7 @@
 0x091C,clif_packetdb.hpp,False,False
 0x091D,clif_packetdb.hpp,False,False
 0x0922,clif_packetdb.hpp,False,False
-0x0926,clif_packetdb.hpp,False,False
 0x0929,clif_packetdb.hpp,False,False
-0x092E,clif_packetdb.hpp,False,False
 0x0933,clif_packetdb.hpp,False,False
 0x0938,clif_packetdb.hpp,False,False
 0x093B,clif_packetdb.hpp,False,False
@@ -1013,7 +1010,6 @@
 0x094E,clif_packetdb.hpp,False,False
 0x0953,clif_packetdb.hpp,False,False
 0x0959,clif_packetdb.hpp,False,False
-0x095A,clif_packetdb.hpp,False,False
 0x0960,clif_packetdb.hpp,False,False
 0x0961,clif_packetdb.hpp,False,False
 0x0963,clif_packetdb.hpp,False,False

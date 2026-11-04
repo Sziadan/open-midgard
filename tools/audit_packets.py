@@ -269,11 +269,16 @@ int main(){CGameModePacketRouter r;RegisterDefaultGameModePacketHandlers(r);for(
     historical = defaultdict(set)
     for file in [server / 'src/map/clif_packetdb.hpp', server / 'src/map/packets.hpp', server / 'src/map/packets_struct.hpp', server / 'src/common/packets.hpp']:
         text = read(file)
+        # The historical catalog records source definitions, not examples in
+        # comments or string literals. Keep newlines so source positions remain
+        # stable for any follow-up evidence.
+        text = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|//[^\n]*|/\*.*?\*/',
+                      lambda m: ''.join('\n' if c == '\n' else ' ' for c in m[0]), text, flags=re.S)
         for m in re.finditer(r'(?:DEFINE_PACKET_(?:HEADER|ID)\s*\(\s*(\w+)\s*,\s*|(?:parseable_)?packet\s*\(\s*)(0x[\da-fA-F]+)', text):
             historical[int(m[2], 16)].add(m[1] or file.name)
     with (OUT / 'historical-catalog.csv').open('w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
-        writer.writerow(['opcode', 'definitions_all_versions', 'in_configured_registry', 'in_client_table'])
+        writer.writerow(['opcode', 'definitions_in_source_snapshot', 'in_configured_registry', 'in_client_table'])
         for op, symbols in sorted(historical.items()):
             writer.writerow([f'0x{op:04X}', '; '.join(sorted(symbols)), op in server_db, op in client])
     print(json.dumps(data['counts']))
