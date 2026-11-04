@@ -47,6 +47,13 @@ struct SkillPacketReplayAccess {
 
 struct LoginModeReplayAccess : CLoginMode {
     int NextSubMode() const { return m_nextSubMode; }
+    static void SeedCharServerForConnect(LoginModeReplayAccess& mode, u32 ip, s16 port) {
+        mode.m_numServer = 1;
+        mode.m_serverSelected = 0;
+        std::memset(mode.m_serverInfo, 0, sizeof(mode.m_serverInfo));
+        mode.m_serverInfo[0].ip = ip;
+        mode.m_serverInfo[0].port = port;
+    }
     static void PrepareHandshakeOnly(LoginModeReplayAccess& mode) {
         mode.m_syncRequestTime = 123;
         mode.m_waitingForPasswordHash = true;
@@ -1449,6 +1456,72 @@ void LoginConnectInfoGateReplay()
     std::cout << "{\"case_id\":\"login_connect_info_gate\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0200-connect-info-0204-hash-source-and-01db-password-hash-gates\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendExeHashCheck -> SendPasswordHashRequest/SendPlainAccountLogin\",\"disabled_stream_hex\":\"" << disabledStream << "\",\"enabled_stream_hex\":\"" << enabledStream << "\",\"synthetic_hash_override_stream_hex\":\"" << hashOverrideStream << "\",\"password_hash_request_stream_hex\":\"" << passwordHashRequestStream << "\",\"synthetic_hash_source_exe_stream_hex\":\"" << hashSourceExeStream << "\",\"disabled_gate_sends_only_0064\":true,\"enabled_gate_sends_0200_then_0064\":true,\"default_america_without_hash_source_omits_0204\":true,\"synthetic_hash_override_sends_0204_then_0064\":true,\"relative_synthetic_source_exe_sends_independent_abc_md5\":true,\"default_no_hash_request_sends_0064\":true,\"forced_hash_request_sends_01db_and_waits_for_challenge\":true,\"connect_account_path_uses_local_mock\":true,\"isolated_settings_fixture_removed\":true,\"no_live_credentials_or_server\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginCharacterServerEntryRequestReplay()
+{
+    SetCase("login_character_server_entry_request", "PK44.CHAR-RAW-AID-HANDSHAKE", "PK44-0065-connect-char-entry-request", "CLoginMode::OnChangeState(ConnectChar) -> CRagConnection::SendPacket");
+    SocketOwner listener(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+    Require(listener.value != INVALID_SOCKET, "mock char-server listener socket creation failed");
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    address.sin_port = 0;
+    Require(bind(listener.value, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0,
+        "mock char-server listener bind failed");
+    socklen_t addressLength = sizeof(address);
+    Require(getsockname(listener.value, reinterpret_cast<sockaddr*>(&address), &addressLength) == 0,
+        "mock char-server listener port query failed");
+    Require(listen(listener.value, 1) == 0, "mock char-server listener setup failed");
+
+    struct RestoreSessionEntryFields {
+        u32 aid = g_session.m_aid;
+        u32 authCode = g_session.m_authCode;
+        u32 userLevel = g_session.m_userLevel;
+        u8 sex = g_session.m_sex;
+        char charServerAddr[sizeof(g_session.m_charServerAddr)]{};
+        int charServerPort = g_session.m_charServerPort;
+        RestoreSessionEntryFields() { std::memcpy(charServerAddr, g_session.m_charServerAddr, sizeof(charServerAddr)); }
+        ~RestoreSessionEntryFields() {
+            g_session.m_aid = aid;
+            g_session.m_authCode = authCode;
+            g_session.m_userLevel = userLevel;
+            g_session.m_sex = sex;
+            std::memcpy(g_session.m_charServerAddr, charServerAddr, sizeof(charServerAddr));
+            g_session.m_charServerPort = charServerPort;
+        }
+    } restoreSession;
+    g_session.m_aid = 0x11223344u;
+    g_session.m_authCode = 0x55667788u;
+    g_session.m_userLevel = 0x99aabbccu;
+    g_session.m_sex = 1;
+
+    const u16 charPort = ntohs(address.sin_port);
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::SeedCharServerForConnect(
+        mode, inet_addr("127.0.0.1"), static_cast<s16>(charPort));
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    mode.OnChangeState(CLoginMode::LoginSubMode_ConnectChar);
+    Require(connection->IsOpen() && LoginModeReplayAccess::IsConnected(mode),
+        "ConnectChar production state did not connect to the local mock listener");
+    Require(SelectSocket(listener.value, true, false,
+            std::chrono::duration_cast<std::chrono::milliseconds>(kTimeout)) > 0,
+        "mock char-server listener timed out waiting for ConnectChar");
+    SocketOwner accepted(accept(listener.value, nullptr, nullptr));
+    Require(accepted.value != INVALID_SOCKET, "mock char-server listener accept failed");
+
+    const std::vector<u8> expected{
+        0x65, 0x00, 0x44, 0x33, 0x22, 0x11, 0x88, 0x77, 0x66,
+        0x55, 0xcc, 0xbb, 0xaa, 0x99, 0x00, 0x00, 0x01};
+    const std::vector<u8> captured = ReceiveExactSocket(accepted.value, expected.size());
+    Require(captured == expected,
+        "ConnectChar production state emitted a different independent 0x0065 field fixture");
+    Require(g_windowMgr.GetLoginStatus() == "Login: waiting for character list...",
+        "ConnectChar did not enter its production character-list wait status");
+    connection->Disconnect();
+    g_windowMgr.RemoveAllWindows();
+    std::cout << "{\"case_id\":\"login_character_server_entry_request\",\"contract_id\":\"PK44.CHAR-RAW-AID-HANDSHAKE\",\"fixture_id\":\"PK44-0065-connect-char-entry-request\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectChar) -> CRagConnection::Connect/SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":17,\"opcode\":\"0x0065\",\"account_id\":287454020,\"login_id1\":1432778632,\"login_id2\":2578103244,\"unused\":0,\"sex\":1,\"local_char_server_connection\":true,\"raw_four_byte_server_echo_not_exercised\":true,\"socket_closed_after_capture\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginCharacterRefusalReplay()
 {
     SetCase("login_character_refusal", "PK44.CHAR-LIST-ENTRY", "PK44-006c-refuse-enter-selected-source", "CLoginMode::OnRefuseChar");
@@ -1681,6 +1754,7 @@ int main(){try{
     LoginAccountAuxRequestReplay(true);
     LoginAccountAuxRequestReplay(false);
     LoginConnectInfoGateReplay();
+    LoginCharacterServerEntryRequestReplay();
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();

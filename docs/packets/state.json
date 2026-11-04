@@ -1155,9 +1155,11 @@
         "docs/packets/evidence/PK44.04-password-hash-request-gate.md",
         "docs/packets/evidence/PK44.04-password-hash-request-gate.jsonl",
         "docs/packets/evidence/PK44.04-executable-hash-source-file.md",
-        "docs/packets/evidence/PK44.04-executable-hash-source-file.jsonl"
+        "docs/packets/evidence/PK44.04-executable-hash-source-file.jsonl",
+        "docs/packets/evidence/PK44.04-character-server-entry-request.md",
+        "docs/packets/evidence/PK44.04-character-server-entry-request.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): verify executable hash source file"
+      "commit_subject": "packet(PK44.04): capture character server entry request"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
