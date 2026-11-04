@@ -2308,6 +2308,35 @@ void GuildMemberLoginNoticeReplay(){
     g_session.m_guildWindow=previousState;router.Clear();RegisterDefaultGameModePacketHandlers(router);
 }
 
+void PetStatusReplay(){
+    SetCase("pet_status_state_decode","PK07.PET-STATUS","PK07-01a2-selected-20080910-fields","ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ro::pet::ReadStatus");
+    Require(ro::net::GetPacketSize(0x01a2)==35,"active pet status framing changed from selected 35-byte profile");
+    const auto previousStatus=g_session.m_petStatus;
+    g_session.m_petStatus={};
+    const std::vector<u8> frame{0xa2,0x01,'P',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,20,0,30,0,0x34,0x12};
+    auto rejected=g_session.m_petStatus;
+    auto shortFrame=frame;shortFrame.pop_back();
+    Require(!ro::pet::ReadStatus(rejected,shortFrame.data(),shortFrame.size()),"short pet status frame was accepted");
+    auto wrongOpcode=frame;wrongOpcode[0]=0xa3;
+    Require(!ro::pet::ReadStatus(rejected,wrongOpcode.data(),wrongOpcode.size()),"wrong pet status opcode was accepted");
+    Require(!rejected.valid&&rejected.name.empty()&&rejected.level==0,"rejected pet status input partially mutated state");
+    TestConnection connection;LoopbackPeer peer(connection);peer.Send(frame);
+    CGameMode mode;auto& router=GetProductionGameModePacketRouter();router.Clear();RegisterDefaultGameModePacketHandlers(router);
+    const auto result=ProcessGameModePacketLoop(mode,connection,router,4);
+    const auto& status=g_session.m_petStatus;
+    Require(result.packetsProcessed==1&&result.packetsDispatched==1,"production router did not dispatch pet status");
+    Require(status.valid&&status.name=="P"&&status.modified==0&&status.level==10&&status.fullness==20&&status.relationship==30&&status.accessoryItemId==0x1234,"pet status fields were not decoded from selected 35-byte layout");
+    auto preserved=status;
+    Require(!ro::pet::ReadStatus(preserved,shortFrame.data(),shortFrame.size()),"short frame replaced an existing pet status snapshot");
+    Require(!ro::pet::ReadStatus(preserved,wrongOpcode.data(),wrongOpcode.size()),"wrong opcode replaced an existing pet status snapshot");
+    Require(preserved.valid&&preserved.name=="P"&&preserved.level==10&&preserved.accessoryItemId==0x1234,"rejected pet status input mutated an existing snapshot");
+    auto signedFixture=frame;signedFixture[26]=0xff;signedFixture[27]=0x00;signedFixture[28]=0x80;signedFixture[29]=0xff;signedFixture[30]=0xff;
+    ro::pet::Status signedStatus;Require(ro::pet::ReadStatus(signedStatus,signedFixture.data(),signedFixture.size()),"source-width signed pet fields were rejected");
+    Require(signedStatus.modified==-1&&signedStatus.level==-32768&&signedStatus.fullness==-1,"signed pet fields were not decoded as signed wire values");
+    std::cout<<"{\"case_id\":\"pet_status_state_decode\",\"contract_id\":\"PK07.PET-STATUS\",\"fixture_id\":\"PK07-01a2-selected-20080910-fields\",\"input_frame_hex\":\""<<Hex(frame)<<"\",\"packet_size\":35,\"name\":\""<<JsonEscape(status.name)<<"\",\"modified\":"<<static_cast<int>(status.modified)<<",\"level\":"<<status.level<<",\"fullness\":"<<status.fullness<<",\"relationship\":"<<status.relationship<<",\"accessory_item_id\":"<<status.accessoryItemId<<",\"malformed_size_and_opcode_atomic\":true,\"signed_wire_values\":[-1,-32768,-1],\"outcome\":\"PASS\"}\n";
+    g_session.m_petStatus=previousStatus;router.Clear();RegisterDefaultGameModePacketHandlers(router);
+}
+
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
@@ -2337,6 +2366,7 @@ int main(){try{
     EofCase(fixed,0,"eof_empty",kFixedFixture,kFixedSha);EofCase(fixed,1,"eof_partial_fixed_header",kFixedFixture,kFixedSha);
     EofCase(variable,5,"eof_partial_variable_body",kVariableFixture,kVariableSha);
     ProductionRouterDispatchReplay();
+    PetStatusReplay();
     DisconnectAckEveryBoundaryReplay();
     DisconnectAckRefusalDispatchReplay(PendingDisconnectAction::ReturnToCharSelect,"disconnect_ack_refuses_return_to_char_select");
     DisconnectAckRefusalDispatchReplay(PendingDisconnectAction::ExitToWindows,"disconnect_ack_refuses_exit_to_windows");

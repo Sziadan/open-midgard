@@ -5276,6 +5276,11 @@ void HandleGuildWindowPacket(CGameMode& mode,const PacketView& packet)
     }
 }
 
+void HandlePetStatus(CGameMode&, const PacketView& packet)
+{
+    ro::pet::ReadStatus(g_session.m_petStatus, packet.data, packet.packetLength);
+}
+
 void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 12 || mode.m_world == nullptr) {
@@ -8744,6 +8749,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0111, HandlePlayerSkillAdd);
     router.Register(0x011C, HandleWarpMapList);
     router.Register(0x01AD, HandleMakingArrowList);
+    router.Register(0x01A2, HandlePetStatus);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);
     router.Register(0x029D, HandleMercSkillList);

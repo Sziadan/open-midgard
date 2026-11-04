@@ -1,6 +1,7 @@
 #pragma once
 #include "core/Vitals.h"
 #include "core/GuildState.h"
+#include "core/PetState.h"
 #include <array>
 #include <mutex>
 #include <unordered_map>
@@ -188,6 +189,7 @@ public:
     std::string m_partyName;
     LocalGuildInfo m_localGuild;
     ro::guild::WindowState m_guildWindow;
+    ro::pet::Status m_petStatus;
     bool m_amIPartyMaster = false;
     bool m_partyExpShare = false;
     bool m_itemDivType = false;

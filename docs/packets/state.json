@@ -278,12 +278,17 @@
       "commit_subject": "packet(PK07.02): select active pet status framing"
     },
     "PK07.03": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK07.03-replay.md",
+        "docs/packets/evidence/PK07.03-replay.jsonl",
+        "docs/packets/contracts/PK07.PET-STATUS.md",
+        "docs/packets/work-items/PK07.03.md"
+      ],
+      "commit_subject": "packet(PK07.03): decode pet status snapshot"
     },
     "PK07.04": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     },

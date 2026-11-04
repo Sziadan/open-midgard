@@ -584,3 +584,11 @@ Established selected-source map S2C `0x01A2` as a packed 35-byte pet status snap
 ## 2026-11-04 — PK07.02 select active pet status framing
 
 Changed selected-profile `0x01A2` framing from 37 to 35 bytes and replayed a literal source-layout sample followed by fixed `0x006C` through production `Connect`/`RecvPacket`; both packets arrived intact and the queue emptied. Deploy-off build succeeded; focused CTest passed 1/1 in 2.91 seconds. Binary SHA-256 `26B6DDC5C72B766B292D7E074209A404FE46F44EE98F845608E31DC0316B7F15`. Evidence in `evidence/PK07.02-replay.md`/`.jsonl`. This does not decode pet state or close discovery. Stable subject: `packet(PK07.02): select active pet status framing`. Next: PK07.03 trace and implement pet status state integration; PK27 owns lifecycle.
+
+## 2026-11-04 — PK07.03 decode pet status snapshot
+
+Added exact-size/opcode 35-byte parser for fixed name and signed modified/level/fullness/relationship/accessory fields. Production route updates a dedicated session snapshot only after complete validation; no actor identity is inferred. Replay covers each field, malformed size/opcode atomicity against prior state, signed wire values, and the production TCP/router path. Deploy-off build succeeded; focused CTest passed 1/1 in 2.97 seconds. Binary SHA-256 `51728B3B0FF5A56E01C3E08526CC08807C467606A5470F7F99D212F23AA2DB32`. Visible pet UI and owner/lifecycle transitions remain PK27. Stable subject: `packet(PK07.03): decode pet status snapshot`. Next: PK07.04 self-review; PK48 pending, not a gate.
+
+## 2026-11-04 — PK07.02 select active pet status framing
+
+Changed selected-profile `0x01A2` framing from 37 to 35 bytes and replayed a literal source-layout sample followed by fixed `0x006C` through production `Connect`/`RecvPacket`; both packets arrived intact and the queue emptied. Deploy-off build succeeded; focused CTest passed 1/1 in 2.91 seconds. Binary SHA-256 `26B6DDC5C72B766B292D7E074209A404FE46F44EE98F845608E31DC0316B7F15`. Evidence in `evidence/PK07.02-replay.md`/`.jsonl`. This does not decode pet state or close discovery. Stable subject: `packet(PK07.02): select active pet status framing`. Next: PK07.03 trace and implement pet status state integration; PK27 owns lifecycle.
