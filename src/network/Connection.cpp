@@ -330,6 +330,7 @@ bool CConnection::Connect(const char* ip, int port)
     const int connectRet = connect(m_socket, reinterpret_cast<sockaddr*>(&m_addr), sizeof(m_addr));
     if (connectRet == 0) {
         m_dwTime = GetTickCount();
+        OnConnect();
         return true;
     }
 
@@ -371,11 +372,13 @@ bool CConnection::Connect(const char* ip, int port)
     }
 
     m_dwTime = GetTickCount();
+    OnConnect();
     return true;
 }
 
 void CConnection::Disconnect()
 {
+    const bool wasOpen = m_socket != INVALID_SOCKET;
     if (m_socket != INVALID_SOCKET) {
         CloseSocketHandle(m_socket);
         m_socket = INVALID_SOCKET;
@@ -383,6 +386,9 @@ void CConnection::Disconnect()
     m_sendQueue.Clear();
     m_recvQueue.Clear();
     m_blockQueue.Clear();
+    if (wasOpen) {
+        OnClose();
+    }
 }
 
 int CConnection::FlushSendQueue()
@@ -475,6 +481,28 @@ CRagConnection* CRagConnection::instance()
     return &s_instance;
 }
 
+void CRagConnection::OnConnect()
+{
+    m_waitingForRawAccountIdEcho = false;
+    m_expectedRawAccountIdEcho = 0;
+}
+
+void CRagConnection::OnClose()
+{
+    m_waitingForRawAccountIdEcho = false;
+    m_expectedRawAccountIdEcho = 0;
+}
+
+bool CRagConnection::ExpectRawAccountIdEcho(u32 expectedAccountId)
+{
+    if (!IsOpen()) {
+        return false;
+    }
+    m_expectedRawAccountIdEcho = expectedAccountId;
+    m_waitingForRawAccountIdEcho = true;
+    return true;
+}
+
 bool CRagConnection::SendPacket(const char* data, int len)
 {
     if (!data || len <= 0) return false;
@@ -487,6 +515,31 @@ bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)
 
     const auto extractBufferedPacket = [&]() {
         while (true) {
+            if (m_waitingForRawAccountIdEcho) {
+                if (m_recvQueue.GetSize() < 4) {
+                    return false;
+                }
+
+                u8 rawAccountId[4] = {};
+                if (!m_recvQueue.Pop(reinterpret_cast<char*>(rawAccountId), 4)) {
+                    return false;
+                }
+                const u32 receivedAccountId = static_cast<u32>(rawAccountId[0])
+                    | (static_cast<u32>(rawAccountId[1]) << 8)
+                    | (static_cast<u32>(rawAccountId[2]) << 16)
+                    | (static_cast<u32>(rawAccountId[3]) << 24);
+                const u32 expectedAccountId = m_expectedRawAccountIdEcho;
+                m_waitingForRawAccountIdEcho = false;
+                m_expectedRawAccountIdEcho = 0;
+                if (receivedAccountId != expectedAccountId) {
+                    DbgLog("[Net] raw character-server account echo mismatch: expected=%u received=%u\n",
+                           expectedAccountId, receivedAccountId);
+                    Disconnect();
+                    return false;
+                }
+                DbgLog("[Net] raw character-server account echo accepted: account=%u\n", receivedAccountId);
+            }
+
             if (m_recvQueue.GetSize() < 2) {
                 return false;
             }

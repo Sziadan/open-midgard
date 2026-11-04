@@ -1773,6 +1773,14 @@ void CLoginMode::OnChangeState(int newState) {
             break;
         }
 
+        if (!CRagConnection::instance()->ExpectRawAccountIdEcho(g_session.m_aid)) {
+            CRagConnection::instance()->Disconnect();
+            m_isConnected = 0;
+            SetLoginStatus("Login: could not initialize character-server authentication.");
+            m_nextSubMode = LoginSubMode_Login;
+            break;
+        }
+
         // Send CA_ENTER (0x0065) to char server
         PACKET_CA_ENTER ePkt{};
         ePkt.PacketType = ro::net::GetActiveCharacterPacketProfile().charServerEnter;
@@ -2025,8 +2033,6 @@ void CLoginMode::PollNetwork()
         case 0x0071: OnNotifyZonesvr(pkt);  break;
         case 0x0081: OnDisconnectMsg(pkt);  break;
         case 0x0283: break;
-        case 0x8482: break;
-        case 0x8483: break;
         default:
             DbgLog("[Login] Unknown packet 0x%04X (%d bytes)\n", id, (int)pkt.size());
             break;

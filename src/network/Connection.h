@@ -81,7 +81,13 @@ public:
     // Send a fully assembled packet (data includes the 2-byte PacketType header).
     bool SendPacket(const char* data, int len);
     bool RecvPacket(char* buffer);
+    bool ExpectRawAccountIdEcho(u32 expectedAccountId);
 
 protected:
-    // ... Any additional methods ...
+    void OnConnect() override;
+    void OnClose() override;
+
+private:
+    bool m_waitingForRawAccountIdEcho = false;
+    u32 m_expectedRawAccountIdEcho = 0;
 };
