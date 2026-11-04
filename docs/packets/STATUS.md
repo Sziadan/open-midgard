@@ -164,3 +164,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK45.01 scopes per-handler/variant actor and receive-handler evidence. 240 registration entries and 136 indexed functions need explicit contracts; PK20/22/24 lifecycle branches remain open. No rows closed; proceed with unrelated PK45.02 actor paths.
 
 - PK45.02 traced selected-source 0x0195/0x0095 actor-name responses into the current name-cache handler. 0x0194, request reachability, lifecycle cleanup, malformed replay, and visible rendering remain open. One handler family only; no rows closed.
+
+- PK45.02 additionally traces 0x0080 actor vanish/death branches and cleanup. Timing, repeated/malformed behavior, rendered fade, and replay remain open; no rows closed.

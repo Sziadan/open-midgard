@@ -748,3 +748,7 @@ Specified exact source inputs, per-handler evidence, and actor/receive-handler l
 ## 2026-11-04 — PK45.02 trace actor name acknowledgments
 
 Traced selected 20080910 server 0x0195 player name/party/guild/position and 0x0095 non-player name layouts into the current `HandleActorNameAck` receive and cache updates. The 0x0194 variant, request reachability, lifecycle cleanup, malformed replay, and visible rendering remain open. One handler family only; no rows closed. Evidence: `evidence/PK45.02-actor-name-ack.md`. Continue with nonblocked actor spawn/move/action leaves; preserve PK20/22/24 gates.
+
+## 2026-11-04 — PK45.02 trace actor vanish lifecycle
+
+Traced selected-source 7-byte 0x0080 (GID@2, reason@6) from server emitters into the client handler. Reasons 0/1/other map to remove/death transition/remove; name and chase caches clear on final actor removal. Timing, replay, idempotence and rendered lifecycle remain open. One handler family only; no rows closed. Evidence: evidence/PK45.02-actor-vanish.md.
