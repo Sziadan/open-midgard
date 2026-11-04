@@ -20,3 +20,5 @@ Validate plan/tracker with `python tools/check_packet_plan.py`. Before builds us
 After each completed leaf, commit its evidence, state/STATUS, progress and handoff with only explicit owned paths. Report the leaf, concrete result, verification limits, commit SHA, and next exact step.
 
 Latest PK44.04 increment (`packet(PK44.04): reject over-capacity login server list`): `0x0069` now rejects partial record arrays and arrays beyond the client's 100-entry storage capacity rather than truncating them. Deploy-off replay build and focused CTest passed 1/1; see `evidence/PK44.04-login-accept-reply.md` and `.jsonl`. Continue PK44.04 with another bounded source-backed login/character branch.
+
+Latest PK44.04 increment (`packet(PK44.04): reject over-capacity character list`): `0x006B` rejects arrays over the client 12-record capacity rather than truncating. Deploy-off replay build and focused CTest passed 1/1. See `evidence/PK44.04-character-record-conversion.md` and `.jsonl`. Next: continue with bounded source-backed PK44.04 work; note SSO negotiation, deletion, rename/paged variants, and native Qt lifecycle as separate unresolved gates.

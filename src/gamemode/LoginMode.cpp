@@ -2426,6 +2426,16 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
         return;
     }
 
+    const size_t characterRecordCount = (static_cast<size_t>(pktLen) - headerSize) / charInfoSize;
+    if (characterRecordCount > std::size(m_charInfo)) {
+        SetLoginStatus("Login error: too many character records in char-list response.");
+        std::memset(m_charInfo, 0, sizeof(m_charInfo));
+        m_numChar = 0;
+        m_selectedCharIndex = 0;
+        m_nextSubMode = LoginSubMode_Login;
+        return;
+    }
+
     const int charAreaLen = static_cast<int>(pktLen - static_cast<u16>(headerSize));
     m_numChar = 0;
     if (charAreaLen >= static_cast<int>(charInfoSize)) {

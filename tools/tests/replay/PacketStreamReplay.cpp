@@ -1186,6 +1186,18 @@ void LoginAcceptCharacterListReplay()
             && partialRecordMode.NextSubMode() == CLoginMode::LoginSubMode_Login,
         "0x006B partial-record layout did not clear the list and return to Login");
 
+    constexpr size_t kClientCharacterCapacity = 12;
+    std::vector<u8> overCapacityPacket(kHeaderLength + kCharacterRecordLength * (kClientCharacterCapacity + 1), 0);
+    overCapacityPacket[0] = 0x6b;
+    overCapacityPacket[2] = static_cast<u8>(overCapacityPacket.size() & 0xff);
+    overCapacityPacket[3] = static_cast<u8>(overCapacityPacket.size() >> 8);
+    LoginModeReplayAccess overCapacityMode;
+    receiveThroughPollNetwork(overCapacityMode, overCapacityPacket,
+        "Login error: too many character records in char-list response.");
+    Require(overCapacityMode.GetCharCount() == 0
+            && overCapacityMode.NextSubMode() == CLoginMode::LoginSubMode_Login,
+        "0x006B record count beyond client capacity was not rejected and cleared");
+
     std::vector<u8> makePacket(sizeof(PACKET_HC_ACCEPT_MAKECHAR), 0);
     makePacket[0] = 0x6d;
     std::memcpy(makePacket.data() + sizeof(u16), record, kCharacterRecordLength);
@@ -1201,6 +1213,7 @@ void LoginAcceptCharacterListReplay()
     std::cout << "{\"case_id\":\"login_accept_character_list\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-two-character-records-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":" << packet.size() << ",\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"record_count\":2,\"input_frame_hex\":\"" << Hex(packet) << "\",\"records\":[{\"gid\":305419896,\"name\":\"RuneA\",\"job\":7,\"headpalette\":18,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"rename_flag_default\":1},{\"gid\":2271560481,\"name\":\"RuneB\",\"job\":8,\"headpalette\":9,\"wire_slot_u16\":3,\"wire_hair_color_u16\":7,\"parsed_slot\":3,\"parsed_hair_color\":7,\"rename_flag_default\":1}],\"first_character_selected\":true,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_character_list_empty\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-empty-list-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":24,\"opcode\":\"0x006B\",\"header_length\":24,\"record_count\":0,\"input_frame_hex\":\"" << Hex(emptyPacket) << "\",\"empty_list_status\":\"Login: no characters on account.\",\"char_select_transition\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_character_list_partial_record\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-reject-partial-character-record\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":" << partialRecordPacket.size() << ",\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"partial_tail_bytes\":1,\"input_frame_hex\":\"" << Hex(partialRecordPacket) << "\",\"unsupported_layout_status\":\"Login error: unsupported char-list packet layout.\",\"clears_character_list\":true,\"returns_to_login\":true,\"production_framing_dispatch\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_accept_character_list_over_capacity\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-reject-13-character-records\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":" << overCapacityPacket.size() << ",\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"client_capacity\":12,\"record_count\":13,\"input_frame_hex\":\"" << Hex(overCapacityPacket) << "\",\"capacity_error_status\":\"Login error: too many character records in char-list response.\",\"clears_character_list\":true,\"returns_to_login\":true,\"production_framing_dispatch\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_make_character\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006d-make-character-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptMakeChar\",\"frame_length\":110,\"opcode\":\"0x006D\",\"character_record_length\":108,\"input_frame_hex\":\"" << Hex(makePacket) << "\",\"character_gid\":305419896,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
