@@ -846,7 +846,7 @@ void LoginRefusalResultMappingReplay()
 
 void LoginDisconnectResultReplay()
 {
-    SetCase("login_disconnect_result_mapping", "PK44.LOGIN-REPLIES", "PK44-0081-auth-result-selected-source", "CLoginMode::OnDisconnectMsg -> FormatLoginDisconnectMessage");
+    SetCase("login_disconnect_result_mapping", "PK44.LOGIN-REPLIES", "PK44-0081-auth-result-selected-source", "CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnDisconnectMsg");
     struct Sample { u8 code; const char* expected; };
     const Sample samples[] = {
         {1, "Disconnected by server: login service unavailable or access restricted."},
@@ -859,11 +859,21 @@ void LoginDisconnectResultReplay()
     std::vector<std::string> frames;
     std::vector<std::string> messages;
     for (const Sample& sample : samples) {
+        connection->Disconnect();
+        LoopbackPeer peer(*connection);
         std::vector<u8> packet(kNotifyBanPacketLength, 0);
         packet[0] = 0x81;
         packet[2] = sample.code;
         LoginModeReplayAccess::PrepareDisconnectState(mode);
-        LoginModeReplayAccess::RunDisconnect(mode, packet);
+        LoginModeReplayAccess::SetStatus(mode, "Login: awaiting replay packet.");
+        peer.Send(packet);
+        const auto receiveDeadline = Clock::now() + kTimeout;
+        while (g_windowMgr.GetLoginStatus() != sample.expected && Clock::now() < receiveDeadline) {
+            LoginModeReplayAccess::RunPollNetwork(mode);
+            if (g_windowMgr.GetLoginStatus() != sample.expected) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
         const std::string message = g_windowMgr.GetLoginStatus();
         Require(message == sample.expected, "0x0081 result did not map to its selected source meaning");
         Require(LoginModeReplayAccess::DisconnectStateCleared(mode), "0x0081 handler did not clear connection/hash state");
@@ -879,7 +889,7 @@ void LoginDisconnectResultReplay()
     Require(LoginModeReplayAccess::FormatDisconnect(unassigned) == "Disconnected by server (code 2).",
         "0x0081 result without an active selected-source sender lost its numeric fallback");
 
-    std::cout << "{\"case_id\":\"login_disconnect_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0081-auth-result-selected-source\",\"production_entry\":\"CLoginMode::OnDisconnectMsg -> FormatLoginDisconnectMessage -> SetLoginStatus/ErrorMsg -> Disconnect -> Login\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":3,\"opcode\":\"0x0081\",\"result_byte_offset\":2,\"input_frames_hex\":[\"" << frames[0] << "\",\"" << frames[1] << "\"],\"result_codes\":[1,8],\"actual_messages\":[\"" << JsonEscape(messages[0]) << "\",\"" << JsonEscape(messages[1]) << "\"],\"login_status_matches_expected\":true,\"account_hash_handshake_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"numeric_fallback_code2_preserved\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_disconnect_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0081-auth-result-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnDisconnectMsg -> FormatLoginDisconnectMessage\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":3,\"opcode\":\"0x0081\",\"result_byte_offset\":2,\"input_frames_hex\":[\"" << frames[0] << "\",\"" << frames[1] << "\"],\"result_codes\":[1,8],\"actual_messages\":[\"" << JsonEscape(messages[0]) << "\",\"" << JsonEscape(messages[1]) << "\"],\"login_status_matches_expected\":true,\"account_hash_handshake_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"numeric_fallback_code2_preserved\":true,\"production_framing_dispatch\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginAcceptReplyReplay()

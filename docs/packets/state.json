@@ -1139,7 +1139,7 @@
         "docs/packets/evidence/PK44.04-character-create-refusal.md",
         "docs/packets/evidence/PK44.04-character-create-refusal.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): route login acceptance through receive loop"
+      "commit_subject": "packet(PK44.04): route login disconnect through receive loop"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
