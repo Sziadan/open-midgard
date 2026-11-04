@@ -63,3 +63,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 | PK44.CHAR-DELETE | Legacy immediate and scheduled character deletion transactions | PK44; review PK48 | Server layouts/results traced; active client opcode mismatch and scheduled client reachability remain open |
 
 | PK44.CHAR-RENAME | Legacy two-step character name validation and rename | PK44; review PK48 | Server protocol traced; current-client reachability and request pairing remain open |
+
+| PK44.CHAR-PINCODE | Character-server PIN challenge and update family | PK44; review PK48 | All assigned handlers/registrations compile out for selected PACKETVER=20080910 source config |
