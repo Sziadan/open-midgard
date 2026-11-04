@@ -297,12 +297,16 @@
       "commit_subject": "packet(PK07.04): self-review pet status implementation"
     },
     "PK08.01": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK08.01-source-contract.md",
+        "docs/packets/contracts/PK08.GROUND-SKILL-TEXT.md",
+        "docs/packets/work-items/PK08.01.md"
+      ],
+      "commit_subject": "packet(PK08.01): specify ground skill text contract"
     },
     "PK08.02": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     },
