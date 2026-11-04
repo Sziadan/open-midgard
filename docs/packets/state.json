@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK14.03",
+  "active_step": "PK45.02",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -1272,19 +1272,26 @@
         "docs/packets/evidence/PK44.04-login-027c-request.jsonl",
         "docs/packets/evidence/PK44.04-login-01fa-request.md",
         "docs/packets/evidence/PK44.04-login-01fa-request.jsonl",
-        "docs/packets/evidence/PK44.04-character-request-directions.md"
+        "docs/packets/evidence/PK44.04-character-request-directions.md",
+        "docs/packets/evidence/PK44.04-focused-replay-rerun.md"
       ],
-      "commit_subject": "packet(PK44.04): implement explicit login3 hash request"
+      "commit_subject": "packet(PK44.04): record focused replay rerun"
     },
     "PK45.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK45.01-scope-boundary.md"
+      ],
+      "commit_subject": "packet(PK45.01): scope actor handler audit"
     },
     "PK45.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK45.02-actor-name-ack.md",
+        "docs/packets/evidence/PK45.02-actor-vanish.md",
+        "docs/packets/evidence/PK45.02-self-movement-ack.md"
+      ],
+      "commit_subject": "packet(PK45.02): trace self movement acknowledgment"
     },
     "PK45.03": {
       "status": "NOT_STARTED",
@@ -1297,19 +1304,26 @@
       "commit_subject": null
     },
     "PK46.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK46.01-scope-boundary.md"
+      ],
+      "commit_subject": "packet(PK46.01): scope outbound parity review"
     },
     "PK46.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK46.02-map-movement.md",
+        "docs/packets/evidence/PK46.02-map-change-direction.md"
+      ],
+      "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
     "PK46.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK46.03-login-character-crosswalk.md"
+      ],
+      "commit_subject": "packet(PK46.03): audit login character send gates"
     },
     "PK46.04": {
       "status": "NOT_STARTED",
@@ -1345,9 +1359,11 @@
       "commit_subject": "packet(PK47.04): record per-identity evidence boundary"
     },
     "PK48.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK48.01-scope-boundary.md"
+      ],
+      "commit_subject": "packet(PK48.01): scope independent certification"
     },
     "PK48.02": {
       "status": "NOT_STARTED",
@@ -1385,14 +1401,18 @@
       "commit_subject": null
     },
     "PK50.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK50.01-quest-mission-scope.md"
+      ],
+      "commit_subject": "packet(PK50.01): scope quest mission lifecycle"
     },
     "PK50.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "BLOCKED",
+      "evidence": [
+        "docs/packets/evidence/PK50.02-snapshot-model-boundary.md"
+      ],
+      "commit_subject": "packet(PK50.02): defer quest snapshot model"
     },
     "PK50.03": {
       "status": "NOT_STARTED",
