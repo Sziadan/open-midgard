@@ -1149,9 +1149,11 @@
         "docs/packets/evidence/PK44.04-executable-hash-gate.md",
         "docs/packets/evidence/PK44.04-executable-hash-gate.jsonl",
         "docs/packets/evidence/PK44.04-channel-login-request.md",
-        "docs/packets/evidence/PK44.04-channel-login-request.jsonl"
+        "docs/packets/evidence/PK44.04-channel-login-request.jsonl",
+        "docs/packets/evidence/PK44.04-pcbang-login-request.md",
+        "docs/packets/evidence/PK44.04-pcbang-login-request.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): capture channel login request"
+      "commit_subject": "packet(PK44.04): capture pcbang login request"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
