@@ -21,6 +21,16 @@ int main(){
     auto members=Packet(108);Put(members,4,100);Put(members,8,200);members[18]=8;members[20]=99;Put(members,22,123456);Put(members,26,1);Put(members,30,2);Str(members,84,"Member Name");
     assert(ReadWindowPacket(state,0x154,members.data(),members.size())&&state.members.size()==1);
     auto m=state.members[0];assert(m.account==100&&m.character==200&&m.job==8&&m.level==99&&m.exp==123456&&m.online&&m.position==2&&m.name=="Member Name");
+    state.positions[2]={2,0x11,30,"Officer"};
+    std::uint32_t localPermissions=0;std::string localTitle;
+    assert(FindLocalPosition(state,200,localPermissions,localTitle)&&localPermissions==0x11&&localTitle=="Officer");
+    auto memberPosition=Packet(16);Put(memberPosition,4,100);Put(memberPosition,8,200);Put(memberPosition,12,3);
+    assert(ReadWindowPacket(state,0x156,memberPosition.data(),memberPosition.size()));
+    state.positions[3]={3,0x01,0,"Recruiter"};
+    assert(FindLocalPosition(state,200,localPermissions,localTitle)&&localPermissions==0x01&&localTitle=="Recruiter");
+    auto changedPosition=Packet(44);Put(changedPosition,4,3);Put(changedPosition,8,0x10);Put(changedPosition,16,0);Str(changedPosition,20,"Expel Officer");
+    assert(ReadWindowPacket(state,0x174,changedPosition.data(),changedPosition.size()));
+    assert(FindLocalPosition(state,200,localPermissions,localTitle)&&localPermissions==0x10&&localTitle=="Expel Officer");
     assert(!ReadWindowPacket(state,0x154,members.data(),107)&&state.members.size()==1);
     auto online=Packet(14);Put(online,2,100);Put(online,6,200);assert(ReadWindowPacket(state,0x16d,online.data(),14)&&!state.members[0].online);
     auto rank=Packet(16);Put(rank,4,100);Put(rank,8,200);Put(rank,12,3);assert(ReadWindowPacket(state,0x156,rank.data(),16)&&state.members[0].position==3);

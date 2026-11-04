@@ -383,9 +383,11 @@
       "commit_subject": "packet(PK11.01): bound guild permission review"
     },
     "PK11.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK11.02-guild-permission-reconciliation.md"
+      ],
+      "commit_subject": "packet(PK11.02): reconcile guild position permissions"
     },
     "PK11.03": {
       "status": "NOT_STARTED",

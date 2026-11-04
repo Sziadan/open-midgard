@@ -19,6 +19,16 @@ struct WindowState {
     std::vector<Relation> relations;
     std::vector<Ban> bans;
 };
+inline bool FindLocalPosition(const WindowState& state,std::uint32_t character,std::uint32_t& permissions,std::string& title)
+{
+    const auto member=std::find_if(state.members.begin(),state.members.end(),[&](const auto& item){return item.character==character;});
+    if(member==state.members.end())return false;
+    const auto position=state.positions.find(member->position);
+    if(position==state.positions.end())return false;
+    permissions=position->second.mode;
+    title=position->second.name;
+    return true;
+}
 inline std::uint32_t Read(const unsigned char* p){return p[0]|(std::uint32_t(p[1])<<8)|(std::uint32_t(p[2])<<16)|(std::uint32_t(p[3])<<24);}
 inline unsigned short ReadShort(const unsigned char* p){return p[0]|(p[1]<<8);}
 inline std::string Text(const unsigned char* p,std::size_t n){std::size_t i=0;while(i<n && p[i])++i;return {reinterpret_cast<const char*>(p),i};}

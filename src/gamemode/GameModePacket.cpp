@@ -5270,9 +5270,11 @@ void HandleGuildWindowPacket(CGameMode& mode,const PacketView& packet)
         auto& guild=g_session.m_localGuild;guild.characterId=g_session.m_gid;
         guild.guildId=g_session.m_guildWindow.id;guild.name=g_session.m_guildWindow.name;guild.emblemVersion=g_session.m_guildWindow.emblemVersion;
     }
-    for(const auto& member:g_session.m_guildWindow.members)if(member.character==g_session.m_gid) {
-        const auto pos=g_session.m_guildWindow.positions.find(member.position);
-        if(pos!=g_session.m_guildWindow.positions.end())g_session.m_localGuild.title=pos->second.name;
+    u32 permissions=g_session.m_localGuild.permissions;
+    std::string title=g_session.m_localGuild.title;
+    if(ro::guild::FindLocalPosition(g_session.m_guildWindow,g_session.m_gid,permissions,title)) {
+        g_session.m_localGuild.permissions=permissions;
+        g_session.m_localGuild.title=std::move(title);
     }
 }
 

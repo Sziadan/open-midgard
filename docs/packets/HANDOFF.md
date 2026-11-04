@@ -1,4 +1,4 @@
-PK11.01 scope is ready for checkpoint commit. Active leaf: PK11.02 source-backed guild incremental update reconciliation. PK09.02 and PK10.02 remain blocked at their documented S-complexity protocol identity/lifecycle gaps. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
+PK11.02 implementation is ready for checkpoint commit. Active next leaf after commit: PK11.03 apply menu flags/current permission gates to Qt controls. PK09.02 and PK10.02 remain blocked at their documented S-complexity protocol identity/lifecycle gaps. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
 
 PK10.02 is blocked for stronger review: server `0x0283` carries map player ID before auth, while client stage routing/replay does not establish the complete lifecycle. Active independent step: PK11.01. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
 
