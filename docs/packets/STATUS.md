@@ -168,3 +168,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK45.02 additionally traces 0x0080 actor vanish/death branches and cleanup. Timing, repeated/malformed behavior, rendered fade, and replay remain open; no rows closed.
 
 - PK45.02 additionally traces self-walk 0x0087 (12 bytes) into current position updates and move-ack clearing. This does not cover remote movement or interpolation; no rows closed.
+
+- PK45.02 additionally traces selected 0x02E1 actor-action wire fields into the current action message. Configuration-dependent values and animation/effect/UI lifecycle remain open; 0x008A/0x08C8 variants are separate.

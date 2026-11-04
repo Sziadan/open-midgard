@@ -756,3 +756,7 @@ Traced selected-source 7-byte 0x0080 (GID@2, reason@6) from server emitters into
 ## 2026-11-04 — PK45.02 trace self-movement acknowledgment
 
 Traced selected-source 12-byte 0x0087 from clif_walkok through HandleSelfMoveAck. Tick@2 and packed path@6 update session/actor positions and clear pending move acknowledgment. Self-only path; remote movement/spawn, correlation, malformed bounds, and rendered interpolation remain open. No rows closed. Evidence: evidence/PK45.02-self-movement-ack.md.
+
+## 2026-11-04 — PK45.02 trace actor action notification
+
+Traced selected 20080910 33-byte 0x02E1 from clif_damage through HandleActorActionNotify. Signed damage, action, target, tick, hit count, and timing offsets align; server config changes values, and motion/effect presentation remains unverified. One selected variant only; no rows closed. Evidence: evidence/PK45.02-actor-action-notify.md.
