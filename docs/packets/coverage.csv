@@ -526,7 +526,7 @@ AUDIT-0x0278,0x0278,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x0279,0x0279,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x027A,0x027A,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x027B,0x027B,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x027C,0x027C,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.027C-C2S-MD5-MAC
+AUDIT-0x027C,0x027C,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Login-server C2S parser and explicitly configured current-client sender are source/replay-confirmed; Ref MAC behavior and deployed profile intent remain open,C2S_ONLY,PK44.LOGIN.027C-C2S-MD5-MAC
 AUDIT-0x027D,0x027D,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x027E,0x027E,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x027F,0x027F,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,

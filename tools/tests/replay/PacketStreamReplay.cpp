@@ -1289,6 +1289,85 @@ void LoginAccountAuxRequestReplay(bool channel)
               << ",\"synthetic_packet_override\":true,\"live_credentials_not_used\":true,\"deployed_profile_intent_unverified\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void Login4AccountRequestReplay()
+{
+    SetCase("login_account_027c_request", "PK44.LOGIN-REQUESTS", "PK44-027c-current-client-md5-mac-login", "CLoginMode::SendPlainAccountLogin -> SendLogin4 -> CRagConnection::SendPacket");
+    const char* oldDataDirValue = std::getenv("OPEN_MIDGARD_DATA_DIR");
+    const bool hadDataDir = oldDataDirValue != nullptr;
+    const std::string oldDataDir = oldDataDirValue ? oldDataDirValue : "";
+    struct RestoreDataDir {
+        bool hadValue;
+        std::string value;
+        ~RestoreDataDir() {
+#if RO_PLATFORM_WINDOWS
+            _putenv_s("OPEN_MIDGARD_DATA_DIR", hadValue ? value.c_str() : "");
+#else
+            if (hadValue) setenv("OPEN_MIDGARD_DATA_DIR", value.c_str(), 1);
+            else unsetenv("OPEN_MIDGARD_DATA_DIR");
+#endif
+        }
+    } restoreDataDir{hadDataDir, oldDataDir};
+
+    const std::filesystem::path settingsDirectory = std::filesystem::temp_directory_path()
+        / (std::string("open-midgard-packet-replay-account-027c-") + std::to_string(GetTickCount()));
+    std::filesystem::create_directories(settingsDirectory);
+    struct RemoveSettingsDirectory {
+        std::filesystem::path path;
+        ~RemoveSettingsDirectory() { std::error_code error; std::filesystem::remove_all(path, error); }
+    } removeSettingsDirectory{settingsDirectory};
+#if RO_PLATFORM_WINDOWS
+    Require(_putenv_s("OPEN_MIDGARD_DATA_DIR", settingsDirectory.string().c_str()) == 0,
+        "could not point 0x027C replay settings at the isolated temporary directory");
+#else
+    Require(setenv("OPEN_MIDGARD_DATA_DIR", settingsDirectory.string().c_str(), 1) == 0,
+        "could not point 0x027C replay settings at the isolated temporary directory");
+#endif
+    {
+        std::ofstream settings(settingsDirectory / "open-midgard.ini", std::ios::binary | std::ios::trunc);
+        Require(settings.is_open(), "could not write isolated 0x027C settings fixture");
+        settings << "[Login]\nAccountLoginPacket=login4\nClientDateOverride=20080910\nClientTypeOverride=1\n";
+        settings.close();
+        Require(settings.good(), "could not finish isolated 0x027C settings fixture");
+    }
+
+    const ServiceType originalService = g_serviceType;
+    struct RestoreServiceType { ServiceType value; ~RestoreServiceType() { g_serviceType = value; } } restoreService{originalService};
+    g_serviceType = ServiceAmerica;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    const char user[] = "packet-user";
+    const char password[] = "packet-pass";
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetUserId,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(user)), 0, 0) != 0,
+        "0x027C username message was rejected");
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetPassword,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(password)), 0, 0) != 0,
+        "0x027C password message was rejected");
+    LoginModeReplayAccess::RunPlainAccountLogin(mode);
+
+    std::vector<u8> expected(60, 0);
+    expected[0] = 0x7c;
+    expected[1] = 0x02;
+    expected[2] = 0x0e;
+    expected[3] = 0x69;
+    expected[4] = 0x32;
+    expected[5] = 0x01;
+    std::memcpy(expected.data() + 6, user, sizeof(user) - 1);
+    const u8 expectedDigest[16] = {0xb5,0xd2,0x4b,0x16,0x37,0x27,0x74,0xb2,0xdc,0x52,0x2d,0x70,0x49,0x1e,0xf7,0x8f};
+    std::memcpy(expected.data() + 30, expectedDigest, sizeof(expectedDigest));
+    expected[46] = 1;
+    std::memcpy(expected.data() + 47, "111111111111", 12);
+    const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+    Require(captured == expected,
+        "configured 0x027C request differs from the independent 60-byte field fixture");
+    Require(g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
+        "configured 0x027C login sender did not publish its production status");
+    std::cout << "{\"case_id\":\"login_account_027c_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-027c-current-client-md5-mac-login\",\"production_entry\":\"CLoginMode::SendPlainAccountLogin -> SendLogin4 -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"" << Hex(expected)
+              << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":60,\"opcode\":\"0x027C\",\"client_version\":20080910,\"username\":\"packet-user\",\"password_md5\":\"b5d24b16372774b2dc522d70491ef78f\",\"client_type\":1,\"mac_field\":\"111111111111\",\"zero_initialized_padding\":true,\"synthetic_packet_override\":true,\"deployed_profile_intent_unverified\":true,\"ref_mac_behavior_review_pending\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginConnectInfoGateReplay()
 {
     SetCase("login_connect_info_gate", "PK44.LOGIN-REQUESTS", "PK44-0200-connect-info-opt-in", "CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendPlainAccountLogin");
@@ -1753,6 +1832,7 @@ int main(){try{
     LoginAccountRequestReplay();
     LoginAccountAuxRequestReplay(true);
     LoginAccountAuxRequestReplay(false);
+    Login4AccountRequestReplay();
     LoginConnectInfoGateReplay();
     LoginCharacterServerEntryRequestReplay();
     LoginCharacterRefusalReplay();
