@@ -1127,7 +1127,7 @@
         "docs/packets/evidence/PK44.04-login-hash-challenge.md",
         "docs/packets/evidence/PK44.04-login-hash-challenge.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): replay login hash challenge modes"
+      "commit_subject": "packet(PK44.04): cover documented login refusal results"
     },
     "PK45.01": {
       "status": "NOT_STARTED",

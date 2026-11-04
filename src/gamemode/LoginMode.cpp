@@ -2304,6 +2304,21 @@ std::string CLoginMode::FormatLoginRefusalMessage(const std::vector<u8>& packet)
             std::snprintf(msg, sizeof(msg), "Login refused: account is temporarily blocked.");
         }
         break;
+    case 7:  std::snprintf(msg, sizeof(msg), "Login refused: server is busy due to high population."); break;
+    case 8:  std::snprintf(msg, sizeof(msg), "Login refused: too many accounts are connected from this company."); break;
+    case 9:  std::snprintf(msg, sizeof(msg), "Login refused: ban by DBA."); break;
+    case 10: std::snprintf(msg, sizeof(msg), "Login refused: email not confirmed."); break;
+    case 11: std::snprintf(msg, sizeof(msg), "Login refused: ban by GM."); break;
+    case 12: std::snprintf(msg, sizeof(msg), "Login refused: account is being updated in the database."); break;
+    case 13: std::snprintf(msg, sizeof(msg), "Login refused: account is self-locked."); break;
+    case 14:
+    case 15: std::snprintf(msg, sizeof(msg), "Login refused: account group is not permitted."); break;
+    case 99: std::snprintf(msg, sizeof(msg), "Login refused: account no longer exists."); break;
+    case 100: std::snprintf(msg, sizeof(msg), "Login refused: login information remains."); break;
+    case 101: std::snprintf(msg, sizeof(msg), "Login refused: account is under hacking investigation."); break;
+    case 102: std::snprintf(msg, sizeof(msg), "Login refused: account is under bug investigation."); break;
+    case 103: std::snprintf(msg, sizeof(msg), "Login refused: character deletion is in progress."); break;
+    case 104: std::snprintf(msg, sizeof(msg), "Login refused: spouse character deletion is in progress."); break;
     default: std::snprintf(msg, sizeof(msg), "Login refused (code %d).", (int)code); break;
     }
     return msg;

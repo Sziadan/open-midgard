@@ -682,7 +682,7 @@ void ProductionAcceptedExitAckReplay(){
 }
 void LoginRefusalResultMappingReplay()
 {
-    SetCase("login_refusal_result_mapping", "PK44.04_login_reply", "PK44-006a-auth-result-map-selected-source", "CLoginMode::OnRefuseLogin -> FormatLoginRefusalMessage");
+    SetCase("login_refusal_result_mapping", "PK44.LOGIN-REPLIES", "PK44-006a-auth-result-map-selected-source", "CLoginMode::OnRefuseLogin -> FormatLoginRefusalMessage");
     struct Sample { u8 code; const char* expected; };
     const Sample samples[] = {
         {0, "Login refused: ID not registered."},
@@ -690,6 +690,21 @@ void LoginRefusalResultMappingReplay()
         {2, "Login refused: account expired."},
         {3, "Login refused: rejected by the server."},
         {4, "Login refused: blocked by the GM team."},
+        {7, "Login refused: server is busy due to high population."},
+        {8, "Login refused: too many accounts are connected from this company."},
+        {9, "Login refused: ban by DBA."},
+        {10, "Login refused: email not confirmed."},
+        {11, "Login refused: ban by GM."},
+        {12, "Login refused: account is being updated in the database."},
+        {13, "Login refused: account is self-locked."},
+        {14, "Login refused: account group is not permitted."},
+        {15, "Login refused: account group is not permitted."},
+        {99, "Login refused: account no longer exists."},
+        {100, "Login refused: login information remains."},
+        {101, "Login refused: account is under hacking investigation."},
+        {102, "Login refused: account is under bug investigation."},
+        {103, "Login refused: character deletion is in progress."},
+        {104, "Login refused: spouse character deletion is in progress."},
     };
     Require(sizeof(PACKET_AC_REFUSE_LOGIN) == 23, "selected client 0x006A receive layout is not 23 bytes");
 
@@ -711,8 +726,8 @@ void LoginRefusalResultMappingReplay()
         "0x006A result 6 without detail lost its temporary-block fallback");
     std::vector<u8> unknownResult(sizeof(PACKET_AC_REFUSE_LOGIN), 0);
     unknownResult[0] = 0x6a;
-    unknownResult[2] = 99;
-    Require(LoginModeReplayAccess::FormatRefusal(unknownResult) == "Login refused (code 99).",
+    unknownResult[2] = 16;
+    Require(LoginModeReplayAccess::FormatRefusal(unknownResult) == "Login refused (code 16).",
         "unknown 0x006A result no longer preserves its numeric code");
 
     std::cout << "{\"case_id\":\"login_refusal_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-006a-auth-result-map-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseLogin -> FormatLoginRefusalMessage\",\"frame_length\":23,\"opcode\":\"0x006A\",\"result_byte_offset\":2,\"block_date_bytes_zero\":true,\"input_frames_hex\":[";
@@ -720,12 +735,12 @@ void LoginRefusalResultMappingReplay()
         if (i != 0) std::cout << ",";
         std::cout << "\"" << inputFrames[i] << "\"";
     }
-    std::cout << "],\"result_codes\":[0,1,2,3,4],\"actual_messages\":[";
+    std::cout << "],\"result_codes\":[0,1,2,3,4,7,8,9,10,11,12,13,14,15,99,100,101,102,103,104],\"actual_messages\":[";
     for (size_t i = 0; i < actualMessages.size(); ++i) {
         if (i != 0) std::cout << ",";
         std::cout << "\"" << JsonEscape(actualMessages[i]) << "\"";
     }
-    std::cout << "],\"result_6_empty_detail_fallback\":true,\"unknown_result_preserved\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "],\"result_6_empty_detail_fallback\":true,\"numeric_fallback_code16_preserved\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginPasswordHashChallengeReplay()
