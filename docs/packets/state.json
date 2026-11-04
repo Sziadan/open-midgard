@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK44.03.007",
+  "active_step": "PK44.03.008",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -1088,9 +1088,11 @@
       "commit_subject": "packet(PK44.03.006): trace character deletion flows"
     },
     "PK44.03.007": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK44.CHAR-RENAME.md"
+      ],
+      "commit_subject": "packet(PK44.03.007): trace character rename protocol"
     },
     "PK44.03.008": {
       "status": "NOT_STARTED",
