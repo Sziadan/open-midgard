@@ -72,12 +72,19 @@ protected:
 class CRagConnection : public CConnection
 {
 public:
+    enum class ReceiveError : u8 {
+        None,
+        UnknownOpcode,
+        InvalidVariableLength,
+    };
+
     CRagConnection();
     virtual ~CRagConnection() override;
 
     static CRagConnection* instance();
 
     bool RecvPacket(std::vector<u8>& outPacket);
+    ReceiveError GetLastReceiveError() const { return m_lastReceiveError; }
     // Send a fully assembled packet (data includes the 2-byte PacketType header).
     bool SendPacket(const char* data, int len);
     bool RecvPacket(char* buffer);
@@ -91,4 +98,5 @@ private:
     friend struct PacketStreamReplayAccess;
     bool m_waitingForRawAccountIdEcho = false;
     u32 m_expectedRawAccountIdEcho = 0;
+    ReceiveError m_lastReceiveError = ReceiveError::None;
 };

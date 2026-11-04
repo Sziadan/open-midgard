@@ -130,7 +130,7 @@ void LogFirstSeenInvalidVariablePacket(u16 packetId, int packetSize, CPacketQueu
         char history[8 * 16 + 1] = {};
         FormatQueueSample(queue, sample, sizeof(sample));
         FormatRecentPacketHistory(history, sizeof(history));
-        DbgLog("[Net] dropping invalid variable recv packet id=0x%04X size=%d recent=%s sample=%s\n",
+        DbgLog("[Net] invalid variable recv packet; disconnecting id=0x%04X size=%d recent=%s sample=%s\n",
             packetId,
             packetSize,
             history,
@@ -485,6 +485,7 @@ void CRagConnection::OnConnect()
 {
     m_waitingForRawAccountIdEcho = false;
     m_expectedRawAccountIdEcho = 0;
+    m_lastReceiveError = ReceiveError::None;
 }
 
 void CRagConnection::OnClose()
@@ -560,6 +561,7 @@ bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)
 
             if (knownSize == 0) {
                 LogFirstSeenUnknownRecvPacket(packetId, m_recvQueue.GetSize(), m_recvQueue);
+                m_lastReceiveError = ReceiveError::UnknownOpcode;
                 Disconnect();
                 return false;
             }
@@ -575,6 +577,7 @@ bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)
                     (static_cast<u16>(static_cast<unsigned char>(hdr[3])) << 8));
                 if (packetSize < 4 || packetSize > 0x7FFF) {
                     LogFirstSeenInvalidVariablePacket(packetId, packetSize, m_recvQueue);
+                    m_lastReceiveError = ReceiveError::InvalidVariableLength;
                     Disconnect();
                     return false;
                 }

@@ -192,7 +192,7 @@
       "commit_subject": "packet(PK05.01): specify unknown receive boundaries"
     },
     "PK05.02": {
-      "status": "READY_TO_COMMIT",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK05.02-replay.md",
         "docs/packets/evidence/PK05.02-replay.jsonl",
@@ -202,9 +202,14 @@
       "commit_subject": "packet(PK05.02): close on unknown framing boundaries"
     },
     "PK05.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "READY_TO_COMMIT",
+      "evidence": [
+        "docs/packets/evidence/PK05.03-protocol-error-replay.md",
+        "docs/packets/evidence/PK05.03-protocol-error-replay.jsonl",
+        "docs/packets/contracts/PK05.UNKNOWN-OPCODE.md",
+        "docs/packets/work-items/PK05.03.md"
+      ],
+      "commit_subject": "packet(PK05.03): report receive framing errors"
     },
     "PK05.04": {
       "status": "NOT_STARTED",

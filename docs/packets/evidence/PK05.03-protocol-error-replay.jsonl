@@ -1,0 +1,6 @@
+{"case_id":"unknown_opcode_closes_without_rescan_typed_error","contract_id":"PK05.UNKNOWN-OPCODE","expected_receive_error":"UnknownOpcode","actual_receive_error":"UnknownOpcode","outcome":"PASS"}
+{"case_id":"unknown_opcode_fragmented_header_closes_without_rescan_typed_error","contract_id":"PK05.UNKNOWN-OPCODE","expected_receive_error":"UnknownOpcode","actual_receive_error":"UnknownOpcode","outcome":"PASS"}
+{"case_id":"undersized_variable_closes_without_rescan_typed_error","contract_id":"PK05.UNKNOWN-OPCODE","expected_receive_error":"InvalidVariableLength","actual_receive_error":"InvalidVariableLength","outcome":"PASS"}
+{"case_id":"oversized_variable_closes_without_rescan_typed_error","contract_id":"PK05.UNKNOWN-OPCODE","expected_receive_error":"InvalidVariableLength","actual_receive_error":"InvalidVariableLength","outcome":"PASS"}
+{"case_id":"undersized_variable_fragmented_header_closes_without_rescan_typed_error","contract_id":"PK05.UNKNOWN-OPCODE","expected_receive_error":"InvalidVariableLength","actual_receive_error":"InvalidVariableLength","outcome":"PASS"}
+{"case_id":"protocol_error_reconnect_reset_error","contract_id":"PK05.UNKNOWN-OPCODE","error_before_reconnect":"UnknownOpcode","error_after_reconnect":"None","reconnected_packet_hex":"6c0000","outcome":"PASS"}

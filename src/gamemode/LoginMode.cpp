@@ -1429,7 +1429,12 @@ void CLoginMode::OnUpdate() {
         MainLoopWatchdogSetStage("Login:PollNetwork");
         PollNetwork();
         if (m_isConnected && !CRagConnection::instance()->IsOpen()) {
-            const char* message = (m_subMode == LoginSubMode_ConnectAccount)
+            const CRagConnection::ReceiveError receiveError = CRagConnection::instance()->GetLastReceiveError();
+            const char* message = receiveError == CRagConnection::ReceiveError::UnknownOpcode
+                ? "Login error: server sent an unknown packet; connection closed."
+                : receiveError == CRagConnection::ReceiveError::InvalidVariableLength
+                    ? "Login error: server sent a malformed variable-length packet; connection closed."
+                    : (m_subMode == LoginSubMode_ConnectAccount)
                 ? (m_waitingForPasswordHash
                     ? "Login server closed the connection while waiting for the password-hash challenge response."
                     : (m_plainAccountLoginSent
