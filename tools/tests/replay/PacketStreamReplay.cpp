@@ -1335,12 +1335,20 @@ void LoginConnectInfoGateReplay()
     g_serviceType = ServiceAmerica;
     g_passwordEncrypt = 0;
 
-    const auto runConnect = [&](bool sendConnectInfo, const char* hashOverride, bool forcePasswordHash) {
+    const auto runConnect = [&](bool sendConnectInfo, const char* hashOverride, bool forcePasswordHash, bool useHashSourceExe) {
+        if (useHashSourceExe) {
+            std::ofstream hashSource(settingsDirectory / "synthetic-client.exe", std::ios::binary | std::ios::trunc);
+            Require(hashSource.is_open(), "could not create synthetic executable-hash source");
+            hashSource << "abc";
+            hashSource.close();
+            Require(hashSource.good(), "could not finish synthetic executable-hash source");
+        }
         std::ofstream settings(settingsDirectory / "open-midgard.ini", std::ios::binary | std::ios::trunc);
         Require(settings.is_open(), "could not write isolated login-settings fixture");
         settings << "[Login]\n"
                  << "SendConnectInfoChanged=" << (sendConnectInfo ? 1 : 0) << "\n"
                  << "ClientHashOverrideMd5=" << (hashOverride ? hashOverride : "") << "\n"
+                 << "ClientHashSourceExe=" << (useHashSourceExe ? "synthetic-client.exe" : "") << "\n"
                  << "AccountLoginPacket=plain\n"
                  << "ForcePasswordHashRequest=" << (forcePasswordHash ? 1 : 0) << "\n"
                  << "ClientDateOverride=20080910\n"
@@ -1406,6 +1414,11 @@ void LoginConnectInfoGateReplay()
                 0x04, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
                 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
             expectedStream.insert(expectedStream.end(), exeHash.begin(), exeHash.end());
+        } else if (useHashSourceExe) {
+            const std::vector<u8> exeHash{
+                0x04, 0x02, 0x90, 0x01, 0x50, 0x98, 0x3c, 0xd2, 0x4f,
+                0xb0, 0xd6, 0x96, 0x3f, 0x7d, 0x28, 0xe1, 0x7f, 0x72};
+            expectedStream.insert(expectedStream.end(), exeHash.begin(), exeHash.end());
         }
         if (forcePasswordHash) {
             expectedStream.push_back(0xdb);
@@ -1428,11 +1441,12 @@ void LoginConnectInfoGateReplay()
         return Hex(captured);
     };
 
-    const std::string disabledStream = runConnect(false, nullptr, false);
-    const std::string enabledStream = runConnect(true, nullptr, false);
-    const std::string hashOverrideStream = runConnect(false, "00112233445566778899aabbccddeeff", false);
-    const std::string passwordHashRequestStream = runConnect(false, nullptr, true);
-    std::cout << "{\"case_id\":\"login_connect_info_gate\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0200-connect-info-0204-exe-hash-and-01db-password-hash-gates\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendExeHashCheck -> SendPasswordHashRequest/SendPlainAccountLogin\",\"disabled_stream_hex\":\"" << disabledStream << "\",\"enabled_stream_hex\":\"" << enabledStream << "\",\"synthetic_hash_override_stream_hex\":\"" << hashOverrideStream << "\",\"password_hash_request_stream_hex\":\"" << passwordHashRequestStream << "\",\"disabled_gate_sends_only_0064\":true,\"enabled_gate_sends_0200_then_0064\":true,\"default_america_without_hash_source_omits_0204\":true,\"synthetic_hash_override_sends_0204_then_0064\":true,\"default_no_hash_request_sends_0064\":true,\"forced_hash_request_sends_01db_and_waits_for_challenge\":true,\"connect_account_path_uses_local_mock\":true,\"isolated_settings_fixture_removed\":true,\"no_live_credentials_or_server\":true,\"outcome\":\"PASS\"}\n";
+    const std::string disabledStream = runConnect(false, nullptr, false, false);
+    const std::string enabledStream = runConnect(true, nullptr, false, false);
+    const std::string hashOverrideStream = runConnect(false, "00112233445566778899aabbccddeeff", false, false);
+    const std::string passwordHashRequestStream = runConnect(false, nullptr, true, false);
+    const std::string hashSourceExeStream = runConnect(false, nullptr, false, true);
+    std::cout << "{\"case_id\":\"login_connect_info_gate\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0200-connect-info-0204-hash-source-and-01db-password-hash-gates\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendExeHashCheck -> SendPasswordHashRequest/SendPlainAccountLogin\",\"disabled_stream_hex\":\"" << disabledStream << "\",\"enabled_stream_hex\":\"" << enabledStream << "\",\"synthetic_hash_override_stream_hex\":\"" << hashOverrideStream << "\",\"password_hash_request_stream_hex\":\"" << passwordHashRequestStream << "\",\"synthetic_hash_source_exe_stream_hex\":\"" << hashSourceExeStream << "\",\"disabled_gate_sends_only_0064\":true,\"enabled_gate_sends_0200_then_0064\":true,\"default_america_without_hash_source_omits_0204\":true,\"synthetic_hash_override_sends_0204_then_0064\":true,\"relative_synthetic_source_exe_sends_independent_abc_md5\":true,\"default_no_hash_request_sends_0064\":true,\"forced_hash_request_sends_01db_and_waits_for_challenge\":true,\"connect_account_path_uses_local_mock\":true,\"isolated_settings_fixture_removed\":true,\"no_live_credentials_or_server\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginCharacterRefusalReplay()

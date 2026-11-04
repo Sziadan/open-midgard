@@ -1153,9 +1153,11 @@
         "docs/packets/evidence/PK44.04-pcbang-login-request.md",
         "docs/packets/evidence/PK44.04-pcbang-login-request.jsonl",
         "docs/packets/evidence/PK44.04-password-hash-request-gate.md",
-        "docs/packets/evidence/PK44.04-password-hash-request-gate.jsonl"
+        "docs/packets/evidence/PK44.04-password-hash-request-gate.jsonl",
+        "docs/packets/evidence/PK44.04-executable-hash-source-file.md",
+        "docs/packets/evidence/PK44.04-executable-hash-source-file.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): verify password hash request gate"
+      "commit_subject": "packet(PK44.04): verify executable hash source file"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
