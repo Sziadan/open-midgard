@@ -966,6 +966,17 @@ void LoginAcceptCharacterListReplay()
     Require(g_windowMgr.GetLoginStatus() == "Login: character list received from char server.",
         "0x006B character response status differs from expected");
 
+    std::vector<u8> emptyPacket(kHeaderLength, 0);
+    emptyPacket[0] = 0x6b;
+    emptyPacket[1] = 0x00;
+    emptyPacket[2] = static_cast<u8>(kHeaderLength);
+    LoginModeReplayAccess emptyMode;
+    LoginModeReplayAccess::RunAcceptChar(emptyMode, emptyPacket);
+    Require(emptyMode.GetCharCount() == 0
+            && emptyMode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect
+            && g_windowMgr.GetLoginStatus() == "Login: no characters on account.",
+        "valid selected-source empty 0x006B response did not enter empty character selection state");
+
     std::vector<u8> makePacket(sizeof(PACKET_HC_ACCEPT_MAKECHAR), 0);
     makePacket[0] = 0x6d;
     std::memcpy(makePacket.data() + sizeof(u16), record, kCharacterRecordLength);
@@ -979,6 +990,7 @@ void LoginAcceptCharacterListReplay()
         "0x006D character creation status differs from expected");
 
     std::cout << "{\"case_id\":\"login_accept_character_list\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-character-record-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptChar\",\"frame_length\":132,\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"input_frame_hex\":\"" << Hex(packet) << "\",\"character_gid\":305419896,\"character_name\":\"RuneA\",\"job\":7,\"headpalette\":18,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"rename_flag_default\":1,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_accept_character_list_empty\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-empty-list-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptChar\",\"frame_length\":24,\"opcode\":\"0x006B\",\"header_length\":24,\"record_count\":0,\"input_frame_hex\":\"" << Hex(emptyPacket) << "\",\"empty_list_status\":\"Login: no characters on account.\",\"char_select_transition\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_make_character\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006d-make-character-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptMakeChar\",\"frame_length\":110,\"opcode\":\"0x006D\",\"character_record_length\":108,\"input_frame_hex\":\"" << Hex(makePacket) << "\",\"character_gid\":305419896,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
