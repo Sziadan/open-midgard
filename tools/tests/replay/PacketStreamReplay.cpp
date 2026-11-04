@@ -806,12 +806,23 @@ void LoginRefusalResultMappingReplay()
         "unknown 0x006A result no longer preserves its numeric code");
 
     CRagConnection* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
     LoginModeReplayAccess mode;
     LoginModeReplayAccess::PrepareDisconnectState(mode);
     std::vector<u8> refusalPacket(sizeof(PACKET_AC_REFUSE_LOGIN), 0);
     refusalPacket[0] = 0x6a;
     refusalPacket[2] = 1;
-    LoginModeReplayAccess::RunRefusal(mode, refusalPacket);
+    LoginModeReplayAccess::SetStatus(mode, "Login: awaiting replay packet.");
+    peer.Send(refusalPacket);
+    const auto receiveDeadline = Clock::now() + kTimeout;
+    while (g_windowMgr.GetLoginStatus() != "Login refused: incorrect password."
+           && Clock::now() < receiveDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(mode);
+        if (g_windowMgr.GetLoginStatus() != "Login refused: incorrect password.") {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
     Require(g_windowMgr.GetLoginStatus() == "Login refused: incorrect password.",
         "0x006A handler did not write the mapped refusal status");
     Require(LoginModeReplayAccess::DisconnectStateCleared(mode),
@@ -820,7 +831,7 @@ void LoginRefusalResultMappingReplay()
         "0x006A handler did not return to stable Login");
     Require(!connection->IsOpen(), "0x006A handler did not close the connection");
 
-    std::cout << "{\"case_id\":\"login_refusal_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-006a-auth-result-map-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseLogin -> FormatLoginRefusalMessage -> SetLoginStatus/ErrorMsg -> Disconnect -> Login\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":23,\"opcode\":\"0x006A\",\"result_byte_offset\":2,\"block_date_bytes_zero\":true,\"input_frames_hex\":[";
+    std::cout << "{\"case_id\":\"login_refusal_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-006a-auth-result-map-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnRefuseLogin -> FormatLoginRefusalMessage\",\"assertion_scope\":\"headless AppMain_stub ErrorMsg; visible modal not verified\",\"frame_length\":23,\"opcode\":\"0x006A\",\"result_byte_offset\":2,\"block_date_bytes_zero\":true,\"input_frames_hex\":[";
     for (size_t i = 0; i < inputFrames.size(); ++i) {
         if (i != 0) std::cout << ",";
         std::cout << "\"" << inputFrames[i] << "\"";
