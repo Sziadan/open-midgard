@@ -1147,9 +1147,11 @@
         "docs/packets/evidence/PK44.04-connect-info-gate.md",
         "docs/packets/evidence/PK44.04-connect-info-gate.jsonl",
         "docs/packets/evidence/PK44.04-executable-hash-gate.md",
-        "docs/packets/evidence/PK44.04-executable-hash-gate.jsonl"
+        "docs/packets/evidence/PK44.04-executable-hash-gate.jsonl",
+        "docs/packets/evidence/PK44.04-channel-login-request.md",
+        "docs/packets/evidence/PK44.04-channel-login-request.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): verify executable hash gate"
+      "commit_subject": "packet(PK44.04): capture channel login request"
     },
     "PK45.01": {
       "status": "NOT_STARTED",

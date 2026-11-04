@@ -1169,6 +1169,103 @@ void LoginAccountRequestReplay()
     std::cout << "{\"case_id\":\"login_account_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0064-raw-login-selected-profile\",\"production_entry\":\"CLoginMode::SendMsg(SetUserId/SetPassword) -> SendPlainAccountLogin -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":55,\"opcode\":\"0x0064\",\"client_version\":20080910,\"username\":\"packet-user\",\"password_fixture\":\"packet-pass\",\"clienttype\":1,\"production_send_capture\":true,\"connect_account_gate_not_exercised\":true,\"live_credentials_not_used\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginAccountChannelRequestReplay()
+{
+    SetCase("login_account_channel_request", "PK44.LOGIN-REQUESTS", "PK44-02b0-channel-login-selected-source-layout", "CLoginMode::SendPlainAccountLogin -> SendLoginChannel -> CRagConnection::SendPacket");
+    const char* oldDataDirValue = std::getenv("OPEN_MIDGARD_DATA_DIR");
+    const bool hadDataDir = oldDataDirValue != nullptr;
+    const std::string oldDataDir = oldDataDirValue ? oldDataDirValue : "";
+    struct RestoreDataDir {
+        bool hadValue;
+        std::string value;
+        ~RestoreDataDir() {
+#if RO_PLATFORM_WINDOWS
+            _putenv_s("OPEN_MIDGARD_DATA_DIR", hadValue ? value.c_str() : "");
+#else
+            if (hadValue) setenv("OPEN_MIDGARD_DATA_DIR", value.c_str(), 1);
+            else unsetenv("OPEN_MIDGARD_DATA_DIR");
+#endif
+        }
+    } restoreDataDir{hadDataDir, oldDataDir};
+
+    const std::filesystem::path settingsDirectory = std::filesystem::temp_directory_path()
+        / ("open-midgard-packet-replay-channel-" + std::to_string(GetTickCount()));
+    std::filesystem::create_directories(settingsDirectory);
+    struct RemoveSettingsDirectory {
+        std::filesystem::path path;
+        ~RemoveSettingsDirectory() { std::error_code error; std::filesystem::remove_all(path, error); }
+    } removeSettingsDirectory{settingsDirectory};
+#if RO_PLATFORM_WINDOWS
+    Require(_putenv_s("OPEN_MIDGARD_DATA_DIR", settingsDirectory.string().c_str()) == 0,
+        "could not point channel-login replay settings at the isolated temporary directory");
+#else
+    Require(setenv("OPEN_MIDGARD_DATA_DIR", settingsDirectory.string().c_str(), 1) == 0,
+        "could not point channel-login replay settings at the isolated temporary directory");
+#endif
+    {
+        std::ofstream settings(settingsDirectory / "open-midgard.ini", std::ios::binary | std::ios::trunc);
+        Require(settings.is_open(), "could not write isolated channel-login settings fixture");
+        settings << "[Login]\nAccountLoginPacket=channel\nClientDateOverride=20080910\nClientTypeOverride=1\n";
+        settings.close();
+        Require(settings.good(), "could not finish isolated channel-login settings fixture");
+    }
+
+    const ServiceType originalService = g_serviceType;
+    struct RestoreServiceType { ServiceType value; ~RestoreServiceType() { g_serviceType = value; } } restoreService{originalService};
+    g_serviceType = ServiceAmerica;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    const char user[] = "packet-user";
+    const char password[] = "packet-pass";
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetUserId,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(user)), 0, 0) != 0,
+        "channel-login username message was rejected");
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetPassword,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(password)), 0, 0) != 0,
+        "channel-login password message was rejected");
+    LoginModeReplayAccess::RunPlainAccountLogin(mode);
+
+    std::vector<u8> expected(85, 0);
+    expected[0] = 0xb0;
+    expected[1] = 0x02;
+    expected[2] = 0x0e;
+    expected[3] = 0x69;
+    expected[4] = 0x32;
+    expected[5] = 0x01;
+    std::memcpy(expected.data() + 6, user, sizeof(user) - 1);
+    std::memcpy(expected.data() + 30, password, sizeof(password) - 1);
+    expected[54] = 1;
+    char expectedIp[16] = "127.0.0.1";
+    char hostName[100] = {};
+    if (gethostname(hostName, sizeof(hostName)) == 0) {
+        hostent* const host = gethostbyname(hostName);
+        if (host && host->h_addr_list && host->h_addr_list[0]) {
+            const char* const resolvedIp = inet_ntoa(*reinterpret_cast<in_addr*>(host->h_addr_list[0]));
+            if (resolvedIp && *resolvedIp) {
+                std::strncpy(expectedIp, resolvedIp, sizeof(expectedIp) - 1);
+            }
+        }
+    }
+    std::memcpy(expected.data() + 55, expectedIp, std::strlen(expectedIp));
+    const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+    Require(captured.size() == 85, "0x02B0 selected client request was not 85 bytes");
+    const char* const capturedIp = reinterpret_cast<const char*>(captured.data() + 55);
+    const size_t ipLength = strnlen(capturedIp, 16);
+    Require(ipLength > 0 && ipLength < 16
+            && inet_addr(capturedIp) != INADDR_NONE
+            && capturedIp == std::string(expectedIp),
+        "0x02B0 local IP field was not a terminated IPv4 address");
+    const char expectedMac[] = "111111111111";
+    std::memcpy(expected.data() + 71, expectedMac, sizeof(expectedMac));
+    Require(captured == expected,
+        "selected-source 0x02B0 outbound request differs from independent field-offset fixture");
+    Require(g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
+        "channel account login sender did not publish its production status");
+    std::cout << "{\"case_id\":\"login_account_channel_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-02b0-channel-login-selected-source-layout\",\"production_entry\":\"CLoginMode::SendPlainAccountLogin -> SendLoginChannel -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":85,\"opcode\":\"0x02B0\",\"client_version\":20080910,\"client_type\":1,\"ip_field_valid_ipv4\":true,\"mac_field\":\"111111111111\",\"gravity_flag\":0,\"synthetic_channel_override\":true,\"live_credentials_not_used\":true,\"deployed_profile_intent_unverified\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginConnectInfoGateReplay()
 {
     SetCase("login_connect_info_gate", "PK44.LOGIN-REQUESTS", "PK44-0200-connect-info-opt-in", "CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendPlainAccountLogin");
@@ -1542,6 +1639,7 @@ int main(){try{
     LoginSelectCharacterRequestReplay();
     LoginCreateCharacterRequestReplay();
     LoginAccountRequestReplay();
+    LoginAccountChannelRequestReplay();
     LoginConnectInfoGateReplay();
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
