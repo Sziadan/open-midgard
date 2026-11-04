@@ -1129,7 +1129,9 @@
         "docs/packets/evidence/PK44.04-login-hash-challenge.md",
         "docs/packets/evidence/PK44.04-login-hash-challenge.jsonl",
         "docs/packets/evidence/PK44.04-login-accept-reply.md",
-        "docs/packets/evidence/PK44.04-login-accept-reply.jsonl"
+        "docs/packets/evidence/PK44.04-login-accept-reply.jsonl",
+        "docs/packets/evidence/PK44.04-character-record-conversion.md",
+        "docs/packets/evidence/PK44.04-character-record-conversion.jsonl"
       ],
       "commit_subject": "packet(PK44.04): map login refusal and disconnect results"
     },

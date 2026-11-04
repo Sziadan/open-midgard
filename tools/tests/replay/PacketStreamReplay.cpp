@@ -69,6 +69,23 @@ struct LoginModeReplayAccess : CLoginMode {
     static void RunAcceptLogin(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnAcceptLogin(packet);
     }
+    static void RunAcceptChar(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnAcceptChar(packet);
+    }
+    static void RunAcceptMakeChar(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnAcceptMakeChar(packet);
+    }
+    static bool AcceptedCharacterFieldsMatch(const LoginModeReplayAccess& mode) {
+        const CHARACTER_INFO* const characters = mode.GetCharInfo();
+        return mode.GetCharCount() == 1 && characters != nullptr
+            && characters[0].GID == 0x12345678u
+            && std::string(reinterpret_cast<const char*>(characters[0].name)) == "RuneA"
+            && characters[0].job == 7
+            && characters[0].headpalette == 18
+            && characters[0].CharNum == 7
+            && characters[0].haircolor == 18
+            && characters[0].bIsChangedCharName == 1;
+    }
     static bool AcceptLoginFieldsMatch(const LoginModeReplayAccess& mode) {
         if (mode.m_numServer != 1 || mode.m_serverSelected != 0
             || mode.m_serverInfo[0].ip != 0x0a01a8c0u
@@ -894,6 +911,62 @@ void LoginAcceptReplyReplay()
     std::cout << "{\"case_id\":\"login_accept_reply\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-login-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptLogin\",\"frame_length\":79,\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"input_frame_hex\":\"" << Hex(packet) << "\",\"auth_code\":287454020,\"account_id\":1432778632,\"login_id2\":2864434397,\"raw_sex\":11,\"normalized_sex\":1,\"server_ip_bytes_hex\":\"c0a8010a\",\"server_port\":6121,\"server_name\":\"char-main\",\"server_users\":3,\"server_type\":4660,\"server_new_flag\":2,\"one_server_auto_selected\":true,\"transitions_to_connect_char\":true,\"login_handshake_cleared\":true,\"visible_ui_and_socket_connect_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginAcceptCharacterListReplay()
+{
+    SetCase("login_accept_character_list", "PK44.CHAR-LIST-ENTRY", "PK44-006b-character-record-selected-source", "CLoginMode::OnAcceptChar");
+    constexpr size_t kHeaderLength = 24;
+    constexpr size_t kCharacterRecordLength = 108;
+    constexpr size_t kPacketLength = kHeaderLength + kCharacterRecordLength;
+    std::vector<u8> packet(kPacketLength, 0);
+    packet[0] = 0x6b;
+    packet[1] = 0x00;
+    packet[2] = static_cast<u8>(kPacketLength & 0xff);
+    packet[3] = static_cast<u8>(kPacketLength >> 8);
+    u8* const record = packet.data() + kHeaderLength;
+    const auto PutU32Le = [record](size_t offset, u32 value) {
+        record[offset] = static_cast<u8>(value & 0xff);
+        record[offset + 1] = static_cast<u8>((value >> 8) & 0xff);
+        record[offset + 2] = static_cast<u8>((value >> 16) & 0xff);
+        record[offset + 3] = static_cast<u8>((value >> 24) & 0xff);
+    };
+    PutU32Le(0, 0x12345678u);
+    record[52] = 7; // selected server job
+    record[70] = 18; // selected server headpalette
+    std::memcpy(record + 74, "RuneA", 5);
+    record[98] = 10;
+    record[99] = 20;
+    record[100] = 30;
+    record[101] = 40;
+    record[102] = 50;
+    record[103] = 60;
+    record[104] = 7; // selected server's 16-bit CharNum
+    record[106] = 18; // selected server's 16-bit hairColor
+
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::RunAcceptChar(mode, packet);
+    Require(LoginModeReplayAccess::AcceptedCharacterFieldsMatch(mode),
+        "selected-source 0x006B slot/hair-color values were not translated into the client character record");
+    Require(mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
+        "0x006B character response did not transition to CharSelect");
+    Require(g_windowMgr.GetLoginStatus() == "Login: character list received from char server.",
+        "0x006B character response status differs from expected");
+
+    std::vector<u8> makePacket(sizeof(PACKET_HC_ACCEPT_MAKECHAR), 0);
+    makePacket[0] = 0x6d;
+    std::memcpy(makePacket.data() + sizeof(u16), record, kCharacterRecordLength);
+    LoginModeReplayAccess createMode;
+    LoginModeReplayAccess::RunAcceptMakeChar(createMode, makePacket);
+    Require(LoginModeReplayAccess::AcceptedCharacterFieldsMatch(createMode),
+        "selected-source 0x006D slot/hair-color values were not translated into the client character record");
+    Require(createMode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
+        "0x006D character creation response did not transition to CharSelect");
+    Require(g_windowMgr.GetLoginStatus() == "Login: character created successfully.",
+        "0x006D character creation status differs from expected");
+
+    std::cout << "{\"case_id\":\"login_accept_character_list\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-character-record-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptChar\",\"frame_length\":132,\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"input_frame_hex\":\"" << Hex(packet) << "\",\"character_gid\":305419896,\"character_name\":\"RuneA\",\"job\":7,\"headpalette\":18,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"rename_flag_default\":1,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_accept_make_character\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-006d-make-character-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptMakeChar\",\"frame_length\":110,\"opcode\":\"0x006D\",\"character_record_length\":108,\"input_frame_hex\":\"" << Hex(makePacket) << "\",\"character_gid\":305419896,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginPasswordHashChallengeReplay()
 {
     SetCase("login_password_hash_challenge", "PK44.LOGIN-REPLIES", "PK44-01dc-md5-challenge-selected-source", "CLoginMode::OnAckHash -> active 0x01DD builder -> CRagConnection::SendPacket");
@@ -977,6 +1050,7 @@ int main(){try{
     LoginRefusalResultMappingReplay();
     LoginDisconnectResultReplay();
     LoginAcceptReplyReplay();
+    LoginAcceptCharacterListReplay();
     LoginPasswordHashChallengeReplay();
     LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();

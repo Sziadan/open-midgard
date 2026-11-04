@@ -115,9 +115,52 @@ struct LEGACY_CHARACTER_INFO_106
     u8  Luk;
     u16 CharNum;
 };
+
+struct LEGACY_CHARACTER_INFO_108
+{
+    u32 GID;
+    int exp;
+    int money;
+    int jobexp;
+    int joblevel;
+    int bodystate;
+    int healthstate;
+    int effectstate;
+    int virtue;
+    int honor;
+    s16 jobpoint;
+    s16 hp;
+    s16 maxhp;
+    s16 sp;
+    s16 maxsp;
+    s16 speed;
+    s16 job;
+    s16 head;
+    s16 weapon;
+    s16 level;
+    s16 sppoint;
+    s16 accessory;
+    s16 shield;
+    s16 accessory2;
+    s16 accessory3;
+    s16 headpalette;
+    s16 bodypalette;
+    u8 name[24];
+    u8 Str;
+    u8 Agi;
+    u8 Vit;
+    u8 Int;
+    u8 Dex;
+    u8 Luk;
+    s16 CharNum;
+    s16 hairColor;
+};
 #pragma pack(pop)
 
 static_assert(sizeof(LEGACY_CHARACTER_INFO_106) == 106, "Legacy 0x006B character record size mismatch");
+static_assert(sizeof(LEGACY_CHARACTER_INFO_108) == 108, "Selected rAthena 0x006B character record size mismatch");
+static_assert(offsetof(LEGACY_CHARACTER_INFO_108, CharNum) == 104, "Selected rAthena character slot offset mismatch");
+static_assert(offsetof(LEGACY_CHARACTER_INFO_108, hairColor) == 106, "Selected rAthena hair-color offset mismatch");
 
 enum class CharListLayout
 {
@@ -228,6 +271,17 @@ CHARACTER_INFO ExpandLegacyCharacterInfo(const LEGACY_CHARACTER_INFO_106& legacy
     std::memcpy(&info, &legacy, sizeof(legacy));
     info.CharNum = static_cast<u8>(legacy.CharNum & 0xFFu);
     info.haircolor = static_cast<u8>(std::clamp<int>(legacy.headpalette, 0, 0xFF));
+    info.bIsChangedCharName = 1;
+    return info;
+}
+
+CHARACTER_INFO ExpandLegacyCharacterInfo(const LEGACY_CHARACTER_INFO_108& legacy)
+{
+    CHARACTER_INFO info{};
+    std::memcpy(&info, &legacy, sizeof(legacy));
+    info.CharNum = static_cast<u8>(legacy.CharNum);
+    info.haircolor = static_cast<u8>(std::clamp<int>(legacy.hairColor, 0, 0xFF));
+    // The selected legacy server layout has no rename flag; match the existing compact conversion default.
     info.bIsChangedCharName = 1;
     return info;
 }
@@ -2367,6 +2421,14 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
                                 sizeof(legacy));
                     m_charInfo[index] = ExpandLegacyCharacterInfo(legacy);
                 }
+            } else if (layout == CharListLayout::Legacy && ResolveAccountLoginVersion() < 20090225u) {
+                for (int index = 0; index < toRead; ++index) {
+                    LEGACY_CHARACTER_INFO_108 legacy{};
+                    std::memcpy(&legacy,
+                                p + headerSize + static_cast<size_t>(index) * sizeof(legacy),
+                                sizeof(legacy));
+                    m_charInfo[index] = ExpandLegacyCharacterInfo(legacy);
+                }
             } else {
                 std::memcpy(m_charInfo,
                             p + headerSize,
@@ -2466,7 +2528,13 @@ void CLoginMode::OnAcceptMakeChar(const std::vector<u8>& raw)
     }
 
     CHARACTER_INFO created{};
-    std::memcpy(&created, raw.data() + sizeof(u16), sizeof(created));
+    if (ResolveAccountLoginVersion() < 20090225u) {
+        LEGACY_CHARACTER_INFO_108 legacy{};
+        std::memcpy(&legacy, raw.data() + sizeof(u16), sizeof(legacy));
+        created = ExpandLegacyCharacterInfo(legacy);
+    } else {
+        std::memcpy(&created, raw.data() + sizeof(u16), sizeof(created));
+    }
 
     if (m_numChar >= 0 && m_numChar < static_cast<int>(std::size(m_charInfo))) {
         m_charInfo[m_numChar] = created;
