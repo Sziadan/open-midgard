@@ -1,6 +1,6 @@
 # Contract: <permanent ID>
 
-Status: DRAFT / IMPLEMENTED_PENDING_REVIEW / STRONG_REVIEW_APPROVED. Discovery parents: AUDIT-0x.... Owner step: PKxx.nn. Reviewer and approval commit: pending until the later independent review pass; not required before implementation.
+Status: SOURCE_BACKED / IMPLEMENTED_PENDING_REVIEW / REVIEWED_PK48. Discovery parents: AUDIT-0x.... Owner step: PKxx.nn. PK48 review status and commit: pending until the later independent review pass; not required before implementation.
 
 ## Identity and applicability
 
@@ -24,4 +24,4 @@ List exact Session/actor fields and Qt model signals/windows/actions to change. 
 
 ## Implementation boundary and tests
 
-Allowed files and forbidden adjacent changes. Complexity tier (S/M/L), with no prior strong-agent approval required. Exact independent fixtures and production entry points. Expected field/state/reply/UI assertions for each transition. List source branch-to-test mappings and acceptance thresholds. Separate offline and live gates. Unresolved technical questions block implementation of the affected work; pending independent review alone does not.
+Allowed files and forbidden adjacent changes. Complexity tier (S/M/L); prior strong-agent approval is not required. Exact independent fixtures and production entry points. Expected field/state/reply/UI assertions for each transition. List source branch-to-test mappings and acceptance thresholds. Separate offline and live gates. Unresolved technical questions block implementation of the affected work; pending independent review alone does not.

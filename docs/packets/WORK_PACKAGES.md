@@ -825,7 +825,7 @@ Tier: **S**. Dependencies: PK03, PK10, PK34.
 
 ### Required acceptance and traps
 
-P10: no guessed encryption, plaintext shortcut, logged passwords or UI-only pretend unlock. Source ambiguity is a strong-agent blocker, not permission to disable authentication.
+P10: no guessed encryption, plaintext shortcut, logged passwords or UI-only pretend unlock. Unresolved source questions block only the affected work; record the evidence and continue independent steps.
 
 ### Discovery ownership
 
@@ -907,7 +907,7 @@ Tier: **S**. Dependencies: PK03, PK34.
 
 ### Required acceptance and traps
 
-Each financial flow is a separate strong-reviewed child step. No modern bank request on2008 without proof. Reject overflows, stale quotes, duplicate responses and malformed lists.
+Each financial flow is a separate bounded child step with source-backed evidence; PK48 provides the later independent review. No modern bank request on2008 without proof. Reject overflows, stale quotes, duplicate responses and malformed lists.
 
 ### Discovery ownership
 

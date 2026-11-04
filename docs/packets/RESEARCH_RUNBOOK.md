@@ -26,7 +26,7 @@ The audit compiler probes demonstrate effective configuration and packed layouts
 
 Inspect final active registrations for0190 and007E, not Ref's packet struct alone. The audit identifies0190 as a19-byte action request with parser offsets5,18;007E MoreInfo is102 bytes with offsets5,9,12,20,22. Revalidate those against effective server configuration. Annotate every byte, including unused/padding/text regions, from the actual server registration and parser. Replace incorrect90-byte expectations in old tests. Assert production sends exactly what the server parser consumes, including text bounds and destination fields. Replay unrelated action requests too, because changing a shared profile can break them. A test comparing serializer output with the same client struct proves nothing.
 
-## Example: PK13 trade asymmetry (strong agent; external gate)
+## Example: PK13 trade asymmetry (source investigation; external server fix)
 
 Read trade_tradeack's acceptance-distance failure path and each clif result recipient. Make a two-client timeline: requester pending, acceptor invited, accept arrives after distance changes, acceptor receives TOOFAR, requester receives no result, both server trade states clear. Confirm with source-backed replay. Record exactly what a client can observe. Client cancellation/timeout must not invent peer notifications or report a definitive server reason that was never received. Prepare a minimal server fix specification that sends the correct result to both peers and tests both states; external source modification/build/restart needs separate authorization. Split the client and server outcomes in status so a mitigation never closes the actual server defect.
 

@@ -29,5 +29,8 @@ These are **source-backed applicability records only** for hash-pinned rAthena s
 | PK44.ACH.0A24-S2C-UPDATE | Map S2C 0x0A24 achievement update; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
 | PK44.ACH.0A26-C2S-INPUT | Map C2S 0x0A26 null-parser framing; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
 | PK44.ACH.0A26-S2C-REWARD-RESULT | Map S2C 0x0A26 achievement reward result; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
+| PK44.ATTENDANCE.0AEF-C2S-CLAIM | Map C2S 0x0AEF attendance claim; guarded at 20180307, no discovery parent in 20080910 inventory | PK44; review PK48 | Related later-profile identity only |
+| PK44.ATTENDANCE.0AF0-C2S-INPUT | Map C2S 0x0AF0 null-parser framing; inactive in selected 20080910 source config | PK24 primary; PK44; review PK48 | Source-config applicability only |
+| PK44.ATTENDANCE.0AF0-S2C-RESPONSE | Map S2C 0x0AF0 attendance response; inactive in selected 20080910 source config | PK24 primary; PK44; review PK48 | Source-config applicability only |
 
 Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Review summary and limits: [PK01.03 applicability approval](../evidence/PK01.03-applicability-approval.md). Server source file hashes, no-Git-metadata limitation, and effective registry evidence: [PK01.02 evidence](../evidence/PK01.02.md).

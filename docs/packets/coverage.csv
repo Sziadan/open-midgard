@@ -964,7 +964,7 @@ AUDIT-0x0ACF,0x0ACF,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x0AE3,0x0AE3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0AE6,0x0AE6,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0AE7,0x0AE7,map,S2C,PK15,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0AF0,0x0AF0,map,S2C,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0AF0,0x0AF0,map,both/reused,PK24,PK01;PK02;PK47;PK48;PK46;PK44,"Attendance 0x0AF0 is reused for null-parser C2S framing and S2C response; PK24 primary, PK44 source-config cross-review",INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ATTENDANCE.0AF0-C2S-INPUT;PK44.ATTENDANCE.0AF0-S2C-RESPONSE
 AUDIT-0x0AF6,0x0AF6,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0AF8,0x0AF8,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0AFA,0x0AFA,map,S2C,PK15,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
