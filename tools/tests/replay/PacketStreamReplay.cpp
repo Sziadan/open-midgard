@@ -920,9 +920,21 @@ void LoginAcceptReplyReplay()
     Require(sizeof(serverRecord) == kServerRecordLength, "independent selected-source server record fixture is not 32 bytes");
     std::memcpy(packet.data() + kAcceptLoginPrefixLength, serverRecord.data(), serverRecord.size());
 
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
     LoginModeReplayAccess mode;
     LoginModeReplayAccess::PrepareHandshakeOnly(mode);
-    LoginModeReplayAccess::RunAcceptLogin(mode, packet);
+    LoginModeReplayAccess::SetStatus(mode, "Login: awaiting replay packet.");
+    peer.Send(packet);
+    const auto receiveDeadline = Clock::now() + kTimeout;
+    while (g_windowMgr.GetLoginStatus() != "Login: account accepted by server."
+           && Clock::now() < receiveDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(mode);
+        if (g_windowMgr.GetLoginStatus() != "Login: account accepted by server.") {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
     Require(g_session.m_authCode == 0x11223344u && g_session.m_aid == 0x55667788u
             && g_session.m_userLevel == 0xaabbccddu && g_session.m_sex == 1,
         "0x0069 fixed-prefix fields or regional-sex normalization differ from the selected wire fixture");
@@ -934,7 +946,7 @@ void LoginAcceptReplyReplay()
         "0x0069 acceptance status was not written");
     Require(LoginModeReplayAccess::HandshakeCleared(mode), "0x0069 acceptance did not clear login handshake state");
 
-    std::cout << "{\"case_id\":\"login_accept_reply\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-login-selected-source\",\"production_entry\":\"CLoginMode::OnAcceptLogin\",\"frame_length\":79,\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"input_frame_hex\":\"" << Hex(packet) << "\",\"auth_code\":287454020,\"account_id\":1432778632,\"login_id2\":2864434397,\"raw_sex\":11,\"normalized_sex\":1,\"server_ip_bytes_hex\":\"c0a8010a\",\"server_port\":6121,\"server_name\":\"char-main\",\"server_users\":3,\"server_type\":4660,\"server_new_flag\":2,\"one_server_auto_selected\":true,\"transitions_to_connect_char\":true,\"login_handshake_cleared\":true,\"visible_ui_and_socket_connect_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_accept_reply\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-login-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin\",\"frame_length\":79,\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"input_frame_hex\":\"" << Hex(packet) << "\",\"auth_code\":287454020,\"account_id\":1432778632,\"login_id2\":2864434397,\"raw_sex\":11,\"normalized_sex\":1,\"server_ip_bytes_hex\":\"c0a8010a\",\"server_port\":6121,\"server_name\":\"char-main\",\"server_users\":3,\"server_type\":4660,\"server_new_flag\":2,\"one_server_auto_selected\":true,\"transitions_to_connect_char\":true,\"login_handshake_cleared\":true,\"production_framing_dispatch\":true,\"visible_ui_and_socket_connect_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginAcceptCharacterListReplay()
