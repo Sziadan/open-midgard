@@ -1139,7 +1139,7 @@
         "docs/packets/evidence/PK44.04-character-create-refusal.md",
         "docs/packets/evidence/PK44.04-character-create-refusal.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): cover empty character list"
+      "commit_subject": "packet(PK44.04): route character refusal through receive loop"
     },
     "PK45.01": {
       "status": "NOT_STARTED",

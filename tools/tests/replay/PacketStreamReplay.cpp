@@ -1003,15 +1003,23 @@ void LoginCharacterRefusalReplay()
     LoginModeReplayAccess mode;
     LoginModeReplayAccess::SetConnected(mode, true);
     const std::vector<u8> packet{0x6c, 0x00, 0x00};
-    LoginModeReplayAccess::RunCharRefusal(mode, packet);
+    peer.Send(packet);
+    const auto receiveDeadline = Clock::now() + kTimeout;
+    while (g_windowMgr.GetLoginStatus() != "Char server refused entry (code 0)."
+           && Clock::now() < receiveDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(mode);
+        if (g_windowMgr.GetLoginStatus() != "Char server refused entry (code 0).") {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
     Require(g_windowMgr.GetLoginStatus() == "Char server refused entry (code 0).",
-        "selected-source 0x006C result 0 did not retain its generic refusal status");
+        "production PollNetwork did not frame and dispatch selected-source 0x006C");
     Require(mode.NextSubMode() == CLoginMode::LoginSubMode_Login,
         "0x006C refusal did not schedule return to Login");
     Require(!LoginModeReplayAccess::IsConnected(mode), "0x006C refusal did not clear char-server connected state");
     Require(!connection->IsOpen(), "0x006C refusal did not close the active char-server connection");
     g_windowMgr.RemoveAllWindows();
-    std::cout << "{\"case_id\":\"login_character_refusal\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006c-refuse-enter-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseChar -> ShowLoginErrorDialog -> Disconnect -> Login\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":3,\"result\":0,\"status\":\"Char server refused entry (code 0).\",\"connected_state_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"visible_modal_not_verified\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_character_refusal\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006c-refuse-enter-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnRefuseChar -> ShowLoginErrorDialog -> Disconnect -> Login\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":3,\"result\":0,\"status\":\"Char server refused entry (code 0).\",\"connected_state_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"visible_modal_not_verified\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginZoneServerNotificationReplay()
