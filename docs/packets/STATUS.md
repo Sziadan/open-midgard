@@ -83,3 +83,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK06.04 self-review confirmed all selected-source fields, sender branches, receive/state/UI/map transitions, test vectors, and separate 016D/01EB identities. Profile 22, native full-frame UI and deployed-server parity remain open; PK48 review pending. Evidence: `evidence/PK06.04-self-review.md`.
 
 - PK08.04 committed as a blocked send-path self-review: serializer bytes are covered by PK08.03, while production transport capture and UI reachability require a broader harness seam. No discovery rows closed. PK09.01 is the active independent package step.
+
+- PK09.01 committed: bounded inventory/cart alias scope for `AUDIT-0x01EF` and `0x02D0` equipment interaction. Registration/layout semantics remain open; PK09.02 is active.
