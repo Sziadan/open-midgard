@@ -154,3 +154,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK44.04 focused production replay rerun: target build passed; sandboxed CTest failed before invocation because local mock connection was unavailable, then passed 1/1 with local-loopback permission. Evidence hashes the user-dirty replay source; no attribution or row closure. Broader per-contract malformed/lifecycle/UI coverage remains open.
 
 - PK46.01 scopes outbound parity as per-request path and field verification. 177 map requests remain (49 constructor matches, 128 unproven); 237 discovery rows are secondary assignments with no primary PK46 rows. PK46.02 must trace in bounded batches; no rows closed.
+
+- PK46.02 has an initial movement request trace: PacketVer22/23 0x00A7/8 bytes/destination@5 matches the selected 20080910 server parser. Explicit Legacy profile mismatches; deployed profile and packet-specific replay remain open. Only one of 177 requests is traced; no rows closed.

@@ -728,3 +728,7 @@ The replay target built successfully. Restricted CTest could not connect to its 
 ## 2026-11-04 — PK46.01 define outbound parity scope
 
 Specified source inputs, per-request trace fields, review leaves, and evidence gates. PK46.02 covers 177 accepted map requests (49 constructor matches, 128 unproven); PK46.03 covers login/character sends and unsupported gates; PK46.04 self-reviews and validates only applicable paths. The ledger has 237 secondary PK46 assignments and no primary owners. No runtime changes or rows closed. Evidence: `evidence/PK46.01-scope-boundary.md`. Next: trace PK46.02 in bounded batches.
+
+## 2026-11-04 — PK46.02 trace map movement request
+
+Traced WinMain mouse messages through held-click GameMode movement to the 8-byte 0x00A7 request. PacketVer22/23 encode the packed destination at offset 5, matching the selected 20080910 server registration/parser; explicit Legacy profile uses 0x0085/5 bytes and does not match. Active deployment profile and packet-specific replay remain open. One wire path only; no rows closed. Evidence: `evidence/PK46.02-map-movement.md`.
