@@ -937,7 +937,7 @@ AUDIT-0x09B9,0x09B9,map,S2C,PK40,PK01;PK02;PK47;PK48,Provisional source-symbol f
 AUDIT-0x09C4,0x09C4,map,S2C,PK38,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x09CA,0x09CA,map,S2C,PK23,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x09CD,0x09CD,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x09DA,0x09DA,map,S2C,PK12,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x09DA,0x09DA,map,S2C,PK12,PK01;PK02;PK47;PK48;PK44,PK12 primary guild-storage owner; PK44 source-confirmed cross-review identifies guarded 0x09DA S2C usage-log response and layout variants,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.GSTORAGE.09DA-S2C-USAGE-LOG
 AUDIT-0x09E7,0x09E7,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x09ED,0x09ED,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x09F0,0x09F0,map,unresolved,PK32,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

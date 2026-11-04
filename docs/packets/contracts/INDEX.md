@@ -35,3 +35,4 @@ These are **source-backed applicability records only** for hash-pinned rAthena s
 | PK44.DRESSROOM.0A02-S2C-OPEN | Map S2C 0x0A02 dressroom open; inactive in selected 20080910 source config | PK44; review PK48 | Source-config applicability only |
 
 Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Review summary and limits: [PK01.03 applicability approval](../evidence/PK01.03-applicability-approval.md). Server source file hashes, no-Git-metadata limitation, and effective registry evidence: [PK01.02 evidence](../evidence/PK01.02.md).
+| PK44.GSTORAGE.09DA-S2C-USAGE-LOG | Map S2C 0x09DA guild-storage usage log; inactive in selected 20080910 source config | PK12 primary; PK44; review PK48 | Source-config applicability only; later item/card width variants traced |
