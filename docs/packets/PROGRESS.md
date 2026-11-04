@@ -744,3 +744,7 @@ Cross-referenced current login sends and legacy character select/create captures
 ## 2026-11-04 — PK45.01 define actor/handler audit scope
 
 Specified exact source inputs, per-handler evidence, and actor/receive-handler leaves. The 240 registered-entry and 136 handler-function inventories require packet/variant-level contracts. PK20 class-resource, PK22 status visual/motion, and PK24 effect-ordering branches remain explicit gates; audit unrelated handlers independently. Scope only; no runtime changes or rows closed. Evidence: `evidence/PK45.01-scope-boundary.md`. Next: bounded nonblocked PK45.02 actor paths.
+
+## 2026-11-04 — PK45.02 trace actor name acknowledgments
+
+Traced selected 20080910 server 0x0195 player name/party/guild/position and 0x0095 non-player name layouts into the current `HandleActorNameAck` receive and cache updates. The 0x0194 variant, request reachability, lifecycle cleanup, malformed replay, and visible rendering remain open. One handler family only; no rows closed. Evidence: `evidence/PK45.02-actor-name-ack.md`. Continue with nonblocked actor spawn/move/action leaves; preserve PK20/22/24 gates.
