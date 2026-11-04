@@ -261,7 +261,7 @@ public:
     u32 m_colorEndTick;
     u16 m_clevel;
     u32 m_MaxHp, m_Hp, m_MaxSp, m_Sp;
-    int m_Exp;
+    u32 m_Exp;
     u16 m_Str, m_Int, m_Dex, m_Vit, m_Luk, m_Agi;
     vector3d m_accel;
     CPathInfo m_path;

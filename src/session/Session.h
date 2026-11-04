@@ -235,10 +235,10 @@ public:
     CHARACTER_INFO* GetMutableSelectedCharacterInfo();
     const CharacterVitals& GetCharacterVitals() const { return m_characterVitals; }
     bool UpdateCharacterVital(u32 type, u32 value) { return m_characterVitals.Update(type, value); }
-    void SetBaseExpValue(int value);
-    void SetNextBaseExpValue(int value);
-    void SetJobExpValue(int value);
-    void SetNextJobExpValue(int value);
+    void SetBaseExpValue(u32 value);
+    void SetNextBaseExpValue(u32 value);
+    void SetJobExpValue(u32 value);
+    void SetNextJobExpValue(u32 value);
     bool TryGetBaseExpPercent(int* outPercent) const;
     bool TryGetJobExpPercent(int* outPercent) const;
     void ClearInventoryItems();
@@ -375,10 +375,10 @@ private:
     CHARACTER_INFO m_selectedCharacterInfo;
     CharacterVitals m_characterVitals;
     bool m_hasSelectedCharacterInfo;
-    int m_baseExpValue;
-    int m_nextBaseExpValue;
-    int m_jobExpValue;
-    int m_nextJobExpValue;
+    u32 m_baseExpValue;
+    u32 m_nextBaseExpValue;
+    u32 m_jobExpValue;
+    u32 m_nextJobExpValue;
     bool m_hasBaseExpValue;
     bool m_hasNextBaseExpValue;
     bool m_hasJobExpValue;

@@ -1764,16 +1764,16 @@ bool ApplySelfStatusUpdateToSession(u32 statusType, u32 value)
     CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo();
     switch (statusType) {
     case kStatusBaseExp:
-        g_session.SetBaseExpValue(static_cast<int>(value));
+        g_session.SetBaseExpValue(value);
         return true;
     case kStatusJobExp:
-        g_session.SetJobExpValue(static_cast<int>(value));
+        g_session.SetJobExpValue(value);
         return true;
     case kStatusNextBaseExp:
-        g_session.SetNextBaseExpValue(static_cast<int>(value));
+        g_session.SetNextBaseExpValue(value);
         return true;
     case kStatusNextJobExp:
-        g_session.SetNextJobExpValue(static_cast<int>(value));
+        g_session.SetNextJobExpValue(value);
         return true;
     default:
         break;
@@ -2836,7 +2836,7 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
         return updatedSession;
     case kStatusBaseExp:
     case kStatusJobExp:
-        player->m_Exp = static_cast<int>(value);
+        player->m_Exp = value;
         return true;
     default:
         return updatedSession;

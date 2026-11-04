@@ -128,3 +128,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK22.02 deferred: rAthena OPT3 masks match Ref, but profile identity and effect/motion/ARGB cleanup lifetimes remain unresolved. PK22.03/04 await a source-backed status lifecycle and production replay. No rows closed.
 
 - PK24.01 scoped 44 provisional owners and split arithmetic audit, actor lifecycle, and replay checks. No rows closed. PK24.02 is next.
+
+- PK24.02 fixed signed-int EXP narrowing to u32 and added extreme unsigned percentage checks; high-vitals script and ro_gamemode target pass. Full app link was blocked by output executable permission. No rows closed. PK24.03 is next.

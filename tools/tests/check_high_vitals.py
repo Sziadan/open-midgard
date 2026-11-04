@@ -83,7 +83,12 @@ int main() {
     check(VitalBarFill(4294967295ll,1,114)==114);
     check(AddVital(4294967290u,100)==4294967295u);
     check(AddVital(65535,1)==65536);
-    std::cout << "PASS: legacy wire size, signed-16 boundary, full unsigned-32 HP/SP, repeated bootstrap, packet order, bars, recovery saturation\n";
+    int experiencePercent=-1;
+    check(TryExperiencePercent(4294967295u,4294967295u,&experiencePercent) && experiencePercent==100);
+    check(TryExperiencePercent(2147483648u,4294967295u,&experiencePercent) && experiencePercent==50);
+    check(TryExperiencePercent(4294967295u,1u,&experiencePercent) && experiencePercent==100);
+    check(!TryExperiencePercent(1u,0u,&experiencePercent));
+    std::cout << "PASS: legacy wire size, signed-16 boundary, unsigned-32 HP/SP/EXP, extreme experience ratios, repeated bootstrap, packet order, bars, recovery saturation\n";
 }
 ''')
 compiler = Path("C:/Qt/Tools/mingw1310_64/bin/g++.exe")

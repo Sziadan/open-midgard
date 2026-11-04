@@ -1449,50 +1449,44 @@ CHARACTER_INFO* CSession::GetMutableSelectedCharacterInfo()
     return m_hasSelectedCharacterInfo ? &m_selectedCharacterInfo : nullptr;
 }
 
-void CSession::SetBaseExpValue(int value)
+void CSession::SetBaseExpValue(u32 value)
 {
-    m_baseExpValue = (std::max)(value, 0);
+    m_baseExpValue = value;
     m_hasBaseExpValue = true;
 }
 
-void CSession::SetNextBaseExpValue(int value)
+void CSession::SetNextBaseExpValue(u32 value)
 {
-    m_nextBaseExpValue = (std::max)(value, 0);
+    m_nextBaseExpValue = value;
     m_hasNextBaseExpValue = true;
 }
 
-void CSession::SetJobExpValue(int value)
+void CSession::SetJobExpValue(u32 value)
 {
-    m_jobExpValue = (std::max)(value, 0);
+    m_jobExpValue = value;
     m_hasJobExpValue = true;
 }
 
-void CSession::SetNextJobExpValue(int value)
+void CSession::SetNextJobExpValue(u32 value)
 {
-    m_nextJobExpValue = (std::max)(value, 0);
+    m_nextJobExpValue = value;
     m_hasNextJobExpValue = true;
 }
 
 bool CSession::TryGetBaseExpPercent(int* outPercent) const
 {
-    if (!outPercent || !m_hasBaseExpValue || !m_hasNextBaseExpValue || m_nextBaseExpValue <= 0) {
+    if (!m_hasBaseExpValue || !m_hasNextBaseExpValue) {
         return false;
     }
-
-    const int percent = static_cast<int>((100LL * m_baseExpValue) / m_nextBaseExpValue);
-    *outPercent = (std::max)(0, (std::min)(percent, 100));
-    return true;
+    return TryExperiencePercent(m_baseExpValue, m_nextBaseExpValue, outPercent);
 }
 
 bool CSession::TryGetJobExpPercent(int* outPercent) const
 {
-    if (!outPercent || !m_hasJobExpValue || !m_hasNextJobExpValue || m_nextJobExpValue <= 0) {
+    if (!m_hasJobExpValue || !m_hasNextJobExpValue) {
         return false;
     }
-
-    const int percent = static_cast<int>((100LL * m_jobExpValue) / m_nextJobExpValue);
-    *outPercent = (std::max)(0, (std::min)(percent, 100));
-    return true;
+    return TryExperiencePercent(m_jobExpValue, m_nextJobExpValue, outPercent);
 }
 
 void CSession::ClearInventoryItems()

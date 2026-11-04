@@ -28,3 +28,11 @@ inline int VitalBarFill(std::int64_t amount, std::int64_t maximum, int width)
     if (maximum <= 0 || width <= 0) return 0;
     return static_cast<int>((std::clamp<std::int64_t>(amount, 0, maximum) * width) / maximum);
 }
+
+inline bool TryExperiencePercent(std::uint32_t current, std::uint32_t next, int* outPercent)
+{
+    if (!outPercent || next == 0) return false;
+    const std::uint64_t percent = (std::uint64_t(current) * 100u) / next;
+    *outPercent = static_cast<int>((std::min<std::uint64_t>)(percent, 100u));
+    return true;
+}
