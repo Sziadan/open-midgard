@@ -1159,9 +1159,11 @@
         "docs/packets/evidence/PK44.04-character-server-entry-request.md",
         "docs/packets/evidence/PK44.04-character-server-entry-request.jsonl",
         "docs/packets/evidence/PK44.04-character-select-ui-actions.md",
-        "docs/packets/evidence/PK44.04-character-select-ui-actions.jsonl"
+        "docs/packets/evidence/PK44.04-character-select-ui-actions.jsonl",
+        "docs/packets/evidence/PK44.04-character-create-ui-actions.md",
+        "docs/packets/evidence/PK44.04-character-create-ui-actions.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): exercise character select UI actions"
+      "commit_subject": "packet(PK44.04): exercise character create UI actions"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
