@@ -88,6 +88,7 @@ protected:
     void OnClose() override;
 
 private:
+    friend struct PacketStreamReplayAccess;
     bool m_waitingForRawAccountIdEcho = false;
     u32 m_expectedRawAccountIdEcho = 0;
 };

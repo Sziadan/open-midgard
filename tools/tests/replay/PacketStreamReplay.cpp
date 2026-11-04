@@ -46,6 +46,11 @@ struct SkillPacketReplayAccess {
     }
 };
 
+struct PacketStreamReplayAccess {
+    static SOCKET Native(const CRagConnection& connection) { return connection.m_socket; }
+    static int BufferedBytes(const CRagConnection& connection) { return connection.m_recvQueue.GetSize(); }
+};
+
 struct LoginModeReplayAccess : CLoginMode {
     int NextSubMode() const { return m_nextSubMode; }
     static void SeedCharServerForConnect(LoginModeReplayAccess& mode, u32 ip, s16 port) {
@@ -1797,9 +1802,132 @@ void LoginCharacterServerEntryRequestReplay()
         "ConnectChar production state emitted a different independent 0x0065 field fixture");
     Require(g_windowMgr.GetLoginStatus() == "Login: waiting for character list...",
         "ConnectChar did not enter its production character-list wait status");
+    const std::vector<u8> charServerReply{
+        0x44, 0x33, 0x22, 0x11,
+        0x6b, 0x00, 0x18, 0x00,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    Require(send(accepted.value, reinterpret_cast<const char*>(charServerReply.data()),
+                 static_cast<int>(charServerReply.size()), 0) == static_cast<int>(charServerReply.size()),
+        "mock char server did not send raw AID echo plus selected-source empty character list");
+    Require(SelectSocket(PacketStreamReplayAccess::Native(*connection), true, false,
+            std::chrono::duration_cast<std::chrono::milliseconds>(kTimeout)) > 0,
+        "mock char-server reply did not become readable");
+    LoginModeReplayAccess::RunPollNetwork(mode);
+    Require(g_windowMgr.GetLoginStatus() == "Login: no characters on account."
+            && mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
+        "ConnectChar did not consume the raw AID and dispatch the following framed character list");
     connection->Disconnect();
     g_windowMgr.RemoveAllWindows();
-    std::cout << "{\"case_id\":\"login_character_server_entry_request\",\"contract_id\":\"PK44.CHAR-RAW-AID-HANDSHAKE\",\"fixture_id\":\"PK44-0065-connect-char-entry-request\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectChar) -> CRagConnection::Connect/SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":17,\"opcode\":\"0x0065\",\"account_id\":287454020,\"login_id1\":1432778632,\"login_id2\":2578103244,\"unused\":0,\"sex\":1,\"local_char_server_connection\":true,\"raw_four_byte_server_echo_not_exercised\":true,\"socket_closed_after_capture\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_character_server_entry_request\",\"contract_id\":\"PK44.CHAR-RAW-AID-HANDSHAKE\",\"fixture_id\":\"PK44-0065-connect-char-entry-request-and-raw-aid\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectChar) -> CRagConnection::Connect/ExpectRawAccountIdEcho/SendPacket -> RecvPacket -> PollNetwork\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"char_server_reply_hex\":\"" << Hex(charServerReply) << "\",\"frame_length\":17,\"opcode\":\"0x0065\",\"account_id\":287454020,\"raw_echo_hex\":\"44332211\",\"following_frame_hex\":\"6b0018000000000000000000000000000000000000000000\",\"empty_character_list_dispatched\":true,\"next_submode_char_select\":true,\"network_scope\":\"loopback mock char server only\",\"outcome\":\"PASS\"}\n";
+}
+
+void RawAccountIdPrefixBoundaryReplay()
+{
+    SetCase("raw_account_id_prefix_boundaries", "PK04.RAW-AID", "PK04-raw-aid-literal-prefixes", "CRagConnection::ExpectRawAccountIdEcho -> RecvPacket -> opcode-framed suffix");
+    struct PrefixCase {
+        u32 accountId;
+        std::array<u8, 4> bytes;
+        const char* label;
+    };
+    const std::array<PrefixCase, 3> cases{{
+        {0x12345678u, {0x78, 0x56, 0x34, 0x12}, "ordinary"},
+        {0xA1B2006Cu, {0x6c, 0x00, 0xb2, 0xa1}, "fixed_006c_collision"},
+        {0xA1B20069u, {0x69, 0x00, 0xb2, 0xa1}, "variable_0069_collision"},
+    }};
+    const std::vector<u8> expectedFrame{
+        0x6b, 0x00, 0x18, 0x00,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    const std::vector<u8> nextFramedPacket{0x6c, 0x00, 0x00};
+    for (const PrefixCase& fixture : cases) {
+        for (size_t split = 1; split <= fixture.bytes.size(); ++split) {
+            const std::string caseId = std::string("raw_aid_") + fixture.label + "_split_" + std::to_string(split);
+            SetCase(caseId, "PK04.RAW-AID", "PK04-raw-aid-literal-prefixes", "CRagConnection::ExpectRawAccountIdEcho -> RecvPacket -> opcode-framed suffix");
+            TestConnection connection;
+            LoopbackPeer peer(connection);
+            Require(connection.ExpectRawAccountIdEcho(fixture.accountId),
+                "production connection refused to arm the raw account-ID prefix");
+            const std::vector<u8> prefix(fixture.bytes.begin(), fixture.bytes.begin() + split);
+            peer.Send(prefix);
+            std::vector<u8> received;
+            if (split < fixture.bytes.size()) {
+                PumpUntilBuffered(connection, static_cast<int>(split));
+                Require(!Receive(connection, received) && connection.BufferedBytes() == static_cast<int>(split),
+                    "partial raw account-ID prefix was delivered or consumed prematurely");
+            } else {
+                WaitReadable(connection, Clock::now() + kTimeout);
+                Require(!Receive(connection, received) && connection.BufferedBytes() == 0,
+                    "complete raw echo without a framed suffix produced a packet");
+            }
+            std::vector<u8> suffix(fixture.bytes.begin() + split, fixture.bytes.end());
+            suffix.insert(suffix.end(), expectedFrame.begin(), expectedFrame.end());
+            suffix.insert(suffix.end(), nextFramedPacket.begin(), nextFramedPacket.end());
+            peer.Send(suffix);
+            const std::vector<u8> captured = PumpUntilPacket(connection);
+            Require(captured == expectedFrame,
+                "validated raw AID prefix changed or consumed the adjacent framed response");
+            const std::vector<u8> capturedNext = PumpUntilPacket(connection);
+            Require(capturedNext == nextFramedPacket,
+                "raw-prefix expectation was not cleared exactly once after matching the AID");
+            Require(connection.IsOpen(), "valid raw AID prefix unexpectedly closed the connection");
+            std::cout << "{\"case_id\":\"" << caseId << "\",\"contract_id\":\"PK04.RAW-AID\",\"fixture_id\":\"PK04-raw-aid-literal-prefixes\",\"production_entry\":\"ExpectRawAccountIdEcho -> RecvPacket\",\"account_id_hex\":\"" << Hex(std::vector<u8>(fixture.bytes.begin(), fixture.bytes.end())) << "\",\"account_id_literal\":\"" << fixture.label << "\",\"split_after_bytes\":" << split << ",\"incomplete_prefix_delivery\":false,\"following_frame_expected_hex\":\"" << Hex(expectedFrame) << "\",\"following_frame_captured_hex\":\"" << Hex(captured) << "\",\"next_frame_expected_hex\":\"" << Hex(nextFramedPacket) << "\",\"next_frame_captured_hex\":\"" << Hex(capturedNext) << "\",\"framed_suffix_preserved\":true,\"expectation_cleared_once\":true,\"connection_open\":true,\"outcome\":\"PASS\"}\n";
+        }
+    }
+
+    SetCase("raw_account_id_mismatch_rejected", "PK04.RAW-AID", "PK04-raw-aid-mismatch-and-eof", "CRagConnection::ExpectRawAccountIdEcho -> RecvPacket mismatch close");
+    {
+        TestConnection connection;
+        LoopbackPeer peer(connection);
+        Require(connection.ExpectRawAccountIdEcho(0x12345678u), "mismatch fixture could not arm expected AID");
+        const std::vector<u8> mismatchAndFrame{0x79,0x56,0x34,0x12,0x6b,0x00,0x18,0x00,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        peer.Send(mismatchAndFrame);
+        std::vector<u8> captured;
+        const auto deadline = Clock::now() + kTimeout;
+        while (connection.IsOpen() && Clock::now() < deadline) {
+            WaitReadable(connection, deadline);
+            if (Receive(connection, captured)) break;
+        }
+        Require(!connection.IsOpen() && connection.BufferedBytes() == 0 && captured.empty(),
+            "mismatched four-byte account echo was not rejected before framed bytes");
+        std::cout << "{\"case_id\":\"raw_account_id_mismatch_rejected\",\"contract_id\":\"PK04.RAW-AID\",\"fixture_id\":\"PK04-raw-aid-mismatch-and-eof\",\"expected_aid_hex\":\"78563412\",\"received_aid_hex\":\"79563412\",\"following_frame_dispatched\":false,\"connection_open\":false,\"buffered_bytes\":0,\"outcome\":\"PASS\"}\n";
+    }
+
+    for (size_t partial = 0; partial < 4; ++partial) {
+        SetCase("raw_account_id_eof_" + std::to_string(partial), "PK04.RAW-AID", "PK04-raw-aid-mismatch-and-eof", "CRagConnection::ExpectRawAccountIdEcho -> RecvPacket EOF");
+        TestConnection connection;
+        LoopbackPeer peer(connection);
+        Require(connection.ExpectRawAccountIdEcho(0x12345678u), "EOF fixture could not arm expected AID");
+        if (partial > 0) {
+            const std::vector<u8> prefix{0x78,0x56,0x34};
+            peer.Send(std::vector<u8>(prefix.begin(), prefix.begin() + partial));
+            PumpUntilBuffered(connection, static_cast<int>(partial));
+        }
+        CloseSocket(peer.peer.value);
+        peer.peer.value = INVALID_SOCKET;
+        WaitReadable(connection, Clock::now() + kTimeout);
+        std::vector<u8> captured;
+        Require(!Receive(connection, captured) && !connection.IsOpen() && connection.BufferedBytes() == 0,
+            "EOF during raw AID prefix did not close and clear the receive state");
+        std::cout << "{\"case_id\":\"raw_account_id_eof_" << partial << "\",\"contract_id\":\"PK04.RAW-AID\",\"fixture_id\":\"PK04-raw-aid-mismatch-and-eof\",\"partial_prefix_bytes\":" << partial << ",\"packet_delivered\":false,\"connection_open\":false,\"buffered_bytes\":0,\"outcome\":\"PASS\"}\n";
+    }
+
+    SetCase("raw_account_id_reconnect_clears_policy", "PK04.RAW-AID", "PK04-raw-aid-mismatch-and-eof", "CRagConnection::Connect/Disconnect lifecycle -> ordinary framed receive");
+    {
+        TestConnection connection;
+        {
+            LoopbackPeer peer(connection);
+            Require(connection.ExpectRawAccountIdEcho(0x12345678u), "reconnect fixture could not arm expected AID");
+            peer.Send({0x78,0x56});
+            PumpUntilBuffered(connection, 2);
+        }
+        const std::vector<u8> expectedOrdinary{0x6c,0x00,0x00};
+        LoopbackPeer reconnected(connection);
+        reconnected.Send(expectedOrdinary);
+        const std::vector<u8> captured = PumpUntilPacket(connection);
+        Require(captured == expectedOrdinary && connection.IsOpen(),
+            "new ordinary connection inherited the previous raw account-ID expectation");
+        std::cout << "{\"case_id\":\"raw_account_id_reconnect_clears_policy\",\"contract_id\":\"PK04.RAW-AID\",\"fixture_id\":\"PK04-raw-aid-mismatch-and-eof\",\"reconnected_frame_expected_hex\":\"6c0000\",\"reconnected_frame_captured_hex\":\"" << Hex(captured) << "\",\"stale_prefix_policy_cleared\":true,\"outcome\":\"PASS\"}\n";
+    }
 }
 
 void LoginCharacterRefusalReplay()
@@ -2137,6 +2265,8 @@ int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
     Require(ro::net::GetPacketSize(0x018b)==4,"0x018b disconnect acknowledgement size differs from contract");
+    Require(ro::net::GetPacketSize(0x8482)==0 && ro::net::GetPacketSize(0x8483)==0,
+        "fake raw account-ID prefix identities remain registered as opcodes");
     const std::vector<u8> fixed{0x6c,0x00,0x00}; // opaque length sample: map registry clif_packetdb.hpp line 18
     const std::vector<u8> variable{0x69,0x00,0x06,0x00,0x11,0x22}; // variable framing only
     FixedEveryBoundary(fixed);FixedCoalesced(fixed);VariableEveryBoundary(variable,fixed);
@@ -2171,6 +2301,7 @@ int main(){try{
     Login4AccountRequestReplay();
     LoginConnectInfoGateReplay();
     LoginCharacterServerEntryRequestReplay();
+    RawAccountIdPrefixBoundaryReplay();
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();
