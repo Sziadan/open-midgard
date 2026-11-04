@@ -677,3 +677,9 @@ Bound fixed 11-byte 0x01B0 (GID, unused type byte, class ID) separately from 0x0
 ## 2026-11-04 — PK20.02 deferred on actor resource lifecycle
 
 Did not make a runtime change: 0x01D7's base-look update does not prove class-specific NPC model/resource replacement, and replacing/upgrading actors transfers effect/message ownership. PK20 acceptance requires render, picking, visibility, repeated-change, release, and teardown checks unavailable through the established actor API. Defer PK20.02 and dependent .03/.04 for stronger actor/resource review. No rows closed. Evidence: `evidence/PK20.02-resource-rebuild-blocker.md`. Continue independent PK22.01.
+## 2026-11-04 — PK22.01 scope ShowEFST and extended status
+
+Bound 0x028A's 18-byte four-u32 contract and recorded Ref's distinct `showEFST` branch groups; the current handler covers only level-99 and Assumptio. Separated 0x043F's unexplained trailing 12 bytes and newer-profile status from the 2008 reference. Exact target status enum identity and effect lifecycle remain gates. No rows closed. Evidence: `evidence/PK22.01-showefst-scope.md`. Stable subject: `packet(PK22.01): scope ShowEFST status branches`. Next: PK22.02 only after status enum/lifetime mapping is source-backed.
+## 2026-11-04 — PK22.02 deferred on branch lifecycle proof
+
+Compared Ref showEFST branches with available rAthena `e_sc_opt3`; all candidate masks align. However, branch/profile identity and status-end cleanup are not established, and Ref side effects include priority effects, hidden-state cleanup, and motion/ARGB lifetimes. The dirty replay harness cannot safely be extended here. Defer PK22.02–.04 for stronger status/profile and lifecycle review. No rows closed. Evidence: `evidence/PK22.02-branch-lifecycle-boundary.md`. Continue next independent package.

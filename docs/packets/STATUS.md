@@ -122,3 +122,7 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK20.01 scoped 0x01B0 separately from 0x01D7; profile identity remains a gate. PK20.02 is next; 0x01B0 class resource replacement must not be implemented through the look selector handler.
 
 - PK20.02 deferred: no proven NPC class resource rebuild lifecycle; 01D7's job mutation is insufficient evidence. PK20.03/04 await a safe actor/resource design and lifecycle tests. PK22.01 is next independent package.
+
+- PK22.01 scoped 0x028A fields and Ref branches; current handler implements only level-99/Assumptio. 0x043F remains newer-profile-only with 12 unexplained tail bytes. Target status enums and effect lifetimes need adjudication before implementation; no rows closed.
+
+- PK22.02 deferred: rAthena OPT3 masks match Ref, but profile identity and effect/motion/ARGB cleanup lifetimes remain unresolved. PK22.03/04 await a source-backed status lifecycle and production replay. No rows closed.
