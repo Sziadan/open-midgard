@@ -379,7 +379,10 @@ void DisconnectAckDecisionReplay(){
     Require(BeginPendingDisconnectAction(PendingDisconnectAction::ReturnToCharSelect),"could not begin return-to-character request");
     Require(!BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),"duplicate disconnect request was accepted");
     MarkPendingDisconnectActionSent(0);
-    Require(GetExpiredDisconnectAction(false,15000)==PendingDisconnectAction::None,"packet-budget exhaustion expired request");
+    GameModePacketLoopResult packetBudgetExhausted{};
+    packetBudgetExhausted.receiveDrained=false;
+    Require(!ApplyDisconnectTimeoutAfterPacketLoop(packetBudgetExhausted,15000),"packet-budget exhaustion applied the production timeout fallback");
+    Require(GetPendingDisconnectAction()==PendingDisconnectAction::ReturnToCharSelect,"packet-budget exhaustion cleared the pending action");
     Require(GetExpiredDisconnectAction(true,14999)==PendingDisconnectAction::None,"request expired before the 15-second deadline");
     Require(GetExpiredDisconnectAction(true,15000)==PendingDisconnectAction::ReturnToCharSelect,"zero start tick did not expire at deadline");
     ClearPendingDisconnectAction();
@@ -495,7 +498,7 @@ void LoginPollTransientStatusReplay()
 }
 void DisconnectTimeoutFallbackReplay()
 {
-    SetCase("disconnect_timeout_fallback","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","ProcessGameModePacketLoop -> GetExpiredDisconnectAction -> ApplyDisconnectTimeoutFallback -> ReturnToLoginModeWithStatus -> CModeMgr::Switch");
+    SetCase("disconnect_timeout_fallback","disconnect_ack_contract","PK03.04.DISCONNECT-ACK","ProcessGameModePacketLoop -> ApplyDisconnectTimeoutAfterPacketLoop -> ApplyDisconnectTimeoutFallback -> ReturnToLoginModeWithStatus -> CModeMgr::Switch");
     CRagConnection* singleton=CRagConnection::instance();
     singleton->Disconnect();
     ClearPendingDisconnectAction();
@@ -519,15 +522,14 @@ void DisconnectTimeoutFallbackReplay()
     Require(eofDrainedWithoutPacket,"EOF without acknowledgement did not drain/close the receive connection");
     const bool pendingRetainedAfterEof=GetPendingDisconnectAction()==PendingDisconnectAction::ReturnToCharSelect;
     Require(pendingRetainedAfterEof,"EOF without acknowledgement cleared pending request context");
-    Require(GetExpiredDisconnectAction(loopResult.receiveDrained,14999)==PendingDisconnectAction::None,"EOF caused timeout before the deadline");
-    const PendingDisconnectAction expired=GetExpiredDisconnectAction(loopResult.receiveDrained,15000);
-    Require(expired==PendingDisconnectAction::ReturnToCharSelect,"EOF-pending request did not expire at the timeout boundary");
+    Require(!ApplyDisconnectTimeoutAfterPacketLoop(loopResult,14999),"EOF caused timeout before the deadline");
+    Require(GetPendingDisconnectAction()==PendingDisconnectAction::ReturnToCharSelect,"early EOF timeout check cleared the pending action");
 
     const int oldReturnFlag=g_session.m_pendingReturnToCharSelect;
     SetPendingLoginStatus("");
     g_session.m_pendingReturnToCharSelect=0;
     g_modeMgr.Switch(1,"map");
-    Require(ApplyDisconnectTimeoutFallback(expired),"expired return action did not apply the production login fallback");
+    Require(ApplyDisconnectTimeoutAfterPacketLoop(loopResult,15000),"expired return action did not apply the production packet-loop timeout fallback");
     const bool returnTimeoutRequestsCharSelect=g_session.m_pendingReturnToCharSelect==1&&SkillPacketReplayAccess::NextType()==0;
     Require(returnTimeoutRequestsCharSelect,
         "return timeout did not request character-select login mode");
@@ -545,11 +547,11 @@ void DisconnectTimeoutFallbackReplay()
     constexpr u32 wrappedDeadline=wrappedStart+15000u;
     Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),"could not stage pending exit timeout");
     MarkPendingDisconnectActionSent(wrappedStart);
-    const PendingDisconnectAction expiredExit=GetExpiredDisconnectAction(true,wrappedDeadline);
-    Require(expiredExit==PendingDisconnectAction::ExitToWindows,"exit action did not expire across tick wrap");
+    GameModePacketLoopResult drainedPacketLoop{};
+    drainedPacketLoop.receiveDrained=true;
     g_session.m_pendingReturnToCharSelect=1;
     g_modeMgr.Switch(1,"map");
-    Require(ApplyDisconnectTimeoutFallback(expiredExit),"expired exit action did not use production login fallback");
+    Require(ApplyDisconnectTimeoutAfterPacketLoop(drainedPacketLoop,wrappedDeadline),"exit action did not expire across tick wrap through the production packet-loop fallback");
     const bool exitTimeoutSkipsCharSelect=g_session.m_pendingReturnToCharSelect==0&&SkillPacketReplayAccess::NextType()==0;
     Require(exitTimeoutSkipsCharSelect,
         "exit timeout incorrectly requested character-select resume");
@@ -560,7 +562,7 @@ void DisconnectTimeoutFallbackReplay()
         "exit timeout status did not override the normal server-selection status");
     g_session.m_pendingReturnToCharSelect=oldReturnFlag;
     std::cout<<"{\"case_id\":\"disconnect_timeout_fallback\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"fixture_id\":\"PK03.04-018b-no-ack-eof\","<<ConfiguredSourceProvenanceJson()
-        <<",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\",\"production_entry\":\"ProcessGameModePacketLoop -> GetExpiredDisconnectAction -> ApplyDisconnectTimeoutFallback -> ReturnToLoginModeWithStatus -> CModeMgr::Switch\",\"stage\":\"headless_timeout_mode_handoff\",\"assertion_scope\":\"production timeout decision/fallback and LoginMode status-adoption helpers; full CGameMode::OnUpdate and CLoginMode::OnInit frames not instantiated\",\"eof_drained_without_packet\":"<<(eofDrainedWithoutPacket?"true":"false")<<",\"eof_preserves_pending_action\":"<<(pendingRetainedAfterEof?"true":"false")<<",\"return_timeout_requests_char_select\":"<<(returnTimeoutRequestsCharSelect?"true":"false")<<",\"fallback_cleared_action_and_map\":"<<(fallbackClearedActionAndMap?"true":"false")<<",\"exit_timeout_skips_char_select\":"<<(exitTimeoutSkipsCharSelect?"true":"false")<<",\"return_timeout_status_adopted\":"<<(returnTimeoutStatusAdopted?"true":"false")<<",\"exit_timeout_status_adopted\":"<<(exitTimeoutStatusAdopted?"true":"false")<<",\"outcome\":\"PASS\"}\n";
+        <<",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\",\"production_entry\":\"ProcessGameModePacketLoop -> ApplyDisconnectTimeoutAfterPacketLoop -> ApplyDisconnectTimeoutFallback -> ReturnToLoginModeWithStatus -> CModeMgr::Switch\",\"stage\":\"headless_timeout_mode_handoff\",\"assertion_scope\":\"production packet-loop timeout decision/fallback and LoginMode status-adoption helpers; full CGameMode::OnUpdate and CLoginMode::OnInit frames not instantiated\",\"eof_drained_without_packet\":"<<(eofDrainedWithoutPacket?"true":"false")<<",\"eof_preserves_pending_action\":"<<(pendingRetainedAfterEof?"true":"false")<<",\"return_timeout_requests_char_select\":"<<(returnTimeoutRequestsCharSelect?"true":"false")<<",\"fallback_cleared_action_and_map\":"<<(fallbackClearedActionAndMap?"true":"false")<<",\"exit_timeout_skips_char_select\":"<<(exitTimeoutSkipsCharSelect?"true":"false")<<",\"return_timeout_status_adopted\":"<<(returnTimeoutStatusAdopted?"true":"false")<<",\"exit_timeout_status_adopted\":"<<(exitTimeoutStatusAdopted?"true":"false")<<",\"outcome\":\"PASS\"}\n";
     ClearPendingDisconnectAction();
 }
 void DisconnectRequestReplay(){

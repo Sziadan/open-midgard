@@ -10342,10 +10342,7 @@ void CGameMode::OnUpdate() {
     const GameModePacketLoopResult packetLoop = ProcessGameModePacketLoop(
         *this, *conn, GetProductionGameModePacketRouter(), packetBudget);
     const DWORD packetEnd = GetTickCount();
-    const PendingDisconnectAction expiredAction = GetExpiredDisconnectAction(
-        packetLoop.receiveDrained,
-        GetTickCount());
-    if (ApplyDisconnectTimeoutFallback(expiredAction)) {
+    if (ApplyDisconnectTimeoutAfterPacketLoop(packetLoop, GetTickCount())) {
         return;
     }
     const int packetsProcessed = packetLoop.packetsProcessed;

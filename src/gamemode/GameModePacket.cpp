@@ -7885,6 +7885,14 @@ PendingDisconnectAction GetExpiredDisconnectAction(bool receiveDrained, u32 nowT
     return g_pendingDisconnectAction;
 }
 
+bool ApplyDisconnectTimeoutAfterPacketLoop(const GameModePacketLoopResult& packetLoop, u32 nowTick)
+{
+    const PendingDisconnectAction expiredAction = GetExpiredDisconnectAction(
+        packetLoop.receiveDrained,
+        nowTick);
+    return ApplyDisconnectTimeoutFallback(expiredAction);
+}
+
 void ClearPendingDisconnectAction()
 {
     g_pendingDisconnectAction = PendingDisconnectAction::None;

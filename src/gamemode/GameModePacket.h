@@ -64,6 +64,7 @@ GameModePacketLoopResult ProcessGameModePacketLoop(
     CRagConnection& connection,
     CGameModePacketRouter& router,
     int packetBudget);
+bool ApplyDisconnectTimeoutAfterPacketLoop(const GameModePacketLoopResult& packetLoop, u32 nowTick);
 
 // Removes runtime actors whose delayed despawn timer has expired.
 void CleanupPendingActorDespawns(CGameMode& mode);

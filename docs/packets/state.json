@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK03.04",
+  "active_step": "PK44.01",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -140,7 +140,7 @@
         "docs/packets/evidence/PK03.04-global-router-refusal.jsonl",
         "docs/packets/contracts/PK03.04.DISCONNECT-ACK.md"
       ],
-      "commit_subject": "packet(PK03.04): replay LoginMode failure fallback"
+      "commit_subject": "packet(PK03.04): exercise shared timeout preamble"
     },
     "PK04.01": {
       "status": "NOT_STARTED",
@@ -978,7 +978,7 @@
       "commit_subject": null
     },
     "PK44.01": {
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK44.01-scope.md"
       ],
