@@ -659,3 +659,6 @@ Scoped P11 across 0x02C8 party-invite settings, 0x02D8/0x02D9 server-confirmed c
 ## 2026-11-04 — PK16.02 profile identity blocker
 
 Confirmed the current receive registrations and ignored handlers; searched for client 0x02D8 framing, serializer, and setting UI call sites. The selected server registry and available external parser snapshot provide a candidate layout and setting enum but not an identity-matched 2008 profile; repository commit identity could not be read. Do not guess IDs or wire behavior. No rows closed. Evidence: `evidence/PK16.02-profile-blocker.md`. Continue with independent PK16.03 social-path audit.
+## 2026-11-04 — PK16.03 audit social paths
+
+Audited friend roster/state/add/delete/request handlers, whisper send/receive/ack state, candidate ignore commands, user-count packet framing, and failure notices. Found a malformed 0x0201 snapshot atomicity risk owned by PK34, a single-slot whisper correlation risk, and silent friend-add/delete outcomes. 0x00D2/0x00D7 semantics and complete block-list behavior remain unverified. No discovery rows closed. Evidence: `evidence/PK16.03-social-path-audit.md`. Stable subject: `packet(PK16.03): audit social state paths`. Next: PK16.04 production replay/UI verification; keep profile gates open.
