@@ -269,3 +269,10 @@ Current client has no registered or dispatched path for any of the four packets.
 ## 2026-11-04 — PK44.03.008 PIN applicability trace
 
 Traced assigned character-server PIN identities `0x08B8`, `0x08B9`, `0x08BA`, `0x08BE`, and `0x08C5`, their packed fields and later-profile call semantics. The authoritative config header defines `PACKETVER_SUPPORTS_PINCODE` as `PACKETVER >= 20110309`; every handler registration and dispatch gate is inside this macro. Effective selected PACKETVER=20080910 compiles the transaction out, independent of runtime PIN settings. All five discovery rows are now `INACTIVE_FOR_SELECTED_SOURCE_CONFIG` and link the applicability contract. The later-profile enum contradicts a stale nearby code comment; table uses the enum/call sites. No runtime changes/build/tests. Deployed-server provenance and later profile security remain outside this step. Stable subject: `packet(PK44.03.008): trace PIN profile guards`. Next: `PK44.03.009`.
+
+
+## 2026-11-04 — PK44.03.009 character-slot move trace
+
+Traced unconditionally registered C2S `0x08D4` (8 bytes: before slot, after slot, client remaining count) and selected S2C `0x08D5` (8 bytes: length, result, remaining moves; newer profile uses `0x0B70`). Server validates feature/count/source/destination limits, updates or swaps SQL slots subject to config, decrements finite move count and resends character list on success. Current client has no sender or response registration; rows remain UNREVIEWED.
+
+Found concrete malformed-input issue: when client `slot_before >= MAX_CHARS`, server calls reply helper with that index, and helper reads `sd.char_moves[index]` unchecked. Recorded as PK48 security gate before hostile-input replay or runtime implementation. No runtime code changed; no build/test run; deployed-server reachability unknown. Stable subject: `packet(PK44.03.009): trace character slot move`. Next: `PK44.03.010`.
