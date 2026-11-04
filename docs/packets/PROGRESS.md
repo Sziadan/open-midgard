@@ -520,3 +520,7 @@ Corrected the replay evidence: this Windows build links `src/main/WinMain.cpp`, 
 ## 2026-11-04 — PK44.04 exercise accepted login endpoint transition
 
 Extended `0x0069` replay with a second selected-source acceptance frame whose first server record points to a local mock char server. Production framing and `OnAcceptLogin` parse that endpoint, the production ConnectChar transition establishes the socket, and the peer captures the exact 17-byte `0x0065` `CA_ENTER` frame with accepted session fields. The client enters the character-list wait status. Fresh deploy-off build succeeded; focused CTest passed 1/1 in 2.69 seconds with local-loopback permission. Replay SHA-256: `909BFD6D54EB36466E7D6EF95392E57C549B0C0B48F2C0EEE1EB3DA875203CA8` (19,855,239 bytes, `2026-11-04T05:17:05Z`). Visible acceptance UI remains unverified; no discovery row was closed. Stable subject: `packet(PK44.04): exercise accepted login endpoint transition`. Next: select another bounded source-backed PK44.04 reply or state branch.
+
+## 2026-11-04 — PK44.04 correct remaining modal linkage claims
+
+Reconciled the active 0x0081 contract and 0x006C/0x006E evidence against the actual Windows replay link: `WinMain.cpp::ErrorMsg -> MessageBoxA`, not `AppMain_stub.cpp`. Visible modal delivery remains unverified. Updated the 0x0069 self-review to reflect the integrated endpoint-to-0x0065 loopback replay and retain the raw AID echo/list-response boundary as open under PK04. Historical progress notes remain unchanged. Stable subject: `packet(PK44.04): correct modal linkage evidence`.
