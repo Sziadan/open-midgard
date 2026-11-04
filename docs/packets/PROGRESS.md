@@ -580,3 +580,7 @@ Self-reviewed selected 01F2 source layout and send branches against framing, mem
 ## 2026-11-04 — PK07.01 specify pet status contract
 
 Established selected-source map S2C `0x01A2` as a packed 35-byte pet status snapshot for effective profile 20080910; the 2-byte `job` extension is guarded at PACKETVER >= 20081126 and remains a separate PK47 identity. Documented exact offsets, sender field sources/rename branch, SELF recipient, status-refresh caller families, and absence of actor identity. Client currently frames 37 bytes. PK27 retains lifecycle ownership; no code or coverage classification changed. No build run for this contract checkpoint. Stable subject: `packet(PK07.01): specify pet status contract`. Next: PK07.02 active-profile framing correction. PK48 is pending, not a gate.
+
+## 2026-11-04 — PK07.02 select active pet status framing
+
+Changed selected-profile `0x01A2` framing from 37 to 35 bytes and replayed a literal source-layout sample followed by fixed `0x006C` through production `Connect`/`RecvPacket`; both packets arrived intact and the queue emptied. Deploy-off build succeeded; focused CTest passed 1/1 in 2.91 seconds. Binary SHA-256 `26B6DDC5C72B766B292D7E074209A404FE46F44EE98F845608E31DC0316B7F15`. Evidence in `evidence/PK07.02-replay.md`/`.jsonl`. This does not decode pet state or close discovery. Stable subject: `packet(PK07.02): select active pet status framing`. Next: PK07.03 trace and implement pet status state integration; PK27 owns lifecycle.

@@ -2311,10 +2311,21 @@ void GuildMemberLoginNoticeReplay(){
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
+    Require(ro::net::GetPacketSize(0x01a2)==35,"active 20080910 pet status receive size must be 35 bytes");
     Require(ro::net::GetPacketSize(0x018b)==4,"0x018b disconnect acknowledgement size differs from contract");
     Require(ro::net::GetPacketSize(0x8482)==0 && ro::net::GetPacketSize(0x8483)==0,
         "fake raw account-ID prefix identities remain registered as opcodes");
     const std::vector<u8> fixed{0x6c,0x00,0x00}; // opaque length sample: map registry clif_packetdb.hpp line 18
+    {
+        std::vector<u8> petStatus{0xa2,0x01,'P'};petStatus.insert(petStatus.end(),23,0);
+        petStatus.insert(petStatus.end(),{0,10,0,20,0,30,0,0x34,0x12});
+        std::vector<u8> coalesced=petStatus;coalesced.insert(coalesced.end(),fixed.begin(),fixed.end());
+        SetCase("pet_status_35_byte_followed_by_fixed_packet");TestConnection c;LoopbackPeer peer(c);peer.Send(coalesced);WaitKernelPending(c,static_cast<int>(coalesced.size()));
+        const auto actualPet=ReadOne(c);Require(actualPet==petStatus,"production framing changed the selected 35-byte pet status frame");
+        Require(c.BufferedBytes()==static_cast<int>(fixed.size()),"35-byte pet frame did not leave the following fixed frame aligned");
+        const auto actualNext=ReadOne(c);Require(actualNext==fixed&&c.BufferedBytes()==0,"fixed frame following pet status was lost or misaligned");
+        std::cout<<"{\"case_id\":\"pet_status_35_byte_followed_by_fixed_packet\",\"contract_id\":\"PK07.PET-STATUS\",\"fixture_id\":\"PK07-01a2-selected-20080910-fields\",\"production_entry\":\"CRagConnection::Connect/RecvPacket -> TryReadPacket\",\"pet_frame_hex\":\""<<Hex(actualPet)<<"\",\"pet_frame_size\":"<<actualPet.size()<<",\"following_frame_hex\":\""<<Hex(actualNext)<<"\",\"following_frame_size\":"<<actualNext.size()<<",\"queue_empty\":"<<(c.BufferedBytes()==0?"true":"false")<<",\"outcome\":\"PASS\"}\n";
+    }
     const std::vector<u8> variable{0x69,0x00,0x06,0x00,0x11,0x22}; // variable framing only
     FixedEveryBoundary(fixed);FixedCoalesced(fixed);VariableEveryBoundary(variable,fixed);
     RejectUnframedInput({0xff,0xff},fixed,"unknown_opcode_closes_without_rescan",CRagConnection::ReceiveError::UnknownOpcode);
