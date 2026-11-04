@@ -1157,9 +1157,11 @@
         "docs/packets/evidence/PK44.04-executable-hash-source-file.md",
         "docs/packets/evidence/PK44.04-executable-hash-source-file.jsonl",
         "docs/packets/evidence/PK44.04-character-server-entry-request.md",
-        "docs/packets/evidence/PK44.04-character-server-entry-request.jsonl"
+        "docs/packets/evidence/PK44.04-character-server-entry-request.jsonl",
+        "docs/packets/evidence/PK44.04-character-select-ui-actions.md",
+        "docs/packets/evidence/PK44.04-character-select-ui-actions.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): capture character server entry request"
+      "commit_subject": "packet(PK44.04): exercise character select UI actions"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
