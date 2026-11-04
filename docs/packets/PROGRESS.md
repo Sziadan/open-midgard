@@ -764,3 +764,7 @@ Traced selected 20080910 33-byte 0x02E1 from clif_damage through HandleActorActi
 ## 2026-11-04 — PK45.02 defer actor spawn variant family
 
 The client receive profile exposes legacy, shifted, modern, and font spawn variants; the selected server emitter/actor-kind layout has not been tied to the matching decode path. PK20 class-resource, PK22 status/motion, and PK24 effect-ordering boundaries also affect spawn presentation. Defer this family for stronger source/profile review and independent replay. No rows closed. Evidence: evidence/PK45.02-spawn-variant-boundary.md. Move to an independently supported PK45.03 receive-handler leaf.
+
+## 2026-11-04 — PK45.03 correct 0x0189 type-1 meaning
+
+Cross-checking PK25.03 against authoritative rAthena found type 1 is CANT_MEMO, emitted for MF_NOMEMO/MF_NOWARPTO, while the client said teleport was possible based on Ref wording. Corrected the message to “Saved point cannot be memorized.” Preserved the packet length/type-3 ack behavior; display color remains unverified. ro_gamemode build passed. One handler correction only; no rows closed. Evidence: evidence/PK45.03-map-info-semantics.md.

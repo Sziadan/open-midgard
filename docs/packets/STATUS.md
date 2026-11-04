@@ -172,3 +172,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK45.02 additionally traces selected 0x02E1 actor-action wire fields into the current action message. Configuration-dependent values and animation/effect/UI lifecycle remain open; 0x008A/0x08C8 variants are separate.
 
 - PK45.02 actor-spawn variants are deferred: current client has legacy/shifted/modern/font layouts, but selected 20080910 emitter-to-decoder parity and actor resource lifecycle are unproven. Stronger profile review and an independent fixture are required; no rows closed.
+
+- PK45.03 corrected 0x0189 type 1 to the selected server's saved-point memo restriction; previous client text said teleport was possible. ro_gamemode built successfully. Color/UI and remaining handler parity are open; no rows closed.

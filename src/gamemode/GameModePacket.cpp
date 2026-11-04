@@ -3692,7 +3692,7 @@ void HandleNotifyMapInfo(CGameMode& mode, const PacketView& packet)
         color = 0x00FF0000u;
         break;
     case 1:
-        message = "Teleport is possible in this area.";
+        message = "Saved point cannot be memorized.";
         break;
     case 2:
         message = "Skills cannot be used in this area.";
