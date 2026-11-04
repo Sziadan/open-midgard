@@ -276,3 +276,8 @@ Traced assigned character-server PIN identities `0x08B8`, `0x08B9`, `0x08BA`, `0
 Traced unconditionally registered C2S `0x08D4` (8 bytes: before slot, after slot, client remaining count) and selected S2C `0x08D5` (8 bytes: length, result, remaining moves; newer profile uses `0x0B70`). Server validates feature/count/source/destination limits, updates or swaps SQL slots subject to config, decrements finite move count and resends character list on success. Current client has no sender or response registration; rows remain UNREVIEWED.
 
 Found concrete malformed-input issue: when client `slot_before >= MAX_CHARS`, server calls reply helper with that index, and helper reads `sd.char_moves[index]` unchecked. Recorded as PK48 security gate before hostile-input replay or runtime implementation. No runtime code changed; no build/test run; deployed-server reachability unknown. Stable subject: `packet(PK44.03.009): trace character slot move`. Next: `PK44.03.010`.
+
+
+## 2026-11-04 — PK44.03.010 character block/status applicability trace
+
+Traced S2C variable `0x020D`: 4-byte header followed by 24-byte CID/unblock-time records, normally sent after char-list and repeated every 10 seconds while a future block remains. The selected `PACKETVER_SAK_NUM=20080910` defines `PACKETVER_SAK_LEGACY_CHARINFO`; the sender returns immediately under that macro before packet construction, sending, expiry cleanup or timer scheduling. Classified the discovery row `INACTIVE_FOR_SELECTED_SOURCE_CONFIG`; deployed provenance remains unknown. No runtime changes/build/tests. Stable subject: `packet(PK44.03.010): trace character block status`. Next: aggregate PK44.03 after checking all ten child checkpoints.

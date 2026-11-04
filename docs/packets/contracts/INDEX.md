@@ -67,3 +67,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 | PK44.CHAR-PINCODE | Character-server PIN challenge and update family | PK44; review PK48 | All assigned handlers/registrations compile out for selected PACKETVER=20080910 source config |
 
 | PK44.CHAR-SLOT-MOVE | Character-slot move request/reply transaction | PK44; review PK48 | Server protocol traced; handler contains unchecked source-slot read on malformed request |
+
+| PK44.CHAR-BLOCK-INFO | Character-server variable character-block/unban-time status packet | PK44; review PK48 | Sender returns before construction under selected legacy-charinfo macro; inactive for selected source config |

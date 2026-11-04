@@ -419,7 +419,7 @@ AUDIT-0x0207,0x0207,map,S2C,PK50,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x0208,0x0208,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0209,0x0209,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x020A,0x020A,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x020D,0x020D,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Connection-stage applicability and handshake review,UNREVIEWED,
+AUDIT-0x020D,0x020D,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Sender call is profile-gated; selected PACKETVER_SAK_NUM defines PACKETVER_SAK_LEGACY_CHARINFO and sender returns before packet build/send. See PK44.CHAR-BLOCK-INFO.md.,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.CHAR-BLOCK-INFO
 AUDIT-0x020E,0x020E,map,S2C,PK26,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x020F,0x020F,map,C2S,PK39,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0210,0x0210,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
