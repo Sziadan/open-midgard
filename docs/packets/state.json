@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK44.02.002",
+  "active_step": "PK44.02.003",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -997,12 +997,14 @@
       "commit_subject": "packet(PK44.02.001): classify clan source-date applicability"
     },
     "PK44.02.002": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK44.ROULETTE-MAP.md"
+      ],
+      "commit_subject": "packet(PK44.02.002): trace roulette direction and source-date gates"
     },
     "PK44.02.003": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     },
