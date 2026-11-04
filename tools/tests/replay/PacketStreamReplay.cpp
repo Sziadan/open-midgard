@@ -2,6 +2,7 @@
 #include "GronPacket.h"
 #include "MapSendProfile.h"
 #include "Packet.h"
+#include "core/Globals.h"
 #include "gamemode/ActionRequestSender.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
@@ -44,6 +45,12 @@ struct SkillPacketReplayAccess {
 
 struct LoginModeReplayAccess : CLoginMode {
     int NextSubMode() const { return m_nextSubMode; }
+    static void SendHashRequest(LoginModeReplayAccess& mode) {
+        mode.SendPasswordHashRequest();
+    }
+    static void RunAckHash(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
+        mode.OnAckHash(packet);
+    }
     static std::string FormatRefusal(const std::vector<u8>& packet) {
         return FormatLoginRefusalMessage(packet);
     }
@@ -721,6 +728,60 @@ void LoginRefusalResultMappingReplay()
     std::cout << "],\"result_6_empty_detail_fallback\":true,\"unknown_result_preserved\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginPasswordHashChallengeReplay()
+{
+    SetCase("login_password_hash_challenge", "PK44.LOGIN-REPLIES", "PK44-01dc-md5-challenge-selected-source", "CLoginMode::OnAckHash -> active 0x01DD builder -> CRagConnection::SendPacket");
+    const std::vector<u8> challenge = {
+        0xdc, 0x01, 0x18, 0x00,
+        0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+        0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33,
+    };
+    Require(sizeof(PACKET_CA_LOGIN_HASH) == 47, "selected client 0x01DD request size differs from source contract");
+    Require(challenge.size() == 24 && challenge[2] == 0x18 && challenge[3] == 0,
+        "synthetic 0x01DC fixture does not contain its four-byte header and 20-byte salt");
+
+    struct ModeSample { int passwordFirst; const char* expectedDigest; };
+    const ModeSample samples[] = {
+        {0, "e30bf739e82f48e80e85d68a47981cad"},
+        {1, "54ad6400ff9529c355b65b9afb05f42d"},
+    };
+    const int originalPasswordEncrypt2 = g_passwordEncrypt2;
+    struct RestorePasswordEncrypt2 { int value; ~RestorePasswordEncrypt2() { g_passwordEncrypt2 = value; } } restore{originalPasswordEncrypt2};
+    CRagConnection* connection = CRagConnection::instance();
+    LoginModeReplayAccess mode;
+    std::strncpy(mode.m_userId, "packet-test", sizeof(mode.m_userId) - 1);
+    std::strncpy(mode.m_userPassword, "password", sizeof(mode.m_userPassword) - 1);
+    std::vector<std::string> actualFrames;
+    for (const ModeSample& sample : samples) {
+        connection->Disconnect();
+        g_passwordEncrypt2 = sample.passwordFirst;
+        LoopbackPeer peer(*connection);
+        LoginModeReplayAccess::SendHashRequest(mode);
+        const std::vector<u8> hashRequest = peer.ReceiveExact(sizeof(PACKET_CA_REQ_HASH));
+        Require(hashRequest == std::vector<u8>({0xdb, 0x01}), "production password-hash request bytes differ from 0x01DB");
+        LoginModeReplayAccess::RunAckHash(mode, challenge);
+        const std::vector<u8> request = peer.ReceiveExact(sizeof(PACKET_CA_LOGIN_HASH));
+        Require(request.size() == 47 && request[0] == 0xdd && request[1] == 0x01,
+            "0x01DC production handler did not send a 47-byte 0x01DD login request");
+        const u32 clientVersion = static_cast<u32>(request[2])
+            | (static_cast<u32>(request[3]) << 8)
+            | (static_cast<u32>(request[4]) << 16)
+            | (static_cast<u32>(request[5]) << 24);
+        Require(clientVersion == 20080910u, "0x01DD request did not preserve the selected packetver-23 login date");
+        Require(std::string(reinterpret_cast<const char*>(request.data() + 6)) == "packet-test",
+            "0x01DD request did not preserve the synthetic account ID");
+        Require(Hex(std::vector<u8>(request.begin() + 30, request.begin() + 46)) == sample.expectedDigest,
+            "0x01DD digest does not match the selected password/challenge concatenation order");
+        actualFrames.push_back(Hex(request));
+        connection->Disconnect();
+    }
+    g_passwordEncrypt2 = originalPasswordEncrypt2;
+
+    std::cout << "{\"case_id\":\"login_password_hash_challenge\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-01dc-md5-challenge-selected-source\",\"production_entry\":\"CLoginMode::SendPasswordHashRequest -> 0x01DB; OnAckHash -> active 0x01DD builder -> CRagConnection::SendPacket\",\"request_01db_hex\":\"db01\",\"input_challenge_hex\":\"" << Hex(challenge)
+        << "\",\"captured_01dd_frames_hex\":[\"" << actualFrames[0] << "\",\"" << actualFrames[1]
+        << "\"],\"passwordencrypt2_modes\":[0,1],\"expected_digest_order_0\":\"salt+password\",\"expected_digest_order_1\":\"password+salt\",\"outcome\":\"PASS\"}\n";
+}
+
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
@@ -748,6 +809,7 @@ int main(){try{
     {SetCase("production_reconnect_reset");TestConnection c;{LoopbackPeer p(c);p.Send({0x6c});PumpUntilBuffered(c,1);}c.Disconnect();Require(!c.IsOpen()&&c.BufferedBytes()==0,"disconnect failed to clear receive queue");{LoopbackPeer p(c);p.Send(fixed);auto out=PumpUntilPacket(c);Require(out==fixed,"production reconnect failed after disconnect");VerifyRoute(out,0x006c);Report("production_reconnect_reset",kFixedFixture,kFixedSha,{fixed},Hex(fixed),Hex(out),0,c.BufferedBytes(),c);}}
     ProductionAcceptedExitAckReplay();
     LoginRefusalResultMappingReplay();
+    LoginPasswordHashChallengeReplay();
     LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;

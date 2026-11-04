@@ -1123,9 +1123,11 @@
       "evidence": [
         "docs/packets/evidence/PK44.04-self-review.md",
         "docs/packets/evidence/PK44.04-login-refusal-mapping.md",
-        "docs/packets/evidence/PK44.04-login-refusal-mapping.jsonl"
+        "docs/packets/evidence/PK44.04-login-refusal-mapping.jsonl",
+        "docs/packets/evidence/PK44.04-login-hash-challenge.md",
+        "docs/packets/evidence/PK44.04-login-hash-challenge.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): correct login refusal result labels"
+      "commit_subject": "packet(PK44.04): replay login hash challenge modes"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
