@@ -89,3 +89,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK09.02 is blocked on authoritative 0x01EF server/profile identity: current client registration collides between equipment inventory and cart parsing. PK09.03 is dependent and remains open; work proceeds at PK10.01.
 
 - PK10.01 scope is recorded for two discovery parents, `0x0283` and `0x02D5`; PK10.02 is next. PK09.02 remains blocked on 0x01EF server/profile identity.
+
+- PK10.02 is blocked for stronger review at the cross-stage `0x0283` map-auth lifecycle and login/character failure UI boundary; source facts are recorded, with no row closure. Work proceeds to PK11.01.

@@ -1,3 +1,5 @@
+PK10.02 is blocked for stronger review: server `0x0283` carries map player ID before auth, while client stage routing/replay does not establish the complete lifecycle. Active independent step: PK11.01. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
+
 PK10.01 scope is ready for its checkpoint commit. Active leaf: PK10.02 source-trace map confirmation `0x0283` and login/character failure branches. PK09.02 remains blocked on server-backed 0x01EF identity. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.
 
 PK09.02 is blocked on source-backed resolution of the `0x01EF` cart/equipment identity conflict; do not modify either route speculatively. Active independent step: PK10.01 connection transition contract scope. Preserve unrelated dirty `tools/tests/replay/PacketStreamReplay.cpp`.

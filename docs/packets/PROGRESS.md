@@ -620,3 +620,7 @@ Traced a duplicate client registration: profile routing assigns `0x01EF` to equi
 ## 2026-11-04 — PK10.01 bound connection transition review
 
 Specified source inputs, packet families, branch/lifecycle checks and bounded split for `0x0283` confirmation and `0x02D5` server disconnect. PK10 owns two primary discovery parents; framing lengths are treated only as discovery. PK03.04 partial disconnect replay is explicitly limited to its covered boundaries. Scope checkpoint only; no runtime behavior or rows certified. Evidence: `evidence/PK10.01-scope.md`. Stable subject: `packet(PK10.01): bound connection transition review`. Next: PK10.02 source-trace map confirmation and login/character failure branches.
+
+## 2026-11-04 — PK10.02 record 0x0283 stage boundary
+
+Confirmed selected server `0x0283` is six bytes and carries `sd->id` at offset 2 before `chrif_authreq`; the earlier raw four-byte form is gated to PACKETVER < 20070521. Client LoginMode currently ignores this opcode, and PK03.04's synthetic ignored-packet replay proves framing only. Full map transition/authentication and login/character failure UI branches are S-complex and not safely certified by current replay. Recorded exact facts and stronger-review gap. No code change or row closure. Evidence: `evidence/PK10.02-0283-transition-boundary.md`. Stable subject: `packet(PK10.02): record 0283 stage boundary`. Next independent task: PK11.01.
