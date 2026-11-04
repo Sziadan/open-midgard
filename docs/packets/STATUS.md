@@ -87,3 +87,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK09.01 committed: bounded inventory/cart alias scope for `AUDIT-0x01EF` and `0x02D0` equipment interaction. Registration/layout semantics remain open; PK09.02 is active.
 
 - PK09.02 is blocked on authoritative 0x01EF server/profile identity: current client registration collides between equipment inventory and cart parsing. PK09.03 is dependent and remains open; work proceeds at PK10.01.
+
+- PK10.01 scope is recorded for two discovery parents, `0x0283` and `0x02D5`; PK10.02 is next. PK09.02 remains blocked on 0x01EF server/profile identity.

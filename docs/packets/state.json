@@ -354,9 +354,11 @@
       "commit_subject": null
     },
     "PK10.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK10.01-scope.md"
+      ],
+      "commit_subject": "packet(PK10.01): bound connection transition review"
     },
     "PK10.02": {
       "status": "NOT_STARTED",

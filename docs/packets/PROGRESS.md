@@ -616,3 +616,7 @@ Defined PK09 scope for the sole assigned parent `AUDIT-0x01EF` and its selected 
 ## 2026-11-04 — PK09.02 document 0x01EF ownership conflict
 
 Traced a duplicate client registration: profile routing assigns `0x01EF` to equipment inventory, then Commerce registration overwrites it; Commerce parses it as 18-byte cart entries. Because the effective 2008 server identity and active profile binding are not yet resolved, changing either route would risk corrupting cart/equipment state. Recorded the exact source paths and required resolution evidence. PK09.02 is blocked; PK09.03 remains dependent. No runtime change or discovery closure. Evidence: `evidence/PK09.02-01ef-ownership-conflict.md`. Stable subject: `packet(PK09.02): document 01ef ownership conflict`. Next independent task: PK10.01.
+
+## 2026-11-04 — PK10.01 bound connection transition review
+
+Specified source inputs, packet families, branch/lifecycle checks and bounded split for `0x0283` confirmation and `0x02D5` server disconnect. PK10 owns two primary discovery parents; framing lengths are treated only as discovery. PK03.04 partial disconnect replay is explicitly limited to its covered boundaries. Scope checkpoint only; no runtime behavior or rows certified. Evidence: `evidence/PK10.01-scope.md`. Stable subject: `packet(PK10.01): bound connection transition review`. Next: PK10.02 source-trace map confirmation and login/character failure branches.
