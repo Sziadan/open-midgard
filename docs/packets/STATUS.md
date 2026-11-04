@@ -152,3 +152,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK48.01 defines independent certification inputs, evidence schema, review sequence, and entry gates. PK48.02–.04 are not ready while feature leaves and PK44/PK47 evidence remain open; no rows closed. Resume PK44.04 implementation/evidence work.
 
 - PK44.04 focused production replay rerun: target build passed; sandboxed CTest failed before invocation because local mock connection was unavailable, then passed 1/1 with local-loopback permission. Evidence hashes the user-dirty replay source; no attribution or row closure. Broader per-contract malformed/lifecycle/UI coverage remains open.
+
+- PK46.01 scopes outbound parity as per-request path and field verification. 177 map requests remain (49 constructor matches, 128 unproven); 237 discovery rows are secondary assignments with no primary PK46 rows. PK46.02 must trace in bounded batches; no rows closed.

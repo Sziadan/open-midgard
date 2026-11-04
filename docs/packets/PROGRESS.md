@@ -724,3 +724,7 @@ Recorded authoritative inputs, per-contract review and replay evidence requireme
 ## 2026-11-04 — PK44.04 rerun focused production replay
 
 The replay target built successfully. Restricted CTest could not connect to its local mock before handler invocation; the same focused test passed 1/1 with local-loopback permission. Recorded executable and dirty source hashes in `evidence/PK44.04-focused-replay-rerun.md`. The replay source remains user-owned and untouched; no rows closed, and PK44.04 remains in progress.
+
+## 2026-11-04 — PK46.01 define outbound parity scope
+
+Specified source inputs, per-request trace fields, review leaves, and evidence gates. PK46.02 covers 177 accepted map requests (49 constructor matches, 128 unproven); PK46.03 covers login/character sends and unsupported gates; PK46.04 self-reviews and validates only applicable paths. The ledger has 237 secondary PK46 assignments and no primary owners. No runtime changes or rows closed. Evidence: `evidence/PK46.01-scope-boundary.md`. Next: trace PK46.02 in bounded batches.
