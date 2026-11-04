@@ -713,3 +713,6 @@ Ref confirms distinct inbox/read/attachment/send/delete/return/result UI routine
 ## 2026-11-04 — PK50.01 scope quest journal and missions
 
 Bound legacy list/mission/add/remove/progress/state packets and related 02B6 request; recorded 104-byte mission records and 107-byte add entries from the available sender. Captured newer 097A/09F8/08FE/09F9 branches as conditional variants, not default-2008 evidence. Time units and source identity remain open; client has no quest journal model/handlers in inspected paths. No rows closed. Evidence: `evidence/PK50.01-quest-mission-scope.md`. Stable subject: `packet(PK50.01): scope quest mission lifecycle`. Next: adjudicate target profile/time units before implementing atomic snapshots.
+## 2026-11-04 — PK50.02 deferred on journal model/time contract
+
+Ref confirms legacy 02B1/02B2 behavior, but list handling clears before validating, mission snapshots update in place, and time/objective conversions need exact field review. Current client lacks a typed quest model/UI; newer PACKETVER branches use different layouts. Defer PK50.02–.04 for stronger profile/model work; do not copy non-atomic Ref behavior. No rows closed. Evidence: `evidence/PK50.02-snapshot-model-boundary.md`. Resume existing independent PK44.04 review after the login3 implementation checkpoint.

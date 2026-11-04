@@ -146,3 +146,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK32.02–.05 deferred for full mail state/UI reconstruction and transactional claim/send semantics; current client lacks a mail model and no replay can be safely added. No rows closed. PK50.01 is next independent package.
 
 - PK50.01 scoped legacy quest list/mission/add/remove/progress/state packets plus newer conditional variants. Mission time units and target profile remain open; no journal model/handlers in inspected paths. No rows closed.
+
+- PK50.02–.04 deferred for atomic journal model/time-unit design; Ref's 02B1 clears before validation and 02B2 conversions need careful review. No rows closed; resume independent PK44.04.
