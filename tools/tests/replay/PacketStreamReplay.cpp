@@ -1075,6 +1075,45 @@ void LoginSelectCharacterRequestReplay()
     std::cout << "{\"case_id\":\"login_select_character_request\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0066-select-character-selected-source\",\"production_entry\":\"CLoginMode::SendMsg(LoginMsg_SelectCharacter) -> OnChangeState(SelectChar) -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"660007\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":3,\"opcode\":\"0x0066\",\"selected_slot\":7,\"selection_message_accepted\":true,\"next_submode_select_char\":true,\"production_framing_dispatch\":true,\"onrun_state_dispatch_not_exercised\":true,\"qt_click_lifecycle_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginCreateCharacterRequestReplay()
+{
+    SetCase("login_create_character_request", "PK44.CHAR-CREATE", "PK44-0067-make-character-selected-source", "CLoginMode::SendMsg(LoginMsg_CreateCharacter) -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::SetConnected(mode, true);
+    Require(mode.SendMsg(CLoginMode::LoginMsg_RequestMakeCharacter, 7, 0, 0) != 0,
+        "character creation slot selection was rejected");
+    const std::array<int, 8> params{1, 2, 3, 4, 5, 6, 18, 42};
+    const char name[] = "RuneA";
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetCharParam,
+            reinterpret_cast<msgparam_t>(const_cast<int*>(params.data())), 0, 0) != 0,
+        "character creation parameters were rejected");
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetMakingCharName,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(name)), 0, 0) != 0,
+        "character creation name was rejected");
+    Require(mode.SendMsg(CLoginMode::LoginMsg_CreateCharacter, 0, 0, 0) != 0,
+        "production character creation sender rejected the selected-source request");
+
+    std::vector<u8> expected(37, 0);
+    expected[0] = 0x67;
+    std::memcpy(expected.data() + 2, "RuneA", 5);
+    for (size_t index = 0; index < 6; ++index) {
+        expected[26 + index] = static_cast<u8>(index + 1);
+    }
+    expected[32] = 7;
+    expected[33] = 18;
+    expected[35] = 42;
+    const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+    Require(captured == expected,
+        "selected-source 0x0067 outbound request differs from independent field-offset fixture");
+    Require(g_windowMgr.GetLoginStatus() == "Login: requesting character creation...",
+        "character creation sender did not publish its production status");
+    g_windowMgr.RemoveAllWindows();
+    std::cout << "{\"case_id\":\"login_create_character_request\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-0067-make-character-selected-source\",\"production_entry\":\"CLoginMode::SendMsg(LoginMsg_RequestMakeCharacter/SetCharParam/SetMakingCharName/CreateCharacter) -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":37,\"opcode\":\"0x0067\",\"name\":\"RuneA\",\"stats\":[1,2,3,4,5,6],\"slot\":7,\"hair_color_u16\":18,\"hair_style_u16\":42,\"production_send_capture\":true,\"qt_click_lifecycle_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginCharacterRefusalReplay()
 {
     SetCase("login_character_refusal", "PK44.CHAR-LIST-ENTRY", "PK44-006c-refuse-enter-selected-source", "CLoginMode::OnRefuseChar");
@@ -1302,6 +1341,7 @@ int main(){try{
     LoginAcceptReplyReplay();
     LoginAcceptCharacterListReplay();
     LoginSelectCharacterRequestReplay();
+    LoginCreateCharacterRequestReplay();
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();

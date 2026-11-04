@@ -1139,9 +1139,11 @@
         "docs/packets/evidence/PK44.04-character-create-refusal.md",
         "docs/packets/evidence/PK44.04-character-create-refusal.jsonl",
         "docs/packets/evidence/PK44.04-character-selection-request.md",
-        "docs/packets/evidence/PK44.04-character-selection-request.jsonl"
+        "docs/packets/evidence/PK44.04-character-selection-request.jsonl",
+        "docs/packets/evidence/PK44.04-character-create-request.md",
+        "docs/packets/evidence/PK44.04-character-create-request.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): capture character selection request"
+      "commit_subject": "packet(PK44.04): capture character creation request"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
