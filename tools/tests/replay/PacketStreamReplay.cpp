@@ -121,13 +121,19 @@ struct LoginModeReplayAccess : CLoginMode {
             && characters[0].bIsChangedCharName == 1;
     }
     static bool AcceptLoginFieldsMatch(const LoginModeReplayAccess& mode) {
-        if (mode.m_numServer != 1 || mode.m_serverSelected != 0
+        if (mode.m_numServer != 2 || mode.m_serverSelected != 0
             || mode.m_serverInfo[0].ip != 0x0a01a8c0u
             || static_cast<u16>(mode.m_serverInfo[0].port) != 6121u
             || std::string(reinterpret_cast<const char*>(mode.m_serverInfo[0].name)) != "char-main"
             || mode.m_serverInfo[0].usercount != 3
             || mode.m_serverInfo[0].state != 0x1234
-            || mode.m_serverInfo[0].property != 2) {
+            || mode.m_serverInfo[0].property != 2
+            || mode.m_serverInfo[1].ip != 0x077100cbu
+            || static_cast<u16>(mode.m_serverInfo[1].port) != 6122u
+            || std::string(reinterpret_cast<const char*>(mode.m_serverInfo[1].name)) != "char-backup"
+            || mode.m_serverInfo[1].usercount != 9
+            || mode.m_serverInfo[1].state != 0x5678
+            || mode.m_serverInfo[1].property != 1) {
             return false;
         }
         return true;
@@ -928,7 +934,8 @@ void LoginAcceptReplyReplay()
     SetCase("login_accept_reply", "PK44.LOGIN-REPLIES", "PK44-0069-accept-login-selected-source", "CLoginMode::OnAcceptLogin");
     constexpr size_t kAcceptLoginPrefixLength = 47;
     constexpr size_t kServerRecordLength = 32;
-    constexpr size_t kPacketLength = kAcceptLoginPrefixLength + kServerRecordLength;
+    constexpr size_t kServerRecordCount = 2;
+    constexpr size_t kPacketLength = kAcceptLoginPrefixLength + kServerRecordLength * kServerRecordCount;
     Require(sizeof(SERVER_ADDR) == kServerRecordLength, "client server-address record size differs from selected source layout");
 
     std::vector<u8> packet(kPacketLength, 0);
@@ -960,6 +967,20 @@ void LoginAcceptReplyReplay()
     serverRecord[30] = 2;
     Require(sizeof(serverRecord) == kServerRecordLength, "independent selected-source server record fixture is not 32 bytes");
     std::memcpy(packet.data() + kAcceptLoginPrefixLength, serverRecord.data(), serverRecord.size());
+    std::array<u8, kServerRecordLength> backupServerRecord{};
+    backupServerRecord[0] = 203;
+    backupServerRecord[1] = 0;
+    backupServerRecord[2] = 113;
+    backupServerRecord[3] = 7;
+    backupServerRecord[4] = 0xea;
+    backupServerRecord[5] = 0x17;
+    std::memcpy(backupServerRecord.data() + 6, "char-backup", 11);
+    backupServerRecord[26] = 9;
+    backupServerRecord[28] = 0x78;
+    backupServerRecord[29] = 0x56;
+    backupServerRecord[30] = 1;
+    std::memcpy(packet.data() + kAcceptLoginPrefixLength + kServerRecordLength,
+        backupServerRecord.data(), backupServerRecord.size());
 
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
@@ -982,12 +1003,12 @@ void LoginAcceptReplyReplay()
     Require(LoginModeReplayAccess::AcceptLoginFieldsMatch(mode),
         "0x0069 server record fields were not preserved from the source-derived byte fixture");
     Require(mode.NextSubMode() == CLoginMode::LoginSubMode_ConnectChar,
-        "0x0069 with one char server did not transition to ConnectChar");
+        "0x0069 with multiple char servers did not transition to ConnectChar");
     Require(g_windowMgr.GetLoginStatus() == "Login: account accepted by server.",
         "0x0069 acceptance status was not written");
     Require(LoginModeReplayAccess::HandshakeCleared(mode), "0x0069 acceptance did not clear login handshake state");
 
-    std::cout << "{\"case_id\":\"login_accept_reply\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-login-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin\",\"frame_length\":79,\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"input_frame_hex\":\"" << Hex(packet) << "\",\"auth_code\":287454020,\"account_id\":1432778632,\"login_id2\":2864434397,\"raw_sex\":11,\"normalized_sex\":1,\"server_ip_bytes_hex\":\"c0a8010a\",\"server_port\":6121,\"server_name\":\"char-main\",\"server_users\":3,\"server_type\":4660,\"server_new_flag\":2,\"one_server_auto_selected\":true,\"transitions_to_connect_char\":true,\"login_handshake_cleared\":true,\"production_framing_dispatch\":true,\"visible_ui_and_socket_connect_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_accept_reply\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-login-two-servers-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin\",\"frame_length\":" << packet.size() << ",\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"server_record_count\":2,\"input_frame_hex\":\"" << Hex(packet) << "\",\"auth_code\":287454020,\"account_id\":1432778632,\"login_id2\":2864434397,\"raw_sex\":11,\"normalized_sex\":1,\"first_server\":{\"ip_bytes_hex\":\"c0a8010a\",\"port\":6121,\"name\":\"char-main\",\"users\":3,\"type\":4660,\"new_flag\":2},\"second_server\":{\"ip_bytes_hex\":\"cb007107\",\"port\":6122,\"name\":\"char-backup\",\"users\":9,\"type\":22136,\"new_flag\":1},\"selected_server_index\":0,\"multiple_servers_preserved\":true,\"transitions_to_connect_char\":true,\"login_handshake_cleared\":true,\"production_framing_dispatch\":true,\"visible_ui_and_socket_connect_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginAcceptCharacterListReplay()
