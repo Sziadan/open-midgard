@@ -1142,6 +1142,7 @@
         "docs/packets/evidence/PK44.04-character-selection-request.jsonl",
         "docs/packets/evidence/PK44.04-character-create-request.md",
         "docs/packets/evidence/PK44.04-character-create-request.jsonl",
+        "docs/packets/evidence/PK44.04-character-create-capacity-gap.md",
         "docs/packets/evidence/PK44.04-account-login-request.md",
         "docs/packets/evidence/PK44.04-account-login-request.jsonl",
         "docs/packets/evidence/PK44.04-connect-info-gate.md",
@@ -1169,7 +1170,7 @@
         "docs/packets/evidence/PK44.04-login-027c-request.jsonl",
         "docs/packets/evidence/PK44.04-character-request-directions.md"
       ],
-      "commit_subject": "packet(PK44.04): reject over-capacity character list"
+      "commit_subject": "packet(PK44.04): record create-capacity recovery gap"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
