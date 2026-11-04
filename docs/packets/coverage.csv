@@ -911,9 +911,9 @@ AUDIT-0x0979,0x0979,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/fam
 AUDIT-0x097C,0x097C,map,C2S,PK39,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x097D,0x097D,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x097E,0x097E,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0988,0x0988,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0989,0x0989,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x098E,0x098E,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0988,0x0988,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.CLAN.0988-20131223+
+AUDIT-0x0989,0x0989,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.CLAN.0989-20131223+
+AUDIT-0x098E,0x098E,map,S2C,PK44,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.CLAN.098E-20131223+
 AUDIT-0x099B,0x099B,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x099D,0x099D,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Connection-stage applicability and handshake review,UNREVIEWED,
 AUDIT-0x09A0,0x09A0,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Connection-stage applicability and handshake review,UNREVIEWED,
