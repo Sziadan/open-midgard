@@ -16,6 +16,8 @@
 #include <cerrno>
 #include <chrono>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #if !RO_PLATFORM_WINDOWS
 #include <sys/ioctl.h>
@@ -190,6 +192,18 @@ int SelectSocket(SOCKET s,bool readable,bool writable,std::chrono::milliseconds 
 #else
     return select(s+1,readable?&r:nullptr,writable?&w:nullptr,nullptr,&tv);
 #endif
+}
+std::vector<u8> ReceiveExactSocket(SOCKET socketValue,size_t count){
+    std::vector<u8> bytes;bytes.reserve(count);const auto deadline=Clock::now()+kTimeout;
+    while(bytes.size()<count){
+        const int ready=SelectSocket(socketValue,true,false,std::chrono::milliseconds(100));
+        if(ready<=0){Require(ready==0,"socket select failed while waiting for captured bytes");Require(Clock::now()<deadline,"socket capture timed out");continue;}
+        std::array<u8,4096> buffer{};
+        const int received=recv(socketValue,reinterpret_cast<char*>(buffer.data()),static_cast<int>(std::min(buffer.size(),count-bytes.size())),0);
+        if(received>0){bytes.insert(bytes.end(),buffer.begin(),buffer.begin()+received);continue;}
+        Require(false,"socket closed before expected captured bytes arrived");
+    }
+    return bytes;
 }
 class TestConnection final:public CRagConnection{
 public:SOCKET Native()const{return m_socket;}int BufferedBytes()const{return m_recvQueue.GetSize();}
@@ -1155,6 +1169,142 @@ void LoginAccountRequestReplay()
     std::cout << "{\"case_id\":\"login_account_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0064-raw-login-selected-profile\",\"production_entry\":\"CLoginMode::SendMsg(SetUserId/SetPassword) -> SendPlainAccountLogin -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":55,\"opcode\":\"0x0064\",\"client_version\":20080910,\"username\":\"packet-user\",\"password_fixture\":\"packet-pass\",\"clienttype\":1,\"production_send_capture\":true,\"connect_account_gate_not_exercised\":true,\"live_credentials_not_used\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginConnectInfoGateReplay()
+{
+    SetCase("login_connect_info_gate", "PK44.LOGIN-REQUESTS", "PK44-0200-connect-info-opt-in", "CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendPlainAccountLogin");
+    const char* oldDataDirValue = std::getenv("OPEN_MIDGARD_DATA_DIR");
+    const bool hadDataDir = oldDataDirValue != nullptr;
+    const std::string oldDataDir = oldDataDirValue ? oldDataDirValue : "";
+    struct RestoreDataDir {
+        bool hadValue;
+        std::string value;
+        ~RestoreDataDir() {
+#if RO_PLATFORM_WINDOWS
+            _putenv_s("OPEN_MIDGARD_DATA_DIR", hadValue ? value.c_str() : "");
+#else
+            if (hadValue) setenv("OPEN_MIDGARD_DATA_DIR", value.c_str(), 1);
+            else unsetenv("OPEN_MIDGARD_DATA_DIR");
+#endif
+        }
+    } restoreDataDir{hadDataDir, oldDataDir};
+
+    const std::filesystem::path settingsDirectory = std::filesystem::temp_directory_path()
+        / ("open-midgard-packet-replay-" + std::to_string(GetTickCount()));
+    std::filesystem::create_directories(settingsDirectory);
+    struct RemoveSettingsDirectory {
+        std::filesystem::path path;
+        ~RemoveSettingsDirectory() { std::error_code error; std::filesystem::remove_all(path, error); }
+    } removeSettingsDirectory{settingsDirectory};
+#if RO_PLATFORM_WINDOWS
+    Require(_putenv_s("OPEN_MIDGARD_DATA_DIR", settingsDirectory.string().c_str()) == 0,
+        "could not point replay settings at the isolated temporary directory");
+#else
+    Require(setenv("OPEN_MIDGARD_DATA_DIR", settingsDirectory.string().c_str(), 1) == 0,
+        "could not point replay settings at the isolated temporary directory");
+#endif
+
+    const ServiceType originalService = g_serviceType;
+    const std::string originalAccountAddress = g_accountAddr;
+    const std::string originalAccountPort = g_accountPort;
+    const int originalPasswordEncrypt = g_passwordEncrypt;
+    struct RestoreLoginGlobals {
+        ServiceType service;
+        std::string address;
+        std::string port;
+        int passwordEncrypt;
+        ~RestoreLoginGlobals() {
+            g_serviceType = service;
+            g_accountAddr = address;
+            g_accountPort = port;
+            g_passwordEncrypt = passwordEncrypt;
+        }
+    } restoreLoginGlobals{originalService, originalAccountAddress, originalAccountPort, originalPasswordEncrypt};
+    g_serviceType = ServiceAmerica;
+    g_passwordEncrypt = 0;
+
+    const auto runConnect = [&](bool sendConnectInfo) {
+        std::ofstream settings(settingsDirectory / "open-midgard.ini", std::ios::binary | std::ios::trunc);
+        Require(settings.is_open(), "could not write isolated login-settings fixture");
+        settings << "[Login]\n"
+                 << "SendConnectInfoChanged=" << (sendConnectInfo ? 1 : 0) << "\n"
+                 << "AccountLoginPacket=plain\n"
+                 << "ForcePasswordHashRequest=0\n"
+                 << "ClientDateOverride=20080910\n"
+                 << "ClientTypeOverride=1\n";
+        settings.close();
+        Require(settings.good(), "could not finish isolated login-settings fixture");
+
+        SocketOwner listener(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+        Require(listener.value != INVALID_SOCKET, "mock account listener socket creation failed");
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        address.sin_port = 0;
+        Require(bind(listener.value, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0,
+            "mock account listener bind failed");
+        socklen_t addressLength = sizeof(address);
+        Require(getsockname(listener.value, reinterpret_cast<sockaddr*>(&address), &addressLength) == 0,
+            "mock account listener port query failed");
+        Require(listen(listener.value, 1) == 0, "mock account listener setup failed");
+        g_accountAddr = "127.0.0.1";
+        g_accountPort = std::to_string(ntohs(address.sin_port));
+
+        CRagConnection* const connection = CRagConnection::instance();
+        connection->Disconnect();
+        LoginModeReplayAccess mode;
+        const char user[] = "packet-user";
+        const char password[] = "packet-pass";
+        Require(mode.SendMsg(CLoginMode::LoginMsg_SetUserId,
+                reinterpret_cast<msgparam_t>(const_cast<char*>(user)), 0, 0) != 0,
+            "connect-account username message was rejected");
+        Require(mode.SendMsg(CLoginMode::LoginMsg_SetPassword,
+                reinterpret_cast<msgparam_t>(const_cast<char*>(password)), 0, 0) != 0,
+            "connect-account password message was rejected");
+        mode.OnChangeState(CLoginMode::LoginSubMode_ConnectAccount);
+        Require(connection->IsOpen() && LoginModeReplayAccess::IsConnected(mode),
+            "ConnectAccount production state did not connect to the local mock listener");
+        Require(SelectSocket(listener.value, true, false,
+                std::chrono::duration_cast<std::chrono::milliseconds>(kTimeout)) > 0,
+            "mock account listener timed out waiting for the production ConnectAccount path");
+        SocketOwner accepted(accept(listener.value, nullptr, nullptr));
+        Require(accepted.value != INVALID_SOCKET, "mock account listener accept failed");
+
+        std::vector<u8> expectedLogin(55, 0);
+        expectedLogin[0] = 0x64;
+        expectedLogin[2] = 0x0e;
+        expectedLogin[3] = 0x69;
+        expectedLogin[4] = 0x32;
+        expectedLogin[5] = 0x01;
+        std::memcpy(expectedLogin.data() + 6, user, sizeof(user) - 1);
+        std::memcpy(expectedLogin.data() + 30, password, sizeof(password) - 1);
+        expectedLogin[54] = 1;
+
+        std::vector<u8> expectedStream;
+        if (sendConnectInfo) {
+            std::vector<u8> connectInfo(26, 0);
+            connectInfo[0] = 0x00;
+            connectInfo[1] = 0x02;
+            std::memcpy(connectInfo.data() + 2, user, sizeof(user) - 1);
+            expectedStream.insert(expectedStream.end(), connectInfo.begin(), connectInfo.end());
+        }
+        expectedStream.insert(expectedStream.end(), expectedLogin.begin(), expectedLogin.end());
+        const std::vector<u8> captured = ReceiveExactSocket(accepted.value, expectedStream.size());
+        Require(captured == expectedStream,
+            "ConnectAccount gate emitted a different 0x0200/0x0064 packet sequence than expected");
+        Require(g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
+            "ConnectAccount production flow did not enter account-response wait state");
+        Require(SelectSocket(accepted.value, true, false, std::chrono::milliseconds(20)) == 0,
+            "ConnectAccount emitted an unexpected extra packet after its expected request sequence");
+        connection->Disconnect();
+        g_windowMgr.RemoveAllWindows();
+        return Hex(captured);
+    };
+
+    const std::string disabledStream = runConnect(false);
+    const std::string enabledStream = runConnect(true);
+    std::cout << "{\"case_id\":\"login_connect_info_gate\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0200-connect-info-opt-in\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendPlainAccountLogin\",\"disabled_stream_hex\":\"" << disabledStream << "\",\"enabled_stream_hex\":\"" << enabledStream << "\",\"disabled_gate_sends_only_0064\":true,\"enabled_gate_sends_0200_then_0064\":true,\"connect_account_path_uses_local_mock\":true,\"isolated_settings_fixture_removed\":true,\"no_live_credentials_or_server\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginCharacterRefusalReplay()
 {
     SetCase("login_character_refusal", "PK44.CHAR-LIST-ENTRY", "PK44-006c-refuse-enter-selected-source", "CLoginMode::OnRefuseChar");
@@ -1384,6 +1534,7 @@ int main(){try{
     LoginSelectCharacterRequestReplay();
     LoginCreateCharacterRequestReplay();
     LoginAccountRequestReplay();
+    LoginConnectInfoGateReplay();
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();
