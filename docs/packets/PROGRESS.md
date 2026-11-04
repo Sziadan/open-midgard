@@ -281,3 +281,10 @@ Found concrete malformed-input issue: when client `slot_before >= MAX_CHARS`, se
 ## 2026-11-04 — PK44.03.010 character block/status applicability trace
 
 Traced S2C variable `0x020D`: 4-byte header followed by 24-byte CID/unblock-time records, normally sent after char-list and repeated every 10 seconds while a future block remains. The selected `PACKETVER_SAK_NUM=20080910` defines `PACKETVER_SAK_LEGACY_CHARINFO`; the sender returns immediately under that macro before packet construction, sending, expiry cleanup or timer scheduling. Classified the discovery row `INACTIVE_FOR_SELECTED_SOURCE_CONFIG`; deployed provenance remains unknown. No runtime changes/build/tests. Stable subject: `packet(PK44.03.010): trace character block status`. Next: aggregate PK44.03 after checking all ten child checkpoints.
+
+
+## 2026-11-04 — PK44.03 login/character family aggregate
+
+Verified all ten numbered research children are COMPLETED in `state.json`, their evidence paths exist, and each stable commit subject is present in Git history. Reconciled 48 unique login/character discovery parents across children after the `0x006A` login-stage and deletion-family routing corrections. Coverage now has 2 C2S_ONLY (`0x0064`,`0x0200`), 6 source-config-inactive (five PIN identities and `0x020D`), and 40 UNREVIEWED; no rows were closed. PK44.02/03 total provisional primary ownership remains 59.
+
+Aggregate evidence: `evidence/PK44.03-login-character-family.md`. Scope-specific client mismatches and the slot-move unchecked array read remain explicit for PK48; raw handshake implementation stays PK04-owned. No runtime code changed or replay/build was run. Stable subject: `packet(PK44.03): aggregate login and character traces`. Next: `PK44.04` self-review and production replay.
