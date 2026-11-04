@@ -683,3 +683,6 @@ Bound 0x028A's 18-byte four-u32 contract and recorded Ref's distinct `showEFST` 
 ## 2026-11-04 — PK22.02 deferred on branch lifecycle proof
 
 Compared Ref showEFST branches with available rAthena `e_sc_opt3`; all candidate masks align. However, branch/profile identity and status-end cleanup are not established, and Ref side effects include priority effects, hidden-state cleanup, and motion/ARGB lifetimes. The dirty replay harness cannot safely be extended here. Defer PK22.02–.04 for stronger status/profile and lifecycle review. No rows closed. Evidence: `evidence/PK22.02-branch-lifecycle-boundary.md`. Continue next independent package.
+## 2026-11-04 — PK24.01 scope resource and actor invariants
+
+Bounded PK24's 44 provisional primary discovery rows, separated arithmetic/width audit from actor lifecycle review, and identified 0x0AF0 as a PK44 cross-review boundary. PK24.02 covers status/resource widths and math; PK24.03 covers ordering/actor teardown/hallucination display; PK24.04 owns production extreme-value replay. No rows closed. Evidence: `evidence/PK24.01-resource-state-scope.md`. Stable subject: `packet(PK24.01): scope resource state invariants`. Next: PK24.02 audit and correct source-backed signed-width defects.

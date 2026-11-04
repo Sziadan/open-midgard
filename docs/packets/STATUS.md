@@ -126,3 +126,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK22.01 scoped 0x028A fields and Ref branches; current handler implements only level-99/Assumptio. 0x043F remains newer-profile-only with 12 unexplained tail bytes. Target status enums and effect lifetimes need adjudication before implementation; no rows closed.
 
 - PK22.02 deferred: rAthena OPT3 masks match Ref, but profile identity and effect/motion/ARGB cleanup lifetimes remain unresolved. PK22.03/04 await a source-backed status lifecycle and production replay. No rows closed.
+
+- PK24.01 scoped 44 provisional owners and split arithmetic audit, actor lifecycle, and replay checks. No rows closed. PK24.02 is next.
