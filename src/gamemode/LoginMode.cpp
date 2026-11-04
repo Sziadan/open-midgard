@@ -561,6 +561,7 @@ enum class AccountLoginPacketKind {
     Legacy,
     LoginChannel,
     LoginPcBang,
+    Login3,
     Login4,
 };
 
@@ -580,6 +581,9 @@ AccountLoginPacketKind ResolveAccountLoginPacketKind()
         }
         if (overrideValue == "277" || overrideValue == "0x277" || overrideValue == "pcbang" || overrideValue == "login_pcbang") {
             return AccountLoginPacketKind::LoginPcBang;
+        }
+        if (overrideValue == "1fa" || overrideValue == "0x1fa" || overrideValue == "login3") {
+            return AccountLoginPacketKind::Login3;
         }
         if (overrideValue == "27c" || overrideValue == "0x27c" || overrideValue == "login4") {
             return AccountLoginPacketKind::Login4;
@@ -615,6 +619,10 @@ bool UsesLoginChannelPacket()
 
 bool ShouldRequestPasswordHashOnConnect()
 {
+    if (ResolveAccountLoginPacketKind() == AccountLoginPacketKind::Login3) {
+        return true;
+    }
+
     int forcePasswordHash = 0;
     if (TryLoadLoginSettingInt("ForcePasswordHashRequest", &forcePasswordHash)) {
         return forcePasswordHash != 0;
@@ -2101,6 +2109,9 @@ void CLoginMode::SendPlainAccountLogin()
     case AccountLoginPacketKind::LoginPcBang:
         SendLoginPcBang();
         return;
+    case AccountLoginPacketKind::Login3:
+        SendPasswordHashRequest();
+        return;
     case AccountLoginPacketKind::Login4:
         SendLogin4();
         return;
@@ -2244,28 +2255,56 @@ void CLoginMode::OnAckHash(const std::vector<u8>& raw)
     }
     const std::array<u8, 16> digest = ro::cipher::ComputeMd5(digestInput.data(), digestInput.size());
 
-    PACKET_CA_LOGIN_HASH pkt{};
-    pkt.PacketType = ro::net::GetActiveAccountLoginPacketProfile().passwordHashLogin;
-    pkt.Version = ResolveAccountLoginVersion();
-    CopyCString(pkt.ID, sizeof(pkt.ID), m_userId);
-    std::memcpy(pkt.PasswdMD5, digest.data(), digest.size());
-    pkt.clienttype = ResolveAccountClientType();
-
-    if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
-        DbgLog("[Login] CA_LOGIN_HASH send failed: user='%s' version=%u challengeBytes=%d clienttype=%u\n",
-               pkt.ID,
-               pkt.Version,
-               static_cast<int>(payloadLength),
-               static_cast<unsigned int>(pkt.clienttype));
-        return;
+    const AccountLoginPacketKind packetKind = ResolveAccountLoginPacketKind();
+    const u8 clientType = ResolveAccountClientType();
+    bool sent = false;
+    if (packetKind == AccountLoginPacketKind::Login3) {
+        const int clientInfo = GetSelectedClientInfoIndex();
+        if (clientInfo < 0 || clientInfo > 255) {
+            ResetAccountLoginHandshake();
+            CRagConnection::instance()->Disconnect();
+            m_isConnected = 0;
+            m_nextSubMode = LoginSubMode_Login;
+            SetLoginStatus("Login error: selected client-info index cannot be encoded in login3.");
+            DbgLog("[Login] CA_LOGIN3 send skipped: clientinfo index=%d is outside the packet byte range\n", clientInfo);
+            return;
+        }
+        PACKET_CA_LOGIN_HASH_CLIENTINFO pkt{};
+        pkt.PacketType = PacketProfile::ActiveLoginChain::kPasswordHashLoginClientInfo;
+        pkt.Version = ResolveAccountLoginVersion();
+        CopyCString(pkt.ID, sizeof(pkt.ID), m_userId);
+        std::memcpy(pkt.PasswdMD5, digest.data(), digest.size());
+        pkt.clienttype = clientType;
+        pkt.clientinfo = static_cast<u8>(clientInfo);
+        sent = CRagConnection::instance()->SendPacket(
+            reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)));
+        if (!sent) {
+            DbgLog("[Login] CA_LOGIN3 send failed: user='%s' version=%u challengeBytes=%d clienttype=%u clientinfo=%u\n",
+                   pkt.ID, pkt.Version, static_cast<int>(payloadLength),
+                   static_cast<unsigned int>(pkt.clienttype), static_cast<unsigned int>(pkt.clientinfo));
+            return;
+        }
+    } else {
+        PACKET_CA_LOGIN_HASH pkt{};
+        pkt.PacketType = ro::net::GetActiveAccountLoginPacketProfile().passwordHashLogin;
+        pkt.Version = ResolveAccountLoginVersion();
+        CopyCString(pkt.ID, sizeof(pkt.ID), m_userId);
+        std::memcpy(pkt.PasswdMD5, digest.data(), digest.size());
+        pkt.clienttype = clientType;
+        sent = CRagConnection::instance()->SendPacket(
+            reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)));
+        if (!sent) {
+            DbgLog("[Login] CA_LOGIN_HASH send failed: user='%s' version=%u challengeBytes=%d clienttype=%u\n",
+                   pkt.ID, pkt.Version, static_cast<int>(payloadLength),
+                   static_cast<unsigned int>(pkt.clienttype));
+            return;
+        }
     }
     ResetAccountLoginHandshake();
-        DbgLog("[Login] CA_LOGIN_HASH sent: user='%s' version=%u challengeBytes=%d clienttype=%u mode=%s\n",
-           pkt.ID,
-           pkt.Version,
-           static_cast<int>(payloadLength),
-            static_cast<unsigned int>(pkt.clienttype),
-            g_passwordEncrypt2 != 0 ? "password+challenge" : "challenge+password");
+    DbgLog("[Login] %s sent: challengeBytes=%d clienttype=%u mode=%s\n",
+           packetKind == AccountLoginPacketKind::Login3 ? "CA_LOGIN3" : "CA_LOGIN_HASH",
+           static_cast<int>(payloadLength), static_cast<unsigned int>(clientType),
+           g_passwordEncrypt2 != 0 ? "password+challenge" : "challenge+password");
     SetLoginStatus("Login: waiting for account server response...");
 }
 

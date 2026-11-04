@@ -1168,9 +1168,11 @@
         "docs/packets/evidence/PK44.04-login-hash-response-direction.md",
         "docs/packets/evidence/PK44.04-login-027c-request.md",
         "docs/packets/evidence/PK44.04-login-027c-request.jsonl",
+        "docs/packets/evidence/PK44.04-login-01fa-request.md",
+        "docs/packets/evidence/PK44.04-login-01fa-request.jsonl",
         "docs/packets/evidence/PK44.04-character-request-directions.md"
       ],
-      "commit_subject": "packet(PK44.04): correct modal linkage evidence"
+      "commit_subject": "packet(PK44.04): implement explicit login3 hash request"
     },
     "PK45.01": {
       "status": "NOT_STARTED",

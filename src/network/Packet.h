@@ -9,6 +9,7 @@ enum PacketId {
     PACKETID_CA_ENTER         = 0x0065,  // also sent to char server
     PACKETID_CA_REQ_HASH      = 0x01DB,
     PACKETID_CA_LOGIN_HASH    = 0x01DD,
+    PACKETID_CA_LOGIN_HASH_CLIENTINFO = 0x01FA,
     PACKETID_CA_CONNECT_INFO_CHANGED = 0x0200,
     PACKETID_CA_EXE_HASHCHECK = 0x0204,
     PACKETID_CZ_RESTART       = 0x00B2,
@@ -53,6 +54,7 @@ constexpr u16 kExeHashCheck = PACKETID_CA_EXE_HASHCHECK;
 constexpr u16 kRequestPasswordHash = PACKETID_CA_REQ_HASH;
 constexpr u16 kPasswordHashChallenge = PACKETID_AC_ACK_HASH;
 constexpr u16 kPasswordHashLogin = PACKETID_CA_LOGIN_HASH;
+constexpr u16 kPasswordHashLoginClientInfo = PACKETID_CA_LOGIN_HASH_CLIENTINFO;
 constexpr u16 kCharServerEnter = PACKETID_CA_ENTER;
 constexpr u16 kSelectCharacter = 0x0066;
 constexpr u16 kMakeCharacter = PACKETID_CH_MAKE_CHAR;
@@ -68,6 +70,7 @@ constexpr u16 kExeHashCheck = PacketVer23LoginChain::kExeHashCheck;
 constexpr u16 kRequestPasswordHash = PacketVer23LoginChain::kRequestPasswordHash;
 constexpr u16 kPasswordHashChallenge = PacketVer23LoginChain::kPasswordHashChallenge;
 constexpr u16 kPasswordHashLogin = PacketVer23LoginChain::kPasswordHashLogin;
+constexpr u16 kPasswordHashLoginClientInfo = PacketVer23LoginChain::kPasswordHashLoginClientInfo;
 constexpr u16 kCharServerEnter = PacketVer23LoginChain::kCharServerEnter;
 constexpr u16 kSelectCharacter = PacketVer23LoginChain::kSelectCharacter;
 constexpr u16 kMakeCharacter = PacketVer23LoginChain::kMakeCharacter;
@@ -238,6 +241,15 @@ struct PACKET_CA_LOGIN_HASH {
     char ID[24];       // username
     u8  PasswdMD5[16]; // MD5(challenge + password) on the normal service path
     u8  clienttype;    // GetAccountType()
+};
+
+struct PACKET_CA_LOGIN_HASH_CLIENTINFO {
+    u16 PacketType;    // 0x01FA
+    u32 Version;
+    char ID[24];
+    u8  PasswdMD5[16];
+    u8  clienttype;
+    u8  clientinfo;
 };
 
 struct PACKET_CA_CONNECT_INFO_CHANGED {
@@ -706,6 +718,7 @@ static_assert(sizeof(PACKET_CA_LOGIN_PCBANG) == 84, "PACKET_CA_LOGIN_PCBANG size
 static_assert(sizeof(PACKET_CA_LOGIN4) == 60, "PACKET_CA_LOGIN4 size mismatch");
 static_assert(sizeof(PACKET_CA_REQ_HASH) == 2, "PACKET_CA_REQ_HASH size mismatch");
 static_assert(sizeof(PACKET_CA_LOGIN_HASH) == 47, "PACKET_CA_LOGIN_HASH size mismatch");
+static_assert(sizeof(PACKET_CA_LOGIN_HASH_CLIENTINFO) == 48, "PACKET_CA_LOGIN_HASH_CLIENTINFO size mismatch");
 static_assert(sizeof(PACKET_CA_CONNECT_INFO_CHANGED) == 26, "PACKET_CA_CONNECT_INFO_CHANGED size mismatch");
 static_assert(sizeof(PACKET_CA_ENTER) == 17, "PACKET_CA_ENTER size mismatch");
 static_assert(sizeof(PACKET_CZ_SELECT_CHAR) == 3, "PACKET_CZ_SELECT_CHAR size mismatch");

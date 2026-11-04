@@ -2,6 +2,7 @@
 #include "GronPacket.h"
 #include "MapSendProfile.h"
 #include "Packet.h"
+#include "core/ClientInfoLocale.h"
 #include "core/Globals.h"
 #include "gamemode/ActionRequestSender.h"
 #include "gamemode/GameMode.h"
@@ -1997,6 +1998,141 @@ void LoginPasswordHashChallengeReplay()
         << "\"],\"passwordencrypt2_modes\":[0,1],\"expected_digest_order_0\":\"salt+password\",\"expected_digest_order_1\":\"password+salt\",\"outcome\":\"PASS\"}\n";
 }
 
+void Login3ClientInfoHashRequestReplay()
+{
+    SetCase("login3_clientinfo_hash_request", "PK44.LOGIN-REQUESTS", "PK44-01fa-md5-clientinfo-selected-source", "ConnectAccount -> 0x01DB -> 0x01DC -> OnAckHash -> 0x01FA");
+    const std::filesystem::path settingsDirectory = std::filesystem::temp_directory_path()
+        / ("open-midgard-login3-replay-" + std::to_string(GetTickCount()));
+    std::filesystem::create_directories(settingsDirectory);
+    struct RemoveSettingsDirectory {
+        std::filesystem::path path;
+        ~RemoveSettingsDirectory() { std::error_code error; std::filesystem::remove_all(path, error); }
+    } removeSettingsDirectory{settingsDirectory};
+    const char* const originalDataDirValue = std::getenv("OPEN_MIDGARD_DATA_DIR");
+    const bool hadOriginalDataDir = originalDataDirValue != nullptr;
+    const std::string originalDataDir = originalDataDirValue ? originalDataDirValue : "";
+    struct RestoreDataDir {
+        bool hadValue;
+        std::string value;
+        ~RestoreDataDir() {
+#if RO_PLATFORM_WINDOWS
+            _putenv_s("OPEN_MIDGARD_DATA_DIR", hadValue ? value.c_str() : "");
+#else
+            if (hadValue) setenv("OPEN_MIDGARD_DATA_DIR", value.c_str(), 1);
+            else unsetenv("OPEN_MIDGARD_DATA_DIR");
+#endif
+        }
+    } restoreDataDir{hadOriginalDataDir, originalDataDir};
+#if RO_PLATFORM_WINDOWS
+    Require(_putenv_s("OPEN_MIDGARD_DATA_DIR", settingsDirectory.string().c_str()) == 0,
+        "could not point login3 replay at its isolated settings directory");
+#else
+    Require(setenv("OPEN_MIDGARD_DATA_DIR", settingsDirectory.string().c_str(), 1) == 0,
+        "could not point login3 replay at its isolated settings directory");
+#endif
+    std::ofstream settings(settingsDirectory / "open-midgard.ini", std::ios::binary | std::ios::trunc);
+    Require(settings.is_open(), "could not write isolated login3 settings");
+    settings << "[Login]\nAccountLoginPacket=login3\nClientDateOverride=20080910\n";
+    settings.close();
+    Require(settings.good(), "could not finish isolated login3 settings");
+    const std::filesystem::path clientInfoPath = settingsDirectory / "clientinfo.xml";
+    std::ofstream clientInfo(clientInfoPath, std::ios::binary | std::ios::trunc);
+    Require(clientInfo.is_open(), "could not write isolated login3 client-info fixture");
+    clientInfo << "<clientinfo><servicetype>america</servicetype><servertype>primary</servertype>"
+                  "<connection><address>127.0.0.1</address><port>6900</port><version>18</version><langtype>1</langtype></connection>"
+                  "<connection><address>127.0.0.1</address><port>6901</port><version>18</version><langtype>1</langtype></connection>"
+                  "</clientinfo>";
+    clientInfo.close();
+    Require(clientInfo.good(), "could not finish isolated login3 client-info fixture");
+    Require(InitClientInfo(clientInfoPath.string().c_str()), "could not parse isolated login3 client-info fixture");
+    SelectClientInfo(1);
+    Require(GetSelectedClientInfoIndex() == 1, "login3 client-info fixture did not select profile index one");
+
+    SocketOwner listener(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+    Require(listener.value != INVALID_SOCKET, "login3 mock account listener socket creation failed");
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    address.sin_port = 0;
+    Require(bind(listener.value, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0,
+        "login3 mock account listener bind failed");
+    socklen_t addressLength = sizeof(address);
+    Require(getsockname(listener.value, reinterpret_cast<sockaddr*>(&address), &addressLength) == 0,
+        "login3 mock account listener port query failed");
+    Require(listen(listener.value, 1) == 0, "login3 mock account listener listen failed");
+
+    const ServiceType originalService = g_serviceType;
+    const std::string originalAccountAddress = g_accountAddr;
+    const std::string originalAccountPort = g_accountPort;
+    struct RestoreLoginGlobals {
+        ServiceType service;
+        std::string address;
+        std::string port;
+        ~RestoreLoginGlobals() {
+            g_serviceType = service;
+            g_accountAddr = address;
+            g_accountPort = port;
+        }
+    } restoreLoginGlobals{originalService, originalAccountAddress, originalAccountPort};
+    g_serviceType = ServiceAmerica;
+    g_accountAddr = "127.0.0.1";
+    g_accountPort = std::to_string(ntohs(address.sin_port));
+
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoginModeReplayAccess mode;
+    const char username[] = "packet-test";
+    const char password[] = "password";
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetUserId,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(username)), 0, 0) != 0,
+        "login3 username fixture was rejected");
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetPassword,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(password)), 0, 0) != 0,
+        "login3 password fixture was rejected");
+    mode.OnChangeState(CLoginMode::LoginSubMode_ConnectAccount);
+    Require(connection->IsOpen() && LoginModeReplayAccess::IsConnected(mode),
+        "login3 ConnectAccount did not open its mock account connection");
+    Require(SelectSocket(listener.value, true, false,
+            std::chrono::duration_cast<std::chrono::milliseconds>(kTimeout)) > 0,
+        "login3 listener timed out waiting for ConnectAccount");
+    SocketOwner accepted(accept(listener.value, nullptr, nullptr));
+    Require(accepted.value != INVALID_SOCKET, "login3 mock account accept failed");
+    const std::vector<u8> expectedHashRequest{0xdb, 0x01};
+    const std::vector<u8> capturedHashRequest = ReceiveExactSocket(accepted.value, expectedHashRequest.size());
+    Require(capturedHashRequest == expectedHashRequest,
+        "explicit login3 profile did not automatically request the password-hash challenge");
+    const std::vector<u8> challenge{
+        0xdc, 0x01, 0x18, 0x00,
+        0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+        0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33};
+    const int challengeBytes = send(accepted.value, reinterpret_cast<const char*>(challenge.data()),
+        static_cast<int>(challenge.size()), 0);
+    Require(challengeBytes == static_cast<int>(challenge.size()),
+        "login3 mock account server did not send the full selected-source challenge");
+    const auto responseDeadline = Clock::now() + kTimeout;
+    while (!LoginModeReplayAccess::HandshakeCleared(mode) && Clock::now() < responseDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(mode);
+        if (!LoginModeReplayAccess::HandshakeCleared(mode)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    const std::vector<u8> expectedLogin{
+        0xfa, 0x01, 0x0e, 0x69, 0x32, 0x01,
+        'p','a','c','k','e','t','-','t','e','s','t',
+        0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xe3,0x0b,0xf7,0x39,0xe8,0x2f,0x48,0xe8,0x0e,0x85,0xd6,0x8a,0x47,0x98,0x1c,0xad,
+        1, 1};
+    Require(expectedLogin.size() == 48, "independent login3 byte fixture has the wrong size");
+    const std::vector<u8> capturedLogin = ReceiveExactSocket(accepted.value, expectedLogin.size());
+    Require(capturedLogin == expectedLogin,
+        "production login3 sender differs from the 48-byte selected-source fixture");
+    Require(LoginModeReplayAccess::HandshakeCleared(mode)
+            && g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
+        "login3 response did not clear challenge state and wait for account reply");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"login3_clientinfo_hash_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-01fa-md5-clientinfo-selected-source\",\"production_entry\":\"ConnectAccount -> 0x01DB -> 0x01DC -> OnAckHash -> 0x01FA\",\"request_01db_hex\":\"" << Hex(capturedHashRequest) << "\",\"challenge_hex\":\"" << Hex(challenge) << "\",\"expected_01fa_hex\":\"" << Hex(expectedLogin) << "\",\"captured_01fa_hex\":\"" << Hex(capturedLogin) << "\",\"clientinfo_from_selected_profile\":1,\"challenge_digest_matches_independent_vector\":true,\"challenge_request_automatic_for_login3\":true,\"handshake_cleared\":true,\"network_scope\":\"loopback mock account server only\",\"outcome\":\"PASS\"}\n";
+}
+
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
@@ -2039,7 +2175,8 @@ int main(){try{
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();
     LoginPasswordHashChallengeReplay();
-    LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();
+    LoginCharConnectionFailureReplay();
+    Login3ClientInfoHashRequestReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}
