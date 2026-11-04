@@ -740,3 +740,7 @@ Traced the mouse direction action to the 11-byte PacketVer22/23 0x0085 sender (H
 ## 2026-11-04 — PK46.03 cross-check login/character sends
 
 Cross-referenced current login sends and legacy character select/create captures with PK44 contracts/evidence. Confirmed request-direction evidence only for recorded settings/branches; native Qt delivery and full lifecycle remain open. Preserved the 0x0068/0x01FB deletion mismatch, 0x0825 SSO security gate, and unproven rename/scheduled/paged actions. PK46.03 remains partial; PK46.04 cannot certify while PK46.02 and these gates remain open. No rows closed. Evidence: `evidence/PK46.03-login-character-crosswalk.md`.
+
+## 2026-11-04 — PK45.01 define actor/handler audit scope
+
+Specified exact source inputs, per-handler evidence, and actor/receive-handler leaves. The 240 registered-entry and 136 handler-function inventories require packet/variant-level contracts. PK20 class-resource, PK22 status visual/motion, and PK24 effect-ordering branches remain explicit gates; audit unrelated handlers independently. Scope only; no runtime changes or rows closed. Evidence: `evidence/PK45.01-scope-boundary.md`. Next: bounded nonblocked PK45.02 actor paths.

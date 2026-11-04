@@ -160,3 +160,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK46.02 change-direction path is mismatched under PacketVer22/23: client 0x0085 is 11 bytes, fields 7/10; selected 20080910 server expects 14 bytes, fields 10/13. Needs profile-specific review and replay before correction. PK46.02 remains incomplete; no rows closed.
 
 - PK46.03 cross-checked existing login request captures plus 0x0066/0x0067 character select/create evidence. Remaining gates include profile-specific 0x0068/0x01FB deletion mismatch, 0x0825 SSO security, native Qt lifecycle, and unverified rename/scheduled/paged paths. Partial only; no rows closed.
+
+- PK45.01 scopes per-handler/variant actor and receive-handler evidence. 240 registration entries and 136 indexed functions need explicit contracts; PK20/22/24 lifecycle branches remain open. No rows closed; proceed with unrelated PK45.02 actor paths.
