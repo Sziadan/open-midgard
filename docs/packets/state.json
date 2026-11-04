@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK05.02",
+  "active_step": "PK06.01",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -202,7 +202,7 @@
       "commit_subject": "packet(PK05.02): close on unknown framing boundaries"
     },
     "PK05.03": {
-      "status": "READY_TO_COMMIT",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK05.03-protocol-error-replay.md",
         "docs/packets/evidence/PK05.03-protocol-error-replay.jsonl",
@@ -212,12 +212,16 @@
       "commit_subject": "packet(PK05.03): report receive framing errors"
     },
     "PK05.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK05.04-self-review.md",
+        "docs/packets/contracts/PK05.UNKNOWN-OPCODE.md",
+        "docs/packets/work-items/PK05.04.md"
+      ],
+      "commit_subject": "packet(PK05.04): self-review receive framing changes"
     },
     "PK06.01": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     },

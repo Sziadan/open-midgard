@@ -94,7 +94,7 @@ void LogFirstSeenUnknownRecvPacket(u16 packetId, int bufferedBytes, CPacketQueue
         char history[8 * 16 + 1] = {};
         FormatQueueSample(queue, sample, sizeof(sample));
         FormatRecentPacketHistory(history, sizeof(history));
-        DbgLog("[Net] dropping unknown recv packet id=0x%04X buffered=%d recent=%s sample=%s\n",
+        DbgLog("[Net] unknown recv packet; disconnecting id=0x%04X buffered=%d recent=%s sample=%s\n",
             packetId,
             bufferedBytes,
             history,
