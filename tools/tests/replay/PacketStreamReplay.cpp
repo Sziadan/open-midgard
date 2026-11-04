@@ -57,6 +57,9 @@ struct LoginModeReplayAccess : CLoginMode {
     static void SendHashRequest(LoginModeReplayAccess& mode) {
         mode.SendPasswordHashRequest();
     }
+    static void RunPlainAccountLogin(LoginModeReplayAccess& mode) {
+        mode.CLoginMode::SendPlainAccountLogin();
+    }
     static void RunAckHash(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnAckHash(packet);
     }
@@ -1114,6 +1117,44 @@ void LoginCreateCharacterRequestReplay()
     std::cout << "{\"case_id\":\"login_create_character_request\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-0067-make-character-selected-source\",\"production_entry\":\"CLoginMode::SendMsg(LoginMsg_RequestMakeCharacter/SetCharParam/SetMakingCharName/CreateCharacter) -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":37,\"opcode\":\"0x0067\",\"name\":\"RuneA\",\"stats\":[1,2,3,4,5,6],\"slot\":7,\"hair_color_u16\":18,\"hair_style_u16\":42,\"production_send_capture\":true,\"qt_click_lifecycle_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
+void LoginAccountRequestReplay()
+{
+    SetCase("login_account_request", "PK44.LOGIN-REQUESTS", "PK44-0064-raw-login-selected-profile", "CLoginMode::SendPlainAccountLogin -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    const ServiceType originalService = g_serviceType;
+    struct RestoreServiceType { ServiceType value; ~RestoreServiceType() { g_serviceType = value; } } restore{originalService};
+    g_serviceType = ServiceAmerica;
+
+    LoginModeReplayAccess mode;
+    const char user[] = "packet-user";
+    const char password[] = "packet-pass";
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetUserId,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(user)), 0, 0) != 0,
+        "account login username message was rejected");
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SetPassword,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(password)), 0, 0) != 0,
+        "account login password message was rejected");
+    LoginModeReplayAccess::RunPlainAccountLogin(mode);
+
+    std::vector<u8> expected(55, 0);
+    expected[0] = 0x64;
+    expected[2] = 0x0e;
+    expected[3] = 0x69;
+    expected[4] = 0x32;
+    expected[5] = 0x01;
+    std::memcpy(expected.data() + 6, user, sizeof(user) - 1);
+    std::memcpy(expected.data() + 30, password, sizeof(password) - 1);
+    expected[54] = 1;
+    const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+    Require(captured == expected,
+        "selected 20080910 0x0064 outbound request differs from independent field-offset fixture");
+    Require(g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
+        "plain account login sender did not publish its production status");
+    std::cout << "{\"case_id\":\"login_account_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0064-raw-login-selected-profile\",\"production_entry\":\"CLoginMode::SendMsg(SetUserId/SetPassword) -> SendPlainAccountLogin -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":55,\"opcode\":\"0x0064\",\"client_version\":20080910,\"username\":\"packet-user\",\"password_fixture\":\"packet-pass\",\"clienttype\":1,\"production_send_capture\":true,\"connect_account_gate_not_exercised\":true,\"live_credentials_not_used\":true,\"outcome\":\"PASS\"}\n";
+}
+
 void LoginCharacterRefusalReplay()
 {
     SetCase("login_character_refusal", "PK44.CHAR-LIST-ENTRY", "PK44-006c-refuse-enter-selected-source", "CLoginMode::OnRefuseChar");
@@ -1342,6 +1383,7 @@ int main(){try{
     LoginAcceptCharacterListReplay();
     LoginSelectCharacterRequestReplay();
     LoginCreateCharacterRequestReplay();
+    LoginAccountRequestReplay();
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();
