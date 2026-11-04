@@ -671,3 +671,6 @@ Bound 0x0192 to a 24-byte map-cell update carrying signed cell coordinates, type
 ## 2026-11-04 — PK18.02 deferred on cell type mapping
 
 No runtime change: the available sender's 0x0192 type field cannot be mapped reliably to client collision/render semantics. Wire value 5 for Ice Wall conflicts with internal enum ordinal 9, and no identity-matched 2008 Ref/profile mapping or dynamic overlay exists. PK18.03/04 remain dependent and deferred. No rows closed. Evidence: `evidence/PK18.02-type-mapping-blocker.md`. Continue next independent eligible package PK20.01.
+## 2026-11-04 — PK20.01 scope NPC class replacement
+
+Bound fixed 11-byte 0x01B0 (GID, unused type byte, class ID) separately from 0x01D7's look selector/value contract. Available server snapshot shows class change excludes player classes and is used for mobs/homunculi, but target profile identity remains unverified. Listed model/resource, missing actor, repeated change, picking, visibility, and map teardown cases. No rows closed. Evidence: `evidence/PK20.01-npc-class-replacement-scope.md`. Stable subject: `packet(PK20.01): scope NPC class replacement`. Next: PK20.02 distinct class handler/rebuild.
