@@ -2285,6 +2285,19 @@ void CLoginMode::OnAcceptLogin(const std::vector<u8>& raw)
     const u8* p = raw.data();
 
     const u16 packetLen = static_cast<u16>(p[2]) | (static_cast<u16>(p[3]) << 8);
+    constexpr size_t kAcceptLoginPrefixLength = 47;
+    constexpr size_t kServerRecordLength = sizeof(SERVER_ADDR);
+    if (packetLen != raw.size()
+        || packetLen < kAcceptLoginPrefixLength
+        || (static_cast<size_t>(packetLen) - kAcceptLoginPrefixLength) % kServerRecordLength != 0) {
+        m_numServer = 0;
+        m_serverSelected = -1;
+        std::memset(m_serverInfo, 0, sizeof(m_serverInfo));
+        SetLoginStatus("Login error: malformed AC_ACCEPT_LOGIN server list.");
+        m_nextSubMode = LoginSubMode_Login;
+        return;
+    }
+
     g_session.m_authCode   = u32(p[4])|(u32(p[5])<<8)|(u32(p[6])<<16)|(u32(p[7])<<24);
     g_session.m_aid        = u32(p[8])|(u32(p[9])<<8)|(u32(p[10])<<16)|(u32(p[11])<<24);
     g_session.m_userLevel  = u32(p[12])|(u32(p[13])<<8)|(u32(p[14])<<16)|(u32(p[15])<<24);

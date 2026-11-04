@@ -155,6 +155,9 @@ struct LoginModeReplayAccess : CLoginMode {
         }
         return true;
     }
+    static bool MalformedAcceptLoginClearedList(const LoginModeReplayAccess& mode) {
+        return mode.m_numServer == 0 && mode.m_serverSelected == -1;
+    }
     static std::string FormatDisconnect(const std::vector<u8>& packet) {
         return FormatLoginDisconnectMessage(packet);
     }
@@ -1025,7 +1028,37 @@ void LoginAcceptReplyReplay()
         "0x0069 acceptance status was not written");
     Require(LoginModeReplayAccess::HandshakeCleared(mode), "0x0069 acceptance did not clear login handshake state");
 
+    std::vector<u8> partialRecordPacket(packet.begin(), packet.begin() + kAcceptLoginPrefixLength + kServerRecordLength);
+    partialRecordPacket.push_back(0xee);
+    partialRecordPacket[2] = static_cast<u8>(partialRecordPacket.size() & 0xff);
+    partialRecordPacket[3] = static_cast<u8>(partialRecordPacket.size() >> 8);
+    const u32 acceptedAuthCode = g_session.m_authCode;
+    const u32 acceptedAid = g_session.m_aid;
+    connection->Disconnect();
+    LoopbackPeer malformedPeer(*connection);
+    LoginModeReplayAccess malformedMode;
+    LoginModeReplayAccess::PrepareHandshakeOnly(malformedMode);
+    LoginModeReplayAccess::SetStatus(malformedMode, "Login: awaiting malformed replay packet.");
+    malformedPeer.Send(partialRecordPacket);
+    const std::string malformedStatus = "Login error: malformed AC_ACCEPT_LOGIN server list.";
+    const auto malformedDeadline = Clock::now() + kTimeout;
+    while (g_windowMgr.GetLoginStatus() != malformedStatus && Clock::now() < malformedDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(malformedMode);
+        if (g_windowMgr.GetLoginStatus() != malformedStatus) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    Require(g_windowMgr.GetLoginStatus() == malformedStatus
+            && malformedMode.NextSubMode() == CLoginMode::LoginSubMode_Login
+            && LoginModeReplayAccess::MalformedAcceptLoginClearedList(malformedMode)
+            && LoginModeReplayAccess::HandshakeCleared(malformedMode),
+        "0x0069 partial server record was not rejected with cleared pending/list state");
+    Require(g_session.m_authCode == acceptedAuthCode && g_session.m_aid == acceptedAid,
+        "0x0069 malformed response overwrote accepted session credentials");
+    connection->Disconnect();
+
     std::cout << "{\"case_id\":\"login_accept_reply\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-accept-login-two-servers-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin\",\"frame_length\":" << packet.size() << ",\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"server_record_count\":2,\"input_frame_hex\":\"" << Hex(packet) << "\",\"auth_code\":287454020,\"account_id\":1432778632,\"login_id2\":2864434397,\"raw_sex\":11,\"normalized_sex\":1,\"first_server\":{\"ip_bytes_hex\":\"c0a8010a\",\"port\":6121,\"name\":\"char-main\",\"users\":3,\"type\":4660,\"new_flag\":2},\"second_server\":{\"ip_bytes_hex\":\"cb007107\",\"port\":6122,\"name\":\"char-backup\",\"users\":9,\"type\":22136,\"new_flag\":1},\"selected_server_index\":0,\"multiple_servers_preserved\":true,\"transitions_to_connect_char\":true,\"login_handshake_cleared\":true,\"production_framing_dispatch\":true,\"visible_ui_and_socket_connect_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_accept_reply_partial_server_record\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-0069-reject-partial-server-record\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptLogin\",\"frame_length\":" << partialRecordPacket.size() << ",\"opcode\":\"0x0069\",\"prefix_length\":47,\"server_record_length\":32,\"complete_record_count\":1,\"partial_tail_bytes\":1,\"input_frame_hex\":\"" << Hex(partialRecordPacket) << "\",\"malformed_status\":\"" << malformedStatus << "\",\"returns_to_login\":true,\"server_list_cleared\":true,\"handshake_cleared\":true,\"session_credentials_preserved\":true,\"production_framing_dispatch\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginAcceptCharacterListReplay()
