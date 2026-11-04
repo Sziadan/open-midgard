@@ -1,6 +1,7 @@
 #include "Connection.h"
 #include "GronPacket.h"
 #include "MapSendProfile.h"
+#include "Packet.h"
 #include "gamemode/ActionRequestSender.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
@@ -43,6 +44,9 @@ struct SkillPacketReplayAccess {
 
 struct LoginModeReplayAccess : CLoginMode {
     int NextSubMode() const { return m_nextSubMode; }
+    static std::string FormatRefusal(const std::vector<u8>& packet) {
+        return FormatLoginRefusalMessage(packet);
+    }
     static void AdoptDeferredStatus(LoginModeReplayAccess& mode, const char* status) {
         SetPendingLoginStatus(status);
         AdoptPendingLoginStatus(mode.m_deferredLoginStatus);
@@ -669,6 +673,54 @@ void ProductionAcceptedExitAckReplay(){
     ClearPendingDisconnectAction();
     std::cout<<"{\"case_id\":\"disconnect_ack_accepted_exit\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"orphan_ignored\":true,\"0x00b3_isolated\":true,\"accepted_exit_dispatched\":true,\"outcome\":\"PASS\"}\n";
 }
+void LoginRefusalResultMappingReplay()
+{
+    SetCase("login_refusal_result_mapping", "PK44.04_login_reply", "PK44-006a-auth-result-map-selected-source", "CLoginMode::OnRefuseLogin -> FormatLoginRefusalMessage");
+    struct Sample { u8 code; const char* expected; };
+    const Sample samples[] = {
+        {0, "Login refused: ID not registered."},
+        {1, "Login refused: incorrect password."},
+        {2, "Login refused: account expired."},
+        {3, "Login refused: rejected by the server."},
+        {4, "Login refused: blocked by the GM team."},
+    };
+    Require(sizeof(PACKET_AC_REFUSE_LOGIN) == 23, "selected client 0x006A receive layout is not 23 bytes");
+
+    std::vector<std::string> actualMessages;
+    std::vector<std::string> inputFrames;
+    for (const Sample& sample : samples) {
+        std::vector<u8> packet(sizeof(PACKET_AC_REFUSE_LOGIN), 0);
+        packet[0] = 0x6a;
+        packet[2] = sample.code;
+        const std::string actual = LoginModeReplayAccess::FormatRefusal(packet);
+        Require(actual == sample.expected, "0x006A result code maps to a message different from the selected server meaning");
+        actualMessages.push_back(actual);
+        inputFrames.push_back(Hex(packet));
+    }
+    std::vector<u8> result6(sizeof(PACKET_AC_REFUSE_LOGIN), 0);
+    result6[0] = 0x6a;
+    result6[2] = 6;
+    Require(LoginModeReplayAccess::FormatRefusal(result6).find("temporarily blocked") != std::string::npos,
+        "0x006A result 6 without detail lost its temporary-block fallback");
+    std::vector<u8> unknownResult(sizeof(PACKET_AC_REFUSE_LOGIN), 0);
+    unknownResult[0] = 0x6a;
+    unknownResult[2] = 99;
+    Require(LoginModeReplayAccess::FormatRefusal(unknownResult) == "Login refused (code 99).",
+        "unknown 0x006A result no longer preserves its numeric code");
+
+    std::cout << "{\"case_id\":\"login_refusal_result_mapping\",\"contract_id\":\"PK44.LOGIN-REPLIES\",\"fixture_id\":\"PK44-006a-auth-result-map-selected-source\",\"production_entry\":\"CLoginMode::OnRefuseLogin -> FormatLoginRefusalMessage\",\"frame_length\":23,\"opcode\":\"0x006A\",\"result_byte_offset\":2,\"block_date_bytes_zero\":true,\"input_frames_hex\":[";
+    for (size_t i = 0; i < inputFrames.size(); ++i) {
+        if (i != 0) std::cout << ",";
+        std::cout << "\"" << inputFrames[i] << "\"";
+    }
+    std::cout << "],\"result_codes\":[0,1,2,3,4],\"actual_messages\":[";
+    for (size_t i = 0; i < actualMessages.size(); ++i) {
+        if (i != 0) std::cout << ",";
+        std::cout << "\"" << JsonEscape(actualMessages[i]) << "\"";
+    }
+    std::cout << "],\"result_6_empty_detail_fallback\":true,\"unknown_result_preserved\":true,\"outcome\":\"PASS\"}\n";
+}
+
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
@@ -695,6 +747,7 @@ int main(){try{
     ProductionDisconnectAckEofReplay();
     {SetCase("production_reconnect_reset");TestConnection c;{LoopbackPeer p(c);p.Send({0x6c});PumpUntilBuffered(c,1);}c.Disconnect();Require(!c.IsOpen()&&c.BufferedBytes()==0,"disconnect failed to clear receive queue");{LoopbackPeer p(c);p.Send(fixed);auto out=PumpUntilPacket(c);Require(out==fixed,"production reconnect failed after disconnect");VerifyRoute(out,0x006c);Report("production_reconnect_reset",kFixedFixture,kFixedSha,{fixed},Hex(fixed),Hex(out),0,c.BufferedBytes(),c);}}
     ProductionAcceptedExitAckReplay();
+    LoginRefusalResultMappingReplay();
     LoginCharConnectionFailureReplay();
     LoginPollTransientStatusReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;

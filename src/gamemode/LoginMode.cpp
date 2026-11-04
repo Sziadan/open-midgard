@@ -2274,16 +2274,28 @@ void CLoginMode::OnRefuseLogin(const std::vector<u8>& raw)
 {
     ResetAccountLoginHandshake();
     const u8 code = (raw.size() > 2) ? raw[2] : 0;
-    const std::string detail = raw.size() >= sizeof(PACKET_AC_REFUSE_LOGIN)
-        ? ExtractFixedText(reinterpret_cast<const char*>(raw.data() + 3), sizeof(PACKET_AC_REFUSE_LOGIN::BlockDate))
+    const std::string message = FormatLoginRefusalMessage(raw);
+    DbgLog("[Login] AC_REFUSE_LOGIN: code=%d\n", (int)code);
+    SetLoginStatus(message.c_str());
+    ShowLoginErrorDialog(message.c_str());
+    CRagConnection::instance()->Disconnect();
+    m_isConnected = 0;
+    m_nextSubMode = LoginSubMode_Login;
+}
+
+std::string CLoginMode::FormatLoginRefusalMessage(const std::vector<u8>& packet)
+{
+    const u8 code = (packet.size() > 2) ? packet[2] : 0;
+    const std::string detail = packet.size() >= sizeof(PACKET_AC_REFUSE_LOGIN)
+        ? ExtractFixedText(reinterpret_cast<const char*>(packet.data() + 3), sizeof(PACKET_AC_REFUSE_LOGIN::BlockDate))
         : std::string();
     char msg[160];
     switch (code) {
-    case 0:  std::snprintf(msg, sizeof(msg), "Login refused: account suspended."); break;
-    case 1:  std::snprintf(msg, sizeof(msg), "Login refused: ID not found."); break;
-    case 2:  std::snprintf(msg, sizeof(msg), "Login refused: wrong password."); break;
-    case 3:  std::snprintf(msg, sizeof(msg), "Login refused: account already logged in."); break;
-    case 4:  std::snprintf(msg, sizeof(msg), "Login refused: account not approved."); break;
+    case 0:  std::snprintf(msg, sizeof(msg), "Login refused: ID not registered."); break;
+    case 1:  std::snprintf(msg, sizeof(msg), "Login refused: incorrect password."); break;
+    case 2:  std::snprintf(msg, sizeof(msg), "Login refused: account expired."); break;
+    case 3:  std::snprintf(msg, sizeof(msg), "Login refused: rejected by the server."); break;
+    case 4:  std::snprintf(msg, sizeof(msg), "Login refused: blocked by the GM team."); break;
     case 5:  std::snprintf(msg, sizeof(msg), "Login refused: client version is not accepted by the server."); break;
     case 6:
         if (!detail.empty()) {
@@ -2294,12 +2306,7 @@ void CLoginMode::OnRefuseLogin(const std::vector<u8>& raw)
         break;
     default: std::snprintf(msg, sizeof(msg), "Login refused (code %d).", (int)code); break;
     }
-    DbgLog("[Login] AC_REFUSE_LOGIN: code=%d\n", (int)code);
-    SetLoginStatus(msg);
-    ShowLoginErrorDialog(msg);
-    CRagConnection::instance()->Disconnect();
-    m_isConnected = 0;
-    m_nextSubMode = LoginSubMode_Login;
+    return msg;
 }
 
 // ---------------------------------------------------------------------------

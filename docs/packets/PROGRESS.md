@@ -349,3 +349,7 @@ Aggregated the completed PK47.03.001 guarded-registration scan and PK47.03.002 c
 ## 2026-11-04 — PK47.04 per-identity evidence boundary
 
 Self-reviewed the PK47 aggregate against its two source-audit children and the corrected catalog. Aggregate counts reconcile, but registration/declaration inventories do not establish per-identity client reachability, parser/emitter semantics or byte oracles. The existing PK03 replay is unrelated to those packet identities. Recorded the per-identity work needed in `evidence/PK47.04-boundary.md`, kept all 442 catalog-only identities unresolved, and moved to the dependency-ready PK44.04 self-review. This is an evidence boundary, not a strong-agent approval gate. Next: PK44.04.
+
+## 2026-11-04 — PK44.04 correct login refusal results
+
+Implemented the source-backed `0x006A` result mapping for codes 0–4 in the production `OnRefuseLogin` formatter. Added replay inputs using the selected 23-byte packet layout; the same production helper now verifies the five meanings, retains code 6's empty-date fallback, and preserves numeric output for unknown codes. Updated the login-replies contract, blocker/status records and PK44.04 evidence. No discovery rows were closed; codes 7+ user text, full modal/UI path and `0x01DC` hash behavior remain open. Validation: `cmake --build build-mingw-preset --target packet_stream_replay_checks ro_gamemode open_midgard --parallel 4` passed; CTest passed 1/1 with local-loopback permission. Stable subject: `packet(PK44.04): correct login refusal result labels`.
