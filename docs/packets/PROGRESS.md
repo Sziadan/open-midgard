@@ -665,3 +665,6 @@ Audited friend roster/state/add/delete/request handlers, whisper send/receive/ac
 ## 2026-11-04 — PK16.04 verification deferred
 
 Reviewed PK16.02/03 source evidence and confirmed the profile and replay gaps. Planning consistency passes, but no production replay or visible UI lifecycle check can prove behavior; the existing replay source is dirty with unresolved ownership. Defer for stronger review after replay ownership and target profile are established. No audit rows closed. Evidence: `evidence/PK16.04-verification-boundary.md`. Continue next independent PK18.01 scope.
+## 2026-11-04 — PK18.01 scope dynamic map cells
+
+Bound 0x0192 to a 24-byte map-cell update carrying signed cell coordinates, type and a 16-byte map name. The available rAthena sender snapshot shows Ice Wall and permission-gated map-cell call paths, but its internal cell enum does not match the wire value and no target 2008 profile/Ref definition is available. Require a proven type mapping before world/pathfinding/render changes; 0x0199/01D6/02E7 remain PK19. No rows closed. Evidence: `evidence/PK18.01-dynamic-map-cell-scope.md`. Stable subject: `packet(PK18.01): bound dynamic map cell scope`. Next: adjudicate PK18.02 type mapping before implementation.
