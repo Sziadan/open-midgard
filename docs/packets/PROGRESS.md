@@ -237,6 +237,10 @@ Traced the character-server `CA_ENTER` request and raw echo. Server waits for 17
 
 The current receive path interprets the first two bytes as an opcode. It consumes four bytes only for fake IDs `0x8482/0x8483`, silently without comparing the AID; other AIDs cause two-byte unknown-header drops and stream misalignment. Documented the handshake and concrete client gap in `contracts/PK44.CHAR-RAW-AID-HANDSHAKE.md`; retained PK04 as primary implementation owner and did not change discovery coverage. No runtime code changed; no build/test was run. Deployed-server provenance remains unknown. Stable subject: `packet(PK44.03.003): trace raw character account handshake`. Next: `PK44.03.004`.
 
+## 2026-11-04 — PK03.03 lifecycle boundary
+
+Rechecked PK03.03 against the current plan: the production action sender already covers profile-23 attack/repeat/sit/stand bytes, and the headless chooser replay drives production activation/mode-message handling with local-peer request-byte and send-result assertions. The remaining complete LoginMode-to-chooser-to-Session acknowledgement handoff, Qt input delivery, and visible UI rendering cannot be verified in the existing replay without initializing coupled audio/assets/window/world/renderer state. Recorded exact coverage and limits in `evidence/PK03.03-boundary.md`; marked only that boundary `BLOCKED` and advanced the active step to PK03.04, whose self-review/replay can proceed independently. No discovery rows were closed and no runtime code changed. Plan consistency validation and PK03.04 production replay are next.
+
 
 ## 2026-11-04 — PK44.03.004 character list, selection and entry trace
 
@@ -333,3 +337,15 @@ Found four comment-only false positives in the prior historical catalog scan. Up
 ## 2026-11-04 — PK47.03.002 comment-filtered catalog and crosswalk
 
 Completed the snapshot-local catalog correction. The prior scanner matched four comment-only occurrences; `audit_packets.py` now masks comments and string literals and emits `definitions_in_source_snapshot`. Rebuilt the catalog and per-opcode crosswalk: 1,380 source opcodes, 938 mapped to discovery IDs, 442 without discovery parents; selected registry membership is 596 present / 784 absent with zero mismatches. PK47.03.001 is reconciled to 234 catalog-only opcodes and 299 guarded registrations; 208 other catalog-only declarations remain. The 234 registration rows and 208 declaration rows stay unresolved pending full parser/emitter/client-path traces; their scope is documented in `BLOCKED.md` for a later stronger review. No semantic classification was closed; no runtime code changed. Evidence: `evidence/PK47.03.002-catalog-comment-scan.md`. Validation: source-row/key checks, `python tools/check_packet_plan.py`, and `git diff --check`. Stable subject: `packet(PK47.03.002): exclude comments from packet definition catalog`. Next eligible plan step: resume `PK03.03`; PK04 depends on completion of PK03.
+
+## 2026-11-04 — PK03.04 deploy-off replay rerun
+
+Both `packet_stream_replay_checks` and `open_midgard` build targets succeeded; CTest initially could not open the local mock-peer path in the default sandbox, then passed 1/1 with local-loopback permission (2.33s). Verbose output confirmed PASS for framing/router/refusal, the 0x0437 sender, chooser activation, timeout and LoginMode cases. The replay executable hash matches the previously recorded binary and its timestamp follows the replay source timestamp; no runtime source changed. Updated `evidence/PK03.04-replay-audit.md`; full application update/init/exit frames and visible Qt rendering remain open. Stable subject: `packet(PK03.04): rerun deploy-off lifecycle replay`.
+
+## 2026-11-04 — PK47.03 source-adjudication aggregate
+
+Aggregated the completed PK47.03.001 guarded-registration scan and PK47.03.002 comment-filtered catalog correction. The corrected catalog has 1,380 identities; 234 catalog-only opcodes have 299 guarded map registrations, and another 208 have declarations without a matched active registration. All 442 identities remain `UNRESOLVED`; no discovery rows or semantic findings were closed. Added `evidence/PK47.03-aggregate.md` with counts, evidence links, source limitations, and validation scope. The PK03 lifecycle checks remain blocked at the full application/visible Qt boundary, while independent PK47 work continues. Stable subject: `packet(PK47.03): aggregate historical identity adjudication`. Next: PK47.04 self-review.
+
+## 2026-11-04 — PK47.04 per-identity evidence boundary
+
+Self-reviewed the PK47 aggregate against its two source-audit children and the corrected catalog. Aggregate counts reconcile, but registration/declaration inventories do not establish per-identity client reachability, parser/emitter semantics or byte oracles. The existing PK03 replay is unrelated to those packet identities. Recorded the per-identity work needed in `evidence/PK47.04-boundary.md`, kept all 442 catalog-only identities unresolved, and moved to the dependency-ready PK44.04 self-review. This is an evidence boundary, not a strong-agent approval gate. Next: PK44.04.

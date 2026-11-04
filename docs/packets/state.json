@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK03.03",
+  "active_step": "PK44.04",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -125,16 +125,17 @@
       "commit_subject": "packet(PK03.02): replay production packet stream framing"
     },
     "PK03.03": {
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "evidence": [
         "docs/packets/evidence/PK03.03-outbound-transport.md",
         "docs/packets/evidence/PK03.03-outbound-transport.jsonl",
-        "docs/packets/evidence/PK03.03-0437-contract-review.md"
+        "docs/packets/evidence/PK03.03-0437-contract-review.md",
+        "docs/packets/evidence/PK03.03-boundary.md"
       ],
       "commit_subject": "packet(PK03.03): replay reviewed 0437 action sender"
     },
     "PK03.04": {
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "evidence": [
         "docs/packets/evidence/PK03.04-replay-audit.md",
         "docs/packets/evidence/PK03.04-global-router-refusal.jsonl",
@@ -1179,14 +1180,18 @@
       "commit_subject": "packet(PK47.02): aggregate discovery and historical reconciliations"
     },
     "PK47.03": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK47.03-aggregate.md"
+      ],
+      "commit_subject": "packet(PK47.03): aggregate historical identity adjudication"
     },
     "PK47.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "BLOCKED",
+      "evidence": [
+        "docs/packets/evidence/PK47.04-boundary.md"
+      ],
+      "commit_subject": "packet(PK47.04): record per-identity evidence boundary"
     },
     "PK48.01": {
       "status": "NOT_STARTED",
