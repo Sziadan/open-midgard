@@ -1222,11 +1222,12 @@ void LoginConnectInfoGateReplay()
     g_serviceType = ServiceAmerica;
     g_passwordEncrypt = 0;
 
-    const auto runConnect = [&](bool sendConnectInfo) {
+    const auto runConnect = [&](bool sendConnectInfo, const char* hashOverride) {
         std::ofstream settings(settingsDirectory / "open-midgard.ini", std::ios::binary | std::ios::trunc);
         Require(settings.is_open(), "could not write isolated login-settings fixture");
         settings << "[Login]\n"
                  << "SendConnectInfoChanged=" << (sendConnectInfo ? 1 : 0) << "\n"
+                 << "ClientHashOverrideMd5=" << (hashOverride ? hashOverride : "") << "\n"
                  << "AccountLoginPacket=plain\n"
                  << "ForcePasswordHashRequest=0\n"
                  << "ClientDateOverride=20080910\n"
@@ -1287,6 +1288,12 @@ void LoginConnectInfoGateReplay()
             std::memcpy(connectInfo.data() + 2, user, sizeof(user) - 1);
             expectedStream.insert(expectedStream.end(), connectInfo.begin(), connectInfo.end());
         }
+        if (hashOverride) {
+            const std::vector<u8> exeHash{
+                0x04, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
+                0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+            expectedStream.insert(expectedStream.end(), exeHash.begin(), exeHash.end());
+        }
         expectedStream.insert(expectedStream.end(), expectedLogin.begin(), expectedLogin.end());
         const std::vector<u8> captured = ReceiveExactSocket(accepted.value, expectedStream.size());
         Require(captured == expectedStream,
@@ -1300,9 +1307,10 @@ void LoginConnectInfoGateReplay()
         return Hex(captured);
     };
 
-    const std::string disabledStream = runConnect(false);
-    const std::string enabledStream = runConnect(true);
-    std::cout << "{\"case_id\":\"login_connect_info_gate\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0200-connect-info-opt-in\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendPlainAccountLogin\",\"disabled_stream_hex\":\"" << disabledStream << "\",\"enabled_stream_hex\":\"" << enabledStream << "\",\"disabled_gate_sends_only_0064\":true,\"enabled_gate_sends_0200_then_0064\":true,\"connect_account_path_uses_local_mock\":true,\"isolated_settings_fixture_removed\":true,\"no_live_credentials_or_server\":true,\"outcome\":\"PASS\"}\n";
+    const std::string disabledStream = runConnect(false, nullptr);
+    const std::string enabledStream = runConnect(true, nullptr);
+    const std::string hashOverrideStream = runConnect(false, "00112233445566778899aabbccddeeff");
+    std::cout << "{\"case_id\":\"login_connect_info_gate\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0200-connect-info-opt-in-and-0204-exe-hash\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendExeHashCheck -> SendPlainAccountLogin\",\"disabled_stream_hex\":\"" << disabledStream << "\",\"enabled_stream_hex\":\"" << enabledStream << "\",\"synthetic_hash_override_stream_hex\":\"" << hashOverrideStream << "\",\"disabled_gate_sends_only_0064\":true,\"enabled_gate_sends_0200_then_0064\":true,\"default_america_without_hash_source_omits_0204\":true,\"synthetic_hash_override_sends_0204_then_0064\":true,\"connect_account_path_uses_local_mock\":true,\"isolated_settings_fixture_removed\":true,\"no_live_credentials_or_server\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginCharacterRefusalReplay()
