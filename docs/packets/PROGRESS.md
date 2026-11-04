@@ -576,3 +576,7 @@ Added a production QVariant row mapper for online/gender/hair fields and used it
 ## 2026-11-04 — PK06.04 self-review guild member status
 
 Self-reviewed selected 01F2 source layout and send branches against framing, member decode, production dispatch, Qt row mapping, and map marker lifecycle. All source-derived online/offline and malformed cases are covered; offline 01F2 removes the member's prior 01EB position marker. The deployed client view is not rendered in this harness; profile 22 and deployment parity remain unverified. Focused CTest and tracker checks pass. No discovery rows were closed; PK48 review is pending and does not gate progress. Evidence: `evidence/PK06.04-self-review.md`. Stable subject: `packet(PK06.04): self-review guild member status`. Next: PK07.01 specify the selected-source pet status profile and layout.
+
+## 2026-11-04 — PK07.01 specify pet status contract
+
+Established selected-source map S2C `0x01A2` as a packed 35-byte pet status snapshot for effective profile 20080910; the 2-byte `job` extension is guarded at PACKETVER >= 20081126 and remains a separate PK47 identity. Documented exact offsets, sender field sources/rename branch, SELF recipient, status-refresh caller families, and absence of actor identity. Client currently frames 37 bytes. PK27 retains lifecycle ownership; no code or coverage classification changed. No build run for this contract checkpoint. Stable subject: `packet(PK07.01): specify pet status contract`. Next: PK07.02 active-profile framing correction. PK48 is pending, not a gate.

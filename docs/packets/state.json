@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK07.01",
+  "active_step": "PK07.02",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -259,12 +259,16 @@
       "commit_subject": "packet(PK06.04): self-review guild member status"
     },
     "PK07.01": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK07.01-source-contract.md",
+        "docs/packets/contracts/PK07.PET-STATUS.md",
+        "docs/packets/work-items/PK07.01.md"
+      ],
+      "commit_subject": "packet(PK07.01): specify pet status contract"
     },
     "PK07.02": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     },
