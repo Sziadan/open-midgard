@@ -760,3 +760,7 @@ Traced selected-source 12-byte 0x0087 from clif_walkok through HandleSelfMoveAck
 ## 2026-11-04 — PK45.02 trace actor action notification
 
 Traced selected 20080910 33-byte 0x02E1 from clif_damage through HandleActorActionNotify. Signed damage, action, target, tick, hit count, and timing offsets align; server config changes values, and motion/effect presentation remains unverified. One selected variant only; no rows closed. Evidence: evidence/PK45.02-actor-action-notify.md.
+
+## 2026-11-04 — PK45.02 defer actor spawn variant family
+
+The client receive profile exposes legacy, shifted, modern, and font spawn variants; the selected server emitter/actor-kind layout has not been tied to the matching decode path. PK20 class-resource, PK22 status/motion, and PK24 effect-ordering boundaries also affect spawn presentation. Defer this family for stronger source/profile review and independent replay. No rows closed. Evidence: evidence/PK45.02-spawn-variant-boundary.md. Move to an independently supported PK45.03 receive-handler leaf.
