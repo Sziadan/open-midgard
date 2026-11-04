@@ -559,11 +559,9 @@ bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)
             }
 
             if (knownSize == 0) {
-                // Unknown packet id: drop this header and keep scanning so one unsupported
-                // packet doesn't stall the whole login/game receive pipeline.
                 LogFirstSeenUnknownRecvPacket(packetId, m_recvQueue.GetSize(), m_recvQueue);
-                m_recvQueue.RemoveData(2);
-                continue;
+                Disconnect();
+                return false;
             }
 
             int packetSize = knownSize;
@@ -577,8 +575,8 @@ bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)
                     (static_cast<u16>(static_cast<unsigned char>(hdr[3])) << 8));
                 if (packetSize < 4 || packetSize > 0x7FFF) {
                     LogFirstSeenInvalidVariablePacket(packetId, packetSize, m_recvQueue);
-                    m_recvQueue.RemoveData(2);
-                    continue;
+                    Disconnect();
+                    return false;
                 }
             }
 
