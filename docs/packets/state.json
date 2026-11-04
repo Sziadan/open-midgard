@@ -452,9 +452,11 @@
       "commit_subject": null
     },
     "PK14.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK14.01-party-position-scope.md"
+      ],
+      "commit_subject": "packet(PK14.01): bound party position contract"
     },
     "PK14.02": {
       "status": "NOT_STARTED",

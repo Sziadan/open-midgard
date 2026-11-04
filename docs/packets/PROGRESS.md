@@ -636,3 +636,7 @@ Implemented local guild title/permission reconciliation from the current member 
 ## 2026-11-04 — PK11.03 apply verified guild menu gates
 
 Propagated 0x014E menu flags into Qt state, gated known tabs and outbound notice/position/skill/member-position actions, and added matching QML control states. Added action tests for flag-required/denied paths and seeded the local preview with server role masks 0xD7/0x57. Fresh deploy-off `open_midgard` target built; `check_guild_window.py` passed all parser/action/screenshot cases. The custom Relations tab remains unresolved against server 0x40 `GMENUFLAG_ALLGUILDLIST`, so PK11.03 is blocked for stronger review; no discovery rows closed. Evidence: `evidence/PK11.03-menu-flags.md`. Stable subject: `packet(PK11.03): apply verified guild menu gates`. Next independent package: PK14.01.
+
+## 2026-11-04 — PK14.01 bound party position contract
+
+Traced the sole parent `AUDIT-0x0107`: 10-byte S2C packet with AID and signed 16-bit map-cell X/Y; server sends `(-1,-1)` to remove the dot, broadcasts only among same-map party members, and invokes removal on map departure. Specified session update, roster/map/reconnect teardown, and minimap-rendering leaf boundaries. Scope only; no runtime rows closed. Evidence: `evidence/PK14.01-party-position-scope.md`. Stable subject: `packet(PK14.01): bound party position contract`. Next: PK14.02 implement account-ID state and sentinel lifecycle.
