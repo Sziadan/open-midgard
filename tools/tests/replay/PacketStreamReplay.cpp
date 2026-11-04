@@ -2310,6 +2310,7 @@ void GuildMemberLoginNoticeReplay(){
 
 void PetStatusReplay(){
     SetCase("pet_status_state_decode","PK07.PET-STATUS","PK07-01a2-selected-20080910-fields","ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ro::pet::ReadStatus");
+    Require(ro::net::GetActivePacketProfile().id==ro::net::PacketVersionId::PacketVer23,"pet status 35-byte fixture must run under selected profile 23");
     Require(ro::net::GetPacketSize(0x01a2)==35,"active pet status framing changed from selected 35-byte profile");
     const auto previousStatus=g_session.m_petStatus;
     g_session.m_petStatus={};

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK07.02",
+  "active_step": "PK08.01",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -288,12 +288,16 @@
       "commit_subject": "packet(PK07.03): decode pet status snapshot"
     },
     "PK07.04": {
-      "status": "IN_PROGRESS",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK07.04-self-review.md",
+        "docs/packets/contracts/PK07.PET-STATUS.md",
+        "docs/packets/work-items/PK07.04.md"
+      ],
+      "commit_subject": "packet(PK07.04): self-review pet status implementation"
     },
     "PK08.01": {
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "evidence": [],
       "commit_subject": null
     },

@@ -409,6 +409,9 @@ void InitializePacketSize()
     std::call_once(g_initOnce, []() {
         FillPacketSizeTable(g_packetSizePacketVer23);
         FillPacketSizeTable(g_packetSizePacketVer22);
+        // The 20080910 contract selects profile 23. Keep profile 22's prior
+        // framing until its independent historical layout is verified.
+        g_packetSizePacketVer22[0x01A2] = 37;
     });
 }
 
