@@ -1335,14 +1335,14 @@ void LoginConnectInfoGateReplay()
     g_serviceType = ServiceAmerica;
     g_passwordEncrypt = 0;
 
-    const auto runConnect = [&](bool sendConnectInfo, const char* hashOverride) {
+    const auto runConnect = [&](bool sendConnectInfo, const char* hashOverride, bool forcePasswordHash) {
         std::ofstream settings(settingsDirectory / "open-midgard.ini", std::ios::binary | std::ios::trunc);
         Require(settings.is_open(), "could not write isolated login-settings fixture");
         settings << "[Login]\n"
                  << "SendConnectInfoChanged=" << (sendConnectInfo ? 1 : 0) << "\n"
                  << "ClientHashOverrideMd5=" << (hashOverride ? hashOverride : "") << "\n"
                  << "AccountLoginPacket=plain\n"
-                 << "ForcePasswordHashRequest=0\n"
+                 << "ForcePasswordHashRequest=" << (forcePasswordHash ? 1 : 0) << "\n"
                  << "ClientDateOverride=20080910\n"
                  << "ClientTypeOverride=1\n";
         settings.close();
@@ -1407,12 +1407,20 @@ void LoginConnectInfoGateReplay()
                 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
             expectedStream.insert(expectedStream.end(), exeHash.begin(), exeHash.end());
         }
-        expectedStream.insert(expectedStream.end(), expectedLogin.begin(), expectedLogin.end());
+        if (forcePasswordHash) {
+            expectedStream.push_back(0xdb);
+            expectedStream.push_back(0x01);
+        } else {
+            expectedStream.insert(expectedStream.end(), expectedLogin.begin(), expectedLogin.end());
+        }
         const std::vector<u8> captured = ReceiveExactSocket(accepted.value, expectedStream.size());
         Require(captured == expectedStream,
             "ConnectAccount gate emitted a different 0x0200/0x0064 packet sequence than expected");
-        Require(g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
-            "ConnectAccount production flow did not enter account-response wait state");
+        const char* const expectedStatus = forcePasswordHash
+            ? "Login: waiting for account hash challenge..."
+            : "Login: waiting for account server response...";
+        Require(g_windowMgr.GetLoginStatus() == expectedStatus,
+            "ConnectAccount production flow did not enter the expected account-response wait state");
         Require(SelectSocket(accepted.value, true, false, std::chrono::milliseconds(20)) == 0,
             "ConnectAccount emitted an unexpected extra packet after its expected request sequence");
         connection->Disconnect();
@@ -1420,10 +1428,11 @@ void LoginConnectInfoGateReplay()
         return Hex(captured);
     };
 
-    const std::string disabledStream = runConnect(false, nullptr);
-    const std::string enabledStream = runConnect(true, nullptr);
-    const std::string hashOverrideStream = runConnect(false, "00112233445566778899aabbccddeeff");
-    std::cout << "{\"case_id\":\"login_connect_info_gate\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0200-connect-info-opt-in-and-0204-exe-hash\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendExeHashCheck -> SendPlainAccountLogin\",\"disabled_stream_hex\":\"" << disabledStream << "\",\"enabled_stream_hex\":\"" << enabledStream << "\",\"synthetic_hash_override_stream_hex\":\"" << hashOverrideStream << "\",\"disabled_gate_sends_only_0064\":true,\"enabled_gate_sends_0200_then_0064\":true,\"default_america_without_hash_source_omits_0204\":true,\"synthetic_hash_override_sends_0204_then_0064\":true,\"connect_account_path_uses_local_mock\":true,\"isolated_settings_fixture_removed\":true,\"no_live_credentials_or_server\":true,\"outcome\":\"PASS\"}\n";
+    const std::string disabledStream = runConnect(false, nullptr, false);
+    const std::string enabledStream = runConnect(true, nullptr, false);
+    const std::string hashOverrideStream = runConnect(false, "00112233445566778899aabbccddeeff", false);
+    const std::string passwordHashRequestStream = runConnect(false, nullptr, true);
+    std::cout << "{\"case_id\":\"login_connect_info_gate\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-0200-connect-info-0204-exe-hash-and-01db-password-hash-gates\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectAccount) -> SendConnectInfoChanged -> SendExeHashCheck -> SendPasswordHashRequest/SendPlainAccountLogin\",\"disabled_stream_hex\":\"" << disabledStream << "\",\"enabled_stream_hex\":\"" << enabledStream << "\",\"synthetic_hash_override_stream_hex\":\"" << hashOverrideStream << "\",\"password_hash_request_stream_hex\":\"" << passwordHashRequestStream << "\",\"disabled_gate_sends_only_0064\":true,\"enabled_gate_sends_0200_then_0064\":true,\"default_america_without_hash_source_omits_0204\":true,\"synthetic_hash_override_sends_0204_then_0064\":true,\"default_no_hash_request_sends_0064\":true,\"forced_hash_request_sends_01db_and_waits_for_challenge\":true,\"connect_account_path_uses_local_mock\":true,\"isolated_settings_fixture_removed\":true,\"no_live_credentials_or_server\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginCharacterRefusalReplay()

@@ -1151,9 +1151,11 @@
         "docs/packets/evidence/PK44.04-channel-login-request.md",
         "docs/packets/evidence/PK44.04-channel-login-request.jsonl",
         "docs/packets/evidence/PK44.04-pcbang-login-request.md",
-        "docs/packets/evidence/PK44.04-pcbang-login-request.jsonl"
+        "docs/packets/evidence/PK44.04-pcbang-login-request.jsonl",
+        "docs/packets/evidence/PK44.04-password-hash-request-gate.md",
+        "docs/packets/evidence/PK44.04-password-hash-request-gate.jsonl"
       ],
-      "commit_subject": "packet(PK44.04): capture pcbang login request"
+      "commit_subject": "packet(PK44.04): verify password hash request gate"
     },
     "PK45.01": {
       "status": "NOT_STARTED",
