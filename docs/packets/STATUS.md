@@ -150,3 +150,5 @@ Status refresh 2026-11-04. **No runtime work package is certified complete.** PK
 - PK50.02–.04 deferred for atomic journal model/time-unit design; Ref's 02B1 clears before validation and 02B2 conversions need careful review. No rows closed; resume independent PK44.04.
 
 - PK48.01 defines independent certification inputs, evidence schema, review sequence, and entry gates. PK48.02–.04 are not ready while feature leaves and PK44/PK47 evidence remain open; no rows closed. Resume PK44.04 implementation/evidence work.
+
+- PK44.04 focused production replay rerun: target build passed; sandboxed CTest failed before invocation because local mock connection was unavailable, then passed 1/1 with local-loopback permission. Evidence hashes the user-dirty replay source; no attribution or row closure. Broader per-contract malformed/lifecycle/UI coverage remains open.

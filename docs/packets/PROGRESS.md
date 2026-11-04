@@ -720,3 +720,7 @@ Ref confirms legacy 02B1/02B2 behavior, but list handling clears before validati
 ## 2026-11-04 — PK48.01 define independent certification scope
 
 Recorded authoritative inputs, per-contract review and replay evidence requirements, summary schema, and entry gates. Certification is not ready: feature leaves remain deferred, PK44.04 lifecycle/UI work is incomplete, PK47.04 lacks row-level evidence, and replay-file ownership remains unresolved. Scope only; no runtime changes or rows closed. Evidence: `evidence/PK48.01-scope-boundary.md`. Resume PK44.04 implementation/evidence work before PK48.02.
+
+## 2026-11-04 — PK44.04 rerun focused production replay
+
+The replay target built successfully. Restricted CTest could not connect to its local mock before handler invocation; the same focused test passed 1/1 with local-loopback permission. Recorded executable and dirty source hashes in `evidence/PK44.04-focused-replay-rerun.md`. The replay source remains user-owned and untouched; no rows closed, and PK44.04 remains in progress.
