@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK11.02",
+  "active_step": "PK11.03",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -383,7 +383,7 @@
       "commit_subject": "packet(PK11.01): bound guild permission review"
     },
     "PK11.02": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK11.02-guild-permission-reconciliation.md"
       ],
