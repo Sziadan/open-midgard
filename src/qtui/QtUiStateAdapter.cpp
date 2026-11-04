@@ -3807,6 +3807,14 @@ bool TryAppendHoveredUiItemAnchor(QVariantList* anchors)
 
 } // namespace
 
+void PopulateGuildMemberPresenceData(QVariantMap& row,const ro::guild::Member& member)
+{
+    row["online"]=member.online;
+    row["gender"]=member.gender;
+    row["hairStyle"]=member.hairStyle;
+    row["hairColor"]=member.hairColor;
+}
+
 static void PopulateGuildWindow(QtUiState* state,CGameMode& mode)
 {
     if(mode.m_pendingEmblemGuild && (!CRagConnection::instance()->IsOpen() || GetTickCount()-mode.m_pendingEmblemTick>=15000)) {
@@ -3827,7 +3835,7 @@ static void PopulateGuildWindow(QtUiState* state,CGameMode& mode)
     QVariantList members,positions,skills,relations,bans;
     for(const auto& m:info.members){
         QVariantMap row;row["name"]=ToQString(m.name);row["character"]=m.character;row["account"]=m.account;row["job"]=ToQString(g_session.GetJobDisplayName(m.job));
-        row["level"]=m.level;row["online"]=m.online;row["exp"]=m.exp;row["position"]=m.position;
+        row["level"]=m.level;row["exp"]=m.exp;row["position"]=m.position;PopulateGuildMemberPresenceData(row,m);
         const auto pos=info.positions.find(m.position);row["rank"]=pos==info.positions.end()?QString():ToQString(pos->second.name);members.push_back(row);
     }
     for(const auto& entry:info.positions){const auto& p=entry.second;QVariantMap row;row["id"]=p.id;row["name"]=ToQString(p.name);row["tax"]=p.tax;row["invite"]=(p.mode&1)!=0;row["expel"]=(p.mode&16)!=0;positions.push_back(row);}

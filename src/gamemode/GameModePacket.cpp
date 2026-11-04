@@ -5265,7 +5265,7 @@ void HandleGuildBelong(CGameMode& mode, const PacketView& packet)
 void HandleGuildWindowPacket(CGameMode& mode,const PacketView& packet)
 {
     if(!ro::guild::ReadWindowPacket(g_session.m_guildWindow,packet.packetId,packet.data,packet.packetLength))return;
-    if(packet.packetId==0x16d && ReadLE32(packet.data+10)==0)mode.m_guildPosList.erase(ReadLE32(packet.data+2));
+    if((packet.packetId==0x16d || packet.packetId==0x1f2) && ReadLE32(packet.data+10)==0)mode.m_guildPosList.erase(ReadLE32(packet.data+2));
     if(packet.packetId==0x150 || packet.packetId==0x1b6) {
         auto& guild=g_session.m_localGuild;guild.characterId=g_session.m_gid;
         guild.guildId=g_session.m_guildWindow.id;guild.name=g_session.m_guildWindow.name;guild.emblemVersion=g_session.m_guildWindow.emblemVersion;

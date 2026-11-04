@@ -9,6 +9,7 @@
 #include "gamemode/GameModePacket.h"
 #include "gamemode/LoginMode.h"
 #include "gamemode/Mode.h"
+#include "qtui/QtUiStateAdapter.h"
 #include "session/Session.h"
 #include "ui/UIChooseWnd.h"
 #include "ui/UIWindowMgr.h"
@@ -2288,15 +2289,22 @@ void GuildMemberLoginNoticeReplay(){
     Require(loginResult.packetsProcessed==1&&loginResult.packetsDispatched==1,"production router did not dispatch the 0x01F2 notice");
     const auto& onlineMember=g_session.m_guildWindow.members[0];
     Require(onlineMember.online&&onlineMember.gender==1&&onlineMember.hairStyle==0x1234&&onlineMember.hairColor==0x5678&&g_session.m_guildWindow.online==2,"0x01F2 online state or appearance fields decoded incorrectly");
+    QVariantMap onlineRow;PopulateGuildMemberPresenceData(onlineRow,onlineMember);
+    Require(onlineRow.value("online").toBool()&&onlineRow.value("gender").toUInt()==1&&onlineRow.value("hairStyle").toUInt()==0x1234&&onlineRow.value("hairColor").toUInt()==0x5678,"online member state did not propagate into the production Qt row model");
     std::cout<<"{\"case_id\":\"guild_member_login_notice_01f2_online\",\"contract_id\":\"PK06.GUILD-MEMBER-LOGIN\",\"fixture_id\":\"PK06-01f2-selected-source-literal\",\"production_entry\":\"ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ReadWindowPacket\",\"input_frame_hex\":\""<<Hex(online)<<"\",\"packet_size\":20,\"member_online\":true,\"gender\":1,\"hair_style\":4660,\"hair_color\":22136,\"online_count\":2,\"outcome\":\"PASS\"}\n";
 
+    const std::vector<u8> mapPosition{0xeb,0x01,0x44,0x33,0x22,0x11,0x05,0x00,0x06,0x00};
+    peer.Send(mapPosition);const auto positionResult=ProcessGameModePacketLoop(mode,connection,router,4);
+    Require(positionResult.packetsProcessed==1&&positionResult.packetsDispatched==1&&mode.m_guildPosList.count(0x11223344)==1,"production 0x01EB did not add the guild map-position marker");
     const std::vector<u8> offline{0xf2,0x01,0x44,0x33,0x22,0x11,0x88,0x77,0x66,0x55,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
     peer.Send(offline);const auto logoutResult=ProcessGameModePacketLoop(mode,connection,router,4);
     const auto& offlineMember=g_session.m_guildWindow.members[0];
     Require(logoutResult.packetsProcessed==1&&logoutResult.packetsDispatched==1,"production router did not dispatch the offline 0x01F2 notice");
-    Require(!offlineMember.online&&offlineMember.gender==0&&offlineMember.hairStyle==0&&offlineMember.hairColor==0&&g_session.m_guildWindow.online==1,"0x01F2 offline branch or zeroed appearance fields decoded incorrectly");
+    Require(!offlineMember.online&&offlineMember.gender==0&&offlineMember.hairStyle==0&&offlineMember.hairColor==0&&g_session.m_guildWindow.online==1&&mode.m_guildPosList.count(0x11223344)==0,"0x01F2 offline branch or guild map-position cleanup decoded incorrectly");
     Require(g_session.m_guildWindow.members.size()==2&&g_session.m_guildWindow.members[1].online,"0x01F2 update changed an unrelated member or inserted a phantom member");
-    std::cout<<"{\"case_id\":\"guild_member_login_notice_01f2_offline\",\"contract_id\":\"PK06.GUILD-MEMBER-LOGIN\",\"fixture_id\":\"PK06-01f2-selected-source-literal\",\"input_frame_hex\":\""<<Hex(offline)<<"\",\"member_online\":false,\"appearance_zeroed\":true,\"online_count\":1,\"other_member_unchanged\":true,\"outcome\":\"PASS\"}\n";
+    QVariantMap offlineRow;PopulateGuildMemberPresenceData(offlineRow,offlineMember);
+    Require(!offlineRow.value("online").toBool()&&offlineRow.value("gender").toUInt()==0&&offlineRow.value("hairStyle").toUInt()==0&&offlineRow.value("hairColor").toUInt()==0,"offline member state did not propagate into the production Qt row model");
+    std::cout<<"{\"case_id\":\"guild_member_login_notice_01f2_offline\",\"contract_id\":\"PK06.GUILD-MEMBER-LOGIN\",\"fixture_id\":\"PK06-01f2-selected-source-literal\",\"input_frame_hex\":\""<<Hex(offline)<<"\",\"member_online\":false,\"appearance_zeroed\":true,\"online_count\":1,\"other_member_unchanged\":true,\"map_position_removed\":true,\"qt_member_row_updated\":true,\"outcome\":\"PASS\"}\n";
     g_session.m_guildWindow=previousState;router.Clear();RegisterDefaultGameModePacketHandlers(router);
 }
 

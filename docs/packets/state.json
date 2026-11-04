@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK06.02",
+  "active_step": "PK06.03",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -230,7 +230,7 @@
       "commit_subject": "packet(PK06.01): specify guild member status notice"
     },
     "PK06.02": {
-      "status": "READY_TO_COMMIT",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK06.02-replay.md",
         "docs/packets/evidence/PK06.02-replay.jsonl",
@@ -240,9 +240,14 @@
       "commit_subject": "packet(PK06.02): decode guild member status notice"
     },
     "PK06.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "READY_TO_COMMIT",
+      "evidence": [
+        "docs/packets/evidence/PK06.03-presence-propagation.md",
+        "docs/packets/evidence/PK06.03-presence-propagation.jsonl",
+        "docs/packets/contracts/PK06.GUILD-MEMBER-LOGIN.md",
+        "docs/packets/work-items/PK06.03.md"
+      ],
+      "commit_subject": "packet(PK06.03): propagate guild member presence"
     },
     "PK06.04": {
       "status": "NOT_STARTED",
