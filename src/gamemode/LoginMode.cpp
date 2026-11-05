@@ -2766,6 +2766,8 @@ void CLoginMode::OnNotifyZonesvr(const std::vector<u8>& raw)
     if (raw.size() < 28) return;
     const u8* p = raw.data();
 
+    // Character/map identity changes here, before zone traffic or mode exit.
+    g_session.InvalidatePartyPositions();
     g_session.m_gid = u32(p[2])|(u32(p[3])<<8)|(u32(p[4])<<16)|(u32(p[5])<<24);
     g_session.m_localGuild={}; // A character login starts a fresh membership session.
     g_session.m_guildWindow={};

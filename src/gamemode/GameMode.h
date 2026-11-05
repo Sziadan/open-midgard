@@ -15,6 +15,7 @@ class UIPlayerGage;
 class CRagConnection;
 class CGameModePacketRouter;
 struct GameModePacketLoopResult;
+struct MapTransitionServices;
 
 struct NamePair {
     std::string name;
@@ -164,6 +165,9 @@ public:
     // Production frame gate, kept independent of world/audio initialization.
     bool ProcessNetworkUpdate(CRagConnection& connection, CGameModePacketRouter& router,
         int packetBudget, u32 nowTick, GameModePacketLoopResult* outResult = nullptr);
+    // Borrowed services must remain alive through dispatch; nullptr restores defaults.
+    void SetMapTransitionServices(const MapTransitionServices* services) { m_mapTransitionServices = services; }
+    const MapTransitionServices* GetMapTransitionServices() const { return m_mapTransitionServices; }
     void ProcessPlayWave();
     virtual msgresult_t SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     virtual void OnChangeState(int newState) override;
@@ -350,6 +354,7 @@ public:
 private:
     bool m_terminalNetworkHandled = false;
     u64 m_networkModeOperationGeneration = 0;
+    const MapTransitionServices* m_mapTransitionServices = nullptr;
 };
 
 struct PlayerVitalsScreenMetrics {

@@ -37,6 +37,15 @@ struct PacketView
     const u8* data = nullptr;
 };
 
+// Optional per-mode orchestration; absent callbacks use production services.
+// Parsing, session updates and loaded-map branch selection remain in the handler.
+// requestMode schedules a handoff; it must not destroy the executing mode inline.
+struct MapTransitionServices {
+    std::function<void(const char*, float)> presentLoading;
+    std::function<bool(u32, u16)> reconnect;
+    std::function<void(int, const char*)> requestMode;
+};
+
 // Decode one packet from a raw byte stream.
 // Returns true when a complete packet was decoded.
 bool TryReadPacket(const u8* stream, int availableBytes, PacketView& outPacket, int& consumedBytes);

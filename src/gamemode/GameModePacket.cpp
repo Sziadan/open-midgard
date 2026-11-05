@@ -4402,7 +4402,6 @@ bool ReconnectForServerMove(const MapChangeInfo& info)
         static_cast<unsigned int>((info.ip >> 16) & 0xFFu),
         static_cast<unsigned int>((info.ip >> 24) & 0xFFu));
 
-    ClearPendingDisconnectAction();
     CRagConnection::instance()->Disconnect();
     if (!CRagConnection::instance()->Connect(serverHost, static_cast<int>(info.port))) {
         DbgLog("[GameMode] map change reconnect failed zone=%s:%u map='%s'\n",
@@ -7908,13 +7907,22 @@ void HandleBroadcast(CGameMode& mode, const PacketView& packet)
     RecordChat(mode, payload.text, payload.color, kChatChannelBroadcast);
 }
 
-void ReturnToLoginMode()
+void RequestTransitionMode(const MapTransitionServices* services, int modeType, const char* worldName)
+{
+    if (services && services->requestMode) {
+        services->requestMode(modeType, worldName);
+    } else {
+        g_modeMgr.Switch(modeType, worldName);
+    }
+}
+
+void ReturnToLoginMode(const MapTransitionServices* services = nullptr)
 {
     ClearPendingDisconnectAction();
     g_session.ClearInventoryItems();
     g_windowMgr.ClearChatEvents();
     CRagConnection::instance()->Disconnect();
-    g_modeMgr.Switch(0, "");
+    RequestTransitionMode(services, 0, "");
 }
 
 } // namespace
@@ -8147,16 +8155,28 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    g_modeMgr.PresentLoadingScreen("Loading new map...", 0.01f);
+    const MapTransitionServices* const services = mode.GetMapTransitionServices();
+    if (services && services->presentLoading) {
+        services->presentLoading("Loading new map...", 0.01f);
+    } else {
+        g_modeMgr.PresentLoadingScreen("Loading new map...", 0.01f);
+    }
 
-    if (!ReconnectForServerMove(info)) {
-        ReturnToLoginMode();
+    // Pending request state belongs to the real transition, not the injected transport.
+    if (info.hasServerMove) ClearPendingDisconnectAction();
+    const bool reconnected = !info.hasServerMove
+        || (services && services->reconnect
+            ? services->reconnect(info.ip, info.port)
+            : ReconnectForServerMove(info));
+    if (!reconnected) {
+        g_session.m_pendingReturnToCharSelect = 0;
+        ReturnToLoginMode(services);
         return;
     }
 
     char worldName[40] = {};
     std::snprintf(worldName, sizeof(worldName), "%s.rsw", g_session.m_curMap);
-    g_modeMgr.Switch(1, worldName);
+    RequestTransitionMode(services, 1, worldName);
 }
 
 void HandleAcceptEnter(CGameMode&, const PacketView& packet)

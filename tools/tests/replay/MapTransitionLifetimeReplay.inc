@@ -1,0 +1,442 @@
+#include "gamemode/View.h"
+#include "world/GameActor.h"
+#include "world/World.h"
+
+namespace {
+
+struct MapTransitionLifetimeSnapshot {
+    u32 aid = g_session.m_aid;
+    u32 gid = g_session.m_gid;
+    u32 authCode = g_session.m_authCode;
+    u8 sex = g_session.m_sex;
+    int playerX = g_session.m_playerPosX;
+    int playerY = g_session.m_playerPosY;
+    int playerDir = g_session.m_playerDir;
+    int pendingReturn = g_session.m_pendingReturnToCharSelect;
+    std::string map = g_session.m_curMap;
+    LocalGuildInfo localGuild = g_session.m_localGuild;
+    ro::guild::WindowState guildWindow = g_session.m_guildWindow;
+    std::vector<FRIEND_INFO> party{g_session.GetPartyList().begin(), g_session.GetPartyList().end()};
+    std::string partyName = g_session.m_partyName;
+    bool partyMaster = g_session.m_amIPartyMaster;
+    bool expShare = g_session.m_partyExpShare;
+    bool itemDiv = g_session.m_itemDivType;
+    bool itemCollect = g_session.m_itemCollectType;
+    std::vector<ITEM_INFO> inventory{g_session.GetInventoryItems().begin(), g_session.GetInventoryItems().end()};
+    ro::commerce::State commerce = ro::commerce::state;
+    std::vector<UIChatEvent> chatEvents = g_windowMgr.GetChatEvents();
+    int requestedMode = g_modeMgr.GetRequestedModeType();
+    CMode* currentMode = SkillPacketReplayAccess::Current();
+    int currentModeType = SkillPacketReplayAccess::CurrentType();
+
+    void Restore()
+    {
+        g_session.m_aid = aid;
+        g_session.m_gid = gid;
+        g_session.m_authCode = authCode;
+        g_session.m_sex = sex;
+        g_session.m_playerPosX = playerX;
+        g_session.m_playerPosY = playerY;
+        g_session.m_playerDir = playerDir;
+        g_session.m_pendingReturnToCharSelect = pendingReturn;
+        std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", map.c_str());
+        g_session.m_localGuild = localGuild;
+        g_session.m_guildWindow = guildWindow;
+
+        g_session.ClearParty();
+        for (const FRIEND_INFO& member : party) {
+            g_session.AddMemberToParty(member);
+            if (member.partyPositionValid) {
+                g_session.SetPartyMemberPosition(member.AID, member.partyX, member.partyY);
+            }
+        }
+        g_session.m_partyName = partyName;
+        g_session.m_amIPartyMaster = partyMaster;
+        g_session.m_partyExpShare = expShare;
+        g_session.m_itemDivType = itemDiv;
+        g_session.m_itemCollectType = itemCollect;
+        g_session.ClearInventoryItems();
+        for (const ITEM_INFO& item : inventory) g_session.SetInventoryItem(item);
+        ro::commerce::state = commerce;
+
+        g_windowMgr.ClearChatEvents();
+        for (const UIChatEvent& event : chatEvents) {
+            g_windowMgr.PushChatEvent(event.text.c_str(), event.color, event.channel, event.tick);
+        }
+
+        CRagConnection::instance()->Disconnect();
+        ClearPendingDisconnectAction();
+        GetProductionGameModePacketRouter().Clear();
+        RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
+        SkillPacketReplayAccess::Restore(currentMode, currentModeType);
+        g_modeMgr.Switch(requestedMode, "");
+    }
+};
+
+void SeedMapTransitionMarker(const char* map)
+{
+    g_session.ClearParty();
+    g_session.m_aid = 0x10101010u;
+    g_session.m_gid = 0x20202020u;
+    std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", map);
+    FRIEND_INFO member{};
+    member.isValid = 1;
+    member.AID = 0x30303030u;
+    member.characterName = "MarkerPeer";
+    member.mapName = std::string(map) + ".gat";
+    member.state = 0;
+    g_session.AddMemberToParty(member);
+    Require(g_session.SetPartyMemberPosition(member.AID, 25, 35), "could not seed map-transition marker");
+}
+
+void RequirePartyInvalidated(const u64 beforeRevision, const u64 beforeToken, const char* caseId)
+{
+    const FRIEND_INFO* const member = g_session.FindPartyMemberByAid(0x30303030u);
+    UIRoMapWnd minimap;
+    UIRoMapWnd::DisplayData display{};
+    Require(minimap.GetDisplayDataForQt(&display), std::string(caseId) + " could not read Qt minimap token");
+    Require(member && !member->partyPositionValid && member->partyX == 0 && member->partyY == 0,
+        std::string(caseId) + " retained the previous party coordinates");
+    Require(!g_session.IsPartyMarkerEligible(*member, g_session.m_curMap),
+        std::string(caseId) + " left the marker eligible for native/Qt consumers");
+    Require(g_session.GetNumParty() == 1 && member->characterName == "MarkerPeer",
+        std::string(caseId) + " removed party membership while invalidating coordinates");
+    Require(g_session.GetPartyPositionRevision() > beforeRevision && display.imageRevision != beforeToken,
+        std::string(caseId) + " did not advance the position revision and minimap token");
+}
+
+std::vector<u8> MapChangeFrame(u16 opcode, const char* map, u16 x, u16 y,
+    u32 ip = 0, u16 port = 0)
+{
+    const size_t length = opcode == 0x0092 ? 28 : 22;
+    std::vector<u8> frame(length, 0);
+    frame[0] = static_cast<u8>(opcode & 0xffu);
+    frame[1] = static_cast<u8>(opcode >> 8);
+    std::strncpy(reinterpret_cast<char*>(frame.data() + 2), map, 15);
+    frame[18] = static_cast<u8>(x & 0xffu);
+    frame[19] = static_cast<u8>(x >> 8);
+    frame[20] = static_cast<u8>(y & 0xffu);
+    frame[21] = static_cast<u8>(y >> 8);
+    if (opcode == 0x0092) {
+        frame[22] = static_cast<u8>(ip & 0xffu);
+        frame[23] = static_cast<u8>((ip >> 8) & 0xffu);
+        frame[24] = static_cast<u8>((ip >> 16) & 0xffu);
+        frame[25] = static_cast<u8>((ip >> 24) & 0xffu);
+        frame[26] = static_cast<u8>(port & 0xffu);
+        frame[27] = static_cast<u8>(port >> 8);
+    }
+    return frame;
+}
+
+void FeedProductionMapFrame(CGameMode& mode, CGameModePacketRouter& router,
+    const std::vector<u8>& frame, GameModePacketLoopResult& loop)
+{
+    TestConnection connection;
+    LoopbackPeer peer(connection);
+    peer.Send(frame);
+    WaitKernelPending(connection, static_cast<int>(frame.size()));
+    loop = ProcessGameModePacketLoop(mode, connection, router, 8);
+}
+
+} // namespace
+
+void MapTransitionLifetimeReplay()
+{
+    SetCase("map_transition_lifetime", "PK14.06", "PK14.06-map-transition-selected-0091-0092-0071",
+        "CRagConnection::RecvPacket -> production game-mode router -> HandleMapChange / CLoginMode::PollNetwork");
+    MapTransitionLifetimeSnapshot saved;
+    CRagConnection* const singleton = CRagConnection::instance();
+    singleton->Disconnect();
+    ClearPendingDisconnectAction();
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    constexpr u32 kMoveIp = 0x0100000au;
+    constexpr u16 kMovePort = 6121;
+    const std::vector<u8> mapChangeAtoB = MapChangeFrame(0x0091, "geffen", 41, 52);
+    const std::vector<u8> serverMove = MapChangeFrame(0x0092, "geffen", 61, 72, kMoveIp, kMovePort);
+    const std::vector<u8> characterChange = {
+        0x71, 0x00, 0x80, 0x70, 0x60, 0x50,
+        'g','e','f','f','e','n','.','g','a','t',0,0,0,0,0,0,
+        10,0,0,1,0xe9,0x17
+    };
+
+    // A literal 0x0091 map A -> B frame takes the production non-reconnect branch.
+    {
+        SeedMapTransitionMarker("prontera");
+        const u64 revision = g_session.GetPartyPositionRevision();
+        UIRoMapWnd minimap;
+        UIRoMapWnd::DisplayData before{};
+        Require(minimap.GetDisplayDataForQt(&before), "could not capture pre-map-change visual token");
+        CGameMode mode;
+        int presentations = 0;
+        int reconnects = 0;
+        int handoffs = 0;
+        int handoffType = -1;
+        std::string handoffWorld;
+        MapTransitionServices services;
+        services.presentLoading = [&](const char* message, float progress) {
+            ++presentations;
+            Require(std::string(message) == "Loading new map..." && progress > 0.0f,
+                "map-change presentation request differed from production defaults");
+        };
+        services.reconnect = [&](u32, u16) { ++reconnects; return true; };
+        services.requestMode = [&](int type, const char* worldName) {
+            ++handoffs;
+            handoffType = type;
+            handoffWorld = worldName ? worldName : "";
+            g_modeMgr.Switch(type, worldName);
+        };
+        mode.SetMapTransitionServices(&services);
+        GameModePacketLoopResult loop{};
+        FeedProductionMapFrame(mode, router, mapChangeAtoB, loop);
+        Require(loop.packetsProcessed == 1 && loop.packetsDispatched == 1 && loop.modeOperationRequested,
+            "production 0x0091 map change was not dispatched through the handoff");
+        Require(g_session.m_curMap == std::string("geffen") && g_session.m_playerPosX == 41 && g_session.m_playerPosY == 52,
+            "production 0x0091 did not apply the selected map and position");
+        Require(presentations == 1 && reconnects == 0 && handoffs == 1
+            && handoffType == 1 && handoffWorld == "geffen.rsw",
+            "0x0091 selected the wrong presentation/reconnect/mode branch");
+        Require(g_modeMgr.GetLastOperation() == ModeOperationKind::Switch && g_modeMgr.GetRequestedModeType() == 1,
+            "0x0091 request callback did not schedule a production game-mode switch");
+        RequirePartyInvalidated(revision, before.imageRevision, "map A to B");
+    }
+
+    // An already-loaded same-map warp takes production reuse, invalidates old dots,
+    // and sends the normal load-end ACK through the real singleton connection.
+    {
+        SeedMapTransitionMarker("prontera");
+        const u64 revision = g_session.GetPartyPositionRevision();
+        UIRoMapWnd minimap;
+        UIRoMapWnd::DisplayData before{};
+        Require(minimap.GetDisplayDataForQt(&before), "could not capture pre-warp visual token");
+        TestConnection mapInput;
+        LoopbackPeer inputPeer(mapInput);
+        LoopbackPeer ackPeer(*singleton);
+        CWorld world;
+        CPlayer player;
+        player.m_gid = g_session.m_gid;
+        CView view;
+        world.m_player = &player;
+        world.m_ground = new C3dGround{};
+        world.m_ground->m_width = 200;
+        world.m_ground->m_height = 200;
+        world.m_ground->m_zoom = 5.0f;
+        view.SetWorld(&world);
+        CGameMode mode;
+        mode.m_world = &world;
+        mode.m_view = &view;
+        mode.m_mapLoadingStage = CGameMode::MapLoading_None;
+        std::snprintf(mode.m_rswName, sizeof(mode.m_rswName), "%s", "prontera.rsw");
+        mode.m_partyPosList[0x30303030u].x = 25;
+        mode.m_partyPosList[0x30303030u].y = 35;
+        int presentations = 0;
+        int handoffs = 0;
+        MapTransitionServices services;
+        services.presentLoading = [&](const char*, float) { ++presentations; };
+        services.reconnect = [](u32, u16) -> bool { throw std::runtime_error("same-map fixture attempted reconnect"); };
+        services.requestMode = [&](int type, const char* name) { ++handoffs; g_modeMgr.Switch(type, name); };
+        mode.SetMapTransitionServices(&services);
+        const auto frame = MapChangeFrame(0x0091, "prontera", 80, 90);
+        inputPeer.Send(frame);
+        WaitKernelPending(mapInput, static_cast<int>(frame.size()));
+        const GameModePacketLoopResult loop = ProcessGameModePacketLoop(mode, mapInput, router, 8);
+        Require(loop.packetsDispatched == 1 && !loop.modeOperationRequested,
+            "same-map warp did not stay on the loaded map");
+        Require(presentations == 0 && handoffs == 0, "loaded same-map warp selected external orchestration");
+        const std::vector<u8> ack = ackPeer.ReceiveExact(2);
+        const u16 expectedAck = ro::net::GetActiveMapGameplaySendProfile().notifyActorInit;
+        Require(ack == std::vector<u8>{static_cast<u8>(expectedAck & 0xffu), static_cast<u8>(expectedAck >> 8)},
+            "same-map warp did not send the production load-end acknowledgement");
+        Require(g_session.m_curMap == std::string("prontera") && g_session.m_playerPosX == 80 && g_session.m_playerPosY == 90,
+            "same-map warp did not apply the new coordinates");
+        RequirePartyInvalidated(revision, before.imageRevision, "same-map warp reuse");
+        Require(mode.m_mapLoadingStage == CGameMode::MapLoading_None && mode.m_world == &world && mode.m_view == &view,
+            "same-map reuse discarded the loaded world/view");
+        Require(mode.m_partyPosList.empty() && mode.m_runtimeActors.at(g_session.m_gid) == &player,
+            "same-map reuse did not clear legacy dots while retaining the player");
+
+        // The same name alone must not select reuse while map loading is active.
+        SeedMapTransitionMarker("prontera");
+        const u64 loadingRevision = g_session.GetPartyPositionRevision();
+        UIRoMapWnd::DisplayData loadingBefore{};
+        Require(minimap.GetDisplayDataForQt(&loadingBefore), "could not capture loading-map token");
+        mode.m_mapLoadingStage = CGameMode::MapLoading_BootstrapAssets;
+        inputPeer.Send(frame);
+        WaitKernelPending(mapInput, static_cast<int>(frame.size()));
+        const auto loadingLoop = ProcessGameModePacketLoop(mode, mapInput, router, 8);
+        Require(loadingLoop.modeOperationRequested && presentations == 1 && handoffs == 1,
+            "same-map request incorrectly reused an incompletely loaded map");
+        RequirePartyInvalidated(loadingRevision, loadingBefore.imageRevision, "same-map while loading");
+
+        // A server-move endpoint must reconnect even if that map is fully loaded.
+        SeedMapTransitionMarker("prontera");
+        const u64 transferRevision = g_session.GetPartyPositionRevision();
+        UIRoMapWnd::DisplayData transferBefore{};
+        Require(minimap.GetDisplayDataForQt(&transferBefore), "could not capture same-map server-move token");
+        int sameMapReconnects = 0;
+        services.reconnect = [&](u32 ip, u16 port) {
+            ++sameMapReconnects;
+            Require(ip == kMoveIp && port == kMovePort, "loaded same-map server move lost its endpoint");
+            return true;
+        };
+        CGameMode transferMode;
+        transferMode.m_world = &world;
+        transferMode.m_view = &view;
+        transferMode.m_mapLoadingStage = CGameMode::MapLoading_None;
+        std::snprintf(transferMode.m_rswName, sizeof(transferMode.m_rswName), "%s", "prontera.rsw");
+        transferMode.SetMapTransitionServices(&services);
+        const auto transfer = MapChangeFrame(0x0092, "prontera", 91, 92, kMoveIp, kMovePort);
+        GameModePacketLoopResult transferLoop{};
+        FeedProductionMapFrame(transferMode, router, transfer, transferLoop);
+        Require(transferLoop.modeOperationRequested && sameMapReconnects == 1 && presentations == 2 && handoffs == 2,
+            "loaded same-map server move incorrectly selected local warp reuse");
+        RequirePartyInvalidated(transferRevision, transferBefore.imageRevision, "loaded same-map server move");
+        transferMode.m_world = nullptr;
+        transferMode.m_view = nullptr;
+        mode.m_world = nullptr;
+        mode.m_view = nullptr;
+        mode.m_runtimeActors.clear();
+        world.m_player = nullptr;
+        singleton->Disconnect();
+    }
+
+    // Server-move reconnect success and failure both exercise production parser/state mutation;
+    // only network reconnect and loading presentation are replaced by callbacks.
+    for (const bool reconnectSucceeds : {true, false}) {
+        SeedMapTransitionMarker("prontera");
+        g_session.m_pendingReturnToCharSelect = reconnectSucceeds ? 0 : 1;
+        Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),
+            "could not seed pending action before server move");
+        MarkPendingDisconnectActionSent(1);
+        const u64 revision = g_session.GetPartyPositionRevision();
+        UIRoMapWnd minimap;
+        UIRoMapWnd::DisplayData before{};
+        Require(minimap.GetDisplayDataForQt(&before), "could not capture pre-server-move visual token");
+        CGameMode mode;
+        int presentations = 0;
+        int reconnects = 0;
+        int handoffs = 0;
+        int handoffType = -1;
+        std::string handoffWorld;
+        u32 observedIp = 0;
+        u16 observedPort = 0;
+        MapTransitionServices services;
+        services.presentLoading = [&](const char*, float) { ++presentations; };
+        services.reconnect = [&](u32 ip, u16 port) {
+            ++reconnects;
+            const auto* member = g_session.FindPartyMemberByAid(0x30303030u);
+            Require(member && !member->partyPositionValid && g_session.m_curMap == std::string("geffen")
+                && GetPendingDisconnectAction() == PendingDisconnectAction::None,
+                "server-move state was not invalidated/cleared before reconnect orchestration");
+            observedIp = ip;
+            observedPort = port;
+            return reconnectSucceeds;
+        };
+        services.requestMode = [&](int type, const char* worldName) {
+            ++handoffs;
+            handoffType = type;
+            handoffWorld = worldName ? worldName : "";
+            g_modeMgr.Switch(type, worldName);
+        };
+        mode.SetMapTransitionServices(&services);
+        GameModePacketLoopResult loop{};
+        FeedProductionMapFrame(mode, router, serverMove, loop);
+        Require(loop.packetsDispatched == 1 && loop.modeOperationRequested,
+            "production 0x0092 server move did not dispatch and request a handoff");
+        Require(observedIp == kMoveIp && observedPort == kMovePort && reconnects == 1 && presentations == 1,
+            "0x0092 did not pass the literal server endpoint to reconnect service");
+        Require(GetPendingDisconnectAction() == PendingDisconnectAction::None,
+            "0x0092 handler did not clear pending disconnect state before reconnect");
+        Require(g_session.m_curMap == std::string("geffen") && g_session.m_playerPosX == 61 && g_session.m_playerPosY == 72,
+            "0x0092 did not apply map state before reconnect result");
+        if (reconnectSucceeds) {
+            Require(handoffs == 1 && handoffType == 1 && handoffWorld == "geffen.rsw",
+                "successful 0x0092 reconnect did not schedule the target map");
+            Require(g_modeMgr.GetLastOperation() == ModeOperationKind::Switch && g_modeMgr.GetRequestedModeType() == 1,
+                "successful 0x0092 did not preserve the game-mode handoff");
+        } else {
+            Require(handoffs == 1 && handoffType == 0 && handoffWorld.empty(),
+                "failed 0x0092 reconnect did not return to Login");
+            Require(g_session.m_pendingReturnToCharSelect == 0,
+                "failed 0x0092 reconnect retained a stale return-to-character intent");
+            Require(g_modeMgr.GetLastOperation() == ModeOperationKind::Switch && g_modeMgr.GetRequestedModeType() == 0,
+                "failed 0x0092 did not preserve the Login handoff");
+        }
+        RequirePartyInvalidated(revision, before.imageRevision,
+            reconnectSucceeds ? "server move success" : "server move failure");
+    }
+
+    // Unknown and malformed-short map frames must leave the current marker intact.
+    {
+        SeedMapTransitionMarker("prontera");
+        const u64 revision = g_session.GetPartyPositionRevision();
+        TestConnection connection;
+        LoopbackPeer peer(connection);
+        peer.Send({0xff, 0xff});
+        WaitKernelPending(connection, 2);
+        CGameMode mode;
+        const GameModePacketLoopResult loop = ProcessGameModePacketLoop(mode, connection, router, 8);
+        Require(loop.packetsProcessed == 0 && connection.GetLastReceiveError() == CRagConnection::ReceiveError::UnknownOpcode,
+            "unknown input reached the map-change handler");
+        const FRIEND_INFO* member = g_session.FindPartyMemberByAid(0x30303030u);
+        Require(member && member->partyPositionValid && member->partyX == 25 && member->partyY == 35
+            && g_session.GetPartyPositionRevision() == revision,
+            "unknown input mutated party marker state");
+
+        std::array<u8, 21> shortPacket{};
+        shortPacket[0] = 0x91;
+        shortPacket[1] = 0x00;
+        std::memcpy(shortPacket.data() + 2, "geffen", 6);
+        PacketView shortView{0x0091, static_cast<u16>(shortPacket.size()), shortPacket.data()};
+        Require(router.Dispatch(mode, shortView), "production router did not register the active map-change handler");
+        member = g_session.FindPartyMemberByAid(0x30303030u);
+        Require(member && member->partyPositionValid && g_session.m_curMap == std::string("prontera")
+            && g_session.GetPartyPositionRevision() == revision,
+            "short malformed map-change packet mutated marker or map state");
+    }
+
+    // The actual 0x0071 PollNetwork/OnNotifyZonesvr boundary invalidates before
+    // changing the selected character/map; OnExit remains safe and idempotent afterward.
+    for (const bool sameMap : {false, true}) {
+        SeedMapTransitionMarker("prontera");
+        const u64 revision = g_session.GetPartyPositionRevision();
+        UIRoMapWnd minimap;
+        UIRoMapWnd::DisplayData before{};
+        Require(minimap.GetDisplayDataForQt(&before), "could not capture pre-character-change token");
+        singleton->Disconnect();
+        LoopbackPeer charPeer(*singleton);
+        LoginModeReplayAccess mode;
+        LoginModeReplayAccess::SetConnected(mode, true);
+        auto frame = characterChange;
+        const std::string expectedMap = sameMap ? "prontera" : "geffen";
+        std::fill(frame.begin() + 6, frame.begin() + 22, 0);
+        std::copy(expectedMap.begin(), expectedMap.end(), frame.begin() + 6);
+        charPeer.Send(frame);
+        const auto deadline = Clock::now() + kTimeout;
+        while (singleton->IsOpen() && Clock::now() < deadline) {
+            LoginModeReplayAccess::RunPollNetwork(mode);
+            if (singleton->IsOpen()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        Require(g_session.m_gid == 0x50607080u && g_session.m_curMap == expectedMap,
+            "actual 0x0071 PollNetwork path did not select the new character and map");
+        RequirePartyInvalidated(revision, before.imageRevision, "character change notification");
+        Require(mode.NextSubMode() == CLoginMode::LoginSubMode_ZoneConnect
+            && !LoginModeReplayAccess::IsConnected(mode) && !singleton->IsOpen(),
+            "0x0071 did not close the character connection and schedule ZoneConnect");
+        const u64 afterNotifyRevision = g_session.GetPartyPositionRevision();
+        mode.OnExit();
+        Require(g_session.GetPartyPositionRevision() > afterNotifyRevision,
+            "actual LoginMode::OnExit did not preserve its idempotent marker invalidation boundary");
+        const FRIEND_INFO* member = g_session.FindPartyMemberByAid(0x30303030u);
+        Require(member && !member->partyPositionValid && g_session.GetNumParty() == 1,
+            "LoginMode::OnExit removed party membership or revived old coordinates");
+    }
+
+    saved.Restore();
+    std::cout << "{\"case_id\":\"map_transition_lifetime\",\"contract_id\":\"PK14.06\",\"map_0091_literal\":\"" << Hex(mapChangeAtoB)
+        << "\",\"map_0092_literal\":\"" << Hex(serverMove)
+        << "\",\"zone_0071_literal\":\"" << Hex(characterChange)
+        << "\",\"outcome\":\"PASS\",\"assertions\":\"production framing/router, map A to B, same-map reuse ACK, server-move success/failure, invalid short/unknown inputs, actual character notification then login exit, membership/revision/token cleanup\"}\n";
+}

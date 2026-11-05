@@ -1,0 +1,82 @@
+{
+  "date": "2026-11-05",
+  "baseline": "d3ccc48c2cff1f9d4939f6e56de50cfd8febef86",
+  "source_inputs": {
+    "src/gamemode/GameMode.h": {
+      "working_sha256": "2925816fdb5976161b806943f5aece80b5560c82ab2ffd79e16a0acf7ba3ab03",
+      "git_blob": "69a9b111d8da5329a30ceba5d9b81cae8522c260"
+    },
+    "src/gamemode/GameModePacket.cpp": {
+      "working_sha256": "06da656b501d2522af178664a41fc53e5e25bb5406d049d874cc9c139c49de74",
+      "git_blob": "9c96aef64ca61eedd1a030ba9bd4ada9e7b47057"
+    },
+    "src/gamemode/GameModePacket.h": {
+      "working_sha256": "fc763c37ef9ba6a8dfec39591b116b6b8806ffb9c37f8c19829c0efa859d77ff",
+      "git_blob": "c971ade818663386bdc53aac122d0d0773989fa7"
+    },
+    "src/gamemode/LoginMode.cpp": {
+      "working_sha256": "c3183c2f5c6a039be025dc433b43aa5300c8bb8aa3316bda7548893ebc5af82d",
+      "git_blob": "208ab539c7495efc674f666eb01a5941a83cb537"
+    },
+    "tools/tests/replay/PacketStreamReplay.cpp": {
+      "working_sha256": "a57806f4001726c24047db71139aa6961441fc4f081c5bfddcb82e7664bae057",
+      "git_blob": "17ac73c9234eed7ac5287a12c4992c124e08fcf6"
+    },
+    "tools/tests/replay/MapTransitionLifetimeReplay.inc": {
+      "working_sha256": "785b01b5d4bf496db589d2c1d549996ef093067c1a881d01d4aeb18d22e48b81",
+      "git_blob": "362dc783b03c641580b611e1352683ca35178ad6"
+    }
+  },
+  "input_scope": "six source/test inputs; separately drafted CartItemWireFieldsReplay.inc is not included in this binary or checkpoint",
+  "commands": [
+    "cmake --build build-mingw-preset --target open_midgard packet_stream_replay_checks -j 6",
+    "cmake --build build-mingw-preset --target packet_stream_replay_checks -j 6",
+    "ctest --test-dir build-mingw-preset -R '^packet_stream_replay_checks$' --verbose --output-on-failure"
+  ],
+  "results": {
+    "app_replay_build_exit": 0,
+    "final_replay_build_exit": 0,
+    "ctest_exit": 0,
+    "ctest_passed": 1,
+    "ctest_seconds": 4.86,
+    "PASS_json_records": 158,
+    "new_case": "map_transition_lifetime"
+  },
+  "build_options": {
+    "RO_ENABLE_DEV_DEPLOY": false,
+    "RO_BUILD_PACKET_REPLAY_TESTS": true,
+    "Qt": "6.11.0/mingw_64",
+    "compiler": "MinGW 13.1 x64 Release"
+  },
+  "log_sha256": {
+    "pk14-final-build.log": "cdabf1cc04ef77d7166c9f146baec19e6027808a3231f83216fff9262165ac7a",
+    "pk14-replay-final-build.log": "f46c81dc3eb0e87aa87265be066d21c369b6e1f0a376dfd29aa4f59553448500",
+    "pk14-ctest.log": "13c1c29d41a283304cf55bd193e27ef4a2c9baac9238941a97f952a6704b2d16"
+  },
+  "artifacts": {
+    "build-mingw-preset/open-midgard.exe": {
+      "sha256": "e7397e7ff4d3838256eaf9692e2bb6418086ba70e7b7c4578ab6392f79363dcb",
+      "bytes": 19689733,
+      "mtime_utc": "2026-11-05T12:35:57.644200+00:00"
+    },
+    "build-mingw-preset/packet_stream_replay_checks.exe": {
+      "sha256": "dbd181d98235e5169316250999496730d820d60500da8fe48319761c3a544e6e",
+      "bytes": 20168188,
+      "mtime_utc": "2026-11-05T12:38:51.645356+00:00"
+    },
+    "docs/packets/evidence/PK14.06-transition-caller-replay.jsonl": {
+      "sha256": "d343bc985028d7bae5fe7b0fa279727e4a76cce4c0a8dd6fefe5013240f2bc24",
+      "bytes": 93206,
+      "mtime_utc": "2026-11-05T12:40:13.155533+00:00"
+    }
+  },
+  "limits": [
+    "Headless state/caller/ACK proof, not native/Qt rendered output",
+    "Loading presentation/reconnect/handoff injected per mode; parser/state/loaded-map selection/reuse cleanup remain production",
+    "Same-map load-end ACK uses real singleton loopback",
+    "Character notification uses actual singleton PollNetwork before real OnExit",
+    "No installed map assets, live zone server or deployment",
+    "Configure-time Git macro may predate this source edit; recorded source hashes/blobs define actual input",
+    "Subsequent tracker/evidence edits are documentation only"
+  ]
+}
