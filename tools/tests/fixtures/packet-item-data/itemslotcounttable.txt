@@ -1,0 +1,2 @@
+// Extracted fixture row: Ref/GRF-Content/data/itemslotcounttable.txt
+1201#3#

@@ -628,6 +628,7 @@ bool UIShortCutWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
     outData->text = BuildShortcutItemHoverText(GetAbsoluteSlotIndex(m_hoverSlot), hoverItem);
     outData->itemId = hoverItem.GetItemId();
     outData->identified = hoverItem.m_isIdentified != 0;
+    outData->nameColorArgb = hoverItem.GetNameColorArgb();
     return outData->IsValid();
 }
 

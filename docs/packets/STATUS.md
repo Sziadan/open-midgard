@@ -1,12 +1,11 @@
 # Packet implementation status
 
-**Active step: PK09.06.** [Map-entry item lifetime](evidence/PK09.05-map-entry-items.md), [provenance](evidence/PK09.05-map-entry-items.json) and [HANDOFF](HANDOFF.md) define the current checkpoint and continuation.
+**Active step: PK09.04.** [Item hover colours](evidence/PK09.06-item-hover-colours.md), [provenance](evidence/PK09.06-item-hover-colours.json) and [HANDOFF](HANDOFF.md) define the current checkpoint and continuation.
 
-- PK09.05 is complete at its selected-source lifecycle scope. Real map initialization and real same-map load-end reuse now begin fresh item/storage/cart/transaction state. Both had failing regressions before repair. Native storage closes; local panel positions and inventory tab survive. The loaded same-map world/player/view remain intact.
-- All configured targets build deploy-off. Full CTest passed 106/106 in 26.20 seconds: 160 PASS packet records, actual actor bubble checks, 23 failure-ACK packets/18 notices, assertion-enabled party state, and 18 native/QML minimap scenes with zero QML warnings/errors. No installed client/live server was used.
-- PK09.04 remains IN_PROGRESS for its broader four-route field/branch/UI matrix. New PK09.06 handles source-proven identified/bound item name-colour semantics with real UI acceptance. Do not substitute a raw-nonzero badge. The selected cart WearState/bind fields are already preserved and independently probed.
-- PK23.05 cast announcements/all-result failure-ACK freeze release and all PK14 selected-source leaves retain committed evidence. Only the earlier 0x0107 row has its scoped canonical completion; no row is newly certified by this lifecycle repair.
-- Source-ready NPC representation, ShowEFST ownership and legacy-mail decisions still need implementation/resource/transaction/UI acceptance. Timed-status inactivity and preserve-331/332 research dispositions have dedicated completed checkpoints.
-- PK46.02's 177 request rows, remaining character paths, historical PK47 identities, broad independent PK48/PK49 and deployed-server profile provenance remain open.
+- PK09.06 is complete at its selected-source hover-colour scope. Shared source-exact colours reach native inventory/storage and real Qt item hover paths; only identified bind2 is yellow, all unidentified cases gray. Source conversion, actual pixels, identification precedence and hover removal are verified. Full item art/panels/variants remain separate.
+- All configured targets build deploy-off. Full CTest passed 107/107 in 33.40s: 160 PASS packet records, six item combinations/30 saved frames, 18 minimap scenes, prior cast/failure-ACK and assertion-enabled party-state checks. Both render tests report zero QML warnings/errors. No installed client or live server was used.
+- PK09.05 actual initialization/same-map snapshot lifetime, native storage closure and preserved panel positions/tab retain committed proof. PK09.04 stays IN_PROGRESS for its wider four-route field/branch/UI matrix; preserve these completed leaves and the earlier selected cart-tail repair.
+- PK23.05 and all selected-source PK14 leaves remain complete at their scoped checkpoints. No discovery row is newly certified by the item hover repair; earlier 0x0107 canonical verification retains its independent-review limit.
+- Source-ready NPC, ShowEFST and legacy-mail decisions still require implementation/resource/transaction/UI acceptance. PK46.02's 177 request rows, character paths, historical PK47 identities, independent PK48/PK49 and deployed profile provenance remain open.
 
 The whole-plan goal remains active. A source/state/caller/render checkpoint does not certify unrelated packet families or live server behavior.

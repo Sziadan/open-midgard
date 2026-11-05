@@ -67,6 +67,7 @@
 #include "world/World.h"
 
 #include <QChar>
+#include <QColor>
 #include <QFont>
 #include <QFontMetrics>
 #include <QImage>
@@ -3762,7 +3763,7 @@ QVariantMap MakeUiItemAnchor(const shopui::ItemHoverInfo& hoverInfo)
         UiScaleLogicalToRawCoordinate(logicalCenterX),
         UiScaleLogicalToRawCoordinate(logicalTopY),
     QStringLiteral("#f0363b42"),
-    hoverInfo.identified ? QStringLiteral("#ffffff") : QStringLiteral("#b8b8b8"));
+    QColor::fromRgba(hoverInfo.nameColorArgb).name(QColor::HexArgb));
     anchor.insert(QStringLiteral("kind"), QStringLiteral("uiTooltip"));
     return anchor;
 }

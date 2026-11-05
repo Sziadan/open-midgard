@@ -10,10 +10,12 @@
 #include "world/World.h"
 #include "gamemode/View.h"
 #include <QVariantMap>
+#include <QColor>
+#include "ui/UIShopCommon.h"
 
 namespace {
 QString str(const std::string& s){return QString::fromUtf8(s.data(),int(s.size()));}
-QVariantMap row(const ITEM_INFO& item,u32 count=0xffffffffu,u32 price=0){return {{"index",item.m_itemIndex},{"id",item.GetItemId()},{"name",str(item.GetEquipDisplayName())},{"count",count==0xffffffffu?u32(item.m_num):count},{"price",price},{"identified",item.m_isIdentified!=0},{"equipped",item.m_wearLocation!=0},{"equip",item.m_location!=0},{"description",str(item.GetDescription())}};}
+QVariantMap row(const ITEM_INFO& item,u32 count=0xffffffffu,u32 price=0){return {{"index",item.m_itemIndex},{"id",item.GetItemId()},{"name",str(item.GetEquipDisplayName())},{"count",count==0xffffffffu?u32(item.m_num):count},{"price",price},{"identified",item.m_isIdentified!=0},{"equipped",item.m_wearLocation!=0},{"equip",item.m_location!=0},{"description",str(item.GetDescription())},{"hoverText",str(shopui::BuildItemHoverText(item))},{"nameColor",QColor::fromRgba(item.GetNameColorArgb()).name(QColor::HexArgb)}};}
 QVariantMap geometry(const ro::commerce::Window& w,bool suppressed){return {{"visible",w.visible&&!suppressed},{"x",w.x},{"y",w.y},{"width",w.width},{"height",w.height}};}
 QVariantList offers(const std::vector<ro::commerce::Offer>& list){QVariantList result;for(const auto& o:list)result.push_back(row(o.item,o.amount,o.price));return result;}
 }

@@ -1,0 +1,2 @@
+// Extracted fixture row: Ref/GRF-Content/data/idnum2itemdisplaynametable.txt
+1201#Knife#

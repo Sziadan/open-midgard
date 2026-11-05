@@ -24,6 +24,11 @@ struct ITEM_INFO {
 
     void SetItemId(unsigned int itemId);
     unsigned int GetItemId() const;
+    // Primary Ref CSession::GetItemDisColor: packed AARRGGBB, for hover names.
+    u32 GetNameColorArgb() const {
+        if (!m_isIdentified) return 0xffaaaaaau;
+        return m_isYours == 2 ? 0xffffff00u : 0xffffffffu;
+    }
     std::string GetDisplayName() const;
     std::string GetEquipDisplayName() const;
     std::string GetDescription() const;

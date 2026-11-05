@@ -76,6 +76,8 @@ public:
     void DragAndDrop(int x, int y, const DRAG_INFO* const info) override;
     void StoreInfo() override;
     void DrawHoverOverlay(HDC hdc, const RECT& clientRect) const;
+    void DrawNativeToHdc(HDC hdc);
+    void DrawNativeHoverOverlay(HDC hdc, const RECT& clientRect) const;
     bool IsMiniMode() const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
     bool GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const;

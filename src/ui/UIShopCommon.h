@@ -52,6 +52,7 @@ struct ItemHoverInfo {
     std::string text;
     unsigned int itemId = 0;
     bool identified = true;
+    unsigned int nameColorArgb = 0xffffffffu;
 
     bool IsValid() const
     {

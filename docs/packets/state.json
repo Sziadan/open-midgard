@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK09.06",
+  "active_step": "PK09.04",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -374,11 +374,13 @@
       "commit_subject": "packet(PK09.05): reset item snapshots on map entry"
     },
     "PK09.06": {
-      "status": "NOT_STARTED",
+      "status": "COMPLETED",
       "evidence": [
-        "docs/packets/work-items/PK09.06.md"
+        "docs/packets/work-items/PK09.06.md",
+        "docs/packets/evidence/PK09.06-item-hover-colours.md",
+        "docs/packets/evidence/PK09.06-item-hover-colours.json"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK09.06): restore source-defined item hover colours"
     },
     "PK10.01": {
       "status": "COMPLETED",

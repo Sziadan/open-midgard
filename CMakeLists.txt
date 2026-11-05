@@ -351,6 +351,18 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
             "${CMAKE_CURRENT_BINARY_DIR}/packet-minimap-renders")
         set_tests_properties(packet_minimap_render_checks PROPERTIES TIMEOUT 45
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-minimap-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        add_executable(packet_item_render_checks tools/tests/replay/ItemColourRenderChecks.cpp)
+        target_compile_features(packet_item_render_checks PRIVATE cxx_std_17)
+        target_compile_definitions(packet_item_render_checks PRIVATE
+            RO_PACKET_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+            RO_PACKET_QT_PLATFORM_PLUGINS="${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        target_link_libraries(packet_item_render_checks PRIVATE
+            ${RO_PACKET_REPLAY_RUNTIME_LIBRARIES} ro_qtui Qt6::Quick Qt6::Qml
+            Threads::Threads ws2_32 winmm dxguid ole32 oleaut32 psapi msimg32)
+        add_test(NAME packet_item_render_checks COMMAND packet_item_render_checks
+            "${CMAKE_CURRENT_BINARY_DIR}/packet-item-renders")
+        set_tests_properties(packet_item_render_checks PROPERTIES TIMEOUT 45
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-item-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
     endif()
 endif()
 

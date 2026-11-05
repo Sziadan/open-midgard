@@ -1,0 +1,49 @@
+{
+    "cases": [
+        {
+            "bind": 0,
+            "case": "identified-bind0",
+            "expected_argb": "#ffffffff",
+            "identified": true,
+            "outcome": "PASS"
+        },
+        {
+            "bind": 1,
+            "case": "identified-bind1",
+            "expected_argb": "#ffffffff",
+            "identified": true,
+            "outcome": "PASS"
+        },
+        {
+            "bind": 2,
+            "case": "identified-bind2",
+            "expected_argb": "#ffffff00",
+            "identified": true,
+            "outcome": "PASS"
+        },
+        {
+            "bind": 0,
+            "case": "unidentified-bind0",
+            "expected_argb": "#ffaaaaaa",
+            "identified": false,
+            "outcome": "PASS"
+        },
+        {
+            "bind": 1,
+            "case": "unidentified-bind1",
+            "expected_argb": "#ffaaaaaa",
+            "identified": false,
+            "outcome": "PASS"
+        },
+        {
+            "bind": 2,
+            "case": "unidentified-bind2",
+            "expected_argb": "#ffaaaaaa",
+            "identified": false,
+            "outcome": "PASS"
+        }
+    ],
+    "hover_exit_and_row_removal": true,
+    "outcome": "PASS",
+    "qml_errors": 0
+}

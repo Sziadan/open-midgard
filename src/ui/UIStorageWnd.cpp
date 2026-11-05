@@ -552,11 +552,12 @@ void DrawItemHoverTooltip(HDC hdc, const RECT& clientRect, const RECT& itemRect,
     painter.setRenderHint(QPainter::Antialiasing, false);
     painter.setRenderHint(QPainter::TextAntialiasing, false);
     painter.setFont(font);
-    painter.setPen(QColor(255, 255, 255));
+    painter.setPen(QColor::fromRgba(item.GetNameColorArgb()));
     painter.drawText(tooltipPaddingX, tooltipPaddingY + metrics.ascent(), label);
     AlphaBlendArgbToHdc(hdc, tooltipRect.left, tooltipRect.top, width, height, pixels.data(), width, height);
 #else
-    drawDc.SetTextColor(RGB(255, 255, 255));
+    const unsigned int nameColor = item.GetNameColorArgb();
+    drawDc.SetTextColor(RGB((nameColor >> 16) & 0xff, (nameColor >> 8) & 0xff, nameColor & 0xff));
     drawDc.TextOutA(tooltipRect.left + tooltipPaddingX,
         tooltipRect.top + tooltipPaddingY,
         tooltipText.c_str(),
@@ -751,21 +752,27 @@ void UIStorageWnd::OnDraw()
     if (m_show == 0) {
         return;
     }
+    HDC hdc = AcquireDrawTarget();
+    if (!hdc) {
+        return;
+    }
+    DrawNativeToHdc(hdc);
+    ReleaseDrawTarget(hdc);
+}
 
+void UIStorageWnd::DrawNativeToHdc(HDC hdc)
+{
+    if (!hdc || m_show == 0) {
+        return;
+    }
     EnsureCreated();
     RefreshVisibleItemsForInteractionState();
-
     if (m_h > kMiniHeight) {
         for (const VisibleItem& visibleItem : m_visibleItems) {
             if (visibleItem.item) {
                 GetItemIcon(*visibleItem.item);
             }
         }
-    }
-
-    HDC hdc = AcquireDrawTarget();
-    if (!hdc) {
-        return;
     }
 
     RECT windowRect{ m_x, m_y, m_x + m_w, m_y + m_h };
@@ -847,7 +854,6 @@ void UIStorageWnd::OnDraw()
     }
 
     DrawChildrenToHdc(hdc);
-    ReleaseDrawTarget(hdc);
 
     m_lastVisualStateToken = BuildVisualStateToken();
     m_hasVisualStateToken = true;
@@ -859,11 +865,14 @@ void UIStorageWnd::DrawHoverOverlay(HDC hdc, const RECT& clientRect) const
     if (IsQtUiRuntimeEnabled()) {
         return;
     }
+    DrawNativeHoverOverlay(hdc, clientRect);
+}
 
+void UIStorageWnd::DrawNativeHoverOverlay(HDC hdc, const RECT& clientRect) const
+{
     if (!hdc || m_show == 0 || !m_hoverOverlayItem) {
         return;
     }
-
     DrawItemHoverTooltip(hdc, clientRect, m_hoverOverlayRect, *m_hoverOverlayItem);
 }
 
@@ -1270,6 +1279,7 @@ bool UIStorageWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
     outData->text = shopui::BuildItemHoverText(*item);
     outData->itemId = item->GetItemId();
     outData->identified = item->m_isIdentified != 0;
+    outData->nameColorArgb = item->GetNameColorArgb();
     return outData->IsValid();
 }
 

@@ -1,0 +1,366 @@
+{
+  "date": "2026-11-05",
+  "baseline": "3b6051b70fd04a985b525b558d7c94a88f2c921f",
+  "commit_subject": "packet(PK09.06): restore source-defined item hover colours",
+  "source_inputs": {
+    "CMakeLists.txt": {
+      "working_sha256": "90fbbf5030e49d1b5e514f70282c112004ab636d2f02660792446096f3166b03",
+      "git_blob": "2aec951a267699b832b675d4bb6ef620ea9cf8eb"
+    },
+    "src/item/Item.h": {
+      "working_sha256": "ca832dbc8563ca21885aaccc05259dcfc2472e48011d1fb3dd5df8fe590e5495",
+      "git_blob": "dc3ab325973e31ac5c7c8ddc3a636d1cf20efb10"
+    },
+    "src/qtui/QtCommerce.cpp": {
+      "working_sha256": "d8469e9a773c98af7c1ba4221691eeb339e91222719e1dc1ff7538d14c1bafc6",
+      "git_blob": "a9efd3233fad25186b842cb8c0719f3fa2805aa2"
+    },
+    "src/qtui/QtUiStateAdapter.cpp": {
+      "working_sha256": "5a3c0f7dd0b29342a44ff746e53c848d67396503ba5673ac763a5a077e8352a6",
+      "git_blob": "60e747c8ec8faa41d6fb9520e8b4c3804bd8851e"
+    },
+    "src/qtui/qml/RoCommerce.qml": {
+      "working_sha256": "ad17b6939dadfc38895b8cda087eb0e0e139e7ad0a9f8bb5391604b5f23cc32a",
+      "git_blob": "29a58cb3a8a07d4670d8421398731746e43468a0"
+    },
+    "src/ui/UIEquipWnd.cpp": {
+      "working_sha256": "34812c2576cac6291ef4679516361b3ead05eb1141723e3cb6ccd5e006a2429e",
+      "git_blob": "a0e949918fc4b9358dcefac3d2d0b6cc7d9a305e"
+    },
+    "src/ui/UIItemWnd.cpp": {
+      "working_sha256": "9e0d1959f8a2326aaac45a28e11f89847e2b0301e18ae91b1f57729ba3660fd9",
+      "git_blob": "851cd43c707dc445bb0d3bf7468c8cd415dfe54b"
+    },
+    "src/ui/UIItemWnd.h": {
+      "working_sha256": "a8a5c8daba15d71f803e84ea77ead4ac60a1e9f4a73a79a81f41d293970cc404",
+      "git_blob": "83a5637da4a9646181b775490eb7dbe5956c5283"
+    },
+    "src/ui/UIShopCommon.h": {
+      "working_sha256": "a5ec509145311d15597e80ffdb7df3ad3cd4b9886a48bba26a8c89451f13face",
+      "git_blob": "316bc41670f68ef1828753f7c5aa677138f51714"
+    },
+    "src/ui/UIShortCutWnd.cpp": {
+      "working_sha256": "57744bd318508bf55a87d509c769f11076ab8899da5b7853e449ae9943f3d795",
+      "git_blob": "99bb600aa85e2acab4ca789b9647f393e70ed5e9"
+    },
+    "src/ui/UIStorageWnd.cpp": {
+      "working_sha256": "2885617fd4571186b07ee26b80e7c5a1e6209e12206df968e532f050953a9908",
+      "git_blob": "95eb6e029e06650860ce87349a6880c0b643fdbc"
+    },
+    "src/ui/UIStorageWnd.h": {
+      "working_sha256": "1b0e41c8a45e6686c757faaea12c8296b85fb76c438c12d21f3fa894f8a36df5",
+      "git_blob": "0c9d889e1f4de017438833b7dfa63a43a5e32103"
+    },
+    "tools/tests/replay/ItemColourRenderChecks.cpp": {
+      "working_sha256": "5cc51fe4d7d816f342b309a908cdeab74ba75b33b1ca0076294b666ccb89dfeb",
+      "git_blob": "fd74c34f05543833f448af0b5e3853df625c5356"
+    },
+    "tools/tests/fixtures/packet-item-data/idnum2itemdisplaynametable.txt": {
+      "working_sha256": "60f68a83c15b94f25bda750e01ca6654c4a63b34636237e0ce033dfe0fcda70b",
+      "git_blob": "3f115cde08a2ca832e0fa8f6090a72e4f0ef8626"
+    },
+    "tools/tests/fixtures/packet-item-data/num2itemdisplaynametable.txt": {
+      "working_sha256": "2cd54273d1d7130a2893dc3a0d61ee503dae43a72f3e06762dac444e45d39e06",
+      "git_blob": "a0cf1c81b792a168d5e419fa8acf2395a888eaaf"
+    },
+    "tools/tests/fixtures/packet-item-data/itemslotcounttable.txt": {
+      "working_sha256": "720a870c20438145fda309d6826e2ea6b8e5bbc7209548ebe60da35378bb0ad5",
+      "git_blob": "57daf956176c7f5002b0ed0f0c8d9b29ce0faf98"
+    }
+  },
+  "reference_inputs_sha256": {
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/Mode.cpp": "2fd15fac636a59a745b57aec84c576944b98fd4d9a248cabf9b706d0de84292e",
+    "Ref/UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/GRF-Content/data/idnum2itemdisplaynametable.txt": "fba99eacb4e766632c6f881c576cbea83121eb0533eeacc6963b0b6f21fe7dcf",
+    "Ref/GRF-Content/data/num2itemdisplaynametable.txt": "cc4442997446d9bc11ff8c81084f6efc60532e78e283769c51e6821e297d8c4e",
+    "Ref/GRF-Content/data/itemslotcounttable.txt": "cb7916712470c699764536b4c92160fe234ec14a067ef5353ab84a1d1883b76c"
+  },
+  "other_inputs_sha256": {
+    "src/item/Item.cpp": "32705f909edd22123dd5958311aeab7c09a7b1678f44a8a20dd3d0e2d83dc5ff",
+    "src/qtui/QtUiState.h": "85b262c8def37d66524c2815ecf636165854f32fbd826bc8e0c693280cf8be7a",
+    "src/qtui/QtUiSpikeBridge.cpp": "c3e310fd6c0eb07ca974067b9f5ea4a2ec56f6ff4ad031609118280a6d61bd79",
+    "src/qtui/qml/GameOverlay.qml": "19774555a5a521809e12276294073d1627a9cd6c409c23329fd976f5325cfbdf",
+    "src/qtui/qml/RoTheme.qml": "84dba38403bdf50aba65974f0c5fab5f62343c8a631038c2f67fcdb9151f4cbd",
+    "third_party/fonts/NotoSans.ttf": "bfb7bb691513f12e734dc346c03a03f784912432d7e3fa8e56efcf906fe86b3d"
+  },
+  "server_inputs_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "selected_profile": 20080910,
+  "source_colours_argb": {
+    "identified_bind_2": "#ffffff00",
+    "other_identified": "#ffffffff",
+    "unidentified": "#ffaaaaaa"
+  },
+  "commands": [
+    "cmake -S . -B build-mingw-preset -DRO_ENABLE_DEV_DEPLOY=OFF -DRO_BUILD_PACKET_REPLAY_TESTS=ON -DRO_BUILD_SKILL_REPLAY_TESTS=ON",
+    "cmake --build build-mingw-preset -j 6",
+    "cmake --build build-mingw-preset --target packet_item_render_checks -j 6",
+    "ctest --test-dir build-mingw-preset --verbose --output-on-failure"
+  ],
+  "results": {
+    "ctest_passed": 107,
+    "ctest_failed": 0,
+    "seconds": 33.4,
+    "packet_pass_records": 160,
+    "item_combinations": 6,
+    "item_frames": 30,
+    "qml_errors": 0,
+    "hover_exit_and_removal": true,
+    "minimap_scenes": 18
+  },
+  "item_render_results": {
+    "cases": [
+      {
+        "bind": 0,
+        "case": "identified-bind0",
+        "expected_argb": "#ffffffff",
+        "identified": true,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 1,
+        "case": "identified-bind1",
+        "expected_argb": "#ffffffff",
+        "identified": true,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 2,
+        "case": "identified-bind2",
+        "expected_argb": "#ffffff00",
+        "identified": true,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 0,
+        "case": "unidentified-bind0",
+        "expected_argb": "#ffaaaaaa",
+        "identified": false,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 1,
+        "case": "unidentified-bind1",
+        "expected_argb": "#ffaaaaaa",
+        "identified": false,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 2,
+        "case": "unidentified-bind2",
+        "expected_argb": "#ffaaaaaa",
+        "identified": false,
+        "outcome": "PASS"
+      }
+    ],
+    "hover_exit_and_row_removal": true,
+    "outcome": "PASS",
+    "qml_errors": 0
+  },
+  "diagnostic_before_inputs": {
+    "src/item/Item.h": "ca832dbc8563ca21885aaccc05259dcfc2472e48011d1fb3dd5df8fe590e5495",
+    "src/qtui/QtUiStateAdapter.cpp": "c5b16c049add10c764a4153dcda6bd9c8af001ca8dbbaf1c8ad12d2370374004",
+    "build-mingw-preset/packet_item_render_checks.exe": "fa0ee31306d953543455246b265c4f4131a8035ee552a10790bb586df9e40d01",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "6e05c05ed467f2b65df00f54e700db59c34d9e5267de8611b75ca953ab96f138",
+    "src/qtui/qml/RoCommerce.qml": "a6c490418a2e0ed759cba5b9b382a8cd1038ded8ed0c3d11caba24cd90f82bbc",
+    "src/qtui/QtCommerce.cpp": "b1c1db3a799fe47659d5d6a677e1c5d4bafc9acf101b08de4c8bbba3bd58f3d4"
+  },
+  "logs_sha256": {
+    "build-mingw-preset/review-2026-11-05/pk09-colour-configure.log": "27dd43e43b293002ce877f97f32a37e3b7105d0d3e747b0011e436cd63f95c60",
+    "build-mingw-preset/review-2026-11-05/pk09-colour-all-build.log": "247e67a43b435e92e90f83fdeeaa2b254f3309eba60c8d2d5ef9bbe0612c3968",
+    "build-mingw-preset/review-2026-11-05/pk09-colour-build.log": "abc428618e06739b84c0badf987ee292ce7d51b4482421b1736c54a34555075a",
+    "build-mingw-preset/review-2026-11-05/pk09-colour-all-ctest.log": "9583e22aa2834bd960a38228696e51d0c96ee2922f7159f1182fdd638e2e076c",
+    "build-mingw-preset/review-2026-11-05/pk09-colour-before.log": "2807f7e8ef3de1b95c634212a0c73e3707eb412f2479f9231a244811840bef3c"
+  },
+  "binaries": {
+    "open-midgard.exe": {
+      "sha256": "592be351d6db910945545e0c89b92b7fdb81a5abc12ad8ad2fe0ff80946a8b3a",
+      "bytes": 19694586,
+      "mtime_utc": "2026-11-05T15:08:19.462916+00:00"
+    },
+    "packet_item_render_checks.exe": {
+      "sha256": "9e459cd78a99473c084b4ed177aaaef5ac2482f885630c03e40006764bbe0ceb",
+      "bytes": 19751439,
+      "mtime_utc": "2026-11-05T15:12:18.358809+00:00"
+    },
+    "packet_stream_replay_checks.exe": {
+      "sha256": "ee59d4a5d46dbefe21e26acba9f656268f7edb9bd5d19489f0812f68bba853b5",
+      "bytes": 20187696,
+      "mtime_utc": "2026-11-05T15:08:25.262487+00:00"
+    },
+    "packet_minimap_render_checks.exe": {
+      "sha256": "765b594b754037f6329cdd20b241c0f834d4298df53be2f1dda21d8635fae19b",
+      "bytes": 19731007,
+      "mtime_utc": "2026-11-05T15:08:20.747419+00:00"
+    },
+    "skill_packet_replay_runtime_checks.exe": {
+      "sha256": "5682208c86d337873662b3b04482d46e3342524730ecac2c93ffb421ea6c440c",
+      "bytes": 19883554,
+      "mtime_utc": "2026-11-05T15:08:21.196011+00:00"
+    },
+    "party_position_state_checks.exe": {
+      "sha256": "c412fab8077f16344239af2da51b2d6facf2efd4b5db5383f0e41617b1b279d6",
+      "bytes": 54468,
+      "mtime_utc": "2026-11-05T15:08:15.298972+00:00"
+    }
+  },
+  "render_artifacts": {
+    "identified-bind0-native-inventory.png": {
+      "sha256": "5f0632735bc0740ca479225079c5f7623b75f365a892017d814c71766aef6f0d",
+      "bytes": 4813
+    },
+    "identified-bind0-native-storage.png": {
+      "sha256": "03a36de639cd7c09e49c3ab605f4b73c95f816b57245ea920b81331c726b9723",
+      "bytes": 5742
+    },
+    "identified-bind0-qt-cart.png": {
+      "sha256": "cc5c058d436e6fe4453b9e0fbbf9f6fa69c45ac625425e5de4d09b142d136a67",
+      "bytes": 23135
+    },
+    "identified-bind0-qt-inventory.png": {
+      "sha256": "b63468476e9357a3e88f8cc26302357d6e570b21aca6fe0064bd60b7ff861b4a",
+      "bytes": 23267
+    },
+    "identified-bind0-qt-storage.png": {
+      "sha256": "27c02e39690693c1d16a9f4c8d331bd82d205a4c5c8323db7ba063ccb59fb55b",
+      "bytes": 23304
+    },
+    "identified-bind1-native-inventory.png": {
+      "sha256": "5f0632735bc0740ca479225079c5f7623b75f365a892017d814c71766aef6f0d",
+      "bytes": 4813
+    },
+    "identified-bind1-native-storage.png": {
+      "sha256": "03a36de639cd7c09e49c3ab605f4b73c95f816b57245ea920b81331c726b9723",
+      "bytes": 5742
+    },
+    "identified-bind1-qt-cart.png": {
+      "sha256": "cc5c058d436e6fe4453b9e0fbbf9f6fa69c45ac625425e5de4d09b142d136a67",
+      "bytes": 23135
+    },
+    "identified-bind1-qt-inventory.png": {
+      "sha256": "b63468476e9357a3e88f8cc26302357d6e570b21aca6fe0064bd60b7ff861b4a",
+      "bytes": 23267
+    },
+    "identified-bind1-qt-storage.png": {
+      "sha256": "27c02e39690693c1d16a9f4c8d331bd82d205a4c5c8323db7ba063ccb59fb55b",
+      "bytes": 23304
+    },
+    "identified-bind2-native-inventory.png": {
+      "sha256": "409a9fd427e2d2177a512a976d1b0da8586e95e7b2e461f2b97453df27479603",
+      "bytes": 4831
+    },
+    "identified-bind2-native-storage.png": {
+      "sha256": "4a519bf0ffd1d1eaeae5d98b212ffa8f72209150c9aa1af459bdd4faf3512287",
+      "bytes": 5747
+    },
+    "identified-bind2-qt-cart.png": {
+      "sha256": "503d1a826e017c7bce78294b9318c7f2017b668ebf275fe10af8543364c23040",
+      "bytes": 23121
+    },
+    "identified-bind2-qt-inventory.png": {
+      "sha256": "46a1e2814bcf6532b5a3cf9111289306f2092876347f3703c2903e1ab0b2a2b7",
+      "bytes": 23277
+    },
+    "identified-bind2-qt-storage.png": {
+      "sha256": "a803730b6cdea1d3c977aacdd07027b13d6fac24ed18a5ed69d5a2f18c7b5341",
+      "bytes": 23292
+    },
+    "render-results.json": {
+      "sha256": "4ed1cf6bb1bbeccfcb983c4022ae5fb5cf9add9b1442a6f8908c25a56f134aec",
+      "bytes": 1245
+    },
+    "tooltip-contact.png": {
+      "sha256": "6f304096a4805836c98dbdbea5f3d1a6d2ca95e709358f62d4e2798740b3f1ec",
+      "bytes": 52653
+    },
+    "unidentified-bind0-native-inventory.png": {
+      "sha256": "233d6c0665110896dbf5d8b9d6cbc0582eee7bad03d20ea290c7ce48c9537db0",
+      "bytes": 4891
+    },
+    "unidentified-bind0-native-storage.png": {
+      "sha256": "47a9bb5a392ec94a0d3338eed96891bf725a1eddbde2669867af1a03a6e1fb00",
+      "bytes": 5799
+    },
+    "unidentified-bind0-qt-cart.png": {
+      "sha256": "b9de88df91a6d44ef3719c14e9cde995360b47bd9ceef2a0aa7b031e790c6eeb",
+      "bytes": 23665
+    },
+    "unidentified-bind0-qt-inventory.png": {
+      "sha256": "6adab565716bd8e63d7d91ee2db840d8e4f8cab5f6221aeb8f92197476460904",
+      "bytes": 23745
+    },
+    "unidentified-bind0-qt-storage.png": {
+      "sha256": "d071b3489109514bc82ba6d0471a1ee5e69c3cc76cbb58a153038ba3ec3b4e34",
+      "bytes": 23474
+    },
+    "unidentified-bind1-native-inventory.png": {
+      "sha256": "233d6c0665110896dbf5d8b9d6cbc0582eee7bad03d20ea290c7ce48c9537db0",
+      "bytes": 4891
+    },
+    "unidentified-bind1-native-storage.png": {
+      "sha256": "47a9bb5a392ec94a0d3338eed96891bf725a1eddbde2669867af1a03a6e1fb00",
+      "bytes": 5799
+    },
+    "unidentified-bind1-qt-cart.png": {
+      "sha256": "b9de88df91a6d44ef3719c14e9cde995360b47bd9ceef2a0aa7b031e790c6eeb",
+      "bytes": 23665
+    },
+    "unidentified-bind1-qt-inventory.png": {
+      "sha256": "6adab565716bd8e63d7d91ee2db840d8e4f8cab5f6221aeb8f92197476460904",
+      "bytes": 23745
+    },
+    "unidentified-bind1-qt-storage.png": {
+      "sha256": "d071b3489109514bc82ba6d0471a1ee5e69c3cc76cbb58a153038ba3ec3b4e34",
+      "bytes": 23474
+    },
+    "unidentified-bind2-native-inventory.png": {
+      "sha256": "233d6c0665110896dbf5d8b9d6cbc0582eee7bad03d20ea290c7ce48c9537db0",
+      "bytes": 4891
+    },
+    "unidentified-bind2-native-storage.png": {
+      "sha256": "47a9bb5a392ec94a0d3338eed96891bf725a1eddbde2669867af1a03a6e1fb00",
+      "bytes": 5799
+    },
+    "unidentified-bind2-qt-cart.png": {
+      "sha256": "b9de88df91a6d44ef3719c14e9cde995360b47bd9ceef2a0aa7b031e790c6eeb",
+      "bytes": 23665
+    },
+    "unidentified-bind2-qt-inventory.png": {
+      "sha256": "6adab565716bd8e63d7d91ee2db840d8e4f8cab5f6221aeb8f92197476460904",
+      "bytes": 23745
+    },
+    "unidentified-bind2-qt-storage.png": {
+      "sha256": "d071b3489109514bc82ba6d0471a1ee5e69c3cc76cbb58a153038ba3ec3b4e34",
+      "bytes": 23474
+    }
+  },
+  "Qt_runtime_sha256": {
+    "build-mingw-preset/Qt6Core.dll": "28741e6f2b2f6531c003c83d4da4eb926ee02be0e2727ff37034d4a57ff204c8",
+    "build-mingw-preset/Qt6Gui.dll": "a32fd504bf5647419538ad3b414bf745333aecf81bd32828ba0f53e5ae7525ab",
+    "build-mingw-preset/Qt6Qml.dll": "d8b674fa9fe25a6f378ada1f09892a53a4074c9dec2eaf0c40d997db5fb0d80d",
+    "build-mingw-preset/Qt6Quick.dll": "15e6cdeaf49f92e3d5180fe3b3cf67e2c71370c494fc75d8ef9175e7aa5ec013"
+  },
+  "Qt_offscreen_plugin": {
+    "path": "C:/Qt/6.11.0/mingw_64/plugins/platforms/qoffscreen.dll",
+    "sha256": "1f50703a1e553d2bf795a546d88c24a59dbed9ff838e13c53c8efb0234fd6c24"
+  },
+  "visual_inspection": [
+    "Final tooltip-contact.png (all 12 inventory/cart popups)",
+    "identified-bind2-qt-inventory.png",
+    "identified-bind2-qt-storage.png",
+    "unidentified-bind2-native-storage.png",
+    "unidentified-bind2-native-inventory.png"
+  ],
+  "limits": [
+    "Actual native paint bodies captured explicitly; current forced Qt UI-mode policy unchanged.",
+    "Transparent fixture chrome/item images; three extracted metadata rows; no complete art/database certification.",
+    "Equipment/shortcut hover payload propagation/source tokens reviewed; their full panels not rendered here.",
+    "Broader PK09.04 and PK48/49 remain open; no discovery row newly closed; no live/deployed certification."
+  ]
+}

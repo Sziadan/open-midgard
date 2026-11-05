@@ -1647,6 +1647,7 @@ bool UIEquipWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
     outData->text = shopui::BuildItemHoverText(*item);
     outData->itemId = item->GetItemId();
     outData->identified = item->m_isIdentified != 0;
+    outData->nameColorArgb = item->GetNameColorArgb();
     return outData->IsValid();
 }
 
@@ -2029,6 +2030,7 @@ unsigned long long UIEquipWnd::BuildVisualStateToken() const
         HashTokenValue(&hash, static_cast<unsigned long long>(item.m_wearLocation));
         HashTokenValue(&hash, static_cast<unsigned long long>(item.m_num));
         HashTokenValue(&hash, static_cast<unsigned long long>(item.m_isIdentified));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_isYours));
         HashTokenValue(&hash, static_cast<unsigned long long>(item.m_isDamaged));
         HashTokenValue(&hash, static_cast<unsigned long long>(item.m_refiningLevel));
         for (int slotValue : item.m_slot) {

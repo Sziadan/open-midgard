@@ -1,0 +1,13 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 4: packet_item_render_checks
+1/1 Test #4: packet_item_render_checks ........***Failed    0.98 sec
+FAIL item colour render: production inventory/cart row lost the source-defined name colour
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.99 sec
+
+The following tests FAILED:
+	  4 - packet_item_render_checks (Failed)
+Errors while running CTest

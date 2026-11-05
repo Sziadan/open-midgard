@@ -3,14 +3,33 @@ import QtQuick 2.15
 Item {
     id: hub
     anchors.fill: parent
-    z: pending!==null || !!view.promptKind || !!(view.playerMenu&&view.playerMenu.visible) ? 3000 : 30
+    z: pending!==null || hoverTile!==null || !!view.promptKind || !!(view.playerMenu&&view.playerMenu.visible) ? 3000 : 30
     RoTheme { id: theme }
     property var view: uiState.commerceData || ({})
     property var dragItem: ({})
     property string dragFrom: ""
     property bool dragging: false
     property var pending: null
-    property string hoverText: ""
+    property var hoverTile: null
+    Rectangle {
+        id: itemTooltip
+        objectName: "commerceItemTooltip"
+        visible: hub.hoverTile !== null && !hub.dragging
+        property point anchor: hub.hoverTile ? hub.hoverTile.mapToItem(hub,hub.hoverTile.width/2,0) : Qt.point(0,0)
+        width: Math.min(360,Math.ceil(hoverName.implicitWidth)+16)
+        height: Math.ceil(hoverName.implicitHeight)+12
+        x: Math.max(2,Math.min(hub.width-width-2,anchor.x-width/2))
+        y: Math.max(2,anchor.y-height+2)
+        color: "#f0303030"; border.color: "#606060"; radius: 2; z: 5000
+        Text {
+            id: hoverName
+            objectName: "commerceItemTooltipText"
+            x: 8; y: 6; width: parent.width-16
+            text: hub.hoverTile ? (hub.hoverTile.item.hoverText || hub.hoverTile.item.name || "") : ""
+            color: hub.hoverTile ? (hub.hoverTile.item.nameColor || "#ffffff") : "#ffffff"
+            font.family: theme.fontFamily; font.pixelSize: 14; wrapMode: Text.Wrap
+        }
+    }
     function send(action, args) { uiState.commerceAction(action, args || {}) }
     Repeater {
         model:hub.view.shopBoards || []
@@ -68,6 +87,7 @@ Item {
         objectName: "commerceTile_" + sourceKind + "_" + item.index
         required property var item
         property string sourceKind: "inventory"
+        Component.onDestruction: if (hub && hub.hoverTile === tile) hub.hoverTile = null
         width: sourceKind==="inventory" || sourceKind==="cart" ? 35 : 46; height: width; radius: 5
         color: mouse.containsMouse ? theme.rowHover : theme.rowAlt
         border.width: 1; border.color: item.equipped ? theme.gold : theme.bodyBorder
@@ -78,8 +98,8 @@ Item {
         MouseArea { id: mouse; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
             preventStealing: true
             property point origin
-            onEntered: hub.hoverText = tile.item.name
-            onExited: hub.hoverText = ""
+            onEntered: hub.hoverTile = tile
+            onExited: if (hub.hoverTile === tile) hub.hoverTile = null
             onPressed: function(event) { origin = Qt.point(event.x,event.y); hub.dragItem = tile.item; hub.dragFrom = tile.sourceKind }
             onPositionChanged: function(event) {
                 if (pressedButtons & Qt.LeftButton) {
@@ -95,7 +115,7 @@ Item {
             onDoubleClicked: if(tile.sourceKind==="inventory")hub.send("use",{index:tile.item.index})
         }
     }
-    component Status: Text { text: hub.hoverText || hub.view.status || ""; color: theme.muted; font.pixelSize: 10; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight }
+    component Status: Text { text: hub.view.status || ""; color: theme.muted; font.pixelSize: 10; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight }
 
     Repeater {
         model: ["inventory","cart"]
