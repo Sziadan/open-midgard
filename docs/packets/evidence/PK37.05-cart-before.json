@@ -1,0 +1,16 @@
+{
+  "case_id": "cart_stack_delta_lifecycle_20080910",
+  "stage": "PK37.05",
+  "fixture_id": "PK37-selected-20080910-cart-status-list-add-delete-failure",
+  "production_entry": "ProcessGameModePacketLoop -> production router -> Commerce::Receive",
+  "runtime_baseline_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+  "source_commit_at_configure": "3b6051b70fd04a985b525b558d7c94a88f2c921f",
+  "source_tree_status_at_configure": "dirty",
+  "invocation_count": 0,
+  "expected_packet_hex": null,
+  "actual_packet_hex": null,
+  "expected_queue_remainder": null,
+  "actual_queue_remainder": null,
+  "outcome": "FAIL",
+  "error": "01C5 stack delta did not accumulate while preserving uncarried location"
+}

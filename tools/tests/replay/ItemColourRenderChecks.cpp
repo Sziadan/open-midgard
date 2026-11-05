@@ -71,6 +71,14 @@ void Mouse(QGuiApplication& app,QQuickView& view,QPointF p) {
     QMouseEvent move(QEvent::MouseMove,p,view.mapToGlobal(p.toPoint()),Qt::NoButton,Qt::NoButton,Qt::NoModifier);
     QCoreApplication::sendEvent(&view,&move); Frames(app,view);
 }
+void Click(QGuiApplication& app,QQuickView& view,QQuickItem* item) {
+    Require(item && item->isVisible(),"cart button is missing or hidden");
+    const auto p=item->mapToScene(QPointF(item->width()/2,item->height()/2));
+    Mouse(app,view,p);
+    QMouseEvent press(QEvent::MouseButtonPress,p,view.mapToGlobal(p.toPoint()),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+    QMouseEvent release(QEvent::MouseButtonRelease,p,view.mapToGlobal(p.toPoint()),Qt::LeftButton,Qt::NoButton,Qt::NoModifier);
+    QCoreApplication::sendEvent(&view,&press);QCoreApplication::sendEvent(&view,&release);Frames(app,view);
+}
 int Pixels(const QImage& image,const QRect& bounds,QRgb rgb,const QImage* before=nullptr) {
     int count=0;
     for(int y=bounds.top();y<=bounds.bottom();++y)for(int x=bounds.left();x<=bounds.right();++x){
@@ -256,12 +264,41 @@ int main(int argc,char** argv) {
         auto* tip=Find(view.rootObject(),"commerceItemTooltip");Require(tip && tip->isVisible(),"cart lifetime hover did not open");
         Dispatch(mode,{0xd2,2,4,0});PopulateCommerceUi(state,mode,false);Frames(app,view);
         Require(!tip->isVisible() && g_session.GetInventoryItemByIndex(291),"cart row removal retained stale hover or changed inventory");
+        // Status owns count/weight independently of rows; 012B closes contents,
+        // and the actual QML Cart button must still reopen an empty cart.
+        Dispatch(mode,{0x21,1,1,0,100,0,0x34,0x30,0,0,0xa0,0x86,1,0});
+        Dispatch(mode,Equipment(0xd2,true,2));ro::commerce::state.cart.visible=true;
+        PopulateCommerceUi(state,mode,false);Frames(app,view);
+        auto checkCartFooter=[&](int count,int weight) {
+            const auto data=state->commerceData();
+            Require(data.value("cartCount").toInt()==count && data.value("cartWeight").toInt()==weight
+                && data.value("cartMaxWeight").toInt()==10000,"cart status projection changed counters or scaled weight twice");
+            auto* footer=Find(view.rootObject(),"commerceFooter_cart");
+            Require(footer && footer->isVisible(),"actual cart footer missing");
+            Require(footer->property("text").toString()==QString("%1 / 100 slots · Weight %2 / 10000").arg(count).arg(weight),
+                "rendered cart footer differs from authoritative status");
+        };
+        checkCartFooter(1,1234);
+        Require(view.grabWindow().save(output+"/cart-before-clear.png"),"save cart before clear failed");
+        Dispatch(mode,{0x2b,1});PopulateCommerceUi(state,mode,false);Frames(app,view);
+        Require(!ro::commerce::state.cart.visible && state->commerceData().value("hasCart").toBool()
+            && state->commerceData().value("cartItems").toList().isEmpty(),"cart clear lost presence or retained rows");
+        Click(app,view,Find(view.rootObject(),"commerceCartButton"));
+        PopulateCommerceUi(state,mode,false);Frames(app,view);
+        Require(ro::commerce::state.cart.visible && state->commerceData().value("cartItems").toList().isEmpty(),
+            "actual QML button did not reopen the cleared empty cart");
+        checkCartFooter(1,1234);
+        Require(view.grabWindow().save(output+"/cart-reopened-empty.png"),"save reopened empty cart failed");
+        Dispatch(mode,{0x21,1,0,0,100,0,0,0,0,0,0xa0,0x86,1,0});
+        PopulateCommerceUi(state,mode,false);Frames(app,view);checkCartFooter(0,0);
+        Require(state->commerceData().value("hasCart").toBool(),"empty status removed cart button entitlement");
+        Require(view.grabWindow().save(output+"/cart-status-reconciled.png"),"save reconciled cart failed");
         Require(errors==0,"item UI emitted QML warnings/errors");
         QImage contact(760,int(contacts.size())*52,QImage::Format_RGB32);contact.fill(QColor("#181b20"));QPainter painter(&contact);painter.setPen(Qt::white);
         for(size_t i=0;i<contacts.size();++i){painter.drawImage(0,int(i)*52,contacts[i]);painter.drawText(280,int(i)*52+23,contactNames[i]);}painter.end();
         Require(contact.save(output+"/tooltip-contact.png"),"save item contact sheet failed");
         QFile file(output+"/render-results.json");Require(file.open(QIODevice::WriteOnly),"item results open failed");
-        file.write(QJsonDocument(QJsonObject{{"cases",results},{"qml_errors",errors},{"hover_exit_and_row_removal",true},{"worn_bag_success_failure_ammunition",true},{"outcome","PASS"}}).toJson());
+        file.write(QJsonDocument(QJsonObject{{"cases",results},{"qml_errors",errors},{"hover_exit_and_row_removal",true},{"worn_bag_success_failure_ammunition",true},{"cart_status_clear_reopen",true},{"outcome","PASS"}}).toJson());
         view.hide();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
         SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
         std::cout<<"PASS six item colour cases across native inventory/storage and production QML inventory/cart/storage\n";return 0;

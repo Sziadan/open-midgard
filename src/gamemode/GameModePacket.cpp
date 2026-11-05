@@ -256,6 +256,7 @@ void InvalidateCartUi()
 void UpdateKnownLocalCartState(bool active, int effectState = 0)
 {
     g_localCartInfoKnown = true;
+    ro::commerce::state.hasCart = active;
     if (!active) {
         g_localCartEffectStateMask = 0;
         return;
@@ -6739,8 +6740,7 @@ void HandleCartOff(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    UpdateKnownLocalCartState(false);
-    ApplyPendingLocalCartState(mode);
+    // Local actor option changes own cart presence. ZC_CARTOFF only clears contents.
     InvalidateCartUi();
     DbgLog("[GameMode] cart cleared\n");
 }

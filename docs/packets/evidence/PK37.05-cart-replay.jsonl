@@ -1,0 +1,3 @@
+{"case_id":"cart_stack_delta_lifecycle_20080910","contract_id":"PK37.05","routes":["0121","02E9","01C5","0125","012C"],"outcome":"PASS"}
+{"case_id":"cart_clear_contents_lifecycle_20080910","contract_id":"PK37.05","routes":["0121","02E9","012B"],"outcome":"PASS"}
+{"case_id":"cart_local_option_presence_20080910","contract_id":"PK37.05","routes":["0119","012B"],"outcome":"PASS"}

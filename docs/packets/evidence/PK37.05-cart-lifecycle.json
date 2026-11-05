@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-05",
+  "baseline": "ece8bcebcb567a32d5dbb0254fdf62183cee992c",
+  "commit_subject": "packet(PK37.05): preserve cart contents and presence lifetimes",
+  "profile": 20080910,
+  "source_sha256": {
+    "src/gamemode/Commerce.cpp": "843f05e4cd21d24648cc5f8c2f8a808a3984c6c6fcc3a438e59516e65dfb12b1",
+    "src/gamemode/GameModePacket.cpp": "47441b2b47b22bb6c690502afdc898f8995da9c3cc812d102eb62d22db692fe7",
+    "src/qtui/QtCommerce.cpp": "08dc28e05b429ec4d8e67ee3e3d2ba6369f3c15b267525283a17ea63d0cd3f21",
+    "src/qtui/qml/RoCommerce.qml": "4eb09aafa227f70483f8fc399e4c76590bd661ecb94dacdf3619e0ab3754e2e6",
+    "tools/tests/replay/PacketStreamReplay.cpp": "cff80b8daf2d0a79a1517c18418428c52cbf0ac5d7006f8df37822abbbe0a16f",
+    "tools/tests/replay/CartItemLifecycleReplay.inc": "d1eb8624a01b3957e09c3c09ad6b034260b8b1f3ec1e49fb93754d4a18f14f44",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "d6d77562d4b6ebff8daf98794e949465d1837f6f8e852ef912f20ee9138a969d",
+    "docs/packets/evidence/PK37.05-cart-layout-probe.cpp": "44a9ba1fbad65d65501d2c5a622e95bdbaef854859e42ce10ba9a2e6d374dde8"
+  },
+  "reference_sha256": {
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39"
+  },
+  "external_source_root": "C:\\Users\\sziad\\source\\repos\\rathena-master",
+  "external_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/clif.hpp": "4be8d550c203378b4444655922927fa309e5c513bd43819b1877ad7f24c27c5d",
+    "src/map/pc.cpp": "e94af5e1b173cc442ee0b14f69ebd402f5703deea1d51fca36df8f9a69244a4e"
+  },
+  "validation": {
+    "ctest_passed": 107,
+    "ctest_failed": 0,
+    "seconds": 34.96,
+    "packet_records": 164,
+    "new_cart_records": [
+      {
+        "case_id": "cart_stack_delta_lifecycle_20080910",
+        "contract_id": "PK37.05",
+        "routes": [
+          "0121",
+          "02E9",
+          "01C5",
+          "0125",
+          "012C"
+        ],
+        "outcome": "PASS"
+      },
+      {
+        "case_id": "cart_clear_contents_lifecycle_20080910",
+        "contract_id": "PK37.05",
+        "routes": [
+          "0121",
+          "02E9",
+          "012B"
+        ],
+        "outcome": "PASS"
+      },
+      {
+        "case_id": "cart_local_option_presence_20080910",
+        "contract_id": "PK37.05",
+        "routes": [
+          "0119",
+          "012B"
+        ],
+        "outcome": "PASS"
+      }
+    ],
+    "cart_render_frames": 3,
+    "item_colour_frames": 30,
+    "bag_frames": 4,
+    "minimap_scenes": 18,
+    "item_qml_errors": 0,
+    "deploy": "OFF",
+    "header_probe": "PASS selected 20080910 cart sizes, IDs, fields and legacy OPTION model"
+  },
+  "binary_sha256": {
+    "packet_stream_replay_checks.exe": "72b172e9954b43e1e5a0b6542d3d955b6bbf545c3356c475dcee830a47cea964",
+    "packet_item_render_checks.exe": "c7b1f40418c812a2078954de2aa32a21484e335639e1d710361096bdb4c1b8ef",
+    "packet_minimap_render_checks.exe": "c70f7e37957b6ca33e22dd0198b38fc8c774144e5e7a7f5dfec18f858272f64e",
+    "open-midgard.exe": "1ba03578eddb16123f72cbb2b58ddb7efdb8112cf06d654b8d09522ed716c445"
+  },
+  "evidence_sha256": {
+    "PK37.05-cart-renders/cart-before-clear.png": "358f226dd19b89c6f1f932040597100546bcce7bc411d22b9c1b0e326f207691",
+    "PK37.05-cart-renders/cart-reopened-empty.png": "a59663ae818391c7915217e69083d0fd44bff084317ca27ede1cc9da7b9be78c",
+    "PK37.05-cart-renders/cart-status-reconciled.png": "2c7ab3dde1d0bcaffd8fec8c1e64895b0044a759cf73b044e58a49a21b1bf291",
+    "PK37.05-cart-renders/render-results.json": "b797d2e23f0a854aeff7eb2277b496b0eb43458d8d6a77ec68b2c425d7a39132",
+    "PK37.05-cart-before.json": "2183cdc8802dc9533b941d85f1572513093bf652e57f3b4aea41c5f1d9e85982",
+    "PK37.05-cart-layout-probe.txt": "b4b9e2f62f0d27e2403b5adb2acf009e04482d2cd8458f7373291fe141ec11e0",
+    "PK37.05-cart-replay.jsonl": "15a977888a98faa59e6aef48a41df2237af19fed6b909172202c6b4e60ad6ab7"
+  },
+  "validation_log_sha256": "a4f879a04c46a3e5b42be51fdbf4af7a68694fd4735188757cafd08fd691b3b5",
+  "limits": [
+    "No broad PK37 completion or discovery-row closure",
+    "No C2S transfer or inventory failure rollback certification",
+    "PK09.04 UI variants and PK47/48/49 remain open",
+    "Synthetic UI assets; no live deployment acceptance"
+  ]
+}

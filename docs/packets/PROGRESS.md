@@ -3352,3 +3352,7 @@ packet(PK09.02): verify selected alias ownership. Current runtime source blobs a
 ## 2026-11-05 — PK09.03 selected verification checkpoint
 
 packet(PK09.03): verify four selected list routes. Current runtime source blobs and binaries match the committed bag/field provenance: 107 tests and 161 packet records pass. Supersedes the historical dirty-tree gate; retains broad PK09.04, historical/deployed and independent-review limits. No runtime change or numeric classification update.
+
+## 2026-11-05 — PK37.05 cart lifecycle review
+
+Reviewed the uncommitted cart fixtures, corrected selected fixture semantics, reproduced metadata loss and fixed same-index adds, contents/presence ownership and unknown transfer failure notices. Added real actor-option regression for all five masks and remote/local isolation, actual QML Cart-button clear/reopen and authoritative counter/weight frames, plus selected header assertions. All targets build deploy-off; final CTest107/107 in 34.96s, 164 packet records, zero item QML errors; prior renders remain passing. Added bounded PK37.05; PK37.01–.04 and PK09.04 UI variants stay open. No discovery closure or live/deployed acceptance. Dedicated commit: packet(PK37.05): preserve cart contents and presence lifetimes.

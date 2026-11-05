@@ -855,6 +855,8 @@ Tier: **S**. Dependencies: PK13, PK34.
 - **PK37.03 [S]** Audit trade both peers lock accept cancel results and transaction ownership. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK37.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
+- **PK37.05 [S]** Verify selected cart status/delta/failure/counter and legacy option/contents lifetimes against primary sources, repair defects, and retain production replay plus actual Qt clear/reopen evidence; leave broader transfer/vending/trade and item UI scope open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+
 ### Required acceptance and traps
 
 Verify every production sender/server parser, partial purchases, quantities/prices, stale indices, insufficient funds, capacity and teardown. Server confirms mutations; UI drag/drop must use verified request paths.

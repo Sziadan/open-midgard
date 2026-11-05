@@ -87,10 +87,24 @@ bool Receive(CGameMode&,const PacketView& v){
     switch(op){
     case 0x110:if(n<10)return false;if(read(p+2)==41 && p[8]==0){state.vendingPending=false;state.vendingActive=false;state.status="Vending was rejected by the server. Check the skill, cart and selected items.";}return true;
     case 0x121:if(n<14)return false;state.hasCart=true;state.cartCount=read(p+2);state.cartCapacity=read(p+4);state.cartWeight=read(p+6,4);state.cartMaxWeight=read(p+10,4);return true;
-    case 0x12b:state.hasCart=false;state.cartItems.clear();state.cart.visible=state.vending.visible=false;state.draft.clear();state.vendingActive=state.vendingPending=false;return true;
-    case 0x124:case 0x1c5:{const bool typed=op==0x1c5;const int shift=typed?1:0;if(n<21+shift)return false;ITEM_INFO i;i.m_itemIndex=read(p+2);i.m_num=int(read(p+4,4));i.SetItemId(read(p+8));i.m_itemType=typed?p[10]:0;i.m_isIdentified=p[10+shift];i.m_isDamaged=p[11+shift];i.m_refiningLevel=p[12+shift];for(int k=0;k<4;++k)i.m_slot[k]=read(p+13+shift+k*2);auto old=state.cartItems.find(i.m_itemIndex);if(old!=state.cartItems.end())i.m_num+=old->second.m_num;state.cartItems[i.m_itemIndex]=i;state.hasCart=true;return true;}
+    // ZC_CARTOFF clears the contents/window, not cart entitlement or status counters.
+    case 0x12b:state.cartItems.clear();state.cart.visible=state.vending.visible=false;state.draft.clear();state.vendingActive=state.vendingPending=false;return true;
+    case 0x124:case 0x1c5:{
+        const bool typed=op==0x1c5;const int shift=typed?1:0;
+        if(n<21+shift)return false;
+        ITEM_INFO i;i.m_itemIndex=read(p+2);i.m_num=int(read(p+4,4));
+        i.SetItemId(read(p+8));i.m_itemType=typed?p[10]:0;
+        i.m_isIdentified=p[10+shift];i.m_isDamaged=p[11+shift];i.m_refiningLevel=p[12+shift];
+        for(int k=0;k<4;++k)i.m_slot[k]=read(p+13+shift+k*2);
+        auto old=state.cartItems.find(i.m_itemIndex);
+        // Primary CSession::AddMerchantItem changes only quantity for an existing index.
+        // In particular, this delta has no allowed-location, expiry or bind fields.
+        if(old!=state.cartItems.end())old->second.m_num+=i.m_num;
+        else state.cartItems[i.m_itemIndex]=i;
+        state.hasCart=true;return true;
+    }
     case 0x125:if(n<8)return false;remove(state.cartItems,read(p+2),read(p+4,4));return true;
-    case 0x12c:if(n<3)return false;note(p[2]==0?"Cart transfer failed: cart weight limit.":"Cart transfer failed: cart item capacity limit.");return true;
+    case 0x12c:if(n<3||p[2]>1)return false;note(p[2]==0?"Cart transfer failed: cart weight limit.":"Cart transfer failed: cart item capacity limit.");return true;
     case 0x12d:if(n<4)return false;state.vendingSlots=std::min<u32>(12,read(p+2));state.vending.visible=state.cart.visible=true;state.draft.clear();state.vendingActive=state.vendingPending=false;state.status="Drag cart items here, then set quantities and prices.";return true;
     case 0x136:case 0x133:{if(n<8||(n-8)%22)return false;std::vector<Offer> offers;for(int at=8;at<n;at+=22){Offer o;o.price=read(p+at,4);o.amount=read(p+at+(op==0x136?6:4));o.item.m_itemIndex=read(p+at+(op==0x136?4:6));o.item.m_itemType=p[at+8];o.item.SetItemId(read(p+at+9));o.item.m_isIdentified=p[at+11];o.item.m_isDamaged=p[at+12];o.item.m_refiningLevel=p[at+13];o.item.m_num=int(o.amount);for(int k=0;k<4;++k)o.item.m_slot[k]=read(p+at+14+k*2);offers.push_back(o);}if(op==0x136){state.draft=offers;state.vendingActive=true;state.vendingPending=false;state.vending.visible=true;state.status="Shop is open.";}else{state.shopItems=offers;state.sellerId=read(p+4,4);state.shop.visible=true;state.status="Select an item and quantity to purchase.";}return true;}
     case 0x137:if(n<6)return false;for(auto& o:state.draft)if(o.item.m_itemIndex==read(p+2))o.amount=o.amount>read(p+4)?o.amount-read(p+4):0;state.draft.erase(std::remove_if(state.draft.begin(),state.draft.end(),[](const auto& o){return !o.amount;}),state.draft.end());return true;

@@ -145,7 +145,7 @@ Item {
                     DropArea { anchors.fill: parent; keys:["commerce-item"]; onDropped: function(drop) { hub.drop(bag.kind);drop.acceptProposedAction() } }
                 }
                 Column { id: footer; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 3
-                    Text { text: bag.kind==="inventory" ? (hub.view.inventoryCount||0)+" / 100 slots · Double-click to use / equip" : (hub.view.cartCount||0)+" / "+(hub.view.cartCapacity||100)+" slots · Weight "+(hub.view.cartWeight||0)+" / "+(hub.view.cartMaxWeight||0); color: theme.muted; font.pixelSize: 10 }
+                    Text { objectName: "commerceFooter_"+bag.kind; text: bag.kind==="inventory" ? (hub.view.inventoryCount||0)+" / 100 slots · Double-click to use / equip" : (hub.view.cartCount||0)+" / "+(hub.view.cartCapacity||100)+" slots · Weight "+(hub.view.cartWeight||0)+" / "+(hub.view.cartMaxWeight||0); color: theme.muted; font.pixelSize: 10 }
                     Status { width: parent.width; height: 28 }
                 }
             }

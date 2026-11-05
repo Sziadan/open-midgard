@@ -1258,6 +1258,11 @@
         "id": "PK37.04",
         "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
+      },
+      {
+        "id": "PK37.05",
+        "action": "Verify selected cart status/delta/failure/counter and legacy option/contents lifetimes against primary sources, repair defects, and retain production replay plus actual Qt clear/reopen evidence; leave broader transfer/vending/trade and item UI scope open.",
+        "tier": "S"
       }
     ],
     "acceptance": "Verify every production sender/server parser, partial purchases, quantities/prices, stale indices, insufficient funds, capacity and teardown. Server confirms mutations; UI drag/drop must use verified request paths."
