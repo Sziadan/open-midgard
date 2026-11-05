@@ -101,6 +101,17 @@ int Pixels(const QImage& image,const QRect& bounds,QRgb rgb,const QImage* before
     }
     return count;
 }
+int PixelsNear(const QImage& image,const QRect& bounds,QRgb rgb) {
+    const QColor foreground=QColor::fromRgb(rgb);
+    const QRect clipped=bounds.intersected(image.rect());
+    int count=0;
+    for(int y=clipped.top();y<=clipped.bottom();++y)for(int x=clipped.left();x<=clipped.right();++x){
+        const auto pixel=image.pixelColor(x,y);
+        if(std::abs(pixel.red()-foreground.red())+std::abs(pixel.green()-foreground.green())
+            +std::abs(pixel.blue()-foreground.blue())<45)++count;
+    }
+    return count;
+}
 void Dispatch(CGameMode& mode,const std::vector<u8>& bytes) {
     PacketView packet{};int consumed=0;
     Require(TryReadPacket(bytes.data(),int(bytes.size()),packet,consumed),"item colour fixture did not frame");
@@ -154,6 +165,7 @@ template<class Window> QImage Native(Window& window,QRgb expected,int width=Widt
 #include "NpcShopQuantityRenderChecks.inc"
 #include "InventoryTabStartupRenderChecks.inc"
 #include "InventoryGeometryRenderChecks.inc"
+#include "ItemDetailGeometryRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -175,6 +187,12 @@ int main(int argc,char** argv) {
         const bool itemTabsStartupChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-tabs-startup-child";
         const bool itemGeometry=argc>2 && QString::fromLocal8Bit(argv[2])=="item-geometry";
         const bool itemGeometryChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-geometry-child";
+        const bool itemDetailGeometry=argc>2 && QString::fromLocal8Bit(argv[2])=="item-detail-geometry";
+        const bool itemDetailGeometryChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-detail-geometry-child";
+        if(itemDetailGeometry) {
+            CheckItemDetailGeometryDriver(output);
+            std::cout<<"PASS source item detail geometry and viewer\n";return 0;
+        }
         if(itemGeometry) {
             CheckInventoryGeometryDriver(output);
             std::cout<<"PASS source inventory geometry and mini lifecycle\n";return 0;
@@ -184,7 +202,7 @@ int main(int argc,char** argv) {
             std::cout<<"PASS source inventory tab startup and runtime retention\n";return 0;
         }
         InventoryTabViewportFixture inventoryTabViewport;
-        if(itemTabsStartupChild || itemGeometryChild) {
+        if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild) {
             Require(argc>3,"inventory startup child stage missing");
             const QString stage=QString::fromLocal8Bit(argv[3]);
             SetRuntimeUiScalePercent(100);inventoryTabViewport.Create(stage=="small"?QString("read-small"):stage);
@@ -199,6 +217,16 @@ int main(int argc,char** argv) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/rental-idnum2itemdesctable.txt");
             Require(source.open(QIODevice::ReadOnly),"source rental description missing");const auto bytes=source.readAll();
             QFile target(output+"/data/idnum2itemdesctable.txt");Require(target.open(QIODevice::WriteOnly) && target.write(bytes)==bytes.size(),"copy rental description failed");
+        }
+        if(itemDetailGeometryChild) {
+            QByteArray description;
+            for(const auto id:{501,1201}) {
+                description+=QByteArray::number(id)+"#\n^FF0000SCROLL START^000000\n";
+                for(int line=0;line<40;++line)description+="Description line "+QByteArray::number(line)+" wraps inside the fixed source viewer.\n";
+                description+="^0000FFSCROLL END^000000\n#\n";
+            }
+            QFile target(output+"/data/idnum2itemdesctable.txt");
+            Require(target.open(QIODevice::WriteOnly)&&target.write(description)==description.size(),"write private long detail descriptions failed");
         }
         for(const QString& table:{QString("idnum2itemdisplaynametable.txt"),QString("num2itemdisplaynametable.txt"),QString("itemslotcounttable.txt"),QString("cardprefixnametable.txt"),QString("cardpostfixnametable.txt"),QString("carditemnametable.txt")}) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+table);
@@ -230,14 +258,16 @@ int main(int argc,char** argv) {
         int errors=0;
         QQuickView view;view.setColor(QColor("#181b20"));view.resize(Width,Height);view.setResizeMode(QQuickView::SizeRootObjectToView);
         if(itemGeometryChild)view.resize(QString::fromLocal8Bit(argv[3])=="small"?640:1280,QString::fromLocal8Bit(argv[3])=="small"?480:720);
+        if(itemDetailGeometryChild)view.resize(1280,720);
         view.rootContext()->setContextProperty("uiState",adapter.stateObject());
         view.engine()->addImageProvider("openmidgard",new FixtureImages);
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
-        if(itemTabsStartupChild || itemGeometryChild) {
+        if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild) {
             Require(argc>3,"inventory tab persistence child stage missing");
-            if(itemGeometryChild)CheckInventoryGeometryChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
+            if(itemDetailGeometryChild)CheckItemDetailGeometryChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
+            else if(itemGeometryChild)CheckInventoryGeometryChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
             else CheckInventoryTabStartupChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
             Require(errors==0,"inventory tab persistence child emitted QML errors");
             view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;

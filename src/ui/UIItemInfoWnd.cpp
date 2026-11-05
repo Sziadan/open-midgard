@@ -13,66 +13,16 @@
 #include <tuple>
 
 namespace {
-constexpr int kWindowWidth = 332;
-constexpr int kWindowHeight = 308;
-constexpr int kWindowMinHeight = 129;
+constexpr int kWindowWidth = 280;
+constexpr int kWindowHeight = 120;
 constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kCloseButtonSize = 12;
-constexpr int kPadding = 8;
-constexpr int kPreviewBoxSize = 96;
+constexpr int kPreviewBoxSize = 75;
 constexpr int kGraphicsButtonWidth = 36;
 constexpr int kGraphicsButtonHeight = 16;
-constexpr int kSlotSize = 22;
-constexpr int kSlotGap = 6;
-constexpr int kNameHeight = 18;
-constexpr int kDetailLineAdvance = 13;
-constexpr int kDescriptionTopGap = 4;
-constexpr int kDescriptionBottomPadding = 20;
-constexpr int kSlotDescriptionGap = 24;
+constexpr int kSlotSize = 24;
+constexpr int kSlotGap = 1;
 constexpr char kUnknownItemDescription[] = "Unknown item, can be identified by using a ^0000FFMagnifier^000000.";
-
-std::string BuildMeasurementText(const std::string& text);
-
-int MeasureWrappedTextHeight(HFONT font, int width, const std::string& text)
-{
-    if (width <= 0 || text.empty()) {
-        return 0;
-    }
-
-    const std::string measureText = BuildMeasurementText(text);
-    if (measureText.empty()) {
-        return 0;
-    }
-
-    HDC hdc = AcquireMainWindowDrawTarget();
-    if (!hdc) {
-        return 0;
-    }
-
-    RECT measureRect{ 0, 0, width, 0 };
-    HGDIOBJ oldFont = SelectObject(hdc, font);
-    DrawTextA(hdc,
-              measureText.c_str(),
-              static_cast<int>(measureText.size()),
-              &measureRect,
-              DT_LEFT | DT_WORDBREAK | DT_EDITCONTROL | DT_CALCRECT | DT_NOPREFIX);
-    SelectObject(hdc, oldFont);
-    ReleaseMainWindowDrawTarget(hdc);
-
-    const int measuredHeight = static_cast<int>(measureRect.bottom - measureRect.top);
-    return (std::max)(0, measuredHeight);
-}
-
-int GetMaxItemInfoWindowHeight()
-{
-    RECT clientRect{};
-    if (!GetClientRect(g_hMainWnd, &clientRect)) {
-        return kWindowHeight;
-    }
-
-    const int clientHeight = clientRect.bottom - clientRect.top;
-    return (std::max)(kWindowMinHeight, clientHeight - kPadding);
-}
 
 HFONT GetItemInfoDescriptionFont()
 {
@@ -97,24 +47,6 @@ HFONT GetItemInfoDescriptionFont()
 bool IsInsideRect(const RECT& rect, int x, int y)
 {
     return x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
-}
-
-bool IsEquipInfoType(int itemType)
-{
-    switch (itemType) {
-    case 4:
-    case 5:
-    case 8:
-    case 9:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-        return true;
-    default:
-        return false;
-    }
 }
 
 bool IsHexDigit(char ch)
@@ -145,25 +77,6 @@ std::string SanitizeRoText(const std::string& text)
             continue;
         }
         out.push_back(ch == '_' ? ' ' : ch);
-    }
-    return out;
-}
-
-std::string BuildMeasurementText(const std::string& text)
-{
-    const std::string sanitized = SanitizeRoText(text);
-    std::string out;
-    out.reserve(sanitized.size() + 8);
-    for (char ch : sanitized) {
-        if (ch == '\r') {
-            continue;
-        }
-        if (ch == '\n') {
-            out.push_back('\r');
-            out.push_back('\n');
-            continue;
-        }
-        out.push_back(ch);
     }
     return out;
 }
@@ -218,13 +131,27 @@ void DrawSlotTooltip(HDC hdc, const RECT& bounds, const RECT& anchorRect, const 
                                DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 }
 
+class ItemDescriptionInput final : public UIWindow {
+public:
+    explicit ItemDescriptionInput(UIItemInfoWnd& owner) : m_owner(owner) {}
+    void OnWheel(int delta) override { m_owner.ScrollDescriptionWheel(delta); }
+private:
+    UIItemInfoWnd& m_owner;
+};
+
 ITEM_INFO BuildSlottedCardInfo(unsigned int itemId)
 {
     ITEM_INFO item{};
     item.SetItemId(itemId);
     item.m_num = 1;
+    item.m_itemType = 6;
     item.m_isIdentified = 1;
     return item;
+}
+
+bool StartsWithCardOrEmpty(const ITEM_INFO& item)
+{
+    return item.m_slot[0]==0 || g_ttemmgr.IsCardItem(static_cast<unsigned>(item.m_slot[0]));
 }
 }
 
@@ -235,7 +162,6 @@ UIItemInfoWnd::UIItemInfoWnd()
       m_closePressed(false),
       m_graphicsHovered(false),
       m_graphicsPressed(false),
-    m_hasStoredPlacement(false),
     m_previewUsesCollection(false),
     m_hoveredSlotIndex(-1),
     m_previewBitmap(),
@@ -243,14 +169,15 @@ UIItemInfoWnd::UIItemInfoWnd()
     m_slotBitmaps()
 {
     Create(kWindowWidth, kWindowHeight);
-    Move(24, 24);
-    int savedX = m_x;
-    int savedY = m_y;
-    if (LoadUiWindowPlacement("ItemInfoWnd", &savedX, &savedY)) {
-        g_windowMgr.ClampWindowToClient(&savedX, &savedY, m_w, m_h);
-        Move(savedX, savedY);
-        m_hasStoredPlacement = true;
-    }
+    int x=0,y=0;
+    g_windowMgr.RestoreItemDetailWindowPlacement(&x,&y);
+    Move(x,y);
+    m_descriptionInput = new ItemDescriptionInput(*this);
+    const RECT viewer = GetDescriptionRect();
+    m_descriptionInput->Create(viewer.right-viewer.left,viewer.bottom-viewer.top);
+    m_descriptionInput->Move(viewer.left,viewer.top);
+    m_descriptionInput->SetShow(1);
+    AddChild(m_descriptionInput);
 }
 
 void UIItemInfoWnd::OnDraw()
@@ -268,7 +195,8 @@ void UIItemInfoWnd::DrawNativeToHdc(HDC hdc)
     if (m_show == 0 || !m_hasItem || !hdc) return;
 
     const RECT bounds = shopui::MakeRect(m_x, m_y, m_w, m_h);
-    shopui::DrawFrameWindow(hdc, bounds, BuildTitle().c_str());
+    shopui::FillRectColor(hdc,bounds,RGB(245,242,234));
+    shopui::FrameRectColor(hdc,bounds,RGB(166,159,145));
 
     const RECT closeRect = GetCloseButtonRect();
     shopui::FillRectColor(hdc, closeRect, m_closePressed ? RGB(189, 199, 222) : (m_closeHovered ? RGB(215, 223, 240) : RGB(231, 226, 214)));
@@ -279,7 +207,7 @@ void UIItemInfoWnd::DrawNativeToHdc(HDC hdc)
     shopui::FillRectColor(hdc, previewRect, RGB(245, 242, 234));
     shopui::FrameRectColor(hdc, previewRect, RGB(166, 159, 145));
     if (m_previewBitmap.IsValid()) {
-        const RECT imageRect = shopui::MakeRect(previewRect.left + 2, previewRect.top + 2, kPreviewBoxSize - 4, kPreviewBoxSize - 4);
+        const RECT imageRect = shopui::MakeRect(previewRect.left + 2, previewRect.top + 2, previewRect.right-previewRect.left-4, previewRect.bottom-previewRect.top-4);
         shopui::DrawBitmapPixelsTransparent(hdc, m_previewBitmap, imageRect);
     }
 
@@ -291,23 +219,16 @@ void UIItemInfoWnd::DrawNativeToHdc(HDC hdc)
     }
 
     const RECT nameRect = GetNameRect();
-    shopui::DrawWindowTextRect(hdc, nameRect, BuildDisplayName(), RGB(0, 0, 0), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
-
-    int detailY = nameRect.bottom + 2;
-    for (const std::string& line : BuildDetailLines()) {
-        RECT detailRect{ nameRect.left, detailY, m_x + m_w - kPadding, detailY + 14 };
-        shopui::DrawWindowTextRect(hdc, detailRect, line, RGB(64, 64, 64), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
-        detailY += 13;
-    }
+    shopui::DrawWindowTextRect(hdc, nameRect, BuildDisplayName(), m_item.m_isIdentified ? RGB(0,0,0) : RGB(128,128,128), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
 
     const RECT descriptionRect = GetDescriptionRect();
     HGDIOBJ oldDescriptionFont = SelectObject(hdc, GetItemInfoDescriptionFont());
-    DrawNpcSayDialogColoredText(hdc, descriptionRect, BuildDescriptionText());
+    DrawNpcSayDialogColoredText(hdc, descriptionRect, BuildViewerText(), m_descriptionScrollOffset);
     SelectObject(hdc, oldDescriptionFont);
 
     if (ShouldShowSlots()) {
         const int declaredSlots = GetDeclaredSlotCount();
-        for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
+        for (int slotIndex = 0; slotIndex < GetDeclaredSlotCount(); ++slotIndex) {
             const RECT slotRect = GetSlotRect(slotIndex);
             const bool available = slotIndex < declaredSlots;
             const bool occupied = m_slotItemIds[static_cast<size_t>(slotIndex)] != 0;
@@ -347,7 +268,7 @@ void UIItemInfoWnd::OnLBtnDown(int x, int y)
         return;
     }
 
-    UIFrameWnd::OnLBtnDown(x, y);
+    if (x > m_x+60 && y < m_y+kTitleBarHeight) UIFrameWnd::OnLBtnDown(x, y);
 }
 
 void UIItemInfoWnd::OnLBtnUp(int x, int y)
@@ -365,7 +286,6 @@ void UIItemInfoWnd::OnLBtnUp(int x, int y)
     UpdateInteraction(x, y);
 
     if (activateClose) {
-        StoreInfo();
         g_windowMgr.DeleteWindow(this);
         return;
     }
@@ -407,8 +327,7 @@ void UIItemInfoWnd::OnMouseHover(int x, int y)
 
 void UIItemInfoWnd::StoreInfo()
 {
-    SaveUiWindowPlacement("ItemInfoWnd", m_x, m_y);
-    m_hasStoredPlacement = true;
+    g_windowMgr.StoreItemDetailWindowInfo({m_x,m_y,m_w,m_h});
 }
 
 void UIItemInfoWnd::OnProcess()
@@ -434,8 +353,8 @@ bool UIItemInfoWnd::RefreshBoundItem()
     const auto fields=[](const ITEM_INFO& i){return std::tie(i.m_itemType,i.m_location,i.m_itemIndex,i.m_wearLocation,
         i.m_num,i.m_price,i.m_realPrice,i.m_itemName,i.m_isIdentified,i.m_isDamaged,i.m_refiningLevel,i.m_isYours,i.m_deleteTime);};
     if (fields(*current) != fields(m_item) || !std::equal(std::begin(current->m_slot),std::end(current->m_slot),std::begin(m_item.m_slot))) {
-        m_item = *current;RefreshPreviewAndSlots();Resize(kWindowWidth,GetDesiredWindowHeight());
-        int x=m_x,y=m_y;g_windowMgr.ClampWindowToClient(&x,&y,m_w,m_h);Move(x,y);Invalidate();
+        m_item = *current;ResetDescriptionScroll();RefreshPreviewAndSlots();
+        Resize(m_w,GetDesiredWindowHeight());Invalidate();
     }
     return true;
 }
@@ -450,22 +369,13 @@ bool UIItemInfoWnd::MatchesSelection(const ITEM_INFO& item) const
 
 void UIItemInfoWnd::SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source)
 {
+    (void)preferredX; (void)preferredY;
     m_item = item;
     m_source = source;
     m_hasItem = item.GetItemId() != 0;
+    ResetDescriptionScroll();
     RefreshPreviewAndSlots();
-
-    Resize(kWindowWidth, m_hasItem ? GetDesiredWindowHeight() : kWindowHeight);
-
-    int nextX = m_x;
-    int nextY = m_y;
-    if (m_show == 0 && !m_hasStoredPlacement) {
-        nextX = preferredX;
-        nextY = preferredY;
-    }
-    g_windowMgr.ClampWindowToClient(&nextX, &nextY, m_w, m_h);
-    Move(nextX, nextY);
-
+    Resize(m_w,m_hasItem ? GetDesiredWindowHeight() : kWindowHeight);
     SetShow(m_hasItem ? 1 : 0);
     Invalidate();
 }
@@ -475,6 +385,7 @@ bool UIItemInfoWnd::GetDisplayDataForQt(DisplayData* outData) const
     if (!outData || m_show == 0 || !m_hasItem) {
         return false;
     }
+    *outData = DisplayData{};
 
     outData->title = BuildTitle();
     outData->itemId = m_item.GetItemId();
@@ -483,12 +394,16 @@ bool UIItemInfoWnd::GetDisplayDataForQt(DisplayData* outData) const
     outData->previewUsesCollection = m_previewUsesCollection;
     outData->detailLines = BuildDetailLines();
     outData->description = BuildDescriptionText();
+    outData->previewRect = GetPreviewRect();
+    outData->nameRect = GetNameRect();
+    outData->descriptionRect = GetDescriptionRect();
+    outData->descriptionGeneration = m_descriptionGeneration;
     outData->closeButton = { GetCloseButtonRect().left, GetCloseButtonRect().top, kCloseButtonSize, kCloseButtonSize, m_closeHovered, m_closePressed, true, true, "X" };
     outData->graphicsButton = { GetGraphicsButtonRect().left, GetGraphicsButtonRect().top, kGraphicsButtonWidth, kGraphicsButtonHeight, m_graphicsHovered, m_graphicsPressed, true, HasViewButton(), "View" };
     if (ShouldShowSlots()) {
-        outData->slotEntries.reserve(4);
+        outData->slotEntries.reserve(GetDeclaredSlotCount());
         const int declaredSlots = GetDeclaredSlotCount();
-        for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
+        for (int slotIndex = 0; slotIndex < GetDeclaredSlotCount(); ++slotIndex) {
             const RECT slotRect = GetSlotRect(slotIndex);
             DisplaySlot slot;
             slot.x = slotRect.left;
@@ -521,34 +436,29 @@ RECT UIItemInfoWnd::GetCloseButtonRect() const
 
 RECT UIItemInfoWnd::GetGraphicsButtonRect() const
 {
-    const RECT previewRect = GetPreviewRect();
-    return shopui::MakeRect(previewRect.left + 4, previewRect.top + 4, kGraphicsButtonWidth, kGraphicsButtonHeight);
+    return shopui::MakeRect(m_x+6,m_y+6,kGraphicsButtonWidth,kGraphicsButtonHeight);
 }
 
 RECT UIItemInfoWnd::GetPreviewRect() const
 {
-    return shopui::MakeRect(m_x + kPadding, m_y + kTitleBarHeight + kPadding, kPreviewBoxSize, kPreviewBoxSize);
+    return shopui::MakeRect(m_x+10,m_y+11,kPreviewBoxSize,100);
 }
 
 RECT UIItemInfoWnd::GetNameRect() const
 {
-    const RECT previewRect = GetPreviewRect();
-    return RECT{ previewRect.right + 8, previewRect.top, m_x + m_w - kPadding, previewRect.top + kNameHeight };
+    return RECT{m_x+90,m_y+10,m_x+m_w-18,m_y+27};
 }
 
 RECT UIItemInfoWnd::GetDescriptionRect() const
 {
-    const RECT nameRect = GetNameRect();
-    const int detailY = nameRect.bottom + 2 + static_cast<int>(BuildDetailLines().size()) * kDetailLineAdvance;
-    const int bottomPadding = ShouldShowSlots() ? (kSlotSize + kPadding + kSlotDescriptionGap) : kDescriptionBottomPadding;
-    return RECT{ nameRect.left, detailY + kDescriptionTopGap, m_x + m_w - kPadding, m_y + m_h - bottomPadding };
+    // Ref creates this child at280x120 and does not resize it when adding the
+    // socket row. Keep its182x80 rectangle independent of outer height.
+    return shopui::MakeRect(m_x+91,m_y+31,182,80);
 }
 
 RECT UIItemInfoWnd::GetSlotRect(int slotIndex) const
 {
-    const int left = m_x + kPadding + slotIndex * (kSlotSize + kSlotGap);
-    const int top = m_y + m_h - kPadding - kSlotSize;
-    return shopui::MakeRect(left, top, kSlotSize, kSlotSize);
+    return shopui::MakeRect(m_x+4+slotIndex*(kSlotSize+kSlotGap),m_y+m_h-26,kSlotSize,kSlotSize);
 }
 
 void UIItemInfoWnd::UpdateInteraction(int x, int y)
@@ -557,7 +467,7 @@ void UIItemInfoWnd::UpdateInteraction(int x, int y)
     const bool nextGraphicsHovered = HasViewButton() && IsInsideRect(GetGraphicsButtonRect(), x, y);
     int nextHoveredSlot = -1;
     if (ShouldShowSlots()) {
-        for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
+        for (int slotIndex = 0; slotIndex < GetDeclaredSlotCount(); ++slotIndex) {
             if (m_slotItemIds[static_cast<size_t>(slotIndex)] == 0) {
                 continue;
             }
@@ -595,20 +505,18 @@ void UIItemInfoWnd::RefreshPreviewAndSlots()
         shopui::TryLoadItemIconPixels(m_item, &m_previewBitmap);
     }
 
-    if (!ShouldShowSlots()) {
+    if (!StartsWithCardOrEmpty(m_item)) {
         return;
     }
 
-    for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
+    for (int slotIndex = 0; slotIndex < GetDeclaredSlotCount(); ++slotIndex) {
         const unsigned int cardId = static_cast<unsigned int>(m_item.m_slot[slotIndex]);
         if (cardId == 0) {
             continue;
         }
 
         m_slotItemIds[static_cast<size_t>(slotIndex)] = cardId;
-        ITEM_INFO slotItem{};
-        slotItem.SetItemId(cardId);
-        slotItem.m_isIdentified = 1;
+        const ITEM_INFO slotItem=BuildSlottedCardInfo(cardId);
         if (!shopui::TryLoadItemIconPixels(slotItem, &m_slotBitmaps[static_cast<size_t>(slotIndex)])) {
             shopui::TryLoadItemCollectionPixels(slotItem, &m_slotBitmaps[static_cast<size_t>(slotIndex)]);
         }
@@ -629,9 +537,18 @@ int UIItemInfoWnd::GetDeclaredSlotCount() const
     return (std::max)(0, (std::min)(4, slotCount));
 }
 
+bool UIItemInfoWnd::HasSlotRow() const
+{
+    // IsManufacturedItem is precisely marker255; marker254 is a different
+    // naming path and must not be treated as the same predicate.
+    return m_hasItem && m_item.m_isIdentified != 0 && GetDeclaredSlotCount() > 0 && m_item.m_slot[0] != 255;
+}
+
 bool UIItemInfoWnd::ShouldShowSlots() const
 {
-    return m_hasItem && m_item.m_isIdentified != 0 && IsEquipInfoType(m_item.m_itemType);
+    // Painting observes current geometry, independently of the assignment-time
+    // expansion predicate. Cache raw declared card words even while collapsed.
+    return m_hasItem && m_h>120 && GetDeclaredSlotCount()>0 && StartsWithCardOrEmpty(m_item);
 }
 
 std::string UIItemInfoWnd::BuildTitle() const
@@ -674,18 +591,49 @@ std::string UIItemInfoWnd::BuildDescriptionText() const
 
 int UIItemInfoWnd::GetDesiredWindowHeight() const
 {
-    const int minHeight = ShouldShowSlots()
-        ? kTitleBarHeight + kPadding + kPreviewBoxSize + kSlotDescriptionGap + kSlotSize + kPadding
-        : kWindowMinHeight;
+    // Preserve the observed144 guard versus149 target. No independent source
+    // was found that justifies silently normalizing this decompiler oddity.
+    return HasSlotRow() ? (m_h == 144 ? 144 : 149) : 120;
+}
 
-    const RECT nameRect = GetNameRect();
-    const int descriptionTop = (nameRect.bottom - m_y) + 2 + static_cast<int>(BuildDetailLines().size()) * kDetailLineAdvance + kDescriptionTopGap;
-    const int descriptionWidth = (m_x + m_w - kPadding) - nameRect.left;
-    const int descriptionHeight = MeasureWrappedTextHeight(GetItemInfoDescriptionFont(), descriptionWidth, BuildDescriptionText());
-    const int descriptionBottomPadding = ShouldShowSlots()
-        ? (kSlotSize + kPadding + kSlotDescriptionGap)
-        : kDescriptionBottomPadding;
-    const int desiredHeight = descriptionTop + descriptionHeight + descriptionBottomPadding;
+void UIItemInfoWnd::Move(int x,int y)
+{
+    UIFrameWnd::Move(x,y);
+    if (m_descriptionInput) {
+        const RECT rect=GetDescriptionRect();
+        m_descriptionInput->Move(rect.left,rect.top);
+    }
+}
 
-    return (std::max)(minHeight, (std::min)(GetMaxItemInfoWindowHeight(), desiredHeight));
+std::string UIItemInfoWnd::BuildViewerText() const
+{
+    std::string text;
+    for (const auto& line:BuildDetailLines()) { text += line; text += '\n'; }
+    return text+BuildDescriptionText();
+}
+
+void UIItemInfoWnd::ResetDescriptionScroll()
+{
+    m_descriptionScrollOffset=0;
+    m_descriptionWheelRemainder=0;
+    ++m_descriptionGeneration;
+}
+
+void UIItemInfoWnd::ScrollDescriptionWheel(int delta)
+{
+    HDC hdc=AcquireMainWindowDrawTarget();
+    if (!hdc || !m_hasItem || !m_show) { if(hdc)ReleaseMainWindowDrawTarget(hdc); return; }
+    const HGDIOBJ old=SelectObject(hdc,GetItemInfoDescriptionFont());
+    const int height=MeasureNpcSayDialogColoredTextHeight(hdc,182,BuildViewerText());
+    const int lineHeight=(std::max)(1,MeasureNpcSayDialogColoredTextHeight(hdc,182,"M"));
+    SelectObject(hdc,old);ReleaseMainWindowDrawTarget(hdc);
+    const int64_t total=int64_t(m_descriptionWheelRemainder)+delta;
+    const int64_t notches=total/WHEEL_DELTA;
+    m_descriptionWheelRemainder=static_cast<int>(total%WHEEL_DELTA);
+    UINT lines=3;
+    SystemParametersInfoA(SPI_GETWHEELSCROLLLINES,0,&lines,0);
+    const int64_t step=lines==WHEEL_PAGESCROLL ? 80 : int64_t(lines)*lineHeight;
+    const int maximum=(std::max)(0,height-80);
+    m_descriptionScrollOffset=static_cast<int>((std::clamp)(int64_t(m_descriptionScrollOffset)-int64_t(notches)*step,int64_t(0),int64_t(maximum)));
+    Invalidate();
 }

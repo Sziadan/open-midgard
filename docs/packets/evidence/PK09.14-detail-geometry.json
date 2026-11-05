@@ -1,0 +1,88 @@
+{
+  "date": "2026-11-06",
+  "timezone": "Europe/Stockholm",
+  "baseline": "0782262b6502bb693bc0ca90fb2bf129eb647ebd",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.14): restore item detail geometry and clipped viewer",
+  "source_sha256": {
+    "CMakeLists.txt": "7d5bced5216888d45f73c6104dd2f64175eaf13c5de36b0fb55914a1ee867a83",
+    "src/qtui/QtUiStateAdapter.cpp": "cc6f9d1c41b9ba4820ee6d15260509abcd41d11912e6b54f6222ea399e931c0e",
+    "src/qtui/qml/GameOverlay.qml": "a9ee265039b6c8185b4014c447132b90dbb5b5b8cc778048c1fe6331868e9654",
+    "src/qtui/qml/RoChromeButton.qml": "e77b21c42173adcb8b144b3f733302428b9372dd6006e294e0af1c4a074379eb",
+    "src/ui/NpcDialogColoredText.cpp": "6ed086dad05e9bcf5e5d812f2df3a5428c8ec8f6ceade89353ab7e5bc1e468af",
+    "src/ui/NpcDialogColoredText.h": "cc1903e3eeff0c6117d4e484af0aa03c01a6e5c4828c604b45c90a67126da7c0",
+    "src/ui/UIItemInfoWnd.cpp": "ad81d50cdf361ed50cd926ef4c951cab2e36aa2db2a59bb1c1a5bfa09386d7b7",
+    "src/ui/UIItemInfoWnd.h": "a62e1294f66336d9491f9e5d83cc418dba117f27d5493039830d9ecd32ca615c",
+    "src/ui/UIWindowMgr.cpp": "a7ab5c802c1019b6578e9360e5212d3c196725e0c6325d3dfd31109b710640e4",
+    "src/ui/UIWindowMgr.h": "86a8d1e41d7f0f06576e3d01dc1f7555e34770f2b180b7e4a70146709e50500f",
+    "tools/tests/replay/CommerceItemDetailRenderChecks.inc": "abb0de9314c00ef77b5135e17107f78ffc28e8cf6d3bd1546885df0e980b457c",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "3aeddbb27bd78e42abc00a6c3e796eb3dac0db04846f5e3bed04ddbf83c039d9",
+    "tools/tests/replay/ItemDetailToggleRenderChecks.inc": "b71b94feb3d0f79972b31b8fe783675ff1f11033124466baa31545da70d73891",
+    "tools/tests/replay/NpcShopDetailRenderChecks.inc": "81ac2b85837a801d42d39cb5d99563fa44a2e37bb58472b313a7719760c58f1b",
+    "tools/tests/replay/RentalItemRenderChecks.inc": "c30181191815152c7631a2b8d7bb16d0a94fb25653a89286506ef9c114781093",
+    "tools/tests/replay/ItemDetailGeometryRenderChecks.inc": "e65ff162cfadc97933e5826e39389a2c6d00905b87b8bca26fa2fa03780001e6"
+  },
+  "primary_sha256": {
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIRectInfo.cpp": "e966ca8d73cd295750d9d1abd0a0595b77112b3ae956efd5b41809ba98beaa11",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/ItemInfo.cpp": "5bce74c76f40aafad079c2feaf746a7570a1380492a03e6e1cec52bdcf722bc8",
+    "Ref/dhxj/ItemInfo.cpp": "f4292b9be27d72e75d598927c25a3a085e8838b96969c3173937dba20ab56447",
+    "Ref/WinMain.cpp": "3cac1c7d4943d1e85b91a336dd084deaa34d01cc29cb6a1b6c3f4fa22803d39c"
+  },
+  "preview_asset": {
+    "item_id": 1201,
+    "resource_hex": "b3aac0ccc7c1",
+    "path": "Ref/GRF-Content/data/texture/\u00c0\u00af\u00c0\u00fa\u00c0\u00ce\u00c5\u00cd\u00c6\u00e4\u00c0\u00cc\u00bd\u00ba/collection/\u00b3\u00aa\u00c0\u00cc\u00c7\u00c1.bmp",
+    "dimensions": [
+      75,
+      100
+    ],
+    "sha256": "e56b54e0605c42a18e0b0e25d81a780734b6069df154f5f1fe840f1f6c97a90f",
+    "table_sha256": "685beb217b61e01ae0f22f7da6806960e95e3c97cf24a68541b2196cbfd21df9"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "b9595240c9d152d5266f23f072342f1ce3fe6726a9e4e78e41141b8b467c10c0",
+    "packet_stream_replay_checks.exe": "436ef0e9008a3b411b8b15c3986f5e6e87acc64bd1ce88f86116e390a085eb14",
+    "open-midgard.exe": "eaa26d6df414ae2d8126c41921f82d7eb6f122f135fbe3b9e4be0023050dc9a1"
+  },
+  "validation": {
+    "ctest_passed": 118,
+    "ctest_total": 118,
+    "ctest_seconds": 154.96,
+    "packet_PASS_records": 173,
+    "fresh_processes": 8,
+    "rendered_frames": 9,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "b7015f53503aa09752b6cb2195a2c812d852116f4031bef01615a6a5a28ff735",
+    "ctest_log_sha256": "8e091c384f5da866400ab9a68d5d4f9196d01896c64b763d37b46f20520eef1d"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK09.14-detail-renders/cold-default-item-detail-geometry-normal.qml.png": "78b4382f3bba563e090eccc02119fee0bd7fda549ebdb142dd66b6ceef1fef5f",
+    "evidence/PK09.14-detail-renders/cold-default-item-detail-geometry.json": "e4eb98b57191919b56336cff6c354e90138fb2d138690d0d5c50aa818d13122e",
+    "evidence/PK09.14-detail-renders/item-detail-geometry-results.json": "5d0c76d4a4c16811324059353b5d13fb66d2cf104ec522d64217e036ecff0bc8",
+    "evidence/PK09.14-detail-renders/lifecycle-item-detail-geometry-bottom.native.png": "c9cce0abb8b0f8a2b652ef54f5b207b2d0017bb7806e2053c970346221ad26a5",
+    "evidence/PK09.14-detail-renders/lifecycle-item-detail-geometry-scroll.qml.png": "a94d25611e36bfb7ed3115d4f35469b681f49325306b76818e0ab3a28b9f0e8f",
+    "evidence/PK09.14-detail-renders/lifecycle-item-detail-geometry-top.native.png": "2d933e26f4fc80556389892cc7fbb568d36a75f9ddac317e2c028f1e10813fbc",
+    "evidence/PK09.14-detail-renders/lifecycle-item-detail-geometry.json": "b02ea5d47ded0cacc55edeb03d2fdc23d679913b7a69f60ce7cd4855e03778d0",
+    "evidence/PK09.14-detail-renders/slots-item-detail-geometry-four-sockets.qml.png": "22d720e7d2b67dd20bf95cfd09ee31863f5ebff6c80e27b7e016fb186e901247",
+    "evidence/PK09.14-detail-renders/slots-item-detail-geometry-marker.qml.png": "c1975999721f8a195f43b9af767911196ab1a2b0b65169aa66e1a60e90b166a6",
+    "evidence/PK09.14-detail-renders/slots-item-detail-geometry-sockets.qml.png": "3166f9971c8c2c37eae5d9991c8d4ad14a7f3bd36b61f614e5af973347a86c09",
+    "evidence/PK09.14-detail-renders/slots-item-detail-geometry.json": "880beaa99c2d4de1954dd6f621c337f108de1aef0132252418f2010e4c1ae27b",
+    "evidence/PK09.14-detail-renders/warm-invalid-item-detail-geometry.json": "f36d5899543b53f73c118d27d684fa6ae8f7554bb0d1dbc9a43e64beecab0542",
+    "evidence/PK09.14-detail-renders/warm-invalid-x-item-detail-geometry.json": "839a4439c574e0e787e061b437aa1a247721599146e5d3658db2b4659ea14f1d",
+    "evidence/PK09.14-detail-renders/warm-invalid-y-overflow-item-detail-geometry.json": "c6131b93b49477fc92ddeded29dfcf9998328df075253a89b07db2509edce3cd",
+    "evidence/PK09.14-detail-renders/warm-partial-item-detail-geometry.json": "770da0d1378e6231a8acf5965ed6aa59a57beca9528f54de66b15d170bfb9a01",
+    "evidence/PK09.14-detail-renders/warm-valid-item-detail-geometry-expanded-edge.qml.png": "c9f222102ade93812174def17c9caf5fe36e61c47bcea1c98e19f91ec0054120",
+    "evidence/PK09.14-detail-renders/warm-valid-item-detail-geometry-persisted.qml.png": "f069d536e0807487c17d46fd269d08f961102b0283ddaba869d779ddf650e0ca",
+    "evidence/PK09.14-detail-renders/warm-valid-item-detail-geometry.json": "e3eba4bafd28cedf72313612410ccf838c929fadbe5d246bfe061affc83bf082",
+    "evidence/PK09.14-before.txt": "87928d658121b154c455a097294bb0b10e6dcb091fb96c81999f54cb0db62116"
+  },
+  "scope_limits": [
+    "Main detail only; separate WID82 card hit/popup behavior remains unimplemented",
+    "Modern palette/extra detail lines and host wheel preferences; original viewer step unavailable",
+    "Synthetic artwork/branch settings; actual75x100 source bitmap inspected but art/locale not certified",
+    "No wire/route/discovery closure or full PK09.04/PK47/PK48/49/deployed acceptance"
+  ]
+}

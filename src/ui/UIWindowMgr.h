@@ -27,6 +27,13 @@ struct InventoryWindowInfo {
     int radio3 = 4;
 };
 
+struct ItemDetailWindowInfo {
+    int x = 280;
+    int y = 126;
+    int width = 280;
+    int height = 120;
+};
+
 // Forward declarations for all windows managed by UIWindowMgr
 class UILoadingWnd;
 class UIRoMapWnd;
@@ -142,6 +149,9 @@ public:
     InventoryWindowInfo GetInventoryWindowInfo();
     void StoreInventoryWindowInfo(const InventoryWindowInfo& info);
     void CloseInventoryWindow();
+    ItemDetailWindowInfo GetItemDetailWindowInfo();
+    void RestoreItemDetailWindowPlacement(int* x, int* y);
+    void StoreItemDetailWindowInfo(const ItemDetailWindowInfo& info);
     void Reset();
     void OnProcess();
     void OnDraw();
@@ -294,6 +304,7 @@ private:
     void ValidateInventoryWindowInfo();
     bool m_inventoryWindowInfoInitialized = false;
     InventoryWindowInfo m_inventoryWindowInfo;
+    ItemDetailWindowInfo m_itemDetailWindowInfo;
     UIWindow* HitTestWindow(int x, int y) const;
     bool HasFrontMenuUiVisible() const;
     bool HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi);

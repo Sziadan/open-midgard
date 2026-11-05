@@ -13,6 +13,7 @@ Rectangle {
     property bool labelBold: true
     property string labelFont: theme.fontFamily
     property bool titleControl: false
+    property color systemInk: theme.titleText
     readonly property bool isSystemControl: titleControl || (width <= 20 && height <= 20
         && (label === "X" || label === "x" || label === "_" || label === "B")
     )
@@ -34,7 +35,7 @@ Rectangle {
         width: Math.min(20, Math.max(8, parent.width - 6))
         height: Math.min(20, Math.max(8, parent.height - 4))
         icon: button.effectiveIcon
-        ink: !button.enabled ? theme.disabledText : (button.isSystemControl ? theme.titleText : theme.ink)
+        ink: !button.enabled ? theme.disabledText : (button.isSystemControl ? button.systemInk : theme.ink)
         paper: button.color
     }
 

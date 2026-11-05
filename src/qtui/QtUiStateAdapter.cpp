@@ -2723,6 +2723,14 @@ void PopulateItemInfoState(QtUiState* state)
         data.insert(QStringLiteral("name"), ToQString(display.name));
         data.insert(QStringLiteral("previewUsesCollection"), display.previewUsesCollection);
         data.insert(QStringLiteral("description"), ToQString(display.description));
+        const auto localRect=[&](const RECT& r) {
+            return QVariantMap{{"x",static_cast<int>(r.left-itemInfoWnd->m_x)},{"y",static_cast<int>(r.top-itemInfoWnd->m_y)},
+                {"width",static_cast<int>(r.right-r.left)},{"height",static_cast<int>(r.bottom-r.top)}};
+        };
+        data.insert(QStringLiteral("previewRect"),localRect(display.previewRect));
+        data.insert(QStringLiteral("nameRect"),localRect(display.nameRect));
+        data.insert(QStringLiteral("descriptionRect"),localRect(display.descriptionRect));
+        data.insert(QStringLiteral("descriptionGeneration"),display.descriptionGeneration);
 
         QVariantList detailLines;
         detailLines.reserve(static_cast<qsizetype>(display.detailLines.size()));

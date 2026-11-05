@@ -8,5 +8,6 @@
 // Say dialog: color persists across lines until the next page (new draw starts at black).
 // Menu options: each row starts at default black.
 
-void DrawNpcSayDialogColoredText(HDC hdc, const RECT& textRect, const std::string& text);
+void DrawNpcSayDialogColoredText(HDC hdc, const RECT& textRect, const std::string& text, int verticalOffset = 0);
+int MeasureNpcSayDialogColoredTextHeight(HDC hdc, int width, const std::string& text);
 void DrawNpcMenuOptionColoredText(HDC hdc, const RECT& textRect, const std::string& text);

@@ -405,6 +405,10 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
             "${CMAKE_CURRENT_BINARY_DIR}/packet-inventory-geometry-renders" "item-geometry")
         set_tests_properties(packet_inventory_geometry_render_checks PROPERTIES TIMEOUT 120
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-inventory-geometry-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        add_test(NAME packet_item_detail_geometry_render_checks COMMAND packet_item_render_checks
+            "${CMAKE_CURRENT_BINARY_DIR}/packet-item-detail-geometry-renders" "item-detail-geometry")
+        set_tests_properties(packet_item_detail_geometry_render_checks PROPERTIES TIMEOUT 120
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-item-detail-geometry-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
     endif()
 endif()
 

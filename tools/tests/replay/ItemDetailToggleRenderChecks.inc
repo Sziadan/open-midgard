@@ -31,7 +31,7 @@ void CheckItemDetailToggleUi(QGuiApplication& app,QQuickView& view,QtUiState* ui
         const auto qt=view.grabWindow().convertToFormat(QImage::Format_RGB32);
         auto* name=Find(view.rootObject(),"itemInfoName");
         const auto rect=name->mapRectToScene(name->boundingRect()).toAlignedRect().intersected(qt.rect());
-        Require(Pixels(qt,rect,0xff25313c)>5,"actual Qt detail name paint is obscured");
+        Require(PixelsNear(qt,rect,identified?0xff25313cu:0xff808080u)>5,"actual Qt detail name paint is obscured");
         Require(qt.save(output+"/"+stem+"-qt.png"),"save Qt item detail frame failed");
         UIItemInfoWnd* detail=g_windowMgr.m_itemInfoWnd;Require(detail,"item detail disappeared before native capture");
         ArgbDibSurface surface;Require(surface.EnsureSize(Width,Height),"item detail native surface failed");
@@ -188,6 +188,7 @@ void CheckItemDetailToggleUi(QGuiApplication& app,QQuickView& view,QtUiState* ui
 
     // Closing through the actual native close button deletes the owned window.
     g_windowMgr.m_itemInfoWnd->Move(100,70);sync();
+    const int storedHeight=g_windowMgr.m_itemInfoWnd->m_h;
     UIItemInfoWnd::DisplayData closeData;Require(g_windowMgr.m_itemInfoWnd->GetDisplayDataForQt(&closeData),"close button display data missing");
     const int closeX=closeData.closeButton.x+closeData.closeButton.width/2,closeY=closeData.closeButton.y+closeData.closeButton.height/2;
     g_windowMgr.OnLBtnDown(closeX,closeY);g_windowMgr.OnLBtnUp(closeX,closeY);sync();
@@ -195,7 +196,11 @@ void CheckItemDetailToggleUi(QGuiApplication& app,QQuickView& view,QtUiState* ui
     rightClick("commerceDetail_shop_333",1201,"shop-reopen-saved-placement");
     UIItemInfoWnd* reopened=g_windowMgr.m_itemInfoWnd;Require(reopened,"deleted item detail did not reopen");
     UIItemInfoWnd::DisplayData reopenedData;Require(reopened->GetDisplayDataForQt(&reopenedData),"reopened item detail data missing");
-    Require(reopenedData.itemId==1201&&reopened->m_x==100&&reopened->m_y==70,"reopened selection did not restore saved placement and identity");
+    // Source validates the stored shape before assigning the next item: only
+    //280x120 is restorable; a saved socket-row height149 defaults as a whole.
+    const int expectedX=storedHeight==120?100:280;
+    const int expectedY=storedHeight==120?70:126;
+    Require(reopenedData.itemId==1201&&reopened->m_x==expectedX&&reopened->m_y==expectedY,"reopened selection did not apply source rectangle validation and identity");
     outcomes.push_back(QJsonObject{{"case","deleted item detail can be recreated"},{"outcome","PASS"}});
 
     inventory.OnMouseMove(Width-1,Height-1);storage.OnMouseMove(Width-1,Height-1);

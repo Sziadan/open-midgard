@@ -51,12 +51,12 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
         auto* label=Find(view.rootObject(),"itemInfoName");
         Require(label && label->isVisible() && label->property("text").toString()==expectedName,
             "actual Qt detail label differs from clicked row");
-        Require(qAbs(label->mapToScene(QPointF()).x()-(450+112)*GetConfiguredUiScaleFactor())<2,
+        Require(qAbs(label->mapToScene(QPointF()).x()-(450+90)*GetConfiguredUiScaleFactor())<2,
             "commerce snapshot popup lost native coordinate scaling");
         const QString suffix=QString::fromLatin1(caseName);
         const auto qt=view.grabWindow().convertToFormat(QImage::Format_RGB32);
         const auto rect=label->mapRectToScene(label->boundingRect()).toAlignedRect().intersected(qt.rect());
-        Require(Pixels(qt,rect,0xff25313c)>5,"actual Qt detail name paint was obscured");
+        Require(PixelsNear(qt,rect,identified?0xff25313cu:0xff808080u)>5,"actual Qt detail name paint was obscured");
         Require(qt.save(output+"/commerce-detail-"+suffix+"-qt.png"),"save commerce detail Qt frame failed");
         ArgbDibSurface surface;Require(surface.EnsureSize(Width,Height),"commerce detail native surface failed");
         std::fill_n(surface.GetPixels(),Width*Height,0xff181b20u);detail->DrawNativeToHdc(surface.GetDC());

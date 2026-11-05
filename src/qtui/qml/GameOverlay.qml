@@ -2735,17 +2735,10 @@ Item {
         height: uiState.itemInfoHeight
         visible: uiState.itemInfoVisible
         z: 40
-        Text {
-            x: 12
-            y: 2
-            text: uiState.itemInfoData.title || "Item Information"
-            color: theme.titleText
-            font.family: theme.fontFamily
-            font.pixelSize: theme.titleSize
-            font.weight: Font.DemiBold
-        }
-
+        objectName: "itemInfoWindow"
+        showTitle: false
         RoChromeButton {
+            systemInk: theme.ink
             x: (root.objectOrEmpty(uiState.itemInfoData.closeButton).x || 0) - uiState.itemInfoX
             y: (root.objectOrEmpty(uiState.itemInfoData.closeButton).y || 0) - uiState.itemInfoY
             width: root.objectOrEmpty(uiState.itemInfoData.closeButton).width || 0
@@ -2756,10 +2749,10 @@ Item {
         }
 
         Rectangle {
-            x: 8
-            y: 25
-            width: 96
-            height: 96
+            x: root.objectOrEmpty(uiState.itemInfoData.previewRect).x || 0
+            y: root.objectOrEmpty(uiState.itemInfoData.previewRect).y || 0
+            width: root.objectOrEmpty(uiState.itemInfoData.previewRect).width || 0
+            height: root.objectOrEmpty(uiState.itemInfoData.previewRect).height || 0
             color: theme.fieldFill
             border.width: 1
             border.color: theme.buttonBorder
@@ -2776,8 +2769,8 @@ Item {
             }
 
             RoChromeButton {
-                x: 4
-                y: 4
+                x: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).x || 0) - uiState.itemInfoX - parent.x
+                y: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).y || 0) - uiState.itemInfoY - parent.y
                 width: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).width || 0)
                 height: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).height || 0)
                 visible: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).visible || false
@@ -2789,63 +2782,59 @@ Item {
         }
 
         Text {
-            x: 112
-            y: 25
             objectName: "itemInfoName"
-            width: parent.width - 120
+            x: root.objectOrEmpty(uiState.itemInfoData.nameRect).x || 0
+            y: root.objectOrEmpty(uiState.itemInfoData.nameRect).y || 0
+            width: root.objectOrEmpty(uiState.itemInfoData.nameRect).width || 0
+            height: root.objectOrEmpty(uiState.itemInfoData.nameRect).height || 0
             text: uiState.itemInfoData.name || ""
-            color: theme.ink
+            color: uiState.itemInfoData.identified ? theme.ink : "#808080"
             font.family: theme.fontFamily
-            font.pixelSize: 13
-            font.bold: true
+            font.pixelSize: 12
             elide: Text.ElideRight
-        }
-
-        Column {
-            id: itemInfoDetailsColumn
-            x: 112
-            y: 45
-            width: parent.width - 120
-            spacing: 2
-
-            Repeater {
-                model: uiState.itemInfoData.detailLines || []
-
-                delegate: Text {
-                    required property var modelData
-                    width: parent.width
-                    text: modelData
-                    color: theme.ink
-                    font.family: theme.fontFamily
-                    font.pixelSize: 11
-                    elide: Text.ElideRight
-                }
-            }
         }
 
         Flickable {
             id: itemInfoDescriptionViewport
-            x: 112
-            y: itemInfoDetailsColumn.y + itemInfoDetailsColumn.height + 4
-            width: parent.width - 120
-            height: Math.max(0, parent.height - y - (((uiState.itemInfoData.slots || []).length > 0) ? 56 : 20))
+            objectName: "itemInfoDescriptionViewport"
+            x: root.objectOrEmpty(uiState.itemInfoData.descriptionRect).x || 0
+            y: root.objectOrEmpty(uiState.itemInfoData.descriptionRect).y || 0
+            width: root.objectOrEmpty(uiState.itemInfoData.descriptionRect).width || 0
+            height: root.objectOrEmpty(uiState.itemInfoData.descriptionRect).height || 0
             clip: true
             contentWidth: width
-            contentHeight: itemInfoDescription.implicitHeight
+            contentHeight: itemInfoViewerColumn.height
             flickableDirection: Flickable.VerticalFlick
             boundsBehavior: Flickable.StopAtBounds
-            Text {
-                id: itemInfoDescription
-                objectName: "itemInfoDescription"
+            property double descriptionGeneration: uiState.itemInfoData.descriptionGeneration || 0
+            onDescriptionGenerationChanged: contentY = 0
+            Column {
+                id: itemInfoViewerColumn
                 width: itemInfoDescriptionViewport.width
-                text: root.roColorTextToRichText(uiState.itemInfoData.description || "")
-                onTextChanged: itemInfoDescriptionViewport.contentY = 0
-                textFormat: Text.RichText
-                color: theme.ink
-                font.family: theme.fontFamily
-                font.pixelSize: 12
-                wrapMode: Text.WordWrap
-                verticalAlignment: Text.AlignTop
+                Repeater {
+                    model: uiState.itemInfoData.detailLines || []
+                    Text {
+                        required property var modelData
+                        width: parent.width
+                        text: modelData
+                        color: theme.ink
+                        font.family: theme.fontFamily
+                        font.pixelSize: 12
+                        wrapMode: Text.WordWrap
+                    }
+                }
+                Text {
+                    id: itemInfoDescription
+                    objectName: "itemInfoDescription"
+                    width: parent.width
+                    text: root.roColorTextToRichText(uiState.itemInfoData.description || "")
+                    textFormat: Text.RichText
+                    color: theme.ink
+                    font.family: theme.fontFamily
+                    font.pixelSize: 12
+                    wrapMode: Text.WordWrap
+                    verticalAlignment: Text.AlignTop
+                }
             }
         }
 

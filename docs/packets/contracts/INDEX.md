@@ -94,3 +94,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.ITEM-TAB-STARTUP](PK09.ITEM-TAB-STARTUP.md) records the late cold-start override, manager-owned runtime selection, native/Qt sharing and storage independence. Full original geometry remains open.
 
 [PK09.INVENTORY-GEOMETRY](PK09.INVENTORY-GEOMETRY.md) defines complete inventory rectangle validation, source quantization,17-pixel mini, stored/live heights and native/Qt close and resize controls. Detail and map/show acceptance remain open.
+
+[PK09.ITEM-DETAIL-GEOMETRY](PK09.ITEM-DETAIL-GEOMETRY.md) records parent geometry, strict saved shapes, clipped scrolling and visible socket rules; source card hit testing and WID82 remain a separate required path.

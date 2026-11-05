@@ -111,7 +111,7 @@ void DrawFragmentWrappedQt(
     int& y,
     int lineHeight,
     COLORREF color,
-    const std::string& frag)
+    const std::string& frag, bool paint = true)
 {
     if (frag.empty()) {
         return;
@@ -133,7 +133,7 @@ void DrawFragmentWrappedQt(
             if (y + lineHeight > areaHeight) {
                 return;
             }
-            DrawTextRun(painter, metrics, x, y, color, ws);
+            if (paint) DrawTextRun(painter, metrics, x, y, color, ws);
             x += width;
             p = q;
             continue;
@@ -177,7 +177,7 @@ void DrawFragmentWrappedQt(
                     best = 1;
                 }
                 const std::string part = word.substr(wi, static_cast<size_t>(best));
-                DrawTextRun(painter, metrics, x, y, color, part);
+                if (paint) DrawTextRun(painter, metrics, x, y, color, part);
                 x += MeasureTextWidth(metrics, part);
                 wi += static_cast<size_t>(best);
                 if (wi < word.size()) {
@@ -189,7 +189,7 @@ void DrawFragmentWrappedQt(
             continue;
         }
 
-        DrawTextRun(painter, metrics, x, y, color, word);
+        if (paint) DrawTextRun(painter, metrics, x, y, color, word);
         x += width;
         p = q;
     }
@@ -198,7 +198,7 @@ void DrawFragmentWrappedQt(
 
 #if !RO_ENABLE_QT6_UI
 void DrawFragmentWrapped(
-    HDC hdc, const RECT& area, int& x, int& y, int lineHeight, COLORREF color, const std::string& frag)
+    HDC hdc, const RECT& area, int& x, int& y, int lineHeight, COLORREF color, const std::string& frag, bool paint = true)
 {
     if (frag.empty()) {
         return;
@@ -222,7 +222,7 @@ void DrawFragmentWrapped(
                 x = left;
                 y += lineHeight;
             }
-            TextOutA(hdc, x, y, ws.c_str(), static_cast<int>(ws.size()));
+            if (paint) TextOutA(hdc, x, y, ws.c_str(), static_cast<int>(ws.size()));
             x += sz.cx;
             p = q;
             continue;
@@ -264,7 +264,7 @@ void DrawFragmentWrapped(
                     best = 1;
                 }
                 GetTextExtentPoint32A(hdc, word.c_str() + wi, best, &sz);
-                TextOutA(hdc, x, y, word.c_str() + wi, best);
+                if (paint) TextOutA(hdc, x, y, word.c_str() + wi, best);
                 x += sz.cx;
                 wi += static_cast<size_t>(best);
                 if (wi < word.size()) {
@@ -276,7 +276,7 @@ void DrawFragmentWrapped(
             continue;
         }
 
-        TextOutA(hdc, x, y, word.c_str(), static_cast<int>(word.size()));
+        if (paint) TextOutA(hdc, x, y, word.c_str(), static_cast<int>(word.size()));
         x += sz.cx;
         p = q;
     }
@@ -285,19 +285,22 @@ void DrawFragmentWrapped(
 
 } // namespace
 
-void DrawNpcSayDialogColoredText(HDC hdc, const RECT& textRect, const std::string& text)
+static int LayoutNpcSayDialogColoredText(HDC hdc, const RECT& textRect, const std::string& text, int verticalOffset, bool measureOnly)
 {
+    if (!hdc || text.empty() || textRect.right <= textRect.left) return 0;
+    verticalOffset = (std::max)(0,verticalOffset);
 #if RO_ENABLE_QT6_UI
     const int width = textRect.right - textRect.left;
     const int height = textRect.bottom - textRect.top;
+    const int layoutHeight = measureOnly ? (1<<28) : height;
     if (!hdc || width <= 0 || height <= 0 || text.empty()) {
-        return;
+        return 0;
     }
 
     std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
     QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
     if (image.isNull()) {
-        return;
+        return 0;
     }
 
     QPainter painter(&image);
@@ -307,16 +310,16 @@ void DrawNpcSayDialogColoredText(HDC hdc, const RECT& textRect, const std::strin
     const QFontMetrics metrics(painter.font());
     const int lineHeight = (std::max)(1, metrics.height());
     int x = 0;
-    int y = 0;
+    int y = -verticalOffset;
     COLORREF color = RGB(0, 0, 0);
     size_t i = 0;
 
     while (i < text.size()) {
-        if (y + lineHeight > height) {
+        if (y + lineHeight > layoutHeight) {
             break;
         }
-        if (text[i] == '\r' && i + 1 < text.size() && text[i + 1] == '\n') {
-            i += 2;
+        if (text[i] == '\r') {
+            i += i+1 < text.size() && text[i+1] == '\n' ? 2 : 1;
             x = 0;
             y += lineHeight;
             continue;
@@ -346,27 +349,30 @@ void DrawNpcSayDialogColoredText(HDC hdc, const RECT& textRect, const std::strin
         }
 
         if (i > start) {
-            DrawFragmentWrappedQt(painter, metrics, width, height, x, y, lineHeight, color, text.substr(start, i - start));
+            DrawFragmentWrappedQt(painter, metrics, width, layoutHeight, x, y, lineHeight, color, text.substr(start, i - start), !measureOnly);
         }
     }
 
-    AlphaBlendArgbToHdc(hdc, textRect.left, textRect.top, width, height, pixels.data(), width, height);
+    if (!measureOnly) AlphaBlendArgbToHdc(hdc, textRect.left, textRect.top, width, height, pixels.data(), width, height);
+    return y+lineHeight+verticalOffset;
 #else
     TEXTMETRICA tm{};
     GetTextMetricsA(hdc, &tm);
     const int lineHeight = tm.tmHeight;
     int x = textRect.left;
-    int y = textRect.top;
+    int y = textRect.top-verticalOffset;
+    RECT layoutRect = textRect;
+    if (measureOnly) layoutRect.bottom = 1<<28;
     COLORREF color = RGB(0, 0, 0);
     size_t i = 0;
 
     while (i < text.size()) {
-        if (y + lineHeight > textRect.bottom) {
+        if (y + lineHeight > layoutRect.bottom) {
             break;
         }
 
-        if (text[i] == '\r' && i + 1 < text.size() && text[i + 1] == '\n') {
-            i += 2;
+        if (text[i] == '\r') {
+            i += i+1 < text.size() && text[i+1] == '\n' ? 2 : 1;
             x = textRect.left;
             y += lineHeight;
             continue;
@@ -397,10 +403,27 @@ void DrawNpcSayDialogColoredText(HDC hdc, const RECT& textRect, const std::strin
 
         if (i > start) {
             DrawFragmentWrapped(
-                hdc, textRect, x, y, lineHeight, color, text.substr(start, i - start));
+                hdc, layoutRect, x, y, lineHeight, color, text.substr(start, i - start), !measureOnly);
         }
     }
+    return y+lineHeight-textRect.top+verticalOffset;
 #endif
+}
+
+void DrawNpcSayDialogColoredText(HDC hdc, const RECT& textRect, const std::string& text, int verticalOffset)
+{
+    if (!hdc) return;
+    const int saved = SaveDC(hdc);
+    IntersectClipRect(hdc,textRect.left,textRect.top,textRect.right,textRect.bottom);
+    LayoutNpcSayDialogColoredText(hdc,textRect,text,verticalOffset,false);
+    if (saved) RestoreDC(hdc,saved);
+}
+
+int MeasureNpcSayDialogColoredTextHeight(HDC hdc, int width, const std::string& text)
+{
+    // Measurement shares the colored word-wrap layout, but allocates only a
+    // one-pixel-high canvas. Long descriptions never allocate a tall bitmap.
+    return LayoutNpcSayDialogColoredText(hdc,RECT{0,0,width,1},text,0,true);
 }
 
 void DrawNpcMenuOptionColoredText(HDC hdc, const RECT& textRect, const std::string& text)

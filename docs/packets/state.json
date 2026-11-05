@@ -1956,6 +1956,14 @@
         "docs/packets/evidence/PK09.13-inventory-geometry.json"
       ],
       "commit_subject": "packet(PK09.13): restore inventory rectangle and mini lifecycle"
+    },
+    "PK09.14": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.14-detail-geometry.md",
+        "docs/packets/evidence/PK09.14-detail-geometry.json"
+      ],
+      "commit_subject": "packet(PK09.14): restore item detail geometry and clipped viewer"
     }
   }
 }

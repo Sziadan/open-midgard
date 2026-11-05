@@ -43,6 +43,10 @@ public:
         bool previewUsesCollection = false;
         std::vector<std::string> detailLines;
         std::string description;
+        RECT previewRect{};
+        RECT nameRect{};
+        RECT descriptionRect{};
+        unsigned int descriptionGeneration = 0;
         DisplayButton closeButton;
         DisplayButton graphicsButton;
         std::vector<DisplaySlot> slotEntries;
@@ -59,12 +63,15 @@ public:
     void OnRBtnDown(int x, int y) override;
     void OnMouseMove(int x, int y) override;
     void OnMouseHover(int x, int y) override;
+    void Move(int x, int y) override;
     void StoreInfo() override;
     void SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source = ItemInfoSource::Snapshot);
     bool RefreshBoundItem();
     bool MatchesSelection(const ITEM_INFO& item) const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
     bool HasItem() const;
+    void ScrollDescriptionWheel(int delta);
+    int GetNativeDescriptionScrollOffset() const { return m_descriptionScrollOffset; }
 
 private:
     RECT GetCloseButtonRect() const;
@@ -76,6 +83,9 @@ private:
     void UpdateInteraction(int x, int y);
     void RefreshPreviewAndSlots();
     int GetDesiredWindowHeight() const;
+    bool HasSlotRow() const;
+    void ResetDescriptionScroll();
+    std::string BuildViewerText() const;
     bool HasViewButton() const;
     int GetDeclaredSlotCount() const;
     bool ShouldShowSlots() const;
@@ -91,7 +101,10 @@ private:
     bool m_closePressed;
     bool m_graphicsHovered;
     bool m_graphicsPressed;
-    bool m_hasStoredPlacement;
+    UIWindow* m_descriptionInput = nullptr;
+    int m_descriptionScrollOffset = 0;
+    int m_descriptionWheelRemainder = 0;
+    unsigned int m_descriptionGeneration = 0;
     bool m_previewUsesCollection;
     int m_hoveredSlotIndex;
     shopui::BitmapPixels m_previewBitmap;

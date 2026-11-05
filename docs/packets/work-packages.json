@@ -353,6 +353,11 @@
         "id": "PK09.13",
         "action": "Restore source inventory complete rectangle validation, resize quantization, mini/original-height retention and explicit close/recreation, with shared compact native/Qt geometry, real controls and fresh-process regressions.",
         "tier": "S"
+      },
+      {
+        "id": "PK09.14",
+        "action": "Restore primary parent detail rectangle lifecycle, fixed clipped viewer and source height/visible-socket predicates; verify cached startup, strict saved shapes, native/Qt scroll/reset, boundary placement and child input cleanup, leaving separate card interaction open.",
+        "tier": "S"
       }
     ],
     "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."

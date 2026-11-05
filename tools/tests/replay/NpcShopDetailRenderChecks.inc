@@ -45,7 +45,7 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
             "NPC QML item detail label differs from native source snapshot");
         const QImage image=view.grabWindow().convertToFormat(QImage::Format_RGB32);
         const QRect ink=text->mapRectToScene(text->boundingRect()).toAlignedRect().intersected(image.rect());
-        Require(!ink.isEmpty()&&Pixels(image,ink,0xff25313c)>2,"NPC QML item detail label has no rendered ink");
+        Require(!ink.isEmpty()&&PixelsNear(image,ink,identified?0xff25313cu:0xff808080u)>2,"NPC QML item detail label has no rendered ink");
         return data;
     };
     const auto capture=[&](const QString& stem,u32 expectedId,bool identified) {

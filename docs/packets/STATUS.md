@@ -1,8 +1,9 @@
 # Packet implementation status
 
-**Active step: PK09.04.** [Latest inventory-geometry evidence](evidence/PK09.13-inventory-geometry.md), [contract](contracts/PK09.INVENTORY-GEOMETRY.md), [provenance](evidence/PK09.13-inventory-geometry.json), and [HANDOFF](HANDOFF.md) define continuation.
+**Active step: PK09.04.** [Latest parent-detail evidence](evidence/PK09.14-detail-geometry.md), [contract](contracts/PK09.ITEM-DETAIL-GEOMETRY.md), [provenance](evidence/PK09.14-detail-geometry.json), and [HANDOFF](HANDOFF.md) define continuation.
 
-- PK09.13 restores inventory whole-record fallback, source dimensions/normalization, mini and original height, native/Qt resize and explicit managed close/recreation. Detail geometry and inventory map/show lifetime remain open.
+- PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing remain open.
+- PK09.13 restores inventory whole-record fallback, source dimensions/normalization, mini and original height, native/Qt resize and explicit managed close/recreation. Parent detail geometry now passes PK09.14; separate card and map/show lifetime remain open.
 - PK09.12 shares source-selected startup and manager runtime tab selection, with fresh-process, radio, viewport, native/Qt close/recreation and storage independence coverage. Inventory geometry now passes PK09.13; detail and broader lifecycle remain open.
 - PK37.09 verifies exact C5/C8/C9, strict signed-length/row/quote guards, failed immediate sends, local packetless cancel, ordered CA/CB receipts, native/Qt count prompts and map cleanup. Later NPC contexts cannot lose or be cleared by older replies. Selected market-stock applicability is adjudicated; broad server eligibility and full lifecycle remain open.
 - PK37.08 preserves unsigned/zero list quotes, exact64-bit row/aggregate amounts and decimal strings through Qt, fixes overflow-prone deltas and zero sell stock, and fits full numeric labels in native/Qt panes. Broad request/result and transaction eligibility remain open.
@@ -17,5 +18,5 @@
 - PK09.07 repairs list-only socket suffixes leaking into hovers and Qt identification/refinement naming. Actual native/Qt names and quantity delegates/replacement pass. Generic cards now pass PK09.08; special-name variants now pass PK09.09; expiry and other contexts remain required.
 - PK37.05 repairs same-index metadata loss, contents/presence conflation and unknown failure notices. Local options own cart removal; counters remain authoritative. Production packet/actor tests and actual QML Cart-button reopening/footer rendering pass. Broader PK37.01–.04 remain open.
 - Prior bag/field/colour/map proofs and PK09.02/.03 mapping/route checkpoints remain verified. PK09.04 stays open for remaining type/tab/radio/detail contexts and historical acceptance.
-- Deploy-off build and final validation: **117/117 CTest in 147.37s**, **173 PASS packet records**, seven fresh geometry child processes, nine invalid-record cases, seven resize quantization probes, eight geometry frames and zero geometry-child QML errors. No installed client/live server or numeric row closure.
+- Deploy-off build and final validation: **118/118 CTest in 154.96s**, **173 PASS packet records**, eight fresh detail child processes, nine detail frames and zero detail-child QML errors. No installed client/live server or numeric row closure.
 - NPC/status/mail implementations, PK46.02's177-row inventory/character paths (including broader scope beyond the bounded NPC sends), PK47 and independent PK48/49/deployed provenance remain open. The whole-plan goal remains active.

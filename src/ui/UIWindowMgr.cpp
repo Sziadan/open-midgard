@@ -745,6 +745,17 @@ void UIWindowMgr::InitializeInventoryWindowInfo()
     // Ref reads the UI registry record once, then overwrites these inventory
     // fields. Later window recreation consumes the in-memory record instead.
     if (!HasSettingsIniSection("UIWindows")) return;
+    // These records are read together at process initialization in Ref. A
+    // missing value in an existing key leaves the global record zero-filled.
+    const auto detailField=[](const char* key) {
+        std::string raw;
+        if (!TryLoadSettingsIniString("UIWindows",key,&raw)) return 0;
+        int value=0;
+        return TryLoadSettingsIniInt("UIWindows",key,&value) ? value : -1;
+    };
+    m_itemDetailWindowInfo = {
+        detailField("ItemInfoWndX"),detailField("ItemInfoWndY"),
+        detailField("ItemInfoWndWidth"),detailField("ItemInfoWndHeight")};
     m_inventoryWindowInfo = {744,514,280,134,134,1,3,3,4};
     const auto radio = [](const char* key, int fallback) {
         std::string raw;
@@ -807,6 +818,41 @@ void UIWindowMgr::CloseInventoryWindow()
     if (!m_itemWnd) return;
     if (ContainsManagedWindow(*this,m_itemWnd)) DeleteWindow(m_itemWnd);
     else m_itemWnd->SetShow(0);
+}
+
+ItemDetailWindowInfo UIWindowMgr::GetItemDetailWindowInfo()
+{
+    InitializeInventoryWindowInfo();
+    return m_itemDetailWindowInfo;
+}
+
+void UIWindowMgr::RestoreItemDetailWindowPlacement(int* x, int* y)
+{
+    InitializeInventoryWindowInfo();
+    RECT client{};
+    GetUiLogicalClientRectForScale(IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f,&client);
+    const int width = client.right-client.left;
+    const int height = client.bottom-client.top;
+    const auto& info = m_itemDetailWindowInfo;
+    if (info.width == 280 && info.height == 120 && info.x >= 0 && info.y >= 0
+        && int64_t(info.x) <= int64_t(width)-280 && int64_t(info.y) <= int64_t(height)-120) {
+        *x = info.x; *y = info.y;
+        return;
+    }
+    m_itemDetailWindowInfo = ItemDetailWindowInfo{};
+    // The source deliberately uses renderer WIDTH for the default Y formula.
+    *x = 280+(width-640)/2;
+    *y = static_cast<int>(int64_t(width)*126/640);
+}
+
+void UIWindowMgr::StoreItemDetailWindowInfo(const ItemDetailWindowInfo& info)
+{
+    InitializeInventoryWindowInfo();
+    m_itemDetailWindowInfo = info;
+    SaveSettingsIniInt("UIWindows","ItemInfoWndX",info.x);
+    SaveSettingsIniInt("UIWindows","ItemInfoWndY",info.y);
+    SaveSettingsIniInt("UIWindows","ItemInfoWndWidth",info.width);
+    SaveSettingsIniInt("UIWindows","ItemInfoWndHeight",info.height);
 }
 
 void UIWindowMgr::RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent)
@@ -1456,19 +1502,23 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
         return;
     }
 
-    if (m_captureWindow == window) {
+    const auto belongsToWindow=[window](const UIWindow* candidate) {
+        for (auto* current=candidate;current;current=current->m_parent) if (current==window) return true;
+        return false;
+    };
+    if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
     }
-    if (m_editWindow == window) {
+    if (belongsToWindow(m_editWindow)) {
         m_editWindow = nullptr;
     }
     if (window == m_npcInputWnd && m_npcInputWnd && m_editWindow == m_npcInputWnd->GetEditCtrl()) {
         m_editWindow = nullptr;
     }
-    if (m_modalWindow == window) {
+    if (belongsToWindow(m_modalWindow)) {
         m_modalWindow = nullptr;
     }
-    if (m_lastHitWindow == window) {
+    if (belongsToWindow(m_lastHitWindow)) {
         m_lastHitWindow = nullptr;
     }
 
@@ -1561,6 +1611,7 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
         m_itemWnd = nullptr;
     }
     if (window == m_itemInfoWnd) {
+        m_itemInfoWnd->StoreInfo();
         m_itemInfoWnd = nullptr;
     }
     if (window == m_itemCollectionWnd) {
@@ -2429,7 +2480,6 @@ void UIWindowMgr::ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int 
     // second selection of the previously visible item.
     if (action == ItemInfoAction::Select && m_itemInfoWnd && m_itemInfoWnd->m_show != 0
         && m_itemInfoWnd->MatchesSelection(item)) {
-        m_itemInfoWnd->StoreInfo();
         DeleteWindow(m_itemInfoWnd);
         return;
     }

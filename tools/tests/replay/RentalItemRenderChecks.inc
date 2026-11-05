@@ -63,7 +63,7 @@ void CheckRentalItemUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     g_session.ClearInventoryItems();ro::commerce::state.cartItems.clear();g_session.OpenStorage(1,600);
     Dispatch(mode,equip(0xd0,1704067200));Dispatch(mode,equip(0xd2,1704240000));Dispatch(mode,equip(0xd1,1704240000));
     PopulateCommerceUi(state,mode,false);openQt("inventory");capture("inventory-date","01/01 00:00");
-    auto* description=Find(view.rootObject(),"itemInfoDescription");auto* viewport=description->parentItem()->parentItem();
+    auto* description=Find(view.rootObject(),"itemInfoDescription");auto* viewport=Find(view.rootObject(),"itemInfoDescriptionViewport");
     Require(viewport->clip() && viewport->property("contentHeight").toReal()>viewport->height(),
         "long rental description is not bounded and scrollable");
     viewport->setProperty("contentY",viewport->property("contentHeight").toReal()-viewport->height());Frames(app,view);
@@ -72,7 +72,7 @@ void CheckRentalItemUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     viewport->setProperty("contentY",0);Frames(app,view);
     SetRuntimeUiScalePercent(125);g_windowMgr.m_itemInfoWnd->Move(300,40);capture("scaled-inventory-date","01/01 00:00");
     auto* scaledLabel=Find(view.rootObject(),"itemInfoDescription");
-    Require(qAbs(scaledLabel->mapToScene(QPointF()).x()-(300+112)*1.25)<1,
+    Require(qAbs(scaledLabel->mapToScene(QPointF()).x()-(300+91)*1.25)<1,
         "raised detail popup lost native coordinate scaling");
     SetRuntimeUiScalePercent(100);g_windowMgr.m_itemInfoWnd->Move(450,70);
     Dispatch(mode,equip(0xd2,1704326400));capture("inventory-cart-collision","01/01 00:00");
