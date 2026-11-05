@@ -4,7 +4,7 @@
 
 #include <cstring>
 
-#if RO_PLATFORM_WINDOWS
+#if defined(_WIN32) || RO_PLATFORM_WINDOWS
 
 #include <ddraw.h>
 #include <d3d.h>

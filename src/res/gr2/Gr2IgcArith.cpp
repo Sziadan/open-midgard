@@ -15,7 +15,7 @@ constexpr int ARITH_RESCALE_TRIGGER = 0x4000;
 static inline uint32_t U32(uint32_t x) { return x; }
 static inline int32_t I32(int32_t x) { return x; }
 
-static const uint8_t BR4[16] = {0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15};
+static constexpr uint8_t BR4[16] = {0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15};
 static const uint8_t BR3[8] = {0, 4, 2, 6, 1, 5, 3, 7};
 // Immutable compile-time table; first-use initialization also used to race.
 static constexpr auto BR8=[] {

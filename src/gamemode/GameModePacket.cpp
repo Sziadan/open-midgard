@@ -1981,6 +1981,12 @@ static void HandleSkillInfoListByTarget(CGameMode&, const PacketView& packet, Sk
         return;
     }
 
+    constexpr size_t kSkillInfoListEntrySize = 37;
+    const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
+    if (payloadSize % kSkillInfoListEntrySize != 0) {
+        return;
+    }
+
     DbgLog("[GameMode] skill list pkt=0x%04X len=%u target=%d\n",
         static_cast<unsigned int>(packet.packetId),
         static_cast<unsigned int>(packet.packetLength),
@@ -1998,7 +2004,7 @@ static void HandleSkillInfoListByTarget(CGameMode&, const PacketView& packet, Sk
         break;
     }
 
-    for (size_t offset = 4; offset + 37 <= static_cast<size_t>(packet.packetLength); offset += 37) {
+    for (size_t offset = 4; offset + kSkillInfoListEntrySize <= static_cast<size_t>(packet.packetLength); offset += kSkillInfoListEntrySize) {
         PLAYER_SKILL_INFO skillInfo;
         if (!BuildPlayerSkillListEntry(packet.data + offset, skillInfo)) {
             continue;
@@ -2226,16 +2232,19 @@ void HandleNormalInventoryList(CGameMode&, const PacketView& packet)
     if (entrySize == 0) {
         return;
     }
+    if (payloadSize % entrySize != 0) {
+        return;
+    }
     // A character with no stackables is a 4-byte list. Leaving the previous
     // character's items in place is what shows them on the next login.
     if (payloadSize < entrySize) {
         if (payloadSize == 0) {
-            g_session.ClearInventoryItems();
+            g_session.ClearNormalInventoryItems();
         }
         return;
     }
 
-    g_session.ClearInventoryItems();
+    g_session.ClearNormalInventoryItems();
     for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
         ITEM_INFO itemInfo;
         if (BuildNormalInventoryItem(packet, packet.data + offset, itemInfo)) {
@@ -2259,6 +2268,10 @@ void HandleEquipInventoryList(CGameMode& mode, const PacketView& packet)
         return;
     }
     const size_t entrySize = static_cast<size_t>(entrySizeValue);
+    const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
+    if (payloadSize % entrySize != 0) {
+        return;
+    }
 
     g_session.ClearEquipmentInventoryItems();
     for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
@@ -2347,6 +2360,10 @@ void HandleNormalStorageList(CGameMode&, const PacketView& packet)
         return;
     }
     const size_t entrySize = static_cast<size_t>(entrySizeValue);
+    const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
+    if (payloadSize % entrySize != 0) {
+        return;
+    }
 
     for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
         ITEM_INFO itemInfo;
@@ -2371,6 +2388,10 @@ void HandleEquipStorageList(CGameMode&, const PacketView& packet)
         return;
     }
     const size_t entrySize = static_cast<size_t>(entrySizeValue);
+    const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
+    if (payloadSize % entrySize != 0) {
+        return;
+    }
 
     for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
         ITEM_INFO itemInfo;
@@ -2405,6 +2426,15 @@ void HandleStorageItemRemoved(CGameMode&, const PacketView& packet)
 
     const unsigned int itemIndex = ReadLE16(packet.data + 2);
     const int amount = static_cast<int>(ReadLE32(packet.data + 4));
+    // The selected server uses a zero-count 0x00F6 as a failed-transfer
+    // correction. It must not erase the storage row.
+    if (amount <= 0) {
+        DbgLog("[GameMode] storage remove ignored index=%u amount=%d\n",
+            itemIndex,
+            amount);
+        return;
+    }
+
     g_session.RemoveStorageItem(itemIndex, amount);
     DbgLog("[GameMode] storage remove index=%u amount=%d\n",
         static_cast<unsigned int>(itemIndex),
@@ -2654,6 +2684,12 @@ void HandleItemRemove(CGameMode& mode, const PacketView& packet)
 
     if (mode.m_waitingItemThrowAck == static_cast<int>(itemIndex)) {
         mode.m_waitingItemThrowAck = 0;
+    }
+
+    // The selected pre-20091117 server reports a rejected drop as a basic
+    // 0x00AF acknowledgement with count zero. It is not an inventory removal.
+    if (packet.packetId == 0x00AF && amount == 0) {
+        return;
     }
 
     g_session.RemoveInventoryItem(itemIndex, amount);
@@ -3537,10 +3573,14 @@ void HandleNpcShopBuyList(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    const size_t payloadLength = static_cast<size_t>(packet.packetLength - 4);
+    if (payloadLength % 11 != 0) {
+        return;
+    }
+
     mode.m_isOnQuest = 1;
 
     std::vector<NPC_SHOP_ROW> rows;
-    const size_t payloadLength = static_cast<size_t>(packet.packetLength - 4);
     rows.reserve(payloadLength / 11);
     for (size_t offset = 4; offset + 11 <= static_cast<size_t>(packet.packetLength); offset += 11) {
         NPC_SHOP_ROW row{};
@@ -3566,10 +3606,14 @@ void HandleNpcShopSellList(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    const size_t payloadLength = static_cast<size_t>(packet.packetLength - 4);
+    if (payloadLength % 10 != 0) {
+        return;
+    }
+
     mode.m_isOnQuest = 1;
 
     std::vector<NPC_SHOP_ROW> rows;
-    const size_t payloadLength = static_cast<size_t>(packet.packetLength - 4);
     rows.reserve(payloadLength / 10);
     for (size_t offset = 4; offset + 10 <= static_cast<size_t>(packet.packetLength); offset += 10) {
         const unsigned int itemIndex = ReadLE16(packet.data + offset + 0);
@@ -4329,6 +4373,7 @@ void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
 
 void ApplyMapChangeSessionState(const MapChangeInfo& info)
 {
+    g_session.InvalidatePartyPositions();
     constexpr size_t kMaxMapName = sizeof(g_session.m_curMap) - 1;
     const size_t copyLen = (std::min)(kMaxMapName, info.mapName.size());
     std::memset(g_session.m_curMap, 0, sizeof(g_session.m_curMap));
@@ -7589,6 +7634,14 @@ void HandlePartyList(CGameMode& mode, const PacketView& packet)
         if (info.AID == 0 || duplicateAid || info.characterName.empty() || info.role > 1 || info.state > 1) {
             return;
         }
+        members.push_back(std::move(info));
+    }
+
+    const std::string partyName = ExtractFixedPacketString(packet.data + 4, 24);
+    if (!g_session.ReplacePartyRoster(partyName, members)) {
+        return;
+    }
+    for (const FRIEND_INFO& info : members) {
         ApplyCachedPartyHpToVisibleActor(mode, info.AID, info.characterName);
     }
 
@@ -7634,14 +7687,6 @@ void HandlePartyOptionChanged(CGameMode& mode, const PacketView& packet)
     const u32 expOption = ReadLE32(packet.data + 2);
     if (expOption == 2) {
         RecordChat(mode, "Cannot change EXP sharing right now.", 0x00FF4040, kChatChannelSystem);
-        members.push_back(std::move(info));
-    }
-
-    const std::string partyName = ExtractFixedPacketString(packet.data + 4, 24);
-    if (!g_session.ReplacePartyRoster(partyName, members)) {
-        return;
-    }
-    for (const FRIEND_INFO& info : members) {
     } else {
         g_session.m_partyExpShare = expOption != 0;
     }
@@ -7725,6 +7770,14 @@ void HandlePartyPosition(CGameMode&,const PacketView& packet)
     const u32 aid=ReadLE32(packet.data+2);
     const s16 x=static_cast<s16>(ReadLE16(packet.data+6));
     const s16 y=static_cast<s16>(ReadLE16(packet.data+8));
+    const FRIEND_INFO* const member = g_session.FindPartyMemberByAid(aid);
+    if (!member) {
+        return;
+    }
+    const bool removeMarker = x == -1 && y == -1;
+    if (!removeMarker && (x < 0 || y < 0 || !g_session.IsPartyMemberOnMap(*member, g_session.m_curMap))) {
+        return;
+    }
     g_session.SetPartyMemberPosition(aid,x,y);
 }
 
@@ -7865,6 +7918,13 @@ void ReturnToLoginMode()
 }
 
 } // namespace
+
+#if defined(RO_PACKET_REPLAY_TESTS)
+bool ReplaySendMapLoadEndAckPacket()
+{
+    return SendLoadEndAckPacket();
+}
+#endif
 
 void ReturnToLoginModeWithStatus(const char* status)
 {

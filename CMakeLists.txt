@@ -220,6 +220,7 @@ set(RO_CLIENT_RUNTIME_LIBRARIES
     ro_core
     ro_security
     ro_lua
+    lua51
 )
 target_link_libraries(open_midgard PRIVATE ${RO_CLIENT_RUNTIME_LIBRARIES})
 
@@ -267,6 +268,7 @@ if(RO_ENABLE_DEV_DEPLOY)
 endif()
 
 if(RO_BUILD_PACKET_REPLAY_TESTS)
+    target_compile_definitions(ro_gamemode PRIVATE RO_PACKET_REPLAY_TESTS=1)
     enable_testing()
     find_package(Threads REQUIRED)
     find_package(Git QUIET)

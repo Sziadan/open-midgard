@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #if RO_PLATFORM_WINDOWS
+#include <winsock2.h>
 #include <windows.h>
 #include <ddraw.h>
 #include <d3d.h>

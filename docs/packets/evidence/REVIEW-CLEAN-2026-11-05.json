@@ -1,0 +1,199 @@
+{
+  "date": "2026-11-05",
+  "review_baseline": "9aa752ab2da862c74f44b5e3cfe17e84c7c4e458",
+  "tested_git_tree": "b06e5f025b53f6a9b92cfc849bc06e949dc6e806",
+  "snapshot": "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-review-clean-snapshot",
+  "build": "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-review-clean-build",
+  "snapshot_export": "git archive --format=zip --output=build-mingw-preset/review-2026-11-05/clean-candidate.zip b06e5f025b53f6a9b92cfc849bc06e949dc6e806",
+  "archive_sha256": "0a16200f31c98aff656d17b5f0d7c859514557e5941af4c5df5749a0c3105788",
+  "all_exported_files_verified_unchanged_after_build": 1471,
+  "candidate_files": {
+    "CMakeLists.txt": {
+      "git_blob": "e22fcad1aedf5c2598000d3eba3b3dcf6aa20ff1",
+      "exported_sha256": "7ca0f4419b1756813379bac88e46a49edc1dac859af00102be7a481298283516",
+      "staged_sha256": "1579a50b27f762d0f9c924b7d64d74a1b15e3d4bfe529750fa0f116a7a27c160",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/gamemode/CMakeLists.txt": {
+      "git_blob": "07815dab4cf4b0feb94268e62225622e6d9b43fa",
+      "exported_sha256": "daf03d9c43dbcff1bb58dd07385f7355fc7f9495fdf4d67d70d7dc61cf9a7e77",
+      "staged_sha256": "123ebfb9419a97fa5745c468d9be00ab1977d57046df05137173339c92c1c6bc",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/gamemode/GameMode.cpp": {
+      "git_blob": "0b61397811e54d691a9ccfb22d15a8f9564b96a0",
+      "exported_sha256": "2ff2ef4bf0755595998c60660ff6ae8f0ab6510d081fef81986a7d391f110515",
+      "staged_sha256": "389fa20c75729337ca91d59ea64e26defab8a9080bf5decfa1c3de0acf0d6491",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/gamemode/GameModePacket.cpp": {
+      "git_blob": "e673e96eea6683f9c3307f7e9bafb08a73351be3",
+      "exported_sha256": "b60760d9b49c78c019b901b48a5a3544081bb8034b6e60378582bfae08cba152",
+      "staged_sha256": "2f1ef0fb6dce548a1af969bef73346b22a52351e0956d13cee641cc3fe0c2c20",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/gamemode/LoginMode.cpp": {
+      "git_blob": "942af2bdb672f7bb7c29a47ea2c478e66bd47c7a",
+      "exported_sha256": "0f5a4b4279007e2aa85d39a1dd9ac6c0bb2bf191b1b77b6653c1ee1e2f8766f7",
+      "staged_sha256": "f872636335850fc9aae1c396871759d67d894da96738b6e20b8da021ceea288e",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/network/Connection.h": {
+      "git_blob": "27aa5d011e67abcace8a216940ffc63f7d7e0083",
+      "exported_sha256": "9d8490405439bac38e8a03d78605ee2e7247efd1784686889dffc6d774634551",
+      "staged_sha256": "fb80f3d704c5028b8cbe14a428f02d75672a06b7be2fd46763df4b44b8ebee63",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/network/GronPacket.cpp": {
+      "git_blob": "69f050a33f52f34fea1f3333069f72d67017a4fa",
+      "exported_sha256": "07c2bc9f974ab282188254f8066595118e6820af87d87021d89dc1c96ed46ced",
+      "staged_sha256": "d6e1a2664ed5e3c181fb8013b6ad0ef3dbb5aff36c52482ce29f466004a2c2b0",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/network/MapSendProfile.cpp": {
+      "git_blob": "df0782ba127513c87a2697277d3c9a38bfadebc4",
+      "exported_sha256": "038d0b9313825504112a6fab1cd3e8753ee418860948d94fa572ff6e821594e8",
+      "staged_sha256": "5dd4988967d7dda2de80f80bc8e8d1ea4fbc1659c33af586ff37b66536a0f864",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/platform/WindowsCompat.h": {
+      "git_blob": "b0a9c3e2266227c0b6d02619e1eb2650f29d6dba",
+      "exported_sha256": "126ba42ef1dd31fee6a6374acdfcad4321358869ff3ee1d3098453d14151de60",
+      "staged_sha256": "d4aa64151cd519e98bd19e90aae331a8a01b7a41459821cc9bda950c27882740",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/render3d/Dx7Compat.h": {
+      "git_blob": "b4c709385582cd73b2f1cb12e60fec6025570977",
+      "exported_sha256": "b22628102561644f087d6bef1fd74fe51e06afe9de26df5ba9725899f76da663",
+      "staged_sha256": "b30597781aa4f2e18e53576849ed8cef94c6776e860b170aff05a82a3e8d4466",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/render3d/RenderBackend.h": {
+      "git_blob": "1cd41827e1733c4f7016a9f88e495494bee8ae30",
+      "exported_sha256": "d6c9b229061a63423564d648e3d2e79f689256124ac0b0319ffee6817e75caa8",
+      "staged_sha256": "be5b42908c96bf657e0362e0289c3f952065d388e0bb2c42463740d79c9fbc35",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/render3d/RenderDevice.h": {
+      "git_blob": "fe7d42cce9cf3c70bfabd771396e479d98784fa1",
+      "exported_sha256": "4f6b37575386259537ac0aa78b2ebba29519b12431bd3a983dc3463c604181f1",
+      "staged_sha256": "0f3e182d2ef5b365f70c655cb3daa1c80655cfe4dab4803b18f1c1be803de231",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/res/gr2/Gr2IgcArith.cpp": {
+      "git_blob": "6bf53c0dd3e8dca20c6381ff7a354ca1c108a70f",
+      "exported_sha256": "3729df336ca7cb4997b4d97d7eb2a892ce4a592e3aeb56baff50838733d93fbd",
+      "staged_sha256": "32c1dcc30d861df4571b82e4d0371095c00100a9633af38d6d26db3485e0c7d7",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/session/Session.cpp": {
+      "git_blob": "7547292b0cabbe8717c08fe6b3fe0a57f8dfe12d",
+      "exported_sha256": "61ba50fc0669c06aca0b5bda98ffda215f543dd4e111ef48866234f9e0cca2dc",
+      "staged_sha256": "21f3861bacc0143cc9cd7aadc239997cdd7d66a15371ae313999efa5d23f5d31",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/session/Session.h": {
+      "git_blob": "7a32e0dec9a17f19f04a654ac53486019ecb4ace",
+      "exported_sha256": "02777681df88900da939c39fdfab0ddc6c95766f5023d35f1f7c762a52bbb35c",
+      "staged_sha256": "a97154076caec5c9224570a67a21b2c437e15c1065aa66c3ba99beb0f2de0019",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/ui/UIGuildWnd.cpp": {
+      "git_blob": "996b36b411611a206d9f8f5c2cfbba6dc315b6aa",
+      "exported_sha256": "07a0e3bf0b55de0a9a18aab9596a1c8b6a1eedcbce617e567917bf8c79a182a1",
+      "staged_sha256": "92ac4eb7dc573d06504470ccdaf0d945d05d0f9ac03fc03ee08dde35f89de4f6",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/ui/UIGuildWnd.h": {
+      "git_blob": "3e4f2fd507f69404e4837da19fd2ef9b9f5fd6a8",
+      "exported_sha256": "23c7b4b2c64e3607fdb3f135ec76ac1b42fe2656fe992e9607e6f6bcaa1e46ac",
+      "staged_sha256": "e1b5e2f0d5b5dad87da77b54111df50f80c4d010a83dfcaf25defecf1466f5be",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "src/ui/UIMinimapWnd.cpp": {
+      "git_blob": "f7c3ad7e6b9ca97f6036318c19ddb5c01b385086",
+      "exported_sha256": "104e2c4b6d7aeb055e2eab4c7b9622cc81fba3a8950b1d6521eaed4c4fb33496",
+      "staged_sha256": "2165703f18229247d9ffa33b33d850539e36ca3145acf264ad4e7e6c0a4f053b",
+      "matches_after_Git_CRLF_normalization": true
+    },
+    "tools/tests/replay/PacketStreamReplay.cpp": {
+      "git_blob": "d9504851f68eeec1adffd5aae313c2d16db994ae",
+      "exported_sha256": "1d38dfeb3e7b125a95b8f1220088c46a0154b609f8041289c63bcd7fa74b5582",
+      "staged_sha256": "ffb73e5d98ef2e8b996cf85f888a58a8431d88550d1e3f3034b8dc02d61188ea",
+      "matches_after_Git_CRLF_normalization": true
+    }
+  },
+  "build_configuration": {
+    "generator": "MinGW Makefiles",
+    "build_type": "Release",
+    "compiler": "C:/Qt/Tools/mingw1310_64/bin/g++.exe",
+    "Qt": "C:/Qt/6.11.0/mingw_64",
+    "RO_ENABLE_DEV_DEPLOY": false,
+    "RO_BUILD_PACKET_REPLAY_TESTS": true
+  },
+  "commands": [
+    "cmake -S build-review-clean-snapshot -B build-review-clean-build -G \"MinGW Makefiles\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=C:/Qt/Tools/mingw1310_64/bin/g++.exe -DCMAKE_C_COMPILER=C:/Qt/Tools/mingw1310_64/bin/gcc.exe -DCMAKE_MAKE_PROGRAM=C:/Qt/Tools/mingw1310_64/bin/mingw32-make.exe -DRO_QT_ROOT=C:/Qt/6.11.0/mingw_64 -DCMAKE_PREFIX_PATH=C:/Qt/6.11.0/mingw_64 -DRO_ENABLE_DEV_DEPLOY=OFF -DRO_BUILD_PACKET_REPLAY_TESTS=ON -DRO_ENABLE_QT6_UI=ON -DRO_QT_UI_DEFAULT_ENABLED=ON -DFETCHCONTENT_SOURCE_DIR_ZLIB=D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/_deps/zlib-src -DFETCHCONTENT_SOURCE_DIR_LUA51=D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/_deps/lua51-src",
+    "cmake --build build-review-clean-build --target open_midgard packet_stream_replay_checks -j 6",
+    "ctest --test-dir build-review-clean-build -R '^packet_stream_replay_checks$' --verbose --output-on-failure"
+  ],
+  "dependency_sources": {
+    "zlib": {
+      "files": 257,
+      "aggregate_sha256": "7e350184c144da380fda576fdfa24a54e0ed5c82225ae070de7858ac0d363d7b"
+    },
+    "lua51": {
+      "files": 102,
+      "aggregate_sha256": "23934d8bbd66ecdbf3a950afa620fcada8abfb840135ca5964152f5fe3f69af3"
+    }
+  },
+  "results": {
+    "configure_exit": 0,
+    "fresh_build_exit": 0,
+    "ctest_exit": 0,
+    "ctest_tests_passed": 1,
+    "ctest_seconds": 4.65,
+    "json_PASS_records": 156,
+    "required_cases": [
+      "party_roster_replacement_atomic",
+      "party_marker_game_mode_exit",
+      "selected_inventory_cart_route_isolation"
+    ],
+    "exported_sources_match_staged_blobs": true,
+    "effect_PE_Ref_source_comparison": "PASS (root source/ignored PE, separate from candidate replay)"
+  },
+  "test_environment": {
+    "PATH_prefix": [
+      "C:/Qt/6.11.0/mingw_64/bin",
+      "C:/Qt/Tools/mingw1310_64/bin"
+    ],
+    "OPEN_MIDGARD_DATA_DIR": "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-review-clean-build\\packet-replay-settings",
+    "loopback": "sandbox denied Connect; authorized rerun passed, no live server"
+  },
+  "artifacts": {
+    "open-midgard.exe": {
+      "sha256": "aff0c22892b60f02d712f944c026c385082632f961bdeeb87acbae0ed1e1fd59",
+      "bytes": 19685620
+    },
+    "packet_stream_replay_checks.exe": {
+      "sha256": "2844b28b9ffb747f37b85d50097f1737b58f0091e9ac4fbfd8304a24d44b20c1",
+      "bytes": 20106082
+    },
+    "REVIEW-CLEAN-2026-11-05-replay.jsonl": {
+      "sha256": "9d6830e2ecf67edff6b057dd8e146ee9fd8433837f85b340b6a037e0771c9cbd",
+      "bytes": 92308
+    }
+  },
+  "log_sha256": {
+    "clean-configure.log": "18cd34dd27447272d8635d00eea3b8cf5517cdb9cdeef653cb0ad408c57875d7",
+    "clean-build.log": "8d872c66ef8c0117791f8920efc62485dd9581648c540e113a52477a5f08e407",
+    "clean-ctest.log": "a8046000c036670f9a738dae9d82ff4eb8d19a591ab84478b91c287ff779f67f"
+  },
+  "limits": [
+    "No rendered/native UI acceptance",
+    "No deployed-server run",
+    "No installed-client copy/run",
+    "PK05.05 receive preamble, PK14.06 actual transition callers and PK23.05 cast presentation remain unfinished",
+    "CMake git macro finds parent repository and reports original dirty HEAD; exact source identity is the exported tree and verified blobs above",
+    "Subsequent documentation commit changes documentation only; runtime inputs remain these verified blobs"
+  ]
+}

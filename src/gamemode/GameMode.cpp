@@ -9706,6 +9706,85 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
 }
 }
 
+#if defined(RO_PACKET_REPLAY_TESTS)
+bool ReplaySendMapMoveRequestPacket(int dstX, int dstY)
+{
+    return SendMoveRequestPacket(dstX, dstY);
+}
+bool ReplayRequestUseInventoryItem(u16 itemIndex)
+{
+    return RequestUseInventoryItem(itemIndex);
+}
+bool ReplaySendUseSkillToIdPacket(u16 skillId, u16 skillLevel, u32 targetGid)
+{
+    return SendUseSkillToIdPacket(skillId, skillLevel, targetGid);
+}
+bool ReplaySendTakeItemRequestPacket(u32 objectAid)
+{
+    return SendTakeItemRequestPacket(objectAid);
+}
+bool ReplaySendChangeDirectionPacket(u8 headDir, u8 dir)
+{
+    return SendChangeDirRequestPacket(headDir, dir);
+}
+bool ReplayRequestCartOffPacket()
+{
+    return RequestCartOff();
+}
+bool ReplayRequestNpcCloseDialog(u32 npcId)
+{
+    return RequestNpcCloseDialog(npcId);
+}
+bool ReplayRequestIncreaseStatus(u16 statusId)
+{
+    return RequestIncreaseStatus(statusId);
+}
+bool ReplayRequestNpcNext(u32 npcId)
+{
+    return RequestNpcNext(npcId);
+}
+bool ReplayRequestNpcInputNumber(u32 npcId, u32 value)
+{
+    return RequestNpcInputNumber(npcId, value);
+}
+bool ReplayRequestNpcInputString(u32 npcId, const char* text)
+{
+    return RequestNpcInputString(npcId, text);
+}
+bool ReplayRequestNpcContact(u32 npcId)
+{
+    return RequestNpcContact(npcId);
+}
+bool ReplayRequestNpcMenuSelection(u32 npcId, u8 choice)
+{
+    return RequestNpcMenuSelection(npcId, choice);
+}
+bool ReplayRequestReturnToSavePoint()
+{
+    return RequestReturnToSavePoint();
+}
+bool ReplayRequestUpgradeSkillLevel(u16 skillId)
+{
+    return RequestUpgradeSkillLevel(skillId);
+}
+bool ReplayRequestIdentifyInventoryItem(s16 itemIndex)
+{
+    return RequestIdentifyInventoryItem(itemIndex);
+}
+bool ReplayRequestShortcutSlotUpdate(int absoluteSlotIndex)
+{
+    return RequestShortcutSlotUpdate(absoluteSlotIndex);
+}
+bool ReplayRequestCloseStorage()
+{
+    return RequestCloseStorage();
+}
+bool ReplaySendGlobalChatMessage(const char* playerName, const std::string& message)
+{
+    return SendGlobalChatMessage(playerName, message);
+}
+#endif
+
 bool ArmPendingSkillUseFromSkillList(int skillId)
 {
     if (skillId <= 0) {
@@ -9889,6 +9968,7 @@ CGameMode::~CGameMode() {
 }
 
 void CGameMode::OnInit(const char* worldName) {
+    g_session.InvalidatePartyPositions();
     ClearPendingDisconnectAction();
     RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
     ClearRuntimeActors(*this);
@@ -9991,6 +10071,7 @@ void CGameMode::MakeFog(int fogOn)
 }
 
 void CGameMode::OnExit() {
+    g_session.InvalidatePartyPositions();
     ClearPendingDisconnectAction();
     g_renderer.FogSwitch(0);
     GetProductionGameModePacketRouter().Clear();

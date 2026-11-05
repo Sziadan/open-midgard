@@ -212,7 +212,8 @@ MapReceiveProfile MakePacketVer23ReceiveProfile()
     profile.normalInventoryListCardSlots = 0x01EE;
     profile.normalInventoryListTimed = 0x02E8;
     profile.equipInventoryListBasic = 0x00A4;
-    profile.equipInventoryListTimed = 0x01EF;
+    // 0x01EF is a historical normal-cart packet, not selected equipment inventory.
+    profile.equipInventoryListTimed = 0;
     profile.equipInventoryListTimedOwned = 0x02D0;
     profile.normalStorageListBasic = 0x00A5;
     profile.normalStorageListCardSlots = 0x01F0;

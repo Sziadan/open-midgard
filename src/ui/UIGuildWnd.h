@@ -7,5 +7,6 @@ public:
     void OnKeyDown(int key) override;
     void StoreInfo() override;
     void Refresh();
+    static void SendRefreshRequests();
     int tab=0;
 };

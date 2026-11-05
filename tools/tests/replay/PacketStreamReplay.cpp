@@ -5,14 +5,17 @@
 #include "core/ClientInfoLocale.h"
 #include "core/Globals.h"
 #include "gamemode/ActionRequestSender.h"
+#include "gamemode/Commerce.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
 #include "gamemode/LoginMode.h"
 #include "gamemode/Mode.h"
-#include "qtui/QtUiStateAdapter.h"
 #include "session/Session.h"
+#include "qtui/QtUiStateAdapter.h"
 #include "ui/UIChooseWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIGuildWnd.h"
+#include "ui/UIMinimapWnd.h"
 #include <algorithm>
 #include <array>
 #include <cerrno>
@@ -302,6 +305,7 @@ void WaitKernelPending(const TestConnection& c,int bytes){auto deadline=Clock::n
 #endif
     if(pending>=bytes)return;std::this_thread::sleep_for(std::chrono::milliseconds(1));}throw std::runtime_error("coalesced bytes did not reach receive socket before deadline");}
 std::string Hex(const std::vector<u8>& bytes){static const char* d="0123456789abcdef";std::string out;for(u8 b:bytes){out.push_back(d[b>>4]);out.push_back(d[b&15]);}return out;}
+std::vector<u8> Unhex(std::string_view value){Require(value.size()%2==0,"fixture hex has odd digit count");std::vector<u8> bytes;bytes.reserve(value.size()/2);auto digit=[](char c)->u8{if(c>='0'&&c<='9')return static_cast<u8>(c-'0');if(c>='a'&&c<='f')return static_cast<u8>(c-'a'+10);if(c>='A'&&c<='F')return static_cast<u8>(c-'A'+10);throw std::runtime_error("fixture hex contains a non-hex digit");};for(size_t i=0;i<value.size();i+=2)bytes.push_back(static_cast<u8>((digit(value[i])<<4)|digit(value[i+1])));return bytes;}
 std::string ChunkJson(const std::vector<std::vector<u8>>& chunks){std::string out="[";for(size_t i=0;i<chunks.size();++i){if(i)out+=",";out+="\""+Hex(chunks[i])+"\"";}return out+"]";}
 std::string JsonEscape(const std::string& value){static const char* hex="0123456789abcdef";std::string out;for(unsigned char ch:value){if(ch=='"'||ch=='\\'){out.push_back('\\');out.push_back(static_cast<char>(ch));}else if(ch<0x20){out+="\\u00";out.push_back(hex[ch>>4]);out.push_back(hex[ch&0x0f]);}else out.push_back(static_cast<char>(ch));}return out;}
 #ifndef RO_PACKET_REPLAY_SOURCE_COMMIT_AT_CONFIGURE
@@ -362,6 +366,90 @@ void ProductionRouterDispatchReplay(){
         <<(unknownDispatched?"true":"false")<<"]"
         <<",\"expected_connection_state\":\"open\",\"actual_connection_state\":\""<<(connection.IsOpen()?"open":"closed")
         <<"\",\"expected_queue_remainder\":0,\"actual_queue_remainder\":"<<connection.BufferedBytes()<<",\"outcome\":\"PASS\"}\n";
+}
+
+void SelectedInventoryCartRouteIsolationReplay()
+{
+    SetCase("selected_inventory_cart_route_isolation", "PK09.03",
+            "PK09.02-selected-20080910-four-lists", "TryReadPacket -> production router -> inventory/commerce list handlers");
+    const auto savedCommerce = ro::commerce::state;
+    ro::commerce::state = ro::commerce::State{};
+    g_session.ClearInventoryItems();
+
+    ITEM_INFO oldNormal{};
+    oldNormal.m_itemIndex = 8001; oldNormal.SetItemId(9001); oldNormal.m_itemType = 3; oldNormal.m_num = 7;
+    ITEM_INFO oldEquipment{};
+    oldEquipment.m_itemIndex = 8002; oldEquipment.SetItemId(9002); oldEquipment.m_itemType = 4;
+    oldEquipment.m_num = 1; oldEquipment.m_location = 1; oldEquipment.m_wearLocation = 1;
+    g_session.SetInventoryItem(oldNormal);
+    g_session.SetInventoryItem(oldEquipment);
+
+    ITEM_INFO oldCartNormal{};
+    oldCartNormal.m_itemIndex = 8101; oldCartNormal.SetItemId(9101); oldCartNormal.m_itemType = 3; oldCartNormal.m_num = 2;
+    ITEM_INFO oldCartEquipment{};
+    oldCartEquipment.m_itemIndex = 8102; oldCartEquipment.SetItemId(9102); oldCartEquipment.m_itemType = 4; oldCartEquipment.m_num = 1;
+    ro::commerce::state.cartItems[oldCartNormal.m_itemIndex] = oldCartNormal;
+    ro::commerce::state.cartItems[oldCartEquipment.m_itemIndex] = oldCartEquipment;
+
+    CGameMode mode;
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    RegisterDefaultGameModePacketHandlers(router);
+    Require(!ro::net::IsActiveEquipInventoryListPacket(0x01EF), "historical 0x01EF still claims equipment-inventory profile ownership");
+    Require(ro::net::IsActiveNormalInventoryListPacket(0x02E8), "selected normal inventory route is not active");
+    Require(ro::net::IsActiveEquipInventoryListPacket(0x02D0), "selected equipment inventory route is not active");
+
+    const auto makePacket = [](u16 id, size_t entrySize, u16 itemIndex, u16 itemId, u8 itemType, u16 amount) {
+        std::vector<u8> bytes(4 + entrySize, 0);
+        bytes[0] = static_cast<u8>(id & 0xFF); bytes[1] = static_cast<u8>(id >> 8);
+        bytes[2] = static_cast<u8>(bytes.size() & 0xFF); bytes[3] = static_cast<u8>(bytes.size() >> 8);
+        const auto put16 = [&](size_t offset, u16 value) { bytes[offset] = static_cast<u8>(value & 0xFF); bytes[offset + 1] = static_cast<u8>(value >> 8); };
+        if (entrySize >= 10) {
+            const size_t e = 4;
+            put16(e, itemIndex); put16(e + 2, itemId); bytes[e + 4] = itemType; bytes[e + 5] = 1;
+            if (id == 0x02E8 || id == 0x02E9) {
+                put16(e + 6, amount); put16(e + 8, 0);
+            } else {
+                put16(e + 6, 1); put16(e + 8, 1); bytes[e + 10] = 0; bytes[e + 11] = 0;
+                put16(e + 12, 0); put16(e + 14, 0); put16(e + 16, 0); put16(e + 18, 0);
+                put16(e + 20, 0); put16(e + 22, 0);
+            }
+        }
+        return bytes;
+    };
+    const auto dispatch = [&](const std::vector<u8>& bytes, const char* label) {
+        PacketView packet{}; int consumed = 0;
+        Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed), std::string(label) + " did not frame");
+        Require(consumed == static_cast<int>(bytes.size()), std::string(label) + " left trailing bytes");
+        Require(router.Dispatch(mode, packet), std::string(label) + " had no production handler");
+    };
+
+    dispatch(makePacket(0x02E8, 22, 8201, 9201, 3, 5), "normal inventory");
+    Require(g_session.GetInventoryItemByIndex(8001) == nullptr && g_session.GetInventoryItemByIndex(8002) != nullptr,
+            "normal inventory replacement changed the equipment category");
+    dispatch(makePacket(0x02D0, 26, 8202, 9202, 4, 1), "equipment inventory");
+    Require(g_session.GetInventoryItemByIndex(8201) != nullptr && g_session.GetInventoryItemByIndex(8002) == nullptr,
+            "equipment inventory replacement changed the normal category");
+
+    dispatch(makePacket(0x02E9, 22, 8301, 9301, 3, 6), "normal cart");
+    Require(ro::commerce::state.cartItems.count(8301) == 1 && ro::commerce::state.cartItems.count(8101) == 0
+            && ro::commerce::state.cartItems.count(8102) == 1, "normal cart replacement changed the equipment-cart category");
+    dispatch(makePacket(0x02D2, 26, 8302, 9302, 4, 1), "equipment cart");
+    Require(ro::commerce::state.cartItems.count(8302) == 1 && ro::commerce::state.cartItems.count(8301) == 1
+            && ro::commerce::state.cartItems.count(8102) == 0, "equipment cart replacement changed the normal-cart category");
+    Require(g_session.GetInventoryItemByIndex(8201) != nullptr && g_session.GetInventoryItemByIndex(8202) != nullptr,
+            "cart list dispatch modified inventory state");
+
+    dispatch(makePacket(0x02E8, 22, 8203, 9203, 3, 4), "normal inventory after equipment");
+    Require(g_session.GetInventoryItemByIndex(8202) != nullptr, "normal list after equipment list removed equipment state");
+    dispatch(makePacket(0x02E8, 1, 0, 0, 0, 0), "malformed normal inventory");
+    Require(g_session.GetInventoryItemByIndex(8203) != nullptr, "malformed list changed existing inventory state");
+    dispatch(makePacket(0x02E8, 0, 0, 0, 0, 0), "empty normal inventory");
+    Require(g_session.GetInventoryItemByIndex(8203) == nullptr && g_session.GetInventoryItemByIndex(8202) != nullptr,
+            "empty normal list did not preserve equipment state");
+
+    g_session.ClearInventoryItems();
+    ro::commerce::state = savedCommerce;
+    std::cout << "{\"case_id\":\"selected_inventory_cart_route_isolation\",\"contract_id\":\"PK09.03\",\"routes\":[\"02E8\",\"02D0\",\"02E9\",\"02D2\"],\"outcome\":\"PASS\"}\n";
 }
 
 void DisconnectAckRefusalDispatchReplay(PendingDisconnectAction action,const char* caseId)
@@ -522,6 +610,34 @@ void RejectFragmentedUnframedInput(const std::vector<u8>& first,const std::vecto
 void ProtocolErrorReconnectReset(const std::vector<u8>& fixed){SetCase("protocol_error_reconnect_reset");TestConnection c;{LoopbackPeer peer(c);peer.Send({0xff,0xff});std::vector<u8> out;const auto deadline=Clock::now()+kTimeout;while(c.IsOpen()){if(Receive(c,out))throw std::runtime_error("unknown packet emitted before reconnect check");if(c.IsOpen())WaitReadable(c,deadline);}Require(c.GetLastReceiveError()==CRagConnection::ReceiveError::UnknownOpcode,"unknown opcode error was not retained after disconnect");}LoopbackPeer reconnect(c);Require(c.GetLastReceiveError()==CRagConnection::ReceiveError::None,"reconnect retained stale receive error");reconnect.Send(fixed);const auto packet=PumpUntilPacket(c);Require(packet==fixed,"valid framing did not resume after protocol-error reconnect");Report("protocol_error_reconnect_reset",kFixedFixture,kFixedSha,{fixed},Hex(fixed),Hex(packet),0,c.BufferedBytes(),c);std::cout<<"{\"case_id\":\"protocol_error_reconnect_reset_error\",\"contract_id\":\"PK05.UNKNOWN-OPCODE\",\"error_before_reconnect\":\"UnknownOpcode\",\"error_after_reconnect\":\""<<ReceiveErrorName(c.GetLastReceiveError())<<"\",\"reconnected_packet_hex\":\""<<Hex(packet)<<"\",\"outcome\":\"PASS\"}\n";}
 void EofCase(const std::vector<u8>& bytes,size_t count,const char* id,const char* fixture,const char* sha){SetCase(id);TestConnection c;LoopbackPeer p(c);if(count){p.Send(std::vector<u8>(bytes.begin(),bytes.begin()+count));PumpUntilBuffered(c,static_cast<int>(count));}std::vector<u8> out;if(count)Require(!Receive(c,out),"truncated packet returned at EOF case");CloseSocket(p.peer.value);p.peer.value=INVALID_SOCKET;WaitReadable(c,Clock::now()+kTimeout);Require(!Receive(c,out),"EOF should not return a packet");Require(!c.IsOpen()&&c.BufferedBytes()==0,"EOF did not close socket and clear partial queue");Report(id,fixture,sha,{std::vector<u8>(bytes.begin(),bytes.begin()+count)},"",Hex(out),0,c.BufferedBytes(),c,"closed");}
 void OutboundTransportCapture(const std::vector<u8>& frame){SetCase("outbound_transport_capture");TestConnection c;LoopbackPeer p(c);Require(!c.SendPacket(nullptr,static_cast<int>(frame.size())),"null outbound buffer was accepted");Require(!c.SendPacket(reinterpret_cast<const char*>(frame.data()),0),"zero-length outbound packet was accepted");Require(c.SendPacket(reinterpret_cast<const char*>(frame.data()),static_cast<int>(frame.size())),"production SendPacket rejected structural sample");auto captured=p.ReceiveExact(frame.size());Require(captured==frame,"mock peer captured different outbound bytes");std::cout<<"{\"case_id\":\"outbound_transport_capture\",\"contract_id\":\"PK03.03.transport-only\",\"fixture_id\":\"PK03.02-map-006c-synthetic\",\"expected_fixture_sha256\":\"a8649967f8ca13630d18e21c07eaad14b309a54534f1cd9f633b692c3b2f341f\","<<ConfiguredSourceProvenanceJson()<<",\"production_entry\":\"CRagConnection::SendPacket -> CConnection::Send/FlushSendQueue\",\"expected_packet_hex\":\""<<Hex(frame)<<"\",\"captured_packet_hex\":\""<<Hex(captured)<<"\",\"invalid_null_rejected\":true,\"invalid_empty_rejected\":true,\"outcome\":\"PASS\"}\n";}
+void GroundSkillTextRequestReplay(){
+    constexpr std::string_view fixtureHex="7e00000000030000002301006400000000000000c8006669787475726500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    const std::vector<u8> expected=Unhex(fixtureHex);
+    Require(expected.size()==102,"independent selected-source ground-skill fixture length changed");
+    const ro::net::MapGameplaySendProfile& profile=ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id==ro::net::MapGameplaySendProfileId::PacketVer23 && profile.useSkillToPosInfo==0x007E,
+        "fixture requires the PacketVer23 0x007E ground-skill profile");
+    SetCase("ground_skill_text_request_send_capture");
+    CRagConnection* const connection=CRagConnection::instance();
+    CGameMode mode;
+    connection->Disconnect();
+    Require(!mode.SendSkillToGroundWithText(0x0123,3,100,200,"fixture"),
+        "valid ground-skill request reported success while the connection was closed");
+    LoopbackPeer peer(*connection);
+    const std::string tooLong(80,'X');
+    Require(!mode.SendSkillToGroundWithText(0x0123,3,100,200,tooLong),"ground-skill sender accepted text beyond its 79-byte bound");
+    Require(!mode.SendSkillToGroundWithText(0,3,100,200,"fixture"),"ground-skill sender accepted zero skill ID");
+    Require(!mode.SendSkillToGroundWithText(0x0123,0,100,200,"fixture"),"ground-skill sender accepted zero skill level");
+    Require(!mode.SendSkillToGroundWithText(0x0123,3,-1,200,"fixture"),"ground-skill sender accepted a negative X coordinate");
+    Require(!mode.SendSkillToGroundWithText(0x0123,3,100,0x8000,"fixture"),"ground-skill sender accepted an out-of-range signed Y coordinate");
+    Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(50))==0,"rejected ground-skill requests emitted socket bytes");
+    Require(mode.SendSkillToGroundWithText(0x0123,3,100,200,"fixture"),"production ground-skill sender rejected the valid server-layout sample");
+    const std::vector<u8> captured=peer.ReceiveExact(expected.size());
+    Require(captured==expected,"captured production ground-skill request differs from independent server fixture");
+    Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(50))==0,"ground-skill sender emitted unexpected trailing bytes");
+    connection->Disconnect();
+    std::cout<<"{\"case_id\":\"ground_skill_text_request_send_capture\",\"contract_id\":\"PK01.P05.007E\",\"fixture_id\":\"P05-skill-ground-text-synthetic\",\"expected_fixture_sha256\":\"6964f423166f13b756fc9b47180d16243873390f38e5c9aef2a912738c3efbd6\","<<ConfiguredSourceProvenanceJson()<<",\"profile\":23,\"production_entry\":\"CGameMode::SendSkillToGroundWithText -> SendUseSkillToPosInfoPacket -> BuildActiveUseSkillToPosInfoPacket -> CRagConnection::SendPacket -> loopback TCP\",\"expected_packet_hex\":\""<<Hex(expected)<<"\",\"captured_packet_hex\":\""<<Hex(captured)<<"\",\"frame_length\":102,\"closed_connection_rejected\":true,\"invalid_skill_level_coordinate_and_text_rejected_without_send\":true,\"ui_caller_present\":false,\"outcome\":\"PASS\"}\n";
+}
 void ActionRequestBuilderReplay(){SetCase("action_request_builder_replay");using namespace ro::net;const MapGameplaySendProfile& profile=GetActiveMapGameplaySendProfile();Require(profile.id==MapGameplaySendProfileId::PacketVer23&&profile.actionRequest==0x0437,"replay requires active profile 23 / opcode 0x0437");struct Sample{u32 target;u8 action;const char* hex;};const Sample samples[]={{0x11223344,0x00,"37044433221100"},{0x11223344,0x07,"37044433221107"},{0,0x02,"37040000000002"},{0,0x03,"37040000000003"}};std::vector<u8> expectedStream;std::vector<std::string> expectedFrames;
     for(const Sample& sample:samples){std::array<u8,7> out{};int length=0;Require(BuildActiveActionRequestPacket(sample.target,sample.action,out.data(),static_cast<int>(out.size()),&length),"production action request builder rejected approved sample");Require(length==static_cast<int>(out.size()),"production action request builder returned wrong frame length");std::vector<u8> frame(out.begin(),out.end());Require(Hex(frame)==sample.hex,"production action request builder bytes differ from independent source sample");expectedFrames.emplace_back(sample.hex);expectedStream.insert(expectedStream.end(),frame.begin(),frame.end());}
     std::array<u8,7> sentinel{};sentinel.fill(0xa5);int outLength=123;Require(!BuildActiveActionRequestPacket(1,0,sentinel.data(),6,&outLength),"undersized action builder buffer was accepted");Require(std::all_of(sentinel.begin(),sentinel.end(),[](u8 b){return b==0xa5;}),"failed builder changed sentinel output storage");Require(!BuildActiveActionRequestPacket(1,0,nullptr,7,&outLength),"null action builder output was accepted");std::array<u8,7> valid{};Require(!BuildActiveActionRequestPacket(1,0,valid.data(),7,nullptr),"null action builder length output was accepted");
@@ -1308,6 +1424,26 @@ void LoginSelectCharacterRequestReplay()
     Require(g_windowMgr.GetLoginStatus() == "Login: selecting character...",
         "character selection request did not report its production status");
     std::cout << "{\"case_id\":\"login_select_character_request\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0066-select-character-selected-source\",\"production_entry\":\"CLoginMode::SendMsg(LoginMsg_SelectCharacter) -> OnChangeState(SelectChar) -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"660007\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":3,\"opcode\":\"0x0066\",\"selected_slot\":7,\"selection_message_accepted\":true,\"next_submode_select_char\":true,\"production_framing_dispatch\":true,\"onrun_state_dispatch_not_exercised\":true,\"qt_click_lifecycle_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+}
+
+void LoginSelectCharacterRejectInvalidIndexReplay()
+{
+    SetCase("login_select_character_reject_invalid_index", "PK46.03", "PK46.03-loginmode-character-send-paths",
+        "CLoginMode::SendMsg(LoginMsg_SelectCharacter) validates list index before state transition or send");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::SeedCharacterForSelection(mode, 7);
+    const int priorSubMode = mode.NextSubMode();
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SelectCharacter, 1, 0, 0) == 0,
+        "character selection accepted an index past the one-entry list");
+    Require(mode.NextSubMode() == priorSubMode,
+        "rejected character selection changed the next submode");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "rejected character selection emitted a packet");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"login_select_character_reject_invalid_index\",\"contract_id\":\"PK46.03\",\"fixture_id\":\"PK46.03-loginmode-character-send-paths\",\"character_count\":1,\"requested_index\":1,\"message_rejected\":true,\"next_submode_unchanged\":true,\"wire_bytes\":0,\"outcome\":\"PASS\"}" << std::endl;
 }
 
 void LoginCreateCharacterRequestReplay()
@@ -2289,8 +2425,6 @@ void GuildMemberLoginNoticeReplay(){
     Require(loginResult.packetsProcessed==1&&loginResult.packetsDispatched==1,"production router did not dispatch the 0x01F2 notice");
     const auto& onlineMember=g_session.m_guildWindow.members[0];
     Require(onlineMember.online&&onlineMember.gender==1&&onlineMember.hairStyle==0x1234&&onlineMember.hairColor==0x5678&&g_session.m_guildWindow.online==2,"0x01F2 online state or appearance fields decoded incorrectly");
-    QVariantMap onlineRow;PopulateGuildMemberPresenceData(onlineRow,onlineMember);
-    Require(onlineRow.value("online").toBool()&&onlineRow.value("gender").toUInt()==1&&onlineRow.value("hairStyle").toUInt()==0x1234&&onlineRow.value("hairColor").toUInt()==0x5678,"online member state did not propagate into the production Qt row model");
     std::cout<<"{\"case_id\":\"guild_member_login_notice_01f2_online\",\"contract_id\":\"PK06.GUILD-MEMBER-LOGIN\",\"fixture_id\":\"PK06-01f2-selected-source-literal\",\"production_entry\":\"ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ReadWindowPacket\",\"input_frame_hex\":\""<<Hex(online)<<"\",\"packet_size\":20,\"member_online\":true,\"gender\":1,\"hair_style\":4660,\"hair_color\":22136,\"online_count\":2,\"outcome\":\"PASS\"}\n";
 
     const std::vector<u8> mapPosition{0xeb,0x01,0x44,0x33,0x22,0x11,0x05,0x00,0x06,0x00};
@@ -2338,28 +2472,6 @@ void PetStatusReplay(){
     g_session.m_petStatus=previousStatus;router.Clear();RegisterDefaultGameModePacketHandlers(router);
 }
 
-int main(){try{
-    Require(CConnection::Startup(),"socket startup failed");
-    Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
-    Require(ro::net::GetPacketSize(0x01a2)==35,"active 20080910 pet status receive size must be 35 bytes");
-    Require(ro::net::GetPacketSize(0x018b)==4,"0x018b disconnect acknowledgement size differs from contract");
-    Require(ro::net::GetPacketSize(0x8482)==0 && ro::net::GetPacketSize(0x8483)==0,
-        "fake raw account-ID prefix identities remain registered as opcodes");
-    const std::vector<u8> fixed{0x6c,0x00,0x00}; // opaque length sample: map registry clif_packetdb.hpp line 18
-    {
-        std::vector<u8> petStatus{0xa2,0x01,'P'};petStatus.insert(petStatus.end(),23,0);
-        petStatus.insert(petStatus.end(),{0,10,0,20,0,30,0,0x34,0x12});
-        std::vector<u8> coalesced=petStatus;coalesced.insert(coalesced.end(),fixed.begin(),fixed.end());
-        SetCase("pet_status_35_byte_followed_by_fixed_packet");TestConnection c;LoopbackPeer peer(c);peer.Send(coalesced);WaitKernelPending(c,static_cast<int>(coalesced.size()));
-        const auto actualPet=ReadOne(c);Require(actualPet==petStatus,"production framing changed the selected 35-byte pet status frame");
-        Require(c.BufferedBytes()==static_cast<int>(fixed.size()),"35-byte pet frame did not leave the following fixed frame aligned");
-        const auto actualNext=ReadOne(c);Require(actualNext==fixed&&c.BufferedBytes()==0,"fixed frame following pet status was lost or misaligned");
-        std::cout<<"{\"case_id\":\"pet_status_35_byte_followed_by_fixed_packet\",\"contract_id\":\"PK07.PET-STATUS\",\"fixture_id\":\"PK07-01a2-selected-20080910-fields\",\"production_entry\":\"CRagConnection::Connect/RecvPacket -> TryReadPacket\",\"pet_frame_hex\":\""<<Hex(actualPet)<<"\",\"pet_frame_size\":"<<actualPet.size()<<",\"following_frame_hex\":\""<<Hex(actualNext)<<"\",\"following_frame_size\":"<<actualNext.size()<<",\"queue_empty\":"<<(c.BufferedBytes()==0?"true":"false")<<",\"outcome\":\"PASS\"}\n";
-    }
-    const std::vector<u8> variable{0x69,0x00,0x06,0x00,0x11,0x22}; // variable framing only
-    FixedEveryBoundary(fixed);FixedCoalesced(fixed);VariableEveryBoundary(variable,fixed);
-    RejectUnframedInput({0xff,0xff},fixed,"unknown_opcode_closes_without_rescan",CRagConnection::ReceiveError::UnknownOpcode);
-    RejectFragmentedUnframedInput({0xff},{0xff,0x6c,0x00,0x00},"unknown_opcode_fragmented_header_closes_without_rescan",CRagConnection::ReceiveError::UnknownOpcode);
 void PartyRosterReplacementReplay()
 {
     SetCase("party_roster_replacement_atomic", "production_party_replay", "PK14.05-0107-00fb-20080910",
@@ -2474,6 +2586,41 @@ void PartyRosterReplacementReplay()
     Require(g_session.GetNumParty() == 2 && g_session.FindPartyMemberByAid(42)->partyPositionValid,
         "source-invalid 13-member roster mutated prior state");
 
+    // The selected server also updates membership through fixed 0x01E9 records.
+    // An offline member must lose its cached position before returning online.
+    auto makeMemberUpdate = [](const FRIEND_INFO& entry) {
+        std::vector<u8> packet(81, 0);
+        packet[0] = 0xe9;
+        packet[1] = 0x01;
+        for (int b = 0; b < 4; ++b) {
+            packet[2 + b] = static_cast<u8>((entry.AID >> (b * 8)) & 0xff);
+            packet[6 + b] = static_cast<u8>((static_cast<u32>(entry.role) >> (b * 8)) & 0xff);
+        }
+        packet[14] = static_cast<u8>(entry.state);
+        std::copy_n(entry.characterName.begin(), std::min<size_t>(entry.characterName.size(), 24), packet.begin() + 39);
+        std::copy_n(entry.mapName.begin(), std::min<size_t>(entry.mapName.size(), 16), packet.begin() + 63);
+        packet[79] = packet[80] = 1;
+        return packet;
+    };
+    dispatch(makeMemberUpdate(peer), 1);
+    retained = g_session.FindPartyMemberByAid(42);
+    Require(retained && retained->partyPositionValid && retained->partyX == 50 && retained->partyY == 70,
+        "incremental same-map online refresh lost stationary marker");
+    FRIEND_INFO incrementalOffline = peer;
+    incrementalOffline.state = 1;
+    dispatch(makeMemberUpdate(incrementalOffline), 1);
+    retained = g_session.FindPartyMemberByAid(42);
+    Require(retained && !retained->partyPositionValid && retained->partyX == 0 && retained->partyY == 0,
+        "incremental offline update retained stale marker coordinates");
+    dispatch(makeMemberUpdate(peer), 1);
+    retained = g_session.FindPartyMemberByAid(42);
+    Require(retained && !retained->partyPositionValid,
+        "incremental online update resurrected stale marker before fresh 0x0107");
+    dispatch(position, 1);
+    retained = g_session.FindPartyMemberByAid(42);
+    Require(retained && retained->partyPositionValid && retained->partyX == 50 && retained->partyY == 70,
+        "fresh position did not restore marker after incremental offline/online transition");
+
     FRIEND_INFO moved = peer;
     moved.mapName = "payon.gat";
     moved.role = 0;
@@ -2531,7 +2678,7 @@ void PartyRosterReplacementReplay()
     g_session.m_itemDivType = savedItemDiv;
     g_session.m_itemCollectType = savedItemCollect;
 
-    std::cout << "{\"case_id\":\"party_roster_replacement_atomic\",\"contract_id\":\"PK14.05\",\"fixture_id\":\"PK14.05-0107-00fb-20080910\",\"outcome\":\"PASS\",\"assertions\":\"position, HP, leader, options, malformed atomicity, count bound, map, offline, AID identity, removal, sentinel\"}\n";
+    std::cout << "{\"case_id\":\"party_roster_replacement_atomic\",\"contract_id\":\"PK14.05\",\"fixture_id\":\"PK14.05-0107-00fb-20080910\",\"outcome\":\"PASS\",\"assertions\":\"position, HP, leader, options, malformed atomicity, count bound, incremental offline/online, map, offline, AID identity, removal, sentinel\"}\n";
 }
 
 void PartyMarkerGameModeExitReplay()
@@ -2594,6 +2741,1823 @@ void PartyMarkerGameModeExitReplay()
     std::cout << "{\"case_id\":\"party_marker_game_mode_exit\",\"contract_id\":\"PK14.06\",\"fixture_id\":\"PK14.06-session-marker-exit\",\"outcome\":\"PASS\",\"assertions\":\"production OnExit, membership retained, shared eligibility false, position revision and minimap token changed\"}\n";
 }
 
+bool ReplaySendMapMoveRequestPacket(int dstX, int dstY);
+bool ReplayRequestUseInventoryItem(u16 itemIndex);
+bool ReplaySendUseSkillToIdPacket(u16 skillId, u16 skillLevel, u32 targetGid);
+bool ReplaySendTakeItemRequestPacket(u32 objectAid);
+
+void MapMovementProductionSendReplay()
+{
+    SetCase("map_movement_production_send", "PK46.02", "PK01.02-final-00a7-walktoxy",
+        "TryRequestMoveToCell -> SendMoveRequestPacket -> CRagConnection::SendPacket");
+    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.walkToXY == 0x00A7,
+        "replay fixture requires the default PacketVer23 movement profile");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplaySendMapMoveRequestPacket(341, 683), "movement sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(ReplaySendMapMoveRequestPacket(341, 683), "production movement sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(8);
+    Require(captured.size() == 8 && captured[0] == 0xA7 && captured[1] == 0x00,
+        "production movement sender did not emit the selected server's 0x00A7 eight-byte frame");
+    Require(captured[5] == 0x55 && captured[6] == 0x6A && captured[7] == 0xB0,
+        "production movement destination differs from the selected server's byte-5 coordinate field");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"map_movement_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00a7-walktoxy\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"length\":8,\"destination_offset\":5,\"closed_connection_rejected\":true,\"outcome\":\"PASS\"}\n";
+}
+
+void UseItemProductionSendReplay()
+{
+    SetCase("use_item_production_send", "PK46.02", "PK46.02-0439-packetver23-use-item",
+        "RequestUseInventoryItem -> BuildActiveUseItemPacket -> CRagConnection::SendPacket");
+    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.useItem == 0x0439,
+        "replay fixture requires the PacketVer23 0x0439 item-use profile");
+
+    constexpr u16 itemIndex = 64999;
+    constexpr u32 targetAid = 0x11223344;
+    Require(g_session.GetInventoryItemByIndex(itemIndex) == nullptr,
+        "item-use replay fixture index is already present");
+    ITEM_INFO item{};
+    item.m_itemIndex = itemIndex;
+    item.m_num = 1;
+    g_session.SetInventoryItem(item);
+    const u32 savedAid = g_session.m_aid;
+    g_session.m_aid = targetAid;
+
+    CGameMode* const currentMode = g_modeMgr.GetCurrentGameMode();
+    const int savedWaitingAck = currentMode ? currentMode->m_waitingUseItemAck : 0;
+    const int savedLastCardIndex = currentMode ? currentMode->m_lastCardItemIndex : 0;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestUseInventoryItem(itemIndex),
+        "item-use sender reported success without an open connection");
+    {
+        LoopbackPeer peer(*connection);
+        Require(ReplayRequestUseInventoryItem(itemIndex),
+            "production item-use sender rejected an open loopback connection");
+        const std::vector<u8> expected{0x39, 0x04, 0xE7, 0xFD, 0x44, 0x33, 0x22, 0x11};
+        const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+        Require(captured == expected,
+            "production item-use sender did not emit the selected eight-byte 0x0439 frame");
+        std::cout << "{\"case_id\":\"use_item_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-0439-packetver23-use-item\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}\n";
+    }
+    connection->Disconnect();
+    g_session.m_aid = savedAid;
+    if (currentMode) {
+        currentMode->m_waitingUseItemAck = savedWaitingAck;
+        currentMode->m_lastCardItemIndex = savedLastCardIndex;
+    }
+    g_session.RemoveInventoryItem(itemIndex, item.m_num);
+}
+
+void SkillTargetProductionSendReplay()
+{
+    SetCase("skill_target_production_send", "PK46.02", "PK46.02-0438-packetver23-skill-target",
+        "SendUseSkillToIdPacket -> BuildActiveUseSkillToIdPacket -> CRagConnection::SendPacket");
+    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.useSkillToId == 0x0438,
+        "replay fixture requires the PacketVer23 0x0438 targeted-skill profile");
+
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplaySendUseSkillToIdPacket(0x1234, 7, 0x55667788),
+        "targeted-skill sender reported success without an open connection");
+    {
+        LoopbackPeer peer(*connection);
+        Require(ReplaySendUseSkillToIdPacket(0x1234, 7, 0x55667788),
+            "production targeted-skill sender rejected an open loopback connection");
+        const std::vector<u8> expected{0x38, 0x04, 0x07, 0x00, 0x34, 0x12, 0x88, 0x77, 0x66, 0x55};
+        const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+        Require(captured == expected,
+            "production targeted-skill sender did not emit the selected ten-byte 0x0438 frame");
+        std::cout << "{\"case_id\":\"skill_target_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-0438-packetver23-skill-target\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}\n";
+    }
+    connection->Disconnect();
+}
+
+void TakeItemProductionSendReplay()
+{
+    SetCase("take_item_production_send", "PK46.02", "PK46.02-00f5-packetver23-take-item",
+        "SendTakeItemRequestPacket -> BuildActiveTakeItemPacket -> CRagConnection::SendPacket");
+    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.takeItem == 0x00F5,
+        "replay fixture requires the PacketVer23 0x00F5 take-item profile");
+
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplaySendTakeItemRequestPacket(0), "take-item sender accepted object ID zero");
+    Require(!ReplaySendTakeItemRequestPacket(0x11223344),
+        "take-item sender reported success without an open connection");
+    {
+        LoopbackPeer peer(*connection);
+        Require(ReplaySendTakeItemRequestPacket(0x11223344),
+            "production take-item sender rejected an open loopback connection");
+        const std::vector<u8> expected{0xF5, 0x00, 0x00, 0x00, 0x44, 0x33, 0x22, 0x11};
+        const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+        Require(captured == expected,
+            "production take-item sender did not emit the selected eight-byte 0x00F5 frame");
+        std::cout << "{\"case_id\":\"take_item_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-00f5-packetver23-take-item\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}\n";
+    }
+    connection->Disconnect();
+}
+
+bool ReplaySendChangeDirectionPacket(u8 headDir, u8 dir);
+
+void ChangeDirectionProductionSendReplay()
+{
+    SetCase("change_direction_production_send", "PK46.02", "PK01.02-final-0085-changedir",
+        "TryRequestChangeDirFromScreenPoint -> SendChangeDirRequestPacket -> CRagConnection::SendPacket");
+    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.changeDir == 0x0085,
+        "replay fixture requires the default PacketVer23 change-direction profile");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplaySendChangeDirectionPacket(0x23, 6), "change-direction sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(ReplaySendChangeDirectionPacket(0x23, 6), "production change-direction sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(11);
+    Require(captured.size() == 11 && captured[0] == 0x85 && captured[1] == 0x00,
+        "production change-direction sender did not emit the selected server's 0x0085 eleven-byte frame");
+    Require(captured[7] == 0x23 && captured[8] == 0x00 && captured[10] == 0x06,
+        "production direction fields differ from the selected server's byte-7/byte-10 positions");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"change_direction_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0085-changedir\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"length\":11,\"head_dir_offset\":7,\"dir_offset\":10,\"closed_connection_rejected\":true,\"outcome\":\"PASS\"}\n";
+}
+
+bool ReplayRequestCartOffPacket();
+
+void CartOffProductionSendReplay()
+{
+    SetCase("cart_off_production_send", "PK46.02", "PK01.02-final-012a-removeoption",
+        "UIEquipWnd::SendMsg(kButtonIdRemoveOption) -> CGameMode::OnMessage -> RequestCartOff -> BuildActiveCartOffPacket -> CRagConnection::SendPacket");
+    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.cartOff == 0x012A,
+        "replay fixture requires the default PacketVer23 cart-off profile");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestCartOffPacket(), "cart-off sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(ReplayRequestCartOffPacket(), "production cart-off sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(2);
+    Require(captured.size() == 2 && captured[0] == 0x2A && captured[1] == 0x01,
+        "production cart-off sender did not emit the selected server's 0x012A two-byte frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"cart_off_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-012a-removeoption\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestNpcCloseDialog(u32 npcId);
+
+void NpcCloseDialogProductionSendReplay()
+{
+    SetCase("npc_close_dialog_production_send", "PK46.02", "PK01.02-final-0146-npc-close-clicked",
+        "UISayDialogWnd/UINpcInputWnd -> GameMsg_RequestNpcCloseDialog -> RequestNpcCloseDialog -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestNpcCloseDialog(0x11223344), "NPC close sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestNpcCloseDialog(0), "NPC close sender accepted a zero NPC ID");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "zero-ID NPC close unexpectedly emitted bytes");
+    Require(ReplayRequestNpcCloseDialog(0x11223344), "production NPC close sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(6);
+    Require(captured.size() == 6 && captured[0] == 0x46 && captured[1] == 0x01
+        && captured[2] == 0x44 && captured[3] == 0x33 && captured[4] == 0x22 && captured[5] == 0x11,
+        "production NPC close sender bytes differ from the selected six-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"npc_close_dialog_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0146-npc-close-clicked\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"zero_id_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestIncreaseStatus(u16 statusId);
+
+void StatusIncreaseProductionSendReplay()
+{
+    SetCase("status_increase_production_send", "PK46.02", "PK01.02-final-00bb-statusup",
+        "UIStatusWnd -> GameMsg_RequestIncreaseStatus -> RequestIncreaseStatus -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestIncreaseStatus(13), "status sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestIncreaseStatus(12) && !ReplayRequestIncreaseStatus(19),
+        "status sender accepted an ID outside the server enum range");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "invalid status ID unexpectedly emitted bytes");
+    Require(ReplayRequestIncreaseStatus(13) && ReplayRequestIncreaseStatus(18),
+        "production status sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(10);
+    const std::vector<u8> expected{0xBB,0x00,0x0D,0x00,0x01, 0xBB,0x00,0x12,0x00,0x01};
+    Require(captured == expected,
+        "production status sender bytes differ from the selected five-byte server frames");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"status_increase_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00bb-statusup\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"invalid_ids_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestNpcNext(u32 npcId);
+
+void NpcNextProductionSendReplay()
+{
+    SetCase("npc_next_production_send", "PK46.02", "PK01.02-final-00b9-npc-next-clicked",
+        "UISayDialogWnd -> GameMsg_RequestNpcNext -> RequestNpcNext -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestNpcNext(0x11223344), "NPC next sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestNpcNext(0), "NPC next sender accepted a zero NPC ID");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "zero-ID NPC next unexpectedly emitted bytes");
+    Require(ReplayRequestNpcNext(0x11223344), "production NPC next sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(6);
+    Require(captured.size() == 6 && captured[0] == 0xB9 && captured[1] == 0x00
+        && captured[2] == 0x44 && captured[3] == 0x33 && captured[4] == 0x22 && captured[5] == 0x11,
+        "production NPC next sender bytes differ from the selected six-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"npc_next_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00b9-npc-next-clicked\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"zero_id_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestNpcInputNumber(u32 npcId, u32 value);
+
+void NpcInputNumberProductionSendReplay()
+{
+    SetCase("npc_input_number_production_send", "PK46.02", "PK01.02-final-0143-npc-amount-input",
+        "UINpcInputWnd -> GameMsg_RequestNpcInputNumber -> RequestNpcInputNumber -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestNpcInputNumber(0x11223344, 12345),
+        "NPC number sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestNpcInputNumber(0, 12345), "NPC number sender accepted a zero NPC ID");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "zero-ID NPC number request unexpectedly emitted bytes");
+    Require(ReplayRequestNpcInputNumber(0x11223344, 0x7FFFFFFF)
+        && ReplayRequestNpcInputNumber(0x11223344, 0x80000000),
+        "production NPC number sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(20);
+    const std::vector<u8> expected{
+        0x43,0x01,0x44,0x33,0x22,0x11,0xFF,0xFF,0xFF,0x7F,
+        0x43,0x01,0x44,0x33,0x22,0x11,0x00,0x00,0x00,0x80};
+    Require(captured == expected,
+        "production NPC number sender bytes differ from the independent signed-boundary fixtures");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"npc_input_number_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0143-npc-amount-input\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"zero_id_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestNpcInputString(u32 npcId, const char* text);
+
+void NpcInputStringProductionSendReplay()
+{
+    SetCase("npc_input_string_production_send", "PK46.02", "PK01.02-final-01d5-npc-string-input",
+        "UINpcInputWnd -> GameMsg_RequestNpcInputString -> RequestNpcInputString -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestNpcInputString(0x11223344, "Hi"),
+        "NPC string sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    const std::string oversized(65527, 'x');
+    Require(!ReplayRequestNpcInputString(0, "Hi")
+        && !ReplayRequestNpcInputString(0x11223344, nullptr)
+        && !ReplayRequestNpcInputString(0x11223344, "")
+        && !ReplayRequestNpcInputString(0x11223344, oversized.c_str()),
+        "NPC string sender accepted an invalid ID/text or a packet length above u16");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "rejected NPC string input unexpectedly emitted bytes");
+    Require(ReplayRequestNpcInputString(0x11223344, "Hi"),
+        "production NPC string sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(11);
+    const std::vector<u8> expected{0xD5,0x01,0x0B,0x00,0x44,0x33,0x22,0x11,0x48,0x69,0x00};
+    Require(captured == expected,
+        "production NPC string sender bytes differ from the independent variable-frame fixture");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"npc_input_string_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-01d5-npc-string-input\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"invalid_and_oversize_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestNpcContact(u32 npcId);
+
+void NpcContactProductionSendReplay()
+{
+    SetCase("npc_contact_production_send", "PK46.02", "PK01.02-final-0090-contactnpc",
+        "TryRequestNpcTalkFromScreenPoint -> RequestNpcContact -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestNpcContact(0x11223344),
+        "NPC contact sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestNpcContact(0), "NPC contact sender accepted a zero NPC ID");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "zero-ID NPC contact unexpectedly emitted bytes");
+    Require(ReplayRequestNpcContact(0x11223344),
+        "production NPC contact sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(7);
+    const std::vector<u8> expected{0x90,0x00,0x44,0x33,0x22,0x11,0x01};
+    Require(captured == expected,
+        "production NPC contact sender bytes differ from the selected seven-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"npc_contact_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0090-contactnpc\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"zero_id_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestNpcMenuSelection(u32 npcId, u8 choice);
+
+void NpcMenuSelectionProductionSendReplay()
+{
+    SetCase("npc_menu_selection_production_send", "PK46.02", "PK01.02-final-00b8-npc-selectmenu",
+        "UINpcMenuWnd -> GameMsg_RequestNpcSelectMenu -> RequestNpcMenuSelection -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestNpcMenuSelection(0x11223344, 3),
+        "NPC menu sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestNpcMenuSelection(0, 3) && !ReplayRequestNpcMenuSelection(0x11223344, 0),
+        "NPC menu sender accepted a zero NPC ID or zero choice");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "rejected NPC menu selection unexpectedly emitted bytes");
+    Require(ReplayRequestNpcMenuSelection(0x11223344, 3),
+        "production NPC menu sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(7);
+    const std::vector<u8> expected{0xB8,0x00,0x44,0x33,0x22,0x11,0x03};
+    Require(captured == expected,
+        "production NPC menu sender bytes differ from the selected seven-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"npc_menu_selection_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00b8-npc-selectmenu\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"invalid_input_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestReturnToSavePoint();
+
+void ReturnToSavePointProductionSendReplay()
+{
+    SetCase("return_save_point_production_send", "PK46.02", "PK01.02-final-00b2-restart-savepoint",
+        "UIChooseWnd -> GameMsg_RequestReturnToSavePoint -> RequestReturnToSavePoint -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestReturnToSavePoint(),
+        "return-to-save-point sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(ReplayRequestReturnToSavePoint(),
+        "production return-to-save-point sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(3);
+    const std::vector<u8> expected{0xB2,0x00,0x00};
+    Require(captured == expected,
+        "production return-to-save-point sender bytes differ from the selected three-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"return_save_point_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00b2-restart-savepoint\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestUpgradeSkillLevel(u16 skillId);
+
+void SkillUpgradeProductionSendReplay()
+{
+    SetCase("skill_upgrade_production_send", "PK46.02", "PK01.02-final-0112-skillup",
+        "UISkillListWnd/QtSkillTree -> GameMsg_RequestUpgradeSkillLevel -> RequestUpgradeSkillLevel -> CRagConnection::SendPacket");
+    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.skillUp == 0x0112,
+        "replay fixture requires the default PacketVer23 skill-up profile");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestUpgradeSkillLevel(0x1234),
+        "skill-up sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestUpgradeSkillLevel(0), "skill-up sender accepted skill ID zero");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "zero-skill request unexpectedly emitted bytes");
+    Require(ReplayRequestUpgradeSkillLevel(0x1234),
+        "production skill-up sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(4);
+    const std::vector<u8> expected{0x12,0x01,0x34,0x12};
+    Require(captured == expected,
+        "production skill-up sender bytes differ from the selected four-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"skill_upgrade_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0112-skillup\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"zero_skill_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestIdentifyInventoryItem(s16 itemIndex);
+
+void IdentifyItemCancelProductionSendReplay()
+{
+    SetCase("identify_item_cancel_production_send", "PK46.02", "PK01.02-final-0178-item-identify",
+        "UIItemIdentifyWnd::CancelSelection -> GameMsg_RequestIdentifyInventoryItem(-1) -> RequestIdentifyInventoryItem -> CRagConnection::SendPacket");
+    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.itemIdentify == 0x0178,
+        "replay fixture requires the default PacketVer23 item-identify profile");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestIdentifyInventoryItem(-1),
+        "identify-cancel sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(ReplayRequestIdentifyInventoryItem(-1),
+        "production identify-cancel sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(4);
+    const std::vector<u8> expected{0x78,0x01,0xFF,0xFF};
+    Require(captured == expected,
+        "production identify-cancel sender bytes differ from the selected four-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"identify_item_cancel_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0178-item-identify\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"cancel_index_signed_minus_one\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void IdentifyItemSelectionProductionSendReplay()
+{
+    SetCase("identify_item_selection_production_send", "PK46.02", "PK01.02-final-0178-item-identify",
+        "UIItemIdentifyWnd::SubmitSelection -> GameMsg_RequestIdentifyInventoryItem -> production sender");
+    constexpr unsigned int itemIndex = 30000;
+    Require(g_session.GetInventoryItemByIndex(itemIndex) == nullptr,
+        "identify replay fixture item index is already present");
+    ITEM_INFO item{};
+    item.m_itemIndex = itemIndex;
+    item.m_num = 1;
+    g_session.SetInventoryItem(item);
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestIdentifyInventoryItem(static_cast<s16>(itemIndex)),
+        "identify sender reported success without an open connection");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(ReplayRequestIdentifyInventoryItem(static_cast<s16>(itemIndex)),
+            "valid un-identified inventory item was rejected by the production sender");
+        const std::vector<u8> expected{0x78, 0x01, 0x30, 0x75};
+        Require(peer.ReceiveExact(expected.size()) == expected,
+            "item-identify selection did not emit the selected four-byte frame");
+    }
+
+    item.m_isIdentified = 1;
+    g_session.SetInventoryItem(item);
+    Require(!ReplayRequestIdentifyInventoryItem(static_cast<s16>(itemIndex)),
+        "already-identified inventory item was accepted for identification");
+    connection->Disconnect();
+    g_session.RemoveInventoryItem(itemIndex, item.m_num);
+    std::cout << "{\"case_id\":\"identify_item_selection_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0178-item-identify\",\"outcome\":\"PASS\",\"assertions\":\"send failure and identified-item guard; valid item emits four-byte frame\"}" << std::endl;
+}
+
+bool ReplayRequestShortcutSlotUpdate(int absoluteSlotIndex);
+
+void ShortcutSlotUpdateProductionSendReplay()
+{
+    SetCase("shortcut_slot_update_production_send", "PK46.02", "PK01.02-final-02ba-hotkey",
+        "UIShortCutWnd -> GameMsg_RequestShortcutUpdate -> RequestShortcutSlotUpdate -> CRagConnection::SendPacket");
+    const int slotIndex = 5;
+    const SHORTCUT_SLOT* const originalPtr = g_session.GetShortcutSlotByAbsoluteIndex(slotIndex);
+    Require(originalPtr != nullptr, "shortcut fixture slot is outside the session array");
+    const SHORTCUT_SLOT original = *originalPtr;
+    g_session.SetShortcutSlotByAbsoluteIndex(slotIndex, 1, 0x11223344, 0x5566);
+
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestShortcutSlotUpdate(-1), "shortcut sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestShortcutSlotUpdate(-1), "shortcut sender accepted an invalid absolute slot");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "invalid shortcut slot unexpectedly emitted bytes");
+    Require(ReplayRequestShortcutSlotUpdate(slotIndex), "production shortcut sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(11);
+    const std::vector<u8> expected{0xBA,0x02,0x05,0x00,0x01,0x44,0x33,0x22,0x11,0x66,0x55};
+    Require(captured == expected,
+        "production shortcut sender bytes differ from the selected eleven-byte server frame");
+    connection->Disconnect();
+    g_session.SetShortcutSlotByAbsoluteIndex(slotIndex, original.isSkill, original.id, original.count);
+    std::cout << "{\"case_id\":\"shortcut_slot_update_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-02ba-hotkey\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"slot_restored\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void InspectPlayerEquipmentProductionSendReplay()
+{
+    SetCase("inspect_player_equipment_production_send", "PK46.02", "PK01.02-final-02d6-view-player-equip",
+        "UIPlayerContextMenuWnd -> Commerce::PlayerAction(CheckEquipmentInfo) -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_CheckEquipmentInfo, 0x11223344, "Target"),
+        "equipment-view sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_CheckEquipmentInfo, 0, "Target"),
+        "equipment-view sender accepted a zero target");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "zero-target equipment-view request unexpectedly emitted bytes");
+    Require(ro::commerce::PlayerAction(CGameMode::PlayerContext_CheckEquipmentInfo, 0x11223344, "Target"),
+        "production equipment-view sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(6);
+    const std::vector<u8> expected{0xD6,0x02,0x44,0x33,0x22,0x11};
+    Require(captured == expected,
+        "production equipment-view sender bytes differ from the selected six-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"inspect_player_equipment_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-02d6-view-player-equip\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"zero_target_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void AddFriendRequestProductionSendReplay()
+{
+    SetCase("add_friend_request_production_send", "PK46.02", "PK01.02-final-0202-friends-list-add",
+        "UIPlayerContextMenuWnd -> Commerce::PlayerAction(RegisterFriend) -> named -> send -> CRagConnection::SendPacket");
+    const std::string maxName(23, 'A');
+    const std::string tooLongName(24, 'A');
+    const u32 targetAid = 0x11223344;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_RegisterFriend, targetAid, maxName),
+        "friend request sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_RegisterFriend, targetAid, "")
+        && !ro::commerce::PlayerAction(CGameMode::PlayerContext_RegisterFriend, targetAid, tooLongName)
+        && !ro::commerce::PlayerAction(CGameMode::PlayerContext_RegisterFriend, 0, maxName),
+        "friend request sender accepted empty/overlength name or zero target");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "rejected friend request unexpectedly emitted bytes");
+    Require(ro::commerce::PlayerAction(CGameMode::PlayerContext_RegisterFriend, targetAid, maxName),
+        "production friend request sender rejected the maximum supported name");
+    const std::vector<u8> captured = peer.ReceiveExact(26);
+    std::vector<u8> expected(26, 0);
+    expected[0] = 0x02;
+    expected[1] = 0x02;
+    std::fill(expected.begin() + 2, expected.begin() + 25, static_cast<u8>('A'));
+    Require(captured == expected,
+        "production friend request bytes differ from the selected 26-byte name frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"add_friend_request_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0202-friends-list-add\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"max_name_accepted\":true,\"overlength_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void GuildInfoRefreshProductionSendReplay()
+{
+    SetCase("guild_info_refresh_production_send", "PK46.02", "PK01.02-final-014f-guild-request-info",
+        "UIGuildWnd::SetShow -> Refresh -> SendRefreshRequests -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    const u32 originalGuildId = g_session.m_localGuild.guildId;
+    g_session.m_localGuild.guildId = 0;
+    {
+        LoopbackPeer peer(*connection);
+        UIGuildWnd::SendRefreshRequests();
+        const std::vector<u8> captured = peer.ReceiveExact(2);
+        Require(captured == std::vector<u8>{0x4D,0x01},
+            "guild refresh without a guild did not send only the permissions request");
+        connection->Disconnect();
+    }
+    g_session.m_localGuild.guildId = 0x11223344;
+    {
+        LoopbackPeer peer(*connection);
+        UIGuildWnd::SendRefreshRequests();
+        const std::vector<u8> captured = peer.ReceiveExact(32);
+        std::vector<u8> expected{0x4D,0x01};
+        for (u8 type = 0; type <= 4; ++type) {
+            expected.insert(expected.end(), {0x4F,0x01,type,0,0,0});
+        }
+        Require(captured == expected,
+            "guild refresh request order/subtypes differ from the five selected six-byte frames");
+        connection->Disconnect();
+    }
+    g_session.m_localGuild.guildId = originalGuildId;
+    std::cout << "{\"case_id\":\"guild_info_refresh_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-014f-guild-request-info\",\"guildless_permissions_only\":true,\"subtypes\":[0,1,2,3,4],\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void GuildInviteProductionSendReplay()
+{
+    SetCase("guild_invite_production_send", "PK46.02", "PK01.02-final-0168-guild-invite",
+        "UIPlayerContextMenuWnd -> Commerce::PlayerAction(InviteJoinGuild) -> CRagConnection::SendPacket");
+    const u32 savedGuildId = g_session.m_localGuild.guildId;
+    const unsigned char savedMaster = g_session.m_localGuild.isMaster;
+    const u32 savedPermissions = g_session.m_localGuild.permissions;
+    const u32 savedAid = g_session.m_aid;
+    const u32 savedGid = g_session.m_gid;
+    const u32 targetAid = 0x11223344;
+    const u32 localAid = 0x55667788;
+    const u32 localGid = 0x99AABBCC;
+    g_session.m_localGuild.guildId = 1;
+    g_session.m_localGuild.isMaster = 0;
+    g_session.m_localGuild.permissions = 0;
+    g_session.m_aid = localAid;
+    g_session.m_gid = localGid;
+
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_InviteJoinGuild, targetAid, "Target"),
+        "guild invite sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_InviteJoinGuild, targetAid, "Target"),
+        "guild invite sender bypassed missing invite permission");
+    g_session.m_localGuild.permissions = 0x01;
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_InviteJoinGuild, 0, "Target")
+        && !ro::commerce::PlayerAction(CGameMode::PlayerContext_InviteJoinGuild, targetAid, ""),
+        "guild invite sender accepted zero target or empty name");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "rejected guild invite unexpectedly emitted bytes");
+    Require(ro::commerce::PlayerAction(CGameMode::PlayerContext_InviteJoinGuild, targetAid, "Target"),
+        "permitted production guild invite sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(14);
+    const std::vector<u8> expected{0x68,0x01,0x44,0x33,0x22,0x11,0x88,0x77,0x66,0x55,0xCC,0xBB,0xAA,0x99};
+    Require(captured == expected,
+        "production guild invite sender bytes differ from the selected fourteen-byte server frame");
+    connection->Disconnect();
+    g_session.m_localGuild.guildId = savedGuildId;
+    g_session.m_localGuild.isMaster = savedMaster;
+    g_session.m_localGuild.permissions = savedPermissions;
+    g_session.m_aid = savedAid;
+    g_session.m_gid = savedGid;
+    std::cout << "{\"case_id\":\"guild_invite_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0168-guild-invite\",\"permission_gate_checked\":true,\"captured_packet_hex\":\"" << Hex(captured) << "\",\"session_restored\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void RejectWhisperProductionSendReplay()
+{
+    SetCase("reject_whisper_production_send", "PK46.02", "PK01.02-final-00cf-pm-ignore",
+        "UIPlayerContextMenuWnd -> Commerce::PlayerAction(RejectWhispering) -> CRagConnection::SendPacket");
+    const std::string maxName(23, 'R');
+    const std::string tooLongName(24, 'R');
+    const u32 targetAid = 0x11223344;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_RejectWhispering, targetAid, maxName),
+        "reject-whisper sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_RejectWhispering, targetAid, "")
+        && !ro::commerce::PlayerAction(CGameMode::PlayerContext_RejectWhispering, targetAid, tooLongName)
+        && !ro::commerce::PlayerAction(CGameMode::PlayerContext_RejectWhispering, 0, maxName),
+        "reject-whisper sender accepted empty/overlength name or zero target");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "rejected whisper-ignore request unexpectedly emitted bytes");
+    Require(ro::commerce::PlayerAction(CGameMode::PlayerContext_RejectWhispering, targetAid, maxName),
+        "production reject-whisper sender rejected the maximum supported name");
+    const std::vector<u8> captured = peer.ReceiveExact(27);
+    std::vector<u8> expected(27, 0);
+    expected[0] = 0xCF;
+    std::fill(expected.begin() + 2, expected.begin() + 25, static_cast<u8>('R'));
+    Require(captured == expected,
+        "production reject-whisper bytes differ from the selected 27-byte server frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"reject_whisper_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00cf-pm-ignore\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"max_name_accepted\":true,\"overlength_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void TradeRequestProductionSendReplay()
+{
+    SetCase("trade_request_production_send", "PK46.02", "PK01.02-final-00e4-trade-request",
+        "UIPlayerContextMenuWnd -> Commerce::PlayerAction(RequestDeal) -> CRagConnection::SendPacket");
+    const ro::commerce::State savedCommerceState = ro::commerce::state;
+    const u32 savedAid = g_session.m_aid;
+    const u32 targetAid = 0x11223344;
+    g_session.m_aid = 0x55667788;
+    ro::commerce::Reset();
+    ro::commerce::UpdateTradeContext(1234, {{targetAid, {"Target", 2}}});
+
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_RequestDeal, targetAid, "Target"),
+        "trade request reported success without an open connection");
+    Require(!ro::commerce::state.tradeWaiting,
+        "failed trade request entered the pending/waiting state");
+    LoopbackPeer peer(*connection);
+    Require(ro::commerce::PlayerAction(CGameMode::PlayerContext_RequestDeal, targetAid, "Target"),
+        "production trade request rejected the server's maximum accepted distance");
+    const std::vector<u8> captured = peer.ReceiveExact(6);
+    const std::vector<u8> expected{0xE4,0x00,0x44,0x33,0x22,0x11};
+    Require(captured == expected,
+        "production trade request bytes differ from the selected six-byte server frame");
+    Require(ro::commerce::state.tradeWaiting && ro::commerce::state.partnerId == targetAid
+        && ro::commerce::state.partner == "Target",
+        "successful trade request did not enter the expected pending state");
+    connection->Disconnect();
+    ro::commerce::state = savedCommerceState;
+    g_session.m_aid = savedAid;
+    std::cout << "{\"case_id\":\"trade_request_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00e4-trade-request\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"pending_state_after_success\":true,\"failed_send_not_pending\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void MailComposerProductionSendReplay()
+{
+    SetCase("mail_composer_production_send", "PK46.02", "PK01.02-final-0246-mail-window-open",
+        "UIPlayerContextMenuWnd -> Commerce::PlayerAction(SendMail) -> CRagConnection::SendPacket");
+    const ro::commerce::State savedCommerceState = ro::commerce::state;
+    const u32 savedAid = g_session.m_aid;
+    const u32 targetAid = 0x11223344;
+    g_session.m_aid = 0x55667788;
+    ro::commerce::Reset();
+
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_SendMail, targetAid, "Target"),
+        "mail composer sender reported success without an open connection");
+    Require(ro::commerce::state.mail.visible && ro::commerce::state.mailTo == "Target"
+        && !ro::commerce::state.mailPending,
+        "mail composer local state differs after failed open request");
+    LoopbackPeer peer(*connection);
+    ro::commerce::state.tradeWaiting = true;
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_SendMail, targetAid, "Target"),
+        "mail composer request bypassed the busy transaction guard");
+    ro::commerce::state.tradeWaiting = false;
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "busy mail composer request unexpectedly emitted bytes");
+    Require(ro::commerce::PlayerAction(CGameMode::PlayerContext_SendMail, targetAid, "Target"),
+        "production mail composer sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(4);
+    const std::vector<u8> expected{0x46,0x02,0x00,0x00};
+    Require(captured == expected,
+        "production mail composer bytes differ from the selected four-byte server frame");
+    Require(ro::commerce::state.mail.visible && ro::commerce::state.mailTo == "Target",
+        "successful mail composer request did not retain its local draft state");
+    connection->Disconnect();
+    ro::commerce::state = savedCommerceState;
+    g_session.m_aid = savedAid;
+    std::cout << "{\"case_id\":\"mail_composer_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0246-mail-window-open\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"busy_guard_checked\":true,\"draft_retained_on_failure\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplayRequestCloseStorage();
+
+void StorageCloseProductionSendReplay()
+{
+    SetCase("storage_close_production_send", "PK46.02", "PK01.02-final-0193-close-kafra",
+        "UIStorageWnd::OnButton(Close) -> GameMsg_RequestStorageClose -> RequestCloseStorage -> CRagConnection::SendPacket");
+    const bool savedStorageOpen = g_session.m_storageOpen;
+    g_session.m_storageOpen = false;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplayRequestCloseStorage(),
+        "storage close sender reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(!ReplayRequestCloseStorage(), "storage close sender bypassed the storage-open guard");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "closed-storage request unexpectedly emitted bytes");
+    g_session.m_storageOpen = true;
+    Require(ReplayRequestCloseStorage(),
+        "production storage close sender rejected an open loopback connection");
+    const std::vector<u8> captured = peer.ReceiveExact(2);
+    const std::vector<u8> expected{0x93,0x01};
+    Require(captured == expected,
+        "production storage close sender bytes differ from the selected two-byte server frame");
+    connection->Disconnect();
+    g_session.m_storageOpen = savedStorageOpen;
+    std::cout << "{\"case_id\":\"storage_close_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0193-close-kafra\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"storage_guard_checked\":true,\"session_restored\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void MailSendProductionReplay()
+{
+    SetCase("mail_send_production_replay", "PK46.02", "PK01.02-final-0248-mail-send",
+        "Commerce::Action(mail) -> variable 0x0248 builder -> CRagConnection::SendPacket");
+    const ro::commerce::State savedCommerceState = ro::commerce::state;
+    ro::commerce::Reset();
+    auto makeMail = [](std::string recipient, std::string subject, std::string body) {
+        ro::commerce::Command command;
+        command.action = "mail";
+        command.text = std::move(recipient);
+        command.subject = std::move(subject);
+        command.body = std::move(body);
+        return command;
+    };
+    const ro::commerce::Command shortMail = makeMail("Recipient", "Subject", "Hi");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::Action(shortMail), "mail sender reported success without an open connection");
+    Require(!ro::commerce::state.mailPending,
+        "failed mail send entered the pending-result state");
+    LoopbackPeer peer(*connection);
+    Require(!ro::commerce::Action(makeMail("", "Subject", "Body"))
+        && !ro::commerce::Action(makeMail(std::string(24, 'R'), "Subject", "Body"))
+        && !ro::commerce::Action(makeMail("Recipient", "", "Body"))
+        && !ro::commerce::Action(makeMail("Recipient", std::string(40, 'S'), "Body"))
+        && !ro::commerce::Action(makeMail("Recipient", "Subject", std::string(255, 'B'))),
+        "mail sender accepted empty or over-limit recipient/subject/body");
+    ro::commerce::state.mailPending = true;
+    Require(!ro::commerce::Action(shortMail), "mail sender accepted a second request while one was pending");
+    ro::commerce::state.mailPending = false;
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "rejected mail request unexpectedly emitted bytes");
+
+    const std::string recipient(23, 'R');
+    const std::string subject(39, 'S');
+    const std::string body(254, 'B');
+    Require(ro::commerce::Action(makeMail(recipient, subject, body)),
+        "production mail sender rejected the maximum accepted field sizes");
+    const std::vector<u8> captured = peer.ReceiveExact(324);
+    std::vector<u8> expected(324, 0);
+    expected[0] = 0x48;
+    expected[1] = 0x02;
+    expected[2] = 0x44;
+    expected[3] = 0x01;
+    std::fill(expected.begin() + 4, expected.begin() + 27, static_cast<u8>('R'));
+    std::fill(expected.begin() + 28, expected.begin() + 67, static_cast<u8>('S'));
+    expected[68] = 255;
+    std::fill(expected.begin() + 69, expected.begin() + 323, static_cast<u8>('B'));
+    Require(captured == expected,
+        "production mail sender bytes differ from the independent maximum-size frame fixture");
+    Require(ro::commerce::state.mailPending,
+        "successful mail send did not enter the pending-result state");
+    ro::commerce::state.mailPending = false;
+    Require(ro::commerce::Action(shortMail),
+        "production mail sender rejected short valid text fields");
+    const std::vector<u8> capturedShort = peer.ReceiveExact(72);
+    std::vector<u8> expectedShort(72, 0);
+    expectedShort[0] = 0x48;
+    expectedShort[1] = 0x02;
+    expectedShort[2] = 0x48;
+    std::copy(shortMail.text.begin(), shortMail.text.end(), expectedShort.begin() + 4);
+    std::copy(shortMail.subject.begin(), shortMail.subject.end(), expectedShort.begin() + 28);
+    expectedShort[68] = 3;
+    expectedShort[69] = 'H';
+    expectedShort[70] = 'i';
+    Require(capturedShort == expectedShort,
+        "short production mail frame differs in field padding, length, or body termination");
+    Require(ro::commerce::state.mailPending,
+        "successful short mail send did not enter the pending-result state");
+    connection->Disconnect();
+    ro::commerce::state = savedCommerceState;
+    std::cout << "{\"case_id\":\"mail_send_production_replay\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0248-mail-send\",\"captured_lengths\":[324,72],\"recipient_subject_body_limits_checked\":true,\"short_field_padding_and_body_terminator_checked\":true,\"pending_after_success\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+bool ReplaySendMapLoadEndAckPacket();
+
+void MailResultProductionReceiveReplay()
+{
+    SetCase("mail_result_production_receive", "PK46.02", "PK01.02-final-0249-mail-result",
+        "ProcessGameModePacketLoop -> production packet router -> Commerce::Receive");
+    const ro::commerce::State savedCommerceState = ro::commerce::state;
+    ro::commerce::Reset();
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    ro::commerce::state.mail.visible = true;
+    ro::commerce::state.mailPending = true;
+    const std::vector<u8> failure{0x49, 0x02, 0x01};
+    Require(connection.QueueBytes(std::vector<u8>(failure.begin(), failure.begin() + 2)),
+        "could not queue partial mail-result frame");
+    const GameModePacketLoopResult partial = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(partial.packetsProcessed == 0 && ro::commerce::state.mailPending
+        && ro::commerce::state.mail.visible,
+        "partial mail-result frame changed pending or composer state");
+    Require(connection.QueueBytes(std::vector<u8>(failure.begin() + 2, failure.end())),
+        "could not complete mail-result frame");
+    const GameModePacketLoopResult failed = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(failed.packetsProcessed == 1 && failed.packetsDispatched == 1
+        && !ro::commerce::state.mailPending && ro::commerce::state.mail.visible
+        && ro::commerce::state.status == "Mail could not be sent.",
+        "production mail failure result did not clear pending state and retain the composer");
+
+    ro::commerce::state.mailPending = true;
+    const std::vector<u8> success{0x49, 0x02, 0x00};
+    Require(connection.QueueBytes(success), "could not queue successful mail-result frame");
+    const GameModePacketLoopResult sent = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(sent.packetsProcessed == 1 && sent.packetsDispatched == 1
+        && !ro::commerce::state.mailPending && !ro::commerce::state.mail.visible
+        && ro::commerce::state.status == "Mail sent.",
+        "production mail success result did not clear pending state and close the composer");
+    ro::commerce::state = savedCommerceState;
+    std::cout << "{\"case_id\":\"mail_result_production_receive\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0249-mail-result\",\"partial_frame_buffered\":true,\"failure_retained_composer\":true,\"success_closed_composer\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void MapLoadEndAckProductionSendReplay()
+{
+    SetCase("map_load_end_ack_production_send", "PK46.02", "PK46.02-007d-selected-server-literal",
+        "HandleMapChange -> SendLoadEndAckPacket -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplaySendMapLoadEndAckPacket(), "load-end acknowledgement reported success without an open connection");
+    LoopbackPeer peer(*connection);
+    Require(ReplaySendMapLoadEndAckPacket(), "production load-end acknowledgement sender rejected an open connection");
+    const std::vector<u8> expected{0x7D, 0x00};
+    const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+    Require(captured == expected, "production load-end acknowledgement differs from the selected server literal 0x007D frame");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"map_load_end_ack_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-007d-selected-server-literal\",\"expected_packet_hex\":\"7d00\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"closed_connection_rejected\":true,\"outcome\":\"PASS\"}\n";
+}
+
+void ActionFailureProductionReceiveReplay()
+{
+    SetCase("action_failure_production_receive", "PK45.03", "PK45.03-action-failure",
+        "ProcessGameModePacketLoop -> production packet router -> HandleActionFailure");
+    const u32 savedPlayerJob = g_session.m_playerJob;
+    g_session.m_playerJob = 25;
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    auto seedRetryState = [&]() {
+        mode.m_lastMonGid = 11;
+        mode.m_lastLockOnMonGid = 12;
+        mode.m_hasAttackChaseHint = 1;
+        mode.m_attackChaseTargetGid = 13;
+        mode.m_hasSkillChase = 1;
+        mode.m_hasGroundSkillChase = 1;
+    };
+    auto sendFailureType = [&](u16 type) {
+        const std::vector<u8> frame{0x3B, 0x01, static_cast<u8>(type), static_cast<u8>(type >> 8)};
+        Require(connection.QueueBytes(frame), "could not queue action-failure frame");
+        const GameModePacketLoopResult result = ProcessGameModePacketLoop(mode, connection, router, 1);
+        Require(result.packetsProcessed == 1 && result.packetsDispatched == 1,
+            "production router did not dispatch a complete action-failure frame");
+    };
+    auto retryStateCleared = [&]() {
+        return mode.m_lastMonGid == 0 && mode.m_lastLockOnMonGid == 0
+            && mode.m_hasAttackChaseHint == 0 && mode.m_attackChaseTargetGid == 0
+            && mode.m_hasSkillChase == 0 && mode.m_hasGroundSkillChase == 0;
+    };
+    auto requireRetryStateRetained = [&]() {
+        Require(mode.m_lastMonGid == 11 && mode.m_lastLockOnMonGid == 12
+            && mode.m_hasAttackChaseHint == 1 && mode.m_attackChaseTargetGid == 13
+            && mode.m_hasSkillChase == 1 && mode.m_hasGroundSkillChase == 1,
+            "non-clearing action-failure type changed retry state");
+    };
+
+    for (u16 type = 0; type <= 2; ++type) {
+        seedRetryState();
+        sendFailureType(type);
+        Require(retryStateCleared(), "action-failure type 0-2 did not clear retry state");
+        sendFailureType(type);
+        Require(retryStateCleared(), "repeated action-failure delivery was not idempotent");
+    }
+    seedRetryState();
+    sendFailureType(3);
+    requireRetryStateRetained();
+    seedRetryState();
+    sendFailureType(4);
+    requireRetryStateRetained();
+    g_session.m_playerJob = savedPlayerJob;
+    std::cout << "{\"case_id\":\"action_failure_production_receive\",\"contract_id\":\"PK45.03\",\"fixture_id\":\"PK45.03-action-failure\",\"types_0_2_clear_retry_state\":true,\"repeated_delivery_idempotent\":true,\"type_3_and_unknown_type_preserve_retry_state\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyInviteProductionSendReplay()
+{
+    SetCase("party_invite_production_send", "PK46.02", "PK46.02-map-party-invite-request",
+        "QtCommerce player-context action -> CGameMode::SendMsg -> RequestPartyInvite -> CRagConnection::SendPacket");
+    const auto savedPartyList = g_session.m_partyList;
+    g_session.m_partyList.clear();
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    CGameMode mode;
+    const u32 targetAid = 0x11223344;
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyInvite, targetAid, 0, 0) == 0,
+        "party invite accepted while the local party list was empty");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyInvite, 0, 0, 0) == 0,
+        "party invite accepted a zero target AID");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "rejected party invite request emitted bytes");
+
+    g_session.m_partyList.emplace_back();
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyInvite, targetAid, 0, 0) != 0,
+        "valid party invite was rejected with a local party and target");
+    const std::vector<u8> captured = peer.ReceiveExact(6);
+    const std::vector<u8> expected{0xFC, 0x00, 0x44, 0x33, 0x22, 0x11};
+    Require(captured == expected,
+        "production party invite bytes differ from the independent 0x00FC fixture");
+    connection->Disconnect();
+    g_session.m_partyList = savedPartyList;
+    std::cout << "{\"case_id\":\"party_invite_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-invite-request\",\"expected_packet_hex\":\"fc0044332211\",\"empty_party_and_zero_aid_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyInviteReplyProductionSendReplay()
+{
+    SetCase("party_invite_reply_production_send", "PK46.02", "PK46.02-map-party-invite-reply-request",
+        "UIJoinPartyAcceptWnd reply action -> CGameMode::SendMsg -> ReplyPartyInvite -> CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    CGameMode mode;
+    const u32 partyId = 0x11223344;
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyInviteReply, 0, 1, 0) == 0,
+        "party-invite reply accepted a zero party ID");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "zero-party-ID reply emitted bytes");
+
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyInviteReply, partyId, 1, 0) != 0,
+        "party-invite acceptance reply was rejected");
+    const std::vector<u8> accepted = peer.ReceiveExact(10);
+    const std::vector<u8> expectedAccept{0xFF,0x00,0x44,0x33,0x22,0x11,0x01,0x00,0x00,0x00};
+    Require(accepted == expectedAccept,
+        "party-invite acceptance reply differs from the independent ten-byte fixture");
+
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyInviteReply, partyId, 0, 0) != 0,
+        "party-invite rejection reply was rejected");
+    const std::vector<u8> rejected = peer.ReceiveExact(10);
+    const std::vector<u8> expectedReject{0xFF,0x00,0x44,0x33,0x22,0x11,0x00,0x00,0x00,0x00};
+    Require(rejected == expectedReject,
+        "party-invite rejection reply differs from the independent ten-byte fixture");
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"party_invite_reply_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-invite-reply-request\",\"accept_packet_hex\":\"ff004433221101000000\",\"reject_packet_hex\":\"ff004433221100000000\",\"zero_party_id_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyCreateProductionSendReplay()
+{
+    SetCase("party_create_production_send", "PK46.02", "PK46.02-map-party-create-request",
+        "UIPartyOptionWnd submit -> CGameMode::SendMsg -> RequestCreateParty -> CRagConnection::SendPacket");
+    const auto savedPartyList = g_session.m_partyList;
+    g_session.m_partyList.clear();
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    CGameMode mode;
+    const std::string overlongName(26, 'P');
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyCreate,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(overlongName.c_str())), 0x07, 0) == 0,
+        "party creation reported success without an open connection");
+    Require(mode.m_pendingPartyCreateName.empty(),
+        "failed party-create send retained a pending name");
+
+    LoopbackPeer peer(*connection);
+    const std::string whitespaceName(" \t\r\n ");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyCreate,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(whitespaceName.c_str())), 0x07, 0) == 0,
+        "party creation accepted an empty normalized name");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "empty normalized party name emitted bytes");
+
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyCreate,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(overlongName.c_str())), 0x07, 0) != 0,
+        "party creation rejected a valid name after normalization");
+    const std::vector<u8> captured = peer.ReceiveExact(26);
+    std::vector<u8> expected(26, 0);
+    expected[0] = 0xF9;
+    expected[1] = 0x00;
+    std::fill(expected.begin() + 2, expected.begin() + 25, static_cast<u8>('P'));
+    Require(captured == expected,
+        "party-create packet differs in opcode, truncation, padding, or terminator");
+    Require(mode.m_pendingPartyCreateName == std::string(23, 'P')
+        && mode.m_hasPendingPartyCreateOptions
+        && mode.m_pendingPartyCreateExpShare
+        && mode.m_pendingPartyCreateItemShare
+        && mode.m_pendingPartyCreateItemSharingType,
+        "successful party-create send did not retain normalized name and option state");
+    connection->Disconnect();
+    g_session.m_partyList = savedPartyList;
+    std::cout << "{\"case_id\":\"party_create_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-create-request\",\"captured_length\":26,\"name_truncated_to_23\":true,\"empty_name_rejected\":true,\"options_pending_after_send\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyOptionChangeProductionSendReplay()
+{
+    SetCase("party_option_change_production_send", "PK46.02", "PK46.02-map-party-option-change-request",
+        "UIPartyOptionWnd submit -> CGameMode::SendMsg -> RequestChangePartyOptions -> CRagConnection::SendPacket");
+    const bool savedExpShare = g_session.m_partyExpShare;
+    const bool savedItemCollectType = g_session.m_itemCollectType;
+    const bool savedItemDivType = g_session.m_itemDivType;
+    g_session.m_partyExpShare = true;
+    g_session.m_itemCollectType = false;
+    g_session.m_itemDivType = true;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    CGameMode mode;
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyChangeOptions, 0, 0, 0) == 0,
+        "party-option change reported success without an open connection");
+    Require(g_session.m_partyExpShare && !g_session.m_itemCollectType && g_session.m_itemDivType,
+        "failed party-option send optimistically changed local option state");
+
+    LoopbackPeer peer(*connection);
+    for (unsigned int bits = 0; bits < 8; ++bits) {
+        const bool expShare = (bits & 0x01u) != 0;
+        const bool itemShare = (bits & 0x02u) != 0;
+        const bool shared = (bits & 0x04u) != 0;
+        const u16 itemOption = static_cast<u16>((itemShare ? 1u : 0u) | (shared ? 2u : 0u));
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyChangeOptions,
+                static_cast<msgparam_t>(bits), 0, 0) != 0,
+            "production party-option sender rejected one of the eight option combinations");
+        const std::vector<u8> captured = peer.ReceiveExact(6);
+        const std::vector<u8> expected{0x02, 0x01,
+            static_cast<u8>(expShare ? 1 : 0), 0x00,
+            static_cast<u8>(itemOption & 0xFF), static_cast<u8>(itemOption >> 8)};
+        Require(captured == expected,
+            "party-option production frame differs from the independent field-combination fixture");
+        Require(g_session.m_partyExpShare == expShare
+            && g_session.m_itemCollectType == itemShare
+            && g_session.m_itemDivType == shared,
+            "successful party-option send did not update the local option cache");
+    }
+    connection->Disconnect();
+    g_session.m_partyExpShare = savedExpShare;
+    g_session.m_itemCollectType = savedItemCollectType;
+    g_session.m_itemDivType = savedItemDivType;
+    std::cout << "{\"case_id\":\"party_option_change_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-option-change-request\",\"option_combinations_checked\":8,\"failed_send_kept_prior_cache\":true,\"successful_send_updates_cache\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyDisbandProductionSendReplay()
+{
+    SetCase("party_disband_production_send", "PK46.02", "PK46.02-map-party-leave-request",
+        "UIPartyOptionWnd master disband -> CGameMode::SendMsg -> remove-member frames -> 0x0100 leave");
+    const auto savedPartyList = g_session.m_partyList;
+    const u32 savedAid = g_session.m_aid;
+    const bool savedMaster = g_session.m_amIPartyMaster;
+    g_session.m_aid = 0x55667788;
+    g_session.m_partyList.clear();
+    g_session.m_amIPartyMaster = true;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    CGameMode mode;
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyDisband, 0, 0, 0) == 0,
+        "party disband accepted an empty local party");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "empty-party disband emitted bytes");
+
+    FRIEND_INFO leader{};
+    leader.AID = g_session.m_aid;
+    leader.characterName = "Leader";
+    FRIEND_INFO member{};
+    member.AID = 0x11223344;
+    member.characterName = "Target";
+    FRIEND_INFO invalid{};
+    invalid.characterName = "Invalid";
+    g_session.m_partyList.push_back(leader);
+    g_session.m_partyList.push_back(member);
+    g_session.m_partyList.push_back(invalid);
+    g_session.m_amIPartyMaster = false;
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyDisband, 0, 0, 0) == 0,
+        "non-master party disband was accepted");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "non-master party disband emitted bytes");
+
+    g_session.m_amIPartyMaster = true;
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyDisband, 0, 0, 0) != 0,
+        "master party disband failed with a valid member");
+    std::vector<u8> expected(32, 0);
+    expected[0] = 0x03;
+    expected[1] = 0x01;
+    expected[2] = 0x44;
+    expected[3] = 0x33;
+    expected[4] = 0x22;
+    expected[5] = 0x11;
+    std::copy(member.characterName.begin(), member.characterName.end(), expected.begin() + 6);
+    expected[31] = 0x01;
+    const std::vector<u8> captured = peer.ReceiveExact(expected.size());
+    Require(captured == expected,
+        "master disband did not send the valid member removal followed by 0x0100 leave");
+    connection->Disconnect();
+    g_session.m_partyList = savedPartyList;
+    g_session.m_aid = savedAid;
+    g_session.m_amIPartyMaster = savedMaster;
+    std::cout << "{\"case_id\":\"party_disband_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-leave-request\",\"empty_and_nonmaster_guards\":true,\"valid_member_remove_then_leave\":true,\"captured_length\":32,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyInviteResultProductionReceiveReplay()
+{
+    SetCase("party_invite_result_production_receive", "PK46.02", "PK46.02-map-party-invite-request",
+        "ProcessGameModePacketLoop -> production packet router -> HandlePartyInviteAck");
+    g_windowMgr.ClearChatEvents();
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    std::vector<u8> basic(27, 0);
+    basic[0] = 0xFD;
+    std::copy_n("Alice", 5, basic.begin() + 2);
+    basic[26] = 2;
+    Require(connection.QueueBytes(basic), "could not queue basic party-invite result");
+    const GameModePacketLoopResult basicResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(basicResult.packetsProcessed == 1 && basicResult.packetsDispatched == 1,
+        "production router did not dispatch the 0x00FD party-invite result");
+    const auto& basicEvents = g_windowMgr.GetChatEvents();
+    Require(basicEvents.size() == 1 && basicEvents.back().text == "Alice accepted the party invitation."
+        && basicEvents.back().color == 0x0000C000,
+        "basic party-invite success result did not produce the expected system notice");
+
+    std::vector<u8> extended(30, 0);
+    extended[0] = 0xC5;
+    extended[1] = 0x02;
+    std::copy_n("Alice", 5, extended.begin() + 2);
+    extended[26] = 5;
+    Require(connection.QueueBytes(std::vector<u8>(extended.begin(), extended.begin() + 27)),
+        "could not queue partial extended party-invite result");
+    const GameModePacketLoopResult partial = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(partial.packetsProcessed == 0 && g_windowMgr.GetChatEvents().size() == 1,
+        "partial 0x02C5 result was dispatched before its four-byte code arrived");
+    Require(connection.QueueBytes(std::vector<u8>(extended.begin() + 27, extended.end())),
+        "could not complete extended party-invite result");
+    const GameModePacketLoopResult extendedResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(extendedResult.packetsProcessed == 1 && extendedResult.packetsDispatched == 1,
+        "production router did not dispatch the complete 0x02C5 party-invite result");
+    const auto& resultEvents = g_windowMgr.GetChatEvents();
+    Require(resultEvents.size() == 2 && resultEvents.back().text == "The character blocked party invitations."
+        && resultEvents.back().color == 0x00FF4040,
+        "extended party-invite denial result did not produce the expected system notice");
+
+    std::vector<u8> unknown(27, 0);
+    unknown[0] = 0xFD;
+    unknown[26] = 6;
+    Require(connection.QueueBytes(unknown), "could not queue unknown party-invite result");
+    const GameModePacketLoopResult unknownResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(unknownResult.packetsProcessed == 1 && unknownResult.packetsDispatched == 1
+        && g_windowMgr.GetChatEvents().size() == 2,
+        "unknown party-invite result fabricated a system notice");
+    g_windowMgr.ClearChatEvents();
+    std::cout << "{\"case_id\":\"party_invite_result_production_receive\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-invite-request\",\"basic_success_notice\":true,\"extended_partial_frame_buffered\":true,\"extended_denial_notice\":true,\"unknown_result_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyOptionChangeResultProductionReceiveReplay()
+{
+    SetCase("party_option_change_result_production_receive", "PK46.02", "PK46.02-map-party-option-change-request",
+        "ProcessGameModePacketLoop -> production packet router -> HandlePartyOptionChanged");
+    const bool savedExpShare = g_session.m_partyExpShare;
+    const bool savedItemCollectType = g_session.m_itemCollectType;
+    const bool savedItemDivType = g_session.m_itemDivType;
+    g_session.m_partyExpShare = true;
+    g_session.m_itemCollectType = false;
+    g_session.m_itemDivType = true;
+    g_windowMgr.ClearChatEvents();
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    const std::vector<u8> denied{0x01,0x01,0x02,0x00,0x00,0x00};
+    Require(connection.QueueBytes(denied), "could not queue denied party-option result");
+    const GameModePacketLoopResult deniedResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(deniedResult.packetsProcessed == 1 && deniedResult.packetsDispatched == 1
+        && g_session.m_partyExpShare && !g_session.m_itemCollectType && g_session.m_itemDivType,
+        "denied party-option result changed the local option cache");
+    Require(g_windowMgr.GetChatEvents().size() == 1
+        && g_windowMgr.GetChatEvents().back().text == "Cannot change EXP sharing right now.",
+        "denied party-option result did not queue its system notice");
+
+    const std::vector<u8> disabled{0x01,0x01,0x00,0x00,0x00,0x00};
+    Require(connection.QueueBytes(std::vector<u8>(disabled.begin(), disabled.begin() + 5)),
+        "could not queue partial party-option result");
+    const GameModePacketLoopResult partial = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(partial.packetsProcessed == 0 && g_session.m_partyExpShare,
+        "partial party-option result mutated EXP state");
+    Require(connection.QueueBytes(std::vector<u8>(disabled.begin() + 5, disabled.end())),
+        "could not complete party-option result");
+    const GameModePacketLoopResult disabledResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(disabledResult.packetsProcessed == 1 && !g_session.m_partyExpShare
+        && !g_session.m_itemCollectType && g_session.m_itemDivType,
+        "six-byte party-option success did not update EXP while retaining item cache");
+
+    const std::vector<u8> enabled{0x01,0x01,0x01,0x00,0x00,0x00};
+    Require(connection.QueueBytes(enabled), "could not queue successful party-option result");
+    const GameModePacketLoopResult enabledResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(enabledResult.packetsProcessed == 1 && g_session.m_partyExpShare
+        && !g_session.m_itemCollectType && g_session.m_itemDivType,
+        "party-option EXP enable result changed the unrelated item cache");
+
+    g_session.m_partyExpShare = savedExpShare;
+    g_session.m_itemCollectType = savedItemCollectType;
+    g_session.m_itemDivType = savedItemDivType;
+    g_windowMgr.ClearChatEvents();
+    std::cout << "{\"case_id\":\"party_option_change_result_production_receive\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-option-change-request\",\"denial_keeps_cache\":true,\"partial_frame_buffered\":true,\"six_byte_response_updates_exp_only\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyMemberRemovedProductionReceiveReplay()
+{
+    SetCase("party_member_removed_production_receive", "PK46.02", "PK46.02-map-party-member-removal-notification",
+        "ProcessGameModePacketLoop -> production packet router -> HandlePartyMemberRemoved -> CSession");
+    const std::vector<FRIEND_INFO> savedMembers(g_session.GetPartyList().begin(), g_session.GetPartyList().end());
+    const std::string savedPartyName = g_session.m_partyName;
+    g_session.ClearParty();
+    g_session.m_partyName = "Replay party";
+    FRIEND_INFO member{};
+    member.isValid = 1;
+    member.AID = 77;
+    member.characterName = "Removed";
+    g_session.m_partyList.push_back(member);
+    g_windowMgr.ClearChatEvents();
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    std::vector<u8> removed(31, 0);
+    removed[0] = 0x05;
+    removed[1] = 0x01;
+    std::copy_n("Removed", 7, removed.begin() + 6);
+    Require(connection.QueueBytes(removed), "could not queue party-member removal notification");
+    const GameModePacketLoopResult removedResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(removedResult.packetsProcessed == 1 && removedResult.packetsDispatched == 1
+        && g_session.GetPartyList().empty() && g_session.m_partyName == "Replay party",
+        "production 0x0105 notification did not remove only the named party member");
+
+    member.characterName = "Retained";
+    g_session.m_partyList.push_back(member);
+    removed[30] = 2;
+    std::fill(removed.begin() + 6, removed.begin() + 30, 0);
+    std::copy_n("Retained", 8, removed.begin() + 6);
+    Require(connection.QueueBytes(removed), "could not queue rejected party-leave notification");
+    const GameModePacketLoopResult rejectedResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(rejectedResult.packetsProcessed == 1 && g_session.GetPartyList().size() == 1
+        && g_windowMgr.GetChatEvents().size() == 1,
+        "0x0105 cannot-leave result changed membership or omitted its system notice");
+
+    g_session.ClearParty();
+    g_session.m_partyList.insert(g_session.m_partyList.end(), savedMembers.begin(), savedMembers.end());
+    g_session.m_partyName = savedPartyName;
+    g_windowMgr.ClearChatEvents();
+    std::cout << "{\"case_id\":\"party_member_removed_production_receive\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-member-removal-notification\",\"outcome\":\"PASS\",\"assertions\":\"production route removes named member; cannot-leave result preserves membership and records system notice\"}" << std::endl;
+}
+
+void UnequipAcknowledgementCorrelationReplay()
+{
+    SetCase("unequip_ack_zero_index_correlation", "PK46.02", "PK46.02-map-unequip-item-request",
+        "ProcessGameModePacketLoop -> production packet router -> HandleUnequipItemAck");
+    CGameMode mode;
+    const u32 savedPendingIndex = mode.m_waitingTakeoffEquipAck;
+    mode.m_waitingTakeoffEquipAck = 123;
+    TestConnection connection;
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+
+    const std::vector<u8> uncorrelatedFailure{0xac, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    Require(connection.QueueBytes(uncorrelatedFailure), "could not queue zero-index unequip failure acknowledgement");
+    const GameModePacketLoopResult zeroIndexResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(zeroIndexResult.packetsProcessed == 1 && zeroIndexResult.packetsDispatched == 1
+        && mode.m_waitingTakeoffEquipAck == 123,
+        "zero-index unequip failure acknowledgement cleared an unrelated pending item index");
+
+    const std::vector<u8> matchingFailure{0xac, 0x00, 123, 0x00, 0x00, 0x00, 0x00};
+    Require(connection.QueueBytes(matchingFailure), "could not queue matching unequip failure acknowledgement");
+    const GameModePacketLoopResult matchingResult = ProcessGameModePacketLoop(mode, connection, router, 1);
+    Require(matchingResult.packetsProcessed == 1 && mode.m_waitingTakeoffEquipAck == 0,
+        "matching unequip acknowledgement did not clear the pending item index");
+
+    mode.m_waitingTakeoffEquipAck = savedPendingIndex;
+    std::cout << "{\"case_id\":\"unequip_ack_zero_index_correlation\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-unequip-item-request\",\"outcome\":\"PASS\",\"assertions\":\"zero-index ack preserves unrelated pending item; matching ack clears it\"}" << std::endl;
+}
+
+void TradeLockProductionSendReplay()
+{
+    SetCase("trade_lock_production_send", "PK46.02", "PK01.02-final-00eb-trade-lock",
+        "Commerce::Action(lockTrade) -> production CRagConnection::SendPacket");
+    const ro::commerce::State savedState = ro::commerce::state;
+    ro::commerce::Reset();
+    ro::commerce::state.tradeActive = true;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    const ro::commerce::Command lock{"lockTrade"};
+    Require(!ro::commerce::Action(lock) && !ro::commerce::state.lockPending,
+        "failed trade-lock send entered pending state");
+
+    LoopbackPeer peer(*connection);
+    Require(ro::commerce::Action(lock) && ro::commerce::state.lockPending,
+        "valid trade-lock action did not send or enter pending state");
+    const std::vector<u8> captured = peer.ReceiveExact(2);
+    Require(captured == std::vector<u8>({0xeb, 0x00}),
+        "production trade-lock action did not emit the selected two-byte frame");
+    Require(!ro::commerce::Action(lock) && ro::commerce::state.lockPending,
+        "duplicate trade-lock action was not suppressed while pending");
+
+    connection->Disconnect();
+    ro::commerce::state = savedState;
+    std::cout << "{\"case_id\":\"trade_lock_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00eb-trade-lock\",\"outcome\":\"PASS\",\"assertions\":\"send failure does not pend; successful action emits 2-byte frame and pends; duplicate is suppressed\"}" << std::endl;
+}
+
+void TradeAcceptDeclineProductionSendReplay()
+{
+    SetCase("trade_accept_decline_production_send", "PK46.02", "PK01.02-final-00e6-trade-ack",
+        "Commerce::Action(tradeReply) -> production CRagConnection::SendPacket");
+    const ro::commerce::State savedState = ro::commerce::state;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    ro::commerce::Reset();
+    ro::commerce::state.tradeIncoming = true;
+    ro::commerce::state.partnerId = 77;
+    ro::commerce::state.tradePeers.emplace(77, ro::commerce::TradePeer{"Peer", 1});
+    ro::commerce::Command reply{};
+    reply.action = "tradeReply";
+    reply.amount = 1;
+    Require(!ro::commerce::Action(reply) && ro::commerce::state.tradeIncoming
+        && !ro::commerce::state.tradeWaiting,
+        "failed trade-accept send changed invitation state");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(reply) && !ro::commerce::state.tradeIncoming
+            && ro::commerce::state.tradeWaiting,
+            "successful trade acceptance did not enter pending state");
+        Require(peer.ReceiveExact(3) == std::vector<u8>({0xe6, 0x00, 0x03}),
+            "trade acceptance did not emit the selected three-byte 0x00E6 frame");
+    }
+
+    connection->Disconnect();
+    ro::commerce::Reset();
+    ro::commerce::state.tradeIncoming = true;
+    reply.amount = 0;
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(reply) && !ro::commerce::state.tradeIncoming,
+            "successful trade decline did not clear the incoming invitation");
+        Require(peer.ReceiveExact(3) == std::vector<u8>({0xe6, 0x00, 0x04}),
+            "trade decline did not emit the selected three-byte 0x00E6 frame");
+    }
+    connection->Disconnect();
+    ro::commerce::state = savedState;
+    std::cout << "{\"case_id\":\"trade_accept_decline_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00e6-trade-ack\",\"outcome\":\"PASS\",\"assertions\":\"failed accept preserves invite; accept emits type 3 and enters pending; decline emits type 4 and clears invite\"}" << std::endl;
+}
+
+void TradeCommitProductionSendReplay()
+{
+    SetCase("trade_commit_production_send", "PK46.02", "PK01.02-final-00ef-trade-commit",
+        "Commerce::Action(commitTrade) -> production CRagConnection::SendPacket");
+    const ro::commerce::State savedState = ro::commerce::state;
+    ro::commerce::Reset();
+    ro::commerce::state.tradeActive = true;
+    ro::commerce::state.localLocked = true;
+    ro::commerce::state.remoteLocked = false;
+    const ro::commerce::Command commit{"commitTrade"};
+    Require(!ro::commerce::Action(commit) && !ro::commerce::state.commitPending,
+        "trade commit was sent before the remote side locked");
+
+    ro::commerce::state.remoteLocked = true;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::Action(commit) && !ro::commerce::state.commitPending,
+        "failed trade-commit send entered pending state");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(commit) && ro::commerce::state.commitPending,
+            "valid two-sided trade commit did not enter pending state");
+        Require(peer.ReceiveExact(2) == std::vector<u8>({0xef, 0x00}),
+            "trade commit did not emit the selected two-byte frame");
+        Require(!ro::commerce::Action(commit) && ro::commerce::state.commitPending,
+            "duplicate trade commit was not suppressed while pending");
+    }
+
+    connection->Disconnect();
+    ro::commerce::state = savedState;
+    std::cout << "{\"case_id\":\"trade_commit_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00ef-trade-commit\",\"outcome\":\"PASS\",\"assertions\":\"remote lock required; failed send does not pend; valid send emits 2-byte frame and duplicate suppressed\"}" << std::endl;
+}
+
+void TradeCancelProductionSendReplay()
+{
+    SetCase("trade_cancel_production_send", "PK46.02", "PK01.02-final-00ed-trade-cancel",
+        "Commerce::Action(close trade) -> production CRagConnection::SendPacket");
+    const ro::commerce::State savedState = ro::commerce::state;
+    ro::commerce::Reset();
+    ro::commerce::state.tradeWaiting = true;
+    ro::commerce::state.partnerId = 77;
+    ro::commerce::Command close{};
+    close.action = "close";
+    close.to = "trade";
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::Action(close) && ro::commerce::state.tradeWaiting,
+        "failed trade-cancel send cleared the pending outgoing trade");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(close) && !ro::commerce::state.tradeWaiting
+            && !ro::commerce::state.tradeActive,
+            "successful trade cancellation did not reset outgoing trade state");
+        Require(peer.ReceiveExact(2) == std::vector<u8>({0xed, 0x00}),
+            "outgoing trade cancellation did not emit the selected two-byte 0x00ED frame");
+    }
+    connection->Disconnect();
+    ro::commerce::state = savedState;
+    std::cout << "{\"case_id\":\"trade_cancel_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00ed-trade-cancel\",\"outcome\":\"PASS\",\"assertions\":\"failed send retains outgoing trade; successful send emits two bytes and resets it\"}" << std::endl;
+}
+
+void TradeAddItemProductionSendReplay()
+{
+    SetCase("trade_add_item_production_send", "PK46.02", "PK01.02-final-00e8-trade-item",
+        "Commerce::Action(offerTrade) -> production CRagConnection::SendPacket");
+    const ro::commerce::State savedState = ro::commerce::state;
+    constexpr unsigned int itemIndex = 65000;
+    Require(g_session.GetInventoryItemByIndex(itemIndex) == nullptr,
+        "trade replay fixture item index is already present");
+    ITEM_INFO item{};
+    item.m_itemIndex = itemIndex;
+    item.m_num = 5;
+    g_session.SetInventoryItem(item);
+    ro::commerce::Reset();
+    ro::commerce::state.tradeActive = true;
+    ro::commerce::Command offer{};
+    offer.action = "offerTrade";
+    offer.index = itemIndex;
+    offer.amount = 2;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::Action(offer) && !ro::commerce::state.tradeAddPending,
+        "failed trade-item send entered pending state");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(offer) && ro::commerce::state.tradeAddPending
+            && ro::commerce::state.pendingTrade.item.m_itemIndex == itemIndex
+            && ro::commerce::state.pendingTrade.amount == 2,
+            "successful trade-item offer did not retain the pending item and amount");
+        const std::vector<u8> expected{0xe8, 0x00, 0xe8, 0xfd, 0x02, 0x00, 0x00, 0x00};
+        Require(peer.ReceiveExact(expected.size()) == expected,
+            "trade-item offer did not emit the selected eight-byte frame");
+        Require(!ro::commerce::Action(offer) && ro::commerce::state.tradeAddPending,
+            "duplicate trade-item offer was not suppressed while awaiting acknowledgement");
+    }
+
+    connection->Disconnect();
+    ro::commerce::state = savedState;
+    g_session.RemoveInventoryItem(itemIndex, item.m_num);
+    std::cout << "{\"case_id\":\"trade_add_item_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00e8-trade-item\",\"outcome\":\"PASS\",\"assertions\":\"failed send does not pend; valid offer emits eight bytes and records item; duplicate while pending suppressed\"}" << std::endl;
+}
+
+void WarpSkillSelectionProductionSendReplay()
+{
+    SetCase("warp_skill_selection_production_send", "PK46.02", "PK01.02-final-011b-use-skill-map",
+        "CGameMode::SendWarpMapSelection -> production SendUseSkillMapPacket");
+    CGameMode mode;
+    mode.m_warpSkillId = 0x1234;
+    mode.m_warpMapDestinations = {"prontera", "payon"};
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!mode.SendWarpMapSelection("prontera") && mode.m_warpSkillId == 0x1234
+        && mode.m_warpMapDestinations.size() == 2,
+        "failed warp-map send cleared the pending skill selection");
+    Require(!mode.SendWarpMapSelection("geffen") && mode.m_warpSkillId == 0x1234,
+        "warp-map sender accepted a destination outside the selected list");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(mode.SendWarpMapSelection("prontera") && mode.m_warpSkillId == 0
+            && mode.m_warpMapDestinations.empty(),
+            "successful warp-map send did not clear the pending skill selection");
+        std::vector<u8> expected(20, 0);
+        expected[0] = 0x1b;
+        expected[1] = 0x01;
+        expected[2] = 0x34;
+        expected[3] = 0x12;
+        std::copy_n("prontera", 8, expected.begin() + 4);
+        Require(peer.ReceiveExact(expected.size()) == expected,
+            "warp-skill selection did not emit the selected 20-byte frame");
+    }
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"warp_skill_selection_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-011b-use-skill-map\",\"outcome\":\"PASS\",\"assertions\":\"failed send and invalid destination preserve pending selection; valid 20-byte send clears it\"}" << std::endl;
+}
+
+void CloseVendingProductionSendReplay()
+{
+    SetCase("close_vending_production_send", "PK46.02", "PK01.02-final-012e-close-vending",
+        "Commerce::Action(close vending) -> production CRagConnection::SendPacket");
+    const ro::commerce::State savedState = ro::commerce::state;
+    ro::commerce::Reset();
+    ro::commerce::state.vendingActive = true;
+    ro::commerce::state.vendingPending = true;
+    ro::commerce::state.draft.emplace_back();
+    ro::commerce::Command close{};
+    close.action = "close";
+    close.to = "vending";
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::Action(close) && ro::commerce::state.vendingActive
+        && ro::commerce::state.vendingPending && ro::commerce::state.draft.size() == 1,
+        "failed vending-close send mutated the active shop state");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(close) && !ro::commerce::state.vendingActive
+            && !ro::commerce::state.vendingPending && ro::commerce::state.draft.empty(),
+            "successful vending close did not reset the local shop state");
+        Require(peer.ReceiveExact(2) == std::vector<u8>({0x2e, 0x01}),
+            "vending close did not emit the selected two-byte 0x012E frame");
+    }
+    connection->Disconnect();
+    ro::commerce::state = savedState;
+    std::cout << "{\"case_id\":\"close_vending_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-012e-close-vending\",\"outcome\":\"PASS\",\"assertions\":\"failed send preserves active shop; successful close emits two-byte request and clears local state\"}" << std::endl;
+}
+
+void VendingPurchaseProductionSendReplay()
+{
+    SetCase("vending_purchase_production_send", "PK46.02", "PK01.02-final-0134-vending-buy",
+        "Commerce::Action(buy) -> production CRagConnection::SendPacket");
+    const ro::commerce::State savedState = ro::commerce::state;
+    ro::commerce::Reset();
+    ro::commerce::state.sellerId = 0x11223344;
+    ro::commerce::Offer listed{};
+    listed.item.m_itemIndex = 0x1234;
+    listed.amount = 7;
+    ro::commerce::state.shopItems.push_back(listed);
+    ro::commerce::Command buy{};
+    buy.action = "buy";
+    buy.index = 0x1234;
+    buy.amount = 2;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::Action(buy), "vending purchase succeeded without an open connection");
+    Require(!ro::commerce::state.shopItems.empty()
+        && ro::commerce::state.shopItems.front().amount == 7,
+        "failed vending purchase changed the local shop stock");
+    buy.amount = 8;
+    Require(!ro::commerce::Action(buy), "vending purchase exceeded listed stock");
+    buy.amount = 2;
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(buy), "valid vending purchase was rejected by the production action");
+        const std::vector<u8> expected{
+            0x34, 0x01, 0x0c, 0x00, 0x44, 0x33, 0x22, 0x11,
+            0x02, 0x00, 0x34, 0x12
+        };
+        Require(peer.ReceiveExact(expected.size()) == expected,
+            "vending purchase did not emit the selected 12-byte transaction frame");
+        Require(ro::commerce::state.shopItems.front().amount == 7,
+            "vending purchase optimistically changed local stock before a server response");
+    }
+    connection->Disconnect();
+    ro::commerce::state = savedState;
+    std::cout << "{\"case_id\":\"vending_purchase_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0134-vending-buy\",\"outcome\":\"PASS\",\"assertions\":\"stock guard enforced; failed send preserves stock; valid purchase emits 12-byte frame without optimistic decrement\"}" << std::endl;
+}
+
+void ExitToWindowsProductionSendReplay()
+{
+    SetCase("exit_to_windows_production_send", "PK46.02", "PK01.02-final-018a-quit-game",
+        "CGameMode::SendMsg(GameMsg_RequestExitToWindows) -> production sender");
+    ClearPendingDisconnectAction();
+    CGameMode mode;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestExitToWindows, 0, 0, 0) == 0
+        && GetPendingDisconnectAction() == PendingDisconnectAction::None,
+        "failed exit request left a pending disconnect action");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestExitToWindows, 0, 0, 0) == 1
+            && GetPendingDisconnectAction() == PendingDisconnectAction::ExitToWindows,
+            "successful exit request did not enter the pending disconnect state");
+        Require(peer.ReceiveExact(sizeof(PACKET_CZ_QUITGAME))
+                == std::vector<u8>({0x8a, 0x01, 0x00, 0x00}),
+            "exit-to-Windows request did not emit the selected four-byte frame");
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestExitToWindows, 0, 0, 0) == 0
+            && GetPendingDisconnectAction() == PendingDisconnectAction::ExitToWindows,
+            "duplicate exit request was not suppressed while pending");
+    }
+    connection->Disconnect();
+    ClearPendingDisconnectAction();
+    std::cout << "{\"case_id\":\"exit_to_windows_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-018a-quit-game\",\"outcome\":\"PASS\",\"assertions\":\"failed send clears pending action; successful send emits four-byte frame; duplicate while pending suppressed\"}" << std::endl;
+}
+
+void ChangeCartProductionSendReplay()
+{
+    SetCase("change_cart_production_send", "PK46.02", "PK01.02-final-01af-change-cart",
+        "UISelectCartWnd::ActivateOption -> GameMsg_RequestChangeCart -> production sender");
+    CGameMode mode;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestChangeCart, 3, 0, 0) == 0,
+        "change-cart sender reported success without an open connection");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestChangeCart, 0, 0, 0) == 0
+            && mode.SendMsg(CGameMode::GameMsg_RequestChangeCart, 6, 0, 0) == 0,
+            "change-cart sender accepted an out-of-range cart type");
+        for (u16 type = 1; type <= 5; ++type) {
+            Require(mode.SendMsg(CGameMode::GameMsg_RequestChangeCart, type, 0, 0) == 1,
+                "valid change-cart type was rejected");
+            const std::vector<u8> expected{0xaf, 0x01, static_cast<u8>(type), 0x00};
+            Require(peer.ReceiveExact(expected.size()) == expected,
+                "change-cart sender emitted an incorrect four-byte frame");
+        }
+    }
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"change_cart_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-01af-change-cart\",\"outcome\":\"PASS\",\"assertions\":\"closed connection fails; types 0 and 6 rejected; types 1 through 5 emit four-byte frames\"}" << std::endl;
+}
+
+void FriendReplyProductionSendReplay()
+{
+    SetCase("friend_reply_production_send", "PK46.02", "PK01.02-final-0208-friend-reply",
+        "Commerce::Action(prompt friend) -> production CRagConnection::SendPacket");
+    const ro::commerce::State savedState = ro::commerce::state;
+    ro::commerce::Reset();
+    ro::commerce::state.promptKind = "friend";
+    ro::commerce::state.promptId = 0x11223344;
+    ro::commerce::state.promptChar = 0x55667788;
+    ro::commerce::Command reply{};
+    reply.action = "prompt";
+    reply.amount = 1;
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ro::commerce::Action(reply) && ro::commerce::state.promptKind == "friend",
+        "failed friend-reply send cleared the pending prompt");
+
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(reply) && ro::commerce::state.promptKind.empty(),
+            "successful friend acceptance did not clear the prompt");
+        const std::vector<u8> expected{
+            0x08, 0x02, 0x44, 0x33, 0x22, 0x11, 0x88, 0x77,
+            0x66, 0x55, 0x01, 0x00, 0x00, 0x00
+        };
+        Require(peer.ReceiveExact(expected.size()) == expected,
+            "friend acceptance did not emit the selected 14-byte frame");
+    }
+
+    connection->Disconnect();
+    ro::commerce::state.promptKind = "friend";
+    ro::commerce::state.promptId = 0x01020304;
+    ro::commerce::state.promptChar = 0xA1B2C3D4;
+    reply.amount = 0;
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(reply) && ro::commerce::state.promptKind.empty(),
+            "successful friend decline did not clear the prompt");
+        const std::vector<u8> expected{
+            0x08, 0x02, 0x04, 0x03, 0x02, 0x01, 0xd4, 0xc3,
+            0xb2, 0xa1, 0x00, 0x00, 0x00, 0x00
+        };
+        Require(peer.ReceiveExact(expected.size()) == expected,
+            "friend decline did not emit the selected 14-byte frame");
+    }
+    connection->Disconnect();
+    ro::commerce::state = savedState;
+    std::cout << "{\"case_id\":\"friend_reply_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0208-friend-reply\",\"outcome\":\"PASS\",\"assertions\":\"failed send preserves prompt; accept/decline emit 14-byte frames with IDs and answer values\"}" << std::endl;
+}
+
+bool ReplaySendGlobalChatMessage(const char* playerName, const std::string& message);
+
+void GlobalChatProductionSendReplay()
+{
+    SetCase("global_chat_production_send", "PK46.02", "PK01.02-final-global-chat",
+        "GameMode global-chat caller -> SendGlobalChatMessage -> production CRagConnection::SendPacket");
+    CRagConnection* const connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!ReplaySendGlobalChatMessage("Alice", ""),
+        "global chat sender accepted an empty message");
+    Require(!ReplaySendGlobalChatMessage("", "hello"),
+        "global chat sender accepted an empty player name");
+    const std::string oversized(65523, 'x');
+    Require(!ReplaySendGlobalChatMessage("Alice", oversized),
+        "global chat sender accepted a frame larger than the wire length field");
+    Require(!ReplaySendGlobalChatMessage("Alice", "hello"),
+        "global chat sender reported success without an open connection");
+
+    const u16 opcode = ro::net::GetActiveMapGameplaySendProfile().globalMessage;
+    const std::string payload = "Alice : hello";
+    std::vector<u8> expected(4 + payload.size() + 1, 0);
+    expected[0] = static_cast<u8>(opcode & 0xff);
+    expected[1] = static_cast<u8>(opcode >> 8);
+    expected[2] = static_cast<u8>(expected.size() & 0xff);
+    expected[3] = static_cast<u8>(expected.size() >> 8);
+    std::copy(payload.begin(), payload.end(), expected.begin() + 4);
+    {
+        LoopbackPeer peer(*connection);
+        Require(ReplaySendGlobalChatMessage("Alice", "hello"),
+            "valid global chat message was rejected by the production sender");
+        Require(peer.ReceiveExact(expected.size()) == expected,
+            "global chat sender emitted an incorrect profile opcode or variable frame");
+    }
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"global_chat_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-global-chat\",\"outcome\":\"PASS\",\"assertions\":\"empty name/message, oversized frame and disconnected send rejected; profile opcode, length, payload and terminator captured\"}" << std::endl;
+}
+
+int main(){try{
+    Require(CConnection::Startup(),"socket startup failed");
+    MapMovementProductionSendReplay();
+    UseItemProductionSendReplay();
+    SkillTargetProductionSendReplay();
+    TakeItemProductionSendReplay();
+    ChangeDirectionProductionSendReplay();
+    CartOffProductionSendReplay();
+    NpcCloseDialogProductionSendReplay();
+    StatusIncreaseProductionSendReplay();
+    NpcNextProductionSendReplay();
+    NpcInputNumberProductionSendReplay();
+    NpcInputStringProductionSendReplay();
+    NpcContactProductionSendReplay();
+    NpcMenuSelectionProductionSendReplay();
+    ReturnToSavePointProductionSendReplay();
+    SkillUpgradeProductionSendReplay();
+    IdentifyItemCancelProductionSendReplay();
+    IdentifyItemSelectionProductionSendReplay();
+    ShortcutSlotUpdateProductionSendReplay();
+    InspectPlayerEquipmentProductionSendReplay();
+    AddFriendRequestProductionSendReplay();
+    GuildInfoRefreshProductionSendReplay();
+    GuildInviteProductionSendReplay();
+    RejectWhisperProductionSendReplay();
+    TradeRequestProductionSendReplay();
+    TradeLockProductionSendReplay();
+    TradeAcceptDeclineProductionSendReplay();
+    TradeCommitProductionSendReplay();
+    TradeCancelProductionSendReplay();
+    TradeAddItemProductionSendReplay();
+    WarpSkillSelectionProductionSendReplay();
+    CloseVendingProductionSendReplay();
+    VendingPurchaseProductionSendReplay();
+    ExitToWindowsProductionSendReplay();
+    ChangeCartProductionSendReplay();
+    FriendReplyProductionSendReplay();
+    GlobalChatProductionSendReplay();
+    MailComposerProductionSendReplay();
+    MailSendProductionReplay();
+    MailResultProductionReceiveReplay();
+    StorageCloseProductionSendReplay();
+    ActionFailureProductionReceiveReplay();
+    PartyInviteProductionSendReplay();
+    PartyInviteReplyProductionSendReplay();
+    PartyCreateProductionSendReplay();
+    PartyOptionChangeProductionSendReplay();
+    PartyDisbandProductionSendReplay();
+    PartyInviteResultProductionReceiveReplay();
+    PartyOptionChangeResultProductionReceiveReplay();
+    UnequipAcknowledgementCorrelationReplay();
+    PartyMemberRemovedProductionReceiveReplay();
+    MapLoadEndAckProductionSendReplay();
+    Require(ro::net::GetPacketSize(0x006c)==3,"0x006c fixed receive size differs from active client table");
+    Require(ro::net::GetPacketSize(0x01a2)==35,"active 20080910 pet status receive size must be 35 bytes");
+    Require(ro::net::GetPacketSize(0x018b)==4,"0x018b disconnect acknowledgement size differs from contract");
+    Require(ro::net::GetPacketSize(0x8482)==0 && ro::net::GetPacketSize(0x8483)==0,
+        "fake raw account-ID prefix identities remain registered as opcodes");
+    const std::vector<u8> fixed{0x6c,0x00,0x00}; // opaque length sample: map registry clif_packetdb.hpp line 18
+    {
+        std::vector<u8> petStatus{0xa2,0x01,'P'};petStatus.insert(petStatus.end(),23,0);
+        petStatus.insert(petStatus.end(),{0,10,0,20,0,30,0,0x34,0x12});
+        std::vector<u8> coalesced=petStatus;coalesced.insert(coalesced.end(),fixed.begin(),fixed.end());
+        SetCase("pet_status_35_byte_followed_by_fixed_packet");TestConnection c;LoopbackPeer peer(c);peer.Send(coalesced);WaitKernelPending(c,static_cast<int>(coalesced.size()));
+        const auto actualPet=ReadOne(c);Require(actualPet==petStatus,"production framing changed the selected 35-byte pet status frame");
+        Require(c.BufferedBytes()==static_cast<int>(fixed.size()),"35-byte pet frame did not leave the following fixed frame aligned");
+        const auto actualNext=ReadOne(c);Require(actualNext==fixed&&c.BufferedBytes()==0,"fixed frame following pet status was lost or misaligned");
+        std::cout<<"{\"case_id\":\"pet_status_35_byte_followed_by_fixed_packet\",\"contract_id\":\"PK07.PET-STATUS\",\"fixture_id\":\"PK07-01a2-selected-20080910-fields\",\"production_entry\":\"CRagConnection::Connect/RecvPacket -> TryReadPacket\",\"pet_frame_hex\":\""<<Hex(actualPet)<<"\",\"pet_frame_size\":"<<actualPet.size()<<",\"following_frame_hex\":\""<<Hex(actualNext)<<"\",\"following_frame_size\":"<<actualNext.size()<<",\"queue_empty\":"<<(c.BufferedBytes()==0?"true":"false")<<",\"outcome\":\"PASS\"}\n";
+    }
+    const std::vector<u8> variable{0x69,0x00,0x06,0x00,0x11,0x22}; // variable framing only
+    FixedEveryBoundary(fixed);FixedCoalesced(fixed);VariableEveryBoundary(variable,fixed);
+    RejectUnframedInput({0xff,0xff},fixed,"unknown_opcode_closes_without_rescan",CRagConnection::ReceiveError::UnknownOpcode);
+    RejectFragmentedUnframedInput({0xff},{0xff,0x6c,0x00,0x00},"unknown_opcode_fragmented_header_closes_without_rescan",CRagConnection::ReceiveError::UnknownOpcode);
     RejectUnframedInput({0x69,0x00,0x03,0x00},fixed,"undersized_variable_closes_without_rescan",CRagConnection::ReceiveError::InvalidVariableLength);
     RejectUnframedInput({0x69,0x00,0x00,0x80},fixed,"oversized_variable_closes_without_rescan",CRagConnection::ReceiveError::InvalidVariableLength);
     RejectFragmentedUnframedInput({0x69,0x00,0x03},{0x00,0x6c,0x00,0x00},"undersized_variable_fragmented_header_closes_without_rescan",CRagConnection::ReceiveError::InvalidVariableLength);
@@ -2601,11 +4565,13 @@ void PartyMarkerGameModeExitReplay()
     EofCase(fixed,0,"eof_empty",kFixedFixture,kFixedSha);EofCase(fixed,1,"eof_partial_fixed_header",kFixedFixture,kFixedSha);
     EofCase(variable,5,"eof_partial_variable_body",kVariableFixture,kVariableSha);
     ProductionRouterDispatchReplay();
+    PartyRosterReplacementReplay();
     PetStatusReplay();
     DisconnectAckEveryBoundaryReplay();
     DisconnectAckRefusalDispatchReplay(PendingDisconnectAction::ReturnToCharSelect,"disconnect_ack_refuses_return_to_char_select");
     DisconnectAckRefusalDispatchReplay(PendingDisconnectAction::ExitToWindows,"disconnect_ack_refuses_exit_to_windows");
     OutboundTransportCapture(fixed);
+    GroundSkillTextRequestReplay();
     ActionRequestBuilderReplay();
     DisconnectAckDecisionReplay();
     LoginStatusPrecedenceReplay();
@@ -2620,6 +4586,7 @@ void PartyMarkerGameModeExitReplay()
     LoginAcceptReplyReplay();
     LoginAcceptCharacterListReplay();
     LoginSelectCharacterRequestReplay();
+    LoginSelectCharacterRejectInvalidIndexReplay();
     LoginCreateCharacterRequestReplay();
     LoginAccountRequestReplay();
     LoginAccountAuxRequestReplay(true);
@@ -2636,6 +4603,7 @@ void PartyMarkerGameModeExitReplay()
     LoginCharConnectionFailureReplay();
     Login3ClientInfoHashRequestReplay();
     GuildMemberLoginNoticeReplay();
+    PartyMarkerGameModeExitReplay();
+    SelectedInventoryCartRouteIsolationReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}
-    PartyRosterReplacementReplay();

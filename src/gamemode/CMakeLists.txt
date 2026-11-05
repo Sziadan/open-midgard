@@ -32,6 +32,8 @@ target_link_libraries(ro_gamemode PUBLIC
     ro_ui
 )
 
+target_link_libraries(ro_gamemode PRIVATE zlibstatic)
+
 if(RO_ENABLE_QT6_UI)
     target_link_libraries(ro_gamemode PUBLIC
         Qt6::Core

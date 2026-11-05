@@ -1505,13 +1505,25 @@ void CSession::ClearInventoryItems()
     m_inventoryItems.clear();
 }
 
+void CSession::ClearNormalInventoryItems()
+{
+    for (auto it = m_inventoryItems.begin(); it != m_inventoryItems.end(); ) {
+        const bool equipment = it->m_itemType == 4 || it->m_itemType == 5
+            || it->m_itemType == 7 || it->m_itemType == 8;
+        if (!equipment) {
+            it = m_inventoryItems.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 void CSession::ClearEquipmentInventoryItems()
 {
     for (auto it = m_inventoryItems.begin(); it != m_inventoryItems.end(); ) {
-        // Ammo has an equipment destination, but arrives in the stackable
-        // list. Preserve it (and its equip ack) when replacing equipment.
-        const bool ammunition = it->m_itemType == 10 || it->m_itemType == 16 || it->m_itemType == 17;
-        if (it->m_location != 0 && !ammunition) {
+        const bool equipment = it->m_itemType == 4 || it->m_itemType == 5
+            || it->m_itemType == 7 || it->m_itemType == 8;
+        if (equipment) {
             it = m_inventoryItems.erase(it);
         } else {
             ++it;
@@ -2073,6 +2085,7 @@ int CSession::GetNpcShopUnitPrice(const NPC_SHOP_ROW& row) const
 
 void CSession::ClearParty()
 {
+    InvalidatePartyPositions();
     m_partyList.clear();
     m_partyName.clear();
     m_amIPartyMaster = false;
@@ -2081,7 +2094,6 @@ void CSession::ClearParty()
     m_itemCollectType = false;
 }
 
-unsigned int CSession::GetNumParty() const
 bool CSession::ReplacePartyRoster(const std::string& partyName, const std::vector<FRIEND_INFO>& members)
 {
     if (members.size() > 12) {
@@ -2126,6 +2138,34 @@ bool CSession::ReplacePartyRoster(const std::string& partyName, const std::vecto
     return true;
 }
 
+void CSession::InvalidatePartyPositions()
+{
+    for (FRIEND_INFO& member : m_partyList) {
+        member.partyPositionValid = false;
+        member.partyX = 0;
+        member.partyY = 0;
+    }
+    ++m_partyPositionRevision;
+    if (m_partyPositionRevision == 0) ++m_partyPositionRevision;
+}
+
+bool CSession::IsPartyMemberOnMap(const FRIEND_INFO& member, const std::string& currentMap) const
+{
+    if (member.AID == 0 || member.state != 0 || member.mapName.empty() || currentMap.empty()) {
+        return false;
+    }
+    return NormalizePartyMapKey(member.mapName) == NormalizePartyMapKey(currentMap);
+}
+
+bool CSession::IsPartyMarkerEligible(const FRIEND_INFO& member, const std::string& currentMap) const
+{
+    return member.partyPositionValid
+        && member.partyX >= 0
+        && member.partyY >= 0
+        && IsPartyMemberOnMap(member, currentMap);
+}
+
+unsigned int CSession::GetNumParty() const
 {
     return static_cast<unsigned int>(m_partyList.size());
 }
@@ -2199,7 +2239,12 @@ bool CSession::SetPartyMemberHp(unsigned int aid, long long hp, long long maxHp)
 
 bool CSession::SetPartyMemberPosition(unsigned int aid,int x,int y)
 {
-    return ApplyPartyMapPosition(m_partyList,aid,x,y);
+    const bool updated = ApplyPartyMapPosition(m_partyList,aid,x,y);
+    if (updated) {
+        ++m_partyPositionRevision;
+        if (m_partyPositionRevision == 0) ++m_partyPositionRevision;
+    }
+    return updated;
 }
 
 const FRIEND_INFO* CSession::FindPartyMemberByAid(unsigned int aid) const

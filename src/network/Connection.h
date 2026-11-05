@@ -3,7 +3,7 @@
 // Connection.h  –  TCP connection classes
 // Clean C++17 rewrite.
 //===========================================================================
-#if RO_PLATFORM_WINDOWS
+#if defined(_WIN32) || RO_PLATFORM_WINDOWS
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else

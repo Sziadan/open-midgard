@@ -318,6 +318,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x022C, 65);
     SetPacketSize(0x0235, kVariablePacketSize);
     SetPacketSize(0x0239, 11);
+    SetPacketSize(0x023A, 4);                 // Storage password request from server registry
+    SetPacketSize(0x023C, 6);                 // Storage password result from server registry
     SetPacketSize(0x0283, 6);
     SetPacketSize(0x028A, 18);              // ZC_NPC_SHOWEFST_UPDATE
     SetPacketSize(0x02EA, kVariablePacketSize);

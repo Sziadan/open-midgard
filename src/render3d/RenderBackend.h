@@ -1,6 +1,7 @@
 #pragma once
 
 #if defined(_WIN32) || RO_PLATFORM_WINDOWS
+#include <winsock2.h>
 #include <windows.h>
 using RoNativeWindowHandle = HWND;
 #else

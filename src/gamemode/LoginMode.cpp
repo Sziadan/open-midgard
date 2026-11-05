@@ -1402,6 +1402,7 @@ void CLoginMode::OnInit(const char* worldName) {
 }
 
 void CLoginMode::OnExit() {
+    g_session.InvalidatePartyPositions();
     RefreshMainWindowTitle();
 }
 
@@ -1925,13 +1926,24 @@ void CLoginMode::OnChangeState(int newState) {
                 zonePacket.data(),
                 static_cast<int>(zonePacket.size()),
                 &zonePacketLength)) {
+            CRagConnection::instance()->Disconnect();
+            m_isConnected = 0;
             SetLoginStatus("Login: failed to build zone-entry packet.");
+            ShowConnectionFailedDialog("zone entry");
             m_nextSubMode = LoginSubMode_Login;
             break;
         }
 
         const u16 zoneOpcode = static_cast<u16>(zonePacket[0]) | (static_cast<u16>(zonePacket[1]) << 8);
-        CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(zonePacket.data()), zonePacketLength);
+        if (!CRagConnection::instance()->SendPacket(
+                reinterpret_cast<const char*>(zonePacket.data()), zonePacketLength)) {
+            CRagConnection::instance()->Disconnect();
+            m_isConnected = 0;
+            SetLoginStatus("Login: zone-entry request send failed.");
+            ShowConnectionFailedDialog("zone server");
+            m_nextSubMode = LoginSubMode_Login;
+            break;
+        }
     char zoneHex[3 * sizeof(PACKET_CZ_ENTER_PACKETVER22) + 1] = {};
      FormatPacketBytes(zonePacket.data(), zonePacketLength, zoneHex, sizeof(zoneHex));
      DbgLog("[Login] wanttoconnection sent to zone: opcode=0x%04X aid=%u gid=%u len=%d bytes=%s\n",

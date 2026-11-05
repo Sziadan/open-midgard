@@ -82,7 +82,11 @@ inline bool ApplyPartyMapPosition(std::list<FRIEND_INFO>& members,u32 aid,int x,
 
 inline void PreservePartyMapPosition(const FRIEND_INFO& existing,FRIEND_INFO& updated)
 {
-    if(existing.AID!=0&&existing.AID==updated.AID&&existing.mapName==updated.mapName&&existing.partyPositionValid){
+    updated.partyPositionValid=false;
+    updated.partyX=0;
+    updated.partyY=0;
+    if(existing.AID!=0&&existing.AID==updated.AID&&existing.mapName==updated.mapName
+        &&existing.state==0&&updated.state==0&&existing.partyPositionValid){
         updated.partyX=existing.partyX;updated.partyY=existing.partyY;updated.partyPositionValid=true;
     }
 }
@@ -242,6 +246,7 @@ public:
     bool TryGetBaseExpPercent(int* outPercent) const;
     bool TryGetJobExpPercent(int* outPercent) const;
     void ClearInventoryItems();
+    void ClearNormalInventoryItems();
     void ClearEquipmentInventoryItems();
     void ClearStorageItems();
     void ClearSkillItems();
@@ -296,6 +301,10 @@ public:
     bool SetPartyMemberHp(unsigned int aid, long long hp, long long maxHp);
     bool SetPartyMemberPosition(unsigned int aid, int x, int y);
     bool ReplacePartyRoster(const std::string& partyName, const std::vector<FRIEND_INFO>& members);
+    void InvalidatePartyPositions();
+    bool IsPartyMemberOnMap(const FRIEND_INFO& member, const std::string& currentMap) const;
+    bool IsPartyMarkerEligible(const FRIEND_INFO& member, const std::string& currentMap) const;
+    u64 GetPartyPositionRevision() const { return m_partyPositionRevision; }
     const FRIEND_INFO* FindPartyMemberByAid(unsigned int aid) const;
     void RefreshPartyUI();
     const std::list<FRIEND_INFO>& GetPartyList() const;
@@ -363,11 +372,11 @@ public:
     char* GetHeadPaletteName(int head, int job, int sex, int palNum, char* buf);
     
 private:
+    u64 m_partyPositionRevision = 0;
     void EnsureFogParameterTableLoaded();
     void EnsureAccessoryNameTableLoaded();
     void InitJobHitWaveName();
     void InitWeaponHitWaveName();
-    u64 m_partyPositionRevision = 0;
     void InitWeaponSwingWaveName();
     int NormalizeJob(int job) const;
     u32 m_serverTime;
