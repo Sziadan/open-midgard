@@ -15,6 +15,18 @@ struct ShortcutKeyBinding {
     unsigned char modifiers = 0;
 };
 
+struct InventoryWindowInfo {
+    int x = 0;
+    int y = 120;
+    int width = 280;
+    int height = 120;
+    int originalHeight = 120;
+    int tab = 0;
+    int radio1 = 3;
+    int radio2 = 3;
+    int radio3 = 4;
+};
+
 // Forward declarations for all windows managed by UIWindowMgr
 class UILoadingWnd;
 class UIRoMapWnd;
@@ -127,6 +139,9 @@ public:
     bool Init();
     int GetInventoryTabSelection();
     void SetInventoryTabSelection(int tab);
+    InventoryWindowInfo GetInventoryWindowInfo();
+    void StoreInventoryWindowInfo(const InventoryWindowInfo& info);
+    void CloseInventoryWindow();
     void Reset();
     void OnProcess();
     void OnDraw();
@@ -275,7 +290,10 @@ public:
     std::array<ShortcutKeyBinding, kShortcutKeyBindingCount> m_shortcutKeyBindings{};
 
 private:
-    int m_inventoryTabSelection = -1;
+    void InitializeInventoryWindowInfo();
+    void ValidateInventoryWindowInfo();
+    bool m_inventoryWindowInfoInitialized = false;
+    InventoryWindowInfo m_inventoryWindowInfo;
     UIWindow* HitTestWindow(int x, int y) const;
     bool HasFrontMenuUiVisible() const;
     bool HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi);

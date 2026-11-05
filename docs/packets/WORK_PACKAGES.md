@@ -224,6 +224,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK09.10 [S]** Share initialized primary item tab groups across native inventory/storage and visible Qt commerce; verify selected source-derived types, historical branch probes, raw-field and refresh lifetime, and document dormant radio controls without inventing UI. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.11 [S]** Restore primary same-key item-detail selection closure and explicit forced update, with pre-open visibility, owned close/recreation, source isolation and actual native/Qt interaction/render checks; keep unimplemented NPC fallback gestures separate. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.12 [S]** Share the source inventory startup override and in-process native/Qt tab retention; verify fresh-process settings/radio/viewport branches, real input/close/recreation and storage independence without claiming full legacy geometry. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.13 [S]** Restore source inventory complete rectangle validation, resize quantization, mini/original-height retention and explicit close/recreation, with shared compact native/Qt geometry, real controls and fresh-process regressions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 

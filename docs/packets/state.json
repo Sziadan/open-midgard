@@ -1948,6 +1948,14 @@
         "docs/packets/evidence/PK09.12-tab-startup.json"
       ],
       "commit_subject": "packet(PK09.12): share source inventory tab startup and retention"
+    },
+    "PK09.13": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.13-inventory-geometry.md",
+        "docs/packets/evidence/PK09.13-inventory-geometry.json"
+      ],
+      "commit_subject": "packet(PK09.13): restore inventory rectangle and mini lifecycle"
     }
   }
 }

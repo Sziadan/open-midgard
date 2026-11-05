@@ -81,6 +81,7 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     }
     for(const auto& i:s.cartItems)cart.push_back(row(i.second));for(const auto& i:s.viewedEquipment)equipment.push_back(row(i));
     QVariantMap inv;if(auto* w=g_windowMgr.m_itemWnd)inv={{"visible",w->m_show!=0&&!suppressed},{"x",w->m_x},{"y",w->m_y},{"width",w->m_w},{"height",w->m_h}};
+    if(auto* w=g_windowMgr.m_itemWnd)inv["mini"]=w->IsMiniMode();
     data["inventory"]=inv;data["inventoryItems"]=inventory;data["inventoryCount"]=inventoryCount;data["inventoryTab"]=s.inventoryTab;
     data["cart"]=geometry(s.cart,suppressed);data["cartItems"]=cart;data["hasCart"]=s.hasCart;data["cartCount"]=s.cartCount;data["cartCapacity"]=s.cartCapacity;data["cartWeight"]=s.cartWeight/10;data["cartMaxWeight"]=s.cartMaxWeight/10;
     data["vending"]=geometry(s.vending,suppressed);data["draft"]=offers(s.draft);data["vendingSlots"]=s.vendingSlots;data["vendingActive"]=s.vendingActive;data["vendingPending"]=s.vendingPending;

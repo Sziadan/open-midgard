@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-05",
+  "baseline": "fda9c43e36eec37923733d7720857669b7817901",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.13): restore inventory rectangle and mini lifecycle",
+  "source_sha256": {
+    "CMakeLists.txt": "223fe73a0ca7016fbea1f6eea588b51d52aa409e4859cf3410574c3493d42357",
+    "src/gamemode/Commerce.cpp": "2ec8b2b61fc36fe4a9bae150fb90c6e0118556f1fa4e69b222949b658470e30b",
+    "src/qtui/QtCommerce.cpp": "6bff6b95bf856b42619c84c088afc55c1a348e1d09ba7fb51bef7ac1c4c363a8",
+    "src/qtui/qml/RoCommerce.qml": "5ef760a1da96b45bd7eb9a83049405b4ca45cc92c6526f1938a45c061187048c",
+    "src/qtui/qml/RoCommercePanel.qml": "31ca8a714787d3f74da4fc473c67f4097e11d7001b0e709f0cce7d14959f59a6",
+    "src/ui/UIItemWnd.cpp": "4ca03cfdfcf136b0e174cb7095b42a5f9b3f001b34d6dae5e6a505039579643a",
+    "src/ui/UIItemWnd.h": "c9d54d4d0e784c357c91afb5facac12557765852e25606bc623a7bfdc9839fd0",
+    "src/ui/UIWindowMgr.cpp": "6493491c36daa60350396a5382eda70cc0b8cea718a781b37e6b0d1e9e085dd8",
+    "src/ui/UIWindowMgr.h": "63849d55cc85fe6cc1b6576703fa3f43ce66405ef3cdf1a41267b3b6e5dff17a",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "95c32ebabe8abc71f580d7f6f856bbc8457fe7d18cc7d22b1bd31c7e682418f4",
+    "tools/tests/replay/InventoryGeometryRenderChecks.inc": "366431c43c89466479eb45e13180ecdc0b24e2b9dcca291981de7eb9ff280489"
+  },
+  "primary_sha256": {
+    "Ref/UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "Ref/UIRectInfo.cpp": "e966ca8d73cd295750d9d1abd0a0595b77112b3ae956efd5b41809ba98beaa11",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/WinMain.cpp": "3cac1c7d4943d1e85b91a336dd084deaa34d01cc29cb6a1b6c3f4fa22803d39c"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "3de13adff8a82670c321987a6eed1d1cc13308cb216a6f85e370aff441772893",
+    "packet_stream_replay_checks.exe": "9616cdd26cd503f3048b1801374f48fa47c544bd726c51bd8bbc2b130cf85087",
+    "open-midgard.exe": "66ac39e2c3f7a845183a6232cfacfed13114d66cfc4e023edee055edd56d9764"
+  },
+  "validation": {
+    "ctest_passed": 117,
+    "ctest_total": 117,
+    "ctest_seconds": 147.37,
+    "packet_PASS_records": 173,
+    "fresh_processes": 7,
+    "invalid_record_cases": 9,
+    "quantization_probes": 7,
+    "rendered_frames": 8,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "ad5d026d245017941e2c17e1b99932f44db71e5e55aee6846fe60fd0e52ae65a",
+    "ctest_log_sha256": "8d5d4bbf717102b6bcbbf3856b2e11b257d7b3f9a39306382d442886908c5607"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK09.13-geometry-renders/defaults-inventory-geometry-default.native.png": "2f71c5c7c93c8c4da9faf30c8e6e3e4c8c0ff3dc0ecee75cc937ed54be00f3c8",
+    "evidence/PK09.13-geometry-renders/defaults-inventory-geometry-default.qml.png": "d8f6d692ff3fdc6ac151a388205692c76cef3e027743b773b53deaaff7b90755",
+    "evidence/PK09.13-geometry-renders/defaults-inventory-geometry.json": "eb488a20f8283f356ff0a8c0d828cdb5416c462f0f18b4dd109d833260fad35a",
+    "evidence/PK09.13-geometry-renders/invalid-inventory-geometry.json": "4cd2a1268fee684c264b2b9f2cb48d1aee937d73e7a58966c75405e034948d57",
+    "evidence/PK09.13-geometry-renders/inventory-geometry-results.json": "a5a0f79c14aa0c2d1c5981762e8bde0c76a5c11cf259327ca1f46445ce65e11a",
+    "evidence/PK09.13-geometry-renders/lifecycle-inventory-geometry-lifecycle.qml.png": "ed4b58a3561d10b19fbf1d3a8b7ddb70f3b1c35700a00d6bbe63291b62d74f11",
+    "evidence/PK09.13-geometry-renders/lifecycle-inventory-geometry-resized.native.png": "bb3c77dde2a8c0962e4f359307d571c8db7743b84d6cbf85583d53798c38a723",
+    "evidence/PK09.13-geometry-renders/lifecycle-inventory-geometry-resized.qml.png": "0907bd6299c59dd2d30e5e123e4399b25c2ff8a44b53e40e1de721a07cce000d",
+    "evidence/PK09.13-geometry-renders/lifecycle-inventory-geometry.json": "dfcd78cdf2024999f8453ff78a1971f4c050248684fb74732a25aa3bf8423713",
+    "evidence/PK09.13-geometry-renders/mini-inventory-geometry-mini.qml.png": "59bd1764b18ff78f5452298d8c563364807414ef584dc2c41ed486e7c1fc9e4f",
+    "evidence/PK09.13-geometry-renders/mini-inventory-geometry.json": "b278941fbe0e82fd1d4d89332376fdfbf03c6d4022d302192cc205093e54fc99",
+    "evidence/PK09.13-geometry-renders/seed-warm-inventory-geometry.json": "6ae98b9573f445dcd14ac6729095b8e9cb28bfd4f07087b07efb8d07c4b85046",
+    "evidence/PK09.13-geometry-renders/small-inventory-geometry.json": "fb1d02caa77a6930491979079a92f20595099b3bb6237ab6966bf1d354073484",
+    "evidence/PK09.13-geometry-renders/warm-inventory-geometry-warm.native.png": "c70abbf801fde10c7a6e25d84b05b1ad667669c8d0807c271c372c2ee81db86e",
+    "evidence/PK09.13-geometry-renders/warm-inventory-geometry-warm.qml.png": "bea12b68be37422d79fb8aeb99ff4fc6cc18e821714dda0e0db597d9a98d71be",
+    "evidence/PK09.13-geometry-renders/warm-inventory-geometry.json": "888642f639febf137095545f652e9241412e7575304daead8eb5137f68c2faa7",
+    "evidence/PK09.13-before.txt": "16fdee753b62099c3916a9e18049912a45b7dc0c9df2115998c84b9f7cdc4272"
+  },
+  "scope_limits": [
+    "Source logical geometry and100% render fixtures; broader scale transitions remain open",
+    "Storage independent; detail geometry and full inventory map/show restoration not certified",
+    "Selected packet snapshots plus explicitly synthetic geometry/settings branches",
+    "No wire/route/discovery closure or full PK09.04/PK47/PK48/49/deployed acceptance"
+  ]
+}

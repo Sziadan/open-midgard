@@ -134,7 +134,23 @@ bool Receive(CGameMode&,const PacketView& v){
 
 bool Action(const Command& c){
     state.status.clear();
-    if(c.action=="moveWindow"){if(auto* w=window(c.to)){w->x=std::max(0,c.x);w->y=std::max(0,c.y);return true;}if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.m_itemWnd->Move(std::max(0,c.x),std::max(0,c.y));return true;}return false;}
+    if(c.action=="inventoryMini" && g_windowMgr.m_itemWnd){
+        return g_windowMgr.m_itemWnd->SendMsg(nullptr,6,136,0,0)!=0;
+    }
+    if(c.action=="resizeInventory" && g_windowMgr.m_itemWnd){
+        g_windowMgr.m_itemWnd->ResizeInventory(c.x,c.y);
+        if(c.amount)g_windowMgr.m_itemWnd->StoreInfo();
+        return true;
+    }
+    if(c.action=="moveWindow"){
+        if(auto* w=window(c.to)){w->x=std::max(0,c.x);w->y=std::max(0,c.y);return true;}
+        if(c.to=="inventory" && g_windowMgr.m_itemWnd){
+            g_windowMgr.m_itemWnd->Move(std::max(0,c.x),std::max(0,c.y));
+            if(c.amount)g_windowMgr.m_itemWnd->StoreInfo();
+            return true;
+        }
+        return false;
+    }
     if(c.action=="inventoryTab"){
         if(g_windowMgr.m_itemWnd)g_windowMgr.m_itemWnd->SetCurrentTab(c.tab);
         else {
@@ -145,7 +161,7 @@ bool Action(const Command& c){
     }
     if(c.action=="cart"){if(state.hasCart){state.cart.visible=!state.cart.visible;return true;}return false;}
     if(c.action=="close"){
-        if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.m_itemWnd->SetShow(0);return true;}
+        if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.CloseInventoryWindow();return true;}
         if(c.to=="trade"){bool sent=false;if(state.tradeIncoming){auto p=packet(0xe6,3);p[2]=4;sent=send(p);}else sent=simple(0xed);if(!sent)return false;tradeReset();state.trade.visible=false;note("Trade canceled. No exchange was completed.");return true;}
         if(c.to=="vending"){if(state.vendingActive){if(!simple(0x12e))return false;state.vendingActive=false;}else{auto p=packet(0x1b2,85);put(p,2,85);if(!send(p))return false;}state.draft.clear();state.vendingPending=false;}
         if(auto* w=window(c.to)){w->visible=false;return true;}return false;

@@ -92,3 +92,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 | PK44.CHAR-BLOCK-INFO | Character-server variable character-block/unban-time status packet | PK44; review PK48 | Sender returns before construction under selected legacy-charinfo macro; inactive for selected source config |
 
 [PK09.ITEM-TAB-STARTUP](PK09.ITEM-TAB-STARTUP.md) records the late cold-start override, manager-owned runtime selection, native/Qt sharing and storage independence. Full original geometry remains open.
+
+[PK09.INVENTORY-GEOMETRY](PK09.INVENTORY-GEOMETRY.md) defines complete inventory rectangle validation, source quantization,17-pixel mini, stored/live heights and native/Qt close and resize controls. Detail and map/show acceptance remain open.

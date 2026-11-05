@@ -734,28 +734,79 @@ void UIWindowMgr::ClampWindowToClient(int* x, int* y, int w, int h) const
 
 int UIWindowMgr::GetInventoryTabSelection()
 {
-    if (m_inventoryTabSelection >= 0) return m_inventoryTabSelection;
-    // Ref InitUIRectInfoFromReg reads the tab, then overrides it to 1 and
-    // (744,514,280,134). Message34 falls back to tab0 if that record is invalid.
-    m_inventoryTabSelection = 0;
-    if (!HasSettingsIniSection("UIWindows")) return m_inventoryTabSelection;
-    const auto validRadio = [](const char* key, int maximum) {
+    InitializeInventoryWindowInfo();
+    return m_inventoryWindowInfo.tab;
+}
+
+void UIWindowMgr::InitializeInventoryWindowInfo()
+{
+    if (m_inventoryWindowInfoInitialized) return;
+    m_inventoryWindowInfoInitialized = true;
+    // Ref reads the UI registry record once, then overwrites these inventory
+    // fields. Later window recreation consumes the in-memory record instead.
+    if (!HasSettingsIniSection("UIWindows")) return;
+    m_inventoryWindowInfo = {744,514,280,134,134,1,3,3,4};
+    const auto radio = [](const char* key, int fallback) {
         std::string raw;
-        if (!TryLoadSettingsIniString("UIWindows", key, &raw)) return true;
+        if (!TryLoadSettingsIniString("UIWindows", key, &raw)) return fallback;
         int value = 0;
-        return TryLoadSettingsIniInt("UIWindows", key, &value) && value >= 0 && value <= maximum;
+        return TryLoadSettingsIniInt("UIWindows", key, &value) ? value : -1;
     };
+    m_inventoryWindowInfo.radio1 = radio("ItemWndRadio1",3);
+    m_inventoryWindowInfo.radio2 = radio("ItemWndRadio2",3);
+    m_inventoryWindowInfo.radio3 = radio("ItemWndRadio3",4);
+    ValidateInventoryWindowInfo();
+}
+
+void UIWindowMgr::ValidateInventoryWindowInfo()
+{
     RECT client{};
     GetUiLogicalClientRectForScale(IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f, &client);
-    if (client.right - client.left >= 1024 && client.bottom - client.top >= 648
-        && validRadio("ItemWndRadio1", 3) && validRadio("ItemWndRadio2", 3) && validRadio("ItemWndRadio3", 4))
-        m_inventoryTabSelection = 1;
-    return m_inventoryTabSelection;
+    const auto& info = m_inventoryWindowInfo;
+    // Use wide subtraction for externally seeded or corrupt dimensions. The
+    // source checks stored height (including17), not the expanded height.
+    const bool valid = info.x >= 0 && int64_t(info.x) <= int64_t(client.right-client.left)-info.width
+        && info.y >= 0 && int64_t(info.y) <= int64_t(client.bottom-client.top)-info.height
+        && info.tab >= 0 && info.tab <= 2
+        && info.radio1 >= 0 && info.radio1 < 4 && info.radio2 >= 0 && info.radio2 < 4
+        && info.radio3 >= 0 && info.radio3 <= 4;
+    if (!valid) m_inventoryWindowInfo = InventoryWindowInfo{};
 }
 
 void UIWindowMgr::SetInventoryTabSelection(int tab)
 {
-    m_inventoryTabSelection = std::clamp(tab, 0, 2);
+    InitializeInventoryWindowInfo();
+    m_inventoryWindowInfo.tab = std::clamp(tab, 0, 2);
+}
+
+InventoryWindowInfo UIWindowMgr::GetInventoryWindowInfo()
+{
+    InitializeInventoryWindowInfo();
+    // Message34 validates the complete record on each new window attachment.
+    ValidateInventoryWindowInfo();
+    return m_inventoryWindowInfo;
+}
+
+void UIWindowMgr::StoreInventoryWindowInfo(const InventoryWindowInfo& info)
+{
+    m_inventoryWindowInfoInitialized = true;
+    m_inventoryWindowInfo = info;
+    SaveSettingsIniInt("UIWindows","ItemWndX",info.x);
+    SaveSettingsIniInt("UIWindows","ItemWndY",info.y);
+    SaveSettingsIniInt("UIWindows","ItemWndWidth",info.width);
+    SaveSettingsIniInt("UIWindows","ItemWndHeight",info.height);
+    SaveSettingsIniInt("UIWindows","ItemWndOrgHeight",info.originalHeight);
+    SaveSettingsIniInt("UIWindows","ItemWndTab",info.tab);
+    SaveSettingsIniInt("UIWindows","ItemWndRadio1",info.radio1);
+    SaveSettingsIniInt("UIWindows","ItemWndRadio2",info.radio2);
+    SaveSettingsIniInt("UIWindows","ItemWndRadio3",info.radio3);
+}
+
+void UIWindowMgr::CloseInventoryWindow()
+{
+    if (!m_itemWnd) return;
+    if (ContainsManagedWindow(*this,m_itemWnd)) DeleteWindow(m_itemWnd);
+    else m_itemWnd->SetShow(0);
 }
 
 void UIWindowMgr::RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent)

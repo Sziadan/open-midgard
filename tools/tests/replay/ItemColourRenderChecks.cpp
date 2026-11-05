@@ -131,13 +131,13 @@ template<class Window> QPoint Hover(Window& window) {
         <<" slots="<<data.displaySlots.size()<<" size="<<window.m_w<<','<<window.m_h<<'\n';
     throw std::runtime_error("real native equipment tab has no occupied slot");
 }
-template<class Window> QImage Native(Window& window,QRgb expected) {
-    ArgbDibSurface surface;Require(surface.EnsureSize(Width,Height),"native item DIB failed");
-    std::fill_n(surface.GetPixels(),Width*Height,0xff181b20u);
+template<class Window> QImage Native(Window& window,QRgb expected,int width=Width,int height=Height) {
+    ArgbDibSurface surface;Require(surface.EnsureSize(width,height),"native item DIB failed");
+    std::fill_n(surface.GetPixels(),width*height,0xff181b20u);
     window.DrawNativeToHdc(surface.GetDC());
-    QImage before=QImage(reinterpret_cast<uchar*>(surface.GetPixels()),Width,Height,Width*4,QImage::Format_RGB32).copy();
-    window.DrawNativeHoverOverlay(surface.GetDC(),RECT{0,0,Width,Height});
-    QImage image=QImage(reinterpret_cast<uchar*>(surface.GetPixels()),Width,Height,Width*4,QImage::Format_RGB32).copy();
+    QImage before=QImage(reinterpret_cast<uchar*>(surface.GetPixels()),width,height,width*4,QImage::Format_RGB32).copy();
+    window.DrawNativeHoverOverlay(surface.GetDC(),RECT{0,0,width,height});
+    QImage image=QImage(reinterpret_cast<uchar*>(surface.GetPixels()),width,height,width*4,QImage::Format_RGB32).copy();
     Require(Pixels(image,image.rect(),expected,&before)>8,"native hover did not paint source-defined foreground");
     return image;
 }
@@ -153,6 +153,7 @@ template<class Window> QImage Native(Window& window,QRgb expected) {
 #include "NpcShopAmountRenderChecks.inc"
 #include "NpcShopQuantityRenderChecks.inc"
 #include "InventoryTabStartupRenderChecks.inc"
+#include "InventoryGeometryRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -172,14 +173,21 @@ int main(int argc,char** argv) {
         const bool npcShopQuantityOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="npc-shop-quantity";
         const bool itemTabsStartup=argc>2 && QString::fromLocal8Bit(argv[2])=="item-tabs-startup";
         const bool itemTabsStartupChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-tabs-startup-child";
+        const bool itemGeometry=argc>2 && QString::fromLocal8Bit(argv[2])=="item-geometry";
+        const bool itemGeometryChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-geometry-child";
+        if(itemGeometry) {
+            CheckInventoryGeometryDriver(output);
+            std::cout<<"PASS source inventory geometry and mini lifecycle\n";return 0;
+        }
         if(itemTabsStartup) {
             CheckInventoryTabStartupDriver(output);
             std::cout<<"PASS source inventory tab startup and runtime retention\n";return 0;
         }
         InventoryTabViewportFixture inventoryTabViewport;
-        if(itemTabsStartupChild) {
+        if(itemTabsStartupChild || itemGeometryChild) {
             Require(argc>3,"inventory startup child stage missing");
-            SetRuntimeUiScalePercent(100);inventoryTabViewport.Create(QString::fromLocal8Bit(argv[3]));
+            const QString stage=QString::fromLocal8Bit(argv[3]);
+            SetRuntimeUiScalePercent(100);inventoryTabViewport.Create(stage=="small"?QString("read-small"):stage);
         }
         if(specialOnly || rentalOnly) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(rentalOnly?"rental-msgstringtable.txt":"special-name-msgstringtable.txt"));
@@ -205,14 +213,15 @@ int main(int argc,char** argv) {
         CGameMode mode;mode.m_world=&world;mode.m_view=&camera;SkillPacketReplayAccess::SetCurrent(&mode);
         RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
         g_session.ClearInventoryItems();g_session.CloseStorage();ro::commerce::Reset();
-        UIItemWnd inventory;inventory.SetShow(1);inventory.Resize(350,420);inventory.Move(20,100);
+        UIItemWnd inventory;inventory.SetShow(1);
+        if(!itemGeometryChild){inventory.Resize(350,420);inventory.Move(20,100);}
         UIStorageWnd storage;storage.SetShow(1);storage.Resize(350,420);storage.Move(900,100);
         g_windowMgr.m_itemWnd=&inventory;g_windowMgr.m_storageWnd=&storage;
-        if(!itemTabsStartupChild) {
+        if(!itemTabsStartupChild && !itemGeometryChild) {
             inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+58);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+58);
             SelectInventoryFixtureTab(1);
         }
-        if(!itemTabsStartupChild) {
+        if(!itemTabsStartupChild && !itemGeometryChild) {
             storage.OnLBtnDown(storage.m_x+5,storage.m_y+58);storage.OnLBtnUp(storage.m_x+5,storage.m_y+58);
         }
         ro::commerce::state.cart.visible=true;ro::commerce::state.cart.x=450;ro::commerce::state.cart.y=100;
@@ -220,14 +229,16 @@ int main(int argc,char** argv) {
         Require(state,"item adapter state missing");state->setLoadingVisible(false);state->setUiScale(1.0);
         int errors=0;
         QQuickView view;view.setColor(QColor("#181b20"));view.resize(Width,Height);view.setResizeMode(QQuickView::SizeRootObjectToView);
+        if(itemGeometryChild)view.resize(QString::fromLocal8Bit(argv[3])=="small"?640:1280,QString::fromLocal8Bit(argv[3])=="small"?480:720);
         view.rootContext()->setContextProperty("uiState",adapter.stateObject());
         view.engine()->addImageProvider("openmidgard",new FixtureImages);
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
-        if(itemTabsStartupChild) {
+        if(itemTabsStartupChild || itemGeometryChild) {
             Require(argc>3,"inventory tab persistence child stage missing");
-            CheckInventoryTabStartupChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
+            if(itemGeometryChild)CheckInventoryGeometryChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
+            else CheckInventoryTabStartupChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
             Require(errors==0,"inventory tab persistence child emitted QML errors");
             view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
             SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;return 0;

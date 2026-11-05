@@ -348,6 +348,11 @@
         "id": "PK09.12",
         "action": "Share the source inventory startup override and in-process native/Qt tab retention; verify fresh-process settings/radio/viewport branches, real input/close/recreation and storage independence without claiming full legacy geometry.",
         "tier": "S"
+      },
+      {
+        "id": "PK09.13",
+        "action": "Restore source inventory complete rectangle validation, resize quantization, mini/original-height retention and explicit close/recreation, with shared compact native/Qt geometry, real controls and fresh-process regressions.",
+        "tier": "S"
       }
     ],
     "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."

@@ -45,9 +45,9 @@
 
 namespace {
 
-constexpr int kWindowWidth = 360;
-constexpr int kWindowHeight = 300;
-constexpr int kMiniHeight = 34;
+constexpr int kWindowWidth = 280;
+constexpr int kWindowHeight = 120;
+constexpr int kMiniHeight = 17;
 constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kGridLeft = 36;
 constexpr int kGridTop = 17;
@@ -584,15 +584,12 @@ UIItemWnd::UIItemWnd()
       m_lastVisualStateToken(0ull),
       m_hasVisualStateToken(false)
 {
+    const InventoryWindowInfo info = g_windowMgr.GetInventoryWindowInfo();
     Create(kWindowWidth, kWindowHeight);
-    Move(0, 121);
-    int savedX = m_x;
-    int savedY = m_y;
-    if (LoadUiWindowPlacement("ItemWnd", &savedX, &savedY)) {
-        g_windowMgr.ClampWindowToClient(&savedX, &savedY, m_w, m_h);
-        Move(savedX, savedY);
-    }
-    SetCurrentTab(g_windowMgr.GetInventoryTabSelection());
+    ResizeInventory(info.width, info.originalHeight);
+    if (info.height != info.originalHeight) SetMiniMode(true);
+    Move(info.x, info.y);
+    SetCurrentTab(info.tab);
 }
 
 UIItemWnd::~UIItemWnd()
@@ -632,8 +629,11 @@ bool UIItemWnd::IsUpdateNeed()
 msgresult_t UIItemWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     (void)sender;
-    (void)lparam;
-    (void)extra;
+
+    if (msg == 14 && wparam == 7) {
+        ResizeInventory(static_cast<int>(lparam), static_cast<int>(extra));
+        return 1;
+    }
 
     if (msg != 6) {
         return 0;
@@ -644,10 +644,11 @@ msgresult_t UIItemWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msg
         SetMiniMode(false);
         return 1;
     case kButtonIdMini:
-        SetMiniMode(true);
+        SetMiniMode(!IsMiniMode());
         return 1;
     case kButtonIdClose:
-        SetShow(0);
+        if (g_windowMgr.m_itemWnd == this) g_windowMgr.CloseInventoryWindow();
+        else SetShow(0);
         return 1;
     default:
         return 1;
@@ -807,7 +808,9 @@ void UIItemWnd::DrawNativeToHdc(HDC hdc)
         const int itemCount = GetInventoryItemCount();
         char footerText[32]{};
         std::snprintf(footerText, sizeof(footerText), "%d / %d", itemCount, totalSlotCount);
-        DrawWindowText(hdc, m_x + m_w - 50, footerRect.top + 5, footerText, RGB(74, 74, 74));
+        DrawWindowText(hdc, m_x + m_w - 74, footerRect.top + 5, footerText, RGB(74, 74, 74));
+        RECT grip{m_x+m_w-15,m_y+m_h-15,m_x+m_w,m_y+m_h};
+        DrawFrameControl(hdc,&grip,DFC_SCROLL,DFCS_SCROLLSIZEGRIP);
     }
 
     DrawChildrenToHdc(hdc);
@@ -946,10 +949,19 @@ void UIItemWnd::OnLBtnDown(int x, int y)
     m_dragItemCount = 0;
     m_dragItemEquipLocation = 0;
 
+    if (m_show && !IsMiniMode() && x >= m_x+m_w-15 && x < m_x+m_w
+        && y >= m_y+m_h-15 && y < m_y+m_h) {
+        m_resizing = true;
+        m_resizeStart = {x,y};
+        m_resizeWidth = m_w;
+        m_resizeHeight = m_h;
+        return;
+    }
+
     if (IsQtUiRuntimeEnabled()) {
-        const RECT baseRect = MakeItemRect(m_x, m_y, 3, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT miniRect = MakeItemRect(m_x, m_y, 247, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT closeRect = MakeItemRect(m_x, m_y, 265, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT baseRect = MakeItemRect(m_x, m_y, m_w - 33, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT miniRect = MakeItemRect(m_x, m_y, m_w - 33, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT closeRect = MakeItemRect(m_x, m_y, m_w - 15, 3, kQtButtonWidth, kQtButtonHeight);
         if (IsPointInRect(baseRect, x, y) || IsPointInRect(miniRect, x, y) || IsPointInRect(closeRect, x, y)) {
             UIWindow::OnLBtnDown(x, y);
             return;
@@ -1018,6 +1030,11 @@ void UIItemWnd::OnLBtnDown(int x, int y)
 
 void UIItemWnd::OnLBtnUp(int x, int y)
 {
+    if (m_resizing) {
+        m_resizing = false;
+        StoreInfo();
+        return;
+    }
     m_dragArmed = false;
     m_dragItemId = 0;
     m_dragItemIndex = 0;
@@ -1031,9 +1048,9 @@ void UIItemWnd::OnLBtnUp(int x, int y)
             return;
         }
 
-        const RECT baseRect = MakeItemRect(m_x, m_y, 3, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT miniRect = MakeItemRect(m_x, m_y, 247, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT closeRect = MakeItemRect(m_x, m_y, 265, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT baseRect = MakeItemRect(m_x, m_y, m_w - 33, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT miniRect = MakeItemRect(m_x, m_y, m_w - 33, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT closeRect = MakeItemRect(m_x, m_y, m_w - 15, 3, kQtButtonWidth, kQtButtonHeight);
 
         if (m_h == kMiniHeight && IsPointInRect(baseRect, x, y)) {
             SendMsg(this, 6, kButtonIdBase, 0, 0);
@@ -1081,6 +1098,10 @@ void UIItemWnd::OnRBtnDown(int x, int y)
 
 void UIItemWnd::OnMouseMove(int x, int y)
 {
+    if (m_resizing) {
+        ResizeInventory(m_resizeWidth+x-m_resizeStart.x, m_resizeHeight+y-m_resizeStart.y);
+        return;
+    }
     UIFrameWnd::OnMouseMove(x, y);
     if (m_dragArmed) {
         const int dx = x - m_dragStartPoint.x;
@@ -1178,11 +1199,7 @@ void UIItemWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
 
 void UIItemWnd::StoreInfo()
 {
-    SaveUiWindowPlacement("ItemWnd", m_x, m_y);
-    SaveSettingsIniInt("UIWindows", "ItemWndTab", m_currentTab);
-    SaveSettingsIniInt("UIWindows", "ItemWndRadio1", 3);
-    SaveSettingsIniInt("UIWindows", "ItemWndRadio2", 3);
-    SaveSettingsIniInt("UIWindows", "ItemWndRadio3", 4);
+    g_windowMgr.StoreInventoryWindowInfo({m_x,m_y,m_w,m_h,m_fullHeight,m_currentTab,3,3,4});
 }
 
 bool UIItemWnd::IsMiniMode() const
@@ -1332,7 +1349,7 @@ bool UIItemWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDat
     switch (index) {
     case 0:
         outData->id = kButtonIdBase;
-        outData->x = m_x + 247;
+        outData->x = m_x + m_w - 33;
         outData->y = m_y + 3;
         outData->width = kQtButtonWidth;
         outData->height = kQtButtonHeight;
@@ -1342,7 +1359,7 @@ bool UIItemWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDat
         return true;
     case 1:
         outData->id = kButtonIdMini;
-        outData->x = m_x + 247;
+        outData->x = m_x + m_w - 33;
         outData->y = m_y + 3;
         outData->width = kQtButtonWidth;
         outData->height = kQtButtonHeight;
@@ -1352,7 +1369,7 @@ bool UIItemWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDat
         return true;
     case 2:
         outData->id = kButtonIdClose;
-        outData->x = m_x + 265;
+        outData->x = m_x + m_w - 15;
         outData->y = m_y + 3;
         outData->width = kQtButtonWidth;
         outData->height = kQtButtonHeight;
@@ -1403,15 +1420,15 @@ void UIItemWnd::LayoutChildren()
     }
 
     if (m_systemButtons[0]) {
-        m_systemButtons[0]->Move(m_x + 247, m_y + 3);
+        m_systemButtons[0]->Move(m_x + m_w - 33, m_y + 3);
         m_systemButtons[0]->SetShow(m_h == kMiniHeight ? 1 : 0);
     }
     if (m_systemButtons[1]) {
-        m_systemButtons[1]->Move(m_x + 247, m_y + 3);
+        m_systemButtons[1]->Move(m_x + m_w - 33, m_y + 3);
         m_systemButtons[1]->SetShow(m_h != kMiniHeight ? 1 : 0);
     }
     if (m_systemButtons[2]) {
-        m_systemButtons[2]->Move(m_x + 265, m_y + 3);
+        m_systemButtons[2]->Move(m_x + m_w - 15, m_y + 3);
         m_systemButtons[2]->SetShow(1);
     }
 }
@@ -1443,7 +1460,26 @@ void UIItemWnd::ReleaseAssets()
 
 void UIItemWnd::SetMiniMode(bool miniMode)
 {
-    Resize(kWindowWidth, miniMode ? kMiniHeight : m_fullHeight);
+    if (miniMode == IsMiniMode()) return;
+    if (miniMode) m_fullHeight = m_h;
+    Resize(m_w, miniMode ? kMiniHeight : m_fullHeight);
+    m_hoveredItemIndex = -1;
+    m_hoverOverlayItem = nullptr;
+    m_dragArmed = false;
+    m_resizing = false;
+    LayoutChildren();
+}
+
+void UIItemWnd::ResizeInventory(int width, int height)
+{
+    // Ref message14: C++ signed division deliberately truncates toward zero.
+    const int nextWidth = 280+32*((std::clamp(width,232,320)-280)/32);
+    const int nextHeight = 38+32*((std::clamp(height,102,240)-38)/32);
+    Resize(nextWidth,nextHeight);
+    m_fullHeight = m_h;
+    m_viewOffset = 0;
+    m_hoveredItemIndex = -1;
+    m_hoverOverlayItem = nullptr;
     LayoutChildren();
 }
 

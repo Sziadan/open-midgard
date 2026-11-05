@@ -86,6 +86,8 @@ public:
     bool GetQtTabDisplayForQt(int index, QtButtonDisplay* outData) const;
     void SetCurrentTab(int tabIndex);
     int GetCurrentTab() const { return m_currentTab; }
+    int GetRestoreHeight() const { return m_fullHeight; }
+    void ResizeInventory(int width, int height);
 
 private:
     struct VisibleItem {
@@ -117,6 +119,10 @@ private:
     int m_viewOffset;
     int m_hoveredItemIndex;
     int m_fullHeight;
+    bool m_resizing = false;
+    POINT m_resizeStart{};
+    int m_resizeWidth = 0;
+    int m_resizeHeight = 0;
     const ITEM_INFO* m_hoverOverlayItem;
     RECT m_hoverOverlayRect;
     std::array<UIBitmapButton*, 3> m_systemButtons;

@@ -153,27 +153,27 @@ Item {
             caption: modelData==="inventory" ? "Inventory" : "Cart inventory"
             z: modelData==="inventory" ? 1 : 2
             Item { parent: bag.body; anchors.fill: parent
-                Row { id: tabs; spacing: 4; height: 30
+                Column { id: tabs; spacing: 0; width: 32; height: bag.kind==="inventory" ? 81 : 0
                     Repeater { model: bag.kind==="inventory" ? ["Usable","Equipment","Other"] : []
-                        Button { required property string modelData; required property int index; objectName:"commerceInventoryTab_"+index; width: 72; label: modelData; primary: hub.view.inventoryTab===index; onClicked: hub.send("inventoryTab",{tab:index}) }
+                        Button { required property string modelData; required property int index; objectName:"commerceInventoryTab_"+index; width: 32; height: 27; labelSize: 10; label: ["Use","Eqp","Etc"][index]; primary: hub.view.inventoryTab===index; onClicked: hub.send("inventoryTab",{tab:index}) }
                     }
-                    Button { objectName:"commerceCartButton"; visible: bag.kind==="inventory" && !!hub.view.hasCart; label: "Cart"; width: 68; onClicked: hub.send("cart") }
                 }
-                Flickable { anchors.top: tabs.bottom; anchors.topMargin: 6; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: footer.top; anchors.bottomMargin: 6; clip: true; contentHeight: Math.max(height,grid.height)
-                    Grid { id: grid; width: parent.width; columns: Math.max(1,Math.floor((width+4)/39)); spacing: 4
+                Flickable { anchors.top: parent.top; anchors.topMargin: bag.kind==="inventory" ? 0 : 36; anchors.left: parent.left; anchors.leftMargin: bag.kind==="inventory" ? 36 : 0; anchors.right: parent.right; anchors.rightMargin: bag.kind==="inventory" ? 20 : 0; anchors.bottom: footer.top; anchors.bottomMargin: bag.kind==="inventory" ? 0 : 6; clip: true; contentHeight: Math.max(height,grid.height)
+                    Grid { id: grid; width: parent.width; columns: Math.max(1,Math.floor(bag.kind==="inventory" ? width/32 : (width+4)/39)); spacing: bag.kind==="inventory" ? 0 : 4
                         property var items: bag.kind==="inventory" ? hub.view.inventoryItems || [] : hub.view.cartItems || []
-                        Repeater { model: Math.max(grid.items.length,grid.columns*Math.ceil(parent.parent.height/39))
-                            Rectangle { required property int index; width:35; height:35; radius:5; color:theme.rowAlt; border.width:1; border.color:theme.bodyBorder
-                                Tile { visible:parent.index<grid.items.length; item:grid.items[parent.index] || ({index:0,id:0,count:0}); sourceKind:bag.kind }
+                        Repeater { model: Math.max(grid.items.length,grid.columns*(bag.kind==="inventory" ? Math.floor(parent.parent.height/32) : Math.ceil(parent.parent.height/39)))
+                            Rectangle { required property int index; width:bag.kind==="inventory" ? 32 : 35; height:width; radius:5; color:theme.rowAlt; border.width:1; border.color:theme.bodyBorder
+                                Tile { width: parent.width; height: parent.height; visible:parent.index<grid.items.length; item:grid.items[parent.index] || ({index:0,id:0,count:0}); sourceKind:bag.kind }
                             }
                         }
                     }
                     DropArea { anchors.fill: parent; keys:["commerce-item"]; onDropped: function(drop) { hub.drop(bag.kind);drop.acceptProposedAction() } }
                 }
-                Column { id: footer; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 3
-                    Text { objectName: "commerceFooter_"+bag.kind; text: bag.kind==="inventory" ? (hub.view.inventoryCount||0)+" / 100 slots · Double-click to use / equip" : (hub.view.cartCount||0)+" / "+(hub.view.cartCapacity||100)+" slots · Weight "+(hub.view.cartWeight||0)+" / "+(hub.view.cartMaxWeight||0); color: theme.muted; font.pixelSize: 10 }
-                    Status { width: parent.width; height: 28 }
+                Column { id: footer; anchors.left: parent.left; anchors.leftMargin: bag.kind==="inventory" ? 36 : 0; anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 3
+                    Text { objectName: "commerceFooter_"+bag.kind; text: bag.kind==="inventory" ? (hub.view.status || (hub.view.inventoryCount||0)+" / 100 slots") : (hub.view.cartCount||0)+" / "+(hub.view.cartCapacity||100)+" slots · Weight "+(hub.view.cartWeight||0)+" / "+(hub.view.cartMaxWeight||0); color: theme.muted; font.pixelSize: 10; width: bag.kind==="inventory" ? parent.width-(hub.view.hasCart ? 92 : 20) : implicitWidth; elide: bag.kind==="inventory" ? Text.ElideRight : Text.ElideNone }
+                    Status { width: parent.width; visible: bag.kind!=="inventory"; height: visible ? 28 : 0 }
                 }
+                Button { objectName:"commerceCartButton"; visible: bag.kind==="inventory" && !!hub.view.hasCart; label: "Cart"; x: parent.width-88; y: parent.height-20; width: 68; height: 18; onClicked: hub.send("cart") }
             }
         }
     }
