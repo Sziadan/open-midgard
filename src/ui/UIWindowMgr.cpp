@@ -756,6 +756,9 @@ void UIWindowMgr::InitializeInventoryWindowInfo()
     m_itemDetailWindowInfo = {
         detailField("ItemInfoWndX"),detailField("ItemInfoWndY"),
         detailField("ItemInfoWndWidth"),detailField("ItemInfoWndHeight")};
+    m_cardDetailWindowInfo = {
+        detailField("CardInfoWndX"),detailField("CardInfoWndY"),
+        detailField("CardInfoWndWidth"),detailField("CardInfoWndHeight")};
     m_inventoryWindowInfo = {744,514,280,134,134,1,3,3,4};
     const auto radio = [](const char* key, int fallback) {
         std::string raw;
@@ -820,39 +823,40 @@ void UIWindowMgr::CloseInventoryWindow()
     else m_itemWnd->SetShow(0);
 }
 
-ItemDetailWindowInfo UIWindowMgr::GetItemDetailWindowInfo()
+ItemDetailWindowInfo UIWindowMgr::GetItemDetailWindowInfo(ItemDetailKind kind)
 {
     InitializeInventoryWindowInfo();
-    return m_itemDetailWindowInfo;
+    return kind==ItemDetailKind::SlottedCard ? m_cardDetailWindowInfo : m_itemDetailWindowInfo;
 }
 
-void UIWindowMgr::RestoreItemDetailWindowPlacement(int* x, int* y)
+void UIWindowMgr::RestoreItemDetailWindowPlacement(int* x, int* y, ItemDetailKind kind)
 {
     InitializeInventoryWindowInfo();
     RECT client{};
     GetUiLogicalClientRectForScale(IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f,&client);
     const int width = client.right-client.left;
     const int height = client.bottom-client.top;
-    const auto& info = m_itemDetailWindowInfo;
+    auto& info = kind==ItemDetailKind::SlottedCard ? m_cardDetailWindowInfo : m_itemDetailWindowInfo;
     if (info.width == 280 && info.height == 120 && info.x >= 0 && info.y >= 0
         && int64_t(info.x) <= int64_t(width)-280 && int64_t(info.y) <= int64_t(height)-120) {
         *x = info.x; *y = info.y;
         return;
     }
-    m_itemDetailWindowInfo = ItemDetailWindowInfo{};
+    info = ItemDetailWindowInfo{280,kind==ItemDetailKind::SlottedCard ? 278 : 126,280,120};
     // The source deliberately uses renderer WIDTH for the default Y formula.
     *x = 280+(width-640)/2;
-    *y = static_cast<int>(int64_t(width)*126/640);
+    *y = static_cast<int>(int64_t(width)*info.y/640);
 }
 
-void UIWindowMgr::StoreItemDetailWindowInfo(const ItemDetailWindowInfo& info)
+void UIWindowMgr::StoreItemDetailWindowInfo(const ItemDetailWindowInfo& info, ItemDetailKind kind)
 {
     InitializeInventoryWindowInfo();
-    m_itemDetailWindowInfo = info;
-    SaveSettingsIniInt("UIWindows","ItemInfoWndX",info.x);
-    SaveSettingsIniInt("UIWindows","ItemInfoWndY",info.y);
-    SaveSettingsIniInt("UIWindows","ItemInfoWndWidth",info.width);
-    SaveSettingsIniInt("UIWindows","ItemInfoWndHeight",info.height);
+    (kind==ItemDetailKind::SlottedCard ? m_cardDetailWindowInfo : m_itemDetailWindowInfo) = info;
+    const std::string prefix=kind==ItemDetailKind::SlottedCard ? "CardInfoWnd" : "ItemInfoWnd";
+    SaveSettingsIniInt("UIWindows",(prefix+"X").c_str(),info.x);
+    SaveSettingsIniInt("UIWindows",(prefix+"Y").c_str(),info.y);
+    SaveSettingsIniInt("UIWindows",(prefix+"Width").c_str(),info.width);
+    SaveSettingsIniInt("UIWindows",(prefix+"Height").c_str(),info.height);
 }
 
 void UIWindowMgr::RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent)
@@ -1242,6 +1246,16 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_itemInfoWnd->SetShow(1);
         return m_itemInfoWnd;
 
+    case WID_CARDINFOWND:
+        if (!m_cardInfoWnd) {
+            m_cardInfoWnd = new UIItemInfoWnd(ItemDetailKind::SlottedCard);
+            m_children.push_back(m_cardInfoWnd);
+        }
+        m_children.remove(m_cardInfoWnd);
+        m_children.push_back(m_cardInfoWnd);
+        m_cardInfoWnd->SetShow(1);
+        return m_cardInfoWnd;
+
     case WID_ITEMCOLLECTIONWND:
         if (!m_itemCollectionWnd) {
             m_itemCollectionWnd = new UIItemCollectionWnd();
@@ -1614,6 +1628,10 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
         m_itemInfoWnd->StoreInfo();
         m_itemInfoWnd = nullptr;
     }
+    if (window == m_cardInfoWnd) {
+        m_cardInfoWnd->StoreInfo();
+        m_cardInfoWnd = nullptr;
+    }
     if (window == m_itemCollectionWnd) {
         m_itemCollectionWnd = nullptr;
     }
@@ -1699,6 +1717,7 @@ void UIWindowMgr::RemoveAllWindows()
     m_optionWnd = nullptr;
     m_itemWnd = nullptr;
     m_itemInfoWnd = nullptr;
+    m_cardInfoWnd = nullptr;
     m_itemCollectionWnd = nullptr;
     m_itemCompositionWnd = nullptr;
     m_itemIdentifyWnd = nullptr;
@@ -1814,6 +1833,9 @@ void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
     if (m_storageWnd && m_storageWnd->m_show != 0) {
         m_storageWnd->DrawHoverOverlay(targetDC, clientRect);
     }
+    // Source help balloons belong above every owner, including a second detail.
+    if (m_itemInfoWnd) m_itemInfoWnd->DrawHoverOverlay(targetDC);
+    if (m_cardInfoWnd) m_cardInfoWnd->DrawHoverOverlay(targetDC);
     if (includeRoMap) {
         ClearDirtyVisualState();
     } else {
@@ -2490,6 +2512,17 @@ void UIWindowMgr::ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int 
     window->SetItemInfo(item, preferredX, preferredY, source);
 }
 
+void UIWindowMgr::ShowCardInfoWindow(const ITEM_INFO& item, ItemInfoAction action)
+{
+    if (action==ItemInfoAction::Select && m_cardInfoWnd && m_cardInfoWnd->m_show
+        && m_cardInfoWnd->MatchesSelection(item)) {
+        DeleteWindow(m_cardInfoWnd);
+        return;
+    }
+    auto* window=static_cast<UIItemInfoWnd*>(MakeWindow(WID_CARDINFOWND));
+    if (window) window->SetItemInfo(item,0,0,ItemInfoSource::Snapshot);
+}
+
 void UIWindowMgr::ShowItemCollectionWindow(const ITEM_INFO& item, int preferredX, int preferredY)
 {
     UIItemCollectionWnd* const window = static_cast<UIItemCollectionWnd*>(MakeWindow(WID_ITEMCOLLECTIONWND));
@@ -2534,7 +2567,7 @@ bool UIWindowMgr::HasGameplayInputModal() const
 }
 bool UIWindowMgr::HasNativePopupAtPoint(int x,int y) const
 {
-    const UIWindow* windows[]={m_itemInfoWnd,m_skillDescribeWnd};
+    const UIWindow* windows[]={m_itemInfoWnd,m_cardInfoWnd,m_skillDescribeWnd};
     for(const auto* w:windows)if(w&&w->m_show&&x>=w->m_x&&y>=w->m_y&&x<w->m_x+w->m_w&&y<w->m_y+w->m_h)return true;
     return false;
 }

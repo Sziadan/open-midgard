@@ -5,6 +5,7 @@
 #include "session/Session.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UIItemWnd.h"
+#include "ui/UIItemInfoWnd.h"
 #include "ui/UIPlayerContextMenuWnd.h"
 #include "ui/UiScale.h"
 #include "world/World.h"
@@ -110,6 +111,23 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
 void BindCommerceUi(QtUiState* ui){
     QObject::connect(ui,&QtUiState::commerceActionRequested,[](const QString& action,const QVariantMap& args){
         using namespace ro::commerce;
+        if(action=="describeCardSlot"){
+            const int x=args.value("x").toInt(),y=args.value("y").toInt();
+            g_windowMgr.OnRBtnDown(x,y);g_windowMgr.OnRBtnUp(x,y);return;
+        }
+        if(action=="hoverCardSlot"){
+            g_windowMgr.OnMouseMove(args.value("x").toInt(),args.value("y").toInt());return;
+        }
+        if(action=="clearCardSlotHover"){
+            if(g_windowMgr.m_itemInfoWnd)g_windowMgr.m_itemInfoWnd->OnMouseHover(-1,-1);
+            if(g_windowMgr.m_cardInfoWnd)g_windowMgr.m_cardInfoWnd->OnMouseHover(-1,-1);
+            return;
+        }
+        if(action=="closeItemDetail"){
+            auto* window=args.value("card").toBool()?g_windowMgr.m_cardInfoWnd:g_windowMgr.m_itemInfoWnd;
+            if(window)g_windowMgr.DeleteWindow(window);
+            return;
+        }
         if(action=="browseShop"){const auto target=args.value("target").toUInt();auto it=state.shopBoards.find(target);if(it!=state.shopBoards.end())PlayerAction(8,target,it->second);return;}
         if(action=="contextClose"){g_windowMgr.ClosePlayerContextMenu();return;}
         if(action=="context"){

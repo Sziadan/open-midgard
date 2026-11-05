@@ -304,6 +304,7 @@ void ClearGameplayUiState(QtUiState* state)
     state->setItemInfoVisible(false);
     state->setItemInfoGeometry(0, 0, 0, 0);
     state->setItemInfoData(QVariantMap{});
+    state->setCardInfoData(QVariantMap{});
 
     state->setSkillDescribeVisible(false);
     state->setSkillDescribeGeometry(0, 0, 0, 0);
@@ -2696,24 +2697,8 @@ void PopulateSkillListState(QtUiState* state)
     state->setSkillListData(data);
 }
 
-void PopulateItemInfoState(QtUiState* state)
+QVariantMap BuildItemDetailData(const UIItemInfoWnd* itemInfoWnd)
 {
-    if (!state) {
-        return;
-    }
-
-    UIItemInfoWnd* const itemInfoWnd = g_windowMgr.m_itemInfoWnd;
-    if (itemInfoWnd) itemInfoWnd->RefreshBoundItem();
-    const bool visible = IsGameplayWindowVisible(state, itemInfoWnd) && itemInfoWnd->HasItem();
-    state->setItemInfoVisible(visible);
-    if (!visible) {
-        state->setItemInfoGeometry(0, 0, 0, 0);
-        state->setItemInfoData(QVariantMap{});
-        return;
-    }
-
-    state->setItemInfoGeometry(itemInfoWnd->m_x, itemInfoWnd->m_y, itemInfoWnd->m_w, itemInfoWnd->m_h);
-
     UIItemInfoWnd::DisplayData display{};
     QVariantMap data;
     if (itemInfoWnd->GetDisplayDataForQt(&display)) {
@@ -2731,6 +2716,9 @@ void PopulateItemInfoState(QtUiState* state)
         data.insert(QStringLiteral("nameRect"),localRect(display.nameRect));
         data.insert(QStringLiteral("descriptionRect"),localRect(display.descriptionRect));
         data.insert(QStringLiteral("descriptionGeneration"),display.descriptionGeneration);
+        data.insert(QStringLiteral("slotTooltip"),ToQString(display.slotTooltip));
+        data.insert(QStringLiteral("slotTooltipX"),static_cast<int>(display.slotTooltipAnchor.left));
+        data.insert(QStringLiteral("slotTooltipY"),static_cast<int>(display.slotTooltipAnchor.top));
 
         QVariantList detailLines;
         detailLines.reserve(static_cast<qsizetype>(display.detailLines.size()));
@@ -2778,7 +2766,37 @@ void PopulateItemInfoState(QtUiState* state)
         }
         data.insert(QStringLiteral("slots"), slotList);
     }
-    state->setItemInfoData(data);
+    return data;
+}
+
+void PopulateItemInfoState(QtUiState* state)
+{
+    if(!state)return;
+    auto* main=g_windowMgr.m_itemInfoWnd;
+    auto* card=g_windowMgr.m_cardInfoWnd;
+    if(main)main->RefreshBoundItem();
+    if(card)card->RefreshBoundItem();
+    int layer=40,mainLayer=40,cardLayer=40;
+    for(auto* window:g_windowMgr.m_children) {
+        if(window==main){mainLayer=layer++;}
+        else if(window==card){cardLayer=layer++;}
+    }
+    const bool mainVisible=IsGameplayWindowVisible(state,main)&&main->HasItem();
+    state->setItemInfoVisible(mainVisible);
+    if(mainVisible) {
+        state->setItemInfoGeometry(main->m_x,main->m_y,main->m_w,main->m_h);
+        auto data=BuildItemDetailData(main);data.insert("layer",mainLayer);
+        state->setItemInfoData(data);
+    } else {
+        state->setItemInfoGeometry(0,0,0,0);
+        state->setItemInfoData(QVariantMap{});
+    }
+    if(IsGameplayWindowVisible(state,card)&&card->HasItem()) {
+        auto data=BuildItemDetailData(card);
+        data.insert("visible",true);data.insert("x",card->m_x);data.insert("y",card->m_y);
+        data.insert("width",card->m_w);data.insert("height",card->m_h);data.insert("layer",cardLayer);
+        state->setCardInfoData(data);
+    } else state->setCardInfoData(QVariantMap{});
 }
 
 void PopulateSkillDescribeState(QtUiState* state)

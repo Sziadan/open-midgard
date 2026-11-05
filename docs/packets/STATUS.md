@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Active step: PK09.04.** [Latest parent-detail evidence](evidence/PK09.14-detail-geometry.md), [contract](contracts/PK09.ITEM-DETAIL-GEOMETRY.md), [provenance](evidence/PK09.14-detail-geometry.json), and [HANDOFF](HANDOFF.md) define continuation.
+**Active step: PK09.04.** Latest checkpoint: [PK09.15 card details](evidence/PK09.15-card-detail.md), [contract](contracts/PK09.CARD-DETAIL.md), [provenance](evidence/PK09.15-card-detail.json). Dedicated commit: `packet(PK09.15): separate slotted card details and source hit testing`. 119/119 CTest in 166.57s; 173 PASS packet records; nine fresh card-detail children; zero QML errors. Earlier inventory, NPC and item proofs remain passing.
 
 - PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing remain open.
 - PK09.13 restores inventory whole-record fallback, source dimensions/normalization, mini and original height, native/Qt resize and explicit managed close/recreation. Parent detail geometry now passes PK09.14; separate card and map/show lifetime remain open.
@@ -20,3 +20,5 @@
 - Prior bag/field/colour/map proofs and PK09.02/.03 mapping/route checkpoints remain verified. PK09.04 stays open for remaining type/tab/radio/detail contexts and historical acceptance.
 - Deploy-off build and final validation: **118/118 CTest in 154.96s**, **173 PASS packet records**, eight fresh detail child processes, nine detail frames and zero detail-child QML errors. No installed client/live server or numeric row closure.
 - NPC/status/mail implementations, PK46.02's177-row inventory/character paths (including broader scope beyond the bounded NPC sends), PK47 and independent PK48/49/deployed provenance remain open. The whole-plan goal remains active.
+
+Preserve [PK09.15 card details](contracts/PK09.CARD-DETAIL.md): separate WID82 snapshot/geometry/toggle, own close and parent coexistence, hidden-band nonzero-prefix hits, strict gaps and child routing, viewport balloons above both panes, popup priority and mode cleanup. Painting and interaction remain separate predicates. Card description sends no combine transaction. Continue inventory map/show recreation and remaining full item/status/delta/context acceptance; broader scale/art/locale and PK47/48/49/deployment remain open.

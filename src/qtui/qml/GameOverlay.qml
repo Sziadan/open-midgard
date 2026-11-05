@@ -2723,36 +2723,47 @@ Item {
         }
     }
 
-    RoFrame {
+    component ItemDetailPanel: RoFrame {
+        id: detailPanel
+        property var detailData: ({})
+        property int logicalX: 0
+        property int logicalY: 0
+        property int logicalWidth: 280
+        property int logicalHeight: 120
+        property bool presented: false
+        property bool card: false
+        readonly property string namePrefix: card ? "cardInfo" : "itemInfo"
         // Commerce is a root sibling. Keep this popup above its panels while
         // retaining the native UI coordinate scale.
         parent: root
-        x: uiState.itemInfoX * root.uiScale
-        y: uiState.itemInfoY * root.uiScale
+        x: detailPanel.logicalX * root.uiScale
+        y: detailPanel.logicalY * root.uiScale
         scale: root.uiScale
         transformOrigin: Item.TopLeft
-        width: uiState.itemInfoWidth
-        height: uiState.itemInfoHeight
-        visible: uiState.itemInfoVisible
-        z: 40
-        objectName: "itemInfoWindow"
+        width: detailPanel.logicalWidth
+        height: detailPanel.logicalHeight
+        visible: detailPanel.presented
+        z: detailPanel.detailData.layer || 40
+        objectName: detailPanel.namePrefix+"Window"
         showTitle: false
         RoChromeButton {
+            objectName: detailPanel.namePrefix+"Close"
+            MouseArea { anchors.fill: parent; onClicked: uiState.commerceAction("closeItemDetail",{card:detailPanel.card}) }
             systemInk: theme.ink
-            x: (root.objectOrEmpty(uiState.itemInfoData.closeButton).x || 0) - uiState.itemInfoX
-            y: (root.objectOrEmpty(uiState.itemInfoData.closeButton).y || 0) - uiState.itemInfoY
-            width: root.objectOrEmpty(uiState.itemInfoData.closeButton).width || 0
-            height: root.objectOrEmpty(uiState.itemInfoData.closeButton).height || 0
-            pressed: root.objectOrEmpty(uiState.itemInfoData.closeButton).pressed || false
-            hovered: root.objectOrEmpty(uiState.itemInfoData.closeButton).hovered || false
-            label: root.objectOrEmpty(uiState.itemInfoData.closeButton).label || "X"
+            x: (root.objectOrEmpty(detailPanel.detailData.closeButton).x || 0) - detailPanel.logicalX
+            y: (root.objectOrEmpty(detailPanel.detailData.closeButton).y || 0) - detailPanel.logicalY
+            width: root.objectOrEmpty(detailPanel.detailData.closeButton).width || 0
+            height: root.objectOrEmpty(detailPanel.detailData.closeButton).height || 0
+            pressed: root.objectOrEmpty(detailPanel.detailData.closeButton).pressed || false
+            hovered: root.objectOrEmpty(detailPanel.detailData.closeButton).hovered || false
+            label: root.objectOrEmpty(detailPanel.detailData.closeButton).label || "X"
         }
 
         Rectangle {
-            x: root.objectOrEmpty(uiState.itemInfoData.previewRect).x || 0
-            y: root.objectOrEmpty(uiState.itemInfoData.previewRect).y || 0
-            width: root.objectOrEmpty(uiState.itemInfoData.previewRect).width || 0
-            height: root.objectOrEmpty(uiState.itemInfoData.previewRect).height || 0
+            x: root.objectOrEmpty(detailPanel.detailData.previewRect).x || 0
+            y: root.objectOrEmpty(detailPanel.detailData.previewRect).y || 0
+            width: root.objectOrEmpty(detailPanel.detailData.previewRect).width || 0
+            height: root.objectOrEmpty(detailPanel.detailData.previewRect).height || 0
             color: theme.fieldFill
             border.width: 1
             border.color: theme.buttonBorder
@@ -2763,32 +2774,32 @@ Item {
                 fillMode: Image.PreserveAspectFit
                 smooth: false
                 cache: false
-                source: (uiState.itemInfoData.previewUsesCollection || false)
-                    ? root.collectionImageSource(uiState.itemInfoData.itemId || 0, uiState.itemInfoData.identified)
-                    : root.itemIconSource(uiState.itemInfoData.itemId || 0, uiState.itemInfoData.identified)
+                source: (detailPanel.detailData.previewUsesCollection || false)
+                    ? root.collectionImageSource(detailPanel.detailData.itemId || 0, detailPanel.detailData.identified)
+                    : root.itemIconSource(detailPanel.detailData.itemId || 0, detailPanel.detailData.identified)
             }
 
             RoChromeButton {
-                x: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).x || 0) - uiState.itemInfoX - parent.x
-                y: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).y || 0) - uiState.itemInfoY - parent.y
-                width: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).width || 0)
-                height: (root.objectOrEmpty(uiState.itemInfoData.graphicsButton).height || 0)
-                visible: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).visible || false
-                pressed: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).pressed || false
-                hovered: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).hovered || false
-                label: root.objectOrEmpty(uiState.itemInfoData.graphicsButton).label || "View"
+                x: (root.objectOrEmpty(detailPanel.detailData.graphicsButton).x || 0) - detailPanel.logicalX - parent.x
+                y: (root.objectOrEmpty(detailPanel.detailData.graphicsButton).y || 0) - detailPanel.logicalY - parent.y
+                width: (root.objectOrEmpty(detailPanel.detailData.graphicsButton).width || 0)
+                height: (root.objectOrEmpty(detailPanel.detailData.graphicsButton).height || 0)
+                visible: root.objectOrEmpty(detailPanel.detailData.graphicsButton).visible || false
+                pressed: root.objectOrEmpty(detailPanel.detailData.graphicsButton).pressed || false
+                hovered: root.objectOrEmpty(detailPanel.detailData.graphicsButton).hovered || false
+                label: root.objectOrEmpty(detailPanel.detailData.graphicsButton).label || "View"
                 labelSize: 9
             }
         }
 
         Text {
-            objectName: "itemInfoName"
-            x: root.objectOrEmpty(uiState.itemInfoData.nameRect).x || 0
-            y: root.objectOrEmpty(uiState.itemInfoData.nameRect).y || 0
-            width: root.objectOrEmpty(uiState.itemInfoData.nameRect).width || 0
-            height: root.objectOrEmpty(uiState.itemInfoData.nameRect).height || 0
-            text: uiState.itemInfoData.name || ""
-            color: uiState.itemInfoData.identified ? theme.ink : "#808080"
+            objectName: detailPanel.namePrefix+"Name"
+            x: root.objectOrEmpty(detailPanel.detailData.nameRect).x || 0
+            y: root.objectOrEmpty(detailPanel.detailData.nameRect).y || 0
+            width: root.objectOrEmpty(detailPanel.detailData.nameRect).width || 0
+            height: root.objectOrEmpty(detailPanel.detailData.nameRect).height || 0
+            text: detailPanel.detailData.name || ""
+            color: detailPanel.detailData.identified ? theme.ink : "#808080"
             font.family: theme.fontFamily
             font.pixelSize: 12
             elide: Text.ElideRight
@@ -2796,23 +2807,23 @@ Item {
 
         Flickable {
             id: itemInfoDescriptionViewport
-            objectName: "itemInfoDescriptionViewport"
-            x: root.objectOrEmpty(uiState.itemInfoData.descriptionRect).x || 0
-            y: root.objectOrEmpty(uiState.itemInfoData.descriptionRect).y || 0
-            width: root.objectOrEmpty(uiState.itemInfoData.descriptionRect).width || 0
-            height: root.objectOrEmpty(uiState.itemInfoData.descriptionRect).height || 0
+            objectName: detailPanel.namePrefix+"DescriptionViewport"
+            x: root.objectOrEmpty(detailPanel.detailData.descriptionRect).x || 0
+            y: root.objectOrEmpty(detailPanel.detailData.descriptionRect).y || 0
+            width: root.objectOrEmpty(detailPanel.detailData.descriptionRect).width || 0
+            height: root.objectOrEmpty(detailPanel.detailData.descriptionRect).height || 0
             clip: true
             contentWidth: width
             contentHeight: itemInfoViewerColumn.height
             flickableDirection: Flickable.VerticalFlick
             boundsBehavior: Flickable.StopAtBounds
-            property double descriptionGeneration: uiState.itemInfoData.descriptionGeneration || 0
+            property double descriptionGeneration: detailPanel.detailData.descriptionGeneration || 0
             onDescriptionGenerationChanged: contentY = 0
             Column {
                 id: itemInfoViewerColumn
                 width: itemInfoDescriptionViewport.width
                 Repeater {
-                    model: uiState.itemInfoData.detailLines || []
+                    model: detailPanel.detailData.detailLines || []
                     Text {
                         required property var modelData
                         width: parent.width
@@ -2825,9 +2836,9 @@ Item {
                 }
                 Text {
                     id: itemInfoDescription
-                    objectName: "itemInfoDescription"
+                    objectName: detailPanel.namePrefix+"Description"
                     width: parent.width
-                    text: root.roColorTextToRichText(uiState.itemInfoData.description || "")
+                    text: root.roColorTextToRichText(detailPanel.detailData.description || "")
                     textFormat: Text.RichText
                     color: theme.ink
                     font.family: theme.fontFamily
@@ -2839,12 +2850,12 @@ Item {
         }
 
         Repeater {
-            model: uiState.itemInfoData.slots || []
+            model: detailPanel.detailData.slots || []
 
             delegate: Rectangle {
                 required property var modelData
-                x: (modelData.x || 0) - uiState.itemInfoX
-                y: (modelData.y || 0) - uiState.itemInfoY
+                x: (modelData.x || 0) - detailPanel.logicalX
+                y: (modelData.y || 0) - detailPanel.logicalY
                 width: modelData.width || 0
                 height: modelData.height || 0
                 color: !(modelData.available || false)
@@ -2863,30 +2874,59 @@ Item {
                     source: root.itemIconSource(modelData.itemId || 0)
                 }
 
-                Rectangle {
-                    id: cardTooltip
-                    visible: (modelData.hovered || false) && (modelData.occupied || false) && !!modelData.tooltip
-                    z: 5
-                    width: cardTooltipLabel.implicitWidth + 14
-                    height: cardTooltipLabel.implicitHeight + 8
-                    x: (parent.width - width) / 2
-                    y: -height - 4
-                    radius: theme.buttonRadius
-                    color: theme.ink
-                    border.width: 1
-                    border.color: theme.focus
 
-                    Text {
-                        id: cardTooltipLabel
-                        anchors.centerIn: parent
-                        text: modelData.tooltip || ""
-                        color: theme.titleText
-                        font.family: theme.fontFamily
-                        font.pixelSize: 11
-                    }
-                }
             }
         }
+        MouseArea {
+            objectName: detailPanel.namePrefix+"CardInput"
+            anchors.fill: parent
+            z: 2
+            hoverEnabled: true
+            acceptedButtons: Qt.RightButton
+            onPositionChanged: function(mouse) {
+                uiState.commerceAction("hoverCardSlot",{x:detailPanel.logicalX+mouse.x,y:detailPanel.logicalY+mouse.y})
+            }
+            onExited: uiState.commerceAction("clearCardSlotHover",{})
+            onClicked: function(mouse) {
+                uiState.commerceAction("describeCardSlot",{x:detailPanel.logicalX+mouse.x,y:detailPanel.logicalY+mouse.y})
+            }
+        }
+        Rectangle {
+            id: detailSlotTooltip
+            objectName: detailPanel.namePrefix+"SlotTooltip"
+            parent: root
+            z: 5000
+            visible: detailPanel.presented && !!detailPanel.detailData.slotTooltip
+            scale: root.uiScale
+            transformOrigin: Item.TopLeft
+            width: Math.min(root.width/root.uiScale+6,detailSlotTooltipLabel.implicitWidth+12)
+            height: detailSlotTooltipLabel.implicitHeight+8
+            x: Math.max(-3,Math.min(root.width/root.uiScale-width+3,detailPanel.detailData.slotTooltipX || 0))*root.uiScale
+            y: Math.max(-3,Math.min(root.height/root.uiScale-height+3,detailPanel.detailData.slotTooltipY || 0))*root.uiScale
+            color: "#f0303030"; border.color: "#606060"; radius: 2
+            Text {
+                id: detailSlotTooltipLabel
+                x: 6; y: 4; width: parent.width-12
+                text: detailPanel.detailData.slotTooltip || ""
+                color: "white"; font.family: theme.fontFamily; font.pixelSize: 12
+                wrapMode: Text.Wrap
+            }
+        }
+
+    }
+
+    ItemDetailPanel {
+        detailData: uiState.itemInfoData
+        logicalX: uiState.itemInfoX; logicalY: uiState.itemInfoY
+        logicalWidth: uiState.itemInfoWidth; logicalHeight: uiState.itemInfoHeight
+        presented: uiState.itemInfoVisible
+    }
+    ItemDetailPanel {
+        card: true
+        detailData: uiState.cardInfoData
+        logicalX: detailData.x || 0; logicalY: detailData.y || 0
+        logicalWidth: detailData.width || 280; logicalHeight: detailData.height || 120
+        presented: !!detailData.visible
     }
 
     RoFrame {

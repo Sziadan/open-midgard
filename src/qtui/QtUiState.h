@@ -233,6 +233,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemInfoWidth READ itemInfoWidth NOTIFY itemInfoGeometryChanged)
     Q_PROPERTY(int itemInfoHeight READ itemInfoHeight NOTIFY itemInfoGeometryChanged)
     Q_PROPERTY(QVariantMap itemInfoData READ itemInfoData NOTIFY itemInfoDataChanged)
+    Q_PROPERTY(QVariantMap cardInfoData READ cardInfoData NOTIFY cardInfoDataChanged)
     Q_PROPERTY(bool skillDescribeVisible READ skillDescribeVisible NOTIFY skillDescribeVisibleChanged)
     Q_PROPERTY(int skillDescribeX READ skillDescribeX NOTIFY skillDescribeGeometryChanged)
     Q_PROPERTY(int skillDescribeY READ skillDescribeY NOTIFY skillDescribeGeometryChanged)
@@ -532,6 +533,7 @@ public:
     int itemInfoWidth() const { return m_itemInfoWidth; }
     int itemInfoHeight() const { return m_itemInfoHeight; }
     const QVariantMap& itemInfoData() const { return m_itemInfoData; }
+    const QVariantMap& cardInfoData() const { return m_cardInfoData; }
     bool skillDescribeVisible() const { return m_skillDescribeVisible; }
     int skillDescribeX() const { return m_skillDescribeX; }
     int skillDescribeY() const { return m_skillDescribeY; }
@@ -1753,6 +1755,11 @@ public:
         m_itemInfoData = value;
         emit itemInfoDataChanged();
     }
+    void setCardInfoData(const QVariantMap& value) {
+        if(m_cardInfoData==value)return;
+        m_cardInfoData=value;
+        emit cardInfoDataChanged();
+    }
 
     void setSkillDescribeVisible(bool value) {
         if (m_skillDescribeVisible == value) {
@@ -2132,6 +2139,7 @@ signals:
     void itemInfoVisibleChanged();
     void itemInfoGeometryChanged();
     void itemInfoDataChanged();
+    void cardInfoDataChanged();
     void skillDescribeVisibleChanged();
     void skillDescribeGeometryChanged();
     void skillDescribeDataChanged();
@@ -2389,6 +2397,7 @@ private:
     int m_itemInfoWidth = 0;
     int m_itemInfoHeight = 0;
     QVariantMap m_itemInfoData;
+    QVariantMap m_cardInfoData;
     bool m_skillDescribeVisible = false;
     int m_skillDescribeX = 0;
     int m_skillDescribeY = 0;

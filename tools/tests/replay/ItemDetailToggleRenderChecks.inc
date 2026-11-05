@@ -43,6 +43,12 @@ void CheckItemDetailToggleUi(QGuiApplication& app,QQuickView& view,QtUiState* ui
         QQuickItem* target=Find(view.rootObject(),objectName);Require(target&&target->isVisible(),"item detail QML target missing or hidden");
         const QVariantMap row=target->property("item").toMap();Require(row.value("id").toUInt()==expectedId,"item detail QML target has unexpected item ID");
         const QPointF point=target->mapToScene(QPointF(target->width()/2,target->height()/2));Mouse(app,view,point);
+        // A real popup now owns its right-button input. Keep this owner-key
+        // selection fixture's target exposed rather than clicking through it.
+        if(auto* detail=g_windowMgr.m_itemInfoWnd; detail&&detail->m_show
+            &&QRectF(detail->m_x,detail->m_y,detail->m_w,detail->m_h).contains(point)) {
+            detail->Move(20,Height-detail->m_h-5);sync();Mouse(app,view,point);
+        }
         QMouseEvent press(QEvent::MouseButtonPress,point,view.mapToGlobal(point.toPoint()),Qt::RightButton,Qt::RightButton,Qt::NoModifier);
         QMouseEvent release(QEvent::MouseButtonRelease,point,view.mapToGlobal(point.toPoint()),Qt::RightButton,Qt::NoButton,Qt::NoModifier);
         QCoreApplication::sendEvent(&view,&press);QCoreApplication::sendEvent(&view,&release);sync();

@@ -47,17 +47,20 @@ public:
         RECT nameRect{};
         RECT descriptionRect{};
         unsigned int descriptionGeneration = 0;
+        std::string slotTooltip;
+        RECT slotTooltipAnchor{};
         DisplayButton closeButton;
         DisplayButton graphicsButton;
         std::vector<DisplaySlot> slotEntries;
     };
 
-    UIItemInfoWnd();
+    explicit UIItemInfoWnd(ItemDetailKind kind = ItemDetailKind::Main);
     ~UIItemInfoWnd() override = default;
 
     void OnDraw() override;
     void OnProcess() override;
     void DrawNativeToHdc(HDC hdc);
+    void DrawHoverOverlay(HDC hdc) const;
     void OnLBtnDown(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnRBtnDown(int x, int y) override;
@@ -70,6 +73,7 @@ public:
     bool MatchesSelection(const ITEM_INFO& item) const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
     bool HasItem() const;
+    ItemDetailKind GetKind() const { return m_kind; }
     void ScrollDescriptionWheel(int delta);
     int GetNativeDescriptionScrollOffset() const { return m_descriptionScrollOffset; }
 
@@ -89,11 +93,13 @@ private:
     bool HasViewButton() const;
     int GetDeclaredSlotCount() const;
     bool ShouldShowSlots() const;
+    int GetCardSlotAtPoint(int x, int y) const;
     std::string BuildTitle() const;
     std::string BuildDisplayName() const;
     std::vector<std::string> BuildDetailLines() const;
     std::string BuildDescriptionText() const;
 
+    ItemDetailKind m_kind;
     ITEM_INFO m_item;
     ItemInfoSource m_source = ItemInfoSource::Snapshot;
     bool m_hasItem;

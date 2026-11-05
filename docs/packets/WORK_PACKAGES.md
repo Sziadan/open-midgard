@@ -226,6 +226,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK09.12 [S]** Share the source inventory startup override and in-process native/Qt tab retention; verify fresh-process settings/radio/viewport branches, real input/close/recreation and storage independence without claiming full legacy geometry. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.13 [S]** Restore source inventory complete rectangle validation, resize quantization, mini/original-height retention and explicit close/recreation, with shared compact native/Qt geometry, real controls and fresh-process regressions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.14 [S]** Restore primary parent detail rectangle lifecycle, fixed clipped viewer and source height/visible-socket predicates; verify cached startup, strict saved shapes, native/Qt scroll/reset, boundary placement and child input cleanup, leaving separate card interaction open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.15 [S]** Restore separately owned WID82 card snapshots/rectangle and source nonzero-prefix hidden-band input; verify native/actual Qt hover/right-click/close, independent lifecycle and viewport tooltip layering, retaining full PK09.04. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 

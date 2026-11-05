@@ -1,0 +1,70 @@
+{
+    "child_count": 9,
+    "children": [
+        {
+            "case_count": 1,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/cold-default/cold-default",
+            "pid": 58800,
+            "stage": "cold-default"
+        },
+        {
+            "case_count": 1,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/warm-valid/warm-valid",
+            "pid": 22856,
+            "stage": "warm-valid"
+        },
+        {
+            "case_count": 1,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/warm-invalid/warm-invalid",
+            "pid": 56612,
+            "stage": "warm-invalid"
+        },
+        {
+            "case_count": 1,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/warm-partial/warm-partial",
+            "pid": 64944,
+            "stage": "warm-partial"
+        },
+        {
+            "case_count": 9,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/source-hits/source-hits",
+            "pid": 31504,
+            "stage": "source-hits"
+        },
+        {
+            "case_count": 7,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/metadata-gates/metadata-gates",
+            "pid": 50676,
+            "stage": "metadata-gates"
+        },
+        {
+            "case_count": 2,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/routing/routing",
+            "pid": 64704,
+            "stage": "routing"
+        },
+        {
+            "case_count": 10,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/hover/hover",
+            "pid": 61420,
+            "stage": "hover"
+        },
+        {
+            "case_count": 4,
+            "outcome": "PASS",
+            "output_directory": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-item-card-detail-renders/item-card-detail-30040-1793921499750/lifecycle/lifecycle",
+            "pid": 30012,
+            "stage": "lifecycle"
+        }
+    ],
+    "outcome": "PASS",
+    "qml_errors": 0
+}

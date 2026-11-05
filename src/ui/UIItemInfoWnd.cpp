@@ -94,7 +94,21 @@ std::string NormalizeDescriptionText(const std::string& text)
     return out;
 }
 
-void DrawSlotTooltip(HDC hdc, const RECT& bounds, const RECT& anchorRect, const std::string& text)
+std::string WrapCardTooltip(const std::string& text)
+{
+    std::string out;
+    int characters=0;
+    for (const unsigned char ch:text) {
+        if ((ch&0xc0)!=0x80) {
+            if (characters==35) { out+='\n';characters=0; }
+            ++characters;
+        }
+        out+=static_cast<char>(ch);
+    }
+    return out;
+}
+
+void DrawSlotTooltip(HDC hdc, const RECT& anchorRect, const std::string& text)
 {
     if (!hdc || text.empty()) {
         return;
@@ -102,33 +116,39 @@ void DrawSlotTooltip(HDC hdc, const RECT& bounds, const RECT& anchorRect, const 
 
     SIZE textSize{};
     HGDIOBJ oldFont = SelectObject(hdc, shopui::GetUiFont());
-    GetTextExtentPoint32A(hdc, text.c_str(), static_cast<int>(text.size()), &textSize);
+    RECT measured{0,0,600,0};
+    DrawTextA(hdc,text.c_str(),static_cast<int>(text.size()),&measured,DT_CALCRECT|DT_NOPREFIX);
+    textSize={measured.right,measured.bottom};
     SelectObject(hdc, oldFont);
 
     const int paddingX = 6;
     const int paddingY = 4;
     const int tooltipWidth = textSize.cx + paddingX * 2;
     const int tooltipHeight = textSize.cy + paddingY * 2;
-    int left = anchorRect.left + ((anchorRect.right - anchorRect.left) - tooltipWidth) / 2;
-    int top = anchorRect.top - tooltipHeight - 2;
-    const int minLeft = static_cast<int>(bounds.left) + 2;
-    const int maxLeft = static_cast<int>(bounds.right) - tooltipWidth - 2;
-    const int minTop = static_cast<int>(bounds.top) + kTitleBarHeight + 2;
-    left = (std::max)(minLeft, left);
-    left = (std::min)(maxLeft, left);
-    top = (std::max)(minTop, top);
+    RECT viewport{};GetClipBox(hdc,&viewport);
+    int left=(std::max)(int(viewport.left)-3,int(anchorRect.left));
+    int top=(std::max)(int(viewport.top)-3,int(anchorRect.top));
+    if (left+tooltipWidth>viewport.right+3) left=viewport.right-tooltipWidth+3;
+    if (top+tooltipHeight>viewport.bottom+3) top=viewport.bottom-tooltipHeight+3;
 
     RECT tooltipRect{ left, top, left + tooltipWidth, top + tooltipHeight };
     shopui::FillRectColor(hdc, tooltipRect, RGB(48, 48, 48));
     shopui::FrameRectColor(hdc, tooltipRect, RGB(96, 96, 96));
-    shopui::DrawWindowTextRect(hdc,
-                               shopui::MakeRect(tooltipRect.left + paddingX,
-                                                tooltipRect.top + paddingY,
-                                                tooltipWidth - paddingX * 2,
-                                                tooltipHeight - paddingY * 2),
-                               text,
-                               RGB(255, 255, 255),
-                               DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+    // The shared Qt-backed native label helper is deliberately single-line.
+    // Draw each source balloon line separately instead of flattening newlines.
+    const int lines=1+static_cast<int>(std::count(text.begin(),text.end(),'\n'));
+    const int lineHeight=(std::max)(1,static_cast<int>(textSize.cy)/lines);
+    size_t start=0;
+    for(int line=0;line<lines;++line) {
+        const size_t end=text.find('\n',start);
+        shopui::DrawWindowTextRect(hdc,
+            shopui::MakeRect(left+paddingX,top+paddingY+line*lineHeight,
+                tooltipWidth-paddingX*2,lineHeight),
+            text.substr(start,end==std::string::npos ? end : end-start),
+            RGB(255,255,255),DT_LEFT|DT_TOP|DT_NOPREFIX|DT_SINGLELINE);
+        if(end==std::string::npos)break;
+        start=end+1;
+    }
 }
 
 class ItemDescriptionInput final : public UIWindow {
@@ -155,8 +175,9 @@ bool StartsWithCardOrEmpty(const ITEM_INFO& item)
 }
 }
 
-UIItemInfoWnd::UIItemInfoWnd()
-    : m_item(),
+UIItemInfoWnd::UIItemInfoWnd(ItemDetailKind kind)
+    : m_kind(kind),
+      m_item(),
       m_hasItem(false),
       m_closeHovered(false),
       m_closePressed(false),
@@ -170,7 +191,7 @@ UIItemInfoWnd::UIItemInfoWnd()
 {
     Create(kWindowWidth, kWindowHeight);
     int x=0,y=0;
-    g_windowMgr.RestoreItemDetailWindowPlacement(&x,&y);
+    g_windowMgr.RestoreItemDetailWindowPlacement(&x,&y,m_kind);
     Move(x,y);
     m_descriptionInput = new ItemDescriptionInput(*this);
     const RECT viewer = GetDescriptionRect();
@@ -243,13 +264,20 @@ void UIItemInfoWnd::DrawNativeToHdc(HDC hdc)
             }
         }
 
-        if (m_hoveredSlotIndex >= 0 && m_hoveredSlotIndex < 4 && m_slotItemIds[static_cast<size_t>(m_hoveredSlotIndex)] != 0) {
-            const ITEM_INFO slotItem = BuildSlottedCardInfo(m_slotItemIds[static_cast<size_t>(m_hoveredSlotIndex)]);
-            DrawSlotTooltip(hdc, bounds, GetSlotRect(m_hoveredSlotIndex), SanitizeRoText(shopui::BuildItemHoverNameText(slotItem)));
-        }
     }
+    DrawHoverOverlay(hdc);
 
     m_isDirty = 0;
+}
+
+void UIItemInfoWnd::DrawHoverOverlay(HDC hdc) const
+{
+    if (m_show && m_hasItem && m_hoveredSlotIndex>=0 && m_hoveredSlotIndex<GetDeclaredSlotCount()) {
+        const auto slotItem=BuildSlottedCardInfo(static_cast<unsigned>(m_item.m_slot[m_hoveredSlotIndex]));
+        const RECT anchor=shopui::MakeRect(m_x+4+25*m_hoveredSlotIndex,m_y+m_h-50,1,1);
+        DrawSlotTooltip(hdc,anchor,WrapCardTooltip(SanitizeRoText(shopui::BuildItemHoverNameText(slotItem))));
+    }
+
 }
 
 void UIItemInfoWnd::OnLBtnDown(int x, int y)
@@ -296,22 +324,11 @@ void UIItemInfoWnd::OnLBtnUp(int x, int y)
 
 void UIItemInfoWnd::OnRBtnDown(int x, int y)
 {
-    if (m_show == 0 || !ShouldShowSlots()) {
-        return;
-    }
-
     UpdateInteraction(x, y);
-    if (m_hoveredSlotIndex < 0 || m_hoveredSlotIndex >= 4) {
-        return;
-    }
-
-    const unsigned int itemId = m_slotItemIds[static_cast<size_t>(m_hoveredSlotIndex)];
-    if (itemId == 0) {
-        return;
-    }
-
+    if (m_hoveredSlotIndex<0) return;
+    const unsigned int itemId=static_cast<unsigned>(m_item.m_slot[m_hoveredSlotIndex]);
     const ITEM_INFO slotItem = BuildSlottedCardInfo(itemId);
-    g_windowMgr.ShowItemInfoWindow(slotItem, x + 12, y + 12);
+    g_windowMgr.ShowCardInfoWindow(slotItem);
 }
 
 void UIItemInfoWnd::OnMouseMove(int x, int y)
@@ -327,7 +344,7 @@ void UIItemInfoWnd::OnMouseHover(int x, int y)
 
 void UIItemInfoWnd::StoreInfo()
 {
-    g_windowMgr.StoreItemDetailWindowInfo({m_x,m_y,m_w,m_h});
+    g_windowMgr.StoreItemDetailWindowInfo({m_x,m_y,m_w,m_h},m_kind);
 }
 
 void UIItemInfoWnd::OnProcess()
@@ -398,6 +415,11 @@ bool UIItemInfoWnd::GetDisplayDataForQt(DisplayData* outData) const
     outData->nameRect = GetNameRect();
     outData->descriptionRect = GetDescriptionRect();
     outData->descriptionGeneration = m_descriptionGeneration;
+    if (m_hoveredSlotIndex>=0 && m_hoveredSlotIndex<GetDeclaredSlotCount()) {
+        const auto item=BuildSlottedCardInfo(static_cast<unsigned>(m_item.m_slot[m_hoveredSlotIndex]));
+        outData->slotTooltip=WrapCardTooltip(SanitizeRoText(shopui::BuildItemHoverNameText(item)));
+        outData->slotTooltipAnchor=shopui::MakeRect(m_x+4+25*m_hoveredSlotIndex,m_y+m_h-50,1,1);
+    }
     outData->closeButton = { GetCloseButtonRect().left, GetCloseButtonRect().top, kCloseButtonSize, kCloseButtonSize, m_closeHovered, m_closePressed, true, true, "X" };
     outData->graphicsButton = { GetGraphicsButtonRect().left, GetGraphicsButtonRect().top, kGraphicsButtonWidth, kGraphicsButtonHeight, m_graphicsHovered, m_graphicsPressed, true, HasViewButton(), "View" };
     if (ShouldShowSlots()) {
@@ -465,18 +487,7 @@ void UIItemInfoWnd::UpdateInteraction(int x, int y)
 {
     const bool nextCloseHovered = IsInsideRect(GetCloseButtonRect(), x, y);
     const bool nextGraphicsHovered = HasViewButton() && IsInsideRect(GetGraphicsButtonRect(), x, y);
-    int nextHoveredSlot = -1;
-    if (ShouldShowSlots()) {
-        for (int slotIndex = 0; slotIndex < GetDeclaredSlotCount(); ++slotIndex) {
-            if (m_slotItemIds[static_cast<size_t>(slotIndex)] == 0) {
-                continue;
-            }
-            if (IsInsideRect(GetSlotRect(slotIndex), x, y)) {
-                nextHoveredSlot = slotIndex;
-                break;
-            }
-        }
-    }
+    const int nextHoveredSlot=GetCardSlotAtPoint(x,y);
     if (m_closeHovered == nextCloseHovered && m_graphicsHovered == nextGraphicsHovered && m_hoveredSlotIndex == nextHoveredSlot) {
         return;
     }
@@ -484,6 +495,19 @@ void UIItemInfoWnd::UpdateInteraction(int x, int y)
     m_graphicsHovered = nextGraphicsHovered;
     m_hoveredSlotIndex = nextHoveredSlot;
     Invalidate();
+}
+
+int UIItemInfoWnd::GetCardSlotAtPoint(int x,int y) const
+{
+    if (!m_show || !m_hasItem || x<m_x || y<m_y
+        || int64_t(x)>=int64_t(m_x)+m_w || int64_t(y)>=int64_t(m_y)+m_h) return -1;
+    const int localX=x-m_x-3;
+    if (y-m_y<=m_h-26) return -1;
+    for (int index=0;index<GetDeclaredSlotCount();++index) {
+        if (!m_item.m_slot[index]) break;
+        if (25*index<localX && localX<25*index+25) return index;
+    }
+    return -1;
 }
 
 void UIItemInfoWnd::RefreshPreviewAndSlots()

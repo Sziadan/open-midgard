@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-06",
+  "timezone": "Europe/Stockholm",
+  "baseline": "6ff8eb5525732ac741e48ca237a3077a7511a89b",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.15): separate slotted card details and source hit testing",
+  "source_sha256": {
+    "CMakeLists.txt": "6c61fbf7147581573689d43fa3987416fff700ae27859bff777145aa1aa1d9e8",
+    "src/qtui/QtCommerce.cpp": "a513144e2857c1851a3ea8ba3b011acac87fe8cae987dcd43956613d9f3289c2",
+    "src/qtui/QtUiState.h": "05a841396e2115d8d32b5a3b584aacd206c47a8e78742cee2a6dd0e0f1d94fcf",
+    "src/qtui/QtUiStateAdapter.cpp": "1983b0306fe50224d511bf36201f5654ddb96106c237ce229c919d08154e7578",
+    "src/qtui/qml/GameOverlay.qml": "e405c6b9d05e95c2f55d44244381692aa3d9003251a75355ea952bf25b37633c",
+    "src/ui/ItemInfoSource.h": "df54d9bcd58601372be7a32b0cbb5889eba033013d4a3eb79b5baa9c131f5d76",
+    "src/ui/UIItemInfoWnd.cpp": "7a94df63d4e9a937bca05ca7a40183130e2591325298c6e438bbf361842212ea",
+    "src/ui/UIItemInfoWnd.h": "8dd31ef0b3081229005a9eb3c42f6282bd6167703ff872593c44ef082e15d0d3",
+    "src/ui/UIWindowMgr.cpp": "de6da21caa4bf9384915dcb3a8e195e0f5502da34f69cf00b35076d3ad9e7c54",
+    "src/ui/UIWindowMgr.h": "a7b635b47b127caa5154c0e87442382c40983ec9fd14491eeb034d91256364b6",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "5fb279289b25a378d164d15e4430002af78bf758264a213b3bc4616dc2923fcd",
+    "tools/tests/replay/ItemDetailToggleRenderChecks.inc": "9cba3d2a5926e2f88d0e6e2cac29cc6c6708cd0a9270bc306fee71aae3b4ff9d",
+    "tools/tests/replay/ItemCardDetailRenderChecks.inc": "11192ab89bd5d5dbc3ee934a9d8bb5a0fdece8e41ff47a798f9f212faa8b1674"
+  },
+  "primary_sha256": {
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIRectInfo.cpp": "e966ca8d73cd295750d9d1abd0a0595b77112b3ae956efd5b41809ba98beaa11",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/Mode.cpp": "2fd15fac636a59a745b57aec84c576944b98fd4d9a248cabf9b706d0de84292e",
+    "Ref/UIControl.cpp": "1c35fbb92f87961edb4eb6cea00cccd623d7535dc1c48b4cf5e876345d670c59"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "8a6e77ee57b1e883f26be0023cb4981b8332e13508a9ac1613be6410d8d17f57",
+    "packet_stream_replay_checks.exe": "3c45c7d6986f59b0765a7e868a86d124f60e6c434ea5a476cde9591341a29df7",
+    "open-midgard.exe": "45c065ed26f8c028a7edc41cb4abb52b40bd77f9db27e081d7dd240c073fc428"
+  },
+  "validation": {
+    "ctest_passed": 119,
+    "ctest_total": 119,
+    "ctest_seconds": 166.57,
+    "packet_PASS_records": 173,
+    "fresh_processes": 9,
+    "rendered_frames": 4,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "09727f04394993167fe677469a738c2497aded04c19f4f554402f8a8f8661d41",
+    "ctest_log_sha256": "5b729260eba0eb58254c92d117ed5b7288fe9eedac4ac8312e318daad5a6382d"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK09.15-card-renders/cold-default-item-card-detail-cold.qml.png": "f4c884a590f230d8d63b3eeadb021fb206718f21ec2041e1d55728547dd2741a",
+    "evidence/PK09.15-card-renders/cold-default-item-card-detail.json": "d6a208f6ac7d8a8b5ae7585e8a1b1179cce39bea6b9999c8b68dc6b1db83c08e",
+    "evidence/PK09.15-card-renders/hover-item-card-detail-hover-layers.qml.png": "bbd5dd5254c601d2d0a749dcab90369d6be0cdeafc0e5c1539be9d262edc2510",
+    "evidence/PK09.15-card-renders/hover-item-card-detail-hover.native.png": "2a4e44373560d25d608115c57501da45336882c13bee7c2dc67d233d75d94b69",
+    "evidence/PK09.15-card-renders/hover-item-card-detail.json": "3cc949018e57706d0042b2c92fdbd7bbee9ec6d394b935f93f9df76f66d78fb6",
+    "evidence/PK09.15-card-renders/item-card-detail-results.json": "4b5c75ad76e77b01f3eff28329920d214da82e3dbe52d906329644fea5e9d2ab",
+    "evidence/PK09.15-card-renders/lifecycle-item-card-detail.json": "4c53fa305916c6fac1d9d79eccb1b3618e9dc2a6539fc470bca26b353b0ae862",
+    "evidence/PK09.15-card-renders/metadata-gates-item-card-detail.json": "703b4e59908204e41fb1230eb2bb136af8f9d64b4364a9356c865b1acfbd5c51",
+    "evidence/PK09.15-card-renders/routing-item-card-detail-qt-right-click.qml.png": "ef99a8375d517fcc6aa9f3d5a8f88cf5f023a0a933f444b4579df9b343f97223",
+    "evidence/PK09.15-card-renders/routing-item-card-detail.json": "652dfea72841ad8f98ec17bc3f2c611ef8ae397bc881f461e9d547665ec0b1fd",
+    "evidence/PK09.15-card-renders/source-hits-item-card-detail.json": "c24a90b03aab097c83c780bb93dfc12911f1effbfc3cb3ea430b6df4d72a5b74",
+    "evidence/PK09.15-card-renders/warm-invalid-item-card-detail.json": "020a60a8cb7565c5ec0bbf6dfb46170e39f038c7388505c0c5bf959a1a081367",
+    "evidence/PK09.15-card-renders/warm-partial-item-card-detail.json": "d0f14ecacd02bd37e83539514c04f10268f4e47cb1cdfacd38f0bd43046aae3c",
+    "evidence/PK09.15-card-renders/warm-valid-item-card-detail.json": "d1abe25d9f87c260e500079c3b02879b809597d340d3defabfd5623619f570b7",
+    "evidence/PK09.15-red-parent.txt": "a7c00c913975c4a93df33efce2ba3790ef239d50b36bb786a62af94a0f6d9752",
+    "evidence/PK09.15-red-overlay.txt": "963e1edfca961bf42a89c6eb5d670d14e3cb3b746b8d20bf44a251e2c9cf8806",
+    "evidence/PK09.15-red-wrap.txt": "67de505cfaaefa969bdf7d6c52892bde0214b496d0588a8739840ed262c42eda"
+  },
+  "scope_limits": [
+    "100% logical card-detail acceptance; general scale transitions and full map/show lifecycle open",
+    "Synthetic name/art/markers/settings, not a live server capture or original locale certification",
+    "No new wire/route/discovery closure, full PK09.04, PK47/48/49 or deployment acceptance"
+  ]
+}

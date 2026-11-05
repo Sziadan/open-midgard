@@ -1964,6 +1964,14 @@
         "docs/packets/evidence/PK09.14-detail-geometry.json"
       ],
       "commit_subject": "packet(PK09.14): restore item detail geometry and clipped viewer"
+    },
+    "PK09.15": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.15-card-detail.md",
+        "docs/packets/evidence/PK09.15-card-detail.json"
+      ],
+      "commit_subject": "packet(PK09.15): separate slotted card details and source hit testing"
     }
   }
 }

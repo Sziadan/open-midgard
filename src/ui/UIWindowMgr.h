@@ -108,6 +108,7 @@ public:
         WID_ITEMWND           = 8,
         WID_NOTICECONFIRMWND  = 8,
         WID_ITEMINFOWND       = 24,
+        WID_CARDINFOWND       = 82,
         WID_ITEMCOLLECTIONWND = 25,
         WID_SKILLDESCRIBEWND  = 26,
         WID_ITEMIDENTIFYWND   = 0x49,
@@ -149,9 +150,10 @@ public:
     InventoryWindowInfo GetInventoryWindowInfo();
     void StoreInventoryWindowInfo(const InventoryWindowInfo& info);
     void CloseInventoryWindow();
-    ItemDetailWindowInfo GetItemDetailWindowInfo();
-    void RestoreItemDetailWindowPlacement(int* x, int* y);
-    void StoreItemDetailWindowInfo(const ItemDetailWindowInfo& info);
+    ItemDetailWindowInfo GetItemDetailWindowInfo(ItemDetailKind kind = ItemDetailKind::Main);
+    void RestoreItemDetailWindowPlacement(int* x, int* y, ItemDetailKind kind = ItemDetailKind::Main);
+    void StoreItemDetailWindowInfo(const ItemDetailWindowInfo& info, ItemDetailKind kind = ItemDetailKind::Main);
+    void ShowCardInfoWindow(const ITEM_INFO& item, ItemInfoAction action = ItemInfoAction::Select);
     void Reset();
     void OnProcess();
     void OnDraw();
@@ -274,6 +276,7 @@ public:
     UIOptionWnd* m_optionWnd;
     UIItemWnd* m_itemWnd;
     UIItemInfoWnd* m_itemInfoWnd;
+    UIItemInfoWnd* m_cardInfoWnd = nullptr;
     UIItemCollectionWnd* m_itemCollectionWnd;
     UIItemCompositionWnd* m_itemCompositionWnd;
     UIItemIdentifyWnd* m_itemIdentifyWnd;
@@ -305,6 +308,7 @@ private:
     bool m_inventoryWindowInfoInitialized = false;
     InventoryWindowInfo m_inventoryWindowInfo;
     ItemDetailWindowInfo m_itemDetailWindowInfo;
+    ItemDetailWindowInfo m_cardDetailWindowInfo{280,278,280,120};
     UIWindow* HitTestWindow(int x, int y) const;
     bool HasFrontMenuUiVisible() const;
     bool HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi);

@@ -166,6 +166,7 @@ template<class Window> QImage Native(Window& window,QRgb expected,int width=Widt
 #include "InventoryTabStartupRenderChecks.inc"
 #include "InventoryGeometryRenderChecks.inc"
 #include "ItemDetailGeometryRenderChecks.inc"
+#include "ItemCardDetailRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -189,6 +190,12 @@ int main(int argc,char** argv) {
         const bool itemGeometryChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-geometry-child";
         const bool itemDetailGeometry=argc>2 && QString::fromLocal8Bit(argv[2])=="item-detail-geometry";
         const bool itemDetailGeometryChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-detail-geometry-child";
+        const bool itemCardDetail=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail";
+        const bool itemCardDetailChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail-child";
+        if(itemCardDetail) {
+            CheckItemCardDetailDriver(output);
+            std::cout<<"PASS separate card detail and source hit testing\n";return 0;
+        }
         if(itemDetailGeometry) {
             CheckItemDetailGeometryDriver(output);
             std::cout<<"PASS source item detail geometry and viewer\n";return 0;
@@ -202,7 +209,7 @@ int main(int argc,char** argv) {
             std::cout<<"PASS source inventory tab startup and runtime retention\n";return 0;
         }
         InventoryTabViewportFixture inventoryTabViewport;
-        if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild) {
+        if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild || itemCardDetailChild) {
             Require(argc>3,"inventory startup child stage missing");
             const QString stage=QString::fromLocal8Bit(argv[3]);
             SetRuntimeUiScalePercent(100);inventoryTabViewport.Create(stage=="small"?QString("read-small"):stage);
@@ -231,7 +238,12 @@ int main(int argc,char** argv) {
         for(const QString& table:{QString("idnum2itemdisplaynametable.txt"),QString("num2itemdisplaynametable.txt"),QString("itemslotcounttable.txt"),QString("cardprefixnametable.txt"),QString("cardpostfixnametable.txt"),QString("carditemnametable.txt")}) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+table);
             Require(source.open(QIODevice::ReadOnly),"source-derived item fixture table missing");
-            const QByteArray bytes=source.readAll();QFile target(output+"/data/"+table);
+            QByteArray bytes=source.readAll();
+            // Private synthetic name exercises35-character wrapping and a
+            // balloon extending beyond its owner, without changing source data.
+            if(itemCardDetailChild&&table=="idnum2itemdisplaynametable.txt")
+                bytes+="\n4004#"+QByteArray(70,'W')+"#\n";
+            QFile target(output+"/data/"+table);
             Require(target.open(QIODevice::WriteOnly) && target.write(bytes)==bytes.size(),"item fixture table copy failed");
         }
         Require(QDir::setCurrent(output),"item fixture working directory failed");
@@ -258,15 +270,16 @@ int main(int argc,char** argv) {
         int errors=0;
         QQuickView view;view.setColor(QColor("#181b20"));view.resize(Width,Height);view.setResizeMode(QQuickView::SizeRootObjectToView);
         if(itemGeometryChild)view.resize(QString::fromLocal8Bit(argv[3])=="small"?640:1280,QString::fromLocal8Bit(argv[3])=="small"?480:720);
-        if(itemDetailGeometryChild)view.resize(1280,720);
+        if(itemDetailGeometryChild || itemCardDetailChild)view.resize(1280,720);
         view.rootContext()->setContextProperty("uiState",adapter.stateObject());
         view.engine()->addImageProvider("openmidgard",new FixtureImages);
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
-        if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild) {
+        if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild || itemCardDetailChild) {
             Require(argc>3,"inventory tab persistence child stage missing");
-            if(itemDetailGeometryChild)CheckItemDetailGeometryChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
+            if(itemCardDetailChild)CheckItemCardDetailChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
+            else if(itemDetailGeometryChild)CheckItemDetailGeometryChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
             else if(itemGeometryChild)CheckInventoryGeometryChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
             else CheckInventoryTabStartupChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
             Require(errors==0,"inventory tab persistence child emitted QML errors");

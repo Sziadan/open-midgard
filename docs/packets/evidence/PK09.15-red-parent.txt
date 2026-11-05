@@ -1,0 +1,14 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 15: packet_item_card_detail_render_checks
+1/1 Test #15: packet_item_card_detail_render_checks ...***Failed    0.66 sec
+FAIL item colour render: card detail child cold-default failed: FAIL item colour render: right-clicked card did not create its managed detail window
+
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.66 sec
+
+The following tests FAILED:
+	 15 - packet_item_card_detail_render_checks (Failed)
+Errors while running CTest
