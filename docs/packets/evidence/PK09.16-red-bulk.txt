@@ -1,0 +1,14 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 15: packet_inventory_show_render_checks
+1/1 Test #15: packet_inventory_show_render_checks ...***Failed    1.97 sec
+FAIL item colour render: inventory show child lifecycle failed: FAIL item colour render: bulk teardown did not destroy inventory while preserving remembered show state
+
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   1.97 sec
+
+The following tests FAILED:
+	 15 - packet_inventory_show_render_checks (Failed)
+Errors while running CTest

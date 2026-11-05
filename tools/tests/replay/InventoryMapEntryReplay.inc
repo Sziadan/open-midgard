@@ -1,3 +1,5 @@
+#include "ui/UIItemWnd.h"
+
 void InventoryMapEntryReplay()
 {
     SetCase("inventory_map_entry_reset", "PK09.05",
@@ -143,9 +145,24 @@ void InventoryMapEntryReplay()
     mode.m_characterNameReqTimer[0x12345678]=42;
     g_session.QueueNpcShopResult(NpcShopMode::Buy);g_session.m_shopChoicePending=true;
     g_session.m_shopRows.resize(1);g_session.m_shopDealRows.resize(1);
+    g_windowMgr.CloseInventoryWindow();
+    g_windowMgr.StoreInventoryWindowInfo({40,80,280,166,166,2,3,3,4});
+    auto* inventoryWindow=static_cast<UIItemWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMWND));
+    Require(inventoryWindow,"map inventory window setup failed");
+    inventoryWindow->SendMsg(nullptr,6,136,0,0);inventoryWindow->StoreInfo();
+    const auto checkRecreatedInventory=[&] {
+        Require(!g_windowMgr.m_itemWnd&&g_windowMgr.GetInventoryWindowShowState(),
+            "actual map entry lost remembered inventory visibility or retained old window");
+        g_windowMgr.MakeWindow(UIWindowMgr::WID_BASICINFOWND);
+        auto* reopened=g_windowMgr.m_itemWnd;
+        Require(reopened&&reopened->m_show&&reopened->m_x==40&&reopened->m_y==80
+            &&reopened->m_w==280&&reopened->m_h==17&&reopened->GetRestoreHeight()==166
+            &&reopened->GetCurrentTab()==2,"basic UI did not reconstruct remembered inventory after actual map entry");
+    };
     mode.OnInit(nullptr);
     restore.initialized = true;
     requireReset("first OnInit(nullptr)");
+    checkRecreatedInventory();
     Require(mode.m_characterNameCache.empty() && mode.m_characterNameReqTimer.empty(),"actual map entry retained character name state");
 
     // A server may omit an empty equipment category. Its normal inventory and
@@ -164,6 +181,14 @@ void InventoryMapEntryReplay()
 
     mode.OnInit(nullptr);
     requireReset("retry OnInit(nullptr)");
+    checkRecreatedInventory();
+    g_windowMgr.CloseInventoryWindow();
+    Require(!g_windowMgr.GetInventoryWindowShowState(),"explicit inventory close retained map show state");
+    mode.OnInit(nullptr);
+    requireReset("closed inventory OnInit(nullptr)");
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_BASICINFOWND);
+    Require(!g_windowMgr.m_itemWnd&&!g_windowMgr.GetInventoryWindowShowState(),
+        "actual map entry reopened an explicitly closed inventory");
     mode.m_characterNameCache[0x12345678]="Old producer";
     mode.m_characterNameReqTimer[0x12345678]=42;
     g_session.QueueNpcShopResult(NpcShopMode::Sell);g_session.m_shopChoicePending=true;

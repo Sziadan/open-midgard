@@ -784,7 +784,10 @@ void UIWindowMgr::ValidateInventoryWindowInfo()
         && info.tab >= 0 && info.tab <= 2
         && info.radio1 >= 0 && info.radio1 < 4 && info.radio2 >= 0 && info.radio2 < 4
         && info.radio3 >= 0 && info.radio3 <= 4;
-    if (!valid) m_inventoryWindowInfo = InventoryWindowInfo{};
+    if (!valid) {
+        m_inventoryWindowInfo = InventoryWindowInfo{};
+        m_inventoryWindowShown = false;
+    }
 }
 
 void UIWindowMgr::SetInventoryTabSelection(int tab)
@@ -820,7 +823,23 @@ void UIWindowMgr::CloseInventoryWindow()
 {
     if (!m_itemWnd) return;
     if (ContainsManagedWindow(*this,m_itemWnd)) DeleteWindow(m_itemWnd);
-    else m_itemWnd->SetShow(0);
+    else {
+        m_itemWnd->SetShow(0);
+        SetInventoryWindowShowState(false);
+    }
+}
+
+bool UIWindowMgr::GetInventoryWindowShowState()
+{
+    InitializeInventoryWindowInfo();
+    return m_inventoryWindowShown;
+}
+
+void UIWindowMgr::SetInventoryWindowShowState(bool shown)
+{
+    InitializeInventoryWindowInfo();
+    m_inventoryWindowShown = shown;
+    SaveSettingsIniInt("UIWindows","ItemWndShow",shown ? 1 : 0);
 }
 
 ItemDetailWindowInfo UIWindowMgr::GetItemDetailWindowInfo(ItemDetailKind kind)
@@ -1079,6 +1098,8 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_children.remove(m_basicInfoWnd);
         m_children.push_front(m_basicInfoWnd);
         m_basicInfoWnd->SetShow(1);
+        // Ref case0 reconstructs remembered inventory after map teardown.
+        if (GetInventoryWindowShowState()) MakeWindow(WID_ITEMWND);
         return m_basicInfoWnd;
 
     case WID_STATUSWND:
@@ -1234,6 +1255,7 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_children.remove(m_itemWnd);
         m_children.push_back(m_itemWnd);
         m_itemWnd->SetShow(1);
+        SetInventoryWindowShowState(true);
         return m_itemWnd;
 
     case WID_ITEMINFOWND:
@@ -1462,8 +1484,13 @@ bool UIWindowMgr::ToggleWindow(int windowId)
         window = m_guildWnd;
         break;
     case WID_ITEMWND:
-        window = m_itemWnd;
-        break;
+        // The source basic-info button/Alt-E tries DeleteWindow first,
+        // including retained hidden instances, then creates only if absent.
+        if (m_itemWnd) {
+            CloseInventoryWindow();
+            return false;
+        }
+        return MakeWindow(WID_ITEMWND) != nullptr;
     case WID_STORAGEWND:
         window = m_storageWnd;
         break;
@@ -1511,6 +1538,11 @@ void UIWindowMgr::AddWindowFront(UIWindow* window)
 }
 
 void UIWindowMgr::DeleteWindow(UIWindow* window)
+{
+    DeleteWindowImpl(window,false);
+}
+
+void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
 {
     if (!window) {
         return;
@@ -1623,6 +1655,7 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     if (window == m_itemWnd) {
         m_itemWnd->StoreInfo();
         m_itemWnd = nullptr;
+        if (!preserveInventoryShow) SetInventoryWindowShowState(false);
     }
     if (window == m_itemInfoWnd) {
         m_itemInfoWnd->StoreInfo();
@@ -1677,7 +1710,9 @@ void UIWindowMgr::RemoveAllWindows()
     }
 
     while (!m_children.empty()) {
-        DeleteWindow(m_children.front());
+        // Bulk teardown stores windows without the explicit close semantics
+        // that clear inventory's remembered show bit in Ref case8.
+        DeleteWindowImpl(m_children.front(),true);
     }
 
     m_captureWindow = nullptr;

@@ -98,3 +98,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.ITEM-DETAIL-GEOMETRY](PK09.ITEM-DETAIL-GEOMETRY.md) records parent geometry, strict saved shapes, clipped scrolling and visible socket rules; source card hit testing and WID82 remain a separate required path.
 
 [PK09.CARD-DETAIL](PK09.CARD-DETAIL.md) records the separate WID82 snapshot, rectangle, hit testing and native/Qt tooltip lifecycle accepted by PK09.15.
+
+[PK09.INVENTORY-SHOW](PK09.INVENTORY-SHOW.md) records separate remembered/live visibility and source map reconstruction accepted by PK09.16.

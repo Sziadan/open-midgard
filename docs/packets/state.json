@@ -1972,6 +1972,14 @@
         "docs/packets/evidence/PK09.15-card-detail.json"
       ],
       "commit_subject": "packet(PK09.15): separate slotted card details and source hit testing"
+    },
+    "PK09.16": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.16-inventory-show.md",
+        "docs/packets/evidence/PK09.16-inventory-show.json"
+      ],
+      "commit_subject": "packet(PK09.16): restore remembered inventory across map teardown"
     }
   }
 }

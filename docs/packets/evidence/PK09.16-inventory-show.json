@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-06",
+  "timezone": "Europe/Stockholm",
+  "baseline": "aad034b9669c9ecee433ed437765e4024de39376",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.16): restore remembered inventory across map teardown",
+  "source_sha256": {
+    "CMakeLists.txt": "5ffcf90f6aa098fa019eee758981b16f1b2913dba76ee1e284da3265fd45b414",
+    "src/ui/UIWindowMgr.cpp": "68b922e5e92a5efc1d1d4a159b190b7be3630f9bf27afa871e2d97e5929b2721",
+    "src/ui/UIWindowMgr.h": "34563e09ae8eb60d8712e668f65d0b3eb2e24de1312488efa7e56d690107df88",
+    "tools/tests/replay/InventoryMapEntryReplay.inc": "a95c2708df0c42ae111f9592a8a3304e1d102ad3ba10c40bbb6a83c2e0fb9ebd",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "fae8f75acbec736439af803be9dd1c195fa94ce7960cc8c5a75f89dab18bc9e6",
+    "tools/tests/replay/InventoryShowRenderChecks.inc": "540d2545015f2b100cb592734fb5c592a01720cdfd770fdffc911231391c8ad6"
+  },
+  "primary_sha256": {
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "Ref/UIRectInfo.cpp": "e966ca8d73cd295750d9d1abd0a0595b77112b3ae956efd5b41809ba98beaa11",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "f51f379bb1e61478480cb419817aa07bba2f136b11da452cb1cd9a276e0cf195",
+    "packet_stream_replay_checks.exe": "5f2584b08c2459cf206909e8d653b9071b7f9f12cc539d8afb888b2588c40a09",
+    "open-midgard.exe": "85372af09118cbcf78e8b5ccf48e43d993d6d626ef6c823bd3d95660f938e3f5"
+  },
+  "validation": {
+    "ctest_passed": 120,
+    "ctest_total": 120,
+    "ctest_seconds": 169.39,
+    "packet_PASS_records": 173,
+    "fresh_processes": 4,
+    "rendered_frames": 3,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "1e0c6c3a9744c9bc3b8766fab923e1f993cbff4c79469f9e652b61364a15963d",
+    "ctest_log_sha256": "ae944596402d3618a1e93caf4e6d738a27ed50966128deb32cd69126ae87f0e4"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK09.16-show-renders/cold-inventory-show.json": "e99f99116ade59ae64c382bf3b0f77fba38a69227cc9cbf70b3f4746b0e5919c",
+    "evidence/PK09.16-show-renders/inventory-show-results.json": "7e23d2a770ecf25f1af520306bb20832063b1af797caf20406242eaca300800e",
+    "evidence/PK09.16-show-renders/lifecycle-inventory-show-mini.qml.png": "aae7a72577d0a770b5112edd5950c2f8142e7272a3201aa34e148976cb905caf",
+    "evidence/PK09.16-show-renders/lifecycle-inventory-show-restored.native.png": "2982989a77f4b3a173794fa0abfcfb2a5731e3beef1febe416d4848c3eda4f98",
+    "evidence/PK09.16-show-renders/lifecycle-inventory-show-restored.qml.png": "cb415f99534adddbbd5919b3e2ac3452106478c247d400bccb8eb8b69f2d0aa0",
+    "evidence/PK09.16-show-renders/lifecycle-inventory-show.json": "9ce0e4f97b8bb1dd510469f128382aa1df140c1411cb36d40971825f5bbbb60a",
+    "evidence/PK09.16-show-renders/seed-warm-inventory-show.json": "68d7a8e9152b4f798af7936f5d6aa5226fe15269efb5cccb57259a01308be5df",
+    "evidence/PK09.16-show-renders/warm-inventory-show.json": "d698416753e35a4c377cf3dec4c452fb89d7ba6b083b81453fa4badd37a59c4b",
+    "evidence/PK09.16-red-restore.txt": "c808828dac05568f2a9cb0f08cb477235ecdd8f1a2a5ad6bf5a3d9a2d613e179",
+    "evidence/PK09.16-red-bulk.txt": "14c1cd5497a6ab0d15836ec0feb64767e567e71c3718afd7465e71350cf24cd5"
+  },
+  "scope_limits": [
+    "Inventory show state and OnInit/basic-factory boundaries, not full loading assets or general chat persistence",
+    "100% logical GUI checks; general scale/art/locale and full item/status/delta/context acceptance remain open",
+    "No new wire/discovery closure, PK47/48/49 or deployment certification"
+  ]
+}

@@ -363,6 +363,11 @@
         "id": "PK09.15",
         "action": "Restore separately owned WID82 card snapshots/rectangle and source nonzero-prefix hidden-band input; verify native/actual Qt hover/right-click/close, independent lifecycle and viewport tooltip layering, retaining full PK09.04.",
         "tier": "S"
+      },
+      {
+        "id": "PK09.16",
+        "action": "Restore independent remembered inventory show state, source delete-first button/Alt-E and bulk teardown/basic-UI reconstruction; verify actual OnInit boundaries and native/Qt geometry/tab/mini/close lifecycle without closing full item acceptance.",
+        "tier": "S"
       }
     ],
     "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."

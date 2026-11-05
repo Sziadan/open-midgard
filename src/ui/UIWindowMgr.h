@@ -150,6 +150,7 @@ public:
     InventoryWindowInfo GetInventoryWindowInfo();
     void StoreInventoryWindowInfo(const InventoryWindowInfo& info);
     void CloseInventoryWindow();
+    bool GetInventoryWindowShowState();
     ItemDetailWindowInfo GetItemDetailWindowInfo(ItemDetailKind kind = ItemDetailKind::Main);
     void RestoreItemDetailWindowPlacement(int* x, int* y, ItemDetailKind kind = ItemDetailKind::Main);
     void StoreItemDetailWindowInfo(const ItemDetailWindowInfo& info, ItemDetailKind kind = ItemDetailKind::Main);
@@ -307,6 +308,9 @@ private:
     void ValidateInventoryWindowInfo();
     bool m_inventoryWindowInfoInitialized = false;
     InventoryWindowInfo m_inventoryWindowInfo;
+    bool m_inventoryWindowShown = false;
+    void SetInventoryWindowShowState(bool shown);
+    void DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow);
     ItemDetailWindowInfo m_itemDetailWindowInfo;
     ItemDetailWindowInfo m_cardDetailWindowInfo{280,278,280,120};
     UIWindow* HitTestWindow(int x, int y) const;
