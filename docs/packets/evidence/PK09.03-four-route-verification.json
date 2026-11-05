@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-05",
+  "step": "PK09.03",
+  "commit_subject": "packet(PK09.03): verify four selected list routes",
+  "documentation_base": "7dc8a02660c5623aca8a80aa7d9a044fa3cf4169",
+  "runtime_evidence": "docs/packets/evidence/PK09.04-bag-projection.json",
+  "runtime_evidence_sha256": "90706e5c3e8af7e28da108d3cf1c7b3573b6a47a3a6334045e5bbd24dbf83da3",
+  "source_blobs": {
+    "src/network/MapSendProfile.cpp": "df0782ba127513c87a2697277d3c9a38bfadebc4",
+    "src/network/GronPacket.cpp": "69f050a33f52f34fea1f3333069f72d67017a4fa",
+    "src/gamemode/GameModePacket.cpp": "181dd4ebd45d2188dd8466505773543a3e3f4f29",
+    "src/gamemode/Commerce.cpp": "0d607b7dd6e873856ea8491f27587fa9d760ede5",
+    "tools/tests/replay/PacketStreamReplay.cpp": "5874ca4781f08d29d3bd4ca63ad48b9a30490505",
+    "tools/tests/replay/CartItemWireFieldsReplay.inc": "6460f51bbaaf6460d3b4f01c2d4639cf56eaf104",
+    "tools/tests/replay/InventoryItemFieldsReplay.inc": "a7624a1f904f9364ae8f8c9c3a199de91fe3d540"
+  },
+  "results": {
+    "passed": 107,
+    "failed": 0,
+    "seconds": 34.28,
+    "packet_records": 161,
+    "bag_frames": 4,
+    "item_colour_frames": 30,
+    "item_qml_errors": 0,
+    "minimap_scenes": 18
+  },
+  "binaries": {
+    "open-midgard.exe": {
+      "sha256": "76d0d0a5a0cd5a78353e80f1a68eadd70dcda7ef5da82e8d45c34baa010ddb1b",
+      "bytes": 19694586,
+      "mtime_utc": "2026-11-05T16:43:57.667242+00:00"
+    },
+    "packet_stream_replay_checks.exe": {
+      "sha256": "ad39d36d51aba17f23b2f92c3069df989ca495d16eb319c02813b64ec7f9759d",
+      "bytes": 20199097,
+      "mtime_utc": "2026-11-05T16:52:23.876262+00:00"
+    },
+    "packet_item_render_checks.exe": {
+      "sha256": "d51c284a45eae5872b98160f544ae75b8b89990df04803a4199d73cf8ebcd95a",
+      "bytes": 19758001,
+      "mtime_utc": "2026-11-05T16:44:02.615264+00:00"
+    },
+    "packet_minimap_render_checks.exe": {
+      "sha256": "16e89f167ba4c706a400ffed83e97f82edf9420c8d1689890acae974e28b3f58",
+      "bytes": 19731007,
+      "mtime_utc": "2026-11-05T16:43:57.541534+00:00"
+    },
+    "skill_packet_replay_runtime_checks.exe": {
+      "sha256": "316d0a3c37ab12aeb469b2bfdcd31f238538db966caab4c4f80d7fde0c9b8118",
+      "bytes": 19884066,
+      "mtime_utc": "2026-11-05T16:43:57.420346+00:00"
+    }
+  },
+  "server_inputs_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "limits": [
+    "Selected mapping/routes only; broad PK09.04 remains open.",
+    "No global discovery closure, complete profile22, historical/deployed or PK48/49 certification."
+  ]
+}

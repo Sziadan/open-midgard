@@ -349,12 +349,14 @@
       "commit_subject": "packet(PK09.02): verify selected alias ownership"
     },
     "PK09.03": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK09.03-four-route-replay-2026-11-05.md",
-        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md",
+        "docs/packets/evidence/PK09.03-four-route-verification.md",
+        "docs/packets/evidence/PK09.03-four-route-verification.json"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK09.03): verify four selected list routes"
     },
     "PK09.04": {
       "status": "IN_PROGRESS",

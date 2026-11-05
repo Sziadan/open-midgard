@@ -3348,3 +3348,7 @@ Reproduced then fixed Qt worn-equipment bag rows/counts to match native and prim
 ## 2026-11-05 — PK09.02 selected verification checkpoint
 
 packet(PK09.02): verify selected alias ownership. Current runtime source blobs and binaries match the committed bag/field provenance: 107 tests and 161 packet records pass. Supersedes the historical dirty-tree gate; retains broad PK09.04, historical/deployed and independent-review limits. No runtime change or numeric classification update.
+
+## 2026-11-05 — PK09.03 selected verification checkpoint
+
+packet(PK09.03): verify four selected list routes. Current runtime source blobs and binaries match the committed bag/field provenance: 107 tests and 161 packet records pass. Supersedes the historical dirty-tree gate; retains broad PK09.04, historical/deployed and independent-review limits. No runtime change or numeric classification update.

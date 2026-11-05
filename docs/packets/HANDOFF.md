@@ -4,7 +4,7 @@
 
 ## Continue here
 
-1. PK09.02 selected alias ownership is complete; finalize PK09.03 four-route checkpoint using the same exact current-source proof. Its earlier dirty-tree gate is superseded. Trace profile 22/23 inherited inventory mappings without claiming whole historical/deployed wire parity. Keep one completed leaf per commit.
+1. PK09.02 selected alias and PK09.03 four-route verification are complete in their own checkpoints. Historical dirty-tree gates are superseded; do not repeat those repairs. Continue the broader PK09.04 work below without claiming whole historical/deployed parity.
 2. Continue [PK09.04](work-items/PK09.04.md)'s remaining cart status/delta/failure/counter and applicable quantity/name/card/refine/expiry UI work. Identify actual package ownership and add bounded source-backed leaves. Worn bag projection, normal/equipment fields/ordering, ammo state, category arrays, map entry/reuse and hover colours are already verified.
 3. Resume bounded PK46.02 request/profile/send-failure and character paths; its 177 request rows remain research. NPC/status/mail have concrete source-ready contracts.
 
