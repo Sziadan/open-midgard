@@ -9975,6 +9975,7 @@ void CGameMode::OnInit(const char* worldName) {
     ClearPendingDisconnectAction();
     RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
     ClearRuntimeActors(*this);
+    ro::commerce::ResetForMapEntry();
     m_groundItemList.clear();
     m_playWaveList.clear();
     m_ambientWaveList.clear();

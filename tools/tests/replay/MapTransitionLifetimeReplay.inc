@@ -1,4 +1,5 @@
 #include "gamemode/View.h"
+#include "ui/UIStorageWnd.h"
 #include "world/GameActor.h"
 #include "world/World.h"
 
@@ -238,6 +239,17 @@ void MapTransitionLifetimeReplay()
         services.reconnect = [](u32, u16) -> bool { throw std::runtime_error("same-map fixture attempted reconnect"); };
         services.requestMode = [&](int type, const char* name) { ++handoffs; g_modeMgr.Switch(type, name); };
         mode.SetMapTransitionServices(&services);
+        ITEM_INFO oldEquipment{};
+        oldEquipment.m_itemIndex = 0x123;
+        oldEquipment.SetItemId(0x4d2);
+        oldEquipment.m_itemType = 5;
+        oldEquipment.m_num = 1;
+        g_session.SetInventoryItem(oldEquipment);
+        g_session.OpenStorage(1, 600);
+        g_session.SetStorageItem(oldEquipment);
+        g_windowMgr.MakeWindow(UIWindowMgr::WID_STORAGEWND);
+        Require(g_windowMgr.m_storageWnd && g_windowMgr.m_storageWnd->m_show,
+            "could not open the real storage window before same-map warp");
         const auto frame = MapChangeFrame(0x0091, "prontera", 80, 90);
         inputPeer.Send(frame);
         WaitKernelPending(mapInput, static_cast<int>(frame.size()));
@@ -249,6 +261,11 @@ void MapTransitionLifetimeReplay()
         const u16 expectedAck = ro::net::GetActiveMapGameplaySendProfile().notifyActorInit;
         Require(ack == std::vector<u8>{static_cast<u8>(expectedAck & 0xffu), static_cast<u8>(expectedAck >> 8)},
             "same-map warp did not send the production load-end acknowledgement");
+        Require(g_session.GetInventoryItems().empty(),
+            "same-map load-end acknowledgement retained old inventory snapshot rows");
+        Require(!g_session.IsStorageOpen() && g_session.GetStorageItems().empty()
+            && g_windowMgr.m_storageWnd && !g_windowMgr.m_storageWnd->m_show,
+            "same-map warp retained the old storage session or native window");
         Require(g_session.m_curMap == std::string("prontera") && g_session.m_playerPosX == 80 && g_session.m_playerPosY == 90,
             "same-map warp did not apply the new coordinates");
         RequirePartyInvalidated(revision, before.imageRevision, "same-map warp reuse");

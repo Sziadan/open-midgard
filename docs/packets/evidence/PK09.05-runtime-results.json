@@ -1,0 +1,32 @@
+{
+  "case": {
+    "case_id": "inventory_map_entry_reset",
+    "contract_id": "PK09.05",
+    "routes": [
+      "02E8",
+      "02D0",
+      "02E9",
+      "02D2"
+    ],
+    "empty_equipment_category_omitted": true,
+    "repeat_map_entry_idempotence": true,
+    "positions_and_tab_preserved": true,
+    "storage_and_transactions_reset": true,
+    "outcome": "PASS"
+  },
+  "full_ctest": {
+    "passed": 106,
+    "failed": 0,
+    "seconds": 26.2
+  },
+  "packet_pass_records": 160,
+  "same_map_checks": [
+    "real 0091 production handler",
+    "singleton two-byte load-end acknowledgement",
+    "old inventory cleared",
+    "real native storage window hidden and storage closed",
+    "loaded world/player/view preserved"
+  ],
+  "minimap_scenes": 18,
+  "qml_errors": 0
+}

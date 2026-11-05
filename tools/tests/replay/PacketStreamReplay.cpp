@@ -4488,6 +4488,7 @@ void GlobalChatProductionSendReplay()
 #include "MapReceivePreambleReplay.inc"
 #include "MapTransitionLifetimeReplay.inc"
 #include "CartItemWireFieldsReplay.inc"
+#include "InventoryMapEntryReplay.inc"
 
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
@@ -4612,5 +4613,6 @@ int main(){try{
     MapReceivePreambleReplay();
     MapTransitionLifetimeReplay();
     CartItemWireFieldsReplay();
+    InventoryMapEntryReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

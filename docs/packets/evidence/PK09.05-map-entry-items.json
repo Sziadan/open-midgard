@@ -1,0 +1,162 @@
+{
+  "date": "2026-11-05",
+  "baseline": "8ede9b8724703fdff915f924c31ec4341eafbeb7",
+  "commit_subject": "packet(PK09.05): reset item snapshots on map entry",
+  "source_inputs": {
+    "src/gamemode/Commerce.cpp": {
+      "working_sha256": "de33aa4fc25e85cf78d054104478cbfb5df5d74997dfc4113a85f039e1337c95",
+      "git_blob": "0d607b7dd6e873856ea8491f27587fa9d760ede5"
+    },
+    "src/gamemode/Commerce.h": {
+      "working_sha256": "7764279b422c370f345a6d814983acae13385122e45dc992f6005ca8bba02708",
+      "git_blob": "6cc57b579f3fe58fef5335a95f4891fda5eba11e"
+    },
+    "src/gamemode/GameMode.cpp": {
+      "working_sha256": "19fbd7becaf153ab92c91cfe00e0d40f460abec35459fa39825a02bf4335922b",
+      "git_blob": "7ae45e91ef2f4bb449e8cb475145f002d313035e"
+    },
+    "src/gamemode/GameModePacket.cpp": {
+      "working_sha256": "8170e9387e790e1c8818659b5479821c661585f962375c60fdd48c8142565a78",
+      "git_blob": "181dd4ebd45d2188dd8466505773543a3e3f4f29"
+    },
+    "tools/tests/replay/PacketStreamReplay.cpp": {
+      "working_sha256": "8b4b0ead01225edc9a81e8267efb58a0d616f2dd5eda588641d0475856d7354f",
+      "git_blob": "d6ed46b6fe5eae826f21a268f8b65f03955343ce"
+    },
+    "tools/tests/replay/InventoryMapEntryReplay.inc": {
+      "working_sha256": "cb2dffa4904aa96f12df1d9ade9a494339295f4e63e6d052f5e2bb24bb619464",
+      "git_blob": "fed178326f350b4b778f66944910d4b63f8bf483"
+    },
+    "tools/tests/replay/MapTransitionLifetimeReplay.inc": {
+      "working_sha256": "422b85d4fa125ca83f33f3f0cc5f3d4990fa2b9d4195e103e15aa660354fd950",
+      "git_blob": "cecc2331e776b569171a173a15e86bc59fd48aac"
+    }
+  },
+  "reference_inputs_sha256": {
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb"
+  },
+  "other_inputs_sha256": {
+    "CMakeLists.txt": "d163f00e33c25dce1e67fbaf2166e48226df485f91970b3774dbbef75da40b77",
+    "src/gamemode/Mode.cpp": "5c31092addd5302b87e8c509b523511d71a0b5b6087ae6c84eb6728f279c8023",
+    "src/session/Session.cpp": "61ba50fc0669c06aca0b5bda98ffda215f543dd4e111ef48866234f9e0cca2dc",
+    "src/ui/UIWindowMgr.cpp": "7aa5b15da596cdb8c01edda70ca14d176684d880c7bbe9b6b57273c3d8da1f7d",
+    "tools/tests/replay/CartItemWireFieldsReplay.inc": "cdf49d50c94456a256d116a8937d9262e0cf24f2a2106c9242e4fd97e86518cc",
+    "docs/packets/evidence/PK09.04-cart-fields-probe.cpp": "799cd3c0d924f557ed48346d0d80a3219310a44160f844235a616b8a36e202f9",
+    "docs/packets/evidence/PK09.04-cart-fields-probe.txt": "4f6926b3ad1ffd6c9365ab390790c0d5de047c3c5012df90493e4b29ac4a50dc"
+  },
+  "server_inputs_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "selected_profile": {
+    "PACKETVER": 20080910,
+    "normalInventory": "0x02E8",
+    "equipmentInventory": "0x02D0",
+    "normalCart": "0x02E9",
+    "equipmentCart": "0x02D2",
+    "empty_category_emission": "omitted"
+  },
+  "commands": [
+    "cmake -S . -B build-mingw-preset -DRO_ENABLE_DEV_DEPLOY=OFF -DRO_BUILD_PACKET_REPLAY_TESTS=ON -DRO_BUILD_SKILL_REPLAY_TESTS=ON",
+    "cmake --build build-mingw-preset -j 6",
+    "ctest --test-dir build-mingw-preset --verbose --output-on-failure"
+  ],
+  "results": {
+    "case": {
+      "case_id": "inventory_map_entry_reset",
+      "contract_id": "PK09.05",
+      "routes": [
+        "02E8",
+        "02D0",
+        "02E9",
+        "02D2"
+      ],
+      "empty_equipment_category_omitted": true,
+      "repeat_map_entry_idempotence": true,
+      "positions_and_tab_preserved": true,
+      "storage_and_transactions_reset": true,
+      "outcome": "PASS"
+    },
+    "full_ctest": {
+      "passed": 106,
+      "failed": 0,
+      "seconds": 26.2
+    },
+    "packet_pass_records": 160,
+    "same_map_checks": [
+      "real 0091 production handler",
+      "singleton two-byte load-end acknowledgement",
+      "old inventory cleared",
+      "real native storage window hidden and storage closed",
+      "loaded world/player/view preserved"
+    ],
+    "minimap_scenes": 18,
+    "qml_errors": 0
+  },
+  "diagnostic_inputs": {
+    "pk09-map-before-inputs.json": {
+      "src/gamemode/Commerce.cpp": "1e9a5dbcd2b71519e7bc7ac38fbca2db7c841b92a9ae7db1722bbcb10e60ce10",
+      "src/gamemode/Commerce.h": "e975b838e5610f301a09b64a3af5f83cd27bce1897d18d3f4370651567f47e25",
+      "tools/tests/replay/InventoryMapEntryReplay.inc": "f9db4afbe679e8270334d255c2aef41a9bb64b17cd97f8211761c05fb14604b4",
+      "build-mingw-preset/packet_stream_replay_checks.exe": "905dad8b74cb32a7f5c0dfb9305521c05d2b1c7e4d3a1ce28d1b3eca3d2ad20a",
+      "src/gamemode/GameMode.cpp": "34b2856a29f018c8861263f5bb1b86fb35421a6eba53da0abdb7b678a40efe52"
+    },
+    "pk09-reuse-before-inputs.json": {
+      "src/gamemode/GameModePacket.cpp": "ac2661e5d03312162b788c66176b2999714aed9064a47328bee54e2f5500c27e",
+      "src/gamemode/GameMode.cpp": "b5018ce622396d819d2ce98bb76377727d8d0b843fec9e2c89ffc251fb943924",
+      "tools/tests/replay/MapTransitionLifetimeReplay.inc": "8fb9cb9ed1c0e84b7221899f98e84893e3f4c4a3a8295fdccba3114022aebed3",
+      "build-mingw-preset/packet_stream_replay_checks.exe": "2543d895e630018000cc29b9e094a8513a7fc816e4a347d8ae38356942e07044",
+      "src/gamemode/Commerce.cpp": "62c3efb3f0ca688bbe5e4572c8b1ad2f99ea36c7fb6eebc80596151197756f3b"
+    }
+  },
+  "logs_sha256": {
+    "build-mingw-preset/review-2026-11-05/pk09-map-configure.log": "6325b7d4054177af674cc3d2a68c391ed1c6a2d516a110cddf294edbd7aedd61",
+    "build-mingw-preset/review-2026-11-05/pk09-map-build.log": "2e109a28a6d8b315112926ebabdb0afa9f1e4f9b76a36cce24fd136cd639fc44",
+    "build-mingw-preset/review-2026-11-05/pk09-map-all-ctest.log": "e600f517bfd74ee18fbdaef8d97316962883bf13f0ba24ae69bb69ab1463b269",
+    "build-mingw-preset/review-2026-11-05/pk09-map-before.log": "2e16cfa8c92b26448a1508cca8271fa264f1d9ca5bd18bf83deb2b5e87ecb0c1",
+    "build-mingw-preset/review-2026-11-05/pk09-reuse-before.log": "5e77af266fdda2a52ac7fa162d9f3669f8a056e308baefdb5781edc6f12b5d82"
+  },
+  "binaries": {
+    "open-midgard.exe": {
+      "sha256": "344a012bb5b75a4e7dc8c96cc98c5adc0423f84a0f6c4fb5f3946fb6bf2263e0",
+      "size": 19689842,
+      "mtime_utc": "2026-11-05T14:40:47.726927+00:00"
+    },
+    "packet_stream_replay_checks.exe": {
+      "sha256": "60d6bbd15d9106ecbdbeb7cb4cbb59261cb33654ff3143ab5782919edc58e991",
+      "size": 20182952,
+      "mtime_utc": "2026-11-05T14:40:56.676584+00:00"
+    },
+    "skill_packet_replay_runtime_checks.exe": {
+      "sha256": "e628da0ad964f57a8b42de3a078cf6bbf7f7745bfa0e78e61bb20c30e7a122a1",
+      "size": 19879834,
+      "mtime_utc": "2026-11-05T14:40:47.651345+00:00"
+    },
+    "packet_minimap_render_checks.exe": {
+      "sha256": "1a1b5c4c81471d147bfd1bf8cb6d154a3b73b5103890d9707b7f2f99de6678d6",
+      "size": 19726975,
+      "mtime_utc": "2026-11-05T14:40:47.710402+00:00"
+    },
+    "party_position_state_checks.exe": {
+      "sha256": "8614b4434ad210bb323252932ab0acf7cf20a488a17f525a73667d962e4aefc4",
+      "size": 54468,
+      "mtime_utc": "2026-11-05T13:13:51.144443+00:00"
+    }
+  },
+  "retained_evidence_sha256": {
+    "PK09.05-runtime-results.json": "69727bffcd3b3cfd982d5012f132c00c34b5426a45c17170e5d0befaacf2175a",
+    "PK09.05-before-init.jsonl": "021f3f367409c4b36c41cc6908c97dcc0fec56ec19419ef2fe45c3b27ff1c620",
+    "PK09.05-before-reuse.jsonl": "c08873b19c14325fed3dfc7a2e8963dbc4ca86d21ff7c40db0f51e00c717ab64"
+  },
+  "limits": [
+    "Actual OnInit(null world name) and real same-map handler/loopback ACK; no live/deployed transport reconnect claimed.",
+    "Native storage-window visibility/state checked; no item-panel rendered pixels in this leaf.",
+    "Synthetic storage and transaction flags test map lifetime only, not complete storage/mail/commerce protocol.",
+    "Broader PK09.04 and new UI leaf PK09.06 remain open; no numeric discovery row newly closed."
+  ]
+}

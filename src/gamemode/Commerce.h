@@ -32,6 +32,9 @@ struct State {
 };
 extern State state;
 void Reset();
+// Fresh map snapshot: clear session items/storage and commerce server state,
+// retaining local panel positions and the selected inventory tab.
+void ResetForMapEntry();
 void CloseTransactions();
 bool Receive(CGameMode&,const PacketView&);
 bool Action(const Command&);

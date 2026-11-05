@@ -305,8 +305,18 @@
         "tier": "S"
       },
       {
+        "id": "PK09.05",
+        "tier": "S",
+        "action": "Restore fresh inventory/storage/cart/transaction snapshots at actual map initialization and same-map load-end reuse; production-replay omitted empty categories and real native storage-window closure while preserving local panel positions/tab. Follow work-items/PK09.05.md."
+      },
+      {
+        "id": "PK09.06",
+        "tier": "S",
+        "action": "Restore primary Ref identified/bound item name-colour semantics in applicable native/Qt consumers; verify raw bind 0/1/2, identification precedence and actual rendered output without inventing a badge. Follow work-items/PK09.06.md."
+      },
+      {
         "id": "PK09.04",
-        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
+        "action": "After PK09.05 map-entry and PK09.06 item-colour leaves, finish source/field/branch and actual UI lifecycle acceptance for all four selected list routes; close only evidence-backed rows and commit the implementation-verification checkpoint. PK48 remains independent.",
         "tier": "S"
       }
     ],
@@ -1034,7 +1044,7 @@
       },
       {
         "id": "PK31.02",
-        "action": "Implement00D5\u201300E3 room list create join owner/password/membership flows.",
+        "action": "Implement00D5–00E3 room list create join owner/password/membership flows.",
         "tier": "S"
       },
       {
@@ -1300,7 +1310,7 @@
       },
       {
         "id": "PK39.02",
-        "action": "Implement MVP010A\u2013010D and rankings0219/021A/021B/021C/0224/0226/0236/0238.",
+        "action": "Implement MVP010A–010D and rankings0219/021A/021B/021C/0224/0226/0236/0238.",
         "tier": "M"
       },
       {
@@ -1402,7 +1412,7 @@
       },
       {
         "id": "PK42.02",
-        "action": "Implement02CB\u201302CE creation state queue/wait and result branches.",
+        "action": "Implement02CB–02CE creation state queue/wait and result branches.",
         "tier": "S"
       },
       {
@@ -1536,7 +1546,7 @@
       },
       {
         "id": "PK44.03.006",
-        "action": "Trace legacy and scheduled character deletion requests, confirmations, cancellation and results (including 0x01FB and 0x0827\u20130x082C) across stage transitions.",
+        "action": "Trace legacy and scheduled character deletion requests, confirmations, cancellation and results (including 0x01FB and 0x0827–0x082C) across stage transitions.",
         "tier": "M"
       },
       {

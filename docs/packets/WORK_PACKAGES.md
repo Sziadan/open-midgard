@@ -4,7 +4,7 @@ Read ../PACKET_IMPLEMENTATION_PLAN.md first. Every numbered step below requires 
 
 Common source anchors for every card: rAthena src/map/clif_packetdb.hpp, packets.hpp, packets_struct.hpp, clif.cpp and the parser/emitter call tree; Ref/GameModePacket.cpp, packet.h and corresponding Session/actor/UI methods. Exact matching audit symbols/opcodes are listed in coverage.csv and inventory.json. Before implementation, write exact symbol/guard/field evidence into a contract. If a card is too broad, enumerate permanent child IDs before coding; each child gets a separate commit.
 
-## PK00 — Reconcile and preserve the implementation baseline
+## PK00 â€” Reconcile and preserve the implementation baseline
 
 Tier: **S**. Dependencies: none.
 
@@ -23,7 +23,7 @@ Do not stage all current work. Planning commit alone does not capture runtime de
 
 0 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK01 — Resolve active protocol identities
+## PK01 â€” Resolve active protocol identities
 
 Tier: **S**. Dependencies: PK00.
 
@@ -42,7 +42,7 @@ Profiles22/23 currently share a table: determine their supported contract, do no
 
 0 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK02 — Create server contract manifest and byte oracles
+## PK02 â€” Create server contract manifest and byte oracles
 
 Tier: **S**. Dependencies: PK01.
 
@@ -61,7 +61,7 @@ Expected request offsets must come from final server parser registration. No cli
 
 0 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK03 — Production replay and test harness
+## PK03 â€” Production replay and test harness
 
 Tier: **S**. Dependencies: PK02.
 
@@ -80,7 +80,7 @@ Document confirmed MinGW test commands. Detect stale binaries, use deployment OF
 
 0 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK04 — Raw account-ID handshake
+## PK04 â€” Raw account-ID handshake
 
 Tier: **S**. Dependencies: PK03.
 
@@ -105,7 +105,7 @@ Finding P01: Account-ID handshake is represented as fake opcodes.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/LoginMode.cpp`:1935; search `case 0x8482`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/char/char_clif.cpp`:850; search `// send back account_id`. Recheck current line/guard.
 
-## PK05 — Framing and unknown-opcode behavior
+## PK05 â€” Framing and unknown-opcode behavior
 
 Tier: **S**. Dependencies: PK04.
 
@@ -129,7 +129,7 @@ Finding P02: Unknown packet recovery can destroy stream alignment.
 
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/Connection.cpp`:533; search `if (knownSize == 0)`. Recheck current line/guard.
 
-## PK06 — Guild member login notice 01F2
+## PK06 â€” Guild member login notice 01F2
 
 Tier: **M**. Dependencies: PK05.
 
@@ -153,7 +153,7 @@ Finding P03: Guild member status is still unframed and unhandled.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:8682; search `void clif_guild_memberlogin_notice`. Recheck current line/guard.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp`:25; search `void FillPacketSizeTable`. Recheck current line/guard.
 
-## PK07 — Pet 01A2 framing repair
+## PK07 â€” Pet 01A2 framing repair
 
 Tier: **M**. Dependencies: PK05.
 
@@ -177,7 +177,7 @@ Finding P04: Pet status length is wrong for the configured server.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp`:260; search `SetPacketSize(0x01A2, 37)`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/packets_struct.hpp`:5441; search `struct PACKET_ZC_PROPERTY_PET`. Recheck current line/guard.
 
-## PK08 — Ground skill text request contract
+## PK08 â€” Ground skill text request contract
 
 Tier: **S**. Dependencies: PK05.
 
@@ -202,7 +202,7 @@ Finding P05: Ground-skill text request uses the wrong active contract.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/MapSendProfile.cpp`:942; search `bool BuildActiveUseSkillToPosInfoPacket`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif_packetdb.hpp`:531; search `parseable_packet(0x007e,102`. Recheck current line/guard.
 
-## PK09 — Inventory/cart receive alias ownership
+## PK09 â€” Inventory/cart receive alias ownership
 
 Tier: **S**. Dependencies: PK05.
 
@@ -211,7 +211,9 @@ Tier: **S**. Dependencies: PK05.
 - **PK09.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.02 [S]** Apply the reviewed selected-20080910 mapping: normal/equipment inventory 02E8/02D0, cart 02E9/02D2; remove 01EF from selected equipment alias ownership and retain its historical normal-cart identity under PK47. Follow REVIEW-2026-11-05; source ambiguity is resolved, route tests/commit remain. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.03 [S]** Verify active normal/equipment/cart routes independently. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK09.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.05 [S]** Restore fresh inventory/storage/cart/transaction snapshots at actual map initialization and same-map load-end reuse; production-replay omitted empty categories and real native storage-window closure while preserving local panel positions/tab. Follow work-items/PK09.05.md. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.06 [S]** Restore primary Ref identified/bound item name-colour semantics in applicable native/Qt consumers; verify raw bind 0/1/2, identification precedence and actual rendered output without inventing a badge. Follow work-items/PK09.06.md. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.04 [S]** After PK09.05 map-entry and PK09.06 item-colour leaves, finish source/field/branch and actual UI lifecycle acceptance for all four selected list routes; close only evidence-backed rows and commit the implementation-verification checkpoint. PK48 remains independent. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -226,7 +228,7 @@ Finding P06: Duplicate registration hides an advertised inventory handler.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/MapSendProfile.cpp`:215; search `profile.equipInventoryListTimed = 0x01EF`. Recheck current line/guard.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:8765; search `for(u16 id:{0x0122`. Recheck current line/guard.
 
-## PK10 — Connection transitions and confirmations
+## PK10 â€” Connection transitions and confirmations
 
 Tier: **S**. Dependencies: PK05.
 
@@ -250,7 +252,7 @@ Finding P12: Server-directed disconnect is ignored.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:8842; search `router.Register(0x02D5`. Recheck current line/guard.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/Ref/GameModePacket.cpp`:2384; search `CGameMode::Zc_Isvr_Disconnect`. Recheck current line/guard.
 
-## PK11 — Guild incremental permissions and menu state
+## PK11 â€” Guild incremental permissions and menu state
 
 Tier: **M**. Dependencies: PK06.
 
@@ -280,7 +282,7 @@ Finding P16: Guild menu permissions are stored but not applied.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtUiStateAdapter.cpp`:3820; search `const auto& guild=g_session.m_localGuild;const auto& info=`. Recheck current line/guard.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/qml/RoGuild.qml`:50; search `model: ["Overview"`. Recheck current line/guard.
 
-## PK12 — Guild management requests and responses
+## PK12 â€” Guild management requests and responses
 
 Tier: **S**. Dependencies: PK11.
 
@@ -305,7 +307,7 @@ Finding P17: Guild receive support is not complete guild functionality.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtUiStateAdapter.cpp`:3851; search `QObject::connect(m_state,&QtUiState::guildActionRequested`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:14584; search `void clif_parse_GuildMessage`. Recheck current line/guard.
 
-## PK13 — Trade asymmetry and pending transactions
+## PK13 â€” Trade asymmetry and pending transactions
 
 Tier: **S**. Dependencies: PK03, PK10.
 
@@ -330,7 +332,7 @@ Finding P21: Server trade distance failure notifies only one peer.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/trade.cpp`:108; search `void trade_tradeack`. Recheck current line/guard.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/Commerce.cpp`:38; search `void UpdateTradeContext`. Recheck current line/guard.
 
-## PK14 — Party map positions
+## PK14 â€” Party map positions
 
 Tier: **M**. Dependencies: PK05.
 
@@ -357,7 +359,7 @@ Finding P07: Party positions are discarded.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:8801; search `router.Register(0x0107`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:8065; search `void clif_party_xy(`. Recheck current line/guard.
 
-## PK15 — Party lifecycle and configuration
+## PK15 â€” Party lifecycle and configuration
 
 Tier: **M**. Dependencies: PK14, PK10.
 
@@ -382,7 +384,7 @@ Finding P11: Equipment/privacy and party-invite settings are discarded.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:8832; search `router.Register(0x02D9`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:17719; search `void clif_parse_configuration`. Recheck current line/guard.
 
-## PK16 — Privacy settings and social state
+## PK16 â€” Privacy settings and social state
 
 Tier: **M**. Dependencies: PK05.
 
@@ -406,7 +408,7 @@ Finding P11: Equipment/privacy and party-invite settings are discarded.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:8832; search `router.Register(0x02D9`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:17719; search `void clif_parse_configuration`. Recheck current line/guard.
 
-## PK17 — Party and guild chat transport
+## PK17 â€” Party and guild chat transport
 
 Tier: **M**. Dependencies: PK12, PK15.
 
@@ -431,7 +433,7 @@ Finding P18: Group chat transport and filtering are incomplete.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:7217; search `if(op==0x17f)`. Recheck current line/guard.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/ui/UINewChatWnd.cpp`:142; search `kChatFilterLabels`. Recheck current line/guard.
 
-## PK18 — Dynamic map cells
+## PK18 â€” Dynamic map cells
 
 Tier: **S**. Dependencies: PK05.
 
@@ -455,7 +457,7 @@ Finding P08: Map cell and map-property changes are discarded.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:8811; search `router.Register(0x0192`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:5363; search `void clif_changemapcell`. Recheck current line/guard.
 
-## PK19 — Map properties and restrictions
+## PK19 â€” Map properties and restrictions
 
 Tier: **S**. Dependencies: PK18.
 
@@ -479,7 +481,7 @@ Finding P08: Map cell and map-property changes are discarded.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:8811; search `router.Register(0x0192`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:5363; search `void clif_changemapcell`. Recheck current line/guard.
 
-## PK20 — NPC class and resource replacement
+## PK20 â€” NPC class and resource replacement
 
 Tier: **S**. Dependencies: PK05.
 
@@ -503,7 +505,7 @@ Finding P09: NPC class-change notification is discarded.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:8799; search `router.Register(0x01B0`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:1471; search `void clif_class_change`. Recheck current line/guard.
 
-## PK21 — NPC progress interaction
+## PK21 â€” NPC progress interaction
 
 Tier: **S**. Dependencies: PK10, PK25.
 
@@ -522,7 +524,7 @@ Use server units/timers and Ref lifecycle; no guessed completion delay or duplic
 
 3 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK22 — Extended status and ShowEFST
+## PK22 â€” Extended status and ShowEFST
 
 Tier: **S**. Dependencies: PK05.
 
@@ -551,7 +553,7 @@ Finding P14: Extended status values are parsed only as icon timing.
 
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:1109; search `void HandlePacket043F`. Recheck current line/guard.
 
-## PK23 — Existing skill packet semantic audit
+## PK23 â€” Existing skill packet semantic audit
 
 Tier: **S**. Dependencies: PK08, PK22.
 
@@ -571,7 +573,7 @@ All registered skill handlers need field/branch evidence. Existing skill plan ca
 
 33 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK24 — Stats resources and actor state invariants
+## PK24 â€” Stats resources and actor state invariants
 
 Tier: **S**. Dependencies: PK05.
 
@@ -591,7 +593,7 @@ Do not truncate HP or use overflow-prone percentage arithmetic. Source distingui
 
 44 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK25 — NPC dialogue and script messages
+## PK25 â€” NPC dialogue and script messages
 
 Tier: **M**. Dependencies: PK10.
 
@@ -610,7 +612,7 @@ Honor server selection indexes, cancel values, string limits and input lifetime.
 
 21 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK26 — Special skill information and choices
+## PK26 â€” Special skill information and choices
 
 Tier: **M**. Dependencies: PK23, PK25.
 
@@ -629,7 +631,7 @@ Selections need server-valid values and failure UI. Do not synthesize unsupporte
 
 4 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK27 — Complete pet lifecycle
+## PK27 â€” Complete pet lifecycle
 
 Tier: **S**. Dependencies: PK07, PK20.
 
@@ -653,7 +655,7 @@ Finding P04: Pet status length is wrong for the configured server.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp`:260; search `SetPacketSize(0x01A2, 37)`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/packets_struct.hpp`:5441; search `struct PACKET_ZC_PROPERTY_PET`. Recheck current line/guard.
 
-## PK28 — Homunculus lifecycle
+## PK28 â€” Homunculus lifecycle
 
 Tier: **S**. Dependencies: PK23, PK24.
 
@@ -672,7 +674,7 @@ Enumerate actual active family from server rather than assuming listed seeds exh
 
 6 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK29 — Mercenary and elemental lifecycle
+## PK29 â€” Mercenary and elemental lifecycle
 
 Tier: **S**. Dependencies: PK23, PK24.
 
@@ -691,7 +693,7 @@ No blanket exclusion based on feature age; prove guards/call sites. Different co
 
 6 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK30 — Marriage adoption and relationship state
+## PK30 â€” Marriage adoption and relationship state
 
 Tier: **S**. Dependencies: PK16, PK25.
 
@@ -710,14 +712,14 @@ Tier: **S**. Dependencies: PK16, PK25.
 
 7 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK31 — Player chat rooms
+## PK31 â€” Player chat rooms
 
 Tier: **S**. Dependencies: PK10, PK16.
 
 ### Bounded steps
 
 - **PK31.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK31.02 [S]** Implement00D5–00E3 room list create join owner/password/membership flows. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK31.02 [S]** Implement00D5â€“00E3 room list create join owner/password/membership flows. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK31.03 [S]** Implement room bubble click entry removal capacity and disconnect cleanup. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK31.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
@@ -729,7 +731,7 @@ Not vending shops. Verify room IDs versus owner IDs and rejected password/join b
 
 12 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK32 — Legacy mail complete workflow
+## PK32 â€” Legacy mail complete workflow
 
 Tier: **S**. Dependencies: PK03, PK10.
 
@@ -754,7 +756,7 @@ Finding P19: Legacy mail is compose/send only.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/Commerce.cpp`:146; search `if(c.action=="mail")`. Recheck current line/guard.
 - Source anchor: `C:/Users/sziad/source/repos/rathena-master/src/map/clif.cpp`:16070; search `void clif_Mail_refreshinbox`. Recheck current line/guard.
 
-## PK33 — Rental binding and broken equipment
+## PK33 â€” Rental binding and broken equipment
 
 Tier: **M**. Dependencies: PK09, PK24.
 
@@ -773,7 +775,7 @@ No removing equipment optimistically without server semantics. Verify units and 
 
 4 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK34 — Atomic inventory storage and friend snapshots
+## PK34 â€” Atomic inventory storage and friend snapshots
 
 Tier: **S**. Dependencies: PK09.
 
@@ -798,7 +800,7 @@ Finding P20: Snapshot parsers accept partial record arrays.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:2242; search `void HandleEquipInventoryList`. Recheck current line/guard.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:7673; search `void HandleFriendsList`. Recheck current line/guard.
 
-## PK35 — Craft refine repair and cooking
+## PK35 â€” Craft refine repair and cooking
 
 Tier: **S**. Dependencies: PK25, PK34.
 
@@ -818,7 +820,7 @@ Source-prove list record sizes, slots/card options, selection indexes and materi
 
 6 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK36 — Storage password challenge
+## PK36 â€” Storage password challenge
 
 Tier: **S**. Dependencies: PK03, PK10, PK34.
 
@@ -842,7 +844,7 @@ Finding P10: Storage password flow is a message/log stub.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:2416; search `void HandleStoragePasswordRequest`. Recheck current line/guard.
 - Source anchor: `D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameModePacket.cpp`:2427; search `void HandleStoragePasswordResult`. Recheck current line/guard.
 
-## PK37 — Existing commerce and trade consistency
+## PK37 â€” Existing commerce and trade consistency
 
 Tier: **S**. Dependencies: PK13, PK34.
 
@@ -861,7 +863,7 @@ Verify every production sender/server parser, partial purchases, quantities/pric
 
 39 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK38 — Item use and equipment action parity
+## PK38 â€” Item use and equipment action parity
 
 Tier: **M**. Dependencies: PK33, PK34.
 
@@ -880,14 +882,14 @@ Per-action source-derived requests/results, inventory indices and quantities. Ve
 
 52 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK39 — MVP rankings PvP manner and messages
+## PK39 â€” MVP rankings PvP manner and messages
 
 Tier: **M**. Dependencies: PK05, PK24.
 
 ### Bounded steps
 
 - **PK39.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK39.02 [M]** Implement MVP010A–010D and rankings0219/021A/021B/021C/0224/0226/0236/0238. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK39.02 [M]** Implement MVP010Aâ€“010D and rankings0219/021A/021B/021C/0224/0226/0236/0238. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK39.03 [M]** Implement014A/014B/01AB manner and02C1 colored messages. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK39.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
@@ -899,7 +901,7 @@ Units, ID/name encoding, color and duration from sources. L candidates: approved
 
 27 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK40 — Auction cash shop and banking
+## PK40 â€” Auction cash shop and banking
 
 Tier: **S**. Dependencies: PK03, PK34.
 
@@ -919,7 +921,7 @@ Each financial flow is a separate bounded child step with source-backed evidence
 
 31 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK41 — Battleground identity and state
+## PK41 â€” Battleground identity and state
 
 Tier: **S**. Dependencies: PK14, PK19, PK24.
 
@@ -938,14 +940,14 @@ Distinguish battleground IDs and guild emblems. Full server-family enumeration r
 
 11 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK42 — Instance metadata lifecycle
+## PK42 â€” Instance metadata lifecycle
 
 Tier: **S**. Dependencies: PK10, PK25.
 
 ### Bounded steps
 
 - **PK42.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK42.02 [S]** Implement02CB–02CE creation state queue/wait and result branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK42.02 [S]** Implement02CBâ€“02CE creation state queue/wait and result branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK42.03 [S]** Wire instance UI entry restriction expiry and map/reconnect cleanup. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK42.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
@@ -957,7 +959,7 @@ Inspect active server guards/call sites first; no invented dungeon launch or uns
 
 4 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK43 — Buying store search and party booking
+## PK43 â€” Buying store search and party booking
 
 Tier: **S**. Dependencies: PK03, PK37.
 
@@ -976,7 +978,7 @@ Per-contract configuration evidence; modern opcode presence in client table is n
 
 20 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK44 — Later feature and login-character applicability
+## PK44 â€” Later feature and login-character applicability
 
 Tier: **S**. Dependencies: PK01, PK02.
 
@@ -997,7 +999,7 @@ Tier: **S**. Dependencies: PK01, PK02.
 - **PK44.03.003 [S]** Trace raw account-ID handshake/echo framing and client behavior as a distinct non-opcode contract. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.004 [S]** Trace character list, selection and entry requests/responses, split by connection stage and layout variant. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.005 [S]** Trace character creation request/results, field variants, rejection paths and Ref behavior. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK44.03.006 [M]** Trace legacy and scheduled character deletion requests, confirmations, cancellation and results (including `0x01FB` and `0x0827`–`0x082C`) across stage transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK44.03.006 [M]** Trace legacy and scheduled character deletion requests, confirmations, cancellation and results (including `0x01FB` and `0x0827`â€“`0x082C`) across stage transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.007 [M]** Trace character rename request/results, supported variants and failure behavior. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.008 [S]** Trace PIN/security requests and responses by stage, variant and result branch. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK44.03.009 [M]** Trace character slot requests/responses, limits and state transitions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
@@ -1012,7 +1014,7 @@ For every row prove active/inactive/alias, then split applicable features into a
 
 59 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK45 — All existing actor and receive-handler semantics
+## PK45 â€” All existing actor and receive-handler semantics
 
 Tier: **S**. Dependencies: PK20, PK22, PK24.
 
@@ -1031,7 +1033,7 @@ Tier: **S**. Dependencies: PK20, PK22, PK24.
 
 52 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK46 — Exhaustive outbound parser parity
+## PK46 â€” Exhaustive outbound parser parity
 
 Tier: **S**. Dependencies: PK02, PK03.
 
@@ -1050,7 +1052,7 @@ Tier: **S**. Dependencies: PK02, PK03.
 
 0 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK47 — Residual and historical classification closure
+## PK47 â€” Residual and historical classification closure
 
 Tier: **S**. Dependencies: PK01, PK02.
 
@@ -1073,7 +1075,7 @@ No catch-all task completion without per-row contracts/classification. Add newly
 
 370 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK48 — Independent certification review
+## PK48 â€” Independent certification review
 
 Tier: **S**. Dependencies: PK00, PK01, PK02, PK03, PK04, PK05, PK06, PK07, PK08, PK09, PK10, PK11, PK12, PK13, PK14, PK15, PK16, PK17, PK18, PK19, PK20, PK21, PK22, PK23, PK24, PK25, PK26, PK27, PK28, PK29, PK30, PK31, PK32, PK33, PK34, PK35, PK36, PK37, PK38, PK39, PK40, PK41, PK42, PK43, PK44, PK45, PK46, PK47, PK50.
 
@@ -1092,7 +1094,7 @@ Requires all applicable feature leaves across packages complete or explicitly re
 
 0 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK49 — Final reproducible handoff and acceptance
+## PK49 â€” Final reproducible handoff and acceptance
 
 Tier: **S**. Dependencies: PK48.
 
@@ -1111,7 +1113,7 @@ No automatic deployment/server restart. Final report lists every unresolved gate
 
 0 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
-## PK50 — Quest journal and mission lifecycle
+## PK50 â€” Quest journal and mission lifecycle
 
 Tier: **S**. Dependencies: PK03, PK10.
 

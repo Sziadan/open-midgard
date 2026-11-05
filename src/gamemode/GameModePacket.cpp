@@ -8151,6 +8151,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
         info.hasServerMove ? 1 : 0);
 
     if (sameMapAlreadyLoaded) {
+        ro::commerce::ResetForMapEntry();
         PrepareSameMapWarpReuse(mode);
         const bool sentLoadAck = SendLoadEndAckPacket();
         mode.m_sentLoadEndAck = sentLoadAck ? 1 : 0;

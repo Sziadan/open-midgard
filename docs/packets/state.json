@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK09.04",
+  "active_step": "PK09.06",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -361,6 +361,22 @@
         "docs/packets/evidence/PK09.04-cart-wire-fields.json",
         "docs/packets/evidence/PK09.04-cart-wire-fields.jsonl",
         "docs/packets/work-items/PK09.04.md"
+      ],
+      "commit_subject": null
+    },
+    "PK09.05": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/work-items/PK09.05.md",
+        "docs/packets/evidence/PK09.05-map-entry-items.md",
+        "docs/packets/evidence/PK09.05-map-entry-items.json"
+      ],
+      "commit_subject": "packet(PK09.05): reset item snapshots on map entry"
+    },
+    "PK09.06": {
+      "status": "NOT_STARTED",
+      "evidence": [
+        "docs/packets/work-items/PK09.06.md"
       ],
       "commit_subject": null
     },

@@ -43,6 +43,25 @@ void remove(std::map<u32,ITEM_INFO>& list,u32 index,u32 amount){auto it=list.fin
 Window* window(const std::string& name){if(name=="cart")return &state.cart;if(name=="vending")return &state.vending;if(name=="trade")return &state.trade;if(name=="shop")return &state.shop;if(name=="mail")return &state.mail;if(name=="equipment")return &state.equipment;return nullptr;}
 }
 void Reset(){state=State{};state.vending.x=800;state.trade.x=360;state.trade.width=380;state.trade.height=170;state.shop.x=420;state.mail.x=480;state.equipment.x=480;}
+void ResetForMapEntry()
+{
+    // Server snapshots omit empty categories. Ref Initialize clears item and
+    // merchant/transaction lists before the load-end acknowledgement.
+    g_session.ClearInventoryItems();
+    g_session.CloseStorage();
+    g_windowMgr.CloseStorageWindows();
+    const Window previous[] = {state.cart, state.vending, state.trade,
+        state.shop, state.mail, state.equipment};
+    const int inventoryTab = state.inventoryTab;
+    Reset();
+    Window* windows[] = {&state.cart, &state.vending, &state.trade,
+        &state.shop, &state.mail, &state.equipment};
+    for (int i = 0; i < 6; ++i) {
+        windows[i]->x = previous[i].x;
+        windows[i]->y = previous[i].y;
+    }
+    state.inventoryTab = inventoryTab;
+}
 void CloseTransactions(){state.cart.visible=state.vending.visible=state.trade.visible=state.shop.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=false;state.shopBoards.clear();state.cartItems.clear();}
 void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
     state.clock=now;state.tradePeers=std::move(peers);
