@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK09.CARD-NAME-ASSEMBLY](PK09.CARD-NAME-ASSEMBLY.md) verifies generic card-ID grouping and descriptor ownership across actual native/Qt consumers. Special names, expiry and independent PK48 remain open.
+
 [PK09.ITEM-NAME-CONTEXT](PK09.ITEM-NAME-CONTEXT.md) records ordinary name/refinement/identification and quantity consumer repairs. Full cards/sentinels/expiry and independent PK48 remain open.
 
 [PK37.CART-LIFETIME](PK37.CART-LIFETIME.md) records the selected cart status/delta and legacy option/contents repair. IMPLEMENTED_PENDING_REVIEW; broad commerce and independent PK48 remain open.

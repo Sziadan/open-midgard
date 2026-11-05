@@ -22,6 +22,7 @@ constexpr const char* kAccessoryNameTableName = "AccNameTable";
 constexpr int kMaxAccessoryViewId = 8192;
 
 struct AggregatedCardLabel {
+	unsigned int cardId = 0;
 	std::string label;
 	int count = 0;
 };
@@ -38,7 +39,7 @@ std::string AppendSlotSuffix(std::string baseName, int slotCount)
 	return baseName;
 }
 
-const char* GetRepeatedCardPrefixWord(int count)
+const char* GetRepeatedCardWord(int count)
 {
 	switch (count) {
 	case 2:
@@ -52,20 +53,21 @@ const char* GetRepeatedCardPrefixWord(int count)
 	}
 }
 
-void AppendCardPrefixLabel(std::vector<AggregatedCardLabel>& labels, std::string&& label)
+void AppendCardLabel(std::vector<AggregatedCardLabel>& labels, unsigned int cardId, std::string&& label)
 {
 	if (label.empty()) {
 		return;
 	}
 
 	for (AggregatedCardLabel& existing : labels) {
-		if (existing.label == label) {
+		if (existing.cardId == cardId) {
 			++existing.count;
 			return;
 		}
 	}
 
 	AggregatedCardLabel entry;
+	entry.cardId = cardId;
 	entry.label = std::move(label);
 	entry.count = 1;
 	labels.push_back(std::move(entry));
@@ -83,7 +85,7 @@ std::string BuildAggregatedCardPrefixText(const std::vector<AggregatedCardLabel>
 			text += " ";
 		}
 
-		if (const char* repeatWord = GetRepeatedCardPrefixWord(entry.count)) {
+		if (const char* repeatWord = GetRepeatedCardWord(entry.count)) {
 			text += repeatWord;
 			text += " ";
 		}
@@ -324,6 +326,10 @@ void CItemMgr::EnsureLoaded()
 	LoadCardPrefixTable();
 	LoadCardPostfixTable();
 	LoadCardItemTable();
+	// Primary s_cardDescMap is populated by all four card metadata tables,
+	// including records that have no display affix.
+	m_cardDescriptorIds.insert(m_cardItemIds.begin(), m_cardItemIds.end());
+	m_cardDescriptorIds.insert(m_cardPostfixIds.begin(), m_cardPostfixIds.end());
 	m_loaded = true;
 }
 
@@ -370,22 +376,20 @@ std::string CItemMgr::GetEquipDisplayName(const ITEM_INFO& item, bool includeSlo
 		text += " ";
 	}
 
-	std::vector<AggregatedCardLabel> prefixLabels;
-	for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
-		const unsigned int cardId = static_cast<unsigned int>(item.m_slot[slotIndex]);
-		if (cardId == 0 || !IsCardItem(cardId) || IsPostfixCard(cardId)) {
-			continue;
+	// Primary GetItemName enters generic card composition only when slot zero
+	// has a card descriptor. Named/crafted sentinel slots have separate contracts.
+	const bool composeCards = m_cardDescriptorIds.count(static_cast<unsigned int>(item.m_slot[0])) != 0;
+	std::vector<AggregatedCardLabel> prefixLabels, postfixLabels;
+	if (composeCards) {
+		for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
+			const unsigned int cardId = static_cast<unsigned int>(item.m_slot[slotIndex]);
+			std::string label = GetCardPrefixName(cardId);
+			// Null/empty primary card labels contribute nothing; never invent an
+			// affix from the card item's display name or numeric ID.
+			if (label.empty()) continue;
+			auto& labels = IsPostfixCard(cardId) ? postfixLabels : prefixLabels;
+			AppendCardLabel(labels, cardId, std::move(label));
 		}
-
-		std::string prefix = GetCardPrefixName(cardId);
-		if (prefix.empty()) {
-			prefix = GetDisplayName(cardId, true);
-		}
-		if (prefix.empty()) {
-			continue;
-		}
-
-		AppendCardPrefixLabel(prefixLabels, std::move(prefix));
 	}
 
 	const std::string prefixText = BuildAggregatedCardPrefixText(prefixLabels);
@@ -396,22 +400,14 @@ std::string CItemMgr::GetEquipDisplayName(const ITEM_INFO& item, bool includeSlo
 
 	text += GetDisplayName(itemId, item.m_isIdentified != 0, includeSlotSuffix);
 
-	for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
-		const unsigned int cardId = static_cast<unsigned int>(item.m_slot[slotIndex]);
-		if (cardId == 0 || !IsCardItem(cardId) || !IsPostfixCard(cardId)) {
-			continue;
-		}
-
-		std::string postfix = GetCardPrefixName(cardId);
-		if (postfix.empty()) {
-			postfix = GetDisplayName(cardId, true);
-		}
-		if (postfix.empty()) {
-			continue;
-		}
-
+	for (const auto& postfix : postfixLabels) {
 		text += " ";
-		text += postfix;
+		text += postfix.label;
+		// Unlike prefixes, Ref GetPostfix puts the repeat word after the label.
+		if (const char* repeatWord = GetRepeatedCardWord(postfix.count)) {
+			text += " ";
+			text += repeatWord;
+		}
 	}
 
 	return text;
@@ -582,7 +578,7 @@ bool CItemMgr::LoadSlotCountTable()
 
 bool CItemMgr::LoadCardIllustTable()
 {
-	return ParsePairTable("Num2CardIllustNameTable.txt", AssignCardIllustName);
+	return ParsePairTable("Num2CardIllustNameTable.txt", AssignCardIllustName, &m_cardDescriptorIds);
 }
 
 bool CItemMgr::LoadCardPrefixTable()
@@ -601,6 +597,7 @@ bool CItemMgr::LoadCardPrefixTable()
 			continue;
 		}
 		m_cardPrefixNames[itemId] = NormalizeDisplayToken(std::move(value));
+		m_cardDescriptorIds.insert(itemId);
 	}
 
 	return true;
@@ -616,7 +613,8 @@ bool CItemMgr::LoadCardItemTable()
 	return ParseIdSetTable("carditemnametable.txt", m_cardItemIds);
 }
 
-bool CItemMgr::ParsePairTable(const char* fileName, void (*assignValue)(ItemMetadata&, std::string&&))
+bool CItemMgr::ParsePairTable(const char* fileName, void (*assignValue)(ItemMetadata&, std::string&&),
+    std::unordered_set<unsigned int>* descriptorIds)
 {
 	std::string text;
 	if (!LoadTextFileFromGameData(fileName, text)) {
@@ -632,6 +630,7 @@ bool CItemMgr::ParsePairTable(const char* fileName, void (*assignValue)(ItemMeta
 			continue;
 		}
 		assignValue(m_metadata[itemId], std::move(value));
+		if (descriptorIds) descriptorIds->insert(itemId);
 	}
 
 	return true;

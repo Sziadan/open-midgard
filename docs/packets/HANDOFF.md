@@ -1,16 +1,16 @@
 # Packet continuation handoff
 
-**Active step: PK09.04.** Latest name/quantity checkpoint: [PK09.07](evidence/PK09.07-item-names.md), [provenance](evidence/PK09.07-item-names.json). Dedicated commit: `packet(PK09.07): distinguish hover and list item names`. Previous cart checkpoint: [PK37.05 cart lifecycle](evidence/PK37.05-cart-lifecycle.md), [provenance](evidence/PK37.05-cart-lifecycle.json), [contract](contracts/PK37.CART-LIFETIME.md). Dedicated commit: `packet(PK37.05): preserve cart contents and presence lifetimes`.
+**Active step: PK09.04.** Latest bounded checkpoint: [PK09.08 generic card names](evidence/PK09.08-card-names.md), [provenance](evidence/PK09.08-card-names.json), [contract](contracts/PK09.CARD-NAME-ASSEMBLY.md). Dedicated commit: `packet(PK09.08): restore card ID and postfix name grouping`. Prior ordinary names/quantities (PK09.07) and cart lifetimes (PK37.05) retain their scoped evidence.
 
 ## Continue here
 
-1. Continue [PK09.04](work-items/PK09.04.md). Ordinary zero-card refinement/identification names, hover versus list socket context and quantity badge/replacement now pass PK09.07; preserve those checks. Parent must next repair primary card-ID grouping and repeated postfix composition, then manufactured/named-pet sentinel names. Luna can extract bounded real metadata fixtures, but parent must inspect initialization plus consumer assembly before accepting expected names: postfix-table loading moves the label and clears its prefix, so isolated GetPrefix output is insufficient. Next trace detailed item-window ownership and implement source absolute local expiry (not hover countdown), plus selected 0299 removal.
+1. Continue [PK09.04](work-items/PK09.04.md). PK09.07 ordinary names/quantities and PK09.08 generic card-ID/prefix/postfix assembly are verified. Parent must next implement manufactured/producer/element/star-piece and named-pet sentinel names against primary GetItemName. Trace table initialization and actor-name availability, not isolated helper text. Luna may extract bounded exact metadata/locale rows and test fixtures; parent owns the semantics. Then implement detailed item expiry and selected 0299 removal after confirming native/Qt window ownership and source local-date formatting. Do not add an invented hover countdown.
 2. The strong-agent cart ownership decision is complete in PK37.05. `012B` clears rows/window while preserving entitlement/counters; local legacy actor options own removal. Same-index adds retain metadata; only `0121` updates count/weight; unknown `012C` results are ignored. Preserve these regressions. PK37.01–.04 remain open for broad transfer/request, inventory rollback, vending and trade review; do not close their rows from this leaf.
 3. Resume bounded PK46.02 request/profile/send-failure and character paths; its 177 request rows remain research. NPC/status/mail have concrete source-ready contracts. PK09.02/.03 mapping/route checkpoints are complete; historical dirty-tree gates are superseded.
 
 ## Verified current checkpoint
 
-All targets build deploy-off. Final validation: **107/107 CTest in 37.63s**, **164 PASS packet records**, four name/three quantity frames; retained 30 colour/four bag/three cart/18 minimap scenes and zero item QML errors.
+All targets build deploy-off. **107/107 CTest in 50.71s**, **164 PASS packet records**, 17 card cases and 57 card frames (six native, 51 Qt), zero item QML errors. Prior colour, ordinary-name, quantity, cart, bag and minimap checks remain passing.
 
 No discovery row is newly closed. PK09.04, broad PK37, independent PK48/49 and deployed provenance remain open. The whole packet plan remains unfinished.
 

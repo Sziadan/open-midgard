@@ -1,0 +1,107 @@
+{
+    "cases": [
+        {
+            "case": "prefix-single",
+            "expected_hover": "Lucky Knife: 1 ea",
+            "expected_row": "Lucky Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "prefix-double",
+            "expected_hover": "Double Lucky Knife: 1 ea",
+            "expected_row": "Double Lucky Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "prefix-triple",
+            "expected_hover": "Triple Lucky Knife: 1 ea",
+            "expected_row": "Triple Lucky Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "prefix-quadruple",
+            "expected_hover": "Quadruple Lucky Knife: 1 ea",
+            "expected_row": "Quadruple Lucky Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "distinct-ids-same-label",
+            "expected_hover": "Lucky Lucky Knife: 1 ea",
+            "expected_row": "Lucky Lucky Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "prefix-order",
+            "expected_hover": "Vital Lucky Knife: 1 ea",
+            "expected_row": "Vital Lucky Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "prefix-reverse-order",
+            "expected_hover": "Lucky Vital Knife: 1 ea",
+            "expected_row": "Lucky Vital Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "postfix-single",
+            "expected_hover": "Knife of Champion: 1 ea",
+            "expected_row": "Knife [4] of Champion",
+            "outcome": "PASS"
+        },
+        {
+            "case": "postfix-double",
+            "expected_hover": "Knife of Champion Double: 1 ea",
+            "expected_row": "Knife [4] of Champion Double",
+            "outcome": "PASS"
+        },
+        {
+            "case": "postfix-triple",
+            "expected_hover": "Knife of Champion Triple: 1 ea",
+            "expected_row": "Knife [4] of Champion Triple",
+            "outcome": "PASS"
+        },
+        {
+            "case": "postfix-quadruple",
+            "expected_hover": "Knife of Champion Quadruple: 1 ea",
+            "expected_row": "Knife [4] of Champion Quadruple",
+            "outcome": "PASS"
+        },
+        {
+            "case": "mixed-affixes-refined",
+            "expected_hover": "+7 Lucky Vital Knife of Champion Double: 1 ea",
+            "expected_row": "+7 Lucky Vital Knife [4] of Champion Double",
+            "outcome": "PASS"
+        },
+        {
+            "case": "postfix-first-slot",
+            "expected_hover": "Lucky Vital Knife of Champion Double: 1 ea",
+            "expected_row": "Lucky Vital Knife [4] of Champion Double",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unidentified-suppression",
+            "expected_hover": "Dagger: 1 ea",
+            "expected_row": "Dagger [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "empty-first-slot-gate",
+            "expected_hover": "Knife: 1 ea",
+            "expected_row": "Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unknown-first-slot-gate",
+            "expected_hover": "Knife: 1 ea",
+            "expected_row": "Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unknown-later-slot",
+            "expected_hover": "Lucky Knife: 1 ea",
+            "expected_row": "Lucky Knife [4]",
+            "outcome": "PASS"
+        }
+    ],
+    "outcome": "PASS"
+}

@@ -1,0 +1,227 @@
+{
+  "date": "2026-11-05",
+  "baseline": "64ca50cb62c5add77e16c3176f74a87268a8ab6f",
+  "commit_subject": "packet(PK09.08): restore card ID and postfix name grouping",
+  "profile": 20080910,
+  "source_sha256": {
+    "src/item/Item.cpp": "f0a1051ff007961c001dafb1449f01fe4f5b6e49861a0dded5d4270c87b1a189",
+    "src/item/Item.h": "4bfc583af161b56c61848d9fa4973e9eec463a28d6d99090ecd4f36cd9246f3a",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "42a131b3d24932d26873b0ef2ad24a3bd5e03c4c6e9f56c86d93cd9ff026d6d3",
+    "tools/tests/replay/ItemCardNameRenderChecks.inc": "9db117cb9e6de6d9c02691186c71d04f39d5b6ec6d637757c7011b9175f5827d"
+  },
+  "fixture_sha256": {
+    "tools/tests/fixtures/packet-item-data/cardprefixnametable.txt": "b17d99d8ec5a312c458b6d4b9ae470ec2adc9bf96038c81878a7ffc56cf4fb66",
+    "tools/tests/fixtures/packet-item-data/cardpostfixnametable.txt": "81ae3a843b8c8d2bec63b4d530c878f29d3028b5e51058a5bd69bba942195a44",
+    "tools/tests/fixtures/packet-item-data/carditemnametable.txt": "62f0b6f660ac0dfb3520a37a97d712363f442647706ff7e1f2fa2efc05baca0f",
+    "tools/tests/fixtures/packet-item-data/idnum2itemdisplaynametable.txt": "f7cd3cdf43082e67dfae2d222c7c2b73a02cc9c273530c7ed61aaadc00b2e0ef",
+    "tools/tests/fixtures/packet-item-data/num2itemdisplaynametable.txt": "58482b2ed1f75a624d802319d53bf4ee2919ca60c454ff1c456182fa61737306",
+    "tools/tests/fixtures/packet-item-data/itemslotcounttable.txt": "cb2927ebf1cdeb69999fc1e53ccac83b78a699d74512e08adf3bdb17dc68c6b6"
+  },
+  "reference_sha256": {
+    "Ref/ItemInfo.cpp": "5bce74c76f40aafad079c2feaf746a7570a1380492a03e6e1cec52bdcf722bc8",
+    "Ref/GRF-Content/data/msgstringtable.txt": "200c4ac4970853ac7cb947629df790168a9d1afc5572e15fdc8d4944b6ab80af",
+    "Ref/GRF-Content/data/cardprefixnametable.txt": "3da1caf42f1fb117ad84e3f72ad29d6a7d0532c6caa12930b5567e38e0992b32",
+    "Ref/GRF-Content/data/cardpostfixnametable.txt": "151f9705d0293a2a8d27519d66fd2651ece74b6b5177cbfe72e2a495a1f75f45",
+    "Ref/GRF-Content/data/carditemnametable.txt": "8d2ab0571a54bfc6c812b3ce48f0723e77db04576a4b08186f0cd8bb58c01506",
+    "Ref/GRF-Content/data/idnum2itemdisplaynametable.txt": "fba99eacb4e766632c6f881c576cbea83121eb0533eeacc6963b0b6f21fe7dcf",
+    "Ref/GRF-Content/data/num2itemdisplaynametable.txt": "cc4442997446d9bc11ff8c81084f6efc60532e78e283769c51e6821e297d8c4e",
+    "Ref/GRF-Content/data/itemslotcounttable.txt": "cb7916712470c699764536b4c92160fe234ec14a067ef5353ab84a1d1883b76c"
+  },
+  "validation": {
+    "ctest_passed": 107,
+    "ctest_failed": 0,
+    "seconds": 50.71,
+    "packet_records": 164,
+    "card_name_cases": 17,
+    "card_frames": 57,
+    "card_native_frames": 6,
+    "card_qml_frames": 51,
+    "retained_item_colour_frames": 30,
+    "retained_name_frames": 4,
+    "retained_quantity_frames": 3,
+    "retained_bag_frames": 4,
+    "retained_cart_frames": 3,
+    "retained_minimap_scenes": 18,
+    "item_qml_errors": 0,
+    "deploy": "OFF"
+  },
+  "cases": [
+    {
+      "case": "prefix-single",
+      "expected_hover": "Lucky Knife: 1 ea",
+      "expected_row": "Lucky Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "prefix-double",
+      "expected_hover": "Double Lucky Knife: 1 ea",
+      "expected_row": "Double Lucky Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "prefix-triple",
+      "expected_hover": "Triple Lucky Knife: 1 ea",
+      "expected_row": "Triple Lucky Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "prefix-quadruple",
+      "expected_hover": "Quadruple Lucky Knife: 1 ea",
+      "expected_row": "Quadruple Lucky Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "distinct-ids-same-label",
+      "expected_hover": "Lucky Lucky Knife: 1 ea",
+      "expected_row": "Lucky Lucky Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "prefix-order",
+      "expected_hover": "Vital Lucky Knife: 1 ea",
+      "expected_row": "Vital Lucky Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "prefix-reverse-order",
+      "expected_hover": "Lucky Vital Knife: 1 ea",
+      "expected_row": "Lucky Vital Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "postfix-single",
+      "expected_hover": "Knife of Champion: 1 ea",
+      "expected_row": "Knife [4] of Champion",
+      "outcome": "PASS"
+    },
+    {
+      "case": "postfix-double",
+      "expected_hover": "Knife of Champion Double: 1 ea",
+      "expected_row": "Knife [4] of Champion Double",
+      "outcome": "PASS"
+    },
+    {
+      "case": "postfix-triple",
+      "expected_hover": "Knife of Champion Triple: 1 ea",
+      "expected_row": "Knife [4] of Champion Triple",
+      "outcome": "PASS"
+    },
+    {
+      "case": "postfix-quadruple",
+      "expected_hover": "Knife of Champion Quadruple: 1 ea",
+      "expected_row": "Knife [4] of Champion Quadruple",
+      "outcome": "PASS"
+    },
+    {
+      "case": "mixed-affixes-refined",
+      "expected_hover": "+7 Lucky Vital Knife of Champion Double: 1 ea",
+      "expected_row": "+7 Lucky Vital Knife [4] of Champion Double",
+      "outcome": "PASS"
+    },
+    {
+      "case": "postfix-first-slot",
+      "expected_hover": "Lucky Vital Knife of Champion Double: 1 ea",
+      "expected_row": "Lucky Vital Knife [4] of Champion Double",
+      "outcome": "PASS"
+    },
+    {
+      "case": "unidentified-suppression",
+      "expected_hover": "Dagger: 1 ea",
+      "expected_row": "Dagger [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "empty-first-slot-gate",
+      "expected_hover": "Knife: 1 ea",
+      "expected_row": "Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "unknown-first-slot-gate",
+      "expected_hover": "Knife: 1 ea",
+      "expected_row": "Knife [4]",
+      "outcome": "PASS"
+    },
+    {
+      "case": "unknown-later-slot",
+      "expected_hover": "Lucky Knife: 1 ea",
+      "expected_row": "Lucky Knife [4]",
+      "outcome": "PASS"
+    }
+  ],
+  "binary_sha256": {
+    "open-midgard.exe": "c0fcfccfa94a0186b1ec9df52c11de32ad250a646227b32809dc3c49a5bd6bf4",
+    "packet_stream_replay_checks.exe": "180a1fd8e41885b6e86b9b58889079f48232f4aea808a79a8248d92ffe6602ef",
+    "packet_item_render_checks.exe": "879ac21c0b2b0074b700ffbd32e4e71321880ee1e53170b809027b46f2ac95fc",
+    "packet_minimap_render_checks.exe": "7d65c15dfdb06b1fdd6f556b3dc6de1c71efb949a1ffd174dcc2da2de2034586"
+  },
+  "evidence_sha256": {
+    "PK09.08-card-renders/card-distinct-ids-same-label-cart.png": "2994fa7e88b9ac23ae25dc81ce8483a2b58fcd3afc0b2aa5670946396043750b",
+    "PK09.08-card-renders/card-distinct-ids-same-label-inventory.png": "c49f496da855abf6c83e48617074bbb7894820122c846eb00cb4275d47eecf3e",
+    "PK09.08-card-renders/card-distinct-ids-same-label-native-storage.png": "34373e9365d2f06fdf4d470e85cd5e8257422d7593347e31751095e4e78db6b5",
+    "PK09.08-card-renders/card-distinct-ids-same-label-native.png": "e30aa692180d55ff296b1b2f6891dfcf1183cf3bf64bcbf244a597a095c24714",
+    "PK09.08-card-renders/card-distinct-ids-same-label-qt-storage.png": "a1a8765ec997852f3344865a9830bb35d627811b6a03ee4b06dd3545d4b21423",
+    "PK09.08-card-renders/card-empty-first-slot-gate-cart.png": "980150bc4b35a0da37d6bc757168a79cce0bcab0ef0995e54a04d686a5d4375e",
+    "PK09.08-card-renders/card-empty-first-slot-gate-inventory.png": "efe553d3794a9dcaca21c7ec0c514d6cb92b7e34c2df9e6a11d8d238e362fa07",
+    "PK09.08-card-renders/card-empty-first-slot-gate-qt-storage.png": "bf504e3beb7ec3a0a3c015a4aabc29661f2b3ddc7ead20e05266d20e05e8dc08",
+    "PK09.08-card-renders/card-mixed-affixes-refined-cart.png": "18fccad44d92c3c55879a493c297987f650830e4981f9411b8dc9cb92e26e98b",
+    "PK09.08-card-renders/card-mixed-affixes-refined-inventory.png": "76b6914dff60ebb2b3b41096903da72ee2f59a4f254537f73267a214a4105620",
+    "PK09.08-card-renders/card-mixed-affixes-refined-qt-storage.png": "0a9c7f7029faff2fef549824d9f1d81ac3dbff3cd4b3d9efc6771432c3338cab",
+    "PK09.08-card-renders/card-name-results.json": "14f85c43fc0cb5ece5dd66d5304e867e980fdb3ae7f5e77a4d415af4ca191cba",
+    "PK09.08-card-renders/card-postfix-double-cart.png": "380cb3f04dfa28de67a79e7c3d1745be78046c3bffb13e4b98f230b215197cc0",
+    "PK09.08-card-renders/card-postfix-double-inventory.png": "c30778e08453e119e6c137d4bf714d634a64d859b87969897f5e3bb7afe4058f",
+    "PK09.08-card-renders/card-postfix-double-qt-storage.png": "93cbac2cb6cd467907c551e60bd25ad6d2f21afa47fc14cc40df9a324315a550",
+    "PK09.08-card-renders/card-postfix-first-slot-cart.png": "fc9fea5a25831e9344ac520947ec628b99ad0f0163ca4005bec08da1eeb086c0",
+    "PK09.08-card-renders/card-postfix-first-slot-inventory.png": "da8e9c4eff9888339da7fbfb7e010f918c11834cd50593d08a006a4c2ca83912",
+    "PK09.08-card-renders/card-postfix-first-slot-qt-storage.png": "7c2aaa4973449d38677e6baeab96c373d8813cd20f073c3805265cc4e968007a",
+    "PK09.08-card-renders/card-postfix-quadruple-cart.png": "ac0b7dfc665c3f242d8e0377dcf55b4efc6fa3757514b591ab9d4c31519da926",
+    "PK09.08-card-renders/card-postfix-quadruple-inventory.png": "70e241b9404341782914061bce657c9b6d23681ecd49a39db54bc1852d8946a3",
+    "PK09.08-card-renders/card-postfix-quadruple-native-storage.png": "2d9d8d55c543fe487fecacad61c4d6b1c9e9f99022812111ff0aa61405ebe821",
+    "PK09.08-card-renders/card-postfix-quadruple-native.png": "1a25bcfea2e2b3b8fdb99ff9054310506cbf8253b6c7e550cae2e2226f7623eb",
+    "PK09.08-card-renders/card-postfix-quadruple-qt-storage.png": "1c9125243f864938e98c9503990097e24b3589cc480d52f144bf6a548233ed7c",
+    "PK09.08-card-renders/card-postfix-single-cart.png": "549b7340e93130b9e1ef5bc4e6de097cdb51d156e5f91c3c5be3ee59c2181ed6",
+    "PK09.08-card-renders/card-postfix-single-inventory.png": "665c06356e893ac2b7e9e813be0296bb6c1ef906e17a9198d2a8476187bdd3d3",
+    "PK09.08-card-renders/card-postfix-single-qt-storage.png": "5ed46977b9a8f52b5b419c97900d97569cd343b5bb5ebd0b0f80450a95091e95",
+    "PK09.08-card-renders/card-postfix-triple-cart.png": "cb2a6172f9bb0948437898dbe4e43e74555de304be5188a1e6367cdec4f5cf42",
+    "PK09.08-card-renders/card-postfix-triple-inventory.png": "bba0bcca43541ce123c18d6e2584d7c4162de6905fbdbc9a866dc44e5abb9f38",
+    "PK09.08-card-renders/card-postfix-triple-qt-storage.png": "3abe186bb7a2f1248b8999f7d17da6ee724832298735e85ee32d482bfd978105",
+    "PK09.08-card-renders/card-prefix-double-cart.png": "18fdbae0a0dfb7436227f96f14955b066c565d801b73d29e7ee80983013bfaf6",
+    "PK09.08-card-renders/card-prefix-double-inventory.png": "4d9593f601f3d04ea0369a1891684ab0d1519b6213bf11f178d434f9e2d6ec2e",
+    "PK09.08-card-renders/card-prefix-double-qt-storage.png": "3a2b0524cca90a633664810942bb84a05c83a6c9878f6383b8a01092f7a532c0",
+    "PK09.08-card-renders/card-prefix-order-cart.png": "c8b58a7fc38292ec80bed2a9e0e6f5de65813da8d90a2fda4e6ceeb27c527db6",
+    "PK09.08-card-renders/card-prefix-order-inventory.png": "14b0e492e4d401192fd4bf474f194457631b24777c75492a6a3b108661ddd1c2",
+    "PK09.08-card-renders/card-prefix-order-qt-storage.png": "c6b2838a2d3abfc7c75d0f3431dfcc394b188126a8845757391d6d4851ed8f06",
+    "PK09.08-card-renders/card-prefix-quadruple-cart.png": "a450b0fba9bfef13d39a5d8c59cd00080b0d8322c7c9d7ac0f49d4c431b92599",
+    "PK09.08-card-renders/card-prefix-quadruple-inventory.png": "a6d77944256c8359dedaf8ef34291bb3a421b56c41aa886943437a7a716fbc5c",
+    "PK09.08-card-renders/card-prefix-quadruple-qt-storage.png": "5ca4313d83bba7d694156c9b075cafeed919302a2f9b0b2ce9eb791f6fe9307c",
+    "PK09.08-card-renders/card-prefix-reverse-order-cart.png": "f4bb476791e0be5b4dae26da6e5d7f15a6c94931ac4ff0294b56e9d34ca13ef1",
+    "PK09.08-card-renders/card-prefix-reverse-order-inventory.png": "06928a979fc0ea4c5e21bf369fe0f2307f1af9c88a2eb173c102cdaf98138ce0",
+    "PK09.08-card-renders/card-prefix-reverse-order-qt-storage.png": "152cd4addaa0e3896fbab5de2ffe73a32f26f68ad68adb1fdc6775ef87ff9da5",
+    "PK09.08-card-renders/card-prefix-single-cart.png": "b1f4bae9e16723674abbe5e9727aa6500f7e0c1bd3db8496b353a52d1628437a",
+    "PK09.08-card-renders/card-prefix-single-inventory.png": "c5bbb0c9933d0d09db58e244c635309420f607a9464356b24c629096749bee2f",
+    "PK09.08-card-renders/card-prefix-single-qt-storage.png": "d27a6237d6f5bf455286d6c35a1969bc2aae346e7f8c5cbff908a9ce8a79d2d7",
+    "PK09.08-card-renders/card-prefix-triple-cart.png": "8a851cdd35423178c89331ddfd9270301caedf2cdcf33633e0c2ebc640eddc25",
+    "PK09.08-card-renders/card-prefix-triple-inventory.png": "1f8d2f0cbba5a36e0f7515b862dac2778097d09c34288572cc16641ecc68d4d8",
+    "PK09.08-card-renders/card-prefix-triple-qt-storage.png": "e717ae184d9e6c478b71b09d63f770c2cc6e18544befc9268b5d109c309670a4",
+    "PK09.08-card-renders/card-unidentified-suppression-cart.png": "c49da0eb737e439b6789baeb6fad3bf108e8a49dc331c26c1bdb621829aea524",
+    "PK09.08-card-renders/card-unidentified-suppression-inventory.png": "ac91d85846dcb50d8f2ecdf56ec1cf31d6616a37e8835a2e466de41e7b6b93e3",
+    "PK09.08-card-renders/card-unidentified-suppression-native-storage.png": "30612a3035efa87c5de8e7de3bf679b548d15ea2b1295dea964cd2a071f6564c",
+    "PK09.08-card-renders/card-unidentified-suppression-native.png": "03c660654fa4cb436dd695c09b7f9c4fd31989bec0799930ae722d6373adbbe7",
+    "PK09.08-card-renders/card-unidentified-suppression-qt-storage.png": "babc34000e642cc301a11ba1a27ea5c6ae7a913e8a33191ad077efd876009910",
+    "PK09.08-card-renders/card-unknown-first-slot-gate-cart.png": "980150bc4b35a0da37d6bc757168a79cce0bcab0ef0995e54a04d686a5d4375e",
+    "PK09.08-card-renders/card-unknown-first-slot-gate-inventory.png": "efe553d3794a9dcaca21c7ec0c514d6cb92b7e34c2df9e6a11d8d238e362fa07",
+    "PK09.08-card-renders/card-unknown-first-slot-gate-qt-storage.png": "bf504e3beb7ec3a0a3c015a4aabc29661f2b3ddc7ead20e05266d20e05e8dc08",
+    "PK09.08-card-renders/card-unknown-later-slot-cart.png": "b1f4bae9e16723674abbe5e9727aa6500f7e0c1bd3db8496b353a52d1628437a",
+    "PK09.08-card-renders/card-unknown-later-slot-inventory.png": "c5bbb0c9933d0d09db58e244c635309420f607a9464356b24c629096749bee2f",
+    "PK09.08-card-renders/card-unknown-later-slot-qt-storage.png": "749cef4f2bccadfc49cfd5d9826b526282779a40492c158407fb1d3aa4aefc5c",
+    "PK09.08-card-renders/render-results.json": "94538d58bc01ef0afe2f4aefbb19502f7419b6116a7248835fadc903862e5e12",
+    "PK09.08-card-before.txt": "8a028ce31d7579fa45f0723163da7ec182ac10352a2fceb1d26bdc49c647b785"
+  },
+  "validation_log_sha256": "628a6378119fa3888547c7e4f2111b6fe6c784605ae393f9ab7c4557fcc65077",
+  "limits": [
+    "Generic card descriptor name composition only; special sentinels and expiry remain open",
+    "Synthetic unknown/slot-zero branch probes not claimed server reachable",
+    "List socket defaults retained; all list contexts not certified",
+    "No numeric discovery closure or independent PK48/49/live deployment acceptance"
+  ]
+}

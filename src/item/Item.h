@@ -76,7 +76,8 @@ private:
     bool LoadCardPrefixTable();
     bool LoadCardPostfixTable();
     bool LoadCardItemTable();
-    bool ParsePairTable(const char* fileName, void (*assignValue)(ItemMetadata&, std::string&&));
+    bool ParsePairTable(const char* fileName, void (*assignValue)(ItemMetadata&, std::string&&),
+        std::unordered_set<unsigned int>* descriptorIds = nullptr);
     bool ParseIntegerPairTable(const char* fileName, void (*assignValue)(ItemMetadata&, int));
     bool ParseDescriptionBlocks(const char* fileName);
     bool ParseIdSetTable(const char* fileName, std::unordered_set<unsigned int>& outSet);
@@ -88,6 +89,7 @@ private:
     std::unordered_map<unsigned int, std::string> m_cardPrefixNames;
     std::unordered_set<unsigned int> m_cardPostfixIds;
     std::unordered_set<unsigned int> m_cardItemIds;
+    std::unordered_set<unsigned int> m_cardDescriptorIds;
 };
 
 extern CItemMgr g_ttemmgr;

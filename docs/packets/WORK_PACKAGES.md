@@ -217,6 +217,8 @@ Tier: **S**. Dependencies: PK05.
 
 - **PK09.07 [S]** Verify ordinary selected item hover/list name context, refine/identification composition and quantity replacement with source-backed literal packets and actual native/Qt consumers; keep full card/sentinel and expiry behavior open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
+- **PK09.08 [S]** Restore source card-ID grouping, prefix/postfix repeat placement and descriptor initialization/slot-zero ownership; verify selected production inventory/cart/storage records through actual native and Qt consumers, leaving special names/expiry independently open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+
 ### Required acceptance and traps
 
 P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership.

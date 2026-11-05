@@ -32,6 +32,7 @@
 #include <QFile>
 #include <QDir>
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <stdexcept>
 
@@ -125,6 +126,8 @@ template<class Window> QImage Native(Window& window,QRgb expected) {
 }
 }
 
+#include "ItemCardNameRenderChecks.inc"
+
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
     if(qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM_PLUGIN_PATH"))qputenv("QT_QPA_PLATFORM_PLUGIN_PATH",RO_PACKET_QT_PLATFORM_PLUGINS);
@@ -133,7 +136,7 @@ int main(int argc,char** argv) {
         const QString output=QDir::cleanPath(argc>1?QString::fromLocal8Bit(argv[1]):QDir::currentPath()+"/item-renders");
         Require(QDir().mkpath(output),"item render directory failed");
         Require(QDir().mkpath(output+"/data"),"item metadata fixture directory failed");
-        for(const QString& table:{QString("idnum2itemdisplaynametable.txt"),QString("num2itemdisplaynametable.txt"),QString("itemslotcounttable.txt")}) {
+        for(const QString& table:{QString("idnum2itemdisplaynametable.txt"),QString("num2itemdisplaynametable.txt"),QString("itemslotcounttable.txt"),QString("cardprefixnametable.txt"),QString("cardpostfixnametable.txt"),QString("carditemnametable.txt")}) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+table);
             Require(source.open(QIODevice::ReadOnly),"source-derived item fixture table missing");
             const QByteArray bytes=source.readAll();QFile target(output+"/data/"+table);
@@ -350,12 +353,13 @@ int main(int argc,char** argv) {
         Require(!Find(view.rootObject(),"commerceTile_inventory_292") && !Find(view.rootObject(),"commerceTile_cart_292")
             && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),"quantity snapshot removal left stale delegates/hover");
         Require(view.grabWindow().save(output+"/quantity-empty.png"),"save empty quantity frame failed");
+        CheckCardNameCases(app,view,state,mode,inventory,storage,adapter,output);
         Require(errors==0,"item UI emitted QML warnings/errors");
         QImage contact(760,int(contacts.size())*52,QImage::Format_RGB32);contact.fill(QColor("#181b20"));QPainter painter(&contact);painter.setPen(Qt::white);
         for(size_t i=0;i<contacts.size();++i){painter.drawImage(0,int(i)*52,contacts[i]);painter.drawText(280,int(i)*52+23,contactNames[i]);}painter.end();
         Require(contact.save(output+"/tooltip-contact.png"),"save item contact sheet failed");
         QFile file(output+"/render-results.json");Require(file.open(QIODevice::WriteOnly),"item results open failed");
-        file.write(QJsonDocument(QJsonObject{{"cases",results},{"qml_errors",errors},{"hover_exit_and_row_removal",true},{"worn_bag_success_failure_ammunition",true},{"cart_status_clear_reopen",true},{"ordinary_item_name_refine_identification",true},{"quantity_snapshot_badges",true},{"outcome","PASS"}}).toJson());
+        file.write(QJsonDocument(QJsonObject{{"cases",results},{"qml_errors",errors},{"hover_exit_and_row_removal",true},{"worn_bag_success_failure_ammunition",true},{"cart_status_clear_reopen",true},{"ordinary_item_name_refine_identification",true},{"quantity_snapshot_badges",true},{"card_name_cases",17},{"outcome","PASS"}}).toJson());
         view.hide();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
         SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
         std::cout<<"PASS six item colour cases across native inventory/storage and production QML inventory/cart/storage\n";return 0;

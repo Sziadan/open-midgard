@@ -1,0 +1,6 @@
+// Extracted fixture rows: Ref/GRF-Content/data/cardprefixnametable.txt lines 1-2, 6, 14
+// Source SHA256: 3DA1CAF42F1FB117AD84E3F72AD29D6A7D0532C6CAA12930B5567E38E0992B32
+4001#Lucky#
+4002#Vital#
+4006#Lucky#
+4014#of Champion#

@@ -1,0 +1,6 @@
+// Extracted fixture rows: Ref/GRF-Content/data/carditemnametable.txt lines 1-2, 6, 14
+// Source SHA256: 8D2AB0571A54BFC6C812B3CE48F0723E77DB04576A4B08186F0CD8BB58C01506
+4001#
+4002#
+4006#
+4014#
