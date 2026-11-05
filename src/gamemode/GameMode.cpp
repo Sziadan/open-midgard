@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <unordered_set>
+#include <unordered_map>
 
 #include "network/Connection.h"
 #include "network/Packet.h"
@@ -38,6 +40,7 @@
 #include "ui/UIWindow.h"
 #include "ui/UIOptionWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIChooseSellBuyWnd.h"
 #include "render/DrawUtil.h"
 #include "render/Prim.h"
 #include "render/Renderer.h"
@@ -6303,7 +6306,10 @@ bool RequestNpcCloseDialog(u32 npcId)
 
 bool RequestNpcShopDealType(u8 dealType)
 {
-    if (g_session.m_shopNpcId == 0 || dealType > 1) {
+    CGameMode* const gameMode = g_modeMgr.GetCurrentGameMode();
+    if (g_session.m_shopNpcId == 0 || dealType > 1 || g_session.m_shopMode != NpcShopMode::None
+        || g_session.m_shopChoicePending
+        || (gameMode && gameMode->m_isPlayerDead)) {
         return false;
     }
 
@@ -6315,6 +6321,10 @@ bool RequestNpcShopDealType(u8 dealType)
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
+    if (sent) {
+        g_session.m_shopChoicePending = true;
+        if (g_windowMgr.m_chooseSellBuyWnd) g_windowMgr.m_chooseSellBuyWnd->SetShow(0);
+    }
     DbgLog("[GameMode] npc shop deal type npc=%u type=%u sent=%d\n",
         static_cast<unsigned int>(packet.NpcId),
         static_cast<unsigned int>(packet.Type),
@@ -6322,15 +6332,86 @@ bool RequestNpcShopDealType(u8 dealType)
     return sent;
 }
 
+bool SameNpcShopSellItem(const ITEM_INFO& first, const ITEM_INFO& second)
+{
+    // Count may change independently, but an indexed slot must still contain
+    // the quoted item, including its identification/refinement/card metadata.
+    return first.GetItemId() == second.GetItemId() && first.m_itemIndex == second.m_itemIndex
+        && first.m_itemType == second.m_itemType && first.m_location == second.m_location
+        && first.m_isIdentified == second.m_isIdentified && first.m_isDamaged == second.m_isDamaged
+        && first.m_refiningLevel == second.m_refiningLevel && first.m_isYours == second.m_isYours
+        && first.m_deleteTime == second.m_deleteTime
+        && std::equal(first.m_slot, first.m_slot + 4, second.m_slot);
+}
+
+constexpr size_t kNpcShopRequestMaxLength = 0x7fff;
+
+bool ValidateNpcShopDeal(NpcShopMode mode)
+{
+    CGameMode* const gameMode = g_modeMgr.GetCurrentGameMode();
+    const auto& deals = g_session.m_shopDealRows;
+    if (g_session.m_shopMode != mode || g_session.m_shopChoicePending
+        || deals.empty()
+        || deals.size() > (kNpcShopRequestMaxLength - 4u) / 4u || (gameMode && gameMode->m_isPlayerDead)) return false;
+
+    const auto quoteKey = [mode](unsigned int id, unsigned int index) {
+        return mode == NpcShopMode::Buy ? static_cast<unsigned long long>(id)
+            : (static_cast<unsigned long long>(index) << 32) | id;
+    };
+    std::unordered_map<unsigned long long, const NPC_SHOP_ROW*> quotes;
+    quotes.reserve(g_session.m_shopRows.size());
+    for (const auto& source : g_session.m_shopRows)
+        quotes.emplace(quoteKey(source.itemInfo.GetItemId(), source.sourceItemIndex), &source);
+    std::unordered_set<unsigned int> identities;
+    identities.reserve(deals.size());
+    for (const auto& deal : deals) {
+        const unsigned int id = deal.itemInfo.GetItemId();
+        if (id == 0 || id > 0xffffu || deal.quantity <= 0 || deal.quantity > 30000) return false;
+        const unsigned int key = mode == NpcShopMode::Buy ? id : deal.sourceItemIndex;
+        if (!identities.insert(key).second) return false;
+        const auto found = quotes.find(quoteKey(id, deal.sourceItemIndex));
+        if (found == quotes.end()) return false;
+        const NPC_SHOP_ROW& quoted = *found->second;
+        if (deal.unitPrice != g_session.GetNpcShopUnitPrice(quoted)
+            || deal.itemInfo.m_itemType != quoted.itemInfo.m_itemType
+            || (!NpcShopItemIsStackable(quoted.itemInfo.m_itemType) && deal.quantity != 1)) return false;
+        if (mode == NpcShopMode::Sell) {
+            const ITEM_INFO* current = g_session.GetInventoryItemByIndex(key);
+            if (key < 2 || key > 0xffffu || !current || current->m_wearLocation != 0
+                || current->m_num < deal.quantity || quoted.availableCount < deal.quantity
+                || !SameNpcShopSellItem(quoted.itemInfo, *current)
+                || !SameNpcShopSellItem(deal.itemInfo, *current)) return false;
+        }
+    }
+    return true;
+}
+
+void FinishNpcShopInteraction(NpcShopMode pendingResult)
+{
+    g_windowMgr.CloseNpcDialogWindows();
+    g_windowMgr.CloseNpcShopWindows();
+    // Replies have no transaction ID. Preserve expected reply order across
+    // later NPC contexts instead of letting an old CA consume a new purchase.
+    g_session.ClearNpcShopState(false);
+    g_session.QueueNpcShopResult(pendingResult);
+    if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        gameMode->m_isOnQuest = 0;
+        if (gameMode->m_dragType == static_cast<int>(DragType::ShopItem)) {
+            gameMode->m_dragType = 0;
+            gameMode->m_dragInfo = DRAG_INFO{};
+        }
+    }
+}
+
 bool RequestNpcShopPurchaseList()
 {
-    if (g_session.m_shopMode != NpcShopMode::Buy || g_session.m_shopDealRows.empty()) {
+    if (!ValidateNpcShopDeal(NpcShopMode::Buy)) {
         return false;
     }
 
     const size_t rowCount = g_session.m_shopDealRows.size();
     const size_t packetLen = sizeof(PACKET_CZ_PC_PURCHASE_ITEMLIST) + rowCount * 4;
-    if (packetLen > 0xFFFFu) {
+    if (packetLen > kNpcShopRequestMaxLength) {
         return false;
     }
 
@@ -6341,8 +6422,8 @@ bool RequestNpcShopPurchaseList()
 
     size_t offset = sizeof(PACKET_CZ_PC_PURCHASE_ITEMLIST);
     for (const NPC_SHOP_DEAL_ROW& row : g_session.m_shopDealRows) {
-        const u16 amount = static_cast<u16>((std::max)(0, (std::min)(row.quantity, 0xFFFF)));
-        const u16 itemId = static_cast<u16>(row.itemInfo.GetItemId() & 0xFFFFu);
+        const u16 amount = static_cast<u16>(row.quantity);
+        const u16 itemId = static_cast<u16>(row.itemInfo.GetItemId());
         bytes[offset + 0] = static_cast<u8>(amount & 0xFFu);
         bytes[offset + 1] = static_cast<u8>((amount >> 8) & 0xFFu);
         bytes[offset + 2] = static_cast<u8>(itemId & 0xFFu);
@@ -6356,18 +6437,19 @@ bool RequestNpcShopPurchaseList()
     DbgLog("[GameMode] npc shop purchase rows=%u sent=%d\n",
         static_cast<unsigned int>(rowCount),
         sent ? 1 : 0);
+    if (sent) FinishNpcShopInteraction(NpcShopMode::Buy);
     return sent;
 }
 
 bool RequestNpcShopSellList()
 {
-    if (g_session.m_shopMode != NpcShopMode::Sell || g_session.m_shopDealRows.empty()) {
+    if (!ValidateNpcShopDeal(NpcShopMode::Sell)) {
         return false;
     }
 
     const size_t rowCount = g_session.m_shopDealRows.size();
     const size_t packetLen = sizeof(PACKET_CZ_PC_SELL_ITEMLIST) + rowCount * 4;
-    if (packetLen > 0xFFFFu) {
+    if (packetLen > kNpcShopRequestMaxLength) {
         return false;
     }
 
@@ -6378,8 +6460,8 @@ bool RequestNpcShopSellList()
 
     size_t offset = sizeof(PACKET_CZ_PC_SELL_ITEMLIST);
     for (const NPC_SHOP_DEAL_ROW& row : g_session.m_shopDealRows) {
-        const u16 itemIndex = static_cast<u16>(row.sourceItemIndex & 0xFFFFu);
-        const u16 amount = static_cast<u16>((std::max)(0, (std::min)(row.quantity, 0xFFFF)));
+        const u16 itemIndex = static_cast<u16>(row.sourceItemIndex);
+        const u16 amount = static_cast<u16>(row.quantity);
         bytes[offset + 0] = static_cast<u8>(itemIndex & 0xFFu);
         bytes[offset + 1] = static_cast<u8>((itemIndex >> 8) & 0xFFu);
         bytes[offset + 2] = static_cast<u8>(amount & 0xFFu);
@@ -6393,41 +6475,17 @@ bool RequestNpcShopSellList()
     DbgLog("[GameMode] npc shop sell rows=%u sent=%d\n",
         static_cast<unsigned int>(rowCount),
         sent ? 1 : 0);
+    if (sent) FinishNpcShopInteraction(NpcShopMode::Sell);
     return sent;
 }
 
 bool RequestNpcShopCancel()
 {
-    u32 conversationId = 0;
-    if (g_windowMgr.m_sayDialogWnd && g_windowMgr.m_sayDialogWnd->GetNpcId() != 0) {
-        conversationId = g_windowMgr.m_sayDialogWnd->GetNpcId();
-    } else if (g_windowMgr.m_npcMenuWnd && g_windowMgr.m_npcMenuWnd->GetNpcId() != 0) {
-        conversationId = g_windowMgr.m_npcMenuWnd->GetNpcId();
-    } else if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-        conversationId = gameMode->m_lastNaid;
-    }
-
-    const NpcShopMode shopMode = g_session.m_shopMode;
-    const u32 shopId = g_session.m_shopNpcId;
-    g_session.m_suppressNextShopResult = true;
-
-    PACKET_CZ_PC_PURCHASE_ITEMLIST emptyDeal{};
-    emptyDeal.PacketLength = static_cast<u16>(sizeof(emptyDeal));
-    if (shopMode == NpcShopMode::Sell) {
-        emptyDeal.PacketType = PacketProfile::LegacyNpcShopSend::kSellItemList;
-    } else {
-        emptyDeal.PacketType = PacketProfile::LegacyNpcShopSend::kPurchaseItemList;
-    }
-    CRagConnection::instance()->SendPacket(
-        reinterpret_cast<const char*>(&emptyDeal),
-        static_cast<int>(sizeof(emptyDeal)));
-
-    g_windowMgr.CloseNpcDialogWindows();
-    g_windowMgr.CloseNpcShopWindows();
-    g_session.ClearNpcShopState();
-
-    const u32 closeId = conversationId != 0 ? conversationId : shopId;
-    return RequestNpcCloseDialog(closeId);
+    if (g_session.m_shopNpcId == 0 && g_session.m_shopMode == NpcShopMode::None) return false;
+    // Legacy primary cancel is local. An empty C8/C9 is a real transaction
+    // (and produces CA/CB); 0146 belongs to script-dialog continuation.
+    FinishNpcShopInteraction(NpcShopMode::None);
+    return true;
 }
 
 bool RequestMoveInventoryItemToStorage(u16 itemIndex, u32 amount)
@@ -9993,6 +10051,7 @@ void CGameMode::OnInit(const char* worldName) {
     m_terminalNetworkHandled = false;
     m_networkModeOperationGeneration = g_modeMgr.GetOperationGeneration();
     g_session.InvalidatePartyPositions();
+    g_session.ClearNpcShopState();
     ClearPendingDisconnectAction();
     RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
     ClearRuntimeActors(*this);
@@ -10097,6 +10156,7 @@ void CGameMode::MakeFog(int fogOn)
 
 void CGameMode::OnExit() {
     g_session.InvalidatePartyPositions();
+    g_session.ClearNpcShopState();
     ClearPendingDisconnectAction();
     g_renderer.FogSwitch(0);
     GetProductionGameModePacketRouter().Clear();
@@ -11148,6 +11208,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         return RequestNpcCloseDialog(static_cast<u32>(wparam)) ? 1 : 0;
 
     case GameMsg_RequestShopDealType:
+        if (wparam != 0 && wparam != 1) return 0;
         return RequestNpcShopDealType(static_cast<u8>(wparam)) ? 1 : 0;
 
     case GameMsg_RequestShopBuyList:

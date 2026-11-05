@@ -1,0 +1,90 @@
+[
+  {
+    "case_id": "npc_shop_choice_boundary",
+    "contract_id": "PK37.09",
+    "runtime_baseline_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+    "source_commit_at_configure": "d8c70dfcd3986c8629ee05b2339b2eba26815c94",
+    "source_tree_status_at_configure": "dirty",
+    "production_entry": "CGameMode::SendMsg -> RequestNpcShopDealType; ProcessGameModePacketLoop -> C4/C7",
+    "wide_wparam_rejected_without_bytes": true,
+    "valid_c5_hex": "c5004433221101",
+    "c7_cleared_choice_pending": true,
+    "outcome": "PASS"
+  },
+  {
+    "case_id": "npc_shop_choice_buy_result",
+    "contract_id": "PK37.09",
+    "runtime_baseline_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+    "source_commit_at_configure": "d8c70dfcd3986c8629ee05b2339b2eba26815c94",
+    "source_tree_status_at_configure": "dirty",
+    "production_entry": "CGameMode::SendMsg -> RequestNpcShopDealType/RequestNpcShopPurchaseList -> CRagConnection::SendPacket; ProcessGameModePacketLoop -> C6/CA/CB",
+    "c5_hex": "c5004433221100",
+    "c8_hex": "c80008000200f501",
+    "invalid_buy_rows_rejected": 5,
+    "dead_player_rejected": true,
+    "wrong_family_ignored": true,
+    "matching_result_consumed_once": true,
+    "outcome": "PASS"
+  },
+  {
+    "case_id": "npc_shop_sell_result",
+    "contract_id": "PK37.09",
+    "runtime_baseline_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+    "source_commit_at_configure": "d8c70dfcd3986c8629ee05b2339b2eba26815c94",
+    "source_tree_status_at_configure": "dirty",
+    "production_entry": "CGameMode::SendMsg -> RequestNpcShopSellList -> CRagConnection::SendPacket; ProcessGameModePacketLoop -> C7/CB",
+    "c7_quote_rows": 1,
+    "invalid_sell_rows_rejected": 8,
+    "dead_player_rejected": true,
+    "c9_hex": "c900080002000200",
+    "inventory_unchanged_until_authoritative_update": true,
+    "outcome": "PASS"
+  },
+  {
+    "case_id": "npc_shop_result_ownership",
+    "contract_id": "PK37.09",
+    "runtime_baseline_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+    "source_commit_at_configure": "d8c70dfcd3986c8629ee05b2339b2eba26815c94",
+    "source_tree_status_at_configure": "dirty",
+    "buy_codes": [
+      0,
+      1,
+      2,
+      3,
+      255
+    ],
+    "sell_codes": [
+      0,
+      1,
+      255
+    ],
+    "older_ca_preserves_new_chooser": true,
+    "same_family_fifo_verified": true,
+    "outcome": "PASS"
+  },
+  {
+    "case_id": "npc_shop_positive_length_boundary",
+    "contract_id": "PK37.09",
+    "runtime_baseline_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+    "source_commit_at_configure": "d8c70dfcd3986c8629ee05b2339b2eba26815c94",
+    "source_tree_status_at_configure": "dirty",
+    "synthetic_quote_source": true,
+    "rejected_rows": 8191,
+    "captured_bytes": 32764,
+    "header_hex": "c800fc7f",
+    "last_row_hex": "0100fe1f",
+    "outcome": "PASS"
+  },
+  {
+    "case_id": "npc_shop_local_cancel",
+    "contract_id": "PK37.09",
+    "runtime_baseline_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+    "source_commit_at_configure": "d8c70dfcd3986c8629ee05b2339b2eba26815c94",
+    "source_tree_status_at_configure": "dirty",
+    "production_entry": "CGameMode::SendMsg -> RequestNpcShopCancel -> local NPC dialog/shop cleanup",
+    "choice_buy_sell_cancel_outbound_bytes": 0,
+    "offline_submit_preserved_deal_ui_quest": true,
+    "offline_cancel_succeeded": true,
+    "outcome": "PASS"
+  }
+]

@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-05",
+  "baseline": "d8c70dfcd3986c8629ee05b2339b2eba26815c94",
+  "profile": 20080910,
+  "commit_subject": "packet(PK37.09): guard NPC shop transactions and replies",
+  "source_sha256": {
+    "CMakeLists.txt": "a93401baea180c46466157754db9f9b11c7cdfae8f6da88a3f954f379e940fc9",
+    "src/gamemode/GameMode.cpp": "61884736724a0d14a10cdf75880530c02b1817d53ea4553210b83f909ec69787",
+    "src/gamemode/GameModePacket.cpp": "0fc3670ce674ef3ec6926620b543b7a9784dad1fc30ee9a6ba860959964dc999",
+    "src/session/Session.cpp": "956715a8ab601e83552550fde8e63a7503da77db9b65f4906b03a0543e6c5f70",
+    "src/session/Session.h": "a8ececf51d95f1afaa0d898886056292ddaea5d8bd412314ce5ef261bcccbb86",
+    "src/ui/UIItemShopWnd.cpp": "ac4042272a7e60fd8e2a2b4b24fef6afb8ff5cbee7c05f7847affbfd0d333f67",
+    "src/ui/UINpcInputWnd.cpp": "b2b9f3332688b165b6467f638597fa155909f3fc21a2c6ef6ffb671fe2d2a97d",
+    "src/ui/UINpcInputWnd.h": "fe117f40772973c82b705a1e99a472b930b91d0f76bd73dfd27f0ed17c0b54a5",
+    "src/ui/UIWindowMgr.cpp": "06901ee080ea1f875c56d9398a2839680d60f78127f6d8b893e17d02d1f98497",
+    "src/ui/UIWindowMgr.h": "be79485eb3f2ce18c5c71b0c115fe12ae76a293e2a3d62bd81398c1c263839b0",
+    "tools/tests/replay/InventoryMapEntryReplay.inc": "a9de6001c07a37cc26060c1b3507d972b6fbac703c37528ccbeeef0e63cd1188",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "719b778c6ef055e14dd6932422c579c495cf71d8734643454b3059d58763b9a2",
+    "tools/tests/replay/NpcShopDetailRenderChecks.inc": "94db66cfc8762f449a3850920c3bbfc170cf176c54007785aed22632e0f2c7c3",
+    "tools/tests/replay/PacketStreamReplay.cpp": "a423c96cf98e550967691245c73bb71508ca3d62abc6f55c9170512307145579",
+    "tools/tests/replay/NpcShopTransactionReplay.inc": "971e3cb0d1d57f5391709c07dccb38030f9d7dd333a8319831d3890d2d822413",
+    "tools/tests/replay/NpcShopQuantityRenderChecks.inc": "b225f98fbbe1679818d89921a96edce03526ad0f5341435de626fa1ca88775ed"
+  },
+  "oracle_sha256": {
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\GameMode2.cpp": "111ca06ba24dc274a4b57f5484c71a0cc30d99952d554033d05221e80fe66217",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\packet-audit\\server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\docs\\packets\\evidence\\PK01.02-server-registry-final.csv": "faba011b15f10020297efb371312019729a2580a6662b3cd1164bed51fbd276f",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\clif.hpp": "4be8d550c203378b4444655922927fa309e5c513bd43819b1877ad7f24c27c5d",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\npc.cpp": "5e3374d32b745827f4fb34d7b00a3fe4de0a445e6480fb2129ee343969922732",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\itemdb.cpp": "3b51a2bbcb44c5ffbdb5dc04683dd4f567c2da92f56a4bc0008aa9a93de5efe5",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\common\\mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a"
+  },
+  "fixture_sha256": {
+    "tools/tests/fixtures/packet-item-data/carditemnametable.txt": "62f0b6f660ac0dfb3520a37a97d712363f442647706ff7e1f2fa2efc05baca0f",
+    "tools/tests/fixtures/packet-item-data/cardpostfixnametable.txt": "81ae3a843b8c8d2bec63b4d530c878f29d3028b5e51058a5bd69bba942195a44",
+    "tools/tests/fixtures/packet-item-data/cardprefixnametable.txt": "b17d99d8ec5a312c458b6d4b9ae470ec2adc9bf96038c81878a7ffc56cf4fb66",
+    "tools/tests/fixtures/packet-item-data/idnum2itemdisplaynametable.txt": "8c94c27f0812a79bc85196ad20934e57a44464b8298cf3d537b078598736173c",
+    "tools/tests/fixtures/packet-item-data/itemslotcounttable.txt": "cb2927ebf1cdeb69999fc1e53ccac83b78a699d74512e08adf3bdb17dc68c6b6",
+    "tools/tests/fixtures/packet-item-data/num2itemdisplaynametable.txt": "78c95ed1f33e5ddbaa00a8e4000ceeccf24fe190ab2635e8a30637e5529c14df"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "4a18c906a6bd1e223a0b8ce6599767241d3967c8b8b3ad068200e740fa90cae3",
+    "packet_stream_replay_checks.exe": "76324f3cb99bf67873f25e8036f1901aa61913725913890841f1e9440e6c5c37",
+    "open-midgard.exe": "fe80e1e042f1e633d8dd87665263ffd32fe155b86fac82e2b746fecde9bd969e"
+  },
+  "validation": {
+    "ctest_passed": 115,
+    "ctest_total": 115,
+    "ctest_seconds": 121.44,
+    "packet_PASS_records": 173,
+    "npc_transaction_records": 6,
+    "quantity_ui_cases": 4,
+    "type_probes": 16,
+    "rendered_frames": 4,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "2a66a04b791112c01ed2218f366a5d97e3228c59c0bba29ff08c13a248830b08",
+    "ctest_log_sha256": "57dddb96da45cf00b9cd1ad63c0c3f1c8b57580a1123b70c8bdb585ee1bf0835",
+    "probe_build_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "post_formatting_check": {
+      "scope": "four trailing spaces removed from replay include; targeted replay rebuild/retest only",
+      "packet_PASS_records": 173,
+      "build_log_sha256": "5bb40f6d20df3505688049e5d3ac2e45a5352cdb332c334819375cebc352a417",
+      "ctest_log_sha256": "4e9c1f31dfc06f0a4dd13cda48f923069dd30b6aec0f0dfe73a26e1c99018044"
+    }
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK37.09-npc-renders/npc-delay-consume-prompt-qt.png": "454db861aae1602a459025823d893e3193ce95da574a2060983690eeda00aeaa",
+    "evidence/PK37.09-npc-renders/npc-delay-consume-selected-native.png": "3c287e8421f9c1e991a64b5afd2cc3b820105f12e7e841b7a9288c86292ec65d",
+    "evidence/PK37.09-npc-renders/npc-delay-consume-selected-qt.png": "3dbf0cca11acd1cf7e80d4e465f9225aa5b2757c7e20c1a4de3d57c9f0df0166",
+    "evidence/PK37.09-npc-renders/npc-shop-cancelled-qt.png": "37495c2c45526abf122bda39e4cfd5bf88e0dda9f640d4de9947389702a4ed15",
+    "evidence/PK37.09-npc-renders/npc-shop-quantity-render-results.json": "62d467f2cf38d95618a39d9ecf24ed07273c4f02287312dc1f1346af8d5cd918",
+    "evidence/PK37.09-npc-renders/npc-shop-quantity-results.json": "cfbe4a57ed9880fa0c7702c37d9dc8873bcff1ef7a4b6e076c8f056ffd1819ed",
+    "evidence/PK37.09-before.txt": "7036ff912477220e7168ab9788df3e42180005ce6f21f2b0a75a716a7c2d93ae",
+    "evidence/PK37.09-layout.cpp": "91d8a17393de53cb88d3848cab198de5a93ada89cb3ad00a6a344beef8a3898c",
+    "evidence/PK37.09-layout.txt": "c1ea5c0d03d2064ad3d7ad308da139b660cda75b38a6c8aea53e84d31e4e84e0",
+    "evidence/PK37.09-transactions-replay.json": "2776173e89e7559a73ab3610cdb66fd282c2db53add234ded7ca9ffb8147007e",
+    "evidence/PK37.09-source-adjudication.md": "e40fff95f21fd395434571914cca1050507ca1a9753ed9e6a873fd1b659f4e3f"
+  },
+  "scope_limits": [
+    "Offline localhost sender/production receive and offscreen Qt; no live server transaction",
+    "Synthetic signed-length quote and raw type/metadata mutations, not server catalog/item legality",
+    "Queue acceptance, immediate failure and ordered expected receipts, not asynchronous commit/recovery",
+    "Canonical request/discovery inventory and full PK09.04/PK37/PK46.02/PK48/49 remain open",
+    "Funds/weight/capacity/proximity/visibility/silent-choice recovery/script shops/authoritative currency/full pictures/primary prompt limits/historical/deployed acceptance open"
+  ],
+  "source_lf_sha256": {
+    "CMakeLists.txt": "4698ce27c7bfd8ca67fdbffc5423ec0f6734fed0729c0c2c79becf19959f0305",
+    "src/gamemode/GameMode.cpp": "3706bfb1802759b1492294f5beaa1636694881cdfc76828cfbd6419e0da4fd7e",
+    "src/gamemode/GameModePacket.cpp": "e240fb6aef2dd6ec1b189916c8f12af35e33fb5a29f958e189d62916463e3648",
+    "src/session/Session.cpp": "622ef5d8293033f86ac4d565bbb3b30855260edc2f9da3ad4aa391c2d9897ca6",
+    "src/session/Session.h": "9da6f07bda0227c2f30cf61fe438fdf9ddbd909396e4bdd3688faeb5ab5b1c80",
+    "src/ui/UIItemShopWnd.cpp": "eaed165fd8b68a1cc664a6082e6800ce202dc326025b7f7b61c4e4b421d50d78",
+    "src/ui/UINpcInputWnd.cpp": "a8f5aebf67205fa7339ed509f1a05d0294899d5327a0a4c1389fa81cd788fb7d",
+    "src/ui/UINpcInputWnd.h": "09d0330feb104e2e87251b42464d0e85c514c663888e88f0febe5c4f18a2cedb",
+    "src/ui/UIWindowMgr.cpp": "4c898728b68689e06cad173734dc63869e9abbebd6386470b00b88b9abb448b3",
+    "src/ui/UIWindowMgr.h": "af1536e7402befcad7b9916d90bff7ec4741193977262262c3ac1e6e4594ad06",
+    "tools/tests/replay/InventoryMapEntryReplay.inc": "a9de6001c07a37cc26060c1b3507d972b6fbac703c37528ccbeeef0e63cd1188",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "b96199a66f138271793ad351418d22c9c2dd4d473bf4d56282f08a91b4cbfeda",
+    "tools/tests/replay/NpcShopDetailRenderChecks.inc": "f1a2df785b0ff02c33a1585dbd9bd01e4c7a7039b41037849ad4fcd060cf1135",
+    "tools/tests/replay/PacketStreamReplay.cpp": "6de9dacf796d259b0ddd0a805cb4deef21de961b3405a5cc4de072aa68151a8a",
+    "tools/tests/replay/NpcShopTransactionReplay.inc": "a7be253b0fac9c06bc7854bf989f87d3764267c277f4f42159fa25858d90c200",
+    "tools/tests/replay/NpcShopQuantityRenderChecks.inc": "b225f98fbbe1679818d89921a96edce03526ad0f5341435de626fa1ca88775ed"
+  }
+}

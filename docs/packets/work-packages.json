@@ -1308,6 +1308,11 @@
         "id": "PK37.08",
         "action": "Preserve unsigned selected NPC list prices and authoritative zero quotes, compute exact widened row/aggregate amounts, guard mode/stock/quantity deltas, and render decimal strings beyond JS precision with native/Qt column-fit regressions.",
         "tier": "S"
+      },
+      {
+        "id": "PK37.09",
+        "action": "Verify exact selected NPC choice/purchase/sale frames, strict quote/row and signed-length guards, immediate-send failure preservation, packetless primary cancel, ordered reply ownership, stackability/count prompts and map/context cleanup with production transport and native/Qt evidence.",
+        "tier": "S"
       }
     ],
     "acceptance": "Verify every production sender/server parser, partial purchases, quantities/prices, stale indices, insufficient funds, capacity and teardown. Server confirms mutations; UI drag/drop must use verified request paths."

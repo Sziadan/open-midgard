@@ -28,6 +28,7 @@ public:
     void OpenString(u32 npcId);
     void OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue, u32 maxValue, const char* placeholder = nullptr);
     void HideInput();
+    bool IsGameNumberPromptFor(int gameMessage) const;
     bool HandleKeyDown(int virtualKey);
     UIEditCtrl* GetEditCtrl() const;
     u32 GetNpcId() const;

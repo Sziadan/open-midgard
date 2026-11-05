@@ -869,6 +869,7 @@ Tier: **S**. Dependencies: PK13, PK34.
 - **PK37.06 [S]** Resolve commerce item descriptions by their actual owner/offer identity; restore primary merchant/trade right-click snapshots and verify index collisions, remote ordinals, invalid callbacks, actual native/Qt paint and tooltip layering. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK37.07 [S]** Restore NPC catalog and buy/sell deal right-click descriptions from their own snapshots; align native/Qt header, hit testing, data-row counts, scrolling and shrinking/reopened viewports; verify passive WindowProc input, copied metadata and cross-owner isolation. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK37.08 [S]** Preserve unsigned selected NPC list prices and authoritative zero quotes, compute exact widened row/aggregate amounts, guard mode/stock/quantity deltas, and render decimal strings beyond JS precision with native/Qt column-fit regressions. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK37.09 [S]** Verify exact selected NPC choice/purchase/sale frames, strict quote/row and signed-length guards, immediate-send failure preservation, packetless primary cancel, ordered reply ownership, stackability/count prompts and map/context cleanup with production transport and native/Qt evidence. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 

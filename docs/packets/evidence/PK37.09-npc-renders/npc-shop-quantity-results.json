@@ -1,0 +1,23 @@
+{
+    "cases": [
+        {
+            "case": "delay-consume native double-click, visible Qt count prompt and typed quantity",
+            "outcome": "PASS"
+        },
+        {
+            "case": "new C6 list invalidates prior quantity prompt and callback",
+            "outcome": "PASS"
+        },
+        {
+            "case": "five nonstackable and eleven stackable type probes share prompt and quantity limits",
+            "outcome": "PASS"
+        },
+        {
+            "case": "local shop cancellation closes Qt panes and quantity callback",
+            "outcome": "PASS"
+        }
+    ],
+    "generated_frames": 4,
+    "outcome": "PASS",
+    "type_probes": 16
+}

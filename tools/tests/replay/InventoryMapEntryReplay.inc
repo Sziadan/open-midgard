@@ -116,6 +116,8 @@ void InventoryMapEntryReplay()
     SkillPacketReplayAccess::SetCurrent(&mode);
 
     const auto requireReset = [&](const char* phase) {
+        Require(g_session.GetNpcShopPendingResult()==NpcShopMode::None&&!g_session.m_shopChoicePending
+            &&g_session.m_shopRows.empty()&&g_session.m_shopDealRows.empty(),std::string(phase)+" retained NPC shop state");
         Require(g_session.GetInventoryItems().empty(), std::string(phase) + " retained inventory rows");
         Require(ro::commerce::state.cartItems.empty() && !ro::commerce::state.hasCart,
             std::string(phase) + " retained cart rows or hasCart");
@@ -138,6 +140,8 @@ void InventoryMapEntryReplay()
 
     mode.m_characterNameCache[0x12345678]="Old producer";
     mode.m_characterNameReqTimer[0x12345678]=42;
+    g_session.QueueNpcShopResult(NpcShopMode::Buy);g_session.m_shopChoicePending=true;
+    g_session.m_shopRows.resize(1);g_session.m_shopDealRows.resize(1);
     mode.OnInit(nullptr);
     restore.initialized = true;
     requireReset("first OnInit(nullptr)");
@@ -161,7 +165,11 @@ void InventoryMapEntryReplay()
     requireReset("retry OnInit(nullptr)");
     mode.m_characterNameCache[0x12345678]="Old producer";
     mode.m_characterNameReqTimer[0x12345678]=42;
+    g_session.QueueNpcShopResult(NpcShopMode::Sell);g_session.m_shopChoicePending=true;
+    g_session.m_shopRows.resize(1);g_session.m_shopDealRows.resize(1);
     mode.OnExit();
+    Require(g_session.GetNpcShopPendingResult()==NpcShopMode::None&&!g_session.m_shopChoicePending
+        &&g_session.m_shopRows.empty()&&g_session.m_shopDealRows.empty(),"OnExit retained NPC shop state");
     Require(mode.m_characterNameCache.empty() && mode.m_characterNameReqTimer.empty(),"actual mode exit retained character name state");
     restore.initialized = false;
     std::cout << "{\"case_id\":\"inventory_map_entry_reset\",\"contract_id\":\"PK09.05\",\"routes\":[\"02E8\",\"02D0\",\"02E9\",\"02D2\"],\"empty_equipment_category_omitted\":true,\"repeat_map_entry_idempotence\":true,\"positions_and_tab_preserved\":true,\"storage_and_transactions_reset\":true,\"outcome\":\"PASS\"}\n";

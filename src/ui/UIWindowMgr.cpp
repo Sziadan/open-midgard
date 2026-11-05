@@ -882,6 +882,7 @@ void UIWindowMgr::ClosePlayerContextMenu()
 
 void UIWindowMgr::CloseNpcShopWindows()
 {
+    CloseNpcShopQuantityPrompt();
     if (m_chooseSellBuyWnd) {
         m_chooseSellBuyWnd->SetShow(0);
         m_chooseSellBuyWnd->StoreInfo();
@@ -898,6 +899,12 @@ void UIWindowMgr::CloseNpcShopWindows()
         m_itemSellWnd->SetShow(0);
         m_itemSellWnd->StoreInfo();
     }
+}
+
+void UIWindowMgr::CloseNpcShopQuantityPrompt()
+{
+    if (m_npcInputWnd && m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestShopAdjustDeal))
+        m_npcInputWnd->HideInput();
 }
 
 void UIWindowMgr::CloseStorageWindows()

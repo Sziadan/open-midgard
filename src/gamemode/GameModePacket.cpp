@@ -2340,6 +2340,7 @@ void HandleStorageStatus(CGameMode&, const PacketView& packet)
     const int currentCount = static_cast<int>(ReadLE16(packet.data + 2));
     const int maxCount = static_cast<int>(ReadLE16(packet.data + 4));
     g_session.OpenStorage(currentCount, maxCount);
+    g_session.ClearNpcShopState(false);
     g_windowMgr.CloseNpcDialogWindows();
     g_windowMgr.CloseNpcShopWindows();
     g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMWND);
@@ -3623,6 +3624,7 @@ void HandleNpcShopBuyList(CGameMode& mode, const PacketView& packet)
         rows.push_back(std::move(row));
     }
 
+    g_windowMgr.CloseNpcShopQuantityPrompt();
     g_session.SetNpcShopRows(g_session.m_shopNpcId, NpcShopMode::Buy, rows);
     if (g_windowMgr.m_chooseSellBuyWnd) {
         g_windowMgr.DeleteWindow(g_windowMgr.m_chooseSellBuyWnd);
@@ -3662,6 +3664,7 @@ void HandleNpcShopSellList(CGameMode& mode, const PacketView& packet)
         rows.push_back(std::move(row));
     }
 
+    g_windowMgr.CloseNpcShopQuantityPrompt();
     g_session.SetNpcShopRows(g_session.m_shopNpcId, NpcShopMode::Sell, rows);
     if (g_windowMgr.m_chooseSellBuyWnd) {
         g_windowMgr.DeleteWindow(g_windowMgr.m_chooseSellBuyWnd);
@@ -3676,15 +3679,7 @@ void HandleNpcShopBuyResult(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    if (g_session.m_suppressNextShopResult) {
-        g_session.m_suppressNextShopResult = false;
-        ReleaseNpcConversationLock(mode);
-        CloseNpcShopWindows();
-        g_session.ClearNpcShopState();
-        return;
-    }
-
-    ReleaseNpcConversationLock(mode);
+    if (!g_session.ConsumeNpcShopResult(NpcShopMode::Buy)) return;
 
     switch (packet.data[2]) {
     case 0:
@@ -3703,8 +3698,6 @@ void HandleNpcShopBuyResult(CGameMode& mode, const PacketView& packet)
         break;
     }
 
-    CloseNpcShopWindows();
-    g_session.ClearNpcShopState();
 }
 
 void HandleNpcShopSellResult(CGameMode& mode, const PacketView& packet)
@@ -3713,15 +3706,7 @@ void HandleNpcShopSellResult(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    if (g_session.m_suppressNextShopResult) {
-        g_session.m_suppressNextShopResult = false;
-        ReleaseNpcConversationLock(mode);
-        CloseNpcShopWindows();
-        g_session.ClearNpcShopState();
-        return;
-    }
-
-    ReleaseNpcConversationLock(mode);
+    if (!g_session.ConsumeNpcShopResult(NpcShopMode::Sell)) return;
 
     if (packet.data[2] == 0) {
         PushShopResultMessage("The deal has successfully completed.", 0x00FFFF00u);
@@ -3729,8 +3714,6 @@ void HandleNpcShopSellResult(CGameMode& mode, const PacketView& packet)
         PushShopResultMessage("The deal has failed.", 0x000000FFu);
     }
 
-    CloseNpcShopWindows();
-    g_session.ClearNpcShopState();
 }
 
 std::string SanitizeNpcDisplayName(std::string name)

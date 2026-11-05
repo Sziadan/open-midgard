@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK37.NPC-TRANSACTIONS](PK37.NPC-TRANSACTIONS.md) records strict selected sends, signed lengths, quote/stock identity, local cancel, FIFO receipts and native/Qt count lifetimes under PK37.09. Broader server eligibility and independent PK48 remain open.
+
 [PK37.NPC-AMOUNTS](PK37.NPC-AMOUNTS.md) records unsigned/zero quotes, exact amounts and guarded stock/deltas under PK37.08. Broad NPC requests/results and independent PK48 remain open.
 
 [PK37.NPC-ITEM-DETAILS](PK37.NPC-ITEM-DETAILS.md) records catalog and selected buy/sell snapshot ownership, passive input and viewport fixes under PK37.07. Broad NPC transactions, legacy grid fallback geometry and independent PK48 remain open.

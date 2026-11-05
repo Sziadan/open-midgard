@@ -4,6 +4,7 @@
 #include "core/PetState.h"
 #include <algorithm>
 #include <array>
+#include <deque>
 #include <mutex>
 #include <unordered_map>
 #include <string>
@@ -96,6 +97,13 @@ enum class NpcShopMode : int {
     Buy = 1,
     Sell = 2,
 };
+
+// Selected C6/server item-type semantics. Pet eggs and shadow gear normally
+// project to type4/5 on this wire; include their raw types defensively as well.
+inline bool NpcShopItemIsStackable(int itemType)
+{
+    return itemType != 4 && itemType != 5 && itemType != 7 && itemType != 8 && itemType != 12;
+}
 
 struct NPC_SHOP_ROW {
     ITEM_INFO itemInfo;
@@ -204,7 +212,7 @@ public:
     int m_plusAspd = 0;
     u32 m_shopNpcId = 0;
     NpcShopMode m_shopMode = NpcShopMode::None;
-    bool m_suppressNextShopResult = false;
+    bool m_shopChoicePending = false;
     int m_shopSelectedSourceRow = -1;
     int m_shopSelectedDealRow = -1;
     unsigned long long m_shopDealTotal = 0;
@@ -286,7 +294,18 @@ public:
     const PLAYER_SKILL_INFO* GetSkillItemBySkillId(int skillId) const;
     const PLAYER_SKILL_INFO* GetHomunSkillItemBySkillId(int skillId) const;
     const PLAYER_SKILL_INFO* GetMercSkillItemBySkillId(int skillId) const;
-    void ClearNpcShopState();
+    void ClearNpcShopState(bool clearPendingResults = true);
+    NpcShopMode GetNpcShopPendingResult() const {
+        return m_shopPendingResults.empty() ? NpcShopMode::None : m_shopPendingResults.front();
+    }
+    void QueueNpcShopResult(NpcShopMode mode) {
+        if (mode != NpcShopMode::None) m_shopPendingResults.push_back(mode);
+    }
+    bool ConsumeNpcShopResult(NpcShopMode mode) {
+        if (mode == NpcShopMode::None || GetNpcShopPendingResult() != mode) return false;
+        m_shopPendingResults.pop_front();
+        return true;
+    }
     void SetNpcShopChoice(u32 npcId);
     void SetNpcShopRows(u32 npcId, NpcShopMode mode, const std::vector<NPC_SHOP_ROW>& rows);
     bool AdjustNpcShopDealBySourceRow(size_t sourceRowIndex, int deltaQuantity);
@@ -372,6 +391,7 @@ public:
     char* GetHeadPaletteName(int head, int job, int sex, int palNum, char* buf);
     
 private:
+    std::deque<NpcShopMode> m_shopPendingResults;
     u64 m_partyPositionRevision = 0;
     void EnsureFogParameterTableLoaded();
     void EnsureAccessoryNameTableLoaded();

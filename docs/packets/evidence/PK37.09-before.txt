@@ -1,0 +1,38 @@
+UpdateCTestConfiguration  from :D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/DartConfiguration.tcl
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: packet_stream_replay_checks
+
+1: Test command: D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\packet_stream_replay_checks.exe
+1: Working Directory: D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+1: Environment variables:
+1:  OPEN_MIDGARD_DATA_DIR=D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-replay-settings
+1: Test timeout computed to be: 30
+1: {"case_id":"npc_shop_choice_boundary","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","production_entry":"CGameMode::SendMsg -> RequestNpcShopDealType; ProcessGameModePacketLoop -> C4/C7","wide_wparam_rejected_without_bytes":true,"valid_c5_hex":"c5004433221101","c7_cleared_choice_pending":true,"outcome":"PASS"}
+1: {"case_id":"npc_shop_choice_buy_result","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","production_entry":"CGameMode::SendMsg -> RequestNpcShopDealType/RequestNpcShopPurchaseList -> CRagConnection::SendPacket; ProcessGameModePacketLoop -> C6/CA/CB","c5_hex":"c5004433221100","c8_hex":"c80008000200f501","invalid_buy_rows_rejected":5,"dead_player_rejected":true,"wrong_family_ignored":true,"matching_result_consumed_once":true,"outcome":"PASS"}
+1: {"case_id":"npc_shop_sell_result","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","production_entry":"CGameMode::SendMsg -> RequestNpcShopSellList -> CRagConnection::SendPacket; ProcessGameModePacketLoop -> C7/CB","c7_quote_rows":1,"invalid_sell_rows_rejected":8,"dead_player_rejected":true,"c9_hex":"c900080002000200","inventory_unchanged_until_authoritative_update":true,"outcome":"PASS"}
+1: {"case_id":"npc_shop_result_ownership","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","buy_codes":[0,1,2,3,255],"sell_codes":[0,1,255],"older_ca_preserves_new_chooser":true,"same_family_fifo_verified":true,"outcome":"PASS"}
+1: {"case_id":"npc_shop_positive_length_boundary","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","synthetic_quote_source":true,"rejected_rows":8191,"captured_bytes":32764,"header_hex":"c800fc7f","last_row_hex":"0100fe1f","outcome":"PASS"}
+1: {"case_id":"npc_shop_transaction_replay","stage":"PK37.09","fixture_id":"selected-20080910-shop-c5-c8-c9-ca-cb","production_entry":"CGameMode::SendMsg -> NPC shop production sender; production packet router -> NPC shop handlers","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","invocation_count":0,"expected_packet_hex":null,"actual_packet_hex":null,"expected_queue_remainder":null,"actual_queue_remainder":null,"outcome":"FAIL","error":"rejected or local-only NPC shop action emitted outbound bytes"}
+1/1 Test #1: packet_stream_replay_checks ......***Failed    0.53 sec
+{"case_id":"npc_shop_choice_boundary","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","production_entry":"CGameMode::SendMsg -> RequestNpcShopDealType; ProcessGameModePacketLoop -> C4/C7","wide_wparam_rejected_without_bytes":true,"valid_c5_hex":"c5004433221101","c7_cleared_choice_pending":true,"outcome":"PASS"}
+{"case_id":"npc_shop_choice_buy_result","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","production_entry":"CGameMode::SendMsg -> RequestNpcShopDealType/RequestNpcShopPurchaseList -> CRagConnection::SendPacket; ProcessGameModePacketLoop -> C6/CA/CB","c5_hex":"c5004433221100","c8_hex":"c80008000200f501","invalid_buy_rows_rejected":5,"dead_player_rejected":true,"wrong_family_ignored":true,"matching_result_consumed_once":true,"outcome":"PASS"}
+{"case_id":"npc_shop_sell_result","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","production_entry":"CGameMode::SendMsg -> RequestNpcShopSellList -> CRagConnection::SendPacket; ProcessGameModePacketLoop -> C7/CB","c7_quote_rows":1,"invalid_sell_rows_rejected":8,"dead_player_rejected":true,"c9_hex":"c900080002000200","inventory_unchanged_until_authoritative_update":true,"outcome":"PASS"}
+{"case_id":"npc_shop_result_ownership","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","buy_codes":[0,1,2,3,255],"sell_codes":[0,1,255],"older_ca_preserves_new_chooser":true,"same_family_fifo_verified":true,"outcome":"PASS"}
+{"case_id":"npc_shop_positive_length_boundary","contract_id":"PK37.09","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","synthetic_quote_source":true,"rejected_rows":8191,"captured_bytes":32764,"header_hex":"c800fc7f","last_row_hex":"0100fe1f","outcome":"PASS"}
+{"case_id":"npc_shop_transaction_replay","stage":"PK37.09","fixture_id":"selected-20080910-shop-c5-c8-c9-ca-cb","production_entry":"CGameMode::SendMsg -> NPC shop production sender; production packet router -> NPC shop handlers","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"d8c70dfcd3986c8629ee05b2339b2eba26815c94","source_tree_status_at_configure":"dirty","invocation_count":0,"expected_packet_hex":null,"actual_packet_hex":null,"expected_queue_remainder":null,"actual_queue_remainder":null,"outcome":"FAIL","error":"rejected or local-only NPC shop action emitted outbound bytes"}
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.54 sec
+
+The following tests FAILED:
+	  1 - packet_stream_replay_checks (Failed)
+Errors while running CTest

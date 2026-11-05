@@ -2047,8 +2047,10 @@ const PLAYER_SKILL_INFO* CSession::GetMercSkillItemBySkillId(int skillId) const
     return nullptr;
 }
 
-void CSession::ClearNpcShopState()
+void CSession::ClearNpcShopState(bool clearPendingResults)
 {
+    m_shopChoicePending = false;
+    if (clearPendingResults) m_shopPendingResults.clear();
     m_shopNpcId = 0;
     m_shopMode = NpcShopMode::None;
     m_shopSelectedSourceRow = -1;
@@ -2060,12 +2062,13 @@ void CSession::ClearNpcShopState()
 
 void CSession::SetNpcShopChoice(u32 npcId)
 {
-    ClearNpcShopState();
+    ClearNpcShopState(false);
     m_shopNpcId = npcId;
 }
 
 void CSession::SetNpcShopRows(u32 npcId, NpcShopMode mode, const std::vector<NPC_SHOP_ROW>& rows)
 {
+    m_shopChoicePending = false;
     m_shopNpcId = npcId;
     m_shopMode = mode;
     m_shopRows = rows;
@@ -2447,9 +2450,10 @@ bool CSession::AdjustNpcShopDealBySourceRow(size_t sourceRowIndex, int deltaQuan
     }
 
     const NPC_SHOP_ROW& row = m_shopRows[sourceRowIndex];
+    const int typeLimit = NpcShopItemIsStackable(row.itemInfo.m_itemType) ? 30000 : 1;
     const int maxQuantity = m_shopMode == NpcShopMode::Sell
-        ? (std::max)(0, (std::min)(row.availableCount, 30000))
-        : 30000;
+        ? (std::max)(0, (std::min)(row.availableCount, typeLimit))
+        : typeLimit;
     if (maxQuantity <= 0 && deltaQuantity > 0) {
         return false;
     }

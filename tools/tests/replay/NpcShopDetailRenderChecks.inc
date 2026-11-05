@@ -117,11 +117,11 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     // Exercise the production quantity/deal projection from the selected C6
     // source row. This is a local action after the literal packet, not a claim
     // that C6 itself carries a deal row.
-    Require(g_session.AdjustNpcShopDealBySourceRow(0,2),"NPC buy source did not create a deal row");sync();
-    Require(g_session.m_shopDealRows.size()==1&&g_session.m_shopDealRows[0].quantity==2
-        &&g_session.m_shopDealRows[0].itemInfo.m_num==2,"NPC buy source deal quantity projection differs");
+    Require(g_session.AdjustNpcShopDealBySourceRow(0,1),"NPC buy source did not create a deal row");sync();
+    Require(g_session.m_shopDealRows.size()==1&&g_session.m_shopDealRows[0].quantity==1
+        &&g_session.m_shopDealRows[0].itemInfo.m_num==1,"NPC buy source deal quantity projection differs");
     clickBuyDeal(0,1201);capture("npc-buy-deal-from-source",1201,true);
-    Require(g_session.m_shopDealRows[0].quantity==2&&g_session.m_shopDealTotal==2*g_session.m_shopDealRows[0].unitPrice,
+    Require(g_session.m_shopDealRows[0].quantity==1&&g_session.m_shopDealTotal==g_session.m_shopDealRows[0].unitPrice,
         "NPC buy deal right-click changed production deal quantity or total");
     cases.push_back(QJsonObject{{"case","buy deal projected from C6 source row"},{"item_id",1201},{"outcome","PASS"}});clearDetail();
 

@@ -452,6 +452,11 @@ bool UINpcInputWnd::SubmitCurrentText()
     return false;
 }
 
+bool UINpcInputWnd::IsGameNumberPromptFor(int gameMessage) const
+{
+    return m_submitAction == SubmitAction::GameMessage && m_submitGameMessage == gameMessage;
+}
+
 void UINpcInputWnd::CancelInput()
 {
     if (m_submitAction == SubmitAction::GameMessage || m_npcId == 0) {

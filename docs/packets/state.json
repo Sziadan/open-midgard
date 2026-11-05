@@ -1931,6 +1931,15 @@
         "docs/packets/evidence/PK37.08-npc-amounts.json"
       ],
       "commit_subject": "packet(PK37.08): preserve exact NPC shop amounts"
+    },
+    "PK37.09": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK37.09-npc-transactions.md",
+        "docs/packets/evidence/PK37.09-npc-transactions.json",
+        "docs/packets/evidence/PK37.09-source-adjudication.md"
+      ],
+      "commit_subject": "packet(PK37.09): guard NPC shop transactions and replies"
     }
   }
 }

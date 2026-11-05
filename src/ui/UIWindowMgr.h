@@ -186,6 +186,7 @@ public:
     void CloseNpcDialogWindows();
     void ClosePlayerContextMenu();
     void CloseNpcShopWindows();
+    void CloseNpcShopQuantityPrompt();
     void CloseStorageWindows();
     void ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY,
         ItemInfoSource source = ItemInfoSource::Snapshot, ItemInfoAction action = ItemInfoAction::Select);

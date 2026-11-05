@@ -39,20 +39,7 @@ bool ShopItemUsesCountPrompt(int itemType, int count)
         return false;
     }
 
-    switch (itemType) {
-    case 4:
-    case 5:
-    case 8:
-    case 9:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-        return false;
-    default:
-        return true;
-    }
+    return NpcShopItemIsStackable(itemType);
 }
 
 int DealQuantityForSourceRow(size_t sourceRowIndex)

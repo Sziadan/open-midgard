@@ -13,6 +13,10 @@
 #include "session/Session.h"
 #include "qtui/QtUiStateAdapter.h"
 #include "ui/UIChooseWnd.h"
+#include "ui/UIChooseSellBuyWnd.h"
+#include "ui/UIItemShopWnd.h"
+#include "ui/UIItemPurchaseWnd.h"
+#include "ui/UIItemSellWnd.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UINewChatWnd.h"
 #include "ui/UIGuildWnd.h"
@@ -4512,9 +4516,11 @@ void GlobalChatProductionSendReplay()
 #include "CartItemLifecycleReplay.inc"
 #include "CharacterNameReplay.inc"
 #include "RentalItemReplay.inc"
+#include "NpcShopTransactionReplay.inc"
 
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
+    NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();
     SkillTargetProductionSendReplay();
