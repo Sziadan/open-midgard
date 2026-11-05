@@ -773,6 +773,7 @@ Tier: **M**. Dependencies: PK09, PK24.
 - **PK33.02 [M]** Implement0298/0299 rental notices and expiry state. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK33.03 [M]** Implement02D3 bind-on-equip and02BB damaged gear lifecycle. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK33.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK33.05 [S]** Restore selected 0298/0299 notices, absolute detail expiry and owner-bound lifetime; verify production framing/removal plus actual native/Qt paint, scaling and teardown, without closing full PK33 or other contexts. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 

@@ -1,0 +1,1 @@
+PASS PACKETVER20080910: 0298/8 itemId@2 seconds@4; 0299/6 index@2 itemId@4; normal22 expiry@18; equip26 expiry@20

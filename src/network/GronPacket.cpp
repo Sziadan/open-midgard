@@ -254,6 +254,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0179, 5);
     SetPacketSize(0x0193, 2);
     SetPacketSize(0x0194, 30);
+    SetPacketSize(0x0298, 8);               // selected rental: item ID + seconds
+    SetPacketSize(0x0299, 6);               // selected rental: index + item ID
     SetPacketSize(0x0195, 102);
     SetPacketSize(0x0196, 9);
     SetPacketSize(0x0191, 86);              // ZC_TALKBOX_CHATCONTENTS

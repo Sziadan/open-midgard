@@ -227,6 +227,8 @@ MapReceiveProfile MakePacketVer23ReceiveProfile()
     profile.useItemAckExtended = 0x01C8;
     profile.itemRemoveBasic = 0x00AF;
     profile.itemRemoveExtended = 0x07FA;
+    profile.rentalTimeCounter = 0x0298;
+    profile.rentalItemDelete = 0x0299;
     profile.partyInviteAckBasic = 0x00FD;
     profile.partyInviteAckExtended = 0x02C5;
     profile.partyInviteRequestBasic = 0x00FE;

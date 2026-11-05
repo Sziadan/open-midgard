@@ -580,7 +580,8 @@ void UIShortCutWnd::OnRBtnDown(int x, int y)
     fallbackItem.SetItemId(slot->id);
     fallbackItem.m_isIdentified = 1;
     const ITEM_INFO* const item = g_session.GetInventoryItemByItemId(slot->id);
-    g_windowMgr.ShowItemInfoWindow(item ? *item : fallbackItem, x + 12, y + 12);
+    g_windowMgr.ShowItemInfoWindow(item ? *item : fallbackItem, x + 12, y + 12,
+        item ? ItemInfoSource::Inventory : ItemInfoSource::Snapshot);
 }
 
 void UIShortCutWnd::OnWheel(int delta)

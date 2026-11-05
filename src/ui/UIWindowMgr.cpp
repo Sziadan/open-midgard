@@ -2336,13 +2336,13 @@ bool UIWindowMgr::OnWheel(int x, int y, int delta)
     return true;
 }
 
-void UIWindowMgr::ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY)
+void UIWindowMgr::ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source)
 {
     UIItemInfoWnd* const window = static_cast<UIItemInfoWnd*>(MakeWindow(WID_ITEMINFOWND));
     if (!window) {
         return;
     }
-    window->SetItemInfo(item, preferredX, preferredY);
+    window->SetItemInfo(item, preferredX, preferredY, source);
 }
 
 void UIWindowMgr::ShowItemCollectionWindow(const ITEM_INFO& item, int preferredX, int preferredY)

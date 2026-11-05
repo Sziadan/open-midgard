@@ -339,6 +339,8 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_test(NAME party_position_state_checks COMMAND party_position_state_checks)
     if(WIN32 AND RO_ENABLE_QT6_UI)
         get_filename_component(RO_PACKET_QT_PREFIX "${Qt6_DIR}/../../.." ABSOLUTE)
+        target_compile_definitions(packet_stream_replay_checks PRIVATE
+            RO_PACKET_QT_PLATFORM_PLUGINS="${RO_PACKET_QT_PREFIX}/plugins/platforms")
         add_executable(packet_minimap_render_checks tools/tests/replay/MinimapRenderChecks.cpp)
         target_compile_features(packet_minimap_render_checks PRIVATE cxx_std_17)
         target_compile_definitions(packet_minimap_render_checks PRIVATE
@@ -367,6 +369,10 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
             "${CMAKE_CURRENT_BINARY_DIR}/packet-special-name-renders" "special-names")
         set_tests_properties(packet_special_item_name_render_checks PROPERTIES TIMEOUT 45
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-special-name-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        add_test(NAME packet_rental_item_render_checks COMMAND packet_item_render_checks
+            "${CMAKE_CURRENT_BINARY_DIR}/packet-rental-renders" "rental-items")
+        set_tests_properties(packet_rental_item_render_checks PROPERTIES TIMEOUT 45
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-rental-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
     endif()
 endif()
 

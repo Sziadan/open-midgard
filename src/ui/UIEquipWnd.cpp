@@ -1457,7 +1457,8 @@ void UIEquipWnd::OnRBtnDown(int x, int y)
             m_y + m_layout.cards[i].y + m_layout.cards[i].height
         };
         if (x >= slotRect.left && x < slotRect.right && y >= slotRect.top && y < slotRect.bottom) {
-            g_windowMgr.ShowItemInfoWindow(*item, x + 12, y + 12);
+            const auto source = g_session.GetInventoryItemByIndex(item->m_itemIndex) == item ? ItemInfoSource::Inventory : ItemInfoSource::Snapshot;
+            g_windowMgr.ShowItemInfoWindow(*item, x + 12, y + 12, source);
             return;
         }
     }

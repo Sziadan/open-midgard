@@ -3,6 +3,7 @@
 #include "item/Item.h"
 #include "UIFrameWnd.h"
 #include "UIShopCommon.h"
+#include "ItemInfoSource.h"
 
 #include <array>
 #include <string>
@@ -51,13 +52,16 @@ public:
     ~UIItemInfoWnd() override = default;
 
     void OnDraw() override;
+    void OnProcess() override;
+    void DrawNativeToHdc(HDC hdc);
     void OnLBtnDown(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnRBtnDown(int x, int y) override;
     void OnMouseMove(int x, int y) override;
     void OnMouseHover(int x, int y) override;
     void StoreInfo() override;
-    void SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY);
+    void SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source = ItemInfoSource::Snapshot);
+    bool RefreshBoundItem();
     bool GetDisplayDataForQt(DisplayData* outData) const;
     bool HasItem() const;
 
@@ -80,6 +84,7 @@ private:
     std::string BuildDescriptionText() const;
 
     ITEM_INFO m_item;
+    ItemInfoSource m_source = ItemInfoSource::Snapshot;
     bool m_hasItem;
     bool m_closeHovered;
     bool m_closePressed;

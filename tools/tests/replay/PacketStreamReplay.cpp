@@ -14,6 +14,7 @@
 #include "qtui/QtUiStateAdapter.h"
 #include "ui/UIChooseWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UINewChatWnd.h"
 #include "ui/UIGuildWnd.h"
 #include "ui/UIMinimapWnd.h"
 #include <algorithm>
@@ -32,6 +33,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+#if RO_ENABLE_QT6_UI
+#include <QGuiApplication>
+#endif
 #if !RO_PLATFORM_WINDOWS
 #include <fcntl.h>
 #endif
@@ -4507,6 +4511,7 @@ void GlobalChatProductionSendReplay()
 #include "InventoryItemFieldsReplay.inc"
 #include "CartItemLifecycleReplay.inc"
 #include "CharacterNameReplay.inc"
+#include "RentalItemReplay.inc"
 
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
@@ -4638,5 +4643,6 @@ int main(){try{
     CartActorPresenceReplay();
     CharacterNameReplyIsolationReplay();
     CharacterNameRequestReplyReplay();
+    RentalItemPacketReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

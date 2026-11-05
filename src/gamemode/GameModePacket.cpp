@@ -2658,6 +2658,35 @@ void HandleGroundItemDisappear(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleRentalItem(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data) return;
+    const auto& profile = ro::net::GetActiveMapReceiveProfile();
+    std::vector<std::string> messages;
+    if (packet.packetId == profile.rentalTimeCounter) {
+        if (packet.packetLength != 8) return;
+        const u16 itemId = ReadLE16(packet.data + 2);
+        if (!itemId) return;
+        messages = g_ttemmgr.GetRentalTimeNotices(itemId, ReadLE32(packet.data + 4));
+    } else if (packet.packetId == profile.rentalItemDelete) {
+        if (packet.packetLength != 6) return;
+        const u16 index = ReadLE16(packet.data + 2), itemId = ReadLE16(packet.data + 4);
+        if (!index || !itemId) return;
+        // Primary Zc_Cash_Item_Delete decrements one. Selected pc_delitem then
+        // sends 00AF with the full stack amount; an absent row stays absent.
+        g_session.RemoveInventoryItem(index, 1);
+        if (g_windowMgr.m_itemWnd) g_windowMgr.m_itemWnd->Invalidate();
+        if (g_windowMgr.m_equipWnd) g_windowMgr.m_equipWnd->Invalidate();
+        if (g_windowMgr.m_shortCutWnd) g_windowMgr.m_shortCutWnd->Invalidate();
+        if (g_windowMgr.m_itemInfoWnd) g_windowMgr.m_itemInfoWnd->RefreshBoundItem();
+        messages.push_back(g_ttemmgr.GetRentalDeleteNotice(itemId));
+    } else return;
+    // One system event fans out to the modern All/Info tabs. No actor/world state
+    // or absolute expiry timestamp is inferred from the warning's seconds field.
+    g_windowMgr.EnsureChatWindowVisible();
+    for (const auto& message : messages) g_windowMgr.PushChatEvent(message.c_str(), 0x00ffff00u, 6);
+}
+
 void HandleItemRemove(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data) {
@@ -8971,6 +9000,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     RegisterHandlerIfValid(router, receiveProfile.equipStorageListTimedOwned, HandleEquipStorageList);
     router.Register(0x00AA, HandleEquipItemAck);
     RegisterHandlerIfValid(router, receiveProfile.itemRemoveBasic, HandleItemRemove);
+    RegisterHandlerIfValid(router, receiveProfile.rentalTimeCounter, HandleRentalItem);
+    RegisterHandlerIfValid(router, receiveProfile.rentalItemDelete, HandleRentalItem);
     router.Register(0x00AC, HandleUnequipItemAck);
     RegisterHandlerIfValid(router, receiveProfile.useItemAckBasic, HandleUseItemAck);
     router.Register(0x0147, HandleAutoRunSkill);

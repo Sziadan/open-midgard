@@ -11,6 +11,8 @@
 #include "session/Session.h"
 #include "ui/UIItemWnd.h"
 #include "ui/UIItemInfoWnd.h"
+#include "ui/UINewChatWnd.h"
+#include "ui/UiScale.h"
 #include "ui/UIStorageWnd.h"
 #include "ui/UIShopCommon.h"
 #include "ui/UIWindowMgr.h"
@@ -34,6 +36,8 @@
 #include <QDir>
 #include <algorithm>
 #include <array>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <stdexcept>
 
@@ -129,6 +133,7 @@ template<class Window> QImage Native(Window& window,QRgb expected) {
 
 #include "ItemCardNameRenderChecks.inc"
 #include "SpecialItemNameRenderChecks.inc"
+#include "RentalItemRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -139,11 +144,17 @@ int main(int argc,char** argv) {
         Require(QDir().mkpath(output),"item render directory failed");
         Require(QDir().mkpath(output+"/data"),"item metadata fixture directory failed");
         const bool specialOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="special-names";
-        if(specialOnly) {
-            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/special-name-msgstringtable.txt");
+        const bool rentalOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="rental-items";
+        if(specialOnly || rentalOnly) {
+            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(rentalOnly?"rental-msgstringtable.txt":"special-name-msgstringtable.txt"));
             Require(source.open(QIODevice::ReadOnly),"special source message fixture missing");
             const auto bytes=source.readAll();QFile target(output+"/data/msgstringtable.txt");
             Require(target.open(QIODevice::WriteOnly) && target.write(bytes)==bytes.size(),"copy special messages failed");
+        }
+        if(rentalOnly) {
+            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/rental-idnum2itemdesctable.txt");
+            Require(source.open(QIODevice::ReadOnly),"source rental description missing");const auto bytes=source.readAll();
+            QFile target(output+"/data/idnum2itemdesctable.txt");Require(target.open(QIODevice::WriteOnly) && target.write(bytes)==bytes.size(),"copy rental description failed");
         }
         for(const QString& table:{QString("idnum2itemdisplaynametable.txt"),QString("num2itemdisplaynametable.txt"),QString("itemslotcounttable.txt"),QString("cardprefixnametable.txt"),QString("cardpostfixnametable.txt"),QString("carditemnametable.txt")}) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+table);
@@ -174,6 +185,14 @@ int main(int argc,char** argv) {
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
+        if(rentalOnly) {
+            CheckRentalItemUi(app,view,state,mode,inventory,storage,adapter,output);
+            Require(errors==0,"rental item UI emitted QML errors");QFile file(output+"/rental-render-results.json");
+            Require(file.open(QIODevice::WriteOnly),"open rental render result failed");file.write(QJsonDocument(QJsonObject{{"qml_errors",errors},{"outcome","PASS"}}).toJson());
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS rental expiry detail/lifetime rendering\n";return 0;
+        }
         if(specialOnly) {
             CheckSpecialItemNames(app,view,state,mode,inventory,storage,adapter,output);
             Require(errors==0,"special item UI emitted QML errors");

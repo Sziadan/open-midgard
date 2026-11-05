@@ -1,0 +1,10 @@
+1201#
+A simple knife.
+Weapon Class: ^777777Dagger^000000
+Attack Strength: ^77777717^000000
+Weight: ^77777740^000000
+Weapon Level: ^7777771^000000
+Required Level: ^777777NA^000000
+Jobs: ^777777Novice, Swordman, Mage, Archer, Merchant,
+Thief Classes, Soul Linker, and Ninja^000000
+#

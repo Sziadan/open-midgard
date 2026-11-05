@@ -2698,7 +2698,8 @@ void PopulateItemInfoState(QtUiState* state)
         return;
     }
 
-    const UIItemInfoWnd* const itemInfoWnd = g_windowMgr.m_itemInfoWnd;
+    UIItemInfoWnd* const itemInfoWnd = g_windowMgr.m_itemInfoWnd;
+    if (itemInfoWnd) itemInfoWnd->RefreshBoundItem();
     const bool visible = IsGameplayWindowVisible(state, itemInfoWnd) && itemInfoWnd->HasItem();
     state->setItemInfoVisible(visible);
     if (!visible) {

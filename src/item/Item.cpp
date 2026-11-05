@@ -9,6 +9,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -33,6 +34,21 @@ std::string ResolveItemProducer(const ITEM_INFO& item)
 	const u32 characterId = u32(u16(item.m_slot[2])) | (u32(u16(item.m_slot[3])) << 16);
 	CGameMode* mode = g_modeMgr.GetCurrentGameMode();
 	return mode ? mode->ResolveCharacterName(characterId) : std::string();
+}
+
+std::string FormatRentalMessage(const std::string& format, const std::string& value, u32 amount = 0)
+{
+	std::string result;
+	for (size_t i = 0; i < format.size(); ++i) {
+		if (format[i] == '%' && i + 1 < format.size()) {
+			const char next = format[i + 1];
+			if (next == 's') { result += value; ++i; continue; }
+			if (next == 'd' || next == 'u') { result += std::to_string(amount); ++i; continue; }
+			if (next == '%') { result += '%'; ++i; continue; }
+		}
+		result += format[i];
+	}
+	return result;
 }
 
 std::string AppendSlotSuffix(std::string baseName, int slotCount)
@@ -303,6 +319,11 @@ std::string ITEM_INFO::GetDescription() const
 	return g_ttemmgr.GetDescription(GetItemId());
 }
 
+std::string ITEM_INFO::GetExpiryDisplayText() const
+{
+	return g_ttemmgr.GetExpiryDisplayText(static_cast<u32>(m_deleteTime));
+}
+
 std::string ITEM_INFO::GetResourceName() const
 {
 	return g_ttemmgr.GetResourceName(GetItemId(), m_isIdentified != 0);
@@ -466,6 +487,42 @@ std::string CItemMgr::GetDescription(unsigned int itemId)
 		return metadata->description;
 	}
 	return std::string();
+}
+
+std::string CItemMgr::GetExpiryDisplayText(u32 unixSeconds)
+{
+	if (!unixSeconds) return {};
+	EnsureLoaded();
+	// HireExpireDate is an unsigned wire epoch, even though legacy ITEM_INFO
+	// stores its bits in int. Do not sign-extend dates at/after January 2038.
+	const std::time_t stamp = static_cast<std::time_t>(unixSeconds);
+	if (static_cast<unsigned long long>(stamp) != unixSeconds) return {};
+	const std::tm* local = std::localtime(&stamp);
+	if (!local) return {};
+	char date[128]{};
+	const std::string format = ItemNameMessage(1260, "%m/%d %H:%M");
+	if (!std::strftime(date, sizeof(date), format.c_str(), local)) return {};
+	return FormatRentalMessage(ItemNameMessage(1255, " ^ff0000Expiration Date: %s^000000"), date);
+}
+
+std::vector<std::string> CItemMgr::GetRentalTimeNotices(unsigned int itemId, u32 seconds)
+{
+	EnsureLoaded();
+	const auto name = GetDisplayName(itemId, true, false);
+	const u32 minutes = seconds / 60;
+	std::vector<std::string> messages;
+	messages.push_back(FormatRentalMessage(minutes
+		? ItemNameMessage(1256, " The '%s' item will disappear in %d minutes.")
+		: ItemNameMessage(1270, " The '%s' item will disappear in %d seconds."), name, minutes ? minutes : seconds));
+	if (minutes == 1)
+		messages.push_back(FormatRentalMessage(ItemNameMessage(1257, "%s' item will be deleted from the Inventory in 1 minute."), name));
+	return messages;
+}
+
+std::string CItemMgr::GetRentalDeleteNotice(unsigned int itemId)
+{
+	EnsureLoaded();
+	return FormatRentalMessage(ItemNameMessage(1258, " '%s' item has been deleted from the Inventory."), GetDisplayName(itemId, true, false));
 }
 
 std::string CItemMgr::GetResourceName(unsigned int itemId, bool identified)
@@ -669,7 +726,8 @@ void CItemMgr::LoadItemNameMessages()
 		const size_t end = text.find('#', begin);
 		if (end == std::string::npos) break;
 		while (begin < end && (text[begin] == '\r' || text[begin] == '\n')) ++begin;
-		if ((index >= 450 && index <= 454) || (index >= 459 && index <= 461) || index == 756) {
+		if ((index >= 450 && index <= 454) || (index >= 459 && index <= 461) || index == 756
+			|| (index >= 1255 && index <= 1258) || index == 1260 || index == 1270) {
 			// Preserve spaces in positional message values, including their absence.
 			m_itemNameMessages[index] = text.substr(begin, end - begin);
 		}

@@ -1042,7 +1042,7 @@ void UIStorageWnd::OnRBtnDown(int x, int y)
         return;
     }
 
-    g_windowMgr.ShowItemInfoWindow(*item, x + 12, y + 12);
+    g_windowMgr.ShowItemInfoWindow(*item, x + 12, y + 12, ItemInfoSource::Storage);
 }
 
 void UIStorageWnd::OnMouseMove(int x, int y)

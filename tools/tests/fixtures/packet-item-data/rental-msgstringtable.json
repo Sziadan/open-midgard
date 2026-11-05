@@ -1,0 +1,38 @@
+{
+  "source": "Ref/GRF-Content/data/msgstringtable.txt",
+  "source_sha256": "200c4ac4970853ac7cb947629df790168a9d1afc5572e15fdc8d4944b6ab80af",
+  "synthetic_padding": "All unspecified zero-based indexes are synthetic empty # entries.",
+  "entries": 1271,
+  "selected_rows": [
+    {
+      "index": 1255,
+      "line": 1256,
+      "raw": " ^ff0000Expiration Date: %s^000000#"
+    },
+    {
+      "index": 1256,
+      "line": 1257,
+      "raw": " The '%s' item will disappear in %d minutes.#"
+    },
+    {
+      "index": 1257,
+      "line": 1258,
+      "raw": "%s' item will be deleted from the Inventory in 1 minute.#"
+    },
+    {
+      "index": 1258,
+      "line": 1259,
+      "raw": " '%s' item has been deleted from the Inventory.#"
+    },
+    {
+      "index": 1260,
+      "line": 1261,
+      "raw": "%m/%d %H:%M#"
+    },
+    {
+      "index": 1270,
+      "line": 1271,
+      "raw": " The '%s' item will disappear in %d seconds.#"
+    }
+  ]
+}

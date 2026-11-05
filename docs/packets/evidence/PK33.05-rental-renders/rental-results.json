@@ -1,0 +1,84 @@
+{
+    "cases": [
+        {
+            "case": "inventory-date",
+            "date": "01/01 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "scaled-inventory-date",
+            "date": "01/01 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "inventory-cart-collision",
+            "date": "01/01 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "inventory-date-updated",
+            "date": "01/02 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "inventory-permanent",
+            "date": "",
+            "expiry": false,
+            "outcome": "PASS"
+        },
+        {
+            "case": "unidentified-rental",
+            "date": "01/01 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "unsigned-2038-date",
+            "date": "01/19 03:14",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "unsigned-2106-date",
+            "date": "02/07 06:28",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "cart-date",
+            "date": "01/04 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "cart-survives-inventory-expiry",
+            "date": "01/04 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "storage-date",
+            "date": "01/03 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        },
+        {
+            "case": "normal-stack-rental",
+            "date": "01/01 00:00",
+            "expiry": true,
+            "outcome": "PASS"
+        }
+    ],
+    "configured_empty_message": true,
+    "frames": 26,
+    "live_update_and_removal": true,
+    "loaded_date_format": true,
+    "local_zone": true,
+    "outcome": "PASS",
+    "source_namespace_isolation": true,
+    "unsigned_wire_epoch": true
+}

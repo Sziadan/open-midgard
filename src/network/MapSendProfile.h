@@ -122,6 +122,8 @@ struct MapReceiveProfile {
     u16 useItemAckExtended;
     u16 itemRemoveBasic;
     u16 itemRemoveExtended;
+    u16 rentalTimeCounter;
+    u16 rentalItemDelete;
     u16 partyInviteAckBasic;
     u16 partyInviteAckExtended;
     u16 partyInviteRequestBasic;

@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 struct ITEM_INFO {
     int m_itemType = 0;
@@ -33,6 +34,7 @@ struct ITEM_INFO {
     std::string GetItemName(bool includeSlotSuffix = true) const;
     std::string GetEquipDisplayName(bool includeSlotSuffix = true) const;
     std::string GetDescription() const;
+    std::string GetExpiryDisplayText() const;
     std::string GetResourceName() const;
     int GetSlotCount() const;
     std::string GetCardIllustName() const;
@@ -60,6 +62,9 @@ public:
     std::string GetItemName(const ITEM_INFO& item, bool includeSlotSuffix = true);
     std::string GetEquipDisplayName(const ITEM_INFO& item, bool includeSlotSuffix = true);
     std::string GetDescription(unsigned int itemId);
+    std::string GetExpiryDisplayText(u32 unixSeconds);
+    std::vector<std::string> GetRentalTimeNotices(unsigned int itemId, u32 seconds);
+    std::string GetRentalDeleteNotice(unsigned int itemId);
     std::string GetResourceName(unsigned int itemId, bool identified);
     int GetSlotCount(unsigned int itemId);
     std::string GetCardIllustName(unsigned int itemId);

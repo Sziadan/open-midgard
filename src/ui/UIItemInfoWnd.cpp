@@ -5,9 +5,12 @@
 #include "UIWindowMgr.h"
 #include "item/Item.h"
 #include "main/WinMain.h"
+#include "session/Session.h"
+#include "gamemode/Commerce.h"
 
 #include <algorithm>
 #include <cctype>
+#include <tuple>
 
 namespace {
 constexpr int kWindowWidth = 332;
@@ -252,14 +255,17 @@ UIItemInfoWnd::UIItemInfoWnd()
 
 void UIItemInfoWnd::OnDraw()
 {
-    if (m_show == 0 || !m_hasItem) {
-        return;
-    }
-
+    if (!RefreshBoundItem() || !m_show) return;
     HDC hdc = AcquireDrawTarget();
-    if (!hdc) {
-        return;
-    }
+    if (!hdc) return;
+    DrawNativeToHdc(hdc);
+    ReleaseDrawTarget(hdc);
+}
+
+void UIItemInfoWnd::DrawNativeToHdc(HDC hdc)
+{
+    RefreshBoundItem();
+    if (m_show == 0 || !m_hasItem || !hdc) return;
 
     const RECT bounds = shopui::MakeRect(m_x, m_y, m_w, m_h);
     shopui::DrawFrameWindow(hdc, bounds, BuildTitle().c_str());
@@ -322,7 +328,6 @@ void UIItemInfoWnd::OnDraw()
         }
     }
 
-    ReleaseDrawTarget(hdc);
     m_isDirty = 0;
 }
 
@@ -405,9 +410,39 @@ void UIItemInfoWnd::StoreInfo()
     m_hasStoredPlacement = true;
 }
 
-void UIItemInfoWnd::SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY)
+void UIItemInfoWnd::OnProcess()
+{
+    RefreshBoundItem();
+    UIFrameWnd::OnProcess();
+}
+
+bool UIItemInfoWnd::RefreshBoundItem()
+{
+    if (m_source == ItemInfoSource::Snapshot || !m_show || !m_hasItem) return m_hasItem;
+    const ITEM_INFO* current = nullptr;
+    if (m_source == ItemInfoSource::Inventory) current = g_session.GetInventoryItemByIndex(m_item.m_itemIndex);
+    else if (m_source == ItemInfoSource::Storage && g_session.IsStorageOpen()) current = g_session.GetStorageItemByIndex(m_item.m_itemIndex);
+    else if (m_source == ItemInfoSource::Cart) {
+        const auto found = ro::commerce::state.cartItems.find(m_item.m_itemIndex);
+        if (found != ro::commerce::state.cartItems.end()) current = &found->second;
+    }
+    if (!current || current->GetItemId() != m_item.GetItemId()) {
+        m_item = ITEM_INFO{};m_hasItem = false;m_source = ItemInfoSource::Snapshot;
+        SetShow(0);Invalidate();return false;
+    }
+    const auto fields=[](const ITEM_INFO& i){return std::tie(i.m_itemType,i.m_location,i.m_itemIndex,i.m_wearLocation,
+        i.m_num,i.m_price,i.m_realPrice,i.m_itemName,i.m_isIdentified,i.m_isDamaged,i.m_refiningLevel,i.m_isYours,i.m_deleteTime);};
+    if (fields(*current) != fields(m_item) || !std::equal(std::begin(current->m_slot),std::end(current->m_slot),std::begin(m_item.m_slot))) {
+        m_item = *current;RefreshPreviewAndSlots();Resize(kWindowWidth,GetDesiredWindowHeight());
+        int x=m_x,y=m_y;g_windowMgr.ClampWindowToClient(&x,&y,m_w,m_h);Move(x,y);Invalidate();
+    }
+    return true;
+}
+
+void UIItemInfoWnd::SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source)
 {
     m_item = item;
+    m_source = source;
     m_hasItem = item.GetItemId() != 0;
     RefreshPreviewAndSlots();
 
@@ -622,15 +657,10 @@ std::vector<std::string> UIItemInfoWnd::BuildDetailLines() const
 
 std::string UIItemInfoWnd::BuildDescriptionText() const
 {
-    if (m_item.m_isIdentified == 0) {
-        return kUnknownItemDescription;
-    }
-
-    const std::string description = NormalizeDescriptionText(m_item.GetDescription());
-    if (!description.empty()) {
-        return description;
-    }
-    return std::string();
+    std::string text = m_item.GetExpiryDisplayText();
+    const std::string description = m_item.m_isIdentified == 0 ? kUnknownItemDescription : NormalizeDescriptionText(m_item.GetDescription());
+    if (!text.empty() && !description.empty()) text += "\n\n";
+    return text + description;
 }
 
 int UIItemInfoWnd::GetDesiredWindowHeight() const

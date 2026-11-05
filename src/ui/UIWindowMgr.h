@@ -1,6 +1,7 @@
 #pragma once
 #include "render/DC.h"
 #include "UIWindow.h"
+#include "ItemInfoSource.h"
 #include <array>
 #include <map>
 
@@ -186,7 +187,7 @@ public:
     void ClosePlayerContextMenu();
     void CloseNpcShopWindows();
     void CloseStorageWindows();
-    void ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY);
+    void ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source = ItemInfoSource::Snapshot);
     void ShowItemCollectionWindow(const ITEM_INFO& item, int preferredX, int preferredY);
     void ShowSkillDescribeWindow(const PLAYER_SKILL_INFO& skillInfo, int preferredX, int preferredY);
 

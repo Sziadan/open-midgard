@@ -2713,8 +2713,13 @@ Item {
     }
 
     RoFrame {
-        x: uiState.itemInfoX
-        y: uiState.itemInfoY
+        // Commerce is a root sibling. Keep this popup above its panels while
+        // retaining the native UI coordinate scale.
+        parent: root
+        x: uiState.itemInfoX * root.uiScale
+        y: uiState.itemInfoY * root.uiScale
+        scale: root.uiScale
+        transformOrigin: Item.TopLeft
         width: uiState.itemInfoWidth
         height: uiState.itemInfoHeight
         visible: uiState.itemInfoVisible
@@ -2806,18 +2811,30 @@ Item {
             }
         }
 
-        Text {
+        Flickable {
+            id: itemInfoDescriptionViewport
             x: 112
             y: itemInfoDetailsColumn.y + itemInfoDetailsColumn.height + 4
             width: parent.width - 120
-            height: parent.height - y - (((uiState.itemInfoData.slots || []).length > 0) ? 56 : 20)
-            text: root.roColorTextToRichText(uiState.itemInfoData.description || "")
-            textFormat: Text.RichText
-            color: theme.ink
-            font.family: theme.fontFamily
-            font.pixelSize: 12
-            wrapMode: Text.WordWrap
-            verticalAlignment: Text.AlignTop
+            height: Math.max(0, parent.height - y - (((uiState.itemInfoData.slots || []).length > 0) ? 56 : 20))
+            clip: true
+            contentWidth: width
+            contentHeight: itemInfoDescription.implicitHeight
+            flickableDirection: Flickable.VerticalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            Text {
+                id: itemInfoDescription
+                objectName: "itemInfoDescription"
+                width: itemInfoDescriptionViewport.width
+                text: root.roColorTextToRichText(uiState.itemInfoData.description || "")
+                onTextChanged: itemInfoDescriptionViewport.contentY = 0
+                textFormat: Text.RichText
+                color: theme.ink
+                font.family: theme.fontFamily
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                verticalAlignment: Text.AlignTop
+            }
         }
 
         Repeater {

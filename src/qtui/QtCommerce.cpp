@@ -77,7 +77,7 @@ void BindCommerceUi(QtUiState* ui){
             mode->m_dragInfo.itemId=item->GetItemId();mode->m_dragInfo.itemIndex=item->m_itemIndex;mode->m_dragInfo.itemCount=item->m_num;mode->m_dragInfo.itemEquipLocation=item->m_location;
             g_windowMgr.OnLBtnUp(c.x,c.y);return;
         }
-        if(action=="describe"){const ITEM_INFO* item=nullptr;if(c.from=="inventory")item=g_session.GetInventoryItemByIndex(c.index);else{auto it=state.cartItems.find(c.index);if(it!=state.cartItems.end())item=&it->second;}if(item)g_windowMgr.ShowItemInfoWindow(*item,c.x,c.y);return;}
+        if(action=="describe"){const ITEM_INFO* item=nullptr;if(c.from=="inventory")item=g_session.GetInventoryItemByIndex(c.index);else{auto it=state.cartItems.find(c.index);if(it!=state.cartItems.end())item=&it->second;}if(item)g_windowMgr.ShowItemInfoWindow(*item,c.x,c.y,c.from=="inventory"?ItemInfoSource::Inventory:c.from=="cart"?ItemInfoSource::Cart:ItemInfoSource::Snapshot);return;}
         if(!Action(c) && state.status.empty())state.status="Action unavailable. Check the quantity and current transaction state.";
     });
 }

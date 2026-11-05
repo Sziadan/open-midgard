@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-05",
+  "baseline": "8fd782514aa3aba4ce50e9c3d26af5a75ed360d5",
+  "commit_subject": "packet(PK33.05): restore rental expiry display and removal",
+  "profile": 20080910,
+  "source_sha256": {
+    "CMakeLists.txt": "7ac34069602ae9e05656f8fa8da217e961fcc59a987b0bc9b5fc07f7aa923d04",
+    "src/gamemode/GameModePacket.cpp": "cd161864aee153059596cfa3b5996ae49f845555beedbd839e744c99545f611c",
+    "src/item/Item.cpp": "7036b215cbf297c2a108e9862cffe167079cff3641ef3eff983610239f6ad8ce",
+    "src/item/Item.h": "37dac6fc0caf593a1743fb29e2833e9a7fdfea67abe9f400de3d7b090b333df2",
+    "src/network/GronPacket.cpp": "b9bbb5dbe66ec86b2fa9ac8557c99d1558e3feada8dd566babb205d8e2f58c21",
+    "src/network/MapSendProfile.cpp": "f9b62ceaf3f674a05b293d6ed3824cc996a19296dd3c1c91557c934c5da74744",
+    "src/network/MapSendProfile.h": "0eec857ef12fb900214646f78494730690a83cab06176c1585e9228494f5467f",
+    "src/qtui/QtCommerce.cpp": "4e1019df0455093f87c9d17a4ef625ce5b480a0040a9cfbdf30e22de2efa190e",
+    "src/qtui/QtUiStateAdapter.cpp": "ced5b87fab8c4cea9d8468eddf379e5e900af3f430b34094d08482e3aafdb51c",
+    "src/qtui/qml/GameOverlay.qml": "2255b60718a82c43103641067c5b568a486120ec512b7ac10d9aae821f833e37",
+    "src/ui/UIEquipWnd.cpp": "e8c2e45fcb65987f259abfa71a9591b49826475585d433305ed76559e10829da",
+    "src/ui/UIItemInfoWnd.cpp": "e8784100b89e8733bd499aedecbe27659f74d36848d790a2160734600d007c9c",
+    "src/ui/UIItemInfoWnd.h": "1e89e36b0a5d3692049bf6793d1b308ed6b01334d853826a184c54791b6f793f",
+    "src/ui/UIItemWnd.cpp": "2c274e46088d786c21d9cb57880db74aa99a5bbbc109b971532493fe6b08209e",
+    "src/ui/UIShortCutWnd.cpp": "5dbcd9171cd0651df015085ecaefd42726148542cddd62374147f7044c37af56",
+    "src/ui/UIStorageWnd.cpp": "6347b68c006fdbe134edfdbd3ecd49041cf878efdb3e3d71d4aee02bc357122a",
+    "src/ui/UIWindowMgr.cpp": "d759ecc8c50c55bdcf85fb6fc78ceb392acf47dcb45b6c98f407fc73b9ad2e75",
+    "src/ui/UIWindowMgr.h": "9a7316d107bf45e9f212028fd13f45d3b2be54ecbb38490f97216df2b120c92e",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "9a6104108493a27a88819697cb03b13a112732058d6f5db228345f3cdbfba2b2",
+    "tools/tests/replay/PacketStreamReplay.cpp": "604418f35fab03233eb20f5f5b994e6608980d355b9810574099f26e6bf5f88c",
+    "src/ui/ItemInfoSource.h": "24558df6d5341d3902d15106af6a5de4760c8c36580960400e6798f1447a5e5b",
+    "tools/tests/replay/RentalItemRenderChecks.inc": "368e7f76cbea2bb6bbbc80e77eebe9ff11e9b113ef75bc7d91ebe66ecebdb677",
+    "tools/tests/replay/RentalItemReplay.inc": "208a308924abed6b68ce74e4e20bd011498ae8f0a7fc4b637d98a0e293dd3c86"
+  },
+  "fixture_sha256": {
+    "tools/tests/fixtures/packet-item-data/rental-idnum2itemdesctable.txt": "eb0cea16aca0d05435c72b764c8726c5b8cc340bca4cee78c0919e7012f9191c",
+    "tools/tests/fixtures/packet-item-data/rental-msgstringtable.json": "ecc0ee853b3a5b3493aa556897e8eace00e8db8949a92ea3f7aca86d01ad9748",
+    "tools/tests/fixtures/packet-item-data/rental-msgstringtable.txt": "af5e539f61b69de2937109ef42bd441e2ed73ebb9caef37dc182eda083910675"
+  },
+  "oracle_sha256": {
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\GRF-Content\\data\\msgstringtable.txt": "200c4ac4970853ac7cb947629df790168a9d1afc5572e15fdc8d4944b6ab80af",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\pc.cpp": "e94af5e1b173cc442ee0b14f69ebd402f5703deea1d51fca36df8f9a69244a4e",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\packet-audit\\server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "cb0d9f42bcb623711e0f800acf14e7837e005c6b09369b3be371e9aef7b96b00",
+    "packet_stream_replay_checks.exe": "9df5c2db441262d67f5146ead6ec35a04641f4a428aa2349c31e6c5c197768d2",
+    "open-midgard.exe": "d0bcb9848e0e5b8d9cba4415c81d00f48242151e8b1d459530c4b58931bd710c"
+  },
+  "validation": {
+    "ctest_passed": 109,
+    "ctest_total": 109,
+    "ctest_seconds": 76.96,
+    "packet_PASS_records": 167,
+    "rental_frames": 26,
+    "rental_qml_errors": 0,
+    "dev_deploy": false,
+    "ctest_log_sha256": "9d351b00fd241f63ca34c319bc13432c51bd453575819ea068356a5f2470c4d1",
+    "build_log_sha256": "e2bc5f8bb1c795e61c8c40c282f14a8156295bf3299c4e20c9be5e5376f0f8cc"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK33.05-rental-renders/description-scrolled-qt.png": "f08a67a09162cf7d04092e0362d0597696893559fe40a840685facecffee4701",
+    "evidence/PK33.05-rental-renders/expiry-removed-qt.png": "bda99c6a45be0b6adeccf485e0b350adebf3f0c51881a8925676f7668486c1eb",
+    "evidence/PK33.05-rental-renders/inventory-date-native.png": "8966a06df4a6079ffa05a23d2800cbb6c74ecbbf038c52aaf8baaf2018b72b95",
+    "evidence/PK33.05-rental-renders/inventory-date-qt.png": "ccb27eec5c581eb89491747662157831c0c49b6452334c88d72537094f0fce6f",
+    "evidence/PK33.05-rental-renders/inventory-permanent-qt.png": "91b6de4e63d791d81bdb89214cbf6bdffd26901eb48772366d65f86a63786f4c",
+    "evidence/PK33.05-rental-renders/normal-stack-rental-qt.png": "30f6ab933fc0b35026ba88a1026fc638c1d54ee78fbc829f8fa727fdd4918b6c",
+    "evidence/PK33.05-rental-renders/rental-render-results.json": "62d467f2cf38d95618a39d9ecf24ed07273c4f02287312dc1f1346af8d5cd918",
+    "evidence/PK33.05-rental-renders/rental-results.json": "a8924a28571bdf6309a2f028965917706766dfff7e8d0901d0ae053a4d874794",
+    "evidence/PK33.05-rental-renders/scaled-inventory-date-qt.png": "e8154b8a6a384e16344aaeb2e873e82faa06d050bede156295b71cbd4c12412b",
+    "evidence/PK33.05-rental-renders/unidentified-rental-qt.png": "665abf721bb314015ad96074b5cfc5c5d9541516f70b873dce63c28f76a94862"
+  },
+  "scope_limits": [
+    "No discovery closure",
+    "Synthetic cart/storage field/namespace tests do not prove rental transfer validity",
+    "No full bind/broken gear, other detail contexts, locale/art, historical or deployed acceptance",
+    "Independent PK48/49 remain open"
+  ]
+}

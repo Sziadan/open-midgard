@@ -1140,6 +1140,11 @@
         "id": "PK33.04",
         "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
+      },
+      {
+        "id": "PK33.05",
+        "action": "Restore selected 0298/0299 notices, absolute detail expiry and owner-bound lifetime; verify production framing/removal plus actual native/Qt paint, scaling and teardown, without closing full PK33 or other contexts.",
+        "tier": "S"
       }
     ],
     "acceptance": "No removing equipment optimistically without server semantics. Verify units and item identity/index conventions. L candidate: approved expiry notice rendering."
