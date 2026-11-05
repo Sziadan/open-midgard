@@ -71,7 +71,7 @@ void CheckItemDetailToggleUi(QGuiApplication& app,QQuickView& view,QtUiState* ui
     };
 
     if(g_windowMgr.m_itemInfoWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_itemInfoWnd);
-    ro::commerce::Reset();ro::commerce::state.inventoryTab=1;
+    ro::commerce::Reset();SelectInventoryFixtureTab(1);
     g_session.ClearInventoryItems();g_session.ClearStorageItems();g_session.OpenStorage(1,600);
     if(g_windowMgr.m_itemWnd)g_windowMgr.m_itemWnd->SetShow(1);inventory.SetShow(1);storage.SetShow(1);
     Dispatch(mode,Equipment(0xd0,true,0));

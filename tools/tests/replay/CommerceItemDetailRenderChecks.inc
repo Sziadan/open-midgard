@@ -75,7 +75,7 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
         state.cart.visible=state.vending.visible=state.trade.visible=state.shop.visible=state.mail.visible=state.equipment.visible=false;
     };
 
-    Reset();state.inventoryTab=1;g_session.ClearInventoryItems();state.cartItems.clear();g_session.OpenStorage(1,600);
+    Reset();SelectInventoryFixtureTab(1);g_session.ClearInventoryItems();state.cartItems.clear();g_session.OpenStorage(1,600);
     hidePanels();
     // Deliberate same-index collision: inventory is Knife; cart is Dagger.
     Dispatch(mode,Equipment(0xd0,true,0));

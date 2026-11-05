@@ -84,6 +84,8 @@ public:
     bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const;
     int GetQtTabCount() const;
     bool GetQtTabDisplayForQt(int index, QtButtonDisplay* outData) const;
+    void SetCurrentTab(int tabIndex);
+    int GetCurrentTab() const { return m_currentTab; }
 
 private:
     struct VisibleItem {
@@ -97,7 +99,6 @@ private:
     void ReleaseAssets();
     void TryActivateItemAtPoint(int x, int y);
     void SetMiniMode(bool miniMode);
-    void SetCurrentTab(int tabIndex);
     void RefreshVisibleItemsForInteractionState();
     void UpdateHoveredItem(int globalX, int globalY);
     int GetTabAtPoint(int globalX, int globalY) const;

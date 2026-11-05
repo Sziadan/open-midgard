@@ -1,7 +1,8 @@
 # Packet implementation status
 
-**Active step: PK09.04.** [Latest NPC-transaction evidence](evidence/PK37.09-npc-transactions.md), [source adjudication](evidence/PK37.09-source-adjudication.md), [provenance](evidence/PK37.09-npc-transactions.json), and [HANDOFF](HANDOFF.md) define continuation.
+**Active step: PK09.04.** [Latest startup/runtime evidence](evidence/PK09.12-tab-startup.md), [contract](contracts/PK09.ITEM-TAB-STARTUP.md), [provenance](evidence/PK09.12-tab-startup.json), and [HANDOFF](HANDOFF.md) define continuation.
 
+- PK09.12 shares source-selected startup and manager runtime tab selection, with fresh-process, radio, viewport, native/Qt close/recreation and storage independence coverage. Full original geometry and whole-record geometry coupling remain open.
 - PK37.09 verifies exact C5/C8/C9, strict signed-length/row/quote guards, failed immediate sends, local packetless cancel, ordered CA/CB receipts, native/Qt count prompts and map cleanup. Later NPC contexts cannot lose or be cleared by older replies. Selected market-stock applicability is adjudicated; broad server eligibility and full lifecycle remain open.
 - PK37.08 preserves unsigned/zero list quotes, exact64-bit row/aggregate amounts and decimal strings through Qt, fixes overflow-prone deltas and zero sell stock, and fits full numeric labels in native/Qt panes. Broad request/result and transaction eligibility remain open.
 - PK37.07 restores NPC catalog/buy/sell descriptions from exact copied rows, fixes final-row scrolling, scrolled-header selection, stale model offsets and Qt header alignment. Passive native input and125% conversion pass. Legacy grid fallback remains a geometry/signature boundary; do not invent a current gesture. Row-price arithmetic now passes PK37.08; broad NPC transactions remain open.
@@ -15,5 +16,5 @@
 - PK09.07 repairs list-only socket suffixes leaking into hovers and Qt identification/refinement naming. Actual native/Qt names and quantity delegates/replacement pass. Generic cards now pass PK09.08; special-name variants now pass PK09.09; expiry and other contexts remain required.
 - PK37.05 repairs same-index metadata loss, contents/presence conflation and unknown failure notices. Local options own cart removal; counters remain authoritative. Production packet/actor tests and actual QML Cart-button reopening/footer rendering pass. Broader PK37.01–.04 remain open.
 - Prior bag/field/colour/map proofs and PK09.02/.03 mapping/route checkpoints remain verified. PK09.04 stays open for remaining type/tab/radio/detail contexts and historical acceptance.
-- Deploy-off build and final validation: **115/115 CTest in 121.44s**, **173 PASS packet records**, six NPC transaction replay records, four quantity UI cases/16 type probes, four frames and zero NPC-quantity QML errors. No installed client/live server or numeric row closure.
+- Deploy-off build and final validation: **116/116 CTest in 140.49s**, **173 PASS packet records**, 29 fresh child processes, 19 generated frames and zero startup-child QML errors. No installed client/live server or numeric row closure.
 - NPC/status/mail implementations, PK46.02's177-row inventory/character paths (including broader scope beyond the bounded NPC sends), PK47 and independent PK48/49/deployed provenance remain open. The whole-plan goal remains active.

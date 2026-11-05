@@ -52,7 +52,8 @@ void ResetForMapEntry()
     g_windowMgr.CloseStorageWindows();
     const Window previous[] = {state.cart, state.vending, state.trade,
         state.shop, state.mail, state.equipment};
-    const int inventoryTab = state.inventoryTab;
+    const int inventoryTab = g_windowMgr.m_itemWnd
+        ? g_windowMgr.m_itemWnd->GetCurrentTab() : g_windowMgr.GetInventoryTabSelection();
     Reset();
     Window* windows[] = {&state.cart, &state.vending, &state.trade,
         &state.shop, &state.mail, &state.equipment};
@@ -134,7 +135,14 @@ bool Receive(CGameMode&,const PacketView& v){
 bool Action(const Command& c){
     state.status.clear();
     if(c.action=="moveWindow"){if(auto* w=window(c.to)){w->x=std::max(0,c.x);w->y=std::max(0,c.y);return true;}if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.m_itemWnd->Move(std::max(0,c.x),std::max(0,c.y));return true;}return false;}
-    if(c.action=="inventoryTab"){state.inventoryTab=std::clamp(c.tab,0,2);return true;}
+    if(c.action=="inventoryTab"){
+        if(g_windowMgr.m_itemWnd)g_windowMgr.m_itemWnd->SetCurrentTab(c.tab);
+        else {
+            g_windowMgr.SetInventoryTabSelection(c.tab);
+            state.inventoryTab=g_windowMgr.GetInventoryTabSelection();
+        }
+        return true;
+    }
     if(c.action=="cart"){if(state.hasCart){state.cart.visible=!state.cart.visible;return true;}return false;}
     if(c.action=="close"){
         if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.m_itemWnd->SetShow(0);return true;}

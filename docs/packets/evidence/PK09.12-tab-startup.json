@@ -1,0 +1,78 @@
+{
+  "date": "2026-11-05",
+  "baseline": "2c9dc48e8465cd37ad04ff609cbac0350b677a43",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.12): share source inventory tab startup and retention",
+  "source_sha256": {
+    "CMakeLists.txt": "10b1b914f429578c3436f31eb77b957437d380832deb45d30052ceea8864969a",
+    "src/core/SettingsIni.cpp": "6ab62a765d5e8e11e7d1941346e09f97e0cc61c390532e949b24cda95da4d472",
+    "src/core/SettingsIni.h": "121a1cedb67284ea6126ac205e6d72cdeeab85aded24d6baba1bef86c46db564",
+    "src/gamemode/Commerce.cpp": "81a6e5d5de6ff26263622738ac4b222905290b04ddf6e97438ec12ae95ea1344",
+    "src/qtui/QtCommerce.cpp": "1557613e025562974c3ff8844e6a8e00b3505a9b3f049d75378b885805c0af93",
+    "src/ui/UIItemWnd.cpp": "e72b27559a835b127cee368c0e213bb433af05ba6cbb2f1425bd4b6a16d792a6",
+    "src/ui/UIItemWnd.h": "9eb94bd48e171ff2fe5ef034bc26dfc971d95a11a3df3a8f29d946c9c48563a2",
+    "src/ui/UIWindowMgr.cpp": "cb1e0641ef9d83b9074b4c3625a8399e883c19f271c4144970c65379a8eb1120",
+    "src/ui/UIWindowMgr.h": "7698025087404a7802064938c0bd193ab532f2f3aaee9d95cd0301349562cfec",
+    "tools/tests/replay/CommerceItemDetailRenderChecks.inc": "8d7f01c918903ad8293e36de3b439f67083c6e52a63d81d31c32cb7d9fe9183c",
+    "tools/tests/replay/InventoryMapEntryReplay.inc": "4013fbc1cf528017b7701dfc6c5a539546d5f872fae42cf7fcfb689525b095e5",
+    "tools/tests/replay/ItemCardNameRenderChecks.inc": "892a35f4d66b4ceafcfd8b76cd71319fedcf44f8a2b8a36602cc6d9a2bf22e40",
+    "tools/tests/replay/ItemCategoryRenderChecks.inc": "a33bed364d47dd67c2005a13dadf94f9e444f1e094b547e9f0b79adc6953d2c8",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "3cb6642c1a8aaf7cf9e55415056bd921f5692bfbfb32c998e0db7860d1097141",
+    "tools/tests/replay/ItemDetailToggleRenderChecks.inc": "3e8e826ea5c74b1a2f1c2059766a3239adf59fdc3a4bf8d5da8b73c470b09e96",
+    "tools/tests/replay/RentalItemRenderChecks.inc": "592a1544407278fc1a6e5c192eece71ce347b64483279fdf66fd459a089a1049",
+    "tools/tests/replay/SpecialItemNameRenderChecks.inc": "cc3e5b385e30d95abe1044904492e61e1175d7f46ba4ef79a133ebc83dfa3e19",
+    "tools/tests/replay/InventoryTabStartupRenderChecks.inc": "010be63903d8b87f8f1026673ae3539991517f46fc26462f7f758d6ad2249155"
+  },
+  "primary_sha256": {
+    "Ref/WinMain.cpp": "3cac1c7d4943d1e85b91a336dd084deaa34d01cc29cb6a1b6c3f4fa22803d39c",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "Ref/UIRectInfo.cpp": "e966ca8d73cd295750d9d1abd0a0595b77112b3ae956efd5b41809ba98beaa11"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "fc45eb8eff599f07720256d6c25c270ebd7243110a25ff47342e83a5e6e07169",
+    "packet_stream_replay_checks.exe": "d6db87a2d18403082fb3aa9fbb4fd30fd2c58a043e0b4edae0e4ab80247ebc3f",
+    "open-midgard.exe": "c464d0b6a54cc1caa3b93dfd0236111f029fcd8d21ca517288df4a8e8c55fb60"
+  },
+  "validation": {
+    "ctest_passed": 116,
+    "ctest_total": 116,
+    "ctest_seconds": 140.49,
+    "packet_PASS_records": 173,
+    "fresh_processes": 29,
+    "rendered_frames": 19,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "35afbd18fd8d5b207543082065b4f04f26f393ec203dc80a89d30e31973f6663",
+    "ctest_log_sha256": "dbcfc4e1b1004d17a816b1ee5b13311152b64178c033a35c0b423001da452fe7"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK09.12-tab-renders/inventory-tab-startup-results.json": "58354742d30dc365fb0af95218a133b0834e28e12459f584f5b879f08e4f0fd4",
+    "evidence/PK09.12-tab-renders/read-after-managed-inventory-tab-1.png": "b5eac5d4c6363482d97c354566abb4e6c32d185bb90c081fde4cee5eb73a1b39",
+    "evidence/PK09.12-tab-renders/read-after-managed-inventory-tab-startup.json": "6b8fc7c1a54696d90ccdea301ee12fd3c6c609dbadf42d249c94ce1a1ca0cb99",
+    "evidence/PK09.12-tab-renders/read-after-native-inventory-tab-1.png": "b5eac5d4c6363482d97c354566abb4e6c32d185bb90c081fde4cee5eb73a1b39",
+    "evidence/PK09.12-tab-renders/read-after-native-inventory-tab-startup-native.png": "491b35119116e8b36464d54c528f215a5d2ee004a2ee0f4b82541fb26c18860b",
+    "evidence/PK09.12-tab-renders/read-after-native-inventory-tab-startup.json": "052583ab6b66708548a5e20c501889802563041a216fc735a39a258e301e8019",
+    "evidence/PK09.12-tab-renders/read-after-qml-inventory-tab-1.png": "b5eac5d4c6363482d97c354566abb4e6c32d185bb90c081fde4cee5eb73a1b39",
+    "evidence/PK09.12-tab-renders/read-after-qml-inventory-tab-startup.json": "f84ef0aed642953a84ac2643ad35cd1dd5db835361aeb62bb826ba028c521145",
+    "evidence/PK09.12-tab-renders/read-boundary-inventory-tab-1.png": "b5eac5d4c6363482d97c354566abb4e6c32d185bb90c081fde4cee5eb73a1b39",
+    "evidence/PK09.12-tab-renders/read-boundary-inventory-tab-startup.json": "c02fb9ca3c391413f742298dba9877babd91c0fd267e863c27beadcdcbb2e612",
+    "evidence/PK09.12-tab-renders/read-default-inventory-tab-0.png": "bd510b58eb044f5dc7a2d8884751a963f18bb6fef320f22134c520c4e41bf2e8",
+    "evidence/PK09.12-tab-renders/read-default-inventory-tab-startup.json": "4ccb7ec24909c990b68b768d6a710472269afa6e60ab899b85172836fe1dd752",
+    "evidence/PK09.12-tab-renders/read-radio-one-inventory-tab-0.png": "bd510b58eb044f5dc7a2d8884751a963f18bb6fef320f22134c520c4e41bf2e8",
+    "evidence/PK09.12-tab-renders/read-radio-one-inventory-tab-startup.json": "cd54cad50b846aa88139b586b190ea9e6404203d1576ae70e8ea193afeeb5115",
+    "evidence/PK09.12-tab-renders/read-small-inventory-tab-0.png": "bd510b58eb044f5dc7a2d8884751a963f18bb6fef320f22134c520c4e41bf2e8",
+    "evidence/PK09.12-tab-renders/read-small-inventory-tab-startup.json": "49666ce0772a07ea767276c0af2780a3058ad7cb545befbdc9b3b0cdc1c1d786",
+    "evidence/PK09.12-tab-renders/select-managed-2-inventory-tab-startup.json": "bad4d24fecbfd6ff32de3b0d153875c2497e14e92a0bf83826a4a5db86cc139f",
+    "evidence/PK09.12-tab-renders/select-native-2-inventory-tab-selected-2.png": "e0bed074f0f264af901d631c98bb46f083547a96b1591901045deb805c366195",
+    "evidence/PK09.12-tab-renders/select-native-2-inventory-tab-startup.json": "665fb152613865af4a639f49cfd7b1785f810fe9935a2ba14c16ea15ab67b037",
+    "evidence/PK09.12-tab-renders/select-qml-0-inventory-tab-selected-0.png": "b0c07779a27c2c09f53a554001222ca2ad068563f6657e7d9067c9a48d4d08f9",
+    "evidence/PK09.12-tab-renders/select-qml-0-inventory-tab-startup.json": "0e3a9bc411dbb77f758d6b462d38e7c74923a74cace175a09a90e5a8b03fdc0b"
+  },
+  "scope_limits": [
+    "INI section maps reference registry-key existence; missing optional radios use initialized All",
+    "Current logical viewport at100% test scale, not full original geometry/record coupling or scaling equivalence",
+    "Storage geometry only; no new storage tab persistence",
+    "No wire/route/discovery closure or full PK09.04/PK48/49/deployed acceptance"
+  ]
+}

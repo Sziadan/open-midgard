@@ -732,6 +732,32 @@ void UIWindowMgr::ClampWindowToClient(int* x, int* y, int w, int h) const
         IsQtUiRuntimeEnabled());
 }
 
+int UIWindowMgr::GetInventoryTabSelection()
+{
+    if (m_inventoryTabSelection >= 0) return m_inventoryTabSelection;
+    // Ref InitUIRectInfoFromReg reads the tab, then overrides it to 1 and
+    // (744,514,280,134). Message34 falls back to tab0 if that record is invalid.
+    m_inventoryTabSelection = 0;
+    if (!HasSettingsIniSection("UIWindows")) return m_inventoryTabSelection;
+    const auto validRadio = [](const char* key, int maximum) {
+        std::string raw;
+        if (!TryLoadSettingsIniString("UIWindows", key, &raw)) return true;
+        int value = 0;
+        return TryLoadSettingsIniInt("UIWindows", key, &value) && value >= 0 && value <= maximum;
+    };
+    RECT client{};
+    GetUiLogicalClientRectForScale(IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f, &client);
+    if (client.right - client.left >= 1024 && client.bottom - client.top >= 648
+        && validRadio("ItemWndRadio1", 3) && validRadio("ItemWndRadio2", 3) && validRadio("ItemWndRadio3", 4))
+        m_inventoryTabSelection = 1;
+    return m_inventoryTabSelection;
+}
+
+void UIWindowMgr::SetInventoryTabSelection(int tab)
+{
+    m_inventoryTabSelection = std::clamp(tab, 0, 2);
+}
+
 void UIWindowMgr::RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent)
 {
     const int clampedPreviousPercent = ClampUiScalePercent(previousPercent);
@@ -1480,6 +1506,7 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
         m_notifyJobLevelUpWnd = nullptr;
     }
     if (window == m_itemWnd) {
+        m_itemWnd->StoreInfo();
         m_itemWnd = nullptr;
     }
     if (window == m_itemInfoWnd) {

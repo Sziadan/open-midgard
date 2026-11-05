@@ -8,6 +8,8 @@
 #include "UIStorageWnd.h"
 #include "UIWindowMgr.h"
 #include "core/File.h"
+#include "core/SettingsIni.h"
+#include "gamemode/Commerce.h"
 #include "item/Item.h"
 #include "item/ItemTab.h"
 #include "main/WinMain.h"
@@ -590,6 +592,7 @@ UIItemWnd::UIItemWnd()
         g_windowMgr.ClampWindowToClient(&savedX, &savedY, m_w, m_h);
         Move(savedX, savedY);
     }
+    SetCurrentTab(g_windowMgr.GetInventoryTabSelection());
 }
 
 UIItemWnd::~UIItemWnd()
@@ -599,6 +602,7 @@ UIItemWnd::~UIItemWnd()
 
 void UIItemWnd::SetShow(int show)
 {
+    if (show == 0 && m_show != 0) StoreInfo();
     UIWindow::SetShow(show);
     if (show != 0) {
         EnsureCreated();
@@ -1175,6 +1179,10 @@ void UIItemWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
 void UIItemWnd::StoreInfo()
 {
     SaveUiWindowPlacement("ItemWnd", m_x, m_y);
+    SaveSettingsIniInt("UIWindows", "ItemWndTab", m_currentTab);
+    SaveSettingsIniInt("UIWindows", "ItemWndRadio1", 3);
+    SaveSettingsIniInt("UIWindows", "ItemWndRadio2", 3);
+    SaveSettingsIniInt("UIWindows", "ItemWndRadio3", 4);
 }
 
 bool UIItemWnd::IsMiniMode() const
@@ -1446,7 +1454,10 @@ void UIItemWnd::SetCurrentTab(int tabIndex)
         m_currentTab = clamped;
         m_viewOffset = 0;
         m_hoveredItemIndex = -1;
+        Invalidate();
     }
+    ro::commerce::state.inventoryTab = clamped;
+    g_windowMgr.SetInventoryTabSelection(clamped);
 }
 
 void UIItemWnd::RefreshVisibleItemsForInteractionState()

@@ -343,6 +343,11 @@
         "id": "PK09.11",
         "action": "Restore primary same-key item-detail selection closure and explicit forced update, with pre-open visibility, owned close/recreation, source isolation and actual native/Qt interaction/render checks; keep unimplemented NPC fallback gestures separate.",
         "tier": "S"
+      },
+      {
+        "id": "PK09.12",
+        "action": "Share the source inventory startup override and in-process native/Qt tab retention; verify fresh-process settings/radio/viewport branches, real input/close/recreation and storage independence without claiming full legacy geometry.",
+        "tier": "S"
       }
     ],
     "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."

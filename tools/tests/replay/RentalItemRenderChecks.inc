@@ -103,14 +103,14 @@ void CheckRentalItemUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
 
     // Selected NORMALITEM_INFO also carries HireExpireDate at row+18.
     std::vector<u8> normal={0xe8,2,26,0,0x23,1,0xf5,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0x80,0,0x92,0x65};
-    Dispatch(mode,normal);ro::commerce::state.inventoryTab=0;PopulateCommerceUi(state,mode,false);
+    Dispatch(mode,normal);SelectInventoryFixtureTab(0);PopulateCommerceUi(state,mode,false);
     openQt("inventory");capture("normal-stack-rental","01/01 00:00");
     Require(g_session.GetInventoryItemByIndex(291)->m_num==2,"normal rental amount lost");
     Dispatch(mode,{0x99,2,0x23,1,0xf5,1});sync();
     Require(state->itemInfoVisible() && g_session.GetInventoryItemByIndex(291)->m_num==1,
         "partial rental decrement closed surviving stack detail");
     Dispatch(mode,{0xaf,0,0x23,1,2,0});sync();Require(!state->itemInfoVisible(),"full normal rental removal retained detail");
-    ro::commerce::state.inventoryTab=1;
+    SelectInventoryFixtureTab(1);
     Dispatch(mode,equip(0xd0,1704067200));PopulateCommerceUi(state,mode,false);openQt("inventory");
     Dispatch(mode,equip(0xd0,0,1202));sync();Require(!state->itemInfoVisible(),"reused inventory index retargeted an old detail");
     Dispatch(mode,equip(0xd0,1704067200));PopulateCommerceUi(state,mode,false);openQt("inventory");

@@ -31,7 +31,7 @@ void CheckCardNameCases(QGuiApplication& app,QQuickView& view,QtUiState* state,
         {"unknown-later-slot",{4001,0xeeee,0,0},"Lucky Knife"}
     };
     g_session.ClearInventoryItems();ro::commerce::state.cartItems.clear();
-    ro::commerce::state.inventoryTab=1;
+    SelectInventoryFixtureTab(1);
     inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+58);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+58);
     QJsonArray outcomes;
     for(const auto& test:cases) {

@@ -42,7 +42,7 @@ void CheckSpecialItemNames(QGuiApplication& app,QQuickView& view,QtUiState* stat
     const auto seed=[&](const Case& test) {
         g_session.ClearInventoryItems();ro::commerce::state.cartItems.clear();
         const int tab=test.type==0?0:(test.type==7?2:1);const int y=tab==0?28:(tab==1?58:88);
-        ro::commerce::state.inventoryTab=tab;
+        SelectInventoryFixtureTab(tab);
         inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+y);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+y);
         storage.OnLBtnDown(storage.m_x+5,storage.m_y+y);storage.OnLBtnUp(storage.m_x+5,storage.m_y+y);
         Dispatch(mode,{0xea,2,4,0});Dispatch(mode,{0xd1,2,4,0});

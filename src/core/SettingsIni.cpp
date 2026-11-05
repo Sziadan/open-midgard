@@ -301,6 +301,15 @@ bool TryLoadSettingsIniString(const char* section, const char* key, std::string*
     return true;
 }
 
+bool HasSettingsIniSection(const char* section)
+{
+    if (!section || !*section) return false;
+    std::lock_guard<std::mutex> lock(g_iniMutex);
+    IniDocument document;
+    LoadDocumentWithDefaults(&document, nullptr);
+    return document.sections.find(section) != document.sections.end();
+}
+
 int LoadSettingsIniInt(const char* section, const char* key, int defaultValue)
 {
     if (!section || !*section || !key || !*key) {

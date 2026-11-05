@@ -69,6 +69,8 @@ void DescribeCommerceItem(const QVariantMap& args)
 }
 void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     using namespace ro::commerce;auto& s=state;QVariantMap data;QVariantList inventory,cart,equipment;
+    // The native inventory owns the selection; both projections share it.
+    s.inventoryTab=g_windowMgr.m_itemWnd?g_windowMgr.m_itemWnd->GetCurrentTab():g_windowMgr.GetInventoryTabSelection();
     int inventoryCount=0;
     for(const auto& i:g_session.GetInventoryItems()){
         // Ref moves worn equipment into separate slots. The shared model keeps

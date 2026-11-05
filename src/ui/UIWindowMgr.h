@@ -125,6 +125,8 @@ public:
     ~UIWindowMgr();
 
     bool Init();
+    int GetInventoryTabSelection();
+    void SetInventoryTabSelection(int tab);
     void Reset();
     void OnProcess();
     void OnDraw();
@@ -273,6 +275,7 @@ public:
     std::array<ShortcutKeyBinding, kShortcutKeyBindingCount> m_shortcutKeyBindings{};
 
 private:
+    int m_inventoryTabSelection = -1;
     UIWindow* HitTestWindow(int x, int y) const;
     bool HasFrontMenuUiVisible() const;
     bool HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi);

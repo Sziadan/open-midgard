@@ -56,7 +56,7 @@ void CheckItemCategoryUi(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
         Dispatch(mode,makeList(normalOpcode,ns,false));Dispatch(mode,makeList(equipOpcode,es,true));
     };
     g_session.ClearInventoryItems();g_session.ClearStorageItems();ro::commerce::Reset();
-    ro::commerce::state.inventoryTab=0;g_session.OpenStorage(0,600);
+    SelectInventoryFixtureTab(0);g_session.OpenStorage(0,600);
     dispatchSnapshot(0x02e8,0x02d0,normalRows,equipRows);
     dispatchSnapshot(0x02ea,0x02d1,normalRows,equipRows);
     // Historical selectors and non-emitted branch probes are projected from
@@ -146,13 +146,13 @@ void CheckItemCategoryUi(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     Require(wornArmor&&wornAmmo,"category wear fixtures missing");
     auto setWear=[&](const Fixture& f,u16 wear) {const ITEM_INFO* existing=g_session.GetInventoryItemByIndex(static_cast<unsigned>(f.index));Require(existing,"wear fixture missing from inventory");ITEM_INFO updated=*existing;updated.m_wearLocation=wear;g_session.SetInventoryItem(updated);};
     setWear(*wornArmor,0x0002);setWear(*wornAmmo,0x8000);
-    chooseNativeTab(inventory,1);ro::commerce::state.inventoryTab=1;PopulateCommerceUi(uiState,mode,false);
+    chooseNativeTab(inventory,1);SelectInventoryFixtureTab(1);PopulateCommerceUi(uiState,mode,false);
     auto wearRows=uiState->commerceData().value("inventoryItems").toList();
     auto expectedWornEquip=expectedIds(1);expectedWornEquip.erase(static_cast<unsigned int>(wornArmor->id));
     UIItemWnd::DisplayData wornInventoryDisplay{};Require(inventory.GetDisplayDataForQt(&wornInventoryDisplay),"worn inventory native display failed");
     Require(tabIdSet(wearRows)==expectedWornEquip&&nativeIdSet(wornInventoryDisplay)==expectedWornEquip,
         "worn equipment remained in the inventory bag projection");
-    chooseNativeTab(inventory,2);ro::commerce::state.inventoryTab=2;PopulateCommerceUi(uiState,mode,false);
+    chooseNativeTab(inventory,2);SelectInventoryFixtureTab(2);PopulateCommerceUi(uiState,mode,false);
     wearRows=uiState->commerceData().value("inventoryItems").toList();
     UIItemWnd::DisplayData wornAmmoDisplay{};Require(inventory.GetDisplayDataForQt(&wornAmmoDisplay),"worn ammo native display failed");
     Require(tabIdSet(wearRows)==expectedIds(2)&&nativeIdSet(wornAmmoDisplay)==expectedIds(2),
@@ -177,13 +177,13 @@ void CheckItemCategoryUi(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     Fixture changed{19019,QStringLiteral("refresh_type_change"),QStringLiteral("Refresh type change"),19,1200,true};
     Dispatch(mode,makeList(0x02e8,{changed},false));
     for(int tab=0;tab<3;++tab) {
-        ro::commerce::state.inventoryTab=tab;PopulateCommerceUi(uiState,mode,false);
+        SelectInventoryFixtureTab(tab);PopulateCommerceUi(uiState,mode,false);
         for(const auto& value:uiState->commerceData().value("inventoryItems").toList())
             Require(value.toMap().value("index").toUInt()!=1200,"unknown item type appeared in a Qt inventory tab");
     }
     Require(g_session.GetInventoryItemByIndex(1200) && g_session.GetInventoryItemByIndex(1200)->m_itemType==19,
         "filtering removed or rewrote authoritative unknown item state");
-    changed.wireType=18;Dispatch(mode,makeList(0x02e8,{changed},false));ro::commerce::state.inventoryTab=0;PopulateCommerceUi(uiState,mode,false);
+    changed.wireType=18;Dispatch(mode,makeList(0x02e8,{changed},false));SelectInventoryFixtureTab(0);PopulateCommerceUi(uiState,mode,false);
     auto changedRows=uiState->commerceData().value("inventoryItems").toList();
     Require(changedRows.size()==1&&changedRows[0].toMap().value("index").toUInt()==1200
         &&changedRows[0].toMap().value("id").toUInt()==19019,"raw-type replacement did not move item into usable tab on refresh");
@@ -220,7 +220,7 @@ void CheckItemCategoryUi(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     outcomes.push_back(QJsonObject{{"case","empty and replacement snapshots"},{"outcome","PASS"}});
 
     // The commerce reset intentionally preserves the selected bag tab.
-    ro::commerce::state.inventoryTab=2;ro::commerce::ResetForMapEntry();
+    SelectInventoryFixtureTab(2);ro::commerce::ResetForMapEntry();
     Require(ro::commerce::state.inventoryTab==2,"commerce reset lost the selected inventory tab");
     outcomes.push_back(QJsonObject{{"case","inventory tab preference survives commerce reset"},{"outcome","PASS"}});
     QFile result(output+"/item-category-results.json");Require(result.open(QIODevice::WriteOnly),"open item category result JSON failed");

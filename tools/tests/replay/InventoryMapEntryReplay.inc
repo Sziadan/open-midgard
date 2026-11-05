@@ -111,7 +111,8 @@ void InventoryMapEntryReplay()
     ro::commerce::state.cart.y = 241;
     ro::commerce::state.trade.x = 307;
     ro::commerce::state.trade.y = 191;
-    ro::commerce::state.inventoryTab = 2;
+    ro::commerce::Command tabPreference;tabPreference.action="inventoryTab";tabPreference.tab=2;
+    Require(ro::commerce::Action(tabPreference),"inventory tab preference setup failed");
     CRagConnection::instance()->Disconnect();
     SkillPacketReplayAccess::SetCurrent(&mode);
 

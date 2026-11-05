@@ -115,6 +115,11 @@ std::vector<u8> Equipment(u8 lowOpcode,bool identified,u8 bind) {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     bytes[9]=identified?1:0;bytes[28]=bind;return bytes;
 }
+void SelectInventoryFixtureTab(int tab) {
+    ro::commerce::Command command;command.action="inventoryTab";command.tab=tab;
+    Require(ro::commerce::Action(command),"inventory fixture tab action failed");
+}
+
 template<class Window> QPoint Hover(Window& window) {
     typename Window::DisplayData data;
     Require(window.GetDisplayDataForQt(&data),"real native item display failed");
@@ -147,6 +152,7 @@ template<class Window> QImage Native(Window& window,QRgb expected) {
 #include "NpcShopDetailRenderChecks.inc"
 #include "NpcShopAmountRenderChecks.inc"
 #include "NpcShopQuantityRenderChecks.inc"
+#include "InventoryTabStartupRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -164,6 +170,17 @@ int main(int argc,char** argv) {
         const bool npcShopDetailsOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="npc-shop-details";
         const bool npcShopAmountsOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="npc-shop-amounts";
         const bool npcShopQuantityOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="npc-shop-quantity";
+        const bool itemTabsStartup=argc>2 && QString::fromLocal8Bit(argv[2])=="item-tabs-startup";
+        const bool itemTabsStartupChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-tabs-startup-child";
+        if(itemTabsStartup) {
+            CheckInventoryTabStartupDriver(output);
+            std::cout<<"PASS source inventory tab startup and runtime retention\n";return 0;
+        }
+        InventoryTabViewportFixture inventoryTabViewport;
+        if(itemTabsStartupChild) {
+            Require(argc>3,"inventory startup child stage missing");
+            SetRuntimeUiScalePercent(100);inventoryTabViewport.Create(QString::fromLocal8Bit(argv[3]));
+        }
         if(specialOnly || rentalOnly) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(rentalOnly?"rental-msgstringtable.txt":"special-name-msgstringtable.txt"));
             Require(source.open(QIODevice::ReadOnly),"special source message fixture missing");
@@ -191,9 +208,13 @@ int main(int argc,char** argv) {
         UIItemWnd inventory;inventory.SetShow(1);inventory.Resize(350,420);inventory.Move(20,100);
         UIStorageWnd storage;storage.SetShow(1);storage.Resize(350,420);storage.Move(900,100);
         g_windowMgr.m_itemWnd=&inventory;g_windowMgr.m_storageWnd=&storage;
-        inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+58);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+58);
-        storage.OnLBtnDown(storage.m_x+5,storage.m_y+58);storage.OnLBtnUp(storage.m_x+5,storage.m_y+58);
-        ro::commerce::state.inventoryTab=1;
+        if(!itemTabsStartupChild) {
+            inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+58);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+58);
+            SelectInventoryFixtureTab(1);
+        }
+        if(!itemTabsStartupChild) {
+            storage.OnLBtnDown(storage.m_x+5,storage.m_y+58);storage.OnLBtnUp(storage.m_x+5,storage.m_y+58);
+        }
         ro::commerce::state.cart.visible=true;ro::commerce::state.cart.x=450;ro::commerce::state.cart.y=100;
         QtUiStateAdapter adapter;auto* state=qobject_cast<QtUiState*>(adapter.stateObject());
         Require(state,"item adapter state missing");state->setLoadingVisible(false);state->setUiScale(1.0);
@@ -204,6 +225,13 @@ int main(int argc,char** argv) {
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
+        if(itemTabsStartupChild) {
+            Require(argc>3,"inventory tab persistence child stage missing");
+            CheckInventoryTabStartupChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));
+            Require(errors==0,"inventory tab persistence child emitted QML errors");
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;return 0;
+        }
         if(npcShopQuantityOnly) {
             CheckNpcShopQuantityUi(app,view,state,mode,adapter,output);
             Require(errors==0,"NPC shop quantity UI emitted QML errors");
@@ -371,7 +399,7 @@ int main(int argc,char** argv) {
         // Empty equipment snapshot clears worn item while normal ammunition
         // remains present and visible, even after its real equip notification.
         Dispatch(mode,{0xe8,2,26,0,0x24,1,0xd6,6,10,1,9,0,0,0x80,0,0,0,0,0,0,0,0,0,0,0,0});
-        Dispatch(mode,{0xd0,2,4,0});ro::commerce::state.inventoryTab=2;
+        Dispatch(mode,{0xd0,2,4,0});SelectInventoryFixtureTab(2);
         inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+88);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+88);
         checkBag(true,"normal ammunition snapshot");
         Require(g_session.GetInventoryItemByIndex(292)->m_wearLocation==0,"normal allowed ammunition slot set actual wear");
@@ -418,7 +446,7 @@ int main(int argc,char** argv) {
         // Socket counts are appended explicitly by particular list consumers,
         // not by the inventory GetItemName + MSI_EA2 hover path.
         g_session.ClearInventoryItems();ro::commerce::state.cartItems.clear();
-        ro::commerce::state.inventoryTab=1;
+        SelectInventoryFixtureTab(1);
         inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+58);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+58);
         for(bool identified:{true,false}) {
             auto refined=Equipment(0xd0,identified,0);refined[15]=7;Dispatch(mode,refined);
@@ -447,7 +475,7 @@ int main(int argc,char** argv) {
             }
         }
         g_session.ClearInventoryItems();ro::commerce::state.cartItems.clear();
-        ro::commerce::state.inventoryTab=2;
+        SelectInventoryFixtureTab(2);
         inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+88);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+88);
         for(const u8 amount:{u8(9),u8(1)}) {
             std::vector<u8> normal={0xe8,2,26,0,0x24,1,0xd6,6,10,1,amount,0,0,0x80,0,0,0,0,0,0,0,0,0,0,0,0};
