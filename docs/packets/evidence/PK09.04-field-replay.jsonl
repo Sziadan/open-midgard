@@ -1,0 +1,3 @@
+{"case_id":"selected_inventory_cart_route_isolation","contract_id":"PK09.03","routes":["02E8","02D0","02E9","02D2"],"outcome":"PASS"}
+{"case_id":"cart_item_wire_fields_20080910","contract_id":"PK09.04","routes":["02D2","02E9"],"equip_tail":["WearState","cards","HireExpireDate","bindOnEquipType"],"empty_and_malformed_lists_checked":true,"outcome":"PASS"}
+{"case_id":"inventory_item_wire_fields_20080910","contract_id":"PK09.04","routes":["02E8","02D0","013C","00AC"],"normal_and_equip_fields":true,"category_replacement_both_orders":true,"malformed_atomicity":true,"empty_categories":true,"ammo_wear_refresh":true,"outcome":"PASS"}

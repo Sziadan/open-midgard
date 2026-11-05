@@ -360,7 +360,9 @@
         "docs/packets/evidence/PK09.04-cart-wire-fields.md",
         "docs/packets/evidence/PK09.04-cart-wire-fields.json",
         "docs/packets/evidence/PK09.04-cart-wire-fields.jsonl",
-        "docs/packets/work-items/PK09.04.md"
+        "docs/packets/work-items/PK09.04.md",
+        "docs/packets/evidence/PK09.04-bag-projection.md",
+        "docs/packets/evidence/PK09.04-bag-projection.json"
       ],
       "commit_subject": null
     },

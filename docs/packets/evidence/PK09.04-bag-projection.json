@@ -1,0 +1,234 @@
+{
+  "date": "2026-11-05",
+  "baseline": "67422e2320d726702db7ac3e15442a0e2883d2d2",
+  "commit_subject": "packet(PK09.04): align worn equipment bag projection",
+  "source_inputs": {
+    "src/qtui/QtCommerce.cpp": {
+      "working_sha256": "08dc28e05b429ec4d8e67ee3e3d2ba6369f3c15b267525283a17ea63d0cd3f21",
+      "git_blob": "e0f836bfe5da36ecc4c78f965af4f9f25ae8372c"
+    },
+    "tools/tests/replay/PacketStreamReplay.cpp": {
+      "working_sha256": "19d981ffc675b65fb8d99b8ed336e2bf34a86756cac25edfa376b3077678716a",
+      "git_blob": "5874ca4781f08d29d3bd4ca63ad48b9a30490505"
+    },
+    "tools/tests/replay/CartItemWireFieldsReplay.inc": {
+      "working_sha256": "22f200576e5e48d0723f27a73871a064f245656f1461933734d5c07866dd5f04",
+      "git_blob": "6460f51bbaaf6460d3b4f01c2d4639cf56eaf104"
+    },
+    "tools/tests/replay/InventoryItemFieldsReplay.inc": {
+      "working_sha256": "a6b4be546716917bf3fb2013fdec8efc5958d6c9ce6cd8f0ad4062f297a2213a",
+      "git_blob": "a7624a1f904f9364ae8f8c9c3a199de91fe3d540"
+    },
+    "tools/tests/replay/ItemColourRenderChecks.cpp": {
+      "working_sha256": "b2b20649ebd2b343293a7978e6801d10702bf045aa19ca134e6ddbb878cd49e5",
+      "git_blob": "bc10874cdfbb68035443cf30e15405c5e611827f"
+    }
+  },
+  "other_inputs_sha256": {
+    "src/network/MapSendProfile.cpp": "038d0b9313825504112a6fab1cd3e8753ee418860948d94fa572ff6e821594e8",
+    "src/network/MapSendProfile.h": "8b6c009efbac7a276d7aab55c9e5145218d76536f80f340b5768d68f526903a0",
+    "src/network/GronPacket.cpp": "07c2bc9f974ab282188254f8066595118e6820af87d87021d89dc1c96ed46ced",
+    "src/gamemode/GameModePacket.cpp": "8170e9387e790e1c8818659b5479821c661585f962375c60fdd48c8142565a78",
+    "src/session/Session.cpp": "61ba50fc0669c06aca0b5bda98ffda215f543dd4e111ef48866234f9e0cca2dc",
+    "src/ui/UIItemWnd.cpp": "9e0d1959f8a2326aaac45a28e11f89847e2b0301e18ae91b1f57729ba3660fd9",
+    "src/qtui/qml/RoCommerce.qml": "ad17b6939dadfc38895b8cda087eb0e0e139e7ad0a9f8bb5391604b5f23cc32a",
+    "docs/packets/evidence/PK09.04-inventory-fields-probe.cpp": "f8554c51ea8524a6d1d74bc85f726b2783cc4493eb817301f5c7f2f167c1ec41",
+    "docs/packets/evidence/PK09.04-inventory-fields-probe.txt": "047d7c307c6c379a4d5465190a0222d94d3d39568b2175d25f61ce9ab74891aa",
+    "build-mingw-preset/packet-audit/server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c"
+  },
+  "reference_inputs_sha256": {
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971"
+  },
+  "server_inputs_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "configured_provenance": {},
+  "selected_profile": 20080910,
+  "results": {
+    "passed": 107,
+    "failed": 0,
+    "seconds": 34.28,
+    "packet_records": 161,
+    "bag_frames": 4,
+    "item_colour_frames": 30,
+    "item_qml_errors": 0,
+    "minimap_scenes": 18
+  },
+  "field_records": [
+    {
+      "case_id": "selected_inventory_cart_route_isolation",
+      "contract_id": "PK09.03",
+      "routes": [
+        "02E8",
+        "02D0",
+        "02E9",
+        "02D2"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "case_id": "cart_item_wire_fields_20080910",
+      "contract_id": "PK09.04",
+      "routes": [
+        "02D2",
+        "02E9"
+      ],
+      "equip_tail": [
+        "WearState",
+        "cards",
+        "HireExpireDate",
+        "bindOnEquipType"
+      ],
+      "empty_and_malformed_lists_checked": true,
+      "outcome": "PASS"
+    },
+    {
+      "case_id": "inventory_item_wire_fields_20080910",
+      "contract_id": "PK09.04",
+      "routes": [
+        "02E8",
+        "02D0",
+        "013C",
+        "00AC"
+      ],
+      "normal_and_equip_fields": true,
+      "category_replacement_both_orders": true,
+      "malformed_atomicity": true,
+      "empty_categories": true,
+      "ammo_wear_refresh": true,
+      "outcome": "PASS"
+    }
+  ],
+  "item_results": {
+    "cases": [
+      {
+        "bind": 0,
+        "case": "identified-bind0",
+        "expected_argb": "#ffffffff",
+        "identified": true,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 1,
+        "case": "identified-bind1",
+        "expected_argb": "#ffffffff",
+        "identified": true,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 2,
+        "case": "identified-bind2",
+        "expected_argb": "#ffffff00",
+        "identified": true,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 0,
+        "case": "unidentified-bind0",
+        "expected_argb": "#ffaaaaaa",
+        "identified": false,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 1,
+        "case": "unidentified-bind1",
+        "expected_argb": "#ffaaaaaa",
+        "identified": false,
+        "outcome": "PASS"
+      },
+      {
+        "bind": 2,
+        "case": "unidentified-bind2",
+        "expected_argb": "#ffaaaaaa",
+        "identified": false,
+        "outcome": "PASS"
+      }
+    ],
+    "hover_exit_and_row_removal": true,
+    "outcome": "PASS",
+    "qml_errors": 0,
+    "worn_bag_success_failure_ammunition": true
+  },
+  "commands": [
+    "cmake --build build-mingw-preset -j 6",
+    "ctest --test-dir build-mingw-preset --verbose --output-on-failure"
+  ],
+  "probe_command": "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -Ibuild-mingw-preset/packet-audit -IC:/Users/sziad/source/repos/rathena-master/src -IC:/Users/sziad/source/repos/rathena-master/3rdparty -IC:/Users/sziad/source/repos/rathena-master/3rdparty/libconfig docs/packets/evidence/PK09.04-inventory-fields-probe.cpp -o build-mingw-preset/review-2026-11-05/pk09-inventory-fields-probe.exe",
+  "before_inputs": {
+    "build-mingw-preset/packet_stream_replay_checks.exe": "aa2485e9fcc14c3d8a07bb459bf98e76e296335fbc477ede628b74140a763cb9",
+    "tools/tests/replay/InventoryItemFieldsReplay.inc": "530a2a089701995cfe637deb235bece58fd7d8e9c4449651ecd71a2fec6f336a",
+    "build-mingw-preset/packet_item_render_checks.exe": "f1d718eb1b56458345f4a4a56f550ff2ee21142823c4a75ad5d666f7b780a0b7",
+    "src/qtui/QtCommerce.cpp": "d8469e9a773c98af7c1ba4221691eeb339e91222719e1dc1ff7538d14c1bafc6",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "7765a1a3458f52df18d2076c4d43d5a3a6e9e3aae8aea7fe20bccfaf2a74a5bd"
+  },
+  "logs_sha256": {
+    "build-mingw-preset/review-2026-11-05/pk09-bag-all-build.log": "46323bd9b3ed2d9e2732fd4f0906fd58849613e2f05d28444f9346329b283087",
+    "build-mingw-preset/review-2026-11-05/pk09-fields-build.log": "58f6b85531fb956b1280a1080a3ccb6e91487821c4009cd9f121435664c795f7",
+    "build-mingw-preset/review-2026-11-05/pk09-bag-all-ctest.log": "1930d500dbc546c0a9288aba52ad6ee2562637373e6d98f847395c551468aca9",
+    "build-mingw-preset/review-2026-11-05/pk09-bag-before.log": "aacc87f16a00aa18dcd69e428cb0e49d5003bdeda5781491724e21e1389f54ad"
+  },
+  "binaries": {
+    "open-midgard.exe": {
+      "sha256": "76d0d0a5a0cd5a78353e80f1a68eadd70dcda7ef5da82e8d45c34baa010ddb1b",
+      "bytes": 19694586,
+      "mtime_utc": "2026-11-05T16:43:57.667242+00:00"
+    },
+    "packet_stream_replay_checks.exe": {
+      "sha256": "ad39d36d51aba17f23b2f92c3069df989ca495d16eb319c02813b64ec7f9759d",
+      "bytes": 20199097,
+      "mtime_utc": "2026-11-05T16:52:23.876262+00:00"
+    },
+    "packet_item_render_checks.exe": {
+      "sha256": "d51c284a45eae5872b98160f544ae75b8b89990df04803a4199d73cf8ebcd95a",
+      "bytes": 19758001,
+      "mtime_utc": "2026-11-05T16:44:02.615264+00:00"
+    },
+    "packet_minimap_render_checks.exe": {
+      "sha256": "16e89f167ba4c706a400ffed83e97f82edf9420c8d1689890acae974e28b3f58",
+      "bytes": 19731007,
+      "mtime_utc": "2026-11-05T16:43:57.541534+00:00"
+    },
+    "skill_packet_replay_runtime_checks.exe": {
+      "sha256": "316d0a3c37ab12aeb469b2bfdcd31f238538db966caab4c4f80d7fde0c9b8118",
+      "bytes": 19884066,
+      "mtime_utc": "2026-11-05T16:43:57.420346+00:00"
+    }
+  },
+  "render_artifacts": {
+    "bag-equipped-ammunition.png": {
+      "sha256": "57659a1743a8efb8dd8e5227de16d116d3f21d182ab6252bf5760219695af045",
+      "bytes": 22275
+    },
+    "bag-equipped.png": {
+      "sha256": "47458de5de030c78fa52ba77ed2042743a423d657a28fb7cf25d0e0ef091e299",
+      "bytes": 21637
+    },
+    "bag-unequipped.png": {
+      "sha256": "0b9d17b24cbd907c177e1a13ba223884d6d1796ecf790be4a843da535a59f90e",
+      "bytes": 21610
+    },
+    "bag-worn-snapshot.png": {
+      "sha256": "47458de5de030c78fa52ba77ed2042743a423d657a28fb7cf25d0e0ef091e299",
+      "bytes": 21637
+    },
+    "render-results.json": {
+      "sha256": "4ea57a564361bda772b57483957c47b472b5f5a5edd771a34ee619217cfed4a5",
+      "bytes": 1294
+    }
+  },
+  "visual_inspection": [
+    "bag-equipped.png",
+    "bag-unequipped.png",
+    "bag-equipped-ammunition.png"
+  ],
+  "limits": [
+    "Bag projection/count repaired; central inventory row retained.",
+    "Field fixtures preserve bytes, not all live item-definition combinations or future rental calendar behavior.",
+    "Historical 01EF compatibility dispatch is not a deployed/historical server certification.",
+    "PK09.04 broader status/delta/UI and PK48/49 remain open; no coverage row newly closed."
+  ]
+}

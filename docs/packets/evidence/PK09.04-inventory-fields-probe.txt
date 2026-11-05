@@ -1,0 +1,1 @@
+PACKETVER=20080910 routes=02e8/02d0/02e9/02d2 normal=22 equip=26 all-index-id-type-ident-location-card-expiry-wear-damage-refine-bind-offsets=PASS

@@ -439,6 +439,21 @@ void SelectedInventoryCartRouteIsolationReplay()
     Require(g_session.GetInventoryItemByIndex(8201) != nullptr && g_session.GetInventoryItemByIndex(8202) != nullptr,
             "cart list dispatch modified inventory state");
 
+    // Historical normal-cart compatibility bytes have an 18-byte row, not an
+    // equipment inventory row. Prove the final dispatch owner, not just a predicate.
+    const std::vector<u8> historicalCart = {
+        0xef,1,22,0, 0x6f,0x20,0x57,0x24,3,1,2,0,0,0,
+        0xa1,0xa1,0xb2,0xb2,0xc3,0xc3,0xd4,0xd4
+    };
+    dispatch(historicalCart, "historical 0x01EF normal cart compatibility");
+    Require(g_session.GetInventoryItems().size()==2 && g_session.GetInventoryItemByIndex(8202)
+            && g_session.GetInventoryItemByIndex(8202)->m_wearLocation==1,
+            "historical 0x01EF changed selected equipment inventory");
+    Require(ro::commerce::state.cartItems.count(0x206f)==1
+            && ro::commerce::state.cartItems.at(0x206f).m_num==2
+            && ro::commerce::state.cartItems.count(8302)==1,
+            "historical 0x01EF did not dispatch uniquely to normal cart compatibility");
+
     dispatch(makePacket(0x02E8, 22, 8203, 9203, 3, 4), "normal inventory after equipment");
     Require(g_session.GetInventoryItemByIndex(8202) != nullptr, "normal list after equipment list removed equipment state");
     dispatch(makePacket(0x02E8, 1, 0, 0, 0, 0), "malformed normal inventory");
@@ -4489,6 +4504,7 @@ void GlobalChatProductionSendReplay()
 #include "MapTransitionLifetimeReplay.inc"
 #include "CartItemWireFieldsReplay.inc"
 #include "InventoryMapEntryReplay.inc"
+#include "InventoryItemFieldsReplay.inc"
 
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
@@ -4614,5 +4630,6 @@ int main(){try{
     MapTransitionLifetimeReplay();
     CartItemWireFieldsReplay();
     InventoryMapEntryReplay();
+    InventoryItemFieldsReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

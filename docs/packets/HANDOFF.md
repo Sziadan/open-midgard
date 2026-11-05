@@ -1,20 +1,18 @@
 # Packet continuation handoff
 
-**Active step: PK09.04.** PK09.06 source-defined hover colours is complete: [report](evidence/PK09.06-item-hover-colours.md), [provenance](evidence/PK09.06-item-hover-colours.json), [contact sheet](evidence/PK09.06-renders/tooltip-contact.png). Dedicated checkpoint: `packet(PK09.06): restore source-defined item hover colours`.
+**Active step: PK09.04.** [Worn bag/field verification](evidence/PK09.04-bag-projection.md) and [provenance](evidence/PK09.04-bag-projection.json) are the latest bounded checkpoint. Dedicated commit: `packet(PK09.04): align worn equipment bag projection`.
 
 ## Continue here
 
-1. Finish [PK09.04](work-items/PK09.04.md)'s remaining selected four-list field/branch/UI/lifecycle matrix. PK09.05 map-entry/reuse and PK09.06 hover-colour leaves are complete; do not repeat them. Preserve the selected cart tail/header probe, route-isolation, actual initialization/reuse and new render regressions. Enumerate concrete remaining checks before closing rows: snapshot fields and order, ammunition state, applicable deltas/counters and actual UI consumption. Distinguish adjacent packet-family ownership and create bounded leaves for proven defects.
-   The next confirmed repair is Qt bag inclusion of worn equipment: primary Ref moves worn items out of the bag into separate equipment slots; native filtering preserves that model, but Qt commerce currently duplicates worn items in its bag. Follow the exact source/caller and success/failure/ammunition tests in the work item.
-2. Resume bounded PK46.02 per-request source/profile/UI/send-failure work, then remaining character paths. Its 177 rows remain research. Source-ready NPC/status/mail leaves can proceed when a specific technical dependency blocks another leaf.
+1. Finalize PK09.02 selected alias and PK09.03 four-route checkpoints using the current source and exact tests; their earlier dirty-tree gate is superseded. Trace profile 22/23 inherited inventory mappings without claiming whole historical/deployed wire parity. Keep one completed leaf per commit.
+2. Continue [PK09.04](work-items/PK09.04.md)'s remaining cart status/delta/failure/counter and applicable quantity/name/card/refine/expiry UI work. Identify actual package ownership and add bounded source-backed leaves. Worn bag projection, normal/equipment fields/ordering, ammo state, category arrays, map entry/reuse and hover colours are already verified.
+3. Resume bounded PK46.02 request/profile/send-failure and character paths; its 177 request rows remain research. NPC/status/mail have concrete source-ready contracts.
 
 ## Verified current checkpoint
 
-All configured targets build with developer deployment OFF. Full CTest passed **107/107 in 33.40 seconds**, preserving 160 PASS packet records, prior cast/failure-ACK checks, standalone party state and 18 native/QML minimap scenes. New item acceptance covers identified/unidentified × raw bind 0/1/2 across native inventory/storage, real Qt commerce inventory/cart hover and gameplay-adapter/storage tooltip pixels: **30 saved frames, zero QML warnings/errors**, pointer exit and authoritative cart-row removal pass.
+All targets build deploy-off. Full CTest passed **107/107 in 34.28s**, with **161 PASS packet records**, actual bag delegate/count transitions, four bag frames, prior 30 item-colour and 18 minimap frames. Qt item warnings/errors remain zero.
 
-Primary Ref GetItemDisColor and MakeHelpBalloon prove the exact RGB rule and native channel conversion. Only identified bind2 is yellow; other identified items are white; all unidentified items are gray. Colours apply to hover-help names, not universal list labels. Shared metadata/payload producers and equipment bind-token invalidation are implemented. Native paint-body entry points retain the app's forced Qt policy and are used by real native fallback drawing. Tiny source-extracted metadata rows preserve real Knife/Dagger names and slot suffix; icon/chrome placeholders do not certify art parity. No guessed badge or raw-nonzero bound state was added.
-
-PK09.05, PK23.05, all selected-source PK14 leaves and PK05.05 retain committed proofs. No numeric row is newly closed by this colour leaf. Broader PK09.04, independent PK48/PK49 and deployed-server provenance remain open. See the evidence for rendered-panel/input/asset limits.
+Qt now mirrors primary Ref/native bag semantics while retaining authoritative central rows: worn equipment is omitted, successful unequip returns it, failures preserve display/state and equipped ammunition remains visible. All selected list fields and offsets have independent literal/probe verification. Malformed and empty categories preserve the other category across all four list routes. Literal historical 0x01EF dispatch updates only normal-cart compatibility, not selected equipment inventory. No discovery row is newly closed here. Broad PK09.04 and independent/deployed limits remain open.
 
 ## Working discipline
 

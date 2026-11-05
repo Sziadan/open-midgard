@@ -59,6 +59,12 @@ QQuickItem* Find(QQuickItem* root,const QString& name) {
     for(auto* child:root->childItems())if(auto* found=Find(child,name))return found;
     return nullptr;
 }
+int VisibleBagTiles(QQuickItem* root) {
+    int count=root->objectName().startsWith("commerceTile_inventory_") && root->isVisible()
+        && root->property("item").toMap().value("id").toUInt()!=0 ? 1 : 0;
+    for(auto* child:root->childItems())count+=VisibleBagTiles(child);
+    return count;
+}
 void Mouse(QGuiApplication& app,QQuickView& view,QPointF p) {
     QEnterEvent enter(p,p,view.mapToGlobal(p.toPoint()));
     QCoreApplication::sendEvent(&view,&enter);
@@ -204,6 +210,47 @@ int main(int argc,char** argv) {
             results.push_back(QJsonObject{{"case",name},{"identified",identified},{"bind",int(bind)},{"expected_argb",colour},{"outcome","PASS"}});
             std::cout<<QJsonDocument(results.last().toObject()).toJson(QJsonDocument::Compact).toStdString()<<'\n';
         }
+        // Primary Ref moves equipped items out of the bag. This rewrite keeps
+        // authoritative inventory rows centrally, so both projections filter.
+        auto checkBag=[&](bool visible,const char* phase){
+            PopulateCommerceUi(state,mode,false);
+            UIItemWnd::DisplayData nativeData;Require(inventory.GetDisplayDataForQt(&nativeData),"native bag projection failed");
+            const int nativeRows=int(std::count_if(nativeData.displaySlots.begin(),nativeData.displaySlots.end(),[](const auto& row){return row.occupied;}));
+            const auto rows=state->commerceData().value("inventoryItems").toList();
+            Require(nativeRows==int(visible) && nativeData.currentItemCount==int(visible),"native bag rows/count lost the expected wear predicate");
+            if(rows.size()!=int(visible) || state->commerceData().value("inventoryCount").toInt()!=int(visible))
+                throw std::runtime_error(std::string("Qt bag rows/count diverge from native/source at ")+phase);
+            Frames(app,view);
+            Require(VisibleBagTiles(view.rootObject())==int(visible),"actual QML bag delegates diverged from source rows");
+        };
+        auto worn=Equipment(0xd0,true,2);worn[12]=2;
+        Dispatch(mode,worn);checkBag(false,"worn snapshot");
+        Require(g_session.GetInventoryItemByIndex(291)->m_wearLocation==2,"bag filtering erased authoritative worn state");
+        Require(view.grabWindow().save(output+"/bag-worn-snapshot.png"),"save worn bag frame failed");
+        mode.m_waitingTakeoffEquipAck=291;
+        Dispatch(mode,{0xac,0,0x23,1,2,0,0});checkBag(false,"failed unequip");
+        Require(mode.m_waitingTakeoffEquipAck==0,"unequip failure did not release pending request");
+        Dispatch(mode,{0xac,0,0x23,1,2,0,1});checkBag(true,"successful unequip");
+        Require(g_session.GetInventoryItemByIndex(291)->m_wearLocation==0,"successful unequip lost inventory row/wear update");
+        Require(view.grabWindow().save(output+"/bag-unequipped.png"),"save unequipped bag frame failed");
+        mode.m_waitingWearEquipAck=291;
+        Dispatch(mode,{0xaa,0,0x23,1,2,0,0});checkBag(true,"failed equip");
+        Require(mode.m_waitingWearEquipAck==0,"equip failure did not release pending request");
+        Dispatch(mode,{0xaa,0,0x23,1,2,0,1});checkBag(false,"successful equip");
+        Require(g_session.GetInventoryItemByIndex(291)->m_wearLocation==2,"successful equip erased authoritative row");
+        Require(view.grabWindow().save(output+"/bag-equipped.png"),"save equipped bag frame failed");
+        // Empty equipment snapshot clears worn item while normal ammunition
+        // remains present and visible, even after its real equip notification.
+        Dispatch(mode,{0xe8,2,26,0,0x24,1,0xd6,6,10,1,9,0,0,0x80,0,0,0,0,0,0,0,0,0,0,0,0});
+        Dispatch(mode,{0xd0,2,4,0});ro::commerce::state.inventoryTab=2;
+        inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+88);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+88);
+        checkBag(true,"normal ammunition snapshot");
+        Require(g_session.GetInventoryItemByIndex(292)->m_wearLocation==0,"normal allowed ammunition slot set actual wear");
+        Dispatch(mode,{0x3c,1,0x24,1});checkBag(true,"equipped ammunition exception");
+        Require(g_session.GetInventoryItemByIndex(292)->m_wearLocation==0x8000,"ammo equip did not retain wear mask");
+        Require(view.grabWindow().save(output+"/bag-equipped-ammunition.png"),"save ammunition bag frame failed");
+        // Return the inventory fixture for the independent cart-hover lifetime check.
+        Dispatch(mode,Equipment(0xd0,false,2));
         auto* cartTile=Find(view.rootObject(),"commerceTile_cart_291");Require(cartTile,"cart lifetime fixture tile missing");
         Mouse(app,view,cartTile->mapToScene(QPointF(cartTile->width()/2,cartTile->height()/2)));
         auto* tip=Find(view.rootObject(),"commerceItemTooltip");Require(tip && tip->isVisible(),"cart lifetime hover did not open");
@@ -214,7 +261,7 @@ int main(int argc,char** argv) {
         for(size_t i=0;i<contacts.size();++i){painter.drawImage(0,int(i)*52,contacts[i]);painter.drawText(280,int(i)*52+23,contactNames[i]);}painter.end();
         Require(contact.save(output+"/tooltip-contact.png"),"save item contact sheet failed");
         QFile file(output+"/render-results.json");Require(file.open(QIODevice::WriteOnly),"item results open failed");
-        file.write(QJsonDocument(QJsonObject{{"cases",results},{"qml_errors",errors},{"hover_exit_and_row_removal",true},{"outcome","PASS"}}).toJson());
+        file.write(QJsonDocument(QJsonObject{{"cases",results},{"qml_errors",errors},{"hover_exit_and_row_removal",true},{"worn_bag_success_failure_ammunition",true},{"outcome","PASS"}}).toJson());
         view.hide();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
         SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
         std::cout<<"PASS six item colour cases across native inventory/storage and production QML inventory/cart/storage\n";return 0;

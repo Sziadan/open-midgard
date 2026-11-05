@@ -21,14 +21,19 @@ QVariantList offers(const std::vector<ro::commerce::Offer>& list){QVariantList r
 }
 void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     using namespace ro::commerce;auto& s=state;QVariantMap data;QVariantList inventory,cart,equipment;
+    int inventoryCount=0;
     for(const auto& i:g_session.GetInventoryItems()){
+        // Ref moves worn equipment into separate slots. The shared model keeps
+        // every row; the bag mirrors native filtering, including its ammo exception.
+        if(i.m_wearLocation!=0 && i.m_itemType!=10)continue;
+        ++inventoryCount;
         const bool equip=i.m_itemType==4||i.m_itemType==5||i.m_itemType==7||i.m_itemType==8;
         const bool usable=i.m_itemType==0||i.m_itemType==2||i.m_itemType==11;
         if((s.inventoryTab==0&&usable)||(s.inventoryTab==1&&equip)||(s.inventoryTab==2&&!usable&&!equip))inventory.push_back(row(i));
     }
     for(const auto& i:s.cartItems)cart.push_back(row(i.second));for(const auto& i:s.viewedEquipment)equipment.push_back(row(i));
     QVariantMap inv;if(auto* w=g_windowMgr.m_itemWnd)inv={{"visible",w->m_show!=0&&!suppressed},{"x",w->m_x},{"y",w->m_y},{"width",w->m_w},{"height",w->m_h}};
-    data["inventory"]=inv;data["inventoryItems"]=inventory;data["inventoryCount"]=int(g_session.GetInventoryItems().size());data["inventoryTab"]=s.inventoryTab;
+    data["inventory"]=inv;data["inventoryItems"]=inventory;data["inventoryCount"]=inventoryCount;data["inventoryTab"]=s.inventoryTab;
     data["cart"]=geometry(s.cart,suppressed);data["cartItems"]=cart;data["hasCart"]=s.hasCart;data["cartCount"]=s.cartCount;data["cartCapacity"]=s.cartCapacity;data["cartWeight"]=s.cartWeight/10;data["cartMaxWeight"]=s.cartMaxWeight/10;
     data["vending"]=geometry(s.vending,suppressed);data["draft"]=offers(s.draft);data["vendingSlots"]=s.vendingSlots;data["vendingActive"]=s.vendingActive;data["vendingPending"]=s.vendingPending;
     data["trade"]=geometry(s.trade,suppressed);data["tradeIncoming"]=s.tradeIncoming;data["tradeActive"]=s.tradeActive;data["tradeWaiting"]=s.tradeWaiting;data["localLocked"]=s.localLocked;data["remoteLocked"]=s.remoteLocked;data["lockPending"]=s.lockPending;data["commitPending"]=s.commitPending;data["addPending"]=s.tradeAddPending;

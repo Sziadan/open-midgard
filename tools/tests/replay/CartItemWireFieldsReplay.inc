@@ -86,5 +86,20 @@ void CartItemWireFieldsReplay()
         && ro::commerce::state.cartItems.count(0x0124) == 1,
         "empty 0x02D2 cart list did not clear only equip entries");
 
+    dispatchFrame(equip, "restore 0x02D2 equipment before normal-list isolation");
+    const std::vector<u8> malformedNormal = {
+        0xe9,2,25,0, 0x24,1,0xd3,4,3,1,3,0,2,0,
+        0xa1,0xa1,0xb2,0xb2,0xc3,0xc3,0xd4,0xd4,0x89,0x67,0x45
+    };
+    dispatchFrame(malformedNormal, "malformed 0x02E9 normal cart fixture");
+    Require(ro::commerce::state.cartItems.at(0x0124).m_num == 3
+        && ro::commerce::state.cartItems.at(0x0124).m_deleteTime == 0x23456789
+        && ro::commerce::state.cartItems.at(0x0123).m_isYours == 2,
+        "malformed normal cart list modified either category");
+    dispatchFrame({0xe9,2,4,0}, "empty 0x02E9 normal cart fixture");
+    Require(ro::commerce::state.cartItems.count(0x0124) == 0
+        && ro::commerce::state.cartItems.at(0x0123).m_wearLocation == 0x2000,
+        "empty normal cart list did not preserve equipment category");
+
     std::cout << "{\"case_id\":\"cart_item_wire_fields_20080910\",\"contract_id\":\"PK09.04\",\"routes\":[\"02D2\",\"02E9\"],\"equip_tail\":[\"WearState\",\"cards\",\"HireExpireDate\",\"bindOnEquipType\"],\"empty_and_malformed_lists_checked\":true,\"outcome\":\"PASS\"}\n";
 }

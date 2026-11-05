@@ -1,0 +1,21 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 1: packet_stream_replay_checks
+1/2 Test #1: packet_stream_replay_checks ......   Passed    4.73 sec
+    Start 4: packet_item_render_checks
+2/2 Test #4: packet_item_render_checks ........***Failed    7.00 sec
+{"bind":0,"case":"identified-bind0","expected_argb":"#ffffffff","identified":true,"outcome":"PASS"}
+{"bind":1,"case":"identified-bind1","expected_argb":"#ffffffff","identified":true,"outcome":"PASS"}
+{"bind":2,"case":"identified-bind2","expected_argb":"#ffffff00","identified":true,"outcome":"PASS"}
+{"bind":0,"case":"unidentified-bind0","expected_argb":"#ffaaaaaa","identified":false,"outcome":"PASS"}
+{"bind":1,"case":"unidentified-bind1","expected_argb":"#ffaaaaaa","identified":false,"outcome":"PASS"}
+{"bind":2,"case":"unidentified-bind2","expected_argb":"#ffaaaaaa","identified":false,"outcome":"PASS"}
+FAIL item colour render: Qt bag rows/count diverge from native/source at worn snapshot
+
+
+50% tests passed, 1 tests failed out of 2
+
+Total Test time (real) =  11.74 sec
+
+The following tests FAILED:
+	  4 - packet_item_render_checks (Failed)
+Errors while running CTest
