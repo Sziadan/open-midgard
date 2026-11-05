@@ -385,6 +385,10 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
             "${CMAKE_CURRENT_BINARY_DIR}/packet-item-detail-toggle-renders" "item-detail-toggle")
         set_tests_properties(packet_item_detail_toggle_render_checks PROPERTIES TIMEOUT 45
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-item-detail-toggle-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        add_test(NAME packet_npc_shop_detail_render_checks COMMAND packet_item_render_checks
+            "${CMAKE_CURRENT_BINARY_DIR}/packet-npc-shop-detail-renders" "npc-shop-details")
+        set_tests_properties(packet_npc_shop_detail_render_checks PROPERTIES TIMEOUT 45
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-npc-shop-detail-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
     endif()
 endif()
 

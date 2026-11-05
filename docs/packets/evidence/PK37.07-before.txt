@@ -1,0 +1,13 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 10: packet_npc_shop_detail_render_checks
+1/1 Test #10: packet_npc_shop_detail_render_checks ...***Failed    0.92 sec
+FAIL item colour render: NPC source row did not open detail
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.93 sec
+
+The following tests FAILED:
+	 10 - packet_npc_shop_detail_render_checks (Failed)
+Errors while running CTest

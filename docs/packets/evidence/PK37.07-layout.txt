@@ -1,0 +1,1 @@
+PASS selected20080910: 00c4/6 npcId@2; 00c6/header4 row11 price@0 discount@4 type@8 id@9; 00c7/header4 row10 index@0 price@2 overcharge@6

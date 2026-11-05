@@ -1298,6 +1298,11 @@
         "id": "PK37.06",
         "action": "Resolve commerce item descriptions by their actual owner/offer identity; restore primary merchant/trade right-click snapshots and verify index collisions, remote ordinals, invalid callbacks, actual native/Qt paint and tooltip layering.",
         "tier": "S"
+      },
+      {
+        "id": "PK37.07",
+        "action": "Restore NPC catalog and buy/sell deal right-click descriptions from their own snapshots; align native/Qt header, hit testing, data-row counts, scrolling and shrinking/reopened viewports; verify passive WindowProc input, copied metadata and cross-owner isolation.",
+        "tier": "S"
       }
     ],
     "acceptance": "Verify every production sender/server parser, partial purchases, quantities/prices, stale indices, insufficient funds, capacity and teardown. Server confirms mutations; UI drag/drop must use verified request paths."

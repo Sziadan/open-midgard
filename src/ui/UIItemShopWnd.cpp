@@ -184,8 +184,11 @@ UIItemShopWnd::~UIItemShopWnd()
 
 void UIItemShopWnd::SetShow(int show)
 {
+    const bool opening = show != 0 && m_show == 0;
     UIWindow::SetShow(show);
+    if (opening) m_viewOffset = 0;
     if (show == 0) {
+        m_dragArmed = false;
         m_hoverRow = -1;
         return;
     }
@@ -236,18 +239,14 @@ RECT UIItemShopWnd::GetListRect() const
 int UIItemShopWnd::HitTestSourceRow(int x, int y) const
 {
     const RECT listRect = GetListRect();
-    if (x < listRect.left || x >= listRect.right || y < listRect.top || y >= listRect.bottom) {
+    if (x <= listRect.left || x >= listRect.right - 1 || y <= listRect.top || y >= listRect.bottom - 1)
         return -1;
-    }
-
-    const int localRow = (y - listRect.top) / kRowHeight;
-    if (localRow <= 0) {
-        return -1;
-    }
-    const int rowIndex = m_viewOffset + localRow - 1;
-    if (rowIndex < 0 || rowIndex >= static_cast<int>(g_session.m_shopRows.size())) {
-        return -1;
-    }
+    // Row zero is the header. Match the one-pixel inset and visible data rows
+    // used by both native paint and the passive Qt projection.
+    const int localRow = (y - listRect.top - 1) / kRowHeight - 1;
+    if (localRow < 0 || localRow >= GetVisibleRowCount()) return -1;
+    const int rowIndex = GetViewOffset() + localRow;
+    if (rowIndex < 0 || rowIndex >= static_cast<int>(g_session.m_shopRows.size())) return -1;
     return rowIndex;
 }
 
@@ -303,7 +302,7 @@ void UIItemShopWnd::OnDraw()
     shopui::DrawWindowTextRect(hdc, shopui::MakeRect(headerRect.right - 78, headerRect.top + 1, 70, headerRect.bottom - headerRect.top - 2), "Price", RGB(30, 30, 30), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 
     const int visibleRows = GetVisibleRowCount();
-    const int startRow = m_viewOffset;
+    const int startRow = GetViewOffset();
     const int endRow = (std::min)(static_cast<int>(g_session.m_shopRows.size()), startRow + visibleRows);
     for (int rowIndex = startRow; rowIndex < endRow; ++rowIndex) {
         const NPC_SHOP_ROW& row = g_session.m_shopRows[static_cast<size_t>(rowIndex)];
@@ -381,6 +380,18 @@ void UIItemShopWnd::UpdateRowDrag(int x, int y)
     m_dragArmed = false;
 }
 
+void UIItemShopWnd::OnRBtnDown(int x, int y)
+{
+    if (m_show == 0) return;
+    const int rowIndex = HitTestSourceRow(x, y);
+    if (rowIndex < 0) return;
+    // NPC rows are their own snapshots. Buy catalogs have no inventory index;
+    // selected deal rows must not be re-resolved through the catalog or bag.
+    const ITEM_INFO& item = g_session.m_shopRows[static_cast<size_t>(rowIndex)].itemInfo;
+    if (item.GetItemId())
+        g_windowMgr.ShowItemInfoWindow(item, x + 12, y + 12, ItemInfoSource::Snapshot);
+}
+
 void UIItemShopWnd::OnLBtnDown(int x, int y)
 {
     const int rowIndex = HitTestSourceRow(x, y);
@@ -439,7 +450,7 @@ void UIItemShopWnd::DragAndDrop(int x, int y, const DRAG_INFO* const info)
 void UIItemShopWnd::OnWheel(int delta)
 {
     const int step = delta > 0 ? -1 : 1;
-    m_viewOffset = (std::max)(0, (std::min)(GetMaxViewOffset(), m_viewOffset + step));
+    m_viewOffset = (std::max)(0, (std::min)(GetMaxViewOffset(), GetViewOffset() + step));
 }
 
 void UIItemShopWnd::HandleKeyDown(int virtualKey)
@@ -468,9 +479,9 @@ void UIItemShopWnd::HandleKeyDown(int virtualKey)
     }
 
     g_session.m_shopSelectedSourceRow = selectedRow;
-    if (selectedRow < m_viewOffset) {
+    if (selectedRow < GetViewOffset()) {
         m_viewOffset = selectedRow;
-    } else if (selectedRow >= m_viewOffset + GetVisibleRowCount()) {
+    } else if (selectedRow >= GetViewOffset() + GetVisibleRowCount()) {
         m_viewOffset = selectedRow - GetVisibleRowCount() + 1;
     }
     m_viewOffset = (std::max)(0, (std::min)(GetMaxViewOffset(), m_viewOffset));
@@ -478,7 +489,7 @@ void UIItemShopWnd::HandleKeyDown(int virtualKey)
 
 int UIItemShopWnd::GetViewOffset() const
 {
-    return m_viewOffset;
+    return (std::max)(0, (std::min)(GetMaxViewOffset(), m_viewOffset));
 }
 
 int UIItemShopWnd::GetHoverRow() const

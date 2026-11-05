@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK37.NPC-ITEM-DETAILS](PK37.NPC-ITEM-DETAILS.md) records catalog and selected buy/sell snapshot ownership, passive input and viewport fixes under PK37.07. Broad NPC transactions, legacy grid fallback geometry and independent PK48 remain open.
+
 [PK09.SPECIAL-ITEM-NAMES](PK09.SPECIAL-ITEM-NAMES.md) verifies named/created/forged names, selected pet intimacy/visual tab and delayed producer refresh. Detail expiry and other contexts remain open.
 
 [PK45.CHARACTER-NAME](PK45.CHARACTER-NAME.md) verifies the selected character-ID lookup request/cache namespace; special-item name/UI integration and broader actor/historical review remain open.

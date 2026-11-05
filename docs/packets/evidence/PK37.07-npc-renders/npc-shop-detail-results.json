@@ -1,0 +1,75 @@
+{
+    "cases": [
+        {
+            "case": "buy catalog row right-click snapshot and repeat toggle",
+            "item_id": 501,
+            "outcome": "PASS"
+        },
+        {
+            "case": "buy snapshot survives source catalog replacement",
+            "outcome": "PASS"
+        },
+        {
+            "case": "buy deal projected from C6 source row",
+            "item_id": 1201,
+            "outcome": "PASS"
+        },
+        {
+            "case": "buy deal snapshot, repeat toggle, source close",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unidentified sell catalog preserves inventory refinement/card key",
+            "outcome": "PASS"
+        },
+        {
+            "case": "sell deal projected from C7 source row",
+            "item_id": 1201,
+            "outcome": "PASS"
+        },
+        {
+            "case": "sell deal snapshot isolated from removed inventory row",
+            "outcome": "PASS"
+        },
+        {
+            "case": "scrolled last catalog row opens correct item",
+            "item_id": 6017,
+            "outcome": "PASS"
+        },
+        {
+            "case": "scrolled header is not an item row",
+            "outcome": "PASS"
+        },
+        {
+            "case": "new NPC dialog resets retained pane viewport",
+            "outcome": "PASS"
+        },
+        {
+            "case": "buy deal scroll/header/shrink",
+            "outcome": "PASS"
+        },
+        {
+            "case": "sell deal scroll/header/shrink",
+            "outcome": "PASS"
+        },
+        {
+            "case": "blank NPC list space is not an item row",
+            "outcome": "PASS"
+        },
+        {
+            "case": "NPC snapshot survives inventory/cart removal",
+            "outcome": "PASS"
+        },
+        {
+            "case": "125 percent passive Qt row through WindowProc coordinate conversion",
+            "outcome": "PASS"
+        }
+    ],
+    "catalog_packet_families": [
+        "00C6 buy",
+        "00C7 sell"
+    ],
+    "outcome": "PASS",
+    "saved_frames": 15,
+    "synthetic_deal_contexts": true
+}

@@ -1536,12 +1536,14 @@ void PopulateItemPurchaseState(QtUiState* state)
     const int startRow = purchaseWnd->GetViewOffset();
     const int endRow = (std::min)(
         static_cast<int>(g_session.m_shopDealRows.size()),
-        startRow + purchaseWnd->GetVisibleRowCountForQt() - 1);
+        startRow + purchaseWnd->GetVisibleRowCountForQt());
     rows.reserve((std::max)(0, endRow - startRow));
     for (int rowIndex = startRow; rowIndex < endRow; ++rowIndex) {
         const NPC_SHOP_DEAL_ROW& row = g_session.m_shopDealRows[static_cast<size_t>(rowIndex)];
         QVariantMap entry;
         entry.insert(QStringLiteral("name"), ToQString(shopui::GetItemDisplayName(row.itemInfo)));
+        entry.insert(QStringLiteral("itemId"), row.itemInfo.GetItemId());
+        entry.insert(QStringLiteral("identified"), row.itemInfo.m_isIdentified != 0);
         entry.insert(QStringLiteral("quantity"), row.quantity);
         entry.insert(QStringLiteral("cost"), row.unitPrice * row.quantity);
         entry.insert(QStringLiteral("selected"), g_session.m_shopSelectedDealRow == rowIndex);
@@ -1610,12 +1612,14 @@ void PopulateItemSellState(QtUiState* state)
     const int startRow = sellWnd->GetViewOffset();
     const int endRow = (std::min)(
         static_cast<int>(g_session.m_shopDealRows.size()),
-        startRow + sellWnd->GetVisibleRowCountForQt() - 1);
+        startRow + sellWnd->GetVisibleRowCountForQt());
     rows.reserve((std::max)(0, endRow - startRow));
     for (int rowIndex = startRow; rowIndex < endRow; ++rowIndex) {
         const NPC_SHOP_DEAL_ROW& row = g_session.m_shopDealRows[static_cast<size_t>(rowIndex)];
         QVariantMap entry;
         entry.insert(QStringLiteral("name"), ToQString(shopui::GetItemDisplayName(row.itemInfo)));
+        entry.insert(QStringLiteral("itemId"), row.itemInfo.GetItemId());
+        entry.insert(QStringLiteral("identified"), row.itemInfo.m_isIdentified != 0);
         entry.insert(QStringLiteral("quantity"), row.quantity);
         entry.insert(QStringLiteral("gain"), row.unitPrice * row.quantity);
         entry.insert(QStringLiteral("selected"), g_session.m_shopSelectedDealRow == rowIndex);

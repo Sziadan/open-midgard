@@ -1915,6 +1915,14 @@
         "docs/packets/evidence/PK09.11-detail-selection.json"
       ],
       "commit_subject": "packet(PK09.11): restore item detail toggle and forced updates"
+    },
+    "PK37.07": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK37.07-npc-details.md",
+        "docs/packets/evidence/PK37.07-npc-details.json"
+      ],
+      "commit_subject": "packet(PK37.07): restore NPC shop item descriptions"
     }
   }
 }

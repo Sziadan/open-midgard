@@ -867,6 +867,7 @@ Tier: **S**. Dependencies: PK13, PK34.
 
 - **PK37.05 [S]** Verify selected cart status/delta/failure/counter and legacy option/contents lifetimes against primary sources, repair defects, and retain production replay plus actual Qt clear/reopen evidence; leave broader transfer/vending/trade and item UI scope open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK37.06 [S]** Resolve commerce item descriptions by their actual owner/offer identity; restore primary merchant/trade right-click snapshots and verify index collisions, remote ordinals, invalid callbacks, actual native/Qt paint and tooltip layering. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK37.07 [S]** Restore NPC catalog and buy/sell deal right-click descriptions from their own snapshots; align native/Qt header, hit testing, data-row counts, scrolling and shrinking/reopened viewports; verify passive WindowProc input, copied metadata and cross-owner isolation. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 

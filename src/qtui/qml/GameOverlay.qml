@@ -616,7 +616,7 @@ Item {
 
                 Rectangle {
                     width: parent.width
-                    height: 17
+                    height: 18
                     color: theme.rowAlt
 
                     Text {
@@ -642,7 +642,7 @@ Item {
                     }
 
                     Text {
-                        x: width - 60
+                        x: parent.width - 60
                         y: 2
                         width: 54
                         text: uiState.itemShopData.priceLabel || ""
@@ -658,6 +658,8 @@ Item {
 
                     delegate: Rectangle {
                         required property var modelData
+                        required property int index
+                        objectName: "npcShopSourceRow_" + index
                         width: parent.width
                         height: 18
                         color: modelData.selected ? theme.rowSelected : (modelData.hover ? theme.rowHover : "transparent")
@@ -754,7 +756,7 @@ Item {
 
                 Rectangle {
                     width: parent.width
-                    height: 17
+                    height: 18
                     color: theme.rowAlt
 
                     Text {
@@ -778,7 +780,7 @@ Item {
                     }
 
                     Text {
-                        x: width - 64
+                        x: parent.width - 64
                         y: 2
                         width: 56
                         text: uiState.itemPurchaseData.amountLabel || ""
@@ -794,6 +796,8 @@ Item {
 
                     delegate: Rectangle {
                         required property var modelData
+                        required property int index
+                        objectName: "npcShopBuyDealRow_" + index
                         width: parent.width
                         height: 18
                         color: modelData.selected ? theme.rowSelected : (modelData.hover ? theme.rowHover : "transparent")
@@ -912,7 +916,7 @@ Item {
 
                 Rectangle {
                     width: parent.width
-                    height: 17
+                    height: 18
                     color: theme.rowAlt
 
                     Text {
@@ -936,7 +940,7 @@ Item {
                     }
 
                     Text {
-                        x: width - 64
+                        x: parent.width - 64
                         y: 2
                         width: 56
                         text: uiState.itemSellData.amountLabel || ""
@@ -952,6 +956,8 @@ Item {
 
                     delegate: Rectangle {
                         required property var modelData
+                        required property int index
+                        objectName: "npcShopSellDealRow_" + index
                         width: parent.width
                         height: 18
                         color: modelData.selected ? theme.rowSelected : (modelData.hover ? theme.rowHover : "transparent")

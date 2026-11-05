@@ -69,8 +69,11 @@ UIItemSellWnd::~UIItemSellWnd() = default;
 
 void UIItemSellWnd::SetShow(int show)
 {
+    const bool opening = show != 0 && m_show == 0;
     UIWindow::SetShow(show);
+    if (opening) m_viewOffset = 0;
     if (show == 0) {
+        m_dragArmed = false;
         m_hoverRow = -1;
         m_hoverButton = ButtonNone;
         m_pressedButton = ButtonNone;
@@ -108,7 +111,7 @@ RECT UIItemSellWnd::GetListRect() const
 
 int UIItemSellWnd::GetVisibleRowCount() const
 {
-    return (std::max)(1, (m_h - kListTop - kListBottomMargin) / kRowHeight);
+    return (std::max)(1, ((m_h - kListTop - kListBottomMargin) / kRowHeight) - 1);
 }
 
 int UIItemSellWnd::GetMaxViewOffset() const
@@ -123,15 +126,14 @@ int UIItemSellWnd::GetMaxViewOffset() const
 int UIItemSellWnd::HitTestDealRow(int x, int y) const
 {
     const RECT listRect = GetListRect();
-    if (x < listRect.left || x >= listRect.right || y < listRect.top || y >= listRect.bottom) {
+    if (x <= listRect.left || x >= listRect.right - 1 || y <= listRect.top || y >= listRect.bottom - 1)
         return -1;
-    }
-
-    const int localRow = (y - listRect.top) / kRowHeight;
-    const int rowIndex = m_viewOffset + localRow - 1;
-    if (rowIndex < 0 || rowIndex >= static_cast<int>(g_session.m_shopDealRows.size())) {
-        return -1;
-    }
+    // Row zero is the header. Match the one-pixel inset and visible data rows
+    // used by both native paint and the passive Qt projection.
+    const int localRow = (y - listRect.top - 1) / kRowHeight - 1;
+    if (localRow < 0 || localRow >= GetVisibleRowCount()) return -1;
+    const int rowIndex = GetViewOffset() + localRow;
+    if (rowIndex < 0 || rowIndex >= static_cast<int>(g_session.m_shopDealRows.size())) return -1;
     return rowIndex;
 }
 
@@ -214,8 +216,8 @@ void UIItemSellWnd::OnDraw()
     shopui::DrawWindowTextRect(hdc, shopui::MakeRect(headerRect.right - 64, headerRect.top + 1, 56, headerRect.bottom - headerRect.top - 2), "Gain", RGB(30, 30, 30), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 
     const int visibleRows = GetVisibleRowCount();
-    const int startRow = m_viewOffset;
-    const int endRow = (std::min)(static_cast<int>(g_session.m_shopDealRows.size()), startRow + visibleRows - 1);
+    const int startRow = GetViewOffset();
+    const int endRow = (std::min)(static_cast<int>(g_session.m_shopDealRows.size()), startRow + visibleRows);
     for (int rowIndex = startRow; rowIndex < endRow; ++rowIndex) {
         const NPC_SHOP_DEAL_ROW& row = g_session.m_shopDealRows[static_cast<size_t>(rowIndex)];
         RECT rowRect = shopui::MakeRect(listRect.left + 1,
@@ -292,6 +294,18 @@ void UIItemSellWnd::UpdateRowDrag(int x, int y)
     m_dragArmed = false;
 }
 
+void UIItemSellWnd::OnRBtnDown(int x, int y)
+{
+    if (m_show == 0) return;
+    const int rowIndex = HitTestDealRow(x, y);
+    if (rowIndex < 0) return;
+    // NPC rows are their own snapshots. Buy catalogs have no inventory index;
+    // selected deal rows must not be re-resolved through the catalog or bag.
+    const ITEM_INFO& item = g_session.m_shopDealRows[static_cast<size_t>(rowIndex)].itemInfo;
+    if (item.GetItemId())
+        g_windowMgr.ShowItemInfoWindow(item, x + 12, y + 12, ItemInfoSource::Snapshot);
+}
+
 void UIItemSellWnd::OnLBtnDown(int x, int y)
 {
     m_pressedButton = HitTestButton(x, y);
@@ -361,7 +375,7 @@ void UIItemSellWnd::DragAndDrop(int x, int y, const DRAG_INFO* const info)
 void UIItemSellWnd::OnWheel(int delta)
 {
     const int step = delta > 0 ? -1 : 1;
-    m_viewOffset = (std::max)(0, (std::min)(GetMaxViewOffset(), m_viewOffset + step));
+    m_viewOffset = (std::max)(0, (std::min)(GetMaxViewOffset(), GetViewOffset() + step));
 }
 
 void UIItemSellWnd::HandleKeyDown(int virtualKey)
@@ -400,17 +414,17 @@ void UIItemSellWnd::HandleKeyDown(int virtualKey)
     }
 
     g_session.m_shopSelectedDealRow = selectedRow;
-    if (selectedRow < m_viewOffset) {
+    if (selectedRow < GetViewOffset()) {
         m_viewOffset = selectedRow;
-    } else if (selectedRow >= m_viewOffset + GetVisibleRowCount() - 1) {
-        m_viewOffset = selectedRow - GetVisibleRowCount() + 2;
+    } else if (selectedRow >= GetViewOffset() + GetVisibleRowCount()) {
+        m_viewOffset = selectedRow - GetVisibleRowCount() + 1;
     }
     m_viewOffset = (std::max)(0, (std::min)(GetMaxViewOffset(), m_viewOffset));
 }
 
 int UIItemSellWnd::GetViewOffset() const
 {
-    return m_viewOffset;
+    return (std::max)(0, (std::min)(GetMaxViewOffset(), m_viewOffset));
 }
 
 int UIItemSellWnd::GetHoverRow() const
