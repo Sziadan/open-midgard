@@ -1,16 +1,16 @@
 # Packet continuation handoff
 
-**Active step: PK09.04.** Latest bounded checkpoint: [PK09.08 generic card names](evidence/PK09.08-card-names.md), [provenance](evidence/PK09.08-card-names.json), [contract](contracts/PK09.CARD-NAME-ASSEMBLY.md). Dedicated commit: `packet(PK09.08): restore card ID and postfix name grouping`. Prior ordinary names/quantities (PK09.07) and cart lifetimes (PK37.05) retain their scoped evidence.
+**Active step: PK09.04.** Latest dependency checkpoint: [PK45.05 character names](evidence/PK45.05-character-name.md), [provenance](evidence/PK45.05-character-name.json), [contract](contracts/PK45.CHARACTER-NAME.md). Dedicated commit: `packet(PK45.05): isolate character name lookup from actors`. PK09.07/.08 ordinary/card name and PK37.05 cart proofs remain verified.
 
 ## Continue here
 
-1. Continue [PK09.04](work-items/PK09.04.md). PK09.07 ordinary names/quantities and PK09.08 generic card-ID/prefix/postfix assembly are verified. Parent must next implement manufactured/producer/element/star-piece and named-pet sentinel names against primary GetItemName. Trace table initialization and actor-name availability, not isolated helper text. Luna may extract bounded exact metadata/locale rows and test fixtures; parent owns the semantics. Then implement detailed item expiry and selected 0299 removal after confirming native/Qt window ownership and source local-date formatting. Do not add an invented hover countdown.
+1. Continue [PK09.04](work-items/PK09.04.md) special named/crafted item names. The prerequisite character-ID resolver is now implemented in PK45.05: combine unsigned card words 2/3 to a CID and use CGameMode::ResolveCharacterName; never query/mutate world actors for a producer. Selected request is 00A2/15/CID@11; 0194 names characters. Parent must implement primary named-pet and manufactured/producer/element/star-piece ordering plus delayed reply/cache refresh in native/Qt UI. Primary Ref named-pet slots are 0/0/0/1; manufactured 254 with word1 zero precedes the type gate; 255/star handling is inside the equipment-like branch. Parent must verify metadata and locale rows against actual source tables; filename guesses or unmatched searches do not establish absence. Then implement detailed expiry and selected 0299 removal after confirming surface ownership and local-date formatting. No hover countdown.
 2. The strong-agent cart ownership decision is complete in PK37.05. `012B` clears rows/window while preserving entitlement/counters; local legacy actor options own removal. Same-index adds retain metadata; only `0121` updates count/weight; unknown `012C` results are ignored. Preserve these regressions. PK37.01–.04 remain open for broad transfer/request, inventory rollback, vending and trade review; do not close their rows from this leaf.
 3. Resume bounded PK46.02 request/profile/send-failure and character paths; its 177 request rows remain research. NPC/status/mail have concrete source-ready contracts. PK09.02/.03 mapping/route checkpoints are complete; historical dirty-tree gates are superseded.
 
 ## Verified current checkpoint
 
-All targets build deploy-off. **107/107 CTest in 50.71s**, **164 PASS packet records**, 17 card cases and 57 card frames (six native, 51 Qt), zero item QML errors. Prior colour, ordinary-name, quantity, cart, bag and minimap checks remain passing.
+All targets build deploy-off. **107/107 CTest in 51.15s**, **166 PASS packet records**, two new character-name cases, zero item QML errors. Existing card/name/quantity/colour/cart/bag/minimap regressions remain passing.
 
 No discovery row is newly closed. PK09.04, broad PK37, independent PK48/49 and deployed provenance remain open. The whole packet plan remains unfinished.
 

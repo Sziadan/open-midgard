@@ -7423,6 +7423,8 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 
 void ClearRuntimeActors(CGameMode& mode)
 {
+    mode.m_characterNameCache.clear();
+    mode.m_characterNameReqTimer.clear();
     CWorld* const world = mode.m_world ? mode.m_world : &g_world;
     if (world) {
         world->m_player = nullptr;
@@ -9916,6 +9918,25 @@ bool CGameMode::ResolveCursorDrawPosition(int rawX, int rawY, int* drawX, int* d
     // coordinate back into physical mouse movement, ground aiming or UI input.
     return m_world->ResolveCursorSnap(m_view->GetViewMatrix(), m_view->GetCameraLongitude(),
         rawX, rawY, !pendingSkill, drawX, drawY);
+}
+
+std::string CGameMode::ResolveCharacterName(u32 characterId)
+{
+    if (characterId == 0) return {};
+    const auto cached = m_characterNameCache.find(characterId);
+    if (cached != m_characterNameCache.end() && !cached->second.empty()) return cached->second;
+
+    const u32 now = GetTickCount();
+    const auto requested = m_characterNameReqTimer.find(characterId);
+    if (requested != m_characterNameReqTimer.end() && now - requested->second < 2500u) return {};
+    unsigned char packet[32]{};
+    int length = 0;
+    if (ro::net::BuildActiveCharacterNameRequestPacket(characterId, packet, sizeof(packet), &length)
+        && CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), length)) {
+        // A failed send must not suppress a later successful lookup.
+        m_characterNameReqTimer[characterId] = now;
+    }
+    return {};
 }
 
 CGameMode::CGameMode() 

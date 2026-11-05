@@ -80,6 +80,8 @@ struct GroundItemState {
 //===========================================================================
 class CGameMode : public CMode {
 public:
+    // Character IDs (item producer/creator), distinct from visible actor IDs.
+    std::string ResolveCharacterName(u32 characterId);
     bool ResolveCursorDrawPosition(int rawX, int rawY, int* drawX, int* drawY) const;
     bool m_hasCursorSnap = false;
     int m_cursorSnapRawX = 0, m_cursorSnapRawY = 0;
@@ -212,6 +214,8 @@ public:
     std::map<u32, u32> m_actorNameReqTimer;
     std::map<u32, NamePair> m_actorNameListByGID;
     std::map<u32, u32> m_actorNameByGIDReqTimer;
+    std::map<u32, std::string> m_characterNameCache;
+    std::map<u32, u32> m_characterNameReqTimer;
     std::map<u32, int> m_guildMemberStatusCache;
     std::map<u32, CellPos> m_actorPosList;
     std::map<u32, CGameActor*> m_runtimeActors;

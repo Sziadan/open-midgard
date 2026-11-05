@@ -1,0 +1,2 @@
+{"case_id":"character_name_reply_isolation","contract_id":"PK45.05","opcode":"0194","outcome":"PASS"}
+{"case_id":"character_name_request_reply","contract_id":"PK45.05","request_opcode":"00A2","length":15,"character_id_offset":11,"captured_hex":"a20061333535353634320078563492","padding":"ignored bytes 2..10 vary with tick","outcome":"PASS"}

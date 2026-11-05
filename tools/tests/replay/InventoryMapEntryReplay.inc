@@ -136,9 +136,12 @@ void InventoryMapEntryReplay()
             std::string(phase) + " lost local panel positions or inventory tab");
     };
 
+    mode.m_characterNameCache[0x12345678]="Old producer";
+    mode.m_characterNameReqTimer[0x12345678]=42;
     mode.OnInit(nullptr);
     restore.initialized = true;
     requireReset("first OnInit(nullptr)");
+    Require(mode.m_characterNameCache.empty() && mode.m_characterNameReqTimer.empty(),"actual map entry retained character name state");
 
     // A server may omit an empty equipment category. Its normal inventory and
     // normal cart snapshots must not resurrect stale equipment from prior entry.
@@ -156,7 +159,10 @@ void InventoryMapEntryReplay()
 
     mode.OnInit(nullptr);
     requireReset("retry OnInit(nullptr)");
+    mode.m_characterNameCache[0x12345678]="Old producer";
+    mode.m_characterNameReqTimer[0x12345678]=42;
     mode.OnExit();
+    Require(mode.m_characterNameCache.empty() && mode.m_characterNameReqTimer.empty(),"actual mode exit retained character name state");
     restore.initialized = false;
     std::cout << "{\"case_id\":\"inventory_map_entry_reset\",\"contract_id\":\"PK09.05\",\"routes\":[\"02E8\",\"02D0\",\"02E9\",\"02D2\"],\"empty_equipment_category_omitted\":true,\"repeat_map_entry_idempotence\":true,\"positions_and_tab_preserved\":true,\"storage_and_transactions_reset\":true,\"outcome\":\"PASS\"}\n";
 }

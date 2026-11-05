@@ -3905,6 +3905,8 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
     mode.m_actorNameReqTimer.clear();
     mode.m_actorNameListByGID.clear();
     mode.m_actorNameByGIDReqTimer.clear();
+    mode.m_characterNameCache.clear();
+    mode.m_characterNameReqTimer.clear();
     mode.m_partyPosList.clear();
     mode.m_guildPosList.clear();
     mode.m_compassPosList.clear();
@@ -8743,6 +8745,18 @@ void HandleActorSpriteChange(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleCharacterNameAck(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 30) return;
+    const u32 characterId = ReadLE32(packet.data + 2);
+    const std::string name = ExtractFixedPacketString(packet, 6, 24);
+    if (characterId == 0 || name.empty()) return;
+    mode.m_characterNameCache[characterId] = name;
+    mode.m_characterNameReqTimer.erase(characterId);
+    // ZC_ACK_REQNAME_BYGID carries a character ID, not an actor's world ID.
+    // Never create an actor, overwrite actor affiliations or complete its query.
+}
+
 void HandleActorNameAck(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 30) {
@@ -8930,7 +8944,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     RegisterHandlerIfValid(router, receiveProfile.broadcastColored, HandleBroadcast);
     router.Register(0x02DC, HandleBattlefieldChat);
     RegisterHandlerIfValid(router, receiveProfile.actorNameAckBasic, HandleActorNameAck);
-    RegisterHandlerIfValid(router, receiveProfile.actorNameAckParty, HandleActorNameAck);
+    RegisterHandlerIfValid(router, receiveProfile.characterNameAck, HandleCharacterNameAck);
     RegisterHandlerIfValid(router, receiveProfile.actorNameAckFull, HandleActorNameAck);
 
     RegisterHandlerIfValid(router, receiveProfile.groundItemEntryExisting, HandleGroundItemEntry);

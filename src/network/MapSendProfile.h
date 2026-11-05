@@ -79,6 +79,10 @@ struct MapGameplaySendProfile {
     u16 getCharNameRequest;
     u16 whisper;
     u16 globalMessage;
+    // Source-selected 20080910 character-ID lookup; zero means unaudited profile.
+    u16 characterNameRequest = 0;
+    u8 characterNameRequestLength = 0;
+    u8 characterNameRequestIdOffset = 0;
 };
 
 struct MapReceiveProfile {
@@ -150,7 +154,7 @@ struct MapReceiveProfile {
     u16 actorMoveModern;
     u16 actorMoveModernFont;
     u16 actorNameAckBasic;
-    u16 actorNameAckParty;
+    u16 characterNameAck;
     u16 actorNameAckFull;
     u16 actorStateChangeBasic;
     u16 actorStateChangeExtended;
@@ -232,6 +236,8 @@ bool BuildActiveActionRequestPacket(u32 targetGid,
     void* outBuffer,
     int outBufferSize,
     int* outPacketLength);
+bool BuildActiveCharacterNameRequestPacket(u32 characterId,
+    void* outBuffer, int outBufferSize, int* outPacketLength);
 bool BuildActiveUseSkillToIdPacket(u16 skillId,
     u16 skillLevel,
     u32 targetGid,

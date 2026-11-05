@@ -1031,6 +1031,8 @@ Tier: **S**. Dependencies: PK20, PK22, PK24.
 - **PK45.03 [S]** Audit every remaining registered handler field/branch through state/UI/replies. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK45.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
+- **PK45.05 [S]** Separate selected character-ID lookup from actor names, implement source-final 00A2/15/CID@11 request plus 0194/30 reply cache/timer lifecycle and production socket/replay proofs; leave actual special-item UI integration and other profiles open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+
 ### Required acceptance and traps
 
 240 registered entries and136 indexed handler functions need explicit contract references, not a global pass assertion. Expand per handler/variant into numbered leaves; sitting/desync/picking/cart depth are regression scenarios when relevant.

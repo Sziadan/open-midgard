@@ -1,0 +1,89 @@
+{
+  "date": "2026-11-05",
+  "baseline": "15ce791ce14f02f9eed256665b57652d3873fc8c",
+  "commit_subject": "packet(PK45.05): isolate character name lookup from actors",
+  "profile": 20080910,
+  "source_sha256": {
+    "src/network/MapSendProfile.h": "2d75cef21e03a2f2d231345f1150b973a943aebff348ee90decd0e487e219015",
+    "src/network/MapSendProfile.cpp": "5c3f4aa4819782c3acbcf3fe60b78c75112c9c57304e697103be09e13067272d",
+    "src/gamemode/GameMode.h": "5d77d645dfc0d0d2175aca50a88128e4a42916f1ae1a4ead1f0cd4b765786f74",
+    "src/gamemode/GameMode.cpp": "983e4898442d9f752bb44c8775c54ff41e31a17554f64b1db9478bc2048f6fe8",
+    "src/gamemode/GameModePacket.cpp": "bb5aba0cd806af8d1d9cb7621d61e642a909c65edfc42e50f5b04cc911b5796b",
+    "tools/tests/replay/PacketStreamReplay.cpp": "0725e1b1499411cf17a22133958a434864915903c7f8c462ab37a74dff65b252",
+    "tools/tests/replay/CharacterNameReplay.inc": "d88d400d3d2de60846066c9284d6d31db554b9bcbbbaeeeed0cf6fc80302b8ae",
+    "tools/tests/replay/InventoryMapEntryReplay.inc": "bb50d0e3d6fe452d03fba0bfcdb172c50c4fc088d5e4acfae8c510f87977a5ef",
+    "tools/tests/replay/MapTransitionLifetimeReplay.inc": "44a21cb909cdf408b70504b5f5c4025aadbbfd7395406440b2ffc37885fb8a03",
+    "docs/packets/evidence/PK45.05-character-name-probe.cpp": "f5bc4c9b419d0f172260880ac3509df154b1bf8abd34b8bc0479fd1cf27615d4"
+  },
+  "reference_sha256": {
+    "Ref/ItemInfo.cpp": "5bce74c76f40aafad079c2feaf746a7570a1380492a03e6e1cec52bdcf722bc8",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c"
+  },
+  "external_source_root": "C:\\Users\\sziad\\source\\repos\\rathena-master",
+  "external_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "selected_registry": {
+    "final_sequence": "377",
+    "source_line": "875",
+    "opcode": "00a2",
+    "length": "15",
+    "parser": "clif_parse_SolveCharName",
+    "field_positions": "11,0"
+  },
+  "selected_config_and_registry_hashes_match": "PK37.05-cart-lifecycle.json",
+  "validation": {
+    "ctest_passed": 107,
+    "ctest_failed": 0,
+    "seconds": 51.15,
+    "packet_records": 166,
+    "new_cases": [
+      {
+        "case_id": "character_name_reply_isolation",
+        "contract_id": "PK45.05",
+        "opcode": "0194",
+        "outcome": "PASS"
+      },
+      {
+        "case_id": "character_name_request_reply",
+        "contract_id": "PK45.05",
+        "request_opcode": "00A2",
+        "length": 15,
+        "character_id_offset": 11,
+        "captured_hex": "a20061333535353634320078563492",
+        "padding": "ignored bytes 2..10 vary with tick",
+        "outcome": "PASS"
+      }
+    ],
+    "header_probe": "PASS 0194/30/CID@2/name24@6",
+    "item_qml_errors": 0,
+    "retained_card_cases": 17,
+    "retained_card_frames": 57,
+    "retained_item_colour_frames": 30,
+    "retained_name_frames": 4,
+    "retained_quantity_frames": 3,
+    "retained_bag_frames": 4,
+    "retained_cart_frames": 3,
+    "retained_minimap_scenes": 18,
+    "deploy": "OFF"
+  },
+  "binary_sha256": {
+    "open-midgard.exe": "3f40b6ba4a50013161e6068cf59ad7d40cca443ca2cf3fcef5697318569cd8e1",
+    "packet_stream_replay_checks.exe": "2ae4e2b1b24daee22458e772341e358cef320656c87d7033c29f3ef681292fee",
+    "packet_item_render_checks.exe": "926f1e5ba24ba7b01807d1333e5c7b8880f5d73e695cee48dbb7477cb02ed755",
+    "packet_minimap_render_checks.exe": "4fa0c689bb8a4159f1053f46dca60d91c135b5271549a99335c570655f601570"
+  },
+  "validation_log_sha256": "eb7d47b4037ee99f3f2f9a64c3982e9f13e0d92c7f0957a7b92c10eb9aad34a9",
+  "limits": [
+    "Request/cache dependency only; actual special item name UI remains next",
+    "Other request profiles disabled/unaudited, existing actor queries not fully reviewed",
+    "Normal map/mode reconnect boundaries tested; no general transport-generation claim",
+    "No numeric discovery closure, PK48/49 or deployment acceptance"
+  ]
+}

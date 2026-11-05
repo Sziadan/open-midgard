@@ -1,0 +1,16 @@
+{
+  "case_id": "character_name_reply_isolation",
+  "stage": "PK45.05",
+  "fixture_id": "selected-20080910-0194-character-id",
+  "production_entry": "ProcessGameModePacketLoop -> production router -> character-name acknowledgement",
+  "runtime_baseline_commit": "af41f6484cb7ff31825296babe4b913aa36c4c67",
+  "source_commit_at_configure": "3b6051b70fd04a985b525b558d7c94a88f2c921f",
+  "source_tree_status_at_configure": "dirty",
+  "invocation_count": 0,
+  "expected_packet_hex": null,
+  "actual_packet_hex": null,
+  "expected_queue_remainder": null,
+  "actual_queue_remainder": null,
+  "outcome": "FAIL",
+  "error": "character-ID reply overwrote actor-ID cache or request timer"
+}

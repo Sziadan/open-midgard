@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK45.CHARACTER-NAME](PK45.CHARACTER-NAME.md) verifies the selected character-ID lookup request/cache namespace; special-item name/UI integration and broader actor/historical review remain open.
+
 [PK09.CARD-NAME-ASSEMBLY](PK09.CARD-NAME-ASSEMBLY.md) verifies generic card-ID grouping and descriptor ownership across actual native/Qt consumers. Special names, expiry and independent PK48 remain open.
 
 [PK09.ITEM-NAME-CONTEXT](PK09.ITEM-NAME-CONTEXT.md) records ordinary name/refinement/identification and quantity consumer repairs. Full cards/sentinels/expiry and independent PK48 remain open.

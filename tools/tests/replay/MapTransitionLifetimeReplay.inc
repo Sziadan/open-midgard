@@ -240,6 +240,8 @@ void MapTransitionLifetimeReplay()
         services.requestMode = [&](int type, const char* name) { ++handoffs; g_modeMgr.Switch(type, name); };
         mode.SetMapTransitionServices(&services);
         ITEM_INFO oldEquipment{};
+        mode.m_characterNameCache[0x12345678]="Old producer";
+        mode.m_characterNameReqTimer[0x12345678]=42;
         oldEquipment.m_itemIndex = 0x123;
         oldEquipment.SetItemId(0x4d2);
         oldEquipment.m_itemType = 5;
@@ -271,6 +273,7 @@ void MapTransitionLifetimeReplay()
         RequirePartyInvalidated(revision, before.imageRevision, "same-map warp reuse");
         Require(mode.m_mapLoadingStage == CGameMode::MapLoading_None && mode.m_world == &world && mode.m_view == &view,
             "same-map reuse discarded the loaded world/view");
+        Require(mode.m_characterNameCache.empty() && mode.m_characterNameReqTimer.empty(),"same-map reuse retained character-name state");
         Require(mode.m_partyPosList.empty() && mode.m_runtimeActors.at(g_session.m_gid) == &player,
             "same-map reuse did not clear legacy dots while retaining the player");
 

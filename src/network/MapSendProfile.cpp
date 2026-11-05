@@ -121,6 +121,7 @@ MapGameplaySendProfile MakePacketVer23Profile()
         PacketProfile::PacketVer23MapServerSend::kGetCharNameRequest,
         PacketProfile::PacketVer23MapServerSend::kWhisper,
         PacketProfile::PacketVer23MapServerSend::kGlobalMessage,
+        0x00A2, 15, 11, // final selected clif_parse_SolveCharName registration
     };
 }
 
@@ -258,7 +259,7 @@ MapReceiveProfile MakePacketVer23ReceiveProfile()
     profile.actorMoveModern = 0x022C;
     profile.actorMoveModernFont = 0x02EC;
     profile.actorNameAckBasic = 0x0095;
-    profile.actorNameAckParty = 0x0194;
+    profile.characterNameAck = 0x0194;
     profile.actorNameAckFull = 0x0195;
     profile.actorStateChangeBasic = 0x0119;
     profile.actorStateChangeExtended = 0x0229;
@@ -699,7 +700,7 @@ bool IsActiveLegacyActorMovePacket(u16 packetId)
 bool IsActiveActorNameAckPacket(u16 packetId)
 {
     const MapReceiveProfile& profile = GetActiveMapReceiveProfile();
-    return MatchesPacketId(packetId, {profile.actorNameAckBasic, profile.actorNameAckParty, profile.actorNameAckFull});
+    return MatchesPacketId(packetId, {profile.actorNameAckBasic, profile.actorNameAckFull});
 }
 
 bool IsActiveActorNameAckFullPacket(u16 packetId)
@@ -1046,6 +1047,25 @@ bool BuildActiveTakeItemPacket(u32 objectAid,
     packet.ObjectAID = objectAid;
     std::memcpy(outBuffer, &packet, sizeof(packet));
     *outPacketLength = static_cast<int>(sizeof(packet));
+    return true;
+}
+
+bool BuildActiveCharacterNameRequestPacket(u32 characterId,
+    void* outBuffer, int outBufferSize, int* outPacketLength)
+{
+    if (outPacketLength) *outPacketLength = 0;
+    const auto& profile = GetActiveMapGameplaySendProfile();
+    const int length = profile.characterNameRequestLength;
+    const int offset = profile.characterNameRequestIdOffset;
+    if (!characterId || !outBuffer || !outPacketLength || !profile.characterNameRequest
+        || length < 6 || offset < 2 || offset + 4 > length || outBufferSize < length) return false;
+    auto* bytes = static_cast<u8*>(outBuffer);
+    std::memset(bytes, 0, length);
+    bytes[0] = static_cast<u8>(profile.characterNameRequest);
+    bytes[1] = static_cast<u8>(profile.characterNameRequest >> 8);
+    FillPacketPadding(bytes + 2, offset - 2);
+    for (int i = 0; i < 4; ++i) bytes[offset + i] = static_cast<u8>(characterId >> (8 * i));
+    *outPacketLength = length;
     return true;
 }
 
