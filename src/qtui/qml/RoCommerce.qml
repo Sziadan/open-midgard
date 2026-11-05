@@ -155,7 +155,7 @@ Item {
             Item { parent: bag.body; anchors.fill: parent
                 Row { id: tabs; spacing: 4; height: 30
                     Repeater { model: bag.kind==="inventory" ? ["Usable","Equipment","Other"] : []
-                        Button { required property string modelData; required property int index; width: 72; label: modelData; primary: hub.view.inventoryTab===index; onClicked: hub.send("inventoryTab",{tab:index}) }
+                        Button { required property string modelData; required property int index; objectName:"commerceInventoryTab_"+index; width: 72; label: modelData; primary: hub.view.inventoryTab===index; onClicked: hub.send("inventoryTab",{tab:index}) }
                     }
                     Button { objectName:"commerceCartButton"; visible: bag.kind==="inventory" && !!hub.view.hasCart; label: "Cart"; width: 68; onClicked: hub.send("cart") }
                 }

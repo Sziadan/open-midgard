@@ -13,6 +13,7 @@
 #include <QColor>
 #include <algorithm>
 #include "ui/UIShopCommon.h"
+#include "item/ItemTab.h"
 
 namespace {
 QString str(const std::string& s){return QString::fromUtf8(s.data(),int(s.size()));}
@@ -74,9 +75,7 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
         // every row; the bag mirrors native filtering, including its ammo exception.
         if(i.m_wearLocation!=0 && i.m_itemType!=10)continue;
         ++inventoryCount;
-        const bool equip=i.m_itemType==4||i.m_itemType==5||i.m_itemType==8;
-        const bool usable=i.m_itemType==0||i.m_itemType==2||i.m_itemType==11;
-        if((s.inventoryTab==0&&usable)||(s.inventoryTab==1&&equip)||(s.inventoryTab==2&&!usable&&!equip))inventory.push_back(row(i));
+        if(ro::item::ItemTypeBelongsToTab(i.m_itemType,s.inventoryTab))inventory.push_back(row(i));
     }
     for(const auto& i:s.cartItems)cart.push_back(row(i.second));for(const auto& i:s.viewedEquipment)equipment.push_back(row(i));
     QVariantMap inv;if(auto* w=g_windowMgr.m_itemWnd)inv={{"visible",w->m_show!=0&&!suppressed},{"x",w->m_x},{"y",w->m_y},{"width",w->m_w},{"height",w->m_h}};

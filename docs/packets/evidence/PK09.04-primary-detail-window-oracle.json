@@ -1,0 +1,78 @@
+{
+  "evidence_id": "PK09.04-primary-detail-window-oracle",
+  "scope": "Primary decompiled Ref item-detail window placement and message-24 update behavior.",
+  "conclusion": "Ref supports retained/default or previously saved placement. Right-click callers pass an ITEM_INFO snapshot without cursor coordinates. UIWindowMgr.MakeWindow shows the detail window before the caller sends message 24, so normal source behavior does not use a preferred cursor position.",
+  "sources": {
+    "Ref/UIFrameWnd2.cpp": {
+      "sha256": "A4492392A5BA84E124283FCC5250D811D5D9A44BC32975B9C63FEB9D81E991CB",
+      "references": [
+        "UIItemCollectionWnd::SendMsg message 24: lines 9335-9374",
+        "UIItemCollectionWnd::SendMsg message 34: lines 9608-9622",
+        "UIItemCollectionWnd::StoreInfo: lines 23313-23324",
+        "UIEquipWnd::OnRBtnDown: lines 21750-21764",
+        "UIExchangeWnd::OnRBtnDown: lines 22530-22545"
+      ]
+    },
+    "Ref/UIWindowMgr.cpp": {
+      "sha256": "176786BC43C8D53F9BDEAEBD992A273B5D1CAC90A22106FA5D73ACE7D4D32437",
+      "references": [
+        "UIWindowMgr::MakeWindow case 12: lines 5131-5151",
+        "Registry load of itemCollectionWndInfo: lines 11036-11039",
+        "Registry save of itemCollectionWndInfo: lines 13013-13016"
+      ]
+    },
+    "Ref/UIRectInfo.cpp": {
+      "sha256": "E966CA8D73CD295750D9D1ABD0A0595B77112B3AE956EFD5B41809BA98BEAA11",
+      "references": [
+        "ItemCollectionWndInfo::IsValidInfo: lines 294-309",
+        "ItemCollectionWndInfo::MakeDefault: lines 1145-1154"
+      ]
+    },
+    "Ref/UIItemWnd.cpp": {
+      "sha256": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+      "references": [
+        "Right-click detail callers pass val2=0; selected-item fallback callers around8492,9205,9894,12454,13104 pass val2=1."
+      ]
+    }
+  },
+  "placement": {
+    "window_id": 12,
+    "create_size": {
+      "width": 280,
+      "height": 120,
+      "reference": "Ref/UIWindowMgr.cpp:5144"
+    },
+    "initial_manager_move": "UIX(185), UICY(300), then add window and initialize stored info; Ref/UIWindowMgr.cpp:5145-5150.",
+    "valid_saved_rectangle": "w must equal 280, h must equal 120, x must be within [0, renderer.width-280], and y within [0, renderer.height-120]; Ref/UIRectInfo.cpp:297-309.",
+    "default_rectangle": {
+      "x": 280,
+      "y": 126,
+      "width": 280,
+      "height": 120,
+      "reference": "Ref/UIRectInfo.cpp:1148-1154"
+    },
+    "first_open_default_move": "If stored geometry is invalid, move to (default.x + (renderer.width-640)/2, renderer.width*default.y/640); Ref/UIFrameWnd2.cpp:9615-9621.",
+    "stored_move": "If stored geometry is valid, restore its x/y; Ref/UIFrameWnd2.cpp:9609-9613.",
+    "persistence": "StoreInfo saves x, y, w, h only; Ref/UIFrameWnd2.cpp:23313-23324. UIWindowMgr reads/writes the itemCollectionWndInfo fields; Ref/UIWindowMgr.cpp:11036-11039 and 13013-13016.",
+    "message_24_position_effect": "No move or preferred-coordinate handling occurs in message 24. Updating the displayed item retains the window's current x/y.",
+    "normal_open_order": "MakeWindow case 12 creates or retrieves the window, sends initialization on first creation, calls SetShow(1), and returns; the caller then sends message 24. Ref/UIWindowMgr.cpp:5131-5151."
+  },
+  "message_24": {
+    "toggle_predicate": "Close/delete the detail window only if the full stored m_itemInfo.m_itemName string compares equal to the incoming val1->m_itemName string, m_refiningLevel matches, all four m_slot values match, and val2 is zero; Ref/UIFrameWnd2.cpp:9335-9349.",
+    "identity_caveat": "The toggle compares the m_itemName field plus refining and card-slot fields. It does not compare m_itemIndex, GetItemId(), or identification state in this predicate.",
+    "force_update": "Any nonzero val2 bypasses the same-item close predicate and continues through item assignment/update.",
+    "nonzero_val2_callers": [
+      "UIItemPurchaseWnd::OnLBtnDown fallback selected-item detail: Ref/UIItemWnd.cpp:8407-8412.",
+      "UIItemSellWnd::OnLBtnDown fallback selected-item detail: Ref/UIItemWnd.cpp:9205-9212.",
+      "UIItemShopWnd::OnLBtnDown fallback selected-item detail: Ref/UIItemWnd.cpp:9894-9902.",
+      "UIMerchantItemPurchaseWnd::OnLBtnDown fallback selected-item detail: Ref/UIItemWnd.cpp:12454-12460.",
+      "UIMerchantItemShopWnd::OnLBtnDown fallback selected-item detail: Ref/UIItemWnd.cpp:13104-13112."
+    ],
+    "zero_val2_callers": "The observed primary right-click detail calls in Ref/UIItemWnd.cpp and Ref/UIFrameWnd2.cpp pass val2=0. They pass item snapshots and no cursor x/y values."
+  },
+  "dynamic_size": {
+    "with_identified_slots": "Resize to height 149 when identified and having slots, unless the current height equals 144; Ref/UIFrameWnd2.cpp:9359-9366.",
+    "otherwise": "Resize to height 120 unless the current height already equals 120; Ref/UIFrameWnd2.cpp:9367-9373.",
+    "decompiler_note": "The identified-slot branch checks current height 144 but resizes to 149. Preserve this as an observed decompiler oddity; do not normalize the check without independent evidence."
+  }
+}

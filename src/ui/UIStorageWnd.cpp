@@ -9,6 +9,7 @@
 #include "UIWindowMgr.h"
 #include "core/File.h"
 #include "item/Item.h"
+#include "item/ItemTab.h"
 #include "main/WinMain.h"
 #include "qtui/QtUiRuntime.h"
 #include "render/DC.h"
@@ -387,57 +388,11 @@ void DrawWindowTextRect(HDC hdc, const RECT& rect, const std::string& text, COLO
     SelectObject(hdc, oldFont);
 }
 
-bool IsUsableTabType(int itemType)
-{
-    return static_cast<unsigned int>(itemType) <= 2u || itemType == 18;
-}
-
-bool IsEquipTabType(int itemType)
-{
-    switch (itemType) {
-    case 4:
-    case 5:
-    case 8:
-    case 9:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-        return true;
-    default:
-        return false;
-    }
-}
-
-bool IsEtcTabType(int itemType)
-{
-    switch (itemType) {
-    case 3:
-    case 6:
-    case 7:
-    case 10:
-    case 16:
-    case 17:
-        return true;
-    default:
-        return false;
-    }
-}
-
 bool ItemBelongsToTab(const ITEM_INFO& item, int tabIndex)
 {
-    switch (tabIndex) {
-    case 0:
-        return IsUsableTabType(item.m_itemType);
-    case 1:
-        return IsEquipTabType(item.m_itemType);
-    case 2:
-        return IsEtcTabType(item.m_itemType);
-    default:
-        return false;
-    }
+    return ro::item::ItemTypeBelongsToTab(item.m_itemType, tabIndex);
 }
+
 
 std::string BuildShortItemLabel(const ITEM_INFO& item)
 {

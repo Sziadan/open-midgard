@@ -1,0 +1,61 @@
+{
+  "date": "2026-11-05",
+  "baseline": "e1f30eb486048e33b406a945f1635c3117414c4c",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.10): share primary item tab classification",
+  "source_sha256": {
+    "CMakeLists.txt": "4aecc44407414a108acf583e4fcfe204f7c8891e559a39f5d9a45c8dd42b7e65",
+    "src/item/ItemTab.h": "254ee55ea22969f65910b2d73ffe3e4e69d8d3216c033c85e8b4f3497a40f2ba",
+    "src/ui/UIItemWnd.cpp": "5ec9aee3be288de5e69bfc248c8be167aef2d2df4d50ecb7c8cd37a63a2cc778",
+    "src/ui/UIStorageWnd.cpp": "09e0063f4e93b987b909431a821f994d277065828940cf698da1f5bdac52fd01",
+    "src/qtui/QtCommerce.cpp": "5565ec426deeb3129fd835b1e9030979f986d6073c90818507c422d0135dfb10",
+    "src/qtui/qml/RoCommerce.qml": "4a8cacfcc4cebee530aa9ae009b20df6ee6db1b699cc9184f6d8dde903a4f869",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "b63acc9f040b7f72e2b857ce17a7990fedbe5f7bd3bb74cc6556f9ee6324473d",
+    "tools/tests/replay/ItemCategoryRenderChecks.inc": "7a63f421859c7976742601cb0c4bfe9b7abf3c561d2e17a001f2122f42326b56"
+  },
+  "fixture_sha256": {
+    "tools/tests/fixtures/packet-item-data/item-type-source-cases.json": "a69682a0cdca73d582cecfb9254dee6cdc663b351e0cb75d1abef51654740c48"
+  },
+  "oracle_sha256": {
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIControl.cpp": "1c35fbb92f87961edb4eb6cea00cccd623d7535dc1c48b4cf5e876345d670c59",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIRectInfo.cpp": "e966ca8d73cd295750d9d1abd0a0595b77112b3ae956efd5b41809ba98beaa11",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\common\\mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\itemdb.cpp": "3b51a2bbcb44c5ffbdb5dc04683dd4f567c2da92f56a4bc0008aa9a93de5efe5",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "6673d506696ffbfde4a11311afb24b0672cdad6ade4296aceb78de502137c33d",
+    "packet_stream_replay_checks.exe": "0ec26f5b4be7a6c4200294a2794b5db1bb8b6b8a79de3a47c342d0aca2035250",
+    "open-midgard.exe": "9a20c3bf71be81fb5692b212e9e5ed9854253267f8f1a43af3189b6fc72b05c2"
+  },
+  "validation": {
+    "ctest_passed": 111,
+    "ctest_total": 111,
+    "ctest_seconds": 91.37,
+    "packet_PASS_records": 167,
+    "selected_source_type_cases": 12,
+    "historical_synthetic_cases": 12,
+    "category_frames": 10,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "d306fd200b819f16f289fb8f0ce51aa99098301565d213c3944e651790e5d44e",
+    "ctest_log_sha256": "1f427b07a95ff6b809b7f7ad88478e593d26faaa21a818784585c993ae03d336"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK09.10-tab-renders/item-category-moved-other-qt.png": "4359c02cf4fbf9d796bc897e4e14f9dedbe077218e1e0f6496a32bfbdf937b0e",
+    "evidence/PK09.10-tab-renders/item-category-native-inventory-tab-1.png": "03bcfd08a0fb78da13aec1ede3e2ef3ed69bae81f0091e19bee739783f5f9899",
+    "evidence/PK09.10-tab-renders/item-category-native-storage-tab-2.png": "a53238ed2b900ef9aff7722e34a1359f2b92a2e326510f10effd2cd33b3370c7",
+    "evidence/PK09.10-tab-renders/item-category-qt-tab-0.png": "e682f454f9658bd2ee2c8ad09e7193799edd6f6fd559221649c92796c6e30e17",
+    "evidence/PK09.10-tab-renders/item-category-render-results.json": "62d467f2cf38d95618a39d9ecf24ed07273c4f02287312dc1f1346af8d5cd918",
+    "evidence/PK09.10-tab-renders/item-category-results.json": "469e01bfdf6808a1bf71ced848514d9abe7ca140b2689655f54b2a5a6fff83f9"
+  },
+  "scope_limits": [
+    "Visual groups are not wire record categories",
+    "Only source ID/type fields certified; other fixture metadata synthetic",
+    "Historical aliases and unknown types tested as session-state probes, not selected emissions",
+    "No connected primary subtype UI; do not infer labels/options",
+    "No discovery closure/full PK09.04/PK48/49 acceptance",
+    "Saved-tab restart/detail-toggle/locale/art/historical/deployed acceptance remain open"
+  ]
+}

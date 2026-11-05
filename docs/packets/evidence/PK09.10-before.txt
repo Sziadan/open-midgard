@@ -1,0 +1,16 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 8: packet_item_category_render_checks
+1/1 Test #8: packet_item_category_render_checks ...***Failed    0.83 sec
+category mismatch tab=0 type=18 id=9553 index=202
+category mismatch tab=0 type=1 id=1201 index=212
+category mismatch tab=0 type=11 id=1201 index=214
+FAIL item colour render: Qt commerce inventory IDs/indices differ from source tab categories
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.83 sec
+
+The following tests FAILED:
+	  8 - packet_item_category_render_checks (Failed)
+Errors while running CTest

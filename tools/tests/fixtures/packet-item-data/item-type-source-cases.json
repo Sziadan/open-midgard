@@ -1,0 +1,247 @@
+{
+  "scope": "PK09.04 selected Renewal item-type fixture rows",
+  "source": "C:/Users/sziad/source/repos/rathena-master; inspected local snapshot, deployed-server provenance unknown",
+  "enum": {
+    "path": "src/common/mmo.hpp:223-238",
+    "sha256": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "ids": {
+      "Healing": 0,
+      "Unknown": 1,
+      "Usable": 2,
+      "Etc": 3,
+      "Armor": 4,
+      "Weapon": 5,
+      "Card": 6,
+      "Petegg": 7,
+      "Petarmor": 8,
+      "Unknown2": 9,
+      "Ammo": 10,
+      "DelayConsume": 11,
+      "Shadowgear": 12,
+      "Cash": 18
+    }
+  },
+  "emitter": {
+    "path": "src/map/clif.cpp:109-119",
+    "sha256": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "rule": "Petegg emits Armor(4); Shadowgear emits Weapon(5) iff Locations includes EQP_SHADOW_WEAPON, otherwise Armor(4); other types pass through."
+  },
+  "loader": {
+    "path": "src/map/itemdb.cpp:1117-1127",
+    "sha256": "3b51a2bbcb44c5ffbdb5dc04683dd4f567c2da92f56a4bc0008aa9a93de5efe5",
+    "rule": "IT_DELAYCONSUME(11) is rewritten to IT_USABLE(2) during loadingFinished."
+  },
+  "effective_db": {
+    "root": "db (conf/map_athena.conf:74-75)",
+    "renewal_selection": "src/config/core.hpp:117 includes renewal.hpp; renewal.hpp:24 defines RENEWAL. db/item_db.yml:90-97 selects db/re/item_db.yml then db/import/item_db.yml.",
+    "renewal_imports": [
+      "db/re/item_db_usable.yml",
+      "db/re/item_db_equip.yml",
+      "db/re/item_db_etc.yml"
+    ],
+    "custom_import_rows": 0
+  },
+  "fixtures": [
+    {
+      "id": 501,
+      "aegis_name": "Red_Potion",
+      "name": "Red Potion",
+      "raw_type": "Healing",
+      "db_path": "db/re/item_db_usable.yml",
+      "row_line": 99,
+      "file_sha256": "865e1eb2da0965af62e061cffe78d01185dab9765e7444a7d6fa5a7bfc7bb984",
+      "emitted_rationale": "Healing passes through itemtype unchanged.",
+      "emitted_type": 0,
+      "raw_type_id": 0
+    },
+    {
+      "id": 603,
+      "aegis_name": "Old_Blue_Box",
+      "name": "Old Blue Box",
+      "raw_type": "Usable",
+      "db_path": "db/re/item_db_usable.yml",
+      "row_line": 1096,
+      "file_sha256": "865e1eb2da0965af62e061cffe78d01185dab9765e7444a7d6fa5a7bfc7bb984",
+      "emitted_rationale": "Usable passes through itemtype unchanged.",
+      "emitted_type": 2,
+      "raw_type_id": 2
+    },
+    {
+      "id": 9553,
+      "aegis_name": "C_CatPaw_7Day_Box_",
+      "name": "Infinite Cat Hand Ticket Box(7 Days)",
+      "raw_type": "Cash",
+      "db_path": "db/re/item_db_usable.yml",
+      "row_line": 2205,
+      "file_sha256": "865e1eb2da0965af62e061cffe78d01185dab9765e7444a7d6fa5a7bfc7bb984",
+      "emitted_rationale": "Cash is not special-cased by itemtype and remains 18.",
+      "emitted_type": 18,
+      "raw_type_id": 18
+    },
+    {
+      "id": 601,
+      "aegis_name": "Wing_Of_Fly",
+      "name": "Fly Wing",
+      "raw_type": "DelayConsume",
+      "db_path": "db/re/item_db_usable.yml",
+      "row_line": 1076,
+      "file_sha256": "865e1eb2da0965af62e061cffe78d01185dab9765e7444a7d6fa5a7bfc7bb984",
+      "emitted_rationale": "Loader normalizes 11 to Usable(2) before itemtype emits it.",
+      "emitted_type": 2,
+      "raw_type_id": 11
+    },
+    {
+      "id": 2101,
+      "aegis_name": "Guard",
+      "name": "Guard",
+      "raw_type": "Armor",
+      "db_path": "db/re/item_db_equip.yml",
+      "row_line": 22974,
+      "file_sha256": "51a659022c7fb2a4208805af90e77c228239f390f829b0ead60304daea5007d7",
+      "emitted_rationale": "Armor passes through as 4; row Locations has Left_Hand, not Shadow_Weapon.",
+      "emitted_type": 4,
+      "raw_type_id": 4
+    },
+    {
+      "id": 1100,
+      "aegis_name": "Taurus_Sword_J",
+      "name": "Taurus Sword",
+      "raw_type": "Weapon",
+      "db_path": "db/re/item_db_equip.yml",
+      "row_line": 92,
+      "file_sha256": "51a659022c7fb2a4208805af90e77c228239f390f829b0ead60304daea5007d7",
+      "emitted_rationale": "Weapon passes through as 5; row Locations has Right_Hand.",
+      "emitted_type": 5,
+      "raw_type_id": 5
+    },
+    {
+      "id": 4001,
+      "aegis_name": "Poring_Card",
+      "name": "Poring Card",
+      "raw_type": "Card",
+      "db_path": "db/re/item_db_etc.yml",
+      "row_line": 2668,
+      "file_sha256": "a0e1216735746e6c08226481df05cbe92718ae593fab928ab7367c50b5da96f0",
+      "emitted_rationale": "Card passes through as 6.",
+      "emitted_type": 6,
+      "raw_type_id": 6
+    },
+    {
+      "id": 9001,
+      "aegis_name": "Poring_Egg",
+      "name": "Poring Egg",
+      "raw_type": "Petegg",
+      "db_path": "db/re/item_db_equip.yml",
+      "row_line": 58201,
+      "file_sha256": "51a659022c7fb2a4208805af90e77c228239f390f829b0ead60304daea5007d7",
+      "emitted_rationale": "Petegg normalizes to Armor(4) in itemtype.",
+      "emitted_type": 4,
+      "raw_type_id": 7
+    },
+    {
+      "id": 10001,
+      "aegis_name": "Skull_Helm",
+      "name": "Skull Helm",
+      "raw_type": "Petarmor",
+      "db_path": "db/re/item_db_equip.yml",
+      "row_line": 58939,
+      "file_sha256": "51a659022c7fb2a4208805af90e77c228239f390f829b0ead60304daea5007d7",
+      "emitted_rationale": "Petarmor passes through as 8.",
+      "emitted_type": 8,
+      "raw_type_id": 8
+    },
+    {
+      "id": 1750,
+      "aegis_name": "Arrow",
+      "name": "Arrow",
+      "raw_type": "Ammo",
+      "db_path": "db/re/item_db_etc.yml",
+      "row_line": 2122,
+      "file_sha256": "a0e1216735746e6c08226481df05cbe92718ae593fab928ab7367c50b5da96f0",
+      "emitted_rationale": "Ammo passes through as 10.",
+      "emitted_type": 10,
+      "raw_type_id": 10
+    },
+    {
+      "id": 15280,
+      "aegis_name": "S_CriticalHit_Armor",
+      "name": "Critical Hit Shadow Armor",
+      "raw_type": "Shadowgear",
+      "locations": [
+        "Shadow_Armor: true"
+      ],
+      "db_path": "db/re/item_db_equip.yml",
+      "row_line": 74257,
+      "file_sha256": "51a659022c7fb2a4208805af90e77c228239f390f829b0ead60304daea5007d7",
+      "emitted_rationale": "Inspected Locations lacks Shadow_Weapon, so itemtype emits Armor(4).",
+      "emitted_type": 4,
+      "raw_type_id": 12
+    },
+    {
+      "id": 24001,
+      "aegis_name": "T_Dex1_Weapon_S",
+      "name": "Shadow Gauntlets (Tier 1)",
+      "raw_type": "Shadowgear",
+      "locations": [
+        "Shadow_Weapon: true"
+      ],
+      "db_path": "db/re/item_db_equip.yml",
+      "row_line": 122654,
+      "file_sha256": "51a659022c7fb2a4208805af90e77c228239f390f829b0ead60304daea5007d7",
+      "emitted_rationale": "Inspected Locations has Shadow_Weapon, so EQP_SHADOW_WEAPON maps it to Weapon(5).",
+      "emitted_type": 5,
+      "raw_type_id": 12
+    }
+  ],
+  "historical_only_tab_branch_probes": [
+    {
+      "type_id": 1,
+      "legacy_tab": "usable",
+      "kind": "synthetic branch probe; not a selected emitted fixture"
+    },
+    {
+      "type_id": 9,
+      "legacy_tab": "equipment",
+      "kind": "synthetic branch probe; not a selected emitted fixture"
+    },
+    {
+      "type_id": 11,
+      "legacy_tab": "equipment",
+      "kind": "synthetic branch probe; loader-normalized in selected source"
+    },
+    {
+      "type_id": 12,
+      "legacy_tab": "equipment",
+      "kind": "synthetic branch probe; source itemtype normalizes shadowgear"
+    },
+    {
+      "type_id": 13,
+      "legacy_tab": "equipment",
+      "kind": "synthetic branch probe; not a selected emitted fixture"
+    },
+    {
+      "type_id": 14,
+      "legacy_tab": "equipment",
+      "kind": "synthetic branch probe; not a selected emitted fixture"
+    },
+    {
+      "type_id": 15,
+      "legacy_tab": "equipment",
+      "kind": "synthetic branch probe; not a selected emitted fixture"
+    },
+    {
+      "type_id": 16,
+      "legacy_tab": "etc",
+      "kind": "synthetic branch probe; not a selected emitted fixture"
+    },
+    {
+      "type_id": 17,
+      "legacy_tab": "etc",
+      "kind": "synthetic branch probe; not a selected emitted fixture"
+    }
+  ],
+  "legacy_tab_reference": "Ref/UIItemWnd.cpp:1362-1443; selected ref branch categories, not live server data.",
+  "name_asset_certification": "Names and AegisNames are copied from selected source rows; item-name/icon asset availability is not certified against the old client.",
+  "status": "Fixture inputs only; no acceptance or deployed-server claim.",
+  "wire_fixture_scope": "Source rows certify item ID and normalized type. Test quantities, wear/location masks and synthetic lifecycle row identities are projection probes, not full server item-state or transaction validity."
+}

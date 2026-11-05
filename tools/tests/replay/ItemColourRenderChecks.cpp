@@ -33,6 +33,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QFile>
+#include <set>
+#include <type_traits>
 #include <QDir>
 #include <algorithm>
 #include <array>
@@ -135,6 +137,7 @@ template<class Window> QImage Native(Window& window,QRgb expected) {
 #include "SpecialItemNameRenderChecks.inc"
 #include "RentalItemRenderChecks.inc"
 #include "CommerceItemDetailRenderChecks.inc"
+#include "ItemCategoryRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -147,6 +150,7 @@ int main(int argc,char** argv) {
         const bool specialOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="special-names";
         const bool rentalOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="rental-items";
         const bool commerceDetailsOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="commerce-details";
+        const bool itemCategoriesOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="item-categories";
         if(specialOnly || rentalOnly) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(rentalOnly?"rental-msgstringtable.txt":"special-name-msgstringtable.txt"));
             Require(source.open(QIODevice::ReadOnly),"special source message fixture missing");
@@ -187,6 +191,16 @@ int main(int argc,char** argv) {
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
+        if(itemCategoriesOnly) {
+            CheckItemCategoryUi(app,view,state,mode,inventory,storage,adapter,output);
+            Require(errors==0,"item category UI emitted QML errors");
+            QFile file(output+"/item-category-render-results.json");
+            Require(file.open(QIODevice::WriteOnly),"open item category render results failed");
+            file.write(QJsonDocument(QJsonObject{{"qml_errors",errors},{"outcome","PASS"}}).toJson());
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS item category source/native/Qt rendering\n";return 0;
+        }
         if(commerceDetailsOnly) {
             CheckCommerceItemDetails(app,view,state,mode,adapter,output);
             Require(errors==0,"commerce item details emitted QML errors");

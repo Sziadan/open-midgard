@@ -1,0 +1,82 @@
+{
+    "extra_synthetic_probes": 3,
+    "frames": 10,
+    "historical_synthetic_probes": 9,
+    "outcome": "PASS",
+    "source_fixture_rows": 12,
+    "tab_cases": [
+        {
+            "expected_indices": [
+                200,
+                201,
+                202,
+                203,
+                212
+            ],
+            "inventory_count": 5,
+            "native_inventory": "PASS",
+            "native_storage": "PASS",
+            "qml_action": "PASS",
+            "tab": 0
+        },
+        {
+            "expected_indices": [
+                204,
+                205,
+                207,
+                208,
+                210,
+                211,
+                213,
+                214,
+                215,
+                216,
+                217,
+                218
+            ],
+            "inventory_count": 12,
+            "native_inventory": "PASS",
+            "native_storage": "PASS",
+            "qml_action": "PASS",
+            "tab": 1
+        },
+        {
+            "expected_indices": [
+                206,
+                209,
+                219,
+                220,
+                221
+            ],
+            "inventory_count": 5,
+            "native_inventory": "PASS",
+            "native_storage": "PASS",
+            "qml_action": "PASS",
+            "tab": 2
+        },
+        {
+            "case": "worn equipment excluded; ammo retained",
+            "outcome": "PASS"
+        },
+        {
+            "case": "malformed snapshot atomicity",
+            "outcome": "PASS"
+        },
+        {
+            "case": "raw type changes across normal snapshot refresh",
+            "outcome": "PASS"
+        },
+        {
+            "case": "stationary hover cleanup on type move",
+            "outcome": "PASS"
+        },
+        {
+            "case": "empty and replacement snapshots",
+            "outcome": "PASS"
+        },
+        {
+            "case": "inventory tab preference survives commerce reset",
+            "outcome": "PASS"
+        }
+    ]
+}
