@@ -1,8 +1,12 @@
 # rAthena-authoritative packet implementation plan
 
+**Remaining stronger-source decisions completed (2026-11-05):** [follow-up adjudication](packets/evidence/STRONG-UNBLOCK-2026-11-05.md) supplies concrete NPC representation, ShowEFST ownership and legacy-mail contracts. Timed 0x043F is inactive for selected 20080910; PK24.05 preserves the reviewed legacy 331/332 behavior. Reviewed source dispositions do not certify runtime or UI completion.
+
 Created 2026-11-03. This is an execution specification, not a claim that any runtime finding has been fixed.
 
 ## Start here
+
+**Current continuation priority (2026-11-05 reviewed clean checkpoint):** runtime commit `fde621a1` and [fresh exported-candidate verification](packets/evidence/REVIEW-CLEAN-2026-11-05.md) complete PK14.07 and scoped PK14.05. Continue **PK05.05 → remaining PK14.06 → PK14.04 → PK23.05**, then bounded PK09/PK46 work. The inventory/cart correction and replay are committed; broader acceptance remains open. PK22.03 and PK24.05 are source/applicability dispositions with separate checkpoint commits. Read the current HANDOFF; historical dirty-tree deferrals no longer select the next task.
 
 Read this document, [STATUS](packets/STATUS.md), [HANDOFF](packets/HANDOFF.md), then the assigned card in [WORK_PACKAGES](packets/WORK_PACKAGES.md). The machine inventory is [coverage.csv](packets/coverage.csv); task metadata is [work-packages.json](packets/work-packages.json). The original evidence is [packet audit](packet-audit/README.md). Use the [research runbook](packets/RESEARCH_RUNBOOK.md) for concrete source-navigation and task-splitting examples. Do one numbered leaf step at a time. Every completed leaf step requires its own self-reviewed commit and a user-facing progress update. Independent strong-agent review happens afterward and is not required between steps. Never claim a package complete because its decoder compiles.
 

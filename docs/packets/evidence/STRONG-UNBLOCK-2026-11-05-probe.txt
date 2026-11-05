@@ -1,0 +1,6 @@
+PACKETVER=20080910 SAK=20080910 MAIN=20080910
+NPCSPRITE opcode=01b0 size=11 GID=2 type=6 class=7
+SHOWEFST opcode=028a size=18 gid=2 option=6 level=10 opt3=14
+selected_status opcode=0196 size=9 alternate_status opcode=043f size=25 Left=9 val1=13 val2=17 val3=21
+MAIL_MAX_INBOX=30 MAIL_TITLE_LENGTH=40 MAIL_BODY_LENGTH=200 MAIL_MAX_ITEM=1
+clif_status_change_sub timed-043f emitter gate=disabled

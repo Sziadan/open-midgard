@@ -115,10 +115,11 @@ Tier: **S**. Dependencies: PK04.
 - **PK05.02 [S]** Replace destructive two-byte skipping with profile-derived bounded framing. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK05.03 [S]** Define explicit protocol-error/connection cleanup and malformed-frame reporting. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK05.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK05.05 [S]** Implement review R1 using the adjudicated mode-operation generation, terminal-latched production update preamble and accepted-ACK precedence matrix in work-items/PK05.05.md; no further stronger design approval is required. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
-P02: preserve alignment for valid concatenated packets. Never resynchronize by scanning payload. Known but missing handlers stay open feature tasks. Unknown size cannot safely be guessed.
+P02: preserve alignment for valid concatenated packets. Never resynchronize by scanning payload. Known but missing handlers stay open feature tasks. Unknown size cannot safely be guessed. Review R1 adds PK05.05: map-mode terminal failure must produce one-shot safe cleanup/status/transition, while open/no-data remains normal. Historical PK05.01-.04 completion does not close this repair.
 
 ### Discovery ownership
 
@@ -208,7 +209,7 @@ Tier: **S**. Dependencies: PK05.
 ### Bounded steps
 
 - **PK09.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK09.02 [S]** Resolve01EF duplicate router registration per profile. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.02 [S]** Apply the reviewed selected-20080910 mapping: normal/equipment inventory 02E8/02D0, cart 02E9/02D2; remove 01EF from selected equipment alias ownership and retain its historical normal-cart identity under PK47. Follow REVIEW-2026-11-05; source ambiguity is resolved, route tests/commit remain. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.03 [S]** Verify active normal/equipment/cart routes independently. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
@@ -338,11 +339,14 @@ Tier: **M**. Dependencies: PK05.
 - **PK14.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK14.02 [M]** Implement0107 by account ID with source-proven units/sentinels. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK14.03 [M]** Render/update/remove party minimap markers through existing party position state. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK14.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK14.04 [S]** After PK14.05 and PK14.06, verify production framing/router, full-roster preservation, actual map/session teardown, native/Qt marker eligibility/token and applicable visible UI. Preserve explicit remaining visual gates; then resume PK46.02. Follow work-items/PK14.04.md. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK14.05 [M]** Repair review R2: validate and atomically replace full party rosters while preserving compatible AID/map positions and HP; production-replay 0x0107 then 0x00FB, removal, identity/map changes and malformed arrays. Follow work-items/PK14.05.md. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK14.06 [S]** Repair review R3 after PK14.05: invalidate session-owned party coordinates at actual map/warp/session boundaries, share native/Qt map eligibility, and replay transition/token behavior. Follow work-items/PK14.06.md; then run PK14.04. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK14.07 [S]** Repair review R4: reconcile misplaced PK14.05 source/test declarations into an additive buildable checkpoint and verify the exact candidate/committed snapshot, preserving unrelated dirty work. Follow work-items/PK14.07.md; execute first. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
-P07: removal(-1) semantics, remote-map movement, roster loss, reconnect. L candidate after contract approval: marker state update.
+P07: removal(-1) semantics, remote-map movement, roster loss, reconnect. L candidate after contract approval: marker state update. Review R2/R3 requires PK14.05 then PK14.06 before PK14.04: prove full-roster preservation through the actual handler and invalidate session-owned coordinates at production map/session boundaries. Helper-only tests are insufficient. Review R4 reopens PK14.05 until PK14.07 validates an exact buildable candidate/commit; a dirty-tree replay is insufficient checkpoint provenance.
 
 ### Discovery ownership
 
@@ -482,7 +486,7 @@ Tier: **S**. Dependencies: PK05.
 ### Bounded steps
 
 - **PK20.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK20.02 [S]** Implement01B0 distinct from01D7 and rebuild actor representation. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK20.02 [S]** Implement 01B0 in-place representation changes using PK20.NPC-CLASS-LIFETIME; preserve actor identity and release old GR2 instances safely. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK20.03 [S]** Verify sprite/GR2 resource ownership picking and effects during replacement. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK20.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
@@ -525,9 +529,9 @@ Tier: **S**. Dependencies: PK05.
 ### Bounded steps
 
 - **PK22.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK22.02 [S]** Port028A branches and flag lifetimes beyond level99/Assumptio. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK22.03 [S]** Decode043F remaining value fields only under proven layout. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK22.04 [S]** Apply per-status start refresh end and actor teardown semantics. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK22.02 [S]** Port 028A using PK22.SHOWEFST-LIFETIME branch matrix and shared effect-owner reconciliation. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK22.03 [S]** Checkpoint PK22.TIMED-STATUS-043F selected-inactive proof; preserve historical layouts and do not invent selected timed fields. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK22.04 [S]** Apply shared status start/refresh/end/teardown ownership; repair unreachable icon aliases with production message-route checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK22.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
@@ -557,6 +561,7 @@ Tier: **S**. Dependencies: PK08, PK22.
 - **PK23.02 [S]** Enumerate every skill handler branch and connect to skill plan ownership. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK23.03 [S]** Verify damage cast target ground effect duration cancel and rejection semantics per contract. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK23.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK23.05 [M]** Repair review R5: restore the Ref-backed non-monster timed-cast mode-99 announcement branch through existing production head bubbles; replay ordinary/wedding/freeze/monster/zero-time cases. Follow work-items/PK23.05.md. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -576,6 +581,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK24.02 [S]** Audit signed widths HP/SP EXP stats and status increments. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK24.03 [S]** Verify actor state transitions and lifecycle ordering with extreme values. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK24.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK24.05 [M]** Resolve the exact 0x0284 effect/resource authority by numeric enum and selected emitter callsites before any healing change; build independent ordering oracles without equating EF_HEAL(312) with EF_HPTIME/EF_SPTIME(331/332). Follow work-items/PK24.05.md. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -730,9 +736,9 @@ Tier: **S**. Dependencies: PK03, PK10.
 ### Bounded steps
 
 - **PK32.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK32.02 [S]** Implement inbox0240 read0242 and new-mail024A. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK32.03 [S]** Implement attachment0245/0255 claim and zeny/item state. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK32.04 [S]** Implement delete0257 return0274 and full compose/send results. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK32.02 [S]** Implement legacy 0240/0242/024A inbox/read/notification with bounded records and existing-composer coordination. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK32.03 [S]** Implement legacy attachment staging/claim; correlate serialized ambiguous acknowledgements and authoritative resource updates. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK32.04 [S]** Implement delete/return/compose results with pending-ID correlation, failed-read 0274 handling and staged-compose refresh coordination. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK32.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps

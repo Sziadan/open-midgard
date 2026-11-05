@@ -1,0 +1,247 @@
+{
+  "profile": 20080910,
+  "authority": "Ref GameModeShowEFST plus selected clif_changeoption2/e_sc_opt3",
+  "scope": "branch specification; no implementation or lifetime test certificate",
+  "wire": {
+    "size": 18,
+    "GID": "u32@2",
+    "OPTION": "u32@6",
+    "level": "i32@10",
+    "OPT3": "u32@14"
+  },
+  "hide_branch_input": "current actor OPTION; incoming OPTION separately gates level-99 message",
+  "hidden_remove_one": {
+    "PC": [
+      203,
+      254,
+      418,
+      586
+    ],
+    "nonPC": [
+      203,
+      254,
+      418
+    ]
+  },
+  "blade_stop": {
+    "bit": "0x20",
+    "gray": [
+      64,
+      64,
+      64
+    ],
+    "PC_forced_animation_jobs": [
+      15,
+      4016,
+      4038
+    ],
+    "other_actors": "motion freeze",
+    "clear": "recompute from independent owner claims"
+  },
+  "branches": [
+    {
+      "actor": "PC-visible",
+      "bit": "0x1",
+      "effects": [
+        166
+      ],
+      "selector": "first present in listed selector order",
+      "message44_option": 130
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x2",
+      "effects": [
+        166
+      ],
+      "selector": "first present in listed selector order",
+      "message44_option": 128
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x4",
+      "effects": [
+        166
+      ],
+      "selector": "first present in listed selector order",
+      "message44_option": 169
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x4000",
+      "effects": [
+        617
+      ],
+      "selector": "first present in listed selector order",
+      "message44_option": null
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x8",
+      "effects": [
+        203
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x10",
+      "effects": [
+        254
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x40",
+      "effects": [
+        474
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x80",
+      "effects": [
+        368
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x100",
+      "effects": [
+        382
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x200",
+      "effects": [
+        394
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x400",
+      "effects": [
+        396
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x800",
+      "effects": [
+        375
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x1000",
+      "effects": [
+        418,
+        544
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x2000",
+      "effects": [
+        419
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x8000",
+      "effects": [
+        424
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x10000",
+      "effects": [
+        655
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "PC-visible",
+      "bit": "0x20000",
+      "effects": [
+        586
+      ],
+      "start_guard": "first listed effect absent",
+      "clear": "shared-owner reconciliation; no blanket Ref PC clear branch"
+    },
+    {
+      "actor": "nonPC-visible",
+      "bit": "0x2",
+      "effects": [
+        420
+      ],
+      "start_guard": "effect absent",
+      "clear": "remove all matching Ref instances",
+      "terminal_per_removed": 540
+    },
+    {
+      "actor": "nonPC-visible",
+      "bit": "0x4",
+      "effects": [
+        427
+      ],
+      "start_guard": "effect absent",
+      "clear": "remove all matching Ref instances",
+      "terminal_per_removed": null
+    },
+    {
+      "actor": "nonPC-visible",
+      "bit": "0x10",
+      "effects": [
+        254
+      ],
+      "start_guard": "effect absent",
+      "clear": "remove all matching Ref instances",
+      "terminal_per_removed": null
+    },
+    {
+      "actor": "nonPC-visible",
+      "bit": "0x10000",
+      "effects": [
+        655
+      ],
+      "start_guard": "effect absent",
+      "clear": "remove all matching Ref instances",
+      "terminal_per_removed": 656
+    },
+    {
+      "actor": "nonPC-visible",
+      "bit": "0x8000",
+      "effects": [
+        667
+      ],
+      "start_guard": "effect absent",
+      "clear": "remove all matching Ref instances",
+      "terminal_per_removed": null
+    }
+  ]
+}

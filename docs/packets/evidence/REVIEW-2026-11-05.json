@@ -1,0 +1,99 @@
+{
+  "date": "2026-11-05",
+  "head": "9aa752ab2da862c74f44b5e3cfe17e84c7c4e458",
+  "snapshot": "dirty working tree; distinct from committed source syntax check",
+  "review_scope": "implementation plus deferred source/security/model decisions; not global PK48 certification",
+  "server_source_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "src/common/packets.hpp": "07b47b66a41ed05433f852e399ba1d714ba728074f76633ad77bc2f7720d79ef",
+    "src/common/socket.cpp": "df83905f0b336a6fedddd51638dd3dcd5668a1a23a77c59c13885842c66f3ee3",
+    "src/common/socket.hpp": "36f4024c46cc3aed017e25019a8c651af15e485cbbec04477225d842c96f5346",
+    "src/common/strlib.cpp": "4dee69dd4f2d318c99602b0fc224d3e6a40807bd96e64fb0a790494e4e2f41f8",
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/clif.hpp": "4be8d550c203378b4444655922927fa309e5c513bd43819b1877ad7f24c27c5d",
+    "src/map/party.cpp": "5a87d5e1ce5260145aa7dc7b5dd3f0a9c878c05c2f20d8e7db893b38a723d75f",
+    "src/map/map.cpp": "5c4c1e3ce2b386f8230bd60aab4aeed3353c62162cbbffc5af2eabed1e27faf8",
+    "src/map/script.hpp": "5e8f5a95569af50c647f803af53b5a489cf4d71727808724ea71577ac835bb7b",
+    "src/map/battle.cpp": "7dbba790036d9666db67d5ab483630f421cc613a253116af56b49f2985499573",
+    "src/map/status.cpp": "64df60335b337a2a274e52178529eab263fb273dd6739922f08a9df5e48334e3",
+    "src/map/pc.cpp": "e94af5e1b173cc442ee0b14f69ebd402f5703deea1d51fca36df8f9a69244a4e",
+    "src/login/loginclif.cpp": "a0eea56f5a41286674ae27caad5b57e192b298e20c0fddc38f015b0c2ece5e3f",
+    "src/char/char_clif.cpp": "5fcc31adcf30d0192be8e2dbb825efa1a0a0cde74eae5ebe9b0f7615ee3175d7",
+    "src/char/char.cpp": "1ea07e91f935abd08c0f76b53ed8499ff5cf6edb1ed56344cdca97282e9ba8cc"
+  },
+  "matching_previously_pinned_inputs": {
+    "src/custom/defines_pre.hpp": true,
+    "src/config/packets.hpp": true,
+    "src/common/mmo.hpp": true,
+    "src/common/packets.hpp": true,
+    "src/map/packets.hpp": true,
+    "src/map/packets_struct.hpp": true,
+    "src/map/clif_packetdb.hpp": true,
+    "src/map/clif.cpp": true,
+    "src/login/loginclif.cpp": true,
+    "src/char/char_clif.cpp": true
+  },
+  "client_source_sha256": {
+    "src/gamemode/GameMode.cpp": "2ff2ef4bf0755595998c60660ff6ae8f0ab6510d081fef81986a7d391f110515",
+    "src/gamemode/GameModePacket.cpp": "9360bd30705d8028b701d915e32b1e2767f30cf7d995ee3b70dddd6b851b5bbd",
+    "src/gamemode/LoginMode.cpp": "0f5a4b4279007e2aa85d39a1dd9ac6c0bb2bf191b1b77b6653c1ee1e2f8766f7",
+    "src/gamemode/Mode.cpp": "486e50030840104e14ada09df7e116efb03526d6d83dfbe2f6513d9e24a6c6ba",
+    "src/session/Session.cpp": "2c241ebdda25880d0ee65621fe4f705fe641f56482e5bdec2915b22e33c5ddb3",
+    "src/session/Session.h": "8753a2873eacd0b0b8b90dba7787f45f0b570fd872d8eea297942278deae462c",
+    "src/ui/UIMinimapWnd.cpp": "104e2c4b6d7aeb055e2eab4c7b9622cc81fba3a8950b1d6521eaed4c4fb33496",
+    "src/network/MapSendProfile.cpp": "e21705392cdd126ae6037c5cfa109a5978674eca86bf64a5bd48c05a269ce0a4",
+    "tools/tests/replay/PacketStreamReplay.cpp": "75de7bb4cabcd023d972993b5d4fb2809252b340a5ee40b6986363ad0672907b",
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39"
+  },
+  "build_command": "cmake --build --preset build-mingw-qt-x64-ci --target packet_stream_replay_checks open_midgard -j 6",
+  "build_exit": 0,
+  "developer_deploy": false,
+  "packet_replay": true,
+  "test_command": "ctest --test-dir build-mingw-preset -R '^packet_stream_replay_checks$' --output-on-failure",
+  "test_exit": 0,
+  "test_seconds": 4.56,
+  "loopback_permission": "authorized rerun outside sandbox after initial Connect denial",
+  "json_records": 155,
+  "json_outcomes": {
+    "PASS": 155
+  },
+  "binaries": {
+    "build-mingw-preset/open-midgard.exe": {
+      "sha256": "deb6ee2a89f99c18214fc80382b7d8a517aa98056ace9269bbc8538b39b95feb",
+      "bytes": 19687500,
+      "mtime_unix": 1793867490.004152
+    },
+    "build-mingw-preset/packet_stream_replay_checks.exe": {
+      "sha256": "923ca42bf2c39422d1ea00995256e504ce5c7c7a4ecdf47a16192b9726e618ae",
+      "bytes": 20094884,
+      "mtime_unix": 1793870758.2826214
+    }
+  },
+  "server_layout_probe_output": "PACKETVER=20080910 SAK=20080910 MAIN=20080910\ninventory normal=02e8 equipment=02d0 cart normal=02e9 equipment=02d2\nidle=02ee/60 spawn=02ed/59 walk=02ec/67 fallback idle=0078/55 spawn=007c/42\ncast=013e/24 src=2 dst=6 x=10 skill=14 element=16 delay=20\n",
+  "server_layout_probe_source_sha256": "cfbb333b7578c10080b26d5f66f12fbb361578fec3093db9459e07483a6a2b17",
+  "server_layout_probe_command": "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -Ibuild-mingw-preset/packet-audit -IC:/Users/sziad/source/repos/rathena-master/src -IC:/Users/sziad/source/repos/rathena-master/3rdparty -IC:/Users/sziad/source/repos/rathena-master/3rdparty/libconfig build-mingw-preset/review-2026-11-05/layout-review.cpp -o build-mingw-preset/review-2026-11-05/layout-review.exe",
+  "server_include_shim_sha256": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c",
+  "committed_session_syntax_exit": 1,
+  "committed_session_syntax_output": "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\review-2026-11-05\\committed-Session.cpp:2085:1: error: expected initializer before 'bool'\n 2085 | bool CSession::ReplacePartyRoster(const std::string& partyName, const std::vector<FRIEND_INFO>& members)\n      | ^~~~\nD:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\review-2026-11-05\\committed-Session.cpp:2129:1: error: expected unqualified-id before '{' token\n 2129 | {\n      | ^\n",
+  "committed_session_probe_note": "git show HEAD:src/session/Session.cpp saved into build directory and checked with current include response; proves syntax defect, not full clean build",
+  "external_source_modified": false,
+  "hostile_server_replay": false,
+  "effect_enum_source_crosscheck": {
+    "EF_HEAL": 312,
+    "EF_HEAL2": 313,
+    "EF_HPTIME": 331,
+    "EF_SPTIME": 332,
+    "method": "read selected script.hpp e_special_effects sequential enum values; not inferred from names",
+    "scope": "battle EF_HEAL caller does not prove a 331/332 double heal"
+  },
+  "documentation_validation": {
+    "plan_checker": "PASS: 51 packages, 238 numbered steps, 990 discovery owners; planning consistency only",
+    "diff_check": "PASS",
+    "current_summary_and_repair_link_check": "PASS"
+  }
+}

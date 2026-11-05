@@ -179,9 +179,14 @@
         "id": "PK05.04",
         "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
+      },
+      {
+        "id": "PK05.05",
+        "action": "Implement review R1 using the adjudicated mode-operation generation, terminal-latched production update preamble and accepted-ACK precedence matrix in work-items/PK05.05.md; no further stronger design approval is required.",
+        "tier": "S"
       }
     ],
-    "acceptance": "P02: preserve alignment for valid concatenated packets. Never resynchronize by scanning payload. Known but missing handlers stay open feature tasks. Unknown size cannot safely be guessed."
+    "acceptance": "P02: preserve alignment for valid concatenated packets. Never resynchronize by scanning payload. Known but missing handlers stay open feature tasks. Unknown size cannot safely be guessed. Review R1 adds PK05.05: map-mode terminal failure must produce one-shot safe cleanup/status/transition, while open/no-data remains normal. Historical PK05.01-.04 completion does not close this repair."
   },
   {
     "id": "PK06",
@@ -291,7 +296,7 @@
       },
       {
         "id": "PK09.02",
-        "action": "Resolve01EF duplicate router registration per profile.",
+        "action": "Apply the reviewed selected-20080910 mapping: normal/equipment inventory 02E8/02D0, cart 02E9/02D2; remove 01EF from selected equipment alias ownership and retain its historical normal-cart identity under PK47. Follow REVIEW-2026-11-05; source ambiguity is resolved, route tests/commit remain.",
         "tier": "S"
       },
       {
@@ -467,11 +472,26 @@
       },
       {
         "id": "PK14.04",
-        "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
+        "action": "After PK14.05 and PK14.06, verify production framing/router, full-roster preservation, actual map/session teardown, native/Qt marker eligibility/token and applicable visible UI. Preserve explicit remaining visual gates; then resume PK46.02. Follow work-items/PK14.04.md.",
         "tier": "S"
+      },
+      {
+        "id": "PK14.05",
+        "action": "Repair review R2: validate and atomically replace full party rosters while preserving compatible AID/map positions and HP; production-replay 0x0107 then 0x00FB, removal, identity/map changes and malformed arrays. Follow work-items/PK14.05.md.",
+        "tier": "M"
+      },
+      {
+        "id": "PK14.06",
+        "action": "Repair review R3 after PK14.05: invalidate session-owned party coordinates at actual map/warp/session boundaries, share native/Qt map eligibility, and replay transition/token behavior. Follow work-items/PK14.06.md; then run PK14.04.",
+        "tier": "S"
+      },
+      {
+        "id": "PK14.07",
+        "tier": "S",
+        "action": "Repair review R4: reconcile misplaced PK14.05 source/test declarations into an additive buildable checkpoint and verify the exact candidate/committed snapshot, preserving unrelated dirty work. Follow work-items/PK14.07.md; execute first."
       }
     ],
-    "acceptance": "P07: removal(-1) semantics, remote-map movement, roster loss, reconnect. L candidate after contract approval: marker state update."
+    "acceptance": "P07: removal(-1) semantics, remote-map movement, roster loss, reconnect. L candidate after contract approval: marker state update. Review R2/R3 requires PK14.05 then PK14.06 before PK14.04: prove full-roster preservation through the actual handler and invalidate session-owned coordinates at production map/session boundaries. Helper-only tests are insufficient. Review R4 reopens PK14.05 until PK14.07 validates an exact buildable candidate/commit; a dirty-tree replay is insufficient checkpoint provenance."
   },
   {
     "id": "PK15",
@@ -650,7 +670,7 @@
       },
       {
         "id": "PK20.02",
-        "action": "Implement01B0 distinct from01D7 and rebuild actor representation.",
+        "action": "Implement 01B0 in-place representation changes using PK20.NPC-CLASS-LIFETIME; preserve actor identity and release old GR2 instances safely.",
         "tier": "S"
       },
       {
@@ -713,17 +733,17 @@
       },
       {
         "id": "PK22.02",
-        "action": "Port028A branches and flag lifetimes beyond level99/Assumptio.",
+        "action": "Port 028A using PK22.SHOWEFST-LIFETIME branch matrix and shared effect-owner reconciliation.",
         "tier": "S"
       },
       {
         "id": "PK22.03",
-        "action": "Decode043F remaining value fields only under proven layout.",
+        "action": "Checkpoint PK22.TIMED-STATUS-043F selected-inactive proof; preserve historical layouts and do not invent selected timed fields.",
         "tier": "S"
       },
       {
         "id": "PK22.04",
-        "action": "Apply per-status start refresh end and actor teardown semantics.",
+        "action": "Apply shared status start/refresh/end/teardown ownership; repair unreachable icon aliases with production message-route checks.",
         "tier": "S"
       },
       {
@@ -762,6 +782,11 @@
         "id": "PK23.04",
         "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
+      },
+      {
+        "id": "PK23.05",
+        "tier": "M",
+        "action": "Repair review R5: restore the Ref-backed non-monster timed-cast mode-99 announcement branch through existing production head bubbles; replay ordinary/wedding/freeze/monster/zero-time cases. Follow work-items/PK23.05.md."
       }
     ],
     "acceptance": "All registered skill handlers need field/branch evidence. Existing skill plan cannot override server wire truth. Break into named handler leaf steps before coding, avoid generic effect fallbacks."
@@ -793,6 +818,11 @@
         "id": "PK24.04",
         "action": "Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review.",
         "tier": "S"
+      },
+      {
+        "id": "PK24.05",
+        "tier": "M",
+        "action": "Resolve the exact 0x0284 effect/resource authority by numeric enum and selected emitter callsites before any healing change; build independent ordering oracles without equating EF_HEAL(312) with EF_HPTIME/EF_SPTIME(331/332). Follow work-items/PK24.05.md."
       }
     ],
     "acceptance": "Do not truncate HP or use overflow-prone percentage arithmetic. Source distinguishes display from authoritative resources. Hallucination display must not mutate actual damage state."
@@ -1036,17 +1066,17 @@
       },
       {
         "id": "PK32.02",
-        "action": "Implement inbox0240 read0242 and new-mail024A.",
+        "action": "Implement legacy 0240/0242/024A inbox/read/notification with bounded records and existing-composer coordination.",
         "tier": "S"
       },
       {
         "id": "PK32.03",
-        "action": "Implement attachment0245/0255 claim and zeny/item state.",
+        "action": "Implement legacy attachment staging/claim; correlate serialized ambiguous acknowledgements and authoritative resource updates.",
         "tier": "S"
       },
       {
         "id": "PK32.04",
-        "action": "Implement delete0257 return0274 and full compose/send results.",
+        "action": "Implement delete/return/compose results with pending-ID correlation, failed-read 0274 handling and staged-compose refresh coordination.",
         "tier": "S"
       },
       {

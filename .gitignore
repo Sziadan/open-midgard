@@ -29,6 +29,7 @@ tools/
 build_output*.txt
 *.ps1
 *.py
+!docs/packets/evidence/STRONG-UNBLOCK-2026-11-05-fixtures.py
 
 # Skill parity generators and checks must accompany their generated outputs.
 !tools/

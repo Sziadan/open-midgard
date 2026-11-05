@@ -1,0 +1,107 @@
+{
+  "date": "2026-11-05",
+  "head": "9aa752ab2da862c74f44b5e3cfe17e84c7c4e458",
+  "snapshot": "existing dirty tree, no runtime changes by this follow-up",
+  "scope": "source/design/applicability adjudication; no global PK48 or production/UI certificate",
+  "server_root": "C:\\Users\\sziad\\source\\repos\\rathena-master",
+  "server_source_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/clif.hpp": "4be8d550c203378b4444655922927fa309e5c513bd43819b1877ad7f24c27c5d",
+    "src/map/status.hpp": "94f3200871d1a526e167e0d19b22df3ed86e083bbc09e3e854b5646a05a540b6",
+    "src/map/script.hpp": "5e8f5a95569af50c647f803af53b5a489cf4d71727808724ea71577ac835bb7b",
+    "src/map/script_constants.hpp": "4ec847c04fb015f1d5ff3471f278fd542f2510e1a6103749ab6ad876c039462d",
+    "src/map/battle.cpp": "7dbba790036d9666db67d5ab483630f421cc613a253116af56b49f2985499573",
+    "src/map/mail.cpp": "00cb44a098584c8b9623e02077e64ea5c3fbb16ca5afc85e5c90f047d4cf3d30",
+    "src/map/intif.cpp": "d2b2d980230237d6a03c714b50d911c3b21bdc7f52a8c334b2d949b5edc37ac0"
+  },
+  "matching_preceding_review_inputs": {
+    "src/custom/defines_pre.hpp": true,
+    "src/config/packets.hpp": true,
+    "src/common/mmo.hpp": true,
+    "src/map/packets.hpp": true,
+    "src/map/packets_struct.hpp": true,
+    "src/map/clif_packetdb.hpp": true,
+    "src/map/clif.cpp": true,
+    "src/map/clif.hpp": true,
+    "src/map/script.hpp": true,
+    "src/map/battle.cpp": true
+  },
+  "inspected_local_sha256": {
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/Npc.cpp": "442c22386814361792dca765bbd7775e6792aea22f50ad429f5b30747b855a40",
+    "Ref/GameActor.cpp": "60686f1ea817285db0c60bf755d1f978d932870ac35319f7e22cc1ee8dd12f92",
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "src/world/GameActor.cpp": "3a4e0ceda22880f6303fbed2f1c0757153f7846c6e2aa0e844b41fae0390872a",
+    "src/world/GameActorMsgHandler.cpp": "e53ca065a5d8cd9cd450d5ad1de4065a05d02519d4afb606b8802713bc7b8a94",
+    "src/world/World.cpp": "4ed1acb2bbb7831806bd09c7bff158d93241b877b5af6e66ee9f770fe03ae0c9",
+    "src/world/Gr2Monster.cpp": "6a3e02b606728e1641fd4360e37d4fb71f732135c29d4c6a14d7c096ede77fbf",
+    "src/world/RagEffect.cpp": "686f3af6a90045ddc26292c2d887c77e2a46411be741d9cabdd4e36b24b58271",
+    "src/gamemode/GameModePacket.cpp": "9360bd30705d8028b701d915e32b1e2767f30cf7d995ee3b70dddd6b851b5bbd",
+    "src/gamemode/Commerce.cpp": "893059088c717e5e6e9c400192bf9beb553bc4fa87652da0c151d009e5af4a2f",
+    "tools/tests/check_notify_effect3_packet.py": "44782ba280cce598a3de6d4e8f9433f03367859a69dca8726bb1813826ad9de7",
+    "build-mingw-preset/packet-audit/server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c",
+    "docs/packets/evidence/PK01.02-server-registry-final.csv": "faba011b15f10020297efb371312019729a2580a6662b3cd1164bed51fbd276f"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05-probe.cpp": "c7443aab11633383ca5ac4ad0b1c744fae6484e2d546f1625f1a804d6f8ba949",
+    "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05-probe.txt": "ee8fd7ad1b6ae0d2646f47345f72a8d09fc27dcad38917119628193153b43632",
+    "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05-fixtures.py": "a4184a43efdff3de66dedf8c1ec08bc9c5af4727f5989408b9807cee91b98c09",
+    "docs/packets/contracts/PK22.SHOWEFST-LIFETIME.json": "58149491d9e07b16db2a227e7391cb7c0771c75845acf0e61f6df8e86c53149f",
+    "docs/packets/contracts/PK32.LEGACY-MAIL-fixtures.json": "16bc073cb6be837801a4c4478e2896d6f1f5a8d8b5cdace54a6d091a45959bc2",
+    "build-mingw-preset/review-2026-11-05/unblock-probe.exe": "607762d821a87787c2110a2e33d5e4e4834310ad4027a9af8c6b803110beda6d",
+    "docs/packets/contracts/PK20.NPC-CLASS-LIFETIME.md": "2fb20efcce65b4b388f04a18e86cd3c7881c93b9b1fb7a1a8272bfce04d95514",
+    "docs/packets/contracts/PK22.SHOWEFST-LIFETIME.md": "258a6d3a6b20d4e303f9fe1b2113d7e1dde46280d7507dd300e8b5391c79edce",
+    "docs/packets/contracts/PK22.TIMED-STATUS-043F.md": "83bd38a1ec1d52fa96c66b69d04b8ff9c940873ff9bc039b1ddbf39850bc358e",
+    "docs/packets/contracts/PK32.LEGACY-MAIL-STATE.md": "96fb28378a0de4010154d6829addf5db1d90b21d62273a971774fe7dc2545f2c",
+    "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md": "10d4edfddb71ece5d0241f20f125fc39fa631bc4366ce85e6838c8cb7931d20a",
+    "docs/packets/evidence/PK24.05-effect-resource-authority.md": "edaf3a48f714da7f0ab16491f1b42eba03a238d29d5c240fb20a8d7745541078",
+    "docs/packets/work-items/PK20.02.md": "4db67474b7eeede5d7eb0e674cc5b62f377e8e463e931293d8af65b10af99f24",
+    "docs/packets/work-items/PK22.02.md": "761d418c892315d28ec3e30ddf9e64c84e0abc0bb397af2c261ce9bbb9ea1096",
+    "docs/packets/work-items/PK22.03.md": "dfa7be3e979c5312c6132f93a18b0cf7be2dfa1fc88d56191c2e16353c3a1283",
+    "docs/packets/work-items/PK22.04.md": "7a0ed2067f28b567eb925b4b0af329d8e1b2d3573ac3aaec053259fd156d1f14",
+    "docs/packets/work-items/PK32.02.md": "6254cf1db981c82b25fd8da2a15d5c66eb0efba04ec2b4ec1e209395271d5048",
+    "docs/packets/work-items/PK32.03.md": "68c13cf77a5c925da98d934ffe802b494cfa1e44ddfdfdbf916c8521acad37ef",
+    "docs/packets/work-items/PK32.04.md": "dceb4d4a21a1be1d28a84074b6a8d7dcb344607af35f702e47233c7d23866a1c"
+  },
+  "selected_profile": {
+    "PACKETVER": 20080910,
+    "SAK": 20080910,
+    "MAIN": 20080910
+  },
+  "commands": [
+    "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -Ibuild-mingw-preset/packet-audit -IC:/Users/sziad/source/repos/rathena-master/src -IC:/Users/sziad/source/repos/rathena-master/3rdparty -IC:/Users/sziad/source/repos/rathena-master/3rdparty/libconfig docs/packets/evidence/STRONG-UNBLOCK-2026-11-05-probe.cpp -o build-mingw-preset/review-2026-11-05/unblock-probe.exe",
+    "build-mingw-preset/review-2026-11-05/unblock-probe.exe",
+    "python tools/tests/check_notify_effect3_packet.py",
+    "python docs/packets/evidence/STRONG-UNBLOCK-2026-11-05-fixtures.py"
+  ],
+  "results": {
+    "header_probe": "PASS; output pinned separately",
+    "effect_PE_Ref_source_comparison": "PASS; auxiliary Ref/RunningServer DB is historical only",
+    "fixture_construction": "PASS; 22 branch rows, 8 mail examples; not production replay",
+    "contract_fixture_and_link_checks": "PASS; 8 wire examples structurally checked, 22 unique matrix branches, selected registry absent, source hashes unchanged, local contract/work-item links resolved",
+    "plan_checker": "PASS: 51 packages, 238 numbered steps, 990 discovery owners; planning consistency only",
+    "diff_whitespace": "PASS: git diff --check; line-ending conversion warnings only"
+  },
+  "coverage_delta_this_pass": [
+    {
+      "id": "AUDIT-0x043F",
+      "from": "UNREVIEWED",
+      "to": "INACTIVE_FOR_SELECTED_SOURCE_CONFIG",
+      "contract": "PK22.TIMED-STATUS-043F"
+    }
+  ],
+  "limits": [
+    "No new app/CTest or rendered run",
+    "No live/external server change",
+    "Source profile is not deployed-server provenance",
+    "Timed gate probe repeats preprocessing condition; emitter guards separately inspected",
+    "No selected 331/332 value caller found is not a universal custom-peer absence proof",
+    "No commits or whole runtime leaf completion claimed"
+  ]
+}

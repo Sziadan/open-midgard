@@ -1,0 +1,103 @@
+{
+  "profile": 20080910,
+  "origin": "independently constructed from selected server WFIFO offsets; no client serializer",
+  "scope": "wire examples; not captures, escrow certification or production replay",
+  "fixtures": [
+    {
+      "name": "list-empty",
+      "hex": "4002080000000000",
+      "size": 8,
+      "expected": {
+        "count": 0
+      }
+    },
+    {
+      "name": "list-one-full-width-title",
+      "hex": "4002510001000000443322115454545454545454545454545454545454545454545454545454545454545454545454545454545400416c6963650000000000000000000000000000000000000000f15365",
+      "size": 81,
+      "expected": {
+        "count": 1,
+        "mail_id": 287454020,
+        "title_bytes": 40,
+        "read": false
+      }
+    },
+    {
+      "name": "read-item-and-zeny",
+      "hex": "42026a004433221147696674000000000000000000000000000000000000000000000000000000000000000000000000416c69636500000000000000000000000000000000000000000000003930000002000000f501000001000000000000000000000548656c6c6f00",
+      "size": 106,
+      "expected": {
+        "mail_id": 287454020,
+        "zeny": 12345,
+        "amount": 2,
+        "item_id": 501,
+        "body": "Hello"
+      }
+    },
+    {
+      "name": "read-no-item-empty-source-body",
+      "hex": "4202710044332211000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c286e6f206d6573736167652900",
+      "size": 113,
+      "expected": {
+        "body": "(no message)",
+        "amount": 0,
+        "zeny": 0
+      }
+    },
+    {
+      "name": "unread-refresh-id-zero",
+      "hex": "4a020000000047696674000000000000000000000000000000000000000000000000000000000000000000000000416c69636500000000000000000000000000000000000000",
+      "size": 70,
+      "expected": {
+        "insert_row": false
+      }
+    },
+    {
+      "name": "missing-read-return-failure",
+      "hex": "7402443322110100",
+      "size": 8,
+      "expected": {
+        "pending_operation": "read",
+        "failed_id": 287454020
+      }
+    },
+    {
+      "name": "claim-success",
+      "hex": "450200",
+      "size": 3,
+      "expected": {
+        "credit_inventory_or_zeny": false
+      }
+    },
+    {
+      "name": "claim-capacity",
+      "hex": "450202",
+      "size": 3,
+      "expected": {
+        "credit_inventory_or_zeny": false
+      }
+    }
+  ],
+  "sequence_requirements": [
+    {
+      "name": "one-claim-two-successes",
+      "request_id": 287454020,
+      "ordered_inputs": [
+        "authoritative item update",
+        "claim-success",
+        "authoritative zeny update",
+        "claim-success"
+      ],
+      "expected": "retain original request ID; no resource credit from ack; reconcile without retargeting"
+    },
+    {
+      "name": "read-refresh-unread",
+      "ordered_inputs": [
+        "read-item-and-zeny",
+        "list-one-full-width-title",
+        "unread-refresh-id-zero"
+      ],
+      "expected": "list/read state by mail ID; notification zero never becomes a mail"
+    }
+  ]
+}

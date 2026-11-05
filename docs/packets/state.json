@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK45.03",
+  "active_step": "PK05.05",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -337,15 +337,21 @@
       "commit_subject": "packet(PK09.01): bound inventory cart alias review"
     },
     "PK09.02": {
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK09.02-01ef-ownership-conflict.md"
+        "docs/packets/evidence/PK09.02-01ef-ownership-conflict.md",
+        "docs/packets/evidence/REVIEW-2026-11-05.md",
+        "docs/packets/evidence/PK09.02-selected-profile-correction-2026-11-05.md",
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
       ],
       "commit_subject": "packet(PK09.02): document 01ef ownership conflict"
     },
     "PK09.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK09.03-four-route-replay-2026-11-05.md",
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
+      ],
       "commit_subject": null
     },
     "PK09.04": {
@@ -390,9 +396,10 @@
       "commit_subject": "packet(PK11.02): reconcile guild position permissions"
     },
     "PK11.03": {
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK11.03-menu-flags.md"
+        "docs/packets/evidence/PK11.03-menu-flags.md",
+        "docs/packets/evidence/REVIEW-2026-11-05.md"
       ],
       "commit_subject": "packet(PK11.03): apply verified guild menu gates"
     },
@@ -466,13 +473,19 @@
       "commit_subject": "packet(PK14.02): implement party position state"
     },
     "PK14.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK14.03-party-minimap-markers.md"
+      ],
+      "commit_subject": "packet(PK14.03): render party minimap markers"
     },
     "PK14.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/work-items/PK14.04.md",
+        "docs/packets/evidence/PK14.04-verification-boundary.md",
+        "docs/packets/evidence/PK14.04-current-tree-verification-2026-11-05.md"
+      ],
       "commit_subject": null
     },
     "PK15.01": {
@@ -586,8 +599,11 @@
       "commit_subject": null
     },
     "PK20.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
+        "docs/packets/work-items/PK20.02.md"
+      ],
       "commit_subject": null
     },
     "PK20.03": {
@@ -626,18 +642,27 @@
       "commit_subject": null
     },
     "PK22.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
+        "docs/packets/work-items/PK22.02.md"
+      ],
       "commit_subject": null
     },
     "PK22.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "READY_TO_COMMIT",
+      "evidence": [
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
+        "docs/packets/work-items/PK22.03.md"
+      ],
       "commit_subject": null
     },
     "PK22.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
+        "docs/packets/work-items/PK22.04.md"
+      ],
       "commit_subject": null
     },
     "PK22.05": {
@@ -831,18 +856,27 @@
       "commit_subject": null
     },
     "PK32.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
+        "docs/packets/work-items/PK32.02.md"
+      ],
       "commit_subject": null
     },
     "PK32.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
+        "docs/packets/work-items/PK32.03.md"
+      ],
       "commit_subject": null
     },
     "PK32.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
+        "docs/packets/work-items/PK32.04.md"
+      ],
       "commit_subject": null
     },
     "PK32.05": {
@@ -1291,7 +1325,9 @@
         "docs/packets/evidence/PK45.02-actor-vanish.md",
         "docs/packets/evidence/PK45.02-self-movement-ack.md",
         "docs/packets/evidence/PK45.02-actor-action-notify.md",
-        "docs/packets/evidence/PK45.02-spawn-variant-boundary.md"
+        "docs/packets/evidence/PK45.02-spawn-variant-boundary.md",
+        "docs/packets/evidence/PK45.02-server-spawn-20080910-font-pair.md",
+        "docs/packets/evidence/PK45.02-server-walking-20080910.md"
       ],
       "commit_subject": "packet(PK45.02): defer spawn variant audit"
     },
@@ -1299,13 +1335,139 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK45.03-map-info-semantics.md",
-        "docs/packets/evidence/PK45.03-npc-number-input.md"
+        "docs/packets/evidence/PK45.03-npc-number-input.md",
+        "docs/packets/evidence/PK45.03-npc-string-input.md",
+        "docs/packets/evidence/PK45.03-npc-menu-input.md",
+        "docs/packets/evidence/PK45.03-dialogue-text-next-close.md",
+        "docs/packets/evidence/PK45.03-actor-state-change.md",
+        "docs/packets/evidence/PK45.03-item-pickup-ack.md",
+        "docs/packets/evidence/PK45.03-cart-metadata-clear.md",
+        "docs/packets/evidence/PK45.03-actor-walking-decoder.md",
+        "docs/packets/evidence/PK45.03-actor-position-correction.md",
+        "docs/packets/evidence/PK45.03-actor-move-update.md",
+        "docs/packets/evidence/PK45.03-actor-resurrection.md",
+        "docs/packets/evidence/PK45.03-actor-direction.md",
+        "docs/packets/evidence/PK45.03-ground-item-disappear.md",
+        "docs/packets/evidence/PK45.03-ground-item-entry.md",
+        "docs/packets/evidence/PK45.03-inventory-item-remove.md",
+        "docs/packets/evidence/PK45.03-equip-item-ack.md",
+        "docs/packets/evidence/PK45.03-action-failure.md",
+        "docs/packets/evidence/PK45.03-actor-appearance-font.md",
+        "docs/packets/evidence/PK45.03-skill-failure-ack.md",
+        "docs/packets/evidence/PK45.03-emotion-request-ack.md",
+        "docs/packets/evidence/PK45.03-player-skill-list-update.md",
+        "docs/packets/evidence/PK45.03-companion-skill-lists.md",
+        "docs/packets/evidence/PK45.03-player-skill-add.md",
+        "docs/packets/evidence/PK45.03-shortcut-key-list.md",
+        "docs/packets/evidence/PK45.03-normal-inventory-list.md",
+        "docs/packets/evidence/PK45.03-equipment-inventory-list.md",
+        "docs/packets/evidence/PK45.03-storage-lifecycle.md",
+        "docs/packets/evidence/PK45.03-storage-password.md",
+        "docs/packets/evidence/PK45.03-whisper-flow.md",
+        "docs/packets/evidence/PK45.03-chat-notifications.md",
+        "docs/packets/evidence/PK45.03-broadcast-chat.md",
+        "docs/packets/evidence/PK45.03-friend-handlers.md",
+        "docs/packets/evidence/PK45.03-party-options-removal-position.md",
+        "docs/packets/evidence/PK45.03-party-hp-update.md",
+        "docs/packets/evidence/PK45.03-party-member-added.md",
+        "docs/packets/evidence/PK45.03-party-create-invite-list.md",
+        "docs/packets/evidence/PK45.03-recovery-notification.md",
+        "docs/packets/evidence/PK45.03-ammunition-equip-ack.md",
+        "docs/packets/evidence/PK45.03-attack-chase-range.md",
+        "docs/packets/evidence/PK45.03-attack-distance-hint.md",
+        "docs/packets/evidence/PK45.03-self-stat-update.md",
+        "docs/packets/evidence/PK45.03-status-point-cost.md",
+        "docs/packets/evidence/PK45.03-server-time-notification.md",
+        "docs/packets/evidence/PK45.03-ban-notification.md",
+        "docs/packets/evidence/PK45.03-return-character-select-ack.md",
+        "docs/packets/evidence/PK45.03-disconnect-ack.md",
+        "docs/packets/evidence/PK45.03-login-refusal.md",
+        "docs/packets/evidence/PK45.03-login-acceptance.md",
+        "docs/packets/evidence/PK45.03-skill-unit-disappearance.md",
+        "docs/packets/evidence/PK45.03-talkbox-chat-contents.md",
+        "docs/packets/evidence/PK45.03-local-guild-membership.md",
+        "docs/packets/evidence/PK45.03-pet-status.md",
+        "docs/packets/evidence/PK45.03-actor-guild-change.md",
+        "docs/packets/evidence/PK45.03-status-change-ack.md",
+        "docs/packets/evidence/PK45.03-status-summaries.md",
+        "docs/packets/evidence/PK45.03-self-status-parameters.md",
+        "docs/packets/evidence/PK45.03-sound-loop.md",
+        "docs/packets/evidence/PK45.03-combo-delay.md",
+        "docs/packets/evidence/PK45.03-npc-shop-deal-type.md",
+        "docs/packets/evidence/PK45.03-npc-shop-lists-results.md",
+        "docs/packets/evidence/PK45.03-guild-departure.md",
+        "docs/packets/evidence/PK45.03-guild-create-ack.md",
+        "docs/packets/evidence/PK45.03-guild-member-position.md",
+        "docs/packets/evidence/PK45.03-party-channel-notification.md",
+        "docs/packets/evidence/PK45.03-guild-notification-results.md",
+        "docs/packets/evidence/PK45.03-guild-alliance-invitation.md",
+        "docs/packets/evidence/PK45.03-guild-skill-list.md",
+        "docs/packets/evidence/PK45.03-guild-relation-remove.md",
+        "docs/packets/evidence/PK45.03-guild-member-record.md",
+        "docs/packets/evidence/PK45.03-guild-window-menu-flags.md",
+        "docs/packets/evidence/PK45.03-guild-position-names.md",
+        "docs/packets/evidence/PK45.03-guild-position-mode-tax.md",
+        "docs/packets/evidence/PK45.03-ignored-01b0.md",
+        "docs/packets/evidence/PK45.03-ignored-packet-group.md",
+        "docs/packets/evidence/PK45.03-warp-map-list.md",
+        "docs/packets/evidence/PK45.03-self-move-ack.md",
+        "docs/packets/evidence/PK45.03-making-arrow-list.md",
+        "docs/packets/evidence/PK45.03-item-composition-list.md",
+        "docs/packets/evidence/PK45.03-item-identification-list.md",
+        "docs/packets/evidence/PK45.03-item-identification-ack.md",
+        "docs/packets/evidence/PK45.03-item-composition-ack.md",
+        "docs/packets/evidence/PK45.03-skill-message.md",
+        "docs/packets/evidence/PK45.03-auto-run-skill.md",
+        "docs/packets/evidence/PK45.03-auto-spell-list.md",
+        "docs/packets/evidence/PK45.03-show-image.md",
+        "docs/packets/evidence/PK45.03-show-image2.md",
+        "docs/packets/evidence/PK45.03-status-icon-0196.md",
+        "docs/packets/evidence/PK45.03-devotion-list.md",
+        "docs/packets/evidence/PK45.03-timed-status-icon-043f.md",
+        "docs/packets/evidence/PK45.03-blade-stop.md",
+        "docs/packets/evidence/PK45.03-spirits-01d0.md",
+        "docs/packets/evidence/PK45.03-effect-notification-0284.md",
+        "docs/packets/evidence/PK45.03-skill-unit-visibility.md",
+        "docs/packets/evidence/PK45.03-npc-show-effect-update.md",
+        "docs/packets/evidence/PK45.03-spirits2-01e1.md",
+        "docs/packets/evidence/PK45.03-skill-cast-cancel.md",
+        "docs/packets/evidence/PK45.03-skill-cast-ack-deferred.md",
+        "docs/packets/evidence/PK45.03-guild-emblem.md",
+        "docs/packets/evidence/PK45.03-guild-member-online.md",
+        "docs/packets/evidence/PK45.03-guild-relation-list-014c.md",
+        "docs/packets/evidence/PK45.03-guild-window-summary-0150-01b6.md",
+        "docs/packets/evidence/PK45.03-guild-notice-016f.md",
+        "docs/packets/evidence/PK45.03-guild-ban-list-0163.md",
+        "docs/packets/evidence/PK45.03-guild-member-status-01f2.md",
+        "docs/packets/evidence/PK45.03-guild-member-roster-0154.md",
+        "docs/packets/evidence/PK45.03-commerce-guild-invitation.md",
+        "docs/packets/evidence/PK45.03-commerce-small-results.md",
+        "docs/packets/evidence/PK45.03-commerce-cart-item-lists.md",
+        "docs/packets/evidence/PK45.03-commerce-cart-deltas.md",
+        "docs/packets/evidence/PK45.03-commerce-vending-shop-lifecycle.md",
+        "docs/packets/evidence/PK45.03-commerce-trade-lifecycle.md",
+        "docs/packets/evidence/PK45.03-commerce-viewed-equipment.md",
+        "docs/packets/evidence/PK45.03-accept-enter-variants.md",
+        "docs/packets/evidence/PK45.03-notify-effect-019b.md",
+        "docs/packets/evidence/PK45.03-login-notify-error-01f1.md",
+        "docs/packets/evidence/PK45.03-remove-effect-0b0d.md",
+        "docs/packets/evidence/PK45.03-c2s-owner-scope-review.md",
+        "docs/packets/evidence/PK45.03-ground-skill-notify-0117.md",
+        "docs/packets/evidence/PK45.03-skill-result-notifications.md",
+        "docs/packets/evidence/PK45.03-notify-effect-direct-01f3.md",
+        "docs/packets/evidence/PK45.03-use-item-ack.md",
+        "docs/packets/evidence/PK45.03-map-change-receive.md",
+        "docs/packets/evidence/PK45.03-map-handler-index-crosswalk.md"
       ],
       "commit_subject": "packet(PK45.03): trace NPC number input"
     },
     "PK45.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK45.04-commerce-self-review-replay-blocker.md",
+        "docs/packets/evidence/PK45.04-invitation-family-self-review.md",
+        "docs/packets/evidence/PK45.04-party-list-boundary-self-review.md"
+      ],
       "commit_subject": null
     },
     "PK46.01": {
@@ -1318,21 +1480,125 @@
     "PK46.02": {
       "status": "IN_PROGRESS",
       "evidence": [
+        "docs/packets/evidence/PK46.02-map-action-request.md",
+        "docs/packets/evidence/PK46.02-map-actor-name-request.md",
+        "docs/packets/evidence/PK46.02-map-add-friend-request.md",
+        "docs/packets/evidence/PK46.02-map-auction-feeling-cooking-gaps.md",
+        "docs/packets/evidence/PK46.02-map-card-composition-request.md",
+        "docs/packets/evidence/PK46.02-map-cart-off-request-012A.md",
+        "docs/packets/evidence/PK46.02-map-change-cart-request.md",
+        "docs/packets/evidence/PK46.02-map-change-direction.md",
+        "docs/packets/evidence/PK46.02-map-close-vending-request.md",
+        "docs/packets/evidence/PK46.02-map-compose-card-request.md",
+        "docs/packets/evidence/PK46.02-map-create-party2-01E8.md",
+        "docs/packets/evidence/PK46.02-map-drop-item-request.md",
+        "docs/packets/evidence/PK46.02-map-emotion-request.md",
+        "docs/packets/evidence/PK46.02-map-equip-item-request.md",
+        "docs/packets/evidence/PK46.02-map-exit-to-windows-request.md",
+        "docs/packets/evidence/PK46.02-map-friend-reply-request.md",
+        "docs/packets/evidence/PK46.02-map-global-chat-request.md",
+        "docs/packets/evidence/PK46.02-map-gm-item-monster-013F.md",
+        "docs/packets/evidence/PK46.02-map-gm-novice-adopt-repair-friend-gaps.md",
+        "docs/packets/evidence/PK46.02-map-gm-shift-gaps.md",
+        "docs/packets/evidence/PK46.02-map-ground-skill-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-alliance-reply-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-chat-alliance-gaps.md",
+        "docs/packets/evidence/PK46.02-map-guild-emblem-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-gm-search-gaps.md",
+        "docs/packets/evidence/PK46.02-map-guild-info-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-invite-reply-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-invite-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-leave-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-member-position-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-notice-request.md",
+        "docs/packets/evidence/PK46.02-map-guild-position-info-request.md",
+        "docs/packets/evidence/PK46.02-map-hom-storage-mail-gaps.md",
+        "docs/packets/evidence/PK46.02-map-identify-item-request.md",
+        "docs/packets/evidence/PK46.02-map-load-end-ack.md",
+        "docs/packets/evidence/PK46.02-map-mail-send-request.md",
+        "docs/packets/evidence/PK46.02-map-mail-window-request.md",
+        "docs/packets/evidence/PK46.02-map-making-arrow-01AE.md",
+        "docs/packets/evidence/PK46.02-map-move-alternate-0140.md",
         "docs/packets/evidence/PK46.02-map-movement.md",
-        "docs/packets/evidence/PK46.02-map-change-direction.md"
+        "docs/packets/evidence/PK46.02-map-newer-party-system-service-gaps.md",
+        "docs/packets/evidence/PK46.02-map-npc-contact-request.md",
+        "docs/packets/evidence/PK46.02-map-npc-dialog-close-request.md",
+        "docs/packets/evidence/PK46.02-map-npc-menu-selection-request.md",
+        "docs/packets/evidence/PK46.02-map-npc-next-request.md",
+        "docs/packets/evidence/PK46.02-map-npc-number-input-request.md",
+        "docs/packets/evidence/PK46.02-map-npc-shop-deal-type-request.md",
+        "docs/packets/evidence/PK46.02-map-npc-shop-purchase-request.md",
+        "docs/packets/evidence/PK46.02-map-npc-shop-sell-request.md",
+        "docs/packets/evidence/PK46.02-map-npc-string-input-request.md",
+        "docs/packets/evidence/PK46.02-map-open-vending-alternate-012F.md",
+        "docs/packets/evidence/PK46.02-map-open-vending-request.md",
+        "docs/packets/evidence/PK46.02-map-party-create-request.md",
+        "docs/packets/evidence/PK46.02-map-party-invite-reply-request.md",
+        "docs/packets/evidence/PK46.02-map-party-invite-request.md",
+        "docs/packets/evidence/PK46.02-map-party-leave-request.md",
+        "docs/packets/evidence/PK46.02-map-party-member-removal-request.md",
+        "docs/packets/evidence/PK46.02-map-party-option-change-request.md",
+        "docs/packets/evidence/PK46.02-map-pet-request-gaps.md",
+        "docs/packets/evidence/PK46.02-map-private-message-ignore-requests.md",
+        "docs/packets/evidence/PK46.02-map-production-reset-gm-gaps.md",
+        "docs/packets/evidence/PK46.02-map-pvp-ranking-refine-hom-gaps.md",
+        "docs/packets/evidence/PK46.02-map-reject-whisper-request.md",
+        "docs/packets/evidence/PK46.02-map-request-memo-011D.md",
+        "docs/packets/evidence/PK46.02-map-return-char-select-request.md",
+        "docs/packets/evidence/PK46.02-map-return-save-point-request.md",
+        "docs/packets/evidence/PK46.02-map-send-emotion-01A9.md",
+        "docs/packets/evidence/PK46.02-map-service-request-gaps.md",
+        "docs/packets/evidence/PK46.02-map-shortcut-slot-update-request.md",
+        "docs/packets/evidence/PK46.02-map-sit-stand-action-request.md",
+        "docs/packets/evidence/PK46.02-map-skill-target-request-0438.md",
+        "docs/packets/evidence/PK46.02-map-skill-up-request.md",
+        "docs/packets/evidence/PK46.02-map-status-increase-request.md",
+        "docs/packets/evidence/PK46.02-map-stop-attack-0118.md",
+        "docs/packets/evidence/PK46.02-map-storage-close-request.md",
+        "docs/packets/evidence/PK46.02-map-take-item-request.md",
+        "docs/packets/evidence/PK46.02-map-time-sync-request.md",
+        "docs/packets/evidence/PK46.02-map-trade-ack-request.md",
+        "docs/packets/evidence/PK46.02-map-trade-add-item-request.md",
+        "docs/packets/evidence/PK46.02-map-trade-cancel-request.md",
+        "docs/packets/evidence/PK46.02-map-trade-commit-request.md",
+        "docs/packets/evidence/PK46.02-map-trade-lock-request.md",
+        "docs/packets/evidence/PK46.02-map-trade-request.md",
+        "docs/packets/evidence/PK46.02-map-unequip-item-request.md",
+        "docs/packets/evidence/PK46.02-map-use-item-request.md",
+        "docs/packets/evidence/PK46.02-map-vending-list-request.md",
+        "docs/packets/evidence/PK46.02-map-vending-purchase-request.md",
+        "docs/packets/evidence/PK46.02-map-view-player-equipment-request.md",
+        "docs/packets/evidence/PK46.02-map-warp-skill-selection-request.md",
+        "docs/packets/evidence/PK46.02-map-whisper-request.md",
+        "docs/packets/evidence/PK46.02-map-zone-entry-request.md",
+        "docs/packets/evidence/PK46.02-opcode-mention-census.md",
+        "docs/packets/evidence/PK46.02-party-chat-request-path.md",
+        "docs/packets/evidence/PK46.02-storage-transfer-requests.md",
+        "docs/packets/evidence/PK46.02-unimplemented-cart-transfer-request-paths.md",
+        "docs/packets/evidence/PK46.02-unimplemented-chat-room-request-paths.md",
+        "docs/packets/evidence/PK46.02-unmatched-registered-request-paths.md",
+        "docs/packets/evidence/PK46.02-inventory-link-audit-2026-11-05.md"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
     "PK46.03": {
       "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK46.03-login-character-crosswalk.md"
+        "docs/packets/evidence/PK46.03-login-character-crosswalk.md",
+        "docs/packets/evidence/PK46.03-character-delete-ui-mismatch.md",
+        "docs/packets/evidence/PK46.03-account-login-send-gates.md",
+        "docs/packets/evidence/PK46.03-account-login-variant-layouts.md",
+        "docs/packets/evidence/PK46.03-loginmode-character-send-paths.md",
+        "docs/packets/evidence/PK46.03-character-server-entry-path.md",
+        "docs/packets/evidence/REVIEW-2026-11-05.md"
       ],
       "commit_subject": "packet(PK46.03): audit login character send gates"
     },
     "PK46.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK46.04-bounded-self-review.md"
+      ],
       "commit_subject": null
     },
     "PK47.01": {
@@ -1371,8 +1637,11 @@
       "commit_subject": "packet(PK48.01): scope independent certification"
     },
     "PK48.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/REVIEW-2026-11-05.md",
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
+      ],
       "commit_subject": null
     },
     "PK48.03": {
@@ -1413,9 +1682,10 @@
       "commit_subject": "packet(PK50.01): scope quest mission lifecycle"
     },
     "PK50.02": {
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK50.02-snapshot-model-boundary.md"
+        "docs/packets/evidence/PK50.02-snapshot-model-boundary.md",
+        "docs/packets/evidence/REVIEW-2026-11-05.md"
       ],
       "commit_subject": "packet(PK50.02): defer quest snapshot model"
     },
@@ -1459,6 +1729,69 @@
         "docs/packets/evidence/PK47.03.002-catalog-comment-scan.md"
       ],
       "commit_subject": "packet(PK47.03.002): exclude comments from packet definition catalog"
+    },
+    "PK05.05": {
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/REVIEW-2026-11-04.md",
+        "docs/packets/work-items/PK05.05.md",
+        "docs/packets/evidence/PK05.05-deferral-2026-11-04.md",
+        "docs/packets/evidence/PK05.05-deferral-2026-11-05.md",
+        "docs/packets/evidence/REVIEW-2026-11-05.md",
+        "docs/packets/evidence/PK05.05-implementation-boundary-2026-11-05.md"
+      ],
+      "commit_subject": null
+    },
+    "PK14.05": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/work-items/PK14.05.md",
+        "docs/packets/evidence/PK14.05-roster-position-repair.md",
+        "docs/packets/evidence/REVIEW-2026-11-05.md",
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
+      ],
+      "commit_subject": "packet(PK14.07): restore reproducible roster repair checkpoint"
+    },
+    "PK14.06": {
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/work-items/PK14.06.md",
+        "docs/packets/evidence/PK14.06-marker-lifetime-repair.md",
+        "docs/packets/evidence/PK14.06-deferral-2026-11-05.md",
+        "docs/packets/evidence/REVIEW-2026-11-05.md",
+        "docs/packets/evidence/PK14.06-transition-boundary-2026-11-05.md",
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
+      ],
+      "commit_subject": null
+    },
+    "PK14.07": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/REVIEW-2026-11-05.md",
+        "docs/packets/work-items/PK14.07.md",
+        "docs/packets/evidence/PK14.07-reproducible-roster-checkpoint.md",
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
+      ],
+      "commit_subject": "packet(PK14.07): restore reproducible roster repair checkpoint"
+    },
+    "PK23.05": {
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/REVIEW-2026-11-05.md",
+        "docs/packets/work-items/PK23.05.md",
+        "docs/packets/evidence/PK23.05-implementation-boundary-2026-11-05.md"
+      ],
+      "commit_subject": null
+    },
+    "PK24.05": {
+      "status": "READY_TO_COMMIT",
+      "evidence": [
+        "docs/packets/evidence/REVIEW-2026-11-05.md",
+        "docs/packets/work-items/PK24.05.md",
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
+        "docs/packets/evidence/PK24.05-effect-resource-authority.md"
+      ],
+      "commit_subject": null
     }
   }
 }
