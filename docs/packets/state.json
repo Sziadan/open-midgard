@@ -650,12 +650,15 @@
       "commit_subject": null
     },
     "PK22.03": {
-      "status": "READY_TO_COMMIT",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
-        "docs/packets/work-items/PK22.03.md"
+        "docs/packets/work-items/PK22.03.md",
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md",
+        "docs/packets/contracts/PK22.TIMED-STATUS-043F.md",
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.json"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK22.03): checkpoint selected timed-status applicability"
     },
     "PK22.04": {
       "status": "IN_PROGRESS",
