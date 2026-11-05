@@ -2360,6 +2360,240 @@ int main(){try{
     FixedEveryBoundary(fixed);FixedCoalesced(fixed);VariableEveryBoundary(variable,fixed);
     RejectUnframedInput({0xff,0xff},fixed,"unknown_opcode_closes_without_rescan",CRagConnection::ReceiveError::UnknownOpcode);
     RejectFragmentedUnframedInput({0xff},{0xff,0x6c,0x00,0x00},"unknown_opcode_fragmented_header_closes_without_rescan",CRagConnection::ReceiveError::UnknownOpcode);
+void PartyRosterReplacementReplay()
+{
+    SetCase("party_roster_replacement_atomic", "production_party_replay", "PK14.05-0107-00fb-20080910",
+        "ProcessGameModePacketLoop -> production router -> HandlePartyPosition/HandlePartyList -> CSession");
+
+    const u32 savedAid = g_session.m_aid;
+    const std::string savedMap(g_session.m_curMap);
+    const std::string savedPartyName = g_session.m_partyName;
+    const bool savedPartyMaster = g_session.m_amIPartyMaster;
+    const bool savedExpShare = g_session.m_partyExpShare;
+    const bool savedItemDiv = g_session.m_itemDivType;
+    const bool savedItemCollect = g_session.m_itemCollectType;
+    const std::vector<FRIEND_INFO> savedMembers(g_session.GetPartyList().begin(), g_session.GetPartyList().end());
+
+    g_session.ClearParty();
+    g_session.m_aid = 42;
+    std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", "prontera");
+    g_session.m_partyName = "Old party";
+    g_session.m_partyExpShare = true;
+    g_session.m_itemDivType = true;
+    g_session.m_itemCollectType = true;
+    FRIEND_INFO self{};
+    self.isValid = 1;
+    self.AID = 1;
+    self.characterName = "Self";
+    self.mapName = "prontera.gat";
+    self.role = 0;
+    self.state = 0;
+    g_session.AddMemberToParty(self);
+    FRIEND_INFO peer{};
+    peer.isValid = 1;
+    peer.AID = 42;
+    peer.characterName = "Peer";
+    peer.mapName = "prontera.gat";
+    peer.role = 1;
+    peer.state = 0;
+    peer.partyHp = 88;
+    peer.partyMaxHp = 100;
+    g_session.AddMemberToParty(peer);
+
+    const std::vector<u8> position = Unhex("07012a00000032004600");
+    const std::vector<u8> roster = Unhex(
+        "fb007800"
+        "546573740000000000000000000000000000000000000000"
+        "2a000000506565720000000000000000000000000000000000000000"
+        "70726f6e746572612e676174000000000000"
+        "0100000053656c660000000000000000000000000000000000000000"
+        "70726f6e746572612e676174000000000100");
+    Require(position.size() == 10 && roster.size() == 120, "server-derived party fixture lengths differ from 20080910 layout");
+
+    TestConnection connection;
+    LoopbackPeer peerSocket(connection);
+    CGameMode mode;
+    CGameModePacketRouter& router = GetProductionGameModePacketRouter();
+    router.Clear();
+    RegisterDefaultGameModePacketHandlers(router);
+    auto dispatch = [&](const std::vector<u8>& bytes, int expectedPackets) {
+        peerSocket.Send(bytes);
+        WaitKernelPending(connection, static_cast<int>(bytes.size()));
+        const GameModePacketLoopResult result = ProcessGameModePacketLoop(mode, connection, router, 64);
+        Require(result.packetsProcessed == expectedPackets, "production party replay processed an unexpected packet count");
+    };
+
+    std::vector<u8> ordered = position;
+    ordered.insert(ordered.end(), roster.begin(), roster.end());
+    dispatch(ordered, 2);
+    const FRIEND_INFO* retained = g_session.FindPartyMemberByAid(42);
+    Require(retained && retained->partyPositionValid && retained->partyX == 50 && retained->partyY == 70,
+        "same-map online stationary member lost the production 0x0107 marker during 0x00FB replacement");
+    Require(retained->partyHp == 88 && retained->partyMaxHp == 100, "roster replacement lost cached HP by AID");
+    Require(g_session.IsPartyMarkerEligible(*retained, "prontera"), "shared minimap policy rejected a same-map online marker");
+    Require(!g_session.IsPartyMarkerEligible(*retained, "payon"), "shared minimap policy exposed a wrong-map marker");
+    Require(g_session.m_amIPartyMaster && g_session.m_partyName == "Test", "roster replacement lost local leader or party-name state");
+    Require(g_session.m_partyExpShare && g_session.m_itemDivType && g_session.m_itemCollectType,
+        "roster replacement cleared party options absent from 0x00FB");
+
+    auto makeRoster = [](const std::vector<FRIEND_INFO>& entries) {
+        std::vector<u8> packet(28 + entries.size() * 46, 0);
+        packet[0] = 0xfb;
+        packet[1] = 0x00;
+        packet[2] = static_cast<u8>(packet.size() & 0xff);
+        packet[3] = static_cast<u8>((packet.size() >> 8) & 0xff);
+        const std::string name = "Next";
+        std::copy(name.begin(), name.end(), packet.begin() + 4);
+        for (size_t i = 0; i < entries.size(); ++i) {
+            const FRIEND_INFO& entry = entries[i];
+            const size_t offset = 28 + i * 46;
+            for (int b = 0; b < 4; ++b) packet[offset + b] = static_cast<u8>((entry.AID >> (b * 8)) & 0xff);
+            std::copy_n(entry.characterName.begin(), std::min<size_t>(entry.characterName.size(), 24), packet.begin() + offset + 4);
+            std::copy_n(entry.mapName.begin(), std::min<size_t>(entry.mapName.size(), 16), packet.begin() + offset + 28);
+            packet[offset + 44] = static_cast<u8>(entry.role);
+            packet[offset + 45] = static_cast<u8>(entry.state);
+        }
+        return packet;
+    };
+
+    const std::string acceptedName = g_session.m_partyName;
+    std::vector<u8> malformed = makeRoster({peer, self});
+    malformed.push_back(0xee);
+    malformed[2] = static_cast<u8>(malformed.size() & 0xff);
+    malformed[3] = static_cast<u8>((malformed.size() >> 8) & 0xff);
+    dispatch(malformed, 1);
+    retained = g_session.FindPartyMemberByAid(42);
+    Require(g_session.m_partyName == acceptedName && retained && retained->partyPositionValid
+        && retained->partyX == 50 && retained->partyY == 70 && retained->partyHp == 88,
+        "malformed trailing roster partially mutated the accepted party state");
+    Require(g_session.m_amIPartyMaster && g_session.m_partyExpShare && g_session.m_itemDivType && g_session.m_itemCollectType,
+        "malformed roster cleared leader or party options");
+
+    std::vector<FRIEND_INFO> tooMany(13, peer);
+    dispatch(makeRoster(tooMany), 1);
+    Require(g_session.GetNumParty() == 2 && g_session.FindPartyMemberByAid(42)->partyPositionValid,
+        "source-invalid 13-member roster mutated prior state");
+
+    FRIEND_INFO moved = peer;
+    moved.mapName = "payon.gat";
+    moved.role = 0;
+    dispatch(makeRoster({moved, self}), 1);
+    retained = g_session.FindPartyMemberByAid(42);
+    Require(retained && !retained->partyPositionValid, "position survived a changed map in full roster replacement");
+
+    std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", "payon");
+    dispatch(Unhex("07012a0000000a001400"), 1);
+    dispatch(makeRoster({moved, self}), 1);
+    retained = g_session.FindPartyMemberByAid(42);
+    Require(retained && retained->partyPositionValid, "same-map online marker was not staged before offline transition check");
+    FRIEND_INFO offline = moved;
+    offline.state = 1;
+    dispatch(makeRoster({offline, self}), 1);
+    retained = g_session.FindPartyMemberByAid(42);
+    Require(retained && !retained->partyPositionValid && !g_session.IsPartyMarkerEligible(*retained, "payon"),
+        "position survived an offline roster state");
+
+    dispatch(makeRoster({moved, self}), 1);
+    dispatch(Unhex("07012a0000000b001500"), 1);
+    FRIEND_INFO reusedName = moved;
+    reusedName.AID = 43;
+    reusedName.state = 0;
+    dispatch(makeRoster({reusedName, self}), 1);
+    retained = g_session.FindPartyMemberByAid(43);
+    Require(retained && !retained->partyPositionValid && g_session.FindPartyMemberByAid(42) == nullptr,
+        "reused character name retained prior AID position or stale member");
+
+    dispatch(makeRoster({self}), 1);
+    Require(g_session.FindPartyMemberByAid(43) == nullptr && g_session.GetNumParty() == 1,
+        "full roster replacement retained a removed member");
+
+    reusedName.role = 1;
+    dispatch(makeRoster({reusedName, self}), 1);
+    dispatch(Unhex("07012b0000000c001600"), 1);
+    dispatch(Unhex("07012b000000ffffffff"), 1);
+    retained = g_session.FindPartyMemberByAid(43);
+    Require(retained && !retained->partyPositionValid, "0x0107 sentinel failed to remove marker after roster replacement");
+
+    g_session.ClearParty();
+    g_session.m_aid = savedAid;
+    std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", savedMap.c_str());
+    for (FRIEND_INFO member : savedMembers) {
+        const bool hadPosition = member.partyPositionValid;
+        const int x = member.partyX;
+        const int y = member.partyY;
+        const u32 aid = member.AID;
+        g_session.AddMemberToParty(member);
+        if (hadPosition) g_session.SetPartyMemberPosition(aid, x, y);
+    }
+    g_session.m_partyName = savedPartyName;
+    g_session.m_amIPartyMaster = savedPartyMaster;
+    g_session.m_partyExpShare = savedExpShare;
+    g_session.m_itemDivType = savedItemDiv;
+    g_session.m_itemCollectType = savedItemCollect;
+
+    std::cout << "{\"case_id\":\"party_roster_replacement_atomic\",\"contract_id\":\"PK14.05\",\"fixture_id\":\"PK14.05-0107-00fb-20080910\",\"outcome\":\"PASS\",\"assertions\":\"position, HP, leader, options, malformed atomicity, count bound, map, offline, AID identity, removal, sentinel\"}\n";
+}
+
+void PartyMarkerGameModeExitReplay()
+{
+    SetCase("party_marker_game_mode_exit", "production_lifecycle_replay", "PK14.06-session-marker-exit",
+        "CGameMode::OnExit -> CSession::InvalidatePartyPositions -> UIRoMapWnd visual token");
+    const u32 savedAid = g_session.m_aid;
+    const std::string savedMap(g_session.m_curMap);
+    const std::string savedPartyName = g_session.m_partyName;
+    const bool savedPartyMaster = g_session.m_amIPartyMaster;
+    const bool savedExpShare = g_session.m_partyExpShare;
+    const bool savedItemDiv = g_session.m_itemDivType;
+    const bool savedItemCollect = g_session.m_itemCollectType;
+    const std::vector<FRIEND_INFO> savedMembers(g_session.GetPartyList().begin(), g_session.GetPartyList().end());
+
+    g_session.ClearParty();
+    g_session.m_aid = 42;
+    std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", "prontera");
+    FRIEND_INFO member{};
+    member.isValid = 1;
+    member.AID = 42;
+    member.characterName = "Peer";
+    member.mapName = "prontera.gat";
+    member.state = 0;
+    g_session.AddMemberToParty(member);
+    Require(g_session.SetPartyMemberPosition(42, 25, 35), "could not seed marker before production mode exit");
+    const u64 revisionBefore = g_session.GetPartyPositionRevision();
+    UIRoMapWnd minimap;
+    UIRoMapWnd::DisplayData displayBefore{};
+    Require(minimap.GetDisplayDataForQt(&displayBefore), "could not capture pre-exit Qt minimap state");
+
+    CGameMode mode;
+    mode.OnExit();
+    const FRIEND_INFO* retained = g_session.FindPartyMemberByAid(42);
+    UIRoMapWnd::DisplayData displayAfter{};
+    Require(minimap.GetDisplayDataForQt(&displayAfter), "could not capture post-exit Qt minimap state");
+    Require(retained && !retained->partyPositionValid && g_session.GetNumParty() == 1,
+        "production game-mode exit did not invalidate coordinates while retaining party membership");
+    Require(!g_session.IsPartyMarkerEligible(*retained, "prontera"), "invalidated marker remains eligible for native/Qt consumers");
+    Require(g_session.GetPartyPositionRevision() > revisionBefore && displayAfter.imageRevision != displayBefore.imageRevision,
+        "party marker revision or minimap visual token did not invalidate on mode exit");
+
+    g_session.ClearParty();
+    g_session.m_aid = savedAid;
+    std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", savedMap.c_str());
+    for (FRIEND_INFO saved : savedMembers) {
+        const bool hadPosition = saved.partyPositionValid;
+        const int x = saved.partyX;
+        const int y = saved.partyY;
+        const u32 aid = saved.AID;
+        g_session.AddMemberToParty(saved);
+        if (hadPosition) g_session.SetPartyMemberPosition(aid, x, y);
+    }
+    g_session.m_partyName = savedPartyName;
+    g_session.m_amIPartyMaster = savedPartyMaster;
+    g_session.m_partyExpShare = savedExpShare;
+    g_session.m_itemDivType = savedItemDiv;
+    g_session.m_itemCollectType = savedItemCollect;
+
+    std::cout << "{\"case_id\":\"party_marker_game_mode_exit\",\"contract_id\":\"PK14.06\",\"fixture_id\":\"PK14.06-session-marker-exit\",\"outcome\":\"PASS\",\"assertions\":\"production OnExit, membership retained, shared eligibility false, position revision and minimap token changed\"}\n";
+}
+
     RejectUnframedInput({0x69,0x00,0x03,0x00},fixed,"undersized_variable_closes_without_rescan",CRagConnection::ReceiveError::InvalidVariableLength);
     RejectUnframedInput({0x69,0x00,0x00,0x80},fixed,"oversized_variable_closes_without_rescan",CRagConnection::ReceiveError::InvalidVariableLength);
     RejectFragmentedUnframedInput({0x69,0x00,0x03},{0x00,0x6c,0x00,0x00},"undersized_variable_fragmented_header_closes_without_rescan",CRagConnection::ReceiveError::InvalidVariableLength);
@@ -2404,3 +2638,4 @@ int main(){try{
     GuildMemberLoginNoticeReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}
+    PartyRosterReplacementReplay();

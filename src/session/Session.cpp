@@ -180,6 +180,17 @@ std::string NormalizePartyMapName(std::string value)
     return value;
 }
 
+std::string NormalizePartyMapKey(std::string value)
+{
+    if (value.empty()) {
+        return {};
+    }
+    if (value.find('.') == std::string::npos) {
+        value += ".rsw";
+    }
+    return ToLowerAscii(NormalizePartyMapName(std::move(value)));
+}
+
 bool NamesEqual(const std::string& left, const char* right)
 {
     if (!right) {
@@ -2071,6 +2082,50 @@ void CSession::ClearParty()
 }
 
 unsigned int CSession::GetNumParty() const
+bool CSession::ReplacePartyRoster(const std::string& partyName, const std::vector<FRIEND_INFO>& members)
+{
+    if (members.size() > 12) {
+        return false;
+    }
+
+    std::list<FRIEND_INFO> replacement;
+    bool amPartyMaster = false;
+    int index = 0;
+    for (FRIEND_INFO member : members) {
+        member.mapName = NormalizePartyMapName(std::move(member.mapName));
+        const auto existing = std::find_if(m_partyList.begin(), m_partyList.end(), [&member](const FRIEND_INFO& item) {
+            return item.AID != 0 && item.AID == member.AID;
+        });
+        if (existing != m_partyList.end()) {
+            if (member.partyHp <= 0 && member.partyMaxHp <= 0) {
+                member.partyHp = existing->partyHp;
+                member.partyMaxHp = existing->partyMaxHp;
+            }
+            if (NormalizePartyMapKey(existing->mapName) == NormalizePartyMapKey(member.mapName)
+                && existing->state == 0
+                && member.state == 0
+                && existing->partyPositionValid) {
+                member.partyX = existing->partyX;
+                member.partyY = existing->partyY;
+                member.partyPositionValid = true;
+            }
+        }
+
+        member.color = ResolveRosterAccentColor(index++);
+        if (member.AID == m_aid && member.role == 0) {
+            amPartyMaster = true;
+        }
+        replacement.push_back(std::move(member));
+    }
+
+    m_partyList.swap(replacement);
+    m_partyName = partyName;
+    m_amIPartyMaster = amPartyMaster;
+    ++m_partyPositionRevision;
+    if (m_partyPositionRevision == 0) ++m_partyPositionRevision;
+    return true;
+}
+
 {
     return static_cast<unsigned int>(m_partyList.size());
 }

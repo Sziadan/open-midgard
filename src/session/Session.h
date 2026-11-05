@@ -295,6 +295,7 @@ public:
     void ChangeRoleFromParty(unsigned int aid, int role);
     bool SetPartyMemberHp(unsigned int aid, long long hp, long long maxHp);
     bool SetPartyMemberPosition(unsigned int aid, int x, int y);
+    bool ReplacePartyRoster(const std::string& partyName, const std::vector<FRIEND_INFO>& members);
     const FRIEND_INFO* FindPartyMemberByAid(unsigned int aid) const;
     void RefreshPartyUI();
     const std::list<FRIEND_INFO>& GetPartyList() const;
@@ -366,6 +367,7 @@ private:
     void EnsureAccessoryNameTableLoaded();
     void InitJobHitWaveName();
     void InitWeaponHitWaveName();
+    u64 m_partyPositionRevision = 0;
     void InitWeaponSwingWaveName();
     int NormalizeJob(int job) const;
     u32 m_serverTime;

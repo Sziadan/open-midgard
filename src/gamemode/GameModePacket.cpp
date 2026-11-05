@@ -7559,23 +7559,23 @@ void HandlePartyInviteRequest(CGameMode&, const PacketView& packet)
 
 void HandlePartyList(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 28) {
+    constexpr int kHeaderSize = 28;
+    constexpr int kMemberSize = 46;
+    constexpr int kMaxPartyMembers = 12;
+    if (!packet.data || packet.packetLength < kHeaderSize
+        || (packet.packetLength - kHeaderSize) % kMemberSize != 0) {
         return;
     }
 
-    std::map<u32, std::pair<long long, long long>> cachedPartyHpByAid;
-    for (const FRIEND_INFO& existing : g_session.GetPartyList()) {
-        if (existing.AID != 0 && existing.partyMaxHp > 0) {
-            cachedPartyHpByAid[existing.AID] = std::make_pair(existing.partyHp, existing.partyMaxHp);
-        }
+    const int entryCount = (packet.packetLength - kHeaderSize) / kMemberSize;
+    if (entryCount > kMaxPartyMembers) {
+        return;
     }
 
-    g_session.ClearParty();
-    g_session.m_partyName = ExtractFixedPacketString(packet.data + 4, 24);
-
-    const int entryCount = (packet.packetLength - 28) / 46;
+    std::vector<FRIEND_INFO> members;
+    members.reserve(static_cast<size_t>(entryCount));
     for (int index = 0; index < entryCount; ++index) {
-        const u8* entry = packet.data + 28 + index * 46;
+        const u8* entry = packet.data + kHeaderSize + index * kMemberSize;
         FRIEND_INFO info{};
         info.isValid = 1;
         info.AID = ReadLE32(entry + 0);
@@ -7583,14 +7583,11 @@ void HandlePartyList(CGameMode& mode, const PacketView& packet)
         info.mapName = ExtractFixedPacketString(entry + 28, 16);
         info.role = static_cast<int>(entry[44]);
         info.state = static_cast<int>(entry[45]);
-        const auto cachedHpIt = cachedPartyHpByAid.find(info.AID);
-        if (cachedHpIt != cachedPartyHpByAid.end()) {
-            info.partyHp = cachedHpIt->second.first;
-            info.partyMaxHp = cachedHpIt->second.second;
-        }
-        g_session.AddMemberToParty(info);
-        if (info.AID == g_session.m_aid && info.role == 0) {
-            g_session.m_amIPartyMaster = true;
+        const bool duplicateAid = std::any_of(members.begin(), members.end(), [&info](const FRIEND_INFO& previous) {
+            return previous.AID == info.AID;
+        });
+        if (info.AID == 0 || duplicateAid || info.characterName.empty() || info.role > 1 || info.state > 1) {
+            return;
         }
         ApplyCachedPartyHpToVisibleActor(mode, info.AID, info.characterName);
     }
@@ -7637,6 +7634,14 @@ void HandlePartyOptionChanged(CGameMode& mode, const PacketView& packet)
     const u32 expOption = ReadLE32(packet.data + 2);
     if (expOption == 2) {
         RecordChat(mode, "Cannot change EXP sharing right now.", 0x00FF4040, kChatChannelSystem);
+        members.push_back(std::move(info));
+    }
+
+    const std::string partyName = ExtractFixedPacketString(packet.data + 4, 24);
+    if (!g_session.ReplacePartyRoster(partyName, members)) {
+        return;
+    }
+    for (const FRIEND_INFO& info : members) {
     } else {
         g_session.m_partyExpShare = expOption != 0;
     }
