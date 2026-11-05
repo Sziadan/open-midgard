@@ -1,0 +1,123 @@
+{
+    "cases": [
+        {
+            "case": "inventory",
+            "id": 1201,
+            "identified": true,
+            "name": "Knife [3]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "cart-collision",
+            "id": 1202,
+            "identified": false,
+            "name": "Dagger [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "vending",
+            "id": 1202,
+            "identified": true,
+            "name": "+3 Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "shop",
+            "id": 1201,
+            "identified": false,
+            "name": "Dagger [3]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "scaled-shop",
+            "id": 1201,
+            "identified": false,
+            "name": "Dagger [3]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "trade-local",
+            "id": 1201,
+            "identified": true,
+            "name": "Knife [3]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "trade-remote-row0",
+            "id": 1202,
+            "identified": true,
+            "name": "Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "trade-remote-row1",
+            "id": 1201,
+            "identified": false,
+            "name": "Dagger [3]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "viewed-equipment",
+            "id": 1202,
+            "identified": true,
+            "name": "Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "shop-snapshot",
+            "id": 1202,
+            "identified": true,
+            "name": "+3 Knife [4]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "snapshot-after-source-close",
+            "outcome": "PASS"
+        },
+        {
+            "case": "stale-expected-id",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unknown-row",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unknown-source",
+            "outcome": "PASS"
+        },
+        {
+            "case": "missing-expected-id",
+            "outcome": "PASS"
+        },
+        {
+            "case": "zero-amount",
+            "outcome": "PASS"
+        },
+        {
+            "case": "missing-vending-row-with-cart-collision",
+            "outcome": "PASS"
+        },
+        {
+            "case": "hidden-source-panel",
+            "outcome": "PASS"
+        },
+        {
+            "case": "missing-remote-row",
+            "outcome": "PASS"
+        },
+        {
+            "case": "negative-remote-row",
+            "outcome": "PASS"
+        },
+        {
+            "case": "omitted-remote-row",
+            "outcome": "PASS"
+        }
+    ],
+    "frames": 20,
+    "wire_equipment_routed": true,
+    "wire_shop_snapshot": true,
+    "wire_trade_accept_and_remote_rows": true,
+    "wire_vending_snapshot": true
+}

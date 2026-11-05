@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-05",
+  "baseline": "35f2311b35e65a516d1635336e8016848de695b5",
+  "profile": 20080910,
+  "commit_subject": "packet(PK37.06): isolate commerce item detail contexts",
+  "source_sha256": {
+    "CMakeLists.txt": "304383092c2a742f84155844d627f13eee332e1abab0e9dc57862f1fe99cda21",
+    "src/qtui/QtCommerce.cpp": "ab6168ce57f763b71281dc801ff89b2644cc2cbcd449b37b80ba1a4e46ebef93",
+    "src/qtui/qml/RoCommerce.qml": "3589defeed4bd2c1a8f3d496f290c0e646600c2484dc4a77efcc1fceb5513065",
+    "src/qtui/qml/GameOverlay.qml": "9a935a89b36ab6fd35fdda1175cd901d09a998636a41bb76968b0f11d5086231",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "dbb77d702a883ef68b9c1fd769e20149cc758160bc0dbee21a3a3a2edab4e522",
+    "tools/tests/replay/CommerceItemDetailRenderChecks.inc": "5f4c4d96f6f943ec745dba67f381c7110643ded04e614cc3256a8fc516d4a948"
+  },
+  "oracle_sha256": {
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\packet-audit\\server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "1a6a4c278cbe78b5dffc0e541e970e6e65489dac4116fbe15cc3c92730e81a2a",
+    "packet_stream_replay_checks.exe": "8871c964bd5728a3c1978ae8f8705dbb93a9d8cc9c693c2207fc68f1bbec3523",
+    "open-midgard.exe": "11e840ed6c2409761bf9672b03b7f5e9485a3ec0a63f2415f90cb322579b8284"
+  },
+  "validation": {
+    "ctest_passed": 110,
+    "ctest_total": 110,
+    "ctest_seconds": 89.32,
+    "packet_PASS_records": 167,
+    "commerce_detail_frames": 20,
+    "commerce_detail_cases": 21,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "c44bd3e613247bb4457f5abda7ed5aa63c704c1f0ed0bed19360aa011380fe7a",
+    "ctest_log_sha256": "8793ae548c53cdcf25d416921012468f61971ef1d21b8dd4b7869409197f5f36"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK37.06-detail-renders/commerce-detail-render-results.json": "62d467f2cf38d95618a39d9ecf24ed07273c4f02287312dc1f1346af8d5cd918",
+    "evidence/PK37.06-detail-renders/commerce-detail-results.json": "059ea53f82baa5e828880c90e8a84bcec8e1eda458a71c79ce44b3f84bcb686a",
+    "evidence/PK37.06-detail-renders/commerce-detail-scaled-shop-qt.png": "368fc1c84de35216e1c3eee6889963f4f0acb264648a6409f319147ddd2e19c2",
+    "evidence/PK37.06-detail-renders/commerce-detail-shop-qt.png": "05cb9c771dd78c898ce62a8dfe4e8219da171648025da64663adb23c966ae53d",
+    "evidence/PK37.06-detail-renders/commerce-detail-shop-snapshot-native.png": "3ae060b9a13be426450270361bf62d688b2ceb39994f9173a030d43f4c020d42",
+    "evidence/PK37.06-detail-renders/commerce-detail-trade-remote-row0-qt.png": "15170a611547af02019f1e906bf73c7daeb12218021e185b1cb5525c19ece2e3",
+    "evidence/PK37.06-detail-renders/commerce-detail-trade-remote-row1-qt.png": "4f9f1fad99f5d106ea794e970539f7730986b8da774f1bdc45c001ae9be31605",
+    "evidence/PK37.06-detail-renders/commerce-detail-vending-qt.png": "ba1847272b1cbaf4ea7eb512f7a702e70e26e0da3abab075b971034c402f8457",
+    "evidence/PK37.06-detail-renders/commerce-detail-viewed-equipment-qt.png": "e4b64a9a87e872a3ba9688de5b5c7e1052bfa24353614e55cecf0b0257cb5fd1"
+  },
+  "scope_limits": [
+    "Context and rendered snapshot proof; full requests/state machines/rollback not accepted",
+    "Local offer/index collisions are synthetic context fixtures",
+    "No conditional fallback for literal equipment snapshot route",
+    "No discovery closure or full PK09.04/PK37/PK48/49 acceptance",
+    "Preferred creation/placement policy remains open",
+    "No locale/art/historical/live/deployed acceptance"
+  ]
+}

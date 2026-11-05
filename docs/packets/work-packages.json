@@ -1283,6 +1283,11 @@
         "id": "PK37.05",
         "action": "Verify selected cart status/delta/failure/counter and legacy option/contents lifetimes against primary sources, repair defects, and retain production replay plus actual Qt clear/reopen evidence; leave broader transfer/vending/trade and item UI scope open.",
         "tier": "S"
+      },
+      {
+        "id": "PK37.06",
+        "action": "Resolve commerce item descriptions by their actual owner/offer identity; restore primary merchant/trade right-click snapshots and verify index collisions, remote ordinals, invalid callbacks, actual native/Qt paint and tooltip layering.",
+        "tier": "S"
       }
     ],
     "acceptance": "Verify every production sender/server parser, partial purchases, quantities/prices, stale indices, insufficient funds, capacity and teardown. Server confirms mutations; UI drag/drop must use verified request paths."

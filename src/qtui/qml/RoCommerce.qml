@@ -3,7 +3,7 @@ import QtQuick 2.15
 Item {
     id: hub
     anchors.fill: parent
-    z: pending!==null || hoverTile!==null || !!view.promptKind || !!(view.playerMenu&&view.playerMenu.visible) ? 3000 : 30
+    z: pending!==null || !!view.promptKind || !!(view.playerMenu&&view.playerMenu.visible) ? 3000 : 30
     RoTheme { id: theme }
     property var view: uiState.commerceData || ({})
     property var dragItem: ({})
@@ -13,6 +13,8 @@ Item {
     property var hoverTile: null
     Rectangle {
         id: itemTooltip
+        // Lift the tooltip alone; raising every panel obscures item details.
+        parent: hub.parent
         objectName: "commerceItemTooltip"
         visible: hub.hoverTile !== null && !hub.dragging
         property point anchor: hub.hoverTile ? hub.hoverTile.mapToItem(hub,hub.hoverTile.width/2,0) : Qt.point(0,0)
@@ -109,13 +111,37 @@ Item {
             }
             onReleased: function(event) {
                 if (hub.dragging) { var p=mapToItem(hub,event.x,event.y);if(!hub.dropAt(p.x,p.y) && tile.sourceKind==="inventory")hub.send("externalDrop",{index:tile.item.index,x:p.x,y:p.y});hub.dragging=false }
-                else if (event.button===Qt.RightButton) { var p=mapToItem(hub,event.x,event.y);hub.send("describe",{from:tile.sourceKind,index:tile.item.index,x:p.x+12,y:p.y+12}) }
+                else if (event.button===Qt.RightButton) { var p=mapToItem(hub,event.x,event.y);hub.hoverTile=null;hub.send("describe",{from:tile.sourceKind,index:tile.item.index,id:tile.item.id,x:p.x+12,y:p.y+12}) }
             }
             onCanceled: hub.dragging=false
             onDoubleClicked: if(tile.sourceKind==="inventory")hub.send("use",{index:tile.item.index})
         }
     }
     component Status: Text { text: hub.view.status || ""; color: theme.muted; font.pixelSize: 10; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight }
+
+    component DetailIcon: Item {
+        id: detailIcon
+        required property var item
+        required property string sourceKind
+        property int offerRow: -1
+        objectName: "commerceDetail_" + sourceKind + "_" + (offerRow >= 0 ? offerRow : item.index)
+        width: 32; height: 32
+        Component.onDestruction: if (hub && hub.hoverTile === detailIcon) hub.hoverTile = null
+        Image { anchors.fill: parent; source: hub.icon(detailIcon.item); smooth: false }
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            hoverEnabled: true
+            onEntered: hub.hoverTile = detailIcon
+            onExited: if (hub.hoverTile === detailIcon) hub.hoverTile = null
+            onClicked: function(event) {
+                var p = mapToItem(hub,event.x,event.y)
+                hub.hoverTile = null
+                hub.send("describe",{from:detailIcon.sourceKind,index:detailIcon.item.index,
+                    id:detailIcon.item.id,row:detailIcon.offerRow,x:p.x+12,y:p.y+12})
+            }
+        }
+    }
 
     Repeater {
         model: ["inventory","cart"]
@@ -204,8 +230,8 @@ Item {
                         Flickable { x:8; y:32; width:parent.width-16; height:parent.height-66; contentHeight:Math.max(height,offerRows.height); clip:true
                             Column { id:offerRows; width:parent.width; spacing:5
                                 Repeater { model:side.mine ? hub.view.localOffer||[] : hub.view.remoteOffer||[]
-                                    Row { required property var modelData; width:offerRows.width; spacing:6
-                                        Image { width:30; height:30; source:hub.icon(modelData); smooth:false }
+                                    Row { required property var modelData; required property int index; width:offerRows.width; spacing:6
+                                        DetailIcon { item:modelData; sourceKind:side.mine ? "trade-local" : "trade-remote"; offerRow:side.mine ? -1 : index }
                                         Text { width:parent.width-38; anchors.verticalCenter:parent.verticalCenter; text:modelData.count+" × "+modelData.name; wrapMode:Text.WordWrap; color:theme.ink; font.pixelSize:11 }
                                     }
                                 }
@@ -235,7 +261,7 @@ Item {
             Column { id:shopRows; width:parent.width; spacing:8
                 Repeater { model:hub.view.shopItems||[]
                     Rectangle { required property var modelData; width:shopRows.width; height:70; color:theme.rowAlt; radius:5
-                        Image { x:6; y:8; width:32; height:32; source:hub.icon(modelData) }
+                        DetailIcon { x:6; y:8; item:modelData; sourceKind:"shop" }
                         Text { x:45; y:7; width:parent.width-50; text:modelData.name; elide:Text.ElideRight; color:theme.ink; font.pixelSize:12 }
                         Text { x:45; y:26; text:modelData.price+" Zeny each · "+modelData.count+" available"; color:theme.muted; font.pixelSize:10 }
                         Field { id:buyAmount; x:45; y:41; width:70; height:25; text:"1"; input.validator:IntValidator { bottom:1; top:32767 } }
@@ -266,7 +292,7 @@ Item {
             Column { id:equipmentRows; width:parent.width; spacing:6
                 Repeater { model:hub.view.equipmentItems||[]
                     Row { required property var modelData; spacing:8
-                        Image { width:32; height:32; source:hub.icon(modelData) }
+                        DetailIcon { item:modelData; sourceKind:"equipment" }
                         Text { text:modelData.name; color:theme.ink; font.pixelSize:12; anchors.verticalCenter:parent.verticalCenter }
                     }
                 }

@@ -1,0 +1,1 @@
+PASS PACKETVER20080910: 0136 header8 row22 index@4 amount@6 id@9; 0133 header8 row22 amount@4 index@6 id@9; 00e9 size19 amount@2 id@6 identified@8 refine@10 slot@11, no inventory index; 02d7 header43 equiprow26

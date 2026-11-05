@@ -1,0 +1,101 @@
+{
+  "scope": "PK09.04 selected item-type reachability; source evidence only",
+  "selected_server": {
+    "path": "C:/Users/sziad/source/repos/rathena-master",
+    "provenance": "Local source snapshot has no Git metadata; deployed-server provenance is unknown.",
+    "hashes_sha256": {
+      "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+      "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+      "src/map/itemdb.cpp": "3b51a2bbcb44c5ffbdb5dc04683dd4f567c2da92f56a4bc0008aa9a93de5efe5",
+      "conf/map_athena.conf": "608bc8ce9b85b8b6dea79768ee357bfb9893bb2f48d7f6fe27acb5cc5bd2d6ea",
+      "src/config/core.hpp": "ba04ee9f32d9d334f59b345326105864ddc5fed296ebbaf9d599c26e48aea7ae",
+      "src/config/renewal.hpp": "b12685514fd1b2a40f80f104e2b4d35409403615c0fc7172c4ddf557db71d168",
+      "db/item_db.yml": "d6cf495fc47405cceb897ee11dc3bb43433dbae58b1f11e3d11a79c8acc46592",
+      "db/re/item_db.yml": "3c90cdea4b4384b460b7d36271210d8543936c8f03d8020e49acad1cc1952eb3",
+      "db/re/item_db_usable.yml": "865e1eb2da0965af62e061cffe78d01185dab9765e7444a7d6fa5a7bfc7bb984",
+      "db/re/item_db_equip.yml": "51a659022c7fb2a4208805af90e77c228239f390f829b0ead60304daea5007d7",
+      "db/re/item_db_etc.yml": "a0e1216735746e6c08226481df05cbe92718ae593fab928ab7367c50b5da96f0",
+      "db/import/item_db.yml": "4904463d2ba6baf7ac90acdff9eff249d12469fe6ad6d5a6abe4baf9dfa85b07"
+    }
+  },
+  "effective_db": {
+    "selection": "conf/map_athena.conf:74-75 sets db_path=db; src/config/core.hpp:117 includes src/config/renewal.hpp, which defines RENEWAL at line 24. db/item_db.yml:90-97 selects db/re/item_db.yml under Renewal and then db/import/item_db.yml.",
+    "renewal_imports": "db/re/item_db.yml footer imports db/re/item_db_usable.yml, item_db_equip.yml, and item_db_etc.yml.",
+    "custom_import": "db/import/item_db.yml contains no item rows (only schema/header documentation)."
+  },
+  "wire_type_mapping": {
+    "enum_source": "src/common/mmo.hpp:223-238",
+    "ids": {
+      "Healing": 0,
+      "Unknown": 1,
+      "Usable": 2,
+      "Etc": 3,
+      "Armor": 4,
+      "Weapon": 5,
+      "Card": 6,
+      "Petegg": 7,
+      "Petarmor": 8,
+      "Unknown2": 9,
+      "Ammo": 10,
+      "DelayConsume": 11,
+      "Shadowgear": 12,
+      "Cash": 18
+    },
+    "stock_renewal_item_rows_by_type": {
+      "db/re/item_db_usable.yml": {
+        "Cash": 2410,
+        "DelayConsume": 740,
+        "Delayconsume": 2,
+        "Healing": 463,
+        "Usable": 2787
+      },
+      "db/re/item_db_equip.yml": {
+        "Armor": 8866,
+        "PetArmor": 3,
+        "PetEgg": 31,
+        "Petarmor": 42,
+        "Petegg": 118,
+        "ShadowGear": 521,
+        "Shadowgear": 507,
+        "Weapon": 2806
+      },
+      "db/re/item_db_etc.yml": {
+        "Ammo": 123,
+        "Card": 5586,
+        "Etc": 4124
+      }
+    },
+    "normalization": [
+      {
+        "source": "src/map/itemdb.cpp:1117-1127",
+        "input": "IT_DELAYCONSUME (11)",
+        "loaded_type": "IT_USABLE (2)",
+        "note": "Sets delay-consume flag; loader does not leave type 11 on the item."
+      },
+      {
+        "source": "src/map/clif.cpp:109-119",
+        "input": "IT_PETEGG (7)",
+        "wire_type": "IT_ARMOR (4)"
+      },
+      {
+        "source": "src/map/clif.cpp:109-119",
+        "input": "IT_SHADOWGEAR (12)",
+        "wire_type": "IT_WEAPON (5) when EQP_SHADOW_WEAPON; otherwise IT_ARMOR (4)"
+      },
+      {
+        "source": "src/map/clif.cpp:109-119",
+        "input": "IT_CASH (18)",
+        "wire_type": "18 (pass-through)"
+      }
+    ],
+    "wire_reachability_note": "Stock Renewal rows establish source-data reachability for wire type 18; DelayConsume rows emit as 2, pet eggs as 4, and shadowgear as 4 or 5. Other enum IDs pass through itemtype() unchanged. This does not establish any individual row is in a player inventory or on a deployed server.",
+    "counting_method": "Exact case-sensitive Type scalars at four-space item-row indentation; usable data contains 740 DelayConsume and two Delayconsume spellings. Their combined count is 742, but exact source spellings are retained here."
+  },
+  "ui_comparison_refs": {
+    "legacy_primary_sort": "Ref/UIItemWnd.cpp:1362-1443 (usable includes 0-2 and 18; equipment 4,5,8,9,11-15; etc 3,6,7,10,16,17, with radio subfilters).",
+    "current_primary_classifier": "src/ui/UIItemWnd.cpp:385-434; inventory filtering/order at 1618-1641.",
+    "visible_qt_inventory": "src/qtui/qml/GameOverlay.qml legacy Inventory is visible:false; root RoCommerce renders the visible inventory. Compare PopulateCommerceUi in src/qtui/QtCommerce.cpp against UIItemWnd broad helpers."
+  },
+  "baseline_limit": "docs/packets/source-baseline.json pins mmo.hpp, clif.cpp and selected profile files; it does not pin itemdb.cpp or item DB YAML. Hashes above record the inspected local files, not a tracked DB baseline.",
+  "status": "Bounded source evidence only; no acceptance or discovery-closure claim."
+}

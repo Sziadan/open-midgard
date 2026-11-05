@@ -2780,6 +2780,7 @@ Item {
         Text {
             x: 112
             y: 25
+            objectName: "itemInfoName"
             width: parent.width - 120
             text: uiState.itemInfoData.name || ""
             color: theme.ink

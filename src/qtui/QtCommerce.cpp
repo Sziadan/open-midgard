@@ -11,6 +11,7 @@
 #include "gamemode/View.h"
 #include <QVariantMap>
 #include <QColor>
+#include <algorithm>
 #include "ui/UIShopCommon.h"
 
 namespace {
@@ -18,6 +19,52 @@ QString str(const std::string& s){return QString::fromUtf8(s.data(),int(s.size()
 QVariantMap row(const ITEM_INFO& item,u32 count=0xffffffffu,u32 price=0){return {{"index",item.m_itemIndex},{"id",item.GetItemId()},{"name",str(shopui::GetItemDisplayName(item))},{"count",count==0xffffffffu?u32(item.m_num):count},{"price",price},{"identified",item.m_isIdentified!=0},{"equipped",item.m_wearLocation!=0},{"equip",item.m_location!=0},{"description",str(item.GetDescription())},{"hoverText",str(shopui::BuildItemHoverText(item))},{"nameColor",QColor::fromRgba(item.GetNameColorArgb()).name(QColor::HexArgb)}};}
 QVariantMap geometry(const ro::commerce::Window& w,bool suppressed){return {{"visible",w.visible&&!suppressed},{"x",w.x},{"y",w.y},{"width",w.width},{"height",w.height}};}
 QVariantList offers(const std::vector<ro::commerce::Offer>& list){QVariantList result;for(const auto& o:list)result.push_back(row(o.item,o.amount,o.price));return result;}
+
+void DescribeCommerceItem(const QVariantMap& args)
+{
+    using namespace ro::commerce;
+    const QString from = args.value("from").toString();
+    const u32 index = args.value("index").toUInt();
+    const ITEM_INFO* item = nullptr;
+    ItemInfoSource source = ItemInfoSource::Snapshot;
+    const auto findOffer = [index](const std::vector<Offer>& entries) -> const ITEM_INFO* {
+        const auto found = std::find_if(entries.begin(), entries.end(), [index](const Offer& offer) {
+            return offer.item.m_itemIndex == index && offer.amount != 0;
+        });
+        return found == entries.end() ? nullptr : &found->item;
+    };
+    if (from == "inventory") {
+        item = g_session.GetInventoryItemByIndex(index);
+        source = ItemInfoSource::Inventory;
+    } else if (from == "cart") {
+        const auto found = state.cartItems.find(index);
+        if (found != state.cartItems.end()) item = &found->second;
+        source = ItemInfoSource::Cart;
+    } else if (from == "vending" && state.vending.visible) {
+        item = findOffer(state.draft);
+    } else if (from == "shop" && state.shop.visible) {
+        item = findOffer(state.shopItems);
+    } else if (from == "trade-local" && state.trade.visible && state.tradeActive) {
+        item = findOffer(state.localOffer);
+    } else if (from == "trade-remote" && state.trade.visible && state.tradeActive) {
+        // 00E9 has no inventory index. The rendered row identifies an offer;
+        // never resolve its default index zero against another item owner.
+        bool valid = false;
+        const int ordinal = args.value("row").toInt(&valid);
+        if (valid && ordinal >= 0 && size_t(ordinal) < state.remoteOffer.size()
+            && state.remoteOffer[size_t(ordinal)].amount != 0)
+            item = &state.remoteOffer[size_t(ordinal)].item;
+    } else if (from == "equipment" && state.equipment.visible) {
+        const auto found = std::find_if(state.viewedEquipment.begin(), state.viewedEquipment.end(),
+            [index](const ITEM_INFO& entry) { return entry.m_itemIndex == index; });
+        if (found != state.viewedEquipment.end()) item = &*found;
+    }
+    // A queued UI callback must not describe a replacement row of another ID.
+    const u32 expectedId = args.value("id").toUInt();
+    if (item && expectedId && expectedId == item->GetItemId())
+        g_windowMgr.ShowItemInfoWindow(*item, UiScaleRawToLogicalCoordinate(args.value("x").toInt()),
+            UiScaleRawToLogicalCoordinate(args.value("y").toInt()), source);
+}
 }
 void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     using namespace ro::commerce;auto& s=state;QVariantMap data;QVariantList inventory,cart,equipment;
@@ -77,7 +124,7 @@ void BindCommerceUi(QtUiState* ui){
             mode->m_dragInfo.itemId=item->GetItemId();mode->m_dragInfo.itemIndex=item->m_itemIndex;mode->m_dragInfo.itemCount=item->m_num;mode->m_dragInfo.itemEquipLocation=item->m_location;
             g_windowMgr.OnLBtnUp(c.x,c.y);return;
         }
-        if(action=="describe"){const ITEM_INFO* item=nullptr;if(c.from=="inventory")item=g_session.GetInventoryItemByIndex(c.index);else{auto it=state.cartItems.find(c.index);if(it!=state.cartItems.end())item=&it->second;}if(item)g_windowMgr.ShowItemInfoWindow(*item,c.x,c.y,c.from=="inventory"?ItemInfoSource::Inventory:c.from=="cart"?ItemInfoSource::Cart:ItemInfoSource::Snapshot);return;}
+        if(action=="describe"){DescribeCommerceItem(args);return;}
         if(!Action(c) && state.status.empty())state.status="Action unavailable. Check the quantity and current transaction state.";
     });
 }
