@@ -1,0 +1,13 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 9: packet_item_detail_toggle_render_checks
+1/1 Test #9: packet_item_detail_toggle_render_checks ...***Failed    1.33 sec
+FAIL item colour render: same QML inventory key toggles closed
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   1.34 sec
+
+The following tests FAILED:
+	  9 - packet_item_detail_toggle_render_checks (Failed)
+Errors while running CTest

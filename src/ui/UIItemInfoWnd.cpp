@@ -365,7 +365,8 @@ void UIItemInfoWnd::OnLBtnUp(int x, int y)
     UpdateInteraction(x, y);
 
     if (activateClose) {
-        SetShow(0);
+        StoreInfo();
+        g_windowMgr.DeleteWindow(this);
         return;
     }
     if (activateGraphics && m_hasItem) {
@@ -437,6 +438,14 @@ bool UIItemInfoWnd::RefreshBoundItem()
         int x=m_x,y=m_y;g_windowMgr.ClampWindowToClient(&x,&y,m_w,m_h);Move(x,y);Invalidate();
     }
     return true;
+}
+
+bool UIItemInfoWnd::MatchesSelection(const ITEM_INFO& item) const
+{
+    // Ref compares the complete raw name field, not its parsed numeric ID.
+    return m_hasItem && m_item.m_itemName == item.m_itemName
+        && m_item.m_refiningLevel == item.m_refiningLevel
+        && std::equal(std::begin(m_item.m_slot), std::end(m_item.m_slot), std::begin(item.m_slot));
 }
 
 void UIItemInfoWnd::SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source)

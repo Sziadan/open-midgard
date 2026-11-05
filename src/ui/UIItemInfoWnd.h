@@ -62,6 +62,7 @@ public:
     void StoreInfo() override;
     void SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source = ItemInfoSource::Snapshot);
     bool RefreshBoundItem();
+    bool MatchesSelection(const ITEM_INFO& item) const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
     bool HasItem() const;
 

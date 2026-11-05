@@ -1,0 +1,99 @@
+{
+    "cases": [
+        {
+            "case": "same QML inventory key toggles closed",
+            "outcome": "PASS"
+        },
+        {
+            "case": "hidden retained same-key selection reopens",
+            "outcome": "PASS"
+        },
+        {
+            "case": "cross-owner/index/type/identified same key toggles closed",
+            "outcome": "PASS"
+        },
+        {
+            "case": "cart context opens after same-key toggle",
+            "outcome": "PASS"
+        },
+        {
+            "case": "raw item name participates in source key",
+            "outcome": "PASS"
+        },
+        {
+            "case": "refine participates in source key",
+            "outcome": "PASS"
+        },
+        {
+            "case": "card word 0 participates in source key",
+            "outcome": "PASS"
+        },
+        {
+            "case": "card word 1 participates in source key",
+            "outcome": "PASS"
+        },
+        {
+            "case": "card word 2 participates in source key",
+            "outcome": "PASS"
+        },
+        {
+            "case": "card word 3 participates in source key",
+            "outcome": "PASS"
+        },
+        {
+            "case": "ForceUpdate refreshes and remains visible",
+            "display_name": "Knife [3]",
+            "outcome": "PASS"
+        },
+        {
+            "case": "snapshot binding isolation",
+            "outcome": "PASS"
+        },
+        {
+            "case": "cart source binding refresh",
+            "outcome": "PASS"
+        },
+        {
+            "case": "inventory source binding refresh",
+            "outcome": "PASS"
+        },
+        {
+            "case": "native inventory repeat selection toggles closed",
+            "outcome": "PASS"
+        },
+        {
+            "case": "native storage repeat selection toggles closed",
+            "outcome": "PASS"
+        },
+        {
+            "case": "native inventory and storage selection",
+            "outcome": "PASS"
+        },
+        {
+            "case": "cross-owner shop same key toggles closed",
+            "outcome": "PASS"
+        },
+        {
+            "case": "actual QML shop detail source",
+            "outcome": "PASS"
+        },
+        {
+            "case": "ForceUpdate bypasses toggle",
+            "outcome": "PASS"
+        },
+        {
+            "case": "native close button deletes owned item detail",
+            "outcome": "PASS"
+        },
+        {
+            "case": "deleted item detail can be recreated",
+            "outcome": "PASS"
+        },
+        {
+            "case": "ForceUpdate at 125 percent scale",
+            "outcome": "PASS"
+        }
+    ],
+    "outcome": "PASS",
+    "rendered_frames": 8
+}

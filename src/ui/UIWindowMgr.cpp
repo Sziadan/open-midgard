@@ -2336,8 +2336,18 @@ bool UIWindowMgr::OnWheel(int x, int y, int delta)
     return true;
 }
 
-void UIWindowMgr::ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source)
+void UIWindowMgr::ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY,
+    ItemInfoSource source, ItemInfoAction action)
 {
+    // Test the pre-open visibility: MakeWindow shows a retained hidden window.
+    // Reopening such a window corresponds to a fresh source instance, not a
+    // second selection of the previously visible item.
+    if (action == ItemInfoAction::Select && m_itemInfoWnd && m_itemInfoWnd->m_show != 0
+        && m_itemInfoWnd->MatchesSelection(item)) {
+        m_itemInfoWnd->StoreInfo();
+        DeleteWindow(m_itemInfoWnd);
+        return;
+    }
     UIItemInfoWnd* const window = static_cast<UIItemInfoWnd*>(MakeWindow(WID_ITEMINFOWND));
     if (!window) {
         return;

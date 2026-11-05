@@ -187,7 +187,8 @@ public:
     void ClosePlayerContextMenu();
     void CloseNpcShopWindows();
     void CloseStorageWindows();
-    void ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source = ItemInfoSource::Snapshot);
+    void ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY,
+        ItemInfoSource source = ItemInfoSource::Snapshot, ItemInfoAction action = ItemInfoAction::Select);
     void ShowItemCollectionWindow(const ITEM_INFO& item, int preferredX, int preferredY);
     void ShowSkillDescribeWindow(const PLAYER_SKILL_INFO& skillInfo, int preferredX, int preferredY);
 

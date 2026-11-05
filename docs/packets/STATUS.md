@@ -1,7 +1,8 @@
 # Packet implementation status
 
-**Active step: PK09.04.** [Latest item-tab evidence](evidence/PK09.10-item-tabs.md), [provenance](evidence/PK09.10-item-tabs.json), and [HANDOFF](HANDOFF.md) define continuation.
+**Active step: PK09.04.** [Latest detail-selection evidence](evidence/PK09.11-detail-selection.md), [provenance](evidence/PK09.11-detail-selection.json), and [HANDOFF](HANDOFF.md) define continuation.
 
+- PK09.11 restores same-key visible selection closure, hidden reopen, explicit forced assignment, owned native close/recreation and saved logical position. Native/Qt selections and force API checks pass; NPC detail fallback gestures remain open.
 - PK09.10 shares source All-tab classification across native inventory/storage and visible Qt commerce, fixes Cash18/historical groups and unknown fallback, and verifies raw fields, actual tab delegates and snapshot/hover lifetime. Primary radio predicates have no connected selectable controls.
 - PK37.06 resolves commerce detail contexts, remote ordinal identity and copied-offer ownership; merchant/trade/viewed-equipment right-clicks, scale, invalid-callback guards and tooltip layering pass. Broad transaction/placement acceptance stays open.
 - PK33.05 verifies selected rental framing/notices/removal, absolute local expiry dates and owner-bound native/Qt detail lifetime. Popup layering, scale and description containment are corrected; broad PK33 stays open.
@@ -11,5 +12,5 @@
 - PK09.07 repairs list-only socket suffixes leaking into hovers and Qt identification/refinement naming. Actual native/Qt names and quantity delegates/replacement pass. Generic cards now pass PK09.08; special-name variants now pass PK09.09; expiry and other contexts remain required.
 - PK37.05 repairs same-index metadata loss, contents/presence conflation and unknown failure notices. Local options own cart removal; counters remain authoritative. Production packet/actor tests and actual QML Cart-button reopening/footer rendering pass. Broader PK37.01–.04 remain open.
 - Prior bag/field/colour/map proofs and PK09.02/.03 mapping/route checkpoints remain verified. PK09.04 stays open for remaining type/tab/radio/detail contexts and historical acceptance.
-- Deploy-off build and final validation: **111/111 CTest in 91.37s**, **167 PASS packet records**, 24 item-type probes, 10 category frames and zero category QML errors. Existing downstream checks pass; no installed client/live server or numeric row closure.
+- Deploy-off build and final validation: **112/112 CTest in 99.44s**, **167 PASS packet records**, 23 detail-selection cases, eight detail frames and zero detail-toggle QML errors. Existing downstream checks pass; no installed client/live server or numeric row closure.
 - NPC/status/mail implementations, PK46.02's 177 request rows/character paths, PK47 and independent PK48/49/deployed provenance remain open. The whole-plan goal remains active.

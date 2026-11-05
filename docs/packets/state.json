@@ -1907,6 +1907,14 @@
         "docs/packets/evidence/PK09.10-item-tabs.json"
       ],
       "commit_subject": "packet(PK09.10): share primary item tab classification"
+    },
+    "PK09.11": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.11-detail-selection.md",
+        "docs/packets/evidence/PK09.11-detail-selection.json"
+      ],
+      "commit_subject": "packet(PK09.11): restore item detail toggle and forced updates"
     }
   }
 }

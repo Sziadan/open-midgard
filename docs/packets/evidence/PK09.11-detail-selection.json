@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-05",
+  "baseline": "91fa2ba42b07a6d58b2d67a7703642b6fb9e835c",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.11): restore item detail toggle and forced updates",
+  "source_sha256": {
+    "CMakeLists.txt": "b5f16f094079d1b35d9c1a095734c1fe01f7991b46efeba28d0aa7dabcc99864",
+    "src/ui/ItemInfoSource.h": "73cab8736ecd8174aa52ae8ada3583a707546bf573caff58fa17a5eaab7f1f60",
+    "src/ui/UIItemInfoWnd.cpp": "5c6dc9e28a2e337526b43b70b10055edd0c10ffc8862f61b212145e1e5ad3ab3",
+    "src/ui/UIItemInfoWnd.h": "ae9401a3e61be19995d80440635c2bc351300f9c5b57fb22f8ced11a5ed2f731",
+    "src/ui/UIWindowMgr.cpp": "97a37259535cb8c5f549eee31a03bc712ac9865776b3cd13e89285c23769b0e8",
+    "src/ui/UIWindowMgr.h": "06c39eba786cbb4e432e24dad73ba938282cf1de032d981767e4ad8e5505e5a1",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "f1305dc814e0db4eabf483256df4af3442f0aa8a08a308f037997584a5e4c2b1",
+    "tools/tests/replay/ItemDetailToggleRenderChecks.inc": "6aa536509a8ad63be94b44cbba409eeea3a558bdbbe9281ee5e7e2f0930eb43b"
+  },
+  "oracle_and_renderer_sha256": {
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIRectInfo.cpp": "e966ca8d73cd295750d9d1abd0a0595b77112b3ae956efd5b41809ba98beaa11",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\src\\qtui\\qml\\GameOverlay.qml": "9a935a89b36ab6fd35fdda1175cd901d09a998636a41bb76968b0f11d5086231",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\src\\qtui\\qml\\RoCommerce.qml": "4a8cacfcc4cebee530aa9ae009b20df6ee6db1b699cc9184f6d8dde903a4f869",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\src\\ui\\UIItemShopWnd.cpp": "9ce2085c4ff386fd73473f1ac711df85b7c02df811803a894199acf5592a2704",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\src\\ui\\UIItemPurchaseWnd.cpp": "7ef8982a117f5f5b6d100d69de19844aa6a122504eb360441afebe54251dcae4",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\src\\ui\\UIItemSellWnd.cpp": "ecabf562b2511f317af7c3e32631384950afe90575e197e149ccf19f59ed0532"
+  },
+  "fixture_sha256": {
+    "tools/tests/fixtures/packet-item-data/idnum2itemdisplaynametable.txt": "8c94c27f0812a79bc85196ad20934e57a44464b8298cf3d537b078598736173c",
+    "tools/tests/fixtures/packet-item-data/num2itemdisplaynametable.txt": "78c95ed1f33e5ddbaa00a8e4000ceeccf24fe190ab2635e8a30637e5529c14df",
+    "tools/tests/fixtures/packet-item-data/itemslotcounttable.txt": "cb2927ebf1cdeb69999fc1e53ccac83b78a699d74512e08adf3bdb17dc68c6b6",
+    "tools/tests/fixtures/packet-item-data/cardprefixnametable.txt": "b17d99d8ec5a312c458b6d4b9ae470ec2adc9bf96038c81878a7ffc56cf4fb66",
+    "tools/tests/fixtures/packet-item-data/cardpostfixnametable.txt": "81ae3a843b8c8d2bec63b4d530c878f29d3028b5e51058a5bd69bba942195a44",
+    "tools/tests/fixtures/packet-item-data/carditemnametable.txt": "62f0b6f660ac0dfb3520a37a97d712363f442647706ff7e1f2fa2efc05baca0f"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "0e757287eebb238d8d0a145be17754d7aa8a31f3be370ec83cd8564b43440695",
+    "packet_stream_replay_checks.exe": "5487b440d8a2065f6d2233d61e1e624daf38bc8f821f618e688d490bef693173",
+    "open-midgard.exe": "cac7a0df801fe48c0ea8a622d7166961132fe8b86507119a1cd15bff2d3e3d45"
+  },
+  "validation": {
+    "ctest_passed": 112,
+    "ctest_total": 112,
+    "ctest_seconds": 99.44,
+    "packet_PASS_records": 167,
+    "detail_selection_cases": 23,
+    "rendered_frames": 8,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "1fc0121ca68a48c2822716d574344fce9a3ea80bcc47920c567d183fdca720c2",
+    "ctest_log_sha256": "0a30562846c7e30ec14f95c0747937e56a4d52a0f265208a6e8d192ed3da2051"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK09.11-detail-renders/item-detail-forced-update-native.png": "c4e102b35b910e31ada24930edbf2a6a1951eb30994c55bc9a93388493945b10",
+    "evidence/PK09.11-detail-renders/item-detail-forced-update-qt.png": "3d55be6f846ab1110f3b6b1c79f065127302d45a5a505cf0bfc8a9815b6ca5e1",
+    "evidence/PK09.11-detail-renders/item-detail-inventory-selected-qt.png": "1481d40ce4e40be31f3f874bdbdbae3c53036c4e6bfbe190255e3eed403bc7a2",
+    "evidence/PK09.11-detail-renders/item-detail-native-storage-native.png": "d78f89b2fffdf52628fcf852e127df5313f7fdb35b58c5b1e8524eb99c437b4a",
+    "evidence/PK09.11-detail-renders/item-detail-scaled-retained-qt.png": "7c9dec6f915dd1abe95fa2da7ff1ba3be99c1ad032c068dca0e7e061d5c2d700",
+    "evidence/PK09.11-detail-renders/item-detail-toggle-closed-qt.png": "6a85d45cb3aa7af9efd92b4a52d9d0541580b48d6ea0a5eaf165517e47ca6988",
+    "evidence/PK09.11-detail-renders/item-detail-toggle-render-results.json": "62d467f2cf38d95618a39d9ecf24ed07273c4f02287312dc1f1346af8d5cd918",
+    "evidence/PK09.11-detail-renders/item-detail-toggle-results.json": "829304dfb48f5a155508f16c2cee35facdafc747bdeb7be271a25411a751a69a"
+  },
+  "scope_limits": [
+    "Force update API checked; current NPC force fallback gestures not implemented",
+    "Literal inventory context setup; cross-owner/key permutations synthetic",
+    "Current logical persistence/scaled rendering, not full legacy geometry/rectangle rules",
+    "No packet change/discovery closure/full PK09.04/PK48/49 acceptance",
+    "Saved-tab restart, NPC transaction coupling, locale/art/historical/deployed acceptance remain open"
+  ]
+}
