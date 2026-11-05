@@ -1787,14 +1787,16 @@
       "commit_subject": null
     },
     "PK24.05": {
-      "status": "READY_TO_COMMIT",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/REVIEW-2026-11-05.md",
         "docs/packets/work-items/PK24.05.md",
         "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
-        "docs/packets/evidence/PK24.05-effect-resource-authority.md"
+        "docs/packets/evidence/PK24.05-effect-resource-authority.md",
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md",
+        "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.json"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK24.05): resolve effect resource authority"
     }
   }
 }
