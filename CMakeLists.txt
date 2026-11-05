@@ -375,6 +375,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         ro_main ro_gamemode ro_session ro_world ro_skill ro_item ro_pathfinder
         ro_network ro_res ro_audio ro_render3d ro_render ro_ui ro_input
         ro_cipher ro_core ro_security ro_lua)
+    if(RO_ENABLE_QT6_UI)
+        target_link_libraries(skill_packet_replay_runtime_checks PRIVATE ro_qtui)
+    endif()
     if(WIN32)
         target_link_libraries(skill_packet_replay_runtime_checks PRIVATE
             winmm.lib dxguid.lib ole32.lib oleaut32.lib psapi.lib msimg32.lib)
@@ -575,6 +578,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_cast_ack013e_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/cast_ack013e.tsv")
+    add_test(NAME skill_packet_replay_cast_announcement_checks
+        COMMAND skill_packet_replay_runtime_checks --cast-announcements
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/cast_ack013e.tsv")
     add_test(NAME skill_packet_replay_arrow_shower47_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/arrow_shower47.tsv")
@@ -719,6 +725,7 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     set_tests_properties(skill_packet_replay_venom_dust_trigger_lifecycle_checks
         skill_packet_replay_talkie_box_trigger_lifecycle_checks
         skill_packet_replay_cast_ack013e_checks
+        skill_packet_replay_cast_announcement_checks
         skill_packet_replay_arrow_shower47_checks
         skill_packet_replay_skill_damage2_662_checks
         skill_packet_replay_skill_damage2_141_levelFFFF_checks

@@ -1,0 +1,4 @@
+43: production skill replay failed: 0x0110 did not clear local-player motion freeze for every result value
+production skill replay failed: 0x0110 did not clear local-player motion freeze for every result value
+99% tests passed, 1 tests failed out of 106
+	 43 - skill_packet_replay_skill_fail_ack_checks (Failed)

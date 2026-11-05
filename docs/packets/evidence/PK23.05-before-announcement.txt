@@ -1,0 +1,13 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 60: skill_packet_replay_cast_announcement_checks
+1/1 Test #60: skill_packet_replay_cast_announcement_checks ...***Failed    0.10 sec
+production skill replay failed: skill announcement bubble text differs from skill metadata
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.11 sec
+
+The following tests FAILED:
+	 60 - skill_packet_replay_cast_announcement_checks (Failed)
+Errors while running CTest

@@ -1,0 +1,145 @@
+{
+  "date": "2026-11-05",
+  "baseline": "934f0f47340b15d0d7afde40b5823ff4fdac50af",
+  "source_inputs": {
+    "CMakeLists.txt": {
+      "working_sha256": "d163f00e33c25dce1e67fbaf2166e48226df485f91970b3774dbbef75da40b77",
+      "git_blob": "3468f5df5facbaffb8cc6496f90d702521a0bdb5"
+    },
+    "src/gamemode/GameModePacket.cpp": {
+      "working_sha256": "ac2661e5d03312162b788c66176b2999714aed9064a47328bee54e2f5500c27e",
+      "git_blob": "0a7cfd1f6c0ca57199348444463440e339def599"
+    },
+    "tools/tests/replay/SkillPacketRuntimeReplay.cpp": {
+      "working_sha256": "8547a73af40b06af0ae66705aed087dca796505cfc99011d59199c12615bf9d8",
+      "git_blob": "77b31ed7078e22fe0bba30400b2e0762e4667439"
+    }
+  },
+  "reference_inputs_sha256": {
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/GameMode2.cpp": "111ca06ba24dc274a4b57f5484c71a0cc30d99952d554033d05221e80fe66217"
+  },
+  "other_inputs_sha256": {
+    "src/gamemode/GameMode.cpp": "34b2856a29f018c8861263f5bb1b86fb35421a6eba53da0abdb7b678a40efe52",
+    "src/world/GameActor.cpp": "3a4e0ceda22880f6303fbed2f1c0757153f7846c6e2aa0e844b41fae0390872a",
+    "src/skill/Skill.cpp": "77f022bd559aa12051a0a10facf0f2bf0ba3f1567aab0a3505c5c725f227a505",
+    "src/skill/SkillEnumIdTable.inc": "337dc4870190237cbce3009f3b3718ad6cee61937dca0f674f234470ad03003d",
+    "Ref/GRF-Content/data/skillnametable.txt": "8223f74656489e8b3cc4743a0b462ec46ed0bf74a9186b3b022de45bff50e3a4",
+    "docs/skill/replay/cast_ack013e.tsv": "8e802135268fcc560aa66fb71d0cfa7e0752f2cdf8606c80c5bc01035fb2661f",
+    "docs/skill/replay/skill_fail_ack0110.tsv": "a1754d3b0bd018e0e92e4ac1b5f16bcc9284e54c85eede1c797662debac1f137",
+    "build-mingw-preset/packet-audit/server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c",
+    "docs/packets/evidence/PK23.05-cast-layout-probe.cpp": "4323b78153e7e20fa094a8eb94d49751ba181c2085fcb8baa4bf7f13cfd721eb",
+    "docs/packets/evidence/PK23.05-cast-layout-probe.txt": "966ddd35d39b445d0d4dc5391315c90cdb611b6522d4d1f68863b4b69f5d530b"
+  },
+  "server_inputs_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "selected_profile": {
+    "PACKETVER": 20080910,
+    "PACKETVER_SAK_NUM": 20080910,
+    "opcode": "0x013E",
+    "length": 24,
+    "delay_wire": "uint32",
+    "element_wire": "uint32",
+    "level_field": false
+  },
+  "commands": [
+    "cmake -S . -B build-mingw-preset -DRO_ENABLE_DEV_DEPLOY=OFF -DRO_BUILD_PACKET_REPLAY_TESTS=ON -DRO_BUILD_SKILL_REPLAY_TESTS=ON",
+    "cmake --build build-mingw-preset -j 6",
+    "cmake --build build-mingw-preset --target skill_packet_replay_runtime_checks -j 6",
+    "ctest --test-dir build-mingw-preset --verbose --output-on-failure"
+  ],
+  "probe_command": "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -Ibuild-mingw-preset/packet-audit -IC:/Users/sziad/source/repos/rathena-master/src -IC:/Users/sziad/source/repos/rathena-master/3rdparty -IC:/Users/sziad/source/repos/rathena-master/3rdparty/libconfig docs/packets/evidence/PK23.05-cast-layout-probe.cpp -o build-mingw-preset/review-2026-11-05/pk23-cast-layout-probe.exe",
+  "results": {
+    "ctest": {
+      "passed": 106,
+      "failed": 0,
+      "seconds": 26.3
+    },
+    "announcement_checks": [
+      "PASS cast-announcement timed-ordinary nonzero-target extra=0 text/expiry/source",
+      "PASS cast-announcement wedding334 target-name extra=2 text/expiry",
+      "PASS cast-announcement wedding335 target-name extra=2 text/expiry",
+      "PASS cast-announcement monster excluded",
+      "PASS cast-announcement unresolved-source excluded",
+      "PASS cast-announcement freeze57/62 excluded",
+      "PASS cast-announcement local-zero/rejection excluded",
+      "PASS cast-announcement remote-zero text/expiry/source extra=0",
+      "PASS cast-announcement cancel preserves bubble expiry",
+      "PASS cast-announcement repeat-after-cancel refreshes bubble",
+      "PASS cast-announcement filtered-skill=326",
+      "PASS cast-announcement filtered-skill=318",
+      "PASS cast-announcement filtered-skill=492",
+      "PASS cast-announcement filtered-skill=389"
+    ],
+    "ack0110_packets": 23,
+    "ack0110_notice_count": 18,
+    "packet_records_passed": 159,
+    "minimap_scenes": 18,
+    "qml_errors": 0
+  },
+  "diagnostic_inputs": {
+    "pk23-before-inputs.json": {
+      "CMakeLists.txt": "d163f00e33c25dce1e67fbaf2166e48226df485f91970b3774dbbef75da40b77",
+      "src/gamemode/GameModePacket.cpp": "06da656b501d2522af178664a41fc53e5e25bb5406d049d874cc9c139c49de74",
+      "tools/tests/replay/SkillPacketRuntimeReplay.cpp": "08207114ac1c7a5db45f4d9afbdbc09cdf5dbbcb1bed39e39c53ede28e79040c",
+      "build-mingw-preset/skill_packet_replay_runtime_checks.exe": "a278d172e15bef8f6ae7dadf9c88e11cb364ec9f7620f48e785fb64e8fb7abda"
+    },
+    "pk23-integration-before-inputs.json": {
+      "tools/tests/replay/SkillPacketRuntimeReplay.cpp": "ca3d756573b48614532111168cdf07d6f2039a63fa6ce0cc57c1dcb647458078",
+      "src/gamemode/GameModePacket.cpp": "8646af7ef7a8a48c8819675578ee78fd5eb5d6fbee7bc7b6c770f9bf3d4deac9",
+      "build-mingw-preset/skill_packet_replay_runtime_checks.exe": "e5cba16e3bfa18682f15900d8235c226c06c988827771f2cd9df5c5517e58ca8"
+    }
+  },
+  "logs_sha256": {
+    "build-mingw-preset/review-2026-11-05/pk23-all-build.log": "2db8d647e10163745caeb0946fb84be42510867518d9280afa2a32a278f9d556",
+    "build-mingw-preset/review-2026-11-05/pk23-all-ctest.log": "f623d76d325174061edced54dc4288431a9e946bedaa30c135e1fffa7f3580a0",
+    "build-mingw-preset/review-2026-11-05/pk23-before.log": "79ac127d044fa5ffebed1378d6fb128eb8198f00a13691b0c473c46c2de8a4db",
+    "build-mingw-preset/review-2026-11-05/pk23-configure.log": "0583291ef7fbe5d1cc83b1b3f21c97bb3b0ade493849c02f39808914ee587ff7",
+    "build-mingw-preset/review-2026-11-05/pk23-final-build.log": "61b03eb65bed688c7209af16f450bc883a2f6b0585267df91c287e5d1af83d97",
+    "build-mingw-preset/review-2026-11-05/pk23-final-test-build.log": "52db830a5920f343e7bfc57a915b225bab47d8a60f9cf2ea480d75d85efb87ee",
+    "build-mingw-preset/review-2026-11-05/pk23-focused.log": "90a2431c172cd6a182be35ad762bae1fd6358a638cc233af6da7768d75a8737d",
+    "build-mingw-preset/review-2026-11-05/pk23-integration-before.log": "fa6a03bf67bdaf85957fb3c9560fde44643068b0bc8851faeddc243108d3842b",
+    "build-mingw-preset/review-2026-11-05/pk23-red-build.log": "1b7190b1bcea7782d523d46f1b8857fa7260e290f32fbfbd4256ce287f0e8c5d"
+  },
+  "binaries": {
+    "open-midgard.exe": {
+      "sha256": "d057b4ea8c4fee3119289f1d9d5faa2a1e3bd8ba50519e8fc3450b5d81343828",
+      "size": 19689788,
+      "mtime_utc": "2026-11-05T14:21:02.530887+00:00"
+    },
+    "skill_packet_replay_runtime_checks.exe": {
+      "sha256": "6dcba43b826af71fa84f578bc819627065f612e8589eee70eadb6acf44943bae",
+      "size": 19879268,
+      "mtime_utc": "2026-11-05T14:21:28.450883+00:00"
+    },
+    "packet_stream_replay_checks.exe": {
+      "sha256": "25062c1d71d2714a52c5b109562e5e577d5967e195eff516b8ffea2972c113dd",
+      "size": 20174996,
+      "mtime_utc": "2026-11-05T14:21:02.581479+00:00"
+    },
+    "packet_minimap_render_checks.exe": {
+      "sha256": "74a027b0dc2f47f9a14f6a76f21481d31eae5496e53b816c96f6dff853238959",
+      "size": 19726921,
+      "mtime_utc": "2026-11-05T14:21:02.802638+00:00"
+    },
+    "party_position_state_checks.exe": {
+      "sha256": "8614b4434ad210bb323252932ab0acf7cf20a488a17f525a73667d962e4aefc4",
+      "size": 54468,
+      "mtime_utc": "2026-11-05T13:13:51.144443+00:00"
+    }
+  },
+  "retained_evidence_sha256": {
+    "PK23.05-runtime-checks.txt": "26b343d67caf79f4b2ff239df03d3af8f05b9334521685c7bc3c128b3f1cbbc1",
+    "PK23.05-before-announcement.txt": "1b1d2d3abd35422de8284abafe20afbc85b158df1b5ed3a87cb4c7cc758c1dd5",
+    "PK23.05-before-unfreeze.txt": "ca18feda3074e088b2c4bb90806a4b9025112ce2603961e42bd2a7571436ed3c"
+  },
+  "limits": [
+    "Source-selected 20080910 only; no deployed-server provenance or live capture.",
+    "Actual actor text/state/lifetime verified; no rendered balloon/font pixels.",
+    "Broader PK23 and independent PK48/PK49 remain open; 013E discovery row remains UNREVIEWED."
+  ]
+}

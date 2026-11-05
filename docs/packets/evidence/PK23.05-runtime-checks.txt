@@ -1,0 +1,19 @@
+PASS cast-announcement timed-ordinary nonzero-target extra=0 text/expiry/source
+PASS cast-announcement wedding334 target-name extra=2 text/expiry
+PASS cast-announcement wedding335 target-name extra=2 text/expiry
+PASS cast-announcement monster excluded
+PASS cast-announcement unresolved-source excluded
+PASS cast-announcement freeze57/62 excluded
+PASS cast-announcement local-zero/rejection excluded
+PASS cast-announcement remote-zero text/expiry/source extra=0
+PASS cast-announcement cancel preserves bubble expiry
+PASS cast-announcement repeat-after-cancel refreshes bubble
+PASS cast-announcement filtered-skill=326
+PASS cast-announcement filtered-skill=318
+PASS cast-announcement filtered-skill=492
+PASS cast-announcement filtered-skill=389
+SkillFailAck opcode=0x0110 packets=23 notices=18 motionUnfreeze=23 emotionRequestCleared=1
+Packet replay: 159 PASS records
+Minimap render: 18 scenes, zero QML warnings/errors
+100% tests passed, 0 tests failed out of 106
+Total Test time (real) = 26.30 sec

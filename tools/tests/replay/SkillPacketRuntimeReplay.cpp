@@ -9,6 +9,7 @@
 #include "res/ModelRes.h"
 #include "render/Renderer.h"
 #include "session/Session.h"
+#include "skill/Skill.h"
 #include "world/3dActor.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
@@ -345,6 +346,153 @@ struct Fixture {
         g_session.m_aid = oldAid;
     }
 };
+
+void DispatchLiteralReplayPacket(CGameModePacketRouter& router, CGameMode& mode, const char* hex)
+{
+    const std::vector<u8> bytes = DecodeHex(hex);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed),
+        "production packet reader rejected cast-announcement fixture packet");
+    Require(consumed == static_cast<int>(bytes.size()), "cast-announcement packet framing left trailing bytes");
+    Require(router.Dispatch(mode, packet), "default client router did not dispatch cast-announcement packet");
+}
+
+void RequireAnnouncement(CGameActor& actor, u32 before, const std::string& expected)
+{
+    const u32 after = GetTickCount();
+    const u32 expiryOffset = static_cast<u32>(actor.m_chatTick - before);
+    const u32 elapsed = static_cast<u32>(after - before);
+    Require(actor.GetChatBubbleText() == expected, "skill announcement bubble text differs from skill metadata");
+    Require(expiryOffset >= 5000u && expiryOffset <= elapsed + 5000u,
+        "skill announcement bubble expiry is not approximately five seconds after dispatch");
+    Require(actor.HasActiveChatBubble(after), "skill announcement bubble was not active after dispatch");
+    Require(!actor.HasActiveChatBubble(actor.m_chatTick), "skill announcement bubble remained active at its expiry tick");
+}
+
+void ReplayCastAnnouncements(const std::string& fixturePath)
+{
+    g_skillMgr.EnsureLoaded();
+    const SkillMetadata* fireBolt = g_skillMgr.GetSkillMetadata(19);
+    Require(fireBolt != nullptr && !fireBolt->displayName.empty(),
+        "real skill metadata did not provide the Fire Bolt display name");
+    const std::string fireBoltText = fireBolt->displayName + " !!";
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    {
+        Fixture fixture(fixturePath);
+        const u32 before = GetTickCount();
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A00140013000000000040060000");
+        RequireAnnouncement(fixture.source, before, fireBoltText);
+        Require(fixture.mode.sentMessages.size() == 1, "cast ACK did not send exactly one mode message99");
+        const auto& sent = fixture.mode.sentMessages.back();
+        Require(sent.id == 99 && sent.wparam == 19
+            && sent.lparam == reinterpret_cast<msgparam_t>(&fixture.source) && sent.extra == 0,
+            "cast acknowledgement mode99 tuple differs from source, skill, or normal destination extra");
+        Require(fixture.target.GetChatBubbleText().empty(), "cast ACK announced on the destination instead of the caster");
+        std::cout << "PASS cast-announcement timed-ordinary nonzero-target extra=0 text/expiry/source\n";
+    }
+    {
+        Fixture fixture(fixturePath);
+        fixture.mode.m_actorNameListByGID[2].name = "Fixture Target";
+        const u32 before = GetTickCount();
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A0014004E010000000040060000");
+        RequireAnnouncement(fixture.source, before, "Fixture Target !!  I love you.");
+        const auto& sent = fixture.mode.sentMessages.back();
+        Require(sent.id == 99 && sent.wparam == 334
+            && sent.lparam == reinterpret_cast<msgparam_t>(&fixture.source) && sent.extra == 2,
+            "wedding skill mode99 tuple did not carry destination AID2");
+        std::cout << "PASS cast-announcement wedding334 target-name extra=2 text/expiry\n";
+    }
+    {
+        Fixture fixture(fixturePath);
+        fixture.mode.m_actorNameListByGID[2].name = "Fixture Target";
+        const u32 before = GetTickCount();
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A0014004F010000000040060000");
+        RequireAnnouncement(fixture.source, before, "Fixture Target !!  I love you.");
+        Require(fixture.mode.sentMessages.size() == 1 && fixture.mode.sentMessages.back().wparam == 335
+            && fixture.mode.sentMessages.back().lparam == reinterpret_cast<msgparam_t>(&fixture.source)
+            && fixture.mode.sentMessages.back().extra == 2,
+            "wedding skill335 announcement lost source/skill/target arguments");
+        std::cout << "PASS cast-announcement wedding335 target-name extra=2 text/expiry\n";
+    }
+    {
+        Fixture fixture(fixturePath);
+        fixture.source.m_job = 1001;
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A00140013000000000040060000");
+        Require(std::none_of(fixture.mode.sentMessages.begin(), fixture.mode.sentMessages.end(),
+            [](const ReplayGameMode::SentMessage& message) { return message.id == 99; }),
+            "monster cast ACK incorrectly emitted player mode message99");
+        Require(fixture.source.GetChatBubbleText().empty(), "monster cast ACK incorrectly showed player bubble");
+        std::cout << "PASS cast-announcement monster excluded\n";
+    }
+    {
+        Fixture fixture(fixturePath);
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0194010000020000000A00140013000000000040060000");
+        Require(fixture.mode.sentMessages.empty() && fixture.source.GetChatBubbleText().empty(),
+            "missing-source cast acknowledgement emitted a mode99 announcement");
+        std::cout << "PASS cast-announcement unresolved-source excluded\n";
+    }
+    {
+        Fixture fixture(fixturePath);
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A00140039000000000040060000");
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A0014003E000000000040060000");
+        Require(fixture.mode.sentMessages.empty() && fixture.source.GetChatBubbleText().empty(),
+            "freeze skills57/62 incorrectly emitted a cast announcement");
+        Require(fixture.source.m_isMotionFreezed != 0, "freeze skill ACK lost its existing freeze behavior");
+        std::cout << "PASS cast-announcement freeze57/62 excluded\n";
+    }
+    {
+        Fixture fixture(fixturePath);
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A00140013000000000000000000");
+        Require(fixture.source.m_stateId == 0, "zero-time local cast acknowledgement was not deferred");
+        DispatchLiteralReplayPacket(router, fixture.mode, "10011300000000000000");
+        Require(fixture.mode.sentMessages.empty() && fixture.source.GetChatBubbleText().empty(),
+            "local zero-time cast plus failure acknowledgement created an announcement");
+        std::cout << "PASS cast-announcement local-zero/rejection excluded\n";
+        DispatchLiteralReplayPacket(router, fixture.mode, "B90101000000");
+        const u32 remoteBefore = GetTickCount();
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0102000000010000000A00140013000000000000000000");
+        RequireAnnouncement(fixture.target, remoteBefore, fireBoltText);
+        Require(fixture.mode.sentMessages.size() == 1
+            && fixture.mode.sentMessages.back().id == 99 && fixture.mode.sentMessages.back().wparam == 19
+            && fixture.mode.sentMessages.back().lparam == reinterpret_cast<msgparam_t>(&fixture.target)
+            && fixture.mode.sentMessages.back().extra == 0,
+            "zero-time remote cast acknowledgement did not preserve the Ref announcement");
+        std::cout << "PASS cast-announcement remote-zero text/expiry/source extra=0\n";
+        const u32 castBefore = GetTickCount();
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A00140013000000000040060000");
+        RequireAnnouncement(fixture.source, castBefore, fireBoltText);
+        const u32 firstExpiry = fixture.source.m_chatTick;
+        DispatchLiteralReplayPacket(router, fixture.mode, "B90101000000");
+        Require(fixture.source.GetChatBubbleText() == fireBoltText && fixture.source.m_chatTick == firstExpiry,
+            "cast cancel incorrectly cleared or renewed the existing head bubble");
+        Require(fixture.source.m_beginSpellEffect == nullptr && fixture.source.m_isMotionFreezed == 0,
+            "cast cancel did not clean up the cast effect/freeze");
+        std::cout << "PASS cast-announcement cancel preserves bubble expiry\n";
+        const u32 repeatBefore = GetTickCount();
+        DispatchLiteralReplayPacket(router, fixture.mode, "3E0101000000020000000A00140013000000000040060000");
+        RequireAnnouncement(fixture.source, repeatBefore, fireBoltText);
+        Require(static_cast<u32>(fixture.source.m_chatTick - firstExpiry) < 5000u,
+            "repeated ACK moved bubble expiry backwards");
+        Require(fixture.mode.sentMessages.size() == 3, "repeated cast acknowledgements did not preserve repeated announcements");
+        std::cout << "PASS cast-announcement repeat-after-cancel refreshes bubble\n";
+    }
+    for (const char* packet : {
+        "3E0101000000020000000A00140046010000000040060000",
+        "3E0101000000020000000A0014003E010000000040060000",
+        "3E0101000000020000000A001400EC010000000040060000",
+        "3E0101000000020000000A00140085010000000040060000" }) {
+        Fixture fixture(fixturePath);
+        DispatchLiteralReplayPacket(router, fixture.mode, packet);
+        Require(fixture.mode.sentMessages.size() == 1 && fixture.mode.sentMessages.back().id == 99,
+            "filtered skill did not reach the production head-bubble helper");
+        Require(fixture.source.GetChatBubbleText().empty(), "filtered skill unexpectedly created a head bubble");
+        std::cout << "PASS cast-announcement filtered-skill=" << fixture.mode.sentMessages.back().wparam << '\n';
+    }
+    std::cout << "CastAnnouncements metadata=FireBolt wedding=334/335 filters=4 packets=literal\n";
+}
 
 std::vector<u8> LoadOnePacket(const std::string& path, u16& expectedOpcode)
 {
@@ -733,6 +881,7 @@ void ReplaySkillFailAck(const std::string& path)
         } else {
             g_session.m_isSkillFail = 1;
         }
+        fixture.source.SetState(8);
         fixture.source.m_isMotionFreezed = 1;
         if (index == 14) {
             fixture.mode.m_isReqEmotion = 1;
@@ -746,6 +895,8 @@ void ReplaySkillFailAck(const std::string& path)
         Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch 0x0110");
         Require(fixture.source.m_isMotionFreezed == 0,
             "0x0110 did not clear local-player motion freeze for every result value");
+        Require(fixture.source.m_stateId == (packets[index].bytes[8] == 0 ? 0 : 8),
+            "0x0110 did not restrict cast-pose reset to a rejected result");
         if (index == 14) {
             Require(fixture.mode.m_isReqEmotion == 0,
                 "skill1 cause0 btype1 did not clear the pending emotion request");
@@ -2391,7 +2542,9 @@ int main(int argc, char** argv)
 {
     try {
         const bool trapModelResourceReplay = argc == 3 && std::string(argv[1]) == "--trap-model-resource";
-        Require(argc == 2 || trapModelResourceReplay, "expected one replay scenario path or a trap-model fixture command");
+        const bool castAnnouncementReplay = argc == 3 && std::string(argv[1]) == "--cast-announcements";
+        Require(argc == 2 || trapModelResourceReplay || castAnnouncementReplay,
+            "expected one replay scenario path or a fixture command");
         const std::string runtimeLogPath = "debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log";
         std::ofstream freshRuntimeLog(runtimeLogPath, std::ios::trunc);
         Require(static_cast<bool>(freshRuntimeLog), "could not reset per-run production runtime log");
@@ -2400,6 +2553,8 @@ int main(int argc, char** argv)
             ReplayGroundScopeRender();
         } else if (trapModelResourceReplay) {
             ReplayTrapModelResource(argv[2]);
+        } else if (castAnnouncementReplay) {
+            ReplayCastAnnouncements(argv[2]);
         } else if (IsGroundSkillWaveScenario(argv[1])) {
             ReplayGroundSkillWave(argv[1]);
         } else if (IsMissingActorGroundSkillScenario(argv[1])) {

@@ -1,0 +1,1 @@
+PACKETVER=20080910 opcode=013e size=24 src=2 dst=6 x=10 y=12 skill=14 element=16 delay=20 delay_unsigned=1

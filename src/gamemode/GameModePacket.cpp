@@ -4213,13 +4213,16 @@ void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
     const u32 btype = ReadLE32(packet.data + 4);
     const u8 result = packet.data[8];
     const u8 cause = packet.data[9];
+    // Ref Zc_Ack_Touseskill releases the local motion freeze for every result.
+    if (mode.m_world != nullptr && mode.m_world->m_player != nullptr) {
+        mode.m_world->m_player->m_isMotionFreezed = 0;
+    }
     if (result != 0) {
         return;
     }
 
     if (mode.m_world != nullptr && mode.m_world->m_player != nullptr) {
         CPlayer* player = mode.m_world->m_player;
-        player->m_isMotionFreezed = 0;
         // A rejected skill must not leave the swing or cast pose running.
         // The server did not spend SP and will not send a hit.
         const int state = player->m_stateId;
@@ -4605,6 +4608,12 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
                     sourceActor->m_motionSpeed = static_cast<float>(castTimeMs / 300);
                 }
             }
+        } else {
+            // Ref Zc_useskill_ack: only wedding announcements use the target AID.
+            mode.SendMsg(99,
+                static_cast<msgparam_t>(skillId),
+                reinterpret_cast<msgparam_t>(sourceActor),
+                static_cast<msgparam_t>((skillId == 334 || skillId == 335) ? dstGid : 0));
         }
     }
 
