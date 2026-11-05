@@ -30,6 +30,7 @@ struct ITEM_INFO {
         return m_isYours == 2 ? 0xffffff00u : 0xffffffffu;
     }
     std::string GetDisplayName(bool includeSlotSuffix = true) const;
+    std::string GetItemName(bool includeSlotSuffix = true) const;
     std::string GetEquipDisplayName(bool includeSlotSuffix = true) const;
     std::string GetDescription() const;
     std::string GetResourceName() const;
@@ -56,6 +57,7 @@ public:
     void EnsureLoaded();
     const ItemMetadata* GetMetadata(unsigned int itemId);
     std::string GetDisplayName(unsigned int itemId, bool identified, bool includeSlotSuffix = true);
+    std::string GetItemName(const ITEM_INFO& item, bool includeSlotSuffix = true);
     std::string GetEquipDisplayName(const ITEM_INFO& item, bool includeSlotSuffix = true);
     std::string GetDescription(unsigned int itemId);
     std::string GetResourceName(unsigned int itemId, bool identified);
@@ -76,6 +78,9 @@ private:
     bool LoadCardPrefixTable();
     bool LoadCardPostfixTable();
     bool LoadCardItemTable();
+    void LoadItemNameMessages();
+    std::string ItemNameMessage(unsigned int index, const char* fallback) const;
+    std::string ManufacturedSuffix(u8 element) const;
     bool ParsePairTable(const char* fileName, void (*assignValue)(ItemMetadata&, std::string&&),
         std::unordered_set<unsigned int>* descriptorIds = nullptr);
     bool ParseIntegerPairTable(const char* fileName, void (*assignValue)(ItemMetadata&, int));
@@ -90,6 +95,7 @@ private:
     std::unordered_set<unsigned int> m_cardPostfixIds;
     std::unordered_set<unsigned int> m_cardItemIds;
     std::unordered_set<unsigned int> m_cardDescriptorIds;
+    std::unordered_map<unsigned int, std::string> m_itemNameMessages;
 };
 
 extern CItemMgr g_ttemmgr;

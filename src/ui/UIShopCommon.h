@@ -583,24 +583,7 @@ inline bool TryLoadCardIllustPixels(const ITEM_INFO& item, BitmapPixels* outBitm
 
 inline std::string GetItemDisplayName(const ITEM_INFO& item, bool includeSlotSuffix = true)
 {
-    std::string displayName;
-    switch (item.m_itemType) {
-    case 4:
-    case 5:
-    case 8:
-    case 9:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 19:
-        displayName = item.m_isIdentified != 0 ? item.GetEquipDisplayName(includeSlotSuffix) : item.GetDisplayName(includeSlotSuffix);
-        break;
-    default:
-        displayName = item.GetDisplayName(includeSlotSuffix);
-        break;
-    }
+    const std::string displayName = item.GetItemName(includeSlotSuffix);
     if (!displayName.empty()) {
         return displayName;
     }

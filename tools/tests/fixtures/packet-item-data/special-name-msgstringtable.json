@@ -1,0 +1,52 @@
+{
+  "source": "Ref/GRF-Content/data/msgstringtable.txt",
+  "full_source_sha256": "200c4ac4970853ac7cb947629df790168a9d1afc5572e15fdc8d4944b6ab80af",
+  "explanation": "Blank rows are index padding, not invented messages.",
+  "entries": [
+    {
+      "index": 450,
+      "source_line": 451,
+      "raw_source_value": "'s #"
+    },
+    {
+      "index": 451,
+      "source_line": 452,
+      "raw_source_value": "'s Fire #"
+    },
+    {
+      "index": 452,
+      "source_line": 453,
+      "raw_source_value": "'s Ice #"
+    },
+    {
+      "index": 453,
+      "source_line": 454,
+      "raw_source_value": "'s Wind #"
+    },
+    {
+      "index": 454,
+      "source_line": 455,
+      "raw_source_value": "'s Earth #"
+    },
+    {
+      "index": 459,
+      "source_line": 460,
+      "raw_source_value": "Very Strong #"
+    },
+    {
+      "index": 460,
+      "source_line": 461,
+      "raw_source_value": "Very Very Strong #"
+    },
+    {
+      "index": 461,
+      "source_line": 462,
+      "raw_source_value": "Very Very Very Strong #"
+    },
+    {
+      "index": 756,
+      "source_line": 757,
+      "raw_source_value": "Beloved#"
+    }
+  ]
+}

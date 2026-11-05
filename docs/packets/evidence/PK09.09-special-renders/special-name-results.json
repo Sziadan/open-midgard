@@ -1,0 +1,109 @@
+{
+    "cases": [
+        {
+            "case": "forged-normal",
+            "name": "Smith's Knife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "forged-ice",
+            "name": "Smith's Ice Knife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "forged-earth",
+            "name": "Smith's Earth Knife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "forged-fire",
+            "name": "Smith's Fire Knife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "forged-wind",
+            "name": "Smith's Wind Knife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "one-star",
+            "name": "Very Strong Smith's Knife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "two-stars",
+            "name": "Very Very Strong Smith's Ice Knife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "three-stars",
+            "name": "Very Very Very Strong Smith's Fire Knife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unidentified-forge",
+            "name": "Dagger",
+            "outcome": "PASS"
+        },
+        {
+            "case": "created-potion",
+            "name": "Smith's Red Potion",
+            "outcome": "PASS"
+        },
+        {
+            "case": "named-pet",
+            "name": "BelovedPoring Egg",
+            "outcome": "PASS"
+        },
+        {
+            "case": "named-pet-intimacy",
+            "name": "BelovedPoring Egg",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unnamed-pet",
+            "name": "Poring Egg",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unidentified-pet",
+            "name": "Poring Egg",
+            "outcome": "PASS"
+        },
+        {
+            "case": "legacy-type7-named-pet",
+            "name": "BelovedPoring Egg",
+            "outcome": "PASS"
+        },
+        {
+            "case": "legacy-type7-unnamed-pet",
+            "name": "Poring Egg",
+            "outcome": "PASS"
+        },
+        {
+            "case": "create-nonzero-word-guard",
+            "name": "Red Potion",
+            "outcome": "PASS"
+        },
+        {
+            "case": "forge-type-guard",
+            "name": "Red Potion",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unknown-element",
+            "name": "SmithKnife",
+            "outcome": "PASS"
+        },
+        {
+            "case": "unknown-star",
+            "name": "Smith's Knife",
+            "outcome": "PASS"
+        }
+    ],
+    "configured_empty_message_preserved": true,
+    "delayed_name_without_item_resend": true,
+    "name_replacement": true,
+    "outcome": "PASS",
+    "row_removal": true
+}

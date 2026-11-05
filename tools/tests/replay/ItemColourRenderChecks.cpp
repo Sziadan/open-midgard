@@ -10,6 +10,7 @@
 #include "render/DC.h"
 #include "session/Session.h"
 #include "ui/UIItemWnd.h"
+#include "ui/UIItemInfoWnd.h"
 #include "ui/UIStorageWnd.h"
 #include "ui/UIShopCommon.h"
 #include "ui/UIWindowMgr.h"
@@ -96,10 +97,10 @@ void Dispatch(CGameMode& mode,const std::vector<u8>& bytes) {
     Require(GetProductionGameModePacketRouter().Dispatch(mode,packet),"item colour fixture missed real router");
 }
 std::vector<u8> Equipment(u8 lowOpcode,bool identified,u8 bind) {
-    // Independent selected EQUIPITEM_INFO[26]: index291, Knife1201, type4,
+    // Independent selected EQUIPITEM_INFO[26]: index291, Knife1201, type5,
     // location2/wear0 (visible in the native bag), expiry0, raw bind word at
     // row+24. No client serializer.
-    std::vector<u8> bytes={lowOpcode,2,30,0, 0x23,1,0xb1,4,4,1,2,0,0,0,0,0,
+    std::vector<u8> bytes={lowOpcode,2,30,0, 0x23,1,0xb1,4,5,1,2,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     bytes[9]=identified?1:0;bytes[28]=bind;return bytes;
 }
@@ -127,6 +128,7 @@ template<class Window> QImage Native(Window& window,QRgb expected) {
 }
 
 #include "ItemCardNameRenderChecks.inc"
+#include "SpecialItemNameRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -136,6 +138,13 @@ int main(int argc,char** argv) {
         const QString output=QDir::cleanPath(argc>1?QString::fromLocal8Bit(argv[1]):QDir::currentPath()+"/item-renders");
         Require(QDir().mkpath(output),"item render directory failed");
         Require(QDir().mkpath(output+"/data"),"item metadata fixture directory failed");
+        const bool specialOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="special-names";
+        if(specialOnly) {
+            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/special-name-msgstringtable.txt");
+            Require(source.open(QIODevice::ReadOnly),"special source message fixture missing");
+            const auto bytes=source.readAll();QFile target(output+"/data/msgstringtable.txt");
+            Require(target.open(QIODevice::WriteOnly) && target.write(bytes)==bytes.size(),"copy special messages failed");
+        }
         for(const QString& table:{QString("idnum2itemdisplaynametable.txt"),QString("num2itemdisplaynametable.txt"),QString("itemslotcounttable.txt"),QString("cardprefixnametable.txt"),QString("cardpostfixnametable.txt"),QString("carditemnametable.txt")}) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+table);
             Require(source.open(QIODevice::ReadOnly),"source-derived item fixture table missing");
@@ -165,6 +174,15 @@ int main(int argc,char** argv) {
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
+        if(specialOnly) {
+            CheckSpecialItemNames(app,view,state,mode,inventory,storage,adapter,output);
+            Require(errors==0,"special item UI emitted QML errors");
+            QFile file(output+"/special-render-results.json");Require(file.open(QIODevice::WriteOnly),"open special render results failed");
+            file.write(QJsonDocument(QJsonObject{{"qml_errors",errors},{"outcome","PASS"}}).toJson());
+            view.hide();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS special item names and delayed producer replies\n";return 0;
+        }
         QJsonArray results;std::vector<QImage> contacts;std::vector<QString> contactNames;
         for(bool identified:{true,false})for(u8 bind:{u8(0),u8(1),u8(2)}) {
             const QRgb expected=identified?(bind==2?0xffffff00u:0xffffffffu):0xffaaaaaau;

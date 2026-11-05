@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK09.SPECIAL-ITEM-NAMES](PK09.SPECIAL-ITEM-NAMES.md) verifies named/created/forged names, selected pet intimacy/visual tab and delayed producer refresh. Detail expiry and other contexts remain open.
+
 [PK45.CHARACTER-NAME](PK45.CHARACTER-NAME.md) verifies the selected character-ID lookup request/cache namespace; special-item name/UI integration and broader actor/historical review remain open.
 
 [PK09.CARD-NAME-ASSEMBLY](PK09.CARD-NAME-ASSEMBLY.md) verifies generic card-ID grouping and descriptor ownership across actual native/Qt consumers. Special names, expiry and independent PK48 remain open.

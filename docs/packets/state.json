@@ -1874,6 +1874,15 @@
         "docs/packets/contracts/PK45.CHARACTER-NAME.md"
       ],
       "commit_subject": "packet(PK45.05): isolate character name lookup from actors"
+    },
+    "PK09.09": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.09-special-item-names.md",
+        "docs/packets/evidence/PK09.09-special-item-names.json",
+        "docs/packets/contracts/PK09.SPECIAL-ITEM-NAMES.md"
+      ],
+      "commit_subject": "packet(PK09.09): restore special item names and producer refresh"
     }
   }
 }

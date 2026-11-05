@@ -597,10 +597,7 @@ std::string UIItemInfoWnd::BuildTitle() const
 
 std::string UIItemInfoWnd::BuildDisplayName() const
 {
-    if (m_item.m_isIdentified == 0) {
-        return SanitizeRoText(m_item.GetDisplayName());
-    }
-    return SanitizeRoText(m_item.GetEquipDisplayName());
+    return SanitizeRoText(m_item.GetItemName());
 }
 
 std::vector<std::string> UIItemInfoWnd::BuildDetailLines() const

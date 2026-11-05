@@ -1,3 +1,5 @@
 // Extracted fixture row: Ref/GRF-Content/data/num2itemdisplaynametable.txt
 1201#Dagger#
 1202#Dagger#
+501#Red_Potion#
+9001#Poring_Egg#

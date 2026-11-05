@@ -3,6 +3,7 @@
 #include "DebugLog.h"
 #include "core/File.h"
 #include "lua/LuaBridge.h"
+#include "gamemode/GameMode.h"
 
 #include <algorithm>
 #include <cctype>
@@ -26,6 +27,13 @@ struct AggregatedCardLabel {
 	std::string label;
 	int count = 0;
 };
+
+std::string ResolveItemProducer(const ITEM_INFO& item)
+{
+	const u32 characterId = u32(u16(item.m_slot[2])) | (u32(u16(item.m_slot[3])) << 16);
+	CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+	return mode ? mode->ResolveCharacterName(characterId) : std::string();
+}
 
 std::string AppendSlotSuffix(std::string baseName, int slotCount)
 {
@@ -285,6 +293,11 @@ std::string ITEM_INFO::GetEquipDisplayName(bool includeSlotSuffix) const
 	return g_ttemmgr.GetEquipDisplayName(*this, includeSlotSuffix);
 }
 
+std::string ITEM_INFO::GetItemName(bool includeSlotSuffix) const
+{
+	return g_ttemmgr.GetItemName(*this, includeSlotSuffix);
+}
+
 std::string ITEM_INFO::GetDescription() const
 {
 	return g_ttemmgr.GetDescription(GetItemId());
@@ -326,6 +339,7 @@ void CItemMgr::EnsureLoaded()
 	LoadCardPrefixTable();
 	LoadCardPostfixTable();
 	LoadCardItemTable();
+	LoadItemNameMessages();
 	// Primary s_cardDescMap is populated by all four card metadata tables,
 	// including records that have no display affix.
 	m_cardDescriptorIds.insert(m_cardItemIds.begin(), m_cardItemIds.end());
@@ -360,6 +374,29 @@ std::string CItemMgr::GetDisplayName(unsigned int itemId, bool identified, bool 
 	return itemId != 0 ? std::to_string(itemId) : std::string();
 }
 
+std::string CItemMgr::GetItemName(const ITEM_INFO& item, bool includeSlotSuffix)
+{
+	const auto itemId = item.GetItemId();
+	if (!item.m_isIdentified) return GetDisplayName(itemId, false, includeSlotSuffix);
+	EnsureLoaded();
+	// Primary GetItemName handles these markers before its item-type switch.
+	// Selected clif_addcards carries intimacy in word two, and itemtype()
+	// normalizes eggs to armor. The renamed marker is independent of wire type.
+	const bool namedPet = item.m_slot[0] == 0 && item.m_slot[1] == 0 && item.m_slot[3] == 1;
+	if (namedPet)
+		return ItemNameMessage(756, "Beloved") + GetDisplayName(itemId, true, includeSlotSuffix);
+	if (item.m_slot[0] == 254 && item.m_slot[1] == 0) {
+		std::string text = item.m_refiningLevel > 0 ? "+" + std::to_string(item.m_refiningLevel) + " " : "";
+		return text + ResolveItemProducer(item) + ManufacturedSuffix(0) + GetDisplayName(itemId, true, includeSlotSuffix);
+	}
+	switch (item.m_itemType) {
+	case 4: case 5: case 8: case 9: case 11: case 12: case 13: case 14: case 15: case 19:
+		return GetEquipDisplayName(item, includeSlotSuffix);
+	default:
+		return GetDisplayName(itemId, true, includeSlotSuffix);
+	}
+}
+
 std::string CItemMgr::GetEquipDisplayName(const ITEM_INFO& item, bool includeSlotSuffix)
 {
 	const unsigned int itemId = item.GetItemId();
@@ -379,6 +416,16 @@ std::string CItemMgr::GetEquipDisplayName(const ITEM_INFO& item, bool includeSlo
 	// Primary GetItemName enters generic card composition only when slot zero
 	// has a card descriptor. Named/crafted sentinel slots have separate contracts.
 	const bool composeCards = m_cardDescriptorIds.count(static_cast<unsigned int>(item.m_slot[0])) != 0;
+	if (!composeCards && item.m_slot[0] == 255) {
+		switch ((u16(item.m_slot[1]) >> 8) & 0xff) {
+		case 5: text += ItemNameMessage(459, "Very Strong "); break;
+		case 10: text += ItemNameMessage(460, "Very Very Strong "); break;
+		case 15: text += ItemNameMessage(461, "Very Very Very Strong "); break;
+		default: break;
+		}
+		return text + ResolveItemProducer(item) + ManufacturedSuffix(u8(item.m_slot[1]))
+			+ GetDisplayName(itemId, true, includeSlotSuffix);
+	}
 	std::vector<AggregatedCardLabel> prefixLabels, postfixLabels;
 	if (composeCards) {
 		for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
@@ -611,6 +658,41 @@ bool CItemMgr::LoadCardPostfixTable()
 bool CItemMgr::LoadCardItemTable()
 {
 	return ParseIdSetTable("carditemnametable.txt", m_cardItemIds);
+}
+
+void CItemMgr::LoadItemNameMessages()
+{
+	std::string text;
+	if (!LoadTextFileFromGameData("msgstringtable.txt", text)) return;
+	size_t begin = 0;
+	for (unsigned int index = 0; begin < text.size(); ++index) {
+		const size_t end = text.find('#', begin);
+		if (end == std::string::npos) break;
+		while (begin < end && (text[begin] == '\r' || text[begin] == '\n')) ++begin;
+		if ((index >= 450 && index <= 454) || (index >= 459 && index <= 461) || index == 756) {
+			// Preserve spaces in positional message values, including their absence.
+			m_itemNameMessages[index] = text.substr(begin, end - begin);
+		}
+		begin = end + 1;
+	}
+}
+
+std::string CItemMgr::ItemNameMessage(unsigned int index, const char* fallback) const
+{
+	const auto found = m_itemNameMessages.find(index);
+	return found == m_itemNameMessages.end() ? std::string(fallback) : found->second;
+}
+
+std::string CItemMgr::ManufacturedSuffix(u8 element) const
+{
+	switch (element) {
+	case 0: return ItemNameMessage(450, "'s ");
+	case 1: return ItemNameMessage(452, "'s Ice ");
+	case 2: return ItemNameMessage(454, "'s Earth ");
+	case 3: return ItemNameMessage(451, "'s Fire ");
+	case 4: return ItemNameMessage(453, "'s Wind ");
+	default: return {};
+	}
 }
 
 bool CItemMgr::ParsePairTable(const char* fileName, void (*assignValue)(ItemMetadata&, std::string&&),

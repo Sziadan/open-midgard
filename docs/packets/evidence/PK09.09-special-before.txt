@@ -1,0 +1,13 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 5: packet_special_item_name_render_checks
+1/1 Test #5: packet_special_item_name_render_checks ...***Failed    0.82 sec
+FAIL item colour render: special row mismatch: forged-normal / inventory
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.83 sec
+
+The following tests FAILED:
+	  5 - packet_special_item_name_render_checks (Failed)
+Errors while running CTest

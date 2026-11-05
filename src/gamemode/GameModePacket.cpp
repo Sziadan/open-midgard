@@ -35,6 +35,7 @@
 #include "ui/UISkillSelectWnd.h"
 #include "ui/UIItemInfoWnd.h"
 #include "ui/UIItemWnd.h"
+#include "ui/UIStorageWnd.h"
 #include "ui/UIItemPurchaseWnd.h"
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIItemShopWnd.h"
@@ -2480,7 +2481,7 @@ void AnnouncePickedUpItem(const ITEM_INFO& itemInfo)
     // The color argument is COLORREF 16776960 (0x00FFFF00), which is RGB(0, 255, 255).
     // Chat stores that as R in the high byte. Type 5 is the get-item chat class;
     // the Info tab is the channel that still shows it.
-    std::string itemName = itemInfo.GetEquipDisplayName();
+    std::string itemName = itemInfo.GetItemName(false);
     if (itemName.empty()) {
         itemName = itemInfo.GetDisplayName();
     }
@@ -8753,6 +8754,11 @@ void HandleCharacterNameAck(CGameMode& mode, const PacketView& packet)
     if (characterId == 0 || name.empty()) return;
     mode.m_characterNameCache[characterId] = name;
     mode.m_characterNameReqTimer.erase(characterId);
+    if (g_windowMgr.m_itemWnd) g_windowMgr.m_itemWnd->Invalidate();
+    if (g_windowMgr.m_storageWnd) g_windowMgr.m_storageWnd->Invalidate();
+    if (g_windowMgr.m_equipWnd) g_windowMgr.m_equipWnd->Invalidate();
+    if (g_windowMgr.m_itemInfoWnd) g_windowMgr.m_itemInfoWnd->Invalidate();
+    if (g_windowMgr.m_shortCutWnd) g_windowMgr.m_shortCutWnd->Invalidate();
     // ZC_ACK_REQNAME_BYGID carries a character ID, not an actor's world ID.
     // Never create an actor, overwrite actor affiliations or complete its query.
 }

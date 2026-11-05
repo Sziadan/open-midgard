@@ -1,0 +1,274 @@
+{
+  "date": "2026-11-05",
+  "baseline": "d1d9ec38b7304e84704e82b60cad848bf6e61682",
+  "commit_subject": "packet(PK09.09): restore special item names and producer refresh",
+  "profile": 20080910,
+  "source_sha256": {
+    "CMakeLists.txt": "c9fc060b867c192154e851570baf114673fecefaa466869934da01981998470c",
+    "src/item/Item.h": "3c6993732da1057dc59ba9d20a6c758c5f5da04568b09abc1462d908bde26ee9",
+    "src/item/Item.cpp": "5f7dcf57d1e4ad5d0fced8880dc9198930b4cd9a26d9a2c41f822f05a0a3124b",
+    "src/ui/UIShopCommon.h": "80b8b531ff6c9c769beefe08b7d155961584cd587a8fd34176bac07e835852af",
+    "src/ui/UIItemInfoWnd.cpp": "24e234e4de60f84ff2881a566d471563bb705f1557730810e81a1d6c2b0c94ec",
+    "src/qtui/QtCommerce.cpp": "d846da58118d0fe494d8c6d0856c6b07859a40aa68fdae8550e54ad8e743fd9b",
+    "src/gamemode/GameModePacket.cpp": "81dccce33317af33199e4173cbe93b96965082f44dd186cf7a4f08312d0bdacd",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "55090cca0231e21dd2d4b28c998923e20d4e176f22c9777bce1541a9fdf3389a",
+    "tools/tests/replay/SpecialItemNameRenderChecks.inc": "19ceea69ce0d1f10192c13df14ae43591ae5413c506f18726c81acc9e4112c8e"
+  },
+  "fixture_sha256": {
+    "tools/tests/fixtures/packet-item-data/special-name-msgstringtable.txt": "ad8bf4e1af814071150318184d82d67e833da791f85d96d95f1014064371423f",
+    "tools/tests/fixtures/packet-item-data/special-name-msgstringtable.json": "691af1998d6c6a5aca4fcca7ad1b65bc367d95404f2cd20d7026b22b53f9d6f3",
+    "tools/tests/fixtures/packet-item-data/idnum2itemdisplaynametable.txt": "8c94c27f0812a79bc85196ad20934e57a44464b8298cf3d537b078598736173c",
+    "tools/tests/fixtures/packet-item-data/num2itemdisplaynametable.txt": "78c95ed1f33e5ddbaa00a8e4000ceeccf24fe190ab2635e8a30637e5529c14df",
+    "tools/tests/fixtures/packet-item-data/itemslotcounttable.txt": "cb2927ebf1cdeb69999fc1e53ccac83b78a699d74512e08adf3bdb17dc68c6b6"
+  },
+  "primary_reference_sha256": {
+    "Ref/ItemInfo.cpp": "5bce74c76f40aafad079c2feaf746a7570a1380492a03e6e1cec52bdcf722bc8",
+    "Ref/UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "Ref/GRF-Content/data/msgstringtable.txt": "200c4ac4970853ac7cb947629df790168a9d1afc5572e15fdc8d4944b6ab80af",
+    "Ref/GRF-Content/data/idnum2itemdisplaynametable.txt": "fba99eacb4e766632c6f881c576cbea83121eb0533eeacc6963b0b6f21fe7dcf",
+    "Ref/GRF-Content/data/num2itemdisplaynametable.txt": "cc4442997446d9bc11ff8c81084f6efc60532e78e283769c51e6821e297d8c4e",
+    "Ref/GRF-Content/data/itemslotcounttable.txt": "cb7916712470c699764536b4c92160fe234ec14a067ef5353ab84a1d1883b76c"
+  },
+  "secondary_enum_crosscheck": {
+    "path": "Ref/dhxj/MsgStrings.h",
+    "sha256": "3a3317bac31fde357d7cd5621732b0fee5faefe37b3ef307207ccc0a209c0c49",
+    "scope": "MSI numeric-index corroboration only; algorithm and message bytes use primary references"
+  },
+  "external_source_root": "C:\\Users\\sziad\\source\\repos\\rathena-master",
+  "external_sha256": {
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/itemdb.cpp": "3b51a2bbcb44c5ffbdb5dc04683dd4f567c2da92f56a4bc0008aa9a93de5efe5",
+    "src/map/itemdb.hpp": "c38422e6ca68c9546418de7984b4a46d6478a849b82139ac9de46aca79d374d1",
+    "src/common/mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "db/pre-re/item_db_equip.yml": "0e0daa938fed5512fea5ef26102083dfdc43c1b1d863aefe43fa790bca955d6b"
+  },
+  "validation": {
+    "ctest_passed": 108,
+    "ctest_failed": 0,
+    "seconds": 71.09,
+    "packet_records": 166,
+    "special_name_variants": 20,
+    "special_frames": 77,
+    "special_native_frames": 8,
+    "special_qt_frames": 69,
+    "stationary_delayed_name_without_item_resend": true,
+    "retained_detail_model_updated": true,
+    "configured_empty_message_preserved": true,
+    "item_qml_errors": 0,
+    "special_qml_errors": 0,
+    "retained_card_cases": 17,
+    "retained_card_frames": 57,
+    "retained_colour_frames": 30,
+    "retained_name_frames": 4,
+    "retained_quantity_frames": 3,
+    "retained_bag_frames": 4,
+    "retained_cart_frames": 3,
+    "retained_minimap_scenes": 18,
+    "deploy": "OFF"
+  },
+  "cases": {
+    "cases": [
+      {
+        "case": "forged-normal",
+        "name": "Smith's Knife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "forged-ice",
+        "name": "Smith's Ice Knife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "forged-earth",
+        "name": "Smith's Earth Knife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "forged-fire",
+        "name": "Smith's Fire Knife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "forged-wind",
+        "name": "Smith's Wind Knife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "one-star",
+        "name": "Very Strong Smith's Knife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "two-stars",
+        "name": "Very Very Strong Smith's Ice Knife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "three-stars",
+        "name": "Very Very Very Strong Smith's Fire Knife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "unidentified-forge",
+        "name": "Dagger",
+        "outcome": "PASS"
+      },
+      {
+        "case": "created-potion",
+        "name": "Smith's Red Potion",
+        "outcome": "PASS"
+      },
+      {
+        "case": "named-pet",
+        "name": "BelovedPoring Egg",
+        "outcome": "PASS"
+      },
+      {
+        "case": "named-pet-intimacy",
+        "name": "BelovedPoring Egg",
+        "outcome": "PASS"
+      },
+      {
+        "case": "unnamed-pet",
+        "name": "Poring Egg",
+        "outcome": "PASS"
+      },
+      {
+        "case": "unidentified-pet",
+        "name": "Poring Egg",
+        "outcome": "PASS"
+      },
+      {
+        "case": "legacy-type7-named-pet",
+        "name": "BelovedPoring Egg",
+        "outcome": "PASS"
+      },
+      {
+        "case": "legacy-type7-unnamed-pet",
+        "name": "Poring Egg",
+        "outcome": "PASS"
+      },
+      {
+        "case": "create-nonzero-word-guard",
+        "name": "Red Potion",
+        "outcome": "PASS"
+      },
+      {
+        "case": "forge-type-guard",
+        "name": "Red Potion",
+        "outcome": "PASS"
+      },
+      {
+        "case": "unknown-element",
+        "name": "SmithKnife",
+        "outcome": "PASS"
+      },
+      {
+        "case": "unknown-star",
+        "name": "Smith's Knife",
+        "outcome": "PASS"
+      }
+    ],
+    "configured_empty_message_preserved": true,
+    "delayed_name_without_item_resend": true,
+    "name_replacement": true,
+    "outcome": "PASS",
+    "row_removal": true
+  },
+  "binary_sha256": {
+    "open-midgard.exe": "7f55fe7cedf40436fceaeac734983cc3a0f266da6cd2c25cbfafb7e058a6a918",
+    "packet_stream_replay_checks.exe": "4d95a58dbcaf87b3530aae140a91cf1b8ec90d1193614dd861b2369bd013c1cb",
+    "packet_item_render_checks.exe": "7e871a4ff68ba2d02d9dd656933440715d34bfcb2a4c2ee06c3d9275be9e97b2",
+    "packet_minimap_render_checks.exe": "2ed7f481d4ec775b254c50e3eebd862f0b3b57e5d58ca3f72a0c8e3019a5e76c"
+  },
+  "evidence_sha256": {
+    "PK09.09-special-renders/create-nonzero-word-guard-qt-cart.png": "5961dba7119e54de7b5b78dcad9b3d22c42faaa21f8ba63366f0646d77ac9c3e",
+    "PK09.09-special-renders/create-nonzero-word-guard-qt-inventory.png": "46be59dbf12af59dd373c178e3f135e8ba39485385b5554d24b61569d0420141",
+    "PK09.09-special-renders/create-nonzero-word-guard-qt-storage.png": "8c2f1c87480a57fdf458148780f4a74fc4ff6ff2ec2d2e9f94cb1f49e5f80906",
+    "PK09.09-special-renders/created-potion-native-inventory.png": "b412c5dd2339487d617262f8d7dde57935100d149cb194370f466ea2da5ed726",
+    "PK09.09-special-renders/created-potion-native-storage.png": "5179bd2d0338203b75df01b9559d1edb57a1aff77ce2aa5efb6978821dcff632",
+    "PK09.09-special-renders/created-potion-qt-cart.png": "3f2ff6612ee78e133e361b8636fe4fc9ea83ca8d13f361d70f30e0ca0ad62e5d",
+    "PK09.09-special-renders/created-potion-qt-inventory.png": "58e242de4d9c52003241051b56301b129ea269ce5e8faa9291f154a5dec4b185",
+    "PK09.09-special-renders/created-potion-qt-storage.png": "ba6758d1934e655ec2c7302a016aadc0c8b26105a3b3fb9e48ab10b7f0c5b5e1",
+    "PK09.09-special-renders/forge-type-guard-qt-cart.png": "5961dba7119e54de7b5b78dcad9b3d22c42faaa21f8ba63366f0646d77ac9c3e",
+    "PK09.09-special-renders/forge-type-guard-qt-inventory.png": "46be59dbf12af59dd373c178e3f135e8ba39485385b5554d24b61569d0420141",
+    "PK09.09-special-renders/forge-type-guard-qt-storage.png": "8c2f1c87480a57fdf458148780f4a74fc4ff6ff2ec2d2e9f94cb1f49e5f80906",
+    "PK09.09-special-renders/forged-earth-qt-cart.png": "a790df8d617007b88656c55fb74f41e437d96ed7e126fb47b31369ef98704d42",
+    "PK09.09-special-renders/forged-earth-qt-inventory.png": "1c4f0be18433707776d1f194fc2860b3708b1630ae2ab38544e28f1aab9daae9",
+    "PK09.09-special-renders/forged-earth-qt-storage.png": "cea5bcddd4dfb2ecc5b93c8b419b8d9d3873a6d6dfce8905f1f7695d1e7babf1",
+    "PK09.09-special-renders/forged-fire-qt-cart.png": "7ed71f9849e21057821e93a9bddef836c06b848feb802255383131697d087a84",
+    "PK09.09-special-renders/forged-fire-qt-inventory.png": "2910d1299519eb535c6af79c8920f1482b51699577ebc7cb899412de10ac3f00",
+    "PK09.09-special-renders/forged-fire-qt-storage.png": "7c454b93da6771d4f140b590af7aa10bdfcdf803e7c16df2b3e5992d424d08f7",
+    "PK09.09-special-renders/forged-ice-qt-cart.png": "d9ff515421300b1f085ff6df2b90e88f9e4690bf4e2e7419dced93bbdf4cc0dc",
+    "PK09.09-special-renders/forged-ice-qt-inventory.png": "32b26100b3d31e2dde64607ceff5eb3b10277e8808238179e583d34b55dc0785",
+    "PK09.09-special-renders/forged-ice-qt-storage.png": "1486f3521f7a84bbe828c1e0f8b3bc2c3548413f3694a6c01cfc3bda9e0a04e0",
+    "PK09.09-special-renders/forged-normal-qt-cart.png": "15deef84d61a171b35a7a3435732872fe38a3877cc4baef4f50c3d6de34f9d86",
+    "PK09.09-special-renders/forged-normal-qt-inventory.png": "f0c50a2379ecfd0173085e48e2f74b521629d8d9fe77463dd1a93c59355c1885",
+    "PK09.09-special-renders/forged-normal-qt-storage.png": "75a741902f9650c96e3f5ce932dafd9780e987c50df128f05885885056546f61",
+    "PK09.09-special-renders/forged-wind-qt-cart.png": "d08680d31f49e5d1d37c11ea3b46c8b866be41100988e82bfd3b1af36bb11421",
+    "PK09.09-special-renders/forged-wind-qt-inventory.png": "3fb2480ad09094bb8cb9d8306f89817b88b85d46a3afa57eb2c27c0724f3b63e",
+    "PK09.09-special-renders/forged-wind-qt-storage.png": "db0376e618cfd7be27bcd10d974824c621e07aeb54482c0e8d279a4e1448b872",
+    "PK09.09-special-renders/legacy-type7-named-pet-qt-cart.png": "f0477b34f3924587ad6f9efff72f56b39183b6dfbe46df1607511b0180145c1c",
+    "PK09.09-special-renders/legacy-type7-named-pet-qt-inventory.png": "aa9761ac517d5b20fd8a1dd23cfe329496e571aed66bf65ae0ab230c9b21d398",
+    "PK09.09-special-renders/legacy-type7-named-pet-qt-storage.png": "ab14219ce1c601cd5286129fc0506964427f1469cb88bf487e826414df59659b",
+    "PK09.09-special-renders/legacy-type7-unnamed-pet-qt-cart.png": "651608caa3e5e11c0264a783f03821ae09f68d178512d05cd9b7f789c13bf9cc",
+    "PK09.09-special-renders/legacy-type7-unnamed-pet-qt-inventory.png": "930d1721991b74f784e06b17b1a414601e8a077ff99be52beb81fde808be1d93",
+    "PK09.09-special-renders/legacy-type7-unnamed-pet-qt-storage.png": "f22026b1c14424b201a1a2557a1a175b6b3b08ba9d4785b2e282c78d9c1a802d",
+    "PK09.09-special-renders/named-pet-intimacy-native-inventory.png": "a9cc315997e0bc5957d4127993c6dfd10f12b522471262da5bd2c13a7b65999b",
+    "PK09.09-special-renders/named-pet-intimacy-native-storage.png": "b0c7d0219fa7f1152d2d09cf0274d08d0dbf453d562bb2ca92ebffd06f3f897b",
+    "PK09.09-special-renders/named-pet-intimacy-qt-cart.png": "03473af7c2feb1a93846e64992b8657fb7d98c9468103d768de6629e892d6730",
+    "PK09.09-special-renders/named-pet-intimacy-qt-inventory.png": "c57250072a3fb43bb302cca7e467af2ffa4d2bc5a23888e653d13f2edc0b38c0",
+    "PK09.09-special-renders/named-pet-intimacy-qt-storage.png": "9c6fe28ed567851e34d97cc975558c8ab9b9fda19bee3dfb1c7760898afb69cf",
+    "PK09.09-special-renders/named-pet-qt-cart.png": "03473af7c2feb1a93846e64992b8657fb7d98c9468103d768de6629e892d6730",
+    "PK09.09-special-renders/named-pet-qt-inventory.png": "c57250072a3fb43bb302cca7e467af2ffa4d2bc5a23888e653d13f2edc0b38c0",
+    "PK09.09-special-renders/named-pet-qt-storage.png": "9c6fe28ed567851e34d97cc975558c8ab9b9fda19bee3dfb1c7760898afb69cf",
+    "PK09.09-special-renders/one-star-qt-cart.png": "252ffee191daae1cab3ffcbb7e8bbfd8590eb9243459db09387801503fadc37e",
+    "PK09.09-special-renders/one-star-qt-inventory.png": "b203054b6408f9e356e48d8db2f21935c8dac2a37245bdbfc2be06a602bb0fc2",
+    "PK09.09-special-renders/one-star-qt-storage.png": "e995f23e05834f176663ac4d44a7414ca1f851289ce26ab786490ad0bb7617e2",
+    "PK09.09-special-renders/producer-arrived-native-inventory.png": "2fa3199a64ec5c76d0de0eab6362e9fc0ea5f9fa606743d97be75cc518a4a1d9",
+    "PK09.09-special-renders/producer-arrived-qt-cart.png": "8a392b4af6ac0f6ca54904be003b352cbd3693e1f6c08c488aaf408df39bb421",
+    "PK09.09-special-renders/producer-arrived-qt-inventory.png": "754482414be8a270acc9c88c10cdf9c130385761e849b349853ee6cf93a7b00d",
+    "PK09.09-special-renders/producer-arrived-qt-storage.png": "75d3851d4c2ffb69531e3633488b05671a966c7e0c5e4a62725cbc259db37161",
+    "PK09.09-special-renders/producer-pending-native-inventory.png": "14c15b4a55264a1557082fc0377683b529ef1566c63e1d91dcfd9af3930423ab",
+    "PK09.09-special-renders/producer-pending-qt-cart.png": "5e1de9c1ece2079c1c7c64e421522c0adb568ab62fac3836605e29e77ae77077",
+    "PK09.09-special-renders/producer-pending-qt-inventory.png": "116c291d51e95dfaa056fe499c7ec38da6df691a2fc6ac8a271ef24f6e37abe5",
+    "PK09.09-special-renders/producer-pending-qt-storage.png": "df796e77916c5ce3a75cd84b6226413265c9db8098da5b31dd9e32d057369183",
+    "PK09.09-special-renders/producer-renamed-qt-cart.png": "93552c6ffca4d98be3e9c8f031076d8d1a9cfc147232dc3bb092e4137d84e3da",
+    "PK09.09-special-renders/producer-renamed-qt-inventory.png": "ad5685c15a40f27c4e5ff8a55d415940af02f302c72404d164d9378b7e35db01",
+    "PK09.09-special-renders/producer-renamed-qt-storage.png": "1a72c36e8524c2a253429d01b0c94054e5f6230808f97fd719e856cebdd5c6ff",
+    "PK09.09-special-renders/special-name-results.json": "9c3ab45119c1f361abc5a77e8ff828ad30f5a4dcae1fea0e96a729e832d0d3a4",
+    "PK09.09-special-renders/special-render-results.json": "62d467f2cf38d95618a39d9ecf24ed07273c4f02287312dc1f1346af8d5cd918",
+    "PK09.09-special-renders/three-stars-native-inventory.png": "af2b5c930f7a652a2e0b402b924f8c292c34b1d3f4b948c28954d90ede9eebe1",
+    "PK09.09-special-renders/three-stars-native-storage.png": "94205efe9c574768cb3155aedd460da156613a6021e57cec0fc54968b974697f",
+    "PK09.09-special-renders/three-stars-qt-cart.png": "d20c313f41744b25e1b52e5a4a8716bacd12ac5d61031540adc1597fc2099a8a",
+    "PK09.09-special-renders/three-stars-qt-inventory.png": "9e8e36f3236983d2b93959bdf1ede340d439600d5f235b5bd34698f54336716e",
+    "PK09.09-special-renders/three-stars-qt-storage.png": "e29940e19c9add9aa9b0f47d1b1d79272cd05bb264aea29a3edccc3d0b6953d1",
+    "PK09.09-special-renders/two-stars-qt-cart.png": "efdf1003f3464dd357d6c417bb6e610e28a9e5506099e3bd3f2c115e8886ea4e",
+    "PK09.09-special-renders/two-stars-qt-inventory.png": "1025329dea3ffb2980e832f4204cfac86f7cbff94798f0b2e4f0fdf795de9aae",
+    "PK09.09-special-renders/two-stars-qt-storage.png": "d7a6852c15d615da530070f93b38b9d9ffa512f776d817fcaedbd927df8072c3",
+    "PK09.09-special-renders/unidentified-forge-qt-cart.png": "88bee197b9bfffda77b453f3c26a3e464f48458f94c3c815ba434581ca2d86a5",
+    "PK09.09-special-renders/unidentified-forge-qt-inventory.png": "d95c07f748e80b12399e9fc6d3da80c147ebe352299822218a5da95ce6b9ae3d",
+    "PK09.09-special-renders/unidentified-forge-qt-storage.png": "7b2c8ca2535075bd26abf4b77998c712f20c1b5f1c84c9749570ac08f8ed86bb",
+    "PK09.09-special-renders/unidentified-pet-qt-cart.png": "0bc98a7bcbd56d46073e4210be0ebcc93fbe2bc305aceafb7ea584ca7694f886",
+    "PK09.09-special-renders/unidentified-pet-qt-inventory.png": "e7ae063b06e76606e7dfe88211d45e1129330ab83127fee1f12628af7eed1972",
+    "PK09.09-special-renders/unidentified-pet-qt-storage.png": "e534362f83d7dd7e9837bab845844e6b9aaed16a7cb3536a5f217dc014e110c2",
+    "PK09.09-special-renders/unknown-element-qt-cart.png": "2e298b056ad6aa233c266d8a8f9d8af169801a9f9011188f18c20fe9cb08a2ba",
+    "PK09.09-special-renders/unknown-element-qt-inventory.png": "4c9237b0e92a8f0dc0e4ba48e581168b82cb4307d326528234186a785d58ef60",
+    "PK09.09-special-renders/unknown-element-qt-storage.png": "3013d1281484df0dff676fbc314c2d00b345f1a6532960fce7d46ddfe6e75cef",
+    "PK09.09-special-renders/unknown-star-qt-cart.png": "102b6f5887fdc370556b82bc129a059ce4da1548e85e71d243180ae20045a63a",
+    "PK09.09-special-renders/unknown-star-qt-inventory.png": "06824b954c4cf0f19af4213989495e8bd9848ab6625440b7ab3888a517660380",
+    "PK09.09-special-renders/unknown-star-qt-storage.png": "575be391da3ab0a9278b4e79724ca927a3e9328a7f3b57b298b2f0a48243f157",
+    "PK09.09-special-renders/unnamed-pet-qt-cart.png": "888a575fd8314d8bf319c3e52fc2269ecf680f2055f3f6a6a5423bb528075a85",
+    "PK09.09-special-renders/unnamed-pet-qt-inventory.png": "7b137d02ea38283e4bdede117fbcbc7def8f2469f2cd40f29fb5cc2efffd70c4",
+    "PK09.09-special-renders/unnamed-pet-qt-storage.png": "300c0a86b11996699c68b53559a395fe697aaeacca8cecdc6e8eb7d22ff00270",
+    "PK09.09-special-before.txt": "324dd4ab6ea54dc84661231e2b467ec5d815ecb750e52096ec5bf28b8a91c478"
+  },
+  "validation_log_sha256": "fd7ca4f4cfaa0505cf31231a34e2367f60781d61b39a8e05b31e03fc4728286c",
+  "limits": [
+    "Special name/pet visual-tab scope only; other type/tab/radio mappings remain open",
+    "Retained detail model name verified; full detail-window/expiry acceptance remains open",
+    "English message bytes and controlled empty-entry probe; full locale/art not certified",
+    "Synthetic guard cases do not claim real server forging recipes",
+    "No numeric discovery closure, PK48/49 or deployed-server acceptance"
+  ]
+}

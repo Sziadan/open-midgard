@@ -219,6 +219,9 @@ Tier: **S**. Dependencies: PK05.
 
 - **PK09.08 [S]** Restore source card-ID grouping, prefix/postfix repeat placement and descriptor initialization/slot-zero ownership; verify selected production inventory/cart/storage records through actual native and Qt consumers, leaving special names/expiry independently open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
+
+- **PK09.09 [S]** Restore selected named-pet/created/forged producer, element and star-piece names with source marker precedence/message values; verify actual native/Qt consumers, selected normalized-pet and historical-type-seven visual tabs and delayed CID replies without item resends, keeping expiry/other contexts open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+
 ### Required acceptance and traps
 
 P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership.

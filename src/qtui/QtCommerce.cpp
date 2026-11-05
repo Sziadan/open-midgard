@@ -27,7 +27,7 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
         // every row; the bag mirrors native filtering, including its ammo exception.
         if(i.m_wearLocation!=0 && i.m_itemType!=10)continue;
         ++inventoryCount;
-        const bool equip=i.m_itemType==4||i.m_itemType==5||i.m_itemType==7||i.m_itemType==8;
+        const bool equip=i.m_itemType==4||i.m_itemType==5||i.m_itemType==8;
         const bool usable=i.m_itemType==0||i.m_itemType==2||i.m_itemType==11;
         if((s.inventoryTab==0&&usable)||(s.inventoryTab==1&&equip)||(s.inventoryTab==2&&!usable&&!equip))inventory.push_back(row(i));
     }
