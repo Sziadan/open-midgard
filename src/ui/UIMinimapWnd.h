@@ -17,6 +17,7 @@ public:
         int x = 0;
         int y = 0;
         int radius = 0;
+        // Packed 0x00RRGGBB, shared with the Qt marker model (not Win32 COLORREF).
         unsigned int color = 0;
     };
 

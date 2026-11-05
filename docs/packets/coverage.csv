@@ -160,7 +160,7 @@ AUDIT-0x0103,0x0103,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x0104,0x0104,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0105,0x0105,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0106,0x0106,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0107,0x0107,map,S2C,PK14,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0107,0x0107,map,S2C,PK14,PK01;PK02;PK47;PK48;PK45,Selected 20080910 packed 10-byte AID/cell/sentinel notification; source/caller/state and real native/QML pixels verified in PK14.04; independent PK48 remains pending,APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK14.PARTY-POSITION
 AUDIT-0x0108,0x0108,map,C2S,PK17,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0109,0x0109,map,S2C,PK17,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x010A,0x010A,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

@@ -1,5 +1,7 @@
 # Open decisions and external gates
 
+**PK14 rendered acceptance resolved — 2026-11-05:** [actual native/QML capture and integrated checks](evidence/PK14.04-rendered-acceptance.md) close PK14.04 at its selected-source scope. Marker rendering is no longer blocked on a missing harness. Active PK23.05 has exact Ref cast-ACK arguments and a production runtime fixture; implement it rather than repeating a generic stronger-review deferral. Historical entries below do not override current HANDOFF/STATUS/state.
+
 **PK14.06 caller boundary resolved — 2026-11-05:** [production transition replay](evidence/PK14.06-transition-caller-replay.md) replaces the historical map/warp/character caller deferrals below. Remaining rendered/integrated acceptance is PK14.04; no generic stronger-review or caller-seam gate remains for this implemented checkpoint.
 
 **Current cleanup disposition — 2026-11-05:** [fresh exported-candidate review](evidence/REVIEW-CLEAN-2026-11-05.md) and commit `fde621a1` resolve the malformed roster checkpoint and dirty-file isolation gates below. PK14.07/scoped PK14.05 are complete. PK05.05 is now implemented and verified in [its repair checkpoint](evidence/PK05.05-map-disconnect-repair.md); active PK14.04 for remaining integration/rendered acceptance. PK23.05 announcements and PK14.04 rendered acceptance remain unfinished; PK14.06 callers are now verified. Historical blocker entries below do not override current HANDOFF/STATUS/state.

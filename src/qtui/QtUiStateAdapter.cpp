@@ -3971,6 +3971,11 @@ bool QtUiStateAdapter::syncMenu(RenderBackendType activeBackend,
     return true;
 }
 
+void QtUiStateAdapter::syncMinimap()
+{
+    PopulateMinimapState(m_state);
+}
+
 bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     RenderBackendType activeBackend,
     RenderBackendType nativeOverlayBackend,
@@ -4038,7 +4043,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     PopulateSkillSelectState(m_state);
     PopulateItemCompositionState(m_state);
     PopulateOptionState(m_state);
-    PopulateMinimapState(m_state);
+    syncMinimap();
     const int uiMouseX = UiScaleRawToLogicalCoordinate(mouseX);
     const int uiMouseY = UiScaleRawToLogicalCoordinate(mouseY);
     PopulateStatusIconsState(m_state, uiMouseX, uiMouseY);

@@ -1,0 +1,41 @@
+UpdateCTestConfiguration  from :D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/DartConfiguration.tcl
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2
+    Start 2: packet_minimap_render_checks
+
+2: Test command: D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\packet_minimap_render_checks.exe "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-minimap-renders"
+2: Working Directory: D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+2: Environment variables:
+2:  OPEN_MIDGARD_DATA_DIR=D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-minimap-settings
+2:  QT_QPA_PLATFORM_PLUGIN_PATH=C:/Qt/6.11.0/mingw_64/plugins/platforms
+2: Test timeout computed to be: 45
+2: minimap-render: main
+2: minimap-render: Qt application ready
+2: minimap-render: bitmap ready
+2: minimap-render: native window ready
+2: minimap-render: QML ready
+2: {"case":"online","expected_visible":true,"native_rgb":"#b8310a","qt_rgb":"#0a31b8","x":51,"y":126}
+2: FAIL minimap render: native party dot pixels differ from expected boundary/color
+1/1 Test #2: packet_minimap_render_checks .....***Failed    0.96 sec
+minimap-render: main
+minimap-render: Qt application ready
+minimap-render: bitmap ready
+minimap-render: native window ready
+minimap-render: QML ready
+{"case":"online","expected_visible":true,"native_rgb":"#b8310a","qt_rgb":"#0a31b8","x":51,"y":126}
+FAIL minimap render: native party dot pixels differ from expected boundary/color
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.97 sec
+
+The following tests FAILED:
+	  2 - packet_minimap_render_checks (Failed)
+Errors while running CTest

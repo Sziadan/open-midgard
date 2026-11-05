@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK14.04",
+  "active_step": "PK23.05",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -485,13 +485,17 @@
       "commit_subject": "packet(PK14.03): render party minimap markers"
     },
     "PK14.04": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/work-items/PK14.04.md",
         "docs/packets/evidence/PK14.04-verification-boundary.md",
-        "docs/packets/evidence/PK14.04-current-tree-verification-2026-11-05.md"
+        "docs/packets/evidence/PK14.04-current-tree-verification-2026-11-05.md",
+        "docs/packets/evidence/PK14.04-rendered-acceptance.md",
+        "docs/packets/evidence/PK14.04-rendered-acceptance.json",
+        "docs/packets/evidence/PK14.04-integration-replay.jsonl",
+        "docs/packets/contracts/PK14.PARTY-POSITION.md"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK14.04): verify native and Qt party marker rendering"
     },
     "PK15.01": {
       "status": "NOT_STARTED",

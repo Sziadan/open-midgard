@@ -1,0 +1,486 @@
+{
+  "date": "2026-11-05",
+  "baseline": "5ef6b4f4da4f0e4ee8a4b0e7e6771eea96e0def0",
+  "source_inputs": {
+    "CMakeLists.txt": {
+      "working_sha256": "14884d6e45ee4d908d8d5ac8e9c834256239b641a70a86499d7a967f6f3a1d5d",
+      "git_blob": "c364181efbc9f1096dfe3bacd78bb633135651d9"
+    },
+    "src/qtui/QtUiStateAdapter.cpp": {
+      "working_sha256": "c5b16c049add10c764a4153dcda6bd9c8af001ca8dbbaf1c8ad12d2370374004",
+      "git_blob": "6e2c2082e58be53d487af38ba9496bd5bfe57d09"
+    },
+    "src/qtui/QtUiStateAdapter.h": {
+      "working_sha256": "35fc7609cb2d6bd0bc53a5eda5aeb1b336e6d884753e6b59cca4ff8cad3f3728",
+      "git_blob": "4661faafa0b925dab77fd252fdfc8a3e4be33266"
+    },
+    "src/ui/UIMinimapWnd.cpp": {
+      "working_sha256": "86fcf6820977a0a9ba07e172bfaa59110d334e830d2408a626c9daf9b672ea75",
+      "git_blob": "27aa24e6a1a7c48e6630537002a0bb919f07efbc"
+    },
+    "src/ui/UIMinimapWnd.h": {
+      "working_sha256": "04dabca7511e223f371f183fefd59f6ab2e3491abccf250556ab65bd7528ad80",
+      "git_blob": "76779524f45208f6048a7f2f7e2e14fbdf2c29c2"
+    },
+    "tools/tests/replay/MinimapRenderChecks.cpp": {
+      "working_sha256": "e710c5c8906b9a4087d51e728b5dad8b19fcad9220191b0f4649aba1c1496477",
+      "git_blob": "92f4ad1fe6147e6f97de55f29316206a479b0900"
+    }
+  },
+  "other_render_inputs_sha256": {
+    "tools/tests/PartyPositionTests.cpp": "86940ffbd4ed89c534510c1a6be2a46c9f8098325326a2a6c2d060b4179f4786",
+    "src/qtui/qml/GameOverlay.qml": "19774555a5a521809e12276294073d1627a9cd6c409c23329fd976f5325cfbdf",
+    "src/qtui/qml/RoTheme.qml": "84dba38403bdf50aba65974f0c5fab5f62343c8a631038c2f67fcdb9151f4cbd",
+    "src/qtui/qml/RoFrame.qml": "03c5df22eae269bea47f1cdb4d5b85106855eed5281bd6abbd7a49e81839b1a6",
+    "src/qtui/QtUiState.h": "85b262c8def37d66524c2815ecf636165854f32fbd826bc8e0c693280cf8be7a",
+    "third_party/fonts/NotoSans.ttf": "bfb7bb691513f12e734dc346c03a03f784912432d7e3fa8e56efcf906fe86b3d",
+    "build-mingw-preset/qt.conf": "20ab6c4c32a5077c39a34b10b9236921aeee94609108cf2b98b29c2046db92ce"
+  },
+  "selected_profile": 20080910,
+  "selected_registry_entry": null,
+  "registry_disposition": "No selected input-registry entry; active typed S2C clif_party_xy/xy_single/xy_remove send sizeof(p)=10 directly. Absence here is not inactivity.",
+  "server_inputs_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/party.cpp": "5a87d5e1ce5260145aa7dc7b5dd3f0a9c878c05c2f20d8e7db893b38a723d75f"
+  },
+  "probe_inputs_sha256": {
+    "docs/packets/evidence/PK14.04-position-layout-probe.cpp": "38cc5429c2746c60f3fd618b127a869043de9c208045bf96461de61aa1638812",
+    "docs/packets/evidence/PK14.04-position-layout-probe.txt": "7736a584857fc338d39695a7e30a10b6997b2091557c880b92f0726c37faddd1",
+    "build-mingw-preset/packet-audit/server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c"
+  },
+  "probe_command": "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -Ibuild-mingw-preset/packet-audit -IC:/Users/sziad/source/repos/rathena-master/src -IC:/Users/sziad/source/repos/rathena-master/3rdparty -IC:/Users/sziad/source/repos/rathena-master/3rdparty/libconfig docs/packets/evidence/PK14.04-position-layout-probe.cpp -o build-mingw-preset/review-2026-11-05/pk14-position-layout-probe.exe",
+  "commands": [
+    "cmake -S . -B build-mingw-preset -DRO_ENABLE_DEV_DEPLOY=OFF -DRO_BUILD_PACKET_REPLAY_TESTS=ON",
+    "cmake --build build-mingw-preset --target open_midgard packet_stream_replay_checks packet_minimap_render_checks party_position_state_checks -j 6",
+    "ctest --test-dir build-mingw-preset -R '^(packet_stream_replay_checks|packet_minimap_render_checks|party_position_state_checks)$' --verbose --output-on-failure"
+  ],
+  "results": {
+    "configure_exit": 0,
+    "four_target_build_exit": 0,
+    "ctest_exit": 0,
+    "ctest_passed": 3,
+    "ctest_seconds": 7.22,
+    "packet_PASS_records": 159,
+    "native_QML_scenes": 18,
+    "QML_warnings_errors": 0,
+    "standalone_state_assertions_active": true,
+    "party_state_compile_flags": [
+      "CXX_FLAGS = -O3 -DNDEBUG -std=c++17 -UNDEBUG"
+    ]
+  },
+  "log_sha256": {
+    "pk14-render-configure.log": "bec16ac568bf994e342978ca8502621bb941299edd4f0c34f3c55a4c5cab8415",
+    "pk14-render-final-build.log": "c47675a522f15d8c0181457fda0f6d2825746f95492c84e659e48bfa93489723",
+    "pk14-integration-ctest.log": "31fa514b358b1886da630aece4252f744e83cdbae9fcdeaaa9cae2f633254b25",
+    "pk14-render-color-before.log": "22c7824981b6cc2d9d50a9b5578649fb08d622d6feadc536a9616ca928e62fb6",
+    "pk14-render-clip-before.log": "0dae5a6f4ce08c2c918ca076a439315b2ffb91a8655154a70e2de80730ba227e"
+  },
+  "diagnostic_initial_inputs": {
+    "color-before": [
+      {
+        "Path": "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\src\\ui\\UIMinimapWnd.cpp",
+        "Hash": "104E2C4B6D7AEB055E2EAB4C7B9622CC81FBA3A8950B1D6521EAED4C4FB33496"
+      },
+      {
+        "Path": "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\packet_minimap_render_checks.exe",
+        "Hash": "5D35FE983EE055880A6BA7DBCDEC1E1B66EE71CCCDF3622FD7EE2ECB4E44402C"
+      }
+    ],
+    "clip-before": [
+      {
+        "Path": "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\src\\ui\\UIMinimapWnd.cpp",
+        "Hash": "D698D01A80ED5CA8FA4991F4271FBC8CF00BED09AF65F966D90EF522F17F916F"
+      },
+      {
+        "Path": "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\packet_minimap_render_checks.exe",
+        "Hash": "A227283D75481B1FDEF895C515D1D1F7AD13C33309CCD3698D0536B2B2205419"
+      }
+    ]
+  },
+  "render_results": {
+    "cases": [
+      {
+        "case": "online",
+        "expected_visible": true,
+        "native_rgb": "#0a31b8",
+        "qt_rgb": "#0a31b8",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "stationary-roster",
+        "expected_visible": true,
+        "native_rgb": "#0a31b8",
+        "qt_rgb": "#0a31b8",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "online-movement",
+        "expected_visible": true,
+        "native_rgb": "#0a31b8",
+        "qt_rgb": "#0a31b8",
+        "x": 133,
+        "y": 77
+      },
+      {
+        "case": "moved-back",
+        "expected_visible": true,
+        "native_rgb": "#0a31b8",
+        "qt_rgb": "#0a31b8",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "offline",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "online-without-position",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "fresh-position",
+        "expected_visible": true,
+        "native_rgb": "#0a31b8",
+        "qt_rgb": "#0a31b8",
+        "x": 133,
+        "y": 77
+      },
+      {
+        "case": "sentinel-removal",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 133,
+        "y": 77
+      },
+      {
+        "case": "roster-loss",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "other-map",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "other-map-position-rejected",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "guild-over-party",
+        "expected_visible": true,
+        "native_rgb": "#80ff80",
+        "qt_rgb": "#80ff80",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "player-over-guild-and-party",
+        "expected_visible": true,
+        "native_rgb": "#f5e07e",
+        "qt_rgb": "#ffffff",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "left-map-edge",
+        "expected_visible": true,
+        "native_rgb": "#0a31b8",
+        "qt_rgb": "#0a31b8",
+        "x": 10,
+        "y": 102
+      },
+      {
+        "case": "map-transition",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "reconnect-success",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "reconnect-failure",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      },
+      {
+        "case": "session-boundary",
+        "expected_visible": false,
+        "native_rgb": "#324d65",
+        "qt_rgb": "#324d65",
+        "x": 51,
+        "y": 126
+      }
+    ],
+    "outcome": "PASS",
+    "qml_errors": 0
+  },
+  "render_artifacts": {
+    "clip-before-left-map-edge-native.png": {
+      "sha256": "18dcd3e01855f243cba9dde878b810ccda251d088498c341f5263479f7619232",
+      "bytes": 1520
+    },
+    "clip-before-left-map-edge-qt.png": {
+      "sha256": "81d4522daa86318042d5923a78a7b8b85f16040b99304dcd8139ff07351f046d",
+      "bytes": 3819
+    },
+    "color-before-online-native.png": {
+      "sha256": "a4f8a04b4d7edc6239732ff13e3e7c2d25e4383ff212f8e5abb8db495e48a58d",
+      "bytes": 1084
+    },
+    "color-before-online-qt.png": {
+      "sha256": "18800b6127a2be8da19027e2951042a8156f5b9c115edce472c7ed279f1e549f",
+      "bytes": 1681
+    },
+    "contact-0.png": {
+      "sha256": "227e66bf0d2b77e48bb6b3655a9c00609c828fbc31ee7d14051e568e666b0d1d",
+      "bytes": 36025
+    },
+    "contact-1.png": {
+      "sha256": "f22dc28354114739c37f9e94a417721e9e8b51e43522fba0653587687a5cbb91",
+      "bytes": 37493
+    },
+    "contact-2.png": {
+      "sha256": "0460420c680e5290a5dac9cffa5f2f50c3d694d658357b7eda5fc5a54e4aa2f4",
+      "bytes": 37846
+    },
+    "fresh-position-native.png": {
+      "sha256": "6f165c2c91996dc0d99e8a1533cff262001e8105930023b39dc25282834c5656",
+      "bytes": 1511
+    },
+    "fresh-position-qt.png": {
+      "sha256": "8a0aae6973f82f8586417cdad3eef66cdb508d19338fca5c17b61bf50fb1d157",
+      "bytes": 3850
+    },
+    "guild-over-party-native.png": {
+      "sha256": "841721d28bfe16bde5d1fefc69d8bed18f97968be83904cb8f52b23817d12176",
+      "bytes": 1511
+    },
+    "guild-over-party-qt.png": {
+      "sha256": "b3da40cd3c71d5499c68e48b8891447824cb22bcbbb639cecba0fb0b385e4106",
+      "bytes": 3848
+    },
+    "left-map-edge-native.png": {
+      "sha256": "ca7f8ffee3bbe1a8165d6211b8a376344a9c467fcb09ca85ceae4d61c91df569",
+      "bytes": 1509
+    },
+    "left-map-edge-qt.png": {
+      "sha256": "81d4522daa86318042d5923a78a7b8b85f16040b99304dcd8139ff07351f046d",
+      "bytes": 3819
+    },
+    "map-transition-native.png": {
+      "sha256": "227f90869686deba2cdbdff7057f9864527c7db1c237e35693fdf0c785e549fb",
+      "bytes": 1481
+    },
+    "map-transition-qt.png": {
+      "sha256": "46af88e7fe0971b21b39305371001ea25ee94b603459246db120078ffa38c084",
+      "bytes": 3755
+    },
+    "moved-back-native.png": {
+      "sha256": "37c6a435c0cdda96682a150be0a26afd5b2fdbdf1c7c6a444f7197708a7ff027",
+      "bytes": 1512
+    },
+    "moved-back-qt.png": {
+      "sha256": "a0db3206b6f611f9b98f08946234135e96c13318d5a3949f5002fda3f6cab9ee",
+      "bytes": 3852
+    },
+    "offline-native.png": {
+      "sha256": "d4a9bb28b8e48ac9b63439396c099941195cb238a0693ed18cbbc452d60d1778",
+      "bytes": 1459
+    },
+    "offline-qt.png": {
+      "sha256": "b3ee4968ec35e3798cc6613b1d8da5005980a6fe138b1f71deea4032081d9eda",
+      "bytes": 3751
+    },
+    "online-movement-native.png": {
+      "sha256": "6f165c2c91996dc0d99e8a1533cff262001e8105930023b39dc25282834c5656",
+      "bytes": 1511
+    },
+    "online-movement-qt.png": {
+      "sha256": "8a0aae6973f82f8586417cdad3eef66cdb508d19338fca5c17b61bf50fb1d157",
+      "bytes": 3850
+    },
+    "online-native.png": {
+      "sha256": "37c6a435c0cdda96682a150be0a26afd5b2fdbdf1c7c6a444f7197708a7ff027",
+      "bytes": 1512
+    },
+    "online-qt.png": {
+      "sha256": "a0db3206b6f611f9b98f08946234135e96c13318d5a3949f5002fda3f6cab9ee",
+      "bytes": 3852
+    },
+    "online-without-position-native.png": {
+      "sha256": "d4a9bb28b8e48ac9b63439396c099941195cb238a0693ed18cbbc452d60d1778",
+      "bytes": 1459
+    },
+    "online-without-position-qt.png": {
+      "sha256": "b3ee4968ec35e3798cc6613b1d8da5005980a6fe138b1f71deea4032081d9eda",
+      "bytes": 3751
+    },
+    "other-map-native.png": {
+      "sha256": "d4a9bb28b8e48ac9b63439396c099941195cb238a0693ed18cbbc452d60d1778",
+      "bytes": 1459
+    },
+    "other-map-position-rejected-native.png": {
+      "sha256": "d4a9bb28b8e48ac9b63439396c099941195cb238a0693ed18cbbc452d60d1778",
+      "bytes": 1459
+    },
+    "other-map-position-rejected-qt.png": {
+      "sha256": "b3ee4968ec35e3798cc6613b1d8da5005980a6fe138b1f71deea4032081d9eda",
+      "bytes": 3751
+    },
+    "other-map-qt.png": {
+      "sha256": "b3ee4968ec35e3798cc6613b1d8da5005980a6fe138b1f71deea4032081d9eda",
+      "bytes": 3751
+    },
+    "pk14-render-clip-before.log": {
+      "sha256": "0bfb7e64be15b1e2a550b8c375a63a1b58507c187230f590a720af6a23346e16",
+      "bytes": 4219
+    },
+    "pk14-render-color-before.log": {
+      "sha256": "fc471b7119f86f4b4d2eb8efb02697ca1b75b40a8455526f2959dcc16a52e908",
+      "bytes": 1995
+    },
+    "pk14_fixture.bmp": {
+      "sha256": "c7a5fe33f6ec111470d63c83ed9af76204ed71418ef34b2699d4bb47120b18a8",
+      "bytes": 12342
+    },
+    "player-over-guild-and-party-native.png": {
+      "sha256": "056813bf6b77f1577c0c48e44c5614a084a7d1a9521c90ff0120f7354e3ac19e",
+      "bytes": 1467
+    },
+    "player-over-guild-and-party-qt.png": {
+      "sha256": "dba234df0275992cd49eaaeb85da893028da1f7446d4eb5e76d8a05481a29937",
+      "bytes": 3882
+    },
+    "reconnect-failure-native.png": {
+      "sha256": "227f90869686deba2cdbdff7057f9864527c7db1c237e35693fdf0c785e549fb",
+      "bytes": 1481
+    },
+    "reconnect-failure-qt.png": {
+      "sha256": "46af88e7fe0971b21b39305371001ea25ee94b603459246db120078ffa38c084",
+      "bytes": 3755
+    },
+    "reconnect-success-native.png": {
+      "sha256": "227f90869686deba2cdbdff7057f9864527c7db1c237e35693fdf0c785e549fb",
+      "bytes": 1481
+    },
+    "reconnect-success-qt.png": {
+      "sha256": "46af88e7fe0971b21b39305371001ea25ee94b603459246db120078ffa38c084",
+      "bytes": 3755
+    },
+    "render-results.json": {
+      "sha256": "668c78ae47e6abb180623cc70aaf11171b67d96d2bd2b8ff3991c7e0cc755d7a",
+      "bytes": 3863
+    },
+    "roster-loss-native.png": {
+      "sha256": "d4a9bb28b8e48ac9b63439396c099941195cb238a0693ed18cbbc452d60d1778",
+      "bytes": 1459
+    },
+    "roster-loss-qt.png": {
+      "sha256": "b3ee4968ec35e3798cc6613b1d8da5005980a6fe138b1f71deea4032081d9eda",
+      "bytes": 3751
+    },
+    "sentinel-removal-native.png": {
+      "sha256": "d4a9bb28b8e48ac9b63439396c099941195cb238a0693ed18cbbc452d60d1778",
+      "bytes": 1459
+    },
+    "sentinel-removal-qt.png": {
+      "sha256": "b3ee4968ec35e3798cc6613b1d8da5005980a6fe138b1f71deea4032081d9eda",
+      "bytes": 3751
+    },
+    "session-boundary-native.png": {
+      "sha256": "227f90869686deba2cdbdff7057f9864527c7db1c237e35693fdf0c785e549fb",
+      "bytes": 1481
+    },
+    "session-boundary-qt.png": {
+      "sha256": "46af88e7fe0971b21b39305371001ea25ee94b603459246db120078ffa38c084",
+      "bytes": 3755
+    },
+    "stationary-roster-native.png": {
+      "sha256": "37c6a435c0cdda96682a150be0a26afd5b2fdbdf1c7c6a444f7197708a7ff027",
+      "bytes": 1512
+    },
+    "stationary-roster-qt.png": {
+      "sha256": "a0db3206b6f611f9b98f08946234135e96c13318d5a3949f5002fda3f6cab9ee",
+      "bytes": 3852
+    }
+  },
+  "binaries": {
+    "build-mingw-preset/open-midgard.exe": {
+      "sha256": "47ca3d19916b29028e3b824e719d1b55e3d0459a13f1db7c152c703049f22dc7",
+      "bytes": 19689788,
+      "mtime_utc": "2026-11-05T13:09:42.454146+00:00"
+    },
+    "build-mingw-preset/packet_stream_replay_checks.exe": {
+      "sha256": "b735a4cf819fde6d82560e1fe1bf7103cd3cac5c8ba5dc4ee4e243276bfcd550",
+      "bytes": 20174484,
+      "mtime_utc": "2026-11-05T13:09:58.896389+00:00"
+    },
+    "build-mingw-preset/packet_minimap_render_checks.exe": {
+      "sha256": "41f7b55bf307b4647e88a39cbe8a434323f2832494160727774d62cd1d2f04f9",
+      "bytes": 19726921,
+      "mtime_utc": "2026-11-05T13:13:19.514501+00:00"
+    },
+    "build-mingw-preset/party_position_state_checks.exe": {
+      "sha256": "8614b4434ad210bb323252932ab0acf7cf20a488a17f525a73667d962e4aefc4",
+      "bytes": 54468,
+      "mtime_utc": "2026-11-05T13:13:51.144443+00:00"
+    }
+  },
+  "Qt_offscreen_plugin": {
+    "path": "C:/Qt/6.11.0/mingw_64/plugins/platforms/qoffscreen.dll",
+    "sha256": "1f50703a1e553d2bf795a546d88c24a59dbed9ff838e13c53c8efb0234fd6c24"
+  },
+  "visual_inspection": "all final contact-0/1/2 sheets inspected with view_image; native left, actual QML right; expected dot/state/layer behavior confirmed",
+  "limits": [
+    "Synthetic map/geometry; no installed game art or live server",
+    "Qt software/offscreen and real Win32 memory-HDC rendering, not GPU performance validation",
+    "Native player circle and Qt player arrow/chrome retain existing different styles",
+    "Source-selected profile is not deployed-server binary provenance",
+    "PK48/PK49 remain open; only the selected 0107 identity is closed",
+    "Configure-time Git macros are secondary; source hashes/blobs establish built input",
+    "The qoffscreen plugin path is test-only; application deployment unchanged"
+  ],
+  "diagnostic_log_archive": "Retained text copies normalize line endings/trailing whitespace; log_sha256 pins original raw build-directory logs separately.",
+  "Qt_runtime_sha256": {
+    "build-mingw-preset/Qt6Core.dll": "28741e6f2b2f6531c003c83d4da4eb926ee02be0e2727ff37034d4a57ff204c8",
+    "build-mingw-preset/Qt6Gui.dll": "a32fd504bf5647419538ad3b414bf745333aecf81bd32828ba0f53e5ae7525ab",
+    "build-mingw-preset/Qt6Qml.dll": "d8b674fa9fe25a6f378ada1f09892a53a4074c9dec2eaf0c40d997db5fb0d80d",
+    "build-mingw-preset/Qt6Quick.dll": "15e6cdeaf49f92e3d5180fe3b3cf67e2c71370c494fc75d8ef9175e7aa5ec013"
+  }
+}

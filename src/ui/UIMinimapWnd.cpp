@@ -837,9 +837,12 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
 
     std::string mapName = StripExtension(GetCurrentMinimapBitmapName());
 
-    auto drawWorldPoint = [&](int cellX, int cellY, COLORREF fillColor, COLORREF outlineColor, int radius) {
+    const int markerDc = SaveDC(hdc);
+    IntersectClipRect(hdc, mapRect.left, mapRect.top, mapRect.right, mapRect.bottom);
+    auto drawWorldPoint = [&](int cellX, int cellY, u32 packedRgb, COLORREF outlineColor, int radius) {
         POINT pt{};
         if (BuildMarkerPoint(attrArea, drawRect, zoomedView, srcRect, m_mapBitmapWidth, m_mapBitmapHeight, cellX, cellY, &pt)) {
+            const COLORREF fillColor = RGB((packedRgb >> 16) & 0xffu, (packedRgb >> 8) & 0xffu, packedRgb & 0xffu);
             DrawSmallMarker(hdc, pt, fillColor, outlineColor, radius);
         }
     };
@@ -865,6 +868,7 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
             g_session.m_playerPosX, g_session.m_playerPosY, &playerPoint)) {
         DrawSmallMarker(hdc, playerPoint, RGB(245, 224, 126), RGB(0, 0, 0), 4);
     }
+    RestoreDC(hdc, markerDc);
 
     char coordsText[64] = {};
     std::snprintf(coordsText, sizeof(coordsText), "X : %d    Y : %d", g_session.m_playerPosX, g_session.m_playerPosY);

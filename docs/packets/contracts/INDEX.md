@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK14.PARTY-POSITION](PK14.PARTY-POSITION.md) now has selected-source field/caller/state and actual native/QML rendered verification. Status IMPLEMENTED_PENDING_REVIEW; independent PK48 remains open.
+
 Additional reviewed continuation contracts (2026-11-05): [NPC representation lifetime](PK20.NPC-CLASS-LIFETIME.md), [ShowEFST ownership/branches](PK22.SHOWEFST-LIFETIME.md), [timed-status selected applicability](PK22.TIMED-STATUS-043F.md), and [legacy-mail records/transactions](PK32.LEGACY-MAIL-STATE.md). These certify source/design scope only; implementation and applicable runtime/UI acceptance remain open.
 
 This index includes both source-backed PK01 applicability contracts and package-owned implementation contracts. Applicability approval alone does not certify client semantics or UI/runtime behavior. Where implementation evidence exists, the package contract and linked replay define its limits. Independent review is deferred to PK48 and is not a prerequisite to implementation.

@@ -1,0 +1,150 @@
+{
+    "cases": [
+        {
+            "case": "online",
+            "expected_visible": true,
+            "native_rgb": "#0a31b8",
+            "qt_rgb": "#0a31b8",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "stationary-roster",
+            "expected_visible": true,
+            "native_rgb": "#0a31b8",
+            "qt_rgb": "#0a31b8",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "online-movement",
+            "expected_visible": true,
+            "native_rgb": "#0a31b8",
+            "qt_rgb": "#0a31b8",
+            "x": 133,
+            "y": 77
+        },
+        {
+            "case": "moved-back",
+            "expected_visible": true,
+            "native_rgb": "#0a31b8",
+            "qt_rgb": "#0a31b8",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "offline",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "online-without-position",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "fresh-position",
+            "expected_visible": true,
+            "native_rgb": "#0a31b8",
+            "qt_rgb": "#0a31b8",
+            "x": 133,
+            "y": 77
+        },
+        {
+            "case": "sentinel-removal",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 133,
+            "y": 77
+        },
+        {
+            "case": "roster-loss",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "other-map",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "other-map-position-rejected",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "guild-over-party",
+            "expected_visible": true,
+            "native_rgb": "#80ff80",
+            "qt_rgb": "#80ff80",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "player-over-guild-and-party",
+            "expected_visible": true,
+            "native_rgb": "#f5e07e",
+            "qt_rgb": "#ffffff",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "left-map-edge",
+            "expected_visible": true,
+            "native_rgb": "#0a31b8",
+            "qt_rgb": "#0a31b8",
+            "x": 10,
+            "y": 102
+        },
+        {
+            "case": "map-transition",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "reconnect-success",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "reconnect-failure",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        },
+        {
+            "case": "session-boundary",
+            "expected_visible": false,
+            "native_rgb": "#324d65",
+            "qt_rgb": "#324d65",
+            "x": 51,
+            "y": 126
+        }
+    ],
+    "outcome": "PASS",
+    "qml_errors": 0
+}
