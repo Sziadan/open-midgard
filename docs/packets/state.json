@@ -355,8 +355,13 @@
       "commit_subject": null
     },
     "PK09.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK09.04-cart-wire-fields.md",
+        "docs/packets/evidence/PK09.04-cart-wire-fields.json",
+        "docs/packets/evidence/PK09.04-cart-wire-fields.jsonl",
+        "docs/packets/work-items/PK09.04.md"
+      ],
       "commit_subject": null
     },
     "PK10.01": {

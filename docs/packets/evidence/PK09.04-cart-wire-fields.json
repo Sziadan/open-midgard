@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-05",
+  "baseline": "803458e711a39e5f6afb2c50f336934c2c9cf763",
+  "source_inputs": {
+    "src/gamemode/Commerce.cpp": {
+      "working_sha256": "1e9a5dbcd2b71519e7bc7ac38fbca2db7c841b92a9ae7db1722bbcb10e60ce10",
+      "git_blob": "1a497ae0cb2b6476ff8953b8c04f83475951caed"
+    },
+    "tools/tests/replay/PacketStreamReplay.cpp": {
+      "working_sha256": "a546e0e788415d84c020926d337b0eccd42031e56df532151a7898b1bbab4351",
+      "git_blob": "3eda32b4cf7c0caaf75ce67269196ffe56ef9f73"
+    },
+    "tools/tests/replay/CartItemWireFieldsReplay.inc": {
+      "working_sha256": "cdf49d50c94456a256d116a8937d9262e0cf24f2a2106c9242e4fd97e86518cc",
+      "git_blob": "92f0334ad0fb85bbb141b02dcdc3404972ce53ad"
+    }
+  },
+  "selected_profile": 20080910,
+  "server_inputs": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "probe_inputs": {
+    "build-mingw-preset/packet-audit/server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c",
+    "docs/packets/evidence/PK09.04-cart-fields-probe.cpp": "799cd3c0d924f557ed48346d0d80a3219310a44160f844235a616b8a36e202f9",
+    "docs/packets/evidence/PK09.04-cart-fields-probe.txt": "4f6926b3ad1ffd6c9365ab390790c0d5de047c3c5012df90493e4b29ac4a50dc"
+  },
+  "probe_command": "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -Ibuild-mingw-preset/packet-audit -IC:/Users/sziad/source/repos/rathena-master/src -IC:/Users/sziad/source/repos/rathena-master/3rdparty -IC:/Users/sziad/source/repos/rathena-master/3rdparty/libconfig docs/packets/evidence/PK09.04-cart-fields-probe.cpp -o build-mingw-preset/review-2026-11-05/pk09-cart-fields-probe.exe",
+  "commands": [
+    "cmake --build build-mingw-preset --target open_midgard packet_stream_replay_checks -j 6",
+    "ctest --test-dir build-mingw-preset -R '^packet_stream_replay_checks$' --verbose --output-on-failure"
+  ],
+  "results": {
+    "selected_header_probe_exit": 0,
+    "app_replay_build_exit": 0,
+    "ctest_exit": 0,
+    "ctest_passed": 1,
+    "ctest_seconds": 4.88,
+    "PASS_json_records": 159,
+    "new_case": "cart_item_wire_fields_20080910"
+  },
+  "log_sha256": {
+    "pk09-cart-build.log": "476ced1196a8f2dc80026f872cfa32b84acef70701c8caf52c19bac645f53e2e",
+    "pk09-cart-ctest.log": "41743d9e4a7f2de24c064defffe33c1ab457f59355f382689c62ea13b343a1ba"
+  },
+  "artifacts": {
+    "build-mingw-preset/open-midgard.exe": {
+      "sha256": "e13f73d1431cd10ac6e469e59b63eaea5a78dab6d2048c1b7a1a8bc263804060",
+      "bytes": 19689733,
+      "mtime_utc": "2026-11-05T12:43:00.789135+00:00"
+    },
+    "build-mingw-preset/packet_stream_replay_checks.exe": {
+      "sha256": "35cd0cd68f0f78ac325739f850bbcef8e4fa71a30cae12de598a7463cc491923",
+      "bytes": 20174429,
+      "mtime_utc": "2026-11-05T12:43:15.194569+00:00"
+    },
+    "docs/packets/evidence/PK09.04-cart-wire-fields.jsonl": {
+      "sha256": "1f4af502bcb3dfd172ec692eeb000126b6a4dde5a02f1190e90af80a0c130547",
+      "bytes": 93429,
+      "mtime_utc": "2026-11-05T12:45:26.987271+00:00"
+    }
+  },
+  "limits": [
+    "Source-derived synthetic decoder fixtures, not captures/live transactions",
+    "Broader PK09.04 remains IN_PROGRESS",
+    "No rendered/historical-profile certification",
+    "No speculative cart ammo normalization",
+    "Local-loopback permission used only for offline replay; developer deploy OFF"
+  ]
+}

@@ -1,0 +1,1 @@
+PACKETVER=20080910 normal=22 equipment=26 wear=8 expiry=20 bind=24

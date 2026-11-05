@@ -26,7 +26,16 @@ void tradeReset(){state.trade.width=380;state.trade.height=170;state.tradeIncomi
 bool busy(){return state.tradeActive||state.tradeWaiting||state.tradeIncoming||state.vendingActive||state.vendingPending;}
 ITEM_INFO item(const u8* p,bool equip,int size){
     ITEM_INFO i;i.m_itemIndex=read(p);i.SetItemId(read(p+2));i.m_itemType=p[4];i.m_isIdentified=p[5];
-    if(equip){i.m_num=1;i.m_location=read(p+6);i.m_isDamaged=p[10];i.m_refiningLevel=p[11];for(int n=0;n<4;++n)i.m_slot[n]=read(p+12+n*2);if(size>=24)i.m_deleteTime=int(read(p+20,4));}
+    if(equip){
+        i.m_num=1;
+        i.m_location=read(p+6);
+        i.m_wearLocation=read(p+8);
+        i.m_isDamaged=p[10];
+        i.m_refiningLevel=p[11];
+        for(int n=0;n<4;++n)i.m_slot[n]=read(p+12+n*2);
+        if(size>=24)i.m_deleteTime=int(read(p+20,4));
+        if(size>=26)i.m_isYours=read(p+24);
+    }
     else{i.m_num=int(read(p+6));i.m_location=read(p+8);if(size>=18)for(int n=0;n<4;++n)i.m_slot[n]=read(p+10+n*2);if(size>=22)i.m_deleteTime=int(read(p+18,4));}
     return i;
 }

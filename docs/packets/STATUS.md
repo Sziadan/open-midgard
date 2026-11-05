@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**PK14.06 caller checkpoint verified — 2026-11-05:** [actual map/character lifetime repair](evidence/PK14.06-transition-caller-replay.md), deploy-off app/replay build PASS and 158 PASS records. Same-map reuse, active-loading guard, same-map server move, reconnect outcomes and actual character notification/exit now have production caller proof. Earlier caller-seam deferrals below are historical. Active PK14.04 for remaining integration/rendered acceptance, then PK23.05 and bounded PK09/PK46 work. PK09 cart wear/bind omission has an independent fixture draft queued for a small repair; it is not part of this checkpoint.
+**PK14.06 caller checkpoint verified — 2026-11-05:** [actual map/character lifetime repair](evidence/PK14.06-transition-caller-replay.md), deploy-off app/replay build PASS and 158 PASS records. Same-map reuse, active-loading guard, same-map server move, reconnect outcomes and actual character notification/exit now have production caller proof. Earlier caller-seam deferrals below are historical. Active PK14.04 for remaining integration/rendered acceptance, then PK23.05 and bounded PK09/PK46 work. The separate PK09 cart wear/bind omission is now [fixed and independently verified](evidence/PK09.04-cart-wire-fields.md), with 159 PASS records; broader PK09 acceptance remains open.
 
 Review/cleanup checkpoint — 2026-11-05. **Active step: PK14.04.** [Current review](evidence/REVIEW-CLEAN-2026-11-05.md) and [HANDOFF](HANDOFF.md) supersede earlier dirty-tree/candidate deferrals.
 
