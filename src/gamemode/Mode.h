@@ -15,6 +15,8 @@ class CMousePointer;
 class CGameMode;
 class CLoginMode;
 
+enum class ModeOperationKind { None, Switch, Quit };
+
 enum class CursorAction : int {
     Arrow = 0,
     Talk = 1,
@@ -86,8 +88,13 @@ public:
     CGameMode* GetCurrentGameMode() const;
     CLoginMode* GetCurrentLoginMode() const;
     void Quit();
+    u64 GetOperationGeneration() const { return m_operationGeneration; }
+    ModeOperationKind GetLastOperation() const { return m_lastOperation; }
+    int GetRequestedModeType() const { return m_nextModeType; }
 
 private:
+    u64 m_operationGeneration = 0;
+    ModeOperationKind m_lastOperation = ModeOperationKind::None;
     friend struct SkillPacketReplayAccess;
     // Memory layout from HighPriest.exe.h:30965
     int m_loopCond;

@@ -4485,6 +4485,8 @@ void GlobalChatProductionSendReplay()
     std::cout << "{\"case_id\":\"global_chat_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-global-chat\",\"outcome\":\"PASS\",\"assertions\":\"empty name/message, oversized frame and disconnected send rejected; profile opcode, length, payload and terminator captured\"}" << std::endl;
 }
 
+#include "MapReceivePreambleReplay.inc"
+
 int main(){try{
     Require(CConnection::Startup(),"socket startup failed");
     MapMovementProductionSendReplay();
@@ -4605,5 +4607,6 @@ int main(){try{
     GuildMemberLoginNoticeReplay();
     PartyMarkerGameModeExitReplay();
     SelectedInventoryCartRouteIsolationReplay();
+    MapReceivePreambleReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

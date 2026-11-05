@@ -187,12 +187,16 @@ CModeMgr::~CModeMgr() = default;
 
 void CModeMgr::Quit()
 {
+    ++m_operationGeneration;
+    m_lastOperation = ModeOperationKind::Quit;
     m_loopCond = 0;
     PostQuitMessage(0);
 }
 
 void CModeMgr::Switch(int newMode, const char* worldName)
 {
+    ++m_operationGeneration;
+    m_lastOperation = ModeOperationKind::Switch;
     m_nextModeType = newMode;
     if (worldName) {
         std::strncpy(m_nextModeName, worldName, 39);

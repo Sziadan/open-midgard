@@ -9954,6 +9954,7 @@ CGameMode::CGameMode()
         m_hasPendingPartyCreateOptions(0), m_pendingPartyCreateExpShare(0), m_pendingPartyCreateItemShare(0), m_pendingPartyCreateItemSharingType(0),
         m_pendingPartyCreateName()
 {
+    m_networkModeOperationGeneration = g_modeMgr.GetOperationGeneration();
     std::memset(m_rswName, 0, sizeof(m_rswName));
     std::memset(m_minimapBmpName, 0, sizeof(m_minimapBmpName));
     std::memset(ViewPointData, 0, sizeof(ViewPointData));
@@ -9968,6 +9969,8 @@ CGameMode::~CGameMode() {
 }
 
 void CGameMode::OnInit(const char* worldName) {
+    m_terminalNetworkHandled = false;
+    m_networkModeOperationGeneration = g_modeMgr.GetOperationGeneration();
     g_session.InvalidatePartyPositions();
     ClearPendingDisconnectAction();
     RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
@@ -10397,17 +10400,70 @@ GameModePacketLoopResult ProcessGameModePacketLoop(
         }
         TraceGamePacketFirstSeen(packet);
         ++result.packetsProcessed;
+        const u64 operationBefore = g_modeMgr.GetOperationGeneration();
         if (router.Dispatch(mode, packet)) {
             ++result.packetsDispatched;
         } else {
             ++result.packetsUnhandled;
             LogFirstSeenUnhandledGamePacket(packet.packetId, packet.packetLength);
         }
+        if (g_modeMgr.GetOperationGeneration() != operationBefore) {
+            result.modeOperationRequested = true;
+            break;
+        }
     }
     return result;
 }
 
+bool CGameMode::ProcessNetworkUpdate(CRagConnection& connection, CGameModePacketRouter& router,
+    int packetBudget, u32 nowTick, GameModePacketLoopResult* outResult)
+{
+    if (outResult) *outResult = {};
+    if (m_terminalNetworkHandled) return false;
+    // A UI or other production caller may already have scheduled a handoff.
+    if (g_modeMgr.GetOperationGeneration() != m_networkModeOperationGeneration) {
+        m_terminalNetworkHandled = true;
+        return false;
+    }
+
+    const GameModePacketLoopResult packetLoop = ProcessGameModePacketLoop(
+        *this, connection, router, packetBudget);
+    if (outResult) *outResult = packetLoop;
+    if (packetLoop.modeOperationRequested) {
+        m_terminalNetworkHandled = true;
+        return false;
+    }
+    if (!connection.IsOpen()) {
+        m_terminalNetworkHandled = true;
+        ClearPendingDisconnectAction();
+        g_session.m_pendingReturnToCharSelect = 0;
+        const auto error = connection.GetLastReceiveError();
+        const char* status = error == CRagConnection::ReceiveError::UnknownOpcode
+            ? "Login error: server sent an unknown packet; connection closed."
+            : error == CRagConnection::ReceiveError::InvalidVariableLength
+                ? "Login error: server sent a malformed variable-length packet; connection closed."
+                : "Login: connection to map server lost.";
+        ReturnToLoginModeWithStatus(status);
+        return false;
+    }
+    if (ApplyDisconnectTimeoutAfterPacketLoop(packetLoop, nowTick)) {
+        m_terminalNetworkHandled = true;
+        return false;
+    }
+    return true;
+}
+
 void CGameMode::OnUpdate() {
+    // Receive and decide handoffs before any actor, world or audio processing.
+    CRagConnection* conn = CRagConnection::instance();
+    const int packetBudget = (m_mapLoadingStage != MapLoading_None) ? 128 : 64;
+    const DWORD packetStart = GetTickCount();
+    GameModePacketLoopResult packetLoop{};
+    if (!ProcessNetworkUpdate(*conn, GetProductionGameModePacketRouter(),
+            packetBudget, packetStart, &packetLoop)) return;
+    const DWORD packetEnd = GetTickCount();
+    const int packetsProcessed = packetLoop.packetsProcessed;
+
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);
     SendTimeSyncRequest(*this, false);
@@ -10415,18 +10471,6 @@ void CGameMode::OnUpdate() {
     if (trackMovePerfFrame) {
         g_gameModeMovePerfStats.frames += 1;
     }
-
-    // Poll a bounded number of packets per frame to avoid starvation.
-    CRagConnection* conn = CRagConnection::instance();
-    const int packetBudget = (m_mapLoadingStage != MapLoading_None) ? 128 : 64;
-    const DWORD packetStart = GetTickCount();
-    const GameModePacketLoopResult packetLoop = ProcessGameModePacketLoop(
-        *this, *conn, GetProductionGameModePacketRouter(), packetBudget);
-    const DWORD packetEnd = GetTickCount();
-    if (ApplyDisconnectTimeoutAfterPacketLoop(packetLoop, GetTickCount())) {
-        return;
-    }
-    const int packetsProcessed = packetLoop.packetsProcessed;
 
     const DWORD actorSummaryStart = GetTickCount();
     LogRuntimeActorSummary(*this);

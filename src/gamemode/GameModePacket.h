@@ -27,6 +27,7 @@ struct GameModePacketLoopResult {
     int packetsDispatched = 0;
     int packetsUnhandled = 0;
     bool receiveDrained = false;
+    bool modeOperationRequested = false;
 };
 
 struct PacketView

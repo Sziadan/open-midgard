@@ -8001,6 +8001,9 @@ PendingDisconnectAction GetExpiredDisconnectAction(bool receiveDrained, u32 nowT
 
 bool ApplyDisconnectTimeoutAfterPacketLoop(const GameModePacketLoopResult& packetLoop, u32 nowTick)
 {
+    if (packetLoop.modeOperationRequested) {
+        return false;
+    }
     const PendingDisconnectAction expiredAction = GetExpiredDisconnectAction(
         packetLoop.receiveDrained,
         nowTick);

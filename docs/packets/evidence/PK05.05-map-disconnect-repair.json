@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-05",
+  "baseline": "6e371fa13534b258a5860e532ff09407a6331b1a",
+  "tested_staged_runtime_tree": "d84fbbca724f4d733cdccedc2cfb763d9d0d25d4",
+  "input_verification": "all 8 staged runtime/test inputs match the built working tree after Git CRLF normalization; no other runtime files dirty",
+  "source_inputs": {
+    "src/gamemode/GameMode.cpp": {
+      "working_sha256": "34b2856a29f018c8861263f5bb1b86fb35421a6eba53da0abdb7b678a40efe52",
+      "staged_blob": "132cacce6ad09e5fbbc408e5d0f6040181603bda"
+    },
+    "src/gamemode/GameMode.h": {
+      "working_sha256": "0d0804aa06bbe731ba0fd031ea7a8cf778dabd3983c54b56b07202525066f67f",
+      "staged_blob": "002d63538033a312581ddd98b71e23fd6cf89e5d"
+    },
+    "src/gamemode/GameModePacket.cpp": {
+      "working_sha256": "387d1bf4c33660e88bf349071576db309fbbf4c556b2e4485a45347830ef335b",
+      "staged_blob": "c015f5eb1daac3b4b9cd375083c95fd0b72e5fcf"
+    },
+    "src/gamemode/GameModePacket.h": {
+      "working_sha256": "e60b714840c3260c2f90faf07ae775982795ce24e7f8cb3edd1ad6e16d0a192f",
+      "staged_blob": "67cbd08d22cf698658a0a334f10e590a55b78897"
+    },
+    "src/gamemode/Mode.cpp": {
+      "working_sha256": "5c31092addd5302b87e8c509b523511d71a0b5b6087ae6c84eb6728f279c8023",
+      "staged_blob": "a402ad3dae194df8948292eba09d12394c534743"
+    },
+    "src/gamemode/Mode.h": {
+      "working_sha256": "13c540e572c371dbfde1741cf70fe1fd69ee761f07b0e13373eebc646f0a86a4",
+      "staged_blob": "259343bd676640dcac0a5d4d8b1b2007793f826e"
+    },
+    "tools/tests/replay/MapReceivePreambleReplay.inc": {
+      "working_sha256": "332fb151cc0c2bb35d591055864df95656729d91c58d9e78a826cfa14816f24e",
+      "staged_blob": "b1a2d6b1c393f02d04fff91f9d4719c72e299d03"
+    },
+    "tools/tests/replay/PacketStreamReplay.cpp": {
+      "working_sha256": "c1f433b1ac585db78f64ee700edd323f30a5e6f5b2de9d9f4e1fecb5be144003",
+      "staged_blob": "af38a75328d68e3aa78427738e2aca7532a56e86"
+    }
+  },
+  "commands": [
+    "cmake -S . -B build-mingw-preset -DRO_ENABLE_DEV_DEPLOY=OFF -DRO_BUILD_PACKET_REPLAY_TESTS=ON",
+    "cmake --build build-mingw-preset --target open_midgard packet_stream_replay_checks -j 6",
+    "ctest --test-dir build-mingw-preset -R '^packet_stream_replay_checks$' --verbose --output-on-failure"
+  ],
+  "results": {
+    "configure_exit": 0,
+    "app_replay_build_exit": 0,
+    "ctest_exit": 0,
+    "ctest_passed": 1,
+    "ctest_seconds": 4.57,
+    "PASS_json_records": 157,
+    "new_case": "map_receive_preamble"
+  },
+  "log_sha256": {
+    "pk05-configure.log": "0e3612966324e82e97e0d651ac7761c5259b12710222d58db41ef8fc9aa974fd",
+    "pk05-final-build.log": "d7a1be4fb33e5f2b9c1a902ac78d39299ea8a030afd1dc642db8e3d0cde47404",
+    "pk05-ctest.log": "5911c22a00d0b7ede77aa4b06f232ac4164618b7e4f099605db4eaf00888c05c"
+  },
+  "artifacts": {
+    "build-mingw-preset/open-midgard.exe": {
+      "sha256": "bb2664ea8af83bdd551c256326b7ba7c3d15264ac9d13511cb7cb67d693afaf4",
+      "bytes": 19688709,
+      "mtime_utc": "2026-11-05T12:16:57.500653+00:00"
+    },
+    "build-mingw-preset/packet_stream_replay_checks.exe": {
+      "sha256": "9df05d1730555ab5b6cc30896dde7e0a7a04335c8e2b4b764ed210b4efe902b0",
+      "bytes": 20131151,
+      "mtime_utc": "2026-11-05T12:21:45.288899+00:00"
+    },
+    "docs/packets/evidence/PK05.05-map-disconnect-replay.jsonl": {
+      "sha256": "2ba39bc1e2b1ce1670ec8bbf66200a6f6c56d19761998c9e266171492dc97bc3",
+      "bytes": 92689,
+      "mtime_utc": "2026-11-05T12:23:38.593976+00:00"
+    }
+  },
+  "delegation": {
+    "model": "gpt-6-luna",
+    "scope": "bounded replay helper research and additive test draft; primary agent implemented production decisions and reviewed/corrected test assertions"
+  },
+  "limits": [
+    "No renderer/audio initialization for preamble tests",
+    "Actual repeated OnUpdate gated before world clock changes; full rendered frame not certified",
+    "OnInit resets latch in production source; replay uses a fresh mode for reconnect instead of initializing installed assets",
+    "Local-loopback sandbox denied Connect; authorized offline rerun passed",
+    "No deployed game server, installed-client deployment or global PK48/PK49 certification"
+  ]
+}

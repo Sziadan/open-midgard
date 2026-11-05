@@ -12,6 +12,9 @@ class CMousePointer;
 class CGameActor;
 class UINameBalloonText;
 class UIPlayerGage;
+class CRagConnection;
+class CGameModePacketRouter;
+struct GameModePacketLoopResult;
 
 struct NamePair {
     std::string name;
@@ -158,6 +161,9 @@ public:
     virtual void OnExit() override;
     virtual int  OnRun() override;
     virtual void OnUpdate() override;
+    // Production frame gate, kept independent of world/audio initialization.
+    bool ProcessNetworkUpdate(CRagConnection& connection, CGameModePacketRouter& router,
+        int packetBudget, u32 nowTick, GameModePacketLoopResult* outResult = nullptr);
     void ProcessPlayWave();
     virtual msgresult_t SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     virtual void OnChangeState(int newState) override;
@@ -340,6 +346,10 @@ public:
     int m_pendingPartyCreateItemSharingType;
     std::string m_pendingPartyCreateName;
     std::vector<CGameActor*> m_deferredActorDeletes;
+
+private:
+    bool m_terminalNetworkHandled = false;
+    u64 m_networkModeOperationGeneration = 0;
 };
 
 struct PlayerVitalsScreenMetrics {
