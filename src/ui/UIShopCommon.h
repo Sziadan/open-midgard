@@ -581,7 +581,7 @@ inline bool TryLoadCardIllustPixels(const ITEM_INFO& item, BitmapPixels* outBitm
     return false;
 }
 
-inline std::string GetItemDisplayName(const ITEM_INFO& item)
+inline std::string GetItemDisplayName(const ITEM_INFO& item, bool includeSlotSuffix = true)
 {
     std::string displayName;
     switch (item.m_itemType) {
@@ -594,10 +594,11 @@ inline std::string GetItemDisplayName(const ITEM_INFO& item)
     case 13:
     case 14:
     case 15:
-        displayName = item.m_isIdentified != 0 ? item.GetEquipDisplayName() : item.GetDisplayName();
+    case 19:
+        displayName = item.m_isIdentified != 0 ? item.GetEquipDisplayName(includeSlotSuffix) : item.GetDisplayName(includeSlotSuffix);
         break;
     default:
-        displayName = item.GetDisplayName();
+        displayName = item.GetDisplayName(includeSlotSuffix);
         break;
     }
     if (!displayName.empty()) {
@@ -611,7 +612,8 @@ inline std::string GetItemDisplayName(const ITEM_INFO& item)
 
 inline std::string BuildItemHoverNameText(const ITEM_INFO& item)
 {
-    return GetItemDisplayName(item);
+    // Primary GetItemName does not append GetSocketNumber; list consumers do so explicitly.
+    return GetItemDisplayName(item, false);
 }
 
 inline std::string BuildItemHoverText(const ITEM_INFO& item)

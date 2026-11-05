@@ -1847,6 +1847,15 @@
         "docs/packets/contracts/PK37.CART-LIFETIME.md"
       ],
       "commit_subject": "packet(PK37.05): preserve cart contents and presence lifetimes"
+    },
+    "PK09.07": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.07-item-names.md",
+        "docs/packets/evidence/PK09.07-item-names.json",
+        "docs/packets/contracts/PK09.ITEM-NAME-CONTEXT.md"
+      ],
+      "commit_subject": "packet(PK09.07): distinguish hover and list item names"
     }
   }
 }

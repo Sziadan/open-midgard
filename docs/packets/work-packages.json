@@ -318,6 +318,11 @@
         "id": "PK09.04",
         "action": "After PK09.05 map-entry and PK09.06 item-colour leaves, finish source/field/branch and actual UI lifecycle acceptance for all four selected list routes; close only evidence-backed rows and commit the implementation-verification checkpoint. PK48 remains independent.",
         "tier": "S"
+      },
+      {
+        "id": "PK09.07",
+        "tier": "S",
+        "action": "Verify ordinary selected item hover/list name context, refine/identification composition and quantity replacement with source-backed literal packets and actual native/Qt consumers; keep full card/sentinel and expiry behavior open."
       }
     ],
     "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."

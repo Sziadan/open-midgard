@@ -93,7 +93,7 @@ Item {
         border.width: 1; border.color: item.equipped ? theme.gold : theme.bodyBorder
         Image { anchors.centerIn: parent; width: 30; height: 30; source: tile.item.id ? hub.icon(tile.item) : ""; smooth: false }
         Rectangle { anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 1; visible:tile.item.count>1; width:stackLabel.implicitWidth+6; height:16; radius:3; color:"#e025313c"
-            Text { id:stackLabel; anchors.centerIn:parent; text:tile.item.count; color:"#ffffff"; font.bold:true; font.pixelSize:12 }
+            Text { id:stackLabel; objectName:"commerceStackLabel_"+tile.sourceKind+"_"+tile.item.index; anchors.centerIn:parent; text:tile.item.count; color:"#ffffff"; font.bold:true; font.pixelSize:12 }
         }
         MouseArea { id: mouse; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
             preventStealing: true

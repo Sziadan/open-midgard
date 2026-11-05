@@ -207,6 +207,8 @@ int main(int argc,char** argv) {
                 Mouse(app,view,tile->mapToScene(QPointF(tile->width()/2,tile->height()/2)));
                 auto* tip=Find(view.rootObject(),"commerceItemTooltip");Require(tip && tip->isVisible(),"real QML item hover tooltip missing");
                 auto* label=Find(tip,"commerceItemTooltipText");Require(label,"QML hover name text missing");
+                Require(label->property("text").toString()==(identified?"Knife: 1 ea":"Dagger: 1 ea"),
+                    "actual item hover incorrectly appended a list-only socket count");
                 Require(label->property("color").value<QColor>()==QColor::fromRgba(expected),"actual QML hover text has wrong colour");
                 const QRect bounds=tip->mapRectToScene(tip->boundingRect()).toAlignedRect().intersected(QRect(0,0,Width,Height));
                 QImage qt=view.grabWindow().convertToFormat(QImage::Format_RGB32);
@@ -293,12 +295,67 @@ int main(int argc,char** argv) {
         PopulateCommerceUi(state,mode,false);Frames(app,view);checkCartFooter(0,0);
         Require(state->commerceData().value("hasCart").toBool(),"empty status removed cart button entitlement");
         Require(view.grabWindow().save(output+"/cart-status-reconciled.png"),"save reconciled cart failed");
+        // Ref GetItemName suppresses refine/card composition when unidentified.
+        // Socket counts are appended explicitly by particular list consumers,
+        // not by the inventory GetItemName + MSI_EA2 hover path.
+        g_session.ClearInventoryItems();ro::commerce::state.cartItems.clear();
+        ro::commerce::state.inventoryTab=1;
+        inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+58);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+58);
+        for(bool identified:{true,false}) {
+            auto refined=Equipment(0xd0,identified,0);refined[15]=7;Dispatch(mode,refined);
+            refined[0]=0xd2;Dispatch(mode,refined);PopulateCommerceUi(state,mode,false);Frames(app,view);
+            const QString expectedList=identified?"+7 Knife [3]":"Dagger [3]";
+            const QString expectedHover=identified?"+7 Knife: 1 ea":"Dagger: 1 ea";
+            const auto invRows=state->commerceData().value("inventoryItems").toList();
+            const auto cartRows=state->commerceData().value("cartItems").toList();
+            Require(invRows.size()==1 && cartRows.size()==1
+                && invRows[0].toMap().value("name").toString()==expectedList
+                && cartRows[0].toMap().value("name").toString()==expectedList,
+                "commerce list name leaked refinement on an unidentified item");
+            Hover(inventory);shopui::ItemHoverInfo nativeHover;
+            Require(inventory.GetHoveredItemForQt(&nativeHover) && QString::fromStdString(nativeHover.text)==expectedHover,
+                "native inventory hover name differs from primary GetItemName");
+            inventory.OnMouseMove(-100,-100);
+            for(const QString& kind:{QString("inventory"),QString("cart")}) {
+                auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_291");Require(tile,"refined item tile missing");
+                Mouse(app,view,tile->mapToScene(QPointF(tile->width()/2,tile->height()/2)));
+                auto* label=Find(view.rootObject(),"commerceItemTooltipText");
+                Require(label && label->isVisible() && label->property("text").toString()==expectedHover,
+                    "actual QML refined/unidentified hover differs from primary GetItemName");
+                Require(view.grabWindow().save(output+QString("/name-%1-%2.png").arg(identified?"identified":"unidentified",kind)),
+                    "save source item name frame failed");
+                Mouse(app,view,QPointF(Width-1,Height-1));
+            }
+        }
+        g_session.ClearInventoryItems();ro::commerce::state.cartItems.clear();
+        ro::commerce::state.inventoryTab=2;
+        inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+88);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+88);
+        for(const u8 amount:{u8(9),u8(1)}) {
+            std::vector<u8> normal={0xe8,2,26,0,0x24,1,0xd6,6,10,1,amount,0,0,0x80,0,0,0,0,0,0,0,0,0,0,0,0};
+            Dispatch(mode,normal);normal[0]=0xe9;Dispatch(mode,normal);
+            PopulateCommerceUi(state,mode,false);Frames(app,view);
+            UIItemWnd::DisplayData nativeData;Require(inventory.GetDisplayDataForQt(&nativeData),"quantity native projection failed");
+            auto slot=std::find_if(nativeData.displaySlots.begin(),nativeData.displaySlots.end(),[](const auto& s){return s.occupied;});
+            Require(slot!=nativeData.displaySlots.end() && slot->count==amount,"native quantity did not follow replacement snapshot");
+            for(const QString& kind:{QString("inventory"),QString("cart")}) {
+                auto* count=Find(view.rootObject(),"commerceStackLabel_"+kind+"_292");
+                Require(count && count->property("text").toString()==QString::number(amount)
+                    && count->isVisible()==(amount>1),"actual QML quantity badge text/visibility is stale");
+            }
+            Require(view.grabWindow().save(output+QString("/quantity-%1.png").arg(amount)),"save quantity frame failed");
+        }
+        auto* quantityTile=Find(view.rootObject(),"commerceTile_cart_292");Require(quantityTile,"quantity tile missing");
+        Mouse(app,view,quantityTile->mapToScene(QPointF(quantityTile->width()/2,quantityTile->height()/2)));
+        Dispatch(mode,{0xe8,2,4,0});Dispatch(mode,{0xe9,2,4,0});PopulateCommerceUi(state,mode,false);Frames(app,view);
+        Require(!Find(view.rootObject(),"commerceTile_inventory_292") && !Find(view.rootObject(),"commerceTile_cart_292")
+            && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),"quantity snapshot removal left stale delegates/hover");
+        Require(view.grabWindow().save(output+"/quantity-empty.png"),"save empty quantity frame failed");
         Require(errors==0,"item UI emitted QML warnings/errors");
         QImage contact(760,int(contacts.size())*52,QImage::Format_RGB32);contact.fill(QColor("#181b20"));QPainter painter(&contact);painter.setPen(Qt::white);
         for(size_t i=0;i<contacts.size();++i){painter.drawImage(0,int(i)*52,contacts[i]);painter.drawText(280,int(i)*52+23,contactNames[i]);}painter.end();
         Require(contact.save(output+"/tooltip-contact.png"),"save item contact sheet failed");
         QFile file(output+"/render-results.json");Require(file.open(QIODevice::WriteOnly),"item results open failed");
-        file.write(QJsonDocument(QJsonObject{{"cases",results},{"qml_errors",errors},{"hover_exit_and_row_removal",true},{"worn_bag_success_failure_ammunition",true},{"cart_status_clear_reopen",true},{"outcome","PASS"}}).toJson());
+        file.write(QJsonDocument(QJsonObject{{"cases",results},{"qml_errors",errors},{"hover_exit_and_row_removal",true},{"worn_bag_success_failure_ammunition",true},{"cart_status_clear_reopen",true},{"ordinary_item_name_refine_identification",true},{"quantity_snapshot_badges",true},{"outcome","PASS"}}).toJson());
         view.hide();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
         SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
         std::cout<<"PASS six item colour cases across native inventory/storage and production QML inventory/cart/storage\n";return 0;

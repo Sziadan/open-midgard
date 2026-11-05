@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK09.ITEM-NAME-CONTEXT](PK09.ITEM-NAME-CONTEXT.md) records ordinary name/refinement/identification and quantity consumer repairs. Full cards/sentinels/expiry and independent PK48 remain open.
+
 [PK37.CART-LIFETIME](PK37.CART-LIFETIME.md) records the selected cart status/delta and legacy option/contents repair. IMPLEMENTED_PENDING_REVIEW; broad commerce and independent PK48 remain open.
 
 [PK14.PARTY-POSITION](PK14.PARTY-POSITION.md) now has selected-source field/caller/state and actual native/QML rendered verification. Status IMPLEMENTED_PENDING_REVIEW; independent PK48 remains open.

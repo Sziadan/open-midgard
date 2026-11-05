@@ -1,0 +1,61 @@
+{
+  "date": "2026-11-05",
+  "baseline": "e9ff43ad37e8d4b290f924a866f9270790fa6909",
+  "commit_subject": "packet(PK09.07): distinguish hover and list item names",
+  "profile": 20080910,
+  "source_sha256": {
+    "src/item/Item.h": "7ea789dbffd88188b2df67fc244c7f81fb7f9194003f53c7ea83862ae5b96c8d",
+    "src/item/Item.cpp": "879585c0c6005ff6d0a341e84389520124a7574f0ec30cc3871aa8f4aeff1f40",
+    "src/ui/UIShopCommon.h": "19a19d4c4cc1bf20d9d8729655009070cdc22ea7cfcf1ac64c7ecddeaa01418d",
+    "src/qtui/QtCommerce.cpp": "7cb2ef954ab8f0b1da9006780748c7e010761e5dc55c509e290c7a773e840ab9",
+    "src/qtui/qml/RoCommerce.qml": "73b57bed888843bea37d77af896360c80c7e7579d3a8cd9fd9ad41ee12ff0117",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "46f177f7ee76907d378081a74a7d1062759e570896164590152ecc418e016581"
+  },
+  "reference_sha256": {
+    "Ref/ItemInfo.cpp": "5bce74c76f40aafad079c2feaf746a7570a1380492a03e6e1cec52bdcf722bc8",
+    "Ref/UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "Ref/GRF-Content/data/idnum2itemdisplaynametable.txt": "fba99eacb4e766632c6f881c576cbea83121eb0533eeacc6963b0b6f21fe7dcf",
+    "Ref/GRF-Content/data/num2itemdisplaynametable.txt": "cc4442997446d9bc11ff8c81084f6efc60532e78e283769c51e6821e297d8c4e",
+    "Ref/GRF-Content/data/itemslotcounttable.txt": "cb7916712470c699764536b4c92160fe234ec14a067ef5353ab84a1d1883b76c"
+  },
+  "validation": {
+    "ctest_passed": 107,
+    "ctest_failed": 0,
+    "seconds": 37.63,
+    "packet_records": 164,
+    "name_frames": 4,
+    "quantity_frames": 3,
+    "retained_item_colour_frames": 30,
+    "retained_bag_frames": 4,
+    "retained_cart_frames": 3,
+    "retained_minimap_scenes": 18,
+    "qml_errors": 0,
+    "deploy": "OFF",
+    "ordinary_item_name_refine_identification": true,
+    "quantity_snapshot_badges": true
+  },
+  "binary_sha256": {
+    "open-midgard.exe": "780e9c4fc25821c28789db377333f44d0133a28fe8ac690498b215643cd04591",
+    "packet_stream_replay_checks.exe": "848a93f403dcac36c37cdd95fcba6f58b0eadbf43bfa417724e8dfd9f07401b1",
+    "packet_item_render_checks.exe": "d54a19fdce56a2653359a107c642ac5d4aa758a88a3f245e89a6581588464ca0",
+    "packet_minimap_render_checks.exe": "3a10d061b85672620c304e4b385c770df36c5c41db52c49cbbf7ec96f90ba80d"
+  },
+  "evidence_sha256": {
+    "PK09.07-item-name-renders/name-identified-cart.png": "3d1232541ff0d2d2fd84b1cde87c799be242dbd155e8db8996013ac1e7b6946d",
+    "PK09.07-item-name-renders/name-identified-inventory.png": "188bfe53264c0b87487db6a4af67a4b090a939d8085b2bea22ba0e18c4f930ab",
+    "PK09.07-item-name-renders/name-unidentified-cart.png": "1a30ab9cf14ef1f67929b909ef12bf108bb394690017ff76858c7497f9adcef2",
+    "PK09.07-item-name-renders/name-unidentified-inventory.png": "6cb90a92bbd1e60fac0fe9f676de4d040ee639032c90cb7f634e55b6fb84bc88",
+    "PK09.07-item-name-renders/quantity-1.png": "8f626c0a857f858a924181c747d784373c097e195bfa8b7ce6719ff302308c2b",
+    "PK09.07-item-name-renders/quantity-9.png": "436915132628cffda167a5fbf4d155800e17dcfb6e35076bf17d57d1492ef7b3",
+    "PK09.07-item-name-renders/quantity-empty.png": "3933efee413a2d250e939828fc11cec66eca99779fc3f910433630e5d7061818",
+    "PK09.07-item-name-renders/render-results.json": "885afc45fb47a3e704028ae1e971b9d776e022f9590e1fc7625f9d02a41b26c5",
+    "PK09.07-item-name-before.txt": "058956a89f7d8c94e025194dc931405dfbca327af7c3d5ccb213aab3de630aa6"
+  },
+  "validation_log_sha256": "d3a100412779b481c9503c0f5be36390403e853490e6646a2b3aa608d6a18bbf",
+  "limits": [
+    "Ordinary zero-card names and quantity replacement only",
+    "Existing list-label defaults retained; all list labels not certified",
+    "Card ID grouping/postfix repeats/sentinels and expiry remain open",
+    "No numeric discovery closure, independent PK48/49 or live/deployment acceptance"
+  ]
+}

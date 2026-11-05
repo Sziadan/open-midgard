@@ -29,8 +29,8 @@ struct ITEM_INFO {
         if (!m_isIdentified) return 0xffaaaaaau;
         return m_isYours == 2 ? 0xffffff00u : 0xffffffffu;
     }
-    std::string GetDisplayName() const;
-    std::string GetEquipDisplayName() const;
+    std::string GetDisplayName(bool includeSlotSuffix = true) const;
+    std::string GetEquipDisplayName(bool includeSlotSuffix = true) const;
     std::string GetDescription() const;
     std::string GetResourceName() const;
     int GetSlotCount() const;
@@ -55,8 +55,8 @@ public:
 
     void EnsureLoaded();
     const ItemMetadata* GetMetadata(unsigned int itemId);
-    std::string GetDisplayName(unsigned int itemId, bool identified);
-    std::string GetEquipDisplayName(const ITEM_INFO& item);
+    std::string GetDisplayName(unsigned int itemId, bool identified, bool includeSlotSuffix = true);
+    std::string GetEquipDisplayName(const ITEM_INFO& item, bool includeSlotSuffix = true);
     std::string GetDescription(unsigned int itemId);
     std::string GetResourceName(unsigned int itemId, bool identified);
     int GetSlotCount(unsigned int itemId);

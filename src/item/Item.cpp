@@ -273,14 +273,14 @@ unsigned int ITEM_INFO::GetItemId() const
 	return static_cast<unsigned int>(std::strtoul(m_itemName.c_str(), nullptr, 10));
 }
 
-std::string ITEM_INFO::GetDisplayName() const
+std::string ITEM_INFO::GetDisplayName(bool includeSlotSuffix) const
 {
-	return g_ttemmgr.GetDisplayName(GetItemId(), m_isIdentified != 0);
+	return g_ttemmgr.GetDisplayName(GetItemId(), m_isIdentified != 0, includeSlotSuffix);
 }
 
-std::string ITEM_INFO::GetEquipDisplayName() const
+std::string ITEM_INFO::GetEquipDisplayName(bool includeSlotSuffix) const
 {
-	return g_ttemmgr.GetEquipDisplayName(*this);
+	return g_ttemmgr.GetEquipDisplayName(*this, includeSlotSuffix);
 }
 
 std::string ITEM_INFO::GetDescription() const
@@ -334,27 +334,27 @@ const ItemMetadata* CItemMgr::GetMetadata(unsigned int itemId)
 	return it != m_metadata.end() ? &it->second : nullptr;
 }
 
-std::string CItemMgr::GetDisplayName(unsigned int itemId, bool identified)
+std::string CItemMgr::GetDisplayName(unsigned int itemId, bool identified, bool includeSlotSuffix)
 {
 	if (const ItemMetadata* metadata = GetMetadata(itemId)) {
 		const std::string& preferredName = identified
 			? metadata->identifiedDisplayName
 			: metadata->unidentifiedDisplayName;
 		if (!preferredName.empty()) {
-			return AppendSlotSuffix(preferredName, metadata->slotCount);
+			return includeSlotSuffix ? AppendSlotSuffix(preferredName, metadata->slotCount) : preferredName;
 		}
 
 		const std::string& fallbackName = identified
 			? metadata->unidentifiedDisplayName
 			: metadata->identifiedDisplayName;
 		if (!fallbackName.empty()) {
-			return AppendSlotSuffix(fallbackName, metadata->slotCount);
+			return includeSlotSuffix ? AppendSlotSuffix(fallbackName, metadata->slotCount) : fallbackName;
 		}
 	}
 	return itemId != 0 ? std::to_string(itemId) : std::string();
 }
 
-std::string CItemMgr::GetEquipDisplayName(const ITEM_INFO& item)
+std::string CItemMgr::GetEquipDisplayName(const ITEM_INFO& item, bool includeSlotSuffix)
 {
 	const unsigned int itemId = item.GetItemId();
 	if (itemId == 0) {
@@ -394,7 +394,7 @@ std::string CItemMgr::GetEquipDisplayName(const ITEM_INFO& item)
 		text += " ";
 	}
 
-	text += GetDisplayName(itemId, item.m_isIdentified != 0);
+	text += GetDisplayName(itemId, item.m_isIdentified != 0, includeSlotSuffix);
 
 	for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
 		const unsigned int cardId = static_cast<unsigned int>(item.m_slot[slotIndex]);

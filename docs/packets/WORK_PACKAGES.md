@@ -215,6 +215,8 @@ Tier: **S**. Dependencies: PK05.
 - **PK09.06 [S]** Restore primary Ref identified/bound item name-colour semantics in applicable native/Qt consumers; verify raw bind 0/1/2, identification precedence and actual rendered output without inventing a badge. Follow work-items/PK09.06.md. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.04 [S]** After PK09.05 map-entry and PK09.06 item-colour leaves, finish source/field/branch and actual UI lifecycle acceptance for all four selected list routes; close only evidence-backed rows and commit the implementation-verification checkpoint. PK48 remains independent. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
+- **PK09.07 [S]** Verify ordinary selected item hover/list name context, refine/identification composition and quantity replacement with source-backed literal packets and actual native/Qt consumers; keep full card/sentinel and expiry behavior open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+
 ### Required acceptance and traps
 
 P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership.
