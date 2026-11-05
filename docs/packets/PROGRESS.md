@@ -3344,3 +3344,7 @@ Traced primary GetItemDisColor through MakeHelpBalloon byte conversion: identifi
 ## 2026-11-05 — PK09.04 bag projection and selected field matrix
 
 Reproduced then fixed Qt worn-equipment bag rows/counts to match native and primary Ref, retaining central records and ammunition exception. Production snapshot/equip/unequip success/failure, native data, actual QML delegates and four bag frames pass. Added literal complete normal/equipment inventory field checks, category orders, malformed/empty isolation, ammo notification/list refresh/replacement/unequip; extended normal-cart malformed/empty cases and actual historical 01EF dispatch safety. Fresh guarded header probe asserts all four list IDs, record sizes and field offsets; normal WearState is allowed location. All targets build deploy-off; CTest107/107 PASS in 34.28s, 161 packet records, retained 30 item-colour/18 minimap frames. Evidence/provenance in PK09.04-bag-projection. Remaining broad status/delta/UI, historical/independent/deployed limits stay open. Dedicated bounded commit: packet(PK09.04): align worn equipment bag projection.
+
+## 2026-11-05 — PK09.02 selected verification checkpoint
+
+packet(PK09.02): verify selected alias ownership. Current runtime source blobs and binaries match the committed bag/field provenance: 107 tests and 161 packet records pass. Supersedes the historical dirty-tree gate; retains broad PK09.04, historical/deployed and independent-review limits. No runtime change or numeric classification update.

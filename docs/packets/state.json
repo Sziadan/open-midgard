@@ -337,14 +337,16 @@
       "commit_subject": "packet(PK09.01): bound inventory cart alias review"
     },
     "PK09.02": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK09.02-01ef-ownership-conflict.md",
         "docs/packets/evidence/REVIEW-2026-11-05.md",
         "docs/packets/evidence/PK09.02-selected-profile-correction-2026-11-05.md",
-        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md",
+        "docs/packets/evidence/PK09.02-selected-alias-verification.md",
+        "docs/packets/evidence/PK09.02-selected-alias-verification.json"
       ],
-      "commit_subject": "packet(PK09.02): document 01ef ownership conflict"
+      "commit_subject": "packet(PK09.02): verify selected alias ownership"
     },
     "PK09.03": {
       "status": "IN_PROGRESS",
