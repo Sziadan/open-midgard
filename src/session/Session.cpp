@@ -2075,12 +2075,11 @@ void CSession::SetNpcShopRows(u32 npcId, NpcShopMode mode, const std::vector<NPC
     m_shopSelectedDealRow = -1;
 }
 
-int CSession::GetNpcShopUnitPrice(const NPC_SHOP_ROW& row) const
+u32 CSession::GetNpcShopUnitPrice(const NPC_SHOP_ROW& row) const
 {
-    if (row.secondaryPrice > 0) {
-        return row.secondaryPrice;
-    }
-    return row.price;
+    // Both selected list layouts carry the actual discounted/overcharge price.
+    // Zero is a valid price, not an absent-value sentinel.
+    return row.secondaryPrice;
 }
 
 void CSession::ClearParty()
@@ -2442,14 +2441,15 @@ int CSession::FindShortcutSlotBySkillId(int skillId) const
 
 bool CSession::AdjustNpcShopDealBySourceRow(size_t sourceRowIndex, int deltaQuantity)
 {
-    if (deltaQuantity == 0 || sourceRowIndex >= m_shopRows.size()) {
+    if (deltaQuantity == 0 || sourceRowIndex >= m_shopRows.size()
+        || (m_shopMode != NpcShopMode::Buy && m_shopMode != NpcShopMode::Sell)) {
         return false;
     }
 
     const NPC_SHOP_ROW& row = m_shopRows[sourceRowIndex];
-    const int maxQuantity = row.availableCount > 0
-        ? row.availableCount
-        : static_cast<int>((std::min)(static_cast<long long>(std::numeric_limits<int>::max()), 30000ll));
+    const int maxQuantity = m_shopMode == NpcShopMode::Sell
+        ? (std::max)(0, (std::min)(row.availableCount, 30000))
+        : 30000;
     if (maxQuantity <= 0 && deltaQuantity > 0) {
         return false;
     }
@@ -2474,8 +2474,9 @@ bool CSession::AdjustNpcShopDealBySourceRow(size_t sourceRowIndex, int deltaQuan
     }
 
     const int oldQuantity = it->quantity;
-    const int unclampedQuantity = oldQuantity + deltaQuantity;
-    const int newQuantity = (std::max)(0, (std::min)(maxQuantity, unclampedQuantity));
+    const long long unclampedQuantity = static_cast<long long>(oldQuantity) + deltaQuantity;
+    const int newQuantity = static_cast<int>((std::max)(0ll,
+        (std::min)(static_cast<long long>(maxQuantity), unclampedQuantity)));
     if (newQuantity == oldQuantity) {
         return false;
     }
@@ -2496,11 +2497,12 @@ bool CSession::AdjustNpcShopDealBySourceRow(size_t sourceRowIndex, int deltaQuan
         m_shopSelectedDealRow = static_cast<int>(std::distance(m_shopDealRows.begin(), it));
     }
 
-    long long total = 0;
+    unsigned long long total = 0;
     for (const NPC_SHOP_DEAL_ROW& dealRow : m_shopDealRows) {
-        total += static_cast<long long>(dealRow.unitPrice) * static_cast<long long>(dealRow.quantity);
+        total += static_cast<unsigned long long>(dealRow.unitPrice) * dealRow.quantity;
     }
-    m_shopDealTotal = static_cast<int>((std::min)(total, static_cast<long long>(std::numeric_limits<int>::max())));
+    // Packet-bounded row counts and MAX_AMOUNT keep this exact sum below 2^63.
+    m_shopDealTotal = total;
     m_shopSelectedSourceRow = static_cast<int>(sourceRowIndex);
     return true;
 }

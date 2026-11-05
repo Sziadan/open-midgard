@@ -1,0 +1,79 @@
+{
+  "date": "2026-11-05",
+  "baseline": "8e268efb616876c29b571f3541ca27583320a741",
+  "profile": 20080910,
+  "commit_subject": "packet(PK37.08): preserve exact NPC shop amounts",
+  "source_sha256": {
+    "CMakeLists.txt": "d4e685993355025ea4ae3d39922008e487bd01436e0390a77c6407e16492f4c0",
+    "src/gamemode/GameModePacket.cpp": "f11b2b51c9340770ec0722bda8fc906ff75e86ffed7df861f6b22a2776de1559",
+    "src/qtui/QtUiState.h": "01f6fa48573980d4cf885aeab0756e9fd9ba8943ea1a6a2f14c0e64017e4290a",
+    "src/qtui/QtUiStateAdapter.cpp": "6708e1bb12ceda9bdb3138a431c9724ce0fe3d794460e7779583dc2a77a91a82",
+    "src/qtui/qml/GameOverlay.qml": "b18a2ae4da5c00597a9f366f0965d4432901aed48b4a5f6989b05e6483dc0616",
+    "src/session/Session.cpp": "006c429387e6bd8a3adea61920afc5b9af2dd69c14588f7eabaedd24312aa46a",
+    "src/session/Session.h": "5d0edad8af224c8d035c874e9c55f835d59a97676af1ccedfe2aa91bbff52465",
+    "src/ui/UIItemPurchaseWnd.cpp": "06fc6711c5b5d371744930223378b7c5406ad8dd46c2db5e7d9707d8ee400465",
+    "src/ui/UIItemPurchaseWnd.h": "54a07090ec0091f39d46fad13908c632edb35d08a14231ed4c6bac9b6f44cdef",
+    "src/ui/UIItemSellWnd.cpp": "e3feed926c1d74292bf75391b64418623c405228c38a5c0e35f86dfe6dc37945",
+    "src/ui/UIItemSellWnd.h": "97c65e36668d71a21024400c8225527f3f9a4bfc152d105d3f535ed240d2747d",
+    "src/ui/UIItemShopWnd.cpp": "6b0cc6be0c346d0c629a5c622ef7c4d6fde88a823645e7060ab4d810bc6ac8ed",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "9d807baac86c799c9abe4dbc46caad88f889e02fbb61c2415a74206bc9763136",
+    "tools/tests/replay/NpcShopAmountRenderChecks.inc": "21efed3fa714967aee855bd8a8cbfeb1583a1cfaa55c0fcd6ecc2da99787aeea"
+  },
+  "oracle_sha256": {
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\UIItemWnd.cpp": "306d03d0b3091a9ca6ce49e102b22def28ac496169b5d6f6af2fa67a5d342971",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\Ref\\GameMode2.cpp": "111ca06ba24dc274a4b57f5484c71a0cc30d99952d554033d05221e80fe66217",
+    "D:\\Spel\\RoRebuild\\Ragnarok___Win32_HighPriest2008_Release\\build-mingw-preset\\packet-audit\\server_packets.hpp": "1c2006ab70496df70c5e40b59652ed77deecb01c530a10ed44033a4eaf5a099c",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\npc.cpp": "5e3374d32b745827f4fb34d7b00a3fe4de0a445e6480fb2129ee343969922732",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\common\\mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a"
+  },
+  "fixture_sha256": {
+    "tools/tests/fixtures/packet-item-data/carditemnametable.txt": "62f0b6f660ac0dfb3520a37a97d712363f442647706ff7e1f2fa2efc05baca0f",
+    "tools/tests/fixtures/packet-item-data/cardpostfixnametable.txt": "81ae3a843b8c8d2bec63b4d530c878f29d3028b5e51058a5bd69bba942195a44",
+    "tools/tests/fixtures/packet-item-data/cardprefixnametable.txt": "b17d99d8ec5a312c458b6d4b9ae470ec2adc9bf96038c81878a7ffc56cf4fb66",
+    "tools/tests/fixtures/packet-item-data/idnum2itemdisplaynametable.txt": "8c94c27f0812a79bc85196ad20934e57a44464b8298cf3d537b078598736173c",
+    "tools/tests/fixtures/packet-item-data/itemslotcounttable.txt": "cb2927ebf1cdeb69999fc1e53ccac83b78a699d74512e08adf3bdb17dc68c6b6",
+    "tools/tests/fixtures/packet-item-data/num2itemdisplaynametable.txt": "78c95ed1f33e5ddbaa00a8e4000ceeccf24fe190ab2635e8a30637e5529c14df"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "fe85450f70dd3fd465968620878ad5f68cbdd911cd69fd5663ff01d2408f4c26",
+    "packet_stream_replay_checks.exe": "5ce40b6f4e99179c991fbc7a39f26256fbc752a92da5d692ea2f6f6aec50d577",
+    "open-midgard.exe": "05b7db3a335ec0447a1df2d8a2a75690e4de0f782199349604ad2e095892f9ca"
+  },
+  "validation": {
+    "ctest_passed": 114,
+    "ctest_total": 114,
+    "ctest_seconds": 114.4,
+    "packet_PASS_records": 167,
+    "amount_cases": 7,
+    "rendered_frames": 8,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "9fdf4e0d1375521b9905093c64d38894bd53878e3f59a332f66c59a0711cea0f",
+    "ctest_log_sha256": "25f26f8636081c196761c8a337dbb7aaff5a555d768dafa0aa5d614014a61a22"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK37.08-npc-renders/npc-shop-amount-js-safe-boundary-native.png": "5969db0a3a153412d654be2440e658cd1a0d627c9892b2f71f0a98cc7b846d9b",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-js-safe-boundary-qt.png": "7e2c0348731f07755c39952d62736a31f9d1984ddb5b9bb170370826d23135c0",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-render-results.json": "62d467f2cf38d95618a39d9ecf24ed07273c4f02287312dc1f1346af8d5cd918",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-results.json": "fddfa048097b0ee8b0616b897a6496329b13addbe9f2050cb0d57046956c753b",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-unsigned-buy-native.png": "bb6734bc3b164ef23d3cd437c1cc8a4b6af9bc277aceeaf492fdf0c12ee64ae3",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-unsigned-buy-qt.png": "da0ac5c50b462369b7c4502b2ae5fc875054a6dac421a1c5a478bad30bad9b4c",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-wide-sell-native.png": "48e9070020947ce284be6d0e3dd1e7631010790e2a7409a64160ac073b9d996a",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-wide-sell-qt.png": "8baf1ac08a6360740006eaca6bfc35dacfa1fb869c1f5f180c128b414af19bb6",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-zero-sell-native.png": "def608e1d18cf1335ac8bae63b359cf396ff55c669ac06067617689f588240ef",
+    "evidence/PK37.08-npc-renders/npc-shop-amount-zero-sell-qt.png": "66d78647f6e31ef2ffabf658a8bb039a3eee1b275586a73fec6ccf606f3280cd",
+    "evidence/PK37.08-before.txt": "228eda7a19a01a47837ac5eebf9fdfb97cebfd246396a85d766e004a22db6057",
+    "evidence/PK37.08-layout.cpp": "536b317c3fdace38247b0814441cc4ddda4d844496cb5ed6b92a04b5e59ffc12",
+    "evidence/PK37.08-layout.txt": "a1c308091421cb3af9fb9dac7cd8651091116d7f311313d1967740473a563120"
+  },
+  "scope_limits": [
+    "Packet-derived unsigned32 fields and bounded exact64 arithmetic",
+    "Extreme prices/generated aggregate and availability mutations not server item/price legality",
+    "QString roles/properties; no Number coercion in QML",
+    "No full request/result/eligibility/send-failure/transaction acceptance",
+    "No discovery closure/full PK09.04/PK37/PK48/49 or deployed acceptance"
+  ]
+}

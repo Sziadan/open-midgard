@@ -26,10 +26,10 @@ constexpr int kRowHeight = 18;
 constexpr int kButtonWidth = 68;
 constexpr int kButtonHeight = 20;
 
-std::string FormatNumber(int value)
+std::string FormatNumber(unsigned long long value)
 {
     char buffer[32];
-    std::snprintf(buffer, sizeof(buffer), "%d", value);
+    std::snprintf(buffer, sizeof(buffer), "%llu", value);
     return std::string(buffer);
 }
 
@@ -199,9 +199,14 @@ void UIItemSellWnd::OnDraw()
     }
 
     HDC hdc = AcquireDrawTarget();
-    if (!hdc || m_show == 0) {
-        return;
-    }
+    if (!hdc) return;
+    DrawNativeToHdc(hdc);
+    ReleaseDrawTarget(hdc);
+}
+
+void UIItemSellWnd::DrawNativeToHdc(HDC hdc)
+{
+    if (!hdc || m_show == 0) return;
 
     const RECT bounds = shopui::MakeRect(m_x, m_y, m_w, m_h);
     const RECT listRect = GetListRect();
@@ -211,9 +216,9 @@ void UIItemSellWnd::OnDraw()
 
     const RECT headerRect = shopui::MakeRect(listRect.left + 1, listRect.top + 1, listRect.right - listRect.left - 2, kRowHeight - 1);
     shopui::FillRectColor(hdc, headerRect, RGB(222, 229, 237));
-    shopui::DrawWindowTextRect(hdc, shopui::MakeRect(headerRect.left + 4, headerRect.top + 1, 126, headerRect.bottom - headerRect.top - 2), "Item", RGB(30, 30, 30), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-    shopui::DrawWindowTextRect(hdc, shopui::MakeRect(headerRect.left + 126, headerRect.top + 1, 34, headerRect.bottom - headerRect.top - 2), "Qty", RGB(30, 30, 30), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-    shopui::DrawWindowTextRect(hdc, shopui::MakeRect(headerRect.right - 64, headerRect.top + 1, 56, headerRect.bottom - headerRect.top - 2), "Gain", RGB(30, 30, 30), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+    shopui::DrawWindowTextRect(hdc, shopui::MakeRect(headerRect.left + 4, headerRect.top + 1, 70, headerRect.bottom - headerRect.top - 2), "Item", RGB(30, 30, 30), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+    shopui::DrawWindowTextRect(hdc, shopui::MakeRect(headerRect.left + 78, headerRect.top + 1, 32, headerRect.bottom - headerRect.top - 2), "Qty", RGB(30, 30, 30), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    shopui::DrawWindowTextRect(hdc, shopui::MakeRect(headerRect.right - 108, headerRect.top + 1, 100, headerRect.bottom - headerRect.top - 2), "Gain", RGB(30, 30, 30), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 
     const int visibleRows = GetVisibleRowCount();
     const int startRow = GetViewOffset();
@@ -233,18 +238,18 @@ void UIItemSellWnd::OnDraw()
         }
 
         shopui::DrawWindowTextRect(hdc,
-            shopui::MakeRect(rowRect.left + 4, rowRect.top + 1, 126, rowRect.bottom - rowRect.top - 2),
+            shopui::MakeRect(rowRect.left + 4, rowRect.top + 1, 70, rowRect.bottom - rowRect.top - 2),
             shopui::GetItemDisplayName(row.itemInfo),
             RGB(26, 26, 26),
             DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
         shopui::DrawWindowTextRect(hdc,
-            shopui::MakeRect(rowRect.left + 126, rowRect.top + 1, 34, rowRect.bottom - rowRect.top - 2),
+            shopui::MakeRect(rowRect.left + 78, rowRect.top + 1, 32, rowRect.bottom - rowRect.top - 2),
             FormatNumber(row.quantity),
             RGB(48, 48, 48),
             DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         shopui::DrawWindowTextRect(hdc,
-            shopui::MakeRect(rowRect.right - 64, rowRect.top + 1, 56, rowRect.bottom - rowRect.top - 2),
-            FormatNumber(row.unitPrice * row.quantity),
+            shopui::MakeRect(rowRect.right - 108, rowRect.top + 1, 100, rowRect.bottom - rowRect.top - 2),
+            FormatNumber(static_cast<unsigned long long>(row.unitPrice) * row.quantity),
             RGB(28, 60, 98),
             DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
     }
@@ -261,7 +266,6 @@ void UIItemSellWnd::OnDraw()
 
     m_lastDrawStateToken = BuildDisplayStateToken();
     m_hasDrawStateToken = true;
-    ReleaseDrawTarget(hdc);
 }
 
 void UIItemSellWnd::ArmRowDrag(int rowIndex, int x, int y)

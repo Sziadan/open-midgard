@@ -642,9 +642,9 @@ Item {
                     }
 
                     Text {
-                        x: parent.width - 60
+                        x: parent.width - 80
                         y: 2
-                        width: 54
+                        width: 74
                         text: uiState.itemShopData.priceLabel || ""
                         color: theme.ink
                         font.family: theme.fontFamily
@@ -711,6 +711,7 @@ Item {
                             x: parent.width - 76
                             y: 2
                             width: 70
+                            objectName: "npcShopSourcePrice_" + index
                             text: modelData.price
                             color: theme.titleBottom
                             font.family: theme.fontFamily
@@ -769,9 +770,9 @@ Item {
                     }
 
                     Text {
-                        x: 126
+                        x: 78
                         y: 2
-                        width: 34
+                        width: 32
                         text: uiState.itemPurchaseData.quantityLabel || ""
                         color: theme.ink
                         font.family: theme.fontFamily
@@ -780,9 +781,9 @@ Item {
                     }
 
                     Text {
-                        x: parent.width - 64
+                        x: parent.width - 108
                         y: 2
-                        width: 56
+                        width: 100
                         text: uiState.itemPurchaseData.amountLabel || ""
                         color: theme.ink
                         font.family: theme.fontFamily
@@ -811,7 +812,7 @@ Item {
                         Text {
                             x: 4
                             y: 2
-                            width: 126
+                            width: 70
                             text: modelData.name
                             color: theme.ink
                             font.family: theme.fontFamily
@@ -820,9 +821,9 @@ Item {
                         }
 
                         Text {
-                            x: 126
+                            x: 78
                             y: 2
-                            width: 34
+                            width: 32
                             text: modelData.quantity
                             color: theme.ink
                             font.family: theme.fontFamily
@@ -831,9 +832,10 @@ Item {
                         }
 
                         Text {
-                            x: parent.width - 64
+                            x: parent.width - 108
                             y: 2
-                            width: 56
+                            width: 100
+                            objectName: "npcShopBuyAmount_" + index
                             text: modelData.cost
                             color: theme.titleBottom
                             font.family: theme.fontFamily
@@ -858,6 +860,7 @@ Item {
             x: 90
             y: parent.height - 75
             width: 138
+            objectName: "npcShopBuyTotal"
             text: uiState.itemPurchaseTotal
             color: theme.titleBottom
             font.family: theme.fontFamily
@@ -929,9 +932,9 @@ Item {
                     }
 
                     Text {
-                        x: 126
+                        x: 78
                         y: 2
-                        width: 34
+                        width: 32
                         text: uiState.itemSellData.quantityLabel || ""
                         color: theme.ink
                         font.family: theme.fontFamily
@@ -940,9 +943,9 @@ Item {
                     }
 
                     Text {
-                        x: parent.width - 64
+                        x: parent.width - 108
                         y: 2
-                        width: 56
+                        width: 100
                         text: uiState.itemSellData.amountLabel || ""
                         color: theme.ink
                         font.family: theme.fontFamily
@@ -971,7 +974,7 @@ Item {
                         Text {
                             x: 4
                             y: 2
-                            width: 126
+                            width: 70
                             text: modelData.name
                             color: theme.ink
                             font.family: theme.fontFamily
@@ -980,9 +983,9 @@ Item {
                         }
 
                         Text {
-                            x: 126
+                            x: 78
                             y: 2
-                            width: 34
+                            width: 32
                             text: modelData.quantity
                             color: theme.ink
                             font.family: theme.fontFamily
@@ -991,9 +994,10 @@ Item {
                         }
 
                         Text {
-                            x: parent.width - 64
+                            x: parent.width - 108
                             y: 2
-                            width: 56
+                            width: 100
+                            objectName: "npcShopSellAmount_" + index
                             text: modelData.gain
                             color: theme.titleBottom
                             font.family: theme.fontFamily
@@ -1018,6 +1022,7 @@ Item {
             x: 90
             y: parent.height - 75
             width: 138
+            objectName: "npcShopSellTotal"
             text: uiState.itemSellTotal
             color: theme.titleBottom
             font.family: theme.fontFamily

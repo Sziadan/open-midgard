@@ -1303,6 +1303,11 @@
         "id": "PK37.07",
         "action": "Restore NPC catalog and buy/sell deal right-click descriptions from their own snapshots; align native/Qt header, hit testing, data-row counts, scrolling and shrinking/reopened viewports; verify passive WindowProc input, copied metadata and cross-owner isolation.",
         "tier": "S"
+      },
+      {
+        "id": "PK37.08",
+        "action": "Preserve unsigned selected NPC list prices and authoritative zero quotes, compute exact widened row/aggregate amounts, guard mode/stock/quantity deltas, and render decimal strings beyond JS precision with native/Qt column-fit regressions.",
+        "tier": "S"
       }
     ],
     "acceptance": "Verify every production sender/server parser, partial purchases, quantities/prices, stale indices, insufficient funds, capacity and teardown. Server confirms mutations; UI drag/drop must use verified request paths."

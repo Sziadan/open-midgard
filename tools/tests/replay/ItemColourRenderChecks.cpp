@@ -144,6 +144,7 @@ template<class Window> QImage Native(Window& window,QRgb expected) {
 #include "ItemCategoryRenderChecks.inc"
 #include "ItemDetailToggleRenderChecks.inc"
 #include "NpcShopDetailRenderChecks.inc"
+#include "NpcShopAmountRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -159,6 +160,7 @@ int main(int argc,char** argv) {
         const bool itemCategoriesOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="item-categories";
         const bool itemDetailToggleOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="item-detail-toggle";
         const bool npcShopDetailsOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="npc-shop-details";
+        const bool npcShopAmountsOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="npc-shop-amounts";
         if(specialOnly || rentalOnly) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(rentalOnly?"rental-msgstringtable.txt":"special-name-msgstringtable.txt"));
             Require(source.open(QIODevice::ReadOnly),"special source message fixture missing");
@@ -199,6 +201,16 @@ int main(int argc,char** argv) {
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
+        if(npcShopAmountsOnly) {
+            CheckNpcShopAmounts(app,view,state,mode,adapter,output);
+            Require(errors==0,"NPC shop amount UI emitted QML errors");
+            QFile file(output+"/npc-shop-amount-render-results.json");
+            Require(file.open(QIODevice::WriteOnly),"open NPC shop amount render results failed");
+            file.write(QJsonDocument(QJsonObject{{"qml_errors",errors},{"outcome","PASS"}}).toJson());
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS NPC shop exact amount rendering\n";return 0;
+        }
         if(npcShopDetailsOnly) {
             CheckNpcShopDetails(app,view,state,mode,adapter,output);
             Require(errors==0,"NPC shop detail UI emitted QML errors");

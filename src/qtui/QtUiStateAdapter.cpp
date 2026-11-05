@@ -222,14 +222,14 @@ void ClearGameplayUiState(QtUiState* state)
 
     state->setItemPurchaseVisible(false);
     state->setItemPurchaseGeometry(0, 0, 0, 0);
-    state->setItemPurchaseTotal(0);
+    state->setItemPurchaseTotal(QStringLiteral("0"));
     state->setItemPurchaseData(QVariantMap{});
     state->setItemPurchaseRows(QVariantList{});
     state->setItemPurchaseButtons(QVariantList{});
 
     state->setItemSellVisible(false);
     state->setItemSellGeometry(0, 0, 0, 0);
-    state->setItemSellTotal(0);
+    state->setItemSellTotal(QStringLiteral("0"));
     state->setItemSellData(QVariantMap{});
     state->setItemSellRows(QVariantList{});
     state->setItemSellButtons(QVariantList{});
@@ -1496,7 +1496,7 @@ void PopulateItemShopState(QtUiState* state)
         entry.insert(QStringLiteral("itemId"), row.itemInfo.GetItemId());
         entry.insert(QStringLiteral("identified"), row.itemInfo.m_isIdentified != 0);
         entry.insert(QStringLiteral("quantity"), row.availableCount);
-        entry.insert(QStringLiteral("price"), g_session.GetNpcShopUnitPrice(row));
+        entry.insert(QStringLiteral("price"), QString::number(g_session.GetNpcShopUnitPrice(row)));
         entry.insert(QStringLiteral("selected"), g_session.m_shopSelectedSourceRow == rowIndex);
         entry.insert(QStringLiteral("hover"), shopWnd->GetHoverRow() == rowIndex);
         rows.push_back(entry);
@@ -1515,7 +1515,7 @@ void PopulateItemPurchaseState(QtUiState* state)
     state->setItemPurchaseVisible(visible);
     if (!visible) {
         state->setItemPurchaseGeometry(0, 0, 0, 0);
-        state->setItemPurchaseTotal(0);
+        state->setItemPurchaseTotal(QStringLiteral("0"));
         state->setItemPurchaseData(QVariantMap{});
         state->setItemPurchaseRows(QVariantList{});
         state->setItemPurchaseButtons(QVariantList{});
@@ -1523,7 +1523,7 @@ void PopulateItemPurchaseState(QtUiState* state)
     }
 
     state->setItemPurchaseGeometry(purchaseWnd->m_x, purchaseWnd->m_y, purchaseWnd->m_w, purchaseWnd->m_h);
-    state->setItemPurchaseTotal(g_session.m_shopDealTotal);
+    state->setItemPurchaseTotal(QString::number(g_session.m_shopDealTotal));
     QVariantMap purchaseData;
     purchaseData.insert(QStringLiteral("title"), QStringLiteral("Purchase"));
     purchaseData.insert(QStringLiteral("nameLabel"), QStringLiteral("Item"));
@@ -1545,7 +1545,7 @@ void PopulateItemPurchaseState(QtUiState* state)
         entry.insert(QStringLiteral("itemId"), row.itemInfo.GetItemId());
         entry.insert(QStringLiteral("identified"), row.itemInfo.m_isIdentified != 0);
         entry.insert(QStringLiteral("quantity"), row.quantity);
-        entry.insert(QStringLiteral("cost"), row.unitPrice * row.quantity);
+        entry.insert(QStringLiteral("cost"), QString::number(static_cast<unsigned long long>(row.unitPrice) * row.quantity));
         entry.insert(QStringLiteral("selected"), g_session.m_shopSelectedDealRow == rowIndex);
         entry.insert(QStringLiteral("hover"), purchaseWnd->GetHoverRow() == rowIndex);
         rows.push_back(entry);
@@ -1591,7 +1591,7 @@ void PopulateItemSellState(QtUiState* state)
     state->setItemSellVisible(visible);
     if (!visible) {
         state->setItemSellGeometry(0, 0, 0, 0);
-        state->setItemSellTotal(0);
+        state->setItemSellTotal(QStringLiteral("0"));
         state->setItemSellData(QVariantMap{});
         state->setItemSellRows(QVariantList{});
         state->setItemSellButtons(QVariantList{});
@@ -1599,7 +1599,7 @@ void PopulateItemSellState(QtUiState* state)
     }
 
     state->setItemSellGeometry(sellWnd->m_x, sellWnd->m_y, sellWnd->m_w, sellWnd->m_h);
-    state->setItemSellTotal(g_session.m_shopDealTotal);
+    state->setItemSellTotal(QString::number(g_session.m_shopDealTotal));
     QVariantMap sellData;
     sellData.insert(QStringLiteral("title"), QStringLiteral("Sell"));
     sellData.insert(QStringLiteral("nameLabel"), QStringLiteral("Item"));
@@ -1621,7 +1621,7 @@ void PopulateItemSellState(QtUiState* state)
         entry.insert(QStringLiteral("itemId"), row.itemInfo.GetItemId());
         entry.insert(QStringLiteral("identified"), row.itemInfo.m_isIdentified != 0);
         entry.insert(QStringLiteral("quantity"), row.quantity);
-        entry.insert(QStringLiteral("gain"), row.unitPrice * row.quantity);
+        entry.insert(QStringLiteral("gain"), QString::number(static_cast<unsigned long long>(row.unitPrice) * row.quantity));
         entry.insert(QStringLiteral("selected"), g_session.m_shopSelectedDealRow == rowIndex);
         entry.insert(QStringLiteral("hover"), sellWnd->GetHoverRow() == rowIndex);
         rows.push_back(entry);

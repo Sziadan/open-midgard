@@ -1,0 +1,39 @@
+{
+    "cases": [
+        {
+            "case": "literal C6 high-bit and exact UINT32_MAX price text and native/QML render",
+            "outcome": "PASS"
+        },
+        {
+            "case": "literal C6 zero secondary is authoritative free price",
+            "outcome": "PASS"
+        },
+        {
+            "case": "literal C7 zero secondary with synthetic zero/negative availability guards",
+            "outcome": "PASS"
+        },
+        {
+            "case": "literal C7 production adjustment computes 4500000000",
+            "outcome": "PASS"
+        },
+        {
+            "case": "synthetic multirow C6 aggregate above JS 2^53 preserves decimal QML text",
+            "outcome": "PASS"
+        },
+        {
+            "case": "synthetic INT_MAX and INT_MIN quantity deltas clamp safely and underflow removes row",
+            "outcome": "PASS"
+        },
+        {
+            "case": "inactive shop mode rejects deal edits",
+            "outcome": "PASS"
+        }
+    ],
+    "literal_packet_families": [
+        "00C6 buy",
+        "00C7 sell"
+    ],
+    "outcome": "PASS",
+    "saved_frames": 8,
+    "synthetic_multirow_aggregate": true
+}

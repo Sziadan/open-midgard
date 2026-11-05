@@ -11,6 +11,7 @@ public:
     bool IsUpdateNeed() override;
     void StoreInfo() override;
     void OnDraw() override;
+    void DrawNativeToHdc(HDC hdc);
     void OnLBtnDown(int x, int y) override;
     void OnRBtnDown(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;

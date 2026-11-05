@@ -3615,8 +3615,8 @@ void HandleNpcShopBuyList(CGameMode& mode, const PacketView& packet)
     rows.reserve(payloadLength / 11);
     for (size_t offset = 4; offset + 11 <= static_cast<size_t>(packet.packetLength); offset += 11) {
         NPC_SHOP_ROW row{};
-        row.price = static_cast<int>(ReadLE32(packet.data + offset + 0));
-        row.secondaryPrice = static_cast<int>(ReadLE32(packet.data + offset + 4));
+        row.price = ReadLE32(packet.data + offset + 0);
+        row.secondaryPrice = ReadLE32(packet.data + offset + 4);
         row.itemInfo.m_itemType = packet.data[offset + 8];
         row.itemInfo.SetItemId(ReadLE16(packet.data + offset + 9));
         row.itemInfo.m_isIdentified = 1;
@@ -3656,8 +3656,8 @@ void HandleNpcShopSellList(CGameMode& mode, const PacketView& packet)
         NPC_SHOP_ROW row{};
         row.itemInfo = *itemInfo;
         row.sourceItemIndex = itemIndex;
-        row.price = static_cast<int>(ReadLE32(packet.data + offset + 2));
-        row.secondaryPrice = static_cast<int>(ReadLE32(packet.data + offset + 6));
+        row.price = ReadLE32(packet.data + offset + 2);
+        row.secondaryPrice = ReadLE32(packet.data + offset + 6);
         row.availableCount = itemInfo->m_num;
         rows.push_back(std::move(row));
     }

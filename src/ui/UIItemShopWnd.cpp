@@ -26,10 +26,10 @@ constexpr int kRowHeight = 18;
 constexpr int kShopDragThresholdSq = 16;
 constexpr int kShopUnlimitedStack = 30000;
 
-std::string FormatPrice(int value)
+std::string FormatPrice(unsigned long long value)
 {
     char buffer[32];
-    std::snprintf(buffer, sizeof(buffer), "%d", value);
+    std::snprintf(buffer, sizeof(buffer), "%llu", value);
     return std::string(buffer);
 }
 
@@ -84,6 +84,7 @@ int TransferLimitForSourceRow(size_t sourceRowIndex, bool removeFromCart)
     }
 
     int stock = row.availableCount;
+    if (g_session.m_shopMode == NpcShopMode::Sell && stock <= 0) return 0;
     if (stock <= 0) {
         if (!ShopItemUsesCountPrompt(row.itemInfo.m_itemType, 2)) {
             stock = 1;

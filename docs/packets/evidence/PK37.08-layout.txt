@@ -1,0 +1,1 @@
+PASS selected20080910 C6/C7: four unsigned 32-bit price fields; MAX_AMOUNT=30000; packet-bounded exact aggregate fits signed/unsigned 64 bits

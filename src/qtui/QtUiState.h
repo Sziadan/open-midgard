@@ -124,7 +124,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemPurchaseY READ itemPurchaseY NOTIFY itemPurchaseGeometryChanged)
     Q_PROPERTY(int itemPurchaseWidth READ itemPurchaseWidth NOTIFY itemPurchaseGeometryChanged)
     Q_PROPERTY(int itemPurchaseHeight READ itemPurchaseHeight NOTIFY itemPurchaseGeometryChanged)
-    Q_PROPERTY(int itemPurchaseTotal READ itemPurchaseTotal NOTIFY itemPurchaseTotalChanged)
+    Q_PROPERTY(QString itemPurchaseTotal READ itemPurchaseTotal NOTIFY itemPurchaseTotalChanged)
     Q_PROPERTY(QVariantMap itemPurchaseData READ itemPurchaseData NOTIFY itemPurchaseDataChanged)
     Q_PROPERTY(QVariantList itemPurchaseRows READ itemPurchaseRows NOTIFY itemPurchaseRowsChanged)
     Q_PROPERTY(QVariantList itemPurchaseButtons READ itemPurchaseButtons NOTIFY itemPurchaseButtonsChanged)
@@ -133,7 +133,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemSellY READ itemSellY NOTIFY itemSellGeometryChanged)
     Q_PROPERTY(int itemSellWidth READ itemSellWidth NOTIFY itemSellGeometryChanged)
     Q_PROPERTY(int itemSellHeight READ itemSellHeight NOTIFY itemSellGeometryChanged)
-    Q_PROPERTY(int itemSellTotal READ itemSellTotal NOTIFY itemSellTotalChanged)
+    Q_PROPERTY(QString itemSellTotal READ itemSellTotal NOTIFY itemSellTotalChanged)
     Q_PROPERTY(QVariantMap itemSellData READ itemSellData NOTIFY itemSellDataChanged)
     Q_PROPERTY(QVariantList itemSellRows READ itemSellRows NOTIFY itemSellRowsChanged)
     Q_PROPERTY(QVariantList itemSellButtons READ itemSellButtons NOTIFY itemSellButtonsChanged)
@@ -423,7 +423,7 @@ public:
     int itemPurchaseY() const { return m_itemPurchaseY; }
     int itemPurchaseWidth() const { return m_itemPurchaseWidth; }
     int itemPurchaseHeight() const { return m_itemPurchaseHeight; }
-    int itemPurchaseTotal() const { return m_itemPurchaseTotal; }
+    QString itemPurchaseTotal() const { return m_itemPurchaseTotal; }
     const QVariantMap& itemPurchaseData() const { return m_itemPurchaseData; }
     const QVariantList& itemPurchaseRows() const { return m_itemPurchaseRows; }
     const QVariantList& itemPurchaseButtons() const { return m_itemPurchaseButtons; }
@@ -432,7 +432,7 @@ public:
     int itemSellY() const { return m_itemSellY; }
     int itemSellWidth() const { return m_itemSellWidth; }
     int itemSellHeight() const { return m_itemSellHeight; }
-    int itemSellTotal() const { return m_itemSellTotal; }
+    QString itemSellTotal() const { return m_itemSellTotal; }
     const QVariantMap& itemSellData() const { return m_itemSellData; }
     const QVariantList& itemSellRows() const { return m_itemSellRows; }
     const QVariantList& itemSellButtons() const { return m_itemSellButtons; }
@@ -1196,7 +1196,7 @@ public:
         emit itemPurchaseGeometryChanged();
     }
 
-    void setItemPurchaseTotal(int value) {
+    void setItemPurchaseTotal(const QString& value) {
         if (m_itemPurchaseTotal == value) {
             return;
         }
@@ -1242,7 +1242,7 @@ public:
         emit itemSellGeometryChanged();
     }
 
-    void setItemSellTotal(int value) {
+    void setItemSellTotal(const QString& value) {
         if (m_itemSellTotal == value) {
             return;
         }
@@ -2280,7 +2280,7 @@ private:
     int m_itemPurchaseY = 0;
     int m_itemPurchaseWidth = 0;
     int m_itemPurchaseHeight = 0;
-    int m_itemPurchaseTotal = 0;
+    QString m_itemPurchaseTotal = QStringLiteral("0");
     QVariantMap m_itemPurchaseData;
     QVariantList m_itemPurchaseRows;
     QVariantList m_itemPurchaseButtons;
@@ -2289,7 +2289,7 @@ private:
     int m_itemSellY = 0;
     int m_itemSellWidth = 0;
     int m_itemSellHeight = 0;
-    int m_itemSellTotal = 0;
+    QString m_itemSellTotal = QStringLiteral("0");
     QVariantMap m_itemSellData;
     QVariantList m_itemSellRows;
     QVariantList m_itemSellButtons;

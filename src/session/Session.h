@@ -100,15 +100,15 @@ enum class NpcShopMode : int {
 struct NPC_SHOP_ROW {
     ITEM_INFO itemInfo;
     unsigned int sourceItemIndex = 0;
-    int price = 0;
-    int secondaryPrice = 0;
+    u32 price = 0;
+    u32 secondaryPrice = 0;
     int availableCount = 0;
 };
 
 struct NPC_SHOP_DEAL_ROW {
     ITEM_INFO itemInfo;
     unsigned int sourceItemIndex = 0;
-    int unitPrice = 0;
+    u32 unitPrice = 0;
     int quantity = 0;
 };
 
@@ -207,7 +207,7 @@ public:
     bool m_suppressNextShopResult = false;
     int m_shopSelectedSourceRow = -1;
     int m_shopSelectedDealRow = -1;
-    int m_shopDealTotal = 0;
+    unsigned long long m_shopDealTotal = 0;
     std::vector<NPC_SHOP_ROW> m_shopRows;
     std::vector<NPC_SHOP_DEAL_ROW> m_shopDealRows;
     std::list<FRIEND_INFO> m_partyList;
@@ -291,7 +291,7 @@ public:
     void SetNpcShopRows(u32 npcId, NpcShopMode mode, const std::vector<NPC_SHOP_ROW>& rows);
     bool AdjustNpcShopDealBySourceRow(size_t sourceRowIndex, int deltaQuantity);
     bool AdjustNpcShopDealByDealRow(size_t dealRowIndex, int deltaQuantity);
-    int GetNpcShopUnitPrice(const NPC_SHOP_ROW& row) const;
+    u32 GetNpcShopUnitPrice(const NPC_SHOP_ROW& row) const;
     void ClearParty();
     unsigned int GetNumParty() const;
     void AddMemberToParty(const FRIEND_INFO& info);
