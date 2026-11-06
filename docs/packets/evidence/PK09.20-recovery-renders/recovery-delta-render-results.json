@@ -1,0 +1,32 @@
+{
+    "cases": [
+        {
+            "case": "013D HP +12 from 95 exceeds max 100",
+            "expected_hp": 107,
+            "outcome": "PASS"
+        },
+        {
+            "case": "013D SP raw 0xffff is signed -1",
+            "expected_sp": 19,
+            "outcome": "PASS"
+        },
+        {
+            "case": "zero delta retains value and unknown status is quiet",
+            "outcome": "PASS"
+        },
+        {
+            "case": "authoritative 00B0 replaces recovery delta",
+            "expected_hp": 77,
+            "outcome": "PASS"
+        },
+        {
+            "case": "013D raw 0x8000 is signed -32768 from 40000",
+            "expected_hp": 7232,
+            "outcome": "PASS"
+        }
+    ],
+    "errors": 0,
+    "generated_frames": 8,
+    "outcome": "PASS",
+    "qml_checks": "PASS"
+}

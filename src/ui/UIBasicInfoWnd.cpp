@@ -559,6 +559,14 @@ void UIBasicInfoWnd::OnDraw()
         return;
     }
 
+    DrawNativeToHdc(hdc);
+    ReleaseDrawTarget(hdc);
+}
+
+void UIBasicInfoWnd::DrawNativeToHdc(HDC hdc)
+{
+    if(!hdc||!m_show)return;
+    EnsureCreated();
     const DisplayData data = BuildDisplayData();
     if (m_h == BasicMiniHeight()) {
         DrawCachedBitmap(hdc, m_backgroundMini, m_x, m_y);
@@ -627,7 +635,6 @@ void UIBasicInfoWnd::OnDraw()
     }
 
     DrawChildrenToHdc(hdc);
-    ReleaseDrawTarget(hdc);
     m_lastDrawStateToken = BuildDisplayStateToken();
     m_hasDrawStateToken = true;
     m_isDirty = 0;
@@ -938,9 +945,9 @@ UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
     data.level = (std::max)(data.level, 0);
     data.jobLevel = (std::max)(data.jobLevel, 0);
     data.hp = (std::max)(data.hp, 0LL);
-    data.maxHp = (std::max)(data.maxHp, data.hp);
+    data.maxHp = (std::max)(data.maxHp, 0LL);
     data.sp = (std::max)(data.sp, 0LL);
-    data.maxSp = (std::max)(data.maxSp, data.sp);
+    data.maxSp = (std::max)(data.maxSp, 0LL);
     data.jobName = NormalizeJobDisplayName(data.jobName);
     data.weight = 0;
     data.maxWeight = 0;

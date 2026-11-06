@@ -1,10 +1,10 @@
 # Packet continuation handoff
 
-**Active step: PK09.04.** Latest checkpoint: [PK09.19 item-use feedback](evidence/PK09.19-item-use.md), [contract](contracts/PK09.ITEM-USE-FEEDBACK.md), [provenance](evidence/PK09.19-item-use.json). Commit: `packet(PK09.19): restore source item-use feedback`. 123/123 CTest in 173.21s; 176 PASS packet records; 220 source rows checked across all65536 item IDs; 5 GUI cases and8 retained frames; zero QML errors.
+**Active step: PK09.04.** Latest checkpoint: [PK09.20 signed recovery](evidence/PK09.20-recovery-delta.md), [contract](contracts/PK09.RECOVERY-DELTA.md), [provenance](evidence/PK09.20-recovery-delta.json). Commit: `packet(PK09.20): restore signed recovery deltas and feedback`. 126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors.
 
 ## Continue here
 
-**Next strong-agent task:** [PK09.19 recovery reconciliation](work-items/PK09.19.md) must resolve013D amount signedness and producer/status ordering before changing recovery arithmetic. Bounded agents may gather exact callsites and fixtures; preserve the accepted use-feedback and acquisition contracts.
+**Next work:** [PK09.20 continuation](work-items/PK09.20.md): remaining item/context/detail and chat stick-on source maps, plus independent legacy unit-project migration. The signed013D gate is complete.
 
 1. Continue [PK09.04](work-items/PK09.04.md) with remaining full item/status/delta/detail contexts, remaining item mutation/status/context acceptance. PK37.07 now covers normal NPC catalog and selected buy/sell right-clicks, exact row snapshots, copied identification/refine/cards, owner collisions, lifetime, scrolling/header/padding, model shrink, reopening and125% WindowProc input. Preserve passive QML input and never resolve an NPC detail through equal-index inventory/cart or catalog rows.
    The strong-agent fallback review is complete at the current representation boundary: primary mode36/44/45 actions reset/setup drag state; transaction submission is separate. Legacy grid GetCurItem clamps a right tail that coordinate GetItemInfo rejects, while the decompiled one-argument lookup is unreliable. Current full-width row UI lacks this mismatch. Do not invent header/blank/normal-left ForceUpdate gestures. Exact legacy geometry/signature behavior remains unaccepted; PK09.11's explicit ForceUpdate API and default raw-key Select toggle remain required.
@@ -17,7 +17,7 @@
 
 ## Verified current checkpoint
 
-All targets build deploy-off. 123/123 CTest in 173.21s; 176 PASS packet records; 220 source rows checked across all65536 item IDs; 5 GUI cases and8 retained frames; zero QML errors. Earlier downstream regressions remain passing.
+All active targets build deploy-off. 126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors. The separate legacy all-unit project has the documented source-extraction migration gap.
 
 No discovery row is newly closed. PK09.04, broad PK37, independent PK48/49 and deployed provenance remain open. The whole packet plan remains unfinished.
 
@@ -37,4 +37,6 @@ Preserve [PK09.17 acknowledgement state/notices](contracts/PK09.INVENTORY-ACKS.m
 
 PK09.18 completes the prior WID58 item-notification gate. Follow [continuation instructions](work-items/PK09.18.md); preserve its snapshot/sizing/name/color/overflow/lifetime/passive-input boundaries. Money branch and remaining full item/context/effect acceptance stay open. 122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors.
 
-PK09.19 accepts the bounded source item-use feedback contract. Continue with the [strong recovery reconciliation](work-items/PK09.19.md), then remaining full item/context/effect work. Money trigger, legacy Yggdrasil latch workflow, audio hardware/animation art and broad/independent/deployed gates remain open.
+PK09.19 accepts the bounded source item-use feedback contract. PK09.20 resolves the recovery arithmetic gate; continue remaining full item/context/effect work under its instructions. Money trigger, legacy Yggdrasil latch workflow, audio hardware/animation art and broad/independent/deployed gates remain open.
+
+Preserve [PK09.20 recovery](contracts/PK09.RECOVERY-DELTA.md): signed words, session-owned modulo arithmetic, zero events, recognized statuses, shared RNG and independent maxima. Source-body units and production/native/Qt checks pass. Full item/context/art and broad/independent/deployed acceptance remain open.

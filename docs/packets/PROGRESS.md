@@ -3432,3 +3432,7 @@ Completed strong source/PE review and the pending native/Qt item notification; c
 ## 2026-11-06 — PK09.19 item-use feedback
 
 Strong review completed source potion selection/audio paths, repeated-effect replacement, auxiliary effect, experience notices and basic recovery feedback. Corrected bounded-agent source/fixture/lifetime assumptions. Four intentional regressions rejected. 123/123 CTest in 173.21s; 176 PASS packet records; 220 source rows checked across all65536 item IDs; 5 GUI cases and8 retained frames; zero QML errors. Next013D signedness/producer reconciliation, full item/effect/context and broad/independent/deployed gates remain open. Commit: packet(PK09.19): restore source item-use feedback.
+
+## 2026-11-06 — PK09.20 signed recovery
+
+Resolved selected field/order and PE arithmetic; restored canonical signed/modulo deltas, zero feedback, unknown silence, shared RNG and truthful UI maxima. Added active/standalone source-derived units; legacy broad unit project remains a documented migration gap. Five intentional regressions rejected. 126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors. Full plan remains active. Commit: packet(PK09.20): restore signed recovery deltas and feedback.

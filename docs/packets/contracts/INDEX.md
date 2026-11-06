@@ -106,3 +106,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.ITEM-OBTAIN](PK09.ITEM-OBTAIN.md) records the WID58 item acquisition snapshot, sizing, text, colors, overflow and lifetime accepted by PK09.18.
 
 [PK09.ITEM-USE-FEEDBACK](PK09.ITEM-USE-FEEDBACK.md) records source use-effect/action selection, duplicate replacement, exact-AID notices and compatibility recovery feedback accepted by PK09.19.
+
+[PK09.RECOVERY-DELTA](PK09.RECOVERY-DELTA.md) records selected signed013D state, feedback, ordering and independent maxima accepted by PK09.20.

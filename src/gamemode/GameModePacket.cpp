@@ -488,9 +488,9 @@ u32 ResolveRecoveryNumberColor(u32 statusType)
     return statusType == kStatusSp ? kRecoverySpNumberColor : kRecoveryHpNumberColor;
 }
 
-void EmitRecoveryNumber(CGameActor* sourceActor, CGameActor* targetActor, u32 amount, u32 color)
+void EmitRecoveryNumber(CGameActor* sourceActor, CGameActor* targetActor, int amount, u32 color)
 {
-    if (!targetActor || amount == 0) {
+    if (!targetActor) {
         return;
     }
 
@@ -1424,58 +1424,31 @@ void HandleItemCompositionAck(CGameMode&, const PacketView& packet)
 
 void HandleRecovery(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 6) {
-        return;
+    if (!packet.data || packet.packetLength < 6) return;
+    const u32 statusType=ReadLE16(packet.data+2);
+    const int effectId=ResolveRecoveryEffectId(statusType);
+    if(effectId<0)return;
+
+    // Selected PACKET_ZC_RECOVERY.amount is int16. Both original PE branches
+    // use movswl and an unchecked 32-bit add, not a maximum-HP clamp.
+    const u16 rawAmount=ReadLE16(packet.data+4);
+    const int amount=rawAmount<=0x7fff ? int(rawAmount) : int(rawAmount)-0x10000;
+    AdvanceEffectStatusRandomState();
+    const auto& vitals=g_session.GetCharacterVitals();
+    const u32 previousValue=statusType==kStatusHp ? vitals.hp : vitals.sp;
+    const u32 updatedValue=previousValue+static_cast<u32>(amount);
+    ApplySelfStatusUpdate(mode,statusType,updatedValue);
+    if(updatedValue!=previousValue)InvalidateBasicInfoWindow();
+
+    if(mode.m_world&&mode.m_world->m_player) {
+        CGameActor* actor=mode.m_world->m_player;
+        // Zero and negative deltas still send the source number message. The
+        // existing Am_Make_Number path clamps a negative display value to zero.
+        EmitRecoveryNumber(actor,actor,amount,ResolveRecoveryNumberColor(statusType));
+        if(!actor->LaunchEffect(effectId,vector3d{},0.0f))
+            DbgLog("[GameMode] recovery effect launch failed status=%u amount=%d\n",unsigned(statusType),amount);
     }
-
-    const u32 statusType = ReadLE16(packet.data + 2);
-    const u32 amount = ReadLE16(packet.data + 4);
-    if (amount == 0) {
-        return;
-    }
-
-    u32 currentValue = 0;
-    u32 maxValue = 0;
-    if (mode.m_world && mode.m_world->m_player) {
-        const CPlayer* player = mode.m_world->m_player;
-        if (statusType == kStatusHp) {
-            currentValue = player->m_Hp;
-            maxValue = player->m_MaxHp;
-        } else if (statusType == kStatusSp) {
-            currentValue = player->m_Sp;
-            maxValue = player->m_MaxSp;
-        }
-    } else if (g_session.GetSelectedCharacterInfo()) {
-        const auto& vitals = g_session.GetCharacterVitals();
-        if (statusType == kStatusHp) {
-            currentValue = vitals.hp;
-            maxValue = vitals.maxHp;
-        } else if (statusType == kStatusSp) {
-            currentValue = vitals.sp;
-            maxValue = vitals.maxSp;
-        }
-    }
-
-    if (statusType == kStatusHp || statusType == kStatusSp) {
-        const u32 healedValue = maxValue > 0 ? (std::min)(maxValue, AddVital(currentValue, amount)) : AddVital(currentValue, amount);
-        ApplySelfStatusUpdate(mode, statusType, healedValue);
-    }
-
-    if (mode.m_world && mode.m_world->m_player) {
-        CGameActor* actor = mode.m_world->m_player;
-        EmitRecoveryNumber(actor, actor, amount, ResolveRecoveryNumberColor(statusType));
-
-        const int effectId = ResolveRecoveryEffectId(statusType);
-        if (effectId >= 0 && !actor->LaunchEffect(effectId, vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f)) {
-            DbgLog("[GameMode] recovery effect launch failed status=%u amount=%u\n",
-                static_cast<unsigned int>(statusType),
-                static_cast<unsigned int>(amount));
-        }
-    }
-
-    DbgLog("[GameMode] recovery status=%u amount=%u\n",
-        static_cast<unsigned int>(statusType),
-        static_cast<unsigned int>(amount));
+    DbgLog("[GameMode] recovery status=%u amount=%d\n",unsigned(statusType),amount);
 }
 
 void HandleAttackRange(CGameMode& mode, const PacketView& packet)

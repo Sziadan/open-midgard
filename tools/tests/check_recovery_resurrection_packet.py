@@ -45,17 +45,14 @@ for token in (
 
 local_recovery = body(LOCAL, "void HandleRecovery(CGameMode& mode, const PacketView& packet)")
 for token in (
-    "if (amount == 0)", "statusType == kStatusHp", "statusType == kStatusSp",
-    "ApplySelfStatusUpdate(mode, statusType, healedValue)",
-    "EmitRecoveryNumber(actor, actor, amount, ResolveRecoveryNumberColor(statusType))",
-    "else if (const CHARACTER_INFO* info = g_session.GetSelectedCharacterInfo())",
-    "ResolveRecoveryEffectId(statusType)",
+    "const int effectId=ResolveRecoveryEffectId(statusType)", "if(effectId<0)return;",
+    "rawAmount<=0x7fff ? int(rawAmount) : int(rawAmount)-0x10000",
+    "g_session.GetCharacterVitals()", "previousValue+static_cast<u32>(amount)",
+    "ApplySelfStatusUpdate(mode,statusType,updatedValue)", "InvalidateBasicInfoWindow()",
+    "AdvanceEffectStatusRandomState()", "EmitRecoveryNumber(actor,actor,amount,ResolveRecoveryNumberColor(statusType))",
 ):
-    assert token in local_recovery, f"local Recovery behavior missing {token}"
-
-# The client Ref does nothing for unknown varIDs. Local code still displays a green
-# number for any nonzero status but launches no unknown effect; retain this as an
-# explicit, tested divergence rather than describe it as full source parity.
+    assert token in local_recovery, f"selected Recovery behavior missing {token}"
+assert "amount == 0" not in local_recovery
 assert "ResolveRecoveryNumberColor(u32 statusType)" in LOCAL
 assert "return statusType == kStatusSp ? kRecoverySpNumberColor : kRecoveryHpNumberColor;" in LOCAL
 
@@ -76,10 +73,7 @@ for token in (
 ):
     assert token in local_resurrection, f"local Resurrection behavior missing {token}"
 
-# Local Recovery also ignores zero amounts and can seed HP/SP from selected-character
-# data when the world player is absent; these behaviors are intentionally exercised
-# and are not present in the canonical packet method.
-assert "packet.packetLength < 6" in local_recovery and "if (amount == 0)" in local_recovery
+assert "packet.packetLength < 6" in local_recovery
 
 # Local resurrection intentionally adds a packet-length/zero-GID guard and clears
 # the pending item-ack flag; it also resolves local actors through its runtime map
@@ -91,5 +85,5 @@ assert "packet.packetLength < 8" in local_resurrection and "if (gid == 0)" in lo
 
 print("Recovery and Resurrection PE/Ref method bodies match each other.")
 print("Local packet tests cover HP/SP recovery and runtime actor resolution.")
-print("Known local differences: Recovery ignores zero amount, falls back to selected-character HP/SP without a world player, and renders a default-green number for unknown statuses.")
+print("Recovery consumes selected signed16 deltas, session-owned32-bit addition, zero feedback and recognized statuses only; actor absence remains defensive.")
 print("Resurrection adds defensive guards and clears the pending item-ack flag; its runtime resolver can coalesce the source's separate local-player send when the local actor is found.")

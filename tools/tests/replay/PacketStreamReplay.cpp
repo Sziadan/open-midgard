@@ -4514,6 +4514,7 @@ void GlobalChatProductionSendReplay()
 #include "InventoryMapEntryReplay.inc"
 #include "InventoryMutationAckReplay.inc"
 #include "ItemUseFeedbackReplay.inc"
+#include "RecoveryDeltaReplay.inc"
 #include "InventoryItemFieldsReplay.inc"
 #include "CartItemLifecycleReplay.inc"
 #include "CharacterNameReplay.inc"
@@ -4659,6 +4660,7 @@ int main(int argc,char** argv){try{
     InventoryMapEntryReplay();
     InventoryMutationAckReplay();
     ItemUseFeedbackReplay();
+    RecoveryDeltaReplay();
     InventoryItemFieldsReplay();
     CartStackDeltaReplay();
     CartClearContentsReplay();

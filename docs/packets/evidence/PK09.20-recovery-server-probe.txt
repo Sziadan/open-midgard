@@ -1,0 +1,8 @@
+PACKETVER=20080910 sizeof=6 offsets=0,2,4 signed_amount=1
+0 amount=0 bytes=3D0105000000
+1 amount=1 bytes=3D0105000100
+32767 amount=32767 bytes=3D010500FF7F
+32768 amount=-32768 bytes=3D0105000080
+65535 amount=-1 bytes=3D010500FFFF
+65536 amount=0 bytes=3D0105000000
+4294967295 amount=-1 bytes=3D010500FFFF

@@ -300,6 +300,8 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
         endif()
     endif()
 
+    add_subdirectory(tools/tests/recovery_delta)
+
     add_executable(packet_stream_replay_checks
         tools/tests/replay/PacketStreamReplay.cpp)
     target_compile_features(packet_stream_replay_checks PRIVATE cxx_std_17)
@@ -419,6 +421,10 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
             "${CMAKE_CURRENT_BINARY_DIR}/packet-item-card-detail-renders" "item-card-detail")
         set_tests_properties(packet_item_card_detail_render_checks PROPERTIES TIMEOUT 120
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-item-card-detail-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        add_test(NAME packet_recovery_delta_render_checks COMMAND packet_item_render_checks
+            "${CMAKE_CURRENT_BINARY_DIR}/packet-recovery-delta-renders" "recovery-delta")
+        set_tests_properties(packet_recovery_delta_render_checks PROPERTIES TIMEOUT 60
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-recovery-delta-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
         add_test(NAME packet_item_use_feedback_render_checks COMMAND packet_item_render_checks
             "${CMAKE_CURRENT_BINARY_DIR}/packet-item-use-feedback-renders" "item-use-feedback")
         set_tests_properties(packet_item_use_feedback_render_checks PROPERTIES TIMEOUT 60

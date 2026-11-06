@@ -48,6 +48,7 @@ public:
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     void OnCreate(int x, int y) override;
     void OnDraw() override;
+    void DrawNativeToHdc(HDC hdc);
     void OnLBtnDown(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;

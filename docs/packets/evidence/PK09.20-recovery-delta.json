@@ -1,0 +1,98 @@
+{
+  "date": "2026-11-06",
+  "baseline": "c8f6fd9e9da8d33cf7f54891766da5f2df6a7812",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.20): restore signed recovery deltas and feedback",
+  "validation": "126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors",
+  "source_sha256": {
+    "CMakeLists.txt": "b3db56c8787ea12bfa711ebf312726d265b1552db7720eac153835508e6dddf2",
+    "src/gamemode/GameModePacket.cpp": "d085d155ac1c13ea8cdbb4f7e0f4ac97f987d932aa846db1dfc647c33575bed9",
+    "src/ui/UIBasicInfoWnd.cpp": "ea37efb99f913375b27f04a4a8da0133c0c74156a4363c6aa908626f870f2564",
+    "src/ui/UIBasicInfoWnd.h": "710ddcbf9df4b74229829399a1c1c55766dd13e8f9464dbc431b747d19859332",
+    "tools/tests/RecoveryResurrectionPacketTests.cpp": "50c0ad951b58553a9cd0c115179bb34d1aaba7f8c043316858827425b97041d2",
+    "tools/tests/check_recovery_resurrection_packet.py": "ca09cea9898e7595002154aca58cf228f02d1039632a3e093ec90cc1d9ba7eff",
+    "tools/tests/recovery_delta/CMakeLists.txt": "a262428adf0295c27c4bf99c31359e1ee44f8532a1e6cae6bccd19fdce0db5cd",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "1942d7ce9a8a009453701e376784a96979e9fdaf6775a253d231d4a007497300",
+    "tools/tests/replay/PacketStreamReplay.cpp": "a15ff3089b8a5330c58b89cbf02ded8daf6e76d45d805b80d0281eb396a6e696",
+    "tools/tests/replay/RecoveryDeltaRenderChecks.inc": "bc24da3ae10438230f765fb7e844716d5402c5340db3da4ff981905176fbedf1",
+    "tools/tests/replay/RecoveryDeltaReplay.inc": "48259e15ce7a6d6a41d1c6479c81885afb701d02e3498cbe66a2d9485f5647ac"
+  },
+  "primary_sha256": {
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/GameActorMsgHandler.cpp": "4774efc60e9590200037e941056c28cefa03b0de8291544841611df96e155418",
+    "Ref/GameActor.cpp": "60686f1ea817285db0c60bf755d1f978d932870ac35319f7e22cc1ee8dd12f92",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5"
+  },
+  "server_sha256": {
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/pc.cpp": "e94af5e1b173cc442ee0b14f69ebd402f5703deea1d51fca36df8f9a69244a4e",
+    "src/map/status.cpp": "64df60335b337a2a274e52178529eab263fb273dd6739922f08a9df5e48334e3",
+    "src/map/skill.cpp": "f9aac46fdc14d36f9b018eb3cd52a39c790fe3b23923e657b5f3ca6c3f6f2982"
+  },
+  "original_pe": {
+    "path": "HighPriest.exe",
+    "sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "method": "read-only objdump; never launched or copied",
+    "range": "0x5a0570-0x5a0740",
+    "signed_amount_instructions": [
+      "0x5a05e0",
+      "0x5a06a6"
+    ],
+    "add_instructions": [
+      "0x5a05ea",
+      "0x5a06b0"
+    ]
+  },
+  "proof_sha256": {
+    "PK09.20-recovery-disassembly.txt": "ebd1e043599f20249f1d8819e0c1521e29760c7598c8c68ee33a6f07203110fc",
+    "PK09.20-recovery-server-probe.cpp": "32f1718b264358060f9bce79c04c59bbcb462062714e659348d795fddb4e4537",
+    "PK09.20-recovery-server-probe.txt": "97a764ff04a4d41e7121b77c8bcb118b7216c229352bd19fe3a19bff7ae55cdb",
+    "PK09.20-probe-compiler.txt": "cb802d75296bc02e480e22da4e00229bbfb8b0c0d9613e10b27f31fbf180f8a4"
+  },
+  "probe_scope": "Actual selected guarded declaration and producer expression; local GNU13.1.0 fragment probe, not full server/live ABI proof",
+  "intentional_regressions": {
+    "signed": {
+      "log_sha256": "fd5586bdbff6220a4c5ee60ec1687d7f1d5b039c00c34bcc437a3617069eeb19",
+      "failure": []
+    },
+    "zero": {
+      "log_sha256": "7c63283e05ea5bb222f510fe87cdd1af0583f8e62bc4078a2f9b007621ab5a77",
+      "failure": []
+    },
+    "clamp": {
+      "log_sha256": "e0d25721483eb0075b7a67d376b816f96d9d1b0466e31c1eec41ea4b657dfdda",
+      "failure": []
+    },
+    "unknown": {
+      "log_sha256": "2b730df7e97491378423b2f87019fe42e12c621f9d46a57a2984c9397c4810ac",
+      "failure": []
+    },
+    "projection": {
+      "log_sha256": "8141b5af0abdc71b38c0d19469f9c5ed8b1160a01b25ca68def98826def86b1d",
+      "failure": [
+        "FAIL item colour render: hp-plus-12-no-clamp"
+      ]
+    }
+  },
+  "render_sha256": {
+    "recovery-delta-authoritative-00b0.native.png": "6ecd27740ffa301627314e963a89480c73abed7aeec9c47e9f4152100c3d60ef",
+    "recovery-delta-authoritative-00b0.qml.png": "f6c42781d6c3c95a1b95ff7db052f4ed83c7011a8ab8cfaf3d4bc87b0030c0c2",
+    "recovery-delta-hp-plus-12-no-clamp.native.png": "33c6628827388ae7a073ffcdea7c3e0803c71fcd83fe866e5589d5e87d00564d",
+    "recovery-delta-hp-plus-12-no-clamp.qml.png": "7f0a92ed351bc5bf69b330877d2cc0a3004c7486c54677eca521c6643385d13f",
+    "recovery-delta-render-results.json": "66e3a46fd818126e35ed7dca436aa094c4a01be0817d41395c5779a3e885de47",
+    "recovery-delta-signed-32768-from-40000.native.png": "38ffe594155b930d943d860a7ddb56d7a85240d9336c81647ae8176f5c54cf37",
+    "recovery-delta-signed-32768-from-40000.qml.png": "02ffe677126f304313a07836f2c1c723da08c285a9dbaaeda519d113efeb5d40",
+    "recovery-delta-sp-minus-1.native.png": "8a084ace0396a1576c274e21d8463434df3e719aa8e3212fc9af0a1b45a2e61a",
+    "recovery-delta-sp-minus-1.qml.png": "6380abbb45d0dd3096bbfdb20aca2bacd62fc00af1707b83f43ac526d8f70cfe"
+  },
+  "extracted_unit_body_sha256": "43d33006cd85188062aca95ddc3c08c677edbe782902e8466146333bcbaa097d",
+  "full_ctest_sha256": "aad69753386c2790f85e8ab328012bc8b320294b8d380a4f53ec1e44e321a002",
+  "scope_limits": [
+    "Legacy all-unit project still needs source-boundary/private-helper migration",
+    "Producer narrowing cannot reconstruct untransmitted original amount; server unchanged",
+    "No full item/context/art, independent PK47/48/49 or deployed certification"
+  ]
+}

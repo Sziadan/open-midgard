@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Active step: PK09.04.** Latest checkpoint: [PK09.19 item-use feedback](evidence/PK09.19-item-use.md), [contract](contracts/PK09.ITEM-USE-FEEDBACK.md), [provenance](evidence/PK09.19-item-use.json). Commit: `packet(PK09.19): restore source item-use feedback`. 123/123 CTest in 173.21s; 176 PASS packet records; 220 source rows checked across all65536 item IDs; 5 GUI cases and8 retained frames; zero QML errors.
+**Active step: PK09.04.** Latest checkpoint: [PK09.20 signed recovery](evidence/PK09.20-recovery-delta.md), [contract](contracts/PK09.RECOVERY-DELTA.md), [provenance](evidence/PK09.20-recovery-delta.json). Commit: `packet(PK09.20): restore signed recovery deltas and feedback`. 126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors.
 
 - PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing now pass PK09.15.
 - PK09.13 restores inventory whole-record fallback, source dimensions/normalization, mini and original height, native/Qt resize and explicit managed close/recreation. Parent detail geometry now passes PK09.14; separate card and map/show lifetime now pass PK09.15/PK09.16.
@@ -29,4 +29,6 @@ Preserve [PK09.17 acknowledgement state/notices](contracts/PK09.INVENTORY-ACKS.m
 
 PK09.18 completes the prior WID58 item-notification gate. Follow [continuation instructions](work-items/PK09.18.md); preserve its snapshot/sizing/name/color/overflow/lifetime/passive-input boundaries. Money branch and remaining full item/context/effect acceptance stay open. 122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors.
 
-PK09.19 accepts the bounded source item-use feedback contract. Continue with the [strong recovery reconciliation](work-items/PK09.19.md), then remaining full item/context/effect work. Money trigger, legacy Yggdrasil latch workflow, audio hardware/animation art and broad/independent/deployed gates remain open.
+PK09.19 accepts the bounded source item-use feedback contract. PK09.20 resolves the recovery arithmetic gate; continue remaining full item/context/effect work under its instructions. Money trigger, legacy Yggdrasil latch workflow, audio hardware/animation art and broad/independent/deployed gates remain open.
+
+Preserve [PK09.20 recovery](contracts/PK09.RECOVERY-DELTA.md): signed words, session-owned modulo arithmetic, zero events, recognized statuses, shared RNG and independent maxima. Source-body units and production/native/Qt checks pass. Full item/context/art and broad/independent/deployed acceptance remain open.

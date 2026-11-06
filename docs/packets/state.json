@@ -2004,6 +2004,14 @@
         "docs/packets/evidence/PK09.19-item-use.json"
       ],
       "commit_subject": "packet(PK09.19): restore source item-use feedback"
+    },
+    "PK09.20": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.20-recovery-delta.md",
+        "docs/packets/evidence/PK09.20-recovery-delta.json"
+      ],
+      "commit_subject": "packet(PK09.20): restore signed recovery deltas and feedback"
     }
   }
 }

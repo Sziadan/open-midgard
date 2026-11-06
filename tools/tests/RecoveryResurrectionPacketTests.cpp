@@ -14,7 +14,10 @@ using msgparam_t = std::intptr_t;
 struct vector3d { float x=0, y=0, z=0; };
 struct PacketView { u16 packetId=0, packetLength=0; const u8* data=nullptr; };
 struct CHARACTER_INFO { s16 hp=0,maxhp=0,sp=0,maxsp=0; };
+struct RuntimeVitals {u32 hp=0,maxHp=0,sp=0,maxSp=0;};
 struct Session {
+    RuntimeVitals vitals;
+    const RuntimeVitals& GetCharacterVitals() const {return vitals;}
     u32 m_gid=0,m_aid=0;
     CHARACTER_INFO* selected=nullptr;
     const CHARACTER_INFO* GetSelectedCharacterInfo() const { return selected; }
@@ -59,10 +62,16 @@ void DbgLog(const char*,...) {}
 
 struct StatusUpdate { u32 status=0,value=0; };
 std::vector<StatusUpdate> statusUpdates;
-bool ApplySelfStatusUpdate(CGameMode&,u32 status,u32 value) {
+bool ApplySelfStatusUpdate(CGameMode& mode,u32 status,u32 value) {
+    if(status==5)g_session.vitals.hp=value;else if(status==7)g_session.vitals.sp=value;
+    if(mode.m_world&&mode.m_world->m_player){if(status==5)mode.m_world->m_player->m_Hp=value;else if(status==7)mode.m_world->m_player->m_Sp=value;}
     statusUpdates.push_back({status,value});
     return true;
 }
+
+int basicInvalidations=0,randomAdvances=0;
+void InvalidateBasicInfoWindow(){++basicInvalidations;}
+void AdvanceEffectStatusRandomState(){++randomAdvances;}
 
 #include "RecoveryResurrectionPacketBodies.inc"
 
@@ -95,7 +104,7 @@ int main() {
     assert(mode.m_isOnQuest==1&&mode.m_isPlayerDead==1&&mode.m_waitingUseItemAck==1);
 
     // Local AID falls back to the world player and clears the current implementation's flags.
-    g_session={100,100,nullptr};
+    g_session={};g_session.m_gid=100;g_session.m_aid=100;
     mode.m_isOnQuest=1;mode.m_isPlayerDead=1;mode.m_waitingUseItemAck=1;
     WriteLE32(bytes.data()+2,100);
     HandleActorResurrection(mode,PacketView{0x0148,8,bytes.data()});
@@ -107,52 +116,56 @@ int main() {
     HandleActorResurrection(mode,PacketView{0x0148,8,bytes.data()});
     assert(player.messages.size()==1&&mode.m_isOnQuest==0&&mode.m_isPlayerDead==0);
 
-    // HP and SP recovery clamp to the current world player's maxima and emit exact UI/effect payloads.
-    statusUpdates.clear();player.messages.clear();player.effectIds.clear();
-    player.m_Hp=95;player.m_MaxHp=100;
-    WriteLE16(bytes.data()+2,5);WriteLE16(bytes.data()+4,12);
+    // Source-selected signed delta arithmetic is based on canonical session values.
+    const auto clear=[&]{statusUpdates.clear();player.messages.clear();player.effectIds.clear();basicInvalidations=0;randomAdvances=0;};
+    g_session.vitals={95,100,20,25};player.m_Hp=9999;player.m_MaxHp=100;
+    clear();WriteLE16(bytes.data()+2,5);WriteLE16(bytes.data()+4,12);
     HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
-    assert(statusUpdates.size()==1&&statusUpdates[0].status==kStatusHp&&statusUpdates[0].value==100);
+    assert(statusUpdates.size()==1&&statusUpdates[0].value==107&&g_session.vitals.hp==107&&player.m_Hp==107);
     assert(player.messages.size()==1&&player.messages[0].sender==&player&&player.messages[0].id==88
         &&player.messages[0].a==12&&player.messages[0].b==static_cast<std::int32_t>(kRecoveryHpNumberColor)
         &&player.messages[0].c==114&&player.effectIds==std::vector<int>{331});
+    assert(basicInvalidations==1&&randomAdvances==1&&g_session.vitals.maxHp==100);
 
-    statusUpdates.clear();player.messages.clear();player.effectIds.clear();
-    player.m_Sp=20;player.m_MaxSp=25;
-    WriteLE16(bytes.data()+2,7);WriteLE16(bytes.data()+4,9);
+    clear();player.m_Sp=999;player.m_MaxSp=25;WriteLE16(bytes.data()+2,7);WriteLE16(bytes.data()+4,9);
     HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
-    assert(statusUpdates.size()==1&&statusUpdates[0].status==kStatusSp&&statusUpdates[0].value==25);
-    assert(player.messages.size()==1&&player.messages[0].id==88&&player.messages[0].a==9
+    assert(statusUpdates.size()==1&&statusUpdates[0].value==29&&player.m_Sp==29);
+    assert(player.messages.size()==1&&player.messages[0].a==9
         &&player.messages[0].b==static_cast<std::int32_t>(kRecoverySpNumberColor)
         &&player.messages[0].c==114&&player.effectIds==std::vector<int>{332});
+    assert(basicInvalidations==1&&randomAdvances==1);
 
-    // Invalid framing and zero amount are closed no-op gates.
-    statusUpdates.clear();player.messages.clear();player.effectIds.clear();
-    HandleRecovery(mode,PacketView{0x013D,5,bytes.data()});
-    WriteLE16(bytes.data()+4,0);
+    // Zero is still a number/effect event and rotates the source status RNG state.
+    clear();WriteLE16(bytes.data()+4,0);HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
+    assert(statusUpdates.size()==1&&statusUpdates[0].value==29&&basicInvalidations==0&&randomAdvances==1);
+    assert(player.messages.size()==1&&player.messages[0].a==0&&player.effectIds==std::vector<int>{332});
+
+    // Literal boundary words establish sign extension and unchecked32-bit addition.
+    struct DeltaCase {u32 before;u16 word;u32 after;int message;};
+    for(const auto& c:std::array<DeltaCase,5>{{{10,0xffff,9,-1},{40000,0x8000,7232,-32768},
+        {40000,0x7fff,72767,32767},{0,0xffff,0xffffffffu,-1},{0xffffffffu,1,0,1}}}) {
+        clear();g_session.vitals.hp=c.before;WriteLE16(bytes.data()+2,5);WriteLE16(bytes.data()+4,c.word);
+        HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
+        assert(g_session.vitals.hp==c.after&&player.m_Hp==c.after&&statusUpdates.size()==1);
+        assert(player.messages.size()==1&&player.messages[0].a==c.message&&basicInvalidations==1&&randomAdvances==1);
+    }
+
+    // Unknown statuses and incomplete/null frames cannot mutate state or produce feedback/RNG.
+    clear();WriteLE16(bytes.data()+2,99);WriteLE16(bytes.data()+4,3);
     HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
+    WriteLE16(bytes.data()+2,5);HandleRecovery(mode,PacketView{0x013D,5,bytes.data()});
     HandleRecovery(mode,PacketView{0x013D,6,nullptr});
-    assert(statusUpdates.empty()&&player.messages.empty()&&player.effectIds.empty());
+    assert(statusUpdates.empty()&&player.messages.empty()&&player.effectIds.empty()&&basicInvalidations==0&&randomAdvances==0);
 
-    // Selected-character fallback is used when the world player is unavailable.
-    CHARACTER_INFO info{95,100,4,8};g_session.selected=&info;world.m_player=nullptr;
-    WriteLE16(bytes.data()+2,5);WriteLE16(bytes.data()+4,20);statusUpdates.clear();
-    HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
-    assert(statusUpdates.size()==1&&statusUpdates[0].status==kStatusHp&&statusUpdates[0].value==100);
+    // A missing actor does not discard the session delta or seed from legacy selected-character values.
+    CHARACTER_INFO info{1,100,4,8};g_session.selected=&info;world.m_player=nullptr;g_session.vitals.hp=95;
+    clear();WriteLE16(bytes.data()+4,20);HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
+    assert(statusUpdates.size()==1&&statusUpdates[0].value==115&&g_session.vitals.hp==115);
+    assert(player.messages.empty()&&player.effectIds.empty()&&basicInvalidations==1&&randomAdvances==1);
 
-    // The local handler still emits a green recovery number for unknown status IDs,
-    // although the canonical Ref handler does nothing for them.
-    world.m_player=&player;player.messages.clear();player.effectIds.clear();statusUpdates.clear();
-    WriteLE16(bytes.data()+2,99);WriteLE16(bytes.data()+4,3);
+    // A failed cosmetic launch does not suppress the signed number message.
+    world.m_player=&player;clear();player.effectLaunchOk=false;WriteLE16(bytes.data()+4,0xffff);
     HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
-    assert(statusUpdates.empty()&&player.messages.size()==1&&player.messages[0].id==88
-        &&player.messages[0].a==3&&player.messages[0].b==static_cast<std::int32_t>(kRecoveryHpNumberColor)
-        &&player.effectIds.empty());
-
-    // A failed cosmetic effect launch does not suppress the recovery number.
-    player.messages.clear();player.effectIds.clear();player.effectLaunchOk=false;
-    WriteLE16(bytes.data()+2,5);WriteLE16(bytes.data()+4,2);
-    HandleRecovery(mode,PacketView{0x013D,6,bytes.data()});
-    assert(player.messages.size()==1&&player.effectIds==std::vector<int>{331});
+    assert(player.messages.size()==1&&player.messages[0].a==-1&&player.effectIds==std::vector<int>{331});
     return 0;
 }

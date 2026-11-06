@@ -383,6 +383,11 @@
         "id": "PK09.19",
         "action": "Restore complete source item-use effect/audio/message selection, actor duplicate replacement and auxiliary order, exact-AID cyan notices and basic recovery feedback; verify220 literal rows/all65536 IDs, production packets and native/Qt notices without closing full item/effect acceptance.",
         "tier": "S"
+      },
+      {
+        "id": "PK09.20",
+        "action": "Reconcile selected013D signed field and producer ordering against original PE; restore session-owned modulo recovery, zero/unknown feedback and independent UI maxima, with active source-derived units, production replay and actual native/Qt proof while retaining full item acceptance.",
+        "tier": "S"
       }
     ],
     "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."
