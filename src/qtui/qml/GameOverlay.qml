@@ -1192,62 +1192,42 @@ Item {
             }
         }
         Rectangle {
-            x: 1
-            y: 6
-            width: parent.width - 2
-            height: 32
-            radius: 7
-            color: theme.titleTop
-            border.width: 0
+            x: 1; y: 0; width: parent.width - 2; height: 16
+            visible: chatWindowChrome.chatUi.expanded !== false
+            radius: 4; color: theme.titleTop; border.width: 0
         }
-
         Rectangle {
-            x: 8
-            y: 40
-            width: parent.width - 16
-            height: 1
+            x: 5; y: 16; width: parent.width - 8; height: 1
+            visible: chatWindowChrome.chatUi.expanded !== false
             color: theme.focus
         }
-
-        Row {
-            x: 10
-            y: 12
-            height: 22
-            width: parent.width - 44
-            spacing: 6
-
+        Item {
+            width: parent.width; height: 16
+            visible: chatWindowChrome.chatUi.expanded !== false
             Repeater {
-                model: parent.parent.chatUi.tabs || []
-
+                model: chatWindowChrome.chatUi.tabs || []
                 delegate: RoTabButton {
                     required property var modelData
-                    width: Math.max(68, Math.floor((parent.width - ((parent.spacing || 0) * Math.max(0, ((parent.parent.chatUi.tabs || []).length || 1) - 1))) / Math.max(1, ((parent.parent.chatUi.tabs || []).length || 1))))
-                    height: 22
-                    selected: modelData.active
-                    label: modelData.label
-                    labelSize: 12
+                    x: modelData.x || 0; y: modelData.y || 0
+                    width: modelData.width || 0; height: modelData.height || 0
+                    selected: modelData.active; label: modelData.label; labelSize: 12
                 }
             }
         }
-
         RoChromeButton {
-            x: parent.width - 28
-            y: 14
-            width: 18
-            height: 18
+            readonly property var bounds: (chatWindowChrome.chatUi.sourceRects || {}).gear || ({})
+            x: bounds.x || 0; y: bounds.y || 0
+            width: bounds.width || 0; height: bounds.height || 0
+            visible: chatWindowChrome.chatUi.expanded !== false
             pressed: parent.chatUi.configVisible || false
-            icon: "option"
-            labelSize: 12
-            labelBold: false
-            labelFont: "Segoe UI Symbol"
+            icon: "option"; labelSize: 12; labelBold: false; labelFont: "Segoe UI Symbol"
         }
 
         RoChatContent {
-            x: 10
-            y: 46
-            width: parent.width - 20
-            height: parent.height - 56
+            x: 0; y: 0; width: parent.width; height: parent.height
             fontPixelSize: chatWindowChrome.chatFontSize
+            sourceRects: chatWindowChrome.chatUi.sourceRects || ({})
+            expanded: chatWindowChrome.chatUi.expanded !== false
         }
     }
 

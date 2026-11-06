@@ -1,5 +1,6 @@
 #include "UINewChatWnd.h"
 #include "ChatText.h"
+#include "ChatWindowState.h"
 
 #include "UIWindowMgr.h"
 #include "UiScale.h"
@@ -42,28 +43,18 @@ constexpr char kChatTabMaskPrefix[] = "TabMask";
 
 constexpr size_t kMaxChatLines = 50;
 constexpr int kChatWindowMargin = 12;
-constexpr int kChatDefaultWindowWidth = 486;
-constexpr int kChatTabBarHeight = 26;
+constexpr int kChatDefaultWindowWidth = 600;
 constexpr int kChatLineHeight = 19;
-constexpr int kChatInputHeight = 28;
-constexpr int kChatWhisperInputWidth = 126;
-constexpr int kChatInputGap = 8;
 constexpr int kChatPanelPadding = 10;
 constexpr int kChatMessageGap = 2;
-constexpr int kChatVisibleLineCount = 12;
-constexpr int kChatHistoryHeight =
-    (kChatLineHeight * kChatVisibleLineCount) + (kChatMessageGap * (kChatVisibleLineCount - 1));
-constexpr int kChatDefaultWindowHeight = kChatTabBarHeight + kChatHistoryHeight + kChatInputHeight + (kChatPanelPadding * 4);
-constexpr int kChatMinVisibleLineCount = 4;
-constexpr int kChatMinHistoryHeight =
-    (kChatLineHeight * kChatMinVisibleLineCount) + (kChatMessageGap * (kChatMinVisibleLineCount - 1));
+constexpr int kChatDefaultWindowHeight = ro::chat::HeightForState(7);
 constexpr int kChatWindowMinWidth = 360;
-constexpr int kChatWindowMinHeight = kChatTabBarHeight + kChatMinHistoryHeight + kChatInputHeight + (kChatPanelPadding * 4);
+constexpr int kChatWindowMinHeight = 24;
+
 constexpr int kChatResizeBorder = 6;
 constexpr int kChatScrollbarWidth = 8;
 constexpr int kChatScrollbarGap = 4;
 constexpr int kChatTabGap = 6;
-constexpr int kChatGearButtonSize = 18;
 constexpr int kChatConfigPanelWidth = 336;
 constexpr int kChatConfigPanelHeight = 492;
 constexpr int kChatConfigListWidth = 92;
@@ -470,62 +461,24 @@ ChatLayoutRects BuildChatLayoutRects(int x, int y, int w, int h)
     ChatLayoutRects rects{};
     rects.panel = { x, y, x + w, y + h };
 
-    rects.header = {
-        x + kChatPanelPadding,
-        y + kChatPanelPadding,
-        x + w - kChatPanelPadding,
-        y + kChatPanelPadding + kChatTabBarHeight
-    };
-
-    rects.gearButton = {
-        rects.header.right - kChatGearButtonSize,
-        rects.header.top + (kChatTabBarHeight - kChatGearButtonSize) / 2,
-        rects.header.right,
-        rects.header.top + (kChatTabBarHeight - kChatGearButtonSize) / 2 + kChatGearButtonSize
-    };
-
+    const bool expanded = h > 24;
+    rects.header = {x + 5, y, x + w - 3, y + (expanded ? 16 : 0)};
+    rects.gearButton = expanded ? RECT{x + w - 18, y + 1, x + w - 4, y + 15} : RECT{};
     const int tabsLeft = rects.header.left;
     const int tabsRight = rects.gearButton.left - kChatTabGap;
-    const int availableTabWidth = (std::max)(0, tabsRight - tabsLeft - (kChatTabGap * (kChatTabCount - 1)));
-    const int tabWidth = kChatTabCount > 0 ? availableTabWidth / kChatTabCount : 0;
-    int tabX = tabsLeft;
+    const int availableTabWidth = (std::max)(0, tabsRight - tabsLeft - kChatTabGap * (kChatTabCount - 1));
+    const int tabWidth = availableTabWidth / kChatTabCount;
     for (int index = 0; index < kChatTabCount; ++index) {
-        const int right = (index + 1 == kChatTabCount) ? tabsRight : tabX + tabWidth;
-        rects.tabs[static_cast<size_t>(index)] = {
-            tabX,
-            rects.header.top + 2,
-            right,
-            rects.header.bottom - 2
-        };
-        tabX = right + kChatTabGap;
+        const int left = tabsLeft + index * (tabWidth + kChatTabGap);
+        rects.tabs[index] = expanded ? RECT{left, y + 1,
+            index + 1 == kChatTabCount ? tabsRight : left + tabWidth, y + 15} : RECT{};
     }
-
-    const int inputLeft = x + kChatPanelPadding;
-    const int inputRight = x + w - kChatPanelPadding;
-    const int inputTop = y + h - kChatInputHeight - kChatPanelPadding;
-    const int inputBottom = y + h - kChatPanelPadding;
-    const int totalInputWidth = (std::max)(0, inputRight - inputLeft);
-    int whisperWidth = (std::min)(kChatWhisperInputWidth, (std::max)(80, totalInputWidth / 3));
-    whisperWidth = (std::min)(whisperWidth, (std::max)(80, totalInputWidth - (48 + kChatInputGap)));
-
-    rects.whisperInput = {
-        inputLeft,
-        inputTop,
-        inputLeft + whisperWidth,
-        inputBottom
-    };
-    rects.messageInput = {
-        rects.whisperInput.right + kChatInputGap,
-        inputTop,
-        inputRight,
-        inputBottom
-    };
-    rects.history = {
-        inputLeft,
-        rects.header.bottom + kChatPanelPadding,
-        inputRight,
-        inputTop - kChatPanelPadding
-    };
+    // Primary Create is600 wide, with90x16 whisper at6 and460x16 common
+    // at110. Preserve those columns; the modern custom width scales the common
+    // field while retaining the original30px right control band.
+    rects.whisperInput = {x + 6, y + h - 20, x + 96, y + h - 4};
+    rects.messageInput = {x + 110, y + h - 20, x + w - 30, y + h - 4};
+    rects.history = {x + 5, y + (expanded ? 18 : 0), x + w - 3, y + (expanded ? h - 26 : 0)};
 
     const RECT clientRect = GetChatLogicalClientRect();
     rects.configPanel = {
@@ -729,7 +682,10 @@ void UINewChatWnd::LoadSettings(int* outWindowWidth, int* outWindowHeight)
     int maxHeight = kChatDefaultWindowHeight;
     GetChatWindowSizeLimits(&minWidth, &minHeight, &maxWidth, &maxHeight);
     storedWidth = std::clamp(storedWidth, minWidth, maxWidth);
-    storedHeight = std::clamp(storedHeight, minHeight, maxHeight);
+    m_expansionState = g_windowMgr.m_chatWndStatus;
+    TryLoadSettingsIniInt(kChatWndSection, "State", &m_expansionState);
+    m_expansionState = ro::chat::NormalizeState(m_expansionState);
+    storedHeight = ro::chat::HeightForState(m_expansionState);
     if (outWindowWidth) {
         *outWindowWidth = storedWidth;
     }
@@ -745,6 +701,7 @@ void UINewChatWnd::SaveSettings() const
     SaveSettingsIniInt(kChatWndSection, kChatWindowIdleOpacityValue, m_idleOpacityPercent);
     SaveSettingsIniInt(kChatWndSection, kChatWindowWidthValue, m_w);
     SaveSettingsIniInt(kChatWndSection, kChatWindowHeightValue, m_h);
+    SaveSettingsIniInt(kChatWndSection, "State", m_expansionState);
     SaveSettingsIniInt(kChatWndSection, kChatActiveTabValue, m_activeTab);
 
     char keyName[32] = {};
@@ -883,6 +840,7 @@ const std::vector<std::string>& UINewChatWnd::GetInputHistory() const
 
 ChatScrollBarState UINewChatWnd::GetScrollBarState() const
 {
+    if (m_expansionState == 0) return {};
     ChatScrollBarState state{};
     for (const ChatLine& line : m_lines) {
         if ((m_tabChannelMasks[static_cast<size_t>(m_activeTab)] & ChatChannelBit(line.channel)) != 0u) {
@@ -1458,12 +1416,10 @@ bool UINewChatWnd::HandlePointerMove(int x, int y)
         ClampChatWindowPosition(&nextX, &nextY, nextW, nextH);
 
         const bool sizeChanged = nextW != m_w || nextH != m_h;
-        if (sizeChanged) {
-            Resize(nextW, nextH);
-        }
-        if (nextX != m_x || nextY != m_y) {
-            Move(nextX, nextY);
-        }
+        if (nextW != m_w) Resize(nextW, m_h);
+        if (nextX != m_x) Move(nextX, m_y);
+        if ((m_resizeEdges & (ChatResizeEdge_Top | ChatResizeEdge_Bottom)) != 0)
+            SendMsg(this, 14, 2, nextW, nextH);
         if (sizeChanged) {
             RefreshVisibleLines(GetTickCount());
         }
@@ -1688,16 +1644,11 @@ void UINewChatWnd::Layout()
     GetChatWindowSizeLimits(&minWidth, &minHeight, &maxWidth, &maxHeight);
 
     const int nextWidth = std::clamp(m_w > 0 ? m_w : kChatDefaultWindowWidth, minWidth, maxWidth);
-    const int nextHeight = std::clamp(m_h > 0 ? m_h : kChatDefaultWindowHeight, minHeight, maxHeight);
+    const int nextHeight = ro::chat::HeightForState(m_expansionState);
     const bool sizeChanged = nextWidth != m_w || nextHeight != m_h;
-    if (sizeChanged) {
-        Resize(nextWidth, nextHeight);
-    }
-
-    int clampedX = m_x;
-    int clampedY = m_y;
-    ClampChatWindowPosition(&clampedX, &clampedY, nextWidth, nextHeight);
-    Move(clampedX, clampedY);
+    if (sizeChanged) Resize(nextWidth, nextHeight);
+    // SetState preserves the old bottom even when the new top is off-screen.
+    // Only actual pointer movement applies the existing viewport drag clamp.
     if (sizeChanged) {
         RefreshVisibleLines(GetTickCount());
     }
@@ -1931,6 +1882,59 @@ void UINewChatWnd::RestorePersistentState(const std::vector<std::string>& inputH
 
 void UINewChatWnd::StoreInfo()
 {
+    g_windowMgr.m_chatWndStatus = m_expansionState;
+    g_windowMgr.m_chatWndHeight = m_h;
+    g_windowMgr.m_chatWndX = m_x;
+    g_windowMgr.m_chatWndY = m_y;
     SaveUiWindowPlacement("ChatWnd", m_x, m_y);
     SaveSettings();
+}
+
+void UINewChatWnd::SetState(int requested)
+{
+    // Qt stores frame capture locally; native input also has the manager
+    // pointer. Inline resizer/slider captures represent source child controls.
+    const bool frameCaptured = (g_windowMgr.m_captureWindow == this || m_dragArmed || m_isDragging)
+        && m_resizeEdges == ChatResizeEdge_None && m_transparencyDragActive == 0;
+    if (frameCaptured) return;
+    const int bottom = m_y + m_h;
+    m_expansionState = ro::chat::NormalizeState(requested);
+    const int height = ro::chat::HeightForState(m_expansionState);
+    Resize(m_w, height);
+    Move(m_x, bottom - height);
+    RefreshVisibleLines(GetTickCount());
+    Invalidate();
+}
+
+void UINewChatWnd::CancelPointerCapture()
+{
+    m_dragArmed = m_isDragging = m_transparencyDragActive = 0;
+    m_resizeEdges = ChatResizeEdge_None;
+    if (g_windowMgr.m_captureWindow == this) g_windowMgr.m_captureWindow = nullptr;
+}
+
+msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, msgparam_t detail, msgparam_t extra)
+{
+    switch (msg) {
+    case 2:
+        if (g_windowMgr.m_chatWndStickOn) SetState(ro::chat::CycleState(m_expansionState, value != 0));
+        return 0;
+    case 14:
+        if (value == 2 && g_windowMgr.m_chatWndStickOn) {
+            const int next = ro::chat::StateFromRequestedHeight(static_cast<int>(extra));
+            if (next != m_expansionState) SetState(next);
+        }
+        return 0;
+    case 15: SetState(static_cast<int>(value)); return 0;
+    case 16:
+        if (g_windowMgr.m_chatWndStickOn && m_expansionState == 0) SetState(1);
+        return 0;
+    default: return UIWindow::SendMsg(sender, msg, value, detail, extra);
+    }
+}
+
+ChatWindowLayoutDisplay UINewChatWnd::GetLayoutDisplay() const
+{
+    const auto rects = BuildChatLayoutRects(0, 0, m_w, m_h);
+    return {rects.header, rects.history, rects.whisperInput, rects.messageInput, rects.gearButton, rects.tabs};
 }

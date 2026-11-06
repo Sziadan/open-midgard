@@ -4,6 +4,8 @@ Item {
     id: chat
     property int fontPixelSize: 13
     property color ink: "#ece1cc"
+    property var sourceRects: ({})
+    property bool expanded: true
 
     function escaped(value) {
         return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -24,8 +26,11 @@ Item {
     Rectangle {
         id: pane
         objectName: "chatHistoryPane"
-        width: parent.width
-        height: parent.height - 40
+        x: chat.sourceRects.history ? chat.sourceRects.history.x : 0
+        y: chat.sourceRects.history ? chat.sourceRects.history.y : 0
+        width: chat.sourceRects.history ? chat.sourceRects.history.width : parent.width
+        height: chat.sourceRects.history ? chat.sourceRects.history.height : parent.height - 40
+        visible: chat.expanded
         color: "#14110e"
         radius: 4
         border.color: "#806c49"
@@ -156,8 +161,10 @@ Item {
     ChatInput {
         id: whisper
         objectName: "chatWhisperField"
-        y: parent.height - height
-        width: 126
+        x: chat.sourceRects.whisper ? chat.sourceRects.whisper.x : 0
+        y: chat.sourceRects.whisper ? chat.sourceRects.whisper.y : parent.height - height
+        width: chat.sourceRects.whisper ? chat.sourceRects.whisper.width : 126
+        height: chat.sourceRects.whisper ? chat.sourceRects.whisper.height : 28
         fieldId: 1
         sourceText: uiState.chatWindowWhisperTargetText
         inputActive: uiState.chatWindowWhisperInputActive
@@ -165,9 +172,10 @@ Item {
     ChatInput {
         id: message
         objectName: "chatMessageField"
-        x: 134
-        y: parent.height - height
-        width: parent.width - x
+        x: chat.sourceRects.message ? chat.sourceRects.message.x : 134
+        y: chat.sourceRects.message ? chat.sourceRects.message.y : parent.height - height
+        width: chat.sourceRects.message ? chat.sourceRects.message.width : parent.width - x
+        height: chat.sourceRects.message ? chat.sourceRects.message.height : 28
         sourceText: uiState.chatWindowInputText
         inputActive: uiState.chatWindowMessageInputActive
     }

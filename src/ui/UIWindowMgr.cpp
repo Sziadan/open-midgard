@@ -640,8 +640,8 @@ int UiRawToLogicalCoordinateWithScale(int rawValue, float scaleFactor)
 UIWindowMgr g_windowMgr;
 
 UIWindowMgr::UIWindowMgr() 
-    : m_chatWndX(0), m_chatWndY(0), m_chatWndHeight(0), m_chatWndShow(0),
-      m_gronMsnWndShow(0), m_gronMsgWndShow(0), m_chatWndStatus(0),
+    : m_chatWndX(0), m_chatWndY(0), m_chatWndHeight(98), m_chatWndShow(1),
+      m_gronMsnWndShow(0), m_gronMsgWndShow(0), m_chatWndStatus(7),
       m_miniMapZoomFactor(1.0f), m_miniMapArgb(0), m_isDrawCompass(0),
       m_isDragAll(0), m_conversionMode(0), m_isInvalidatedByForce(false),
     m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
@@ -2284,6 +2284,18 @@ void UIWindowMgr::HideLoadingScreen()
 }
 
 void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam) {
+    // Original manager2/3 are state/show operations, distinct from notices.
+    if (msg == 2) {
+        if (m_chatWnd) m_chatWnd->SendMsg(nullptr, 15, wparam, 0, 0);
+        return;
+    }
+    if (msg == 3) {
+        // Original ShowWindow(WID_CHATWND,1) creates a missing main window.
+        EnsureChatWindowVisible();
+        m_chatWndShow = 1;
+        m_chatWnd->SendMsg(nullptr, 16, 0, 0, 0);
+        return;
+    }
     if (msg != kUiChatEventMsg || wparam == 0) {
         return;
     }

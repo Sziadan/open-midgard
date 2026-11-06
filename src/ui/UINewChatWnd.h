@@ -32,6 +32,11 @@ struct ChatFilterOptionDisplay {
     int enabled = 0;
 };
 
+struct ChatWindowLayoutDisplay {
+    RECT header{}, history{}, whisperInput{}, messageInput{}, gearButton{};
+    std::array<RECT, 4> tabs{};
+};
+
 class UINewChatWnd : public UIWindow {
 public:
     enum ActiveInputField {
@@ -52,6 +57,10 @@ public:
     void OnLBtnUp(int x, int y) override;
     void OnWheel(int delta) override;
     void StoreInfo() override;
+    msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
+    void SetState(int requested);
+    int GetExpansionState() const { return m_expansionState; }
+    ChatWindowLayoutDisplay GetLayoutDisplay() const;
 
     void AddChatLine(const char* text, u32 color, u8 channel, u32 tick);
     bool HandleQtMouseDown(int x, int y);
@@ -61,6 +70,7 @@ public:
     bool IsQtInteractionPoint(int x, int y) const;
     bool IsQtMainPanelPoint(int x, int y) const;
     bool IsQtPointerCaptured() const;
+    void CancelPointerCapture();
     void ClearInputFocus();
     const std::vector<ChatLine>& GetLines() const;
     const std::vector<ChatLine>& GetVisibleLines() const;
@@ -145,4 +155,5 @@ private:
     int m_resizeEdges;
     int m_transparencyDragActive;
     std::array<u32, 4> m_tabChannelMasks;
+    int m_expansionState = 7;
 };

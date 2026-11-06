@@ -1,0 +1,113 @@
+{
+  "date": "2026-11-06",
+  "baseline": "69fff9674ccb77dfb1adbdf19c888f38b6eb9465",
+  "scope": "PK09.21 main state phase only; full sticky/mini/detached-history lifecycle remains IN_PROGRESS",
+  "commit_subject": "packet(PK09.21): restore main chat state transitions",
+  "runtime_test_sha256": {
+    "CMakeLists.txt": "fc777685796aecd55a6b5421889ea83ad9d470e3119bc18ef42a21af3ebd17fa",
+    "src/qtui/QtUiSpikeBridge.cpp": "89390edc91612ad630fa6ecfba3221594aa7ef65c942f3aa4252b66a5d726eb4",
+    "src/qtui/QtUiStateAdapter.cpp": "d8ded3d5a4d447c324ccc7574859309a2bd11a850637586192fe81e465c4d1ed",
+    "src/qtui/qml/GameOverlay.qml": "6e504dcec6b5dd3dbf3b3b93ba1b9c9054547374f5601ecd14c0314eb6e8b739",
+    "src/qtui/qml/RoChatContent.qml": "e328cc16003a30aabad6eda45f40f40400debb3ac6a6bbac76059a58da64db00",
+    "src/ui/ChatWindowState.h": "c13682887dacac0862477760be5c0bc872044cd11d1df8ba9f8350df6f3ab042",
+    "src/ui/UINewChatWnd.cpp": "8d3ade403cf35529199a81a722a4832ac75efc4d5283f17c6568442fc067fc42",
+    "src/ui/UINewChatWnd.h": "65193494089adf4ac2997e31a40e69a9f85303317240c4cab3c7af5d02eb5127",
+    "src/ui/UIWindowMgr.cpp": "c91f4107727c4d62dfa208b536cc15db4d53a5dee32d68dd0b23ee61002fa1f8",
+    "src/ui/UIWindowMgr.h": "fcdd7dd0c032033bae4ea8a4c4d9bea3a6b8fc417ca69638b134275cbbe277cd",
+    "tools/tests/CMakeLists.txt": "55df3ab2dac5a1521ac7c9fee4c82f0894c678e8be70ae2a02187ff24d87041a",
+    "tools/tests/ChatWindowStateTests.cpp": "b7d69157df12accb86c8b4143c470fe5e2e37a541ceb2ffa5604c919961956e7",
+    "tools/tests/replay/ChatWindowStateRenderChecks.inc": "7138874f79fa003135ab7f6d18a9869484608387330e15acaea6b581e51737ff",
+    "tools/tests/replay/ChatWindowStateReplay.inc": "822b61c45c3c2bee9732f52826518f48fb6810c519f7aa42dd3b6790ea69bda5",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "3015b6468ca5c40d31d90da604f92d58d6e76c1954ec1b441b0ec46b01c9e6c9",
+    "tools/tests/replay/PacketStreamReplay.cpp": "82ba14886c8293f8e83b7175c38b106a77e9aeab7eef70e72fb17d628f1d0d4f"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/UIFrameWnd3.cpp": "ace15e1a1d180c9f9e65709c0518080e6326d19ed799e808623ec37440e9627f",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/UIControl.cpp": "1c35fbb92f87961edb4eb6cea00cccd623d7535dc1c48b4cf5e876345d670c59",
+    "Ref/UIRectInfo.cpp": "e966ca8d73cd295750d9d1abd0a0595b77112b3ae956efd5b41809ba98beaa11"
+  },
+  "binary_sha256": {
+    "build-mingw-preset/open-midgard.exe": "9636bd403c53f4e92ca68e11cf8c78988d0fa7cddfa6ccc3880aa4b57d4f1d4b",
+    "build-mingw-preset/packet_stream_replay_checks.exe": "c3f6262c485e293b8983f6760ca2645bab04bcebc39e1b06cc3dbcb124ae4ddf",
+    "build-mingw-preset/packet_item_render_checks.exe": "bddbf15800e346af9f370b70f17db28f3c97635b6acd93e6683b00a4955d79bf",
+    "build-mingw-preset/chat_window_state_checks.exe": "63b50b1e38296d5467c4953d0ca723cd0d04ed2eddba78e88066796dc9d01dc3",
+    "build-recovery-unit-review/chat_window_state_checks.exe": "d2493121d004e2c3e6a10bf34362287f9188cea66c6328ba3bad2ee1faa30322"
+  },
+  "retained_evidence_sha256": {
+    "docs/packets/evidence/PK09.21-capture-before-fix.log": "101d54884d0ed19075983081fef3d5ac453b84db06f5e0860be249ffbe8fedcd",
+    "docs/packets/evidence/PK09.21-cycle-pe.txt": "50ec09b652557dc14106a3e7949dda156dcf24bd2b0de661bf77769804c882eb",
+    "docs/packets/evidence/PK09.21-main-state-root-ctest.log": "5fb009c16f307c8e2c03734d1c9d7c6fb27e64382cd20f56d408b2153d6fd6b7",
+    "docs/packets/evidence/PK09.21-main-state-unit-ctest.log": "d071032cc78bb7244e6aa0a333ae30b3840073d6f9ac20c7f49c24960a624d1d",
+    "docs/packets/evidence/PK09.21-resize-pe.txt": "527272665f19ab797547d14ad99fe449bee4c01003d1457190962f5bee81d290",
+    "docs/packets/evidence/PK09.21-state-oracle.json": "c12a2cca8098826b7202c3ac6fa54b6f19a17f2ce1c2a564e3b7c24dd24574f4",
+    "docs/packets/evidence/PK09.21-state-pe.txt": "827708d0fce6ff739ec37bc898cc718ff65e7eb3d83272daa0d2c2622124cc85",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-0.native.png": "2179b9708f3b964a5c8fffbcd03bb7d825eea79459205191a247978322bc31d1",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-0.qml.png": "4e9e2813216a0db6f2906320d24a7d95d5289aac4379ef8f38993dcf49b8d1d8",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-1.native.png": "8050e7021261ea33f9eb32ec7b30855e81a26836be62711e2d3fe4bc53578bed",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-1.qml.png": "4ae1d9c1849d90f26e00cb00c8096ba7508217a355e0c3a8285738dcef360cb2",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-15.native.png": "40aae778dac97d018ff588ff356d8e4b5237a84bcf9f2f491ee8ee88b2ce73fd",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-15.qml.png": "a41c0e1378f3f78fd8d60f11a9ae1da35ad3df2ce1211addb90eedcbf0cae4e9",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-7.native.png": "d288267d9389b249e9e2a411db2f6f316c9de161d1f17580a919d06746b81478",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-7.qml.png": "1cbe0905da548fd4c7568d8d5fe4140259c806c99ccfa2c103e0d7beb9d4aa40",
+    "docs/packets/evidence/PK09.21-main-state-renders/chat-state-results.json": "3a44ba56abed9ec0dd34f64612eccd4c81e82336b6196d061d9aca09161f6829"
+  },
+  "server_profile": 20080910,
+  "client_receive_profile": 23,
+  "server_revision": null,
+  "server_snapshot": "unversioned, hash-pinned; selected source hashes unchanged",
+  "server_sources_sha256": {
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d"
+  },
+  "validation": {
+    "root": {
+      "passed": 130,
+      "failed": 0,
+      "seconds": 181.02
+    },
+    "standalone": {
+      "passed": 461,
+      "failed": 0,
+      "seconds": 72.91
+    },
+    "actual_ui_frames": 8,
+    "states": [
+      0,
+      1,
+      7,
+      15
+    ],
+    "actual_qt_editor_focus": true,
+    "qml_errors": 0,
+    "rendering": "QML software/offscreen and native DIB; no GPU certification",
+    "intentional_regression": "Qt frame capture incorrectly accepted a state change; retained before-fix failure",
+    "root_command": "ctest --test-dir build-mingw-preset --output-on-failure",
+    "standalone_command": "ctest --test-dir build-recovery-unit-review --output-on-failure",
+    "runtime_path_prefix": [
+      "C:/Qt/Tools/mingw1310_64/bin",
+      "C:/Qt/6.11.0/mingw_64/bin"
+    ],
+    "build_type": "Release",
+    "deployment": "OFF",
+    "builds": "Full root and standalone builds succeeded; final test-only Qt focus assertion rebuilt packet_item_render_checks and passed focused plus full root CTest.",
+    "standalone_note": "461-test accepted run precedes the final Qt-only render assertion; standalone sources/binaries were unchanged by that assertion."
+  },
+  "pending": [
+    "sticky save/restore",
+    "manager-owned histories137/138 and mini140",
+    "explicit source ST/BT stream routing",
+    "hide/delete/recreate/map lifetime",
+    "real outside-client capture/release",
+    "font/scale/stored-placement acceptance",
+    "full PK09.04 and independent/deployed acceptance"
+  ],
+  "reference_executable_executed": false,
+  "reference_executable_copied": false,
+  "installed_deployment_modified": false,
+  "live_transaction": false
+}

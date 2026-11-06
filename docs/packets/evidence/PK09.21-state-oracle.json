@@ -1,0 +1,338 @@
+{
+  "oracle": "PK09.21 main chat state source expectations",
+  "provenance": {
+    "primary_source": "Ref/UIFrameWnd3.cpp",
+    "source_only": false,
+    "pe_execution_or_copy": false,
+    "pe_static_disassembly_verified": true,
+    "goldens_derived_from_upcoming_helper": false,
+    "anchors": [
+      {
+        "symbol": "UINewChatWnd::SetState",
+        "lines": "9693-9810",
+        "source_facts": "state < 0 becomes 15; state > 15 becomes 0; accepted 0..15; expanded height is titleHeight + chatEditHeight + 14*(state+3); state 0 height is chatEditHeight; Move preserves old bottom edge via oldY+oldH-newH."
+      },
+      {
+        "symbol": "UINewChatWnd::SendMsg child message 2",
+        "lines": "3347-3364",
+        "source_facts": "Returns without change when manager sticky flag is false. PE instructions at 0x49E52C-0x49E53F show the negative candidate remains signed: val1!=0 gives candidate -1 at state 0, or state-3 at nonzero state. Candidate <=0 maps to SetState(-1) at old state 0 and SetState(0) at nonzero old state. Positive candidates use candidate+1-candidate%3 followed by SetState normalization."
+      },
+      {
+        "symbol": "UINewChatWnd::SendMsg child message 14",
+        "lines": "3608-3620",
+        "source_facts": "Requires val1==2 and sticky flag. If val3 >= titleHeight+56, computes (val3-(titleHeight+56))/14+1 capped at 15 and sets that state; otherwise sets state 0 only if currently expanded."
+      },
+      {
+        "symbol": "UINewChatWnd::SendMsg child message 2 PE arithmetic",
+        "address": "0x49E52C-0x49E53F",
+        "evidence": "Static disassembly: neg eax; sbb eax,eax; and al,0xFE; inc eax. No zero-extension is present; high bits remain signed, yielding candidate -1 for decrease at state 0. No executable was run or copied."
+      }
+    ]
+  },
+  "constants": {
+    "title_height": 16,
+    "editor_height": 24,
+    "row_height": 14,
+    "child14_resize_threshold_total_height": 72,
+    "child14_resize_threshold_source_expression": "titleHeight + 56"
+  },
+  "normalize_state": {
+    "source_rule": "negative requested state -> 15; requested state > 15 -> 0; otherwise unchanged",
+    "cases": [
+      {
+        "requested": -2,
+        "expected": 15
+      },
+      {
+        "requested": -1,
+        "expected": 15
+      },
+      {
+        "requested": 0,
+        "expected": 0
+      },
+      {
+        "requested": 1,
+        "expected": 1
+      },
+      {
+        "requested": 15,
+        "expected": 15
+      },
+      {
+        "requested": 16,
+        "expected": 0
+      },
+      {
+        "requested": "INT_MIN",
+        "expected": 15
+      },
+      {
+        "requested": "INT_MAX",
+        "expected": 0
+      }
+    ]
+  },
+  "state_heights": {
+    "expanded_height_formula": "16 + 24 + 14*(state+3)",
+    "collapsed_height": 24,
+    "by_state_0_through_15": [
+      {
+        "state": 0,
+        "height": 24
+      },
+      {
+        "state": 1,
+        "height": 96
+      },
+      {
+        "state": 2,
+        "height": 110
+      },
+      {
+        "state": 3,
+        "height": 124
+      },
+      {
+        "state": 4,
+        "height": 138
+      },
+      {
+        "state": 5,
+        "height": 152
+      },
+      {
+        "state": 6,
+        "height": 166
+      },
+      {
+        "state": 7,
+        "height": 180
+      },
+      {
+        "state": 8,
+        "height": 194
+      },
+      {
+        "state": 9,
+        "height": 208
+      },
+      {
+        "state": 10,
+        "height": 222
+      },
+      {
+        "state": 11,
+        "height": 236
+      },
+      {
+        "state": 12,
+        "height": 250
+      },
+      {
+        "state": 13,
+        "height": 264
+      },
+      {
+        "state": 14,
+        "height": 278
+      },
+      {
+        "state": 15,
+        "height": 292
+      }
+    ]
+  },
+  "child_message_2_sticky_transitions": {
+    "domain": "current state 0..15 × val1 zero/nonzero",
+    "val1_zero": [
+      {
+        "current": 0,
+        "expected": 1
+      },
+      {
+        "current": 1,
+        "expected": 4
+      },
+      {
+        "current": 2,
+        "expected": 4
+      },
+      {
+        "current": 3,
+        "expected": 7
+      },
+      {
+        "current": 4,
+        "expected": 7
+      },
+      {
+        "current": 5,
+        "expected": 7
+      },
+      {
+        "current": 6,
+        "expected": 10
+      },
+      {
+        "current": 7,
+        "expected": 10
+      },
+      {
+        "current": 8,
+        "expected": 10
+      },
+      {
+        "current": 9,
+        "expected": 13
+      },
+      {
+        "current": 10,
+        "expected": 13
+      },
+      {
+        "current": 11,
+        "expected": 13
+      },
+      {
+        "current": 12,
+        "expected": 0
+      },
+      {
+        "current": 13,
+        "expected": 0
+      },
+      {
+        "current": 14,
+        "expected": 0
+      },
+      {
+        "current": 15,
+        "expected": 0
+      }
+    ],
+    "val1_nonzero": [
+      {
+        "current": 0,
+        "expected": 15
+      },
+      {
+        "current": 1,
+        "expected": 0
+      },
+      {
+        "current": 2,
+        "expected": 0
+      },
+      {
+        "current": 3,
+        "expected": 0
+      },
+      {
+        "current": 4,
+        "expected": 1
+      },
+      {
+        "current": 5,
+        "expected": 1
+      },
+      {
+        "current": 6,
+        "expected": 4
+      },
+      {
+        "current": 7,
+        "expected": 4
+      },
+      {
+        "current": 8,
+        "expected": 4
+      },
+      {
+        "current": 9,
+        "expected": 7
+      },
+      {
+        "current": 10,
+        "expected": 7
+      },
+      {
+        "current": 11,
+        "expected": 7
+      },
+      {
+        "current": 12,
+        "expected": 10
+      },
+      {
+        "current": 13,
+        "expected": 10
+      },
+      {
+        "current": 14,
+        "expected": 10
+      },
+      {
+        "current": 15,
+        "expected": 13
+      }
+    ],
+    "sticky_off": "All 32 input combinations leave current state unchanged because child message 2 returns before calculating a candidate."
+  },
+  "child_message_14_resize": {
+    "active_only_when": "val1 == 2 and chatWndStickOn is true",
+    "below_threshold": {
+      "val3_range": "less than 72",
+      "expected": "state 0 if current state is nonzero; otherwise unchanged at 0"
+    },
+    "at_or_above_threshold": {
+      "row_formula": "min(15, floor((val3-72)/14)+1)",
+      "boundary_cases": [
+        {
+          "val3": 71,
+          "expected_state": 0,
+          "note": "below threshold"
+        },
+        {
+          "val3": 72,
+          "expected_state": 1
+        },
+        {
+          "val3": 85,
+          "expected_state": 1
+        },
+        {
+          "val3": 86,
+          "expected_state": 2
+        },
+        {
+          "val3": 99,
+          "expected_state": 2
+        },
+        {
+          "val3": 100,
+          "expected_state": 3
+        },
+        {
+          "val3": 267,
+          "expected_state": 14
+        },
+        {
+          "val3": 268,
+          "expected_state": 15
+        },
+        {
+          "val3": 281,
+          "expected_state": 15
+        },
+        {
+          "val3": 282,
+          "expected_state": 15,
+          "note": "cap remains 15"
+        }
+      ],
+      "source_ambiguity": "Resolved by root: primary Ref/UIControl.cpp6808-6820 captures parent.m_h;6857-6912 RT_UP subtracts pointer delta and sends the resulting requested physical parent height as child14 val3. Preserve this threshold formula even though it is not the inverse of HeightForState."
+    },
+    "sticky_off_or_val1_not_2": "No state change."
+  }
+}

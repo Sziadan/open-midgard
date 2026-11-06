@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK09.04",
+  "active_step": "PK09.21",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -2029,6 +2029,17 @@
         "docs/packets/evidence/PK45.06-gr2-provenance.json"
       ],
       "commit_subject": "packet(PK45.06): restore independent GR2 corpse lifecycle"
+    },
+    "PK09.21": {
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/work-items/PK09.21.md",
+        "docs/packets/evidence/PK09.21-state-oracle.json",
+        "docs/packets/contracts/PK09.CHAT-STATE.md",
+        "docs/packets/evidence/PK09.21-main-state.md",
+        "docs/packets/evidence/PK09.21-main-state-provenance.json"
+      ],
+      "commit_subject": null
     }
   }
 }

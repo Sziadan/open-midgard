@@ -2134,3 +2134,7 @@ add_test(NAME combat_presentation_fix_checks COMMAND combat_presentation_fix_che
 add_test(NAME ammo_cursor_regression_checks
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_ammo_cursor_regressions.py"
         --cxx "${CMAKE_CXX_COMPILER}")
+
+add_executable(chat_window_state_checks ChatWindowStateTests.cpp)
+target_compile_features(chat_window_state_checks PRIVATE cxx_std_17)
+add_test(NAME chat_window_state_checks COMMAND chat_window_state_checks)

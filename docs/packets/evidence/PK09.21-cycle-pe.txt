@@ -1,0 +1,56 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0049e52c <.text+0x9d52c>:
+  49e52c:	a0 94 89 76 00       	mov    0x768994,%al
+  49e531:	84 c0                	test   %al,%al
+  49e533:	0f 84 a6 01 00 00    	je     0x49e6df
+  49e539:	8b 45 10             	mov    0x10(%ebp),%eax
+  49e53c:	8b 53 30             	mov    0x30(%ebx),%edx
+  49e53f:	f7 d8                	neg    %eax
+  49e541:	1b c0                	sbb    %eax,%eax
+  49e543:	24 fe                	and    $0xfe,%al
+  49e545:	40                   	inc    %eax
+  49e546:	85 d2                	test   %edx,%edx
+  49e548:	74 05                	je     0x49e54f
+  49e54a:	8d 0c 42             	lea    (%edx,%eax,2),%ecx
+  49e54d:	03 c1                	add    %ecx,%eax
+  49e54f:	8b c8                	mov    %eax,%ecx
+  49e551:	85 c9                	test   %ecx,%ecx
+  49e553:	7e 2e                	jle    0x49e583
+  49e555:	99                   	cltd
+  49e556:	be 03 00 00 00       	mov    $0x3,%esi
+  49e55b:	f7 fe                	idiv   %esi
+  49e55d:	b8 01 00 00 00       	mov    $0x1,%eax
+  49e562:	2b c2                	sub    %edx,%eax
+  49e564:	03 c8                	add    %eax,%ecx
+  49e566:	51                   	push   %ecx
+  49e567:	8b cb                	mov    %ebx,%ecx
+  49e569:	e8 12 e5 ff ff       	call   0x49ca80
+  49e56e:	5f                   	pop    %edi
+  49e56f:	5e                   	pop    %esi
+  49e570:	33 c0                	xor    %eax,%eax
+  49e572:	5b                   	pop    %ebx
+  49e573:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  49e576:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  49e57d:	8b e5                	mov    %ebp,%esp
+  49e57f:	5d                   	pop    %ebp
+  49e580:	c2 18 00             	ret    $0x18
+  49e583:	85 d2                	test   %edx,%edx
+  49e585:	74 02                	je     0x49e589
+  49e587:	33 c9                	xor    %ecx,%ecx
+  49e589:	51                   	push   %ecx
+  49e58a:	8b cb                	mov    %ebx,%ecx
+  49e58c:	e8 ef e4 ff ff       	call   0x49ca80
+  49e591:	5f                   	pop    %edi
+  49e592:	5e                   	pop    %esi
+  49e593:	33 c0                	xor    %eax,%eax
+  49e595:	5b                   	pop    %ebx
+  49e596:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  49e599:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  49e5a0:	8b e5                	mov    %ebp,%esp
+  49e5a2:	5d                   	pop    %ebp
+  49e5a3:	c2 18 00             	ret    $0x18

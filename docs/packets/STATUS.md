@@ -1,8 +1,8 @@
 # Packet implementation status
 
-**Latest checkpoint (2026-11-06):** [PK45.06 model corpses](evidence/PK45.06-gr2.md) complete the separate sprite/model death lifecycles. Root127/127 in174.52s; standalone460/460 in72.36s;16 model GPU cases plus the retained sprite evidence. Preserve immediate model handoff after queued hits, private model resources, independent clocks/counters and source cutout rendering.
+**Latest checkpoint (2026-11-06):** [PK09.21 main chat state phase](evidence/PK09.21-main-state.md) restores source expansion, signed cycles, bottom anchoring and shared native/Qt editor geometry. Main-state, capture and actual Qt focus checks pass; eight UI frames are retained. Full root130/130 and standalone461/461 pass. Sticky mode, mini and detached histories remain unfinished under the same IN_PROGRESS leaf.
 
-**Active step: PK09.04.** Resume remaining item/status/detail/context work. Latest commit subject: `packet(PK45.06): restore independent GR2 corpse lifecycle`. Broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.
+**Active step: PK09.21.** Finish [chat sticky/history ownership](work-items/PK09.21.md) under still-open PK09.04. Latest checkpoint subject: `packet(PK09.21): restore main chat state transitions`. Preserve completed PK45.06 sprite/model corpse lifecycles; broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.
 
 - PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing now pass PK09.15.
 - PK09.13 restores inventory whole-record fallback, source dimensions/normalization, mini and original height, native/Qt resize and explicit managed close/recreation. Parent detail geometry now passes PK09.14; separate card and map/show lifetime now pass PK09.15/PK09.16.

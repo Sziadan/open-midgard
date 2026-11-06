@@ -1964,6 +1964,24 @@ void PopulateChatWindowState(QtUiState* state)
     state->setChatWindowScrollBar(scrollBar);
 
     QVariantMap chatUi;
+    const auto layout = chatWnd->GetLayoutDisplay();
+    const auto rectMap = [](const RECT& rect) {
+        QVariantMap value;
+        value.insert(QStringLiteral("x"), static_cast<int>(rect.left));
+        value.insert(QStringLiteral("y"), static_cast<int>(rect.top));
+        value.insert(QStringLiteral("width"), static_cast<int>(rect.right - rect.left));
+        value.insert(QStringLiteral("height"), static_cast<int>(rect.bottom - rect.top));
+        return value;
+    };
+    QVariantMap sourceRects;
+    sourceRects.insert(QStringLiteral("header"), rectMap(layout.header));
+    sourceRects.insert(QStringLiteral("history"), rectMap(layout.history));
+    sourceRects.insert(QStringLiteral("whisper"), rectMap(layout.whisperInput));
+    sourceRects.insert(QStringLiteral("message"), rectMap(layout.messageInput));
+    sourceRects.insert(QStringLiteral("gear"), rectMap(layout.gearButton));
+    chatUi.insert(QStringLiteral("sourceRects"), sourceRects);
+    chatUi.insert(QStringLiteral("expansionState"), chatWnd->GetExpansionState());
+    chatUi.insert(QStringLiteral("expanded"), chatWnd->GetExpansionState() != 0);
     QVariantList tabs;
     tabs.reserve(chatWnd->GetTabCount());
     for (int index = 0; index < chatWnd->GetTabCount(); ++index) {
@@ -1976,6 +1994,8 @@ void PopulateChatWindowState(QtUiState* state)
         entry.insert(QStringLiteral("id"), tab.id);
         entry.insert(QStringLiteral("label"), ToQString(tab.label));
         entry.insert(QStringLiteral("active"), tab.active != 0);
+        const auto bounds = rectMap(layout.tabs[index]);
+        for (auto field = bounds.cbegin(); field != bounds.cend(); ++field) entry.insert(field.key(), field.value());
         tabs.push_back(entry);
     }
     chatUi.insert(QStringLiteral("tabs"), tabs);

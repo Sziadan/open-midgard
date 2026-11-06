@@ -1,0 +1,59 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0049e491 <.text+0x9d491>:
+  49e491:	8b 45 10             	mov    0x10(%ebp),%eax
+  49e494:	83 e8 02             	sub    $0x2,%eax
+  49e497:	0f 85 42 02 00 00    	jne    0x49e6df
+  49e49d:	a0 94 89 76 00       	mov    0x768994,%al
+  49e4a2:	84 c0                	test   %al,%al
+  49e4a4:	0f 84 35 02 00 00    	je     0x49e6df
+  49e4aa:	8b 8b b0 00 00 00    	mov    0xb0(%ebx),%ecx
+  49e4b0:	8b 45 18             	mov    0x18(%ebp),%eax
+  49e4b3:	83 c1 38             	add    $0x38,%ecx
+  49e4b6:	3b c1                	cmp    %ecx,%eax
+  49e4b8:	7c 49                	jl     0x49e503
+  49e4ba:	2b c1                	sub    %ecx,%eax
+  49e4bc:	8b c8                	mov    %eax,%ecx
+  49e4be:	b8 93 24 49 92       	mov    $0x92492493,%eax
+  49e4c3:	f7 e9                	imul   %ecx
+  49e4c5:	03 d1                	add    %ecx,%edx
+  49e4c7:	c1 fa 03             	sar    $0x3,%edx
+  49e4ca:	8b c2                	mov    %edx,%eax
+  49e4cc:	c1 e8 1f             	shr    $0x1f,%eax
+  49e4cf:	8d 44 02 01          	lea    0x1(%edx,%eax,1),%eax
+  49e4d3:	83 f8 0f             	cmp    $0xf,%eax
+  49e4d6:	7e 05                	jle    0x49e4dd
+  49e4d8:	b8 0f 00 00 00       	mov    $0xf,%eax
+  49e4dd:	39 43 30             	cmp    %eax,0x30(%ebx)
+  49e4e0:	0f 84 f9 01 00 00    	je     0x49e6df
+  49e4e6:	50                   	push   %eax
+  49e4e7:	8b cb                	mov    %ebx,%ecx
+  49e4e9:	e8 92 e5 ff ff       	call   0x49ca80
+  49e4ee:	5f                   	pop    %edi
+  49e4ef:	5e                   	pop    %esi
+  49e4f0:	33 c0                	xor    %eax,%eax
+  49e4f2:	5b                   	pop    %ebx
+  49e4f3:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  49e4f6:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  49e4fd:	8b e5                	mov    %ebp,%esp
+  49e4ff:	5d                   	pop    %ebp
+  49e500:	c2 18 00             	ret    $0x18
+  49e503:	8b 43 30             	mov    0x30(%ebx),%eax
+  49e506:	85 c0                	test   %eax,%eax
+  49e508:	0f 84 d1 01 00 00    	je     0x49e6df
+  49e50e:	6a 00                	push   $0x0
+  49e510:	8b cb                	mov    %ebx,%ecx
+  49e512:	e8 69 e5 ff ff       	call   0x49ca80
+  49e517:	5f                   	pop    %edi
+  49e518:	5e                   	pop    %esi
+  49e519:	33 c0                	xor    %eax,%eax
+  49e51b:	5b                   	pop    %ebx
+  49e51c:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  49e51f:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  49e526:	8b e5                	mov    %ebp,%esp
+  49e528:	5d                   	pop    %ebp
+  49e529:	c2 18 00             	ret    $0x18

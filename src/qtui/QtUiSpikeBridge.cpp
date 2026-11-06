@@ -1160,6 +1160,10 @@ public:
     void notifyWindowMessage(RoWindowMessage msg, RoWindowWParam wParam, RoWindowLParam lParam)
     {
         switch (msg) {
+        case WM_CAPTURECHANGED:
+        case WM_CANCELMODE:
+            if (g_windowMgr.m_chatWnd) g_windowMgr.m_chatWnd->CancelPointerCapture();
+            break;
         case WM_MOUSEMOVE:
             m_mouseX = GetLParamX(lParam);
             m_mouseY = GetLParamY(lParam);

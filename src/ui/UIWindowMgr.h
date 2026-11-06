@@ -233,6 +233,7 @@ public:
     int m_gronMsnWndShow;
     int m_gronMsgWndShow;
     int m_chatWndStatus;
+    bool m_chatWndStickOn = true;
     float m_miniMapZoomFactor;
     u32 m_miniMapArgb;
     int m_isDrawCompass;

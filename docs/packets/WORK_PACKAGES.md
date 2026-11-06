@@ -232,6 +232,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK09.18 [S]** Restore separate WID58 raw acquisition snapshots, source dummy sizing/full text/color/overflow and strict expiry; verify production pickup, native/Qt rendering, passive input, replacements, scaling and teardown while retaining full PK09.04. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.19 [S]** Restore complete source item-use effect/audio/message selection, actor duplicate replacement and auxiliary order, exact-AID cyan notices and basic recovery feedback; verify220 literal rows/all65536 IDs, production packets and native/Qt notices without closing full item/effect acceptance. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.20 [S]** Reconcile selected013D signed field and producer ordering against original PE; restore session-owned modulo recovery, zero/unknown feedback and independent UI maxima, with active source-derived units, production replay and actual native/Qt proof while retaining full item acceptance. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.21 [S]** Restore source chat states, sticky save/restore, manager mini/detached-history ownership and explicit stream routing through shared native/Qt lifecycle/render acceptance. [Strong-agent card](work-items/PK09.21.md). IN_PROGRESS; helpers alone do not complete it. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 

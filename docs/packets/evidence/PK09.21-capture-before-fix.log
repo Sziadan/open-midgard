@@ -1,0 +1,13 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 3: packet_chat_state_checks
+1/1 Test #3: packet_chat_state_checks .........***Failed    0.12 sec
+{"case_id":"chat_window_state","stage":"PK09.21","fixture_id":"primary-ui-state-messages","production_entry":"managed chat messages -> source state/anchor/capture -> shared Qt rectangles","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"69fff9674ccb77dfb1adbdf19c888f38b6eb9465","source_tree_status_at_configure":"dirty","invocation_count":0,"expected_packet_hex":null,"actual_packet_hex":null,"expected_queue_remainder":null,"actual_queue_remainder":null,"outcome":"FAIL","error":"Qt captured chat frame accepted a source state change"}
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   0.13 sec
+
+The following tests FAILED:
+	  3 - packet_chat_state_checks (Failed)
+Errors while running CTest

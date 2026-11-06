@@ -178,6 +178,7 @@ template<class Window> QImage Native(Window& window,QRgb expected,int width=Widt
 #include "ItemObtainRenderChecks.inc"
 #include "ItemUseFeedbackRenderChecks.inc"
 #include "RecoveryDeltaRenderChecks.inc"
+#include "ChatWindowStateRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -204,6 +205,7 @@ int main(int argc,char** argv) {
         const bool itemCardDetail=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail";
         const bool itemCardDetailChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail-child";
         const bool recoveryDelta=argc>2 && QString::fromLocal8Bit(argv[2])=="recovery-delta";
+        const bool chatState=argc>2 && QString::fromLocal8Bit(argv[2])=="chat-state";
         const bool itemUseFeedback=argc>2 && QString::fromLocal8Bit(argv[2])=="item-use-feedback";
         const bool itemObtain=argc>2 && QString::fromLocal8Bit(argv[2])=="item-obtain";
         const bool inventoryMutations=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-mutations";
@@ -313,7 +315,7 @@ int main(int argc,char** argv) {
         QQuickView view;view.setColor(QColor("#181b20"));view.resize(Width,Height);view.setResizeMode(QQuickView::SizeRootObjectToView);
         if(itemGeometryChild)view.resize(QString::fromLocal8Bit(argv[3])=="small"?640:1280,QString::fromLocal8Bit(argv[3])=="small"?480:720);
         if(itemDetailGeometryChild || itemCardDetailChild || inventoryShowChild)view.resize(1280,720);
-        if(inventoryMutations || itemObtain || itemUseFeedback || recoveryDelta)view.resize(1280,720);
+        if(inventoryMutations || itemObtain || itemUseFeedback || recoveryDelta || chatState)view.resize(1280,720);
         view.rootContext()->setContextProperty("uiState",adapter.stateObject());
         view.engine()->addImageProvider("openmidgard",new FixtureImages(itemObtain));
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
@@ -366,6 +368,13 @@ int main(int argc,char** argv) {
             view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
             SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
             std::cout<<"PASS NPC shop detail snapshot rendering\n";return 0;
+        }
+        if(chatState) {
+            CheckChatWindowStateUi(app,view,state,mode,adapter,output);
+            Require(errors==0,"chat state UI emitted QML warnings/errors");
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS chat state native/Qt geometry and history pixels, zero QML errors\n";return 0;
         }
         if(recoveryDelta) {
             CheckRecoveryDeltaUi(app,view,state,mode,inventory,adapter,output);
