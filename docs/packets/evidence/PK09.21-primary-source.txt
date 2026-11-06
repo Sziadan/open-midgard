@@ -1,0 +1,417 @@
+=== Ref/UIControl2.cpp:4010-4073 ===
+4010: // Original Signature: public: virtual void __thiscall UIChatHisBox::AddItem(char const *,unsigned long,char const *)
+4011: // Decompiled from address: 0x44e040
+4012: // ================================================
+4013: void __thiscall UIChatHisBox::AddItem(UIChatHisBox *this, const char *txt, unsigned int itemRGB, const char *name)
+4014: {
+4015:   std::string *First; // eax
+4016:   int v6; // ecx
+4017:   std::string *v7; // ecx
+4018:   unsigned int v8; // eax
+4019:   const char *v9; // esi
+4020:   const char *v10; // edi
+4021:   std::string *Last; // eax
+4022:   const char *v12; // esi
+4023:   std::string *v13; // eax
+4024:   std::string *v14; // eax
+4025:   int TextWidth; // eax
+4026:   const char *v16; // eax
+4027:   std::string *v17; // eax
+4028:   int v18; // edi
+4029:   UIScrollBar *m_vertScrollBar; // edx
+4030:   int v20; // ecx
+4031:   std::string v21; // [esp+8h] [ebp-30h] BYREF
+4032:   std::string _X; // [esp+18h] [ebp-20h] BYREF
+4033:   unsigned __int8 isBottomLine; // [esp+2Bh] [ebp-Dh]
+4034:   int v24; // [esp+34h] [ebp-4h]
+4035:
+4036:   isBottomLine = 0;
+4037:   if ( !this->m_vertScrEnabled
+4038:     || ((First = this->m_items._First) != 0 ? (v6 = this->m_items._Last - First) : (v6 = 0),
+4039:         this->m_vertViewOffset == v6 + this->m_horzScrEnabled - this->m_h / this->m_itemSpacing) )
+4040:   {
+4041:     isBottomLine = 1;
+4042:   }
+4043:   v7 = this->m_items._First;
+4044:   if ( v7 )
+4045:     v8 = this->m_items._Last - v7;
+4046:   else
+4047:     v8 = 0;
+4048:   if ( v8 >= this->m_maxItem )
+4049:     UIChatHisBox::DeleteFirstHalfItem(this);
+4050:   v9 = name;
+4051:   if ( name )
+4052:   {
+4053:     _X.allocator = (std::allocator<char>)HIBYTE(name);
+4054:     std::string::_Tidy(&_X, 0);
+4055:     v10 = (const char *)strlen(v9);
+4056:     name = v10;
+4057:     if ( std::string::_Grow(&_X, (unsigned int)v10, 1u) )
+4058:     {
+4059:       qmemcpy(_X._Ptr, v9, (unsigned int)v10);
+4060:       std::string::_Eos(&_X, (unsigned int)v10);
+4061:     }
+4062:     Last = this->m_talkerNameList._Last;
+4063:     v24 = 0;
+4064:     std::vector<std::string>::insert(&this->m_talkerNameList, Last, 1u, &_X);
+4065:     v24 = -1;
+4066:     std::string::_Tidy(&_X, 1u);
+4067:   }
+4068:   else
+4069:   {
+4070:     _X.allocator = 0;
+4071:     std::string::_Tidy(&_X, 0);
+4072:     v12 = (const char *)strlen(&Buf);
+4073:     name = v12;
+=== Ref/UIControl2.cpp:4348-4376 ===
+4348: // Original Signature: public: virtual void __thiscall UIChatHisBox::OnLBtnDblClk(int,int)
+4349: // Decompiled from address: 0x44e470
+4350: // ================================================
+4351: void __thiscall UIChatHisBox::OnLBtnDblClk(UIChatHisBox *this, int x, int y)
+4352: {
+4353:   int m_curItem; // eax
+4354:   std::string *First; // esi
+4355:   std::string *v5; // edx
+4356:   std::string *v6; // eax
+4357:   const char *Ptr; // eax
+4358:   const char *v8; // edx
+4359:
+4360:   m_curItem = this->m_curItem;
+4361:   if ( m_curItem != -1 )
+4362:   {
+4363:     First = this->m_talkerNameList._First;
+4364:     v5 = &First[m_curItem];
+4365:     if ( v5->_Len )
+4366:     {
+4367:       if ( v5->_Ptr || `std::string::_Nullstr'::`2'::_C )
+4368:       {
+4369:         v6 = &First[m_curItem];
+4370:         if ( v6->_Len )
+4371:         {
+4372:           Ptr = v6->_Ptr;
+4373:           if ( Ptr )
+4374:             v8 = Ptr;
+4375:           else
+4376:             v8 = `std::string::_Nullstr'::`2'::_C;
+=== Ref/UIControl2.cpp:4423-4488 ===
+4423: // Original Signature: public: virtual void __thiscall UIChatHisBox::Resize(int,int)
+4424: // Decompiled from address: 0x44dbb0
+4425: // ================================================
+4426: void __thiscall UIChatHisBox::Resize(UIChatHisBox *this, unsigned int cx, int cy)
+4427: {
+4428:   int v4; // edi
+4429:   std::string *First; // eax
+4430:   int v6; // ecx
+4431:   int v7; // eax
+4432:   UIScrollBar *m_vertScrollBar; // ecx
+4433:   UIScrollBar *v9; // ecx
+4434:
+4435:   UIWindow::Resize(this, cx, cy);
+4436:   this->m_vertScrollBar->UIWindow::Resize(this->m_vertScrollBar, 12, cy);
+4437:   v4 = cx - 13;
+4438:   this->m_vertScrollBar->UIWindow::Move(this->m_vertScrollBar, cx - 13, 0);
+4439:   this->m_horzScrollBar->UIWindow::Resize(this->m_horzScrollBar, cx - 13, 12);
+4440:   this->m_horzScrollBar->UIWindow::Move(this->m_horzScrollBar, 0, cy - 13);
+4441:   this->UIListBox::RecalcScrbarPos(this);
+4442:   if ( this->m_vertScrEnabled )
+4443:   {
+4444:     First = this->m_items._First;
+4445:     if ( First )
+4446:       v6 = this->m_items._Last - First;
+4447:     else
+4448:       v6 = 0;
+4449:     v7 = this->m_horzScrEnabled - this->m_h / this->m_itemSpacing + v6;
+4450:     m_vertScrollBar = this->m_vertScrollBar;
+4451:     this->m_vertViewOffset = v7;
+4452:     m_vertScrollBar->m_curPos = v7;
+4453:     this->m_vertScrollBar->UIWindow::Move(this->m_vertScrollBar, v4, 0);
+4454:     this->m_vertScrollBar->UIWindow::Invalidate(this->m_vertScrollBar);
+4455:   }
+4456:   else
+4457:   {
+4458:     v9 = this->m_vertScrollBar;
+4459:     this->m_vertViewOffset = 0;
+4460:     v9->m_curPos = 0;
+4461:     this->m_vertScrollBar->UIWindow::Move(this->m_vertScrollBar, v4, 0);
+4462:   }
+4463: }
+4464:
+4465:
+4466: // ================================================
+4467: // Original Signature: public: virtual void __thiscall UIChatHisBox::SetShow(int)
+4468: // Decompiled from address: 0x44dc80
+4469: // ================================================
+4470: void __thiscall UIChatHisBox::SetShow(UIChatHisBox *this, int visible)
+4471: {
+4472:   this->m_show = visible;
+4473:   if ( visible )
+4474:     this->UIWindow::Invalidate(this);
+4475: }
+4476:
+4477:
+4478: // ================================================
+4479: // Original Signature: public: virtual void __thiscall UIComboBox::Create2(int,int,int,int,bool)
+4480: // Decompiled from address: 0x44cdf0
+4481: // ================================================
+4482: void __thiscall UIComboBox::Create2(UIComboBox *this, int x, int y, int cx, int cy, unsigned __int8 trans)
+4483: {
+4484:   this->m_isTransParent = trans;
+4485:   UIWindow::Resize(this, cx, cy);
+4486:   this->UIWindow::Move(this, x, y);
+4487:   this->UIWindow::OnCreate(this, cx, cy);
+4488:   this->UIWindow::OnSize(this, cx, cy);
+=== Ref/UIControl2.cpp:7749-7810 ===
+7749: // Original Signature: public: void __thiscall UIChatHisBox::AddItem2(char const *,unsigned long,char const *)
+7750: // Decompiled from address: 0x44e2d0
+7751: // ================================================
+7752: void __thiscall UIChatHisBox::AddItem2(UIChatHisBox *this, const char *txt, unsigned int itemRGB, const char *name)
+7753: {
+7754:   UIScrollBar *m_vertScrollBar; // edx
+7755:   int m_w; // eax
+7756:   int v6; // esi
+7757:   std::string *First; // eax
+7758:   const char *v8; // edi
+7759:   size_t v9; // kr04_4
+7760:   char *v10; // edx
+7761:   const char *v11; // eax
+7762:   UIChatHisBox *v12; // ecx
+7763:   std::string *Last; // esi
+7764:   char **p_Ptr; // edi
+7765:   char *v15; // eax
+7766:   char *v16; // ecx
+7767:   char v17; // al
+7768:   std::vector<std::string> strings; // [esp+Ch] [ebp-24h] BYREF
+7769:   UIChatHisBox *v19; // [esp+1Ch] [ebp-14h]
+7770:   int j; // [esp+20h] [ebp-10h]
+7771:   int v21; // [esp+2Ch] [ebp-4h]
+7772:   unsigned int i; // [esp+38h] [ebp+8h]
+7773:
+7774:   v19 = this;
+7775:   strings.allocator = (std::allocator<std::string >)HIBYTE(txt);
+7776:   memset(&strings._First, 0, 12);
+7777:   m_vertScrollBar = this->m_vertScrollBar;
+7778:   m_w = this->m_w;
+7779:   v21 = 0;
+7780:   if ( m_vertScrollBar )
+7781:     m_w -= 16;
+7782:   UIWindow::PolishText4(this, txt, &strings, m_w);
+7783:   v6 = 0;
+7784:   i = 0;
+7785:   for ( j = 0; ; v6 = j )
+7786:   {
+7787:     First = strings._First;
+7788:     if ( !strings._First || i >= strings._Last - strings._First )
+7789:       break;
+7790:     v8 = `std::string::_Nullstr'::`2'::_C;
+7791:     if ( *(char **)((char *)&strings._First->_Ptr + v6) )
+7792:       v8 = *(char **)((char *)&strings._First->_Ptr + v6);
+7793:     v9 = strlen(v8) + 1;
+7794:     v10 = (char *)operator new(v9);
+7795:     v11 = *(char **)((char *)&strings._First->_Ptr + v6);
+7796:     if ( !v11 )
+7797:       v11 = `std::string::_Nullstr'::`2'::_C;
+7798:     strcpy(v10, v11);
+7799:     v12 = v19;
+7800:     v10[v9 - 1] = 0;
+7801:     v12->UIChatHisBox::AddItem(v12, v10, itemRGB, name);
+7802:     ++i;
+7803:     j += 16;
+7804:   }
+7805:   Last = strings._Last;
+7806:   if ( strings._First != strings._Last )
+7807:   {
+7808:     p_Ptr = &strings._First->_Ptr;
+7809:     do
+7810:     {
+=== Ref/UIControl2.cpp:7834-7865 ===
+7834: // Original Signature: public: void __thiscall UIChatHisBox::DeleteFirstHalfItem(void)
+7835: // Decompiled from address: 0x44dca0
+7836: // ================================================
+7837: void __thiscall UIChatHisBox::DeleteFirstHalfItem(UIChatHisBox *this)
+7838: {
+7839:   std::string *First; // eax
+7840:   unsigned int v2; // edi
+7841:   unsigned int v3; // edi
+7842:   int v4; // ebx
+7843:   unsigned int v5; // esi
+7844:   unsigned int v6; // eax
+7845:   std::vector<std::string> *p_m_items; // esi
+7846:   std::string *v8; // ecx
+7847:   std::string *Last; // ebx
+7848:   unsigned int v10; // eax
+7849:   std::vector<unsigned long> *p_m_itemColors; // edi
+7850:   unsigned int *v12; // eax
+7851:   unsigned int v13; // esi
+7852:   unsigned int v14; // esi
+7853:   signed int v15; // eax
+7854:   int v16; // edx
+7855:   unsigned int *v17; // ecx
+7856:   unsigned int v18; // eax
+7857:   unsigned int *v19; // ebx
+7858:   unsigned int v20; // eax
+7859:   std::string *v21; // ecx
+7860:   unsigned int v22; // ebx
+7861:   unsigned int v23; // ebx
+7862:   unsigned int v24; // eax
+7863:   int v25; // edi
+7864:   int v26; // esi
+7865:   std::vector<std::string> *p_m_talkerNameList; // ecx
+=== Ref/UIFrameWnd3.cpp:1704-1725 ===
+1704: UINewChatWnd *__thiscall UINewChatWnd::UINewChatWnd(UINewChatWnd *this)
+1705: {
+1706:   UINewChatWnd *result; // eax
+1707:
+1708:   UIFrameWnd::UIFrameWnd(this);
+1709:   this->__vftable = (UINewChatWnd_vtbl *)&UINewChatWnd::`vftable';
+1710:   this->m_commonChat = 0;
+1711:   this->m_whisperChat = 0;
+1712:   this->m_lastFocusChat = 0;
+1713:   this->m_resizer = 0;
+1714:   this->m_listBox = 0;
+1715:   this->m_cmdListBox = 0;
+1716:   this->m_state = 0;
+1717:   this->m_comboMode = 0;
+1718:   this->m_tab = 0;
+1719:   this->m_saveState = 0;
+1720:   this->m_titleHeight = 16;
+1721:   this->m_titleWidth = 71;
+1722:   this->m_chatEditHeight = 24;
+1723:   this->m_colorTab1 = 1711276032;
+1724:   this->m_colorTab2 = -1728053248;
+1725:   switch ( g_serviceType )
+=== Ref/UIFrameWnd3.cpp:6618-6648 ===
+6618: // Decompiled from address: 0x49c900
+6619: // ================================================
+6620: void __thiscall UINewChatWnd::OnLBtnDown(UINewChatWnd *this, int x, int y)
+6621: {
+6622:   int m_tab; // esi
+6623:   int m_titleWidth; // edx
+6624:
+6625:   if ( y <= 0 || y >= 21 )
+6626:   {
+6627:     UIFrameWnd::OnLBtnDown(this, x, y);
+6628:   }
+6629:   else
+6630:   {
+6631:     m_tab = this->m_tab;
+6632:     if ( x > 0 && x < this->m_titleWidth - 1 && m_tab )
+6633:     {
+6634:       this->m_tab = 0;
+6635:     }
+6636:     else
+6637:     {
+6638:       m_titleWidth = this->m_titleWidth;
+6639:       if ( x > m_titleWidth + 1 && x < 2 * m_titleWidth - 1 && m_tab != 1 )
+6640:         this->m_tab = 1;
+6641:     }
+6642:     if ( m_tab != this->m_tab )
+6643:       UINewChatWnd::ChangeTab(this);
+6644:   }
+6645: }
+6646:
+6647:
+6648: // ================================================
+=== Ref/UIFrameWnd3.cpp:9647-9690 ===
+9647: // Original Signature: public: void __thiscall UINewChatWnd::ChangeTab(void)
+9648: // Decompiled from address: 0x49e8c0
+9649: // ================================================
+9650: void __thiscall UINewChatWnd::ChangeTab(UINewChatWnd *this)
+9651: {
+9652:   int m_tab; // eax
+9653:   UIChatHisBox *m_cmdListBox; // eax
+9654:   UIChatHisBox *m_listBox; // ecx
+9655:   UIChatHisBox *v5; // ecx
+9656:   UIChatHisBox *v6; // eax
+9657:   UIChatHisBox *v7; // ecx
+9658:
+9659:   m_tab = this->m_tab;
+9660:   if ( !m_tab )
+9661:   {
+9662:     m_cmdListBox = this->m_cmdListBox;
+9663:     m_listBox = this->m_listBox;
+9664:     this->m_colorTab1 = 1711276032;
+9665:     this->m_colorTab2 = -1728053248;
+9666:     m_listBox->UIWindow::Resize(m_listBox, m_cmdListBox->m_w, m_cmdListBox->m_h);
+9667:     this->m_listBox->UIWindow::Move(this->m_listBox, this->m_cmdListBox->m_x, this->m_cmdListBox->m_y);
+9668:     v5 = this->m_cmdListBox;
+9669: LABEL_5:
+9670:     v5->UIWindow::Move(v5, -100 - this->m_w, -100);
+9671:     goto LABEL_6;
+9672:   }
+9673:   if ( m_tab == 1 )
+9674:   {
+9675:     v6 = this->m_listBox;
+9676:     v7 = this->m_cmdListBox;
+9677:     this->m_colorTab1 = -1728053248;
+9678:     this->m_colorTab2 = 1711276032;
+9679:     v7->UIWindow::Resize(v7, v6->m_w, v6->m_h);
+9680:     this->m_cmdListBox->UIWindow::Move(this->m_cmdListBox, this->m_listBox->m_x, this->m_listBox->m_y);
+9681:     v5 = this->m_listBox;
+9682:     goto LABEL_5;
+9683:   }
+9684: LABEL_6:
+9685:   this->UIWindow::Invalidate(this);
+9686: }
+9687:
+9688:
+9689: // ================================================
+9690: // Original Signature: public: void __thiscall UINewChatWnd::SetState(int)
+=== Ref/GameMode.cpp:12855-12912 ===
+12855: // ================================================
+12856: void __thiscall CGameMode::MakePotionEffect(CGameMode *this, int itemId, unsigned int aid)
+12857: {
+12858:   CPlayer *m_player; // ebx
+12859:   const char *v4; // eax
+12860:   const char *v5; // eax
+12861:   const char *v6; // eax
+12862:   int v7; // edi
+12863:   vector3d v8[2]; // [esp-10h] [ebp-128h] BYREF
+12864:   char msg[256]; // [esp+Ch] [ebp-10Ch] BYREF
+12865:   int v10; // [esp+10Ch] [ebp-Ch]
+12866:   int v11; // [esp+110h] [ebp-8h]
+12867:   int v12; // [esp+114h] [ebp-4h]
+12868:
+12869:   if ( aid == g_session.m_aid )
+12870:   {
+12871:     m_player = this->m_world->m_player;
+12872:     if ( !m_player )
+12873:       return;
+12874:     if ( itemId > 14532 )
+12875:     {
+12876:       if ( itemId == 14533 )
+12877:       {
+12878:         v4 = MsgStr(MSI_PLUSEXP14533);
+12879: LABEL_8:
+12880:         sprintf(msg, v4);
+12881:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)msg, 16776960, 7, 0);
+12882:       }
+12883:     }
+12884:     else
+12885:     {
+12886:       switch ( itemId )
+12887:       {
+12888:         case 14532:
+12889:           v6 = MsgStr(MSI_PLUSEXP14532);
+12890:           sprintf(msg, v6);
+12891:           UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)msg, 16776960, 7, 0);
+12892:           break;
+12893:         case 12208:
+12894:           v5 = MsgStr(MSI_PLUSEXP);
+12895:           sprintf(msg, v5);
+12896:           UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)msg, 16776960, 7, 0);
+12897:           break;
+12898:         case 12312:
+12899:           v4 = MsgStr(MSI_PLUSEXP12312);
+12900:           goto LABEL_8;
+12901:         default:
+12902:           break;
+12903:       }
+12904:     }
+12905:   }
+12906:   else
+12907:   {
+12908:     m_player = (CPlayer *)CWorld::GetGameActorByAID(this->m_world, aid);
+12909:   }
+12910:   if ( !m_player )
+12911:     return;
+12912:   v7 = -1;

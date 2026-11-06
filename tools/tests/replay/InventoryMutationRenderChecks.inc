@@ -71,40 +71,49 @@ void CheckInventoryMutationUi(QGuiApplication& app,QQuickView& view,QtUiState* u
         Hover(inventory);const QImage native=Native(inventory,0xffffffffu,view.width(),view.height());
         Require(native.save(output+"/inventory-mutation-"+stem+".native.png"),"save inventory mutation native frame failed");++frames;
     };
-    const auto checkNotice=[&](const QString& expected,int channel) {
+    const auto checkNotice=[&](const QString& expected,ro::chat::NoticeType type,bool command) {
         const auto& events=g_windowMgr.GetChatEvents();bool sourceFound=false;
         for(const auto& event:events)if(QString::fromUtf8(event.text.c_str()).contains(expected)
-            &&event.channel==channel&&(event.color&0x00ffffffu)==0x00ff0000u)sourceFound=true;
+            &&event.source.route==ro::chat::NoticeRoute::Normal&&event.source.type==type
+            &&(event.color&0x00ffffffu)==0x00ff0000u)sourceFound=true;
         Require(sourceFound,"inventory acknowledgement failure notice missing or not red in chat source");
         Require(g_windowMgr.m_chatWnd!=nullptr,"inventory acknowledgement chat window was not created");
-        g_windowMgr.m_chatWnd->Resize(600,200);
-        g_windowMgr.m_chatWnd->Move(320,510);
-        g_windowMgr.m_chatWnd->SetWindowFocused(true);sync();
-        for(int i=0;i<g_windowMgr.m_chatWnd->GetTabCount();++i) {
-            ChatTabDisplay tab{};
-            if(g_windowMgr.m_chatWnd->GetTabDisplay(i,&tab)
-                &&(tab.channelMask&(u32(1)<<channel))
-                &&(channel!=6||QString::fromUtf8(tab.label).contains("Info",Qt::CaseInsensitive))) {
-                QQuickItem* target=nullptr;
-                std::function<void(QQuickItem*)> findTab=[&](QQuickItem* item) {
-                    if(item->property("label").toString()==QString::fromUtf8(tab.label)
-                        &&item->metaObject()->indexOfProperty("selected")>=0) target=item;
-                    for(auto* child:item->childItems())findTab(child);
-                };
-                auto* chatPanel=Find(view.rootObject(),"chatWindowPanel");
-                Require(chatPanel,"actual chat panel missing before selecting its tab");
-                findTab(chatPanel);Require(target&&target->isVisible(),"actual chat tab missing");
-                const QPointF p=target->mapToScene(QPointF(target->width()/2,target->height()/2));
-                Require(g_windowMgr.m_chatWnd->HandleQtMouseDown(qRound(p.x()),qRound(p.y())),
-                    "native bridge did not handle actual Qt chat tab");
-                g_windowMgr.m_chatWnd->HandleQtMouseUp(qRound(p.x()),qRound(p.y()));break;
+        auto* chat=g_windowMgr.m_chatWnd;
+        chat->SetState(7);chat->Resize(600,200);chat->Move(320,510);chat->SetWindowFocused(true);
+        const int tabIndex=command?1:0;
+        ChatTabDisplay tab{};Require(chat->GetTabDisplay(tabIndex,&tab)
+            &&tab.id==tabIndex&&QString::fromUtf8(tab.label)==(command?"BT":"ST"),
+            "actual ST/BT source tab metadata differs");
+        const auto layout=chat->GetLayoutDisplay();
+        Require(layout.tabs[tabIndex].right>layout.tabs[tabIndex].left,
+            "native source tab geometry is empty");
+        chat->SelectSourceTab(tabIndex);
+        Require(chat->GetSourceTab()==tabIndex&&chat->GetTabDisplay(tabIndex,&tab)&&tab.active!=0,
+            "native source tab selection failed");
+        sync();
+        const auto& sourceRows=chat->GetSourceHistory(command);
+        bool nativeRow=false;
+        for(const auto& row:sourceRows)if(QString::fromUtf8(row.text.c_str()).contains(expected)
+            &&row.color==0x00ff0000u)nativeRow=true;
+        Require(nativeRow,"selected native source history omitted red inventory failure notice");
+        const auto projected=uiState->chatWindowLines();bool qmlRow=false;
+        for(int i=0;i<projected.size();++i) {
+            const auto item=projected[i].toMap();
+            if(item.value("text").toString().contains(expected)) {
+                auto* row=Find(view.rootObject(),QString("sourceChatRow%1").arg(i));
+                qmlRow=row&&row->isVisible()&&row->property("text").toString().contains(expected);
+                if(qmlRow) {
+                    const auto pos=row->mapToScene(QPointF(0,0));
+                    qmlRow=qRound(pos.y())==chat->m_y+layout.history.top+3+i*14;
+                }
             }
         }
-        sync();
-        auto* history=Find(view.rootObject(),"chatHistoryEditor");
-        Require(history&&history->isVisible()&&history->property("text").toString().contains(expected),
-            "actual RoChatContent history editor did not render inventory failure notice");
+        Require(qmlRow,"actual sourceChatRow Text did not render inventory failure notice");
         auto* pane=Find(view.rootObject(),"chatHistoryPane");Require(pane,"actual chat viewport missing");
+        const QRect expectedPane(chat->m_x+layout.history.left,chat->m_y+layout.history.top,
+            layout.history.right-layout.history.left,layout.history.bottom-layout.history.top);
+        Require(pane->isVisible()&&pane->mapRectToScene(pane->boundingRect()).toAlignedRect()==expectedPane,
+            "actual source-history viewport geometry diverged from native layout");
         const QRect visible=pane->mapRectToScene(pane->boundingRect()).toAlignedRect()
             .intersected(QRect(0,0,view.width(),view.height()));
         const auto image=view.grabWindow().convertToFormat(QImage::Format_RGB32);
@@ -114,7 +123,7 @@ void CheckInventoryMutationUi(QGuiApplication& app,QQuickView& view,QtUiState* u
             if(c.red()>150&&c.green()<90&&c.blue()<90)++red;
         }
         Require(red>20,"actual Qt notice did not paint red inside the visible chat viewport");
-        Require(image.save(output+QString("/inventory-mutation-notice-%1.qml.png").arg(channel)),
+        Require(image.save(output+QString("/inventory-mutation-notice-%1.qml.png").arg(tabIndex)),
             "save visible acknowledgement notice failed");++frames;
     };
     Require(hasQuantity(detailData.detailLines,5),"initial bound detail quantity is not five");
@@ -128,7 +137,10 @@ void CheckInventoryMutationUi(QGuiApplication& app,QQuickView& view,QtUiState* u
 
     auto pickupFailure=std::vector<u8>(29,0);pickupFailure[0]=0xd4;pickupFailure[1]=2;pickupFailure[22]=2;
     mode.m_pickupReqItemNaidList={0x12345678};mode.m_lastPickupRequestTick=77;
-    Dispatch(mode,pickupFailure);sync();checkNotice(QStringLiteral("You cannot carry more items because you are overweight."),0);
+    g_windowMgr.EnsureChatWindowVisible();
+    Require(g_windowMgr.m_chatWnd!=nullptr,"pickup acknowledgement main chat window was not created");
+    g_windowMgr.m_chatWnd->SetState(7);
+    Dispatch(mode,pickupFailure);sync();checkNotice(QStringLiteral("You cannot carry more items because you are overweight."),ro::chat::NoticeType::None,false);
     cases.push_back(QJsonObject{{"case","02D4 failure renders the red overweight notice in actual Qt chat"},{"outcome","PASS"}});
 
     // Same-index expanded pickup adds two while retaining the original row metadata.
@@ -183,7 +195,7 @@ void CheckInventoryMutationUi(QGuiApplication& app,QQuickView& view,QtUiState* u
     Require(equipment,"local equipment window did not open");equipment->Move(640,100);sync();
     auto equipFail=std::vector<u8>{0xaa,0,0x23,1,2,0,2};Dispatch(mode,equipFail);sync();
     auto* knife=g_session.GetInventoryItemByIndex(291);Require(knife&&knife->m_wearLocation==0,"failed equip ack changed wear state");
-    g_windowMgr.EnsureChatWindowVisible();sync();checkNotice(QStringLiteral("You can't put this item on."),6);
+    g_windowMgr.EnsureChatWindowVisible();sync();checkNotice(QStringLiteral("You can't put this item on."),ro::chat::NoticeType::Equip,true);
     auto equipOk=equipFail;equipOk[6]=1;Dispatch(mode,equipOk);sync();
     knife=g_session.GetInventoryItemByIndex(291);Require(knife&&knife->m_wearLocation==2,"successful equip ack did not set wear mask");
     const auto wearRow=[&]()->QVariantMap {for(const auto& v:uiState->commerceData().value("inventoryItems").toList())if(v.toMap().value("index").toUInt()==291)return v.toMap();return {};};

@@ -1,0 +1,22 @@
+{
+  "docs/packets/evidence/PK09.21-primary-before-alpha.native.png": {
+    "crop": [
+      27,
+      79,
+      604,
+      306
+    ],
+    "max_channel": 201,
+    "pixels_above_170": 4841
+  },
+  "build-mingw-preset/packet-chat-state-renders/chat-primary-oldest.native.png": {
+    "crop": [
+      27,
+      79,
+      604,
+      306
+    ],
+    "max_channel": 170,
+    "pixels_above_170": 0
+  }
+}

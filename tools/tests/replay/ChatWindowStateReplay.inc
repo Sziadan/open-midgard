@@ -69,7 +69,7 @@ void ChatWindowStateReplay()
     chat->CancelPointerCapture();
     Require(g_windowMgr.m_captureWindow == nullptr, "cancelled native chat capture retained manager pointer");
     const auto gap = chat->GetLayoutDisplay();
-    const int gapX = chat->m_x + gap.tabs[0].right + 2, gapY = chat->m_y + 8;
+    const int gapX = chat->m_x + 100, gapY = chat->m_y + chat->m_h - 24;
     Require(chat->HandleQtMouseDown(gapX, gapY) && chat->IsQtPointerCaptured(),
         "Qt chat frame did not acquire its own capture");
     chat->SendMsg(nullptr, 15, 0, 0, 0);

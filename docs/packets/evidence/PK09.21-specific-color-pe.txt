@@ -1,0 +1,58 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00503aa0 <.text+0x102aa0>:
+  503aa0:	55                   	push   %ebp
+  503aa1:	8b ec                	mov    %esp,%ebp
+  503aa3:	83 3d 14 c2 78 00 06 	cmpl   $0x6,0x78c214
+  503aaa:	75 3f                	jne    0x503aeb
+  503aac:	8b 45 08             	mov    0x8(%ebp),%eax
+  503aaf:	3d 7e bc 06 00       	cmp    $0x6bc7e,%eax
+  503ab4:	77 1b                	ja     0x503ad1
+  503ab6:	74 2c                	je     0x503ae4
+  503ab8:	05 5f 79 fe ff       	add    $0xfffe795f,%eax
+  503abd:	83 f8 4b             	cmp    $0x4b,%eax
+  503ac0:	77 29                	ja     0x503aeb
+  503ac2:	33 c9                	xor    %ecx,%ecx
+  503ac4:	8a 88 f8 3a 50 00    	mov    0x503af8(%eax),%cl
+  503aca:	ff 24 8d f0 3a 50 00 	jmp    *0x503af0(,%ecx,4)
+  503ad1:	2d 82 bc 06 00       	sub    $0x6bc82,%eax
+  503ad6:	74 0c                	je     0x503ae4
+  503ad8:	83 e8 0d             	sub    $0xd,%eax
+  503adb:	74 07                	je     0x503ae4
+  503add:	2d 5e 82 01 00       	sub    $0x1825e,%eax
+  503ae2:	75 07                	jne    0x503aeb
+  503ae4:	b8 ff 00 00 00       	mov    $0xff,%eax
+  503ae9:	5d                   	pop    %ebp
+  503aea:	c3                   	ret
+  503aeb:	33 c0                	xor    %eax,%eax
+  503aed:	5d                   	pop    %ebp
+  503aee:	c3                   	ret
+  503aef:	90                   	nop
+  503af0:	e4 3a                	in     $0x3a,%al
+  503af2:	50                   	push   %eax
+  503af3:	00 eb                	add    %ch,%bl
+  503af5:	3a 50 00             	cmp    0x0(%eax),%dl
+  503af8:	00 01                	add    %al,(%ecx)
+  503afa:	01 01                	add    %eax,(%ecx)
+  503afc:	01 01                	add    %eax,(%ecx)
+  503afe:	01 01                	add    %eax,(%ecx)
+  503b00:	01 01                	add    %eax,(%ecx)
+  503b02:	01 01                	add    %eax,(%ecx)
+  503b04:	01 01                	add    %eax,(%ecx)
+  503b06:	01 01                	add    %eax,(%ecx)
+  503b08:	01 01                	add    %eax,(%ecx)
+  503b0a:	01 01                	add    %eax,(%ecx)
+  503b0c:	01 01                	add    %eax,(%ecx)
+  503b0e:	01 01                	add    %eax,(%ecx)
+  503b10:	01 01                	add    %eax,(%ecx)
+  503b12:	01 01                	add    %eax,(%ecx)
+  503b14:	01 01                	add    %eax,(%ecx)
+  503b16:	01 01                	add    %eax,(%ecx)
+  503b18:	01 01                	add    %eax,(%ecx)
+  503b1a:	01 01                	add    %eax,(%ecx)
+  503b1c:	01 01                	add    %eax,(%ecx)
+  503b1e:	01 01                	add    %eax,(%ecx)

@@ -342,6 +342,12 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_executable(chat_notice_checks tools/tests/ChatNoticeTests.cpp)
     target_compile_features(chat_notice_checks PRIVATE cxx_std_17)
     add_test(NAME chat_notice_checks COMMAND chat_notice_checks)
+    add_executable(chat_history_view_checks tools/tests/ChatHistoryViewTests.cpp)
+    target_compile_features(chat_history_view_checks PRIVATE cxx_std_17)
+    add_test(NAME chat_history_view_checks COMMAND chat_history_view_checks)
+    add_test(NAME packet_chat_primary_checks COMMAND packet_stream_replay_checks --chat-primary-only)
+    set_tests_properties(packet_chat_primary_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-primary-settings")
     set_tests_properties(packet_stream_replay_checks packet_corpse_lifecycle_checks PROPERTIES
         TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-replay-settings")

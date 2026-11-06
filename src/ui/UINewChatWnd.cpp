@@ -46,9 +46,9 @@ constexpr char kChatTabMaskPrefix[] = "TabMask";
 constexpr size_t kMaxChatLines = 50;
 constexpr int kChatWindowMargin = 12;
 constexpr int kChatDefaultWindowWidth = 600;
-constexpr int kChatLineHeight = 19;
+constexpr int kChatLineHeight = 14;
 constexpr int kChatPanelPadding = 10;
-constexpr int kChatMessageGap = 2;
+constexpr int kChatMessageGap = 0;
 constexpr int kChatDefaultWindowHeight = ro::chat::HeightForState(7);
 constexpr int kChatWindowMinWidth = 360;
 constexpr int kChatWindowMinHeight = 24;
@@ -58,7 +58,7 @@ constexpr int kChatScrollbarWidth = 8;
 constexpr int kChatScrollbarGap = 4;
 constexpr int kChatTabGap = 6;
 constexpr int kChatConfigPanelWidth = 336;
-constexpr int kChatConfigPanelHeight = 492;
+constexpr int kChatConfigPanelHeight = 280;
 constexpr int kChatConfigListWidth = 92;
 constexpr int kChatConfigButtonHeight = 28;
 constexpr int kChatConfigButtonGap = 8;
@@ -244,7 +244,7 @@ int MeasureWrappedTextHeightQt(const std::string& text, int width, int pixelSize
     return (std::max)(kChatLineHeight, bounds.height());
 }
 
-void DrawChatTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF color, bool wrap, int pixelSize)
+void DrawChatTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF color, bool wrap, int pixelSize, bool elide = true)
 {
     if (!hdc || rect.right <= rect.left || rect.bottom <= rect.top) {
         return;
@@ -254,13 +254,13 @@ void DrawChatTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF
     const int width = rect.right - rect.left;
     const int height = rect.bottom - rect.top;
     const QFont font = BuildChatUiFont(pixelSize);
-    if (!wrap) {
+    if (!wrap && elide) {
         const QFontMetrics metrics(font);
         label = metrics.elidedText(label, Qt::ElideRight, width);
     }
 
     std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
-    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32_Premultiplied);
     if (image.isNull()) {
         return;
     }
@@ -274,6 +274,7 @@ void DrawChatTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF
         ? (Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap)
         : (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextSingleLine);
     painter.drawText(QRect(0, 0, width, height), flags, label);
+    painter.end();
     AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
 }
 #endif
@@ -459,7 +460,7 @@ int GetChatResizeEdgesForPoint(const ChatLayoutRects& layout, int x, int y)
     return resizeEdges;
 }
 
-ChatLayoutRects BuildChatLayoutRects(int x, int y, int w, int h)
+ChatLayoutRects BuildChatLayoutRects(int x, int y, int w, int h, int titleWidth)
 {
     ChatLayoutRects rects{};
     rects.panel = { x, y, x + w, y + h };
@@ -468,15 +469,8 @@ ChatLayoutRects BuildChatLayoutRects(int x, int y, int w, int h)
     rects.header = {x + 5, y, x + w - 3, y + (expanded ? 16 : 0)};
     rects.gearButton = expanded ? RECT{x + w - 18, y + 1, x + w - 4, y + 15} : RECT{};
     rects.stickButton = expanded ? RECT{x + w - 36, y + 1, x + w - 22, y + 15} : RECT{};
-    const int tabsLeft = rects.header.left;
-    const int tabsRight = rects.stickButton.left - kChatTabGap;
-    const int availableTabWidth = (std::max)(0, tabsRight - tabsLeft - kChatTabGap * (kChatTabCount - 1));
-    const int tabWidth = availableTabWidth / kChatTabCount;
-    for (int index = 0; index < kChatTabCount; ++index) {
-        const int left = tabsLeft + index * (tabWidth + kChatTabGap);
-        rects.tabs[index] = expanded ? RECT{left, y + 1,
-            index + 1 == kChatTabCount ? tabsRight : left + tabWidth, y + 15} : RECT{};
-    }
+    rects.tabs[0] = expanded ? RECT{x + 1, y + 1, x + titleWidth - 1, y + 18} : RECT{};
+    rects.tabs[1] = expanded ? RECT{x + titleWidth + 2, y + 1, x + 2 * titleWidth - 1, y + 18} : RECT{};
     // Primary Create is600 wide, with90x16 whisper at6 and460x16 common
     // at110. Preserve those columns; the modern custom width scales the common
     // field while retaining the original30px right control band.
@@ -589,6 +583,7 @@ ChatLayoutRects BuildChatLayoutRects(int x, int y, int w, int h)
         rects.configPanel.right - 12,
         rects.configPanel.bottom - 12
     };
+    rects.resetButton = {};
     return rects;
 }
 
@@ -618,6 +613,8 @@ UINewChatWnd::UINewChatWnd()
       m_transparencyDragActive(0),
       m_tabChannelMasks{}
 {
+    m_sourceTitleWidth = (g_serviceType == ServiceAmerica || g_serviceType == ServicePhilippine
+        || g_serviceType == ServiceIndia) ? 110 : g_serviceType == ServiceFrance ? 90 : 71;
     ResetTabDefaults();
     int initialWidth = kChatDefaultWindowWidth;
     int initialHeight = kChatDefaultWindowHeight;
@@ -638,6 +635,7 @@ UINewChatWnd::UINewChatWnd()
         ClampChatWindowPosition(&savedX, &savedY, m_w, m_h);
         Move(savedX, savedY);
     }
+    if (m_expansionState != 0) m_sourceViews[0].Resize((m_h - 44) / 14, 0);
 }
 
 UINewChatWnd::~UINewChatWnd() = default;
@@ -735,14 +733,18 @@ bool UINewChatWnd::ReceiveSourceNotice(const char* text, u32 uiRgb, ro::chat::No
     for (const auto& segment : segments) {
         const auto append = [&](int kind, UISubChatHisWnd* detached) {
             auto& rows = m_sourceHistory[kind];
+            const int before = static_cast<int>(rows.size());
             if (rows.size() >= 240) rows.erase(rows.begin(), rows.begin() + rows.size() / 2);
             rows.push_back({segment, uiRgb, talker});
+            m_sourceViews[kind].AfterAppend(before, static_cast<int>(rows.size()));
             // Original subwindow receives the UNSPLIT argument for every segment.
             if (detached) detached->Append(original.c_str(), uiRgb, talker.c_str());
         };
         if (normal) append(0, g_windowMgr.m_chatWnd == this ? g_windowMgr.m_subChatWndST : nullptr);
         if (command) append(1, g_windowMgr.m_chatWnd == this ? g_windowMgr.m_subChatWndBT : nullptr);
     }
+    RefreshVisibleLines(GetTickCount());
+    Invalidate();
     return !segments.empty();
 }
 
@@ -799,7 +801,7 @@ bool UINewChatWnd::IsQtInteractionPoint(int x, int y) const
         return false;
     }
 
-    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
     if (PointInRectXY(layout.panel, x, y) || GetChatResizeEdgesForPoint(layout, x, y) != ChatResizeEdge_None) {
         return true;
     }
@@ -812,13 +814,13 @@ bool UINewChatWnd::IsQtMainPanelPoint(int x, int y) const
         return false;
     }
 
-    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
     return PointInRectXY(layout.panel, x, y);
 }
 
 bool UINewChatWnd::IsQtPointerCaptured() const
 {
-    return m_dragArmed != 0 || m_isDragging != 0 || m_transparencyDragActive != 0;
+    return m_dragArmed != 0 || m_isDragging != 0 || m_transparencyDragActive != 0 || m_historyPointerDown || m_sourceScrollDragging;
 }
 
 void UINewChatWnd::ClearInputFocus()
@@ -839,9 +841,26 @@ const std::vector<ChatLine>& UINewChatWnd::GetVisibleLines() const
 std::vector<ChatLine> UINewChatWnd::GetFilteredLines() const
 {
     std::vector<ChatLine> result;
-    const u32 mask=m_tabChannelMasks[static_cast<size_t>(m_activeTab)];
-    for(const auto& line:m_lines)if(mask & ChatChannelBit(line.channel))result.push_back(line);
+    for (const auto& row : m_sourceHistory[m_sourceTab]) result.push_back({row.text, row.color, 0, 0, row.talker});
     return result;
+}
+
+void UINewChatWnd::SelectSourceTab(int tab)
+{
+    if (tab < 0 || tab > 1 || tab == m_sourceTab) return;
+    const int sourceRows = m_sourceViews[m_sourceTab].rows;
+    m_sourceTab = tab;
+    // ChangeTab calls the newly selected box's virtual Resize, which snaps to bottom.
+    m_sourceViews[tab].Resize(sourceRows, static_cast<int>(m_sourceHistory[tab].size()));
+    RefreshVisibleLines(GetTickCount());
+    Invalidate();
+}
+
+void UINewChatWnd::ScrollSourceHistory(int rows)
+{
+    m_sourceViews[m_sourceTab].Scroll(rows, static_cast<int>(m_sourceHistory[m_sourceTab].size()));
+    RefreshVisibleLines(GetTickCount());
+    Invalidate();
 }
 
 void UINewChatWnd::FocusQtInput(int field)
@@ -876,16 +895,9 @@ const std::vector<std::string>& UINewChatWnd::GetInputHistory() const
 ChatScrollBarState UINewChatWnd::GetScrollBarState() const
 {
     if (m_expansionState == 0) return {};
-    ChatScrollBarState state{};
-    for (const ChatLine& line : m_lines) {
-        if ((m_tabChannelMasks[static_cast<size_t>(m_activeTab)] & ChatChannelBit(line.channel)) != 0u) {
-            ++state.totalLines;
-        }
-    }
-    state.firstVisibleLine = m_firstVisibleLineIndex;
-    state.visibleLineCount = static_cast<int>(m_visibleLines.size());
-    state.visible = (state.totalLines > state.visibleLineCount) ? 1 : 0;
-    return state;
+    const auto& view = m_sourceViews[m_sourceTab];
+    const int total = static_cast<int>(m_sourceHistory[m_sourceTab].size());
+    return {total > view.rows ? 1 : 0, total, view.first, (std::min)(total, view.rows)};
 }
 
 int UINewChatWnd::GetFontPixelSize() const
@@ -930,7 +942,7 @@ bool UINewChatWnd::GetConfigRectForQt(int* x, int* y, int* width, int* height) c
         return false;
     }
 
-    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
     *x = layout.configPanel.left;
     *y = layout.configPanel.top;
     *width = layout.configPanel.right - layout.configPanel.left;
@@ -938,41 +950,19 @@ bool UINewChatWnd::GetConfigRectForQt(int* x, int* y, int* width, int* height) c
     return true;
 }
 
-int UINewChatWnd::GetTabCount() const
-{
-    return kChatTabCount;
-}
+int UINewChatWnd::GetTabCount() const { return 2; }
 
 bool UINewChatWnd::GetTabDisplay(int index, ChatTabDisplay* outData) const
 {
-    if (!outData || index < 0 || index >= kChatTabCount) {
-        return false;
-    }
-
-    outData->id = index;
-    outData->label = kChatTabPresets[static_cast<size_t>(index)].label;
-    outData->active = index == m_activeTab ? 1 : 0;
-    outData->channelMask = m_tabChannelMasks[static_cast<size_t>(index)];
+    if (!outData || index < 0 || index > 1) return false;
+    *outData = {index, index == 0 ? "ST" : "BT", m_sourceTab == index ? 1 : 0, 0};
     return true;
 }
 
-int UINewChatWnd::GetFilterOptionCount() const
-{
-    return kChatFilterCount;
-}
-
-bool UINewChatWnd::GetFilterOptionDisplay(int index, ChatFilterOptionDisplay* outData) const
-{
-    if (!outData || index < 0 || index >= kChatFilterCount) {
-        return false;
-    }
-
-    const u32 channelBit = ChatChannelBit(kChatFilterChannels[static_cast<size_t>(index)]);
-    outData->id = index;
-    outData->label = kChatFilterLabels[static_cast<size_t>(index)];
-    outData->enabled = (m_tabChannelMasks[static_cast<size_t>(m_activeTab)] & channelBit) != 0u ? 1 : 0;
-    return true;
-}
+// The old visual-channel masks are retained only as legacy settings/receipt data.
+// They cannot control source streams. Source battle options139 are a separate owner.
+int UINewChatWnd::GetFilterOptionCount() const { return 0; }
+bool UINewChatWnd::GetFilterOptionDisplay(int, ChatFilterOptionDisplay*) const { return false; }
 
 void UINewChatWnd::OnProcess()
 {
@@ -1047,7 +1037,7 @@ void UINewChatWnd::DrawNativeToHdc(HDC hdc)
     const int savedDc = SaveDC(hdc);
     SelectObject(hdc, GetChatUiFont(m_fontPixelSize));
 
-    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
     RECT panelRc = layout.panel;
     RECT historyRc = layout.history;
     RECT whisperInputRc = layout.whisperInput;
@@ -1068,67 +1058,37 @@ void UINewChatWnd::DrawNativeToHdc(HDC hdc)
     const int historyClipDc = SaveDC(hdc);
     IntersectClipRect(hdc, historyRc.left, historyRc.top, historyRc.right, historyRc.bottom);
     SetBkMode(hdc, TRANSPARENT);
-    const int textInset = 4;
     const ChatScrollBarState scrollState = GetScrollBarState();
-    const int reservedScrollbarWidth = scrollState.visible ? (kChatScrollbarWidth + kChatScrollbarGap) : 0;
-    const int textWidth = (historyRc.right - historyRc.left) - (textInset * 2) - reservedScrollbarWidth;
-    const size_t lineCount = m_visibleLines.size();
-    std::vector<int> measuredHeights(lineCount, kChatLineHeight);
-    int usedHeight = 0;
-    for (size_t index = 0; index < lineCount; ++index) {
-        measuredHeights[index] = MeasureWrappedTextHeight(m_visibleLines[index].text, textWidth, m_fontPixelSize);
-        usedHeight += measuredHeights[index];
-        if (index + 1 < lineCount) {
-            usedHeight += kChatMessageGap;
-        }
-    }
-
-    int lineY = historyRc.bottom - textInset - usedHeight;
-    if (lineY < historyRc.top + textInset) {
-        lineY = historyRc.top + textInset;
-    }
-    for (size_t index = 0; index < lineCount; ++index) {
-        const ChatLine& line = m_visibleLines[index];
-        const int textHeight = measuredHeights[index];
-        RECT textRc = {
-            historyRc.left + textInset,
-            lineY,
-            historyRc.right - textInset - reservedScrollbarWidth,
-            lineY + textHeight
-        };
-        SetTextColor(hdc, ToColorRef(line.color));
+    for (size_t index = 0; index < m_visibleLines.size(); ++index) {
+        const auto& line = m_visibleLines[index];
+        RECT textRc{historyRc.left + 2, historyRc.top + static_cast<int>(index) * 14 + 3,
+            historyRc.right - (scrollState.visible ? 13 : 0), historyRc.top + static_cast<int>(index) * 14 + 21};
 #if RO_ENABLE_QT6_UI
-        DrawChatTextQt(hdc, textRc, line.text, ToColorRef(line.color), true, m_fontPixelSize);
+        DrawChatTextQt(hdc, textRc, line.text, ToColorRef(line.color), false, m_fontPixelSize, false);
 #else
-        DrawTextA(hdc, line.text.c_str(), -1, &textRc, DT_LEFT | DT_TOP | DT_WORDBREAK | DT_EDITCONTROL | DT_NOPREFIX);
+        SetTextColor(hdc, ToColorRef(line.color));
+        DrawTextA(hdc, line.text.c_str(), -1, &textRc, DT_LEFT | DT_TOP | DT_SINGLELINE | DT_NOPREFIX);
 #endif
-        lineY += textHeight + kChatMessageGap;
     }
     RestoreDC(hdc, historyClipDc);
-
+    SetBkMode(hdc, TRANSPARENT);
+    const auto display = GetLayoutDisplay();
     if (scrollState.visible) {
-        RECT trackRc = {
-            historyRc.right - textInset - kChatScrollbarWidth,
-            historyRc.top + textInset,
-            historyRc.right - textInset,
-            historyRc.bottom - textInset
-        };
-        HBRUSH trackBrush = CreateSolidBrush(RGB(40, 40, 40));
-        FillRect(hdc, &trackRc, trackBrush);
-        DeleteObject(trackBrush);
-        FrameRect(hdc, &trackRc, static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH)));
-
-        const int trackHeight = trackRc.bottom - trackRc.top;
-        const int visibleLineCount = (std::max)(1, scrollState.visibleLineCount);
-        const int totalLines = (std::max)(visibleLineCount, scrollState.totalLines);
-        const int thumbHeight = (std::max)(18, trackHeight * visibleLineCount / totalLines);
-        const int maxTravel = (std::max)(0, trackHeight - thumbHeight);
-        const int scrollDenom = (std::max)(1, totalLines - visibleLineCount);
-        const int thumbTop = trackRc.top + (maxTravel * scrollState.firstVisibleLine) / scrollDenom;
-        RECT thumbRc = { trackRc.left + 1, thumbTop, trackRc.right - 1, thumbTop + thumbHeight };
+        const auto globalRect = [&](RECT rect) { rect.left += m_x; rect.right += m_x; rect.top += m_y; rect.bottom += m_y; return rect; };
+        RECT track = globalRect(display.scrollTrack), thumb = globalRect(display.scrollThumb);
+        HBRUSH trackBrush = CreateSolidBrush(RGB(64, 64, 64));
+        FillRect(hdc, &track, trackBrush); DeleteObject(trackBrush);
         HBRUSH thumbBrush = CreateSolidBrush(RGB(184, 184, 184));
-        FillRect(hdc, &thumbRc, thumbBrush);
-        DeleteObject(thumbBrush);
+        FillRect(hdc, &thumb, thumbBrush); DeleteObject(thumbBrush);
+    }
+    if (m_expansionState != 0) {
+        for (int tab = 0; tab < 2; ++tab) {
+            RECT bounds = layout.tabs[tab];
+            HBRUSH brush = CreateSolidBrush(tab == m_sourceTab ? RGB(75, 95, 115) : RGB(92, 92, 92));
+            FillRect(hdc, &bounds, brush); DeleteObject(brush);
+            SetTextColor(hdc, RGB(255, 255, 255));
+            DrawTextA(hdc, tab == 0 ? "ST" : "BT", 2, &bounds, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        }
     }
 
     HBRUSH whisperBg = CreateSolidBrush(IsWhisperTargetActive() ? RGB(245, 245, 220) : RGB(210, 210, 210));
@@ -1187,64 +1147,18 @@ void UINewChatWnd::DrawNativeToHdc(HDC hdc)
 void UINewChatWnd::RefreshVisibleLines(u32 nowTick)
 {
     (void)nowTick;
-
-    ClampScrollOffset();
-
-    std::vector<ChatLine> nextVisible;
-    m_firstVisibleLineIndex = 0;
-
-    if (!m_lines.empty()) {
-        std::vector<const ChatLine*> filteredLines;
-        filteredLines.reserve(m_lines.size());
-        const u32 activeMask = m_tabChannelMasks[static_cast<size_t>(m_activeTab)];
-        for (const ChatLine& line : m_lines) {
-            if ((activeMask & ChatChannelBit(line.channel)) != 0u) {
-                filteredLines.push_back(&line);
-            }
-        }
-
-        const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
-        const ChatScrollBarState scrollState = GetScrollBarState();
-        const int reservedScrollbarWidth = scrollState.visible ? (kChatScrollbarWidth + kChatScrollbarGap) : 0;
-        const int textWidth = (layout.history.right - layout.history.left) - 8 - reservedScrollbarWidth;
-        const int availableHeight = layout.history.bottom - layout.history.top - 8;
-        const int endExclusive = (std::max)(0, static_cast<int>(filteredLines.size()) - m_scrollLineOffset);
-        int usedHeight = 0;
-        int firstVisibleIndex = endExclusive;
-        for (int index = endExclusive - 1; index >= 0; --index) {
-            const int measured = MeasureWrappedTextHeight(filteredLines[static_cast<size_t>(index)]->text, textWidth, m_fontPixelSize);
-            const int blockHeight = measured + ((usedHeight > 0) ? kChatMessageGap : 0);
-            if (usedHeight + blockHeight > availableHeight) {
-                break;
-            }
-            usedHeight += blockHeight;
-            firstVisibleIndex = index;
-        }
-
-        if (firstVisibleIndex == endExclusive && endExclusive > 0) {
-            firstVisibleIndex = endExclusive - 1;
-        }
-
-        m_firstVisibleLineIndex = (std::max)(0, firstVisibleIndex);
-        nextVisible.reserve(static_cast<size_t>((std::max)(0, endExclusive - m_firstVisibleLineIndex)));
-        for (int index = m_firstVisibleLineIndex; index < endExclusive; ++index) {
-            nextVisible.push_back(*filteredLines[static_cast<size_t>(index)]);
+    const auto& rows = m_sourceHistory[m_sourceTab];
+    auto& view = m_sourceViews[m_sourceTab];
+    view.first = std::clamp(view.first, 0, view.LastFirst(static_cast<int>(rows.size())));
+    m_firstVisibleLineIndex = view.first;
+    m_visibleLines.clear();
+    if (m_expansionState != 0) {
+        const int end = (std::min)(static_cast<int>(rows.size()), view.first + view.rows);
+        for (int index = view.first; index < end; ++index) {
+            const auto& row = rows[index];
+            m_visibleLines.push_back({row.text, row.color, 0, 0, row.talker});
         }
     }
-
-    if (nextVisible.size() != m_visibleLines.size()) {
-        Invalidate();
-    } else {
-        for (size_t i = 0; i < nextVisible.size(); ++i) {
-            if (nextVisible[i].text != m_visibleLines[i].text ||
-                nextVisible[i].color != m_visibleLines[i].color ||
-                nextVisible[i].channel != m_visibleLines[i].channel) {
-                Invalidate();
-                break;
-            }
-        }
-    }
-    m_visibleLines.swap(nextVisible);
 }
 
 void UINewChatWnd::ClearLines()
@@ -1258,15 +1172,15 @@ void UINewChatWnd::ClearLines()
 
 bool UINewChatWnd::HandlePointerDown(int x, int y)
 {
-    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
     if (IsQtInteractionPoint(x, y)) {
         SetWindowFocused(true);
     }
 
     if (m_configVisible != 0 && RectIsValid(layout.configPanel) && PointInRectXY(layout.configPanel, x, y)) {
-        for (int index = 0; index < kChatTabCount; ++index) {
+        for (int index = 0; index < GetTabCount(); ++index) {
             if (PointInRectXY(layout.configTabs[static_cast<size_t>(index)], x, y)) {
-                SetActiveTab(index);
+                SelectSourceTab(index);
                 return true;
             }
         }
@@ -1294,7 +1208,7 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
             UpdateWindowOpacityFromPointer(x, layout.transparencyIdleTrack, true);
             return true;
         }
-        for (int index = 0; index < kChatFilterCount; ++index) {
+        for (int index = 0; index < GetFilterOptionCount(); ++index) {
             if (PointInRectXY(layout.filterButtons[static_cast<size_t>(index)], x, y)) {
                 const u32 channelBit = ChatChannelBit(kChatFilterChannels[static_cast<size_t>(index)]);
                 m_tabChannelMasks[static_cast<size_t>(m_activeTab)] ^= channelBit;
@@ -1319,6 +1233,12 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
         return true;
     }
 
+    if (m_expansionState != 0 && !PointInRectXY(layout.history, x, y)) {
+        for (int tab = 0; tab < 2; ++tab) if (PointInRectXY(layout.tabs[tab], x, y)) {
+            SelectSourceTab(tab);
+            return true;
+        }
+    }
     const int resizeEdges = GetChatResizeEdgesForPoint(layout, x, y);
     if (resizeEdges != ChatResizeEdge_None) {
         m_dragArmed = 1;
@@ -1349,13 +1269,6 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
         return true;
     }
 
-    for (int index = 0; index < kChatTabCount; ++index) {
-        if (PointInRectXY(layout.tabs[static_cast<size_t>(index)], x, y)) {
-            SetActiveTab(index);
-            return true;
-        }
-    }
-
     if (PointInRectXY(layout.whisperInput, x, y)) {
         SetActiveInputField(InputField_WhisperTarget);
         m_dragArmed = 0;
@@ -1370,7 +1283,7 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
         return true;
     }
 
-    if (PointInRectXY(layout.header, x, y)) {
+    if (PointInRectXY(layout.header, x, y) && (y - m_y <= 0 || y - m_y >= 21)) {
         m_dragArmed = 1;
         m_isDragging = 0;
         m_resizeEdges = ChatResizeEdge_None;
@@ -1384,16 +1297,31 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
     }
 
     if (PointInRectXY(layout.history, x, y)) {
-        SetActiveInputField(InputField_Message);
-        m_dragArmed = 1;
-        m_isDragging = 0;
-        m_resizeEdges = ChatResizeEdge_None;
-        m_dragStartGlobalX = x;
-        m_dragStartGlobalY = y;
-        m_dragStartWindowX = m_x;
-        m_dragStartWindowY = m_y;
-        m_dragStartWindowW = m_w;
-        m_dragStartWindowH = m_h;
+        const auto display = GetLayoutDisplay();
+        if (GetScrollBarState().visible && x - m_x >= display.scrollTrack.left) {
+            const int localY = y - m_y;
+            if (localY >= display.scrollThumb.top && localY < display.scrollThumb.bottom) {
+                m_sourceScrollDragging = true;
+                m_sourceScrollGrab = localY - display.scrollThumb.top;
+            } else {
+                ScrollSourceHistory(localY < display.scrollThumb.top ? 1 - m_sourceViews[m_sourceTab].rows
+                    : m_sourceViews[m_sourceTab].rows - 1);
+                m_historyPointerDown = true;
+            }
+            return true;
+        }
+        auto& view = m_sourceViews[m_sourceTab];
+        const int index = view.first + (y - layout.history.top) / 14;
+        view.selected = index < static_cast<int>(m_sourceHistory[m_sourceTab].size()) ? index : -1;
+        m_historyPointerDown = true;
+        return true;
+    }
+
+    if (PointInRectXY(layout.panel, x, y) && (y - m_y <= 0 || y - m_y >= 21)) {
+        m_dragArmed = 1; m_isDragging = 0; m_resizeEdges = ChatResizeEdge_None;
+        m_dragStartGlobalX = x; m_dragStartGlobalY = y;
+        m_dragStartWindowX = m_x; m_dragStartWindowY = m_y;
+        m_dragStartWindowW = m_w; m_dragStartWindowH = m_h;
         return true;
     }
 
@@ -1402,8 +1330,21 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
 
 bool UINewChatWnd::HandlePointerMove(int x, int y)
 {
+    if (m_sourceScrollDragging) {
+        const auto display = GetLayoutDisplay();
+        const int travel = (display.scrollTrack.bottom - display.scrollTrack.top)
+            - (display.scrollThumb.bottom - display.scrollThumb.top);
+        const int position = std::clamp(y - m_y - static_cast<int>(display.scrollTrack.top) - m_sourceScrollGrab, 0, (std::max)(0, travel));
+        auto& view = m_sourceViews[m_sourceTab];
+        const int count = static_cast<int>(m_sourceHistory[m_sourceTab].size());
+        const int target = travel > 0 ? position * view.LastFirst(count) / travel : 0;
+        ScrollSourceHistory(target - view.first);
+        return true;
+    }
+    if (m_historyPointerDown) return true;
+
     if (m_transparencyDragActive != 0) {
-        const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+        const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
         const bool idle = m_transparencyDragActive == 2;
         UpdateWindowOpacityFromPointer(x, idle ? layout.transparencyIdleTrack : layout.transparencyTrack, idle);
         return true;
@@ -1489,16 +1430,21 @@ bool UINewChatWnd::HandlePointerMove(int x, int y)
 
 bool UINewChatWnd::HandlePointerUp(int x, int y)
 {
+    if (m_historyPointerDown || m_sourceScrollDragging) {
+        m_historyPointerDown = m_sourceScrollDragging = false;
+        return true;
+    }
+
     const bool hadCapture = m_dragArmed != 0 || m_isDragging != 0 || m_transparencyDragActive != 0;
     if (m_transparencyDragActive != 0) {
-        const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+        const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
         const bool idle = m_transparencyDragActive == 2;
         UpdateWindowOpacityFromPointer(x, idle ? layout.transparencyIdleTrack : layout.transparencyTrack, idle);
     }
     if (m_isDragging != 0) {
         StoreInfo();
     } else if (m_dragArmed != 0 && m_resizeEdges == ChatResizeEdge_None) {
-        const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+        const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
         if (PointInRectXY(layout.panel, x, y)
             && !PointInRectXY(layout.whisperInput, x, y)
             && !PointInRectXY(layout.messageInput, x, y)) {
@@ -1515,27 +1461,26 @@ bool UINewChatWnd::HandlePointerUp(int x, int y)
 
 bool UINewChatWnd::HandlePointerWheel(int delta, int x, int y)
 {
-    if (!IsQtInteractionPoint(x, y)) {
-        return false;
-    }
-
-    const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
-    if (m_configVisible != 0 && RectIsValid(layout.configPanel) && PointInRectXY(layout.configPanel, x, y)
-        && !PointInRectXY(layout.panel, x, y)) {
-        return true;
-    }
-
-    if (delta > 0) {
-        AdjustScroll(kChatWheelScrollLines);
-    } else if (delta < 0) {
-        AdjustScroll(-kChatWheelScrollLines);
-    }
+    if (!m_show || m_expansionState == 0) return false;
+    const auto layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
+    if (!PointInRectXY(layout.history, x, y)) return false;
+    ScrollSourceHistory(delta >= 0 ? -3 : 3);
     return true;
 }
 
 void UINewChatWnd::OnLBtnDown(int x, int y)
 {
     HandlePointerDown(x, y);
+}
+
+void UINewChatWnd::OnLBtnDblClk(int x, int y)
+{
+    const auto layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
+    if (!m_show || m_expansionState == 0 || !PointInRectXY(layout.history, x, y)) return;
+    const auto& rows = m_sourceHistory[m_sourceTab];
+    const int selected = m_sourceViews[m_sourceTab].selected;
+    if (selected < 0 || selected >= static_cast<int>(rows.size()) || rows[selected].talker.empty()) return;
+    SendMsg(this, 6, 281, reinterpret_cast<msgparam_t>(rows[selected].talker.c_str()), 0);
 }
 
 void UINewChatWnd::OnMouseMove(int x, int y)
@@ -1707,30 +1652,8 @@ void UINewChatWnd::Layout()
     }
 }
 
-void UINewChatWnd::AdjustScroll(int lineDelta)
-{
-    if (lineDelta == 0 || m_lines.empty()) {
-        return;
-    }
-
-    m_scrollLineOffset += lineDelta;
-    ClampScrollOffset();
-    RefreshVisibleLines(GetTickCount());
-    Invalidate();
-}
-
-void UINewChatWnd::ClampScrollOffset()
-{
-    int filteredCount = 0;
-    const u32 activeMask = m_tabChannelMasks[static_cast<size_t>(m_activeTab)];
-    for (const ChatLine& line : m_lines) {
-        if ((activeMask & ChatChannelBit(line.channel)) != 0u) {
-            ++filteredCount;
-        }
-    }
-    const int maxOffset = filteredCount > 0 ? filteredCount - 1 : 0;
-    m_scrollLineOffset = std::clamp(m_scrollLineOffset, 0, maxOffset);
-}
+void UINewChatWnd::AdjustScroll(int delta) { ScrollSourceHistory(-delta); }
+void UINewChatWnd::ClampScrollOffset() {}
 
 void UINewChatWnd::ResetTabDefaults()
 {
@@ -1949,7 +1872,7 @@ void UINewChatWnd::StickOnOff(bool sticky)
         g_windowMgr.m_chatWndStickOn = sticky;
         if (sticky) {
             if (m_savedExpansionState == 0) m_savedExpansionState = 1;
-            SetActiveTab(0);
+            m_sourceTab = 0;
             SetState(m_savedExpansionState);
         } else {
             m_savedExpansionState = m_expansionState;
@@ -1977,12 +1900,13 @@ void UINewChatWnd::SetState(int requested)
     // Qt stores frame capture locally; native input also has the manager
     // pointer. Inline resizer/slider captures represent source child controls.
     const bool frameCaptured = (g_windowMgr.m_captureWindow == this || m_dragArmed || m_isDragging)
-        && m_resizeEdges == ChatResizeEdge_None && m_transparencyDragActive == 0 && !m_stickyControlDispatch;
+        && m_resizeEdges == ChatResizeEdge_None && m_transparencyDragActive == 0 && !m_stickyControlDispatch && !m_historyPointerDown && !m_sourceScrollDragging;
     if (frameCaptured) return;
     const int bottom = m_y + m_h;
     m_expansionState = ro::chat::NormalizeState(requested);
     const int height = ro::chat::HeightForState(m_expansionState);
     Resize(m_w, height);
+    if (m_expansionState != 0) m_sourceViews[m_sourceTab].Resize((height - 44) / 14, static_cast<int>(m_sourceHistory[m_sourceTab].size()));
     Move(m_x, bottom - height);
     RefreshVisibleLines(GetTickCount());
     Invalidate();
@@ -1991,6 +1915,7 @@ void UINewChatWnd::SetState(int requested)
 void UINewChatWnd::CancelPointerCapture()
 {
     m_dragArmed = m_isDragging = m_transparencyDragActive = 0;
+    m_historyPointerDown = m_sourceScrollDragging = false;
     m_resizeEdges = ChatResizeEdge_None;
     if (g_windowMgr.m_captureWindow == this) g_windowMgr.m_captureWindow = nullptr;
 }
@@ -1998,6 +1923,8 @@ void UINewChatWnd::CancelPointerCapture()
 msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, msgparam_t detail, msgparam_t extra)
 {
     switch (msg) {
+    case 3: ScrollSourceHistory(1 - m_sourceViews[m_sourceTab].rows); return 0;
+    case 4: ScrollSourceHistory(m_sourceViews[m_sourceTab].rows - 1); return 0;
     case 37:
     case 115:
         ReceiveSourceNotice(reinterpret_cast<const char*>(value), ro::chat::ColorRefToUiRgb(static_cast<u32>(detail)),
@@ -2005,7 +1932,13 @@ msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, m
             static_cast<ro::chat::NoticeType>(extra));
         return 0;
     case 6:
-        if (value == 291) StickOnOff(true);
+        if (value == 281 && detail) {
+            const std::string target(reinterpret_cast<const char*>(detail));
+            if (std::find(m_whisperTargets.begin(), m_whisperTargets.end(), target) == m_whisperTargets.end()) m_whisperTargets.push_back(target);
+            SetQtInputText(InputField_WhisperTarget, target);
+            FocusQtInput(InputField_Message);
+        }
+        else if (value == 291) StickOnOff(true);
         else if (value == 292) StickOnOff(false);
         return 0;
     case 2:
@@ -2027,6 +1960,16 @@ msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, m
 
 ChatWindowLayoutDisplay UINewChatWnd::GetLayoutDisplay() const
 {
-    const auto rects = BuildChatLayoutRects(0, 0, m_w, m_h);
-    return {rects.header, rects.history, rects.whisperInput, rects.messageInput, rects.gearButton, rects.stickButton, rects.tabs};
+    const auto rects = BuildChatLayoutRects(0, 0, m_w, m_h, m_sourceTitleWidth);
+    ChatWindowLayoutDisplay display{rects.header, rects.history, rects.whisperInput, rects.messageInput, rects.gearButton, rects.stickButton, rects.tabs};
+    const auto state = GetScrollBarState();
+    if (state.visible) {
+        display.scrollTrack = {rects.history.right - 13, rects.history.top, rects.history.right - 1, rects.history.bottom};
+        const int height = display.scrollTrack.bottom - display.scrollTrack.top;
+        const int thumbHeight = (std::min)(height, (std::max)(8, height * state.visibleLineCount / state.totalLines));
+        const int offset = (height - thumbHeight) * state.firstVisibleLine / (state.totalLines - state.visibleLineCount);
+        display.scrollThumb = {display.scrollTrack.left + 1, display.scrollTrack.top + offset,
+            display.scrollTrack.right - 1, display.scrollTrack.top + offset + thumbHeight};
+    }
+    return display;
 }

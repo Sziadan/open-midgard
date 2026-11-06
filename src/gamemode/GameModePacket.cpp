@@ -12,6 +12,7 @@
 #include "GuildCreation.h"
 #include "PacketPadding.h"
 #include "core/Globals.h"
+#include "core/ClientInfoLocale.h"
 #include "Types.h"
 #include "core/File.h"
 #include "pathfinder/PathFinder.h"
@@ -77,7 +78,7 @@ public:
 
 namespace {
 
-void RecordChat(CGameMode& mode, const std::string& text, u32 color, u8 channel);
+void RecordChat(CGameMode& mode, const std::string& text, u32 color, u8 channel, ro::chat::NoticeSource source = {});
 
 constexpr int kUiChatEventMsg = 101;
 constexpr u32 kSystemNoticeColor = 0x0080C0FFu;
@@ -1136,7 +1137,7 @@ void MakePotionEffect(CGameMode& mode, unsigned int itemId, u32 actorId)
     // Primary only announces EXP-item notices to the exact local AID with a player.
     if(actorId==g_session.m_aid&&mode.m_world&&mode.m_world->m_player) {
         const auto notice=g_ttemmgr.GetItemUseNotice(itemId);
-        if(!notice.empty())g_windowMgr.PushChatEvent(notice.c_str(),0x0000ffffu,6);
+        if(!notice.empty())g_windowMgr.PushSourceChatEvent(notice.c_str(),0x0000ffffu,6, ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Status);
     }
     if(feedback.sound)PlayWave(feedback.sound,0.0f,0.0f,0.0f);
     if(feedback.extraEffectId>0)actor->LaunchEffect(feedback.extraEffectId,vector3d{},0.0f);
@@ -7145,23 +7146,26 @@ void ApplyActorChatBubble(CGameMode& mode, u32 actorId, const std::string& chatT
     actor->SetChatBubbleText(bubbleText, ComputeActorChatBubbleUntilTick(bubbleText, now));
 }
 
-void PropagateChatToUi(const ChatEntry& entry)
+void PropagateChatToUi(const ChatEntry& entry, const ro::chat::NoticeSource& source)
 {
     if (entry.text.empty()) {
         return;
     }
 
-    g_windowMgr.PushChatEvent(entry.text.c_str(), entry.color, entry.channel, GetTickCount());
+    if (source.route == ro::chat::NoticeRoute::Unspecified)
+        g_windowMgr.PushChatEvent(entry.text.c_str(), entry.color, entry.channel, GetTickCount());
+    else g_windowMgr.PushSourceChatEvent(entry.text.c_str(), entry.color, entry.channel, source.route, source.type,
+        source.talker.c_str(), GetTickCount());
 }
 
-void RecordChat(CGameMode& mode, const std::string& text, u32 color, u8 channel)
+void RecordChat(CGameMode& mode, const std::string& text, u32 color, u8 channel, ro::chat::NoticeSource source)
 {
     if (text.empty()) {
         return;
     }
 
     const ChatEntry entry = BuildChatEntry(text, color, channel);
-    PropagateChatToUi(entry);
+    PropagateChatToUi(entry, source);
 
     if (mode.m_lastChat == entry.text) {
         ++mode.m_sameChatRepeatCnt;
@@ -7195,7 +7199,16 @@ void HandleGuildNotification(CGameMode& mode,const PacketView& packet){
         if(aid==g_session.m_aid)return;
         if(x<0||y<0)mode.m_guildPosList.erase(aid);else mode.m_guildPosList[aid]={x,y,0x0080FF80u};return;
     }
-    if(op==0x17f){if(n>=4)RecordChat(mode,ExtractPacketString(packet,4),0x00B4FFB4u,kChatChannelParty);return;}
+    if(op==0x17f){
+        if(n>=5 && !g_session.m_isNoTalkMsg2) {
+            auto text = ExtractPacketString(packet, 4);
+            // Original forces the final payload byte to NUL, including unterminated input.
+            if (text.size() == n - 4 && !text.empty()) text.pop_back();
+            RecordChat(mode, text, ro::chat::ColorRefToUiRgb(11861940u), kChatChannelParty,
+                {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Guild, {}});
+        }
+        return;
+    }
     if(op==0x171){if(n<30)return;auto& state=ro::commerce::state;state.promptKind="alliance";state.promptId=ReadLE32(p+2);state.promptName=ExtractFixedPacketString(packet,6,24);return;}
     std::string message;
     if(op==0x173){if(n<3)return;const char* messages[]={"Guilds are already allied.","Guild alliance invitation declined.","Guild alliance invitation accepted.","The other guild has too many alliances.","Your guild has too many alliances.","Guild alliances are disabled."};message=p[2]<6?messages[p[2]]:"Guild alliance request failed.";}
@@ -7223,7 +7236,19 @@ void HandleNotifyChat(CGameMode& mode, const PacketView& packet)
     const u32 aid = ReadLE32(packet.data + 4);
     mode.m_aidList[aid] = GetTickCount();
     const std::string text = ExtractChatTextWithAid(packet);
-    RecordChat(mode, text, 0x00FFFFFF, kChatChannelNormal);
+    if (std::find(g_session.m_exAidList.begin(), g_session.m_exAidList.end(), aid) != g_session.m_exAidList.end()) return;
+    if (IsNameYellow(aid)) {
+        const u32 colorRef = g_serviceType == ServiceThai ? 16776960u
+            : g_serviceType == ServiceGermany ? 1936895u : 0x0000ffffu;
+        RecordChat(mode, text, ro::chat::ColorRefToUiRgb(colorRef), kChatChannelNormal,
+            {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Chat, {}});
+    } else if (const u32 colorRef = GetSpecificNameColorRef(aid)) {
+        RecordChat(mode, text, ro::chat::ColorRefToUiRgb(colorRef), kChatChannelNormal,
+            {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None, {}});
+    } else if (g_session.m_isNoTalkMsg != 1 && g_session.m_isNoTalkMsg2 != 1) {
+        RecordChat(mode, text, 0x00ffffffu, kChatChannelNormal,
+            {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Chat, {}});
+    }
     ApplyActorChatBubble(mode, aid, text);
 }
 
@@ -7234,7 +7259,10 @@ void HandleNotifyPlayerChat(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    RecordChat(mode, ExtractPacketString(packet, 4), 0x0000FF00, kChatChannelPlayer);
+    const auto text = ExtractPacketString(packet, 4);
+    RecordChat(mode, text, 0x0000ff00u, kChatChannelPlayer,
+        {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Chat, {}});
+    ApplyActorChatBubble(mode, g_session.m_aid, text);
 }
 
 void HandleWhisper(CGameMode& mode, const PacketView& packet)
@@ -7273,7 +7301,11 @@ void HandleNotifyChatParty(CGameMode& mode, const PacketView& packet)
 
     const std::string msg = ExtractPacketString(packet, 8);
     if (!msg.empty()) {
-        RecordChat(mode, msg, 0x00C8C8FF, kChatChannelParty);
+        const bool self = aid == g_session.m_aid;
+        if (!self) g_windowMgr.SendMsg(3, 0, 0);
+        RecordChat(mode, msg, ro::chat::ColorRefToUiRgb(self ? 51455u : 13158655u), kChatChannelParty,
+            {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Party, {}});
+        ApplyActorChatBubble(mode, aid, msg);
     }
 }
 

@@ -1,0 +1,23 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start  3: packet_chat_state_checks
+1/9 Test  #3: packet_chat_state_checks ..................   Passed    0.16 sec
+    Start  4: packet_chat_notice_checks
+2/9 Test  #4: packet_chat_notice_checks .................   Passed    0.10 sec
+    Start  5: chat_window_state_checks
+3/9 Test  #5: chat_window_state_checks ..................   Passed    0.02 sec
+    Start  6: chat_notice_checks
+4/9 Test  #6: chat_notice_checks ........................   Passed    0.02 sec
+    Start  7: chat_history_view_checks
+5/9 Test  #7: chat_history_view_checks ..................   Passed    0.02 sec
+    Start  8: packet_chat_primary_checks
+6/9 Test  #8: packet_chat_primary_checks ................   Passed    0.09 sec
+    Start 22: packet_inventory_mutation_render_checks
+7/9 Test #22: packet_inventory_mutation_render_checks ...   Passed    3.87 sec
+    Start 26: packet_chat_state_render_checks
+8/9 Test #26: packet_chat_state_render_checks ...........   Passed    2.59 sec
+    Start 27: packet_item_use_feedback_render_checks
+9/9 Test #27: packet_item_use_feedback_render_checks ....   Passed    1.98 sec
+
+100% tests passed, 0 tests failed out of 9
+
+Total Test time (real) =   8.88 sec

@@ -2042,7 +2042,9 @@
         "docs/packets/evidence/PK09.21-family-provenance.json",
         "docs/packets/contracts/PK09.CHAT-NOTICES.md",
         "docs/packets/evidence/PK09.21-notices.md",
-        "docs/packets/evidence/PK09.21-notices-provenance.json"
+        "docs/packets/evidence/PK09.21-notices-provenance.json",
+        "docs/packets/evidence/PK09.21-primary.md",
+        "docs/packets/evidence/PK09.21-primary-provenance.json"
       ],
       "commit_subject": null
     }

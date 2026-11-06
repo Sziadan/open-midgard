@@ -43,40 +43,41 @@ void CheckItemUseFeedbackUi(QGuiApplication& app,QQuickView& view,QtUiState* uiS
         const auto& events=g_windowMgr.GetChatEvents();
         Require(!events.empty(),"successful local EXP item produced no chat event");
         const auto& event=events.back();
-        Require(QString::fromUtf8(event.text.c_str())==expected&&event.channel==6
+        Require(QString::fromUtf8(event.text.c_str())==expected
+            &&event.source.route==ro::chat::NoticeRoute::Normal
+            &&event.source.type==ro::chat::NoticeType::Status
             &&event.color==0x0000ffffu,"local EXP notice text/channel/color differs from source mapping");
-        g_windowMgr.EnsureChatWindowVisible();
-        Require(g_windowMgr.m_chatWnd!=nullptr,"item-use feedback chat window missing");
-        g_windowMgr.m_chatWnd->Resize(600,200);g_windowMgr.m_chatWnd->Move(320,510);
-        g_windowMgr.m_chatWnd->SetWindowFocused(true);sync();
-
-        bool selectedInfo=false;
-        for(int i=0;i<g_windowMgr.m_chatWnd->GetTabCount();++i) {
-            ChatTabDisplay tab{};
-            if(!g_windowMgr.m_chatWnd->GetTabDisplay(i,&tab)
-                ||!(tab.channelMask&(u32(1)<<6))
-                ||!QString::fromUtf8(tab.label).contains("Info",Qt::CaseInsensitive))continue;
-            QQuickItem* target=nullptr;
-            std::function<void(QQuickItem*)> findTab=[&](QQuickItem* item) {
-                if(item->property("label").toString()==QString::fromUtf8(tab.label)
-                    &&item->metaObject()->indexOfProperty("selected")>=0)target=item;
-                for(auto* child:item->childItems())findTab(child);
-            };
-            auto* panel=Find(view.rootObject(),"chatWindowPanel");
-            Require(panel,"actual chat panel missing for EXP notice");findTab(panel);
-            Require(target&&target->isVisible(),"actual Info chat tab missing");
-            const QPointF p=target->mapToScene(QPointF(target->width()/2,target->height()/2));
-            Require(g_windowMgr.m_chatWnd->HandleQtMouseDown(qRound(p.x()),qRound(p.y())),
-                "native chat bridge did not select Info tab");
-            g_windowMgr.m_chatWnd->HandleQtMouseUp(qRound(p.x()),qRound(p.y()));
-            selectedInfo=true;break;
+        auto* chat=g_windowMgr.m_chatWnd;
+        Require(chat!=nullptr,"item-use feedback chat window missing");
+        ChatTabDisplay bt{};Require(chat->GetTabDisplay(1,&bt)&&bt.id==1
+            &&QString::fromUtf8(bt.label)=="BT","actual BT source tab metadata differs");
+        chat->SetState(7);chat->Resize(600,200);chat->Move(320,510);
+        chat->SetWindowFocused(true);chat->SelectSourceTab(1);
+        const auto layout=chat->GetLayoutDisplay();
+        Require(layout.tabs[1].right>layout.tabs[1].left,"native BT tab geometry is empty");
+        Require(chat->GetSourceTab()==1&&chat->GetTabDisplay(1,&bt)&&bt.active!=0,
+            "native BT source tab selection failed");sync();
+        bool nativeRow=false;
+        for(const auto& row:chat->GetSourceHistory(true))if(QString::fromUtf8(row.text.c_str())==expected
+            &&row.color==0x0000ffffu)nativeRow=true;
+        Require(nativeRow,"native BT history omitted cyan EXP status notice");
+        bool qmlRow=false;
+        const auto projected=uiState->chatWindowLines();
+        for(int i=0;i<projected.size();++i)if(projected[i].toMap().value("text").toString()==expected) {
+            auto* row=Find(view.rootObject(),QString("sourceChatRow%1").arg(i));
+            qmlRow=row&&row->isVisible()&&row->property("text").toString()==expected;
+            if(qmlRow) {
+                const auto pos=row->mapToScene(QPointF(0,0));
+                qmlRow=qRound(pos.y())==chat->m_y+layout.history.top+3+i*14;
+            }
         }
-        Require(selectedInfo,"chat Info tab was not available for EXP notice");sync();
-        auto* history=Find(view.rootObject(),"chatHistoryEditor");
-        Require(history&&history->isVisible()&&history->property("text").toString().contains(expected),
-            "actual Qt chat history omitted local EXP notice");
+        Require(qmlRow,"actual sourceChatRow Text omitted local EXP notice");
         auto* pane=Find(view.rootObject(),"chatHistoryPane");
         Require(pane,"actual chat viewport missing for EXP notice");
+        const QRect expectedPane(chat->m_x+layout.history.left,chat->m_y+layout.history.top,
+            layout.history.right-layout.history.left,layout.history.bottom-layout.history.top);
+        Require(pane->isVisible()&&pane->mapRectToScene(pane->boundingRect()).toAlignedRect()==expectedPane,
+            "actual source-history viewport geometry diverged from native BT layout");
         const QRect visible=pane->mapRectToScene(pane->boundingRect()).toAlignedRect()
             .intersected(QRect(0,0,view.width(),view.height()));
         const QImage qt=view.grabWindow().convertToFormat(QImage::Format_RGB32);
@@ -110,6 +111,8 @@ void CheckItemUseFeedbackUi(QGuiApplication& app,QQuickView& view,QtUiState* uiS
         {14532,"[USE MSG 1384]"},{14533,"[USE MSG 1385]"},{12312,"[USE MSG 1386]"}
     }};
     g_windowMgr.EnsureChatWindowVisible();
+    Require(g_windowMgr.m_chatWnd!=nullptr,"item-use feedback main chat window was not created");
+    g_windowMgr.m_chatWnd->SetState(7);
     QJsonArray cases;int frames=0;
     for(const auto& [item,text]:notices) {
         const size_t before=g_windowMgr.GetChatEvents().size();

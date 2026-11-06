@@ -487,3 +487,16 @@ bool IsNameYellow(unsigned int aid)
 {
     return std::binary_search(s_dwYellowAID.begin(), s_dwYellowAID.end(), static_cast<u32>(aid));
 }
+
+unsigned int GetSpecificNameColorRef(unsigned int aid)
+{
+    // PE0x503AA0 is active (unlike the commented secondary source copy).
+    // Current service tags are internal; clientinfo maps the Indonesia name to this tag.
+    if (g_serviceType != ServiceIndonesia) return 0;
+    switch (aid) {
+    case 100001: case 100064: case 100065: case 100068: case 100075: case 100076:
+    case 441470: case 441474: case 441487: case 540397:
+        return 255; // RGB(255,0,0) in original COLORREF order.
+    default: return 0;
+    }
+}

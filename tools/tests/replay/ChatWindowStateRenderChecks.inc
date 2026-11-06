@@ -15,7 +15,7 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     chat->SetQtInputText(UINewChatWnd::InputField_WhisperTarget, "SourceTarget");
     chat->SetQtInputText(UINewChatWnd::InputField_Message, "compact editor remains available");
     g_windowMgr.ClearChatEvents();
-    g_windowMgr.PushChatEvent("SOURCE CHAT HISTORY MARKER", 0x00ff2020, 0);
+    g_windowMgr.PushSourceChatEvent("SOURCE CHAT HISTORY MARKER", 0x00ff2020, 0, ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None);
     const auto redPixels = [](const QImage& image, QRect area) {
         int count = 0;
         area = area.intersected(image.rect());
@@ -176,4 +176,102 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     Require(QImage(reinterpret_cast<uchar*>(auxSurface.GetPixels()), view.width(), view.height(),
         view.width() * 4, QImage::Format_RGB32).save(output + "/chat-retained-without-main.native.png"),
         "save retained-owner native frame failed");
+    // Primary source rows must outlive the50-event receipt cache and render from
+    // shared source offsets, not an independent QML scrolling document.
+    g_windowMgr.EnsureChatWindowVisible();
+    auto* primary = g_windowMgr.m_chatWnd;
+    primary->StickOnOff(true); primary->SetState(15); primary->Move(20,40);
+    primary->SetWindowFocused(true);
+    for (int i = 0; i < 240; ++i) {
+        const std::string text = i == 0 ? "SOURCE ROW ZERO - OLDER THAN RECEIPT CACHE" : "source row " + std::to_string(i);
+        g_windowMgr.PushSourceChatEvent(text.c_str(), i == 0 ? 0xff2020 : 0xaaaaaa, 6,
+            ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None, "SourceZero");
+    }
+    primary->ScrollSourceHistory(-1000);
+    Require(primary->GetLines().size() == 50 && primary->GetSourceHistory(false).size() == 240
+        && primary->GetVisibleLines().size() == 17 && primary->GetVisibleLines().front().text.find("SOURCE ROW ZERO") == 0,
+        "primary source rows were reduced to the receipt cache");
+    for (int i=0;i<270;++i) g_windowMgr.PushChatEvent("UNCLASSIFIED RECEIPT",0x20ff20,0);
+    Require(g_windowMgr.GetChatEvents().size()==256 && primary->GetLines().size()==50,
+        "manager receipt cap and primary cache cap were confused");
+    const auto capturePrimary = [&](const QString& name, bool expectRed) {
+        adapter.syncChat(); Frames(app,view);
+        const auto projected = state->chatWindowLines();
+        Require(projected.size() == static_cast<int>(primary->GetVisibleLines().size()), "actual Qt row projection differs from native source view");
+        const auto geometry = primary->GetLayoutDisplay();
+        const QRect area(primary->m_x + geometry.history.left, primary->m_y + geometry.history.top,
+            geometry.history.right - geometry.history.left, geometry.history.bottom - geometry.history.top);
+        const auto qt = view.grabWindow().convertToFormat(QImage::Format_RGB32);
+        ArgbDibSurface dib;
+        Require(dib.EnsureSize(view.width(),view.height()), "primary native DIB allocation failed");
+        std::fill_n(dib.GetPixels(),view.width()*view.height(),0xff181b20u);
+        primary->DrawNativeToHdc(dib.GetDC());
+        const auto native = QImage(reinterpret_cast<uchar*>(dib.GetPixels()),view.width(),view.height(),
+            view.width()*4,QImage::Format_RGB32).copy();
+        Require((redPixels(qt,area)>20)==expectRed && (redPixels(native,area)>20)==expectRed,
+            "native/Qt primary stream pixels diverged");
+        if (expectRed) {
+            // Rows after the first are gray170 over a darker background. Straight-alpha
+            // pixels passed to the premultiplied native blender exceed this bound.
+            for (int y=area.top()+21; y<area.top()+area.height(); ++y)
+                for (int x=area.left()+2; x<area.left()+area.width()-13; ++x) {
+                    const auto pixel=native.pixel(x,y);
+                    Require(qRed(pixel)<=170 && qGreen(pixel)<=170 && qBlue(pixel)<=170,
+                        "native source text violates premultiplied alpha range");
+                }
+        }
+        Require(qt.save(output+"/"+name+".qml.png") && native.save(output+"/"+name+".native.png"), "save primary source frames failed");
+        auto* firstRow = Find(view.rootObject(),"sourceChatRow0");
+        Require(firstRow && qRound(firstRow->y()) == 3, "actual first source row is not top aligned");
+        auto* secondRow = Find(view.rootObject(),"sourceChatRow1");
+        if (secondRow) Require(qRound(secondRow->y()-firstRow->y())==14, "actual source row pitch differs from14px");
+    };
+    capturePrimary("chat-primary-oldest",true);
+    Require(state->chatWindowLines().front().toMap().value("text").toString().startsWith("SOURCE ROW ZERO"),
+        "actual QML cannot show source rows older than50 receipts");
+    g_windowMgr.PushSourceChatEvent("BT ONLY SOURCE MESSAGE",0x20ff20,0,
+        ro::chat::NoticeRoute::Command,ro::chat::NoticeType::None,"CommandPeer");
+    const auto click = [&](RECT bounds) {
+        const int x = primary->m_x + bounds.left + 5, y = primary->m_y + bounds.top + 7;
+        WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(x,y));
+        WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(x,y));
+    };
+    click(primary->GetLayoutDisplay().tabs[1]);
+    Require(primary->GetSourceTab()==1 && primary->GetVisibleLines().size()==1
+        && primary->GetVisibleLines().front().text=="BT ONLY SOURCE MESSAGE", "native pointer failed to select command source tab");
+    capturePrimary("chat-primary-command",false);
+    for (int i=1;i<40;++i) {
+        const auto text="command row "+std::to_string(i);
+        g_windowMgr.PushSourceChatEvent(text.c_str(),0x20ff20,0,
+            ro::chat::NoticeRoute::Command,ro::chat::NoticeType::None,"CommandPeer");
+    }
+    primary->ScrollSourceHistory(-9);
+    Require(primary->GetScrollBarState().firstVisibleLine==14, "command view did not scroll away from bottom");
+    click(primary->GetLayoutDisplay().tabs[0]);
+    Require(primary->GetScrollBarState().firstVisibleLine==223, "pointer tab switch did not invoke source resize snap");
+    click(primary->GetLayoutDisplay().tabs[1]);
+    Require(primary->GetScrollBarState().firstVisibleLine==23, "command tab failed to snap to bottom on return");
+    click(primary->GetLayoutDisplay().tabs[0]);
+    auto scrollLayout=primary->GetLayoutDisplay();
+    const int thumbX=primary->m_x+scrollLayout.scrollThumb.left+2;
+    const int thumbY=primary->m_y+scrollLayout.scrollThumb.top+2;
+    WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(thumbX,thumbY));
+    WindowProc(g_hMainWnd,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(thumbX,primary->m_y+scrollLayout.scrollTrack.top+2));
+    WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(-20,-20));
+    Require(primary->GetScrollBarState().firstVisibleLine==0 && !primary->IsQtPointerCaptured(),
+        "shared source scrollbar failed drag-to-top/outside release");
+    capturePrimary("chat-primary-scroll-top",true);
+    const auto historyRect=primary->GetLayoutDisplay().history;
+    click({historyRect.left,historyRect.top,historyRect.right-13,historyRect.bottom});
+    WindowProc(g_hMainWnd,WM_LBUTTONDBLCLK,MK_LBUTTON,
+        MAKELPARAM(primary->m_x+historyRect.left+5,primary->m_y+historyRect.top+7));
+    Require(primary->GetWhisperTargetText()=="SourceZero" && primary->IsMessageInputActive(),
+        "native source row doubleclick did not select its stored talker");
+    adapter.syncChat(); Frames(app,view);
+    Require(view.grabWindow().save(output+"/chat-primary-talker.qml.png"), "save source talker frame failed");
+    QFile primaryResults(output+"/chat-primary-results.json");
+    Require(primaryResults.open(QIODevice::WriteOnly), "primary results open failed");
+    primaryResults.write(QJsonDocument(QJsonObject{{"source_rows",240},{"legacy_view_rows",50},{"manager_receipts",256},{"row_pitch",14},
+        {"tabs",2},{"resize_snap",true},{"shared_scrollbar",true},{"talker_selection",true},{"outcome","PASS"}}).toJson());
+
 }

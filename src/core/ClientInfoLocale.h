@@ -28,3 +28,6 @@ int GetClientInfoConnectionCount();
 int GetSelectedClientInfoIndex();
 bool IsGravityAid(unsigned int aid);
 bool IsNameYellow(unsigned int aid);
+
+// Selected PE Indonesia-only name highlight; returns original COLORREF or zero.
+unsigned int GetSpecificNameColorRef(unsigned int aid);

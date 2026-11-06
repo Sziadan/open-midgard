@@ -1482,48 +1482,7 @@ Item {
             }
         }
 
-        Text {
-            x: 120
-            y: 276
-            text: "Message Types"
-            color: theme.ink
-            font.family: "Segoe UI"
-            font.pixelSize: 12
-            font.bold: true
-        }
 
-        Grid {
-            x: 120
-            y: 300
-            width: parent.width - 132
-            columns: 2
-            rowSpacing: 8
-            columnSpacing: 8
-
-            Repeater {
-                model: uiState.chatWindowUi.filters || []
-
-                delegate: RoTextButton {
-                    required property var modelData
-                    width: Math.floor((parent.width - 8) / 2)
-                    height: 28
-                    enabled: modelData.enabled || false
-                    label: modelData.label
-                    labelSize: 12
-                    labelBold: true
-                }
-            }
-        }
-
-        RoTextButton {
-            x: parent.width - 116
-            y: parent.height - 40
-            width: 104
-            height: 28
-            label: "Reset Tab"
-            labelSize: 12
-            labelBold: true
-        }
     }
 
     RoFrame {

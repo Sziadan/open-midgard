@@ -6,7 +6,7 @@ Created 2026-11-03. This is an execution specification, not a claim that any run
 
 ## Start here
 
-**Latest checkpoint (2026-11-06):** [PK09.21 typed notices](packets/evidence/PK09.21-notices.md) implements source route/type parsing, independent main/detached history data, no-replay backlog ownership, selected pickup/equip metadata and explicit pickup-failure expansion including empty language text. Root132/132, standalone462/462 and13 native/QML frames pass. Full primary source-tab rendering, other producers and remaining lifecycle/persistence/active Qt gates remain IN_PROGRESS; prior proofs stay accepted.
+**Latest checkpoint (2026-11-06):** [PK09.21 source primary histories](packets/evidence/PK09.21-primary.md) replaces the primary receipt/filter view with actual ST/BT source rows, shared native/Qt scrolling and talker selection. Represented no-room normal/player/party/guild speech and EXP notices carry reviewed source metadata. Strong review corrected tab-switch resize, active PE name colors, overlapping child input and native text alpha. Full validation and hashes are retained with the checkpoint. Detached wrapping/controls/options, remaining producers, persistence and active Qt/scale/art/locale acceptance remain open.
 
 **Current continuation priority:** finish [PK09.21 chat state/sticky/history ownership](packets/work-items/PK09.21.md) under [PK09.04](packets/work-items/PK09.04.md), then continue remaining item/status/detail/context work. Preserve corpse, effect and recovery regressions. PK45.06 is complete; broad actor/model review, full feature coverage, PK47 and independent PK48/49/deployment remain open. The whole packet implementation goal remains active.
 

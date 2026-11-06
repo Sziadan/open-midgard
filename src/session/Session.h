@@ -184,6 +184,8 @@ public:
     int m_playerAccessory2;
     int m_playerAccessory3;
     char m_playerName[25];
+    std::list<u32> m_exAidList;
+    int m_isNoTalkMsg = 0, m_isNoTalkMsg2 = 0;
     // Ref Session initialization: the thirteen source battle-message filters start enabled.
     std::array<bool, 13> m_battleMsgOnOffSet = {
         true, true, true, true, true, true, true, true, true, true, true, true, true

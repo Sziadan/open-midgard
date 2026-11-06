@@ -2142,3 +2142,7 @@ add_test(NAME chat_window_state_checks COMMAND chat_window_state_checks)
 add_executable(chat_notice_checks ChatNoticeTests.cpp)
 target_compile_features(chat_notice_checks PRIVATE cxx_std_17)
 add_test(NAME chat_notice_checks COMMAND chat_notice_checks)
+
+add_executable(chat_history_view_checks ChatHistoryViewTests.cpp)
+target_compile_features(chat_history_view_checks PRIVATE cxx_std_17)
+add_test(NAME chat_history_view_checks COMMAND chat_history_view_checks)

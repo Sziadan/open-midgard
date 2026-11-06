@@ -1,0 +1,6 @@
+
+HighPriest.exe:     file format pei-i386
+
+Contents of section .rdata:
+ 6ce188 50d84400 50764d00 70f94300 b0db4400  P.D.PvM.p.C...D.
+ 6ce198 80f94300 90f94300                    ..C...C.

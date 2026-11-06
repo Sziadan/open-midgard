@@ -1,0 +1,38 @@
+{
+    "auxiliary_lifecycle_pending": true,
+    "cases": [
+        {
+            "bottom": 700,
+            "editor_focused": true,
+            "height": 24,
+            "native_history_pixels": 0,
+            "qt_history_pixels": 0,
+            "state": 0
+        },
+        {
+            "bottom": 700,
+            "editor_focused": true,
+            "height": 96,
+            "native_history_pixels": 491,
+            "qt_history_pixels": 481,
+            "state": 1
+        },
+        {
+            "bottom": 700,
+            "editor_focused": true,
+            "height": 180,
+            "native_history_pixels": 491,
+            "qt_history_pixels": 481,
+            "state": 7
+        },
+        {
+            "bottom": 700,
+            "editor_focused": true,
+            "height": 292,
+            "native_history_pixels": 491,
+            "qt_history_pixels": 481,
+            "state": 15
+        }
+    ],
+    "main_state_phase": "PASS"
+}

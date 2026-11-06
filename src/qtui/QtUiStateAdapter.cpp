@@ -1989,7 +1989,7 @@ void PopulateChatWindowState(QtUiState* state)
     state->setChatWindowInputText(ToQString(chatWnd->GetInputText()));
 
     QVariantList lines;
-    const std::vector<ChatLine> visibleLines = chatWnd->GetFilteredLines();
+    const std::vector<ChatLine> visibleLines = chatWnd->GetVisibleLines();
     lines.reserve(static_cast<qsizetype>(visibleLines.size()));
     for (const ChatLine& line : visibleLines) {
         QVariantMap entry;
@@ -2025,6 +2025,8 @@ void PopulateChatWindowState(QtUiState* state)
     QVariantMap sourceRects;
     sourceRects.insert(QStringLiteral("header"), rectMap(layout.header));
     sourceRects.insert(QStringLiteral("history"), rectMap(layout.history));
+    sourceRects.insert(QStringLiteral("scrollTrack"), rectMap(layout.scrollTrack));
+    sourceRects.insert(QStringLiteral("scrollThumb"), rectMap(layout.scrollThumb));
     sourceRects.insert(QStringLiteral("whisper"), rectMap(layout.whisperInput));
     sourceRects.insert(QStringLiteral("message"), rectMap(layout.messageInput));
     sourceRects.insert(QStringLiteral("gear"), rectMap(layout.gearButton));

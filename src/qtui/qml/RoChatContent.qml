@@ -7,99 +7,50 @@ Item {
     property var sourceRects: ({})
     property bool expanded: true
 
-    function escaped(value) {
-        return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;").replace(/\n/g, "<br>")
-    }
-    function updateHistory() {
-        // Keep the document stable while the player is selecting/copying it.
-        if (history.selectedText.length > 0) return
-        const atBottom = transcript.contentY >= transcript.contentHeight - transcript.height - 4
-        const lines = uiState.chatWindowLines || []
-        let html = ""
-        for (const line of lines)
-            html += '<p style="margin:0 0 2px 0;color:' + line.color + '">' + escaped(line.text) + '</p>'
-        if (history.text !== html) history.text = html
-        if (atBottom) Qt.callLater(function() { transcript.contentY = Math.max(0, transcript.contentHeight - transcript.height) })
-    }
-
     Rectangle {
         id: pane
         objectName: "chatHistoryPane"
-        x: chat.sourceRects.history ? chat.sourceRects.history.x : 0
-        y: chat.sourceRects.history ? chat.sourceRects.history.y : 0
-        width: chat.sourceRects.history ? chat.sourceRects.history.width : parent.width
-        height: chat.sourceRects.history ? chat.sourceRects.history.height : parent.height - 40
+        readonly property var bounds: chat.sourceRects.history || ({})
+        x: bounds.x || 0; y: bounds.y || 0
+        width: bounds.width || 0; height: bounds.height || 0
         visible: chat.expanded
-        color: "#14110e"
-        radius: 4
-        border.color: "#806c49"
-        clip: true
-
-        Flickable {
+        color: "#14110e"; border.color: "#806c49"; clip: true
+        Item {
             id: transcript
             objectName: "chatTranscript"
             anchors.fill: parent
-            anchors.margins: 5
-            anchors.rightMargin: scroll.visible ? 12 : 5
-            contentWidth: width
-            contentHeight: Math.max(height, history.contentHeight)
-            boundsBehavior: Flickable.StopAtBounds
-            acceptedButtons: Qt.NoButton
+            anchors.rightMargin: (uiState.chatWindowScrollBar.visible || false) ? 13 : 0
             clip: true
-            TextEdit {
-                id: history
-                objectName: "chatHistoryEditor"
-                width: transcript.width
-                y: Math.max(0, transcript.height - contentHeight)
-                height: Math.max(transcript.height, contentHeight)
-                readOnly: true
-                selectByMouse: true
-                selectByKeyboard: true
-                persistentSelection: true
-                activeFocusOnPress: true
-                textFormat: TextEdit.RichText
-                wrapMode: TextEdit.Wrap
-                color: chat.ink
-                selectionColor: "#496b95"
-                selectedTextColor: "white"
-                font.family: "Noto Sans"
-                font.pixelSize: chat.fontPixelSize
-                font.contextFontMerging: true
-                onActiveFocusChanged: if (activeFocus) uiState.focusChat(0)
-                onSelectedTextChanged: if (selectedText.length === 0) Qt.callLater(chat.updateHistory)
-                Keys.onReturnPressed: uiState.chatKey(13)
-                Keys.onEnterPressed: uiState.chatKey(13)
-                Keys.onEscapePressed: { deselect(); focus = false; uiState.focusChat(0) }
-                onCursorRectangleChanged: {
-                    if (!activeFocus || selectedText.length === 0) return
-                    const top = y + cursorRectangle.y
-                    if (top < transcript.contentY) transcript.contentY = top
-                    else if (top + cursorRectangle.height > transcript.contentY + transcript.height)
-                        transcript.contentY = top + cursorRectangle.height - transcript.height
+            Repeater {
+                model: uiState.chatWindowLines || []
+                delegate: Text {
+                    required property var modelData
+                    required property int index
+                    objectName: "sourceChatRow" + index
+                    x: 2; y: index * 14 + 3
+                    width: transcript.width - 2; height: 18
+                    text: modelData.text; textFormat: Text.PlainText
+                    color: modelData.color
+                    font.family: "Noto Sans"; font.pixelSize: chat.fontPixelSize
+                    font.contextFontMerging: true
+                    wrapMode: Text.NoWrap; clip: true
                 }
             }
         }
-        RoScrollBar {
-            id: scroll
-            x: parent.width - 9
-            y: 5
-            width: 6
-            height: parent.height - 10
-            visible: transcript.contentHeight > transcript.height
-            thumbWidth: width
-            thumbHeight: Math.max(18, height * transcript.height / transcript.contentHeight)
-            thumbY: (height - thumbHeight) * transcript.contentY / Math.max(1, transcript.contentHeight - transcript.height)
-            MouseArea {
-                anchors.fill: parent
-                property real grab: 0
-                onPressed: function(mouse) { grab = mouse.y - scroll.thumbY; if (grab < 0 || grab > scroll.thumbHeight) grab = scroll.thumbHeight / 2; moveThumb(mouse.y) }
-                onPositionChanged: function(mouse) { if (pressed) moveThumb(mouse.y) }
-                function moveThumb(y) {
-                    transcript.contentY = Math.max(0, Math.min(1, (y - grab) / Math.max(1, scroll.height - scroll.thumbHeight))) * Math.max(0, transcript.contentHeight - transcript.height)
-                }
-            }
-        }
+    }
+    Rectangle {
+        readonly property var bounds: chat.sourceRects.scrollTrack || ({})
+        x: bounds.x || 0; y: bounds.y || 0
+        width: bounds.width || 0; height: bounds.height || 0
+        visible: chat.expanded && (uiState.chatWindowScrollBar.visible || false)
+        color: "#404040"
+    }
+    Rectangle {
+        readonly property var bounds: chat.sourceRects.scrollThumb || ({})
+        x: bounds.x || 0; y: bounds.y || 0
+        width: bounds.width || 0; height: bounds.height || 0
+        visible: chat.expanded && (uiState.chatWindowScrollBar.visible || false)
+        color: "#b8b8b8"
     }
 
     component ChatInput: RoField {
@@ -179,9 +130,4 @@ Item {
         sourceText: uiState.chatWindowInputText
         inputActive: uiState.chatWindowMessageInputActive
     }
-    Connections {
-        target: uiState
-        function onChatWindowLinesChanged() { chat.updateHistory() }
-    }
-    Component.onCompleted: updateHistory()
 }

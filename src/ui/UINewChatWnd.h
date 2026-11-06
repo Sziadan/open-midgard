@@ -3,6 +3,7 @@
 #include "UIWindow.h"
 #include "UISubChatWnd.h"
 #include "core/ChatNotice.h"
+#include "core/ChatHistoryView.h"
 
 #include <array>
 #include <vector>
@@ -12,6 +13,7 @@ struct ChatLine {
     u32 color;
     u8 channel;
     u32 tick;
+    std::string talker;
 };
 
 struct ChatScrollBarState {
@@ -37,6 +39,7 @@ struct ChatFilterOptionDisplay {
 struct ChatWindowLayoutDisplay {
     RECT header{}, history{}, whisperInput{}, messageInput{}, gearButton{}, stickButton{};
     std::array<RECT, 4> tabs{};
+    RECT scrollTrack{}, scrollThumb{};
 };
 
 class UINewChatWnd : public UIWindow {
@@ -55,6 +58,7 @@ public:
     void OnDraw() override;
     void DrawNativeToHdc(HDC hdc);
     void OnLBtnDown(int x, int y) override;
+    void OnLBtnDblClk(int x, int y) override;
     void OnMouseMove(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnWheel(int delta) override;
@@ -65,6 +69,10 @@ public:
     void SetShow(int show) override;
     void Move(int x, int y) override;
     int GetExpansionState() const { return m_expansionState; }
+    int GetSourceTab() const { return m_sourceTab; }
+    void SelectSourceTab(int tab);
+    void ScrollSourceHistory(int rows);
+    int GetSourceSelectedRow() const { return m_sourceViews[m_sourceTab].selected; }
     ChatWindowLayoutDisplay GetLayoutDisplay() const;
 
     void AddChatLine(const char* text, u32 color, u8 channel, u32 tick);
@@ -137,6 +145,13 @@ private:
 
     std::vector<ChatLine> m_lines;
     std::array<std::vector<SubChatRow>, 2> m_sourceHistory;
+    std::array<ro::chat::HistoryView, 2> m_sourceViews;
+    int m_sourceTab = 0;
+    int m_sourceTitleWidth = 71;
+    bool m_historyPointerDown = false;
+    bool m_sourceScrollDragging = false;
+    int m_sourceScrollGrab = 0;
+    std::vector<std::string> m_whisperTargets;
     std::vector<ChatLine> m_visibleLines;
     std::vector<std::string> m_inputHistory;
     std::string m_whisperTargetText;

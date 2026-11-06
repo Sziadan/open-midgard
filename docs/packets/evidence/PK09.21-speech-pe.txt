@@ -1,0 +1,141 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+005924f0 <.text+0x1914f0>:
+  5924f0:	55                   	push   %ebp
+  5924f1:	8b ec                	mov    %esp,%ebp
+  5924f3:	81 ec 04 01 00 00    	sub    $0x104,%esp
+  5924f9:	53                   	push   %ebx
+  5924fa:	8b 5d 08             	mov    0x8(%ebp),%ebx
+  5924fd:	89 4d fc             	mov    %ecx,-0x4(%ebp)
+  592500:	8b 43 04             	mov    0x4(%ebx),%eax
+  592503:	b9 18 1f 7b 00       	mov    $0x7b1f18,%ecx
+  592508:	50                   	push   %eax
+  592509:	e8 a2 b1 0d 00       	call   0x66d6b0
+  59250e:	85 c0                	test   %eax,%eax
+  592510:	0f 85 34 01 00 00    	jne    0x59264a
+  592516:	33 c9                	xor    %ecx,%ecx
+  592518:	56                   	push   %esi
+  592519:	66 8b 4b 02          	mov    0x2(%ebx),%cx
+  59251d:	57                   	push   %edi
+  59251e:	83 e9 08             	sub    $0x8,%ecx
+  592521:	8d 73 08             	lea    0x8(%ebx),%esi
+  592524:	8b d1                	mov    %ecx,%edx
+  592526:	8d bd fc fe ff ff    	lea    -0x104(%ebp),%edi
+  59252c:	c1 e9 02             	shr    $0x2,%ecx
+  59252f:	f3 a5                	rep movsl %ds:(%esi),%es:(%edi)
+  592531:	a1 68 88 76 00       	mov    0x768868,%eax
+  592536:	8b ca                	mov    %edx,%ecx
+  592538:	83 e1 03             	and    $0x3,%ecx
+  59253b:	f3 a4                	rep movsb %ds:(%esi),%es:(%edi)
+  59253d:	5f                   	pop    %edi
+  59253e:	5e                   	pop    %esi
+  59253f:	85 c0                	test   %eax,%eax
+  592541:	74 21                	je     0x592564
+  592543:	6a 00                	push   $0x0
+  592545:	6a 00                	push   $0x0
+  592547:	8d 85 fc fe ff ff    	lea    -0x104(%ebp),%eax
+  59254d:	68 22 22 22 00       	push   $0x222222
+  592552:	50                   	push   %eax
+  592553:	6a 05                	push   $0x5
+  592555:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  59255a:	e8 51 77 f5 ff       	call   0x4e9cb0
+  59255f:	e9 ce 00 00 00       	jmp    0x592632
+  592564:	8b 4b 04             	mov    0x4(%ebx),%ecx
+  592567:	51                   	push   %ecx
+  592568:	e8 a3 14 f7 ff       	call   0x503a10
+  59256d:	83 c4 04             	add    $0x4,%esp
+  592570:	84 c0                	test   %al,%al
+  592572:	74 3a                	je     0x5925ae
+  592574:	a1 14 c2 78 00       	mov    0x78c214,%eax
+  592579:	83 f8 05             	cmp    $0x5,%eax
+  59257c:	75 0b                	jne    0x592589
+  59257e:	6a 00                	push   $0x0
+  592580:	6a 01                	push   $0x1
+  592582:	68 00 ff ff 00       	push   $0xffff00
+  592587:	eb 6a                	jmp    0x5925f3
+  592589:	83 f8 0a             	cmp    $0xa,%eax
+  59258c:	6a 00                	push   $0x0
+  59258e:	6a 01                	push   $0x1
+  592590:	75 0e                	jne    0x5925a0
+  592592:	8d 85 fc fe ff ff    	lea    -0x104(%ebp),%eax
+  592598:	68 ff 8d 1d 00       	push   $0x1d8dff
+  59259d:	50                   	push   %eax
+  59259e:	eb 5a                	jmp    0x5925fa
+  5925a0:	8d 8d fc fe ff ff    	lea    -0x104(%ebp),%ecx
+  5925a6:	68 ff ff 00 00       	push   $0xffff
+  5925ab:	51                   	push   %ecx
+  5925ac:	eb 4c                	jmp    0x5925fa
+  5925ae:	8b 53 04             	mov    0x4(%ebx),%edx
+  5925b1:	52                   	push   %edx
+  5925b2:	e8 e9 14 f7 ff       	call   0x503aa0
+  5925b7:	83 c4 04             	add    $0x4,%esp
+  5925ba:	85 c0                	test   %eax,%eax
+  5925bc:	74 1a                	je     0x5925d8
+  5925be:	8b 43 04             	mov    0x4(%ebx),%eax
+  5925c1:	6a 00                	push   $0x0
+  5925c3:	6a 00                	push   $0x0
+  5925c5:	50                   	push   %eax
+  5925c6:	e8 d5 14 f7 ff       	call   0x503aa0
+  5925cb:	83 c4 04             	add    $0x4,%esp
+  5925ce:	8d 8d fc fe ff ff    	lea    -0x104(%ebp),%ecx
+  5925d4:	50                   	push   %eax
+  5925d5:	51                   	push   %ecx
+  5925d6:	eb 22                	jmp    0x5925fa
+  5925d8:	83 3d 94 43 7b 00 01 	cmpl   $0x1,0x7b4394
+  5925df:	74 25                	je     0x592606
+  5925e1:	83 3d 98 43 7b 00 01 	cmpl   $0x1,0x7b4398
+  5925e8:	74 1c                	je     0x592606
+  5925ea:	6a 00                	push   $0x0
+  5925ec:	6a 01                	push   $0x1
+  5925ee:	68 ff ff ff 00       	push   $0xffffff
+  5925f3:	8d 95 fc fe ff ff    	lea    -0x104(%ebp),%edx
+  5925f9:	52                   	push   %edx
+  5925fa:	6a 01                	push   $0x1
+  5925fc:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  592601:	e8 aa 76 f5 ff       	call   0x4e9cb0
+  592606:	8b 45 fc             	mov    -0x4(%ebp),%eax
+  592609:	8b 53 04             	mov    0x4(%ebx),%edx
+  59260c:	52                   	push   %edx
+  59260d:	8b 88 b4 00 00 00    	mov    0xb4(%eax),%ecx
+  592613:	e8 68 9b f6 ff       	call   0x4fc180
+  592618:	85 c0                	test   %eax,%eax
+  59261a:	74 16                	je     0x592632
+  59261c:	8b 10                	mov    (%eax),%edx
+  59261e:	6a 00                	push   $0x0
+  592620:	8d 8d fc fe ff ff    	lea    -0x104(%ebp),%ecx
+  592626:	6a 00                	push   $0x0
+  592628:	51                   	push   %ecx
+  592629:	6a 07                	push   $0x7
+  59262b:	6a 00                	push   $0x0
+  59262d:	8b c8                	mov    %eax,%ecx
+  59262f:	ff 52 08             	call   *0x8(%edx)
+  592632:	a1 80 44 7b 00       	mov    0x7b4480,%eax
+  592637:	85 c0                	test   %eax,%eax
+  592639:	74 0f                	je     0x59264a
+  59263b:	8b 4d fc             	mov    -0x4(%ebp),%ecx
+  59263e:	8d 95 fc fe ff ff    	lea    -0x104(%ebp),%edx
+  592644:	52                   	push   %edx
+  592645:	e8 36 b3 fe ff       	call   0x57d980
+  59264a:	5b                   	pop    %ebx
+  59264b:	8b e5                	mov    %ebp,%esp
+  59264d:	5d                   	pop    %ebp
+  59264e:	c2 04 00             	ret    $0x4
+  592651:	90                   	nop
+  592652:	90                   	nop
+  592653:	90                   	nop
+  592654:	90                   	nop
+  592655:	90                   	nop
+  592656:	90                   	nop
+  592657:	90                   	nop
+  592658:	90                   	nop
+  592659:	90                   	nop
+  59265a:	90                   	nop
+  59265b:	90                   	nop
+  59265c:	90                   	nop
+  59265d:	90                   	nop
+  59265e:	90                   	nop
+  59265f:	90                   	nop
