@@ -22,14 +22,44 @@ void CheckChatBattleOptionsUi(QGuiApplication& app,QQuickView& view,QtUiState* s
     const auto language=std::filesystem::path(output.toStdString())/"options-language";
     std::filesystem::create_directories(language);
     {std::ofstream f(language/"msgstringtable.txt",std::ios::binary);
-        for(int i=0;i<=1331;++i){f<<"FILTER LABEL "<<i<<"#\r\n";}}
+        for(int i=0;i<=1331;++i){if(i==1291)f<<"#\r\n";else if(i==1292)f<<"COMMAND LABEL#\r\n";else f<<"FILTER LABEL "<<i<<"#\r\n";}}
     std::filesystem::current_path(language);g_readFolderFirst=1;g_serviceType=ServiceKorea;
     g_session.m_battleMsgOnOffSet.fill(true);SaveSettingsIniInt("ChatOption","0",1);
-    g_windowMgr.m_chatWndStickOn=true;
+    g_windowMgr.RemoveAllWindows();g_windowMgr.m_chatWndStickOn=true;
+    g_windowMgr.m_chatWndHeight=123;g_windowMgr.m_chatWndStatus=4;
+    g_windowMgr.m_chatWndX=30;g_windowMgr.m_chatWndY=200;
+    SaveSettingsIniInt("ChatWnd","Width",600);
     g_windowMgr.EnsureChatWindowVisible();auto* main=g_windowMgr.m_chatWnd;
+    Require(main->m_x==30 && main->m_y==185 && main->m_w==600 && main->m_h==138,
+        "actual render owner did not restore cached physical height before state4");
+    adapter.syncChat();Frames(app,view);
+    auto* restoredPanel=Find(view.rootObject(),"chatWindowPanel");
+    Require(restoredPanel && qRound(restoredPanel->x())==30 && qRound(restoredPanel->y())==185
+        && qRound(restoredPanel->width())==600 && qRound(restoredPanel->height())==138,
+        "actual QML cached-placement geometry diverged from native owner");
+    Require(view.grabWindow().save(output+"/chat-restore-placement.qml.png"),"restore Qt capture failed");
+    {ArgbDibSurface dib;Require(dib.EnsureSize(view.width(),view.height()),"restore native DIB failed");
+        std::fill_n(dib.GetPixels(),view.width()*view.height(),0xff181b20u);main->DrawNativeToHdc(dib.GetDC());
+        const auto image=QImage(reinterpret_cast<uchar*>(dib.GetPixels()),view.width(),view.height(),view.width()*4,QImage::Format_RGB32).copy();
+        Require(image.save(output+"/chat-restore-placement.native.png"),"restore native capture failed");}
+
     auto* bt=static_cast<UISubChatHisWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SUBCHATBT));
     g_windowMgr.MakeWindow(UIWindowMgr::WID_SUBCHATST);g_windowMgr.MakeWindow(UIWindowMgr::WID_SUBCHATMINI);
     main->SetState(7);main->Move(20,100);
+    Require(std::string(main->GetSourceTabLabel(0)).empty() && std::string(main->GetSourceTabLabel(1))=="COMMAND LABEL"
+        && bt->GetSourceLabel()=="COMMAND LABEL" && g_windowMgr.m_subChatWndST->GetSourceLabel().empty(),
+        "actual owner language labels lost positional empty/translated values");
+    adapter.syncChat();Frames(app,view);
+    auto* tab0=Find(view.rootObject(),"sourceChatTab0");auto* tab1=Find(view.rootObject(),"sourceChatTab1");
+    auto* historyLabel0=Find(view.rootObject(),"detachedSourceLabel0");auto* historyLabel1=Find(view.rootObject(),"detachedSourceLabel1");
+    auto* miniLabel0=Find(view.rootObject(),"chatMiniStLabel");auto* miniLabel1=Find(view.rootObject(),"chatMiniBtLabel");
+    Require(tab0 && tab1 && historyLabel0 && historyLabel1 && miniLabel0 && miniLabel1
+        && tab1->clip() && historyLabel1->clip() && miniLabel1->clip()
+        && tab0->property("label").toString().isEmpty() && tab1->property("label").toString()=="COMMAND LABEL"
+        && historyLabel0->property("text").toString().isEmpty() && historyLabel1->property("text").toString()=="COMMAND LABEL"
+        && miniLabel0->property("text").toString().isEmpty() && miniLabel1->property("text").toString()=="COMMAND LABEL",
+        "actual QML owner labels replaced empty entries or lost translation");
+
     const auto pointer=[&](int x,int y){
         WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(x,y));
         WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(x,y));
@@ -150,7 +180,7 @@ void CheckChatBattleOptionsUi(QGuiApplication& app,QQuickView& view,QtUiState* s
     Require(!g_windowMgr.m_battleMsgOptionWnd && !g_windowMgr.m_captureWindow && !GetCapture(),
         "mouse-down close135 left a deleted owner or orphaned OS capture");
     QFile result(output+"/chat-options-results.json");Require(result.open(QIODevice::WriteOnly),"options results open failed");
-    result.write(QJsonDocument(QJsonObject{{"filters",13},{"siege_message_id",1331},{"rows",8},{"last_first",6},
+    result.write(QJsonDocument(QJsonObject{{"translated_label_clip",true},{"cached_restore_geometry",true},{"source_labels_empty_and_translated",true},{"filters",13},{"siege_message_id",1331},{"rows",8},{"last_first",6},
         {"native_qt_checkbox_pixels",true},{"actual_editor_escape",true},{"close_persistence",true},
         {"real_capture_cancel",true},{"mouse_close_capture",true},{"peer_stacking",true},{"scale125_geometry",true},{"absent_main",true},{"outcome","PASS"}}).toJson());
 }

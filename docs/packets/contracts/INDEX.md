@@ -126,3 +126,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.21 battle-message options](../evidence/PK09.21-options.md) records manager139, session filtering, close-only preferences, cross-process startup reload and native/QML UI checks. Shared UIScrollBar fidelity, remaining window persistence/labels/producers and full lifecycle acceptance remain open.
 
 [PK09.21 source scrollbar controls](../evidence/PK09.21-scroll.md) records reviewed base/history subclass geometry, relative drag and captured-child lifetime, plus separate thumb/text offsets after trim. It supersedes the earlier primary clamp-first assumption. Remaining persistence/labels/producers/art and full acceptance stay open.
+
+[PK09.21 labels and restore](../evidence/PK09.21-restore.md) records selected language IDs, empty/missing semantics, source physical-height placement order, write-only startup status, geometry/toggle/show preferences and full teardown PE adjudication. Room/whisper/producers/bubbles, exact skin/locale and full acceptance remain open.

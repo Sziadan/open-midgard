@@ -3,6 +3,8 @@
 #include "core/ChatHistoryView.h"
 #include "core/ChatBattleOptions.h"
 #include "core/ChatScrollBar.h"
+#include <array>
+#include <string>
 
 struct SubChatWindowInfo {
     int x = 0, y = 0, width = 0, height = 0;
@@ -24,6 +26,7 @@ class UISubChatHisWnd : public UIWindow {
 public:
     explicit UISubChatHisWnd(int kind);
     int GetKind() const { return m_kind; }
+    const std::string& GetSourceLabel() const { return m_sourceLabel; }
     const std::vector<SubChatRow>& GetRows() const { return m_rows; }
     const std::vector<SubChatRow>& GetVisualRows() const { return m_visualRows; }
     std::vector<SubChatRow> GetVisibleRows() const;
@@ -47,6 +50,7 @@ public:
     bool IsFrameWnd() override { return true; }
 private:
     int m_kind;
+    std::string m_sourceLabel;
     int m_titleWidth=71;
     std::vector<SubChatRow> m_rows, m_visualRows;
     ro::chat::HistoryView m_view;
@@ -61,10 +65,13 @@ private:
 class UISubChatMiniWnd : public UIWindow {
 public:
     UISubChatMiniWnd();
+    const std::string& GetSourceLabel(int kind) const { return m_sourceLabels.at(static_cast<std::size_t>(kind)); }
     msgresult_t SendMsg(UIWindow*, int, msgparam_t, msgparam_t, msgparam_t) override;
     void OnLBtnDown(int x, int y) override;
     void OnDraw() override;
     void UpdateHistoryVisibility();
+private:
+    std::array<std::string, 2> m_sourceLabels{{"ST", "BT"}};
 };
 
 struct BattleOptionsLayout {

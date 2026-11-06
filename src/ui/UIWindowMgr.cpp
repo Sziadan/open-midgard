@@ -981,9 +981,61 @@ bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 
 RECT UIWindowMgr::GetChatClientRect() const
 {
-    RECT client{};
-    GetUiLogicalClientRectForScale(IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f, &client);
-    return client;
+    RECT client{0,0,WINDOW_WIDTH>0?WINDOW_WIDTH:640,WINDOW_HEIGHT>0?WINDOW_HEIGHT:480};
+    if(g_hMainWnd)GetClientRect(g_hMainWnd,&client);
+    const float scale=IsQtUiRuntimeEnabled()?GetConfiguredUiScaleFactor():1.0f;
+    const float normalized=scale>0?scale:1.0f;
+    int width=(std::max)(1,static_cast<int>(std::floor(static_cast<float>(client.right-client.left)/normalized)));
+    int height=(std::max)(1,static_cast<int>(std::floor(static_cast<float>(client.bottom-client.top)/normalized)));
+    if(WINDOW_WIDTH>0)width=(std::min)(width,WINDOW_WIDTH);
+    if(WINDOW_HEIGHT>0)height=(std::min)(height,WINDOW_HEIGHT);
+    return {0,0,width,height};
+}
+
+void UIWindowMgr::LoadChatWindowPreferences()
+{
+    // Selected source reads height/placement/show but never reads the status
+    // value it writes. Status therefore keeps the manager's session default7.
+    m_chatWndHeight=LoadSettingsIniInt("UIWindows","ChatWndHeight",98);
+    // Avoid malformed dimensions causing oversized render allocations; normal
+    // restored heights are not quantized into SetState before placement.
+    if(m_chatWndHeight<1 || m_chatWndHeight>8192)m_chatWndHeight=98;
+    m_chatWndX=LoadSettingsIniInt("UIWindows","ChatWndX",0);
+    m_chatWndY=LoadSettingsIniInt("UIWindows","ChatWndY",static_cast<int>(GetChatClientRect().bottom)-98);
+    m_chatWndShow=LoadSettingsIniInt("UIWindows","ChatWndShow",1);
+    m_chatWndStickOn=LoadSettingsIniInt("UIWindows","ChatWndStickOn",1)!=0;
+    m_onStSubChat=LoadSettingsIniInt("UIWindows","OnStSubChat",0)!=0;
+    m_onBtSubChat=LoadSettingsIniInt("UIWindows","OnBtSubChat",0)!=0;
+    for(int kind=0;kind<2;++kind){
+        const std::string prefix=kind==0?"SubChatWndSt":"SubChatWndBt";
+        auto& info=m_subChatInfo[kind];
+        info.x=LoadSettingsIniInt("UIWindows",(prefix+"X").c_str(),0);
+        info.y=LoadSettingsIniInt("UIWindows",(prefix+"Y").c_str(),0);
+        info.width=LoadSettingsIniInt("UIWindows",(prefix+"W").c_str(),0);
+        info.height=LoadSettingsIniInt("UIWindows",(prefix+"H").c_str(),0);
+    }
+}
+
+void UIWindowMgr::SaveChatWindowPreferences() const
+{
+    // Shutdown calls this after RemoveAllWindows has snapshotted every owner.
+    // Hidden windows, checkbox edits and127 toggles do not write this record.
+    SaveSettingsIniInt("UIWindows","ChatWndStatus",m_chatWndStatus);
+    SaveSettingsIniInt("UIWindows","ChatWndHeight",m_chatWndHeight);
+    SaveSettingsIniInt("UIWindows","ChatWndX",m_chatWndX);
+    SaveSettingsIniInt("UIWindows","ChatWndY",m_chatWndY);
+    SaveSettingsIniInt("UIWindows","ChatWndShow",m_chatWndShow);
+    SaveSettingsIniInt("UIWindows","ChatWndStickOn",m_chatWndStickOn);
+    SaveSettingsIniInt("UIWindows","OnStSubChat",m_onStSubChat);
+    SaveSettingsIniInt("UIWindows","OnBtSubChat",m_onBtSubChat);
+    for(int kind=0;kind<2;++kind){
+        const std::string prefix=kind==0?"SubChatWndSt":"SubChatWndBt";
+        const auto& info=m_subChatInfo[kind];
+        SaveSettingsIniInt("UIWindows",(prefix+"X").c_str(),info.x);
+        SaveSettingsIniInt("UIWindows",(prefix+"Y").c_str(),info.y);
+        SaveSettingsIniInt("UIWindows",(prefix+"W").c_str(),info.width);
+        SaveSettingsIniInt("UIWindows",(prefix+"H").c_str(),info.height);
+    }
 }
 
 void UIWindowMgr::InitializeChatAuxiliaries()
@@ -1004,6 +1056,14 @@ void UIWindowMgr::UpdateChatAuxiliaryVisibility()
     m_subChatMiniWnd->UpdateHistoryVisibility();
 }
 
+void UIWindowMgr::ShowChatWindow(bool show)
+{
+    EnsureChatWindowVisible();
+    m_chatWndShow=show;
+    m_chatWnd->SetShow(show);
+    if(!show)m_chatWnd->StoreInfo();
+}
+
 void UIWindowMgr::EnsureChatWindowVisible()
 {
     if (!m_chatWnd) {
@@ -1020,6 +1080,7 @@ void UIWindowMgr::EnsureChatWindowVisible()
 
     m_children.remove(m_chatWnd);
     m_children.push_back(m_chatWnd);
+    m_chatWndShow=1;
     m_chatWnd->SetShow(1);
 }
 
@@ -1119,6 +1180,7 @@ bool UIWindowMgr::Init() {
         ++m_sourceChatGeneration;
         InitializeChatAuxiliaries();
         m_children.push_back(m_chatWnd);
+        m_chatWnd->SetShow(m_chatWndShow);
     }
     return true;
 }
@@ -1149,7 +1211,7 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             m_children.push_back(m_subChatMiniWnd);
         }
         return m_subChatMiniWnd;
-    case WID_BASICINFOWND:
+    case WID_BASICINFOWND: {
         if (!m_basicInfoWnd) {
             m_basicInfoWnd = new UIBasicInfoWnd();
             m_children.push_back(m_basicInfoWnd);
@@ -1157,9 +1219,13 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_children.remove(m_basicInfoWnd);
         m_children.push_front(m_basicInfoWnd);
         m_basicInfoWnd->SetShow(1);
+        // Source basic UI also recreates chat even when its saved show is0.
+        const bool rememberedChatShow=m_chatWndShow!=0;
+        ShowChatWindow(rememberedChatShow);
         // Ref case0 reconstructs remembered inventory after map teardown.
         if (GetInventoryWindowShowState()) MakeWindow(WID_ITEMWND);
         return m_basicInfoWnd;
+    }
 
     case WID_STATUSWND:
         if (!m_statusWnd) {
@@ -1675,6 +1741,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     }
     if (window == m_chatWnd) {
         m_chatWnd->StoreInfo();
+        if(!preserveInventoryShow)m_chatWndShow=0;
         m_chatWnd = nullptr;
     }
     if (window == m_subChatWndST) { m_subChatWndST->StoreInfo(); m_subChatWndST = nullptr; }

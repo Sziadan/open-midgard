@@ -50,7 +50,7 @@ void CheckItemUseFeedbackUi(QGuiApplication& app,QQuickView& view,QtUiState* uiS
         auto* chat=g_windowMgr.m_chatWnd;
         Require(chat!=nullptr,"item-use feedback chat window missing");
         ChatTabDisplay bt{};Require(chat->GetTabDisplay(1,&bt)&&bt.id==1
-            &&QString::fromUtf8(bt.label)=="BT","actual BT source tab metadata differs");
+            &&QString::fromUtf8(bt.label)=="UNSELECTED_1292","actual BT source tab metadata differs");
         chat->SetState(7);chat->Resize(600,200);chat->Move(320,510);
         chat->SetWindowFocused(true);chat->SelectSourceTab(1);
         const auto layout=chat->GetLayoutDisplay();

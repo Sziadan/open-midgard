@@ -1,0 +1,47 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+      Start  1: packet_stream_replay_checks
+ 1/21 Test  #1: packet_stream_replay_checks ..............   Passed    5.48 sec
+      Start  3: packet_chat_state_checks
+ 2/21 Test  #3: packet_chat_state_checks .................   Passed    0.11 sec
+      Start  4: packet_chat_notice_checks
+ 3/21 Test  #4: packet_chat_notice_checks ................   Passed    0.10 sec
+      Start  5: chat_window_state_checks
+ 4/21 Test  #5: chat_window_state_checks .................   Passed    0.03 sec
+      Start  6: chat_notice_checks
+ 5/21 Test  #6: chat_notice_checks .......................   Passed    0.02 sec
+      Start  7: chat_history_view_checks
+ 6/21 Test  #7: chat_history_view_checks .................   Passed    0.02 sec
+      Start  8: chat_history_wrap_checks
+ 7/21 Test  #8: chat_history_wrap_checks .................   Passed    0.03 sec
+      Start  9: chat_battle_options_checks
+ 8/21 Test  #9: chat_battle_options_checks ...............   Passed    0.03 sec
+      Start 10: chat_scrollbar_checks
+ 9/21 Test #10: chat_scrollbar_checks ....................   Passed    0.03 sec
+      Start 11: packet_chat_restore_checks
+10/21 Test #11: packet_chat_restore_checks ...............   Passed    0.08 sec
+      Start 12: packet_chat_labels_checks
+11/21 Test #12: packet_chat_labels_checks ................   Passed    0.09 sec
+      Start 13: packet_chat_window_write_checks
+12/21 Test #13: packet_chat_window_write_checks ..........   Passed    0.11 sec
+      Start 14: packet_chat_window_read_checks
+13/21 Test #14: packet_chat_window_read_checks ...........   Passed    0.10 sec
+      Start 15: packet_chat_scrollbar_checks
+14/21 Test #15: packet_chat_scrollbar_checks .............   Passed    0.14 sec
+      Start 16: packet_chat_options_checks
+15/21 Test #16: packet_chat_options_checks ...............   Passed    0.17 sec
+      Start 17: packet_chat_options_write_checks
+16/21 Test #17: packet_chat_options_write_checks .........   Passed    0.09 sec
+      Start 18: packet_chat_options_read_checks
+17/21 Test #18: packet_chat_options_read_checks ..........   Passed    0.08 sec
+      Start 19: packet_chat_detached_checks
+18/21 Test #19: packet_chat_detached_checks ..............   Passed    0.10 sec
+      Start 20: packet_chat_primary_checks
+19/21 Test #20: packet_chat_primary_checks ...............   Passed    0.10 sec
+      Start 38: packet_chat_state_render_checks
+20/21 Test #38: packet_chat_state_render_checks ..........   Passed    5.68 sec
+      Start 39: packet_item_use_feedback_render_checks
+21/21 Test #39: packet_item_use_feedback_render_checks ...   Passed    1.98 sec
+
+100% tests passed, 0 tests failed out of 21
+
+Total Test time (real) =  14.57 sec

@@ -1,0 +1,71 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0049dd80 <.text+0x9cd80>:
+  49dd80:	50                   	push   %eax
+  49dd81:	e8 52 b4 1f 00       	call   0x6991d8
+  49dd86:	83 c4 04             	add    $0x4,%esp
+  49dd89:	33 c0                	xor    %eax,%eax
+  49dd8b:	5f                   	pop    %edi
+  49dd8c:	5e                   	pop    %esi
+  49dd8d:	5b                   	pop    %ebx
+  49dd8e:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  49dd91:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  49dd98:	8b e5                	mov    %ebp,%esp
+  49dd9a:	5d                   	pop    %ebp
+  49dd9b:	c2 18 00             	ret    $0x18
+  49dd9e:	8b 15 5c 87 76 00    	mov    0x76875c,%edx
+  49dda4:	32 c0                	xor    %al,%al
+  49dda6:	85 d2                	test   %edx,%edx
+  49dda8:	7d 02                	jge    0x49ddac
+  49ddaa:	b0 01                	mov    $0x1,%al
+  49ddac:	8b 35 60 87 76 00    	mov    0x768760,%esi
+  49ddb2:	85 f6                	test   %esi,%esi
+  49ddb4:	7d 02                	jge    0x49ddb8
+  49ddb6:	b0 01                	mov    $0x1,%al
+  49ddb8:	8b 0d 38 ec 72 00    	mov    0x72ec38,%ecx
+  49ddbe:	8b 79 24             	mov    0x24(%ecx),%edi
+  49ddc1:	2b 7b 1c             	sub    0x1c(%ebx),%edi
+  49ddc4:	3b d7                	cmp    %edi,%edx
+  49ddc6:	7e 02                	jle    0x49ddca
+  49ddc8:	b0 01                	mov    $0x1,%al
+  49ddca:	8b 79 28             	mov    0x28(%ecx),%edi
+  49ddcd:	2b 7b 20             	sub    0x20(%ebx),%edi
+  49ddd0:	3b f7                	cmp    %edi,%esi
+  49ddd2:	7f 04                	jg     0x49ddd8
+  49ddd4:	84 c0                	test   %al,%al
+  49ddd6:	74 13                	je     0x49ddeb
+  49ddd8:	33 d2                	xor    %edx,%edx
+  49ddda:	89 15 5c 87 76 00    	mov    %edx,0x76875c
+  49dde0:	8b 41 28             	mov    0x28(%ecx),%eax
+  49dde3:	2b 43 20             	sub    0x20(%ebx),%eax
+  49dde6:	a3 60 87 76 00       	mov    %eax,0x768760
+  49ddeb:	89 53 14             	mov    %edx,0x14(%ebx)
+  49ddee:	8b 0d 60 87 76 00    	mov    0x768760,%ecx
+  49ddf4:	89 4b 18             	mov    %ecx,0x18(%ebx)
+  49ddf7:	8b 15 74 87 76 00    	mov    0x768774,%edx
+  49ddfd:	52                   	push   %edx
+  49ddfe:	8b cb                	mov    %ebx,%ecx
+  49de00:	e8 7b ec ff ff       	call   0x49ca80
+  49de05:	8b 4b 18             	mov    0x18(%ebx),%ecx
+  49de08:	8b 53 14             	mov    0x14(%ebx),%edx
+  49de0b:	8b 03                	mov    (%ebx),%eax
+  49de0d:	51                   	push   %ecx
+  49de0e:	52                   	push   %edx
+  49de0f:	8b cb                	mov    %ebx,%ecx
+  49de11:	ff 50 18             	call   *0x18(%eax)
+  49de14:	5f                   	pop    %edi
+  49de15:	5e                   	pop    %esi
+  49de16:	33 c0                	xor    %eax,%eax
+  49de18:	5b                   	pop    %ebx
+  49de19:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  49de1c:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  49de23:	8b e5                	mov    %ebp,%esp
+  49de25:	5d                   	pop    %ebp
+  49de26:	c2 18 00             	ret    $0x18
+  49de29:	8b 45 10             	mov    0x10(%ebp),%eax
+  49de2c:	83 c0 8a             	add    $0xffffff8a,%eax
+  49de2f:	3d                   	.byte 0x3d

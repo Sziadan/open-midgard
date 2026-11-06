@@ -354,6 +354,16 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_executable(chat_scrollbar_checks tools/tests/ChatScrollBarTests.cpp)
     target_compile_features(chat_scrollbar_checks PRIVATE cxx_std_17)
     add_test(NAME chat_scrollbar_checks COMMAND chat_scrollbar_checks)
+    add_test(NAME packet_chat_restore_checks COMMAND packet_stream_replay_checks --chat-restore-only)
+    add_test(NAME packet_chat_labels_checks COMMAND packet_stream_replay_checks --chat-labels-only)
+    set_tests_properties(packet_chat_restore_checks packet_chat_labels_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-restore-settings")
+    add_test(NAME packet_chat_window_write_checks COMMAND packet_stream_replay_checks --chat-window-write)
+    add_test(NAME packet_chat_window_read_checks COMMAND packet_stream_replay_checks --chat-window-read)
+    set_tests_properties(packet_chat_window_write_checks packet_chat_window_read_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-window-restart-settings")
+    set_tests_properties(packet_chat_window_write_checks PROPERTIES FIXTURES_SETUP chat_window_preferences)
+    set_tests_properties(packet_chat_window_read_checks PROPERTIES FIXTURES_REQUIRED chat_window_preferences)
     add_test(NAME packet_chat_scrollbar_checks COMMAND packet_stream_replay_checks --chat-scroll-only)
     set_tests_properties(packet_chat_scrollbar_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-scroll-settings")

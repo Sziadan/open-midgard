@@ -1208,6 +1208,8 @@ Item {
                 model: chatWindowChrome.chatUi.tabs || []
                 delegate: RoTabButton {
                     required property var modelData
+                    objectName: "sourceChatTab" + modelData.id
+                    clip: true
                     x: modelData.x || 0; y: modelData.y || 0
                     width: modelData.width || 0; height: modelData.height || 0
                     selected: modelData.active; label: modelData.label; labelSize: 12
@@ -4275,7 +4277,7 @@ Item {
             z: modelData.layer || 0
             color: "#2a2723"; border.color: "#80745e"
             Rectangle { width: parent.width; height: 16; color: "#505a64" }
-            Text { x: 5; height: 16; text: modelData.kind === 0 ? "ST" : "BT"; color: "white"; font.pixelSize: 12 }
+            Text { objectName: "detachedSourceLabel" + modelData.kind; x: 5; width: Math.max(0,parent.width-70); height: 16; clip: true; text: modelData.label === undefined ? (modelData.kind === 0 ? "ST" : "BT") : modelData.label; color: "white"; font.pixelSize: 12 }
             Text { x: parent.width - 18; height: 16; text: "x"; color: "white"; font.pixelSize: 12 }
             Text { x: parent.width - 65; height: 16; visible: modelData.kind === 1; text: "Attach"; color: "white"; font.pixelSize: 12 }
             Text {
@@ -4327,8 +4329,8 @@ Item {
         color: "#373c41"
         Rectangle { width: 32; height: 32; color: parent.mini.st ? "#5a789b" : "#373c41" }
         Rectangle { x: 32; width: 32; height: 32; color: parent.mini.bt ? "#5a789b" : "#373c41" }
-        Text { x: 4; height: 32; verticalAlignment: Text.AlignVCenter; text: "ST"; color: "white"; font.pixelSize: 12 }
-        Text { x: 36; height: 32; verticalAlignment: Text.AlignVCenter; text: "BT"; color: "white"; font.pixelSize: 12 }
+        Text { objectName: "chatMiniStLabel"; x: 4; width: 28; height: 32; clip: true; verticalAlignment: Text.AlignVCenter; text: parent.mini.stLabel === undefined ? "ST" : parent.mini.stLabel; color: "white"; font.pixelSize: 12 }
+        Text { objectName: "chatMiniBtLabel"; x: 36; width: 28; height: 32; clip: true; verticalAlignment: Text.AlignVCenter; text: parent.mini.btLabel === undefined ? "BT" : parent.mini.btLabel; color: "white"; font.pixelSize: 12 }
     }
 
     Rectangle {

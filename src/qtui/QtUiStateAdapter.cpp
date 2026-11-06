@@ -1927,6 +1927,7 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         if (!history) continue;
         QVariantMap value;
         value.insert(QStringLiteral("kind"), history->GetKind());
+        value.insert(QStringLiteral("label"), ToQString(history->GetSourceLabel()));
         value.insert(QStringLiteral("layer"), chatLayer(history));
         value.insert(QStringLiteral("visible"), IsGameplayWindowVisible(state, history));
         value.insert(QStringLiteral("x"), history->m_x);
@@ -1964,6 +1965,8 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         mini.insert(QStringLiteral("y"), window->m_y);
         mini.insert(QStringLiteral("st"), g_windowMgr.m_onStSubChat);
         mini.insert(QStringLiteral("bt"), g_windowMgr.m_onBtSubChat);
+        mini.insert(QStringLiteral("stLabel"), ToQString(window->GetSourceLabel(0)));
+        mini.insert(QStringLiteral("btLabel"), ToQString(window->GetSourceLabel(1)));
     }
     chatUi.insert(QStringLiteral("mini"), mini);
     QVariantMap options;

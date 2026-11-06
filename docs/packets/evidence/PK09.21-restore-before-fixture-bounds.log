@@ -1,0 +1,52 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+      Start  1: packet_stream_replay_checks
+ 1/20 Test  #1: packet_stream_replay_checks ........   Passed    5.64 sec
+      Start  3: packet_chat_state_checks
+ 2/20 Test  #3: packet_chat_state_checks ...........   Passed    0.10 sec
+      Start  4: packet_chat_notice_checks
+ 3/20 Test  #4: packet_chat_notice_checks ..........   Passed    0.10 sec
+      Start  5: chat_window_state_checks
+ 4/20 Test  #5: chat_window_state_checks ...........   Passed    0.02 sec
+      Start  6: chat_notice_checks
+ 5/20 Test  #6: chat_notice_checks .................   Passed    0.02 sec
+      Start  7: chat_history_view_checks
+ 6/20 Test  #7: chat_history_view_checks ...........   Passed    0.02 sec
+      Start  8: chat_history_wrap_checks
+ 7/20 Test  #8: chat_history_wrap_checks ...........   Passed    0.02 sec
+      Start  9: chat_battle_options_checks
+ 8/20 Test  #9: chat_battle_options_checks .........   Passed    0.02 sec
+      Start 10: chat_scrollbar_checks
+ 9/20 Test #10: chat_scrollbar_checks ..............   Passed    0.02 sec
+      Start 11: packet_chat_restore_checks
+10/20 Test #11: packet_chat_restore_checks .........   Passed    0.08 sec
+      Start 12: packet_chat_labels_checks
+11/20 Test #12: packet_chat_labels_checks ..........   Passed    0.09 sec
+      Start 13: packet_chat_window_write_checks
+12/20 Test #13: packet_chat_window_write_checks ....   Passed    0.10 sec
+      Start 14: packet_chat_window_read_checks
+13/20 Test #14: packet_chat_window_read_checks .....***Failed    0.09 sec
+restore actual x/y/h/status: 0,300,180,7
+{"case_id":"chat_window_settings_read","stage":"PK09.21","fixture_id":"actual-process-chat-window-preferences","production_entry":"ReadRegistry -> manager cache -> actual owners -> teardown -> shutdown save -> fresh process","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"23a655e1d3131e23e87d3d0b089db51c5071405a","source_tree_status_at_configure":"dirty","invocation_count":0,"expected_packet_hex":null,"actual_packet_hex":null,"expected_queue_remainder":null,"actual_queue_remainder":null,"outcome":"FAIL","error":"fresh process did not apply default state7 after cached24px placement"}
+
+      Start 15: packet_chat_scrollbar_checks
+14/20 Test #15: packet_chat_scrollbar_checks .......   Passed    0.09 sec
+      Start 16: packet_chat_options_checks
+15/20 Test #16: packet_chat_options_checks .........   Passed    0.14 sec
+      Start 17: packet_chat_options_write_checks
+16/20 Test #17: packet_chat_options_write_checks ...   Passed    0.09 sec
+      Start 18: packet_chat_options_read_checks
+17/20 Test #18: packet_chat_options_read_checks ....   Passed    0.08 sec
+      Start 19: packet_chat_detached_checks
+18/20 Test #19: packet_chat_detached_checks ........   Passed    0.09 sec
+      Start 20: packet_chat_primary_checks
+19/20 Test #20: packet_chat_primary_checks .........   Passed    0.10 sec
+      Start 38: packet_chat_state_render_checks
+20/20 Test #38: packet_chat_state_render_checks ....   Passed    5.22 sec
+
+95% tests passed, 1 tests failed out of 20
+
+Total Test time (real) =  12.18 sec
+
+The following tests FAILED:
+	 14 - packet_chat_window_read_checks (Failed)
+Errors while running CTest

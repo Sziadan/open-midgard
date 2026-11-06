@@ -156,6 +156,9 @@ public:
     bool Init();
     RECT GetChatClientRect() const;
     bool IsChatAuxiliaryAtPoint(int x, int y) const;
+    void ShowChatWindow(bool show);
+    void LoadChatWindowPreferences();
+    void SaveChatWindowPreferences() const;
     void InitializeChatAuxiliaries();
     void UpdateChatAuxiliaryVisibility();
     int GetInventoryTabSelection();

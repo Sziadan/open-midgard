@@ -1,0 +1,537 @@
+
+--- Ref/UIWindowMgr.cpp:870-895 ---
+870:   this->m_w = 0;
+871:   this->m_h = 0;
+872:   v8 = strlen(&Buf);
+873:   if ( std::string::_Grow(&this->m_chatMsg, v8, 1u) )
+874:   {
+875:     qmemcpy(this->m_chatMsg._Ptr, &Buf, v8);
+876:     std::string::_Eos(&this->m_chatMsg, v8);
+877:   }
+878:   this->m_chatWndStatus = 7;
+879:   this->m_chatWndHeight = 98;
+880:   this->m_chatWndX = 0;
+881:   this->m_chatWndY = 0;
+882:   this->m_chatWndShow = 1;
+883:   this->m_miniMapZoomFactor = 4.0;
+884:   this->m_miniMapArgb = -1426063361;
+885:   this->m_isDrawCompass = 1;
+886:   this->m_chatWndWhisperCurHis = 0;
+887:   this->m_chatWndCurHis = 0;
+888:   this->m_isInvalidatedByForce = 0;
+889:   v9 = g_languageType == LanguageJapanese;
+890:   this->m_chatWndStickOn = 1;
+891:   this->m_conversionMode = v9;
+892:   this->m_onBtSubChat = 0;
+893:   this->m_onStSubChat = 0;
+894:   v9 = g_serviceType == ServiceKorea;
+895:   this->T_Logo_X = 0;
+
+--- Ref/UIWindowMgr.cpp:4547-4566 ---
+4547:           }
+4548:         }
+4549:       }
+4550:       return 1;
+4551:     }
+4552:     return 0;
+4553:   }
+4554:   m_chatWnd = this->m_chatWnd;
+4555:   v12 = show;
+4556:   this->m_chatWndShow = (int)show;
+4557:   if ( !m_chatWnd )
+4558:     UIWindowMgr::MakeWindow(&g_windowMgr, WID_CHATWND);
+4559:   this->m_chatWnd->UIWindow::SetShow(this->m_chatWnd, (int)v12);
+4560:   if ( !v12 )
+4561:   {
+4562:     this->m_chatWnd->UIWindow::StoreInfo(this->m_chatWnd);
+4563:     return 1;
+4564:   }
+4565:   windowId = this->m_chatWnd;
+4566:   if ( g_windowMgr.m_roMapWnd )
+
+--- Ref/UIWindowMgr.cpp:4838-4888 ---
+4838:       if ( this->equipWndInfo.show )
+4839:         UIWindowMgr::MakeWindow(this, WID_EQUIPWND);
+4840:       if ( this->statusWndInfo.show )
+4841:         UIWindowMgr::MakeWindow(this, WID_STATUSWND);
+4842:       if ( this->optionWndInfo.show )
+4843:         UIWindowMgr::MakeWindow(this, WID_OPTIONWND);
+4844:       if ( this->skillListWndInfo.show )
+4845:         UIWindowMgr::MakeWindow(this, WID_SKILLLISTWND);
+4846:       if ( this->questWndInfo.show )
+4847:         UIWindowMgr::DeleteWindow(this, (UISelCharForUServerWnd *)0x8D);
+4848:       CModeMgr::GetGameMode(&g_modeMgr);
+4849:       UIWindowMgr::ShowWindow(this, (UIWindow *)1, (std::list<UIWindow *>::_Node *)this->m_chatWndShow);
+4850:       UIWindowMgr::ShowWindow(this, (UIWindow *)0x24, (std::list<UIWindow *>::_Node *)this->shortCutWndInfo.show);
+4851:       UIWindowMgr::ShowWindow(this, (UIWindow *)0xF, 0);
+4852:       if ( this->messengerGroupWndInfo.show )
+4853:         UIWindowMgr::MakeWindow(this, WID_MESSENGERWND);
+4854:       if ( g_session.m_isLowSystemMemory
+4855:         && g_session.m_bAutoOpenDetailWindowIfLowMemory
+4856:         && g_registry.m_spriteMode == 2
+4857:         && g_registry.m_textureMode == 2 )
+4858:       {
+4859:         UIWindowMgr::MakeWindow(this, WID_DETAILLEVELWND);
+4860:       }
+4861:       return m_basicInfoWnd;
+4862:     case 1:
+4863:       m_basicInfoWnd = (UIBasicInfoWnd *)this->m_chatWnd;
+4864:       p_m_chatWnd = &this->m_chatWnd;
+4865:       width = (int)&this->m_chatWnd;
+4866:       if ( !m_basicInfoWnd )
+4867:       {
+4868:         v6 = (UINewChatWnd *)operator new(0xCCu);
+4869:         windowId = (int)v6;
+4870:         v191 = 1;
+4871:         if ( v6 )
+4872:           m_basicInfoWnd = (UIBasicInfoWnd *)UINewChatWnd::UINewChatWnd(v6);
+4873:         else
+4874:           m_basicInfoWnd = 0;
+4875:         *p_m_chatWnd = (UINewChatWnd *)m_basicInfoWnd;
+4876:         m_chatWndHeight = this->m_chatWndHeight;
+4877:         v191 = -1;
+4878:         UIWindow::Create(m_basicInfoWnd, 600, m_chatWndHeight);
+4879:         windowId = (int)m_basicInfoWnd;
+4880:         std::list<UIWindow *>::insert(
+4881:           &this->m_children,
+4882:           &result,
+4883:           (std::list<UIWindow *>::iterator)this->m_children._Head,
+4884:           (UIWindow *const *)&windowId);
+4885:         p_m_chatWnd = (UINewChatWnd **)width;
+4886:       }
+4887:       (*p_m_chatWnd)->UIWindow::SendMsg(*p_m_chatWnd, 0, 34, 0, 0, 0, 0);
+4888:       return m_basicInfoWnd;
+
+--- Ref/UIWindowMgr.cpp:10831-10884 ---
+10831: // Original Signature: public: void __thiscall UIWindowMgr::InitUIRectInfoFromReg(void)
+10832: // Decompiled from address: 0x4d9970
+10833: // ================================================
+10834: void __thiscall UIWindowMgr::InitUIRectInfoFromReg(UIWindowMgr *this)
+10835: {
+10836:   int *p_m_isDragAll; // edi
+10837:   unsigned int *p_m_miniMapArgb; // edi
+10838:   HKEY__ *v4; // ecx
+10839:   HKEY__ *v5; // [esp-18h] [ebp-234h]
+10840:   HKEY__ *v6; // [esp-18h] [ebp-234h]
+10841:   HKEY__ *v7; // [esp-18h] [ebp-234h]
+10842:   HKEY__ *v8; // [esp-18h] [ebp-234h]
+10843:   HKEY__ *v9; // [esp-18h] [ebp-234h]
+10844:   HKEY__ *v10; // [esp-18h] [ebp-234h]
+10845:   HKEY__ *v11; // [esp-18h] [ebp-234h]
+10846:   HKEY__ *v12; // [esp-18h] [ebp-234h]
+10847:   char UIPath[512]; // [esp+Ch] [ebp-210h] BYREF
+10848:   HKEY__ *hResultKey; // [esp+20Ch] [ebp-10h] BYREF
+10849:   unsigned int DATALENGTH; // [esp+210h] [ebp-Ch] BYREF
+10850:   unsigned int REG_TYPE; // [esp+214h] [ebp-8h] BYREF
+10851:   HKEY__ *hKey; // [esp+218h] [ebp-4h] BYREF
+10852:
+10853:   strcpy(UIPath, g_regPath);
+10854:   strcat(UIPath, g_uiPath);
+10855:   if ( RegOpenKeyExA(HKEY_LOCAL_MACHINE, UIPath, 0, 1u, &hResultKey) )
+10856:   {
+10857:     UIWindowMgr::MakeDefaultUIRectInfo(this);
+10858:   }
+10859:   else
+10860:   {
+10861:     RegCloseKey(hResultKey);
+10862:     if ( !RegOpenKeyExA(HKEY_LOCAL_MACHINE, UIPath, 0, 1u, &hKey) )
+10863:     {
+10864:       REG_TYPE = 4;
+10865:       DATALENGTH = 4;
+10866:       RegQueryValueExA(hKey, aMMinimapzoomwn, 0, &REG_TYPE, (LPBYTE)&this->m_miniMapZoomFactor, &DATALENGTH);
+10867:       p_m_isDragAll = &this->m_isDragAll;
+10868:       if ( RegQueryValueExA(hKey, aMIsdragall, 0, &REG_TYPE, (LPBYTE)&this->m_isDragAll, &DATALENGTH) )
+10869:         *p_m_isDragAll = 1;
+10870:       if ( *p_m_isDragAll )
+10871:         *p_m_isDragAll = 1;
+10872:       if ( RegQueryValueExA(hKey, aMIsdrawcompass, 0, &REG_TYPE, (LPBYTE)&this->m_isDrawCompass, &DATALENGTH) )
+10873:         this->m_isDrawCompass = 0;
+10874:       p_m_miniMapArgb = &this->m_miniMapArgb;
+10875:       if ( RegQueryValueExA(hKey, aMMinimapargb, 0, &REG_TYPE, (LPBYTE)&this->m_miniMapArgb, &DATALENGTH) )
+10876:         *p_m_miniMapArgb = -1426063361;
+10877:       if ( *p_m_miniMapArgb != -1 )
+10878:         *p_m_miniMapArgb = -1426063361;
+10879:       RegQueryValueExA(hKey, aMChatwndheight, 0, &REG_TYPE, (LPBYTE)&this->m_chatWndHeight, &DATALENGTH);
+10880:       RegQueryValueExA(hKey, aMChatwndx, 0, &REG_TYPE, (LPBYTE)&this->m_chatWndX, &DATALENGTH);
+10881:       RegQueryValueExA(hKey, aMChatwndy, 0, &REG_TYPE, (LPBYTE)&this->m_chatWndY, &DATALENGTH);
+10882:       RegQueryValueExA(hKey, aMChatwndshow, 0, &REG_TYPE, (LPBYTE)&this->m_chatWndShow, &DATALENGTH);
+10883:       RegQueryValueExA(hKey, aSaydialogwndin, 0, &REG_TYPE, (LPBYTE)&this->sayDialogWndInfo, &DATALENGTH);
+10884:       RegQueryValueExA(hKey, aSaydialogwndin_0, 0, &REG_TYPE, (LPBYTE)&this->sayDialogWndInfo.y, &DATALENGTH);
+
+--- Ref/UIWindowMgr.cpp:11114-11125 ---
+11114:       RegQueryValueExA(hKey, aSubchatwndstX, 0, &REG_TYPE, (LPBYTE)&this->subChatWndStInfo, &DATALENGTH);
+11115:       RegQueryValueExA(hKey, aSubchatwndstY, 0, &REG_TYPE, (LPBYTE)&this->subChatWndStInfo.y, &DATALENGTH);
+11116:       RegQueryValueExA(hKey, aSubchatwndstW, 0, &REG_TYPE, (LPBYTE)&this->subChatWndStInfo.w, &DATALENGTH);
+11117:       RegQueryValueExA(hKey, aSubchatwndstH, 0, &REG_TYPE, (LPBYTE)&this->subChatWndStInfo.h, &DATALENGTH);
+11118:       RegQueryValueExA(hKey, aSubchatwndbtX, 0, &REG_TYPE, (LPBYTE)&this->subChatWndBtInfo, &DATALENGTH);
+11119:       RegQueryValueExA(hKey, aSubchatwndbtY, 0, &REG_TYPE, (LPBYTE)&this->subChatWndBtInfo.y, &DATALENGTH);
+11120:       RegQueryValueExA(hKey, aSubchatwndbtW, 0, &REG_TYPE, (LPBYTE)&this->subChatWndBtInfo.w, &DATALENGTH);
+11121:       RegQueryValueExA(hKey, aSubchatwndbtH, 0, &REG_TYPE, (LPBYTE)&this->subChatWndBtInfo.h, &DATALENGTH);
+11122:       RegQueryValueExA(hKey, aChatwndstickon, 0, &REG_TYPE, &this->m_chatWndStickOn, &DATALENGTH);
+11123:       RegQueryValueExA(hKey, aOnstsubchat, 0, &REG_TYPE, &this->m_onStSubChat, &DATALENGTH);
+11124:       RegQueryValueExA(hKey, aOnbtsubchat, 0, &REG_TYPE, &this->m_onBtSubChat, &DATALENGTH);
+11125:       RegQueryValueExA(hKey, aMemorialdunwnd, 0, &REG_TYPE, (LPBYTE)&g_session.dunInfoWndX, &DATALENGTH);
+
+--- Ref/UIWindowMgr.cpp:11739-11783 ---
+11739:
+11740: // ================================================
+11741: // Original Signature: public: void __thiscall UIWindowMgr::RemoveAllWindows(void)
+11742: // Decompiled from address: 0x4dd510
+11743: // ================================================
+11744: void __thiscall UIWindowMgr::RemoveAllWindowsExceptChatWnd(UIWindowMgr *this)
+11745: {
+11746:   std::list<UIWindow *>::_Node *Head; // eax
+11747:   std::list<UIWindow *>::_Node *Next; // edi
+11748:   UIMemorialDunWnd *Value; // eax
+11749:   UIWindow *v5; // ecx
+11750:   std::list<UIWindow *>::_Node *v6; // ebx
+11751:   std::list<UIWindow *>::_Node *v7; // eax
+11752:   std::list<UIWindow *>::_Node *v8; // edi
+11753:   UINewChatWnd *v9; // eax
+11754:   std::list<UIWindow *>::_Node *v10; // ebx
+11755:   std::_Tree<UIWindow *,std::pair<UIWindow * const,CSnapInfo>,std::map<UIWindow *,CSnapInfo,std::less<UIWindow *>,std::allocator<CSnapInfo> >::_Kfn,std::less<UIWindow *>,std::allocator<CSnapInfo> >::_Node *v11; // ecx
+11756:   UISubChatHisWnd *Left; // eax
+11757:   std::_Tree<UIWindow *,std::pair<UIWindow * const,CSnapInfo>,std::map<UIWindow *,CSnapInfo,std::less<UIWindow *>,std::allocator<CSnapInfo> >::_Kfn,std::less<UIWindow *>,std::allocator<CSnapInfo> >::_Node *v13; // edx
+11758:   UISubChatHisWnd *v14; // ecx
+11759:   std::_Tree<UIWindow *,std::pair<UIWindow * const,CSnapInfo>,std::map<UIWindow *,CSnapInfo,std::less<UIWindow *>,std::allocator<CSnapInfo> >::_Kfn,std::less<UIWindow *>,std::allocator<CSnapInfo> >::_Node *v15; // ecx
+11760:   UISubChatHisWnd *j; // ecx
+11761:   UIWindow *i; // ecx
+11762:   UISubChatHisWnd *m_subChatWndST; // eax
+11763:   UINewChatWnd *m_chatWnd; // edi
+11764:   UISubChatMiniWnd *m_subChatMiniWnd; // ebx
+11765:   UISubChatHisWnd *v21; // eax
+11766:   UISubChatHisWnd *v22; // ecx
+11767:   UISubChatHisWnd *subChatWndBT; // [esp+4h] [ebp-8h] BYREF
+11768:   UISubChatHisWnd *subChatWndST; // [esp+8h] [ebp-4h]
+11769:
+11770:   if ( this->m_chatWnd )
+11771:   {
+11772:     Head = this->m_children._Head;
+11773:     Next = Head->_Next;
+11774:     if ( Head->_Next != Head )
+11775:     {
+11776:       do
+11777:       {
+11778:         Value = (UIMemorialDunWnd *)Next->_Value;
+11779:         if ( (UIMemorialDunWnd *)this->m_chatWnd == Value
+11780:           || (UIMemorialDunWnd *)this->m_subChatWndST == Value
+11781:           || (UIMemorialDunWnd *)this->m_subChatWndBT == Value
+11782:           || (UIMemorialDunWnd *)this->m_subChatMiniWnd == Value )
+11783:         {
+
+--- Ref/UIWindowMgr.cpp:11870-11909 ---
+11870:       while ( Left != (UISubChatHisWnd *)this->m_snapInfo._Tr._Head );
+11871:     }
+11872:     m_subChatWndST = this->m_subChatWndST;
+11873:     m_chatWnd = 0;
+11874:     m_subChatMiniWnd = 0;
+11875:     subChatWndST = 0;
+11876:     subChatWndBT = 0;
+11877:     if ( m_subChatWndST )
+11878:       subChatWndST = m_subChatWndST;
+11879:     if ( this->m_subChatWndBT )
+11880:       subChatWndBT = this->m_subChatWndBT;
+11881:     if ( this->m_subChatMiniWnd )
+11882:       m_subChatMiniWnd = this->m_subChatMiniWnd;
+11883:     if ( this->m_chatWnd )
+11884:       m_chatWnd = this->m_chatWnd;
+11885:     UIWindowMgr::MakeWndPointerNull(this);
+11886:     v21 = subChatWndST;
+11887:     v22 = subChatWndBT;
+11888:     this->m_chatWnd = m_chatWnd;
+11889:     this->m_subChatMiniWnd = m_subChatMiniWnd;
+11890:     this->m_subChatWndST = v21;
+11891:     this->m_subChatWndBT = v22;
+11892:   }
+11893:   else
+11894:   {
+11895:     UIWindowMgr::RemoveAllWindows(this);
+11896:   }
+11897: }
+11898:
+11899:
+11900: // ================================================
+11901: // Original Signature: public: void __thiscall UIWindowMgr::RemoveAllWindowsExceptChatWnd(void)
+11902: // Decompiled from address: 0x4dd510
+11903: // ================================================
+11904: void __thiscall UIWindowMgr::RemoveAllWindowsExceptChatWnd(UIWindowMgr *this)
+11905: {
+11906:   std::list<UIWindow *>::_Node *Head; // eax
+11907:   std::list<UIWindow *>::_Node *Next; // edi
+11908:   UIMemorialDunWnd *Value; // eax
+11909:   UIWindow *v5; // ecx
+
+--- Ref/UIWindowMgr.cpp:12471-12483 ---
+12471: // Original Signature: public: void __thiscall UIWindowMgr::SetSize(int,int)
+12472: // Decompiled from address: 0x4dd2f0
+12473: // ================================================
+12474: void __thiscall UIWindowMgr::SetSize(UIWindowMgr *this, int cx, int cy)
+12475: {
+12476:   int m_chatWndHeight; // edx
+12477:
+12478:   m_chatWndHeight = this->m_chatWndHeight;
+12479:   this->m_w = cx;
+12480:   this->m_h = cy;
+12481:   this->m_chatWndX = 0;
+12482:   this->m_chatWndY = cy - m_chatWndHeight;
+12483: }
+
+--- Ref/UIWindowMgr.cpp:12873-12896 ---
+12873: // Original Signature: public: void __thiscall UIWindowMgr::WriteUIRectInfoToReg(void)
+12874: // Decompiled from address: 0x4db160
+12875: // ================================================
+12876: void __thiscall UIWindowMgr::WriteUIRectInfoToReg(UIWindowMgr *this)
+12877: {
+12878:   char UIPath[512]; // [esp+Ch] [ebp-208h] BYREF
+12879:   unsigned int dwDisposition; // [esp+20Ch] [ebp-8h] BYREF
+12880:   HKEY__ *hKey; // [esp+210h] [ebp-4h] BYREF
+12881:
+12882:   strcpy(UIPath, g_regPath);
+12883:   strcat(UIPath, g_uiPath);
+12884:   dwDisposition = 0;
+12885:   if ( !RegCreateKeyExA(HKEY_LOCAL_MACHINE, UIPath, 0, 0, 0, 0xF003Fu, 0, &hKey, &dwDisposition) )
+12886:   {
+12887:     RegSetValueExA(hKey, aMMinimapzoomwn, 0, 4u, (const BYTE *)&this->m_miniMapZoomFactor, 4u);
+12888:     RegSetValueExA(hKey, aMIsdragall, 0, 4u, (const BYTE *)&this->m_isDragAll, 4u);
+12889:     RegSetValueExA(hKey, aMIsdrawcompass, 0, 4u, (const BYTE *)&this->m_isDrawCompass, 4u);
+12890:     RegSetValueExA(hKey, aMMinimapargb, 0, 4u, (const BYTE *)&this->m_miniMapArgb, 4u);
+12891:     RegSetValueExA(hKey, aMChatwndstatus, 0, 4u, (const BYTE *)&this->m_chatWndStatus, 4u);
+12892:     RegSetValueExA(hKey, aMChatwndheight, 0, 4u, (const BYTE *)&this->m_chatWndHeight, 4u);
+12893:     RegSetValueExA(hKey, aMChatwndx, 0, 4u, (const BYTE *)&this->m_chatWndX, 4u);
+12894:     RegSetValueExA(hKey, aMChatwndy, 0, 4u, (const BYTE *)&this->m_chatWndY, 4u);
+12895:     RegSetValueExA(hKey, aMChatwndshow, 0, 4u, (const BYTE *)&this->m_chatWndShow, 4u);
+12896:     RegSetValueExA(hKey, aSaydialogwndin, 0, 4u, (const BYTE *)&this->sayDialogWndInfo, 4u);
+
+--- Ref/UIWindowMgr.cpp:13049-13060 ---
+13049:     RegSetValueExA(hKey, aSubchatwndstX, 0, 4u, (const BYTE *)&this->subChatWndStInfo, 4u);
+13050:     RegSetValueExA(hKey, aSubchatwndstY, 0, 4u, (const BYTE *)&this->subChatWndStInfo.y, 4u);
+13051:     RegSetValueExA(hKey, aSubchatwndstW, 0, 4u, (const BYTE *)&this->subChatWndStInfo.w, 4u);
+13052:     RegSetValueExA(hKey, aSubchatwndstH, 0, 4u, (const BYTE *)&this->subChatWndStInfo.h, 4u);
+13053:     RegSetValueExA(hKey, aSubchatwndbtX, 0, 4u, (const BYTE *)&this->subChatWndBtInfo, 4u);
+13054:     RegSetValueExA(hKey, aSubchatwndbtY, 0, 4u, (const BYTE *)&this->subChatWndBtInfo.y, 4u);
+13055:     RegSetValueExA(hKey, aSubchatwndbtW, 0, 4u, (const BYTE *)&this->subChatWndBtInfo.w, 4u);
+13056:     RegSetValueExA(hKey, aSubchatwndbtH, 0, 4u, (const BYTE *)&this->subChatWndBtInfo.h, 4u);
+13057:     RegSetValueExA(hKey, aChatwndstickon, 0, 4u, &this->m_chatWndStickOn, 4u);
+13058:     RegSetValueExA(hKey, aOnstsubchat, 0, 4u, &this->m_onStSubChat, 4u);
+13059:     RegSetValueExA(hKey, aOnbtsubchat, 0, 4u, &this->m_onBtSubChat, 4u);
+13060:     RegSetValueExA(hKey, aMemorialdunwnd, 0, 4u, (const BYTE *)&g_session.dunInfoWndX, 4u);
+
+--- Ref/UIFrameWnd3.cpp:1701-1748 ---
+1701: // Original Signature: public: __thiscall UINewChatWnd::UINewChatWnd(void)
+1702: // Decompiled from address: 0x49bc50
+1703: // ================================================
+1704: UINewChatWnd *__thiscall UINewChatWnd::UINewChatWnd(UINewChatWnd *this)
+1705: {
+1706:   UINewChatWnd *result; // eax
+1707:
+1708:   UIFrameWnd::UIFrameWnd(this);
+1709:   this->__vftable = (UINewChatWnd_vtbl *)&UINewChatWnd::`vftable';
+1710:   this->m_commonChat = 0;
+1711:   this->m_whisperChat = 0;
+1712:   this->m_lastFocusChat = 0;
+1713:   this->m_resizer = 0;
+1714:   this->m_listBox = 0;
+1715:   this->m_cmdListBox = 0;
+1716:   this->m_state = 0;
+1717:   this->m_comboMode = 0;
+1718:   this->m_tab = 0;
+1719:   this->m_saveState = 0;
+1720:   this->m_titleHeight = 16;
+1721:   this->m_titleWidth = 71;
+1722:   this->m_chatEditHeight = 24;
+1723:   this->m_colorTab1 = 1711276032;
+1724:   this->m_colorTab2 = -1728053248;
+1725:   switch ( g_serviceType )
+1726:   {
+1727:     case ServiceAmerica:
+1728:     case ServicePhilippine:
+1729:     case ServiceIndia:
+1730:       this->m_titleWidth = 110;
+1731:       goto LABEL_5;
+1732:     case ServiceGermany:
+1733:       this->m_titleWidth = 71;
+1734:       result = this;
+1735:       break;
+1736:     case ServiceFrance:
+1737:       this->m_titleWidth = 90;
+1738:       result = this;
+1739:       break;
+1740:     default:
+1741: LABEL_5:
+1742:       result = this;
+1743:       break;
+1744:   }
+1745:   return result;
+1746: }
+1747:
+1748:
+
+--- Ref/UIFrameWnd3.cpp:3622-3640 ---
+3622:     case 0x22u:
+3623:       m_chatWndX = g_windowMgr.m_chatWndX;
+3624:       v47 = g_windowMgr.m_chatWndX < 0;
+3625:       if ( g_windowMgr.m_chatWndY < 0 )
+3626:         v47 = 1;
+3627:       if ( g_windowMgr.m_chatWndX > g_renderer->m_width - this->m_w )
+3628:         v47 = 1;
+3629:       if ( g_windowMgr.m_chatWndY > g_renderer->m_height - this->m_h || v47 )
+3630:       {
+3631:         m_chatWndX = 0;
+3632:         g_windowMgr.m_chatWndX = 0;
+3633:         g_windowMgr.m_chatWndY = g_renderer->m_height - this->m_h;
+3634:       }
+3635:       this->m_x = m_chatWndX;
+3636:       this->m_y = g_windowMgr.m_chatWndY;
+3637:       UINewChatWnd::SetState(this, g_windowMgr.m_chatWndStatus);
+3638:       this->UIWindow::Move(this, this->m_x, this->m_y);
+3639:       return 0;
+3640:     case 0x25u:
+
+--- Ref/UIFrameWnd3.cpp:4590-4600 ---
+4590:       result = 0;
+4591:       break;
+4592:     case 34:
+4593:       v8 = val1;
+4594:       this->m_info = val1;
+4595:       if ( !SubChatWndInfo::IsValidInfo(v8) )
+4596:         SubChatWndInfo::MakeDefault(this->m_info, this->m_id);
+4597:       this->UIWindow::Move(this, this->m_info->x, this->m_info->y);
+4598:       this->UIWindow::Resize(this, this->m_info->w, this->m_info->h);
+4599:       if ( this->m_id )
+4600:       {
+
+--- Ref/UIFrameWnd3.cpp:6709-6718 ---
+6709: // Original Signature: public: virtual void __thiscall UINewChatWnd::StoreInfo(void)
+6710: // Decompiled from address: 0x49d2e0
+6711: // ================================================
+6712: void __thiscall UINewChatWnd::StoreInfo(UINewChatWnd *this)
+6713: {
+6714:   g_windowMgr.m_chatWndStatus = this->m_state;
+6715:   g_windowMgr.m_chatWndHeight = this->m_h;
+6716:   g_windowMgr.m_chatWndX = this->m_x;
+6717:   g_windowMgr.m_chatWndY = this->m_y;
+6718: }
+
+--- Ref/UIFrameWnd3.cpp:9446-9463 ---
+9446: // Original Signature: public: virtual void __thiscall UISubChatHisWnd::StoreInfo(void)
+9447: // Decompiled from address: 0x4a0390
+9448: // ================================================
+9449: void __thiscall UISubChatHisWnd::StoreInfo(UISubChatHisWnd *this)
+9450: {
+9451:   SubChatWndInfo *m_info; // eax
+9452:
+9453:   m_info = this->m_info;
+9454:   if ( m_info )
+9455:   {
+9456:     m_info->w = this->m_w;
+9457:     this->m_info->h = this->m_h;
+9458:     this->m_info->x = this->m_x;
+9459:     this->m_info->y = this->m_y;
+9460:   }
+9461: }
+9462:
+9463:
+
+--- Ref/UIFrameWnd3.cpp:9475-9499 ---
+9475: // Original Signature: public: virtual void __thiscall UISubChatMiniWnd::OnDraw(void)
+9476: // Decompiled from address: 0x4a0450
+9477: // ================================================
+9478: void __thiscall UISubChatMiniWnd::OnDraw(UISubChatMiniWnd *this)
+9479: {
+9480:   const char *v2; // eax
+9481:   CResMgr *v3; // eax
+9482:   CBitmapRes *v4; // ebx
+9483:   const char *v5; // eax
+9484:   CResMgr *v6; // eax
+9485:   CBitmapRes *v7; // edi
+9486:   const char *v8; // [esp-8h] [ebp-14h]
+9487:   const char *v9; // [esp-8h] [ebp-14h]
+9488:
+9489:   if ( g_windowMgr.m_onStSubChat )
+9490:     v2 = UIBmp(byte_6F4E34);
+9491:   else
+9492:     v2 = UIBmp(&byte_6F4E0C);
+9493:   v8 = v2;
+9494:   v3 = g_resMgr();
+9495:   v4 = (CBitmapRes *)CResMgr::Get(v3, v8, 0);
+9496:   if ( g_windowMgr.m_onBtSubChat )
+9497:     v5 = UIBmp(byte_6F4DE4);
+9498:   else
+9499:     v5 = UIBmp(&byte_6F4DBC);
+
+--- Ref/UIRectInfo.cpp:932-955 ---
+932: // Original Signature: public: int __thiscall SubChatWndInfo::IsValidInfo(void)
+933: // Decompiled from address: 0x4d5e30
+934: // ================================================
+935: BOOL __thiscall SubChatWndInfo::IsValidInfo(SubChatWndInfo *this)
+936: {
+937:   int w; // edx
+938:   int h; // edi
+939:   int y; // ecx
+940:   BOOL result; // eax
+941:
+942:   w = this->w;
+943:   result = 0;
+944:   if ( w > 0 )
+945:   {
+946:     h = this->h;
+947:     if ( h > 0 && this->x >= 0 && this->x <= g_renderer->m_width - w )
+948:     {
+949:       y = this->y;
+950:       if ( y >= 0 && y <= g_renderer->m_height - h )
+951:         return 1;
+952:     }
+953:   }
+954:   return result;
+955: }
+
+--- Ref/UIRectInfo.cpp:1519-1533 ---
+1519: // Original Signature: public: void __thiscall SubChatWndInfo::MakeDefault(int)
+1520: // Decompiled from address: 0x4d5df0
+1521: // ================================================
+1522: void __thiscall SubChatWndInfo::MakeDefault(SubChatWndInfo *this, int mode)
+1523: {
+1524:   int m_height; // edx
+1525:
+1526:   if ( mode )
+1527:   {
+1528:     if ( mode == 1 )
+1529:       this->x = 300;
+1530:   }
+1531:   else
+1532:   {
+1533:     this->x = 0;
+
+--- Ref/UIRectInfo.cpp:1660-1670 ---
+1660:     ItemIdentifyWndInfo::MakeDefault(&this->itemIdentifyWndInfo);
+1661:     EmotionWndInfo::MakeDefault(&this->emotionWndInfo);
+1662:     EmotionListWndInfo::MakeDefault(&this->emotionListWndInfo);
+1663:     PetInfoWndInfo::MakeDefault(&this->petInfoWndInfo);
+1664:     HomunInfoWndInfo::MakeDefault(&this->homunInfoWndInfo);
+1665:     MerInfoWndInfo::MakeDefault(&this->merInfoWndInfo);
+1666:     SubChatWndInfo::MakeDefault(&this->subChatWndStInfo, 0);
+1667:     SubChatWndInfo::MakeDefault(&this->subChatWndBtInfo, 1);
+1668:   }
+1669: }
+1670:
+
+--- Ref/WinMain.cpp:210-216 ---
+210:   if ( g_3dDevice.m_bIsFullscreen )
+211:     ShowCursor(0);
+212:   SetHwnd();
+213:   CMouse::Init(&g_mouse);
+214:   UIWindowMgr::SetSize(&g_windowMgr, g_renderer->m_width, g_renderer->m_height);
+215:   UIWindowMgr::InitUIRectInfoFromReg(&g_windowMgr);
+216:   C3dGrannyBoneRes::Init(&g_GrannyBoneRes);
+
+--- Ref/WinMain.cpp:285-294 ---
+285:   CModeMgr::Run(&g_modeMgr, 1, worldName);
+286:   UnInitMSS();
+287:   UIWindowMgr::DestroyDC(&g_windowMgr);
+288:   v20 = CRagConnection::instanceR();
+289:   CConnection::Disconnect(v20);
+290:   CConnection::Cleanup();
+291:   UIWindowMgr::RemoveAllWindows(&g_windowMgr);
+292:   UIWindowMgr::WriteUIRectInfoToReg(&g_windowMgr);
+293:   CSession::WriteOptionToRegistry(&g_session);
+294:   v21 = g_resMgr();

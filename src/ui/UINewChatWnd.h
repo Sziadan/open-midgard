@@ -64,6 +64,7 @@ public:
     void OnLBtnUp(int x, int y) override;
     void OnWheel(int delta) override;
     void StoreInfo() override;
+    void RestoreSourcePlacement();
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     void SetState(int requested);
     void StickOnOff(bool sticky);
@@ -108,6 +109,7 @@ public:
     bool GetConfigRectForQt(int* x, int* y, int* width, int* height) const;
     int GetTabCount() const;
     bool GetTabDisplay(int index, ChatTabDisplay* outData) const;
+    const std::string& GetSourceTabLabel(int index) const { return m_sourceTabLabels.at(static_cast<std::size_t>(index)); }
     int GetFilterOptionCount() const;
     bool GetFilterOptionDisplay(int index, ChatFilterOptionDisplay* outData) const;
     void ClearLines();
@@ -151,6 +153,7 @@ private:
     std::array<int,2> m_sourceViewHeights={70,70};
     int m_sourceTab = 0;
     int m_sourceTitleWidth = 71;
+    std::array<std::string, 2> m_sourceTabLabels{{"ST", "BT"}};
     bool m_historyPointerDown = false;
     bool m_sourceScrollDragging = false;
     ro::chat::ScrollDrag m_sourceScrollDrag;

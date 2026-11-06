@@ -6,7 +6,7 @@ Created 2026-11-03. This is an execution specification, not a claim that any run
 
 ## Start here
 
-**Latest checkpoint (2026-11-06):** [PK09.21 source scrollbar controls](packets/evidence/PK09.21-scroll.md) implements arrow/page/thumb regions, source relative dragging and captured-child lifetime across main, detached and options owners. Strong source/PE review also corrects history trim: the thumb clamps separately while the text offset can remain stale. Native/Qt blank-view and reconciliation checks pass. Remaining labels, window restore/persistence, producers and art/locale/active Qt acceptance stay open.
+**Latest checkpoint (2026-11-06):** [PK09.21 labels and window preferences](packets/evidence/PK09.21-restore.md) integrates selected ST/BT language IDs, cached-height-first placement, startup/shutdown geometry and sticky/mini/show preferences. Strong PE review proves expansion status is write-only at startup and resolves the mislabeled full teardown routine. Actual native/Qt restore and language checks are retained. Room route5, dedicated whisper, remaining producers/bubbles and art/locale/active Qt acceptance remain open.
 
 **Current continuation priority:** finish [PK09.21 chat state/sticky/history ownership](packets/work-items/PK09.21.md) under [PK09.04](packets/work-items/PK09.04.md), then continue remaining item/status/detail/context work. Preserve corpse, effect and recovery regressions. PK45.06 is complete; broad actor/model review, full feature coverage, PK47 and independent PK48/49/deployment remain open. The whole packet implementation goal remains active.
 

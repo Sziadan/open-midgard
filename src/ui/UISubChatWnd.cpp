@@ -63,6 +63,9 @@ void Box(HDC dc, RECT rect, COLORREF color)
 
 UISubChatHisWnd::UISubChatHisWnd(int kind) : m_kind(kind)
 {
+    ro::UiMessageStrings sourceLabels;
+    if (sourceLabels.Load()) m_sourceLabel = sourceLabels.Get(kind == 0 ? 1291 : 1292, kind == 0 ? "ST" : "BT");
+    else m_sourceLabel = kind == 0 ? "ST" : "BT";
     m_id = kind == 0 ? UIWindowMgr::WID_SUBCHATST : UIWindowMgr::WID_SUBCHATBT;
     if(g_serviceType==ServiceAmerica || g_serviceType==ServicePhilippine || g_serviceType==ServiceIndia)m_titleWidth=110;
     else if(g_serviceType==ServiceFrance)m_titleWidth=90;
@@ -208,7 +211,7 @@ void UISubChatHisWnd::OnDraw()
     SetBkMode(dc, TRANSPARENT);
     Box(dc, {m_x, m_y, m_x + m_w, m_y + m_h}, RGB(42, 39, 35));
     Box(dc, {m_x, m_y, m_x + m_w, m_y + 16}, RGB(80, 90, 100));
-    Text(dc, {m_x + 5, m_y, m_x + m_w - 65, m_y + 16}, m_kind == 0 ? "ST" : "BT", 0xffffff);
+    Text(dc, {m_x + 5, m_y, m_x + m_w - 65, m_y + 16}, m_sourceLabel, 0xffffff);
     Text(dc, {m_x + m_w - 18, m_y, m_x + m_w, m_y + 16}, "x", 0xffffff);
     if (m_kind == 1) Text(dc, {m_x + m_w - 65, m_y, m_x + m_w - 18, m_y + 16}, "Attach", 0xffffff);
     if(m_kind==1){auto button=GetBattleOptionButton();button.left+=m_x;button.right+=m_x;button.top+=m_y;button.bottom+=m_y;Text(dc,button,"B",0xffffff);}
@@ -289,6 +292,11 @@ void UISubChatHisWnd::CancelPointerCapture()
 
 UISubChatMiniWnd::UISubChatMiniWnd()
 {
+    ro::UiMessageStrings sourceLabels;
+    if (sourceLabels.Load()) {
+        m_sourceLabels[0] = sourceLabels.Get(1291, "ST");
+        m_sourceLabels[1] = sourceLabels.Get(1292, "BT");
+    }
     m_id = UIWindowMgr::WID_SUBCHATMINI;
     Create(64, 32);
     SetShow(0);
@@ -328,8 +336,8 @@ void UISubChatMiniWnd::OnDraw()
     SetBkMode(dc, TRANSPARENT);
     Box(dc, {m_x, m_y, m_x + 32, m_y + 32}, g_windowMgr.m_onStSubChat ? RGB(90, 120, 155) : RGB(55, 60, 65));
     Box(dc, {m_x + 32, m_y, m_x + 64, m_y + 32}, g_windowMgr.m_onBtSubChat ? RGB(90, 120, 155) : RGB(55, 60, 65));
-    Text(dc, {m_x + 4, m_y, m_x + 32, m_y + 32}, "ST", 0xffffff);
-    Text(dc, {m_x + 36, m_y, m_x + 64, m_y + 32}, "BT", 0xffffff);
+    Text(dc, {m_x + 4, m_y, m_x + 32, m_y + 32}, m_sourceLabels[0], 0xffffff);
+    Text(dc, {m_x + 36, m_y, m_x + 64, m_y + 32}, m_sourceLabels[1], 0xffffff);
     RestoreDC(dc, saved);
     ReleaseDrawTarget(dc);
 }

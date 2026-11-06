@@ -3,6 +3,7 @@
 #include "ChatText.h"
 #include "ChatWindowState.h"
 #include "core/Globals.h"
+#include "core/UiMessageStrings.h"
 #include "session/Session.h"
 
 #include "UIWindowMgr.h"
@@ -245,7 +246,7 @@ int MeasureWrappedTextHeightQt(const std::string& text, int width, int pixelSize
     return (std::max)(kChatLineHeight, bounds.height());
 }
 
-void DrawChatTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF color, bool wrap, int pixelSize, bool elide = true)
+void DrawChatTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF color, bool wrap, int pixelSize, bool elide = true, bool center = false)
 {
     if (!hdc || rect.right <= rect.left || rect.bottom <= rect.top) {
         return;
@@ -273,7 +274,7 @@ void DrawChatTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF
     painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
     const int flags = wrap
         ? (Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap)
-        : (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextSingleLine);
+        : ((center ? Qt::AlignHCenter : Qt::AlignLeft) | Qt::AlignVCenter | Qt::TextSingleLine);
     painter.drawText(QRect(0, 0, width, height), flags, label);
     painter.end();
     AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
@@ -379,30 +380,7 @@ void FillRectStippled(HDC target, const RECT& rect)
 
 RECT GetChatLogicalClientRect()
 {
-    RECT clientRect{ 0, 0, WINDOW_WIDTH > 0 ? WINDOW_WIDTH : 640, WINDOW_HEIGHT > 0 ? WINDOW_HEIGHT : 480 };
-    if (g_hMainWnd) {
-        GetClientRect(g_hMainWnd, &clientRect);
-    }
-
-    const float scaleFactor = IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f;
-    const float normalizedScale = scaleFactor > 0.0f ? scaleFactor : 1.0f;
-    const int rawWidth = clientRect.right - clientRect.left;
-    const int rawHeight = clientRect.bottom - clientRect.top;
-    int logicalWidth = (std::max)(1, static_cast<int>(std::floor(static_cast<float>(rawWidth) / normalizedScale)));
-    int logicalHeight = (std::max)(1, static_cast<int>(std::floor(static_cast<float>(rawHeight) / normalizedScale)));
-    if (WINDOW_WIDTH > 0) {
-        logicalWidth = (std::min)(logicalWidth, WINDOW_WIDTH);
-    }
-    if (WINDOW_HEIGHT > 0) {
-        logicalHeight = (std::min)(logicalHeight, WINDOW_HEIGHT);
-    }
-
-    RECT logicalRect{};
-    logicalRect.left = 0;
-    logicalRect.top = 0;
-    logicalRect.right = logicalWidth;
-    logicalRect.bottom = logicalHeight;
-    return logicalRect;
+    return g_windowMgr.GetChatClientRect();
 }
 
 void ClampChatWindowPosition(int* x, int* y, int w, int h)
@@ -614,6 +592,11 @@ UINewChatWnd::UINewChatWnd()
       m_transparencyDragActive(0),
       m_tabChannelMasks{}
 {
+    ro::UiMessageStrings sourceLabels;
+    if (sourceLabels.Load()) {
+        m_sourceTabLabels[0] = sourceLabels.Get(1291, "ST");
+        m_sourceTabLabels[1] = sourceLabels.Get(1292, "BT");
+    }
     m_sourceTitleWidth = (g_serviceType == ServiceAmerica || g_serviceType == ServicePhilippine
         || g_serviceType == ServiceIndia) ? 110 : g_serviceType == ServiceFrance ? 90 : 71;
     ResetTabDefaults();
@@ -623,20 +606,7 @@ UINewChatWnd::UINewChatWnd()
 
     Create(initialWidth, initialHeight);
 
-    int defaultX = kChatWindowMargin;
-    const RECT logicalClientRect = GetChatLogicalClientRect();
-    int defaultY = logicalClientRect.bottom - initialHeight - kChatWindowMargin;
-    ClampChatWindowPosition(&defaultX, &defaultY, initialWidth, initialHeight);
-
-    Move(defaultX, defaultY);
-
-    int savedX = m_x;
-    int savedY = m_y;
-    if (LoadUiWindowPlacement("ChatWnd", &savedX, &savedY)) {
-        ClampChatWindowPosition(&savedX, &savedY, m_w, m_h);
-        Move(savedX, savedY);
-    }
-    if (m_expansionState != 0) {m_sourceViewHeights[0]=m_h-44;m_sourceViews[0].Resize((m_h - 44) / 14, 0);}
+    RestoreSourcePlacement();
 }
 
 UINewChatWnd::~UINewChatWnd() = default;
@@ -671,12 +641,8 @@ void UINewChatWnd::LoadSettings(int* outWindowWidth, int* outWindowHeight)
     }
 
     int storedWidth = kChatDefaultWindowWidth;
-    int storedHeight = kChatDefaultWindowHeight;
     if (TryLoadSettingsIniInt(kChatWndSection, kChatWindowWidthValue, &storedValue)) {
         storedWidth = storedValue;
-    }
-    if (TryLoadSettingsIniInt(kChatWndSection, kChatWindowHeightValue, &storedValue)) {
-        storedHeight = storedValue;
     }
 
     int minWidth = kChatWindowMinWidth;
@@ -685,15 +651,12 @@ void UINewChatWnd::LoadSettings(int* outWindowWidth, int* outWindowHeight)
     int maxHeight = kChatDefaultWindowHeight;
     GetChatWindowSizeLimits(&minWidth, &minHeight, &maxWidth, &maxHeight);
     storedWidth = std::clamp(storedWidth, minWidth, maxWidth);
-    m_expansionState = g_windowMgr.m_chatWndStatus;
-    TryLoadSettingsIniInt(kChatWndSection, "State", &m_expansionState);
-    m_expansionState = ro::chat::NormalizeState(m_expansionState);
-    storedHeight = ro::chat::HeightForState(m_expansionState);
     if (outWindowWidth) {
         *outWindowWidth = storedWidth;
     }
     if (outWindowHeight) {
-        *outWindowHeight = storedHeight;
+        *outWindowHeight = g_windowMgr.m_chatWndHeight>=1 && g_windowMgr.m_chatWndHeight<=8192
+            ? g_windowMgr.m_chatWndHeight : 98;
     }
 }
 
@@ -703,8 +666,6 @@ void UINewChatWnd::SaveSettings() const
     SaveSettingsIniInt(kChatWndSection, kChatWindowOpacityValue, m_windowOpacityPercent);
     SaveSettingsIniInt(kChatWndSection, kChatWindowIdleOpacityValue, m_idleOpacityPercent);
     SaveSettingsIniInt(kChatWndSection, kChatWindowWidthValue, m_w);
-    SaveSettingsIniInt(kChatWndSection, kChatWindowHeightValue, m_h);
-    SaveSettingsIniInt(kChatWndSection, "State", m_expansionState);
     SaveSettingsIniInt(kChatWndSection, kChatActiveTabValue, m_activeTab);
 
     char keyName[32] = {};
@@ -966,7 +927,7 @@ int UINewChatWnd::GetTabCount() const { return 2; }
 bool UINewChatWnd::GetTabDisplay(int index, ChatTabDisplay* outData) const
 {
     if (!outData || index < 0 || index > 1) return false;
-    *outData = {index, index == 0 ? "ST" : "BT", m_sourceTab == index ? 1 : 0, 0};
+    *outData = {index, m_sourceTabLabels[index].c_str(), m_sourceTab == index ? 1 : 0, 0};
     return true;
 }
 
@@ -1101,7 +1062,11 @@ void UINewChatWnd::DrawNativeToHdc(HDC hdc)
             HBRUSH brush = CreateSolidBrush(tab == m_sourceTab ? RGB(75, 95, 115) : RGB(92, 92, 92));
             FillRect(hdc, &bounds, brush); DeleteObject(brush);
             SetTextColor(hdc, RGB(255, 255, 255));
-            DrawTextA(hdc, tab == 0 ? "ST" : "BT", 2, &bounds, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+#if RO_ENABLE_QT6_UI
+            DrawChatTextQt(hdc,bounds,m_sourceTabLabels[tab],RGB(255,255,255),false,m_fontPixelSize,false,true);
+#else
+            DrawTextA(hdc, m_sourceTabLabels[tab].c_str(), -1, &bounds, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+#endif
         }
     }
 
@@ -1880,13 +1845,28 @@ void UINewChatWnd::RestorePersistentState(const std::vector<std::string>& inputH
     Invalidate();
 }
 
+void UINewChatWnd::RestoreSourcePlacement()
+{
+    const RECT client=GetChatLogicalClientRect();
+    // Source message34 validates against the CURRENT physical height before
+    // SetState changes height while preserving the bottom anchor.
+    int x=g_windowMgr.m_chatWndX,y=g_windowMgr.m_chatWndY;
+    if(x<0 || y<0 || static_cast<long long>(x)+m_w>client.right
+        || static_cast<long long>(y)+m_h>client.bottom){
+        x=0;y=static_cast<int>(client.bottom)-m_h;
+        g_windowMgr.m_chatWndX=x;g_windowMgr.m_chatWndY=y;
+    }
+    Move(x,y);
+    SetState(g_windowMgr.m_chatWndStatus);
+    Move(m_x,m_y);
+}
+
 void UINewChatWnd::StoreInfo()
 {
     g_windowMgr.m_chatWndStatus = m_expansionState;
     g_windowMgr.m_chatWndHeight = m_h;
     g_windowMgr.m_chatWndX = m_x;
     g_windowMgr.m_chatWndY = m_y;
-    SaveUiWindowPlacement("ChatWnd", m_x, m_y);
     SaveSettings();
 }
 
@@ -1948,6 +1928,7 @@ void UINewChatWnd::CancelPointerCapture()
 msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, msgparam_t detail, msgparam_t extra)
 {
     switch (msg) {
+    case 34: RestoreSourcePlacement(); return 0;
     case 3: ScrollSourceHistory(1 - m_sourceViews[m_sourceTab].rows); return 0;
     case 4: ScrollSourceHistory(m_sourceViews[m_sourceTab].rows - 1); return 0;
     case 37:

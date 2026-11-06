@@ -503,6 +503,7 @@ int ReadRegistry()
     EnsureOpenMidgardIniDefaults();
     g_session.LoadBattleMessageOptions();
     ApplyConfiguredWindowSize();
+    g_windowMgr.LoadChatWindowPreferences();
     (void)GetConfiguredRenderBackend();
     return 1;
 }
@@ -972,6 +973,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     DbgLog("[Shutdown] CConnection::Cleanup done\n");
     DbgLog("[Shutdown] UIWindowMgr::Reset start\n");
     g_windowMgr.Reset();
+    g_windowMgr.SaveChatWindowPreferences();
     DbgLog("[Shutdown] UIWindowMgr::Reset done\n");
     DbgLog("[Shutdown] Lua shutdown start\n");
     g_buabridge.Shutdown();
