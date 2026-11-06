@@ -1,0 +1,4 @@
+Intentional regression; selected failure excerpt. Full local log SHA256: 406f25a64fd9e91b49e886dd5d2cf60e72e769fd17e150239fb75d6c9ed666a3
+1: {"case_id":"inventory_mutation_ack_lifecycle","stage":"PK09.17","fixture_id":"PK09.17-literal-inventory-mutation-acks","production_entry":"ProcessGameModePacketLoop -> TryReadPacket -> production router -> inventory mutation acknowledgement handlers","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"5377a0f45d46e2c754ec38157ce1cddffbc252cc","source_tree_status_at_configure":"dirty","invocation_count":0,"expected_packet_hex":null,"actual_packet_hex":null,"expected_queue_remainder":null,"actual_queue_remainder":null,"outcome":"FAIL","error":"same-index pickup failed to add count while retaining item metadata"}
+0% tests passed, 1 tests failed out of 1
+Total Test time (real) =   5.21 sec

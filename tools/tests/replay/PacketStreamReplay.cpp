@@ -4512,13 +4512,26 @@ void GlobalChatProductionSendReplay()
 #include "MapTransitionLifetimeReplay.inc"
 #include "CartItemWireFieldsReplay.inc"
 #include "InventoryMapEntryReplay.inc"
+#include "InventoryMutationAckReplay.inc"
 #include "InventoryItemFieldsReplay.inc"
 #include "CartItemLifecycleReplay.inc"
 #include "CharacterNameReplay.inc"
 #include "RentalItemReplay.inc"
 #include "NpcShopTransactionReplay.inc"
 
-int main(){try{
+int main(int argc,char** argv){try{
+#if RO_ENABLE_QT6_UI
+    qputenv("QT_QPA_PLATFORM","offscreen");
+#ifdef RO_PACKET_QT_PLATFORM_PLUGINS
+    if(qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM_PLUGIN_PATH"))
+        qputenv("QT_QPA_PLATFORM_PLUGIN_PATH",RO_PACKET_QT_PLATFORM_PLUGINS);
+#endif
+    // Real acknowledgement failures open chat and measure its text. Supply
+    // Qt's font/runtime prerequisites even though this is a packet harness.
+    QGuiApplication app(argc,argv);
+#else
+    (void)argc;(void)argv;
+#endif
     Require(CConnection::Startup(),"socket startup failed");
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
@@ -4643,6 +4656,7 @@ int main(){try{
     MapTransitionLifetimeReplay();
     CartItemWireFieldsReplay();
     InventoryMapEntryReplay();
+    InventoryMutationAckReplay();
     InventoryItemFieldsReplay();
     CartStackDeltaReplay();
     CartClearContentsReplay();

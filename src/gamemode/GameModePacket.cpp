@@ -1253,7 +1253,20 @@ void MakePotionEffect(CGameMode& mode, unsigned int itemId, u32 actorId)
         effectId);
 }
 
-void HandleUseItemAck2(CGameMode&, const PacketView& packet)
+void ApplyInventoryRemainingAmount(unsigned int itemIndex,int remainingAmount)
+{
+    const ITEM_INFO* existing=g_session.GetInventoryItemByIndex(itemIndex);
+    if (!existing) return;
+    if (remainingAmount==0) {
+        g_session.RemoveInventoryItem(itemIndex,0);
+        return;
+    }
+    ITEM_INFO updated=*existing;
+    updated.m_num=remainingAmount;
+    g_session.SetInventoryItem(updated);
+}
+
+void HandleUseItemAck2(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 13) {
         return;
@@ -1270,26 +1283,13 @@ void HandleUseItemAck2(CGameMode&, const PacketView& packet)
     const bool ok = packet.data[12] != 0;
 
     if (IsLocalActorId(actorId)) {
-        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-            gameMode->m_waitingUseItemAck = 0;
-            gameMode->m_lastCardItemIndex = ok && g_ttemmgr.IsCardItem(itemId) ? static_cast<int>(itemIndex) : 0;
-        }
-
-        if (ok) {
-            if (const ITEM_INFO* existing = g_session.GetInventoryItemByIndex(itemIndex)) {
-                const int currentAmount = (std::max)(0, existing->m_num);
-                const int consumedAmount = currentAmount - (std::max)(0, remainingAmount);
-                if (consumedAmount > 0) {
-                    g_session.RemoveInventoryItem(itemIndex, consumedAmount);
-                }
-            }
-        }
+        mode.m_waitingUseItemAck = 0;
+        mode.m_lastCardItemIndex = ok && g_ttemmgr.IsCardItem(itemId) ? static_cast<int>(itemIndex) : 0;
+        if (ok) ApplyInventoryRemainingAmount(itemIndex,remainingAmount);
     }
 
     if (ok) {
-        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-            MakePotionEffect(*gameMode, itemId, actorId);
-        }
+        MakePotionEffect(mode, itemId, actorId);
     }
 
     DbgLog("[GameMode] use item ack2 index=%u itemId=%u actor=%u amount=%d ok=%d self=%d\n",
@@ -1320,13 +1320,7 @@ void HandleUseItemAck(CGameMode& mode, const PacketView& packet)
     mode.m_lastCardItemIndex = ok && item && g_ttemmgr.IsCardItem(item->GetItemId()) ? static_cast<int>(itemIndex) : 0;
 
     if (ok) {
-        if (const ITEM_INFO* existing = item) {
-            const int currentAmount = (std::max)(0, existing->m_num);
-            const int consumedAmount = currentAmount - (std::max)(0, remainingAmount);
-            if (consumedAmount > 0) {
-                g_session.RemoveInventoryItem(itemIndex, consumedAmount);
-            }
-        }
+        ApplyInventoryRemainingAmount(itemIndex,remainingAmount);
     }
 
     DbgLog("[GameMode] use item ack index=%u amount=%d ok=%d\n",
@@ -2506,7 +2500,21 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
     }
 
     const int result = packet.data[22];
+    const u32 pickedObjectAid = mode.m_pickupReqItemNaidList.empty()
+        ? 0 : mode.m_pickupReqItemNaidList.front();
+    // Ref clears the intent before examining the result. Rejection must stop
+    // PumpPendingPickupRequest from retrying until the user asks again.
+    mode.m_pickupReqItemNaidList.clear();
+    mode.m_lastPickupRequestTick = 0;
     if (result != 0) {
+        // Source message3 shows chat for these known failures even when the
+        // selected language resource deliberately contains an empty message.
+        if(result==1 || result==2 || result==4 || result==5 || result==6)
+            g_windowMgr.EnsureChatWindowVisible();
+        const auto notice=g_ttemmgr.GetPickupFailureNotice(static_cast<unsigned char>(result));
+        if (!notice.empty()) {
+            g_windowMgr.PushChatEvent(notice.c_str(),0x00ff0000u,0);
+        }
         return;
     }
 
@@ -2546,17 +2554,12 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
         itemInfo.m_deleteTime,
         static_cast<unsigned int>(itemInfo.m_isYours));
 
-    const u32 pickedObjectAid = mode.m_pickupReqItemNaidList.empty()
-        ? 0
-        : mode.m_pickupReqItemNaidList.front();
     if (pickedObjectAid != 0) {
         StartLocalPickupAnimation(mode, pickedObjectAid);
     }
 
     AnnouncePickedUpItem(itemInfo);
     g_session.AddInventoryItem(itemInfo);
-    mode.m_pickupReqItemNaidList.clear();
-    mode.m_lastPickupRequestTick = 0;
 }
 
 void UpsertGroundItem(CGameMode& mode,
@@ -2740,7 +2743,11 @@ void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
         mode.m_waitingWearEquipAck = 0;
     }
 
-    if (result == 0 || itemIndex == 0 || wearLocation == 0) {
+    if (result != 1 || itemIndex == 0 || wearLocation == 0) {
+        if (result==0 || result==2) {
+            const auto notice=g_ttemmgr.GetEquipFailureNotice();
+            g_windowMgr.PushChatEvent(notice.c_str(),0x00ff0000u,6);
+        }
         DbgLog("[GameMode] equip ack index=%u wear=0x%04X ok=%d\n",
             itemIndex,
             static_cast<unsigned int>(wearLocation),
@@ -2748,6 +2755,8 @@ void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    // The primary GetItemInfoByIndex guard runs before moving any equip mask.
+    if (!g_session.GetInventoryItemByIndex(itemIndex)) return;
     g_session.ClearInventoryWearLocationMask(wearLocation, itemIndex);
     g_session.SetInventoryItemWearLocation(itemIndex, wearLocation);
     g_session.RebuildPlayerEquipmentAppearanceFromInventory();

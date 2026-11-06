@@ -525,6 +525,25 @@ std::string CItemMgr::GetRentalDeleteNotice(unsigned int itemId)
 	return FormatRentalMessage(ItemNameMessage(1258, " '%s' item has been deleted from the Inventory."), GetDisplayName(itemId, true, false));
 }
 
+std::string CItemMgr::GetPickupFailureNotice(unsigned char result)
+{
+    EnsureLoaded();
+    // Ref Zc_Item_Pickup_Ack3 uses these positional MsgString IDs.
+    switch(result) {
+    case 1: case 6: return ItemNameMessage(53,"You cannot get the item.");
+    case 2: return ItemNameMessage(52,"You cannot carry more items because you are overweight.");
+    case 4: return ItemNameMessage(220,"You can't have this item because you will exceed the weight limit.");
+    case 5: return ItemNameMessage(279,"You cannot carry more than 30,000 of one kind of item.");
+    default: return {};
+    }
+}
+
+std::string CItemMgr::GetEquipFailureNotice()
+{
+    EnsureLoaded();
+    return ItemNameMessage(372,"You can't put this item on.");
+}
+
 std::string CItemMgr::GetResourceName(unsigned int itemId, bool identified)
 {
 	if (const ItemMetadata* metadata = GetMetadata(itemId)) {
@@ -726,7 +745,8 @@ void CItemMgr::LoadItemNameMessages()
 		const size_t end = text.find('#', begin);
 		if (end == std::string::npos) break;
 		while (begin < end && (text[begin] == '\r' || text[begin] == '\n')) ++begin;
-		if ((index >= 450 && index <= 454) || (index >= 459 && index <= 461) || index == 756
+        if (index == 52 || index == 53 || index == 220 || index == 279 || index == 372
+            || (index >= 450 && index <= 454) || (index >= 459 && index <= 461) || index == 756
 			|| (index >= 1255 && index <= 1258) || index == 1260 || index == 1270) {
 			// Preserve spaces in positional message values, including their absence.
 			m_itemNameMessages[index] = text.substr(begin, end - begin);

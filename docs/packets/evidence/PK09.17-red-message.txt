@@ -1,0 +1,4 @@
+Intentional regression; selected failure excerpt. Full local log SHA256: 03ad8c245b3b88db05bbe5708af8e18faae5e8b1a9ccd1df7e93f1bc9da34b4d
+15: FAIL item colour render: inventory acknowledgement failure notice missing or not red in chat source
+0% tests passed, 1 tests failed out of 1
+Total Test time (real) =   0.94 sec

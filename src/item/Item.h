@@ -65,6 +65,8 @@ public:
     std::string GetExpiryDisplayText(u32 unixSeconds);
     std::vector<std::string> GetRentalTimeNotices(unsigned int itemId, u32 seconds);
     std::string GetRentalDeleteNotice(unsigned int itemId);
+    std::string GetPickupFailureNotice(unsigned char result);
+    std::string GetEquipFailureNotice();
     std::string GetResourceName(unsigned int itemId, bool identified);
     int GetSlotCount(unsigned int itemId);
     std::string GetCardIllustName(unsigned int itemId);

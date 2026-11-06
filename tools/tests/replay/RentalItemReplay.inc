@@ -2,14 +2,8 @@ void RentalItemPacketReplay()
 {
     SetCase("rental_item_counter_and_delete", "PK33.05", "selected-20080910-0298-0299-00af",
         "ProcessGameModePacketLoop -> production router -> rental notifications/removal");
-#if RO_ENABLE_QT6_UI
-    // This receive family reveals chat, whose real wrapping path needs fonts.
-    qputenv("QT_QPA_PLATFORM","offscreen");
-#ifdef RO_PACKET_QT_PLATFORM_PLUGINS
-    qputenv("QT_QPA_PLATFORM_PLUGIN_PATH",RO_PACKET_QT_PLATFORM_PLUGINS);
-#endif
-    int argc=1;char name[]="rental-replay";char* argv[]={name,nullptr};QGuiApplication app(argc,argv);
-#endif
+    // PacketStreamReplay main owns the one process-wide Qt application.
+
     struct Restore {
         std::vector<ITEM_INFO> inventory{g_session.GetInventoryItems().begin(),g_session.GetInventoryItems().end()};
         std::vector<UIChatEvent> chat=g_windowMgr.GetChatEvents();

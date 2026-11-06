@@ -1,0 +1,24 @@
+warning: QGuiApplication::font(): no QGuiApplication instance and no application font set.
+warning: QFontDatabase: Must construct a QGuiApplication before accessing QFontDatabase
+#0  0x00007ff8eff0a608 in RaiseFailFastException () from C:\WINDOWS\System32\KernelBase.dll
+#1  0x00007ff80fd07b75 in QtPrivate::sizedFree(void*, unsigned long long) () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Core.dll
+#2  0x00007ff80fd0d834 in qt_message_output(QtMsgType, QMessageLogContext const&, QString const&) () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Core.dll
+#3  0x00007ff8101e1589 in QMessageLogger::fatal(char const*, ...) const () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Core.dll
+#4  0x00007ff80a0976e0 in QPlatformWindow::setMouseGrabEnabled(bool) () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Gui.dll
+#5  0x00007ff809abed2e in QFontDatabasePrivate::findFont(QFontDef const&, int, bool) () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Gui.dll
+#6  0x00007ff809ac03ad in QFontDatabasePrivate::load(QFontPrivate const*, int) () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Gui.dll
+#7  0x00007ff809aa1113 in QFontPrivate::engineForScript(int) const () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Gui.dll
+#8  0x00007ff809ad1845 in QFontMetricsF::leading() const () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Gui.dll
+#9  0x00007ff8099a8557 in QPainter::~QPainter() () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Gui.dll
+#10 0x00007ff8099a9112 in QPainter::~QPainter() () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Gui.dll
+#11 0x00007ff809ad0bc0 in QFontMetrics::boundingRect(QRect const&, int, QString const&, int, int*) const () from D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\Qt6Gui.dll
+#12 0x00007ff6be53e7a5 in (anonymous namespace)::MeasureWrappedTextHeightQt(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int, int) ()
+#13 0x00007ff6be5408dc in UINewChatWnd::RefreshVisibleLines(unsigned int) ()
+#14 0x00007ff6be5419ce in UINewChatWnd::AddChatLine(char const*, unsigned int, unsigned char, unsigned int) ()
+#15 0x00007ff6be598fb7 in UIWindowMgr::PushChatEvent(char const*, unsigned int, unsigned char, unsigned int) ()
+#16 0x00007ff6be36b200 in (anonymous namespace)::HandleItemPickupAck(CGameMode&, PacketView const&) ()
+#17 0x00007ff6be372de0 in CGameModePacketRouter::Dispatch(CGameMode&, PacketView const&) const ()
+#18 0x00007ff6be331d3a in ProcessGameModePacketLoop(CGameMode&, CRagConnection&, CGameModePacketRouter&, int) ()
+#19 0x00007ff6be2ba0f4 in InventoryMutationAckReplay()::{lambda(std::vector<unsigned char, std::allocator<unsigned char> > const&, char const*)#1}::operator()(std::vector<unsigned char, std::allocator<unsigned char> > const&, char const*) const ()
+#20 0x00007ff6be2f211a in InventoryMutationAckReplay() ()
+#21 0x00007ff6be81cf1d in main ()

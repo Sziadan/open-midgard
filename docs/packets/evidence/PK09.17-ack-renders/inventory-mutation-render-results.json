@@ -1,0 +1,36 @@
+{
+    "cases": [
+        {
+            "case": "02D4 failure renders the red overweight notice in actual Qt chat",
+            "outcome": "PASS"
+        },
+        {
+            "case": "02D4 adds two to selected 02E8 stack and refreshes actual Qt/native quantity",
+            "outcome": "PASS"
+        },
+        {
+            "case": "00A8 authoritative remaining count updates Qt tile and bound detail",
+            "outcome": "PASS"
+        },
+        {
+            "case": "01C8 local count three applies and remote actor count zero is isolated",
+            "outcome": "PASS"
+        },
+        {
+            "case": "failed 00A8 leaves quantity and detail unchanged",
+            "outcome": "PASS"
+        },
+        {
+            "case": "00AF zero preserves, positive count decrements and full removal clears bound detail",
+            "outcome": "PASS"
+        },
+        {
+            "case": "00AA/00AC acknowledgements keep native inventory and Qt equipped projection synchronized",
+            "outcome": "PASS"
+        }
+    ],
+    "errors": 0,
+    "generated_frames": 12,
+    "outcome": "PASS",
+    "qml_checks": "PASS"
+}

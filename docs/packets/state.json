@@ -1980,6 +1980,14 @@
         "docs/packets/evidence/PK09.16-inventory-show.json"
       ],
       "commit_subject": "packet(PK09.16): restore remembered inventory across map teardown"
+    },
+    "PK09.17": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.17-inventory-acks.md",
+        "docs/packets/evidence/PK09.17-inventory-acks.json"
+      ],
+      "commit_subject": "packet(PK09.17): repair inventory acknowledgement state and notices"
     }
   }
 }

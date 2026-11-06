@@ -1697,13 +1697,9 @@ void CSession::AddInventoryItem(const ITEM_INFO& itemInfo)
     });
 
     if (it != m_inventoryItems.end()) {
+        // Ref AddItem updates only the count of an existing index. Retain the
+        // original row's complete metadata, including equip and wear masks.
         it->m_num += itemInfo.m_num;
-        if (itemInfo.m_location != 0) {
-            it->m_location = itemInfo.m_location;
-        }
-        if (itemInfo.m_wearLocation != 0) {
-            it->m_wearLocation = itemInfo.m_wearLocation;
-        }
         return;
     }
 

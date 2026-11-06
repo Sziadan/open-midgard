@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-06",
+  "timezone": "Europe/Stockholm",
+  "baseline": "5377a0f45d46e2c754ec38157ce1cddffbc252cc",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.17): repair inventory acknowledgement state and notices",
+  "source_sha256": {
+    "CMakeLists.txt": "81b8e99998c8eb768a756fe0e9da4e90529e30a059800bfdbf352e718de3c6a1",
+    "src/gamemode/GameModePacket.cpp": "b9216c2b2ca1d3481548b61f51652430067414df9b422b249ab57f59107320cf",
+    "src/item/Item.cpp": "164eae90f08d2d79afac13d6c660dc8120c692939053d5d40b930c76444e38a9",
+    "src/item/Item.h": "b52f6f68eb08a2ebec21c7edf2b682c4329d4b0f8bf4bf70d9af51c4ee15e800",
+    "src/session/Session.cpp": "0b46a5b2bc4bf319c2ac656f22aeffac78a342b2c7b037540530e1280fded858",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "35a60c88673e27cfa0cca73d0434d0883120244bdf7a62b4959381390dec4d71",
+    "tools/tests/replay/NpcShopTransactionReplay.inc": "addda68a06d6d23d2c00f26140695334a7d652964333ff1cf37551d74a23ee6c",
+    "tools/tests/replay/PacketStreamReplay.cpp": "4e66215e655f8a7a64e1e8432e8b07f410f55ae23102ce67095fd3d6a4cc9afc",
+    "tools/tests/replay/RentalItemReplay.inc": "a5053cfb4b4543ba65e3afe86bd0e1a17d735ac25ec7660de113ced05a54397c",
+    "tools/tests/replay/InventoryMutationAckReplay.inc": "4e7c35442efc5f335ce0eb3bea561fd5e42b3ea8ddbed008659f936adbe9b123",
+    "tools/tests/replay/InventoryMutationRenderChecks.inc": "31f02d91bd1604e07443dc07f6cf9edbfca2188981ed83373fd1252431a4e9b9",
+    "tools/tests/fixtures/packet-item-data/inventory-ack-msgstringtable.txt": "6db3b80b4c66bcb34fadcdbfc277ec9b6e763b6cbf23cdfd26ace67a557dc629"
+  },
+  "primary_sha256": {
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/dhxj/MsgStrings.h": "3a3317bac31fde357d7cd5621732b0fee5faefe37b3ef307207ccc0a209c0c49",
+    "Ref/GRF-Content/data/msgstringtable.txt": "200c4ac4970853ac7cb947629df790168a9d1afc5572e15fdc8d4944b6ab80af"
+  },
+  "selected_server_sha256": {
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/pc.hpp": "9acffb29d528615eceea47bd5805748282031340d5cc3c0fbb342d2e0c6b8339"
+  },
+  "binary_sha256": {
+    "packet_item_render_checks.exe": "e63b7a3b671472b2b4d5ce39e8d49efa9a690153591207222f4fbd39bfe38d08",
+    "packet_stream_replay_checks.exe": "6f76c439ac1f845ec03aca07f540c7959e6d186e1001669eb17dc4c0d64d7ffb",
+    "open-midgard.exe": "3bb6c0103c2e342da4bdf477d1e0d1131d36c1b2cfacf3e429cdfa209eeff1b8"
+  },
+  "validation": {
+    "ctest_passed": 121,
+    "ctest_total": 121,
+    "ctest_seconds": 174.02,
+    "packet_PASS_records": 174,
+    "gui_cases": 7,
+    "rendered_frames": 12,
+    "qml_errors": 0,
+    "dev_deploy": false,
+    "build_log_sha256": "76f58f73ce6bf82f97a58fa9194b2a7b71548c0419cf476bb8e59245a44facae",
+    "ctest_log_sha256": "8b789878ebabb4eb7a59500e613377865a128a9b817cf5bce0f2d6ddefc43542"
+  },
+  "retained_artifact_sha256": {
+    "evidence/PK09.17-ack-renders/inventory-mutation-basic-use-nine.native.png": "02ac6346141e6ee5e42a0409a1ef5b2ecb10b87fa3eaf2757b6cec13baff9f41",
+    "evidence/PK09.17-ack-renders/inventory-mutation-basic-use-nine.qml.png": "c0fdecbeeb822c4de81d41956376e5dd14418a3025b06dbe23231783ade127d5",
+    "evidence/PK09.17-ack-renders/inventory-mutation-equipment.qml.png": "3bd6e35b2f609fa932127c90139ada73e846fd4fb0b10b8eebc2d96241f5b113",
+    "evidence/PK09.17-ack-renders/inventory-mutation-equipped.qml.png": "9fd2d0636cd25581475822c180826832bf9c0f09c2ed2b7f5c19b2a0ffb2e3f9",
+    "evidence/PK09.17-ack-renders/inventory-mutation-extended-use-three.native.png": "b6dc797bb0b4242447ed76eb3cf801972c9e3bf173a69a60de33f74193a2ad38",
+    "evidence/PK09.17-ack-renders/inventory-mutation-extended-use-three.qml.png": "8955beb34f5a6921851d67f18cbd9b8c7011c096a8708461a9d90c896822497a",
+    "evidence/PK09.17-ack-renders/inventory-mutation-notice-0.qml.png": "b949a80fa4575994941e1200e8acec532424318ee3e9a23bbb4b69d0106a49ec",
+    "evidence/PK09.17-ack-renders/inventory-mutation-notice-6.qml.png": "3bd6e35b2f609fa932127c90139ada73e846fd4fb0b10b8eebc2d96241f5b113",
+    "evidence/PK09.17-ack-renders/inventory-mutation-pickup-seven.native.png": "a8df88b2c53986e90f5c4bdabbcb854dd8c1f51224d6b8159827707f3c3735e7",
+    "evidence/PK09.17-ack-renders/inventory-mutation-pickup-seven.qml.png": "d416ec8a49b9f93f33450e2856c47cde93150a0deeb418883219e69aba0d9e52",
+    "evidence/PK09.17-ack-renders/inventory-mutation-render-results.json": "408cb3bce1c250f1f195bb2d1e78f3d5c2b12ec207dfb0ca1fa436eb217b3015",
+    "evidence/PK09.17-ack-renders/inventory-mutation-stack-removed.native.png": "f8624eb8d72519d17b5264e1c70e588219fdb8bea2f270924d523228fce95f81",
+    "evidence/PK09.17-ack-renders/inventory-mutation-stack-removed.qml.png": "1b772406eaa6b0c78ef6497ec8eb2aa7b7865d5da1f72709c58e9c17cbceb3dc",
+    "evidence/PK09.17-font-runtime-before.txt": "6f9f379138ab0ebc61fc78c897840d5506ce3a6491c1a7114fcc22804dfd94a3",
+    "evidence/PK09.17-red-pickup.txt": "4a8e885b8e364912440b70cd5d9353d10ed4f3f2edd892ab4fb9da8977a15c16",
+    "evidence/PK09.17-red-equip.txt": "f5d86c0431407858af00dae4c27308cd6a4134e0193eeb80d8e3d7ec9d5ddaee",
+    "evidence/PK09.17-red-use.txt": "102b19da1eae2d94602991afe9f6a2202933286679b8303776464632b57b042d",
+    "evidence/PK09.17-red-metadata.txt": "ead8463a6bb5997a4235a0b77c2b97c558610bde2cf916a251a6ad924062236d",
+    "evidence/PK09.17-red-message.txt": "0d170962b437ddf2dd6fcff6ca28534197353cb830b88a0caf4ca03543800cdd"
+  },
+  "fixture_provenance": {
+    "notice_source_indices": [
+      52,
+      53,
+      220,
+      279,
+      372
+    ],
+    "other_message_positions": "synthetic UNEXPECTED ACK MESSAGE INDEX sentinels",
+    "noncanonical_fields": "explicit raw metadata mismatches, high expiry/ownership and failure/unknown boundary cases are synthetic; not live captures"
+  },
+  "scope_limits": [
+    "State/notices/visible inventory transitions only; source acquisition popup and complete item/effect/context acceptance remain open",
+    "Basic00A0/00A8 compatibility tests are not selected-emitter reachability proof; historical result3 snapshot excluded",
+    "No new discovery closure, general scale/art/locale or independent PK47/48/49/deployment certification"
+  ]
+}

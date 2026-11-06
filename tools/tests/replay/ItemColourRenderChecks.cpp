@@ -168,6 +168,7 @@ template<class Window> QImage Native(Window& window,QRgb expected,int width=Widt
 #include "ItemDetailGeometryRenderChecks.inc"
 #include "ItemCardDetailRenderChecks.inc"
 #include "InventoryShowRenderChecks.inc"
+#include "InventoryMutationRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -193,6 +194,7 @@ int main(int argc,char** argv) {
         const bool itemDetailGeometryChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-detail-geometry-child";
         const bool itemCardDetail=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail";
         const bool itemCardDetailChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail-child";
+        const bool inventoryMutations=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-mutations";
         const bool inventoryShow=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-show";
         const bool inventoryShowChild=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-show-child";
         if(inventoryShow) {
@@ -216,10 +218,19 @@ int main(int argc,char** argv) {
             std::cout<<"PASS source inventory tab startup and runtime retention\n";return 0;
         }
         InventoryTabViewportFixture inventoryTabViewport;
+        if(inventoryMutations) {
+            SetRuntimeUiScalePercent(100);inventoryTabViewport.Create("inventory-mutations");
+        }
         if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild || itemCardDetailChild || inventoryShowChild) {
             Require(argc>3,"inventory startup child stage missing");
             const QString stage=QString::fromLocal8Bit(argv[3]);
             SetRuntimeUiScalePercent(100);inventoryTabViewport.Create(stage=="small"?QString("read-small"):stage);
+        }
+        if(inventoryMutations) {
+            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/inventory-ack-msgstringtable.txt");
+            Require(source.open(QIODevice::ReadOnly),"inventory acknowledgement message fixture missing");
+            const auto bytes=source.readAll();QFile target(output+"/data/msgstringtable.txt");
+            Require(target.open(QIODevice::WriteOnly)&&target.write(bytes)==bytes.size(),"copy inventory acknowledgement messages failed");
         }
         if(specialOnly || rentalOnly) {
             QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(rentalOnly?"rental-msgstringtable.txt":"special-name-msgstringtable.txt"));
@@ -278,6 +289,7 @@ int main(int argc,char** argv) {
         QQuickView view;view.setColor(QColor("#181b20"));view.resize(Width,Height);view.setResizeMode(QQuickView::SizeRootObjectToView);
         if(itemGeometryChild)view.resize(QString::fromLocal8Bit(argv[3])=="small"?640:1280,QString::fromLocal8Bit(argv[3])=="small"?480:720);
         if(itemDetailGeometryChild || itemCardDetailChild || inventoryShowChild)view.resize(1280,720);
+        if(inventoryMutations)view.resize(1280,720);
         view.rootContext()->setContextProperty("uiState",adapter.stateObject());
         view.engine()->addImageProvider("openmidgard",new FixtureImages);
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
@@ -293,6 +305,13 @@ int main(int argc,char** argv) {
             Require(errors==0,"inventory tab persistence child emitted QML errors");
             view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
             SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;return 0;
+        }
+        if(inventoryMutations) {
+            CheckInventoryMutationUi(app,view,state,mode,inventory,adapter,output);
+            Require(errors==0,"inventory mutation UI emitted QML errors");
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS inventory mutation acknowledgement rendering\n";return 0;
         }
         if(npcShopQuantityOnly) {
             CheckNpcShopQuantityUi(app,view,state,mode,adapter,output);

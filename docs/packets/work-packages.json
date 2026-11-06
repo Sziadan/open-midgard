@@ -368,6 +368,11 @@
         "id": "PK09.16",
         "action": "Restore independent remembered inventory show state, source delete-first button/Alt-E and bulk teardown/basic-UI reconstruction; verify actual OnInit boundaries and native/Qt geometry/tab/mini/close lifecycle without closing full item acceptance.",
         "tier": "S"
+      },
+      {
+        "id": "PK09.17",
+        "action": "Repair and verify selected inventory pickup/use/equip acknowledgement state, pending cleanup, metadata/count retention and source notices through production receive replay and actual native/Qt quantity, detail and bag/equipment transitions; retain acquisition-popup/full-item acceptance.",
+        "tier": "S"
       }
     ],
     "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."

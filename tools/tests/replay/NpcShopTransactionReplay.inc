@@ -2,15 +2,8 @@ void NpcShopTransactionReplay()
 {
     SetCase("npc_shop_transaction_replay", "PK37.09", "selected-20080910-shop-c5-c8-c9-ca-cb",
         "CGameMode::SendMsg -> NPC shop production sender; production packet router -> NPC shop handlers");
-#if RO_ENABLE_QT6_UI
-    // The production chooser/list windows resolve item/chat text through Qt font APIs.
-    qputenv("QT_QPA_PLATFORM", "offscreen");
-#ifdef RO_PACKET_QT_PLATFORM_PLUGINS
-    qputenv("QT_QPA_PLATFORM_PLUGIN_PATH", RO_PACKET_QT_PLATFORM_PLUGINS);
-#endif
-    int argc = 1; char name[] = "npc-shop-replay"; char* argv[] = { name, nullptr };
-    QGuiApplication app(argc, argv);
-#endif
+    // PacketStreamReplay main owns the one process-wide Qt application.
+
     CGameMode mode;
     struct Restore {
         std::vector<ITEM_INFO> inventory{ g_session.GetInventoryItems().begin(), g_session.GetInventoryItems().end() };
