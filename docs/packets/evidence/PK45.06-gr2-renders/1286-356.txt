@@ -1,0 +1,2 @@
+{"case_id":"gr2_corpse_native","job":1286,"count":356,"alpha":255,"alive":1,"age_ms":5000,"clock":10,"rotation":145,"faces":945}
+{"case_id":"corpse_packet_lifecycle","contract_id":"PK45.06","status":"PASS","source_expiry_ms":6120,"eligibility_cases":12,"original_assets":true}

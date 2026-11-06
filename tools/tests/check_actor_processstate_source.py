@@ -238,4 +238,4 @@ if errors:
         print(f"FAIL {error}")
     raise SystemExit(1)
 print("PASS ProcessState source inventory and in-scope branch/integration anchors")
-print("Documented scope/architecture differences: pet chat data and legacy UI stance route; SPR CCorpse path is implemented; separate GR2 corpse virtual path remains pending")
+print("Documented scope/architecture differences: pet chat data and legacy UI stance route; independent SPR and GR2 corpse lifecycles have separate production acceptance")

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK45.06",
+  "active_step": "PK09.04",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -2018,14 +2018,17 @@
       "commit_subject": "packet(PK09.20): restore signed recovery deltas and feedback"
     },
     "PK45.06": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/REVIEW-2026-11-06-followup.md",
         "docs/packets/contracts/PK45.SPRITE-CORPSE.md",
         "docs/packets/evidence/PK45.06-sprite.md",
-        "docs/packets/evidence/PK45.06-sprite-provenance.json"
+        "docs/packets/evidence/PK45.06-sprite-provenance.json",
+        "docs/packets/contracts/PK45.GR2-CORPSE.md",
+        "docs/packets/evidence/PK45.06-gr2.md",
+        "docs/packets/evidence/PK45.06-gr2-provenance.json"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK45.06): restore independent GR2 corpse lifecycle"
     }
   }
 }

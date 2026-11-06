@@ -4092,7 +4092,10 @@ void CRenderObject::SetAction(int act, int mot, int type) {
 void CRenderObject::ProcessMotion() {
     if (const CGameActor* actor = dynamic_cast<const CGameActor*>(this)) {
         if (Gr2MonsterModel(actor->m_job)) {
-            m_isMotionFinished = Gr2MonsterMotionFinished(actor->m_gid,actor->m_stateId,actor->m_stateStartTick);
+            // Original C3dGrannyGameActor::ProcessMotion0x565670 marks state3
+            // finished immediately. Its separate corpse plays death from zero.
+            m_isMotionFinished = actor->m_stateId == 3
+                || Gr2MonsterMotionFinished(actor->m_gid,actor->m_stateId,actor->m_stateStartTick);
             return;
         }
     }
@@ -8935,6 +8938,6 @@ bool CGameActor::MakeCorpse()
     if (!mode || !mode->m_world) return false;
     // Resolve the same runtime ACT/SPR used by the source death motion before
     // the actor is retired; non-PC billboards may hold them in their cache.
-    ResolveRuntimeActorActRes(this);
+    if (!Gr2MonsterModel(m_job)) ResolveRuntimeActorActRes(this);
     return mode->MakeCorpse(*this);
 }

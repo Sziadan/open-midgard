@@ -14,6 +14,8 @@ add_library(ro_world STATIC
     Corpse.h
     Corpse.cpp
     CorpseState.h
+    GrannyCorpse.h
+    GrannyCorpse.cpp
     GroundScope.cpp
     SkillUnit.cpp
     GraffiSkill.cpp

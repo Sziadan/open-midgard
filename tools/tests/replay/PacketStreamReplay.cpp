@@ -4536,6 +4536,7 @@ int main(int argc,char** argv){try{
     (void)argc;(void)argv;
 #endif
     Require(CConnection::Startup(),"socket startup failed");
+    if(argc>1 && std::string(argv[1])=="--corpse-gr2-native") { CorpseNativePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--corpse-only") { CorpsePacketReplay();CConnection::Cleanup();return 0; }
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();

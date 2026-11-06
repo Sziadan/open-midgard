@@ -1,6 +1,7 @@
 #pragma once
 #include "Types.h"
 #include <vector>
+#include <memory>
 class CTexture;
 class CGameMode;
 
@@ -47,3 +48,19 @@ void ClearGr2Monsters();
 
 void PreloadGr2Monsters();
 void WaitForGr2Monsters();
+
+// A corpse owns an animation/mesh instance independently of the actor-ID cache.
+// Shared immutable model/texture resources remain pinned across cache teardown.
+class Gr2CorpseModel {
+public:
+    explicit Gr2CorpseModel(int job);
+    ~Gr2CorpseModel();
+    Gr2CorpseModel(const Gr2CorpseModel&) = delete;
+    Gr2CorpseModel& operator=(const Gr2CorpseModel&) = delete;
+    bool Render(const vector3d& position, float rotation, u8 alpha, const matrix& view, double elapsedSeconds);
+    float Clock() const;
+private:
+    struct Impl;
+    std::unique_ptr<Impl> m_impl;
+};
+float Gr2MonsterCurrentRotation(u32 gid, float actorRotation);

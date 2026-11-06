@@ -1,9 +1,12 @@
 #include "world/Corpse.h"
+#include "world/GrannyCorpse.h"
 #include "world/CorpseState.h"
 #include "world/World.h"
 #include "gamemode/View.h"
+#include "render/Renderer.h"
+#include "render3d/RenderDevice.h"
 
-void CorpsePacketReplay()
+void CorpsePacketReplay(bool modelNative=false)
 {
     SetCase("corpse_packet_lifecycle", "PK45.06", "selected-0080-death-and-original-corpse",
         "production framing/router -> queued death -> actor retirement -> independent corpse");
@@ -158,12 +161,105 @@ void CorpsePacketReplay()
     for(auto* old:mode.m_deferredActorDeletes)delete old;
     mode.m_deferredActorDeletes.clear();
     Require(g_world.m_gameObjectList.front()==corpse,"same-ID actor reuse removed an independent corpse");
+    if(modelNative) {
+        const int nativeJob=std::getenv("RO_GR2_CORPSE_JOB")?std::atoi(std::getenv("RO_GR2_CORPSE_JOB")):1286;
+        Require(Gr2MonsterModel(nativeJob)!=nullptr,"unsupported native model job");
+        auto* guardian=actorFor(nativeJob,1,false);
+        guardian->m_pos={0,0,0};guardian->m_roty=35;
+        matrix modelView{};modelView.m[0][0]=1;modelView.m[1][1]=.70710678f;modelView.m[2][1]=-.70710678f;
+        modelView.m[1][2]=.70710678f;modelView.m[2][2]=.70710678f;modelView.m[3][2]=500;modelView.m[3][3]=1;
+        g_renderer.m_hpc=g_renderer.m_vpc=1750;g_renderer.m_xoffset=320;g_renderer.m_yoffset=240;
+        const Gr2MonsterState renderState{42,nativeJob,0,guardian->m_stateStartTick,guardian->m_pos,
+            guardian->m_roty,1,false,0xFFFFFFFFu,{0,-1,0},{1,1,1},{.5f,.5f,.5f}};
+        RenderGr2Monster(renderState,modelView);WaitForGr2Monsters();
+        Require(RenderGr2Monster(renderState,modelView),"native original model did not render");
+        const float modelRotation=Gr2MonsterCurrentRotation(42,guardian->m_roty);
+        WBA pendingHit{};pendingHit.message=12;pendingHit.time=timeGetTime()+60000;
+        guardian->m_willBeAttackedList.push_back(pendingHit);
+        dispatch(died);
+        Require(guardian->m_stateId!=3&&guardian->m_willBeDead==1,"native model death ignored queued hit");
+        guardian->m_stateStartTick=timeGetTime()-20000;CleanupPendingActorDespawns(mode);
+        Require(guardian->m_vanishTime==0&&mode.m_runtimeActors.count(42)==1,"native model hit lost to timeout");
+        const auto countBefore=g_world.m_gameObjectList.size();
+        guardian->m_willBeAttackedList.front().time=timeGetTime()-1;
+        // The model virtual ProcessMotion marks state3 complete immediately;
+        // the newly independent corpse, not the old actor, plays death from0.
+        g_world.UpdateActors();
+        Require(mode.m_runtimeActors.empty()&&g_world.m_actorList.empty()
+            &&g_world.m_gameObjectList.size()==countBefore+1,"native due-hit state3 failed immediate model retirement");
+        auto* retained=dynamic_cast<CGrannyCorpse3d*>(g_world.m_gameObjectList.back());
+        Require(retained&&retained->Rotation()==modelRotation,"native corpse lost interpolated model rotation");
+        for(auto* old:mode.m_deferredActorDeletes)delete old;mode.m_deferredActorDeletes.clear();
+        // Destroy the actor/model lookup caches before the corpse's first draw.
+        // Its pinned asset and private mesh/animation instance must survive.
+        ClearGr2Monsters();
+        // The live-actor submissions establish cache state, not capture pixels.
+        // Clear their queue before the corpse-only frame starts its render pass.
+        g_renderer.DiscardRenderList();
+        const int requested=std::getenv("RO_GR2_CORPSE_COUNT")?std::atoi(std::getenv("RO_GR2_CORPSE_COUNT")):1;
+        Require(requested>=1&&requested<=602,"native model counter outside fixture bounds");
+        bool alive=true;while(retained->StateCount()<requested)alive=retained->OnProcess()!=0;
+        const int alpha=retained->Alpha();
+        const u32 age=std::getenv("RO_GR2_CORPSE_AGE")?static_cast<u32>(std::strtoul(std::getenv("RO_GR2_CORPSE_AGE"),nullptr,10)):5000;
+        Require(age<=60000,"native model age outside fixture bounds");
+        g_renderer.m_nClearColor=0xFF202020;g_renderer.ClearBackground();g_renderer.Clear(0);
+        if(alive)Require(retained->RenderAt(modelView,retained->StartTick()+age),"retained model resources did not render after cache teardown");
+        Require(!alive||std::fabs(retained->AnimationClock()-age*.002f)<.0001f,"corpse animation clock lost2x elapsed-time rate");
+        Require(g_renderer.m_rpAlphaList.empty(),"model corpse changed source flag0 to translucent sprite sorting");
+        std::cout<<"{\"case_id\":\"gr2_corpse_native\",\"job\":"<<nativeJob<<",\"count\":"<<requested<<",\"alpha\":"<<alpha
+            <<",\"alive\":"<<alive<<",\"age_ms\":"<<age<<",\"clock\":"<<retained->AnimationClock()
+            <<",\"rotation\":"<<retained->Rotation()<<",\"faces\":"<<g_renderer.m_rpFaceList.size()<<"}\n";
+        Require(g_renderer.DrawScene(),"native model corpse frame failed");
+        Require(GetRenderDevice().Present(false)==0,"native model corpse presentation failed");
+        // Source lifetime sweep; then later factory tests can reuse the same ID.
+        while(retained->StateCount()<=601)retained->OnProcess();
+        g_world.UpdateGameObjects();
+        Require(g_world.m_gameObjectList.size()==countBefore,"native model corpse did not sweep");
+    }
     const auto beforeModel=g_world.m_gameObjectList.size();
     auto* modelActor=actorFor(1288,1,false);
-    Require(!mode.MakeCorpse(*modelActor)&&mode.m_runtimeActors.count(42)==1
-        &&g_world.m_gameObjectList.size()==beforeModel,
-        "GR2 actor was incorrectly replaced with an empty sprite corpse");
-    dispatch({0x80,0,42,0,0,0,0});
+    modelActor->m_pos={3,4,5};modelActor->m_roty=47;modelActor->m_zoom=3;
+    dispatch(died);modelActor->m_stateStartTick=timeGetTime()-20000;
+    CleanupPendingActorDespawns(mode);
+    Require(mode.m_runtimeActors.count(42)==1&&modelActor->m_vanishTime==0,
+        "GR2 death still armed an invented timed actor fade");
+    // Source model ProcessMotion completes state3 immediately, independently
+    // of any rendered actor animation. The corpse begins its own death bank.
+    g_world.UpdateActors();
+    Require(mode.m_runtimeActors.empty()
+        &&g_world.m_gameObjectList.size()==beforeModel+1,
+        "GR2 factory did not independently retire its actor");
+    auto* modelCorpse=dynamic_cast<CGrannyCorpse3d*>(g_world.m_gameObjectList.back());
+    Require(modelCorpse&&modelCorpse->StateCount()==1&&modelCorpse->Alpha()==255
+        &&modelCorpse->Position().x==3&&modelCorpse->Position().y==4
+        &&modelCorpse->Position().z==5&&modelCorpse->Rotation()==133,
+        "GR2 corpse snapshot/initial owning-sweep count changed");
+    dispatch(died);
+    Require(g_world.m_gameObjectList.size()==beforeModel+1,
+        "duplicate death created another GR2 corpse");
+    for(auto* old:mode.m_deferredActorDeletes)delete old;
+    mode.m_deferredActorDeletes.clear();
+    // Literal PE counter/byte-alpha goldens, deliberately independent of time.
+    struct ModelCount {int previous;int alpha;bool alive;};
+    const ModelCount modelCounts[]={{355,255,true},{356,244,true},{512,88,true},
+        {599,1,true},{600,0,true},{601,255,false}};
+    int next=1;
+    for(const auto& test:modelCounts) {
+        while(next<test.previous){Require(modelCorpse->OnProcess()!=0,"GR2 expired early");++next;}
+        Require((modelCorpse->OnProcess()!=0)==test.alive&&modelCorpse->Alpha()==test.alpha
+            &&modelCorpse->StateCount()==test.previous+1,"GR2 source counter/byte-alpha boundary changed");
+        ++next;
+    }
+    auto* replacement=actorFor(1288,1,false);
+    Require(mode.MakeCorpse(*replacement)&&g_world.m_gameObjectList.size()==beforeModel+2,
+        "same-ID model actor reuse did not get an independent corpse");
+    auto* replacementCorpse=dynamic_cast<CGrannyCorpse3d*>(g_world.m_gameObjectList.back());
+    Require(replacementCorpse!=modelCorpse&&replacementCorpse->StateCount()==1
+        &&replacementCorpse->Alpha()==255,"same-ID model reuse shared corpse animation/lifetime");
+    // The expired object remains on the owning list until its next sweep.
+    g_world.UpdateGameObjects();
+    Require(g_world.m_gameObjectList.size()==beforeModel+1,
+        "world sweep did not retire the expired model corpse exactly once");
     for(auto* old:mode.m_deferredActorDeletes)delete old;
     mode.m_deferredActorDeletes.clear();
     const auto beforeAdjacent=g_world.m_gameObjectList.size();
@@ -185,4 +281,20 @@ void CorpsePacketReplay()
     Require(g_world.m_gameObjectList.empty()&&act.m_lockCnt==actLocks&&spr.m_lockCnt==sprLocks,
         "map teardown retained a corpse or its resource locks");
     std::cout<<"{\"case_id\":\"corpse_packet_lifecycle\",\"contract_id\":\"PK45.06\",\"status\":\"PASS\",\"source_expiry_ms\":6120,\"eligibility_cases\":12,\"original_assets\":true}\n";
+}
+
+void CorpseNativePacketReplay()
+{
+    Require(GetRequestedRenderBackend()==RenderBackendType::Vulkan,"native corpse proof requires explicit Vulkan backend");
+    HWND window=CreateWindowExA(0,"STATIC","Packet corpse fixture",WS_POPUP,0,0,640,480,nullptr,nullptr,GetModuleHandleA(nullptr),nullptr);
+    Require(window!=nullptr,"hidden native corpse window creation failed");
+    struct Cleanup {
+        HWND window;
+        ~Cleanup(){ClearGr2Monsters();GetRenderDevice().Shutdown();DestroyWindow(window);}
+    } cleanup{window};
+    RenderBackendBootstrapResult result{};
+    Require(GetRenderDevice().Initialize(window,&result)&&result.backend==RenderBackendType::Vulkan,
+        "native corpse Vulkan initialization failed");
+    g_renderer.Init();g_renderer.SetSize(640,480);
+    CorpsePacketReplay(true);
 }

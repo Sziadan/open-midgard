@@ -1694,7 +1694,7 @@
       },
       {
         "id": "PK45.02",
-        "action": "Audit every actor spawn move action name and resource lifecycle handler.",
+        "action": "Audit every actor spawn move action name and resource lifecycle handler. Preserve completed PK45.06 death lifecycles; separately verify live non90 GR2 transforms (treasure model currently uses the old X90 helper), broader model state2/attack completion and appearance.",
         "tier": "S"
       },
       {
@@ -1714,7 +1714,7 @@
       },
       {
         "id": "PK45.06",
-        "action": "Restore separate source sprite and CGrannyCorpse3d lifecycles: exact eligibility, independent world/resource/model-instance ownership, final-frame direction/animation, branch-specific fade and actor removal/teardown through production packets and rendered checks. Sprite branch reviewed; GR2 remains pending. Preserve ordinary-PC death and full PK45/24 acceptance.",
+        "action": "Restore separate source sprite and CGrannyCorpse3d death lifecycles: exact eligibility and branch-specific motion gate, independent world/resource/model-instance ownership, original sprite fade and model counter/animation, actor retirement and teardown through production packets and native rendering. Both branches verified; preserve ordinary-PC death and full PK45/24 acceptance boundaries.",
         "tier": "S"
       }
     ],

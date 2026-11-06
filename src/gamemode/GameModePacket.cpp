@@ -1,5 +1,6 @@
 #include "GameModePacket.h"
 #include "world/Corpse.h"
+#include "world/GrannyCorpse.h"
 #include "world/Gr2Monster.h"
 #include "Commerce.h"
 #include "LoginMode.h"
@@ -5804,11 +5805,6 @@ void BeginActorDeath(CGameMode& mode, CGameActor& actor, u32 gid)
         pcActor->InvalidateBillboard();
     }
 
-    // Sprite deaths use m_willBeDead only for queued hits. The separate
-    // original CGrannyCorpse3d path is still being ported (PK45.06); retain
-    // the existing model hold/fade until that path owns a real model corpse.
-    if (Gr2MonsterModel(actor.m_job) && !IsLocalPlayerActor(mode, gid) && actor.m_isPc == 0)
-        actor.m_willBeDead = 1;
 
 }
 
@@ -8397,17 +8393,6 @@ void CleanupPendingActorDespawns(CGameMode& mode)
             continue;
         }
 
-        // Temporary preservation of the pre-existing GR2 lifecycle. Generic
-        // sprite corpses must never use this timer or lose queued death hits.
-        if (Gr2MonsterModel(actor->m_job) && actor->m_willBeDead == 1 && actor->m_vanishTime == 0) {
-            if (now >= actor->m_stateStartTick + 1290u) {
-                actor->m_vanishTime = now + 510u;
-                actor->m_willBeDead = 2;
-                if (auto* pcActor = dynamic_cast<CPc*>(actor)) pcActor->InvalidateBillboard();
-            }
-            continue;
-        }
-
         if (actor->m_vanishTime == 0 || actor->m_vanishTime > now) {
             continue;
         }
@@ -8992,12 +8977,15 @@ bool CGameMode::MakeCorpse(CGameActor& actor)
 {
     if (actor.m_corpseCreated) return true;
     if (!m_world || m_world->m_player == &actor) return false;
-    // GR2 has a distinct source virtual corpse class, not an empty SPR object.
-    if (Gr2MonsterModel(actor.m_job)) return false;
     const auto owner = m_runtimeActors.find(actor.m_gid);
     if (owner == m_runtimeActors.end() || owner->second != &actor) return false;
-    auto corpse = std::make_unique<CCorpse>(actor.m_pos, actor.m_actRes, actor.m_sprRes,
-        actor.m_baseAction, actor.m_curMotion, actor.m_roty);
+    std::unique_ptr<CGameObject> corpse;
+    if (Gr2MonsterModel(actor.m_job))
+        corpse = std::make_unique<CGrannyCorpse3d>(actor.m_job, actor.m_pos,
+            Gr2MonsterCurrentRotation(actor.m_gid, actor.m_roty));
+    else
+        corpse = std::make_unique<CCorpse>(actor.m_pos, actor.m_actRes, actor.m_sprRes,
+            actor.m_baseAction, actor.m_curMotion, actor.m_roty);
     // The original owning game-object sweep reaches the newly appended corpse
     // in this step. Actors are a separate pass here, so initialize its frame now.
     corpse->OnProcess();

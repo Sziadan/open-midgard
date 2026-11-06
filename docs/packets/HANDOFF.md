@@ -1,12 +1,12 @@
 # Packet continuation handoff
 
-**Latest reviewed checkpoint (2026-11-06):** [PK45.06 sprite corpses](evidence/PK45.06-sprite.md) now use independent world/resource ownership and original per-clip rendering/fade. Full root127/127 in174.27s; standalone460/460 in72.44s; six actual Vulkan captures pass. The earlier sole failing source check now passes, but does not certify the separate GR2 branch.
+**Latest checkpoint (2026-11-06):** [PK45.06 model corpses](evidence/PK45.06-gr2.md) complete the separate sprite/model death lifecycles. Root127/127 in174.52s; standalone460/460 in72.36s;16 model GPU cases plus the retained sprite evidence. Preserve immediate model handoff after queued hits, private model resources, independent clocks/counters and source cutout rendering.
 
-**Active step: PK45.06.** [Strong-agent continuation card](work-items/PK45.06.md). Sprite branch reviewed; GR2 model corpse remains unfinished in the same step. Checkpoint commit subject: `packet(PK45.06): restore independent sprite corpse lifecycle`. Full PK45/24/48/49 and PK09.04 remain open.
+**Active step: PK09.04.** Resume remaining item/status/detail/context work. Latest commit subject: `packet(PK45.06): restore independent GR2 corpse lifecycle`. Broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.
 
 ## Continue here
 
-**Next work:** finish the separate CGrannyCorpse3d branch in [PK45.06](work-items/PK45.06.md): verify original counter/alpha/animation from PE, implement independent model-instance ownership and production retirement, then prove same-ID reuse, expiry, teardown and rendering. Preserve the sprite branch and its6120ms clock; do not apply that clock to GR2. Root owns the complex implementation; lighter agents may inventory source/fixtures or continue bounded PK09.04 work independently. Then resume the remaining item/chat/context list below.
+**Next work:** resume [PK09.04](work-items/PK09.04.md) and its remaining bounded item/status/detail/context leaves. PK45.06 is complete; do not repeat the corpse implementation or weaken its source/production/native regressions. Root retains complex protocol/ownership/source decisions; lighter agents can implement source-ready bounded leaves. Under still-open PK45.02, review live non90 model transforms (treasure model currently uses the old X90 helper) and broader model state2/attack/appearance behavior separately; corpse proof does not certify those paths.
 
 1. Continue [PK09.04](work-items/PK09.04.md) with remaining full item/status/delta/detail contexts, remaining item mutation/status/context acceptance. PK37.07 now covers normal NPC catalog and selected buy/sell right-clicks, exact row snapshots, copied identification/refine/cards, owner collisions, lifetime, scrolling/header/padding, model shrink, reopening and125% WindowProc input. Preserve passive QML input and never resolve an NPC detail through equal-index inventory/cart or catalog rows.
    The strong-agent fallback review is complete at the current representation boundary: primary mode36/44/45 actions reset/setup drag state; transaction submission is separate. Legacy grid GetCurItem clamps a right tail that coordinate GetItemInfo rejects, while the decompiled one-argument lookup is unreliable. Current full-width row UI lacks this mismatch. Do not invent header/blank/normal-left ForceUpdate gestures. Exact legacy geometry/signature behavior remains unaccepted; PK09.11's explicit ForceUpdate API and default raw-key Select toggle remain required.
@@ -19,7 +19,7 @@
 
 ## Verified current checkpoint
 
-All active targets build deploy-off. Latest full root127/127 and standalone460/460 pass; six retained native sprite-corpse captures pass. This checkpoint accepts the sprite branch only. The separate GR2 runtime/render lifecycle remains pending despite green aggregate suites.
+All active targets build deploy-off. Full root127/127 and standalone460/460 pass on the final runtime;16 native model cases pass with original assets, independent geometry/shade and exact counter/animation checks. The sprite checkpoint remains accepted. Full packet feature coverage and independent/deployed acceptance remain unfinished.
 
 No discovery row is newly closed. PK09.04, broad PK37, independent PK48/49 and deployed provenance remain open. The whole packet plan remains unfinished.
 

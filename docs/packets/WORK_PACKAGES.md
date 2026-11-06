@@ -1046,12 +1046,12 @@ Tier: **S**. Dependencies: PK20, PK22, PK24.
 ### Bounded steps
 
 - **PK45.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK45.02 [S]** Audit every actor spawn move action name and resource lifecycle handler. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK45.02 [S]** Audit every actor spawn move action name and resource lifecycle handler. Preserve completed PK45.06 deaths; separately review live non90 GR2 transforms, model state2/attack completion and appearance. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK45.03 [S]** Audit every remaining registered handler field/branch through state/UI/replies. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK45.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 - **PK45.05 [S]** Separate selected character-ID lookup from actor names, implement source-final 00A2/15/CID@11 request plus 0194/30 reply cache/timer lifecycle and production socket/replay proofs; leave actual special-item UI integration and other profiles open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK45.06 [S]** Restore original separate-corpse eligibility, resource/actor ownership, rendering and timed fade through production death/lifecycle verification. [Strong-agent work item](work-items/PK45.06.md). IN_PROGRESS; sprite branch reviewed (root127/127, standalone460/460, six Vulkan captures); separate CGrannyCorpse3d ownership/counter/animation/render acceptance remains pending in this step. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK45.06 [S]** Restore original separate-corpse eligibility, resource/actor ownership, rendering and timed fade through production death/lifecycle verification. [Strong-agent work item](work-items/PK45.06.md). COMPLETED; separate sprite/model ownership, gates, clocks and rendering verified (root127/127, standalone460/460,16 model GPU cases). [Model evidence](evidence/PK45.06-gr2.md). Parent actor/effect/independent acceptance remains open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -1105,7 +1105,7 @@ No catch-all task completion without per-row contracts/classification. Add newly
 
 ## PK48 â€” Independent certification review
 
-Partial PK48.02 follow-up: [effect repairs and corpse gate](evidence/REVIEW-2026-11-06-followup.md) corrects four runtime semantics and migrates bounded checks. Root126/126; standalone459/460. PK45.06 now owns the substantive corpse failure; certification remains open.
+Partial PK48.02 follow-up: [effect repairs and corpse gate](evidence/REVIEW-2026-11-06-followup.md) corrects four runtime semantics and migrates bounded checks. Root126/126; standalone459/460. PK45.06 subsequently resolved the separate sprite/model corpse gap; this paragraph retains the earlier test outcomes and certification remains open.
 
 Tier: **S**. Dependencies: PK00, PK01, PK02, PK03, PK04, PK05, PK06, PK07, PK08, PK09, PK10, PK11, PK12, PK13, PK14, PK15, PK16, PK17, PK18, PK19, PK20, PK21, PK22, PK23, PK24, PK25, PK26, PK27, PK28, PK29, PK30, PK31, PK32, PK33, PK34, PK35, PK36, PK37, PK38, PK39, PK40, PK41, PK42, PK43, PK44, PK45, PK46, PK47, PK50.
 
@@ -1163,4 +1163,4 @@ No quest packet may remain a consume-only handler. Full snapshots and incrementa
 22 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 
-PK45.06 sprite checkpoint: [implementation and review](evidence/PK45.06-sprite.md). Preserve independent SPR ownership and6120ms fade. Complete the distinct GR2 branch before closing PK45.06; full PK45/24/48/49 remain open.
+PK45.06 is now complete: [sprite checkpoint](evidence/PK45.06-sprite.md) and [model checkpoint](evidence/PK45.06-gr2.md). Resume PK09.04. Preserve both source gates/clocks and private resources; full PK45/24/48/49 remain open. PK45.02 must separately review the live non90 model X90 assumption and broader model attack/state2/appearance behavior.

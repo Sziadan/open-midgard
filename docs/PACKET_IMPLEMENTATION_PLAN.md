@@ -6,9 +6,9 @@ Created 2026-11-03. This is an execution specification, not a claim that any run
 
 ## Start here
 
-**Latest reviewed checkpoint (2026-11-06):** [PK45.06 sprite corpses](packets/evidence/PK45.06-sprite.md) restore independent world/resource ownership, original per-clip rendering and6120ms fade. Root127/127 and standalone460/460; six actual Vulkan captures pass. Green tests do not close the unimplemented model branch.
+**Latest checkpoint (2026-11-06):** [PK45.06 model corpse evidence](packets/evidence/PK45.06-gr2.md) completes both separate corpse lifecycles: resource ownership, actor retirement, original sprite fade and model animation/counter/rendering. Root127/127, standalone460/460 and16 native model cases pass; earlier sprite evidence remains accepted.
 
-**Current continuation priority:** finish [PK45.06](packets/work-items/PK45.06.md) with the separate source CGrannyCorpse3d lifecycle, independent model instance, verified counter/alpha/animation and production/rendered acceptance. Strong agent owns this work. Lighter agents may continue bounded PK09.04 items or GR2 research independently. Preserve accepted sprite behavior and prior effect/recovery repairs. Full feature coverage, PK47 and independent PK48/49/deployment remain open.
+**Current continuation priority:** resume [PK09.04](packets/work-items/PK09.04.md) for remaining item/status/detail/context work and bounded leaves. Preserve corpse, effect and recovery regressions. PK45.06 is complete; broad actor/model review, full feature coverage, PK47 and independent PK48/49/deployment remain open. The whole packet implementation goal remains active.
 
 Read this document, [STATUS](packets/STATUS.md), [HANDOFF](packets/HANDOFF.md), then the assigned card in [WORK_PACKAGES](packets/WORK_PACKAGES.md). The machine inventory is [coverage.csv](packets/coverage.csv); task metadata is [work-packages.json](packets/work-packages.json). The original evidence is [packet audit](packet-audit/README.md). Use the [research runbook](packets/RESEARCH_RUNBOOK.md) for concrete source-navigation and task-splitting examples. Do one numbered leaf step at a time. Every completed leaf step requires its own self-reviewed commit and a user-facing progress update. Independent strong-agent review happens afterward and is not required between steps. Never claim a package complete because its decoder compiles.
 

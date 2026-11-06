@@ -5115,3 +5115,6 @@ check_frozen_staff_presentation.py passes compiled production-body resource reso
 
 
 2026-11-06 packet corpse follow-up supersedes earlier missing-MakeCorpse/state10 sprite descriptions: CCorpse now owns independent ACT/SPR resources and textures, retires eligible non-player actors after completed motion/queued hits, renders original clips and expires at6120ms. Full root127/127 and standalone460/460 plus six Vulkan captures pass. Separate CGrannyCorpse3d remains pending under PK45.06; see docs/packets/evidence/PK45.06-sprite.md. Other packet-plan coverage and independent acceptance remain open.
+
+
+2026-11-06 PK45.06 GR2 follow-up completes the separate model corpse too: source immediate state3 handoff after queued hits, private model instances/resource pins through actor/cache deletion, byte-alpha processing counter and independent high-resolution2x animation/rendering. Root127/127, standalone460/460 and16 native model cases pass. Sprite acceptance is retained. See docs/packets/evidence/PK45.06-gr2.md. Broad live model attack/appearance/non90 transforms and independent packet/deployed acceptance remain open.

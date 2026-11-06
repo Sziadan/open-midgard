@@ -1,0 +1,44 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00565950 <.text+0x164950>:
+  565950:	55                   	push   %ebp
+  565951:	8b ec                	mov    %esp,%ebp
+  565953:	6a ff                	push   $0xffffffff
+  565955:	68 28 6c 6c 00       	push   $0x6c6c28
+  56595a:	64 a1 00 00 00 00    	mov    %fs:0x0,%eax
+  565960:	50                   	push   %eax
+  565961:	64 89 25 00 00 00 00 	mov    %esp,%fs:0x0
+  565968:	51                   	push   %ecx
+  565969:	53                   	push   %ebx
+  56596a:	56                   	push   %esi
+  56596b:	8b d9                	mov    %ecx,%ebx
+  56596d:	57                   	push   %edi
+  56596e:	89 5d f0             	mov    %ebx,-0x10(%ebp)
+  565971:	e8 ca f2 fe ff       	call   0x554c40
+  565976:	8b 7d 08             	mov    0x8(%ebp),%edi
+  565979:	33 c0                	xor    %eax,%eax
+  56597b:	83 c9 ff             	or     $0xffffffff,%ecx
+  56597e:	c7 03 d0 70 6d 00    	movl   $0x6d70d0,(%ebx)
+  565984:	c6 83 3c 01 00 00 ff 	movb   $0xff,0x13c(%ebx)
+  56598b:	89 43 14             	mov    %eax,0x14(%ebx)
+  56598e:	89 43 18             	mov    %eax,0x18(%ebx)
+  565991:	89 45 fc             	mov    %eax,-0x4(%ebp)
+  565994:	f2 ae                	repnz scas %es:(%edi),%al
+  565996:	f7 d1                	not    %ecx
+  565998:	2b f9                	sub    %ecx,%edi
+  56599a:	8d 93 44 01 00 00    	lea    0x144(%ebx),%edx
+  5659a0:	8b c1                	mov    %ecx,%eax
+  5659a2:	8b f7                	mov    %edi,%esi
+  5659a4:	8b fa                	mov    %edx,%edi
+  5659a6:	c1 e9 02             	shr    $0x2,%ecx
+  5659a9:	f3 a5                	rep movsl %ds:(%esi),%es:(%edi)
+  5659ab:	8b c8                	mov    %eax,%ecx
+  5659ad:	83 e1 03             	and    $0x3,%ecx
+  5659b0:	f3 a4                	rep movsb %ds:(%esi),%es:(%edi)
+  5659b2:	8b cb                	mov    %ebx,%ecx
+  5659b4:	e8 f7 00 00 00       	call   0x565ab0
+  5659b9:	8b                   	.byte 0x8b

@@ -1,0 +1,591 @@
+{
+  "cases": [
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": [
+        255,
+        175,
+        347,
+        263
+      ],
+      "contrast_sum": 244593.0,
+      "pid": 62912,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 291.7449535385454,
+        "y": 212.4872589686174,
+        "oow": 0.0019888561785914916,
+        "z": 0.986689367329616
+      },
+      "expected_shade": 218,
+      "mesh_input": {
+        "rawx": -2.30766439,
+        "rawy": 10.8577957,
+        "rawz": 3.60855174,
+        "nx": -0.278739512,
+        "ny": -0.574277997,
+        "nz": 0.769142747,
+        "x": 291.744965,
+        "y": 212.487259,
+        "oow": 0.00198885612,
+        "z": 0.986689389
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 356,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": [
+        255,
+        175,
+        347,
+        263
+      ],
+      "contrast_sum": 243107.0,
+      "pid": 54040,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 291.7449535385454,
+        "y": 212.4872589686174,
+        "oow": 0.0019888561785914916,
+        "z": 0.986689367329616
+      },
+      "expected_shade": 218,
+      "mesh_input": {
+        "rawx": -2.30766439,
+        "rawy": 10.8577957,
+        "rawz": 3.60855174,
+        "nx": -0.278739512,
+        "ny": -0.574277997,
+        "nz": 0.769142747,
+        "x": 291.744965,
+        "y": 212.487259,
+        "oow": 0.00198885612,
+        "z": 0.986689389
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 357,
+      "alpha": 244,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": [
+        255,
+        175,
+        347,
+        263
+      ],
+      "contrast_sum": 244067.0,
+      "pid": 63408,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 291.7449535385454,
+        "y": 212.4872589686174,
+        "oow": 0.0019888561785914916,
+        "z": 0.986689367329616
+      },
+      "expected_shade": 218,
+      "mesh_input": {
+        "rawx": -2.30766439,
+        "rawy": 10.8577957,
+        "rawz": 3.60855174,
+        "nx": -0.278739512,
+        "ny": -0.574277997,
+        "nz": 0.769142747,
+        "x": 291.744965,
+        "y": 212.487259,
+        "oow": 0.00198885612,
+        "z": 0.986689389
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 500,
+      "alpha": 101,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": null,
+      "contrast_sum": 0.0,
+      "pid": 64484,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 291.7449535385454,
+        "y": 212.4872589686174,
+        "oow": 0.0019888561785914916,
+        "z": 0.986689367329616
+      },
+      "expected_shade": 218,
+      "mesh_input": {
+        "rawx": -2.30766439,
+        "rawy": 10.8577957,
+        "rawz": 3.60855174,
+        "nx": -0.278739512,
+        "ny": -0.574277997,
+        "nz": 0.769142747,
+        "x": 291.744965,
+        "y": 212.487259,
+        "oow": 0.00198885612,
+        "z": 0.986689389
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 600,
+      "alpha": 1,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": null,
+      "contrast_sum": 0.0,
+      "pid": 63848,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 291.7449535385454,
+        "y": 212.4872589686174,
+        "oow": 0.0019888561785914916,
+        "z": 0.986689367329616
+      },
+      "expected_shade": 218,
+      "mesh_input": {
+        "rawx": -2.30766439,
+        "rawy": 10.8577957,
+        "rawz": 3.60855174,
+        "nx": -0.278739512,
+        "ny": -0.574277997,
+        "nz": 0.769142747,
+        "x": 291.744965,
+        "y": 212.487259,
+        "oow": 0.00198885612,
+        "z": 0.986689389
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 601,
+      "alpha": 0,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": null,
+      "contrast_sum": 0.0,
+      "pid": 55900,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 291.7449535385454,
+        "y": 212.4872589686174,
+        "oow": 0.0019888561785914916,
+        "z": 0.986689367329616
+      },
+      "expected_shade": 218,
+      "mesh_input": {
+        "rawx": -2.30766439,
+        "rawy": 10.8577957,
+        "rawz": 3.60855174,
+        "nx": -0.278739512,
+        "ny": -0.574277997,
+        "nz": 0.769142747,
+        "x": 291.744965,
+        "y": 212.487259,
+        "oow": 0.00198885612,
+        "z": 0.986689389
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 602,
+      "alpha": 255,
+      "alive": 0,
+      "age_ms": 5000,
+      "clock": 0,
+      "rotation": 145,
+      "faces": 0,
+      "pixel_bbox": null,
+      "contrast_sum": 0.0,
+      "pid": 53940
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1285,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 978,
+      "pixel_bbox": [
+        301,
+        213,
+        403,
+        290
+      ],
+      "contrast_sum": 254184.0,
+      "pid": 10408,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 322.91721300834115,
+        "y": 221.66596466283428,
+        "oow": 0.002016059453081881,
+        "z": 0.9864155088615918
+      },
+      "expected_shade": 155,
+      "mesh_input": {
+        "rawx": 1.16956282,
+        "rawy": 0.228739738,
+        "rawz": 6.49085188,
+        "nx": -0.826506972,
+        "ny": 0.363496065,
+        "nz": 0.429833859,
+        "x": 322.917206,
+        "y": 221.66597,
+        "oow": 0.00201605936,
+        "z": 0.986415505
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1287,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 756,
+      "pixel_bbox": [
+        259,
+        182,
+        350,
+        261
+      ],
+      "contrast_sum": 198474.0,
+      "pid": 44640,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 324.79797487127803,
+        "y": 199.33554132020194,
+        "oow": 0.00195821720537824,
+        "z": 0.9869978133686755
+      },
+      "expected_shade": 214,
+      "mesh_input": {
+        "rawx": 10.2865953,
+        "rawy": 12.2497807,
+        "rawz": 0.846930504,
+        "nx": -0.675537586,
+        "ny": -0.553801298,
+        "nz": 0.48677811,
+        "x": 324.797974,
+        "y": 199.335541,
+        "oow": 0.00195821724,
+        "z": 0.986997843
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1324,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 192,
+      "pixel_bbox": [
+        301,
+        220,
+        331,
+        248
+      ],
+      "contrast_sum": 41289.0,
+      "pid": 28800,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 300.82430871723943,
+        "y": 228.62657910405434,
+        "oow": 0.0019953351640307608,
+        "z": 0.9866241426439857
+      },
+      "expected_shade": 165,
+      "mesh_input": {
+        "rawx": -2.70330787,
+        "rawy": 1.47658777,
+        "rawz": -5.71354961,
+        "nx": -0.857438505,
+        "ny": -0.141717449,
+        "nz": -0.494686991,
+        "x": 300.82431,
+        "y": 228.626587,
+        "oow": 0.0019953351,
+        "z": 0.986624122
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1288,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 138,
+      "pixel_bbox": [
+        299,
+        180,
+        348,
+        249
+      ],
+      "contrast_sum": 636208.0,
+      "pid": 29544,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 325.21154154449675,
+        "y": 245.70180279497114,
+        "oow": 0.002005295924688332,
+        "z": 0.9865238665299834
+      },
+      "expected_shade": 252,
+      "mesh_input": {
+        "rawx": 0.0219643712,
+        "rawy": -2.55778861,
+        "rawz": -0.215172291,
+        "nx": -9.96957823e-08,
+        "ny": -0.991853833,
+        "nz": -0.127380967,
+        "x": 325.211548,
+        "y": 245.701797,
+        "oow": 0.00200529583,
+        "z": 0.986523867
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 722,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 190,
+      "pixel_bbox": [
+        300,
+        132,
+        351,
+        254
+      ],
+      "contrast_sum": 722223.0,
+      "pid": 22964,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 320.01451595190105,
+        "y": 151.57273348619555,
+        "oow": 0.002101487438278884,
+        "z": 0.9855554955877965
+      },
+      "expected_shade": 155,
+      "mesh_input": {
+        "rawx": -0.0380395092,
+        "rawy": -0.0612076484,
+        "rawz": 34.0764542,
+        "nx": 1.24478902e-07,
+        "ny": 7.64838148e-08,
+        "nz": -1.0,
+        "x": 320.014526,
+        "y": 151.572739,
+        "oow": 0.00210148748,
+        "z": 0.98555547
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1830,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 5000,
+      "clock": 10,
+      "rotation": 145,
+      "faces": 978,
+      "pixel_bbox": [
+        301,
+        213,
+        403,
+        290
+      ],
+      "contrast_sum": 254251.0,
+      "pid": 65440,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 322.91721300834115,
+        "y": 221.66596466283428,
+        "oow": 0.002016059453081881,
+        "z": 0.9864155088615918
+      },
+      "expected_shade": 155,
+      "mesh_input": {
+        "rawx": 1.16956282,
+        "rawy": 0.228739738,
+        "rawz": 6.49085188,
+        "nx": -0.826506972,
+        "ny": 0.363496065,
+        "nz": 0.429833859,
+        "x": 322.917206,
+        "y": 221.66597,
+        "oow": 0.00201605936,
+        "z": 0.986415505
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 0,
+      "clock": 0,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": [
+        287,
+        164,
+        350,
+        256
+      ],
+      "contrast_sum": 318359.0,
+      "pid": 64920,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 316.13486649952586,
+        "y": 223.31324511629896,
+        "oow": 0.002044536726214267,
+        "z": 0.9861288249038833
+      },
+      "expected_shade": 220,
+      "mesh_input": {
+        "rawx": -3.41079521,
+        "rawy": -2.9877305,
+        "rawz": 10.9993515,
+        "nx": -0.733852029,
+        "ny": -0.642995894,
+        "nz": 0.219127789,
+        "x": 316.134857,
+        "y": 223.313248,
+        "oow": 0.00204453664,
+        "z": 0.986128807
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 250,
+      "clock": 0.5,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": [
+        285,
+        187,
+        351,
+        263
+      ],
+      "contrast_sum": 291157.0,
+      "pid": 67200,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 316.54614124073544,
+        "y": 223.8335878944122,
+        "oow": 0.0020401102453166766,
+        "z": 0.9861733867921141
+      },
+      "expected_shade": 202,
+      "mesh_input": {
+        "rawx": -2.94294524,
+        "rawy": -2.51632452,
+        "rawz": 10.1530447,
+        "nx": -0.786461651,
+        "ny": -0.436262518,
+        "nz": 0.434201866,
+        "x": 316.546143,
+        "y": 223.833588,
+        "oow": 0.0020401103,
+        "z": 0.986173391
+      }
+    },
+    {
+      "case_id": "gr2_corpse_native",
+      "job": 1286,
+      "count": 1,
+      "alpha": 255,
+      "alive": 1,
+      "age_ms": 60000,
+      "clock": 120,
+      "rotation": 145,
+      "faces": 945,
+      "pixel_bbox": [
+        255,
+        175,
+        347,
+        263
+      ],
+      "contrast_sum": 243317.0,
+      "pid": 57464,
+      "independent_PE_geometry": "PASS",
+      "expected_vertex": {
+        "x": 291.7449535385454,
+        "y": 212.4872589686174,
+        "oow": 0.0019888561785914916,
+        "z": 0.986689367329616
+      },
+      "expected_shade": 218,
+      "mesh_input": {
+        "rawx": -2.30766439,
+        "rawy": 10.8577957,
+        "rawz": 3.60855174,
+        "nx": -0.278739512,
+        "ny": -0.574277997,
+        "nz": 0.769142747,
+        "x": 291.744965,
+        "y": 212.487259,
+        "oow": 0.00198885612,
+        "z": 0.986689389
+      }
+    }
+  ],
+  "actual_gpu_readback": true,
+  "counter_oracle": "PE0x565C90 byte subtraction and old-counter comparison",
+  "coverage": "six model types, guardian alias, death handoff, private resources after cache teardown, counter/cutout/expiry, birth/progress/long gap and independent PE geometry"
+}

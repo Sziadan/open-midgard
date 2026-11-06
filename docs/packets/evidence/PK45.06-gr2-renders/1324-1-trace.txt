@@ -1,0 +1,2 @@
+[pid:28800 t:647062140] [Gr2CorpseVertex] rawx=-2.70330787 rawy=1.47658777 rawz=-5.71354961 nx=-0.857438505 ny=-0.141717449 nz=-0.494686991 x=300.82431 y=228.626587 oow=0.0019953351 z=0.986624122 color=ffa5a5a5
+[pid:28800 t:647062156] [HealPreview] captured GPU frame 'D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\review-2026-11-05\gr2-corpse-native\1324-1.bmp'

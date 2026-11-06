@@ -109,4 +109,6 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 
 [PK09.RECOVERY-DELTA](PK09.RECOVERY-DELTA.md) records selected signed013D state, feedback, ordering and independent maxima accepted by PK09.20.
 
-[PK45.SPRITE-CORPSE](PK45.SPRITE-CORPSE.md) records reviewed sprite corpse ownership, original clock and per-clip rendering. PK45.06 remains IN_PROGRESS for its distinct GR2 model branch; no discovery-row closure.
+[PK45.SPRITE-CORPSE](PK45.SPRITE-CORPSE.md) records reviewed sprite corpse ownership, original clock and per-clip rendering. PK45.06 now also accepts its distinct GR2 model branch below; no discovery-row closure.
+
+[PK45.GR2-CORPSE](PK45.GR2-CORPSE.md) records completed model death handoff, independent instance/resource ownership, byte-alpha counter,2x elapsed animation and original cutout geometry. Broad actor/model and independent/deployed certification remain open.

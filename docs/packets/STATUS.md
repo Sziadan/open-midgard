@@ -1,8 +1,8 @@
 # Packet implementation status
 
-**Latest reviewed checkpoint (2026-11-06):** [PK45.06 sprite corpses](evidence/PK45.06-sprite.md) now use independent world/resource ownership and original per-clip rendering/fade. Full root127/127 in174.27s; standalone460/460 in72.44s; six actual Vulkan captures pass. The earlier sole failing source check now passes, but does not certify the separate GR2 branch.
+**Latest checkpoint (2026-11-06):** [PK45.06 model corpses](evidence/PK45.06-gr2.md) complete the separate sprite/model death lifecycles. Root127/127 in174.52s; standalone460/460 in72.36s;16 model GPU cases plus the retained sprite evidence. Preserve immediate model handoff after queued hits, private model resources, independent clocks/counters and source cutout rendering.
 
-**Active step: PK45.06.** [Strong-agent continuation card](work-items/PK45.06.md). Sprite branch reviewed; GR2 model corpse remains unfinished in the same step. Checkpoint commit subject: `packet(PK45.06): restore independent sprite corpse lifecycle`. Full PK45/24/48/49 and PK09.04 remain open.
+**Active step: PK09.04.** Resume remaining item/status/detail/context work. Latest commit subject: `packet(PK45.06): restore independent GR2 corpse lifecycle`. Broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.
 
 - PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing now pass PK09.15.
 - PK09.13 restores inventory whole-record fallback, source dimensions/normalization, mini and original height, native/Qt resize and explicit managed close/recreation. Parent detail geometry now passes PK09.14; separate card and map/show lifetime now pass PK09.15/PK09.16.
