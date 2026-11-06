@@ -1231,6 +1231,13 @@ Item {
             visible: chatWindowChrome.chatUi.expanded !== false
             icon: "minimize"
         }
+        RoChromeButton {
+            readonly property var bounds: (chatWindowChrome.chatUi.sourceRects || {}).battleOption || ({})
+            objectName: "chatBattleOptionsButton"
+            x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
+            visible: chatWindowChrome.chatUi.expanded !== false
+            icon: "option"
+        }
         RoChatContent {
             x: 0; y: 0; width: parent.width; height: parent.height
             fontPixelSize: chatWindowChrome.chatFontSize
@@ -4261,6 +4268,7 @@ Item {
         delegate: Rectangle {
             required property var modelData
             objectName: "detachedChatHistory" + modelData.kind
+            parent: uiLayer
             x: modelData.x; y: modelData.y
             width: modelData.width; height: modelData.height
             visible: modelData.visible
@@ -4270,6 +4278,13 @@ Item {
             Text { x: 5; height: 16; text: modelData.kind === 0 ? "ST" : "BT"; color: "white"; font.pixelSize: 12 }
             Text { x: parent.width - 18; height: 16; text: "x"; color: "white"; font.pixelSize: 12 }
             Text { x: parent.width - 65; height: 16; visible: modelData.kind === 1; text: "Attach"; color: "white"; font.pixelSize: 12 }
+            Text {
+                readonly property var bounds: parent.modelData.battleOption || ({})
+                objectName: "detachedBattleOptionsButton" + parent.modelData.kind
+                x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
+                visible: parent.modelData.kind === 1
+                text: "B"; color: "white"; font.pixelSize: 12
+            }
             Item {
                 id: detachedViewport
                 readonly property var history: parent.modelData
@@ -4310,6 +4325,7 @@ Item {
     Rectangle {
         readonly property var mini: (uiState.chatWindowUi || {}).mini || ({})
         objectName: "detachedChatMini"
+        parent: uiLayer
         x: mini.x || 0; y: mini.y || 0; width: 64; height: 32
         visible: mini.visible || false; z: mini.layer || 0
         color: "#373c41"
@@ -4317,6 +4333,45 @@ Item {
         Rectangle { x: 32; width: 32; height: 32; color: parent.mini.bt ? "#5a789b" : "#373c41" }
         Text { x: 4; height: 32; verticalAlignment: Text.AlignVCenter; text: "ST"; color: "white"; font.pixelSize: 12 }
         Text { x: 36; height: 32; verticalAlignment: Text.AlignVCenter; text: "BT"; color: "white"; font.pixelSize: 12 }
+    }
+
+    Rectangle {
+        id: battleOptionsWindow
+        parent: uiLayer
+        readonly property var optionData: (uiState.chatWindowUi || {}).battleOptions || ({})
+        objectName: "chatBattleOptionsWindow"
+        x: optionData.x || 0; y: optionData.y || 0; width: optionData.width || 0; height: optionData.height || 0
+        visible: optionData.visible || false; z: optionData.layer || 0
+        color: "#dcdcdc"; clip: true
+        Rectangle { width: parent.width; height: 17; color: "#505a64" }
+        Text { x: 17; y: 2; text: battleOptionsWindow.optionData.title || ""; color: "white"; font.family: "Noto Sans"; font.pixelSize: 12 }
+        Text { x: 3; y: 2; text: "-"; color: "white"; font.pixelSize: 12 }
+        Text { x: parent.width-14; y: 2; text: "x"; color: "white"; font.pixelSize: 12 }
+        Repeater {
+            model: battleOptionsWindow.optionData.rows || []
+            delegate: Item {
+                required property var modelData
+                required property int index
+                x: 25; y: 19+index*20; width: battleOptionsWindow.width-40; height: 20
+                objectName: "battleOptionRow"+modelData.index
+                Rectangle { anchors.fill: parent; color: "white"; visible: parent.modelData.selected }
+                Rectangle {
+                    x: 2; y: 3; width: 11; height: 11; color: "white"
+                    Rectangle { x: 2; y: 2; width: 7; height: 7; color: "#23642d"; visible: parent.parent.modelData.enabled }
+                }
+                Text { x: 25; y: 3; text: parent.modelData.text; color: "black"; font.family: "Noto Sans"; font.pixelSize: 12 }
+            }
+        }
+        Rectangle {
+            readonly property var bounds: battleOptionsWindow.optionData.scrollTrack || ({})
+            x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
+            color: "#404040"
+        }
+        Rectangle {
+            readonly property var bounds: battleOptionsWindow.optionData.scrollThumb || ({})
+            x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
+            color: "#b8b8b8"
+        }
     }
 
 }

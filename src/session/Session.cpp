@@ -1,5 +1,6 @@
 #include "world/Gr2Monster.h"
 #include "Session.h"
+#include "core/SettingsIni.h"
 #include "../core/File.h"
 #include "../core/ClientInfoLocale.h"
 #include "../core/Xml.h"
@@ -3434,4 +3435,21 @@ float CSession::GetPCAttackMotion(int job, int sex, int weaponItemId, int isSeco
         return 5.75f;
     }
     return 6.0f;
+}
+
+void CSession::LoadBattleMessageOptions()
+{
+    for (std::size_t i=0;i<m_battleMsgOnOffSet.size();++i) {
+        const auto key=std::to_string(i);
+        m_battleMsgOnOffSet[i]=LoadSettingsIniInt("ChatOption",key.c_str(),1)!=0;
+    }
+}
+bool CSession::SaveBattleMessageOptions() const
+{
+    bool saved=true;
+    for (std::size_t i=0;i<m_battleMsgOnOffSet.size();++i) {
+        const auto key=std::to_string(i);
+        saved=SaveSettingsIniInt("ChatOption",key.c_str(),m_battleMsgOnOffSet[i]?1:0) && saved;
+    }
+    return saved;
 }

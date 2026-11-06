@@ -1165,6 +1165,7 @@ public:
             if (g_windowMgr.m_chatWnd) g_windowMgr.m_chatWnd->CancelPointerCapture();
             if (g_windowMgr.m_subChatWndST) g_windowMgr.m_subChatWndST->CancelPointerCapture();
             if (g_windowMgr.m_subChatWndBT) g_windowMgr.m_subChatWndBT->CancelPointerCapture();
+        if (g_windowMgr.m_battleMsgOptionWnd) g_windowMgr.m_battleMsgOptionWnd->CancelPointerCapture();
             if (g_windowMgr.m_captureWindow == g_windowMgr.m_subChatMiniWnd) g_windowMgr.m_captureWindow = nullptr;
             break;
         case WM_MOUSEMOVE:
@@ -1223,7 +1224,7 @@ public:
         if (auxiliaryEnabled && (msg == WM_LBUTTONDOWN || msg == WM_MOUSEMOVE || msg == WM_LBUTTONUP)) {
             const auto isAuxiliary = [](const UIWindow* window) {
                 return window && (window == g_windowMgr.m_subChatWndST || window == g_windowMgr.m_subChatWndBT
-                    || window == g_windowMgr.m_subChatMiniWnd);
+                    || window == g_windowMgr.m_subChatMiniWnd || window == g_windowMgr.m_battleMsgOptionWnd);
             };
             const int x = GetUiLogicalX(lParam), y = GetUiLogicalY(lParam);
             const bool captured = isAuxiliary(g_windowMgr.m_captureWindow);
@@ -1231,7 +1232,8 @@ public:
                 && g_windowMgr.IsChatAuxiliaryAtPoint(x, y))) {
                 if (msg == WM_LBUTTONDOWN) {
                     g_windowMgr.OnLBtnDown(x, y);
-                    SetCapture(reinterpret_cast<HWND>(m_mainWindow));
+                    // A close button may delete its owner during mouse-down.
+                    if (g_windowMgr.m_captureWindow) SetCapture(reinterpret_cast<HWND>(m_mainWindow));
                 } else if (msg == WM_LBUTTONUP) {
                     g_windowMgr.OnLBtnUp(x, y);
                     if (GetCapture() == reinterpret_cast<HWND>(m_mainWindow)) ReleaseCapture();

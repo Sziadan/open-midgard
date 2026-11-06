@@ -187,6 +187,8 @@ public:
     std::list<u32> m_exAidList;
     int m_isNoTalkMsg = 0, m_isNoTalkMsg2 = 0;
     // Ref Session initialization: the thirteen source battle-message filters start enabled.
+    void LoadBattleMessageOptions();
+    bool SaveBattleMessageOptions() const;
     std::array<bool, 13> m_battleMsgOnOffSet = {
         true, true, true, true, true, true, true, true, true, true, true, true, true
     };

@@ -39,7 +39,7 @@ struct ChatFilterOptionDisplay {
 struct ChatWindowLayoutDisplay {
     RECT header{}, history{}, whisperInput{}, messageInput{}, gearButton{}, stickButton{};
     std::array<RECT, 4> tabs{};
-    RECT scrollTrack{}, scrollThumb{};
+    RECT scrollTrack{}, scrollThumb{}, battleOptionButton{};
 };
 
 class UINewChatWnd : public UIWindow {

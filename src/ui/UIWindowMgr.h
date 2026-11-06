@@ -106,6 +106,7 @@ public:
         WID_SUBCHATST = 137,
         WID_SUBCHATBT = 138,
         WID_SUBCHATMINI = 140,
+        WID_BATTLEMSGOPTION = 139,
         WID_BASICINFOWND      = 0,
         WID_LOGINWND          = 1,
         WID_SELECTSERVERWND   = 3,
@@ -253,6 +254,7 @@ public:
     UISubChatHisWnd* m_subChatWndST = nullptr;
     UISubChatHisWnd* m_subChatWndBT = nullptr;
     UISubChatMiniWnd* m_subChatMiniWnd = nullptr;
+    UIBattleMsgOptionWnd* m_battleMsgOptionWnd = nullptr;
     float m_miniMapZoomFactor;
     u32 m_miniMapArgb;
     int m_isDrawCompass;

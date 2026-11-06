@@ -1073,6 +1073,12 @@ void UINewChatWnd::DrawNativeToHdc(HDC hdc)
     RestoreDC(hdc, historyClipDc);
     SetBkMode(hdc, TRANSPARENT);
     const auto display = GetLayoutDisplay();
+    if (m_expansionState!=0) {
+        RECT button=display.battleOptionButton;
+        button.left+=m_x;button.right+=m_x;button.top+=m_y;button.bottom+=m_y;
+        SetTextColor(hdc,RGB(255,255,255));
+        DrawTextA(hdc,"B",1,&button,DT_LEFT|DT_TOP|DT_SINGLELINE);
+    }
     if (scrollState.visible) {
         const auto globalRect = [&](RECT rect) { rect.left += m_x; rect.right += m_x; rect.top += m_y; rect.bottom += m_y; return rect; };
         RECT track = globalRect(display.scrollTrack), thumb = globalRect(display.scrollThumb);
@@ -1239,7 +1245,14 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
             return true;
         }
     }
-    const int resizeEdges = GetChatResizeEdgesForPoint(layout, x, y);
+    auto battleButton=GetLayoutDisplay().battleOptionButton;
+    battleButton.left+=m_x;battleButton.right+=m_x;battleButton.top+=m_y;battleButton.bottom+=m_y;
+    // Source child windows win overlapping frame borders. The port's inline
+    // history/edit/button controls must keep the same hit-test precedence.
+    const bool childHit=PointInRectXY(layout.history,x,y) || PointInRectXY(layout.whisperInput,x,y)
+        || PointInRectXY(layout.messageInput,x,y) || PointInRectXY(layout.gearButton,x,y)
+        || PointInRectXY(layout.stickButton,x,y) || PointInRectXY(battleButton,x,y);
+    const int resizeEdges = childHit ? ChatResizeEdge_None : GetChatResizeEdgesForPoint(layout,x,y);
     if (resizeEdges != ChatResizeEdge_None) {
         m_dragArmed = 1;
         m_isDragging = 0;
@@ -1264,6 +1277,7 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
         return true;
     }
 
+    if (PointInRectXY(battleButton,x,y)) {SendMsg(this,6,127,0,0);return true;}
     if (PointInRectXY(layout.gearButton, x, y)) {
         SetConfigVisible(m_configVisible == 0);
         return true;
@@ -1935,6 +1949,7 @@ msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, m
             static_cast<ro::chat::NoticeType>(extra));
         return 0;
     case 6:
+        if (value==127) {g_windowMgr.ToggleWindow(UIWindowMgr::WID_BATTLEMSGOPTION);return 0;}
         if (value == 281 && detail) {
             const std::string target(reinterpret_cast<const char*>(detail));
             if (std::find(m_whisperTargets.begin(), m_whisperTargets.end(), target) == m_whisperTargets.end()) m_whisperTargets.push_back(target);
@@ -1965,6 +1980,7 @@ ChatWindowLayoutDisplay UINewChatWnd::GetLayoutDisplay() const
 {
     const auto rects = BuildChatLayoutRects(0, 0, m_w, m_h, m_sourceTitleWidth);
     ChatWindowLayoutDisplay display{rects.header, rects.history, rects.whisperInput, rects.messageInput, rects.gearButton, rects.stickButton, rects.tabs};
+    if (m_expansionState!=0) display.battleOptionButton={2*m_sourceTitleWidth+19,4,2*m_sourceTitleWidth+31,16};
     const auto state = GetScrollBarState();
     if (state.visible) {
         display.scrollTrack = {rects.history.right - 13, rects.history.top, rects.history.right - 1, rects.history.bottom};

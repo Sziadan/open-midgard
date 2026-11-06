@@ -5,6 +5,7 @@ add_library(ro_core STATIC
     MainLoopWatchdog.h MainLoopWatchdog.cpp
     Hash.h      Hash.cpp
     SettingsIni.h SettingsIni.cpp
+    UiMessageStrings.h UiMessageStrings.cpp
     GPak.h      GPak.cpp
     File.h      File.cpp
     Globals.h   Globals.cpp

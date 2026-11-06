@@ -1,0 +1,3 @@
+{"case_id":"chat_battle_options_routes","filters":13,"siege_message_id":1331,"last_first":6,"actual_008d":true,"close_only_persistence":true,"outcome":"PASS"}
+{"case_id":"chat_options_settings_write","actual_startup":true,"outcome":"PASS"}
+{"case_id":"chat_options_settings_read","actual_startup":true,"outcome":"PASS"}

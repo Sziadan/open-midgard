@@ -13,6 +13,7 @@
 #include "WinMain.h"
 #include "Types.h"
 #include "core/SettingsIni.h"
+#include "session/Session.h"
 #include "core/Timer.h"
 #include "core/File.h"
 #include "gamemode/CursorRenderer.h"
@@ -500,6 +501,7 @@ bool RelaunchCurrentApplication()
 int ReadRegistry()
 {
     EnsureOpenMidgardIniDefaults();
+    g_session.LoadBattleMessageOptions();
     ApplyConfiguredWindowSize();
     (void)GetConfiguredRenderBackend();
     return 1;
@@ -515,6 +517,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (g_windowMgr.m_chatWnd) g_windowMgr.m_chatWnd->CancelPointerCapture();
         if (g_windowMgr.m_subChatWndST) g_windowMgr.m_subChatWndST->CancelPointerCapture();
         if (g_windowMgr.m_subChatWndBT) g_windowMgr.m_subChatWndBT->CancelPointerCapture();
+        if (g_windowMgr.m_battleMsgOptionWnd) g_windowMgr.m_battleMsgOptionWnd->CancelPointerCapture();
         if (g_windowMgr.m_captureWindow == g_windowMgr.m_subChatMiniWnd) g_windowMgr.m_captureWindow = nullptr;
         if (msg == WM_CANCELMODE && GetCapture() == hwnd) ReleaseCapture();
     }

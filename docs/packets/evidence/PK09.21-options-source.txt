@@ -1,0 +1,860 @@
+=== Ref/UIFrameWnd3.cpp:1570-1648 ===
+1570: // ================================================
+1571: // Original Signature: public: __thiscall UIBattleMsgOptionWnd::UIBattleMsgOptionWnd(void)
+1572: // Decompiled from address: 0x4a0630
+1573: // ================================================
+1574: UIBattleMsgOptionWnd *__thiscall UIBattleMsgOptionWnd::UIBattleMsgOptionWnd(UIBattleMsgOptionWnd *this)
+1575: {
+1576:   char *v2; // eax
+1577:   char **Last; // edx
+1578:   char *v4; // eax
+1579:   char **v5; // ecx
+1580:   char *v6; // eax
+1581:   char **v7; // edx
+1582:   char *v8; // eax
+1583:   char **v9; // ecx
+1584:   char *v10; // eax
+1585:   char **v11; // edx
+1586:   char *v12; // eax
+1587:   char **v13; // ecx
+1588:   char *v14; // eax
+1589:   char **v15; // edx
+1590:   char *v16; // eax
+1591:   char **v17; // ecx
+1592:   char *_X; // [esp+Ch] [ebp-14h] BYREF
+1593:   std::allocator<char *> v20; // [esp+13h] [ebp-Dh]
+1594:   int v21; // [esp+1Ch] [ebp-4h]
+1595:
+1596:   UIFrameWnd::UIFrameWnd(this);
+1597:   v21 = 0;
+1598:   this->m_battleMsgOptionTable.allocator = v20;
+1599:   this->m_battleMsgOptionTable._First = 0;
+1600:   this->m_battleMsgOptionTable._Last = 0;
+1601:   this->m_battleMsgOptionTable._End = 0;
+1602:   LOBYTE(v21) = 1;
+1603:   this->__vftable = (UIBattleMsgOptionWnd_vtbl *)&UIBattleMsgOptionWnd::`vftable';
+1604:   this->m_curItem = -1;
+1605:   _X = (char *)MsgStr(MSI_VIEW_CHAT_MSG);
+1606:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, this->m_battleMsgOptionTable._Last, 1u, &_X);
+1607:   v2 = (char *)MsgStr(MSI_VIEW_WHISPER_MSG);
+1608:   Last = this->m_battleMsgOptionTable._Last;
+1609:   _X = v2;
+1610:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, Last, 1u, &_X);
+1611:   v4 = (char *)MsgStr(MSI_VIEW_PARTY_MSG);
+1612:   v5 = this->m_battleMsgOptionTable._Last;
+1613:   _X = v4;
+1614:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, v5, 1u, &_X);
+1615:   _X = (char *)MsgStr(MSI_VIEW_GUILD_MSG);
+1616:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, this->m_battleMsgOptionTable._Last, 1u, &_X);
+1617:   v6 = (char *)MsgStr(MSI_VIEW_GET_ITEM_MSG);
+1618:   v7 = this->m_battleMsgOptionTable._Last;
+1619:   _X = v6;
+1620:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, v7, 1u, &_X);
+1621:   v8 = (char *)MsgStr(MSI_VIEW_EQUIP_MSG);
+1622:   v9 = this->m_battleMsgOptionTable._Last;
+1623:   _X = v8;
+1624:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, v9, 1u, &_X);
+1625:   _X = (char *)MsgStr(MSI_VIEW_CHANGE_STATUS_MSG);
+1626:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, this->m_battleMsgOptionTable._Last, 1u, &_X);
+1627:   v10 = (char *)MsgStr(MSI_VIEW_GET_ITEM_PARTY_MSG);
+1628:   v11 = this->m_battleMsgOptionTable._Last;
+1629:   _X = v10;
+1630:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, v11, 1u, &_X);
+1631:   v12 = (char *)MsgStr(MSI_VIEW_CHANGE_STATUS_PARTY_MSG);
+1632:   v13 = this->m_battleMsgOptionTable._Last;
+1633:   _X = v12;
+1634:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, v13, 1u, &_X);
+1635:   _X = (char *)MsgStr(MSI_VIEW_FAIL_SKILL_MSG);
+1636:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, this->m_battleMsgOptionTable._Last, 1u, &_X);
+1637:   v14 = (char *)MsgStr(MSI_VIEW_PARTY_SETUP_MSG);
+1638:   v15 = this->m_battleMsgOptionTable._Last;
+1639:   _X = v14;
+1640:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, v15, 1u, &_X);
+1641:   v16 = (char *)MsgStr(MSI_VIEW_DAMAGED_EQUIP_MSG);
+1642:   v17 = this->m_battleMsgOptionTable._Last;
+1643:   _X = v16;
+1644:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, v17, 1u, &_X);
+1645:   _X = (char *)MsgStr(MSI_VIEW_SIEGE_INFO_MSG);
+1646:   std::vector<char *>::insert(&this->m_battleMsgOptionTable, this->m_battleMsgOptionTable._Last, 1u, &_X);
+1647:   return this;
+1648: }
+=== Ref/UIFrameWnd3.cpp:2940-3007 ===
+2940: // ================================================
+2941: // Original Signature: public: virtual int __thiscall UIBattleMsgOptionWnd::SendMsg(class UIWindow *,int,int,int,int,int)
+2942: // Decompiled from address: 0x4a11f0
+2943: // ================================================
+2944: int __thiscall UIBattleMsgOptionWnd::SendMsg(
+2945:         UIBattleMsgOptionWnd *this,
+2946:         UIWindow *sender,
+2947:         int message,
+2948:         HKEY val1,
+2949:         int val2,
+2950:         int val3,
+2951:         int val4)
+2952: {
+2953:   int i; // esi
+2954:   int result; // eax
+2955:   int m_viewOffset; // edi
+2956:   CHAR SubKey[512]; // [esp+8h] [ebp-20Ch] BYREF
+2957:   char Buffer[12]; // [esp+208h] [ebp-Ch] BYREF
+2958:
+2959:   switch ( message )
+2960:   {
+2961:     case 6:
+2962:       if ( val1 == (HKEY)135 )
+2963:       {
+2964:         message = 0;
+2965:         strcpy(SubKey, g_regPath);
+2966:         strcat(SubKey, aChatoption);
+2967:         RegCreateKeyExA(HKEY_LOCAL_MACHINE, SubKey, 0, 0, 0, 0xF003Fu, 0, &val1, (LPDWORD)&message);
+2968:         for ( i = 0; i < 13; ++i )
+2969:         {
+2970:           itoa(i, Buffer, 10);
+2971:           RegSetValueExA(val1, Buffer, 0, 4u, &g_session.m_battleMsgOnOffSet[i], 4u);
+2972:         }
+2973:         RegCloseKey(val1);
+2974:         UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x8B);
+2975:       }
+2976:       result = 0;
+2977:       break;
+2978:     case 7:
+2979:     case 9:
+2980:     case 10:
+2981:       m_viewOffset = this->m_viewOffset;
+2982:       if ( message == 9 )
+2983:       {
+2984:         this->m_viewOffset = m_viewOffset - this->m_itemVertNum + 1;
+2985:       }
+2986:       else if ( message == 10 )
+2987:       {
+2988:         this->m_viewOffset = this->m_itemVertNum + m_viewOffset - 1;
+2989:       }
+2990:       else
+2991:       {
+2992:         this->m_viewOffset = (int)val1 + m_viewOffset;
+2993:       }
+2994:       if ( m_viewOffset != this->m_viewOffset )
+2995:       {
+2996:         this->UIBattleMsgOptionWnd::RecalcScrbarPos(this);
+2997:         this->UIWindow::Invalidate(this);
+2998:       }
+2999:       result = this->m_viewOffset - m_viewOffset;
+3000:       break;
+3001:     default:
+3002:       result = UIFrameWnd::SendMsg(this, sender, message, (int)val1, val2, val3, val4);
+3003:       break;
+3004:   }
+3005:   return result;
+3006: }
+3007:
+=== Ref/UIFrameWnd3.cpp:3506-3515 ===
+3506:           goto LABEL_167;
+3507:         case 127:
+3508:           if ( UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x8B) )
+3509:             return 0;
+3510:           UIWindowMgr::MakeWindow(&g_windowMgr, 139);
+3511:           return 0;
+3512:         case 146:
+3513:           this->UIWindow::SendMsg(this, 0, 2, 0, 0, 0, 0);
+3514:           return 0;
+3515:         case 159:
+=== Ref/UIFrameWnd3.cpp:4517-4543 ===
+4517:     case 6:
+4518:       switch ( (unsigned int)val1 )
+4519:       {
+4520:         case 0x7Fu:
+4521:           if ( UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x8B) )
+4522:             goto LABEL_54;
+4523:           UIWindowMgr::MakeWindow(&g_windowMgr, 139);
+4524:           result = 0;
+4525:           break;
+4526:         case 0x88u:
+4527:           this->UIWindow::SetShow(this, 0);
+4528:           if ( g_windowMgr.m_subChatMiniWnd )
+4529:             g_windowMgr.m_subChatMiniWnd->UIWindow::SendMsg(
+4530:               g_windowMgr.m_subChatMiniWnd,
+4531:               this,
+4532:               6,
+4533:               136,
+4534:               this->m_id,
+4535:               0,
+4536:               0);
+4537:           goto LABEL_54;
+4538:         case 0x119u:
+4539:           UIWindowMgr::AddWhisperCharName2(&g_windowMgr, (const char *)val2);
+4540:           result = 0;
+4541:           break;
+4542:         case 0x123u:
+4543:           if ( !g_windowMgr.m_chatWnd )
+=== Ref/UIFrameWnd3.cpp:4913-4935 ===
+4913:   Block = v4;
+4914:   v34 = 0;
+4915:   if ( v4 )
+4916:     v5 = UIScrollBar::UIScrollBar(v4);
+4917:   else
+4918:     v5 = 0;
+4919:   v20 = this->m_h - 38;
+4920:   v19 = this->m_w - 15;
+4921:   v34 = -1;
+4922:   this->m_scrollBar = v5;
+4923:   UIScrollBar::Create(v5, v19, 14, 1, v20);
+4924:   UIWindow::AddChild(this, this->m_scrollBar);
+4925:   posX[1] = this->m_w - 14;
+4926:   posX[0] = 3;
+4927:   ids[0] = 134;
+4928:   ids[1] = 135;
+4929:   buttonName[0] = aBase;
+4930:   buttonName[1] = aClose;
+4931:   tooltip[0] = &Buf;
+4932:   tooltip[1] = aEsc;
+4933:   preBmpName.allocator = (std::allocator<char>)HIBYTE(cy);
+4934:   std::string::_Tidy(&preBmpName, 0);
+4935:   std::string::assign(&preBmpName, &byte_6F2D10, strlen(&byte_6F2D10));
+=== Ref/UIFrameWnd3.cpp:4980-4990 ===
+4980:     std::string::_Tidy(&v21, 1u);
+4981:     UIWindow::Create(v8, v8->m_bitmapWidth, v8->m_bitmapHeight);
+4982:     v8->UIWindow::Move(v8, posX[i], 3);
+4983:     v16 = tooltip[i];
+4984:     v8->m_id = ids[i];
+4985:     UIButton::SetToolTip(v8, v16);
+4986:     UIWindow::AddChild(v33, v8);
+4987:   }
+4988:   v17 = v33;
+4989:   v33[1].m_h = (cy - 38) / 20;
+4990:   v17->__vftable[1].UIWindow::~UIWindow(v17);
+=== Ref/UIFrameWnd3.cpp:5150-5198 ===
+5150:   v29 = MsgStr(MSI_BATTLE_CHAT_WND_OPTION);
+5151:   UIWindow::TextOutWithShadow(this, 17, 2, v29, 0, 0, 0xFFFFFFu, 0, 12);
+5152:   First = this->m_battleMsgOptionTable._First;
+5153:   Last = this->m_battleMsgOptionTable._Last;
+5154:   v32 = 0;
+5155:   itemCount = 0;
+5156:   if ( First != Last )
+5157:   {
+5158:     v50 = 1;
+5159:     v33 = 22;
+5160:     do
+5161:     {
+5162:       if ( v32 >= this->m_viewOffset )
+5163:       {
+5164:         if ( this->m_curItem == v32 )
+5165:         {
+5166:           CSkinMgr::GetColorChipColor(&g_skinMgr, 6, 2, &r, &g, &b);
+5167:           HIBYTE(v34) = b;
+5168:           LOBYTE(v34) = g;
+5169:           UIWindow::DrawBox(this, 25, v33 - 3, this->m_w - 40, 20, (unsigned __int8)r | (v34 << 8));
+5170:           UIWindow::DrawBox(this, 26, v33 - 2, this->m_w - 42, 18, 0xFFFFFFu);
+5171:         }
+5172:         UIWindow::TextOutA(this, 50, v33, *First, 0, 0, 12, 0);
+5173:         if ( g_session.m_battleMsgOnOffSet[itemCount] )
+5174:           v35 = UIBmp(byte_6F47EC);
+5175:         else
+5176:           v35 = UIBmp(&byte_6F47BC);
+5177:         v46 = v35;
+5178:         v36 = g_resMgr();
+5179:         v37 = (CBitmapRes *)CResMgr::Get(v36, v46, 0);
+5180:         UIWindow::DrawBitmap(this, 27, v33, v37, 1);
+5181:         if ( v50 == this->m_itemVertNum )
+5182:           return;
+5183:         ++First;
+5184:         v33 += 20;
+5185:         v32 = itemCount + 1;
+5186:         ++v50;
+5187:         ++itemCount;
+5188:       }
+5189:       else
+5190:       {
+5191:         ++First;
+5192:         itemCount = ++v32;
+5193:       }
+5194:     }
+5195:     while ( First != this->m_battleMsgOptionTable._Last );
+5196:   }
+5197: }
+5198:
+=== Ref/UIFrameWnd3.cpp:5213-5268 ===
+5213: // Decompiled from address: 0x4a1020
+5214: // ================================================
+5215: void __thiscall UIBattleMsgOptionWnd::OnLBtnDown(UIBattleMsgOptionWnd *this, int x, int y)
+5216: {
+5217:   int v5; // edi
+5218:   unsigned int v6; // edx
+5219:   int v7; // ecx
+5220:   unsigned int v8; // edx
+5221:   char **i; // eax
+5222:   int m_curItem; // eax
+5223:   int oldCurItem; // [esp+10h] [ebp+Ch]
+5224:
+5225:   if ( y >= 17 )
+5226:   {
+5227:     oldCurItem = this->m_curItem;
+5228:     if ( x >= 0 && y < 20 * this->m_itemVertNum + 17 )
+5229:     {
+5230:       v5 = 0;
+5231:       v6 = (int)((unsigned __int64)(1717986919LL * (y - 17)) >> 32) >> 3;
+5232:       v7 = 0;
+5233:       v8 = (v6 >> 31) + v6;
+5234:       for ( i = this->m_battleMsgOptionTable._First; i != this->m_battleMsgOptionTable._Last; ++v7 )
+5235:       {
+5236:         if ( v7 >= this->m_viewOffset )
+5237:         {
+5238:           if ( v5 == x / this->m_w + v8 )
+5239:             goto LABEL_12;
+5240:           ++i;
+5241:           ++v5;
+5242:         }
+5243:         else
+5244:         {
+5245:           ++i;
+5246:         }
+5247:       }
+5248:     }
+5249:     v7 = -1;
+5250: LABEL_12:
+5251:     this->m_curItem = v7;
+5252:     if ( oldCurItem != v7 )
+5253:       this->UIWindow::Invalidate(this);
+5254:     m_curItem = this->m_curItem;
+5255:     if ( m_curItem != -1 )
+5256:     {
+5257:       g_session.m_battleMsgOnOffSet[m_curItem] = g_session.m_battleMsgOnOffSet[m_curItem] == 0;
+5258:       this->UIWindow::Invalidate(this);
+5259:     }
+5260:   }
+5261:   else
+5262:   {
+5263:     UIFrameWnd::OnLBtnDown(this, x, y);
+5264:   }
+5265: }
+5266:
+5267:
+5268: // ================================================
+=== Ref/UIFrameWnd3.cpp:5310-5397 ===
+5310: // ================================================
+5311: void __thiscall UIBattleMsgOptionWnd::OnWheel(UIBattleMsgOptionWnd *this, int wheel)
+5312: {
+5313:   int v2; // eax
+5314:
+5315:   if ( this->m_vertScrEnabled )
+5316:   {
+5317:     v2 = this->m_itemVertNum - 1;
+5318:     if ( v2 >= 3 )
+5319:       v2 = 3;
+5320:     if ( wheel >= 0 )
+5321:       v2 = -v2;
+5322:     ((void (__stdcall *)(UIScrollBar *, int, int, _DWORD, _DWORD, _DWORD))this->UIWindow::SendMsg)(
+5323:       this->m_scrollBar,
+5324:       7,
+5325:       v2,
+5326:       0,
+5327:       0,
+5328:       0);
+5329:   }
+5330: }
+5331:
+5332:
+5333: // ================================================
+5334: // Original Signature: public: virtual void __thiscall UIBattleMsgOptionWnd::RecalcScrbarPos(void)
+5335: // Decompiled from address: 0x4a1390
+5336: // ================================================
+5337: void __thiscall UIBattleMsgOptionWnd::RecalcScrbarPos(UIBattleMsgOptionWnd *this)
+5338: {
+5339:   char **First; // eax
+5340:   int m_itemVertNum; // ecx
+5341:   int v4; // edx
+5342:   char **v5; // edi
+5343:   int v6; // eax
+5344:   int v7; // edi
+5345:   int v8; // eax
+5346:   int v9; // edi
+5347:   UIScrollBar *m_scrollBar; // ecx
+5348:   int v11; // [esp-10h] [ebp-14h]
+5349:
+5350:   if ( !this->m_scrollBar )
+5351:     return;
+5352:   First = this->m_battleMsgOptionTable._First;
+5353:   m_itemVertNum = this->m_itemVertNum;
+5354:   if ( First )
+5355:     v4 = this->m_battleMsgOptionTable._Last - First;
+5356:   else
+5357:     v4 = 0;
+5358:   v5 = this->m_battleMsgOptionTable._First;
+5359:   if ( v5 )
+5360:     v6 = this->m_battleMsgOptionTable._Last - v5;
+5361:   else
+5362:     v6 = 0;
+5363:   v7 = v4 + (v6 != 0);
+5364:   v8 = v7 - m_itemVertNum;
+5365:   if ( v7 - m_itemVertNum < 0 )
+5366:   {
+5367:     v8 = 0;
+5368: LABEL_10:
+5369:     this->m_vertScrEnabled = 0;
+5370:     goto LABEL_11;
+5371:   }
+5372:   if ( !v8 )
+5373:     goto LABEL_10;
+5374:   this->m_vertScrEnabled = 1;
+5375: LABEL_11:
+5376:   if ( this->m_vertScrEnabled )
+5377:   {
+5378:     UIScrollBar::SetRange(this->m_scrollBar, v8, m_itemVertNum, v7);
+5379:     if ( this->m_viewOffset < 0 )
+5380:       this->m_viewOffset = 0;
+5381:     v9 = v7 - this->m_itemVertNum;
+5382:     if ( this->m_viewOffset > v9 )
+5383:       this->m_viewOffset = v9;
+5384:     UIScrollBar::SetPos(this->m_scrollBar, this->m_viewOffset);
+5385:     this->m_scrollBar->UIWindow::Invalidate(this->m_scrollBar);
+5386:   }
+5387:   else
+5388:   {
+5389:     v11 = m_itemVertNum;
+5390:     m_scrollBar = this->m_scrollBar;
+5391:     this->m_viewOffset = 0;
+5392:     UIScrollBar::SetRange(m_scrollBar, 0, v11, v7);
+5393:     this->m_scrollBar->UIWindow::Invalidate(this->m_scrollBar);
+5394:   }
+5395: }
+5396:
+5397:
+=== Ref/UIFrameWnd3.cpp:6153-6159 ===
+6153:   LOBYTE(v88) = 5;
+6154:   std::string::_Tidy(&result, 1u);
+6155:   UIWindow::Create(this->m_btnOption, this->m_btnOption->m_bitmapWidth, this->m_btnOption->m_bitmapHeight);
+6156:   this->m_btnOption->UIWindow::Move(this->m_btnOption, 2 * this->m_titleWidth + 19, 5);
+6157:   this->m_btnOption->m_id = 127;
+6158:   UIWindow::AddChild(this, this->m_btnOption);
+6159:   v88 = -1;
+=== Ref/UIFrameWnd3.cpp:9173-9179 ===
+9173:   LOBYTE(v46) = 5;
+9174:   std::string::_Tidy(&result, 1u);
+9175:   UIWindow::Create(this->m_btnOption, this->m_btnOption->m_bitmapWidth, this->m_btnOption->m_bitmapHeight);
+9176:   this->m_btnOption->UIWindow::Move(this->m_btnOption, this->m_titleWidth + 15, 5);
+9177:   this->m_btnOption->m_id = 127;
+9178:   UIWindow::AddChild(this, this->m_btnOption);
+9179:   v46 = -1;
+=== Ref/UIWindowMgr.cpp:70-89 ===
+70:
+71: // ================================================
+72: // Original Signature: int __cdecl UICY(int)
+73: // Decompiled from address: 0x4e7300
+74: // ================================================
+75: int __cdecl UICY(int y)
+76: {
+77:   return y * g_renderer->m_height / 480;
+78: }
+79:
+80:
+81: // ================================================
+82: // Original Signature: int __cdecl UIX(int)
+83: // Decompiled from address: 0x4e72c0
+84: // ================================================
+85: int __cdecl UIX(int x)
+86: {
+87:   return x + (g_renderer->m_width - 640) / 2;
+88: }
+89:
+=== Ref/UIWindowMgr.cpp:7478-7503 ===
+7478:       m_basicInfoWnd->UIWindow::SetShow(m_basicInfoWnd, 0);
+7479:       return m_basicInfoWnd;
+7480:     case 139:
+7481:       m_basicInfoWnd = (UIBasicInfoWnd *)this->m_battleMsgOpionWnd;
+7482:       if ( m_basicInfoWnd )
+7483:         goto LABEL_695;
+7484:       v157 = (UIBattleMsgOptionWnd *)operator new(0x84u);
+7485:       windowId = (int)v157;
+7486:       v191 = 120;
+7487:       if ( v157 )
+7488:         m_basicInfoWnd = (UIBasicInfoWnd *)UIBattleMsgOptionWnd::UIBattleMsgOptionWnd(v157);
+7489:       else
+7490:         m_basicInfoWnd = 0;
+7491:       v191 = -1;
+7492:       this->m_battleMsgOpionWnd = (UIBattleMsgOptionWnd *)m_basicInfoWnd;
+7493:       UIWindow::Create(m_basicInfoWnd, 280, 200);
+7494: LABEL_667:
+7495:       windowId = (int)&m_basicInfoWnd->UIWindow::Move;
+7496:       v167 = UICY(200);
+7497:       v70 = UIX(400);
+7498: LABEL_668:
+7499:       (*(void (__thiscall **)(UIBasicInfoWnd *, int, int))windowId)(m_basicInfoWnd, v70, v167);
+7500: LABEL_669:
+7501:       UIWindowMgr::AddWindow(this, m_basicInfoWnd);
+7502:       goto LABEL_695;
+7503:     case 140:
+=== Ref/UIWindowMgr.cpp:11650-11678 ===
+11650: // Original Signature: public: void __thiscall UIWindowMgr::ReadToReg(void)
+11651: // Decompiled from address: 0x4eb030
+11652: // ================================================
+11653: void __thiscall UIWindowMgr::ReadToReg(UIWindowMgr *this)
+11654: {
+11655:   int i; // esi
+11656:   char OptionPath[512]; // [esp+Ch] [ebp-218h] BYREF
+11657:   CHAR buf[12]; // [esp+20Ch] [ebp-18h] BYREF
+11658:   unsigned int DATALENGTH; // [esp+218h] [ebp-Ch] BYREF
+11659:   unsigned int REG_TYPE; // [esp+21Ch] [ebp-8h] BYREF
+11660:   HKEY__ *hKey; // [esp+220h] [ebp-4h] BYREF
+11661:
+11662:   strcpy(OptionPath, g_regPath);
+11663:   strcat(OptionPath, aChatoption);
+11664:   REG_TYPE = 4;
+11665:   DATALENGTH = 4;
+11666:   RegOpenKeyExA(HKEY_LOCAL_MACHINE, OptionPath, 0, 1u, &hKey);
+11667:   for ( i = 0; i < 13; ++i )
+11668:   {
+11669:     itoa(i, buf, 10);
+11670:     if ( RegQueryValueExA(hKey, buf, 0, &REG_TYPE, &g_session.m_battleMsgOnOffSet[i], &DATALENGTH) )
+11671:       g_session.m_battleMsgOnOffSet[i] = 1;
+11672:   }
+11673:   RegCloseKey(hKey);
+11674: }
+11675:
+11676:
+11677: // ================================================
+11678: // Original Signature: public: void __thiscall UIWindowMgr::RefreshItem(void)
+=== Ref/UIControl2.cpp:53-154 ===
+53: int __thiscall UIScrollBar::GetScrollRange(UIScrollBar *this)
+54: {
+55:   int m_h; // edi
+56:
+57:   m_h = this->m_h;
+58:   if ( !this->m_isVert )
+59:     m_h = this->m_w;
+60:   return m_h - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this);
+61: }
+62:
+63:
+64: // ================================================
+65: // Original Signature: protected: int __thiscall UIScrollBar::GetThumbOffset(void)
+66: // Decompiled from address: 0x450ae0
+67: // ================================================
+68: int __thiscall UIScrollBar::GetThumbOffset(UIScrollBar *this)
+69: {
+70:   int m_h; // edi
+71:
+72:   m_h = this->m_h;
+73:   if ( !this->m_isVert )
+74:     m_h = this->m_w;
+75:   return (m_h - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this)) * this->m_curPos / this->m_maxPos;
+76: }
+77:
+78:
+79: // ================================================
+80: // Original Signature: protected: int __thiscall UIScrollBar::HitTest(int,int)
+81: // Decompiled from address: 0x4508b0
+82: // ================================================
+83: int __thiscall UIScrollBar::HitTest(UIScrollBar *this, int x, int y)
+84: {
+85:   int m_w; // ebx
+86:   int m_h; // edi
+87:   int m_isVert; // eax
+88:   int m_scrollBtnSize; // ebx
+89:   int v9; // edi
+90:   int v10; // ebx
+91:   int v11; // edi
+92:   int v12; // edx
+93:   int v13; // eax
+94:   int v14; // ecx
+95:   int v15; // edi
+96:   int v16; // edi
+97:   int v17; // ebx
+98:   int v18; // edx
+99:
+100:   if ( !this->m_maxPos )
+101:     return -1;
+102:   if ( x < 0 )
+103:     return -1;
+104:   m_w = this->m_w;
+105:   if ( x >= m_w )
+106:     return -1;
+107:   if ( y < 0 )
+108:     return -1;
+109:   m_h = this->m_h;
+110:   if ( y >= m_h )
+111:     return -1;
+112:   m_isVert = this->m_isVert;
+113:   if ( m_isVert )
+114:   {
+115:     if ( m_isVert != 1 )
+116:       return -1;
+117:     if ( y < this->m_scrollBtnSize )
+118:       return 0;
+119:     m_scrollBtnSize = this->m_scrollBtnSize;
+120:     if ( y < m_scrollBtnSize
+121:            + (m_h - 2 * m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this)) * this->m_curPos / this->m_maxPos )
+122:       return 1;
+123:     v9 = this->m_h;
+124:     if ( !this->m_isVert )
+125:       v9 = this->m_w;
+126:     v10 = v9 - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this);
+127:     v11 = this->m_scrollBtnSize;
+128:     v12 = this->UIScrollBar::GetThumbSize(this) + v11 + v10 * this->m_curPos / this->m_maxPos;
+129:     v13 = y;
+130:     if ( y < v12 )
+131:       return 2;
+132:     v14 = this->m_h;
+133:   }
+134:   else
+135:   {
+136:     if ( x < this->m_scrollBtnSize )
+137:       return 0;
+138:     v15 = this->m_scrollBtnSize;
+139:     if ( x < v15 + (m_w - 2 * v15 - this->UIScrollBar::GetThumbSize(this)) * this->m_curPos / this->m_maxPos )
+140:       return 1;
+141:     v16 = this->m_h;
+142:     if ( !this->m_isVert )
+143:       v16 = this->m_w;
+144:     v17 = v16 - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this);
+145:     v11 = this->m_scrollBtnSize;
+146:     v18 = this->UIScrollBar::GetThumbSize(this) + v11 + v17 * this->m_curPos / this->m_maxPos;
+147:     v13 = x;
+148:     if ( x < v18 )
+149:       return 2;
+150:     v14 = this->m_w;
+151:   }
+152:   return (v13 >= v14 - v11) + 3;
+153: }
+154:
+=== Ref/UIControl2.cpp:936-953 ===
+936: UIScrollBar *__thiscall UIScrollBar::UIScrollBar(UIScrollBar *this)
+937: {
+938:   UIWindow::UIWindow(this);
+939:   this->m_maxPos = 0;
+940:   this->m_curPos = 0;
+941:   this->m_drawMode = 0;
+942:   this->m_startDragX = 0;
+943:   this->m_startDragY = 0;
+944:   this->m_deltaDrag = 0;
+945:   this->m_parentNumItem = 0;
+946:   this->m_parentnumCanDisplayItem = 0;
+947:   this->__vftable = (UIScrollBar_vtbl *)&UIScrollBar::`vftable';
+948:   this->m_scrollBtnSize = 13;
+949:   this->m_isVert = 1;
+950:   this->m_fixedLength = 13;
+951:   this->m_type = 1;
+952:   return this;
+953: }
+=== Ref/UIControl2.cpp:2403-2425 ===
+2403: // Decompiled from address: 0x450a90
+2404: // ================================================
+2405: int __thiscall UIScrollBar::GetThumbSize(UIScrollBar *this)
+2406: {
+2407:   int m_h; // eax
+2408:   int m_parentNumItem; // esi
+2409:   int v3; // edx
+2410:   int result; // eax
+2411:
+2412:   m_h = this->m_h;
+2413:   if ( !this->m_isVert )
+2414:     m_h = this->m_w;
+2415:   m_parentNumItem = this->m_parentNumItem;
+2416:   v3 = m_h - 2 * this->m_scrollBtnSize;
+2417:   if ( m_parentNumItem )
+2418:     v3 = v3 * this->m_parentnumCanDisplayItem / m_parentNumItem;
+2419:   if ( !this->m_type )
+2420:     return v3;
+2421:   result = 8;
+2422:   if ( v3 >= 8 )
+2423:     return v3;
+2424:   return result;
+2425: }
+=== Ref/UIControl2.cpp:6601-6672 ===
+6601: // Original Signature: public: virtual void __thiscall UIScrollBar::OnLBtnDown(int,int)
+6602: // Decompiled from address: 0x44ffa0
+6603: // ================================================
+6604: void __thiscall UIScrollBar::OnLBtnDown(UIScrollBar *this, int x, int y)
+6605: {
+6606:   int v4; // eax
+6607:   int m_isVert; // ecx
+6608:
+6609:   if ( this->m_maxPos )
+6610:   {
+6611:     v4 = UIScrollBar::HitTest(this, x, y);
+6612:     m_isVert = this->m_isVert;
+6613:     this->m_startDragX = x;
+6614:     this->m_startDragY = y;
+6615:     this->m_deltaDrag = 0;
+6616:     if ( m_isVert )
+6617:     {
+6618:       if ( m_isVert == 1 )
+6619:       {
+6620:         switch ( v4 )
+6621:         {
+6622:           case 0:
+6623:             this->m_parent->UIWindow::SendMsg(this->m_parent, this, 7, -1, 0, 0, 0);
+6624:             break;
+6625:           case 1:
+6626:             this->m_parent->UIWindow::SendMsg(this->m_parent, this, 9, 0, 0, 0, 0);
+6627:             break;
+6628:           case 2:
+6629:             goto $L134106;
+6630:           case 3:
+6631:             this->m_parent->UIWindow::SendMsg(this->m_parent, this, 10, 0, 0, 0, 0);
+6632:             break;
+6633:           case 4:
+6634:             this->m_parent->UIWindow::SendMsg(this->m_parent, this, 7, 1, 0, 0, 0);
+6635:             break;
+6636:           default:
+6637:             return;
+6638:         }
+6639:       }
+6640:     }
+6641:     else
+6642:     {
+6643:       switch ( v4 )
+6644:       {
+6645:         case 0:
+6646:           this->m_parent->UIWindow::SendMsg(this->m_parent, this, 8, -1, 0, 0, 0);
+6647:           break;
+6648:         case 1:
+6649:           this->m_parent->UIWindow::SendMsg(this->m_parent, this, 11, 0, 0, 0, 0);
+6650:           break;
+6651:         case 2:
+6652: $L134106:
+6653:           UIWindowMgr::SetCapture(&g_windowMgr, this);
+6654:           break;
+6655:         case 3:
+6656:           this->m_parent->UIWindow::SendMsg(this->m_parent, this, 12, 0, 0, 0, 0);
+6657:           break;
+6658:         case 4:
+6659:           this->m_parent->UIWindow::SendMsg(this->m_parent, this, 8, 1, 0, 0, 0);
+6660:           break;
+6661:         default:
+6662:           return;
+6663:       }
+6664:     }
+6665:   }
+6666:   else
+6667:   {
+6668:     this->m_parent->UIWindow::OnLBtnDown(this->m_parent, x + this->m_x, y + this->m_y);
+6669:   }
+6670: }
+6671:
+6672:
+=== Ref/UIControl2.cpp:6692-6780 ===
+6692: // Original Signature: public: virtual void __thiscall UIScrollBar::OnMouseMove(int,int)
+6693: // Decompiled from address: 0x4501a0
+6694: // ================================================
+6695: void __thiscall UIScrollBar::OnMouseMove(UIScrollBar *this, int x, int y)
+6696: {
+6697:   int m_h; // edi
+6698:   int m_drawMode; // edi
+6699:   int m_isVert; // eax
+6700:   int v7; // edi
+6701:   int v8; // eax
+6702:   int v9; // eax
+6703:   int m_w; // edi
+6704:   int v11; // eax
+6705:
+6706:   if ( !this->m_maxPos )
+6707:   {
+6708:     this->m_parent->UIWindow::OnMouseMove(this->m_parent, x + this->m_x, y + this->m_y);
+6709:     return;
+6710:   }
+6711:   m_h = this->m_h;
+6712:   if ( !this->m_isVert )
+6713:     m_h = this->m_w;
+6714:   if ( m_h - 2 * this->m_scrollBtnSize != this->UIScrollBar::GetThumbSize(this) )
+6715:   {
+6716:     m_drawMode = this->m_drawMode;
+6717:     switch ( UIScrollBar::HitTest(this, x, y) )
+6718:     {
+6719:       case -1:
+6720:       case 1:
+6721:       case 3:
+6722:         this->m_drawMode = 0;
+6723:         break;
+6724:       case 0:
+6725:         this->m_drawMode = 1;
+6726:         break;
+6727:       case 2:
+6728:         this->m_drawMode = 3;
+6729:         break;
+6730:       case 4:
+6731:         this->m_drawMode = 2;
+6732:         break;
+6733:       default:
+6734:         break;
+6735:     }
+6736:     if ( m_drawMode != this->m_drawMode )
+6737:       this->UIWindow::Invalidate(this);
+6738:     if ( UIWindowMgr::GetCapture(&g_windowMgr) == this && this->m_parent )
+6739:     {
+6740:       m_isVert = this->m_isVert;
+6741:       if ( !m_isVert )
+6742:       {
+6743:         m_w = this->m_w;
+6744:         v11 = (this->m_maxPos + 1)
+6745:             * (x - this->m_startDragX)
+6746:             / (m_w - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this))
+6747:             - this->m_deltaDrag;
+6748:         if ( !v11 )
+6749:           return;
+6750:         v9 = ((int (__stdcall *)(UIScrollBar *, int, int, _DWORD, _DWORD, _DWORD))this->m_parent->UIWindow::SendMsg)(
+6751:                this,
+6752:                8,
+6753:                v11,
+6754:                0,
+6755:                0,
+6756:                0);
+6757:         goto LABEL_21;
+6758:       }
+6759:       if ( m_isVert == 1 )
+6760:       {
+6761:         v7 = this->m_h;
+6762:         v8 = (this->m_maxPos + 1)
+6763:            * (y - this->m_startDragY)
+6764:            / (v7 - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this))
+6765:            - this->m_deltaDrag;
+6766:         if ( v8 )
+6767:         {
+6768:           v9 = ((int (__stdcall *)(UIScrollBar *, int, int, _DWORD, _DWORD, _DWORD))this->m_parent->UIWindow::SendMsg)(
+6769:                  this,
+6770:                  7,
+6771:                  v8,
+6772:                  0,
+6773:                  0,
+6774:                  0);
+6775: LABEL_21:
+6776:           this->m_deltaDrag += v9;
+6777:         }
+6778:       }
+6779:     }
+6780:   }
+=== Ref/UIControl2.cpp:6819-6854 ===
+6819: // Original Signature: public: virtual void __thiscall UIScrollBar::Resize(int,int)
+6820: // Decompiled from address: 0x450140
+6821: // ================================================
+6822: void __thiscall UIScrollBar::Resize(UIScrollBar *this, int cx, int cy)
+6823: {
+6824:   int m_isVert; // eax
+6825:   int m_fixedLength; // ebx
+6826:   int v6; // edi
+6827:
+6828:   this->UIWindow::Invalidate(this);
+6829:   m_isVert = this->m_isVert;
+6830:   if ( m_isVert )
+6831:   {
+6832:     if ( m_isVert == 1 )
+6833:     {
+6834:       m_fixedLength = this->m_fixedLength;
+6835:       v6 = cy;
+6836:     }
+6837:     else
+6838:     {
+6839:       v6 = cy;
+6840:       m_fixedLength = cx;
+6841:     }
+6842:   }
+6843:   else
+6844:   {
+6845:     v6 = this->m_fixedLength;
+6846:     m_fixedLength = cx;
+6847:     UIWindow::Resize(this, cx, v6);
+6848:     this->UIWindow::OnSize(this, cx, v6);
+6849:   }
+6850:   UIWindow::Resize(this, m_fixedLength, v6);
+6851:   this->UIWindow::OnSize(this, m_fixedLength, v6);
+6852: }
+6853:
+6854:

@@ -95,6 +95,19 @@ void ChatPrimaryViewReplay()
     chat->OnLBtnDblClk(x,y);
     Require(chat->GetWhisperTargetText() == "Peer" && chat->IsMessageInputActive()
         && chat->GetInputText() == "draft survives target selection", "selected talker did not target whisper/common edit");
+    // Source child borders cannot become modern frame-resize gestures.
+    const int childWidth=chat->m_w,childHeight=chat->m_h;
+    const auto childLayout=chat->GetLayoutDisplay();
+    const int childX=chat->m_x+childLayout.history.right-1;
+    chat->HandleQtMouseDown(childX,y);chat->HandleQtMouseMove(childX+30,y);chat->HandleQtMouseUp(childX+30,y);
+    Require(chat->m_w==childWidth && chat->m_h==childHeight,
+        "history child right edge was stolen by frame resize");
+    const int editX=chat->m_x+childLayout.whisperInput.left+5;
+    const int editY=chat->m_y+childLayout.whisperInput.bottom-1;
+    chat->HandleQtMouseDown(editX,editY);chat->HandleQtMouseMove(editX+20,editY+20);chat->HandleQtMouseUp(editX+20,editY+20);
+    Require(chat->IsWhisperTargetActive() && chat->m_w==childWidth && chat->m_h==childHeight,
+        "editor bottom edge was stolen by frame resize");
+    chat->OnLBtnDblClk(x,y);
     // A held double-click remains history-child capture and must not trigger the
     // main-frame capture gate for manager state operations.
     g_windowMgr.m_captureWindow=chat;

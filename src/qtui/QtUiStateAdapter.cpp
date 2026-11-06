@@ -1937,6 +1937,7 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         const auto rectMap=[](RECT rect) { return QVariantMap{{"x",static_cast<int>(rect.left)},{"y",static_cast<int>(rect.top)},
             {"width",static_cast<int>(rect.right-rect.left)},{"height",static_cast<int>(rect.bottom-rect.top)}}; };
         value.insert(QStringLiteral("history"),rectMap(layout.history));
+        value.insert(QStringLiteral("battleOption"),rectMap(history->GetBattleOptionButton()));
         value.insert(QStringLiteral("scrollTrack"),rectMap(layout.scrollTrack));
         value.insert(QStringLiteral("scrollThumb"),rectMap(layout.scrollThumb));
         value.insert(QStringLiteral("first"),layout.first);
@@ -1964,6 +1965,25 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         mini.insert(QStringLiteral("bt"), g_windowMgr.m_onBtSubChat);
     }
     chatUi.insert(QStringLiteral("mini"), mini);
+    QVariantMap options;
+    if(const auto* window=g_windowMgr.m_battleMsgOptionWnd){
+        const auto layout=window->GetLayout();
+        const auto rectMap=[](RECT r){return QVariantMap{{"x",static_cast<int>(r.left)},{"y",static_cast<int>(r.top)},
+            {"width",static_cast<int>(r.right-r.left)},{"height",static_cast<int>(r.bottom-r.top)}};};
+        options={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},
+            {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
+            {"title",ToQString(window->GetTitle())},{"first",layout.first},
+            {"base",rectMap(layout.base)},{"close",rectMap(layout.close)},
+            {"scrollTrack",rectMap(layout.scrollTrack)},{"scrollThumb",rectMap(layout.scrollThumb)}};
+        QVariantList rows;
+        for(int i=0;i<layout.rows && layout.first+i<13;++i){
+            const int index=layout.first+i;
+            rows.push_back(QVariantMap{{"index",index},{"text",ToQString(window->GetLabel(index))},
+                {"enabled",g_session.m_battleMsgOnOffSet[index]},{"selected",layout.selected==index}});
+        }
+        options.insert("rows",rows);
+    }
+    chatUi.insert("battleOptions",options);
 }
 
 void PopulateChatWindowState(QtUiState* state)
@@ -2039,6 +2059,7 @@ void PopulateChatWindowState(QtUiState* state)
     sourceRects.insert(QStringLiteral("whisper"), rectMap(layout.whisperInput));
     sourceRects.insert(QStringLiteral("message"), rectMap(layout.messageInput));
     sourceRects.insert(QStringLiteral("gear"), rectMap(layout.gearButton));
+    sourceRects.insert(QStringLiteral("battleOption"),rectMap(layout.battleOptionButton));
     sourceRects.insert(QStringLiteral("stick"), rectMap(layout.stickButton));
     chatUi.insert(QStringLiteral("sourceRects"), sourceRects);
 
@@ -4032,6 +4053,8 @@ QtUiStateAdapter::QtUiStateAdapter()
         syncChat();
     });
     QObject::connect(m_state, &QtUiState::chatKeyRequested, [this](int key) {
+        if(key==VK_ESCAPE && g_windowMgr.m_battleMsgOptionWnd
+            && g_windowMgr.OnQtKeyDown(key,false,false,false)){syncChat();return;}
         if(auto* chat=g_windowMgr.m_chatWnd)chat->HandleKeyDown(key);
         syncChat();
     });

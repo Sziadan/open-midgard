@@ -6,7 +6,7 @@ Created 2026-11-03. This is an execution specification, not a claim that any run
 
 ## Start here
 
-**Latest checkpoint (2026-11-06):** [PK09.21 detached visual histories](packets/evidence/PK09.21-wrapped.md) restores pixel wrapping, separate logical/visual240-row caps, resize replay and shared native/Qt scrolling and talker input. Strong review preserves character-unit wrapping, CRLF/blank-line rules, child capture and absent-main no-op behavior. Options139, persistence/main cached restore, remaining producers and active Qt/scale/art/locale acceptance remain open.
+**Latest checkpoint (2026-11-06):** [PK09.21 battle-message options](packets/evidence/PK09.21-options.md) adds manager139, thirteen session filters with selected message IDs, source127 toggle versus135 save/close, startup preferences and cross-process reload. Native/Qt input, checkbox pixels, Escape priority and125% popup geometry are checked. Exact shared scrollbar arrows/relative drag, remaining persistence/main restore, primary/detached language labels, producers and broader art/locale/active Qt acceptance remain open.
 
 **Current continuation priority:** finish [PK09.21 chat state/sticky/history ownership](packets/work-items/PK09.21.md) under [PK09.04](packets/work-items/PK09.04.md), then continue remaining item/status/detail/context work. Preserve corpse, effect and recovery regressions. PK45.06 is complete; broad actor/model review, full feature coverage, PK47 and independent PK48/49/deployment remain open. The whole packet implementation goal remains active.
 

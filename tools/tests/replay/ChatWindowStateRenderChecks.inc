@@ -1,3 +1,4 @@
+#include "ChatBattleOptionsRenderChecks.inc"
 #include "ui/UINewChatWnd.h"
 
 void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* state,
@@ -358,5 +359,7 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
         {"narrow_rows",narrowRows},{"wide_rows",static_cast<int>(wrappedBT->GetVisualRows().size())},
         {"viewport_top",20},{"row_pitch",14},{"real_scroll_capture",true},{"talker_target",true},
         {"absent_main_noop",true},{"outcome","PASS"}}).toJson());
+
+    CheckChatBattleOptionsUi(app,view,state,adapter,output);
 
 }

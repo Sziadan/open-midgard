@@ -1,0 +1,212 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0049ce80 <.text+0x9be80>:
+  49ce80:	55                   	push   %ebp
+  49ce81:	8b ec                	mov    %esp,%ebp
+  49ce83:	83 ec 24             	sub    $0x24,%esp
+  49ce86:	56                   	push   %esi
+  49ce87:	8b f1                	mov    %ecx,%esi
+  49ce89:	57                   	push   %edi
+  49ce8a:	8b 8e b8 00 00 00    	mov    0xb8(%esi),%ecx
+  49ce90:	8b 96 b0 00 00 00    	mov    0xb0(%esi),%edx
+  49ce96:	8b 46 20             	mov    0x20(%esi),%eax
+  49ce99:	8d 3c 0a             	lea    (%edx,%ecx,1),%edi
+  49ce9c:	3b c7                	cmp    %edi,%eax
+  49ce9e:	7e 5d                	jle    0x49cefd
+  49cea0:	2b c1                	sub    %ecx,%eax
+  49cea2:	83 c2 02             	add    $0x2,%edx
+  49cea5:	83 e8 02             	sub    $0x2,%eax
+  49cea8:	89 55 f0             	mov    %edx,-0x10(%ebp)
+  49ceab:	8b 56 1c             	mov    0x1c(%esi),%edx
+  49ceae:	89 45 f8             	mov    %eax,-0x8(%ebp)
+  49ceb1:	8d 45 ec             	lea    -0x14(%ebp),%eax
+  49ceb4:	83 ea 06             	sub    $0x6,%edx
+  49ceb7:	50                   	push   %eax
+  49ceb8:	68 ff 00 ff ff       	push   $0xffff00ff
+  49cebd:	8b ce                	mov    %esi,%ecx
+  49cebf:	c7 45 ec 05 00 00 00 	movl   $0x5,-0x14(%ebp)
+  49cec6:	89 55 f4             	mov    %edx,-0xc(%ebp)
+  49cec9:	e8 72 a3 03 00       	call   0x4d7240
+  49cece:	8b 8e b4 00 00 00    	mov    0xb4(%esi),%ecx
+  49ced4:	33 c0                	xor    %eax,%eax
+  49ced6:	89 45 dc             	mov    %eax,-0x24(%ebp)
+  49ced9:	89 45 e0             	mov    %eax,-0x20(%ebp)
+  49cedc:	8b 86 b0 00 00 00    	mov    0xb0(%esi),%eax
+  49cee2:	8d 54 09 02          	lea    0x2(%ecx,%ecx,1),%edx
+  49cee6:	8d 4d dc             	lea    -0x24(%ebp),%ecx
+  49cee9:	40                   	inc    %eax
+  49ceea:	51                   	push   %ecx
+  49ceeb:	68 ff 00 ff ff       	push   $0xffff00ff
+  49cef0:	8b ce                	mov    %esi,%ecx
+  49cef2:	89 55 e4             	mov    %edx,-0x1c(%ebp)
+  49cef5:	89 45 e8             	mov    %eax,-0x18(%ebp)
+  49cef8:	e8 43 a3 03 00       	call   0x4d7240
+  49cefd:	a0 94 89 76 00       	mov    0x768994,%al
+  49cf02:	84 c0                	test   %al,%al
+  49cf04:	0f 84 63 02 00 00    	je     0x49d16d
+  49cf0a:	8b 96 b0 00 00 00    	mov    0xb0(%esi),%edx
+  49cf10:	8b 8e b8 00 00 00    	mov    0xb8(%esi),%ecx
+  49cf16:	8b 46 20             	mov    0x20(%esi),%eax
+  49cf19:	03 d1                	add    %ecx,%edx
+  49cf1b:	3b c2                	cmp    %edx,%eax
+  49cf1d:	0f 8e 4a 02 00 00    	jle    0x49d16d
+  49cf23:	8b 86 a8 00 00 00    	mov    0xa8(%esi),%eax
+  49cf29:	53                   	push   %ebx
+  49cf2a:	bb ff ff ff 00       	mov    $0xffffff,%ebx
+  49cf2f:	85 c0                	test   %eax,%eax
+  49cf31:	89 5d fc             	mov    %ebx,-0x4(%ebp)
+  49cf34:	75 61                	jne    0x49cf97
+  49cf36:	50                   	push   %eax
+  49cf37:	6a 0c                	push   $0xc
+  49cf39:	50                   	push   %eax
+  49cf3a:	50                   	push   %eax
+  49cf3b:	8b fb                	mov    %ebx,%edi
+  49cf3d:	68 0b 05 00 00       	push   $0x50b
+  49cf42:	bb 8e 8e 8e 00       	mov    $0x8e8e8e,%ebx
+  49cf47:	e8 04 74 07 00       	call   0x514350
+  49cf4c:	83 c4 04             	add    $0x4,%esp
+  49cf4f:	8b ce                	mov    %esi,%ecx
+  49cf51:	50                   	push   %eax
+  49cf52:	6a 04                	push   $0x4
+  49cf54:	6a 08                	push   $0x8
+  49cf56:	e8 95 a8 03 00       	call   0x4d77f0
+  49cf5b:	8b 86 b4 00 00 00    	mov    0xb4(%esi),%eax
+  49cf61:	8b 4d fc             	mov    -0x4(%ebp),%ecx
+  49cf64:	51                   	push   %ecx
+  49cf65:	8b 8e b0 00 00 00    	mov    0xb0(%esi),%ecx
+  49cf6b:	8d 50 01             	lea    0x1(%eax),%edx
+  49cf6e:	6a 01                	push   $0x1
+  49cf70:	52                   	push   %edx
+  49cf71:	83 c0 02             	add    $0x2,%eax
+  49cf74:	51                   	push   %ecx
+  49cf75:	50                   	push   %eax
+  49cf76:	8b ce                	mov    %esi,%ecx
+  49cf78:	e8 73 a3 03 00       	call   0x4d72f0
+  49cf7d:	8b 55 fc             	mov    -0x4(%ebp),%edx
+  49cf80:	8b 86 b0 00 00 00    	mov    0xb0(%esi),%eax
+  49cf86:	52                   	push   %edx
+  49cf87:	6a 01                	push   $0x1
+  49cf89:	6a 01                	push   $0x1
+  49cf8b:	50                   	push   %eax
+  49cf8c:	6a 03                	push   $0x3
+  49cf8e:	8b ce                	mov    %esi,%ecx
+  49cf90:	e8 5b a3 03 00       	call   0x4d72f0
+  49cf95:	eb 59                	jmp    0x49cff0
+  49cf97:	83 f8 01             	cmp    $0x1,%eax
+  49cf9a:	75 4e                	jne    0x49cfea
+  49cf9c:	6a 00                	push   $0x0
+  49cf9e:	6a 0c                	push   $0xc
+  49cfa0:	6a 00                	push   $0x0
+  49cfa2:	6a 00                	push   $0x0
+  49cfa4:	68 0c 05 00 00       	push   $0x50c
+  49cfa9:	bf 8e 8e 8e 00       	mov    $0x8e8e8e,%edi
+  49cfae:	e8 9d 73 07 00       	call   0x514350
+  49cfb3:	8b 8e b4 00 00 00    	mov    0xb4(%esi),%ecx
+  49cfb9:	83 c4 04             	add    $0x4,%esp
+  49cfbc:	83 c1 09             	add    $0x9,%ecx
+  49cfbf:	50                   	push   %eax
+  49cfc0:	6a 04                	push   $0x4
+  49cfc2:	51                   	push   %ecx
+  49cfc3:	8b ce                	mov    %esi,%ecx
+  49cfc5:	e8 26 a8 03 00       	call   0x4d77f0
+  49cfca:	8b 55 fc             	mov    -0x4(%ebp),%edx
+  49cfcd:	8b 86 b4 00 00 00    	mov    0xb4(%esi),%eax
+  49cfd3:	8b 8e b0 00 00 00    	mov    0xb0(%esi),%ecx
+  49cfd9:	52                   	push   %edx
+  49cfda:	40                   	inc    %eax
+  49cfdb:	6a 01                	push   $0x1
+  49cfdd:	50                   	push   %eax
+  49cfde:	51                   	push   %ecx
+  49cfdf:	6a 03                	push   $0x3
+  49cfe1:	8b ce                	mov    %esi,%ecx
+  49cfe3:	e8 08 a3 03 00       	call   0x4d72f0
+  49cfe8:	eb 06                	jmp    0x49cff0
+  49cfea:	8b 7d fc             	mov    -0x4(%ebp),%edi
+  49cfed:	8b 5d fc             	mov    -0x4(%ebp),%ebx
+  49cff0:	6a 0c                	push   $0xc
+  49cff2:	8d 55 fc             	lea    -0x4(%ebp),%edx
+  49cff5:	6a 00                	push   $0x0
+  49cff7:	52                   	push   %edx
+  49cff8:	6a 00                	push   $0x0
+  49cffa:	68 0b 05 00 00       	push   $0x50b
+  49cfff:	e8 4c 73 07 00       	call   0x514350
+  49d004:	83 c4 04             	add    $0x4,%esp
+  49d007:	8b ce                	mov    %esi,%ecx
+  49d009:	50                   	push   %eax
+  49d00a:	6a 03                	push   $0x3
+  49d00c:	6a 07                	push   $0x7
+  49d00e:	e8 3d a9 03 00       	call   0x4d7950
+  49d013:	6a 0c                	push   $0xc
+  49d015:	8d 45 fc             	lea    -0x4(%ebp),%eax
+  49d018:	6a 00                	push   $0x0
+  49d01a:	50                   	push   %eax
+  49d01b:	6a 00                	push   $0x0
+  49d01d:	68 0c 05 00 00       	push   $0x50c
+  49d022:	e8 29 73 07 00       	call   0x514350
+  49d027:	8b 8e b4 00 00 00    	mov    0xb4(%esi),%ecx
+  49d02d:	83 c4 04             	add    $0x4,%esp
+  49d030:	83 c1 08             	add    $0x8,%ecx
+  49d033:	50                   	push   %eax
+  49d034:	6a 03                	push   $0x3
+  49d036:	51                   	push   %ecx
+  49d037:	8b ce                	mov    %esi,%ecx
+  49d039:	e8 12 a9 03 00       	call   0x4d7950
+  49d03e:	8b 96 b4 00 00 00    	mov    0xb4(%esi),%edx
+  49d044:	57                   	push   %edi
+  49d045:	83 ea 05             	sub    $0x5,%edx
+  49d048:	6a 01                	push   $0x1
+  49d04a:	52                   	push   %edx
+  49d04b:	6a 00                	push   $0x0
+  49d04d:	6a 05                	push   $0x5
+  49d04f:	8b ce                	mov    %esi,%ecx
+  49d051:	e8 9a a2 03 00       	call   0x4d72f0
+  49d056:	57                   	push   %edi
+  49d057:	6a 01                	push   $0x1
+  49d059:	6a 01                	push   $0x1
+  49d05b:	6a 01                	push   $0x1
+  49d05d:	6a 04                	push   $0x4
+  49d05f:	8b ce                	mov    %esi,%ecx
+  49d061:	e8 8a a2 03 00       	call   0x4d72f0
+  49d066:	8b 86 b0 00 00 00    	mov    0xb0(%esi),%eax
+  49d06c:	57                   	push   %edi
+  49d06d:	83 e8 02             	sub    $0x2,%eax
+  49d070:	8b ce                	mov    %esi,%ecx
+  49d072:	50                   	push   %eax
+  49d073:	6a 01                	push   $0x1
+  49d075:	6a 02                	push   $0x2
+  49d077:	6a 03                	push   $0x3
+  49d079:	e8 72 a2 03 00       	call   0x4d72f0
+  49d07e:	8b 8e b4 00 00 00    	mov    0xb4(%esi),%ecx
+  49d084:	57                   	push   %edi
+  49d085:	6a 01                	push   $0x1
+  49d087:	6a 01                	push   $0x1
+  49d089:	6a 00                	push   $0x0
+  49d08b:	51                   	push   %ecx
+  49d08c:	8b ce                	mov    %esi,%ecx
+  49d08e:	e8 5d a2 03 00       	call   0x4d72f0
+  49d093:	8b 96 b4 00 00 00    	mov    0xb4(%esi),%edx
+  49d099:	57                   	push   %edi
+  49d09a:	6a 01                	push   $0x1
+  49d09c:	6a 01                	push   $0x1
+  49d09e:	42                   	inc    %edx
+  49d09f:	6a 01                	push   $0x1
+  49d0a1:	52                   	push   %edx
+  49d0a2:	8b ce                	mov    %esi,%ecx
+  49d0a4:	e8 47 a2 03 00       	call   0x4d72f0
+  49d0a9:	8b 86 b0 00 00 00    	mov    0xb0(%esi),%eax
+  49d0af:	8b 8e b4 00 00 00    	mov    0xb4(%esi),%ecx
+  49d0b5:	83 e8 02             	sub    $0x2,%eax
+  49d0b8:	57                   	push   %edi
+  49d0b9:	50                   	push   %eax
+  49d0ba:	6a 01                	push   $0x1
+  49d0bc:	83 c1 02             	add    $0x2,%ecx
+  49d0bf:	6a 02                	push   $0x2
+  49d0c1:	51                   	push   %ecx
+  49d0c2:	8b ce                	mov    %esi,%ecx
+  49d0c4:	e8 27 a2 03 00       	call   0x4d72f0
+  49d0c9:	8b 86 b4 00 00 00    	mov    0xb4(%esi),%eax
+  49d0cf:	53                   	push   %ebx

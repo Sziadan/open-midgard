@@ -348,6 +348,18 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_executable(chat_history_wrap_checks tools/tests/ChatHistoryWrapTests.cpp)
     target_compile_features(chat_history_wrap_checks PRIVATE cxx_std_17)
     add_test(NAME chat_history_wrap_checks COMMAND chat_history_wrap_checks)
+    add_executable(chat_battle_options_checks tools/tests/ChatBattleOptionsTests.cpp)
+    target_compile_features(chat_battle_options_checks PRIVATE cxx_std_17)
+    add_test(NAME chat_battle_options_checks COMMAND chat_battle_options_checks)
+    add_test(NAME packet_chat_options_checks COMMAND packet_stream_replay_checks --chat-options-only)
+    set_tests_properties(packet_chat_options_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-options-settings")
+    add_test(NAME packet_chat_options_write_checks COMMAND packet_stream_replay_checks --chat-options-write)
+    add_test(NAME packet_chat_options_read_checks COMMAND packet_stream_replay_checks --chat-options-read)
+    set_tests_properties(packet_chat_options_write_checks packet_chat_options_read_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-options-restart-settings")
+    set_tests_properties(packet_chat_options_write_checks PROPERTIES FIXTURES_SETUP chat_options_preferences)
+    set_tests_properties(packet_chat_options_read_checks PROPERTIES FIXTURES_REQUIRED chat_options_preferences)
     add_test(NAME packet_chat_detached_checks COMMAND packet_stream_replay_checks --chat-detached-only)
     set_tests_properties(packet_chat_detached_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-detached-settings")

@@ -1,0 +1,40 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+      Start  3: packet_chat_state_checks
+ 1/13 Test  #3: packet_chat_state_checks ...........   Passed    0.17 sec
+      Start  4: packet_chat_notice_checks
+ 2/13 Test  #4: packet_chat_notice_checks ..........   Passed    0.15 sec
+      Start  5: chat_window_state_checks
+ 3/13 Test  #5: chat_window_state_checks ...........   Passed    0.02 sec
+      Start  6: chat_notice_checks
+ 4/13 Test  #6: chat_notice_checks .................   Passed    0.02 sec
+      Start  7: chat_history_view_checks
+ 5/13 Test  #7: chat_history_view_checks ...........   Passed    0.05 sec
+      Start  8: chat_history_wrap_checks
+ 6/13 Test  #8: chat_history_wrap_checks ...........   Passed    0.02 sec
+      Start  9: chat_battle_options_checks
+ 7/13 Test  #9: chat_battle_options_checks .........   Passed    0.03 sec
+      Start 10: packet_chat_options_checks
+ 8/13 Test #10: packet_chat_options_checks .........***Failed    0.29 sec
+{"case_id":"chat_battle_options_routes","stage":"PK09.21","fixture_id":"source139-window","production_entry":"manager139/source127 -> UI checkbox -> production008D and typed source routes -> save/close/recreate","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"595cfbaf20139641bc704f0a086ec3f15bea10a3","source_tree_status_at_configure":"dirty","invocation_count":0,"expected_packet_hex":null,"actual_packet_hex":null,"expected_queue_remainder":null,"actual_queue_remainder":null,"outcome":"FAIL","error":"actual008D did not honor the toggled BT filter while retaining ST/detached ownership"}
+
+      Start 11: packet_chat_options_write_checks
+ 9/13 Test #11: packet_chat_options_write_checks ...   Passed    0.19 sec
+      Start 12: packet_chat_options_read_checks
+10/13 Test #12: packet_chat_options_read_checks ....   Passed    0.07 sec
+      Start 13: packet_chat_detached_checks
+11/13 Test #13: packet_chat_detached_checks ........   Passed    0.09 sec
+      Start 14: packet_chat_primary_checks
+12/13 Test #14: packet_chat_primary_checks .........   Passed    0.12 sec
+      Start 32: packet_chat_state_render_checks
+13/13 Test #32: packet_chat_state_render_checks ....***Failed    4.97 sec
+FAIL item colour render: options escaped the shared Qt scale layer
+
+
+85% tests passed, 2 tests failed out of 13
+
+Total Test time (real) =   6.23 sec
+
+The following tests FAILED:
+	 10 - packet_chat_options_checks (Failed)
+	 32 - packet_chat_state_render_checks (Failed)
+Errors while running CTest

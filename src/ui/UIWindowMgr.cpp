@@ -976,7 +976,7 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
 bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 {
     const auto* hit = HitTestWindow(x, y);
-    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd);
+    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd);
 }
 
 RECT UIWindowMgr::GetChatClientRect() const
@@ -1126,6 +1126,13 @@ bool UIWindowMgr::Init() {
 UIWindow* UIWindowMgr::MakeWindow(int windowId)
 {
     switch (windowId) {
+    case WID_BATTLEMSGOPTION:
+        if (!m_battleMsgOptionWnd) {
+            m_battleMsgOptionWnd=new UIBattleMsgOptionWnd();
+            m_children.push_back(m_battleMsgOptionWnd);
+        }
+        m_battleMsgOptionWnd->SetShow(1);
+        return m_battleMsgOptionWnd;
     case WID_SUBCHATST:
     case WID_SUBCHATBT: {
         const bool bt = windowId == WID_SUBCHATBT;
@@ -1536,6 +1543,10 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
 
 bool UIWindowMgr::ToggleWindow(int windowId)
 {
+    if (windowId==WID_BATTLEMSGOPTION) {
+        if (m_battleMsgOptionWnd) {DeleteWindow(m_battleMsgOptionWnd);return false;}
+        return MakeWindow(windowId)!=nullptr;
+    }
     UIWindow* window = nullptr;
     switch (windowId) {
     case WID_STATUSWND:
@@ -1615,7 +1626,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd);
+        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd);
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -1669,6 +1680,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if (window == m_subChatWndST) { m_subChatWndST->StoreInfo(); m_subChatWndST = nullptr; }
     if (window == m_subChatWndBT) { m_subChatWndBT->StoreInfo(); m_subChatWndBT = nullptr; }
     if (window == m_subChatMiniWnd) m_subChatMiniWnd = nullptr;
+    if (window == m_battleMsgOptionWnd) m_battleMsgOptionWnd = nullptr;
     if (window == m_basicInfoWnd) {
         m_basicInfoWnd = nullptr;
     }
@@ -2445,7 +2457,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);
-        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd))
+        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd))
             SetCapture(g_hMainWnd);
     }
 }
@@ -2490,7 +2502,7 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
 void UIWindowMgr::OnLBtnUp(int x, int y)
 {
     const bool chatCapture = m_captureWindow && (m_captureWindow == m_chatWnd || m_captureWindow == m_subChatWndST
-        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd);
+        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd);
     if (m_captureWindow) {
         m_captureWindow->OnLBtnUp(x, y);
         m_captureWindow = nullptr;
@@ -2771,6 +2783,11 @@ bool UIWindowMgr::HasFrontMenuUiVisible() const
 
 bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi)
 {
+    if (virtualKey==VK_ESCAPE && !hasFrontMenuUi && m_battleMsgOptionWnd && m_battleMsgOptionWnd->m_show
+        && !HasGameplayInputModal() && CanRouteQtChatInput()) {
+        m_battleMsgOptionWnd->SendMsg(nullptr,6,135,0,0);
+        return true;
+    }
     if (isCtrlDown && virtualKey == VK_TAB && !hasFrontMenuUi) {
         ToggleWindow(WID_ROMAPWND);
         return true;

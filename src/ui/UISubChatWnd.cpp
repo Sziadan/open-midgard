@@ -3,6 +3,9 @@
 #include "UINewChatWnd.h"
 #include "core/ChatHistoryWrap.h"
 #include "core/ChatNotice.h"
+#include "core/UiMessageStrings.h"
+#include "session/Session.h"
+#include "core/Globals.h"
 #include <algorithm>
 
 namespace {
@@ -60,6 +63,8 @@ void Box(HDC dc, RECT rect, COLORREF color)
 UISubChatHisWnd::UISubChatHisWnd(int kind) : m_kind(kind)
 {
     m_id = kind == 0 ? UIWindowMgr::WID_SUBCHATST : UIWindowMgr::WID_SUBCHATBT;
+    if(g_serviceType==ServiceAmerica || g_serviceType==ServicePhilippine || g_serviceType==ServiceIndia)m_titleWidth=110;
+    else if(g_serviceType==ServiceFrance)m_titleWidth=90;
     m_rows.reserve(240);
     Create(300, 95);
     RestoreInfo();
@@ -166,6 +171,7 @@ msgresult_t UISubChatHisWnd::SendMsg(UIWindow* sender, int message, msgparam_t v
             ScrollHistory(message==3 ? 1-m_view.rows : m_view.rows-1);
         return 0;
     }
+    if (message==6 && value==127) {g_windowMgr.ToggleWindow(UIWindowMgr::WID_BATTLEMSGOPTION);return 0;}
     if (message==6 && value==281) {
         // AddWhisperCharName2 does nothing without a main; do not resurrect it.
         if (g_windowMgr.m_chatWnd && detail) g_windowMgr.m_chatWnd->SendMsg(this,6,281,detail,0);
@@ -199,6 +205,7 @@ void UISubChatHisWnd::OnDraw()
     Text(dc, {m_x + 5, m_y, m_x + m_w - 65, m_y + 16}, m_kind == 0 ? "ST" : "BT", 0xffffff);
     Text(dc, {m_x + m_w - 18, m_y, m_x + m_w, m_y + 16}, "x", 0xffffff);
     if (m_kind == 1) Text(dc, {m_x + m_w - 65, m_y, m_x + m_w - 18, m_y + 16}, "Attach", 0xffffff);
+    if(m_kind==1){auto button=GetBattleOptionButton();button.left+=m_x;button.right+=m_x;button.top+=m_y;button.bottom+=m_y;Text(dc,button,"B",0xffffff);}
     const auto layout=GetHistoryLayout();
     const int clip=SaveDC(dc);
     IntersectClipRect(dc,m_x+layout.history.left,m_y+layout.history.top,m_x+layout.history.right,m_y+layout.history.bottom);
@@ -220,6 +227,7 @@ void UISubChatHisWnd::OnDraw()
 void UISubChatHisWnd::OnLBtnDown(int x, int y)
 {
     const int localX = x - m_x, localY = y - m_y;
+    if(m_kind==1 && Contains(GetBattleOptionButton(),localX,localY)){SendMsg(this,6,127,0,0);return;}
     if (localY < 16 && localX >= m_w - 18) { SendMsg(this, 6, 136, 0, 0); return; }
     if (m_kind == 1 && localY < 16 && localX >= m_w - 65) { SendMsg(this, 6, 291, 0, 0); return; }
     const auto layout=GetHistoryLayout();
@@ -319,4 +327,104 @@ void UISubChatMiniWnd::OnDraw()
     Text(dc, {m_x + 36, m_y, m_x + 64, m_y + 32}, "BT", 0xffffff);
     RestoreDC(dc, saved);
     ReleaseDrawTarget(dc);
+}
+
+UIBattleMsgOptionWnd::UIBattleMsgOptionWnd()
+{
+    m_id=UIWindowMgr::WID_BATTLEMSGOPTION;
+    Create(280,200);
+    ro::UiMessageStrings table;table.Load();
+    constexpr const char* labels[]={"Chat","Whispers","Party chat","Guild chat","Obtained items",
+        "Equipment","Status changes","Party items","Party status","Failed skills","Party setup",
+        "Damaged equipment","Siege information"};
+    for (std::size_t i=0;i<m_labels.size();++i) m_labels[i]=table.Get(ro::chat::BattleOptionMessageIds[i],labels[i]);
+    m_title=table.Get(ro::chat::BattleOptionTitleId,"Battle message options");
+    const auto client=g_windowMgr.GetChatClientRect();
+    Move(400+(client.right-640)/2,200*client.bottom/480);
+    SetShow(1);
+}
+BattleOptionsLayout UIBattleMsgOptionWnd::GetLayout() const
+{
+    BattleOptionsLayout layout;
+    layout.first=m_view.first;layout.selected=m_view.selected;layout.rows=m_view.rows;
+    // Neutral12px controls until source bitmap geometry is accepted.
+    layout.base={3,3,15,15};layout.close={m_w-14,3,m_w-2,15};
+    layout.scrollTrack={m_w-15,14,m_w-3,m_h-24};
+    const int height=layout.scrollTrack.bottom-layout.scrollTrack.top;
+    const int thumb=height*m_view.rows/14;
+    const int offset=(height-thumb)*m_view.first/m_view.LastFirst();
+    layout.scrollThumb={layout.scrollTrack.left+1,14+offset,layout.scrollTrack.right-1,14+offset+thumb};
+    return layout;
+}
+void UIBattleMsgOptionWnd::ScrollRows(int delta) {m_view.Scroll(delta);Invalidate();}
+msgresult_t UIBattleMsgOptionWnd::SendMsg(UIWindow* sender,int message,msgparam_t value,msgparam_t detail,msgparam_t extra)
+{
+    if (message==6) {
+        if (value==135) {
+            g_session.SaveBattleMessageOptions();
+            g_windowMgr.DeleteWindow(this);
+        }
+        // Source consumes134 without changing filters or invoking its base.
+        return 0;
+    }
+    if (message==7 || message==9 || message==10) {
+        const int moved=m_view.Scroll(message==9?1-m_view.rows:message==10?m_view.rows-1:static_cast<int>(value));
+        Invalidate();return moved;
+    }
+    return UIWindow::SendMsg(sender,message,value,detail,extra);
+}
+void UIBattleMsgOptionWnd::OnDraw()
+{
+    HDC dc=AcquireDrawTarget();if(!dc)return;
+    const int saved=SaveDC(dc);
+    IntersectClipRect(dc,m_x,m_y,m_x+m_w,m_y+m_h);
+    Box(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(220,220,220));
+    Box(dc,{m_x,m_y,m_x+m_w,m_y+17},RGB(80,90,100));
+    Text(dc,{m_x+17,m_y+2,m_x+m_w-15,m_y+17},m_title,0xffffff);
+    Text(dc,{m_x+3,m_y+2,m_x+15,m_y+16},"-",0xffffff);
+    Text(dc,{m_x+m_w-14,m_y+2,m_x+m_w-2,m_y+16},"x",0xffffff);
+    const auto layout=GetLayout();
+    for (int i=0;i<m_view.rows && m_view.first+i<13;++i) {
+        const int index=m_view.first+i,y=m_y+22+i*20;
+        if(index==m_view.selected)Box(dc,{m_x+25,y-3,m_x+m_w-15,y+17},RGB(255,255,255));
+        Box(dc,{m_x+27,y,m_x+38,y+11},RGB(255,255,255));
+        if(g_session.m_battleMsgOnOffSet[index])Box(dc,{m_x+29,y+2,m_x+36,y+9},RGB(35,100,45));
+        Text(dc,{m_x+50,y,m_x+m_w-16,y+18},m_labels[index],0x000000);
+    }
+    const auto global=[&](RECT r){r.left+=m_x;r.right+=m_x;r.top+=m_y;r.bottom+=m_y;return r;};
+    Box(dc,global(layout.scrollTrack),RGB(64,64,64));Box(dc,global(layout.scrollThumb),RGB(184,184,184));
+    RestoreDC(dc,saved);ReleaseDrawTarget(dc);
+}
+void UIBattleMsgOptionWnd::OnLBtnDown(int x,int y)
+{
+    x-=m_x;y-=m_y;
+    const auto layout=GetLayout();
+    if (Contains(layout.close,x,y)) {SendMsg(this,6,135,0,0);return;}
+    if (Contains(layout.base,x,y)) {SendMsg(this,6,134,0,0);return;}
+    if (Contains(layout.scrollTrack,x,y)) {
+        if(Contains(layout.scrollThumb,x,y)){m_scrollDragging=true;m_grabY=y-layout.scrollThumb.top;}
+        else ScrollRows(y<layout.scrollThumb.top?1-m_view.rows:m_view.rows-1);
+        return;
+    }
+    if(y<17){m_dragging=true;m_grabX=x;m_grabY=y;return;}
+    m_view.selected=m_view.Hit(x,y,m_w);
+    if(m_view.selected>=0)g_session.m_battleMsgOnOffSet[m_view.selected]=!g_session.m_battleMsgOnOffSet[m_view.selected];
+    Invalidate();
+}
+void UIBattleMsgOptionWnd::OnMouseMove(int x,int y)
+{
+    if(m_dragging)Move(x-m_grabX,y-m_grabY);
+    else if(m_scrollDragging){
+        const auto layout=GetLayout();
+        const int travel=layout.scrollTrack.bottom-layout.scrollTrack.top-(layout.scrollThumb.bottom-layout.scrollThumb.top);
+        const int pos=std::clamp(y-m_y-static_cast<int>(layout.scrollTrack.top)-m_grabY,0,travel);
+        ScrollRows(pos*m_view.LastFirst()/travel-m_view.first);
+    }
+}
+void UIBattleMsgOptionWnd::OnLBtnUp(int,int){CancelPointerCapture();}
+void UIBattleMsgOptionWnd::OnWheel(int delta){ScrollRows(delta>=0?-3:3);}
+void UIBattleMsgOptionWnd::CancelPointerCapture()
+{
+    m_dragging=m_scrollDragging=false;
+    if(g_windowMgr.m_captureWindow==this)g_windowMgr.m_captureWindow=nullptr;
 }
