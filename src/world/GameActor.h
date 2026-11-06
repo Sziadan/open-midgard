@@ -295,6 +295,7 @@ public:
     void* m_homunAI; // CMercenaryAI
     void* m_merAI;   // CMercenaryAI
     u8 m_objectType;
+    bool m_corpseCreated = false;
     _MSG2AI m_homunMsg, m_homunResMsg, m_merMsg, m_merResMsg;
     CMsgEffect* m_birdEffect;
     CMsgEffect* m_iceEffect;
@@ -317,6 +318,7 @@ public:
     std::string m_chatBubbleText;
 
     virtual u8   ProcessState();
+    bool MakeCorpse();
     void ProcessEffectState();
     void MakeSpecialAttackEffect(unsigned int targetGid, float hideTime);
     virtual void SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;

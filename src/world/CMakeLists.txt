@@ -11,6 +11,9 @@ add_library(ro_world STATIC
     RagEffect.cpp
     SkillSpecialEffect.cpp
     ArrowEffect.cpp
+    Corpse.h
+    Corpse.cpp
+    CorpseState.h
     GroundScope.cpp
     SkillUnit.cpp
     GraffiSkill.cpp

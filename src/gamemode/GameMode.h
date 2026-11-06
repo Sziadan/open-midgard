@@ -158,6 +158,7 @@ public:
     };
 
     CGameMode();
+    bool MakeCorpse(CGameActor& actor);
     virtual ~CGameMode();
 
     virtual void OnInit(const char* worldName) override;

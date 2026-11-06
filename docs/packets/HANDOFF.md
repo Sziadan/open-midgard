@@ -1,12 +1,12 @@
 # Packet continuation handoff
 
-**Strong review follow-up (2026-11-06):** [effect repairs and remaining corpse gate](evidence/REVIEW-2026-11-06-followup.md) correct projection depth, SphereWind2 narrowing, ice sprites and unknown-emotion fallback. Root126/126; standalone459/460. Active work is PK45.06 (separate corpse lifecycle); PK09.04 and full PK48/49 remain open.
+**Latest reviewed checkpoint (2026-11-06):** [PK45.06 sprite corpses](evidence/PK45.06-sprite.md) now use independent world/resource ownership and original per-clip rendering/fade. Full root127/127 in174.27s; standalone460/460 in72.44s; six actual Vulkan captures pass. The earlier sole failing source check now passes, but does not certify the separate GR2 branch.
 
-**Active step: PK45.06.** [Strong-agent implementation card](work-items/PK45.06.md). Latest review commit: `packet(PK48.02): repair effect semantics and narrow remaining review gap`. Root126/126 in174.40s; standalone459/460 in72.64s. The sole remaining standalone failure is the missing original corpse lifecycle; no full certification claim.
+**Active step: PK45.06.** [Strong-agent continuation card](work-items/PK45.06.md). Sprite branch reviewed; GR2 model corpse remains unfinished in the same step. Checkpoint commit subject: `packet(PK45.06): restore independent sprite corpse lifecycle`. Full PK45/24/48/49 and PK09.04 remain open.
 
 ## Continue here
 
-**Next work:** implement [PK45.06](work-items/PK45.06.md) completely: source corpse eligibility, resource/actor/world ownership, final-frame rendering, time-derived fade and teardown. Then return to PK09.04 and the remaining item/chat/context list below. The twelve initial review gates now reduce to the single substantive corpse failure; preserve the other regressions.
+**Next work:** finish the separate CGrannyCorpse3d branch in [PK45.06](work-items/PK45.06.md): verify original counter/alpha/animation from PE, implement independent model-instance ownership and production retirement, then prove same-ID reuse, expiry, teardown and rendering. Preserve the sprite branch and its6120ms clock; do not apply that clock to GR2. Root owns the complex implementation; lighter agents may inventory source/fixtures or continue bounded PK09.04 work independently. Then resume the remaining item/chat/context list below.
 
 1. Continue [PK09.04](work-items/PK09.04.md) with remaining full item/status/delta/detail contexts, remaining item mutation/status/context acceptance. PK37.07 now covers normal NPC catalog and selected buy/sell right-clicks, exact row snapshots, copied identification/refine/cards, owner collisions, lifetime, scrolling/header/padding, model shrink, reopening and125% WindowProc input. Preserve passive QML input and never resolve an NPC detail through equal-index inventory/cart or catalog rows.
    The strong-agent fallback review is complete at the current representation boundary: primary mode36/44/45 actions reset/setup drag state; transaction submission is separate. Legacy grid GetCurItem clamps a right tail that coordinate GetItemInfo rejects, while the decompiled one-argument lookup is unreliable. Current full-width row UI lacks this mismatch. Do not invent header/blank/normal-left ForceUpdate gestures. Exact legacy geometry/signature behavior remains unaccepted; PK09.11's explicit ForceUpdate API and default raw-key Select toggle remain required.
@@ -19,7 +19,7 @@
 
 ## Verified current checkpoint
 
-All active targets build deploy-off. 126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors. The separate legacy all-unit project has the documented source-extraction migration gap.
+All active targets build deploy-off. Latest full root127/127 and standalone460/460 pass; six retained native sprite-corpse captures pass. This checkpoint accepts the sprite branch only. The separate GR2 runtime/render lifecycle remains pending despite green aggregate suites.
 
 No discovery row is newly closed. PK09.04, broad PK37, independent PK48/49 and deployed provenance remain open. The whole packet plan remains unfinished.
 

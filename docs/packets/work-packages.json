@@ -1714,7 +1714,7 @@
       },
       {
         "id": "PK45.06",
-        "action": "Restore source state3 corpse eligibility, separate world-owned resource snapshots, final-frame direction, time-derived alpha fade and actor removal/teardown through production death packets and rendered lifecycle checks; preserve ordinary-PC death and full PK45/24 acceptance.",
+        "action": "Restore separate source sprite and CGrannyCorpse3d lifecycles: exact eligibility, independent world/resource/model-instance ownership, final-frame direction/animation, branch-specific fade and actor removal/teardown through production packets and rendered checks. Sprite branch reviewed; GR2 remains pending. Preserve ordinary-PC death and full PK45/24 acceptance.",
         "tier": "S"
       }
     ],

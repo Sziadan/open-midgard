@@ -1,0 +1,17 @@
+{
+  "corpse_vtable_address": "0x6D72CC",
+  "corpse_vtable": [
+    "0x5d5b80",
+    "0x5d5bf0",
+    "0x5d5c80",
+    "0x558680",
+    "0x554cd0",
+    "0x558640",
+    "0x558650",
+    "0x555ee0",
+    "0x555500"
+  ],
+  "clock_factor_address": "0x6CEF34",
+  "clock_factor_bits": "0x3d2aaaab",
+  "clock_factor_value": 0.0416666679084301
+}

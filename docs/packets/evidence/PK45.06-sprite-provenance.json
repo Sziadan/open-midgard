@@ -1,0 +1,97 @@
+{
+  "date": "2026-11-06",
+  "baseline": "9d319307e38a977c32c50550c0f52666c902eb7a",
+  "status": "SPRITE_REVIEWED_GR2_PENDING",
+  "step_status": "IN_PROGRESS",
+  "server_profile": 20080910,
+  "client_receive_profile": 23,
+  "runtime_and_test_sha256": {
+    "CMakeLists.txt": "a26938f4042004370111aab8fe3827fcc62471f21fae8e7f10616ede5c0265fd",
+    "src/world/CMakeLists.txt": "574ddaff811f61abf4556f2edb4d36c9398527e04480299414ae39637ba53904",
+    "src/world/Corpse.cpp": "501d1233ba0218e0f5e5b9782e9f5c205bc9a7fcecfe5adfe4935b7f45263d11",
+    "src/world/Corpse.h": "d66366e253435ae83703282be435363ff3041bdb2819ac868bb73dcf164c14eb",
+    "src/world/CorpseState.h": "0a5710140c5a4624103d8072f91bbf0e4ca39055d988e2ad9486e232d0032541",
+    "src/world/GameActor.cpp": "604e967d30b7ded3546f75ec8e39dcbf423dfe8f94615d53c30691af991072e9",
+    "src/world/GameActor.h": "1f52a616df03ee07ddaeef6d247a1d4bae122e9bbb5b2ceb881e719fd7b4dab8",
+    "src/gamemode/GameModePacket.cpp": "8d2c5bb3c5c0ae3fc242a776a6d08c22c32fc3e52aa95d43a8d20468658980a1",
+    "src/gamemode/GameMode.h": "932d9ca8b536e8c9e1999575db87a2601050f33f230886d65ea791046a9a26aa",
+    "src/main/HealRenderPreview.cpp": "ffbace536f584faca7e179e0ba120b730ac13bcb1a9631518786b95fde183cd2",
+    "tools/tests/replay/PacketStreamReplay.cpp": "ae41114303eaa5106776507548e0ce091432654dc761d0c70818eca7d051103f",
+    "tools/tests/replay/CorpsePacketReplay.inc": "5619a82eed1f152c7507e4a4ed69840b1283ed5e64005b7eb0e148ecef27e5b0",
+    "tools/tests/check_actor_processstate_source.py": "7558cec7b4efbdad3a55da1748d68696acc654b3825edefd6934cdbf4875c3c7",
+    "tools/tests/check_corpse_render_evidence.py": "885d20a2ac5081553a8729e7ed918f31f96e825a8170aab6783cb836642f7325",
+    "tools/tests/run_corpse_preview.ps1": "5b246f5709ccd58710c4e04007780cf968c70348e16d561247d24a1c5eb4f596"
+  },
+  "read_only_reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/GameActor.cpp": "60686f1ea817285db0c60bf755d1f978d932870ac35319f7e22cc1ee8dd12f92",
+    "Ref/Npc.cpp": "442c22386814361792dca765bbd7775e6792aea22f50ad429f5b30747b855a40",
+    "Ref/Pc.cpp": "9cc1609984e321219ab1b2888cbeac05e94fc00534571970bf29935c19eeaf38",
+    "Ref/GameActor3d.cpp": "cb27e02bda9a8c0355099dc970c1720e95c5da383adadcd2f666a3fa694a33ba",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/Session2.cpp": "71f1b0655644f690ef1e5a63a2558751305acd6643f06c71b25a98f4dd4d3883",
+    "Ref/GameWorld.cpp": "828e99dd3660847806cfef94025af31e3cdb0e948d13be9600a74e6d391da930",
+    "Ref/GRF-Content/data/sprite/ork_warrior.act": "6153d73d844551353d557da1889e2cb75b223f1657a6d593bf6d3fb2703b572e",
+    "Ref/GRF-Content/data/sprite/ork_warrior.spr": "e859e3bd50ccf4cfc0d993254c0ce07f967e4232823da79270607365e5d34659"
+  },
+  "server_sources_sha256": {
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d"
+  },
+  "server_revision": null,
+  "server_revision_reason": "Unversioned source snapshot; pinned here by file hashes. Git status unavailable.",
+  "server_probe_scope": "copied unconditional packed layout declaration only; no complete header/server build",
+  "deployment": "RO_ENABLE_DEV_DEPLOY:BOOL=OFF",
+  "deployed_server_verified": false,
+  "reference_executable_executed_or_copied": false,
+  "built_executable_sha256": "a7fc680f1cd875767ed307fedefb390fdbef2b8c80d1054b622e91f132acfb80",
+  "full_root": {
+    "passed": 127,
+    "failed": 0,
+    "seconds": 174.27
+  },
+  "full_standalone": {
+    "passed": 460,
+    "failed": 0,
+    "seconds": 72.44
+  },
+  "review_rerun": {
+    "build_exit": 0,
+    "production_replays_passed": 2,
+    "source_check_passed": 1,
+    "native_capture_verifier_exit": 0
+  },
+  "native_capture": "six actual Vulkan swapchain readbacks; lossless RGB PNG conversion checked against BMP",
+  "evidence_sha256": {
+    "PK45.06-sprite-clock-pe.txt": "1ed90b56227913350c5a3d8539888107340e450f3ba89a7a984a10b625969dca",
+    "PK45.06-sprite-corpse-final-root-ctest.log": "a56437020a57b87ddf5090104b3b0b00c5adc25176f8059b6d106fef983aa91f",
+    "PK45.06-sprite-corpse-final-unit-ctest.log": "8297e32f479d9bcf9475dc111d0f9604842e2ebf69b0bd1490c1c0cdc358b497",
+    "PK45.06-sprite-ctor-pe.txt": "2f761cba4910a26e331d9f96a552d14e12f4bce0eba0133f69a0c444e0d0b74f",
+    "PK45.06-sprite-depth-pe.txt": "ac5855d0397d4e2527fdbd3af7defa66aab59e514f21131e923fe4c66af0c155",
+    "PK45.06-sprite-factory-pe.txt": "fcc6b7a6b2cacbbdc435beae4ff4a11235de31d16e4b539fa85b423028dd45f4",
+    "PK45.06-sprite-pe-data.json": "826ed2b2e1e890071ef001d9dce83779e1f7c02a7b833c9ef3d1349a3269dbfd",
+    "PK45.06-sprite-render-pe.txt": "7c78a34c40f8986189f8aa7955f00e7631ca18560757112b91390d030e6f029c",
+    "PK45.06-sprite-server-probe.cpp": "ea474c926613ca616ec8034347daaa0cb9fe67e106c81dfda180d73c5ed902e1",
+    "PK45.06-sprite-server-probe.txt": "febe19cb1891b84d300c0f9a8b91eef76bc120a1e6588ca29e72ca5a12d8c6af"
+  },
+  "renders_sha256": {
+    "corpse-0.png": "7eb1df5004dd765a3d84dd5459ee11e760c1fda6ed82d92397f36e7bb0d0fee4",
+    "corpse-0.txt": "669e151654ec792d796ed9d7879c1cc134720ef02bede2c8ec4408de54cc9713",
+    "corpse-3060.png": "a7678b287619ba6ddb516aa023b6ed1fc487d05663b33bbb0d0a403667929ea2",
+    "corpse-3060.txt": "f785bc5d2f377f950e4d5b2b1edc3879fbe9e31e8c1cbd5bce88138edcc262d8",
+    "corpse-6000.png": "591690e7337f331a83dd8abba123ab81825de2800fc8f4f6aba3e395e10834c5",
+    "corpse-6000.txt": "b2afe0ecd6c19f3f527fca25648b52716544d191503bb17871b51da5b6329427",
+    "corpse-6119.png": "563eadee3a03e79e272146c400fac80f65dfc3a3a74609ff09f886a3c1db652f",
+    "corpse-6119.txt": "cd858ae7b4f3674111e4630eb84ca179e9c92ed9172a43a2aa71b32c3c92dee4",
+    "corpse-6120.png": "563eadee3a03e79e272146c400fac80f65dfc3a3a74609ff09f886a3c1db652f",
+    "corpse-6120.txt": "7db1198e9e15da704117802f590c8eadb309d4cc2c447f159631fb61341f6904",
+    "corpse-transform.png": "8e0f745337a73d93f677fd939d56ecf7da33ac8888c4a55d4976dc67a108031c",
+    "corpse-transform.txt": "9cdf174306fcf991538e88c92263dac38277c3c549c4c487d10d6dc456d02915",
+    "results.json": "bed3220c93f8bfcca359c7ec0f6f080ae738eea96ac497449849b2f752e3469f",
+    "run-manifest.json": "dafb9e1decd88e4af6bc45eeadf2bf914922bf97a98d5d74a6bfb11f51d59ae2"
+  },
+  "review_fix": "Focused CTest now shares full replay settings isolation and30-second timeout; rebuilt and2/2 production replay tests passed afterward."
+}

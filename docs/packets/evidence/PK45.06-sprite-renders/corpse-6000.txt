@@ -1,0 +1,6 @@
+[pid:56252 t:645158515] [CorpsePreview] age=6000 alive=1 alpha=5 action=32 motion=11 depthFaces=0 alphaFaces=3
+[pid:56252 t:645158515] [CorpseVertex] i=0 x=339.5 y=222 oow=0.00203672214 z=0.986207485 rgba=05ffffff
+[pid:56252 t:645158515] [CorpseVertex] i=1 x=293.5 y=222 oow=0.00203672214 z=0.986207485 rgba=05ffffff
+[pid:56252 t:645158515] [CorpseVertex] i=2 x=339.5 y=259 oow=0.00206040312 z=0.985969067 rgba=05ffffff
+[pid:56252 t:645158515] [CorpseVertex] i=3 x=293.5 y=259 oow=0.00206040312 z=0.985969067 rgba=05ffffff
+[pid:56252 t:645158531] [HealPreview] captured GPU frame 'D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\review-2026-11-05\corpse-native\corpse-6000.bmp'

@@ -328,7 +328,8 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
         endif()
     endif()
     add_test(NAME packet_stream_replay_checks COMMAND packet_stream_replay_checks)
-    set_tests_properties(packet_stream_replay_checks PROPERTIES
+    add_test(NAME packet_corpse_lifecycle_checks COMMAND packet_stream_replay_checks --corpse-only)
+    set_tests_properties(packet_stream_replay_checks packet_corpse_lifecycle_checks PROPERTIES
         TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-replay-settings")
     add_executable(party_position_state_checks tools/tests/PartyPositionTests.cpp)

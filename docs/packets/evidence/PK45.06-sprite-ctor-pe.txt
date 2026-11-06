@@ -1,0 +1,16 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+005d5b50 <.text+0x1d4b50>:
+  5d5b50:	56                   	push   %esi
+  5d5b51:	8b f1                	mov    %ecx,%esi
+  5d5b53:	e8 58 f3 f7 ff       	call   0x554eb0
+  5d5b58:	b0 01                	mov    $0x1,%al
+  5d5b5a:	c7 06 cc 72 6d 00    	movl   $0x6d72cc,(%esi)
+  5d5b60:	88 86 8c 00 00 00    	mov    %al,0x8c(%esi)
+  5d5b66:	88 86 88 00 00 00    	mov    %al,0x88(%esi)
+  5d5b6c:	ff 15 2c c4 6c 00    	call   *0x6cc42c
+  5d5b72:	89 46 78             	mov    %eax,0x78(%esi)

@@ -1,4 +1,5 @@
 #include "GameActor.h"
+#include "CorpseState.h"
 #include "Gr2Monster.h"
 #include "ActorTint.h"
 #include "Emotion.h"
@@ -5010,11 +5011,11 @@ u8 CGameActor::ProcessState() {
         m_isCounter = 0;
         ProcessMotion();
         if (m_isMotionFinished && m_willBeAttackedList.empty()) {
-            // Ref/GameActor.cpp:1863 sends mode message 13, which only drops
-            // the actor from the cell map. The death pose stays until the
-            // vanish fade. Leaving state 3 here keeps that last frame; state
-            // 10 would drop the death billboard and the effects riding on it.
-            UnRegisterPos();
+            UnRegisterPos(); // Original mode message13 removes the cell only.
+            // Ref CPc::ProcessState retains player-style deaths. This port uses
+            // CPc for monster billboards too, so distinguish the actual style.
+            if (!m_isPc && ro::corpse::IsEligible(m_job, m_objectType) && MakeCorpse())
+                return 0;
         }
         break;
     case 4: {
@@ -8926,3 +8927,14 @@ void CPlayer::ProcessPreMove()
 // CPlayer stubs
 // CSkill stubs
 // CItem stubs
+
+bool CGameActor::MakeCorpse()
+{
+    if (m_corpseCreated) return true;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || !mode->m_world) return false;
+    // Resolve the same runtime ACT/SPR used by the source death motion before
+    // the actor is retired; non-PC billboards may hold them in their cache.
+    ResolveRuntimeActorActRes(this);
+    return mode->MakeCorpse(*this);
+}

@@ -170,7 +170,7 @@ current_anchors = {
     "state 1 legacy stance/screen route explicitly scoped out": (1, r"old stance/screen-specific GID 3 route depends on legacy UI state not represented by the Qt client[\s\S]*?SetState\(0\)"),
     "state 1 applies Asura force tuple and timeout": (1, r"m_isAsuraAttack[\s\S]*?m_forceAct\s*=\s*96[\s\S]*?m_forceStateEndTick\s*=\s*timeGetTime\(\)\s*\+\s*3000"),
     "states 2/9/12 process then return idle": (2, 9, 12, r"ProcessMotion\(\)[\s\S]*?m_isMotionFinished[\s\S]*?SetState\(0\)"),
-    "state 3 waits for attacks, sends 13, and retains final corpse frame": (3, r"m_isForceState\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_willBeAttackedList\.empty\(\)[\s\S]*?SendMsg\(13,[\s\S]*?guardedJob[\s\S]*?isMercenaryOrHomunculus[\s\S]*?modern actor remains in the world list[\s\S]*?m_stateId\s*=\s*10[\s\S]*?return\s+0"),
+    "state 3 waits for attacks, removes cell registration, and makes an independent eligible corpse": (3, r"m_isForceState\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_willBeAttackedList\.empty\(\)[\s\S]*?UnRegisterPos\(\)[\s\S]*?!m_isPc[\s\S]*?ro::corpse::IsEligible\(m_job, m_objectType\)[\s\S]*?MakeCorpse\(\)[\s\S]*?return\s+0"),
     "state 4 interpolates damage destination from prior process time": (4, r"m_damageDestX[\s\S]*?m_lastProcessStateTime[\s\S]*?m_damageDestZ[\s\S]*?SetState\(0\)"),
     "states 5/7 process motion without added freeze behavior": (5, 7, r"m_isCounter\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_isMotionFinished[\s\S]*?SetState\(0\)"),
     "state 8 periodically faces target without recharge handling": (8, r"m_targetGid[\s\S]*?%\s*34[\s\S]*?std::atan2[\s\S]*?m_roty\s*=\s*static_cast<float>\(rotation\)"),
@@ -207,6 +207,18 @@ if movement_lambda:
 check(has(impl, r"m_lastProcessStateTime\s*=\s*timeGetTime\(\)[\s\S]*?m_lastServerTime\s*=\s*serverTime[\s\S]*?if\s*\(\s*posChanged\s*\)[\s\S]*?GetHeight"),
       "current implementation mismatch: common timestamp and conditional terrain-height tail")
 
+# The port combines original CNpc and CPc sprite storage. Player-style state3
+# retains its actor as Ref CPc::ProcessState does; generic NPC deaths own a corpse.
+corpse_state = (ROOT / "src/world/CorpseState.h").read_text(encoding="utf-8")
+check(has(corpse_state, r"job > 28 && job < 4000[\s\S]*?objectType == 9[\s\S]*?job > 6000 && job < 6048"),
+      "corpse eligibility must retain original NPC/type9/strict mercenary boundaries")
+corpse = (ROOT / "src/world/Corpse.cpp").read_text(encoding="utf-8")
+check("CGameObject::Get8Dir(m_roty)" in corpse and "frames < 255.0" in corpse,
+      "independent corpse must use generic direction and its source fade lifetime")
+check("static_cast<double>(0.041666668f)" in corpse_state and "static_cast<float>" in corpse_state,
+      "corpse clock must use the original float multiplier and float storage")
+check("m_stateId = 10" not in current_group(3), "corpse must not be replaced by an idle actor state")
+
 # These client-only integrations are allowed to coexist with the source
 # state machine, and are required to remain reachable after the port.
 integration_anchors = {
@@ -226,4 +238,4 @@ if errors:
         print(f"FAIL {error}")
     raise SystemExit(1)
 print("PASS ProcessState source inventory and in-scope branch/integration anchors")
-print("Documented scope/architecture differences: pet chat data, legacy UI stance route, separate CCorpse object (current actor holds final frame)")
+print("Documented scope/architecture differences: pet chat data and legacy UI stance route; SPR CCorpse path is implemented; separate GR2 corpse virtual path remains pending")

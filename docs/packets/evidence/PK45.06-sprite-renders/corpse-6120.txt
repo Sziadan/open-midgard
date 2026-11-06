@@ -1,0 +1,2 @@
+[pid:32448 t:645160078] [CorpsePreview] age=6120 alive=0 alpha=0 action=32 motion=11 depthFaces=0 alphaFaces=0
+[pid:32448 t:645160093] [HealPreview] captured GPU frame 'D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\review-2026-11-05\corpse-native\corpse-6120.bmp'

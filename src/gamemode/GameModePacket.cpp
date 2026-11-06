@@ -1,4 +1,6 @@
 #include "GameModePacket.h"
+#include "world/Corpse.h"
+#include "world/Gr2Monster.h"
 #include "Commerce.h"
 #include "LoginMode.h"
 
@@ -450,8 +452,6 @@ constexpr u32 kEffectIdBaseLevelUpSuperNovice = 338;
 constexpr u32 kEffectIdJobLevelUpSuperNovice = 337;
 constexpr u32 kEffectIdBaseLevelUpTaekwon = 582;
 constexpr u32 kLocalLevelUpNotifySuppressMs = 1200;
-constexpr u32 kDeathFadeDurationMs = 510;
-constexpr u32 kDeathCorpseHoldMs = 1290;
 
 struct RemoteMoveApplyTrace {
     u32 lastClientTick = 0;
@@ -5804,11 +5804,12 @@ void BeginActorDeath(CGameMode& mode, CGameActor& actor, u32 gid)
         pcActor->InvalidateBillboard();
     }
 
-    // Monsters keep the existing corpse hold + fade timing, but PCs should
-    // remain visible on the ground until a later vanish/remove packet arrives.
-    if (!IsLocalPlayerActor(mode, gid) && actor.m_isPc == 0) {
+    // Sprite deaths use m_willBeDead only for queued hits. The separate
+    // original CGrannyCorpse3d path is still being ported (PK45.06); retain
+    // the existing model hold/fade until that path owns a real model corpse.
+    if (Gr2MonsterModel(actor.m_job) && !IsLocalPlayerActor(mode, gid) && actor.m_isPc == 0)
         actor.m_willBeDead = 1;
-    }
+
 }
 
 void HandleActorResurrection(CGameMode& mode, const PacketView& packet)
@@ -8396,17 +8397,13 @@ void CleanupPendingActorDespawns(CGameMode& mode)
             continue;
         }
 
-        if (actor->m_willBeDead == 1 && actor->m_vanishTime == 0) {
-            const u32 deathFadeStart = actor->m_stateStartTick + kDeathCorpseHoldMs;
-            if (now >= deathFadeStart) {
-                actor->m_vanishTime = now + kDeathFadeDurationMs;
+        // Temporary preservation of the pre-existing GR2 lifecycle. Generic
+        // sprite corpses must never use this timer or lose queued death hits.
+        if (Gr2MonsterModel(actor->m_job) && actor->m_willBeDead == 1 && actor->m_vanishTime == 0) {
+            if (now >= actor->m_stateStartTick + 1290u) {
+                actor->m_vanishTime = now + 510u;
                 actor->m_willBeDead = 2;
-                if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
-                    pcActor->InvalidateBillboard();
-                }
-                DbgLog("[GameMode] begin death fade gid=%u vanishAt=%u\n",
-                    gid,
-                    static_cast<unsigned int>(actor->m_vanishTime));
+                if (auto* pcActor = dynamic_cast<CPc*>(actor)) pcActor->InvalidateBillboard();
             }
             continue;
         }
@@ -8989,4 +8986,23 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
 void NoteLocalHideSkillRequest(u16 skillId, u32 targetGid)
 {
     RecordLocalHideSkillRequest(skillId, targetGid);
+}
+
+bool CGameMode::MakeCorpse(CGameActor& actor)
+{
+    if (actor.m_corpseCreated) return true;
+    if (!m_world || m_world->m_player == &actor) return false;
+    // GR2 has a distinct source virtual corpse class, not an empty SPR object.
+    if (Gr2MonsterModel(actor.m_job)) return false;
+    const auto owner = m_runtimeActors.find(actor.m_gid);
+    if (owner == m_runtimeActors.end() || owner->second != &actor) return false;
+    auto corpse = std::make_unique<CCorpse>(actor.m_pos, actor.m_actRes, actor.m_sprRes,
+        actor.m_baseAction, actor.m_curMotion, actor.m_roty);
+    // The original owning game-object sweep reaches the newly appended corpse
+    // in this step. Actors are a separate pass here, so initialize its frame now.
+    corpse->OnProcess();
+    m_world->m_gameObjectList.push_back(corpse.release());
+    actor.m_corpseCreated = true;
+    RemoveRuntimeActor(*this, actor.m_gid);
+    return true;
 }

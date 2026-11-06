@@ -1,5 +1,6 @@
 #include "world/World.h"
 #include "world/GameActor.h"
+#include "world/Corpse.h"
 #include "world/Gr2Monster.h"
 #include "core/Timer.h"
 #include "world/RagEffect.h"
@@ -48,10 +49,54 @@
 #include <QQuickItem>
 #endif
 
+// Corpse proof uses the same production queue/device/swapchain capture as the
+// other opt-in previews, with staged read-only SPR/ACT files and no game mode.
+static void RunCorpseRenderPreview()
+{
+    auto* act=g_resMgr.GetAs<CActRes>("data\\sprite\\ork_warrior.act");
+    auto* spr=g_resMgr.GetAs<CSprRes>("data\\sprite\\ork_warrior.spr");
+    if(!act||!spr) { DbgLog("[CorpsePreview] missing staged original resources\n");return; }
+    if (std::getenv("RO_HEAL_PREVIEW_CORPSE_TRANSFORM")) {
+        for (auto& clip:act->actions[32].motions[11].sprClips) {
+            clip.flags^=1;clip.angle+=45;clip.zoomX*=1.5f;clip.zoomY*=0.75f;
+        }
+    }
+    const u32 age=std::getenv("RO_HEAL_PREVIEW_CORPSE_AGE")
+        ?static_cast<u32>(std::strtoul(std::getenv("RO_HEAL_PREVIEW_CORPSE_AGE"),nullptr,10)):0;
+    auto corpse=std::make_unique<CCorpse>(vector3d{},act,spr,32,11,0);
+    const bool alive=corpse->ProcessAt(corpse->m_stateStartTick+age)!=0;
+    const int alpha=corpse->m_u28.m_sprColor.u.s.a;
+    const int action=corpse->m_curAction,motion=corpse->m_curMotion;
+    if(alive)g_world.m_gameObjectList.push_back(corpse.release());
+    matrix view{};
+    view.m[0][0]=1;view.m[1][1]=0.70710678f;view.m[2][1]=-0.70710678f;
+    view.m[1][2]=0.70710678f;view.m[2][2]=0.70710678f;view.m[3][2]=500;view.m[3][3]=1;
+    g_renderer.m_nClearColor=0xFF202020;
+    g_renderer.ClearBackground();g_renderer.Clear(0);
+    // Fixed oracle camera for reproducible PE geometry and native pixels.
+    g_renderer.m_hpc=1750;g_renderer.m_vpc=1750;
+    g_renderer.m_xoffset=320;g_renderer.m_yoffset=240;
+    g_renderer.m_screenXFactor=1;g_renderer.m_screenYFactor=1;
+    g_world.RenderGameObjects(view);
+    DbgLog("[CorpsePreview] age=%u alive=%d alpha=%d action=%d motion=%d depthFaces=%u alphaFaces=%u\n",
+        age,alive,alpha,action,motion,static_cast<unsigned>(g_renderer.m_rpAlphaDepthList.size()),
+        static_cast<unsigned>(g_renderer.m_rpAlphaList.size()));
+    const RPFace* first=!g_renderer.m_rpAlphaDepthList.empty()?g_renderer.m_rpAlphaDepthList.front().second:
+        (!g_renderer.m_rpAlphaList.empty()?g_renderer.m_rpAlphaList.front().second:nullptr);
+    if(first)for(int vertex=0;vertex<4;++vertex) {
+        const auto& v=first->verts[vertex];
+        DbgLog("[CorpseVertex] i=%d x=%.9g y=%.9g oow=%.9g z=%.9g rgba=%08x\n",
+            vertex,v.x,v.y,v.oow,v.z,v.color);
+    }
+    g_renderer.DrawScene();GetRenderDevice().Present(false);
+    g_world.ClearFixedObjects();
+}
+
 // Opt-in native render fixture. Uses installed assets and the selected graphics
 // backend, without entering a game mode, logging in, or saving settings.
 void RunHealRenderPreview()
 {
+    if (std::getenv("RO_HEAL_PREVIEW_CORPSE")) { RunCorpseRenderPreview();return; }
     if (std::getenv("RO_HEAL_PREVIEW_MONSTER")) WaitForGr2Monsters();
     const char* previewMap=std::getenv("RO_HEAL_PREVIEW_MAP");
     const bool room=std::getenv("RO_HEAL_PREVIEW_ROOM")!=nullptr || previewMap;

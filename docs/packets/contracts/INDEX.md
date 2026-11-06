@@ -108,3 +108,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.ITEM-USE-FEEDBACK](PK09.ITEM-USE-FEEDBACK.md) records source use-effect/action selection, duplicate replacement, exact-AID notices and compatibility recovery feedback accepted by PK09.19.
 
 [PK09.RECOVERY-DELTA](PK09.RECOVERY-DELTA.md) records selected signed013D state, feedback, ordering and independent maxima accepted by PK09.20.
+
+[PK45.SPRITE-CORPSE](PK45.SPRITE-CORPSE.md) records reviewed sprite corpse ownership, original clock and per-clip rendering. PK45.06 remains IN_PROGRESS for its distinct GR2 model branch; no discovery-row closure.

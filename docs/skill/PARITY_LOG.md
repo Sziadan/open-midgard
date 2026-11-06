@@ -5112,3 +5112,6 @@ HighPriest.exe.c:515214–515222 / Ref/Skill.cpp:2714–2722 type 5 (world depth
 HighPriest.exe file offset 0x31D824 (_ + B7 D4 B5 E5 + nul), HighPriest.exe.c:475437 / Ref/Session.cpp:21464–21465 -> GameActor.cpp and Session.cpp rod token: corrected CE to D4 for weapon types [10,23]. Exact extracted male/female wizard staff ACT/SPR names and headers corroborate it. All other token cases and attack-selection control flow are unchanged. No unresolved asset symbols.
 
 check_frozen_staff_presentation.py passes compiled production-body resource resolution, shell submission and depth sampling checks; existing ammunition/input/casting/weather regressions pass. MinGW Qt build succeeds. No media rendered or client launched; no full-suite or live acceptance claim.
+
+
+2026-11-06 packet corpse follow-up supersedes earlier missing-MakeCorpse/state10 sprite descriptions: CCorpse now owns independent ACT/SPR resources and textures, retires eligible non-player actors after completed motion/queued hits, renders original clips and expires at6120ms. Full root127/127 and standalone460/460 plus six Vulkan captures pass. Separate CGrannyCorpse3d remains pending under PK45.06; see docs/packets/evidence/PK45.06-sprite.md. Other packet-plan coverage and independent acceptance remain open.
