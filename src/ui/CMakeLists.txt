@@ -27,6 +27,8 @@ add_library(ro_ui STATIC
     UINewChatWnd.cpp
     UISubChatWnd.h
     UISubChatWnd.cpp
+    UIChatRoomWnd.h
+    UIChatRoomWnd.cpp
     UIBasicInfoWnd.h
     UIBasicInfoWnd.cpp
     UIStatusWnd.h

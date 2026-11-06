@@ -95,7 +95,11 @@ current_only = actor_cases - ref_cases
 assert current_only == {34, 35}, f"current-only actor IDs changed: {sorted(current_only)}"
 assert actor_lifecycle_inherited.isdisjoint(actor_cases | out_of_scope_ui)
 assert len(ref_cases) == 79, f"expected 79 canonical actor message IDs, found {len(ref_cases)}"
-assert len(actor_cases) == 75, f"expected 75 current actor message IDs, found {len(actor_cases)}"
+assert len(actor_cases) == 77, f"expected 77 current actor message IDs, found {len(actor_cases)}"
+# PK09.21 now owns source room-title metadata/lifetime; rendering remains a separate gate.
+assert {32, 33}.issubset(actor_cases)
+actor_bodies = top_level_case_bodies(actor)
+assert "UIChatRoomTitle" in actor_bodies[32] and "m_chatTitle" in actor_bodies[33]
 unmapped = ref_cases - actor_cases - able_cases - actor_lifecycle_inherited - out_of_scope_ui
 assert len(unmapped) == 0, f"expected no in-scope actor IDs still unmapped, found {len(unmapped)}"
 print(f"Ref and canonical EXE top-level message IDs: {len(ref_cases)}")
@@ -103,7 +107,7 @@ print(f"Current CGameActor::SendMsg and status-delegate IDs: {len(actor_cases)}"
 print(f"Current-only actor UI extension IDs: {sorted(current_only)}")
 print(f"IDs delegated to the current CAbleToMakeEffect::SendMsg: {sorted(able_inherited)}")
 print(f"Actor lifecycle callbacks represented outside SendMsg: {sorted(actor_lifecycle_inherited - actor_cases)}")
-print(f"UI-only source IDs excluded by plan scope: {sorted(out_of_scope_ui)}")
+print(f"UI-only source IDs excluded by the original skill-plan scope: {sorted(out_of_scope_ui)}")
 print(f"Remaining in-scope source IDs without a direct/inherited current case: {len(unmapped)}")
 print("Remaining IDs:", sorted(unmapped))
 print("Inventory only; this is not a branch-parity pass. Compare each source arm and its inherited behavior before marking WP2.2 complete.")

@@ -2158,3 +2158,7 @@ add_test(NAME chat_battle_options_checks COMMAND chat_battle_options_checks)
 add_executable(chat_scrollbar_checks ChatScrollBarTests.cpp)
 target_compile_features(chat_scrollbar_checks PRIVATE cxx_std_17)
 add_test(NAME chat_scrollbar_checks COMMAND chat_scrollbar_checks)
+
+add_executable(chat_room_packet_checks ChatRoomPacketTests.cpp)
+target_compile_features(chat_room_packet_checks PRIVATE cxx_std_17)
+add_test(NAME chat_room_packet_checks COMMAND chat_room_packet_checks)

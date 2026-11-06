@@ -17,7 +17,7 @@ int casts=0,turns=0,moves=0,attacks=0,pickups=0,talks=0,selections=0,skillChaseC
 constexpr int VK_SHIFT=16;
 int GetKeyState(int){return shift?0x8000:0;}
 int GetTickCount(){return 1000;}
-struct {bool HasActiveNpcDialog(){return modal;}} g_windowMgr;
+struct {void* m_chatRoomWnd=nullptr;bool HasActiveNpcDialog(){return modal;}} g_windowMgr;
 void ClearPickupIntent(CGameMode&){}
 void ClearAttackChaseHint(CGameMode&){}
 void ClearSkillChase(CGameMode&){++skillChaseClears;}
@@ -57,6 +57,12 @@ int main(){
     assert(mode.Click(100,200)==1&&turns==1);
     player.m_isSitting=0;moves=turns=0;
     assert(mode.Click(100,200)==1&&moves==1&&turns==0);
+    // Source room context also selects turn-only ground clicks, even standing.
+    g_windowMgr.m_chatRoomWnd=&player;moves=turns=0;
+    assert(mode.Click(100,200)==1&&turns==1&&moves==0);
+    mode.m_skillUseInfo={28,1};validTarget=true;casts=turns=moves=0;
+    assert(mode.Click(100,200)==1&&casts==1&&turns==0&&moves==0);
+    g_windowMgr.m_chatRoomWnd=nullptr;
     // NPC modal handling still takes precedence over world actions.
     modal=true;mode.m_skillUseInfo={28,1};casts=turns=moves=0;
     assert(mode.Click(100,200)==1&&casts==0&&turns==0&&moves==0);

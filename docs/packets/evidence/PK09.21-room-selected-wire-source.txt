@@ -1,0 +1,519 @@
+
+### Ref\GameMode.cpp
+
+15948:     case TT_NORMAL:
+15949:     case TT_NORMAL_FROM_CHATROOM:
+15950:       Ptr = g_windowMgr.m_chatMsg._Ptr;
+15951:       *(float *)&val2 = 0.0;
+15952:       val1 = TT_NORMAL;
+15953:       if ( !g_windowMgr.m_chatMsg._Ptr )
+15954:         Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+15955:       strcpy(&chat2, Ptr);
+15956:       if ( chat2 == 37 )
+15957:       {
+15958:         if ( strlen(&chat2) <= 1 )
+15959:           return;
+15960:         *(float *)&val2 = COERCE_FLOAT(strlen(v276));
+15961:         if ( std::string::_Grow(&g_windowMgr.m_chatMsg, val2, 1u) )
+15962:         {
+15963:           v24 = val2;
+15964:           qmemcpy(g_windowMgr.m_chatMsg._Ptr, v276, val2);
+15965:           g_windowMgr.m_chatMsg._Len = v24;
+15966:           g_windowMgr.m_chatMsg._Ptr[v24] = 0;
+15967:         }
+15968:         val2 = 1;
+15969:       }
+15970:       else if ( chat2 == 36 )
+15971:       {
+15972:         if ( strlen(&chat2) <= 1 )
+15973:           return;
+15974:         dy = strlen(v276);
+15975:         if ( std::string::_Grow(&g_windowMgr.m_chatMsg, dy, 1u) )
+15976:         {
+15977:           v25 = dy;
+15978:           qmemcpy(g_windowMgr.m_chatMsg._Ptr, v276, dy);
+15979:           g_windowMgr.m_chatMsg._Len = v25;
+15980:           g_windowMgr.m_chatMsg._Ptr[v25] = 0;
+15981:         }
+15982:         val1 = TT_BROADCAST;
+15983:       }
+15984:       v26 = 1;
+15985:       if ( !((unsigned __int16)GetAsyncKeyState(17) >> 8) )
+15986:         v26 = val2;
+15987:       v27 = TT_BROADCAST;
+15988:       if ( !((unsigned __int16)GetAsyncKeyState(18) >> 8) )
+15989:         v27 = val1;
+15990:       if ( talkType != TT_NORMAL_FROM_CHATROOM )
+15991:       {
+15992:         if ( g_session.m_isBattleChat )
+15993:         {
+15994:           this->CMode::SendMsg(this, 271, 0, 0, 0);
+15995:           return;
+15996:         }
+15997:         if ( g_session.m_talkType == 2 )
+15998:         {
+15999:           if ( g_guildInfo.m_gdid )
+16000:           {
+16001:             if ( v27 == TT_NORMAL )
+16002:             {
+16003:               this->CMode::SendMsg(this, 142, 0, 0, 0);
+16004:               return;
+16005:             }
+16006:             goto LABEL_83;
+16007:           }
+16008:         }
+16009:         else if ( g_session.m_talkType == 1 )
+16010:         {
+16011:           if ( !v26 && CSession::GetNumParty(&g_session) )
+16012:             goto LABEL_78;
+16013:           goto LABEL_83;
+16014:         }
+16015:         if ( v26 && CSession::GetNumParty(&g_session) )
+16016:         {
+16017: LABEL_78:
+16018:           this->CMode::SendMsg(this, 72, 0, 0, 0);
+16019:           return;
+16020:         }
+16021:         if ( v27 )
+16022:           goto LABEL_86;
+16023: LABEL_83:
+16024:         this->CMode::SendMsg(this, 6, 0, 0, 0);
+16025:         return;
+16026:       }
+16027:       if ( g_session.m_talkType == 2 && g_guildInfo.m_gdid )
+16028:         goto LABEL_86;
+16029:       if ( v26 && CSession::GetNumParty(&g_session) )
+16030:         goto LABEL_78;
+16031:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(6, 0, 0, 0);
+16032:       return;
+16033:     case TT_BROADCAST:
+16034:       this->CMode::SendMsg(this, 7, 0, 0, 0);
+16035:       return;
+16036:     case TT_UNKNOWN:
+
+### Ref\GameMode2.cpp
+
+2883:     case 6u:
+2884:       if ( !strlen(UIWindowMgr::GetChatMsg(&g_windowMgr)) || CSession::IsEFST_Berserk(&g_session) == 1 )
+2885:         return SUT_NOSKILL;
+2886:       strcpy(_S, UIWindowMgr::GetChatMsg(&g_windowMgr));
+2887:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, _S) )
+2888:       {
+2889:         UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+2890:         v308 = MsgStr(MSI_NO_SEND_BECAUSE_INSULT);
+2891:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v308, 255, 0, 0);
+2892:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+2893:         return SUT_NOSKILL;
+2894:       }
+2895:       if ( std::operator==(&this->m_lastChat, _S) )
+2896:         ++this->m_sameChatRepeatCnt;
+2897:       else
+2898:         this->m_sameChatRepeatCnt = 0;
+2899:       if ( IsSameSentence(this->m_sameChatRepeatCnt) )
+2900:         return SUT_NOSKILL;
+2901:       std::string::operator=(&this->m_lastChat, _S);
+2902:       qmemcpy(chat_p2, _S, sizeof(chat_p2));
+2903:       v677 = v627;
+2904:       v678 = v628;
+2905:       v309 = strlen(chat_p2);
+2906:       if ( v309 > 6 )
+2907:       {
+2908:         if ( v309 + 3 < 247 )
+2909:         {
+2910:           chat_p2[v309 + 2] = chat_p2[v309];
+2911:           chat_p2[v309 + 3] = chat_p2[v309 + 1];
+
+### Ref\GameMode2.cpp
+
+3110:       cyn = CLanguage::GetLanguageCharset(g_language, 0);
+3111:       CharName = CSession::GetCharName(&g_session);
+3112:       sprintf(chat2, "%s : %s%s", CharName, cyn, v590);
+3113:       v634 = 0;
+3114:       v346 = strlen(chat2) + 1;
+3115:       UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3116:       *(_WORD *)&passwd[4] = 243;
+3117:       *(_WORD *)&passwd[6] = v346 - 1 + 5;
+3118:       *(_DWORD *)buf = *(_DWORD *)&passwd[4];
+3119:       qmemcpy(&buf[4], chat2, v346);
+3120:       cyo = *(unsigned __int16 *)&passwd[6];
+3121:       v347 = CRagConnection::instanceR();
+3122:       CRagConnection::SendPacket(v347, cyo, buf);
+3123:       return SUT_NOSKILL;
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\clif_packetdb.hpp
+
+78: 	parseable_packet(0x00cf,27,clif_parse_PMIgnore,2,26);
+79: 	parseable_packet( HEADER_CZ_SETTING_WHISPER_STATE, sizeof( PACKET_CZ_SETTING_WHISPER_STATE ), clif_parse_PMIgnoreAll, 0 );
+80: 	parseable_packet(0x00d3,2,clif_parse_PMIgnoreList,0);
+81: 	parseable_packet( HEADER_CZ_CREATE_CHATROOM, -1, clif_parse_CreateChatRoom, 0 );
+82: 	parseable_packet( HEADER_CZ_REQ_ENTER_ROOM, sizeof( PACKET_CZ_REQ_ENTER_ROOM ), clif_parse_ChatAddMember, 0 );
+83: 	parseable_packet( HEADER_CZ_CHANGE_CHATROOM, -1, clif_parse_ChatRoomStatusChange, 0 );
+84: 	parseable_packet(0x00e0,30,clif_parse_ChangeChatOwner,2,6);
+85: 	parseable_packet(0x00e2,26,clif_parse_KickFromChat,2);
+86: 	parseable_packet(0x00e3,2,clif_parse_ChatLeave,0);
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\clif_packetdb.hpp
+
+297: 	parseable_packet(0x0085,20,clif_parse_UseSkillToId,7,12,16);
+298: 	parseable_packet(0x0089,15,clif_parse_GetCharNameRequest,11);
+299: 	parseable_packet(0x008c,23,clif_parse_UseSkillToPos,3,6,17,21);
+300: 	parseable_packet(0x0094,10,clif_parse_TakeItem,6);
+301: 	parseable_packet(0x009b,6,clif_parse_WalkToXY,3);
+302: 	parseable_packet(0x009f,13,clif_parse_ChangeDir,5,12);
+303: 	parseable_packet(0x00a2,103,clif_parse_UseSkillToPosMoreInfo,3,6,17,21,23);
+304: 	parseable_packet(0x00a7,12,clif_parse_SolveCharName,8);
+305: 	parseable_packet(0x00f3,-1,clif_parse_GlobalMessage,2,4);
+306: 	parseable_packet(0x00f5,17,clif_parse_UseItem,6,12);
+307: 	parseable_packet(0x00f7,10,clif_parse_TickSend,6);
+308: 	parseable_packet(0x0113,16,clif_parse_MoveToKafra,5,12);
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp
+
+980: struct PACKET_ZC_CHANGE_CHATROOM{
+981: 	uint16 packetType;
+982: 	uint16 packetSize;
+983: 	uint32 ownerId;
+984: 	uint32 chatId;
+985: 	uint16 limit;
+986: 	uint16 users;
+987: 	uint8 flag;
+988: 	char title[];
+989: } __attribute__((packed));
+990: DEFINE_PACKET_HEADER(ZC_CHANGE_CHATROOM, 0xdf);
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp
+
+1084: struct PACKET_ZC_ENTER_ROOM_sub{
+1085: 	uint32 flag;
+1086: 	char name[NAME_LENGTH];
+1087: } __attribute__((packed));
+1088:
+1089: struct PACKET_ZC_ENTER_ROOM{
+1090: 	uint16 packetType;
+1091: 	uint16 packetSize;
+1092: 	uint32 chatId;
+1093: 	PACKET_ZC_ENTER_ROOM_sub members[];
+1094: } __attribute__((packed));
+1095: DEFINE_PACKET_HEADER(ZC_ENTER_ROOM, 0xdb);
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp
+
+1692: struct PACKET_ZC_ROOM_NEWENTRY {
+1693: 	int16 packetType;
+1694: 	uint16 packetSize;
+1695: 	int32 owner;
+1696: 	int32 id;
+1697: 	uint16 limit;
+1698: 	uint16 users;
+1699: 	uint8 type;
+1700: 	char title[];
+1701: } __attribute__((packed));
+1702: DEFINE_PACKET_HEADER(ZC_ROOM_NEWENTRY, 0xd7);
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp
+
+1778: 	int16 packetType;
+1779: } __attribute__((packed));
+1780: DEFINE_PACKET_HEADER(ZC_THROW_MVPITEM, 0x10d);
+1781:
+1782: struct PACKET_ZC_UPDATE_MAPINFO{
+1783: 	int16 packetType;
+1784: 	int16 x;
+1785: 	int16 y;
+1786: 	int16 type;
+1787: 	char mapname[MAP_NAME_LENGTH_EXT];
+1788: } __attribute__((packed));
+1789: DEFINE_PACKET_HEADER(ZC_UPDATE_MAPINFO, 0x192);
+1790:
+1791: struct PACKET_CZ_REQ_ENTER_ROOM{
+1792: 	int16 packetType;
+1793: 	uint32 chat_id;
+1794: 	char password[8];
+1795: } __attribute__((packed));
+1796: DEFINE_PACKET_HEADER(CZ_REQ_ENTER_ROOM, 0xd9);
+1797:
+1798: struct PACKET_CZ_CHANGE_CHATROOM{
+1799: 	int16 packetType;
+1800: 	uint16 packetSize;
+1801: 	uint16 limit;
+1802: 	uint8 type;
+1803: 	char password[8];
+1804: 	char title[];
+1805: } __attribute__((packed));
+1806: DEFINE_PACKET_HEADER(CZ_CHANGE_CHATROOM, 0xde);
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\clif.cpp
+
+4498: /// Inform client whether chatroom creation was successful or not.
+4499: /// 00d6 <flag>.B (ZC_ACK_CREATE_CHATROOM)
+4500: /// flag:
+4501: ///     0 = Room has been successfully created (opens chat room)
+4502: ///     1 = Room limit exceeded
+4503: ///     2 = Same room already exists
+4504: void clif_createchat( const map_session_data& sd, e_create_chatroom flag ){
+4505: 	PACKET_ZC_ACK_CREATE_CHATROOM packet{};
+4506:
+4507: 	packet.packetType = HEADER_ZC_ACK_CREATE_CHATROOM;
+4508: 	packet.flag = static_cast<decltype(packet.flag)>(flag);
+4509:
+4510: 	clif_send( &packet, sizeof( packet ), &sd, SELF );
+4511: }
+4512:
+4513: /// Calculates the chat status
+4514: /// type:
+4515: ///     0 = private (password protected)
+4516: ///     1 = public
+4517: ///     2 = arena (npc waiting room)
+4518: ///     3 = PK zone (non-clickable)
+4519: static e_status_chatroom clif_chat_status( const chat_data &cd ){
+4520: 	if (cd.owner->type == BL_PC)
+4521: 		return (cd.pub) ? STATUSROOM_PUBLIC : STATUSROOM_PRIVATE;
+4522: 	else if (cd.owner->type == BL_NPC)
+4523: 		return (cd.limit) ? STATUSROOM_ARENA : STATUSROOM_PK_ZONE;
+4524: 	else
+4525: 		return STATUSROOM_PUBLIC;
+4526: }
+4527:
+4528: /// Calculates the chat user count
+4529: static uint16 clif_chat_usercount( const chat_data& cd ){
+4530: 	if( cd.owner->type == BL_NPC ){
+4531: 		return cd.users + 1;
+4532: 	}else{
+4533: 		return cd.users;
+4534: 	}
+4535: }
+4536:
+4537: /// Display a chat above the owner.
+4538: /// 00d7 <packet len>.W <owner id>.L <char id>.L <limit>.W <users>.W <type>.B <title>.?B (ZC_ROOM_NEWENTRY)
+4539: void clif_dispchat( const chat_data& cd ){
+4540: 	if( cd.owner == nullptr ){
+4541: 		return;
+4542: 	}
+4543:
+4544: 	PACKET_ZC_ROOM_NEWENTRY* p = reinterpret_cast<PACKET_ZC_ROOM_NEWENTRY*>( packet_buffer );
+4545:
+4546: 	p->packetType = HEADER_ZC_ROOM_NEWENTRY;
+4547: 	p->packetSize = sizeof( *p );
+4548: 	p->owner = cd.owner->id;
+4549: 	p->id = cd.id;
+4550: 	p->limit = cd.limit;
+4551: 	p->users = clif_chat_usercount( cd );
+4552: 	p->type = clif_chat_status( cd );
+4553:
+4554: 	// not zero-terminated
+4555: 	size_t max = safestrnlen( cd.title, CHATROOM_TITLE_SIZE );
+4556: 	strncpy( p->title, cd.title, max );
+4557: 	p->packetSize += static_cast<decltype(p->packetSize)>( max );
+4558:
+4559: 	clif_send( p, p->packetSize, cd.owner, AREA_WOSC );
+4560: }
+4561:
+4562: /// Chatroom properties adjustment.
+4563: /// 00df <packet len>.W <owner id>.L <chat id>.L <limit>.W <users>.W <type>.B <title>.?B (ZC_CHANGE_CHATROOM)
+4564: void clif_changechatstatus( const chat_data& cd ) {
+4565: 	if( cd.owner == nullptr ){
+4566: 		return;
+4567: 	}
+4568:
+4569: 	PACKET_ZC_CHANGE_CHATROOM* p = reinterpret_cast<PACKET_ZC_CHANGE_CHATROOM*>( packet_buffer );
+4570:
+4571: 	p->packetType = HEADER_ZC_CHANGE_CHATROOM;
+4572: 	p->packetSize = sizeof(*p);
+4573: 	p->ownerId = cd.owner->id;
+4574: 	p->chatId = cd.id;
+4575: 	p->limit = cd.limit;
+4576: 	p->users = clif_chat_usercount( cd );
+4577: 	p->flag = clif_chat_status( cd );
+4578:
+4579: 	// not zero-terminated
+4580: 	size_t max = safestrnlen( cd.title, CHATROOM_TITLE_SIZE );
+4581: 	strncpy( p->title, cd.title, max );
+4582: 	p->packetSize += static_cast<decltype(p->packetSize)>( max );
+4583:
+4584: 	clif_send(p,p->packetSize,cd.owner,CHAT);
+4585: }
+4586:
+4587:
+4588: /// Removes the chatroom
+4589: /// 00d8 <chat id>.L (ZC_DESTROY_ROOM)
+4590: void clif_clearchat( const chat_data& cd ){
+4591:
+4592: 	PACKET_ZC_DESTROY_ROOM p{};
+4593:
+4594: 	p.packetType = HEADER_ZC_DESTROY_ROOM;
+4595: 	p.chatId = cd.id;
+4596:
+4597: 	clif_send(&p,sizeof(p),cd.owner,AREA_WOSC);
+4598: }
+4599:
+4600:
+4601: /// Displays messages regarding join chat failures.
+4602: /// 00da <result>.B (ZC_REFUSE_ENTER_ROOM)
+4603: /// result:
+4604: ///     0 = room full
+4605: ///     1 = wrong password
+4606: ///     2 = kicked
+4607: ///     3 = success (no message)
+4608: ///     4 = no enough zeny
+4609: ///     5 = too low level
+4610: ///     6 = too high level
+4611: ///     7 = unsuitable job class
+4612: void clif_joinchatfail( map_session_data& sd, e_refuse_enter_room result ){
+4613: 	PACKET_ZC_REFUSE_ENTER_ROOM packet{};
+4614:
+4615: 	packet.packetType = HEADER_ZC_REFUSE_ENTER_ROOM;
+4616: 	packet.result = static_cast<decltype(packet.result)>(result);
+4617:
+4618: 	clif_send( &packet, sizeof( packet ), &sd, SELF );
+4619: }
+4620:
+4621:
+4622: /// Notifies the client about entering a chatroom (ZC_ENTER_ROOM).
+4623: /// 00db <packet len>.W <chat id>.L { <role>.L <name>.24B }*
+4624: /// role:
+4625: ///     0 = owner (menu)
+4626: ///     1 = normal
+4627: void clif_joinchatok( const map_session_data& sd, const chat_data& cd ){
+4628: 	PACKET_ZC_ENTER_ROOM* p = reinterpret_cast<PACKET_ZC_ENTER_ROOM*>( packet_buffer );
+4629:
+4630: 	p->packetType = HEADER_ZC_ENTER_ROOM;
+4631: 	p->packetSize = sizeof(*p);
+4632: 	p->chatId = cd.id;
+4633:
+4634: 	if(cd.owner->type == BL_NPC){
+4635: 		PACKET_ZC_ENTER_ROOM_sub& owner = p->members[0];
+4636: 		owner.flag = 0;
+4637: 		safestrncpy(owner.name, reinterpret_cast<npc_data*>(cd.owner)->name, sizeof(owner.name));
+4638: 		p->packetSize += static_cast<decltype(p->packetSize)>( sizeof( owner ) );
+4639:
+4640: 		for (size_t i = 0; i < cd.users; i++) {
+4641: 			PACKET_ZC_ENTER_ROOM_sub& member = p->members[i + 1];
+4642:
+4643: 			member.flag = 1;
+4644: 			safestrncpy(member.name, cd.usersd[i]->status.name, sizeof(member.name));
+4645:
+4646: 			p->packetSize += static_cast<decltype(p->packetSize)>( sizeof( member ) );
+4647: 		}
+4648: 	}else{
+4649: 		for (size_t i = 0; i < cd.users; i++) {
+4650: 			PACKET_ZC_ENTER_ROOM_sub& member = p->members[i];
+4651:
+4652: 			member.flag = i > 0;
+4653: 			safestrncpy(member.name, cd.usersd[i]->status.name, sizeof(member.name));
+4654:
+4655: 			p->packetSize += static_cast<decltype(p->packetSize)>( sizeof( member ) );
+4656: 		}
+4657: 	}
+4658:
+4659: 	clif_send(p,p->packetSize,&sd,SELF);
+4660: }
+4661:
+4662:
+4663: /// Notifies clients in a chat about a new member.
+4664: /// 00dc <users>.W <name>.24B (ZC_MEMBER_NEWENTRY)
+4665: void clif_addchat( const chat_data& cd, const map_session_data& sd ){
+4666: 	PACKET_ZC_MEMBER_NEWENTRY p = {};
+4667:
+4668: 	p.packetType = HEADER_ZC_MEMBER_NEWENTRY;
+4669: 	p.count = cd.users;
+4670: 	safestrncpy( p.name, sd.status.name, sizeof( p.name ) );
+4671:
+4672: 	clif_send( &p, sizeof( p ), &sd, CHAT_WOS );
+4673: }
+4674:
+4675:
+4676: /// Announce the new owner.
+4677: /// 00e1 <role>.L <nick>.24B (ZC_ROLE_CHANGE)
+4678: /// role:
+4679: ///     0 = owner (menu)
+4680: ///     1 = normal
+4681: void clif_chat_role( const chat_data& cd, const map_session_data& sd ){
+4682: 	PACKET_ZC_ROLE_CHANGE p = {};
+4683:
+4684: 	p.packetType = HEADER_ZC_ROLE_CHANGE;
+4685: 	p.flag = cd.usersd[0] != &sd;
+4686: 	safestrncpy( p.name, sd.status.name, sizeof( p.name ) );
+4687:
+4688: 	clif_send( &p, sizeof( p ), &sd, CHAT );
+4689: }
+4690:
+4691:
+4692: /// Notify about user leaving the chatroom.
+4693: /// 00dd <users>.W <nick>.24B <flag>.B (ZC_MEMBER_EXIT)
+4694: /// flag:
+4695: ///     0 = left
+4696: ///     1 = kicked
+4697: void clif_chat_leave( const chat_data& cd, const map_session_data& sd, bool kicked ){
+4698: 	PACKET_ZC_MEMBER_EXIT p = {};
+4699:
+4700: 	p.packetType = HEADER_ZC_MEMBER_EXIT;
+4701: 	p.count = cd.users - 1;
+4702: 	safestrncpy( p.name, sd.status.name, sizeof( p.name ) );
+4703: 	p.kicked = kicked;
+4704:
+4705: 	clif_send( &p, sizeof( p ), &sd, CHAT );
+4706: }
+4707:
+4708:
+4709: /// Opens a trade request window from char 'name'.
+4710: /// 00e5 <nick>.24B (ZC_REQ_EXCHANGE_ITEM)
+4711: /// 01f4 <nick>.24B <targetid>.L <baselvl>.W (ZC_REQ_EXCHANGE_ITEM2)
+4712: void clif_traderequest(map_session_data& sd, const char* name){
+4713:
+4714: 	PACKET_ZC_REQ_EXCHANGE_ITEM p{};
+4715:
+4716: 	p.packetType = HEADER_ZC_REQ_EXCHANGE_ITEM;
+4717: 	safestrncpy(p.requesterName, name, sizeof(p.requesterName));
+4718:
+4719: #if PACKETVER > 6
+4720: 	p.targetId = sd.trade_partner.id; // Client generates a random char[5] with this info
+4721: 	p.targetLv = sd.trade_partner.lv;
+4722: #endif
+4723:
+4724: 	clif_send(&p,sizeof(p),&sd,SELF);
+4725:
+4726: }
+4727:
+4728:
+4729: /// Reply to a trade-request.
+4730: /// 00e7 <result>.B (ZC_ACK_EXCHANGE_ITEM)
+4731: /// 01f5 <result>.B <targetid>.L <baselvl>.W (ZC_ACK_EXCHANGE_ITEM2)
+4732: /// result:
+4733: ///     0 = Char is too far
+4734: ///     1 = Character does not exist
+4735: ///     2 = Trade failed
+4736: ///     3 = Accept
+4737: ///     4 = Cancel
+4738: ///     5 = Busy
+4739: void clif_traderesponse( map_session_data& sd, e_ack_trade_response result ){
+4740:
+4741: 	PACKET_ZC_ACK_EXCHANGE_ITEM p{};
+4742:
+4743: 	p.packetType = HEADER_ZC_ACK_EXCHANGE_ITEM;
+4744: 	p.result = static_cast<decltype(p.result)>( result );
+4745:
+4746: #if PACKETVER > 6
+4747: 	p.targetId = sd.trade_partner.id; // Client generates a random char[5] with this info
+4748: 	p.targetLv = sd.trade_partner.lv;
+4749: #endif
+4750:
+4751: 	clif_send(&p,sizeof(p),&sd,SELF);
+4752: }
+4753:
+4754:
+4755: /// Notifies the client about an item from other player in current trade.
+4756: /// 00e9 <amount>.L <nameid>.W <identified>.B <damaged>.B <refine>.B <card1>.W <card2>.W <card3>.W <card4>.W (ZC_ADD_EXCHANGE_ITEM)
+4757: /// 080f <nameid>.W <item type>.B <amount>.L <identified>.B <damaged>.B <refine>.B <card1>.W <card2>.W <card3>.W <card4>.W (ZC_ADD_EXCHANGE_ITEM2)
+4758: /// 0a09 <nameid>.W <item type>.B <amount>.L <identified>.B <damaged>.B <refine>.B <card1>.W <card2>.W <card3>.W <card4>.W { <option id>.W <option value>.W <option param>.B }*5 (ZC_ADD_EXCHANGE_ITEM3)
+4759: void clif_tradeadditem( map_session_data* sd, map_session_data* tsd, int32 index, int32 amount ){
+4760: 	nullpo_retv( sd );
+4761: 	nullpo_retv( tsd );
+4762:
+4763: 	int32 fd = tsd->fd;
+4764:
+4765: 	if( !session_isActive( fd ) ){
+4766: 		return;
+4767: 	}
+4768:
+4769: 	PACKET_ZC_ADD_EXCHANGE_ITEM p = {};
+4770:

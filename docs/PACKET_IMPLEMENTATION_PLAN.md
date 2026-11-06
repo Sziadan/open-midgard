@@ -6,7 +6,7 @@ Created 2026-11-03. This is an execution specification, not a claim that any run
 
 ## Start here
 
-**Latest checkpoint (2026-11-06):** [PK09.21 labels and window preferences](packets/evidence/PK09.21-restore.md) integrates selected ST/BT language IDs, cached-height-first placement, startup/shutdown geometry and sticky/mini/show preferences. Strong PE review proves expansion status is write-only at startup and resolves the mislabeled full teardown routine. Actual native/Qt restore and language checks are retained. Room route5, dedicated whisper, remaining producers/bubbles and art/locale/active Qt acceptance remain open.
+**Latest checkpoint (2026-11-06):** [PK09.21 room reception and routing](packets/evidence/PK09.21-room.md) adds the separate WID28 owner, production room receipts, room-only speech/history, source roster/geometry, actual selected F3/96/E3 sends and native/Qt checks. Strong review resolves generic parent-only resize, server-echo bubble ownership and capture release. Visible/clickable world titles, entry/create/change/owner controls, dedicated whisper and remaining producers/art/locale/active Qt acceptance remain open.
 
 **Current continuation priority:** finish [PK09.21 chat state/sticky/history ownership](packets/work-items/PK09.21.md) under [PK09.04](packets/work-items/PK09.04.md), then continue remaining item/status/detail/context work. Preserve corpse, effect and recovery regressions. PK45.06 is complete; broad actor/model review, full feature coverage, PK47 and independent PK48/49/deployment remain open. The whole packet implementation goal remains active.
 

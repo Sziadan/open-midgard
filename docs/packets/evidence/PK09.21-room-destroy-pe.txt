@@ -1,0 +1,62 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00599db0 <.text+0x198db0>:
+  599db0:	55                   	push   %ebp
+  599db1:	8b ec                	mov    %esp,%ebp
+  599db3:	83 ec 10             	sub    $0x10,%esp
+  599db6:	56                   	push   %esi
+  599db7:	57                   	push   %edi
+  599db8:	8b 7d 08             	mov    0x8(%ebp),%edi
+  599dbb:	8b f1                	mov    %ecx,%esi
+  599dbd:	8d 4d f8             	lea    -0x8(%ebp),%ecx
+  599dc0:	8d 55 f0             	lea    -0x10(%ebp),%edx
+  599dc3:	8b 47 02             	mov    0x2(%edi),%eax
+  599dc6:	51                   	push   %ecx
+  599dc7:	52                   	push   %edx
+  599dc8:	8d 8e a0 01 00 00    	lea    0x1a0(%esi),%ecx
+  599dce:	89 45 f8             	mov    %eax,-0x8(%ebp)
+  599dd1:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%ebp)
+  599dd8:	e8 73 75 fe ff       	call   0x581350
+  599ddd:	8b 45 f0             	mov    -0x10(%ebp),%eax
+  599de0:	8b 48 10             	mov    0x10(%eax),%ecx
+  599de3:	51                   	push   %ecx
+  599de4:	8b 8e b4 00 00 00    	mov    0xb4(%esi),%ecx
+  599dea:	e8 91 23 f6 ff       	call   0x4fc180
+  599def:	85 c0                	test   %eax,%eax
+  599df1:	74 11                	je     0x599e04
+  599df3:	8b 10                	mov    (%eax),%edx
+  599df5:	6a 00                	push   $0x0
+  599df7:	6a 00                	push   $0x0
+  599df9:	6a 00                	push   $0x0
+  599dfb:	6a 21                	push   $0x21
+  599dfd:	6a 00                	push   $0x0
+  599dff:	8b c8                	mov    %eax,%ecx
+  599e01:	ff 52 08             	call   *0x8(%edx)
+  599e04:	a1 68 88 76 00       	mov    0x768868,%eax
+  599e09:	85 c0                	test   %eax,%eax
+  599e0b:	74 25                	je     0x599e32
+  599e0d:	8b 80 8c 00 00 00    	mov    0x8c(%eax),%eax
+  599e13:	8b 4f 02             	mov    0x2(%edi),%ecx
+  599e16:	3b c1                	cmp    %ecx,%eax
+  599e18:	75 18                	jne    0x599e32
+  599e1a:	6a 1c                	push   $0x1c
+  599e1c:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  599e21:	e8 ba 5b f4 ff       	call   0x4df9e0
+  599e26:	6a 1e                	push   $0x1e
+  599e28:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  599e2d:	e8 ae 5b f4 ff       	call   0x4df9e0
+  599e32:	5f                   	pop    %edi
+  599e33:	5e                   	pop    %esi
+  599e34:	8b e5                	mov    %ebp,%esp
+  599e36:	5d                   	pop    %ebp
+  599e37:	c2 04 00             	ret    $0x4
+  599e3a:	90                   	nop
+  599e3b:	90                   	nop
+  599e3c:	90                   	nop
+  599e3d:	90                   	nop
+  599e3e:	90                   	nop
+  599e3f:	90                   	nop

@@ -126,6 +126,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x00D8, 6);
     SetPacketSize(0x00D9, 14);
     SetPacketSize(0x00DA, 3);
+    SetPacketSize(0x00DB, kVariablePacketSize);
     SetPacketSize(0x00DC, 28);
     SetPacketSize(0x00DD, 29);
     SetPacketSize(0x00DE, kVariablePacketSize);

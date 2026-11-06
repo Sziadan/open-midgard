@@ -2,6 +2,7 @@
 #include "gamemode/Commerce.h"
 #include "UILoadingWnd.h"
 #include "UINewChatWnd.h"
+#include "UIChatRoomWnd.h"
 #include "UIBasicInfoWnd.h"
 #include "UIStatusWnd.h"
 #include "UISayDialogWnd.h"
@@ -976,7 +977,7 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
 bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 {
     const auto* hit = HitTestWindow(x, y);
-    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd);
+    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd);
 }
 
 RECT UIWindowMgr::GetChatClientRect() const
@@ -1006,6 +1007,10 @@ void UIWindowMgr::LoadChatWindowPreferences()
     m_chatWndStickOn=LoadSettingsIniInt("UIWindows","ChatWndStickOn",1)!=0;
     m_onStSubChat=LoadSettingsIniInt("UIWindows","OnStSubChat",0)!=0;
     m_onBtSubChat=LoadSettingsIniInt("UIWindows","OnBtSubChat",0)!=0;
+    m_chatRoomWindowInfo={LoadSettingsIniInt("UIWindows","ChatRoomWndX",500),
+        LoadSettingsIniInt("UIWindows","ChatRoomWndY",180),
+        LoadSettingsIniInt("UIWindows","ChatRoomWndW",280),
+        LoadSettingsIniInt("UIWindows","ChatRoomWndH",120)};
     for(int kind=0;kind<2;++kind){
         const std::string prefix=kind==0?"SubChatWndSt":"SubChatWndBt";
         auto& info=m_subChatInfo[kind];
@@ -1028,6 +1033,10 @@ void UIWindowMgr::SaveChatWindowPreferences() const
     SaveSettingsIniInt("UIWindows","ChatWndStickOn",m_chatWndStickOn);
     SaveSettingsIniInt("UIWindows","OnStSubChat",m_onStSubChat);
     SaveSettingsIniInt("UIWindows","OnBtSubChat",m_onBtSubChat);
+    SaveSettingsIniInt("UIWindows","ChatRoomWndX",m_chatRoomWindowInfo.x);
+    SaveSettingsIniInt("UIWindows","ChatRoomWndY",m_chatRoomWindowInfo.y);
+    SaveSettingsIniInt("UIWindows","ChatRoomWndW",m_chatRoomWindowInfo.width);
+    SaveSettingsIniInt("UIWindows","ChatRoomWndH",m_chatRoomWindowInfo.height);
     for(int kind=0;kind<2;++kind){
         const std::string prefix=kind==0?"SubChatWndSt":"SubChatWndBt";
         const auto& info=m_subChatInfo[kind];
@@ -1094,6 +1103,7 @@ bool UIWindowMgr::HasActiveNpcDialog() const
 bool UIWindowMgr::CanRouteQtChatInput() const
 {
     if(HasFrontMenuUiVisible() || HasActiveNpcDialog() || IsCapturingShortcutKeyBinding())return false;
+    if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd)return false;
     // These dialogs already take keyboard priority over chat in OnKeyDown.
     const UIWindow* dialogs[]={m_joinPartyAcceptWnd,m_skillSelectWnd,m_playerContextMenuWnd,
         m_itemPurchaseWnd,m_itemSellWnd,m_itemShopWnd,m_storageWnd,m_chooseSellBuyWnd,m_loadingWnd,m_waitWnd};
@@ -1188,6 +1198,13 @@ bool UIWindowMgr::Init() {
 UIWindow* UIWindowMgr::MakeWindow(int windowId)
 {
     switch (windowId) {
+    case WID_CHATROOMWND:
+        if(!m_chatRoomWnd){
+            m_chatRoomWnd=new UIChatRoomWnd();m_children.push_back(m_chatRoomWnd);
+            m_editWindow=m_chatRoomWnd;if(m_chatWnd)m_chatWnd->ClearInputFocus();
+        }
+        m_chatRoomWnd->SetShow(1);return m_chatRoomWnd;
+
     case WID_BATTLEMSGOPTION:
         if (!m_battleMsgOptionWnd) {
             m_battleMsgOptionWnd=new UIBattleMsgOptionWnd();
@@ -1692,7 +1709,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd);
+        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd);
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -1744,6 +1761,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         if(!preserveInventoryShow)m_chatWndShow=0;
         m_chatWnd = nullptr;
     }
+    if (window == m_chatRoomWnd) { m_chatRoomWnd->StoreInfo();m_chatRoomWnd=nullptr; }
     if (window == m_subChatWndST) { m_subChatWndST->StoreInfo(); m_subChatWndST = nullptr; }
     if (window == m_subChatWndBT) { m_subChatWndBT->StoreInfo(); m_subChatWndBT = nullptr; }
     if (window == m_subChatMiniWnd) m_subChatMiniWnd = nullptr;
@@ -2422,6 +2440,10 @@ void UIWindowMgr::HideLoadingScreen()
 }
 
 void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t noticeType, msgparam_t talker) {
+    if(msg==5){
+        if(m_chatRoomWnd && wparam)m_chatRoomWnd->SendMsg(nullptr,37,wparam,lparam,0);
+        return;
+    }
     if ((msg == 1 || msg == 20) && wparam) {
         const auto color = static_cast<u32>(lparam) != 0 ? static_cast<u32>(lparam) : 0x00ffffffu;
         PushSourceChatEvent(reinterpret_cast<const char*>(wparam), ro::chat::ColorRefToUiRgb(color), 6,
@@ -2504,6 +2526,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
         }
     }
 
+    if(hit==m_chatWnd && m_editWindow==m_chatRoomWnd)m_editWindow=nullptr;
     m_captureWindow = hit;
 
     if (hit) {
@@ -2524,7 +2547,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);
-        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd))
+        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd))
             SetCapture(g_hMainWnd);
     }
 }
@@ -2569,7 +2592,7 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
 void UIWindowMgr::OnLBtnUp(int x, int y)
 {
     const bool chatCapture = m_captureWindow && (m_captureWindow == m_chatWnd || m_captureWindow == m_subChatWndST
-        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd);
+        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd);
     if (m_captureWindow) {
         m_captureWindow->OnLBtnUp(x, y);
         m_captureWindow = nullptr;
@@ -2832,6 +2855,7 @@ void UIWindowMgr::OnChar(char c)
         return;
     }
 
+    if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd){m_chatRoomWnd->OnChar(c);return;}
     if (m_chatWnd && m_chatWnd->m_show != 0 && m_chatWnd->HandleChar(c)) {
         return;
     }
@@ -2959,6 +2983,10 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStorageClose, 0, 0, 0) != 0;
     }
 
+    if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd){
+        if(!isAltDown && !isCtrlDown)m_chatRoomWnd->OnKeyDown(virtualKey);
+        return true;
+    }
     if (HasBlockingUiForGameplayHotkeys()) {
         return false;
     }
@@ -3056,6 +3084,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         return;
     }
 
+    if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd){m_chatRoomWnd->OnKeyDown(virtualKey);return;}
     if (m_chatWnd && m_chatWnd->m_show != 0 && m_chatWnd->HandleKeyDown(virtualKey)) {
         if (virtualKey == VK_RETURN || virtualKey == VK_ESCAPE) {
             DbgLog("[UI] keydown consumed by chat vk=%d\n", virtualKey);

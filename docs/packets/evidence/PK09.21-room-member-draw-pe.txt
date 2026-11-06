@@ -1,0 +1,139 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0044f250 <.text+0x4e250>:
+  44f250:	55                   	push   %ebp
+  44f251:	8b ec                	mov    %esp,%ebp
+  44f253:	83 ec 08             	sub    $0x8,%esp
+  44f256:	53                   	push   %ebx
+  44f257:	56                   	push   %esi
+  44f258:	8b f1                	mov    %ecx,%esi
+  44f25a:	33 c0                	xor    %eax,%eax
+  44f25c:	33 c9                	xor    %ecx,%ecx
+  44f25e:	57                   	push   %edi
+  44f25f:	8a a6 bc 00 00 00    	mov    0xbc(%esi),%ah
+  44f265:	8a 8e b4 00 00 00    	mov    0xb4(%esi),%cl
+  44f26b:	8a 86 b8 00 00 00    	mov    0xb8(%esi),%al
+  44f271:	c1 e0 08             	shl    $0x8,%eax
+  44f274:	0b c1                	or     %ecx,%eax
+  44f276:	8b ce                	mov    %esi,%ecx
+  44f278:	50                   	push   %eax
+  44f279:	e8 a2 7f 08 00       	call   0x4d7220
+  44f27e:	8b 46 58             	mov    0x58(%esi),%eax
+  44f281:	8b 5e 68             	mov    0x68(%esi),%ebx
+  44f284:	85 c0                	test   %eax,%eax
+  44f286:	75 04                	jne    0x44f28c
+  44f288:	33 c9                	xor    %ecx,%ecx
+  44f28a:	eb 08                	jmp    0x44f294
+  44f28c:	8b 4e 5c             	mov    0x5c(%esi),%ecx
+  44f28f:	2b c8                	sub    %eax,%ecx
+  44f291:	c1 f9 04             	sar    $0x4,%ecx
+  44f294:	8b 46 20             	mov    0x20(%esi),%eax
+  44f297:	8b 7e 78             	mov    0x78(%esi),%edi
+  44f29a:	99                   	cltd
+  44f29b:	f7 be 88 00 00 00    	idivl  0x88(%esi)
+  44f2a1:	2b c7                	sub    %edi,%eax
+  44f2a3:	03 c3                	add    %ebx,%eax
+  44f2a5:	3b c1                	cmp    %ecx,%eax
+  44f2a7:	72 14                	jb     0x44f2bd
+  44f2a9:	8b 4e 58             	mov    0x58(%esi),%ecx
+  44f2ac:	85 c9                	test   %ecx,%ecx
+  44f2ae:	75 05                	jne    0x44f2b5
+  44f2b0:	89 4d fc             	mov    %ecx,-0x4(%ebp)
+  44f2b3:	eb 0b                	jmp    0x44f2c0
+  44f2b5:	8b 46 5c             	mov    0x5c(%esi),%eax
+  44f2b8:	2b c1                	sub    %ecx,%eax
+  44f2ba:	c1 f8 04             	sar    $0x4,%eax
+  44f2bd:	89 45 fc             	mov    %eax,-0x4(%ebp)
+  44f2c0:	8b 45 fc             	mov    -0x4(%ebp),%eax
+  44f2c3:	8b fb                	mov    %ebx,%edi
+  44f2c5:	3b d8                	cmp    %eax,%ebx
+  44f2c7:	7d 7d                	jge    0x44f346
+  44f2c9:	8b c3                	mov    %ebx,%eax
+  44f2cb:	c1 e0 04             	shl    $0x4,%eax
+  44f2ce:	89 45 f8             	mov    %eax,-0x8(%ebp)
+  44f2d1:	3b 7e 64             	cmp    0x64(%esi),%edi
+  44f2d4:	75 22                	jne    0x44f2f8
+  44f2d6:	8b 86 88 00 00 00    	mov    0x88(%esi),%eax
+  44f2dc:	8b cf                	mov    %edi,%ecx
+  44f2de:	2b cb                	sub    %ebx,%ecx
+  44f2e0:	8b 56 1c             	mov    0x1c(%esi),%edx
+  44f2e3:	0f af c8             	imul   %eax,%ecx
+  44f2e6:	68 32 c8 c8 00       	push   $0xc8c832
+  44f2eb:	50                   	push   %eax
+  44f2ec:	41                   	inc    %ecx
+  44f2ed:	52                   	push   %edx
+  44f2ee:	51                   	push   %ecx
+  44f2ef:	6a 00                	push   $0x0
+  44f2f1:	8b ce                	mov    %esi,%ecx
+  44f2f3:	e8 f8 7f 08 00       	call   0x4d72f0
+  44f2f8:	8b 45 f8             	mov    -0x8(%ebp),%eax
+  44f2fb:	8b 56 58             	mov    0x58(%esi),%edx
+  44f2fe:	8b 8e a4 00 00 00    	mov    0xa4(%esi),%ecx
+  44f304:	03 c2                	add    %edx,%eax
+  44f306:	8b 40 04             	mov    0x4(%eax),%eax
+  44f309:	85 c0                	test   %eax,%eax
+  44f30b:	75 05                	jne    0x44f312
+  44f30d:	b8 8c c8 6c 00       	mov    $0x6cc88c,%eax
+  44f312:	8b 14 b9             	mov    (%ecx,%edi,4),%edx
+  44f315:	8b ce                	mov    %esi,%ecx
+  44f317:	52                   	push   %edx
+  44f318:	6a 0c                	push   $0xc
+  44f31a:	6a 00                	push   $0x0
+  44f31c:	6a 00                	push   $0x0
+  44f31e:	50                   	push   %eax
+  44f31f:	8b c7                	mov    %edi,%eax
+  44f321:	2b c3                	sub    %ebx,%eax
+  44f323:	0f af 86 88 00 00 00 	imul   0x88(%esi),%eax
+  44f32a:	83 c0 03             	add    $0x3,%eax
+  44f32d:	50                   	push   %eax
+  44f32e:	6a 02                	push   $0x2
+  44f330:	e8 bb 84 08 00       	call   0x4d77f0
+  44f335:	8b 4d f8             	mov    -0x8(%ebp),%ecx
+  44f338:	8b 45 fc             	mov    -0x4(%ebp),%eax
+  44f33b:	47                   	inc    %edi
+  44f33c:	83 c1 10             	add    $0x10,%ecx
+  44f33f:	3b f8                	cmp    %eax,%edi
+  44f341:	89 4d f8             	mov    %ecx,-0x8(%ebp)
+  44f344:	7c 8b                	jl     0x44f2d1
+  44f346:	5f                   	pop    %edi
+  44f347:	5e                   	pop    %esi
+  44f348:	5b                   	pop    %ebx
+  44f349:	8b e5                	mov    %ebp,%esp
+  44f34b:	5d                   	pop    %ebp
+  44f34c:	c3                   	ret
+  44f34d:	90                   	nop
+  44f34e:	90                   	nop
+  44f34f:	90                   	nop
+  44f350:	55                   	push   %ebp
+  44f351:	8b ec                	mov    %esp,%ebp
+  44f353:	6a ff                	push   $0xffffffff
+  44f355:	68 c8 e5 6b 00       	push   $0x6be5c8
+  44f35a:	64 a1 00 00 00 00    	mov    %fs:0x0,%eax
+  44f360:	50                   	push   %eax
+  44f361:	64 89 25 00 00 00 00 	mov    %esp,%fs:0x0
+  44f368:	83 ec 14             	sub    $0x14,%esp
+  44f36b:	53                   	push   %ebx
+  44f36c:	56                   	push   %esi
+  44f36d:	8b f1                	mov    %ecx,%esi
+  44f36f:	89 75 e0             	mov    %esi,-0x20(%ebp)
+  44f372:	e8 99 78 08 00       	call   0x4d6c10
+  44f377:	8a 45 f3             	mov    -0xd(%ebp),%al
+  44f37a:	33 db                	xor    %ebx,%ebx
+  44f37c:	88 46 54             	mov    %al,0x54(%esi)
+  44f37f:	b8 ff 00 00 00       	mov    $0xff,%eax
+  44f384:	89 5e 58             	mov    %ebx,0x58(%esi)
+  44f387:	89 5e 5c             	mov    %ebx,0x5c(%esi)
+  44f38a:	89 5e 60             	mov    %ebx,0x60(%esi)
+  44f38d:	89 5e 64             	mov    %ebx,0x64(%esi)
+  44f390:	89 5e 68             	mov    %ebx,0x68(%esi)
+  44f393:	89 5e 6c             	mov    %ebx,0x6c(%esi)
+  44f396:	89 5e 70             	mov    %ebx,0x70(%esi)
+  44f399:	89 5e 7c             	mov    %ebx,0x7c(%esi)
+  44f39c:	89                   	.byte 0x89
+  44f39d:	9e                   	sahf
+  44f39e:	80                   	.byte 0x80
+	...

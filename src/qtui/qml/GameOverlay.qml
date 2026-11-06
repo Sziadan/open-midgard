@@ -4370,4 +4370,6 @@ Item {
         }
     }
 
+    RoChatRoom { parent: uiLayer; roomData: (uiState.chatWindowUi || {}).room || ({}) }
+
 }

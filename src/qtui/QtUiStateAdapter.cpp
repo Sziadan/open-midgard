@@ -1,4 +1,5 @@
 #include "ui/StatusLayout.h"
+#include "ui/UIChatRoomWnd.h"
 #include "QtUiStateAdapter.h"
 
 #include "QtUiState.h"
@@ -1922,6 +1923,34 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         }
         return (windowIndex - mainIndex) * 0.0001;
     };
+    QVariantMap room;
+    if(const auto* window=g_windowMgr.m_chatRoomWnd){
+        room.insert("visible",IsGameplayWindowVisible(state,window));room.insert("layer",chatLayer(window));
+        room.insert("x",window->m_x);room.insert("y",window->m_y);room.insert("width",window->m_w);room.insert("height",window->m_h);
+        room.insert("title",ToQString(window->GetTitle()));room.insert("input",ToQString(window->GetInputText()));
+        room.insert("id",static_cast<qulonglong>(window->GetInfo().roomId));
+        const auto rect=[](RECT r){return QVariantMap{{"x",static_cast<int>(r.left)},{"y",static_cast<int>(r.top)},
+            {"width",static_cast<int>(r.right-r.left)},{"height",static_cast<int>(r.bottom-r.top)}};};
+        const auto layout=window->GetLayout();
+        room.insert("history",rect(layout.history));room.insert("members",rect(layout.members));room.insert("edit",rect(layout.edit));
+        room.insert("close",rect(layout.close));room.insert("resizer",rect(layout.resizer));
+        room.insert("scrollTrack",rect(layout.scrollTrack));room.insert("scrollThumb",rect(layout.scrollThumb));
+        room.insert("scrollUp",rect(layout.scrollUp));room.insert("scrollDown",rect(layout.scrollDown));
+        room.insert("memberTrack",rect(layout.memberTrack));room.insert("memberThumb",rect(layout.memberThumb));
+        room.insert("memberUp",rect(layout.memberUp));room.insert("memberDown",rect(layout.memberDown));
+        room.insert("scrollVisible",window->GetScrollModel().maximum>0);room.insert("memberScrollVisible",window->GetScrollModel(true).maximum>0);
+        QVariantList rows;
+        for(const auto& row:window->GetVisibleRows())rows.push_back(QVariantMap{{"text",ToQString(row.text)},{"color",QColor::fromRgb(row.color).name()}});
+        room.insert("rows",rows);rows.clear();
+        const auto& members=window->GetMemberRows();const int first=window->GetMemberFirst();
+        for(int i=first;i<static_cast<int>(members.size()) && i<first+window->GetScrollModel(true).page;++i){
+            if(i<0)continue;
+            rows.push_back(QVariantMap{{"name",ToQString(members[i].name)},{"role",static_cast<qulonglong>(members[i].role)},
+                {"selected",i==window->GetSelectedMember()},{"color",members[i].role?"#000000":"#008080"}});
+        }
+        room.insert("memberRows",rows);
+    }
+    chatUi.insert("room",room);
     QVariantList histories;
     for (const auto* history : {g_windowMgr.m_subChatWndST, g_windowMgr.m_subChatWndBT}) {
         if (!history) continue;

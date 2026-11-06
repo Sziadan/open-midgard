@@ -27,6 +27,8 @@
 #include "audio/Audio.h"
 #include "lua/LuaBridge.h"
 #include "ui/UIBasicInfoWnd.h"
+#include "ui/UIChatRoomWnd.h"
+#include "core/UiMessageStrings.h"
 #include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UISayDialogWnd.h"
 #include "ui/UINpcMenuWnd.h"
@@ -3788,6 +3790,8 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
 
     mode.m_actorPosList.clear();
     mode.m_aidList.clear();
+    mode.m_chatRoomOwners.clear();
+    if(g_windowMgr.m_chatRoomWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomWnd);
     mode.m_actorNameList.clear();
     mode.m_actorNameReqTimer.clear();
     mode.m_actorNameListByGID.clear();
@@ -7226,6 +7230,8 @@ void HandleGuildNotification(CGameMode& mode,const PacketView& packet){
     if(!message.empty())RecordChat(mode,message,0x0080C0FFu,kChatChannelSystem);
 }
 
+#include "ChatRoomPacketHandlers.inc"
+
 void HandleNotifyChat(CGameMode& mode, const PacketView& packet)
 {
     // Ref: Zc_Notify_Chat (0x008D)
@@ -7237,6 +7243,9 @@ void HandleNotifyChat(CGameMode& mode, const PacketView& packet)
     mode.m_aidList[aid] = GetTickCount();
     const std::string text = ExtractChatTextWithAid(packet);
     if (std::find(g_session.m_exAidList.begin(), g_session.m_exAidList.end(), aid) != g_session.m_exAidList.end()) return;
+    if(g_windowMgr.m_chatRoomWnd){
+        mode.m_lastChat=text;g_windowMgr.SendMsg(5,reinterpret_cast<msgparam_t>(text.c_str()),2236962);return;
+    }
     if (IsNameYellow(aid)) {
         const u32 colorRef = g_serviceType == ServiceThai ? 16776960u
             : g_serviceType == ServiceGermany ? 1936895u : 0x0000ffffu;
@@ -7260,6 +7269,9 @@ void HandleNotifyPlayerChat(CGameMode& mode, const PacketView& packet)
     }
 
     const auto text = ExtractPacketString(packet, 4);
+    if(g_windowMgr.m_chatRoomWnd){
+        mode.m_lastChat=text;g_windowMgr.SendMsg(5,reinterpret_cast<msgparam_t>(text.c_str()),30720);return;
+    }
     RecordChat(mode, text, 0x0000ff00u, kChatChannelPlayer,
         {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Chat, {}});
     ApplyActorChatBubble(mode, g_session.m_aid, text);
@@ -8825,6 +8837,16 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     RegisterHandlerIfValid(router, receiveProfile.actorStateChangeExtended, HandleActorStateChange);
     router.Register(0x0121, HandleCartInfo);
     router.Register(0x012B, HandleCartOff);
+
+    router.Register(0x00d6,HandleRoomCreateAck);
+    router.Register(0x00d7,HandleRoomListing);
+    router.Register(0x00d8,HandleRoomDestroy);
+    router.Register(0x00da,HandleRoomEnterRefused);
+    router.Register(0x00db,HandleRoomEntry);
+    router.Register(0x00dc,HandleRoomMemberEnter);
+    router.Register(0x00dd,HandleRoomMemberExit);
+    router.Register(0x00df,HandleRoomListing);
+    router.Register(0x00e1,HandleRoomRole);
 
     // Chat/system text pathways.
     router.Register(0x008D, HandleNotifyChat);

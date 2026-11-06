@@ -4526,6 +4526,8 @@ void GlobalChatProductionSendReplay()
 #include "ChatScrollBarReplay.inc"
 #include "ChatSourceLabelsReplay.inc"
 #include "ChatRestoreReplay.inc"
+#include "ChatRoomReplay.inc"
+#include "ChatRoomAckReplay.inc"
 #include "InventoryItemFieldsReplay.inc"
 #include "CartItemLifecycleReplay.inc"
 #include "CharacterNameReplay.inc"
@@ -4547,6 +4549,7 @@ int main(int argc,char** argv){try{
 #endif
     Require(CConnection::Startup(),"socket startup failed");
     if(argc>1 && std::string(argv[1])=="--corpse-gr2-native") { CorpseNativePacketReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--chat-room-only") {ChatRoomReplay();ChatRoomAckReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--chat-restore-only") {ChatWindowRestoreReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--chat-window-write") {ChatWindowSettingsProcess(true);CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--chat-window-read") {ChatWindowSettingsProcess(false);CConnection::Cleanup();return 0;}
@@ -4704,5 +4707,7 @@ int main(int argc,char** argv){try{
     ChatScrollBarReplay();
     ChatSourceLabelsReplay();
     ChatWindowRestoreReplay();
+    ChatRoomReplay();
+    ChatRoomAckReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

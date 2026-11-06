@@ -1,4 +1,5 @@
 #include "ChatScrollTrimRenderChecks.inc"
+#include "ChatRoomRenderChecks.inc"
 #include "ChatBattleOptionsRenderChecks.inc"
 #include "ui/UINewChatWnd.h"
 
@@ -381,5 +382,6 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
 
     CheckChatBattleOptionsUi(app,view,state,adapter,output);
     CheckChatScrollTrimUi(app,view,state,adapter,output);
+    CheckChatRoomUi(app,view,state,mode,adapter,output);
 
 }

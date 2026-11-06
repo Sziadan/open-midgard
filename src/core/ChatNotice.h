@@ -21,8 +21,9 @@ struct NoticeSource {
 // CutString(94), with the port's UTF-8 character boundaries replacing CharNextExA.
 // The original byte-distance threshold is not a hard maximum: a space run or
 // multibyte boundary can cross it. Preserve every byte, including trailing spaces.
-inline std::vector<std::string> SplitNotice(std::string_view text)
+inline std::vector<std::string> SplitNotice(std::string_view text, std::size_t threshold = 94)
 {
+    if (threshold == 0) threshold = 1;
     std::vector<std::string> result;
     std::size_t start = 0, cursor = 0, lastSpace = 0;
     while (cursor < text.size()) {
@@ -31,7 +32,7 @@ inline std::vector<std::string> SplitNotice(std::string_view text)
         if (cursor < text.size() && text[cursor] == ' ') {
             do { lastSpace = ++cursor; } while (cursor < text.size() && text[cursor] == ' ');
         }
-        if (cursor - start >= 94) {
+        if (cursor - start >= threshold) {
             const auto end = lastSpace > start ? lastSpace : cursor;
             result.emplace_back(text.substr(start, end - start));
             start = end;

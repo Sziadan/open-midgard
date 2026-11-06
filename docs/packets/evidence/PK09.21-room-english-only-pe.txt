@@ -1,0 +1,40 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00669940 <.text+0x268940>:
+  669940:	55                   	push   %ebp
+  669941:	8b ec                	mov    %esp,%ebp
+  669943:	8b 55 08             	mov    0x8(%ebp),%edx
+  669946:	57                   	push   %edi
+  669947:	8b fa                	mov    %edx,%edi
+  669949:	83 c9 ff             	or     $0xffffffff,%ecx
+  66994c:	33 c0                	xor    %eax,%eax
+  66994e:	f2 ae                	repnz scas %es:(%edi),%al
+  669950:	f7 d1                	not    %ecx
+  669952:	49                   	dec    %ecx
+  669953:	85 c9                	test   %ecx,%ecx
+  669955:	7e 0b                	jle    0x669962
+  669957:	f6 04 10 80          	testb  $0x80,(%eax,%edx,1)
+  66995b:	75 0c                	jne    0x669969
+  66995d:	40                   	inc    %eax
+  66995e:	3b c1                	cmp    %ecx,%eax
+  669960:	7c f5                	jl     0x669957
+  669962:	5f                   	pop    %edi
+  669963:	b0 01                	mov    $0x1,%al
+  669965:	5d                   	pop    %ebp
+  669966:	c2 04 00             	ret    $0x4
+  669969:	5f                   	pop    %edi
+  66996a:	32 c0                	xor    %al,%al
+  66996c:	5d                   	pop    %ebp
+  66996d:	c2 04 00             	ret    $0x4
+  669970:	55                   	push   %ebp
+  669971:	8b ec                	mov    %esp,%ebp
+  669973:	8b 55 08             	mov    0x8(%ebp),%edx
+  669976:	57                   	push   %edi
+  669977:	8b fa                	mov    %edx,%edi
+  669979:	83 c9 ff             	or     $0xffffffff,%ecx
+  66997c:	33 c0                	xor    %eax,%eax
+  66997e:	f2 ae                	repnz scas %es:(%edi),%al

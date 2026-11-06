@@ -8,6 +8,7 @@
 #include "network/MapSendProfile.h"
 #include "CursorRenderer.h"
 #include "GameMode.h"
+#include "ui/UIChatRoomWnd.h"
 #include "ActionRequestSender.h"
 #include "Commerce.h"
 #include "PacketPadding.h"
@@ -4467,10 +4468,7 @@ bool ShouldUseTurnOnlyGroundClick(const CGameMode& mode)
     const bool looksSeated = (player->m_isSitting != 0)
         || (player->m_baseAction == 16)
         || (player->m_curAction >= 16 && player->m_curAction < 24);
-    // Ref also routes this path while a chat-room window is active. We do not
-    // have chat-room UI/interaction wired yet, so keep this disabled for now
-    // and extend this helper when that feature is implemented.
-    const bool hasChatRoomContext = false;
+    const bool hasChatRoomContext = g_windowMgr.m_chatRoomWnd != nullptr;
     return looksSeated || isShiftHeld || hasChatRoomContext;
 }
 
@@ -4746,29 +4744,6 @@ bool LocalPlayerHasPendingMoveAck(const CGameMode& mode, u32 now)
     }
 
     return now - player->m_moveReqTick <= kMoveAckTimeoutMs;
-}
-
-constexpr u32 kLocalChatBubbleBaseLifetimeMs = 3200;
-constexpr u32 kLocalChatBubblePerCharLifetimeMs = 90;
-constexpr u32 kLocalChatBubbleMinLifetimeMs = 4500;
-constexpr u32 kLocalChatBubbleMaxLifetimeMs = 12000;
-
-u32 ComputeLocalChatBubbleUntilTick(const std::string& text, u32 now)
-{
-    const u32 bubbleLengthMs = kLocalChatBubbleBaseLifetimeMs
-        + static_cast<u32>(text.size()) * kLocalChatBubblePerCharLifetimeMs;
-    const u32 clampedLengthMs = (std::min)(kLocalChatBubbleMaxLifetimeMs,
-        (std::max)(kLocalChatBubbleMinLifetimeMs, bubbleLengthMs));
-    return now + clampedLengthMs;
-}
-
-void ApplyLocalPlayerChatBubble(CGameMode& mode, const std::string& text)
-{
-    if (text.empty() || !mode.m_world || !mode.m_world->m_player) {
-        return;
-    }
-
-    mode.m_world->m_player->SetChatBubbleText(text, ComputeLocalChatBubbleUntilTick(text, GetTickCount()));
 }
 
 bool SendGlobalChatMessage(const char* playerName, const std::string& message)
@@ -10893,6 +10868,12 @@ void UpdateShowImageInfo(CGameMode& mode, const char* imageName, int type)
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     switch (msg) {
+    case 53: {
+        if(!g_windowMgr.m_chatRoomWnd)return 0;
+        const char bytes[]={static_cast<char>(0xe3),0};
+        return CRagConnection::instance()->SendPacket(bytes,2)?1:0;
+    }
+
     case 99:
         ShowSkillHeadBubble(*this,
             static_cast<int>(wparam),
@@ -11151,9 +11132,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             return sent ? 1 : 0;
         }
         const bool sent = SendGlobalChatMessage(g_session.GetPlayerName(), text);
-        if (sent) {
-            ApplyLocalPlayerChatBubble(*this, text);
-        }
+        // Source normal/room dispatch sends only; 008D/008E own speech bubbles.
         return sent ? 1 : 0;
     }
 

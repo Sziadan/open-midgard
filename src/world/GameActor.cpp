@@ -1,4 +1,5 @@
 #include "GameActor.h"
+#include "ui/UIChatRoomWnd.h"
 #include "CorpseState.h"
 #include "Gr2Monster.h"
 #include "ActorTint.h"
@@ -4643,6 +4644,7 @@ void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, m
 
 CGameActor::~CGameActor()
 {
+    delete m_chatTitle;m_chatTitle=nullptr;
     if (Gr2MonsterModel(m_job)) ReleaseGr2Monster(m_gid);
     DestroySkillRechargeGage();
     DetachEffects();
@@ -5341,6 +5343,13 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         return;
     }
     switch (msg) {
+    case 32:
+        if(par1){if(!m_chatTitle)m_chatTitle=new UIChatRoomTitle();
+            m_chatTitle->m_roomInfo=*reinterpret_cast<const ro::chat::RoomInfo*>(par1);}
+        return;
+    case 33:
+        delete m_chatTitle;m_chatTitle=nullptr;return;
+
     case 11:
         Am_Action(reinterpret_cast<const int*>(par1));
         return;

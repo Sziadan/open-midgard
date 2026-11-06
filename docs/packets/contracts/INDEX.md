@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK09 room extension](../evidence/PK09.21-room.md) records reviewed reception, manager5, room controls/geometry and server-echo bubble ownership. Visible titles and management/whisper flows remain open under PK09.21.
+
 [PK37.NPC-TRANSACTIONS](PK37.NPC-TRANSACTIONS.md) records strict selected sends, signed lengths, quote/stock identity, local cancel, FIFO receipts and native/Qt count lifetimes under PK37.09. Broader server eligibility and independent PK48 remain open.
 
 [PK37.NPC-AMOUNTS](PK37.NPC-AMOUNTS.md) records unsigned/zero quotes, exact amounts and guarded stock/deltas under PK37.08. Broad NPC requests/results and independent PK48 remain open.

@@ -1,4 +1,5 @@
 #pragma once
+#include "core/ChatRoomPackets.h"
 #include "Mode.h"
 #include "audio/Audio.h"
 #include <map>
@@ -58,10 +59,7 @@ struct SHOW_IMAGE_INFO {
     int x, y;
 };
 
-struct ChatRoomInfo {
-    int id;
-    std::string title;
-};
+using ChatRoomInfo = ro::chat::RoomInfo;
 
 struct GroundItemState {
     u32 objectId = 0;
@@ -289,6 +287,7 @@ public:
     int m_dragType;
     DRAG_INFO m_dragInfo;
     ChatRoomInfo m_lastChatroomInfo;
+    std::map<u32,u32> m_chatRoomOwners;
     SKILL_USE_INFO m_skillUseInfo;
     SHOW_IMAGE_INFO m_showImageInfo;
     std::string m_lastChat;

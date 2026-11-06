@@ -1,0 +1,12 @@
+{
+    "absent_main_noop": true,
+    "logical_rows": 121,
+    "narrow_rows": 7,
+    "outcome": "PASS",
+    "real_scroll_capture": true,
+    "row_pitch": 14,
+    "talker_target": true,
+    "viewport_top": 20,
+    "visual_rows": 122,
+    "wide_rows": 4
+}

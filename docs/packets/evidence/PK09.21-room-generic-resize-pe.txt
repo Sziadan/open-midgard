@@ -1,0 +1,38 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004d6fa0 <.text+0xd5fa0>:
+  4d6fa0:	55                   	push   %ebp
+  4d6fa1:	8b ec                	mov    %esp,%ebp
+  4d6fa3:	53                   	push   %ebx
+  4d6fa4:	56                   	push   %esi
+  4d6fa5:	8b f1                	mov    %ecx,%esi
+  4d6fa7:	57                   	push   %edi
+  4d6fa8:	8b 4e 28             	mov    0x28(%esi),%ecx
+  4d6fab:	85 c9                	test   %ecx,%ecx
+  4d6fad:	74 06                	je     0x4d6fb5
+  4d6faf:	8b 01                	mov    (%ecx),%eax
+  4d6fb1:	6a 01                	push   $0x1
+  4d6fb3:	ff 10                	call   *(%eax)
+  4d6fb5:	8b 7d 0c             	mov    0xc(%ebp),%edi
+  4d6fb8:	8b 5d 08             	mov    0x8(%ebp),%ebx
+  4d6fbb:	57                   	push   %edi
+  4d6fbc:	53                   	push   %ebx
+  4d6fbd:	b9 78 c6 72 00       	mov    $0x72c678,%ecx
+  4d6fc2:	e8 89 dd f2 ff       	call   0x404d50
+  4d6fc7:	8b 16                	mov    (%esi),%edx
+  4d6fc9:	8b ce                	mov    %esi,%ecx
+  4d6fcb:	89 46 28             	mov    %eax,0x28(%esi)
+  4d6fce:	89 5e 1c             	mov    %ebx,0x1c(%esi)
+  4d6fd1:	89 7e 20             	mov    %edi,0x20(%esi)
+  4d6fd4:	ff 52 04             	call   *0x4(%edx)
+  4d6fd7:	5f                   	pop    %edi
+  4d6fd8:	5e                   	pop    %esi
+  4d6fd9:	5b                   	pop    %ebx
+  4d6fda:	5d                   	pop    %ebp
+  4d6fdb:	c2 08 00             	ret    $0x8
+  4d6fde:	90                   	nop
+  4d6fdf:	90                   	nop
