@@ -1,6 +1,8 @@
 #include "UINewChatWnd.h"
 #include "ChatText.h"
 #include "ChatWindowState.h"
+#include "core/Globals.h"
+#include "session/Session.h"
 
 #include "UIWindowMgr.h"
 #include "UiScale.h"
@@ -713,6 +715,37 @@ void UINewChatWnd::SaveSettings() const
     }
 }
 
+bool UINewChatWnd::ReceiveSourceNotice(const char* text, u32 uiRgb, ro::chat::NoticeRoute route,
+    ro::chat::NoticeType type, const char* speaker)
+{
+    if (!text || (route != ro::chat::NoticeRoute::Normal && route != ro::chat::NoticeRoute::Command)) return false;
+    const std::string original(text);
+    std::string talker = speaker ? speaker : "";
+    const int numericType = static_cast<int>(type);
+    if (numericType == 1 || numericType == 3 || numericType == 4) {
+        const auto delimiter = original.find(" :");
+        if (delimiter != std::string::npos && delimiter > 0) talker = original.substr(0, delimiter);
+    }
+    if ((g_serviceType == ServiceGermany || g_serviceType == ServiceVietnam) && talker.size() > 24) return false;
+    if (talker == g_session.GetPlayerName()) talker.clear();
+    const auto segments = ro::chat::SplitNotice(original);
+    const bool normal = route == ro::chat::NoticeRoute::Normal && numericType != 8 && numericType != 9;
+    const bool command = route == ro::chat::NoticeRoute::Command ||
+        (numericType >= 1 && numericType <= 13 && g_session.m_battleMsgOnOffSet[numericType - 1]);
+    for (const auto& segment : segments) {
+        const auto append = [&](int kind, UISubChatHisWnd* detached) {
+            auto& rows = m_sourceHistory[kind];
+            if (rows.size() >= 240) rows.erase(rows.begin(), rows.begin() + rows.size() / 2);
+            rows.push_back({segment, uiRgb, talker});
+            // Original subwindow receives the UNSPLIT argument for every segment.
+            if (detached) detached->Append(original.c_str(), uiRgb, talker.c_str());
+        };
+        if (normal) append(0, g_windowMgr.m_chatWnd == this ? g_windowMgr.m_subChatWndST : nullptr);
+        if (command) append(1, g_windowMgr.m_chatWnd == this ? g_windowMgr.m_subChatWndBT : nullptr);
+    }
+    return !segments.empty();
+}
+
 void UINewChatWnd::AddChatLine(const char* text, u32 color, u8 channel, u32 tick)
 {
     if (!text || *text == '\0') {
@@ -949,6 +982,11 @@ void UINewChatWnd::OnProcess()
     const size_t start = events.size() > kMaxChatLines ? (events.size() - kMaxChatLines) : 0;
     syncedLines.reserve(events.size() - start);
     for (size_t i = start; i < events.size(); ++i) {
+        // Typed source receipts belong to the main instance that received them.
+        // Absent-window backlog and a destroyed main are never reclassified/replayed.
+        if (events[i].source.route != ro::chat::NoticeRoute::Unspecified
+            && (events[i].source.mainGeneration == 0
+                || events[i].source.mainGeneration != g_windowMgr.GetSourceChatGeneration())) continue;
         ChatLine line{};
         line.text = events[i].text;
         line.color = events[i].color;
@@ -1960,6 +1998,12 @@ void UINewChatWnd::CancelPointerCapture()
 msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, msgparam_t detail, msgparam_t extra)
 {
     switch (msg) {
+    case 37:
+    case 115:
+        ReceiveSourceNotice(reinterpret_cast<const char*>(value), ro::chat::ColorRefToUiRgb(static_cast<u32>(detail)),
+            msg == 37 ? ro::chat::NoticeRoute::Normal : ro::chat::NoticeRoute::Command,
+            static_cast<ro::chat::NoticeType>(extra));
+        return 0;
     case 6:
         if (value == 291) StickOnOff(true);
         else if (value == 292) StickOnOff(false);

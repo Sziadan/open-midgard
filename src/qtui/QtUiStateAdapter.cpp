@@ -1911,6 +1911,52 @@ void PopulateStatusState(QtUiState* state)
     state->setStatusData(data);
 }
 
+void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
+{
+    const auto chatLayer = [](const UIWindow* window) {
+        int index = 0, mainIndex = 0, windowIndex = 0;
+        for (const auto* child : g_windowMgr.m_children) {
+            if (child == g_windowMgr.m_chatWnd) mainIndex = index;
+            if (child == window) windowIndex = index;
+            ++index;
+        }
+        return (windowIndex - mainIndex) * 0.0001;
+    };
+    QVariantList histories;
+    for (const auto* history : {g_windowMgr.m_subChatWndST, g_windowMgr.m_subChatWndBT}) {
+        if (!history) continue;
+        QVariantMap value;
+        value.insert(QStringLiteral("kind"), history->GetKind());
+        value.insert(QStringLiteral("layer"), chatLayer(history));
+        value.insert(QStringLiteral("visible"), IsGameplayWindowVisible(state, history));
+        value.insert(QStringLiteral("x"), history->m_x);
+        value.insert(QStringLiteral("y"), history->m_y);
+        value.insert(QStringLiteral("width"), history->m_w);
+        value.insert(QStringLiteral("height"), history->m_h);
+        QVariantList rows;
+        for (const auto& row : history->GetRows()) {
+            QVariantMap entry;
+            entry.insert(QStringLiteral("text"), ToQString(row.text));
+            entry.insert(QStringLiteral("color"), QColor::fromRgb(row.color).name());
+            entry.insert(QStringLiteral("talker"), ToQString(row.talker));
+            rows.push_back(entry);
+        }
+        value.insert(QStringLiteral("rows"), rows);
+        histories.push_back(value);
+    }
+    chatUi.insert(QStringLiteral("histories"), histories);
+    QVariantMap mini;
+    if (const auto* window = g_windowMgr.m_subChatMiniWnd) {
+        mini.insert(QStringLiteral("visible"), IsGameplayWindowVisible(state, window));
+        mini.insert(QStringLiteral("layer"), chatLayer(window));
+        mini.insert(QStringLiteral("x"), window->m_x);
+        mini.insert(QStringLiteral("y"), window->m_y);
+        mini.insert(QStringLiteral("st"), g_windowMgr.m_onStSubChat);
+        mini.insert(QStringLiteral("bt"), g_windowMgr.m_onBtSubChat);
+    }
+    chatUi.insert(QStringLiteral("mini"), mini);
+}
+
 void PopulateChatWindowState(QtUiState* state)
 {
     if (!state) {
@@ -1929,7 +1975,9 @@ void PopulateChatWindowState(QtUiState* state)
         state->setChatWindowInputText(QString());
         state->setChatWindowLines(QVariantList{});
         state->setChatWindowScrollBar(QVariantMap{});
-        state->setChatWindowUi(QVariantMap{});
+        QVariantMap auxiliary;
+        PopulateChatAuxiliaryState(state, auxiliary);
+        state->setChatWindowUi(auxiliary);
         return;
     }
 
@@ -1964,6 +2012,7 @@ void PopulateChatWindowState(QtUiState* state)
     state->setChatWindowScrollBar(scrollBar);
 
     QVariantMap chatUi;
+    PopulateChatAuxiliaryState(state, chatUi);
     const auto layout = chatWnd->GetLayoutDisplay();
     const auto rectMap = [](const RECT& rect) {
         QVariantMap value;
@@ -1981,48 +2030,7 @@ void PopulateChatWindowState(QtUiState* state)
     sourceRects.insert(QStringLiteral("gear"), rectMap(layout.gearButton));
     sourceRects.insert(QStringLiteral("stick"), rectMap(layout.stickButton));
     chatUi.insert(QStringLiteral("sourceRects"), sourceRects);
-    const auto chatLayer = [](const UIWindow* window) {
-        int index = 0, mainIndex = 0, windowIndex = 0;
-        for (const auto* child : g_windowMgr.m_children) {
-            if (child == g_windowMgr.m_chatWnd) mainIndex = index;
-            if (child == window) windowIndex = index;
-            ++index;
-        }
-        return (windowIndex - mainIndex) * 0.0001;
-    };
-    QVariantList histories;
-    for (const auto* history : {g_windowMgr.m_subChatWndST, g_windowMgr.m_subChatWndBT}) {
-        if (!history) continue;
-        QVariantMap value;
-        value.insert(QStringLiteral("kind"), history->GetKind());
-        value.insert(QStringLiteral("layer"), chatLayer(history));
-        value.insert(QStringLiteral("visible"), history->m_show != 0);
-        value.insert(QStringLiteral("x"), history->m_x);
-        value.insert(QStringLiteral("y"), history->m_y);
-        value.insert(QStringLiteral("width"), history->m_w);
-        value.insert(QStringLiteral("height"), history->m_h);
-        QVariantList rows;
-        for (const auto& row : history->GetRows()) {
-            QVariantMap entry;
-            entry.insert(QStringLiteral("text"), ToQString(row.text));
-            entry.insert(QStringLiteral("color"), QColor::fromRgb(row.color).name());
-            entry.insert(QStringLiteral("talker"), ToQString(row.talker));
-            rows.push_back(entry);
-        }
-        value.insert(QStringLiteral("rows"), rows);
-        histories.push_back(value);
-    }
-    chatUi.insert(QStringLiteral("histories"), histories);
-    QVariantMap mini;
-    if (const auto* window = g_windowMgr.m_subChatMiniWnd) {
-        mini.insert(QStringLiteral("visible"), window->m_show != 0);
-        mini.insert(QStringLiteral("layer"), chatLayer(window));
-        mini.insert(QStringLiteral("x"), window->m_x);
-        mini.insert(QStringLiteral("y"), window->m_y);
-        mini.insert(QStringLiteral("st"), g_windowMgr.m_onStSubChat);
-        mini.insert(QStringLiteral("bt"), g_windowMgr.m_onBtSubChat);
-    }
-    chatUi.insert(QStringLiteral("mini"), mini);
+
     chatUi.insert(QStringLiteral("expansionState"), chatWnd->GetExpansionState());
     chatUi.insert(QStringLiteral("expanded"), chatWnd->GetExpansionState() != 0);
     QVariantList tabs;

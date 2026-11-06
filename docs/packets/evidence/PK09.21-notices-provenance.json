@@ -1,0 +1,159 @@
+{
+  "date": "2026-11-06",
+  "baseline": "6b14b3f2318e8106dbc2f3986921121ed2571921",
+  "commit_subject": "packet(PK09.21): route typed chat notices",
+  "scope": "Partial PK09.21 typed source parsing, independent stream ownership, selected pickup/equip producers and retained auxiliary projection; primary source-tab rendering and full producer/lifecycle acceptance remain IN_PROGRESS",
+  "runtime_test_sha256": {
+    "CMakeLists.txt": "b123b05d1b9845bb475d2d6cebfc2705dfe702bc1bc2d8cf43c2356733ecb562",
+    "src/core/ChatNotice.h": "45b818162d9d8db5c5f1ca89b458c01359d96225a968151f2615acb6035a8663",
+    "src/gamemode/GameModePacket.cpp": "b2569e01525789e0317822f42ed64940bee7eedb6bb0f0bfea8967f2c43367a0",
+    "src/qtui/QtUiSpikeBridge.cpp": "c07c2af9a2c84c2e13a6c0d92e5c2a04ede9c92793dcc95e81631dce3312b7f4",
+    "src/qtui/QtUiStateAdapter.cpp": "33d22e2f5260b90039416e27077fe3a4316e03eee235bc1977f2db5e6372b6cb",
+    "src/session/Session.h": "cfff5407d0e32317a23c80182d2a54e96d6312a2abfeacff003c8e0f69011d31",
+    "src/ui/UINewChatWnd.cpp": "f5d3b74900b55fe67cd254d5f2dddfb77b35476b83aee872ab3bc7eb8ab228da",
+    "src/ui/UINewChatWnd.h": "d321fdb0143767ef7a42cf8677d83e52556b0936ff2178a6c67bd897a0d160c9",
+    "src/ui/UIWindowMgr.cpp": "51834cc68b21b5d654e5055b52f1b66af090bd7f5109279d05e6e121cf65205f",
+    "src/ui/UIWindowMgr.h": "0fbdb7e56912034638b342c181001c27a7309f05b500b3745909ea4fe8ff11de",
+    "tools/tests/CMakeLists.txt": "77124a9a2592e9de9f6819719dd2e6188802b2dc869f8c8ae5a0f8025c7ab6cb",
+    "tools/tests/ChatNoticeTests.cpp": "7cc1037f524783afc8f4dd2c5dbce1353a36e47dc4a2bae4423df55a0a141633",
+    "tools/tests/replay/ChatNoticeProducerReplay.inc": "2ccbc337d2df882aaa2435271f3ab06a26c9f420a80d2071cb3845f689c6ebbf",
+    "tools/tests/replay/ChatNoticeRoutingReplay.inc": "0bc73d08231fb8688c001827f3cb37933fab115c32244e41d798661e19c30714",
+    "tools/tests/replay/ChatWindowStateRenderChecks.inc": "dd6d17f80edd8b7c639bdbbd596927d84151bc1581da5640b95b9ac22e7cf830",
+    "tools/tests/replay/PacketStreamReplay.cpp": "73ab6c871cfffe7cf6b75a296eebb158c31d4fb102aa2cbf2d6ebcaadf0ba2b4"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/UIFrameWnd3.cpp": "ace15e1a1d180c9f9e65709c0518080e6326d19ed799e808623ec37440e9627f",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/UIControl2.cpp": "48e3d33d0aa4345fa47b891091ed39688c72b2b78b0e61d095b035d43ce6ce79",
+    "Ref/UISys.cpp": "9efaa402fa8dde2f1854c3f55b5a619da93d0d162459efa960d17f6cf47bf25b",
+    "Ref/Language.cpp": "91e4169f1fab62a29fa122c936d45530f07e8c5aac6861df15d6d2793ac8837f",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/dhxj/Window/UISys.h": "d8639d0f6f3fac82a903dd57594717f8e5b0d37d9f8c62c9c9ca033ad471d8ce"
+  },
+  "binary_sha256": {
+    "build-mingw-preset/open-midgard.exe": "19a720348f784e6a23059dfd9ae3597215a636429f85167c7b82f60add06c9f7",
+    "build-mingw-preset/packet_stream_replay_checks.exe": "5c1939e9d1c72b6294ca1323bb3afc52c95331c4ebe3b2fceff6d9f7d3ebc047",
+    "build-mingw-preset/packet_item_render_checks.exe": "3fb0feb9c7b7afbbd78fd823b7bc604313d622e76a6b857e1ce9586d3579f0de",
+    "build-mingw-preset/chat_notice_checks.exe": "b9418d5e42fe7e25297e5f2e5057116c5ba146914f26b500acf6c102aa196195",
+    "build-recovery-unit-review/chat_notice_checks.exe": "277cc0f21762601eb23d8f6721ffa4da1b478645fad43627fd87837fe6e089bf"
+  },
+  "retained_evidence_sha256": {
+    "docs/packets/evidence/PK09.21-notices-before-fix.log": "0861a95f3dd3868e0fc28ce13a58644026589561f665318b141d02d5def63967",
+    "docs/packets/evidence/PK09.21-notices-build.log": "4950158486d5ccb26c8f8574ff432643b0ff339e8b878f1f64128c699f716639",
+    "docs/packets/evidence/PK09.21-notices-cases.log": "0b65786f9e2da6d467ec923e75e87533dfa7bbada87a4488d3815dc028223961",
+    "docs/packets/evidence/PK09.21-notices-root-ctest.log": "1b7ea296921fb2c452b5e4474b2e70b83670be50298a9eb3a0e59b03f6021ec0",
+    "docs/packets/evidence/PK09.21-notices-unit-build.log": "71ed69a43192172f11751e708a203a9cc23cabd7a827eb923099a548a9ccba89",
+    "docs/packets/evidence/PK09.21-notices-unit-ctest.log": "2de314070ab2462f74acf344387581a5503cfa24fd152795ff6653c8458bbcd3",
+    "docs/packets/evidence/PK09.21-notice-pe.txt": "c431b06854a730f38d888fea34fcf55bc00a8a5a3e0c4ade77849925daac4efe",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-detached.native.png": "70c66377556e8eb094b2e36cfce9c7eb9977a8f8817ad830a7242e266860459f",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-detached.qml.png": "c1d14c6729b1c24b9ee6669ad5269cb9e40b9f4d894b773a4cf384096f3c30a0",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-reattached.qml.png": "2ad03b19685f484479e5b46f12d16a73f10cf93f7b782a492c5f251b1562e1b9",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-retained-without-main.native.png": "e2d30ffec12b096938a8d870cccc858c43781ddcecf98c15170ca4dad60dbcf4",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-retained-without-main.qml.png": "98f0776f76c4666b067e41710d80272c1b72d111c20b53224b0fef64a0c7a317",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-0.native.png": "2179b9708f3b964a5c8fffbcd03bb7d825eea79459205191a247978322bc31d1",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-0.qml.png": "4e9e2813216a0db6f2906320d24a7d95d5289aac4379ef8f38993dcf49b8d1d8",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-1.native.png": "f679becae6e619dc36e540bafe90fee04ecf4c873402a99a6f0f68a0226d1469",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-1.qml.png": "5823e8ea6e13367f26233964fb2d62c01e843ef723fbaf6f1f42445ae31ace76",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-15.native.png": "9924e7c238897612f8c1b686ef5e3537c6f5f808a8173b2e72750c9ba2fb03f9",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-15.qml.png": "0ba4b4ffd7216dd319c63a031d786351f2e84eb3db191155f3130aa73b2fb9c4",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-7.native.png": "b0e2b58fa4d278fb8e0867e1d00d11a9f084a031dd222d15f39bac376277d7bc",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-7.qml.png": "b717116222bf6f33e7626d4811c78e405e36eee2eb28daa3c20d4a94721b49b9",
+    "docs/packets/evidence/PK09.21-notices-renders/chat-state-results.json": "3a44ba56abed9ec0dd34f64612eccd4c81e82336b6196d061d9aca09161f6829"
+  },
+  "server_profile": 20080910,
+  "client_receive_profile": 23,
+  "server_revision": null,
+  "server_sources_sha256": {
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "src/custom/defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "src/config/packets.hpp": "180f7ddaf5c978af0db7ed26215388265d51f59957ac7173d617870e2cc0964d"
+  },
+  "validation": {
+    "root": {
+      "passed": 132,
+      "failed": 0,
+      "seconds": 182.29
+    },
+    "standalone": {
+      "passed": 462,
+      "failed": 0,
+      "seconds": 74.93
+    },
+    "all_target_builds": "root and standalone succeed on final applicable source",
+    "commands": [
+      "cmake --build build-mingw-preset --parallel 4",
+      "cmake --build build-recovery-unit-review --parallel 4",
+      "ctest --test-dir build-mingw-preset --output-on-failure",
+      "ctest --test-dir build-recovery-unit-review --output-on-failure",
+      "packet_stream_replay_checks.exe --chat-notice-only"
+    ],
+    "runtime_path_prefix": [
+      "C:/Qt/Tools/mingw1310_64/bin",
+      "C:/Qt/6.11.0/mingw_64/bin"
+    ],
+    "deployment": "OFF",
+    "actual_ui_frames": 13,
+    "qml_errors": 0,
+    "renderer": "offscreen/software QML plus native DIB",
+    "source_ui_cases": [
+      "13 numeric types",
+      "option-disabled normal versus command bypass",
+      "exact live manager sentinels versus unfiltered child path",
+      "talker prefix/self/Germany limits",
+      "94-byte ASCII splitting and UTF-8 boundary adaptation",
+      "main240-entry half-trim",
+      "unsplit detached repeats",
+      "independent absent backlog",
+      "source main generation prevents replay",
+      "retained auxiliary projection without main"
+    ],
+    "packet_cases": [
+      {
+        "case_id": "chat_notice_routing",
+        "status": "PASS",
+        "types": 13,
+        "detached_unsplit_mirror": true,
+        "backlog_replay": false
+      },
+      {
+        "case_id": "chat_notice_producer_source_metadata",
+        "contract_id": "PK09.21",
+        "fixture_id": "PK09.21-selected-pickup-equip-notices",
+        "production_entry": "ProcessGameModePacketLoop -> production router -> HandleItemPickupAck/HandleEquipItemAck -> PushSourceChatEvent",
+        "pickup_route": 1,
+        "pickup_type": 5,
+        "equip_route": 1,
+        "equip_type": 6,
+        "failure_route": 1,
+        "failure_type": 0,
+        "failure_expansion_message": 3,
+        "known_empty_resource_case": "PASS isolated known-failure empty resource",
+        "outcome": "PASS"
+      }
+    ],
+    "intentional_regression": {
+      "old_behavior": "EnsureChatWindowVisible only for known pickup failure",
+      "result": "rejected",
+      "error": "explicit known-failure manager message did not show and expand collapsed chat",
+      "final_source_restored_byte_for_byte": true
+    },
+    "standalone_note": "The final producer-test-only assertion additions and historical mutation/rebuild did not alter standalone compiled sources; the full462-test run used the final standalone source.",
+    "not_certified": [
+      "primary source-tab rendering/selection",
+      "all remaining chat producers/conditional branches",
+      "full history controls/options139",
+      "restart persistence/main cached restore",
+      "active Qt embedding capture/overlaps and scales",
+      "legacy wordbreak/codepage/charset tags",
+      "art/live/deployment"
+    ]
+  },
+  "reference_executable_executed": false,
+  "reference_executable_copied": false,
+  "installed_deployment_modified": false,
+  "live_transaction": false
+}

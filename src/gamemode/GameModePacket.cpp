@@ -2349,7 +2349,7 @@ void AnnouncePickedUpItem(const ITEM_INFO& itemInfo)
     // Chat stores that as R in the high byte. Type 5 is the get-item chat class;
     // the Info tab is the channel that still shows it.
     const auto message=g_ttemmgr.GetItemObtainChatText(itemInfo);
-    g_windowMgr.PushChatEvent(message.c_str(),0x0000FFFFu,6);
+    g_windowMgr.PushSourceChatEvent(message.c_str(),0x0000FFFFu,6, ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::ObtainItem);
 }
 
 void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
@@ -2373,10 +2373,10 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
         // Source message3 shows chat for these known failures even when the
         // selected language resource deliberately contains an empty message.
         if(result==1 || result==2 || result==4 || result==5 || result==6)
-            g_windowMgr.EnsureChatWindowVisible();
+            g_windowMgr.SendMsg(3, 0, 0);
         const auto notice=g_ttemmgr.GetPickupFailureNotice(static_cast<unsigned char>(result));
         if (!notice.empty()) {
-            g_windowMgr.PushChatEvent(notice.c_str(),0x00ff0000u,0);
+            g_windowMgr.PushSourceChatEvent(notice.c_str(),0x00ff0000u,0, ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None);
         }
         return;
     }
@@ -2610,7 +2610,7 @@ void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
     if (result != 1 || itemIndex == 0 || wearLocation == 0) {
         if (result==0 || result==2) {
             const auto notice=g_ttemmgr.GetEquipFailureNotice();
-            g_windowMgr.PushChatEvent(notice.c_str(),0x00ff0000u,6);
+            g_windowMgr.PushSourceChatEvent(notice.c_str(),0x00ff0000u,6, ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Equip);
         }
         DbgLog("[GameMode] equip ack index=%u wear=0x%04X ok=%d\n",
             itemIndex,

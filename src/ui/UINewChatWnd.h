@@ -1,6 +1,8 @@
 #pragma once
 
 #include "UIWindow.h"
+#include "UISubChatWnd.h"
+#include "core/ChatNotice.h"
 
 #include <array>
 #include <vector>
@@ -66,6 +68,9 @@ public:
     ChatWindowLayoutDisplay GetLayoutDisplay() const;
 
     void AddChatLine(const char* text, u32 color, u8 channel, u32 tick);
+    bool ReceiveSourceNotice(const char* text, u32 uiRgb, ro::chat::NoticeRoute route,
+        ro::chat::NoticeType type, const char* talker = nullptr);
+    const std::vector<SubChatRow>& GetSourceHistory(bool command) const { return m_sourceHistory[command ? 1 : 0]; }
     bool HandleQtMouseDown(int x, int y);
     bool HandleQtMouseMove(int x, int y);
     bool HandleQtMouseUp(int x, int y);
@@ -131,6 +136,7 @@ private:
     bool HandlePointerWheel(int delta, int x, int y);
 
     std::vector<ChatLine> m_lines;
+    std::array<std::vector<SubChatRow>, 2> m_sourceHistory;
     std::vector<ChatLine> m_visibleLines;
     std::vector<std::string> m_inputHistory;
     std::string m_whisperTargetText;

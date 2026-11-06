@@ -1008,6 +1008,7 @@ void UIWindowMgr::EnsureChatWindowVisible()
 {
     if (!m_chatWnd) {
         m_chatWnd = new UINewChatWnd();
+        ++m_sourceChatGeneration;
         InitializeChatAuxiliaries();
         m_children.push_back(m_chatWnd);
         m_chatWnd->RestorePersistentState(m_chatInputHistory,
@@ -1115,6 +1116,7 @@ bool UIWindowMgr::Init() {
 
     if (!m_chatWnd) {
         m_chatWnd = new UINewChatWnd();
+        ++m_sourceChatGeneration;
         InitializeChatAuxiliaries();
         m_children.push_back(m_chatWnd);
     }
@@ -2340,7 +2342,14 @@ void UIWindowMgr::HideLoadingScreen()
     SetWallpaper(nullptr);
 }
 
-void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam) {
+void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t noticeType, msgparam_t talker) {
+    if ((msg == 1 || msg == 20) && wparam) {
+        const auto color = static_cast<u32>(lparam) != 0 ? static_cast<u32>(lparam) : 0x00ffffffu;
+        PushSourceChatEvent(reinterpret_cast<const char*>(wparam), ro::chat::ColorRefToUiRgb(color), 6,
+            msg == 1 ? ro::chat::NoticeRoute::Normal : ro::chat::NoticeRoute::Command,
+            static_cast<ro::chat::NoticeType>(noticeType), reinterpret_cast<const char*>(talker));
+        return;
+    }
     // Original manager2/3 are state/show operations, distinct from notices.
     if (msg == 2) {
         if (m_chatWnd) m_chatWnd->SendMsg(nullptr, 15, wparam, 0, 0);
@@ -2363,7 +2372,21 @@ void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam) {
     PushChatEvent(text, color, channel, GetTickCount());
 }
 
-void UIWindowMgr::PushChatEvent(const char* text, u32 color, u8 channel, u32 tick)
+void UIWindowMgr::PushSourceChatEvent(const char* text, u32 uiRgb, u8 channel, ro::chat::NoticeRoute route,
+    ro::chat::NoticeType type, const char* talker, u32 tick)
+{
+    if (!text || (route != ro::chat::NoticeRoute::Normal && route != ro::chat::NoticeRoute::Command)) return;
+    uiRgb = uiRgb ? uiRgb & 0x00ffffffu : 0x00ffffffu;
+    if (m_chatWnd) {
+        if (ro::chat::IsNoticeSentinel(text) || !m_chatWnd->ReceiveSourceNotice(text, uiRgb, route, type, talker)) return;
+    } else {
+        // Source backlog retains only split text/color, without route/type/talker.
+        for (auto& line : ro::chat::SplitNotice(text)) m_sourceChatBacklog.push_back({std::move(line), uiRgb, {}});
+    }
+    PushChatEvent(text, uiRgb, channel, tick, {route, type, talker ? talker : "", m_chatWnd ? m_sourceChatGeneration : 0});
+}
+
+void UIWindowMgr::PushChatEvent(const char* text, u32 color, u8 channel, u32 tick, ro::chat::NoticeSource source)
 {
     if (!text || *text == '\0') {
         return;
@@ -2374,6 +2397,7 @@ void UIWindowMgr::PushChatEvent(const char* text, u32 color, u8 channel, u32 tic
     event.color = color & 0x00FFFFFFu;
     event.channel = channel;
     event.tick = tick != 0 ? tick : GetTickCount();
+    event.source = std::move(source);
 
     if (m_chatEvents.size() >= kMaxChatEvents) {
         m_chatEvents.erase(m_chatEvents.begin());
@@ -3026,12 +3050,7 @@ std::vector<UIChatEvent> UIWindowMgr::GetChatPreviewEvents(size_t maxCount) cons
     preview.reserve(m_chatEvents.size() - start);
 
     for (size_t i = start; i < m_chatEvents.size(); ++i) {
-        UIChatEvent ev{};
-        ev.text = m_chatEvents[i].text;
-        ev.color = m_chatEvents[i].color;
-        ev.channel = m_chatEvents[i].channel;
-        ev.tick = m_chatEvents[i].tick;
-        preview.push_back(std::move(ev));
+        preview.push_back(m_chatEvents[i]);
     }
     return preview;
 }

@@ -116,3 +116,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.CHAT-STATE](PK09.CHAT-STATE.md) records the reviewed main state phase: signed cycles, source heights, bottom anchoring and shared native/Qt editor geometry. PK09.21 remains IN_PROGRESS for sticky/mini/detached-history ownership and source stream routing; no discovery-row closure.
 
 [PK09.21 family ownership evidence](../evidence/PK09.21-family.md) extends the partial chat contract with managed auxiliary ownership, sticky transitions and native capture proof. Source routing and remaining lifecycle gates stay open.
+
+[PK09.CHAT-NOTICES](PK09.CHAT-NOTICES.md) records typed source notice parsing, split/unsplit owner rows, backlog/generation lifetime and selected producer proof. Source primary-tab rendering and full PK09.21 acceptance remain open.

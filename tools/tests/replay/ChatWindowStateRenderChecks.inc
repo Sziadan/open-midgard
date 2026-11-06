@@ -82,8 +82,8 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     auto* bt = g_windowMgr.m_subChatWndBT;
     Require(st && bt, "render fixture missing managed histories");
     st->Move(20, 260); bt->Move(340, 260);
-    st->Append("ST INDEPENDENT HISTORY", 0xff2020, "SourceST");
-    bt->Append("BT INDEPENDENT HISTORY", 0xff2020, "SourceBT");
+    g_windowMgr.PushSourceChatEvent("ST INDEPENDENT HISTORY", 0xff2020, 6, ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None, "SourceST");
+    g_windowMgr.PushSourceChatEvent("BT INDEPENDENT HISTORY", 0xff2020, 6, ro::chat::NoticeRoute::Command, ro::chat::NoticeType::None, "SourceBT");
     adapter.syncChat(); Frames(app, view);
     auto* stItem = Find(view.rootObject(), "detachedChatHistory0");
     auto* btItem = Find(view.rootObject(), "detachedChatHistory1");
@@ -160,4 +160,20 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     Require(file.open(QIODevice::WriteOnly), "chat state results open failed");
     file.write(QJsonDocument(QJsonObject{{"cases",cases},{"main_state_phase","PASS"},
         {"auxiliary_lifecycle_pending",true}}).toJson());
+    chat->StickOnOff(false);
+    g_windowMgr.UpdateChatAuxiliaryVisibility();
+    g_windowMgr.DeleteWindow(chat);
+    adapter.syncChat(); Frames(app, view);
+    auto* retainedSt = Find(view.rootObject(), "detachedChatHistory0");
+    auto* retainedBt = Find(view.rootObject(), "detachedChatHistory1");
+    Require(!state->chatWindowVisible() && retainedSt && retainedSt->isVisible()
+        && retainedBt && retainedBt->isVisible() && miniItem->isVisible(),
+        "actual Qt retained auxiliary family disappeared with main");
+    Require(view.grabWindow().save(output + "/chat-retained-without-main.qml.png"), "save retained-owner Qt frame failed");
+    std::fill_n(auxSurface.GetPixels(), view.width() * view.height(), 0xff181b20u);
+    st->DrawToHdc(auxSurface.GetDC()); bt->DrawToHdc(auxSurface.GetDC());
+    g_windowMgr.m_subChatMiniWnd->DrawToHdc(auxSurface.GetDC());
+    Require(QImage(reinterpret_cast<uchar*>(auxSurface.GetPixels()), view.width(), view.height(),
+        view.width() * 4, QImage::Format_RGB32).save(output + "/chat-retained-without-main.native.png"),
+        "save retained-owner native frame failed");
 }

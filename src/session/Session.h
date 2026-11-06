@@ -184,6 +184,10 @@ public:
     int m_playerAccessory2;
     int m_playerAccessory3;
     char m_playerName[25];
+    // Ref Session initialization: the thirteen source battle-message filters start enabled.
+    std::array<bool, 13> m_battleMsgOnOffSet = {
+        true, true, true, true, true, true, true, true, true, true, true, true, true
+    };
     int m_plusStr = 0;
     int m_plusAgi = 0;
     int m_plusVit = 0;

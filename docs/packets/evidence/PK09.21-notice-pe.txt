@@ -1,0 +1,86 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0049dcab <.text+0x9ccab>:
+  49dcab:	8b 4d 08             	mov    0x8(%ebp),%ecx
+  49dcae:	8b 44 08 04          	mov    0x4(%eax,%ecx,1),%eax
+  49dcb2:	85 c0                	test   %eax,%eax
+  49dcb4:	75 05                	jne    0x49dcbb
+  49dcb6:	b8 8c c8 6c 00       	mov    $0x6cc88c,%eax
+  49dcbb:	8b 8b a0 00 00 00    	mov    0xa0(%ebx),%ecx
+  49dcc1:	8d 7d a4             	lea    -0x5c(%ebp),%edi
+  49dcc4:	57                   	push   %edi
+  49dcc5:	56                   	push   %esi
+  49dcc6:	8b 11                	mov    (%ecx),%edx
+  49dcc8:	50                   	push   %eax
+  49dcc9:	ff 92 b0 00 00 00    	call   *0xb0(%edx)
+  49dccf:	8b 4d c8             	mov    -0x38(%ebp),%ecx
+  49dcd2:	85 c9                	test   %ecx,%ecx
+  49dcd4:	74 16                	je     0x49dcec
+  49dcd6:	8b 01                	mov    (%ecx),%eax
+  49dcd8:	8d 55 a4             	lea    -0x5c(%ebp),%edx
+  49dcdb:	6a 00                	push   $0x0
+  49dcdd:	52                   	push   %edx
+  49dcde:	8b 55 10             	mov    0x10(%ebp),%edx
+  49dce1:	56                   	push   %esi
+  49dce2:	52                   	push   %edx
+  49dce3:	6a 25                	push   $0x25
+  49dce5:	53                   	push   %ebx
+  49dce6:	ff 90 94 00 00 00    	call   *0x94(%eax)
+  49dcec:	8b 45 e4             	mov    -0x1c(%ebp),%eax
+  49dcef:	8b 4d 18             	mov    0x18(%ebp),%ecx
+  49dcf2:	85 c9                	test   %ecx,%ecx
+  49dcf4:	74 4e                	je     0x49dd44
+  49dcf6:	8a 91 3f 46 7b 00    	mov    0x7b463f(%ecx),%dl
+  49dcfc:	84 d2                	test   %dl,%dl
+  49dcfe:	74 44                	je     0x49dd44
+  49dd00:	8b 4d 08             	mov    0x8(%ebp),%ecx
+  49dd03:	8b 44 08 04          	mov    0x4(%eax,%ecx,1),%eax
+  49dd07:	85 c0                	test   %eax,%eax
+  49dd09:	75 05                	jne    0x49dd10
+  49dd0b:	b8 8c c8 6c 00       	mov    $0x6cc88c,%eax
+  49dd10:	8b 8b a4 00 00 00    	mov    0xa4(%ebx),%ecx
+  49dd16:	8d 7d a4             	lea    -0x5c(%ebp),%edi
+  49dd19:	57                   	push   %edi
+  49dd1a:	56                   	push   %esi
+  49dd1b:	8b 11                	mov    (%ecx),%edx
+  49dd1d:	50                   	push   %eax
+  49dd1e:	ff 92 b0 00 00 00    	call   *0xb0(%edx)
+  49dd24:	8b 4d cc             	mov    -0x34(%ebp),%ecx
+  49dd27:	85 c9                	test   %ecx,%ecx
+  49dd29:	74 16                	je     0x49dd41
+  49dd2b:	8b 01                	mov    (%ecx),%eax
+  49dd2d:	8d 55 a4             	lea    -0x5c(%ebp),%edx
+  49dd30:	6a 00                	push   $0x0
+  49dd32:	52                   	push   %edx
+  49dd33:	8b 55 10             	mov    0x10(%ebp),%edx
+  49dd36:	56                   	push   %esi
+  49dd37:	52                   	push   %edx
+  49dd38:	6a 25                	push   $0x25
+  49dd3a:	53                   	push   %ebx
+  49dd3b:	ff 90 94 00 00 00    	call   *0x94(%eax)
+  49dd41:	8b 45 e4             	mov    -0x1c(%ebp),%eax
+  49dd44:	8b 55 f0             	mov    -0x10(%ebp),%edx
+  49dd47:	8b 4d 08             	mov    0x8(%ebp),%ecx
+  49dd4a:	42                   	inc    %edx
+  49dd4b:	83 c1 10             	add    $0x10,%ecx
+  49dd4e:	89 55 f0             	mov    %edx,-0x10(%ebp)
+  49dd51:	89 4d 08             	mov    %ecx,0x8(%ebp)
+  49dd54:	e9 22 ff ff ff       	jmp    0x49dc7b
+  49dd59:	83 f9 73             	cmp    $0x73,%ecx
+  49dd5c:	74 a2                	je     0x49dd00
+  49dd5e:	eb 8f                	jmp    0x49dcef
+
+HighPriest.exe:     file format pei-i386
+
+Contents of section .data:
+ 6f3934 203a0000 29b4d4c0 cc20c5f0            :..).... ..
+
+HighPriest.exe:     file format pei-i386
+
+Contents of section .data:
+ 6f6af0 25730000 4e4f204d 53470000 4e6f204d  %s..NO MSG..No M
+ 6f6b00 73670000 2920202a                    sg..)  *

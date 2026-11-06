@@ -2138,3 +2138,7 @@ add_test(NAME ammo_cursor_regression_checks
 add_executable(chat_window_state_checks ChatWindowStateTests.cpp)
 target_compile_features(chat_window_state_checks PRIVATE cxx_std_17)
 add_test(NAME chat_window_state_checks COMMAND chat_window_state_checks)
+
+add_executable(chat_notice_checks ChatNoticeTests.cpp)
+target_compile_features(chat_notice_checks PRIVATE cxx_std_17)
+add_test(NAME chat_notice_checks COMMAND chat_notice_checks)

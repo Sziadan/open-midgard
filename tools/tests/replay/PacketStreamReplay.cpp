@@ -4517,6 +4517,8 @@ void GlobalChatProductionSendReplay()
 #include "RecoveryDeltaReplay.inc"
 #include "CorpsePacketReplay.inc"
 #include "ChatWindowStateReplay.inc"
+#include "ChatNoticeRoutingReplay.inc"
+#include "ChatNoticeProducerReplay.inc"
 #include "InventoryItemFieldsReplay.inc"
 #include "CartItemLifecycleReplay.inc"
 #include "CharacterNameReplay.inc"
@@ -4538,6 +4540,7 @@ int main(int argc,char** argv){try{
 #endif
     Require(CConnection::Startup(),"socket startup failed");
     if(argc>1 && std::string(argv[1])=="--corpse-gr2-native") { CorpseNativePacketReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--chat-notice-only") { ChatNoticeRoutingReplay(); ChatNoticeProducerReplay(); CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--chat-state-only") { ChatWindowStateReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--corpse-only") { CorpsePacketReplay();CConnection::Cleanup();return 0; }
     NpcShopTransactionReplay();
@@ -4675,5 +4678,7 @@ int main(int argc,char** argv){try{
     RentalItemPacketReplay();
     CorpsePacketReplay();
     ChatWindowStateReplay();
+    ChatNoticeRoutingReplay();
+    ChatNoticeProducerReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

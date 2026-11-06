@@ -2039,7 +2039,10 @@
         "docs/packets/evidence/PK09.21-main-state.md",
         "docs/packets/evidence/PK09.21-main-state-provenance.json",
         "docs/packets/evidence/PK09.21-family.md",
-        "docs/packets/evidence/PK09.21-family-provenance.json"
+        "docs/packets/evidence/PK09.21-family-provenance.json",
+        "docs/packets/contracts/PK09.CHAT-NOTICES.md",
+        "docs/packets/evidence/PK09.21-notices.md",
+        "docs/packets/evidence/PK09.21-notices-provenance.json"
       ],
       "commit_subject": null
     }

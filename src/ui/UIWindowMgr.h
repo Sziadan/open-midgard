@@ -2,6 +2,7 @@
 #include "render/DC.h"
 #include "UIWindow.h"
 #include "UISubChatWnd.h"
+#include "core/ChatNotice.h"
 #include "ItemInfoSource.h"
 #include <array>
 #include <map>
@@ -92,6 +93,7 @@ struct UIChatEvent {
     u32 color;
     u8 channel;
     u32 tick;
+    ro::chat::NoticeSource source{};
 };
 
 //===========================================================================
@@ -186,8 +188,12 @@ public:
     void ShowLoadingScreen(const std::string& wallpaperName, const std::string& message, float progress);
     void UpdateLoadingScreen(const std::string& message, float progress);
     void HideLoadingScreen();
-    void SendMsg(int msg, msgparam_t wparam, msgparam_t lparam);
-    void PushChatEvent(const char* text, u32 color, u8 channel, u32 tick = 0);
+    void SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t noticeType = 0, msgparam_t talker = 0);
+    void PushSourceChatEvent(const char* text, u32 uiRgb, u8 channel, ro::chat::NoticeRoute route,
+        ro::chat::NoticeType type, const char* talker = nullptr, u32 tick = 0);
+    const std::vector<SubChatRow>& GetSourceChatBacklog() const { return m_sourceChatBacklog; }
+    unsigned long long GetSourceChatGeneration() const { return m_sourceChatGeneration; }
+    void PushChatEvent(const char* text, u32 color, u8 channel, u32 tick = 0, ro::chat::NoticeSource source = {});
     void SetLoginStatus(const std::string& status);
     void SetLoginWallpaper(const std::string& wallpaperName);
     const std::string& GetLoginStatus() const;
@@ -314,6 +320,8 @@ public:
     ArgbDibSurface m_uiComposeSurface;
 
     std::vector<UIChatEvent> m_chatEvents;
+    std::vector<SubChatRow> m_sourceChatBacklog;
+    unsigned long long m_sourceChatGeneration = 0;
     std::vector<std::string> m_chatInputHistory;
     std::string m_chatWhisperTargetText;
     std::string m_chatInputText;

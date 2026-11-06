@@ -1219,14 +1219,15 @@ public:
             g_windowMgr.m_chatWnd->ClearInputFocus();
             if(m_stateAdapter)m_stateAdapter->syncChat();
         }
-        if (chatEnabled && (msg == WM_LBUTTONDOWN || msg == WM_MOUSEMOVE || msg == WM_LBUTTONUP)) {
+        const bool auxiliaryEnabled = !HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal() && g_windowMgr.CanRouteQtChatInput();
+        if (auxiliaryEnabled && (msg == WM_LBUTTONDOWN || msg == WM_MOUSEMOVE || msg == WM_LBUTTONUP)) {
             const auto isAuxiliary = [](const UIWindow* window) {
                 return window && (window == g_windowMgr.m_subChatWndST || window == g_windowMgr.m_subChatWndBT
                     || window == g_windowMgr.m_subChatMiniWnd);
             };
             const int x = GetUiLogicalX(lParam), y = GetUiLogicalY(lParam);
             const bool captured = isAuxiliary(g_windowMgr.m_captureWindow);
-            if (captured || (!m_chatInput.pointerCaptured() && !g_windowMgr.m_captureWindow && !g_windowMgr.m_chatWnd->IsQtPointerCaptured()
+            if (captured || (!m_chatInput.pointerCaptured() && !g_windowMgr.m_captureWindow && (!g_windowMgr.m_chatWnd || !g_windowMgr.m_chatWnd->IsQtPointerCaptured())
                 && g_windowMgr.IsChatAuxiliaryAtPoint(x, y))) {
                 if (msg == WM_LBUTTONDOWN) {
                     g_windowMgr.OnLBtnDown(x, y);
