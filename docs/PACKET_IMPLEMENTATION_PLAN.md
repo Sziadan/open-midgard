@@ -1,12 +1,12 @@
 # rAthena-authoritative packet implementation plan
 
-**Remaining stronger-source decisions completed (2026-11-05):** [follow-up adjudication](packets/evidence/STRONG-UNBLOCK-2026-11-05.md) supplies concrete NPC representation, ShowEFST ownership and legacy-mail contracts. Timed 0x043F is inactive for selected 20080910; PK24.05 preserves the reviewed legacy 331/332 behavior. Reviewed source dispositions do not certify runtime or UI completion.
+**Earlier NPC/status/mail source decisions completed (2026-11-05):** [follow-up adjudication](packets/evidence/STRONG-UNBLOCK-2026-11-05.md) supplies concrete NPC representation, ShowEFST ownership and legacy-mail contracts. Timed 0x043F is inactive for selected 20080910; PK24.05 preserves the reviewed legacy 331/332 behavior. Reviewed source dispositions do not certify runtime or UI completion.
 
 Created 2026-11-03. This is an execution specification, not a claim that any runtime finding has been fixed.
 
 ## Start here
 
-**Current continuation priority (2026-11-06 acquisition notification):** [PK09.18](packets/evidence/PK09.18-item-obtain.md) completes the prior strong-agent WID58 item branch gate. Follow [bounded-agent continuation instructions](packets/work-items/PK09.18.md) for remaining PK09.04 item/context/effect source maps and fixtures. 122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors. Money branch, broad requests/commerce/NPC/status/mail, PK47 and independent PK48/49/deployment remain open.
+**Current continuation priority (2026-11-06 item-use feedback):** [PK09.19](packets/evidence/PK09.19-item-use.md) restores complete source effect/action selection and bounded acknowledgement feedback. Follow [strong recovery reconciliation and continuation instructions](packets/work-items/PK09.19.md). 123/123 CTest in 173.21s; 176 PASS packet records; 220 source rows checked across all65536 item IDs; 5 GUI cases and8 retained frames; zero QML errors. Full PK09.04, broad requests/commerce/NPC/status/mail, PK47 and independent PK48/49/deployment remain open.
 
 Read this document, [STATUS](packets/STATUS.md), [HANDOFF](packets/HANDOFF.md), then the assigned card in [WORK_PACKAGES](packets/WORK_PACKAGES.md). The machine inventory is [coverage.csv](packets/coverage.csv); task metadata is [work-packages.json](packets/work-packages.json). The original evidence is [packet audit](packet-audit/README.md). Use the [research runbook](packets/RESEARCH_RUNBOOK.md) for concrete source-navigation and task-splitting examples. Do one numbered leaf step at a time. Every completed leaf step requires its own self-reviewed commit and a user-facing progress update. Independent strong-agent review happens afterward and is not required between steps. Never claim a package complete because its decoder compiles.
 

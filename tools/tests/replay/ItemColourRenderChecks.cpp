@@ -176,6 +176,7 @@ template<class Window> QImage Native(Window& window,QRgb expected,int width=Widt
 #include "InventoryShowRenderChecks.inc"
 #include "InventoryMutationRenderChecks.inc"
 #include "ItemObtainRenderChecks.inc"
+#include "ItemUseFeedbackRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -201,6 +202,7 @@ int main(int argc,char** argv) {
         const bool itemDetailGeometryChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-detail-geometry-child";
         const bool itemCardDetail=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail";
         const bool itemCardDetailChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail-child";
+        const bool itemUseFeedback=argc>2 && QString::fromLocal8Bit(argv[2])=="item-use-feedback";
         const bool itemObtain=argc>2 && QString::fromLocal8Bit(argv[2])=="item-obtain";
         const bool inventoryMutations=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-mutations";
         const bool inventoryShow=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-show";
@@ -226,7 +228,7 @@ int main(int argc,char** argv) {
             std::cout<<"PASS source inventory tab startup and runtime retention\n";return 0;
         }
         InventoryTabViewportFixture inventoryTabViewport;
-        if(inventoryMutations || itemObtain) {
+        if(inventoryMutations || itemObtain || itemUseFeedback) {
             SetRuntimeUiScalePercent(100);inventoryTabViewport.Create("inventory-mutations");
         }
         if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild || itemCardDetailChild || inventoryShowChild) {
@@ -234,8 +236,8 @@ int main(int argc,char** argv) {
             const QString stage=QString::fromLocal8Bit(argv[3]);
             SetRuntimeUiScalePercent(100);inventoryTabViewport.Create(stage=="small"?QString("read-small"):stage);
         }
-        if(inventoryMutations || itemObtain) {
-            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(itemObtain?"item-obtain-msgstringtable.txt":"inventory-ack-msgstringtable.txt"));
+        if(inventoryMutations || itemObtain || itemUseFeedback) {
+            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(itemUseFeedback?"item-use-msgstringtable.txt":itemObtain?"item-obtain-msgstringtable.txt":"inventory-ack-msgstringtable.txt"));
             Require(source.open(QIODevice::ReadOnly),"inventory acknowledgement message fixture missing");
             const auto bytes=source.readAll();QFile target(output+"/data/msgstringtable.txt");
             Require(target.open(QIODevice::WriteOnly)&&target.write(bytes)==bytes.size(),"copy inventory acknowledgement messages failed");
@@ -309,7 +311,7 @@ int main(int argc,char** argv) {
         QQuickView view;view.setColor(QColor("#181b20"));view.resize(Width,Height);view.setResizeMode(QQuickView::SizeRootObjectToView);
         if(itemGeometryChild)view.resize(QString::fromLocal8Bit(argv[3])=="small"?640:1280,QString::fromLocal8Bit(argv[3])=="small"?480:720);
         if(itemDetailGeometryChild || itemCardDetailChild || inventoryShowChild)view.resize(1280,720);
-        if(inventoryMutations || itemObtain)view.resize(1280,720);
+        if(inventoryMutations || itemObtain || itemUseFeedback)view.resize(1280,720);
         view.rootContext()->setContextProperty("uiState",adapter.stateObject());
         view.engine()->addImageProvider("openmidgard",new FixtureImages(itemObtain));
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
@@ -362,6 +364,13 @@ int main(int argc,char** argv) {
             view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
             SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
             std::cout<<"PASS NPC shop detail snapshot rendering\n";return 0;
+        }
+        if(itemUseFeedback) {
+            CheckItemUseFeedbackUi(app,view,state,mode,inventory,adapter,output);
+            Require(errors==0,"item-use feedback UI emitted QML warnings/errors");
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS item-use feedback native/Qt notices, zero QML errors\n";return 0;
         }
         if(itemObtain) {
             CheckItemObtainUi(app,view,state,mode,inventory,adapter,output);

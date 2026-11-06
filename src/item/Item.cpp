@@ -1,4 +1,5 @@
 #include "Item.h"
+#include "ItemUseFeedback.h"
 
 #include "DebugLog.h"
 #include "core/File.h"
@@ -544,6 +545,15 @@ std::string CItemMgr::GetEquipFailureNotice()
     return ItemNameMessage(372,"You can't put this item on.");
 }
 
+std::string CItemMgr::GetItemUseNotice(unsigned itemId)
+{
+    EnsureLoaded();
+    const auto messageId=ro::item::GetUseFeedback(itemId).noticeMessageId;
+    if(!messageId)return {};
+    return ItemNameMessage(messageId,messageId==1249
+        ? "You will receive 1.5 times more EXP from hunting monsters for the next 30 minutes." : "");
+}
+
 std::string CItemMgr::GetItemObtainSizingText(const ITEM_INFO& item)
 {
     EnsureLoaded();
@@ -818,7 +828,7 @@ void CItemMgr::LoadItemNameMessages()
 		if (end == std::string::npos) break;
 		while (begin < end && (text[begin] == '\r' || text[begin] == '\n')) ++begin;
         if (index == 52 || index == 53 || index == 153 || index == 220 || index == 279 || index == 372
-            || index == 581 || index == 696
+            || index == 581 || index == 696 || index == 1249 || (index >= 1384 && index <= 1386)
             || (index >= 450 && index <= 454) || (index >= 459 && index <= 461) || index == 756
 			|| (index >= 1255 && index <= 1258) || index == 1260 || index == 1270) {
 			// Preserve spaces in positional message values, including their absence.

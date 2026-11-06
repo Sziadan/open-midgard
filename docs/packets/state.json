@@ -1996,6 +1996,14 @@
         "docs/packets/evidence/PK09.18-item-obtain.json"
       ],
       "commit_subject": "packet(PK09.18): restore item acquisition notification"
+    },
+    "PK09.19": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.19-item-use.md",
+        "docs/packets/evidence/PK09.19-item-use.json"
+      ],
+      "commit_subject": "packet(PK09.19): restore source item-use feedback"
     }
   }
 }

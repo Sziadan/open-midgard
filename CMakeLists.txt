@@ -304,6 +304,7 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
         tools/tests/replay/PacketStreamReplay.cpp)
     target_compile_features(packet_stream_replay_checks PRIVATE cxx_std_17)
     target_compile_definitions(packet_stream_replay_checks PRIVATE
+        RO_PACKET_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
         RO_PACKET_REPLAY_SOURCE_COMMIT_AT_CONFIGURE="${RO_PACKET_REPLAY_SOURCE_COMMIT_AT_CONFIGURE}"
         RO_PACKET_REPLAY_SOURCE_TREE_STATUS_AT_CONFIGURE="${RO_PACKET_REPLAY_SOURCE_TREE_STATUS_AT_CONFIGURE}")
     set(RO_PACKET_REPLAY_RUNTIME_LIBRARIES ${RO_CLIENT_RUNTIME_LIBRARIES})
@@ -340,6 +341,7 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     if(WIN32 AND RO_ENABLE_QT6_UI)
         get_filename_component(RO_PACKET_QT_PREFIX "${Qt6_DIR}/../../.." ABSOLUTE)
         target_compile_definitions(packet_stream_replay_checks PRIVATE
+        RO_PACKET_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
             RO_PACKET_QT_PLATFORM_PLUGINS="${RO_PACKET_QT_PREFIX}/plugins/platforms")
         add_executable(packet_minimap_render_checks tools/tests/replay/MinimapRenderChecks.cpp)
         target_compile_features(packet_minimap_render_checks PRIVATE cxx_std_17)
@@ -417,6 +419,10 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
             "${CMAKE_CURRENT_BINARY_DIR}/packet-item-card-detail-renders" "item-card-detail")
         set_tests_properties(packet_item_card_detail_render_checks PROPERTIES TIMEOUT 120
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-item-card-detail-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        add_test(NAME packet_item_use_feedback_render_checks COMMAND packet_item_render_checks
+            "${CMAKE_CURRENT_BINARY_DIR}/packet-item-use-feedback-renders" "item-use-feedback")
+        set_tests_properties(packet_item_use_feedback_render_checks PROPERTIES TIMEOUT 60
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-item-use-feedback-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
         add_test(NAME packet_item_obtain_render_checks COMMAND packet_item_render_checks
             "${CMAKE_CURRENT_BINARY_DIR}/packet-item-obtain-renders" "item-obtain")
         set_tests_properties(packet_item_obtain_render_checks PROPERTIES TIMEOUT 60

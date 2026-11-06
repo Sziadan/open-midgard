@@ -3,6 +3,8 @@
 add_library(ro_item STATIC
     Item.h
     Item.cpp
+    ItemUseFeedback.h
+    ItemUseFeedback.cpp
 )
 
 target_include_directories(ro_item PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

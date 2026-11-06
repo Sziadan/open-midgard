@@ -72,6 +72,7 @@ public:
     std::string GetRentalDeleteNotice(unsigned int itemId);
     std::string GetPickupFailureNotice(unsigned char result);
     std::string GetEquipFailureNotice();
+    std::string GetItemUseNotice(unsigned itemId);
     std::string GetItemObtainSizingText(const ITEM_INFO& item);
     std::string GetItemObtainChatText(const ITEM_INFO& item);
     std::vector<ItemTextSegment> GetItemObtainSegments(const ITEM_INFO& item);

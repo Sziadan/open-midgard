@@ -1039,6 +1039,13 @@ void UINewChatWnd::OnDraw()
         return;
     }
 
+    DrawNativeToHdc(hdc);
+    ReleaseDrawTarget(hdc);
+}
+
+void UINewChatWnd::DrawNativeToHdc(HDC hdc)
+{
+    if(!hdc||!m_show)return;
     const int savedDc = SaveDC(hdc);
     SelectObject(hdc, GetChatUiFont(m_fontPixelSize));
 
@@ -1168,7 +1175,6 @@ void UINewChatWnd::OnDraw()
 #endif
 
     RestoreDC(hdc, savedDc);
-    ReleaseDrawTarget(hdc);
 
     m_lastDrawTick = GetTickCount();
     m_isDirty = 0;

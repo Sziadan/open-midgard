@@ -17,6 +17,7 @@
 #include "session/SkillActionInfo2.h"
 #include "skill/Skill.h"
 #include "item/Item.h"
+#include "item/ItemUseFeedback.h"
 #include "Mode.h"
 #include "DebugLog.h"
 #include "audio/Audio.h"
@@ -1126,131 +1127,25 @@ void HandlePacket043F(CGameMode& mode, const PacketView& packet)
     ApplySelfStatusIconPacket(mode, statusType, actorId, flag != 0, remainingMs, flag);
 }
 
-int ResolvePotionEffectId(unsigned int itemId)
-{
-    switch (itemId) {
-    case 501:
-    case 507:
-    case 545:
-    case 569:
-    case 578:
-    case 598:
-        return 204;
-    case 502:
-    case 579:
-    case 599:
-        return 205;
-    case 503:
-    case 508:
-    case 546:
-    case 11500:
-        return 206;
-    case 504:
-    case 509:
-    case 547:
-    case 555:
-    case 556:
-    case 557:
-    case 11501:
-    case 11503:
-        return 207;
-    case 505:
-    case 510:
-    case 11504:
-        return 208;
-    case 506:
-    case 511:
-        return 209;
-    case 512:
-    case 513:
-    case 515:
-    case 516:
-    case 531:
-    case 532:
-    case 534:
-    case 535:
-    case 548:
-    case 549:
-    case 550:
-    case 574:
-    case 582:
-    case 682:
-        return 210;
-    case 514:
-    case 533:
-    case 568:
-    case 680:
-    case 683:
-        return 211;
-    case 517:
-    case 518:
-    case 519:
-    case 520:
-    case 521:
-    case 526:
-    case 528:
-    case 529:
-    case 530:
-    case 536:
-    case 537:
-    case 538:
-    case 539:
-    case 540:
-    case 541:
-    case 542:
-    case 543:
-    case 544:
-    case 551:
-    case 552:
-    case 553:
-    case 562:
-    case 563:
-    case 564:
-    case 565:
-    case 566:
-    case 567:
-    case 570:
-    case 571:
-    case 572:
-    case 575:
-    case 576:
-    case 577:
-    case 580:
-    case 581:
-    case 583:
-    case 584:
-    case 585:
-    case 586:
-        return 7;
-    default:
-        return -1;
-    }
-}
-
 void MakePotionEffect(CGameMode& mode, unsigned int itemId, u32 actorId)
 {
-    CGameActor* actor = ResolveSkillPacketActor(mode, actorId);
-    if (!actor) {
-        return;
+    CGameActor* actor=ResolveSkillPacketActor(mode,actorId);
+    if(!actor)return;
+    const auto feedback=ro::item::GetUseFeedback(itemId);
+    // Primary only announces EXP-item notices to the exact local AID with a player.
+    if(actorId==g_session.m_aid&&mode.m_world&&mode.m_world->m_player) {
+        const auto notice=g_ttemmgr.GetItemUseNotice(itemId);
+        if(!notice.empty())g_windowMgr.PushChatEvent(notice.c_str(),0x0000ffffu,6);
     }
-
-    const int effectId = ResolvePotionEffectId(itemId);
-    if (effectId <= 0) {
-        return;
-    }
-
-    if (!actor->LaunchEffect(effectId, vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f)) {
-        DbgLog("[GameMode] potion effect launch failed itemId=%u actor=%u effect=%d\n",
-            static_cast<unsigned int>(itemId),
-            static_cast<unsigned int>(actorId),
-            effectId);
-        return;
-    }
-
-    DbgLog("[GameMode] potion effect itemId=%u actor=%u effect=%d\n",
-        static_cast<unsigned int>(itemId),
-        static_cast<unsigned int>(actorId),
-        effectId);
+    if(feedback.sound)PlayWave(feedback.sound,0.0f,0.0f,0.0f);
+    if(feedback.extraEffectId>0)actor->LaunchEffect(feedback.extraEffectId,vector3d{},0.0f);
+    if(feedback.effectId<=0)return;
+    // Message109 removes one matching owner entry; repeat until all old copies end.
+    while(std::any_of(actor->m_effectList.begin(),actor->m_effectList.end(),[&](const CRagEffect* effect){
+        return effect&&effect->GetEffectType()==feedback.effectId;
+    }))actor->SendMsg(actor,109,feedback.effectId,0,0);
+    if(!actor->LaunchEffect(feedback.effectId,vector3d{},0.0f))
+        DbgLog("[GameMode] potion effect launch failed itemId=%u actor=%u effect=%d\n",itemId,actorId,feedback.effectId);
 }
 
 void ApplyInventoryRemainingAmount(unsigned int itemIndex,int remainingAmount)
@@ -1320,7 +1215,10 @@ void HandleUseItemAck(CGameMode& mode, const PacketView& packet)
     mode.m_lastCardItemIndex = ok && item && g_ttemmgr.IsCardItem(item->GetItemId()) ? static_cast<int>(itemIndex) : 0;
 
     if (ok) {
+        const bool recovery=item&&item->m_itemIndex!=0&&item->GetItemId()>500&&item->GetItemId()<600;
         ApplyInventoryRemainingAmount(itemIndex,remainingAmount);
+        if(recovery&&mode.m_world&&mode.m_world->m_player)
+            mode.m_world->m_player->SendMsg(mode.m_world->m_player,20,0,0,0);
     }
 
     DbgLog("[GameMode] use item ack index=%u amount=%d ok=%d\n",

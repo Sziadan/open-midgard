@@ -1,0 +1,98 @@
+{
+  "date": "2026-11-06",
+  "baseline": "5d2948a523f9cfdbf583779af5c783a0653aae8e",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.19): restore source item-use feedback",
+  "validation": "123/123 CTest in 173.21s; 176 PASS packet records; 220 source rows checked across all65536 item IDs; 5 GUI cases and8 retained frames; zero QML errors",
+  "source_sha256": {
+    "CMakeLists.txt": "933836c047d4049b09602dd5c47cb8de1a8df7dca53e3263daa30f5c1fad01da",
+    "src/gamemode/GameModePacket.cpp": "7135cae0ffc0591f0bb903ef7d261439edd154fcf806667717c337d8612a1ff7",
+    "src/item/CMakeLists.txt": "854f0d0edee729bb544ec99b421b2b4e105b8f13f5ad2442378828b31e9f8fc6",
+    "src/item/Item.cpp": "1de857e3205f4c9d536f47b18225639d04f935d3d6a660d695f93ead3bf7e4ca",
+    "src/item/Item.h": "84dddcfc93c476400f13c9ad94c5739496b0fccd3a28f021a5ce9397833daef8",
+    "src/item/ItemUseFeedback.cpp": "ac79b79e5a330022a0fbc2ba3facc990675120a576e549010524262ca27801e3",
+    "src/item/ItemUseFeedback.h": "7abf2172a7c687bd857b93b38bfc0907eea86ba6453552fe573a97311b93a112",
+    "src/ui/UINewChatWnd.cpp": "d615c13f6c21585c00a486f3fde0611b04d0d49af57f766eb9ca5c9243287a06",
+    "src/ui/UINewChatWnd.h": "3a4952d5b75c84f5745129430b38e18db317b50bf127f211de4eb443d4716811",
+    "tools/tests/fixtures/packet-item-data/item-use-feedback.tsv": "3c71a58308b2fcde48fc7b53583ab1459ccfa7140988cf14a444ba06fe662c79",
+    "tools/tests/fixtures/packet-item-data/item-use-msgstringtable.txt": "9fb8165951cb12a594760171df35dd5712f659cb06f09a6dc6125114f5ef9828",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "7a954dc50ed4b7cc3989b93899ad33d185b24063fa115011418e2b6d7b576d0e",
+    "tools/tests/replay/ItemUseFeedbackRenderChecks.inc": "401a81fd9f8389b8065860eed1a58fa69693c1a717d151d4c43b15bbc619cb16",
+    "tools/tests/replay/ItemUseFeedbackReplay.inc": "4566caff0e4103a98e39e7821cf7ec45b3ad1a945591e957d4a985d1d6bc3db9",
+    "tools/tests/replay/PacketStreamReplay.cpp": "9e55038fb5fa7aeb22906893c0949fd85b1368868689761865e23dba4c1d1056"
+  },
+  "primary_sha256": {
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/GameActor.cpp": "60686f1ea817285db0c60bf755d1f978d932870ac35319f7e22cc1ee8dd12f92",
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/ItemInfo.cpp": "5bce74c76f40aafad079c2feaf746a7570a1380492a03e6e1cec52bdcf722bc8",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/GRF-Content/data/msgstringtable.txt": "200c4ac4970853ac7cb947629df790168a9d1afc5572e15fdc8d4944b6ab80af",
+    "HighPriest.exe.h": "df5a56ae1219b3537dfdb42ed4aec3b99099199d86637c9c0165be08a9781c08"
+  },
+  "server_sha256": {
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/packets_struct.hpp": "9390aff3739c343361af14c987dda58da99080a48d774efb142f6b8661212ae3",
+    "src/map/pc.cpp": "e94af5e1b173cc442ee0b14f69ebd402f5703deea1d51fca36df8f9a69244a4e"
+  },
+  "original_pe": {
+    "path": "HighPriest.exe",
+    "sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "method": "read-only static string inspection; never executed",
+    "sound_raw_offsets": {
+      "_heal_effect.wav": "0x312840",
+      "effect\\EF_Blessing.wav": "0x312828",
+      "evil_cloud_hermit_attack.wav": "0x3127a0",
+      "effect\\mapae.wav": "0x31278c",
+      "effect\\itempokjuk.wav": "0x3127e8",
+      "effect\\fast.wav": "0x312818",
+      "effect\\ro2effect.wav": "0x312800",
+      "wraith_die.wav": "0x3127d8",
+      "ork_warrior_breath.wav": "0x3127c0"
+    }
+  },
+  "intentional_regressions": {
+    "map": {
+      "log_sha256": "2cd1a0961cba4794f455b094fdf25073c0e0a2951f0c8cfa1112471818927cf8",
+      "failure": [
+        "{\"case_id\":\"item_use_feedback_source_oracle\",\"stage\":\"PK09.19\",\"fixture_id\":\"source-transcribed-item-use-feedback-tsv\",\"production_entry\":\"GetUseFeedback pure source selection\",\"runtime_baseline_commit\":\"af41f6484cb7ff31825296babe4b913aa36c4c67\",\"source_commit_at_configure\":\"5d2948a523f9cfdbf583779af5c783a0653aae8e\",\"source_tree_status_at_configure\":\"dirty\",\"invocation_count\":0,\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\"item-use-feedback selection differs from source fixture at item 607\"}"
+      ]
+    },
+    "replace": {
+      "log_sha256": "25ab6b85ad538c49422bc2861bc5cbc6ed1048ffd10f2ad72b5834d9301422af",
+      "failure": [
+        "{\"case_id\":\"item_use_feedback_packet_replay\",\"stage\":\"PK09.19\",\"fixture_id\":\"legacy00a8-selected01c8-use-feedback\",\"production_entry\":\"ProcessGameModePacketLoop -> production router -> use-item acknowledgement\",\"runtime_baseline_commit\":\"af41f6484cb7ff31825296babe4b913aa36c4c67\",\"source_commit_at_configure\":\"5d2948a523f9cfdbf583779af5c783a0653aae8e\",\"source_tree_status_at_configure\":\"dirty\",\"invocation_count\":0,\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\"duplicate replacement removed unrelated effect or retained duplicate\"}"
+      ]
+    },
+    "notice": {
+      "log_sha256": "e902ed1a5e4904d1bbd29f6555fbd858da6413fef7e5d0f27589a96c61d7e796",
+      "failure": [
+        "{\"case_id\":\"item_use_feedback_packet_replay\",\"stage\":\"PK09.19\",\"fixture_id\":\"legacy00a8-selected01c8-use-feedback\",\"production_entry\":\"ProcessGameModePacketLoop -> production router -> use-item acknowledgement\",\"runtime_baseline_commit\":\"af41f6484cb7ff31825296babe4b913aa36c4c67\",\"source_commit_at_configure\":\"5d2948a523f9cfdbf583779af5c783a0653aae8e\",\"source_tree_status_at_configure\":\"dirty\",\"invocation_count\":0,\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\"remote actor emitted a local EXP notice\"}"
+      ]
+    },
+    "basic": {
+      "log_sha256": "997f23f6d5a7f4e3b956d8d353882263ab16765e651893f4c14cae6d465c60f1",
+      "failure": [
+        "{\"case_id\":\"item_use_feedback_packet_replay\",\"stage\":\"PK09.19\",\"fixture_id\":\"legacy00a8-selected01c8-use-feedback\",\"production_entry\":\"ProcessGameModePacketLoop -> production router -> use-item acknowledgement\",\"runtime_baseline_commit\":\"af41f6484cb7ff31825296babe4b913aa36c4c67\",\"source_commit_at_configure\":\"5d2948a523f9cfdbf583779af5c783a0653aae8e\",\"source_tree_status_at_configure\":\"dirty\",\"invocation_count\":0,\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\"basic 00A8 upper recovery boundary 599 differs\"}"
+      ]
+    }
+  },
+  "render_sha256": {
+    "item-use-feedback-12208.native.png": "4947abe76247fe0c9e7507095278c669325d3d557177eaf6300173bb805ab3d5",
+    "item-use-feedback-12208.qml.png": "d5197d359e5f6ffed5d82d4b02ed7ffe182d8b2b271db0bad3771e66a0c9b892",
+    "item-use-feedback-12312.native.png": "4576d2fba3ab9f486f7b8cafc0c741777dd15f625716d65900eacb12282a11e1",
+    "item-use-feedback-12312.qml.png": "be9ad2e9a086fedcc024bea028f70d7087c7c451465a35fbf1b8eb45c7b1bb2f",
+    "item-use-feedback-14532.native.png": "c79c3e52902a106a2e4644a808552c5f6215db43b5f0445110fbab39096167c6",
+    "item-use-feedback-14532.qml.png": "d99c1b335a2de4b5a924633d7c8710db027beb365aad87cd656267e5a0ea671f",
+    "item-use-feedback-14533.native.png": "fe3d47eefd359250f6457f1cfd2329dfb25ce881dd268529f74075b0307b9d8e",
+    "item-use-feedback-14533.qml.png": "58cc518441cc0d6eeabac15061965c22f1585ab1df1ed2f945548a3e23348cbf",
+    "item-use-feedback-render-results.json": "b60c9af6185edc569bfa42206b356fda2abbbdc644f041abe39ea6b746aba9d6"
+  },
+  "oracle_sha256": "a5c9b9bcbdcc3a2481b3159b4dbe9387e02c08a741cebf65b1bbc60dbe777db8",
+  "full_ctest_sha256": "2a1d10b7e520d6224b88c3eea15bf1fa8e9a4f97ae8f204f5bd3cc9646afe3a7",
+  "scope_limits": [
+    "Selected01C8;00A8 compatibility not selected-emission proof",
+    "Original effect animation/art and hardware audio output unaccepted",
+    "No full item/context, recovery013D, Ygg-latch workflow, money-trigger, independent or deployed acceptance"
+  ]
+}

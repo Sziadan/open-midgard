@@ -3428,3 +3428,7 @@ Strong source review repaired pickup retry cleanup, strict equip outcomes and un
 ## 2026-11-06 — PK09.18 acquisition notification review
 
 Completed strong source/PE review and the pending native/Qt item notification; corrected fixture offsets, ownership, font/geometry and Qt child-property conflict. Three intentional regressions rejected. 122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors. Strong WID58 item gate cleared; money/full item/context/effect/broad/independent/deployed acceptance remains open. Commit: packet(PK09.18): restore item acquisition notification.
+
+## 2026-11-06 — PK09.19 item-use feedback
+
+Strong review completed source potion selection/audio paths, repeated-effect replacement, auxiliary effect, experience notices and basic recovery feedback. Corrected bounded-agent source/fixture/lifetime assumptions. Four intentional regressions rejected. 123/123 CTest in 173.21s; 176 PASS packet records; 220 source rows checked across all65536 item IDs; 5 GUI cases and8 retained frames; zero QML errors. Next013D signedness/producer reconciliation, full item/effect/context and broad/independent/deployed gates remain open. Commit: packet(PK09.19): restore source item-use feedback.

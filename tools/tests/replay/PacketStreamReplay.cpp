@@ -4513,6 +4513,7 @@ void GlobalChatProductionSendReplay()
 #include "CartItemWireFieldsReplay.inc"
 #include "InventoryMapEntryReplay.inc"
 #include "InventoryMutationAckReplay.inc"
+#include "ItemUseFeedbackReplay.inc"
 #include "InventoryItemFieldsReplay.inc"
 #include "CartItemLifecycleReplay.inc"
 #include "CharacterNameReplay.inc"
@@ -4657,6 +4658,7 @@ int main(int argc,char** argv){try{
     CartItemWireFieldsReplay();
     InventoryMapEntryReplay();
     InventoryMutationAckReplay();
+    ItemUseFeedbackReplay();
     InventoryItemFieldsReplay();
     CartStackDeltaReplay();
     CartClearContentsReplay();

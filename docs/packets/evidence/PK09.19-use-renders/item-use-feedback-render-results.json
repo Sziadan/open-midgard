@@ -1,0 +1,28 @@
+{
+    "cases": [
+        {
+            "case": "local item 12208 emits mapped cyan EXP notice",
+            "outcome": "PASS"
+        },
+        {
+            "case": "local item 14532 emits mapped cyan EXP notice",
+            "outcome": "PASS"
+        },
+        {
+            "case": "local item 14533 emits mapped cyan EXP notice",
+            "outcome": "PASS"
+        },
+        {
+            "case": "local item 12312 emits mapped cyan EXP notice",
+            "outcome": "PASS"
+        },
+        {
+            "case": "GID-only, remote actor, failed acknowledgement, and unknown item stay quiet",
+            "outcome": "PASS"
+        }
+    ],
+    "errors": 0,
+    "generated_frames": 8,
+    "outcome": "PASS",
+    "qml_checks": "PASS"
+}
