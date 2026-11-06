@@ -43,6 +43,7 @@ class UIMinimapZoomWnd;
 class UIStatusWnd;
 class UINewChatWnd;
 class UIChatRoomWnd;
+class UIChatRoomPasswordWnd;
 class UILoginWnd;
 class UISelectServerWnd;
 class UISelectCharWnd;
@@ -109,6 +110,7 @@ public:
         WID_SUBCHATMINI = 140,
         WID_BATTLEMSGOPTION = 139,
         WID_CHATROOMWND = 28,
+        WID_CHATROOMPASSWORD = 29,
         WID_BASICINFOWND      = 0,
         WID_LOGINWND          = 1,
         WID_SELECTSERVERWND   = 3,
@@ -258,6 +260,7 @@ public:
     std::array<SubChatWindowInfo, 2> m_subChatInfo{};
     SubChatWindowInfo m_chatRoomWindowInfo{500,180,280,120};
     UIChatRoomWnd* m_chatRoomWnd = nullptr;
+    UIChatRoomPasswordWnd* m_chatRoomPasswordWnd = nullptr;
     UISubChatHisWnd* m_subChatWndST = nullptr;
     UISubChatHisWnd* m_subChatWndBT = nullptr;
     UISubChatMiniWnd* m_subChatMiniWnd = nullptr;

@@ -9,6 +9,7 @@
 #include "CursorRenderer.h"
 #include "GameMode.h"
 #include "ui/UIChatRoomWnd.h"
+#include "core/ChatRoomRequests.h"
 #include "ActionRequestSender.h"
 #include "Commerce.h"
 #include "PacketPadding.h"
@@ -7642,8 +7643,6 @@ void EnsureBootstrapSelfActor(CGameMode& mode)
         // Preserve independent server values while status packets arrive.
     }
 
-    actor->m_lastTlvertX = g_session.m_playerPosX;
-    actor->m_lastTlvertY = g_session.m_playerPosY;
     actor->m_moveDestX = g_session.m_playerPosX;
     actor->m_moveDestY = g_session.m_playerPosY;
     mode.m_actorPosList[g_session.m_gid] = CellPos{ g_session.m_playerPosX, g_session.m_playerPosY };
@@ -7776,8 +7775,6 @@ void SyncBootstrapSelfActorWorldPos(CGameMode& mode)
         return;
     }
 
-    player->m_lastTlvertX = g_session.m_playerPosX;
-    player->m_lastTlvertY = g_session.m_playerPosY;
     player->m_moveDestX = g_session.m_playerPosX;
     player->m_moveDestY = g_session.m_playerPosY;
     player->m_pos.x = TileToWorldCoordX(mode.m_world, g_session.m_playerPosX);
@@ -7830,8 +7827,6 @@ void SyncBootstrapRuntimeActorWorldPos(CGameMode& mode)
         resolvedDstPos.y = mode.m_world->m_attr->GetHeight(resolvedDstPos.x, resolvedDstPos.z);
 
         actor->UnRegisterPos();
-        actor->m_lastTlvertX = destX;
-        actor->m_lastTlvertY = destY;
         actor->m_moveSrcX = srcX;
         actor->m_moveSrcY = srcY;
         actor->m_moveDestX = destX;
@@ -10865,9 +10860,22 @@ void UpdateShowImageInfo(CGameMode& mode, const char* imageName, int type)
     }
 }
 
+bool CGameMode::RequestEnterChatRoom(u32 roomId,const char* password,u32 now)
+{
+    // Preserve the strict 1000ms threshold with wrap-safe elapsed arithmetic.
+    if(static_cast<u32>(now-m_reqTickChatRoom)>1000)m_isWaitingEnterRoom=0;
+    if(g_windowMgr.m_chatRoomWnd || m_isWaitingEnterRoom)return false;
+    m_isWaitingEnterRoom=1;m_reqTickChatRoom=now;
+    std::array<std::uint8_t,8> bytes{};
+    if(password)for(std::size_t i=0;i<bytes.size() && password[i];++i)bytes[i]=static_cast<std::uint8_t>(password[i]);
+    std::vector<std::uint8_t> packet;ro::chat::BuildRoomJoinRequest(roomId,bytes,packet);
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()));
+}
+
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     switch (msg) {
+    case 50:return RequestEnterChatRoom(static_cast<u32>(wparam),reinterpret_cast<const char*>(lparam),GetTickCount())?1:0;
     case 53: {
         if(!g_windowMgr.m_chatRoomWnd)return 0;
         const char bytes[]={static_cast<char>(0xe3),0};

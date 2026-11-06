@@ -977,7 +977,7 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
 bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 {
     const auto* hit = HitTestWindow(x, y);
-    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd);
+    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd);
 }
 
 RECT UIWindowMgr::GetChatClientRect() const
@@ -1103,6 +1103,7 @@ bool UIWindowMgr::HasActiveNpcDialog() const
 bool UIWindowMgr::CanRouteQtChatInput() const
 {
     if(HasFrontMenuUiVisible() || HasActiveNpcDialog() || IsCapturingShortcutKeyBinding())return false;
+    if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd)return false;
     if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd)return false;
     // These dialogs already take keyboard priority over chat in OnKeyDown.
     const UIWindow* dialogs[]={m_joinPartyAcceptWnd,m_skillSelectWnd,m_playerContextMenuWnd,
@@ -1198,6 +1199,11 @@ bool UIWindowMgr::Init() {
 UIWindow* UIWindowMgr::MakeWindow(int windowId)
 {
     switch (windowId) {
+    case WID_CHATROOMPASSWORD:
+        if(!m_chatRoomPasswordWnd){m_chatRoomPasswordWnd=new UIChatRoomPasswordWnd();m_children.push_back(m_chatRoomPasswordWnd);}
+        m_editWindow=m_chatRoomPasswordWnd;if(m_chatWnd)m_chatWnd->ClearInputFocus();
+        m_chatRoomPasswordWnd->SetShow(1);return m_chatRoomPasswordWnd;
+
     case WID_CHATROOMWND:
         if(!m_chatRoomWnd){
             m_chatRoomWnd=new UIChatRoomWnd();m_children.push_back(m_chatRoomWnd);
@@ -1709,7 +1715,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd);
+        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd);
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -1761,6 +1767,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         if(!preserveInventoryShow)m_chatWndShow=0;
         m_chatWnd = nullptr;
     }
+    if (window == m_chatRoomPasswordWnd) m_chatRoomPasswordWnd=nullptr;
     if (window == m_chatRoomWnd) { m_chatRoomWnd->StoreInfo();m_chatRoomWnd=nullptr; }
     if (window == m_subChatWndST) { m_subChatWndST->StoreInfo(); m_subChatWndST = nullptr; }
     if (window == m_subChatWndBT) { m_subChatWndBT->StoreInfo(); m_subChatWndBT = nullptr; }
@@ -2526,7 +2533,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
         }
     }
 
-    if(hit==m_chatWnd && m_editWindow==m_chatRoomWnd)m_editWindow=nullptr;
+    if(hit==m_chatWnd && (m_editWindow==m_chatRoomWnd || m_editWindow==m_chatRoomPasswordWnd))m_editWindow=nullptr;
     m_captureWindow = hit;
 
     if (hit) {
@@ -2547,7 +2554,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);
-        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd))
+        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd))
             SetCapture(g_hMainWnd);
     }
 }
@@ -2592,7 +2599,7 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
 void UIWindowMgr::OnLBtnUp(int x, int y)
 {
     const bool chatCapture = m_captureWindow && (m_captureWindow == m_chatWnd || m_captureWindow == m_subChatWndST
-        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd);
+        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd);
     if (m_captureWindow) {
         m_captureWindow->OnLBtnUp(x, y);
         m_captureWindow = nullptr;
@@ -2855,6 +2862,7 @@ void UIWindowMgr::OnChar(char c)
         return;
     }
 
+    if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd){m_chatRoomPasswordWnd->OnChar(c);return;}
     if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd){m_chatRoomWnd->OnChar(c);return;}
     if (m_chatWnd && m_chatWnd->m_show != 0 && m_chatWnd->HandleChar(c)) {
         return;
@@ -2953,7 +2961,8 @@ bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool isAltDown, boo
 
 bool UIWindowMgr::HasBlockingUiForGameplayHotkeys() const
 {
-    return (m_npcInputWnd && m_npcInputWnd->m_show != 0)
+    return (m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show != 0 && m_editWindow==m_chatRoomPasswordWnd)
+        || (m_npcInputWnd && m_npcInputWnd->m_show != 0)
         || (m_joinPartyAcceptWnd && m_joinPartyAcceptWnd->m_show != 0)
         || (m_npcMenuWnd && m_npcMenuWnd->m_show != 0)
         || (m_playerContextMenuWnd && m_playerContextMenuWnd->m_show != 0)
@@ -2983,6 +2992,10 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStorageClose, 0, 0, 0) != 0;
     }
 
+    if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd){
+        if(!isAltDown && !isCtrlDown)m_chatRoomPasswordWnd->OnKeyDown(virtualKey);
+        return true;
+    }
     if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd){
         if(!isAltDown && !isCtrlDown)m_chatRoomWnd->OnKeyDown(virtualKey);
         return true;
@@ -3084,6 +3097,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         return;
     }
 
+    if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd){m_chatRoomPasswordWnd->OnKeyDown(virtualKey);return;}
     if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd){m_chatRoomWnd->OnKeyDown(virtualKey);return;}
     if (m_chatWnd && m_chatWnd->m_show != 0 && m_chatWnd->HandleKeyDown(virtualKey)) {
         if (virtualKey == VK_RETURN || virtualKey == VK_ESCAPE) {

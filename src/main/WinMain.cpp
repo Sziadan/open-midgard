@@ -518,6 +518,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if (msg == WM_CAPTURECHANGED || msg == WM_CANCELMODE) {
         if (g_windowMgr.m_chatWnd) g_windowMgr.m_chatWnd->CancelPointerCapture();
         if (g_windowMgr.m_chatRoomWnd) g_windowMgr.m_chatRoomWnd->CancelPointerCapture();
+        if (g_windowMgr.m_chatRoomPasswordWnd) g_windowMgr.m_chatRoomPasswordWnd->CancelPointerCapture();
         if (g_windowMgr.m_subChatWndST) g_windowMgr.m_subChatWndST->CancelPointerCapture();
         if (g_windowMgr.m_subChatWndBT) g_windowMgr.m_subChatWndBT->CancelPointerCapture();
         if (g_windowMgr.m_battleMsgOptionWnd) g_windowMgr.m_battleMsgOptionWnd->CancelPointerCapture();

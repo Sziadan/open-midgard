@@ -223,7 +223,7 @@ target_include_directories(change_guild_checks PRIVATE "${CMAKE_CURRENT_BINARY_D
 add_test(NAME change_guild_checks COMMAND change_guild_checks)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ../../src/world/GameActor.cpp ../../src/gamemode/GameModePacket.cpp)
 file(READ "../../src/gamemode/GameMode.cpp" show_image_mode_source)
-extract_body(show_image_state "${show_image_mode_source}" "void UpdateShowImageInfo(CGameMode& mode, const char* imageName, int type)" "msgresult_t CGameMode::SendMsg(")
+extract_body(show_image_state "${show_image_mode_source}" "void UpdateShowImageInfo(CGameMode& mode, const char* imageName, int type)" "bool CGameMode::RequestEnterChatRoom(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ShowImageStateBody.inc" "${show_image_state}")
 file(READ "../../src/gamemode/GameModePacket.cpp" show_image_packet_source)
 extract_body(show_image_packet "${show_image_packet_source}" "void HandleShowImage(CGameMode& mode, const PacketView& packet)" "void HandleShowImage2(")

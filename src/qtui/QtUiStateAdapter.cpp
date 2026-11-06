@@ -1923,6 +1923,27 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         }
         return (windowIndex - mainIndex) * 0.0001;
     };
+    QVariantList roomTitles;
+    for(const auto* child:g_windowMgr.m_children){
+        if(const auto* title=dynamic_cast<const UIChatRoomTitle*>(child)){
+            roomTitles.push_back(QVariantMap{{"visible",IsGameplayWindowVisible(state,title)},{"layer",chatLayer(title)},
+                {"x",title->m_x},{"y",title->m_y},{"width",title->m_w},{"height",title->m_h},
+                {"id",static_cast<qulonglong>(title->m_roomInfo.roomId)},{"text",ToQString(title->GetDisplayTitle())},
+                {"fullText",ToQString(title->GetTitle())},{"artwork",QString::fromStdString(title->GetArtworkUri())}});
+        }
+    }
+    chatUi.insert("roomTitles",roomTitles);
+    QVariantMap password;
+    if(const auto* dialog=g_windowMgr.m_chatRoomPasswordWnd){
+        const auto ok=dialog->GetOkBounds();
+        password={{"visible",IsGameplayWindowVisible(state,dialog)},{"layer",chatLayer(dialog)},
+            {"x",dialog->m_x},{"y",dialog->m_y},{"width",dialog->m_w},{"height",dialog->m_h},
+            {"id",static_cast<qulonglong>(dialog->GetRoomId())},{"prompt",ToQString(dialog->GetPrompt())},
+            {"masked",QString(static_cast<int>(dialog->GetInputText().size()),QChar('*'))},{"pressedOk",dialog->IsOkPressed()},{"okX",static_cast<int>(ok.left)},{"okY",static_cast<int>(ok.top)},
+            {"okWidth",static_cast<int>(ok.right-ok.left)},{"okHeight",static_cast<int>(ok.bottom-ok.top)},
+            {"okArtwork",QString::fromStdString(dialog->GetOkArtworkUri())},{"okImageWidth",dialog->GetOkArtworkWidth()},{"okImageHeight",dialog->GetOkArtworkHeight()}};
+    }
+    chatUi.insert("roomPassword",password);
     QVariantMap room;
     if(const auto* window=g_windowMgr.m_chatRoomWnd){
         room.insert("visible",IsGameplayWindowVisible(state,window));room.insert("layer",chatLayer(window));

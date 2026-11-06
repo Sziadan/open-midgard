@@ -2,15 +2,10 @@
 #include "UIWindow.h"
 #include "UISubChatWnd.h"
 #include "core/ChatRoomPackets.h"
+#include "UIChatRoomEntry.h"
 #include "core/ChatHistoryView.h"
 #include "core/ChatScrollBar.h"
 #include <map>
-
-// Actor-owned source metadata; world rendering/entry input is a separate gate.
-class UIChatRoomTitle : public UIWindow {
-public:
-    ro::chat::RoomInfo m_roomInfo;
-};
 
 struct ChatRoomLayout {
     RECT history{},members{},edit{},close{},resizer{};

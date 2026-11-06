@@ -324,6 +324,7 @@ public:
     void RenderGameObjects(const matrix& viewMatrix, u32* outRenderedObjects = nullptr, u32* outRenderedFixedEffects = nullptr) const;
     void UpdateBackgroundObjects(const matrix* viewMatrix);
     void UpdateActors();
+    void ProcessActorChatRoomTitles(const matrix& viewMatrix);
     void ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude);
     void RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, float cameraLongitude, float cameraLatitude);
     void RenderActors(const matrix& viewMatrix, float cameraLongitude);

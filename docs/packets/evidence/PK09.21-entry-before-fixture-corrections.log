@@ -1,0 +1,22 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start  1: packet_stream_replay_checks
+1/4 Test  #1: packet_stream_replay_checks .......   Passed    5.80 sec
+    Start 10: packet_chat_room_checks
+2/4 Test #10: packet_chat_room_checks ...........   Passed    0.26 sec
+    Start 11: chat_room_packet_checks
+3/4 Test #11: chat_room_packet_checks ...........***Failed    0.04 sec
+chat room packet literal mismatch
+
+    Start 40: packet_chat_state_render_checks
+4/4 Test #40: packet_chat_state_render_checks ...***Failed    7.04 sec
+FAIL item colour render: native/Qt title position diverged
+
+
+50% tests passed, 2 tests failed out of 4
+
+Total Test time (real) =  13.15 sec
+
+The following tests FAILED:
+	 11 - chat_room_packet_checks (Failed)
+	 40 - packet_chat_state_render_checks (Failed)
+Errors while running CTest

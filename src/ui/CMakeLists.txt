@@ -11,6 +11,8 @@ add_library(ro_ui STATIC
     GuildSkillWndRows.cpp
     UISpellListWnd.h
     UISpellListWnd.cpp
+    UIChatRoomEntry.h
+    UIChatRoomEntry.cpp
     UIWindow.h
     UIWindow.cpp
     UiScale.h

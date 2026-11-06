@@ -1,0 +1,90 @@
+{
+  "purpose": "Unequal bitmap states share maximum45x22 hit bounds without stretching native43x20 normal artwork. Source resource lookup outranks transparent flat shadows.",
+  "observations": [
+    {
+      "file": "chat-entry-password.native.png",
+      "body_pixel": [
+        671,
+        334
+      ],
+      "body_rgb": [
+        192,
+        160,
+        128
+      ],
+      "edge_pixel": [
+        710,
+        334
+      ],
+      "edge_rgb": [
+        232,
+        232,
+        232
+      ]
+    },
+    {
+      "file": "chat-entry-password.qml.png",
+      "body_pixel": [
+        671,
+        334
+      ],
+      "body_rgb": [
+        192,
+        160,
+        128
+      ],
+      "edge_pixel": [
+        710,
+        334
+      ],
+      "edge_rgb": [
+        232,
+        232,
+        232
+      ]
+    },
+    {
+      "file": "chat-entry-password-pressed.native.png",
+      "body_pixel": [
+        671,
+        334
+      ],
+      "body_rgb": [
+        128,
+        96,
+        64
+      ],
+      "edge_pixel": [
+        710,
+        334
+      ],
+      "edge_rgb": [
+        128,
+        96,
+        64
+      ]
+    },
+    {
+      "file": "chat-entry-password-pressed.qml.png",
+      "body_pixel": [
+        671,
+        334
+      ],
+      "body_rgb": [
+        128,
+        96,
+        64
+      ],
+      "edge_pixel": [
+        710,
+        334
+      ],
+      "edge_rgb": [
+        128,
+        96,
+        64
+      ]
+    }
+  ],
+  "outcome": "PASS"
+}

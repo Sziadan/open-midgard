@@ -1,0 +1,115 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0055b120 <.text+0x15a120>:
+  55b120:	55                   	push   %ebp
+  55b121:	8b ec                	mov    %esp,%ebp
+  55b123:	51                   	push   %ecx
+  55b124:	53                   	push   %ebx
+  55b125:	56                   	push   %esi
+  55b126:	8b f1                	mov    %ecx,%esi
+  55b128:	b0 01                	mov    $0x1,%al
+  55b12a:	8a 0d 70 df 7a 00    	mov    0x7adf70,%cl
+  55b130:	57                   	push   %edi
+  55b131:	84 c8                	test   %cl,%al
+  55b133:	75 35                	jne    0x55b16a
+  55b135:	0a c8                	or     %al,%cl
+  55b137:	a1 38 ec 72 00       	mov    0x72ec38,%eax
+  55b13c:	88 0d 70 df 7a 00    	mov    %cl,0x7adf70
+  55b142:	8b 40 28             	mov    0x28(%eax),%eax
+  55b145:	8d 04 c0             	lea    (%eax,%eax,8),%eax
+  55b148:	8d 0c c0             	lea    (%eax,%eax,8),%ecx
+  55b14b:	b8 89 88 88 88       	mov    $0x88888889,%eax
+  55b150:	f7 e9                	imul   %ecx
+  55b152:	03 d1                	add    %ecx,%edx
+  55b154:	c1 fa 08             	sar    $0x8,%edx
+  55b157:	8b ca                	mov    %edx,%ecx
+  55b159:	c1 e9 1f             	shr    $0x1f,%ecx
+  55b15c:	03 d1                	add    %ecx,%edx
+  55b15e:	89 55 fc             	mov    %edx,-0x4(%ebp)
+  55b161:	db 45 fc             	fildl  -0x4(%ebp)
+  55b164:	d9 1d 78 df 7a 00    	fstps  0x7adf78
+  55b16a:	8b 86 38 02 00 00    	mov    0x238(%esi),%eax
+  55b170:	85 c0                	test   %eax,%eax
+  55b172:	0f 84 a9 00 00 00    	je     0x55b221
+  55b178:	ff 15 2c c4 6c 00    	call   *0x6cc42c
+  55b17e:	8b 96 1c 02 00 00    	mov    0x21c(%esi),%edx
+  55b184:	81 c2 88 13 00 00    	add    $0x1388,%edx
+  55b18a:	3b c2                	cmp    %edx,%eax
+  55b18c:	73 78                	jae    0x55b206
+  55b18e:	db 86 9c 00 00 00    	fildl  0x9c(%esi)
+  55b194:	d9 05 78 df 7a 00    	flds   0x7adf78
+  55b19a:	d8 4e 48             	fmuls  0x48(%esi)
+  55b19d:	8b 86 58 02 00 00    	mov    0x258(%esi),%eax
+  55b1a3:	8b be 98 00 00 00    	mov    0x98(%esi),%edi
+  55b1a9:	99                   	cltd
+  55b1aa:	de e9                	fsubrp %st,%st(1)
+  55b1ac:	2b c2                	sub    %edx,%eax
+  55b1ae:	d1 f8                	sar    %eax
+  55b1b0:	da a6 5c 02 00 00    	fisubl 0x25c(%esi)
+  55b1b6:	2b f8                	sub    %eax,%edi
+  55b1b8:	e8 03 ce 14 00       	call   0x6a7fc0
+  55b1bd:	83 ff fd             	cmp    $0xfffffffd,%edi
+  55b1c0:	7d 05                	jge    0x55b1c7
+  55b1c2:	bf fd ff ff ff       	mov    $0xfffffffd,%edi
+  55b1c7:	8b 1d 38 ec 72 00    	mov    0x72ec38,%ebx
+  55b1cd:	8b 8e 38 02 00 00    	mov    0x238(%esi),%ecx
+  55b1d3:	8b 53 24             	mov    0x24(%ebx),%edx
+  55b1d6:	2b 51 1c             	sub    0x1c(%ecx),%edx
+  55b1d9:	83 c2 03             	add    $0x3,%edx
+  55b1dc:	3b fa                	cmp    %edx,%edi
+  55b1de:	7e 02                	jle    0x55b1e2
+  55b1e0:	8b fa                	mov    %edx,%edi
+  55b1e2:	83 f8 fd             	cmp    $0xfffffffd,%eax
+  55b1e5:	7d 05                	jge    0x55b1ec
+  55b1e7:	b8 fd ff ff ff       	mov    $0xfffffffd,%eax
+  55b1ec:	8b 53 28             	mov    0x28(%ebx),%edx
+  55b1ef:	8b 59 20             	mov    0x20(%ecx),%ebx
+  55b1f2:	2b d3                	sub    %ebx,%edx
+  55b1f4:	83 c2 03             	add    $0x3,%edx
+  55b1f7:	3b c2                	cmp    %edx,%eax
+  55b1f9:	7e 02                	jle    0x55b1fd
+  55b1fb:	8b c2                	mov    %edx,%eax
+  55b1fd:	8b 11                	mov    (%ecx),%edx
+  55b1ff:	50                   	push   %eax
+  55b200:	57                   	push   %edi
+  55b201:	ff 52 18             	call   *0x18(%edx)
+  55b204:	eb 1b                	jmp    0x55b221
+  55b206:	8b 86 38 02 00 00    	mov    0x238(%esi),%eax
+  55b20c:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  55b211:	50                   	push   %eax
+  55b212:	e8 79 3c f8 ff       	call   0x4dee90
+  55b217:	c7 86 38 02 00 00 00 	movl   $0x0,0x238(%esi)
+  55b21e:	00 00 00
+  55b221:	8b be 3c 02 00 00    	mov    0x23c(%esi),%edi
+  55b227:	85 ff                	test   %edi,%edi
+  55b229:	74 2e                	je     0x55b259
+  55b22b:	db 86 9c 00 00 00    	fildl  0x9c(%esi)
+  55b231:	d9 05 78 df 7a 00    	flds   0x7adf78
+  55b237:	d8 4e 48             	fmuls  0x48(%esi)
+  55b23a:	8b 1f                	mov    (%edi),%ebx
+  55b23c:	de e9                	fsubrp %st,%st(1)
+  55b23e:	d8 25 00 70 6d 00    	fsubs  0x6d7000
+  55b244:	e8 77 cd 14 00       	call   0x6a7fc0
+  55b249:	8b 8e 98 00 00 00    	mov    0x98(%esi),%ecx
+  55b24f:	50                   	push   %eax
+  55b250:	83 e9 64             	sub    $0x64,%ecx
+  55b253:	51                   	push   %ecx
+  55b254:	8b cf                	mov    %edi,%ecx
+  55b256:	ff 53 18             	call   *0x18(%ebx)
+  55b259:	8b be 40 02 00 00    	mov    0x240(%esi),%edi
+  55b25f:	85 ff                	test   %edi,%edi
+  55b261:	74 37                	je     0x55b29a
+  55b263:	db 86 9c 00 00 00    	fildl  0x9c(%esi)
+  55b269:	d9 05 78 df 7a 00    	flds   0x7adf78
+  55b26f:	d8 4e 48             	fmuls  0x48(%esi)
+  55b272:	8b 1f                	mov    (%edi),%ebx
+  55b274:	de e9                	fsubrp %st,%st(1)
+  55b276:	d8 25 00 70 6d 00    	fsubs  0x6d7000
+  55b27c:	d8                   	.byte 0xd8
+  55b27d:	25                   	.byte 0x25
+  55b27e:	00                   	.byte 0x0
+  55b27f:	70                   	.byte 0x70

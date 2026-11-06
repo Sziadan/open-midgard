@@ -2,6 +2,8 @@
 #include "ActorSpriteDepth.h"
 #include "world/CursorSnap.h"
 #include "world/GameActor.h"
+#include "ui/UIChatRoomEntry.h"
+#include "ui/UiScale.h"
 #include "world/ActorTint.h"
 #include "world/MsgEffect.h"
 #include "world/3dActor.h"
@@ -6616,6 +6618,29 @@ void CWorld::UpdateNightLighting()
     g_renderer.SetLight(&lightDir, &diffuse, &ambient);
 }
 
+void CWorld::ProcessActorChatRoomTitles(const matrix& viewMatrix)
+{
+    // Ref ProcessChatBalloon caches its screen-height term on first use.
+    static float sourceOffset=-1;
+    if(!m_player && m_actorList.empty())return;
+    if(sourceOffset<0)sourceOffset=static_cast<float>(81*g_renderer.m_height/480);
+    const auto update=[&](CGameActor* actor){
+        if(!actor)return;
+        tlvertex3d point{};
+        if(!actor->m_isVisible || !ProjectPoint(g_renderer,viewMatrix,actor->m_pos,&point)){
+            if(actor->m_chatTitle)actor->m_chatTitle->SetShow(0);return;
+        }
+        actor->m_lastTlvertX=static_cast<int>(point.x);actor->m_lastTlvertY=static_cast<int>(point.y);
+        const float average=g_renderer.m_height*0.0017447917f;
+        actor->m_lastPixelRatio=average>0?point.oow*g_renderer.m_hpc*0.14285715f/average:1.0f;
+        if(!actor->m_chatTitle)return;
+        const int rawY=static_cast<int>(static_cast<double>(actor->m_lastTlvertY)-sourceOffset*actor->m_lastPixelRatio-UiScaleLogicalToRawCoordinate(17));
+        actor->m_chatTitle->Move(UiScaleRawToLogicalCoordinate(actor->m_lastTlvertX)-100,UiScaleRawToLogicalCoordinate(rawY));
+        actor->m_chatTitle->SetShow(1);
+    };
+    update(m_player);for(auto* actor:m_actorList)if(actor!=m_player)update(actor);
+}
+
 void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude)
 {
     int clientHeight = 480;
@@ -6688,6 +6713,7 @@ void CWorld::RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, floa
 
 void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
 {
+    ProcessActorChatRoomTitles(viewMatrix);
     m_lastRenderStats = RenderDebugStats{};
 
     u32 renderedObjects = 0;

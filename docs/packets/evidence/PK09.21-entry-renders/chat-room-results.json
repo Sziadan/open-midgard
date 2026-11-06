@@ -1,0 +1,13 @@
+{
+    "absent_main": true,
+    "actual_resize": true,
+    "black_color": true,
+    "close_waits_server": true,
+    "destroy_during_capture": true,
+    "native_input": true,
+    "native_qt_rectangles": true,
+    "outcome": "PASS",
+    "relative_thumb": true,
+    "room_id": "0xF0123456",
+    "source_df_dc_speech": true
+}

@@ -1,0 +1,66 @@
+{
+  "purpose": "Verify original raw CP949 resource key wins over conflicting transparent flat fallback. Windows fixture uses the same ANSI file APIs as CFileMgr; portable retained copies preserve exact bitmap bytes.",
+  "source_prefix_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c",
+  "files": [
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c62746e5f6f6b2e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/btn_ok.bmp",
+      "shadow_bitmap": "entry-assets/btn_ok.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c62746e5f6f6b5f612e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/btn_ok_a.bmp",
+      "shadow_bitmap": "entry-assets/btn_ok_a.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c62746e5f6f6b5f622e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/btn_ok_b.bmp",
+      "shadow_bitmap": "entry-assets/btn_ok_b.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c636861745f636c6f73652e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/chat_close.bmp",
+      "shadow_bitmap": "entry-assets/chat_close.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c636861745f6f70656e2e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/chat_open.bmp",
+      "shadow_bitmap": "entry-assets/chat_open.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c737973626f785f6172725f6c2e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/sysbox_arr_l.bmp",
+      "shadow_bitmap": "entry-assets/sysbox_arr_l.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c737973626f785f6c642e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/sysbox_ld.bmp",
+      "shadow_bitmap": "entry-assets/sysbox_ld.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c737973626f785f6c752e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/sysbox_lu.bmp",
+      "shadow_bitmap": "entry-assets/sysbox_lu.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c737973626f785f6d642e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/sysbox_md.bmp",
+      "shadow_bitmap": "entry-assets/sysbox_md.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c737973626f785f6d752e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/sysbox_mu.bmp",
+      "shadow_bitmap": "entry-assets/sysbox_mu.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c737973626f785f72642e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/sysbox_rd.bmp",
+      "shadow_bitmap": "entry-assets/sysbox_rd.bmp"
+    },
+    {
+      "preferred_key_hex": "746578747572655cc0afc0fac0cec5cdc6e4c0ccbdba5c737973626f785f72752e626d70",
+      "preferred_bitmap": "entry-assets/source-bitmaps/sysbox_ru.bmp",
+      "shadow_bitmap": "entry-assets/sysbox_ru.bmp"
+    }
+  ]
+}

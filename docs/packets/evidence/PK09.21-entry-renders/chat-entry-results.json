@@ -1,0 +1,13 @@
+{
+    "actual_125_button": true,
+    "actual_d7_world_title": true,
+    "delete_during_capture": true,
+    "drag_cancel_release": true,
+    "ellipsis": true,
+    "masked_native_input": true,
+    "native_qt_bitmap_tiles": true,
+    "outcome": "PASS",
+    "private_doubleclick": true,
+    "release_button": true,
+    "teardown": true
+}

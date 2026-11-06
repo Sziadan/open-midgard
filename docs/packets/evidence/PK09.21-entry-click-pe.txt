@@ -1,0 +1,51 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00448df0 <.text+0x47df0>:
+  448df0:	56                   	push   %esi
+  448df1:	8b f1                	mov    %ecx,%esi
+  448df3:	b9 28 c2 78 00       	mov    $0x78c228,%ecx
+  448df8:	e8 93 cc 0b 00       	call   0x505a90
+  448dfd:	8b 4e 6c             	mov    0x6c(%esi),%ecx
+  448e00:	85 c9                	test   %ecx,%ecx
+  448e02:	74 1a                	je     0x448e1e
+  448e04:	83 f9 03             	cmp    $0x3,%ecx
+  448e07:	74 39                	je     0x448e42
+  448e09:	8b 4e 78             	mov    0x78(%esi),%ecx
+  448e0c:	8b 10                	mov    (%eax),%edx
+  448e0e:	6a 00                	push   $0x0
+  448e10:	6a 00                	push   $0x0
+  448e12:	51                   	push   %ecx
+  448e13:	6a 32                	push   $0x32
+  448e15:	8b c8                	mov    %eax,%ecx
+  448e17:	ff 52 14             	call   *0x14(%edx)
+  448e1a:	5e                   	pop    %esi
+  448e1b:	c2 08 00             	ret    $0x8
+  448e1e:	6a 1d                	push   $0x1d
+  448e20:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  448e25:	e8 36 94 09 00       	call   0x4e2260
+  448e2a:	8b 4e 78             	mov    0x78(%esi),%ecx
+  448e2d:	8b 10                	mov    (%eax),%edx
+  448e2f:	6a 00                	push   $0x0
+  448e31:	6a 00                	push   $0x0
+  448e33:	6a 00                	push   $0x0
+  448e35:	51                   	push   %ecx
+  448e36:	6a 2f                	push   $0x2f
+  448e38:	6a 00                	push   $0x0
+  448e3a:	8b c8                	mov    %eax,%ecx
+  448e3c:	ff 92 94 00 00 00    	call   *0x94(%edx)
+  448e42:	5e                   	pop    %esi
+  448e43:	c2 08 00             	ret    $0x8
+  448e46:	90                   	nop
+  448e47:	90                   	nop
+  448e48:	90                   	nop
+  448e49:	90                   	nop
+  448e4a:	90                   	nop
+  448e4b:	90                   	nop
+  448e4c:	90                   	nop
+  448e4d:	90                   	nop
+  448e4e:	90                   	nop
+  448e4f:	90                   	nop

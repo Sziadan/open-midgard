@@ -1,0 +1,1785 @@
+
+### Ref/UIControl.cpp
+1992: UIChatRoomTitle *__thiscall UIChatRoomTitle::UIChatRoomTitle(UIChatRoomTitle *this)
+1993: {
+1994:   std::allocator<char> v3; // [esp+7h] [ebp-1h]
+1995:
+1996:   UIWindow::UIWindow(this);
+1997:   this->m_roomInfo.title.allocator = v3;
+1998:   this->m_roomInfo.title._Ptr = 0;
+1999:   this->m_roomInfo.title._Len = 0;
+2000:   this->m_roomInfo.title._Res = 0;
+2001:   this->m_roomInfo.pass.allocator = v3;
+2002:   this->m_roomInfo.pass._Ptr = 0;
+2003:   this->m_roomInfo.pass._Len = 0;
+2004:   this->m_roomInfo.pass._Res = 0;
+2005:   this->__vftable = (UIChatRoomTitle_vtbl *)&UIChatRoomTitle::`vftable';
+2006:   return this;
+2007: }
+2008:
+
+### Ref/UIControl.cpp
+3988: int __thiscall UIChatRoomTitle::SendMsg(
+3989:         UIChatRoomTitle *this,
+3990:         UIWindow *sender,
+3991:         int message,
+3992:         int val1,
+3993:         int val2,
+3994:         int val3,
+3995:         int val4)
+3996: {
+3997:   UIChatRoomTitle *v7; // esi
+3998:   ChatRoomInfo *p_m_roomInfo; // ebx
+3999:   int v10; // ecx
+4000:   int roomType; // eax
+4001:   unsigned int v12; // kr04_4
+4002:   const char *Ptr; // ebx
+4003:   unsigned int v14; // kr08_4
+4004:   const char *v15; // ebx
+4005:   unsigned int v16; // kr0C_4
+4006:   UIStaticText *m_title; // eax
+4007:   char v18; // al
+4008:   char title[384]; // [esp+4h] [ebp-1A0h] BYREF
+4009:   std::string typeString; // [esp+184h] [ebp-20h] BYREF
+4010:   UIChatRoomTitle *v21; // [esp+194h] [ebp-10h]
+4011:   int v22; // [esp+1A0h] [ebp-4h]
+4012:   const char *val1a; // [esp+1B4h] [ebp+10h]
+4013:   const char *val1b; // [esp+1B4h] [ebp+10h]
+4014:
+4015:   v7 = this;
+4016:   v21 = this;
+4017:   if ( message == 6 )
+4018:     return 0;
+4019:   if ( message != 34 )
+4020:     return UIWindow::SendMsg(this, sender, message, val1, val2, val3, val4);
+4021:   p_m_roomInfo = &this->m_roomInfo;
+4022:   std::string::assign(&this->m_roomInfo.title, (const std::string *)val1, 0, std::string::npos);
+4023:   std::string::assign(&v7->m_roomInfo.pass, (const std::string *)(val1 + 16), 0, std::string::npos);
+4024:   v7->m_roomInfo.roomType = *(_DWORD *)(val1 + 32);
+4025:   v7->m_roomInfo.numPeople = *(_DWORD *)(val1 + 36);
+4026:   v7->m_roomInfo.maxNumPeople = *(_DWORD *)(val1 + 40);
+4027:   v10 = *(_DWORD *)(val1 + 44);
+4028:   typeString.allocator = (std::allocator<char>)HIBYTE(val1);
+4029:   v7->m_roomInfo.roomId = v10;
+4030:   std::string::_Tidy(&typeString, 0);
+4031:   roomType = v7->m_roomInfo.roomType;
+4032:   v22 = 0;
+4033:   if ( !roomType )
+4034:   {
+4035:     val1a = MsgStr(MSI_ROOM_PRIVATE);
+4036:     v12 = strlen(val1a) + 1;
+4037:     if ( std::string::_Grow(&typeString, v12 - 1, 1u) )
+4038:     {
+4039:       qmemcpy(typeString._Ptr, val1a, v12 - 1);
+4040:       std::string::_Eos(&typeString, v12 - 1);
+4041:       v7 = v21;
+4042:     }
+4043:     Ptr = p_m_roomInfo->title._Ptr;
+4044:     if ( Ptr )
+4045:       goto LABEL_19;
+4046:     goto LABEL_18;
+4047:   }
+4048:   if ( roomType != 3 )
+4049:   {
+4050:     val1b = MsgStr(MSI_ROOM_PUBLIC);
+4051:     v16 = strlen(val1b) + 1;
+4052:     if ( std::string::_Grow(&typeString, v16 - 1, 1u) )
+4053:     {
+4054:       qmemcpy(typeString._Ptr, val1b, v16 - 1);
+4055:       v7 = v21;
+4056:       typeString._Len = v16 - 1;
+4057:       typeString._Ptr[v16 - 1] = 0;
+4058:     }
+4059:     Ptr = p_m_roomInfo->title._Ptr;
+4060:     if ( Ptr )
+4061:       goto LABEL_19;
+4062: LABEL_18:
+4063:     Ptr = `std::string::_Nullstr'::`2'::_C;
+4064: LABEL_19:
+4065:     sprintf(title, "%s (%d/%d)", Ptr, v7->m_roomInfo.numPeople, v7->m_roomInfo.maxNumPeople);
+4066:     goto LABEL_20;
+4067:   }
+4068:   v14 = strlen(&Buf) + 1;
+4069:   if ( std::string::_Grow(&typeString, v14 - 1, 1u) )
+4070:   {
+4071:     qmemcpy(typeString._Ptr, &Buf, v14 - 1);
+4072:     v7 = v21;
+4073:     typeString._Len = v14 - 1;
+4074:     typeString._Ptr[v14 - 1] = 0;
+4075:   }
+4076:   v15 = p_m_roomInfo->title._Ptr;
+4077:   if ( !v15 )
+4078:     v15 = `std::string::_Nullstr'::`2'::_C;
+4079:   sprintf(title, "%s", v15);
+4080: LABEL_20:
+4081:   m_title = v7->m_title;
+4082:   v7->m_shopfont = val2;
+4083:   m_title->m_fontType = 0;
+4084:   m_title->m_fontHeight = 12;
+4085:   UIStaticText::SetTextWithShorten(v7->m_title, title);
+4086:   v7->UIWindow::Invalidate(v7);
+4087:   if ( typeString._Ptr )
+4088:   {
+4089:     v18 = *(typeString._Ptr - 1);
+4090:     if ( v18 && v18 != -1 )
+4091:     {
+4092:       *(typeString._Ptr - 1) = v18 - 1;
+4093:       return 0;
+4094:     }
+
+### Ref/UIControl.cpp
+5248: void __thiscall UIButton::OnLBtnDown(UIButton *this, int x, int y)
+5249: {
+5250:   UIButton_vtbl *v4; // eax
+5251:
+5252:   if ( !this->m_isDisabled )
+5253:   {
+5254:     UIWindowMgr::SetCapture(&g_windowMgr, this);
+5255:     v4 = this->__vftable;
+5256:     this->m_state = 2;
+5257:     v4->UIWindow::Invalidate(this);
+5258:   }
+5259: }
+5260:
+5261:
+5262: // ================================================
+5263: // Original Signature: public: virtual void __thiscall UIButton::OnLBtnUp(int,int)
+5264: // Decompiled from address: 0x441260
+5265: // ================================================
+5266: void __thiscall UIButton::OnLBtnUp(UIButton *this, int x, int y)
+5267: {
+5268:   UIWindow *m_parent; // ecx
+5269:
+5270:   if ( !this->m_isDisabled && UIWindowMgr::GetCapture(&g_windowMgr) == this )
+5271:   {
+5272:     if ( x < 0 || x >= this->m_w || y < 0 || y >= this->m_h )
+5273:     {
+5274:       this->m_state = 0;
+5275:     }
+5276:     else
+5277:     {
+5278:       m_parent = this->m_parent;
+5279:       this->m_state = 1;
+5280:       if ( m_parent )
+5281:         m_parent->UIWindow::SendMsg(m_parent, this, 6, this->m_id, 0, 0, 0);
+5282:       else
+5283:         g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 0, this->m_id, 0, 0);
+5284:     }
+5285:     this->UIWindow::Invalidate(this);
+5286:     UIWindowMgr::ReleaseCapture(&g_windowMgr);
+5287:   }
+5288: }
+5289:
+5290:
+5291: // ================================================
+5292: // Original Signature: public: virtual void __thiscall UIButton::OnMouseHover(int,int)
+5293: // Decompiled from address: 0x4411c0
+5294: // ================================================
+5295: void __thiscall UIButton::OnMouseHover(UIButton *this, int x, int y)
+
+### Ref/UIControl.cpp
+5388: void __thiscall UIChatRoomTitle::OnCreate(UIChatRoomTitle *this, int cx, int cy)
+5389: {
+5390:   UIStaticText *v4; // eax
+5391:   UIStaticText *v5; // eax
+5392:   UIStaticText *m_title; // eax
+5393:   unsigned int v7; // [esp-8h] [ebp-1Ch]
+5394:
+5395:   v4 = (UIStaticText *)operator new(0x98u);
+5396:   if ( v4 )
+5397:     v5 = UIStaticText::UIStaticText(v4);
+5398:   else
+5399:     v5 = 0;
+5400:   v7 = this->m_w - 34;
+5401:   this->m_title = v5;
+5402:   UIWindow::Create(v5, v7, 15);
+5403:   this->m_title->UIWindow::Move(this->m_title, 31, 8);
+5404:   UIStaticText::SetTextWithShorten(this->m_title, &Buf);
+5405:   m_title = this->m_title;
+5406:   m_title->m_fontType = 0;
+5407:   m_title->m_fontHeight = 12;
+5408:   UIWindow::AddChild(this, this->m_title);
+5409: }
+5410:
+5411:
+5412: // ================================================
+5413: // Original Signature: public: virtual void __thiscall UIChatRoomTitle::OnDraw(void)
+5414: // Decompiled from address: 0x448e50
+5415: // ================================================
+5416: void __thiscall UIChatRoomTitle::OnDraw(UIChatRoomTitle *this)
+5417: {
+5418:   CResMgr *v2; // eax
+5419:   CBitmapRes *v3; // eax
+5420:   CResMgr *v4; // eax
+5421:   CBitmapRes *v5; // eax
+5422:   int v6; // edi
+5423:   int v7; // ebx
+5424:   CResMgr *v8; // eax
+5425:   CBitmapRes *v9; // eax
+5426:   CResMgr *v10; // eax
+5427:   CBitmapRes *v11; // eax
+5428:   CResMgr *v12; // eax
+5429:   CBitmapRes *v13; // eax
+5430:   int v14; // edi
+5431:   int v15; // ebx
+5432:   CResMgr *v16; // eax
+5433:   CBitmapRes *v17; // eax
+5434:   CResMgr *v18; // eax
+5435:   CBitmapRes *v19; // eax
+5436:   const char *v20; // eax
+5437:   CResMgr *v21; // eax
+5438:   CBitmapRes *v22; // eax
+5439:   const char *v23; // [esp-8h] [ebp-14h]
+5440:   const char *v24; // [esp-8h] [ebp-14h]
+5441:   const char *v25; // [esp-8h] [ebp-14h]
+5442:   const char *v26; // [esp-8h] [ebp-14h]
+5443:   const char *v27; // [esp-8h] [ebp-14h]
+5444:   const char *v28; // [esp-8h] [ebp-14h]
+5445:   const char *v29; // [esp-8h] [ebp-14h]
+5446:   const char *v30; // [esp-8h] [ebp-14h]
+5447:
+5448:   UIWindow::ClearDC(this, 0xFFFF00FF);
+5449:   v23 = UIBmp(&byte_6F28D4);
+5450:   v2 = g_resMgr();
+5451:   v3 = (CBitmapRes *)CResMgr::Get(v2, v23, 0);
+5452:   UIWindow::DrawBitmap(this, 0, 0, v3, 0);
+5453:   v24 = UIBmp(&byte_6F28B4);
+5454:   v4 = g_resMgr();
+5455:   v5 = (CBitmapRes *)CResMgr::Get(v4, v24, 0);
+5456:   UIWindow::DrawBitmap(this, this->m_w - v5->m_width, 0, v5, 0);
+5457:   if ( (this->m_w - 24) / 12 + ((this->m_w - 24) % 12 != 0) > 0 )
+5458:   {
+5459:     v6 = 12;
+5460:     v7 = (this->m_w - 24) / 12 + ((this->m_w - 24) % 12 != 0);
+5461:     do
+5462:     {
+5463:       v25 = UIBmp(&byte_6F2894);
+5464:       v8 = g_resMgr();
+5465:       v9 = (CBitmapRes *)CResMgr::Get(v8, v25, 0);
+5466:       UIWindow::DrawBitmap(this, v6, 0, v9, 0);
+5467:       v6 += 12;
+5468:       --v7;
+5469:     }
+5470:     while ( v7 );
+5471:   }
+5472:   v26 = UIBmp(&byte_6F2874);
+5473:   v10 = g_resMgr();
+5474:   v11 = (CBitmapRes *)CResMgr::Get(v10, v26, 0);
+5475:   UIWindow::DrawBitmap(this, 0, this->m_h - v11->m_height - 6, v11, 0);
+5476:   v27 = UIBmp(&byte_6F2854);
+5477:   v12 = g_resMgr();
+5478:   v13 = (CBitmapRes *)CResMgr::Get(v12, v27, 0);
+5479:   UIWindow::DrawBitmap(this, this->m_w - v13->m_width, this->m_h - v13->m_height - 6, v13, 0);
+5480:   if ( (this->m_w - 24) / 12 + ((this->m_w - 24) % 12 != 0) > 0 )
+5481:   {
+5482:     v14 = 12;
+5483:     v15 = (this->m_w - 24) / 12 + ((this->m_w - 24) % 12 != 0);
+5484:     do
+5485:     {
+5486:       v28 = UIBmp(&byte_6F2834);
+5487:       v16 = g_resMgr();
+5488:       v17 = (CBitmapRes *)CResMgr::Get(v16, v28, 0);
+5489:       UIWindow::DrawBitmap(this, v14, this->m_h - v17->m_height - 6, v17, 0);
+5490:       v14 += 12;
+5491:       --v15;
+5492:     }
+5493:     while ( v15 );
+5494:   }
+5495:   v29 = UIBmp(&byte_6F2814);
+5496:   v18 = g_resMgr();
+5497:   v19 = (CBitmapRes *)CResMgr::Get(v18, v29, 0);
+5498:   UIWindow::DrawBitmap(this, this->m_w / 2 - v19->m_width / 2, this->m_h - v19->m_height, v19, 0);
+5499:   if ( this->m_roomInfo.roomType )
+5500:     v20 = UIBmp(&byte_6F27D4);
+5501:   else
+5502:     v20 = UIBmp(byte_6F27F4);
+5503:   v30 = v20;
+5504:   v21 = g_resMgr();
+5505:   v22 = (CBitmapRes *)CResMgr::Get(v21, v30, 0);
+5506:   UIWindow::DrawBitmap(this, 3, 3, v22, 1);
+5507: }
+5508:
+5509:
+5510: // ================================================
+5511: // Original Signature: public: virtual void __thiscall UIChatRoomTitle::OnLBtnDblClk(int,int)
+5512: // Decompiled from address: 0x448df0
+5513: // ================================================
+5514: void __thiscall UIChatRoomTitle::OnLBtnDblClk(UIChatRoomTitle *this, int x, int y)
+5515: {
+5516:   CGameMode *GameMode; // eax
+5517:   int roomType; // ecx
+5518:   UIBasicInfoWnd *Window; // eax
+5519:
+5520:   GameMode = CModeMgr::GetGameMode(&g_modeMgr);
+5521:   roomType = this->m_roomInfo.roomType;
+5522:   if ( roomType )
+5523:   {
+5524:     if ( roomType != 3 )
+5525:       GameMode->CMode::SendMsg(GameMode, 50, this->m_roomInfo.roomId, 0, 0);
+5526:   }
+5527:   else
+5528:   {
+5529:     Window = UIWindowMgr::MakeWindow(&g_windowMgr, 29);
+5530:     Window->UIWindow::SendMsg(Window, 0, 47, this->m_roomInfo.roomId, 0, 0, 0);
+5531:   }
+5532: }
+5533:
+5534:
+5535: // ================================================
+5536: // Original Signature: public: virtual void __thiscall UIChatRoomTitle::OnMouseShape(int,int)
+5537: // Decompiled from address: 0x448db0
+5538: // ================================================
+5539: void __thiscall UIChatRoomTitle::OnMouseShape(UIChatRoomTitle *this, int x, int y)
+5540: {
+5541:   if ( x < 0 || x >= this->m_w || y < 0 || y > this->m_h )
+5542:     CMode::SetCursorAction(g_modeMgr.m_curMode, 0);
+5543:   else
+5544:     CMode::SetCursorAction(g_modeMgr.m_curMode, 2);
+5545: }
+5546:
+5547:
+5548: // ================================================
+5549: // Original Signature: public: virtual void __thiscall UICheckBox::OnDraw(void)
+5550: // Decompiled from address: 0x440dc0
+5551: // ================================================
+5552: void __thiscall UICheckBox::OnDraw(UICheckBox *this)
+
+### Ref/UIControl.cpp
+10047: void __thiscall UIStaticText::SetTextWithShorten(UIStaticText *this, const char *txt)
+10048: {
+10049:   CDC *m_dc; // eax
+10050:   int m_w; // eax
+10051:   unsigned int Len; // eax
+10052:   char *v7; // edx
+10053:   unsigned int v8; // esi
+10054:   char *v9; // ecx
+10055:   unsigned int v10; // esi
+10056:   char *v11; // ecx
+10057:   unsigned int v12; // ecx
+10058:   const std::string *v13; // eax
+10059:   char *v14; // esi
+10060:   const std::string *v15; // eax
+10061:   char v16; // al
+10062:   char *Ptr; // ecx
+10063:   char v18; // al
+10064:   unsigned int v19; // edx
+10065:   unsigned int Res; // eax
+10066:   char *v21; // ecx
+10067:   std::string v22; // [esp+Ch] [ebp-3Ch] BYREF
+10068:   std::string result; // [esp+1Ch] [ebp-2Ch] BYREF
+10069:   std::string tmpTxt; // [esp+2Ch] [ebp-1Ch] BYREF
+10070:   int v25; // [esp+44h] [ebp-4h]
+10071:   int txtWidth; // [esp+50h] [ebp+8h]
+10072:   unsigned int txtWidtha; // [esp+50h] [ebp+8h]
+10073:
+10074:   std::string::assign(&this->m_fullText, txt, strlen(txt));
+10075:   m_dc = this->m_dc;
+10076:   this->m_isShorten = 0;
+10077:   if ( !m_dc )
+10078:   {
+10079:     txtWidtha = strlen(txt);
+10080:     if ( std::string::max_size(&this->m_text) < txtWidtha )
+10081:       std::_Xlen();
+10082:     Ptr = this->m_text._Ptr;
+10083:     if ( Ptr && (v18 = *(Ptr - 1)) != 0 && v18 != -1 )
+10084:     {
+10085:       v19 = txtWidtha;
+10086:       if ( !txtWidtha )
+10087:       {
+10088:         *(Ptr - 1) = v18 - 1;
+10089:         std::string::_Tidy(&this->m_text, 0);
+10090:         goto LABEL_45;
+10091:       }
+10092:     }
+10093:     else
+10094:     {
+10095:       if ( !txtWidtha )
+10096:       {
+10097:         std::string::_Tidy(&this->m_text, 1u);
+10098:         goto LABEL_45;
+10099:       }
+10100:       Res = this->m_text._Res;
+10101:       if ( Res <= 0x1F && Res >= txtWidtha )
+10102:       {
+10103: LABEL_44:
+10104:         qmemcpy(this->m_text._Ptr, txt, txtWidtha);
+10105:         v21 = this->m_text._Ptr;
+10106:         this->m_text._Len = txtWidtha;
+10107:         v21[txtWidtha] = 0;
+10108:         goto LABEL_45;
+10109:       }
+10110:       std::string::_Tidy(&this->m_text, 1u);
+10111:       v19 = txtWidtha;
+10112:     }
+10113:     std::string::_Copy(&this->m_text, v19);
+10114:     goto LABEL_44;
+10115:   }
+10116:   txtWidth = UIWindow::GetTextWidth(this, txt, 0, this->m_fontType, this->m_fontHeight, 0);
+10117:   UIWindow::GetTextWidth(this, L, 0, this->m_fontType, this->m_fontHeight, 0);
+10118:   if ( this->m_w >= txtWidth )
+10119:   {
+10120:     std::string::assign(&this->m_text, txt, strlen(txt));
+10121:     goto LABEL_45;
+10122:   }
+10123:   this->m_isShorten = 1;
+10124:   std::string::assign(&this->m_text, txt, strlen(txt));
+10125:   tmpTxt.allocator = (std::allocator<char>)HIBYTE(txtWidth);
+10126:   std::string::_Tidy(&tmpTxt, 0);
+10127:   std::string::assign(&tmpTxt, txt, strlen(txt));
+10128:   m_w = this->m_w;
+10129:   v25 = 0;
+10130:   if ( m_w >= txtWidth )
+
+### Ref/UIFrameWnd.cpp
+8173: void __thiscall UIFrameWnd::OnLBtnDown(UIFrameWnd *this, int x, int y)
+8174: {
+8175:   int v4; // edx
+8176:   int m_x; // eax
+8177:   int m_y; // ecx
+8178:   int gy; // [esp+4h] [ebp-8h] BYREF
+8179:   int gx; // [esp+8h] [ebp-4h] BYREF
+8180:
+8181:   if ( this )
+8182:   {
+8183:     UIWindowMgr::SetCapture(&g_windowMgr, this);
+8184:     gx = x;
+8185:     gy = y;
+8186:     UIWindow::GetGlobalCoor(this, &gx, &gy);
+8187:     v4 = gy;
+8188:     m_x = this->m_x;
+8189:     this->m_startGlobalX = gx;
+8190:     m_y = this->m_y;
+8191:     this->m_startGlobalY = v4;
+8192:     this->m_orgX = m_x;
+8193:     this->m_orgY = m_y;
+8194:     this->m_transTarget = 128;
+8195:     this->m_transTime = timeGetTime();
+8196:     CSnapMgr::BeginMove(&g_snapMgr, this);
+8197:   }
+8198: }
+8199:
+8200:
+8201: // ================================================
+8202: // Original Signature: public: virtual void __thiscall UIFrameWnd::OnLBtnUp(int,int)
+8203: // Decompiled from address: 0x455f10
+8204: // ================================================
+8205: void __thiscall UIFrameWnd::OnLBtnUp(UIFrameWnd *this, int x, int y)
+8206: {
+8207:   if ( UIWindowMgr::GetCapture(&g_windowMgr) == this )
+8208:   {
+8209:     this->m_transTarget = 255;
+8210:     this->m_transTime = timeGetTime();
+8211:     UIWindowMgr::ReleaseCapture(&g_windowMgr);
+8212:     CSnapMgr::EndMove(&g_snapMgr, this);
+8213:   }
+8214: }
+8215:
+8216:
+8217: // ================================================
+8218: // Original Signature: public: virtual void __thiscall UIFrameWnd::OnMouseHover(int,int)
+8219: // Decompiled from address: 0x455fc0
+8220: // ================================================
+8221: void __thiscall UIFrameWnd::OnMouseHover(UIFrameWnd *this, int x, int y)
+8222: {
+8223:   ;
+8224: }
+8225:
+8226:
+8227: // ================================================
+8228: // Original Signature: public: virtual void __thiscall UIFrameWnd::OnMouseMove(int,int)
+8229: // Decompiled from address: 0x455fd0
+8230: // ================================================
+8231: void __thiscall UIFrameWnd::OnMouseMove(UIFrameWnd *this, int x, int y)
+8232: {
+8233:   int v4; // edi
+8234:   int v5; // ebx
+8235:   unsigned __int8 IsRegisteredToSnap; // al
+8236:   UIFrameWnd_vtbl *v7; // edx
+8237:   int dy; // [esp+Ch] [ebp-10h] BYREF
+8238:   int rdx; // [esp+10h] [ebp-Ch] BYREF
+8239:   int gy; // [esp+14h] [ebp-8h] BYREF
+8240:   int gx; // [esp+18h] [ebp-4h] BYREF
+8241:
+8242:   if ( UIWindowMgr::GetCapture(&g_windowMgr) == this )
+8243:   {
+8244:     gx = x;
+8245:     gy = y;
+8246:     UIWindow::GetGlobalCoor(this, &gx, &gy);
+8247:     v4 = gx - this->m_startGlobalX;
+8248:     v5 = gy - this->m_startGlobalY;
+8249:     IsRegisteredToSnap = CSnapMgr::IsRegisteredToSnap(&g_snapMgr, this);
+8250:     v7 = this->__vftable;
+8251:     if ( IsRegisteredToSnap )
+8252:     {
+8253:       v7->UIWindow::MoveDelta(this, v4, v5);
+8254:       UIWindowMgr::GetDeltaSnap(&g_windowMgr, this, &rdx, &dy, 0);
+8255:       y = v4;
+8256:       x = v5;
+8257:       CSnapMgr::GetDeltaDrag(&g_snapMgr, this, &y, &x);
+8258:       if ( (int)abs32(y) < (int)abs32(rdx) )
+8259:         y = rdx;
+8260:       if ( (int)abs32(x) < (int)abs32(dy) )
+8261:         x = dy;
+8262:       this->UIWindow::MoveDelta(this, v4 + y, v5 + x);
+8263:       UIWindowMgr::UpdateSnapInfo(&g_windowMgr, this);
+8264:       CSnapMgr::MoveDelta(&g_snapMgr, this, v4 + y, v5 + x);
+8265:     }
+8266:     else
+8267:     {
+8268:       v7->UIWindow::Move(this, v4 + this->m_orgX, v5 + this->m_orgY);
+8269:     }
+8270:   }
+8271: }
+8272:
+
+### Ref/UIFrameWnd2.cpp
+12264: int __thiscall UIPasswordWnd::SendMsg(
+12265:         UIPasswordWnd *this,
+12266:         UIWindow *sender,
+12267:         int message,
+12268:         int val1,
+12269:         int val2,
+12270:         int val3,
+12271:         int val4)
+12272: {
+12273:   CMode *m_curMode; // edi
+12274:   CMode_vtbl *v10; // ebx
+12275:   const char *Text; // eax
+12276:
+12277:   if ( message == 6 )
+12278:   {
+12279:     if ( val1 == 118 )
+12280:     {
+12281:       m_curMode = g_modeMgr.m_curMode;
+12282:       v10 = g_modeMgr.m_curMode->__vftable;
+12283:       Text = UIEditCtrl::GetText(this->m_editCtrl);
+12284:       v10->CMode::SendMsg(m_curMode, 50, this->m_roomId, (int)Text, 0);
+12285:       UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x1D);
+12286:     }
+12287:     return 0;
+12288:   }
+12289:   else if ( message == 47 )
+12290:   {
+12291:     this->m_roomId = val1;
+12292:     return 0;
+12293:   }
+12294:   else
+12295:   {
+12296:     return UIFrameWnd::SendMsg(this, sender, message, val1, val2, val3, val4);
+12297:   }
+12298: }
+12299:
+12300:
+
+### Ref/UIFrameWnd2.cpp
+27604: void __thiscall UIPasswordWnd::OnCreate(UIPasswordWnd *this, int cx, int cy)
+27605: {
+27606:   UIEditCtrl *v4; // eax
+27607:   UIEditCtrl *v5; // eax
+27608:   UIStaticText *v6; // eax
+27609:   UIStaticText *v7; // eax
+27610:   int m_w; // edx
+27611:   const char *v9; // eax
+27612:   void *v10; // edi
+27613:   int v11; // eax
+27614:   UIBitmapButton *v12; // eax
+27615:   UIBitmapButton *v13; // edi
+27616:   const std::string *v14; // eax
+27617:   char *Ptr; // eax
+27618:   const std::string *v16; // eax
+27619:   char *v17; // eax
+27620:   const std::string *v18; // eax
+27621:   char *v19; // eax
+27622:   char *v20; // ecx
+27623:   char v21; // al
+27624:   char v22; // al
+27625:   char *v23; // ecx
+27626:   char v24; // al
+27627:   std::string result; // [esp+Ch] [ebp-4Ch] BYREF
+27628:   std::string v26; // [esp+1Ch] [ebp-3Ch] BYREF
+27629:   std::string pathName; // [esp+2Ch] [ebp-2Ch] BYREF
+27630:   int pos[1][2]; // [esp+3Ch] [ebp-1Ch]
+27631:   void *Block; // [esp+44h] [ebp-14h]
+27632:   std::allocator<char> v30; // [esp+4Bh] [ebp-Dh]
+27633:   int v31; // [esp+54h] [ebp-4h]
+27634:
+27635:   v4 = (UIEditCtrl *)operator new(0x90u);
+27636:   Block = v4;
+27637:   v31 = 0;
+27638:   if ( v4 )
+27639:     v5 = UIEditCtrl::UIEditCtrl(v4);
+27640:   else
+27641:     v5 = 0;
+27642:   v31 = -1;
+27643:   this->m_editCtrl = v5;
+27644:   UIWindow::Create(v5, 0x5Au, 16);
+27645:   this->m_editCtrl->UIWindow::Move(this->m_editCtrl, 15, 22);
+27646:   this->m_editCtrl->m_maxchar = 8;
+27647:   UIEditCtrl::SetFrameColor(this->m_editCtrl, 232, 232, 232);
+27648:   this->m_editCtrl->m_maskchar = 42;
+27649:   this->m_editCtrl->UIEditCtrl::SetText(this->m_editCtrl, &Buf);
+27650:   UIWindow::AddChild(this, this->m_editCtrl);
+27651:   UIWindowMgr::SetFocusEdit(&g_windowMgr, this->m_editCtrl);
+27652:   v6 = (UIStaticText *)operator new(0x98u);
+27653:   Block = v6;
+27654:   v31 = 1;
+27655:   if ( v6 )
+27656:     v7 = UIStaticText::UIStaticText(v6);
+27657:   else
+27658:     v7 = 0;
+27659:   m_w = this->m_w;
+27660:   v31 = -1;
+27661:   this->m_newText = v7;
+27662:   UIWindow::Create(v7, m_w - 30, 15);
+27663:   this->m_newText->UIWindow::Move(this->m_newText, 15, 6);
+27664:   v9 = MsgStr(MSI_ENTER_PASSWORD);
+27665:   UIStaticText::SetText(this->m_newText, v9, 0);
+27666:   UIWindow::AddChild(this, this->m_newText);
+27667:   pathName.allocator = v30;
+27668:   std::string::_Tidy(&pathName, 0);
+27669:   v10 = (void *)strlen(&byte_6F2E4C);
+27670:   Block = v10;
+27671:   if ( std::string::_Grow(&pathName, (unsigned int)v10, 1u) )
+27672:   {
+27673:     qmemcpy(pathName._Ptr, &byte_6F2E4C, (unsigned int)v10);
+27674:     std::string::_Eos(&pathName, (unsigned int)v10);
+27675:   }
+27676:   v11 = this->m_w;
+27677:   v31 = 2;
+27678:   pos[0][0] = v11 - 55;
+27679:   pos[0][1] = this->m_h - 32;
+27680:   v12 = (UIBitmapButton *)operator new(0xA4u);
+27681:   Block = v12;
+27682:   LOBYTE(v31) = 3;
+27683:   if ( v12 )
+27684:     v13 = UIBitmapButton::UIBitmapButton(v12);
+27685:   else
+27686:     v13 = 0;
+27687:   LOBYTE(v31) = 2;
+27688:   v14 = std::operator+(&result, &pathName, aBtnOk);
+27689:   LOBYTE(v31) = 4;
+27690:   Ptr = std::operator+(&v26, v14, aBmp_2)->_Ptr;
+27691:   LOBYTE(v31) = 5;
+27692:   if ( !Ptr )
+27693:     Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+27694:   UIBitmapButton::SetBitmapName(v13, Ptr, 0);
+27695:   LOBYTE(v31) = 4;
+27696:   std::string::_Tidy(&v26, 1u);
+27697:   LOBYTE(v31) = 2;
+27698:   std::string::_Tidy(&result, 1u);
+27699:   v16 = std::operator+(&v26, &pathName, aBtnOkA);
+27700:   LOBYTE(v31) = 6;
+27701:   v17 = std::operator+(&result, v16, aBmp_2)->_Ptr;
+27702:   LOBYTE(v31) = 7;
+27703:   if ( !v17 )
+27704:     v17 = (char *)`std::string::_Nullstr'::`2'::_C;
+27705:   UIBitmapButton::SetBitmapName(v13, v17, 1);
+27706:   LOBYTE(v31) = 6;
+27707:   std::string::_Tidy(&result, 1u);
+27708:   LOBYTE(v31) = 2;
+
+### Ref/UIWindowMgr.cpp
+5456:         goto LABEL_695;
+5457:       v63 = (UIPasswordWnd *)operator new(0x6Cu);
+5458:       windowId = (int)v63;
+5459:       v191 = 51;
+5460:       if ( v63 )
+5461:         m_basicInfoWnd = (UIBasicInfoWnd *)UIPasswordWnd::UIPasswordWnd(v63);
+5462:       else
+5463:         m_basicInfoWnd = 0;
+5464:       v191 = -1;
+5465:       this->m_passwordWnd = (UIPasswordWnd *)m_basicInfoWnd;
+5466:       UIWindow::Create(m_basicInfoWnd, 176, 46);
+5467:       m_basicInfoWnd->UIWindow::Move(
+5468:         m_basicInfoWnd,
+5469:         (g_renderer->m_width - 640) / 2 + 200,
+5470:         200 * g_renderer->m_height / 480);
+5471:       windowId = (int)m_basicInfoWnd;
+5472:       std::list<UIWindow *>::insert(
+5473:         &this->m_children,
+5474:         &result,
+5475:         (std::list<UIWindow *>::iterator)this->m_children._Head,
+5476:         (UIWindow *const *)&windowId);
+5477:       m_basicInfoWnd->UIWindow::SetShow(m_basicInfoWnd, 1);
+5478:       return m_basicInfoWnd;
+5479:     case 30:
+5480:       m_basicInfoWnd = (UIBasicInfoWnd *)this->m_chatRoomChangeWnd;
+
+### Ref/GameActor.cpp
+3313:       if ( !this->m_chatTitle )
+3314:       {
+3315:         *(float *)&v169 = COERCE_FLOAT(operator new(0x80u));
+3316:         arg2 = *(float *)&v169;
+3317:         v257 = 1;
+3318:         if ( *(float *)&v169 == 0.0 )
+3319:           v170 = 0;
+3320:         else
+3321:           v170 = UIChatRoomTitle::UIChatRoomTitle(v169);
+3322:         v257 = -1;
+3323:         this->m_chatTitle = v170;
+3324:         UIWindow::Create(v170, 200, 34);
+3325:         UIWindowMgr::AddWindowFront(&g_windowMgr, this->m_chatTitle);
+3326:       }
+3327:       this->m_chatTitle->UIWindow::SendMsg(this->m_chatTitle, 0, 34, arg1, this->m_charfont, 0, 0);
+3328:       this->m_chatTitle->UIWindow::Move(
+3329:         this->m_chatTitle,
+3330:         this->m_lastTlvertX - 100,
+3331:         this->m_lastTlvertY - 110 * g_renderer->m_height / 480);
+3332:       return;
+3333:     case 33:
+3334:       if ( this->m_chatTitle )
+3335:       {
+3336:         UIWindowMgr::PostQuit(&g_windowMgr, this->m_chatTitle);
+3337:         this->m_chatTitle = 0;
+3338:       }
+
+### Ref/GameActor.cpp
+6547:   tv.z = this->m_pos.z * vtm->v33 + this->m_pos.y * vtm->v23 + vtm->v13 * this->m_pos.x + vtm->v43;
+6548:   CRenderer::ProjectVertex(g_renderer, &this->m_pos, vtm, &x, &y, &oow);
+6549:   v4 = CRenderer::GetPixelRatio(g_renderer, oow);
+6550:   pixelRatio = v4;
+6551:   this->m_lastPixelRatio = v4 / g_avgPixelRatio;
+6552:   ScreenXFactor = CRenderer::GetScreenXFactor(g_renderer);
+6553:   v6 = MerJob;
+6554:   Motion = mot;
+
+### Ref/GameActor.cpp
+7889: void __thiscall CGameActor::ProcessChatBalloon(CGameActor *this)
+7890: {
+7891:   int v2; // edi
+7892:   __int64 v3; // rax
+7893:   UIBalloonText *m_balloon; // ecx
+7894:   UIChatRoomTitle *m_chatTitle; // edi
+7895:   __int64 v6; // rax
+7896:   UIMerchantShopTitle *m_merchantShopTitle; // edi
+7897:   __int64 v8; // rax
+7898:   int v9; // edi
+7899:   int v10; // eax
+7900:
+7901:   if ( (__S92__1__ProcessChatBalloon_CGameActor__QAEXXZ_4EA & 1) == 0 )
+7902:   {
+7903:     __S92__1__ProcessChatBalloon_CGameActor__QAEXXZ_4EA |= 1u;
+7904:     flt_7ADF78 = (float)(81 * g_renderer->m_height / 480);
+7905:   }
+7906:   if ( this->m_balloon )
+7907:   {
+7908:     if ( timeGetTime() >= this->m_chatTick + 5000 )
+7909:     {
+7910:       UIWindowMgr::PostQuit(&g_windowMgr, this->m_balloon);
+7911:       this->m_balloon = 0;
+7912:     }
+7913:     else
+7914:     {
+7915:       v2 = this->m_lastTlvertX - this->m_chatWidth / 2;
+7916:       v3 = (__int64)((double)this->m_lastTlvertY - flt_7ADF78 * this->m_lastPixelRatio - (double)this->m_chatHeight);
+7917:       if ( v2 < -3 )
+7918:         v2 = -3;
+7919:       m_balloon = this->m_balloon;
+7920:       if ( v2 > g_renderer->m_width - m_balloon->m_w + 3 )
+7921:         v2 = g_renderer->m_width - m_balloon->m_w + 3;
+7922:       if ( (int)v3 < -3 )
+7923:         LODWORD(v3) = -3;
+7924:       if ( (int)v3 > g_renderer->m_height - m_balloon->m_h + 3 )
+7925:         LODWORD(v3) = g_renderer->m_height - m_balloon->m_h + 3;
+7926:       m_balloon->UIWindow::Move(m_balloon, v2, v3);
+7927:     }
+7928:   }
+7929:   m_chatTitle = this->m_chatTitle;
+7930:   if ( m_chatTitle )
+7931:   {
+7932:     v6 = (__int64)((double)this->m_lastTlvertY - flt_7ADF78 * this->m_lastPixelRatio - 17.0);
+7933:     ((void (__fastcall *)(UIChatRoomTitle *, _DWORD, int, _DWORD))m_chatTitle->UIWindow::Move)(
+7934:       m_chatTitle,
+7935:       HIDWORD(v6),
+7936:       this->m_lastTlvertX - 100,
+7937:       v6);
+
+### Ref/Renderer.cpp
+4538: double __thiscall CRenderer::GetPixelRatio(CRenderer *this, float oow)
+4539: {
+4540:   return oow * this->m_hpc * 0.14285715;
+4541: }
+4542:
+
+### Ref/Renderer.cpp
+7732: {
+7733:   double v3; // st7
+7734:   double v4; // st6
+7735:
+7736:   v3 = (double)cy;
+7737:   v4 = (double)cx;
+7738:   this->m_width = cx;
+7739:   this->m_height = cy;
+7740:   this->m_halfWidth = cx / 2;
+7741:   this->m_halfHeight = cy / 2;
+7742:   this->m_aspectRatio = v3 / v4;
+7743:   this->m_hpc = (double)(cx / 2) / tan(3.141592 * 15.0 * 0.0027777778);
+7744:   this->m_vpc = (double)(cy / 2) / tan(3.141592 * 15.0 * 0.0027777778);
+7745:   this->m_hratio = tan((90.0 - 15.0 * 0.5) * 3.141592 * 0.0055555557);
+7746:   this->m_xoffset = cx / 2;
+7747:   this->m_yoffset = cy / 2;
+7748:   this->m_vratio = tan((90.0 - 15.0 * 0.5) * 3.141592 * 0.0055555557);
+7749:   this->m_hpc = v3 / v4 * this->m_hpc;
+7750:   this->m_hratio = v3 / v4 * this->m_hratio;
+7751:   this->m_screenXFactor = v4 * 0.0015625;
+7752:   this->m_screenYFactor = v3 * 0.0020833334;
+7753:   g_avgPixelRatio = v3 * 0.0017447917;
+7754:   g_slope = g_gradient / this->m_screenYFactor;
+7755:   g_shadowSlope = g_gradient / this->m_screenYFactor;
+
+### Ref/GameMode2.cpp
+4345:     case 0x30u:
+4346:       v379 = val1;
+4347:       std::string::operator=(&this->m_lastChatroomInfo.title, (const std::string *)val1);
+4348:       this->m_lastChatroomInfo.roomType = *(_DWORD *)(v379 + 32);
+4349:       this->m_lastChatroomInfo.numPeople = *(_DWORD *)(v379 + 36);
+4350:       this->m_lastChatroomInfo.maxNumPeople = *(_DWORD *)(v379 + 40);
+4351:       this->m_lastChatroomInfo.roomId = *(_DWORD *)(v379 + 44);
+4352:       std::string::operator=(&this->m_lastChatroomInfo.pass, (const std::string *)(v379 + 16));
+4353:       *(_WORD *)&v683[14] = 213;
+4354:       *(_QWORD *)&v683[21] = 0;
+4355:       *(_WORD *)&v683[16] = std::string::size((std::string *)v379) + 15;
+4356:       v380 = std::string::size((std::string *)(v379 + 16));
+4357:       qmemcpy(&v683[21], std::string::c_str((std::string *)(v379 + 16)), v380);
+4358:       v381 = (std::string *)val1;
+4359:       *(_WORD *)&v683[18] = *(_WORD *)(val1 + 40);
+4360:       v683[20] = *(_BYTE *)(val1 + 32);
+4361:       *(_DWORD *)&buf[4] = *(_DWORD *)&v683[18];
+4362:       *(_DWORD *)buf = *(_DWORD *)&v683[14];
+4363:       buf[14] = v683[28];
+4364:       *(_DWORD *)&buf[8] = *(_DWORD *)&v683[22];
+4365:       *(_WORD *)&buf[12] = *(_WORD *)&v683[26];
+4366:       v382 = std::string::size((std::string *)val1);
+4367:       qmemcpy(&buf[15], std::string::c_str(v381), v382);
+4368:       cyw = *(__int16 *)&v683[16];
+4369:       v383 = CRagConnection::instanceR();
+4370:       CRagConnection::SendPacket(v383, cyw, buf);
+4371:       return SUT_NOSKILL;
+4372:     case 0x31u:
+4373:       if ( !UIWindowMgr::GetChatRoom(&g_windowMgr) )
+4374:         return SUT_NOSKILL;
+4375:       v384 = val1;
+4376:       std::string::operator=(&this->m_lastChatroomInfo.title, (const std::string *)val1);
+4377:       this->m_lastChatroomInfo.roomType = *(_DWORD *)(v384 + 32);
+4378:       this->m_lastChatroomInfo.numPeople = *(_DWORD *)(v384 + 36);
+4379:       this->m_lastChatroomInfo.maxNumPeople = *(_DWORD *)(v384 + 40);
+4380:       this->m_lastChatroomInfo.roomId = *(_DWORD *)(v384 + 44);
+4381:       std::string::operator=(&this->m_lastChatroomInfo.pass, (const std::string *)(v384 + 16));
+4382:       *(_WORD *)&v683[14] = 222;
+4383:       *(_WORD *)&v683[16] = std::string::size((std::string *)v384) + 15;
+4384:       *(_QWORD *)&v683[21] = 0;
+4385:       v385 = std::string::size((std::string *)(v384 + 16));
+4386:       qmemcpy(&v683[21], std::string::c_str((std::string *)(v384 + 16)), v385);
+4387:       v386 = (std::string *)val1;
+4388:       *(_WORD *)&v683[18] = *(_WORD *)(val1 + 40);
+4389:       v683[20] = *(_BYTE *)(val1 + 32);
+4390:       *(_DWORD *)buf = *(_DWORD *)&v683[14];
+4391:       *(_DWORD *)&buf[4] = *(_DWORD *)&v683[18];
+4392:       *(_DWORD *)&buf[8] = *(_DWORD *)&v683[22];
+4393:       *(_WORD *)&buf[12] = *(_WORD *)&v683[26];
+4394:       buf[14] = v683[28];
+4395:       v387 = std::string::size((std::string *)val1);
+4396:       qmemcpy(&buf[15], std::string::c_str(v386), v387);
+4397:       cyx = *(__int16 *)&v683[16];
+4398:       v388 = CRagConnection::instanceR();
+4399:       CRagConnection::SendPacket(v388, cyx, buf);
+4400:       return SUT_NOSKILL;
+4401:     case 0x32u:
+4402:       ChatRoom = UIWindowMgr::GetChatRoom(&g_windowMgr);
+4403:       if ( timeGetTime() > this->m_reqTickChatRoom + 1000 )
+4404:         this->m_isWaitingEnterRoom = 0;
+4405:       if ( ChatRoom || this->m_isWaitingEnterRoom )
+4406:         return SUT_NOSKILL;
+4407:       this->m_isWaitingEnterRoom = 1;
+4408:       v390 = timeGetTime();
+4409:       v391 = (const char *)HIDWORD(val1);
+4410:       this->m_reqTickChatRoom = v390;
+4411:       *(_WORD *)&v683[14] = 217;
+4412:       *(_DWORD *)&v683[16] = val1;
+4413:       if ( v391 )
+4414:       {
+4415:         strcpy(passwd, v391);
+4416:         *(_QWORD *)&v683[20] = *(_QWORD *)passwd;
+4417:       }
+4418:       else
+4419:       {
+4420:         *(_QWORD *)&v683[20] = 0;
+4421:       }
+4422:       p_val1 = (__int16 *)&v683[14];
+4423:       cy = 217;
+4424:       goto LABEL_854;
+4425:     case 0x33u:
+4426:       v682 = 224;
+4427:       strcpy(&v687[12], (const char *)val1);
+4428:       p_val1 = &v682;
+4429:       cy = 224;
+4430:       qmemcpy(&v683[4], &v687[12], 0x18u);
+4431:       *(_DWORD *)v683 = HIDWORD(val1);
+4432:       goto LABEL_854;
+4433:     case 0x34u:
+4434:       *(_WORD *)&v683[2] = 226;
+4435:       strcpy(&v687[12], (const char *)val1);
+4436:       qmemcpy(&v683[4], &v687[12], 0x18u);
+4437:       p_val1 = (__int16 *)&v683[2];
+4438:       cy = 226;
+4439:       goto LABEL_854;
+
+### Ref/UIFrameWnd2.cpp
+7045: int __thiscall UIChatRoomChangeWnd::SendMsg(
+7046:         UIChatRoomChangeWnd *this,
+7047:         UIWindow *sender,
+7048:         int message,
+7049:         _DWORD *val1,
+7050:         int val2,
+7051:         int val3,
+7052:         unsigned int val4)
+7053: {
+7054:   std::string *First; // ecx
+7055:   int v10; // eax
+7056:   char *Ptr; // eax
+7057:   const char *v12; // eax
+7058:   const char *v13; // eax
+7059:   const char *v14; // eax
+7060:   int v15; // edi
+7061:   UIRadioBtn **m_radioBtns; // esi
+7062:   UIRadioBtn *v17; // ecx
+7063:   char *v18; // eax
+7064:   const char *Text; // eax
+7065:   const char *v20; // eax
+7066:   int m_curRadioBtn; // eax
+7067:   UIEditCtrl *m_roomTitle; // ecx
+7068:   const char *v23; // esi
+7069:   unsigned int v24; // kr14_4
+7070:   unsigned int v25; // edi
+7071:   const char *v26; // esi
+7072:   unsigned int v27; // kr18_4
+7073:   unsigned int v28; // ebx
+7074:   char v29; // al
+7075:   UIBasicInfoWnd *Window; // esi
+7076:   int v31; // ecx
+7077:   std::string *v32; // ecx
+7078:   int v33; // edi
+7079:   std::string *v34; // eax
+7080:   char *v35; // eax
+7081:   int v36; // edi
+7082:   std::string *v37; // ecx
+7083:   std::string *v38; // eax
+7084:   char *v39; // eax
+7085:   int v40; // edi
+7086:   int m_comboMode; // eax
+7087:   ChatRoomInfo info; // [esp+Ch] [ebp-3Ch] BYREF
+7088:   int v43; // [esp+44h] [ebp-4h]
+7089:   int comboCnt; // [esp+58h] [ebp+10h]
+7090:
+7091:   if ( message != 6 )
+7092:   {
+7093:     if ( message != 34 )
+7094:       return UIChatRoomMakeWnd::SendMsg(this, sender, message, (int)val1, val2, val3, val4);
+7095:     this->m_numPeople = val1[10];
+7096:     First = this->m_numStringList._First;
+7097:     if ( First )
+7098:       v10 = this->m_numStringList._Last - First;
+7099:     else
+7100:       v10 = 0;
+7101:     Ptr = this->m_numStringList._First[v10 - 1]._Ptr;
+7102:     if ( !Ptr )
+7103:       Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+7104:     UIStaticText::SetText(this->m_numText, Ptr, 0);
+7105:     this->m_numText->UIWindow::Invalidate(this->m_numText);
+7106:     v12 = (const char *)val1[5];
+7107:     if ( !v12 )
+7108:       v12 = `std::string::_Nullstr'::`2'::_C;
+7109:     this->m_passWord->UIEditCtrl::SetText(this->m_passWord, v12);
+7110:     v13 = (const char *)val1[1];
+7111:     if ( !v13 )
+7112:       v13 = `std::string::_Nullstr'::`2'::_C;
+7113:     Trace("%s", v13);
+7114:     v14 = (const char *)val1[1];
+7115:     if ( !v14 )
+7116:       v14 = `std::string::_Nullstr'::`2'::_C;
+7117:     this->m_roomTitle->UIEditCtrl::SetText(this->m_roomTitle, v14);
+7118:     UIWindowMgr::SetFocusEdit(&g_windowMgr, this->m_roomTitle);
+7119:     UIEditCtrl::MakeSelect(this->m_roomTitle);
+7120:     this->m_curRadioBtn = val1[8] == 0;
+7121:     v15 = 0;
+7122:     m_radioBtns = this->m_radioBtns;
+7123:     do
+7124:     {
+7125:       (*m_radioBtns)->UIWindow::Invalidate(*m_radioBtns);
+7126:       v17 = *m_radioBtns;
+7127:       if ( v15 == this->m_curRadioBtn )
+7128:         v17->UIWindow::SendMsg(v17, this, 13, 1, 0, 0, 0);
+7129:       else
+7130:         v17->UIWindow::SendMsg(v17, this, 13, 0, 0, 0, 0);
+7131:       ++v15;
+7132:       ++m_radioBtns;
+7133:     }
+7134:     while ( v15 < 2 );
+7135:     UIButton::SetToolTip(this->m_sysButton, &Buf);
+7136:     this->UIWindow::Invalidate(this);
+7137:     return 0;
+7138:   }
+7139:   switch ( (unsigned int)val1 )
+7140:   {
+7141:     case 0x76u:
+7142:       if ( !UIEditCtrl::GetTextSize(this->m_roomTitle) )
+7143:       {
+7144:         v18 = (char *)MsgStr(MSI_ENTER_ROOM_TITLE);
+7145: LABEL_33:
+7146:         UIWindowMgr::ErrorMsg(&g_windowMgr, v18, 0, 1, 0, 0);
+7147:         return 0;
+7148:       }
+7149:       Text = UIEditCtrl::GetText(this->m_roomTitle);
+7150:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, Text) )
+7151:       {
+7152:         v18 = (char *)MsgStr(MSI_BAD_SENTANGE);
+7153:         goto LABEL_33;
+7154:       }
+7155:       if ( g_serviceType == ServiceAmerica )
+7156:       {
+7157:         v20 = UIEditCtrl::GetText(this->m_roomTitle);
+7158:         if ( !CSession::IsOnlyEnglish(&g_session, v20) )
+7159:         {
+7160:           v18 = (char *)MsgStr(MSI_ENGLISHONLY);
+7161:           goto LABEL_33;
+7162:         }
+7163:       }
+7164:       if ( UIEditCtrl::GetTextSize(this->m_passWord) < 4 && this->m_curRadioBtn == 1 )
+7165:       {
+7166:         if ( UIEditCtrl::GetTextSize(this->m_passWord) )
+7167:           v18 = (char *)MsgStr(MSI_Enter_Password_more_than_4_char);
+7168:         else
+7169:           v18 = (char *)MsgStr(MSI_ENTER_PASSWORD);
+7170:         goto LABEL_33;
+7171:       }
+7172:       info.title.allocator = (std::allocator<char>)HIBYTE(val1);
+
+### Ref/UIFrameWnd2.cpp
+7348:         if ( UIEditCtrl::GetTextSize(this->m_roomTitle) )
+7349:         {
+7350:           Text = UIEditCtrl::GetText(this->m_roomTitle);
+7351:           if ( CInsultFilter::IsBadSentence(&g_insultFilter, Text) )
+7352:           {
+7353:             v14 = (char *)MsgStr(MSI_BAD_SENTANGE);
+7354:           }
+7355:           else if ( g_serviceType != ServiceAmerica
+7356:                  || (v16 = UIEditCtrl::GetText(this->m_roomTitle), CSession::IsOnlyEnglish(&g_session, v16)) )
+7357:           {
+7358:             if ( UIEditCtrl::GetTextSize(this->m_passWord) >= 4 || this->m_curRadioBtn != 1 )
+7359:             {
+7360:               info.title.allocator = (std::allocator<char>)HIBYTE(val1);
+7361:               std::string::_Tidy(&info.title, 0);
+7362:               v40 = 0;
+7363:               info.pass.allocator = (std::allocator<char>)HIBYTE(val1);
+7364:               std::string::_Tidy(&info.pass, 0);
+7365:               m_curRadioBtn = this->m_curRadioBtn;
+7366:               info.maxNumPeople = this->m_numPeople;
+7367:               m_roomTitle = this->m_roomTitle;
+7368:               v40 = 1;
+7369:               info.numPeople = 0;
+7370:               info.roomId = -1;
+7371:               info.roomType = m_curRadioBtn != 1;
+7372:               v19 = UIEditCtrl::GetText(m_roomTitle);
+7373:               v20 = strlen(v19) + 1;
+7374:               v21 = v20 - 1;
+7375:               val1 = v20 - 1;
+7376:               if ( std::string::_Grow(&info.title, v20 - 1, 1u) )
+7377:               {
+7378:                 qmemcpy(info.title._Ptr, v19, v21);
+7379:                 info.title._Len = v20 - 1;
+7380:                 info.title._Ptr[v21] = 0;
+7381:               }
+7382:               v22 = UIEditCtrl::GetText(this->m_passWord);
+7383:               v23 = strlen(v22) + 1;
+7384:               v24 = v23 - 1;
+7385:               if ( std::string::_Grow(&info.pass, v23 - 1, 1u) )
+7386:               {
+7387:                 qmemcpy(info.pass._Ptr, v22, v24);
+7388:                 info.pass._Len = v23 - 1;
+7389:                 info.pass._Ptr[v24] = 0;
+7390:               }
+7391:               g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 48, (int)&info, 0, 0);
+7392:               UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x1B);
+7393:               v40 = 2;
+7394:               std::string::_Tidy(&info.pass, 1u);
+7395:               v40 = -1;
+7396:               std::string::_Tidy(&info.title, 1u);
+7397:               return 0;
+7398:             }
+7399:             if ( UIEditCtrl::GetTextSize(this->m_passWord) )
+7400:               v14 = (char *)MsgStr(MSI_Enter_Password_more_than_4_char);
+7401:             else
+7402:               v14 = (char *)MsgStr(MSI_ENTER_PASSWORD);
+7403:           }
+7404:           else
+7405:           {
+7406:             v14 = (char *)MsgStr(MSI_ENGLISHONLY);
+7407:           }
+7408:         }
+7409:         else
+7410:         {
+7411:           v14 = (char *)MsgStr(MSI_ENTER_ROOM_TITLE);
+7412:         }
+7413:         UIWindowMgr::ErrorMsg(&g_windowMgr, v14, 0, 1, 0, 0);
+
+### Ref/dhxj/MsgStrings.h
+1: #ifndef	__MSGSTRINGS
+2: #define	__MSGSTRINGS
+3:
+4: enum MSGSTRINGID {
+5: 	MSI_DO_YOU_AGREE=0, MSI_SERVER_CONNECTION_FAILED, MSI_UNABLE_TO_CONNECT_SERVER, MSI_BANNED,
+6: 	MSI_SERVER_OFF, MSI_DOUBLE_LOGIN_PROHIBITED, MSI_INCORRECT_USERID, MSI_INCORRECT_PASSWORD,
+7: 	MSI_ID_EXPIRED, MSI_ACCESS_DENIED, MSI_CHARACTER_NAME_ALREADY_EXISTS, MSI_CHARACTER_CREATION_DENIED,
+8: 	MSI_CANNOT_DELETE_CHARACTER, MSI_ENTER_ROOM_TITLE, MSI_BAD_SENTANGE, MSI_ENTER_PASSWORD,
+9: 	MSI_Enter_Password_more_than_4_char, MSI_DO_YOU_REALLY_WANT_TO_QUIT, MSI_NAME_MUST_EXCEED_4_CHAR,
+10: 	MSI_DELETE_CHARACTER, MSI_BAD_NAME, MSI_ENTER_NAME_MORE_THAN_4_CHAR, MSI_LIST_COMMAND,
+11: 	MSI_EFFECT_ON, MSI_EFFECT_OFF, MSI_VOLUME_OF_SOUND, MSI_VOLUME_OF_BGM, MSI_SOUND_ON,
+12: 	MSI_SOUND_OFF, MSI_FRAME_SKIP_ON, MSI_FRAME_SKIP_OFF, MSI_BGM_ON, MSI_BGM_OFF, MSI_EXPLAIN_HELP,
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp
+1518: struct PACKET_CZ_CREATE_CHATROOM{
+1519: 	int16 packetType;
+1520: 	uint16 packetSize;
+1521: 	uint16 limit;
+1522: 	uint8 type;
+1523: 	char password[8];
+1524: 	char title[];
+1525: } __attribute__((packed));
+1526: DEFINE_PACKET_HEADER(CZ_CREATE_CHATROOM, 0xd5);
+1527:
+1528: struct PACKET_CZ_BLACKSMITH_RANK{
+1529: 	int16 packetType;
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp
+1791: struct PACKET_CZ_REQ_ENTER_ROOM{
+1792: 	int16 packetType;
+1793: 	uint32 chat_id;
+1794: 	char password[8];
+1795: } __attribute__((packed));
+1796: DEFINE_PACKET_HEADER(CZ_REQ_ENTER_ROOM, 0xd9);
+1797:
+1798: struct PACKET_CZ_CHANGE_CHATROOM{
+1799: 	int16 packetType;
+1800: 	uint16 packetSize;
+1801: 	uint16 limit;
+1802: 	uint8 type;
+1803: 	char password[8];
+1804: 	char title[];
+1805: } __attribute__((packed));
+1806: DEFINE_PACKET_HEADER(CZ_CHANGE_CHATROOM, 0xde);
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\clif_packetdb.hpp
+78: 	parseable_packet(0x00cf,27,clif_parse_PMIgnore,2,26);
+79: 	parseable_packet( HEADER_CZ_SETTING_WHISPER_STATE, sizeof( PACKET_CZ_SETTING_WHISPER_STATE ), clif_parse_PMIgnoreAll, 0 );
+80: 	parseable_packet(0x00d3,2,clif_parse_PMIgnoreList,0);
+81: 	parseable_packet( HEADER_CZ_CREATE_CHATROOM, -1, clif_parse_CreateChatRoom, 0 );
+82: 	parseable_packet( HEADER_CZ_REQ_ENTER_ROOM, sizeof( PACKET_CZ_REQ_ENTER_ROOM ), clif_parse_ChatAddMember, 0 );
+83: 	parseable_packet( HEADER_CZ_CHANGE_CHATROOM, -1, clif_parse_ChatRoomStatusChange, 0 );
+84: 	parseable_packet(0x00e0,30,clif_parse_ChangeChatOwner,2,6);
+85: 	parseable_packet(0x00e2,26,clif_parse_KickFromChat,2);
+86: 	parseable_packet(0x00e3,2,clif_parse_ChatLeave,0);
+
+### C:\Users\sziad\source\repos\rathena-master\src\map\clif.cpp
+12360:
+12361:
+12362: /// Chatroom creation request.
+12363: /// 00d5 <packet len>.W <limit>.W <type>.B <passwd>.8B <title>.?B (CZ_CREATE_CHATROOM)
+12364: /// type:
+12365: ///     0 = private
+12366: ///     1 = public
+12367: void clif_parse_CreateChatRoom( int32 fd, map_session_data* sd){
+12368: 	const PACKET_CZ_CREATE_CHATROOM* p = reinterpret_cast<PACKET_CZ_CREATE_CHATROOM*>( RFIFOP( fd, 0 ) );
+12369:
+12370: 	if( sd == nullptr ){
+12371: 		return;
+12372: 	}
+12373:
+12374: 	if( sd->sc.getSCE( SC_NOCHAT ) && sd->sc.getSCE( SC_NOCHAT )->val1&MANNER_NOROOM ){
+12375: 		return;
+12376: 	}
+12377:
+12378: 	if(battle_config.basic_skill_check && pc_checkskill(sd,NV_BASIC) < 4 && pc_checkskill(sd, SU_BASIC_SKILL) < 1) {
+12379: 		clif_skill_fail( *sd, 1, USESKILL_FAIL_LEVEL, 3 );
+12380: 		return;
+12381: 	}
+12382:
+12383: 	if( npc_isnear(sd) ) {
+12384: 		// uncomment to send msg_txt.
+12385: 		//char output[150];
+12386: 		//sprintf(output, msg_txt(662), battle_config.min_npc_vendchat_distance);
+12387: 		//clif_displaymessage(sd->fd, output);
+12388: 		clif_skill_fail( *sd, 1, USESKILL_FAIL_THERE_ARE_NPC_AROUND );
+12389: 		return;
+12390: 	}
+12391:
+12392: 	if( p->packetSize < sizeof( *p ) ){
+12393: 		// invalid input
+12394: 		return;
+12395: 	}
+12396:
+12397: 	char password[CHATROOM_PASS_SIZE];
+12398:
+12399: 	safestrncpy( password, p->password, sizeof( password ) );
+12400:
+12401: 	char title[CHATROOM_TITLE_SIZE];
+12402:
+12403: 	safestrncpy( title, p->title, std::min<size_t>( sizeof( title ), p->packetSize - sizeof( *p ) + 1 ) );
+12404:
+12405: 	chat_createpcchat( sd, title, password, p->limit, p->type != 0 );
+12406: }
+12407:
+12408:
+12409: /// Chatroom join request.
+12410: /// 00d9 <chat ID>.L <passwd>.8B (CZ_REQ_ENTER_ROOM)
+12411: void clif_parse_ChatAddMember(int32 fd, map_session_data* sd){
+12412: 	if( sd == nullptr ){
+12413: 		return;
+12414: 	}
+12415:
+12416: 	const PACKET_CZ_REQ_ENTER_ROOM* p = reinterpret_cast<PACKET_CZ_REQ_ENTER_ROOM*>( RFIFOP( fd, 0 ) );
+12417:
+12418: 	chat_joinchat( sd, p->chat_id, p->password );
+12419: }
+12420:
+12421:
+12422: /// Chatroom properties adjustment request.
+12423: /// 00de <packet len>.W <limit>.W <type>.B <passwd>.8B <title>.?B (CZ_CHANGE_CHATROOM)
+12424: /// type:
+12425: ///     0 = private
+12426: ///     1 = public
+12427: void clif_parse_ChatRoomStatusChange(int32 fd, map_session_data* sd){
+12428: 	if( sd == nullptr ){
+12429: 		return;
+12430: 	}
+12431:
+12432: 	const PACKET_CZ_CHANGE_CHATROOM* p = reinterpret_cast<PACKET_CZ_CHANGE_CHATROOM*>( RFIFOP( fd, 0 ) );
+12433: 	size_t len = p->packetSize - sizeof( *p );
+12434:
+12435: 	if( len <= 0 )
+12436: 		return; // invalid input
+12437:
+12438: 	char s_password[CHATROOM_PASS_SIZE];
+12439: 	char s_title[CHATROOM_TITLE_SIZE];
+12440:
+12441: 	safestrncpy( s_password, p->password, sizeof( s_password ) );
+12442: 	// NOTE: assumes that safestrncpy will not access the len+1'th byte
+12443: 	safestrncpy( s_title, p->title, std::min<size_t>( len + 1, CHATROOM_TITLE_SIZE ) );
+12444:
+12445: 	chat_changechatstatus( sd, s_title, s_password, p->limit, p->type );
+12446: }
+12447:
+12448:
+12449: /// Request to change the chat room ownership (CZ_REQ_ROLE_CHANGE).
+12450: /// 00e0 <role>.L <nick>.24B
+12451: /// role:
+12452: ///     0 = owner
+12453: ///     1 = normal
+12454: void clif_parse_ChangeChatOwner(int32 fd, map_session_data* sd)
+12455: {
+12456: 	//int32 role = RFIFOL(fd,packet_db[RFIFOW(fd,0)].pos[0]);
+12457: 	chat_changechatowner(sd,RFIFOCP(fd,packet_db[RFIFOW(fd,0)].pos[1]));
+12458: }
+12459:
+12460:
+12461: /// Request to expel a player from chat room (CZ_REQ_EXPEL_MEMBER).
+12462: /// 00e2 <name>.24B
+12463: void clif_parse_KickFromChat(int32 fd,map_session_data *sd)
+12464: {
+12465: 	chat_kickchat(sd,RFIFOCP(fd,packet_db[RFIFOW(fd,0)].pos[0]));
+12466: }
+12467:
+12468:
+12469: /// Request to leave the current chatroom (CZ_EXIT_ROOM).
+12470: /// 00e3
+12471: void clif_parse_ChatLeave(int32 fd, map_session_data* sd)
+12472: {
+12473: 	chat_leavechat(sd,0);
+12474: }
+12475:
+12476: // Handles notifying asker and rejecter of what has just ocurred.
+12477: // Type is used to determine the correct msg_txt to use
+12478: void clif_noask_sub( const map_session_data& sd, const map_session_data& tsd, int32 type ){
+12479: 	char output[CHAT_SIZE_MAX];
+12480:
+12481: 	// Your request has been rejected by autoreject option.
+12482: 	clif_messagecolor( &sd, color_table[COLOR_LIGHT_GREEN], msg_txt( &sd, 392 ), false, SELF );
+12483:
+12484: 	// Notice that a request was rejected.
+12485: 	safesnprintf( output, CHAT_SIZE_MAX, msg_txt( &tsd, type ), sd.status.name );
+12486: 	clif_messagecolor( &tsd, color_table[COLOR_LIGHT_GREEN], output, false, SELF);
+12487: }
+12488:
+12489: /// Request to begin a trade (CZ_REQ_EXCHANGE_ITEM).
+12490: /// 00e4 <account id>.L
+12491: void clif_parse_TradeRequest(int32 fd,map_session_data *sd)
+12492: {
+12493: 	map_session_data *t_sd;
+12494:
+12495: 	t_sd = map_id2sd(RFIFOL(fd,packet_db[RFIFOW(fd,0)].pos[0]));
+12496:
+12497: 	if(!sd->chatID && pc_cant_act(sd))
+
+### Ref/UIControl.cpp
+8775: void __thiscall UIBitmapButton::SetBitmapName(UIBitmapButton *this, const char *bitmapName, int buttonState)
+8776: {
+8777:   CResMgr *v5; // eax
+8778:   CRes *v6; // eax
+8779:   int m_lockCnt; // ecx
+8780:   int m_timeStamp; // eax
+8781:   std::string *p_m_pressedBitmapName; // ebx
+8782:   unsigned int v10; // kr04_4
+8783:   unsigned int v11; // edi
+8784:   char *Ptr; // ecx
+8785:   char v13; // al
+8786:   unsigned int Res; // eax
+8787:   char *v15; // ecx
+8788:   unsigned int v16; // kr08_4
+8789:   unsigned int v17; // eax
+8790:   std::string *p_m_normalBitmapName; // ebx
+8791:   unsigned int v19; // edi
+8792:   char *v20; // ecx
+8793:   const char *v21; // [esp-8h] [ebp-14h]
+8794:   const char *bitmapNamea; // [esp+14h] [ebp+8h]
+8795:
+8796:   v21 = bitmapName;
+8797:   if ( g_serviceType )
+8798:     v21 = UIBmp(bitmapName);
+8799:   v5 = g_resMgr();
+8800:   v6 = CResMgr::Get(v5, v21, 0);
+8801:   if ( v6 )
+8802:   {
+8803:     m_lockCnt = v6[1].m_lockCnt;
+8804:     if ( m_lockCnt > this->m_bitmapWidth )
+8805:       this->m_bitmapWidth = m_lockCnt;
+8806:     m_timeStamp = v6[1].m_timeStamp;
+8807:     if ( m_timeStamp > this->m_bitmapHeight )
+8808:       this->m_bitmapHeight = m_timeStamp;
+8809:     if ( buttonState )
+8810:     {
+8811:       if ( buttonState != 1 )
+8812:       {
+8813:         if ( buttonState != 2 )
+8814:           return;
+8815:         p_m_pressedBitmapName = &this->m_pressedBitmapName;
+8816:         v10 = strlen(bitmapName) + 1;
+8817:         v11 = v10 - 1;
+8818:         bitmapNamea = (const char *)(v10 - 1);
+8819:         if ( std::string::max_size(p_m_pressedBitmapName) < v10 - 1 )
+8820:           std::_Xlen();
+8821:         Ptr = p_m_pressedBitmapName->_Ptr;
+8822:         if ( Ptr )
+8823:         {
+8824:           v13 = *(Ptr - 1);
+8825:           if ( v13 )
+8826:           {
+8827:             if ( v13 != -1 )
+8828:             {
+8829:               if ( v10 == 1 )
+8830:               {
+8831: LABEL_17:
+8832:                 *(Ptr - 1) = v13 - 1;
+8833:                 std::string::_Tidy(p_m_pressedBitmapName, 0);
+8834:                 return;
+8835:               }
+8836: LABEL_23:
+8837:               std::string::_Copy(p_m_pressedBitmapName, v11);
+8838: LABEL_24:
+8839:               qmemcpy(p_m_pressedBitmapName->_Ptr, bitmapName, v11);
+8840:               v15 = p_m_pressedBitmapName->_Ptr;
+8841:               p_m_pressedBitmapName->_Len = (unsigned int)bitmapNamea;
+8842:               bitmapNamea[(_DWORD)v15] = 0;
+8843:               return;
+8844:             }
+8845:           }
+8846:         }
+8847:         if ( v10 != 1 )
+8848:         {
+8849:           Res = p_m_pressedBitmapName->_Res;
+8850:           if ( Res <= 0x1F && Res >= v11 )
+8851:             goto LABEL_24;
+8852:           std::string::_Tidy(p_m_pressedBitmapName, 1u);
+8853:           goto LABEL_23;
+8854:         }
+8855: LABEL_19:
+8856:         std::string::_Tidy(p_m_pressedBitmapName, 1u);
+8857:         return;
+8858:       }
+8859:       p_m_pressedBitmapName = &this->m_mouseonBitmapName;
+8860:       v16 = strlen(bitmapName) + 1;
+8861:       v11 = v16 - 1;
+8862:       bitmapNamea = (const char *)(v16 - 1);
+8863:       if ( std::string::max_size(p_m_pressedBitmapName) < v16 - 1 )
+8864:         std::_Xlen();
+8865:       Ptr = p_m_pressedBitmapName->_Ptr;
+8866:       if ( Ptr && (v13 = *(Ptr - 1)) != 0 && v13 != -1 )
+8867:       {
+8868:         if ( v16 == 1 )
+8869:           goto LABEL_17;
+8870:       }
+8871:       else
+8872:       {
+8873:         if ( v16 == 1 )
+8874:           goto LABEL_19;
+8875:         v17 = p_m_pressedBitmapName->_Res;
+8876:         if ( v17 <= 0x1F && v17 >= v11 )
+8877:           goto LABEL_24;
+8878:         std::string::_Tidy(p_m_pressedBitmapName, 1u);
+8879:       }
+8880:       std::string::_Copy(p_m_pressedBitmapName, v11);
+8881:       goto LABEL_24;
+8882:     }
+8883:     p_m_normalBitmapName = &this->m_normalBitmapName;
+8884:     v19 = strlen(bitmapName);
+8885:     if ( std::string::_Grow(p_m_normalBitmapName, v19, 1u) )
+8886:     {
+8887:       qmemcpy(p_m_normalBitmapName->_Ptr, bitmapName, v19);
+8888:       v20 = p_m_normalBitmapName->_Ptr;
+8889:       p_m_normalBitmapName->_Len = v19;
+8890:       v20[v19] = 0;
+8891:     }
+8892:   }
+8893: }
+
+### Ref/UIFrameWnd2.cpp
+27732:     if ( !v22 || v22 == -1 )
+27733:       operator delete(v23);
+27734:     else
+27735:       *v23 = v22 - 1;
+27736:   }
+27737:   UIWindow::Create(v13, v13->m_bitmapWidth, v13->m_bitmapHeight);
+27738:   v13->UIWindow::Move(v13, pos[0][0], pos[0][1]);
+27739:   v13->m_id = 118;
+27740:   UIWindow::AddChild(this, v13);
+27741:   if ( pathName._Ptr )
+27742:   {
+27743:     v24 = *(pathName._Ptr - 1);
+27744:     if ( !v24 || v24 == -1 )
+27745:       operator delete(pathName._Ptr - 1);
+27746:     else
+27747:       *(pathName._Ptr - 1) = v24 - 1;
+27748:   }
+27749:   this->m_state = 0;
+27750:   this->m_roomId = 0;
+27751:   this->m_defPushId = 118;
+27752: }
+27753:
+27754:
+27755: // ================================================
+27756: // Original Signature: public: virtual void __thiscall UIPasswordWnd::OnDraw(void)
+27757: // Decompiled from address: 0x4788e0
+27758: // ================================================
+27759: void __thiscall UIPasswordWnd::OnDraw(UIPasswordWnd *this)
+27760: {
+27761:   UIFrameWnd::DrawLatticeFrame(this, 0, 0, 0, 0);
+27762: }
+27763:
+
+### Ref/UIFrameWnd2.cpp
+17079:   if ( CSession::IsEFST_TrickDead(&g_session) )
+17080:   {
+17081:     v4 = MsgStr(MSI_CANT_MAKE_CHAT_ROOM);
+17082:     ErrorMsg(v4);
+17083:     UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x1B);
+17084:   }
+17085:   this->m_numPeople = 20;
+17086:   this->m_classMode = 0;
+17087:   v5 = MsgStr(MSI_CHAT_ROOM);
+17088:   pathName.allocator = v109;
+17089:   std::string::_Tidy(&pathName, 0);
+17090:   std::string::assign(&pathName, v5, strlen(v5));
+17091:   Last = this->m_classStringList._Last;
+17092:   v110 = 0;
+17093:   std::vector<std::string>::insert(&this->m_classStringList, Last, &pathName);
+17094:   v110 = -1;
+17095:   std::string::_Tidy(&pathName, 1u);
+17096:   v6 = this->m_classModeList._Last;
+17097:   _X = 0;
+17098:   std::vector<int>::insert(&this->m_classModeList, v6, &_X);
+17099:   v7 = MsgStr(MSI_COUNT_UNIT_OF_PEOPLE);
+17100:   pathName.allocator = v109;
+17101:   std::string::_Tidy(&pathName, 0);
+17102:   std::string::assign(&pathName, v7, strlen(v7));
+17103:   v110 = 1;
+17104:   v8 = std::operator+(&result, a2_0, &pathName);
+17105:   v85 = this->m_numStringList._Last;
+17106:   LOBYTE(v110) = 2;
+17107:   std::vector<std::string>::insert(&this->m_numStringList, v85, v8);
+17108:   LOBYTE(v110) = 1;
+17109:   std::string::_Tidy(&result, 1u);
+17110:   v110 = -1;
+17111:   std::string::_Tidy(&pathName, 1u);
+17112:   v9 = this->m_numList._Last;
+17113:   _X = 2;
+17114:   std::vector<int>::insert(&this->m_numList, v9, &_X);
+17115:   v10 = MsgStr(MSI_COUNT_UNIT_OF_PEOPLE);
+17116:   _X = (int)v10;
+17117:   pathName.allocator = v109;
+17118:   std::string::_Tidy(&pathName, 0);
+17119:   std::string::assign(&pathName, (const char *)_X, strlen(v10));
+17120:   v110 = 3;
+17121:   v11 = std::operator+(&result, a3_0, &pathName);
+17122:   v86 = this->m_numStringList._Last;
+17123:   LOBYTE(v110) = 4;
+17124:   std::vector<std::string>::insert(&this->m_numStringList, v86, v11);
+17125:   LOBYTE(v110) = 3;
+17126:   std::string::_Tidy(&result, 1u);
+17127:   v110 = -1;
+17128:   std::string::_Tidy(&pathName, 1u);
+17129:   v12 = this->m_numList._Last;
+17130:   _X = 3;
+17131:   std::vector<int>::insert(&this->m_numList, v12, &_X);
+17132:   v13 = MsgStr(MSI_COUNT_UNIT_OF_PEOPLE);
+17133:   _X = (int)v13;
+17134:   pathName.allocator = v109;
+17135:   std::string::_Tidy(&pathName, 0);
+17136:   std::string::assign(&pathName, (const char *)_X, strlen(v13));
+17137:   v110 = 5;
+17138:   v14 = std::operator+(&result, a5, &pathName);
+17139:   v87 = this->m_numStringList._Last;
+17140:   LOBYTE(v110) = 6;
+17141:   std::vector<std::string>::insert(&this->m_numStringList, v87, v14);
+17142:   LOBYTE(v110) = 5;
+17143:   std::string::_Tidy(&result, 1u);
+17144:   v110 = -1;
+17145:   std::string::_Tidy(&pathName, 1u);
+17146:   v15 = this->m_numList._Last;
+17147:   _X = 5;
+17148:   std::vector<int>::insert(&this->m_numList, v15, 1u, &_X);
+17149:   v16 = MsgStr(MSI_COUNT_UNIT_OF_PEOPLE);
+17150:   _X = (int)v16;
+17151:   pathName.allocator = v109;
+17152:   std::string::_Tidy(&pathName, 0);
+17153:   std::string::assign(&pathName, (const char *)_X, strlen(v16));
+17154:   v110 = 7;
+17155:   v17 = std::operator+(&result, a10_0, &pathName);
+17156:   v88 = this->m_numStringList._Last;
+17157:   LOBYTE(v110) = 8;
+17158:   std::vector<std::string>::insert(&this->m_numStringList, v88, v17);
+17159:   LOBYTE(v110) = 7;
+17160:   std::string::_Tidy(&result, 1u);
+17161:   v110 = -1;
+17162:   std::string::_Tidy(&pathName, 1u);
+17163:   _X = 10;
+17164:   std::vector<int>::insert(&this->m_numList, this->m_numList._Last, 1u, &_X);
+17165:   v18 = MsgStr(MSI_COUNT_UNIT_OF_PEOPLE);
+17166:   _X = (int)v18;
+17167:   pathName.allocator = v109;
+17168:   std::string::_Tidy(&pathName, 0);
+17169:   std::string::assign(&pathName, (const char *)_X, strlen(v18));
+17170:   v110 = 9;
+17171:   v19 = std::operator+(&result, a15, &pathName);
+17172:   v82 = this->m_numStringList._Last;
+17173:   LOBYTE(v110) = 10;
+17174:   std::vector<std::string>::insert(&this->m_numStringList, v82, 1u, v19);
+17175:   LOBYTE(v110) = 9;
+17176:   std::string::_Tidy(&result, 1u);
+17177:   v110 = -1;
+17178:   std::string::_Tidy(&pathName, 1u);
+17179:   v20 = this->m_numList._Last;
+17180:   _X = 15;
+17181:   std::vector<int>::insert(&this->m_numList, v20, 1u, &_X);
+17182:   v21 = MsgStr(MSI_COUNT_UNIT_OF_PEOPLE);
+17183:   _X = (int)v21;
+17184:   pathName.allocator = v109;
+17185:   std::string::_Tidy(&pathName, 0);
+17186:   std::string::assign(&pathName, (const char *)_X, strlen(v21));
+17187:   v110 = 11;
+17188:   v22 = std::operator+(&result, a20, &pathName);
+17189:   v83 = this->m_numStringList._Last;
+17190:   LOBYTE(v110) = 12;
+17191:   std::vector<std::string>::insert(&this->m_numStringList, v83, 1u, v22);
+17192:   LOBYTE(v110) = 11;
+17193:   std::string::_Tidy(&result, 1u);
+17194:   v110 = -1;
+17195:   std::string::_Tidy(&pathName, 1u);
+17196:   v23 = this->m_numList._Last;
+17197:   _X = 20;
+17198:   std::vector<int>::insert(&this->m_numList, v23, 1u, &_X);
+17199:   m_w = this->m_w;
+
+### Ref/Insult.cpp
+1: #include "Insult.h"
+2:
+3: // ================================================
+4: // Original Signature: char const * __cdecl MakeLower(char *)
+5: // Decompiled from address: 0x50c350
+6: // ================================================
+7: char *__cdecl MakeLower(char *text)
+8: {
+9:   LPSTR i; // esi
+10:
+11:   for ( i = text; i < &text[strlen(text)]; i = CharNextExA(g_codePage, i, 0) )
+12:   {
+13:     if ( *i > 0 && isupper(*i) )
+14:       *i += 32;
+15:   }
+16:   return text;
+17: }
+18:
+19:
+20: // ================================================
+21: // Original Signature: private: void __thiscall CInsultFilter::Insert(char *)
+22: // Decompiled from address: 0x50c690
+23: // ================================================
+24: void __thiscall CInsultFilter::Insert(CInsultFilter *this, char *str)
+25: {
+26:   LPSTR v2; // ebx
+27:   char *i; // eax
+28:   char *v5; // ecx
+29:   char v7; // dl
+30:   Insult *Last; // eax
+31:   int v9; // edx
+32:   Insult *v10; // edi
+33:   Insult *First; // edx
+34:   unsigned int v12; // ecx
+35:   int v13; // eax
+36:   int v14; // eax
+37:   Insult *v15; // eax
+38:   Insult *v16; // ebx
+39:   unsigned int v17; // eax
+40:   Insult *v18; // eax
+41:   int v19; // [esp+Ch] [ebp-Ch]
+42:   Insult *v20; // [esp+10h] [ebp-8h]
+43:   Insult _X; // [esp+14h] [ebp-4h] BYREF
+44:   Insult *stra; // [esp+20h] [ebp+8h]
+45:
+46:   v2 = str;
+47:   for ( i = str; *i == 32 || *i == 9; ++i )
+48:     ;
+49:   v5 = i;
+50:   if ( *i )
+51:   {
+52:     while ( *++i )
+53:       ;
+54:   }
+55:   if ( *i == 32 )
+56:   {
+57:     do
+58:       v7 = *--i;
+59:     while ( v7 == 32 );
+60:   }
+61:   *i = 0;
+62:   if ( *v5 )
+63:   {
+64:     if ( str < &str[strlen(str)] )
+65:     {
+66:       do
+67:       {
+68:         if ( *v2 > 0 && isupper(*v2) )
+69:           *v2 += 32;
+70:         v2 = CharNextExA(g_codePage, v2, 0);
+71:       }
+72:       while ( v2 < &str[strlen(str)] );
+73:       v2 = str;
+74:     }
+75:     Last = this->m_insult._Last;
+76:     v9 = (char *)this->m_insult._End - (char *)Last;
+77:     _X.word = v2;
+78:     v10 = Last;
+79:     if ( v9 >> 2 )
+80:     {
+81:       std::vector<Insult>::_Ucopy(&this->m_insult, Last, Last, Last + 1);
+82:       std::vector<Insult>::_Ufill(&this->m_insult, this->m_insult._Last, 1 - (this->m_insult._Last - v10), &_X);
+83:       v18 = this->m_insult._Last;
+84:       if ( v10 == v18 )
+85:       {
+86:         ++this->m_insult._Last;
+87:       }
+88:       else
+89:       {
+90:         do
+91:         {
+92:           v10->word = _X.word;
+93:           ++v10;
+94:         }
+95:         while ( v10 != v18 );
+96:         ++this->m_insult._Last;
+97:       }
+98:     }
+99:     else
+100:     {
+101:       First = this->m_insult._First;
+102:       if ( !First || (v12 = Last - First, v12 <= 1) )
+103:         v12 = 1;
+104:       if ( First )
+105:         v13 = Last - First;
+106:       else
+107:         v13 = 0;
+108:       v14 = v12 + v13;
+109:       v19 = v14;
+110:       if ( v14 < 0 )
+111:         v14 = 0;
+112:       v15 = (Insult *)operator new(4 * v14);
+113:       v16 = this->m_insult._First;
+114:       v20 = v15;
+115:       for ( stra = v15; v16 != v10; ++stra )
+116:         std::_Construct(stra, v16++);
+117:       std::vector<Insult>::_Ufill(&this->m_insult, stra, 1u, &_X);
+118:       std::vector<Insult>::_Ucopy(&this->m_insult, v10, this->m_insult._Last, stra + 1);
+119:       std::vector<Insult>::_Destroy(&this->m_insult, this->m_insult._First, this->m_insult._Last);
+120:       operator delete(this->m_insult._First);
+121:       this->m_insult._End = &v20[v19];
+122:       v17 = std::vector<Insult>::size(&this->m_insult);
+123:       this->m_insult._First = v20;
+124:       this->m_insult._Last = &v20[v17 + 1];
+125:     }
+126:   }
+127: }
+128:
+129:
+130: // ================================================
+131: // Original Signature: protected: struct Insult * __thiscall std::vector<struct Insult,class std::allocator<struct Insult> >::_Ucopy(struct Insult const *,struct Insult const *,struct Insult *)
+132: // Decompiled from address: 0x402390
+133: // ================================================
+134: posKeyframe *__thiscall std::vector<posKeyframe>::_Ucopy(
+135:         std::vector<posKeyframe> *this,
+136:         const posKeyframe *_F,
+137:         const posKeyframe *_L,
+138:         posKeyframe *_P)
+139: {
+140:   const posKeyframe *v4; // ecx
+141:   posKeyframe *result; // eax
+142:
+143:   v4 = _F;
+144:   if ( _F == _L )
+145:     return _P;
+146:   result = _P;
+147:   do
+148:   {
+149:     if ( result )
+150:     {
+151:       result->frame = v4->frame;
+152:       result->px = v4->px;
+153:       result->py = v4->py;
+154:       result->pz = v4->pz;
+155:     }
+156:     ++v4;
+157:     ++result;
+158:   }
+159:   while ( v4 != _L );
+160:   return result;
+
+### Ref/GameActor.cpp SetTlvert cache ownership
+7178: // Decompiled from address: 0x558640
+7179: // ================================================
+7180: void __thiscall CRenderObject::SetRenderInfo(
+7181:         CRenderObject *this,
+7182:         RENDER_INFO_RECT *info,
+7183:         const float tlvertX,
+7184:         float tlvertY)
+7185: {
+7186:   ;
+7187: }
+7188:
+7189:
+7190: // ================================================
+7191: // Original Signature: public: virtual void __thiscall CRenderObject::SetTlvert(float,float)
+7192: // Decompiled from address: 0x558650
+7193: // ================================================
+7194: void __thiscall CRenderObject::SetTlvert(CRenderObject *this, float tlvertX, float tlvertY)
+7195: {
+7196:   this->m_lastTlvertX = (__int64)tlvertX;
+7197:   this->m_lastTlvertY = (__int64)tlvertY;
+7198: }
+7199:
+7200:
