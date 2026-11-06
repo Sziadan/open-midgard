@@ -1,8 +1,8 @@
 # Packet implementation status
 
-**Strong review checkpoint (2026-11-06):** [review and continuation instructions](evidence/REVIEW-2026-11-06.md) retain PK09.20, repair the standalone test build and three fixture setups, and record twelve still-failing checks. Root CTest passes126/126; standalone passes448/460. PK48.02 remains IN_PROGRESS; full feature/certification acceptance is unchanged.
+**Strong review follow-up (2026-11-06):** [effect repairs and remaining corpse gate](evidence/REVIEW-2026-11-06-followup.md) correct projection depth, SphereWind2 narrowing, ice sprites and unknown-emotion fallback. Root126/126; standalone459/460. Active work is PK45.06 (separate corpse lifecycle); PK09.04 and full PK48/49 remain open.
 
-**Active step: PK09.04.** Latest checkpoint: [PK09.20 signed recovery](evidence/PK09.20-recovery-delta.md), [contract](contracts/PK09.RECOVERY-DELTA.md), [provenance](evidence/PK09.20-recovery-delta.json). Commit: `packet(PK09.20): restore signed recovery deltas and feedback`. 126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors.
+**Active step: PK45.06.** [Strong-agent implementation card](work-items/PK45.06.md). Latest review commit: `packet(PK48.02): repair effect semantics and narrow remaining review gap`. Root126/126 in174.40s; standalone459/460 in72.64s. The sole remaining standalone failure is the missing original corpse lifecycle; no full certification claim.
 
 - PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing now pass PK09.15.
 - PK09.13 restores inventory whole-record fallback, source dimensions/normalization, mini and original height, native/Qt resize and explicit managed close/recreation. Parent detail geometry now passes PK09.14; separate card and map/show lifetime now pass PK09.15/PK09.16.

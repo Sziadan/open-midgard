@@ -78,18 +78,26 @@ source_actions = {
     for emotion, action in re.findall(r"case\s+(\d+)\s*:\s*v8\s*=\s*(\d+)\s*;\s*goto LABEL_106", exe_make)
 }
 assert len(source_actions) == 79 and 34 not in source_actions, f"unexpected source emotion action map size: {len(source_actions)}"
-current_actions = {
-    int(emotion): int(action)
-    for emotion, action in re.findall(r"case\s+(\d+)\s*:\s*action\s*=\s*(\d+)\s*;\s*break", impl_emotion)
-}
-for emotion in range(1, 81):
-    if emotion in (34,):
-        continue
-    if emotion in source_actions:
-        current = current_actions.get(emotion, emotion if 15 <= emotion <= 33 else emotion - 1 if 35 <= emotion <= 80 else None)
-        assert current == source_actions[emotion], f"emotion {emotion}: source action {source_actions[emotion]}, current action {current}"
-assert "action = 0" in impl_emotion, "unknown emotion fallback changed"
-assert "emotion.act" in impl_emotion and "\\xBE\\xF3\\xC0\\xBD\\xB6\\xAF.spr" in impl_emotion
+# Mapping moved to the shared helper; retain the independently derived PE map.
+emotion_source = (ROOT / "src/world/Emotion.h").read_text(encoding="utf-8")
+emotion_helper = body(emotion_source, "constexpr int EmotionAction(int id)")
+assert "int action = EmotionAction(emotion);" in impl_emotion
+first_match = re.search(r"first\[\]\s*=\s*\{([^}]+)\}", emotion_helper)
+assert first_match, "shared emotion prefix map missing"
+first = [int(value.strip()) for value in first_match.group(1).split(",")]
+assert len(first) == 15
+assert "if (id < 0 || id > 80) return -1;" in emotion_helper
+assert "if (id < 15) return first[id];" in emotion_helper
+assert "if (id == 34) return 10;" in emotion_helper
+assert "return id < 34 ? id : id - 1;" in emotion_helper
+for emotion, expected in source_actions.items():
+    current = first[emotion] if emotion < 15 else emotion if emotion < 34 else emotion - 1
+    assert current == expected, f"emotion {emotion}: source action {expected}, current action {current}"
+assert "if (action < 0) action = 0;" in impl_emotion, "PE MakeEmotion default must retain action-zero fallback"
+assert "default: v8 = 0;" in normalized(exe_make)
+# PE MakeEmotion loads the complete SPR string at0x6F2CE0;0x6F2CE6
+# is only its suffix. ACT is at0x712380. The normal emotion uses emotion.spr.
+assert "emotion.act" in impl_emotion and "emotion.spr" in impl_emotion
 assert "effect->m_pos.y -= 20.0f" in impl_emotion
 assert "m_spriteActionIndex = chatProhibit ? 10 : action" in impl_emotion
 assert "m_spriteMotionIndex = chatProhibit ? 15 : 0" in impl_emotion

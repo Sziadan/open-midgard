@@ -119,10 +119,18 @@ int main() {
             &&actor.messages[1].id==109&&actor.messages[1].arg==629&&actor.launched.empty());
     }
 
-    player={};player.m_aid=100;player.m_gid=1100;player.m_job=4038;world.m_player=&player;
-    WriteLE32(bytes.data()+2,100);
-    HandleSpirits(mode,PacketView{0x01D0,8,bytes.data()});
-    assert(player.messages.size()==1&&player.messages[0].arg==504&&player.launched.empty());
+    // Ref Zc_Spirits26146-26206: the own-AID alias resolves the player;
+    // every nonzero visible identity still launches after message109.
+    for(u32 localIdentity:{100u,1100u,1200u}) {
+        player={};player.m_aid=100;player.m_gid=1200;player.m_job=4038;world.m_player=&player;
+        WriteLE32(bytes.data()+2,localIdentity);WriteLE16(bytes.data()+6,0xFFFD);
+        HandleSpirits(mode,PacketView{0x01D0,8,bytes.data()});
+        assert(player.messages.size()==1&&player.messages[0].arg==504);
+        assert(player.launchedIds==std::vector<int>{504});
+        assert(player.launched[0].message==14&&player.launched[0].target.x==-3);
+    }
+    assert(ResolveSkillPacketActor(mode,0)==nullptr); // No zero alias in a connected session.
+    assert(ResolveSkillPacketActor(mode,999)==nullptr);
 
     for(int i=0;i<3;++i) {
         actor={};actor.m_aid=200;actor.m_job=jobs[i];

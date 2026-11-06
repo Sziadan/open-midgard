@@ -1513,6 +1513,14 @@ int main() {
         check(projected.x==320 && projected.y==240 && near(projected.z,0),"reference triangle projection has no half-pixel displacement or configurable-screen-offset substitution");
         ProjectReferenceEffectVertex({1,2,5},view,projected);
         check(projected.z<0 && near(projected.oow,0.2f),"reference triangle projection preserves near device depths without clamping");
+        check(near(projected.z,-1.0067114f),"unbiased z=5 follows original 1500/1490 device-depth projection");
+        g_groundVisualDepthBias=0.0006f;g_groundVisualDepthOffset=3.0f;
+        ProjectReferenceEffectVertex({1,2,5},view,projected);
+        check(near(projected.z,-2.2153651f) && near(projected.oow,0.2f),
+            "ground bias preserves negative near depth and reciprocal instead of pinning triangles to the near plane");
+        ProjectReferenceEffectVertex({0,0,100},view,projected);
+        check(near(projected.z,0.9024201f),"ground-only device and world offsets remain applied to visible geometry");
+        g_groundVisualDepthBias=0.0f;g_groundVisualDepthOffset=0.0f;
         ProjectReferenceEffectVertex({0,0,2000},view,projected);
         check(projected.z>1,"reference triangle projection preserves far device depths without clamping");
         ProjectReferenceEffectVertex({0,0,-50},view,projected);

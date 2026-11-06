@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-06",
+  "baseline": "3d0c4336d2db1d2dad17fd5833745814bcd9598f",
+  "commit_subject": "packet(PK48.02): repair effect semantics and narrow remaining review gap",
+  "review_step": "PK48.02",
+  "review_status": "IN_PROGRESS",
+  "next_active_step": "PK45.06",
+  "root_ctest": {
+    "passed": 126,
+    "total": 126,
+    "seconds": 174.4
+  },
+  "standalone_ctest": {
+    "passed": 459,
+    "total": 460,
+    "seconds": 72.64,
+    "failed_tests": [
+      "actor_processstate_source_check"
+    ]
+  },
+  "original_pe_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "source_sha256": {
+    "src/world/GameActor.cpp": "45cd1018e2f1872a5c0cdb7ecb65ccefdff1112972c88c91ca9282439348360b",
+    "src/world/RagEffect.cpp": "856be11466d3f0f725d61e4dccb568aab3c9354b9c05abe7155fd8a41d4eeb94",
+    "tools/audit_prim_onprocess_inventory.py": "f7667b314ea2eb6cb7448a4b12645c1c98505e16179c3c5dabba45f9b7a81042",
+    "tools/tests/AmmoCursorRegressionTests.cpp": "0ee951aa6cbd849fd72ec5dfb778ab8e7feb810d49d7e3aaff99542e766b3427",
+    "tools/tests/EffectLifecycleTests.cpp": "4f6da9d2dc735e8d84ad3ca2f9c83ef1b9c2e1122a46f7b328dd4ef55da48089",
+    "tools/tests/ParticleRenderTests.cpp": "2f3bdfc1024a080bd9fc674fc1870c2cc26202559d1c0998b50ef3454d22fcf9",
+    "tools/tests/SpiritPacketLifecycleTests.cpp": "22744b9ba7d2f00c1b49b1a90e807607422cbd31ee4ee35390ac99ffe3afb897",
+    "tools/tests/check_actor_sendmsg_emotion_case.py": "4fb3a023adccc191da8558876704e3d34988b873fcf40b35cdf6d1e6f88148aa",
+    "tools/tests/check_ammo_cursor_regressions.py": "dba0e39ff93057a58faeb465f2e4b86165629c52b1a1a90316e41bc42fc829f2",
+    "tools/tests/check_blitzbeat_caller.py": "246ef254450ec798bc51a84a03f31b36514926f63753c9ea84d46c6662736fc9",
+    "tools/tests/check_falcon_equip.py": "94fca3c65c8e93f10b19863f0360d0479dace1e26e658f816cee4d602d687504",
+    "tools/tests/check_frame_submission.py": "6d630922b16a333ea2b7d375ffa3b59663b137ded1f838e993935a2678478544",
+    "tools/tests/check_skill_packet_actor_lookup.py": "10809c5fde76605cd203dee47ed5d6420396e6e291e60777a38a4469d1aa4e0c",
+    "tools/GuildSkillWndRefreshTests.cpp": "1f87e33008426aaea1e40048be67a954c253b57d84461774375c3f96c71feca5"
+  },
+  "reference_sha256": {
+    "HighPriest.exe.c": "939cdc41e3e585a9e1560f7314e65cb0b1c339acf17c3a29e69dfe7448ccacd2",
+    "Ref/GameActor.cpp": "60686f1ea817285db0c60bf755d1f978d932870ac35319f7e22cc1ee8dd12f92",
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/Npc.cpp": "442c22386814361792dca765bbd7775e6792aea22f50ad429f5b30747b855a40",
+    "Ref/Session2.cpp": "71f1b0655644f690ef1e5a63a2558751305acd6643f06c71b25a98f4dd4d3883"
+  },
+  "proof_sha256": {
+    "REVIEW-2026-11-06-emotion-pe.txt": "57a7099b89a4827624d1623901a0f6c5dc9b48a3e59ada1feea3db99002f69b5",
+    "REVIEW-2026-11-06-ftol-pe.txt": "7d5d9111d5f75fcda242d0a805ae17b80c0b876855ea1faaf28eca8cd0e1e21c",
+    "REVIEW-2026-11-06-projection-pe.txt": "dc3f1820dc6c70a1ce760414b1807926b56c3089748b11b2949434dd0e3cc9f4",
+    "REVIEW-2026-11-06-spherewind-pe.txt": "ce2ccc266b23310195b1a6956c9c59b3d34e96b6d71541e37d15af0e7c74dd77"
+  },
+  "log_sha256": {
+    "final-root-build.log": "3d674adf932895a032961a598aabe3cff6a906d3ae49ac5fad49c4ccc33f17fc",
+    "final-root-ctest.log": "17f4ac5b54e65c9085cf57cd2dbc3d36dc278825b6f82001a3f182940926c58b",
+    "final-unit-build.log": "74073119fc16eb76becda7bb3c4b82ea7ab49ce583f619e8e24f4d82518b0e31",
+    "final-unit-ctest.log": "b5d8fb82e15fea97b590afc2a18012b9b56d3c5e2e4bd337d8113d8f94cf826e"
+  },
+  "resource_bytes": {
+    "0x6F2CE0": "c0ccc6d1c6ae5c656d6f74696f6e2e737072",
+    "0x712380": "c0ccc6d1c6ae5c656d6f74696f6e2e616374",
+    "0x71236C": "c0ccc6d1c6ae5cbef3c0bdb6af2e737072",
+    "0x712358": "c0ccc6d1c6ae5cbef3c0bdb6af2e616374",
+    "0x71A3D4": "6566666563745cbec6bcfbc7c1c6bcbfc02e776176"
+  },
+  "limits": [
+    "Corpse lifecycle and full packet plan remain incomplete.",
+    "Root rendered acceptance is limited to its existing cases, not complete effect/corpse artwork.",
+    "Original executable read-only and never executed/copied; external server and installed game untouched."
+  ]
+}

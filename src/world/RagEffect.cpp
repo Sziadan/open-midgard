@@ -2109,7 +2109,9 @@ void ProjectReferenceEffectVertex(const vector3d& point, const matrix& view, tlv
     vertex.z = static_cast<float>(1500.0 / (1500.0 - 10.0) * (1.0 / vertex.oow - 10.0) * vertex.oow);
     const float worldDepthBias = (1500.0f / (1500.0f - 10.0f)) * 10.0f
         * g_groundVisualDepthOffset * vertex.oow * vertex.oow;
-    vertex.z = (std::max)(0.0f, vertex.z - g_groundVisualDepthBias - worldDepthBias);
+    // Preserve the reference device-depth range; clipping belongs to the render device.
+    // Ground-only offsets must not clamp unrelated near-plane geometry.
+    vertex.z -= g_groundVisualDepthBias + worldDepthBias;
 }
 
 void SubmitReferenceEffectTriangle(const vector3d (&points)[3], const matrix& view,
@@ -10554,6 +10556,14 @@ void UpdateReferenceRectUp2(CEffectPrim* prim)
 // Ref/dhxj/RagEffect2.cpp:5566; canonical executable PrimSphereWind2 at 0x6132B0 (case 0x5B).
 void UpdateReferenceSphereWind2(CEffectPrim* prim)
 {
+    // PE 0x613349 calls the truncating int64 helper at 0x6A7FC0, then
+    // stores AX. A direct float-to-short cast is undefined outside int16.
+    const auto narrowRotation = [](double value) -> short {
+        // Masked x87 invalid conversion yields int64 indefinite (low word 0).
+        if (!(value >= -9223372036854775808.0 && value < 9223372036854775808.0)) return 0;
+        const unsigned short word = static_cast<unsigned short>(static_cast<long long>(value));
+        return static_cast<short>(word <= 0x7fff ? static_cast<int>(word) : static_cast<int>(word) - 0x10000);
+    };
     prim->m_pos = prim->m_master->EffectPosition();
     for (EffectGi& gi : prim->m_gi) {
         if (gi.life != 1) continue;
@@ -10573,7 +10583,7 @@ void UpdateReferenceSphereWind2(CEffectPrim* prim)
         if (rand() % 2 == 0) gi.riseAngle = static_cast<short>(gi.riseAngle + 1);
         if (gi.riseAngle >= 360) gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
 
-        gi.rotStart = static_cast<short>(gi.rotStart + gi.height[1]);
+        gi.rotStart = narrowRotation(static_cast<double>(gi.rotStart) + gi.height[1]);
         if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
     }
 }

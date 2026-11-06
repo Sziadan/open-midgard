@@ -2006,7 +2006,7 @@ spherewind2_current_branches = [
     "if (gi.process <= 25)", "gi.alphaB + 2", "else if (gi.process > 70)", "gi.alphaB - 2",
     "if (gi.alphaB < 0) gi.alphaB = 0;", "gi.distance *= 1.01f;", "gi.riseAngle + 1",
     "rand() % 2 == 0", "gi.riseAngle >= 360", "gi.riseAngle - 360",
-    "gi.rotStart + gi.height[1]", "gi.rotStart >= 360", "gi.rotStart - 360",
+    "narrowRotation(static_cast<double>(gi.rotStart) + gi.height[1])", "gi.rotStart >= 360", "gi.rotStart - 360",
 ]
 check("case 0x5B branch map pairs signed-short alpha, distance, RNG conditional, one-step rise/rotation wraps and source order",
       all(compact(branch) in compact(source_spherewind2) for branch in spherewind2_source_branches)
@@ -2019,7 +2019,13 @@ check("case 0x5B branch map pairs signed-short alpha, distance, RNG conditional,
       and current_spherewind2.index("if (gi.life != 1) continue;") < current_spherewind2.index("++gi.process;")
       < current_spherewind2.index("if (gi.process <= 0) continue;") < current_spherewind2.index("gi.distance *= 1.01f;")
       < current_spherewind2.index("gi.riseAngle + 1") < current_spherewind2.index("rand() % 2 == 0")
-      < current_spherewind2.index("gi.riseAngle >= 360") < current_spherewind2.index("gi.rotStart + gi.height[1]"))
+      < current_spherewind2.index("gi.riseAngle >= 360") < current_spherewind2.index("narrowRotation(static_cast<double>(gi.rotStart) + gi.height[1])"))
+
+check("case 0x5B rotation matches PE int64 truncation and low-word signed storage without float-to-short overflow",
+      all(token in current_spherewind2 for token in (
+          "value >= -9223372036854775808.0", "value < 9223372036854775808.0",
+          "static_cast<unsigned short>(static_cast<long long>(value))",
+          "word <= 0x7fff", "static_cast<int>(word) - 0x10000")))
 
 source_soulbreaker2 = body(REF_DHXJ_EFFECT2, "CEffectPrim :: PrimSoulBreaker2()")
 source_soulbreaker2_decompiled = body(REF_EFFECT2, "void __thiscall CEffectPrim::PrimSoulBreaker2(CEffectPrim *this)\n{")

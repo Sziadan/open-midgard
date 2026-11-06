@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "active_step": "PK09.04",
+  "active_step": "PK45.06",
   "baseline": "PK01.02: client at origin/main af41f6484cb7ff31825296babe4b913aa36c4c67; effective 20080910 server config and registry reproduced from hash-pinned unversioned source snapshot.",
   "steps": {
     "PK00.01": {
@@ -1678,7 +1678,9 @@
         "docs/packets/evidence/REVIEW-2026-11-05.md",
         "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md",
         "docs/packets/evidence/REVIEW-2026-11-06.md",
-        "docs/packets/evidence/REVIEW-2026-11-06.json"
+        "docs/packets/evidence/REVIEW-2026-11-06.json",
+        "docs/packets/evidence/REVIEW-2026-11-06-followup.md",
+        "docs/packets/evidence/REVIEW-2026-11-06-followup.json"
       ],
       "commit_subject": null
     },
@@ -2014,6 +2016,13 @@
         "docs/packets/evidence/PK09.20-recovery-delta.json"
       ],
       "commit_subject": "packet(PK09.20): restore signed recovery deltas and feedback"
+    },
+    "PK45.06": {
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/REVIEW-2026-11-06-followup.md"
+      ],
+      "commit_subject": null
     }
   }
 }

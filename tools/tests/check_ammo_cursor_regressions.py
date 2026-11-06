@@ -29,6 +29,7 @@ def main():
     cursor = (ROOT / 'src/gamemode/CursorRenderer.cpp').read_text(encoding='utf-8')
     equip = (ROOT / 'src/ui/UIEquipWnd.cpp').read_text(encoding='utf-8')
     item = (ROOT / 'src/ui/UIItemWnd.cpp').read_text(encoding='utf-8')
+    item_tab = (ROOT / 'src/item/ItemTab.h').read_text(encoding='utf-8')
     session = (ROOT / 'src/session/Session.cpp').read_text(encoding='utf-8')
     actor = (ROOT / 'src/world/GameActor.cpp').read_text(encoding='utf-8')
     # Instant announcements cannot launch a local pose/effect before a result.
@@ -73,9 +74,8 @@ def main():
         (build / 'AmmoRefreshBody.inc').write_text(function(session, 'void CSession::ClearEquipmentInventoryItems()'), encoding='utf-8')
         (build / 'EquipmentOptionLabelBodies.inc').write_text('\n'.join(function(equip, name) for name in [
             'bool IsLocalPlayerPushCartEquipped()', 'const char* GetLocalPlayerRemoveOptionLabel()']), encoding='utf-8')
-        tabs_start = item.index('bool IsUsableTabType(')
-        tabs_end = item.index('bool CanUseInventoryItemOnDoubleClick(', tabs_start)
-        (build / 'AmmoInventoryViewBodies.inc').write_text(item[tabs_start:tabs_end] + '\n'
+        (build / 'ItemTab.h').write_text(item_tab, encoding='utf-8')
+        (build / 'AmmoInventoryViewBodies.inc').write_text(function(item, 'bool ItemBelongsToTab(') + '\n'
             + function(item, 'int UIItemWnd::GetInventoryItemCount()') + '\n'
             + function(item, 'std::vector<const ITEM_INFO*> UIItemWnd::GetFilteredItems()'), encoding='utf-8')
         executable = build / 'ammo_cursor_checks.exe'

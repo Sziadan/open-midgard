@@ -1,0 +1,74 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+006132b0 <.text+0x2122b0>:
+  6132b0:	55                   	push   %ebp
+  6132b1:	8b ec                	mov    %esp,%ebp
+  6132b3:	51                   	push   %ecx
+  6132b4:	8b 81 fc 00 00 00    	mov    0xfc(%ecx),%eax
+  6132ba:	56                   	push   %esi
+  6132bb:	83 c0 04             	add    $0x4,%eax
+  6132be:	57                   	push   %edi
+  6132bf:	8d b1 b2 03 00 00    	lea    0x3b2(%ecx),%esi
+  6132c5:	bf 04 00 00 00       	mov    $0x4,%edi
+  6132ca:	8b 10                	mov    (%eax),%edx
+  6132cc:	89 51 04             	mov    %edx,0x4(%ecx)
+  6132cf:	8b 50 04             	mov    0x4(%eax),%edx
+  6132d2:	89 51 08             	mov    %edx,0x8(%ecx)
+  6132d5:	8b 40 08             	mov    0x8(%eax),%eax
+  6132d8:	89 41 0c             	mov    %eax,0xc(%ecx)
+  6132db:	80 7e fe 01          	cmpb   $0x1,-0x2(%esi)
+  6132df:	0f 85 89 00 00 00    	jne    0x61336e
+  6132e5:	8b 46 0a             	mov    0xa(%esi),%eax
+  6132e8:	40                   	inc    %eax
+  6132e9:	85 c0                	test   %eax,%eax
+  6132eb:	89 46 0a             	mov    %eax,0xa(%esi)
+  6132ee:	7e 7e                	jle    0x61336e
+  6132f0:	83 f8 19             	cmp    $0x19,%eax
+  6132f3:	7f 06                	jg     0x6132fb
+  6132f5:	66 83 06 02          	addw   $0x2,(%esi)
+  6132f9:	eb 09                	jmp    0x613304
+  6132fb:	83 f8 46             	cmp    $0x46,%eax
+  6132fe:	7e 04                	jle    0x613304
+  613300:	66 83 06 fe          	addw   $0xfffe,(%esi)
+  613304:	66 83 3e 00          	cmpw   $0x0,(%esi)
+  613308:	7d 05                	jge    0x61330f
+  61330a:	66 c7 06 00 00       	movw   $0x0,(%esi)
+  61330f:	d9 46 7e             	flds   0x7e(%esi)
+  613312:	d8 0d 64 c9 6c 00    	fmuls  0x6cc964
+  613318:	d9 5e 7e             	fstps  0x7e(%esi)
+  61331b:	66 ff 46 7c          	incw   0x7c(%esi)
+  61331f:	e8 f1 4f 09 00       	call   0x6a8315
+  613324:	25 01 00 00 80       	and    $0x80000001,%eax
+  613329:	79 05                	jns    0x613330
+  61332b:	48                   	dec    %eax
+  61332c:	83 c8 fe             	or     $0xfffffffe,%eax
+  61332f:	40                   	inc    %eax
+  613330:	75 04                	jne    0x613336
+  613332:	66 ff 46 7c          	incw   0x7c(%esi)
+  613336:	66 8b 46 7c          	mov    0x7c(%esi),%ax
+  61333a:	66 3d 68 01          	cmp    $0x168,%ax
+  61333e:	7c 09                	jl     0x613349
+  613340:	05 98 fe ff ff       	add    $0xfffffe98,%eax
+  613345:	66 89 46 7c          	mov    %ax,0x7c(%esi)
+  613349:	0f bf 4e 0e          	movswl 0xe(%esi),%ecx
+  61334d:	89 4d fc             	mov    %ecx,-0x4(%ebp)
+  613350:	db 45 fc             	fildl  -0x4(%ebp)
+  613353:	d8 46 16             	fadds  0x16(%esi)
+  613356:	e8 65 4c 09 00       	call   0x6a7fc0
+  61335b:	66 3d 68 01          	cmp    $0x168,%ax
+  61335f:	66 89 46 0e          	mov    %ax,0xe(%esi)
+  613363:	7c 09                	jl     0x61336e
+  613365:	05 98 fe ff ff       	add    $0xfffffe98,%eax
+  61336a:	66 89 46 0e          	mov    %ax,0xe(%esi)
+  61336e:	81 c6 b4 00 00 00    	add    $0xb4,%esi
+  613374:	4f                   	dec    %edi
+  613375:	0f 85 60 ff ff ff    	jne    0x6132db
+  61337b:	5f                   	pop    %edi
+  61337c:	5e                   	pop    %esi
+  61337d:	8b e5                	mov    %ebp,%esp
+  61337f:	5d                   	pop    %ebp
+  613380:	c3                   	ret

@@ -1711,6 +1711,11 @@
         "id": "PK45.05",
         "tier": "S",
         "action": "Separate selected character-ID lookup from actor names, implement source-final 00A2/15/CID@11 request plus 0194/30 reply cache/timer lifecycle and production socket/replay proofs; leave actual special-item UI integration and other profiles open."
+      },
+      {
+        "id": "PK45.06",
+        "action": "Restore source state3 corpse eligibility, separate world-owned resource snapshots, final-frame direction, time-derived alpha fade and actor removal/teardown through production death packets and rendered lifecycle checks; preserve ordinary-PC death and full PK45/24 acceptance.",
+        "tier": "S"
       }
     ],
     "acceptance": "240 registered entries and136 indexed handler functions need explicit contract references, not a global pass assertion. Expand per handler/variant into numbered leaves; sitting/desync/picking/cart depth are regression scenarios when relevant."

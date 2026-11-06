@@ -5229,7 +5229,7 @@ bool CGameActor::ProcessStatusMsgEffectMessage(int msg)
     case 58:
         if (!m_iceEffect) {
             m_iceEffect = SpawnMsgSprite(5,
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
                 "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
                 0,
                 1.0f);
@@ -5241,7 +5241,7 @@ bool CGameActor::ProcessStatusMsgEffectMessage(int msg)
         return true;
     case 62:
         SpawnMsgSprite(6,
-            "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
             "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
             1,
             1.0f);
@@ -5358,8 +5358,8 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             return;
         }
 
-        const int action = EmotionAction(emotion);
-        if (action < 0) return;
+        int action = EmotionAction(emotion);
+        if (action < 0) action = 0; // PE MakeEmotion default: unknown receive values use action zero.
 
         CMsgEffect* effect = new CMsgEffect();
         if (!effect) {

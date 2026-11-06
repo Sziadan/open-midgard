@@ -35,22 +35,36 @@ if "case 101:" not in ref_actor or "case 102:" not in ref_actor:
 if "pc_setoption(sd,sd->sc.option&~(OPTION_CART|OPTION_RIDING|OPTION_FALCON))" not in server:
     raise SystemExit("Reference CZ_REQ_CARTOFF behavior no longer clears Falcon option")
 
-if 'constexpr int kButtonIdFalconOff = 138;' not in ui:
-    raise SystemExit("equipment Falcon button id missing")
-if 'outData->label = "Release Falcon"' not in ui or 'IsLocalPlayerFalconEquipped()' not in ui:
-    raise SystemExit("equipment Falcon button visibility/label missing")
-if "kButtonIdFalconOff:\n        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestCartOff, 0, 0, 0);" not in ui:
-    raise SystemExit("Falcon button does not issue the shared reference off request")
+if 'constexpr int kButtonIdRemoveOption = 138;' not in ui:
+    raise SystemExit("equipment remove-option control id missing")
+if 'if (player && (player->m_effectState & kFalconOption) != 0) return "Release Falcon";' not in ui:
+    raise SystemExit("equipment remove-option label does not reflect Falcon state")
+if 'if (player && (player->m_effectState & kRidingOption) != 0) return "Unmount";' not in ui:
+    raise SystemExit("equipment shared remove-option riding precedence missing")
+if 'if (IsLocalPlayerPushCartEquipped()) return "Remove cart";' not in ui:
+    raise SystemExit("equipment shared remove-option cart fallback missing")
+if "case kButtonIdRemoveOption:\n        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestCartOff, 0, 0, 0);" not in ui:
+    raise SystemExit("remove-option control does not issue the shared reference off request")
 if "packet.PacketType = profile.cartOff" not in send_profile or "case GameMsg_RequestCartOff:" not in mode:
     raise SystemExit("Falcon off request is not routed through the active packet profile")
-if "outData->y = m_y + 186" not in ui:
-    raise SystemExit("Release Falcon button is not placed beneath the preview sprite")
-if packet.count("effectState = static_cast<int>(option | opt3);") != 5:
-    raise SystemExit("actor spawn decoders must preserve option and opt3 flags together")
+if "m_layout.removeOption.x, m_layout.removeOption.y, m_layout.removeOption.width, m_layout.removeOption.height" not in ui:
+    raise SystemExit("shared remove-option control is not placed through equipment layout")
+if "outData->visible = m_h > kMiniHeight && label;" not in ui:
+    raise SystemExit("shared remove-option visibility is not limited to expanded equipment with an active option")
+if "outData->label = label ? label : \"\";" not in ui:
+    raise SystemExit("Qt equipment control does not publish its dynamic option label")
+layout = (ROOT / "src/ui/EquipmentLayout.h").read_text(encoding="utf-8")
+if "Rect preview,removeOption;" not in layout or "result.removeOption={centerX,centerBottom-24,centerWidth,24};" not in layout:
+    raise SystemExit("equipment remove-option placement no longer follows the shared preview layout")
+qt_equipment = (ROOT / "src/qtui/qml/RoEquipment.qml").read_text(encoding="utf-8")
+if 'objectName: modelData.id === 138 ? "equipmentRemoveOption" : ""' not in qt_equipment or "visible: modelData.visible; label: modelData.label" not in qt_equipment:
+    raise SystemExit("Qt equipment view does not render the shared dynamic remove-option control")
+if packet.count("outState.effectState = static_cast<int>(option);") != 4 or packet.count("outState.showEfst = opt3;") != 4:
+    raise SystemExit("actor spawn decoders must retain option state and opt3 visibility in their separate fields")
 
-qml = (ROOT / "src/qtui/qml/GameOverlay.qml").read_text(encoding="utf-8")
-if "parent.height - y - 49" not in qml:
-    raise SystemExit("Qt equipment preview does not reserve the Falcon button strip")
+adapter = (ROOT / "src/qtui/QtUiStateAdapter.cpp").read_text(encoding="utf-8")
+if 'objectName: "equipmentPreview"' not in qt_equipment or "data.insert(QStringLiteral(\"previewHeight\"), display.preview.height);" not in adapter:
+    raise SystemExit("Qt equipment preview does not use the shared equipment layout dimensions")
 
 bootstrap = function(mode, "void EnsureBootstrapSelfActor(CGameMode& mode)")
 if "actor->m_effectState = info->effectstate;" not in bootstrap or "actor->SendMsg(actor, 101, 0, 0, 0);" not in bootstrap:

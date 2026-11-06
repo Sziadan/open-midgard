@@ -26,13 +26,15 @@ def body(source: str, signature: str) -> str:
 
 actor_lookup = body(packet, "CGameActor* ResolveSkillPacketActor(CGameMode& mode, u32 aid)")
 compact = re.sub(r"\s+", "", actor_lookup)
-expected = ("mode.m_world==nullptr", "aid==g_session.m_aid", "mode.m_world->m_player",
+expected = ("mode.m_world==nullptr", "CGameActor*player=mode.m_world->m_player;",
+            "aid==g_session.m_aid||aid==g_session.m_gid",
+            "(player!=nullptr&&aid==player->m_gid)", "returnplayer;",
             "mode.m_world->GetGameActorByAID(aid)")
 positions = [compact.find(token) for token in expected]
 assert all(position >= 0 for position in positions) and positions == sorted(positions), \
-    "actor resolver must be own AID -> player, else CWorld actor list"
+    "actor resolver must honor local AID/character/player GID aliases before non-creating world lookup"
 assert "m_runtimeActors" not in actor_lookup and "EnsureRuntimeActor" not in actor_lookup
-assert "m_gid" not in actor_lookup and "ResolveCombatActor" not in actor_lookup
+assert "ResolveCombatActor" not in actor_lookup
 
 unit_lookup = body(packet, "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)")
 assert "mode.m_world ? mode.m_world->GetSkillByAID(aid) : nullptr" in unit_lookup
@@ -62,7 +64,9 @@ assert "actor->m_gid == aid" in world_lookup
 unit_world_lookup = body(world, "CSkill* CWorld::GetSkillByAID(u32 aid)")
 assert "m_skillList" in unit_world_lookup and "skill->m_aid == aid" in unit_world_lookup
 assert "void CGameActor::RegisterPos()" in actor and "g_world.RegisterActor(this)" in actor
-assert "void CGameActor::UnRegisterPos()" in actor and "g_world.UnregisterActor(this)" in actor
+unregister_pos = body(actor, "void CGameActor::UnRegisterPos()")
+assert "mode->m_actorPosList.erase(m_gid);" in unregister_pos
+assert "UnregisterActor" not in unregister_pos, "message13 removes the cell only; actor lifetime belongs to the world"
 assert "std::map<u32, CGameActor*> m_runtimeActors;" in mode_h
 
 print(f"WP3.2 shared actor/unit lookup contract passed for {len(handlers)} handler bodies")

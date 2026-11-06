@@ -41,17 +41,19 @@ for token in ('"effect\\\\hunter_blitzbeat_1st.wav"', '"effect\\\\hunter_blitzbe
     if token not in handler: raise SystemExit(f"BlitzBeat payload missing {token}")
 if handler.count("rand()") != 5: raise SystemExit("expected 20 state-zero RNG draws plus 3 later draws")
 on_process = function(msg_effect, "u8 CMsgEffect::OnProcess()")
-falcon = on_process[on_process.index("case 18:"):on_process.index("case 5:", on_process.index("case 18:"))]
+if "case 18:\n        ProcessFalcon();\n        break;" not in on_process:
+    raise SystemExit("Falcon type18 route to ProcessFalcon missing")
+falcon = function(msg_effect, "void CMsgEffect::ProcessFalcon()")
 for token in ("m_falconIsAttackTarget", "m_falconStateCnt <= 10 || m_falconStateCnt >= 25",
               "m_pos.x += m_destPos2.x", "m_falconStateCnt >= 25", "m_falconMotionSpeed",
               "m_masterActor->m_pos", "GetHeight(m_pos.x, m_pos.z) - 25.0f",
-              "std::atan2(dx, -dz)", "Get8Dir(m_falconRotation - 22.5f)",
-              "m_falconLastMotionTick"):
+              "std::atan2(dx, -dz)", "Get8Dir(m_falconRotation - 22.5f)"):
     if token not in falcon: raise SystemExit(f"Falcon type18 processing missing {token}")
 if "m_falconMotionSpeed(4.0f)" not in msg_effect or "m_falconIsAnimation(1)" not in msg_effect:
     raise SystemExit("Falcon source SetAction speed 4 was not preserved")
-if "constexpr u32 kFalconAnimationStepMs = 24;" not in msg_effect:
-    raise SystemExit("Falcon motion cadence must use the 24ms world simulation tick")
+game_mode = (ROOT / "src/gamemode/GameMode.cpp").read_text(encoding="utf-8")
+if "constexpr float kWorldProcessTickMs = 24.0f;" not in game_mode or "m_worldProcessCarryMs / kWorldProcessTickMs" not in game_mode:
+    raise SystemExit("Falcon process cadence must follow the 24ms world simulation step")
 if "if (m_falconStateCnt > 35)" not in on_process or "m_falconIsAttackTarget = 0;" not in on_process:
     raise SystemExit("Falcon attack recovery does not resume owner follow")
 if "Get8Dir2(this, this->m_roty, 1)" not in ref_msg_effect:

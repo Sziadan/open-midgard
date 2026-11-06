@@ -1051,6 +1051,7 @@ Tier: **S**. Dependencies: PK20, PK22, PK24.
 - **PK45.04 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 - **PK45.05 [S]** Separate selected character-ID lookup from actor names, implement source-final 00A2/15/CID@11 request plus 0194/30 reply cache/timer lifecycle and production socket/replay proofs; leave actual special-item UI integration and other profiles open. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK45.06 [S]** Restore original separate-corpse eligibility, resource/actor ownership, rendering and timed fade through production death/lifecycle verification. [Strong-agent work item](work-items/PK45.06.md). IN_PROGRESS; the review-discovered actor ProcessState failure remains a visible gate. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 
@@ -1104,7 +1105,7 @@ No catch-all task completion without per-row contracts/classification. Add newly
 
 ## PK48 â€” Independent certification review
 
-Partial PK48.02 checkpoint: [2026-11-06 strong review](evidence/REVIEW-2026-11-06.md) restores the broad standalone build, retains448/460 with twelve named pending gates, and confirms126/126 active root tests. Certification remains open.
+Partial PK48.02 follow-up: [effect repairs and corpse gate](evidence/REVIEW-2026-11-06-followup.md) corrects four runtime semantics and migrates bounded checks. Root126/126; standalone459/460. PK45.06 now owns the substantive corpse failure; certification remains open.
 
 Tier: **S**. Dependencies: PK00, PK01, PK02, PK03, PK04, PK05, PK06, PK07, PK08, PK09, PK10, PK11, PK12, PK13, PK14, PK15, PK16, PK17, PK18, PK19, PK20, PK21, PK22, PK23, PK24, PK25, PK26, PK27, PK28, PK29, PK30, PK31, PK32, PK33, PK34, PK35, PK36, PK37, PK38, PK39, PK40, PK41, PK42, PK43, PK44, PK45, PK46, PK47, PK50.
 

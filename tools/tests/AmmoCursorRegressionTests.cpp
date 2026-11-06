@@ -6,6 +6,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include "ItemTab.h"
 using u8=std::uint8_t; using u16=std::uint16_t; using u32=std::uint32_t;
 using msgparam_t=std::intptr_t;
 void DbgLog(const char*,...) {}
@@ -63,6 +64,7 @@ struct CGameMode {
     bool m_hasCursorSnap=false;
     int m_cursorSnapRawX=0,m_cursorSnapRawY=0,m_cursorSnapDrawX=0,m_cursorSnapDrawY=0;
     void GetClientCoor(int,int,float&,float&){}
+    void SendMsg(int,msgparam_t,msgparam_t,msgparam_t){}
 } mode;
 struct {CGameMode* GetCurrentGameMode(){return &mode;}} g_modeMgr;
 bool knownCartActive=false;

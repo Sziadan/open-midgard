@@ -1,0 +1,77 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004131b0 <.text+0x121b0>:
+  4131b0:	55                   	push   %ebp
+  4131b1:	8b ec                	mov    %esp,%ebp
+  4131b3:	8b 45 0c             	mov    0xc(%ebp),%eax
+  4131b6:	8b 55 08             	mov    0x8(%ebp),%edx
+  4131b9:	56                   	push   %esi
+  4131ba:	8b 75 10             	mov    0x10(%ebp),%esi
+  4131bd:	d9 40 20             	flds   0x20(%eax)
+  4131c0:	d8 4a 08             	fmuls  0x8(%edx)
+  4131c3:	d9 40 14             	flds   0x14(%eax)
+  4131c6:	d8 4a 04             	fmuls  0x4(%edx)
+  4131c9:	de c1                	faddp  %st,%st(1)
+  4131cb:	d9 40 08             	flds   0x8(%eax)
+  4131ce:	d8 0a                	fmuls  (%edx)
+  4131d0:	de c1                	faddp  %st,%st(1)
+  4131d2:	d8 40 2c             	fadds  0x2c(%eax)
+  4131d5:	d8 3d 3c c7 6c 00    	fdivrs 0x6cc73c
+  4131db:	d9 56 0c             	fsts   0xc(%esi)
+  4131de:	d9 40 18             	flds   0x18(%eax)
+  4131e1:	d8 4a 08             	fmuls  0x8(%edx)
+  4131e4:	d9 40 0c             	flds   0xc(%eax)
+  4131e7:	d8 4a 04             	fmuls  0x4(%edx)
+  4131ea:	de c1                	faddp  %st,%st(1)
+  4131ec:	d9 02                	flds   (%edx)
+  4131ee:	d8 08                	fmuls  (%eax)
+  4131f0:	de c1                	faddp  %st,%st(1)
+  4131f2:	d8 40 24             	fadds  0x24(%eax)
+  4131f5:	d8 c9                	fmul   %st(1),%st
+  4131f7:	d8 09                	fmuls  (%ecx)
+  4131f9:	da 41 2c             	fiaddl 0x2c(%ecx)
+  4131fc:	d9 1e                	fstps  (%esi)
+  4131fe:	dd d8                	fstp   %st(0)
+  413200:	d9 40 1c             	flds   0x1c(%eax)
+  413203:	d8 4a 08             	fmuls  0x8(%edx)
+  413206:	d9 40 10             	flds   0x10(%eax)
+  413209:	d8 4a 04             	fmuls  0x4(%edx)
+  41320c:	de c1                	faddp  %st,%st(1)
+  41320e:	d9 40 04             	flds   0x4(%eax)
+  413211:	d8 0a                	fmuls  (%edx)
+  413213:	de c1                	faddp  %st,%st(1)
+  413215:	d8 40 28             	fadds  0x28(%eax)
+  413218:	d8 49 04             	fmuls  0x4(%ecx)
+  41321b:	d8 4e 0c             	fmuls  0xc(%esi)
+  41321e:	da 41 30             	fiaddl 0x30(%ecx)
+  413221:	d9 5e 04             	fstps  0x4(%esi)
+  413224:	d9 05 54 c7 6c 00    	flds   0x6cc754
+  41322a:	d8 25 58 c7 6c 00    	fsubs  0x6cc758
+  413230:	d8 3d 54 c7 6c 00    	fdivrs 0x6cc754
+  413236:	d9 05 3c c7 6c 00    	flds   0x6cc73c
+  41323c:	d8 76 0c             	fdivs  0xc(%esi)
+  41323f:	d8 25 58 c7 6c 00    	fsubs  0x6cc758
+  413245:	de c9                	fmulp  %st,%st(1)
+  413247:	d8 4e 0c             	fmuls  0xc(%esi)
+  41324a:	d9 5e 08             	fstps  0x8(%esi)
+  41324d:	5e                   	pop    %esi
+  41324e:	5d                   	pop    %ebp
+  41324f:	c2 0c 00             	ret    $0xc
+  413252:	90                   	nop
+  413253:	90                   	nop
+  413254:	90                   	nop
+  413255:	90                   	nop
+  413256:	90                   	nop
+  413257:	90                   	nop
+  413258:	90                   	nop
+  413259:	90                   	nop
+  41325a:	90                   	nop
+  41325b:	90                   	nop
+  41325c:	90                   	nop
+  41325d:	90                   	nop
+  41325e:	90                   	nop
+  41325f:	90                   	nop

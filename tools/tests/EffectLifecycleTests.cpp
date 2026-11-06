@@ -2063,8 +2063,16 @@ __declspec(noinline) void RunSphereWind2LifecycleChecks(CEffectPrim& prim, int& 
 
     a.process=0; a.alphaB=32767; a.distance=1; a.riseAngle=0; a.rotStart=0; a.height[1]=32770.0f;
     rngValues={1}; rngCursor=0; prim.OnProcess();
-    check(a.alphaB==0 && a.rotStart==static_cast<short>(32770.0f),
+    check(a.alphaB==0 && a.rotStart==-32766,
         "case 0x5B alpha and accumulated rotation retain source signed-short narrowing semantics");
+    a.process=0; a.rotStart=0; a.height[1]=32770.75f; prim.OnProcess();
+    check(a.rotStart==-32766,"case 0x5B truncates fractional positive overflow before low-word narrowing");
+    a.process=0; a.rotStart=0; a.height[1]=-32769.75f; prim.OnProcess();
+    check(a.rotStart==32407,"case 0x5B narrows negative overflow before the signed 360-degree adjustment");
+    a.process=0; a.rotStart=1; a.height[1]=16777216.0f; prim.OnProcess();
+    check(a.rotStart==1,"case 0x5B preserves the original extended-precision integer add before truncation");
+    a.process=0; a.rotStart=0; a.height[1]=1.0e20f; prim.OnProcess();
+    check(a.rotStart==0,"case 0x5B masked x87 int64 overflow has zero low word");
     rngValues.clear(); rngCursor=0; g_isSkipFrame=oldSkipFrame;
     RunSoulBreaker2LifecycleChecks(prim, checks, failures);
 }
@@ -5211,11 +5219,11 @@ int main()
         check(waveCalls.empty()&&effect.m_effectPos.x==40&&rngDraws==drawBase,
             "effect440 nonzero state has no frame-zero sound or position copy");
         effect.m_stateCnt=0; effect.ProcessEffect440();
-        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\"&&waveCalls[0].x==390
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\\xBE\xC6\xBC\xFB\xC7\xC1\xC6\xBC\xBF\xC0.wav"&&waveCalls[0].x==390
             &&waveCalls[0].y==0&&waveCalls[0].z==580&&waveCalls[0].volume==250
             &&waveCalls[0].range==40&&waveCalls[0].frequency==1&&effect.m_effectPos.x==400
             &&effect.m_effectPos.y==500&&effect.m_effectPos.z==600&&rngDraws==drawBase,
-            "effect440 state0 copies master position, preserves known sound prefix and runs shared STR");
+            "effect440 state0 copies master position, uses the PE-resolved Assumptio sound and runs shared STR");
         effect.m_stateCnt=2; effect.ProcessEffect440();
         check(waveCalls.size()==1&&rngDraws==drawBase,
             "effect440 later states do not repeat the cue or consume RNG");
