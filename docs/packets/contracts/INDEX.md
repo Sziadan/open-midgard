@@ -114,3 +114,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK45.GR2-CORPSE](PK45.GR2-CORPSE.md) records completed model death handoff, independent instance/resource ownership, byte-alpha counter,2x elapsed animation and original cutout geometry. Broad actor/model and independent/deployed certification remain open.
 
 [PK09.CHAT-STATE](PK09.CHAT-STATE.md) records the reviewed main state phase: signed cycles, source heights, bottom anchoring and shared native/Qt editor geometry. PK09.21 remains IN_PROGRESS for sticky/mini/detached-history ownership and source stream routing; no discovery-row closure.
+
+[PK09.21 family ownership evidence](../evidence/PK09.21-family.md) extends the partial chat contract with managed auxiliary ownership, sticky transitions and native capture proof. Source routing and remaining lifecycle gates stay open.

@@ -6,7 +6,7 @@ Created 2026-11-03. This is an execution specification, not a claim that any run
 
 ## Start here
 
-**Latest checkpoint (2026-11-06):** [PK09.21 main chat state evidence](packets/evidence/PK09.21-main-state.md) accepts the partial expansion/cycle/anchor and shared native/Qt geometry phase. Root130/130 and standalone461/461 pass; eight actual UI frames and actual Qt editor focus are retained. Sticky mode, mini and detached histories remain IN_PROGRESS; completed sprite/model corpse proofs remain accepted.
+**Latest checkpoint (2026-11-06):** [PK09.21 detached chat family](packets/evidence/PK09.21-family.md) implements managed137/138/140 owners, sticky save/restore, independent retained rows, geometry and native/Qt UI. Root130/130 and standalone461/461 pass; eleven UI frames and real hidden-HWND capture tests are retained. Exact producer routing, history controls, persistent restore and active Qt/scale acceptance remain IN_PROGRESS. Earlier main-state and sprite/model corpse evidence remains accepted.
 
 **Current continuation priority:** finish [PK09.21 chat state/sticky/history ownership](packets/work-items/PK09.21.md) under [PK09.04](packets/work-items/PK09.04.md), then continue remaining item/status/detail/context work. Preserve corpse, effect and recovery regressions. PK45.06 is complete; broad actor/model review, full feature coverage, PK47 and independent PK48/49/deployment remain open. The whole packet implementation goal remains active.
 

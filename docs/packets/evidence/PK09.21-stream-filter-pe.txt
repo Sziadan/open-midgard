@@ -1,0 +1,61 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0049dce0 <.text+0x9cce0>:
+  49dce0:	10 56 52             	adc    %dl,0x52(%esi)
+  49dce3:	6a 25                	push   $0x25
+  49dce5:	53                   	push   %ebx
+  49dce6:	ff 90 94 00 00 00    	call   *0x94(%eax)
+  49dcec:	8b 45 e4             	mov    -0x1c(%ebp),%eax
+  49dcef:	8b 4d 18             	mov    0x18(%ebp),%ecx
+  49dcf2:	85 c9                	test   %ecx,%ecx
+  49dcf4:	74 4e                	je     0x49dd44
+  49dcf6:	8a 91 3f 46 7b 00    	mov    0x7b463f(%ecx),%dl
+  49dcfc:	84 d2                	test   %dl,%dl
+  49dcfe:	74 44                	je     0x49dd44
+  49dd00:	8b 4d 08             	mov    0x8(%ebp),%ecx
+  49dd03:	8b 44 08 04          	mov    0x4(%eax,%ecx,1),%eax
+  49dd07:	85 c0                	test   %eax,%eax
+  49dd09:	75 05                	jne    0x49dd10
+  49dd0b:	b8 8c c8 6c 00       	mov    $0x6cc88c,%eax
+  49dd10:	8b 8b a4 00 00 00    	mov    0xa4(%ebx),%ecx
+  49dd16:	8d 7d a4             	lea    -0x5c(%ebp),%edi
+  49dd19:	57                   	push   %edi
+  49dd1a:	56                   	push   %esi
+  49dd1b:	8b 11                	mov    (%ecx),%edx
+  49dd1d:	50                   	push   %eax
+  49dd1e:	ff 92 b0 00 00 00    	call   *0xb0(%edx)
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004a10b0 <.text+0xa00b0>:
+  4a10b0:	3b c1                	cmp    %ecx,%eax
+  4a10b2:	89 4e 64             	mov    %ecx,0x64(%esi)
+  4a10b5:	5b                   	pop    %ebx
+  4a10b6:	74 07                	je     0x4a10bf
+  4a10b8:	8b 06                	mov    (%esi),%eax
+  4a10ba:	8b ce                	mov    %esi,%ecx
+  4a10bc:	ff 50 04             	call   *0x4(%eax)
+  4a10bf:	8b 46 64             	mov    0x64(%esi),%eax
+  4a10c2:	83 f8 ff             	cmp    $0xffffffff,%eax
+  4a10c5:	74 18                	je     0x4a10df
+  4a10c7:	8a 88 40 46 7b 00    	mov    0x7b4640(%eax),%cl
+  4a10cd:	84 c9                	test   %cl,%cl
+  4a10cf:	0f 94 c1             	sete   %cl
+  4a10d2:	88 88 40 46 7b 00    	mov    %cl,0x7b4640(%eax)
+  4a10d8:	8b 16                	mov    (%esi),%edx
+  4a10da:	8b ce                	mov    %esi,%ecx
+  4a10dc:	ff 52 04             	call   *0x4(%edx)
+  4a10df:	5e                   	pop    %esi
+  4a10e0:	5d                   	pop    %ebp
+  4a10e1:	c2 08 00             	ret    $0x8
+  4a10e4:	90                   	nop
+  4a10e5:	90                   	nop
+  4a10e6:	90                   	nop
+  4a10e7:	90                   	nop

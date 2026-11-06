@@ -33,7 +33,7 @@ struct ChatFilterOptionDisplay {
 };
 
 struct ChatWindowLayoutDisplay {
-    RECT header{}, history{}, whisperInput{}, messageInput{}, gearButton{};
+    RECT header{}, history{}, whisperInput{}, messageInput{}, gearButton{}, stickButton{};
     std::array<RECT, 4> tabs{};
 };
 
@@ -59,6 +59,9 @@ public:
     void StoreInfo() override;
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     void SetState(int requested);
+    void StickOnOff(bool sticky);
+    void SetShow(int show) override;
+    void Move(int x, int y) override;
     int GetExpansionState() const { return m_expansionState; }
     ChatWindowLayoutDisplay GetLayoutDisplay() const;
 
@@ -156,4 +159,6 @@ private:
     int m_transparencyDragActive;
     std::array<u32, 4> m_tabChannelMasks;
     int m_expansionState = 7;
+    int m_savedExpansionState = 0;
+    bool m_stickyControlDispatch = false;
 };

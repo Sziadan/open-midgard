@@ -1163,6 +1163,9 @@ public:
         case WM_CAPTURECHANGED:
         case WM_CANCELMODE:
             if (g_windowMgr.m_chatWnd) g_windowMgr.m_chatWnd->CancelPointerCapture();
+            if (g_windowMgr.m_subChatWndST) g_windowMgr.m_subChatWndST->CancelPointerCapture();
+            if (g_windowMgr.m_subChatWndBT) g_windowMgr.m_subChatWndBT->CancelPointerCapture();
+            if (g_windowMgr.m_captureWindow == g_windowMgr.m_subChatMiniWnd) g_windowMgr.m_captureWindow = nullptr;
             break;
         case WM_MOUSEMOVE:
             m_mouseX = GetLParamX(lParam);
@@ -1215,6 +1218,26 @@ public:
         if(!chatEnabled && g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->IsInputActive()) {
             g_windowMgr.m_chatWnd->ClearInputFocus();
             if(m_stateAdapter)m_stateAdapter->syncChat();
+        }
+        if (chatEnabled && (msg == WM_LBUTTONDOWN || msg == WM_MOUSEMOVE || msg == WM_LBUTTONUP)) {
+            const auto isAuxiliary = [](const UIWindow* window) {
+                return window && (window == g_windowMgr.m_subChatWndST || window == g_windowMgr.m_subChatWndBT
+                    || window == g_windowMgr.m_subChatMiniWnd);
+            };
+            const int x = GetUiLogicalX(lParam), y = GetUiLogicalY(lParam);
+            const bool captured = isAuxiliary(g_windowMgr.m_captureWindow);
+            if (captured || (!m_chatInput.pointerCaptured() && !g_windowMgr.m_captureWindow && !g_windowMgr.m_chatWnd->IsQtPointerCaptured()
+                && g_windowMgr.IsChatAuxiliaryAtPoint(x, y))) {
+                if (msg == WM_LBUTTONDOWN) {
+                    g_windowMgr.OnLBtnDown(x, y);
+                    SetCapture(reinterpret_cast<HWND>(m_mainWindow));
+                } else if (msg == WM_LBUTTONUP) {
+                    g_windowMgr.OnLBtnUp(x, y);
+                    if (GetCapture() == reinterpret_cast<HWND>(m_mainWindow)) ReleaseCapture();
+                } else g_windowMgr.OnMouseMove(x, y);
+                if (m_stateAdapter) m_stateAdapter->syncChat();
+                return true;
+            }
         }
         const bool nativePointerCapture=chatEnabled && (g_windowMgr.m_chatWnd->IsQtPointerCaptured() || g_windowMgr.m_captureWindow);
         const bool pointerMessage=msg==WM_MOUSEMOVE || msg==WM_LBUTTONDOWN || msg==WM_LBUTTONUP || msg==WM_LBUTTONDBLCLK || msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP || msg==WM_MOUSEWHEEL;
@@ -1322,6 +1345,7 @@ public:
                     g_windowMgr.m_chatWnd->ClearInputFocus();
                 }
                 if (g_windowMgr.m_chatWnd->HandleQtMouseDown(logicalX, logicalY)) {
+                    if (g_windowMgr.m_chatWnd->IsQtPointerCaptured()) SetCapture(reinterpret_cast<HWND>(m_mainWindow));
                     return true;
                 }
             }
@@ -1380,6 +1404,7 @@ public:
                 && g_windowMgr.m_chatWnd->HandleQtMouseUp(
                     GetUiLogicalX(lParam),
                     GetUiLogicalY(lParam))) {
+                if (GetCapture() == reinterpret_cast<HWND>(m_mainWindow)) ReleaseCapture();
                 return true;
             }
             return false;

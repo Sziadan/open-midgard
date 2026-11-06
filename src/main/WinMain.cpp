@@ -26,6 +26,7 @@
 #include "ui/UIOptionWnd.h"
 #include "ui/UiScale.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UINewChatWnd.h"
 #include "render3d/Device.h"
 #include "render3d/RenderBackend.h"
 #include "render3d/GraphicsSettings.h"
@@ -510,6 +511,13 @@ int ReadRegistry()
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if(msg==WM_UNICHAR && wParam==UNICODE_NOCHAR)return TRUE;
+    if (msg == WM_CAPTURECHANGED || msg == WM_CANCELMODE) {
+        if (g_windowMgr.m_chatWnd) g_windowMgr.m_chatWnd->CancelPointerCapture();
+        if (g_windowMgr.m_subChatWndST) g_windowMgr.m_subChatWndST->CancelPointerCapture();
+        if (g_windowMgr.m_subChatWndBT) g_windowMgr.m_subChatWndBT->CancelPointerCapture();
+        if (g_windowMgr.m_captureWindow == g_windowMgr.m_subChatMiniWnd) g_windowMgr.m_captureWindow = nullptr;
+        if (msg == WM_CANCELMODE && GetCapture() == hwnd) ReleaseCapture();
+    }
     switch (msg) {
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:

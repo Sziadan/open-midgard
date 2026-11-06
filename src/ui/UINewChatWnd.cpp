@@ -160,6 +160,7 @@ struct ChatLayoutRects {
     RECT header;
     std::array<RECT, kChatTabCount> tabs;
     RECT gearButton;
+    RECT stickButton;
     RECT history;
     RECT whisperInput;
     RECT messageInput;
@@ -464,8 +465,9 @@ ChatLayoutRects BuildChatLayoutRects(int x, int y, int w, int h)
     const bool expanded = h > 24;
     rects.header = {x + 5, y, x + w - 3, y + (expanded ? 16 : 0)};
     rects.gearButton = expanded ? RECT{x + w - 18, y + 1, x + w - 4, y + 15} : RECT{};
+    rects.stickButton = expanded ? RECT{x + w - 36, y + 1, x + w - 22, y + 15} : RECT{};
     const int tabsLeft = rects.header.left;
-    const int tabsRight = rects.gearButton.left - kChatTabGap;
+    const int tabsRight = rects.stickButton.left - kChatTabGap;
     const int availableTabWidth = (std::max)(0, tabsRight - tabsLeft - kChatTabGap * (kChatTabCount - 1));
     const int tabWidth = availableTabWidth / kChatTabCount;
     for (int index = 0; index < kChatTabCount; ++index) {
@@ -1132,6 +1134,12 @@ void UINewChatWnd::DrawNativeToHdc(HDC hdc)
     DrawTextA(hdc, messageDrawText.c_str(), -1, &messageTextRc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 #endif
 
+    if (m_expansionState != 0) {
+        RECT stick = layout.stickButton;
+        FrameRect(hdc, &stick, static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH)));
+        SetTextColor(hdc, RGB(255, 255, 255));
+        DrawTextA(hdc, "-", 1, &stick, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    }
     RestoreDC(hdc, savedDc);
 
     m_lastDrawTick = GetTickCount();
@@ -1289,6 +1297,13 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
 
     if (!PointInRectXY(layout.panel, x, y)) {
         return false;
+    }
+
+    if (PointInRectXY(layout.stickButton, x, y)) {
+        m_stickyControlDispatch = true;
+        StickOnOff(false);
+        m_stickyControlDispatch = false;
+        return true;
     }
 
     if (PointInRectXY(layout.gearButton, x, y)) {
@@ -1890,12 +1905,41 @@ void UINewChatWnd::StoreInfo()
     SaveSettings();
 }
 
+void UINewChatWnd::StickOnOff(bool sticky)
+{
+    if (g_windowMgr.m_chatWndStickOn != sticky) {
+        g_windowMgr.m_chatWndStickOn = sticky;
+        if (sticky) {
+            if (m_savedExpansionState == 0) m_savedExpansionState = 1;
+            SetActiveTab(0);
+            SetState(m_savedExpansionState);
+        } else {
+            m_savedExpansionState = m_expansionState;
+            SetState(0);
+        }
+    }
+    if (g_windowMgr.m_chatWnd == this) g_windowMgr.UpdateChatAuxiliaryVisibility();
+    Invalidate();
+}
+
+void UINewChatWnd::SetShow(int show)
+{
+    UIWindow::SetShow(show);
+    if (g_windowMgr.m_chatWnd == this) StickOnOff(g_windowMgr.m_chatWndStickOn);
+}
+
+void UINewChatWnd::Move(int x, int y)
+{
+    UIWindow::Move(x, y);
+    if (g_windowMgr.m_chatWnd == this) g_windowMgr.UpdateChatAuxiliaryVisibility();
+}
+
 void UINewChatWnd::SetState(int requested)
 {
     // Qt stores frame capture locally; native input also has the manager
     // pointer. Inline resizer/slider captures represent source child controls.
     const bool frameCaptured = (g_windowMgr.m_captureWindow == this || m_dragArmed || m_isDragging)
-        && m_resizeEdges == ChatResizeEdge_None && m_transparencyDragActive == 0;
+        && m_resizeEdges == ChatResizeEdge_None && m_transparencyDragActive == 0 && !m_stickyControlDispatch;
     if (frameCaptured) return;
     const int bottom = m_y + m_h;
     m_expansionState = ro::chat::NormalizeState(requested);
@@ -1916,6 +1960,10 @@ void UINewChatWnd::CancelPointerCapture()
 msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, msgparam_t detail, msgparam_t extra)
 {
     switch (msg) {
+    case 6:
+        if (value == 291) StickOnOff(true);
+        else if (value == 292) StickOnOff(false);
+        return 0;
     case 2:
         if (g_windowMgr.m_chatWndStickOn) SetState(ro::chat::CycleState(m_expansionState, value != 0));
         return 0;
@@ -1936,5 +1984,5 @@ msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, m
 ChatWindowLayoutDisplay UINewChatWnd::GetLayoutDisplay() const
 {
     const auto rects = BuildChatLayoutRects(0, 0, m_w, m_h);
-    return {rects.header, rects.history, rects.whisperInput, rects.messageInput, rects.gearButton, rects.tabs};
+    return {rects.header, rects.history, rects.whisperInput, rects.messageInput, rects.gearButton, rects.stickButton, rects.tabs};
 }

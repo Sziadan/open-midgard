@@ -1,0 +1,265 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+        Start   1: packet_stream_replay_checks
+  1/130 Test   #1: packet_stream_replay_checks ..........................................   Passed    5.69 sec
+        Start   2: packet_corpse_lifecycle_checks
+  2/130 Test   #2: packet_corpse_lifecycle_checks .......................................   Passed    0.08 sec
+        Start   3: packet_chat_state_checks
+  3/130 Test   #3: packet_chat_state_checks .............................................   Passed    0.10 sec
+        Start   4: chat_window_state_checks
+  4/130 Test   #4: chat_window_state_checks .............................................   Passed    0.02 sec
+        Start   5: party_position_state_checks
+  5/130 Test   #5: party_position_state_checks ..........................................   Passed    0.02 sec
+        Start   6: packet_minimap_render_checks
+  6/130 Test   #6: packet_minimap_render_checks .........................................   Passed    2.85 sec
+        Start   7: packet_item_render_checks
+  7/130 Test   #7: packet_item_render_checks ............................................   Passed   27.26 sec
+        Start   8: packet_special_item_name_render_checks
+  8/130 Test   #8: packet_special_item_name_render_checks ...............................   Passed   20.74 sec
+        Start   9: packet_rental_item_render_checks
+  9/130 Test   #9: packet_rental_item_render_checks .....................................   Passed    7.16 sec
+        Start  10: packet_commerce_item_detail_render_checks
+ 10/130 Test  #10: packet_commerce_item_detail_render_checks ............................   Passed   12.00 sec
+        Start  11: packet_item_category_render_checks
+ 11/130 Test  #11: packet_item_category_render_checks ...................................   Passed    2.66 sec
+        Start  12: packet_item_detail_toggle_render_checks
+ 12/130 Test  #12: packet_item_detail_toggle_render_checks ..............................   Passed    9.27 sec
+        Start  13: packet_npc_shop_detail_render_checks
+ 13/130 Test  #13: packet_npc_shop_detail_render_checks .................................   Passed   10.90 sec
+        Start  14: packet_npc_shop_amount_render_checks
+ 14/130 Test  #14: packet_npc_shop_amount_render_checks .................................   Passed    2.35 sec
+        Start  15: packet_npc_shop_quantity_render_checks
+ 15/130 Test  #15: packet_npc_shop_quantity_render_checks ...............................   Passed    6.85 sec
+        Start  16: packet_inventory_tab_startup_render_checks
+ 16/130 Test  #16: packet_inventory_tab_startup_render_checks ...........................   Passed   15.03 sec
+        Start  17: packet_inventory_geometry_render_checks
+ 17/130 Test  #17: packet_inventory_geometry_render_checks ..............................   Passed    5.79 sec
+        Start  18: packet_inventory_mutation_render_checks
+ 18/130 Test  #18: packet_inventory_mutation_render_checks ..............................   Passed    4.16 sec
+        Start  19: packet_inventory_show_render_checks
+ 19/130 Test  #19: packet_inventory_show_render_checks ..................................   Passed    2.69 sec
+        Start  20: packet_item_card_detail_render_checks
+ 20/130 Test  #20: packet_item_card_detail_render_checks ................................   Passed   11.31 sec
+        Start  21: packet_recovery_delta_render_checks
+ 21/130 Test  #21: packet_recovery_delta_render_checks ..................................   Passed    1.03 sec
+        Start  22: packet_chat_state_render_checks
+ 22/130 Test  #22: packet_chat_state_render_checks ......................................   Passed    1.78 sec
+        Start  23: packet_item_use_feedback_render_checks
+ 23/130 Test  #23: packet_item_use_feedback_render_checks ...............................   Passed    2.51 sec
+        Start  24: packet_item_obtain_render_checks
+ 24/130 Test  #24: packet_item_obtain_render_checks .....................................   Passed    2.04 sec
+        Start  25: packet_item_detail_geometry_render_checks
+ 25/130 Test  #25: packet_item_detail_geometry_render_checks ............................   Passed    7.78 sec
+        Start  26: ground_scope_source_check
+ 26/130 Test  #26: ground_scope_source_check ............................................   Passed    0.05 sec
+        Start  27: skill_unit_model_asset_check
+ 27/130 Test  #27: skill_unit_model_asset_check .........................................   Passed    0.06 sec
+        Start  28: use_skill_to_pos_info_packet_checks
+ 28/130 Test  #28: use_skill_to_pos_info_packet_checks ..................................   Passed    0.03 sec
+        Start  29: skill_packet_replay_runtime_checks
+ 29/130 Test  #29: skill_packet_replay_runtime_checks ...................................   Passed    0.21 sec
+        Start  30: skill_ground_scope_render_checks
+ 30/130 Test  #30: skill_ground_scope_render_checks .....................................   Passed    0.04 sec
+        Start  31: skill_packet_replay_trap_model_resource_checks
+ 31/130 Test  #31: skill_packet_replay_trap_model_resource_checks .......................   Passed    0.04 sec
+        Start  32: skill_packet_replay_double_strafe_checks
+ 32/130 Test  #32: skill_packet_replay_double_strafe_checks .............................   Passed    0.50 sec
+        Start  33: skill_packet_replay_fire_bolt_checks
+ 33/130 Test  #33: skill_packet_replay_fire_bolt_checks .................................   Passed    0.31 sec
+        Start  34: skill_packet_replay_heal_checks
+ 34/130 Test  #34: skill_packet_replay_heal_checks ......................................   Passed    0.06 sec
+        Start  35: skill_packet_replay_heal200_checks
+ 35/130 Test  #35: skill_packet_replay_heal200_checks ...................................   Passed    0.05 sec
+        Start  36: skill_packet_replay_heal2000_checks
+ 36/130 Test  #36: skill_packet_replay_heal2000_checks ..................................   Passed    0.05 sec
+        Start  37: skill_packet_replay_heal4000_checks
+ 37/130 Test  #37: skill_packet_replay_heal4000_checks ..................................   Passed    0.05 sec
+        Start  38: skill_packet_replay_blessing_checks
+ 38/130 Test  #38: skill_packet_replay_blessing_checks ..................................   Passed    0.05 sec
+        Start  39: skill_packet_replay_sonic_blow_checks
+ 39/130 Test  #39: skill_packet_replay_sonic_blow_checks ................................   Passed    0.88 sec
+        Start  40: skill_packet_replay_asura_checks
+ 40/130 Test  #40: skill_packet_replay_asura_checks .....................................   Passed    0.11 sec
+        Start  41: skill_packet_replay_grimtooth_checks
+ 41/130 Test  #41: skill_packet_replay_grimtooth_checks .................................   Passed    0.34 sec
+        Start  42: skill_packet_replay_storm_gust_checks
+ 42/130 Test  #42: skill_packet_replay_storm_gust_checks ................................   Passed    0.05 sec
+        Start  43: skill_packet_replay_meteor_storm_checks
+ 43/130 Test  #43: skill_packet_replay_meteor_storm_checks ..............................   Passed    0.05 sec
+        Start  44: skill_packet_replay_lord_of_vermilion_checks
+ 44/130 Test  #44: skill_packet_replay_lord_of_vermilion_checks .........................   Passed    0.05 sec
+        Start  45: skill_packet_replay_monster_arrow_shower47_checks
+ 45/130 Test  #45: skill_packet_replay_monster_arrow_shower47_checks ....................   Passed    0.04 sec
+        Start  46: skill_packet_replay_missing_actor_arrow_shower47_checks
+ 46/130 Test  #46: skill_packet_replay_missing_actor_arrow_shower47_checks ..............   Passed    0.04 sec
+        Start  47: skill_packet_replay_sanctuary_checks
+ 47/130 Test  #47: skill_packet_replay_sanctuary_checks .................................   Passed    0.05 sec
+        Start  48: skill_packet_replay_firewall_unit_lifecycle_checks
+ 48/130 Test  #48: skill_packet_replay_firewall_unit_lifecycle_checks ...................   Passed    3.30 sec
+        Start  49: skill_packet_replay_safety_wall_lifecycle_checks
+ 49/130 Test  #49: skill_packet_replay_safety_wall_lifecycle_checks .....................   Passed    0.07 sec
+        Start  50: skill_packet_replay_ice_wall_unit_lifecycle_checks
+ 50/130 Test  #50: skill_packet_replay_ice_wall_unit_lifecycle_checks ...................   Passed    0.08 sec
+        Start  51: skill_packet_replay_magnus_unit_lifecycle_checks
+ 51/130 Test  #51: skill_packet_replay_magnus_unit_lifecycle_checks .....................   Passed    0.08 sec
+        Start  52: skill_packet_replay_demonstration_unit_lifecycle_checks
+ 52/130 Test  #52: skill_packet_replay_demonstration_unit_lifecycle_checks ..............   Passed    0.07 sec
+        Start  53: skill_packet_replay_quagmire_unit_lifecycle_checks
+ 53/130 Test  #53: skill_packet_replay_quagmire_unit_lifecycle_checks ...................   Passed    4.42 sec
+        Start  54: skill_packet_replay_basilica_unit_lifecycle_checks
+ 54/130 Test  #54: skill_packet_replay_basilica_unit_lifecycle_checks ...................   Passed    0.07 sec
+        Start  55: skill_packet_replay_gospel_unit_lifecycle_checks
+ 55/130 Test  #55: skill_packet_replay_gospel_unit_lifecycle_checks .....................   Passed    0.07 sec
+        Start  56: skill_packet_replay_volcano_unit_lifecycle_checks
+ 56/130 Test  #56: skill_packet_replay_volcano_unit_lifecycle_checks ....................   Passed    0.08 sec
+        Start  57: skill_packet_replay_deluge_unit_lifecycle_checks
+ 57/130 Test  #57: skill_packet_replay_deluge_unit_lifecycle_checks .....................   Passed    0.07 sec
+        Start  58: skill_packet_replay_violent_gale_unit_lifecycle_checks
+ 58/130 Test  #58: skill_packet_replay_violent_gale_unit_lifecycle_checks ...............   Passed    0.07 sec
+        Start  59: skill_packet_replay_land_protector_unit_lifecycle_checks
+ 59/130 Test  #59: skill_packet_replay_land_protector_unit_lifecycle_checks .............   Passed    0.07 sec
+        Start  60: skill_packet_replay_spider_web_unit_lifecycle_checks
+ 60/130 Test  #60: skill_packet_replay_spider_web_unit_lifecycle_checks .................   Passed    0.07 sec
+        Start  61: skill_packet_replay_sanctuary_unit_lifecycle_checks
+ 61/130 Test  #61: skill_packet_replay_sanctuary_unit_lifecycle_checks ..................   Passed    0.07 sec
+        Start  62: skill_packet_replay_warp_unit_lifecycle_checks
+ 62/130 Test  #62: skill_packet_replay_warp_unit_lifecycle_checks .......................   Passed    0.09 sec
+        Start  63: skill_packet_replay_warp_map_list_checks
+ 63/130 Test  #63: skill_packet_replay_warp_map_list_checks .............................   Passed    0.04 sec
+        Start  64: skill_packet_replay_cast_cancel_checks
+ 64/130 Test  #64: skill_packet_replay_cast_cancel_checks ...............................   Passed    0.04 sec
+        Start  65: skill_packet_replay_skill_fail_ack_checks
+ 65/130 Test  #65: skill_packet_replay_skill_fail_ack_checks ............................   Passed    0.05 sec
+        Start  66: skill_packet_replay_trap_reveal_lifecycle_checks
+ 66/130 Test  #66: skill_packet_replay_trap_reveal_lifecycle_checks .....................   Passed    0.04 sec
+        Start  67: skill_packet_replay_land_mine_trigger_lifecycle_checks
+ 67/130 Test  #67: skill_packet_replay_land_mine_trigger_lifecycle_checks ...............   Passed    0.07 sec
+        Start  68: skill_packet_replay_graffiti_lifecycle_checks
+ 68/130 Test  #68: skill_packet_replay_graffiti_lifecycle_checks ........................   Passed    0.04 sec
+        Start  69: skill_packet_replay_blast_mine_trigger_lifecycle_checks
+ 69/130 Test  #69: skill_packet_replay_blast_mine_trigger_lifecycle_checks ..............   Passed    0.05 sec
+        Start  70: skill_packet_replay_claymore_trap_trigger_lifecycle_checks
+ 70/130 Test  #70: skill_packet_replay_claymore_trap_trigger_lifecycle_checks ...........   Passed    0.04 sec
+        Start  71: skill_packet_replay_sandman_trap_trigger_lifecycle_checks
+ 71/130 Test  #71: skill_packet_replay_sandman_trap_trigger_lifecycle_checks ............   Passed    0.04 sec
+        Start  72: skill_packet_replay_freezing_trap_trigger_lifecycle_checks
+ 72/130 Test  #72: skill_packet_replay_freezing_trap_trigger_lifecycle_checks ...........   Passed    0.05 sec
+        Start  73: skill_packet_replay_flasher_trap_trigger_lifecycle_checks
+ 73/130 Test  #73: skill_packet_replay_flasher_trap_trigger_lifecycle_checks ............   Passed    0.11 sec
+        Start  74: skill_packet_replay_ankle_snare_trap_trigger_lifecycle_checks
+ 74/130 Test  #74: skill_packet_replay_ankle_snare_trap_trigger_lifecycle_checks ........   Passed    0.04 sec
+        Start  75: skill_packet_replay_shockwave_trap_trigger_lifecycle_checks
+ 75/130 Test  #75: skill_packet_replay_shockwave_trap_trigger_lifecycle_checks ..........   Passed    0.05 sec
+        Start  76: skill_packet_replay_skid_trap_trigger_lifecycle_checks
+ 76/130 Test  #76: skill_packet_replay_skid_trap_trigger_lifecycle_checks ...............   Passed    0.07 sec
+        Start  77: skill_packet_replay_multi_ground_unit_world_update_checks
+ 77/130 Test  #77: skill_packet_replay_multi_ground_unit_world_update_checks ............   Passed    0.04 sec
+        Start  78: skill_packet_replay_multi_ground_unit_resource_world_update_checks
+ 78/130 Test  #78: skill_packet_replay_multi_ground_unit_resource_world_update_checks ...   Passed    0.04 sec
+        Start  79: skill_packet_replay_venom_dust_trigger_lifecycle_checks
+ 79/130 Test  #79: skill_packet_replay_venom_dust_trigger_lifecycle_checks ..............   Passed    0.11 sec
+        Start  80: skill_packet_replay_talkie_box_trigger_lifecycle_checks
+ 80/130 Test  #80: skill_packet_replay_talkie_box_trigger_lifecycle_checks ..............   Passed    0.04 sec
+        Start  81: skill_packet_replay_cast_ack013e_checks
+ 81/130 Test  #81: skill_packet_replay_cast_ack013e_checks ..............................   Passed    0.04 sec
+        Start  82: skill_packet_replay_cast_announcement_checks
+ 82/130 Test  #82: skill_packet_replay_cast_announcement_checks .........................   Passed    0.05 sec
+        Start  83: skill_packet_replay_arrow_shower47_checks
+ 83/130 Test  #83: skill_packet_replay_arrow_shower47_checks ............................   Passed    0.04 sec
+        Start  84: skill_packet_replay_skill_damage2_662_checks
+ 84/130 Test  #84: skill_packet_replay_skill_damage2_662_checks .........................   Passed    0.05 sec
+        Start  85: skill_packet_replay_skill_damage2_141_levelFFFF_checks
+ 85/130 Test  #85: skill_packet_replay_skill_damage2_141_levelFFFF_checks ...............   Passed    0.04 sec
+        Start  86: skill_packet_replay_skill_damage_position_0115_checks
+ 86/130 Test  #86: skill_packet_replay_skill_damage_position_0115_checks ................   Passed    0.04 sec
+        Start  87: skill_packet_replay_ground_skill_wave362_checks
+ 87/130 Test  #87: skill_packet_replay_ground_skill_wave362_checks ......................   Passed    0.11 sec
+        Start  88: skill_packet_replay_ground_skill_wave369_checks
+ 88/130 Test  #88: skill_packet_replay_ground_skill_wave369_checks ......................   Passed    0.11 sec
+        Start  89: skill_packet_replay_lullaby_unit_lifecycle_checks
+ 89/130 Test  #89: skill_packet_replay_lullaby_unit_lifecycle_checks ....................   Passed    0.07 sec
+        Start  90: skill_packet_replay_richman_kim_unit_lifecycle_checks
+ 90/130 Test  #90: skill_packet_replay_richman_kim_unit_lifecycle_checks ................   Passed    0.07 sec
+        Start  91: skill_packet_replay_eternal_chaos_unit_lifecycle_checks
+ 91/130 Test  #91: skill_packet_replay_eternal_chaos_unit_lifecycle_checks ..............   Passed    0.07 sec
+        Start  92: skill_packet_replay_drum_battle_field_unit_lifecycle_checks
+ 92/130 Test  #92: skill_packet_replay_drum_battle_field_unit_lifecycle_checks ..........   Passed    0.08 sec
+        Start  93: skill_packet_replay_ring_nibelungen_unit_lifecycle_checks
+ 93/130 Test  #93: skill_packet_replay_ring_nibelungen_unit_lifecycle_checks ............   Passed    0.07 sec
+        Start  94: skill_packet_replay_lokis_wail_unit_lifecycle_checks
+ 94/130 Test  #94: skill_packet_replay_lokis_wail_unit_lifecycle_checks .................   Passed    0.06 sec
+        Start  95: skill_packet_replay_into_abyss_unit_lifecycle_checks
+ 95/130 Test  #95: skill_packet_replay_into_abyss_unit_lifecycle_checks .................   Passed    0.08 sec
+        Start  96: skill_packet_replay_siegfried_unit_lifecycle_checks
+ 96/130 Test  #96: skill_packet_replay_siegfried_unit_lifecycle_checks ..................   Passed    0.08 sec
+        Start  97: skill_packet_replay_dissonance_unit_lifecycle_checks
+ 97/130 Test  #97: skill_packet_replay_dissonance_unit_lifecycle_checks .................   Passed    0.08 sec
+        Start  98: skill_packet_replay_whistle_unit_lifecycle_checks
+ 98/130 Test  #98: skill_packet_replay_whistle_unit_lifecycle_checks ....................   Passed    0.07 sec
+        Start  99: skill_packet_replay_assassin_cross_unit_lifecycle_checks
+ 99/130 Test  #99: skill_packet_replay_assassin_cross_unit_lifecycle_checks .............   Passed    0.07 sec
+        Start 100: skill_packet_replay_poem_of_bragi_unit_lifecycle_checks
+100/130 Test #100: skill_packet_replay_poem_of_bragi_unit_lifecycle_checks ..............   Passed    0.08 sec
+        Start 101: skill_packet_replay_apple_of_idun_unit_lifecycle_checks
+101/130 Test #101: skill_packet_replay_apple_of_idun_unit_lifecycle_checks ..............   Passed    0.06 sec
+        Start 102: skill_packet_replay_ugly_dance_unit_lifecycle_checks
+102/130 Test #102: skill_packet_replay_ugly_dance_unit_lifecycle_checks .................   Passed    0.08 sec
+        Start 103: skill_packet_replay_humming_unit_lifecycle_checks
+103/130 Test #103: skill_packet_replay_humming_unit_lifecycle_checks ....................   Passed    0.08 sec
+        Start 104: skill_packet_replay_dont_forget_me_unit_lifecycle_checks
+104/130 Test #104: skill_packet_replay_dont_forget_me_unit_lifecycle_checks .............   Passed    0.07 sec
+        Start 105: skill_packet_replay_fortunes_kiss_unit_lifecycle_checks
+105/130 Test #105: skill_packet_replay_fortunes_kiss_unit_lifecycle_checks ..............   Passed    0.07 sec
+        Start 106: skill_packet_replay_service_for_you_unit_lifecycle_checks
+106/130 Test #106: skill_packet_replay_service_for_you_unit_lifecycle_checks ............   Passed    0.07 sec
+        Start 107: skill_packet_replay_gravitation_unit_lifecycle_checks
+107/130 Test #107: skill_packet_replay_gravitation_unit_lifecycle_checks ................   Passed    0.06 sec
+        Start 108: skill_packet_replay_suiton_unit_lifecycle_checks
+108/130 Test #108: skill_packet_replay_suiton_unit_lifecycle_checks .....................   Passed    0.08 sec
+        Start 109: skill_packet_replay_tatamigaeshi_unit_lifecycle_checks
+109/130 Test #109: skill_packet_replay_tatamigaeshi_unit_lifecycle_checks ...............   Passed    0.07 sec
+        Start 110: skill_packet_replay_pneuma_default_unit_checks
+110/130 Test #110: skill_packet_replay_pneuma_default_unit_checks .......................   Passed    0.07 sec
+        Start 111: skill_packet_replay_kaen_unit_lifecycle_checks
+111/130 Test #111: skill_packet_replay_kaen_unit_lifecycle_checks .......................   Passed    0.58 sec
+        Start 112: skill_packet_replay_ground_drift_wind_unit_lifecycle_checks
+112/130 Test #112: skill_packet_replay_ground_drift_wind_unit_lifecycle_checks ..........   Passed    0.56 sec
+        Start 113: skill_packet_replay_ground_drift_dark_unit_lifecycle_checks
+113/130 Test #113: skill_packet_replay_ground_drift_dark_unit_lifecycle_checks ..........   Passed    0.58 sec
+        Start 114: skill_packet_replay_ground_drift_poison_unit_lifecycle_checks
+114/130 Test #114: skill_packet_replay_ground_drift_poison_unit_lifecycle_checks ........   Passed    0.57 sec
+        Start 115: skill_packet_replay_ground_drift_water_unit_lifecycle_checks
+115/130 Test #115: skill_packet_replay_ground_drift_water_unit_lifecycle_checks .........   Passed    0.57 sec
+        Start 116: skill_packet_replay_ground_drift_fire_unit_lifecycle_checks
+116/130 Test #116: skill_packet_replay_ground_drift_fire_unit_lifecycle_checks ..........   Passed    0.56 sec
+        Start 117: skill_packet_replay_job130_unit_lifecycle_checks
+117/130 Test #117: skill_packet_replay_job130_unit_lifecycle_checks .....................   Passed    0.04 sec
+        Start 118: skill_packet_replay_job136_unit_lifecycle_checks
+118/130 Test #118: skill_packet_replay_job136_unit_lifecycle_checks .....................   Passed    0.05 sec
+        Start 119: skill_packet_replay_job146_unit_lifecycle_checks
+119/130 Test #119: skill_packet_replay_job146_unit_lifecycle_checks .....................   Passed    0.07 sec
+        Start 120: skill_packet_replay_job178_unit_lifecycle_checks
+120/130 Test #120: skill_packet_replay_job178_unit_lifecycle_checks .....................   Passed    0.04 sec
+        Start 121: skill_packet_replay_job182_unit_lifecycle_checks
+121/130 Test #121: skill_packet_replay_job182_unit_lifecycle_checks .....................   Passed    0.07 sec
+        Start 122: skill_packet_replay_job185_unit_lifecycle_checks
+122/130 Test #122: skill_packet_replay_job185_unit_lifecycle_checks .....................   Passed    0.08 sec
+        Start 123: skill_packet_replay_job195_unit_lifecycle_checks
+123/130 Test #123: skill_packet_replay_job195_unit_lifecycle_checks .....................   Passed    0.07 sec
+        Start 124: skill_packet_replay_job196_unit_lifecycle_checks
+124/130 Test #124: skill_packet_replay_job196_unit_lifecycle_checks .....................   Passed    0.07 sec
+        Start 125: skill_packet_replay_job197_unit_lifecycle_checks
+125/130 Test #125: skill_packet_replay_job197_unit_lifecycle_checks .....................   Passed    0.08 sec
+        Start 126: skill_packet_replay_job199_unit_lifecycle_checks
+126/130 Test #126: skill_packet_replay_job199_unit_lifecycle_checks .....................   Passed    0.07 sec
+        Start 127: skill_packet_replay_job200_unit_lifecycle_checks
+127/130 Test #127: skill_packet_replay_job200_unit_lifecycle_checks .....................   Passed    0.06 sec
+        Start 128: skill_packet_replay_job201_unit_lifecycle_checks
+128/130 Test #128: skill_packet_replay_job201_unit_lifecycle_checks .....................   Passed    0.08 sec
+        Start 129: recovery_resurrection_packet_checks
+129/130 Test #129: recovery_resurrection_packet_checks ..................................   Passed    0.03 sec
+        Start 130: recovery_resurrection_packet_source_check
+130/130 Test #130: recovery_resurrection_packet_source_check ............................   Passed    0.08 sec
+
+100% tests passed, 0 tests failed out of 130
+
+Total Test time (real) = 181.22 sec

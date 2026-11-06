@@ -1223,6 +1223,14 @@ Item {
             icon: "option"; labelSize: 12; labelBold: false; labelFont: "Segoe UI Symbol"
         }
 
+        RoChromeButton {
+            readonly property var bounds: (chatWindowChrome.chatUi.sourceRects || {}).stick || ({})
+            objectName: "chatDetachButton"
+            x: bounds.x || 0; y: bounds.y || 0
+            width: bounds.width || 0; height: bounds.height || 0
+            visible: chatWindowChrome.chatUi.expanded !== false
+            icon: "minimize"
+        }
         RoChatContent {
             x: 0; y: 0; width: parent.width; height: parent.height
             fontPixelSize: chatWindowChrome.chatFontSize
@@ -4289,4 +4297,46 @@ Item {
             }
         }
     }
+    Repeater {
+        model: (uiState.chatWindowUi || {}).histories || []
+        delegate: Rectangle {
+            required property var modelData
+            objectName: "detachedChatHistory" + modelData.kind
+            x: modelData.x; y: modelData.y
+            width: modelData.width; height: modelData.height
+            visible: modelData.visible
+            z: modelData.layer || 0
+            color: "#2a2723"; border.color: "#80745e"
+            Rectangle { width: parent.width; height: 16; color: "#505a64" }
+            Text { x: 5; height: 16; text: modelData.kind === 0 ? "ST" : "BT"; color: "white"; font.pixelSize: 12 }
+            Text { x: parent.width - 18; height: 16; text: "x"; color: "white"; font.pixelSize: 12 }
+            Text { x: parent.width - 65; height: 16; visible: modelData.kind === 1; text: "Attach"; color: "white"; font.pixelSize: 12 }
+            ListView {
+                x: 5; y: 18; width: parent.width - 8; height: Math.max(0, parent.height - 35)
+                clip: true; interactive: false
+                model: modelData.rows || []
+                onCountChanged: positionViewAtEnd()
+                onWidthChanged: positionViewAtEnd()
+                onHeightChanged: positionViewAtEnd()
+                delegate: Text {
+                    required property var modelData
+                    width: ListView.view.width; height: 14
+                    text: modelData.text; color: modelData.color; font.pixelSize: 12
+                    textFormat: Text.PlainText; clip: true
+                }
+            }
+        }
+    }
+    Rectangle {
+        readonly property var mini: (uiState.chatWindowUi || {}).mini || ({})
+        objectName: "detachedChatMini"
+        x: mini.x || 0; y: mini.y || 0; width: 64; height: 32
+        visible: mini.visible || false; z: mini.layer || 0
+        color: "#373c41"
+        Rectangle { width: 32; height: 32; color: parent.mini.st ? "#5a789b" : "#373c41" }
+        Rectangle { x: 32; width: 32; height: 32; color: parent.mini.bt ? "#5a789b" : "#373c41" }
+        Text { x: 4; height: 32; verticalAlignment: Text.AlignVCenter; text: "ST"; color: "white"; font.pixelSize: 12 }
+        Text { x: 36; height: 32; verticalAlignment: Text.AlignVCenter; text: "BT"; color: "white"; font.pixelSize: 12 }
+    }
+
 }

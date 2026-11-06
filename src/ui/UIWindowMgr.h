@@ -1,6 +1,7 @@
 #pragma once
 #include "render/DC.h"
 #include "UIWindow.h"
+#include "UISubChatWnd.h"
 #include "ItemInfoSource.h"
 #include <array>
 #include <map>
@@ -100,6 +101,9 @@ class UIWindowMgr {
 public:
     // Window IDs (Ref-faithful, from decompiled address space)
     enum WindowId {
+        WID_SUBCHATST = 137,
+        WID_SUBCHATBT = 138,
+        WID_SUBCHATMINI = 140,
         WID_BASICINFOWND      = 0,
         WID_LOGINWND          = 1,
         WID_SELECTSERVERWND   = 3,
@@ -147,6 +151,10 @@ public:
     ~UIWindowMgr();
 
     bool Init();
+    RECT GetChatClientRect() const;
+    bool IsChatAuxiliaryAtPoint(int x, int y) const;
+    void InitializeChatAuxiliaries();
+    void UpdateChatAuxiliaryVisibility();
     int GetInventoryTabSelection();
     void SetInventoryTabSelection(int tab);
     InventoryWindowInfo GetInventoryWindowInfo();
@@ -234,6 +242,11 @@ public:
     int m_gronMsgWndShow;
     int m_chatWndStatus;
     bool m_chatWndStickOn = true;
+    bool m_onStSubChat = false, m_onBtSubChat = false;
+    std::array<SubChatWindowInfo, 2> m_subChatInfo{};
+    UISubChatHisWnd* m_subChatWndST = nullptr;
+    UISubChatHisWnd* m_subChatWndBT = nullptr;
+    UISubChatMiniWnd* m_subChatMiniWnd = nullptr;
     float m_miniMapZoomFactor;
     u32 m_miniMapArgb;
     int m_isDrawCompass;

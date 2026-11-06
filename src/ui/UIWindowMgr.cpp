@@ -973,10 +973,42 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
     ClampWindowToClient(x, y, window->m_w, window->m_h);
 }
 
+bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
+{
+    const auto* hit = HitTestWindow(x, y);
+    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd);
+}
+
+RECT UIWindowMgr::GetChatClientRect() const
+{
+    RECT client{};
+    GetUiLogicalClientRectForScale(IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f, &client);
+    return client;
+}
+
+void UIWindowMgr::InitializeChatAuxiliaries()
+{
+    // Ref main OnCreate: deleting an existing auxiliary must NOT recreate it.
+    if (m_subChatWndST) DeleteWindow(m_subChatWndST); else MakeWindow(WID_SUBCHATST);
+    if (m_subChatWndBT) DeleteWindow(m_subChatWndBT); else MakeWindow(WID_SUBCHATBT);
+    if (m_subChatMiniWnd) DeleteWindow(m_subChatMiniWnd); else MakeWindow(WID_SUBCHATMINI);
+    UpdateChatAuxiliaryVisibility();
+}
+
+void UIWindowMgr::UpdateChatAuxiliaryVisibility()
+{
+    if (!m_subChatMiniWnd) return;
+    m_subChatMiniWnd->SetShow(m_chatWnd && m_chatWnd->m_show && !m_chatWndStickOn);
+    if (m_chatWnd) m_subChatMiniWnd->SendMsg(m_chatWnd, 6, 131,
+        m_chatWnd->m_x + m_chatWnd->m_w, m_chatWnd->m_y + m_chatWnd->m_h);
+    m_subChatMiniWnd->UpdateHistoryVisibility();
+}
+
 void UIWindowMgr::EnsureChatWindowVisible()
 {
     if (!m_chatWnd) {
         m_chatWnd = new UINewChatWnd();
+        InitializeChatAuxiliaries();
         m_children.push_back(m_chatWnd);
         m_chatWnd->RestorePersistentState(m_chatInputHistory,
             m_chatWhisperTargetText,
@@ -1083,6 +1115,7 @@ bool UIWindowMgr::Init() {
 
     if (!m_chatWnd) {
         m_chatWnd = new UINewChatWnd();
+        InitializeChatAuxiliaries();
         m_children.push_back(m_chatWnd);
     }
     return true;
@@ -1091,6 +1124,22 @@ bool UIWindowMgr::Init() {
 UIWindow* UIWindowMgr::MakeWindow(int windowId)
 {
     switch (windowId) {
+    case WID_SUBCHATST:
+    case WID_SUBCHATBT: {
+        const bool bt = windowId == WID_SUBCHATBT;
+        auto*& window = bt ? m_subChatWndBT : m_subChatWndST;
+        if (!window) {
+            window = new UISubChatHisWnd(bt ? 1 : 0);
+            m_children.push_back(window);
+        }
+        return window;
+    }
+    case WID_SUBCHATMINI:
+        if (!m_subChatMiniWnd) {
+            m_subChatMiniWnd = new UISubChatMiniWnd();
+            m_children.push_back(m_subChatMiniWnd);
+        }
+        return m_subChatMiniWnd;
     case WID_BASICINFOWND:
         if (!m_basicInfoWnd) {
             m_basicInfoWnd = new UIBasicInfoWnd();
@@ -1562,6 +1611,10 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         for (auto* current=candidate;current;current=current->m_parent) if (current==window) return true;
         return false;
     };
+    const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
+    const bool nativeChatCapture = belongsToWindow(m_captureWindow)
+        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd);
+    if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
     }
@@ -1608,8 +1661,12 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         m_roMapWnd = nullptr;
     }
     if (window == m_chatWnd) {
+        m_chatWnd->StoreInfo();
         m_chatWnd = nullptr;
     }
+    if (window == m_subChatWndST) { m_subChatWndST->StoreInfo(); m_subChatWndST = nullptr; }
+    if (window == m_subChatWndBT) { m_subChatWndBT->StoreInfo(); m_subChatWndBT = nullptr; }
+    if (window == m_subChatMiniWnd) m_subChatMiniWnd = nullptr;
     if (window == m_basicInfoWnd) {
         m_basicInfoWnd = nullptr;
     }
@@ -2364,6 +2421,8 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);
+        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd))
+            SetCapture(g_hMainWnd);
     }
 }
 
@@ -2406,11 +2465,14 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
 
 void UIWindowMgr::OnLBtnUp(int x, int y)
 {
+    const bool chatCapture = m_captureWindow && (m_captureWindow == m_chatWnd || m_captureWindow == m_subChatWndST
+        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd);
     if (m_captureWindow) {
         m_captureWindow->OnLBtnUp(x, y);
         m_captureWindow = nullptr;
     }
 
+    if (chatCapture && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         if (gameMode->m_dragType != static_cast<int>(DragType::None)) {
             UIWindow* dropTarget = HitTestWindow(x, y);

@@ -1,8 +1,8 @@
 # Packet implementation status
 
-**Latest checkpoint (2026-11-06):** [PK09.21 main chat state phase](evidence/PK09.21-main-state.md) restores source expansion, signed cycles, bottom anchoring and shared native/Qt editor geometry. Main-state, capture and actual Qt focus checks pass; eight UI frames are retained. Full root130/130 and standalone461/461 pass. Sticky mode, mini and detached histories remain unfinished under the same IN_PROGRESS leaf.
+**Latest checkpoint (2026-11-06):** [PK09.21 detached family ownership](evidence/PK09.21-family.md) adds managed histories137/138 and mini140, sticky save/restore, independent half-trimmed rows, cached geometry and native/Qt presentation. Real hidden-HWND tests cover outside-client release, cancellation and replacement capture. Full root130/130 and standalone461/461 pass. Source producer routing, full history interaction/options, persistent restore and active Qt/scale acceptance remain unfinished.
 
-**Active step: PK09.21.** Finish [chat sticky/history ownership](work-items/PK09.21.md) under still-open PK09.04. Latest checkpoint subject: `packet(PK09.21): restore main chat state transitions`. Preserve completed PK45.06 sprite/model corpse lifecycles; broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.
+**Active step: PK09.21.** Finish [source chat routing and remaining lifecycle acceptance](work-items/PK09.21.md) under still-open PK09.04. Latest checkpoint subject: `packet(PK09.21): restore detached chat family ownership`. Preserve main-state and completed PK45.06 sprite/model corpse proofs; broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.
 
 - PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing now pass PK09.15.
 - PK09.13 restores inventory whole-record fallback, source dimensions/normalization, mini and original height, native/Qt resize and explicit managed close/recreation. Parent detail geometry now passes PK09.14; separate card and map/show lifetime now pass PK09.15/PK09.16.
