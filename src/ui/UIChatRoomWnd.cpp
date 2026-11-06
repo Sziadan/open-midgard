@@ -8,12 +8,19 @@
 #include "core/Globals.h"
 #include "core/ClientInfoLocale.h"
 #include "core/UiMessageStrings.h"
+#include "core/SettingsIni.h"
+#include "network/Connection.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "session/Session.h"
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 #if RO_ENABLE_QT6_UI
 #include <QFont>
+#include <QFontMetrics>
 #include <QImage>
 #include <QPainter>
 #endif
@@ -181,8 +188,52 @@ void UIChatRoomWnd::OnMouseMove(int x,int y){
     }else if(m_resizing)ResizeSource(m_oldW+x-m_startX,m_oldH+y-m_startY);
     else if(m_dragging)Move(m_oldX+x-m_startX,m_oldY+y-m_startY);
 }
-void UIChatRoomWnd::CancelPointerCapture(){m_dragging=m_resizing=m_scrollDragging=false;if(g_windowMgr.m_captureWindow==this)g_windowMgr.m_captureWindow=nullptr;}
+void UIChatRoomWnd::CancelPointerCapture(){m_dragging=m_resizing=m_scrollDragging=m_memberRightCapture=false;if(g_windowMgr.m_captureWindow==this)g_windowMgr.m_captureWindow=nullptr;}
 void UIChatRoomWnd::OnLBtnUp(int,int){if(m_dragging || m_resizing)StoreInfo();CancelPointerCapture();}
+void UIChatRoomWnd::OnRBtnDown(int x,int y){m_memberRightCapture=Contains(GetLayout().members,x-m_x,y-m_y);}
+void UIChatRoomWnd::OnRBtnUp(int x,int y){const bool open=m_memberRightCapture;m_memberRightCapture=false;if(open)OpenMemberMenu(x,y);}
+void UIChatRoomWnd::OpenMemberMenu(int x,int y)
+{
+    m_menuItems.clear();if(g_windowMgr.m_chatRoomMenuWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomMenuWnd);
+    const std::string self=g_session.GetPlayerName();const auto local=m_members.find(self);
+    if(local==m_members.end() || local->second==0xffffffffu)return;
+    ro::UiMessageStrings table;table.Load();
+    const auto add=[&](int action,int message,const char* fallback){m_menuItems.push_back({action,table.Get(message,fallback)});};
+    const int selected=m_memberView.selected;
+    if(selected<0){if(local->second==0)add(2,126,"Room settings");add(11,312,"Save chat");}
+    else if(selected<static_cast<int>(m_memberRows.size())){
+        const auto& name=m_memberRows[selected].name;const auto target=m_members.find(name);
+        if(target==m_members.end() || target->second==0xffffffffu)return;
+        if(local->second==0 || local->second==1){
+            if(local->second==0 && name!=self){add(0,127,"Remove member");add(1,128,"Transfer ownership");}
+            add(3,129,"Character information");
+            if(name!=self && g_serverType!=ServerInstantEvent && !g_session.IsFriendName(name.c_str()))add(21,358,"Add friend");
+            if(local->second==0)add(2,126,"Room settings");
+        }
+    }
+    if(m_menuItems.empty())return;
+    g_windowMgr.m_chatRoomMenuWnd=new UIChatRoomMenuWnd(m_menuItems,x,y);
+    g_windowMgr.m_children.push_back(g_windowMgr.m_chatRoomMenuWnd);
+}
+bool UIChatRoomWnd::WriteChatToFile()
+{
+    std::string title(m_info.title.c_str());for(auto& c:title)if(std::string_view("\\/:*?\"<>|").find(c)!=std::string_view::npos)c='_';
+    // The port's writable application-data owner replaces original g_baseDir3.
+    const auto directory=GetOpenMidgardIniPath().parent_path()/"Chat";std::error_code error;
+    std::filesystem::create_directories(directory,error);if(error)return false;
+    auto path=directory/std::filesystem::u8path(title+".txt");unsigned suffix=0;
+    while(std::filesystem::exists(path,error)){
+        std::ostringstream name;name<<title<<std::setfill('0')<<std::setw(3)<<++suffix<<".txt";
+        path=directory/std::filesystem::u8path(name.str());if(error || !suffix)return false;
+    }
+    if(error)return false;std::ofstream file(path,std::ios::binary);if(!file)return false;
+    // Original Windows fopen("w") translates every LF, including embedded LFs.
+    // Spell this out so exports have identical bytes on every host.
+    for(const auto& row:m_rows){for(char c:row.text){if(c=='\n')file.put('\r');file.put(c);}file.write("\r\n",2);}
+    file.close();if(!file)return false;
+    const auto notice=path.u8string()+" is Saved.";g_windowMgr.SendMsg(3,0,0,0);
+    g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),65280);return true;
+}
 void UIChatRoomWnd::OnWheel(int delta){ScrollHistory(delta>=0?-3:3);}
 void UIChatRoomWnd::SetInputText(const std::string& text){m_pendingUtf8.clear();m_input=ro::chat::CleanInput(text,70,70);Invalidate();}
 bool UIChatRoomWnd::SubmitInput(){
@@ -221,10 +272,23 @@ void UIChatRoomWnd::OnChar(char value)
 void UIChatRoomWnd::OnKeyDown(int key){if(key==VK_RETURN)SubmitInput();}
 msgresult_t UIChatRoomWnd::SendMsg(UIWindow* sender,int msg,msgparam_t value,msgparam_t detail,msgparam_t extra){
     switch(msg){
-    case 48:
-        if(value==2){auto* settings=static_cast<UIChatRoomSettingsWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_CHATROOMCHANGE));
+    case 49:OpenMemberMenu(m_x+GetLayout().members.left,m_y+GetLayout().members.top);return 0;
+    case 48: {
+        if(value<0 || static_cast<std::size_t>(value)>=m_menuItems.size())return 0;
+        const int action=m_menuItems[static_cast<std::size_t>(value)].action;
+        const int selected=m_memberView.selected;std::string name;
+        if(selected>=0 && selected<static_cast<int>(m_memberRows.size()))name=m_memberRows[selected].name;
+        if(action==0 || action==1){if(!name.empty())return g_modeMgr.SendMsg(action==0?52:51,reinterpret_cast<msgparam_t>(name.c_str()),0,0);}
+        else if(action==2){auto* settings=static_cast<UIChatRoomSettingsWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_CHATROOMCHANGE));
             if(settings)if(auto* mode=g_modeMgr.GetCurrentGameMode())settings->SetInfo(mode->m_lastChatroomInfo);}
+        else if(action==3)g_windowMgr.ShowRoomValidationMessage(191);
+        else if(action==11)return WriteChatToFile()?1:0;
+        else if(action==21 && !name.empty()){
+            if(name.size()<=24){std::array<char,26> packet{};packet[0]=2;packet[1]=2;std::copy(name.begin(),name.end(),packet.begin()+2);
+                return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;}
+        }
         return 0;
+    }
     case 3:ScrollHistory(1-m_view.rows);return 0;
     case 4:ScrollHistory(m_view.rows-1);return 0;
     case 14:if(value==7)ResizeSource(static_cast<int>(detail),static_cast<int>(extra));return 0;
@@ -237,4 +301,35 @@ msgresult_t UIChatRoomWnd::SendMsg(UIWindow* sender,int msg,msgparam_t value,msg
     case 6:if(value==135)g_modeMgr.SendMsg(53,0,0,0);else if(value==118)SubmitInput();return 0;
     default:return UIWindow::SendMsg(sender,msg,value,detail,extra);
     }
+}
+
+UIChatRoomMenuWnd::UIChatRoomMenuWnd(const std::vector<RoomMenuItem>& items,int x,int y):m_items(items)
+{
+    m_id=10018;int width=20;
+#if RO_ENABLE_QT6_UI
+    QFont font("Segoe UI");font.setPixelSize(12);QFontMetrics metrics(font);
+    for(const auto& item:items)width=(std::max)(width,metrics.horizontalAdvance(QString::fromUtf8(item.label.c_str())));
+#else
+    for(const auto& item:items)width=(std::max)(width,static_cast<int>(item.label.size())*6);
+#endif
+    Create(width+6,static_cast<int>(items.size())*14);const auto client=g_windowMgr.GetChatClientRect();
+    Move((std::min)((std::max)(1,x+1),static_cast<int>(client.right)-m_w),(std::min)((std::max)(1,y+1),static_cast<int>(client.bottom)-m_h));
+}
+void UIChatRoomMenuWnd::OnLBtnUp(int x,int y)
+{
+    const int index=x>=m_x && x<m_x+m_w && y>=m_y && y<m_y+m_h?(y-m_y)/14:-1;
+    m_hover=index;Invalidate();
+    if(index<0)return; // Source leaves an outside release open.
+    // Source resolves caller WID28 at dispatch; the popup can outlive the room.
+    if(auto* caller=g_windowMgr.m_chatRoomWnd)caller->SendMsg(nullptr,48,index,0,0);
+    if(g_windowMgr.m_chatRoomMenuWnd==this)g_windowMgr.DeleteWindow(this);
+}
+void UIChatRoomMenuWnd::OnMouseMove(int x,int y){const int hover=x>=m_x && x<m_x+m_w && y>=m_y && y<m_y+m_h?(y-m_y)/14:-1;if(hover!=m_hover){m_hover=hover;Invalidate();}}
+void UIChatRoomMenuWnd::OnDraw()
+{
+    auto dc=AcquireDrawTarget();if(!dc)return;const int saved=SaveDC(dc);IntersectClipRect(dc,m_x,m_y,m_x+m_w,m_y+m_h);
+    Box(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(240,240,240));
+    for(int i=0;i<static_cast<int>(m_items.size());++i){if(i==m_hover)Box(dc,{m_x+3,m_y+14*i+1,m_x+m_w-3,m_y+14*i+13},RGB(50,200,200));
+        Text(dc,{m_x+3,m_y+14*i+1,m_x+m_w,m_y+14*i+15},m_items[i].label,0);}
+    RestoreDC(dc,saved);ReleaseDrawTarget(dc);
 }

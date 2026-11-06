@@ -3518,3 +3518,11 @@ Integrated WID27/30, source validation message boxes, real manner loader/matchin
 Deploy-off build passes; focused4/4 in8.50s, root149/149 in25.45s, standalone468/468 in12.81s; four raw room replay cases pass. Ten new positive frames and one result JSON retained. See [settings evidence](evidence/PK09.21-settings.md) and provenance. Subject: `packet(PK09.21): restore room creation and settings`.
 
 PK09.21 remains IN_PROGRESS with null completion subject. Next strong integration is role-dependent owner/member menus and mode51/52, then dedicated whisper. Exact form/message/radio artwork, source viewer wrapping, full editor/command/codepage, active Qt/global overlap, broad scales, discovery and independent/deployed gates remain open. Work-item and handoff instructions distinguish represented behavior from remaining acceptance.
+
+## 2026-11-06 — PK09.21 room member actions reviewed partial checkpoint
+
+Source member right release now opens role-dependent managed native/QML menus, preserving selection, source menu-index dispatch, self/info/settings branches and friend/server restrictions. Mode51/52 send E0/E2 with receipt-owned roles/membership; friend21 sends0202; info3 uses unsupported191. Room export sanitizes filenames, uses first-unused%03d, reproduces embedded Windows LF translation and explicitly expands main before the green saved-path notice. Source popup18 conflicts with port NPC18 and uses a dedicated10018 owner instead. A final selected-PE audit preserves the independent menu after room deletion, with current-room lookup and safe stale-index rejection; captured release and100/125% rendering are checked.
+
+Deploy-off build passes; root149/149 in27.39s, standalone468/468 in13.69s; five final raw room cases pass. Four new frames and a result JSON retained. Strong review corrected prior plan/fixture action-ID, self/settings and rounded-transform assumptions and a production export-byte defect. See [member-actions evidence](evidence/PK09.21-actions.md) and provenance. Subject: `packet(PK09.21): restore room member actions`.
+
+Dedicated whisper is next; bounded source inventory is ready for strong PE/ownership review. PK09.21 remains IN_PROGRESS with null completion subject. No parent, broad producer/editor/locale/art/active Qt/global scale, discovery, independent or deployed closure is claimed.

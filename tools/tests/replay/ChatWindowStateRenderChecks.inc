@@ -2,6 +2,7 @@
 #include "ChatRoomRenderChecks.inc"
 #include "ChatRoomEntryRenderChecks.inc"
 #include "ChatRoomSettingsRenderChecks.inc"
+#include "ChatRoomActionsRenderChecks.inc"
 #include "ChatBattleOptionsRenderChecks.inc"
 #include "ui/UINewChatWnd.h"
 
@@ -387,5 +388,6 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     CheckChatRoomUi(app,view,state,mode,adapter,output);
     CheckChatRoomEntryUi(app,view,state,mode,adapter,output);
     CheckChatRoomSettingsUi(app,view,state,mode,adapter,output);
+    CheckChatRoomActionsUi(app,view,state,mode,adapter,output);
 
 }

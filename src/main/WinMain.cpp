@@ -527,6 +527,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (g_windowMgr.m_subChatWndBT) g_windowMgr.m_subChatWndBT->CancelPointerCapture();
         if (g_windowMgr.m_battleMsgOptionWnd) g_windowMgr.m_battleMsgOptionWnd->CancelPointerCapture();
         if (g_windowMgr.m_captureWindow == g_windowMgr.m_subChatMiniWnd) g_windowMgr.m_captureWindow = nullptr;
+        if (g_windowMgr.m_captureWindow == g_windowMgr.m_chatRoomMenuWnd) g_windowMgr.m_captureWindow = nullptr;
         if (msg == WM_CANCELMODE && GetCapture() == hwnd) ReleaseCapture();
     }
     switch (msg) {

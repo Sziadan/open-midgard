@@ -43,6 +43,7 @@ class UIMinimapZoomWnd;
 class UIStatusWnd;
 class UINewChatWnd;
 class UIChatRoomWnd;
+class UIChatRoomMenuWnd;
 class UIChatRoomSettingsWnd;
 class UIChatRoomMessageBox;
 class UIChatRoomPasswordWnd;
@@ -269,6 +270,7 @@ public:
     UIChatRoomSettingsWnd* m_chatRoomChangeWnd=nullptr;
     UIChatRoomMessageBox* m_roomMessageBox=nullptr;
     UIChatRoomWnd* m_chatRoomWnd = nullptr;
+    UIChatRoomMenuWnd* m_chatRoomMenuWnd=nullptr;
     UIChatRoomPasswordWnd* m_chatRoomPasswordWnd = nullptr;
     UISubChatHisWnd* m_subChatWndST = nullptr;
     UISubChatHisWnd* m_subChatWndBT = nullptr;

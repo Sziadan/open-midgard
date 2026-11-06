@@ -68,7 +68,7 @@ void CheckChatRoomSettingsUi(QGuiApplication& app,QQuickView& view,QtUiState* st
     WindowProc(g_hMainWnd,WM_CHAR,'z',0);Require(make->GetTitleText()=="BAD","modal leaked text into settings");
     WindowProc(g_hMainWnd,WM_KEYDOWN,VK_ESCAPE,0);Require(g_windowMgr.m_editWindow==make,"modal did not restore settings focus");
     g_windowMgr.DeleteWindow(make);g_windowMgr.MakeWindow(UIWindowMgr::WID_CHATROOMWND);
-    mode.m_lastChatroomInfo={"Prior","abcd",0,3,2,0x11223344};g_windowMgr.m_chatRoomWnd->SendMsg(nullptr,48,2,0,0);
+    mode.m_lastChatroomInfo={"Prior","abcd",0,3,2,0x11223344};g_windowMgr.m_chatRoomWnd->AddMember(g_session.GetPlayerName(),0);g_windowMgr.m_chatRoomWnd->OpenMemberMenu(0,0);g_windowMgr.m_chatRoomWnd->SendMsg(nullptr,48,1,0,0);
     auto* change=g_windowMgr.m_chatRoomChangeWnd;Require(change && change->GetPeople()==2 && change->GetPeopleLabel().find("20")==0,"actual settings prefill quirks changed");
     WindowProc(g_hMainWnd,WM_CHAR,'N',0);Require(change->GetTitleText()=="N","native selected title was not replaced");
     SetRuntimeUiScalePercent(125);capture("chat-settings-change-125");

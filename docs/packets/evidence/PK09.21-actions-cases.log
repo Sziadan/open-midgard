@@ -1,0 +1,5 @@
+{"case_id":"chat_room_packet_lifecycle","contract_id":"PK09.21","outcome":"PASS"}
+{"case_id":"chat_room_acknowledgements","contract_id":"PK09.21","known_empty_create_notice":true,"d6_da_domain":true,"actual_e3_f3_96_wire":true,"outcome":"PASS"}
+{"case_id":"chat_room_title_and_entry","contract_id":"PK09.21","actual_d9_wire":true,"wait_boundary":true,"actor_manager_lifetime":true,"projected_anchor":true,"outcome":"PASS"}
+{"case_id":"chat_room_settings","contract_id":"PK09.21","source_manner":true,"modal_validation":true,"actual_d5_de":true,"pending_before_send":true,"source_prefill":true,"trickdead":true,"outcome":"PASS"}
+{"case_id":"chat_room_actions","contract_id":"PK09.21","source_menu_index":true,"actual_e0_e2_friend":true,"receipt_owned_roles":true,"stale_selection":true,"source_export":true,"outcome":"PASS"}

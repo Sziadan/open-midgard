@@ -1,0 +1,23 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 10: packet_chat_room_checks
+1/3 Test #10: packet_chat_room_checks ...........***Failed    0.45 sec
+{"case_id":"chat_room_packet_lifecycle","contract_id":"PK09.21","outcome":"PASS"}
+{"case_id":"chat_room_acknowledgements","contract_id":"PK09.21","known_empty_create_notice":true,"d6_da_domain":true,"actual_e3_f3_96_wire":true,"outcome":"PASS"}
+{"case_id":"chat_room_title_and_entry","contract_id":"PK09.21","actual_d9_wire":true,"wait_boundary":true,"actor_manager_lifetime":true,"projected_anchor":true,"outcome":"PASS"}
+{"case_id":"chat_room_settings","stage":"PK09.21","fixture_id":"source-manner-modal-d5-de","production_entry":"source manner bytes -> room validation modal -> real D5/DE -> pending metadata and receipts","runtime_baseline_commit":"af41f6484cb7ff31825296babe4b913aa36c4c67","source_commit_at_configure":"5b8bf92436073b17d944e5bfd13299f0f81d86e6","source_tree_status_at_configure":"dirty","invocation_count":0,"expected_packet_hex":null,"actual_packet_hex":null,"expected_queue_remainder":null,"actual_queue_remainder":null,"outcome":"FAIL","error":"source pending prefill/last-label/selection quirks changed"}
+
+    Start 12: chat_room_packet_checks
+2/3 Test #12: chat_room_packet_checks ...........   Passed    0.02 sec
+    Start 41: packet_chat_state_render_checks
+3/3 Test #41: packet_chat_state_render_checks ...***Failed    8.56 sec
+FAIL item colour render: room menu native/QML scaled bounds differ
+
+
+33% tests passed, 2 tests failed out of 3
+
+Total Test time (real) =   9.04 sec
+
+The following tests FAILED:
+	 10 - packet_chat_room_checks (Failed)
+	 41 - packet_chat_state_render_checks (Failed)
+Errors while running CTest

@@ -1924,6 +1924,13 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         }
         return (windowIndex - mainIndex) * 0.0001;
     };
+    QVariantMap roomMenu;
+    if(const auto* menu=g_windowMgr.m_chatRoomMenuWnd){QVariantList rows;
+        for(const auto& item:menu->GetItems())rows.push_back(QVariantMap{{"action",item.action},{"text",ToQString(item.label)}});
+        roomMenu={{"visible",IsGameplayWindowVisible(state,menu)},{"layer",chatLayer(menu)},{"x",menu->m_x},{"y",menu->m_y},
+            {"width",menu->m_w},{"height",menu->m_h},{"hover",menu->GetHoverIndex()},{"rows",rows}};
+    }
+    chatUi.insert("roomMenu",roomMenu);
     const auto roomButton=[](const RoomSettingsButton& button,int status){
         const auto bounds=button.Bounds();const auto& bitmap=button.bitmaps[status];
         return QVariantMap{{"id",button.id},{"x",static_cast<int>(bounds.left)},{"y",static_cast<int>(bounds.top)},

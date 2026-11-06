@@ -4,6 +4,22 @@ Item {
     id: forms
     property var settings: []
     property var message: ({})
+    property var menu: ({})
+    Rectangle {
+        parent: forms.parent
+        objectName: "sourceRoomMenu"
+        x: forms.menu.x || 0; y: forms.menu.y || 0; width: forms.menu.width || 0; height: forms.menu.height || 0
+        z: forms.menu.layer || 0; visible: forms.menu.visible || false; color: "#f0f0f0"; clip: true
+        Repeater {
+            model: forms.menu.rows || []
+            delegate: Item {
+                required property var modelData; required property int index
+                y: index*14; width: parent.width; height: 14
+                Rectangle { x: 3; y: 1; width: parent.width-6; height: 12; color: "#32c8c8"; visible: index === forms.menu.hover }
+                Text { x: 3; y: 1; width: parent.width-3; height: 14; clip: true; text: modelData.text; textFormat: Text.PlainText; font.family: "Segoe UI"; font.pixelSize: 12; color: "black" }
+            }
+        }
+    }
     component SourceButton: Rectangle {
         property var button: ({})
         x: button.x || 0; y: button.y || 0; width: button.width || 0; height: button.height || 0

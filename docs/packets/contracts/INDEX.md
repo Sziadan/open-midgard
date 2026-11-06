@@ -132,3 +132,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.21 labels and restore](../evidence/PK09.21-restore.md) records selected language IDs, empty/missing semantics, source physical-height placement order, write-only startup status, geometry/toggle/show preferences and full teardown PE adjudication. Room/whisper/producers/bubbles, exact skin/locale and full acceptance remain open.
 
 [PK09.21 room creation and settings](../evidence/PK09.21-settings.md) records source validation/filter, real D5/DE, pending metadata, modal/capture/native-QML checks and strong-review corrections. Owner menus/actions and broad acceptance remain open.
+
+[Room member actions](../evidence/PK09.21-actions.md) now implement source-indexed role menus, E0/E2, friend0202, unsupported modal and room-history export. Preserve the corrected self/settings branches. Dedicated whisper and full chat acceptance remain open.

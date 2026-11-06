@@ -10887,6 +10887,12 @@ bool CGameMode::SendChatRoomSettings(const ro::chat::RoomInfo& info,bool change)
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     switch (msg) {
+    case 51:case 52: {
+        if(!wparam)return 0;const std::string_view name(reinterpret_cast<const char*>(wparam));
+        std::vector<std::uint8_t> packet;
+        const bool built=msg==51?ro::chat::BuildRoomRoleRequest(static_cast<u32>(lparam),name,packet):ro::chat::BuildRoomKickRequest(name,packet);
+        return built && CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
+    }
     case 48:case 49:return wparam && SendChatRoomSettings(*reinterpret_cast<const ro::chat::RoomInfo*>(wparam),msg==49)?1:0;
     case 50:return RequestEnterChatRoom(static_cast<u32>(wparam),reinterpret_cast<const char*>(lparam),GetTickCount())?1:0;
     case 53: {

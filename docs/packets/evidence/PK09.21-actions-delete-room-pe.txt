@@ -1,0 +1,60 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004dfcd4 <.text+0xdecd4>:
+  4dfcd4:	8b 86 10 01 00 00    	mov    0x110(%esi),%eax
+  4dfcda:	3b c7                	cmp    %edi,%eax
+  4dfcdc:	0f 84 e4 19 00 00    	je     0x4e16c6
+  4dfce2:	8b 8e 1c 02 00 00    	mov    0x21c(%esi),%ecx
+  4dfce8:	89 45 08             	mov    %eax,0x8(%ebp)
+  4dfceb:	3b c1                	cmp    %ecx,%eax
+  4dfced:	75 06                	jne    0x4dfcf5
+  4dfcef:	89 be 1c 02 00 00    	mov    %edi,0x21c(%esi)
+  4dfcf5:	3b 86 20 02 00 00    	cmp    0x220(%esi),%eax
+  4dfcfb:	75 06                	jne    0x4dfd03
+  4dfcfd:	89 be 20 02 00 00    	mov    %edi,0x220(%esi)
+  4dfd03:	3b 86 24 02 00 00    	cmp    0x224(%esi),%eax
+  4dfd09:	75 06                	jne    0x4dfd11
+  4dfd0b:	89 be 24 02 00 00    	mov    %edi,0x224(%esi)
+  4dfd11:	8b 46 44             	mov    0x44(%esi),%eax
+  4dfd14:	8d 4e 40             	lea    0x40(%esi),%ecx
+  4dfd17:	8d 55 08             	lea    0x8(%ebp),%edx
+  4dfd1a:	52                   	push   %edx
+  4dfd1b:	50                   	push   %eax
+  4dfd1c:	8d 45 fc             	lea    -0x4(%ebp),%eax
+  4dfd1f:	50                   	push   %eax
+  4dfd20:	e8 bb b7 00 00       	call   0x4eb4e0
+  4dfd25:	89 be 10 01 00 00    	mov    %edi,0x110(%esi)
+  4dfd2b:	5f                   	pop    %edi
+  4dfd2c:	b0 01                	mov    $0x1,%al
+  4dfd2e:	5e                   	pop    %esi
+  4dfd2f:	8b e5                	mov    %ebp,%esp
+  4dfd31:	5d                   	pop    %ebp
+  4dfd32:	c2 04 00             	ret    $0x4
+  4dfd35:	8b 86 c0 00 00 00    	mov    0xc0(%esi),%eax
+  4dfd3b:	3b c7                	cmp    %edi,%eax
+  4dfd3d:	0f 84 83 19 00 00    	je     0x4e16c6
+  4dfd43:	8b 8e 1c 02 00 00    	mov    0x21c(%esi),%ecx
+  4dfd49:	89 45 08             	mov    %eax,0x8(%ebp)
+  4dfd4c:	3b c1                	cmp    %ecx,%eax
+  4dfd4e:	75 06                	jne    0x4dfd56
+  4dfd50:	89 be 1c 02 00 00    	mov    %edi,0x21c(%esi)
+  4dfd56:	3b 86 20 02 00 00    	cmp    0x220(%esi),%eax
+  4dfd5c:	75 06                	jne    0x4dfd64
+  4dfd5e:	89 be 20 02 00 00    	mov    %edi,0x220(%esi)
+  4dfd64:	3b 86 24 02 00 00    	cmp    0x224(%esi),%eax
+  4dfd6a:	75 06                	jne    0x4dfd72
+  4dfd6c:	89 be 24 02 00 00    	mov    %edi,0x224(%esi)
+  4dfd72:	8b 46 44             	mov    0x44(%esi),%eax
+  4dfd75:	8d 4e 40             	lea    0x40(%esi),%ecx
+  4dfd78:	8d 55 08             	lea    0x8(%ebp),%edx
+  4dfd7b:	52                   	push   %edx
+  4dfd7c:	50                   	push   %eax
+  4dfd7d:	8d 45 fc             	lea    -0x4(%ebp),%eax
+  4dfd80:	50                   	push   %eax
+  4dfd81:	e8                   	.byte 0xe8
+  4dfd82:	5a                   	pop    %edx
+  4dfd83:	b7                   	.byte 0xb7

@@ -979,7 +979,7 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
 bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 {
     const auto* hit = HitTestWindow(x, y);
-    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox);
+    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd);
 }
 
 RECT UIWindowMgr::GetChatClientRect() const
@@ -1206,7 +1206,7 @@ void UIWindowMgr::ShowRoomValidationMessage(int messageId)
     ro::UiMessageStrings table;table.Load();
     const char* fallback=messageId==13?"Please enter a room title.":messageId==14?"That title cannot be used.":messageId==15?"Please enter a password."
         :messageId==16?"Please enter at least four password characters.":messageId==190?"Only English text is allowed."
-        :messageId==661?"You cannot create a room while playing dead.":"You cannot create a chat room while a shop is open.";
+        :messageId==191?"Not supported yet.":messageId==661?"You cannot create a room while playing dead.":"You cannot create a chat room while a shop is open.";
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_captureWindow))settings->CancelPointerCapture();
     if(m_chatWnd)m_chatWnd->CancelPointerCapture();
     if(g_hMainWnd && GetCapture()==g_hMainWnd)ReleaseCapture();
@@ -1752,7 +1752,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox);
+        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd);
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -1807,6 +1807,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if (window == m_chatRoomMakeWnd)m_chatRoomMakeWnd=nullptr;
     if (window == m_chatRoomChangeWnd)m_chatRoomChangeWnd=nullptr;
     if (window == m_roomMessageBox)m_roomMessageBox=nullptr;
+    if (window == m_chatRoomMenuWnd)m_chatRoomMenuWnd=nullptr;
     if (window == m_chatRoomPasswordWnd) m_chatRoomPasswordWnd=nullptr;
     if (window == m_chatRoomWnd) { m_chatRoomWnd->StoreInfo();m_chatRoomWnd=nullptr; }
     if (window == m_subChatWndST) { m_subChatWndST->StoreInfo(); m_subChatWndST = nullptr; }
@@ -2594,7 +2595,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);
-        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox))
+        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd))
             SetCapture(g_hMainWnd);
     }
 }
@@ -2639,7 +2640,7 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
 void UIWindowMgr::OnLBtnUp(int x, int y)
 {
     const bool chatCapture = m_captureWindow && (m_captureWindow == m_chatWnd || m_captureWindow == m_subChatWndST
-        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd || m_captureWindow==m_chatRoomMakeWnd || m_captureWindow==m_chatRoomChangeWnd || m_captureWindow==m_roomMessageBox);
+        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd || m_captureWindow==m_chatRoomMakeWnd || m_captureWindow==m_chatRoomChangeWnd || m_captureWindow==m_roomMessageBox || m_captureWindow==m_chatRoomMenuWnd);
     if (m_captureWindow) {
         m_captureWindow->OnLBtnUp(x, y);
         m_captureWindow = nullptr;
@@ -2868,7 +2869,7 @@ bool UIWindowMgr::HasGameplayInputModal() const
 }
 bool UIWindowMgr::HasNativePopupAtPoint(int x,int y) const
 {
-    const UIWindow* windows[]={m_itemInfoWnd,m_cardInfoWnd,m_skillDescribeWnd};
+    const UIWindow* windows[]={m_itemInfoWnd,m_cardInfoWnd,m_skillDescribeWnd,m_chatRoomMenuWnd};
     for(const auto* w:windows)if(w&&w->m_show&&x>=w->m_x&&y>=w->m_y&&x<w->m_x+w->m_w&&y<w->m_y+w->m_h)return true;
     return false;
 }

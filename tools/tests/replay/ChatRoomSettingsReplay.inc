@@ -96,7 +96,7 @@ void ChatRoomSettingsReplay()
     // Source D6 consumes the latest global pending metadata, not a fabricated FIFO.
     dispatch({0xd6,0,0});auto* room=g_windowMgr.m_chatRoomWnd;Require(room && room->GetInfo().title=="Latest" && !mode.m_isWaitingEnterRoom,"D6 did not consume latest pending metadata");
     auto active=room->GetInfo();active.roomId=0x11223344;active.title="Active";active.numPeople=9;room->SetInfo(active);
-    mode.m_lastChatroomInfo={"Prior","abcd",0,3,2,0x11223344};room->SendMsg(nullptr,48,2,0,0);
+    mode.m_lastChatroomInfo={"Prior","abcd",0,3,2,0x11223344};room->OpenMemberMenu(0,0);room->SendMsg(nullptr,48,0,0,0);
     auto* change=g_windowMgr.m_chatRoomChangeWnd;Require(change && change->GetPeople()==2 && change->GetPeopleLabel().find("20")==0
         && change->GetTitleText()=="Prior" && change->HasSelectedTitle(),"source pending prefill/last-label/selection quirks changed");
     change->OnChar('N');Require(change->GetTitleText()=="N","change prefill title was not selected for replacement");
@@ -107,7 +107,7 @@ void ChatRoomSettingsReplay()
         "DE optimistically changed active info or lost source pending-copy fields");
     dispatch(RoomListingFrame(0xdf,0x55667788,0x11223344,5,4,1,"Server title"));
     Require(room->GetInfo().title=="Server title" && room->GetInfo().numPeople==4 && mode.m_lastChatroomInfo.title=="N","DF active update overwrote pending metadata");
-    room->SendMsg(nullptr,48,2,0,0);change=g_windowMgr.m_chatRoomChangeWnd;change->SetTitleText("BAD");Require(!change->SubmitInput(),"change bad-title validation bypassed filter");
+    room->OpenMemberMenu(0,0);room->SendMsg(nullptr,48,0,0,0);change=g_windowMgr.m_chatRoomChangeWnd;change->SetTitleText("BAD");Require(!change->SubmitInput(),"change bad-title validation bypassed filter");
     dispatch({0xd8,0,0x44,0x33,0x22,0x11});Require(!g_windowMgr.m_chatRoomWnd && !g_windowMgr.m_chatRoomChangeWnd && g_windowMgr.m_roomMessageBox,
         "D8 did not remove settings/active owners while retaining the modal safely");
     g_windowMgr.OnKeyDown(VK_ESCAPE);Require(!g_windowMgr.m_modalWindow && !g_windowMgr.m_editWindow,"modal restored a deleted settings editor");
