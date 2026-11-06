@@ -43,6 +43,8 @@ class UIMinimapZoomWnd;
 class UIStatusWnd;
 class UINewChatWnd;
 class UIChatRoomWnd;
+class UIChatRoomSettingsWnd;
+class UIChatRoomMessageBox;
 class UIChatRoomPasswordWnd;
 class UILoginWnd;
 class UISelectServerWnd;
@@ -109,6 +111,8 @@ public:
         WID_SUBCHATBT = 138,
         WID_SUBCHATMINI = 140,
         WID_BATTLEMSGOPTION = 139,
+        WID_CHATROOMMAKE = 27,
+        WID_CHATROOMCHANGE = 30,
         WID_CHATROOMWND = 28,
         WID_CHATROOMPASSWORD = 29,
         WID_BASICINFOWND      = 0,
@@ -159,6 +163,8 @@ public:
 
     bool Init();
     RECT GetChatClientRect() const;
+    void ShowRoomValidationMessage(int messageId);
+    bool OpenChatRoomMake(bool toggle=false);
     bool IsChatAuxiliaryAtPoint(int x, int y) const;
     void ShowChatWindow(bool show);
     void LoadChatWindowPreferences();
@@ -259,6 +265,9 @@ public:
     bool m_onStSubChat = false, m_onBtSubChat = false;
     std::array<SubChatWindowInfo, 2> m_subChatInfo{};
     SubChatWindowInfo m_chatRoomWindowInfo{500,180,280,120};
+    UIChatRoomSettingsWnd* m_chatRoomMakeWnd=nullptr;
+    UIChatRoomSettingsWnd* m_chatRoomChangeWnd=nullptr;
+    UIChatRoomMessageBox* m_roomMessageBox=nullptr;
     UIChatRoomWnd* m_chatRoomWnd = nullptr;
     UIChatRoomPasswordWnd* m_chatRoomPasswordWnd = nullptr;
     UISubChatHisWnd* m_subChatWndST = nullptr;

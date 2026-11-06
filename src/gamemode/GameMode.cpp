@@ -10872,9 +10872,22 @@ bool CGameMode::RequestEnterChatRoom(u32 roomId,const char* password,u32 now)
     return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()));
 }
 
+bool CGameMode::SendChatRoomSettings(const ro::chat::RoomInfo& info,bool change)
+{
+    if(change && !g_windowMgr.m_chatRoomWnd)return false;
+    // Original mode48/49 update pending metadata before attempting the send.
+    m_lastChatroomInfo=info;std::array<std::uint8_t,8> password{};
+    std::copy_n(info.pass.begin(),(std::min)(info.pass.size(),password.size()),password.begin());
+    std::vector<std::uint8_t> packet;
+    const bool built=change?ro::chat::BuildRoomChangeRequest(static_cast<u16>(info.maxNumPeople),static_cast<u8>(info.roomType),password,info.title,packet)
+        :ro::chat::BuildRoomCreateRequest(static_cast<u16>(info.maxNumPeople),static_cast<u8>(info.roomType),password,info.title,packet);
+    return built && CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()));
+}
+
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     switch (msg) {
+    case 48:case 49:return wparam && SendChatRoomSettings(*reinterpret_cast<const ro::chat::RoomInfo*>(wparam),msg==49)?1:0;
     case 50:return RequestEnterChatRoom(static_cast<u32>(wparam),reinterpret_cast<const char*>(lparam),GetTickCount())?1:0;
     case 53: {
         if(!g_windowMgr.m_chatRoomWnd)return 0;
@@ -11106,6 +11119,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         std::transform(command.begin(), command.end(), command.begin(), [](unsigned char ch) {
             return static_cast<char>(std::tolower(ch));
         });
+        if(command=="/chat" || command=="/coxldqkd"){return g_windowMgr.OpenChatRoomMake(false)?1:0;}
         const int emotion = ResolveEmotionCommand(command);
         if (emotion == -2) return 0;
         if (emotion >= 0) {

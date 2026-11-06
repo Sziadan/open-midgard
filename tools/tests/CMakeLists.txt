@@ -2162,3 +2162,8 @@ add_test(NAME chat_scrollbar_checks COMMAND chat_scrollbar_checks)
 add_executable(chat_room_packet_checks ChatRoomPacketTests.cpp)
 target_compile_features(chat_room_packet_checks PRIVATE cxx_std_17)
 add_test(NAME chat_room_packet_checks COMMAND chat_room_packet_checks)
+
+add_executable(insult_words_checks InsultWordsTests.cpp)
+target_compile_features(insult_words_checks PRIVATE cxx_std_17)
+target_include_directories(insult_words_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
+add_test(NAME insult_words_checks COMMAND insult_words_checks)

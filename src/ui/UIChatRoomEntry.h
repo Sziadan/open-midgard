@@ -5,6 +5,8 @@
 #include <string>
 
 class CGameActor;
+shopui::BitmapPixels LoadChatRoomSkinBitmap(const char* name);
+std::string ChatRoomBitmapUri(const shopui::BitmapPixels& bitmap);
 
 // Managed by the UI manager, with a non-owning actor link cleared on either
 // teardown path. This keeps bulk UI deletion and actor deletion independent.

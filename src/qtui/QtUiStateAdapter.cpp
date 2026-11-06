@@ -1,5 +1,6 @@
 #include "ui/StatusLayout.h"
 #include "ui/UIChatRoomWnd.h"
+#include "ui/UIChatRoomSettingsWnd.h"
 #include "QtUiStateAdapter.h"
 
 #include "QtUiState.h"
@@ -1923,6 +1924,36 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         }
         return (windowIndex - mainIndex) * 0.0001;
     };
+    const auto roomButton=[](const RoomSettingsButton& button,int status){
+        const auto bounds=button.Bounds();const auto& bitmap=button.bitmaps[status];
+        return QVariantMap{{"id",button.id},{"x",static_cast<int>(bounds.left)},{"y",static_cast<int>(bounds.top)},
+            {"width",static_cast<int>(bounds.right-bounds.left)},{"height",static_cast<int>(bounds.bottom-bounds.top)},
+            {"imageWidth",bitmap.width},{"imageHeight",bitmap.height},{"artwork",QString::fromStdString(button.uris[status])},
+            {"pressed",status==2},{"label",button.id==118?"OK":button.id==119?"Cancel":button.id==135?"x":"v"}};
+    };
+    QVariantList settings;
+    for(const auto* window:{g_windowMgr.m_chatRoomMakeWnd,g_windowMgr.m_chatRoomChangeWnd}){
+        if(!window)continue;QVariantList buttons,popupRows;
+        for(const auto& button:window->GetButtons())buttons.push_back(roomButton(button,window->GetPressedButton()==button.id?2:window->GetHoveredButton()==button.id?1:0));
+        const int popup=window->GetPopupKind();const auto bounds=window->GetPopupBounds();
+        if(popup>=0)for(int i=0;i<(popup?1:3);++i)popupRows.push_back(ToQString(popup?window->GetClassLabel():window->GetPeopleLabel(window->GetPopupFirst()+i)));
+        settings.push_back(QVariantMap{{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},{"change",window->IsChange()},
+            {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},{"caption",ToQString(window->GetCaption())},
+            {"title",ToQString(window->GetTitleText())},{"masked",QString(static_cast<int>(window->GetPasswordText().size()),QChar('*'))},
+            {"private",window->IsPrivate()},{"publicLabel",ToQString(window->GetPrivacyLabel(false))},{"privateLabel",ToQString(window->GetPrivacyLabel(true))},
+            {"people",window->GetPeople()},{"peopleLabel",ToQString(window->GetPeopleLabel())},{"classLabel",ToQString(window->GetClassLabel())},
+            {"titlebar",QString::fromStdString(window->GetFrameUri(true))},{"background",QString::fromStdString(window->GetFrameUri(false))},
+            {"buttons",buttons},{"popupVisible",popup>=0},{"popupX",static_cast<int>(bounds.left)},{"popupY",static_cast<int>(bounds.top)},
+            {"popupWidth",static_cast<int>(bounds.right-bounds.left)},{"popupHeight",static_cast<int>(bounds.bottom-bounds.top)},{"popupRows",popupRows}});
+    }
+    chatUi.insert("roomSettings",settings);
+    QVariantMap message;
+    if(const auto* window=g_windowMgr.m_roomMessageBox){
+        message={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},
+            {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
+            {"text",ToQString(window->GetText())},{"messageId",window->GetMessageId()},{"button",roomButton(window->GetButton(),window->IsPressed()?2:0)}};
+    }
+    chatUi.insert("roomMessage",message);
     QVariantList roomTitles;
     for(const auto* child:g_windowMgr.m_children){
         if(const auto* title=dynamic_cast<const UIChatRoomTitle*>(child)){

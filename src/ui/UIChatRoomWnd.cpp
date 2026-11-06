@@ -1,4 +1,5 @@
 #include "UIChatRoomWnd.h"
+#include "UIChatRoomSettingsWnd.h"
 #include "UIWindowMgr.h"
 #include "UINewChatWnd.h"
 #include "ChatScrollBarUi.h"
@@ -220,6 +221,10 @@ void UIChatRoomWnd::OnChar(char value)
 void UIChatRoomWnd::OnKeyDown(int key){if(key==VK_RETURN)SubmitInput();}
 msgresult_t UIChatRoomWnd::SendMsg(UIWindow* sender,int msg,msgparam_t value,msgparam_t detail,msgparam_t extra){
     switch(msg){
+    case 48:
+        if(value==2){auto* settings=static_cast<UIChatRoomSettingsWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_CHATROOMCHANGE));
+            if(settings)if(auto* mode=g_modeMgr.GetCurrentGameMode())settings->SetInfo(mode->m_lastChatroomInfo);}
+        return 0;
     case 3:ScrollHistory(1-m_view.rows);return 0;
     case 4:ScrollHistory(m_view.rows-1);return 0;
     case 14:if(value==7)ResizeSource(static_cast<int>(detail),static_cast<int>(extra));return 0;

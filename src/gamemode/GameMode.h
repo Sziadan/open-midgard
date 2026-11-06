@@ -256,6 +256,7 @@ public:
     u32 m_syncRequestTime;
     u32 m_usedCachesUnloadTick;
     u32 m_reqEmotionTick;
+    bool SendChatRoomSettings(const ro::chat::RoomInfo& info,bool change);
     bool RequestEnterChatRoom(u32 roomId,const char* password,u32 now);
     u32 m_reqTickChatRoom;
     u32 m_reqTickMerchantShop;

@@ -1,0 +1,100 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004fe640 <.text+0xfd640>:
+  4fe640:	55                   	push   %ebp
+  4fe641:	8b ec                	mov    %esp,%ebp
+  4fe643:	a1 14 c2 78 00       	mov    0x78c214,%eax
+  4fe648:	53                   	push   %ebx
+  4fe649:	85 c0                	test   %eax,%eax
+  4fe64b:	0f 84 bb 00 00 00    	je     0x4fe70c
+  4fe651:	56                   	push   %esi
+  4fe652:	57                   	push   %edi
+  4fe653:	8b b9 a8 00 00 00    	mov    0xa8(%ecx),%edi
+  4fe659:	85 ff                	test   %edi,%edi
+  4fe65b:	75 05                	jne    0x4fe662
+  4fe65d:	bf 8c c8 6c 00       	mov    $0x6cc88c,%edi
+  4fe662:	83 c9 ff             	or     $0xffffffff,%ecx
+  4fe665:	33 c0                	xor    %eax,%eax
+  4fe667:	f2 ae                	repnz scas %es:(%edi),%al
+  4fe669:	f7 d1                	not    %ecx
+  4fe66b:	2b f9                	sub    %ecx,%edi
+  4fe66d:	8b 5d 08             	mov    0x8(%ebp),%ebx
+  4fe670:	8b c1                	mov    %ecx,%eax
+  4fe672:	8b f7                	mov    %edi,%esi
+  4fe674:	bf 24 b9 78 00       	mov    $0x78b924,%edi
+  4fe679:	68 ac 75 6f 00       	push   $0x6f75ac
+  4fe67e:	c1 e9 02             	shr    $0x2,%ecx
+  4fe681:	f3 a5                	rep movsl %ds:(%esi),%es:(%edi)
+  4fe683:	8b c8                	mov    %eax,%ecx
+  4fe685:	33 c0                	xor    %eax,%eax
+  4fe687:	83 e1 03             	and    $0x3,%ecx
+  4fe68a:	53                   	push   %ebx
+  4fe68b:	f3 a4                	rep movsb %ds:(%esi),%es:(%edi)
+  4fe68d:	8b fb                	mov    %ebx,%edi
+  4fe68f:	83 c9 ff             	or     $0xffffffff,%ecx
+  4fe692:	f2 ae                	repnz scas %es:(%edi),%al
+  4fe694:	f7 d1                	not    %ecx
+  4fe696:	2b f9                	sub    %ecx,%edi
+  4fe698:	8b f7                	mov    %edi,%esi
+  4fe69a:	8b d1                	mov    %ecx,%edx
+  4fe69c:	bf 24 b9 78 00       	mov    $0x78b924,%edi
+  4fe6a1:	83 c9 ff             	or     $0xffffffff,%ecx
+  4fe6a4:	f2 ae                	repnz scas %es:(%edi),%al
+  4fe6a6:	8b ca                	mov    %edx,%ecx
+  4fe6a8:	4f                   	dec    %edi
+  4fe6a9:	c1 e9 02             	shr    $0x2,%ecx
+  4fe6ac:	f3 a5                	rep movsl %ds:(%esi),%es:(%edi)
+  4fe6ae:	8b ca                	mov    %edx,%ecx
+  4fe6b0:	83 e1 03             	and    $0x3,%ecx
+  4fe6b3:	f3 a4                	rep movsb %ds:(%esi),%es:(%edi)
+  4fe6b5:	e8 86 a4 1a 00       	call   0x6a8b40
+  4fe6ba:	83 c4 08             	add    $0x8,%esp
+  4fe6bd:	85 c0                	test   %eax,%eax
+  4fe6bf:	5f                   	pop    %edi
+  4fe6c0:	5e                   	pop    %esi
+  4fe6c1:	75 12                	jne    0x4fe6d5
+  4fe6c3:	68 a4 75 6f 00       	push   $0x6f75a4
+  4fe6c8:	53                   	push   %ebx
+  4fe6c9:	e8 72 a4 1a 00       	call   0x6a8b40
+  4fe6ce:	83 c4 08             	add    $0x8,%esp
+  4fe6d1:	85 c0                	test   %eax,%eax
+  4fe6d3:	74 18                	je     0x4fe6ed
+  4fe6d5:	68 24 b9 78 00       	push   $0x78b924
+  4fe6da:	e8 b1 e4 01 00       	call   0x51cb90
+  4fe6df:	83 c4 04             	add    $0x4,%esp
+  4fe6e2:	84 c0                	test   %al,%al
+  4fe6e4:	75 1c                	jne    0x4fe702
+  4fe6e6:	8b c3                	mov    %ebx,%eax
+  4fe6e8:	5b                   	pop    %ebx
+  4fe6e9:	5d                   	pop    %ebp
+  4fe6ea:	c2 04 00             	ret    $0x4
+  4fe6ed:	68 24 b9 78 00       	push   $0x78b924
+  4fe6f2:	e8 f9 35 02 00       	call   0x521cf0
+  4fe6f7:	8b c8                	mov    %eax,%ecx
+  4fe6f9:	e8 f2 3f 02 00       	call   0x5226f0
+  4fe6fe:	85 c0                	test   %eax,%eax
+  4fe700:	74 e4                	je     0x4fe6e6
+  4fe702:	b8 24 b9 78 00       	mov    $0x78b924,%eax
+  4fe707:	5b                   	pop    %ebx
+  4fe708:	5d                   	pop    %ebp
+  4fe709:	c2 04 00             	ret    $0x4
+  4fe70c:	8b 45 08             	mov    0x8(%ebp),%eax
+  4fe70f:	5b                   	pop    %ebx
+  4fe710:	5d                   	pop    %ebp
+  4fe711:	c2 04 00             	ret    $0x4
+  4fe714:	90                   	nop
+  4fe715:	90                   	nop
+  4fe716:	90                   	nop
+  4fe717:	90                   	nop
+  4fe718:	90                   	nop
+  4fe719:	90                   	nop
+  4fe71a:	90                   	nop
+  4fe71b:	90                   	nop
+  4fe71c:	90                   	nop
+  4fe71d:	90                   	nop
+  4fe71e:	90                   	nop
+  4fe71f:	90                   	nop

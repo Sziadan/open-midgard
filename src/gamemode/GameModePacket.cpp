@@ -28,6 +28,7 @@
 #include "lua/LuaBridge.h"
 #include "ui/UIBasicInfoWnd.h"
 #include "ui/UIChatRoomWnd.h"
+#include "ui/UIChatRoomSettingsWnd.h"
 #include "core/UiMessageStrings.h"
 #include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UISayDialogWnd.h"

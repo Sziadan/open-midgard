@@ -6,6 +6,7 @@ add_library(ro_core STATIC
     Hash.h      Hash.cpp
     SettingsIni.h SettingsIni.cpp
     UiMessageStrings.h UiMessageStrings.cpp
+    InsultWords.h MannerFilter.h MannerFilter.cpp
     GPak.h      GPak.cpp
     File.h      File.cpp
     Globals.h   Globals.cpp
@@ -37,4 +38,7 @@ target_link_libraries(ro_core PRIVATE zlibstatic)
 
 if(WIN32)
     target_link_libraries(ro_core PRIVATE winmm.lib)
+else()
+    find_package(Iconv REQUIRED)
+    target_link_libraries(ro_core PRIVATE Iconv::Iconv)
 endif()

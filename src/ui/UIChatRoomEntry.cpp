@@ -53,6 +53,9 @@ shopui::BitmapPixels LoadRoomBitmap(const char* name)
 }
 }
 
+shopui::BitmapPixels LoadChatRoomSkinBitmap(const char* name){return LoadRoomBitmap(name);}
+std::string ChatRoomBitmapUri(const shopui::BitmapPixels& bitmap){return BitmapUri(bitmap);}
+
 UIChatRoomTitle::UIChatRoomTitle(CGameActor* owner):m_owner(owner)
 {
     Create(200,34);

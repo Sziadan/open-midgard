@@ -2056,7 +2056,9 @@
         "docs/packets/evidence/PK09.21-room.md",
         "docs/packets/evidence/PK09.21-room-provenance.json",
         "docs/packets/evidence/PK09.21-entry.md",
-        "docs/packets/evidence/PK09.21-entry-provenance.json"
+        "docs/packets/evidence/PK09.21-entry-provenance.json",
+        "docs/packets/evidence/PK09.21-settings.md",
+        "docs/packets/evidence/PK09.21-settings-provenance.json"
       ],
       "commit_subject": null
     }

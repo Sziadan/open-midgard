@@ -1,0 +1,12 @@
+{
+    "capture_cancel_release": true,
+    "combo": true,
+    "deleted_editor": true,
+    "known_empty_modal": true,
+    "masked_native_input": true,
+    "native_qml_frames": 10,
+    "outcome": "PASS",
+    "prefill": true,
+    "radio_down": true,
+    "scale_125": true
+}

@@ -1,3 +1,4 @@
+#include "MannerFilter.h"
 #include "ClientInfoLocale.h"
 #include "../DebugLog.h"
 #include "Globals.h"
@@ -435,6 +436,7 @@ void SelectClientInfo(int connectionIndex) {
 
     XMLElement* lang = connection->FindChild("langtype");
     if (lang) g_serviceType = (ServiceType)std::atoi(lang->GetContents().c_str());
+    ro::GetMannerFilter().Load();
 
     XMLElement* registration = connection->FindChild("registrationweb");
     if (registration) g_regstrationWeb = registration->GetContents();

@@ -69,8 +69,10 @@ void HandleRoomDestroy(CGameMode& mode,const PacketView& packet)
     if(!packet.data || packet.packetLength!=6)return;const auto roomId=ReadLE32(packet.data+2);
     const auto owner=mode.m_chatRoomOwners.emplace(roomId,0).first->second;
     if(auto* actor=ResolveRoomActor(mode,owner))actor->SendMsg(nullptr,33,0,0,0);
-    if(g_windowMgr.m_chatRoomWnd && g_windowMgr.m_chatRoomWnd->GetInfo().roomId==roomId)
+    if(g_windowMgr.m_chatRoomWnd && g_windowMgr.m_chatRoomWnd->GetInfo().roomId==roomId){
         g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomWnd);
+        if(g_windowMgr.m_chatRoomChangeWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomChangeWnd);
+    }
     // Original keeps the mapping and last room metadata; map/session reset owns their lifetime.
 }
 void HandleRoomMemberEnter(CGameMode&,const PacketView& packet)
@@ -86,7 +88,9 @@ void HandleRoomMemberExit(CGameMode&,const PacketView& packet)
     if(!packet.data || packet.packetLength!=29)return;
     const auto name=ro::chat::detail::ReadBoundedRoomName(packet.data+4,24);
     if(name==g_session.GetPlayerName()){
-        if(g_windowMgr.m_chatRoomWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomWnd);return;
+        if(g_windowMgr.m_chatRoomWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomWnd);
+        if(g_windowMgr.m_chatRoomChangeWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomChangeWnd);
+        return;
     }
     auto* room=EnsureRoomWindow();auto info=room->GetInfo();info.numPeople=ro::chat::detail::ReadRoomI16(packet.data+2);room->SetInfo(info);room->RemoveMember(name);
     if(packet.data[28]>1)return;

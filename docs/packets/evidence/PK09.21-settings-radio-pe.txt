@@ -1,0 +1,43 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00448b10 <.text+0x47b10>:
+  448b10:	8b c1                	mov    %ecx,%eax
+  448b12:	8b 48 04             	mov    0x4(%eax),%ecx
+  448b15:	85 c9                	test   %ecx,%ecx
+  448b17:	74 1e                	je     0x448b37
+  448b19:	8b 50 58             	mov    0x58(%eax),%edx
+  448b1c:	85 d2                	test   %edx,%edx
+  448b1e:	74 17                	je     0x448b37
+  448b20:	8b 11                	mov    (%ecx),%edx
+  448b22:	56                   	push   %esi
+  448b23:	8b 70 2c             	mov    0x2c(%eax),%esi
+  448b26:	6a 00                	push   $0x0
+  448b28:	6a 00                	push   $0x0
+  448b2a:	6a 00                	push   $0x0
+  448b2c:	56                   	push   %esi
+  448b2d:	6a 06                	push   $0x6
+  448b2f:	50                   	push   %eax
+  448b30:	ff 92 94 00 00 00    	call   *0x94(%edx)
+  448b36:	5e                   	pop    %esi
+  448b37:	c2 08 00             	ret    $0x8
+  448b3a:	90                   	nop
+  448b3b:	90                   	nop
+  448b3c:	90                   	nop
+  448b3d:	90                   	nop
+  448b3e:	90                   	nop
+  448b3f:	90                   	nop
+  448b40:	56                   	push   %esi
+  448b41:	8b f1                	mov    %ecx,%esi
+  448b43:	68 ff 00 ff ff       	push   $0xffff00ff
+  448b48:	e8 d3 e6 08 00       	call   0x4d7220
+  448b4d:	8b 46 30             	mov    0x30(%esi),%eax
+  448b50:	85 c0                	test   %eax,%eax
+  448b52:	75 09                	jne    0x448b5d
+  448b54:	6a 00                	push   $0x0
+  448b56:	68 b4 27 6f 00       	push   $0x6f27b4
+  448b5b:	eb 15                	jmp    0x448b72
+  448b5d:	8b 46 5c             	mov    0x5c(%esi),%eax

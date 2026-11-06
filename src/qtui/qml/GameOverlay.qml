@@ -4370,6 +4370,7 @@ Item {
         }
     }
 
+    RoChatRoomSettings { parent: uiLayer; settings: (uiState.chatWindowUi || {}).roomSettings || []; message: (uiState.chatWindowUi || {}).roomMessage || ({}) }
     RoChatRoomEntries { parent: uiLayer; titleItems: (uiState.chatWindowUi || {}).roomTitles || []; passwordData: (uiState.chatWindowUi || {}).roomPassword || ({}) }
     RoChatRoom { parent: uiLayer; roomData: (uiState.chatWindowUi || {}).room || ({}) }
 
