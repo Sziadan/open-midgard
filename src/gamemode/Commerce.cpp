@@ -225,7 +225,20 @@ bool PlayerAction(int action,u32 target,const std::string& name){
     case CGameMode::PlayerContext_RegisterFriend:return named(0x202,name);
     case CGameMode::PlayerContext_CheckEquipmentInfo:{auto p=packet(0x2d6,6);put(p,2,target,4);return send(p);}
     case CGameMode::PlayerContext_SendWhisper:if(g_windowMgr.m_chatWnd){g_windowMgr.m_chatWnd->SetShow(1);g_windowMgr.m_chatWnd->SetQtInputText(1,name);g_windowMgr.m_chatWnd->FocusQtInput(2);return true;}return false;
-    case CGameMode::PlayerContext_RejectWhispering:{if(name.size()>23)return false;auto p=packet(0xcf,27);std::copy(name.begin(),name.end(),p.begin()+2);p[26]=0;return send(p);}
+    case CGameMode::PlayerContext_RejectWhispering:
+    case CGameMode::PlayerContext_AllowWhispering:{
+        if(name.size()>23)return false;const bool allow=action==CGameMode::PlayerContext_AllowWhispering;
+        auto p=packet(0xcf,27);std::copy(name.begin(),name.end(),p.begin()+2);p[26]=allow?1:0;
+        const bool sent=send(p);
+        // Original context actions update local exclusion independently of ack
+        // or immediate send success; add appends, allow erases the first match.
+        if(!allow){g_session.m_exNameList.push_back(name);g_session.m_exAidList.push_back(target);}
+        else {const auto found=std::find(g_session.m_exNameList.begin(),g_session.m_exNameList.end(),name);
+            if(found!=g_session.m_exNameList.end())g_session.m_exNameList.erase(found);
+            const auto aid=std::find(g_session.m_exAidList.begin(),g_session.m_exAidList.end(),target);
+            if(aid!=g_session.m_exAidList.end())g_session.m_exAidList.erase(aid);}
+        return sent;
+    }
     case CGameMode::PlayerContext_SendMail:{if(busy())return false;state.mailTo=name;state.mail.visible=true;state.mailPending=false;auto p=packet(0x246,4);return send(p);}
     case 8:{auto p=packet(0x130,6);put(p,2,target,4);return send(p);}
     default:return false;

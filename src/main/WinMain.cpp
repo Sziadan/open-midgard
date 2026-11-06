@@ -1,3 +1,4 @@
+#include "ui/UIWhisperWnd.h"
 //===========================================================================
 // WinMain.cpp  –  Application entry point
 // Clean C++17 rewrite.
@@ -504,6 +505,7 @@ int ReadRegistry()
 {
     EnsureOpenMidgardIniDefaults();
     g_session.LoadBattleMessageOptions();
+    g_session.LoadWhisperOptions();
     ApplyConfiguredWindowSize();
     g_windowMgr.LoadChatWindowPreferences();
     (void)GetConfiguredRenderBackend();
@@ -519,6 +521,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if (msg == WM_CAPTURECHANGED || msg == WM_CANCELMODE) {
         if (g_windowMgr.m_chatWnd) g_windowMgr.m_chatWnd->CancelPointerCapture();
         if (g_windowMgr.m_chatRoomWnd) g_windowMgr.m_chatRoomWnd->CancelPointerCapture();
+        for(const auto& entry:g_windowMgr.m_whisperWindows)entry.second->CancelPointerCapture();
         if(g_windowMgr.m_chatRoomMakeWnd)g_windowMgr.m_chatRoomMakeWnd->CancelPointerCapture();
         if(g_windowMgr.m_chatRoomChangeWnd)g_windowMgr.m_chatRoomChangeWnd->CancelPointerCapture();
         if(g_windowMgr.m_roomMessageBox)g_windowMgr.m_roomMessageBox->CancelPointerCapture();
@@ -982,6 +985,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     DbgLog("[Shutdown] UIWindowMgr::Reset start\n");
     g_windowMgr.Reset();
     g_windowMgr.SaveChatWindowPreferences();
+    g_session.SaveWhisperOptions();
     DbgLog("[Shutdown] UIWindowMgr::Reset done\n");
     DbgLog("[Shutdown] Lua shutdown start\n");
     g_buabridge.Shutdown();

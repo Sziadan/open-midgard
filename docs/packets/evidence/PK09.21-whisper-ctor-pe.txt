@@ -1,0 +1,57 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00488420 <.text+0x87420>:
+  488420:	55                   	push   %ebp
+  488421:	8b ec                	mov    %esp,%ebp
+  488423:	51                   	push   %ecx
+  488424:	56                   	push   %esi
+  488425:	8b f1                	mov    %ecx,%esi
+  488427:	e8 f4 d9 fc ff       	call   0x455e20
+  48842c:	8a 45 ff             	mov    -0x1(%ebp),%al
+  48842f:	8a 4d ff             	mov    -0x1(%ebp),%cl
+  488432:	8a 55 ff             	mov    -0x1(%ebp),%dl
+  488435:	88 46 60             	mov    %al,0x60(%esi)
+  488438:	33 c0                	xor    %eax,%eax
+  48843a:	89 46 64             	mov    %eax,0x64(%esi)
+  48843d:	89 46 68             	mov    %eax,0x68(%esi)
+  488440:	89 46 6c             	mov    %eax,0x6c(%esi)
+  488443:	88 4e 70             	mov    %cl,0x70(%esi)
+  488446:	89 46 74             	mov    %eax,0x74(%esi)
+  488449:	89 46 78             	mov    %eax,0x78(%esi)
+  48844c:	89 46 7c             	mov    %eax,0x7c(%esi)
+  48844f:	88 96 90 00 00 00    	mov    %dl,0x90(%esi)
+  488455:	89 86 94 00 00 00    	mov    %eax,0x94(%esi)
+  48845b:	89 86 98 00 00 00    	mov    %eax,0x98(%esi)
+  488461:	89 86 9c 00 00 00    	mov    %eax,0x9c(%esi)
+  488467:	89 86 a0 00 00 00    	mov    %eax,0xa0(%esi)
+  48846d:	c7 06 14 11 6d 00    	movl   $0x6d1114,(%esi)
+  488473:	8b c6                	mov    %esi,%eax
+  488475:	5e                   	pop    %esi
+  488476:	8b e5                	mov    %ebp,%esp
+  488478:	5d                   	pop    %ebp
+  488479:	c3                   	ret
+  48847a:	90                   	nop
+  48847b:	90                   	nop
+  48847c:	90                   	nop
+  48847d:	90                   	nop
+  48847e:	90                   	nop
+  48847f:	90                   	nop
+  488480:	55                   	push   %ebp
+  488481:	8b ec                	mov    %esp,%ebp
+  488483:	56                   	push   %esi
+  488484:	8b f1                	mov    %ecx,%esi
+  488486:	e8 25 00 00 00       	call   0x4884b0
+  48848b:	f6 45 08 01          	testb  $0x1,0x8(%ebp)
+  48848f:	74 09                	je     0x48849a
+  488491:	56                   	push   %esi
+  488492:	e8 41 0d 21 00       	call   0x6991d8
+  488497:	83 c4 04             	add    $0x4,%esp
+  48849a:	8b c6                	mov    %esi,%eax
+  48849c:	5e                   	pop    %esi
+  48849d:	5d                   	pop    %ebp
+  48849e:	c2                   	.byte 0xc2
+  48849f:	04                   	.byte 0x4

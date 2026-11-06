@@ -1,0 +1,151 @@
+
+## C:\Users\sziad\source\repos\rathena-master\src\map\clif.cpp:7000-7075
+
+7000: void clif_wis_message( const map_session_data* sd, const char* nick, const char* mes, size_t mes_len, int32 gmlvl ){
+7001: 	PACKET_ZC_WHISPER* p = reinterpret_cast<PACKET_ZC_WHISPER*>( packet_buffer );
+7002:
+7003: 	p->PacketType = HEADER_ZC_WHISPER;
+7004: 	p->PacketLength = sizeof( *p );
+7005: 	safestrncpy( p->sender, nick, NAME_LENGTH );
+7006: 	safestrncpy( p->message, mes, mes_len );
+7007: 	p->PacketLength += static_cast<decltype( p->PacketLength )>( mes_len );
+7008:
+7009: #if PACKETVER >= 20091104
+7010: 	map_session_data* ssd = map_nick2sd(nick, false);
+7011:
+7012: 	// If it is not a message from the server or a player from another map-server
+7013: 	if( ssd != nullptr ){
+7014: 		gmlvl = pc_get_group_level(ssd);
+7015: 	}
+7016:
+7017: 	p->isAdmin = (gmlvl == 99) ? 1 : 0;
+7018:
+7019: #if PACKETVER_MAIN_NUM >= 20131204 || PACKETVER_RE_NUM >= 20131120 || defined(PACKETVER_ZERO)
+7020: 	if( ssd != nullptr ){
+7021: 		p->senderGID = ssd->id;
+7022: 	}else{
+7023: 		p->senderGID = 0;
+7024: 	}
+7025: #endif
+7026: #endif
+7027:
+7028: 	clif_send( p, p->PacketLength, sd, SELF );
+7029: }
+7030:
+7031:
+7032: /// Inform the player about the result of his whisper action
+7033: /// 0098 <result>.B (ZC_ACK_WHISPER).
+7034: /// 09df <result>.B <CID>.L (ZC_ACK_WHISPER02).
+7035: /// result:
+7036: ///     0 = success to send whisper
+7037: ///     1 = target character is not loged in
+7038: ///     2 = ignored by target
+7039: ///     3 = everyone ignored by target
+7040: void clif_wis_end( const map_session_data& sd, e_ack_whisper result ){
+7041: 	PACKET_ZC_ACK_WHISPER packet{};
+7042:
+7043: 	packet.packetType = HEADER_ZC_ACK_WHISPER;
+7044: 	packet.result = static_cast<decltype(packet.result)>(result);
+7045: #if PACKETVER >= 20131223
+7046: 	packet.CID = sd.status.char_id;
+7047: #endif
+7048:
+7049: 	clif_send( &packet, sizeof( packet ), &sd, SELF );
+7050: }
+7051:
+7052:
+7053: /// Returns character name requested by char_id.
+7054: /// 0194 <char id>.L <name>.24B (ZC_ACK_REQNAME_BYGID)
+7055: /// 0af7 <flag>.W <char id>.L <name>.24B (ZC_ACK_REQNAME_BYGID)
+7056: void clif_solved_charname( const map_session_data& sd, uint32 charid, const char* name ){
+7057: 	PACKET_ZC_ACK_REQNAME_BYGID packet{};
+7058:
+7059: 	packet.packetType = HEADER_ZC_ACK_REQNAME_BYGID;
+7060: #if PACKETVER >= 20180221
+7061: 	packet.flag = name[0] ? 3 : 2;
+7062: #endif
+7063: 	packet.CID = charid;
+7064: 	safestrncpy( packet.name, name, NAME_LENGTH );
+7065:
+7066: 	clif_send( &packet, sizeof( packet ), &sd, SELF );
+7067: }
+7068:
+7069:
+7070: /// Presents a list of items that can be carded/composed (ZC_ITEMCOMPOSITION_LIST).
+7071: /// 017b <packet len>.W { <name id>.W }*
+7072: void clif_use_card( const map_session_data* sd,int32 idx)
+7073: {
+7074: 	int32 i,c,ep;
+7075: 	int32 fd=sd->fd;
+
+## C:\Users\sziad\source\repos\rathena-master\src\map\clif_packetdb.hpp:40-50
+
+40: 	parseable_packet(0x008c,-1,clif_parse_GlobalMessage,2,4);
+41: 	packet(0x008d,-1);
+42: 	packet(0x008e,-1);
+43: 	parseable_packet( HEADER_CZ_CONTACTNPC, sizeof( PACKET_CZ_CONTACTNPC ), clif_parse_NpcClicked, 0 );
+44: 	packet(0x0093,2);
+45: 	parseable_packet(0x0094,6,clif_parse_GetCharNameRequest,2);
+46: 	parseable_packet(0x0096,-1,clif_parse_WisMessage,2,4,28);
+47: 	parseable_packet( HEADER_CZ_BROADCAST, -1, clif_parse_Broadcast, 0 );
+48: 	parseable_packet(0x009b,5,clif_parse_ChangeDir,2,4);
+49: 	packet(0x009e,17);
+50: 	parseable_packet(0x009f,6,clif_parse_TakeItem,2);
+
+## C:\Users\sziad\source\repos\rathena-master\src\map\packets_struct.hpp:5355-5380
+
+5355: } __attribute__((packed));
+5356: DEFINE_PACKET_HEADER(ZC_WHISPER, 0x09de)
+5357: // [4144] unconfirmed version
+5358: #elif PACKETVER >= 20091104
+5359: struct PACKET_ZC_WHISPER {
+5360: 	int16 PacketType;
+5361: 	int16 PacketLength;
+5362: 	char sender[NAME_LENGTH];
+5363: 	int32 isAdmin;
+5364: 	char message[];
+5365: } __attribute__((packed));
+5366: DEFINE_PACKET_HEADER(ZC_WHISPER, 0x0097)
+5367: #else  // PACKETVER_MAIN_NUM >= 20131204 || PACKETVER_RE_NUM >= 20131120 || defined(PACKETVER_ZERO)
+5368: struct PACKET_ZC_WHISPER {
+5369: 	int16 PacketType;
+5370: 	int16 PacketLength;
+5371: 	char sender[NAME_LENGTH];
+5372: 	char message[];
+5373: } __attribute__((packed));
+5374: DEFINE_PACKET_HEADER(ZC_WHISPER, 0x0097)
+5375: #endif  // PACKETVER_MAIN_NUM >= 20131204 || PACKETVER_RE_NUM >= 20131120 || defined(PACKETVER_ZERO)
+5376:
+5377: #if PACKETVER_MAIN_NUM >= 20220216 || PACKETVER_ZERO_NUM >= 20221024
+5378: struct PACKET_ZC_UPDATE_GDID {
+5379: 	int16 PacketType;
+5380: 	uint32 guildId;
+
+## C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp:1210-1235
+
+1210: 	int16 packetType;
+1211: 	uint16 type;
+1212: 	int16 amount;
+1213: } __attribute__((packed));
+1214: DEFINE_PACKET_HEADER(ZC_RECOVERY, 0x13d);
+1215: #endif
+1216:
+1217: #if PACKETVER >= 20131223
+1218: struct PACKET_ZC_ACK_WHISPER {
+1219: 	int16 packetType;
+1220: 	uint8 result;
+1221: 	uint32 CID;
+1222: } __attribute__((packed));
+1223: DEFINE_PACKET_HEADER(ZC_ACK_WHISPER, 0x9df);
+1224: #else
+1225: struct PACKET_ZC_ACK_WHISPER {
+1226: 	int16 packetType;
+1227: 	uint8 result;
+1228: } __attribute__((packed));
+1229: DEFINE_PACKET_HEADER(ZC_ACK_WHISPER, 0x98);
+1230: #endif
+1231:
+1232: struct PACKET_ZC_ACK_ADDITEM_TO_CART {
+1233: 	int16 packetType;
+1234: 	uint8 result;
+1235: } __attribute__((packed));

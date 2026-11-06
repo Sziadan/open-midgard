@@ -43,6 +43,7 @@ class UIMinimapZoomWnd;
 class UIStatusWnd;
 class UINewChatWnd;
 class UIChatRoomWnd;
+class UIWhisperWnd;
 class UIChatRoomMenuWnd;
 class UIChatRoomSettingsWnd;
 class UIChatRoomMessageBox;
@@ -166,6 +167,9 @@ public:
     RECT GetChatClientRect() const;
     void ShowRoomValidationMessage(int messageId);
     bool OpenChatRoomMake(bool toggle=false);
+    bool OpenWhisperWindow(const std::string& name,const char* label=nullptr);
+    bool AddWhisperChatToWhisperWnd(const std::string& name,const std::string& text,u32 colorRef);
+    void AddWhisperCharName(const std::string& name);
     bool IsChatAuxiliaryAtPoint(int x, int y) const;
     void ShowChatWindow(bool show);
     void LoadChatWindowPreferences();
@@ -270,6 +274,8 @@ public:
     UIChatRoomSettingsWnd* m_chatRoomChangeWnd=nullptr;
     UIChatRoomMessageBox* m_roomMessageBox=nullptr;
     UIChatRoomWnd* m_chatRoomWnd = nullptr;
+    std::map<std::string,UIWhisperWnd*> m_whisperWindows;
+    SubChatWindowInfo m_whisperWindowInfo{0,347,280,120};
     UIChatRoomMenuWnd* m_chatRoomMenuWnd=nullptr;
     UIChatRoomPasswordWnd* m_chatRoomPasswordWnd = nullptr;
     UISubChatHisWnd* m_subChatWndST = nullptr;

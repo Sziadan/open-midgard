@@ -1,12 +1,12 @@
 # Packet continuation handoff
 
-**Latest checkpoint (2026-11-06):** [PK09.21 room member actions](evidence/PK09.21-actions.md) integrates role-dependent native/QML menus, actual E0/E2 transfer/kick, friend0202, unsupported modal and source-style history export. Strong review corrected menu-index semantics, self/settings branches and embedded-LF export bytes. Root149/149 and standalone468/468 pass. Dedicated per-name whisper and broad chat acceptance remain open.
+**Latest checkpoint (2026-11-06):** [PK09.21 dedicated whisper routing](evidence/PK09.21-whisper.md) integrates per-name native/QML owners, selected0097/0098 routing, source private0096 guards, preferences and bounded exclusion/autosave behavior. Strong review resolves name comparison, pending acknowledgement ownership, modal priority, history replacement and PE draw-slot annotations. Root154/154 and standalone469/469 pass. Private menus/configuration/commands and broad acceptance remain open.
 
-**Active step: PK09.21.** Finish [detached history controls and remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Latest checkpoint subject: `packet(PK09.21): restore room member actions`. Preserve main-state/family, selected-notice and PK45.06 corpse proofs; broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.
+**Active step: PK09.21.** Finish [detached history controls and remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Latest checkpoint subject: `packet(PK09.21): restore dedicated whisper routing`. Preserve main-state/family, selected-notice and PK45.06 corpse proofs; broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.
 
 ## Continue here
 
-**Next work:** dedicated per-name whisper ownership/preferences, exclusion/self/friend/guild routing and type2 fallback. Strongly review [the bounded whisper inventory](evidence/PK09.21-whisper-inventory.md) before integration. Room title/join/settings and member menus/actions now have production evidence; preserve source menu indices/order, receipt-owned roles, exact E0/E2/0202 and history export LF/path/notice behavior. Generic popup skin/stacking, legacy editor/command/codepage, active Qt/global overlap and broad scales remain open.
+**Next work:** inventory private whisper context menus/manual export/report and mode114/mode26 callers, then UIAutoMessageWnd configuration/aliases. See [whisper evidence and preservation rules](evidence/PK09.21-whisper.md) and the [work item](work-items/PK09.21.md). Root must integrate source ownership, byte/file contracts and modal/input lifetimes. Core whisper ownership/routing/preferences now have production evidence; do not reimplement them from the older inventory. Messenger controls, full source main/global command/talk-type and ignore-list workflows, remaining producers/bubbles, exact art/locale and broad UI acceptance stay open.
 
 1. Continue [PK09.04](work-items/PK09.04.md) with remaining full item/status/delta/detail contexts, remaining item mutation/status/context acceptance. PK37.07 now covers normal NPC catalog and selected buy/sell right-clicks, exact row snapshots, copied identification/refine/cards, owner collisions, lifetime, scrolling/header/padding, model shrink, reopening and125% WindowProc input. Preserve passive QML input and never resolve an NPC detail through equal-index inventory/cart or catalog rows.
    The strong-agent fallback review is complete at the current representation boundary: primary mode36/44/45 actions reset/setup drag state; transaction submission is separate. Legacy grid GetCurItem clamps a right tail that coordinate GetItemInfo rejects, while the decompiled one-argument lookup is unreliable. Current full-width row UI lacks this mismatch. Do not invent header/blank/normal-left ForceUpdate gestures. Exact legacy geometry/signature behavior remains unaccepted; PK09.11's explicit ForceUpdate API and default raw-key Select toggle remain required.
@@ -19,7 +19,7 @@
 
 ## Verified current checkpoint
 
-Deploy-off build, root149/149, standalone468/468, five raw room cases, four new native/QML frames and corrected source contracts are recorded in [member-actions evidence](evidence/PK09.21-actions.md) and provenance. Full PK09.21 acceptance remains unfinished. Preserve all prior settings/title/receipt, restore, scrollbar and trim proofs.
+Deploy-off all-target build, root154/154, standalone469/469, production whisper replay, fresh-process preferences and twelve new native/QML frames are retained in [whisper evidence](evidence/PK09.21-whisper.md) and provenance. Full PK09.21 acceptance remains unfinished. Preserve prior room settings/title/receipt/actions, restore, scrollbar and trim proofs.
 
 No discovery row is newly closed. PK09.04, broad PK37, independent PK48/49 and deployed provenance remain open. The whole packet plan remains unfinished.
 

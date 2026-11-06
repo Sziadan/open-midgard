@@ -148,6 +148,16 @@ class CSession
 public:
     CSession();
     ~CSession();
+    bool m_isShowWhisperWnd=true,m_isShowWhisperWnd_Friend=true,m_isPlayWhisperOpenSound=true;
+    bool m_onAutoMSG=false,m_isSaveChat=false;
+    std::string m_strAutoMSG;
+    std::vector<std::string> m_exNameList;
+    void LoadWhisperOptions();
+    bool SaveWhisperOptions() const;
+    bool IsExName(const char* name) const;
+    bool IsGuildMember(const char* name) const;
+    bool IsCheatName(const char* name) const;
+    bool IsCheatGuildName(const char* name) const;
 
     bool InitAccountInfo();
     

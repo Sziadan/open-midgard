@@ -1,0 +1,27 @@
+{
+  "original_executable_executed": false,
+  "slots": {
+    "UIWhisperWnd": {
+      "vtable": "0x6d1114",
+      "0x30": "0x488d00",
+      "0x4c": "0x43fa40",
+      "0x50": "0x488a10",
+      "0x54": "0x43fa50"
+    },
+    "UINewChatWnd": {
+      "vtable": "0x6d1f84",
+      "0x30": "0x49d2e0",
+      "0x4c": "0x43fa40",
+      "0x50": "0x49d180",
+      "0x54": "0x49ce80"
+    },
+    "UIStSubChatWnd": {
+      "vtable": "0x6d2024",
+      "0x30": "0x4a0390",
+      "0x4c": "0x43fa40",
+      "0x50": "0x49f760",
+      "0x54": "0x49f710"
+    }
+  },
+  "correction": "OnDraw is slot0x50; 0x4c is a generic no-op. Main selected text drawing is slot0x54."
+}

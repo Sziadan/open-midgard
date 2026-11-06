@@ -134,3 +134,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.21 room creation and settings](../evidence/PK09.21-settings.md) records source validation/filter, real D5/DE, pending metadata, modal/capture/native-QML checks and strong-review corrections. Owner menus/actions and broad acceptance remain open.
 
 [Room member actions](../evidence/PK09.21-actions.md) now implement source-indexed role menus, E0/E2, friend0202, unsupported modal and room-history export. Preserve the corrected self/settings branches. Dedicated whisper and full chat acceptance remain open.
+
+[Dedicated whisper routing](../evidence/PK09.21-whisper.md) now supplies exact-name owners, selected0097/0098 routing, bounded source0096/auto-reply/autosave, preferences and native/QML capture/modal checks. Preserve exact membership versus lookalike warnings, pending outgoing metadata, hidden-owner delivery and source-specific save branches. The latest PE oracle corrects earlier draw-slot prose: detached6D2024+50 ->49F760, main6D1F84+54 ->49CE80, +4C generic no-op. Private menus/configuration/full commands and broad acceptance remain open; follow the current work item.

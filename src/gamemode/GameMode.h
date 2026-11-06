@@ -153,6 +153,7 @@ public:
         PlayerContext_RegisterFriend,
         PlayerContext_SendMail,
         PlayerContext_RejectWhispering,
+        PlayerContext_AllowWhispering=9, // 8 is an existing commerce request action.
     };
 
     CGameMode();
@@ -244,6 +245,14 @@ public:
     std::string m_lastWhisperMenuCharacterName;
     std::string m_lastWhisper;
     std::string m_lastWhisperName;
+    int m_hiddenWhisperAcknowledgements=0;
+    std::string m_sourceLastSubmittedChat;
+    int m_sourceSameChatRepeatCount=0;
+    int m_sourceAutoSaveChatCount=0;
+    bool SendSourceWhisper(const std::string& target,const std::string& text);
+    bool ToggleSourceChatAutoSave();
+    bool WriteSourceChat(const std::string& text);
+    std::string GetSourceAutoSaveChatPath() const;
     int m_noMove;
     u32 m_noMoveStartTick;
     int m_isOnQuest;

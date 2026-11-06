@@ -7280,26 +7280,30 @@ void HandleNotifyPlayerChat(CGameMode& mode, const PacketView& packet)
 
 void HandleWhisper(CGameMode& mode, const PacketView& packet)
 {
-    // Ref: Zc_Whisper (0x0097)
-    if (!packet.data || packet.packetLength < 29) {
-        return;
+    if(!packet.data || packet.packetLength<29)return;
+    std::string name(reinterpret_cast<const char*>(packet.data+4),24);name.resize(name.find('\0')==std::string::npos?name.size():name.find('\0'));
+    if(g_session.IsExName(name.c_str()))return;
+    std::string text=ExtractPacketString(packet,28);if(text.size()>255)text.resize(255);
+    const bool delivered=g_windowMgr.AddWhisperChatToWhisperWnd(name,name+" : "+text,0x222222);
+    if(!delivered){
+        const bool friendName=g_session.IsFriendName(name.c_str()),guild=g_session.IsGuildMember(name.c_str());
+        if(!friendName && !guild){
+            const int warning=g_session.IsCheatName(name.c_str())?917:g_session.IsCheatGuildName(name.c_str())?919:0;
+            if(warning){ro::UiMessageStrings table;table.Load();const auto message=table.Get(warning,"Check the sender's identity.");
+                g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message.c_str()),65535);
+                g_windowMgr.SendMsg(20,reinterpret_cast<msgparam_t>(message.c_str()),65535);}
+        }
+        if(name!=g_session.GetPlayerName()){
+            const auto message=std::string(friendName?"[ Friend ":guild?"[ Member ":"( From ")+name+(friendName || guild?" ] : ":" ) : ")+text;
+            g_windowMgr.SendMsg(3,0,0);
+            RecordChat(mode,message,0xffff00,kChatChannelWhisper,{ro::chat::NoticeRoute::Normal,ro::chat::NoticeType::Whisper,name});
+            g_windowMgr.AddWhisperCharName(name);mode.WriteSourceChat(message);
+        }
     }
-
-    std::string name(reinterpret_cast<const char*>(packet.data + 4), 24);
-    const size_t nulPos = name.find('\0');
-    if (nulPos != std::string::npos) {
-        name.resize(nulPos);
-    }
-
-    const std::string msg = StripInlineColorCodes(ExtractPacketString(packet, 28));
-    mode.m_lastWhisperName = name;
-    mode.m_lastWhisper = msg;
-
-    if (!name.empty() && !msg.empty()) {
-        RecordChat(mode, std::string("(From ") + name + ") " + msg, 0x00FFFF00, kChatChannelWhisper);
-    } else if (!msg.empty()) {
-        RecordChat(mode, msg, 0x00FFFF00, kChatChannelWhisper);
-    }
+    // Prefix comparison suppresses auto-reply loops; an empty prefix suppresses
+    // every reply. Incoming text must never replace pending outgoing metadata.
+    if(g_session.m_onAutoMSG){ro::UiMessageStrings table;table.Load();const auto prefix=table.Get(941,"[Auto] ");
+        if(text.compare(0,prefix.size(),prefix)!=0)mode.SendSourceWhisper(name,prefix+g_session.m_strAutoMSG);}
 }
 
 void HandleNotifyChatParty(CGameMode& mode, const PacketView& packet)
@@ -7813,19 +7817,25 @@ void HandleBattlefieldChat(CGameMode& mode, const PacketView& packet)
 
 void HandleAckWhisper(CGameMode& mode, const PacketView& packet)
 {
-    // Ref: Zc_Ack_Whisper (0x0098)
-    if (!packet.data || packet.packetLength < 3) {
-        return;
-    }
-
-    const u8 status = packet.data[2];
-    if (status == 0) {
-        if (!mode.m_lastWhisper.empty()) {
-            RecordChat(mode, std::string("(To ") + mode.m_lastWhisperName + ") " + mode.m_lastWhisper,
-                0x00FFFF00, kChatChannelWhisper);
-        }
-    } else {
-        RecordChat(mode, "Whisper delivery failed.", 0x00FF0000, kChatChannelSystem);
+    if(!packet.data || packet.packetLength!=3)return;
+    const u8 status=packet.data[2];const auto& target=mode.m_lastWhisperName;
+    if(status==0){
+        const auto text=std::string(g_session.GetPlayerName())+" : "+mode.m_lastWhisper;
+        if(g_windowMgr.AddWhisperChatToWhisperWnd(target,text,0x7800))return;
+        const bool bracket=g_session.IsFriendName(target.c_str()) || g_session.IsGuildMember(target.c_str());
+        const auto message=std::string(bracket?"[ To ":"( To ")+target+(bracket?" ] : ":" ) : ")+mode.m_lastWhisper;
+        if(mode.m_hiddenWhisperAcknowledgements>0)--mode.m_hiddenWhisperAcknowledgements;
+        else {g_windowMgr.SendMsg(3,0,0);
+            RecordChat(mode,message,0xffff00,kChatChannelWhisper,{ro::chat::NoticeRoute::Normal,ro::chat::NoticeType::Whisper,target});}
+        mode.WriteSourceChat(message);
+    }else {
+        if(status==1 && mode.m_hiddenWhisperAcknowledgements>0){--mode.m_hiddenWhisperAcknowledgements;return;}
+        const int id=status==2?149:status==3?150:148;
+        ro::UiMessageStrings table;table.Load();const auto label=table.Get(id,status==2?"Whispers are not accepted.":status==3?"All whispers are refused.":"Character not found.");
+        const auto message="("+target+")"+label;
+        if(!g_windowMgr.AddWhisperChatToWhisperWnd(target,message,0x7800))
+            RecordChat(mode,message,0xffff00,kChatChannelWhisper,{ro::chat::NoticeRoute::Normal,ro::chat::NoticeType::Whisper,{}});
+        if(status>3)mode.WriteSourceChat(message);
     }
 }
 

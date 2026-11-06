@@ -1,4 +1,6 @@
 add_library(ro_ui STATIC
+    UIWhisperWnd.h
+    UIWhisperWnd.cpp
     UIGuildWnd.h
     UIGuildWnd.cpp
     SkillTreeModel.h

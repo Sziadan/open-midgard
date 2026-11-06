@@ -3526,3 +3526,11 @@ Source member right release now opens role-dependent managed native/QML menus, p
 Deploy-off build passes; root149/149 in27.39s, standalone468/468 in13.69s; five final raw room cases pass. Four new frames and a result JSON retained. Strong review corrected prior plan/fixture action-ID, self/settings and rounded-transform assumptions and a production export-byte defect. See [member-actions evidence](evidence/PK09.21-actions.md) and provenance. Subject: `packet(PK09.21): restore room member actions`.
 
 Dedicated whisper is next; bounded source inventory is ready for strong PE/ownership review. PK09.21 remains IN_PROGRESS with null completion subject. No parent, broad producer/editor/locale/art/active Qt/global scale, discovery, independent or deployed closure is claimed.
+
+## 2026-11-06 — PK09.21 dedicated whisper strong review and clean checkpoint
+
+Integrated exact-name whisper UI owners, independent copied history/edit state and manager lifetime; source0097/helper/type2 fallback and0098 branch ownership; private0096 guards, auto-prefix reply, fresh-process options/shared geometry, local context exclude/include and privileged source autosave. Strong source/PE review corrected heuristic-versus-membership assumptions, incoming pending-metadata clobbering, source edit-history replacement/advance, active-modal stacking and the older draw-slot annotation (+50 draw; main text+54; +4C no-op). Safe bounded string and app-data path adaptations remain explicit.
+
+Deploy-off all-target build passes; focused6/6, root154/154 in27.98s, standalone469/469 in12.39s, direct production whisper and fresh-process write/read PASS. Twelve new native/QML frames and result JSON retained. See [whisper evidence](evidence/PK09.21-whisper.md) and provenance. Subject: `packet(PK09.21): restore dedicated whisper routing`.
+
+PK09.21 remains IN_PROGRESS with null completion subject. Continue private whisper menus/manual export/report and mode114/mode26 callers, UIAutoMessageWnd configuration/aliases, messenger controls, full source/global/main send11/talk-type/commands and ignore-list workflow. Remaining producer/editor/art/locale/active Qt/global scale, discovery, independent and deployed gates remain open. No whole-plan completion or numeric discovery closure is claimed.

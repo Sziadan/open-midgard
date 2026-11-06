@@ -1,3 +1,10 @@
+#include "core/UiMessageStrings.h"
+#include "core/SettingsIni.h"
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <climits>
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
@@ -10,6 +17,7 @@
 #include "GameMode.h"
 #include "ui/UIChatRoomWnd.h"
 #include "core/ChatRoomRequests.h"
+#include "core/MannerFilter.h"
 #include "ActionRequestSender.h"
 #include "Commerce.h"
 #include "PacketPadding.h"
@@ -3330,7 +3338,8 @@ std::vector<PlayerContextMenuEntry> BuildPlayerContextMenuEntries(const std::str
         { CGameMode::PlayerContext_SendWhisper, "Send whisper to player" },
         { CGameMode::PlayerContext_RegisterFriend, "Register as a Friend" },
         { CGameMode::PlayerContext_SendMail, "Send a mail" },
-        { CGameMode::PlayerContext_RejectWhispering, "Reject Whispering" },
+        { g_session.IsExName(playerName.c_str())?CGameMode::PlayerContext_AllowWhispering:CGameMode::PlayerContext_RejectWhispering,
+          g_session.IsExName(playerName.c_str())?"Allow Whispering":"Reject Whispering" },
     };
 }
 
@@ -3400,6 +3409,8 @@ const char* GetPlayerContextActionName(CGameMode::PlayerContextAction action)
         return "send-mail";
     case CGameMode::PlayerContext_RejectWhispering:
         return "reject-whispering";
+    case CGameMode::PlayerContext_AllowWhispering:
+        return "allow-whispering";
     default:
         return "unknown";
     }
@@ -10884,6 +10895,62 @@ bool CGameMode::SendChatRoomSettings(const ro::chat::RoomInfo& info,bool change)
     return built && CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()));
 }
 
+namespace {
+std::filesystem::path& SourceAutoSaveChatFile(){static std::filesystem::path path;return path;}
+bool CanAutoSaveSourceChat(){return std::find(s_dwAdminAID.begin(),s_dwAdminAID.end(),g_session.m_aid)!=s_dwAdminAID.end();}
+}
+std::string CGameMode::GetSourceAutoSaveChatPath() const{return SourceAutoSaveChatFile().u8string();}
+bool CGameMode::ToggleSourceChatAutoSave()
+{
+    if(!CanAutoSaveSourceChat()){
+        ro::UiMessageStrings table;table.Load();const auto message=table.Get(95,"Invalid command.");
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message.c_str()),65535);return false;
+    }
+    g_session.m_isSaveChat=!g_session.m_isSaveChat;
+    if(g_session.m_isSaveChat){
+        m_sourceAutoSaveChatCount=0;SourceAutoSaveChatFile().clear();std::error_code error;
+        const auto directory=GetOpenMidgardIniPath().parent_path()/"Chat";std::filesystem::create_directories(directory,error);
+        if(!error){auto path=directory/"Chat.txt";unsigned suffix=0;
+            while(std::filesystem::exists(path,error) && !error){std::ostringstream name;name<<"Chat"<<std::setfill('0')<<std::setw(3)<<++suffix<<".txt";path=directory/name.str();}
+            if(!error)SourceAutoSaveChatFile()=path;
+        }
+    }
+    const char* message=g_session.m_isSaveChat?"Chatting Auto Save Start..":"Chatting Auto Save END";
+    g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message),65535);return true;
+}
+bool CGameMode::WriteSourceChat(const std::string& text)
+{
+    if(!g_session.m_isSaveChat || !CanAutoSaveSourceChat())return false;
+    if(m_sourceAutoSaveChatCount<INT_MAX)++m_sourceAutoSaveChatCount;
+    std::ofstream file(SourceAutoSaveChatFile(),std::ios::binary|std::ios::app);if(!file)return false;
+    const std::string value(text.c_str());file.write(value.c_str(),static_cast<std::streamsize>(value.size()+1));file.write("\r\n",2);
+    file.close();return static_cast<bool>(file);
+}
+
+bool CGameMode::SendSourceWhisper(const std::string& target,const std::string& input)
+{
+    std::string text(input.c_str());
+    if(text.empty() || g_session.IsStatusIconActive(107))return false;
+    if(text.size()>222)text.resize(222);
+    auto& filter=ro::GetMannerFilter();filter.EnsureLoaded();
+    const auto reject=[&](int id,const char* fallback){ro::UiMessageStrings table;table.Load();const auto message=table.Get(id,fallback);
+        g_windowMgr.SendMsg(3,0,0,0);g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message.c_str()),255);return false;};
+    if(filter.IsBadUtf8Sentence(text))return reject(50,"That message cannot be sent.");
+    if(m_hiddenWhisperAcknowledgements==0){
+        if(m_sourceLastSubmittedChat==text){if(m_sourceSameChatRepeatCount<INT_MAX)++m_sourceSameChatRepeatCount;}
+        else m_sourceSameChatRepeatCount=0;
+    }
+    if(!g_session.m_onAutoMSG && g_serverType!=ServerInstantEvent && g_serviceType!=ServiceGermany && m_sourceSameChatRepeatCount>=2)
+        return reject(49,"Please do not repeat the same sentence.");
+    m_sourceLastSubmittedChat=text;m_lastWhisperName=std::string(target.c_str());
+    if(m_lastWhisperName==g_session.GetPlayerName())return false;
+    m_lastWhisper=text;
+    if(text.size()>=222)return false;
+    // The selected packet profile owns opcode/framing; source stores pending
+    // metadata before dispatch and has no invented FIFO for later acknowledgements.
+    return SendWhisperChatMessage(m_lastWhisperName,text);
+}
+
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     switch (msg) {
@@ -11126,6 +11193,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             return static_cast<char>(std::tolower(ch));
         });
         if(command=="/chat" || command=="/coxldqkd"){return g_windowMgr.OpenChatRoomMake(false)?1:0;}
+        if(command=="/autosavechat")return ToggleSourceChatAutoSave()?1:0;
         const int emotion = ResolveEmotionCommand(command);
         if (emotion == -2) return 0;
         if (emotion >= 0) {

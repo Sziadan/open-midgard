@@ -1,0 +1,236 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+006608b0 <.text+0x25f8b0>:
+  6608b0:	55                   	push   %ebp
+  6608b1:	8b ec                	mov    %esp,%ebp
+  6608b3:	83 ec 34             	sub    $0x34,%esp
+  6608b6:	8b 45 08             	mov    0x8(%ebp),%eax
+  6608b9:	53                   	push   %ebx
+  6608ba:	56                   	push   %esi
+  6608bb:	57                   	push   %edi
+  6608bc:	50                   	push   %eax
+  6608bd:	8d 4d cc             	lea    -0x34(%ebp),%ecx
+  6608c0:	68 00 29 6f 00       	push   $0x6f2900
+  6608c5:	51                   	push   %ecx
+  6608c6:	e8 2d 71 04 00       	call   0x6a79f8
+  6608cb:	8d 7d cc             	lea    -0x34(%ebp),%edi
+  6608ce:	83 c9 ff             	or     $0xffffffff,%ecx
+  6608d1:	33 c0                	xor    %eax,%eax
+  6608d3:	83 c4 0c             	add    $0xc,%esp
+  6608d6:	8b 55 0c             	mov    0xc(%ebp),%edx
+  6608d9:	f2 ae                	repnz scas %es:(%edi),%al
+  6608db:	f7 d1                	not    %ecx
+  6608dd:	52                   	push   %edx
+  6608de:	8d 45 e4             	lea    -0x1c(%ebp),%eax
+  6608e1:	49                   	dec    %ecx
+  6608e2:	68 00 29 6f 00       	push   $0x6f2900
+  6608e7:	50                   	push   %eax
+  6608e8:	8b f1                	mov    %ecx,%esi
+  6608ea:	e8 09 71 04 00       	call   0x6a79f8
+  6608ef:	8d 7d e4             	lea    -0x1c(%ebp),%edi
+  6608f2:	83 c9 ff             	or     $0xffffffff,%ecx
+  6608f5:	33 c0                	xor    %eax,%eax
+  6608f7:	83 c4 0c             	add    $0xc,%esp
+  6608fa:	f2 ae                	repnz scas %es:(%edi),%al
+  6608fc:	f7 d1                	not    %ecx
+  6608fe:	49                   	dec    %ecx
+  6608ff:	66 3b f1             	cmp    %cx,%si
+  660902:	7d 0b                	jge    0x66090f
+  660904:	8b fe                	mov    %esi,%edi
+  660906:	8b d9                	mov    %ecx,%ebx
+  660908:	89 7d fc             	mov    %edi,-0x4(%ebp)
+  66090b:	2b de                	sub    %esi,%ebx
+  66090d:	eb 09                	jmp    0x660918
+  66090f:	8b f9                	mov    %ecx,%edi
+  660911:	8b de                	mov    %esi,%ebx
+  660913:	89 7d fc             	mov    %edi,-0x4(%ebp)
+  660916:	2b d9                	sub    %ecx,%ebx
+  660918:	0f bf d1             	movswl %cx,%edx
+  66091b:	0f bf f6             	movswl %si,%esi
+  66091e:	8d 4a 02             	lea    0x2(%edx),%ecx
+  660921:	89 5d 0c             	mov    %ebx,0xc(%ebp)
+  660924:	3b f1                	cmp    %ecx,%esi
+  660926:	7c 61                	jl     0x660989
+  660928:	8d 42 04             	lea    0x4(%edx),%eax
+  66092b:	3b f0                	cmp    %eax,%esi
+  66092d:	7f 5a                	jg     0x660989
+  66092f:	33 c0                	xor    %eax,%eax
+  660931:	66 3b f8             	cmp    %ax,%di
+  660934:	89 45 08             	mov    %eax,0x8(%ebp)
+  660937:	7e 29                	jle    0x660962
+  660939:	8d 48 02             	lea    0x2(%eax),%ecx
+  66093c:	0f bf c9             	movswl %cx,%ecx
+  66093f:	8a 4c 0d cc          	mov    -0x34(%ebp,%ecx,1),%cl
+  660943:	80 f9 49             	cmp    $0x49,%cl
+  660946:	74 2b                	je     0x660973
+  660948:	80 f9 6c             	cmp    $0x6c,%cl
+  66094b:	74 26                	je     0x660973
+  66094d:	0f bf d8             	movswl %ax,%ebx
+  660950:	3a 4c 1d e4          	cmp    -0x1c(%ebp,%ebx,1),%cl
+  660954:	75 03                	jne    0x660959
+  660956:	ff 45 08             	incl   0x8(%ebp)
+  660959:	8b 5d 0c             	mov    0xc(%ebp),%ebx
+  66095c:	40                   	inc    %eax
+  66095d:	66 3b c7             	cmp    %di,%ax
+  660960:	7c d7                	jl     0x660939
+  660962:	66 39 7d 08          	cmp    %di,0x8(%ebp)
+  660966:	75 21                	jne    0x660989
+  660968:	5f                   	pop    %edi
+  660969:	5e                   	pop    %esi
+  66096a:	33 c0                	xor    %eax,%eax
+  66096c:	5b                   	pop    %ebx
+  66096d:	8b e5                	mov    %ebp,%esp
+  66096f:	5d                   	pop    %ebp
+  660970:	c2 08 00             	ret    $0x8
+  660973:	0f bf c8             	movswl %ax,%ecx
+  660976:	8a 4c 0d e4          	mov    -0x1c(%ebp,%ecx,1),%cl
+  66097a:	80 f9 49             	cmp    $0x49,%cl
+  66097d:	74 05                	je     0x660984
+  66097f:	80 f9 6c             	cmp    $0x6c,%cl
+  660982:	75 d8                	jne    0x66095c
+  660984:	ff 45 08             	incl   0x8(%ebp)
+  660987:	eb d3                	jmp    0x66095c
+  660989:	8d 42 01             	lea    0x1(%edx),%eax
+  66098c:	3b f0                	cmp    %eax,%esi
+  66098e:	7c 56                	jl     0x6609e6
+  660990:	83 c2 04             	add    $0x4,%edx
+  660993:	3b f2                	cmp    %edx,%esi
+  660995:	7f 4f                	jg     0x6609e6
+  660997:	33 f6                	xor    %esi,%esi
+  660999:	66 85 ff             	test   %di,%di
+  66099c:	7e 38                	jle    0x6609d6
+  66099e:	33 c0                	xor    %eax,%eax
+  6609a0:	8d 50 01             	lea    0x1(%eax),%edx
+  6609a3:	0f bf ca             	movswl %dx,%ecx
+  6609a6:	8a 4c 0d cc          	mov    -0x34(%ebp,%ecx,1),%cl
+  6609aa:	80 f9 49             	cmp    $0x49,%cl
+  6609ad:	74 10                	je     0x6609bf
+  6609af:	80 f9 6c             	cmp    $0x6c,%cl
+  6609b2:	74 0b                	je     0x6609bf
+  6609b4:	0f bf c0             	movswl %ax,%eax
+  6609b7:	3a 4c 05 e4          	cmp    -0x1c(%ebp,%eax,1),%cl
+  6609bb:	75 12                	jne    0x6609cf
+  6609bd:	eb 0f                	jmp    0x6609ce
+  6609bf:	0f bf c8             	movswl %ax,%ecx
+  6609c2:	8a 44 0d e4          	mov    -0x1c(%ebp,%ecx,1),%al
+  6609c6:	3c 49                	cmp    $0x49,%al
+  6609c8:	74 04                	je     0x6609ce
+  6609ca:	3c 6c                	cmp    $0x6c,%al
+  6609cc:	75 01                	jne    0x6609cf
+  6609ce:	46                   	inc    %esi
+  6609cf:	8b c2                	mov    %edx,%eax
+  6609d1:	66 3b c7             	cmp    %di,%ax
+  6609d4:	7c ca                	jl     0x6609a0
+  6609d6:	66 3b f7             	cmp    %di,%si
+  6609d9:	75 0b                	jne    0x6609e6
+  6609db:	5f                   	pop    %edi
+  6609dc:	5e                   	pop    %esi
+  6609dd:	33 c0                	xor    %eax,%eax
+  6609df:	5b                   	pop    %ebx
+  6609e0:	8b e5                	mov    %ebp,%esp
+  6609e2:	5d                   	pop    %ebp
+  6609e3:	c2 08 00             	ret    $0x8
+  6609e6:	66 83 fb 02          	cmp    $0x2,%bx
+  6609ea:	0f 8f bb 00 00 00    	jg     0x660aab
+  6609f0:	33 f6                	xor    %esi,%esi
+  6609f2:	66 85 ff             	test   %di,%di
+  6609f5:	7e 2a                	jle    0x660a21
+  6609f7:	33 c9                	xor    %ecx,%ecx
+  6609f9:	0f bf d7             	movswl %di,%edx
+  6609fc:	8a 44 0d cc          	mov    -0x34(%ebp,%ecx,1),%al
+  660a00:	3c 49                	cmp    $0x49,%al
+  660a02:	74 0c                	je     0x660a10
+  660a04:	3c 6c                	cmp    $0x6c,%al
+  660a06:	74 08                	je     0x660a10
+  660a08:	3a 44 0d e4          	cmp    -0x1c(%ebp,%ecx,1),%al
+  660a0c:	75 0f                	jne    0x660a1d
+  660a0e:	eb 0c                	jmp    0x660a1c
+  660a10:	8a 44 0d e4          	mov    -0x1c(%ebp,%ecx,1),%al
+  660a14:	3c 49                	cmp    $0x49,%al
+  660a16:	74 04                	je     0x660a1c
+  660a18:	3c 6c                	cmp    $0x6c,%al
+  660a1a:	75 01                	jne    0x660a1d
+  660a1c:	46                   	inc    %esi
+  660a1d:	41                   	inc    %ecx
+  660a1e:	4a                   	dec    %edx
+  660a1f:	75 db                	jne    0x6609fc
+  660a21:	0f bf c7             	movswl %di,%eax
+  660a24:	0f bf ce             	movswl %si,%ecx
+  660a27:	8d 50 fe             	lea    -0x2(%eax),%edx
+  660a2a:	89 45 0c             	mov    %eax,0xc(%ebp)
+  660a2d:	3b ca                	cmp    %edx,%ecx
+  660a2f:	7c 0b                	jl     0x660a3c
+  660a31:	5f                   	pop    %edi
+  660a32:	5e                   	pop    %esi
+  660a33:	33 c0                	xor    %eax,%eax
+  660a35:	5b                   	pop    %ebx
+  660a36:	8b e5                	mov    %ebp,%esp
+  660a38:	5d                   	pop    %ebp
+  660a39:	c2 08 00             	ret    $0x8
+  660a3c:	33 d2                	xor    %edx,%edx
+  660a3e:	33 c9                	xor    %ecx,%ecx
+  660a40:	66 3b fa             	cmp    %dx,%di
+  660a43:	b3 01                	mov    $0x1,%bl
+  660a45:	89 55 08             	mov    %edx,0x8(%ebp)
+  660a48:	7e 39                	jle    0x660a83
+  660a4a:	0f bf f2             	movswl %dx,%esi
+  660a4d:	8a 44 35 cc          	mov    -0x34(%ebp,%esi,1),%al
+  660a51:	3c 49                	cmp    $0x49,%al
+  660a53:	74 42                	je     0x660a97
+  660a55:	3c 6c                	cmp    $0x6c,%al
+  660a57:	74 3e                	je     0x660a97
+  660a59:	0f bf f9             	movswl %cx,%edi
+  660a5c:	3a 44 3d e4          	cmp    -0x1c(%ebp,%edi,1),%al
+  660a60:	75 03                	jne    0x660a65
+  660a62:	ff 45 08             	incl   0x8(%ebp)
+  660a65:	8b 7d fc             	mov    -0x4(%ebp),%edi
+  660a68:	0f bf 45 08          	movswl 0x8(%ebp),%eax
+  660a6c:	46                   	inc    %esi
+  660a6d:	3b c6                	cmp    %esi,%eax
+  660a6f:	74 08                	je     0x660a79
+  660a71:	80 fb 01             	cmp    $0x1,%bl
+  660a74:	75 03                	jne    0x660a79
+  660a76:	b3 02                	mov    $0x2,%bl
+  660a78:	49                   	dec    %ecx
+  660a79:	42                   	inc    %edx
+  660a7a:	41                   	inc    %ecx
+  660a7b:	66 3b d7             	cmp    %di,%dx
+  660a7e:	7c ca                	jl     0x660a4a
+  660a80:	8b 45 0c             	mov    0xc(%ebp),%eax
+  660a83:	0f bf 4d 08          	movswl 0x8(%ebp),%ecx
+  660a87:	48                   	dec    %eax
+  660a88:	3b c8                	cmp    %eax,%ecx
+  660a8a:	75 1f                	jne    0x660aab
+  660a8c:	5f                   	pop    %edi
+  660a8d:	5e                   	pop    %esi
+  660a8e:	33 c0                	xor    %eax,%eax
+  660a90:	5b                   	pop    %ebx
+  660a91:	8b e5                	mov    %ebp,%esp
+  660a93:	5d                   	pop    %ebp
+  660a94:	c2 08 00             	ret    $0x8
+  660a97:	0f bf c1             	movswl %cx,%eax
+  660a9a:	8a 44 05 e4          	mov    -0x1c(%ebp,%eax,1),%al
+  660a9e:	3c 49                	cmp    $0x49,%al
+  660aa0:	74 04                	je     0x660aa6
+  660aa2:	3c 6c                	cmp    $0x6c,%al
+  660aa4:	75 c2                	jne    0x660a68
+  660aa6:	ff 45 08             	incl   0x8(%ebp)
+  660aa9:	eb bd                	jmp    0x660a68
+  660aab:	5f                   	pop    %edi
+  660aac:	5e                   	pop    %esi
+  660aad:	b8 01 00 00 00       	mov    $0x1,%eax
+  660ab2:	5b                   	pop    %ebx
+  660ab3:	8b e5                	mov    %ebp,%esp
+  660ab5:	5d                   	pop    %ebp
+  660ab6:	c2 08 00             	ret    $0x8
+  660ab9:	90                   	nop
+  660aba:	90                   	nop
+  660abb:	90                   	nop
+  660abc:	90                   	nop
+  660abd:	90                   	nop
+  660abe:	90                   	nop
+  660abf:	90                   	nop

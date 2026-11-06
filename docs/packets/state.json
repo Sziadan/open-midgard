@@ -2060,7 +2060,9 @@
         "docs/packets/evidence/PK09.21-settings.md",
         "docs/packets/evidence/PK09.21-settings-provenance.json",
         "docs/packets/evidence/PK09.21-actions.md",
-        "docs/packets/evidence/PK09.21-actions-provenance.json"
+        "docs/packets/evidence/PK09.21-actions-provenance.json",
+        "docs/packets/evidence/PK09.21-whisper.md",
+        "docs/packets/evidence/PK09.21-whisper-provenance.json"
       ],
       "commit_subject": null
     }

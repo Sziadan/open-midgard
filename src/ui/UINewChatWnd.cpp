@@ -1925,6 +1925,13 @@ void UINewChatWnd::CancelPointerCapture()
     if (g_windowMgr.m_captureWindow == this) g_windowMgr.m_captureWindow = nullptr;
 }
 
+void UINewChatWnd::RememberWhisperTarget(const std::string& target)
+{
+    if(std::find(m_whisperTargets.begin(),m_whisperTargets.end(),target)!=m_whisperTargets.end())return;
+    m_whisperTargets.push_back(target);
+    if(m_whisperTargetHistoryIndex>=static_cast<int>(m_whisperTargets.size())-1)m_whisperTargetHistoryIndex=static_cast<int>(m_whisperTargets.size());
+}
+
 msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, msgparam_t detail, msgparam_t extra)
 {
     switch (msg) {
@@ -1941,7 +1948,7 @@ msgresult_t UINewChatWnd::SendMsg(UIWindow* sender, int msg, msgparam_t value, m
         if (value==127) {g_windowMgr.ToggleWindow(UIWindowMgr::WID_BATTLEMSGOPTION);return 0;}
         if (value == 281 && detail) {
             const std::string target(reinterpret_cast<const char*>(detail));
-            if (std::find(m_whisperTargets.begin(), m_whisperTargets.end(), target) == m_whisperTargets.end()) m_whisperTargets.push_back(target);
+            RememberWhisperTarget(target);
             SetQtInputText(InputField_WhisperTarget, target);
             FocusQtInput(InputField_Message);
         }

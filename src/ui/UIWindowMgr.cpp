@@ -4,6 +4,9 @@
 #include "UINewChatWnd.h"
 #include "UIChatRoomWnd.h"
 #include "UIChatRoomSettingsWnd.h"
+#include "UIWhisperWnd.h"
+#include "audio/Audio.h"
+#include "res/Res.h"
 #include "core/UiMessageStrings.h"
 #include "UIBasicInfoWnd.h"
 #include "UIStatusWnd.h"
@@ -979,7 +982,7 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
 bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 {
     const auto* hit = HitTestWindow(x, y);
-    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd);
+    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || dynamic_cast<const UIWhisperWnd*>(hit));
 }
 
 RECT UIWindowMgr::GetChatClientRect() const
@@ -997,6 +1000,8 @@ RECT UIWindowMgr::GetChatClientRect() const
 
 void UIWindowMgr::LoadChatWindowPreferences()
 {
+    m_whisperWindowInfo={LoadSettingsIniInt("UIWindows","WhisperWndX",0),LoadSettingsIniInt("UIWindows","WhisperWndY",347),
+        LoadSettingsIniInt("UIWindows","WhisperWndW",280),LoadSettingsIniInt("UIWindows","WhisperWndH",120)};
     // Selected source reads height/placement/show but never reads the status
     // value it writes. Status therefore keeps the manager's session default7.
     m_chatWndHeight=LoadSettingsIniInt("UIWindows","ChatWndHeight",98);
@@ -1025,6 +1030,8 @@ void UIWindowMgr::LoadChatWindowPreferences()
 
 void UIWindowMgr::SaveChatWindowPreferences() const
 {
+    SaveSettingsIniInt("UIWindows","WhisperWndX",m_whisperWindowInfo.x);SaveSettingsIniInt("UIWindows","WhisperWndY",m_whisperWindowInfo.y);
+    SaveSettingsIniInt("UIWindows","WhisperWndW",m_whisperWindowInfo.width);SaveSettingsIniInt("UIWindows","WhisperWndH",m_whisperWindowInfo.height);
     // Shutdown calls this after RemoveAllWindows has snapshotted every owner.
     // Hidden windows, checkbox edits and127 toggles do not write this record.
     SaveSettingsIniInt("UIWindows","ChatWndStatus",m_chatWndStatus);
@@ -1104,6 +1111,7 @@ bool UIWindowMgr::HasActiveNpcDialog() const
 
 bool UIWindowMgr::CanRouteQtChatInput() const
 {
+    if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow))if(whisper->m_show)return false;
     if(m_modalWindow && m_modalWindow->m_show)return false;
     if((m_chatRoomMakeWnd && m_editWindow==m_chatRoomMakeWnd) || (m_chatRoomChangeWnd && m_editWindow==m_chatRoomChangeWnd))return false;
     if(HasFrontMenuUiVisible() || HasActiveNpcDialog() || IsCapturingShortcutKeyBinding())return false;
@@ -1203,6 +1211,7 @@ bool UIWindowMgr::Init() {
 void UIWindowMgr::ShowRoomValidationMessage(int messageId)
 {
     if(m_modalWindow)return;
+    for(const auto& entry:m_whisperWindows)entry.second->CancelPointerCapture();
     ro::UiMessageStrings table;table.Load();
     const char* fallback=messageId==13?"Please enter a room title.":messageId==14?"That title cannot be used.":messageId==15?"Please enter a password."
         :messageId==16?"Please enter at least four password characters.":messageId==190?"Only English text is allowed."
@@ -1212,6 +1221,58 @@ void UIWindowMgr::ShowRoomValidationMessage(int messageId)
     if(g_hMainWnd && GetCapture()==g_hMainWnd)ReleaseCapture();
     m_roomMessageBox=new UIChatRoomMessageBox(table.Get(messageId,fallback),messageId);m_children.push_back(m_roomMessageBox);
     m_captureWindow=nullptr;m_editWindow=nullptr;m_modalWindow=m_roomMessageBox;
+}
+
+void UIWindowMgr::AddWhisperCharName(const std::string& name)
+{
+    if(m_chatWnd)m_chatWnd->RememberWhisperTarget(name);
+}
+bool UIWindowMgr::OpenWhisperWindow(const std::string& input,const char* label)
+{
+    const std::string name(input.c_str());
+    if(m_whisperWindows.find(name)!=m_whisperWindows.end())return false;
+    const std::string title=label?name+"  ("+label+")  *^_^*":name;
+    auto* window=new UIWhisperWnd(name,title);
+    m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),window);
+    const auto& info=m_whisperWindowInfo;const auto client=GetChatClientRect();
+    const long long offset=17LL*static_cast<long long>(m_whisperWindows.size());
+    if(offset>0){
+        const long long x=info.x+offset,y=info.y+offset;
+        if(x>0 && x+info.width<client.right-17 && y>0 && y+info.height<client.bottom-17)window->Move(static_cast<int>(x),static_cast<int>(y));
+        else if(offset+info.width<client.right-17 && offset+info.height<client.bottom-17)window->Move(static_cast<int>(offset),static_cast<int>(offset));
+    }
+    m_whisperWindows.emplace(name,window);AddWhisperCharName(name);
+    if(!m_modalWindow){m_editWindow=window;if(m_chatWnd)m_chatWnd->ClearInputFocus();}
+    return true;
+}
+bool UIWindowMgr::AddWhisperChatToWhisperWnd(const std::string& input,const std::string& text,u32 colorRef)
+{
+    const std::string name(input.c_str());
+    const bool friendName=g_session.IsFriendName(name.c_str());bool created=false;
+    if(g_session.m_isShowWhisperWnd && !friendName){
+        if(g_session.IsGuildMember(name.c_str()))created=OpenWhisperWindow(name,"GuildMember");
+        else {
+            int warning=g_session.IsCheatName(name.c_str())?917:g_session.IsCheatGuildName(name.c_str())?919:0;
+            if(warning){ro::UiMessageStrings table;table.Load();const auto message=table.Get(warning,"Check the sender's identity.");
+                SendMsg(1,reinterpret_cast<msgparam_t>(message.c_str()),65535);}
+            created=OpenWhisperWindow(name);
+        }
+    }else if(g_session.m_isShowWhisperWnd_Friend && friendName){
+        ro::UiMessageStrings table;table.Load();const auto label=table.Get(102,"Friend");created=OpenWhisperWindow(name,label.c_str());
+    }
+    if(created){
+        const char* primary="..\\..\\BGM\\Msg_NewMsg.wav";
+        if(g_resMgr.IsExist(primary))PlayWave(primary,0,0,0,250,40,1.0f);
+        else if(g_session.m_isPlayWhisperOpenSound)PlayWave("\xB9\xF6\xC6\xB0\xBC\xD2\xB8\xAE.wav",0,0,0,250,40,1.0f);
+    }
+    if(name==g_session.GetPlayerName())return false;
+    if(g_session.m_isShowWhisperWnd && created)AddWhisperCharName(name);
+    const auto found=m_whisperWindows.find(name);if(found==m_whisperWindows.end())return false;
+    auto* window=found->second;window->Append(text.c_str(),ro::chat::ColorRefToUiRgb(colorRef));
+    // Original does not unhide an existing window; absent the map overlay it
+    // brings even that retained owner to the end of the managed draw order.
+    if(!m_roMapWnd){m_children.remove(window);m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),window);}
+    return true;
 }
 
 bool UIWindowMgr::OpenChatRoomMake(bool toggle)
@@ -1752,7 +1813,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd);
+        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || dynamic_cast<UIWhisperWnd*>(window));
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -1905,6 +1966,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         m_skillListWnd = nullptr;
     }
 
+    if(auto* whisper=dynamic_cast<UIWhisperWnd*>(window))whisper->StoreInfo();
     delete window;
 }
 
@@ -2488,6 +2550,7 @@ void UIWindowMgr::HideLoadingScreen()
 }
 
 void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t noticeType, msgparam_t talker) {
+    if(msg==14){if(wparam)OpenWhisperWindow(reinterpret_cast<const char*>(wparam),reinterpret_cast<const char*>(lparam));return;}
     if(msg==5){
         if(m_chatRoomWnd && wparam)m_chatRoomWnd->SendMsg(nullptr,37,wparam,lparam,0);
         return;
@@ -2574,7 +2637,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
         }
     }
 
-    if(hit==m_chatWnd && (m_editWindow==m_chatRoomWnd || m_editWindow==m_chatRoomPasswordWnd || m_editWindow==m_chatRoomMakeWnd || m_editWindow==m_chatRoomChangeWnd))m_editWindow=nullptr;
+    if(hit==m_chatWnd && (m_editWindow==m_chatRoomWnd || m_editWindow==m_chatRoomPasswordWnd || m_editWindow==m_chatRoomMakeWnd || m_editWindow==m_chatRoomChangeWnd || dynamic_cast<UIWhisperWnd*>(m_editWindow)))m_editWindow=nullptr;
     m_captureWindow = hit;
 
     if (hit) {
@@ -2595,7 +2658,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);
-        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd))
+        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || dynamic_cast<UIWhisperWnd*>(hit)))
             SetCapture(g_hMainWnd);
     }
 }
@@ -2640,7 +2703,7 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
 void UIWindowMgr::OnLBtnUp(int x, int y)
 {
     const bool chatCapture = m_captureWindow && (m_captureWindow == m_chatWnd || m_captureWindow == m_subChatWndST
-        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd || m_captureWindow==m_chatRoomMakeWnd || m_captureWindow==m_chatRoomChangeWnd || m_captureWindow==m_roomMessageBox || m_captureWindow==m_chatRoomMenuWnd);
+        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd || m_captureWindow==m_chatRoomMakeWnd || m_captureWindow==m_chatRoomChangeWnd || m_captureWindow==m_roomMessageBox || m_captureWindow==m_chatRoomMenuWnd || dynamic_cast<UIWhisperWnd*>(m_captureWindow));
     if (m_captureWindow) {
         m_captureWindow->OnLBtnUp(x, y);
         m_captureWindow = nullptr;
@@ -2905,6 +2968,7 @@ void UIWindowMgr::OnChar(char c)
         return;
     }
 
+    if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){whisper->OnChar(c);return;}}
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_editWindow)){if(settings->m_show){settings->OnChar(c);return;}}
     if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd){m_chatRoomPasswordWnd->OnChar(c);return;}
     if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd){m_chatRoomWnd->OnChar(c);return;}
@@ -3037,6 +3101,7 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStorageClose, 0, 0, 0) != 0;
     }
 
+    if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){if(!isAltDown && !isCtrlDown)whisper->OnKeyDown(virtualKey);return true;}}
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_editWindow)){
         if(settings->m_show){if(!isAltDown && !isCtrlDown)settings->OnKeyDown(virtualKey);return true;}
     }
@@ -3146,6 +3211,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         return;
     }
 
+    if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){whisper->OnKeyDown(virtualKey);return;}}
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_editWindow)){if(settings->m_show){settings->OnKeyDown(virtualKey);return;}}
     if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd){m_chatRoomPasswordWnd->OnKeyDown(virtualKey);return;}
     if(m_chatRoomWnd && m_chatRoomWnd->m_show && m_editWindow==m_chatRoomWnd){m_chatRoomWnd->OnKeyDown(virtualKey);return;}

@@ -1,6 +1,7 @@
 #include "ui/StatusLayout.h"
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
+#include "ui/UIWhisperWnd.h"
 #include "QtUiStateAdapter.h"
 
 #include "QtUiState.h"
@@ -1924,6 +1925,20 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         }
         return (windowIndex - mainIndex) * 0.0001;
     };
+    QVariantList whisperWindows;
+    const auto whisperRect=[](RECT r){return QVariantMap{{"x",static_cast<int>(r.left)},{"y",static_cast<int>(r.top)},
+        {"width",static_cast<int>(r.right-r.left)},{"height",static_cast<int>(r.bottom-r.top)}};};
+    for(const auto& entry:g_windowMgr.m_whisperWindows){
+        const auto* window=entry.second;const auto layout=window->GetLayout();QVariantList rows;
+        for(const auto& row:window->GetVisibleRows())rows.push_back(QVariantMap{{"text",ToQString(row.text)},{"color",QColor::fromRgb(row.color).name()}});
+        whisperWindows.push_back(QVariantMap{{"name",ToQString(window->GetName())},{"title",ToQString(window->GetTitle())},
+            {"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},{"x",window->m_x},{"y",window->m_y},
+            {"width",window->m_w},{"height",window->m_h},{"input",ToQString(window->GetInputText())},{"rows",rows},
+            {"history",whisperRect(layout.history)},{"edit",whisperRect(layout.edit)},{"close",whisperRect(layout.close)},
+            {"resizer",whisperRect(layout.resizer)},{"scrollTrack",whisperRect(layout.track)},{"scrollThumb",whisperRect(layout.thumb)},
+            {"scrollUp",whisperRect(layout.up)},{"scrollDown",whisperRect(layout.down)},{"scrollVisible",window->GetScrollModel().maximum>0}});
+    }
+    chatUi.insert("whisperWindows",whisperWindows);
     QVariantMap roomMenu;
     if(const auto* menu=g_windowMgr.m_chatRoomMenuWnd){QVariantList rows;
         for(const auto& item:menu->GetItems())rows.push_back(QVariantMap{{"action",item.action},{"text",ToQString(item.label)}});

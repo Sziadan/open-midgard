@@ -2167,3 +2167,8 @@ add_executable(insult_words_checks InsultWordsTests.cpp)
 target_compile_features(insult_words_checks PRIVATE cxx_std_17)
 target_include_directories(insult_words_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 add_test(NAME insult_words_checks COMMAND insult_words_checks)
+
+add_executable(whisper_names_checks WhisperNamesTests.cpp)
+target_compile_features(whisper_names_checks PRIVATE cxx_std_17)
+target_include_directories(whisper_names_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
+add_test(NAME whisper_names_checks COMMAND whisper_names_checks)

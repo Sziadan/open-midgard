@@ -1,3 +1,4 @@
+#include "core/WhisperNames.h"
 #include "world/Gr2Monster.h"
 #include "Session.h"
 #include "core/SettingsIni.h"
@@ -3437,6 +3438,36 @@ float CSession::GetPCAttackMotion(int job, int sex, int weaponItemId, int isSeco
     return 6.0f;
 }
 
+void CSession::LoadWhisperOptions()
+{
+    m_isShowWhisperWnd=LoadSettingsIniInt("Option","m_isShowWhisperWnd",1)!=0;
+    m_isShowWhisperWnd_Friend=LoadSettingsIniInt("Option","m_isShowWhisperWnd_Friend",1)!=0;
+    m_isPlayWhisperOpenSound=LoadSettingsIniInt("Option","m_isPlayWhisperOpenSound",1)!=0;
+    if(m_isShowWhisperWnd_Friend)m_isShowWhisperWnd=true;
+}
+bool CSession::SaveWhisperOptions() const
+{
+    bool saved=SaveSettingsIniInt("Option","m_isShowWhisperWnd",m_isShowWhisperWnd);
+    saved=SaveSettingsIniInt("Option","m_isShowWhisperWnd_Friend",m_isShowWhisperWnd_Friend) && saved;
+    return SaveSettingsIniInt("Option","m_isPlayWhisperOpenSound",m_isPlayWhisperOpenSound) && saved;
+}
+bool CSession::IsExName(const char* name) const
+{
+    return name && std::find(m_exNameList.begin(),m_exNameList.end(),name)!=m_exNameList.end();
+}
+bool CSession::IsGuildMember(const char* name) const
+{
+    if(!name)return false;
+    return m_guildWindow.master==name || std::any_of(m_guildWindow.members.begin(),m_guildWindow.members.end(),[&](const auto& member){return member.name==name;});
+}
+bool CSession::IsCheatName(const char* name) const
+{
+    return name && std::any_of(m_friendList.begin(),m_friendList.end(),[&](const auto& member){return ro::chat::WhisperNamesLookAlike(name,member.characterName);});
+}
+bool CSession::IsCheatGuildName(const char* name) const
+{
+    return name && std::any_of(m_guildWindow.members.begin(),m_guildWindow.members.end(),[&](const auto& member){return ro::chat::WhisperNamesLookAlike(name,member.name);});
+}
 void CSession::LoadBattleMessageOptions()
 {
     for (std::size_t i=0;i<m_battleMsgOnOffSet.size();++i) {

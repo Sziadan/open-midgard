@@ -96,6 +96,9 @@ public:
     void FocusQtInput(int field);
     void SetQtInputText(int field, const std::string& text);
     const std::string& GetWhisperTargetText() const;
+    void RememberWhisperTarget(const std::string& target);
+    const std::vector<std::string>& GetWhisperTargets() const { return m_whisperTargets; }
+    int GetWhisperTargetHistoryIndex() const { return m_whisperTargetHistoryIndex; }
     const std::string& GetInputText() const;
     const std::vector<std::string>& GetInputHistory() const;
     ChatScrollBarState GetScrollBarState() const;
@@ -159,6 +162,7 @@ private:
     ro::chat::ScrollDrag m_sourceScrollDrag;
     int m_sourceScrollTab=-1;
     std::vector<std::string> m_whisperTargets;
+    int m_whisperTargetHistoryIndex=0;
     std::vector<ChatLine> m_visibleLines;
     std::vector<std::string> m_inputHistory;
     std::string m_whisperTargetText;
