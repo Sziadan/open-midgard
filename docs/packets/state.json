@@ -2048,7 +2048,9 @@
         "docs/packets/evidence/PK09.21-wrapped.md",
         "docs/packets/evidence/PK09.21-wrapped-provenance.json",
         "docs/packets/evidence/PK09.21-options.md",
-        "docs/packets/evidence/PK09.21-options-provenance.json"
+        "docs/packets/evidence/PK09.21-options-provenance.json",
+        "docs/packets/evidence/PK09.21-scroll.md",
+        "docs/packets/evidence/PK09.21-scroll-provenance.json"
       ],
       "commit_subject": null
     }

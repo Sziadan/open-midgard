@@ -7,21 +7,25 @@ struct HistoryView {
     int rows = 5;
     int first = 0;
     int selected = -1;
+    int scrollPosition = 0;
 
     int LastFirst(int count) const { return (std::max)(0, count - rows); }
     void Resize(int visibleRows, int count) {
         rows = (std::max)(0, visibleRows);
-        first = LastFirst(count);
+        first = scrollPosition = LastFirst(count);
     }
     void Scroll(int delta, int count) {
-        first = static_cast<int>(std::clamp(static_cast<long long>(first) + delta, 0LL,
+        first = scrollPosition = static_cast<int>(std::clamp(static_cast<long long>(first) + delta, 0LL,
             static_cast<long long>(LastFirst(count))));
     }
     void AfterAppend(int before, int after) {
         const bool bottom = before <= rows || first == LastFirst(before);
-        // DeleteFirstHalfItem recalculates/clamps BEFORE the new item is added.
-        if (before >= 240) first = std::clamp(first, 0, LastFirst(before - before / 2));
-        first = bottom ? LastFirst(after) : std::clamp(first, 0, LastFirst(after));
+        // RecalcScrbarPos clamps the BAR, not the parent's text view offset.
+        // An upward-scrolled view can remain beyond the surviving rows until
+        // Scroll/Resize reconciles it. Preserve that source blank-view quirk.
+        if (before >= 240) scrollPosition = std::clamp(scrollPosition, 0, LastFirst(before - before / 2));
+        scrollPosition = std::clamp(scrollPosition, 0, LastFirst(after));
+        if (bottom && after > rows) first = scrollPosition = LastFirst(after);
         // Source leaves the selected numeric index unchanged during main trim.
         // Consumers must bounds-check it rather than reproduce its unsafe read.
     }

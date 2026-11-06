@@ -1,0 +1,1029 @@
+
+--- Ref/UIControl2.cpp:53-154 ---
+53: int __thiscall UIScrollBar::GetScrollRange(UIScrollBar *this)
+54: {
+55:   int m_h; // edi
+56:
+57:   m_h = this->m_h;
+58:   if ( !this->m_isVert )
+59:     m_h = this->m_w;
+60:   return m_h - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this);
+61: }
+62:
+63:
+64: // ================================================
+65: // Original Signature: protected: int __thiscall UIScrollBar::GetThumbOffset(void)
+66: // Decompiled from address: 0x450ae0
+67: // ================================================
+68: int __thiscall UIScrollBar::GetThumbOffset(UIScrollBar *this)
+69: {
+70:   int m_h; // edi
+71:
+72:   m_h = this->m_h;
+73:   if ( !this->m_isVert )
+74:     m_h = this->m_w;
+75:   return (m_h - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this)) * this->m_curPos / this->m_maxPos;
+76: }
+77:
+78:
+79: // ================================================
+80: // Original Signature: protected: int __thiscall UIScrollBar::HitTest(int,int)
+81: // Decompiled from address: 0x4508b0
+82: // ================================================
+83: int __thiscall UIScrollBar::HitTest(UIScrollBar *this, int x, int y)
+84: {
+85:   int m_w; // ebx
+86:   int m_h; // edi
+87:   int m_isVert; // eax
+88:   int m_scrollBtnSize; // ebx
+89:   int v9; // edi
+90:   int v10; // ebx
+91:   int v11; // edi
+92:   int v12; // edx
+93:   int v13; // eax
+94:   int v14; // ecx
+95:   int v15; // edi
+96:   int v16; // edi
+97:   int v17; // ebx
+98:   int v18; // edx
+99:
+100:   if ( !this->m_maxPos )
+101:     return -1;
+102:   if ( x < 0 )
+103:     return -1;
+104:   m_w = this->m_w;
+105:   if ( x >= m_w )
+106:     return -1;
+107:   if ( y < 0 )
+108:     return -1;
+109:   m_h = this->m_h;
+110:   if ( y >= m_h )
+111:     return -1;
+112:   m_isVert = this->m_isVert;
+113:   if ( m_isVert )
+114:   {
+115:     if ( m_isVert != 1 )
+116:       return -1;
+117:     if ( y < this->m_scrollBtnSize )
+118:       return 0;
+119:     m_scrollBtnSize = this->m_scrollBtnSize;
+120:     if ( y < m_scrollBtnSize
+121:            + (m_h - 2 * m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this)) * this->m_curPos / this->m_maxPos )
+122:       return 1;
+123:     v9 = this->m_h;
+124:     if ( !this->m_isVert )
+125:       v9 = this->m_w;
+126:     v10 = v9 - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this);
+127:     v11 = this->m_scrollBtnSize;
+128:     v12 = this->UIScrollBar::GetThumbSize(this) + v11 + v10 * this->m_curPos / this->m_maxPos;
+129:     v13 = y;
+130:     if ( y < v12 )
+131:       return 2;
+132:     v14 = this->m_h;
+133:   }
+134:   else
+135:   {
+136:     if ( x < this->m_scrollBtnSize )
+137:       return 0;
+138:     v15 = this->m_scrollBtnSize;
+139:     if ( x < v15 + (m_w - 2 * v15 - this->UIScrollBar::GetThumbSize(this)) * this->m_curPos / this->m_maxPos )
+140:       return 1;
+141:     v16 = this->m_h;
+142:     if ( !this->m_isVert )
+143:       v16 = this->m_w;
+144:     v17 = v16 - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this);
+145:     v11 = this->m_scrollBtnSize;
+146:     v18 = this->UIScrollBar::GetThumbSize(this) + v11 + v17 * this->m_curPos / this->m_maxPos;
+147:     v13 = x;
+148:     if ( x < v18 )
+149:       return 2;
+150:     v14 = this->m_w;
+151:   }
+152:   return (v13 >= v14 - v11) + 3;
+153: }
+154:
+
+--- Ref/UIControl2.cpp:863-880 ---
+863: UIScrollBar2 *__thiscall UIScrollBar2::UIScrollBar2(UIScrollBar2 *this)
+864: {
+865:   UIWindow::UIWindow(&this->UIScrollBar);
+866:   this->m_maxPos = 0;
+867:   this->m_curPos = 0;
+868:   this->m_drawMode = 0;
+869:   this->m_startDragX = 0;
+870:   this->m_startDragY = 0;
+871:   this->m_deltaDrag = 0;
+872:   this->m_parentNumItem = 0;
+873:   this->m_parentnumCanDisplayItem = 0;
+874:   this->m_isVert = 1;
+875:   this->m_fixedLength = 13;
+876:   this->m_type = 1;
+877:   this->__vftable = (UIScrollBar2_vtbl *)&UIScrollBar2::`vftable';
+878:   this->m_scrollBtnSize = 10;
+879:   return this;
+880: }
+
+--- Ref/UIControl2.cpp:936-953 ---
+936: UIScrollBar *__thiscall UIScrollBar::UIScrollBar(UIScrollBar *this)
+937: {
+938:   UIWindow::UIWindow(this);
+939:   this->m_maxPos = 0;
+940:   this->m_curPos = 0;
+941:   this->m_drawMode = 0;
+942:   this->m_startDragX = 0;
+943:   this->m_startDragY = 0;
+944:   this->m_deltaDrag = 0;
+945:   this->m_parentNumItem = 0;
+946:   this->m_parentnumCanDisplayItem = 0;
+947:   this->__vftable = (UIScrollBar_vtbl *)&UIScrollBar::`vftable';
+948:   this->m_scrollBtnSize = 13;
+949:   this->m_isVert = 1;
+950:   this->m_fixedLength = 13;
+951:   this->m_type = 1;
+952:   return this;
+953: }
+
+--- Ref/UIControl2.cpp:2405-2425 ---
+2405: int __thiscall UIScrollBar::GetThumbSize(UIScrollBar *this)
+2406: {
+2407:   int m_h; // eax
+2408:   int m_parentNumItem; // esi
+2409:   int v3; // edx
+2410:   int result; // eax
+2411:
+2412:   m_h = this->m_h;
+2413:   if ( !this->m_isVert )
+2414:     m_h = this->m_w;
+2415:   m_parentNumItem = this->m_parentNumItem;
+2416:   v3 = m_h - 2 * this->m_scrollBtnSize;
+2417:   if ( m_parentNumItem )
+2418:     v3 = v3 * this->m_parentnumCanDisplayItem / m_parentNumItem;
+2419:   if ( !this->m_type )
+2420:     return v3;
+2421:   result = 8;
+2422:   if ( v3 >= 8 )
+2423:     return v3;
+2424:   return result;
+2425: }
+
+--- Ref/UIControl2.cpp:4090-4117 ---
+4090:   v24 = 2;
+4091:   std::vector<std::string>::insert(&this->m_items, v14, &v21);
+4092:   v24 = -1;
+4093:   std::string::_Tidy(&v21, 1u);
+4094:   name = (const char *)this->m_maxTextWidth;
+4095:   TextWidth = UIWindow::GetTextWidth(this, txt, 0, 0, 12, 0);
+4096:   if ( (int)name <= TextWidth )
+4097:     v16 = (const char *)UIWindow::GetTextWidth(this, txt, 0, 0, 12, 0);
+4098:   else
+4099:     v16 = name;
+4100:   this->m_maxTextWidth = (int)v16;
+4101:   this->UIListBox::RecalcScrbarPos(this);
+4102:   if ( this->m_vertScrEnabled && isBottomLine )
+4103:   {
+4104:     v17 = this->m_items._First;
+4105:     if ( v17 )
+4106:       v18 = this->m_items._Last - v17;
+4107:     else
+4108:       v18 = 0;
+4109:     m_vertScrollBar = this->m_vertScrollBar;
+4110:     v20 = this->m_horzScrEnabled - this->m_h / this->m_itemSpacing;
+4111:     this->m_vertViewOffset = v20 + v18;
+4112:     m_vertScrollBar->m_curPos = v20 + v18;
+4113:     this->m_vertScrollBar->UIWindow::Invalidate(this->m_vertScrollBar);
+4114:   }
+4115:   this->UIWindow::Invalidate(this);
+4116: }
+4117:
+
+--- Ref/UIControl2.cpp:4198-4272 ---
+4198: void __thiscall UIChatHisBox::OnCreate(UIChatHisBox *this, int cx, int cy)
+4199: {
+4200:   UIWindow *v4; // eax
+4201:   UIScrollBar *v5; // esi
+4202:   UIWindow *v6; // eax
+4203:   UIScrollBar *v7; // esi
+4204:   int m_fixedLength; // [esp-4h] [ebp-20h]
+4205:   void *Block; // [esp+Ch] [ebp-10h]
+4206:   void *Blocka; // [esp+Ch] [ebp-10h]
+4207:   unsigned int v11; // [esp+24h] [ebp+8h]
+4208:
+4209:   v4 = (UIWindow *)operator new(0x78u);
+4210:   v5 = (UIScrollBar *)v4;
+4211:   if ( v4 )
+4212:   {
+4213:     UIWindow::UIWindow(v4);
+4214:     v5->m_maxPos = 0;
+4215:     v5->m_curPos = 0;
+4216:     v5->m_isVert = 1;
+4217:     v5->m_drawMode = 0;
+4218:     v5->m_startDragX = 0;
+4219:     v5->m_startDragY = 0;
+4220:     v5->m_deltaDrag = 0;
+4221:     v5->m_parentNumItem = 0;
+4222:     v5->m_parentnumCanDisplayItem = 0;
+4223:     v5->m_fixedLength = 13;
+4224:     v5->m_type = 1;
+4225:     v5->__vftable = (UIScrollBar_vtbl *)&UIScrollBar2::`vftable';
+4226:     v5->m_scrollBtnSize = 10;
+4227:   }
+4228:   else
+4229:   {
+4230:     v5 = 0;
+4231:   }
+4232:   this->m_vertScrollBar = v5;
+4233:   v5->m_isVert = 1;
+4234:   Block = (void *)v5->m_fixedLength;
+4235:   UIWindow::Resize(v5, (unsigned int)Block, cy);
+4236:   v11 = cx - 13;
+4237:   v5->UIWindow::Move(v5, v11, 0);
+4238:   v5->UIWindow::OnCreate(v5, (int)Block, cy);
+4239:   v5->UIWindow::OnSize(v5, (int)Block, cy);
+4240:   UIWindow::AddChild(this, this->m_vertScrollBar);
+4241:   v6 = (UIWindow *)operator new(0x78u);
+4242:   v7 = (UIScrollBar *)v6;
+4243:   if ( v6 )
+4244:   {
+4245:     UIWindow::UIWindow(v6);
+4246:     v7->m_maxPos = 0;
+4247:     v7->m_curPos = 0;
+4248:     v7->m_isVert = 1;
+4249:     v7->m_drawMode = 0;
+4250:     v7->m_startDragX = 0;
+4251:     v7->m_startDragY = 0;
+4252:     v7->m_deltaDrag = 0;
+4253:     v7->m_parentNumItem = 0;
+4254:     v7->m_parentnumCanDisplayItem = 0;
+4255:     v7->m_fixedLength = 13;
+4256:     v7->m_type = 1;
+4257:     v7->__vftable = (UIScrollBar_vtbl *)&UIScrollBar2::`vftable';
+4258:     v7->m_scrollBtnSize = 10;
+4259:   }
+4260:   else
+4261:   {
+4262:     v7 = 0;
+4263:   }
+4264:   this->m_horzScrollBar = v7;
+4265:   m_fixedLength = v7->m_fixedLength;
+4266:   v7->m_isVert = 0;
+4267:   Blocka = (void *)m_fixedLength;
+4268:   UIWindow::Resize(v7, v11, m_fixedLength);
+4269:   v7->UIWindow::Move(v7, 0, cy - 13);
+4270:   v7->UIWindow::OnCreate(v7, v11, (int)Blocka);
+4271:   v7->UIWindow::OnSize(v7, v11, (int)Blocka);
+4272:   UIWindow::AddChild(this, this->m_horzScrollBar);
+
+--- Ref/UIControl2.cpp:4301-4344 ---
+4301:   First = this->m_items._First;
+4302:   m_vertViewOffset = this->m_vertViewOffset;
+4303:   v13 = m_vertViewOffset;
+4304:   if ( First )
+4305:     v5 = this->m_items._Last - First;
+4306:   else
+4307:     v5 = 0;
+4308:   v6 = m_vertViewOffset + this->m_h / this->m_itemSpacing - this->m_horzScrEnabled;
+4309:   if ( v6 >= v5 )
+4310:   {
+4311:     v7 = this->m_items._First;
+4312:     if ( !v7 )
+4313:     {
+4314:       lastItem = 0;
+4315:       goto LABEL_13;
+4316:     }
+4317:     v6 = this->m_items._Last - v7;
+4318:   }
+4319:   lastItem = v6;
+4320: LABEL_13:
+4321:   v8 = this->m_vertViewOffset;
+4322:   if ( m_vertViewOffset < lastItem )
+4323:   {
+4324:     v9 = 16 * m_vertViewOffset;
+4325:     v15 = m_vertViewOffset;
+4326:     while ( 1 )
+4327:     {
+4328:       v10 = *(char **)((char *)&this->m_items._First->_Ptr + v9);
+4329:       if ( !v10 )
+4330:         v10 = `std::string::_Nullstr'::`2'::_C;
+4331:       v11 = v8 - m_vertViewOffset;
+4332:       UIWindow::TextOutA(this, 3, (v8 - m_vertViewOffset) * this->m_itemSpacing + 4, v10, 0, 0, 12, 0);
+4333:       Ptr = this->m_items._First[v15]._Ptr;
+4334:       if ( !Ptr )
+4335:         Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+4336:       UIWindow::TextOutA(this, 2, v11 * this->m_itemSpacing + 3, Ptr, 0, 0, 12, this->m_itemColors._First[v8++]);
+4337:       ++v15;
+4338:       if ( v8 >= lastItem )
+4339:         break;
+4340:       v9 = v15 * 16;
+4341:       m_vertViewOffset = v13;
+4342:     }
+4343:   }
+4344: }
+
+--- Ref/UIControl2.cpp:4426-4462 ---
+4426: void __thiscall UIChatHisBox::Resize(UIChatHisBox *this, unsigned int cx, int cy)
+4427: {
+4428:   int v4; // edi
+4429:   std::string *First; // eax
+4430:   int v6; // ecx
+4431:   int v7; // eax
+4432:   UIScrollBar *m_vertScrollBar; // ecx
+4433:   UIScrollBar *v9; // ecx
+4434:
+4435:   UIWindow::Resize(this, cx, cy);
+4436:   this->m_vertScrollBar->UIWindow::Resize(this->m_vertScrollBar, 12, cy);
+4437:   v4 = cx - 13;
+4438:   this->m_vertScrollBar->UIWindow::Move(this->m_vertScrollBar, cx - 13, 0);
+4439:   this->m_horzScrollBar->UIWindow::Resize(this->m_horzScrollBar, cx - 13, 12);
+4440:   this->m_horzScrollBar->UIWindow::Move(this->m_horzScrollBar, 0, cy - 13);
+4441:   this->UIListBox::RecalcScrbarPos(this);
+4442:   if ( this->m_vertScrEnabled )
+4443:   {
+4444:     First = this->m_items._First;
+4445:     if ( First )
+4446:       v6 = this->m_items._Last - First;
+4447:     else
+4448:       v6 = 0;
+4449:     v7 = this->m_horzScrEnabled - this->m_h / this->m_itemSpacing + v6;
+4450:     m_vertScrollBar = this->m_vertScrollBar;
+4451:     this->m_vertViewOffset = v7;
+4452:     m_vertScrollBar->m_curPos = v7;
+4453:     this->m_vertScrollBar->UIWindow::Move(this->m_vertScrollBar, v4, 0);
+4454:     this->m_vertScrollBar->UIWindow::Invalidate(this->m_vertScrollBar);
+4455:   }
+4456:   else
+4457:   {
+4458:     v9 = this->m_vertScrollBar;
+4459:     this->m_vertViewOffset = 0;
+4460:     v9->m_curPos = 0;
+4461:     this->m_vertScrollBar->UIWindow::Move(this->m_vertScrollBar, v4, 0);
+4462:   }
+
+--- Ref/UIControl2.cpp:5388-5463 ---
+5388: void __thiscall UIListBox::RecalcScrbarPos(UIListBox *this)
+5389: {
+5390:   std::string *First; // esi
+5391:   int v3; // eax
+5392:   int v4; // edx
+5393:   int v5; // ecx
+5394:   int v6; // ecx
+5395:   std::string *v7; // esi
+5396:   UIScrollBar *m_vertScrollBar; // esi
+5397:   int m_horzScrEnabled; // ebx
+5398:   UIScrollBar_vtbl *v10; // eax
+5399:   int m_maxPos; // eax
+5400:   int v12; // ecx
+5401:   UIScrollBar *v13; // esi
+5402:   UIScrollBar_vtbl *v14; // edx
+5403:   int v15; // eax
+5404:
+5405:   First = this->m_items._First;
+5406:   v3 = this->m_h / this->m_itemSpacing;
+5407:   v4 = 0;
+5408:   if ( First )
+5409:     v5 = this->m_items._Last - First;
+5410:   else
+5411:     v5 = 0;
+5412:   v6 = v5 - v3;
+5413:   if ( v6 < 0 )
+5414:   {
+5415:     v6 = 0;
+5416: LABEL_6:
+5417:     this->m_vertScrEnabled = 0;
+5418:     goto LABEL_7;
+5419:   }
+5420:   if ( !v6 )
+5421:     goto LABEL_6;
+5422:   this->m_vertScrEnabled = 1;
+5423: LABEL_7:
+5424:   v7 = this->m_items._First;
+5425:   if ( this->m_vertScrEnabled )
+5426:   {
+5427:     if ( v7 )
+5428:       v4 = this->m_items._Last - v7;
+5429:     m_vertScrollBar = this->m_vertScrollBar;
+5430:     m_horzScrEnabled = this->m_horzScrEnabled;
+5431:     m_vertScrollBar->m_parentnumCanDisplayItem = v3;
+5432:     v10 = m_vertScrollBar->__vftable;
+5433:     m_vertScrollBar->m_maxPos = v6 + m_horzScrEnabled;
+5434:     m_vertScrollBar->m_parentNumItem = v4;
+5435:     v10->UIWindow::Invalidate(m_vertScrollBar);
+5436:     m_maxPos = m_vertScrollBar->m_maxPos;
+5437:     if ( m_vertScrollBar->m_curPos > m_maxPos )
+5438:     {
+5439:       m_vertScrollBar->m_curPos = m_maxPos;
+5440:       this->m_vertScrollBar->UIWindow::Invalidate(this->m_vertScrollBar);
+5441:       return;
+5442:     }
+5443:   }
+5444:   else
+5445:   {
+5446:     if ( v7 )
+5447:       v12 = this->m_items._Last - v7;
+5448:     else
+5449:       v12 = 0;
+5450:     v13 = this->m_vertScrollBar;
+5451:     v13->m_maxPos = 0;
+5452:     v14 = v13->__vftable;
+5453:     v13->m_parentNumItem = v12;
+5454:     v13->m_parentnumCanDisplayItem = v3;
+5455:     v14->UIWindow::Invalidate(v13);
+5456:     v15 = v13->m_maxPos;
+5457:     if ( v13->m_curPos > v15 )
+5458:       v13->m_curPos = v15;
+5459:   }
+5460:   this->m_vertScrollBar->UIWindow::Invalidate(this->m_vertScrollBar);
+5461: }
+5462:
+5463:
+
+--- Ref/UIControl2.cpp:6604-6780 ---
+6604: void __thiscall UIScrollBar::OnLBtnDown(UIScrollBar *this, int x, int y)
+6605: {
+6606:   int v4; // eax
+6607:   int m_isVert; // ecx
+6608:
+6609:   if ( this->m_maxPos )
+6610:   {
+6611:     v4 = UIScrollBar::HitTest(this, x, y);
+6612:     m_isVert = this->m_isVert;
+6613:     this->m_startDragX = x;
+6614:     this->m_startDragY = y;
+6615:     this->m_deltaDrag = 0;
+6616:     if ( m_isVert )
+6617:     {
+6618:       if ( m_isVert == 1 )
+6619:       {
+6620:         switch ( v4 )
+6621:         {
+6622:           case 0:
+6623:             this->m_parent->UIWindow::SendMsg(this->m_parent, this, 7, -1, 0, 0, 0);
+6624:             break;
+6625:           case 1:
+6626:             this->m_parent->UIWindow::SendMsg(this->m_parent, this, 9, 0, 0, 0, 0);
+6627:             break;
+6628:           case 2:
+6629:             goto $L134106;
+6630:           case 3:
+6631:             this->m_parent->UIWindow::SendMsg(this->m_parent, this, 10, 0, 0, 0, 0);
+6632:             break;
+6633:           case 4:
+6634:             this->m_parent->UIWindow::SendMsg(this->m_parent, this, 7, 1, 0, 0, 0);
+6635:             break;
+6636:           default:
+6637:             return;
+6638:         }
+6639:       }
+6640:     }
+6641:     else
+6642:     {
+6643:       switch ( v4 )
+6644:       {
+6645:         case 0:
+6646:           this->m_parent->UIWindow::SendMsg(this->m_parent, this, 8, -1, 0, 0, 0);
+6647:           break;
+6648:         case 1:
+6649:           this->m_parent->UIWindow::SendMsg(this->m_parent, this, 11, 0, 0, 0, 0);
+6650:           break;
+6651:         case 2:
+6652: $L134106:
+6653:           UIWindowMgr::SetCapture(&g_windowMgr, this);
+6654:           break;
+6655:         case 3:
+6656:           this->m_parent->UIWindow::SendMsg(this->m_parent, this, 12, 0, 0, 0, 0);
+6657:           break;
+6658:         case 4:
+6659:           this->m_parent->UIWindow::SendMsg(this->m_parent, this, 8, 1, 0, 0, 0);
+6660:           break;
+6661:         default:
+6662:           return;
+6663:       }
+6664:     }
+6665:   }
+6666:   else
+6667:   {
+6668:     this->m_parent->UIWindow::OnLBtnDown(this->m_parent, x + this->m_x, y + this->m_y);
+6669:   }
+6670: }
+6671:
+6672:
+6673: // ================================================
+6674: // Original Signature: public: virtual void __thiscall UIScrollBar::OnLBtnUp(int,int)
+6675: // Decompiled from address: 0x450360
+6676: // ================================================
+6677: void __thiscall UIScrollBar::OnLBtnUp(UIScrollBar *this, int x, int y)
+6678: {
+6679:   if ( this->m_maxPos )
+6680:   {
+6681:     if ( UIWindowMgr::GetCapture(&g_windowMgr) == this )
+6682:       UIWindowMgr::ReleaseCapture(&g_windowMgr);
+6683:   }
+6684:   else
+6685:   {
+6686:     this->m_parent->UIWindow::OnLBtnUp(this->m_parent, x + this->m_x, y + this->m_y);
+6687:   }
+6688: }
+6689:
+6690:
+6691: // ================================================
+6692: // Original Signature: public: virtual void __thiscall UIScrollBar::OnMouseMove(int,int)
+6693: // Decompiled from address: 0x4501a0
+6694: // ================================================
+6695: void __thiscall UIScrollBar::OnMouseMove(UIScrollBar *this, int x, int y)
+6696: {
+6697:   int m_h; // edi
+6698:   int m_drawMode; // edi
+6699:   int m_isVert; // eax
+6700:   int v7; // edi
+6701:   int v8; // eax
+6702:   int v9; // eax
+6703:   int m_w; // edi
+6704:   int v11; // eax
+6705:
+6706:   if ( !this->m_maxPos )
+6707:   {
+6708:     this->m_parent->UIWindow::OnMouseMove(this->m_parent, x + this->m_x, y + this->m_y);
+6709:     return;
+6710:   }
+6711:   m_h = this->m_h;
+6712:   if ( !this->m_isVert )
+6713:     m_h = this->m_w;
+6714:   if ( m_h - 2 * this->m_scrollBtnSize != this->UIScrollBar::GetThumbSize(this) )
+6715:   {
+6716:     m_drawMode = this->m_drawMode;
+6717:     switch ( UIScrollBar::HitTest(this, x, y) )
+6718:     {
+6719:       case -1:
+6720:       case 1:
+6721:       case 3:
+6722:         this->m_drawMode = 0;
+6723:         break;
+6724:       case 0:
+6725:         this->m_drawMode = 1;
+6726:         break;
+6727:       case 2:
+6728:         this->m_drawMode = 3;
+6729:         break;
+6730:       case 4:
+6731:         this->m_drawMode = 2;
+6732:         break;
+6733:       default:
+6734:         break;
+6735:     }
+6736:     if ( m_drawMode != this->m_drawMode )
+6737:       this->UIWindow::Invalidate(this);
+6738:     if ( UIWindowMgr::GetCapture(&g_windowMgr) == this && this->m_parent )
+6739:     {
+6740:       m_isVert = this->m_isVert;
+6741:       if ( !m_isVert )
+6742:       {
+6743:         m_w = this->m_w;
+6744:         v11 = (this->m_maxPos + 1)
+6745:             * (x - this->m_startDragX)
+6746:             / (m_w - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this))
+6747:             - this->m_deltaDrag;
+6748:         if ( !v11 )
+6749:           return;
+6750:         v9 = ((int (__stdcall *)(UIScrollBar *, int, int, _DWORD, _DWORD, _DWORD))this->m_parent->UIWindow::SendMsg)(
+6751:                this,
+6752:                8,
+6753:                v11,
+6754:                0,
+6755:                0,
+6756:                0);
+6757:         goto LABEL_21;
+6758:       }
+6759:       if ( m_isVert == 1 )
+6760:       {
+6761:         v7 = this->m_h;
+6762:         v8 = (this->m_maxPos + 1)
+6763:            * (y - this->m_startDragY)
+6764:            / (v7 - 2 * this->m_scrollBtnSize - this->UIScrollBar::GetThumbSize(this))
+6765:            - this->m_deltaDrag;
+6766:         if ( v8 )
+6767:         {
+6768:           v9 = ((int (__stdcall *)(UIScrollBar *, int, int, _DWORD, _DWORD, _DWORD))this->m_parent->UIWindow::SendMsg)(
+6769:                  this,
+6770:                  7,
+6771:                  v8,
+6772:                  0,
+6773:                  0,
+6774:                  0);
+6775: LABEL_21:
+6776:           this->m_deltaDrag += v9;
+6777:         }
+6778:       }
+6779:     }
+6780:   }
+
+--- Ref/UIControl2.cpp:6822-6853 ---
+6822: void __thiscall UIScrollBar::Resize(UIScrollBar *this, int cx, int cy)
+6823: {
+6824:   int m_isVert; // eax
+6825:   int m_fixedLength; // ebx
+6826:   int v6; // edi
+6827:
+6828:   this->UIWindow::Invalidate(this);
+6829:   m_isVert = this->m_isVert;
+6830:   if ( m_isVert )
+6831:   {
+6832:     if ( m_isVert == 1 )
+6833:     {
+6834:       m_fixedLength = this->m_fixedLength;
+6835:       v6 = cy;
+6836:     }
+6837:     else
+6838:     {
+6839:       v6 = cy;
+6840:       m_fixedLength = cx;
+6841:     }
+6842:   }
+6843:   else
+6844:   {
+6845:     v6 = this->m_fixedLength;
+6846:     m_fixedLength = cx;
+6847:     UIWindow::Resize(this, cx, v6);
+6848:     this->UIWindow::OnSize(this, cx, v6);
+6849:   }
+6850:   UIWindow::Resize(this, m_fixedLength, v6);
+6851:   this->UIWindow::OnSize(this, m_fixedLength, v6);
+6852: }
+6853:
+
+--- Ref/UIControl2.cpp:7875-7998 ---
+7875:   First = this->m_items._First;
+7876:   v33 = this;
+7877:   if ( First )
+7878:     v2 = this->m_items._Last - First;
+7879:   else
+7880:     v2 = 0;
+7881:   v3 = v2 >> 1;
+7882:   if ( v3 )
+7883:   {
+7884:     v4 = 0;
+7885:     v5 = v3;
+7886:     v32 = v3;
+7887:     while ( 1 )
+7888:     {
+7889:       std::string::assign(&this->m_items._First[v4++], &this->m_items._First[v5++], 0, std::string::npos);
+7890:       if ( !--v32 )
+7891:         break;
+7892:       this = v33;
+7893:     }
+7894:   }
+7895:   _X.allocator = v34;
+7896:   std::string::_Tidy(&_X, 0);
+7897:   v6 = 0;
+7898:   v35 = 0;
+7899:   p_m_items = &v33->m_items;
+7900:   v8 = v33->m_items._First;
+7901:   if ( v8 )
+7902:     v6 = v33->m_items._Last - v8;
+7903:   if ( v6 >= v3 )
+7904:   {
+7905:     if ( v3 < std::vector<std::string>::size(&v33->m_items) )
+7906:       std::vector<std::string>::erase(p_m_items, &p_m_items->_First[v3], p_m_items->_Last);
+7907:   }
+7908:   else
+7909:   {
+7910:     Last = v33->m_items._Last;
+7911:     v10 = std::vector<std::string>::size(&v33->m_items);
+7912:     std::vector<std::string>::insert(p_m_items, Last, v3 - v10, &_X);
+7913:   }
+7914:   v35 = -1;
+7915:   std::string::_Tidy(&_X, 1u);
+7916:   p_m_itemColors = &v33->m_itemColors;
+7917:   v12 = v33->m_itemColors._First;
+7918:   if ( v12 )
+7919:     v13 = v33->m_itemColors._Last - v12;
+7920:   else
+7921:     v13 = 0;
+7922:   v14 = v13 >> 1;
+7923:   v15 = 0;
+7924:   if ( v14 )
+7925:   {
+7926:     v16 = v14;
+7927:     do
+7928:       v33->m_itemColors._First[v15++] = v33->m_itemColors._First[v16++];
+7929:     while ( v15 < (int)v14 );
+7930:   }
+7931:   v17 = p_m_itemColors->_First;
+7932:   v18 = 0;
+7933:   v32 = 0;
+7934:   if ( v17 )
+7935:     v18 = p_m_itemColors->_Last - v17;
+7936:   if ( v18 >= v14 )
+7937:   {
+7938:     if ( v14 < std::vector<unsigned long>::size(p_m_itemColors) )
+7939:       std::vector<unsigned long>::erase(p_m_itemColors, &p_m_itemColors->_First[v14], p_m_itemColors->_Last);
+7940:   }
+7941:   else
+7942:   {
+7943:     v19 = p_m_itemColors->_Last;
+7944:     v20 = std::vector<unsigned long>::size(p_m_itemColors);
+7945:     std::vector<unsigned long>::insert(p_m_itemColors, v19, v14 - v20, &v32);
+7946:   }
+7947:   v21 = v33->m_talkerNameList._First;
+7948:   if ( v21 )
+7949:     v22 = v33->m_talkerNameList._Last - v21;
+7950:   else
+7951:     v22 = 0;
+7952:   v23 = v22 >> 1;
+7953:   v24 = 0;
+7954:   if ( v23 )
+7955:   {
+7956:     v25 = 0;
+7957:     v26 = v23;
+7958:     v32 = v23;
+7959:     do
+7960:     {
+7961:       std::string::assign(
+7962:         &v33->m_talkerNameList._First[v25++],
+7963:         &v33->m_talkerNameList._First[v26++],
+7964:         0,
+7965:         std::string::npos);
+7966:       --v32;
+7967:     }
+7968:     while ( v32 );
+7969:     v24 = 0;
+7970:   }
+7971:   memset(&v31._Ptr, 0, 12);
+7972:   v31.allocator = v34;
+7973:   v35 = 1;
+7974:   p_m_talkerNameList = &v33->m_talkerNameList;
+7975:   v28 = v33->m_talkerNameList._First;
+7976:   if ( v28 )
+7977:     v24 = v33->m_talkerNameList._Last - v28;
+7978:   if ( v24 >= v23 )
+7979:   {
+7980:     if ( v23 < std::vector<std::string>::size(p_m_talkerNameList) )
+7981:       std::vector<std::string>::erase(
+7982:         &v33->m_talkerNameList,
+7983:         &v33->m_talkerNameList._First[v23],
+7984:         v33->m_talkerNameList._Last);
+7985:   }
+7986:   else
+7987:   {
+7988:     if ( v28 )
+7989:       v29 = v33->m_talkerNameList._Last - v28;
+7990:     else
+7991:       v29 = 0;
+7992:     std::vector<std::string>::insert(p_m_talkerNameList, v33->m_talkerNameList._Last, v23 - v29, &v31);
+7993:   }
+7994:   v35 = -1;
+7995:   std::string::_Tidy(&v31, 1u);
+7996:   v33->UIListBox::RecalcScrbarPos(v33);
+7997: }
+7998:
+
+--- Ref/UIFrameWnd3.cpp:6673-6698 ---
+6673: void __thiscall UINewChatWnd::Resize(UINewChatWnd *this, unsigned int cx, int cy)
+6674: {
+6675:   int m_h; // eax
+6676:   int m_titleHeight; // ecx
+6677:
+6678:   UIWindow::Resize(this, cx, cy);
+6679:   m_h = this->m_h;
+6680:   m_titleHeight = this->m_titleHeight;
+6681:   this->m_boxInfo.cx = this->m_w - 6;
+6682:   this->m_boxInfo.cy = m_h - this->m_chatEditHeight - m_titleHeight;
+6683: }
+6684:
+6685:
+6686: // ================================================
+6687: // Original Signature: public: virtual void __thiscall UINewChatWnd::SetShow(int)
+6688: // Decompiled from address: 0x49d310
+6689: // ================================================
+6690: void __thiscall UINewChatWnd::SetShow(UINewChatWnd *this, int visible)
+6691: {
+6692:   this->m_show = visible;
+6693:   if ( visible )
+6694:   {
+6695:     this->UIWindow::Invalidate(this);
+6696:     UIWindowMgr::UpdateSnapInfo(&g_windowMgr, this);
+6697:   }
+6698:   else
+
+--- Ref/UIFrameWnd3.cpp:9650-9810 ---
+9650: void __thiscall UINewChatWnd::ChangeTab(UINewChatWnd *this)
+9651: {
+9652:   int m_tab; // eax
+9653:   UIChatHisBox *m_cmdListBox; // eax
+9654:   UIChatHisBox *m_listBox; // ecx
+9655:   UIChatHisBox *v5; // ecx
+9656:   UIChatHisBox *v6; // eax
+9657:   UIChatHisBox *v7; // ecx
+9658:
+9659:   m_tab = this->m_tab;
+9660:   if ( !m_tab )
+9661:   {
+9662:     m_cmdListBox = this->m_cmdListBox;
+9663:     m_listBox = this->m_listBox;
+9664:     this->m_colorTab1 = 1711276032;
+9665:     this->m_colorTab2 = -1728053248;
+9666:     m_listBox->UIWindow::Resize(m_listBox, m_cmdListBox->m_w, m_cmdListBox->m_h);
+9667:     this->m_listBox->UIWindow::Move(this->m_listBox, this->m_cmdListBox->m_x, this->m_cmdListBox->m_y);
+9668:     v5 = this->m_cmdListBox;
+9669: LABEL_5:
+9670:     v5->UIWindow::Move(v5, -100 - this->m_w, -100);
+9671:     goto LABEL_6;
+9672:   }
+9673:   if ( m_tab == 1 )
+9674:   {
+9675:     v6 = this->m_listBox;
+9676:     v7 = this->m_cmdListBox;
+9677:     this->m_colorTab1 = -1728053248;
+9678:     this->m_colorTab2 = 1711276032;
+9679:     v7->UIWindow::Resize(v7, v6->m_w, v6->m_h);
+9680:     this->m_cmdListBox->UIWindow::Move(this->m_cmdListBox, this->m_listBox->m_x, this->m_listBox->m_y);
+9681:     v5 = this->m_listBox;
+9682:     goto LABEL_5;
+9683:   }
+9684: LABEL_6:
+9685:   this->UIWindow::Invalidate(this);
+9686: }
+9687:
+9688:
+9689: // ================================================
+9690: // Original Signature: public: void __thiscall UINewChatWnd::SetState(int)
+9691: // Decompiled from address: 0x49ca80
+9692: // ================================================
+9693: void __thiscall UINewChatWnd::SetState(UINewChatWnd *this, int state)
+9694: {
+9695:   int v3; // edi
+9696:   UINewChatWnd_vtbl *v4; // eax
+9697:   int m_h; // ebx
+9698:   int v6; // edi
+9699:   UIChatHisBox *m_cmdListBox; // ecx
+9700:   int v8; // eax
+9701:   int *v9; // edi
+9702:   UIBitmapButton **m_buttons; // esi
+9703:   int v11; // ebx
+9704:   int m_chatEditHeight; // edi
+9705:   int v13; // ebx
+9706:   int v14; // eax
+9707:   int *v15; // edi
+9708:   UIBitmapButton **v16; // esi
+9709:   int v17; // ebx
+9710:   int pos[3][2]; // [esp+Ch] [ebp-18h] BYREF
+9711:
+9712:   if ( g_windowMgr.m_comboBoxWnd )
+9713:     UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x1A);
+9714:   if ( UIWindowMgr::GetCapture(&g_windowMgr) != this )
+9715:   {
+9716:     v3 = state;
+9717:     if ( state <= 15 )
+9718:     {
+9719:       if ( state < 0 )
+9720:         v3 = 15;
+9721:     }
+9722:     else
+9723:     {
+9724:       v3 = 0;
+9725:     }
+9726:     v4 = this->__vftable;
+9727:     this->m_state = v3;
+9728:     v4->UIWindow::Invalidate(this);
+9729:     if ( v3 )
+9730:     {
+9731:       m_h = this->m_h;
+9732:       v6 = this->m_titleHeight + this->m_chatEditHeight + 14 * (v3 + 3);
+9733:       this->UIWindow::Resize(this, this->m_w, v6);
+9734:       this->UIWindow::Move(this, this->m_x, m_h + this->m_y - v6);
+9735:       this->m_listBox->UIWindow::Move(this->m_listBox, -100 - this->m_w, -100);
+9736:       this->m_cmdListBox->UIWindow::Move(this->m_cmdListBox, -100 - this->m_w, -100);
+9737:       if ( this->m_tab )
+9738:       {
+9739:         this->m_cmdListBox->UIWindow::Resize(
+9740:           this->m_cmdListBox,
+9741:           this->m_w - 8,
+9742:           v6 - this->m_chatEditHeight - this->m_titleHeight - 4);
+9743:         m_cmdListBox = this->m_cmdListBox;
+9744:       }
+9745:       else
+9746:       {
+9747:         this->m_listBox->UIWindow::Resize(
+9748:           this->m_listBox,
+9749:           this->m_w - 8,
+9750:           v6 - this->m_chatEditHeight - this->m_titleHeight - 4);
+9751:         m_cmdListBox = this->m_listBox;
+9752:       }
+9753:       m_cmdListBox->UIWindow::Move(m_cmdListBox, 5, this->m_titleHeight + 2);
+9754:       this->m_whisperChat->UIWindow::Move(this->m_whisperChat, 6, this->m_h - this->m_chatEditHeight + 4);
+9755:       this->m_commonChat->UIWindow::Move(this->m_commonChat, 110, this->m_h - this->m_chatEditHeight + 4);
+9756:       this->m_resizer->UIWindow::Move(this->m_resizer, 3, this->m_h - this->m_resizer->m_h);
+9757:       this->m_btnStickOff->UIWindow::Move(this->m_btnStickOff, 2 * this->m_titleWidth + 4, 4);
+9758:       this->m_btnOption->UIWindow::Move(this->m_btnOption, 2 * this->m_titleWidth + 19, 4);
+9759:       v8 = this->m_h - this->m_chatEditHeight;
+9760:       pos[0][0] = 97;
+9761:       pos[1][0] = 586;
+9762:       pos[2][0] = 572;
+9763:       pos[0][1] = v8 + 3;
+9764:       pos[1][1] = v8 + 7;
+9765:       pos[2][1] = v8 + 7;
+9766:       v9 = pos[0];
+9767:       m_buttons = this->m_buttons;
+9768:       v11 = 3;
+9769:       do
+9770:       {
+9771:         (*m_buttons)->UIWindow::Move(*m_buttons, *v9, v9[1]);
+9772:         ++m_buttons;
+9773:         v9 += 2;
+9774:         --v11;
+9775:       }
+9776:       while ( v11 );
+9777:     }
+9778:     else
+9779:     {
+9780:       m_chatEditHeight = this->m_chatEditHeight;
+9781:       v13 = this->m_h;
+9782:       this->UIWindow::Resize(this, this->m_w, m_chatEditHeight);
+9783:       this->UIWindow::Move(this, this->m_x, v13 + this->m_y - m_chatEditHeight);
+9784:       this->m_listBox->UIWindow::Move(this->m_listBox, -100 - this->m_w, -100);
+9785:       this->m_cmdListBox->UIWindow::Move(this->m_cmdListBox, -100 - this->m_w, -100);
+9786:       this->m_whisperChat->UIWindow::Move(this->m_whisperChat, 6, this->m_h - this->m_chatEditHeight + 4);
+9787:       this->m_commonChat->UIWindow::Move(this->m_commonChat, 110, this->m_h - this->m_chatEditHeight + 4);
+9788:       this->m_resizer->UIWindow::Move(this->m_resizer, 3, this->m_h - this->m_resizer->m_h);
+9789:       this->m_btnStickOff->UIWindow::Move(this->m_btnStickOff, 2 * this->m_titleWidth + 4, 4);
+9790:       this->m_btnOption->UIWindow::Move(this->m_btnOption, 2 * this->m_titleWidth + 19, 4);
+9791:       v14 = this->m_h - this->m_chatEditHeight;
+9792:       pos[0][0] = 97;
+9793:       pos[1][0] = 586;
+9794:       pos[0][1] = v14 + 3;
+9795:       pos[1][1] = v14 + 7;
+9796:       pos[2][0] = 572;
+9797:       pos[2][1] = v14 + 7;
+9798:       v15 = pos[0];
+9799:       v16 = this->m_buttons;
+9800:       v17 = 3;
+9801:       do
+9802:       {
+9803:         (*v16)->UIWindow::Move(*v16, *v15, v15[1]);
+9804:         ++v16;
+9805:         v15 += 2;
+9806:         --v17;
+9807:       }
+9808:       while ( v17 );
+9809:     }
+9810:   }
+
+--- Ref/UIControl2.cpp:470-510 ---
+470: // Original Signature: public: __thiscall UIChatHisBox::UIChatHisBox(void)
+471: // Decompiled from address: 0x44d620
+472: // ================================================
+473: UIChatHisBox *__thiscall UIChatHisBox::UIChatHisBox(UIChatHisBox *this)
+474: {
+475:   std::string *First; // eax
+476:   std::string *v3; // eax
+477:   std::string *v4; // ecx
+478:   unsigned int v5; // eax
+479:   unsigned int *v6; // eax
+480:   unsigned int *v7; // ebx
+481:   unsigned int v8; // eax
+482:   std::string *Last; // [esp+10h] [ebp-20h]
+483:   std::string *v11; // [esp+10h] [ebp-20h]
+484:   std::string *v12; // [esp+14h] [ebp-1Ch]
+485:   std::string *v13; // [esp+18h] [ebp-18h]
+486:   std::string *v14; // [esp+18h] [ebp-18h]
+487:   std::string *_P; // [esp+1Ch] [ebp-14h]
+488:   char v16; // [esp+23h] [ebp-Dh]
+489:
+490:   UIWindow::UIWindow(this);
+491:   this->m_items.allocator = (std::allocator<std::string >)v16;
+492:   this->m_items._First = 0;
+493:   this->m_items._Last = 0;
+494:   this->m_items._End = 0;
+495:   this->m_curItem = 0;
+496:   this->m_vertViewOffset = 0;
+497:   this->m_horzViewOffset = 0;
+498:   this->m_maxTextWidth = 0;
+499:   this->m_vertScrollBar = 0;
+500:   this->m_horzScrollBar = 0;
+501:   this->m_vertScrEnabled = 0;
+502:   this->m_horzScrEnabled = 0;
+503:   this->m_isTransParent = 0;
+504:   this->m_bR = 255;
+505:   this->m_bG = 255;
+506:   this->m_bB = 255;
+507:   this->m_talkerNameList.allocator = (std::allocator<std::string >)v16;
+508:   this->m_talkerNameList._First = 0;
+509:   this->m_talkerNameList._Last = 0;
+510:   this->m_talkerNameList._End = 0;
+
+--- Ref/UIControl2.cpp:4181-4197 ---
+4181: // Original Signature: public: virtual void __thiscall UIChatHisBox::Create2(int,int,int,int,bool)
+4182: // Decompiled from address: 0x44db60
+4183: // ================================================
+4184: void __thiscall UIChatHisBox::Create2(UIChatHisBox *this, int x, int y, int cx, int cy, unsigned __int8 trans)
+4185: {
+4186:   this->m_isTransParent = 1;
+4187:   UIWindow::Resize(this, cx, cy);
+4188:   this->UIWindow::Move(this, x, y);
+4189:   this->UIWindow::OnCreate(this, cx, cy);
+4190:   this->UIWindow::OnSize(this, cx, cy);
+4191: }
+4192:
+4193:
+4194: // ================================================
+4195: // Original Signature: public: virtual void __thiscall UIChatHisBox::OnCreate(int,int)
+4196: // Decompiled from address: 0x44d9c0
+4197: // ================================================

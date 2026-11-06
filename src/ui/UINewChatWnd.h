@@ -4,6 +4,7 @@
 #include "UISubChatWnd.h"
 #include "core/ChatNotice.h"
 #include "core/ChatHistoryView.h"
+#include "core/ChatScrollBar.h"
 
 #include <array>
 #include <vector>
@@ -39,7 +40,7 @@ struct ChatFilterOptionDisplay {
 struct ChatWindowLayoutDisplay {
     RECT header{}, history{}, whisperInput{}, messageInput{}, gearButton{}, stickButton{};
     std::array<RECT, 4> tabs{};
-    RECT scrollTrack{}, scrollThumb{}, battleOptionButton{};
+    RECT scrollTrack{}, scrollThumb{}, battleOptionButton{}, scrollUp{}, scrollDown{};
 };
 
 class UINewChatWnd : public UIWindow {
@@ -97,6 +98,7 @@ public:
     const std::string& GetInputText() const;
     const std::vector<std::string>& GetInputHistory() const;
     ChatScrollBarState GetScrollBarState() const;
+    ro::chat::ScrollBar GetSourceScrollBar(int tab=-1) const;
     int GetFontPixelSize() const;
     int GetWindowOpacityPercent() const;
     int GetIdleOpacityPercent() const;
@@ -146,11 +148,13 @@ private:
     std::vector<ChatLine> m_lines;
     std::array<std::vector<SubChatRow>, 2> m_sourceHistory;
     std::array<ro::chat::HistoryView, 2> m_sourceViews;
+    std::array<int,2> m_sourceViewHeights={70,70};
     int m_sourceTab = 0;
     int m_sourceTitleWidth = 71;
     bool m_historyPointerDown = false;
     bool m_sourceScrollDragging = false;
-    int m_sourceScrollGrab = 0;
+    ro::chat::ScrollDrag m_sourceScrollDrag;
+    int m_sourceScrollTab=-1;
     std::vector<std::string> m_whisperTargets;
     std::vector<ChatLine> m_visibleLines;
     std::vector<std::string> m_inputHistory;

@@ -4308,17 +4308,13 @@ Item {
                     }
                 }
             }
-            Rectangle {
-                readonly property var bounds: parent.modelData.scrollTrack || ({})
-                x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
-                visible: parent.modelData.scrollVisible || false
-                color: "#404040"
-            }
-            Rectangle {
-                readonly property var bounds: parent.modelData.scrollThumb || ({})
-                x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
-                visible: parent.modelData.scrollVisible || false
-                color: "#b8b8b8"
+            RoSourceScrollBar {
+                trackBounds: detachedViewport.history.scrollTrack || ({})
+                thumbBounds: detachedViewport.history.scrollThumb || ({})
+                upBounds: detachedViewport.history.scrollUp || ({})
+                downBounds: detachedViewport.history.scrollDown || ({})
+                arrowPrefix: "detachedScrollArrow"+detachedViewport.history.kind+"_"
+                shown: detachedViewport.history.scrollVisible || false
             }
         }
     }
@@ -4362,15 +4358,13 @@ Item {
                 Text { x: 25; y: 3; text: parent.modelData.text; color: "black"; font.family: "Noto Sans"; font.pixelSize: 12 }
             }
         }
-        Rectangle {
-            readonly property var bounds: battleOptionsWindow.optionData.scrollTrack || ({})
-            x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
-            color: "#404040"
-        }
-        Rectangle {
-            readonly property var bounds: battleOptionsWindow.optionData.scrollThumb || ({})
-            x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
-            color: "#b8b8b8"
+        RoSourceScrollBar {
+            trackBounds: battleOptionsWindow.optionData.scrollTrack || ({})
+            thumbBounds: battleOptionsWindow.optionData.scrollThumb || ({})
+            upBounds: battleOptionsWindow.optionData.scrollUp || ({})
+            downBounds: battleOptionsWindow.optionData.scrollDown || ({})
+            arrowPrefix: "battleScrollArrow"
+            shown: true
         }
     }
 

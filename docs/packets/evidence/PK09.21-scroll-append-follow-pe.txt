@@ -1,0 +1,64 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0044e240 <.text+0x4d240>:
+  44e240:	89 55 10             	mov    %edx,0x10(%ebp)
+  44e243:	e8 18 a1 08 00       	call   0x4d8360
+  44e248:	8b 4d 10             	mov    0x10(%ebp),%ecx
+  44e24b:	3b c8                	cmp    %eax,%ecx
+  44e24d:	7e 04                	jle    0x44e253
+  44e24f:	8b c1                	mov    %ecx,%eax
+  44e251:	eb 10                	jmp    0x44e263
+  44e253:	6a 00                	push   $0x0
+  44e255:	6a 0c                	push   $0xc
+  44e257:	6a 00                	push   $0x0
+  44e259:	6a 00                	push   $0x0
+  44e25b:	56                   	push   %esi
+  44e25c:	8b cb                	mov    %ebx,%ecx
+  44e25e:	e8 fd a0 08 00       	call   0x4d8360
+  44e263:	89 43 70             	mov    %eax,0x70(%ebx)
+  44e266:	8b 03                	mov    (%ebx),%eax
+  44e268:	8b cb                	mov    %ebx,%ecx
+  44e26a:	ff 90 ac 00 00 00    	call   *0xac(%eax)
+  44e270:	8b 43 74             	mov    0x74(%ebx),%eax
+  44e273:	5e                   	pop    %esi
+  44e274:	85 c0                	test   %eax,%eax
+  44e276:	74 3d                	je     0x44e2b5
+  44e278:	8a 45 f3             	mov    -0xd(%ebp),%al
+  44e27b:	84 c0                	test   %al,%al
+  44e27d:	74 36                	je     0x44e2b5
+  44e27f:	8b 47 04             	mov    0x4(%edi),%eax
+  44e282:	85 c0                	test   %eax,%eax
+  44e284:	75 04                	jne    0x44e28a
+  44e286:	33 ff                	xor    %edi,%edi
+  44e288:	eb 08                	jmp    0x44e292
+  44e28a:	8b 7f 08             	mov    0x8(%edi),%edi
+  44e28d:	2b f8                	sub    %eax,%edi
+  44e28f:	c1 ff 04             	sar    $0x4,%edi
+  44e292:	8b 43 20             	mov    0x20(%ebx),%eax
+  44e295:	8b 4b 78             	mov    0x78(%ebx),%ecx
+  44e298:	99                   	cltd
+  44e299:	f7 bb 88 00 00 00    	idivl  0x88(%ebx)
+  44e29f:	8b 53 7c             	mov    0x7c(%ebx),%edx
+  44e2a2:	2b c8                	sub    %eax,%ecx
+  44e2a4:	8d 04 39             	lea    (%ecx,%edi,1),%eax
+  44e2a7:	89 43 68             	mov    %eax,0x68(%ebx)
+  44e2aa:	89 42 50             	mov    %eax,0x50(%edx)
+  44e2ad:	8b 4b 7c             	mov    0x7c(%ebx),%ecx
+  44e2b0:	8b 01                	mov    (%ecx),%eax
+  44e2b2:	ff 50 04             	call   *0x4(%eax)
+  44e2b5:	8b 13                	mov    (%ebx),%edx
+  44e2b7:	8b cb                	mov    %ebx,%ecx
+  44e2b9:	ff 52 04             	call   *0x4(%edx)
+  44e2bc:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  44e2bf:	5f                   	pop    %edi
+  44e2c0:	5b                   	pop    %ebx
+  44e2c1:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  44e2c8:	8b e5                	mov    %ebp,%esp
+  44e2ca:	5d                   	pop    %ebp
+  44e2cb:	c2 0c 00             	ret    $0xc
+  44e2ce:	90                   	nop
+  44e2cf:	90                   	nop

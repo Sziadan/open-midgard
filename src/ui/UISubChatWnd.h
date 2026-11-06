@@ -2,6 +2,7 @@
 #include "UIWindow.h"
 #include "core/ChatHistoryView.h"
 #include "core/ChatBattleOptions.h"
+#include "core/ChatScrollBar.h"
 
 struct SubChatWindowInfo {
     int x = 0, y = 0, width = 0, height = 0;
@@ -14,7 +15,7 @@ struct SubChatRow {
 };
 
 struct SubChatHistoryLayout {
-    RECT history{}, scrollTrack{}, scrollThumb{};
+    RECT history{}, scrollTrack{}, scrollThumb{}, scrollUp{}, scrollDown{};
     int first = 0, total = 0, visible = 0;
 };
 
@@ -27,6 +28,7 @@ public:
     const std::vector<SubChatRow>& GetVisualRows() const { return m_visualRows; }
     std::vector<SubChatRow> GetVisibleRows() const;
     SubChatHistoryLayout GetHistoryLayout() const;
+    ro::chat::ScrollBar GetScrollModel() const;
     RECT GetBattleOptionButton() const { return m_kind==1 ? RECT{m_titleWidth+15,5,m_titleWidth+27,17} : RECT{}; }
     int GetSelectedRow() const { return m_view.selected; }
     void ScrollHistory(int delta);
@@ -51,7 +53,7 @@ private:
     void AppendVisual(const SubChatRow& row);
     void RebuildVisual();
     bool m_scrollDragging = false;
-    int m_scrollGrab = 0;
+    ro::chat::ScrollDrag m_scrollDrag;
     bool m_dragging = false, m_resizing = false;
     int m_startX = 0, m_startY = 0, m_oldX = 0, m_oldY = 0, m_oldW = 0, m_oldH = 0;
 };
@@ -66,7 +68,7 @@ public:
 };
 
 struct BattleOptionsLayout {
-    RECT base{}, close{}, scrollTrack{}, scrollThumb{};
+    RECT base{}, close{}, scrollTrack{}, scrollThumb{}, scrollUp{}, scrollDown{};
     int first=0, selected=-1, rows=8;
 };
 class UIBattleMsgOptionWnd : public UIWindow {
@@ -75,6 +77,7 @@ public:
     const std::string& GetTitle() const { return m_title; }
     const std::string& GetLabel(int index) const { return m_labels.at(static_cast<std::size_t>(index)); }
     BattleOptionsLayout GetLayout() const;
+    ro::chat::ScrollBar GetScrollModel() const;
     int GetSelectedRow() const { return m_view.selected; }
     int GetFirstRow() const { return m_view.first; }
     void ScrollRows(int delta);
@@ -92,4 +95,5 @@ private:
     std::string m_title;
     bool m_dragging=false,m_scrollDragging=false;
     int m_grabX=0,m_grabY=0;
+    ro::chat::ScrollDrag m_scrollDrag;
 };

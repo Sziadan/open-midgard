@@ -1,0 +1,58 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00450140 <.text+0x4f140>:
+  450140:	55                   	push   %ebp
+  450141:	8b ec                	mov    %esp,%ebp
+  450143:	53                   	push   %ebx
+  450144:	56                   	push   %esi
+  450145:	8b f1                	mov    %ecx,%esi
+  450147:	57                   	push   %edi
+  450148:	8b 06                	mov    (%esi),%eax
+  45014a:	ff 50 04             	call   *0x4(%eax)
+  45014d:	8b 46 54             	mov    0x54(%esi),%eax
+  450150:	83 e8 00             	sub    $0x0,%eax
+  450153:	74 0b                	je     0x450160
+  450155:	48                   	dec    %eax
+  450156:	75 22                	jne    0x45017a
+  450158:	8b 5e 70             	mov    0x70(%esi),%ebx
+  45015b:	8b 7d 0c             	mov    0xc(%ebp),%edi
+  45015e:	eb 20                	jmp    0x450180
+  450160:	8b 7e 70             	mov    0x70(%esi),%edi
+  450163:	8b 5d 08             	mov    0x8(%ebp),%ebx
+  450166:	57                   	push   %edi
+  450167:	53                   	push   %ebx
+  450168:	8b ce                	mov    %esi,%ecx
+  45016a:	e8 31 6e 08 00       	call   0x4d6fa0
+  45016f:	8b 16                	mov    (%esi),%edx
+  450171:	57                   	push   %edi
+  450172:	53                   	push   %ebx
+  450173:	8b ce                	mov    %esi,%ecx
+  450175:	ff 52 5c             	call   *0x5c(%edx)
+  450178:	eb 06                	jmp    0x450180
+  45017a:	8b 7d 0c             	mov    0xc(%ebp),%edi
+  45017d:	8b 5d 08             	mov    0x8(%ebp),%ebx
+  450180:	57                   	push   %edi
+  450181:	53                   	push   %ebx
+  450182:	8b ce                	mov    %esi,%ecx
+  450184:	e8 17 6e 08 00       	call   0x4d6fa0
+  450189:	8b 06                	mov    (%esi),%eax
+  45018b:	57                   	push   %edi
+  45018c:	53                   	push   %ebx
+  45018d:	8b ce                	mov    %esi,%ecx
+  45018f:	ff 50 5c             	call   *0x5c(%eax)
+  450192:	5f                   	pop    %edi
+  450193:	5e                   	pop    %esi
+  450194:	5b                   	pop    %ebx
+  450195:	5d                   	pop    %ebp
+  450196:	c2 08 00             	ret    $0x8
+  450199:	90                   	nop
+  45019a:	90                   	nop
+  45019b:	90                   	nop
+  45019c:	90                   	nop
+  45019d:	90                   	nop
+  45019e:	90                   	nop
+  45019f:	90                   	nop

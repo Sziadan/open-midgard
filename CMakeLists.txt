@@ -351,6 +351,12 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_executable(chat_battle_options_checks tools/tests/ChatBattleOptionsTests.cpp)
     target_compile_features(chat_battle_options_checks PRIVATE cxx_std_17)
     add_test(NAME chat_battle_options_checks COMMAND chat_battle_options_checks)
+    add_executable(chat_scrollbar_checks tools/tests/ChatScrollBarTests.cpp)
+    target_compile_features(chat_scrollbar_checks PRIVATE cxx_std_17)
+    add_test(NAME chat_scrollbar_checks COMMAND chat_scrollbar_checks)
+    add_test(NAME packet_chat_scrollbar_checks COMMAND packet_stream_replay_checks --chat-scroll-only)
+    set_tests_properties(packet_chat_scrollbar_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-scroll-settings")
     add_test(NAME packet_chat_options_checks COMMAND packet_stream_replay_checks --chat-options-only)
     set_tests_properties(packet_chat_options_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-options-settings")

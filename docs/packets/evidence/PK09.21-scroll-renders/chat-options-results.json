@@ -1,0 +1,15 @@
+{
+    "absent_main": true,
+    "actual_editor_escape": true,
+    "close_persistence": true,
+    "filters": 13,
+    "last_first": 6,
+    "mouse_close_capture": true,
+    "native_qt_checkbox_pixels": true,
+    "outcome": "PASS",
+    "peer_stacking": true,
+    "real_capture_cancel": true,
+    "rows": 8,
+    "scale125_geometry": true,
+    "siege_message_id": 1331
+}

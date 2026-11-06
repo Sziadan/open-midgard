@@ -1,4 +1,5 @@
 #include "UISubChatWnd.h"
+#include "ChatScrollBarUi.h"
 #include "UIWindowMgr.h"
 #include "UINewChatWnd.h"
 #include "core/ChatHistoryWrap.h"
@@ -103,7 +104,7 @@ void UISubChatHisWnd::AppendVisual(const SubChatRow& row)
 void UISubChatHisWnd::RebuildVisual()
 {
     m_visualRows.clear();
-    m_view.first=0; m_view.selected=-1;
+    m_view.first=m_view.scrollPosition=0; m_view.selected=-1;
     for (const auto& row:m_rows) AppendVisual(row);
 }
 void UISubChatHisWnd::Resize(int width,int height)
@@ -133,6 +134,7 @@ void UISubChatHisWnd::ScrollHistory(int delta)
 }
 std::vector<SubChatRow> UISubChatHisWnd::GetVisibleRows() const
 {
+    if(m_view.first<0 || m_view.first>=static_cast<int>(m_visualRows.size()))return {};
     const int end=(std::min)(static_cast<int>(m_visualRows.size()),m_view.first+m_view.rows);
     return {m_visualRows.begin()+m_view.first,m_visualRows.begin()+end};
 }
@@ -144,13 +146,17 @@ SubChatHistoryLayout UISubChatHisWnd::GetHistoryLayout() const
     layout.total=static_cast<int>(m_visualRows.size());
     layout.visible=(std::min)(layout.total,m_view.rows);
     if (layout.total>m_view.rows && layout.history.bottom>layout.history.top) {
-        layout.scrollTrack={m_w-16,20,m_w-4,m_h-15};
-        const int height=layout.scrollTrack.bottom-layout.scrollTrack.top;
-        const int thumb=(std::min)(height,(std::max)(8,height*layout.visible/layout.total));
-        const int offset=(height-thumb)*layout.first/(layout.total-layout.visible);
-        layout.scrollThumb={layout.scrollTrack.left+1,20+offset,layout.scrollTrack.right-1,20+offset+thumb};
+        layout.scrollTrack={m_w-16,20,m_w-3,m_h-15};
+        const auto bars=ro::chat::ScrollLayout(layout.scrollTrack,GetScrollModel());
+        layout.scrollThumb=bars.thumb;layout.scrollUp=bars.up;layout.scrollDown=bars.down;
     }
     return layout;
+}
+
+ro::chat::ScrollBar UISubChatHisWnd::GetScrollModel() const
+{
+    const int count=static_cast<int>(m_visualRows.size());
+    return {m_h-35,10,m_view.LastFirst(count),m_view.scrollPosition,m_view.rows,count};
 }
 
 msgresult_t UISubChatHisWnd::SendMsg(UIWindow* sender, int message, msgparam_t value, msgparam_t detail, msgparam_t extra)
@@ -217,8 +223,7 @@ void UISubChatHisWnd::OnDraw()
     RestoreDC(dc,clip);
     if (layout.total>layout.visible) {
         const auto global=[&](RECT r){r.left+=m_x;r.right+=m_x;r.top+=m_y;r.bottom+=m_y;return r;};
-        Box(dc,global(layout.scrollTrack),RGB(64,64,64));
-        Box(dc,global(layout.scrollThumb),RGB(184,184,184));
+        ro::chat::DrawScrollBar(dc,global(layout.scrollTrack),global(layout.scrollThumb),10);
     }
     RestoreDC(dc, saved);
     ReleaseDrawTarget(dc);
@@ -233,9 +238,10 @@ void UISubChatHisWnd::OnLBtnDown(int x, int y)
     const auto layout=GetHistoryLayout();
     if (Contains(layout.history,localX,localY)) {
         if (layout.total>layout.visible && Contains(layout.scrollTrack,localX,localY)) {
-            if (Contains(layout.scrollThumb,localX,localY)) {
-                m_scrollDragging=true; m_scrollGrab=localY-layout.scrollThumb.top;
-            } else ScrollHistory(localY<layout.scrollThumb.top ? 1-m_view.rows : m_view.rows-1);
+            const auto bar=GetScrollModel();
+            const auto hit=bar.Hit(localX-layout.scrollTrack.left,localY-layout.scrollTrack.top);
+            if(hit==ro::chat::ScrollHit::Thumb){m_scrollDragging=true;m_scrollDrag.Begin(localY-layout.scrollTrack.top);}
+            else ScrollHistory(bar.Step(hit));
         } else {
             const int index=m_view.first+(localY-layout.history.top)/14;
             m_view.selected=index<layout.total?index:-1;
@@ -260,10 +266,9 @@ void UISubChatHisWnd::OnMouseMove(int x, int y)
 {
     if (m_scrollDragging) {
         const auto layout=GetHistoryLayout();
-        const int travel=layout.scrollTrack.bottom-layout.scrollTrack.top-(layout.scrollThumb.bottom-layout.scrollThumb.top);
-        const int pos=std::clamp(y-m_y-static_cast<int>(layout.scrollTrack.top)-m_scrollGrab,0,(std::max)(0,travel));
-        const int target=travel>0?pos*m_view.LastFirst(layout.total)/travel:0;
-        ScrollHistory(target-m_view.first);
+        const int before=m_view.first;
+        ScrollHistory(m_scrollDrag.Request(y-m_y-layout.scrollTrack.top,GetScrollModel()));
+        m_scrollDrag.Applied(before,m_view.first);
         return;
     }
     if (m_resizing) SendMsg(this, 14, 7, m_oldW + x - m_startX, m_oldH + y - m_startY);
@@ -349,12 +354,14 @@ BattleOptionsLayout UIBattleMsgOptionWnd::GetLayout() const
     layout.first=m_view.first;layout.selected=m_view.selected;layout.rows=m_view.rows;
     // Neutral12px controls until source bitmap geometry is accepted.
     layout.base={3,3,15,15};layout.close={m_w-14,3,m_w-2,15};
-    layout.scrollTrack={m_w-15,14,m_w-3,m_h-24};
-    const int height=layout.scrollTrack.bottom-layout.scrollTrack.top;
-    const int thumb=height*m_view.rows/14;
-    const int offset=(height-thumb)*m_view.first/m_view.LastFirst();
-    layout.scrollThumb={layout.scrollTrack.left+1,14+offset,layout.scrollTrack.right-1,14+offset+thumb};
+    layout.scrollTrack={m_w-15,14,m_w-2,m_h-24};
+    const auto bars=ro::chat::ScrollLayout(layout.scrollTrack,GetScrollModel());
+    layout.scrollThumb=bars.thumb;layout.scrollUp=bars.up;layout.scrollDown=bars.down;
     return layout;
+}
+ro::chat::ScrollBar UIBattleMsgOptionWnd::GetScrollModel() const
+{
+    return {m_h-38,13,m_view.LastFirst(),m_view.first,m_view.rows,14};
 }
 void UIBattleMsgOptionWnd::ScrollRows(int delta) {m_view.Scroll(delta);Invalidate();}
 msgresult_t UIBattleMsgOptionWnd::SendMsg(UIWindow* sender,int message,msgparam_t value,msgparam_t detail,msgparam_t extra)
@@ -392,7 +399,7 @@ void UIBattleMsgOptionWnd::OnDraw()
         Text(dc,{m_x+50,y,m_x+m_w-16,y+18},m_labels[index],0x000000);
     }
     const auto global=[&](RECT r){r.left+=m_x;r.right+=m_x;r.top+=m_y;r.bottom+=m_y;return r;};
-    Box(dc,global(layout.scrollTrack),RGB(64,64,64));Box(dc,global(layout.scrollThumb),RGB(184,184,184));
+    ro::chat::DrawScrollBar(dc,global(layout.scrollTrack),global(layout.scrollThumb),13);
     RestoreDC(dc,saved);ReleaseDrawTarget(dc);
 }
 void UIBattleMsgOptionWnd::OnLBtnDown(int x,int y)
@@ -402,8 +409,9 @@ void UIBattleMsgOptionWnd::OnLBtnDown(int x,int y)
     if (Contains(layout.close,x,y)) {SendMsg(this,6,135,0,0);return;}
     if (Contains(layout.base,x,y)) {SendMsg(this,6,134,0,0);return;}
     if (Contains(layout.scrollTrack,x,y)) {
-        if(Contains(layout.scrollThumb,x,y)){m_scrollDragging=true;m_grabY=y-layout.scrollThumb.top;}
-        else ScrollRows(y<layout.scrollThumb.top?1-m_view.rows:m_view.rows-1);
+        const auto bar=GetScrollModel();const auto hit=bar.Hit(x-layout.scrollTrack.left,y-layout.scrollTrack.top);
+        if(hit==ro::chat::ScrollHit::Thumb){m_scrollDragging=true;m_scrollDrag.Begin(y-layout.scrollTrack.top);}
+        else ScrollRows(bar.Step(hit));
         return;
     }
     if(y<17){m_dragging=true;m_grabX=x;m_grabY=y;return;}
@@ -416,9 +424,9 @@ void UIBattleMsgOptionWnd::OnMouseMove(int x,int y)
     if(m_dragging)Move(x-m_grabX,y-m_grabY);
     else if(m_scrollDragging){
         const auto layout=GetLayout();
-        const int travel=layout.scrollTrack.bottom-layout.scrollTrack.top-(layout.scrollThumb.bottom-layout.scrollThumb.top);
-        const int pos=std::clamp(y-m_y-static_cast<int>(layout.scrollTrack.top)-m_grabY,0,travel);
-        ScrollRows(pos*m_view.LastFirst()/travel-m_view.first);
+        const int before=m_view.first;
+        ScrollRows(m_scrollDrag.Request(y-m_y-layout.scrollTrack.top,GetScrollModel()));
+        m_scrollDrag.Applied(before,m_view.first);
     }
 }
 void UIBattleMsgOptionWnd::OnLBtnUp(int,int){CancelPointerCapture();}

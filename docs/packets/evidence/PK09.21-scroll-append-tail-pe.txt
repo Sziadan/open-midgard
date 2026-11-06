@@ -1,0 +1,55 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0044e1b0 <.text+0x4d1b0>:
+  44e1b0:	50                   	push   %eax
+  44e1b1:	e8 aa 9e fd ff       	call   0x428060
+  44e1b6:	c7 45 fc ff ff ff ff 	movl   $0xffffffff,-0x4(%ebp)
+  44e1bd:	6a 01                	push   $0x1
+  44e1bf:	8d 4d e0             	lea    -0x20(%ebp),%ecx
+  44e1c2:	e8 79 90 fd ff       	call   0x427240
+  44e1c7:	8b 83 a8 00 00 00    	mov    0xa8(%ebx),%eax
+  44e1cd:	8d 8b a0 00 00 00    	lea    0xa0(%ebx),%ecx
+  44e1d3:	8d 55 0c             	lea    0xc(%ebp),%edx
+  44e1d6:	52                   	push   %edx
+  44e1d7:	6a 01                	push   $0x1
+  44e1d9:	50                   	push   %eax
+  44e1da:	e8 91 5b 00 00       	call   0x453d70
+  44e1df:	8a 45 13             	mov    0x13(%ebp),%al
+  44e1e2:	6a 00                	push   $0x0
+  44e1e4:	8d 4d d0             	lea    -0x30(%ebp),%ecx
+  44e1e7:	88 45 d0             	mov    %al,-0x30(%ebp)
+  44e1ea:	e8 51 90 fd ff       	call   0x427240
+  44e1ef:	8b 75 08             	mov    0x8(%ebp),%esi
+  44e1f2:	83 c9 ff             	or     $0xffffffff,%ecx
+  44e1f5:	8b fe                	mov    %esi,%edi
+  44e1f7:	33 c0                	xor    %eax,%eax
+  44e1f9:	f2 ae                	repnz scas %es:(%edi),%al
+  44e1fb:	f7 d1                	not    %ecx
+  44e1fd:	49                   	dec    %ecx
+  44e1fe:	51                   	push   %ecx
+  44e1ff:	56                   	push   %esi
+  44e200:	8d 4d d0             	lea    -0x30(%ebp),%ecx
+  44e203:	e8 28 83 fe ff       	call   0x436530
+  44e208:	8b 43 5c             	mov    0x5c(%ebx),%eax
+  44e20b:	8d 7b 54             	lea    0x54(%ebx),%edi
+  44e20e:	8d 4d d0             	lea    -0x30(%ebp),%ecx
+  44e211:	c7 45 fc 02 00 00 00 	movl   $0x2,-0x4(%ebp)
+  44e218:	51                   	push   %ecx
+  44e219:	50                   	push   %eax
+  44e21a:	8b cf                	mov    %edi,%ecx
+  44e21c:	e8 8f f6 fe ff       	call   0x43d8b0
+  44e221:	6a 01                	push   $0x1
+  44e223:	8d 4d d0             	lea    -0x30(%ebp),%ecx
+  44e226:	c7 45 fc ff ff ff ff 	movl   $0xffffffff,-0x4(%ebp)
+  44e22d:	e8 0e 90 fd ff       	call   0x427240
+  44e232:	8b 53 70             	mov    0x70(%ebx),%edx
+  44e235:	6a 00                	push   $0x0
+  44e237:	6a 0c                	push   $0xc
+  44e239:	6a 00                	push   $0x0
+  44e23b:	6a 00                	push   $0x0
+  44e23d:	56                   	push   %esi
+  44e23e:	8b cb                	mov    %ebx,%ecx

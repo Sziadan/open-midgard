@@ -1,0 +1,35 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+      Start  3: packet_chat_state_checks
+ 1/15 Test  #3: packet_chat_state_checks ...........   Passed    0.12 sec
+      Start  4: packet_chat_notice_checks
+ 2/15 Test  #4: packet_chat_notice_checks ..........   Passed    0.11 sec
+      Start  5: chat_window_state_checks
+ 3/15 Test  #5: chat_window_state_checks ...........   Passed    0.03 sec
+      Start  6: chat_notice_checks
+ 4/15 Test  #6: chat_notice_checks .................   Passed    0.02 sec
+      Start  7: chat_history_view_checks
+ 5/15 Test  #7: chat_history_view_checks ...........   Passed    0.02 sec
+      Start  8: chat_history_wrap_checks
+ 6/15 Test  #8: chat_history_wrap_checks ...........   Passed    0.02 sec
+      Start  9: chat_battle_options_checks
+ 7/15 Test  #9: chat_battle_options_checks .........   Passed    0.02 sec
+      Start 10: chat_scrollbar_checks
+ 8/15 Test #10: chat_scrollbar_checks ..............   Passed    0.02 sec
+      Start 11: packet_chat_scrollbar_checks
+ 9/15 Test #11: packet_chat_scrollbar_checks .......   Passed    0.09 sec
+      Start 12: packet_chat_options_checks
+10/15 Test #12: packet_chat_options_checks .........   Passed    0.12 sec
+      Start 13: packet_chat_options_write_checks
+11/15 Test #13: packet_chat_options_write_checks ...   Passed    0.09 sec
+      Start 14: packet_chat_options_read_checks
+12/15 Test #14: packet_chat_options_read_checks ....   Passed    0.08 sec
+      Start 15: packet_chat_detached_checks
+13/15 Test #15: packet_chat_detached_checks ........   Passed    0.09 sec
+      Start 16: packet_chat_primary_checks
+14/15 Test #16: packet_chat_primary_checks .........   Passed    0.11 sec
+      Start 34: packet_chat_state_render_checks
+15/15 Test #34: packet_chat_state_render_checks ....   Passed    5.20 sec
+
+100% tests passed, 0 tests failed out of 15
+
+Total Test time (real) =   6.16 sec

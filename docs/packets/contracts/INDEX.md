@@ -124,3 +124,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.21 detached visual histories](../evidence/PK09.21-wrapped.md) records separate logical/visual retention, source wrapping/resize replay, shared view/input and retained-owner interaction. Options139, persistence, exact art and broader producer/lifecycle gates remain open.
 
 [PK09.21 battle-message options](../evidence/PK09.21-options.md) records manager139, session filtering, close-only preferences, cross-process startup reload and native/QML UI checks. Shared UIScrollBar fidelity, remaining window persistence/labels/producers and full lifecycle acceptance remain open.
+
+[PK09.21 source scrollbar controls](../evidence/PK09.21-scroll.md) records reviewed base/history subclass geometry, relative drag and captured-child lifetime, plus separate thumb/text offsets after trim. It supersedes the earlier primary clamp-first assumption. Remaining persistence/labels/producers/art and full acceptance stay open.

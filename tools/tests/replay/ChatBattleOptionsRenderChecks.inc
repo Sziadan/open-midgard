@@ -85,6 +85,9 @@ void CheckChatBattleOptionsUi(QGuiApplication& app,QQuickView& view,QtUiState* s
         Require(qt.save(output+"/"+name+".qml.png") && native.save(output+"/"+name+".native.png"),
             "save options render frames failed");
     };
+    const auto tapOptionArrow=[&](RECT r){pointer(options->m_x+r.left+1,options->m_y+(r.top+r.bottom)/2);};
+    tapOptionArrow(options->GetLayout().scrollDown);Require(options->GetFirstRow()==1,"actual options lower arrow differs");
+    tapOptionArrow(options->GetLayout().scrollUp);Require(options->GetFirstRow()==0 && !GetCapture(),"actual options upper arrow/release differs");
     capture("chat-options-default");
     pointer(options->m_x+50,options->m_y+17);
     Require(!g_session.m_battleMsgOnOffSet[0] && options->GetSelectedRow()==0

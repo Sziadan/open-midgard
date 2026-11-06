@@ -1,0 +1,233 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004508b0 <.text+0x4f8b0>:
+  4508b0:	55                   	push   %ebp
+  4508b1:	8b ec                	mov    %esp,%ebp
+  4508b3:	53                   	push   %ebx
+  4508b4:	56                   	push   %esi
+  4508b5:	8b f1                	mov    %ecx,%esi
+  4508b7:	57                   	push   %edi
+  4508b8:	8b 46 4c             	mov    0x4c(%esi),%eax
+  4508bb:	85 c0                	test   %eax,%eax
+  4508bd:	75 0a                	jne    0x4508c9
+  4508bf:	5f                   	pop    %edi
+  4508c0:	5e                   	pop    %esi
+  4508c1:	83 c8 ff             	or     $0xffffffff,%eax
+  4508c4:	5b                   	pop    %ebx
+  4508c5:	5d                   	pop    %ebp
+  4508c6:	c2 08 00             	ret    $0x8
+  4508c9:	8b 55 08             	mov    0x8(%ebp),%edx
+  4508cc:	85 d2                	test   %edx,%edx
+  4508ce:	7d 0a                	jge    0x4508da
+  4508d0:	5f                   	pop    %edi
+  4508d1:	5e                   	pop    %esi
+  4508d2:	83 c8 ff             	or     $0xffffffff,%eax
+  4508d5:	5b                   	pop    %ebx
+  4508d6:	5d                   	pop    %ebp
+  4508d7:	c2 08 00             	ret    $0x8
+  4508da:	8b 5e 1c             	mov    0x1c(%esi),%ebx
+  4508dd:	3b d3                	cmp    %ebx,%edx
+  4508df:	7c 0a                	jl     0x4508eb
+  4508e1:	5f                   	pop    %edi
+  4508e2:	5e                   	pop    %esi
+  4508e3:	83 c8 ff             	or     $0xffffffff,%eax
+  4508e6:	5b                   	pop    %ebx
+  4508e7:	5d                   	pop    %ebp
+  4508e8:	c2 08 00             	ret    $0x8
+  4508eb:	8b 4d 0c             	mov    0xc(%ebp),%ecx
+  4508ee:	85 c9                	test   %ecx,%ecx
+  4508f0:	7d 0a                	jge    0x4508fc
+  4508f2:	5f                   	pop    %edi
+  4508f3:	5e                   	pop    %esi
+  4508f4:	83 c8 ff             	or     $0xffffffff,%eax
+  4508f7:	5b                   	pop    %ebx
+  4508f8:	5d                   	pop    %ebp
+  4508f9:	c2 08 00             	ret    $0x8
+  4508fc:	8b 7e 20             	mov    0x20(%esi),%edi
+  4508ff:	3b cf                	cmp    %edi,%ecx
+  450901:	7c 0a                	jl     0x45090d
+  450903:	5f                   	pop    %edi
+  450904:	5e                   	pop    %esi
+  450905:	83 c8 ff             	or     $0xffffffff,%eax
+  450908:	5b                   	pop    %ebx
+  450909:	5d                   	pop    %ebp
+  45090a:	c2 08 00             	ret    $0x8
+  45090d:	8b 46 54             	mov    0x54(%esi),%eax
+  450910:	83 e8 00             	sub    $0x0,%eax
+  450913:	0f 84 b0 00 00 00    	je     0x4509c9
+  450919:	48                   	dec    %eax
+  45091a:	74 0a                	je     0x450926
+  45091c:	5f                   	pop    %edi
+  45091d:	5e                   	pop    %esi
+  45091e:	83 c8 ff             	or     $0xffffffff,%eax
+  450921:	5b                   	pop    %ebx
+  450922:	5d                   	pop    %ebp
+  450923:	c2 08 00             	ret    $0x8
+  450926:	3b 4e 6c             	cmp    0x6c(%esi),%ecx
+  450929:	7d 09                	jge    0x450934
+  45092b:	5f                   	pop    %edi
+  45092c:	5e                   	pop    %esi
+  45092d:	33 c0                	xor    %eax,%eax
+  45092f:	5b                   	pop    %ebx
+  450930:	5d                   	pop    %ebp
+  450931:	c2 08 00             	ret    $0x8
+  450934:	8b 06                	mov    (%esi),%eax
+  450936:	8b 5e 6c             	mov    0x6c(%esi),%ebx
+  450939:	8b ce                	mov    %esi,%ecx
+  45093b:	ff 90 a0 00 00 00    	call   *0xa0(%eax)
+  450941:	8d 0c 1b             	lea    (%ebx,%ebx,1),%ecx
+  450944:	2b f9                	sub    %ecx,%edi
+  450946:	8b 4d 0c             	mov    0xc(%ebp),%ecx
+  450949:	2b f8                	sub    %eax,%edi
+  45094b:	8b 46 50             	mov    0x50(%esi),%eax
+  45094e:	0f af c7             	imul   %edi,%eax
+  450951:	99                   	cltd
+  450952:	f7 7e 4c             	idivl  0x4c(%esi)
+  450955:	03 c3                	add    %ebx,%eax
+  450957:	3b c8                	cmp    %eax,%ecx
+  450959:	7d 0c                	jge    0x450967
+  45095b:	5f                   	pop    %edi
+  45095c:	5e                   	pop    %esi
+  45095d:	b8 01 00 00 00       	mov    $0x1,%eax
+  450962:	5b                   	pop    %ebx
+  450963:	5d                   	pop    %ebp
+  450964:	c2 08 00             	ret    $0x8
+  450967:	8b 46 54             	mov    0x54(%esi),%eax
+  45096a:	8b 7e 20             	mov    0x20(%esi),%edi
+  45096d:	83 e8 00             	sub    $0x0,%eax
+  450970:	74 03                	je     0x450975
+  450972:	48                   	dec    %eax
+  450973:	eb 03                	jmp    0x450978
+  450975:	8b 7e 1c             	mov    0x1c(%esi),%edi
+  450978:	8b 16                	mov    (%esi),%edx
+  45097a:	8b ce                	mov    %esi,%ecx
+  45097c:	ff 92 a0 00 00 00    	call   *0xa0(%edx)
+  450982:	8b 4e 6c             	mov    0x6c(%esi),%ecx
+  450985:	8b 16                	mov    (%esi),%edx
+  450987:	d1 e1                	shl    %ecx
+  450989:	2b f9                	sub    %ecx,%edi
+  45098b:	8b ce                	mov    %esi,%ecx
+  45098d:	2b f8                	sub    %eax,%edi
+  45098f:	8b df                	mov    %edi,%ebx
+  450991:	8b 7e 6c             	mov    0x6c(%esi),%edi
+  450994:	ff 92 a0 00 00 00    	call   *0xa0(%edx)
+  45099a:	8b c8                	mov    %eax,%ecx
+  45099c:	8b 46 50             	mov    0x50(%esi),%eax
+  45099f:	0f af c3             	imul   %ebx,%eax
+  4509a2:	99                   	cltd
+  4509a3:	f7 7e 4c             	idivl  0x4c(%esi)
+  4509a6:	8b d0                	mov    %eax,%edx
+  4509a8:	8b c7                	mov    %edi,%eax
+  4509aa:	03 c1                	add    %ecx,%eax
+  4509ac:	03 d0                	add    %eax,%edx
+  4509ae:	8b 45 0c             	mov    0xc(%ebp),%eax
+  4509b1:	3b c2                	cmp    %edx,%eax
+  4509b3:	7d 0c                	jge    0x4509c1
+  4509b5:	5f                   	pop    %edi
+  4509b6:	5e                   	pop    %esi
+  4509b7:	b8 02 00 00 00       	mov    $0x2,%eax
+  4509bc:	5b                   	pop    %ebx
+  4509bd:	5d                   	pop    %ebp
+  4509be:	c2 08 00             	ret    $0x8
+  4509c1:	8b 4e 20             	mov    0x20(%esi),%ecx
+  4509c4:	e9 9e 00 00 00       	jmp    0x450a67
+  4509c9:	3b 56 6c             	cmp    0x6c(%esi),%edx
+  4509cc:	7d 09                	jge    0x4509d7
+  4509ce:	5f                   	pop    %edi
+  4509cf:	5e                   	pop    %esi
+  4509d0:	33 c0                	xor    %eax,%eax
+  4509d2:	5b                   	pop    %ebx
+  4509d3:	5d                   	pop    %ebp
+  4509d4:	c2 08 00             	ret    $0x8
+  4509d7:	8b 06                	mov    (%esi),%eax
+  4509d9:	8b 7e 6c             	mov    0x6c(%esi),%edi
+  4509dc:	8b ce                	mov    %esi,%ecx
+  4509de:	ff 90 a0 00 00 00    	call   *0xa0(%eax)
+  4509e4:	8d 0c 3f             	lea    (%edi,%edi,1),%ecx
+  4509e7:	2b d9                	sub    %ecx,%ebx
+  4509e9:	8b 4d 08             	mov    0x8(%ebp),%ecx
+  4509ec:	2b d8                	sub    %eax,%ebx
+  4509ee:	8b 46 50             	mov    0x50(%esi),%eax
+  4509f1:	0f af c3             	imul   %ebx,%eax
+  4509f4:	99                   	cltd
+  4509f5:	f7 7e 4c             	idivl  0x4c(%esi)
+  4509f8:	03 c7                	add    %edi,%eax
+  4509fa:	3b c8                	cmp    %eax,%ecx
+  4509fc:	7d 0c                	jge    0x450a0a
+  4509fe:	5f                   	pop    %edi
+  4509ff:	5e                   	pop    %esi
+  450a00:	b8 01 00 00 00       	mov    $0x1,%eax
+  450a05:	5b                   	pop    %ebx
+  450a06:	5d                   	pop    %ebp
+  450a07:	c2 08 00             	ret    $0x8
+  450a0a:	8b 46 54             	mov    0x54(%esi),%eax
+  450a0d:	8b 7e 20             	mov    0x20(%esi),%edi
+  450a10:	83 e8 00             	sub    $0x0,%eax
+  450a13:	74 03                	je     0x450a18
+  450a15:	48                   	dec    %eax
+  450a16:	eb 03                	jmp    0x450a1b
+  450a18:	8b 7e 1c             	mov    0x1c(%esi),%edi
+  450a1b:	8b 16                	mov    (%esi),%edx
+  450a1d:	8b ce                	mov    %esi,%ecx
+  450a1f:	ff 92 a0 00 00 00    	call   *0xa0(%edx)
+  450a25:	8b 4e 6c             	mov    0x6c(%esi),%ecx
+  450a28:	8b 16                	mov    (%esi),%edx
+  450a2a:	d1 e1                	shl    %ecx
+  450a2c:	2b f9                	sub    %ecx,%edi
+  450a2e:	8b ce                	mov    %esi,%ecx
+  450a30:	2b f8                	sub    %eax,%edi
+  450a32:	8b df                	mov    %edi,%ebx
+  450a34:	8b 7e 6c             	mov    0x6c(%esi),%edi
+  450a37:	ff 92 a0 00 00 00    	call   *0xa0(%edx)
+  450a3d:	8b c8                	mov    %eax,%ecx
+  450a3f:	8b 46 50             	mov    0x50(%esi),%eax
+  450a42:	0f af c3             	imul   %ebx,%eax
+  450a45:	99                   	cltd
+  450a46:	f7 7e 4c             	idivl  0x4c(%esi)
+  450a49:	8b d0                	mov    %eax,%edx
+  450a4b:	8b c7                	mov    %edi,%eax
+  450a4d:	03 c1                	add    %ecx,%eax
+  450a4f:	03 d0                	add    %eax,%edx
+  450a51:	8b 45 08             	mov    0x8(%ebp),%eax
+  450a54:	3b c2                	cmp    %edx,%eax
+  450a56:	7d 0c                	jge    0x450a64
+  450a58:	5f                   	pop    %edi
+  450a59:	5e                   	pop    %esi
+  450a5a:	b8 02 00 00 00       	mov    $0x2,%eax
+  450a5f:	5b                   	pop    %ebx
+  450a60:	5d                   	pop    %ebp
+  450a61:	c2 08 00             	ret    $0x8
+  450a64:	8b 4e 1c             	mov    0x1c(%esi),%ecx
+  450a67:	2b cf                	sub    %edi,%ecx
+  450a69:	33 d2                	xor    %edx,%edx
+  450a6b:	3b c1                	cmp    %ecx,%eax
+  450a6d:	5f                   	pop    %edi
+  450a6e:	0f 9d c2             	setge  %dl
+  450a71:	83 c2 03             	add    $0x3,%edx
+  450a74:	5e                   	pop    %esi
+  450a75:	8b c2                	mov    %edx,%eax
+  450a77:	5b                   	pop    %ebx
+  450a78:	5d                   	pop    %ebp
+  450a79:	c2 08 00             	ret    $0x8
+  450a7c:	90                   	nop
+  450a7d:	90                   	nop
+  450a7e:	90                   	nop
+  450a7f:	90                   	nop
+  450a80:	8b 41 50             	mov    0x50(%ecx),%eax
+  450a83:	c3                   	ret
+  450a84:	90                   	nop
+  450a85:	90                   	nop
+  450a86:	90                   	nop
+  450a87:	90                   	nop
+  450a88:	90                   	nop
+  450a89:	90                   	nop
+  450a8a:	90                   	nop
+  450a8b:	90                   	nop
+  450a8c:	90                   	nop
+  450a8d:	90                   	nop
+  450a8e:	90                   	nop
+  450a8f:	90                   	nop

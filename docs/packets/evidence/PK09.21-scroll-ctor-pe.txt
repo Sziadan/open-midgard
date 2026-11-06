@@ -1,0 +1,58 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0044fe00 <.text+0x4ee00>:
+  44fe00:	56                   	push   %esi
+  44fe01:	8b f1                	mov    %ecx,%esi
+  44fe03:	e8 08 6e 08 00       	call   0x4d6c10
+  44fe08:	33 c0                	xor    %eax,%eax
+  44fe0a:	ba 0d 00 00 00       	mov    $0xd,%edx
+  44fe0f:	b9 01 00 00 00       	mov    $0x1,%ecx
+  44fe14:	89 46 4c             	mov    %eax,0x4c(%esi)
+  44fe17:	89 46 50             	mov    %eax,0x50(%esi)
+  44fe1a:	89 46 48             	mov    %eax,0x48(%esi)
+  44fe1d:	89 46 58             	mov    %eax,0x58(%esi)
+  44fe20:	89 46 5c             	mov    %eax,0x5c(%esi)
+  44fe23:	89 46 60             	mov    %eax,0x60(%esi)
+  44fe26:	89 46 64             	mov    %eax,0x64(%esi)
+  44fe29:	89 46 68             	mov    %eax,0x68(%esi)
+  44fe2c:	c7 06 34 e0 6c 00    	movl   $0x6ce034,(%esi)
+  44fe32:	89 56 6c             	mov    %edx,0x6c(%esi)
+  44fe35:	89 4e 54             	mov    %ecx,0x54(%esi)
+  44fe38:	89 56 70             	mov    %edx,0x70(%esi)
+  44fe3b:	89 4e 74             	mov    %ecx,0x74(%esi)
+  44fe3e:	8b c6                	mov    %esi,%eax
+  44fe40:	5e                   	pop    %esi
+  44fe41:	c3                   	ret
+  44fe42:	90                   	nop
+  44fe43:	90                   	nop
+  44fe44:	90                   	nop
+  44fe45:	90                   	nop
+  44fe46:	90                   	nop
+  44fe47:	90                   	nop
+  44fe48:	90                   	nop
+  44fe49:	90                   	nop
+  44fe4a:	90                   	nop
+  44fe4b:	90                   	nop
+  44fe4c:	90                   	nop
+  44fe4d:	90                   	nop
+  44fe4e:	90                   	nop
+  44fe4f:	90                   	nop
+  44fe50:	55                   	push   %ebp
+  44fe51:	8b ec                	mov    %esp,%ebp
+  44fe53:	56                   	push   %esi
+  44fe54:	8b f1                	mov    %ecx,%esi
+  44fe56:	e8 25 00 00 00       	call   0x44fe80
+  44fe5b:	f6 45 08 01          	testb  $0x1,0x8(%ebp)
+  44fe5f:	74 09                	je     0x44fe6a
+  44fe61:	56                   	push   %esi
+  44fe62:	e8 71 93 24 00       	call   0x6991d8
+  44fe67:	83 c4 04             	add    $0x4,%esp
+  44fe6a:	8b c6                	mov    %esi,%eax
+  44fe6c:	5e                   	pop    %esi
+  44fe6d:	5d                   	pop    %ebp
+  44fe6e:	c2                   	.byte 0xc2
+  44fe6f:	04                   	.byte 0x4

@@ -32,10 +32,13 @@ int main()
         "resize snaps scrollable history to its new bottom");
 
     view.Resize(9, 240);
-    view.first = 200;
+    view.Scroll(-31,240);
     view.AfterAppend(240, 121);
-    check(view.first == 111,
-        "trim clamps an away-from-bottom offset to the retained 120 rows");
+    check(view.first == 200 && view.scrollPosition == 111,
+        "trim clamps the thumb but retains the stale text offset");
+    view.Scroll(-1,121);
+    check(view.first==112 && view.scrollPosition==112,
+        "scrolling reconciles a stale text view using its own offset");
 
     view.Resize(9, 240);
     view.first = 231;

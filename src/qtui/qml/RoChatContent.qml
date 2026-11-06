@@ -38,19 +38,13 @@ Item {
             }
         }
     }
-    Rectangle {
-        readonly property var bounds: chat.sourceRects.scrollTrack || ({})
-        x: bounds.x || 0; y: bounds.y || 0
-        width: bounds.width || 0; height: bounds.height || 0
-        visible: chat.expanded && (uiState.chatWindowScrollBar.visible || false)
-        color: "#404040"
-    }
-    Rectangle {
-        readonly property var bounds: chat.sourceRects.scrollThumb || ({})
-        x: bounds.x || 0; y: bounds.y || 0
-        width: bounds.width || 0; height: bounds.height || 0
-        visible: chat.expanded && (uiState.chatWindowScrollBar.visible || false)
-        color: "#b8b8b8"
+    RoSourceScrollBar {
+        trackBounds: chat.sourceRects.scrollTrack || ({})
+        thumbBounds: chat.sourceRects.scrollThumb || ({})
+        upBounds: chat.sourceRects.scrollUp || ({})
+        downBounds: chat.sourceRects.scrollDown || ({})
+        arrowPrefix: "chatScrollArrow"
+        shown: chat.expanded && (uiState.chatWindowScrollBar.visible || false)
     }
 
     component ChatInput: RoField {

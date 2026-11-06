@@ -1,0 +1,190 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0044ffa0 <.text+0x4efa0>:
+  44ffa0:	55                   	push   %ebp
+  44ffa1:	8b ec                	mov    %esp,%ebp
+  44ffa3:	56                   	push   %esi
+  44ffa4:	8b f1                	mov    %ecx,%esi
+  44ffa6:	57                   	push   %edi
+  44ffa7:	8b 46 4c             	mov    0x4c(%esi),%eax
+  44ffaa:	85 c0                	test   %eax,%eax
+  44ffac:	75 20                	jne    0x44ffce
+  44ffae:	8b 56 18             	mov    0x18(%esi),%edx
+  44ffb1:	8b 7d 0c             	mov    0xc(%ebp),%edi
+  44ffb4:	8b 4e 04             	mov    0x4(%esi),%ecx
+  44ffb7:	03 d7                	add    %edi,%edx
+  44ffb9:	8b 7d 08             	mov    0x8(%ebp),%edi
+  44ffbc:	52                   	push   %edx
+  44ffbd:	8b 56 14             	mov    0x14(%esi),%edx
+  44ffc0:	8b 01                	mov    (%ecx),%eax
+  44ffc2:	03 d7                	add    %edi,%edx
+  44ffc4:	52                   	push   %edx
+  44ffc5:	ff 50 68             	call   *0x68(%eax)
+  44ffc8:	5f                   	pop    %edi
+  44ffc9:	5e                   	pop    %esi
+  44ffca:	5d                   	pop    %ebp
+  44ffcb:	c2 08 00             	ret    $0x8
+  44ffce:	8b 7d 0c             	mov    0xc(%ebp),%edi
+  44ffd1:	53                   	push   %ebx
+  44ffd2:	8b 5d 08             	mov    0x8(%ebp),%ebx
+  44ffd5:	57                   	push   %edi
+  44ffd6:	53                   	push   %ebx
+  44ffd7:	8b ce                	mov    %esi,%ecx
+  44ffd9:	e8 d2 08 00 00       	call   0x4508b0
+  44ffde:	8b 4e 54             	mov    0x54(%esi),%ecx
+  44ffe1:	89 5e 58             	mov    %ebx,0x58(%esi)
+  44ffe4:	83 e9 00             	sub    $0x0,%ecx
+  44ffe7:	89 7e 5c             	mov    %edi,0x5c(%esi)
+  44ffea:	c7 46 60 00 00 00 00 	movl   $0x0,0x60(%esi)
+  44fff1:	5b                   	pop    %ebx
+  44fff2:	0f 84 98 00 00 00    	je     0x450090
+  44fff8:	49                   	dec    %ecx
+  44fff9:	0f 85 07 01 00 00    	jne    0x450106
+  44ffff:	83 f8 04             	cmp    $0x4,%eax
+  450002:	0f 87 fe 00 00 00    	ja     0x450106
+  450008:	ff 24 85 0c 01 45 00 	jmp    *0x45010c(,%eax,4)
+  45000f:	8b 4e 04             	mov    0x4(%esi),%ecx
+  450012:	6a 00                	push   $0x0
+  450014:	6a 00                	push   $0x0
+  450016:	6a 00                	push   $0x0
+  450018:	8b 01                	mov    (%ecx),%eax
+  45001a:	6a ff                	push   $0xffffffff
+  45001c:	6a 07                	push   $0x7
+  45001e:	56                   	push   %esi
+  45001f:	ff 90 94 00 00 00    	call   *0x94(%eax)
+  450025:	5f                   	pop    %edi
+  450026:	5e                   	pop    %esi
+  450027:	5d                   	pop    %ebp
+  450028:	c2 08 00             	ret    $0x8
+  45002b:	8b 4e 04             	mov    0x4(%esi),%ecx
+  45002e:	6a 00                	push   $0x0
+  450030:	6a 00                	push   $0x0
+  450032:	6a 00                	push   $0x0
+  450034:	8b 11                	mov    (%ecx),%edx
+  450036:	6a 00                	push   $0x0
+  450038:	6a 09                	push   $0x9
+  45003a:	56                   	push   %esi
+  45003b:	ff 92 94 00 00 00    	call   *0x94(%edx)
+  450041:	5f                   	pop    %edi
+  450042:	5e                   	pop    %esi
+  450043:	5d                   	pop    %ebp
+  450044:	c2 08 00             	ret    $0x8
+  450047:	56                   	push   %esi
+  450048:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  45004d:	e8 ee e6 08 00       	call   0x4de740
+  450052:	5f                   	pop    %edi
+  450053:	5e                   	pop    %esi
+  450054:	5d                   	pop    %ebp
+  450055:	c2 08 00             	ret    $0x8
+  450058:	8b 4e 04             	mov    0x4(%esi),%ecx
+  45005b:	6a 00                	push   $0x0
+  45005d:	6a 00                	push   $0x0
+  45005f:	6a 00                	push   $0x0
+  450061:	8b 01                	mov    (%ecx),%eax
+  450063:	6a 00                	push   $0x0
+  450065:	6a 0a                	push   $0xa
+  450067:	56                   	push   %esi
+  450068:	ff 90 94 00 00 00    	call   *0x94(%eax)
+  45006e:	5f                   	pop    %edi
+  45006f:	5e                   	pop    %esi
+  450070:	5d                   	pop    %ebp
+  450071:	c2 08 00             	ret    $0x8
+  450074:	8b 4e 04             	mov    0x4(%esi),%ecx
+  450077:	6a 00                	push   $0x0
+  450079:	6a 00                	push   $0x0
+  45007b:	6a 00                	push   $0x0
+  45007d:	8b 11                	mov    (%ecx),%edx
+  45007f:	6a 01                	push   $0x1
+  450081:	6a 07                	push   $0x7
+  450083:	56                   	push   %esi
+  450084:	ff 92 94 00 00 00    	call   *0x94(%edx)
+  45008a:	5f                   	pop    %edi
+  45008b:	5e                   	pop    %esi
+  45008c:	5d                   	pop    %ebp
+  45008d:	c2 08 00             	ret    $0x8
+  450090:	83 f8 04             	cmp    $0x4,%eax
+  450093:	77 71                	ja     0x450106
+  450095:	ff 24 85 20 01 45 00 	jmp    *0x450120(,%eax,4)
+  45009c:	8b 4e 04             	mov    0x4(%esi),%ecx
+  45009f:	6a 00                	push   $0x0
+  4500a1:	6a 00                	push   $0x0
+  4500a3:	6a 00                	push   $0x0
+  4500a5:	8b 01                	mov    (%ecx),%eax
+  4500a7:	6a ff                	push   $0xffffffff
+  4500a9:	6a 08                	push   $0x8
+  4500ab:	56                   	push   %esi
+  4500ac:	ff 90 94 00 00 00    	call   *0x94(%eax)
+  4500b2:	5f                   	pop    %edi
+  4500b3:	5e                   	pop    %esi
+  4500b4:	5d                   	pop    %ebp
+  4500b5:	c2 08 00             	ret    $0x8
+  4500b8:	8b 4e 04             	mov    0x4(%esi),%ecx
+  4500bb:	6a 00                	push   $0x0
+  4500bd:	6a 00                	push   $0x0
+  4500bf:	6a 00                	push   $0x0
+  4500c1:	8b 11                	mov    (%ecx),%edx
+  4500c3:	6a 00                	push   $0x0
+  4500c5:	6a 0b                	push   $0xb
+  4500c7:	56                   	push   %esi
+  4500c8:	ff 92 94 00 00 00    	call   *0x94(%edx)
+  4500ce:	5f                   	pop    %edi
+  4500cf:	5e                   	pop    %esi
+  4500d0:	5d                   	pop    %ebp
+  4500d1:	c2 08 00             	ret    $0x8
+  4500d4:	8b 4e 04             	mov    0x4(%esi),%ecx
+  4500d7:	6a 00                	push   $0x0
+  4500d9:	6a 00                	push   $0x0
+  4500db:	6a 00                	push   $0x0
+  4500dd:	8b 01                	mov    (%ecx),%eax
+  4500df:	6a 00                	push   $0x0
+  4500e1:	6a 0c                	push   $0xc
+  4500e3:	56                   	push   %esi
+  4500e4:	ff 90 94 00 00 00    	call   *0x94(%eax)
+  4500ea:	5f                   	pop    %edi
+  4500eb:	5e                   	pop    %esi
+  4500ec:	5d                   	pop    %ebp
+  4500ed:	c2 08 00             	ret    $0x8
+  4500f0:	8b 4e 04             	mov    0x4(%esi),%ecx
+  4500f3:	6a 00                	push   $0x0
+  4500f5:	6a 00                	push   $0x0
+  4500f7:	6a 00                	push   $0x0
+  4500f9:	8b 11                	mov    (%ecx),%edx
+  4500fb:	6a 01                	push   $0x1
+  4500fd:	6a 08                	push   $0x8
+  4500ff:	56                   	push   %esi
+  450100:	ff 92 94 00 00 00    	call   *0x94(%edx)
+  450106:	5f                   	pop    %edi
+  450107:	5e                   	pop    %esi
+  450108:	5d                   	pop    %ebp
+  450109:	c2 08 00             	ret    $0x8
+  45010c:	0f 00 45 00          	sldt   0x0(%ebp)
+  450110:	2b 00                	sub    (%eax),%eax
+  450112:	45                   	inc    %ebp
+  450113:	00 47 00             	add    %al,0x0(%edi)
+  450116:	45                   	inc    %ebp
+  450117:	00 58 00             	add    %bl,0x0(%eax)
+  45011a:	45                   	inc    %ebp
+  45011b:	00 74 00 45          	add    %dh,0x45(%eax,%eax,1)
+  45011f:	00 9c 00 45 00 b8 00 	add    %bl,0xb80045(%eax,%eax,1)
+  450126:	45                   	inc    %ebp
+  450127:	00 47 00             	add    %al,0x0(%edi)
+  45012a:	45                   	inc    %ebp
+  45012b:	00 d4                	add    %dl,%ah
+  45012d:	00 45 00             	add    %al,0x0(%ebp)
+  450130:	f0 00 45 00          	lock add %al,0x0(%ebp)
+  450134:	90                   	nop
+  450135:	90                   	nop
+  450136:	90                   	nop
+  450137:	90                   	nop
+  450138:	90                   	nop
+  450139:	90                   	nop
+  45013a:	90                   	nop
+  45013b:	90                   	nop
+  45013c:	90                   	nop
+  45013d:	90                   	nop
+  45013e:	90                   	nop
+  45013f:	90                   	nop

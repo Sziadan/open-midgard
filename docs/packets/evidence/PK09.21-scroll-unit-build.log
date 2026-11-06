@@ -1,0 +1,51 @@
+[  2%] Built target wave_math_checks
+[  3%] Built target actor_tint_checks
+[  5%] Built target ambient_sound_checks
+[  7%] Built target skill_packet_replay_checks
+[  9%] Built target server_sound_checks
+[ 11%] Built target forced_motion_checks
+[ 13%] Built target combo_delay_skill272_integration_checks
+[ 15%] Built target wave_dispatch_checks
+[ 17%] Built target blade_stop_integration_checks
+[ 19%] Built target skill_message_checks
+[ 21%] Built target notify_effect3_checks
+[ 23%] Built target talkbox_chat_contents_checks
+[ 25%] Built target skill_talkbox_text_checks
+[ 27%] Built target change_guild_checks
+[ 29%] Built target show_image_checks
+[ 31%] Built target guild_skill_checks
+[ 33%] Built target ui_invalidate_checks
+[ 35%] Built target renderer_frame_checks
+[ 37%] Built target assumptio_depth_checks
+[ 39%] Built target effect_lifecycle_checks
+[ 40%] Built target particle_render_checks
+[ 42%] Built target guild_skill_wnd_refresh_checks
+[ 46%] Built target auto_spell_packet_checks
+[ 46%] Built target spirit_packet_lifecycle_checks
+[ 48%] Built target spirit_chookgi_integration_checks
+[ 53%] Built target skill_action_info_runtime_parity_checks
+[ 55%] Built target devotion_packet_lifecycle_checks
+[ 57%] Built target recovery_resurrection_packet_checks
+[ 59%] Built target ui_spell_list_receiver_checks
+[ 64%] Built target skill_action_info2_parity_checks
+[ 66%] Built target msg_effect_state_lifecycle_checks
+[ 69%] Built target skill_tree_model_checks
+[ 71%] Built target skill_self_target_checks
+[ 73%] Built target effect_blend_state_checks
+[ 75%] Built target heal_timing_checks
+[ 77%] Built target summon_slave_message_checks
+[ 79%] Built target skill_walk_stop_checks
+[ 81%] Built target presentation_regression_checks
+[ 83%] Built target cursor_snap_checks
+[ 86%] Built target ground_sampler_checks
+[ 88%] Built target chat_window_state_checks
+[ 90%] Built target combat_presentation_fix_checks
+[ 92%] Built target chat_notice_checks
+[ 93%] Building CXX object CMakeFiles/chat_history_view_checks.dir/ChatHistoryViewTests.cpp.obj
+[ 95%] Built target chat_history_wrap_checks
+[ 97%] Built target chat_battle_options_checks
+[ 98%] Building CXX object CMakeFiles/chat_scrollbar_checks.dir/ChatScrollBarTests.cpp.obj
+[ 99%] Linking CXX executable chat_history_view_checks.exe
+[100%] Linking CXX executable chat_scrollbar_checks.exe
+[100%] Built target chat_history_view_checks
+[100%] Built target chat_scrollbar_checks

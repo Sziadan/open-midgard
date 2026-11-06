@@ -1940,6 +1940,7 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         value.insert(QStringLiteral("battleOption"),rectMap(history->GetBattleOptionButton()));
         value.insert(QStringLiteral("scrollTrack"),rectMap(layout.scrollTrack));
         value.insert(QStringLiteral("scrollThumb"),rectMap(layout.scrollThumb));
+        value.insert("scrollUp",rectMap(layout.scrollUp));value.insert("scrollDown",rectMap(layout.scrollDown));
         value.insert(QStringLiteral("first"),layout.first);
         value.insert(QStringLiteral("total"),layout.total);
         value.insert(QStringLiteral("scrollVisible"),layout.total>layout.visible);
@@ -1974,7 +1975,8 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
             {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
             {"title",ToQString(window->GetTitle())},{"first",layout.first},
             {"base",rectMap(layout.base)},{"close",rectMap(layout.close)},
-            {"scrollTrack",rectMap(layout.scrollTrack)},{"scrollThumb",rectMap(layout.scrollThumb)}};
+            {"scrollTrack",rectMap(layout.scrollTrack)},{"scrollThumb",rectMap(layout.scrollThumb)},
+            {"scrollUp",rectMap(layout.scrollUp)},{"scrollDown",rectMap(layout.scrollDown)}};
         QVariantList rows;
         for(int i=0;i<layout.rows && layout.first+i<13;++i){
             const int index=layout.first+i;
@@ -2056,6 +2058,7 @@ void PopulateChatWindowState(QtUiState* state)
     sourceRects.insert(QStringLiteral("history"), rectMap(layout.history));
     sourceRects.insert(QStringLiteral("scrollTrack"), rectMap(layout.scrollTrack));
     sourceRects.insert(QStringLiteral("scrollThumb"), rectMap(layout.scrollThumb));
+    sourceRects.insert("scrollUp",rectMap(layout.scrollUp));sourceRects.insert("scrollDown",rectMap(layout.scrollDown));
     sourceRects.insert(QStringLiteral("whisper"), rectMap(layout.whisperInput));
     sourceRects.insert(QStringLiteral("message"), rectMap(layout.messageInput));
     sourceRects.insert(QStringLiteral("gear"), rectMap(layout.gearButton));

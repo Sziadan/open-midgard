@@ -1,3 +1,4 @@
+#include "ChatScrollTrimRenderChecks.inc"
 #include "ChatBattleOptionsRenderChecks.inc"
 #include "ui/UINewChatWnd.h"
 
@@ -227,6 +228,15 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
         auto* secondRow = Find(view.rootObject(),"sourceChatRow1");
         if (secondRow) Require(qRound(secondRow->y()-firstRow->y())==14, "actual source row pitch differs from14px");
     };
+    const auto tapPrimaryArrow=[&](RECT r){
+        const int x=primary->m_x+r.left+1,y=primary->m_y+(r.top+r.bottom)/2;
+        WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(x,y));
+        WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(x,y));
+    };
+    tapPrimaryArrow(primary->GetLayoutDisplay().scrollDown);
+    Require(primary->GetSourceScrollBar().position==1,"actual primary lower arrow did not step one");
+    tapPrimaryArrow(primary->GetLayoutDisplay().scrollUp);
+    Require(primary->GetSourceScrollBar().position==0 && !GetCapture(),"actual primary upper arrow/release differs");
     capturePrimary("chat-primary-oldest",true);
     Require(state->chatWindowLines().front().toMap().value("text").toString().startsWith("SOURCE ROW ZERO"),
         "actual QML cannot show source rows older than50 receipts");
@@ -323,6 +333,15 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
         Require(qt.save(output+"/"+name+".qml.png") && native.save(output+"/"+name+".native.png"),
             "save detached visual frames failed");
     };
+    const auto tapDetachedArrow=[&](RECT r){
+        const int x=wrappedST->m_x+r.left+1,y=wrappedST->m_y+(r.top+r.bottom)/2;
+        WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(x,y));
+        WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(x,y));
+    };
+    tapDetachedArrow(wrappedST->GetHistoryLayout().scrollDown);
+    Require(wrappedST->GetScrollModel().position==1,"actual detached lower arrow differs");
+    tapDetachedArrow(wrappedST->GetHistoryLayout().scrollUp);
+    Require(wrappedST->GetScrollModel().position==0 && !GetCapture(),"actual detached upper arrow/release differs");
     captureDetached("chat-wrapped-oldest");
     auto scroll=wrappedST->GetHistoryLayout();
     wrappedST->ScrollHistory(10000);scroll=wrappedST->GetHistoryLayout();
@@ -361,5 +380,6 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
         {"absent_main_noop",true},{"outcome","PASS"}}).toJson());
 
     CheckChatBattleOptionsUi(app,view,state,adapter,output);
+    CheckChatScrollTrimUi(app,view,state,adapter,output);
 
 }
