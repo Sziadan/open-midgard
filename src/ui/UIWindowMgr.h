@@ -277,6 +277,8 @@ public:
     std::map<std::string,UIWhisperWnd*> m_whisperWindows;
     SubChatWindowInfo m_whisperWindowInfo{0,347,280,120};
     UIChatRoomMenuWnd* m_chatRoomMenuWnd=nullptr;
+    bool WriteWhisperChatToFile(const std::string& name);
+    bool AddFriendCharName(const std::string& name);
     UIChatRoomPasswordWnd* m_chatRoomPasswordWnd = nullptr;
     UISubChatHisWnd* m_subChatWndST = nullptr;
     UISubChatHisWnd* m_subChatWndBT = nullptr;

@@ -1,5 +1,6 @@
 #include "UIWindowMgr.h"
 #include "gamemode/Commerce.h"
+#include "network/Connection.h"
 #include "UILoadingWnd.h"
 #include "UINewChatWnd.h"
 #include "UIChatRoomWnd.h"
@@ -1226,6 +1227,17 @@ void UIWindowMgr::ShowRoomValidationMessage(int messageId)
 void UIWindowMgr::AddWhisperCharName(const std::string& name)
 {
     if(m_chatWnd)m_chatWnd->RememberWhisperTarget(name);
+}
+bool UIWindowMgr::WriteWhisperChatToFile(const std::string& name)
+{
+    const auto found=m_whisperWindows.find(name);
+    return found!=m_whisperWindows.end() && found->second->SendMsg(nullptr,48,0,0,0)!=0;
+}
+bool UIWindowMgr::AddFriendCharName(const std::string& input)
+{
+    const std::string name(input.c_str());if(name.size()>24)return false;
+    std::array<char,26> packet{};packet[0]=2;packet[1]=2;std::copy(name.begin(),name.end(),packet.begin()+2);
+    return CRagConnection::instance()->SendPacket(packet.data(),static_cast<int>(packet.size()));
 }
 bool UIWindowMgr::OpenWhisperWindow(const std::string& input,const char* label)
 {
@@ -2800,6 +2812,7 @@ void UIWindowMgr::OnRBtnDown(int x, int y)
         m_editWindow = hit;
     }
     hit->OnRBtnDown(x, y);
+    if(g_hMainWnd && dynamic_cast<UIWhisperWnd*>(hit))SetCapture(g_hMainWnd);
 }
 
 void UIWindowMgr::OnRBtnUp(int x, int y)
@@ -2808,8 +2821,10 @@ void UIWindowMgr::OnRBtnUp(int x, int y)
         return;
     }
 
+    const bool whisperCapture=dynamic_cast<UIWhisperWnd*>(m_captureWindow)!=nullptr;
     m_captureWindow->OnRBtnUp(x, y);
     m_captureWindow = nullptr;
+    if(whisperCapture && g_hMainWnd && GetCapture()==g_hMainWnd)ReleaseCapture();
 }
 
 void UIWindowMgr::OnMouseMove(int x, int y)

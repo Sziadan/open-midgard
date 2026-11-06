@@ -13,6 +13,8 @@ void CheckWhisperUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
         std::list<FRIEND_INFO> friends=g_session.m_friendList;ro::guild::WindowState guild=g_session.m_guildWindow;
         std::vector<std::string> excluded=g_session.m_exNameList;
         std::string pendingName,pendingText,submitted;int repeat;
+        std::string menuName=mode.m_lastWhisperMenuCharacterName;
+        std::vector<int> menuIds=mode.m_menuIdList;
         std::filesystem::path cwd=std::filesystem::current_path();
         Restore(CGameMode& value):mode(value),pendingName(value.m_lastWhisperName),pendingText(value.m_lastWhisper),submitted(value.m_sourceLastSubmittedChat),repeat(value.m_sourceSameChatRepeatCount)
         {std::copy(std::begin(g_session.m_playerName),std::end(g_session.m_playerName),name.begin());}
@@ -21,10 +23,12 @@ void CheckWhisperUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
             g_session.m_onAutoMSG=autoMessage;g_session.m_isSaveChat=save;g_windowMgr.m_whisperWindowInfo=geometry;
             g_session.m_friendList=std::move(friends);g_session.m_guildWindow=std::move(guild);g_session.m_exNameList=std::move(excluded);
             std::copy(name.begin(),name.end(),std::begin(g_session.m_playerName));
-            mode.m_lastWhisperName=pendingName;mode.m_lastWhisper=pendingText;mode.m_sourceLastSubmittedChat=submitted;mode.m_sourceSameChatRepeatCount=repeat;}
+            mode.m_lastWhisperName=pendingName;mode.m_lastWhisper=pendingText;mode.m_sourceLastSubmittedChat=submitted;mode.m_sourceSameChatRepeatCount=repeat;
+            mode.m_lastWhisperMenuCharacterName=menuName;mode.m_menuIdList=menuIds;}
     } restore(mode);
     const auto assets=std::filesystem::path(output.toStdString())/"whisper-assets";std::filesystem::create_directories(assets);
-    {std::ofstream file(assets/"msgstringtable.txt",std::ios::binary);for(int i=0;i<=941;++i)file<<(i==102?"Friend Label#\r\n":"#\r\n");}
+    {std::ofstream file(assets/"msgstringtable.txt",std::ios::binary);for(int i=0;i<=941;++i)
+        file<<(i==102?"Friend Label#\r\n":i==312?"Save private <history>#\r\n":i==358?"Add <friend>#\r\n":"#\r\n");}
     std::filesystem::current_path(assets);g_readFolderFirst=1;g_codePage=65001;SetRuntimeUiScalePercent(100);
     g_session.m_isShowWhisperWnd=g_session.m_isShowWhisperWnd_Friend=true;g_session.m_isPlayWhisperOpenSound=false;
     g_session.m_onAutoMSG=g_session.m_isSaveChat=false;g_session.m_friendList.clear();g_session.m_guildWindow={};g_session.m_exNameList.clear();
@@ -90,6 +94,34 @@ void CheckWhisperUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     Require(modalNative.save(output+"/whisper-modal-overlap.native.png") && modalQt.save(output+"/whisper-modal-overlap.qml.png"),"save whisper/modal frames failed");
     WindowProc(g_hMainWnd,WM_CHAR,'z',0);Require(alpha->GetInputText().empty() && under->GetInputText().empty(),"actual modal leaked native input into whisper");
     WindowProc(g_hMainWnd,WM_KEYDOWN,VK_ESCAPE,0);Require(g_windowMgr.m_editWindow==alpha && !g_windowMgr.m_modalWindow,"modal dismissal lost live whisper focus");g_windowMgr.DeleteWindow(under);
+    const auto right=[&](UINT message,int x,int y){WindowProc(g_hMainWnd,message,message==WM_RBUTTONDOWN?MK_RBUTTON:0,
+        MAKELPARAM(UiScaleLogicalToRawCoordinate(x),UiScaleLogicalToRawCoordinate(y)));};
+    for(int menuScale:{100,125}){
+        SetRuntimeUiScalePercent(menuScale);state->setUiScale(GetConfiguredUiScaleFactor());
+        const int menuX=alpha->m_x+25,menuY=alpha->m_y+25;
+        right(WM_RBUTTONDOWN,menuX,menuY);Require(GetCapture()==g_hMainWnd && g_windowMgr.m_captureWindow==alpha,"private right press lacks OS capture");
+        WindowProc(g_hMainWnd,WM_CANCELMODE,0,0);right(WM_RBUTTONUP,menuX,menuY);
+        Require(!g_windowMgr.m_chatRoomMenuWnd && !GetCapture(),"cancelled private right capture opened a popup");
+        right(WM_RBUTTONDOWN,menuX,menuY);right(WM_RBUTTONUP,menuX,menuY);
+        auto* popup=g_windowMgr.m_chatRoomMenuWnd;Require(popup && !GetCapture() && mode.m_lastWhisperMenuCharacterName=="Alpha","native private menu failed mode114 or retained right capture");
+        pointer(WM_MOUSEMOVE,popup->m_x+4,popup->m_y+4);adapter.syncChat();Frames(app,view);
+        auto* qtMenu=Find(view.rootObject(),"sourceRoomMenu");Require(qtMenu,"actual QML private popup missing");const auto bounds=qtMenu->mapRectToScene(qtMenu->boundingRect());
+        const auto projected=state->chatWindowUi().value("roomMenu").toMap();const auto rows=projected.value("rows").toList();
+        Require(qtMenu && qtMenu->isVisible() && rows.size()==2 && rows[0].toMap().value("text")=="Save private <history>"
+            && rows[1].toMap().value("text")=="Add <friend>" && std::abs(bounds.left()-popup->m_x*GetConfiguredUiScaleFactor())<0.001,
+            "actual private native/QML menu labels/geometry differ");
+        ArgbDibSurface menuDib;Require(menuDib.EnsureSize(view.width(),view.height()),"private menu DIB failed");std::fill_n(menuDib.GetPixels(),view.width()*view.height(),0xff181b20u);
+        g_windowMgr.DrawVisibleWindowsToHdc(menuDib.GetDC(),true);
+        auto nativeMenu=QImage(reinterpret_cast<uchar*>(menuDib.GetPixels()),view.width(),view.height(),view.width()*4,QImage::Format_RGB32).copy();
+        const double scale=GetConfiguredUiScaleFactor();nativeMenu=nativeMenu.scaled(qRound(nativeMenu.width()*scale),qRound(nativeMenu.height()*scale),Qt::IgnoreAspectRatio,Qt::FastTransformation).copy(0,0,view.width(),view.height());
+        const auto qtFrame=view.grabWindow().convertToFormat(QImage::Format_RGB32);
+        const QPoint selected(UiScaleLogicalToRawCoordinate(popup->m_x+popup->m_w-4),UiScaleLogicalToRawCoordinate(popup->m_y+2));
+        Require(nativeMenu.pixelColor(selected)==QColor("#32c8c8") && qtFrame.pixelColor(selected)==QColor("#32c8c8"),"private menu native/QML selection or stacking differs");
+        const auto name=output+"/whisper-menu-"+QString::number(menuScale);
+        Require(nativeMenu.save(name+".native.png") && qtFrame.save(name+".qml.png"),"save private menu frames failed");
+        pointer(WM_LBUTTONDOWN,-20,-20);pointer(WM_LBUTTONUP,-20,-20);Require(g_windowMgr.m_chatRoomMenuWnd==popup,"private popup outside release closed it");
+        g_windowMgr.DeleteWindow(popup);
+    }
     const auto close=alpha->GetLayout().close;pointer(WM_LBUTTONDOWN,alpha->m_x+close.left+5,alpha->m_y+8);pointer(WM_LBUTTONUP,-20,-20);
     Require(g_windowMgr.m_whisperWindows.at("Alpha")==alpha,"outside close-button release deleted source whisper");
     tap(alpha->m_x+close.left+5,alpha->m_y+8);Require(!g_windowMgr.m_whisperWindows.count("Alpha") && g_windowMgr.m_whisperWindows.count("Beta"),"closing one name removed another or retained stale map owner");
@@ -98,6 +130,6 @@ void CheckWhisperUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     g_windowMgr.DeleteWindow(beta);Require(!GetCapture() && !g_windowMgr.m_captureWindow && g_windowMgr.m_whisperWindows.empty(),"deleting captured whisper retained pointer/OS capture");
     adapter.syncChat();Frames(app,view);Require(state->chatWindowUi().value("whisperWindows").toList().empty(),"actual QML retained destroyed per-name owners");
     QFile result(output+"/whisper-results.json");Require(result.open(QIODevice::WriteOnly),"whisper render result open failed");
-    result.write(QJsonDocument(QJsonObject{{"native_qml_frames",12},{"two_names_without_main",true},{"peer_stacking",true},{"native_input",true},{"modal_above_new_receive",true},
+    result.write(QJsonDocument(QJsonObject{{"native_qml_frames",16},{"private_menu_capture_100_125",true},{"two_names_without_main",true},{"peer_stacking",true},{"native_input",true},{"modal_above_new_receive",true},
         {"resize_drag_cancel_release",true},{"scale_125",true},{"hidden_delivery",true},{"individual_captured_teardown",true},{"outcome","PASS"}}).toJson());
 }

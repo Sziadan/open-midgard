@@ -1,0 +1,139 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00584211 <.text+0x183211>:
+  584211:	8b 75 0c             	mov    0xc(%ebp),%esi
+  584214:	83 c9 ff             	or     $0xffffffff,%ecx
+  584217:	8b fe                	mov    %esi,%edi
+  584219:	33 c0                	xor    %eax,%eax
+  58421b:	f2 ae                	repnz scas %es:(%edi),%al
+  58421d:	f7 d1                	not    %ecx
+  58421f:	49                   	dec    %ecx
+  584220:	8d 93 30 02 00 00    	lea    0x230(%ebx),%edx
+  584226:	6a 01                	push   $0x1
+  584228:	89 4d 0c             	mov    %ecx,0xc(%ebp)
+  58422b:	51                   	push   %ecx
+  58422c:	8b ca                	mov    %edx,%ecx
+  58422e:	e8 ed 47 ea ff       	call   0x428a20
+  584233:	84 c0                	test   %al,%al
+  584235:	74 27                	je     0x58425e
+  584237:	8b 4d 0c             	mov    0xc(%ebp),%ecx
+  58423a:	8b bb 34 02 00 00    	mov    0x234(%ebx),%edi
+  584240:	8d 83 30 02 00 00    	lea    0x230(%ebx),%eax
+  584246:	8b d1                	mov    %ecx,%edx
+  584248:	c1 e9 02             	shr    $0x2,%ecx
+  58424b:	f3 a5                	rep movsl %ds:(%esi),%es:(%edi)
+  58424d:	8b ca                	mov    %edx,%ecx
+  58424f:	83 e1 03             	and    $0x3,%ecx
+  584252:	f3 a4                	rep movsb %ds:(%esi),%es:(%edi)
+  584254:	8b ca                	mov    %edx,%ecx
+  584256:	51                   	push   %ecx
+  584257:	8b c8                	mov    %eax,%ecx
+  584259:	e8 a2 47 ea ff       	call   0x428a00
+  58425e:	8b 8b e4 01 00 00    	mov    0x1e4(%ebx),%ecx
+  584264:	8b 83 e8 01 00 00    	mov    0x1e8(%ebx),%eax
+  58426a:	81 c3 e0 01 00 00    	add    $0x1e0,%ebx
+  584270:	51                   	push   %ecx
+  584271:	50                   	push   %eax
+  584272:	50                   	push   %eax
+  584273:	e8 28 88 00 00       	call   0x58caa0
+  584278:	8b 53 08             	mov    0x8(%ebx),%edx
+  58427b:	83 c4 0c             	add    $0xc,%esp
+  58427e:	8b f0                	mov    %eax,%esi
+  584280:	8b cb                	mov    %ebx,%ecx
+  584282:	52                   	push   %edx
+  584283:	56                   	push   %esi
+  584284:	e8 57 b6 ea ff       	call   0x42f8e0
+  584289:	8d 85 40 fe ff ff    	lea    -0x1c0(%ebp),%eax
+  58428f:	8b ce                	mov    %esi,%ecx
+  584291:	50                   	push   %eax
+  584292:	6a 01                	push   $0x1
+  584294:	51                   	push   %ecx
+  584295:	8b cb                	mov    %ebx,%ecx
+  584297:	89 73 08             	mov    %esi,0x8(%ebx)
+  58429a:	c7 85 40 fe ff ff 0b 	movl   $0xb,-0x1c0(%ebp)
+  5842a1:	00 00 00
+  5842a4:	e8 07 4b e8 ff       	call   0x408db0
+  5842a9:	8d 95 54 fe ff ff    	lea    -0x1ac(%ebp),%edx
+  5842af:	c7 85 54 fe ff ff 15 	movl   $0x15,-0x1ac(%ebp)
+  5842b6:	00 00 00
+  5842b9:	8b 43 08             	mov    0x8(%ebx),%eax
+  5842bc:	52                   	push   %edx
+  5842bd:	6a 01                	push   $0x1
+  5842bf:	50                   	push   %eax
+  5842c0:	8b cb                	mov    %ebx,%ecx
+  5842c2:	e8 e9 4a e8 ff       	call   0x408db0
+  5842c7:	5f                   	pop    %edi
+  5842c8:	5e                   	pop    %esi
+  5842c9:	33 c0                	xor    %eax,%eax
+  5842cb:	5b                   	pop    %ebx
+  5842cc:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  5842cf:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  5842d6:	8b e5                	mov    %ebp,%esp
+  5842d8:	5d                   	pop    %ebp
+  5842d9:	c2 10 00             	ret    $0x10
+  5842dc:	a1 1c 88 76 00       	mov    0x76881c,%eax
+  5842e1:	85 c0                	test   %eax,%eax
+  5842e3:	74 0c                	je     0x5842f1
+  5842e5:	6a 12                	push   $0x12
+  5842e7:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  5842ec:	e8 ef b6 f5 ff       	call   0x4df9e0
+  5842f1:	a1 78 88 76 00       	mov    0x768878,%eax
+  5842f6:	85 c0                	test   %eax,%eax
+  5842f8:	0f 85 0c 6b 00 00    	jne    0x58ae0a
+  5842fe:	8b 83 e4 01 00 00    	mov    0x1e4(%ebx),%eax
+  584304:	8b 4d 0c             	mov    0xc(%ebp),%ecx
+  584307:	8b 04 88             	mov    (%eax,%ecx,4),%eax
+  58430a:	83 c0 fc             	add    $0xfffffffc,%eax
+  58430d:	83 f8 26             	cmp    $0x26,%eax
+  584310:	0f 87 f4 6a 00 00    	ja     0x58ae0a
+  584316:	ff 24 85 c0 b2 58 00 	jmp    *0x58b2c0(,%eax,4)
+  58431d:	8b 83 0c 03 00 00    	mov    0x30c(%ebx),%eax
+  584323:	8b 13                	mov    (%ebx),%edx
+  584325:	6a 00                	push   $0x0
+  584327:	6a 00                	push   $0x0
+  584329:	50                   	push   %eax
+  58432a:	6a 0e                	push   $0xe
+  58432c:	8b cb                	mov    %ebx,%ecx
+  58432e:	ff 52 14             	call   *0x14(%edx)
+  584331:	5f                   	pop    %edi
+  584332:	5e                   	pop    %esi
+  584333:	33 c0                	xor    %eax,%eax
+  584335:	5b                   	pop    %ebx
+  584336:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  584339:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  584340:	8b e5                	mov    %ebp,%esp
+  584342:	5d                   	pop    %ebp
+  584343:	c2 10 00             	ret    $0x10
+  584346:	b9 28 c2 78 00       	mov    $0x78c228,%ecx
+  58434b:	e8 40 17 f8 ff       	call   0x505a90
+  584350:	8b 88 b4 00 00 00    	mov    0xb4(%eax),%ecx
+  584356:	8b 51 3c             	mov    0x3c(%ecx),%edx
+  584359:	83 ba 98 02 00 00 02 	cmpl   $0x2,0x298(%edx)
+  584360:	0f 84 a4 6a 00 00    	je     0x58ae0a
+  584366:	8b 8b 0c 03 00 00    	mov    0x30c(%ebx),%ecx
+  58436c:	8b 03                	mov    (%ebx),%eax
+  58436e:	6a 00                	push   $0x0
+  584370:	6a 00                	push   $0x0
+  584372:	51                   	push   %ecx
+  584373:	6a 36                	push   $0x36
+  584375:	8b cb                	mov    %ebx,%ecx
+  584377:	ff 50 14             	call   *0x14(%eax)
+  58437a:	5f                   	pop    %edi
+  58437b:	5e                   	pop    %esi
+  58437c:	33 c0                	xor    %eax,%eax
+  58437e:	5b                   	pop    %ebx
+  58437f:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  584382:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  584389:	8b e5                	mov    %ebp,%esp
+  58438b:	5d                   	pop    %ebp
+  58438c:	c2 10 00             	ret    $0x10
+  58438f:	8b 83 0c 03 00 00    	mov    0x30c(%ebx),%eax
+  584395:	8b 13                	mov    (%ebx),%edx
+  584397:	6a 00                	push   $0x0
+  584399:	6a 00                	push   $0x0
+  58439b:	50                   	push   %eax
+  58439c:	68 80 00 00 00       	push   $0x80

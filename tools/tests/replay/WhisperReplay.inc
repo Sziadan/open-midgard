@@ -55,7 +55,7 @@ void WhisperReplay()
 #endif
     const auto language=[&](int empty=-1,const std::string& autoPrefix="[AUTO] "){
         std::ofstream file("msgstringtable.txt",std::ios::binary);
-        const std::map<int,std::string> labels={{49,"REPEAT"},{50,"FILTER"},{95,"INVALID"},{102,"FRIEND"},{148,"MISSING"},{149,"BLOCKED"},{150,"BLOCKED ALL"},{190,"ENGLISH"},{917,"FRIEND WARNING"},{919,"GUILD WARNING"},{941,autoPrefix}};
+        const std::map<int,std::string> labels={{49,"REPEAT"},{50,"FILTER"},{95,"INVALID"},{102,"FRIEND"},{148,"MISSING"},{149,"BLOCKED"},{150,"BLOCKED ALL"},{190,"ENGLISH"},{312,"SAVE"},{358,"ADD FRIEND"},{917,"FRIEND WARNING"},{919,"GUILD WARNING"},{941,autoPrefix}};
         for(int i=0;i<=941;++i){const auto found=labels.find(i);if(i!=empty && found!=labels.end())file<<found->second;file<<"#\r\n";}
     };
     language();g_readFolderFirst=1;g_codePage=65001;g_serviceType=ServiceAmerica;g_serverType=ServerNormal;
@@ -193,6 +193,78 @@ void WhisperReplay()
     history->Append("after-trim",0);Require(history->GetRows().size()==121 && history->GetFirst()==200 && history->GetVisibleRows().empty()
         && history->GetScrollModel().position==115,"source whisper trim incorrectly clamped the text offset with the thumb");
     history->ScrollHistory(-1);Require(history->GetFirst()==116 && !history->GetVisibleRows().empty(),"source whisper trim did not reconcile on next scroll");
+    // Real private menu -> mode114/current mode26 -> exact-name lookup/send.
+    g_serverType=ServerNormal;g_session.m_isSaveChat=false;g_session.m_onAutoMSG=false;
+    g_windowMgr.OpenWhisperWindow("MenuPeer");auto* menuOwner=g_windowMgr.m_whisperWindows.at("MenuPeer");
+    menuOwner->Append("alpha\nbeta",0);menuOwner->Append("^FF0000 <raw>",0);
+    menuOwner->OpenMenu(790,590);
+    Require(menuOwner->GetMenuItems().size()==2 && menuOwner->GetMenuItems()[0].action==11
+        && menuOwner->GetMenuItems()[0].label=="SAVE" && menuOwner->GetMenuItems()[1].action==21
+        && mode.m_menuIdList==std::vector<int>({11,21}) && mode.m_lastWhisperMenuCharacterName=="MenuPeer",
+        "private menu lost source labels/order or mode114 state");
+    auto* popup=g_windowMgr.m_chatRoomMenuWnd;
+    Require(popup && popup->m_x+popup->m_w<=g_windowMgr.GetChatClientRect().right
+        && popup->m_y+popup->m_h<=g_windowMgr.GetChatClientRect().bottom,"private source menu escaped viewport");
+    popup->OnLBtnUp(-1,-1);Require(g_windowMgr.m_chatRoomMenuWnd==popup,"private menu outside release unexpectedly closed");
+    popup->OnLBtnUp(popup->m_x+2,popup->m_y+2);
+    const auto whisperDir=GetOpenMidgardIniPath().parent_path()/"Whisper";
+    const auto readFile=[](const std::filesystem::path& path){std::ifstream file(path,std::ios::binary);return std::string((std::istreambuf_iterator<char>(file)),{});};
+    Require(!g_windowMgr.m_chatRoomMenuWnd && readFile(whisperDir/"MenuPeer.txt")=="alpha\r\nbeta\r\n^FF0000 <raw>\r\n"
+        && last().text==(whisperDir/"MenuPeer.txt").u8string()+" is Saved." && last().color==0x00ff00,
+        "private save mode26/48 lost exact rows/newlines/notice");
+    menuOwner->SetInputText("/savechat ignored");Require(menuOwner->SubmitInput()
+        && readFile(whisperDir/"MenuPeer001.txt")=="alpha\r\nbeta\r\n^FF0000 <raw>\r\n"
+        && menuOwner->GetInputText().empty(),"private save command/collision/history handling changed");
+    menuOwner->SetInputText("/rkfanfl");Require(menuOwner->SubmitInput() && std::filesystem::exists(whisperDir/"MenuPeer002.txt"),"source keyboard save alias failed");
+    g_serviceType=ServiceKorea;menuOwner->SetInputText(u8"/갈무리");Require(menuOwner->SubmitInput()
+        && std::filesystem::exists(whisperDir/"MenuPeer003.txt"),"source Korean save alias failed");g_serviceType=ServiceAmerica;
+    const auto reportDir=GetOpenMidgardIniPath().parent_path()/"Report";
+    std::filesystem::create_directories(reportDir);{std::ofstream report(reportDir/"Local.txt");report<<"untouched";}
+    menuOwner->SetInputText("/report");Require(menuOwner->SubmitInput() && !std::filesystem::exists(reportDir/"Local001.txt")
+        && readFile(reportDir/"Local.txt")=="untouched" && last().text==(reportDir/"Local001.txt").u8string()+" is Saved.",
+        "selected report no-op/file-name/notice behavior changed");
+    menuOwner->SetInputText("/tlsrh");Require(menuOwner->SubmitInput() && !std::filesystem::exists(reportDir/"Local001.txt"),"source report keyboard alias created content");
+    g_serviceType=ServiceKorea;menuOwner->SetInputText(u8"/신고");Require(menuOwner->SubmitInput(),"source Korean report alias failed");g_serviceType=ServiceAmerica;
+    g_windowMgr.OpenWhisperWindow("A/B:C*D?E\"F<G>H|I\\J");auto* unsafe=g_windowMgr.m_whisperWindows.at("A/B:C*D?E\"F<G>H|I\\J");
+    unsafe->Append("sanitized",0);Require(unsafe->WriteChatToFile() && readFile(whisperDir/"A_B_C_D_E_F_G_H_I_J.txt")=="sanitized\r\n","private export filename sanitization failed");
+    g_windowMgr.OpenWhisperWindow("CannotWrite");auto* cannot=g_windowMgr.m_whisperWindows.at("CannotWrite");
+    {std::ofstream blocked(whisperDir/"CannotWrite.txt");blocked<<"collision";}
+    const auto blockedBase=GetOpenMidgardIniPath().parent_path()/"blocked-root";{std::ofstream blocked(blockedBase);blocked<<"file";}
+    const auto settingsRoot=GetOpenMidgardIniPath().parent_path();
+#if RO_PLATFORM_WINDOWS
+    _putenv_s("OPEN_MIDGARD_DATA_DIR",blockedBase.string().c_str());
+#else
+    setenv("OPEN_MIDGARD_DATA_DIR",blockedBase.string().c_str(),1);
+#endif
+    const auto beforeFailure=g_windowMgr.GetChatEvents().size();Require(!cannot->WriteChatToFile() && g_windowMgr.GetChatEvents().size()==beforeFailure,"failed private directory creation emitted success notice");
+#if RO_PLATFORM_WINDOWS
+    _putenv_s("OPEN_MIDGARD_DATA_DIR",settingsRoot.string().c_str());
+#else
+    setenv("OPEN_MIDGARD_DATA_DIR",settingsRoot.string().c_str(),1);
+#endif
+    g_serverType=ServerInstantEvent;menuOwner->OpenMenu(5,5);Require(menuOwner->GetMenuItems().size()==1 && mode.m_menuIdList.size()==2,"instant-event private friend suppression altered mode114 list");
+    g_serverType=ServerNormal;FRIEND_INFO menuFriend;menuFriend.characterName="MenuPeer";g_session.m_friendList.push_back(menuFriend);
+    menuOwner->OpenMenu(5,5);Require(menuOwner->GetMenuItems().size()==1,"private friend menu ignored exact membership");
+    g_session.m_friendList.pop_back();g_windowMgr.m_whisperWindows.at("Local")->OpenMenu(5,5);
+    Require(g_windowMgr.m_whisperWindows.at("Local")->GetMenuItems().size()==2,"private self menu invented friend suppression");
+    language(312);menuOwner->OpenMenu(5,5);Require(menuOwner->GetMenuItems()[0].label.empty(),"private menu replaced known-empty save label");language();
+    {
+        LoopbackPeer friendPeer(*connection);menuOwner->OpenMenu(5,5);popup=g_windowMgr.m_chatRoomMenuWnd;
+        popup->OnLBtnUp(popup->m_x+2,popup->m_y+16);
+        std::vector<u8> expected(26);expected[0]=2;expected[1]=2;std::copy_n("MenuPeer",8,expected.begin()+2);
+        Require(friendPeer.ReceiveExact(26)==expected && !g_windowMgr.m_chatRoomMenuWnd && !g_session.IsFriendName("MenuPeer"),"private friend mode26 changed0202 bytes or mutated roster");
+        const std::string fullName(24,'F');mode.SendMsg(114,reinterpret_cast<msgparam_t>(fullName.c_str()),0,0);
+        Require(mode.SendMsg(26,1,0,0)!=0,"source name-only friend action incorrectly required actor ID or rejected24 bytes");
+        expected.assign(26,'F');expected[0]=2;expected[1]=2;Require(friendPeer.ReceiveExact(26)==expected,"source friend24 field acquired terminator or truncation");
+    }
+    menuOwner->OpenMenu(5,5);popup=g_windowMgr.m_chatRoomMenuWnd;
+    auto* storage=g_windowMgr.MakeWindow(UIWindowMgr::WID_STORAGEWND);Require(storage,"storage guard fixture failed");
+    Require(mode.SendMsg(26,0,0,0)==0 && !g_windowMgr.m_chatRoomMenuWnd && !std::filesystem::exists(whisperDir/"MenuPeer004.txt"),"source storage-owner menu guard was bypassed");
+    g_windowMgr.DeleteWindow(storage);menuOwner->OpenMenu(5,5);popup=g_windowMgr.m_chatRoomMenuWnd;
+    g_windowMgr.DeleteWindow(menuOwner);Require(g_windowMgr.m_chatRoomMenuWnd==popup,"private popup was incorrectly owned by deleted whisper");
+    popup->OnLBtnUp(popup->m_x+2,popup->m_y+2);Require(!g_windowMgr.m_chatRoomMenuWnd && !std::filesystem::exists(whisperDir/"MenuPeer004.txt"),"stale private menu wrote through dead owner");
+    g_windowMgr.OpenWhisperWindow("MenuPeer");Require(!g_windowMgr.WriteWhisperChatToFile("MenuPeer"),"replacement owner inherited stale menu items");
+    Require(mode.SendMsg(26,-1,0,0)==0 && mode.SendMsg(26,2,0,0)==0,"source menu invalid indices were not bounded");
     g_windowMgr.RemoveAllWindows();Require(g_windowMgr.m_whisperWindows.empty(),"bulk teardown retained per-name owners");
     std::cout<<"{\"case_id\":\"source_whisper_owners\",\"contract_id\":\"PK09.21\",\"actual_0097_0098_0096\":true,\"per_name_hidden_lifetime\":true,\"typed_fallback\":true,\"pending_not_overwritten\":true,\"source_guards\":true,\"auto_prefix\":true,\"privileged_autosave_bytes\":true,\"outcome\":\"PASS\"}\n";
 }

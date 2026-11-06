@@ -1,0 +1,679 @@
+Read-only primary source excerpts. Original executable was not executed.
+
+## Ref/UIFrameWnd2.cpp:14280-14402
+
+14280:       operator delete(First);
+14281:       return 0;
+14282:     case 48:
+14283:       if ( this->m_menuItems._First[val1].id != 11 )
+14284:         goto LABEL_101;
+14285:       UIWhisperWnd::WriteChatToFile(this);
+14286:       result = 0;
+14287:       break;
+14288:     case 49:
+14289:       v13 = this->m_menuItems._First;
+14290:       v14 = v13;
+14291:       ib = this->m_menuItems._Last;
+14292:       if ( v13 != ib )
+14293:       {
+14294:         do
+14295:           StringId::`scalar deleting destructor'(v14++, 0);
+14296:         while ( v14 != ib );
+14297:       }
+14298:       this->m_menuItems._Last = v13;
+14299:       if ( g_windowMgr.m_menu )
+14300:         UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x12);
+14301:       v15 = MsgStr(MSI_WRITE_CHAT_TO_FILE);
+14302:       v52.allocator = (std::allocator<char>)HIBYTE(ib);
+14303:       std::string::_Tidy(&v52, 0);
+14304:       ic = strlen(v15);
+14305:       if ( std::string::_Grow(&v52, ic, 1u) )
+14306:       {
+14307:         qmemcpy(v52._Ptr, v15, ic);
+14308:         std::string::_Eos(&v52, ic);
+14309:       }
+14310:       v16 = v52._Ptr;
+14311:       v55 = 1;
+14312:       if ( !v52._Ptr )
+14313:         v16 = (char *)`std::string::_Nullstr'::`2'::_C;
+14314:       v51.itemName.allocator = (std::allocator<char>)HIBYTE(ic);
+14315:       std::string::_Tidy(&v51.itemName, 0);
+14316:       std::string::assign(&v51.itemName, v16, strlen(v16));
+14317:       v51.id = 11;
+14318:       v17 = this->m_menuItems._Last;
+14319:       p_m_menuItems = &this->m_menuItems;
+14320:       LOBYTE(v55) = 2;
+14321:       std::vector<StringId>::insert(&this->m_menuItems, v17, 1u, &v51);
+14322:       LOBYTE(v55) = 1;
+14323:       std::string::_Tidy(&v51.itemName, 1u);
+14324:       v55 = -1;
+14325:       std::string::_Tidy(&v52, 1u);
+14326:       v19 = this->m_whisperName._Ptr;
+14327:       if ( !v19 )
+14328:         v19 = (char *)`std::string::_Nullstr'::`2'::_C;
+14329:       if ( !UIWindowMgr::IsFriendName(&g_windowMgr, v19) && g_serverType != ServerInstantEvent )
+14330:       {
+14331:         v20 = MsgStr(MSI_ADD_TO_FRIEND_CHAR_LIST);
+14332:         v53.allocator = (std::allocator<char>)HIBYTE(ic);
+14333:         std::string::_Tidy(&v53, 0);
+14334:         id = strlen(v20);
+14335:         if ( std::string::_Grow(&v53, id, 1u) )
+14336:         {
+14337:           qmemcpy(v53._Ptr, v20, id);
+14338:           v53._Len = id;
+14339:           v53._Ptr[id] = 0;
+14340:         }
+14341:         v21 = v53._Ptr;
+14342:         v55 = 3;
+14343:         if ( !v53._Ptr )
+14344:           v21 = (char *)`std::string::_Nullstr'::`2'::_C;
+14345:         v50.itemName.allocator = (std::allocator<char>)HIBYTE(id);
+14346:         std::string::_Tidy(&v50.itemName, 0);
+14347:         std::string::assign(&v50.itemName, v21, strlen(v21));
+14348:         v50.id = 21;
+14349:         v22 = this->m_menuItems._Last;
+14350:         p_m_menuItems = &this->m_menuItems;
+14351:         LOBYTE(v55) = 4;
+14352:         std::vector<StringId>::insert(&this->m_menuItems, v22, 1u, &v50);
+14353:         LOBYTE(v55) = 3;
+14354:         std::string::_Tidy(&v50.itemName, 1u);
+14355:         v55 = -1;
+14356:         std::string::_Tidy(&v53, 1u);
+14357:       }
+14358:       v23 = this->m_whisperName._Ptr;
+14359:       if ( !v23 )
+14360:         v23 = (char *)`std::string::_Nullstr'::`2'::_C;
+14361:       g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 114, (int)v23, 0, 0);
+14362:       v24 = p_m_menuItems->_First;
+14363:       if ( v24 && p_m_menuItems->_Last - v24 )
+14364:       {
+14365:         Window = UIWindowMgr::MakeWindow(&g_windowMgr, 18);
+14366:         v26 = TT_NORMAL;
+14367:         for ( ie = 0; ; ++ie )
+14368:         {
+14369:           val2 = v26;
+14370:           v27 = p_m_menuItems->_First;
+14371:           if ( !v27 || ie >= p_m_menuItems->_Last - v27 )
+14372:             break;
+14373:           v28 = *(char **)((char *)&this->m_menuItems._First->itemName._Ptr + val2);
+14374:           if ( !v28 )
+14375:             v28 = `std::string::_Nullstr'::`2'::_C;
+14376:           Window->UIWindow::SendMsg(Window, 0, 31, (int)v28, 0, 0, 0);
+14377:           v26 = val2 + 20;
+14378:         }
+14379:         Window->UIWindow::SendMsg(Window, 0, 30, 0, 0, 0, 0);
+14380:         v29 = g_mouse.m_yPos + 1;
+14381:         v30 = g_mouse.m_xPos + 1;
+14382:         if ( g_mouse.m_xPos + 1 < 1 )
+14383:           v30 = 1;
+14384:         v31 = Window->m_w;
+14385:         if ( v30 > g_renderer->m_width - v31 )
+14386:           v30 = g_renderer->m_width - v31;
+14387:         if ( v29 < 1 )
+14388:           v29 = 1;
+14389:         m_h = Window->m_h;
+14390:         if ( v29 > g_renderer->m_height - m_h )
+14391:           v29 = g_renderer->m_height - m_h;
+14392:         Window->UIWindow::Move(Window, v30, v29);
+14393:         result = 0;
+14394:       }
+14395:       else
+14396:       {
+14397: LABEL_101:
+14398:         result = 0;
+14399:       }
+14400:       break;
+14401:     default:
+14402:       result = UIFrameWnd::SendMsg(&this->UIFrameWnd, sender, message, val1, val2, val3, val4);
+
+## Ref/UIFrameWnd2.cpp:31405-31417
+
+31405:
+31406: // ================================================
+31407: // Original Signature: public: virtual void __thiscall UIWhisperWnd::OnRBtnUp(int,int)
+31408: // Decompiled from address: 0x488e80
+31409: // ================================================
+31410: void __thiscall UIWhisperWnd::OnRBtnUp(UIWhisperWnd *this, int x, int y)
+31411: {
+31412:   this->UIWindow::SendMsg(this, 0, 49, 0, 0, 0, 0);
+31413: }
+31414:
+31415:
+31416: // ================================================
+31417: // Original Signature: public: virtual void __thiscall UIWhisperWnd::StoreInfo(void)
+
+## Ref/UIFrameWnd2.cpp:32059-32308
+
+32059: void __thiscall UIWhisperWnd::WriteChatToFile(UIWhisperWnd *this)
+32060: {
+32061:   int v2; // ebx
+32062:   unsigned int Len; // eax
+32063:   unsigned int v4; // esi
+32064:   signed int v5; // edi
+32065:   char *v6; // eax
+32066:   char v7; // al
+32067:   char *Ptr; // eax
+32068:   char *v9; // eax
+32069:   unsigned int v10; // kr04_4
+32070:   unsigned int v11; // ebx
+32071:   unsigned int v12; // kr08_4
+32072:   unsigned int v13; // esi
+32073:   unsigned int v14; // ebx
+32074:   char *v15; // eax
+32075:   char v16; // al
+32076:   char v17; // al
+32077:   char tmp[2048]; // [esp+8h] [ebp-834h] BYREF
+32078:   UIWhisperWnd *v19; // [esp+808h] [ebp-34h]
+32079:   std::string whisperName; // [esp+80Ch] [ebp-30h] BYREF
+32080:   std::string chatStoreMsg; // [esp+81Ch] [ebp-20h] BYREF
+32081:   std::allocator<char> v22; // [esp+82Fh] [ebp-Dh]
+32082:   int v23; // [esp+838h] [ebp-4h]
+32083:
+32084:   v19 = this;
+32085:   v2 = 0;
+32086:   sprintf(tmp, "%s\\Whisper", g_baseDir3);
+32087:   if ( !access(tmp, 0) || !_mkdir(tmp) )
+32088:   {
+32089:     whisperName.allocator = this->m_whisperName.allocator;
+32090:     std::string::_Tidy(&whisperName, 0);
+32091:     std::string::assign(&whisperName, &this->m_whisperName, 0, std::string::npos);
+32092:     Len = whisperName._Len;
+32093:     v4 = 0;
+32094:     v23 = 0;
+32095:     v5 = whisperName._Len;
+32096:     if ( (int)whisperName._Len > 0 )
+32097:     {
+32098:       while ( 1 )
+32099:       {
+32100:         if ( Len >= v4 && whisperName._Ptr )
+32101:         {
+32102:           std::string::_Freeze(&whisperName);
+32103:           v6 = &whisperName._Ptr[v4];
+32104:         }
+32105:         else
+32106:         {
+32107:           v6 = (char *)`std::string::_Nullstr'::`2'::_C;
+32108:         }
+32109:         v7 = *v6;
+32110:         if ( v7 == 92 || v7 == 47 || v7 == 58 || v7 == 42 || v7 == 63 || v7 == 34 || v7 == 60 || v7 == 62 || v7 == 124 )
+32111:           *std::string::operator[](&whisperName, v4) = 95;
+32112:         if ( (int)++v4 >= v5 )
+32113:           break;
+32114:         Len = whisperName._Len;
+32115:       }
+32116:     }
+32117:     Ptr = whisperName._Ptr;
+32118:     if ( !whisperName._Ptr )
+32119:       Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+32120:     sprintf(tmp, "%s\\Whisper\\%s.txt", g_baseDir3, Ptr);
+32121:     while ( !access(tmp, 0) )
+32122:     {
+32123:       v9 = whisperName._Ptr;
+32124:       ++v2;
+32125:       if ( !whisperName._Ptr )
+32126:         v9 = (char *)`std::string::_Nullstr'::`2'::_C;
+32127:       sprintf(tmp, "%s\\Whisper\\%s%03d.txt", g_baseDir3, v9, v2);
+32128:     }
+32129:     if ( UIChatHisBox::WriteChatToFile(v19->m_listBox, tmp) )
+32130:     {
+32131:       chatStoreMsg.allocator = v22;
+32132:       std::string::_Tidy(&chatStoreMsg, 0);
+32133:       v10 = strlen(tmp) + 1;
+32134:       v11 = v10 - 1;
+32135:       if ( std::string::_Grow(&chatStoreMsg, v10 - 1, 1u) )
+32136:       {
+32137:         qmemcpy(chatStoreMsg._Ptr, tmp, v11);
+32138:         chatStoreMsg._Len = v10 - 1;
+32139:         chatStoreMsg._Ptr[v11] = 0;
+32140:       }
+32141:       v12 = strlen(aIsSaved) + 1;
+32142:       LOBYTE(v23) = 1;
+32143:       v13 = v12 - 1;
+32144:       if ( std::string::npos - chatStoreMsg._Len <= v12 - 1 )
+32145:         std::_Xlen();
+32146:       if ( v12 != 1 )
+32147:       {
+32148:         v14 = chatStoreMsg._Len + v13;
+32149:         if ( std::string::_Grow(&chatStoreMsg, chatStoreMsg._Len + v13, 0) )
+32150:         {
+32151:           qmemcpy(&chatStoreMsg._Ptr[chatStoreMsg._Len], aIsSaved, v13);
+32152:           std::string::_Eos(&chatStoreMsg, v14);
+32153:         }
+32154:       }
+32155:       UIWindowMgr::SendMsg(&g_windowMgr, 3u, 0, 0, 0, 0);
+32156:       v15 = chatStoreMsg._Ptr;
+32157:       if ( !chatStoreMsg._Ptr )
+32158:         v15 = (char *)`std::string::_Nullstr'::`2'::_C;
+32159:       UIWindowMgr::SendMsg(&g_windowMgr, 1u, v15, 65280, 0, 0);
+32160:       if ( chatStoreMsg._Ptr )
+32161:       {
+32162:         v16 = *(chatStoreMsg._Ptr - 1);
+32163:         if ( !v16 || v16 == -1 )
+32164:           operator delete(chatStoreMsg._Ptr - 1);
+32165:         else
+32166:           *(chatStoreMsg._Ptr - 1) = v16 - 1;
+32167:       }
+32168:     }
+32169:     if ( whisperName._Ptr )
+32170:     {
+32171:       v17 = *(whisperName._Ptr - 1);
+32172:       if ( !v17 || v17 == -1 )
+32173:         operator delete(whisperName._Ptr - 1);
+32174:       else
+32175:         *(whisperName._Ptr - 1) = v17 - 1;
+32176:     }
+32177:   }
+32178: }
+32179:
+32180:
+32181: // ================================================
+32182: // Original Signature: public: void __thiscall UIWhisperWnd::WriteChatToReportFile(void)
+32183: // Decompiled from address: 0x489180
+32184: // ================================================
+32185: void __thiscall UIWhisperWnd::WriteChatToReportFile(UIWhisperWnd *this)
+32186: {
+32187:   char *CharName; // esi
+32188:   unsigned int v2; // ebx
+32189:   unsigned int Len; // eax
+32190:   unsigned int v4; // esi
+32191:   signed int v5; // edi
+32192:   char *v6; // eax
+32193:   char v7; // al
+32194:   char *Ptr; // eax
+32195:   char *v9; // eax
+32196:   unsigned int v10; // kr08_4
+32197:   unsigned int v11; // ebx
+32198:   unsigned int v12; // kr0C_4
+32199:   unsigned int v13; // esi
+32200:   unsigned int v14; // ebx
+32201:   char *v15; // eax
+32202:   char v16; // al
+32203:   char v17; // al
+32204:   char tmp[2048]; // [esp+0h] [ebp-838h] BYREF
+32205:   UIWhisperWnd *v19; // [esp+800h] [ebp-38h]
+32206:   std::string chatStoreMsg; // [esp+804h] [ebp-34h] BYREF
+32207:   std::string strCharacter; // [esp+814h] [ebp-24h] BYREF
+32208:   int captureCnt; // [esp+824h] [ebp-14h]
+32209:   std::allocator<char> v23; // [esp+82Bh] [ebp-Dh]
+32210:   int v24; // [esp+834h] [ebp-4h]
+32211:
+32212:   v19 = this;
+32213:   captureCnt = 0;
+32214:   sprintf(tmp, "%s\\Report", g_baseDir3);
+32215:   if ( !access(tmp, 0) || !_mkdir(tmp) )
+32216:   {
+32217:     CharName = CSession::GetCharName(&g_session);
+32218:     strCharacter.allocator = v23;
+32219:     std::string::_Tidy(&strCharacter, 0);
+32220:     v2 = strlen(CharName);
+32221:     if ( std::string::_Grow(&strCharacter, v2, 1u) )
+32222:     {
+32223:       qmemcpy(strCharacter._Ptr, CharName, v2);
+32224:       std::string::_Eos(&strCharacter, v2);
+32225:     }
+32226:     Len = strCharacter._Len;
+32227:     v4 = 0;
+32228:     v24 = 0;
+32229:     v5 = strCharacter._Len;
+32230:     if ( (int)strCharacter._Len > 0 )
+32231:     {
+32232:       while ( 1 )
+32233:       {
+32234:         if ( Len >= v4 && strCharacter._Ptr )
+32235:         {
+32236:           std::string::_Freeze(&strCharacter);
+32237:           v6 = &strCharacter._Ptr[v4];
+32238:         }
+32239:         else
+32240:         {
+32241:           v6 = (char *)`std::string::_Nullstr'::`2'::_C;
+32242:         }
+32243:         v7 = *v6;
+32244:         if ( v7 == 92 || v7 == 47 || v7 == 58 || v7 == 42 || v7 == 63 || v7 == 34 || v7 == 60 || v7 == 62 || v7 == 124 )
+32245:           *std::string::operator[](&strCharacter, v4) = 95;
+32246:         if ( (int)++v4 >= v5 )
+32247:           break;
+32248:         Len = strCharacter._Len;
+32249:       }
+32250:     }
+32251:     Ptr = strCharacter._Ptr;
+32252:     if ( !strCharacter._Ptr )
+32253:       Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+32254:     sprintf(tmp, "%s\\Report\\%s.txt", g_baseDir3, Ptr);
+32255:     while ( !access(tmp, 0) )
+32256:     {
+32257:       v9 = strCharacter._Ptr;
+32258:       ++captureCnt;
+32259:       if ( !strCharacter._Ptr )
+32260:         v9 = (char *)`std::string::_Nullstr'::`2'::_C;
+32261:       sprintf(tmp, "%s\\Report\\%s%03d.txt", g_baseDir3, v9, captureCnt);
+32262:     }
+32263:     if ( UIChatHisBox::WriteChatToReportFile(v19->m_listBox, tmp) )
+32264:     {
+32265:       chatStoreMsg.allocator = v23;
+32266:       std::string::_Tidy(&chatStoreMsg, 0);
+32267:       v10 = strlen(tmp) + 1;
+32268:       v11 = v10 - 1;
+32269:       if ( std::string::_Grow(&chatStoreMsg, v10 - 1, 1u) )
+32270:       {
+32271:         qmemcpy(chatStoreMsg._Ptr, tmp, v11);
+32272:         chatStoreMsg._Len = v10 - 1;
+32273:         chatStoreMsg._Ptr[v11] = 0;
+32274:       }
+32275:       v12 = strlen(aIsSaved) + 1;
+32276:       LOBYTE(v24) = 1;
+32277:       v13 = v12 - 1;
+32278:       if ( std::string::npos - chatStoreMsg._Len <= v12 - 1 )
+32279:         std::_Xlen();
+32280:       if ( v12 != 1 )
+32281:       {
+32282:         v14 = chatStoreMsg._Len + v13;
+32283:         if ( std::string::_Grow(&chatStoreMsg, chatStoreMsg._Len + v13, 0) )
+32284:         {
+32285:           qmemcpy(&chatStoreMsg._Ptr[chatStoreMsg._Len], aIsSaved, v13);
+32286:           std::string::_Eos(&chatStoreMsg, v14);
+32287:         }
+32288:       }
+32289:       UIWindowMgr::SendMsg(&g_windowMgr, 3u, 0, 0, 0, 0);
+32290:       v15 = chatStoreMsg._Ptr;
+32291:       if ( !chatStoreMsg._Ptr )
+32292:         v15 = (char *)`std::string::_Nullstr'::`2'::_C;
+32293:       UIWindowMgr::SendMsg(&g_windowMgr, 1u, v15, 65280, 0, 0);
+32294:       if ( chatStoreMsg._Ptr )
+32295:       {
+32296:         v16 = *(chatStoreMsg._Ptr - 1);
+32297:         if ( !v16 || v16 == -1 )
+32298:           operator delete(chatStoreMsg._Ptr - 1);
+32299:         else
+32300:           *(chatStoreMsg._Ptr - 1) = v16 - 1;
+32301:       }
+32302:     }
+32303:     if ( strCharacter._Ptr )
+32304:     {
+32305:       v17 = *(strCharacter._Ptr - 1);
+32306:       if ( !v17 || v17 == -1 )
+32307:         operator delete(strCharacter._Ptr - 1);
+32308:       else
+
+## Ref/UIControl2.cpp:1115-1169
+
+1115: int __thiscall UIChatHisBox::WriteChatToFile(UIChatHisBox *this, const char *fileName)
+1116: {
+1117:   int result; // eax
+1118:   FILE *v4; // edi
+1119:   std::string *First; // ecx
+1120:   int v6; // eax
+1121:   int v7; // esi
+1122:   int v8; // ebx
+1123:   std::string *v9; // edx
+1124:   const char *Ptr; // eax
+1125:
+1126:   result = (int)fopen(fileName, aW);
+1127:   v4 = (FILE *)result;
+1128:   if ( result )
+1129:   {
+1130:     First = this->m_items._First;
+1131:     HIBYTE(fileName) = 10;
+1132:     if ( First )
+1133:       v6 = this->m_items._Last - First;
+1134:     else
+1135:       v6 = 0;
+1136:     if ( v6 > 0 )
+1137:     {
+1138:       v7 = 0;
+1139:       v8 = v6;
+1140:       do
+1141:       {
+1142:         v9 = this->m_items._First;
+1143:         Ptr = v9[v7]._Ptr;
+1144:         if ( !Ptr )
+1145:           Ptr = `std::string::_Nullstr'::`2'::_C;
+1146:         fwrite(Ptr, v9[v7]._Len, 1u, v4);
+1147:         fwrite((char *)&fileName + 3, 1u, 1u, v4);
+1148:         ++v7;
+1149:         --v8;
+1150:       }
+1151:       while ( v8 );
+1152:     }
+1153:     fclose(v4);
+1154:     return 1;
+1155:   }
+1156:   return result;
+1157: }
+1158:
+1159:
+1160: // ================================================
+1161: // Original Signature: public: int __thiscall UIChatHisBox::WriteChatToReportFile(char const *)
+1162: // Decompiled from address: 0x44e720
+1163: // ================================================
+1164: int __thiscall UIChatHisBox::WriteChatToReportFile(UIChatHisBox *this, const char *fileName)
+1165: {
+1166:   return 1;
+1167: }
+1168:
+1169:
+
+## Ref/GameMode2.cpp:3591-3600
+
+3591:     case 0x1Au:
+3592:       if ( g_windowMgr.m_menu )
+3593:         UIWindowMgr::DeleteWindow(&g_windowMgr, WID_MENUWND);
+3594:       if ( g_windowMgr.m_itemStoreWnd )
+3595:         return SUT_NOSKILL;
+3596:       switch ( this->m_menuIdList._First[val1] )
+3597:       {
+3598:         case 4:
+3599:           if ( CModeMgr::GetGameMode(&g_modeMgr)->m_world->m_player->m_effectState == 2 )
+3600:             return SUT_NOSKILL;
+
+## Ref/GameMode2.cpp:3642-3649
+
+3642:         case 0xB:
+3643:           v92 = std::string::c_str(&this->m_lastWhisperMenuCharacterName);
+3644:           UIWindowMgr::WriteWhisperChatToFile(&g_windowMgr, v92);
+3645:           return SUT_NOSKILL;
+3646:         case 0xC:
+3647:           v86 = std::map<unsigned long,NamePair,std::less<unsigned long>,std::allocator<NamePair>>::operator[](
+3648:                   &this->m_actorNameList,
+3649:                   &this->m_menuTargetAID);
+
+## Ref/GameMode2.cpp:3774-3779
+
+3774:           }
+3775:         case 0x15:
+3776:           v93 = std::string::c_str(&this->m_lastWhisperMenuCharacterName);
+3777:           UIWindowMgr::AddFriendCharName(&g_windowMgr, v93);
+3778:           return SUT_NOSKILL;
+3779:         case 0x16:
+
+## Ref/GameMode2.cpp:5484-5507
+
+5484:     case 0x72u:
+5485:       v51 = (const void *)val1;
+5486:       LODWORD(val1) = strlen((const char *)val1);
+5487:       if ( std::string::_Grow(&this->m_lastWhisperMenuCharacterName, val1, 1u) )
+5488:       {
+5489:         v52 = val1;
+5490:         qmemcpy(this->m_lastWhisperMenuCharacterName._Ptr, v51, val1);
+5491:         std::string::_Eos(&this->m_lastWhisperMenuCharacterName, v52);
+5492:       }
+5493:       First = this->m_menuIdList._First;
+5494:       Last = this->m_menuIdList._Last;
+5495:       p_m_menuIdList = &this->m_menuIdList;
+5496:       v56 = std::copy(Last, Last, First);
+5497:       std::vector<int>::_Destroy(p_m_menuIdList, v56, p_m_menuIdList->_Last);
+5498:       p_m_menuIdList->_Last = v56;
+5499:       _X = 11;
+5500:       std::vector<int>::insert(p_m_menuIdList, v56, 1u, &_X);
+5501:       v668 = 21;
+5502:       std::vector<int>::insert(p_m_menuIdList, p_m_menuIdList->_Last, 1u, &v668);
+5503:       return SUT_NOSKILL;
+5504:     case 0x73u:
+5505:       if ( !g_guildInfo.m_amIMaster )
+5506:         return SUT_NOSKILL;
+5507:       v444 = HIDWORD(val1);
+
+## Ref/UIWindowMgr.cpp:9782-9803
+
+9782:
+9783:
+9784: // ================================================
+9785: // Original Signature: public: void __thiscall UIWindowMgr::AddFriendCharName(char const *)
+9786: // Decompiled from address: 0x4deff0
+9787: // ================================================
+9788: void __thiscall UIWindowMgr::AddFriendCharName(UIWindowMgr *this, const char *friendCharName)
+9789: {
+9790:   CRagConnection *v2; // eax
+9791:   CRagConnection *v3; // eax
+9792:   int PacketSize; // [esp-8h] [ebp-2Ch]
+9793:   PACKET_CZ_ADD_FRIENDS p; // [esp+8h] [ebp-1Ch] BYREF
+9794:
+9795:   p.PacketType = 514;
+9796:   qmemcpy(p.name, friendCharName, sizeof(p.name));
+9797:   v2 = CRagConnection::instanceR();
+9798:   PacketSize = CRagConnection::GetPacketSize(v2, 514);
+9799:   v3 = CRagConnection::instanceR();
+9800:   CRagConnection::SendPacket(v3, PacketSize, (const char *)&p);
+9801: }
+9802:
+9803:
+
+## Ref/UIWindowMgr.cpp:13068-13163
+
+13068: // Original Signature: public: void __thiscall UIWindowMgr::WriteWhisperChatToFile(char const *)
+13069: // Decompiled from address: 0x4eaaf0
+13070: // ================================================
+13071: void __thiscall UIWindowMgr::WriteWhisperChatToFile(UIWindowMgr *this, const char *cName)
+13072: {
+13073:   const char *v2; // esi
+13074:   unsigned int v3; // kr04_4
+13075:   unsigned int v4; // ebx
+13076:   std::map<std::string,UIWindow *,std::less<std::string >,std::allocator<UIWindow *> > *p_m_whisperNameWindow; // ebx
+13077:   const char **p_cName; // eax
+13078:   const char *v7; // edi
+13079:   int v8; // esi
+13080:   char *v9; // ecx
+13081:   char v10; // al
+13082:   std::string v11; // [esp+Ch] [ebp-54h] BYREF
+13083:   int v12; // [esp+1Ch] [ebp-44h]
+13084:   std::string _X; // [esp+20h] [ebp-40h] BYREF
+13085:   std::string v14; // [esp+30h] [ebp-30h] BYREF
+13086:   unsigned __int8 _V1[8]; // [esp+40h] [ebp-20h] BYREF
+13087:   unsigned __int8 v16[4]; // [esp+48h] [ebp-18h] BYREF
+13088:   int v17; // [esp+4Ch] [ebp-14h] BYREF
+13089:   UIWindowMgr *v18; // [esp+50h] [ebp-10h]
+13090:   int v19; // [esp+5Ch] [ebp-4h]
+13091:
+13092:   v18 = this;
+13093:   v14.allocator = (std::allocator<char>)HIBYTE(cName);
+13094:   std::string::_Tidy(&v14, 0);
+13095:   v2 = cName;
+13096:   v3 = strlen(cName) + 1;
+13097:   v4 = v3 - 1;
+13098:   if ( std::string::_Grow(&v14, v3 - 1, 1u) )
+13099:   {
+13100:     qmemcpy(v14._Ptr, v2, v4);
+13101:     v2 = cName;
+13102:     v14._Len = v3 - 1;
+13103:     v14._Ptr[v4] = 0;
+13104:   }
+13105:   p_m_whisperNameWindow = &v18->m_whisperNameWindow;
+13106:   v19 = 0;
+13107:   _lower_bound____Tree_V__basic_string_DU__char_traits_D_std__V__allocator_D_2__std__U__pair___CBV__basic_string_DU__char_traits_D_std__V__allocator_D_2__std__PAVUIWindow___2_U_Kfn___map_V__basic_string_DU__char_traits_D_std__V__allocator_D_2__std__66ddbdd5(
+13108:     &cName,
+13109:     &v14);
+13110:   if ( cName == *(const char **)&p_m_whisperNameWindow->gap0[4]
+13111:     || std::string::compare(&v14, (const std::string *)(cName + 12)) < 0 )
+13112:   {
+13113:     v17 = *(_DWORD *)&p_m_whisperNameWindow->gap0[4];
+13114:     p_cName = (const char **)&v17;
+13115:   }
+13116:   else
+13117:   {
+13118:     p_cName = &cName;
+13119:   }
+13120:   v7 = *p_cName;
+13121:   v19 = -1;
+13122:   std::string::_Tidy(&v14, 1u);
+13123:   if ( v7 != *(const char **)&v18->m_whisperNameWindow.gap0[4] )
+13124:   {
+13125:     _X.allocator = (std::allocator<char>)HIBYTE(cName);
+13126:     memset(&_X._Ptr, 0, 12);
+13127:     std::string::assign(&_X, v2, strlen(v2));
+13128:     v19 = 1;
+13129:     std::string::string(&v11, &_X);
+13130:     v12 = 0;
+13131:     LOBYTE(v19) = 2;
+13132:     _insert____Tree_V__basic_string_DU__char_traits_D_std__V__allocator_D_2__std__U__pair___CBV__basic_string_DU__char_traits_D_std__V__allocator_D_2__std__PAVUIWindow___2_U_Kfn___map_V__basic_string_DU__char_traits_D_std__V__allocator_D_2__std__PAVUIc8c967ce(
+13133:       (#1105 *)p_m_whisperNameWindow,
+13134:       v16,
+13135:       &v11);
+13136:     __0__pair_Viterator____Tree_V__basic_string_DU__char_traits_D_std__V__allocator_D_2__std__U__pair___CBV__basic_string_DU__char_traits_D_std__V__allocator_D_2__std__PAVUIWindow___2_U_Kfn___map_V__basic_string_DU__char_traits_D_std__V__allocator_D_2c6278868(_V1);
+13137:     v8 = *(_DWORD *)_V1;
+13138:     LOBYTE(v19) = 1;
+13139:     std::string::_Tidy(&v11, 1u);
+13140:     (*(void (__thiscall **)(_DWORD, _DWORD, int, _DWORD, _DWORD, _DWORD, _DWORD))(**(_DWORD **)(v8 + 28) + 148))(
+13141:       *(_DWORD *)(v8 + 28),
+13142:       0,
+13143:       48,
+13144:       0,
+13145:       0,
+13146:       0,
+13147:       0);
+13148:     if ( _X._Ptr )
+13149:     {
+13150:       v9 = _X._Ptr - 1;
+13151:       v10 = *(_X._Ptr - 1);
+13152:       if ( !v10 || v10 == -1 )
+13153:         operator delete(v9);
+13154:       else
+13155:         *v9 = v10 - 1;
+13156:     }
+13157:   }
+13158: }
+13159:
+13160:
+13161: // ================================================
+13162: // Original Signature: public: void __thiscall std::_Tree<class UIWindow *,struct std::pair<class UIWindow * const,class CSnapInfo>,struct std::map<class UIWindow *,class CSnapInfo,struct std::less<class UIWindow *>,class std::allocator<class CSnapInfo> >::_Kfn,struct std::less<class UIWindow *>,class std::allocator<class CSnapInfo> >::const_iterator::_Dec(void)
+13163: // Decompiled from address: 0x415c80
+
+## Ref/Session.cpp:22573-22579
+
+22573:   _X.first = aRkfanfl;
+22574:   _X.second = TT_REQ_SAVE_CHAT;
+22575:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22576:   _X.first = aSavechat;
+22577:   _X.second = TT_REQ_SAVE_CHAT;
+22578:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22579:   _X.first = aMiss;
+
+## Ref/Session.cpp:22807-22834
+
+22807:   _X.first = &asc_722E0C;
+22808:   _X.second = TT_ITEM_SNAP_ON_OFF;
+22809:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22810:   _X.first = &asc_722E04;
+22811:   _X.second = TT_REQ_SAVE_CHAT;
+22812:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22813:   _X.first = aAutosavechat;
+22814:   _X.second = TT_REQ_AUTO_SAVE_CHAT;
+22815:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22816:   _X.first = aObjlight;
+22817:   _X.second = TT_TOGGLE_OBJLIGHT;
+22818:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22819:   _X.first = aLoading;
+22820:   _X.second = TT_RANDOM_LOADING_SCREEN_ON_OFF;
+22821:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22822:   _X.first = aMinigame;
+22823:   _X.second = TT_MINIGAME_ON_OFF;
+22824:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22825:   _X.first = &asc_722DC8;
+22826:   _X.second = TT_REQ_REPORT_CHAT;
+22827:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22828:   _X.first = aTlsrh;
+22829:   _X.second = TT_REQ_REPORT_CHAT;
+22830:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22831:   _X.first = aReport;
+22832:   _X.second = TT_REQ_REPORT_CHAT;
+22833:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22834:   _X.first = aBattlemode;

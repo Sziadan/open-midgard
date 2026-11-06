@@ -230,7 +230,8 @@ bool UIChatRoomWnd::WriteChatToFile()
     // Original Windows fopen("w") translates every LF, including embedded LFs.
     // Spell this out so exports have identical bytes on every host.
     for(const auto& row:m_rows){for(char c:row.text){if(c=='\n')file.put('\r');file.put(c);}file.write("\r\n",2);}
-    file.close();if(!file)return false;
+    // Source UIChatHisBox::WriteChatToFile returns success after any open.
+    file.close();
     const auto notice=path.u8string()+" is Saved.";g_windowMgr.SendMsg(3,0,0,0);
     g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),65280);return true;
 }
@@ -284,8 +285,7 @@ msgresult_t UIChatRoomWnd::SendMsg(UIWindow* sender,int msg,msgparam_t value,msg
         else if(action==3)g_windowMgr.ShowRoomValidationMessage(191);
         else if(action==11)return WriteChatToFile()?1:0;
         else if(action==21 && !name.empty()){
-            if(name.size()<=24){std::array<char,26> packet{};packet[0]=2;packet[1]=2;std::copy(name.begin(),name.end(),packet.begin()+2);
-                return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;}
+            return g_windowMgr.AddFriendCharName(name)?1:0;
         }
         return 0;
     }
@@ -303,7 +303,7 @@ msgresult_t UIChatRoomWnd::SendMsg(UIWindow* sender,int msg,msgparam_t value,msg
     }
 }
 
-UIChatRoomMenuWnd::UIChatRoomMenuWnd(const std::vector<RoomMenuItem>& items,int x,int y):m_items(items)
+UIChatRoomMenuWnd::UIChatRoomMenuWnd(const std::vector<RoomMenuItem>& items,int x,int y,bool sourceModeCaller):m_items(items),m_sourceModeCaller(sourceModeCaller)
 {
     m_id=10018;int width=20;
 #if RO_ENABLE_QT6_UI
@@ -321,6 +321,7 @@ void UIChatRoomMenuWnd::OnLBtnUp(int x,int y)
     m_hover=index;Invalidate();
     if(index<0)return; // Source leaves an outside release open.
     // Source resolves caller WID28 at dispatch; the popup can outlive the room.
+    if(m_sourceModeCaller){g_modeMgr.SendMsg(26,index,0,0);return;}
     if(auto* caller=g_windowMgr.m_chatRoomWnd)caller->SendMsg(nullptr,48,index,0,0);
     if(g_windowMgr.m_chatRoomMenuWnd==this)g_windowMgr.DeleteWindow(this);
 }

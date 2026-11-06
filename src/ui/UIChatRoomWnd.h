@@ -77,7 +77,7 @@ private:
 // logical entries are paired 7px source rows (14px per action), without separators.
 class UIChatRoomMenuWnd : public UIWindow {
 public:
-    UIChatRoomMenuWnd(const std::vector<RoomMenuItem>& items,int x,int y);
+    UIChatRoomMenuWnd(const std::vector<RoomMenuItem>& items,int x,int y,bool sourceModeCaller=false);
     const std::vector<RoomMenuItem>& GetItems() const { return m_items; }
     int GetHoverIndex() const { return m_hover; }
     void OnDraw() override;
@@ -88,4 +88,5 @@ public:
 private:
     std::vector<RoomMenuItem> m_items;
     int m_hover=-1;
+    bool m_sourceModeCaller=false;
 };

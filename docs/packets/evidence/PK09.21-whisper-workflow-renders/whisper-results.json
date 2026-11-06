@@ -1,0 +1,13 @@
+{
+    "hidden_delivery": true,
+    "individual_captured_teardown": true,
+    "modal_above_new_receive": true,
+    "native_input": true,
+    "native_qml_frames": 16,
+    "outcome": "PASS",
+    "peer_stacking": true,
+    "private_menu_capture_100_125": true,
+    "resize_drag_cancel_release": true,
+    "scale_125": true,
+    "two_names_without_main": true
+}

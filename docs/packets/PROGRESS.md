@@ -3534,3 +3534,11 @@ Integrated exact-name whisper UI owners, independent copied history/edit state a
 Deploy-off all-target build passes; focused6/6, root154/154 in27.98s, standalone469/469 in12.39s, direct production whisper and fresh-process write/read PASS. Twelve new native/QML frames and result JSON retained. See [whisper evidence](evidence/PK09.21-whisper.md) and provenance. Subject: `packet(PK09.21): restore dedicated whisper routing`.
 
 PK09.21 remains IN_PROGRESS with null completion subject. Continue private whisper menus/manual export/report and mode114/mode26 callers, UIAutoMessageWnd configuration/aliases, messenger controls, full source/global/main send11/talk-type/commands and ignore-list workflow. Remaining producer/editor/art/locale/active Qt/global scale, discovery, independent and deployed gates remain open. No whole-plan completion or numeric discovery closure is claimed.
+
+## 2026-11-06 — PK09.21 private whisper menu/export strong integration
+
+Implemented source private popup49, mode114 menu state/default caller -> mode26, current-name save lookup and storage-owner refusal. Added shared name-only AddFriendCharName for exact0202 without actor-ID guard, preserving24 bytes and receipt-owned roster. Normal export reproduces retained rows, embedded Windows LF translation, sanitized/collision paths and notices. Strong selected-PE review preserves report44E720's success no-op: Report/local-character path and notice without creating a report file. Integrated six source save/report aliases; full parser/exit integration remains open. Native right capture/cancel/release and100/125% passive QML popup checks pass.
+
+Deploy-off build; focused3/3 in10.50s; full root154/154 in33.88s; standalone469/469 in15.36s; direct production whisper PASS. Four new menu frames retained;125% QML visually inspected. See [workflow evidence](evidence/PK09.21-whisper-workflow.md) and provenance. Subject: `packet(PK09.21): restore whisper menus and exports`.
+
+Luna read-only inventories resolve auto-message commands,100-byte configuration, IDs940–944 and explicit Escape versus generic deletion. Root must review source UIY placement, login reset and actual native/QML ownership/input next. PK09.21 remains IN_PROGRESS with null completion subject. No broad/parent/discovery/independent/deployed or full-goal closure is claimed.

@@ -6,8 +6,16 @@
 #include "core/Globals.h"
 #include "core/ChatNotice.h"
 #include "core/UiMessageStrings.h"
+#include "core/SettingsIni.h"
+#include "UiScale.h"
+#include "qtui/QtUiRuntime.h"
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
+#include "session/Session.h"
 #if RO_ENABLE_QT6_UI
 #include <QFont>
 #include <QImage>
@@ -90,6 +98,43 @@ std::vector<SubChatRow> UIWhisperWnd::GetVisibleRows() const
     return {m_rows.begin()+m_view.first,m_rows.begin()+(std::min)(static_cast<int>(m_rows.size()),m_view.first+m_view.rows)};
 }
 void UIWhisperWnd::ScrollHistory(int delta){m_view.Scroll(delta,static_cast<int>(m_rows.size()));Invalidate();}
+void UIWhisperWnd::OpenMenu(int x,int y)
+{
+    m_menuItems.clear();
+    if(g_windowMgr.m_chatRoomMenuWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomMenuWnd);
+    ro::UiMessageStrings table;table.Load();
+    m_menuItems.push_back({11,table.Get(312,"Save chat")});
+    if(!g_session.IsFriendName(m_name.c_str()) && g_serverType!=ServerInstantEvent)
+        m_menuItems.push_back({21,table.Get(358,"Register as a Friend")});
+    g_modeMgr.SendMsg(114,reinterpret_cast<msgparam_t>(m_name.c_str()),0,0);
+    auto* menu=new UIChatRoomMenuWnd(m_menuItems,x,y,true);
+    g_windowMgr.m_chatRoomMenuWnd=menu;
+    g_windowMgr.m_children.insert(std::find(g_windowMgr.m_children.begin(),g_windowMgr.m_children.end(),g_windowMgr.m_modalWindow),menu);
+}
+bool UIWhisperWnd::WriteChatToFile(bool report)
+{
+    std::string name=report?g_session.GetPlayerName():m_name;
+    for(auto& c:name)if(std::string_view("\\/:*?\"<>|").find(c)!=std::string_view::npos)c='_';
+    // Writable app-data ownership replaces the selected client's g_baseDir3.
+    const auto directory=GetOpenMidgardIniPath().parent_path()/(report?"Report":"Whisper");
+    std::error_code error;std::filesystem::create_directories(directory,error);if(error)return false;
+    auto path=directory/std::filesystem::u8path(name+".txt");unsigned suffix=0;
+    while(std::filesystem::exists(path,error)){
+        std::ostringstream filename;filename<<name<<std::setfill('0')<<std::setw(3)<<++suffix<<".txt";
+        path=directory/std::filesystem::u8path(filename.str());if(error || !suffix)return false;
+    }
+    if(error)return false;
+    if(!report){
+        std::ofstream file(path,std::ios::binary);if(!file)return false;
+        // Original fopen("w") translates every LF, including embedded LFs.
+        for(const auto& row:m_rows){for(char c:row.text){if(c=='\n')file.put('\r');file.put(c);}file.write("\r\n",2);}
+        // Source ignores fwrite/fclose results once fopen succeeds.
+        file.close();
+    }
+    // Selected PE 44E720 returns success without creating a report file.
+    const auto notice=path.u8string()+" is Saved.";g_windowMgr.SendMsg(3,0,0,0);
+    g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),65280);return true;
+}
 void UIWhisperWnd::SetInputText(const std::string& text){m_input=ro::chat::CleanInput(text,70,70);m_pendingUtf8.clear();Invalidate();}
 bool UIWhisperWnd::SubmitInput()
 {
@@ -109,7 +154,12 @@ bool UIWhisperWnd::SubmitInput()
         ro::UiMessageStrings table;table.Load();const auto message=table.Get(190,"Only English text is allowed.");
         g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message.c_str()),255);return false;
     }
-    if(text[0]=='/' || m_name.empty())return g_modeMgr.SendMsg(CGameMode::GameMsg_SubmitChat,reinterpret_cast<msgparam_t>(text.c_str()),0,0)!=0;
+    if(text[0]=='/' || m_name.empty()){
+        const auto command=text.substr(0,text.find(' '));
+        if(command=="/savechat" || command=="/rkfanfl" || command==u8"/갈무리")return WriteChatToFile();
+        if(command=="/report" || command=="/tlsrh" || command==u8"/신고")return WriteChatToFile(true);
+        return g_modeMgr.SendMsg(CGameMode::GameMsg_SubmitChat,reinterpret_cast<msgparam_t>(text.c_str()),0,0)!=0;
+    }
     auto* mode=g_modeMgr.GetCurrentGameMode();return mode && mode->SendSourceWhisper(m_name,text);
 }
 void UIWhisperWnd::OnLBtnDown(int x,int y)
@@ -188,6 +238,12 @@ msgresult_t UIWhisperWnd::SendMsg(UIWindow* sender,int message,msgparam_t value,
     case 14:if(value==7)ResizeSource(static_cast<int>(detail),static_cast<int>(extra));return 0;
     case 34:RestoreInfo();return 0;
     case 37:Append(reinterpret_cast<const char*>(value),ro::chat::ColorRefToUiRgb(static_cast<u32>(detail)));return 0;
+    case 48:return value>=0 && static_cast<std::size_t>(value)<m_menuItems.size() && m_menuItems[value].action==11 && WriteChatToFile()?1:0;
+    case 49: {
+        POINT point{};GetCursorPos(&point);if(g_hMainWnd)ScreenToClient(g_hMainWnd,&point);
+        if(IsQtUiRuntimeEnabled()){point.x=UiScaleRawToLogicalCoordinate(point.x);point.y=UiScaleRawToLogicalCoordinate(point.y);}
+        OpenMenu(point.x,point.y);return 0;
+    }
     case 6:if(value==118)SubmitInput();else if(value==135)g_windowMgr.DeleteWindow(this);return 0;
     default:return UIWindow::SendMsg(sender,message,value,detail,extra);
     }

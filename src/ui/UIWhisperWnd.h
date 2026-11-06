@@ -1,6 +1,7 @@
 #pragma once
 #include "UIWindow.h"
 #include "UISubChatWnd.h"
+#include "UIChatRoomWnd.h"
 
 struct WhisperWindowLayout {
     RECT history{},edit{},close{},resizer{},track{},thumb{},up{},down{};
@@ -26,6 +27,9 @@ public:
     void ResizeSource(int width,int height);
     void RestoreInfo();
     void StoreInfo() override;
+    void OpenMenu(int x,int y);
+    bool WriteChatToFile(bool report=false);
+    const std::vector<RoomMenuItem>& GetMenuItems() const { return m_menuItems; }
     void CancelPointerCapture();
     bool IsFrameWnd() override { return true; }
     bool CanReceiveKeyInput() const override { return true; }
@@ -34,6 +38,7 @@ public:
     void OnMouseMove(int x,int y) override;
     void OnLBtnUp(int x,int y) override;
     void OnWheel(int delta) override;
+    void OnRBtnUp(int x,int y) override { OpenMenu(x,y); }
     void OnChar(char c) override;
     void OnKeyDown(int key) override;
     msgresult_t SendMsg(UIWindow*,int,msgparam_t,msgparam_t,msgparam_t) override;
@@ -41,6 +46,7 @@ private:
     std::string m_name,m_title,m_input,m_pendingUtf8;
     std::vector<SubChatRow> m_rows;
     std::vector<std::string> m_inputHistory;
+    std::vector<RoomMenuItem> m_menuItems;
     int m_historyBrowse=0,m_childWidth=280,m_childHeight=120;
     ro::chat::HistoryView m_view;
     ro::chat::ScrollDrag m_scrollDrag;

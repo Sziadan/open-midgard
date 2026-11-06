@@ -10954,6 +10954,17 @@ bool CGameMode::SendSourceWhisper(const std::string& target,const std::string& i
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     switch (msg) {
+    case 114:
+        if(!wparam)return 0;
+        m_lastWhisperMenuCharacterName=reinterpret_cast<const char*>(wparam);m_menuIdList={11,21};return 0;
+    case 26: {
+        // Source mode dispatch uses current menu state after removing menu18.
+        if(g_windowMgr.m_chatRoomMenuWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomMenuWnd);
+        if(g_windowMgr.m_storageWnd || wparam<0 || static_cast<std::size_t>(wparam)>=m_menuIdList.size())return 0;
+        if(m_menuIdList[wparam]==11)return g_windowMgr.WriteWhisperChatToFile(m_lastWhisperMenuCharacterName)?1:0;
+        if(m_menuIdList[wparam]==21)return g_windowMgr.AddFriendCharName(m_lastWhisperMenuCharacterName)?1:0;
+        return 0;
+    }
     case 51:case 52: {
         if(!wparam)return 0;const std::string_view name(reinterpret_cast<const char*>(wparam));
         std::vector<std::uint8_t> packet;
