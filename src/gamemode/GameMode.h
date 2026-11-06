@@ -251,6 +251,9 @@ public:
     int m_sourceAutoSaveChatCount=0;
     bool SendSourceWhisper(const std::string& target,const std::string& text);
     bool ToggleSourceChatAutoSave();
+    // Selected PE ProcessTalkType table; secondary dhxj header is shifted.
+    static constexpr int SourceTalk_AutoMessage=152;
+    bool ToggleSourceAutoMessage();
     bool WriteSourceChat(const std::string& text);
     std::string GetSourceAutoSaveChatPath() const;
     int m_noMove;

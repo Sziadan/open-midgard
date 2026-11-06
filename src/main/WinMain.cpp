@@ -1,4 +1,5 @@
 #include "ui/UIWhisperWnd.h"
+#include "ui/UIAutoMessageWnd.h"
 //===========================================================================
 // WinMain.cpp  –  Application entry point
 // Clean C++17 rewrite.
@@ -521,6 +522,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if (msg == WM_CAPTURECHANGED || msg == WM_CANCELMODE) {
         if (g_windowMgr.m_chatWnd) g_windowMgr.m_chatWnd->CancelPointerCapture();
         if (g_windowMgr.m_chatRoomWnd) g_windowMgr.m_chatRoomWnd->CancelPointerCapture();
+        if (g_windowMgr.m_autoMessageWnd)g_windowMgr.m_autoMessageWnd->CancelPointerCapture();
         for(const auto& entry:g_windowMgr.m_whisperWindows)entry.second->CancelPointerCapture();
         if(g_windowMgr.m_chatRoomMakeWnd)g_windowMgr.m_chatRoomMakeWnd->CancelPointerCapture();
         if(g_windowMgr.m_chatRoomChangeWnd)g_windowMgr.m_chatRoomChangeWnd->CancelPointerCapture();

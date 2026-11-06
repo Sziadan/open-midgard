@@ -14,6 +14,7 @@
 #include "core/ClientInfoLocale.h"
 #include "core/File.h"
 #include "core/Globals.h"
+#include "core/UiMessageStrings.h"
 #include "core/MainLoopWatchdog.h"
 #include "core/SettingsIni.h"
 #include "cipher/Md5.h"
@@ -2369,6 +2370,8 @@ void CLoginMode::OnAcceptLogin(const std::vector<u8>& raw)
         return;
     }
 
+    ro::UiMessageStrings autoMessageStrings;autoMessageStrings.Load();
+    g_session.m_strAutoMSG=autoMessageStrings.Get(940,"I am away.");
     g_session.m_authCode   = u32(p[4])|(u32(p[5])<<8)|(u32(p[6])<<16)|(u32(p[7])<<24);
     g_session.m_aid        = u32(p[8])|(u32(p[9])<<8)|(u32(p[10])<<16)|(u32(p[11])<<24);
     g_session.m_userLevel  = u32(p[12])|(u32(p[13])<<8)|(u32(p[14])<<16)|(u32(p[15])<<24);

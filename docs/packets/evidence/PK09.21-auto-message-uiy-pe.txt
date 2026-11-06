@@ -1,0 +1,64 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004e72c0 <.text+0xe62c0>:
+  4e72c0:	55                   	push   %ebp
+  4e72c1:	8b ec                	mov    %esp,%ebp
+  4e72c3:	a1 38 ec 72 00       	mov    0x72ec38,%eax
+  4e72c8:	8b 40 24             	mov    0x24(%eax),%eax
+  4e72cb:	2d 80 02 00 00       	sub    $0x280,%eax
+  4e72d0:	99                   	cltd
+  4e72d1:	2b c2                	sub    %edx,%eax
+  4e72d3:	8b 55 08             	mov    0x8(%ebp),%edx
+  4e72d6:	d1 f8                	sar    %eax
+  4e72d8:	03 c2                	add    %edx,%eax
+  4e72da:	5d                   	pop    %ebp
+  4e72db:	c3                   	ret
+  4e72dc:	90                   	nop
+  4e72dd:	90                   	nop
+  4e72de:	90                   	nop
+  4e72df:	90                   	nop
+  4e72e0:	55                   	push   %ebp
+  4e72e1:	8b ec                	mov    %esp,%ebp
+  4e72e3:	a1 38 ec 72 00       	mov    0x72ec38,%eax
+  4e72e8:	8b 40 28             	mov    0x28(%eax),%eax
+  4e72eb:	2d e0 01 00 00       	sub    $0x1e0,%eax
+  4e72f0:	99                   	cltd
+  4e72f1:	2b c2                	sub    %edx,%eax
+  4e72f3:	8b 55 08             	mov    0x8(%ebp),%edx
+  4e72f6:	d1 f8                	sar    %eax
+  4e72f8:	03 c2                	add    %edx,%eax
+  4e72fa:	5d                   	pop    %ebp
+  4e72fb:	c3                   	ret
+  4e72fc:	90                   	nop
+  4e72fd:	90                   	nop
+  4e72fe:	90                   	nop
+  4e72ff:	90                   	nop
+  4e7300:	55                   	push   %ebp
+  4e7301:	8b ec                	mov    %esp,%ebp
+  4e7303:	a1 38 ec 72 00       	mov    0x72ec38,%eax
+  4e7308:	8b 48 28             	mov    0x28(%eax),%ecx
+  4e730b:	b8 89 88 88 88       	mov    $0x88888889,%eax
+  4e7310:	0f af 4d 08          	imul   0x8(%ebp),%ecx
+  4e7314:	f7 e9                	imul   %ecx
+  4e7316:	8b c2                	mov    %edx,%eax
+  4e7318:	03 c1                	add    %ecx,%eax
+  4e731a:	c1 f8 08             	sar    $0x8,%eax
+  4e731d:	8b c8                	mov    %eax,%ecx
+  4e731f:	c1 e9 1f             	shr    $0x1f,%ecx
+  4e7322:	03 c1                	add    %ecx,%eax
+  4e7324:	5d                   	pop    %ebp
+  4e7325:	c3                   	ret
+  4e7326:	90                   	nop
+  4e7327:	90                   	nop
+  4e7328:	90                   	nop
+  4e7329:	90                   	nop
+  4e732a:	90                   	nop
+  4e732b:	90                   	nop
+  4e732c:	90                   	nop
+  4e732d:	90                   	nop
+  4e732e:	90                   	nop
+  4e732f:	90                   	nop

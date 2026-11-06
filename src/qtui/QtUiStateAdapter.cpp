@@ -2,6 +2,7 @@
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "ui/UIWhisperWnd.h"
+#include "ui/UIAutoMessageWnd.h"
 #include "QtUiStateAdapter.h"
 
 #include "QtUiState.h"
@@ -1925,6 +1926,15 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         }
         return (windowIndex - mainIndex) * 0.0001;
     };
+    QVariantMap autoMessage;
+    if(const auto* window=g_windowMgr.m_autoMessageWnd){
+        const auto& button=window->GetButton();const auto bounds=button.Bounds();const int status=window->GetButtonState();const auto& bitmap=button.bitmaps[status];
+        autoMessage={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},{"x",window->m_x},{"y",window->m_y},
+            {"width",window->m_w},{"height",window->m_h},{"prompt",ToQString(window->GetPrompt())},{"input",ToQString(window->GetInputText())},{"selected",window->IsSelected()},
+            {"button",QVariantMap{{"x",button.x},{"y",button.y},{"width",static_cast<int>(bounds.right-bounds.left)},{"height",static_cast<int>(bounds.bottom-bounds.top)},
+                {"artwork",QString::fromStdString(button.uris[status])},{"imageWidth",bitmap.width},{"imageHeight",bitmap.height},{"pressed",status==2}}}};
+    }
+    chatUi.insert("autoMessage",autoMessage);
     QVariantList whisperWindows;
     const auto whisperRect=[](RECT r){return QVariantMap{{"x",static_cast<int>(r.left)},{"y",static_cast<int>(r.top)},
         {"width",static_cast<int>(r.right-r.left)},{"height",static_cast<int>(r.bottom-r.top)}};};
@@ -2099,6 +2109,7 @@ void PopulateChatWindowState(QtUiState* state)
     if (!state) {
         return;
     }
+    if(auto* editor=g_windowMgr.m_autoMessageWnd)if(IsGameplayWindowVisible(state,editor))editor->FocusForDraw();
 
     const UINewChatWnd* const chatWnd = g_windowMgr.m_chatWnd;
     const bool visible = IsGameplayWindowVisible(state, chatWnd);

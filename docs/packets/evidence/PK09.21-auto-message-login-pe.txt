@@ -1,0 +1,85 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+005d28b0 <.text+0x1d18b0>:
+  5d28b0:	55                   	push   %ebp
+  5d28b1:	8b ec                	mov    %esp,%ebp
+  5d28b3:	51                   	push   %ecx
+  5d28b4:	53                   	push   %ebx
+  5d28b5:	56                   	push   %esi
+  5d28b6:	57                   	push   %edi
+  5d28b7:	89 4d fc             	mov    %ecx,-0x4(%ebp)
+  5d28ba:	ff 15 2c c4 6c 00    	call   *0x6cc42c
+  5d28c0:	68 74 2a 7b 00       	push   $0x7b2a74
+  5d28c5:	a3 8c 44 7b 00       	mov    %eax,0x7b448c
+  5d28ca:	e8 e1 ad f4 ff       	call   0x51d6b0
+  5d28cf:	68 ac 03 00 00       	push   $0x3ac
+  5d28d4:	e8 77 1a f4 ff       	call   0x514350
+  5d28d9:	8b f0                	mov    %eax,%esi
+  5d28db:	83 c9 ff             	or     $0xffffffff,%ecx
+  5d28de:	8b fe                	mov    %esi,%edi
+  5d28e0:	33 c0                	xor    %eax,%eax
+  5d28e2:	83 c4 08             	add    $0x8,%esp
+  5d28e5:	f2 ae                	repnz scas %es:(%edi),%al
+  5d28e7:	f7 d1                	not    %ecx
+  5d28e9:	49                   	dec    %ecx
+  5d28ea:	6a 01                	push   $0x1
+  5d28ec:	8b d9                	mov    %ecx,%ebx
+  5d28ee:	b9 0c 46 7b 00       	mov    $0x7b460c,%ecx
+  5d28f3:	53                   	push   %ebx
+  5d28f4:	e8 27 61 e5 ff       	call   0x428a20
+  5d28f9:	84 c0                	test   %al,%al
+  5d28fb:	74 26                	je     0x5d2923
+  5d28fd:	8b 3d 10 46 7b 00    	mov    0x7b4610,%edi
+  5d2903:	8b cb                	mov    %ebx,%ecx
+  5d2905:	8b c1                	mov    %ecx,%eax
+  5d2907:	c1 e9 02             	shr    $0x2,%ecx
+  5d290a:	f3 a5                	rep movsl %ds:(%esi),%es:(%edi)
+  5d290c:	8b c8                	mov    %eax,%ecx
+  5d290e:	83 e1 03             	and    $0x3,%ecx
+  5d2911:	f3 a4                	rep movsb %ds:(%esi),%es:(%edi)
+  5d2913:	8b 0d 10 46 7b 00    	mov    0x7b4610,%ecx
+  5d2919:	89 1d 14 46 7b 00    	mov    %ebx,0x7b4614
+  5d291f:	c6 04 19 00          	movb   $0x0,(%ecx,%ebx,1)
+  5d2923:	8b 5d 08             	mov    0x8(%ebp),%ebx
+  5d2926:	8b 53 04             	mov    0x4(%ebx),%edx
+  5d2929:	89 15 94 2b 7b 00    	mov    %edx,0x7b2b94
+  5d292f:	8b 43 0c             	mov    0xc(%ebx),%eax
+  5d2932:	a3 98 2b 7b 00       	mov    %eax,0x7b2b98
+  5d2937:	8b 4b 08             	mov    0x8(%ebx),%ecx
+  5d293a:	89 0d 60 32 7b 00    	mov    %ecx,0x7b3260
+  5d2940:	8a 43 2e             	mov    0x2e(%ebx),%al
+  5d2943:	3c 0a                	cmp    $0xa,%al
+  5d2945:	72 0a                	jb     0x5d2951
+  5d2947:	25 ff 00 00 00       	and    $0xff,%eax
+  5d294c:	83 e8 0a             	sub    $0xa,%eax
+  5d294f:	eb 15                	jmp    0x5d2966
+  5d2951:	80 3d 28 4d 7b 00 01 	cmpb   $0x1,0x7b4d28
+  5d2958:	75 07                	jne    0x5d2961
+  5d295a:	6a 00                	push   $0x0
+  5d295c:	e8 46 89 0d 00       	call   0x6ab2a7
+  5d2961:	25 ff 00 00 00       	and    $0xff,%eax
+  5d2966:	50                   	push   %eax
+  5d2967:	b9 18 1f 7b 00       	mov    $0x7b1f18,%ecx
+  5d296c:	e8 2f 51 0a 00       	call   0x677aa0
+  5d2971:	a0 d8 43 7b 00       	mov    0x7b43d8,%al
+  5d2976:	b9 18 1f 7b 00       	mov    $0x7b1f18,%ecx
+  5d297b:	8a d0                	mov    %al,%dl
+  5d297d:	52                   	push   %edx
+  5d297e:	50                   	push   %eax
+  5d297f:	e8 ec 10 f3 ff       	call   0x503a70
+  5d2984:	8b 43 10             	mov    0x10(%ebx),%eax
+  5d2987:	8d 73 14             	lea    0x14(%ebx),%esi
+  5d298a:	b9 06 00 00 00       	mov    $0x6,%ecx
+  5d298f:	bf a0 2b 7b 00       	mov    $0x7b2ba0,%edi
+  5d2994:	a3 9c 2b 7b 00       	mov    %eax,0x7b2b9c
+  5d2999:	8b 45 fc             	mov    -0x4(%ebp),%eax
+  5d299c:	f3 a5                	rep movsl %ds:(%esi),%es:(%edi)
+  5d299e:	66 a5                	movsw  %ds:(%esi),%es:(%edi)
+  5d29a0:	33 c9                	xor    %ecx,%ecx
+  5d29a2:	c6 05 ba 2b 7b 00 00 	movb   $0x0,0x7b2bba
+  5d29a9:	66 8b 4b 02          	mov    0x2(%ebx),%cx
+  5d29ad:	8d 73 2f             	lea    0x2f(%ebx),%esi

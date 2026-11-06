@@ -1,0 +1,11 @@
+{
+    "draw_focus_and_modal_priority": true,
+    "known_empty_prompt": true,
+    "native_capture_cancel_release": true,
+    "native_qml_frames": 8,
+    "outcome": "PASS",
+    "scale125": true,
+    "selected_edit": true,
+    "source_button_assets": true,
+    "submit_escape_delete_distinct": true
+}

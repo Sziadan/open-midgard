@@ -7,6 +7,7 @@
 #include "core/ChatNotice.h"
 #include "core/UiMessageStrings.h"
 #include "core/SettingsIni.h"
+#include "core/SourceChatCommand.h"
 #include "UiScale.h"
 #include "qtui/QtUiRuntime.h"
 #include <filesystem>
@@ -155,7 +156,7 @@ bool UIWhisperWnd::SubmitInput()
         g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message.c_str()),255);return false;
     }
     if(text[0]=='/' || m_name.empty()){
-        const auto command=text.substr(0,text.find(' '));
+        const auto command=ro::chat::SourceChatCommandToken(text);
         if(command=="/savechat" || command=="/rkfanfl" || command==u8"/갈무리")return WriteChatToFile();
         if(command=="/report" || command=="/tlsrh" || command==u8"/신고")return WriteChatToFile(true);
         return g_modeMgr.SendMsg(CGameMode::GameMsg_SubmitChat,reinterpret_cast<msgparam_t>(text.c_str()),0,0)!=0;

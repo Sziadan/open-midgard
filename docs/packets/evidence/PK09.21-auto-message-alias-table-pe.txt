@@ -1,0 +1,56 @@
+  665004:	c7 45 f8 8d 00 00 00 	movl   $0x8d,-0x8(%ebp)
+  66500b:	8b 46 08             	mov    0x8(%esi),%eax
+  66500e:	8d 55 f4             	lea    -0xc(%ebp),%edx
+  665011:	52                   	push   %edx
+  665012:	50                   	push   %eax
+  665013:	8b ce                	mov    %esi,%ecx
+  665015:	e8 d6 b7 00 00       	call   0x6707f0
+  66501a:	c7 45 f4 78 2d 72 00 	movl   $0x722d78,-0xc(%ebp)
+  665021:	c7 45 f8 98 00 00 00 	movl   $0x98,-0x8(%ebp)
+  665028:	8b 56 08             	mov    0x8(%esi),%edx
+  66502b:	8d 4d f4             	lea    -0xc(%ebp),%ecx
+  66502e:	51                   	push   %ecx
+  66502f:	52                   	push   %edx
+  665030:	8b ce                	mov    %esi,%ecx
+  665032:	e8 b9 b7 00 00       	call   0x6707f0
+  665037:	c7 45 f4 6c 2d 72 00 	movl   $0x722d6c,-0xc(%ebp)
+  66503e:	c7 45 f8 98 00 00 00 	movl   $0x98,-0x8(%ebp)
+  665045:	8b 4e 08             	mov    0x8(%esi),%ecx
+
+  665021:	c7 45 f8 98 00 00 00 	movl   $0x98,-0x8(%ebp)
+  665028:	8b 56 08             	mov    0x8(%esi),%edx
+  66502b:	8d 4d f4             	lea    -0xc(%ebp),%ecx
+  66502e:	51                   	push   %ecx
+  66502f:	52                   	push   %edx
+  665030:	8b ce                	mov    %esi,%ecx
+  665032:	e8 b9 b7 00 00       	call   0x6707f0
+  665037:	c7 45 f4 6c 2d 72 00 	movl   $0x722d6c,-0xc(%ebp)
+  66503e:	c7 45 f8 98 00 00 00 	movl   $0x98,-0x8(%ebp)
+  665045:	8b 4e 08             	mov    0x8(%esi),%ecx
+  665048:	8d 45 f4             	lea    -0xc(%ebp),%eax
+  66504b:	50                   	push   %eax
+  66504c:	51                   	push   %ecx
+  66504d:	8b ce                	mov    %esi,%ecx
+  66504f:	e8 9c b7 00 00       	call   0x6707f0
+  665054:	c7 45 f4 68 2d 72 00 	movl   $0x722d68,-0xc(%ebp)
+  66505b:	c7 45 f8 98 00 00 00 	movl   $0x98,-0x8(%ebp)
+  665062:	8b 46 08             	mov    0x8(%esi),%eax
+
+  66503e:	c7 45 f8 98 00 00 00 	movl   $0x98,-0x8(%ebp)
+  665045:	8b 4e 08             	mov    0x8(%esi),%ecx
+  665048:	8d 45 f4             	lea    -0xc(%ebp),%eax
+  66504b:	50                   	push   %eax
+  66504c:	51                   	push   %ecx
+  66504d:	8b ce                	mov    %esi,%ecx
+  66504f:	e8 9c b7 00 00       	call   0x6707f0
+  665054:	c7 45 f4 68 2d 72 00 	movl   $0x722d68,-0xc(%ebp)
+  66505b:	c7 45 f8 98 00 00 00 	movl   $0x98,-0x8(%ebp)
+  665062:	8b 46 08             	mov    0x8(%esi),%eax
+  665065:	8d 55 f4             	lea    -0xc(%ebp),%edx
+  665068:	52                   	push   %edx
+  665069:	50                   	push   %eax
+  66506a:	8b ce                	mov    %esi,%ecx
+  66506c:	e8 7f b7 00 00       	call   0x6707f0
+  665071:	8d 4d f4             	lea    -0xc(%ebp),%ecx
+  665074:	c7 45 f4 5c 2d 72 00 	movl   $0x722d5c,-0xc(%ebp)
+  66507b:	c7 45 f8 a1 00 00 00 	movl   $0xa1,-0x8(%ebp)

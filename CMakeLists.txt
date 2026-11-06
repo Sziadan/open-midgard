@@ -358,6 +358,13 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     target_compile_features(whisper_names_checks PRIVATE cxx_std_17)
     target_include_directories(whisper_names_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME whisper_names_checks COMMAND whisper_names_checks)
+    add_executable(source_chat_command_checks tools/tests/SourceChatCommandTests.cpp)
+    target_compile_features(source_chat_command_checks PRIVATE cxx_std_17)
+    target_include_directories(source_chat_command_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME source_chat_command_checks COMMAND source_chat_command_checks)
+    add_test(NAME packet_auto_message_checks COMMAND packet_stream_replay_checks --auto-message-only)
+    set_tests_properties(packet_auto_message_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-auto-message-settings")
     add_test(NAME packet_whisper_checks COMMAND packet_stream_replay_checks --whisper-only)
     set_tests_properties(packet_whisper_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-whisper-settings")

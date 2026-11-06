@@ -1,0 +1,13 @@
+{
+  "selected_pe_talk_type": 152,
+  "secondary_dhxj_talk_type": 153,
+  "toggle_branch": "0x57a43a",
+  "process_table": "0x57c8b4",
+  "uiy": "0x4e72e0: y + (height - 480) / 2, signed truncation toward zero",
+  "misleading_ref_uiy_alias": "0x4830e0 is unrelated item-window constructor",
+  "default_message": 940,
+  "on_message": 942,
+  "off_message": 943,
+  "prompt_message": 944,
+  "original_executable_executed": false
+}

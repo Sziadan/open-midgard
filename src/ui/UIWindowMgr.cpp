@@ -6,6 +6,7 @@
 #include "UIChatRoomWnd.h"
 #include "UIChatRoomSettingsWnd.h"
 #include "UIWhisperWnd.h"
+#include "UIAutoMessageWnd.h"
 #include "audio/Audio.h"
 #include "res/Res.h"
 #include "core/UiMessageStrings.h"
@@ -983,7 +984,7 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
 bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 {
     const auto* hit = HitTestWindow(x, y);
-    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || dynamic_cast<const UIWhisperWnd*>(hit));
+    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || hit==m_autoMessageWnd || dynamic_cast<const UIWhisperWnd*>(hit));
 }
 
 RECT UIWindowMgr::GetChatClientRect() const
@@ -1112,6 +1113,7 @@ bool UIWindowMgr::HasActiveNpcDialog() const
 
 bool UIWindowMgr::CanRouteQtChatInput() const
 {
+    if(m_autoMessageWnd && m_autoMessageWnd->m_show)return false;
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow))if(whisper->m_show)return false;
     if(m_modalWindow && m_modalWindow->m_show)return false;
     if((m_chatRoomMakeWnd && m_editWindow==m_chatRoomMakeWnd) || (m_chatRoomChangeWnd && m_editWindow==m_chatRoomChangeWnd))return false;
@@ -1212,6 +1214,7 @@ bool UIWindowMgr::Init() {
 void UIWindowMgr::ShowRoomValidationMessage(int messageId)
 {
     if(m_modalWindow)return;
+    if(m_autoMessageWnd)m_autoMessageWnd->CancelPointerCapture();
     for(const auto& entry:m_whisperWindows)entry.second->CancelPointerCapture();
     ro::UiMessageStrings table;table.Load();
     const char* fallback=messageId==13?"Please enter a room title.":messageId==14?"That title cannot be used.":messageId==15?"Please enter a password."
@@ -1297,6 +1300,9 @@ bool UIWindowMgr::OpenChatRoomMake(bool toggle)
 UIWindow* UIWindowMgr::MakeWindow(int windowId)
 {
     switch (windowId) {
+    case WID_AUTOMESSAGEWND:
+        if(!m_autoMessageWnd){m_autoMessageWnd=new UIAutoMessageWnd();m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),m_autoMessageWnd);}
+        m_autoMessageWnd->SetShow(1);m_autoMessageWnd->FocusForDraw();return m_autoMessageWnd;
     case WID_CHATROOMMAKE:case WID_CHATROOMCHANGE: {
         auto*& owner=windowId==WID_CHATROOMMAKE?m_chatRoomMakeWnd:m_chatRoomChangeWnd;
         if(!owner){
@@ -1825,7 +1831,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || dynamic_cast<UIWhisperWnd*>(window));
+        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || dynamic_cast<UIWhisperWnd*>(window));
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -1881,6 +1887,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if (window == m_chatRoomChangeWnd)m_chatRoomChangeWnd=nullptr;
     if (window == m_roomMessageBox)m_roomMessageBox=nullptr;
     if (window == m_chatRoomMenuWnd)m_chatRoomMenuWnd=nullptr;
+    if (window == m_autoMessageWnd)m_autoMessageWnd=nullptr;
     if (window == m_chatRoomPasswordWnd) m_chatRoomPasswordWnd=nullptr;
     if (window == m_chatRoomWnd) { m_chatRoomWnd->StoreInfo();m_chatRoomWnd=nullptr; }
     if (window == m_subChatWndST) { m_subChatWndST->StoreInfo(); m_subChatWndST = nullptr; }
@@ -2649,7 +2656,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
         }
     }
 
-    if(hit==m_chatWnd && (m_editWindow==m_chatRoomWnd || m_editWindow==m_chatRoomPasswordWnd || m_editWindow==m_chatRoomMakeWnd || m_editWindow==m_chatRoomChangeWnd || dynamic_cast<UIWhisperWnd*>(m_editWindow)))m_editWindow=nullptr;
+    if(hit==m_chatWnd && (m_editWindow==m_chatRoomWnd || m_editWindow==m_chatRoomPasswordWnd || m_editWindow==m_chatRoomMakeWnd || m_editWindow==m_chatRoomChangeWnd || m_editWindow==m_autoMessageWnd || dynamic_cast<UIWhisperWnd*>(m_editWindow)))m_editWindow=nullptr;
     m_captureWindow = hit;
 
     if (hit) {
@@ -2670,7 +2677,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);
-        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || dynamic_cast<UIWhisperWnd*>(hit)))
+        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || hit==m_autoMessageWnd || dynamic_cast<UIWhisperWnd*>(hit)))
             SetCapture(g_hMainWnd);
     }
 }
@@ -2715,7 +2722,7 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
 void UIWindowMgr::OnLBtnUp(int x, int y)
 {
     const bool chatCapture = m_captureWindow && (m_captureWindow == m_chatWnd || m_captureWindow == m_subChatWndST
-        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd || m_captureWindow==m_chatRoomMakeWnd || m_captureWindow==m_chatRoomChangeWnd || m_captureWindow==m_roomMessageBox || m_captureWindow==m_chatRoomMenuWnd || dynamic_cast<UIWhisperWnd*>(m_captureWindow));
+        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd || m_captureWindow==m_chatRoomMakeWnd || m_captureWindow==m_chatRoomChangeWnd || m_captureWindow==m_roomMessageBox || m_captureWindow==m_chatRoomMenuWnd || m_captureWindow==m_autoMessageWnd || dynamic_cast<UIWhisperWnd*>(m_captureWindow));
     if (m_captureWindow) {
         m_captureWindow->OnLBtnUp(x, y);
         m_captureWindow = nullptr;
@@ -2983,6 +2990,7 @@ void UIWindowMgr::OnChar(char c)
         return;
     }
 
+    if(m_autoMessageWnd && m_autoMessageWnd->m_show && m_editWindow==m_autoMessageWnd){m_autoMessageWnd->OnChar(c);return;}
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){whisper->OnChar(c);return;}}
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_editWindow)){if(settings->m_show){settings->OnChar(c);return;}}
     if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd){m_chatRoomPasswordWnd->OnChar(c);return;}
@@ -3066,7 +3074,7 @@ bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool isAltDown, boo
         }
     }
 
-    if (virtualKey == VK_ESCAPE && !hasFrontMenuUi) {
+    if (virtualKey == VK_ESCAPE && !hasFrontMenuUi && !(m_autoMessageWnd && m_autoMessageWnd->m_show)) {
         UIWindow* chooseWnd = MakeWindow(WID_CHOOSEWND);
         if (chooseWnd) {
             chooseWnd->SetShow(1);
@@ -3084,7 +3092,8 @@ bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool isAltDown, boo
 
 bool UIWindowMgr::HasBlockingUiForGameplayHotkeys() const
 {
-    return (m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show != 0 && m_editWindow==m_chatRoomPasswordWnd)
+    return (m_autoMessageWnd && m_autoMessageWnd->m_show != 0)
+        || (m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show != 0 && m_editWindow==m_chatRoomPasswordWnd)
         || (m_npcInputWnd && m_npcInputWnd->m_show != 0)
         || (m_joinPartyAcceptWnd && m_joinPartyAcceptWnd->m_show != 0)
         || (m_npcMenuWnd && m_npcMenuWnd->m_show != 0)
@@ -3116,6 +3125,7 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStorageClose, 0, 0, 0) != 0;
     }
 
+    if(m_autoMessageWnd && m_autoMessageWnd->m_show){if(!isAltDown && !isCtrlDown)m_autoMessageWnd->OnKeyDown(virtualKey);return true;}
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){if(!isAltDown && !isCtrlDown)whisper->OnKeyDown(virtualKey);return true;}}
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_editWindow)){
         if(settings->m_show){if(!isAltDown && !isCtrlDown)settings->OnKeyDown(virtualKey);return true;}
@@ -3226,6 +3236,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         return;
     }
 
+    if(m_autoMessageWnd && m_autoMessageWnd->m_show){m_autoMessageWnd->OnKeyDown(virtualKey);return;}
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){whisper->OnKeyDown(virtualKey);return;}}
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_editWindow)){if(settings->m_show){settings->OnKeyDown(virtualKey);return;}}
     if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd){m_chatRoomPasswordWnd->OnKeyDown(virtualKey);return;}

@@ -1,0 +1,47 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0057a420 <.text+0x179420>:
+  57a420:	8b c8                	mov    %eax,%ecx
+  57a422:	e8 29 f3 e9 ff       	call   0x419750
+  57a427:	5f                   	pop    %edi
+  57a428:	5e                   	pop    %esi
+  57a429:	5b                   	pop    %ebx
+  57a42a:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  57a42d:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  57a434:	8b e5                	mov    %ebp,%esp
+  57a436:	5d                   	pop    %ebp
+  57a437:	c2 08 00             	ret    $0x8
+  57a43a:	8a 0d 08 46 7b 00    	mov    0x7b4608,%cl
+  57a440:	56                   	push   %esi
+  57a441:	84 c9                	test   %cl,%cl
+  57a443:	56                   	push   %esi
+  57a444:	56                   	push   %esi
+  57a445:	0f 94 c2             	sete   %dl
+  57a448:	56                   	push   %esi
+  57a449:	6a 03                	push   $0x3
+  57a44b:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  57a450:	88 15 08 46 7b 00    	mov    %dl,0x7b4608
+  57a456:	e8 55 f8 f6 ff       	call   0x4e9cb0
+  57a45b:	a0 08 46 7b 00       	mov    0x7b4608,%al
+  57a460:	84 c0                	test   %al,%al
+  57a462:	74 1f                	je     0x57a483
+  57a464:	6a 74                	push   $0x74
+  57a466:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  57a46b:	e8 f0 7d f6 ff       	call   0x4e2260
+  57a470:	5f                   	pop    %edi
+  57a471:	5e                   	pop    %esi
+  57a472:	5b                   	pop    %ebx
+  57a473:	8b 4d f4             	mov    -0xc(%ebp),%ecx
+  57a476:	64 89 0d 00 00 00 00 	mov    %ecx,%fs:0x0
+  57a47d:	8b e5                	mov    %ebp,%esp
+  57a47f:	5d                   	pop    %ebp
+  57a480:	c2 08 00             	ret    $0x8
+  57a483:	56                   	push   %esi
+  57a484:	56                   	push   %esi
+  57a485:	68 ff ff 64 00       	push   $0x64ffff
+  57a48a:	68 af 03 00 00       	push   $0x3af
+  57a48f:	e9 f5 23 00 00       	jmp    0x57c889

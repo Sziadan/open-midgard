@@ -1,0 +1,13 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 12: source_chat_command_checks
+1/4 Test #12: source_chat_command_checks ........   Passed    0.02 sec
+    Start 13: packet_auto_message_checks
+2/4 Test #13: packet_auto_message_checks ........   Passed    0.24 sec
+    Start 14: packet_whisper_checks
+3/4 Test #14: packet_whisper_checks .............   Passed    0.21 sec
+    Start 48: packet_chat_state_render_checks
+4/4 Test #48: packet_chat_state_render_checks ...   Passed   11.23 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Total Test time (real) =  11.71 sec

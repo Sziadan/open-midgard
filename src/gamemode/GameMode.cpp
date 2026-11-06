@@ -1,5 +1,6 @@
 #include "core/UiMessageStrings.h"
 #include "core/SettingsIni.h"
+#include "core/SourceChatCommand.h"
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -10918,6 +10919,14 @@ bool CGameMode::ToggleSourceChatAutoSave()
     const char* message=g_session.m_isSaveChat?"Chatting Auto Save Start..":"Chatting Auto Save END";
     g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message),65535);return true;
 }
+bool CGameMode::ToggleSourceAutoMessage()
+{
+    g_session.m_onAutoMSG=!g_session.m_onAutoMSG;
+    g_windowMgr.SendMsg(3,0,0,0);
+    if(g_session.m_onAutoMSG)return g_windowMgr.MakeWindow(UIWindowMgr::WID_AUTOMESSAGEWND)!=nullptr;
+    ro::UiMessageStrings table;table.Load();const auto notice=table.Get(943,"Automatic reply disabled.");
+    g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),6619135);return true;
+}
 bool CGameMode::WriteSourceChat(const std::string& text)
 {
     if(!g_session.m_isSaveChat || !CanAutoSaveSourceChat())return false;
@@ -10954,6 +10963,8 @@ bool CGameMode::SendSourceWhisper(const std::string& target,const std::string& i
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     switch (msg) {
+    case 47:
+        return wparam==SourceTalk_AutoMessage && ToggleSourceAutoMessage()?1:0;
     case 114:
         if(!wparam)return 0;
         m_lastWhisperMenuCharacterName=reinterpret_cast<const char*>(wparam);m_menuIdList={11,21};return 0;
@@ -11166,6 +11177,8 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         if (!text || *text == '\0') {
             return 0;
         }
+        const auto sourceCommand=ro::chat::SourceChatCommandToken(text);
+        if(sourceCommand=="/am" || sourceCommand=="/automsg" || sourceCommand==u8"/자동응답")return SendMsg(47,SourceTalk_AutoMessage,0,0);
         std::string whisperTarget = lparam != 0 ? reinterpret_cast<const char*>(lparam) : std::string();
         const size_t targetFirstNonSpace = whisperTarget.find_first_not_of(" \t\r\n");
         if (targetFirstNonSpace == std::string::npos) {

@@ -1,0 +1,851 @@
+Read-only primary excerpts; original executable was never executed.
+
+## Ref/UIFrameWnd2.cpp:6200-6267
+
+6200: // Original Signature: public: virtual int __thiscall UIAutoMessageWnd::SendMsg(class UIWindow *,int,int,int,int,int)
+6201: // Decompiled from address: 0x492390
+6202: // ================================================
+6203: int __thiscall UIAutoMessageWnd::SendMsg(
+6204:         UIAutoMessageWnd *this,
+6205:         UIWindow *sender,
+6206:         int message,
+6207:         int val1,
+6208:         int val2,
+6209:         int val3,
+6210:         int val4)
+6211: {
+6212:   unsigned int v8; // kr04_4
+6213:   unsigned int v9; // ebx
+6214:   char *Ptr; // edi
+6215:   char v11; // al
+6216:   char *v12; // eax
+6217:   const char *val1a; // [esp+10h] [ebp+10h]
+6218:
+6219:   if ( message != 6 )
+6220:     return UIFrameWnd::SendMsg(this, sender, message, val1, val2, val3, val4);
+6221:   if ( val1 == 118 )
+6222:   {
+6223:     val1a = UIEditCtrl::GetText(this->m_editCtrl);
+6224:     v8 = strlen(val1a) + 1;
+6225:     v9 = v8 - 1;
+6226:     if ( v8 - 1 > 0xFFFFFFFD )
+6227:       std::_Xlen();
+6228:     Ptr = g_session.m_strAutoMSG._Ptr;
+6229:     if ( g_session.m_strAutoMSG._Ptr && (v11 = *(g_session.m_strAutoMSG._Ptr - 1)) != 0 && v11 != -1 )
+6230:     {
+6231:       if ( v8 == 1 )
+6232:       {
+6233:         *(g_session.m_strAutoMSG._Ptr - 1) = v11 - 1;
+6234:         g_session.m_strAutoMSG._Ptr = 0;
+6235:         g_session.m_strAutoMSG._Len = 0;
+6236:         g_session.m_strAutoMSG._Res = 0;
+6237: LABEL_18:
+6238:         v12 = (char *)MsgStr(MSI_AUTO_MSG_ON);
+6239:         UIWindowMgr::SendMsg(&g_windowMgr, 1u, v12, 6619135, 0, 0);
+6240:         UIWindowMgr::FindFocusEditAndSetFocus(&g_windowMgr);
+6241:         UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x74);
+6242:         return 0;
+6243:       }
+6244:     }
+6245:     else
+6246:     {
+6247:       if ( v8 == 1 )
+6248:       {
+6249:         std::string::_Tidy(&g_session.m_strAutoMSG, 1u);
+6250:         goto LABEL_18;
+6251:       }
+6252:       if ( g_session.m_strAutoMSG._Res <= 0x1F && g_session.m_strAutoMSG._Res >= v8 - 1 )
+6253:       {
+6254: LABEL_17:
+6255:         qmemcpy(Ptr, val1a, v9);
+6256:         g_session.m_strAutoMSG._Len = v8 - 1;
+6257:         g_session.m_strAutoMSG._Ptr[v9] = 0;
+6258:         goto LABEL_18;
+6259:       }
+6260:       std::string::_Tidy(&g_session.m_strAutoMSG, 1u);
+6261:     }
+6262:     std::string::_Copy(&g_session.m_strAutoMSG, v9);
+6263:     Ptr = g_session.m_strAutoMSG._Ptr;
+6264:     goto LABEL_17;
+6265:   }
+6266:   return 0;
+6267: }
+
+## Ref/UIFrameWnd2.cpp:15665-15796
+
+15665: // Original Signature: public: virtual void __thiscall UIAutoMessageWnd::OnCreate(int,int)
+15666: // Decompiled from address: 0x492090
+15667: // ================================================
+15668: void __thiscall UIAutoMessageWnd::OnCreate(UIAutoMessageWnd *this, int cx, int cy)
+15669: {
+15670:   UIEditCtrl *v4; // eax
+15671:   UIEditCtrl *v5; // eax
+15672:   unsigned int v6; // ecx
+15673:   char *Ptr; // eax
+15674:   int m_w; // ebx
+15675:   int v9; // eax
+15676:   int v10; // ebx
+15677:   UIBitmapButton *v11; // eax
+15678:   UIBitmapButton *v12; // edi
+15679:   const std::string *v13; // eax
+15680:   char *v14; // eax
+15681:   const std::string *v15; // eax
+15682:   char *v16; // eax
+15683:   const std::string *v17; // eax
+15684:   char *v18; // eax
+15685:   char v19; // cl
+15686:   std::string result; // [esp+Ch] [ebp-4Ch] BYREF
+15687:   std::string v21; // [esp+1Ch] [ebp-3Ch] BYREF
+15688:   std::string pathName; // [esp+2Ch] [ebp-2Ch] BYREF
+15689:   int pos[1][2]; // [esp+3Ch] [ebp-1Ch]
+15690:   void *Block; // [esp+44h] [ebp-14h]
+15691:   std::allocator<char> v25; // [esp+4Bh] [ebp-Dh]
+15692:   int v26; // [esp+54h] [ebp-4h]
+15693:
+15694:   v4 = (UIEditCtrl *)operator new(0x90u);
+15695:   Block = v4;
+15696:   v26 = 0;
+15697:   if ( v4 )
+15698:     v5 = UIEditCtrl::UIEditCtrl(v4);
+15699:   else
+15700:     v5 = 0;
+15701:   v6 = this->m_w - 77;
+15702:   v26 = -1;
+15703:   this->m_editCtrl = v5;
+15704:   UIWindow::Create(v5, v6, 16);
+15705:   this->m_editCtrl->UIWindow::Move(this->m_editCtrl, 15, 22);
+15706:   this->m_editCtrl->m_maxchar = 100;
+15707:   UIEditCtrl::SetFrameColor(this->m_editCtrl, 232, 232, 232);
+15708:   Ptr = g_session.m_strAutoMSG._Ptr;
+15709:   if ( !g_session.m_strAutoMSG._Ptr )
+15710:     Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+15711:   this->m_editCtrl->UIEditCtrl::SetText(this->m_editCtrl, Ptr);
+15712:   UIEditCtrl::MakeSelect(this->m_editCtrl);
+15713:   UIWindow::AddChild(this, this->m_editCtrl);
+15714:   pathName.allocator = v25;
+15715:   std::string::_Tidy(&pathName, 0);
+15716:   std::string::assign(&pathName, &byte_6F2E4C, strlen(&byte_6F2E4C));
+15717:   m_w = this->m_w;
+15718:   v9 = this->m_h - 32;
+15719:   v26 = 1;
+15720:   v10 = m_w - 55;
+15721:   pos[0][1] = v9;
+15722:   v11 = (UIBitmapButton *)operator new(0xA4u);
+15723:   Block = v11;
+15724:   LOBYTE(v26) = 2;
+15725:   if ( v11 )
+15726:     v12 = UIBitmapButton::UIBitmapButton(v11);
+15727:   else
+15728:     v12 = 0;
+15729:   LOBYTE(v26) = 1;
+15730:   v13 = std::operator+(&result, &pathName, aBtnOk);
+15731:   LOBYTE(v26) = 3;
+15732:   v14 = std::operator+(&v21, v13, aBmp_2)->_Ptr;
+15733:   LOBYTE(v26) = 4;
+15734:   if ( !v14 )
+15735:     v14 = (char *)`std::string::_Nullstr'::`2'::_C;
+15736:   UIBitmapButton::SetBitmapName(v12, v14, 0);
+15737:   LOBYTE(v26) = 3;
+15738:   std::string::_Tidy(&v21, 1u);
+15739:   LOBYTE(v26) = 1;
+15740:   std::string::_Tidy(&result, 1u);
+15741:   v15 = std::operator+(&v21, &pathName, aBtnOkA);
+15742:   LOBYTE(v26) = 5;
+15743:   v16 = std::operator+(&result, v15, aBmp_2)->_Ptr;
+15744:   LOBYTE(v26) = 6;
+15745:   if ( !v16 )
+15746:     v16 = (char *)`std::string::_Nullstr'::`2'::_C;
+15747:   UIBitmapButton::SetBitmapName(v12, v16, 1);
+15748:   LOBYTE(v26) = 5;
+15749:   std::string::_Tidy(&result, 1u);
+15750:   LOBYTE(v26) = 1;
+15751:   std::string::_Tidy(&v21, 1u);
+15752:   v17 = std::operator+(&v21, &pathName, aBtnOkB);
+15753:   LOBYTE(v26) = 7;
+15754:   v18 = std::operator+(&result, v17, aBmp_2)->_Ptr;
+15755:   LOBYTE(v26) = 8;
+15756:   if ( !v18 )
+15757:     v18 = (char *)`std::string::_Nullstr'::`2'::_C;
+15758:   UIBitmapButton::SetBitmapName(v12, v18, 2);
+15759:   LOBYTE(v26) = 7;
+15760:   std::string::_Tidy(&result, 1u);
+15761:   LOBYTE(v26) = 1;
+15762:   std::string::_Tidy(&v21, 1u);
+15763:   UIWindow::Create(v12, v12->m_bitmapWidth, v12->m_bitmapHeight);
+15764:   v12->UIWindow::Move(v12, v10, pos[0][1]);
+15765:   v12->m_id = 118;
+15766:   UIWindow::AddChild(this, v12);
+15767:   if ( pathName._Ptr )
+15768:   {
+15769:     v19 = *(pathName._Ptr - 1);
+15770:     if ( !v19 || v19 == -1 )
+15771:       operator delete(pathName._Ptr - 1);
+15772:     else
+15773:       *(pathName._Ptr - 1) = v19 - 1;
+15774:   }
+15775:   this->m_defPushId = 118;
+15776: }
+15777:
+15778:
+15779: // ================================================
+15780: // Original Signature: public: virtual void __thiscall UIAutoMessageWnd::OnDraw(void)
+15781: // Decompiled from address: 0x492340
+15782: // ================================================
+15783: void __thiscall UIAutoMessageWnd::OnDraw(UIAutoMessageWnd *this)
+15784: {
+15785:   const char *v2; // eax
+15786:
+15787:   UIFrameWnd::DrawLatticeFrame(this, 0, 0, 0, 0);
+15788:   v2 = MsgStr(MSI_ENTER_AUTO_MSG);
+15789:   UIWindow::TextOutA(this, 15, 6, v2, 0, 0, 12, 0);
+15790:   UIWindowMgr::SetFocusEdit(&g_windowMgr, this->m_editCtrl);
+15791: }
+15792:
+15793:
+15794: // ================================================
+15795: // Original Signature: public: virtual void __thiscall UIBasicInfoWnd::OnCreate(int,int)
+15796: // Decompiled from address: 0x46eff0
+
+## Ref/UIWindowMgr.cpp:2703-2709
+
+2703:     case 0x74u:
+2704:       if ( !this->m_autoMessageWnd )
+2705:         return 0;
+2706:       UIWindowMgr::PostQuit(this, this->m_autoMessageWnd);
+2707:       this->m_autoMessageWnd = 0;
+2708:       v5 = 1;
+2709:       break;
+
+## Ref/UIWindowMgr.cpp:3612-3618
+
+3612:       else if ( this->m_autoMessageWnd )
+3613:       {
+3614:         g_session.m_onAutoMSG = 0;
+3615:         UIWindowMgr::DeleteWindow(this, (UISelCharForUServerWnd *)0x74);
+3616:         return 0;
+3617:       }
+3618:       else
+
+## Ref/UIWindowMgr.cpp:7162-7181
+
+7162:     case 116:
+7163:       m_basicInfoWnd = (UIBasicInfoWnd *)this->m_autoMessageWnd;
+7164:       if ( m_basicInfoWnd )
+7165:         goto LABEL_695;
+7166:       v144 = (UIAutoMessageWnd *)operator new(0x64u);
+7167:       windowId = (int)v144;
+7168:       v191 = 109;
+7169:       if ( v144 )
+7170:         m_basicInfoWnd = (UIBasicInfoWnd *)UIAutoMessageWnd::UIAutoMessageWnd(v144);
+7171:       else
+7172:         m_basicInfoWnd = 0;
+7173:       v191 = -1;
+7174:       this->m_autoMessageWnd = (UIAutoMessageWnd *)m_basicInfoWnd;
+7175:       UIWindow::Create(m_basicInfoWnd, 280, 48);
+7176:       windowId = (int)&m_basicInfoWnd->UIWindow::Move;
+7177:       v171 = UIY(180);
+7178:       v79 = UIX(185);
+7179:       goto LABEL_342;
+7180:     case 117:
+7181:       if ( this->m_merchantItemWnd )
+
+## Ref/UIWindowMgr.cpp:10444-10504
+
+10444: // Original Signature: public: void __thiscall UIWindowMgr::FindFocusEditAndSetFocus(void)
+10445: // Decompiled from address: 0x4de3f0
+10446: // ================================================
+10447: void __thiscall UIWindowMgr::FindFocusEditAndSetFocus(UIWindowMgr *this)
+10448: {
+10449:   std::list<UIWindow *>::_Node *Head; // eax
+10450:   std::list<UIWindow *>::_Node *Next; // edx
+10451:   UIWindow *Value; // ebx
+10452:   std::list<UIWindow *>::_Node *v4; // eax
+10453:   std::list<UIWindow *>::_Node *v5; // esi
+10454:   UIChatEditCtrl *v6; // edi
+10455:   UIWindow *m_editWindow; // ecx
+10456:   UIWindowMgr *v8; // [esp+Ch] [ebp-8h]
+10457:   std::list<UIWindow *>::_Node *it; // [esp+10h] [ebp-4h]
+10458:
+10459:   Head = this->m_children._Head;
+10460:   Next = Head->_Next;
+10461:   v8 = this;
+10462:   it = Head->_Next;
+10463:   if ( Head->_Next != Head )
+10464:   {
+10465:     while ( 1 )
+10466:     {
+10467:       Value = Next->_Value;
+10468:       if ( Value->m_show )
+10469:       {
+10470:         v4 = Value->m_children._Head;
+10471:         v5 = v4->_Next;
+10472:         if ( v4->_Next != v4 )
+10473:           break;
+10474:       }
+10475: LABEL_9:
+10476:       it = Next->_Next;
+10477:       if ( Next->_Next == this->m_children._Head )
+10478:         return;
+10479:       Next = Next->_Next;
+10480:     }
+10481:     while ( 1 )
+10482:     {
+10483:       v6 = (UIChatEditCtrl *)v5->_Value;
+10484:       if ( v6->UIWindow::CanGetFocus(v6) )
+10485:         break;
+10486:       v5 = v5->_Next;
+10487:       if ( v5 == Value->m_children._Head )
+10488:       {
+10489:         this = v8;
+10490:         Next = it;
+10491:         goto LABEL_9;
+10492:       }
+10493:     }
+10494:     m_editWindow = v8->m_editWindow;
+10495:     if ( m_editWindow )
+10496:       m_editWindow->UIWindow::OnFinishEdit(m_editWindow);
+10497:     if ( v6 != v8->m_chatWnd->m_commonChat )
+10498:     {
+10499:       v8->m_editWindow = v6;
+10500:       if ( v6 )
+10501:         v6->UIWindow::OnBeginEdit(v6);
+10502:     }
+10503:   }
+10504: }
+
+## Ref/GameMode.cpp:17437-17448
+
+17437:     case TT_AUTO_MSG_ON_OFF:
+17438:       g_session.m_onAutoMSG = g_session.m_onAutoMSG == 0;
+17439:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+17440:       if ( g_session.m_onAutoMSG )
+17441:       {
+17442:         UIWindowMgr::MakeWindow(&g_windowMgr, WID_AUTOMESSAGEWND);
+17443:         return;
+17444:       }
+17445:       v259 = 6619135;
+17446:       v67 = MsgStr(MSI_AUTO_MSG_OFF);
+17447:       goto LABEL_513;
+17448:     case TT_REQ_EMOTION_SPARK:
+
+## Ref/Session.cpp:17983-17990
+
+17983: // Original Signature: public: void __thiscall CSession::Init(void)
+17984: // Decompiled from address: 0x64bb90
+17985: // ================================================
+17986: void __thiscall CSession::Init(CSession *this)
+17987: {
+17988:   unsigned int v2; // kr04_4
+17989:   unsigned int v3; // edi
+17990:   char *Ptr; // edx
+
+## Ref/Session.cpp:18094-18103
+
+18094:   this->m_merKillCounter = 0;
+18095:   this->m_merATKRange = 0;
+18096:   this->m_merExpireDate = 0;
+18097:   this->m_merStateId = 0;
+18098:   this->m_onMerUserAI = 0;
+18099:   this->m_onAutoMSG = 0;
+18100:   this->m_waitForSendMail = 0;
+18101:   this->m_waitForAddAuction = 0;
+18102:   this->m_auctionSeachOption = 0;
+18103:   this->m_auctionSeachOption2 = 0;
+
+## Ref/Session.cpp:22852-22862
+
+22852:   _X.first = &asc_722D78;
+22853:   _X.second = TT_AUTO_MSG_ON_OFF;
+22854:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22855:   _X.first = aAutomsg;
+22856:   _X.second = TT_AUTO_MSG_ON_OFF;
+22857:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22858:   _X.first = aAm;
+22859:   _X.second = TT_AUTO_MSG_ON_OFF;
+22860:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22861:   _X.first = aTraceai;
+22862:   _X.second = TT_TRACEAI_ON_OFF;
+
+## Ref/Session.cpp:7728-7767
+
+7728:   if ( !chatBuf )
+7729:   {
+7730:     *(_DWORD *)talkType = 3;
+7731:     return -1;
+7732:   }
+7733:   std::vector<std::string>::vector<std::string>(&t.m_token, &_Al);
+7734:   v128 = 0;
+7735:   temp.allocator = (std::allocator<char>)HIBYTE(talkType);
+7736:   std::string::_Tidy(&temp, 0);
+7737:   std::string::assign(&temp, chatBuf, strlen(chatBuf));
+7738:   LOBYTE(v128) = 1;
+7739:   CTokenizer::SetString(&t, &temp);
+7740:   LOBYTE(v128) = 0;
+7741:   std::string::_Tidy(&temp, 1u);
+7742:   if ( !std::vector<std::string>::size(&t.m_token) )
+7743:   {
+7744:     *(_DWORD *)talkType = 3;
+7745:     v128 = -1;
+7746:     std::vector<std::string>::~vector<std::string>(&t.m_token);
+7747:     return -1;
+7748:   }
+7749:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7750:     ErrorMsg(aErrorInCtokeni);
+7751:   MakeStringLower(t.m_token._First);
+7752:   if ( *chatBuf != 47 )
+7753:   {
+7754:     v7 = (_DWORD *)talkType;
+7755:     *(_DWORD *)talkType = 0;
+7756: LABEL_342:
+7757:     if ( *v7 && chatBuf[v4] == 32 )
+7758:     {
+7759:       do
+7760:         v86 = chatBuf[++v4];
+7761:       while ( v86 == 32 );
+7762:     }
+7763:     goto LABEL_345;
+7764:   }
+7765:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7766:     ErrorMsg(aErrorInCtokeni);
+7767:   if ( !std::string::compare(t.m_token._First, asc_7228C0) )
+
+## Ref/Util.cpp:2113-2298
+
+2113: // Original Signature: public: void __thiscall CTokenizer::SetString(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)
+2114: // Decompiled from address: 0x527280
+2115: // ================================================
+2116: void __thiscall CTokenizer::SetString(CTokenizer *this, const std::string *a)
+2117: {
+2118:   unsigned int Len; // edx
+2119:   std::string *First; // edi
+2120:   std::vector<std::string> *v4; // esi
+2121:   signed int v5; // ebx
+2122:   bool v6; // cc
+2123:   char *v7; // eax
+2124:   const char *v8; // eax
+2125:   char *v9; // eax
+2126:   char *v10; // eax
+2127:   const char *v11; // ecx
+2128:   char *v12; // eax
+2129:   const char *v13; // ecx
+2130:   const char *v14; // eax
+2131:   char *v15; // eax
+2132:   char *v16; // eax
+2133:   char *v17; // eax
+2134:   const char *v18; // ecx
+2135:   int v19; // eax
+2136:   char v20; // cl
+2137:   const char *v21; // ecx
+2138:   char *Ptr; // eax
+2139:   const char *v23; // eax
+2140:   char v24; // dl
+2141:   unsigned int v25; // ebx
+2142:   std::string *v26; // [esp-Ch] [ebp-464h]
+2143:   std::string *v27; // [esp-8h] [ebp-460h]
+2144:   std::string *Last; // [esp-8h] [ebp-460h]
+2145:   char buffer[1024]; // [esp+Ch] [ebp-44Ch] BYREF
+2146:   std::string v30; // [esp+40Ch] [ebp-4Ch] BYREF
+2147:   std::string _X; // [esp+41Ch] [ebp-3Ch] BYREF
+2148:   std::string v32; // [esp+42Ch] [ebp-2Ch] BYREF
+2149:   signed int v33; // [esp+43Ch] [ebp-1Ch]
+2150:   std::vector<std::string> *p_m_token; // [esp+440h] [ebp-18h]
+2151:   lexMode curMode; // [esp+444h] [ebp-14h]
+2152:   int curOffset; // [esp+448h] [ebp-10h]
+2153:   int v37; // [esp+454h] [ebp-4h]
+2154:
+2155:   Len = a->_Len;
+2156:   First = this->m_token._First;
+2157:   p_m_token = &this->m_token;
+2158:   v33 = Len;
+2159:   curOffset = 0;
+2160:   curMode = lm_read;
+2161:   std::vector<std::string>::_Destroy(&this->m_token, First, this->m_token._Last);
+2162:   v4 = p_m_token;
+2163:   v5 = 0;
+2164:   v6 = v33 <= 0;
+2165:   p_m_token->_Last = First;
+2166:   if ( v6 )
+2167:     return;
+2168:   do
+2169:   {
+2170:     switch ( curMode )
+2171:     {
+2172:       case lm_quote:
+2173:         v21 = `std::string::_Nullstr'::`2'::_C;
+2174:         Ptr = a->_Ptr;
+2175:         if ( Ptr )
+2176:           v21 = &Ptr[v5];
+2177:         if ( *v21 == 34 )
+2178:         {
+2179:           v30.allocator = (std::allocator<char>)HIBYTE(a);
+2180:           buffer[curOffset] = 0;
+2181:           std::string::_Tidy(&v30, 0);
+2182:           std::string::assign(&v30, buffer, strlen(buffer));
+2183:           Last = v4->_Last;
+2184:           v37 = 0;
+2185:           std::vector<std::string>::insert(v4, Last, &v30);
+2186:           v37 = -1;
+2187:           std::string::_Tidy(&v30, 1u);
+2188:           curMode = lm_skip;
+2189:           curOffset = 0;
+2190:           break;
+2191:         }
+2192:         if ( Ptr )
+2193:           v23 = &Ptr[v5];
+2194:         else
+2195:           v23 = `std::string::_Nullstr'::`2'::_C;
+2196:         v24 = *v23;
+2197:         v19 = curOffset;
+2198:         buffer[curOffset] = v24;
+2199:         goto LABEL_46;
+2200:       case lm_read:
+2201:         v11 = `std::string::_Nullstr'::`2'::_C;
+2202:         v12 = a->_Ptr;
+2203:         if ( v12 )
+2204:           v11 = &v12[v5];
+2205:         if ( *v11 == 47 )
+2206:         {
+2207:           v13 = `std::string::_Nullstr'::`2'::_C;
+2208:           if ( v12 )
+2209:             v13 = &v12[v5 + 1];
+2210:           if ( *v13 == 47 )
+2211:             return;
+2212:         }
+2213:         if ( v12 )
+2214:           v14 = &v12[v5];
+2215:         else
+2216:           v14 = `std::string::_Nullstr'::`2'::_C;
+2217:         if ( !isspace(*v14)
+2218:           || ((v15 = a->_Ptr) != 0 ? (v16 = &v15[v5]) : (v16 = (char *)`std::string::_Nullstr'::`2'::_C), *v16 < 0) )
+2219:         {
+2220:           v17 = a->_Ptr;
+2221:           v18 = `std::string::_Nullstr'::`2'::_C;
+2222:           if ( v17 )
+2223:             v18 = &v17[v5];
+2224:           if ( *v18 == 34 )
+2225:           {
+2226:             curOffset = 0;
+2227:             curMode = lm_quote;
+2228:             break;
+2229:           }
+2230:           if ( v17 )
+2231:           {
+2232:             v20 = v17[v5];
+2233:             v19 = curOffset;
+2234:             buffer[curOffset] = v20;
+2235:           }
+2236:           else
+2237:           {
+2238:             v19 = curOffset;
+2239:             buffer[curOffset] = `std::string::_Nullstr'::`2'::_C[0];
+2240:           }
+2241: LABEL_46:
+2242:           curOffset = v19 + 1;
+2243:           break;
+2244:         }
+2245:         if ( v5 )
+2246:         {
+2247:           buffer[curOffset] = 0;
+2248:           _X.allocator = (std::allocator<char>)HIBYTE(a);
+2249:           std::string::_Tidy(&_X, 0);
+2250:           std::string::assign(&_X, buffer, strlen(buffer));
+2251:           v27 = v4->_Last;
+2252:           v37 = 1;
+2253:           std::vector<std::string>::insert(v4, v27, &_X);
+2254:           v37 = -1;
+2255:           std::string::_Tidy(&_X, 1u);
+2256:           curOffset = 0;
+2257:         }
+2258:         curMode = lm_skip;
+2259:         break;
+2260:       case lm_skip:
+2261:         v7 = a->_Ptr;
+2262:         v8 = v7 ? &v7[v5] : `std::string::_Nullstr'::`2'::_C;
+2263:         if ( !isspace(*v8)
+2264:           || ((v9 = a->_Ptr) != 0 ? (v10 = &v9[v5]) : (v10 = (char *)`std::string::_Nullstr'::`2'::_C), *v10 < 0) )
+2265:         {
+2266:           curMode = lm_read;
+2267:           --v5;
+2268:         }
+2269:         break;
+2270:     }
+2271:     ++v5;
+2272:   }
+2273:   while ( v5 < v33 );
+2274:   if ( curMode != lm_skip && v5 )
+2275:   {
+2276:     v32.allocator = (std::allocator<char>)HIBYTE(a);
+2277:     buffer[curOffset] = 0;
+2278:     std::string::_Tidy(&v32, 0);
+2279:     v25 = strlen(buffer);
+2280:     if ( std::string::_Grow(&v32, v25, 1u) )
+2281:     {
+2282:       qmemcpy(v32._Ptr, buffer, v25);
+2283:       std::string::_Eos(&v32, v25);
+2284:       v4 = p_m_token;
+2285:     }
+2286:     v26 = v4->_Last;
+2287:     v37 = 2;
+2288:     std::vector<std::string>::insert(v4, v26, 1u, &v32);
+2289:     v37 = -1;
+2290:     std::string::_Tidy(&v32, 1u);
+2291:   }
+2292: }
+2293:
+2294:
+2295: // ================================================
+2296: // Original Signature: public: void __thiscall std::_Tree<long,struct std::pair<long const ,struct POINTER_FUNC>,struct std::multimap<long,struct POINTER_FUNC,struct std::less<long>,class std::allocator<struct POINTER_FUNC> >::_Kfn,struct std::less<long>,class std::allocator<struct POINTER_FUNC> >::const_iterator::_Dec(void)
+2297: // Decompiled from address: 0x415c80
+2298: // ================================================
+
+## Ref/UIControl.cpp:1219-1338
+
+1219: // Original Signature: protected: virtual void __thiscall UIEditCtrl::SetTextByMaxChar(void)
+1220: // Decompiled from address: 0x444a30
+1221: // ================================================
+1222: void __thiscall UIEditCtrl::SetTextByMaxChar(UIEditCtrl *this)
+1223: {
+1224:   signed int Len; // esi
+1225:   char *Ptr; // eax
+1226:   std::string *p_m_text; // ebx
+1227:   const CHAR *i; // edx
+1228:   const CHAR *v5; // eax
+1229:   unsigned int v6; // kr0C_4
+1230:   unsigned int v7; // eax
+1231:   unsigned int v8; // esi
+1232:   unsigned int v9; // edi
+1233:   bool v10; // cf
+1234:   unsigned int v11; // esi
+1235:   unsigned int v12; // edi
+1236:   char *v13; // ecx
+1237:   unsigned int v14; // kr10_4
+1238:   unsigned int v15; // edi
+1239:   char *v16; // ecx
+1240:   char v17; // al
+1241:   char *v18; // ecx
+1242:
+1243:   Len = this->m_text._Len;
+1244:   if ( Len > this->m_maxchar )
+1245:   {
+1246:     Ptr = this->m_text._Ptr;
+1247:     p_m_text = &this->m_text;
+1248:     if ( !Ptr )
+1249:       Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+1250:     for ( i = CharNextExA(g_codePage, Ptr, 0); Len - strlen(i) <= this->m_maxchar; i = CharNextExA(g_codePage, i, 0) )
+1251:       ;
+1252:     v5 = p_m_text->_Ptr;
+1253:     if ( !v5 )
+1254:       v5 = `std::string::_Nullstr'::`2'::_C;
+1255:     v6 = strlen(CharPrevExA(g_codePage, v5, i, 0)) + 1;
+1256:     v7 = p_m_text->_Len;
+1257:     v8 = Len - (v6 - 1);
+1258:     v9 = v8;
+1259:     v10 = v7 < v8;
+1260:     if ( v7 < v8 )
+1261:     {
+1262:       std::string::append(p_m_text, v8 - v7, 0);
+1263:     }
+1264:     else
+1265:     {
+1266:       v11 = std::string::npos;
+1267:       if ( v10 )
+1268:         std::_Xran();
+1269:       std::string::_Split(p_m_text);
+1270:       if ( p_m_text->_Len - v9 < std::string::npos )
+1271:         v11 = p_m_text->_Len - v9;
+1272:       if ( v11 )
+1273:       {
+1274:         memmove(&p_m_text->_Ptr[v9], &p_m_text->_Ptr[v11 + v9], p_m_text->_Len - v11 - v9);
+1275:         v12 = p_m_text->_Len - v11;
+1276:         if ( std::string::_Grow(p_m_text, v12, 0) )
+1277:         {
+1278:           v13 = p_m_text->_Ptr;
+1279:           p_m_text->_Len = v12;
+1280:           v13[v12] = 0;
+1281:         }
+1282:       }
+1283:     }
+1284:     if ( this->m_text._Len < this->m_maxchar )
+1285:     {
+1286:       while ( 1 )
+1287:       {
+1288:         v14 = strlen(asc_6F26DC) + 1;
+1289:         if ( std::string::npos - p_m_text->_Len <= v14 - 1 )
+1290:           std::_Xlen();
+1291:         if ( v14 == 1 )
+1292:           goto LABEL_34;
+1293:         v15 = v14 - 1 + p_m_text->_Len;
+1294:         if ( v15 > 0xFFFFFFFD )
+1295:           std::_Xlen();
+1296:         v16 = p_m_text->_Ptr;
+1297:         if ( !v16 )
+1298:           break;
+1299:         v17 = *(v16 - 1);
+1300:         if ( !v17 || v17 == -1 )
+1301:           break;
+1302:         if ( v15 )
+1303:           goto LABEL_32;
+1304:         *(v16 - 1) = v17 - 1;
+1305:         std::string::_Tidy(p_m_text, 0);
+1306: LABEL_34:
+1307:         if ( this->m_text._Len >= this->m_maxchar )
+1308:           return;
+1309:       }
+1310:       if ( !v15 )
+1311:       {
+1312:         if ( v16 )
+1313:         {
+1314:           p_m_text->_Len = 0;
+1315:           *v16 = 0;
+1316:         }
+1317:         goto LABEL_34;
+1318:       }
+1319:       if ( p_m_text->_Res < v15 )
+1320: LABEL_32:
+1321:         std::string::_Copy(p_m_text, v15);
+1322:       qmemcpy(&p_m_text->_Ptr[p_m_text->_Len], asc_6F26DC, v14 - 1);
+1323:       v18 = p_m_text->_Ptr;
+1324:       p_m_text->_Len = v15;
+1325:       v18[v15] = 0;
+1326:       goto LABEL_34;
+1327:     }
+1328:   }
+1329: }
+1330:
+1331:
+1332: // ================================================
+1333: // Original Signature: protected: void __thiscall UIBalloonText::AdjustSizeByText(void)
+1334: // Decompiled from address: 0x442ab0
+1335: // ================================================
+1336: void __thiscall UIBalloonText::AdjustSizeByText(UIBalloonText *this)
+1337: {
+1338:   int v1; // edi
+
+## Ref/UIControl.cpp:5987-6063
+
+5987: // Original Signature: public: virtual void __thiscall UIEditCtrl::SetText(char const *)
+5988: // Decompiled from address: 0x444380
+5989: // ================================================
+5990: void __thiscall UIEditCtrl::SetText(UIEditCtrl *this, const char *txt)
+5991: {
+5992:   unsigned int v3; // kr04_4
+5993:   std::string *p_m_text; // esi
+5994:   char *Ptr; // eax
+5995:   unsigned int v6; // ebx
+5996:   unsigned int v7; // ecx
+5997:   unsigned int v8; // edi
+5998:   char *v9; // eax
+5999:   const char *v10; // esi
+6000:   CLanguage *v11; // ebx
+6001:   UIWindow *m_parent; // ecx
+6002:   UIEditCtrl *v13; // [esp+Ch] [ebp-Ch]
+6003:   const char *v14; // [esp+10h] [ebp-8h]
+6004:   unsigned int _P0; // [esp+14h] [ebp-4h]
+6005:   unsigned int _P0a; // [esp+14h] [ebp-4h]
+6006:
+6007:   v3 = strlen(txt) + 1;
+6008:   v13 = this;
+6009:   p_m_text = &this->m_text;
+6010:   std::string::_Freeze(p_m_text);
+6011:   Ptr = p_m_text->_Ptr;
+6012:   if ( Ptr )
+6013:     v6 = (unsigned int)&Ptr[p_m_text->_Len];
+6014:   else
+6015:     v6 = 0;
+6016:   std::string::_Freeze(p_m_text);
+6017:   _P0 = (unsigned int)p_m_text->_Ptr;
+6018:   v14 = txt;
+6019:   std::string::_Freeze(p_m_text);
+6020:   v7 = _P0;
+6021:   if ( _P0 )
+6022:     _P0a = _P0 - (unsigned int)p_m_text->_Ptr;
+6023:   else
+6024:     _P0a = 0;
+6025:   v8 = v3 - 1;
+6026:   if ( v6 )
+6027:     v6 -= v7;
+6028:   std::string::replace(p_m_text, _P0a, v6, v8, 0);
+6029:   std::string::_Freeze(p_m_text);
+6030:   v9 = &p_m_text->_Ptr[_P0a];
+6031:   if ( v3 != 1 )
+6032:   {
+6033:     do
+6034:     {
+6035:       *v9++ = *v14;
+6036:       --v8;
+6037:       ++v14;
+6038:     }
+6039:     while ( v8 );
+6040:   }
+6041:   v13->UIEditCtrl::SetTextByMaxChar(v13);
+6042:   if ( UIWindowMgr::GetFocusEdit(&g_windowMgr) == v13 )
+6043:   {
+6044:     CLanguage::ResetInput(g_language);
+6045:     v10 = p_m_text->_Ptr;
+6046:     if ( !v10 )
+6047:       v10 = `std::string::_Nullstr'::`2'::_C;
+6048:     v11 = g_language;
+6049:     CLanguage::ResetInput(g_language);
+6050:     CLanguage::AddInput(v11, v10);
+6051:   }
+6052:   if ( UIWindowMgr::GetFocusEdit(&g_windowMgr) == v13 )
+6053:   {
+6054:     CLanguage::SetSelection(g_language, 0, g_language->m_input._Len);
+6055:   }
+6056:   else
+6057:   {
+6058:     v13->m_selectionOrigin = 0;
+6059:     v13->m_selectionCursor = v13->m_text._Len;
+6060:   }
+6061:   m_parent = v13->m_parent;
+6062:   if ( m_parent )
+6063:     m_parent->UIWindow::Invalidate(m_parent);
+
+## Ref/LoginMode.cpp:1777-1811
+
+1777: // Original Signature: private: void __thiscall CLoginMode::Ac_Accept_Login(char const *)
+1778: // Decompiled from address: 0x5d28b0
+1779: // ================================================
+1780: void __thiscall CLoginMode::Ac_Accept_Login(CLoginMode *this, const char *buf)
+1781: {
+1782:   const char *v2; // esi
+1783:   unsigned int v3; // kr04_4
+1784:   unsigned int v4; // ebx
+1785:   char v5; // al
+1786:   unsigned int v6; // ecx
+1787:   CRagConnection *v7; // eax
+1788:
+1789:   g_session.m_playingTime = timeGetTime();
+1790:   SendID(g_session.m_aName);
+1791:   v2 = MsgStr(MSI_AUTO_MSG);
+1792:   v3 = strlen(v2) + 1;
+1793:   v4 = v3 - 1;
+1794:   if ( std::string::_Grow(&g_session.m_strAutoMSG, v3 - 1, 1u) )
+1795:   {
+1796:     qmemcpy(g_session.m_strAutoMSG._Ptr, v2, v4);
+1797:     g_session.m_strAutoMSG._Len = v3 - 1;
+1798:     g_session.m_strAutoMSG._Ptr[v4] = 0;
+1799:   }
+1800:   g_session.m_authCode = *((_DWORD *)buf + 1);
+1801:   g_session.m_userLevel = *((_DWORD *)buf + 3);
+1802:   g_session.m_aid = *((_DWORD *)buf + 2);
+1803:   if ( buf[46] < 0xAu )
+1804:   {
+1805:     if ( g_multiSTOP == 1 )
+1806:       exit(0);
+1807:     v5 = buf[46];
+1808:   }
+1809:   else
+1810:   {
+1811:     v5 = buf[46] - 10;
+
+## Ref/WinMain.cpp:107-114
+
+107:           (LPPROCESS_INFORMATION)&dstPath[4]);
+108:         return 0;
+109:       }
+110:     }
+111:   }
+112:   CSession::Init(&g_session);
+113:   strcpy(&srcPath[8], aSetupHpExe);
+114:   strcpy(dstPath, aSetupSetupHpEx);
