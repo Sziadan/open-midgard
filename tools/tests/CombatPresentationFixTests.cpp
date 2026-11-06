@@ -1,3 +1,4 @@
+#include "item/ItemTab.h"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -30,9 +31,10 @@ struct CMsgEffect {
 };
 int ResolveMsgSpriteMotionCountForEffect(const CMsgEffect&,int) { return 9; }
 struct QueuedMsgSpriteEffectDraw {
-    bool useReferencePixelRatio=false,usePerspectiveScale=false,bypassZoomClamp=false;
+    bool useReferencePixelRatio=false,usePerspectiveScale=false,bypassZoomClamp=false,anchorAboveHead=false;
     float referencePixelRatio=1,pixelsPerTile=0,desiredWorldWidthCells=0,zoom=1;
 };
+constexpr float kOverheadIconScale=2.25f;
 float ResolveMsgSpriteScale(float zoom) { return std::clamp(zoom,0.75f,2.0f); }
 #include "FalconFixBodies.inc"
 void check() {

@@ -14,6 +14,7 @@ struct CGameActor {
     u32 delay = 0;
     u32 forceDuration = 0;
     int m_isMotionFreezed = 0, m_isSprArgbFixed = 0, tint = 255;
+    u32 m_gid = 77;
     void SetForceAnimEndTick(u32 tick) { delay = tick; }
     void SetForceAnimation(int act, int motion, int maximum, int finishAct, int finishMotion, int animate, u32 duration, int loop) {
         if (act == 96 && motion == 4 && maximum == 4 && finishAct == 96 && finishMotion == 4 && animate == 1 && loop == 0) {
@@ -26,6 +27,7 @@ struct CSession {
     struct ForceAnimTick { u32 aid, tick; };
     std::vector<ForceAnimTick> m_forceAnimEndTick;
     u32 m_aid = 77;
+    u32 m_gid = 77;
     u32 GetForceAnimEndTick(u32 aid) const;
     void SetForceAnimEndTick(u32 aid, u32 tick);
 } g_session;

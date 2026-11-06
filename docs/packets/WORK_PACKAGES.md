@@ -1104,6 +1104,8 @@ No catch-all task completion without per-row contracts/classification. Add newly
 
 ## PK48 â€” Independent certification review
 
+Partial PK48.02 checkpoint: [2026-11-06 strong review](evidence/REVIEW-2026-11-06.md) restores the broad standalone build, retains448/460 with twelve named pending gates, and confirms126/126 active root tests. Certification remains open.
+
 Tier: **S**. Dependencies: PK00, PK01, PK02, PK03, PK04, PK05, PK06, PK07, PK08, PK09, PK10, PK11, PK12, PK13, PK14, PK15, PK16, PK17, PK18, PK19, PK20, PK21, PK22, PK23, PK24, PK25, PK26, PK27, PK28, PK29, PK30, PK31, PK32, PK33, PK34, PK35, PK36, PK37, PK38, PK39, PK40, PK41, PK42, PK43, PK44, PK45, PK46, PK47, PK50.
 
 ### Bounded steps

@@ -1,6 +1,7 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <string>
 #include <unordered_map>
 
 using u8 = std::uint8_t;
@@ -17,6 +18,7 @@ struct PacketView {
 class CGameActor {
 public:
     int m_isPc = 0;
+    u32 m_gid = 0;
     int m_job = 0;
     int m_gdid = 0;
     int m_emblemVersion = 0;
@@ -36,7 +38,16 @@ public:
     }
 };
 
-struct CSession { u32 m_aid = 0; };
+struct LocalGuildInfo {
+    u32 characterId = 0;
+    u32 guildId = 0;
+    u32 emblemVersion = 0;
+    std::string name;
+    std::string title;
+    bool isMaster = false;
+    u32 permissions = 0;
+};
+struct CSession { u32 m_aid = 0; u32 m_gid = 0; LocalGuildInfo m_localGuild{}; };
 CSession g_session;
 
 class CGameMode {
@@ -78,6 +89,7 @@ int main()
 {
     CGameActor pc;
     pc.m_isPc = 1;
+    pc.m_gid = 100;
     pc.m_job = 4001;
     CGameActor ordinaryMonster;
     ordinaryMonster.m_job = 1002;
@@ -92,6 +104,9 @@ int main()
     world.actors.emplace(13, &emperium);
     CGameMode mode;
     mode.m_world = &world;
+    world.m_player = &pc;
+    g_session.m_aid = 10;
+    g_session.m_gid = 100;
 
     std::array<u8, 12> bytes{};
     bytes[0] = 0xB4;
@@ -101,6 +116,15 @@ int main()
     Put16(bytes, 10, 7);
     HandleChangeGuild(mode, PacketView{0x01B4, 12, bytes.data()});
     assert(pc.m_gdid == 50 && pc.m_emblemVersion == 7);
+
+    Put32(bytes, 2, 100);
+    Put32(bytes, 6, 51);
+    Put16(bytes, 10, 8);
+    HandleChangeGuild(mode, PacketView{0x01B4, 12, bytes.data()});
+    assert(g_session.m_localGuild.characterId == 100);
+    assert(g_session.m_localGuild.guildId == 51);
+    assert(g_session.m_localGuild.emblemVersion == 8);
+    pc.SetGuildInfo(50,7); // Restore the baseline for the original rejection cases.
 
     Put32(bytes, 2, 11);
     Put32(bytes, 6, 60);

@@ -38,6 +38,8 @@ struct CAbleToMakeEffect {
 };
 
 struct CGameActor : CAbleToMakeEffect {
+    u32 m_aid=0;
+    u32 m_gid=0;
     struct Message { int id; msgparam_t arg; };
     std::vector<Message> messages;
     void SendMsg(void*, int id, msgparam_t arg, msgparam_t, msgparam_t) { messages.push_back({id,arg}); }
@@ -52,7 +54,7 @@ struct CWorld {
     }
 };
 struct CGameMode { CWorld* m_world=nullptr; };
-struct Session { u32 m_aid=0; bool m_isEffectOn=true; } g_session;
+struct Session { u32 m_aid=0; bool m_isEffectOn=true; u32 m_gid=0; } g_session;
 
 u32 ReadLE32(const u8* data) {
     return static_cast<u32>(data[0]) | (static_cast<u32>(data[1])<<8)
@@ -69,15 +71,15 @@ void WriteLE32(u8* data, u32 value) {
 int main() {
     CWorld world;
     CGameMode mode{&world};
-    CGameActor player;world.m_player=&player;
-    CGameActor devoter;world.actors[200]=&devoter;
+    CGameActor player;player.m_aid=100;player.m_gid=1100;world.m_player=&player;
+    CGameActor devoter;devoter.m_aid=200;devoter.m_gid=1200;world.actors[200]=&devoter;
     std::array<u8,28> bytes{};
     WriteLE32(bytes.data()+2,200);
     const u32 devoteeIds[5]={301,0,301,999,0};
     for(int i=0;i<5;++i) WriteLE32(bytes.data()+6+i*4,devoteeIds[i]);
     bytes[26]=0x34;bytes[27]=0x12; // Source ignores max distance.
 
-    g_session={100,false};
+    g_session={100,false,1100};
     HandleDevotionList(mode,PacketView{0x01CF,28,bytes.data()});
     assert(devoter.messages.empty()&&devoter.launches.empty());
     g_session.m_isEffectOn=true;
@@ -104,7 +106,7 @@ int main() {
     // Self AID is resolved to the local player; each nonzero slot launches regardless
     // of whether that devotee AID resolves to an actor.
     player.messages.clear();player.launches.clear();player.effects.clear();
-    g_session.m_aid=100;WriteLE32(bytes.data()+2,100);
+    g_session.m_aid=100;g_session.m_gid=1100;WriteLE32(bytes.data()+2,100);
     HandleDevotionList(mode,PacketView{0x01CF,28,bytes.data()});
     assert(player.messages.size()==5&&player.launches.size()==3);
     assert(player.effects[0].target.x==100&&player.effects[0].target.y==301);

@@ -3,6 +3,7 @@
 #include <list>
 #include <algorithm>
 #include <cstdlib>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,7 @@ struct World { std::list<CGameObject*> m_gameObjectList; } g_world;
 struct CGameActor : CGameObject {
     u32 m_gid = 0;
     vector3d m_pos;
+    float m_roty = 0.0f;
     int m_oldstateId = 0, m_stateId = 0;
     int m_willBeDead = 0, m_vanishTime = 0;
     u8 m_isLieOnGround = 0, m_isMotionFinished = 0, m_isMotionFreezed = 0, m_shouldAddPickInfo = 0;
@@ -48,9 +50,12 @@ struct CPc : CGameActor {};
 struct CMsgEffect : CGameObject {
     int m_msgEffectType = 0, m_digit = 0, m_numberValue = 0, m_sprShift = 0;
     int m_spriteActionIndex = 0, m_spriteMotionIndex = 0;
+    int m_falconStateCnt = 0, m_falconIsAttackTarget = 0, m_falconIsAnimation = 1;
+    float m_falconRotation = 0.0f, m_falconMotionSpeed = 4.0f;
+    u32 m_falconLastMotionTick = 0;
     int m_lastProcessedSpriteMotionIndex = -1, m_alpha = 0;
     u32 m_masterGid = 0, m_colorArgb = 0, m_stateStartTick = 0;
-    vector3d m_pos, m_orgPos;
+    vector3d m_pos, m_orgPos, m_destPos, m_destPos2, m_followRenderPos;
     float m_zoom = 0, m_orgZoom = 0, m_followTravelDistance = 0;
     CGameActor* m_masterActor = nullptr;
     u8 m_isVisible = 0, m_isDisappear = 0, m_followInitialized = 0, m_followRenderInitialized = 0;

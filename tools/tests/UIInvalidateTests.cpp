@@ -54,6 +54,7 @@ int main()
     assert(root.m_isDirty == 0 && child.m_isDirty == 0 && grandchild.m_isDirty == 0);
 
     g_windowMgr.m_isInvalidatedByForce = false; // RenderWallPaper resets this before the next invalidation cycle.
+    root.m_isDirty = 1; // Only update-needed roots propagate invalidation.
     session.InvalidateUI();
     assert(root.m_isDirty && child.m_isDirty && grandchild.m_isDirty);
     return 0;

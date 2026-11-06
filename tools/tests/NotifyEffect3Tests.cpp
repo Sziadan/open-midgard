@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "../../src/core/Vitals.h"
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -34,6 +35,7 @@ struct MessageCall {
 class CGameActor {
 public:
     u32 m_aid = 0;
+    u32 m_gid = 0;
     u16 m_Hp = 0;
     u16 m_Sp = 0;
     std::vector<MessageCall> messages;
@@ -72,6 +74,9 @@ public:
 
 struct CSession {
     u32 m_aid = 0;
+    u32 m_gid = 0;
+    CharacterVitals m_characterVitals{};
+    bool UpdateCharacterVital(u32 type, u32 value) { return m_characterVitals.Update(type, value); }
 };
 
 CSession g_session;
@@ -148,6 +153,7 @@ int main()
 {
     CGameActor player;
     player.m_aid = 42;
+    player.m_gid = 142;
     player.m_Hp = 100;
     player.m_Sp = 30;
     CWorld world;
@@ -156,6 +162,7 @@ int main()
     CGameMode mode;
     mode.m_world = &world;
     g_session.m_aid = 42;
+    g_session.m_gid = 142;
 
     int expectedNextRand = 0;
     std::srand(179);
@@ -167,6 +174,7 @@ int main()
     std::array<u8, 14> bytes{};
     HandleNotifyEffect3(mode, MakePacket(bytes, 42, 331, 25));
     assert(player.m_Hp == 125);
+    assert(g_session.m_characterVitals.hp == 125);
     assert(g_statusInvalidationCount == 1);
     assert(player.messages.size() == 1 && player.messages[0].value == 25);
     assert(static_cast<u32>(player.messages[0].color) == 0xFF00FF00u);
@@ -184,6 +192,7 @@ int main()
     std::srand(391);
     HandleNotifyEffect3(mode, MakePacket(bytes, 42, 332, 7));
     assert(player.m_Sp == 37);
+    assert(g_session.m_characterVitals.sp == 37);
     assert(g_statusInvalidationCount == 2);
     assert(static_cast<u32>(player.messages[0].color) == 0xFF0000FFu);
     assert(player.effects[0] == 332);
@@ -193,6 +202,7 @@ int main()
 
     CGameActor remote;
     remote.m_aid = 77;
+    remote.m_gid = 177;
     world.actors.emplace(77, &remote);
     const size_t playerMessageCount = player.messages.size();
     const size_t playerEffectCount = player.effects.size();

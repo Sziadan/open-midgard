@@ -3436,3 +3436,7 @@ Strong review completed source potion selection/audio paths, repeated-effect rep
 ## 2026-11-06 — PK09.20 signed recovery
 
 Resolved selected field/order and PE arithmetic; restored canonical signed/modulo deltas, zero feedback, unknown silence, shared RNG and truthful UI maxima. Added active/standalone source-derived units; legacy broad unit project remains a documented migration gap. Five intentional regressions rejected. 126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors. Full plan remains active. Commit: packet(PK09.20): restore signed recovery deltas and feedback.
+
+## 2026-11-06 - PK48.02 strong review / clean-slate checkpoint
+
+Reviewed305c48cf and accumulated test infrastructure. Restored all-target standalone build, retained production extraction guards and repaired three fixture setups. Root build succeeds and126/126 CTest pass in175.36s; standalone448/460 in73.61s, twelve failures retained with explicit source/semantic assignments. PK09.20 evidence hashes match. Corrected chat handler location and notice-versus-expand continuation. No runtime changes, live/deployment certification or completed feature claims. [Review](evidence/REVIEW-2026-11-06.md), [results](evidence/REVIEW-2026-11-06.json). PK48.02 remains IN_PROGRESS. Commit: `packet(PK48.02): restore standalone checks and record review gaps`.

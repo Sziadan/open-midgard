@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Strong review checkpoint (2026-11-06):** [review and continuation instructions](evidence/REVIEW-2026-11-06.md) retain PK09.20, repair the standalone test build and three fixture setups, and record twelve still-failing checks. Root CTest passes126/126; standalone passes448/460. PK48.02 remains IN_PROGRESS; full feature/certification acceptance is unchanged.
+
 **Active step: PK09.04.** Latest checkpoint: [PK09.20 signed recovery](evidence/PK09.20-recovery-delta.md), [contract](contracts/PK09.RECOVERY-DELTA.md), [provenance](evidence/PK09.20-recovery-delta.json). Commit: `packet(PK09.20): restore signed recovery deltas and feedback`. 126/126 CTest in 176.61s; 177 PASS packet records; source-derived recovery/resurrection unit and source checks; 5 GUI cases and8 retained frames; zero QML errors.
 
 - PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing now pass PK09.15.

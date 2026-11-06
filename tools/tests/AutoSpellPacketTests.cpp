@@ -81,7 +81,7 @@ int main()
     assert(window.messages[2].id == 31 && window.messages[2].value == 5107);
 
     g_windowMgr = {};
-    WriteLE32(bytes.data() + 2, 0);
+    bytes.fill(0); // Clear all seven entries, including slots 2 and 6 from the prior case.
     HandleAutoSpellList(mode, PacketView{0x01CD, 30, bytes.data()});
     assert(g_windowMgr.makeWindowCalls == 0); // no window for an empty list
 

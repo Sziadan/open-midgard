@@ -13,6 +13,7 @@ u32 timeGetTime() { return now; }
 struct ForceAnimTick { u32 aid = 0, tick = 0; };
 struct CSession {
     u32 m_aid = 77;
+    u32 m_gid = 77;
     std::vector<ForceAnimTick> m_forceAnimEndTick;
     u32 GetForceAnimEndTick(u32 aid) const;
     void SetForceAnimEndTick(u32 aid, u32 tick);

@@ -40,6 +40,7 @@ struct CAbleToMakeEffect {
 struct CGameActor : CAbleToMakeEffect {
     struct Message { int id; msgparam_t arg; };
     u32 m_aid=0;
+    u32 m_gid=0;
     int m_job=0;
     int m_effectState=0;
     std::vector<Message> messages;
@@ -55,7 +56,7 @@ struct CWorld {
     }
 };
 struct CGameMode { CWorld* m_world=nullptr; };
-struct Session { u32 m_aid=0; bool m_isEffectOn=true; } g_session;
+struct Session { u32 m_aid=0; bool m_isEffectOn=true; u32 m_gid=0; } g_session;
 
 constexpr int kEffectStateHidingMask=0x0004;
 constexpr int kEffectStateBurrowMask=0x0002;
@@ -79,17 +80,17 @@ void WriteLE16(u8* data, u16 value) {
 int main() {
     CWorld world;
     CGameMode mode{&world};
-    CGameActor player;player.m_aid=100;world.m_player=&player;
+    CGameActor player;player.m_aid=100;player.m_gid=1100;world.m_player=&player;
     CGameActor actor;actor.m_aid=200;world.actors[200]=&actor;
     std::array<u8,8> bytes{};
 
-    g_session={100,false};
+    g_session={100,false,1100};
     WriteLE32(bytes.data()+2,200);
     HandleSpirits(mode,PacketView{0x01D0,8,bytes.data()});
     HandleSpirits2(mode,PacketView{0x01E1,8,bytes.data()});
     assert(actor.messages.empty()&&actor.launched.empty());
 
-    g_session={100,true};
+    g_session={100,true,1100};
     HandleSpirits(mode,PacketView{0x01D0,7,bytes.data()});
     HandleSpirits(mode,PacketView{0x01D1,8,bytes.data()});
     HandleSpirits2(mode,PacketView{0x01E1,7,bytes.data()});
@@ -118,7 +119,7 @@ int main() {
             &&actor.messages[1].id==109&&actor.messages[1].arg==629&&actor.launched.empty());
     }
 
-    player={};player.m_aid=100;player.m_job=4038;world.m_player=&player;
+    player={};player.m_aid=100;player.m_gid=1100;player.m_job=4038;world.m_player=&player;
     WriteLE32(bytes.data()+2,100);
     HandleSpirits(mode,PacketView{0x01D0,8,bytes.data()});
     assert(player.messages.size()==1&&player.messages[0].arg==504&&player.launched.empty());
@@ -154,7 +155,7 @@ int main() {
     assert(player.messages.empty()&&player.launched.empty());
 
     CGameMode noWorld{};
-    g_session={100,true};WriteLE32(bytes.data()+2,999);
+    g_session={100,true,1100};WriteLE32(bytes.data()+2,999);
     HandleSpirits(noWorld,PacketView{0x01D0,8,bytes.data()});
     assert(actor.messages.empty());
     return 0;

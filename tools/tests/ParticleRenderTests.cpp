@@ -121,7 +121,8 @@ constexpr int PP_2DTEXTURE=0;
 constexpr int PP_2DTEXTUREORBIT=1;
 using D3DBLEND=int;
 constexpr int PF_A8R8G8B8=4, D3DPT_TRIANGLESTRIP=5, D3DPT_TRIANGLELIST=4, D3DCULL_NONE=1;
-constexpr int D3DRENDERSTATE_ZENABLE=0,D3DRENDERSTATE_ZWRITEENABLE=1,D3DRENDERSTATE_SRCBLEND=2,D3DRENDERSTATE_DESTBLEND=3;
+constexpr int D3DRENDERSTATE_ZENABLE=7,D3DRENDERSTATE_ZWRITEENABLE=14,D3DRENDERSTATE_ALPHATESTENABLE=15;
+constexpr int D3DRENDERSTATE_SRCBLEND=19,D3DRENDERSTATE_DESTBLEND=20,D3DRENDERSTATE_ALPHAREF=24;
 constexpr int TRUE=1,FALSE=0,D3DZB_FALSE=0,D3DZB_TRUE=1;
 struct SilentRenderDevice;
 constexpr int D3DBLEND_SRCALPHA=5,D3DBLEND_ONE=2,D3DBLEND_INVSRCALPHA=6;
@@ -149,15 +150,29 @@ struct RPFace {
     float alphaSortKey=0;
     static void DrawPri(RPFace*,SilentRenderDevice&);
 };
-struct SilentDraw { RPFace face; int depthTest,depthWrite,srcBlend,destBlend; CTexture* bound; };
+struct SilentDraw { RPFace face; int depthTest,depthWrite,alphaTest,alphaRef,srcBlend,destBlend,multiTextureMode; CTexture* bound; };
 struct SilentRenderDevice {
-    int states[4]{1,1,5,6};
+    int states[32]{};
     CTexture* bound=nullptr;
     std::vector<SilentDraw> draws;
+    int multiTextureMode=0;
+    std::vector<int> multiTextureModeHistory;
+    SilentRenderDevice() {
+        states[D3DRENDERSTATE_ZENABLE]=D3DZB_TRUE;
+        states[D3DRENDERSTATE_ZWRITEENABLE]=TRUE;
+        states[D3DRENDERSTATE_ALPHATESTENABLE]=TRUE;
+        states[D3DRENDERSTATE_ALPHAREF]=207;
+        states[D3DRENDERSTATE_SRCBLEND]=D3DBLEND_SRCALPHA;
+        states[D3DRENDERSTATE_DESTBLEND]=D3DBLEND_INVSRCALPHA;
+    }
     void SetRenderState(int name,int value){states[name]=value;}
 } silentDevice;
 void RPFace::DrawPri(RPFace* face,SilentRenderDevice& device){
-    device.draws.push_back({*face,device.states[0],device.states[1],device.states[2],device.states[3],device.bound});
+    device.draws.push_back({*face,
+        device.states[D3DRENDERSTATE_ZENABLE],device.states[D3DRENDERSTATE_ZWRITEENABLE],
+        device.states[D3DRENDERSTATE_ALPHATESTENABLE],device.states[D3DRENDERSTATE_ALPHAREF],
+        device.states[D3DRENDERSTATE_SRCBLEND],device.states[D3DRENDERSTATE_DESTBLEND],
+        device.multiTextureMode,device.bound});
 }
 int fogCalls=0;
 void ApplyFogToVertices(tlvertex3d*,int,bool,int){++fogCalls;}
@@ -173,6 +188,10 @@ struct SilentRenderer {
     void AddReferenceEffectTriangle(RPFace*,int);
     void FlushEffectDepthLists();
     void FlushEffectNoDepthLists();
+    void SetMultiTextureMode(int mode) {
+        m_renderDevice->multiTextureMode=mode;
+        m_renderDevice->multiTextureModeHistory.push_back(mode);
+    }
     void SetTexture(CTexture* tex){m_renderDevice->bound=tex;}
     std::vector<RPFace> submissions;
     std::vector<int> flags;
@@ -220,6 +239,8 @@ void SubmitWorldTeiRect(const vector3d& a,const vector3d& b,const vector3d& c,co
 #include "HermodeRendererBody.inc"
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
+thread_local float g_groundVisualDepthBias=0.0f;
+thread_local float g_groundVisualDepthOffset=0.0f;
 #include "ProjectPointBody.inc"
 #include "CircleRenderBodies.inc"
 #include "CastingColorBodies.inc"
@@ -1534,7 +1555,10 @@ int main() {
             && silentDevice.draws[2].bound==&farTex,"no-depth alpha and emissive passes sort independently back-to-front");
         check(silentDevice.draws[0].depthTest==0 && silentDevice.draws[0].depthWrite==0 && silentDevice.draws[0].srcBlend==5 && silentDevice.draws[0].destBlend==6
             && silentDevice.draws[2].srcBlend==2 && silentDevice.draws[2].destBlend==2,"no-depth passes disable testing/writes and retain source alpha/emissive blends");
-        check(g_renderer.m_rpAlphaNoDepthList.empty() && g_renderer.m_rpEmissiveNoDepthList.empty() && silentDevice.states[0]==1 && silentDevice.states[2]==5 && silentDevice.states[3]==6,
+        check(g_renderer.m_rpAlphaNoDepthList.empty() && g_renderer.m_rpEmissiveNoDepthList.empty()
+            && silentDevice.states[D3DRENDERSTATE_ZENABLE]==D3DZB_TRUE
+            && silentDevice.states[D3DRENDERSTATE_SRCBLEND]==D3DBLEND_SRCALPHA
+            && silentDevice.states[D3DRENDERSTATE_DESTBLEND]==D3DBLEND_INVSRCALPHA,
             "no-depth queues clear and restore subsequent depth/blend state");
         clearQueues();g_renderer.AddReferenceEffectTriangle(face,0x201);g_renderer.FlushEffectNoDepthLists();const auto drawCount=silentDevice.draws.size();
         g_renderer.FlushEffectNoDepthLists();check(silentDevice.draws.size()==drawCount,"no-depth flush never redraws stale previous-frame faces");

@@ -45,6 +45,7 @@ struct CAbleToMakeEffect : CRenderObject {
 };
 struct CGameActor : CAbleToMakeEffect {
     u32 m_aid=0;
+    u32 m_gid=0;
     int m_job=0, m_effectState=0;
     void SendMsg(void*, int, msgparam_t, msgparam_t, msgparam_t);
 };
@@ -57,7 +58,7 @@ struct CWorld {
     }
 };
 struct CGameMode { CWorld* m_world=nullptr; };
-struct Session { u32 m_aid=0; bool m_isEffectOn=true; } g_session;
+struct Session { u32 m_aid=0; bool m_isEffectOn=true; u32 m_gid=0; } g_session;
 constexpr int kEffectStateHidingMask=0x0004;
 constexpr int kEffectStateBurrowMask=0x0002;
 u32 ReadLE32(const u8* data) {
@@ -108,7 +109,7 @@ void WriteLE16(u8* data, u16 value) { data[0]=static_cast<u8>(value); data[1]=st
 int main() {
     CWorld world;
     CGameMode mode{&world};
-    CGameActor actor; actor.m_aid=200; actor.m_pos={11,22,33};
+    CGameActor actor; actor.m_aid=200; actor.m_gid=1200; actor.m_pos={11,22,33};
     world.actors.emplace(actor.m_aid,&actor);
     std::array<u8,8> packet{};
     WriteLE32(packet.data()+2,actor.m_aid);

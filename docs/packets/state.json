@@ -1676,7 +1676,9 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/REVIEW-2026-11-05.md",
-        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md"
+        "docs/packets/evidence/REVIEW-CLEAN-2026-11-05.md",
+        "docs/packets/evidence/REVIEW-2026-11-06.md",
+        "docs/packets/evidence/REVIEW-2026-11-06.json"
       ],
       "commit_subject": null
     },

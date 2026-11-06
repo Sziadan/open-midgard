@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-06",
+  "reviewed_head": "305c48cf4a551f7ca195c2e9a33186c6d05fb084",
+  "step": "PK48.02",
+  "status": "IN_PROGRESS",
+  "runtime_changes": false,
+  "root_ctest": {
+    "passed": 126,
+    "total": 126,
+    "seconds": 175.36
+  },
+  "standalone_ctest": {
+    "passed": 448,
+    "total": 460,
+    "seconds": 73.61,
+    "failed_tests": [
+      "frame_submission_source_check",
+      "effect_lifecycle_checks",
+      "particle_render_checks",
+      "guild_skill_wnd_refresh_checks",
+      "spirit_packet_lifecycle_checks",
+      "actor_processstate_source_check",
+      "actor_sendmsg_emotion_source_check",
+      "blitzbeat_caller_source_check",
+      "skill_packet_actor_lookup_source_check",
+      "msg_effect_state_lifecycle_checks",
+      "falcon_equip_parity_check",
+      "ammo_cursor_regression_checks"
+    ]
+  },
+  "extractor_probes": {
+    "single_function": "PASS",
+    "multiple_functions_rejected": "PASS",
+    "missing_end_rejected": "PASS"
+  },
+  "pk09_20_provenance": "all recorded source/Ref/server/proof/render/PE hashes matched",
+  "source_sha256": {
+    "docs/skill/generated/EFFECT_COVERAGE.tsv": "ae9027603695bd5a05257219f2c02dbd167e8768c5d27504a7b413ea3e547162",
+    "tools/tests/AutoSpellPacketTests.cpp": "ce1346a91875d3fe2dc661e819b9980f52db5b12e40d78d67222889b8c3eda6c",
+    "tools/tests/CMakeLists.txt": "98922ed771d35155bc346b4c9a0bf70a60ffb1006cda9bc9db7c6a797654399c",
+    "tools/tests/ChangeGuildTests.cpp": "fa4a6220f15960e9c548a086df73790750702be23732b7c9162057dcca899ab5",
+    "tools/tests/CombatPresentationFixTests.cpp": "8ffd45dfd5b8e7a1a78aa771be047ed02bec572f922b3dd561b71169e35b420a",
+    "tools/tests/ComboDelayIntegrationTests.cpp": "c8cefe1781c7fa36f82dfda1dbada7ec3c52fe480ddc8bdd5963372164762f7a",
+    "tools/tests/DevotionPacketLifecycleTests.cpp": "62c34fc53d10d665e0513edbff3f046cf5ef2f78738a1fbd080c05e7af00968e",
+    "tools/tests/EffectLifecycleTests.cpp": "ecd1fb55f920754a8c1f07b2d0d6c0991058caac4a6b58f63e780c8d4e7e1890",
+    "tools/tests/MsgEffectStateLifecycleTests.cpp": "0b22f9aa3061e4dceb4df97f6d178440b3442b4f370df4cd62e04e69aab82dcd",
+    "tools/tests/NotifyEffect3Tests.cpp": "d0310a220144e0b43a44b6a625213284e02e8cdf402193ea529fefed90f0afdb",
+    "tools/tests/ParticleRenderTests.cpp": "236754948e51c81ebaa030bf73c5deb561416c3e81c8625c7efa1f78a8d76332",
+    "tools/tests/ServerSoundTests.cpp": "908daf7dd217ff82c0de787da5b6838ca9e437b73668a6dca9a0cd65bfbf7c6e",
+    "tools/tests/SpiritChookgiIntegrationTests.cpp": "4ef9dc3e7040aa57b1872e7d8e49bec77df1d290b07b599f2f1b0a57ccc2d229",
+    "tools/tests/SpiritPacketLifecycleTests.cpp": "b398a8e87870bf62d307233f0c9a797ae32e79ef1b5d53fba0869eda6c0805e7",
+    "tools/tests/UIInvalidateTests.cpp": "5981a507e0a8620c0565581ffd87d3d4ca50743912df03ff43d371c7e9b1d9d8"
+  },
+  "log_sha256": {
+    "review-root-ctest.log": "8fb203eecf34f4f99b9b318b4cdf4d4f8df367d04094c81f7217e4b9ff0a73eb",
+    "review-unit-ctest.log": "884f84df2de5612e5ffdf13403e51f16f9ba358e397aa2f72be3eb065402ecb1",
+    "review-root-build.log": "708e462c0926ff58ee295df6dabd7d406a40a711dc35b233a031fbb03d3afe69",
+    "review-unit-build.log": "f9d1b9f5111712c808bfdceba3b07959b85d3ca0de106b420a4b1717349ce8c2"
+  },
+  "limits": [
+    "Twelve standalone checks remain failing; no full independent certification.",
+    "No original executable execution/copy, live account testing, deployment or external server mutation."
+  ]
+}

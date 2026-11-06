@@ -19,6 +19,8 @@ using u16 = std::uint16_t;
 using u32 = std::uint32_t;
 using msgparam_t = std::intptr_t;
 int g_isSkipFrame = 1;
+u32 g_effectLogicStep=0;
+thread_local float g_groundVisualDepthOffset=0.0f,g_groundVisualDepthBias=0.0f;
 int primitiveDeaths = 0, effectDeaths = 0;
 int g_blitzBeatEmissionCount = 0;
 std::vector<std::string> traceCalls;
@@ -221,10 +223,6 @@ struct CSession {
     const char* GetAttrWaveName(int) const;
 } g_session;
 #include "StatusStateIconMap.h"
-const StatusStateIconEntry* FindStatusStateIcon(int priority,int status) {
-    for(const auto& entry:kStatusStateIconEntries) if(entry.priority==priority&&entry.status==status) return &entry;
-    return nullptr;
-}
 struct ModeManager { CGameMode* current = &gameMode; CGameMode* GetCurrentGameMode() { return current; } } g_modeMgr;
 bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name) {
     const vector3d& listener=g_modeMgr.GetCurrentGameMode()->m_world->m_player->m_pos;
@@ -863,6 +861,7 @@ constexpr int kEffectStateSightMask=0x1, kEffectStateRuwachMask=0x2000;
 constexpr int kSightRelaunchTicks=270, kRuwachRelaunchTicks=200;
 struct CGameActor : CAbleToMakeEffect {
     int m_effectState=0, m_effectLaunchCnt=0;
+    u32 m_effectLaunchStep=0;
     void ProcessEffectState();
 };
 #include "EffectLifecycleBodies.inc"
@@ -6109,8 +6108,10 @@ int main()
         actor.RemoveEffectById(0);
         check(actor.m_effectList.size() == 1 && first.m_master == nullptr && second.m_master == &actor
             && actor.m_beginSpellEffect == &first, "remove id zero detaches first match only, preserving message-109 pointer semantics");
+        g_world.m_gameObjectList.push_back(&second); // Attachment pointers are non-owning; only live world effects receive detach.
         actor.DetachEffects();
         check(actor.m_effectList.empty() && second.m_master == nullptr, "actor exit detaches remaining effects");
+        g_world.m_gameObjectList.remove(&second);
     }
     {
         CRagEffect effect;
@@ -14470,7 +14471,8 @@ int main()
     {
         CGameActor actor;
         const int oldSkipFrame=g_isSkipFrame;
-        g_isSkipFrame=1;
+        const u32 oldLogicStep=g_effectLogicStep;
+        g_isSkipFrame=1;BeginEffectStateLogicStep();
         actor.m_BeZero=1;actor.m_BodyLight=77;actor.m_effectState=0;actor.m_effectLaunchCnt=9;
         actor.ProcessEffectState();
         check(actor.m_BodyLight==0&&actor.m_BeZero==0&&actor.m_effectLaunchCnt==36000
@@ -14480,7 +14482,12 @@ int main()
         actor.m_effectState=kEffectStateSightMask;actor.m_effectLaunchCnt=269;
         actor.ProcessEffectState();
         check(actor.m_BodyLight==55&&actor.m_BeZero==1&&actor.m_effectList.empty()
-            &&actor.m_effectLaunchCnt==270,"ProcessEffectState waits one tick below the Sight relaunch threshold");
+            &&actor.m_effectLaunchCnt==269,"render-only effect-state update does not advance the relaunch counter");
+        g_isSkipFrame=1;BeginEffectStateLogicStep();actor.ProcessEffectState();
+        check(actor.m_effectLaunchCnt==270&&actor.m_effectList.empty(),"Sight reaches threshold only on a logic step");
+        actor.ProcessEffectState();
+        check(actor.m_effectLaunchCnt==270&&actor.m_effectList.empty(),"duplicate actor processing within one logic step is idempotent");
+        BeginEffectStateLogicStep();
         actor.ProcessEffectState();
         CRagEffect* sight=actor.m_effectList.empty()?nullptr:actor.m_effectList.back();
         const int expectedMarker=(timeGetTime()>>4)%10+1;
@@ -14488,9 +14495,9 @@ int main()
             &&actor.m_effectLaunchCnt==1,"ProcessEffectState launches Sight at 270, sends time marker, then increments once");
 
         actor.m_effectState=kEffectStateRuwachMask;actor.m_effectLaunchCnt=199;
-        actor.ProcessEffectState();
+        BeginEffectStateLogicStep();actor.ProcessEffectState();
         check(actor.m_effectLaunchCnt==200,"ProcessEffectState waits one tick below the Ruwach relaunch threshold");
-        actor.ProcessEffectState();
+        BeginEffectStateLogicStep();actor.ProcessEffectState();
         CRagEffect* ruwach=actor.m_effectList.empty()?nullptr:actor.m_effectList.back();
         check(ruwach&&ruwach->m_type==33&&ruwach->m_count==expectedMarker
             &&actor.m_effectLaunchCnt==1,"ProcessEffectState launches Ruwach at 200 and sends the same marker");
@@ -14500,7 +14507,7 @@ int main()
             delete effect;
         }
         actor.m_effectList.clear();
-        g_isSkipFrame=oldSkipFrame;
+        g_isSkipFrame=oldSkipFrame;g_effectLogicStep=oldLogicStep;
     }
     {
         const int oldRandomDraws=rngDraws;
