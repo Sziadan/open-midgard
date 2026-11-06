@@ -120,3 +120,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.CHAT-NOTICES](PK09.CHAT-NOTICES.md) records typed source notice parsing, split/unsplit owner rows, backlog/generation lifetime and selected producer proof. The subsequent primary checkpoint implements source tabs; full PK09.21 acceptance remains open.
 
 [PK09.21 primary histories](../evidence/PK09.21-primary.md) records actual source ST/BT view integration, reviewed speech producers and strong source/PE/render corrections. Full detached interaction/persistence and remaining producer/lifecycle acceptance stay open.
+
+[PK09.21 detached visual histories](../evidence/PK09.21-wrapped.md) records separate logical/visual retention, source wrapping/resize replay, shared view/input and retained-owner interaction. Options139, persistence, exact art and broader producer/lifecycle gates remain open.

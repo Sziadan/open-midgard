@@ -345,6 +345,12 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_executable(chat_history_view_checks tools/tests/ChatHistoryViewTests.cpp)
     target_compile_features(chat_history_view_checks PRIVATE cxx_std_17)
     add_test(NAME chat_history_view_checks COMMAND chat_history_view_checks)
+    add_executable(chat_history_wrap_checks tools/tests/ChatHistoryWrapTests.cpp)
+    target_compile_features(chat_history_wrap_checks PRIVATE cxx_std_17)
+    add_test(NAME chat_history_wrap_checks COMMAND chat_history_wrap_checks)
+    add_test(NAME packet_chat_detached_checks COMMAND packet_stream_replay_checks --chat-detached-only)
+    set_tests_properties(packet_chat_detached_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-detached-settings")
     add_test(NAME packet_chat_primary_checks COMMAND packet_stream_replay_checks --chat-primary-only)
     set_tests_properties(packet_chat_primary_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-primary-settings")

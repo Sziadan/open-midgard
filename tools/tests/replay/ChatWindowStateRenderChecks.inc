@@ -265,6 +265,9 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     click({historyRect.left,historyRect.top,historyRect.right-13,historyRect.bottom});
     WindowProc(g_hMainWnd,WM_LBUTTONDBLCLK,MK_LBUTTON,
         MAKELPARAM(primary->m_x+historyRect.left+5,primary->m_y+historyRect.top+7));
+    // Double-click is the second down; complete its matching up before detach.
+    WindowProc(g_hMainWnd,WM_LBUTTONUP,0,
+        MAKELPARAM(primary->m_x+historyRect.left+5,primary->m_y+historyRect.top+7));
     Require(primary->GetWhisperTargetText()=="SourceZero" && primary->IsMessageInputActive(),
         "native source row doubleclick did not select its stored talker");
     adapter.syncChat(); Frames(app,view);
@@ -273,5 +276,87 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     Require(primaryResults.open(QIODevice::WriteOnly), "primary results open failed");
     primaryResults.write(QJsonDocument(QJsonObject{{"source_rows",240},{"legacy_view_rows",50},{"manager_receipts",256},{"row_pitch",14},
         {"tabs",2},{"resize_snap",true},{"shared_scrollbar",true},{"talker_selection",true},{"outcome","PASS"}}).toJson());
+
+    // Detached logical messages and wrapped visual rows have independent caps.
+    auto* wrappedST=static_cast<UISubChatHisWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SUBCHATST));
+    auto* wrappedBT=static_cast<UISubChatHisWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SUBCHATBT));
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_SUBCHATMINI);
+    primary->StickOnOff(false);
+    Require(primary->GetExpansionState()==0,"completed primary talker gesture left false frame capture");
+    g_windowMgr.m_onStSubChat=g_windowMgr.m_onBtSubChat=true;
+    g_windowMgr.UpdateChatAuxiliaryVisibility();
+    wrappedST->Resize(300,106);wrappedST->Move(20,380);
+    wrappedBT->Resize(280,106);wrappedBT->Move(340,380);
+    for (int i=0;i<121;++i) {
+        const auto text="older-"+std::to_string(i)+"\r\ncontinuation-"+std::to_string(i);
+        wrappedST->Append(text.c_str(),0xff2020,"DetachedPeer");
+    }
+    const std::string longDetached(150,'M');
+    wrappedBT->Append(longDetached.c_str(),0x20ff20,"WrappedPeer");
+    const int narrowRows=static_cast<int>(wrappedBT->GetVisualRows().size());
+    Require(wrappedST->GetRows().size()==121 && wrappedST->GetVisualRows().size()==122
+        && wrappedST->GetVisualRows().front().text=="older-60" && narrowRows>1,
+        "actual detached fixture lacks independent capped/wrapped rows");
+    wrappedST->ScrollHistory(-1000);
+    const auto captureDetached=[&](const QString& name) {
+        adapter.syncChat();Frames(app,view);
+        const auto layout=wrappedST->GetHistoryLayout();
+        const QRect area(wrappedST->m_x+layout.history.left,wrappedST->m_y+layout.history.top,
+            layout.history.right-layout.history.left,layout.history.bottom-layout.history.top);
+        auto* row=Find(view.rootObject(),"detachedChatRow0_0");
+        Require(row && row->isVisible() && row->property("text").toString()
+            ==QString::fromUtf8(wrappedST->GetVisibleRows().front().text.c_str()),
+            "actual detached QML visual row differs from shared native view");
+        const auto location=row->mapToScene(QPointF(0,0));
+        Require(qRound(location.y())==area.top()+3,"detached source row y20+3 differs");
+        auto* viewport=Find(view.rootObject(),"detachedChatViewport0");
+        Require(viewport && viewport->mapRectToScene(viewport->boundingRect()).toAlignedRect()==area,
+            "actual detached source viewport geometry differs");
+        const auto qt=view.grabWindow().convertToFormat(QImage::Format_RGB32);
+        ArgbDibSurface dib;Require(dib.EnsureSize(view.width(),view.height()),"detached visual native DIB failed");
+        std::fill_n(dib.GetPixels(),view.width()*view.height(),0xff181b20u);
+        wrappedST->DrawToHdc(dib.GetDC());wrappedBT->DrawToHdc(dib.GetDC());
+        const auto native=QImage(reinterpret_cast<uchar*>(dib.GetPixels()),view.width(),view.height(),
+            view.width()*4,QImage::Format_RGB32).copy();
+        Require(redPixels(qt,area)>20 && redPixels(native,area)>20,"detached visual source pixels missing");
+        Require(qt.save(output+"/"+name+".qml.png") && native.save(output+"/"+name+".native.png"),
+            "save detached visual frames failed");
+    };
+    captureDetached("chat-wrapped-oldest");
+    auto scroll=wrappedST->GetHistoryLayout();
+    wrappedST->ScrollHistory(10000);scroll=wrappedST->GetHistoryLayout();
+    const int scrollX=wrappedST->m_x+scroll.scrollThumb.left+2;
+    const int scrollY=wrappedST->m_y+scroll.scrollThumb.top+2;
+    WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(scrollX,scrollY));
+    Require(GetCapture()==g_hMainWnd && g_windowMgr.m_captureWindow==wrappedST,
+        "detached visual scrollbar did not acquire real capture");
+    WindowProc(g_hMainWnd,WM_MOUSEMOVE,MK_LBUTTON,
+        MAKELPARAM(scrollX,wrappedST->m_y+scroll.scrollTrack.top+2));
+    WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(-20,-20));
+    Require(wrappedST->GetHistoryLayout().first==0 && !GetCapture() && !g_windowMgr.m_captureWindow,
+        "detached visual scrollbar drag/outside release failed");
+    captureDetached("chat-wrapped-scroll-top");
+    const int rowX=wrappedST->m_x+10,rowY=wrappedST->m_y+27;
+    WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(rowX,rowY));
+    WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(rowX,rowY));
+    WindowProc(g_hMainWnd,WM_LBUTTONDBLCLK,MK_LBUTTON,MAKELPARAM(rowX,rowY));
+    WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(rowX,rowY));
+    Require(primary->GetWhisperTargetText()=="DetachedPeer" && primary->IsMessageInputActive(),
+        "detached visual row did not target main whisper editor");
+    wrappedBT->Resize(504,106);
+    Require(static_cast<int>(wrappedBT->GetVisualRows().size())<narrowRows,
+        "actual width resize failed to reflow detached source visual rows");
+    captureDetached("chat-wrapped-wide");
+    g_windowMgr.DeleteWindow(primary);
+    WindowProc(g_hMainWnd,WM_LBUTTONDBLCLK,MK_LBUTTON,MAKELPARAM(rowX,rowY));
+    WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(rowX,rowY));
+    Require(!g_windowMgr.m_chatWnd,"absent-main detached doubleclick recreated main");
+    captureDetached("chat-wrapped-without-main");
+    QFile detachedResults(output+"/chat-wrapped-results.json");
+    Require(detachedResults.open(QIODevice::WriteOnly),"detached visual results open failed");
+    detachedResults.write(QJsonDocument(QJsonObject{{"logical_rows",121},{"visual_rows",122},
+        {"narrow_rows",narrowRows},{"wide_rows",static_cast<int>(wrappedBT->GetVisualRows().size())},
+        {"viewport_top",20},{"row_pitch",14},{"real_scroll_capture",true},{"talker_target",true},
+        {"absent_main_noop",true},{"outcome","PASS"}}).toJson());
 
 }

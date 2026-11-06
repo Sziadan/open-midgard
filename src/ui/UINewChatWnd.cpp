@@ -1477,6 +1477,9 @@ void UINewChatWnd::OnLBtnDblClk(int x, int y)
 {
     const auto layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h, m_sourceTitleWidth);
     if (!m_show || m_expansionState == 0 || !PointInRectXY(layout.history, x, y)) return;
+    if (GetScrollBarState().visible && x >= layout.history.right - 13) return;
+    // The source capture belongs to the history child, not its main frame.
+    m_historyPointerDown = true;
     const auto& rows = m_sourceHistory[m_sourceTab];
     const int selected = m_sourceViews[m_sourceTab].selected;
     if (selected < 0 || selected >= static_cast<int>(rows.size()) || rows[selected].talker.empty()) return;

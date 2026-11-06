@@ -1933,8 +1933,17 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         value.insert(QStringLiteral("y"), history->m_y);
         value.insert(QStringLiteral("width"), history->m_w);
         value.insert(QStringLiteral("height"), history->m_h);
+        const auto layout=history->GetHistoryLayout();
+        const auto rectMap=[](RECT rect) { return QVariantMap{{"x",static_cast<int>(rect.left)},{"y",static_cast<int>(rect.top)},
+            {"width",static_cast<int>(rect.right-rect.left)},{"height",static_cast<int>(rect.bottom-rect.top)}}; };
+        value.insert(QStringLiteral("history"),rectMap(layout.history));
+        value.insert(QStringLiteral("scrollTrack"),rectMap(layout.scrollTrack));
+        value.insert(QStringLiteral("scrollThumb"),rectMap(layout.scrollThumb));
+        value.insert(QStringLiteral("first"),layout.first);
+        value.insert(QStringLiteral("total"),layout.total);
+        value.insert(QStringLiteral("scrollVisible"),layout.total>layout.visible);
         QVariantList rows;
-        for (const auto& row : history->GetRows()) {
+        for (const auto& row : history->GetVisibleRows()) {
             QVariantMap entry;
             entry.insert(QStringLiteral("text"), ToQString(row.text));
             entry.insert(QStringLiteral("color"), QColor::fromRgb(row.color).name());

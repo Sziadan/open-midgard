@@ -95,6 +95,19 @@ void ChatPrimaryViewReplay()
     chat->OnLBtnDblClk(x,y);
     Require(chat->GetWhisperTargetText() == "Peer" && chat->IsMessageInputActive()
         && chat->GetInputText() == "draft survives target selection", "selected talker did not target whisper/common edit");
+    // A held double-click remains history-child capture and must not trigger the
+    // main-frame capture gate for manager state operations.
+    g_windowMgr.m_captureWindow=chat;
+    chat->SetState(8);
+    Require(chat->GetExpansionState()==8,"history doubleclick was mistaken for frame capture");
+    chat->HandleQtMouseUp(x,y);g_windowMgr.m_captureWindow=nullptr;
+    chat->SetState(7);
+    // Double-clicking the scrollbar must not target the selected row's talker.
+    chat->SetQtInputText(UINewChatWnd::InputField_WhisperTarget,"KeepTarget");
+    chat->OnLBtnDblClk(chat->m_x+chat->GetLayoutDisplay().scrollTrack.left+2,y);
+    Require(chat->GetWhisperTargetText()=="KeepTarget","scrollbar doubleclick targeted a history talker");
+    chat->SetQtInputText(UINewChatWnd::InputField_WhisperTarget,"Peer");
+    chat->ScrollSourceHistory(-1000);
     // Preserve numeric main selection across trim, but never dereference a stale index.
     chat->ScrollSourceHistory(230);
     chat->HandleQtMouseDown(x,y); chat->HandleQtMouseUp(x,y);

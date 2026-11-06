@@ -4270,19 +4270,40 @@ Item {
             Text { x: 5; height: 16; text: modelData.kind === 0 ? "ST" : "BT"; color: "white"; font.pixelSize: 12 }
             Text { x: parent.width - 18; height: 16; text: "x"; color: "white"; font.pixelSize: 12 }
             Text { x: parent.width - 65; height: 16; visible: modelData.kind === 1; text: "Attach"; color: "white"; font.pixelSize: 12 }
-            ListView {
-                x: 5; y: 18; width: parent.width - 8; height: Math.max(0, parent.height - 35)
-                clip: true; interactive: false
-                model: modelData.rows || []
-                onCountChanged: positionViewAtEnd()
-                onWidthChanged: positionViewAtEnd()
-                onHeightChanged: positionViewAtEnd()
-                delegate: Text {
-                    required property var modelData
-                    width: ListView.view.width; height: 14
-                    text: modelData.text; color: modelData.color; font.pixelSize: 12
-                    textFormat: Text.PlainText; clip: true
+            Item {
+                id: detachedViewport
+                readonly property var history: parent.modelData
+                readonly property var bounds: history.history || ({})
+                objectName: "detachedChatViewport" + history.kind
+                x: bounds.x || 0; y: bounds.y || 0
+                width: bounds.width || 0; height: bounds.height || 0
+                clip: true
+                Repeater {
+                    model: detachedViewport.history.rows || []
+                    delegate: Text {
+                        required property var modelData
+                        required property int index
+                        objectName: "detachedChatRow" + detachedViewport.history.kind + "_" + index
+                        x: 2; y: index * 14 + 3
+                        width: detachedViewport.width - (detachedViewport.history.scrollVisible ? 16 : 3)
+                        height: 18
+                        text: modelData.text; color: modelData.color
+                        font.family: "Noto Sans"; font.pixelSize: 12; font.contextFontMerging: true
+                        textFormat: Text.PlainText; wrapMode: Text.NoWrap; clip: true
+                    }
                 }
+            }
+            Rectangle {
+                readonly property var bounds: parent.modelData.scrollTrack || ({})
+                x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
+                visible: parent.modelData.scrollVisible || false
+                color: "#404040"
+            }
+            Rectangle {
+                readonly property var bounds: parent.modelData.scrollThumb || ({})
+                x: bounds.x || 0; y: bounds.y || 0; width: bounds.width || 0; height: bounds.height || 0
+                visible: parent.modelData.scrollVisible || false
+                color: "#b8b8b8"
             }
         }
     }

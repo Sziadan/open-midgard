@@ -1,0 +1,39 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004df170 <.text+0xde170>:
+  4df170:	55                   	push   %ebp
+  4df171:	8b ec                	mov    %esp,%ebp
+  4df173:	6a ff                	push   $0xffffffff
+  4df175:	68 38 4f 6c 00       	push   $0x6c4f38
+  4df17a:	64 a1 00 00 00 00    	mov    %fs:0x0,%eax
+  4df180:	50                   	push   %eax
+  4df181:	64 89 25 00 00 00 00 	mov    %esp,%fs:0x0
+  4df188:	83 ec 24             	sub    $0x24,%esp
+  4df18b:	8b 81 84 00 00 00    	mov    0x84(%ecx),%eax
+  4df191:	33 d2                	xor    %edx,%edx
+  4df193:	3b c2                	cmp    %edx,%eax
+  4df195:	89 4d e0             	mov    %ecx,-0x20(%ebp)
+  4df198:	89 55 f0             	mov    %edx,-0x10(%ebp)
+  4df19b:	0f 84 4e 01 00 00    	je     0x4df2ef
+  4df1a1:	53                   	push   %ebx
+  4df1a2:	56                   	push   %esi
+  4df1a3:	8b 70 6c             	mov    0x6c(%eax),%esi
+  4df1a6:	8b 86 98 00 00 00    	mov    0x98(%esi),%eax
+  4df1ac:	81 c6 90 00 00 00    	add    $0x90,%esi
+  4df1b2:	57                   	push   %edi
+  4df1b3:	89 75 ec             	mov    %esi,-0x14(%ebp)
+  4df1b6:	89 45 e4             	mov    %eax,-0x1c(%ebp)
+  4df1b9:	8b 5e 04             	mov    0x4(%esi),%ebx
+  4df1bc:	3b d8                	cmp    %eax,%ebx
+  4df1be:	74 59                	je     0x4df219
+  4df1c0:	8b 55 08             	mov    0x8(%ebp),%edx
+  4df1c3:	83 c9 ff             	or     $0xffffffff,%ecx
+  4df1c6:	8b fa                	mov    %edx,%edi
+  4df1c8:	33 c0                	xor    %eax,%eax
+  4df1ca:	f2 ae                	repnz scas %es:(%edi),%al
+  4df1cc:	8b 43 08             	mov    0x8(%ebx),%eax
+  4df1cf:	f7                   	.byte 0xf7

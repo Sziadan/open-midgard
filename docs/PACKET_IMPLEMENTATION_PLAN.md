@@ -6,7 +6,7 @@ Created 2026-11-03. This is an execution specification, not a claim that any run
 
 ## Start here
 
-**Latest checkpoint (2026-11-06):** [PK09.21 source primary histories](packets/evidence/PK09.21-primary.md) replaces the primary receipt/filter view with actual ST/BT source rows, shared native/Qt scrolling and talker selection. Represented no-room normal/player/party/guild speech and EXP notices carry reviewed source metadata. Strong review corrected tab-switch resize, active PE name colors, overlapping child input and native text alpha. Full validation and hashes are retained with the checkpoint. Detached wrapping/controls/options, remaining producers, persistence and active Qt/scale/art/locale acceptance remain open.
+**Latest checkpoint (2026-11-06):** [PK09.21 detached visual histories](packets/evidence/PK09.21-wrapped.md) restores pixel wrapping, separate logical/visual240-row caps, resize replay and shared native/Qt scrolling and talker input. Strong review preserves character-unit wrapping, CRLF/blank-line rules, child capture and absent-main no-op behavior. Options139, persistence/main cached restore, remaining producers and active Qt/scale/art/locale acceptance remain open.
 
 **Current continuation priority:** finish [PK09.21 chat state/sticky/history ownership](packets/work-items/PK09.21.md) under [PK09.04](packets/work-items/PK09.04.md), then continue remaining item/status/detail/context work. Preserve corpse, effect and recovery regressions. PK45.06 is complete; broad actor/model review, full feature coverage, PK47 and independent PK48/49/deployment remain open. The whole packet implementation goal remains active.
 
