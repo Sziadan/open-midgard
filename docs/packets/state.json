@@ -1988,6 +1988,14 @@
         "docs/packets/evidence/PK09.17-inventory-acks.json"
       ],
       "commit_subject": "packet(PK09.17): repair inventory acknowledgement state and notices"
+    },
+    "PK09.18": {
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK09.18-item-obtain.md",
+        "docs/packets/evidence/PK09.18-item-obtain.json"
+      ],
+      "commit_subject": "packet(PK09.18): restore item acquisition notification"
     }
   }
 }

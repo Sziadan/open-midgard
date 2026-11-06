@@ -21,6 +21,7 @@
 #include "UIItemIdentifyWnd.h"
 #include "UISkillSelectWnd.h"
 #include "UIItemInfoWnd.h"
+#include "UINotifyItemObtainWnd.h"
 #include "UIItemWnd.h"
 #include "UIStorageWnd.h"
 #include "UIItemPurchaseWnd.h"
@@ -1278,6 +1279,15 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_cardInfoWnd->SetShow(1);
         return m_cardInfoWnd;
 
+    case WID_NOTIFYITEMOBTAINWND:
+        if (!m_itemObtainWnd) {
+            m_itemObtainWnd=new UINotifyItemObtainWnd();
+            m_children.push_back(m_itemObtainWnd);
+        }
+        m_children.remove(m_itemObtainWnd);m_children.push_back(m_itemObtainWnd);
+        m_itemObtainWnd->SetShow(1);
+        return m_itemObtainWnd;
+
     case WID_ITEMCOLLECTIONWND:
         if (!m_itemCollectionWnd) {
             m_itemCollectionWnd = new UIItemCollectionWnd();
@@ -1665,6 +1675,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         m_cardInfoWnd->StoreInfo();
         m_cardInfoWnd = nullptr;
     }
+    if (window == m_itemObtainWnd) m_itemObtainWnd=nullptr;
     if (window == m_itemCollectionWnd) {
         m_itemCollectionWnd = nullptr;
     }
@@ -1753,6 +1764,7 @@ void UIWindowMgr::RemoveAllWindows()
     m_itemWnd = nullptr;
     m_itemInfoWnd = nullptr;
     m_cardInfoWnd = nullptr;
+    m_itemObtainWnd = nullptr;
     m_itemCollectionWnd = nullptr;
     m_itemCompositionWnd = nullptr;
     m_itemIdentifyWnd = nullptr;
@@ -2556,6 +2568,12 @@ void UIWindowMgr::ShowCardInfoWindow(const ITEM_INFO& item, ItemInfoAction actio
     }
     auto* window=static_cast<UIItemInfoWnd*>(MakeWindow(WID_CARDINFOWND));
     if (window) window->SetItemInfo(item,0,0,ItemInfoSource::Snapshot);
+}
+
+void UIWindowMgr::ShowItemObtainNotification(const ITEM_INFO& item)
+{
+    auto* window=static_cast<UINotifyItemObtainWnd*>(MakeWindow(WID_NOTIFYITEMOBTAINWND));
+    if(window)window->SetItem(item,timeGetTime());
 }
 
 void UIWindowMgr::ShowItemCollectionWindow(const ITEM_INFO& item, int preferredX, int preferredY)

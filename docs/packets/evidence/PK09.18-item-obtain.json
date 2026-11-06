@@ -1,0 +1,84 @@
+{
+  "date": "2026-11-06",
+  "baseline": "a9db29f3a72296c719b7a35cf78efd6df35b8e1d",
+  "profile": 20080910,
+  "commit_subject": "packet(PK09.18): restore item acquisition notification",
+  "validation": "122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors",
+  "source_sha256": {
+    "CMakeLists.txt": "d4176e5fb15b5c12abe947ac7a0364312be60510e14a2fa82f9c04304d9d28ec",
+    "src/gamemode/GameModePacket.cpp": "9a8c04b94823576ed5bb68fac0c8ffc7d34d6aaf6a0ddca5e5c1a83d2398864c",
+    "src/item/Item.cpp": "f912153af3ef7e9300c4d5ba9738805fc3fc88c3d4acd1d6b9cdb9308e2a505c",
+    "src/item/Item.h": "cc0ab76a3f9fc24f029009d3df0320f10bf0577d9842750dc9b7f3732e6b9731",
+    "src/qtui/QtUiState.h": "c96ae7a002aec99b9b33e0ec7cf544460be674b16b6d78c50bdd7841fcf6573d",
+    "src/qtui/QtUiStateAdapter.cpp": "bd89ddca7e5f9cb1ee0dd275f743cd7dc164390f04829a03862c21add0542ba0",
+    "src/qtui/qml/GameOverlay.qml": "cb64f349bddf9ac88f35075b228ab14cf97b037628c08264759ca3084b764e9d",
+    "src/ui/CMakeLists.txt": "8ee5fe132c149438ffc89aafac75fef1a94598d7cce63896615ba305f020dac8",
+    "src/ui/UINotifyItemObtainWnd.cpp": "b15f2bac424e4f8db74d53e123047b2cf3433d6f676dff541dea6660cdfed427",
+    "src/ui/UINotifyItemObtainWnd.h": "8402ef9f649f6d01baafd4baeaaf00efa77bc1868168a993da4ea160fee5bf80",
+    "src/ui/UIWindowMgr.cpp": "44dc556513e509653d5d1a80fc501b1d21ec3d1796feb7f6e11c05a0c4000d1a",
+    "src/ui/UIWindowMgr.h": "bab4a1b2b81844af0609985b06e1671172da660740cd1da0c7da16d0c6dc3d81",
+    "tools/tests/fixtures/packet-item-data/item-obtain-msgstringtable.txt": "5979e6cbe05721b71ebb665cc254434d455c1524b49ac26dd97e11a485d6620d",
+    "tools/tests/replay/ItemColourRenderChecks.cpp": "eb2b76348d116d5d68da311dd9ba238082529a3659628bea8aa3c2a2ee26c821",
+    "tools/tests/replay/ItemObtainRenderChecks.inc": "ab155b6b9da4696b2dbf30b344040a45091d014b4bded689d8ef2452be47f69e"
+  },
+  "primary_sha256": {
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/ItemInfo.cpp": "5bce74c76f40aafad079c2feaf746a7570a1380492a03e6e1cec52bdcf722bc8",
+    "Ref/GRF-Content/data/msgstringtable.txt": "200c4ac4970853ac7cb947629df790168a9d1afc5572e15fdc8d4944b6ab80af"
+  },
+  "server_sha256": {
+    "src/map/clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "src/map/packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef"
+  },
+  "original_pe": {
+    "path": "HighPriest.exe",
+    "sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "size": 3338345,
+    "image_base": "0x400000",
+    "method": "read-only static objdump; not executed",
+    "text_function": "0x46e6c0",
+    "name_function": "0x46db30",
+    "marker_va": "0x6f25e4",
+    "marker_raw_offset": "0x2f25e4",
+    "marker_hex": "2e2e2e00"
+  },
+  "intentional_regressions": {
+    "snapshot": {
+      "log_sha256": "a02b7ac79e0e5471ec044608c3a6d8ea9a24809000dd86d758987e122fbc9a75",
+      "failure": [
+        "FAIL item colour render: item-obtain popup did not preserve raw pickup snapshot fields"
+      ]
+    },
+    "expiry": {
+      "log_sha256": "53750d2da199e66e9bbb8a99563f31981c3715e356e7ff727367f9221c6c75b7",
+      "failure": [
+        "FAIL item colour render: item-obtain popup expired at inclusive 5000ms boundary"
+      ]
+    },
+    "sizing": {
+      "log_sha256": "9540e88e82d3700bf81d9db97521d0381b6b274b4a964583f96c9ca35ceb72cb",
+      "failure": [
+        "FAIL item colour render: sizing used decorated name instead of bare dummy name"
+      ]
+    }
+  },
+  "render_sha256": {
+    "item-obtain-125-qt.png": "8d9091e5ac7ba679b2f12c2a66da7d66a7ffb542bc4991ac502f1ba940ad0338",
+    "item-obtain-initial-native.png": "778d050c6a3c090e82ce001429c3771282733a6cb0e448b5f184e435364f5065",
+    "item-obtain-initial-qt.png": "4832444195af2121a0871e7f68c1c3d47b3e4689a68a86b03e20946db985f3e2",
+    "item-obtain-render-results.json": "bfd4ce448ffbc5624767e2f38497676344f08540400dee20e503f537036c6d9b",
+    "item-obtain-same-item-replaced-native.png": "778d050c6a3c090e82ce001429c3771282733a6cb0e448b5f184e435364f5065",
+    "item-obtain-same-item-replaced-qt.png": "400fbc9f8cab620e36a3ad55ed5f922e50a58aac3966c196eadf54fa19f2868b",
+    "item-obtain-unidentified-qt.png": "221bfe68e2195a723407379cfafe64d460e2021ea30478b890e04187f4a131bb",
+    "item-obtain-with-detail-native.png": "778d050c6a3c090e82ce001429c3771282733a6cb0e448b5f184e435364f5065",
+    "item-obtain-with-detail-qt.png": "89dd6255c0d1e35fb5f3d7af5145e84d5621ca860261c997407b2814f54cc1b8"
+  },
+  "full_ctest_sha256": "48416960f6991afc5adffbb97bbe808b08d742452737b8bd7099a53972eb55b9",
+  "scope_limits": [
+    "Item notification only; money unaccepted",
+    "No discovery closure or full PK09.04/PK47/PK48/PK49/deployed certification",
+    "English tests; broader locale and original skin fidelity remain open"
+  ]
+}

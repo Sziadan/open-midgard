@@ -2723,6 +2723,42 @@ Item {
         }
     }
 
+    RoFrame {
+        id: itemObtain
+        parent: root
+        objectName: "itemObtainWindow"
+        property var noticeData: uiState.itemObtainData
+        x: (noticeData.x || 0)*root.uiScale; y: (noticeData.y || 0)*root.uiScale
+        width: noticeData.width || 180; height: 32
+        scale: root.uiScale; transformOrigin: Item.TopLeft
+        visible: !!noticeData.visible; z: noticeData.layer || 40
+        showTitle: false
+        Image {
+            objectName: "itemObtainIcon"
+            x: 13; y: 5; width: 24; height: 24
+            source: root.itemIconSource(itemObtain.noticeData.itemId || 0, !!itemObtain.noticeData.identified)
+        }
+        Repeater {
+            model: itemObtain.noticeData.runs || []
+            Item {
+                required property var modelData
+                x: modelData.x; y: modelData.y
+                Text {
+                    x: 1; y: 1; text: modelData.text
+                    color: "#e0e0e0"; textFormat: Text.PlainText
+                    font.family: "MS Sans Serif"; font.pixelSize: 12; font.kerning: false
+                    renderType: Text.NativeRendering
+                }
+                Text {
+                    objectName: "itemObtainTextRun"
+                    text: modelData.text; color: modelData.color; textFormat: Text.PlainText
+                    font.family: "MS Sans Serif"; font.pixelSize: 12; font.kerning: false
+                    renderType: Text.NativeRendering
+                }
+            }
+        }
+    }
+
     component ItemDetailPanel: RoFrame {
         id: detailPanel
         property var detailData: ({})

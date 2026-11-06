@@ -1,0 +1,42 @@
+{
+    "cases": [
+        {
+            "case": "02D4 success snapshots item data and renders independent native/Qt notification",
+            "outcome": "PASS"
+        },
+        {
+            "case": "missing producer fallback refreshes to named producer without extending lifetime",
+            "outcome": "PASS"
+        },
+        {
+            "case": "notification coexists with regular item detail",
+            "outcome": "PASS"
+        },
+        {
+            "case": "same-item repeated award replaces delta and resets popup lifetime",
+            "outcome": "PASS"
+        },
+        {
+            "case": "failed pickup preserves current notification and timer",
+            "outcome": "PASS"
+        },
+        {
+            "case": "popup survives 5000ms and expires after 5000ms",
+            "outcome": "PASS"
+        },
+        {
+            "case": "width follows independent MS Sans Serif 12px measurement and 28px rounding",
+            "outcome": "PASS"
+        },
+        {
+            "case": "100/125 percent popup origin respects logical UI scaling",
+            "outcome": "PASS"
+        },
+        {
+            "case": "context names, stable sizing, passive hit testing and map teardown",
+            "outcome": "PASS"
+        }
+    ],
+    "frames": 8,
+    "outcome": "PASS"
+}

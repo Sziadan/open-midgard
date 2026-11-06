@@ -102,3 +102,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [PK09.INVENTORY-SHOW](PK09.INVENTORY-SHOW.md) records separate remembered/live visibility and source map reconstruction accepted by PK09.16.
 
 [PK09.INVENTORY-ACKS](PK09.INVENTORY-ACKS.md) records selected acknowledgement state, counts, metadata and source notices accepted by PK09.17.
+
+[PK09.ITEM-OBTAIN](PK09.ITEM-OBTAIN.md) records the WID58 item acquisition snapshot, sizing, text, colors, overflow and lifetime accepted by PK09.18.

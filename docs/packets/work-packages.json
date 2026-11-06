@@ -373,6 +373,11 @@
         "id": "PK09.17",
         "action": "Repair and verify selected inventory pickup/use/equip acknowledgement state, pending cleanup, metadata/count retention and source notices through production receive replay and actual native/Qt quantity, detail and bag/equipment transitions; retain acquisition-popup/full-item acceptance.",
         "tier": "S"
+      },
+      {
+        "id": "PK09.18",
+        "action": "Restore separate WID58 raw acquisition snapshots, source dummy sizing/full text/color/overflow and strict expiry; verify production pickup, native/Qt rendering, passive input, replacements, scaling and teardown while retaining full PK09.04.",
+        "tier": "S"
       }
     ],
     "acceptance": "P06: active2008 equipment02D0.01EF compatibility ambiguity must not cause cart clearing. Assert unique final dispatch ownership."

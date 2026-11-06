@@ -233,6 +233,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemInfoWidth READ itemInfoWidth NOTIFY itemInfoGeometryChanged)
     Q_PROPERTY(int itemInfoHeight READ itemInfoHeight NOTIFY itemInfoGeometryChanged)
     Q_PROPERTY(QVariantMap itemInfoData READ itemInfoData NOTIFY itemInfoDataChanged)
+    Q_PROPERTY(QVariantMap itemObtainData READ itemObtainData NOTIFY itemObtainDataChanged)
     Q_PROPERTY(QVariantMap cardInfoData READ cardInfoData NOTIFY cardInfoDataChanged)
     Q_PROPERTY(bool skillDescribeVisible READ skillDescribeVisible NOTIFY skillDescribeVisibleChanged)
     Q_PROPERTY(int skillDescribeX READ skillDescribeX NOTIFY skillDescribeGeometryChanged)
@@ -533,6 +534,7 @@ public:
     int itemInfoWidth() const { return m_itemInfoWidth; }
     int itemInfoHeight() const { return m_itemInfoHeight; }
     const QVariantMap& itemInfoData() const { return m_itemInfoData; }
+    const QVariantMap& itemObtainData() const { return m_itemObtainData; }
     const QVariantMap& cardInfoData() const { return m_cardInfoData; }
     bool skillDescribeVisible() const { return m_skillDescribeVisible; }
     int skillDescribeX() const { return m_skillDescribeX; }
@@ -1755,6 +1757,10 @@ public:
         m_itemInfoData = value;
         emit itemInfoDataChanged();
     }
+    void setItemObtainData(const QVariantMap& value) {
+        if(m_itemObtainData==value)return;
+        m_itemObtainData=value;emit itemObtainDataChanged();
+    }
     void setCardInfoData(const QVariantMap& value) {
         if(m_cardInfoData==value)return;
         m_cardInfoData=value;
@@ -2139,6 +2145,7 @@ signals:
     void itemInfoVisibleChanged();
     void itemInfoGeometryChanged();
     void itemInfoDataChanged();
+    void itemObtainDataChanged();
     void cardInfoDataChanged();
     void skillDescribeVisibleChanged();
     void skillDescribeGeometryChanged();
@@ -2397,6 +2404,7 @@ private:
     int m_itemInfoWidth = 0;
     int m_itemInfoHeight = 0;
     QVariantMap m_itemInfoData;
+    QVariantMap m_itemObtainData;
     QVariantMap m_cardInfoData;
     bool m_skillDescribeVisible = false;
     int m_skillDescribeX = 0;

@@ -229,6 +229,7 @@ Tier: **S**. Dependencies: PK05.
 - **PK09.15 [S]** Restore separately owned WID82 card snapshots/rectangle and source nonzero-prefix hidden-band input; verify native/actual Qt hover/right-click/close, independent lifecycle and viewport tooltip layering, retaining full PK09.04. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.16 [S]** Restore independent remembered inventory show state, source delete-first button/Alt-E and bulk teardown/basic-UI reconstruction; verify actual OnInit boundaries and native/Qt geometry/tab/mini/close lifecycle without closing full item acceptance. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK09.17 [S]** Repair and verify selected inventory pickup/use/equip acknowledgement state, pending cleanup, metadata/count retention and source notices through production receive replay and actual native/Qt quantity, detail and bag/equipment transitions; retain acquisition-popup/full-item acceptance. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK09.18 [S]** Restore separate WID58 raw acquisition snapshots, source dummy sizing/full text/color/overflow and strict expiry; verify production pickup, native/Qt rendering, passive input, replacements, scaling and teardown while retaining full PK09.04. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps
 

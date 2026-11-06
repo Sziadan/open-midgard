@@ -36,6 +36,7 @@
 #include "ui/UIItemIdentifyWnd.h"
 #include "ui/UISkillSelectWnd.h"
 #include "ui/UIItemInfoWnd.h"
+#include "ui/UINotifyItemObtainWnd.h"
 #include "ui/UIItemWnd.h"
 #include "ui/UIMessengerGroupWnd.h"
 #include "ui/UIPartyOptionWnd.h"
@@ -305,6 +306,7 @@ void ClearGameplayUiState(QtUiState* state)
     state->setItemInfoGeometry(0, 0, 0, 0);
     state->setItemInfoData(QVariantMap{});
     state->setCardInfoData(QVariantMap{});
+    state->setItemObtainData(QVariantMap{});
 
     state->setSkillDescribeVisible(false);
     state->setSkillDescribeGeometry(0, 0, 0, 0);
@@ -2776,10 +2778,12 @@ void PopulateItemInfoState(QtUiState* state)
     auto* card=g_windowMgr.m_cardInfoWnd;
     if(main)main->RefreshBoundItem();
     if(card)card->RefreshBoundItem();
-    int layer=40,mainLayer=40,cardLayer=40;
+    auto* obtain=g_windowMgr.m_itemObtainWnd;
+    int layer=40,mainLayer=40,cardLayer=40,obtainLayer=40;
     for(auto* window:g_windowMgr.m_children) {
         if(window==main){mainLayer=layer++;}
         else if(window==card){cardLayer=layer++;}
+        else if(window==obtain){obtainLayer=layer++;}
     }
     const bool mainVisible=IsGameplayWindowVisible(state,main)&&main->HasItem();
     state->setItemInfoVisible(mainVisible);
@@ -2797,6 +2801,19 @@ void PopulateItemInfoState(QtUiState* state)
         data.insert("width",card->m_w);data.insert("height",card->m_h);data.insert("layer",cardLayer);
         state->setCardInfoData(data);
     } else state->setCardInfoData(QVariantMap{});
+    UINotifyItemObtainWnd::DisplayData display;
+    if(IsGameplayWindowVisible(state,obtain))obtain->RefreshContent();
+    if(IsGameplayWindowVisible(state,obtain)&&obtain->GetDisplayDataForQt(&display)) {
+        QVariantMap data{{"visible",true},{"x",obtain->m_x},{"y",obtain->m_y},
+            {"width",obtain->m_w},{"height",obtain->m_h},{"layer",obtainLayer},
+            {"itemId",display.itemId},{"identified",display.identified},
+            {"text",ToQString(display.text)},{"sizingText",ToQString(display.sizingText)}};
+        QVariantList runs;
+        for(const auto& run:display.runs)runs.push_back(QVariantMap{{"text",ToQString(run.text)},
+            {"x",run.x},{"y",run.y},{"width",run.width},{"colorARGB",run.color},
+            {"color",QColor::fromRgba(run.color)}});
+        data.insert("runs",runs);state->setItemObtainData(data);
+    } else state->setItemObtainData(QVariantMap{});
 }
 
 void PopulateSkillDescribeState(QtUiState* state)

@@ -58,8 +58,14 @@ constexpr int Width=1300, Height=640;
 void Require(bool ok,const char* text) {if(!ok)throw std::runtime_error(text);}
 class FixtureImages final : public QQuickImageProvider {
 public:
-    FixtureImages():QQuickImageProvider(Image){}
-    QImage requestImage(const QString&,QSize* size,const QSize&) override {
+    bool obtainIcons=false;
+    FixtureImages(bool obtain=false):QQuickImageProvider(Image),obtainIcons(obtain){}
+    QImage requestImage(const QString& id,QSize* size,const QSize&) override {
+        if(obtainIcons&&id.startsWith("item/")) {
+            QImage image(24,24,QImage::Format_ARGB32);image.fill(Qt::transparent);
+            QPainter painter(&image);painter.fillRect(3,3,18,18,id.contains("identified=0")?QColor("#a050c0"):QColor("#dc781e"));painter.end();
+            if(size)*size=image.size();return image;
+        }
         QImage image(1,1,QImage::Format_ARGB32); image.fill(Qt::transparent);
         if(size)*size=image.size(); return image;
     }
@@ -169,6 +175,7 @@ template<class Window> QImage Native(Window& window,QRgb expected,int width=Widt
 #include "ItemCardDetailRenderChecks.inc"
 #include "InventoryShowRenderChecks.inc"
 #include "InventoryMutationRenderChecks.inc"
+#include "ItemObtainRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -194,6 +201,7 @@ int main(int argc,char** argv) {
         const bool itemDetailGeometryChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-detail-geometry-child";
         const bool itemCardDetail=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail";
         const bool itemCardDetailChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail-child";
+        const bool itemObtain=argc>2 && QString::fromLocal8Bit(argv[2])=="item-obtain";
         const bool inventoryMutations=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-mutations";
         const bool inventoryShow=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-show";
         const bool inventoryShowChild=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-show-child";
@@ -218,7 +226,7 @@ int main(int argc,char** argv) {
             std::cout<<"PASS source inventory tab startup and runtime retention\n";return 0;
         }
         InventoryTabViewportFixture inventoryTabViewport;
-        if(inventoryMutations) {
+        if(inventoryMutations || itemObtain) {
             SetRuntimeUiScalePercent(100);inventoryTabViewport.Create("inventory-mutations");
         }
         if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild || itemCardDetailChild || inventoryShowChild) {
@@ -226,8 +234,8 @@ int main(int argc,char** argv) {
             const QString stage=QString::fromLocal8Bit(argv[3]);
             SetRuntimeUiScalePercent(100);inventoryTabViewport.Create(stage=="small"?QString("read-small"):stage);
         }
-        if(inventoryMutations) {
-            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/inventory-ack-msgstringtable.txt");
+        if(inventoryMutations || itemObtain) {
+            QFile source(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/tools/tests/fixtures/packet-item-data/"+(itemObtain?"item-obtain-msgstringtable.txt":"inventory-ack-msgstringtable.txt"));
             Require(source.open(QIODevice::ReadOnly),"inventory acknowledgement message fixture missing");
             const auto bytes=source.readAll();QFile target(output+"/data/msgstringtable.txt");
             Require(target.open(QIODevice::WriteOnly)&&target.write(bytes)==bytes.size(),"copy inventory acknowledgement messages failed");
@@ -264,6 +272,18 @@ int main(int argc,char** argv) {
             QFile target(output+"/data/"+table);
             Require(target.open(QIODevice::WriteOnly) && target.write(bytes)==bytes.size(),"item fixture table copy failed");
         }
+        if(itemObtain) {
+            // Declared synthetic resources distinguish identified/unidentified icon selection.
+            for(const QString table:{QString("idnum2itemresnametable.txt"),QString("num2itemresnametable.txt")}) {
+                QFile file(output+"/data/"+table);Require(file.open(QIODevice::WriteOnly),"open synthetic icon table failed");
+                file.write(table.startsWith("id")?"1202#obtain_known#\n":"1202#obtain_unknown#\n");
+            }
+            for(const auto name:{QString("obtain_known"),QString("obtain_unknown")}) {
+                QImage image(24,24,QImage::Format_RGB32);image.fill(QColor(255,0,255));QPainter painter(&image);
+                painter.fillRect(3,3,18,18,name.endsWith("known")&&!name.endsWith("unknown")?QColor("#dc781e"):QColor("#a050c0"));painter.end();
+                Require(image.save(output+"/"+name+".bmp"),"save synthetic native item icon failed");
+            }
+        }
         Require(QDir::setCurrent(output),"item fixture working directory failed");
         Require(QFontDatabase::addApplicationFont(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/third_party/fonts/NotoSans.ttf")>=0,"bundled item font failed");
         QGuiApplication::setFont(QFont("Noto Sans"));
@@ -289,9 +309,9 @@ int main(int argc,char** argv) {
         QQuickView view;view.setColor(QColor("#181b20"));view.resize(Width,Height);view.setResizeMode(QQuickView::SizeRootObjectToView);
         if(itemGeometryChild)view.resize(QString::fromLocal8Bit(argv[3])=="small"?640:1280,QString::fromLocal8Bit(argv[3])=="small"?480:720);
         if(itemDetailGeometryChild || itemCardDetailChild || inventoryShowChild)view.resize(1280,720);
-        if(inventoryMutations)view.resize(1280,720);
+        if(inventoryMutations || itemObtain)view.resize(1280,720);
         view.rootContext()->setContextProperty("uiState",adapter.stateObject());
-        view.engine()->addImageProvider("openmidgard",new FixtureImages);
+        view.engine()->addImageProvider("openmidgard",new FixtureImages(itemObtain));
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
@@ -342,6 +362,13 @@ int main(int argc,char** argv) {
             view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
             SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
             std::cout<<"PASS NPC shop detail snapshot rendering\n";return 0;
+        }
+        if(itemObtain) {
+            CheckItemObtainUi(app,view,state,mode,inventory,adapter,output);
+            Require(errors==0,"item-obtain UI emitted QML warnings/errors");
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS item acquisition notification native/Qt rendering, zero QML errors\n";return 0;
         }
         if(itemDetailToggleOnly) {
             CheckItemDetailToggleUi(app,view,state,mode,inventory,storage,adapter,output);

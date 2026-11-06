@@ -55,6 +55,8 @@ add_library(ro_ui STATIC
     UIStorageWnd.cpp
     UIItemInfoWnd.h
     UIItemInfoWnd.cpp
+    UINotifyItemObtainWnd.h
+    UINotifyItemObtainWnd.cpp
     UIItemCollectionWnd.h
     UIItemCollectionWnd.cpp
     UIItemCompositionWnd.h

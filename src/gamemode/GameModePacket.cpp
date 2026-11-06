@@ -2476,17 +2476,8 @@ void AnnouncePickedUpItem(const ITEM_INFO& itemInfo)
     // The color argument is COLORREF 16776960 (0x00FFFF00), which is RGB(0, 255, 255).
     // Chat stores that as R in the high byte. Type 5 is the get-item chat class;
     // the Info tab is the channel that still shows it.
-    std::string itemName = itemInfo.GetItemName(false);
-    if (itemName.empty()) {
-        itemName = itemInfo.GetDisplayName();
-    }
-    if (itemName.empty()) {
-        itemName = std::to_string(itemInfo.GetItemId());
-    }
-
-    char pickMsg[256] = {};
-    std::snprintf(pickMsg, sizeof(pickMsg), "You got %s (%d).", itemName.c_str(), itemInfo.m_num);
-    g_windowMgr.PushChatEvent(pickMsg, 0x0000FFFFu, 6);
+    const auto message=g_ttemmgr.GetItemObtainChatText(itemInfo);
+    g_windowMgr.PushChatEvent(message.c_str(),0x0000FFFFu,6);
 }
 
 void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
@@ -2558,8 +2549,9 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
         StartLocalPickupAnimation(mode, pickedObjectAid);
     }
 
-    AnnouncePickedUpItem(itemInfo);
     g_session.AddInventoryItem(itemInfo);
+    AnnouncePickedUpItem(itemInfo);
+    g_windowMgr.ShowItemObtainNotification(itemInfo);
 }
 
 void UpsertGroundItem(CGameMode& mode,

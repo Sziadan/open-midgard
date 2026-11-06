@@ -3424,3 +3424,7 @@ Strong review distinguished explicit inventory close from bulk teardown and rest
 ## 2026-11-06 — PK09.17 inventory acknowledgement repair
 
 Strong source review repaired pickup retry cleanup, strict equip outcomes and unknown-row guards, additive metadata retention, authoritative use counts, routed-mode ownership and original notice loading. New receive and actual native/Qt tests cover the state/notice transitions; five intentional regressions fail after correcting the notice-cache whitelist omission. Shared offscreen Qt runtime fixes nested replay application lifetime. Final verification: 121/121 CTest in 174.02s; 174 PASS packet records; 7 GUI cases and 12 retained frames; zero QML errors. Acquisition notification and full PK09.04/broad/independent/deployed acceptance remain open. Commit: packet(PK09.17): repair inventory acknowledgement state and notices.
+
+## 2026-11-06 — PK09.18 acquisition notification review
+
+Completed strong source/PE review and the pending native/Qt item notification; corrected fixture offsets, ownership, font/geometry and Qt child-property conflict. Three intentional regressions rejected. 122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors. Strong WID58 item gate cleared; money/full item/context/effect/broad/independent/deployed acceptance remains open. Commit: packet(PK09.18): restore item acquisition notification.

@@ -36,7 +36,7 @@ std::string ResolveItemProducer(const ITEM_INFO& item)
 	return mode ? mode->ResolveCharacterName(characterId) : std::string();
 }
 
-std::string FormatRentalMessage(const std::string& format, const std::string& value, u32 amount = 0)
+std::string FormatRentalMessage(const std::string& format, const std::string& value, int64_t amount = 0)
 {
 	std::string result;
 	for (size_t i = 0; i < format.size(); ++i) {
@@ -544,6 +544,78 @@ std::string CItemMgr::GetEquipFailureNotice()
     return ItemNameMessage(372,"You can't put this item on.");
 }
 
+std::string CItemMgr::GetItemObtainSizingText(const ITEM_INFO& item)
+{
+    EnsureLoaded();
+    // Message36 measures a zeroed dummy, not the refined/carded snapshot.
+    return FormatRentalMessage(ItemNameMessage(153,"You got %s (%d)."),
+        GetDisplayName(item.GetItemId(),item.m_isIdentified!=0,false),item.m_num);
+}
+
+std::vector<ItemTextSegment> CItemMgr::GetItemObtainSegments(const ITEM_INFO& item)
+{
+    EnsureLoaded();
+    std::vector<ItemTextSegment> result;
+    const bool attachable=item.m_itemType==4||item.m_itemType==5||item.m_itemType==8
+        ||item.m_itemType==9||item.m_itemType==11||item.m_itemType==12
+        ||item.m_itemType==13||item.m_itemType==14||item.m_itemType==15||item.m_itemType==19;
+    const bool created=item.m_slot[0]==254&&item.m_slot[1]==0;
+    const bool forged=attachable&&item.m_slot[0]==255&&!m_cardDescriptorIds.count(255);
+    const auto black=[&](const std::string& text){result.push_back({text,0xff000000u});};
+    const bool named=item.m_slot[0]==0&&item.m_slot[1]==0&&item.m_slot[3]==1;
+    if(!item.m_isIdentified)black(GetDisplayName(item.GetItemId(),false,false));
+    else if(named) {black(ItemNameMessage(756,"Beloved"));black(GetDisplayName(item.GetItemId(),true,false));}
+    else {
+        if((created||attachable)&&item.m_refiningLevel>0)black("+"+std::to_string(item.m_refiningLevel)+" ");
+        if(created||forged) {
+            if(forged) {
+                std::string strong;
+                switch((u16(item.m_slot[1])>>8)&0xff) {
+                case 5: strong=ItemNameMessage(459,"Very Strong ");break;
+                case 10: strong=ItemNameMessage(460,"Very Very Strong ");break;
+                case 15: strong=ItemNameMessage(461,"Very Very Very Strong ");break;
+                default: break;
+                }
+                black(strong);
+            }
+            const std::string producer=ResolveItemProducer(item);
+            result.push_back({producer.empty()?ItemNameMessage(581," Nameless"):producer,
+                producer.empty()?0xffe04040u:0xff4040e0u});
+            black(ManufacturedSuffix(forged?u8(item.m_slot[1]):0));
+            black(GetDisplayName(item.GetItemId(),true,false));
+        } else if(attachable&&m_cardDescriptorIds.count(unsigned(item.m_slot[0]))) {
+            std::vector<AggregatedCardLabel> prefixes,postfixes;
+            for(const auto word:item.m_slot) {
+                auto label=GetCardPrefixName(unsigned(word));if(label.empty())continue;
+                AppendCardLabel(IsPostfixCard(unsigned(word))?postfixes:prefixes,unsigned(word),std::move(label));
+            }
+            auto prefix=BuildAggregatedCardPrefixText(prefixes);if(!prefix.empty())prefix+=" ";
+            black(prefix);black(GetDisplayName(item.GetItemId(),true,false));
+            std::string postfix;
+            for(const auto& label:postfixes) {
+                postfix+=" "+label.label;
+                if(const char* repeat=GetRepeatedCardWord(label.count))postfix+=" "+std::string(repeat);
+            }
+            black(postfix);
+        } else black(GetDisplayName(item.GetItemId(),true,false));
+    }
+    result.push_back({FormatRentalMessage(ItemNameMessage(696," - %d obtained."),"",item.m_num),0xff000000u});
+    return result;
+}
+
+std::string CItemMgr::GetItemObtainChatText(const ITEM_INFO& item)
+{
+    EnsureLoaded();
+    const bool attachable=item.m_itemType==4||item.m_itemType==5||item.m_itemType==8
+        ||item.m_itemType==9||item.m_itemType==11||item.m_itemType==12
+        ||item.m_itemType==13||item.m_itemType==14||item.m_itemType==15||item.m_itemType==19;
+    const bool named=item.m_slot[0]==0&&item.m_slot[1]==0&&item.m_slot[3]==1;
+    const bool created=item.m_slot[0]==254&&item.m_slot[1]==0;
+    const bool suffix=item.m_isIdentified&&attachable&&!named&&!created
+        &&item.m_slot[0]!=255&&!m_cardDescriptorIds.count(unsigned(item.m_slot[0]));
+    return FormatRentalMessage(ItemNameMessage(153,"You got %s (%d)."),GetItemName(item,suffix),item.m_num);
+}
+
 std::string CItemMgr::GetResourceName(unsigned int itemId, bool identified)
 {
 	if (const ItemMetadata* metadata = GetMetadata(itemId)) {
@@ -745,7 +817,8 @@ void CItemMgr::LoadItemNameMessages()
 		const size_t end = text.find('#', begin);
 		if (end == std::string::npos) break;
 		while (begin < end && (text[begin] == '\r' || text[begin] == '\n')) ++begin;
-        if (index == 52 || index == 53 || index == 220 || index == 279 || index == 372
+        if (index == 52 || index == 53 || index == 153 || index == 220 || index == 279 || index == 372
+            || index == 581 || index == 696
             || (index >= 450 && index <= 454) || (index >= 459 && index <= 461) || index == 756
 			|| (index >= 1255 && index <= 1258) || index == 1260 || index == 1270) {
 			// Preserve spaces in positional message values, including their absence.

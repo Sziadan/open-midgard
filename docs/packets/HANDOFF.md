@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-**Active step: PK09.04.** Latest checkpoint: [PK09.17 inventory acknowledgements](evidence/PK09.17-inventory-acks.md), [contract](contracts/PK09.INVENTORY-ACKS.md), [provenance](evidence/PK09.17-inventory-acks.json). Commit: `packet(PK09.17): repair inventory acknowledgement state and notices`. 121/121 CTest in 174.02s; 174 PASS packet records; 7 GUI cases and 12 retained frames; zero QML errors. Prior inventory/card/NPC proofs remain passing.
+**Active step: PK09.04.** Latest checkpoint: [PK09.18 item acquisition notification](evidence/PK09.18-item-obtain.md), [contract](contracts/PK09.ITEM-OBTAIN.md), [provenance](evidence/PK09.18-item-obtain.json). Commit: `packet(PK09.18): restore item acquisition notification`. 122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors. Prior inventory/card/NPC proofs remain passing.
 
 ## Continue here
 
@@ -15,7 +15,7 @@
 
 ## Verified current checkpoint
 
-All targets build deploy-off. **118/118 CTest in 154.96s**, **173 PASS packet records**, eight fresh detail child processes, nine detail frames and zero detail-child QML errors. Earlier inventory, NPC, commerce, rental, selection/category/name/cart/bag/minimap and downstream checks remain passing.
+All targets build deploy-off. 122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors. Earlier downstream regressions remain passing.
 
 No discovery row is newly closed. PK09.04, broad PK37, independent PK48/49 and deployed provenance remain open. The whole packet plan remains unfinished.
 
@@ -31,4 +31,6 @@ Preserve [PK09.15 card details](contracts/PK09.CARD-DETAIL.md): separate WID82 s
 
 Preserve [PK09.16 inventory show/map reconstruction](contracts/PK09.INVENTORY-SHOW.md): startup show=false despite savedShow1; MakeWindow sets remembered-open; raw hide preserves it; explicit close/button/Alt-E deletes and clears it; bulk map teardown preserves it; basic UI reconstructs valid geometry/tab/mini from the cached record. Do not conflate this with authoritative item-row or transaction retention. Keep earlier inventory/card/NPC proofs. Continue full item/status/delta/context acceptance, broad requests/commerce/NPC/status/mail, PK47 and independent PK48/49/deployment.
 
-Preserve [PK09.17 acknowledgement state/notices](contracts/PK09.INVENTORY-ACKS.md): every active pickup result ends retry intent; additive indices retain metadata; use counts are authoritative and owned by the routed mode; remote use cannot consume local rows; equip result1 alone succeeds and missing rows cannot evict occupants; known notices load their original message IDs. Preserve zero-count drop rejection and pending-index correlation. This is not full item acceptance: the separate source acquisition notification and remaining effect/context/profile gates stay open. Next trace/port the separate WID58 acquisition notification under [PK09.17 instructions](work-items/PK09.17.md); full PK09.04, broad requests/commerce and independent/deployed gates remain open.
+Preserve [PK09.17 acknowledgement state/notices](contracts/PK09.INVENTORY-ACKS.md): every active pickup result ends retry intent; additive indices retain metadata; use counts are authoritative and owned by the routed mode; remote use cannot consume local rows; equip result1 alone succeeds and missing rows cannot evict occupants; known notices load their original message IDs. Preserve zero-count drop rejection and pending-index correlation. PK09.18 now accepts the separate item acquisition notification. Follow its continuation instructions for remaining item/context/effect work; full PK09.04 and broad/independent/deployed gates remain open.
+
+PK09.18 completes the prior WID58 item-notification gate. Follow [continuation instructions](work-items/PK09.18.md); preserve its snapshot/sizing/name/color/overflow/lifetime/passive-input boundaries. Money branch and remaining full item/context/effect acceptance stay open. 122/122 CTest in 171.33s; 174 PASS packet records; 9 notification GUI cases and 8 retained frames; zero QML errors.

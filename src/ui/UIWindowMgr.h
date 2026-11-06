@@ -48,6 +48,7 @@ class UIWaitWnd;
 class UIItemWnd;
 class UIStorageWnd;
 class UIItemInfoWnd;
+class UINotifyItemObtainWnd;
 class UIItemCollectionWnd;
 class UIItemCompositionWnd;
 class UIItemIdentifyWnd;
@@ -109,6 +110,7 @@ public:
         WID_NOTICECONFIRMWND  = 8,
         WID_ITEMINFOWND       = 24,
         WID_CARDINFOWND       = 82,
+        WID_NOTIFYITEMOBTAINWND = 58,
         WID_ITEMCOLLECTIONWND = 25,
         WID_SKILLDESCRIBEWND  = 26,
         WID_ITEMIDENTIFYWND   = 0x49,
@@ -155,6 +157,7 @@ public:
     void RestoreItemDetailWindowPlacement(int* x, int* y, ItemDetailKind kind = ItemDetailKind::Main);
     void StoreItemDetailWindowInfo(const ItemDetailWindowInfo& info, ItemDetailKind kind = ItemDetailKind::Main);
     void ShowCardInfoWindow(const ITEM_INFO& item, ItemInfoAction action = ItemInfoAction::Select);
+    void ShowItemObtainNotification(const ITEM_INFO& item);
     void Reset();
     void OnProcess();
     void OnDraw();
@@ -278,6 +281,7 @@ public:
     UIItemWnd* m_itemWnd;
     UIItemInfoWnd* m_itemInfoWnd;
     UIItemInfoWnd* m_cardInfoWnd = nullptr;
+    UINotifyItemObtainWnd* m_itemObtainWnd = nullptr;
     UIItemCollectionWnd* m_itemCollectionWnd;
     UIItemCompositionWnd* m_itemCompositionWnd;
     UIItemIdentifyWnd* m_itemIdentifyWnd;

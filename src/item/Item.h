@@ -50,6 +50,11 @@ struct ItemMetadata {
     std::string cardIllustName;
 };
 
+struct ItemTextSegment {
+    std::string text;
+    u32 color = 0xff000000u;
+};
+
 class CItemMgr
 {
 public:
@@ -67,6 +72,9 @@ public:
     std::string GetRentalDeleteNotice(unsigned int itemId);
     std::string GetPickupFailureNotice(unsigned char result);
     std::string GetEquipFailureNotice();
+    std::string GetItemObtainSizingText(const ITEM_INFO& item);
+    std::string GetItemObtainChatText(const ITEM_INFO& item);
+    std::vector<ItemTextSegment> GetItemObtainSegments(const ITEM_INFO& item);
     std::string GetResourceName(unsigned int itemId, bool identified);
     int GetSlotCount(unsigned int itemId);
     std::string GetCardIllustName(unsigned int itemId);
