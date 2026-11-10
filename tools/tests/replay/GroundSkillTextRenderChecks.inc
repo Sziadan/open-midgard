@@ -67,6 +67,13 @@
                 QCoreApplication::sendEvent(host, &commit);
                 Require(std::string(window->GetEditCtrl()->GetText()) == "\xc3\xa9\xe3\x81\x82", "Qt key or IME commit did not reach the prompt exactly once");
             }
+            g_codePage = 949;
+            window->GetEditCtrl()->SetText("");
+            window->CommitText(std::u16string(40, u'\uac00'));
+            Require(std::strlen(window->GetEditCtrl()->GetText()) == 39*3, "prompt limit used UTF-8 bytes instead of CP949 bytes");
+            window->OnKeyDown(VK_BACK);
+            Require(std::strlen(window->GetEditCtrl()->GetText()) == 38*3, "Backspace truncated text expanded by the codepage conversion");
+            g_codePage = 65001;
             window->GetEditCtrl()->SetText("Ground skill fixture!");
             for(int i=0;i<6;++i)Require(window->GetFrameBitmap(i).IsValid(),"source text frame fixture failed raw-key asset lookup");
             ArgbDibSurface dib;Require(dib.EnsureSize(view.width(),view.height()),"ground text DIB failed");
@@ -89,5 +96,5 @@
             {"source_edit_geometry_and_limit",true},{"source_key_frame_footer_button_samples",true},
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},{"opacity_compositor_acceptance",false},
-            {"native_character_and_qt_commit",true},{"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},{"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
+            {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},{"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
     }

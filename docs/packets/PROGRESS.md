@@ -3715,3 +3715,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-10 Ground prompt character input
 
 **Current ground prompt text checkpoint (2026-11-10)**. Native and Qt text now reach the focused ground prompt. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 16.99s. Live IME, selection, and source packet encoding remain open. [Evidence](evidence/PK27-prompt-text.md)
+
+## 2026-11-10 Ground prompt service encoding
+
+**Current ground prompt encoding checkpoint (2026-11-10)**. Ground text now uses the service codepage on the wire and UTF-8 in the editor and skill bubble. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 17.03s. [Evidence](evidence/PK27-prompt-codec.md)

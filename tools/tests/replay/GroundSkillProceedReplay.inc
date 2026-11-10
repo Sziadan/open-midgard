@@ -1,10 +1,13 @@
         {
             const auto savedManner=ro::GetMannerFilter();
+            const auto savedService = g_serviceType;
+            const int savedCodePage = g_codePage;
             const auto oldFocus=g_windowMgr.m_editWindow;
             const auto oldGroundWindows=g_windowMgr.m_groundSkillTextWindows;
             struct RestoreGroundReplay {std::function<void()> fn;~RestoreGroundReplay(){fn();}} restoreGround{[&]{
                 for(std::size_t i=0;i<2;++i)if(g_windowMgr.m_groundSkillTextWindows[i]!=oldGroundWindows[i])
                     g_windowMgr.DeleteWindow(g_windowMgr.m_groundSkillTextWindows[i]);
+                g_serviceType = savedService; g_codePage = savedCodePage;
                 ro::GetMannerFilter()=savedManner;g_windowMgr.m_editWindow=oldFocus;player.m_effectState=0;player.SendMsg(nullptr,13,0,0,0);
             }};
             const auto groundFrame=[&](int skill,int level,int x,int y,const char* text=nullptr){
@@ -70,6 +73,32 @@
                 window=g_windowMgr.m_groundSkillTextWindows[id==125?0:1];window->SendMsg(nullptr,6,119,0,0);
                 Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(10))==0,"cancel sent text skill");g_windowMgr.OnProcess();Require(!g_windowMgr.m_groundSkillTextWindows[id==125?0:1],"text cancel deferred close not processed");
             }
+            g_serviceType = ServiceJapan;
+            g_codePage = 0;
+            GroundSkillTextRequest japanese{{{125,32,32,1}}, "\xe3\x81\x82"};
+            mode.SendMsg(144, reinterpret_cast<msgparam_t>(&japanese), 0, 0);
+            groundFrame(125,1,32,32,"\x82\xa0");
+            std::vector<u8> talkbox(86);
+            talkbox[0] = 0x91; talkbox[1] = 0x01;
+            for (unsigned i=0; i<4; ++i) talkbox[2+i] = static_cast<u8>(unit.m_aid >> (8*i));
+            talkbox[6] = 0x82; talkbox[7] = 0xa0;
+            world.m_skillList.push_back(&unit);
+            Require(incoming.QueueBytes(talkbox), "talkbox reply queue failed");
+            Require(ProcessGameModePacketLoop(mode,incoming,receiver,1).packetsDispatched == 1, "talkbox reply route missing");
+            Require(unit.GetChatBubbleText() == japanese.text, "talkbox reply did not decode CP932 into UTF-8");
+            world.m_skillList.clear();
+            ro::GetMannerFilter().AppendEncodedFile("\x82\xa0#\r",932);
+            const auto encodedNotices = g_windowMgr.GetChatEvents().size();
+            mode.SendMsg(144, reinterpret_cast<msgparam_t>(&japanese), 0, 0);
+            Require(g_windowMgr.GetChatEvents().size() == encodedNotices+1
+                && SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(10))==0,
+                "CP932 manner filter let encoded prompt text through");
+            g_codePage = 1252;
+            GroundSkillTextRequest western{{{220,32,32,1}}, "caf\xc3\xa9"};
+            mode.SendMsg(144, reinterpret_cast<msgparam_t>(&western), 0, 0);
+            groundFrame(220,1,32,32,"caf\xe9");
+            g_serviceType = savedService;
+            g_codePage = savedCodePage;
             ro::GetMannerFilter().AppendEncodedFile("sourcegroundprohibited#\r",1252);
             GroundSkillTextRequest rejected{{{125,32,32,1}},"sourcegroundprohibited"};
             const auto notices=g_windowMgr.GetChatEvents().size();

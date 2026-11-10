@@ -9,6 +9,7 @@ add_library(ro_core STATIC
     TipOfTheDay.h TipOfTheDay.cpp
     SourceMapNames.h SourceMapNames.cpp
     InsultWords.h MannerFilter.h MannerFilter.cpp
+    SourceTextCodec.h SourceTextCodec.cpp
     GPak.h      GPak.cpp
     File.h      File.cpp
     Globals.h   Globals.cpp

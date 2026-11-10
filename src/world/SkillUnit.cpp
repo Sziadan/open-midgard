@@ -1,3 +1,4 @@
+#include "core/SourceTextCodec.h"
 #include "world/GameActor.h"
 #include "audio/Audio.h"
 #include "core/Timer.h"
@@ -137,7 +138,9 @@ void SetSkillTalkboxText(CSkill& skill, const char* text)
     }
     const char* const terminator = static_cast<const char*>(std::memchr(text, '\0', 80));
     const size_t textLength = terminator != nullptr ? static_cast<size_t>(terminator - text) : 80;
-    skill.SetChatBubbleText(std::string(text, textLength), timeGetTime() + 5000);
+    if (const auto utf8 = ro::DecodeSourceText(std::string_view(text, textLength), ro::SelectedSourceTextCodePage())) {
+        skill.SetChatBubbleText(*utf8, timeGetTime() + 5000);
+    }
 }
 
 void CSkill::HideModel()

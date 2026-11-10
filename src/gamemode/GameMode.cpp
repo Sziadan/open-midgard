@@ -20,6 +20,7 @@
 #include "CursorRenderer.h"
 #include "GameMode.h"
 #include "core/MannerFilter.h"
+#include "core/SourceTextCodec.h"
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIPetInfoWnd.h"
@@ -5686,9 +5687,11 @@ bool DispatchSourceGroundSkill(const std::array<int,4>& values)
 
 bool DispatchSourceGroundSkillText(const GroundSkillTextRequest& request)
 {
-    const std::string text=request.text?request.text:"";
+    const int codePage = ro::SelectedSourceTextCodePage();
+    const auto text = ro::EncodeSourceText(request.text ? request.text : "", codePage);
+    if (!text) return false;
     auto& filter=ro::GetMannerFilter();filter.EnsureLoaded();
-    if(filter.IsBadUtf8Sentence(text)){
+    if(filter.IsBadEncodedSentence(*text, codePage)){
         g_windowMgr.SendMsg(3,0,0,0,0);
         ro::UiMessageStrings table;table.Load();const auto notice=table.Get(50,"Cannot send because of inappropriate language.");
         g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),255,0,0);return false;
@@ -5697,7 +5700,7 @@ bool DispatchSourceGroundSkillText(const GroundSkillTextRequest& request)
     if(!level){const auto* row=g_session.GetSkillItemBySkillId(skill);level=static_cast<u16>(row?row->level:0);}
     std::array<u8,sizeof(PACKET_CZ_USESKILLTOPOSINFO)> packet{};int length=0;
     if(!ro::net::BuildActiveUseSkillToPosInfoPacket(skill,level,static_cast<s16>(request.values[1]),static_cast<s16>(request.values[2]),
-        text,packet.data(),static_cast<int>(packet.size()),&length))return false;
+        *text,packet.data(),static_cast<int>(packet.size()),&length))return false;
     return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),length);
 }
 

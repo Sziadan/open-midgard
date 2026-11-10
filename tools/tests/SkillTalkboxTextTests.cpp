@@ -1,10 +1,15 @@
+#include "core/SourceTextCodec.h"
+#include "core/Globals.h"
+
 #include <cassert>
 #include <cstddef>
 #include <cstring>
 #include <string>
 
+ServiceType g_serviceType = ServiceJapan;
+int g_codePage = 0;
 unsigned int g_now = 0;
-unsigned int timeGetTime()
+unsigned int FakeTimeGetTime()
 {
     return g_now;
 }
@@ -23,7 +28,9 @@ public:
     }
 };
 
+#define timeGetTime FakeTimeGetTime
 #include "SkillTalkboxTextBody.inc"
+#undef timeGetTime
 
 int main()
 {
@@ -47,5 +54,9 @@ int main()
     assert(skill.text.front() == 'x' && skill.text.back() == 'x');
     assert(skill.expiresAt == 128456);
     assert(skill.updates == 2);
+    SetSkillTalkboxText(skill, "\x82\xa0");
+    assert(skill.text == "\xe3\x81\x82");
+    SetSkillTalkboxText(skill, "\x82");
+    assert(skill.text == "\xe3\x81\x82" && skill.updates == 3);
     return 0;
 }

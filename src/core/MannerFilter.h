@@ -9,7 +9,6 @@ namespace ro {
 // '#' emits a token. Only exact leading '//' is a comment. No EOF flush.
 std::vector<std::string> TokenizeMannerFile(std::string_view bytes);
 std::size_t NextMannerCharacter(std::string_view bytes,std::size_t offset,int codePage);
-int SelectedMannerCodePage();
 const char* MannerLanguageFolder(unsigned primaryLanguage);
 
 class MannerFilter {

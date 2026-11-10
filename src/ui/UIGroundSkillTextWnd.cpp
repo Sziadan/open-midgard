@@ -5,6 +5,7 @@
 #include "UINewChatWnd.h"
 #include "core/Globals.h"
 #include "core/Timer.h"
+#include "core/SourceTextCodec.h"
 #include "core/UiMessageStrings.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
@@ -245,6 +246,7 @@ void UIGroundSkillTextWnd::CommitText(std::u16string_view text)
     m_highSurrogate = 0;
     if (!m_editCtrl) return;
     std::string next = m_editCtrl->GetText();
+    const int codePage = ro::SelectedSourceTextCodePage();
     for (std::size_t i = 0; i < text.size(); ++i) {
         char32_t code = text[i];
         if (code >= 0xd800 && code <= 0xdbff) {
@@ -253,7 +255,7 @@ void UIGroundSkillTextWnd::CommitText(std::u16string_view text)
         }
         if (code < 0x20 || (code >= 0xdc00 && code <= 0xdfff)) continue;
         const int count = code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
-        if (next.size() + count > static_cast<std::size_t>(m_editCtrl->m_maxchar)) break;
+        const auto previousSize = next.size();
         if (count == 1) {
             next += static_cast<char>(code);
         } else {
@@ -262,8 +264,16 @@ void UIGroundSkillTextWnd::CommitText(std::u16string_view text)
             for (int shift = 6 * (count - 2); shift >= 0; shift -= 6)
                 next += static_cast<char>(0x80 | ((code >> shift) & 0x3f));
         }
+        const auto encoded = ro::EncodeSourceText(next, codePage);
+        if (!encoded || encoded->size() > static_cast<std::size_t>(m_editCtrl->m_maxchar)) {
+            next.resize(previousSize);
+            break;
+        }
     }
-    m_editCtrl->SetText(next.c_str());
+    if (next != m_editCtrl->m_text) {
+        m_editCtrl->m_text = std::move(next);
+        m_editCtrl->Invalidate();
+    }
 }
 
 void UIGroundSkillTextWnd::OnKeyDown(int key)
@@ -275,7 +285,8 @@ void UIGroundSkillTextWnd::OnKeyDown(int key)
     std::size_t end = text.size() - 1;
     while (end && (static_cast<unsigned char>(text[end]) & 0xc0) == 0x80) --end;
     text.resize(end);
-    m_editCtrl->SetText(text.c_str());
+    m_editCtrl->m_text = std::move(text);
+    m_editCtrl->Invalidate();
 }
 
 void UIGroundSkillTextWnd::ActivateButton(int id)
