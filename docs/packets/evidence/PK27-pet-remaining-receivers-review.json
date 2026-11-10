@@ -41,10 +41,11 @@
       "length": "Variable; header length LE16 at offset 2, packet_db marks -1.",
       "semantic": "Pet egg inventory selection list.",
       "source_receiver": "CGameMode::Zc_PetEgg_List(char const*) at Ref/GameModePacket.cpp:24170-24220; dispatched case 422 at :1731-1732.",
-      "layout_and_ui": "Count=(LE16(packet+2)-4)/2; signed 16-bit inventory indices begin offset 4, stride 2. Makes WID_SELECTPETEGGWND through factory id 90, sends message 75 to clear/reset; for each index resolves ITEM_INFO and for valid itemIndex sends window message 31 with item name and item index; then message 60 to recalc/refresh.",
+      "layout_and_ui": "Signed normal-length word; complete signed16 indices from4. Factory90/message75 (ignored in selected native recipient), valid nonzero indices append copied snapshots via31;60 recalculates only. Repeated and empty lists preserve existing rows/current row/offset. See root-reviewed PK27-pet-egg-selector.md and PK27-pet-egg-reset-pe.json; older clear/reset wording was incorrect.",
       "selection_owner": "UIPetEggListWnd::SendMsg at Ref/UIFrameWnd2.cpp:12302-12419 accepts item rows via message31; click/accept message6,val1=118 gets selected ITEM_INFO, sets damaged flag and session petEggIndex, invalidates inventory, sends mode message159(itemIndex), then deletes selector (id 0x5A). Cancel val1=119 deletes selector. Source message159 transport/request receiver absent in current port; outgoing server packet is 0x01A7 length4 (packet_db:337), selected-egg request.",
       "msgstr": "MSI_PET_EGG_LIST is enum id 599, but Zc_PetEgg_List itself does not read it; selector title setup should not be inferred from this handler.",
-      "port": "No 0x01A6 handler, WID_SELECTPETEGGWND/UIPetEggListWnd equivalent, or mode message159 route found in src."
+      "port": "No 0x01A6 handler, WID_SELECTPETEGGWND/UIPetEggListWnd equivalent, or mode message159 route found in src.",
+      "implementation_checkpoint": "PK27-pet-egg-selector.md; source details beyond declared scope remain open."
     },
     {
       "packet": "0x01AA",

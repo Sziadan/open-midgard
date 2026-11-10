@@ -49,6 +49,7 @@ class UIAutoMessageWnd;
 class UIFriendOptionWnd;
 class UIChatRoomSettingsWnd;
 class UIChatRoomMessageBox;
+class UIPetEggListWnd;
 class UIChatRoomPasswordWnd;
 class UILoginWnd;
 class UISelectServerWnd;
@@ -150,6 +151,7 @@ public:
         WID_TIPOFTHEDAYWND    = 38,
         WID_COMMANDLISTWND    = 112,
         WID_PETINFOWND        = 88,
+        WID_SELECTPETEGGWND   = 90,
         WID_EQUIPWND          = 14,
         WID_SKILLLISTWND      = 15,
         WID_SPELLLISTWND      = 99,
@@ -297,6 +299,7 @@ public:
     UIChatRoomSettingsWnd* m_chatRoomMakeWnd=nullptr;
     UIChatRoomSettingsWnd* m_chatRoomChangeWnd=nullptr;
     UIChatRoomMessageBox* m_roomMessageBox=nullptr;
+    UIPetEggListWnd* m_petEggListWnd=nullptr;
     UIChatRoomWnd* m_chatRoomWnd = nullptr;
     std::map<std::string,UIWhisperWnd*> m_whisperWindows;
     SubChatWindowInfo m_whisperWindowInfo{0,347,280,120};

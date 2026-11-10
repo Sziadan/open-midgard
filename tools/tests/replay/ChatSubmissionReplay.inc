@@ -13,6 +13,7 @@
 #include "ui/UIPartyOptionWnd.h"
 #include "ui/UIBasicInfoWnd.h"
 #include "ui/UIPetInfoWnd.h"
+#include "ui/UIPetEggListWnd.h"
 #include "core/SourceCommandListTables.h"
 
 namespace {
@@ -318,8 +319,10 @@ void ChatSubmissionReplay()
 #include "PetRequestReplay.inc"
 #include "PetWindowReplay.inc"
 #include "PetContextMenuReplay.inc"
+#include "PetEggReplay.inc"
     connection->Disconnect();
 #include "PetWindowFailedSendReplay.inc"
+#include "PetEggFailedSendReplay.inc"
     Require(!mode.SendMsg(163,1,0,0) && !mode.SendMsg(158,reinterpret_cast<msgparam_t>("Poring"),0,0),"disconnected pet requests reported success");
     mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
 #include "ChatIgnoreReplay.inc"

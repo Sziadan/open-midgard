@@ -22,6 +22,7 @@
 #include "skill/Skill.h"
 #include "item/Item.h"
 #include "ui/UIItemInfoWnd.h"
+#include "ui/UIPetEggListWnd.h"
 #include "item/ItemUseFeedback.h"
 #include "Mode.h"
 #include "DebugLog.h"
@@ -5286,6 +5287,24 @@ void HandlePetStatus(CGameMode&, const PacketView& packet)
     InvalidatePetInfo();
 }
 
+void HandlePetEggList(CGameMode&,const PacketView& packet)
+{
+    if(!packet.data || packet.packetId!=0x01a6 || packet.packetLength<4
+        || packet.packetLength>0x7fff || ro::pet::ReadU16(packet.data)!=0x01a6
+        || ro::pet::ReadU16(packet.data+2)!=packet.packetLength)return;
+    auto* window=static_cast<UIPetEggListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SELECTPETEGGWND));
+    if(!window)return;
+    window->SendMsg(nullptr,75,0,0,0); // Selected native recipient deliberately ignores75.
+    const int count=(packet.packetLength-4)/2;
+    for(int i=0;i<count;++i){
+        const auto index=static_cast<unsigned int>(ro::pet::ReadI16(packet.data+4+2*i));
+        if(const auto* item=g_session.GetInventoryItemByIndex(index)){
+            if(item->m_itemIndex)window->SendMsg(nullptr,31,reinterpret_cast<msgparam_t>(item->m_itemName.c_str()),item->m_itemIndex,0);
+        }
+    }
+    window->SendMsg(nullptr,60,0,0,0);
+}
+
 void HandlePetStatusChange(CGameMode& mode,const PacketView& packet)
 {
     if(!packet.data || packet.packetLength!=11 || packet.packetId!=0x01a4)return;
@@ -8893,6 +8912,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x011C, HandleWarpMapList);
     router.Register(0x01AD, HandleMakingArrowList);
     router.Register(0x01A2, HandlePetStatus);
+    router.Register(0x01A6, HandlePetEggList);
     router.Register(0x01A4, HandlePetStatusChange);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);

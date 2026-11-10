@@ -1,0 +1,119 @@
+{
+  "subject": "Selected HighPriest.exe static verification of pet egg selector reset and repeat packets",
+  "binary": {
+    "path": "HighPriest.exe",
+    "sha256": "9ABC36C88376387D85C878C0C879D9AF8EF66EB1F5152638085DC6995E3F4742",
+    "image_base": "0x00400000",
+    "execution": "Not executed; inspected using llvm-objdump and PE byte reads."
+  },
+  "conclusion": {
+    "message75": "No reset/clear occurs. Zc_PetEgg_List calls SendMsg message 75 (0x4B), but UIPetEggListWnd::SendMsg accepts only 6, 7, 9, 10, 31 and 60; its message dispatch bounds-check sends 75 directly to default return 0.",
+    "repeated_packet": "WindowMgr::MakeWindow returns the already cached selector and only SetShow(1)s it. Message 75 is ignored, each following message 31 appends a fresh item snapshot to the list tail, and message 60 only recalculates scrollbar position and invalidates. No deduplication, list clear, or m_curItem write occurs on this path; duplicates and the current row index persist.",
+    "message31": "Zc_PetEgg_List first resolves each packet item index, then sends message 31 with val1=the item-name pointer and val2=itemIndex. UIPetEggListWnd::SendMsg ignores val1 and calls CSession::GetItemInfoByIndex again with val2, then copies that result into m_itemInfoList. Thus the appended row is a current-inventory lookup snapshot at message-31 handling time.",
+    "initialization": "UIPetEggListWnd constructor initializes m_itemInfoList as empty. Its vtable points to UIItemIdentifyWnd::OnCreate at slot 17 (VA 0x47E710); that initializer sets m_viewOffset=0 and m_curItem=-1. The pet egg vtable has UIPetEggListWnd::SendMsg at slot 37 (VA 0x48B650) and the pet egg draw override at slot 20 (VA 0x48B570)."
+  },
+  "evidence": [
+    {
+      "source": "Ref/GameModePacket.cpp:24170-24219",
+      "function_va": "0x005A5FB0",
+      "detail": "Source calls MakeWindow(WID_SELECTPETEGGWND), then SendMsg(...,75,0,0,0,0); for each positive packet index it calls GetItemInfoByIndex and sends message 31 with itemIndex as val2; sends message 60 after the loop."
+    },
+    {
+      "source": "Ref/UIFrameWnd2.cpp:12305-12415",
+      "function_va": "0x0048B650",
+      "detail": "Switch has cases 6, 7/9/10, 31, 60, default. Case 31 calls GetItemInfoByIndex(...,val2), links a new list node at Head->_Prev, increments size, and sends 60. Case 60 recalculates scrollbar and invalidates only."
+    },
+    {
+      "binary_va": "0x0048B674-0x0048B689",
+      "detail": "Loads message, subtracts 6, compares to 0x36 (max supported message 60 minus 6); unsigned-above branch goes to 0x0048B880. For 75, the subtraction result is 69, so it takes this default branch."
+    },
+    {
+      "binary_va": "0x0048B880-0x0048B891",
+      "detail": "Default branch restores frame and returns EAX=0; no state write before return."
+    },
+    {
+      "binary_va": "0x006D12FC",
+      "detail": "Egg vtable snapshot: slot 17=0x0047E710 (shared UIItemIdentifyWnd::OnCreate), slot 20=0x0048B570 (egg OnDraw), slot 37=0x0048B650 (egg SendMsg). UIItemIdentifyWnd vtable at 0x006D0534 also has slot 17=0x0047E710."
+    },
+    {
+      "source": "Ref/UIFrameWnd2.cpp:2217-2235, 23426-23477",
+      "detail": "Egg ctor creates empty sentinel list and zeroes list size; common OnCreate sets view offset 0 and current row -1. No UIPetEggListWnd::OnCreate definition is present; binary vtable confirms inherited common initializer."
+    },
+    {
+      "source": "Ref/UIWindowMgr.cpp:6785-6799, 6849-6853, 7233-7239",
+      "detail": "Window id 90 creates selector only when cached pointer is null; otherwise label 695 shows cached instance. Initial creation uses UIWindow::Create(200,200) and UIX(200)/UICY(200) positioning."
+    }
+  ],
+  "frame_assets": {
+    "note": "UIItemIdentifyWnd::OnDraw source is Ref/UIFrameWnd2.cpp:23644 onward. Its first/top-left bitmap operand is 0x006F2DE0 (not 0x006F2D4C). Paths below are decoded from static CP949 bytes in the selected PE; common prefix bytes c0 af c0 fa c0 ce c5 cd c6 e4 c0 cc bd ba decode to “유저인터페이스” (userinterface).",
+    "top_left": {
+      "va": "0x006F2DE0",
+      "path": "userinterface\\basic_interface\\titlebar_left.bmp"
+    },
+    "top_right": {
+      "va": "0x006F2DAC",
+      "path": "userinterface\\basic_interface\\titlebar_right.bmp"
+    },
+    "top_middle": {
+      "va": "0x006F2D7C",
+      "path": "userinterface\\basic_interface\\titlebar_mid.bmp"
+    },
+    "bottom_left": {
+      "va": "0x006F2EAC",
+      "path": "userinterface\\basic_interface\\btnbar_left2.bmp"
+    },
+    "bottom_right": {
+      "va": "0x006F2E78",
+      "path": "userinterface\\basic_interface\\btnbar_right2.bmp"
+    },
+    "bottom_middle": {
+      "va": "0x006F2EDC",
+      "path": "userinterface\\basic_interface\\btnbar_mid2.bmp"
+    },
+    "button_prefix": {
+      "va": "0x006F2E4C",
+      "decoded": "userinterface\\",
+      "bytes": "c0 af c0 fa c0 ce c5 cd c6 e4 c0 cc bd ba 5c"
+    },
+    "button_suffixes": [
+      "btn_ok.bmp",
+      "btn_ok_a.bmp",
+      "btn_ok_b.bmp",
+      "btn_cancel.bmp",
+      "btn_cancel_a.bmp",
+      "btn_cancel_b.bmp"
+    ],
+    "address_correction": {
+      "va": "0x006F2D4C",
+      "points_at": "ysboxs_rd.bmp",
+      "full_c_string_starts_at": "0x006F2D3C",
+      "full_path": "userinterface\\sysboxs_rd.bmp",
+      "relevance": "Not the first-left/top bitmap used by UIItemIdentifyWnd::OnDraw."
+    },
+    "sizing": "The frame OnDraw uses the title bar at y=0 and button bar at y=m_h-bitmapHeight. The egg selector window is 200x200 at MakeWindow id 90."
+  },
+  "keyboard_and_doubleclick": {
+    "conclusion": "Neither Enter nor Escape reaches the egg selector as a default/cancel message in the selected primary WindowProc path. Ordinary Enter is remapped by ProcessPushButton and handled as its 0x41 action (ExeMenu); it does not call DefPushButton or the egg SendMsg. Escape follows the manager's custom global Escape branch; it never calls CancelPushButton and does not delete WID_SELECTPETEGGWND. The selector therefore does not submit/cancel via those keys, but the keys are not globally inert.",
+    "enter": {
+      "evidence": [
+        "Ref/WinMain.cpp:914-917 identifies primary WindowProc at VA 0x0068A7F0. WM_KEYDOWN (0x100), lines 1088-1099, calls UIWindowMgr::ProcessPushButton(wParam, ((~lParam >> 30) & 1), lParam). WM_CHAR (0x102), lines 1104-1131, goes to CLanguage::OnChar and has no selector dispatch.",
+        "Ref/UIWindowMgr.cpp:3345-3352 identifies ProcessPushButton at VA 0x004E8050. At 3433-3459, ordinary wParam=VK_RETURN (13) maps v5 to 65 (0x41); the 0x41 branch at 4066-4083 ordinarily calls ExeMenu. The default-push case 0x0D at 3579-3587 is not reached for ordinary Return after this remap.",
+        "Ref/UIWindowMgr.cpp:10171-10224: DefPushButton at VA 0x004DEC50 sends message 0 to a modal window or frame windows, but the ordinary Return path above does not call it. Egg SendMsg VA 0x0048B650 would default-return for message 0 regardless."
+      ]
+    },
+    "escape": {
+      "evidence": [
+        "Ref/UIWindowMgr.cpp:3345-3352, 3589-3634: VK_ESCAPE enters ProcessPushButton's custom global Escape case, which handles selected special windows and then global quit/restart state. It contains no selectPetEggWnd/WID_SELECTPETEGGWND action (egg is MakeWindow ID 90, Ref/UIWindowMgr.cpp:6785-6799).",
+        "Ref/UIWindowMgr.cpp:10098-10127: CancelPushButton at VA 0x004DEB80 sends message 1 to modal/edit or frame windows, but source references show no caller; ProcessPushButton Escape does not call it. Egg SendMsg also has no message-1 case or UIFrameWnd fallback, though no primary Escape route sends it."
+      ]
+    },
+    "doubleclick": {
+      "conclusion": "The egg vtable uses the common UIItemIdentifyWnd double-click handler; the handler itself does not recalculate m_curItem from double-click coordinates. It calls UIWindow::OnLBtnDown (a no-op) and then virtual SendMsg(6,118), submitting the existing selected row. A preceding first-click event may already have selected that row.",
+      "evidence": [
+        "Egg vtable VA 0x006D12FC: slot 26=0x0047EFA0 (UIItemIdentifyWnd::OnLBtnDown), slot 27=0x0047EF70 (UIItemIdentifyWnd::OnLBtnDblClk), slot 37=0x0048B650 (UIPetEggListWnd::SendMsg).",
+        "Ref/UIFrameWnd2.cpp:23797-23801: OnLBtnDblClk directly calls UIWindow::OnLBtnDown(this,x,y), then virtual UIWindow::SendMsg(this,0,6,118,0,0,0). UIWindow::OnLBtnDown at Ref/UIControl.cpp:8450-8453 is empty.",
+        "Ref/UIFrameWnd2.cpp:23808-23825: distinct OnLBtnDown updates m_curItem through GetCurItem for y>=17. Ref/UIFrameWnd2.cpp:12327-12357: egg message 6/118 retrieves this->m_curItem, submits that inventory item if present, and deletes window ID 90."
+      ]
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "scope": "Read-only trace of source pet capture from the 0x019E response through choosing a target, capture window, outgoing 0x019F request and incoming 0x01A0 outcome. Reference source establishes the exact path; the initial shorthand 'mode160/019F' is corrected: capture request is mode message 162, while mode 159/160 send unrelated opcodes 0x01A7/0x01A8.",
+  "sequence": [
+    {
+      "step": 1,
+      "event": "0x019E capture response arms special target skill",
+      "source": "Ref/GameModePacket.cpp:1695-1697; common skill setup label :1967-1971",
+      "fields": "Opcode-only response, fixed length 2 (Ref/RunningServer/packet_db.txt:330). Sets m_skillUseInfo.m_skillId=10000, attackRange=5, useLevel=0, skillUseType=SUT_TO_CHARACTER.",
+      "state_lifetime": "This state remains in mode skill-use state until consumed/changed by subsequent player target selection; there is no direct UI message here.",
+      "port": "No 0x019E registration exists in src/gamemode/GameModePacket.cpp; only pet registrations are 0x01A2 and 0x01A4 at :8895-8896. Current pending skill state uses id/level and standard shortcut resolution; no capture skill 10000 special state is present."
+    },
+    {
+      "step": 2,
+      "event": "Player target selection arms skill approach",
+      "source": "CGameMode::ProceedAttack at Ref/GameMode.cpp:13530-13582; CPlayer::SendMsg message 41/90 at Ref/Player.cpp:400-426",
+      "fields": "ProceedAttack(actorGid,attackOnce) checks skillUseType and for character/all target sends local player actor message 41(target GID, skill ID=10000, attackRange=5), then message 90(useLevel). CPlayer message 41 stores PT_SKILL, m_proceedTargetGid, m_skillId, m_skillAttackRange (unless state/effect gates reject); message90 stores m_skillUseLevel.",
+      "approach_and_transition": "CPlayer process PT_SKILL at Ref/Player.cpp:1061 onward resolves m_proceedTargetGid, approaches by skill range, then once in range sends actor message 42 and message13. CPlayer message42 at :422-424 forwards mode message76(skillId,targetGID,useLevel).",
+      "target_predicate": "This source path requires an actor target resolved from clicked target GID; ProceedAttack's target-specific useType branch shown for SUT_TO_CHARACTER/SUT_TO_ALL. Message41 itself rejects states/effects described in its guard."
+    },
+    {
+      "step": 3,
+      "event": "Mode message 76 creates the taming window and captures target GID",
+      "source": "Ref/GameMode2.cpp:4755-4765",
+      "branch": "When skillId/wparam is 0x2710 (10000), if target GID/HIDWORD differs from g_session.m_petGID, MakeWindow(WID_PETTAMINGDECEIVEWND) (factory id 91) then sends that window message80 with val1=0,val2=targetGID. Returns without normal skill packet handling.",
+      "window_owner": "UIWindowMgr factory case 91 at Ref/UIWindowMgr.cpp:6799-6813 allocates UIPetTamingDeceiveWnd, creates 196x256, centers it. The window SendMsg at Ref/UIFrameWnd2.cpp:12423-12445 stores m_monGID=val2 for message80,val1=0.",
+      "lifetime": "Window owns target GID in m_monGID; one attempt only while m_isSelected is false. Window OnProcess invalidates each frame and deletes WID_PETTAMINGDECEIVEWND after it reaches the result animation destination and 2 seconds elapse (Ref/UIFrameWnd2.cpp:27961-27973)."
+    },
+    {
+      "step": 4,
+      "event": "User clicks the capture window to issue request",
+      "source": "UIPetTamingDeceiveWnd::OnLBtnDown at Ref/UIFrameWnd2.cpp:27939-27952; CGameMode::SendMsg case 0xA2 at Ref/GameMode2.cpp:6128-6132",
+      "fields": "If m_isSelected is false, set m_curAct=1,m_destPos=7,m_isSelected=1 then SendMsg(mode,162,m_monGID). Mode message 162 (0xA2) emits opcode decimal415 = 0x019F, writes target GID at payload offset2, and sends packet length6. Packet DB calls 0x019F length6 catchpet (Ref/RunningServer/packet_db.txt:331).",
+      "separation": "Mode messages 159/160 are distinct: Ref/GameMode2.cpp:6107-6117 maps them to opcodes 423/424 (0x01A7/0x01A8), not capture. No mode 160 is the 0x019F request."
+    },
+    {
+      "step": 5,
+      "event": "0x01A0 result selects feedback animation",
+      "source": "CGameMode::PollNetworkStatus switch at Ref/GameModePacket.cpp:1698-1718; UIPetTamingDeceiveWnd::SendMsg at Ref/UIFrameWnd2.cpp:12423-12445",
+      "fields": "Fixed packet length3 (packet_db line332); byte at offset2 controls outcome. If nonzero and window exists, send message80(val1=1,val2=7); if zero, send message80(val1=1,val2=3). Window stores m_destPos=7 or 3 and resets m_delay=m_maxDelay=7. If window no longer exists, result has no local effect.",
+      "presentation": "UIPetTamingDeceiveWnd::OnDraw advances slot-machine ACT animation; OnProcess waits until current motion reaches m_destPos and delay<=maxDelay, then starts 2-second close timer. No MsgStr is used in these steps."
+    }
+  ],
+  "port_comparison": {
+    "existing_generic_target_path": "src/gamemode/GameMode.cpp:11072-11100 intercepts left-button down when HasPendingSkillUse is true and calls TryRequestPendingSkillFromScreenPoint. That function at :5702-5791 resolves an ordinary shortcut skill, requires actor target classification, excludes NPCs, and stores a generic skill chase; PumpSkillChaseRequest at :6900 onward eventually sends SendUseSkillToIdPacket (:5552). This path is generic skill targeting and has no 10000 capture branch, mode76 capture-window handoff, or message162/0x019F request.",
+    "input_state_difference": "Port HasPendingSkillUse requires both positive skill id and positive level (:5666-5672); legacy 0x019E stores skill id 10000 with useLevel 0 and uses SUT_TO_CHARACTER. A direct reuse of current pending-skill path would therefore not reproduce the reference state contract.",
+    "missing_capture_ui_and_receivers": "No WID_PETTAMINGDECEIVEWND/UIPetTamingDeceiveWnd factory/member or capture animation owner appears in src; no handlers for 0x019E or 0x01A0 appear in src/gamemode/GameModePacket.cpp. Current registered pet receiver set is 0x01A2/0x01A4 only.",
+    "actual_current_pet_status": "0x01A2 name/property update is already handled by HandlePetStatus at src/gamemode/GameModePacket.cpp:5273-5287; that is unrelated to the capture result."
+  },
+  "implementation_notes": [
+    "Preserve the two-phase UX: 0x019E arms target selection; target approach produces capture window with target GID; only window click sends 0x019F.",
+    "Bind target GID to the window instance and keep one-attempt gating; reject opening for target GID equal to session pet GID per mode76 branch.",
+    "Do not confuse mode message 159/160 or pet egg packet 0x01A7 with capture. The capture outgoing mode message is 162 and packet 0x019F.",
+    "0x01A0 outcome is animation feedback and timed window close, not pet property/name state; the current 0x01A2 handler remains separate."
+  ]
+}

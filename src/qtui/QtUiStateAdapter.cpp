@@ -6,6 +6,8 @@
 #include "ui/UIFriendOptionWnd.h"
 #include "ui/UICommandListWnd.h"
 #include "ui/UIPetInfoWnd.h"
+#include "ui/UIPetEggListWnd.h"
+#include "ui/ChatScrollBarUi.h"
 #include "ui/UITipOfTheDayWnd.h"
 #include "ui/UITransBalloonText.h"
 #include "ui/ChatScrollBarUi.h"
@@ -2099,6 +2101,32 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
             {"imageWidth",bitmap.width},{"imageHeight",bitmap.height},{"artwork",QString::fromStdString(button.uris[status])},
             {"pressed",status==2},{"label",button.id==118 || button.id==121?"OK":button.id==119 || button.id==122?"Cancel":button.id==135?"x":"v"}};
     };
+    QVariantMap petEgg;
+    if(auto* window=g_windowMgr.m_petEggListWnd){
+        QVariantList rows,pieces,buttons;
+        for(const auto& row:window->GetVisibleRows())rows.push_back(QVariantMap{
+            {"index",row.index},{"itemIndex",row.itemIndex},{"itemId",row.itemId},{"y",row.y},
+            {"selected",row.selected},{"text",QString::fromUtf8(row.text.c_str())},
+            {"artwork",QString::fromStdString(row.artwork)},{"imageWidth",row.bitmap.width},{"imageHeight",row.bitmap.height}});
+        for(const auto& piece:window->GetFramePieces())pieces.push_back(QVariantMap{
+            {"x",piece.x},{"y",piece.y},{"width",piece.bitmap.width},{"height",piece.bitmap.height},
+            {"phase",piece.phase},{"artwork",QString::fromStdString(piece.uri)}});
+        for(const auto* button:window->GetButtons()){
+            auto data=roomButton(button->GetButton(),button->GetVisualState());
+            data["x"]=button->m_x-window->m_x;data["y"]=button->m_y-window->m_y;
+            data["width"]=button->m_w;data["height"]=button->m_h;data["pressed"]=button->IsLogicallyPressed();
+            buttons.push_back(data);
+        }
+        const auto rect=[](RECT r){return QVariantMap{{"x",static_cast<int>(r.left)},{"y",static_cast<int>(r.top)},
+            {"width",static_cast<int>(r.right-r.left)},{"height",static_cast<int>(r.bottom-r.top)}};};
+        const RECT track{185,34,198,179};const auto layout=ro::chat::ScrollLayout(track,window->GetScrollBar());
+        petEgg={{"visible",IsGameplayWindowVisible(state,window)},{"x",window->m_x},{"y",window->m_y},
+            {"width",window->m_w},{"height",window->m_h},{"layer",SourceManagedWindowLayer(window)},
+            {"title",QString::fromUtf8(window->GetTitle().c_str())},{"current",window->GetCurrentItem()},{"offset",window->GetOffset()},
+            {"rows",rows},{"framePieces",pieces},{"buttons",buttons},
+            {"scrollTrack",rect(track)},{"scrollThumb",rect(layout.thumb)},{"scrollUp",rect(layout.up)},{"scrollDown",rect(layout.down)}};
+    }
+    chatUi.insert("petEgg",petEgg);
     QVariantList settings;
     for(const auto* window:{g_windowMgr.m_chatRoomMakeWnd,g_windowMgr.m_chatRoomChangeWnd}){
         if(!window)continue;QVariantList buttons,popupRows;

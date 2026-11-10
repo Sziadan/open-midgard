@@ -1,0 +1,28 @@
+{
+  "baseline": "fb6ced0a",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "5cc1aecfeb65de112289b6772e83bc54bf8199b7002c3736e5c7df3936e6a65a",
+    "src/gamemode/GameMode.cpp": "0151eaf6e3639cfd72e29d356c77d91a9fb05260796f4ffdef2f0d8ec04632f8",
+    "src/gamemode/GameModePacket.cpp": "5720a3d6f55c4e4456455b660c6329ae6f70a43902074ec7d3e9b57f0198ceed",
+    "src/main/WinMain.cpp": "88c73128305bcc880e5bfa4b9f2899831f78df6c873fdd4784dc16db790a13cd",
+    "src/qtui/QtUiSpikeAssets.qrc": "0b71c9b8d977c3efa3d8419b17da69c937b7ddbb122d54c4282c0f4c70a8a5c6",
+    "src/qtui/QtUiStateAdapter.cpp": "4965f630768edaafa82137d37265db9980d96addc42cd33073ca0cae25250ec6",
+    "src/qtui/qml/GameOverlay.qml": "d64c09f8d39687ea6a6430a1d0b9ed589625195e36114d24a10aee3230ba9c41",
+    "src/qtui/qml/RoPetEggList.qml": "dcaa58d138438507b7951450e04bbcdad522858da8d84b3d59a267a06f434179",
+    "src/ui/CMakeLists.txt": "ae7e42ff33134653a41812ec6cca8d06c71536760916218ecd1c8f6a25e7a275",
+    "src/ui/UIPetEggListWnd.cpp": "d78999077b3949349a25d6c8fbb0e08442d3e34c358033529a25d0615d3cbe51",
+    "src/ui/UIPetEggListWnd.h": "8c5e685c87647c4055cfa800d2236ca47418dcbede0dbc0e803223abd582f07e",
+    "src/ui/UIWindowMgr.cpp": "67043653f8f263a2b58647e04ae58adda873d650f0fd4d4d14f508fff369dfe7",
+    "src/ui/UIWindowMgr.h": "63e4c55828ae04b28233719e0c7cee19ae21369180fdebd5543f6b3d0070495a",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "03abb215e8a0db5dc928036c39f1ee4c6157bd12864d04e9e35522a96255f012",
+    "tools/tests/replay/PetEggFailedSendReplay.inc": "df54d9e26a82742b0ded4cde77936dae8bafc959854c64b9904f089f867cdc91",
+    "tools/tests/replay/PetEggRenderChecks.inc": "31e5063ab41d6f643f594bf220c663633eff365b641c3e8b65b2b1704a2f929e",
+    "tools/tests/replay/PetEggReplay.inc": "1070be4cf3589a1cb54721dbd0e56a95270601ea33c49ef84fa14bf6514afef2",
+    "tools/tests/replay/PetWindowRenderChecks.inc": "f3f59317cb48d25cca35b77ceee60a8464261dbf953d05b7e5b82151ed9c196d"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "validation": "Deploy-OFF all-target/standalone builds pass; focused2/2 in5.70s, application164/164 in201.47s and standalone473/473 in73.97s. Eighteen native/Qt frame pairs and zero QML warnings include five egg-selector states, source scrollbar/drag/cancel capture and actual125% OK input. Selected-PE/source and plan checks pass separately. Deploy ON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open.",
+  "deployment": "OFF while building/testing; ON restored configure-only; installed executable unchanged",
+  "scope": "Functional egg packet/controller at declared UI representation; no full package/plan/font/skin/global key/stack/capture/follow/lifecycle/live/deployed closure."
+}

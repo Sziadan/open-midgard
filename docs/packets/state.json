@@ -798,7 +798,8 @@
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
         "docs/packets/evidence/PK27-pet-window.md",
         "docs/packets/evidence/PK27-pet-summary.md",
-        "docs/packets/evidence/PK27-pet-context-menu.md"
+        "docs/packets/evidence/PK27-pet-context-menu.md",
+        "docs/packets/evidence/PK27-pet-egg-selector.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
@@ -811,7 +812,8 @@
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
         "docs/packets/evidence/PK27-pet-window.md",
         "docs/packets/evidence/PK27-pet-summary.md",
-        "docs/packets/evidence/PK27-pet-context-menu.md"
+        "docs/packets/evidence/PK27-pet-context-menu.md",
+        "docs/packets/evidence/PK27-pet-egg-selector.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
@@ -822,7 +824,8 @@
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
         "docs/packets/evidence/PK27-pet-window.md",
         "docs/packets/evidence/PK27-pet-summary.md",
-        "docs/packets/evidence/PK27-pet-context-menu.md"
+        "docs/packets/evidence/PK27-pet-context-menu.md",
+        "docs/packets/evidence/PK27-pet-egg-selector.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
@@ -831,9 +834,10 @@
       "evidence": [
         "docs/packets/evidence/PK27-pet-window.md",
         "docs/packets/evidence/PK27-pet-summary.md",
-        "docs/packets/evidence/PK27-pet-context-menu.md"
+        "docs/packets/evidence/PK27-pet-context-menu.md",
+        "docs/packets/evidence/PK27-pet-egg-selector.md"
       ],
-      "commit_subject": "packet(PK27): restore owned pet actor context menu"
+      "commit_subject": "packet(PK27): restore source pet egg selector"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -2136,9 +2140,10 @@
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
         "docs/packets/evidence/PK27-pet-window.md",
         "docs/packets/evidence/PK27-pet-summary.md",
-        "docs/packets/evidence/PK27-pet-context-menu.md"
+        "docs/packets/evidence/PK27-pet-context-menu.md",
+        "docs/packets/evidence/PK27-pet-egg-selector.md"
       ],
-      "commit_subject": "packet(PK27): restore owned pet actor context menu"
+      "commit_subject": "packet(PK27): restore source pet egg selector"
     }
   }
 }

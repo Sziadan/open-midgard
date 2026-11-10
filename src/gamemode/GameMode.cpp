@@ -11020,6 +11020,11 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]={0xa1,0x01,static_cast<u8>(wparam)};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
     }
+    case 159: {
+        const u16 index=static_cast<u16>(wparam);
+        const u8 packet[]={0xa7,0x01,static_cast<u8>(index),static_cast<u8>(index>>8)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
+    }
     case 183: {
         const u8 packet[]={0xe7,0x01};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;

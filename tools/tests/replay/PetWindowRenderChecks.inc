@@ -1,4 +1,5 @@
 #include "ui/UIPetInfoWnd.h"
+#include "ui/UIPetEggListWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UIChatRoomEntry.h"
@@ -96,10 +97,12 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     makeDirectory(assets.string()+"\\data\\texture\\"+encodedUi+"\\illust");
 
     struct BitmapFixture {const char* name;int width,height;const char* color;bool basic;};
-    const std::array<BitmapFixture,21> bitmaps{{
+    const std::array<BitmapFixture,24> bitmaps{{
         {"titlebar_left.bmp",12,17,"#d24240",true},{"titlebar_right.bmp",12,17,"#4042d2",true},
         {"titlebar_mid.bmp",12,17,"#42d240",true},{"sysboxs_ld.bmp",8,8,"#d2d240",false},
         {"sysboxs_rd.bmp",8,8,"#42d2d2",false},
+        {"btnbar_left2.bmp",21,24,"#b09060",true},{"btnbar_right2.bmp",21,24,"#6090b0",true},
+        {"btnbar_mid2.bmp",21,24,"#90b060",true},
         {"sys_close_off.bmp",11,11,"#308040",true},{"sys_close_on.bmp",11,11,"#50b060",true},
         {"btn_rewrite.bmp",40,20,"#c040c0",false},{"btn_rewrite_a.bmp",40,20,"#40c0a0",false},
         {"btn_rewrite_b.bmp",40,20,"#c08040",false},
@@ -141,7 +144,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
         rows[669]="Normal";rows[670]="Replete";rows[671]="Very replete";rows[676]="Unknown";
         rows[672]="Very awkward";rows[673]="Awkward";rows[674]="Friendly";rows[675]="Very friendly";
         rows[1021]="Hate";rows[1022]="Very hate";rows[597]="Accessory";rows[598]="Equipped";rows[600]="Unequipped";
-        rows[592]="Feed";rows[593]="Performance";rows[594]="Return egg";rows[595]="Accessory off";rows[596]="Pet Info";
+        rows[592]="Feed";rows[593]="Performance";rows[594]="Return egg";rows[595]="Accessory off";rows[596]="Pet Info";rows[599]="Pet Egg List";
         rows[601]="Feed this pet?";rows[682]="Name too long";rows[683]="Rename %s once?";
         std::ofstream messages(assets/"msgstringtable.txt",std::ios::binary);
         for(const auto& row:rows)messages<<row<<"#\r\n";
@@ -449,6 +452,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     adapter.syncGameplay(mode,RenderBackendType::LegacyDirect3D7,RenderBackendType::LegacyDirect3D7,-1,-1);Frames(app,view);
     Require(!state->itemInfoVisible() && !Find(view.rootObject(),"itemInfoWindow")->isVisible(),"closed summary remains projected");
 #include "PetContextMenuRenderChecks.inc"
+#include "PetEggRenderChecks.inc"
     QFile results(output+"/pet-window-render-results.json");
     Require(results.open(QIODevice::WriteOnly),"pet render result file open failed");
     results.write(QJsonDocument(QJsonObject{{"frames",frames},{"synthetic_source_key_frame_button_portrait_bitmaps",true},

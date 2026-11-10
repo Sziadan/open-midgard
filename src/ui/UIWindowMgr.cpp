@@ -11,6 +11,7 @@
 #include "UITipOfTheDayWnd.h"
 #include "UICommandListWnd.h"
 #include "UIPetInfoWnd.h"
+#include "UIPetEggListWnd.h"
 #include "core/TipOfTheDay.h"
 #include "audio/Audio.h"
 #include "res/Res.h"
@@ -996,7 +997,7 @@ bool UIWindowMgr::IsWhisperPreferenceInputWindow(const UIWindow* window) const
     if(!window)return false;
     if(window->m_parent==m_messengerGroupWnd && window->m_id==168)return true;
     if(dynamic_cast<const UIPetCommandMenu*>(window))return true;
-    for(const auto* owner=window;owner;owner=owner->m_parent)if(owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd || owner==m_commandListWnd || owner==m_petInfoWnd)return true;
+    for(const auto* owner=window;owner;owner=owner->m_parent)if(owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd || owner==m_commandListWnd || owner==m_petInfoWnd || owner==m_petEggListWnd)return true;
     return false;
 }
 
@@ -1614,6 +1615,10 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_itemIdentifyWnd->SetShow(1);
         return m_itemIdentifyWnd;
 
+    case WID_SELECTPETEGGWND:
+        if(!m_petEggListWnd){m_petEggListWnd=new UIPetEggListWnd();m_children.push_back(m_petEggListWnd);}
+        m_petEggListWnd->SetShow(1);return m_petEggListWnd;
+
     case WID_SKILLSELECTWND:
         if (!m_skillSelectWnd) {
             m_skillSelectWnd = new UISkillSelectWnd();
@@ -1926,9 +1931,11 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     const bool deletingTip=window==m_tipOfTheDayWnd;
     const bool deletingCommand=window==m_commandListWnd;
     const bool deletingPet=window==m_petInfoWnd;
+    const bool deletingPetEgg=window==m_petEggListWnd;
     if(window==m_commandListWnd)m_commandListWnd=nullptr;
     if(window==m_tipOfTheDayWnd)m_tipOfTheDayWnd=nullptr;
     if(window==m_petInfoWnd){m_petInfoWnd->StoreInfo();m_petInfoWnd=nullptr;}
+    if(deletingPetEgg)m_petEggListWnd=nullptr;
 
     const auto belongsToWindow=[window](const UIWindow* candidate) {
         for (auto* current=candidate;current;current=current->m_parent) if (current==window) return true;
@@ -1936,7 +1943,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (deletingTip || deletingCommand || deletingPet || IsWhisperPreferenceInputWindow(window) || window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
+        && (deletingTip || deletingCommand || deletingPet || deletingPetEgg || IsWhisperPreferenceInputWindow(window) || window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
