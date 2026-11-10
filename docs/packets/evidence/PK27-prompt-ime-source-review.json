@@ -1,0 +1,62 @@
+{
+  "baseline": "d0a1c68e",
+  "original_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "skill_tree_normalized_sha256": {
+    "src/ui/GuildSkillWndRows.cpp": "e3419a1bbe8d8882e681cfd9b483a3c7eb179a316b08cc804dfe434114514848",
+    "src/ui/GuildSkillWndRows.h": "4b7807d11f8a8133c007abbd0580c9e4faf8fe87360794ac948470ef9f96e88c",
+    "src/ui/QtSkillTree.cpp": "7d85bd905111fa2339b7db2d18bc316168fc9f687d7d3fbc9d0560f5d5a47ca0",
+    "src/ui/QtSkillTree.h": "044a594816b93b66993bd4a7ce035b9b7f8e1944d33c120b24872e5add659248",
+    "src/ui/SkillTreeModel.cpp": "0db81a6621a89450bc4408428313bce57d919dd2f8d5f8cf2a05810923dcc21e",
+    "src/ui/SkillTreeModel.h": "ead1459b20df5ac4658b1014409900b49429abc72f4e1a372c79cd5abae4c9e1",
+    "src/ui/UISkillDescribeWnd.cpp": "400248169acac3cdfda3c109e25590c13aacb792f68cb17667554d9056f35b8d",
+    "src/ui/UISkillDescribeWnd.h": "b6de88b7468f80617a03f2479e50d48ff1616e3a9551040fda115c4f76f6b956",
+    "src/ui/UISkillListWnd.cpp": "f4ad39059d53d083491e4d39be7fd2c28b795abb6d6cdc29233ee8e209fc024d",
+    "src/ui/UISkillListWnd.h": "277f1c27080d9c699d29f38d2bbb26daf1c3160a4a36d5a0efaa446531c169a3",
+    "src/ui/UISkillSelectWnd.cpp": "c6e8632fb8cacd85d38664af3a5bd11cc5c97b5e83dcb02633d9a89d82bb7bda",
+    "src/ui/UISkillSelectWnd.h": "d5f3ea0510b7e221ce397fa34b02d47db684b336eb579f7f5a082cf0200973c1",
+    "src/qtui/qml/RoSkillTree.qml": "1b5672061738a4234f60e89881a9b5986d42b1cf00e82d259d205a9943454b92",
+    "src/qtui/SkillTreeGeometry.h": "d4bd7a28e27757473d297ec8d144b601b66239d5c70b1fe3fe0833b89c01db75",
+    "src/qtui/data/skill_tree_catalog.json": "8ba49297694461942e2d55bf6ad5a90ae05e5de062e16388c464983ab912ef42"
+  },
+  "sha256": {
+    "src/main/WinMain.cpp": "9b1d575697c632c852a25b808c48fe73a66454b54aeea61b884368e278501e84",
+    "src/qtui/QtPlatformWindow.cpp": "25612a360b625a686d2022e800954af57f66f44d286eeee898187e78c77b97db",
+    "src/ui/UIGroundSkillTextWnd.cpp": "23c842ecd5d8feee957ab70bcf864c8c073d425e3e0232a5c3dbbc5f26f8d197",
+    "src/ui/UIGroundSkillTextWnd.h": "c081b7d373d3de355a5bb7d12f82fddad8eaac6a612f13cd0cb17659681eae7b",
+    "tools/tests/replay/GroundSkillTextRenderChecks.inc": "64a94c29d74960ad7d6dfe2cf62dc3483f316ea0baff6b89d66db8de0edb91b8",
+    "build-mingw-preset/open-midgard.exe": "ea6add10082c3cf87af56223b6ebba738fb0f519c783b7096a76bfb628a491ff"
+  },
+  "anchors": {
+    "native_events": "Ref/Language.cpp CLanguage::ProcessImeMessage 0x4FEAD0",
+    "native_preedit": "Ref/Language.cpp CLanguage::GetImeCompStr 0x4FF640",
+    "display_text": "Ref/Language.cpp CLanguage::GetLanguageText, lines 3205\u20133275",
+    "source_paint": "Ref/UIControl.cpp UIEditCtrl::DrawEditText 0x444D30",
+    "candidate_layout": "Ref/UIControl.cpp UIEditCtrl::UpdateCandidate 0x444C30 and UpdateKeyStroke 0x444CB0",
+    "qt_contract": "https://doc.qt.io/qt-6/qinputmethodevent.html",
+    "imm_contract": "https://learn.microsoft.com/en-us/windows/win32/intl/wm-ime-setcontext"
+  },
+  "render": {
+    "custom_skin_resource_acceptance": false,
+    "native_character_and_qt_commit": true,
+    "native_frames": 2,
+    "native_keyboard_acceptance": false,
+    "native_windowproc_input": true,
+    "opacity_compositor_acceptance": false,
+    "outcome": "PASS",
+    "pointer_capture_and_outside_release": true,
+    "qt_preedit_cursor_and_replacement": true,
+    "skill_tree_window_changed": false,
+    "source_clipboard_bytes_and_selection": true,
+    "source_codepage_editor_limit": true,
+    "source_colorchip_acceptance": false,
+    "source_edit_geometry_and_limit": true,
+    "source_ids_84_101": true,
+    "source_key_frame_footer_button_samples": true,
+    "source_selection_and_replacement": true,
+    "unregistered_frame_drag": true,
+    "valid_colorchip_sample_and_paint": true
+  },
+  "live_native_ime_acceptance": false,
+  "source_candidate_window_acceptance": false
+}

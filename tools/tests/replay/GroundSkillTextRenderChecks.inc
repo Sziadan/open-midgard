@@ -92,6 +92,40 @@
                 window->GetEditCtrl()->SetText(std::string(77, 'a').c_str());
                 window->PasteSelectionBytes("\x82\xa0");
                 Require(std::string(window->GetEditCtrl()->GetText()) == std::string(77, 'a') + " ", "clipboard insertion bypassed the wire byte limit");
+
+                g_codePage = 65001;
+                window->GetEditCtrl()->SetText("a\xf0\x9f\x99\x82" "b");
+                window->HandleEditKey(VK_HOME, false);
+                window->HandleEditKey(VK_RIGHT, false);
+                const auto queryInput = [&](Qt::InputMethodQuery field) {
+                    QInputMethodQueryEvent query(field);
+                    QCoreApplication::sendEvent(host, &query);
+                    return query.value(field);
+                };
+                const auto initialCaret = queryInput(Qt::ImCursorRectangle).toRect();
+                QInputMethodEvent preedit(QStringLiteral("PQ"), {{QInputMethodEvent::Cursor, 1, 0, {}}});
+                QCoreApplication::sendEvent(host, &preedit);
+                Require(queryInput(Qt::ImSurroundingText).toString() == QString::fromUtf8("a\xf0\x9f\x99\x82" "b"),
+                    "preedit leaked into committed surrounding text");
+                Require(queryInput(Qt::ImCursorRectangle).toRect().x() > initialCaret.x(),
+                    "preedit cursor did not advance within the edit");
+                QInputMethodEvent cancel;
+                QCoreApplication::sendEvent(host, &cancel);
+                Require(queryInput(Qt::ImCursorRectangle).toRect() == initialCaret,
+                    "canceled preedit left the cursor displaced");
+                window->HandleEditKey(VK_RIGHT, false);
+                Require(queryInput(Qt::ImCursorPosition).toInt() == 3, "IME query returned bytes instead of UTF-16 units");
+                QInputMethodEvent range;
+                range.setCommitString(QStringLiteral("Z"), -2, 3);
+                QCoreApplication::sendEvent(host, &range);
+                Require(std::string(window->GetEditCtrl()->GetText()) == "aZ", "IME range replacement split or skipped a character");
+
+                window->GetEditCtrl()->SetText("keep");
+                window->HandleEditKey(VK_HOME, true);
+                QCoreApplication::sendEvent(host, &preedit);
+                QCoreApplication::sendEvent(host, &cancel);
+                Require(queryInput(Qt::ImCurrentSelection).toString() == QStringLiteral("keep"),
+                    "canceling composition did not restore the selected committed text");
             }
             g_codePage = 949;
             window->GetEditCtrl()->SetText("");
@@ -140,6 +174,7 @@
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},{"opacity_compositor_acceptance",false},
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},
-            {"source_clipboard_bytes_and_selection",true},{"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},
+            {"source_clipboard_bytes_and_selection",true},{"qt_preedit_cursor_and_replacement",true},
+            {"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},
             {"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
     }

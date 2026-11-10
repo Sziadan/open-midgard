@@ -3727,3 +3727,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-10 Ground prompt clipboard
 
 **Current ground prompt clipboard checkpoint (2026-11-10)**. Talkie Box and Graffiti now route the original clipboard shortcuts through the selected service codepage. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-clipboard.md)
+
+## 2026-11-10 Ground prompt IME
+
+**Current ground prompt IME checkpoint (2026-11-10)**. The ground prompts now render preedit independently of the committed text and support Qt IME cursor queries and replacement ranges. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-ime.md)

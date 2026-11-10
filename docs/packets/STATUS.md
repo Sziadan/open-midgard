@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current ground prompt clipboard checkpoint (2026-11-10)**. Talkie Box and Graffiti now route the original clipboard shortcuts through the selected service codepage. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-clipboard.md)
+**Current ground prompt IME checkpoint (2026-11-10)**. The ground prompts now render preedit independently of the committed text and support Qt IME cursor queries and replacement ranges. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-ime.md)
+
+**Previous ground prompt clipboard checkpoint (2026-11-10)**. Talkie Box and Graffiti now route the original clipboard shortcuts through the selected service codepage. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-clipboard.md)
 
 **Previous ground prompt selection checkpoint (2026-11-10)**. Talkie Box and Graffiti now support caret navigation, Shift selection, and replacement by typed text or an IME commit. All 164 application checks and 473 standalone checks passed. The focused suite passed all 3 checks. [Evidence](evidence/PK27-prompt-selection.md)
 

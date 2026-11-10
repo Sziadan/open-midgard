@@ -12,6 +12,7 @@
 #include <QCursor>
 #include <QFocusEvent>
 #include <QGuiApplication>
+#include <QInputMethod>
 #include <QKeyEvent>
 #include <QInputMethodEvent>
 #include <QInputMethodQueryEvent>
@@ -150,6 +151,7 @@ protected:
 
     void focusOutEvent(QFocusEvent* event) override
     {
+        if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) prompt->CancelComposition();
         QWindow::focusOutEvent(event);
         sendMessage(kWmActivate, kWaInactive, 0);
     }
@@ -203,15 +205,12 @@ protected:
     {
         if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
             if (event->type() == QEvent::InputMethod) {
-                auto* input = static_cast<QInputMethodEvent*>(event);
-                prompt->CommitText(input->commitString().toStdU16String());
+                prompt->ApplyInputMethod(*static_cast<QInputMethodEvent*>(event));
+                QGuiApplication::inputMethod()->update(Qt::ImQueryInput);
                 return true;
             }
             if (event->type() == QEvent::InputMethodQuery) {
-                auto* query = static_cast<QInputMethodQueryEvent*>(event);
-                query->setValue(Qt::ImEnabled, true);
-                const auto* edit = prompt->GetEditCtrl();
-                query->setValue(Qt::ImCursorRectangle, QRect(edit->m_x, edit->m_y, 1, edit->m_h));
+                prompt->QueryInputMethod(*static_cast<QInputMethodQueryEvent*>(event));
                 return true;
             }
         }
@@ -230,6 +229,7 @@ protected:
 #endif
             if (!(event->modifiers() & (Qt::AltModifier | Qt::GroupSwitchModifier))
                 && prompt->HandleClipboardKey(virtualKey, shift, control, clipboardOwner)) {
+                QGuiApplication::inputMethod()->update(Qt::ImQueryInput);
                 event->accept();
                 return;
             }
@@ -237,6 +237,7 @@ protected:
             if (!(event->modifiers() & (Qt::AltModifier | Qt::ControlModifier))
                 || event->modifiers().testFlag(Qt::GroupSwitchModifier))
                 prompt->CommitText(event->text().toStdU16String());
+            QGuiApplication::inputMethod()->update(Qt::ImQueryInput);
             event->accept();
             return;
         }

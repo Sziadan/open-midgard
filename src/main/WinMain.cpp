@@ -577,6 +577,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
+        if (msg == WM_KILLFOCUS || msg == WM_IME_STARTCOMPOSITION || msg == WM_IME_ENDCOMPOSITION)
+            prompt->CancelComposition();
+        if (msg == WM_IME_SETCONTEXT)
+            return DefWindowProcW(hwnd, msg, wParam, lParam & ~static_cast<LPARAM>(ISC_SHOWUICOMPOSITIONWINDOW));
         if (msg == WM_KEYDOWN && (wParam == VK_BACK || wParam == VK_RETURN || wParam == VK_ESCAPE)) {
             // The translated WM_CHAR owns native Backspace.
             return 0;
@@ -603,23 +607,32 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             return 0;
         }
-        if (msg == WM_IME_COMPOSITION && (lParam & GCS_RESULTSTR)) {
+        if (msg == WM_IME_COMPOSITION) {
             if (HIMC context = ImmGetContext(hwnd)) {
-                const LONG size = ImmGetCompositionStringW(context, GCS_RESULTSTR, nullptr, 0);
-                std::u16string result;
-                if (size > 0 && size % sizeof(char16_t) == 0) {
-                    result.resize(static_cast<std::size_t>(size) / sizeof(char16_t));
-                    if (ImmGetCompositionStringW(context, GCS_RESULTSTR, result.data(), size) != size)
-                        result.clear();
-                }
+                const auto read = [context](DWORD kind) -> std::optional<std::u16string> {
+                    const LONG bytes = ImmGetCompositionStringW(context, kind, nullptr, 0);
+                    if (bytes < 0 || bytes % sizeof(char16_t)) return std::nullopt;
+                    std::u16string text(static_cast<std::size_t>(bytes) / sizeof(char16_t), u'\0');
+                    if (bytes && ImmGetCompositionStringW(context, kind, text.data(), bytes) != bytes)
+                        return std::nullopt;
+                    return text;
+                };
+                const auto result = lParam & GCS_RESULTSTR ? read(GCS_RESULTSTR) : std::nullopt;
+                const auto preedit = lParam & (GCS_COMPSTR | GCS_CURSORPOS) ? read(GCS_COMPSTR) : std::nullopt;
+                const auto cursor = preedit ? ImmGetCompositionStringW(context, GCS_CURSORPOS, nullptr, 0) : -1;
                 ImmReleaseContext(hwnd, context);
-                if (!result.empty()) {
-                    prompt->CommitText(result);
-                    // DefWindowProc must not deliver the same result as WM_IME_CHAR.
-                    const LPARAM composition = lParam & ~static_cast<LPARAM>(GCS_RESULTSTR);
-                    return composition ? DefWindowProcW(hwnd, msg, wParam, composition) : 0;
+                if (result) {
+                    prompt->CancelComposition();
+                    prompt->CommitText(*result);
+                    lParam &= ~static_cast<LPARAM>(GCS_RESULTSTR);
                 }
+                if (preedit) {
+                    prompt->SetComposition(*preedit, cursor);
+                    lParam &= ~static_cast<LPARAM>(GCS_COMPSTR | GCS_CURSORPOS);
+                }
+                if (result || preedit) return lParam ? DefWindowProcW(hwnd, msg, wParam, lParam) : 0;
             }
+            if (!lParam) prompt->CancelComposition();
         }
     }
 
