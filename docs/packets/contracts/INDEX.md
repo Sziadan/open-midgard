@@ -148,3 +148,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [Source caller/core dispatch](../evidence/PK09.21-chat-submission.md) adds real Enter -> parser ->47/11 -> channel/selected action proof and shared buffer/repeat ownership. Remaining source cases/options initialization/global-special/editor/render/deployed gates stay open.
 
 [Main/room save and report dispatch](../evidence/PK09.21-chat-exports.md) pins manager6/7/17/18, separate main history exports and selected report no-op/stub behavior. Remaining PK09.21 and broad/live/deployed gates stay open.
+
+[Whisper-ignore pending/request/reply ownership](../evidence/PK09.21-chat-ignore.md) pins15..19, CF/D0/D3 -> D1/D2/D4, the single pending-name slot, source17 local clear and sole D1 router owner. Full PK09.21 remains open.

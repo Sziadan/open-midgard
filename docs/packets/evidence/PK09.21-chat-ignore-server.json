@@ -1,0 +1,98 @@
+{
+  "topic": "whisper-ignore server packet contract",
+  "server_snapshot": "C:/Users/sziad/source/repos/rathena-master",
+  "selected_server_packetver": {
+    "value": 20080910,
+    "source": "src/custom/defines_pre.hpp:12-13"
+  },
+  "server_contract": {
+    "requests": [
+      {
+        "opcode": "0x00CF",
+        "name": "CZ_SETTING_WHISPER_PC",
+        "length": 27,
+        "layout": "opcode:u16, name:24 bytes, operation:type:u8 at offset 26",
+        "operation": {
+          "0": "deny/block whispers from nick; insert if absent",
+          "1": "allow/unblock nick"
+        },
+        "source": "src/map/clif_packetdb.hpp:78; src/map/clif.cpp:15145-15181 comments/parser"
+      },
+      {
+        "opcode": "0x00D0",
+        "name": "CZ_SETTING_WHISPER_STATE",
+        "length": 3,
+        "layout": "opcode:u16, type:u8",
+        "operation": {
+          "0": "deny all (/exall)",
+          "1": "allow all (/inall)"
+        },
+        "source": "src/map/packets.hpp:2062-2065; src/map/clif_packetdb.hpp:79; src/map/clif.cpp:15184-15217"
+      },
+      {
+        "opcode": "0x00D3",
+        "name": "CZ_REQ_WHISPER_LIST",
+        "length": 2,
+        "layout": "opcode only",
+        "behavior": "requests current ignore list",
+        "source": "src/map/clif_packetdb.hpp:80; src/map/clif.cpp:15239-15250"
+      }
+    ],
+    "replies": [
+      {
+        "opcode": "0x00D1",
+        "name": "ZC_SETTING_WHISPER_PC",
+        "length": 4,
+        "layout": "opcode:u16, type:u8 (echo operation), result:u8",
+        "result": {
+          "0": "success",
+          "1": "failure (e.g. server name or missing unblock entry)",
+          "2": "ignore list full"
+        },
+        "source": "src/map/packets.hpp:2005-2010; src/map/clif.cpp:9621-9630 and 15147-15178"
+      },
+      {
+        "opcode": "0x00D2",
+        "name": "ZC_SETTING_WHISPER_STATE",
+        "length": 4,
+        "layout": "opcode:u16, type:u8 (echo operation), result:u8",
+        "result": {
+          "0": "success",
+          "1": "failure"
+        },
+        "source": "src/map/packets.hpp:2012-2017; src/map/clif.cpp:9633-9650"
+      },
+      {
+        "opcode": "0x00D4",
+        "name": "ZC_WHISPER_LIST",
+        "length": "4 + 24*N",
+        "layout": "opcode:u16, packetLength:u16, N packed name entries; each name is NAME_LENGTH=24 bytes",
+        "source": "src/map/packets.hpp:2068-2075; src/common/mmo.hpp:154; src/map/clif.cpp:15221-15236"
+      }
+    ],
+    "server_side_state_semantics": "Per-character ignore list and ignoreAll state live on map_session_data; parser validates duplicate/free/full or absent entries and sends D1/D2 result. The client request descriptions above are protocol evidence, while these state changes are server implementation behavior.",
+    "source_locations": {
+      "per_name_parser": "src/map/clif.cpp:15145-15181",
+      "global_parser": "src/map/clif.cpp:15184-15217",
+      "list_reply_builder": "src/map/clif.cpp:15221-15236",
+      "list_request_parser": "src/map/clif.cpp:15239-15250",
+      "per_name_ack_builder": "src/map/clif.cpp:9621-9630",
+      "global_ack_builder": "src/map/clif.cpp:9633-9650"
+    }
+  },
+  "current_port_registry_only": {
+    "source": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/network/GronPacket.cpp:120-123",
+    "entries": {
+      "0x00D1": 4,
+      "0x00D2": 4,
+      "0x00D3": 2,
+      "0x00D4": "kVariablePacketSize"
+    },
+    "not_registered_here": [
+      "0x00CF",
+      "0x00D0"
+    ],
+    "scope_note": "This compares framing metadata only; no source edits and no conclusion about send paths outside this registry."
+  },
+  "root_review": "Root cross-checked selected MsgStr push IDs and request jump targets, and read the selected server registry/packet structures; server snapshot is unversioned, hash-pinned and read only."
+}

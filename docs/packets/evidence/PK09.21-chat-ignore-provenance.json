@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "date": "2026-11-10",
+  "baseline": "009007418a71fabaa67346908cb7cd84e058b8f0",
+  "commit_subject": "packet(PK09.21): restore whisper ignore requests and replies",
+  "scope": "Source15..19 + CF/D0/D3 and D1/D2/D4 pending/notice/list ownership; whole packet plan still unfinished",
+  "server_snapshot": "Unversioned read-only hash-pinned PACKETVER20080910; no server commit claimed",
+  "runtime_test_sha256": {
+    "src/gamemode/ChatIgnorePacketHandlers.inc": "3749cca2f3abdd47f9cc7e7289e2c9a1a95cfceef13df46b24031a65506f68c2",
+    "src/gamemode/Commerce.cpp": "887bf27ac3550f383b7fabca5a6c952e49ad34267ac94e184061532438dec7e3",
+    "src/gamemode/GameModePacket.cpp": "2b67332f61cee49aa1fbd0a3972075cae14ea95efde5fd087d9e419895ecd6d5",
+    "src/gamemode/SourceChatSubmission.inc": "d42035d2bea842ba4dfdcb47124765361f8c2aca42d30f6e9d535420c2b5801c",
+    "src/network/GronPacket.cpp": "cfdcb5a868b17b4ab8d3e169d5a1d65439f94b025821458d2b7b651ca97cf53b",
+    "tools/tests/replay/ChatIgnoreReplay.inc": "ab8e04538dafedb1a683a9dbcfc0d2b922105794068d73d9b717d9f67546248c",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "2c5d096ab592480a8d580f76ae07278caf6a90b363c69f2c606573c727e27654"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\custom\\defines_pre.hpp": "0a18ff8845d1e6465c6f0213a3f62aa269d0380337c79e9fce961ec312e41cfb",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\packets.hpp": "fcf4570619db2b46468f254b8a59f94eb6ff1c9c6705c9afb1c3bc8825a136ef",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\common\\mmo.hpp": "aac4f5aa4661d087f71dcb52fdf0cc515deee2ebd4642c084b9cbdc8b2bb140a",
+    "C:\\Users\\sziad\\source\\repos\\rathena-master\\src\\map\\clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69"
+  },
+  "application_sha256": {
+    "build-mingw-preset/open-midgard.exe": "9d7b0dba374d0da0f5687f61ef79f35d8628b92c72af6ec0203ddc9eeadc53de",
+    "build-mingw-preset/packet_stream_replay_checks.exe": "a9b737d7ee2982e6aa210b0a9bd24d1cc5025b70746bd91508f7e23569399dd5"
+  },
+  "deployed_read_only_sha256": {
+    "D:/Spel/OldRO/open-midgard.exe": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-chat-ignore-build.log": "5a97d33c0f35ef6f494f95d82e04adb281c4aff30cca980ff07dffc64a972301",
+    "docs/packets/evidence/PK09.21-chat-ignore-cases.log": "8f1e18d528e31d180a948aacad31c0e59030c80658868d4a7184d661c3867f9b",
+    "docs/packets/evidence/PK09.21-chat-ignore-configure.log": "ee38fe3e87537731770a9d818f97dfbb3ad499f58d7aec107119bcda5d6e4a8d",
+    "docs/packets/evidence/PK09.21-chat-ignore-data-check.log": "f695e606f96149b39949a6bd3cb1eec808d607f08744a98950aef9fa1e317e4a",
+    "docs/packets/evidence/PK09.21-chat-ignore-focused.log": "d75bac65447692dadfdae246658ba5b386f48bb707ef7906df4c20a809bbfd34",
+    "docs/packets/evidence/PK09.21-chat-ignore-messages.json": "398a9c2d4a03c25569e82f5969ceaa9e547d3e3479021e6960dd011929c78e0f",
+    "docs/packets/evidence/PK09.21-chat-ignore-pe.txt": "3c9a0ae1d0cf9249738cbcca481b473ff73c0400eac8b67187e0fec63cc12342",
+    "docs/packets/evidence/PK09.21-chat-ignore-plan-check.log": "9db87cb07fff32518d0fee379cde3ba582fd95c76703109c3267dff701ce2d2c",
+    "docs/packets/evidence/PK09.21-chat-ignore-restore-deploy-setting.log": "1fb9f8a22f9bcea301ce085e5185a4968ab9b5df265a2c96a01008d077fa8ef8",
+    "docs/packets/evidence/PK09.21-chat-ignore-root-ctest.log": "01d46f0739fd5d587c1cd13e15a563a5f7973f93d10904347757a102ac8479c7",
+    "docs/packets/evidence/PK09.21-chat-ignore-server.json": "7ce7ec82a046c4864fc9c90f59f725c37f7c88eeb6c1d06b382babc0104d9d0e",
+    "docs/packets/evidence/PK09.21-chat-ignore-server.txt": "66b7099b8f9d1c0ae5e811fb489731b88864afab65f99b1fd01ec18f298a3ab5",
+    "docs/packets/evidence/PK09.21-chat-ignore-source.txt": "11ff8a43f4f6ccd48b3ecdedc3e07c37eaa3a667b062ee6a516ef3e7eb69dedb",
+    "docs/packets/evidence/PK09.21-chat-ignore-unit-build.log": "989c0b75677b0a28e25c971d88dfcab98d92500b6414a3dec008117fa46ca59e",
+    "docs/packets/evidence/PK09.21-chat-ignore-unit-ctest.log": "4632b54a2c55e3246f58a8c575ddd11e460b37f208a5831af5ad2501e7ae90e9",
+    "docs/packets/evidence/PK09.21-chat-ignore.md": "d061a3d942bc8c36cafea94aeae20382c4a6b092b777e3dbcd9dd92d8150dad7"
+  }
+}

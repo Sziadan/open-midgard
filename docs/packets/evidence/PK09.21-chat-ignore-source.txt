@@ -1,0 +1,357 @@
+## Ref/GameMode.cpp:16372
+16372:     case TT_REQ_WHISPER_LIST:
+16373:       HIWORD(val2) = 211;
+16374:       X_4 = (char *)&val2 + 2;
+16375:       X = 211;
+16376:       goto LABEL_155;
+16377:     case TT_REQ_WHISPER_STATE_EX:
+16378:       this->m_isWaitingWhisperSetting = 1;
+16379:       X_4 = (const char *)&val2;
+16380:       LOWORD(val2) = 208;
+16381:       BYTE2(val2) = 0;
+16382:       X = 208;
+16383:       goto LABEL_155;
+16384:     case TT_REQ_WHISPER_STATE_IN:
+16385:       this->m_isWaitingWhisperSetting = 1;
+16386:       LOWORD(val2) = 208;
+16387:       BYTE2(val2) = 1;
+16388:       v19 = CRagConnection::instanceR();
+16389:       Xa = CRagConnection::GetPacketSize(v19, 208);
+16390:       v20 = CRagConnection::instanceR();
+16391:       CRagConnection::SendPacket(v20, Xa, (const char *)&val2);
+16392:       CSession::DeleteAllExNameList(&g_session);
+16393:       CSession::DeleteAllExAidList(&g_session);
+16394:       return;
+16395:     case TT_REQ_WHISPER_PC_EX:
+16396:       v8 = val2;
+16397:       this->m_isWaitingWhisperSetting = 1;
+16398:       v9 = *(const char **)(v8 + 4);
+16399:       v10 = `std::string::_Nullstr'::`2'::_C;
+16400:       if ( v9 )
+16401:         v10 = v9;
+16402:       *(float *)&talkType = COERCE_FLOAT(strlen(v10));
+16403:       val2 = (unsigned int)&this->m_refuseWhisperName;
+16404:       if ( std::string::_Grow(&this->m_refuseWhisperName, talkType, 1u) )
+16405:       {
+16406:         v11 = val2;
+16407:         v12 = talkType;
+16408:         qmemcpy(*(void **)(val2 + 4), v10, talkType);
+16409:         *(float *)(v11 + 8) = *(float *)&talkType;
+16410:         *(_BYTE *)(v12 + *(_DWORD *)(v11 + 4)) = 0;
+16411:       }
+16412:       if ( this->m_refuseWhisperName._Len > 0x18 )
+16413:         return;
+16414:       v13 = *(const char **)(val2 + 4);
+16415:       if ( !v13 )
+16416:         v13 = `std::string::_Nullstr'::`2'::_C;
+16417:       strcpy(mapName, v13);
+16418:       v279 = 207;
+16419:       qmemcpy(v280, mapName, sizeof(v280));
+16420:       v281 = 0;
+16421:       X_4 = (const char *)&v279;
+16422:       X = 207;
+16423:       goto LABEL_155;
+16424:     case TT_REQ_WHISPER_PC_IN:
+16425:       v14 = val2;
+16426:       this->m_isWaitingWhisperSetting = 1;
+16427:       v15 = `std::string::_Nullstr'::`2'::_C;
+16428:       if ( *(_DWORD *)(v14 + 4) )
+16429:         v15 = *(const char **)(v14 + 4);
+16430:       *(float *)&talkType = COERCE_FLOAT(strlen(v15));
+16431:       val2 = (unsigned int)&this->m_refuseWhisperName;
+16432:       if ( std::string::_Grow(&this->m_refuseWhisperName, talkType, 1u) )
+16433:       {
+16434:         v16 = val2;
+16435:         v17 = talkType;
+16436:         qmemcpy(*(void **)(val2 + 4), v15, talkType);
+16437:         *(float *)(v16 + 8) = *(float *)&talkType;
+16438:         *(_BYTE *)(v17 + *(_DWORD *)(v16 + 4)) = 0;
+16439:       }
+16440:       if ( this->m_refuseWhisperName._Len > 0x18 )
+16441:         return;
+16442:       v18 = *(const char **)(val2 + 4);
+16443:       if ( !v18 )
+16444:         v18 = `std::string::_Nullstr'::`2'::_C;
+16445:       strcpy(mapName, v18);
+16446:       v279 = 207;
+16447:       qmemcpy(v280, mapName, sizeof(v280));
+16448:       v281 = 1;
+16449:       X_4 = (const char *)&v279;
+16450:       X = 207;
+16451: LABEL_155:
+16452:       v55 = CRagConnection::instanceR();
+16453:       Xc = CRagConnection::GetPacketSize(v55, X);
+16454:       v56 = CRagConnection::instanceR();
+16455:       CRagConnection::SendPacket(v56, Xc, X_4);
+16456:       return;
+
+## Ref/GameModePacket.cpp:25133
+25133: // ================================================
+25134: // Original Signature: public: void __thiscall CGameMode::Zc_Setting_Whisper_Pc(char const *)
+25135: // Decompiled from address: 0x599630
+25136: // ================================================
+25137: void __thiscall CGameMode::Zc_Setting_Whisper_Pc(CGameMode *this, const char *buf)
+25138: {
+25139:   const char *v3; // eax
+25140:   char *v4; // eax
+25141:   char *v5; // ecx
+25142:   char v6; // al
+25143:   const char *v7; // eax
+25144:   char *Ptr; // eax
+25145:   char v9; // al
+25146:   const char *v10; // eax
+25147:   char *v11; // eax
+25148:   const char *v12; // eax
+25149:   char *v13; // eax
+25150:   const char *v14; // eax
+25151:   char *v15; // eax
+25152:   const char *v16; // eax
+25153:   char *v17; // eax
+25154:   std::string v18; // [esp+4h] [ebp-6Ch] BYREF
+25155:   std::string v19; // [esp+14h] [ebp-5Ch] BYREF
+25156:   std::string v20; // [esp+24h] [ebp-4Ch] BYREF
+25157:   std::string v21; // [esp+34h] [ebp-3Ch] BYREF
+25158:   std::string v22; // [esp+44h] [ebp-2Ch] BYREF
+25159:   std::string result; // [esp+54h] [ebp-1Ch] BYREF
+25160:   int v24; // [esp+6Ch] [ebp-4h]
+25161:
+25162:   UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+25163:   this->m_isWaitingWhisperSetting = 0;
+25164:   if ( buf[2] )
+25165:   {
+25166:     if ( buf[2] != 1 )
+25167:       return;
+25168:     if ( buf[3] )
+25169:     {
+25170:       if ( buf[3] == 1 )
+25171:       {
+25172:         v7 = MsgStr(MSI_WHISPERNOIGNOREFAILED1);
+25173:         Ptr = std::operator+(&v22, &this->m_refuseWhisperName, v7)->_Ptr;
+25174:         v24 = 4;
+25175:         if ( !Ptr )
+25176:           Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+25177:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)Ptr, 0xFFFF, 0, 0);
+25178:         if ( v22._Ptr )
+25179:         {
+25180:           v5 = v22._Ptr - 1;
+25181:           v9 = *(v22._Ptr - 1);
+25182:           if ( v9 && v9 != -1 )
+25183:           {
+25184:             *v5 = v9 - 1;
+25185:             return;
+25186:           }
+25187:           goto LABEL_18;
+25188:         }
+25189:       }
+25190:       else if ( buf[3] == 2 )
+25191:       {
+25192:         v3 = MsgStr(MSI_WHISPERNOIGNOREFAILED2);
+25193:         v4 = std::operator+(&result, &this->m_refuseWhisperName, v3)->_Ptr;
+25194:         v24 = 5;
+25195:         if ( !v4 )
+25196:           v4 = (char *)`std::string::_Nullstr'::`2'::_C;
+25197:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v4, 0xFFFF, 0, 0);
+25198:         if ( result._Ptr )
+25199:         {
+25200:           v5 = result._Ptr - 1;
+25201:           v6 = *(result._Ptr - 1);
+25202:           if ( v6 && v6 != -1 )
+25203:           {
+25204:             *v5 = v6 - 1;
+25205:             return;
+25206:           }
+25207: LABEL_18:
+25208:           operator delete(v5);
+25209:         }
+25210:       }
+25211:     }
+25212:     else
+25213:     {
+25214:       v10 = MsgStr(MSI_WHISPERNOIGNORESUCCESS);
+25215:       v11 = std::operator+(&v21, &this->m_refuseWhisperName, v10)->_Ptr;
+25216:       v24 = 3;
+25217:       if ( !v11 )
+25218:         v11 = (char *)`std::string::_Nullstr'::`2'::_C;
+25219:       UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v11, 0xFFFF, 0, 0);
+25220:       v24 = -1;
+25221:       std::string::_Tidy(&v21, 1u);
+25222:     }
+25223:   }
+25224:   else if ( buf[3] )
+25225:   {
+25226:     if ( buf[3] == 1 )
+25227:     {
+25228:       v14 = MsgStr(MSI_WHISPERIGNOREFAILED1);
+25229:       v15 = std::operator+(&v19, &this->m_refuseWhisperName, v14)->_Ptr;
+25230:       v24 = 1;
+25231:       if ( !v15 )
+25232:         v15 = (char *)`std::string::_Nullstr'::`2'::_C;
+25233:       UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v15, 0xFFFF, 0, 0);
+25234:       v24 = -1;
+25235:       std::string::_Tidy(&v19, 1u);
+25236:     }
+25237:     else if ( buf[3] == 2 )
+25238:     {
+25239:       v12 = MsgStr(MSI_WHISPERIGNOREFAILED2);
+25240:       v13 = std::operator+(&v20, &this->m_refuseWhisperName, v12)->_Ptr;
+25241:       v24 = 2;
+25242:       if ( !v13 )
+25243:         v13 = (char *)`std::string::_Nullstr'::`2'::_C;
+25244:       UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v13, 0xFFFF, 0, 0);
+25245:       v24 = -1;
+25246:       std::string::_Tidy(&v20, 1u);
+25247:     }
+25248:   }
+25249:   else
+25250:   {
+25251:     v16 = MsgStr(MSI_WHISPERIGNORESUCCESS);
+25252:     v17 = std::operator+(&v18, &this->m_refuseWhisperName, v16)->_Ptr;
+25253:     v24 = 0;
+25254:     if ( !v17 )
+25255:       v17 = (char *)`std::string::_Nullstr'::`2'::_C;
+25256:     UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v17, 0xFFFF, 0, 0);
+25257:     v24 = -1;
+25258:     std::string::_Tidy(&v18, 1u);
+25259:   }
+25260: }
+25261:
+25262:
+25263: // ================================================
+25264: // Original Signature: public: void __thiscall CGameMode::Zc_Setting_Whisper_State(char const *)
+25265: // Decompiled from address: 0x599940
+25266: // ================================================
+25267: void __thiscall CGameMode::Zc_Setting_Whisper_State(CGameMode *this, const char *buf)
+25268: {
+25269:   const char *v3; // eax
+25270:
+25271:   UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+25272:   this->m_isWaitingWhisperSetting = 0;
+25273:   if ( buf[2] )
+25274:   {
+25275:     if ( buf[2] != 1 )
+25276:       return;
+25277:     if ( buf[3] )
+25278:     {
+25279:       if ( buf[3] != 1 )
+25280:         return;
+25281:       v3 = MsgStr(MSI_REQ_HEAR_ALL_FAIL);
+25282:     }
+25283:     else
+25284:     {
+25285:       v3 = MsgStr(MSI_HEAR_ALL);
+25286:     }
+25287:   }
+25288:   else if ( buf[3] )
+25289:   {
+25290:     if ( buf[3] != 1 )
+25291:       return;
+25292:     v3 = MsgStr(MSI_REQ_REFUSE_HEAR_ALL_FAIL);
+25293:   }
+25294:   else
+25295:   {
+25296:     v3 = MsgStr(MSI_REFUSE_HEAR_ALL);
+25297:   }
+25298:   UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v3, 0xFFFF, 0, 0);
+25299: }
+
+## Ref/GameModePacket.cpp:30477
+30477: // ================================================
+30478: // Original Signature: public: void __thiscall CGameMode::Zc_Whisper_List(char const *)
+30479: // Decompiled from address: 0x5999e0
+30480: // ================================================
+30481: void __thiscall CGameMode::Zc_Whisper_List(CGameMode *this, const char *buf)
+30482: {
+30483:   const char *v2; // esi
+30484:   int v3; // ecx
+30485:   int v4; // edi
+30486:   const char *v5; // eax
+30487:   int v6; // ebx
+30488:   char name[28]; // [esp+Ch] [ebp-24h] BYREF
+30489:   int numName; // [esp+28h] [ebp-8h]
+30490:   int i; // [esp+2Ch] [ebp-4h]
+30491:
+30492:   UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+30493:   v2 = buf;
+30494:   v3 = *((__int16 *)buf + 1) - 4;
+30495:   name[24] = 0;
+30496:   v4 = v3 / 24;
+30497:   numName = v3 / 24;
+30498:   if ( v3 / 24 )
+30499:     v5 = MsgStr(MSI_REFUSE_HEAR_LIST);
+30500:   else
+30501:     v5 = MsgStr(MSI_NO_REFUSE_HEAR_LIST);
+30502:   UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v5, 16776960, 0, 0);
+30503:   i = 0;
+30504:   if ( v4 > 0 )
+30505:   {
+30506:     v6 = 4;
+30507:     while ( v6 <= *((__int16 *)v2 + 1) )
+30508:     {
+30509:       qmemcpy(name, &v2[v6], 0x18u);
+30510:       UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)name, 16776960, 0, 0);
+30511:       v6 += 24;
+30512:       if ( ++i >= numName )
+30513:         break;
+30514:       v2 = buf;
+30515:     }
+30516:   }
+30517: }
+
+## Ref/Session.cpp:17165
+17165: // Original Signature: public: void __thiscall CSession::DeleteAllExAidList(void)
+17166: // Decompiled from address: 0x66d6e0
+17167: // ================================================
+17168: void __thiscall CSession::DeleteAllExAidList(CSession *this)
+17169: {
+17170:   std::list<unsigned long>::_Node *Head; // ebx
+17171:   std::list<unsigned long>::_Node *i; // esi
+17172:   std::list<unsigned long>::_Node *v4; // eax
+17173:
+17174:   Head = this->m_exAidList._Head;
+17175:   for ( i = Head->_Next; i != Head; --this->m_exAidList._Size )
+17176:   {
+17177:     v4 = i;
+17178:     i = i->_Next;
+17179:     v4->_Prev->_Next = v4->_Next;
+17180:     v4->_Next->_Prev = v4->_Prev;
+17181:     operator delete(v4);
+17182:   }
+17183: }
+17184:
+17185:
+17186: // ================================================
+17187: // Original Signature: public: void __thiscall CSession::DeleteAllExNameList(void)
+17188: // Decompiled from address: 0x66d580
+17189: // ================================================
+17190: void __thiscall CSession::DeleteAllExNameList(CSession *this)
+17191: {
+17192:   std::list<std::string>::_Node *i; // ebx
+17193:   std::list<std::string>::_Node *v2; // edi
+17194:   unsigned __int8 *v3; // eax
+17195:   std::list<std::string>::_Node *Head; // [esp+4h] [ebp-8h]
+17196:
+17197:   Head = this->m_exNameList._Head;
+17198:   for ( i = Head->_Next; i != Head; --this->m_exNameList._Size )
+17199:   {
+17200:     v2 = i;
+17201:     i = i->_Next;
+17202:     v2->_Prev->_Next = v2->_Next;
+17203:     v2->_Next->_Prev = v2->_Prev;
+17204:     if ( v2->_Value._Ptr )
+17205:     {
+17206:       if ( !*std::string::_Refcnt(&v2->_Value, v2->_Value._Ptr)
+17207:         || *std::string::_Refcnt(&v2->_Value, v2->_Value._Ptr) == 0xFF )
+17208:       {
+17209:         std::allocator<char>::deallocate(&v2->_Value.allocator, v2->_Value._Ptr - 1, v2->_Value._Res + 2);
+17210:       }
+17211:       else
+17212:       {
+17213:         v3 = std::string::_Refcnt(&v2->_Value, v2->_Value._Ptr);
+17214:         --*v3;
+17215:       }
+17216:     }
+17217:     v2->_Value._Ptr = 0;
+17218:     v2->_Value._Len = 0;
+17219:     v2->_Value._Res = 0;
+17220:     operator delete(v2);
+17221:   }

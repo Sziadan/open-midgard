@@ -2077,7 +2077,11 @@
         "docs/packets/evidence/PK09.21-chat-submission-provenance.json",
         "docs/packets/evidence/PK09.21-chat-exports.md",
         "docs/packets/evidence/PK09.21-chat-exports-contract.json",
-        "docs/packets/evidence/PK09.21-chat-exports-provenance.json"
+        "docs/packets/evidence/PK09.21-chat-exports-provenance.json",
+        "docs/packets/evidence/PK09.21-chat-ignore.md",
+        "docs/packets/evidence/PK09.21-chat-ignore-messages.json",
+        "docs/packets/evidence/PK09.21-chat-ignore-server.json",
+        "docs/packets/evidence/PK09.21-chat-ignore-provenance.json"
       ],
       "commit_subject": null
     }

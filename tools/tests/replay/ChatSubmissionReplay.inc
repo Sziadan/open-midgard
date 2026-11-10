@@ -60,7 +60,7 @@ void ChatSubmissionReplay()
 #else
     setenv("OPEN_MIDGARD_DATA_DIR",(restore.resource/"settings").string().c_str(),1);
 #endif
-    {std::ofstream file("msgstringtable.txt",std::ios::binary);const std::map<int,std::string> labels={{25,"SOUND"},{26,"MUSIC"},{49,"REPEAT"},{50,"MANNER"},{95,"INVALID"},{190,"ENGLISH"},{544,"/!"},{545,"/?"},
+    {std::ofstream file("msgstringtable.txt",std::ios::binary);const std::map<int,std::string> labels={{25,"SOUND"},{26,"MUSIC"},{58,"ALL DENIED"},{59,""},{60,"ALL ALLOWED"},{61,"ALL ALLOW FAIL"},{62,"EMPTY LIST"},{63,"EXCLUSION LIST"},{193," IGNORE OK"},{194," IGNORE FAIL1"},{195,""},{196," ALLOW OK"},{197," ALLOW FAIL1"},{198," ALLOW FAIL2"},{49,"REPEAT"},{50,"MANNER"},{95,"INVALID"},{190,"ENGLISH"},{544,"/!"},{545,"/?"},
         {687,"MIN ON"},{688,"MIN OFF"},{698,"/tiny"},{940,"Default"},{943,"Auto off"},{944,"Configure"}};
         for(int i=0;i<=944;++i){const auto found=labels.find(i);if(found!=labels.end())file<<found->second;file<<"#\r\n";}}
     {std::ofstream file("manner.txt");file<<"forbidden#\r\n";}
@@ -231,6 +231,7 @@ void ChatSubmissionReplay()
         player.m_roty=315;Require(submit("/bingbing"),"source bingbing dispatch failed");direction(2,4);Require(player.m_roty==0,"source bingbing did not wrap its body angle");
     }
     connection->Disconnect();mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
+#include "ChatIgnoreReplay.inc"
     mode.SetSourceChatInputServices(nullptr);
     std::cout<<"{\"case_id\":\"source_chat_submission\",\"contract_id\":\"PK09.21\",\"actual_channel_frames\":true,\"caller_history_before_dispatch\":true,\"manager_buffer\":true,\"source47_11\":true,\"emotion_pending\":true,\"outcome\":\"PASS\"}\n";
 }

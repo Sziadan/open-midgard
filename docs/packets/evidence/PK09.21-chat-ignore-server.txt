@@ -1,0 +1,177 @@
+## C:\Users\sziad\source\repos\rathena-master\src\custom\defines_pre.hpp:8
+8:  * rAthena configuration file (http://rathena.org)
+9:  * For detailed guidance on these check http://rathena.org/wiki/SRC/config/
+10:  **/
+11:
+12: #define PACKETVER 20080910
+13: #define PACKETVER_SAK_NUM 20080910
+14:
+15:
+
+## C:\Users\sziad\source\repos\rathena-master\src\map\clif_packetdb.hpp:76
+76: 	packet(0x00cd,3);
+77: 	parseable_packet(0x00ce,2,clif_parse_GMKickAll,0);
+78: 	parseable_packet(0x00cf,27,clif_parse_PMIgnore,2,26);
+79: 	parseable_packet( HEADER_CZ_SETTING_WHISPER_STATE, sizeof( PACKET_CZ_SETTING_WHISPER_STATE ), clif_parse_PMIgnoreAll, 0 );
+80: 	parseable_packet(0x00d3,2,clif_parse_PMIgnoreList,0);
+
+## C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp:2005
+2005: struct PACKET_ZC_SETTING_WHISPER_PC {
+2006: 	int16 packetType;
+2007: 	uint8 type;
+2008: 	uint8 result;
+2009: } __attribute__((packed));
+2010: DEFINE_PACKET_HEADER(ZC_SETTING_WHISPER_PC, 0xd1);
+2011:
+2012: struct PACKET_ZC_SETTING_WHISPER_STATE {
+2013: 	int16 packetType;
+2014: 	uint8 type;
+2015: 	uint8 result;
+2016: } __attribute__((packed));
+2017: DEFINE_PACKET_HEADER(ZC_SETTING_WHISPER_STATE, 0xd2);
+
+## C:\Users\sziad\source\repos\rathena-master\src\map\packets.hpp:2062
+2062: struct PACKET_CZ_SETTING_WHISPER_STATE{
+2063: 	int16 packetType;
+2064: 	int8 type;
+2065: } __attribute__((packed));
+2066: DEFINE_PACKET_HEADER(CZ_SETTING_WHISPER_STATE, 0xd0);
+2067:
+2068: struct PACKET_ZC_WHISPER_LIST_sub{
+2069: 	char name[NAME_LENGTH];
+2070: } __attribute__((packed));
+2071:
+2072: struct PACKET_ZC_WHISPER_LIST{
+2073: 	int16 packetType;
+2074: 	uint16 packetSize;
+2075: 	PACKET_ZC_WHISPER_LIST_sub names[];
+2076: } __attribute__((packed));
+2077: DEFINE_PACKET_HEADER(ZC_WHISPER_LIST, 0xd4);
+
+## C:\Users\sziad\source\repos\rathena-master\src\common\mmo.hpp:150
+150: const t_itemid WEDDING_RING_F = 2635;
+151:
+152: //For character names, title names, guilds, maps, etc.
+153: //Includes null-terminator as it is the length of the array.
+154: #define NAME_LENGTH (23 + 1)
+155: #define PASSWD_LENGTH (32 + 1)
+156: //NPC names can be longer than it's displayed on client (NAME_LENGTH).
+
+## C:\Users\sziad\source\repos\rathena-master\src\map\clif.cpp:15135
+15135: {
+15136: 	char* nick;
+15137: 	uint8 type;
+15138: 	int32 i;
+15139: 	struct s_packet_db* info = &packet_db[RFIFOW(fd,0)];
+15140:
+15141: 	nick = RFIFOCP(fd,info->pos[0]);
+15142: 	nick[NAME_LENGTH-1] = '\0'; // to be sure that the player name has at most 23 characters
+15143: 	type = RFIFOB(fd,info->pos[1]);
+15144:
+15145: 	if( type == 0 ) { // Add name to ignore list (block)
+15146: 		if (strcmp(wisp_server_name, nick) == 0) {
+15147: 			clif_wisexin( *sd, type, 1 ); // fail
+15148: 			return;
+15149: 		}
+15150:
+15151: 		// try to find a free spot, while checking for duplicates at the same time
+15152: 		ARR_FIND( 0, MAX_IGNORE_LIST, i, sd->ignore[i].name[0] == '\0' || strcmp(sd->ignore[i].name, nick) == 0 );
+15153: 		if( i == MAX_IGNORE_LIST ) {// no space for new entry
+15154: 			clif_wisexin( *sd, type, 2 ); // too many blocks
+15155: 			return;
+15156: 		}
+15157: 		if( sd->ignore[i].name[0] != '\0' ) {// name already exists
+15158: 			clif_wisexin( *sd, type, 0 ); // Aegis reports success.
+15159: 			return;
+15160: 		}
+15161:
+15162: 		//Insert in position i
+15163: 		safestrncpy(sd->ignore[i].name, nick, NAME_LENGTH);
+15164: 	} else { // Remove name from ignore list (unblock)
+15165:
+15166: 		// find entry
+15167: 		ARR_FIND( 0, MAX_IGNORE_LIST, i, sd->ignore[i].name[0] == '\0' || strcmp(sd->ignore[i].name, nick) == 0 );
+15168: 		if( i == MAX_IGNORE_LIST || sd->ignore[i].name[0] == '\0' ) { //Not found
+15169: 			clif_wisexin( *sd, type, 1 ); // fail
+15170: 			return;
+15171: 		}
+15172: 		// move everything one place down to overwrite removed entry
+15173: 		memmove(sd->ignore[i].name, sd->ignore[i+1].name, (MAX_IGNORE_LIST-i-1)*sizeof(sd->ignore[0].name));
+15174: 		// wipe last entry
+15175: 		memset(sd->ignore[MAX_IGNORE_LIST-1].name, 0, sizeof(sd->ignore[0].name));
+15176: 	}
+15177:
+15178: 	clif_wisexin( *sd, type, 0 ); // success
+15179: }
+15180:
+15181:
+15182: /// /inall /exall.
+15183: /// Request to allow/deny all whispers.
+15184: /// 00d0 <type>.B (CZ_SETTING_WHISPER_STATE)
+15185: /// type:
+15186: ///     0 = (/exall) deny all speech
+15187: ///     1 = (/inall) allow all speech
+15188: void clif_parse_PMIgnoreAll( int32 fd, map_session_data* sd ){
+15189: 	const PACKET_CZ_SETTING_WHISPER_STATE* p = reinterpret_cast<PACKET_CZ_SETTING_WHISPER_STATE*>( RFIFOP( fd, 0 ) );
+15190: 	bool failure;
+15191:
+15192: 	if( p->type == 0 ) {// Deny all
+15193: 		if( sd->state.ignoreAll ) {
+15194: 			failure = true;
+15195: 		} else {
+15196: 			sd->state.ignoreAll = 1;
+15197: 			failure = false;
+15198: 		}
+15199: 	} else {//Unblock everyone
+15200: 		if( sd->state.ignoreAll ) {
+15201: 			sd->state.ignoreAll = 0;
+15202: 			failure = false;
+15203: 		} else {
+15204: 			if (sd->ignore[0].name[0] != '\0')
+15205: 			{  //Wipe the ignore list.
+15206: 				memset(sd->ignore, 0, sizeof(sd->ignore));
+15207: 				failure = false;
+15208: 			} else {
+15209: 				failure = true;
+15210: 			}
+15211: 		}
+15212: 	}
+15213:
+15214: 	clif_wisall( *sd, p->type, failure );
+15215: }
+15216:
+15217:
+15218: /// Whisper ignore list.
+15219: /// 00d4 <packet len>.W { <char name>.24B }* (ZC_WHISPER_LIST)
+15220: void clif_PMIgnoreList( map_session_data& sd ){
+15221: 	PACKET_ZC_WHISPER_LIST* p = reinterpret_cast<PACKET_ZC_WHISPER_LIST*>( packet_buffer );
+15222:
+15223: 	p->packetType = HEADER_ZC_WHISPER_LIST;
+15224: 	p->packetSize = sizeof( *p );
+15225:
+15226: 	for( size_t i = 0; i < ARRAYLENGTH( sd.ignore ) && sd.ignore[i].name[0]; i++ ){
+15227: 		PACKET_ZC_WHISPER_LIST_sub& entry = p->names[i];
+15228:
+15229: 		safestrncpy( entry.name, sd.ignore[i].name, sizeof( entry.name ) );
+15230:
+15231: 		p->packetSize += static_cast<decltype(p->packetSize)>( sizeof( entry ) );
+15232: 	}
+15233:
+15234: 	clif_send( p, p->packetSize, &sd, SELF );
+15235: }
+15236:
+15237:
+15238: /// Whisper ignore list request (CZ_REQ_WHISPER_LIST).
+15239: /// 00d3
+15240: void clif_parse_PMIgnoreList(int32 fd,map_session_data *sd)
+15241: {
+15242: 	if( sd == nullptr ){
+15243: 		return;
+15244: 	}
+15245:
+15246: 	clif_PMIgnoreList( *sd );
+15247: }
+15248:
+15249:
+15250: /// Request to invoke the /doridori recovery bonus (CZ_DORIDORI).
+15251: /// 01e7

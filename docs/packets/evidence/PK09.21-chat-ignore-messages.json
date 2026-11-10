@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "selected_binary": "HighPriest.exe",
+  "binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "static_tool": "C:/Qt/Tools/mingw1310_64/bin/objdump.exe",
+  "source": {
+    "per_pc_ack": "Ref/GameModePacket.cpp:25137-25299; function address 0x00599630",
+    "all_state_ack": "Ref/GameModePacket.cpp: function address 0x00599940",
+    "whisper_list": "Ref/GameModePacket.cpp:30481-30517; function begins 0x005999e0"
+  },
+  "msgstr_call_target": "0x00514350",
+  "per_pc_suffix_ids": [
+    {
+      "operation": 0,
+      "result": 0,
+      "symbol": "MSI_WHISPERIGNORESUCCESS",
+      "numeric_id": "0xc1",
+      "push_address": "0x005998c9",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "operation": 0,
+      "result": 1,
+      "symbol": "MSI_WHISPERIGNOREFAILED1",
+      "numeric_id": "0xc2",
+      "push_address": "0x00599874",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "operation": 0,
+      "result": 2,
+      "symbol": "MSI_WHISPERIGNOREFAILED2",
+      "numeric_id": "0xc3",
+      "push_address": "0x0059981c",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "operation": 1,
+      "result": 0,
+      "symbol": "MSI_WHISPERNOIGNORESUCCESS",
+      "numeric_id": "0xc4",
+      "push_address": "0x005997ac",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "operation": 1,
+      "result": 1,
+      "symbol": "MSI_WHISPERNOIGNOREFAILED1",
+      "numeric_id": "0xc5",
+      "push_address": "0x0059971d",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "operation": 1,
+      "result": 2,
+      "symbol": "MSI_WHISPERNOIGNOREFAILED2",
+      "numeric_id": "0xc6",
+      "push_address": "0x005996a0",
+      "msgstr_call": "0x00514350"
+    }
+  ],
+  "all_state_ids": [
+    {
+      "operation": 0,
+      "result": 0,
+      "symbol": "MSI_REFUSE_HEAR_ALL",
+      "numeric_id": "0x3a",
+      "push_address": "0x005999bf",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "operation": 0,
+      "result": 1,
+      "symbol": "MSI_REQ_REFUSE_HEAR_ALL_FAIL",
+      "numeric_id": "0x3b",
+      "push_address": "0x005999b2",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "operation": 1,
+      "result": 0,
+      "symbol": "MSI_HEAR_ALL",
+      "numeric_id": "0x3c",
+      "push_address": "0x00599998",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "operation": 1,
+      "result": 1,
+      "symbol": "MSI_REQ_HEAR_ALL_FAIL",
+      "numeric_id": "0x3d",
+      "push_address": "0x0059998b",
+      "msgstr_call": "0x00514350"
+    }
+  ],
+  "whisper_list_ids": [
+    {
+      "condition": "entry_count == 0",
+      "symbol": "MSI_NO_REFUSE_HEAR_LIST",
+      "numeric_id": "0x3e",
+      "push_address": "0x00599a2c",
+      "msgstr_call": "0x00514350"
+    },
+    {
+      "condition": "entry_count != 0",
+      "symbol": "MSI_REFUSE_HEAR_LIST",
+      "numeric_id": "0x3f",
+      "push_address": "0x00599a30",
+      "msgstr_call": "0x00514350"
+    }
+  ],
+  "evidence_note": "Each ID is an immediate pushed immediately before a call to MsgStr at 0x00514350 in the relevant branch. In the list routine the branch on the computed count selects 0x3e for empty, 0x3f for nonempty. Static PE disassembly only; no execution.",
+  "root_review": "Root cross-checked selected MsgStr push IDs and request jump targets, and read the selected server registry/packet structures; server snapshot is unversioned, hash-pinned and read only."
+}

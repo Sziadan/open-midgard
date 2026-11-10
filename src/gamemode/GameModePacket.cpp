@@ -7839,6 +7839,8 @@ void HandleAckWhisper(CGameMode& mode, const PacketView& packet)
     }
 }
 
+#include "ChatIgnorePacketHandlers.inc"
+
 void HandleBroadcast(CGameMode& mode, const PacketView& packet)
 {
     // Ref: Zc_Broadcast (0x009A), Zc_Broadcast2 (0x01C3)
@@ -8865,6 +8867,9 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0109, HandleNotifyChatParty);
     router.Register(0x0097, HandleWhisper);
     router.Register(0x0098, HandleAckWhisper);
+    router.Register(0x00D1, HandleWhisperSettingPc);
+    router.Register(0x00D2, HandleWhisperSettingState);
+    router.Register(0x00D4, HandleWhisperExclusionList);
     RegisterHandlerIfValid(router, receiveProfile.broadcastBasic, HandleBroadcast);
     router.Register(0x00B4, HandleNpcDialogText);
     router.Register(0x00B5, HandleNpcDialogNext);
@@ -8932,7 +8937,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     for(u16 id:{0x0122,0x0123,0x01ef,0x0297,0x02d2,0x02e9,0x0124,0x01c5,0x0125,0x012c,
         0x012d,0x0131,0x0132,0x0133,0x0135,0x0136,0x0137,0x0138,
         0x00e5,0x01f4,0x00e7,0x01f5,0x00e9,0x00ea,0x00ec,0x00ee,0x00f0,0x00f1,
-        0x016a,0x0169,0x00d1,0x0249,0x02d7})
+        0x016a,0x0169,0x0249,0x02d7})
         router.Register(id,[](CGameMode& mode,const PacketView& packet){ro::commerce::Receive(mode,packet);});
     router.Register(0x0167, HandleGuildCreateAck);
     router.Register(0x016C, HandleGuildBelong);

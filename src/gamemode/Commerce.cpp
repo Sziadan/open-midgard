@@ -126,7 +126,6 @@ bool Receive(CGameMode&,const PacketView& v){
     case 0x209:if(n<36)return false;note(read(p+2)?"Friend request was declined or could not be completed.":"Friend added.");return true;
     case 0x169:if(n<3)return false;note(p[2]==2?"Guild invitation accepted.":p[2]==3?"Guild invitation failed: guild is full.":p[2]==0?"Player already belongs to a guild.":"Guild invitation declined.");return true;
     case 0x2d7:{if(n<43||(n-43)%26)return false;std::vector<ITEM_INFO> items;for(int at=43;at<n;at+=26)items.push_back(item(p+at,true,26));state.viewedEquipment=std::move(items);state.equipment.visible=true;state.partner=text(p+4,24);state.status="Equipment shared by this player.";return true;}
-    case 0xd1:if(n<4)return false;note(p[3]?"Whisper preference could not be changed.":"Whisper preference updated.");return true;
     case 0x249:if(n<3)return false;state.mailPending=false;note(p[2]?"Mail could not be sent.":"Mail sent.");if(!p[2])state.mail.visible=false;return true;
     default:return false;
     }

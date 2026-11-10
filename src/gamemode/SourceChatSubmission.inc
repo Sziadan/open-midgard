@@ -143,6 +143,27 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         if(g_windowMgr.m_optionWnd)g_windowMgr.m_optionWnd->Invalidate();
         return 1;
     }
+    case 15: {
+        const std::array<u8,2> packet{{0xd3,0}};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
+    }
+    case 16:case 17: {
+        m_isWaitingWhisperSetting=1;
+        const std::array<u8,3> packet{{0xd0,0,static_cast<u8>(type==17)}};
+        const bool sent=CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()));
+        // Source clears local exclusions after the attempt, including send failure.
+        if(type==17){g_session.m_exNameList.clear();g_session.m_exAidList.clear();}
+        return sent?1:0;
+    }
+    case 18:case 19: {
+        m_isWaitingWhisperSetting=1;
+        m_refuseWhisperName.assign(parameters[0].c_str());
+        if(m_refuseWhisperName.size()>24)return 0;
+        // Fixed 24-byte field; deterministic zero padding replaces unused stack bytes.
+        std::array<u8,27> packet{};packet[0]=0xcf;packet[26]=static_cast<u8>(type==19);
+        std::copy(m_refuseWhisperName.begin(),m_refuseWhisperName.end(),packet.begin()+2);
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
+    }
     case 21: case 22: {
         // Both virtual CPlayer messages30/31 use the same source toggle.
         if(!m_world || !m_world->m_player)return 0;

@@ -1,0 +1,2 @@
+{"case_id":"source_chat_ignore","contract_id":"PK09.21","actual_request_frames":true,"framed_D1_D2_D4":true,"pending_before_failure":true,"last_name_not_fifo":true,"outcome":"PASS"}
+{"case_id":"source_chat_submission","contract_id":"PK09.21","actual_channel_frames":true,"caller_history_before_dispatch":true,"manager_buffer":true,"source47_11":true,"emotion_pending":true,"outcome":"PASS"}
