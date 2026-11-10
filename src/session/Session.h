@@ -413,6 +413,7 @@ public:
     void GetMonsterSkillInfo(const char* monsterName, int skillId, int& act, int& loopType);
     int GetSex() const;
     char* GetJobActName(int job, int sex, char* buf);
+    const char* GetPetAccActName(int accessoryItemId) const;
     char* GetJobSprName(int job, int sex, char* buf);
     char* GetPlayerBodyActName(int job, int sex, int weaponItemId, char* buf);
     char* GetPlayerBodySprName(int job, int sex, int weaponItemId, char* buf);

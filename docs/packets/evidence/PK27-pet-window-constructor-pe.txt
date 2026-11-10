@@ -1,0 +1,46 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00467580 <.text+0x66580>:
+  467580:	56                   	push   %esi
+  467581:	8b f1                	mov    %ecx,%esi
+  467583:	e8 88 f6 06 00       	call   0x4d6c10
+  467588:	b8 75 00 00 00       	mov    $0x75,%eax
+  46758d:	c7 06 0c f3 6c 00    	movl   $0x6cf30c,(%esi)
+  467593:	89 46 58             	mov    %eax,0x58(%esi)
+  467596:	89 46 5c             	mov    %eax,0x5c(%esi)
+  467599:	33 c0                	xor    %eax,%eax
+  46759b:	89 46 48             	mov    %eax,0x48(%esi)
+  46759e:	89 46 4c             	mov    %eax,0x4c(%esi)
+  4675a1:	8b c6                	mov    %esi,%eax
+  4675a3:	5e                   	pop    %esi
+  4675a4:	c3                   	ret
+  4675a5:	90                   	nop
+  4675a6:	90                   	nop
+  4675a7:	90                   	nop
+  4675a8:	90                   	nop
+  4675a9:	90                   	nop
+  4675aa:	90                   	nop
+  4675ab:	90                   	nop
+  4675ac:	90                   	nop
+  4675ad:	90                   	nop
+  4675ae:	90                   	nop
+  4675af:	90                   	nop
+  4675b0:	55                   	push   %ebp
+  4675b1:	8b ec                	mov    %esp,%ebp
+  4675b3:	56                   	push   %esi
+  4675b4:	8b f1                	mov    %ecx,%esi
+  4675b6:	e8 25 00 00 00       	call   0x4675e0
+  4675bb:	f6 45 08 01          	testb  $0x1,0x8(%ebp)
+  4675bf:	74 09                	je     0x4675ca
+  4675c1:	56                   	push   %esi
+  4675c2:	e8 11 1c 23 00       	call   0x6991d8
+  4675c7:	83 c4 04             	add    $0x4,%esp
+  4675ca:	8b c6                	mov    %esi,%eax
+  4675cc:	5e                   	pop    %esi
+  4675cd:	5d                   	pop    %ebp
+  4675ce:	c2                   	.byte 0xc2
+  4675cf:	04                   	.byte 0x4

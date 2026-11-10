@@ -4645,6 +4645,7 @@ void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, m
 
 CGameActor::~CGameActor()
 {
+    if(m_petAccessoryActRes)m_petAccessoryActRes->Unlock();
     g_Weather.OnActorDeleted(this);
     if(m_chatTitle)g_windowMgr.DeleteWindow(m_chatTitle);
     if (Gr2MonsterModel(m_job)) ReleaseGr2Monster(m_gid);
@@ -6466,6 +6467,29 @@ void CGameActor::SetNpcState(int state)
     m_stateStartTick = timeGetTime();
 }
 
+void CGameActor::SetPetAccessoryActName(const char* actName)
+{
+    if(m_petAccessoryActRes){m_petAccessoryActRes->Unlock();m_petAccessoryActRes=nullptr;}
+    m_petAccessoryActName=actName?actName:"";
+    if(actName){
+        // Original SetActName replaces ACT only; the pet's SPR stays owned
+        // by its original job. Resource pointers follow the runtime cache.
+        m_actRes=g_resMgr.GetAs<CActRes>(actName);
+        m_petAccessoryActRes=m_actRes;if(m_petAccessoryActRes)m_petAccessoryActRes->Lock();
+    }else{
+        char actPath[260]={},sprPath[260]={};
+        const bool found=ResolveNonPcSpritePaths(m_job,actPath,sprPath);
+        m_actRes=found?g_resMgr.GetAs<CActRes>(actPath):nullptr;
+        m_sprRes=found?g_resMgr.GetAs<CSprRes>(sprPath):nullptr;
+    }
+    if(auto* pc=dynamic_cast<CPc*>(this)){
+        pc->m_cachedNonPcActRes=m_actRes;
+        if(!actName)pc->m_cachedNonPcSprRes=m_sprRes;
+        pc->m_cachedNonPcResourceJob=pc->m_cachedNonPcActRes && pc->m_cachedNonPcSprRes?ResolveDisplayJob(*pc):-1;
+        pc->InvalidateBillboard();
+    }
+}
+
 void CGameActor::SetState(int state) {
 #if defined(RO_SKILL_REPLAY_TRACE)
     DbgLog("[REPLAY] SetState state=%d actor=%u\n", state, m_gid);
@@ -8277,7 +8301,7 @@ bool ResolveCachedNonPcResourcesForActor(CPc& actor, CActRes** outActRes, CSprRe
             return false;
         }
 
-        actor.m_cachedNonPcActRes = g_resMgr.GetAs<CActRes>(actPath);
+        actor.m_cachedNonPcActRes = g_resMgr.GetAs<CActRes>(actor.m_petAccessoryActName.empty()?actPath:actor.m_petAccessoryActName.c_str());
         actor.m_cachedNonPcSprRes = g_resMgr.GetAs<CSprRes>(sprPath);
         if (!actor.m_cachedNonPcActRes || !actor.m_cachedNonPcSprRes) {
             LogNonPcResourceMissingOnce(displayJob,

@@ -1,0 +1,320 @@
+{
+  "topic": "pet status receive integration review",
+  "scope": "Read-only primary-source review of Ref pet property/status receivers and current src actor/UI capabilities.",
+  "packet_ids": {
+    "property": "0x01A2 / decimal 418 / HEADER_ZC_PROPERTY_PET",
+    "change_status": "0x01A4 / decimal 420 / HEADER_ZC_CHANGESTATE_PET"
+  },
+  "sources": [
+    "Ref/GameModePacket.cpp:10138-10214 (decompiled Zc_Change_Pet_Status; original 0x5A5DF0)",
+    "Ref/GameModePacket.cpp:24396-24430 (decompiled Zc_Property_Pet; original 0x5A60B0)",
+    "Ref/dhxj/packet.h:8129-8161 (wire struct layouts and type enum)",
+    "Ref/dhxj/GameModePacket_4.cpp:473-535,559-578 (modernized historical receiver implementations)",
+    "Ref/GameMode.cpp:8110-8187 (decompiled CGameMode::OnUpdate)",
+    "src/world/GameActor.h:242-327,469-489 (current actor API and CPc resource state)",
+    "src/world/GameActor.cpp:8258 onward (current cached non-PC resource resolution)",
+    "Ref/UIFrameWnd2.cpp:1801-1824,9229-9485 (legacy UIItemCollectionWnd constructor and message 29 pet display)",
+    "src/ui/UIItemCollectionWnd.h:9-70; src/ui/UIItemCollectionWnd.cpp:24-156 (current item illustration implementation)",
+    "Ref/Session2.cpp:533-590 (GetPetAccActName source switch; address 0x680980)",
+    "HighPriest.exe at SHA-256 9ABC36C88376387D85C878C0C879D9AF8EF66EB1F5152638085DC6995E3F4742; GetPetAccActName selected-PE body 0x680980..0x680A4F, jump table 0x680A50",
+    "Ref/GameActor.cpp:10903-10920 (CRenderObject::SetActName)",
+    "Ref/GameActor.cpp:5428-5436 (base CGameActor::SetSprJob no-op)",
+    "Ref/Npc.cpp:1480-1516 (CNpc::SetSprJob job-derived SPR/ACT path application)"
+  ],
+  "modern_actor_comparison": {
+    "available": [
+      "src/world/CWorld::GetGameActorByAID(u32) resolves actor by ID.",
+      "CGameActor has virtual SetState(int); m_headType and m_pkState are public fields in current src/world/GameActor.h, so type 5 can directly assign headType=100 and type 4 can set m_pkState then SetState(0).",
+      "CPc has per-actor m_sprResList/m_actResList. GameActor.cpp has ResolveCachedNonPcResourcesForActor(CPc&, CActRes**, CSprRes**) for cached sprite/action resources."
+    ],
+    "missing_apis": [
+      "Current src had no CGameActor/CPc SetActName or SetSprJob/SetSprAccessory API at research time; root integration is adding actor accessory ACT override support. The only pre-existing SetSpriteJob found is CArrowEffect-specific and must not be used for a pet actor.",
+      "The selected accessory lookup is a static switch, not a resource table. The reproducible generated exact-byte map is src/core/SourcePetAccessoryPaths.generated.inc; tools/generate_source_pet_accessory_paths.py validates it with --check. IDs 10001 and 10003..10020 map; missing ID 10002 and every other unmatched input use default sentinel -1 / Chocho ACT path.",
+      "Current src/UI has no old pet-summary owner path equivalent to UIItemCollectionWnd::SendMsg(29)."
+    ],
+    "accessory_act_spr_semantics": [
+      "Selected PE GetPetAccActName is a 20-entry range dispatch over IDs 10001..10020 with 10002 targeting default; all inputs outside range also default. Source cases explicitly map 10001, 10003..10020; each selected branch returns its literal pointer.",
+      "Returned literal path is an ACT path only, with raw CP949 bytes beginning for `\ubaac\uc2a4\ud130\\`; generated include stores exact byte strings without lossy decoding.",
+      "CRenderObject::SetActName unlocks and replaces/locks only m_actRes from the supplied path. It does not modify m_sprRes.",
+      "Base CGameActor::SetSprJob is a no-op. The pet/NPC rendering implementation CNpc::SetSprJob derives both `NPC\\%s.spr`/`.act` for jobs below 1000, the ordinary job stem under the configured job folder for most jobs >=1000, `homun\\%s.spr`/`.act` for jobs 6001..6047 except 6017..6046, and separate special resource folders for 6017..6046; it applies both SetSprName and SetActName. Therefore accessor add changes ACT only and preserves job SPR; zero/removal calls virtual SetSprJob(job) to restore both baseline SPR and ACT."
+    ],
+    "accessory_mapping_entry_count": 20
+  },
+  "pet_accessory_mapping": {
+    "selected_pe_sha256": "9ABC36C88376387D85C878C0C879D9AF8EF66EB1F5152638085DC6995E3F4742",
+    "function_va": "0x680980",
+    "function_end_exclusive_va": "0x680A4F",
+    "function_sha256": "6e9766ceb3ab6acd18042e5ffafd1f9f496b1c59b58047c1befeecb5cc4fbb3f",
+    "jump_table_va": "0x680A50",
+    "default_item_id_sentinel": -1,
+    "entries": [
+      {
+        "item_id": 10001,
+        "literal_va": "0x007247C8",
+        "path_bytes_hex": "b8f3bdbac5cd5c424150484f4d45545fbbc1b4d9b1b8b8f0c0da2e616374"
+      },
+      {
+        "item_id": 10003,
+        "literal_va": "0x007247A4",
+        "path_bytes_hex": "b8f3bdbac5cd5c4445534552545f574f4c465f425fbfecc1d6bab9b8d3b8ae2e616374"
+      },
+      {
+        "item_id": 10004,
+        "literal_va": "0x00724788",
+        "path_bytes_hex": "b8f3bdbac5cd5c4445564952554348495fc1a5b2c0c1f62e616374"
+      },
+      {
+        "item_id": 10005,
+        "literal_va": "0x00724768",
+        "path_bytes_hex": "b8f3bdbac5cd5c444f4b4542495fbec6c8c4b7ceb8d3b8ae2e616374"
+      },
+      {
+        "item_id": 10006,
+        "literal_va": "0x00724744",
+        "path_bytes_hex": "b8f3bdbac5cd5c697369735fc5acb7b9bfc0c6c4c6aeb6f3b8d3b8aeb6ec2e616374"
+      },
+      {
+        "item_id": 10007,
+        "literal_va": "0x0072472C",
+        "path_bytes_hex": "b8f3bdbac5cd5c6c756e617469635fb8aebabb2e616374"
+      },
+      {
+        "item_id": 10008,
+        "literal_va": "0x00724714",
+        "path_bytes_hex": "b8f3bdbac5cd5c6d756e616b5fbfe4bcfabac02e616374"
+      },
+      {
+        "item_id": 10009,
+        "literal_va": "0x007246F8",
+        "path_bytes_hex": "b8f3bdbac5cd5c6f726b5f77617272696f725fb2c92e616374"
+      },
+      {
+        "item_id": 10010,
+        "literal_va": "0x007246DC",
+        "path_bytes_hex": "b8f3bdbac5cd5c7065636f7065636f5fb3bfbaf12e616374"
+      },
+      {
+        "item_id": 10011,
+        "literal_va": "0x007246C8",
+        "path_bytes_hex": "b8f3bdbac5cd5c50455449545fbab02e616374"
+      },
+      {
+        "item_id": 10012,
+        "literal_va": "0x007246B0",
+        "path_bytes_hex": "b8f3bdbac5cd5c7069636b795fbecbb2aec1fa2e616374"
+      },
+      {
+        "item_id": 10013,
+        "literal_va": "0x00724694",
+        "path_bytes_hex": "b8f3bdbac5cd5c706f72696e675fc3a5b0a1b9e62e616374"
+      },
+      {
+        "item_id": 10014,
+        "literal_va": "0x00724674",
+        "path_bytes_hex": "b8f3bdbac5cd5c726f636b65725fb8deb6d1b1e2bec8b0e62e616374"
+      },
+      {
+        "item_id": 10015,
+        "literal_va": "0x00724654",
+        "path_bytes_hex": "b8f3bdbac5cd5c7361766167655f626162655fb7b9c0ccbdba2e616374"
+      },
+      {
+        "item_id": 10016,
+        "literal_va": "0x0072463C",
+        "path_bytes_hex": "b8f3bdbac5cd5c534f4845455fb9e6bfef2e616374"
+      },
+      {
+        "item_id": 10017,
+        "literal_va": "0x00724620",
+        "path_bytes_hex": "b8f3bdbac5cd5c73706f72655fbff8c1d6b9cec4a1b8b62e616374"
+      },
+      {
+        "item_id": 10018,
+        "literal_va": "0x00724608",
+        "path_bytes_hex": "b8f3bdbac5cd5c796f796f5fb8d3b8aeb6ec2e616374"
+      },
+      {
+        "item_id": 10019,
+        "literal_va": "0x007245EC",
+        "path_bytes_hex": "b8f3bdbac5cd5c736d6f6b69655fb8d3c7c3b7af2e616374"
+      },
+      {
+        "item_id": 10020,
+        "literal_va": "0x007245CC",
+        "path_bytes_hex": "b8f3bdbac5cd5c626f6e5f67756e5fbfb5c8afb5b5bbe7b0cb2e616374"
+      },
+      {
+        "item_id": -1,
+        "literal_va": "0x007245B0",
+        "path_bytes_hex": "b8f3bdbac5cd5c63686f63686f5fb9e6b5b6b8e92e616374"
+      }
+    ]
+  },
+  "pet_status_packet_review": {
+    "header": {
+      "offset": 0,
+      "width": 2,
+      "type": "u16"
+    },
+    "type": {
+      "offset": 2,
+      "width": 1,
+      "wire_decl": "char",
+      "decoded_semantics": "signed 8-bit on this x86/MSVC build; values 0..5"
+    },
+    "GID": {
+      "offset": 3,
+      "width": 4,
+      "type": "signed i32 in PACKET_ZC_CHANGESTATE_PET; used as actor AID/GID key"
+    },
+    "data": {
+      "offset": 7,
+      "width": 4,
+      "type": "signed i32"
+    },
+    "size": 11
+  },
+  "pet_property_packet_review": {
+    "header": {
+      "offset": 0,
+      "width": 2,
+      "type": "u16"
+    },
+    "name": {
+      "offset": 2,
+      "width": 24,
+      "type": "char[24]"
+    },
+    "is_name_modified": {
+      "offset": 26,
+      "width": 1,
+      "type": "u8"
+    },
+    "level": {
+      "offset": 27,
+      "width": 2,
+      "type": "signed i16"
+    },
+    "fullness": {
+      "offset": 29,
+      "width": 2,
+      "type": "signed i16"
+    },
+    "relationship": {
+      "offset": 31,
+      "width": 2,
+      "type": "signed i16"
+    },
+    "accessory_item_id": {
+      "offset": 33,
+      "width": 2,
+      "type": "u16"
+    },
+    "size": 35
+  },
+  "pet_status_review": [
+    {
+      "type": 0,
+      "name": "PET_PRE_INIT",
+      "actor_lookup": "Resolve actor by packet GID before switch, regardless of type.",
+      "writes": [
+        "session.petGID = packet.GID",
+        "if actor exists: session.petJob = actor.GetJob()"
+      ],
+      "actor_effects": [],
+      "ui_or_notice": [],
+      "early_return": false
+    },
+    {
+      "type": 1,
+      "name": "PET_RELATIONSHIP_CHANGED",
+      "writes": [
+        "session.petFriendly = signed packet.data",
+        "if actor exists: session.petJob = actor.GetJob()"
+      ],
+      "actor_effects": [],
+      "ui_or_notice": [
+        "Invalidate pet info window if open, independent of actor existence.",
+        "If player job is 4050..4052 inclusive AND packet.data < 100 AND prior session.petHungry < 30: send MSI_PET_STARVING via UIWindowMgr::SendMsg(channel/type 1, color 3289855). This warning tests existing hunger; it does not change hunger."
+      ],
+      "early_return": false
+    },
+    {
+      "type": 2,
+      "name": "PET_FULLNESS_CHANGED",
+      "writes": [
+        "session.petOldHungry = prior session.petHungry",
+        "session.petHungry = signed packet.data",
+        "if actor exists: session.petJob = actor.GetJob()"
+      ],
+      "actor_effects": [],
+      "ui_or_notice": [
+        "If packet.GID equals session.petGID, invalidate pet info window if open."
+      ],
+      "early_return": false
+    },
+    {
+      "type": 3,
+      "name": "PET_ACCESSARY_CHANGED",
+      "writes": [
+        "Only when actor exists: if data != 0, session.petAcc = signed packet.data; otherwise session.petAcc = 0."
+      ],
+      "actor_effects": [
+        "If actor exists and data != 0: resolve CSession::GetPetAccActName(data), then CRenderObject::SetActName(actor, returned act name).",
+        "If actor exists and data == 0: actor.SetSprJob(actor.GetJob()) to restore the base job sprite."
+      ],
+      "ui_or_notice": [
+        "If actor exists and packet.GID equals session.petGID, invalidate pet info window if open."
+      ],
+      "early_return": false,
+      "missing_actor_behavior": "No writes, rendering, or invalidation."
+    },
+    {
+      "type": 4,
+      "name": "PET_PERFORMANCE_CHANGED",
+      "writes": [],
+      "actor_effects": [
+        "If actor exists: SetPKState(signed packet.data), then SetState(0 / ST_STAND)."
+      ],
+      "ui_or_notice": [],
+      "missing_actor_behavior": "No effect."
+    },
+    {
+      "type": 5,
+      "name": "PET_HEADTYPE_CHANGED",
+      "writes": [],
+      "actor_effects": [
+        "If actor exists: set m_headType = 100 (HEADTYPE_LAST)."
+      ],
+      "ui_or_notice": [],
+      "missing_actor_behavior": "No effect."
+    }
+  ],
+  "pet_property_review": {
+    "normal_level_below_10000": [
+      "copy packet name into session.petName",
+      "session.petOldHungry = prior session.petHungry",
+      "session.petHungry = signed i16 fullness",
+      "session.petFriendly = signed i16 relationship",
+      "session.petAcc = zero-extended u16 accessory ITID",
+      "session.isPetNameModified = packet byte",
+      "session.petLevel = signed i16 level",
+      "if pet info window open: set its name edit control from packet name and invalidate it"
+    ],
+    "special_level_at_least_10000": {
+      "decompiled_legacy_behavior": [
+        "Subtract 10000 from the signed i16 level in the packet buffer (in place).",
+        "Make WID_ITEMCOLLECTIONWND; if non-null, store decoded data in that window: adjusted level to low half of m_h; packet fullness to high half of m_h; relationship to low half of m_isDirty; ITID to high half of m_trans; name-modified byte to m_transTarget; copy packet name into the inline buffer at m_isDirty+2; then send window message 29.",
+        "Do not write normal pet session fields in this branch."
+      ],
+      "owner_semantics": "Ref/UIFrameWnd2.cpp shows the original UIItemCollectionWnd also owns m_petLevel, m_petFullness, m_petRelationship, m_petITID, m_isPetNameModified, and m_petName. Message 29 formats/displays those pet fields (name, modified marker, level, hunger text, relationship text, accessory presence). The constructor initializes the pet level/fullness/relationship/ITID sentinel values to -1. This is a dual-purpose old window API, not a regular item card preview payload.",
+      "current_src_mismatch": "Current src/ui/UIItemCollectionWnd is only the card illustration preview (SetItemInfo(ITEM_INFO), HasItem, image bitmap, title 'Card illustration'); its header has no pet summary fields and it has no legacy SendMsg(message 29) data path. Do not route this branch into its item preview or silently treat it as an ITEM_INFO. The legacy pet summary owner/API is missing from current src."
+    }
+  },
+  "on_update_hunger_warning_review": {
+    "on_update": "Ref/GameMode.cpp CGameMode::OnUpdate at 0x56B750 contains scheduler/world/render processing only; no pet hunger polling, warning, or pet-info invalidation was found there.",
+    "linked_warning": "The only legacy MSI_PET_STARVING behavior is in status type 1 as described above. The historical modernized Ref/dhxj/GameModePacket_4.cpp type-1 warning block is empty; it does not reproduce the notice.",
+    "other_hunger_update": "01A2 normal pet-property updates hunger from signed i16 fullness. 01A4 type 2 snapshots old hunger and stores signed i32 data. The old-hunger snapshot must occur before either assignment."
+  },
+  "width_notes": "Do not conflate 01A2 accessory ITID (u16, zero-extended into the session int) with 01A4 type-3 data (signed i32). Level/fullness/relationship in 01A2 are signed i16. All 01A4 data is read as signed i32. The GID field in PACKET_ZC_CHANGESTATE_PET is signed int32 though the world lookup accepts an unsigned actor ID; preserve its 32-bit bit pattern when passing it to lookup."
+}

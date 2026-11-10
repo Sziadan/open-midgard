@@ -274,6 +274,8 @@ public:
     int m_isBladeStop;
     u32 m_gid;
     int m_job, m_sex;
+    std::string m_petAccessoryActName;
+    CActRes* m_petAccessoryActRes=nullptr;
     UIBalloonText* m_balloon;
     UIChatRoomTitle* m_chatTitle;
     UIMerchantShopTitle* m_merchantShopTitle;
@@ -325,6 +327,7 @@ public:
     bool ProcessStatusMsgEffectMessage(int msg);
     virtual int  Get8Dir(float rot) override;
     virtual void SetState(int state);
+    void SetPetAccessoryActName(const char* actName);
     void SetNpcState(int state);
     virtual void ProcessWillBeAttacked();
     virtual void SetModifyFactorOfmotionSpeed(int attackMT);

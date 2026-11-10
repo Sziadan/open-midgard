@@ -1,12 +1,12 @@
 # Packet implementation status
 
-**Current checkpoint (2026-11-10):** [Command controller and shared help owner](evidence/PK09.21-command-controller.md) integrates factory112, three source tabs, common23-count hit/scroll, native input/capture and passive Qt, plus mode-owned live help. Application162/162 and standalone473/473 pass; six native/Qt capture pairs are retained. Keys68/74/87, full destination behavior, rich text/skin and broad gates remain open.
+**Current checkpoint (2026-11-10):** [Pet receive state and accessory ACT](evidence/PK27-pet-live-state.md) restores source DWORD status owners,01A4 actor/state/resource paths and exact equipment-list egg linkage. Application163/163 and standalone473/473 pass. Actual PetInfo74/factory88 and alternate summary factory12, other command recipients68/87 and broad gates remain open. Preserve the earlier actual command controller/shared help and all prior packet proofs.
 
-**Active step: PK09.21.** Continue [remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Subject: `packet(PK09.21): restore command controller and shared help owner`. Preserve earlier source/packet/item/corpse proofs; broad requests, PK47 and independent PK48/49/live/deployed gates remain open. The whole packet plan remains unfinished.
+**Active step: PK09.21.** Continue [remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Subject: `packet(PK27): restore pet state and accessory reception`. Preserve earlier source/packet/item/corpse proofs; broad requests, PK47 and independent PK48/49/live/deployed gates remain open. The whole packet plan remains unfinished.
 
 **World-entry repair:** [same-world handoff fix](evidence/PK05.05-world-entry.md) remains in the rebuilt candidate and its regression passes. OldRO still has the prior executable and requires redeployment/live retry; no installed acceptance is claimed.
 
-**Pet recipient prerequisites (2026-11-10):** [Mode158/163 request senders](evidence/PK27-pet-control-requests.md) now send exact01A5/26 and01A1/3 frames through production sockets. Application162/162 and standalone473/473 pass. PetInfo74 remains pending: source factory88 needs actual pet job/actor/egg ownership, edit/menu/confirmation and receive/reset paths, including01A2 level>=10000 alternate-owner dispatch. Follow the [pet-control contract](contracts/PK27.PET-CONTROL.md); never create the owner from stale Status::valid alone. PK27 and PK09.21 remain open.
+**Pet recipient prerequisites (2026-11-10):** [Live receive state](evidence/PK27-pet-live-state.md) now supplies job/actor/egg state and source widths,01A4 changes and accessory ACT ownership. [Mode158/163](evidence/PK27-pet-control-requests.md) supplies requests. Next implement actual factory88/controller/edit/menu/confirmation and local egg-return flow, then full receive/reset/follow and alternate factory12. Snapshot validity alone is not presence. PK27 and PK09.21 remain open.
 
 
 - PK09.14 restores parent detail rectangle/default/height lifecycle, fixed clipped scrolling, visible slot predicates, output reuse and safe child deletion. Separate WID82 card details/hit testing now pass PK09.15.

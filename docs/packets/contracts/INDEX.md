@@ -156,3 +156,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [Friend greeting and shared reply/language state](../evidence/PK09.21-friend-greeting.md) pins150, signed global counter/mode lifetime, private charset prefixes and corrected selected UI data. Full command UI and remaining action/render/deployed gates stay open.
 
 [Pet control prerequisites](PK27.PET-CONTROL.md) pins implemented mode158/163 frames and pending actual PetInfo owner, menu, job/egg/actor/receive/reset dependencies. PK27 remains open.
+
+[Pet live receive](../evidence/PK27-pet-live-state.md) adds source field widening, actual01A4 actor/resource state and remembered egg wire ordering; actual pet UI and lifecycle remain open.

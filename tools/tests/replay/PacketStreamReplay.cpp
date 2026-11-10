@@ -2490,7 +2490,7 @@ void PetStatusReplay(){
     Require(preserved.valid&&preserved.name=="P"&&preserved.level==10&&preserved.accessoryItemId==0x1234,"rejected pet status input mutated an existing snapshot");
     auto signedFixture=frame;signedFixture[26]=0xff;signedFixture[27]=0x00;signedFixture[28]=0x80;signedFixture[29]=0xff;signedFixture[30]=0xff;
     ro::pet::Status signedStatus;Require(ro::pet::ReadStatus(signedStatus,signedFixture.data(),signedFixture.size()),"source-width signed pet fields were rejected");
-    Require(signedStatus.modified==-1&&signedStatus.level==-32768&&signedStatus.fullness==-1,"signed pet fields were not decoded as signed wire values");
+    Require(signedStatus.modified==255&&signedStatus.level==-32768&&signedStatus.fullness==-1,"source pet flag/word extensions differ");
     std::cout<<"{\"case_id\":\"pet_status_state_decode\",\"contract_id\":\"PK07.PET-STATUS\",\"fixture_id\":\"PK07-01a2-selected-20080910-fields\",\"input_frame_hex\":\""<<Hex(frame)<<"\",\"packet_size\":35,\"name\":\""<<JsonEscape(status.name)<<"\",\"modified\":"<<static_cast<int>(status.modified)<<",\"level\":"<<status.level<<",\"fullness\":"<<status.fullness<<",\"relationship\":"<<status.relationship<<",\"accessory_item_id\":"<<status.accessoryItemId<<",\"malformed_size_and_opcode_atomic\":true,\"signed_wire_values\":[-1,-32768,-1],\"outcome\":\"PASS\"}\n";
     g_session.m_petStatus=previousStatus;router.Clear();RegisterDefaultGameModePacketHandlers(router);
 }
@@ -4516,6 +4516,7 @@ void GlobalChatProductionSendReplay()
 #include "InventoryMutationAckReplay.inc"
 #include "ItemUseFeedbackReplay.inc"
 #include "RecoveryDeltaReplay.inc"
+#include "PetLifecycleReplay.inc"
 #include "CorpsePacketReplay.inc"
 #include "ChatWindowStateReplay.inc"
 #include "ChatNoticeRoutingReplay.inc"
@@ -4556,6 +4557,7 @@ int main(int argc,char** argv){try{
     (void)argc;(void)argv;
 #endif
     Require(CConnection::Startup(),"socket startup failed");
+    if(argc>1 && std::string(argv[1])=="--pet-lifecycle-only") {PetLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--world-entry-handoff-only") {ModeLoopHandoffReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--corpse-gr2-native") { CorpseNativePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--whisper-only") {WhisperReplay();CConnection::Cleanup();return 0;}
@@ -4660,6 +4662,7 @@ int main(int argc,char** argv){try{
     ProductionRouterDispatchReplay();
     PartyRosterReplacementReplay();
     PetStatusReplay();
+    PetLifecycleReplay();
     DisconnectAckEveryBoundaryReplay();
     DisconnectAckRefusalDispatchReplay(PendingDisconnectAction::ReturnToCharSelect,"disconnect_ack_refuses_return_to_char_select");
     DisconnectAckRefusalDispatchReplay(PendingDisconnectAction::ExitToWindows,"disconnect_ack_refuses_exit_to_windows");

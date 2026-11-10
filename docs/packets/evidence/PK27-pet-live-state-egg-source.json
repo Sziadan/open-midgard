@@ -1,0 +1,56 @@
+{
+  "topic": "Pet egg index source contract",
+  "egg_predicate": {
+    "source": "Ref/Session2.cpp:2082-2085",
+    "expression": "itemId > 9000 && itemId <= 9049",
+    "meaning": "IDs 9001..9049 inclusive."
+  },
+  "equipment_list_writes": [
+    {
+      "source": "Ref/GameModePacket.cpp:10953-11019",
+      "entry_size": 20,
+      "write": "At 11010-11011, IsPetEgg(decoded item ID) && m_isDamaged assigns m_petEggIndex=m_itemIndex, before wearLocation branch at 11012."
+    },
+    {
+      "source": "Ref/GameModePacket.cpp:11045-11112",
+      "entry_size": 24,
+      "write": "At 11103-11104, same predicate and assignment, before wearLocation branch at 11105."
+    },
+    {
+      "source": "Ref/GameModePacket.cpp:11138-11208",
+      "entry_size": 26,
+      "write": "At 11199-11200, same predicate and assignment, before wearLocation branch at 11201."
+    }
+  ],
+  "exact_list_behavior": "At list start, handlers clear equipment rows only (10972-10973, 11064-11065, 11158-11159); they do not clear m_petEggIndex. They walk wire entries in order and overwrite the index for every eligible row before the wearLocation split: last eligible wire row wins regardless of wearLocation. With no eligible row the old index remains. Primary CSession AddItem, SetItem, Remove-equivalent SetItem(num=0), ClearEquipItemInInventory, and ClearItem contain no m_petEggIndex writes (Ref/Session.cpp:3043-3135, 16054-16139, 16191-16208, 25238-25291).",
+  "identified_and_card_semantics": "Equipment entries decode item ID, identified flag, damaged flag, and four slot/card words. Egg-index predicate uses item ID and damaged flag only; it does not test identified state or card values.",
+  "other_primary_index_writes": [
+    {
+      "source": "Ref/UIFrameWnd2.cpp:12330-12339",
+      "behavior": "Successful item-identify action sets m_isDamaged=1, calls SetItem, then assigns m_petEggIndex=info.m_itemIndex."
+    },
+    {
+      "source": "Ref/UIFrameWnd.cpp:6308-6314",
+      "behavior": "Return egg gets row by index, sets m_isDamaged=0, calls SetItem, then clears index and m_petJob to -1."
+    },
+    {
+      "source": "Ref/GameMode2.cpp:3855-3862",
+      "behavior": "Return egg gets row by index, sets m_num=0, calls SetItem, then clears index and m_petJob to -1."
+    },
+    {
+      "source": "Ref/Session.cpp:18038",
+      "behavior": "Constructor initializes m_petEggIndex=-1."
+    }
+  ],
+  "selected_production_mapping": {
+    "source": "src/network/MapSendProfile.cpp:212-218, 533-545, 616-643; src/gamemode/GameModePacket.cpp:8897-8902",
+    "normal_inventory": "0x00A3 basic/10-byte; 0x01EE card slots/18-byte; 0x02E8 timed/22-byte.",
+    "equipment_inventory": "0x00A4 basic/20-byte; 0x02D0 timed-owned/26-byte. Selected 24-byte timed-only ID disabled; 0x01EF is historical normal-cart, not selected equipment inventory.",
+    "handlers": "HandleNormalInventoryList at GameModePacket.cpp:2087-2125; HandleEquipInventoryList at 2128-2158. BuildEquipInventoryItem at 1733-1779 decodes item ID, identified, damaged, all four slots, and optional timed fields."
+  },
+  "current_source_model_facts": {
+    "item_info": "src/item/Item.h:10-27 has inventory index, item ID accessors, m_isIdentified, m_isDamaged, m_slot[4].",
+    "pet_state": "Current CSession has ro::pet::Status but no m_petEggIndex (src/session/Session.h:260). Current LoginMode::OnInit clears inventory at src/gamemode/LoginMode.cpp:1381."
+  },
+  "root_review": "Supersedes earlier preparation recommendation to recompute or reset on inventory mutations; that recommendation changed source behavior and was rejected."
+}

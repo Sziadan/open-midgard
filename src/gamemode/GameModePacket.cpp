@@ -2151,6 +2151,10 @@ void HandleEquipInventoryList(CGameMode& mode, const PacketView& packet)
         if (!BuildEquipInventoryItem(packet, packet.data + offset, itemInfo)) {
             continue;
         }
+        // Source list handlers remember each eligible wire row, including
+        // equipped/unidentified eggs. No eligible row leaves the old index.
+        if(itemInfo.GetItemId()>=9001 && itemInfo.GetItemId()<9050 && itemInfo.m_isDamaged)
+            g_session.m_petStatus.eggIndex=itemInfo.m_itemIndex;
         g_session.AddInventoryItem(itemInfo);
     }
     g_session.RebuildPlayerEquipmentAppearanceFromInventory();
@@ -5259,9 +5263,59 @@ void HandleGuildWindowPacket(CGameMode& mode,const PacketView& packet)
     }
 }
 
+void InvalidatePetInfo()
+{
+    for(auto* window:g_windowMgr.m_children)if(window && window->m_id==88)window->Invalidate();
+}
+
 void HandlePetStatus(CGameMode&, const PacketView& packet)
 {
-    ro::pet::ReadStatus(g_session.m_petStatus, packet.data, packet.packetLength);
+    auto next=g_session.m_petStatus;
+    if(!ro::pet::ReadStatus(next,packet.data,packet.packetLength))return;
+    if(next.level>=10000){
+        // Source routes this alternate summary to factory12/message29.
+        // The port's item-illustration owner cannot receive that contract.
+        DbgLog("[Pet] alternate property summary awaits source factory12 recipient\n");
+        return;
+    }
+    g_session.m_petStatus=std::move(next);
+    InvalidatePetInfo();
+}
+
+void HandlePetStatusChange(CGameMode& mode,const PacketView& packet)
+{
+    if(!packet.data || packet.packetLength!=11 || packet.packetId!=0x01a4)return;
+    const u32 actorId=ReadLE32(packet.data+3),bits=ReadLE32(packet.data+7);
+    s32 value;std::memcpy(&value,&bits,sizeof(value));
+    auto* actor=mode.m_world?mode.m_world->GetGameActorByAID(actorId):nullptr;
+    auto& pet=g_session.m_petStatus;
+    switch(packet.data[2]){
+    case 0:
+        pet.actorId=actorId;if(actor)pet.job=actor->m_job;break;
+    case 1:
+        pet.relationship=value;if(actor)pet.job=actor->m_job;
+        InvalidatePetInfo();
+        if(g_session.m_playerJob>=4050 && g_session.m_playerJob<=4052 && value<100 && pet.fullness<30){
+            ro::UiMessageStrings table;table.Load();const auto message=table.Get(1188,"");
+            g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message.c_str()),0x3232ff,0);
+        }
+        break;
+    case 2:
+        pet.oldFullness=pet.fullness;pet.fullness=value;if(actor)pet.job=actor->m_job;
+        InvalidatePetInfo();break;
+    case 3:
+        if(actor){
+            pet.accessoryItemId=value;
+            actor->SetPetAccessoryActName(value?g_session.GetPetAccActName(value):nullptr);
+            if(actorId==pet.actorId)InvalidatePetInfo();
+        }
+        break;
+    case 4:
+        if(actor){actor->m_pkState=value;actor->SetState(0);}break;
+    case 5:
+        if(actor)actor->m_headType=100;break;
+    default:break;
+    }
 }
 
 void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
@@ -8835,6 +8889,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x011C, HandleWarpMapList);
     router.Register(0x01AD, HandleMakingArrowList);
     router.Register(0x01A2, HandlePetStatus);
+    router.Register(0x01A4, HandlePetStatusChange);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);
     router.Register(0x029D, HandleMercSkillList);

@@ -1,0 +1,28 @@
+{
+  "baseline": "e1669427",
+  "sha256": {
+    "CMakeLists.txt": "fb6bd5fcb83aad0eb61d982eedfdf8de568d4483db2f8c297db7e402ffacb404",
+    "src/core/PetState.h": "dee10474c17dc166fb609445d625033dd46b77e8dae48f4aa77d52ded5ec2541",
+    "src/core/SourcePetAccessoryPaths.generated.inc": "2fb76d164313f4aac840e117e05b793c937545893f86c177f9f3622eede6f4ac",
+    "src/gamemode/GameModePacket.cpp": "68a74143f9e3a5d0f29234cb1e8d5a443e800b026882461d1a612c8d027c832b",
+    "src/gamemode/LoginMode.cpp": "26e83c552875ea36aef5e4bade2c53282ce7255cccccf407d32a34aba54444fd",
+    "src/session/Session.cpp": "1ed2a2b2a473c5b0e232a5b653d844f65a769182c8f47f26eb6ca5c2ba4b59e9",
+    "src/session/Session.h": "651a80fb1648f1caa0ced90faa0bcf61dd1b4e8551cccb6da1a4b5726d10b7dd",
+    "src/world/GameActor.cpp": "28b3deaaa5ff7c3cb7134682b37c58961a46d56cbc90ab07f4741e52e5ae9cec",
+    "src/world/GameActor.h": "be389fc077b712f0c2bb3ddf9e0f28c03df5912bd9e5c620fa877a79123ab3f3",
+    "tools/generate_source_pet_accessory_paths.py": "371222dbf049442c75ed478b1643f31655fe0692ae93c80173f7def5a88de94a",
+    "tools/tests/replay/PacketStreamReplay.cpp": "220264f1123c3ad078f10c316709c2279863c06a1d77b1e70c94950275042a5f",
+    "tools/tests/replay/PetLifecycleReplay.inc": "6807192ea3e2b6c371a085a4b60a613f47f3bcf2b69fe6284de24e6ff422d699",
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "743483264da2b9e9e5f5f2c148591aeffab1a5e5c3249cc5a19255f1ac97fd45"
+  },
+  "validation": {
+    "focused": "1/1 0.24s",
+    "application": "163/163 35.22s",
+    "standalone": "473/473 13.68 sec",
+    "generator": "selected accessory paths --check passes; function/table/literal/hash proven"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "deployment": "OFF while building/testing; ON restored configure-only; installed executable unchanged",
+  "scope": "See evidence: no actualPetInfo/alternate summary owner/UI certification; no whole package/plan completion"
+}

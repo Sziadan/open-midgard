@@ -1,0 +1,25 @@
+# Pet receive state, egg linkage and accessory ACT
+
+Root integration, baseline `e1669427`, 2026-11-10. This checkpoint restores the source live state needed by the pending PetInfo88 owner. PK27, PK09.21 and the full packet plan remain open.
+
+## Source corrections and implementation
+
+Selected `Zc_Property_Pet`5A60B0 widens level/fullness/relationship words with sign extension, but zero-extends the modified byte and accessory word. Static PE instructions5A60DD..5A612C corroborate the source session DWORD fields. `ro::pet::Status` now has those actual runtime widths, previous fullness, job, actor ID and egg index. Property decoding preserves established identity/linkage and records old fullness. Earlier PK07's signed-flag interpretation is superseded at the runtime owner: FF becomes255, and accessory FFFF becomes65535; negative level/fullness/relationship words remain signed. The35-byte selected framing and later-profile gates are unchanged.
+
+Production01A4/11-byte dispatch resolves the transmitted actor ID through the actual world. Type0 records ID and actor job if available;1 writes signed DWORD intimacy, refreshes job and invalidates the pet recipient, with MsgStr1188/color3232FF for jobs4050..4052/intimacy<100/fullness<30. Type2 records old/new signed DWORD fullness and invalidates even without an actor. Type3 requires an actor, updates the source accessory owner, replaces ACT alone for nonzero values and restores the normal job ACT/SPR on zero; only the current pet ID triggers its invalidation. Type4 passes the raw PK action to actual state0;5 sets head marker100. Missing actors and unknown subtypes retain their distinct source behavior.
+
+The selected `GetPetAccActName`680980 mapping is generated from the PE and checked against primary source, function hash, switch/jump targets and literal return bytes. It includes19 explicit items and the default (also10002), preserving raw CP949 ACT path bytes. Modern non-PC CPc cache resolution honors the override; adding an accessory retains SPR. The active override holds a CRes lock, replacement balances it, removal/destruction releases it. Source `SetActName` changes ACT only; source NPC `SetSprJob` resets both job resources. This is resource/actor integration, not pet artwork or whole-animation parity.
+
+Both selected equipment-list formats remember each damaged item with its own ID9001..9049, in wire order and before the equipment-location split. The last eligible row wins. Identification and card words are not predicates. No eligible row, inventory clear or ordinary item mutation leaves the remembered index unchanged, as in the primary source. The earlier preparation's automatic recomputation suggestion was rejected. Constructor initializes job/index to-1; current login initialization resets job only, preserving source separation from the inventory list. Full login-frame runtime acceptance remains open.
+
+The01A2 signed-level>=10000 alternate summary must go to legacy factory12/message29, whose dual-purpose source owner differs from the port's item-illustration preview. Until that actual recipient is restored, the production branch explicitly reports it pending and preserves normal pet state. It does not route those bytes into the unrelated preview. Full alternate-summary behavior is not accepted here.
+
+## Verification scope
+
+The dedicated production-loop replay covers actual framing/router/session/world lookup, all01A4 types, missing actors, signed DWORD values, warning thresholds, real state0 dispatch, source ACT resource loading/SPR retention/lock balance, modified/accessory zero extension, property history/identity preservation, alternate-summary isolation, malformed direct dispatch and both selected equipment-list formats. Egg cases include unmodified identification, worn rows, upper ID boundary, damage predicate, last eligible row and stale-index retention.
+
+An id88 generic invalidation probe tests dispatch only; it is not an actual PetInfo controller or GUI certification. The fixture supplies synthetic ACT bytes at a source resource key; this proves real loader selection and resource ownership, not production pet artwork. Adjacent provenance and logs record final build/test results. Autonomous builds keep deployment OFF and restore the user's ON preference by configure only; the installed OldRO executable remains unchanged.
+
+## Continue
+
+Implement actual factory88, remembered position, full280x160 PetInfo controller, one-time rename editor, source menu/confirmation, local egg return and native/passive Qt behavior. Use job!=-1 as the factory gate; snapshot validity alone is insufficient. Preserve the source1/2/4/3 menu mapping and the hotkey versus menu action0 distinction. Complete the alternate pet-summary owner, egg acquisition control, capture/feed/rename-result receive families, pet follow/actor/reset/lifetime and all PK27 acceptance. Other command recipients68/87, global6, legacy options, rich Tip/command/channel text and broad item/context/independent/live/deployed gates retain their full scope.

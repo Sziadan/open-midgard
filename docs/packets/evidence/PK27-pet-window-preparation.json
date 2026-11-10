@@ -1,0 +1,194 @@
+{
+  "window": "UIPetInfoWnd",
+  "window_id": 88,
+  "sources": [
+    "Ref/UIWindowMgr.cpp:6763-6784",
+    "Ref/UIFrameWnd.cpp:1198-1206, 6077-6343, 11623-11925, 11929-12290",
+    "Ref/UIRectInfo.cpp:763-785, 1408-1417",
+    "Ref/dhxj/MsgStrings.h"
+  ],
+  "creation_and_geometry": {
+    "factory": "Window 88 is not created when m_petJob == -1. Factory creates at 280x160, initially moves to UIX(185), UICY(400)-60, passes PetInfoWndInfo through message 34, then adds and shows the window (UIWindowMgr.cpp:6763-6784).",
+    "saved_info": "Message 34 validates saved bounds and moves to saved x/y; invalid info defaults to x=150,y=100,w=280,h=200. The create path sizes 280x160 and message 34 does not resize. StoreInfo saves current x/y/w/h (UIFrameWnd.cpp:6285-6291,12278-12290).",
+    "constructor": "Root correction: primary Ref/UIFrameWnd.cpp1198..1205 and selected PE467580 confirm m_defPushId=117 and m_defCancelPushId=117 (both receive EAX=0x75); startGlobalX/startGlobalY=0. Earlier preparation value135 for default push was incorrect."
+  },
+  "controls": {
+    "close": "At x=m_w-14,y=3, id 135, tooltip Close. Bitmap keys from CP949 유저인터페이스\\basic_interface\\sys_ + close + _off.bmp/_on.bmp; VAs: prefix 0x006F2D10, off suffix 0x006F2CFC, on suffix 0x006F2CF4 (UIFrameWnd.cpp:11681-11734).",
+    "name_editor": "UIEditCtrl2 size 80x16, maxchar 50, frame color (232,232,232). With petJob present, an empty pet name is seeded from the pet job name. Editor at (135,24) while name is unmodified; hidden at (-100,-100) if no job or name is already modified (11735-11765).",
+    "rename_button": "Bitmap keys CP949 유저인터페이스\\btn_rewrite.bmp, btn_rewrite_a.bmp, btn_rewrite_b.bmp (prefix VA 0x006F2E4C; literals at 0x006F3A5C/0x006F3A4C/0x006F3A3C). At (230,21), id 118; hidden after modification (11766-11820).",
+    "command_menu_button": "Invisible button 120x18 at (150,44), id 202. Child button keys 유저인터페이스\\basic_interface\\txtbox_btn_a/b/c.bmp (prefix VA 0x006F2C50; literals at 0x006F3A20/0x006F3A10/0x006F3A00), at (270-buttonWidth,44), tooltip 'Pet Command', id 202 (11822-11915)."
+  },
+  "on_draw": {
+    "frame_assets": [
+      {
+        "asset": "유저인터페이스\\basic_interface\\titlebar_left.bmp",
+        "literal_va": "0x006F2DE0",
+        "at": "0,0"
+      },
+      {
+        "asset": "유저인터페이스\\basic_interface\\titlebar_right.bmp",
+        "literal_va": "0x006F2DAC",
+        "at": "windowWidth-bitmapWidth,0"
+      },
+      {
+        "asset": "유저인터페이스\\basic_interface\\titlebar_mid.bmp",
+        "literal_va": "0x006F2D7C",
+        "at": "x=12, repeat every 12 px across windowWidth-24"
+      },
+      {
+        "asset": "유저인터페이스\\sysboxs_ld.bmp",
+        "literal_va": "0x006F2D5C",
+        "at": "0,windowHeight-bitmapHeight"
+      },
+      {
+        "asset": "유저인터페이스\\sysboxs_rd.bmp",
+        "literal_va": "0x006F2D3C",
+        "at": "windowWidth-bitmapWidth,windowHeight-bitmapHeight"
+      }
+    ],
+    "frame": "ClearDC uses skin chip (2,2). One-pixel side borders at x=0 and x=windowWidth-1 from y=17 through windowHeight-38 use skin chip (20,6).",
+    "labels": [
+      {
+        "key": "MSI_PET_INFO",
+        "enum_ordinal": 584,
+        "xy": [
+          5,
+          2
+        ]
+      },
+      {
+        "key": "MSI_NAME",
+        "enum_ordinal": 407,
+        "xy": [
+          100,
+          24
+        ]
+      },
+      {
+        "key": "MSI_LEVEL",
+        "enum_ordinal": 408,
+        "xy": [
+          100,
+          44
+        ]
+      },
+      {
+        "key": "MSI_PET_HUNGRY",
+        "enum_ordinal": 585,
+        "xy": [
+          100,
+          69
+        ]
+      },
+      {
+        "key": "MSI_PET_FRIENDLY",
+        "enum_ordinal": 586,
+        "xy": [
+          100,
+          89
+        ]
+      }
+    ],
+    "values": "Level decimal at (135,44); hunger status at (145,69); relationship status at (145,89).",
+    "hunger_thresholds": [
+      {
+        "range": "0-10",
+        "key": "MSI_VERY_HUNGRY",
+        "enum_ordinal": 667
+      },
+      {
+        "range": "11-25",
+        "key": "MSI_HUNGRY",
+        "enum_ordinal": 668
+      },
+      {
+        "range": "26-75",
+        "key": "MSI_NORMAL",
+        "enum_ordinal": 669
+      },
+      {
+        "range": "76-90",
+        "key": "MSI_REPLETE",
+        "enum_ordinal": 670
+      },
+      {
+        "range": "91-100",
+        "key": "MSI_VERY_REPLETE",
+        "enum_ordinal": 671
+      },
+      {
+        "range": "negative or >100",
+        "key": "MSI_UNKNOWN",
+        "enum_ordinal": 676
+      }
+    ],
+    "relationship_thresholds": [
+      {
+        "range": "negative or >1000",
+        "key": "MSI_UNKNOWN",
+        "enum_ordinal": 676
+      },
+      {
+        "range": "0-20, player job 4050-4052",
+        "key": "MSI_VERYHATE",
+        "enum_ordinal": 1022
+      },
+      {
+        "range": "21-40, player job 4050-4052",
+        "key": "MSI_HATE",
+        "enum_ordinal": 1021
+      },
+      {
+        "range": "0-100 outside player jobs 4050-4052; also 41-100 for any job",
+        "key": "MSI_VERY_AWKWARD",
+        "enum_ordinal": 672
+      },
+      {
+        "range": "101-250",
+        "key": "MSI_AWKWARD",
+        "enum_ordinal": 673
+      },
+      {
+        "range": "251-750",
+        "key": "MSI_NORMAL",
+        "enum_ordinal": 669
+      },
+      {
+        "range": "751-900",
+        "key": "MSI_FRIENDLY",
+        "enum_ordinal": 674
+      },
+      {
+        "range": "901-1000",
+        "key": "MSI_VERY_FRIENDLY",
+        "enum_ordinal": 675
+      }
+    ],
+    "name_once": "Only if m_isPetNameModified, draws pet name at (135,24) in 0x00FF00 and (136,24) in 0x1E1E1E. Rename event accepts length <24, confirms MSI_PETNAME_CHANGE_ONLYONCE (ordinal 683); if response !=122, sends game message 158 with the name, sets modified=1, stores it, hides editor/button, invalidates. Length >=24 shows MSI_PETNAME_IN23 (ordinal 682).",
+    "portrait": "Rendered only if petJob != -1 and 1000 <= petJob < 1986. Monster sprite/action keys use VAs 0x006F3990 (몬스터\\%s.spr) and 0x006F3980 (몬스터\\%s.act), action motion (0,0). GetPetIllustName(job,petAcc) is checked first; if resource exists, bitmap draws at (5,21). Otherwise animation clips are centered/clipped to a 90x155 viewport at (5,21). Command title box at (160,44), 110x18, centers literal '< Command >'. Accessory label MSI_PET_ACCESSARY (597) at (100,119), and MSI_ITEM_EQUIPED (598) or MSI_ITEM_UNEQUIPED (600) at (100,139), based on m_petAcc."
+  },
+  "menu_and_events": {
+    "menu_strings": [
+      {
+        "key": "MSI_PET_FEEDING",
+        "enum_ordinal": 592
+      },
+      {
+        "key": "MSI_PET_PERFORMANCE",
+        "enum_ordinal": 593
+      },
+      {
+        "key": "MSI_PET_ACC_OFF",
+        "enum_ordinal": 595
+      },
+      {
+        "key": "MSI_PET_RETURN_EGG",
+        "enum_ordinal": 594
+      }
+    ],
+    "routing": "No UIPetInfoWnd::OnProcess override appears in Ref/UIFrameWnd.h/.cpp; controls route through SendMsg. Button 202 opens a 110x64 menu, message 83/id 88, at global window coordinate (160,44). Menu indices: 0 feed with confirmation; 1 performance; 2 accessory off; 3 return egg. Return sends game message 163/value 3, clears egg damaged flag/index and pet job, invalidates item window, closes id 88 (UIFrameWnd.cpp:6163-6246,6292-6324)."
+  },
+  "ordinal_note": "Primary UIFrameWnd.cpp calls MsgStr with symbolic MSI_* names. Numeric ordinals are counted from Ref/dhxj/MsgStrings.h enum (the primary Ref/MsgStrings.h is declarations only). Asset VAs identify HighPriest.exe CP949 Korean 유저인터페이스 path globals passed through UIBmp.",
+  "status": "preparation-only; not runtime or full root acceptance; verify symbolic label ordinals and all layout branches against selected PE before implementing",
+  "root_review": "Constructor corrected from direct selected PE. Remaining layout/asset/enum-ordinal notes are bounded source leads requiring root verification; no actual PetInfo owner or GUI acceptance is claimed."
+}
