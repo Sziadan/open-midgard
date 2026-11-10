@@ -1,5 +1,6 @@
 // Original caller47/11 and ProcessTalkType578F10 ownership. Included in
 // GameMode.cpp after the existing request helpers, inside the same translation unit.
+#include "core/SourceLanguageCharset.h"
 namespace {
 struct SourceEmotionRoute {int type,emotion;};
 #include "core/SourceChatEmotions.generated.inc"
@@ -17,6 +18,17 @@ void SourceChatNotice(int id,const char* fallback,int color)
 u32 CGameMode::GetSourceChatTick() const
 {
     return m_sourceChatInputServices && m_sourceChatInputServices->ticks?m_sourceChatInputServices->ticks():timeGetTime();
+}
+
+std::string CGameMode::GetSourceChatCharset() const
+{
+    if(!g_multiLang)return {};
+    u16 language=0;
+    if(m_sourceChatInputServices && m_sourceChatInputServices->languageId)language=m_sourceChatInputServices->languageId();
+#if RO_PLATFORM_WINDOWS
+    else language=static_cast<u16>(reinterpret_cast<std::uintptr_t>(GetKeyboardLayout(0)));
+#endif
+    return ro::chat::SourceCharsetPrefix(g_multiLang,language);
 }
 
 bool CGameMode::SubmitSourceChat(const std::string& input,const std::string& target,UIWindow* origin)
@@ -93,10 +105,11 @@ bool CGameMode::SendBufferedSourceChat(int operation,const std::string& target)
     if(whisper){
         m_lastWhisperName=std::string(target.c_str());
         if(m_lastWhisperName==g_session.GetPlayerName()){g_windowMgr.ClearChatMsg();return false;}
-        m_lastWhisper=text;
+        // Original multilingual wire text reserves three bytes before the219-byte copy.
+        m_lastWhisper=g_multiLang?GetSourceChatCharset()+text.substr(0,219):text;
         g_windowMgr.ClearChatMsg();
-        if(text.size()>=222)return false;
-        return SendWhisperChatMessage(m_lastWhisperName,text);
+        if(m_lastWhisper.size()>=222)return false;
+        return SendWhisperChatMessage(m_lastWhisperName,m_lastWhisper);
     }
     const auto& profile=ro::net::GetActiveMapGameplaySendProfile();
     const auto payload=std::string(g_session.GetPlayerName())+" : "+text;
@@ -201,6 +214,23 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return sent?1:0;
     }
     case 104:return ToggleSourceChatAutoSave()?1:0;
+    case 150: {
+        const bool defaultGreeting=parameters[0].empty();
+        const std::string displayed(g_windowMgr.GetChatMsg());
+        const std::string greeting="(Hi) "+(defaultGreeting?std::string("*^_^*"):displayed);
+        for(const auto& member:g_session.m_friendList){
+            g_windowMgr.SetChatMsg(greeting);
+            SendMsg(11,reinterpret_cast<msgparam_t>(member.characterName.c_str()),0,0);
+            // Source INC AL wraps as a signed byte, then caps positive values at40.
+            const int next=(static_cast<u8>(g_MessageHi)+1)&255;
+            g_MessageHi=static_cast<s8>(next>=128?next-256:next);
+            if(g_MessageHi>40)g_MessageHi=40;
+        }
+        const std::string notice=defaultGreeting?"[ To Friends ] : (Hi) *^_^*"
+            :"[ To Friends ] : (Hi) "+(g_serviceType!=ServiceKorea?GetSourceChatCharset():std::string())+displayed;
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),2031615);
+        return 1;
+    }
     case 152:return ToggleSourceAutoMessage()?1:0;
     default:
         // Retained open cases are tracked as missing implementations. Never

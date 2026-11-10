@@ -9,6 +9,7 @@ void WhisperReplay()
     SetCase("source_whisper_owners","PK09.21","per-name-source-routing","actual 0097/0098 framing -> per-name windows or typed main fallback -> real 0096 replies");
     g_windowMgr.RemoveAllWindows();CGameMode mode;TestConnection receive;
     struct Restore {
+        bool multi=g_multiLang;s8 hiddenHi=g_MessageHi;
         CMode* current=SkillPacketReplayAccess::Current();int type=SkillPacketReplayAccess::CurrentType();
         ServiceType service=g_serviceType;ServerType server=g_serverType;int folder=g_readFolderFirst,codePage=g_codePage;
         bool base=g_session.m_isShowWhisperWnd,friendWindows=g_session.m_isShowWhisperWnd_Friend,sound=g_session.m_isPlayWhisperOpenSound;
@@ -25,7 +26,7 @@ void WhisperReplay()
         bool hadDataDir=std::getenv("OPEN_MIDGARD_DATA_DIR")!=nullptr;
         std::string dataDir=hadDataDir?std::getenv("OPEN_MIDGARD_DATA_DIR"):"";
         Restore(){std::copy(std::begin(g_session.m_playerName),std::end(g_session.m_playerName),name.begin());}
-        ~Restore(){
+        ~Restore(){g_multiLang=multi;g_MessageHi=hiddenHi;
             g_windowMgr.RemoveAllWindows();g_windowMgr.ClearChatEvents();CRagConnection::instance()->Disconnect();SkillPacketReplayAccess::Restore(current,type);
             g_serviceType=service;g_serverType=server;g_readFolderFirst=folder;g_codePage=codePage;
             g_session.m_isShowWhisperWnd=base;g_session.m_isShowWhisperWnd_Friend=friendWindows;g_session.m_isPlayWhisperOpenSound=sound;
@@ -64,6 +65,7 @@ void WhisperReplay()
     g_session.m_isShowWhisperWnd=g_session.m_isShowWhisperWnd_Friend=true;g_session.m_isPlayWhisperOpenSound=false;
     g_session.m_onAutoMSG=g_session.m_isSaveChat=false;g_session.SetActiveStatusIcon(107,false,0);g_session.m_aid=0x10203040;
     std::memset(g_session.m_playerName,0,sizeof(g_session.m_playerName));std::memcpy(g_session.m_playerName,"Local",5);
+    g_multiLang=false;g_MessageHi=0;
     g_session.m_battleMsgOnOffSet.fill(true);ro::GetMannerFilter().Clear();SkillPacketReplayAccess::SetCurrent(&mode);
     auto& router=GetProductionGameModePacketRouter();router.Clear();RegisterDefaultGameModePacketHandlers(router);
     const auto dispatch=[&](const std::vector<u8>& packet){Require(receive.QueueBytes(packet),"whisper frame queue failed");

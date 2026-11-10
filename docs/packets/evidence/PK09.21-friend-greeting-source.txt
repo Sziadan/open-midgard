@@ -1,0 +1,535 @@
+## Ref/Session.cpp:17911
+17911: // Original Signature: public: void __thiscall CSession::HiFriends(int)
+17912: // Decompiled from address: 0x6606a0
+17913: // ================================================
+17914: void __thiscall CSession::HiFriends(CSession *this, const char *val1)
+17915: {
+17916:   unsigned int v2; // ebx
+17917:   std::list<FRIEND_INFO>::_Node *Head; // eax
+17918:   char *Ptr; // esi
+17919:   unsigned int v5; // kr10_4
+17920:   unsigned int v6; // ebx
+17921:   std::list<FRIEND_INFO>::_Node **p_Next; // esi
+17922:   const char *v8; // eax
+17923:   char v9; // al
+17924:   std::string temp; // [esp+Ch] [ebp-20h] BYREF
+17925:   CSession *v11; // [esp+1Ch] [ebp-10h]
+17926:   int v12; // [esp+28h] [ebp-4h]
+17927:   std::list<FRIEND_INFO>::_Node *it; // [esp+34h] [ebp+8h]
+17928:
+17929:   v11 = this;
+17930:   temp.allocator = (std::allocator<char>)HIBYTE(val1);
+17931:   std::string::_Tidy(&temp, 0);
+17932:   v2 = strlen(aHi);
+17933:   if ( std::string::_Grow(&temp, v2, 1u) )
+17934:   {
+17935:     qmemcpy(temp._Ptr, aHi, v2);
+17936:     std::string::_Eos(&temp, v2);
+17937:   }
+17938:   v12 = 0;
+17939:   if ( val1 )
+17940:     std::string::append(&temp, val1, strlen(val1));
+17941:   else
+17942:     std::string::append(&temp, asc_722560, strlen(asc_722560));
+17943:   Head = v11->m_friendList._Head;
+17944:   it = Head->_Next;
+17945:   if ( Head->_Next != Head )
+17946:   {
+17947:     do
+17948:     {
+17949:       Ptr = temp._Ptr;
+17950:       if ( !temp._Ptr )
+17951:         Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+17952:       v5 = strlen(Ptr) + 1;
+17953:       v6 = v5 - 1;
+17954:       if ( std::string::_Grow(&g_windowMgr.m_chatMsg, v5 - 1, 1u) )
+17955:       {
+17956:         qmemcpy(g_windowMgr.m_chatMsg._Ptr, Ptr, v6);
+17957:         g_windowMgr.m_chatMsg._Len = v5 - 1;
+17958:         g_windowMgr.m_chatMsg._Ptr[v6] = 0;
+17959:       }
+17960:       p_Next = &it->_Next;
+17961:       v8 = it->_Value.characterName._Ptr;
+17962:       if ( !v8 )
+17963:         v8 = `std::string::_Nullstr'::`2'::_C;
+17964:       g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 11, (int)v8, 0, 0);
+17965:       if ( ++g_MessageHi > 40 )
+17966:         g_MessageHi = 40;
+17967:       it = it->_Next;
+17968:     }
+17969:     while ( *p_Next != v11->m_friendList._Head );
+17970:   }
+17971:   if ( temp._Ptr )
+17972:   {
+17973:     v9 = *(temp._Ptr - 1);
+17974:     if ( !v9 || v9 == -1 )
+17975:       operator delete(temp._Ptr - 1);
+17976:     else
+17977:       *(temp._Ptr - 1) = v9 - 1;
+17978:   }
+17979: }
+
+## Ref/GameMode.cpp:17369
+17369:     case TT_HI:
+17370:       v28 = *(const char **)(val2 + 4);
+17371:       if ( !v28 )
+17372:         v28 = `std::string::_Nullstr'::`2'::_C;
+17373:       if ( !strcmp(v28, &Buf) )
+17374:       {
+17375:         CSession::HiFriends(&g_session, 0);
+17376:         sprintf(curPath, aToFriendsHi);
+17377:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)curPath, 2031615, 0, 0);
+17378:         return;
+17379:       }
+17380:       memset(&mapName[12], 0, 12);
+17381:       mapName[8] = HIBYTE(val2);
+17382:       v284 = 0;
+17383:       if ( g_windowMgr.m_chatMsg._Ptr )
+17384:       {
+17385:         val2 = (unsigned int)g_windowMgr.m_chatMsg._Ptr;
+17386:         v29 = g_windowMgr.m_chatMsg._Ptr;
+17387:       }
+17388:       else
+17389:       {
+17390:         v29 = (char *)`std::string::_Nullstr'::`2'::_C;
+17391:         *(float *)&val2 = COERCE_FLOAT(`std::string::_Nullstr'::`2'::_C);
+17392:       }
+17393:       v30 = strlen(v29) + 1;
+17394:       v31 = v30 - 1;
+17395:       if ( std::string::_Grow((std::string *)&mapName[8], v30 - 1, 1u) )
+17396:       {
+17397:         qmemcpy(*(void **)&mapName[12], v29, v31);
+17398:         v29 = (char *)val2;
+17399:         *(_DWORD *)&mapName[16] = v30 - 1;
+17400:         *(_BYTE *)(v31 + *(_DWORD *)&mapName[12]) = 0;
+17401:       }
+17402:       CSession::HiFriends(&g_session, v29);
+17403:       v32 = *(const char **)&mapName[12];
+17404:       if ( g_serviceType )
+17405:       {
+17406:         if ( !*(_DWORD *)&mapName[12] )
+17407:           v32 = `std::string::_Nullstr'::`2'::_C;
+17408:         X_4a = v32;
+17409:         LanguageCharset = CLanguage::GetLanguageCharset(g_language, 0);
+17410:         sprintf(curPath, "[ To Friends ] : (Hi) %s%s", LanguageCharset, X_4a);
+17411:       }
+17412:       else
+17413:       {
+17414:         if ( !*(_DWORD *)&mapName[12] )
+17415:           v32 = `std::string::_Nullstr'::`2'::_C;
+17416:         sprintf(curPath, "[ To Friends ] : (Hi) %s", v32);
+17417:       }
+17418:       v284 = -1;
+17419:       if ( !*(_DWORD *)&mapName[12] )
+17420:         goto LABEL_124;
+17421:       v34 = *(_BYTE *)(*(_DWORD *)&mapName[12] - 1);
+17422:       if ( !v34 || v34 == -1 )
+17423:       {
+17424:         operator delete((void *)(*(_DWORD *)&mapName[12] - 1));
+17425: LABEL_124:
+17426:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)curPath, 2031615, 0, 0);
+17427:       }
+17428:       else
+17429:       {
+17430:         *(_BYTE *)(*(_DWORD *)&mapName[12] - 1) = v34 - 1;
+17431:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)curPath, 2031615, 0, 0);
+17432:       }
+17433:       return;
+
+## Ref/GameMode2.cpp:3226
+3226:     case 0xBu:
+3227:       if ( !strlen(UIWindowMgr::GetChatMsg(&g_windowMgr)) || CSession::IsEFST_Berserk(&g_session) == 1 )
+3228:         return SUT_NOSKILL;
+3229:       v355 = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3230:       strncpy(&_S[24], v355, 0xDEu);
+3231:       v628 = 0;
+3232:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, &_S[24]) )
+3233:       {
+3234:         UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+3235:         v356 = MsgStr(MSI_NO_SEND_BECAUSE_INSULT);
+3236:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v356, 255, 0, 0);
+3237:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3238:         return SUT_NOSKILL;
+3239:       }
+3240:       if ( !g_MessageHi )
+3241:       {
+3242:         if ( std::operator==(&this->m_lastChat, &_S[24]) )
+3243:           ++this->m_sameChatRepeatCnt;
+3244:         else
+3245:           this->m_sameChatRepeatCnt = 0;
+3246:       }
+3247:       if ( !g_session.m_onAutoMSG && IsSameSentence(this->m_sameChatRepeatCnt) )
+3248:         return SUT_NOSKILL;
+3249:       std::string::operator=(&this->m_lastChat, &_S[24]);
+3250:       memset(&v687[12], 0, 25);
+3251:       strcpy(&v687[12], (const char *)val1);
+3252:       std::string::operator=(&this->m_lastWhisperName, &v687[12]);
+3253:       v357 = CSession::GetCharName(&g_session);
+3254:       if ( !strcmp(std::string::c_str(&this->m_lastWhisperName), v357) )
+3255:         goto LABEL_456;
+3256:       if ( g_multiLang )
+3257:       {
+3258:         strcpy(&chat_p2[24], CLanguage::GetLanguageCharset(g_language, 0));
+3259:         cyt = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3260:         strncpy(&chat_p2[27], cyt, 0xDBu);
+3261:       }
+3262:       else
+3263:       {
+3264:         cyu = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3265:         strncpy(&chat_p2[24], cyu, 0xDEu);
+3266:       }
+3267:       v678 = 0;
+3268:       std::string::operator=(&this->m_lastWhisper, &chat_p2[24]);
+3269:       v358 = strlen(&chat_p2[24]) + 1;
+3270:       if ( v358 == 1 || v358 - 1 >= 0xDE )
+3271:       {
+3272: LABEL_456:
+3273:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3274:         return SUT_NOSKILL;
+3275:       }
+3276:       else
+3277:       {
+3278:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3279:         *(_WORD *)&v683[2] = 150;
+3280:         qmemcpy(&v683[6], &v687[12], 0x18u);
+3281:         *(_WORD *)&v683[4] = v358 - 1 + 29;
+3282:         qmemcpy(buf, &v683[2], 0x1Cu);
+3283:         qmemcpy(&buf[28], &chat_p2[24], v358);
+3284:         cyv = *(unsigned __int16 *)&v683[4];
+3285:         v359 = CRagConnection::instanceR();
+3286:         CRagConnection::SendPacket(v359, cyv, buf);
+3287:         return SUT_NOSKILL;
+3288:       }
+3289:     case 0xCu:
+3290:       v366 = std::map<unsigned long,CellPos,std::less<unsigned long>,std::allocator<CellPos>>::operator[](
+3291:                &this->m_actorPosList,
+3292:                (const unsigned int *)&val1);
+3293:       v366->x = HIDWORD(val1);
+
+## Ref/GameModePacket.cpp:7280
+7280:             std::string::_Tidy(&v72, 1u);
+7281:             LOBYTE(v89) = 1;
+7282:             std::string::_Tidy(&v78, 1u);
+7283:           }
+7284:           else
+7285:           {
+7286:             v19 = std::operator+(&v70, aTo_0, p_m_lastWhisperName);
+7287:             LOBYTE(v89) = 8;
+7288:             v20 = std::operator+(&v84, v19, asc_713074);
+7289:             LOBYTE(v89) = 9;
+7290:             v21 = std::operator+(&v68, v20, p_m_lastWhisper)->_Ptr;
+7291:             LOBYTE(v89) = 10;
+7292:             v22 = `std::string::_Nullstr'::`2'::_C;
+7293:             if ( v21 )
+7294:               v22 = v21;
+7295:             std::string::assign(&msg, v22, strlen(v22));
+7296:             LOBYTE(v89) = 9;
+7297:             std::string::_Tidy(&v68, 1u);
+7298:             LOBYTE(v89) = 8;
+7299:             std::string::_Tidy(&v84, 1u);
+7300:             LOBYTE(v89) = 1;
+7301:             std::string::_Tidy(&v70, 1u);
+7302:           }
+7303:         }
+7304:         if ( g_MessageHi <= 0 )
+7305:         {
+7306:           UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+7307:           v23 = p_m_lastWhisperName->_Ptr;
+7308:           if ( !v23 )
+7309:             v23 = `std::string::_Nullstr'::`2'::_C;
+7310:           v24 = msg._Ptr;
+7311:           if ( !msg._Ptr )
+7312:             v24 = (char *)`std::string::_Nullstr'::`2'::_C;
+7313:           UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v24, 0xFFFF, 2, (int)v23);
+7314:         }
+7315:         else
+7316:         {
+7317:           --g_MessageHi;
+7318:         }
+7319:         if ( g_session.m_isSaveChat )
+7320:         {
+7321:           v25 = msg._Ptr;
+7322:           if ( !msg._Ptr )
+7323:             v25 = (char *)`std::string::_Nullstr'::`2'::_C;
+7324:           CGameMode::WriteChat(v86, v25);
+7325:         }
+7326:         LOBYTE(v89) = 0;
+7327:         std::string::_Tidy(&msg, 1u);
+7328:       }
+7329:       v89 = -1;
+7330:       std::string::_Tidy(&imMsg, 1u);
+7331:       break;
+7332:     case 1:
+7333:       v26 = &this->m_lastWhisperName;
+7334:       v27 = std::operator+(&v81, asc_6F397C, &this->m_lastWhisperName);
+7335:       v89 = 11;
+7336:       v28 = std::operator+(&v83, v27, asc_6F3978);
+7337:       LOBYTE(v89) = 12;
+7338:       v29 = MsgStr(MSI_NOT_EXIST_CHARACTER);
+7339:       v30 = std::operator+(&v74, v28, v29)->_Ptr;
+7340:       LOBYTE(v89) = 13;
+7341:       v31 = `std::string::_Nullstr'::`2'::_C;
+7342:       if ( v30 )
+7343:         v31 = v30;
+7344:       imMsg.allocator = (std::allocator<char>)HIBYTE(buf);
+7345:       std::string::_Tidy(&imMsg, 0);
+7346:       std::string::assign(&imMsg, v31, strlen(v31));
+7347:       LOBYTE(v89) = 17;
+7348:       std::string::_Tidy(&v74, 1u);
+7349:       LOBYTE(v89) = 16;
+7350:       std::string::_Tidy(&v83, 1u);
+7351:       LOBYTE(v89) = 15;
+7352:       std::string::_Tidy(&v81, 1u);
+7353:       if ( g_MessageHi <= 0 )
+7354:       {
+7355:         v32 = imMsg._Ptr;
+7356:         if ( !imMsg._Ptr )
+7357:           v32 = (char *)`std::string::_Nullstr'::`2'::_C;
+7358:         v33 = v26->_Ptr;
+7359:         if ( !v33 )
+7360:           v33 = `std::string::_Nullstr'::`2'::_C;
+7361:         if ( !UIWindowMgr::AddWhisperChatToWhisperWnd(&g_windowMgr, v33, v32, 0x7800u) )
+7362:         {
+7363:           v34 = imMsg._Ptr;
+7364:           if ( !imMsg._Ptr )
+7365:             v34 = (char *)`std::string::_Nullstr'::`2'::_C;
+7366:           UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v34, 0xFFFF, 2, 0);
+7367:         }
+7368:       }
+7369:       else
+7370:       {
+7371:         --g_MessageHi;
+7372:       }
+7373:       v89 = -1;
+7374:       std::string::_Tidy(&imMsg, 1u);
+7375:       break;
+7376:     case 2:
+7377:       v35 = &this->m_lastWhisperName;
+7378:       v36 = std::operator+(&v75, asc_6F397C, &this->m_lastWhisperName);
+7379:       v89 = 18;
+7380:       v37 = std::operator+(&v77, v36, asc_6F3978);
+
+## Ref/Language.cpp:1859
+1859: // Original Signature: public: char const * __thiscall CLanguage::GetLanguageCharset(bool)
+1860: // Decompiled from address: 0x4fe720
+1861: // ================================================
+1862: char *__thiscall CLanguage::GetLanguageCharset(CLanguage *this, unsigned __int8 bScript)
+1863: {
+1864:   unsigned __int16 m_scriptLangId; // ax
+1865:   int v3; // eax
+1866:   int v4; // eax
+1867:
+1868:   if ( g_multiLang )
+1869:   {
+1870:     if ( bScript )
+1871:       m_scriptLangId = this->m_scriptLangId;
+1872:     else
+1873:       m_scriptLangId = this->m_langId;
+1874:     switch ( m_scriptLangId & 0x3FF )
+1875:     {
+1876:       case 1:
+1877:         v3 = 178;
+1878:         break;
+1879:       case 2:
+1880:       case 0x19:
+1881:       case 0x22:
+1882:       case 0x23:
+1883:         v3 = 204;
+1884:         break;
+1885:       case 4:
+1886:         v4 = (m_scriptLangId >> 10) - 1;
+1887:         if ( v4 )
+1888:         {
+1889:           if ( v4 != 1 )
+1890:             goto $L80911;
+1891:           v3 = 134;
+1892:         }
+1893:         else
+1894:         {
+1895:           v3 = 136;
+1896:         }
+1897:         break;
+1898:       case 5:
+1899:       case 0xE:
+1900:       case 0x15:
+1901:       case 0x18:
+1902:       case 0x1A:
+1903:       case 0x1B:
+1904:       case 0x24:
+1905:       case 0x2F:
+1906:         v3 = 238;
+1907:         break;
+1908:       case 8:
+1909: $L80911:
+1910:         v3 = 161;
+1911:         break;
+1912:       case 0xD:
+1913:         v3 = 177;
+1914:         break;
+1915:       case 0x11:
+1916:         v3 = 128;
+1917:         break;
+1918:       case 0x12:
+1919:         v3 = 129;
+1920:         break;
+1921:       case 0x1E:
+1922:         v3 = 222;
+1923:         break;
+1924:       case 0x1F:
+1925:         v3 = 162;
+1926:         break;
+1927:       case 0x25:
+1928:       case 0x26:
+1929:       case 0x27:
+1930:         v3 = 186;
+1931:         break;
+1932:       case 0x2A:
+1933:         v3 = 163;
+1934:         break;
+1935:       default:
+1936:         v3 = 0;
+1937:         break;
+1938:     }
+1939:     sprintf(&byte_78BB28, "|%02x", v3);
+1940:     return &byte_78BB28;
+1941:   }
+1942:   else
+1943:   {
+1944:     byte_78BB28 = 0;
+1945:     return &byte_78BB28;
+1946:   }
+1947: }
+1948:
+1949:
+1950: // ================================================
+1951: // Original Signature: public: char const * __thiscall CLanguage::LanguageFile(char const *)
+1952: // Decompiled from address: 0x4fe640
+1953: // ================================================
+1954: char *__thiscall CLanguage::LanguageFile(CLanguage *this, const char *fName)
+1955: {
+
+## Ref/Locale.cpp:1164
+1164:       g_languageType = LanguageKorean;
+1165:       g_codePage = 949;
+1166:       goto LABEL_22;
+1167:     case ServiceAmerica:
+1168:     case ServiceIndonesia:
+1169:     case ServicePhilippine:
+1170:     case ServiceMalaysia:
+1171:     case ServiceSingapore:
+1172:       goto $L147518;
+1173:     case ServiceJapan:
+1174:       g_languageType = LanguageJapanese;
+1175:       g_codePage = 932;
+1176:       goto LABEL_22;
+1177:     case ServiceChina:
+1178:       g_languageType = LanguageSimplifiedChinese;
+1179:       g_codePage = 936;
+1180:       g_language = &stru_78BC38;
+1181:       break;
+1182:     case ServiceTaiwan:
+1183:       g_languageType = LanguageTraditionalChinese;
+1184:       g_codePage = 950;
+1185:       g_language = &stru_78BC38;
+1186:       break;
+1187:     case ServiceThai:
+1188:       g_languageType = LanguageThai;
+1189:       g_codePage = 874;
+1190:       g_language = &stru_78BB68;
+1191:       break;
+1192:     case ServiceGermany:
+1193:     case ServiceAustralia:
+1194:       g_languageType = LanguageEnglish;
+1195:       g_codePage = 0;
+1196:       g_language = &stru_78C108;
+1197:       g_multiLang = 1;
+1198:       break;
+1199:     case ServiceIndia:
+1200:       g_languageType = LanguageEnglish;
+1201:       g_codePage = 0;
+1202:       g_language = &stru_78C108;
+1203:       g_multiLang = 0;
+1204:       break;
+1205:     case ServiceBrazil:
+1206:     case ServiceFrance:
+1207:       g_languageType = LanguagePortuguese;
+1208:       g_codePage = 1252;
+1209:       goto LABEL_19;
+1210:     case ServiceRussia:
+1211:       g_languageType = LanguageEnglish;
+1212:       g_codePage = 1251;
+1213:       goto LABEL_19;
+1214:     case ServiceVietnam:
+1215:       g_languageType = LanguageVietnam;
+1216:       g_codePage = 1258;
+1217:       goto LABEL_19;
+1218:     case ServiceChile:
+1219:       g_languageType = LanguageEnglish;
+1220:       g_codePage = 1145;
+1221: LABEL_19:
+1222:       g_language = &stru_78C108;
+1223:       g_multiLang = 0;
+1224:       break;
+1225:     default:
+1226:       ErrorMsg(aNoLanguageSett);
+1227: $L147518:
+1228:       g_languageType = LanguageEnglish;
+1229:       g_codePage = 0;
+1230: LABEL_22:
+1231:       g_language = &stru_78C108;
+1232:       break;
+1233:   }
+1234:   if ( g_serverType == ServerInstantEvent )
+1235:     g_multiLang = 1;
+1236: }
+1237:
+
+## Ref/LoginMode.cpp:3715
+3715:   this->m_accountInfo2._End = 0;
+3716:   this->m_strErrorInfo.allocator = (std::allocator<char>)v3;
+3717:   this->m_strErrorInfo._Ptr = 0;
+3718:   this->m_strErrorInfo._Len = 0;
+3719:   this->m_strErrorInfo._Res = 0;
+3720:   this->__vftable = (CLoginMode_vtbl *)&CLoginMode::`vftable';
+3721:   this->m_fadeInCount = 1;
+3722:   this->m_syncRequestTime = timeGetTime() + 12000;
+3723:   this->m_multiLang = g_multiLang;
+3724:   g_multiLang = 0;
+3725:   this->m_nSelectedAccountNo = -1;
+3726:   this->m_wndWait = 0;
+3727:   return this;
+
+## Ref/LoginMode.cpp:3855
+3855:   char *v9; // eax
+3856:   char *v10; // ecx
+3857:   char v11; // al
+3858:
+3859:   this->__vftable = (CLoginMode_vtbl *)&CLoginMode::`vftable';
+3860:   g_multiLang = this->m_multiLang;
+3861:   Ptr = this->m_strErrorInfo._Ptr;
+3862:   if ( Ptr )
+3863:   {
+
+## Ref/UIFrameWnd2.cpp:19002
+19002: LABEL_27:
+19003:         v25 = &m_cmdTempTable._First[this->m_curItem];
+19004:         second = v25->second;
+19005:         if ( second == 150 )
+19006:         {
+19007:           `eh vector constructor iterator'(
+19008:             param,
+19009:             0x10u,
+19010:             3,
+19011:             (void (__thiscall *)(void *))std::string::`default constructor closure',
+19012:             (void (__thiscall *)(void *))std::string::~string);
+19013:           v27 = g_modeMgr.m_curMode->__vftable;
+19014:           v28 = v25->second;
+19015:           LOBYTE(v31) = 1;
+19016:           v27->CMode::SendMsg(g_modeMgr.m_curMode, 47, v28, (int)param, 0);
+19017:           LOBYTE(v31) = 0;
+19018:           `eh vector destructor iterator'(param, 0x10u, 3, (void (__thiscall *)(void *))std::string::~string);
+19019:         }
+19020:         else
+19021:         {
+19022:           g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, second, 0, 0);
+19023:         }

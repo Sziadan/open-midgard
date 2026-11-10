@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "date": "2026-11-10",
+  "baseline": "1ade6fd52b91e83e0718288d663a8cc069729d48",
+  "commit_subject": "packet(PK09.21): restore friend greetings and shared reply state",
+  "scope": "Hi150, signed process-global counter, private charset-prefix/length path and language flag lifetime; selected command UI data reviewed but full UI/actions/codec/render/packet goal unfinished",
+  "runtime_test_sha256": {
+    "src/core/ClientInfoLocale.h": "439d4252560f0c3a33ba281a5692a9f43c5217833b597fb5a3a1110d1caef606",
+    "src/core/Globals.cpp": "f7caad305e91445078cc75bb3056d38d7e09abc5589a975b0a5f91ca56294c9f",
+    "src/core/Globals.h": "8b7875bdfa643b0a97b42e4ff961e6c36cf3dbabcb7531ae137d01a8d5e4e32b",
+    "src/core/Locale.cpp": "d187a0039d0a1781a854383e68101d4c2226671122a6db8e1846b433c2e3f925",
+    "src/core/SourceLanguageCharset.h": "d5c7f12d8e92a672947734d7e383b58ac9974c7d614c01ff081625f5e21d512c",
+    "src/gamemode/GameMode.h": "bdc906f7d34fee0c81c2ee8a24b60a4561c6c5fb4ae8d1bdd9e5e1dc979652cc",
+    "src/gamemode/LoginMode.cpp": "9568c159d78aa5d0567ec6147097503c5722bad7481a28b9028780c8bcbbc0a1",
+    "src/gamemode/SourceChatSubmission.inc": "b4e1301c1775b7723128b46b0dda6c05948c3ea49d7094c6d34f6259843bff3d",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "ea8b6237365f9114c68817309e797d1dcb75bf893223c30d181227e277fdfdde",
+    "tools/tests/replay/FriendGreetingReplay.inc": "ff2598be6a1b815e6a0f678a5dcdaa3a13d2da9d534b6152658af88c40b954aa",
+    "tools/tests/replay/WhisperReplay.inc": "0332eb200d2250d85e36abda4ec6d0d646bd8ab8324990d2d27852900a748aab"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/GameMode2.cpp": "111ca06ba24dc274a4b57f5484c71a0cc30d99952d554033d05221e80fe66217",
+    "Ref/GameModePacket.cpp": "a65db7a145fe7661dfd3212dfbc43ee939b0cf06bc4a1dffbe1a229c68c88c39",
+    "Ref/Language.cpp": "91e4169f1fab62a29fa122c936d45530f07e8c5aac6861df15d6d2793ac8837f",
+    "Ref/Locale.cpp": "e7fc9e30962083fcfa6af3376fa12a33d512b527dbb3bbe41eeca7d8096319de",
+    "Ref/LoginMode.cpp": "3f787e6a7ec601c2e7efccabf6cf73e278bc424b80b4024e0771a6ddda24b955",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437"
+  },
+  "model_data_sha256": {
+    "docs/packets/evidence/PK09.21-chat-submission-data.json": "73080033f350d6f8217c64f1799514d733c1cc8a4194f799bd29434fb33c0733",
+    "docs/packets/evidence/PK09.21-friend-greeting-data.json": "782a92e9b606f15b08582c5f1d06190f43a970c877a2a84d9b4c70648cbfc999",
+    "docs/packets/evidence/PK09.21-friend-greeting-command-ui-data.json": "64e38b6efb2395cac61f7102a2ddf39367002d92cc3919b02a41b66f8dc9e3d8"
+  },
+  "application_sha256": {
+    "build-mingw-preset/open-midgard.exe": "805b4d3f3827ba16b59e19482cc30edf401f957ebc512d9c2dae2567454a2c3f",
+    "build-mingw-preset/packet_stream_replay_checks.exe": "373c70e569dc8ee1b3ea25810e88492baa96bbf59d2a128388281bdc57a05863"
+  },
+  "deployed_read_only_sha256": {
+    "D:/Spel/OldRO/open-midgard.exe": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-friend-greeting-build-initial.log": "f8f5b2f7cf7c6eb84c5bf3c8df275f2ac7fed3dca5e6bde46701a962475bbf3a",
+    "docs/packets/evidence/PK09.21-friend-greeting-build.log": "64f68857b1e8ef0c0e2fcb6f125c150cd2f8b10cc8f9521149d9c2c8072993f3",
+    "docs/packets/evidence/PK09.21-friend-greeting-cases.log": "b2454d1648ea9cd5ec6fe44184b22096a7733e444d667678a9d3badfdbc82923",
+    "docs/packets/evidence/PK09.21-friend-greeting-command-ui-data.json": "64e38b6efb2395cac61f7102a2ddf39367002d92cc3919b02a41b66f8dc9e3d8",
+    "docs/packets/evidence/PK09.21-friend-greeting-configure.log": "5cbdf318204b2bc273b22dec9c8d83d3dfc60af43ca1f22b15c1b9328a2b191e",
+    "docs/packets/evidence/PK09.21-friend-greeting-data-check.log": "f695e606f96149b39949a6bd3cb1eec808d607f08744a98950aef9fa1e317e4a",
+    "docs/packets/evidence/PK09.21-friend-greeting-data.json": "782a92e9b606f15b08582c5f1d06190f43a970c877a2a84d9b4c70648cbfc999",
+    "docs/packets/evidence/PK09.21-friend-greeting-focused.log": "90a146364ab7d7c87bd01bd17be5cbbae5311bc4ba70add2cedca50751a458a6",
+    "docs/packets/evidence/PK09.21-friend-greeting-pe.txt": "97a556470243b1bee7d21ff6e153828e782704a091cc554803962ed3edf3d39a",
+    "docs/packets/evidence/PK09.21-friend-greeting-plan-check.log": "9db87cb07fff32518d0fee379cde3ba582fd95c76703109c3267dff701ce2d2c",
+    "docs/packets/evidence/PK09.21-friend-greeting-replay-build.log": "1ce7cc19b6277c7218a07d709ff4a843673bcc36e1e8f565115cffe17500f14b",
+    "docs/packets/evidence/PK09.21-friend-greeting-restore-deploy-setting.log": "d2db7e28e7a17a234f018390f24130c2bc8b3e3486766cbd0c5373e6d26f119e",
+    "docs/packets/evidence/PK09.21-friend-greeting-root-ctest.log": "7fda011a1669793d684655f49d0b3e69076a8f22467862d6d655a32bb7820fae",
+    "docs/packets/evidence/PK09.21-friend-greeting-source.txt": "87533b5e952b933958ef291a5f0305a1746cc1fb615f6ff9b0434d3ec5bb0e1a",
+    "docs/packets/evidence/PK09.21-friend-greeting-unit-build.log": "af3b4d502459e486558e93dd59a150ce9f6a5df7805e92f82c60cbf4631dbb38",
+    "docs/packets/evidence/PK09.21-friend-greeting-unit-ctest.log": "d8b9ddf86b6d64af5467c29ced6984030d9ba4cd16fd6d8f87b054c362fea706",
+    "docs/packets/evidence/PK09.21-friend-greeting.md": "5e0dc05f9caa93ea3b5a3641d6edb22b1cc14a9fd0bb15c4a7be4ff567cc5c57"
+  }
+}

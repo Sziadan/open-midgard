@@ -2,10 +2,13 @@
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIOptionWnd.h"
 #include "core/MannerFilter.h"
+#include "core/SourceLanguageCharset.h"
 
 namespace {
 ro::chat::SourceChatModifiers submissionKeys;
 u32 submissionTick=10000;
+u16 submissionLanguage=0x0409;
+u16 SubmissionLanguage(){return submissionLanguage;}
 ro::chat::SourceChatModifiers SubmissionModifiers(){return submissionKeys;}
 u32 SubmissionTicks(){return submissionTick;}
 }
@@ -14,6 +17,7 @@ void ChatSubmissionReplay()
     SetCase("source_chat_submission","PK09.21","source-caller-dispatch","actual editor -> parser ->47/11 -> manager buffer -> real request frames");
     g_windowMgr.RemoveAllWindows();CGameMode mode;
     struct Restore {
+        bool multi=g_multiLang;s8 hiddenHi=g_MessageHi;
         CMode* current=SkillPacketReplayAccess::Current();int type=SkillPacketReplayAccess::CurrentType();
         decltype(g_serverType) server=g_serverType;ServiceType service=g_serviceType;
         int folder=g_readFolderFirst,codePage=g_codePage,talk=g_session.m_talkType;
@@ -31,7 +35,7 @@ void ChatSubmissionReplay()
         bool hadData=std::getenv("OPEN_MIDGARD_DATA_DIR")!=nullptr;std::string data=hadData?std::getenv("OPEN_MIDGARD_DATA_DIR"):"";
         std::filesystem::path cwd=std::filesystem::current_path(),resource;
         Restore(){std::copy(std::begin(g_session.m_playerName),std::end(g_session.m_playerName),name.begin());}
-        ~Restore(){
+        ~Restore(){g_multiLang=multi;g_MessageHi=hiddenHi;
             g_windowMgr.m_commandListWnd=nullptr;g_windowMgr.RemoveAllWindows();g_windowMgr.ClearChatEvents();CRagConnection::instance()->Disconnect();
             SkillPacketReplayAccess::Restore(current,type);g_serverType=server;g_serviceType=service;g_readFolderFirst=folder;g_codePage=codePage;
             g_session.m_talkType=talk;g_session.m_isBattleChat=battle;g_session.m_isMinEffect=minimum;g_session.m_isMinEffectOld=oldMinimum;
@@ -70,8 +74,8 @@ void ChatSubmissionReplay()
     g_session.m_partyList.clear();g_session.m_guildWindow={};g_session.SetActiveStatusIcon(107,false,0);
     ro::GetMannerFilter().Clear();ro::GetMannerFilter().Load("manner.txt");
     std::memset(g_session.m_playerName,0,sizeof(g_session.m_playerName));std::memcpy(g_session.m_playerName,"SourceLocal",11);
-    SkillPacketReplayAccess::SetCurrent(&mode);const SourceChatInputServices services{SubmissionModifiers,SubmissionTicks};mode.SetSourceChatInputServices(&services);
-    submissionKeys={};submissionTick=10000;
+    SkillPacketReplayAccess::SetCurrent(&mode);const SourceChatInputServices services{SubmissionModifiers,SubmissionTicks,SubmissionLanguage};mode.SetSourceChatInputServices(&services);
+    submissionKeys={};submissionTick=10000;submissionLanguage=0x0409;g_multiLang=false;g_MessageHi=0;
     g_windowMgr.ShowChatWindow(true);auto* chat=g_windowMgr.m_chatWnd;
 #include "SourceCommandFlagsReplay.inc"
     chat->RestorePersistentState({},"","",0,0);chat->FocusQtInput(2);
@@ -234,6 +238,7 @@ void ChatSubmissionReplay()
     }
     connection->Disconnect();mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
 #include "ChatIgnoreReplay.inc"
+#include "FriendGreetingReplay.inc"
     mode.SetSourceChatInputServices(nullptr);
     std::cout<<"{\"case_id\":\"source_chat_submission\",\"contract_id\":\"PK09.21\",\"actual_channel_frames\":true,\"caller_history_before_dispatch\":true,\"manager_buffer\":true,\"source47_11\":true,\"emotion_pending\":true,\"outcome\":\"PASS\"}\n";
 }

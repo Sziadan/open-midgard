@@ -484,9 +484,9 @@
   },
   "known_remaining": [
     "Finish the three-tab command-list UI, remaining flag actions and full legacy option initialization;23 startup snapshots are implemented at the declared port settings boundary.",
-    "Implement the remaining ProcessTalkType cases, including hi150 action beyond parser message assignment.",
+    "Implement remaining ProcessTalkType toggle/composite/UI/admin actions; Hi150 friend greeting now has declared wire/counter/charset-prefix proof.",
     "Finish source global6 ten-record similarity/strike ChatDori and special225/super-novice branches.",
-    "Review language charset prefix/wire encoding, exact input limits/IME/caret/selection, full font/skin/global UI.",
+    "Complete public/party/guild/battle charset paths and non-ASCII wire encoding, exact input limits/IME/caret/selection, full font/skin/global UI.",
     "Retain independent/deployed gates and the pending live world-entry retry."
   ]
 }

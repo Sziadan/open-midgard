@@ -1,0 +1,3 @@
+PASS: 292 lookup aliases (209 inserts +83 push_back, 49 resources), 82 parameter aliases; selected PE/source provenance and generated data agree.
+PASS: 60 exact-case emotion routes and selected no-op targets agree with primary source/PE.
+Core dispatch is implemented separately; remaining cases/options/global-special/editor/charset acceptance remains open.

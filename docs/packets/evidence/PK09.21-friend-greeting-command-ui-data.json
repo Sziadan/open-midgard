@@ -1,0 +1,2438 @@
+{
+  "schema": 1,
+  "status": "PE_TABLE_DATA_VERIFIED_NOT_UI_ACCEPTANCE",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "root_verified_pairs": [
+    {
+      "table": "toggle",
+      "index": 1,
+      "literal_va": "0x00722dac",
+      "literal_hex": "2f626174746c656d6f6465",
+      "selected_value": 134,
+      "store_va": "0x666403",
+      "store_bytes_hex": "c745f886000000"
+    },
+    {
+      "table": "toggle",
+      "index": 2,
+      "literal_va": "0x00722f50",
+      "literal_hex": "2f6e6f7472616465",
+      "selected_value": 135,
+      "store_va": "0x66642b",
+      "store_bytes_hex": "c745f887000000"
+    },
+    {
+      "table": "toggle",
+      "index": 3,
+      "literal_va": "0x00723020",
+      "literal_hex": "2f6e6f7368696674",
+      "selected_value": 105,
+      "store_va": "0x666455",
+      "store_bytes_hex": "c745f869000000"
+    },
+    {
+      "table": "toggle",
+      "index": 4,
+      "literal_va": "0x00723018",
+      "literal_hex": "2f6e6f6374726c",
+      "selected_value": 108,
+      "store_va": "0x66647b",
+      "store_bytes_hex": "c745f86c000000"
+    },
+    {
+      "table": "toggle",
+      "index": 5,
+      "literal_va": "0x00722fcc",
+      "literal_hex": "2f736b696c6c6661696c",
+      "selected_value": 112,
+      "store_va": "0x6664a1",
+      "store_bytes_hex": "c745f870000000"
+    },
+    {
+      "table": "toggle",
+      "index": 6,
+      "literal_va": "0x00722f74",
+      "literal_hex": "2f6e6f74616c6b6d7367",
+      "selected_value": 113,
+      "store_va": "0x6664c7",
+      "store_bytes_hex": "c745f871000000"
+    },
+    {
+      "table": "toggle",
+      "index": 7,
+      "literal_va": "0x00722f64",
+      "literal_hex": "2f6e6f74616c6b6d736732",
+      "selected_value": 147,
+      "store_va": "0x6664ed",
+      "store_bytes_hex": "c745f893000000"
+    },
+    {
+      "table": "toggle",
+      "index": 8,
+      "literal_va": "0x0072268c",
+      "literal_hex": "2f73686f776e616d65",
+      "selected_value": 107,
+      "store_va": "0x666513",
+      "store_bytes_hex": "c745f86b000000"
+    },
+    {
+      "table": "toggle",
+      "index": 9,
+      "literal_va": "0x00722f20",
+      "literal_hex": "2f666f67",
+      "selected_value": 60,
+      "store_va": "0x666539",
+      "store_bytes_hex": "c745f83c000000"
+    },
+    {
+      "table": "toggle",
+      "index": 10,
+      "literal_va": "0x00722ffc",
+      "literal_hex": "2f61757261",
+      "selected_value": 106,
+      "store_va": "0x66655f",
+      "store_bytes_hex": "c745f86a000000"
+    },
+    {
+      "table": "toggle",
+      "index": 11,
+      "literal_va": "0x00723008",
+      "literal_hex": "2f77696e646f77",
+      "selected_value": 140,
+      "store_va": "0x666585",
+      "store_bytes_hex": "c745f88c000000"
+    },
+    {
+      "table": "toggle",
+      "index": 12,
+      "literal_va": "0x0072302c",
+      "literal_hex": "2f6d697373",
+      "selected_value": 53,
+      "store_va": "0x6665ab",
+      "store_bytes_hex": "c745f835000000"
+    },
+    {
+      "table": "toggle",
+      "index": 13,
+      "literal_va": "0x00722f44",
+      "literal_hex": "2f73657431",
+      "selected_value": 114,
+      "store_va": "0x6665d1",
+      "store_bytes_hex": "c745f872000000"
+    },
+    {
+      "table": "toggle",
+      "index": 14,
+      "literal_va": "0x00722f3c",
+      "literal_hex": "2f73657432",
+      "selected_value": 137,
+      "store_va": "0x6665f7",
+      "store_bytes_hex": "c745f889000000"
+    },
+    {
+      "table": "toggle",
+      "index": 15,
+      "literal_va": "0x00722f98",
+      "literal_hex": "2f7131",
+      "selected_value": 119,
+      "store_va": "0x66661d",
+      "store_bytes_hex": "c745f877000000"
+    },
+    {
+      "table": "toggle",
+      "index": 16,
+      "literal_va": "0x00722f84",
+      "literal_hex": "2f7132",
+      "selected_value": 120,
+      "store_va": "0x666643",
+      "store_bytes_hex": "c745f878000000"
+    },
+    {
+      "table": "toggle",
+      "index": 17,
+      "literal_va": "0x00722f80",
+      "literal_hex": "2f7133",
+      "selected_value": 121,
+      "store_va": "0x666661",
+      "store_bytes_hex": "c745f879000000"
+    },
+    {
+      "table": "toggle",
+      "index": 18,
+      "literal_va": "0x007231e0",
+      "literal_hex": "2f656666656374",
+      "selected_value": 8,
+      "store_va": "0x66668f",
+      "store_bytes_hex": "c745f808000000"
+    },
+    {
+      "table": "toggle",
+      "index": 19,
+      "literal_va": "0x007231e8",
+      "literal_hex": "2f62676d",
+      "selected_value": 7,
+      "store_va": "0x6666b5",
+      "store_bytes_hex": "c745f807000000"
+    },
+    {
+      "table": "toggle",
+      "index": 20,
+      "literal_va": "0x007231cc",
+      "literal_hex": "2f736f756e64",
+      "selected_value": 11,
+      "store_va": "0x6666db",
+      "store_bytes_hex": "c745f80b000000"
+    },
+    {
+      "table": "toggle",
+      "index": 21,
+      "literal_va": "0x006f441c",
+      "literal_hex": "2f746970",
+      "selected_value": 42,
+      "store_va": "0x666701",
+      "store_bytes_hex": "c745f82a000000"
+    },
+    {
+      "table": "toggle",
+      "index": 22,
+      "literal_va": "0x00722fbc",
+      "literal_hex": "2f6c6f67696e6f7574",
+      "selected_value": 164,
+      "store_va": "0x666727",
+      "store_bytes_hex": "c745f8a4000000"
+    },
+    {
+      "table": "toggle",
+      "index": 23,
+      "literal_va": "0x00722fac",
+      "literal_hex": "2f73686f7070696e67",
+      "selected_value": 166,
+      "store_va": "0x66674d",
+      "store_bytes_hex": "c745f8a6000000"
+    },
+    {
+      "table": "action",
+      "index": 1,
+      "literal_va": "0x00722b2c",
+      "literal_hex": "2f7461656b776f6e",
+      "selected_value": 151,
+      "store_va": "0x666770",
+      "store_bytes_hex": "c745f897000000"
+    },
+    {
+      "table": "action",
+      "index": 2,
+      "literal_va": "0x00722658",
+      "literal_hex": "2f6869",
+      "selected_value": 150,
+      "store_va": "0x66679f",
+      "store_bytes_hex": "c745f896000000"
+    },
+    {
+      "table": "action",
+      "index": 3,
+      "literal_va": "0x00722b44",
+      "literal_hex": "2f626c61636b736d697468",
+      "selected_value": 145,
+      "store_va": "0x6667c5",
+      "store_bytes_hex": "c745f891000000"
+    },
+    {
+      "table": "action",
+      "index": 4,
+      "literal_va": "0x00722b38",
+      "literal_hex": "2f616c6368656d697374",
+      "selected_value": 146,
+      "store_va": "0x6667eb",
+      "store_bytes_hex": "c745f892000000"
+    },
+    {
+      "table": "action",
+      "index": 5,
+      "literal_va": "0x00723228",
+      "literal_hex": "2f68656c70",
+      "selected_value": 14,
+      "store_va": "0x666811",
+      "store_bytes_hex": "c745f80e000000"
+    },
+    {
+      "table": "action",
+      "index": 6,
+      "literal_va": "0x007231fc",
+      "literal_hex": "2f77686f",
+      "selected_value": 6,
+      "store_va": "0x666837",
+      "store_bytes_hex": "897df8"
+    },
+    {
+      "table": "action",
+      "index": 7,
+      "literal_va": "0x007231a0",
+      "literal_hex": "2f736974",
+      "selected_value": 22,
+      "store_va": "0x666859",
+      "store_bytes_hex": "c745f816000000"
+    },
+    {
+      "table": "action",
+      "index": 8,
+      "literal_va": "0x00723190",
+      "literal_hex": "2f7374616e64",
+      "selected_value": 21,
+      "store_va": "0x66687f",
+      "store_bytes_hex": "c745f815000000"
+    },
+    {
+      "table": "action",
+      "index": 9,
+      "literal_va": "0x006f385c",
+      "literal_hex": "2f71",
+      "selected_value": 24,
+      "store_va": "0x6668a5",
+      "store_bytes_hex": "c745f818000000"
+    },
+    {
+      "table": "action",
+      "index": 10,
+      "literal_va": "0x00723164",
+      "literal_hex": "2f6c65617665",
+      "selected_value": 27,
+      "store_va": "0x6668cb",
+      "store_bytes_hex": "c745f81b000000"
+    },
+    {
+      "table": "action",
+      "index": 11,
+      "literal_va": "0x007230c8",
+      "literal_hex": "2f7768657265",
+      "selected_value": 9,
+      "store_va": "0x6668f1",
+      "store_bytes_hex": "c745f809000000"
+    },
+    {
+      "table": "action",
+      "index": 12,
+      "literal_va": "0x00723090",
+      "literal_hex": "2f6d656d6f",
+      "selected_value": 43,
+      "store_va": "0x666917",
+      "store_bytes_hex": "c745f82b000000"
+    },
+    {
+      "table": "action",
+      "index": 13,
+      "literal_va": "0x00723174",
+      "literal_hex": "2f63686174",
+      "selected_value": 23,
+      "store_va": "0x66693d",
+      "store_bytes_hex": "c745f817000000"
+    },
+    {
+      "table": "action",
+      "index": 14,
+      "literal_va": "0x00723034",
+      "literal_hex": "2f7361766563686174",
+      "selected_value": 51,
+      "store_va": "0x666963",
+      "store_bytes_hex": "c745f833000000"
+    },
+    {
+      "table": "action",
+      "index": 15,
+      "literal_va": "0x00722ff0",
+      "literal_hex": "2f646f7269646f7269",
+      "selected_value": 109,
+      "store_va": "0x666989",
+      "store_bytes_hex": "c745f86d000000"
+    },
+    {
+      "table": "action",
+      "index": 16,
+      "literal_va": "0x00722fd8",
+      "literal_hex": "2f62616e6762616e67",
+      "selected_value": 111,
+      "store_va": "0x6669a7",
+      "store_bytes_hex": "c745f86f000000"
+    },
+    {
+      "table": "action",
+      "index": 17,
+      "literal_va": "0x00722fe4",
+      "literal_hex": "2f62696e6762696e67",
+      "selected_value": 110,
+      "store_va": "0x6669d5",
+      "store_bytes_hex": "c745f86e000000"
+    },
+    {
+      "table": "action",
+      "index": 18,
+      "literal_va": "0x00722848",
+      "literal_hex": "2f6578",
+      "selected_value": 15,
+      "store_va": "0x6669fb",
+      "store_bytes_hex": "c745f80f000000"
+    },
+    {
+      "table": "action",
+      "index": 19,
+      "literal_va": "0x007231b0",
+      "literal_hex": "2f696e616c6c",
+      "selected_value": 17,
+      "store_va": "0x666a21",
+      "store_bytes_hex": "c745f811000000"
+    },
+    {
+      "table": "action",
+      "index": 20,
+      "literal_va": "0x007231a8",
+      "literal_hex": "2f6578616c6c",
+      "selected_value": 16,
+      "store_va": "0x666a47",
+      "store_bytes_hex": "c745f810000000"
+    },
+    {
+      "table": "action",
+      "index": 21,
+      "literal_va": "0x00722d88",
+      "literal_hex": "2f707670696e666f",
+      "selected_value": 141,
+      "store_va": "0x666a6d",
+      "store_bytes_hex": "c745f88d000000"
+    },
+    {
+      "table": "action",
+      "index": 22,
+      "literal_va": "0x00722b14",
+      "literal_hex": "2f68756e74696e67",
+      "selected_value": 168,
+      "store_va": "0x666a93",
+      "store_bytes_hex": "c745f8a8000000"
+    },
+    {
+      "table": "window",
+      "index": 1,
+      "literal_va": "0x007229ec",
+      "literal_hex": "43686174",
+      "selected_value": 67,
+      "store_va": "0x666d4a",
+      "store_bytes_hex": "c745f843000000"
+    },
+    {
+      "table": "window",
+      "index": 2,
+      "literal_va": "0x007229e4",
+      "literal_hex": "537461747573",
+      "selected_value": 65,
+      "store_va": "0x666d76",
+      "store_bytes_hex": "c745f841000000"
+    },
+    {
+      "table": "window",
+      "index": 3,
+      "literal_va": "0x007229d8",
+      "literal_hex": "44657461696c4c6576656c",
+      "selected_value": 68,
+      "store_va": "0x666d9c",
+      "store_bytes_hex": "c745f844000000"
+    },
+    {
+      "table": "window",
+      "index": 4,
+      "literal_va": "0x007229d0",
+      "literal_hex": "4f7074696f6e",
+      "selected_value": 79,
+      "store_va": "0x666dc2",
+      "store_bytes_hex": "c745f84f000000"
+    },
+    {
+      "table": "window",
+      "index": 5,
+      "literal_va": "0x007229c8",
+      "literal_hex": "4974656d73",
+      "selected_value": 69,
+      "store_va": "0x666de8",
+      "store_bytes_hex": "c745f845000000"
+    },
+    {
+      "table": "window",
+      "index": 6,
+      "literal_va": "0x006ff2c0",
+      "literal_hex": "4d65726368616e74",
+      "selected_value": 87,
+      "store_va": "0x666e0e",
+      "store_bytes_hex": "c745f857000000"
+    },
+    {
+      "table": "window",
+      "index": 7,
+      "literal_va": "0x007229c0",
+      "literal_hex": "536b696c6c",
+      "selected_value": 83,
+      "store_va": "0x666e34",
+      "store_bytes_hex": "c745f853000000"
+    },
+    {
+      "table": "window",
+      "index": 8,
+      "literal_va": "0x007229b4",
+      "literal_hex": "45717569706d656e74",
+      "selected_value": 81,
+      "store_va": "0x666e4f",
+      "store_bytes_hex": "c745f851000000"
+    },
+    {
+      "table": "window",
+      "index": 9,
+      "literal_va": "0x007229a8",
+      "literal_hex": "4261736963496e666f",
+      "selected_value": 86,
+      "store_va": "0x666e80",
+      "store_bytes_hex": "c745f856000000"
+    },
+    {
+      "table": "window",
+      "index": 10,
+      "literal_va": "0x007229a0",
+      "literal_hex": "4775696c64",
+      "selected_value": 71,
+      "store_va": "0x666ea6",
+      "store_bytes_hex": "c745f847000000"
+    },
+    {
+      "table": "window",
+      "index": 11,
+      "literal_va": "0x00722990",
+      "literal_hex": "506172747953657474696e67",
+      "selected_value": 80,
+      "store_va": "0x666ecc",
+      "store_bytes_hex": "c745f850000000"
+    },
+    {
+      "table": "window",
+      "index": 12,
+      "literal_va": "0x00722980",
+      "literal_hex": "467269656e644f7074696f6e",
+      "selected_value": 73,
+      "store_va": "0x666ef2",
+      "store_bytes_hex": "c745f849000000"
+    },
+    {
+      "table": "window",
+      "index": 13,
+      "literal_va": "0x00722974",
+      "literal_hex": "4d657373656e676572",
+      "selected_value": 90,
+      "store_va": "0x666f18",
+      "store_bytes_hex": "c745f85a000000"
+    },
+    {
+      "table": "window",
+      "index": 14,
+      "literal_va": "0x00722968",
+      "literal_hex": "576869737065724c697374",
+      "selected_value": 72,
+      "store_va": "0x666f3e",
+      "store_bytes_hex": "c745f848000000"
+    },
+    {
+      "table": "window",
+      "index": 15,
+      "literal_va": "0x00722960",
+      "literal_hex": "456d6f74696f6e",
+      "selected_value": 77,
+      "store_va": "0x666f60",
+      "store_bytes_hex": "c745f84d000000"
+    },
+    {
+      "table": "window",
+      "index": 16,
+      "literal_va": "0x00722954",
+      "literal_hex": "456d6f74696f6e4c697374",
+      "selected_value": 76,
+      "store_va": "0x666f8a",
+      "store_bytes_hex": "c745f84c000000"
+    },
+    {
+      "table": "window",
+      "index": 17,
+      "literal_va": "0x0072294c",
+      "literal_hex": "506574496e666f",
+      "selected_value": 74,
+      "store_va": "0x666fac",
+      "store_bytes_hex": "c745f84a000000"
+    },
+    {
+      "table": "brazil",
+      "index": 1,
+      "literal_va": "0x00722ab8",
+      "literal_hex": "53616c612064652043686174",
+      "selected_value": 67,
+      "store_va": "0x666ac6",
+      "store_bytes_hex": "c745f843000000"
+    },
+    {
+      "table": "brazil",
+      "index": 2,
+      "literal_va": "0x00722aac",
+      "literal_hex": "417472696275746f73",
+      "selected_value": 65,
+      "store_va": "0x666af2",
+      "store_bytes_hex": "c745f841000000"
+    },
+    {
+      "table": "brazil",
+      "index": 3,
+      "literal_va": "0x00722aa0",
+      "literal_hex": "446574616c686573",
+      "selected_value": 68,
+      "store_va": "0x666b18",
+      "store_bytes_hex": "c745f844000000"
+    },
+    {
+      "table": "brazil",
+      "index": 4,
+      "literal_va": "0x00722a90",
+      "literal_hex": "436f6e666967757261e7e36f",
+      "selected_value": 79,
+      "store_va": "0x666b3e",
+      "store_bytes_hex": "c745f84f000000"
+    },
+    {
+      "table": "brazil",
+      "index": 5,
+      "literal_va": "0x00722a84",
+      "literal_hex": "496e76656e743f696f",
+      "selected_value": 69,
+      "store_va": "0x666b64",
+      "store_bytes_hex": "c745f845000000"
+    },
+    {
+      "table": "brazil",
+      "index": 6,
+      "literal_va": "0x00722a78",
+      "literal_hex": "43617272696e686f",
+      "selected_value": 87,
+      "store_va": "0x666b8a",
+      "store_bytes_hex": "c745f857000000"
+    },
+    {
+      "table": "brazil",
+      "index": 7,
+      "literal_va": "0x00722a6c",
+      "literal_hex": "486162696c696461646573",
+      "selected_value": 83,
+      "store_va": "0x666bb0",
+      "store_bytes_hex": "c745f853000000"
+    },
+    {
+      "table": "brazil",
+      "index": 8,
+      "literal_va": "0x00722a5c",
+      "literal_hex": "4571756970616d656e746f73",
+      "selected_value": 81,
+      "store_va": "0x666bcb",
+      "store_bytes_hex": "c745f851000000"
+    },
+    {
+      "table": "brazil",
+      "index": 9,
+      "literal_va": "0x00722a50",
+      "literal_hex": "496e662e20423f69636173",
+      "selected_value": 86,
+      "store_va": "0x666bfc",
+      "store_bytes_hex": "c745f856000000"
+    },
+    {
+      "table": "brazil",
+      "index": 10,
+      "literal_va": "0x00722a4c",
+      "literal_hex": "436c3f",
+      "selected_value": 71,
+      "store_va": "0x666c22",
+      "store_bytes_hex": "c745f847000000"
+    },
+    {
+      "table": "brazil",
+      "index": 11,
+      "literal_va": "0x00722a40",
+      "literal_hex": "436f6e662e20477275706f",
+      "selected_value": 80,
+      "store_va": "0x666c48",
+      "store_bytes_hex": "c745f850000000"
+    },
+    {
+      "table": "brazil",
+      "index": 12,
+      "literal_va": "0x00722a30",
+      "literal_hex": "436f6e662e20436f6e7461746f73",
+      "selected_value": 73,
+      "store_va": "0x666c6e",
+      "store_bytes_hex": "c745f849000000"
+    },
+    {
+      "table": "brazil",
+      "index": 13,
+      "literal_va": "0x00722a28",
+      "literal_hex": "477275706f",
+      "selected_value": 90,
+      "store_va": "0x666c94",
+      "store_bytes_hex": "c745f85a000000"
+    },
+    {
+      "table": "brazil",
+      "index": 14,
+      "literal_va": "0x00722a1c",
+      "literal_hex": "436f6e7461746f73",
+      "selected_value": 72,
+      "store_va": "0x666cba",
+      "store_bytes_hex": "c745f848000000"
+    },
+    {
+      "table": "brazil",
+      "index": 15,
+      "literal_va": "0x00722a14",
+      "literal_hex": "4174616c686f73",
+      "selected_value": 77,
+      "store_va": "0x666cdd",
+      "store_bytes_hex": "c745f84d000000"
+    },
+    {
+      "table": "brazil",
+      "index": 16,
+      "literal_va": "0x00722a04",
+      "literal_hex": "4c6973746120456d6f7469636f6e73",
+      "selected_value": 76,
+      "store_va": "0x666d06",
+      "store_bytes_hex": "c745f84c000000"
+    },
+    {
+      "table": "brazil",
+      "index": 17,
+      "literal_va": "0x007229f4",
+      "literal_hex": "426963686f206465204573742e",
+      "selected_value": 74,
+      "store_va": "0x666d28",
+      "store_bytes_hex": "c745f84a000000"
+    }
+  ],
+  "root_verified_keys": [
+    {
+      "index": 1,
+      "literal_va": "0x00722944",
+      "literal_hex": "416c74202b2043",
+      "text": "Alt + C"
+    },
+    {
+      "index": 2,
+      "literal_va": "0x0072293c",
+      "literal_hex": "416c74202b2041",
+      "text": "Alt + A"
+    },
+    {
+      "index": 3,
+      "literal_va": "0x00722934",
+      "literal_hex": "416c74202b2044",
+      "text": "Alt + D"
+    },
+    {
+      "index": 4,
+      "literal_va": "0x0072292c",
+      "literal_hex": "416c74202b204f",
+      "text": "Alt + O"
+    },
+    {
+      "index": 5,
+      "literal_va": "0x00722924",
+      "literal_hex": "416c74202b2045",
+      "text": "Alt + E"
+    },
+    {
+      "index": 6,
+      "literal_va": "0x0072291c",
+      "literal_hex": "416c74202b2057",
+      "text": "Alt + W"
+    },
+    {
+      "index": 7,
+      "literal_va": "0x00722914",
+      "literal_hex": "416c74202b2053",
+      "text": "Alt + S"
+    },
+    {
+      "index": 8,
+      "literal_va": "0x0072290c",
+      "literal_hex": "416c74202b2051",
+      "text": "Alt + Q"
+    },
+    {
+      "index": 9,
+      "literal_va": "0x00722904",
+      "literal_hex": "416c74202b2056",
+      "text": "Alt + V"
+    },
+    {
+      "index": 10,
+      "literal_va": "0x007228fc",
+      "literal_hex": "416c74202b2047",
+      "text": "Alt + G"
+    },
+    {
+      "index": 11,
+      "literal_va": "0x007228f4",
+      "literal_hex": "416c74202b2050",
+      "text": "Alt + P"
+    },
+    {
+      "index": 12,
+      "literal_va": "0x007228ec",
+      "literal_hex": "416c74202b2049",
+      "text": "Alt + I"
+    },
+    {
+      "index": 13,
+      "literal_va": "0x007228e4",
+      "literal_hex": "416c74202b205a",
+      "text": "Alt + Z"
+    },
+    {
+      "index": 14,
+      "literal_va": "0x007228dc",
+      "literal_hex": "416c74202b2048",
+      "text": "Alt + H"
+    },
+    {
+      "index": 15,
+      "literal_va": "0x007228d4",
+      "literal_hex": "416c74202b204d",
+      "text": "Alt + M"
+    },
+    {
+      "index": 16,
+      "literal_va": "0x007228cc",
+      "literal_hex": "416c74202b204c",
+      "text": "Alt + L"
+    },
+    {
+      "index": 17,
+      "literal_va": "0x007228c4",
+      "literal_hex": "416c74202b204a",
+      "text": "Alt + J"
+    }
+  ],
+  "verified_pointer_bindings": 96,
+  "source_inventory": {
+    "schema": 2,
+    "selected_binary": "HighPriest.exe",
+    "sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "tool": "C:/Qt/Tools/mingw1310_64/bin/objdump.exe",
+    "function": {
+      "name": "CSession::InitTalkTypeTable",
+      "entry": "0x00663e20",
+      "end": "0x00667110"
+    },
+    "m_cmdOnOffTable": {
+      "entries": [
+        [
+          1,
+          "/battlemode",
+          "0x00722dac",
+          "0x86",
+          "0x00666403",
+          "0x0066640a"
+        ],
+        [
+          2,
+          "/notrade",
+          "0x00722f50",
+          "0x87",
+          "0x0066642b",
+          "0x00666432"
+        ],
+        [
+          3,
+          "/noshift",
+          "0x00723020",
+          "0x69",
+          "0x00666455",
+          "0x0066645c"
+        ],
+        [
+          4,
+          "/noctrl",
+          "0x00723018",
+          "0x6c",
+          "0x0066647b",
+          "0x00666482"
+        ],
+        [
+          5,
+          "/skillfail",
+          "0x00722fcc",
+          "0x70",
+          "0x006664a1",
+          "0x006664a8"
+        ],
+        [
+          6,
+          "/notalkmsg",
+          "0x00722f74",
+          "0x71",
+          "0x006664c7",
+          "0x006664ce"
+        ],
+        [
+          7,
+          "/notalkmsg2",
+          "0x00722f64",
+          "0x93",
+          "0x006664ed",
+          "0x006664f4"
+        ],
+        [
+          8,
+          "/showname",
+          "0x0072268c",
+          "0x6b",
+          "0x00666513",
+          "0x0066651a"
+        ],
+        [
+          9,
+          "/fog",
+          "0x00722f20",
+          "0x3c",
+          "0x00666539",
+          "0x00666540"
+        ],
+        [
+          10,
+          "/aura",
+          "0x00722ffc",
+          "0x6a",
+          "0x0066655f",
+          "0x00666566"
+        ],
+        [
+          11,
+          "/window",
+          "0x00723008",
+          "0x8c",
+          "0x00666585",
+          "0x0066658c"
+        ],
+        [
+          12,
+          "/miss",
+          "0x0072302c",
+          "0x35",
+          "0x006665ab",
+          "0x006665b2"
+        ],
+        [
+          13,
+          "/set1",
+          "0x00722f44",
+          "0x72",
+          "0x006665d1",
+          "0x006665d8"
+        ],
+        [
+          14,
+          "/set2",
+          "0x00722f3c",
+          "0x89",
+          "0x006665f7",
+          "0x006665fe"
+        ],
+        [
+          15,
+          "/q1",
+          "0x00722f98",
+          "0x77",
+          "0x0066661d",
+          "0x00666624"
+        ],
+        [
+          16,
+          "/q2",
+          "0x00722f84",
+          "0x78",
+          "0x00666643",
+          "0x0066664a"
+        ],
+        [
+          17,
+          "/q3",
+          "0x00722f80",
+          "0x79",
+          "0x00666661",
+          "0x00666668"
+        ],
+        [
+          18,
+          "/effect",
+          "0x007231e0",
+          "0x08",
+          "0x0066668f",
+          "0x00666696"
+        ],
+        [
+          19,
+          "/bgm",
+          "0x007231e8",
+          "0x07",
+          "0x006666b5",
+          "0x006666bc"
+        ],
+        [
+          20,
+          "/sound",
+          "0x007231cc",
+          "0x0b",
+          "0x006666db",
+          "0x006666e2"
+        ],
+        [
+          21,
+          "/tip",
+          "0x006f441c",
+          "0x2a",
+          "0x00666701",
+          "0x00666708"
+        ],
+        [
+          22,
+          "/loginout",
+          "0x00722fbc",
+          "0xa4",
+          "0x00666727",
+          "0x0066672e"
+        ],
+        [
+          23,
+          "/shopping",
+          "0x00722fac",
+          "0xa6",
+          "0x0066674d",
+          "0x00666754"
+        ]
+      ],
+      "tuple_columns": [
+        "index",
+        "literal_ascii",
+        "string_VA",
+        "numeric_second",
+        "numeric_store_instruction",
+        "string_pointer_store_instruction"
+      ],
+      "evidence": "Direct disassembly 0x666403-0x667754 plus objdump -s dumps of .data around 0x722680,0x722da0,0x722f00,0x723130 and 0x6f441c. Hex bytes decode to ASCII literals shown."
+    },
+    "m_cmdExeTable": {
+      "entries": [
+        [
+          1,
+          "/taekwon",
+          "0x00722b2c",
+          "0x97",
+          "0x00666770"
+        ],
+        [
+          2,
+          "/hi",
+          "0x00722658",
+          "0x96",
+          "0x0066679f"
+        ],
+        [
+          3,
+          "/blacksmith",
+          "0x00722b44",
+          "0x91",
+          "0x006667c5"
+        ],
+        [
+          4,
+          "/alchemist",
+          "0x00722b38",
+          "0x92",
+          "0x006667eb"
+        ],
+        [
+          5,
+          "/help",
+          "0x00723228",
+          "0x0e",
+          "0x00666811"
+        ],
+        [
+          "6",
+          "/who",
+          "0x007231fc",
+          "0x06",
+          "0x00666837 (edi value word)",
+          "0x0066683a (label pointer word)",
+          "0x00663e9a (edi initialized to 6)"
+        ],
+        [
+          7,
+          "/sit",
+          "0x007231a0",
+          "0x16",
+          "0x00666859"
+        ],
+        [
+          8,
+          "/stand",
+          "0x00723190",
+          "0x15",
+          "0x0066687f"
+        ],
+        [
+          9,
+          "/q",
+          "0x006f385c",
+          "0x18",
+          "0x006668a5"
+        ],
+        [
+          10,
+          "/leave",
+          "0x00723164",
+          "0x1b",
+          "0x006668cb"
+        ],
+        [
+          11,
+          "/where",
+          "0x007230c8",
+          "0x09",
+          "0x006668f1"
+        ],
+        [
+          12,
+          "/memo",
+          "0x00723090",
+          "0x2b",
+          "0x00666917"
+        ],
+        [
+          13,
+          "/chat",
+          "0x00723174",
+          "0x17",
+          "0x0066693d"
+        ],
+        [
+          14,
+          "/savechat",
+          "0x00723034",
+          "0x33",
+          "0x00666963"
+        ],
+        [
+          15,
+          "/doridori",
+          "0x00722ff0",
+          "0x6d",
+          "0x00666989"
+        ],
+        [
+          16,
+          "/bangbang",
+          "0x00722fd8",
+          "0x6f",
+          "0x006669a7"
+        ],
+        [
+          17,
+          "/bingbing",
+          "0x00722fe4",
+          "0x6e",
+          "0x006669d5"
+        ],
+        [
+          18,
+          "/ex",
+          "0x00722848",
+          "0x0f",
+          "0x006669fb"
+        ],
+        [
+          19,
+          "/inall",
+          "0x007231b0",
+          "0x11",
+          "0x00666a21"
+        ],
+        [
+          20,
+          "/exall",
+          "0x007231a8",
+          "0x10",
+          "0x00666a47"
+        ],
+        [
+          21,
+          "/pvpinfo",
+          "0x00722d88",
+          "0x8d",
+          "0x00666a6d"
+        ],
+        [
+          22,
+          "/hunting",
+          "0x00722b14",
+          "0xa8",
+          "0x00666a93"
+        ]
+      ],
+      "tuple_columns": [
+        "index",
+        "literal_ascii",
+        "string_VA",
+        "numeric_second",
+        "numeric_store_or_source_instruction",
+        "string_pointer_store_instruction_when_present",
+        "origin_instruction_when_value_is_register"
+      ],
+      "evidence": "Static disassembly 0x666770-0x666aa1 stores both words. For row 6 the compiler reuses immediate 0x06 from row 5 without rewriting it; source assigns TT_REQ_NUM_USER to both. Literal strings checked by static data dumps / byte strings."
+    },
+    "m_cmdWinTable": {
+      "numeric_second_values_are_window_manager_ids": true,
+      "brazil_entries": [
+        [
+          1,
+          "Sala de Chat",
+          "0x00722ab8",
+          "0x43",
+          "0x00666ac6"
+        ],
+        [
+          2,
+          "Atributos",
+          "0x00722aac",
+          "0x41",
+          "0x00666af2"
+        ],
+        [
+          3,
+          "Detalhes",
+          "0x00722aa0",
+          "0x44",
+          "0x00666b18"
+        ],
+        [
+          4,
+          "Configura\u00e7\u00e3o (raw bytes 43 6f 6e 66 69 67 75 72 61 e7 e3 6f)",
+          "0x00722a90",
+          "0x4f",
+          "0x00666b3e"
+        ],
+        [
+          5,
+          "Invent?io (raw bytes 49 6e 76 65 6e 74 3f 69 6f)",
+          "0x00722a84",
+          "0x45",
+          "0x00666b64"
+        ],
+        [
+          6,
+          "Carrinho",
+          "0x00722a78",
+          "0x57",
+          "0x00666b8a"
+        ],
+        [
+          7,
+          "Habilidades",
+          "0x00722a6c",
+          "0x53",
+          "0x00666bb0"
+        ],
+        [
+          8,
+          "Equipamentos",
+          "0x00722a5c",
+          "0x51",
+          "0x00666bcb"
+        ],
+        [
+          9,
+          "Inf. B?icas (raw bytes 49 6e 66 2e 20 42 3f 69 63 61 73)",
+          "0x00722a50",
+          "0x56",
+          "0x00666bfc"
+        ],
+        [
+          10,
+          "Cl? (raw bytes 43 6c 3f)",
+          "0x00722a4c",
+          "0x47",
+          "0x00666c22"
+        ],
+        [
+          11,
+          "Conf. Grupo",
+          "0x00722a40",
+          "0x50",
+          "0x00666c48"
+        ],
+        [
+          12,
+          "Conf. Contatos",
+          "0x00722a30",
+          "0x49",
+          "0x00666c6e"
+        ],
+        [
+          13,
+          "Grupo",
+          "0x00722a28",
+          "0x5a",
+          "0x00666c94"
+        ],
+        [
+          14,
+          "Contatos",
+          "0x00722a1c",
+          "0x48",
+          "0x00666cba"
+        ],
+        [
+          15,
+          "Atalhos",
+          "0x00722a14",
+          "0x4d",
+          "0x00666cdd"
+        ],
+        [
+          16,
+          "Lista Emoticons",
+          "0x00722a04",
+          "0x4c",
+          "0x00666d06"
+        ],
+        [
+          17,
+          "Bicho de Est.? (raw source bytes see dump)",
+          "0x007229f4",
+          "0x4a",
+          "0x00666d28"
+        ]
+      ],
+      "standard_entries": [
+        [
+          1,
+          "Chat",
+          "0x007229ec",
+          "0x43",
+          "0x00666d4a"
+        ],
+        [
+          2,
+          "Status",
+          "0x007229e4",
+          "0x41",
+          "0x00666d76"
+        ],
+        [
+          3,
+          "DetailLevel",
+          "0x007229d8",
+          "0x44",
+          "0x00666d9c"
+        ],
+        [
+          4,
+          "Option",
+          "0x007229d0",
+          "0x4f",
+          "0x00666dc2"
+        ],
+        [
+          5,
+          "Items",
+          "0x007229c8",
+          "0x45",
+          "0x00666de8"
+        ],
+        [
+          6,
+          "Merchant",
+          "0x006ff2c0",
+          "0x57",
+          "0x00666e0e"
+        ],
+        [
+          7,
+          "Skill",
+          "0x007229c0",
+          "0x53",
+          "0x00666e34"
+        ],
+        [
+          8,
+          "Equipment",
+          "0x007229b4",
+          "0x51",
+          "0x00666e4f"
+        ],
+        [
+          9,
+          "BasicInfo",
+          "0x007229a8",
+          "0x56",
+          "0x00666e80"
+        ],
+        [
+          10,
+          "Guild",
+          "0x007229a0",
+          "0x47",
+          "0x00666ea6"
+        ],
+        [
+          11,
+          "PartySetting",
+          "0x00722990",
+          "0x50",
+          "0x00666ecc"
+        ],
+        [
+          12,
+          "FriendOption",
+          "0x00722980",
+          "0x49",
+          "0x00666ef2"
+        ],
+        [
+          13,
+          "Messenger",
+          "0x00722974",
+          "0x5a",
+          "0x00666f18"
+        ],
+        [
+          14,
+          "WhisperList",
+          "0x00722968",
+          "0x48",
+          "0x00666f3e"
+        ],
+        [
+          15,
+          "Emotion",
+          "0x00722960",
+          "0x4d",
+          "0x00666f60"
+        ],
+        [
+          16,
+          "EmotionList",
+          "0x00722954",
+          "0x4c",
+          "0x00666f8a"
+        ],
+        [
+          17,
+          "PetInfo",
+          "0x0072294c",
+          "0x4a",
+          "0x00666fac"
+        ]
+      ],
+      "evidence": "Brazil branch at 0x666ab4-0x666d3f; normal branch at 0x666d3f-0x666fcb. Each listed address is the immediate write to [ebp-0x8]; paired label pointer is stored to [ebp-0x4] seven bytes later. Numeric values are visible as binary immediates and are used as window-manager IDs by UICommandListWnd, not TALKTYPE IDs.",
+      "brazil_literal_hex": [
+        "53 61 6c 61 20 64 65 20 43 68 61 74 00",
+        "41 74 72 69 62 75 74 6f 73 00",
+        "44 65 74 61 6c 68 65 73 00",
+        "43 6f 6e 66 69 67 75 72 61 e7 e3 6f 00",
+        "49 6e 76 65 6e 74 3f 69 6f 00",
+        "43 61 72 72 69 6e 68 6f 00",
+        "48 61 62 69 6c 69 64 61 64 65 73 00",
+        "45 71 75 69 70 61 6d 65 6e 74 6f 73 00",
+        "49 6e 66 2e 20 42 3f 69 63 61 73 00",
+        "43 6c 3f 00",
+        "43 6f 6e 66 2e 20 47 72 75 70 6f 00",
+        "43 6f 6e 66 2e 20 43 6f 6e 74 61 74 6f 73 00",
+        "47 72 75 70 6f 00",
+        "43 6f 6e 74 61 74 6f 73 00",
+        "41 74 61 6c 68 6f 73 00",
+        "4c 69 73 74 61 20 45 6d 6f 74 69 63 6f 6e 73 00",
+        "42 69 63 68 6f 20 64 65 20 45 73 74 2e 00"
+      ]
+    },
+    "m_keyWinTable": {
+      "entries": [
+        [
+          1,
+          "Alt + C",
+          "0x00722944",
+          "0x00666fd7"
+        ],
+        [
+          2,
+          "Alt + A",
+          "0x0072293c",
+          "0x00666fe9"
+        ],
+        [
+          3,
+          "Alt + D",
+          "0x00722934",
+          "0x00666ffb"
+        ],
+        [
+          4,
+          "Alt + O",
+          "0x0072292c",
+          "0x0066700a"
+        ],
+        [
+          5,
+          "Alt + E",
+          "0x00722924",
+          "0x0066701f"
+        ],
+        [
+          6,
+          "Alt + W",
+          "0x0072291c",
+          "0x00667031"
+        ],
+        [
+          7,
+          "Alt + S",
+          "0x00722914",
+          "0x00667040"
+        ],
+        [
+          8,
+          "Alt + Q",
+          "0x0072290c",
+          "0x00667055"
+        ],
+        [
+          9,
+          "Alt + V",
+          "0x00722904",
+          "0x00667067"
+        ],
+        [
+          10,
+          "Alt + G",
+          "0x007228fc",
+          "0x00667076"
+        ],
+        [
+          11,
+          "Alt + P",
+          "0x007228f4",
+          "0x0066708b"
+        ],
+        [
+          12,
+          "Alt + I",
+          "0x007228ec",
+          "0x0066709d"
+        ],
+        [
+          13,
+          "Alt + Z",
+          "0x007228e4",
+          "0x006670ac"
+        ],
+        [
+          14,
+          "Alt + H",
+          "0x007228dc",
+          "0x006670c1"
+        ],
+        [
+          15,
+          "Alt + M",
+          "0x007228d4",
+          "0x006670d3"
+        ],
+        [
+          16,
+          "Alt + L",
+          "0x007228cc",
+          "0x006670df"
+        ],
+        [
+          17,
+          "Alt + J",
+          "0x007228c4",
+          "0x006670f7"
+        ]
+      ],
+      "tuple_columns": [
+        "index",
+        "literal_ascii",
+        "string_VA",
+        "pointer_store_instruction"
+      ]
+    },
+    "limitations": [
+      "ASCII labels for execution/standard-window rows are established by PE byte dumps at the referenced VAs; Brazil strings with high-bit/question-mark bytes are not normalized beyond raw bytes where shown.",
+      "The execution table numeric stores reflect second words passed into m_cmdExeTable. Window table numeric values are raw selected-PE immediate values; their direct use in ProcessPushButton identifies them as manager IDs, regardless of decompiler enum type.",
+      "Numeric IDs/addresses are static values only; no executable was run."
+    ],
+    "literal_data_dumps": [
+      "objdump -s .data 0x722f00-0x723040, 0x722680-0x7226a0, 0x722da0-0x722dc0, 0x723130-0x723200, 0x6f441c-0x6f442c",
+      "objdump -s .data 0x722640-0x722680, 0x722b10-0x722b60, 0x723220-0x723238, 0x6f385c-0x6f3868",
+      "objdump -s .data 0x722900-0x722b00 (table/window labels), 0x7228c0-0x722950 (parallel Alt+key labels), 0x6ff2c0-0x6ff2d0 (Merchant)"
+    ],
+    "pointer_store_verification": {
+      "description": "Each listed label VA is checked against the immediate in its selected-PE pointer-store instruction in InitTalkTypeTable.",
+      "store_instruction_operands": "m_cmdOnOffTable, m_cmdExeTable and m_cmdWinTable use [ebp-0x4]; m_keyWinTable uses [ebp-0x8].",
+      "checked_count": 96,
+      "mismatch_count": 0,
+      "groups": {
+        "m_cmdOnOffTable": [
+          {
+            "index": 1,
+            "label_VA": "0x00722DAC",
+            "pointer_store": "0x0066640A",
+            "stored_immediate": "0x00722DAC",
+            "matches": true
+          },
+          {
+            "index": 2,
+            "label_VA": "0x00722F50",
+            "pointer_store": "0x00666432",
+            "stored_immediate": "0x00722F50",
+            "matches": true
+          },
+          {
+            "index": 3,
+            "label_VA": "0x00723020",
+            "pointer_store": "0x0066645C",
+            "stored_immediate": "0x00723020",
+            "matches": true
+          },
+          {
+            "index": 4,
+            "label_VA": "0x00723018",
+            "pointer_store": "0x00666482",
+            "stored_immediate": "0x00723018",
+            "matches": true
+          },
+          {
+            "index": 5,
+            "label_VA": "0x00722FCC",
+            "pointer_store": "0x006664A8",
+            "stored_immediate": "0x00722FCC",
+            "matches": true
+          },
+          {
+            "index": 6,
+            "label_VA": "0x00722F74",
+            "pointer_store": "0x006664CE",
+            "stored_immediate": "0x00722F74",
+            "matches": true
+          },
+          {
+            "index": 7,
+            "label_VA": "0x00722F64",
+            "pointer_store": "0x006664F4",
+            "stored_immediate": "0x00722F64",
+            "matches": true
+          },
+          {
+            "index": 8,
+            "label_VA": "0x0072268C",
+            "pointer_store": "0x0066651A",
+            "stored_immediate": "0x0072268C",
+            "matches": true
+          },
+          {
+            "index": 9,
+            "label_VA": "0x00722F20",
+            "pointer_store": "0x00666540",
+            "stored_immediate": "0x00722F20",
+            "matches": true
+          },
+          {
+            "index": 10,
+            "label_VA": "0x00722FFC",
+            "pointer_store": "0x00666566",
+            "stored_immediate": "0x00722FFC",
+            "matches": true
+          },
+          {
+            "index": 11,
+            "label_VA": "0x00723008",
+            "pointer_store": "0x0066658C",
+            "stored_immediate": "0x00723008",
+            "matches": true
+          },
+          {
+            "index": 12,
+            "label_VA": "0x0072302C",
+            "pointer_store": "0x006665B2",
+            "stored_immediate": "0x0072302C",
+            "matches": true
+          },
+          {
+            "index": 13,
+            "label_VA": "0x00722F44",
+            "pointer_store": "0x006665D8",
+            "stored_immediate": "0x00722F44",
+            "matches": true
+          },
+          {
+            "index": 14,
+            "label_VA": "0x00722F3C",
+            "pointer_store": "0x006665FE",
+            "stored_immediate": "0x00722F3C",
+            "matches": true
+          },
+          {
+            "index": 15,
+            "label_VA": "0x00722F98",
+            "pointer_store": "0x00666624",
+            "stored_immediate": "0x00722F98",
+            "matches": true
+          },
+          {
+            "index": 16,
+            "label_VA": "0x00722F84",
+            "pointer_store": "0x0066664A",
+            "stored_immediate": "0x00722F84",
+            "matches": true
+          },
+          {
+            "index": 17,
+            "label_VA": "0x00722F80",
+            "pointer_store": "0x00666668",
+            "stored_immediate": "0x00722F80",
+            "matches": true
+          },
+          {
+            "index": 18,
+            "label_VA": "0x007231E0",
+            "pointer_store": "0x00666696",
+            "stored_immediate": "0x007231E0",
+            "matches": true
+          },
+          {
+            "index": 19,
+            "label_VA": "0x007231E8",
+            "pointer_store": "0x006666BC",
+            "stored_immediate": "0x007231E8",
+            "matches": true
+          },
+          {
+            "index": 20,
+            "label_VA": "0x007231CC",
+            "pointer_store": "0x006666E2",
+            "stored_immediate": "0x007231CC",
+            "matches": true
+          },
+          {
+            "index": 21,
+            "label_VA": "0x006F441C",
+            "pointer_store": "0x00666708",
+            "stored_immediate": "0x006F441C",
+            "matches": true
+          },
+          {
+            "index": 22,
+            "label_VA": "0x00722FBC",
+            "pointer_store": "0x0066672E",
+            "stored_immediate": "0x00722FBC",
+            "matches": true
+          },
+          {
+            "index": 23,
+            "label_VA": "0x00722FAC",
+            "pointer_store": "0x00666754",
+            "stored_immediate": "0x00722FAC",
+            "matches": true
+          }
+        ],
+        "m_cmdExeTable": [
+          {
+            "index": 1,
+            "label_VA": "0x00722B2C",
+            "pointer_store": "0x00666777",
+            "stored_immediate": "0x00722B2C",
+            "matches": true
+          },
+          {
+            "index": 2,
+            "label_VA": "0x00722658",
+            "pointer_store": "0x006667A6",
+            "stored_immediate": "0x00722658",
+            "matches": true
+          },
+          {
+            "index": 3,
+            "label_VA": "0x00722B44",
+            "pointer_store": "0x006667CC",
+            "stored_immediate": "0x00722B44",
+            "matches": true
+          },
+          {
+            "index": 4,
+            "label_VA": "0x00722B38",
+            "pointer_store": "0x006667F2",
+            "stored_immediate": "0x00722B38",
+            "matches": true
+          },
+          {
+            "index": 5,
+            "label_VA": "0x00723228",
+            "pointer_store": "0x00666818",
+            "stored_immediate": "0x00723228",
+            "matches": true
+          },
+          {
+            "index": "6",
+            "label_VA": "0x007231FC",
+            "pointer_store": "0x0066683A",
+            "stored_immediate": "0x007231FC",
+            "matches": true
+          },
+          {
+            "index": 7,
+            "label_VA": "0x007231A0",
+            "pointer_store": "0x00666860",
+            "stored_immediate": "0x007231A0",
+            "matches": true
+          },
+          {
+            "index": 8,
+            "label_VA": "0x00723190",
+            "pointer_store": "0x00666886",
+            "stored_immediate": "0x00723190",
+            "matches": true
+          },
+          {
+            "index": 9,
+            "label_VA": "0x006F385C",
+            "pointer_store": "0x006668AC",
+            "stored_immediate": "0x006F385C",
+            "matches": true
+          },
+          {
+            "index": 10,
+            "label_VA": "0x00723164",
+            "pointer_store": "0x006668D2",
+            "stored_immediate": "0x00723164",
+            "matches": true
+          },
+          {
+            "index": 11,
+            "label_VA": "0x007230C8",
+            "pointer_store": "0x006668F8",
+            "stored_immediate": "0x007230C8",
+            "matches": true
+          },
+          {
+            "index": 12,
+            "label_VA": "0x00723090",
+            "pointer_store": "0x0066691E",
+            "stored_immediate": "0x00723090",
+            "matches": true
+          },
+          {
+            "index": 13,
+            "label_VA": "0x00723174",
+            "pointer_store": "0x00666944",
+            "stored_immediate": "0x00723174",
+            "matches": true
+          },
+          {
+            "index": 14,
+            "label_VA": "0x00723034",
+            "pointer_store": "0x0066696A",
+            "stored_immediate": "0x00723034",
+            "matches": true
+          },
+          {
+            "index": 15,
+            "label_VA": "0x00722FF0",
+            "pointer_store": "0x00666990",
+            "stored_immediate": "0x00722FF0",
+            "matches": true
+          },
+          {
+            "index": 16,
+            "label_VA": "0x00722FD8",
+            "pointer_store": "0x006669AE",
+            "stored_immediate": "0x00722FD8",
+            "matches": true
+          },
+          {
+            "index": 17,
+            "label_VA": "0x00722FE4",
+            "pointer_store": "0x006669DC",
+            "stored_immediate": "0x00722FE4",
+            "matches": true
+          },
+          {
+            "index": 18,
+            "label_VA": "0x00722848",
+            "pointer_store": "0x00666A02",
+            "stored_immediate": "0x00722848",
+            "matches": true
+          },
+          {
+            "index": 19,
+            "label_VA": "0x007231B0",
+            "pointer_store": "0x00666A28",
+            "stored_immediate": "0x007231B0",
+            "matches": true
+          },
+          {
+            "index": 20,
+            "label_VA": "0x007231A8",
+            "pointer_store": "0x00666A4E",
+            "stored_immediate": "0x007231A8",
+            "matches": true
+          },
+          {
+            "index": 21,
+            "label_VA": "0x00722D88",
+            "pointer_store": "0x00666A74",
+            "stored_immediate": "0x00722D88",
+            "matches": true
+          },
+          {
+            "index": 22,
+            "label_VA": "0x00722B14",
+            "pointer_store": "0x00666A9A",
+            "stored_immediate": "0x00722B14",
+            "matches": true
+          }
+        ],
+        "brazil_entries": [
+          {
+            "index": 1,
+            "label_VA": "0x00722AB8",
+            "pointer_store": "0x00666ACD",
+            "stored_immediate": "0x00722AB8",
+            "matches": true
+          },
+          {
+            "index": 2,
+            "label_VA": "0x00722AAC",
+            "pointer_store": "0x00666AF9",
+            "stored_immediate": "0x00722AAC",
+            "matches": true
+          },
+          {
+            "index": 3,
+            "label_VA": "0x00722AA0",
+            "pointer_store": "0x00666B1F",
+            "stored_immediate": "0x00722AA0",
+            "matches": true
+          },
+          {
+            "index": 4,
+            "label_VA": "0x00722A90",
+            "pointer_store": "0x00666B45",
+            "stored_immediate": "0x00722A90",
+            "matches": true
+          },
+          {
+            "index": 5,
+            "label_VA": "0x00722A84",
+            "pointer_store": "0x00666B6B",
+            "stored_immediate": "0x00722A84",
+            "matches": true
+          },
+          {
+            "index": 6,
+            "label_VA": "0x00722A78",
+            "pointer_store": "0x00666B91",
+            "stored_immediate": "0x00722A78",
+            "matches": true
+          },
+          {
+            "index": 7,
+            "label_VA": "0x00722A6C",
+            "pointer_store": "0x00666BB7",
+            "stored_immediate": "0x00722A6C",
+            "matches": true
+          },
+          {
+            "index": 8,
+            "label_VA": "0x00722A5C",
+            "pointer_store": "0x00666BD2",
+            "stored_immediate": "0x00722A5C",
+            "matches": true
+          },
+          {
+            "index": 9,
+            "label_VA": "0x00722A50",
+            "pointer_store": "0x00666C03",
+            "stored_immediate": "0x00722A50",
+            "matches": true
+          },
+          {
+            "index": 10,
+            "label_VA": "0x00722A4C",
+            "pointer_store": "0x00666C29",
+            "stored_immediate": "0x00722A4C",
+            "matches": true
+          },
+          {
+            "index": 11,
+            "label_VA": "0x00722A40",
+            "pointer_store": "0x00666C4F",
+            "stored_immediate": "0x00722A40",
+            "matches": true
+          },
+          {
+            "index": 12,
+            "label_VA": "0x00722A30",
+            "pointer_store": "0x00666C75",
+            "stored_immediate": "0x00722A30",
+            "matches": true
+          },
+          {
+            "index": 13,
+            "label_VA": "0x00722A28",
+            "pointer_store": "0x00666C9B",
+            "stored_immediate": "0x00722A28",
+            "matches": true
+          },
+          {
+            "index": 14,
+            "label_VA": "0x00722A1C",
+            "pointer_store": "0x00666CC1",
+            "stored_immediate": "0x00722A1C",
+            "matches": true
+          },
+          {
+            "index": 15,
+            "label_VA": "0x00722A14",
+            "pointer_store": "0x00666CE4",
+            "stored_immediate": "0x00722A14",
+            "matches": true
+          },
+          {
+            "index": 16,
+            "label_VA": "0x00722A04",
+            "pointer_store": "0x00666D0D",
+            "stored_immediate": "0x00722A04",
+            "matches": true
+          },
+          {
+            "index": 17,
+            "label_VA": "0x007229F4",
+            "pointer_store": "0x00666D2F",
+            "stored_immediate": "0x007229F4",
+            "matches": true
+          }
+        ],
+        "standard_entries": [
+          {
+            "index": 1,
+            "label_VA": "0x007229EC",
+            "pointer_store": "0x00666D51",
+            "stored_immediate": "0x007229EC",
+            "matches": true
+          },
+          {
+            "index": 2,
+            "label_VA": "0x007229E4",
+            "pointer_store": "0x00666D7D",
+            "stored_immediate": "0x007229E4",
+            "matches": true
+          },
+          {
+            "index": 3,
+            "label_VA": "0x007229D8",
+            "pointer_store": "0x00666DA3",
+            "stored_immediate": "0x007229D8",
+            "matches": true
+          },
+          {
+            "index": 4,
+            "label_VA": "0x007229D0",
+            "pointer_store": "0x00666DC9",
+            "stored_immediate": "0x007229D0",
+            "matches": true
+          },
+          {
+            "index": 5,
+            "label_VA": "0x007229C8",
+            "pointer_store": "0x00666DEF",
+            "stored_immediate": "0x007229C8",
+            "matches": true
+          },
+          {
+            "index": 6,
+            "label_VA": "0x006FF2C0",
+            "pointer_store": "0x00666E15",
+            "stored_immediate": "0x006FF2C0",
+            "matches": true
+          },
+          {
+            "index": 7,
+            "label_VA": "0x007229C0",
+            "pointer_store": "0x00666E3B",
+            "stored_immediate": "0x007229C0",
+            "matches": true
+          },
+          {
+            "index": 8,
+            "label_VA": "0x007229B4",
+            "pointer_store": "0x00666E56",
+            "stored_immediate": "0x007229B4",
+            "matches": true
+          },
+          {
+            "index": 9,
+            "label_VA": "0x007229A8",
+            "pointer_store": "0x00666E87",
+            "stored_immediate": "0x007229A8",
+            "matches": true
+          },
+          {
+            "index": 10,
+            "label_VA": "0x007229A0",
+            "pointer_store": "0x00666EAD",
+            "stored_immediate": "0x007229A0",
+            "matches": true
+          },
+          {
+            "index": 11,
+            "label_VA": "0x00722990",
+            "pointer_store": "0x00666ED3",
+            "stored_immediate": "0x00722990",
+            "matches": true
+          },
+          {
+            "index": 12,
+            "label_VA": "0x00722980",
+            "pointer_store": "0x00666EF9",
+            "stored_immediate": "0x00722980",
+            "matches": true
+          },
+          {
+            "index": 13,
+            "label_VA": "0x00722974",
+            "pointer_store": "0x00666F1F",
+            "stored_immediate": "0x00722974",
+            "matches": true
+          },
+          {
+            "index": 14,
+            "label_VA": "0x00722968",
+            "pointer_store": "0x00666F45",
+            "stored_immediate": "0x00722968",
+            "matches": true
+          },
+          {
+            "index": 15,
+            "label_VA": "0x00722960",
+            "pointer_store": "0x00666F67",
+            "stored_immediate": "0x00722960",
+            "matches": true
+          },
+          {
+            "index": 16,
+            "label_VA": "0x00722954",
+            "pointer_store": "0x00666F91",
+            "stored_immediate": "0x00722954",
+            "matches": true
+          },
+          {
+            "index": 17,
+            "label_VA": "0x0072294C",
+            "pointer_store": "0x00666FB3",
+            "stored_immediate": "0x0072294C",
+            "matches": true
+          }
+        ],
+        "m_keyWinTable": [
+          {
+            "index": 1,
+            "label_VA": "0x00722944",
+            "pointer_store": "0x00666FD7",
+            "stored_immediate": "0x00722944",
+            "matches": true
+          },
+          {
+            "index": 2,
+            "label_VA": "0x0072293C",
+            "pointer_store": "0x00666FE9",
+            "stored_immediate": "0x0072293C",
+            "matches": true
+          },
+          {
+            "index": 3,
+            "label_VA": "0x00722934",
+            "pointer_store": "0x00666FFB",
+            "stored_immediate": "0x00722934",
+            "matches": true
+          },
+          {
+            "index": 4,
+            "label_VA": "0x0072292C",
+            "pointer_store": "0x0066700A",
+            "stored_immediate": "0x0072292C",
+            "matches": true
+          },
+          {
+            "index": 5,
+            "label_VA": "0x00722924",
+            "pointer_store": "0x0066701F",
+            "stored_immediate": "0x00722924",
+            "matches": true
+          },
+          {
+            "index": 6,
+            "label_VA": "0x0072291C",
+            "pointer_store": "0x00667031",
+            "stored_immediate": "0x0072291C",
+            "matches": true
+          },
+          {
+            "index": 7,
+            "label_VA": "0x00722914",
+            "pointer_store": "0x00667040",
+            "stored_immediate": "0x00722914",
+            "matches": true
+          },
+          {
+            "index": 8,
+            "label_VA": "0x0072290C",
+            "pointer_store": "0x00667055",
+            "stored_immediate": "0x0072290C",
+            "matches": true
+          },
+          {
+            "index": 9,
+            "label_VA": "0x00722904",
+            "pointer_store": "0x00667067",
+            "stored_immediate": "0x00722904",
+            "matches": true
+          },
+          {
+            "index": 10,
+            "label_VA": "0x007228FC",
+            "pointer_store": "0x00667076",
+            "stored_immediate": "0x007228FC",
+            "matches": true
+          },
+          {
+            "index": 11,
+            "label_VA": "0x007228F4",
+            "pointer_store": "0x0066708B",
+            "stored_immediate": "0x007228F4",
+            "matches": true
+          },
+          {
+            "index": 12,
+            "label_VA": "0x007228EC",
+            "pointer_store": "0x0066709D",
+            "stored_immediate": "0x007228EC",
+            "matches": true
+          },
+          {
+            "index": 13,
+            "label_VA": "0x007228E4",
+            "pointer_store": "0x006670AC",
+            "stored_immediate": "0x007228E4",
+            "matches": true
+          },
+          {
+            "index": 14,
+            "label_VA": "0x007228DC",
+            "pointer_store": "0x006670C1",
+            "stored_immediate": "0x007228DC",
+            "matches": true
+          },
+          {
+            "index": 15,
+            "label_VA": "0x007228D4",
+            "pointer_store": "0x006670D3",
+            "stored_immediate": "0x007228D4",
+            "matches": true
+          },
+          {
+            "index": 16,
+            "label_VA": "0x007228CC",
+            "pointer_store": "0x006670DF",
+            "stored_immediate": "0x007228CC",
+            "matches": true
+          },
+          {
+            "index": 17,
+            "label_VA": "0x007228C4",
+            "pointer_store": "0x006670F7",
+            "stored_immediate": "0x007228C4",
+            "matches": true
+          }
+        ]
+      }
+    }
+  },
+  "layout_review": {
+    "artifact": "command-list-layout-review",
+    "binary": "HighPriest.exe (PE-i386), inspected with objdump only; not executed",
+    "findings": {
+      "pair_layout": {
+        "conclusion": "The vector element is pointer-first, enum-second (8-byte element): caption pointer at +0, TALKTYPE value at +4. The source std::pair<char const*,TALKTYPE> declaration is consistent. The apparent enum-first order in InitTalkTypeTable stack locals is a reversed temporary-argument layout, not the stored pair layout.",
+        "click_proof": "OnLBtnDown 0x4912a0 computes entry address with index*8 at 0x491545-0x491548, then loads DWORD [entry+4] at 0x491548 and compares it with 0x96 at 0x49154c; it dispatches this as the selected command type (47,type,...).",
+        "draw_proof": "OnDraw 0x4909b0 iterates 8-byte entries; at 0x490e46-0x490e52 it loads the dword at [entry] and passes it as the caption/text pointer to draw call 0x4d77f0. Source OnDraw lines 18768-18850 likewise uses v39/v48->first as text and copies ->second separately.",
+        "init_temporary_proof": "At InitTalkTypeTable 0x66682c-0x666841, stack [ebp-8]=tag and [ebp-4]=caption. Call setup pushes pointer to -8 then pointer to -4 (cdecl/stdcall arg order means helper sees -4 as first input and -8 as second). Helper 0x66fad0 explicitly copies first input dword to [dest+0] and second input dword to [dest+4] (0x66fad8-0x66fae1); thus destination/native pair remains caption at +0, tag at +4. For requested example at 0x666837, [ebp-8]=EDI; at 0x66683a, [ebp-4]=0x7231fc.",
+        "source_crosscheck": "Ref/UIFrameWnd2.cpp OnLBtnDown lines 18935+ reads v25->second; OnDraw lines 18768+ uses ->first for labels. Ref/Session.cpp InitTalkTypeTable lines 22210+ types the table as vector<pair<char const*,enum TALKTYPE>> and initializes first=caption, second=tag."
+      },
+      "row6_edi_liveness": {
+        "conclusion": "EDI is initialized to 6 at 0x663e9a and is still used as the tag at 0x666837. The selected instruction stream from initialization through that store contains no explicit write to EDI; intervening calls use the normal x86 callee-preserved EDI register. No intervening string operation changes the live value.",
+        "evidence": "At 0x663e9a: mov edi,6. Stores of EDI to [ebp-8] recur at 0x663ea6, 0x663ebf, 0x663ed8, 0x663ef1 and final 0x666837. Grepping disassembly for EDI writes in this range found only its initialization and these reads/stores. The row at 0x666837 is followed by caption pointer store 0x66683a and pair-construction helper call 0x66fad0 at 0x666841."
+      },
+      "safe_interpretation": "Treat local EBP offsets as temporary argument staging only. The stored vector element, draw path and click path all independently establish pointer +0 / enum +4; do not swap UI element fields based on the initializer's local slot order."
+    },
+    "addresses": {
+      "init_talk_type_table": "0x663e20; sample row stores 0x666837-0x666841",
+      "pair_copy_helper": "0x66fad0",
+      "on_draw": "0x4909b0",
+      "on_lbtn_down": "0x4912a0"
+    }
+  },
+  "interaction_review": {
+    "topic": "UICommandListWnd interaction contract",
+    "source": "Ref/UIFrameWnd2.cpp; Ref/UIWindowMgr.cpp",
+    "executable": "HighPriest.exe (PE-i386, static inspection only; not run)",
+    "window": {
+      "constructor": {
+        "line": 1665,
+        "address": "0x490580",
+        "defaults": {
+          "m_curItem": -1,
+          "m_itemHorzNum": 2
+        }
+      },
+      "on_create": {
+        "line": 18347,
+        "address": "0x4905e0",
+        "steps": [
+          "tab Create(20,132), numTab=3, typeTab=1, Move(0,17), SendMsg(this,13,...), AddChild",
+          "vertical scrollbar Create(w-15,14,1,h-38), AddChild",
+          "button IDs 134 and 135 at x=3 and x=w-14, y=3; button 135 close",
+          "m_itemVertNum=(cy-38)/20, then RecalcScrbarPos"
+        ],
+        "initial_manager_size": [
+          250,
+          200
+        ],
+        "resulting_visible_rows": 8,
+        "scrollbar_args_for_initial_size": [
+          235,
+          14,
+          1,
+          162
+        ]
+      },
+      "tabs": {
+        "source_lines": "OnCreate 18380-18400; OnDraw 18710+, OnLBtnDown 18980+",
+        "states": {
+          "0": "m_cmdOnOffTable",
+          "1": "m_cmdExeTable",
+          "2": "m_cmdWinTable"
+        },
+        "note": "UITab starts with three tabs and parent notification message 13; selected state determines displayed and clicked table."
+      },
+      "draw_geometry": {
+        "source": "OnDraw address 0x4909b0, lines 18528-18890",
+        "frame": "title text at (17,2); content background starts (0,17); inner box starts (1,17), width w-2, height h-17",
+        "row_pitch": 20,
+        "cell_width": "(w-40)/2",
+        "cell_left_x": "25 + cell_width * column",
+        "text_origin": "(cell_left_x+15, 17+20*visibleRow+5)",
+        "selection_boxes": [
+          "outer: x=cell_left_x, y=19+20*visibleRow, width=cell_width, height=20",
+          "inner: x=cell_left_x+1, y=20*(visibleRow+1), width=cell_width-2, height=18, white"
+        ],
+        "indicator": "on/off table draws enabled/disabled bitmap at cell_left_x+2 and row y; command label is offset by 15"
+      },
+      "hit_test": {
+        "function": "GetCurItem",
+        "line": 3013,
+        "address": "0x491ea0",
+        "predicate": "x>=0; y>=17; y<20*m_itemVertNum+17",
+        "cell_math": "xCell=x/(w/m_itemHorzNum); yCell=(y-17)/20",
+        "index": "absolute source table index; skips m_itemHorzNum*m_viewOffset items, then matches xCell+yCell*m_itemHorzNum",
+        "bounds_quirks": [
+          "no x < w predicate in helper",
+          "no horizontal gap or per-cell-width test; hits use equal w/2 columns, while drawn cells are (w-40)/2 wide and start at x=25",
+          "y upper limit is exclusive; row bands are 20px with y=17 origin"
+        ],
+        "table_used_for_count": "m_cmdOnOffTable unconditionally"
+      },
+      "table_count_audit": {
+        "selected_pe_evidence": {
+          "get_cur_item": "0x491ea0 reads global pointers at 0x7b40b0 and 0x7b40b4, computes 8-byte pair count, iterates that range; direct objdump confirms these are not dynamically selected by tab state",
+          "recalc": "0x491f50 reads the same global begin/end pointers 0x7b40b0/0x7b40b4 and divides its 8-byte pair count by m_itemHorzNum",
+          "on_draw": "tab state 0/1/2 selects onoff/command-execution/window tables",
+          "click": "state 2 indexes m_cmdWinTable directly at m_curItem; states 0/1 build a temporary copy of selected table then index m_curItem"
+        },
+        "safety_disposition": "The unconditionally used count/scroll range is the on/off table, while display/click use state-selected tables. This is confirmed in primary source and selected PE. No lengths/population of the three displayed tables are established by these inspected routines, so equal sizing cannot be assumed and a beyond-selected-table index is a source-level risk, not a proven runtime failure. Preserve/report this quirk for root decision; do not silently clamp against a guessed common length.",
+        "source_lines": "GetCurItem 3013-3059; OnDraw 18710-18890; OnLBtnDown 18935-19101; RecalcScrbarPos 19503-19548"
+      },
+      "click": {
+        "function": "OnLBtnDown",
+        "line": 18935,
+        "address": "0x4912a0",
+        "behavior": [
+          "y<17 delegates to UIFrameWnd::OnLBtnDown",
+          "otherwise updates m_curItem via GetCurItem and invalidates on change",
+          "tab state 2 directly ProcessPushButton(command-window action, 0x2710, 0)",
+          "state 0 uses on/off table; state 1 uses command-execution table; chosen second field is sent as CMode::SendMsg(mode,47,type,0,0)",
+          "literal type 150 is special: constructs three default std::string parameters and sends CMode::SendMsg(mode,47,150,paramArray,0), then destroys all three strings"
+        ],
+        "bounds": "click tests only m_curItem != -1 before indexing the tab-selected table; no selected-table length guard is present at this site"
+      },
+      "hover": {
+        "function": "OnMouseHover",
+        "line": 19107,
+        "address": "0x491600",
+        "behavior": [
+          "same GetCurItem selection update/invalidate",
+          "non-window states choose command help by selected type; window state uses key-window table text",
+          "only show balloon when help string differs from prior buffer",
+          "balloon local anchor gx=20*((x-40)/20+2), gy=20*((y-17)/20)+1, then converted with GetGlobalCoor"
+        ]
+      },
+      "scroll": {
+        "recalc": "RecalcScrbarPos line 19503, address 0x491f50",
+        "formula": "rows=ceil(m_cmdOnOffTable_count/m_itemHorzNum); maxOffset=rows-m_itemVertNum",
+        "enabled": "disabled and offset=0 when maxOffset<=0; otherwise enabled",
+        "clamp": "offset clamped to [0, rows-visibleRows]",
+        "scrollbar range": "SetRange(maxOffset, visibleRows, rows); SetPos(viewOffset)",
+        "messages": "SendMsg 7 adds val1; 9 sets offset-=visibleRows-1; 10 sets offset+=visibleRows-1; changed offset triggers recalc+invalidate",
+        "wheel": "if scrolling enabled, step=min(m_itemVertNum-1,3); wheel>=0 negates step; sends scrollbar message 7"
+      },
+      "send_msg_close": {
+        "function": "SendMsg",
+        "line": 8023,
+        "address": "0x491db0",
+        "behavior": "message 6 with val1==135 calls UIWindowMgr::DeleteWindow(...,0x70); other message6 values fall through to result 0"
+      },
+      "resize": {
+        "fact": "No UICommandListWnd::Resize definition was found in Ref/UIFrameWnd2.cpp; initial child geometry and visible-row count are established in OnCreate. Do not infer a class-specific resize contract from this file."
+      }
+    },
+    "manager_lifecycle": {
+      "open_case": {
+        "source": "Ref/UIWindowMgr.cpp:7092-7106; address case 112",
+        "behavior": "if m_commandListWnd is null allocate/construct, Create(250,200), then shared label 667 moves to (UIX(400),UICY(200)), adds to manager and shows; if already allocated, shared existing-window path only SetShow(1), no reconstruction or move"
+      },
+      "close_case": {
+        "source": "Ref/UIWindowMgr.cpp:2681-2686",
+        "behavior": "DeleteWindow case 0x70 PostQuit(m_commandListWnd), clears m_commandListWnd pointer"
+      },
+      "reopen": "after close, open takes null-pointer allocation path and constructor resets m_curItem=-1; first open also registers/shows window via AddWindow"
+    }
+  },
+  "limits": "No window/render/action acceptance. Keep raw Brazil bytes and question marks. Shared23-count range quirk requires explicit safe disposition for selected-table indices outside22/17 entries. Typed64-bit port records need logical fields; do not memcpy original8-byte records."
+}

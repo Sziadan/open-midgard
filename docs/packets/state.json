@@ -2085,7 +2085,11 @@
         "docs/packets/evidence/PK09.21-command-flags.md",
         "docs/packets/evidence/PK09.21-command-flags-data.json",
         "docs/packets/evidence/PK09.21-command-flags-ui-leads.json",
-        "docs/packets/evidence/PK09.21-command-flags-provenance.json"
+        "docs/packets/evidence/PK09.21-command-flags-provenance.json",
+        "docs/packets/evidence/PK09.21-friend-greeting.md",
+        "docs/packets/evidence/PK09.21-friend-greeting-data.json",
+        "docs/packets/evidence/PK09.21-friend-greeting-command-ui-data.json",
+        "docs/packets/evidence/PK09.21-friend-greeting-provenance.json"
       ],
       "commit_subject": null
     }

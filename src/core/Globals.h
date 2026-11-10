@@ -60,3 +60,6 @@ extern std::vector<u32> s_dwYellowAID;
 // Session
 class CSession;
 extern CSession g_session;
+// Original process-lifetime language flag and signed-byte friend-greeting counter.
+extern bool g_multiLang;
+extern s8 g_MessageHi;

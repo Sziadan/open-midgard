@@ -408,6 +408,18 @@ XMLElement* GetClientInfo() {
     return g_xmlDocument.m_root.FindChild("clientinfo");
 }
 
+void ApplySourceChatLanguageMode()
+{
+    // InitLanguage503130 leaves the previous flag intact for the other services.
+    switch(g_serviceType){
+    case ServiceGermany:case ServiceAustralia:g_multiLang=true;break;
+    case ServiceIndia:case ServiceBrazil:case ServiceFrance:case ServiceRussia:
+    case ServiceVietnam:case ServiceChile:g_multiLang=false;break;
+    default:break;
+    }
+    if(g_serverType==ServerInstantEvent)g_multiLang=true;
+}
+
 void SelectClientInfo(int connectionIndex) {
     XMLElement* clientInfo = GetClientInfo();
     if (!clientInfo) return;
@@ -436,6 +448,7 @@ void SelectClientInfo(int connectionIndex) {
 
     XMLElement* lang = connection->FindChild("langtype");
     if (lang) g_serviceType = (ServiceType)std::atoi(lang->GetContents().c_str());
+    ApplySourceChatLanguageMode();
     ro::GetMannerFilter().Load();
 
     XMLElement* registration = connection->FindChild("registrationweb");

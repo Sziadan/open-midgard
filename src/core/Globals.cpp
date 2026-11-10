@@ -4,6 +4,8 @@
 // Global Variables (definitions)
 //===========================================================================
 ServiceType g_serviceType = ServiceKorea;
+bool g_multiLang=false;
+s8 g_MessageHi=0;
 ServerType  g_serverType  = ServerNormal;
 int         g_languageType = 0;
 int         g_codePage     = 0;

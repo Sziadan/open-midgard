@@ -1,6 +1,7 @@
 #pragma once
 #include "core/ChatRoomPackets.h"
 #include "core/SourceChatRouting.h"
+#include "core/Globals.h"
 #include "Mode.h"
 #include "audio/Audio.h"
 #include <array>
@@ -18,7 +19,7 @@ class UIPlayerGage;
 class CRagConnection;
 class CGameModePacketRouter;
 class UIWindow;
-struct SourceChatInputServices { ro::chat::SourceChatModifiers (*readModifiers)()=nullptr; u32 (*ticks)()=nullptr; };
+struct SourceChatInputServices { ro::chat::SourceChatModifiers (*readModifiers)()=nullptr; u32 (*ticks)()=nullptr; u16 (*languageId)()=nullptr; };
 struct GameModePacketLoopResult;
 struct MapTransitionServices;
 
@@ -249,11 +250,12 @@ public:
     std::string m_lastWhisperMenuCharacterName;
     std::string m_lastWhisper;
     std::string m_lastWhisperName;
-    int m_hiddenWhisperAcknowledgements=0;
+    s8& m_hiddenWhisperAcknowledgements=g_MessageHi; // Alias; constructing a mode must not reset it.
     std::string m_sourceLastSubmittedChat;
     int m_sourceSameChatRepeatCount=0;
     int m_sourceAutoSaveChatCount=0;
     bool SendSourceWhisper(const std::string& target,const std::string& text);
+    std::string GetSourceChatCharset() const;
     bool SubmitSourceChat(const std::string& text,const std::string& target,UIWindow* origin=nullptr);
     msgresult_t ProcessSourceTalk(int type,const std::array<std::string,3>& parameters);
     bool SendBufferedSourceChat(int operation,const std::string& target={});

@@ -20,6 +20,7 @@ bool InitClientInfo(const char* fileName);
 XMLElement* GetClientInfo();
 
 void SelectClientInfo(int connectionIndex);
+void ApplySourceChatLanguageMode();
 void SelectClientInfo2(int connectionIndex, int subConnectionIndex);
 const std::vector<std::string>& GetLoadingScreenList();
 void RefreshDefaultLoadingScreenList();

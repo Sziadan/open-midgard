@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "action_type": 150,
+  "hi_case_target": "0x5797d8",
+  "helper": "0x6606a0",
+  "counter": {
+    "va": "0x7b4d20",
+    "storage": "signed byte, process lifetime, initialized zero",
+    "advance": "INC AL modulo256, signed comparison to40; positive larger values become40",
+    "ordering": "advance after every mode11 call, irrespective of success"
+  },
+  "literals": {
+    "prefix": {
+      "va": "0x722568",
+      "hex": "2848692920"
+    },
+    "default_suffix": {
+      "va": "0x722560",
+      "hex": "2a5e5f5e2a"
+    },
+    "default_notice": {
+      "va": "0x71273c",
+      "hex": "5b20546f20467269656e6473205d203a2028486929202a5e5f5e2a"
+    }
+  },
+  "notice_colorref": 2031615,
+  "whisper_limits": {
+    "filter_copy": 222,
+    "charset_prefix": 3,
+    "multi_body_copy": 219,
+    "reject_wire_text_at_least": 222
+  },
+  "charset_source": "CLanguage::GetLanguageCharset4FE720, bScript=false; primary/sublanguage LANGID mapping and lower-case |%02x; port bridge uses current thread GetKeyboardLayout or injected LANGID",
+  "service_flag_policy": "Semantic country cases from InitLanguage503130; port ServiceType is the existing canonical langtype representation, not a raw index into the selected internal service dispatch table. Other InitLanguage font/codepage/object setup is not accepted by this leaf.",
+  "login_flag_lifetime": "save current multi-language flag on constructor, force false, restore saved flag on destructor",
+  "ui_dependency": "source command row /hi has150 and sends three default-constructed parameter strings; full window still pending",
+  "platform_boundary": "Windows native HKL bridge or injected LANGID; non-Windows without a provider uses charset0 and remains outside keyboard-locale acceptance."
+}

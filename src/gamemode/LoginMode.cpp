@@ -1345,6 +1345,7 @@ CLoginMode::CLoginMode()
       m_nSelectedAccountNo(0), m_nSelectedAccountNo2(0),
     m_zonePort(0)
 {
+    m_multiLang=g_multiLang;g_multiLang=false;
     std::memset(m_charParam, 0, sizeof(m_charParam));
     std::memset(m_makingCharName, 0, sizeof(m_makingCharName));
     std::memset(m_emaiAddress, 0, sizeof(m_emaiAddress));
@@ -1356,6 +1357,7 @@ CLoginMode::CLoginMode()
 }
 
 CLoginMode::~CLoginMode() {
+    g_multiLang=m_multiLang!=0;
 }
 
 void CLoginMode::OnInit(const char* worldName) {
