@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Command-toggle checkpoint (2026-11-10):** [Selected toggles/composites and live options](evidence/PK09.21-command-toggles.md) integrates21 actions with raw/wrapping scalar state, child47 ordering, locale text flags, source audio close/replay and shared option60 refresh. Application160/160 and standalone473/473 pass; deployed executable unchanged. NoCtrl/fog ownership is now reviewed and canonical; older temporary separation is superseded. Full command UI, effect snow/Tip, action consumers and broad/live/deployed acceptance remain open.
+
 **World-entry repair (2026-11-10):** [same-world handoff regression](evidence/PK05.05-world-entry.md) fixes a loading-screen deadlock after accepted login plus same-map0091. The manager now honors the explicit request and retires the terminal mode. Real packet/mode-loop regression, root157/157 and standalone470/470 pass. OldRO retains the prior executable; the rebuilt candidate needs redeployment and live retry. Active packet-plan work remains PK09.21.
 
 **Latest checkpoint (2026-11-10):** [PK09.21 friend greeting](evidence/PK09.21-friend-greeting.md) restores Hi150, process-global signed reply-counter lifetime and the shared private charset-prefix path. Reviewed command-table data is ready for full UI integration. Application160/160 and standalone473/473 pass. Full command UI/actions/global6/encoding/render and broad/live/deployed gates remain open.

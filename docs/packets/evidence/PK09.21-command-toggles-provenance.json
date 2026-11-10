@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "date": "2026-11-10",
+  "baseline": "408d7a235f06cec82932269e6b2c4ed79c5a2963",
+  "commit_subject": "packet(PK09.21): integrate command toggles and live options",
+  "scope": "21 direct/composite actions, source text byte flags and live audio/NoCtrl/fog option integration; full packet goal remains unfinished",
+  "runtime_test_sha256": {
+    "src/audio/Audio.cpp": "e858dafe3206f4b88d6e1091f69c12af24eb3fb02366262bd263113a6479fcd0",
+    "src/audio/Audio.h": "036b6685198e7e879e31a1ac182cbd03a3c522520f55cdf64c9036222c00f131",
+    "src/core/Globals.cpp": "12de1dbbc094c7de6648d7ea935599a13f9eb4d5a828123156538af25acd0fbb",
+    "src/core/Globals.h": "e4812feb698cd69ad726166f5d7ff4012c4388e753d074662fee4cbf7572df34",
+    "src/core/SourceChatCommand.h": "eba608c68b685955f3bf92c8f1bc5ad12f49d532b3824c5077f6dd7ddaab6e0c",
+    "src/gamemode/GameMode.cpp": "232cc7413340a26c72c3db1f45329aef733e7ef2044bd37fb3a88f666a034083",
+    "src/gamemode/GameMode.h": "bdc906f7d34fee0c81c2ee8a24b60a4561c6c5fb4ae8d1bdd9e5e1dc979652cc",
+    "src/gamemode/Mode.cpp": "ef374967974d48917276d4caa749e1f5f33821504604ed9db547f710fa0bf4d9",
+    "src/gamemode/Mode.h": "3925bf68699f936027c6e40d7e3948ac88193829e7997d38f8d7bc7fc19bfe41",
+    "src/gamemode/SourceChatSubmission.inc": "6ec9325b77516045a7eecbdbc6aa8caa5ef8118c27cf63f6f157b07dcae690fe",
+    "src/session/Session.cpp": "bef430f8dd9bc820ef0801359cb6989346530ddce0e4584366f6218932389760",
+    "src/session/Session.h": "2510de94668bf845900965989d4323480e17cfcc7e148d567e7794273dd03540",
+    "src/ui/UIOptionWnd.cpp": "0b955fde006c263e017ac02252b84821a6ce334af01abd80363349a7714aea18",
+    "src/ui/UIOptionWnd.h": "e976b42624e08723c14c079b3f68ee01019e316d9add47d11ed2396c46368010",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "2e88d5162023d931c91413663dd497b6915042c4dd5d6b88717af79de156f73f",
+    "tools/tests/replay/CommandToggleReplay.inc": "609a92ea246b341088fbc5751fc80128e82c366ca3b560195e756f17ea79a645",
+    "tools/tests/replay/PacketStreamReplay.cpp": "338d1fc54e3bbbc72578e5d0d7a8b250bc02713c41a2c53d26cde39d7ce2f489",
+    "tools/tests/replay/SourceCommandFlagsReplay.inc": "da2f021b01327a9786d43070a8235edd8e5f07d9f96f16b089f4ef823bb0812c"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "HighPriest.exe.c": "939cdc41e3e585a9e1560f7314e65cb0b1c339acf17c3a29e69dfe7448ccacd2",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-command-toggles-build.log": "04471ea7b540c4f2f84172b1815c7e629eadfd4970a1f6570c287d2e50a33cb4",
+    "docs/packets/evidence/PK09.21-command-toggles-configure.log": "f7256dea68dc907737386b8920736fcc4c97f83fc04a7a72806983c8d8cad0c6",
+    "docs/packets/evidence/PK09.21-command-toggles-data.json": "cc51002f89c76f7d712a4fe7dba08b8c70422d043f55ac0e3992b7248266663c",
+    "docs/packets/evidence/PK09.21-command-toggles-focused.log": "33865961940e8905b47e6837860810816b4bba6af8f36db033174edfbd1e78b9",
+    "docs/packets/evidence/PK09.21-command-toggles-replay-build.log": "42561af5f8302f3cf13ddb838440c8dfe2f07370f7db1b90416208ef074b0ce6",
+    "docs/packets/evidence/PK09.21-command-toggles-restore-deploy.log": "d2db7e28e7a17a234f018390f24130c2bc8b3e3486766cbd0c5373e6d26f119e",
+    "docs/packets/evidence/PK09.21-command-toggles-root-ctest.log": "e60c31650798d9041d6d7e142d3713a460a5083a1f9a1a130cc88eb7cb0d45d2",
+    "docs/packets/evidence/PK09.21-command-toggles-unit-build.log": "c2b2b9c776f9184e81853c8c6c6ee736262e812d176451530bd97056859a05a6",
+    "docs/packets/evidence/PK09.21-command-toggles-unit-ctest.log": "46ea1e5fd6c169165b7f6d03676b348e39aa5e5c15cd0bebe6f2c378935a7ef7",
+    "docs/packets/evidence/PK09.21-command-toggles.md": "a0f3cfaa9dbaafc7193df29832da7d11966169447409019460dee73ba2bba593",
+    "docs/packets/evidence/PK09.21-command-toggles-next-actions.json": "83820fac24a4e9b4880b10fc3f7743311ae243d3c6f0496293f8fd09327da783"
+  },
+  "application_sha256": "17f07e61eee7306fd68422c384c864992e89fa36c2979eb5781da6f0a23f41db",
+  "installed_oldro_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "validation": {
+    "application": "160/160;34.27s",
+    "standalone": "473/473;14.35s",
+    "focused": "1/1;0.94s",
+    "parser_data": "PASS",
+    "plan_consistency": "PASS"
+  },
+  "limits": [
+    "No native-checkbox runtime proof in configured Qt application suite; standalone omits full replay",
+    "No live world entry/redeployment",
+    "No hardware BGM output or configured fog pixels",
+    "Effect8/Tip42/command UI/consumers/render/broad independent gates remain open"
+  ],
+  "deploy_preference_restored": "ON configure-only; no build or copy after restoration"
+}

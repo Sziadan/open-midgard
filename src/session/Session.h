@@ -181,6 +181,7 @@ public:
     void LoadSourceCommandOptions();
     bool SaveSourceCommandOptions() const;
     void InitializeSourceCommandFlags(bool bgmPaused,int soundOn,bool tipPresent);
+    void SetTextType(u8 shorten,u8 bold);
 
     int m_isSkillFail = 1;
     int m_isAura = 1;

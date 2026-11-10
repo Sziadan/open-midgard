@@ -422,7 +422,7 @@ int ResolveRefMapClearColor(const char* rswName)
 
 void ApplyRefFogForMap(const char* rswName, int fogOn)
 {
-    if (!fogOn || !IsOptionFogEnabled()) {
+    if (!fogOn) {
         g_renderer.FogSwitch(0);
         return;
     }
@@ -10033,6 +10033,7 @@ CGameMode::~CGameMode() {
 }
 
 void CGameMode::OnInit(const char* worldName) {
+    g_session.SetTextType(static_cast<u8>(g_session.m_isShowNameTypeOld),static_cast<u8>(g_session.m_isShowNameTypeOld));
     m_terminalNetworkHandled = false;
     m_networkModeOperationGeneration = g_modeMgr.GetOperationGeneration();
     g_session.InvalidatePartyPositions();

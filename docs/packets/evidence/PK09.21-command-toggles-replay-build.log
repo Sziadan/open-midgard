@@ -1,0 +1,26 @@
+[  7%] Built target zlibstatic
+[ 21%] Built target lua51
+[ 26%] Built target ro_core
+[ 27%] Built target ro_pathfinder
+[ 29%] Built target ro_cipher
+[ 31%] Built target ro_network
+[ 37%] Built target ro_res
+[ 40%] Built target ro_audio
+[ 41%] Built target ro_skill
+[ 41%] Built target ro_input
+[ 41%] Built target ro_security
+[ 43%] Built target ro_item
+[ 44%] Built target ro_lua
+[ 46%] Built target ro_session
+[ 49%] Built target ro_render3d
+[ 51%] Built target ro_render
+[ 75%] Built target ro_ui
+[ 89%] Built target ro_world
+[ 94%] Built target ro_gamemode
+[ 94%] Built target ro_qtui_autogen_timestamp_deps
+[ 96%] Built target ro_main
+[ 96%] Built target ro_qtui_autogen
+[100%] Built target ro_qtui
+[100%] Building CXX object CMakeFiles/packet_stream_replay_checks.dir/tools/tests/replay/PacketStreamReplay.cpp.obj
+[100%] Linking CXX executable packet_stream_replay_checks.exe
+[100%] Built target packet_stream_replay_checks

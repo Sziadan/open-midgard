@@ -1,6 +1,7 @@
 #include "core/WhisperNames.h"
 #include "world/Gr2Monster.h"
 #include "Session.h"
+#include "core/Globals.h"
 #include "core/SettingsIni.h"
 #include "../core/File.h"
 #include "../core/ClientInfoLocale.h"
@@ -3450,15 +3451,25 @@ void CSession::LoadSourceCommandOptions()
 {
     m_isEffectOn=LoadSettingsIniInt("Option","isEffectOn",1)!=0;
     m_bMakeMissEffect=LoadSettingsIniInt("Option","m_bMakeMissEffect",1)!=0;
-    // Original auto-attack flag, distinct from the port's movement UI preference.
+    // Source auto-attack owner; the options view reads this live field.
     m_isNoCtrl=LoadSettingsIniInt("Option","m_isNoCtrl",0)!=0;
+    m_fogOn=LoadSettingsIniInt("OptionWnd","FogOn",1)!=0;
 }
 
 bool CSession::SaveSourceCommandOptions() const
 {
     bool saved=SaveSettingsIniInt("Option","isEffectOn",m_isEffectOn);
     saved=SaveSettingsIniInt("Option","m_bMakeMissEffect",m_bMakeMissEffect) && saved;
-    return SaveSettingsIniInt("Option","m_isNoCtrl",m_isNoCtrl) && saved;
+    saved=SaveSettingsIniInt("Option","m_isNoCtrl",m_isNoCtrl) && saved;
+    return SaveSettingsIniInt("OptionWnd","FogOn",m_fogOn) && saved;
+}
+
+void CSession::SetTextType(u8 shorten,u8 bold)
+{
+    if(g_serviceType==ServiceKorea || g_serviceType==ServiceIndonesia
+        || g_serviceType==ServiceGermany || g_serviceType==ServiceBrazil){
+        NameBalloonShorten=shorten;NameBalloonfontBold=bold;
+    }
 }
 
 void CSession::InitializeSourceCommandFlags(bool bgmPaused,int soundOn,bool tipPresent)

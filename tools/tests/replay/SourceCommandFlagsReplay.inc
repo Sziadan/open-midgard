@@ -31,10 +31,10 @@
         snapshot.m_isEffectOn=false;snapshot.m_bMakeMissEffect=7;snapshot.m_isNoCtrl=-3;
         Require(snapshot.SaveSourceCommandOptions(),"source command option save failed");
         CSession reloaded;reloaded.LoadSourceCommandOptions();
-        Require(!reloaded.m_isEffectOn && reloaded.m_bMakeMissEffect==1 && reloaded.m_isNoCtrl==1 && reloaded.m_fogOn,
-            "source command option roundtrip conflated modern UI fields or lost bool normalization");
+        Require(!reloaded.m_isEffectOn && reloaded.m_bMakeMissEffect==1 && reloaded.m_isNoCtrl==1 && !reloaded.m_fogOn,
+            "source command option roundtrip lost live fog or bool normalization");
         struct RestoreFlags {
-            bool effect=g_session.m_isEffectOn;
+            bool effect=g_session.m_isEffectOn,fog=g_session.m_fogOn;
             int miss=g_session.m_bMakeMissEffect,noCtrl=g_session.m_isNoCtrl,sound=g_isSoundOn,soundMode=g_soundMode;
             bool paused=CAudio::GetInstance()->IsBgmPaused();
             float volume=CAudio::GetInstance()->GetVolume();int bgm=CAudio::GetInstance()->GetBgmVolume();
@@ -45,7 +45,7 @@
                 if(ownedTip)g_windowMgr.DeleteWindow(ownedTip);
                 if(ownedCommands)g_windowMgr.DeleteWindow(ownedCommands);
                 g_windowMgr.m_tipOfTheDayWnd=tip;g_windowMgr.m_commandListWnd=commands;
-                g_session.m_isEffectOn=effect;g_session.m_bMakeMissEffect=miss;g_session.m_isNoCtrl=noCtrl;
+                g_session.m_isEffectOn=effect;g_session.m_fogOn=fog;g_session.m_bMakeMissEffect=miss;g_session.m_isNoCtrl=noCtrl;
                 g_isSoundOn=sound;g_soundMode=soundMode;g_session.m_cmdOnOffSet=std::move(flags);
                 CAudio::GetInstance()->SetBgmPaused(paused);CAudio::GetInstance()->SetVolume(volume);CAudio::GetInstance()->SetBgmVolume(bgm);
             }

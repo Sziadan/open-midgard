@@ -63,3 +63,4 @@ extern CSession g_session;
 // Original process-lifetime language flag and signed-byte friend-greeting counter.
 extern bool g_multiLang;
 extern s8 g_MessageHi;
+extern u8 NameBalloonShorten,NameBalloonfontBold;

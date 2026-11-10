@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <cmath>
 #include <cstring>
 #include <string>
 #include <utility>
@@ -553,7 +554,6 @@ void ApplySavedAudioSettings()
         return;
     }
 
-    g_soundMode = soundEnabled ? 1 : 0;
     g_isSoundOn = soundEnabled ? 1 : 0;
     audio->SetVolume(static_cast<float>(soundVolume) / 127.0f);
     audio->SetBgmVolume(bgmVolume);
@@ -807,17 +807,17 @@ void UIOptionWnd::LoadSettings()
     m_h = LoadSettingsIniInt(kOptionWndSection, kOptionWndHValue, m_h);
     m_orgHeight = LoadSettingsIniInt(kOptionWndSection, kOptionWndOrgHValue, m_orgHeight);
     m_show = LoadSettingsIniInt(kOptionWndSection, kOptionWndShowValue, m_show);
-    m_noCtrl = LoadSettingsIniInt(kOptionWndSection, kOptionWndNoCtrlValue, m_noCtrl);
+    m_noCtrl = g_session.m_isNoCtrl != 0;
     m_attackSnap = LoadSettingsIniInt(kOptionWndSection, kOptionWndAttackSnapValue, m_attackSnap);
     m_skillSnap = LoadSettingsIniInt(kOptionWndSection, kOptionWndSkillSnapValue, m_skillSnap);
     m_itemSnap = LoadSettingsIniInt(kOptionWndSection, kOptionWndItemSnapValue, m_itemSnap);
-    m_fogEnabled = LoadSettingsIniInt(kOptionWndSection, kOptionWndFogOnValue, m_fogEnabled);
+    m_fogEnabled = g_session.m_fogOn;
     m_collapsed = LoadSettingsIniInt(kOptionWndSection, kOptionWndCollapsedValue, m_collapsed);
     m_activeTab = LoadSettingsIniInt(kOptionWndSection, kOptionWndTabValue, m_activeTab);
     m_guiScalePercent = GetConfiguredUiScalePercent();
     m_appliedGuiScalePercent = m_guiScalePercent;
 
-    LoadSavedAudioSettingsFromIni(&m_bgmVolume, &m_soundVolume, &m_bgmEnabled, &m_soundEnabled);
+    RefreshSourceControls();
     m_graphicsSettings = GetCachedGraphicsSettings();
     m_appliedGraphicsSettings = m_graphicsSettings;
     m_selectedRenderBackend = NormalizeSelectedBackend(GetConfiguredRenderBackend());
@@ -875,6 +875,17 @@ void UIOptionWnd::SaveGraphicsPreferences() const
     SetConfiguredRenderBackend(m_selectedRenderBackend);
 }
 
+void UIOptionWnd::RefreshSourceControls()
+{
+    const auto* audio = CAudio::GetInstance();
+    m_bgmVolume = audio->GetBgmVolume();
+    m_soundVolume = ClampSliderValue(static_cast<int>(std::lround(audio->GetVolume() * 127.0f)));
+    m_bgmEnabled = !audio->IsBgmPaused();
+    m_soundEnabled = g_isSoundOn != 0;
+    m_noCtrl = g_session.m_isNoCtrl != 0;
+    m_fogEnabled = g_session.m_fogOn;
+}
+
 void UIOptionWnd::SaveSettings() const
 {
     SaveSettingsIniInt(kOptionWndSection, kOptionWndXValue, m_x);
@@ -888,6 +899,7 @@ void UIOptionWnd::SaveSettings() const
     SaveSettingsIniInt(kOptionWndSection, kOptionWndBgmOnValue, m_bgmEnabled != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndSoundOnValue, m_soundEnabled != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndNoCtrlValue, m_noCtrl != 0 ? 1 : 0);
+    SaveSettingsIniInt("Option", "m_isNoCtrl", g_session.m_isNoCtrl);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndAttackSnapValue, m_attackSnap != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndSkillSnapValue, m_skillSnap != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndItemSnapValue, m_itemSnap != 0 ? 1 : 0);
@@ -936,7 +948,6 @@ void UIOptionWnd::ApplyAudioSettings() const
         return;
     }
 
-    g_soundMode = m_soundEnabled ? 1 : 0;
     g_isSoundOn = m_soundEnabled ? 1 : 0;
     audio->SetVolume(static_cast<float>(m_soundVolume) / 127.0f);
     audio->SetBgmVolume(m_bgmVolume);
@@ -945,6 +956,7 @@ void UIOptionWnd::ApplyAudioSettings() const
 
 void UIOptionWnd::ApplyFogSetting() const
 {
+    g_session.m_fogOn = m_fogEnabled != 0;
     if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         gameMode->MakeFog(g_session.m_fogOn ? 1 : 0);
     }
@@ -1648,9 +1660,9 @@ void UIOptionWnd::OnDraw()
         } else if (m_activeTab == TabId_Game) {
             if (m_noCtrlCheckBox) {
 #if RO_ENABLE_QT6_UI
-                DrawUiOptionText(hdc, m_noCtrlCheckBox->m_x + 18, m_noCtrlCheckBox->m_y - 1, "Disable Ctrl+Click movement", RGB(0, 0, 0));
+                DrawUiOptionText(hdc, m_noCtrlCheckBox->m_x + 18, m_noCtrlCheckBox->m_y - 1, "Auto attack without Ctrl", RGB(0, 0, 0));
 #else
-                TextOutA(hdc, m_noCtrlCheckBox->m_x + 18, m_noCtrlCheckBox->m_y - 1, "Disable Ctrl+Click movement", 26);
+                TextOutA(hdc, m_noCtrlCheckBox->m_x + 18, m_noCtrlCheckBox->m_y - 1, "Auto attack without Ctrl", 24);
 #endif
             }
             if (m_attackSnapCheckBox) {
@@ -2015,6 +2027,7 @@ bool UIOptionWnd::HandleQtToggleClick(int x, int y)
 
         int* const value = gameToggleValues[index];
         *value = (*value != 0) ? 0 : 1;
+        if (index == 0) g_session.m_isNoCtrl = m_noCtrl;
         LayoutControls();
         Invalidate();
         SaveSettings();
@@ -2037,6 +2050,13 @@ msgresult_t UIOptionWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, m
     (void)wparam;
     (void)extra;
 
+    if (msg == 60) {
+        RefreshSourceControls();
+        LayoutControls();
+        Invalidate();
+        return 1;
+    }
+
     if (msg != 6 || !sender) {
         return 0;
     }
@@ -2050,6 +2070,7 @@ msgresult_t UIOptionWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, m
         applyAudio = true;
     } else if (sender == m_noCtrlCheckBox) {
         m_noCtrl = (lparam != 0) ? 1 : 0;
+        g_session.m_isNoCtrl = m_noCtrl;
     } else if (sender == m_attackSnapCheckBox) {
         m_attackSnap = (lparam != 0) ? 1 : 0;
     } else if (sender == m_skillSnapCheckBox) {
@@ -2241,7 +2262,7 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
                 const char* label;
             };
             const ToggleDef toggleDefs[] = {
-                { 0, m_noCtrl != 0, "Disable Ctrl+Click movement" },
+                { 0, m_noCtrl != 0, "Auto attack without Ctrl" },
                 { 1, m_attackSnap != 0, "Attack target snap" },
                 { 2, m_skillSnap != 0, "Skill target snap" },
                 { 3, m_itemSnap != 0, "Item target snap" },

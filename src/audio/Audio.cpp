@@ -172,6 +172,16 @@ bool CAudio::IsBgmPaused() const
     return m_bgmPaused;
 }
 
+void CAudio::ToggleSourceBgm(const char* selectedFile)
+{
+    const std::string requested=selectedFile?selectedFile:"";
+    m_bgmPaused=!m_bgmPaused;
+    // Original /bgm closes the stream and reopens the selected map track on ON.
+    // A track preloaded while muted must not turn this into a resume operation.
+    StopBGM();
+    if(!m_bgmPaused)PlayBGM(requested.c_str());
+}
+
 const std::string& CAudio::GetCurrentBgmPath() const
 {
     return m_bgmPath;

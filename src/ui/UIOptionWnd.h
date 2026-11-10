@@ -161,6 +161,7 @@ private:
     void EnsureResources();
     void ClearResources();
     void LoadSettings();
+    void RefreshSourceControls();
     void SaveSettings() const;
     void ApplyAudioSettings() const;
     void LayoutControls();

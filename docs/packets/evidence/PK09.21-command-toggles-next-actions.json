@@ -1,0 +1,25 @@
+{
+  "scope": "Read-only next-leaf verification for effect toggle type 8 and tip toggle type 42; no builds or executable runs.",
+  "effect8": {
+    "primary_command": "Ref/GameMode.cpp:16059-16087. Toggle g_session.m_isEffectOn using 1-old. Only on exact maps XmasFild01.rsw or Xmas.rsw, launch/stop snow after updating the state and before manager message 3, on/off notice message 1 (color 6619135), and opcode 541 (value 0 on / 1 off) packet path.",
+    "primary_weather_owner": "Ref/RagEffectPrim.cpp:5516-5525 initializes CWeather.m_Effect and m_pPlayer null. LaunchSnow at 6483-6496 retains player and effect handle; relaunches only if no handle or remaining duration >300. Process at 6504-6534 validates IsExistEffect(m_pPlayer,m_Effect) and clears stale handle. StopSnow at 6687-6693 shortens duration to stateCnt+300; it does not immediately delete. Reset at 6550-6553 clears handle. GameMode invokes CWeather::Process at 8170 and Reset at 11056 / 17956.",
+    "port_equivalents": "The effect primitive exists: src/world/RagEffectOnProcessCases.generated.inc:191 dispatches effect 162 to SpawnSnow; src/world/RagEffect.cpp:16555-16588 emits snow while remaining duration >160. Player-owned effect launch exists via GameActor::LaunchEffect (src/world/GameActor.h:199; implementation src/world/GameActor.cpp:4350). Global effect gating exists in rendering/packet paths, but no type-8 ProcessTalkType action, Xmas name branch, CWeather-like effect/player-handle owner, relaunch threshold, stop-shortening, or manager lifecycle was found under src. Port analogues are the primitive/emitter and actor effect storage, not the primary controller.",
+    "testable_lifecycle_boundaries": [
+      "Non-Xmas map: type 8 changes the global effect flag and sends normal message/packet sequence, with no weather launch/stop.",
+      "Xmas maps: enable launches effect 162 once; repeated enable with >300 remaining does not duplicate; at <=300 remaining a new effect may launch.",
+      "Disable changes end time to current state count+300, while the effect remains alive until normal effect processing expires it.",
+      "Weather Process clears the retained handle after IsExistEffect becomes false; world reset clears the handle; player ownership is updated on a new launch."
+    ]
+  },
+  "tip42": {
+    "primary_command": "Ref/GameMode.cpp:16593-16596 calls DeleteWindow(WID_TIPOFTHEDAYWND); only when it returns false (not present) does it MakeWindow. Thus present closes; absent opens.",
+    "primary_window": "Ref/UIWindowMgr.cpp:5705-5730 maps window id 38 to UITipOfTheDayWnd, creates/reuses it, UIWindow::Create(280,180), positions at centered x+200 and y=120*height/480, adds to children, and shows. Delete id 38 at Ref/UIWindowMgr.cpp:1700-1713 queues existing window for destruction and clears manager owner pointer. Ref/UIFrameWnd2.cpp:2473-2477 constructor delegates UIFrameWnd. OnCreate at 30442 onward builds back/next/close buttons (command IDs 180/152/135) and show-at-startup checkbox; loads CTipOfTheDay and selects random entry. SendMsg at 13878-13964 handles close ID 135, next 152, previous 180; its checkbox ID 147 updates startup preference and registry. Startup path also conditionally creates the window at Ref/GameMode.cpp:11007-11012.",
+    "port_equivalents": "src has no TipOfTheDay files/class or WID_TIPOFTHEDAYWND factory case (rg --files src | rg -i Tip is empty; src/ui/UIWindowMgr.h IDs at 114-164 omit it; src/ui/UIWindowMgr.cpp MakeWindow switch starts at 1314 and has no case). UIWindowMgr::m_tipOfTheDayWnd exists at src/ui/UIWindowMgr.h:231 and DeleteWindowImpl clears it at src/ui/UIWindowMgr.cpp:1850-1852, but no assignment/construction found; InitializeSourceCommandFlags reads its presence at 2597-2600. Session flags map /tip (type 42) from pointer presence at src/session/Session.cpp:3475-3480. No type-42 UI dispatch, tip data loader, window controls, checkbox persistence, or startup tip creation found in src.",
+    "testable_lifecycle_boundaries": [
+      "Absent tip window + /tip creates, owns, inserts, and shows one window; second /tip closes and clears owner; third opens a fresh window.",
+      "Close button follows same owner-clear path, preventing stale presence in InitializeSourceCommandFlags.",
+      "With valid tip data, construction selects/displays an entry; next/previous wrap; with empty/missing data, creation remains safe and navigation does not index entries.",
+      "Checkbox toggles startup preference persistence independently from opening/closing."
+    ]
+  }
+}

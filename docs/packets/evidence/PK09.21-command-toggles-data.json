@@ -1,0 +1,565 @@
+{
+  "scope": "Source-selected toggles/composites; full command UI, effect snow and Tip remain open",
+  "inputs": {
+    "ignored-command-toggle-actions.json": {
+      "contract": "selected client command-toggle actions",
+      "scope": "Read-only primary-source inventory for requested numeric types. IDs are taken from current selected23 generated alias/parameter data; legacy TT_ labels are matched to action semantics. Ref/GameMode.cpp ProcessTalkType decomp starts at 0x578f10 (line 15640).",
+      "id_mapping_evidence": [
+        "src/core/SourceChatAliases.generated.inc:12-15 maps /bgm=7, /effect=8, /sound=11; :58 maps /tip=42; :68 maps /miss=53.",
+        "src/core/SourceChatAliases.generated.inc:74-102 maps /noshift=105, /aura=106, /noctrl=108, /window=140, /skillfail=112, /loginout=164, /shopping=166, /quickspell=119, /quickspell2=120, /q3=121, /notalkmsg=113, /notalkmsg2=147, /notrade=135, /set1=114, /set2=137.",
+        "src/core/SourceChatParameterRules.generated.inc:75 maps parameterized /showname to type107 (Whole parameter kind).",
+        "The primary decomp TT_ case symbols are semantic labels; numeric mapping above is selected23 data, not Ref/dhxj/Session.h."
+      ],
+      "common_paths": {
+        "LABEL_279": "Ref/GameMode.cpp:17095-17113: SendMsg(windowMgr,1,text,6619135,0,0), then LABEL_280. LABEL_280 sends option window message60 only if m_optionWnd exists, then returns.",
+        "LABEL_513": "Ref/GameMode.cpp:17497-17499: SendMsg(windowMgr,1,text,color,0,0), then returns. Toggle cases reaching it set color=6619135 and send manager message3 before selecting notice.",
+        "manager_message3": "Source calls UIWindowMgr::SendMsg(&g_windowMgr,3,0,0,0,0), which is ordered before notice; do not conflate it with the notice message1."
+      },
+      "actions": [
+        {
+          "type": 7,
+          "case": "TT_MUSIC_ON_OFF",
+          "source": "Ref/GameMode.cpp:16047-16057",
+          "action": "Invert g_session.m_bgmIsPaused; CloseStream if now paused, otherwise PlayStream(streamFileName); then manager msg3; select MSI_BGM_OFF if paused else MSI_BGM_ON; LABEL_279 sends colored notice and refreshes option window (message60) if present; return."
+        },
+        {
+          "type": 8,
+          "case": "TT_EFFECT_ON_OFF",
+          "source": "Ref/GameMode.cpp:16059-16090",
+          "action": "Compute new state as 1-old and write g_session.m_isEffectOn. If map is XmasFild01.rsw or Xmas.rsw, launch snow when new state true, stop snow when false. Then manager msg3; send notice MSI_EFFECT_ON/OFF at color 6619135; construct opcode541 packet with value 0 for on or 1 for off; proceed to common packet-send LABEL_155. No early return in case body before packet send."
+        },
+        {
+          "type": 11,
+          "case": "TT_EFFECT_SOUND_ON_OFF",
+          "source": "Ref/GameMode.cpp:16159-16165,17095-17113",
+          "action": "Invert g_isSoundOn; select MSI_SOUND_ON/OFF; LABEL_279 sends notice, then option-window message60 if present, then returns. No manager msg3 call in this case."
+        },
+        {
+          "type": 42,
+          "case": "TT_OPEN_TIP",
+          "source": "Ref/GameMode.cpp:16593-16596",
+          "action": "Call DeleteWindow(WID_TIPOFTHEDAYWND); only if it returns false, call MakeWindow with same ID; return."
+        },
+        {
+          "type": 53,
+          "case": "TT_MISS_EFFECT_ON_OFF",
+          "source": "Ref/GameMode.cpp:16731-16739",
+          "action": "Invert g_session.m_bMakeMissEffect; manager msg3; choose MSI_MISS_EFFECT_ON/OFF based on new state; LABEL_513 sends notice at color 6619135; return."
+        },
+        {
+          "type": 60,
+          "case": "TT_FOG",
+          "source": "Ref/GameMode.cpp:16776-16784",
+          "action": "Invert g_session.m_fogOn; call MakeFog(this,newState); send notice using literal aFogOn/aFogOff and color 6619135; if option window exists send its message60; return. No manager msg3."
+        },
+        {
+          "type": 105,
+          "case": "TT_NOSHIFT_ON_OFF",
+          "source": "Ref/GameMode.cpp:17067-17074",
+          "action": "Invert g_session.m_isNoShift; manager msg3; select MSI_NOSHIFT_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 106,
+          "case": "TT_AURA_ON_OFF",
+          "source": "Ref/GameMode.cpp:17076-17083",
+          "action": "Invert g_session.m_isAura; manager msg3; select MSI_AURA_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 107,
+          "case": "TT_SHOW_NAME_TYPE",
+          "source": "Ref/GameMode.cpp:17085-17093",
+          "action": "Set m_isShowNameTypeOld to (old==0); call CSession::SetTextType(&g_session,newValue,newValue) with both args identical; manager msg3; choose MSI_SHOWNAME_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 108,
+          "case": "TT_NOCTRL_ON_OFF",
+          "source": "Ref/GameMode.cpp:17095-17112",
+          "action": "Invert g_session.m_isNoCtrl; manager msg3; choose MSI_NOCTRL_ON/OFF; LABEL_279 sends notice at color 6619135, then option-window message60 if present; return."
+        },
+        {
+          "type": 112,
+          "case": "TT_SKILLFAIL_ON_OFF",
+          "source": "Ref/GameMode.cpp:17172-17179",
+          "action": "Invert g_session.m_isSkillFail; manager msg3; choose MSI_SKILLFAIL_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 113,
+          "case": "TT_NOTALKMSG_ON_OFF",
+          "source": "Ref/GameMode.cpp:17181-17188",
+          "action": "Invert g_session.m_isNoTalkMsg; manager msg3; notice selector is semantically inverted: new true chooses MSI_NOTALKMSG_OFF, new false chooses MSI_NOTALKMSG_ON; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 114,
+          "case": "TT_SET1_ON_OFF",
+          "source": "Ref/GameMode.cpp:17190-17195",
+          "action": "Composite dispatch only, no direct state write or notice. Sequentially current mode SendMsg(47,112,0,0), then (47,107,0,0), (47,108,0,0), (47,140,0,0); return."
+        },
+        {
+          "type": 119,
+          "case": "TT_QUICKSPELL_ON_OFF",
+          "source": "Ref/GameMode.cpp:17207-17214",
+          "action": "Invert g_session.m_isQuickSpell; manager msg3; select MSI_QUICKSPELL_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 120,
+          "case": "TT_QUICKSPELL2_ON_OFF",
+          "source": "Ref/GameMode.cpp:17216-17223",
+          "action": "Invert g_session.m_isQuickSpell2; manager msg3; select MSI_QUICKSPELL2_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 121,
+          "case": "TT_QUICKSPELL3_ON_OFF",
+          "source": "Ref/GameMode.cpp:17225-17229",
+          "action": "Composite dispatch only, no direct state write or notice. Sequentially current mode SendMsg(47,119,0,0), then SendMsg(47,120,0,0); return."
+        },
+        {
+          "type": 134,
+          "case": "TT_BATTLE_ON_OFF",
+          "source": "Ref/GameMode.cpp:17265-17272",
+          "action": "Invert g_session.m_isBattle; manager msg3; choose MSI_BATTLE_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 135,
+          "case": "TT_NOTRADE_ON_OFF",
+          "source": "Ref/GameMode.cpp:17274-17281",
+          "action": "Invert g_session.m_isNoTrade; manager msg3; choose MSI_NOTRADE_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 137,
+          "case": "TT_SET2_ON_OFF",
+          "source": "Ref/GameMode.cpp:17283-17290",
+          "action": "Composite dispatch only, no direct state write or notice. Sequentially current mode SendMsg(47,112), (47,107), (47,108), (47,119), (47,120), (47,140), all remaining args zero; return."
+        },
+        {
+          "type": 140,
+          "case": "TT_WINDOW_ON_OFF",
+          "source": "Ref/GameMode.cpp:17291-17298",
+          "action": "Invert g_session.m_isWindow; manager msg3; choose MSI_WINDOW_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 147,
+          "case": "TT_NOTALKMSG2_ON_OFF",
+          "source": "Ref/GameMode.cpp:17341-17348",
+          "action": "Invert g_session.m_isNoTalkMsg2; manager msg3; notice selector is semantically inverted: new true chooses MSI_NOTALKMSG2_OFF, new false chooses MSI_NOTALKMSG2_ON; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 164,
+          "case": "TT_LOGINOUT_ON_OFF",
+          "source": "Ref/GameMode.cpp:17513-17520",
+          "action": "Invert g_session.m_isLogInOut; manager msg3; choose MSI_LOGINOUT_ON/OFF; LABEL_513 notice at color 6619135; return."
+        },
+        {
+          "type": 166,
+          "case": "TT_SHOPPING_ON_OFF",
+          "source": "Ref/GameMode.cpp:17531-17538",
+          "action": "Invert g_session.m_isShopping; manager msg3; choose MSI_SHOPPING_ON/OFF; LABEL_513 notice at color 6619135; return."
+        }
+      ],
+      "numeric_notice_ids": "Not provided: this decomp establishes MSI_* symbolic IDs and color literal, but no selected static message-table numeric mapping was verified for these MSI names."
+    },
+    "command-toggle-message-ids.json": {
+      "evidence": {
+        "binary": "HighPriest.exe",
+        "sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+        "dispatch": "ProcessTalkType at 0x578f10 bounds the direct TALKTYPE index to 0xc0 and dispatches through absolute-pointer table 0x57c8b4. Listed types index that table directly (except the special runtime remap for type 6, irrelevant here).",
+        "msgstr": "Common MsgStr call sites: 0x57c889 calls 0x514350; 0x57aa36 calls 0x514350; type 8 calls 0x514350 directly at 0x579cb0/0x579d09. Numeric push immediately preceding the helper path is the message ID. State-specific push instruction addresses are listed below.",
+        "source_crosscheck": "Ref/GameMode.cpp ProcessTalkType cases recorded in build-recovery-unit-review/ignored-command-toggle-actions.json. On/off labels and the inverted notalk selectors are taken from those case branches; numeric IDs and dispatch targets are from this PE.",
+        "ordering": "For each numeric pair, JSON lists on then off. The original branch selects the ID using the post-toggle state except types 113 and 147, whose source explicitly selects the opposite label."
+      },
+      "actions": [
+        {
+          "type": 7,
+          "dispatch_target": "0x57a91f",
+          "on": {
+            "id": 32,
+            "hex": "0x20",
+            "push": "0x57a967"
+          },
+          "off": {
+            "id": 31,
+            "hex": "0x1f",
+            "push": "0x57a96e"
+          },
+          "msgstr_call": "0x57aa36 -> 0x514350"
+        },
+        {
+          "type": 8,
+          "dispatch_target": "0x579bf6",
+          "on": {
+            "id": 23,
+            "hex": "0x17",
+            "push": "0x579cae"
+          },
+          "off": {
+            "id": 24,
+            "hex": "0x18",
+            "push": "0x579d07"
+          },
+          "msgstr_call": {
+            "on": "0x579cb0 -> 0x514350",
+            "off": "0x579d09 -> 0x514350"
+          }
+        },
+        {
+          "type": 11,
+          "dispatch_target": "0x57a8b6",
+          "on": {
+            "id": 27,
+            "hex": "0x1b",
+            "push": "0x57a8d1"
+          },
+          "off": {
+            "id": 28,
+            "hex": "0x1c",
+            "push": "0x57a8d8"
+          },
+          "msgstr_call": "0x57aa36 -> 0x514350"
+        },
+        {
+          "type": 53,
+          "dispatch_target": "0x579e04",
+          "on": {
+            "id": 317,
+            "hex": "0x13d",
+            "push": "0x579e37"
+          },
+          "off": {
+            "id": 318,
+            "hex": "0x13e",
+            "push": "0x579e41"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 60,
+          "dispatch_target": "0x57c512",
+          "on": {
+            "kind": "direct literal",
+            "pointer": "0x712674",
+            "push": "0x57c53c"
+          },
+          "off": {
+            "kind": "direct literal",
+            "pointer": "0x71266c",
+            "push": "0x57c543"
+          },
+          "msgstr_call": null,
+          "note": "This branch passes the selected literal pointer to window-manager SendMsg at 0x4e9cb0; it does not call MsgStr."
+        },
+        {
+          "type": 105,
+          "dispatch_target": "0x579e4b",
+          "on": {
+            "id": 701,
+            "hex": "0x2bd",
+            "push": "0x579e7e"
+          },
+          "off": {
+            "id": 702,
+            "hex": "0x2be",
+            "push": "0x579e88"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 106,
+          "dispatch_target": "0x579f1e",
+          "on": {
+            "id": 711,
+            "hex": "0x2c7",
+            "push": "0x579f51"
+          },
+          "off": {
+            "id": 712,
+            "hex": "0x2c8",
+            "push": "0x579f5b"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 107,
+          "dispatch_target": "0x57c703",
+          "on": {
+            "id": 722,
+            "hex": "0x2d2",
+            "push": "0x57c741"
+          },
+          "off": {
+            "id": 723,
+            "hex": "0x2d3",
+            "push": "0x57c74b"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 108,
+          "dispatch_target": "0x579e92",
+          "on": {
+            "id": 717,
+            "hex": "0x2cd",
+            "push": "0x579ec4"
+          },
+          "off": {
+            "id": 718,
+            "hex": "0x2ce",
+            "push": "0x579ece"
+          },
+          "msgstr_call": "0x57aa36 -> 0x514350"
+        },
+        {
+          "type": 112,
+          "dispatch_target": "0x57a11d",
+          "on": {
+            "id": 730,
+            "hex": "0x2da",
+            "push": "0x57a14f"
+          },
+          "off": {
+            "id": 731,
+            "hex": "0x2db",
+            "push": "0x57a159"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 113,
+          "dispatch_target": "0x57a30b",
+          "on": {
+            "id": 733,
+            "hex": "0x2dd",
+            "push": "0x57a348"
+          },
+          "off": {
+            "id": 734,
+            "hex": "0x2de",
+            "push": "0x57a33e"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350",
+          "selector": "post-toggle true selects off ID; false selects on ID"
+        },
+        {
+          "type": 119,
+          "dispatch_target": "0x57a1f1",
+          "on": {
+            "id": 765,
+            "hex": "0x2fd",
+            "push": "0x57a223"
+          },
+          "off": {
+            "id": 766,
+            "hex": "0x2fe",
+            "push": "0x57a22d"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 120,
+          "dispatch_target": "0x57a237",
+          "on": {
+            "id": 768,
+            "hex": "0x300",
+            "push": "0x57a26a"
+          },
+          "off": {
+            "id": 769,
+            "hex": "0x301",
+            "push": "0x57a274"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 134,
+          "dispatch_target": "0x57a27e",
+          "on": {
+            "id": 785,
+            "hex": "0x311",
+            "push": "0x57a2b1"
+          },
+          "off": {
+            "id": 786,
+            "hex": "0x312",
+            "push": "0x57a2bb"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 135,
+          "dispatch_target": "0x57a399",
+          "on": {
+            "id": 805,
+            "hex": "0x325",
+            "push": "0x57a3cb"
+          },
+          "off": {
+            "id": 806,
+            "hex": "0x326",
+            "push": "0x57a3d5"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 140,
+          "dispatch_target": "0x579ed8",
+          "on": {
+            "id": 850,
+            "hex": "0x352",
+            "push": "0x579f0a"
+          },
+          "off": {
+            "id": 851,
+            "hex": "0x353",
+            "push": "0x579f14"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 147,
+          "dispatch_target": "0x57a352",
+          "on": {
+            "id": 908,
+            "hex": "0x38c",
+            "push": "0x57a38f"
+          },
+          "off": {
+            "id": 909,
+            "hex": "0x38d",
+            "push": "0x57a385"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350",
+          "selector": "post-toggle true selects off ID; false selects on ID"
+        },
+        {
+          "type": 164,
+          "dispatch_target": "0x57a163",
+          "on": {
+            "id": 1044,
+            "hex": "0x414",
+            "push": "0x57a196"
+          },
+          "off": {
+            "id": 1045,
+            "hex": "0x415",
+            "push": "0x57a1a0"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 166,
+          "dispatch_target": "0x57a1aa",
+          "on": {
+            "id": 1108,
+            "hex": "0x454",
+            "push": "0x57a1dd"
+          },
+          "off": {
+            "id": 1109,
+            "hex": "0x455",
+            "push": "0x57a1e7"
+          },
+          "msgstr_call": "0x57c889 -> 0x514350"
+        },
+        {
+          "type": 42,
+          "dispatch_target": "0x57bb39",
+          "on": null,
+          "off": null,
+          "msgstr_call": null,
+          "note": "No state-toggle notice in this case: it deletes the tip window and creates it only if delete returns false."
+        }
+      ],
+      "known_no_notice_cases": [
+        {
+          "type": 42,
+          "evidence": "0x57bb39 and following instructions call window-manager DeleteWindow/MakeWindow paths; no MsgStr call."
+        },
+        {
+          "types": [
+            114,
+            121,
+            137
+          ],
+          "evidence": "Source inventory marks these composite dispatch types as no direct state write/notice; they are not in the requested toggle-ID set."
+        }
+      ]
+    },
+    "ignored-command-toggle-side-effects.json": {
+      "topic": "type107 show-name and type8 effect/snow side effects",
+      "basis": "Primary Ref source plus current src port inspection; static only; no executable run and no code edits.",
+      "showname_type107": {
+        "primary_action": "Ref/GameMode.cpp:17085-17093 (ProcessTalkType 0x578f10): toggle g_session.m_isShowNameTypeOld using old==0; call CSession::SetTextType(&g_session,new,new); send UIWindowMgr message3; choose MSI_SHOWNAME_ON when new value true else MSI_SHOWNAME_OFF; shared LABEL_513 sends notice message1 in color 6619135; return. No actor/name balloon invalidation or rebuild call occurs in this case.",
+        "SetTextType": "Ref/Locale.cpp:227-239, address 0x503a70: only when service is Korea, Indonesia, Germany, or Brazil, assign global NameBalloonShorten=isShorten and NameBalloonfontBold=isBold. Both arguments from type107 are the same new bool. Other service types leave those globals untouched.",
+        "consumers": "Ref/UIControl.cpp: UINameBalloonText name-string/layout paths check NameBalloonShorten (e.g. 7777 and 8049); text width/height calls use NameBalloonfontBold (e.g. 7802-7820, 7893 onward). Ref/Locale.cpp:841-849 initializes these globals by locale: Korea/Indonesia sets shorten+bold=1 and font size13; other branch sets both0 and size12. These globals affect name balloon shortening/layout/font weight. The toggle itself does not explicitly invalidate current balloons; whether already-built balloon strings/heights immediately reflow is not established by this case alone.",
+        "port_status": "Current src has m_isShowNameTypeOld defaulted and includes it in source command flag-table data (src/session/Session.h:180; src/session/Session.cpp:3469-3473), but no SetTextType, NameBalloonShorten/NameBalloonfontBold, or UINameBalloonText equivalent was found under src. Current actor-name drawing references are hover/locked-target labels in src/gamemode/GameMode.cpp:3512,3568 and do not reference this flag. Therefore port state exists, but this primary name-balloon behavior/consumer integration is absent."
+      },
+      "effect8_xmas_snow": {
+        "primary_order": "Ref/GameMode.cpp:16059-16090: compute new effect state as 1-old, assign g_session.m_isEffectOn, then if map name exactly matches XmasFild01.rsw or Xmas.rsw, call LaunchSnow when new state true and StopSnow when false. After weather call: manager message3; on/off notice message1 at color6619135; construct opcode541 value0 for on or1 for off; send packet via common LABEL_155 path. Snow helper executes before UI update/notice/packet.",
+        "weather_helpers": "Ref/RagEffectPrim.cpp:6480-6496 (LaunchSnow, 0x649ab0) only relaunches if current effect is absent or remaining duration<=300; obtains current game-world player, stores it in m_pPlayer, and launches effect type162 at zero vector offset and scale0. Ref/RagEffectPrim.cpp:6684-6691 (StopSnow, 0x649b30) if effect exists, sets its duration to current state count+300, allowing it to wind down. Ref/RagEffectPrim.cpp:6498 onward Process clears stale m_Effect when effect no longer exists.",
+        "snow_emitter_match": "Primary Ref/RagEffect.cpp:7767-7813, CRagEffect::Snow at0x5f7520; current src/world/RagEffect.cpp:16555-16588, CRagEffect::SpawnSnow. The port emitter is a direct structural match: update position to player; only emit while remaining duration>160; two particle prims; duration320; rotate/random offset, height-100, speed-0.5, alpha/fade and snow sprite/action resources. Port comment identifies the same source function. Thus the low-level snow emitter exists and matches; the separate CWeather manager that tracks one effect/player, launches type162 with the >300 restart threshold, and shortens duration on stop was not found in src.",
+        "port_status": "Current src implements effect gating in multiple rendering/packet paths (e.g. src/gamemode/GameMode.cpp:451; src/world/World.cpp:1773; src/gamemode/GameModePacket.cpp:750), and the snow emitter, but no type8 ProcessTalkType action, Xmas map check, CWeather::LaunchSnow/StopSnow wrapper, or opcode541 toggle path was found in src. The manager-level command side effects remain missing despite emitter support.",
+        "unknowns": [
+          "No claim that toggling showname reflows already-instantiated balloons immediately; the primary toggle has no explicit invalidation/rebuild call, and constructor/update timing was not fully resolved here.",
+          "The exact current-port equivalent owner for storing snow-effect/player handles is absent from the searched source; don't substitute direct emitter spawning for the primary weather-manager lifecycle without integration work."
+        ]
+      }
+    },
+    "ignored-command-toggle-audio-options.json": {
+      "scope": "Read-only source comparison for type 7 BGM and type 11 sound toggles, option-window message 60, and port audio effects. No runtime execution.",
+      "original": {
+        "source": "Ref/GameMode.cpp",
+        "type7": {
+          "lines": "16047-16058",
+          "operation": "Invert g_session.m_bgmIsPaused. If the new value is true, call CloseStream(); otherwise call PlayStream(streamFileName). Send window-manager message 3, choose BGM_OFF when paused or BGM_ON otherwise, then take LABEL_279.",
+          "option_refresh": "LABEL_279 sends notice; LABEL_280 (lines 17108-17113) sends m_optionWnd->UIWindow::SendMsg(sender=null,message=60,...) if the option window exists."
+        },
+        "type11": {
+          "lines": "16159-16165",
+          "operation": "Invert g_isSoundOn; choose MSI_SOUND_ON when true or MSI_SOUND_OFF when false; goto LABEL_279. The case itself does not change g_soundMode and does not call EndDigitalSound.",
+          "option_refresh": "Uses the same LABEL_279/LABEL_280 path described for type 7, so an open option window receives message 60."
+        },
+        "option_message60": {
+          "source": "Ref/UIFrameWnd2.cpp:12070-12088 (UIOptionWnd::SendMsg at 0x475b30)",
+          "effect": "Read-only refresh from source globals: m_bgmVolume <- g_session.m_BgmVolume; m_soundVolume <- Get2DVolume(); scrollbar positions <- those values; checkbox state <- !g_session.m_bgmIsPaused, g_isSoundOn, monster snap fields, and g_session.m_isNoCtrl; invalidate window.",
+          "persistence": "This message-60 branch does not call SaveInfo, registry/INI writes, or audio setters. It synchronizes controls to source state rather than writing source fields."
+        }
+      },
+      "port": {
+        "option_message": {
+          "source": "src/ui/UIOptionWnd.cpp:2035-2042",
+          "effect": "UIOptionWnd::SendMsg returns 0 when msg != 6 or sender is null. Thus the source-style manager call with null sender and message 60 is currently a no-op; it does not refresh controls, apply audio, or save settings."
+        },
+        "apply_audio": {
+          "source": "src/ui/UIOptionWnd.cpp:932-944",
+          "effect": "ApplyAudioSettings writes g_soundMode and g_isSoundOn from m_soundEnabled, sets CAudio sound volume and BGM volume, and sets BGM pause from m_bgmEnabled. Audio sliders and audio checkbox paths call this method; it is not gated by source command state."
+        },
+        "save_audio_settings": {
+          "source": "src/ui/UIOptionWnd.cpp:878-891, 1953-1960, 2040-2076",
+          "effect": "SaveSettings persists m_bgmVolume, m_soundVolume, m_bgmEnabled and m_soundEnabled to the Option INI section. It runs on window close / drag completion and after checkbox message 6. Message 60 itself does not reach SaveSettings because of the early guard.",
+          "consequence": "If a command toggles a global while the option window is open, its in-memory audio controls remain stale. Closing can persist those stale values to INI. A later ApplyAudioSettings (for example, moving an audio slider or changing either audio checkbox) can also replace both g_soundMode/g_isSoundOn and the BGM pause state from those stale controls. This overwrite is not performed by message 60 itself."
+        },
+        "bgm_runtime": {
+          "source": "src/audio/Audio.cpp:50-54, 162-172, 108-122; src/audio/AudioBackend.h:18-22",
+          "effect": "CAudio stores m_bgmPaused; SetBgmPaused updates the stored value and forwards to an initialized backend. Later PlayBGM passes that paused value to the backend. This path does not call CloseStream/PlayStream."
+        },
+        "bgm_backends": [
+          {
+            "source": "src/audio/MilesAudioBackend.cpp:212-226",
+            "effect": "SetBgmPaused forwards pause to the stream. On unpause after a pending start, it starts the stream before forwarding unpause."
+          },
+          {
+            "source": "src/audio/MiniaudioBackend.cpp:242-259",
+            "effect": "SetBgmPaused stops the current sound when paused; when unpaused, starts it if it is not playing."
+          }
+        ],
+        "sound_runtime": {
+          "source": "src/audio/Audio.cpp:87-99; src/audio/Wave.cpp:6-20, 21-48; src/ui/UIOptionWnd.cpp:939-940",
+          "effect": "CAudio::PlaySound and the PlayWave path are gated by both g_soundMode and g_isSoundOn. PlayWave uses mode 2 for 3D-provider/relative playback and mode 1 for the 2D-volume path; other nonzero modes return false there. UIOptionWnd::ApplyAudioSettings maps sound-enabled to mode 1 and also assigns g_isSoundOn. Type 11's original behavior only flips g_isSoundOn, which suppresses subsequent gated wave playback; this switch does not itself stop all currently active sounds."
+        },
+        "startup_audio_settings": {
+          "source": "src/ui/UIOptionWnd.cpp:540-561, 802-820, 1522-1557; src/ui/UIWindowMgr.cpp:2597-2600",
+          "effect": "Saved audio settings initialize UI member values and ApplySavedAudioSettings applies them. On UI creation, ApplyAudioSettings is called. UIWindowMgr initializes source command flags from CAudio::IsBgmPaused() and g_isSoundOn."
+        }
+      },
+      "review_note": "Original option message 60 refreshes controls from current globals and does not save or mutate those globals. Port message 60 currently does nothing. The possible stale-control overwrite is through later port ApplyAudioSettings or persistence of stale member values, not through message-60 handling."
+    }
+  }
+}

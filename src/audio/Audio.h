@@ -89,6 +89,7 @@ public:
     int GetBgmVolume() const;
     void SetBgmPaused(bool paused);
     bool IsBgmPaused() const;
+    void ToggleSourceBgm(const char* selectedFile);
     const std::string& GetCurrentBgmPath() const;
     std::string ResolveMapBgmPath(const char* rswName);
 

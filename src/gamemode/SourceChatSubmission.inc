@@ -13,6 +13,16 @@ void SourceChatNotice(int id,const char* fallback,int color)
     const auto text=SourceChatLabel(id,fallback);
     g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text.c_str()),color);
 }
+int InvertSourceCommandInt(int value)
+{
+    // Selected x86 SUB wraps modulo32, including nonboolean saved state.
+    const u32 bits=1u-static_cast<u32>(value);s32 result;
+    std::memcpy(&result,&bits,sizeof(result));return result;
+}
+void RefreshSourceOptions()
+{
+    if(g_windowMgr.m_optionWnd)g_windowMgr.m_optionWnd->SendMsg(nullptr,60,0,0,0);
+}
 }
 
 u32 CGameMode::GetSourceChatTick() const
@@ -144,6 +154,47 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return SendMsg(33,route.emotion>=0?route.emotion:std::rand()%6+58,0,0);
     }
     switch(type){
+    case 7: {
+        auto* audio=CAudio::GetInstance();audio->ToggleSourceBgm(m_streamFileName.c_str());
+        g_windowMgr.SendMsg(3,0,0,0);
+        SourceChatNotice(audio->IsBgmPaused()?31:32,"",6619135);RefreshSourceOptions();return 1;
+    }
+    case 11:
+        g_isSoundOn=InvertSourceCommandInt(g_isSoundOn);
+        SourceChatNotice(g_isSoundOn?27:28,"",6619135);RefreshSourceOptions();return 1;
+    case 60: {
+        g_session.m_fogOn=!g_session.m_fogOn;MakeFog(g_session.m_fogOn?1:0);
+        const char* text=g_session.m_fogOn?"Fog On":"Fog Off";
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text),6619135);RefreshSourceOptions();return 1;
+    }
+    case 53:case 105:case 106:case 107:case 108:case 112:case 113:
+    case 119:case 120:case 134:case 135:case 140:case 147:case 164:case 166: {
+        struct Toggle {int type;int CSession::* field;int on,off;bool inverse;};
+        static const Toggle toggles[]={
+            {53,&CSession::m_bMakeMissEffect,317,318,false},{105,&CSession::m_isNoShift,701,702,false},
+            {106,&CSession::m_isAura,711,712,false},{107,&CSession::m_isShowNameTypeOld,722,723,false},
+            {108,&CSession::m_isNoCtrl,717,718,false},{112,&CSession::m_isSkillFail,730,731,false},
+            {113,&CSession::m_isNoTalkMsg,733,734,true},{119,&CSession::m_isQuickSpell,765,766,false},
+            {120,&CSession::m_isQuickSpell2,768,769,false},{134,&CSession::m_isBattle,785,786,false},
+            {135,&CSession::m_isNoTrade,805,806,false},{140,&CSession::m_isWindow,850,851,false},
+            {147,&CSession::m_isNoTalkMsg2,908,909,true},{164,&CSession::m_isLogInOut,1044,1045,false},
+            {166,&CSession::m_isShopping,1108,1109,false}};
+        for(const auto& toggle:toggles)if(toggle.type==type){
+            int& value=g_session.*toggle.field;
+            value=type==107?(value==0):InvertSourceCommandInt(value);
+            if(type==107)g_session.SetTextType(static_cast<u8>(value),static_cast<u8>(value));
+            g_windowMgr.SendMsg(3,0,0,0);
+            SourceChatNotice((value!=0)!=toggle.inverse?toggle.on:toggle.off,"",6619135);
+            if(type==108)RefreshSourceOptions();return 1;
+        }
+        return 0;
+    }
+    case 114:case 121:case 137: {
+        const int set1[]={112,107,108,140},q3[]={119,120},set2[]={112,107,108,119,120,140};
+        const int* first=type==114?set1:type==121?q3:set2;const int count=type==114?4:type==121?2:6;
+        for(int i=0;i<count;++i)g_modeMgr.SendMsg(47,first[i],0,0);
+        return 1;
+    }
     case 2: case 20: case 136:return 1; // Selected jump table returns without an action.
     case 3:SourceChatNotice(95,"Invalid command.",65535);return 0;
     case 12: case 13: {
@@ -153,7 +204,7 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         const auto label=SourceChatLabel(type==12?25:26,type==12?"Sound volume":"BGM volume");
         const auto notice=label+" "+std::to_string(value);
         g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),6619135);
-        if(g_windowMgr.m_optionWnd)g_windowMgr.m_optionWnd->Invalidate();
+        RefreshSourceOptions();
         return 1;
     }
     case 15: {
