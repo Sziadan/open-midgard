@@ -1,0 +1,76 @@
+Primary mode lifetime source; read-only.
+1289: // Original Signature: public: void __thiscall CModeMgr::Run(int,char const *)
+1290: // Decompiled from address: 0x505aa0
+1291: // ================================================
+1292: void __thiscall CModeMgr::Run(CModeMgr *this, int modeType, const char *worldName)
+1293: {
+1294:   int m_curModeType; // eax
+1295:   CGameMode *v5; // eax
+1296:   CGameMode *v6; // eax
+1297:   CLoginMode *v7; // eax
+1298:   CMode *m_curMode; // ecx
+1299:   int m_loopCond; // eax
+1300:
+1301:   this->m_curModeType = modeType;
+1302:   this->m_nextModeType = modeType;
+1303:   strcpy(this->m_curModeName, worldName);
+1304:   strcpy(this->m_nextModeName, worldName);
+1305:   if ( this->m_loopCond )
+1306:   {
+1307:     while ( 1 )
+1308:     {
+1309:       if ( g_sysQuit )
+1310:         return;
+1311:       this->m_curModeType = this->m_nextModeType;
+1312:       strcpy(this->m_curModeName, this->m_nextModeName);
+1313:       m_curModeType = this->m_curModeType;
+1314:       if ( !m_curModeType )
+1315:         break;
+1316:       if ( m_curModeType == 1 )
+1317:       {
+1318:         v5 = (CGameMode *)operator new(0x54Cu);
+1319:         if ( v5 )
+1320:         {
+1321:           v6 = CGameMode::CGameMode(v5);
+1322: LABEL_10:
+1323:           this->m_curMode = &v6->CMode;
+1324:           goto LABEL_11;
+1325:         }
+1326:         goto LABEL_9;
+1327:       }
+1328: LABEL_11:
+1329:       this->m_curMode->CMode::OnInit(this->m_curMode, this->m_curModeName);
+1330:       this->m_curMode->CMode::OnRun(this->m_curMode);
+1331:       this->m_curMode->CMode::OnExit(this->m_curMode);
+1332:       m_curMode = this->m_curMode;
+1333:       if ( m_curMode )
+1334:         ((void (__thiscall *)(CMode *, int))m_curMode->CMode::~CMode)(m_curMode, 1);
+1335:       m_loopCond = this->m_loopCond;
+1336:       this->m_curMode = 0;
+1337:       if ( !m_loopCond )
+1338:         return;
+1339:     }
+1340:     v7 = (CLoginMode *)operator new(0x13A8u);
+1341:     if ( v7 )
+1342:     {
+1343:       v6 = (CGameMode *)CLoginMode::CLoginMode(v7);
+1344:       goto LABEL_10;
+1345:     }
+1346: LABEL_9:
+1347:     v6 = 0;
+1348:     goto LABEL_10;
+1349:   }
+1350: }
+1351:
+1352:
+1353: // ================================================
+1354: // Original Signature: public: void __thiscall CModeMgr::Switch(int,char const *)
+1355: // Decompiled from address: 0x505c00
+1356: // ================================================
+1357: void __thiscall CModeMgr::Switch(CModeMgr *this, int modeType, const char *modeName)
+1358: {
+1359:   this->m_curMode->m_loopCond = 0;
+1360:   strcpy(this->m_nextModeName, modeName);
+1361:   this->m_nextModeType = modeType;
+1362: }
+1363:

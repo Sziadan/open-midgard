@@ -1,0 +1,10 @@
+[pid:14520 t:682409578] [Heartbeat] frames=556 fps=111.2 stage='Login:QueueLoginUiQuad' mode=0
+[pid:14520 t:682414578] [Heartbeat] frames=1170 fps=122.8 stage='Login:Flip' mode=0
+[pid:14520 t:682416281] [Login] ZC_ACCEPT_ENTER: opcode=0x02EB map=prontera.rsw x=156 y=184 dir=0 tick=682416281 -> switching to GameMode
+[pid:14520 t:682416343] [GameMode] OnInit world='prontera.rsw' map='prontera' gid=150004 pos=156,184 dir=0
+[pid:14520 t:682416375] [GameMode] map change packet=0x0091 map='prontera' pos=156,184 serverMove=0
+[pid:14520 t:682419593] [Heartbeat] frames=1872 fps=140.0 stage='Mode::OnRun' mode=1
+[pid:14520 t:682424593] [Heartbeat] frames=2592 fps=144.0 stage='Mode::OnRun' mode=1
+[pid:14520 t:682429593] [Heartbeat] frames=3312 fps=144.0 stage='Mode::OnRun' mode=1
+[pid:14520 t:682434593] [Heartbeat] frames=4033 fps=144.2 stage='Mode::OnRun' mode=1
+[pid:14520 t:682439593] [Heartbeat] frames=4738 fps=141.0 stage='Mode::OnRun' mode=1

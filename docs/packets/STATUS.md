@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**World-entry repair (2026-11-10):** [same-world handoff regression](evidence/PK05.05-world-entry.md) fixes a loading-screen deadlock after accepted login plus same-map0091. The manager now honors the explicit request and retires the terminal mode. Real packet/mode-loop regression, root157/157 and standalone470/470 pass. OldRO retains the prior executable; the rebuilt candidate needs redeployment and live retry. Active packet-plan work remains PK09.21.
+
 **Latest checkpoint (2026-11-06):** [PK09.21 auto-message configuration](evidence/PK09.21-auto-message.md) integrates WID116, selected edit/submit/Escape/delete rules, aliases, actual message47/type152 and accepted0069 default940. Strong review resolves UIY alias, secondary enum drift and overlong assignment padding. Root156/156 and standalone470/470 pass with eight new native/QML frames. Messenger preference controls and broad chat acceptance remain open.
 
 **Active step: PK09.21.** Finish [detached history controls and remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Latest checkpoint subject: `packet(PK09.21): restore auto-message configuration`. Preserve main-state/family, selected-notice and PK45.06 corpse proofs; broad PK45.02/PK24.03, PK47 and independent PK48/49/deployment remain open.

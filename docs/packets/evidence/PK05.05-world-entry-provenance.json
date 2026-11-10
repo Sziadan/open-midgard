@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-10",
+  "baseline": "3db169c93772584c5ff9c6bc48dafade010af29e",
+  "commit_subject": "packet(PK05.05): honor same-world mode handoffs",
+  "runtime_test_sha256": {
+    "CMakeLists.txt": "181f79429a42e69cb94bce7fc344b0acfed4b711a111206fd0d0f78e11b2063b",
+    "src/gamemode/Mode.cpp": "ef374967974d48917276d4caa749e1f5f33821504604ed9db547f710fa0bf4d9",
+    "src/gamemode/Mode.h": "3925bf68699f936027c6e40d7e3948ac88193829e7997d38f8d7bc7fc19bfe41",
+    "src/gamemode/GameMode.cpp": "21c4e3f16216ec415f04599118431ef94cd46a831e874a13c9bb22f93acff0f6",
+    "src/gamemode/GameModePacket.cpp": "2f795df718ac9b1f8c0a44a3bba85c3a9f74ff7efc6db37ff35ac865ee4f5cb7",
+    "tools/tests/replay/PacketStreamReplay.cpp": "76ba8fbcbde86856be23d55469591773e571c927971225ecab2ab2aab3a616f0",
+    "tools/tests/replay/ModeLoopHandoffReplay.inc": "864bfb4f5b197e788231ade8994cba759b1ad51bb5667fc183049e16cfd8664e"
+  },
+  "reference_sha256": {
+    "Ref/Mode.cpp": "2fd15fac636a59a745b57aec84c576944b98fd4d9a248cabf9b706d0de84292e",
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742"
+  },
+  "application_sha256": "68141ea2868c8ca7a13c80102ab784c6daa7698a05e46bae3dae7eed45c8ac05",
+  "deployment": {
+    "installed_executable_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+    "installed_executable_unchanged": true,
+    "candidate_deployed": false,
+    "live_login_retried": false,
+    "validation_deploy_enabled": false,
+    "user_deploy_setting_restored_to": true
+  },
+  "validation": {
+    "root": "157/157",
+    "root_seconds": 38.56,
+    "standalone": "470/470",
+    "standalone_seconds": 14.6,
+    "production_mode_loop": true,
+    "actual0091": true,
+    "original_executable_executed": false,
+    "whole_plan_complete": false
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK05.05-world-entry-build-final.log": "f590d63853d4ffcfe2950cfb04f6fe8a490798def4bdf3523005127824c563ac",
+    "docs/packets/evidence/PK05.05-world-entry-cases.log": "0d1c69081261cf4968063aaf7752c24b252d675b300bd41ed294d050abe7d145",
+    "docs/packets/evidence/PK05.05-world-entry-configure.log": "0a6cc7ec388ad6c0cb5711563bebd917752a2eef4dfe557ffdc66a056385c37f",
+    "docs/packets/evidence/PK05.05-world-entry-deployed-excerpt.log": "5db328874c99bb1def7a4d73f8c6ae7613b7973d85796428eac10bf62f01eac5",
+    "docs/packets/evidence/PK05.05-world-entry-mode-pe.txt": "dc093f203e40d82c773218c210981d2c5c55980ab3c59bb73eca82b3d349c30c",
+    "docs/packets/evidence/PK05.05-world-entry-restore-deploy-setting.log": "ff5d048d306acf8d6ee91170031611774054b7908626bc08f57ebf4563bf29b1",
+    "docs/packets/evidence/PK05.05-world-entry-root-ctest.log": "c605c7ac2488f89d303d339c994607198e7e9ad6c9b3f52b73c1e742a4d831b2",
+    "docs/packets/evidence/PK05.05-world-entry-source.txt": "1c52c8dcc3cc402bc6afc7a94e4d21ecceeb4a00fc325da695c7cf8d518f8303",
+    "docs/packets/evidence/PK05.05-world-entry-unit-build.log": "0c4293143cb186ec6809f91174cf35e729a32caff13b0958d655d340d7645e8c",
+    "docs/packets/evidence/PK05.05-world-entry-unit-ctest.log": "f5aa344ae526bf3c2f1e486b0cc2dff6332df82e52a849c6a8c7083fcaf13ca5",
+    "docs/packets/evidence/PK05.05-world-entry.md": "bd15675636d1af371d5eb7c533c992bbc9d56757ba4e9797b67adf0c1fcfd799"
+  }
+}

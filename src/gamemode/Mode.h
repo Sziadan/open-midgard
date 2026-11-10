@@ -3,6 +3,7 @@
 #include "Types.h"
 #include <vector>
 #include <string>
+#include <functional>
 
 // Forward declarations for UI/World classes
 class UITransBalloonText;
@@ -75,13 +76,20 @@ protected:
 //===========================================================================
 // CModeMgr  –  Owns the Login and Game mode instances
 //===========================================================================
+// Default services own the real modes/loading UI. Overrides retain the same
+// lifecycle loop, allowing bounded integration checks without map assets.
+struct ModeRunServices {
+    std::function<CMode*(int)> createMode;
+    std::function<void(const char*,float)> presentLoading;
+};
+
 class CModeMgr
 {
 public:
     CModeMgr();
     ~CModeMgr();
 
-    void Run(int startMode, const char* worldName);
+    void Run(int startMode, const char* worldName,const ModeRunServices* services=nullptr);
     void Switch(int newMode, const char* worldName);
     void PresentLoadingScreen(const char* message, float progress);
     msgresult_t SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra = 0);
@@ -95,6 +103,7 @@ public:
 private:
     u64 m_operationGeneration = 0;
     ModeOperationKind m_lastOperation = ModeOperationKind::None;
+    bool m_switchPending=false;
     friend struct SkillPacketReplayAccess;
     // Memory layout from HighPriest.exe.h:30965
     int m_loopCond;

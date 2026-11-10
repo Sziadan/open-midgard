@@ -1781,7 +1781,9 @@
         "docs/packets/evidence/PK05.05-implementation-boundary-2026-11-05.md",
         "docs/packets/evidence/PK05.05-map-disconnect-repair.md",
         "docs/packets/evidence/PK05.05-map-disconnect-repair.json",
-        "docs/packets/evidence/PK05.05-map-disconnect-replay.jsonl"
+        "docs/packets/evidence/PK05.05-map-disconnect-replay.jsonl",
+        "docs/packets/evidence/PK05.05-world-entry.md",
+        "docs/packets/evidence/PK05.05-world-entry-provenance.json"
       ],
       "commit_subject": "packet(PK05.05): leave map on terminal receive failure"
     },

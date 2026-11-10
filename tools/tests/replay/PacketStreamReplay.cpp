@@ -4510,6 +4510,7 @@ void GlobalChatProductionSendReplay()
 
 #include "MapReceivePreambleReplay.inc"
 #include "MapTransitionLifetimeReplay.inc"
+#include "ModeLoopHandoffReplay.inc"
 #include "CartItemWireFieldsReplay.inc"
 #include "InventoryMapEntryReplay.inc"
 #include "InventoryMutationAckReplay.inc"
@@ -4553,6 +4554,7 @@ int main(int argc,char** argv){try{
     (void)argc;(void)argv;
 #endif
     Require(CConnection::Startup(),"socket startup failed");
+    if(argc>1 && std::string(argv[1])=="--world-entry-handoff-only") {ModeLoopHandoffReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--corpse-gr2-native") { CorpseNativePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--whisper-only") {WhisperReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--auto-message-only") {AutoMessageReplay();CConnection::Cleanup();return 0;}
@@ -4694,6 +4696,7 @@ int main(int argc,char** argv){try{
     SelectedInventoryCartRouteIsolationReplay();
     MapReceivePreambleReplay();
     MapTransitionLifetimeReplay();
+    ModeLoopHandoffReplay();
     CartItemWireFieldsReplay();
     InventoryMapEntryReplay();
     InventoryMutationAckReplay();

@@ -197,6 +197,7 @@ void CModeMgr::Switch(int newMode, const char* worldName)
 {
     ++m_operationGeneration;
     m_lastOperation = ModeOperationKind::Switch;
+    m_switchPending = true;
     m_nextModeType = newMode;
     if (worldName) {
         std::strncpy(m_nextModeName, worldName, 39);
@@ -227,9 +228,10 @@ CLoginMode* CModeMgr::GetCurrentLoginMode() const
     return m_curModeType == 0 ? dynamic_cast<CLoginMode*>(m_curMode) : nullptr;
 }
 
-void CModeMgr::Run(int startMode, const char* worldName)
+void CModeMgr::Run(int startMode, const char* worldName,const ModeRunServices* services)
 {
     m_loopCond = 1;
+    m_switchPending = true;
     m_curModeType = -1;
     m_nextModeType = startMode;
     if (worldName) {
@@ -267,10 +269,13 @@ void CModeMgr::Run(int startMode, const char* worldName)
             const bool reloadCurrentMode = m_curMode
                 && m_curModeType == m_nextModeType
                 && std::strncmp(m_curModeName, m_nextModeName, sizeof(m_curModeName)) != 0;
-            if (!m_curMode || m_curModeType != m_nextModeType || reloadCurrentMode) {
+            if (!m_curMode || m_switchPending || m_curModeType != m_nextModeType || reloadCurrentMode) {
                 MainLoopWatchdogSetStage("ModeSwitch");
+                DbgLog("[Mode] applying switch generation=%llu type=%d world='%s'\n",
+                    static_cast<unsigned long long>(m_operationGeneration),m_nextModeType,m_nextModeName);
                 if (m_curMode) {
-                    DrawLoadingScreenFrame("Loading new map...", 0.01f);
+                    if(services && services->presentLoading)services->presentLoading("Loading new map...",0.01f);
+                    else DrawLoadingScreenFrame("Loading new map...", 0.01f);
                 }
                 if (m_curMode) {
                     m_curMode->OnExit();
@@ -282,7 +287,12 @@ void CModeMgr::Run(int startMode, const char* worldName)
                 std::strncpy(m_curModeName, m_nextModeName, 39);
                 m_curModeName[39] = '\0';
 
-                m_curMode = CreateModeInstance(m_curModeType);
+                // A request is consumed even when type/name match the current
+                // mode. Otherwise its terminal network latch can never clear.
+                // Consume before construction/OnInit so a new request from
+                // initialization remains pending for the next iteration.
+                m_switchPending = false;
+                m_curMode = services && services->createMode?services->createMode(m_curModeType):CreateModeInstance(m_curModeType);
                 if (m_curMode) {
                     MainLoopWatchdogSetStage("Mode::OnInit");
                     m_curMode->OnInit(m_curModeName);
