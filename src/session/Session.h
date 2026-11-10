@@ -175,6 +175,12 @@ public:
     int m_talkType=0;
     bool m_isBattleChat=false;
     std::vector<std::pair<int,int>> m_cmdOnOffSet;
+    int m_isBattle=0,m_isNoTrade=0,m_isNoShift=0,m_isNoCtrl=0;
+    int m_isWindow=0,m_bMakeMissEffect=1,m_isQuickSpell=0,m_isQuickSpell2=0;
+    int m_isShowNameTypeOld=1,m_isLogInOut=1,m_isShopping=0;
+    void LoadSourceCommandOptions();
+    bool SaveSourceCommandOptions() const;
+    void InitializeSourceCommandFlags(bool bgmPaused,int soundOn,bool tipPresent);
 
     int m_isSkillFail = 1;
     int m_isAura = 1;

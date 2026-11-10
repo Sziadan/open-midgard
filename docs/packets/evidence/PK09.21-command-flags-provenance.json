@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "date": "2026-11-10",
+  "baseline": "b275af2d81249e0ef8ecc024a159cff155b4c856",
+  "commit_subject": "packet(PK09.21): initialize source command flag state",
+  "scope": "23 source startup snapshots, source option storage/defaults and command/Tip slot lifetime; not full command UI/actions/legacy option initialization or whole packet plan",
+  "runtime_test_sha256": {
+    "src/core/SettingsIni.cpp": "eac915f1585a849e140ec71f25b1713e9f5bb9266cbc1effe146125dd2701d5f",
+    "src/main/WinMain.cpp": "886a6dcfc91ced9bece993a22152b5a93c9dd7f4a8778987c54700411c67a030",
+    "src/session/Session.cpp": "5b1546bd10cbfa5ce8beb391bea01e0625e521c8b259f234a9710eec6f62d325",
+    "src/session/Session.h": "9179dc329d1b53e0aeb1608180901d8f57a2beed614b5f16380fae255f5052a8",
+    "src/ui/UIWindowMgr.cpp": "5985a329c7910fdf808a1696f848f9ecae8421a9c6c6acce1ad2242be2d49807",
+    "src/ui/UIWindowMgr.h": "c7b0fb7320be4aaebd1ffc20b831fabd6a8f56da4b429df52d0764f5794452d2",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "75442e7cf1ab44d0a6b428426b5712ff0d16ba9f8a98232f0983b08202034d93",
+    "tools/tests/replay/SourceCommandFlagsReplay.inc": "bbbf45ce3eb03dff45424f6c89ddf6b8a96ee2c6d9d160a9caedb4a7650fb801"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/WinMain.cpp": "3cac1c7d4943d1e85b91a336dd084deaa34d01cc29cb6a1b6c3f4fa22803d39c",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437"
+  },
+  "model_data_sha256": {
+    "docs/packets/evidence/PK09.21-chat-submission-data.json": "ef0f6d12600226c4c49fa5f296d2b4f6facc41eebfb011274e492757f13ab50b",
+    "docs/packets/evidence/PK09.21-command-flags-data.json": "439597df838df0dd8ec319814ad269bdc08e890d5dbcd41017eb14623b47e70e"
+  },
+  "application_sha256": {
+    "build-mingw-preset/open-midgard.exe": "57cf65200deb9840ebc32f84d0168695a4effded865adf97914be3df0e09a87d",
+    "build-mingw-preset/packet_stream_replay_checks.exe": "de192258f8469291ad74bdf0be48a027eb3616d7bee456473f915a288ae3a7ff"
+  },
+  "deployed_read_only_sha256": {
+    "D:/Spel/OldRO/open-midgard.exe": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-command-flags-build.log": "1fb351f9caf215d45d44f58d71d1a24089270a119505283c1aeeca9ce3da3244",
+    "docs/packets/evidence/PK09.21-command-flags-cases.log": "48aa70817b8c25e0cd8e86bdd589dd25a88d9e60610809307d2513959bfac0cd",
+    "docs/packets/evidence/PK09.21-command-flags-configure.log": "f2db43ae859a192f08f87664959559d92412906fb761455fb2bbfde252b80a89",
+    "docs/packets/evidence/PK09.21-command-flags-data-check.log": "f695e606f96149b39949a6bd3cb1eec808d607f08744a98950aef9fa1e317e4a",
+    "docs/packets/evidence/PK09.21-command-flags-data.json": "439597df838df0dd8ec319814ad269bdc08e890d5dbcd41017eb14623b47e70e",
+    "docs/packets/evidence/PK09.21-command-flags-focused.log": "5b73ff79d01edaf14ea6ecf790c321e79f24dc61689b64b3be917469a9e2ddd1",
+    "docs/packets/evidence/PK09.21-command-flags-pe.txt": "1483c789642e19e2ec9a80743e7295e1acc1e0e50013bbfbb1285761e16ecabd",
+    "docs/packets/evidence/PK09.21-command-flags-plan-check.log": "9db87cb07fff32518d0fee379cde3ba582fd95c76703109c3267dff701ce2d2c",
+    "docs/packets/evidence/PK09.21-command-flags-restore-deploy-setting.log": "15f351fd9af104f9cac80c7b864d5370d719c8c4894cff20dd95c1c3032c37b5",
+    "docs/packets/evidence/PK09.21-command-flags-root-ctest.log": "cf862b08490a6ddcc1adea661fcf5e1ed44b0360de74828ce4f02d50756a74c1",
+    "docs/packets/evidence/PK09.21-command-flags-source.txt": "dc8c5ed325a7b718f1e6c1f395c0d887b59662bd049e55af32dcd7108da92883",
+    "docs/packets/evidence/PK09.21-command-flags-startup-order.log": "21c00b0fcb157c9a57ec2ed3a8b9bae21474bd88dce06b2d5c8124ad65c7b0f2",
+    "docs/packets/evidence/PK09.21-command-flags-ui-leads.json": "6aeb50055b8186adc4742b68b7c0f985c1a485ef56c20e0db65a7834070109c4",
+    "docs/packets/evidence/PK09.21-command-flags-unit-build.log": "772a0b8aa8cc2270201d75cc4d5459b1772b5afcb2903f0c5459e6dbbc95f414",
+    "docs/packets/evidence/PK09.21-command-flags-unit-ctest.log": "76f90dfa4073cd6e586847ccbb3d0d63d24fb2f6018c77271b9e3fe3abca9206",
+    "docs/packets/evidence/PK09.21-command-flags.md": "0d22cf209a3a41d1adbf4605989bd3351eaf322bcf4b55f8955f292f2dc74103"
+  }
+}

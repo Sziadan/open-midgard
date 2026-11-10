@@ -1,0 +1,475 @@
+## Ref/Session.cpp:20230
+20230: // ================================================
+20231: // Original Signature: public: void __thiscall CSession::InitOptionWithRegistry(void)
+20232: // Decompiled from address: 0x64c040
+20233: // ================================================
+20234: void __thiscall CSession::InitOptionWithRegistry(CSession *this)
+20235: {
+20236:   LSTATUS (__stdcall *v2)(HKEY, LPCSTR, LPDWORD, LPDWORD, LPBYTE, LPDWORD); // esi
+20237:   int *p_m_bgmIsPaused; // edi
+20238:   int *p_m_monsterSnapOn_Skill; // edi
+20239:   int *p_m_monsterSnapOn_NoSkill; // edi
+20240:   int *p_m_isItemSnap; // edi
+20241:   int *p_m_isShowWhisperWnd; // edi
+20242:   int *p_m_isShowWhisperWnd_Friend; // edi
+20243:   int *p_m_isPlayWhisperOpenSound; // edi
+20244:   int m_monsterSnapOn_NoSkill; // eax
+20245:   int *p_m_bMakeMissEffect; // edi
+20246:   unsigned int v12; // edi
+20247:   int *p_m_isNoCtrl; // edi
+20248:   std::vector<std::pair<int,enum TALKTYPE>> *p_m_cmdOnOffSet; // esi
+20249:   std::pair<int,enum TALKTYPE> *v15; // ecx
+20250:   std::pair<int,enum TALKTYPE> *v16; // ecx
+20251:   std::pair<int,enum TALKTYPE> *v17; // ecx
+20252:   std::pair<int,enum TALKTYPE> *v18; // ecx
+20253:   std::pair<int,enum TALKTYPE> *v19; // ecx
+20254:   std::pair<int,enum TALKTYPE> *v20; // ecx
+20255:   std::pair<int,enum TALKTYPE> *v21; // ecx
+20256:   std::pair<int,enum TALKTYPE> *v22; // ecx
+20257:   std::pair<int,enum TALKTYPE> *v23; // ecx
+20258:   std::pair<int,enum TALKTYPE> *v24; // ecx
+20259:   std::pair<int,enum TALKTYPE> *v25; // ecx
+20260:   std::pair<int,enum TALKTYPE> *v26; // edx
+20261:   std::pair<int,enum TALKTYPE> *v27; // edx
+20262:   std::pair<int,enum TALKTYPE> *v28; // ecx
+20263:   std::pair<int,enum TALKTYPE> *v29; // ecx
+20264:   std::pair<int,enum TALKTYPE> *v30; // eax
+20265:   int v31; // ecx
+20266:   std::pair<int,enum TALKTYPE> *v32; // edi
+20267:   std::pair<int,enum TALKTYPE> *First; // edx
+20268:   unsigned int v34; // ecx
+20269:   int v35; // eax
+20270:   int v36; // eax
+20271:   HKEY__ *v37; // eax
+20272:   std::pair<int,enum TALKTYPE> *v38; // ebx
+20273:   std::pair<int,enum TALKTYPE> *v39; // ebx
+20274:   std::pair<int,enum TALKTYPE> *v40; // edx
+20275:   std::pair<int,enum TALKTYPE> *v41; // ecx
+20276:   std::pair<int,enum TALKTYPE> *v42; // eax
+20277:   std::pair<int,enum TALKTYPE> *v43; // eax
+20278:   std::pair<int,enum TALKTYPE> *Last; // [esp-Ch] [ebp-2C0h]
+20279:   std::pair<int,enum TALKTYPE> *v45; // [esp-Ch] [ebp-2C0h]
+20280:   std::pair<int,enum TALKTYPE> *v46; // [esp-Ch] [ebp-2C0h]
+20281:   std::pair<int,enum TALKTYPE> *v47; // [esp-Ch] [ebp-2C0h]
+20282:   std::pair<int,enum TALKTYPE> *v48; // [esp-Ch] [ebp-2C0h]
+20283:   std::pair<int,enum TALKTYPE> *v49; // [esp-Ch] [ebp-2C0h]
+20284:   char OptionPath[512]; // [esp+Ch] [ebp-2A8h] BYREF
+20285:   char skinName[132]; // [esp+20Ch] [ebp-A8h] BYREF
+20286:   HKEY__ *hResultKey; // [esp+290h] [ebp-24h] BYREF
+20287:   unsigned int v53; // [esp+294h] [ebp-20h]
+20288:   int streamVolume; // [esp+298h] [ebp-1Ch] BYREF
+20289:   int soundVolume; // [esp+29Ch] [ebp-18h] BYREF
+20290:   unsigned int REG_TYPE; // [esp+2A0h] [ebp-14h] BYREF
+20291:   unsigned int DATALENGTH; // [esp+2A4h] [ebp-10h] BYREF
+20292:   HKEY__ *hKey; // [esp+2A8h] [ebp-Ch] BYREF
+20293:   std::pair<int,enum TALKTYPE> _X; // [esp+2ACh] [ebp-8h] BYREF
+20294:
+20295:   strcpy(OptionPath, g_regPath);
+20296:   strcat(OptionPath, g_optionPath);
+20297:   if ( RegOpenKeyExA(HKEY_LOCAL_MACHINE, OptionPath, 0, 1u, &hResultKey) )
+20298:   {
+20299:     this->m_fogOn = 1;
+20300:     this->m_isEffectOn = 1;
+20301:     this->m_bgmIsPaused = 0;
+20302:     Set2DVolume(100);
+20303:     Set3DVolume(100);
+20304:     g_isSoundOn = 1;
+20305:     SetStreamVolume(100);
+20306:     this->m_onMerUserAI = 0;
+20307:     this->m_onHoUserAI = 0;
+20308:   }
+20309:   else
+20310:   {
+20311:     RegCloseKey(hResultKey);
+20312:     if ( !RegOpenKeyExA(HKEY_LOCAL_MACHINE, OptionPath, 0, 1u, &hKey) )
+20313:     {
+20314:       REG_TYPE = 4;
+20315:       DATALENGTH = 4;
+20316:       v2 = RegQueryValueExA;
+20317:       if ( RegQueryValueExA(hKey, aIseffecton, 0, &REG_TYPE, (LPBYTE)&this->m_isEffectOn, &DATALENGTH) )
+20318:         this->m_isEffectOn = 1;
+20319:       p_m_bgmIsPaused = &this->m_bgmIsPaused;
+20320:       if ( RegQueryValueExA(hKey, aBgmispaused, 0, &REG_TYPE, (LPBYTE)&this->m_bgmIsPaused, &DATALENGTH) )
+20321:         *p_m_bgmIsPaused = 0;
+20322:       if ( RegQueryValueExA(hKey, aIssoundon, 0, &REG_TYPE, (LPBYTE)&g_isSoundOn, &DATALENGTH) )
+20323:         g_isSoundOn = 1;
+20324:       if ( RegQueryValueExA(hKey, aStreamvolume, 0, &REG_TYPE, (LPBYTE)&streamVolume, &DATALENGTH) )
+20325:         streamVolume = 100;
+20326:       if ( RegQueryValueExA(hKey, aSoundvolume, 0, &REG_TYPE, (LPBYTE)&soundVolume, &DATALENGTH) )
+20327:         soundVolume = 100;
+20328:       if ( RegQueryValueExA(
+20329:              hKey,
+20330:              aMBautoopendeta,
+20331:              0,
+20332:              &REG_TYPE,
+20333:              (LPBYTE)&this->m_bAutoOpenDetailWindowIfLowMemory,
+20334:              &DATALENGTH) )
+20335:       {
+20336:         this->m_bAutoOpenDetailWindowIfLowMemory = 1;
+20337:       }
+20338:       this->m_isEffectOn = this->m_isEffectOn != 0;
+20339:       g_isSoundOn = g_isSoundOn != 0;
+20340:       *p_m_bgmIsPaused = *p_m_bgmIsPaused != 0;
+20341:       g_session.m_BgmVolume = streamVolume;
+20342:       SetStreamVolume(streamVolume);
+20343:       Set2DVolume(soundVolume);
+20344:       Set3DVolume(soundVolume);
+20345:       p_m_monsterSnapOn_Skill = &this->m_monsterSnapOn_Skill;
+20346:       if ( RegQueryValueExA(hKey, aMMonstersnapon, 0, &REG_TYPE, (LPBYTE)&this->m_monsterSnapOn_Skill, &DATALENGTH) )
+20347:         *p_m_monsterSnapOn_Skill = 1;
+20348:       if ( *p_m_monsterSnapOn_Skill )
+20349:         *p_m_monsterSnapOn_Skill = 1;
+20350:       p_m_monsterSnapOn_NoSkill = &this->m_monsterSnapOn_NoSkill;
+20351:       if ( RegQueryValueExA(hKey, aMMonstersnapon_0, 0, &REG_TYPE, (LPBYTE)&this->m_monsterSnapOn_NoSkill, &DATALENGTH) )
+20352:         *p_m_monsterSnapOn_NoSkill = 0;
+20353:       if ( *p_m_monsterSnapOn_NoSkill )
+20354:         *p_m_monsterSnapOn_NoSkill = 1;
+20355:       p_m_isItemSnap = &this->m_isItemSnap;
+20356:       if ( RegQueryValueExA(hKey, aMIsitemsnap, 0, &REG_TYPE, (LPBYTE)&this->m_isItemSnap, &DATALENGTH) )
+20357:         *p_m_isItemSnap = 0;
+20358:       if ( *p_m_isItemSnap )
+20359:         *p_m_isItemSnap = 1;
+20360:       p_m_isShowWhisperWnd = &this->m_isShowWhisperWnd;
+20361:       if ( RegQueryValueExA(hKey, aMIsshowwhisper, 0, &REG_TYPE, (LPBYTE)&this->m_isShowWhisperWnd, &DATALENGTH) )
+20362:         *p_m_isShowWhisperWnd = 1;
+20363:       if ( *p_m_isShowWhisperWnd )
+20364:         *p_m_isShowWhisperWnd = 1;
+20365:       p_m_isShowWhisperWnd_Friend = &this->m_isShowWhisperWnd_Friend;
+20366:       if ( RegQueryValueExA(
+20367:              hKey,
+20368:              aMIsshowwhisper_0,
+20369:              0,
+20370:              &REG_TYPE,
+20371:              (LPBYTE)&this->m_isShowWhisperWnd_Friend,
+20372:              &DATALENGTH) )
+20373:       {
+20374:         *p_m_isShowWhisperWnd_Friend = 1;
+20375:       }
+20376:       if ( *p_m_isShowWhisperWnd_Friend )
+20377:         this->m_isShowWhisperWnd = 1;
+20378:       p_m_isPlayWhisperOpenSound = &this->m_isPlayWhisperOpenSound;
+20379:       if ( RegQueryValueExA(hKey, aMIsplaywhisper, 0, &REG_TYPE, (LPBYTE)&this->m_isPlayWhisperOpenSound, &DATALENGTH) )
+20380:         *p_m_isPlayWhisperOpenSound = 1;
+20381:       if ( *p_m_isPlayWhisperOpenSound )
+20382:         *p_m_isPlayWhisperOpenSound = 1;
+20383:       m_monsterSnapOn_NoSkill = this->m_monsterSnapOn_NoSkill;
+20384:       this->m_isMonsterSnap = 0;
+20385:       if ( m_monsterSnapOn_NoSkill )
+20386:         this->m_isMonsterSnap = 1;
+20387:       p_m_bMakeMissEffect = &this->m_bMakeMissEffect;
+20388:       if ( RegQueryValueExA(hKey, aMBmakemisseffe, 0, &REG_TYPE, (LPBYTE)&this->m_bMakeMissEffect, &DATALENGTH) )
+20389:         *p_m_bMakeMissEffect = 1;
+20390:       else
+20391:         *p_m_bMakeMissEffect = *p_m_bMakeMissEffect != 0;
+20392:       if ( RegQueryValueExA(hKey, aGIsfixedcamera, 0, &REG_TYPE, (LPBYTE)&g_isFixedCamera, &DATALENGTH) )
+20393:         g_isFixedCamera = 0;
+20394:       else
+20395:         g_isFixedCamera = g_isFixedCamera != 0;
+20396:       g_outdoorViewLatitude = -45.0;
+20397:       g_outdoorViewDistance = 500.0;
+20398:       g_indoorViewLatitude = -45.0;
+20399:       g_indoorViewDistance = 500.0;
+20400:       REG_TYPE = 1;
+20401:       DATALENGTH = 128;
+20402:       if ( RegQueryValueExA(hKey, aSkinname, 0, &REG_TYPE, (LPBYTE)skinName, &DATALENGTH) )
+20403:       {
+20404:         strcpy(skinName, aBasicSkin);
+20405:         v2 = RegQueryValueExA;
+20406:       }
+20407:       v12 = strlen(skinName);
+20408:       v53 = v12;
+20409:       if ( std::string::_Grow(&g_skinMgr.m_savedSkinName, v12, 1u) )
+20410:       {
+20411:         qmemcpy(g_skinMgr.m_savedSkinName._Ptr, skinName, v12);
+20412:         std::string::_Eos(&g_skinMgr.m_savedSkinName, v12);
+20413:         v2 = RegQueryValueExA;
+20414:       }
+20415:       p_m_isNoCtrl = &this->m_isNoCtrl;
+20416:       if ( v2(hKey, aMIsnoctrl, 0, &REG_TYPE, (LPBYTE)&this->m_isNoCtrl, &DATALENGTH) )
+20417:         *p_m_isNoCtrl = 0;
+20418:       if ( *p_m_isNoCtrl )
+20419:         *p_m_isNoCtrl = 1;
+20420:       if ( v2(hKey, aGIsgravityid, 0, &REG_TYPE, (LPBYTE)&g_isGravityID, &DATALENGTH) )
+20421:         g_isGravityID = 0;
+20422:       RegCloseKey(hKey);
+20423:     }
+20424:   }
+20425:   LOBYTE(streamVolume) = g_windowMgr.m_tipOfTheDayWnd != 0;
+20426:   p_m_cmdOnOffSet = &this->m_cmdOnOffSet;
+20427:   Last = this->m_cmdOnOffSet._Last;
+20428:   _X.first = g_session.m_bgmIsPaused == 0;
+20429:   _X.second = TT_MUSIC_ON_OFF;
+20430:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, Last, 1u, &_X);
+20431:   v15 = this->m_cmdOnOffSet._Last;
+20432:   _X.first = g_session.m_isEffectOn;
+20433:   _X.second = TT_EFFECT_ON_OFF;
+20434:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v15, 1u, &_X);
+20435:   v16 = this->m_cmdOnOffSet._Last;
+20436:   _X.first = g_isSoundOn;
+20437:   _X.second = TT_EFFECT_SOUND_ON_OFF;
+20438:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v16, 1u, &_X);
+20439:   v17 = this->m_cmdOnOffSet._Last;
+20440:   _X.first = g_session.m_isBattle;
+20441:   _X.second = TT_BATTLE_ON_OFF;
+20442:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v17, 1u, &_X);
+20443:   v45 = this->m_cmdOnOffSet._Last;
+20444:   _X.first = (unsigned __int8)streamVolume;
+20445:   _X.second = TT_OPEN_TIP;
+20446:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v45, 1u, &_X);
+20447:   v18 = this->m_cmdOnOffSet._Last;
+20448:   _X.first = g_session.m_isNoTrade;
+20449:   _X.second = TT_NOTRADE_ON_OFF;
+20450:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v18, 1u, &_X);
+20451:   v19 = this->m_cmdOnOffSet._Last;
+20452:   _X.first = g_session.m_isNoShift;
+20453:   _X.second = TT_NOSHIFT_ON_OFF;
+20454:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v19, 1u, &_X);
+20455:   _X.first = g_session.m_isNoCtrl;
+20456:   _X.second = TT_NOCTRL_ON_OFF;
+20457:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, this->m_cmdOnOffSet._Last, 1u, &_X);
+20458:   v20 = this->m_cmdOnOffSet._Last;
+20459:   _X.first = g_session.m_isSkillFail;
+20460:   _X.second = TT_SKILLFAIL_ON_OFF;
+20461:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v20, 1u, &_X);
+20462:   v21 = this->m_cmdOnOffSet._Last;
+20463:   _X.second = TT_NOTALKMSG_ON_OFF;
+20464:   _X.first = g_session.m_isNoTalkMsg == 0;
+20465:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v21, 1u, &_X);
+20466:   v22 = this->m_cmdOnOffSet._Last;
+20467:   _X.second = TT_NOTALKMSG2_ON_OFF;
+20468:   _X.first = g_session.m_isNoTalkMsg2 == 0;
+20469:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v22, 1u, &_X);
+20470:   v23 = this->m_cmdOnOffSet._Last;
+20471:   _X.first = g_session.m_isAura;
+20472:   _X.second = TT_AURA_ON_OFF;
+20473:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v23, 1u, &_X);
+20474:   v24 = this->m_cmdOnOffSet._Last;
+20475:   _X.first = g_session.m_isWindow;
+20476:   _X.second = TT_WINDOW_ON_OFF;
+20477:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v24, 1u, &_X);
+20478:   v25 = this->m_cmdOnOffSet._Last;
+20479:   _X.first = g_session.m_bMakeMissEffect;
+20480:   _X.second = TT_MISS_EFFECT_ON_OFF;
+20481:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v25, 1u, &_X);
+20482:   v46 = this->m_cmdOnOffSet._Last;
+20483:   _X.first = 0;
+20484:   _X.second = TT_SET1_ON_OFF;
+20485:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v46, 1u, &_X);
+20486:   _X.first = 0;
+20487:   v47 = this->m_cmdOnOffSet._Last;
+20488:   _X.second = TT_SET2_ON_OFF;
+20489:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v47, 1u, &_X);
+20490:   v26 = this->m_cmdOnOffSet._Last;
+20491:   _X.first = g_session.m_isQuickSpell;
+20492:   _X.second = TT_QUICKSPELL_ON_OFF;
+20493:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v26, 1u, &_X);
+20494:   v27 = this->m_cmdOnOffSet._Last;
+20495:   _X.first = g_session.m_isQuickSpell2;
+20496:   _X.second = TT_QUICKSPELL2_ON_OFF;
+20497:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v27, 1u, &_X);
+20498:   v48 = this->m_cmdOnOffSet._Last;
+20499:   _X.first = 0;
+20500:   _X.second = TT_QUICKSPELL3_ON_OFF;
+20501:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v48, 1u, &_X);
+20502:   v49 = this->m_cmdOnOffSet._Last;
+20503:   _X.first = g_session.m_isShowNameTypeOld;
+20504:   _X.second = TT_SHOW_NAME_TYPE;
+20505:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v49, 1u, &_X);
+20506:   v28 = this->m_cmdOnOffSet._Last;
+20507:   _X.first = g_session.m_fogOn;
+20508:   _X.second = TT_FOG;
+20509:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v28, 1u, &_X);
+20510:   v29 = this->m_cmdOnOffSet._Last;
+20511:   _X.first = g_session.m_isLogInOut;
+20512:   _X.second = TT_LOGINOUT_ON_OFF;
+20513:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v29, 1u, &_X);
+20514:   v30 = this->m_cmdOnOffSet._Last;
+20515:   v31 = this->m_cmdOnOffSet._End - v30;
+20516:   _X.first = g_session.m_isShopping;
+20517:   _X.second = TT_SHOPPING_ON_OFF;
+20518:   v32 = v30;
+20519:   if ( v31 )
+20520:   {
+
+## Ref/Session.cpp:24390
+24390:   this->m_expDivType = 0;
+24391:   this->m_itemCollectType = 0;
+24392:   this->m_itemDivType = 0;
+24393:   this->m_isItemSnap = 0;
+24394:   this->m_isMonsterSnap = 1;
+24395:   this->m_monsterSnapOn_Skill = 1;
+24396:   this->m_monsterSnapOn_NoSkill = 0;
+24397:   this->m_bMakeMissEffect = 1;
+24398:   this->m_isNoShift = 0;
+24399:   this->m_isQuickSpell = 0;
+24400:   this->m_isQuickSpell2 = 0;
+24401:   this->m_isBattle = 0;
+24402:   this->m_isBattleChat = 0;
+24403:   this->m_isAura = 1;
+24404:   this->m_isNoCtrl = 0;
+24405:   this->m_isSkillFail = 1;
+24406:   this->m_isLogInOut = 1;
+24407:   this->m_isShopping = 0;
+24408:   this->m_isNoTalkMsg = 0;
+24409:   this->m_isNoTalkMsg2 = 0;
+24410:   this->m_isNoTrade = 0;
+24411:   this->m_isBmChat = 0;
+24412:   this->m_isStartBmChat = 0;
+24413:   this->m_isWindow = 0;
+24414:   g_session.m_isQ2begin = 0;
+24415:   this->m_isShowNameTypeOld = 1;
+24416:   this->RandomScreenFlag = 1;
+
+## Ref/Session.cpp:25810
+25810:   }
+25811:   strcpy(OptionPath, g_regPath);
+25812:   strcat(OptionPath, g_optionPath);
+25813:   if ( !RegCreateKeyExA(HKEY_LOCAL_MACHINE, OptionPath, 0, 0, 0, 0xF003Fu, 0, &hKey, &dwDisposition) )
+25814:   {
+25815:     v2 = numExAid;
+25816:     soundVolume = g_mssVar.digital2DVolume;
+25817:     RegSetValueExA(hKey, aIseffecton, 0, 4u, (const BYTE *)(numExAid + 9352), 4u);
+25818:     RegSetValueExA(hKey, aBgmispaused, 0, 4u, (const BYTE *)(v2 + 9360), 4u);
+25819:     RegSetValueExA(hKey, aIssoundon, 0, 4u, (const BYTE *)&g_isSoundOn, 4u);
+25820:     RegSetValueExA(hKey, aStreamvolume, 0, 4u, (const BYTE *)&g_session.m_BgmVolume, 4u);
+25821:     RegSetValueExA(hKey, aSoundvolume, 0, 4u, (const BYTE *)&soundVolume, 4u);
+25822:     RegSetValueExA(hKey, aMMonstersnapon, 0, 4u, (const BYTE *)(v2 + 3376), 4u);
+25823:     RegSetValueExA(hKey, aMMonstersnapon_0, 0, 4u, (const BYTE *)(v2 + 3380), 4u);
+25824:     RegSetValueExA(hKey, aMIsitemsnap, 0, 4u, (const BYTE *)(v2 + 3368), 4u);
+25825:     RegSetValueExA(hKey, aMIsshowwhisper, 0, 4u, (const BYTE *)(v2 + 3356), 4u);
+25826:     RegSetValueExA(hKey, aMIsshowwhisper_0, 0, 4u, (const BYTE *)(v2 + 3364), 4u);
+25827:     RegSetValueExA(hKey, aMIsplaywhisper, 0, 4u, (const BYTE *)(v2 + 3360), 4u);
+25828:     RegSetValueExA(hKey, aGOutdoorviewla, 0, 4u, (const BYTE *)&g_outdoorViewLatitude, 4u);
+25829:     RegSetValueExA(hKey, aGOutdoorviewdi, 0, 4u, (const BYTE *)&g_outdoorViewDistance, 4u);
+25830:     RegSetValueExA(hKey, aGIndoorviewlat, 0, 4u, (const BYTE *)&g_indoorViewLatitude, 4u);
+25831:     RegSetValueExA(hKey, aGIndoorviewdis, 0, 4u, (const BYTE *)&g_indoorViewDistance, 4u);
+25832:     RegSetValueExA(hKey, aMBmakemisseffe, 0, 4u, (const BYTE *)(v2 + 9396), 4u);
+25833:     RegSetValueExA(hKey, aGIsfixedcamera, 0, 4u, (const BYTE *)&g_isFixedCamera, 4u);
+25834:     RegSetValueExA(hKey, aMBautoopendeta, 0, 4u, (const BYTE *)(v2 + 9404), 4u);
+25835:     v3 = CSkinMgr::GetCurrentSkinName(&g_skinMgr);
+
+## Ref/Session.cpp:25878
+25878:       }
+25879:       while ( v9 != v10 );
+25880:     }
+25881:     RegSetValueExA(hKey, aOnhouserai, 0, 4u, (const BYTE *)(v2 + 9804), 4u);
+25882:     RegSetValueExA(hKey, aOnmeruserai, 0, 4u, (const BYTE *)(v2 + 9948), 4u);
+25883:     RegSetValueExA(hKey, aMIsnoctrl, 0, 4u, (const BYTE *)(v2 + 9304), 4u);
+25884:     RegSetValueExA(hKey, aGIsgravityid, 0, 4u, (const BYTE *)&g_isGravityID, 4u);
+25885:     GetWindowRect(g_hMainWnd, &windowRect);
+
+## Ref/Session.cpp:16804
+16804: // Decompiled from address: 0x64ca40
+16805: // ================================================
+16806: void __thiscall CSession::Create(CSession *this)
+16807: {
+16808:   DWORD Time; // eax
+16809:
+16810:   Time = timeGetTime();
+16811:   srand(Time);
+16812:   CSession::ChangeXorValue(this);
+16813:   CSession::InitTable(this);
+16814:   CSession::InitOptionWithRegistry(this);
+16815: }
+16816:
+16817:
+16818: // ================================================
+16819: // Original Signature: public: void __thiscall CSession::DecItem(unsigned long,int)
+16820: // Decompiled from address: 0x659350
+16821: // ================================================
+16822: void __thiscall CSession::DecItem(CSession *this, unsigned int index, int numItem)
+16823: {
+16824:   std::list<ITEM_INFO>::_Node *Head; // eax
+16825:   std::list<ITEM_INFO>::_Node *Next; // esi
+
+## Ref/WinMain.cpp:102
+102:           0,
+103:           0,
+104:           0,
+105:           0,
+106:           (LPSTARTUPINFOA)&VersionInformation[88],
+107:           (LPPROCESS_INFORMATION)&dstPath[4]);
+108:         return 0;
+109:       }
+110:     }
+111:   }
+112:   CSession::Init(&g_session);
+113:   strcpy(&srcPath[8], aSetupHpExe);
+114:   strcpy(dstPath, aSetupSetupHpEx);
+115:   while ( !ReadRegistry() )
+
+## Ref/WinMain.cpp:150
+150:     }
+151:     else
+152:     {
+153:       wTimerRes = tc.wPeriodMin;
+154:     }
+155:     timeBeginPeriod(wTimerRes);
+156:   }
+157:   ResetTimer();
+158:   CoInitialize(0);
+159:   CSession::Create(&g_session);
+160:   memset(VersionInformation, 0, sizeof(VersionInformation));
+161:   *(_DWORD *)VersionInformation = 156;
+162:   if ( (GetVersionExA((LPOSVERSIONINFOA)VersionInformation)
+163:      || (*(_DWORD *)VersionInformation = 148, GetVersionExA((LPOSVERSIONINFOA)VersionInformation)))
+164:     && *(_DWORD *)&VersionInformation[16] == 1 )
+165:   {
+166:     v12 = SearchProcessIn9X();
+167:   }
+168:   else
+169:   {
+170:     v12 = SearchProcessInNT();
+171:   }
+172:   if ( !v12 )
+173:   {
+174:     MessageBoxA(g_hMainWnd, aInvalidExeName, 0, 0);
+175:     return 0;
+176:   }
+177:   v13 = g_resMgr();
+178:   CResMgr::ReadResNameTable(v13, resNameTable);
+179:   if ( !InitApp(hInstance, nCmdShow) )
+180:     return 1;
+181:   if ( g_registry.m_soundMode && !InitMSS() )
+182:   {
+183:     ErrorMsg(aAudioSystemIni);
+184:     g_soundMode = 0;
+185:     return 1;
+
+## Ref/UIWindowMgr.cpp:2680
+2680:       break;
+2681:     case 0x70u:
+2682:       if ( !this->m_commandListWnd )
+2683:         return 0;
+2684:       UIWindowMgr::PostQuit(this, this->m_commandListWnd);
+2685:       this->m_commandListWnd = 0;
+2686:       v5 = 1;
+2687:       break;
+
+## Ref/UIWindowMgr.cpp:7091
+7091:       goto LABEL_668;
+7092:     case 112:
+7093:       m_basicInfoWnd = (UIBasicInfoWnd *)this->m_commandListWnd;
+7094:       if ( m_basicInfoWnd )
+7095:         goto LABEL_695;
+7096:       v135 = (UICommandListWnd *)operator new(0x7Cu);
+7097:       windowId = (int)v135;
+7098:       v191 = 104;
+7099:       if ( v135 )
+7100:         m_basicInfoWnd = (UIBasicInfoWnd *)UICommandListWnd::UICommandListWnd(v135);
+7101:       else
+7102:         m_basicInfoWnd = 0;
+7103:       v191 = -1;
+7104:       this->m_commandListWnd = (UICommandListWnd *)m_basicInfoWnd;
+7105:       UIWindow::Create(m_basicInfoWnd, 250, 200);
+7106:       goto LABEL_667;
+7107:     case 113:
+7108:       if ( g_session.m_homunJob == -1 )
+7109:         return m_basicInfoWnd;
+7110:       m_basicInfoWnd = (UIBasicInfoWnd *)this->m_homunInfoWnd;
+7111:       if ( m_basicInfoWnd )
+7112:         goto LABEL_695;
+7113:       v136 = (UIHomunInfoWnd *)operator new(0x7Cu);
+7114:       windowId = (int)v136;
+7115:       v191 = 105;
+7116:       if ( v136 )

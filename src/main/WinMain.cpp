@@ -509,6 +509,7 @@ int ReadRegistry()
     EnsureOpenMidgardIniDefaults();
     g_session.LoadBattleMessageOptions();
     g_session.LoadWhisperOptions();
+    g_session.LoadSourceCommandOptions();
     ApplyConfiguredWindowSize();
     g_windowMgr.LoadChatWindowPreferences();
     (void)GetConfiguredRenderBackend();
@@ -817,6 +818,7 @@ static bool InitClientSystems()
         ErrorMsg("UI system initialization failed.");
         return false;
     }
+    g_windowMgr.InitializeSourceCommandFlags();
 
     if (!g_buabridge.Initialize()) {
         ErrorMsg("Lua runtime initialization failed.");
@@ -992,6 +994,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     g_windowMgr.Reset();
     g_windowMgr.SaveChatWindowPreferences();
     g_session.SaveWhisperOptions();
+    g_session.SaveSourceCommandOptions();
     DbgLog("[Shutdown] UIWindowMgr::Reset done\n");
     DbgLog("[Shutdown] Lua shutdown start\n");
     g_buabridge.Shutdown();

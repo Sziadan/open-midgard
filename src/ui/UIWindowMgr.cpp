@@ -1831,7 +1831,6 @@ void UIWindowMgr::AddWindowFront(UIWindow* window)
         return;
     }
 
-    if(window==m_commandListWnd)m_commandListWnd=nullptr;
     m_children.remove(window);
     m_children.push_front(window);
     window->SetShow(1);
@@ -1847,6 +1846,9 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if (!window) {
         return;
     }
+
+    if(window==m_commandListWnd)m_commandListWnd=nullptr;
+    if(window==m_tipOfTheDayWnd)m_tipOfTheDayWnd=nullptr;
 
     const auto belongsToWindow=[window](const UIWindow* candidate) {
         for (auto* current=candidate;current;current=current->m_parent) if (current==window) return true;
@@ -2590,6 +2592,11 @@ void UIWindowMgr::HideLoadingScreen()
     }
     m_loadedWallpaperPath.clear();
     SetWallpaper(nullptr);
+}
+
+void UIWindowMgr::InitializeSourceCommandFlags()
+{
+    g_session.InitializeSourceCommandFlags(CAudio::GetInstance()->IsBgmPaused(),g_isSoundOn,m_tipOfTheDayWnd!=nullptr);
 }
 
 void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t noticeType, msgparam_t talker) {

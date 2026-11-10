@@ -1,0 +1,1 @@
+PASS: static production call order: ReadRegistry/source options -> InitClientSystems/InitMSS -> saved audio -> successful UI Init -> global session flag bridge; shutdown saves source options. Full AppInit/hardware not executed.

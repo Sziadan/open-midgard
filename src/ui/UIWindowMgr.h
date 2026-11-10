@@ -228,6 +228,8 @@ public:
     void ClearChatMsg() { m_chatMsg.clear(); }
     std::string m_chatMsg;
     UIWindow* m_commandListWnd=nullptr;
+    UIWindow* m_tipOfTheDayWnd=nullptr;
+    void InitializeSourceCommandFlags();
 
     UIWindow* MakeWindow(int windowId);
     bool ToggleWindow(int windowId);

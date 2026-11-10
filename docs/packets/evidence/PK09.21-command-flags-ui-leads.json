@@ -1,0 +1,458 @@
+{
+  "schema": 1,
+  "status": "PREPARATION_ONLY_NOT_UI_ACCEPTANCE",
+  "baseline": "b275af2d",
+  "root_instruction": "Verify selected literal strings, enum values, service branches and click150 handling before implementation; do not treat the source/delegated inventories as complete PE verification. Snapshot/lifetime leaf does not implement/render this window.",
+  "window": {
+    "schema": 1,
+    "primary_sources": [
+      "Ref/UIFrameWnd2.cpp",
+      "Ref/UIWindowMgr.cpp",
+      "Ref/Session.cpp",
+      "Ref/GameMode.cpp"
+    ],
+    "window": {
+      "class": "UICommandListWnd",
+      "constructor": {
+        "address": "0x00490580",
+        "facts": "m_curItem=-1; m_itemHorzNum=2"
+      },
+      "owner_open": {
+        "source": "Ref/UIWindowMgr.cpp case 112",
+        "facts": "lazy allocates/stores m_commandListWnd; UIWindow::Create(...,250,200); existing window is shown again"
+      },
+      "owner_close": {
+        "source": "Ref/UIWindowMgr.cpp case 0x70",
+        "facts": "PostQuit on m_commandListWnd and clears pointer"
+      },
+      "on_create": {
+        "address": "0x004905e0",
+        "facts": "creates 3-state tab and scrollbar; m_itemVertNum=(cy-38)/20; two bitmap buttons use IDs 134 and 135; dimensions at owner are 250x200, so 8 visible rows x 2 columns = 16 slots/page"
+      },
+      "on_draw": {
+        "address": "0x004909b0",
+        "facts": "tab state 0 selects m_cmdOnOffTable, state 1 m_cmdExeTable, state 2 m_cmdWinTable; status checkbox image for each row is looked up by row TALKTYPE in m_cmdOnOffSet"
+      },
+      "click": {
+        "address": "0x004912a0",
+        "facts": "state 0/1 selected row dispatches g_modeMgr.m_curMode->SendMsg(47, row.second, 0, 0); state 2 calls UIWindowMgr::ProcessPushButton using selected window command ID"
+      },
+      "window_sendmsg": {
+        "address": "0x00491db0",
+        "facts": "handles scrollbar messages; child close button ID 135 deletes window ID 0x70"
+      },
+      "persistence": "No command-list-specific persisted position/state found in inspected owner/open/close paths; manager constructs lazily, closes via PostQuit, and retains pointer only while open. General frame/window persistence was not exhaustively audited.",
+      "message_ids": "No MsgStr numeric IDs are needed for the 23 row captions in these source paths; the captions are command strings. Window child/button IDs 134/135 are directly present in OnCreate."
+    },
+    "onoff_rows": [
+      {
+        "index": 1,
+        "label": "battlemode",
+        "talktype": "TT_BATTLE_ON_OFF",
+        "numeric_type": "0x86"
+      },
+      {
+        "index": 2,
+        "label": "notrade",
+        "talktype": "TT_NOTRADE_ON_OFF",
+        "numeric_type": "0x87"
+      },
+      {
+        "index": 3,
+        "label": "noshift",
+        "talktype": "TT_NOSHIFT_ON_OFF",
+        "numeric_type": "0x69"
+      },
+      {
+        "index": 4,
+        "label": "noctrl",
+        "talktype": "TT_NOCTRL_ON_OFF",
+        "numeric_type": "0x6c"
+      },
+      {
+        "index": 5,
+        "label": "skillfail",
+        "talktype": "TT_SKILLFAIL_ON_OFF",
+        "numeric_type": "0x70"
+      },
+      {
+        "index": 6,
+        "label": "notalkmsg",
+        "talktype": "TT_NOTALKMSG_ON_OFF",
+        "numeric_type": "0x71"
+      },
+      {
+        "index": 7,
+        "label": "notalkmsg2",
+        "talktype": "TT_NOTALKMSG2_ON_OFF",
+        "numeric_type": "0x93"
+      },
+      {
+        "index": 8,
+        "label": "showname",
+        "talktype": "TT_SHOW_NAME_TYPE",
+        "numeric_type": "0x6b"
+      },
+      {
+        "index": 9,
+        "label": "fog",
+        "talktype": "TT_FOG",
+        "numeric_type": "0x3c"
+      },
+      {
+        "index": 10,
+        "label": "aura",
+        "talktype": "TT_AURA_ON_OFF",
+        "numeric_type": "0x6a"
+      },
+      {
+        "index": 11,
+        "label": "window",
+        "talktype": "TT_WINDOW_ON_OFF",
+        "numeric_type": "0x8c"
+      },
+      {
+        "index": 12,
+        "label": "miss",
+        "talktype": "TT_MISS_EFFECT_ON_OFF",
+        "numeric_type": "0x35"
+      },
+      {
+        "index": 13,
+        "label": "set1",
+        "talktype": "TT_SET1_ON_OFF",
+        "numeric_type": "0x72"
+      },
+      {
+        "index": 14,
+        "label": "set2",
+        "talktype": "TT_SET2_ON_OFF",
+        "numeric_type": "0x89"
+      },
+      {
+        "index": 15,
+        "label": "q1",
+        "talktype": "TT_QUICKSPELL_ON_OFF",
+        "numeric_type": "0x77"
+      },
+      {
+        "index": 16,
+        "label": "q2",
+        "talktype": "TT_QUICKSPELL2_ON_OFF",
+        "numeric_type": "0x78"
+      },
+      {
+        "index": 17,
+        "label": "q3",
+        "talktype": "TT_QUICKSPELL3_ON_OFF",
+        "numeric_type": "0x79"
+      },
+      {
+        "index": 18,
+        "label": "effect",
+        "talktype": "TT_EFFECT_ON_OFF",
+        "numeric_type": "0x08"
+      },
+      {
+        "index": 19,
+        "label": "bgm",
+        "talktype": "TT_MUSIC_ON_OFF",
+        "numeric_type": "0x07"
+      },
+      {
+        "index": 20,
+        "label": "sound",
+        "talktype": "TT_EFFECT_SOUND_ON_OFF",
+        "numeric_type": "0x0b"
+      },
+      {
+        "index": 21,
+        "label": "tip",
+        "talktype": "TT_OPEN_TIP",
+        "numeric_type": "0x2a"
+      },
+      {
+        "index": 22,
+        "label": "loginout",
+        "talktype": "TT_LOGINOUT_ON_OFF",
+        "numeric_type": "0xa4"
+      },
+      {
+        "index": 23,
+        "label": "shopping",
+        "talktype": "TT_SHOPPING_ON_OFF",
+        "numeric_type": "0xa6"
+      }
+    ],
+    "row_source_and_relation": "Ref/Session.cpp lines 23500-23755 append m_cmdOnOffTable in the above order, using command string symbols and TALKTYPE. Ref/Session.cpp lines 20426-20515 independently append 23 status (value,TALKTYPE) pairs to m_cmdOnOffSet in different order. OnDraw joins by TALKTYPE, so the status values control checked images for matching rows; the display list is not a direct positional view of m_cmdOnOffSet.",
+    "click_actions": "All 23 on/off row clicks send mode message 47 with the row's TALKTYPE second value. Ref/GameMode.cpp handlers implement per-type toggles/actions; `set1` and `set2` have source-initialized status 0 and their exact click behavior should be interpreted from those handlers, not assumed to be a generic boolean toggle.",
+    "pe_evidence": "Tag numeric values above are corroborated by static pair-immediate inventory at HighPriest.exe addresses 0x0064c5ac-0x0064c886 in build-recovery-unit-review/chat-command-flags-verified.json. UI source function addresses are decompiler labels; no independent UI-function disassembly audit was performed in this task.",
+    "ambiguities": [
+      "Command label spellings are decompiler symbols (e.g. aBattlemode, aQ1); source does not inline their literal bytes here, so labels are represented by conventional source symbol text.",
+      "There are 23 status rows, but only 16 visible cells per page at the owner-provided size; scrollbar handles additional vertical pages.",
+      "m_cmdOnOffSet is joined by TALKTYPE; duplicate TALKTYPEs, if any, would use the first match in OnDraw. The 23 initializer tags in the current list are distinct."
+    ]
+  },
+  "tables": {
+    "schema": 1,
+    "source": "Ref/Session.cpp CSession::InitTalkTypeTable (lines 22207-24149)",
+    "execution_table": {
+      "table": "m_cmdExeTable",
+      "count": 22,
+      "source_order": [
+        {
+          "label_symbol": "aTaekwon",
+          "value": "TT_REQ_TAEKWON"
+        },
+        {
+          "label_symbol": "aHi_0",
+          "value": "TT_HI"
+        },
+        {
+          "label_symbol": "aBlacksmith_0",
+          "value": "TT_REQ_BLACKSMITH"
+        },
+        {
+          "label_symbol": "aAlchemist_0",
+          "value": "TT_REQ_ALCHEMIST"
+        },
+        {
+          "label_symbol": "aHelp",
+          "value": "TT_HELP"
+        },
+        {
+          "label_symbol": "aWho",
+          "value": "TT_REQ_NUM_USER"
+        },
+        {
+          "label_symbol": "aSit",
+          "value": "TT_REQ_SIT"
+        },
+        {
+          "label_symbol": "aStand_0",
+          "value": "TT_REQ_STAND"
+        },
+        {
+          "label_symbol": "toolTip",
+          "value": "TT_REQ_EXIT_ROOM"
+        },
+        {
+          "label_symbol": "aLeave",
+          "value": "TT_REQ_LEAVE_GROUP"
+        },
+        {
+          "label_symbol": "aWhere",
+          "value": "TT_MAP_POS"
+        },
+        {
+          "label_symbol": "aMemo",
+          "value": "TT_REMEMBER_WARPPOINT"
+        },
+        {
+          "label_symbol": "aChat",
+          "value": "TT_MAKE_CHATROOMMAKEWND"
+        },
+        {
+          "label_symbol": "aSavechat",
+          "value": "TT_REQ_SAVE_CHAT"
+        },
+        {
+          "label_symbol": "aDoridori",
+          "value": "TT_DORIDORI_ON_OFF"
+        },
+        {
+          "label_symbol": "aBangbang",
+          "value": "TT_BANGBANG_ON_OFF"
+        },
+        {
+          "label_symbol": "aBingbing",
+          "value": "TT_BINGBING_ON_OFF"
+        },
+        {
+          "label_symbol": "aEx_0",
+          "value": "TT_REQ_WHISPER_LIST"
+        },
+        {
+          "label_symbol": "aInall",
+          "value": "TT_REQ_WHISPER_STATE_IN"
+        },
+        {
+          "label_symbol": "aExall",
+          "value": "TT_REQ_WHISPER_STATE_EX"
+        },
+        {
+          "label_symbol": "aPvpinfo",
+          "value": "TT_SHOW_PVP_INFO"
+        },
+        {
+          "label_symbol": "aHunting_0",
+          "value": "TT_REQ_HUNTING"
+        }
+      ],
+      "numeric_ids": "The table stores TALKTYPE values by symbolic enum in the primary source. No numeric values are asserted here; they were not independently extracted from PE for every entry. OnLBtnDown separately tests literal second==150 and routes that case to SendMsg(47, type, params), with remaining rows routed to SendMsg(47,type,0,0); enum identity for 150 is left unresolved."
+    },
+    "window_table": {
+      "table": "m_cmdWinTable",
+      "service_branch": "g_serviceType==ServiceBrazil selects localized labels; otherwise standard labels. Both branches pair labels with the same sequence of symbolic values.",
+      "brazil_order": [
+        {
+          "label_symbol": "aSalaDeChat",
+          "value": "TT_REQ_EMOTION_KEK"
+        },
+        {
+          "label_symbol": "aAtributos",
+          "value": "TT_TOGGLE_OBJLIGHT"
+        },
+        {
+          "label_symbol": "aDetalhes",
+          "value": "TT_REQ_EMOTION_SORRY"
+        },
+        {
+          "label_symbol": "aConfigura",
+          "value": "TT_REQ_EMOTION_BIGTHROB"
+        },
+        {
+          "label_symbol": "aInventIo",
+          "value": "TT_REQ_EMOTION_SMILE"
+        },
+        {
+          "label_symbol": "aCarrinho",
+          "value": "TT_LOCALBROADCAST"
+        },
+        {
+          "label_symbol": "aHabilidades",
+          "value": "TT_REQ_EMOTION_CHUPCHUP"
+        },
+        {
+          "label_symbol": "aEquipamentos",
+          "value": "TT_REQ_EMOTION_KIK"
+        },
+        {
+          "label_symbol": "aInfBIcas",
+          "value": "TT_SHOW_EMOTIONLIST"
+        },
+        {
+          "label_symbol": "aCl",
+          "value": "TT_REQ_EMOTION_SCRATCH"
+        },
+        {
+          "label_symbol": "aConfGrupo",
+          "value": "TT_REQ_EMOTION_CRY"
+        },
+        {
+          "label_symbol": "aConfContatos",
+          "value": "TT_REQ_EMOTION_STARE_ABOUT"
+        },
+        {
+          "label_symbol": "aGrupo",
+          "value": "TT_NAMELESS_BROADCAST"
+        },
+        {
+          "label_symbol": "aContatos",
+          "value": "TT_REQ_EMOTION_BEST"
+        },
+        {
+          "label_symbol": "aAtalhos",
+          "value": "TT_REQ_EMOTION_HELP"
+        },
+        {
+          "label_symbol": "aListaEmoticons",
+          "value": "TT_REQ_EMOTION_X"
+        },
+        {
+          "label_symbol": "aBichoDeEst",
+          "value": "TT_REQ_EMOTION_HUK"
+        }
+      ],
+      "standard_order": [
+        {
+          "label_symbol": "aChat_0",
+          "value": "TT_REQ_EMOTION_KEK"
+        },
+        {
+          "label_symbol": "aStatus",
+          "value": "TT_TOGGLE_OBJLIGHT"
+        },
+        {
+          "label_symbol": "aDetaillevel",
+          "value": "TT_REQ_EMOTION_SORRY"
+        },
+        {
+          "label_symbol": "aOption",
+          "value": "TT_REQ_EMOTION_BIGTHROB"
+        },
+        {
+          "label_symbol": "aItems",
+          "value": "TT_REQ_EMOTION_SMILE"
+        },
+        {
+          "label_symbol": "aMerchant",
+          "value": "TT_LOCALBROADCAST"
+        },
+        {
+          "label_symbol": "aSkill",
+          "value": "TT_REQ_EMOTION_CHUPCHUP"
+        },
+        {
+          "label_symbol": "aEquipment",
+          "value": "TT_REQ_EMOTION_KIK"
+        },
+        {
+          "label_symbol": "aBasicinfo",
+          "value": "TT_SHOW_EMOTIONLIST"
+        },
+        {
+          "label_symbol": "aGuild_0",
+          "value": "TT_REQ_EMOTION_SCRATCH"
+        },
+        {
+          "label_symbol": "aPartysetting",
+          "value": "TT_REQ_EMOTION_CRY"
+        },
+        {
+          "label_symbol": "aFriendoption",
+          "value": "TT_REQ_EMOTION_STARE_ABOUT"
+        },
+        {
+          "label_symbol": "aMessenger",
+          "value": "TT_NAMELESS_BROADCAST"
+        },
+        {
+          "label_symbol": "aWhisperlist",
+          "value": "TT_REQ_EMOTION_BEST"
+        },
+        {
+          "label_symbol": "aEmotion_0",
+          "value": "TT_REQ_EMOTION_HELP"
+        },
+        {
+          "label_symbol": "aEmotionlist",
+          "value": "TT_REQ_EMOTION_X"
+        },
+        {
+          "label_symbol": "aPetinfo",
+          "value": "TT_REQ_EMOTION_HUK"
+        }
+      ],
+      "count": 17
+    },
+    "ui_contract": {
+      "source": "Ref/UIFrameWnd2.cpp and Ref/UIWindowMgr.cpp",
+      "tabs": "UITab m_numTab=3; state 0 on/off table, state 1 execution table, state 2 window table. Tab creation at OnCreate, tab child message 13.",
+      "geometry": "Window manager case 112 calls Create(250,200). OnCreate sets 2 columns, 8 rows ((cy-38)/20), scrollbar at x=w-15,y=14,width=1,height=h-38. Cell hit-test uses xCell=x/(w/2), yCell=(y-17)/20, list area y>=17 and y<17+20*itemVertNum; item index uses row-major 2-column slots plus page offset m_itemHorzNum*m_viewOffset.",
+      "scroll": "RecalcScrbarPos uses ceil(row_count/2), visible itemVertNum rows and clamps viewOffset to [0,totalRows-visibleRows]. OnWheel if vertical scrolling enabled sends scrollbar message 7 by max(1,min(itemVertNum-1,3)) rows; nonnegative wheel negates delta. Scrollbar messages 7/9/10 adjust viewOffset and recalc/invalidate.",
+      "hover": "OnMouseHover recomputes GetCurItem and invalidates when selection changes. For non-window tabs it maps current index to command row and shows help balloon; for window tab it copies m_keyWinTable label. Cursor action becomes 2 for valid help selections. Out-of-cell GetCurItem returns -1; explicit cursor/help clearing on invalid hover was not apparent in inspected source; do not infer a reset.",
+      "click": "OnLBtnDown recomputes selection; on tab 2 invokes ProcessPushButton with selected m_cmdWinTable value. Tabs 0/1 dispatch mode message 47 with selected TALKTYPE, except literal second==150 passes parameter array."
+    },
+    "selected_pe_check": {
+      "binary": "HighPriest.exe",
+      "static_reference": "HighPriest.exe.c identifies InitTalkTypeTable at 0x00663e20; command table source matches function. This supplemental pass did not disassemble the entire initializer to extract numeric values for m_cmdExeTable/m_cmdWinTable.",
+      "numeric_policy": "No numeric TALKTYPE values are guessed or derived from unrelated parser maps. The per-PE numeric values remain unverified in this JSON."
+    },
+    "limitations": [
+      "Source strings are represented by decompiler string symbols; literal localized bytes were not independently extracted.",
+      "m_keyWinTable labels are a separate parallel array; OnDraw/hover use it for window-tab display. This task captured m_cmdWinTable creation entries only.",
+      "PE numeric IDs for all execution/window values remain unverified; the source enum labels and creation order are the evidence recorded here."
+    ]
+  }
+}

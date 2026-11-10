@@ -1,5 +1,6 @@
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIChatRoomWnd.h"
+#include "ui/UIOptionWnd.h"
 #include "core/MannerFilter.h"
 
 namespace {
@@ -72,6 +73,7 @@ void ChatSubmissionReplay()
     SkillPacketReplayAccess::SetCurrent(&mode);const SourceChatInputServices services{SubmissionModifiers,SubmissionTicks};mode.SetSourceChatInputServices(&services);
     submissionKeys={};submissionTick=10000;
     g_windowMgr.ShowChatWindow(true);auto* chat=g_windowMgr.m_chatWnd;
+#include "SourceCommandFlagsReplay.inc"
     chat->RestorePersistentState({},"","",0,0);chat->FocusQtInput(2);
     // Failure does not roll back original text/history; whitespace is retained.
     CRagConnection::instance()->Disconnect();chat->SetQtInputText(2,"  raw failed  ");Require(chat->HandleKeyDown(VK_RETURN),"main Enter was not consumed on failed send");

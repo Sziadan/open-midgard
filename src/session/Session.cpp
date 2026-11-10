@@ -3445,6 +3445,34 @@ void CSession::LoadWhisperOptions()
     m_isPlayWhisperOpenSound=LoadSettingsIniInt("Option","m_isPlayWhisperOpenSound",1)!=0;
     if(m_isShowWhisperWnd_Friend)m_isShowWhisperWnd=true;
 }
+
+void CSession::LoadSourceCommandOptions()
+{
+    m_isEffectOn=LoadSettingsIniInt("Option","isEffectOn",1)!=0;
+    m_bMakeMissEffect=LoadSettingsIniInt("Option","m_bMakeMissEffect",1)!=0;
+    // Original auto-attack flag, distinct from the port's movement UI preference.
+    m_isNoCtrl=LoadSettingsIniInt("Option","m_isNoCtrl",0)!=0;
+}
+
+bool CSession::SaveSourceCommandOptions() const
+{
+    bool saved=SaveSettingsIniInt("Option","isEffectOn",m_isEffectOn);
+    saved=SaveSettingsIniInt("Option","m_bMakeMissEffect",m_bMakeMissEffect) && saved;
+    return SaveSettingsIniInt("Option","m_isNoCtrl",m_isNoCtrl) && saved;
+}
+
+void CSession::InitializeSourceCommandFlags(bool bgmPaused,int soundOn,bool tipPresent)
+{
+    // InitOptionWithRegistry64C040 appends; repeated calls do not replace old rows.
+    // Audio and the UI pointer are supplied by their actual runtime owners.
+    const std::pair<int,int> flags[]={
+        {!bgmPaused,7},{m_isEffectOn,8},{soundOn,11},{m_isBattle,134},{tipPresent,42},
+        {m_isNoTrade,135},{m_isNoShift,105},{m_isNoCtrl,108},{m_isSkillFail,112},
+        {m_isNoTalkMsg==0,113},{m_isNoTalkMsg2==0,147},{m_isAura,106},{m_isWindow,140},
+        {m_bMakeMissEffect,53},{0,114},{0,137},{m_isQuickSpell,119},{m_isQuickSpell2,120},
+        {0,121},{m_isShowNameTypeOld,107},{m_fogOn,60},{m_isLogInOut,164},{m_isShopping,166}};
+    m_cmdOnOffSet.insert(m_cmdOnOffSet.end(),std::begin(flags),std::end(flags));
+}
 bool CSession::SaveWhisperOptions() const
 {
     bool saved=SaveSettingsIniInt("Option","m_isShowWhisperWnd",m_isShowWhisperWnd);

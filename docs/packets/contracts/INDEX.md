@@ -150,3 +150,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [Main/room save and report dispatch](../evidence/PK09.21-chat-exports.md) pins manager6/7/17/18, separate main history exports and selected report no-op/stub behavior. Remaining PK09.21 and broad/live/deployed gates stay open.
 
 [Whisper-ignore pending/request/reply ownership](../evidence/PK09.21-chat-ignore.md) pins15..19, CF/D0/D3 -> D1/D2/D4, the single pending-name slot, source17 local clear and sole D1 router owner. Full PK09.21 remains open.
+
+[Source startup command flags](../evidence/PK09.21-command-flags.md) binds23 status pairs, persisted source options, actual audio/Tip snapshots and owner lifetime. Full command-list UI/actions and legacy options remain open.

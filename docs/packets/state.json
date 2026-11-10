@@ -2081,7 +2081,11 @@
         "docs/packets/evidence/PK09.21-chat-ignore.md",
         "docs/packets/evidence/PK09.21-chat-ignore-messages.json",
         "docs/packets/evidence/PK09.21-chat-ignore-server.json",
-        "docs/packets/evidence/PK09.21-chat-ignore-provenance.json"
+        "docs/packets/evidence/PK09.21-chat-ignore-provenance.json",
+        "docs/packets/evidence/PK09.21-command-flags.md",
+        "docs/packets/evidence/PK09.21-command-flags-data.json",
+        "docs/packets/evidence/PK09.21-command-flags-ui-leads.json",
+        "docs/packets/evidence/PK09.21-command-flags-provenance.json"
       ],
       "commit_subject": null
     }

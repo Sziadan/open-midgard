@@ -339,7 +339,7 @@
     "novice_doridori": "0x01E7"
   },
   "command_flag_initializers": {
-    "status": "INVENTORIED_NOT_INTEGRATED",
+    "status": "STARTUP_SNAPSHOT_IMPLEMENTED_PORT_SETTINGS_BRIDGE_UI_PENDING",
     "entries": [
       {
         "source_field_value": "g_session.m_bgmIsPaused == 0",
@@ -479,10 +479,11 @@
         "selected_type": 166,
         "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
       }
-    ]
+    ],
+    "current_evidence": "PK09.21-command-flags.md"
   },
   "known_remaining": [
-    "Initialize the23 command flag pairs from original startup/registry ownership and construct the command-list UI.",
+    "Finish the three-tab command-list UI, remaining flag actions and full legacy option initialization;23 startup snapshots are implemented at the declared port settings boundary.",
     "Implement the remaining ProcessTalkType cases, including hi150 action beyond parser message assignment.",
     "Finish source global6 ten-record similarity/strike ChatDori and special225/super-novice branches.",
     "Review language charset prefix/wire encoding, exact input limits/IME/caret/selection, full font/skin/global UI.",
