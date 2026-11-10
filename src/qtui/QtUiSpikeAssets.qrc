@@ -15,6 +15,7 @@
     <file>qml/RoChatRoomSettings.qml</file>
     <file>qml/RoPetInfo.qml</file>
     <file>qml/RoPetEggList.qml</file>
+    <file>qml/RoPetTaming.qml</file>
         <file>qml/GameOverlay.qml</file>
         <file>qml/RoGuild.qml</file>
         <file>qml/RoCommerce.qml</file>

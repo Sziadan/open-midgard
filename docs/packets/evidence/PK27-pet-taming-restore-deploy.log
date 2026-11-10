@@ -1,0 +1,32 @@
+-- Target architecture : x64
+-- Qt 6 kit root: C:/Qt/6.11.0/mingw_64
+-- Qt deployment tool: C:/Qt/6.11.0/mingw_64/bin/windeployqt.exe
+-- DX7_SDK_DIR not set – falling back to system headers
+CMake Warning (dev) at C:/Program Files/CMake/share/cmake-4.3/Modules/FetchContent.cmake:1386 (message):
+  The DOWNLOAD_EXTRACT_TIMESTAMP option was not given and policy CMP0135 is
+  not set.  The policy's OLD behavior will be used.  When using a URL
+  download, the timestamps of extracted files should preferably be that of
+  the time of extraction, otherwise code that depends on the extracted
+  contents might not be rebuilt if the URL changes.  The OLD behavior
+  preserves the timestamps from the archive instead, but this is usually not
+  what you want.  Update your project to the NEW behavior or specify the
+  DOWNLOAD_EXTRACT_TIMESTAMP option with a value of true to avoid this
+  robustness issue.
+Call Stack (most recent call first):
+  src/core/CMakeLists.txt:33 (FetchContent_Declare)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Vulkan SDK detected for ro_render3d: C:\VulkanSDK\1.4.341.1
+CMake Warning (dev) at C:/Program Files/CMake/share/cmake-4.3/Modules/FetchContent.cmake:1966 (message):
+  Calling FetchContent_Populate(lua51) is deprecated, call
+  FetchContent_MakeAvailable(lua51) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(lua51) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  src/lua/CMakeLists.txt:12 (FetchContent_Populate)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Configuring done (2.8s)
+-- Generating done (1.9s)
+-- Build files have been written to: D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset

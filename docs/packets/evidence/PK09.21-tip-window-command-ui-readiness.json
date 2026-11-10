@@ -425,5 +425,12 @@
     "application": "164/164 in50.89s",
     "selected_pe_review": "PK27-pet-capture-source-review.json",
     "live_deployed": "not accepted"
+  },
+  "runtime_pet_taming_checkpoint": {
+    "evidence": "PK27-pet-taming.md",
+    "scope": "factory91/mode76/01A0 only;019E arm/pick/approach and full lifetimes open",
+    "validation": "Deploy-OFF all-target and standalone builds pass; focused2/2 in6.40s, application164/164 in53.44s (-j4) and standalone473/473 in16.17s (-j8). Twenty-two native/Qt frame pairs and zero QML warnings include four taming states. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open.",
+    "render_pairs": 22,
+    "live_deployed": "not accepted"
   }
 }

@@ -1,0 +1,54 @@
+{
+  "task": "capture10000 mouse target consumption source audit",
+  "source_root": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release",
+  "findings": [
+    {
+      "topic": "input pick pipeline and exclusions",
+      "refs": [
+        "Ref/GameMode.cpp:14064-14105",
+        "Ref/GameMode.cpp:14114-14137",
+        "Ref/GameMode.cpp:5275-5385"
+      ],
+      "detail": "ProcessInput reads mouse/UI state, finds CActorPickInfo with CActorPickNode::FindPickInfo, invokes ProcessMouseSnap, then skips actor/ground picking while quest/player-dead/exchange/item-store/mail/auction conditions hold. Otherwise ProcessActorPick then ProcessGroundPick then ProcessLockOnMouse. ProcessActorPick ignores actor picks for SUT_TO_GROUND; classType 3 suppresses selection when m_lastMonGid is active, classType 4 routes to object-click; otherwise selection is delegated to monster/PC handlers."
+    },
+    {
+      "topic": "pending skill arm and clear",
+      "refs": [
+        "Ref/GameMode2.cpp:4887-4892",
+        "Ref/GameMode2.cpp:4893-4947",
+        "Ref/GameMode.cpp:13533-13583",
+        "Ref/GameMode.cpp:10954-10956"
+      ],
+      "detail": "Input message case 0x4E explicitly clears skillUseType, skillId, and useLevel. Case 0x4F assigns skillUseType from val1 and skillId/range/level from the skill payload. ProceedAttack reads pending skill fields to issue player SendMsg 41 (target gid, skill id, attack range) plus SendMsg 90(level) when the type is 2 or 4, or SendMsg 10 for basic attack; it does not clear the pending skill fields. Another broad clear is at GameMode.cpp:10954-10956, outside the target-click path."
+    },
+    {
+      "topic": "mode 78 and click dispatch",
+      "refs": [
+        "Ref/GameMode.cpp:14139-14155",
+        "Ref/GameMode.cpp:15608-15618",
+        "Ref/GameMode.cpp:4040-4045"
+      ],
+      "detail": "Left BTN_DOWN dispatches CMode::SendMsg(this,78,0,0,0) after pick processing. Right-click path also sends mode message 78 after message 19. The visible case 78 at line 4040 maps to effect/emotion mapping (case 78 -> v8=77) in a different switch; it is not evidence of target-click reset. A click-target flow can call ProceedAttack through other paths; no direct call was found by rg, so vtable/message dispatch or helper path remains to identify."
+    },
+    {
+      "topic": "player41 and burrow visibility state",
+      "refs": [
+        "Ref/GameActor.cpp:3379-3392",
+        "Ref/GameActor.cpp:4699-4709",
+        "Ref/GameActor.cpp:8179-8190"
+      ],
+      "detail": "Actor source confirms burrow/hiding checks: effect message case 51 returns early for Burrow, Hiding, or cart effect; message case 126 skips the effect for special hiding, burrow, or hiding. Effect-state transition handling detects Burrow changes, deletes level effects, and on entering burrow emits object message 63 (with additional job-specific effect handling). These are rendering/effect behaviors, not proof of pick-node exclusion."
+    }
+  ],
+  "unresolved_questions": [
+    "The exact CActorPickNode::FindPickInfo eligibility/exclusion logic and whether burrowed actors are omitted from pick results needs its implementation traced.",
+    "The actor-side receiver for player SendMsg message 41 should be checked to establish whether it clears or replaces an existing proceed target immediately.",
+    "No direct CGameMode::ProceedAttack call appears in the inspected source references; identify its indirect/vtable caller before asserting capture target-click consumption.",
+    "Setting a new capture skill appears to replace the pending skill-use fields in message 0x4F, but no adjacent clear of an already queued player proceed/attack target is established by these sources."
+  ],
+  "root_review_overrides": [
+    "ProceedAttack itself does not clear pending fields, but the full world-input path does: Ref/GameMode.cpp14139-14145 dispatches mode78 AFTER actor/ground pick; Ref/GameMode2.cpp4887-4892 case0x4E clears skillUseType/id/useLevel. The bounded audit must not be read as pending intent surviving a world left-down/miss.",
+    "Root checked player message41 at Ref/Player.cpp400-421: when state!=6 and not burrow for10000, it replaces PT_SKILL/proceedTargetGid/skillId/attackRange. Message90 follows with level0.019E itself only assigns mode skill fields; it does not send player13 or clear an already queued chase.",
+    "Source primary monster-target click in Ref/GameMode.cpp6199 onward applies Shift/noShift and good-skill gates; do not assume generic NPC exclusion, PC or background behavior reproduces this flow. Full picking/consumption integration remains the next strong-agent task."
+  ]
+}

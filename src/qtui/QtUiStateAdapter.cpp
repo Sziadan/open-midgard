@@ -7,6 +7,7 @@
 #include "ui/UICommandListWnd.h"
 #include "ui/UIPetInfoWnd.h"
 #include "ui/UIPetEggListWnd.h"
+#include "ui/UIPetTamingDeceiveWnd.h"
 #include "ui/ChatScrollBarUi.h"
 #include "ui/UITipOfTheDayWnd.h"
 #include "ui/UITransBalloonText.h"
@@ -2127,6 +2128,15 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
             {"scrollTrack",rect(track)},{"scrollThumb",rect(layout.thumb)},{"scrollUp",rect(layout.up)},{"scrollDown",rect(layout.down)}};
     }
     chatUi.insert("petEgg",petEgg);
+    QVariantMap petTaming;
+    if(const auto* window=g_windowMgr.m_petTamingDeceiveWnd){
+        petTaming={{"visible",IsGameplayWindowVisible(state,window)},{"x",window->m_x},{"y",window->m_y},
+            {"width",window->m_w},{"height",window->m_h},{"layer",SourceManagedWindowLayer(window)},
+            {"artwork",QString::fromStdString(window->GetArtworkUri())},{"targetGid",window->GetTargetGid()},
+            {"selected",window->IsSelected()},{"action",window->GetAction()},{"delay",window->GetDelay()},
+            {"destination",window->GetDestination()}};
+    }
+    chatUi.insert("petTaming",petTaming);
     QVariantList settings;
     for(const auto* window:{g_windowMgr.m_chatRoomMakeWnd,g_windowMgr.m_chatRoomChangeWnd}){
         if(!window)continue;QVariantList buttons,popupRows;

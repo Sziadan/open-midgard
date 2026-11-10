@@ -1,5 +1,6 @@
 #include "ui/UIPetInfoWnd.h"
 #include "ui/UIPetEggListWnd.h"
+#include "ui/UIPetTamingDeceiveWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UIChatRoomEntry.h"
@@ -453,6 +454,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     Require(!state->itemInfoVisible() && !Find(view.rootObject(),"itemInfoWindow")->isVisible(),"closed summary remains projected");
 #include "PetContextMenuRenderChecks.inc"
 #include "PetEggRenderChecks.inc"
+#include "PetTamingRenderChecks.inc"
     QFile results(output+"/pet-window-render-results.json");
     Require(results.open(QIODevice::WriteOnly),"pet render result file open failed");
     results.write(QJsonDocument(QJsonObject{{"frames",frames},{"synthetic_source_key_frame_button_portrait_bitmaps",true},

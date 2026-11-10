@@ -1,0 +1,105 @@
+{
+  "scope": "Read-only source audit: pet feed result 0x01A3 and alternate 0x022F, plus pet-talk encoding/speech helpers",
+  "packet_dispatch": {
+    "file": "Ref/GameModePacket.cpp",
+    "lines": "1724-1727",
+    "findings": "Incoming decimal opcode 419 (0x01A3) and 559 (0x022F) both dispatch to CGameMode::Zc_Feed_Pet(buf). No separate alternate handling is dispatched."
+  },
+  "packet_lengths": {
+    "file": "Ref/packet.cpp",
+    "primary_01a3": {
+      "lines": "2187-2193",
+      "length_bytes": 5
+    },
+    "alternate_022f": {
+      "lines": "2771-2772",
+      "length_bytes": 5
+    }
+  },
+  "receiver": {
+    "file": "Ref/GameModePacket.cpp",
+    "function": "CGameMode::Zc_Feed_Pet",
+    "lines": "11372-11471",
+    "layout": [
+      {
+        "offset": 0,
+        "length": 2,
+        "field": "opcode, little-endian WORD"
+      },
+      {
+        "offset": 2,
+        "length": 1,
+        "field": "result/status byte"
+      },
+      {
+        "offset": 3,
+        "length": 2,
+        "field": "item ID, little-endian WORD; read only on failure branches"
+      }
+    ],
+    "branches": [
+      {
+        "lines": "11395-11405",
+        "condition": "opcode 419 and buf[2] != 0",
+        "effect": "Success: read current friendly/hungry states; derive pet talk number using GetPetTalkNumber(petJob, act=0, hungryState); derive emotion from m_petEmotionTable[0][4*hunger][7*friendly + 7*hunger]; send two internal mode messages 161, first with talk number, then emotion; return."
+      },
+      {
+        "lines": "11407-11420",
+        "condition": "opcode 419 and buf[2] == 0",
+        "effect": "Failure: item ID at +3; get item name; format MSI_NOT_EXIST_PET_FOOD; send same message to UIWindowMgr message IDs 1 and 20 with color/value 1974005."
+      },
+      {
+        "lines": "11436-11441",
+        "condition": "opcode 559 and buf[2] != 0",
+        "effect": "Set g_session.m_homunStateId=29; return. Does not produce pet talk or emotion here."
+      },
+      {
+        "lines": "11443-11458",
+        "condition": "opcode 559 and buf[2] == 0",
+        "effect": "Failure: item ID at +3; same MSI_NOT_EXIST_PET_FOOD formatted and sent to window messages 1 and 20; then lookup homunculus actor by m_homunGID and, if found, send actor message 21 with args (4,0,0)."
+      }
+    ],
+    "recipient_notes": "The source distinguishes 01A3 from 022F by opcode despite sharing the receiver. 01A3 success has two CMode::SendMsg(messageId=161) calls; this audit did not find an explicit message-161 case in CMode::SendMsg or CGameMode::SendMsg sources (CMode::SendMsg base only handles 2 and 75 at Ref/Mode.cpp:98-113). Do not equate this internal mode message with incoming packet opcode 0x00A1; GameModePacket case 161 at Ref/GameModePacket.cpp:757-760 removes a picked-up item. The 022F success path is homunculus state 29, not pet speech."
+  },
+  "pet_talk_helpers": {
+    "number_encoder": {
+      "file": "Ref/Session2.cpp",
+      "lines": "1582-1603",
+      "formula": "v4 = hungry + 10*(act + 2*(5*job - 5000)); job>=1519 => v4+90000; otherwise refresh session sex from sexCheck if different, sex==1 => v4+50000, else v4+90000.",
+      "feed_use": "Zc_Feed_Pet uses act 0, hungry from GetPetHungryState(m_petOldHungry)."
+    },
+    "speak_lookup": {
+      "file": "Ref/Session2.cpp",
+      "lines": "3741-? (function CSession::GetPetSpeak; body starts 3744)",
+      "findings": "Zeroes output, decodes aMonsterTalkTab, then looks up pet name and hunger state labels; act maps to feeding/hunting/danger/dead/stand/performance labels (3744 onward). Output text is pulled from pet talk XML table. Full remainder should be consulted for precise XML leaf selection and speakTable behavior if needed."
+    },
+    "speech_display": {
+      "file": "Ref/GameModePacket.cpp",
+      "function": "CGameMode::Zc_Pet_Act",
+      "lines": "24222-24296",
+      "findings": "Looks up pet actor from GID at buf+2. For code at buf+6 >=50000, unpacks sex/job/action/hunger digits and calls GetPetSpeak; >=90000 branch calls GetPetTalkString(..., isChange=1), otherwise 50000..89999 calls GetPetTalkString(..., isChange=0). If resulting text differs from empty sentinel, sends actor message 7 with string, then optionally UIWindowMgr message 1 (color 16448250) unless either no-talk flag is 1. Values below 50000 take actor message 21 with v3. This is opcode 0x01AA via dispatcher decimal 426 at GameModePacket.cpp:1734-1735, not receiver for feed packet."
+    },
+    "talk_string": {
+      "file": "Ref/Session2.cpp",
+      "lines": "3920-4025+",
+      "findings": "GetPetTalkString strips leading tab, copies format string, substitutes sex tokens using sexTable when isChange, gets actor name by pet GID, prefixes name plus ' : ' where actor name is present, and trims trailing tab. Remaining body not fully inspected; see cited source for formatting details."
+    }
+  },
+  "needed_tables_and_strings": [
+    "packet length map (Ref/packet.cpp), 419=>5 and 559=>5",
+    "g_session.m_petEmotionTable [0][4*hunger][7*friendly+7*hunger] and GetPetHungryState/GetPetFriendlyState implementations",
+    "pet talk XML resource selected by decoded aMonsterTalkTab, pet names and hunger/action labels (Ref/Session2.cpp GetPetSpeak)",
+    "GetPetTalkNumber sex/job encoding and GetPetSpeak lookup must be preserved for 01A3 success dialogue",
+    "MsgStr(MSI_NOT_EXIST_PET_FOOD) lookup/string enum and item ID/name tables for both failure paths",
+    "internal CGameMode message 161 recipient/semantics remain unresolved in inspected production receiver sources; trace mode/UI/actor event routing before implementing exact result presentation"
+  ],
+  "uncertainties": [
+    "The feed receiver calls CMode::SendMsg message 161 twice, but the decompiled base CMode handler ignores it and the CGameMode override's body did not reveal a case 161 in this bounded pass. Its effective virtual routing/recipient requires further tracing.",
+    "GetPetSpeak body continues past lines 3818; this report identifies the XML hierarchy and initial mappings, but not the full leaf iteration/table selection.",
+    "No source evidence here establishes that 0x022F should ever trigger player-pet talk; its successful source behavior updates homunculus state ID 29."
+  ],
+  "root_review_overrides": [
+    "Internal mode161 is resolved in Ref/GameMode2.cpp6118-6127, case0xA1: -1 is ignored; values>=50000 require relationship/10>=90 or IsMasterAid(session,3); writes opcode425=01A9 plus DWORD argument and sends. This is the CGameMode override, not base CMode handling or receive opcode00A1. Feeding/actor-talk integration still needs strong review and runtime implementation.",
+    "This is preparatory source evidence only. No feeding,01A9/01AA or alternate022F implementation acceptance is claimed."
+  ]
+}

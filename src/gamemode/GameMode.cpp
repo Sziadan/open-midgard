@@ -21,6 +21,7 @@
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIPetInfoWnd.h"
+#include "ui/UIPetTamingDeceiveWnd.h"
 #include "core/ChatRoomRequests.h"
 #include "core/MannerFilter.h"
 #include "ActionRequestSender.h"
@@ -10266,6 +10267,7 @@ int  CGameMode::OnRun() {
     g_renderer.Clear(0);
     static u32 s_gameplayRenderFrame = 0;
     ++s_gameplayRenderFrame;
+    if(g_windowMgr.m_petTamingDeceiveWnd)g_windowMgr.m_petTamingDeceiveWnd->PrepareDrawFrame();
     DWORD uiDrawStart = GetTickCount();
     DWORD uiDrawEnd = uiDrawStart;
     bool queuedModernOverlayFrame = false;
@@ -11020,6 +11022,14 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]={0xa1,0x01,static_cast<u8>(wparam)};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
     }
+    case 76:
+        if(wparam==10000){
+            if(static_cast<u32>(lparam)!=g_session.m_petStatus.actorId){
+                auto* window=g_windowMgr.MakeWindow(UIWindowMgr::WID_PETTAMINGDECEIVEWND);
+                if(window)window->SendMsg(nullptr,80,0,lparam,0);
+            }
+        }
+        return 0;
     case 159: {
         const u16 index=static_cast<u16>(wparam);
         const u8 packet[]={0xa7,0x01,static_cast<u8>(index),static_cast<u8>(index>>8)};

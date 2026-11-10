@@ -23,6 +23,7 @@
 #include "item/Item.h"
 #include "ui/UIItemInfoWnd.h"
 #include "ui/UIPetEggListWnd.h"
+#include "ui/UIPetTamingDeceiveWnd.h"
 #include "item/ItemUseFeedback.h"
 #include "Mode.h"
 #include "DebugLog.h"
@@ -5287,6 +5288,14 @@ void HandlePetStatus(CGameMode&, const PacketView& packet)
     InvalidatePetInfo();
 }
 
+void HandlePetCaptureResult(CGameMode&,const PacketView& packet)
+{
+    if(!packet.data || packet.packetId!=0x01A0 || packet.packetLength!=3
+        || packet.data[0]!=0xa0 || packet.data[1]!=0x01)return;
+    if(auto* window=g_windowMgr.m_petTamingDeceiveWnd)
+        window->SendMsg(nullptr,80,1,packet.data[2]?7:3,0);
+}
+
 void HandlePetEggList(CGameMode&,const PacketView& packet)
 {
     if(!packet.data || packet.packetId!=0x01a6 || packet.packetLength<4
@@ -8912,6 +8921,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x011C, HandleWarpMapList);
     router.Register(0x01AD, HandleMakingArrowList);
     router.Register(0x01A2, HandlePetStatus);
+    router.Register(0x01A0, HandlePetCaptureResult);
     router.Register(0x01A6, HandlePetEggList);
     router.Register(0x01A4, HandlePetStatusChange);
     router.Register(0x0235, HandleHomunSkillList);

@@ -9,6 +9,8 @@ add_library(ro_ui STATIC
     UICommandListWnd.cpp
     UIPetInfoWnd.h
     UIPetInfoWnd.cpp
+    UIPetTamingDeceiveWnd.h
+    UIPetTamingDeceiveWnd.cpp
     UIPetEggListWnd.h
     UIPetEggListWnd.cpp
     UITransBalloonText.h

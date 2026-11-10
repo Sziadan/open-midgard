@@ -1,0 +1,42 @@
+{
+  "baseline": "3924a5b5",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "cc4f81995190742d2d281fb827c1a8c7d6adc8030cf3aaff85748be3dea4b790",
+    "src/ui/UIPetTamingDeceiveWnd.h": "b70d10fd09e2648ca52902ec39bd2317c54b8b5ba7a898a165d1593078117798",
+    "src/ui/UIPetTamingDeceiveWnd.cpp": "7a35088a1746bf70fb12d6aa78200befb48221e521af57517fd01900920b00a2",
+    "src/ui/CMakeLists.txt": "e99ad85773932530d364d4e0b6d8781b538dc15df86ab6024233be01df27e109",
+    "src/ui/UIWindowMgr.h": "1e572bce70b9ae8638f704decd94217afded86fcca1803182c2909620c8ba21b",
+    "src/ui/UIWindowMgr.cpp": "c2c47bfefad787ee8a3fe7b05e247edb23b7b2eeb97f92b19a9153f35c677abc",
+    "src/gamemode/GameMode.cpp": "cc208f3168831f8cb22e1ca8f86ff1d1166903f2112e88497b1ce9a0e2a03261",
+    "src/gamemode/GameModePacket.cpp": "d5036f5fc3c4dac2ebd8c3ae57c66bc7a8b99763f951f4e4cf15e394fdf69e88",
+    "src/network/GronPacket.cpp": "14fa1aa38927b4356a58f94fd232374cbc09535ff9a6375e0171834de25aa099",
+    "src/qtui/QtUiStateAdapter.cpp": "1f9fca7e493d47756161c3c27b6c8329a8cb971de0143416ffc7d6cf911826ad",
+    "src/qtui/QtUiSpikeAssets.qrc": "1191a764f9751340c32ddd19744952f400179e5f4f15800e2f17a43b20307363",
+    "src/qtui/qml/GameOverlay.qml": "968d2d90f9f03e7577f5c44bdbd36b4ca8f5e77488ce9f8e7d88e691ad05e5e5",
+    "src/qtui/qml/RoPetTaming.qml": "f2a6620222ad84bbafb46b7d4576f836ad48ff9879ae71d5d6fda234166fa4c9",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "69f59b79f8590c19dfc68ef90f0beaf5251d59cdba26fadff789ef2719707b99",
+    "tools/tests/replay/PetTamingReplay.inc": "6bfd26e73def6dae486e94a9754485a668f2b7b46ac5b41ee76b5ec5d1f199b3",
+    "tools/tests/replay/PetTamingFailedSendReplay.inc": "3415f49d091d837e0632e5324cea1208eeee2d550a2785a1a504c5152a3169b2",
+    "tools/tests/replay/PetWindowRenderChecks.inc": "7a7520b39e3b5e62abbdd5d21cc589d79906c8371162885fe716de400acef5db",
+    "tools/tests/replay/PetTamingRenderChecks.inc": "6685174656c3ac76cd7b4585cb367af1214be67e3325a9d8ed0345e2e83a15f8"
+  },
+  "checks": {
+    "all_target_build": "passed; deploy OFF",
+    "focused": "2/2 in6.40s",
+    "application": "164/164 in53.44s; -j4",
+    "standalone_build": "passed",
+    "standalone": "473/473 in16.17s; -j8",
+    "render_pairs": 22,
+    "qml_warnings": 0,
+    "deploy": "ON restored configure-only; no subsequent build/deployment"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "installed_unchanged": true,
+  "scope": "factory91/mode76/01A0 owner, artwork and frame/timer lifecycle;019E arm/pick/approach remains open",
+  "source_review": [
+    "PK27-pet-capture-source-review.json",
+    "PK27-pet-capture-animation-audit.json",
+    "PK27-pet-capture-input-audit.json"
+  ]
+}
