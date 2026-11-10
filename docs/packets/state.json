@@ -815,9 +815,11 @@
         "docs/packets/evidence/PK27-source-pending.md",
         "docs/packets/evidence/PK27-source-pending-source-review.json",
         "docs/packets/evidence/PK27-skill-producers.md",
-        "docs/packets/evidence/PK27-skill-producers-source-review.json"
+        "docs/packets/evidence/PK27-skill-producers-source-review.json",
+        "docs/packets/evidence/PK27-ground-proceed.md",
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore source skill activation and saved levels"
+      "commit_subject": "packet(PK27): restore canonical ground proceed and text owners"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -845,9 +847,11 @@
         "docs/packets/evidence/PK27-source-pending.md",
         "docs/packets/evidence/PK27-source-pending-source-review.json",
         "docs/packets/evidence/PK27-skill-producers.md",
-        "docs/packets/evidence/PK27-skill-producers-source-review.json"
+        "docs/packets/evidence/PK27-skill-producers-source-review.json",
+        "docs/packets/evidence/PK27-ground-proceed.md",
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore source skill activation and saved levels"
+      "commit_subject": "packet(PK27): restore canonical ground proceed and text owners"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -871,9 +875,11 @@
         "docs/packets/evidence/PK27-source-pending.md",
         "docs/packets/evidence/PK27-source-pending-source-review.json",
         "docs/packets/evidence/PK27-skill-producers.md",
-        "docs/packets/evidence/PK27-skill-producers-source-review.json"
+        "docs/packets/evidence/PK27-skill-producers-source-review.json",
+        "docs/packets/evidence/PK27-ground-proceed.md",
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore source skill activation and saved levels"
+      "commit_subject": "packet(PK27): restore canonical ground proceed and text owners"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -895,9 +901,11 @@
         "docs/packets/evidence/PK27-source-pending.md",
         "docs/packets/evidence/PK27-source-pending-source-review.json",
         "docs/packets/evidence/PK27-skill-producers.md",
-        "docs/packets/evidence/PK27-skill-producers-source-review.json"
+        "docs/packets/evidence/PK27-skill-producers-source-review.json",
+        "docs/packets/evidence/PK27-ground-proceed.md",
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore source skill activation and saved levels"
+      "commit_subject": "packet(PK27): restore canonical ground proceed and text owners"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -1724,7 +1732,9 @@
         "docs/packets/evidence/PK27-source-pending.md",
         "docs/packets/evidence/PK27-source-pending-source-review.json",
         "docs/packets/evidence/PK27-skill-producers.md",
-        "docs/packets/evidence/PK27-skill-producers-source-review.json"
+        "docs/packets/evidence/PK27-skill-producers-source-review.json",
+        "docs/packets/evidence/PK27-ground-proceed.md",
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
@@ -2233,7 +2243,9 @@
         "docs/packets/evidence/PK27-source-pending.md",
         "docs/packets/evidence/PK27-source-pending-source-review.json",
         "docs/packets/evidence/PK27-skill-producers.md",
-        "docs/packets/evidence/PK27-skill-producers-source-review.json"
+        "docs/packets/evidence/PK27-skill-producers-source-review.json",
+        "docs/packets/evidence/PK27-ground-proceed.md",
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

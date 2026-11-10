@@ -7,6 +7,8 @@
 #include <array>
 #include <map>
 
+class UIGroundSkillTextWnd;
+
 constexpr int kShortcutKeyBindingCount = 27;
 constexpr unsigned char kShortcutKeyModifierControl = 1u << 0;
 constexpr unsigned char kShortcutKeyModifierShift = 1u << 1;
@@ -114,6 +116,8 @@ class UIWindowMgr {
 public:
     // Window IDs (Ref-faithful, from decompiled address space)
     enum WindowId {
+        WID_TALKBOXTRAPINPUTWND = 84,
+        WID_GRAFFISTRBOXWND = 101,
         WID_AUTOMESSAGEWND = 116,
         WID_FRIENDOPTIONWND = 68,
         WID_SUBCHATST = 137,
@@ -348,6 +352,7 @@ public:
     UIPartyOptionWnd* m_partyOptionWnd;
     UIGuildWnd* m_guildWnd=nullptr;
     UINpcInputWnd* m_npcInputWnd;
+    std::array<UIGroundSkillTextWnd*,2> m_groundSkillTextWindows{};
     UIChooseSellBuyWnd* m_chooseSellBuyWnd;
     UIItemShopWnd* m_itemShopWnd;
     UIItemPurchaseWnd* m_itemPurchaseWnd;

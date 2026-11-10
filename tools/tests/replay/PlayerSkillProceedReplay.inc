@@ -204,4 +204,5 @@
 #include "SourcePendingActorReplay.inc"
 #include "SkillUiProducerReplay.inc"
 #include "SkillUseLevelPersistenceReplay.inc"
+#include "GroundSkillProceedReplay.inc"
     }

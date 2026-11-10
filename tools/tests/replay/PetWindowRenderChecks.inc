@@ -1,4 +1,5 @@
 #include "ui/UIPetInfoWnd.h"
+#include "ui/UIGroundSkillTextWnd.h"
 #include "ui/UIPetEggListWnd.h"
 #include "ui/UIPetTamingDeceiveWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
@@ -142,6 +143,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
 
     {
         std::array<std::string,1023> rows;rows.fill("Pet status");
+        rows[435]="Talkbox Window";rows[436]="Enter text for ground skill";
         rows[584]="Pet Window";rows[407]="Name";rows[408]="Level";
         rows[585]="Hunger";rows[586]="Intimacy";rows[667]="Very hungry";rows[668]="Hungry";
         rows[669]="Normal";rows[670]="Replete";rows[671]="Very replete";rows[676]="Unknown";
@@ -458,6 +460,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
 #include "PetEggRenderChecks.inc"
 #include "PetTamingRenderChecks.inc"
 #include "PetCaptureWorldInputRenderChecks.inc"
+#include "GroundSkillTextRenderChecks.inc"
     QFile results(output+"/pet-window-render-results.json");
     Require(results.open(QIODevice::WriteOnly),"pet render result file open failed");
     results.write(QJsonDocument(QJsonObject{{"frames",frames},{"synthetic_source_key_frame_button_portrait_bitmaps",true},

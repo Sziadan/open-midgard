@@ -1,0 +1,242 @@
+#include "UIGroundSkillTextWnd.h"
+
+#include "UIChatRoomEntry.h"
+#include "UIWindowMgr.h"
+#include "UINewChatWnd.h"
+#include "core/Globals.h"
+#include "core/UiMessageStrings.h"
+#include "gamemode/GameMode.h"
+#include "gamemode/Mode.h"
+#include "main/WinMain.h"
+
+#if RO_ENABLE_QT6_UI
+#include <QFont>
+#include <QImage>
+#include <QPainter>
+#endif
+
+namespace {
+bool Contains(RECT r,int x,int y)
+{
+    return x>=r.left && x<r.right && y>=r.top && y<r.bottom;
+}
+
+RECT GlobalBounds(RECT r,const UIWindow& owner)
+{
+    r.left+=owner.m_x;r.right+=owner.m_x;r.top+=owner.m_y;r.bottom+=owner.m_y;return r;
+}
+
+void DrawText(HDC dc,RECT rect,const std::string& value,COLORREF color)
+{
+    if(rect.right<=rect.left || rect.bottom<=rect.top)return;
+#if RO_ENABLE_QT6_UI
+    QImage image(rect.right-rect.left,rect.bottom-rect.top,QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);QFont font("Segoe UI");font.setPixelSize(12);painter.setFont(font);
+    painter.setPen(QColor::fromRgb(GetRValue(color),GetGValue(color),GetBValue(color)));
+    painter.drawText(image.rect(),Qt::AlignLeft|Qt::AlignTop|Qt::TextSingleLine,
+                     QString::fromLocal8Bit(value.c_str()));
+    painter.end();
+    AlphaBlendArgbToHdc(dc,rect.left,rect.top,image.width(),image.height(),
+                        reinterpret_cast<const unsigned int*>(image.constBits()),image.width(),image.height());
+#else
+    shopui::DrawWindowTextRect(dc,rect,value,color,DT_LEFT|DT_TOP|DT_SINGLELINE|DT_NOPREFIX);
+#endif
+}
+
+RoomSettingsButton MakeButton(int id,int x,int y,const char* normal,const char* hover,const char* pressed)
+{
+    RoomSettingsButton button;button.id=id;button.x=x;button.y=y;
+    const char* names[]={normal,hover,pressed};
+    for(int i=0;i<3;++i){button.bitmaps[i]=LoadChatRoomSkinBitmap(names[i]);button.uris[i]=ChatRoomBitmapUri(button.bitmaps[i]);}
+    return button;
+}
+
+void PaintButton(HDC dc,const UIWindow& owner,const RoomSettingsButton& button,int state)
+{
+    const RECT bounds=GlobalBounds(button.Bounds(),owner);const auto& bitmap=button.bitmaps[state];
+    if(bitmap.IsValid()){
+        shopui::DrawBitmapPixelsTransparent(dc,bitmap,{bounds.left,bounds.top,bounds.left+bitmap.width,bounds.top+bitmap.height});
+    }else{
+        const int shade=state==2?180:state==1?225:210;
+        shopui::FillRectColor(dc,bounds,RGB(shade,shade,shade));
+        DrawText(dc,bounds,button.id==118?std::string("OK"):std::string("Cancel"),RGB(0,0,0));
+    }
+}
+}
+
+class GroundSkillTextEditCtrl : public UIEditCtrl {
+public:
+    explicit GroundSkillTextEditCtrl(UIGroundSkillTextWnd* owner):m_owner(owner){}
+    void OnDraw() override
+    {
+        if(!m_show)return;auto dc=AcquireDrawTarget();if(!dc)return;
+        const int saved=SaveDC(dc);IntersectClipRect(dc,m_x,m_y,m_x+m_w,m_y+m_h);
+        shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(m_r,m_g,m_b));
+        DrawText(dc,{m_x+m_xOffset,m_y+m_yOffset,m_x+m_w-2,m_y+m_h},m_text,RGB(m_textR,m_textG,m_textB));
+        RestoreDC(dc,saved);ReleaseDrawTarget(dc);
+    }
+    void OnLBtnDown(int x,int y) override
+    {
+        UIEditCtrl::OnLBtnDown(x,y);
+        if(m_owner)m_owner->FocusEdit();
+    }
+private:
+    UIGroundSkillTextWnd* m_owner;
+};
+
+UIGroundSkillTextWnd::UIGroundSkillTextWnd(int windowId)
+{
+    m_id=windowId;Create(280,120);
+    const RECT client=g_windowMgr.GetChatClientRect();
+    Move((client.right-640)/2+185,300*client.bottom/480-60);
+
+    auto* edit=new GroundSkillTextEditCtrl(this);
+    edit->Create(240,16);edit->Move(m_x+22,m_y+50);edit->m_maxchar=78;
+    edit->SetFrameColor(242,242,242);m_editCtrl=edit;AddChild(edit);
+
+    m_ok=MakeButton(118,189,96,"btn_ok.bmp","btn_ok_a.bmp","btn_ok_b.bmp");
+    m_cancel=MakeButton(119,234,96,"btn_cancel.bmp","btn_cancel_a.bmp","btn_cancel_b.bmp");
+    const char* frameNames[]={"basic_interface\\titlebar_left.bmp","basic_interface\\titlebar_right.bmp",
+        "basic_interface\\titlebar_mid.bmp","basic_interface\\btnbar_left2.bmp",
+        "basic_interface\\btnbar_right2.bmp","basic_interface\\btnbar_mid2.bmp"};
+    for(std::size_t i=0;i<m_frame.size();++i){m_frame[i]=LoadChatRoomSkinBitmap(frameNames[i]);m_frameUris[i]=ChatRoomBitmapUri(m_frame[i]);}
+    ro::UiMessageStrings messages;messages.Load();
+    m_caption=messages.Get(435,"Talkbox");m_prompt=messages.Get(436,"Enter text");
+    FocusEdit();
+}
+
+const RoomSettingsButton* UIGroundSkillTextWnd::GetButton(int id) const
+{
+    if(id==118)return &m_ok;if(id==119)return &m_cancel;return nullptr;
+}
+
+int UIGroundSkillTextWnd::GetButtonState(int id) const
+{
+    if(id!=118 && id!=119)return 0;
+    if(m_pressed==id)return 2;
+    return m_hover==id?1:0;
+}
+
+void UIGroundSkillTextWnd::FocusEdit()
+{
+    if(m_show && !g_windowMgr.m_modalWindow){
+        g_windowMgr.m_editWindow=this;
+        if(m_editCtrl)m_editCtrl->m_hasFocus=true;
+        if(g_windowMgr.m_chatWnd)g_windowMgr.m_chatWnd->ClearInputFocus();
+    }
+}
+
+void UIGroundSkillTextWnd::Move(int x,int y)
+{
+    const int dx=x-m_x,dy=y-m_y;UIWindow::Move(x,y);
+    if(m_editCtrl)m_editCtrl->MoveDelta(dx,dy);
+}
+
+void UIGroundSkillTextWnd::OnDraw()
+{
+    auto dc=AcquireDrawTarget();if(!dc)return;
+    const int saved=SaveDC(dc);IntersectClipRect(dc,m_x,m_y,m_x+m_w,m_y+m_h);
+    shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(232,232,232));
+    // The port does not expose the source skin color-chip table. Use the
+    // source frame artwork where available and neutral fallback colors for
+    // the missing color-chip(2,2)/(20,6) fills.
+    const auto& titleLeft=m_frame[0];const auto& titleRight=m_frame[1];const auto& titleMid=m_frame[2];
+    if(titleMid.IsValid())for(int x=12;x<m_w-12;x+=12)
+        shopui::DrawBitmapPixelsTransparent(dc,titleMid,{m_x+x,m_y,m_x+x+titleMid.width,m_y+titleMid.height});
+    if(titleLeft.IsValid())shopui::DrawBitmapPixelsTransparent(dc,titleLeft,{m_x,m_y,m_x+titleLeft.width,m_y+titleLeft.height});
+    if(titleRight.IsValid())shopui::DrawBitmapPixelsTransparent(dc,titleRight,{m_x+m_w-titleRight.width,m_y,m_x+m_w,m_y+titleRight.height});
+    const auto& footerLeft=m_frame[3];const auto& footerRight=m_frame[4];const auto& footerMid=m_frame[5];
+    if(footerMid.IsValid())for(int x=21;x<m_w-21;x+=21)
+        shopui::DrawBitmapPixelsTransparent(dc,footerMid,{m_x+x,m_y+m_h-footerMid.height,m_x+x+footerMid.width,m_y+m_h});
+    if(footerLeft.IsValid())shopui::DrawBitmapPixelsTransparent(dc,footerLeft,{m_x,m_y+m_h-footerLeft.height,m_x+footerLeft.width,m_y+m_h});
+    if(footerRight.IsValid())shopui::DrawBitmapPixelsTransparent(dc,footerRight,{m_x+m_w-footerRight.width,m_y+m_h-footerRight.height,m_x+m_w,m_y+m_h});
+    shopui::FillRectColor(dc,{m_x,m_y+17,m_x+1,m_y+m_h-21},RGB(90,90,90));
+    shopui::FillRectColor(dc,{m_x+m_w-1,m_y+17,m_x+m_w,m_y+m_h-21},RGB(90,90,90));
+    if(m_id==84){
+        DrawText(dc,{m_x+17,m_y+3,m_x+m_w-8,m_y+17},m_caption,RGB(255,255,255));
+        DrawText(dc,{m_x+16,m_y+2,m_x+m_w-8,m_y+16},m_caption,RGB(0,0,0));
+    }
+    DrawText(dc,{m_x+17,m_y+23,m_x+m_w-8,m_y+39},m_prompt,RGB(255,255,255));
+    DrawText(dc,{m_x+16,m_y+22,m_x+m_w-8,m_y+38},m_prompt,RGB(0,0,0));
+    PaintButton(dc,*this,m_ok,GetButtonState(118));
+    PaintButton(dc,*this,m_cancel,GetButtonState(119));
+    DrawChildrenToHdc(dc);
+    RestoreDC(dc,saved);ReleaseDrawTarget(dc);
+}
+
+void UIGroundSkillTextWnd::CancelPointerCapture()
+{
+    m_pressed=0;
+    if(g_windowMgr.m_captureWindow==this){g_windowMgr.m_captureWindow=nullptr;if(g_hMainWnd && GetCapture()==g_hMainWnd)ReleaseCapture();}
+    Invalidate();
+}
+
+void UIGroundSkillTextWnd::OnLBtnDown(int x,int y)
+{
+    FocusEdit();const int localX=x-m_x,localY=y-m_y;
+    if(Contains(m_ok.Bounds(),localX,localY))m_pressed=118;
+    else if(Contains(m_cancel.Bounds(),localX,localY))m_pressed=119;
+    else if(m_editCtrl && Contains({m_editCtrl->m_x,m_editCtrl->m_y,m_editCtrl->m_x+m_editCtrl->m_w,m_editCtrl->m_y+m_editCtrl->m_h},x,y)){
+        m_editCtrl->OnLBtnDown(x,y);
+    }
+    if(m_pressed){g_windowMgr.m_captureWindow=this;if(g_hMainWnd)SetCapture(g_hMainWnd);}
+    Invalidate();
+}
+
+void UIGroundSkillTextWnd::OnLBtnUp(int x,int y)
+{
+    const int pressed=m_pressed;CancelPointerCapture();
+    if(!pressed)return;
+    const RoomSettingsButton* button=GetButton(pressed);
+    if(button && Contains(button->Bounds(),x-m_x,y-m_y))ActivateButton(pressed);
+}
+
+void UIGroundSkillTextWnd::OnMouseMove(int x,int y)
+{
+    OnMouseHover(x,y);
+}
+
+void UIGroundSkillTextWnd::OnMouseHover(int x,int y)
+{
+    const int localX=x-m_x,localY=y-m_y;
+    const int hover=Contains(m_ok.Bounds(),localX,localY)?118:Contains(m_cancel.Bounds(),localX,localY)?119:0;
+    if(hover!=m_hover){m_hover=hover;Invalidate();}
+}
+
+void UIGroundSkillTextWnd::OnChar(char c)
+{
+    if(m_editCtrl)m_editCtrl->OnChar(c);
+}
+
+void UIGroundSkillTextWnd::OnKeyDown(int key)
+{
+    if(key==VK_RETURN){SendMsg(this,0,0,0,0);return;}
+    if(key==VK_ESCAPE){SendMsg(this,1,0,0,0);return;}
+    if(m_editCtrl)m_editCtrl->OnKeyDown(key);
+}
+
+void UIGroundSkillTextWnd::ActivateButton(int id)
+{
+    SendMsg(this,6,id,0,0);
+}
+
+msgresult_t UIGroundSkillTextWnd::SendMsg(UIWindow* sender,int message,msgparam_t value,msgparam_t lparam,msgparam_t extra)
+{
+    if(message==68){
+        const auto* fields=reinterpret_cast<const int*>(value);
+        if(fields)for(std::size_t i=0;i<m_values.size();++i)m_values[i]=fields[i];
+        return 0;
+    }
+    if(message==0){return SendMsg(this,6,118,0,0);}
+    if(message==1){return SendMsg(this,6,117,0,0);}
+    if(message!=6)return UIWindow::SendMsg(sender,message,value,lparam,extra);
+    if(value==118){
+        GroundSkillTextRequest request{m_values,m_editCtrl?m_editCtrl->GetText():""};
+        if(auto* mode=g_modeMgr.GetCurrentGameMode())mode->SendMsg(144,reinterpret_cast<msgparam_t>(&request),0,0);
+        g_windowMgr.PostQuit(this);
+    }else if(value==119){
+        g_windowMgr.PostQuit(this);
+    }
+    return 0;
+}

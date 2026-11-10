@@ -1,0 +1,76 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00588eca <.text+0x187eca>:
+  588eca:	8b 45 0c             	mov    0xc(%ebp),%eax
+  588ecd:	66 c7 85 f4 fe ff ff 	movw   $0x7e,-0x10c(%ebp)
+  588ed4:	7e 00
+  588ed6:	66 8b 48 0c          	mov    0xc(%eax),%cx
+  588eda:	66 89 8d f9 fe ff ff 	mov    %cx,-0x107(%ebp)
+  588ee1:	66 8b 10             	mov    (%eax),%dx
+  588ee4:	66 89 95 fd fe ff ff 	mov    %dx,-0x103(%ebp)
+  588eeb:	66 8b 48 04          	mov    0x4(%eax),%cx
+  588eef:	66 89 8d 00 ff ff ff 	mov    %cx,-0x100(%ebp)
+  588ef6:	66 8b 50 08          	mov    0x8(%eax),%dx
+  588efa:	66 89 95 08 ff ff ff 	mov    %dx,-0xf8(%ebp)
+  588f01:	8b 78 10             	mov    0x10(%eax),%edi
+  588f04:	83 c9 ff             	or     $0xffffffff,%ecx
+  588f07:	33 c0                	xor    %eax,%eax
+  588f09:	f2 ae                	repnz scas %es:(%edi),%al
+  588f0b:	f7 d1                	not    %ecx
+  588f0d:	2b f9                	sub    %ecx,%edi
+  588f0f:	8d 95 0a ff ff ff    	lea    -0xf6(%ebp),%edx
+  588f15:	8b c1                	mov    %ecx,%eax
+  588f17:	8b f7                	mov    %edi,%esi
+  588f19:	8b fa                	mov    %edx,%edi
+  588f1b:	c1 e9 02             	shr    $0x2,%ecx
+  588f1e:	f3 a5                	rep movsl %ds:(%esi),%es:(%edi)
+  588f20:	8b c8                	mov    %eax,%ecx
+  588f22:	83 e1 03             	and    $0x3,%ecx
+  588f25:	f3 a4                	rep movsb %ds:(%esi),%es:(%edi)
+  588f27:	8d 8d 0a ff ff ff    	lea    -0xf6(%ebp),%ecx
+  588f2d:	51                   	push   %ecx
+  588f2e:	b9 28 c4 78 00       	mov    $0x78c428,%ecx
+  588f33:	e8 08 35 f8 ff       	call   0x50c440
+  588f38:	84 c0                	test   %al,%al
+  588f3a:	74 24                	je     0x588f60
+  588f3c:	6a 00                	push   $0x0
+  588f3e:	6a 00                	push   $0x0
+  588f40:	6a 00                	push   $0x0
+  588f42:	6a 00                	push   $0x0
+  588f44:	6a 03                	push   $0x3
+  588f46:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  588f4b:	e8 60 0d f6 ff       	call   0x4e9cb0
+  588f50:	6a 00                	push   $0x0
+  588f52:	6a 00                	push   $0x0
+  588f54:	68 ff 00 00 00       	push   $0xff
+  588f59:	6a 32                	push   $0x32
+  588f5b:	e9 21 08 00 00       	jmp    0x589781
+  588f60:	66 83 bd f9 fe ff ff 	cmpw   $0x0,-0x107(%ebp)
+  588f67:	00
+  588f68:	75 34                	jne    0x588f9e
+  588f6a:	8b 95 fd fe ff ff    	mov    -0x103(%ebp),%edx
+  588f70:	8d 85 b0 fd ff ff    	lea    -0x250(%ebp),%eax
+  588f76:	81 e2 ff ff 00 00    	and    $0xffff,%edx
+  588f7c:	b9 18 1f 7b 00       	mov    $0x7b1f18,%ecx
+  588f81:	52                   	push   %edx
+  588f82:	50                   	push   %eax
+  588f83:	e8 c8 ed 0e 00       	call   0x677d50
+  588f88:	66 8b 48 0c          	mov    0xc(%eax),%cx
+  588f8c:	66 89 8d f9 fe ff ff 	mov    %cx,-0x107(%ebp)
+  588f93:	8d 8d b0 fd ff ff    	lea    -0x250(%ebp),%ecx
+  588f99:	e8 a2 27 ef ff       	call   0x47b740
+  588f9e:	8d 95 f4 fe ff ff    	lea    -0x10c(%ebp),%edx
+  588fa4:	52                   	push   %edx
+  588fa5:	6a 7e                	push   $0x7e
+  588fa7:	e9 45 1e 00 00       	jmp    0x58adf1
+  588fac:	8d 45 0e             	lea    0xe(%ebp),%eax
+  588faf:	66 c7 45 0e 18 01    	movw   $0x118,0xe(%ebp)
+  588fb5:	50                   	push   %eax
+  588fb6:	68 18 01 00 00       	push   $0x118
+  588fbb:	e9 31 1e 00 00       	jmp    0x58adf1
+  588fc0:	8b 4d 0c             	mov    0xc(%ebp),%ecx
+  588fc3:	6a                   	.byte 0x6a

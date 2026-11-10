@@ -180,6 +180,23 @@
             WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(missX,missY));
             Require(!mode.m_skillUseInfo.useType && !mode.m_hasSkillChase && !mode.m_isLeftButtonHeld
                 && player.m_proceedType.type==0,"source character-target miss failed78 or started a world intent");
+            int groundX=-1,groundY=-1,gx=-1,gy=-1;
+            for(int y=20;y<view.height() && groundX<0;y+=40)for(int x=20;x<view.width();x+=40){
+                if(!g_windowMgr.HasWindowAtPoint(x,y) && camera.ScreenToHoveredAttrCell(x,y,&gx,&gy)){groundX=x;groundY=y;break;}
+            }
+            Require(groundX>=0,"ground input fixture has no unoccluded source cell");
+            player.SendMsg(nullptr,13,0,0,0);row.SKID=89;row.type=2;row.attackRange=6;
+            mode.SendMsg(126,reinterpret_cast<msgparam_t>(&row),-2,0);
+            WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(groundX,groundY));
+            WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(groundX,groundY));
+            Require(player.m_proceedType.type==4 && player.m_skillId==89 && player.m_skillUseLevel==-2
+                && player.m_gSkillDx==gx && player.m_gSkillDy==gy && player.m_skillAttackRange==6
+                && mode.m_hasGroundSkillChase && !mode.m_skillUseInfo.useType && !mode.m_isLeftButtonHeld,
+                "native ground click lost65/90 raw snapshot or78 ownership");
+            QFile groundProof(output+"/ground-skill-world-input-results.json");
+            Require(groundProof.open(QIODevice::WriteOnly),"ground input proof open failed");
+            groundProof.write(QJsonDocument(QJsonObject{{"outcome","PASS"},{"scene_backend","Vulkan"},{"native_windowproc",true},
+                {"source126_65_90_78",true},{"raw_level",-2},{"snapshot_range",6},{"cell_x",gx},{"cell_y",gy}}).toJson(QJsonDocument::Compact));
             QFile pendingProof(output+"/pending-skill-world-input-results.json");
             Require(pendingProof.open(QIODevice::WriteOnly),"pending world input proof open failed");
             pendingProof.write(QJsonDocument(QJsonObject{{"outcome","PASS"},{"registered_0147",true},{"virtual126_79",true},

@@ -8848,6 +8848,22 @@ void CPlayer::SendMsg(CGameObject* sender,int message,msgparam_t arg1,msgparam_t
     case 42:
         if(mode)mode->SendMsg(76,m_skillId,m_proceedTargetGid,m_skillUseLevel);
         return;
+    case 65:{
+        const int skill=static_cast<int>(arg1);
+        if(mode && m_stateId!=6 && (!(m_effectState&0x0002) || skill==137 || skill==212 || skill==529 || skill==530)){
+            m_proceedType.type=4;m_skillId=skill;m_gSkillDx=static_cast<int>(arg2);m_gSkillDy=static_cast<int>(arg3);
+            m_skillAttackRange=mode->m_skillUseInfo.attackRange;m_proceedTargetGid=0;sync();
+        }
+        return;
+    }
+    case 66:{
+        std::array<int,4> values{{m_skillId,m_gSkillDx,m_gSkillDy,m_skillUseLevel}};
+        if(m_skillId==125 || m_skillId==220){
+            auto* window=g_windowMgr.MakeWindow(m_skillId==125?UIWindowMgr::WID_TALKBOXTRAPINPUTWND:UIWindowMgr::WID_GRAFFISTRBOXWND);
+            if(window)window->SendMsg(nullptr,68,reinterpret_cast<msgparam_t>(&values),0,0);
+        }else if(mode)mode->SendMsg(77,reinterpret_cast<msgparam_t>(&values),0,0);
+        return;
+    }
     case 90:m_skillUseLevel=static_cast<int>(arg1);sync();return;
     case 103:
         if(arg2 && m_stateId!=6 && !(m_effectState&0x0002)){

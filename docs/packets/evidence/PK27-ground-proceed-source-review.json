@@ -1,0 +1,36 @@
+{
+  "baseline": "8e0da944",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "status": "root-reviewed bounded backend/text-owner leaf; full plan remains open",
+  "user_constraint": "Skill tree window/model/catalog/QML/geometry unchanged. Two separate missing source text prompts were added; these do not replace or alter the skill tree.",
+  "primary": {
+    "player": "Ref/Player.cpp447-483,1212-1260,1291; SendMsg5E5710 and ProcessProceed5E4920",
+    "ground_click": "Ref/GameMode.cpp5620-5643;65 copies current range and90 separately writes raw level",
+    "mode77": "Ref/GameMode2.cpp4866-4886; selected switch58AE84 maps77 to588E3F",
+    "mode144": "Ref/GameMode2.cpp5967-5993; selected144 maps588ECA; common5745-5750 returns NOSKILL",
+    "windows": "Ref/UIWindowMgr.cpp6689-6704,6913-6926; Ref/UIFrameWnd.cpp6785-6856,13884-13885,13973,14023-14090; Ref/UIFrameWnd2.cpp corresponding Graffi handlers/OnCreate/OnDraw",
+    "placement": "HighPriest.exe.c UIX4E72C0 / UICY4E7300: centered reference X, height-scaled Y"
+  },
+  "selected_pe": {
+    "player66_virtual77": "5E57AD push4D;5E57B1 FF5214 virtual mode slot14",
+    "text_virtual144": "4691AA push90;4691B1 FF5214 virtual mode slot14",
+    "level77": "588E50 MOV32 level;588E53 TEST ESI,ESI; original full32 zero determines fallback",
+    "level144": "588ED6 MOV16 level;588F60 CMPW0;588F76 masks skillIDFFFF for normal lookup"
+  },
+  "decisions": [
+    "65 uses PT4, raw skill/cells, pending snapshot range, clears proceedTargetGid, refuses state6/burrow except137/212/529/530. Unlike41 it does not allow592. Rejected65 retains old proceed; separate90 still overwrites raw level.",
+    "66 copies four raw fields. Ordinary calls virtual77.125/220 open distinct factory84/101 and copy68 values; no request is sent until text confirmation. Pump66 then13 retires after attempt or window creation.",
+    "PT4 mirrors canonical player state; no legacy mode-only arming or positive-level guard. Source unsigned<2/state4/signed>=16 state rule rejects negatives. Client range or destination-is-player-cell decides dispatch; removed extra server-cell veto. Preserve neighbor order and wrapping32-bit range*5.",
+    "77 full32 zero looks up only normal learned storage, regardless row-valid flag; no temporary/companion fallback. Narrow ID/level/cells only when populating wire.144 instead truncates level first, then its zero WORD uses normal low-word ID lookup. Both mode recipients return0 after attempt.",
+    "144 uses existing selected102-byte007E builder and MannerFilter UTF8 representation; rejection sends manager3 then notice50/red. Existing checked SendSkillToGroundWithText convenience API remains distinct; canonical66/windows use actual144.",
+    "Text prompts have source280x120, edit240x16 at22,50/max78, buttons118/119 at189/234,96, copied68 snapshot,0 forwards118,1 forwards source default117 (ignored), OK/Cancel deferred PostQuit. No empty-text rejection or invented cancel119 on Escape.",
+    "Frame assets resolve raw CP949 keys, source title/footer tiling, source435/436 labels (caption only84), shadow-before-foreground order. Composed Qt UI suppressed base UIEdit rendering: actual screenshot review caught a missing edit; local subclass rendering now keeps input visible without altering global UIEdit/tree.",
+    "Removed unreachable legacy input remainder after all nonzero selectors; strict pending excludes type0. The targeted-skill and touch-skill source gates incorrectly asserted dead input blocks/learned range: they now check real2/4 snapshot41/90 and current snapshot103 consumers. Ground gate retains exact Ref/EXE ProcessProceed/converter equality and verifies new65/66/77 owners.",
+    "External chase interruption now retires canonical PT4 as well as3/6, preventing the pump from resurrecting a cleared ground intent."
+  ],
+  "remaining": [
+    "Text prompt source color-chip(2,2)/(20,6), native original keyboard routing, frame drag/focus/selection and exhaustive lifetimes are not accepted by the two structural native renders; port uses neutral color fallbacks and existing edit model.",
+    "Full item/other selector consumers, companion identity/AI, party/guild/PK/siege controls, cursor/picker priority and interruption lifetimes.",
+    "Metadata GRF/resource overrides, codec/resource presentation, installed world-entry/live acceptance, feeding/talk/follow/reset and the full packet plan. No request/package closure."
+  ]
+}

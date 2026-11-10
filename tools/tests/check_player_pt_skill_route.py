@@ -105,14 +105,24 @@ pump_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "void PumpSk
 targeted_pump_route = pump_route[pump_route.index("if (!mode.m_hasSkillChase || mode.m_skillChaseTargetGid == 0)") :]
 begin_chase = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "void BeginSkillChase(")
 mode_sendmsg = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "msgresult_t CGameMode::SendMsg(")
-assert "BeginSkillChase(mode, targetGid, skillId, skillLevel, skillRange);" in input_route
-assert "const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId))" in input_route
-assert "const int skillRange = skillInfo ? skillInfo->attackRange : 0" in input_route
+assert "if(mode.m_skillUseInfo.useType==2 || mode.m_skillUseInfo.useType==4)" in input_route
+assert "return TryRequestSourceSkillOnActor(mode,actor," in input_route, \
+    "actor-target selectors 2/4 must route through the source skill actor helper"
+assert "BeginSkillChase" not in input_route, "pending actor targeting must not bypass the source actor helper"
+source_actor_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "bool TryRequestSourceSkillOnActor(")
+assert "if(mode.m_skillUseInfo.useType!=2 && mode.m_skillUseInfo.useType!=4)return false" in source_actor_route
+assert "BeginSkillChase(mode,target->m_gid,mode.m_skillUseInfo.id,mode.m_skillUseInfo.level,mode.m_skillUseInfo.attackRange)" in source_actor_route, \
+    "source actor helper must forward stored raw ID, level, and learned pending range"
+assert "const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId))" not in input_route
+assert "const int skillRange = skillInfo ? skillInfo->attackRange : 0" not in input_route
 assert "player->SendMsg(nullptr,41,targetGid,skillId,skillRange);" in begin_chase
 assert "player->SendMsg(nullptr,90,skillLevel,0,0);" in begin_chase
 assert "mode.SynchronizePlayerSkillProceed(player);" in begin_chase
 assert "(std::max)(1, skillRange)" not in begin_chase
-assert "SendUseSkillToIdPacket" not in input_route[input_route.index("if (skillUseMode == ShortcutSkillUseMode::ActorTarget)"):]
+player_sendmsg = extract_definition(ROOT / "src/world/GameActor.cpp", "void CPlayer::SendMsg(")
+assert "const int skill=static_cast<int>(arg2)" in player_sendmsg, "player message 41 must retain raw signed 32-bit skill ID"
+assert "m_skillUseLevel=static_cast<int>(arg1)" in player_sendmsg, "player message 90 must retain raw signed 32-bit level"
+assert "SendUseSkillToIdPacket" not in input_route, "pending target selection must defer source skill dispatch to the helper"
 
 ordered_current = (
     "mode.GetServerCoor(player->m_pos.x, player->m_pos.z, sourceTileX, sourceTileY)",

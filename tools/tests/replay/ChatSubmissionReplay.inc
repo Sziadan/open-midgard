@@ -22,6 +22,7 @@
 bool ReplayTryPetCaptureOnActor(CGameMode&,CGameActor*,bool,bool,bool);
 bool ReplayTrySourceSkillOnActor(CGameMode&,CGameActor*,bool,bool,bool);
 void ReplayPumpSkillChase(CGameMode&);
+void ReplayClearSkillChase(CGameMode&);
 
 namespace {
 // Golden selected /help order, independently retained from57AB1B..57B3CD.

@@ -15,6 +15,8 @@
 #include "skill/Skill.h"
 #include "qtui/QtUiStateAdapter.h"
 #include "ui/UIChooseWnd.h"
+#include "ui/UIGroundSkillTextWnd.h"
+#include "core/MannerFilter.h"
 #include "ui/UIChooseSellBuyWnd.h"
 #include "ui/UIItemShopWnd.h"
 #include "ui/UIItemPurchaseWnd.h"

@@ -534,5 +534,16 @@
       "Metadata GRF/resource overrides, installed world-entry acceptance, feeding/talk/follow/reset and the full packet plan. No request/package closure."
     ],
     "live_deployed": "not accepted"
+  },
+  "runtime_canonical_ground_checkpoint": {
+    "evidence": "PK27-ground-proceed.md",
+    "validation": "Deploy-OFF all-target and standalone builds pass; focused3/3 in17.85s, application164/164 in56.92s (-j4), standalone473/473 in13.17s (-j8). Twenty-two prior native/Qt frame pairs, two added native text-prompt frames and real Vulkan ground/capture/pending input pass. DeployON restored configure-only; OldRO unchanged.",
+    "skill_tree_window": "unchanged; user constraint",
+    "remaining_strong_gates": [
+      "Text prompt source color-chip(2,2)/(20,6), native original keyboard routing, frame drag/focus/selection and exhaustive lifetimes are not accepted by the two structural native renders; port uses neutral color fallbacks and existing edit model.",
+      "Full item/other selector consumers, companion identity/AI, party/guild/PK/siege controls, cursor/picker priority and interruption lifetimes.",
+      "Metadata GRF/resource overrides, codec/resource presentation, installed world-entry/live acceptance, feeding/talk/follow/reset and the full packet plan. No request/package closure."
+    ],
+    "live_deployed": "not accepted"
   }
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source and production-body gate for modern PT_GROUNDSKILL routing."""
+"""Source parity and canonical PT_GROUNDSKILL request-routing gate."""
 from __future__ import annotations
 
 import hashlib
@@ -55,19 +55,16 @@ assert ref_ground == exe_ground, "complete PT_GROUNDSKILL Ref/EXE branch mismatc
 print(f"PT_GROUNDSKILL Ref/EXE equal: chars={len(ref_ground)} sha256={hashlib.sha256(ref_ground.encode()).hexdigest()}")
 
 for token in (
-    "GetServerCoor(GameMode, this->m_pos.x, this->m_pos.z, &sx, &dx2)",
-    "GetClientCoor(GameMode, tActorPosX, dy, (float *)&fdx, (float *)&fdz)",
-    "ConvertToNumCellCloseAndFindNoRedCell",
-    "this->m_skillAttackRange",
     "(unsigned int)v45 < 2 || v45 == 4 || v45 >= 16",
-    "CalcDist(this, *(float *)&fdx, this->m_pos.y, *(float *)&fdz)",
-    "5 * this->m_skillAttackRange",
-    "v46 <= (double)sy + 5.5 || v48",
-    "SendMsg(this, 0, 66, 0, 0, 0)",
-    "m_stateId != 2",
-    "SendMsg(this, 0, 91, v66, v68, 0)",
+    "this->CGameObject::SendMsg(this, 0, 66, 0, 0, 0)",
+    "goto LABEL_176",
 ):
-    assert token in ref_ground, f"missing canonical ground-skill branch anchor: {token}"
+    assert token in ref_ground, f"missing canonical ground proceed anchor: {token}"
+retire_pos = ref_full.index("LABEL_176:")
+retire_send_pos = ref_full.index("this->CGameObject::SendMsg(this, 0, 13, 0, 0, 0)", retire_pos)
+dispatch_pos = ref_ground.index("this->CGameObject::SendMsg(this, 0, 66, 0, 0, 0)")
+assert dispatch_pos < ref_full.index("goto LABEL_176", dispatch_pos) < retire_pos < retire_send_pos, \
+    "canonical ground proceed must pump 66 then retire through 13"
 
 ref_converter = normalize(extract_definition(
     ROOT / "Ref/GameMode.cpp",
@@ -79,53 +76,52 @@ exe_converter = normalize(extract_definition(
 ))
 assert ref_converter == exe_converter, "closest-safe-cell Ref/EXE helper mismatch"
 
+actor_source = ROOT / "src/world/GameActor.cpp"
+send_msg = normalize(extract_definition(
+    actor_source,
+    "void CPlayer::SendMsg(CGameObject* sender,int message,msgparam_t arg1,msgparam_t arg2,msgparam_t arg3)",
+))
+case65 = send_msg[send_msg.index("case 65:"):send_msg.index("case 66:")]
+case66 = send_msg[send_msg.index("case 66:"):send_msg.index("case 90:")]
+case90 = send_msg[send_msg.index("case 90:"):send_msg.index("case 103:")]
+assert "m_stateId!=6" in case65 and "m_effectState&0x0002" in case65
+for allowed_burrow_skill in (137, 212, 529, 530):
+    assert f"skill=={allowed_burrow_skill}" in case65, f"ground source burrow exception missing {allowed_burrow_skill}"
+assert "skill==592" not in case65, "ground source burrow exception list must not include skill 592"
+assert "m_proceedType.type=4" in case65 and "m_skillId=skill" in case65
+assert "m_gSkillDx=static_cast<int>(arg2)" in case65 and "m_gSkillDy=static_cast<int>(arg3)" in case65
+assert "m_skillAttackRange=mode->m_skillUseInfo.attackRange" in case65 and "m_proceedTargetGid=0" in case65
+assert "std::array<int,4> values{{m_skillId,m_gSkillDx,m_gSkillDy,m_skillUseLevel}}" in case66
+assert "mode->SendMsg(77,reinterpret_cast<msgparam_t>(&values),0,0)" in case66
+assert "m_skillId==125" in case66 and "m_skillId==220" in case66, "ground text skills must keep their special input windows"
+assert "m_skillUseLevel=static_cast<int>(arg1)" in case90
+
 mode_source = ROOT / "src/gamemode/GameMode.cpp"
-input_route = extract_definition(mode_source, "bool TryRequestPendingSkillFromScreenPoint(")
-pump_route = extract_definition(mode_source, "void PumpSkillChaseRequest(")
-clear_route = extract_definition(mode_source, "void ClearSkillChase(")
-assert "mode.m_groundSkillCellX = attrX;" in input_route
-assert "mode.m_groundSkillCellY = attrY;" in input_route
-assert "const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId))" in input_route
-assert "mode.m_groundSkillRange = skillInfo ? skillInfo->attackRange : 0;" in input_route
-assert "mode.m_hasGroundSkillChase = 1;" in input_route
-assert "mode.m_hasSkillChase = 1;" in input_route, "ground intent must block concurrent attack chase"
-assert "SendUseSkillToPosPacket" not in input_route
-assert "mode.m_hasGroundSkillChase = 0;" in clear_route
+sync_route = extract_definition(mode_source, "void CGameMode::SynchronizePlayerSkillProceed(CPlayer* player,bool retire)")
+assert "player->m_proceedType.type==4" in sync_route
+assert "m_groundSkillId=player->m_skillId" in sync_route
+assert "m_groundSkillLevel=player->m_skillUseLevel" in sync_route
+assert "m_groundSkillCellX=player->m_gSkillDx" in sync_route and "m_groundSkillCellY=player->m_gSkillDy" in sync_route
+assert "m_hasSkillChase=1;m_hasGroundSkillChase=1;m_hasTouchSkillChase=0" in sync_route, \
+    "PT4 player state must be mirrored to mode ground proceed state"
 
-ordered_current = (
-    "if (mode.m_hasGroundSkillChase)",
-    "const u16 groundSkillId = static_cast<u16>(mode.m_groundSkillId & 0xFFFF)",
-    "const int skillRange = mode.m_groundSkillRange",
-    "mode.GetServerCoor(player->m_pos.x, player->m_pos.z, sourceTileX, sourceTileY)",
-    "mode.GetClientCoor(mode.m_groundSkillCellX, mode.m_groundSkillCellY, targetWorldX, targetWorldZ)",
-    "const float deltaX = player->m_pos.x - targetWorldX",
-    "static_cast<double>(5 * skillRange) * normalizedDirectionX",
-    "static_cast<double>(5 * skillRange) * (inverseLength * deltaZ)",
-    "std::floor(static_cast<double>(approachWorldX / zoom)",
-    "kGroundRefNeighborOrder",
-    "cell.flag != 1 && cell.flag != 5",
-    "player->m_stateId >= 2 && player->m_stateId != 4 && player->m_stateId < 16",
-    "const float dy = 0.0f",
-    "distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell",
-    "const bool sent = SendUseSkillToPosPacket(\n                groundSkillId",
-    "player->m_destCellX == approachTileX && player->m_destCellZ == approachTileY",
-    "player->m_stateId == 2",
-    "player->m_destCellX = approachTileX",
-    "timeGetTime() > player->m_moveReqTick + 1000",
-    "SendMoveRequestPacket(approachTileX, approachTileY)",
-    "if (mode.m_hasTouchSkillChase)",
-    "if (!mode.m_hasSkillChase || mode.m_skillChaseTargetGid == 0)",
+dispatch_route = extract_definition(mode_source, "bool DispatchSourceGroundSkill(const std::array<int,4>& values)")
+ordered_dispatch = (
+    "int level=values[3]",
+    "if(!level)",
+    "g_session.GetSkillItemBySkillId(values[0])",
+    "level=row?row->level:0",
+    "packet.SkillId=static_cast<u16>(values[0])",
+    "packet.SkillLevel=static_cast<u16>(level)",
+    "packet.X=static_cast<u16>(values[1])",
+    "packet.Y=static_cast<u16>(values[2])",
 )
-positions = [pump_route.find(token) for token in ordered_current]
-assert all(position >= 0 for position in positions), "missing current PT_GROUNDSKILL operation"
-assert positions == sorted(positions), "current ground-skill operation order changed"
-ground_dispatch_pos = pump_route.find("const bool sent = SendUseSkillToPosPacket(")
-assert ground_dispatch_pos >= 0 and pump_route.find("ClearSkillChase(mode);", ground_dispatch_pos) > ground_dispatch_pos
-assert "SendUseSkillToPosPacket" in pump_route
-assert "WID_TALKBOXTRAPINPUTWND" not in pump_route and "WID_GRAFFISTRBOXWND" not in pump_route
+positions = [dispatch_route.find(token) for token in ordered_dispatch]
+assert all(position >= 0 for position in positions) and positions == sorted(positions), \
+    "message 77 must preserve raw values and apply normal-skill zero-level fallback before wire narrowing"
+assert "GetTemporarySkillItemBySkillId" not in dispatch_route
+assert "GetHomunSkillItemBySkillId" not in dispatch_route and "GetMercSkillItemBySkillId" not in dispatch_route
+assert "m_isValid" not in dispatch_route, "zero-level fallback must not add a row-validity gate"
+assert "serverInRange" not in dispatch_route and "ServerInRange" not in dispatch_route
 
-normalized_pump = normalize(pump_route)
-expected_neighbors = "{{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}}, {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}}"
-assert expected_neighbors in normalized_pump, "ground closest-safe-cell neighbor order changed"
-
-print("PT_GROUNDSKILL source branch and current persistent modern route anchors/order pass.")
+print("PT_GROUNDSKILL Ref/EXE parity and canonical 65/66/90 -> PT4 -> 77 source contract pass.")

@@ -1,4 +1,6 @@
 add_library(ro_ui STATIC
+    UIGroundSkillTextWnd.h
+    UIGroundSkillTextWnd.cpp
     UIFriendOptionWnd.h
     UIFriendOptionWnd.cpp
     UIAutoMessageWnd.h

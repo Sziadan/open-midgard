@@ -20,6 +20,7 @@ class UIPlayerGage;
 class CRagConnection;
 class CGameModePacketRouter;
 class UIWindow;
+struct GroundSkillTextRequest { std::array<int,4> values{}; const char* text=nullptr; };
 struct SourceChatInputServices { ro::chat::SourceChatModifiers (*readModifiers)()=nullptr; u32 (*ticks)()=nullptr; u16 (*languageId)()=nullptr; };
 struct GameModePacketLoopResult;
 struct MapTransitionServices;

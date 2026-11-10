@@ -1,3 +1,4 @@
+#include "UIGroundSkillTextWnd.h"
 #include "UIWindowMgr.h"
 #include "gamemode/Commerce.h"
 #include "network/Connection.h"
@@ -79,6 +80,15 @@
 #include <map>
 #include <memory>
 #include <vector>
+
+namespace {
+UIGroundSkillTextWnd* GroundSkillTextOwner(UIWindow* window)
+{
+    for(auto* current=window;current;current=current->m_parent)
+        if(auto* owner=dynamic_cast<UIGroundSkillTextWnd*>(current))return owner;
+    return nullptr;
+}
+}
 
 namespace {
 std::string ShortcutVirtualKeyLabel(int virtualKey)
@@ -1322,6 +1332,13 @@ bool UIWindowMgr::OpenChatRoomMake(bool toggle)
 UIWindow* UIWindowMgr::MakeWindow(int windowId)
 {
     switch (windowId) {
+    case WID_TALKBOXTRAPINPUTWND:case WID_GRAFFISTRBOXWND:{
+        auto*& window=m_groundSkillTextWindows[windowId==WID_TALKBOXTRAPINPUTWND?0:1];
+        if(!window){window=new UIGroundSkillTextWnd(windowId);m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),window);}
+        window->SetShow(1);m_editWindow=window;
+        if(m_chatWnd)m_chatWnd->ClearInputFocus();
+        return window;
+    }
     case WID_PETINFOWND:
         if(g_session.m_petStatus.job==-1)return nullptr;
         if(!m_petInfoWnd){
@@ -1937,6 +1954,8 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     const bool deletingPet=window==m_petInfoWnd;
     const bool deletingPetEgg=window==m_petEggListWnd;
     const bool deletingPetTaming=window==m_petTamingDeceiveWnd;
+    const bool deletingGroundText=GroundSkillTextOwner(window)!=nullptr;
+    for(auto*& owner:m_groundSkillTextWindows)if(owner==window)owner=nullptr;
     if(window==m_commandListWnd)m_commandListWnd=nullptr;
     if(window==m_tipOfTheDayWnd)m_tipOfTheDayWnd=nullptr;
     if(window==m_petInfoWnd){m_petInfoWnd->StoreInfo();m_petInfoWnd=nullptr;}
@@ -1949,7 +1968,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (deletingTip || deletingCommand || deletingPet || deletingPetEgg || deletingPetTaming || IsWhisperPreferenceInputWindow(window) || window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
+        && (deletingTip || deletingCommand || deletingPet || deletingPetEgg || deletingPetTaming || deletingGroundText || IsWhisperPreferenceInputWindow(window) || window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -3248,7 +3267,8 @@ bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool isAltDown, boo
 
 bool UIWindowMgr::HasBlockingUiForGameplayHotkeys() const
 {
-    return (m_autoMessageWnd && m_autoMessageWnd->m_show != 0)
+    return (GroundSkillTextOwner(m_editWindow) && GroundSkillTextOwner(m_editWindow)->m_show)
+        || (m_autoMessageWnd && m_autoMessageWnd->m_show != 0)
         || (m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show != 0 && m_editWindow==m_chatRoomPasswordWnd)
         || (m_npcInputWnd && m_npcInputWnd->m_show != 0)
         || (m_joinPartyAcceptWnd && m_joinPartyAcceptWnd->m_show != 0)
@@ -3281,6 +3301,7 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStorageClose, 0, 0, 0) != 0;
     }
 
+    if(auto* ground=GroundSkillTextOwner(m_editWindow)){if(ground->m_show){if(!isAltDown && !isCtrlDown)ground->OnKeyDown(virtualKey);return true;}}
     if(m_autoMessageWnd && m_autoMessageWnd->m_show){if(!isAltDown && !isCtrlDown)m_autoMessageWnd->OnKeyDown(virtualKey);return true;}
     if(auto* tip=dynamic_cast<UITipOfTheDayWnd*>(m_editWindow)){if(tip->m_show){if(!isAltDown && !isCtrlDown)tip->OnKeyDown(virtualKey);return true;}}
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){if(!isAltDown && !isCtrlDown)whisper->OnKeyDown(virtualKey);return true;}}
@@ -3398,6 +3419,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         return;
     }
 
+    if(auto* ground=GroundSkillTextOwner(m_editWindow)){if(ground->m_show){ground->OnKeyDown(virtualKey);return;}}
     if(m_autoMessageWnd && m_autoMessageWnd->m_show){m_autoMessageWnd->OnKeyDown(virtualKey);return;}
     if(auto* tip=dynamic_cast<UITipOfTheDayWnd*>(m_editWindow)){if(tip->m_show){tip->OnKeyDown(virtualKey);return;}}
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){whisper->OnKeyDown(virtualKey);return;}}

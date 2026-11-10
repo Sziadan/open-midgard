@@ -138,12 +138,14 @@ touch_pump = pump_route[
 ]
 assert "bool FindHoveredSkillScreen(" in world_header
 assert "mode.m_world->FindHoveredSkillScreen" in input_route
-assert "skillUseMode == ShortcutSkillUseMode::SkillTarget" in input_route
-assert "hoveredSkill->m_job == 141" in input_route
-assert "hoveredSkill->m_job == 143" in input_route
-assert "hoveredSkill->m_job == 152" in input_route
-assert "skillId >= 215 && skillId <= 218" in input_route
-assert "BeginTouchSkillChase(mode, hoveredSkill->m_aid, skillId, skillLevel, skillRange)" in input_route
+assert "mode.m_skillUseInfo.useType!=0 && mode.m_skillUseInfo.useType!=1" in input_route
+for job in (141,143,152):
+    assert f"unit->m_job=={job}" in input_route
+assert "special && !(id>=215 && id<=218)" in input_route
+assert "!special && mode.m_skillUseInfo.useType==5" in input_route
+assert "SendMsg(nullptr,103,unit->m_aid,reinterpret_cast<msgparam_t>(&mode.m_skillUseInfo),0)" in input_route, \
+    "unit click must pass the current source snapshot to103"
+assert "BeginTouchSkillChase" not in input_route, "unit click must not manufacture a learned-range snapshot"
 assert "skill->m_isVisible" in world_source and "ProjectPoint(g_renderer, viewMatrix, skill->m_pos" in world_source
 assert "mode.m_touchSkillTargetAid = 0;" in clear_route
 

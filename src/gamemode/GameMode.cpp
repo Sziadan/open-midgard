@@ -19,6 +19,7 @@
 #include "network/MapSendProfile.h"
 #include "CursorRenderer.h"
 #include "GameMode.h"
+#include "core/MannerFilter.h"
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIPetInfoWnd.h"
@@ -4557,7 +4558,7 @@ void ClearSkillChase(CGameMode& mode)
 {
     if(mode.m_world && mode.m_world->m_player){
         auto* player=mode.m_world->m_player;
-        if(player->m_proceedType.type==3 || player->m_proceedType.type==6){
+        if(player->m_proceedType.type==3 || player->m_proceedType.type==4 || player->m_proceedType.type==6){
             player->m_proceedType.type=0;player->m_isAttackRequest=0;
         }
     }
@@ -5672,33 +5673,32 @@ bool DispatchSourcePlayerSkill(CGameMode& mode,int skillId,u32 targetGid,int req
     return sent;
 }
 
-bool SendUseSkillToPosPacket(u16 skillId, u16 skillLevel, int cellX, int cellY)
+bool DispatchSourceGroundSkill(const std::array<int,4>& values)
 {
-    if (skillId == 0 || skillLevel == 0) {
-        return false;
-    }
-    if (cellX < 0 || cellY < 0 || cellX > 0xFFFF || cellY > 0xFFFF) {
-        return false;
-    }
-
-    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
+    int level=values[3];
+    if(!level){const auto* row=g_session.GetSkillItemBySkillId(values[0]);level=row?row->level:0;}
     PACKET_CZ_USESKILLTOPOS packet{};
-    packet.PacketType = profile.useSkillToPos;
-    packet.SkillId = skillId;
-    packet.SkillLevel = skillLevel;
-    packet.X = static_cast<u16>(cellX);
-    packet.Y = static_cast<u16>(cellY);
+    packet.PacketType=ro::net::GetActiveMapGameplaySendProfile().useSkillToPos;
+    packet.SkillId=static_cast<u16>(values[0]);packet.SkillLevel=static_cast<u16>(level);
+    packet.X=static_cast<u16>(values[1]);packet.Y=static_cast<u16>(values[2]);
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet),sizeof(packet));
+}
 
-    const bool sent = CRagConnection::instance()->SendPacket(
-        reinterpret_cast<const char*>(&packet),
-        static_cast<int>(sizeof(packet)));
-    DbgLog("[GameMode] useskilltopos skillId=%u level=%u cell=(%d,%d) sent=%d\n",
-        static_cast<unsigned int>(skillId),
-        static_cast<unsigned int>(skillLevel),
-        cellX,
-        cellY,
-        sent ? 1 : 0);
-    return sent;
+bool DispatchSourceGroundSkillText(const GroundSkillTextRequest& request)
+{
+    const std::string text=request.text?request.text:"";
+    auto& filter=ro::GetMannerFilter();filter.EnsureLoaded();
+    if(filter.IsBadUtf8Sentence(text)){
+        g_windowMgr.SendMsg(3,0,0,0,0);
+        ro::UiMessageStrings table;table.Load();const auto notice=table.Get(50,"Cannot send because of inappropriate language.");
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),255,0,0);return false;
+    }
+    const u16 skill=static_cast<u16>(request.values[0]);u16 level=static_cast<u16>(request.values[3]);
+    if(!level){const auto* row=g_session.GetSkillItemBySkillId(skill);level=static_cast<u16>(row?row->level:0);}
+    std::array<u8,sizeof(PACKET_CZ_USESKILLTOPOSINFO)> packet{};int length=0;
+    if(!ro::net::BuildActiveUseSkillToPosInfoPacket(skill,level,static_cast<s16>(request.values[1]),static_cast<s16>(request.values[2]),
+        text,packet.data(),static_cast<int>(packet.size()),&length))return false;
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),length);
 }
 
 bool SendUseSkillToPosInfoPacket(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents)
@@ -5800,110 +5800,11 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
         return false;
     }
 
-    const u16 skillId = static_cast<u16>(mode.m_skillUseInfo.id & 0xFFFF);
-    const u16 skillLevel = static_cast<u16>(mode.m_skillUseInfo.level & 0xFFFF);
-    const ShortcutSkillUseMode skillUseMode = mode.m_skillUseInfo.useType==1?ShortcutSkillUseMode::GroundTarget:ResolveShortcutSkillUseMode(skillId);
-
-    if (skillUseMode == ShortcutSkillUseMode::CartSelect) {
-        const bool handled = HandleChangeCartSkillUiRequest(mode);
-        ClearPendingSkillUse(mode);
-        return handled;
-    }
-
-    if (skillUseMode == ShortcutSkillUseMode::ImmediateSelf) {
-        if (SendUseSkillToIdPacket(skillId, skillLevel, ResolveSelfSkillTargetId())) {
-            ClearSkillChase(mode);
-            ClearPendingSkillUse(mode);
-            return true;
-        }
-        return false;
-    }
-
-    CSkill* hoveredSkill = nullptr;
-    if (mode.m_world->FindHoveredSkillScreen(mode.m_view->GetViewMatrix(), screenX, screenY, &hoveredSkill)
-        && hoveredSkill) {
-        const bool specialSkillUnitJob = hoveredSkill->m_job == 141
-            || hoveredSkill->m_job == 143
-            || hoveredSkill->m_job == 152;
-        const bool excludedSpecialSkill = skillId >= 215 && skillId <= 218;
-        if (specialSkillUnitJob ? !excludedSpecialSkill : skillUseMode == ShortcutSkillUseMode::SkillTarget) {
-            const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId));
-            const int skillRange = skillInfo ? skillInfo->attackRange : 0;
-            BeginTouchSkillChase(mode, hoveredSkill->m_aid, skillId, skillLevel, skillRange);
-            ClearAttackChaseHint(mode);
-            ClearPendingSkillUse(mode);
-            DbgLog("[GameMode] touch skill intent armed skillId=%u level=%u target=%u job=%d range=%d\n",
-                static_cast<unsigned int>(skillId),
-                static_cast<unsigned int>(skillLevel),
-                static_cast<unsigned int>(hoveredSkill->m_aid),
-                hoveredSkill->m_job,
-                skillRange);
-            return true;
-        }
-        if (specialSkillUnitJob && excludedSpecialSkill) {
-            return true;
-        }
-    }
-
-    if (skillUseMode == ShortcutSkillUseMode::SkillTarget) {
-        return false;
-    }
-
-    if (skillUseMode == ShortcutSkillUseMode::ActorTarget) {
-        CGameActor* hoveredActor = nullptr;
-        if (mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
-            mode.m_view->GetCameraLongitude(),
-            screenX,
-            screenY,
-            &hoveredActor,
-            nullptr,
-            nullptr,
-            true)
-            && hoveredActor
-            && !IsNpcLikeHoverActor(hoveredActor)) {
-            const bool isSelfTarget = hoveredActor == mode.m_world->m_player
-                || hoveredActor->m_gid == g_session.m_gid
-                || hoveredActor->m_gid == g_session.m_aid;
-            const u32 targetGid = isSelfTarget
-                ? ResolveSelfSkillTargetId()
-                : hoveredActor->m_gid;
-            const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId));
-            const int skillRange = skillInfo ? skillInfo->attackRange : 0;
-            mode.m_lastMonGid = 0;
-            mode.m_lastLockOnMonGid = 0;
-
-            BeginSkillChase(mode, targetGid, skillId, skillLevel, skillRange);
-            ClearAttackChaseHint(mode);
-            ClearPendingSkillUse(mode);
-            DbgLog("[GameMode] skill chase armed skillId=%u level=%u target=%u range=%d\n",
-                static_cast<unsigned int>(skillId),
-                static_cast<unsigned int>(skillLevel),
-                static_cast<unsigned int>(targetGid),
-                skillRange);
-            return true;
-        }
-        return false;
-    }
-
-    int attrX = -1;
-    int attrY = -1;
-    if (mode.m_view->ScreenToHoveredAttrCell(screenX, screenY, &attrX, &attrY)) {
-        ClearSkillChase(mode);
-        const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId));
-        mode.m_groundSkillCellX = attrX;
-        mode.m_groundSkillCellY = attrY;
-        mode.m_groundSkillId = static_cast<int>(skillId);
-        mode.m_groundSkillLevel = static_cast<int>(skillLevel);
-        mode.m_groundSkillRange = skillInfo ? skillInfo->attackRange : 0;
-        mode.m_hasGroundSkillChase = 1;
-        mode.m_hasSkillChase = 1;
-        ClearPendingSkillUse(mode);
-        DbgLog("[GameMode] ground skill intent armed skillId=%u level=%u cell=(%d,%d) range=%d\n",
-            static_cast<unsigned int>(skillId),
-            static_cast<unsigned int>(skillLevel),
-            attrX,
-            attrY,
-            mode.m_groundSkillRange);
+    if(mode.m_skillUseInfo.useType==1){
+        int x=-1,y=-1;if(!mode.m_view->ScreenToHoveredAttrCell(screenX,screenY,&x,&y))return false;
+        const auto pending=mode.m_skillUseInfo;
+        mode.m_world->m_player->SendMsg(nullptr,65,pending.id,x,y);
+        mode.m_world->m_player->SendMsg(nullptr,90,pending.level,0,0);
         return true;
     }
 
@@ -7028,12 +6929,12 @@ void PumpSkillChaseRequest(CGameMode& mode)
     }
 
     CPlayer* player = mode.m_world->m_player;
-    if (mode.m_hasGroundSkillChase) {
-        const u16 groundSkillId = static_cast<u16>(mode.m_groundSkillId & 0xFFFF);
-        const u16 groundSkillLevel = static_cast<u16>(mode.m_groundSkillLevel & 0xFFFF);
+    if (player->m_proceedType.type==4) {
+        mode.SynchronizePlayerSkillProceed(player);
         const int skillRange = mode.m_groundSkillRange;
+        const int rangeDistance=static_cast<s32>(static_cast<u32>(skillRange)*5u);
         C3dAttr* attr = mode.m_world->m_attr;
-        if (groundSkillId == 0 || groundSkillLevel == 0 || !attr || attr->m_zoom <= 0
+        if (!attr || attr->m_zoom <= 0
             || attr->m_width <= 0 || attr->m_height <= 0
             || attr->m_cells.size() < static_cast<size_t>(attr->m_width) * static_cast<size_t>(attr->m_height)) {
             return;
@@ -7058,8 +6959,8 @@ void PumpSkillChaseRequest(CGameMode& mode)
         if (lengthSquared > 0.0f) {
             const double inverseLength = 1.0 / std::sqrt(static_cast<double>(lengthSquared));
             const float normalizedDirectionX = static_cast<float>(inverseLength * deltaX);
-            const float projectedOffsetX = static_cast<float>(static_cast<double>(5 * skillRange) * normalizedDirectionX);
-            const float projectedOffsetZ = static_cast<float>(static_cast<double>(5 * skillRange) * (inverseLength * deltaZ));
+            const float projectedOffsetX = static_cast<float>(static_cast<double>(rangeDistance) * normalizedDirectionX);
+            const float projectedOffsetZ = static_cast<float>(static_cast<double>(rangeDistance) * (inverseLength * deltaZ));
             const float approachWorldX = projectedOffsetX + targetWorldX;
             const float approachWorldZ = projectedOffsetZ + targetWorldZ;
             const float zoom = static_cast<float>(attr->m_zoom);
@@ -7093,7 +6994,7 @@ void PumpSkillChaseRequest(CGameMode& mode)
         }
 
         // Ref allows states below 2, state 4, and states 16 or above.
-        if (player->m_stateId >= 2 && player->m_stateId != 4 && player->m_stateId < 16) {
+        if (!(static_cast<u32>(player->m_stateId)<2 || player->m_stateId==4 || player->m_stateId>=16)) {
             return;
         }
 
@@ -7106,23 +7007,9 @@ void PumpSkillChaseRequest(CGameMode& mode)
         const double distance = std::sqrt(static_cast<double>(distanceSquared));
         const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
             && player->m_destCellZ == sourceTileY;
-        const bool serverInRange = IsServerCellWithinSkillRange(
-            mode.m_groundSkillCellX, mode.m_groundSkillCellY, skillRange);
-        if ((distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) && serverInRange) {
-            // Ref message 66 reaches mode message 77; keep the current packet
-            // API and complete the intent after the packet attempt.
-            const bool sent = SendUseSkillToPosPacket(
-                groundSkillId,
-                groundSkillLevel,
-                mode.m_groundSkillCellX,
-                mode.m_groundSkillCellY);
-            DbgLog("[GameMode] source-range ground skill dispatch skillId=%u level=%u cell=(%d,%d) sent=%d\n",
-                static_cast<unsigned int>(groundSkillId),
-                static_cast<unsigned int>(groundSkillLevel),
-                mode.m_groundSkillCellX,
-                mode.m_groundSkillCellY,
-                sent ? 1 : 0);
-            ClearSkillChase(mode);
+        if (distance <= static_cast<double>(rangeDistance) + 5.5 || destinationIsPlayerCell) {
+            player->SendMsg(nullptr,66,0,0,0);
+            player->SendMsg(nullptr,13,0,0,0);
             return;
         }
 
@@ -9880,6 +9767,10 @@ void CGameMode::SynchronizePlayerSkillProceed(CPlayer* player,bool retire)
         m_skillChaseSkillLevel=player->m_skillUseLevel;m_skillChaseRange=player->m_skillAttackRange;
         m_hasSkillChase=1;m_hasGroundSkillChase=0;m_hasTouchSkillChase=0;
         m_lastMonGid=0;m_lastLockOnMonGid=0;ClearAttackChaseHint(*this);ClearPickupIntent(*this);
+    }else if(player->m_proceedType.type==4){
+        m_groundSkillCellX=player->m_gSkillDx;m_groundSkillCellY=player->m_gSkillDy;
+        m_groundSkillId=player->m_skillId;m_groundSkillLevel=player->m_skillUseLevel;m_groundSkillRange=player->m_skillAttackRange;
+        m_hasSkillChase=1;m_hasGroundSkillChase=1;m_hasTouchSkillChase=0;
     }else if(player->m_proceedType.type==6){
         m_touchSkillTargetAid=player->m_proceedTargetGid;m_touchSkillId=player->m_skillId;
         m_touchSkillLevel=player->m_skillUseLevel;m_touchSkillRange=player->m_skillAttackRange;
@@ -9900,6 +9791,7 @@ bool ReplayTrySourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,b
     return TryRequestSourceSkillOnActor(mode,target,shift,alt,control);
 }
 void ReplayPumpSkillChase(CGameMode& mode){PumpSkillChaseRequest(mode);}
+void ReplayClearSkillChase(CGameMode& mode){ClearSkillChase(mode);}
 bool ReplaySendMapMoveRequestPacket(int dstX, int dstY)
 {
     return SendMoveRequestPacket(dstX, dstY);
@@ -11118,6 +11010,12 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]={0xa1,0x01,static_cast<u8>(wparam)};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
     }
+    case 77:
+        if(wparam)DispatchSourceGroundSkill(*reinterpret_cast<const std::array<int,4>*>(wparam));
+        return 0;
+    case 144:
+        if(wparam)DispatchSourceGroundSkillText(*reinterpret_cast<const GroundSkillTextRequest*>(wparam));
+        return 0;
     case 76:
         if(wparam==10000){
             if(static_cast<u32>(lparam)!=g_session.m_petStatus.actorId){
