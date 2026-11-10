@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current ground prompt ZIP skin checkpoint (2026-11-11)**. The ground prompts now load selected ZIP skins in gameplay using the existing skin setting. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin-zip.md)
+**Current ground prompt skin control checkpoint (2026-11-11)**. Gameplay Graphics settings now select Basic Skin, directory skins, and ZIP skins for the ground prompts. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-prompt-picker.md)
+
+**Previous ground prompt ZIP skin checkpoint (2026-11-11)**. The ground prompts now load selected ZIP skins in gameplay using the existing skin setting. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin-zip.md)
 
 **Previous ground prompt skin checkpoint (2026-11-11)**. Ground prompt artwork and IME palettes now honor the selected directory skin in gameplay. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin.md)
 

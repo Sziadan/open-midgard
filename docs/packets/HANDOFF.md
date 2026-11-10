@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-**Current ground prompt ZIP skin checkpoint (2026-11-11)**. The ground prompts now load selected ZIP skins in gameplay using the existing skin setting. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin-zip.md)
+**Current ground prompt skin control checkpoint (2026-11-11)**. Gameplay Graphics settings now select Basic Skin, directory skins, and ZIP skins for the ground prompts. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-prompt-picker.md)
+
+**Previous ground prompt ZIP skin checkpoint (2026-11-11)**. The ground prompts now load selected ZIP skins in gameplay using the existing skin setting. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin-zip.md)
 
 **Previous ground prompt skin checkpoint (2026-11-11)**. Ground prompt artwork and IME palettes now honor the selected directory skin in gameplay. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin.md)
 
@@ -57,7 +59,7 @@
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Restore the original skin picker and continue companion AI using the existing package gates. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
+**Next work.** Continue companion AI using the existing package gates. Compare the Graphics skin control with the original dropdown and verify live selection. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
 
 The Traditional Chinese keystroke implementation uses the 39 fixed Big5 pairs in the selected executable and the stable slash-key pair from the adjacent slot string. The period key reads uninitialized bytes in the original. The port leaves that cell empty. [Keystroke evidence](evidence/PK27-prompt-keystrokes.md)
 
@@ -67,7 +69,7 @@ Native composition paint now inserts preedit at the language cursor in a tempora
 
 The Windows modern gameplay queue now submits the prompts and IME popups as a premultiplied layer after the common overlay route. The replay verifies the upload pixels before GPU submission. For live acceptance, inspect the presented texture over a contrasting scene and check that gameplay modals retain priority. [Modern overlay evidence](evidence/PK27-prompt-modern-overlay.md)
 
-Directory and ZIP skins use `[Graphics] SkinName` in `open-midgard.ini`. Reopening a prompt refreshes cached frame and button art, the color chip, and the IME lattice when the selection changes. For the picker, trace the Basic Skin entry, directory and ZIP names, and selection event near `SetCurrentSkinNum` in `Ref/UIFrameWnd2.cpp`. The port's `UIOptionWnd` owns graphics settings and Qt forwards option clicks to that owner. Keep the picker backed by the same persisted value. [Directory skin evidence](evidence/PK27-prompt-skin.md), [ZIP skin evidence](evidence/PK27-prompt-skin-zip.md)
+The gameplay Graphics tab now selects Basic Skin, directory skins, and ZIP skins using the existing row arrows. The shared `UIOptionWnd` owner persists `[Graphics] SkinName` and refreshes open prompts. For original dropdown presentation, trace the list and selection event near `SetCurrentSkinNum` in `Ref/UIFrameWnd2.cpp`. [Skin control evidence](evidence/PK27-prompt-picker.md)
 
 The selected `UIWindowMgr::MakeWindow` paths for IDs 84 and 101 call `AddWindow` without `CSnapMgr::AddSnapObject`. Preserve the unregistered drag for these prompts. The registered branch of `UIFrameWnd::OnMouseMove` applies to windows explicitly added to the snap graph.
 

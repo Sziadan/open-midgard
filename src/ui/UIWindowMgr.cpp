@@ -3185,6 +3185,12 @@ UIGroundSkillTextWnd* UIWindowMgr::GetFocusedGroundSkillText() const
     return prompt && prompt->m_show ? prompt : nullptr;
 }
 
+void UIWindowMgr::RefreshGroundPromptSkins()
+{
+    for (auto* prompt : m_groundSkillTextWindows)
+        if (prompt) prompt->RefreshSkin();
+}
+
 void UIWindowMgr::OnChar(char c)
 {
     if(m_modalWindow && m_modalWindow->m_show){m_modalWindow->OnChar(c);return;}

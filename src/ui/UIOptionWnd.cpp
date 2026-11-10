@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <cmath>
 #include <cstring>
+#include <filesystem>
 #include <string>
 #include <utility>
 #include <vector>
@@ -66,6 +67,32 @@ constexpr int kSliderMin = 0;
 constexpr int kSliderMax = 127;
 constexpr int kTabHeight = 18;
 constexpr int kGraphicsRowHeight = 24;
+
+std::vector<std::string> FindGroundPromptSkins()
+{
+    std::vector<std::string> skins;
+    std::error_code error;
+    for (std::filesystem::directory_iterator entry("skin", error), end;
+         !error && entry != end; entry.increment(error)) {
+        std::error_code typeError;
+        const auto& path = entry->path();
+        if (entry->is_directory(typeError)) {
+            skins.push_back(path.filename().string());
+        } else if (entry->is_regular_file(typeError) && _stricmp(path.extension().string().c_str(), ".zip") == 0) {
+            skins.push_back(path.stem().string());
+        }
+    }
+    const auto compare = [](const auto& a, const auto& b) { return _stricmp(a.c_str(), b.c_str()); };
+    std::sort(skins.begin(), skins.end(), [&](const auto& a, const auto& b) {
+        const int order = compare(a, b);
+        return order == 0 ? a < b : order < 0;
+    });
+    skins.erase(std::unique(skins.begin(), skins.end(), [&](const auto& a, const auto& b) {
+        return compare(a, b) == 0;
+    }), skins.end());
+    skins.insert(skins.begin(), std::string{});
+    return skins;
+}
 constexpr int kWindowCornerRadius = 10;
 constexpr int kToggleSize = 16;
 
@@ -748,6 +775,7 @@ std::vector<UIOptionWnd::GraphicsRowId> UIOptionWnd::GetVisibleGraphicsRows() co
         rows.push_back(GraphicsRow_ConfusionWaves);
     }
     rows.push_back(GraphicsRow_SpriteFiltering);
+    if (g_modeMgr.GetCurrentGameMode()) rows.push_back(GraphicsRow_GroundPromptSkin);
     return rows;
 }
 
@@ -801,6 +829,7 @@ RenderBackendType UIOptionWnd::NormalizeSelectedBackend(RenderBackendType backen
 
 void UIOptionWnd::LoadSettings()
 {
+    m_groundPromptSkin = LoadSettingsIniString("Graphics", "SkinName", "");
     m_x = LoadSettingsIniInt(kOptionWndSection, kOptionWndXValue, m_x);
     m_y = LoadSettingsIniInt(kOptionWndSection, kOptionWndYValue, m_y);
     m_w = LoadSettingsIniInt(kOptionWndSection, kOptionWndWValue, m_w);
@@ -1387,6 +1416,22 @@ void UIOptionWnd::CycleGraphicsSetting(GraphicsRowId rowId, int direction)
         return;
     }
 
+    if (rowId == GraphicsRow_GroundPromptSkin) {
+        const auto choices = FindGroundPromptSkins();
+        const auto current = std::find_if(choices.begin(), choices.end(), [this](const auto& name) {
+            return _stricmp(name.c_str(), m_groundPromptSkin.c_str()) == 0;
+        });
+        const auto count = static_cast<int>(choices.size());
+        const int index = current == choices.end() ? 0 : static_cast<int>(current - choices.begin());
+        const auto& next = choices[(index + count + (direction < 0 ? -1 : 1)) % count];
+        if (SaveSettingsIniString("Graphics", "SkinName", next)) {
+            m_groundPromptSkin = next;
+            g_windowMgr.RefreshGroundPromptSkins();
+            Invalidate();
+        }
+        return;
+    }
+
     if (rowId == GraphicsRow_Resolution) {
         if (m_resolutionEntries.empty()) {
             RefreshResolutionEntries();
@@ -1526,6 +1571,8 @@ std::string UIOptionWnd::GetGraphicsRowValue(GraphicsRowId rowId) const
         return m_graphicsSettings.ssaoEnabled ? "On" : "Off";
     case GraphicsRow_ConfusionWaves:
         return m_graphicsSettings.confusionWaves ? "On" : "Off";
+    case GraphicsRow_GroundPromptSkin:
+        return m_groundPromptSkin.empty() || m_groundPromptSkin == "<Basic Skin>" ? "Basic Skin" : m_groundPromptSkin;
     default:
         return std::string();
     }
@@ -1759,6 +1806,9 @@ void UIOptionWnd::OnDraw()
                     break;
                 case GraphicsRow_ConfusionWaves:
                     label = "Hallucination waves";
+                    break;
+                case GraphicsRow_GroundPromptSkin:
+                    label = "Ground prompt skin";
                     break;
                 }
                 DrawSettingRow(hdc, static_cast<int>(index), label, GetGraphicsRowValue(rows[index]));
@@ -2381,6 +2431,9 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
                     break;
                 case GraphicsRow_ConfusionWaves:
                     row.label = "Hallucination waves";
+                    break;
+                case GraphicsRow_GroundPromptSkin:
+                    row.label = "Ground prompt skin";
                     break;
                 default:
                     break;

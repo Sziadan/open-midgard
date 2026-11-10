@@ -4,6 +4,7 @@
 #include "ui/UIPetTamingDeceiveWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIOptionWnd.h"
 #include "ui/UIChatRoomEntry.h"
 #include "ui/UiScale.h"
 #include "main/WinMain.h"

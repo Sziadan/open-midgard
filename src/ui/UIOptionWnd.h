@@ -151,6 +151,7 @@ private:
         GraphicsRow_SpriteFiltering,
         GraphicsRow_Ssao,
         GraphicsRow_ConfusionWaves,
+        GraphicsRow_GroundPromptSkin,
     };
 
     struct ResolutionEntry {
@@ -255,6 +256,7 @@ private:
     GraphicsSettings m_graphicsSettings;
     GraphicsSettings m_appliedGraphicsSettings;
     RenderBackendType m_selectedRenderBackend;
+    std::string m_groundPromptSkin;
     RenderBackendType m_appliedRenderBackend;
     std::vector<ResolutionEntry> m_resolutionEntries;
 };

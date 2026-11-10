@@ -484,6 +484,28 @@
             Require(SaveSettingsIniString("Graphics","SkinName","<Basic Skin>"), "basic skin setting save failed");
             Require(g_windowMgr.MakeWindow(84) == prompt && prompt->GetColorChipRgb(2,2) == 0x123456u,
                 "basic skin did not restore the original palette");
+            UIOptionWnd options;
+            options.SetShow(1);
+            UIOptionWnd::DisplayData settings;
+            Require(options.GetDisplayDataForQt(&settings), "could not read settings geometry");
+            const auto graphics = std::find_if(settings.tabs.begin(), settings.tabs.end(),
+                [](const auto& tab) { return tab.label == "Graphics"; });
+            Require(graphics != settings.tabs.end(), "graphics settings tab missing");
+            options.OnLBtnDown(graphics->x + 2, graphics->y + 2);
+            Require(options.GetDisplayDataForQt(&settings), "could not read graphics controls");
+            const auto skinRow = std::find_if(settings.graphicsRows.begin(), settings.graphicsRows.end(),
+                [](const auto& row) { return row.label == "Ground prompt skin"; });
+            Require(skinRow != settings.graphicsRows.end() && skinRow->value == "Basic Skin",
+                "graphics skin control did not show the default choice");
+            options.OnLBtnDown(skinRow->prevX + 2, skinRow->prevY + 2);
+            Require(LoadSettingsIniString("Graphics","SkinName","") == "PacketSkinZip"
+                && prompt->GetColorChipRgb(2,2) == 0x42ac6cu,
+                "settings control did not select the ZIP or refresh the open prompt");
+            options.OnLBtnDown(skinRow->nextX + 2, skinRow->nextY + 2);
+            options.OnLBtnDown(skinRow->nextX + 2, skinRow->nextY + 2);
+            Require(LoadSettingsIniString("Graphics","SkinName","") == "PacketSkinA"
+                && prompt->GetColorChipRgb(2,2) == 0x26b478u,
+                "settings control did not wrap through Basic Skin to the first directory");
             g_windowMgr.DeleteWindow(prompt);
         }
         g_windowMgr.m_editWindow=oldFocus;
@@ -493,6 +515,7 @@
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",true},
             {"zip_skin_resource_acceptance",true},
+            {"ground_prompt_skin_picker_replay",true},
             {"opacity_compositor_acceptance",static_cast<bool>(RO_PLATFORM_WINDOWS)},
             {"modern_prompt_upload_alpha",static_cast<bool>(RO_PLATFORM_WINDOWS)},
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},
