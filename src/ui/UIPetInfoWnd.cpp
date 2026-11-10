@@ -252,18 +252,34 @@ void UIPetInfoWnd::ShowCommandMenu()
 }
 void UIPetInfoWnd::CloseCommandMenu(){if(m_menu)g_windowMgr.DeleteWindow(m_menu);}
 void UIPetInfoWnd::CommandMenuDeleted(UIPetCommandMenu* menu){if(m_menu==menu)m_menu=nullptr;}
+void UIPetInfoWnd::ConfirmFeed(UIWindow* owner)
+{
+    if(g_windowMgr.m_modalWindow)return;
+    if(auto* pet=dynamic_cast<UIPetInfoWnd*>(owner))pet->CancelPointerCapture();
+    if(g_hMainWnd && GetCapture()==g_hMainWnd)ReleaseCapture();
+    const auto generation=g_modeMgr.GetOperationGeneration();
+    auto* box=new UIChatRoomMessageBox(Utf8(Label(601)),601);
+    box->ConfigureConfirmation(owner,[generation](bool accepted){
+        if(accepted && g_modeMgr.GetOperationGeneration()==generation)
+            g_modeMgr.SendMsg(163,1,0,0);
+    });
+    g_windowMgr.m_roomMessageBox=box;g_windowMgr.m_children.push_back(box);
+    g_windowMgr.m_modalWindow=box;g_windowMgr.m_editWindow=nullptr;
+}
+void UIPetInfoWnd::ReturnEggLocally()
+{
+    const auto& pet=g_session.m_petStatus;
+    if(const auto* source=g_session.GetInventoryItemByIndex(static_cast<unsigned int>(pet.eggIndex))){auto item=*source;item.m_isDamaged=0;g_session.SetInventoryItem(item);}
+    g_session.m_petStatus.eggIndex=-1;g_session.m_petStatus.job=-1;
+    if(g_windowMgr.m_itemWnd)g_windowMgr.m_itemWnd->Invalidate();
+    if(g_windowMgr.m_petInfoWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_petInfoWnd);
+}
 void UIPetInfoWnd::SelectCommand(int index)
 {
     if(index<0 || index>=4)return;
-    if(index==0){ShowMessage(601,Label(601),[this](bool accepted){if(accepted && g_windowMgr.ContainsWindow(this))g_modeMgr.SendMsg(163,1,0,0);});return;}
+    if(index==0){ConfirmFeed(this);return;}
     g_modeMgr.SendMsg(163,index==1?2:index==2?4:3,0,0);
-    if(index==3){
-        const auto& pet=g_session.m_petStatus;
-        if(const auto* source=g_session.GetInventoryItemByIndex(static_cast<unsigned int>(pet.eggIndex))){auto item=*source;item.m_isDamaged=0;g_session.SetInventoryItem(item);}
-        g_session.m_petStatus.eggIndex=-1;g_session.m_petStatus.job=-1;
-        if(g_windowMgr.m_itemWnd)g_windowMgr.m_itemWnd->Invalidate();
-        g_windowMgr.DeleteWindow(this);
-    }
+    if(index==3)ReturnEggLocally();
 }
 msgresult_t UIPetInfoWnd::SendMsg(UIWindow*,int message,msgparam_t value,msgparam_t,msgparam_t)
 {

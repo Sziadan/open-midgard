@@ -268,6 +268,7 @@ public:
     // Selected PE ProcessTalkType table; secondary dhxj header is shifted.
     static constexpr int SourceTalk_AutoMessage=152;
     bool ToggleSourceAutoMessage();
+    bool OpenPetContextMenu(CGameActor* actor,int logicalX,int logicalY);
     bool WriteSourceChat(const std::string& text);
     std::string GetSourceAutoSaveChatPath() const;
     int m_noMove;

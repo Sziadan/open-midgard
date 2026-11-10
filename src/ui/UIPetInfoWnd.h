@@ -22,6 +22,8 @@ public:
     void CloseCommandMenu();
     void CommandMenuDeleted(UIPetCommandMenu* menu);
     void SelectCommand(int index);
+    static void ConfirmFeed(UIWindow* owner=nullptr);
+    static void ReturnEggLocally();
     void RequestRename();
     void Move(int x,int y) override;
     void StoreInfo() override;

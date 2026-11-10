@@ -87,7 +87,7 @@ void ChatSubmissionReplay()
         {805,"T805"},{806,"T806"},{850,"T850"},{851,"T851"},{908,"T908"},{909,"T909"},{1044,"T1044"},{1045,"T1045"},{1108,"T1108"},{1109,"T1109"},
         {687,"MIN ON"},{688,"MIN OFF"},{698,"/tiny"},{940,"Default"},{943,"Auto off"},{944,"Configure"},
         {407,"Name"},{408,"Level"},{584,"Pet Info"},{585,"Hunger"},{586,"Intimacy"},
-        {592,"Feed"},{593,"Performance"},{594,"Return Egg"},{595,"Accessory Off"},{597,"Accessory"},{598,"Equipped"},{600,"Unequipped"},{601,"Feed now?"},
+        {592,"Feed"},{593,"Performance"},{594,"Return Egg"},{595,"Accessory Off"},{596,"Pet Info"},{597,"Accessory"},{598,"Equipped"},{600,"Unequipped"},{601,"Feed now?"},
         {667,"Very hungry"},{668,"Hungry"},{669,"Normal"},{670,"Full"},{671,"Very full"},{672,"Very awkward"},{673,"Awkward"},{674,"Friendly"},{675,"Very friendly"},{676,"Unknown"},
         {682,"Name too long"},{683,"Rename to %s once?"},{1021,"Hate"},{1022,"Very hate"}};
         for(int i=0;i<=1191;++i){const auto found=labels.find(i);if(found!=labels.end())file<<found->second;
@@ -317,6 +317,7 @@ void ChatSubmissionReplay()
 #include "CommandWindowReplay.inc"
 #include "PetRequestReplay.inc"
 #include "PetWindowReplay.inc"
+#include "PetContextMenuReplay.inc"
     connection->Disconnect();
 #include "PetWindowFailedSendReplay.inc"
     Require(!mode.SendMsg(163,1,0,0) && !mode.SendMsg(158,reinterpret_cast<msgparam_t>("Poring"),0,0),"disconnected pet requests reported success");

@@ -1,0 +1,80 @@
+{
+  "scope": "Authoritative source producer trace for legacy pet right-click menu IDs 29..33. IDs are m_menuIdList action selectors; they are not TALKTYPE values.",
+  "producer": {
+    "function": "CGameMode::MakeMenu(CActorPickInfo*, int)",
+    "location": "Ref/GameMode.cpp:12008-12265 (pet-specific block at 12219-12260)",
+    "caller": "CGameMode::ProcessInput() calls MakeMenu(this, PickInfo, processType) at Ref/GameMode.cpp:14045-14118; it resolves PickInfo under cursor via CActorPickNode::FindPickInfo.",
+    "open_predicate": "Inside MakeMenu: candidate actor exists, processType==0; mouse state gate checks BTN_UP and !m_itemStoreWnd; candidate job >=45 && job <4000 OR CSession::IsMerOrHomun(job) OR m_classType==4; actor resolves by GID; then actor GID equals g_session.m_petGID and resolved GameActorByAID->m_headType==100.",
+    "target_field": "m_menuTargetAID receives the picked actor GID at byte24 (CActorPickInfo::m_gid); pet selectors themselves do not consume the target field.",
+    "replacement_and_position": "Deletes prior WID_MENUWND if present, clears m_menuIdList, creates WID_MENUWND, appends actions in order below, appends matching labels in same order, then moves popup to mouse x+1,y+1.",
+    "ordering": [
+      33,
+      29,
+      30,
+      32,
+      31
+    ],
+    "lifetime": "Shared mode vector is rebuilt on each MakeMenu path that opens a menu (also on player/homunculus/mercenary menus). Selection message 26 consumes a zero-based row index into the current vector. The pet producer's vector persists as mode state until another producer clears/replaces it or mode destruction; selection first deletes WID_MENUWND. This makes ownership/current-menu validation relevant before porting generic dispatch."
+  },
+  "rows": [
+    {
+      "row": 0,
+      "selector": 33,
+      "label_symbol": "MSI_PET_SHOWINFO",
+      "label_numeric_msgstr_id": 596,
+      "dispatch": "SendMsg(163,0); toggle WID_PETINFOWND (delete if open; otherwise create)",
+      "reference": "Ref/GameMode.cpp:12226-12233; Ref/GameMode2.cpp:3875-3883"
+    },
+    {
+      "row": 1,
+      "selector": 29,
+      "label_symbol": "MSI_PET_FEEDING",
+      "label_numeric_msgstr_id": 592,
+      "dispatch": "Confirm MSI_SURE_TO_FEED_PET (numeric MsgStr ID 601; only dialog result 121 continues), then SendMsg(163,1)",
+      "reference": "Ref/GameMode.cpp:12233-12239; Ref/GameMode2.cpp:3844-3850"
+    },
+    {
+      "row": 2,
+      "selector": 30,
+      "label_symbol": "MSI_PET_PERFORMANCE",
+      "label_numeric_msgstr_id": 593,
+      "dispatch": "SendMsg(163,2), immediate",
+      "reference": "Ref/GameMode.cpp:12239-12245; Ref/GameMode2.cpp:3851-3854"
+    },
+    {
+      "row": 3,
+      "selector": 32,
+      "label_symbol": "MSI_PET_ACC_OFF",
+      "label_numeric_msgstr_id": 595,
+      "label_meaning": "Accessory Off",
+      "dispatch": "SendMsg(163,4), immediate",
+      "reference": "Ref/GameMode.cpp:12245-12251; Ref/GameMode2.cpp:3871-3874"
+    },
+    {
+      "row": 4,
+      "selector": 31,
+      "label_symbol": "MSI_PET_RETURN_EGG",
+      "label_numeric_msgstr_id": 594,
+      "dispatch": "SendMsg(163,3); clear active pet egg item's damaged flag and write it back; set session petEggIndex and petJob to -1; invalidate inventory window if present; delete pet info window",
+      "reference": "Ref/GameMode.cpp:12251-12260; Ref/GameMode2.cpp:3855-3870"
+    }
+  ],
+  "numeric_label_ids": "Computed from implicit enum order in Ref/dhxj/MsgStrings.h: MSI_PET_FEEDING=592, PERFORMANCE=593, RETURN_EGG=594, ACC_OFF=595, SHOWINFO=596, SURE_TO_FEED_PET=601. Labels are also the exact symbols consumed by MakeMenu; localization text varies by language.",
+  "other_producers": [
+    "Within Ref/GameMode.cpp, other m_menuIdList writes are other MakeMenu branches (homunculus, mercenary, player menus) and the message-114 whisper-menu producer at Ref/GameMode2.cpp:5488-5503. Pet selector values 29..33 are only populated in the pet actor branch at Ref/GameMode.cpp:12219-12260.",
+    "No additional m_menuIdList producer for pet actions was found in Ref/GameMode2.cpp, Ref/GameMode.cpp or the searched UI sources. Other pet UI classes exist, but their actions do not create this selector vector."
+  ],
+  "popup_behavior_and_port_relation": {
+    "current_chatroom_menu": "src/ui/UIChatRoomWnd.cpp:310-329 is a distinct room menu class (m_id=10018) with sourceModeCaller path that sends message26 with zero-based row index. Its row spacing is 14px logical, consistent with native popup spacing. Do not infer pet actions from its room-menu item IDs; producer is GameMode::MakeMenu and action vector ownership is separate.",
+    "current_pet_ui": "src/ui/UIPetInfoWnd.cpp:248-289 uses its own UIPetCommandMenu and direct SendMsg(163,args); it does not produce IDs 29..33 or call the shared m_menuIdList dispatch. Its row labels are derived from 592/593/595/594, but it omits legacy Show Info as a row and presents info window state separately.",
+    "mode_selection": "Ref/GameMode2.cpp:3590-3597 deletes WID_MENUWND then indexes m_menuIdList by selection index; message 26 subsequently branches on the selector. This is shared generic menu dispatch, not an independent pet popup receiver.",
+    "legacy_popup": "Authoritative native popup is UIMenuWnd in Ref/UIFrameWnd2.cpp:2092 onward (constructor; rows spaced 14px) and message handlers near :11366. Message30/31 appends duplicate label entries and row sizing uses 7px per entry. OnLBtnUp at Ref/UIFrameWnd2.cpp:25643-25751 dispatches valid selection to mode message26 and deletes menu18; outside release leaves popup open. CEGUI rolemenu path is secondary, not authoritative for selected native popup."
+  },
+  "implementation_constraints": [
+    "Route the actual picked pet actor through the shared menu owner; producer requires current actor GID == session pet GID and headType 100, plus preceding object/menu gates.",
+    "Preserve row order [33,29,30,32,31], feed confirmation result 121, and optimistic return-egg local cleanup. Selector 32 is Accessory Off and sends pet command parameter 4.",
+    "Keep selector ownership tied to the active WID_MENUWND/pet producer. A stale index from the room menu or a different m_menuIdList producer must not dispatch pet actions.",
+    "Native UIMenuWnd outside release keeps popup open; valid selected row sends mode message26, whose receiver deletes menu18. Do not model outside release as closing."
+  ],
+  "root_review": "See PK27-pet-context-menu.md: root checked primary MakeMenu, derived class/job gates, native UIMenuWnd (secondary CEGUI is not authority), selected PE selector/label order and01AA identity. Remaining receiver details are preparation, not implementation acceptance."
+}

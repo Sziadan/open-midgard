@@ -141,7 +141,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
         rows[669]="Normal";rows[670]="Replete";rows[671]="Very replete";rows[676]="Unknown";
         rows[672]="Very awkward";rows[673]="Awkward";rows[674]="Friendly";rows[675]="Very friendly";
         rows[1021]="Hate";rows[1022]="Very hate";rows[597]="Accessory";rows[598]="Equipped";rows[600]="Unequipped";
-        rows[592]="Feed";rows[593]="Performance";rows[594]="Return egg";rows[595]="Accessory off";
+        rows[592]="Feed";rows[593]="Performance";rows[594]="Return egg";rows[595]="Accessory off";rows[596]="Pet Info";
         rows[601]="Feed this pet?";rows[682]="Name too long";rows[683]="Rename %s once?";
         std::ofstream messages(assets/"msgstringtable.txt",std::ios::binary);
         for(const auto& row:rows)messages<<row<<"#\r\n";
@@ -448,6 +448,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     SetRuntimeUiScalePercent(100);g_windowMgr.DeleteWindow(detail);
     adapter.syncGameplay(mode,RenderBackendType::LegacyDirect3D7,RenderBackendType::LegacyDirect3D7,-1,-1);Frames(app,view);
     Require(!state->itemInfoVisible() && !Find(view.rootObject(),"itemInfoWindow")->isVisible(),"closed summary remains projected");
+#include "PetContextMenuRenderChecks.inc"
     QFile results(output+"/pet-window-render-results.json");
     Require(results.open(QIODevice::WriteOnly),"pet render result file open failed");
     results.write(QJsonDocument(QJsonObject{{"frames",frames},{"synthetic_source_key_frame_button_portrait_bitmaps",true},

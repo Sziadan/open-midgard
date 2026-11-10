@@ -1,0 +1,21 @@
+{
+  "baseline": "1e42eca1",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "18a197e057a1117d7cedc61f243c3883afdc02ac5cfd99a96a935322a98b204a",
+    "src/gamemode/GameMode.cpp": "0dd10ff7cdec2e5e794a0b46a59963b19f20eab3dbc307f43d98fb2e04e86798",
+    "src/gamemode/GameMode.h": "74f1c989328e1e46f80564c093842f514ff2ae061606bfe28d1297f0cde6c3ec",
+    "src/qtui/qml/RoChatRoomSettings.qml": "94e9a8a5e849f6da6d41f3ed12ad2edf89b65a58743ca3c6d7e15e8daf3ab594",
+    "src/ui/UIPetInfoWnd.cpp": "efadd0871fd0fc3a59711b04cec0e7a95b34f8149b732d822b93407e7473a94d",
+    "src/ui/UIPetInfoWnd.h": "89b414293635f4cdc8d785a707d5f37aef636b9add364049c971fa437d341fc9",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "08ebb795b53ff2fb201de0e0a8e9a1d31ef99bc67c1c1fb18c7a7fd6833d081e",
+    "tools/tests/replay/PetContextMenuRenderChecks.inc": "2478640198331517f978bc7c6671b5bce881ff313387120602f22aafd7a260be",
+    "tools/tests/replay/PetContextMenuReplay.inc": "d9642a81ef4ae962b2305e98098fcd5b79e15e22c7bbfb58d6e8eac7818d9014",
+    "tools/tests/replay/PetWindowFailedSendReplay.inc": "2da43bbd4ccd9bb89cbe8ac4b5a0bdefc9c9711832a5d3a1eda0c01453581652",
+    "tools/tests/replay/PetWindowRenderChecks.inc": "74e4e054f074d2623114eb0ab2691e899a5b6c3d35a4b6a01ecbf6ba0bf979a4"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "validation": "Deploy-OFF all-target/standalone builds pass; focused2/2 in4.27s, application164/164 in200.57s and standalone473/473 in74.87s. Thirteen native/Qt frame pairs and zero QML warnings cover the previous pet owners plus actor menus and ownerless feed confirmation. Selected-PE selector/MsgStr order and source/plan checks pass. Deploy ON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open.",
+  "deployment": "OFF during build/test; ON restored configure-only; OldRO unchanged",
+  "scope": "Functional owned actor/menu/controller branch only; full picker/global stacking/fonts/skin/input/modal scheduling, remaining PK27 and whole-plan gates remain open. See evidence."
+}

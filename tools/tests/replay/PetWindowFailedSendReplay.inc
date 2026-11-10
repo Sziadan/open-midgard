@@ -6,5 +6,12 @@
         g_windowMgr.OnKeyDown(VK_RETURN);
         Require(g_session.m_petStatus.modified && g_session.m_petStatus.name=="FailedSend","failed source send rolled back optimistic pet rename");
         window->SendMsg(nullptr,39,3,0,0);Require(!g_windowMgr.m_petInfoWnd && g_session.m_petStatus.job==-1 && g_session.m_petStatus.eggIndex==-1,"failed source return send retained pet/window state");
-        g_session.m_petStatus=savedPet;g_windowMgr.m_petInfoWindowInfo=savedInfo;
+        const auto savedMenuIds=mode.m_menuIdList;mode.m_menuIdList={33,31};
+        g_session.m_petStatus.job=1002;mode.SendMsg(26,0,0,0);
+        Require(g_windowMgr.m_petInfoWnd,"failed context info request suppressed local owner creation");
+        mode.SendMsg(26,0,0,0);Require(!g_windowMgr.m_petInfoWnd,"failed context info request suppressed toggle deletion");
+        mode.SendMsg(26,0,0,0);mode.SendMsg(26,1,0,0);
+        Require(!g_windowMgr.m_petInfoWnd && g_session.m_petStatus.job==-1 && g_session.m_petStatus.eggIndex==-1,
+            "failed context return request rolled back local pet/owner cleanup");
+        mode.m_menuIdList=savedMenuIds;g_session.m_petStatus=savedPet;g_windowMgr.m_petInfoWindowInfo=savedInfo;
     }

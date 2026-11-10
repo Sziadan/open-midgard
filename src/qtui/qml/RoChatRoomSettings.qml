@@ -6,10 +6,14 @@ Item {
     property var message: ({})
     property var menu: ({})
     Rectangle {
-        parent: forms.parent
+        // Commerce panes live above uiLayer. Shared source menu18 is a popup
+        // above those regular panes, with modal prompts still above it.
+        parent: forms.parent.parent
         objectName: "sourceRoomMenu"
-        x: forms.menu.x || 0; y: forms.menu.y || 0; width: forms.menu.width || 0; height: forms.menu.height || 0
-        z: forms.menu.layer || 0; visible: forms.menu.visible || false; color: "#f0f0f0"; clip: true
+        x: (forms.menu.x || 0)*forms.parent.scale; y: (forms.menu.y || 0)*forms.parent.scale
+        width: forms.menu.width || 0; height: forms.menu.height || 0
+        scale: forms.parent.scale; transformOrigin: Item.TopLeft
+        z: 100+(forms.menu.layer || 0); visible: forms.menu.visible || false; color: "#f0f0f0"; clip: true
         Repeater {
             model: forms.menu.rows || []
             delegate: Item {

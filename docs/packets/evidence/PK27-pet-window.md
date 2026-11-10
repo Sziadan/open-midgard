@@ -31,7 +31,7 @@ This is functional controller/recipient/resource acceptance at the current nativ
 ## Continue
 
 1. Restore the alternate01A2 signed level>=10000 summary recipient (source factory12/message29). The existing port UIItemInfoWnd/WID_ITEMINFOWND24 is the source item-detail owner, as established by PK09.14; extend that shared owner with the source pet-summary state and text path. Port UIItemCollectionWnd/WID_ITEMCOLLECTIONWND25 is the separate illustration preview. Source and port enum numbers/names differ: do not create a competing summary singleton or route pet data into the illustration preview.
-2. Complete pet right-click mode26 IDs29..33, egg acquisition control, capture019E/01A0, feeding01A3, egg list/selection01A6/01A7, rename outcomes01AA and full actor/follow/reset/failure lifetimes. Preserve job/actor/egg ownership and the source stale egg index rules. Do not close PK27 from this window checkpoint.
+2. Complete pet right-click mode26 IDs29..33, egg acquisition control, capture019E/01A0, feeding01A3, egg list/selection01A6/01A7, actor action/dialogue01AA (rename/property01A2) and full actor/follow/reset/failure lifetimes. Preserve job/actor/egg ownership and the source stale egg index rules. Do not close PK27 from this window checkpoint.
 3. Command entries68/87 still need actual DetailLevel and Up recipients. Fifteen of17 entry cases are represented, including six selected no-ops; this does not certify all destination windows. Continue party positive-confirm review, source global6/options and rich Tip/command/channel/editor/render behavior.
 4. Preserve all broader item/context, PK47 and independent PK48/49/live/deployed gates. The full packet plan retains its original scope.
 

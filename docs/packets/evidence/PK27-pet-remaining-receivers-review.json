@@ -1,0 +1,81 @@
+{
+  "scope": "Read-only reference/port audit of pet receiver packets requested for PK27. Packet IDs are little-endian words. Source offsets below are packet-byte offsets unless stated otherwise.",
+  "reference_router": {
+    "function": "CGameMode::PollNetworkStatus / packet switch in Ref/GameModePacket.cpp, beginning near line 226",
+    "switch_locations": "Ref/GameModePacket.cpp:1695-1735",
+    "packet_lengths": "Ref/RunningServer/packet_db.txt:330-342; corroborating fixed/variable sizes in src/network/GronPacket.cpp:268-276",
+    "source_ui_factory": "Ref/UIWindowMgr.cpp:6785-6813 constructs pet egg selector for factory id 90 and pet taming/deceive window for id 91"
+  },
+  "receivers": [
+    {
+      "packet": "0x019E",
+      "length": 2,
+      "semantic": "ZC response to catch-pet request (request 0x019F is 6 bytes, packet_db entry Ref/RunningServer/packet_db.txt:331). It arms the special capture target action; this is not a UI dialog response.",
+      "source_receiver": "CGameMode::PollNetworkStatus switch case 414 at Ref/GameModePacket.cpp:1695-1697; sets m_skillUseInfo.skillId=10000 then shared label 456 sets attackRange=5, useLevel=0, SUT_TO_CHARACTER at :1967-1972.",
+      "payload_effect": "No payload bytes beyond opcode are read. Subsequent target handling routes special skillId 10000 to the actor's skill/action path; Ref/GameMode.cpp:13542-13569 shows ProceedAttack bypassing overweight for this action and sending actor messages 41 and 90.",
+      "ui_owner_or_msgstr": "No direct UI owner or MsgStr in packet receiver.",
+      "port": "No 0x019E registration/handler in src/gamemode/GameModePacket.cpp. Current pet registrations are 0x01A2 and 0x01A4 only (:8895-8896)."
+    },
+    {
+      "packet": "0x01A0",
+      "length": 3,
+      "semantic": "Pet-taming/catch outcome animation response.",
+      "source_receiver": "CGameMode::PollNetworkStatus switch case 416 at Ref/GameModePacket.cpp:1698-1718.",
+      "payload_effect": "Result byte packet[2]/buf[2]: nonzero sends pet-taming window message 80 with (1,7); zero sends message 80 with (1,3). If pet taming window absent, receiver does nothing.",
+      "ui_owner_or_msgstr": "g_windowMgr.m_petTamingDeceiveWnd (UIPetTamingDeceiveWnd; factory WID_PETTAMINGDECEIVEWND / id 91). Its SendMsg at Ref/UIFrameWnd2.cpp:12423-12445 treats message 80,val1!=0 as destPos=val2 and resets delay/maxDelay to 7; val1==0 would set monGID. This packet path passes val1=1. No MsgStr in receiver.",
+      "port": "No pet-taming/deceive window member, factory path, or 0x01A0 handler found in src."
+    },
+    {
+      "packet": "0x01A3",
+      "length": 5,
+      "semantic": "Pet feed result (also handler accepts alternate packet id 559).",
+      "source_receiver": "CGameMode::Zc_Feed_Pet(char const*) at Ref/GameModePacket.cpp:11372-11460; dispatched from case 419 at :1724-1726.",
+      "branches": [
+        "For packet[2]!=0: read session pet hunger/friendly state, compute two pet talk values, send mode message 161 for each; no UI message.",
+        "For packet[2]==0: read failed food item ID LE16 at packet offset 3, resolve item name, format MSI_NOT_EXIST_PET_FOOD (enum MsgStr id 591), and send message 1 and message 20 with color 1974005 to UIWindowMgr."
+      ],
+      "port": "No 0x01A3 handler/registration found. MsgStr id 591 is from implicit enum order Ref/dhxj/MsgStrings.h."
+    },
+    {
+      "packet": "0x01A6",
+      "length": "Variable; header length LE16 at offset 2, packet_db marks -1.",
+      "semantic": "Pet egg inventory selection list.",
+      "source_receiver": "CGameMode::Zc_PetEgg_List(char const*) at Ref/GameModePacket.cpp:24170-24220; dispatched case 422 at :1731-1732.",
+      "layout_and_ui": "Count=(LE16(packet+2)-4)/2; signed 16-bit inventory indices begin offset 4, stride 2. Makes WID_SELECTPETEGGWND through factory id 90, sends message 75 to clear/reset; for each index resolves ITEM_INFO and for valid itemIndex sends window message 31 with item name and item index; then message 60 to recalc/refresh.",
+      "selection_owner": "UIPetEggListWnd::SendMsg at Ref/UIFrameWnd2.cpp:12302-12419 accepts item rows via message31; click/accept message6,val1=118 gets selected ITEM_INFO, sets damaged flag and session petEggIndex, invalidates inventory, sends mode message159(itemIndex), then deletes selector (id 0x5A). Cancel val1=119 deletes selector. Source message159 transport/request receiver absent in current port; outgoing server packet is 0x01A7 length4 (packet_db:337), selected-egg request.",
+      "msgstr": "MSI_PET_EGG_LIST is enum id 599, but Zc_PetEgg_List itself does not read it; selector title setup should not be inferred from this handler.",
+      "port": "No 0x01A6 handler, WID_SELECTPETEGGWND/UIPetEggListWnd equivalent, or mode message159 route found in src."
+    },
+    {
+      "packet": "0x01AA",
+      "length": 10,
+      "semantic": "ZC pet actor action/dialogue update. This is not a rename result.",
+      "source_receiver": "CGameMode::Zc_Pet_Act(char const*) at Ref/GameModePacket.cpp:24223-24389; dispatched from case 426 at :1734-1735.",
+      "layout_and_branches": "Actor AID LE32 at offset 2; action/speech code LE32 at offset 6. Resolve actor by AID and return if missing. Codes <50000 send actor message 21 with the code (motion/action). Codes >=50000 decode pet speech; >=90000 uses alternate speech table. Resolve localized pet dialogue with CSession::GetPetSpeak/GetPetTalkString; when nonempty and different from current speech, send actor message 7 and, unless either no-talk flag is set, UIWindowMgr message 1 in color 16448250. No MsgStr in this receiver.",
+      "port": "No 0x01AA handler/registration found. Current pet receiver registrations remain 01A2 and 01A4."
+    }
+  ],
+  "rename_and_request_id_correction": {
+    "rename_request": "Current source mode message 158 in src/gamemode/GameMode.cpp:11007-11014 already builds 26-byte packet 0x01A5 (A5 01 plus up to 24 name bytes); UI request caller is src/ui/UIPetInfoWnd.cpp:236-246. Packet_db Ref/RunningServer/packet_db.txt:334 labels 0x01A5 length 26 changepetname.",
+    "rename_result": "Pet name/property update is 0x01A2 (35-byte ZC_PROPERTY_PET), handled by source HandlePetStatus in src/gamemode/GameModePacket.cpp:5273-5287 and Ref CGameMode::Zc_Property_Pet at Ref/GameModePacket.cpp:24392-24431. Thus 0x01AA is not rename result.",
+    "selected_egg_request": "0x01A7 is 4-byte selectegg request (packet_db:337), emitted in legacy selector by mode message159; it is not the 01AA response."
+  },
+  "current_port_availability": {
+    "registered_pet_packets": "src/gamemode/GameModePacket.cpp:8895-8896 registers 0x01A2 HandlePetStatus and 0x01A4 HandlePetStatusChange.",
+    "missing_requested_receivers": [
+      "0x019E",
+      "0x01A0",
+      "0x01A3",
+      "0x01A6",
+      "0x01AA"
+    ],
+    "outgoing_support": "Message158/0x01A5 rename request exists. No message159/0x01A7 selected-egg request branch found in src/gamemode/GameMode.cpp."
+  },
+  "bounded_followup": [
+    "Treat 01AA as pet action/dialogue and 01A2 as pet status/name update; keep names aligned to packet evidence.",
+    "01A0 needs the pet taming animation window owner (window messages 80, values 7/3), rather than a generic message box.",
+    "01A6 requires a selector owner whose inventory-item index semantics and accept/cancel behavior match the source before wiring outgoing 01A7.",
+    "019E is an action-state transition with no direct UI; 01A3 handles success dialogue vs failed-food notification."
+  ],
+  "root_review": "See PK27-pet-context-menu.md: root checked primary MakeMenu, derived class/job gates, native UIMenuWnd (secondary CEGUI is not authority), selected PE selector/label order and01AA identity. Remaining receiver details are preparation, not implementation acceptance."
+}

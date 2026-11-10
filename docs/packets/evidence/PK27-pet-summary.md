@@ -24,7 +24,7 @@ Actual production framing/router replay covers signed levels9999/10000/32767/-32
 
 This is functional receiver/controller/text-data acceptance at the current item-detail representation. Visual inspection confirms the summary is present in both backends; the existing test font lacks Korean glyphs and draws missing-glyph boxes. Full glyph/font/locale/skin parity remains unaccepted, along with the existing source text viewer, renderer and input gates. Non-Windows text conversion/non-Qt UTF8 drawing is not certified by these Windows checks. No live server or installed world/UI acceptance is claimed.
 
-Next restore the actual mode26 pet context-menu producers and IDs29..33, then capture019E/01A0, feeding01A3, egg list/selection01A6/01A7, rename outcomes01AA and remaining actor/follow/reset/failure lifetimes. Those menu IDs are not TALKTYPE emotion IDs. Preserve source action ordering, local optimistic mutations and actual owner teardown, plus all broader item/context, command68/87, PK47 and independent PK48/49/live/deployed gates.
+Next restore the actual mode26 pet context-menu producers and IDs29..33, then capture019E/01A0, feeding01A3, egg list/selection01A6/01A7, actor action/dialogue01AA (rename/property01A2) and remaining actor/follow/reset/failure lifetimes. Those menu IDs are not TALKTYPE emotion IDs. Preserve source action ordering, local optimistic mutations and actual owner teardown, plus all broader item/context, command68/87, PK47 and independent PK48/49/live/deployed gates.
 
 ## Final validation
 

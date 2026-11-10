@@ -797,7 +797,8 @@
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
         "docs/packets/evidence/PK27-pet-window.md",
-        "docs/packets/evidence/PK27-pet-summary.md"
+        "docs/packets/evidence/PK27-pet-summary.md",
+        "docs/packets/evidence/PK27-pet-context-menu.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
@@ -809,7 +810,8 @@
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
         "docs/packets/evidence/PK27-pet-window.md",
-        "docs/packets/evidence/PK27-pet-summary.md"
+        "docs/packets/evidence/PK27-pet-summary.md",
+        "docs/packets/evidence/PK27-pet-context-menu.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
@@ -819,7 +821,8 @@
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
         "docs/packets/evidence/PK27-pet-window.md",
-        "docs/packets/evidence/PK27-pet-summary.md"
+        "docs/packets/evidence/PK27-pet-summary.md",
+        "docs/packets/evidence/PK27-pet-context-menu.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
@@ -827,9 +830,10 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK27-pet-window.md",
-        "docs/packets/evidence/PK27-pet-summary.md"
+        "docs/packets/evidence/PK27-pet-summary.md",
+        "docs/packets/evidence/PK27-pet-context-menu.md"
       ],
-      "commit_subject": "packet(PK27): restore alternate property summary recipient"
+      "commit_subject": "packet(PK27): restore owned pet actor context menu"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -2131,9 +2135,10 @@
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
         "docs/packets/evidence/PK27-pet-window.md",
-        "docs/packets/evidence/PK27-pet-summary.md"
+        "docs/packets/evidence/PK27-pet-summary.md",
+        "docs/packets/evidence/PK27-pet-context-menu.md"
       ],
-      "commit_subject": "packet(PK27): restore alternate property summary recipient"
+      "commit_subject": "packet(PK27): restore owned pet actor context menu"
     }
   }
 }

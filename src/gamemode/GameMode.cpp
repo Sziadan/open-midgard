@@ -20,6 +20,7 @@
 #include "GameMode.h"
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIWhisperWnd.h"
+#include "ui/UIPetInfoWnd.h"
 #include "core/ChatRoomRequests.h"
 #include "core/MannerFilter.h"
 #include "ActionRequestSender.h"
@@ -3134,6 +3135,9 @@ bool TrySelectPcTargetFromScreenPoint(CGameMode& mode, int screenX, int screenY)
         return false;
     }
 
+    const int logicalX=IsQtUiRuntimeEnabled()?UiScaleRawToLogicalCoordinate(screenX):screenX;
+    const int logicalY=IsQtUiRuntimeEnabled()?UiScaleRawToLogicalCoordinate(screenY):screenY;
+    if(mode.OpenPetContextMenu(hoveredActor,logicalX,logicalY))return true;
     if (!IsPcLikeHoverActor(hoveredActor) || IsMonsterLikeHoverActor(hoveredActor) || IsNpcLikeHoverActor(hoveredActor)) {
         return false;
     }
@@ -3355,6 +3359,7 @@ bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
     if (!mode.m_world || !mode.m_view) {
         return false;
     }
+    if(GetAsyncKeyState(VK_SHIFT)&0x8000)return false;
 
     CGameActor* hoveredActor = nullptr;
     if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
@@ -10938,6 +10943,23 @@ bool CGameMode::ToggleSourceAutoMessage()
     ro::UiMessageStrings table;table.Load();const auto notice=table.Get(943,"Automatic reply disabled.");
     g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),6619135);return true;
 }
+bool CGameMode::OpenPetContextMenu(CGameActor* actor,int logicalX,int logicalY)
+{
+    if(!m_world || !actor || g_windowMgr.m_storageWnd || g_windowMgr.m_modalWindow
+        || actor->m_gid!=g_session.m_petStatus.actorId || actor->m_headType!=100
+        || m_world->GetGameActorByAID(actor->m_gid)!=actor)return false;
+    const int job=actor->m_job;
+    if(!((job>=45 && job<4000) || (job>6000 && job<6048) || actor->m_objectType==9))return false;
+    if(g_windowMgr.m_chatRoomMenuWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomMenuWnd);
+    m_menuIdList={33,29,30,32,31};m_menuTargetAID=actor->m_gid;
+    ro::UiMessageStrings table;table.Load();
+    const int labels[]={596,592,593,595,594};std::vector<RoomMenuItem> items;
+    for(std::size_t i=0;i<m_menuIdList.size();++i)items.push_back({m_menuIdList[i],table.Get(labels[i],"")});
+    auto* menu=new UIChatRoomMenuWnd(items,logicalX,logicalY,true);
+    // Source Move(mouse+1) is not clamped back into the client rectangle.
+    menu->Move(logicalX+1,logicalY+1);g_windowMgr.m_chatRoomMenuWnd=menu;
+    g_windowMgr.m_children.push_back(menu);return true;
+}
 bool CGameMode::WriteSourceChat(const std::string& text)
 {
     if(!g_session.m_isSaveChat || !CanAutoSaveSourceChat())return false;
@@ -11011,6 +11033,17 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         if(g_windowMgr.m_storageWnd || wparam<0 || static_cast<std::size_t>(wparam)>=m_menuIdList.size())return 0;
         if(m_menuIdList[wparam]==11)return g_windowMgr.WriteWhisperChatToFile(m_lastWhisperMenuCharacterName)?1:0;
         if(m_menuIdList[wparam]==21)return g_windowMgr.AddFriendCharName(m_lastWhisperMenuCharacterName)?1:0;
+        switch(m_menuIdList[wparam]){
+        case 29:UIPetInfoWnd::ConfirmFeed();break;
+        case 30:SendMsg(163,2,0,0);break;
+        case 31:SendMsg(163,3,0,0);UIPetInfoWnd::ReturnEggLocally();break;
+        case 32:SendMsg(163,4,0,0);break;
+        case 33:
+            SendMsg(163,0,0,0);
+            if(g_windowMgr.m_petInfoWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_petInfoWnd);
+            else g_windowMgr.MakeWindow(UIWindowMgr::WID_PETINFOWND);
+            break;
+        }
         return 0;
     }
     case 51:case 52: {
