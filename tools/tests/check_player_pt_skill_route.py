@@ -102,13 +102,15 @@ for token in (
 mode_source = (ROOT / "src/gamemode/GameMode.cpp").read_text(encoding="utf-8", errors="replace")
 input_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "bool TryRequestPendingSkillFromScreenPoint(")
 pump_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "void PumpSkillChaseRequest(")
-targeted_pump_route = pump_route[pump_route.index("const u16 skillId = static_cast<u16>(mode.m_skillChaseSkillId") :]
+targeted_pump_route = pump_route[pump_route.index("if (!mode.m_hasSkillChase || mode.m_skillChaseTargetGid == 0)") :]
 begin_chase = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "void BeginSkillChase(")
 mode_sendmsg = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "msgresult_t CGameMode::SendMsg(")
 assert "BeginSkillChase(mode, targetGid, skillId, skillLevel, skillRange);" in input_route
 assert "const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId))" in input_route
 assert "const int skillRange = skillInfo ? skillInfo->attackRange : 0" in input_route
-assert "mode.m_skillChaseRange = skillRange;" in begin_chase
+assert "player->SendMsg(nullptr,41,targetGid,skillId,skillRange);" in begin_chase
+assert "player->SendMsg(nullptr,90,skillLevel,0,0);" in begin_chase
+assert "mode.SynchronizePlayerSkillProceed(player);" in begin_chase
 assert "(std::max)(1, skillRange)" not in begin_chase
 assert "SendUseSkillToIdPacket" not in input_route[input_route.index("if (skillUseMode == ShortcutSkillUseMode::ActorTarget)"):]
 
@@ -130,7 +132,8 @@ ordered_current = (
     "double distance = std::sqrt(static_cast<double>(distanceSquared))",
     "distance -= 20.0f",
     "if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell)",
-    "SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)",
+    "player->SendMsg(nullptr,42,0,0,0)",
+    "player->SendMsg(nullptr,13,0,0,0)",
     "player->m_destCellX == chaseTileX && player->m_destCellZ == chaseTileY",
     "player->m_stateId == 2",
     "std::atan2(static_cast<long double>(target->m_pos.x - player->m_pos.x)",
@@ -142,12 +145,12 @@ ordered_current = (
 positions = [targeted_pump_route.find(token) for token in ordered_current]
 assert all(position >= 0 for position in positions), "missing current PT_SKILL route operation"
 assert positions == sorted(positions), "current PT_SKILL source operations changed order"
-dispatch_pos = targeted_pump_route.find("SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)")
+dispatch_pos = targeted_pump_route.find("player->SendMsg(nullptr,42,0,0,0)")
 assert dispatch_pos >= 0 and targeted_pump_route.find("ClearSkillChase(mode);", dispatch_pos) > dispatch_pos
-capture_dispatch = targeted_pump_route.index("if(skillId==10000)")
-capture_handoff = targeted_pump_route.index("mode.SendMsg(76,skillId,mode.m_skillChaseTargetGid,skillLevel)")
-assert capture_dispatch < capture_handoff < dispatch_pos
-assert targeted_pump_route.find("}else{", capture_handoff) < dispatch_pos, "capture must not also send an ordinary skill request"
+assert "SendUseSkillToIdPacket" not in targeted_pump_route
+player_messages = extract_definition(ROOT / "src/world/GameActor.cpp", "void CPlayer::SendMsg(")
+assert "mode->SendMsg(76,m_skillId,m_proceedTargetGid,m_skillUseLevel)" in player_messages
+assert "case 41:" in player_messages and "case 90:" in player_messages and "case 13:" in player_messages
 assert "IsAttackTargetWithinRange" not in targeted_pump_route
 assert "ResolveAttackChaseCell" not in targeted_pump_route
 assert "m_isLeftButtonHeld" not in targeted_pump_route and "m_hasHeldMoveTarget" not in targeted_pump_route

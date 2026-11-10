@@ -1731,6 +1731,24 @@ void CSession::SetSkillItem(const PLAYER_SKILL_INFO& skillInfo)
     m_skillItems.push_back(skillInfo);
 }
 
+bool CSession::AddTemporarySkillItem(const PLAYER_SKILL_INFO& skillInfo)
+{
+    auto it = std::find_if(m_temporarySkillItems.begin(), m_temporarySkillItems.end(), [&](const PLAYER_SKILL_INFO& existing) {
+        return existing.SKID == skillInfo.SKID;
+    });
+
+    if (it != m_temporarySkillItems.end()) {
+        it->level = skillInfo.level;
+        it->SKID = skillInfo.SKID;
+        it->spcost = skillInfo.spcost;
+        it->upgradable = skillInfo.upgradable;
+        return false;
+    }
+
+    m_temporarySkillItems.push_back(skillInfo);
+    return true;
+}
+
 bool CSession::SetGuildSkillItem(const PLAYER_SKILL_INFO& skillInfo)
 {
     auto it = std::find_if(m_guildSkillItems.begin(), m_guildSkillItems.end(), [&](const PLAYER_SKILL_INFO& existing) {
@@ -1999,6 +2017,11 @@ const std::list<PLAYER_SKILL_INFO>& CSession::GetSkillItems() const
     return m_skillItems;
 }
 
+const std::list<PLAYER_SKILL_INFO>& CSession::GetTemporarySkillItems() const
+{
+    return m_temporarySkillItems;
+}
+
 const std::list<PLAYER_SKILL_INFO>& CSession::GetGuildSkillItems() const
 {
     return m_guildSkillItems;
@@ -2032,6 +2055,21 @@ const PLAYER_SKILL_INFO* CSession::GetSkillItemBySkillId(int skillId) const
         }
     }
     return nullptr;
+}
+
+const PLAYER_SKILL_INFO* CSession::GetTemporarySkillItemBySkillId(int skillId) const
+{
+    for (const PLAYER_SKILL_INFO& skill : m_temporarySkillItems) {
+        if (skill.SKID == skillId) {
+            return &skill;
+        }
+    }
+    return nullptr;
+}
+
+void CSession::ClearTemporarySkillItems()
+{
+    m_temporarySkillItems.clear();
 }
 
 const PLAYER_SKILL_INFO* CSession::GetHomunSkillItemBySkillId(int skillId) const

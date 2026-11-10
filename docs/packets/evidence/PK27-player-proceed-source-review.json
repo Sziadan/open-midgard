@@ -1,0 +1,45 @@
+{
+  "status": "root-reviewed partial contract; not package acceptance",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "baseline": "749d4423",
+  "source": {
+    "player_messages": "Ref/Player.cpp:248-272,400-425,484-486",
+    "player_runner": "Ref/Player.cpp:1061-1104",
+    "burrow_transition": "Ref/GameActor.cpp:8179-8229; self63, no proceed cancellation",
+    "source_dispatcher": "Ref/GameMode2.cpp:4755-4870; mode76",
+    "temporary_storage": "Ref/Session.cpp:3435-3481,13904 onward; AddTempSkillItem65DC70/GetTempSkillItemInfoBySkillId65DD10",
+    "temporary_producer": "Ref/GameModePacket.cpp:31685-31718; Zc_autorun_skill0147/39"
+  },
+  "decisions": [
+    "Rejected41 preserves old type/target/id/range; following90 still writes raw32 useLevel. State6/burrow transition alone does not cancel an old proceed.",
+    "Player13 clears proceed type and attack request, retaining stored skill fields. PT_SKILL15 only forwards mode28. Player42 forwards canonical fields to76.",
+    "Only raw32 level zero triggers family lookup, then temporary fallback on invalid/missing row. No matching rank still emits level0. Nonzero arguments truncate only at16-bit wire encoding.",
+    "Homun8000..8016 and merc8200..8237 use their own lists and bypass state6 ordinary guard. Merchant own-shop and chat-room owner guards remain.",
+    "20000 emits01E5/6,20001 emits01F9/6 plus the selected diagnostic literal/color; special branches precede ordinary guards.",
+    "154 uses signed SP<40, pushcart then factory95; successful factory creation path falls through to ordinary skill request.",
+    "0147 stores a separate temporary skill. Signed16 level/SP/range and raw32 type are retained. Duplicate rows update only SKID,level,spcost,upgradable; no main-list reset coupling is invented."
+  ],
+  "selected_pe": {
+    "method": "static section-mapped bytes and bounded objdump; original binary not executed",
+    "diagnostic_va": "0x712B1C",
+    "diagnostic_bytes": "5b202876616c31203d3d20323030303129205d00",
+    "sp_signed_branch_va": "0x588D3C",
+    "sp_signed_branch_bytes": "7d4e",
+    "sp_guard_disassembly": [
+      "  588d20: c2 10 00                     \tretl\t$0x10",
+      "  588d23: 81 fe 9a 00 00 00            \tcmpl\t$0x9a, %esi",
+      "  588d29: 0f 85 ca 00 00 00            \tjne\t0x588df9 <.text+0x187df9>",
+      "  588d2f: b9 18 1f 7b 00               \tmovl\t$0x7b1f18, %ecx         # imm = 0x7B1F18",
+      "  588d34: e8 d7 28 00 00               \tcalll\t0x58b610 <.text+0x18a610>",
+      "  588d39: 83 f8 28                     \tcmpl\t$0x28, %eax",
+      "  588d3c: 7d 4e                        \tjge\t0x588d8c <.text+0x187d8c>",
+      "  588d3e: 68 ca 00 00 00               \tpushl\t$0xca"
+    ]
+  },
+  "representation_limits": [
+    "Port active vending state represents own-shop ownership; full merchant window lifetime remains broader work.",
+    "Port local actor owns the self-effect mask; Ref reads session.m_effectState for cart. Dedicated session/self-effect lifetime remains open.",
+    "0147 temporary storage is implemented; general source mode126 UI/arming recipients remain open. Existing identify behavior is preserved.",
+    "General shortcut/list arming, attack/move interruption, ground/touch lifetimes, party/guild/event/siege cursor and lock, companion identity producers/AI and live/deployed acceptance remain open."
+  ]
+}

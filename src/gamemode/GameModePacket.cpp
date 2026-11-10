@@ -1310,20 +1310,6 @@ bool SendIdentifySkillUseRequest()
     return sent;
 }
 
-void HandleAutoRunSkill(CGameMode&, const PacketView& packet)
-{
-    if (!packet.data || packet.packetLength < 39) {
-        return;
-    }
-
-    const unsigned int skillId = static_cast<unsigned int>(ReadLE16(packet.data + 2));
-    if (skillId != kSkillMerchantIdentify) {
-        return;
-    }
-
-    SendIdentifySkillUseRequest();
-}
-
 void HandleItemIdentifyList(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 4 || ((packet.packetLength - 4) % 2) != 0) {
@@ -1827,6 +1813,22 @@ bool BuildPlayerSkillListEntry(const u8* entry, PLAYER_SKILL_INFO& outSkill)
     outSkill.upgradable = static_cast<int>(entry[36]);
     ApplySkillMetadata(outSkill);
     return outSkill.SKID != 0;
+}
+
+// Ref Zc_autorun_skill stores a temporary row before invoking mode126.
+void HandleAutoRunSkill(CGameMode&, const PacketView& packet)
+{
+    if(!packet.data || packet.packetId!=0x0147 || packet.packetLength!=39 || packet.data[0]!=0x47 || packet.data[1]!=1)return;
+    PLAYER_SKILL_INFO skill{};skill.m_isValid=1;skill.SKID=ReadLE16(packet.data+2);
+    ApplySkillMetadata(skill);
+    skill.type=static_cast<int>(ReadLE32(packet.data+4));
+    skill.level=static_cast<s16>(ReadLE16(packet.data+8));skill.spcost=static_cast<s16>(ReadLE16(packet.data+10));
+    skill.attackRange=static_cast<s16>(ReadLE16(packet.data+12));skill.upgradable=packet.data[38];
+    skill.skillName=skill.skillIdName;
+    g_session.AddTemporarySkillItem(skill);
+    // Existing source126/identify recipient is retained; other automatic
+    // skill UI recipients remain a separate integration gate.
+    if(skill.SKID==kSkillMerchantIdentify)SendIdentifySkillUseRequest();
 }
 
 // Matches Ref Zc_Skillinfo_List filtering for ZC_SKILLINFO_LIST (0x010F) player skills.

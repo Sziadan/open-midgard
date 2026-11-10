@@ -4545,9 +4545,9 @@ void ClearAttackChaseHint(CGameMode& mode)
 
 void ClearSkillChase(CGameMode& mode)
 {
-    if(mode.m_skillChaseSkillId==10000 && mode.m_world && mode.m_world->m_player){
+    if(mode.m_world && mode.m_world->m_player){
         auto* player=mode.m_world->m_player;
-        if(player->m_skillId==10000 && player->m_proceedType.type==3){
+        if(player->m_proceedType.type==3){
             player->m_proceedType.type=0;player->m_isAttackRequest=0;
         }
     }
@@ -5619,6 +5619,50 @@ bool SendUseSkillToIdPacket(u16 skillId, u16 skillLevel, u32 targetGid)
     return sent;
 }
 
+bool DispatchSourcePlayerSkill(CGameMode& mode,int skillId,u32 targetGid,int requestedLevel)
+{
+    const auto special=[&](u16 opcode){
+        const u8 packet[]={static_cast<u8>(opcode),static_cast<u8>(opcode>>8),static_cast<u8>(targetGid),
+            static_cast<u8>(targetGid>>8),static_cast<u8>(targetGid>>16),static_cast<u8>(targetGid>>24)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet));
+    };
+    if(skillId==20000)return special(0x01e5);
+    if(skillId==20001){
+        const char* text="[ (val1 == 20001) ]";
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text),0x6e96ff,0,0);
+        return special(0x01f9);
+    }
+    if(ro::commerce::state.vendingActive || !mode.m_world || !mode.m_world->m_player)return false;
+    const bool homun=skillId>=8000 && skillId<8017,merc=skillId>=8200 && skillId<8238;
+    int level=requestedLevel;
+    if(!level){
+        const auto* skill=homun?g_session.GetHomunSkillItemBySkillId(skillId)
+            :merc?g_session.GetMercSkillItemBySkillId(skillId):g_session.GetSkillItemBySkillId(skillId);
+        if(!skill || !skill->m_isValid)skill=g_session.GetTemporarySkillItemBySkillId(skillId);
+        level=skill && skill->m_isValid?skill->level:0;
+    }
+    if((!homun && !merc && mode.m_world->m_player->m_stateId==6) || g_windowMgr.m_chatRoomWnd)return false;
+    if(skillId==154){
+        // The port currently keeps the local effect mask on its player actor;
+        // Ref reads the session's self-effect mask here (not a target actor).
+        const unsigned message=static_cast<s32>(g_session.GetCharacterVitals().sp)<40?202:!IsPushCartEffectState(mode.m_world->m_player->m_effectState)?660:0;
+        if(message){
+            ro::UiMessageStrings strings;strings.Load();const auto text=strings.Get(message,message==202?"Not enough SP.":"You must equip a Pushcart.");
+            g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text.c_str()),255,10,0);return false;
+        }
+        g_windowMgr.MakeWindow(UIWindowMgr::WID_SELECTCARTWND);
+    }
+    // The source dispatcher permits zero when both rank lookups miss, and
+    // truncates nonzero raw arguments only at the wire field. Keep the checked
+    // shortcut sender's positive-level policy separate from this primitive.
+    std::array<u8,sizeof(PACKET_CZ_USESKILLTOID_PACKETVER22)> packet{};int length=0;
+    if(!ro::net::BuildActiveUseSkillToIdPacket(static_cast<u16>(skillId),static_cast<u16>(level),targetGid,
+        packet.data(),static_cast<int>(packet.size()),&length))return false;
+    const bool sent=CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),length);
+    if(sent)NoteLocalHideSkillRequest(static_cast<u16>(skillId),targetGid);
+    return sent;
+}
+
 bool SendUseSkillToPosPacket(u16 skillId, u16 skillLevel, int cellX, int cellY)
 {
     if (skillId == 0 || skillLevel == 0) {
@@ -5708,16 +5752,11 @@ void ClearPendingSkillUse(CGameMode& mode)
 
 void BeginSkillChase(CGameMode& mode, u32 targetGid, u16 skillId, u16 skillLevel, int skillRange)
 {
-    mode.m_lastMonGid = 0;
-    mode.m_lastLockOnMonGid = 0;
-    mode.m_skillChaseTargetGid = targetGid;
-    mode.m_skillChaseSkillId = static_cast<int>(skillId);
-    mode.m_skillChaseSkillLevel = static_cast<int>(skillLevel);
-    mode.m_skillChaseRange = skillRange;
-    mode.m_lastSkillChaseRequestTick = 0;
-    mode.m_hasGroundSkillChase = 0;
-    mode.m_hasTouchSkillChase = 0;
-    mode.m_hasSkillChase = 1;
+    if(!mode.m_world || !mode.m_world->m_player)return;
+    auto* player=mode.m_world->m_player;
+    player->SendMsg(nullptr,41,targetGid,skillId,skillRange);
+    player->SendMsg(nullptr,90,skillLevel,0,0);
+    mode.SynchronizePlayerSkillProceed(player);
 }
 
 void BeginTouchSkillChase(CGameMode& mode, u32 targetAid, u16 skillId, u16 skillLevel, int skillRange)
@@ -6841,13 +6880,7 @@ bool TryRequestPetCaptureOnActor(CGameMode& mode,CGameActor* target,bool shift,b
     mode.m_isCtrlLock=!mode.m_world->m_isSiegeMode && (control || g_session.m_isNoCtrl==1);
     // Source player41 has these guards even though capture bypasses weight.
     // Message90 follows whether or not41 replaced the proceed state.
-    if(player->m_stateId==6 || (player->m_effectState&0x0002)){
-        player->m_skillUseLevel=0;return true;
-    }
-    ClearSkillChase(mode);ClearAttackChaseHint(mode);ClearPickupIntent(mode);
     BeginSkillChase(mode,target->m_gid,10000,0,mode.m_skillUseInfo.attackRange);
-    player->m_proceedType.type=3;player->m_proceedTargetGid=target->m_gid;
-    player->m_skillId=10000;player->m_skillAttackRange=mode.m_skillUseInfo.attackRange;player->m_skillUseLevel=0;
     return true;
 }
 
@@ -7269,14 +7302,7 @@ void PumpSkillChaseRequest(CGameMode& mode)
         return;
     }
 
-    const u16 skillId = static_cast<u16>(mode.m_skillChaseSkillId & 0xFFFF);
-    const u16 skillLevel = static_cast<u16>(mode.m_skillChaseSkillLevel & 0xFFFF);
     const int skillRange = mode.m_skillChaseRange;
-    if (skillId == 0 || (skillLevel == 0 && skillId!=10000)) {
-        ClearSkillChase(mode);
-        return;
-    }
-
     C3dAttr* attr = mode.m_world->m_attr;
     if (!attr || attr->m_zoom <= 0 || attr->m_width <= 0 || attr->m_height <= 0
         || attr->m_cells.size() < static_cast<size_t>(attr->m_width) * static_cast<size_t>(attr->m_height)) {
@@ -7361,15 +7387,8 @@ void PumpSkillChaseRequest(CGameMode& mode)
     if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
         // Ref message 42 dispatches mode message 76, then message 13 clears
         // the proceed state even when the packet send cannot be completed.
-        if(skillId==10000){
-            mode.SendMsg(76,skillId,mode.m_skillChaseTargetGid,skillLevel);
-            DbgLog("[GameMode] pet capture target handoff target=%u\n",static_cast<unsigned int>(mode.m_skillChaseTargetGid));
-        }else{
-            const bool sent=SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid);
-            DbgLog("[GameMode] source-range skill dispatch skillId=%u level=%u target=%u sent=%d\n",
-                static_cast<unsigned int>(skillId),static_cast<unsigned int>(skillLevel),
-                static_cast<unsigned int>(mode.m_skillChaseTargetGid),sent ? 1 : 0);
-        }
+        player->SendMsg(nullptr,42,0,0,0);
+        player->SendMsg(nullptr,13,0,0,0);
         ClearSkillChase(mode);
         return;
     }
@@ -9875,6 +9894,21 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
 }
 }
 
+void CGameMode::SynchronizePlayerSkillProceed(CPlayer* player,bool retire)
+{
+    if(!m_world || m_world->m_player!=player || !player)return;
+    if(player->m_proceedType.type==3){
+        if(m_skillChaseTargetGid!=player->m_proceedTargetGid || m_skillChaseSkillId!=player->m_skillId)
+            m_lastSkillChaseRequestTick=0;
+        m_skillChaseTargetGid=player->m_proceedTargetGid;m_skillChaseSkillId=player->m_skillId;
+        m_skillChaseSkillLevel=player->m_skillUseLevel;m_skillChaseRange=player->m_skillAttackRange;
+        m_hasSkillChase=1;m_hasGroundSkillChase=0;m_hasTouchSkillChase=0;
+        m_lastMonGid=0;m_lastLockOnMonGid=0;ClearAttackChaseHint(*this);ClearPickupIntent(*this);
+    }else if(retire){
+        ClearSkillChase(*this);m_lastMonGid=0;m_lastLockOnMonGid=0;ClearAttackChaseHint(*this);
+    }
+}
+
 #if defined(RO_PACKET_REPLAY_TESTS)
 bool ReplayTryPetCaptureOnActor(CGameMode& mode,CGameActor* target,bool shift,bool alt,bool control)
 {
@@ -11149,7 +11183,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
                 auto* window=g_windowMgr.MakeWindow(UIWindowMgr::WID_PETTAMINGDECEIVEWND);
                 if(window)window->SendMsg(nullptr,80,0,lparam,0);
             }
-        }
+        }else DispatchSourcePlayerSkill(*this,static_cast<int>(wparam),static_cast<u32>(lparam),static_cast<int>(extra));
         return 0;
     case 159: {
         const u16 index=static_cast<u16>(wparam);

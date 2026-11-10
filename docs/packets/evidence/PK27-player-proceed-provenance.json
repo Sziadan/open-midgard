@@ -1,0 +1,22 @@
+{
+  "baseline": "749d4423",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "4a2510cf91842e97b3e503a4ed707855e751ba08170d2729f57935c29c731328",
+    "src/gamemode/GameMode.cpp": "5b2d6c0f695ad6cb26a9ebcbeca07b17d774c906553493f6f770d82ee329ac36",
+    "src/gamemode/GameMode.h": "2bc88c793b37d535e51c7bfa5ec277991a811047279e966a1ec628bb4513f107",
+    "src/gamemode/GameModePacket.cpp": "79bf74a382208913ef453459ddecb83c75b7ae4f0393b5ab5e6f30f36a91f5fa",
+    "src/world/GameActor.cpp": "ca681d961023df75607c6d89aa969a188f0146140b0b9918c8cef6e54c223bcc",
+    "src/world/GameActor.h": "7bea634b60f10a3bfca74eafafb85f10ef2c23634560452298d214cd37c021e6",
+    "src/session/Session.cpp": "bca6b6cdfb88c04a15fc152c553bd02fd6b8434a47e943ac79f480bf2ed0381d",
+    "src/session/Session.h": "0623e9ff22beb6b419f7cea4017366b18f85257b15ca7631bf6b96a8e8fbff94",
+    "tools/tests/check_player_pt_skill_route.py": "e7b55c34de4a57681d95d0147dc9698c4043bfdf3bffd591e8a6ac01fcb91ebf",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "33f9124de29b6dbf649ffc741a9d50d12233f1fe997e51f1fc5d91ec6e59279f",
+    "tools/tests/replay/PetCaptureTargetReplay.inc": "075bbf5a31f7aaf462b0bd3d925ed7be9d781db0948e10498a5dc8330415d059",
+    "tools/tests/replay/PlayerSkillProceedReplay.inc": "0812045999a2ede84679dd50f8980c86d93a2ad6b49683cdc8651ec98f475556"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "installed_unchanged": true,
+  "validation": "Deploy-OFF all-target and standalone builds pass; focused2/2 in7.01s, application164/164 in52.31s (-j4) and standalone473/473 in14.00s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open.",
+  "scope": "shared actor PT_SKILL messages and source76 fallback, temporary0147 storage; broader gates open"
+}

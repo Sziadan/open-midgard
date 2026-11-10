@@ -523,6 +523,7 @@ public:
     CPlayer();
     virtual ~CPlayer();
     void SetState(int state) override;
+    void SendMsg(CGameObject* sender,int message,msgparam_t arg1,msgparam_t arg2,msgparam_t arg3) override;
 
     void BeginPreMove(int destCellX, int destCellZ);
     void ProcessPreMove();

@@ -15,6 +15,7 @@
 #include "ui/UIPetInfoWnd.h"
 #include "ui/UIPetEggListWnd.h"
 #include "ui/UIPetTamingDeceiveWnd.h"
+#include "ui/UISelectCartWnd.h"
 #include "core/SourceCommandListTables.h"
 bool ReplayTryPetCaptureOnActor(CGameMode&,CGameActor*,bool,bool,bool);
 void ReplayPumpSkillChase(CGameMode&);
@@ -326,6 +327,7 @@ void ChatSubmissionReplay()
 #include "PetCaptureRequestReplay.inc"
 #include "PetTamingReplay.inc"
 #include "PetCaptureTargetReplay.inc"
+#include "PlayerSkillProceedReplay.inc"
     connection->Disconnect();
 #include "PetWindowFailedSendReplay.inc"
 #include "PetEggFailedSendReplay.inc"

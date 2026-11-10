@@ -14,6 +14,7 @@
 class CView;
 class CMousePointer;
 class CGameActor;
+class CPlayer;
 class UINameBalloonText;
 class UIPlayerGage;
 class CRagConnection;
@@ -95,6 +96,7 @@ public:
     bool SendWarpMapSelection(const std::string& mapName);
     bool CancelWarpMapSelection();
     bool SendMakingArrowSelection(u16 itemId);
+    void SynchronizePlayerSkillProceed(CPlayer* player,bool retire=false);
 
     enum MapLoadingStage {
         MapLoading_None = 0,

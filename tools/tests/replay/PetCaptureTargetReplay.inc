@@ -44,13 +44,13 @@
         Require(mode.m_skillUseInfo.id==0 && mode.m_skillUseInfo.level==0 && mode.m_skillUseInfo.useType==0
             && mode.m_skillUseInfo.attackRange==5 && mode.m_hasSkillChase && mode.m_skillChaseTargetGid==123,
             "world miss did not consume only pending capture intent");
-        mode.m_hasSkillChase=0;
+        player.SendMsg(nullptr,13,0,0,0);
         arm();Require(!ReplayTryPetCaptureOnActor(mode,&monster,true,false,false) && !mode.m_hasSkillChase,"Shift should block hostile monster capture");
         g_session.m_isNoShift=1;Require(ReplayTryPetCaptureOnActor(mode,&monster,true,false,true)
             && mode.m_hasSkillChase && mode.m_isCtrlLock==1,"noShift/control capture branch failed");
         Require(player.m_proceedType.type==3 && player.m_proceedTargetGid==monster.m_gid && player.m_skillId==10000
             && player.m_skillAttackRange==5 && player.m_skillUseLevel==0,"player41/90 capture fields differ");
-        mode.m_hasSkillChase=0;g_session.m_isNoShift=0;
+        player.SendMsg(nullptr,13,0,0,0);g_session.m_isNoShift=0;
         Require(!ReplayTryPetCaptureOnActor(mode,&monster,false,true,false),"Alt monster click armed capture");
         monster.m_headType=100;Require(!ReplayTryPetCaptureOnActor(mode,&monster,false,false,false),"marked source class3 actor became capture target");
         monster.m_headType=0;
@@ -63,16 +63,16 @@
         pc.m_isPc=1;pc.m_job=1;pc.m_gid=g_session.m_gid==g_session.m_aid?0x66000002:g_session.m_gid;
         Require(!ReplayTryPetCaptureOnActor(mode,&pc,false,false,false),"unshifted non-PK PC captured");
         Require(ReplayTryPetCaptureOnActor(mode,&pc,true,false,false) && mode.m_skillChaseTargetGid==pc.m_gid,"Shift PC target or char-ID collision handling mismatch");
-        mode.m_hasSkillChase=0;pc.m_pkState=1;
+        player.SendMsg(nullptr,13,0,0,0);pc.m_pkState=1;
         Require(ReplayTryPetCaptureOnActor(mode,&pc,false,false,false),"PK PC capture target was rejected");
-        mode.m_hasSkillChase=0;Require(!ReplayTryPetCaptureOnActor(mode,&player,true,false,false),"character-target capture allowed self");
+        player.SendMsg(nullptr,13,0,0,0);Require(!ReplayTryPetCaptureOnActor(mode,&player,true,false,false),"character-target capture allowed self");
         companion.m_gid=0x66000003;companion.m_job=6001;companion.m_objectType=9;g_session.m_homunGID=companion.m_gid;
         world.m_isPKZone=1;Require(!ReplayTryPetCaptureOnActor(mode,&companion,true,false,false),"owned homunculus capture exclusion lost");
         g_session.m_homunGID=0;Require(ReplayTryPetCaptureOnActor(mode,&companion,false,false,false),"foreign PK homunculus target rejected");
-        mode.m_hasSkillChase=0;companion.m_job=1002;companion.m_headType=100;world.m_isPKZone=0;
+        player.SendMsg(nullptr,13,0,0,0);companion.m_job=1002;companion.m_headType=100;world.m_isPKZone=0;
         g_session.m_merGID=companion.m_gid;Require(!ReplayTryPetCaptureOnActor(mode,&companion,true,false,false),"owned companion exclusion lost");
         g_session.m_merGID=0;Require(ReplayTryPetCaptureOnActor(mode,&companion,true,false,false),"class4 override of class3 was ignored");
-        mode.m_hasSkillChase=0;npc.m_gid=0x66000004;npc.m_isPc=0;npc.m_job=111;npc.m_pos={100,0,50};
+        player.SendMsg(nullptr,13,0,0,0);npc.m_gid=0x66000004;npc.m_isPc=0;npc.m_job=111;npc.m_pos={100,0,50};
         player.m_roty=0;player.m_headDir=0;player.m_stateId=0;
         Require(ReplayTryPetCaptureOnActor(mode,&npc,false,false,false) && !mode.m_hasSkillChase,"capture targeting suppressed source NPC contact");
         const auto npcFrames=peer.ReceiveExact(18);
@@ -83,7 +83,7 @@
         player.m_stateId=2;Require(!ReplayTryPetCaptureOnActor(mode,&npc,false,false,false),"moving player incorrectly contacted NPC");
         npc.m_job=45;player.m_stateId=0;Require(!ReplayTryPetCaptureOnActor(mode,&npc,false,false,false),"portal became capture/NPC request");
         Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"ineligible NPC/portal emitted a request");
-        mode.m_hasSkillChase=0;arm();Require(ReplayTryPetCaptureOnActor(mode,&monster,false,false,false),"ordinary capture target rejected");
+        player.SendMsg(nullptr,13,0,0,0);arm();Require(ReplayTryPetCaptureOnActor(mode,&monster,false,false,false),"ordinary capture target rejected");
         mode.m_skillUseInfo.id=0;mode.m_skillUseInfo.level=0;mode.m_skillUseInfo.useType=0;
         player.m_stateId=2;ReplayPumpSkillChase(mode);
         Require(mode.m_hasSkillChase && !g_windowMgr.m_petTamingDeceiveWnd,"approach state2 gate opened capture window");

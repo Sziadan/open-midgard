@@ -1,0 +1,48 @@
+{
+  "task": "player PT_SKILL interruption audit for rejected capture message 41",
+  "source_refs": {
+    "player_messages": [
+      "Ref/Player.cpp:248-252",
+      "Ref/Player.cpp:253-272",
+      "Ref/Player.cpp:336-357",
+      "Ref/Player.cpp:400-421",
+      "Ref/Player.cpp:484-486"
+    ],
+    "proceed_skill_runner": [
+      "Ref/Player.cpp:1061-1104",
+      "Ref/Player.cpp:1290-1293"
+    ],
+    "player_state": [
+      "Ref/Player.cpp:520-560",
+      "Ref/Player.cpp:627-656"
+    ],
+    "effect_transition": [
+      "Ref/GameActor.cpp:8179-8229"
+    ],
+    "port_state_and_effect": [
+      "src/world/GameActor.cpp:8825-8861",
+      "src/world/GameActorMsgHandler.cpp:865-904",
+      "src/world/GameActorMsgHandler.cpp:907-925"
+    ],
+    "port_capture_logic": [
+      "src/gamemode/GameMode.cpp:6840-6849"
+    ]
+  },
+  "message_semantics": {
+    "message_13": "The explicit proceed cancel sends 13 to the player object. It sets m_isAttackRequest=0 and m_proceedType=PT_NOTHING (Player.cpp:248-252). It does not clear m_proceedTargetGid, m_skillId, m_skillAttackRange, or m_skillUseLevel in this case. A world move message17 invokes player message13 before scheduling the destination/pre-engage move (Player.cpp:336-357). PT_SKILL reaching range or losing its target also invokes message13; when in range it first sends message42 (Player.cpp:1061-1103), and missing-target LABEL_176 sends13 (1290-1293).",
+    "message_41": "Player message41 is the target-skill request. If m_stateId != 6 and the player is not burrowed (or skillId is one of 137,212,529,530,592), it overwrites m_proceedType=PT_SKILL, m_proceedTargetGid, m_skillId and m_skillAttackRange (Player.cpp:400-421). If state6 or disallowed burrow, this branch does nothing; it does not clear a pre-existing proceed type/target/skill/range.",
+    "message_90": "Player message90 unconditionally assigns m_skillUseLevel=arg1 (Player.cpp:484-486). Thus ProceedAttack's 41 then90 sequence can leave an old PT_SKILL target/id/range intact after 41 is rejected while still overwriting its use level with the new capture level (normally zero).",
+    "message_15": "When PT_SKILL is active, player message15 only sends mode message28 (Player.cpp:253-272); this case does not set PT_NOTHING."
+  },
+  "state_and_effect_transitions": {
+    "state6": "CPlayer::SetState clears destination cells for any next state other than1 and handles pre-engage cleanup, then delegates to CPc::SetState; it never changes m_proceedType, m_proceedTargetGid, m_skillId, m_skillAttackRange, or m_skillUseLevel (Player.cpp:523-560). PT_SKILL processing pauses for states >=2 and <16 except4 (Player.cpp:1086-1088), which includes state6. Therefore state6 suppresses the runner temporarily; it does not retire the stored PT_SKILL.",
+    "death": "CPlayer::SetState(state3) sends mode message5 and places a death effect before CPc::SetState; that override also does not clear proceed fields (Player.cpp:551-560). CPlayer::OnInit explicitly initializes m_proceedType=PT_NOTHING, targetGid=0, skillId=0, range=1, and level=0 (Player.cpp:627-656). OnExit is empty (Player.cpp:575-581). So the located reset is player initialization/recreation, not state3 itself.",
+    "burrow": "When the burrow bit changes, the actor effect-state transition sends message63 to the same actor on both enter and exit, hides/restores body rendering, and sends visibility/shadow/cart/bird notifications (GameActor.cpp:8179-8229). There is no player message13 or write to player m_proceedType/target/skill fields in this transition. Hiding transitions likewise only update visibility/effect handling in this block's neighboring source. Burrow blocks a new message41 for skill10000 but does not retire an existing PT_SKILL.",
+    "message63_recipient": "The source calls this->CGameObject::SendMsg(this,0,63,...) from the actor whose effect state changed; it is a self-recipient effect/visibility notification, not the player's proceed-cancel message13."
+  },
+  "port_comparison": {
+    "finding": "Port CPlayer::SetState likewise clears destinations/pre-engage state and delegates to CPc::SetState without retiring proceed fields (src/world/GameActor.cpp:8825-8861). Port actor burrow transitions match the source's message63 and visibility behavior (src/world/GameActorMsgHandler.cpp:865-904); hiding sets visibility off/on at 907-925. Port capture acceptance rejects a new request in state6 or burrow by assigning only player.m_skillUseLevel=0 and returning (src/gamemode/GameMode.cpp:6840-6849), which preserves any pre-existing player proceed target/type/id/range, consistent with source 41 rejection followed by 90. The searched port sources do not expose a general CPlayer::SendMsg handler implementing source message13/41/90; the new capture path directly writes the player fields."
+  },
+  "conclusion": "Neither entering state6 nor entering burrow retires an existing PT_SKILL in the original source. A new capture message41 is rejected as a no-op under those guards; subsequent message90 can still overwrite m_skillUseLevel. A real cancellation requires message13 or later player OnInit/recreation.",
+  "root_review": "Primary source independently reviewed; describes pre-change port. Current implementation and remaining gates are in PK27-player-proceed-source-review.json."
+}
