@@ -4,7 +4,9 @@
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIAutoMessageWnd.h"
 #include "ui/UIFriendOptionWnd.h"
+#include "ui/UICommandListWnd.h"
 #include "ui/UITipOfTheDayWnd.h"
+#include "ui/UITransBalloonText.h"
 #include "ui/ChatScrollBarUi.h"
 #include "QtUiStateAdapter.h"
 
@@ -22,6 +24,7 @@
 #include "network/Packet.h"
 #include "core/ClientInfoLocale.h"
 #include "gamemode/GameMode.h"
+#include "gamemode/Mode.h"
 #include "gamemode/PacketPadding.h"
 #include "gamemode/View.h"
 #include "main/WinMain.h"
@@ -1967,6 +1970,53 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
                 {"checked",check->IsChecked()},{"artwork",QString::fromStdString(check->GetBitmapUri())},{"imageWidth",checkArt.width},{"imageHeight",checkArt.height}}}};
     }
     chatUi.insert("tip",tipData);
+    QVariantMap commandList;
+    if(const auto* window=dynamic_cast<const UICommandListWnd*>(g_windowMgr.m_commandListWnd)){
+        QVariantList framePieces,rows,buttons;
+        for(const auto& piece:window->GetFramePieces())
+            framePieces.push_back(QVariantMap{{"x",piece.x},{"y",piece.y},{"width",piece.width},{"height",piece.height},{"phase",piece.phase},
+                {"artwork",QString::fromStdString(piece.uri)}});
+        for(const auto& row:window->GetVisibleRows())
+            rows.push_back(QVariantMap{{"index",row.index},{"value",row.value},{"x",row.x},{"y",row.y},{"width",row.width},
+                {"height",row.height},{"textOffset",row.textOffset},{"caption",ToQString(row.caption)},
+                {"selected",row.selected},{"hasIndicator",row.hasIndicator},{"on",row.on}});
+        const auto* tab=window->GetTab();
+        const auto& tabBitmap=tab->GetBitmap();
+        QVariantMap tabData{{"x",tab->m_x-window->m_x},{"y",tab->m_y-window->m_y},{"width",tab->m_w},{"height",tab->m_h},
+            {"artwork",QString::fromStdString(tab->GetBitmapUri())},{"imageWidth",tabBitmap.width},{"imageHeight",tabBitmap.height}};
+        for(const auto* button:window->GetButtons())if(button){
+            const int status=button->GetVisualState();const auto& art=button->GetButton();const auto& bitmap=art.bitmaps[status];
+            buttons.push_back(QVariantMap{{"id",button->m_id},{"x",button->m_x-window->m_x},{"y",button->m_y-window->m_y},
+                {"width",button->m_w},{"height",button->m_h},{"label",ToQString(button->m_text)},
+                {"artwork",QString::fromStdString(art.uris[status])},{"imageWidth",bitmap.width},{"imageHeight",bitmap.height},{"state",status}});
+        }
+        const auto bar=window->GetScrollBar();
+        const RECT rail{window->m_w-15,14,window->m_w-2,window->m_h-24};
+        const auto layout=ro::chat::ScrollLayout(rail,bar);
+        const auto rect=[](RECT r){return QVariantMap{{"x",int(r.left)},{"y",int(r.top)},
+            {"width",int(r.right-r.left)},{"height",int(r.bottom-r.top)}};};
+        const auto& indicatorOff=window->GetIndicatorBitmap(false);const auto& indicatorOn=window->GetIndicatorBitmap(true);
+        commandList={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},
+            {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
+            {"title",ToQString(window->GetTitle())},{"framePieces",framePieces},{"rows",rows},{"buttons",buttons},{"tab",tabData},
+            {"indicatorOff",QString::fromStdString(window->GetIndicatorUri(false))},
+            {"indicatorOffWidth",indicatorOff.width},{"indicatorOffHeight",indicatorOff.height},
+            {"indicatorOn",QString::fromStdString(window->GetIndicatorUri(true))},
+            {"indicatorOnWidth",indicatorOn.width},{"indicatorOnHeight",indicatorOn.height},
+            {"scroll",QVariantMap{{"visible",bar.maximum>0},{"track",rect(rail)},{"thumb",rect(layout.thumb)},
+                {"up",rect(layout.up)},{"down",rect(layout.down)}}}};
+    }
+    chatUi.insert("commandList",commandList);
+    QVariantMap sourceHelp;
+    if(const auto* mode=g_modeMgr.GetCurrentMode())if(const auto* window=mode->GetHelpBalloon()){
+        QVariantList lines;
+        for(const auto& line:window->GetDisplayLines())lines.push_back(QString::fromUtf8(line.c_str()));
+        const QString fontColor=QString("#%1").arg(static_cast<qulonglong>(window->GetFontColor()&0xffffffu),6,16,QChar('0'));
+        sourceHelp={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},
+            {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
+            {"lines",lines},{"lineHeight",window->GetLineHeight()},{"fontColor",fontColor}};
+    }
+    chatUi.insert("sourceHelp",sourceHelp);
     QVariantList whisperWindows;
     const auto whisperRect=[](RECT r){return QVariantMap{{"x",static_cast<int>(r.left)},{"y",static_cast<int>(r.top)},
         {"width",static_cast<int>(r.right-r.left)},{"height",static_cast<int>(r.bottom-r.top)}};};
@@ -2688,6 +2738,7 @@ void PopulatePartySetupState(QtUiState* state)
             entry.insert(QStringLiteral("height"), choice.height);
             entry.insert(QStringLiteral("label"), ToQString(choice.label));
             entry.insert(QStringLiteral("selected"), choice.selected);
+            entry.insert(QStringLiteral("enabled"), choice.enabled);
             choices.push_back(entry);
         }
         data.insert(QStringLiteral("choices"), choices);

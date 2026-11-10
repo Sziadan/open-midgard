@@ -6,6 +6,7 @@
 #include "main/WinMain.h"
 #include "render/DC.h"
 #include "session/Session.h"
+#include "core/UiMessageStrings.h"
 
 #include <windows.h>
 
@@ -341,13 +342,13 @@ void UIPartyOptionWnd::OnDraw()
         const RECT rect{ choice.x, choice.y, choice.x + choice.width, choice.y + choice.height };
         const RECT bulletRect{ rect.left, rect.top + 2, rect.left + 14, rect.top + 16 };
         FillRectColor(hdc, bulletRect, RGB(247, 243, 233));
-        FrameRectColor(hdc, bulletRect, RGB(126, 111, 85));
+        FrameRectColor(hdc, bulletRect, choice.enabled?RGB(126, 111, 85):RGB(160,160,160));
         if (choice.selected) {
             const RECT fillRect{ bulletRect.left + 3, bulletRect.top + 3, bulletRect.right - 3, bulletRect.bottom - 3 };
             FillRectColor(hdc, fillRect, RGB(87, 111, 138));
         }
         const RECT labelRect{ rect.left + 20, rect.top, rect.right, rect.bottom };
-        DrawTextLine(hdc, labelRect, choice.label.c_str(), RGB(44, 44, 44), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+        DrawTextLine(hdc, labelRect, choice.label.c_str(), choice.enabled?RGB(44, 44, 44):RGB(128,128,128), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
     }
 
     for (const QtButtonDisplay& button : display.buttons) {
@@ -414,7 +415,7 @@ void UIPartyOptionWnd::OnLBtnUp(int x, int y)
     }
 
     if (buttonId == ButtonClose || buttonId == ButtonCancel) {
-        SetShow(0);
+        CloseDialog();
         return;
     }
     if (buttonId == ButtonConfirm) {
@@ -441,7 +442,7 @@ void UIPartyOptionWnd::OnMouseHover(int x, int y)
 void UIPartyOptionWnd::OnKeyDown(int virtualKey)
 {
     if (virtualKey == VK_ESCAPE) {
-        SetShow(0);
+        CloseDialog();
         return;
     }
     if (virtualKey == VK_RETURN) {
@@ -480,6 +481,8 @@ void UIPartyOptionWnd::OpenConfigureDialog()
     ClearEditFocus();
     Invalidate();
 }
+
+bool UIPartyOptionWnd::CanEditSettings() const {return g_session.GetNumParty()==0 || g_session.m_amIPartyMaster;}
 
 bool UIPartyOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
 {
@@ -547,6 +550,7 @@ bool UIPartyOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
             choice.height = choiceRect.bottom - choiceRect.top;
             choice.label = GetChoiceLabel(groupId, optionId);
             choice.selected = GetSelectedChoice(groupId) == optionId;
+            choice.enabled = CanEditSettings();
             outData->choices.push_back(choice);
         }
     }
@@ -611,6 +615,7 @@ unsigned int UIPartyOptionWnd::BuildOptionBits() const
 
 bool UIPartyOptionWnd::Submit()
 {
+    if(!CanEditSettings()){CloseDialog();return true;}
     if (m_mode == ModeCreate) {
         const char* partyName = m_nameEditCtrl ? m_nameEditCtrl->GetText() : "";
         if (!partyName || *partyName == '\0') {
@@ -636,8 +641,15 @@ bool UIPartyOptionWnd::Submit()
         }
     }
 
-    SetShow(0);
+    CloseDialog();
     return true;
+}
+
+void UIPartyOptionWnd::CloseDialog()
+{
+    // The source retires its manager owner on confirm/cancel/close. A retained
+    // hidden object would make the next source Alt+P delete instead of reopen.
+    StoreInfo();if(g_windowMgr.m_partyOptionWnd==this)g_windowMgr.DeleteWindow(this);else SetShow(0);
 }
 
 std::string UIPartyOptionWnd::GetTooltipText(int groupId) const
@@ -711,6 +723,10 @@ RECT UIPartyOptionWnd::GetGroupTooltipAnchorRect(int groupId) const
 
 void UIPartyOptionWnd::SetSelectedChoice(int groupId, int optionId)
 {
+    if(!CanEditSettings()){
+        g_windowMgr.SendMsg(3,0,0,0);ro::UiMessageStrings strings;strings.Load();const auto text=strings.Get(294,"");
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text.c_str()),16777060,9,0);return;
+    }
     switch (groupId) {
     case GroupExpShare:
         m_expShareOption = optionId;
@@ -801,7 +817,9 @@ RECT UIPartyOptionWnd::GetChoiceRect(int groupId, int optionId) const
 
 unsigned long long UIPartyOptionWnd::BuildVisualStateToken() const
 {
+    // Authority changes must repaint the shared native/Qt disabled state.
     unsigned long long hash = 1469598103934665603ull;
+    HashTokenValue(&hash,CanEditSettings()?1ull:0ull);
     HashTokenValue(&hash, static_cast<unsigned long long>(m_show));
     HashTokenValue(&hash, static_cast<unsigned long long>(m_mode));
     HashTokenValue(&hash, static_cast<unsigned long long>(m_expShareOption));

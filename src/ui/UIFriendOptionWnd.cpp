@@ -3,6 +3,7 @@
 #include "core/Globals.h"
 #include "core/UiMessageStrings.h"
 #include "session/Session.h"
+#include "gamemode/Mode.h"
 #if RO_ENABLE_QT6_UI
 #include <QFont>
 #include <QFontMetrics>
@@ -40,6 +41,14 @@ void UIFriendOptionButton::OnLBtnUp(int x,int y)
     m_pressed=false;m_hover=In(*this,x,y);Invalidate();if(activate && m_parent)m_parent->SendMsg(this,6,m_id,0,0);
 }
 void UIFriendOptionButton::OnMouseMove(int x,int y){const bool hover=In(*this,x,y);if(hover!=m_hover){m_hover=hover;Invalidate();}}
+void UIFriendOptionButton::OnMouseHover(int x,int y)
+{
+    OnMouseMove(x,y);
+    // UIButton4411C0 anchors nonempty tooltips to the button's upper-left,
+    // twenty pixels above it. Ignore the modern leave sentinel and disabled
+    // controls; the shared mode owner performs the source screen clamp.
+    if(!m_isDisabled && In(*this,x,y) && !m_toolTip.empty())if(auto* mode=g_modeMgr.GetCurrentMode())mode->MakeHelpBalloon(m_toolTip.c_str(),m_x,m_y-20,0xffffffffu);
+}
 void UIFriendOptionButton::OnDraw()
 {
     auto dc=AcquireDrawTarget();if(!dc)return;const auto& bitmap=m_button.bitmaps[GetVisualState()];

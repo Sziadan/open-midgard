@@ -52,6 +52,11 @@ public:
     void SetCursorAction(int cursorActNum);
     u32 GetCursorAnimStartTick() const { return m_mouseAnimStartTick; }
     int GetCursorAction() const { return m_cursorActNum; }
+    void MakeHelpBalloon(const char* text,int x,int y,u32 color);
+    void ProcessHelpBalloon(u32 now);
+    UITransBalloonText* GetHelpBalloon() const {return m_helpBalloon;}
+    u32 GetHelpBalloonTick() const {return m_helpBalloonTick;}
+    void HelpBalloonDeleted(UITransBalloonText* window);
 
 protected:
     virtual void OnChangeState(int newState) {}
@@ -95,6 +100,7 @@ public:
     msgresult_t SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra = 0);
     CGameMode* GetCurrentGameMode() const;
     CLoginMode* GetCurrentLoginMode() const;
+    CMode* GetCurrentMode() const {return m_curMode;}
     void Quit();
     u64 GetOperationGeneration() const { return m_operationGeneration; }
     ModeOperationKind GetLastOperation() const { return m_lastOperation; }

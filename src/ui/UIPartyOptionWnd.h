@@ -50,6 +50,7 @@ public:
         int height = 0;
         std::string label;
         bool selected = false;
+        bool enabled = true;
     };
 
     struct DisplayHelpIcon {
@@ -100,6 +101,7 @@ public:
     void OpenCreateDialog();
     void OpenConfigureDialog();
     bool GetDisplayDataForQt(DisplayData* outData) const;
+    bool CanEditSettings() const;
 
 private:
     enum Mode {
@@ -113,6 +115,7 @@ private:
     void ClearEditFocus();
     unsigned int BuildOptionBits() const;
     bool Submit();
+    void CloseDialog();
     std::string GetTooltipText(int groupId) const;
     int GetTooltipGroupAtPoint(int x, int y) const;
     void UpdateTooltipHover(int x, int y);

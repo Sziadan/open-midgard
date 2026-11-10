@@ -147,6 +147,7 @@ public:
         WID_GUILDWND          = 0x96,
         WID_OPTIONWND         = 13,
         WID_TIPOFTHEDAYWND    = 38,
+        WID_COMMANDLISTWND    = 112,
         WID_EQUIPWND          = 14,
         WID_SKILLLISTWND      = 15,
         WID_SPELLLISTWND      = 99,
@@ -235,9 +236,12 @@ public:
     void InitializeSourceCommandFlags();
 
     UIWindow* MakeWindow(int windowId);
+    bool ProcessSourceCommandWindowKey(int virtualKey);
     bool ToggleWindow(int windowId);
     void RemoveAllWindows();
     void DeleteWindow(UIWindow* window);
+    void PostQuit(UIWindow* window);
+    void ProcessSourceHoverFrame(int logicalX,int logicalY);
     void AddWindowFront(UIWindow* window);
 
     // Input routing
@@ -380,6 +384,7 @@ public:
     std::array<ShortcutKeyBinding, kShortcutKeyBindingCount> m_shortcutKeyBindings{};
 
 private:
+    std::vector<UIWindow*> m_postedQuits;
     void InitializeInventoryWindowInfo();
     void ValidateInventoryWindowInfo();
     bool m_inventoryWindowInfoInitialized = false;

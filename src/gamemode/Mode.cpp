@@ -9,6 +9,7 @@
 #include "render3d/RenderDevice.h"
 #include "res/Texture.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UITransBalloonText.h"
 #include "main/WinMain.h"
 #include <cstring>
 #include <windows.h>
@@ -155,7 +156,28 @@ CMode::CMode()
     m_mouseSnapDiff.y = 0;
 }
 
-CMode::~CMode() = default;
+CMode::~CMode()
+{
+    if(m_helpBalloon){auto* window=m_helpBalloon;m_helpBalloon=nullptr;window->DetachOwner();g_windowMgr.DeleteWindow(window);}
+}
+void CMode::HelpBalloonDeleted(UITransBalloonText* window){if(m_helpBalloon==window)m_helpBalloon=nullptr;}
+void CMode::MakeHelpBalloon(const char* text,int x,int y,u32 color)
+{
+    if(!text || !*text)return;
+    const auto sanitized=UITransBalloonText::ReplaceUnderbars(text);m_helpBalloonTick=timeGetTime();
+    if(!m_helpBalloon){m_helpBalloon=new UITransBalloonText(this);g_windowMgr.m_children.push_back(m_helpBalloon);}
+    else {g_windowMgr.m_children.remove(m_helpBalloon);g_windowMgr.m_children.push_back(m_helpBalloon);}
+    m_helpBalloon->SetText(sanitized.c_str(),35);
+    m_helpBalloon->SetFontColor(((color&255)<<16)|(color&0xff00)|((color>>16)&255));
+    const auto client=g_windowMgr.GetChatClientRect();
+    x=(std::max)(-3,x);x=(std::min)(x,static_cast<int>(client.right-client.left)-m_helpBalloon->m_w+3);
+    y=(std::max)(-3,y);y=(std::min)(y,static_cast<int>(client.bottom-client.top)-m_helpBalloon->m_h+3);
+    m_helpBalloon->Move(x,y);
+}
+void CMode::ProcessHelpBalloon(u32 now)
+{
+    if(m_helpBalloon && now>=m_helpBalloonTick+100u){auto* window=m_helpBalloon;m_helpBalloon=nullptr;window->DetachOwner();g_windowMgr.PostQuit(window);}
+}
 
 void CMode::SetCursorAction(CursorAction cursorActNum)
 {
@@ -304,6 +326,7 @@ void CModeMgr::Run(int startMode, const char* worldName,const ModeRunServices* s
                 ProcessQtUiRuntimeEvents();
                 MainLoopWatchdogSetStage("Mode::OnRun");
                 m_curMode->OnRun();
+                m_curMode->ProcessHelpBalloon(timeGetTime());
                 MainLoopWatchdogSetStage("RecordMainWindowFrame");
                 RecordMainWindowFrame();
                 MainLoopWatchdogMarkFrame(m_curModeType);

@@ -1,0 +1,39 @@
+{
+  "subject": "Original vertical UIScrollBar pointer interaction",
+  "source": "docs/packets/evidence/PK09.21-scroll-source.txt (Ref/UIControl2.cpp decomp excerpts)",
+  "bounds": {
+    "thumb_size": "GetThumbSize 0x450A90, evidence lines 146-167: (axis-2*button)*displayable/total when total nonzero; type 1 clamps minimum to 8. Scroll range excludes arrows and thumb.",
+    "thumb_start": "button + (axis - 2*button - thumbSize)*curPos/maxPos; C++ integer truncation.",
+    "hit_test": "HitTest address 0x4508B0 (evidence file lines 3-103): maxPos must be nonzero; x in [0,m_w), y in [0,m_h), otherwise -1. For vertical: y<button => 0/up; y<thumbStart => 1/page-up; y<thumbEnd => 2/thumb; remainder with y>=axis-button => 4/down, else 3/page-down."
+  },
+  "press": {
+    "behavior": "If maxPos nonzero, saves local press coordinates to startDragX/Y and zeroes deltaDrag. Vert Up/Down send parent message 7 with lParam -1/+1; PageUp sends message 9 with zero; PageDown sends message 10 with zero. Thumb calls UIWindowMgr::SetCapture(this) at decomp line 6653 (evidence-file line 489). Default/outside hit sends no parent scroll msg. If maxPos is zero, forwards OnLBtnDown to parent using x+m_x,y+m_y.",
+    "evidence": "lines 439-500",
+    "repeats": "No timer/repeat call in UIScrollBar::OnLBtnDown excerpt. Each arrow/page action is one message on press. No held-arrow/page auto-repeat evidenced; repeat interval/timing is not applicable in this handler.",
+    "address": "0x44FFA0"
+  },
+  "captured_drag": {
+    "behavior": "OnMouseMove first updates hover draw mode by hit-test (outside/-1 and page regions => 0; up=>1; thumb=>3; down=>2). If manager capture is this, parent exists, and axis has nonzero thumb travel, uses raw displacement from original press: ((maxPos+1)*(pointer-start))/travel - accumulated actual movement. If nonzero sends vertical parent message 7 with delta; adds returned parent result to deltaDrag, preserving residual after parent clamps. No HitTest/bounds clipping of captured thumb displacement: pointer can move outside track and drag continues from raw coordinates. Signed integer truncation is source behavior.",
+    "evidence": "lines 531-616",
+    "address": "0x4501A0"
+  },
+  "release": {
+    "behavior": "OnLBtnUp releases manager capture only when maxPos is nonzero and manager capture currently equals this; no coordinates/bounds condition, so captured thumb released on outside mouse-up. With maxPos zero it forwards parent OnLBtnUp at translated coordinates.",
+    "evidence": "lines 513-527",
+    "cancel": "The UIScrollBar excerpts include no cancel-mode/capture-cancel handler, and this source artifact does not include UIWindowMgr cancellation/deletion behavior. Whether external cancellation releases a captured thumb remains unresolved; do not infer it from OnLBtnUp.",
+    "address": "0x450360"
+  },
+  "wheel": {
+    "behavior": "No wheel override or WM_MOUSEWHEEL handling is present in the UIScrollBar source excerpts. Wheel must be handled by owner/parent if supported; per-owner wheel delta/line behavior is outside this evidence."
+  },
+  "messages": {
+    "vertical_line": "WM-like source parent SendMsg ID 7, lParam -1 on Up and +1 on Down; also ID 7 with calculated relative delta while captured thumb dragging.",
+    "horizontal": "ID 8 +/-1 for arrows, IDs 11/12 for pages; not applicable to this vertical child.",
+    "vertical_page": "ID 9 with lParam 0 for PageUp; ID 10 with lParam 0 for PageDown."
+  },
+  "unresolved": [
+    "No source evidence here for WM_CANCELMODE, capture loss, or owner destruction during active thumb capture.",
+    "No UIScrollBar wheel handler: owner-specific wheel semantics unresolved.",
+    "No held-arrow/page auto-repeat exists in this down-handler; broader manager-level repeat/timer behavior was not established by this source excerpt."
+  ]
+}

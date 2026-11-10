@@ -5,6 +5,10 @@ add_library(ro_ui STATIC
     UIAutoMessageWnd.cpp
     UITipOfTheDayWnd.h
     UITipOfTheDayWnd.cpp
+    UICommandListWnd.h
+    UICommandListWnd.cpp
+    UITransBalloonText.h
+    UITransBalloonText.cpp
     UIWhisperWnd.h
     UIWhisperWnd.cpp
     UIGuildWnd.h

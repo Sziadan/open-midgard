@@ -15,7 +15,7 @@ public:
     void OnLBtnDown(int x,int y) override;
     void OnLBtnUp(int x,int y) override;
     void OnMouseMove(int x,int y) override;
-    void OnMouseHover(int x,int y) override { OnMouseMove(x,y); }
+    void OnMouseHover(int x,int y) override;
 private:
     RoomSettingsButton m_button;
     bool m_pressed=false,m_hover=false;

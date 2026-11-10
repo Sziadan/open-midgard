@@ -304,7 +304,7 @@
       },
       {
         "row": 4,
-        "label": "Configura\u00e7\u00e3o (raw bytes 43 6f 6e 66 69 67 75 72 61 e7 e3 6f)",
+        "label": "Configuração (raw bytes 43 6f 6e 66 69 67 75 72 61 e7 e3 6f)",
         "window_id": 79,
         "window_id_hex": "0x4f",
         "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
@@ -413,5 +413,6 @@
     "missing_action_count": 10,
     "corrections": "Root checked current mode67 frame0100 and manager6 export ownership; prior subagent prose mislabeled these. Handler presence is preparation, not proof of full action acceptance. Window numeric fields still need root ProcessPushButton routing review."
   },
-  "runtime_action_checkpoint": "docs/packets/evidence/PK09.21-help-where.md; all22 types have handlers at declared scope; full command window/broad alias and text acceptance remain open"
+  "runtime_action_checkpoint": "docs/packets/evidence/PK09.21-help-where.md; all22 types have handlers at declared scope; full command window/broad alias and text acceptance remain open",
+  "runtime_controller_checkpoint": "docs/packets/evidence/PK09.21-command-controller.md; actual controller/help/native/passive Qt implemented; keys68/74/87 and full destination parity remain open. Older window handler preparation below is superseded by root controller checkpoint."
 }

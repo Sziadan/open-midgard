@@ -1070,4 +1070,4 @@
     },
     "limitations": "Static PE/source mapping only; no execution, UI acceptance, build, source edit, or selected-table bounds decision."
   }
-}\n
+}

@@ -5,7 +5,7 @@
 #include <string>
 
 class CGameActor;
-shopui::BitmapPixels LoadChatRoomSkinBitmap(const char* name);
+shopui::BitmapPixels LoadChatRoomSkinBitmap(const char* name,bool applyTransparentKey=true);
 std::string ChatRoomBitmapUri(const shopui::BitmapPixels& bitmap);
 
 // Managed by the UI manager, with a non-owning actor link cleared on either

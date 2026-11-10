@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "static_source_and_selected_pe_contract_only",
+  "selected_pe": {
+    "file": "HighPriest.exe",
+    "sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "inspection": "Read-only PE32 literal extraction with tools/generate_source_command_list_tables.py::read_pe_va; executable not run",
+    "ui_bmp_prefix": {
+      "evidence": "The PE literal bytes decode to an encoded UserInterface\\ prefix followed by \\\\basic_interface\\ filenames; Ref/MsgStrings.cpp UIBmp documents the skin/language/service resolution behavior.",
+      "runtime_assumption": "UIBmp first tries the active skin override when a game skin is active. Otherwise ServiceKorea uses the literal unchanged; other services try CLanguage::LanguageFile, then the UserInterface\\ path fallback if present, else retain the literal. Do not hard-code the selected HighPriest executable's byte-encoded prefix as a path key. The non-Brazil/Brazil service branch in OnDraw affects only the title caption, not these bitmap literals.",
+      "implementation_key_form": "Filename-only basic_interface keys resolved by the current native/Qt UI asset resolver, e.g. ResolveUiAssetPath(\"itemwin_left.bmp\")."
+    }
+  },
+  "source": {
+    "file": "Ref/UIFrameWnd2.cpp",
+    "method": "UICommandListWnd::OnDraw",
+    "va": "0x004909B0",
+    "line_range": [18614, 18918],
+    "coordinates": "Window-local client coordinates; bitmap calls use DrawBitmap(..., flag 0) unless otherwise specified."
+  },
+  "frame_assets": {
+    "titlebar": {
+      "left": { "literal_va": "0x006F2DE0", "effective_key": "basic_interface\\titlebar_left.bmp", "draw": [0, 0] },
+      "middle": { "literal_va": "0x006F2D7C", "effective_key": "basic_interface\\titlebar_mid.bmp", "draw": "x=12+12*i, y=0; i=0..ceil((w-24)/12)-1" },
+      "right": { "literal_va": "0x006F2DAC", "effective_key": "basic_interface\\titlebar_right.bmp", "draw": "x=w-bitmap.width, y=0" },
+      "notes": "Middle stride is hard-coded to 12 px. Loop count is max(0, ceil((w-24)/12)); source does not derive stride from loaded bitmap width."
+    },
+    "side_borders": {
+      "left": { "literal_va": "0x006F33A0", "effective_key": "basic_interface\\itemwin_left.bmp", "draw": "x=0, y=19+8*i; i=0..ceil((h-42)/8)-1" },
+      "right": { "literal_va": "0x006F336C", "effective_key": "basic_interface\\itemwin_right.bmp", "draw": "x=w-bitmap.width, y=17+8*i; i=0..ceil((h-38)/8)-1" },
+      "notes": "Both use a hard-coded 8 px vertical stride. Right edge uses each loaded bitmap's intrinsic width. Counts clamp to zero through the source's positive-count branch."
+    },
+    "bottom_bar": {
+      "left": { "literal_va": "0x006F38E0", "effective_key": "basic_interface\\btnbar_left.bmp", "draw": "x=0, y=h-bitmap.height" },
+      "middle": { "literal_va": "0x006F3880", "effective_key": "basic_interface\\btnbar_mid.bmp", "draw": "x=21+21*i, y=h-bitmap.height; i=0..ceil((w-42)/21)-1" },
+      "right": { "literal_va": "0x006F38B0", "effective_key": "basic_interface\\btnbar_right.bmp", "draw": "x=w-bitmap.width, y=h-21" },
+      "notes": "Middle stride is hard-coded to 21 px; loop count is max(0, ceil((w-42)/21)). Left and middle use their own loaded heights, while right y is explicitly h-21."
+    },
+    "interior_fill_and_edge": {
+      "outer_fill": { "draw_box": [0, 17, "w", "h-17"], "skin_color_chip": [14, 6] },
+      "inner_fill": { "draw_box": [1, 17, "w-2", "h-17"], "skin_color_chip": [2, 2] },
+      "vertical_inset_rule": { "draw_box": [18, 17, 1, "h-21"], "skin_color_chip": [14, 6] },
+      "paint_order": "Titlebar bitmaps; outer fill; inner fill; tiled itemwin sides; vertical inset rule; btnbar bottom; title text and list content.",
+      "boundary_reading": "Fill rectangles use source DrawBox x/y/width/height arguments, not right/bottom coordinates. The second fill is inset one pixel horizontally; it is not a second full-frame outline. Tab is independently positioned at (0,17) by OnCreate and occupies the left interior edge."
+    }
+  },
+  "implementation_contract": {
+    "asset_loading": "Use LoadBitmapPixelsFromGameData(ResolveUiAssetPath(filename)) for all six bitmap keys; retain current service/skin aware path resolution. No separate command-list frame asset was found in source.",
+    "tiling": "Mirror source loops with integer ceiling division and the stated fixed strides/origins. For each count, draw only when count>0. Align right segments by loaded bitmap width and bottom left/middle by loaded bitmap height as stated.",
+    "fill": "Preserve the two nested skin-chip fills and the x=18 one-pixel rule in order. Skin chip colors are runtime-dependent; the source passes their green/blue packed channels to DrawBox.",
+    "caption_service_branch": "g_serviceType == ServiceBrazil selects Lista de Comandos; all other service types select Command List. Both TextOutWithShadow calls are at (17,2), white (0xFFFFFF), font 0, height 12.",
+    "caveat": "This is a source/selected-PE contract only. It does not assert exact final raster clipping/blending or resolve asset-file intrinsic dimensions; those remain properties of the live resource files and DrawBitmap backend."
+  }
+}

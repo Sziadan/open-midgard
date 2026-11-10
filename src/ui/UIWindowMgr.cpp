@@ -9,6 +9,7 @@
 #include "UIAutoMessageWnd.h"
 #include "UIFriendOptionWnd.h"
 #include "UITipOfTheDayWnd.h"
+#include "UICommandListWnd.h"
 #include "core/TipOfTheDay.h"
 #include "audio/Audio.h"
 #include "res/Res.h"
@@ -993,7 +994,7 @@ bool UIWindowMgr::IsWhisperPreferenceInputWindow(const UIWindow* window) const
 {
     if(!window)return false;
     if(window->m_parent==m_messengerGroupWnd && window->m_id==168)return true;
-    for(const auto* owner=window;owner;owner=owner->m_parent)if(owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd)return true;
+    for(const auto* owner=window;owner;owner=owner->m_parent)if(owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd || owner==m_commandListWnd)return true;
     return false;
 }
 
@@ -1329,6 +1330,10 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         if(!m_tipOfTheDayWnd){auto* tip=new UITipOfTheDayWnd();m_tipOfTheDayWnd=tip;const auto client=GetChatClientRect();
             tip->Move((client.right-640)/2+200,120*client.bottom/480);m_children.push_back(tip);}
         m_tipOfTheDayWnd->SetShow(1);return m_tipOfTheDayWnd;
+    case WID_COMMANDLISTWND:
+        if(!m_commandListWnd){auto* window=new UICommandListWnd();m_commandListWnd=window;const auto client=GetChatClientRect();
+            window->Move((client.right-640)/2+200,120*client.bottom/480);m_children.push_back(window);}
+        m_commandListWnd->SetShow(1);return m_commandListWnd;
     case WID_AUTOMESSAGEWND:
         if(!m_autoMessageWnd){m_autoMessageWnd=new UIAutoMessageWnd();m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),m_autoMessageWnd);}
         m_autoMessageWnd->SetShow(1);m_autoMessageWnd->FocusForDraw();return m_autoMessageWnd;
@@ -1843,6 +1848,43 @@ void UIWindowMgr::AddWindowFront(UIWindow* window)
     window->SetShow(1);
 }
 
+void UIWindowMgr::PostQuit(UIWindow* window)
+{
+    if(window && ContainsManagedWindow(*this,window) && std::find(m_postedQuits.begin(),m_postedQuits.end(),window)==m_postedQuits.end())m_postedQuits.push_back(window);
+}
+
+void UIWindowMgr::ProcessSourceHoverFrame(int x,int y)
+{
+    if(m_captureWindow)return;
+    auto* hit=HitTestWindow(x,y);
+    if(m_lastHitWindow!=hit){if(m_lastHitWindow)m_lastHitWindow->OnMouseHover(-1,-1);m_lastHitWindow=hit;}
+    if(hit)hit->OnMouseHover(x,y);
+}
+
+bool UIWindowMgr::ProcessSourceCommandWindowKey(int key)
+{
+    // UICommandListWnd invokes ProcessPushButton(value,10000,0). Keep source
+    // owner guards and virtual-key mapping separate from modern hotkeys.
+    int button=0;
+    switch(key){
+    case 65:button=126;break;case 79:button=127;break;case 69:button=128;break;
+    case 81:button=129;break;case 83:button=130;break;case 86:button=136;break;
+    case 67:case 73:case 90:case 72:case 77:case 76:return false; // Selected defaults, not missing routes.
+    case 71:
+        if(m_basicInfoWnd && g_session.m_guildWindow.id){if(m_guildWnd)DeleteWindow(m_guildWnd);else MakeWindow(WID_GUILDWND);}return true;
+    case 80:
+        if(m_basicInfoWnd){if(m_partyOptionWnd)DeleteWindow(m_partyOptionWnd);
+            else if(g_session.GetNumParty()!=0){auto* window=static_cast<UIPartyOptionWnd*>(MakeWindow(WID_PARTYOPTIONWND));if(window)window->OpenConfigureDialog();}}
+        return true;
+    case 68:case 74:case 87:
+        // These selected recipients still require their real screen/pet/Up
+        // owners. In particular87 remaps to38; it must never open cart181.
+        DbgLog("[SourceCommandWindow] key=%d awaits source recipient integration\n",key);return false;
+    default:return false;
+    }
+    if(!m_basicInfoWnd)return false;m_basicInfoWnd->SendMsg(nullptr,6,button,0,0);return true;
+}
+
 void UIWindowMgr::DeleteWindow(UIWindow* window)
 {
     DeleteWindowImpl(window,false);
@@ -1855,6 +1897,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     }
 
     const bool deletingTip=window==m_tipOfTheDayWnd;
+    const bool deletingCommand=window==m_commandListWnd;
     if(window==m_commandListWnd)m_commandListWnd=nullptr;
     if(window==m_tipOfTheDayWnd)m_tipOfTheDayWnd=nullptr;
 
@@ -1864,7 +1907,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (deletingTip || IsWhisperPreferenceInputWindow(window) || window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
+        && (deletingTip || deletingCommand || IsWhisperPreferenceInputWindow(window) || window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -1883,6 +1926,8 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     }
 
     m_children.remove(window);
+
+    m_postedQuits.erase(std::remove(m_postedQuits.begin(),m_postedQuits.end(),window),m_postedQuits.end());
 
     if (window == m_loginWnd) {
         m_loginWnd = nullptr;
@@ -2121,12 +2166,23 @@ void UIWindowMgr::Reset() {
 }
 
 void UIWindowMgr::OnProcess() {
+    const auto posted=std::move(m_postedQuits);m_postedQuits.clear();
+    for(auto* window:posted)if(ContainsManagedWindow(*this,window))DeleteWindow(window);
     const std::vector<UIWindow*> children(m_children.begin(), m_children.end());
     for (UIWindow* child : children) {
         if (!ContainsManagedWindow(*this, child)) {
             continue;
         }
         child->OnProcess();
+    }
+    // The original mode polls hover every frame. Refresh the live native
+    // pointer even when Windows emits no new movement, so the shared100ms help
+    // deadline measures leaving a help target rather than stopping the mouse.
+    if(g_hMainWnd && IsWindowVisible(g_hMainWnd) && GetForegroundWindow()==g_hMainWnd && !m_captureWindow){
+        POINT point{};if(GetCursorPos(&point) && ScreenToClient(g_hMainWnd,&point)){
+            const int x=UiScaleRawToLogicalCoordinate(point.x),y=UiScaleRawToLogicalCoordinate(point.y);
+            ProcessSourceHoverFrame(x,y);
+        }
     }
 }
 

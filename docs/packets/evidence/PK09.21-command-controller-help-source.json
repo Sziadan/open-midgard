@@ -1,0 +1,128 @@
+{
+  "purpose": "Source contract for CMode::MakeHelpBalloon help tooltip wrapping, for command hover reconstruction.",
+  "source_precedence": {
+    "operative_implementation": "Ref/Mode.cpp is the populated decompilation of the target implementation (address 0x505070). Ref/dhxj/Mode.cpp has an empty MakeHelpBalloon stub and cannot establish runtime behavior.",
+    "cross_check": "Ref/dhxj/Window/UISys.cpp provides readable CutString logic; its core loop matches Ref/UISys.cpp's decompilation. Ref/Language.cpp and Ref/dhxj/Framework/Language.cpp both implement GetWordBreak as CharNextExA(g_codePage, text, 0).",
+    "caveat": "No original executable was run. Source-level behavior below follows the populated decompilation, cross-checked against the readable source where available."
+  },
+  "references": [
+    {
+      "path": "Ref/Mode.cpp",
+      "lines": "746-799",
+      "symbol": "CMode::MakeHelpBalloon",
+      "address": "0x505070"
+    },
+    {
+      "path": "Ref/Mode.cpp",
+      "lines": "833-845",
+      "symbol": "CMode::ProcessHelpBalloon",
+      "address": "0x5051f0"
+    },
+    {
+      "path": "Ref/UISys.cpp",
+      "lines": "2822-3007",
+      "symbol": "CutString",
+      "address": "0x4d6360"
+    },
+    {
+      "path": "Ref/dhxj/Window/UISys.cpp",
+      "lines": "61-102",
+      "symbol": "CutString readable cross-check"
+    },
+    {
+      "path": "Ref/Language.cpp",
+      "lines": "2717-2725",
+      "symbol": "CLanguage::GetWordBreak",
+      "address": "0x4ff620"
+    },
+    {
+      "path": "Ref/dhxj/Framework/Language.cpp",
+      "lines": "446-449",
+      "symbol": "CLanguage::GetWordBreak readable cross-check"
+    },
+    {
+      "path": "Ref/DrawUtil.cpp",
+      "lines": "4-25",
+      "symbol": "FindCharSet",
+      "address": "0x405c40"
+    },
+    {
+      "path": "Ref/dhxj/3dLib/DrawUtil.cpp",
+      "lines": "125-140",
+      "symbol": "FindCharSet readable cross-check"
+    },
+    {
+      "path": "Ref/Session.cpp",
+      "lines": "6069-6084",
+      "symbol": "CSession::RemoveUnderbar",
+      "address": "0x6699b0"
+    },
+    {
+      "path": "Ref/dhxj/Session.cpp",
+      "lines": "8204-8219",
+      "symbol": "RemoveUnderbar readable cross-check"
+    },
+    {
+      "path": "Ref/UIControl.cpp",
+      "lines": "1333-1368",
+      "symbol": "UIBalloonText::AdjustSizeByText",
+      "address": "0x442ab0"
+    },
+    {
+      "path": "Ref/UIControl.cpp",
+      "lines": "1844-1864",
+      "symbol": "UIBalloonText constructor (default font size 12)",
+      "address": "0x4426d0"
+    },
+    {
+      "path": "Ref/UIControl.cpp",
+      "lines": "5067-5100",
+      "symbol": "UIBalloonText::OnDraw",
+      "address": "0x442a10"
+    },
+    {
+      "path": "Ref/UIControl.cpp",
+      "lines": "8716-8767",
+      "symbol": "UIBalloonText::SetText",
+      "address": "0x442810"
+    },
+    {
+      "path": "Ref/UIFrameWnd2.cpp",
+      "lines": "19143-19160, 19453-19467",
+      "symbol": "UICommandListWnd::OnMouseMove command help local buffer and hover call"
+    }
+  ],
+  "contract": {
+    "input_and_lifetime": [
+      "Empty helpMsg returns immediately: it does not refresh m_helpBalloonTick, replace old contents, or close an existing balloon.",
+      "Nonempty helpMsg is first copied through CSession::RemoveUnderbar into a 512-byte stack buffer. The function changes each underscore byte encountered at a code-page character boundary into ASCII space. With distinct input/output it uses strcpy first.",
+      "The balloon is created once as UITransBalloonText if absent, or promoted to top layer if it already exists. It is added to UIWindowMgr after UIWindow::Create(8, 8).",
+      "SetText copies wrapped lines into the balloon's std::vector<std::string>; it does not retain the local helpMsg pointer. SetText clears prior lines only when the incoming string is nonempty.",
+      "Every successful nonempty call resets m_helpBalloonTick. ProcessHelpBalloon posts quit and clears the pointer once timeGetTime() >= tick + 100 ms; repeated hover calls refresh that deadline. CMode::Initialize also posts quit and clears an existing balloon."
+    ],
+    "wrap": [
+      "CMode passes maxNumCharLine=35 to UIBalloonText::SetText, which delegates to CutString.",
+      "CutString uses pointer/byte positions for the threshold: from the current line start, it checks whether the next code-page character boundary is >= start + 35. GetWordBreak calls CharNextExA(g_codePage, p, 0); its size argument is ignored. Therefore 35 is a nominal byte limit, not a glyph count, and a multibyte character can make the chosen boundary pass the threshold.",
+      "At each ASCII space, CutString advances across the entire contiguous run of spaces and remembers the first following non-space as the preferred break. When the threshold is reached, it emits through that remembered position (so spaces stay at the end of the emitted line). If there has been no space break since the current line start, it hard-wraps at the current character boundary.",
+      "After a break, the next line starts at the selected boundary and the 35-byte threshold is measured again from that new start. The final nonempty remainder is emitted.",
+      "There is no explicit CR/LF handling in CutString; newline bytes are ordinary content for this routine. Empty input is skipped by SetText and does not clear prior text."
+    ],
+    "charset_marker": [
+      "FindCharSet returns strlen/available length when g_multiLang is false or no marker exists; otherwise it finds the first literal vertical bar followed by two hex digits anywhere within the bounded string.",
+      "If g_multiLang is true and such a marker exists before end-of-string, CutString prepends those same three marker bytes to each emitted line after the first. It does not remove the original marker from the source segment. The readable source makes this direct; Ref/UISys.cpp's decompiled STL operations are consistent with inserting three bytes into subsequent strings.",
+      "The marker itself is traversed by ordinary code-page character stepping and counts toward the byte threshold. The carry-over rule applies to any first matching marker, not solely to a marker at offset zero."
+    ],
+    "sizing_and_appearance": [
+      "New UIBalloonText defaults to font size 12; MakeHelpBalloon does not call SetFntSize.",
+      "AdjustSizeByText sets width to the maximum rendered text width among lines plus 12 pixels. Height starts at 4 and adds each line's rendered text height plus 4 pixels.",
+      "OnDraw renders each line with shadow at x=6, first y=4, then increments y by that line's rendered text height plus 4. MakeHelpBalloon sets background color to zero, foreground to supplied fntColor, and translucent box color to 0x88000000.",
+      "Balloon position is clamped to x/y >= -3 and <= renderer dimension - balloon dimension + 3."
+    ],
+    "command_hover_observation": "UICommandListWnd::OnMouseMove copies the selected command help into a local char cmdHelp[128] and calls CMode::MakeHelpBalloon with it at Ref/UIFrameWnd2.cpp 19459-19466. The immediate SetText/CutString copies contents before that local buffer goes out of scope."
+  },
+  "pseudocode": [
+    "MakeHelpBalloon(msg): if strlen(msg)==0 return; sanitized[512] = replace underscores with spaces while stepping code-page chars; tick=now; create balloon or raise it; balloon.SetText(sanitized, 35); set colors; clamp requested x/y to screen bounds; move balloon.",
+    "SetText(msg, max): if nonempty, clear previous line strings; CutString(msg, lines, max); if lines nonempty, recompute dimensions.",
+    "CutString: cursor=start; preferredBreak=start; charset=first |HH marker if multilingual; while cursor<end: cursor=next code-page char; if current char is ASCII space, skip consecutive ASCII spaces and remember first following non-space; if cursor>=lineStart+max: emit through preferredBreak if preferredBreak>lineStart else through cursor; lineStart=chosen; repeat. Emit remainder; if charset marker exists, prefix marker to every line except first."
+  ]
+}

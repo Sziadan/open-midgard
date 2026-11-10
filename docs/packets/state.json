@@ -2096,9 +2096,11 @@
         "docs/packets/evidence/PK09.21-tip-window.md",
         "docs/packets/evidence/PK09.21-command-table-seed.md",
         "docs/packets/evidence/PK09.21-command-actions.md",
-        "docs/packets/evidence/PK09.21-help-where.md"
+        "docs/packets/evidence/PK09.21-help-where.md",
+        "docs/packets/evidence/PK09.21-command-controller.md",
+        "docs/packets/evidence/PK09.21-command-controller-provenance.json"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK09.21): restore command controller and shared help owner"
     }
   }
 }

@@ -39,21 +39,21 @@ std::string BitmapUri(const shopui::BitmapPixels& bitmap)
 #endif
     return {};
 }
-shopui::BitmapPixels LoadRoomBitmap(const char* name)
+shopui::BitmapPixels LoadRoomBitmap(const char* name,bool applyTransparentKey=true)
 {
     // The common resolver's English/flat fallbacks do not include the
     // original CP949 interface directory used by the archive's raw keys.
     const std::string source="texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\"+std::string(name);
     for(const auto& path:{source,"data\\"+source}){
         if(!g_fileMgr.IsDataExist(path.c_str()))continue;
-        auto bitmap=shopui::LoadBitmapPixelsFromGameData(path,true);
+        auto bitmap=shopui::LoadBitmapPixelsFromGameData(path,applyTransparentKey);
         if(bitmap.IsValid())return bitmap;
     }
-    return shopui::LoadBitmapPixelsFromGameData(shopui::ResolveUiAssetPath(name),true);
+    return shopui::LoadBitmapPixelsFromGameData(shopui::ResolveUiAssetPath(name),applyTransparentKey);
 }
 }
 
-shopui::BitmapPixels LoadChatRoomSkinBitmap(const char* name){return LoadRoomBitmap(name);}
+shopui::BitmapPixels LoadChatRoomSkinBitmap(const char* name,bool applyTransparentKey){return LoadRoomBitmap(name,applyTransparentKey);}
 std::string ChatRoomBitmapUri(const shopui::BitmapPixels& bitmap){return BitmapUri(bitmap);}
 
 UIChatRoomTitle::UIChatRoomTitle(CGameActor* owner):m_owner(owner)

@@ -2377,6 +2377,7 @@ Item {
                 y: (modelData.y || 0) - uiState.partySetupY
                 width: modelData.width || 0
                 height: modelData.height || 0
+                opacity: modelData.enabled === false ? 0.55 : 1.0
 
                 Rectangle {
                     x: 0
@@ -4390,6 +4391,8 @@ Item {
     RoWhisperWindows { parent: uiLayer; windows: (uiState.chatWindowUi || {}).whisperWindows || [] }
     RoAutoMessage { parent: uiLayer; editorData: (uiState.chatWindowUi || {}).autoMessage || ({}) }
     RoTipOfTheDay { parent: uiLayer; tipData: (uiState.chatWindowUi || {}).tip || ({}) }
+    RoCommandList { parent: uiLayer; commandData: (uiState.chatWindowUi || {}).commandList || ({}) }
+    RoSourceHelpBalloon { parent: uiLayer; helpData: (uiState.chatWindowUi || {}).sourceHelp || ({}) }
     RoFriendOptions { parent: uiLayer; optionData: (uiState.chatWindowUi || {}).friendOptions || ({}) }
 
 }

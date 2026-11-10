@@ -7,6 +7,7 @@
 #include "AutoMessageRenderChecks.inc"
 #include "FriendOptionsRenderChecks.inc"
 #include "TipWindowRenderChecks.inc"
+#include "CommandWindowRenderChecks.inc"
 #include "ChatBattleOptionsRenderChecks.inc"
 #include "ui/UINewChatWnd.h"
 

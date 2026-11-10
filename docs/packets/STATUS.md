@@ -1,8 +1,8 @@
 # Packet implementation status
 
-**Current checkpoint (2026-11-10):** [HELP/WHERE and shared map-name table](evidence/PK09.21-help-where.md) restores the last two missing action-table handlers. All22 types now have handlers at declared scope, with actual parser/mode/chat/socket replay. HELP preserves70 ordered rows and shared-RNG tail; WHERE preserves source X/Z/floor/name/service rules. Application161/161 and standalone473/473 pass. Full command UI/recipients/help balloons/native-passive Qt, rich Tip text/skin and broad gates remain open.
+**Current checkpoint (2026-11-10):** [Command controller and shared help owner](evidence/PK09.21-command-controller.md) integrates factory112, three source tabs, common23-count hit/scroll, native input/capture and passive Qt, plus mode-owned live help. Application162/162 and standalone473/473 pass; six native/Qt capture pairs are retained. Keys68/74/87, full destination behavior, rich text/skin and broad gates remain open.
 
-**Active step: PK09.21.** Continue [remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Subject: `packet(PK09.21): restore source help and map-position actions`. Preserve earlier source/packet/item/corpse proofs; broad requests, PK47 and independent PK48/49/live/deployed gates remain open. The whole packet plan remains unfinished.
+**Active step: PK09.21.** Continue [remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Subject: `packet(PK09.21): restore command controller and shared help owner`. Preserve earlier source/packet/item/corpse proofs; broad requests, PK47 and independent PK48/49/live/deployed gates remain open. The whole packet plan remains unfinished.
 
 **World-entry repair:** [same-world handoff fix](evidence/PK05.05-world-entry.md) remains in the rebuilt candidate and its regression passes. OldRO still has the prior executable and requires redeployment/live retry; no installed acceptance is claimed.
 
