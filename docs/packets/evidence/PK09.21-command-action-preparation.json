@@ -1,0 +1,125 @@
+{
+  "status": "source-contract-review-not-acceptance",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "selected_source_function": {
+    "file": "Ref/GameMode.cpp",
+    "function": "CGameMode::ProcessTalkType(TALKTYPE,unsigned int)",
+    "address": "0x578f10",
+    "note": "Decompiled listing notes local-variable allocation failure; preserve explicit uncertainty where behavior depends on decompiler expressions."
+  },
+  "port_dispatch": {
+    "file": "src/gamemode/SourceChatSubmission.inc",
+    "lines": "138-300",
+    "available": ["ProcessSourceTalk(int, parameters)", "command toggle bookkeeping", "command-list invalidation", "SendMsg dispatcher route", "UIWindowMgr::SendMsg", "CRagConnection::SendPacket", "world/player/session state access"],
+    "missing": "No cases for the ten types below; they reach the awaiting-integration default at line 299.",
+    "dispatcher_route": "src/gamemode/GameMode.cpp:10952-10958; SendMsg(47,type,parameters) routes to ProcessSourceTalk. Availability of a generic helper does not establish downstream semantics for each selected internal message ID."
+  },
+  "actions": [
+    {
+      "row": 1,
+      "label": "/taekwon",
+      "type": 151,
+      "hex": "0x97",
+      "symbol": "TT_REQ_TAEKWON",
+      "selected_contract": "CMode::SendMsg(this,197,0,0,0); return. No local state change, message, or guard in this case.",
+      "source_ref": "Ref/GameMode.cpp:17434; function address 0x578f10",
+      "port_dependency": "Generic SendMsg routing exists; type 151 has no ProcessSourceTalk case. Whether internal message 197 reaches the original service path is unverified here."
+    },
+    {
+      "row": 3,
+      "label": "/blacksmith",
+      "type": 145,
+      "hex": "0x91",
+      "symbol": "TT_REQ_BLACKSMITH",
+      "selected_contract": "CMode::SendMsg(this,194,0,0,0); return. No local state change, message, or guard in this case.",
+      "source_ref": "Ref/GameMode.cpp:17335; function address 0x578f10",
+      "port_dependency": "Generic SendMsg routing exists; type 145 has no ProcessSourceTalk case. Whether internal message 194 reaches the original service path is unverified here."
+    },
+    {
+      "row": 4,
+      "label": "/alchemist",
+      "type": 146,
+      "hex": "0x92",
+      "symbol": "TT_REQ_ALCHEMIST",
+      "selected_contract": "CMode::SendMsg(this,195,0,0,0); return. No local state change, message, or guard in this case.",
+      "source_ref": "Ref/GameMode.cpp:17338; function address 0x578f10",
+      "port_dependency": "Generic SendMsg routing exists; type 146 has no ProcessSourceTalk case. Whether internal message 195 reaches the original service path is unverified here."
+    },
+    {
+      "row": 5,
+      "label": "/help",
+      "type": 14,
+      "hex": "0x0e",
+      "symbol": "TT_HELP",
+      "selected_contract": "Clear chat/output via UIWindowMgr::SendMsg(3,0,0,0,0); then append each MsgStr(MSI_...) via SendMsg(1,text,16777060,0,0), no guard. Message IDs in order: MSI_EXPLAIN_OPENTIP, MSI_EXPLAIN_HELP, MSI_EXPLAIN_WHO, MSI_EXPLAIN_MUSIC, MSI_EXPLAIN_SOUND, MSI_EXPLAIN_EFFECT, MSI_EXPLAIN_POS, MSI_EXPLAIN_FRAMESKIP, MSI_EXPLAIN_SOUNDVOLUME, MSI_EXPLAIN_BGMVOLUME, MSI_EXPLAIN_SAYISOLATION, MSI_EXPLAIN_LIST_SAYISOLATION_CHAR, MSI_EXPLAIN_SAY_PERMIT, MSI_EXPLAIN_SAY_PERMITALL, MSI_EXPLAIN_SAY_ISOLATEALL, MSI_EXPLAIN_PARTY, MSI_EXPLAIN_SIT, MSI_EXPLAIN_STAND, MSI_EXPLAIN_MAKE_CHAT, MSI_EXPLAIN_EXIT_CHAT_ROOM, MSI_EXPLAIN_ORGANIZE_PARTY, MSI_EXPLAIN_LEAVE_PARTY, MSI_EXPLAIN_EXPEL_PARTY_MEMBER, MSI_EXPLAIN_TIP2 through MSI_EXPLAIN_TIP13, MSI_EXPLAIN_SNAP, MSI_EXPLAIN_SAVE_CHAT, MSI_REPORTCOMMAND_EXPLANATION, MSI_EXPLAIN_CAMERA_MISS, MSI_EXPLAIN_WHISPER_LIST_WND, MSI_EXPLAIN_FOG, MSI_EXPLAIN_PVP_INFO, MSI_EXPLAIN_NOTALKMSG2, MSI_EXPLAIN_BINGBING, MSI_EXPLAIN_BANGBANG, MSI_EXPLAIN_AURA, MSI_EXPLAIN_SHOWNAMETYPE, MSI_EXPLAIN_QUICKSPELL3, MSI_EXPLAIN_SET1, MSI_EXPLAIN_DORIDORI, MSI_EXPLAIN_QUICKSPELL, MSI_EXPLAIN_EMOTION, MSI_EXPLAIN_HI, MSI_EXPLAIN_NOTRADE, MSI_EXPLAIN_BATTLE, MSI_EXPLAIN_BATTLE2, MSI_EXPLAIN_BATTLE3, MSI_EXPLAIN_BATTLE4, MSI_EXPLAIN_ALCHEMIST, MSI_EXPLAIN_BLACKSMITH, MSI_EXPLAIN_WINDOW, MSI_EXPLAIN_SKILLFAIL, MSI_EXPLAIN_NOTALKMSG, MSI_EXPLAIN_NOSHIFT, MSI_EXPLAIN_NOCTRL, MSI_EXPLAIN_QUICKSPELL2, MSI_EXPLAIN_LOGINOUT, MSI_EXPLAIN_SHOPPING, MSI_EXPLAIN_ALTY, MSI_EXPLAIN_HUNTING.",
+      "source_ref": "Ref/GameMode.cpp:16211 onward (case body within function at 0x578f10)",
+      "port_dependency": "UIWindowMgr::SendMsg and message-string facilities are used elsewhere; type 14 case and the ordered message bundle are absent. Numeric MSI IDs were not resolved; source uses the listed symbols."
+    },
+    {
+      "row": "6",
+      "label": "/who",
+      "type": 6,
+      "hex": "0x06",
+      "symbol": "TT_REQ_NUM_USER",
+      "selected_contract": "CMode::SendMsg(this,34,0,0,0); return. Pre-switch exception: when g_serviceType==ServiceVietnam and original type is TT_REQ_NUM_USER, type is rewritten to TT_UNKNOWN, then the unknown path is taken (not message 34).",
+      "source_ref": "Ref/GameMode.cpp:15941-15945,16044; function address 0x578f10",
+      "port_dependency": "Generic SendMsg route exists; Vietnam service state exists. Type 6 has no ProcessSourceTalk case, and the service-specific no-op/unknown behavior is not mirrored by this missing action."
+    },
+    {
+      "row": 11,
+      "label": "/where",
+      "type": 9,
+      "hex": "0x09",
+      "symbol": "TT_MAP_POS",
+      "selected_contract": "Read world/player position and map attributes; derive map coordinates as floor(width/2 + player.x/zoom), floor(height/2 + player.y/zoom), strip the final four-character extension from m_rswName when present, format '%s(%s) : %d, %d' using CSession::GetMapName, then clear output (SendMsg 3) and append text (SendMsg 1, color 6619135). Also SendMsg 20 with the same text/color unless g_serviceType==ServiceGermany. No network packet in this case; no explicit guard. Decompiled variable aliases make coordinate expression detail less certain than the UI/message flow.",
+      "source_ref": "Ref/GameMode.cpp:16088-16149; function address 0x578f10",
+      "port_dependency": "World/player/map and UI message primitives exist; type 9 case and source map-name/coordinate formatting are absent."
+    },
+    {
+      "row": 12,
+      "label": "/memo",
+      "type": 43,
+      "hex": "0x2b",
+      "symbol": "TT_REMEMBER_WARPPOINT",
+      "selected_contract": "CMode::SendMsg(this,83,0,0,0); return. No local state change, message, or guard in this case.",
+      "source_ref": "Ref/GameMode.cpp:16597; function address 0x578f10",
+      "port_dependency": "Generic SendMsg routing exists; type 43 has no ProcessSourceTalk case. Whether internal message 83 reaches the original service path is unverified here."
+    },
+    {
+      "row": 16,
+      "label": "/bangbang",
+      "type": 111,
+      "hex": "0x6f",
+      "symbol": "TT_BANGBANG_ON_OFF",
+      "selected_contract": "Rotate local player yaw by -45 degrees, wrap into [0,360) when the decompiled comparison indicates wrap is needed, derive an 8-way heading from (yaw+180)/45 with signed remainder normalization, then CMode::SendMsg(this,152,heading,0,0). No explicit guard; selected code dereferences world/player. No UI message or direct packet in this case.",
+      "source_ref": "Ref/GameMode.cpp:17157-17170; function address 0x578f10",
+      "port_dependency": "World/player yaw and SendMsg are available; type 111 case is absent. Exact float-wrap boundary is somewhat uncertain due to decompiler condition variable v83."
+    },
+    {
+      "row": 21,
+      "label": "/pvpinfo",
+      "type": 141,
+      "hex": "0x8d",
+      "symbol": "TT_SHOW_PVP_INFO",
+      "selected_contract": "Only if m_world->m_isPKZone: write packet opcode 527 (0x020f) and g_session.m_aid into local packet buffer, obtain packet size for 527, and send through CRagConnection::SendPacket. Otherwise return without effect. No UI message.",
+      "source_ref": "Ref/GameMode.cpp:17300-17309; function address 0x578f10",
+      "port_dependency": "m_world->m_isPKZone, session AID, packet-size lookup and connection packet send are available elsewhere; type 141 branch/direct opcode 527 construction is absent from ProcessSourceTalk."
+    },
+    {
+      "row": 22,
+      "label": "/hunting",
+      "type": 168,
+      "hex": "0xa8",
+      "symbol": "TT_REQ_HUNTING",
+      "selected_contract": "CMode::SendMsg(this,262,0,0,0); return. No local state change, message, or guard in this case.",
+      "source_ref": "Ref/GameMode.cpp:17543; function address 0x578f10",
+      "port_dependency": "Generic SendMsg routing exists; type 168 has no ProcessSourceTalk case. Whether internal message 262 reaches the original service path is unverified here."
+    }
+  ],
+  "ambiguities": [
+    "For types routed by selected CMode::SendMsg IDs 34, 83, 194, 195, 197, and 262, this review records the call contract only; it does not establish current port backend behavior for those internal IDs.",
+    "For /where, the original decompiler emits unusual aliased locals and a failed local-variable allocation warning; map UI flow and service guard are clear, while reconstructed coordinate arithmetic retains decompilation uncertainty.",
+    "For /bangbang, yaw-to-heading logic is present but a decompiled floating-point condition is rendered as v83, so its exact wrap boundary should be checked against disassembly before reproducing bit-for-bit.",
+    "For /help, message-string symbolic IDs are exact source references; numeric message-table values were not resolved in this bounded review."
+  ]
+}

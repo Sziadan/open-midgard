@@ -1,0 +1,205 @@
+{
+  "schema": "command-window-root-route-review/v1",
+  "status": "root-static-contract-not-runtime-acceptance",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "invocation": {
+    "method": "UIWindowMgr::ProcessPushButton",
+    "newKeydown": 10000,
+    "accurateKey": 0
+  },
+  "source": "Ref/UIWindowMgr.cpp:3345-4453",
+  "pe_function": "0x004e8050",
+  "lookup": "0x004e9bd4",
+  "jump_table": "0x004e9af8",
+  "preamble_va": "0x004e8050",
+  "preamble_hex": "558bec83ec1c8b45105356578bf93d01001e00897dfc7507b841000000eb413d010020007507b844000000eb338b450883f80d7507b841000000eb243d01001100741883f85774133d01002d00740583f858750cb828000000eb05b82600000083c0f73dd30000000f872c1a000033c98a88d49b4e00ff248df89a4e00",
+  "alt_y_disposition": "Key89 (VK_Y) is default here. Key121 is VK_F10, not lowercase y. Do not claim an Alt+Y entry point from that branch. A header tooltip alone does not prove keyboard routing.",
+  "constructor_disposition": "Selected constructor490580 initializes current item+68=-1 and horizontal count+6c=2 only. Base frame455e20/base window4d6c10 do not initialize derived viewOffset+78. OnCreate4905e0 first clamps that uninitialized value. Port must explicitly initialize offset0 as an undefined-state disposition, not claim a source-defined default. vertScrEnabled is+74, not viewOffset.",
+  "undefined_click_disposition": "Common23-count hit helper/scroll remain unchanged across all tabs. For activation only, suppress indices outside the actual22/17 selected table; preserve selection/index and do not pad tables or clamp by active-tab length.",
+  "limitations": [
+    "Static dispatch only. Full controller, manager routes, help balloon and native/passive Qt acceptance remain open.",
+    "Basic-info button recipients require their own source fidelity review; current port behavior is not proof of source behavior."
+  ],
+  "rows": [
+    {
+      "index": 1,
+      "caption": "Chat",
+      "input_key": 67,
+      "effective_key": 67,
+      "switch_slot": 6,
+      "target": "0x4e9aea",
+      "source_behavior_at_sentinel10000": "Switch default: return0, no window operation.",
+      "selected_target_prefix_hex": "5f5e32c05b8be55dc20c008d49002582"
+    },
+    {
+      "index": 2,
+      "caption": "Status",
+      "input_key": 65,
+      "effective_key": 65,
+      "switch_slot": 25,
+      "target": "0x4e8b75",
+      "source_behavior_at_sentinel10000": "Require basic-info owner; send its message 6/button126; return1, otherwise0.",
+      "selected_target_prefix_hex": "8b3560c36c006a12ffd633c98acc84c9"
+    },
+    {
+      "index": 3,
+      "caption": "DetailLevel",
+      "input_key": 68,
+      "effective_key": 68,
+      "switch_slot": 27,
+      "target": "0x4e8c46",
+      "source_behavior_at_sentinel10000": "Screen110/120 -> SetcurScreen(100), screen2 -> SetcurScreen(1), otherwise unchanged; return0.",
+      "selected_target_prefix_hex": "a1a890760083f86e75146a648bcfe877"
+    },
+    {
+      "index": 4,
+      "caption": "Option",
+      "input_key": 79,
+      "effective_key": 79,
+      "switch_slot": 31,
+      "target": "0x4e8c9a",
+      "source_behavior_at_sentinel10000": "Require basic-info owner; send its message 6/button127; return1, otherwise0.",
+      "selected_target_prefix_hex": "8b3560c36c006a12ffd633c98acc84c9"
+    },
+    {
+      "index": 5,
+      "caption": "Items",
+      "input_key": 69,
+      "effective_key": 69,
+      "switch_slot": 28,
+      "target": "0x4e8cfd",
+      "source_behavior_at_sentinel10000": "Require basic-info owner; send its message 6/button128; return1, otherwise0.",
+      "selected_target_prefix_hex": "8b3560c36c006a12ffd633c98acc84c9"
+    },
+    {
+      "index": 6,
+      "caption": "Merchant",
+      "input_key": 87,
+      "effective_key": 38,
+      "switch_slot": 9,
+      "target": "0x4e87b0",
+      "source_behavior_at_sentinel10000": "Remapped to38: decrement menu selection with lower clamp1; if stanceB==1 rotate Tetris block with source wrap/BlockSetting; if no current mode return0; otherwise send mode108, and when nonzero send106/1 and return1, else manager UpButton and return0. Does not reach nominal key87/button181 cart branch.",
+      "selected_target_prefix_hex": "66a1e05a6f00bb010000006648663bc3"
+    },
+    {
+      "index": 7,
+      "caption": "Skill",
+      "input_key": 83,
+      "effective_key": 83,
+      "switch_slot": 35,
+      "target": "0x4e8be6",
+      "source_behavior_at_sentinel10000": "Require basic-info owner; send its message 6/button130; return1, otherwise0.",
+      "selected_target_prefix_hex": "6a12ff1560c36c0033c98acc84c97520"
+    },
+    {
+      "index": 8,
+      "caption": "Equipment",
+      "input_key": 81,
+      "effective_key": 81,
+      "switch_slot": 33,
+      "target": "0x4e8db0",
+      "source_behavior_at_sentinel10000": "Require basic-info owner; send its message 6/button129; return1, otherwise0.",
+      "selected_target_prefix_hex": "8b3560c36c006a12ffd633c98acc84c9"
+    },
+    {
+      "index": 9,
+      "caption": "BasicInfo",
+      "input_key": 86,
+      "effective_key": 86,
+      "switch_slot": 37,
+      "target": "0x4e8e3b",
+      "source_behavior_at_sentinel10000": "Require basic-info owner; send its message 6/button136; return1, otherwise0.",
+      "selected_target_prefix_hex": "8b3560c36c006a12ffd633c98acc84c9"
+    },
+    {
+      "index": 10,
+      "caption": "Guild",
+      "input_key": 71,
+      "effective_key": 71,
+      "switch_slot": 29,
+      "target": "0x4e8e96",
+      "source_behavior_at_sentinel10000": "If basic-info exists and guild ID is nonzero, delete source guild59 or create it if absent; return1 even when guarded out.",
+      "selected_target_prefix_hex": "6a12ff1560c36c0033c98acc84c9750d"
+    },
+    {
+      "index": 11,
+      "caption": "PartySetting",
+      "input_key": 80,
+      "effective_key": 80,
+      "switch_slot": 32,
+      "target": "0x4e8eed",
+      "source_behavior_at_sentinel10000": "If basic-info exists, first delete source party-setting53; only if absent AND GetNumParty()!=0 create it. Return1 even when guarded out.",
+      "selected_target_prefix_hex": "8b3560c36c006a12ffd633d28ad484d2"
+    },
+    {
+      "index": 12,
+      "caption": "FriendOption",
+      "input_key": 73,
+      "effective_key": 73,
+      "switch_slot": 6,
+      "target": "0x4e9aea",
+      "source_behavior_at_sentinel10000": "Switch default: return0, no window operation.",
+      "selected_target_prefix_hex": "5f5e32c05b8be55dc20c008d49002582"
+    },
+    {
+      "index": 13,
+      "caption": "Messenger",
+      "input_key": 90,
+      "effective_key": 90,
+      "switch_slot": 6,
+      "target": "0x4e9aea",
+      "source_behavior_at_sentinel10000": "Switch default: return0, no window operation.",
+      "selected_target_prefix_hex": "5f5e32c05b8be55dc20c008d49002582"
+    },
+    {
+      "index": 14,
+      "caption": "WhisperList",
+      "input_key": 72,
+      "effective_key": 72,
+      "switch_slot": 6,
+      "target": "0x4e9aea",
+      "source_behavior_at_sentinel10000": "Switch default: return0, no window operation.",
+      "selected_target_prefix_hex": "5f5e32c05b8be55dc20c008d49002582"
+    },
+    {
+      "index": 15,
+      "caption": "Emotion",
+      "input_key": 77,
+      "effective_key": 77,
+      "switch_slot": 6,
+      "target": "0x4e9aea",
+      "source_behavior_at_sentinel10000": "Switch default: return0, no window operation.",
+      "selected_target_prefix_hex": "5f5e32c05b8be55dc20c008d49002582"
+    },
+    {
+      "index": 16,
+      "caption": "EmotionList",
+      "input_key": 76,
+      "effective_key": 76,
+      "switch_slot": 6,
+      "target": "0x4e9aea",
+      "source_behavior_at_sentinel10000": "Switch default: return0, no window operation.",
+      "selected_target_prefix_hex": "5f5e32c05b8be55dc20c008d49002582"
+    },
+    {
+      "index": 17,
+      "caption": "PetInfo",
+      "input_key": 74,
+      "effective_key": 74,
+      "switch_slot": 30,
+      "target": "0x4e8f8c",
+      "source_behavior_at_sentinel10000": "If basic-info exists, delete source pet-info88 or create it if absent; return1 even when owner absent.",
+      "selected_target_prefix_hex": "6a12ff1560c36c0033c98acc84c9750d"
+    },
+    {
+      "probe_key": 89,
+      "switch_slot": 6,
+      "target": "0x4e9aea"
+    },
+    {
+      "probe_key": 121,
+      "switch_slot": 50,
+      "target": "0x4e9a35"
+    }
+  ]
+}

@@ -1,0 +1,1073 @@
+{
+  "schema": 1,
+  "status": "selected_pe_static_hover_mapping_only",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "numeric_method": "IDs are literal selected-PE MSGSTRINGID immediates pushed in each TALKTYPE jump-table block, not calculated from MSGSTRINGID enum order. Symbol names are cross-referenced from the matching decompiled source switch.",
+  "table_evidence": "Source table literals/types from docs/packets/evidence/PK09.21-friend-greeting-command-ui-data.json; each row routed through selected PE lookup bytes at 0x491CCC and jump pointers at 0x491C14.",
+  "function": {
+    "name": "UICommandListWnd::OnMouseHover",
+    "source": "Ref/UIFrameWnd2.cpp:19107",
+    "selected_pe_va": "0x00491600",
+    "msgstr_va": "0x00514350",
+    "dispatch": {
+      "type_normalization": "TALKTYPE-6",
+      "lookup_byte_table_va": "0x00491CCC",
+      "jump_pointer_table_va": "0x00491C14",
+      "evidence": "selected lookup byte chooses a jump slot; ordinary code blocks push MSGSTRINGID before common call at 0x491AF4 -> MsgStr 0x514350"
+    },
+    "table_counts": {
+      "toggle": 23,
+      "action": 22
+    },
+    "toggle_rows": [
+      {
+        "row": 1,
+        "alias": "/battlemode",
+        "talktype": "TT_BATTLE_ON_OFF",
+        "talktype_value": 134,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D4C",
+          "jump_slot_index": 32,
+          "block_va": "0x00491968"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_BATTLE"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_BATTLE",
+            "id": 787,
+            "block_va": "0x00491968"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 2,
+        "alias": "/notrade",
+        "talktype": "TT_NOTRADE_ON_OFF",
+        "talktype_value": 135,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D4D",
+          "jump_slot_index": 33,
+          "block_va": "0x0049197C"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_NOTRADE"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_NOTRADE",
+            "id": 804,
+            "block_va": "0x0049197C"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 3,
+        "alias": "/noshift",
+        "talktype": "TT_NOSHIFT_ON_OFF",
+        "talktype_value": 105,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D2F",
+          "jump_slot_index": 19,
+          "block_va": "0x00491986"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_NOSHIFT"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_NOSHIFT",
+            "id": 700,
+            "block_va": "0x00491986"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 4,
+        "alias": "/noctrl",
+        "talktype": "TT_NOCTRL_ON_OFF",
+        "talktype_value": 108,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D32",
+          "jump_slot_index": 22,
+          "block_va": "0x00491990"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_NOCTRL"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_NOCTRL",
+            "id": 716,
+            "block_va": "0x00491990"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 5,
+        "alias": "/skillfail",
+        "talktype": "TT_SKILLFAIL_ON_OFF",
+        "talktype_value": 112,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D36",
+          "jump_slot_index": 26,
+          "block_va": "0x0049199A"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_SKILLFAIL"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_SKILLFAIL",
+            "id": 729,
+            "block_va": "0x0049199A"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 6,
+        "alias": "/notalkmsg",
+        "talktype": "TT_NOTALKMSG_ON_OFF",
+        "talktype_value": 113,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D37",
+          "jump_slot_index": 27,
+          "block_va": "0x004919B8"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_NOTALKMSG"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_NOTALKMSG",
+            "id": 732,
+            "block_va": "0x004919B8"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 7,
+        "alias": "/notalkmsg2",
+        "talktype": "TT_NOTALKMSG2_ON_OFF",
+        "talktype_value": 147,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D59",
+          "jump_slot_index": 39,
+          "block_va": "0x004919C2"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_NOTALKMSG2"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_NOTALKMSG2",
+            "id": 907,
+            "block_va": "0x004919C2"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 8,
+        "alias": "/showname",
+        "talktype": "TT_SHOW_NAME_TYPE",
+        "talktype_value": 107,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D31",
+          "jump_slot_index": 21,
+          "block_va": "0x00491A3E"
+        },
+        "source_msgstring_symbols": [
+          "MSI_SHOWNAME_ON",
+          "MSI_SHOWNAME_OFF"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_SHOWNAME_ON",
+            "id": 722,
+            "block_va": "0x00491A47"
+          },
+          {
+            "symbol": "MSI_SHOWNAME_OFF",
+            "id": 723,
+            "block_va": "0x00491A51"
+          }
+        ],
+        "hover_behavior": "g_session.m_isShowNameTypeOld: true=ON, false=OFF"
+      },
+      {
+        "row": 9,
+        "alias": "/fog",
+        "talktype": "TT_FOG",
+        "talktype_value": 60,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D02",
+          "jump_slot_index": 18,
+          "block_va": "0x00491A5B"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_FOG"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_FOG",
+            "id": 736,
+            "block_va": "0x00491A5B"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 10,
+        "alias": "/aura",
+        "talktype": "TT_AURA_ON_OFF",
+        "talktype_value": 106,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D30",
+          "jump_slot_index": 20,
+          "block_va": "0x004919CC"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_AURA"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_AURA",
+            "id": 710,
+            "block_va": "0x004919CC"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 11,
+        "alias": "/window",
+        "talktype": "TT_WINDOW_ON_OFF",
+        "talktype_value": 140,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D52",
+          "jump_slot_index": 35,
+          "block_va": "0x004919D6"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_WINDOW"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_WINDOW",
+            "id": 849,
+            "block_va": "0x004919D6"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 12,
+        "alias": "/miss",
+        "talktype": "TT_MISS_EFFECT_ON_OFF",
+        "talktype_value": 53,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CFB",
+          "jump_slot_index": 17,
+          "block_va": "0x004919E0"
+        },
+        "source_msgstring_symbols": [
+          "MSI_MISS_EFFECT_OFF",
+          "MSI_MISS_EFFECT_ON"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_MISS_EFFECT_OFF",
+            "id": 317,
+            "block_va": "0x004919E9"
+          },
+          {
+            "symbol": "MSI_MISS_EFFECT_ON",
+            "id": 318,
+            "block_va": "0x004919F3"
+          }
+        ],
+        "hover_behavior": "g_session.m_bMakeMissEffect: true=OFF, false=ON"
+      },
+      {
+        "row": 13,
+        "alias": "/set1",
+        "talktype": "TT_SET1_ON_OFF",
+        "talktype_value": 114,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D38",
+          "jump_slot_index": 28,
+          "block_va": "0x00491A16"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_SET1"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_SET1",
+            "id": 735,
+            "block_va": "0x00491A16"
+          }
+        ],
+        "hover_behavior": "shared MSI_EXPLAIN_SET1 label block; source TT_SET1_ON_OFF falls through to the common label used by TT_SET2_ON_OFF"
+      },
+      {
+        "row": 14,
+        "alias": "/set2",
+        "talktype": "TT_SET2_ON_OFF",
+        "talktype_value": 137,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D4F",
+          "jump_slot_index": 34,
+          "block_va": "0x004919FD"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_SET1"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_SET1",
+            "id": 735,
+            "block_va": "0x00491A16"
+          }
+        ],
+        "hover_behavior": "ServiceAmerica value 1 uses raw literal instead of MsgStr"
+      },
+      {
+        "row": 15,
+        "alias": "/q1",
+        "talktype": "TT_QUICKSPELL_ON_OFF",
+        "talktype_value": 119,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D3D",
+          "jump_slot_index": 29,
+          "block_va": "0x00491A20"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_QUICKSPELL"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_QUICKSPELL",
+            "id": 767,
+            "block_va": "0x00491A20"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 16,
+        "alias": "/q2",
+        "talktype": "TT_QUICKSPELL2_ON_OFF",
+        "talktype_value": 120,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D3E",
+          "jump_slot_index": 30,
+          "block_va": "0x00491A2A"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_QUICKSPELL2"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_QUICKSPELL2",
+            "id": 770,
+            "block_va": "0x00491A2A"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 17,
+        "alias": "/q3",
+        "talktype": "TT_QUICKSPELL3_ON_OFF",
+        "talktype_value": 121,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D3F",
+          "jump_slot_index": 31,
+          "block_va": "0x00491A34"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_QUICKSPELL3"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_QUICKSPELL3",
+            "id": 771,
+            "block_va": "0x00491A34"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 18,
+        "alias": "/effect",
+        "talktype": "TT_EFFECT_ON_OFF",
+        "talktype_value": 8,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CCE",
+          "jump_slot_index": 2,
+          "block_va": "0x0049195A"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_EFFECT"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_EFFECT",
+            "id": 37,
+            "block_va": "0x0049195A"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 19,
+        "alias": "/bgm",
+        "talktype": "TT_MUSIC_ON_OFF",
+        "talktype_value": 7,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CCD",
+          "jump_slot_index": 1,
+          "block_va": "0x00491953"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_MUSIC"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_MUSIC",
+            "id": 35,
+            "block_va": "0x00491953"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 20,
+        "alias": "/sound",
+        "talktype": "TT_EFFECT_SOUND_ON_OFF",
+        "talktype_value": 11,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CD1",
+          "jump_slot_index": 4,
+          "block_va": "0x00491961"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_SOUND"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_SOUND",
+            "id": 36,
+            "block_va": "0x00491961"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 21,
+        "alias": "/tip",
+        "talktype": "TT_OPEN_TIP",
+        "talktype_value": 42,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CF0",
+          "jump_slot_index": 14,
+          "block_va": "0x00491972"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_OPENTIP"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_OPENTIP",
+            "id": 177,
+            "block_va": "0x00491972"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 22,
+        "alias": "/loginout",
+        "talktype": "TT_LOGINOUT_ON_OFF",
+        "talktype_value": 164,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D6A",
+          "jump_slot_index": 42,
+          "block_va": "0x004919A4"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_LOGINOUT"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_LOGINOUT",
+            "id": 1043,
+            "block_va": "0x004919A4"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 23,
+        "alias": "/shopping",
+        "talktype": "TT_SHOPPING_ON_OFF",
+        "talktype_value": 166,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D6C",
+          "jump_slot_index": 43,
+          "block_va": "0x004919AE"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_SHOPPING"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_SHOPPING",
+            "id": 1107,
+            "block_va": "0x004919AE"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      }
+    ],
+    "action_rows": [
+      {
+        "row": 1,
+        "alias": "/taekwon",
+        "talktype": "TT_REQ_TAEKWON",
+        "talktype_value": 151,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D5D",
+          "jump_slot_index": 45,
+          "block_va": "0x00491B21"
+        },
+        "source_msgstring_symbols": [],
+        "selected_pe_msgstr": [],
+        "hover_behavior": "default empty-help path; no MsgStr"
+      },
+      {
+        "row": 2,
+        "alias": "/hi",
+        "talktype": "TT_HI",
+        "talktype_value": 150,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D5C",
+          "jump_slot_index": 40,
+          "block_va": "0x00491AD3"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_HI"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_HI",
+            "id": 918,
+            "block_va": "0x00491AD3"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 3,
+        "alias": "/blacksmith",
+        "talktype": "TT_REQ_BLACKSMITH",
+        "talktype_value": 145,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D57",
+          "jump_slot_index": 37,
+          "block_va": "0x00491ADA"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_BLACKSMITH"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_BLACKSMITH",
+            "id": 923,
+            "block_va": "0x00491ADA"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 4,
+        "alias": "/alchemist",
+        "talktype": "TT_REQ_ALCHEMIST",
+        "talktype_value": 146,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D58",
+          "jump_slot_index": 38,
+          "block_va": "0x00491AE1"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_ALCHEMIST"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_ALCHEMIST",
+            "id": 924,
+            "block_va": "0x00491AE1"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 5,
+        "alias": "/help",
+        "talktype": "TT_HELP",
+        "talktype_value": 14,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CD4",
+          "jump_slot_index": 5,
+          "block_va": "0x00491A65"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_HELP"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_HELP",
+            "id": 33,
+            "block_va": "0x00491A65"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": "6",
+        "alias": "/who",
+        "talktype": "TT_REQ_NUM_USER",
+        "talktype_value": 6,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CCC",
+          "jump_slot_index": 0,
+          "block_va": "0x00491A6C"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_WHO"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_WHO",
+            "id": 34,
+            "block_va": "0x00491A6C"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 7,
+        "alias": "/sit",
+        "talktype": "TT_REQ_SIT",
+        "talktype_value": 22,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CDC",
+          "jump_slot_index": 10,
+          "block_va": "0x00491A73"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_SIT"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_SIT",
+            "id": 132,
+            "block_va": "0x00491A73"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 8,
+        "alias": "/stand",
+        "talktype": "TT_REQ_STAND",
+        "talktype_value": 21,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CDB",
+          "jump_slot_index": 9,
+          "block_va": "0x00491A7A"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_STAND"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_STAND",
+            "id": 133,
+            "block_va": "0x00491A7A"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 9,
+        "alias": "/q",
+        "talktype": "TT_REQ_EXIT_ROOM",
+        "talktype_value": 24,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CDE",
+          "jump_slot_index": 12,
+          "block_va": "0x00491A88"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_EXIT_CHAT_ROOM"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_EXIT_CHAT_ROOM",
+            "id": 135,
+            "block_va": "0x00491A88"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 10,
+        "alias": "/leave",
+        "talktype": "TT_REQ_LEAVE_GROUP",
+        "talktype_value": 27,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CE1",
+          "jump_slot_index": 13,
+          "block_va": "0x00491A8F"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_LEAVE_PARTY"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_LEAVE_PARTY",
+            "id": 138,
+            "block_va": "0x00491A8F"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 11,
+        "alias": "/where",
+        "talktype": "TT_MAP_POS",
+        "talktype_value": 9,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CCF",
+          "jump_slot_index": 3,
+          "block_va": "0x00491A96"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_POS"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_POS",
+            "id": 38,
+            "block_va": "0x00491A96"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 12,
+        "alias": "/memo",
+        "talktype": "TT_REMEMBER_WARPPOINT",
+        "talktype_value": 43,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CF1",
+          "jump_slot_index": 15,
+          "block_va": "0x00491A81"
+        },
+        "source_msgstring_symbols": [
+          "MSI_WARPPOINTSTORED"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_WARPPOINTSTORED",
+            "id": 217,
+            "block_va": "0x00491A81"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 13,
+        "alias": "/chat",
+        "talktype": "TT_MAKE_CHATROOMMAKEWND",
+        "talktype_value": 23,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CDD",
+          "jump_slot_index": 11,
+          "block_va": "0x00491A9A"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_MAKE_CHAT"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_MAKE_CHAT",
+            "id": 134,
+            "block_va": "0x00491A9A"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 14,
+        "alias": "/savechat",
+        "talktype": "TT_REQ_SAVE_CHAT",
+        "talktype_value": 51,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CF9",
+          "jump_slot_index": 16,
+          "block_va": "0x00491AA1"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_SAVE_CHAT"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_SAVE_CHAT",
+            "id": 313,
+            "block_va": "0x00491AA1"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 15,
+        "alias": "/doridori",
+        "talktype": "TT_DORIDORI_ON_OFF",
+        "talktype_value": 109,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D33",
+          "jump_slot_index": 23,
+          "block_va": "0x00491AA8"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_DORIDORI"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_DORIDORI",
+            "id": 724,
+            "block_va": "0x00491AA8"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 16,
+        "alias": "/bangbang",
+        "talktype": "TT_BANGBANG_ON_OFF",
+        "talktype_value": 111,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D35",
+          "jump_slot_index": 25,
+          "block_va": "0x00491AB6"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_BANGBANG"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_BANGBANG",
+            "id": 728,
+            "block_va": "0x00491AB6"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 17,
+        "alias": "/bingbing",
+        "talktype": "TT_BINGBING_ON_OFF",
+        "talktype_value": 110,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D34",
+          "jump_slot_index": 24,
+          "block_va": "0x00491AAF"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_BINGBING"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_BINGBING",
+            "id": 727,
+            "block_va": "0x00491AAF"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 18,
+        "alias": "/ex",
+        "talktype": "TT_REQ_WHISPER_LIST",
+        "talktype_value": 15,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CD5",
+          "jump_slot_index": 6,
+          "block_va": "0x00491ABD"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_WHISPER_LIST_WND"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_WHISPER_LIST_WND",
+            "id": 349,
+            "block_va": "0x00491ABD"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 19,
+        "alias": "/inall",
+        "talktype": "TT_REQ_WHISPER_STATE_IN",
+        "talktype_value": 17,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CD7",
+          "jump_slot_index": 8,
+          "block_va": "0x00491AC4"
+        },
+        "source_msgstring_symbols": [
+          "MSI_HEAR_ALL"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_HEAR_ALL",
+            "id": 60,
+            "block_va": "0x00491AC4"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 20,
+        "alias": "/exall",
+        "talktype": "TT_REQ_WHISPER_STATE_EX",
+        "talktype_value": 16,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491CD6",
+          "jump_slot_index": 7,
+          "block_va": "0x00491AC8"
+        },
+        "source_msgstring_symbols": [
+          "MSI_REFUSE_HEAR_ALL"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_REFUSE_HEAR_ALL",
+            "id": 58,
+            "block_va": "0x00491AC8"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 21,
+        "alias": "/pvpinfo",
+        "talktype": "TT_SHOW_PVP_INFO",
+        "talktype_value": 141,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D53",
+          "jump_slot_index": 36,
+          "block_va": "0x00491ACC"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_PVP_INFO"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_PVP_INFO",
+            "id": 852,
+            "block_va": "0x00491ACC"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      },
+      {
+        "row": 22,
+        "alias": "/hunting",
+        "talktype": "TT_REQ_HUNTING",
+        "talktype_value": 168,
+        "pe_dispatch": {
+          "lookup_byte_va": "0x00491D6E",
+          "jump_slot_index": 44,
+          "block_va": "0x00491AEF"
+        },
+        "source_msgstring_symbols": [
+          "MSI_EXPLAIN_HUNTING"
+        ],
+        "selected_pe_msgstr": [
+          {
+            "symbol": "MSI_EXPLAIN_HUNTING",
+            "id": 1191,
+            "block_va": "0x00491AEF"
+          }
+        ],
+        "hover_behavior": "direct selected-PE immediate"
+      }
+    ],
+    "no_help_default": {
+      "alias": "/taekwon",
+      "talktype": "TT_REQ_TAEKWON",
+      "talktype_value": 151,
+      "block_va": "0x00491B21",
+      "result": "default path; no MsgStr, help remains empty"
+    },
+    "special_cases": {
+      "/miss": {
+        "flag": "g_session.m_bMakeMissEffect",
+        "true": {
+          "symbol": "MSI_MISS_EFFECT_OFF",
+          "selected_pe_id": 317
+        },
+        "false": {
+          "symbol": "MSI_MISS_EFFECT_ON",
+          "selected_pe_id": 318
+        }
+      },
+      "/showname": {
+        "flag": "g_session.m_isShowNameTypeOld",
+        "true": {
+          "symbol": "MSI_SHOWNAME_ON",
+          "selected_pe_id": 722
+        },
+        "false": {
+          "symbol": "MSI_SHOWNAME_OFF",
+          "selected_pe_id": 723
+        }
+      },
+      "/set2": {
+        "ServiceAmerica_PE_value": 1,
+        "other_services": {
+          "symbol": "MSI_EXPLAIN_SET1",
+          "selected_pe_id": 735
+        },
+        "America_literal_va": "0x006F4840",
+        "America_literal_raw_hex": "2f73657432203a202f73657431202b202f7133",
+        "America_literal_ascii": "/set2 : /set1 + /q3",
+        "note": "America branch copies this literal and does not call MsgStr."
+      }
+    },
+    "empty_help_test": {
+      "source": "Local cmdHelp starts as strcpy(cmdHelp,Buf); method compares resolved local buffer with Buf, then shows balloon only when unequal. It does not compare against a previous hover buffer.",
+      "selected_pe_Buf_va": "0x0074F794",
+      "Buf_storage": "PE .data virtual tail is zero-filled (address exceeds raw initialized size), so Buf begins empty.",
+      "byte_compare_loop_va": "0x00491B34",
+      "equal_branch_va": "0x00491B6A",
+      "balloon_helper_va": "0x004D71D0",
+      "evidence": "PE initializes local -0xA0 from Buf at 0x491643-0x49166C; byte loop 0x491B34-0x491B68 compares local text against Buf at 0x74F794; equality skips balloon."
+    },
+    "limitations": "Static PE/source mapping only; no execution, UI acceptance, build, source edit, or selected-table bounds decision."
+  }
+}\n

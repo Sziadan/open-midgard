@@ -1,0 +1,6 @@
+PASS: all 79 value stores and 96 literal/pointer bindings verified
+PASS: wrong numeric type rejected
+PASS: missing literal provenance rejected
+PASS: wrong pointer binding rejected
+PASS: wrong register-held WHO type rejected
+source command-list tables: evidence, binary provenance, and generated files are current
