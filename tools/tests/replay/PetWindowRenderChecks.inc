@@ -30,7 +30,7 @@
 #include <stdexcept>
 
 void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
-    CGameMode&,QtUiStateAdapter& adapter,const QString& output)
+    CGameMode& mode,QtUiStateAdapter& adapter,const QString& output)
 {
     Require(state!=nullptr,"pet Qt state is missing");
     InventoryTabViewportFixture viewport;viewport.Create("pet-window");
@@ -402,6 +402,52 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     Require(!g_windowMgr.m_petInfoWnd && !g_windowMgr.m_roomMessageBox && !g_windowMgr.m_modalWindow,
         "deleting pet owner retained its confirmation modal");
     adapter.syncChat();Frames(app,view);
+    Require(!g_windowMgr.m_itemInfoWnd,"summary render requires fresh shared item detail");
+    auto* detail=static_cast<UIItemInfoWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMINFOWND));
+    ro::pet::Status alternate;alternate.name="Summary";alternate.level=10012;alternate.fullness=25;
+    alternate.relationship=750;alternate.modified=1;alternate.accessoryItemId=65535;
+    detail->SetPetSummary(alternate);
+    {
+        ArgbDibSurface metrics;Require(metrics.EnsureSize(4,4),"UTF8 metrics DC failed");
+        const int one=MeasureNpcSayDialogColoredTextHeight(metrics.GetDC(),1,u8"가",true);
+        Require(one>0 && MeasureNpcSayDialogColoredTextHeight(metrics.GetDC(),1,u8"가나다",true)==3*one,
+            "UTF8 summary long-word wrapping split a codepoint");
+    }
+    const auto captureSummary=[&](const QString& stem){
+        state->setUiScale(GetConfiguredUiScaleFactor());
+        Require(adapter.syncGameplay(mode,RenderBackendType::LegacyDirect3D7,RenderBackendType::LegacyDirect3D7,-1,-1),"summary gameplay projection failed");
+        Frames(app,view);
+        auto* projected=Find(view.rootObject(),"itemInfoWindow");
+        auto* viewer=Find(view.rootObject(),"itemInfoDescriptionViewport");
+        UIItemInfoWnd::DisplayData display;
+        Require(detail->GetDisplayDataForQt(&display) && state->itemInfoVisible() && projected && projected->isVisible()
+            && viewer && qRound(viewer->width())==182 && qRound(viewer->height())==80,
+            "alternate summary did not reuse actual native/passive Qt detail viewer");
+        const auto data=state->itemInfoData();
+        Require(data.value("description").toString()==QString::fromStdString(display.description)
+            && display.description.find("Summary\n")==0 && display.detailLines.empty(),
+            "alternate summary native/Qt content or row order differs");
+        const double scale=GetConfiguredUiScaleFactor();const auto bounds=projected->mapRectToScene(projected->boundingRect());
+        Require(std::abs(bounds.left()-detail->m_x*scale)<0.01 && std::abs(bounds.top()-detail->m_y*scale)<0.01
+            && std::abs(bounds.width()-detail->m_w*scale)<0.01 && std::abs(bounds.height()-detail->m_h*scale)<0.01,
+            "alternate summary scale/geometry differs");
+        ArgbDibSurface dib;Require(dib.EnsureSize(view.width(),view.height()),"summary native DIB failed");
+        std::fill_n(dib.GetPixels(),view.width()*view.height(),0xff181b20u);
+        g_windowMgr.DrawVisibleWindowsToHdc(dib.GetDC(),true);
+        auto native=QImage(reinterpret_cast<uchar*>(dib.GetPixels()),view.width(),view.height(),view.width()*4,QImage::Format_RGB32).copy();
+        if(GetConfiguredUiScalePercent()!=100)native=native.scaled(qRound(native.width()*scale),qRound(native.height()*scale),Qt::IgnoreAspectRatio,Qt::FastTransformation).copy(0,0,view.width(),view.height());
+        const auto qml=view.grabWindow().convertToFormat(QImage::Format_RGB32);
+        Require(native.save(output+"/"+stem+".native.png") && qml.save(output+"/"+stem+".qml.png"),"summary capture failed");
+        ++frames;
+    };
+    captureSummary("pet-summary-fresh");
+    ITEM_INFO retained{};retained.SetItemId(501);retained.m_num=2;retained.m_isIdentified=1;
+    detail->SetItemInfo(retained,0,0);Require(!detail->HasPetSummary(),"item selection did not clear summary marker");
+    detail->SetPetSummary(alternate);captureSummary("pet-summary-retained-item");
+    SetRuntimeUiScalePercent(125);captureSummary("pet-summary-125-percent");
+    SetRuntimeUiScalePercent(100);g_windowMgr.DeleteWindow(detail);
+    adapter.syncGameplay(mode,RenderBackendType::LegacyDirect3D7,RenderBackendType::LegacyDirect3D7,-1,-1);Frames(app,view);
+    Require(!state->itemInfoVisible() && !Find(view.rootObject(),"itemInfoWindow")->isVisible(),"closed summary remains projected");
     QFile results(output+"/pet-window-render-results.json");
     Require(results.open(QIODevice::WriteOnly),"pet render result file open failed");
     results.write(QJsonDocument(QJsonObject{{"frames",frames},{"synthetic_source_key_frame_button_portrait_bitmaps",true},

@@ -4,6 +4,7 @@
 #include "UIFrameWnd.h"
 #include "UIShopCommon.h"
 #include "ItemInfoSource.h"
+#include "core/PetState.h"
 
 #include <array>
 #include <string>
@@ -69,6 +70,10 @@ public:
     void Move(int x, int y) override;
     void StoreInfo() override;
     void SetItemInfo(const ITEM_INFO& item, int preferredX, int preferredY, ItemInfoSource source = ItemInfoSource::Snapshot);
+    // Source factory12/message29 reuses the ordinary detail owner and item.
+    void SetPetSummary(const ro::pet::Status& wireStatus);
+    bool HasPetSummary() const { return m_petSummaryLevel != -1; }
+    bool HasContent() const { return m_hasItem || HasPetSummary(); }
     bool RefreshBoundItem();
     bool MatchesSelection(const ITEM_INFO& item) const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
@@ -98,11 +103,18 @@ private:
     std::string BuildDisplayName() const;
     std::vector<std::string> BuildDetailLines() const;
     std::string BuildDescriptionText() const;
+    std::string BuildPetSummaryText() const;
 
     ItemDetailKind m_kind;
     ITEM_INFO m_item;
     ItemInfoSource m_source = ItemInfoSource::Snapshot;
     bool m_hasItem;
+    std::int16_t m_petSummaryLevel = -1;
+    std::int16_t m_petSummaryFullness = -1;
+    std::int16_t m_petSummaryRelationship = -1;
+    std::uint16_t m_petSummaryAccessory = 0xffff;
+    std::uint8_t m_petSummaryModified = 0;
+    std::string m_petSummaryName;
     bool m_closeHovered;
     bool m_closePressed;
     bool m_graphicsHovered;

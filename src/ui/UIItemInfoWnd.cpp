@@ -7,6 +7,8 @@
 #include "main/WinMain.h"
 #include "session/Session.h"
 #include "gamemode/Commerce.h"
+#include "core/SourcePetSummaryText.generated.inc"
+#include "core/Globals.h"
 
 #include <algorithm>
 #include <cctype>
@@ -23,6 +25,23 @@ constexpr int kGraphicsButtonHeight = 16;
 constexpr int kSlotSize = 24;
 constexpr int kSlotGap = 1;
 constexpr char kUnknownItemDescription[] = "Unknown item, can be identified by using a ^0000FFMagnifier^000000.";
+
+std::string SummaryUtf8(const std::string& text, unsigned codePage)
+{
+#if RO_PLATFORM_WINDOWS
+    if (text.empty() || codePage==CP_UTF8) return text;
+    const int count=MultiByteToWideChar(codePage,0,text.data(),static_cast<int>(text.size()),nullptr,0);
+    if(count<=0)return text;
+    std::wstring wide(count,L'\0');
+    MultiByteToWideChar(codePage,0,text.data(),static_cast<int>(text.size()),wide.data(),count);
+    const int size=WideCharToMultiByte(CP_UTF8,0,wide.data(),count,nullptr,0,nullptr,nullptr);
+    std::string out(size,'\0');
+    if(size)WideCharToMultiByte(CP_UTF8,0,wide.data(),count,out.data(),size,nullptr,nullptr);
+    return out;
+#else
+    return text;
+#endif
+}
 
 HFONT GetItemInfoDescriptionFont()
 {
@@ -203,7 +222,8 @@ UIItemInfoWnd::UIItemInfoWnd(ItemDetailKind kind)
 
 void UIItemInfoWnd::OnDraw()
 {
-    if (!RefreshBoundItem() || !m_show) return;
+    RefreshBoundItem();
+    if (!HasContent() || !m_show) return;
     HDC hdc = AcquireDrawTarget();
     if (!hdc) return;
     DrawNativeToHdc(hdc);
@@ -213,7 +233,7 @@ void UIItemInfoWnd::OnDraw()
 void UIItemInfoWnd::DrawNativeToHdc(HDC hdc)
 {
     RefreshBoundItem();
-    if (m_show == 0 || !m_hasItem || !hdc) return;
+    if (m_show == 0 || !HasContent() || !hdc) return;
 
     const RECT bounds = shopui::MakeRect(m_x, m_y, m_w, m_h);
     shopui::FillRectColor(hdc,bounds,RGB(245,242,234));
@@ -244,7 +264,7 @@ void UIItemInfoWnd::DrawNativeToHdc(HDC hdc)
 
     const RECT descriptionRect = GetDescriptionRect();
     HGDIOBJ oldDescriptionFont = SelectObject(hdc, GetItemInfoDescriptionFont());
-    DrawNpcSayDialogColoredText(hdc, descriptionRect, BuildViewerText(), m_descriptionScrollOffset);
+    DrawNpcSayDialogColoredText(hdc, descriptionRect, BuildViewerText(), m_descriptionScrollOffset, HasPetSummary());
     SelectObject(hdc, oldDescriptionFont);
 
     if (ShouldShowSlots()) {
@@ -388,6 +408,7 @@ void UIItemInfoWnd::SetItemInfo(const ITEM_INFO& item, int preferredX, int prefe
 {
     (void)preferredX; (void)preferredY;
     m_item = item;
+    m_petSummaryLevel = -1;
     m_source = source;
     m_hasItem = item.GetItemId() != 0;
     ResetDescriptionScroll();
@@ -397,9 +418,26 @@ void UIItemInfoWnd::SetItemInfo(const ITEM_INFO& item, int preferredX, int prefe
     Invalidate();
 }
 
+void UIItemInfoWnd::SetPetSummary(const ro::pet::Status& wireStatus)
+{
+    if (m_kind != ItemDetailKind::Main || wireStatus.level < 10000) return;
+    m_petSummaryLevel = static_cast<std::int16_t>(wireStatus.level - 10000);
+    m_petSummaryFullness = static_cast<std::int16_t>(wireStatus.fullness);
+    m_petSummaryRelationship = static_cast<std::int16_t>(wireStatus.relationship);
+    m_petSummaryAccessory = static_cast<std::uint16_t>(wireStatus.accessoryItemId);
+    m_petSummaryModified = static_cast<std::uint8_t>(wireStatus.modified);
+    m_petSummaryName = SummaryUtf8(wireStatus.name.substr(0,24),g_codePage>0?g_codePage:CP_ACP);
+    // Message29 keeps the source's existing copied ITEM_INFO and artwork.
+    // The summary is a snapshot, not a new inventory binding.
+    m_source = ItemInfoSource::Snapshot;
+    ResetDescriptionScroll();
+    SetShow(1);
+    Invalidate();
+}
+
 bool UIItemInfoWnd::GetDisplayDataForQt(DisplayData* outData) const
 {
-    if (!outData || m_show == 0 || !m_hasItem) {
+    if (!outData || m_show == 0 || !HasContent()) {
         return false;
     }
     *outData = DisplayData{};
@@ -582,12 +620,13 @@ std::string UIItemInfoWnd::BuildTitle() const
 
 std::string UIItemInfoWnd::BuildDisplayName() const
 {
-    return SanitizeRoText(m_item.GetItemName());
+    return m_hasItem ? SanitizeRoText(m_item.GetItemName()) : std::string{};
 }
 
 std::vector<std::string> UIItemInfoWnd::BuildDetailLines() const
 {
     std::vector<std::string> out;
+    if (HasPetSummary()) return out;
     if (m_item.m_isIdentified == 0) {
         return out;
     }
@@ -607,10 +646,26 @@ std::vector<std::string> UIItemInfoWnd::BuildDetailLines() const
 
 std::string UIItemInfoWnd::BuildDescriptionText() const
 {
+    const std::string summary = BuildPetSummaryText();
+    if (!m_hasItem) return summary;
     std::string text = m_item.GetExpiryDisplayText();
     const std::string description = m_item.m_isIdentified == 0 ? kUnknownItemDescription : NormalizeDescriptionText(m_item.GetDescription());
     if (!text.empty() && !description.empty()) text += "\n\n";
-    return text + description;
+    const std::string itemText=text+description;
+    return summary + (HasPetSummary() ? SummaryUtf8(itemText,g_codePage>0?g_codePage:CP_ACP) : itemText);
+}
+
+std::string UIItemInfoWnd::BuildPetSummaryText() const
+{
+    if (!HasPetSummary()) return {};
+    using namespace ro::pet::summary_text;
+    const int h=m_petSummaryFullness, f=m_petSummaryRelationship;
+    const char* hunger=h<0 || h>100 ? hungerUnknown : h<=10 ? hunger0 : h<=25 ? hunger1 : h<=75 ? hunger2 : h<=90 ? hunger3 : hunger4;
+    const char* friendly=f<0 || f>1000 ? friendlyUnknown : f<=100 ? friendly0 : f<=250 ? friendly1 : f<=750 ? friendly2 : f<=900 ? friendly3 : friendly4;
+    const std::string rows=std::string(m_petSummaryModified ? modified : unmodified)+'\n'
+        +levelPrefix+std::to_string(m_petSummaryLevel)+'\n'+fullnessPrefix+hunger+'\n'
+        +relationshipPrefix+friendly+'\n'+(m_petSummaryAccessory ? equipped : unequipped)+'\n';
+    return m_petSummaryName+'\n'+SummaryUtf8(rows,949);
 }
 
 int UIItemInfoWnd::GetDesiredWindowHeight() const
@@ -646,9 +701,9 @@ void UIItemInfoWnd::ResetDescriptionScroll()
 void UIItemInfoWnd::ScrollDescriptionWheel(int delta)
 {
     HDC hdc=AcquireMainWindowDrawTarget();
-    if (!hdc || !m_hasItem || !m_show) { if(hdc)ReleaseMainWindowDrawTarget(hdc); return; }
+    if (!hdc || !HasContent() || !m_show) { if(hdc)ReleaseMainWindowDrawTarget(hdc); return; }
     const HGDIOBJ old=SelectObject(hdc,GetItemInfoDescriptionFont());
-    const int height=MeasureNpcSayDialogColoredTextHeight(hdc,182,BuildViewerText());
+    const int height=MeasureNpcSayDialogColoredTextHeight(hdc,182,BuildViewerText(),HasPetSummary());
     const int lineHeight=(std::max)(1,MeasureNpcSayDialogColoredTextHeight(hdc,182,"M"));
     SelectObject(hdc,old);ReleaseMainWindowDrawTarget(hdc);
     const int64_t total=int64_t(m_descriptionWheelRemainder)+delta;

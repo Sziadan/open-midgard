@@ -1,0 +1,314 @@
+{
+  "task": "PK27 alternate 0x01A2 pet summary recipient source audit",
+  "scope": "Read-only source review. No PE execution. No production or tracked documentation edits.",
+  "source_findings": {
+    "packet_and_branch": {
+      "packet": "0x01A2 / 418 / PACKET_ZC_PROPERTY_PET",
+      "source": "Ref/GameModePacket.cpp:24392-24430 (CGameMode::Zc_Property_Pet, decompiled VA 0x5a60b0)",
+      "branch": "signed short nLevel at packet offset 27; if >=10000, subtract 10000 in-place, call UIWindowMgr::MakeWindow(WID_ITEMCOLLECTIONWND=12), write summary state and send message 29. Else update normal g_session pet state and current PetInfo window.",
+      "normal_branch": "name from buf+2; modified byte +26; level signed short +27; fullness signed short +29; relationship signed short +31; accessory WORD +33; old hunger retained then hunger updated. Alternate branch intentionally does not update this regular session snapshot."
+    },
+    "wire_layout": {
+      "source": "Ref/dhxj/packet.h:8129-8140",
+      "fields": [
+        {
+          "field": "CLIENT_ZONE_PACKET_TYPE / packet header",
+          "offset": 0,
+          "width_bytes": 2
+        },
+        {
+          "field": "szName",
+          "offset": 2,
+          "width_bytes": 24,
+          "type": "char[24]"
+        },
+        {
+          "field": "bModified",
+          "offset": 26,
+          "width_bytes": 1,
+          "type": "BYTE"
+        },
+        {
+          "field": "nLevel",
+          "offset": 27,
+          "width_bytes": 2,
+          "type": "short signed"
+        },
+        {
+          "field": "nFullness",
+          "offset": 29,
+          "width_bytes": 2,
+          "type": "short signed"
+        },
+        {
+          "field": "nRelationship",
+          "offset": 31,
+          "width_bytes": 2,
+          "type": "short signed"
+        },
+        {
+          "field": "ITID",
+          "offset": 33,
+          "width_bytes": 2,
+          "type": "WORD unsigned"
+        }
+      ],
+      "total_wire_size_bytes": 35
+    },
+    "recipient": {
+      "exact_class": "UIItemCollectionWnd",
+      "source_factory_id": "12 (source WID_ITEMCOLLECTIONWND)",
+      "port_mapping_correction": "Root review confirmed source factory12 detail owner maps to port WID_ITEMINFOWND=24 / UIItemInfoWnd; port WID_ITEMCOLLECTIONWND=25 is the separate illustration preview. Do not create a separate pet owner or route to the port illustration window. Implement the summary in the existing source-equivalent detail owner (the port UIItemInfoWnd).",
+      "source_factory": "Ref/UIWindowMgr.cpp:5131-5151 creates/reuses UIItemCollectionWnd at 280x120 and sends message34 on first creation; message29 caller then updates/reuses this same owner.",
+      "constructor": "Ref/UIFrameWnd2.cpp:1801-1827 (VA 0x4792c0) initializes m_petLevel, m_petFullness, m_petRelationship and m_petITID to -1; modified flag 0.",
+      "message29_state": "Ref/UIFrameWnd2.cpp:9226-9237,9476-9690 (VA 0x479e70). Rebuilds viewer rows from the existing m_itemInfo description plus pet summary; writes/uses petName, modified, level, fullness, relationship and ITID. Invalid/unset level (-1) suppresses pet-specific rows but still allows item description rows. Invalidates and raises the owner to top.",
+      "message24_interaction": "Ref/UIFrameWnd2.cpp:9335-9374. On a normal item detail update, if same item name/refine/slots and val2==0, it deletes/closes window and returns before touching pet fields. Otherwise it sets ONLY m_petLevel=-1 before replacing m_itemInfo (including delete time), resizing, and rebuilding item detail. Other pet fields/name/modified/ITID are not reset by message24, but level sentinel suppresses summary rows. Thus message29 can reuse item data already on the owner; message24 causes later item content to coexist with stale pet fields only behind sentinel.",
+      "coexistence": "SendMsg(29) begins with ITEM_INFO::GetDescription(&m_itemInfo), then appends pet rows; it does not clear m_itemInfo/item bitmap. It repopulates text viewer, so pet summary overlays/replaces viewer lines while preserving underlying item detail data. A subsequent message24 replaces item data and clears petLevel sentinel. An equal-item message24 with val2=0 closes owner before reset.",
+      "graphics": "Ref/UIFrameWnd2.cpp:23130-23200; OnDraw draws shared item background, existing item bitmap and item text/socket rows. Pet text rows are rendered by the UITextViewer child. Keep the normal item-detail visual path intact."
+    },
+    "message29_and_render": {
+      "sendmsg": "Ref/UIFrameWnd2.cpp:9226-9237, 9476-9690 (SendMsg VA 0x479e70). Case 29 rebuilds a vector of text rows: pet name; modified/unmodified marker; level; hunger text; relationship text; accessory present/absent label; item description rows. It clears and repopulates m_textViewer with message 29, invalidates and raises this window to top layer. For petLevel==-1 it skips pet-specific rows but still includes item description rows.",
+      "oncreate": "Ref/UIFrameWnd2.cpp:22913 onward (OnCreate VA 0x479490); creates a UITextViewer occupying x=91,y=31,w=cx-98,h=cy-40 and item/card controls. Factory dimensions are 280x120, so text region is 182x80. This is a compact text summary UI, not the 280x160 PetInfoWnd.",
+      "ondraw": "Ref/UIFrameWnd2.cpp:23130-23200 (OnDraw VA 0x4799c0); draws shared item-collection background and item bitmap/item text/card slots. Pet-specific summary rows are rendered by child UITextViewer populated by message 29, not by the main OnDraw branch.",
+      "storeinfo": "Ref/UIFrameWnd2.cpp:23310-23325 (StoreInfo VA 0x479e30); saves current x/y/w/h into ItemCollectionWndInfo when present."
+    },
+    "collision_and_integration": {
+      "source_name_collision": "Ref's UIItemCollectionWnd is deliberately multiplexed: ordinary item collection display and alternate pet summary both use WID_ITEMCOLLECTIONWND/factory12 and the same SendMsg(29) owner. It is not a separate pet summary class in the Ref implementation.",
+      "port_collision": "The current src/ui/UIItemCollectionWnd is the separate item-illustration preview contract (title Card illustration; item-only state) and does not map to source factory12. The source-equivalent detail owner is port UIItemInfoWnd at WID_ITEMINFOWND=24 (see docs/packets/contracts/PK09.ITEM-DETAIL-GEOMETRY.md and src/ui/UIWindowMgr.cpp:1568-1575). Current GameModePacket.cpp:5275-5280 drops the alternate branch pending this recipient. Do not send pet data to the illustration window or create a separate pet owner.",
+      "required_integration": [
+        "Extend existing port UIItemInfoWnd/source factory12 shared detail owner; preserve the unrelated port ItemCollection25 illustration preview.",
+        "Parse 0x01A2 exact 35-byte frame and only take alternate path for signed level>=10000; normalized level = level-10000, retain 16-bit signed state fields, unsigned accessory ID, byte modified flag, bounded 24-byte name semantics.",
+        "Send/update recipient semantics must reuse existing summary owner, populate pet name/modified/level/fullness/relationship/accessory, produce source-equivalent message29 rows (including translated state text and accessory-present line), invalidate and bring owner to top.",
+        "Do not mutate regular pet session snapshot on alternate branch; regular branch stays the existing behavior."
+      ],
+      "unknowns": [
+        "Source UIItemCollectionWnd header in Ref/UIFrameWnd2.h is a signature-only stub, so exact declared C++ member widths/names are not available there; widths above are evidenced by constructor sentinels and decompiled 16-/8-bit stores at the packet receiver.",
+        "The source's sprintf(buf+2) and sprintf into object state are unsafe and do not establish truncation behavior for a non-NUL-terminated 24-byte name. Port should use bounded semantics while preserving ordinary names.",
+        "No source/port UI runtime replay was performed in this audit; source PE was not executed."
+      ]
+    },
+    "source_summary_rows": {
+      "source": "Ref/UIFrameWnd2.cpp:9476-9601; selected static PE HighPriest.exe SHA-256 9ABC36C88376387D85C878C0C879D9AF8EF66EB1F5152638085DC6995E3F4742 read statically at listed VAs.",
+      "rows_in_order": [
+        "pet name",
+        "modified/unmodified marker",
+        "\"레벨 : \" + decimal normalized level",
+        "\"만복도 : \" + localized hunger-state text",
+        "\"친밀도 : \" + localized relationship-state text",
+        "accessory equipped/not-equipped label selected by ITID!=0",
+        "existing ITEM_INFO description rows appended after pet-specific rows"
+      ],
+      "labels_and_literals": [
+        {
+          "va": "0x006F41D0",
+          "hex": "c0ccb8a720baafb0e6b5ca",
+          "text_cp949": "이름 변경됨",
+          "meaning": "modified marker"
+        },
+        {
+          "va": "0x006F41BC",
+          "hex": "c0ccb8a720baafb0e6b5c7c1f6becac0bd",
+          "text_cp949": "이름 변경되지않음",
+          "meaning": "unmodified marker"
+        },
+        {
+          "va": "0x006F41B4",
+          "hex": "b7b9baa7203a20",
+          "text_cp949": "레벨 : ",
+          "meaning": "level prefix"
+        },
+        {
+          "va": "0x006F41A8",
+          "hex": "b8b8bab9b5b5203a20",
+          "text_cp949": "만복도 : ",
+          "meaning": "fullness prefix"
+        },
+        {
+          "va": "0x006F419C",
+          "hex": "c4a3b9d0b5b5203a20",
+          "text_cp949": "친밀도 : ",
+          "meaning": "relationship prefix"
+        },
+        {
+          "va": "0x006F4188",
+          "hex": "bec7bcbcbbe7b8ae203a20c0e5c2f8b5ca",
+          "text_cp949": "악세사리 : 장착됨",
+          "meaning": "accessory-present text; ITID != 0"
+        },
+        {
+          "va": "0x006F4174",
+          "hex": "bec7bcbcbbe7b8ae203a20c0e5c2f8bec8b5ca",
+          "text_cp949": "악세사리 : 장착안됨",
+          "meaning": "accessory-absent text; ITID == 0"
+        }
+      ],
+      "hunger_thresholds": "Ref/Session2.cpp:3536-3574 (GetPetHungryStateText VA 0x681550): <0 or >100 -> unknown; 0..10 first band; 11..25 second; 26..75 middle; 76..90 fourth; 91..100 fifth. The implementation selects text pointers unk_7017CC, C4, BC, B4, A8, and unknown unk_724D5C.",
+      "relationship_thresholds": "Ref/Session2.cpp:3494-3533 (GetPetFriendlyStateText VA 0x681600): 0..100 base band; 101..250 next; 251..750 middle; 751..900 fourth; 901..1000 fifth; <0 or >1000 unknown. Text pointers unk_70179C, 94, BC, 8C, 84, unknown unk_724D64.",
+      "formatting": "Level is itoa(decimal) appended after prefix; state helper emits its selected status string appended to corresponding prefix. Accessory branch is exactly ITID truthiness, not job or inventory lookup.",
+      "literal_c_octal": [
+        {
+          "va": "0x006F41D0",
+          "octal": "\\300\\314\\270\\247\\040\\272\\257\\260\\346\\265\\312",
+          "role": "modified marker"
+        },
+        {
+          "va": "0x006F41BC",
+          "octal": "\\300\\314\\270\\247\\040\\272\\257\\260\\346\\265\\307\\301\\366\\276\\312\\300\\275",
+          "role": "unmodified marker"
+        },
+        {
+          "va": "0x006F41B4",
+          "octal": "\\267\\271\\272\\247\\040\\072\\040",
+          "role": "level prefix"
+        },
+        {
+          "va": "0x006F41A8",
+          "octal": "\\270\\270\\272\\271\\265\\265\\040\\072\\040",
+          "role": "fullness prefix"
+        },
+        {
+          "va": "0x006F419C",
+          "octal": "\\304\\243\\271\\320\\265\\265\\040\\072\\040",
+          "role": "relationship prefix"
+        },
+        {
+          "va": "0x006F4188",
+          "octal": "\\276\\307\\274\\274\\273\\347\\270\\256\\040\\072\\040\\300\\345\\302\\370\\265\\312",
+          "role": "accessory equipped"
+        },
+        {
+          "va": "0x006F4174",
+          "octal": "\\276\\307\\274\\274\\273\\347\\270\\256\\040\\072\\040\\300\\345\\302\\370\\276\\310\\265\\312",
+          "role": "accessory not equipped"
+        }
+      ],
+      "normalized_order_exact": [
+        "petName raw byte string",
+        "modified marker literal (not a label/value pair)",
+        "level prefix + decimal level",
+        "fullness prefix + localized fullness state",
+        "relationship prefix + localized relationship state",
+        "one accessory equipped/not-equipped literal",
+        "each existing ITEM_INFO::GetDescription(m_itemInfo) row in source order"
+      ],
+      "description_append_details": "SendMsg(29) obtains ITEM_INFO::GetDescription(&m_itemInfo) before building pet rows, but appends its elements only after the six pet rows. Each description element is copied as an independent row; message29 then clears UITextViewer and submits every combined string via child SendMsg(29, row, 26, 0, 0). It also repositions m_cardItemButton by IsCardItem(m_itemInfo item-name ID), invalidates, and calls MakeTopLayer. It does not rewrite m_itemInfo, m_itemBmp, or parent dimensions.",
+      "window_height_cases": {
+        "new_factory_owner_no_prior_item": "MakeWindow(factory12) creates UIItemCollectionWnd at 280x120; constructor m_petLevel=-1, empty m_itemInfo. First property message29 fills pet state and produces the six pet rows, then appends current item description vector (the zero/default item resolves the null unidentified description; expected no description rows). It does not resize. This is the native pure-pet summary path.",
+        "existing_ordinary_item_detail": "Parent retains current height, normally 120. Message29 preserves item detail state and bitmap, and uses its description rows after the six pet rows. No resize occurs.",
+        "existing_slotted_item_detail": "Message24 previously sets parent to 149 when identified, slot count positive and not manufactured (the existing source predicate); message29 leaves parent at 149, leaves socket drawing data intact, and appends the current item description. It does not resize parent or child viewer. Source viewer was created at 182x80 from initial 280x120 OnCreate and is not resized by message24/29; parent slot row is painted by OnDraw from retained m_itemInfo.",
+        "existing_same_item_request_caveat": "A later normal message24 for the same item name/refine/four slots with val2==0 closes/deletes owner before pet-level sentinel reset. Otherwise message24 sets only m_petLevel=-1, replaces item data and uses normal 120/149 sizing. The stale other pet fields are hidden by level sentinel."
+      },
+      "hardcoded_state_literals_exact": [
+        {
+          "constant": "hunger0",
+          "va": "0x007017CC",
+          "hex": "b9e8b0edc7c4",
+          "octal_c_string": "\\271\\350\\260\\355\\307\\304"
+        },
+        {
+          "constant": "hunger1",
+          "va": "0x007017C4",
+          "hex": "c3e2c3e2c7d4",
+          "octal_c_string": "\\303\\342\\303\\342\\307\\324"
+        },
+        {
+          "constant": "hunger2",
+          "va": "0x007017BC",
+          "hex": "bab8c5eb",
+          "octal_c_string": "\\272\\270\\305\\353"
+        },
+        {
+          "constant": "hunger3",
+          "va": "0x007017B4",
+          "hex": "b9e8baceb8a7",
+          "octal_c_string": "\\271\\350\\272\\316\\270\\247"
+        },
+        {
+          "constant": "hunger4",
+          "va": "0x007017A8",
+          "hex": "bec6c1d620b9e8baceb8a7",
+          "octal_c_string": "\\276\\306\\301\\326\\040\\271\\350\\272\\316\\270\\247"
+        },
+        {
+          "constant": "hungerUnknown",
+          "va": "0x00724D5C",
+          "hex": "b8f4b6f3bfe42e",
+          "octal_c_string": "\\270\\364\\266\\363\\277\\344\\056"
+        },
+        {
+          "constant": "friendly0",
+          "va": "0x0070179C",
+          "hex": "bcadb8d4bcadb8d4c7d4",
+          "octal_c_string": "\\274\\255\\270\\324\\274\\255\\270\\324\\307\\324"
+        },
+        {
+          "constant": "friendly1",
+          "va": "0x00701794",
+          "hex": "beeebbf6c7d4",
+          "octal_c_string": "\\276\\356\\273\\366\\307\\324"
+        },
+        {
+          "constant": "friendly2",
+          "va": "0x007017BC",
+          "hex": "bab8c5eb",
+          "octal_c_string": "\\272\\270\\305\\353"
+        },
+        {
+          "constant": "friendly3",
+          "va": "0x0070178C",
+          "hex": "c4a3c7d4",
+          "octal_c_string": "\\304\\243\\307\\324"
+        },
+        {
+          "constant": "friendly4",
+          "va": "0x00701784",
+          "hex": "c0fdc4a3c7d4",
+          "octal_c_string": "\\300\\375\\304\\243\\307\\324"
+        },
+        {
+          "constant": "friendlyUnknown",
+          "va": "0x00724D64",
+          "hex": "c0fab4c220b8f0b8a8b4cfb4d9bec6bec6bec62e",
+          "octal_c_string": "\\300\\372\\264\\302\\040\\270\\360\\270\\250\\264\\317\\264\\331\\276\\306\\276\\306\\276\\306\\056"
+        }
+      ],
+      "state_literal_provenance": "Ref/Session2.cpp CSession::GetPetHungryStateText (0x681550) and GetPetFriendlyStateText (0x681600) select these raw literals and strcpy into caller output. They are hardcoded CP949 byte strings, not MsgStr entries or PetInfo UI localization calls."
+    },
+    "port_mapping_and_integration": {
+      "correct_owner": "Use the port UIItemInfoWnd at WID_ITEMINFOWND=24 (UIWindowMgr.cpp:1568-1575); source factory12 is the ordinary detail owner. Current port WID_ITEMCOLLECTIONWND=25 / UIItemCollectionWnd is a distinct illustration preview and is not the source mapping.",
+      "requirements": [
+        "Add pet-summary state/render path to existing source-equivalent detail owner while retaining normal item detail behavior.",
+        "On alt 0x01A2, decode signed level>=10000, subtract 10000, copy short fullness/relationship, unsigned WORD ITID, byte modified flag and bounded 24-byte name; do not replace regular pet session state.",
+        "Build source row order/literals and threshold bands, append existing item description rows, and invalidate/raise existing detail owner per message29 semantics.",
+        "Implement message24 equivalent sentinel: changing/replacing ordinary item sets pet level=-1, while same-item val2==0 closes before reset; no need to erase other summary fields when sentinel is authoritative.",
+        "Preserve source coexistence: message29 leaves item data/bitmap intact and uses its current detail description; message24 updates item detail without letting stale pet fields render."
+      ],
+      "disconfirmed_prior_recommendation": "The earlier preliminary suggestion to choose a separate owner/coexistence strategy because the current port illustration class conflicts with source was wrong. Root mapping and PK09 detail contract establish UIItemInfoWnd as the source factory12 detail owner; no separate pet owner should be planned."
+    },
+    "bounded_integration_examples": {
+      "example_a_fresh_summary": [
+        "factory12 create 280x120; item state default/empty, pet level sentinel -1",
+        "01A2 signed nLevel 10042 -> alternate level 42; set name/modified/fullness/relationship/ITID",
+        "message29 output: name; modified marker; level prefix + 42; fullness prefix + translated band; relationship prefix + translated band; accessory line",
+        "append zero-item null description rows (normally none); keep 280x120; display child text rows"
+      ],
+      "example_b_existing_slotted_detail": [
+        "existing owner has item state, item bitmap, identified item with descriptor slots, height 149",
+        "01A2 alternate state -> message29 on same owner",
+        "output has six pet rows first, followed by existing item description rows; no item fields/bitmap overwritten; slot row continues to use item state",
+        "height remains 149; no parent or child-viewer resize"
+      ],
+      "example_c_switch_back_to_item": [
+        "existing owner has pet summary and item state",
+        "normal message24 for changed item sets m_petLevel=-1, replaces item state, then applies source 120/149 item height",
+        "same-item + val2==0 path deletes owner before resetting pet sentinel"
+      ]
+    }
+  },
+  "correction_note": "Updated after root source-mapping review: source factory12 == port WID_ITEMINFOWND/UIItemInfoWnd; port WID_ITEMCOLLECTIONWND is illustration preview only. Added exact message29 row octal literals, appended item description behavior, and fresh/existing-slotted height examples. Added exact PE hex and octal C-byte strings for all hunger and relationship state text.",
+  "root_review": {
+    "baseline": "f330222b",
+    "mapping": "Source factory12 is existing port UIItemInfoWnd/WID_ITEMINFOWND24. Port ItemCollection25 is illustration preview; no new summary singleton.",
+    "verified": "Primary property branch, message24 reset/message29 six rows + retained description, helper thresholds/literal VAs, source placement contract and generated raw bytes reviewed. See PK27-pet-summary.md for implemented scope and open acceptance."
+  }
+}

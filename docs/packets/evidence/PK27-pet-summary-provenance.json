@@ -1,0 +1,36 @@
+{
+  "baseline": "f330222b",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "3a89dc38d7b65d55022fb64ba24b8c2348c214eddef4e72a004b6b9b76c0fd8e",
+    "docs/packets/evidence/PK27-pet-summary-native-text-check.cpp": "9f7c157d9f384f908dbec94458ae913d136de8c75a1e7152adda9af024750c49",
+    "src/core/SourcePetSummaryText.generated.inc": "e27afe5f11ca094d79dfaf8dba67cff5eddc96967c17370187a90062fa2b73b6",
+    "src/gamemode/GameModePacket.cpp": "3b450c107d57b5304ad4b61ab5ba8069153107f5a1c156cccf27aeaa37d621e5",
+    "src/qtui/QtUiStateAdapter.cpp": "3314ca54ab6df5741da9bd72c98ccf9597e6ebe85208c9ac221bff757f1f4b51",
+    "src/ui/NpcDialogColoredText.cpp": "1947368616089062fa5349163ddf9ebc17d280b3e0d8edd76b191ecab5ce0bc3",
+    "src/ui/NpcDialogColoredText.h": "6806cd14719cd422a6cda90f0af9e37585410d50c77e6f4c2d21dd55cd6aa555",
+    "src/ui/UIItemInfoWnd.cpp": "458fd0605c36df61b71479c2400ecefb279377a0d8cd0a6bb191147869c146ca",
+    "src/ui/UIItemInfoWnd.h": "12a2ac16a183515483871ca26cdc6b42f4277a97e453ebe976bc40e4c5e0790e",
+    "tools/generate_source_pet_summary_text.py": "f0bb22732ffae7d18710feaf9c95b1d55c60eab3038704038f95cf8a424506e4",
+    "tools/tests/replay/PetLifecycleReplay.inc": "d535630c5089138f9f490604ac760484d501dae5b5fbcb1f6e3bd2b5fa412f4d",
+    "tools/tests/replay/PetWindowRenderChecks.inc": "63ef6a1fc8578525c17b1d10a1978a2c828f2ea78778c1e299a80f5da79c2258"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "validation": {
+    "focused": "PK27-pet-summary-focused.log",
+    "application": "PK27-pet-summary-root-ctest.log",
+    "standalone": "PK27-pet-summary-unit-ctest.log",
+    "renders": "PK27-pet-summary-renders/pet-window-render-results.json",
+    "generator": "generate_source_pet_summary_text.py --check passes; full selected PE hash/literal/source reference checks; plan consistency separately"
+  },
+  "non_qt_windows_check": {
+    "compile_command": "C:/Qt/Tools/mingw1310_64/bin/g++.exe -std=c++17 -DRO_ENABLE_QT6_UI=0 -DNOMINMAX -DWIN32_LEAN_AND_MEAN -Isrc docs/packets/evidence/PK27-pet-summary-native-text-check.cpp src/ui/NpcDialogColoredText.cpp -lgdi32 -luser32 -o build-recovery-unit-review/pet-summary-native-text-check.exe",
+    "execution": "Prepend C:/Qt/Tools/mingw1310_64/bin to PATH; run build-recovery-unit-review/pet-summary-native-text-check.exe",
+    "exit_code": 0,
+    "log": "PK27-pet-summary-native-text-check.log",
+    "assertions": "UTF8 codepoint wrapping, wide drawing, red color switch and DC clipping; no Korean glyph/font parity claim"
+  },
+  "native_check_sha256": "b208cdaa0f8978ba021ed8b2a3c02cb12cf523fd5c039356daddd908f40f1171",
+  "deployment": "OFF for build/test; ON restored by configure only; installed executable unchanged",
+  "scope": "Functional alternate property/shared detail checkpoint; full font/skin/charset/non-Windows acceptance, other PK27 lifecycle and whole-plan gates remain open; see evidence."
+}

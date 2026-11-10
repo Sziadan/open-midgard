@@ -3152,7 +3152,7 @@ void PopulateItemInfoState(QtUiState* state)
         else if(window==card){cardLayer=layer++;}
         else if(window==obtain){obtainLayer=layer++;}
     }
-    const bool mainVisible=IsGameplayWindowVisible(state,main)&&main->HasItem();
+    const bool mainVisible=IsGameplayWindowVisible(state,main)&&main->HasContent();
     state->setItemInfoVisible(mainVisible);
     if(mainVisible) {
         state->setItemInfoGeometry(main->m_x,main->m_y,main->m_w,main->m_h);

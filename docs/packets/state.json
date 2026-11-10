@@ -796,7 +796,8 @@
         "docs/packets/contracts/PK27.PET-CONTROL.md",
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
-        "docs/packets/evidence/PK27-pet-window.md"
+        "docs/packets/evidence/PK27-pet-window.md",
+        "docs/packets/evidence/PK27-pet-summary.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
@@ -807,7 +808,8 @@
         "docs/packets/contracts/PK27.PET-CONTROL.md",
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
-        "docs/packets/evidence/PK27-pet-window.md"
+        "docs/packets/evidence/PK27-pet-window.md",
+        "docs/packets/evidence/PK27-pet-summary.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
@@ -816,16 +818,18 @@
       "evidence": [
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
-        "docs/packets/evidence/PK27-pet-window.md"
+        "docs/packets/evidence/PK27-pet-window.md",
+        "docs/packets/evidence/PK27-pet-summary.md"
       ],
       "commit_subject": "packet(PK27): restore pet state and accessory reception"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK27-pet-window.md"
+        "docs/packets/evidence/PK27-pet-window.md",
+        "docs/packets/evidence/PK27-pet-summary.md"
       ],
-      "commit_subject": "packet(PK27): restore actual pet information window"
+      "commit_subject": "packet(PK27): restore alternate property summary recipient"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -2126,9 +2130,10 @@
         "docs/packets/contracts/PK27.PET-CONTROL.md",
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
-        "docs/packets/evidence/PK27-pet-window.md"
+        "docs/packets/evidence/PK27-pet-window.md",
+        "docs/packets/evidence/PK27-pet-summary.md"
       ],
-      "commit_subject": "packet(PK27): restore actual pet information window"
+      "commit_subject": "packet(PK27): restore alternate property summary recipient"
     }
   }
 }

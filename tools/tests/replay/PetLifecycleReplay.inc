@@ -4,6 +4,8 @@
 #include "res/Sprite.h"
 #include "world/World.h"
 #include "ui/UIWindow.h"
+#include "ui/UIItemInfoWnd.h"
+#include "core/SourcePetSummaryText.generated.inc"
 
 void PetLifecycleReplay()
 {
@@ -18,6 +20,7 @@ void PetLifecycleReplay()
     TestConnection connection;
     auto& router=GetProductionGameModePacketRouter();
     UIWindow invalidationProbe;invalidationProbe.m_id=88;
+    Require(!g_windowMgr.m_itemInfoWnd,"pet state replay requires a fresh shared detail owner");
     struct Restore {
         CWorld& world;CGameMode& mode;PetActor& actor;UIWindow& probe;CGameModePacketRouter& router;
         ro::pet::Status pet=g_session.m_petStatus;
@@ -30,6 +33,7 @@ void PetLifecycleReplay()
         CMode* current=SkillPacketReplayAccess::Current();int modeType=SkillPacketReplayAccess::CurrentType();
         int folder=g_readFolderFirst;std::filesystem::path cwd=std::filesystem::current_path(),temporary;
         ~Restore(){
+            if(g_windowMgr.m_itemInfoWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_itemInfoWnd);
             g_windowMgr.m_children.remove(&probe);world.UnregisterActor(&actor);mode.m_world=nullptr;
             SkillPacketReplayAccess::Restore(current,modeType);
             g_session.m_petStatus=pet;g_session.ClearInventoryItems();for(const auto& item:inventory)g_session.SetInventoryItem(item);g_windowMgr.m_chatEvents=events;
@@ -113,6 +117,71 @@ void PetLifecycleReplay()
         && pet.relationship==-32768 && pet.accessoryItemId==65535 && pet.actorId==actor.m_gid && pet.job==1011 && pet.eggIndex==4321,"property extension/history/identity preservation differs");
     set16(property,27,10000);property[2]='X';dispatch(property);
     Require(pet.name=="P" && pet.level==10,"alternate pet summary overwrote normal pet state");
+    auto* detail=g_windowMgr.m_itemInfoWnd;
+    Require(detail && detail->HasPetSummary() && detail->HasContent() && !detail->HasItem()
+        && detail->m_w==280 && detail->m_h==120,"alternate summary did not create actual shared source detail owner");
+    UIItemInfoWnd::DisplayData summary;
+    Require(detail->GetDisplayDataForQt(&summary),"fresh alternate summary has no passive view");
+    using namespace ro::pet::summary_text;
+    const auto utf8=[](const std::string& raw){
+        const int n=MultiByteToWideChar(949,0,raw.data(),static_cast<int>(raw.size()),nullptr,0);
+        std::wstring wide(n,L'\0');MultiByteToWideChar(949,0,raw.data(),static_cast<int>(raw.size()),wide.data(),n);
+        const int size=WideCharToMultiByte(CP_UTF8,0,wide.data(),n,nullptr,0,nullptr,nullptr);
+        std::string out(size,'\0');WideCharToMultiByte(CP_UTF8,0,wide.data(),n,out.data(),size,nullptr,nullptr);return out;
+    };
+    const std::string expected=std::string("X\n")+utf8(std::string(modified)+'\n'+levelPrefix+"0\n"
+        +fullnessPrefix+hungerUnknown+'\n'+relationshipPrefix+friendlyUnknown+'\n'+equipped+'\n');
+    Require(summary.description==expected && summary.detailLines.empty() && summary.itemId==0,
+        "alternate summary rows/order/signed fields/unsigned flag-accessory differ");
+    Require(!g_windowMgr.m_itemCollectionWnd,"alternate summary opened illustration preview");
+    const std::pair<int,const char*> hungerCases[]={{-1,hungerUnknown},{0,hunger0},{10,hunger0},{11,hunger1},
+        {25,hunger1},{26,hunger2},{75,hunger2},{76,hunger3},{90,hunger3},{91,hunger4},{100,hunger4},{101,hungerUnknown}};
+    for(const auto& test:hungerCases){
+        set16(property,29,static_cast<u16>(test.first));dispatch(property);
+        Require(g_windowMgr.m_itemInfoWnd==detail && detail->GetDisplayDataForQt(&summary)
+            && summary.description.find(utf8(std::string(fullnessPrefix)+test.second+'\n'))!=std::string::npos,
+            "alternate summary hunger boundary or singleton reuse differs");
+    }
+    const std::pair<int,const char*> friendCases[]={{-1,friendlyUnknown},{0,friendly0},{100,friendly0},{101,friendly1},
+        {250,friendly1},{251,friendly2},{750,friendly2},{751,friendly3},{900,friendly3},{901,friendly4},{1000,friendly4},{1001,friendlyUnknown}};
+    for(const auto& test:friendCases){
+        set16(property,31,static_cast<u16>(test.first));dispatch(property);
+        Require(detail->GetDisplayDataForQt(&summary)
+            && summary.description.find(utf8(std::string(relationshipPrefix)+test.second+'\n'))!=std::string::npos,
+            "alternate summary relationship boundary differs");
+    }
+    ITEM_INFO previous{};previous.SetItemId(501);previous.m_itemIndex=64321;previous.m_num=2;previous.m_isIdentified=1;
+    g_session.SetInventoryItem(previous);
+    detail->SetItemInfo(previous,0,0,ItemInfoSource::Inventory);Require(!detail->HasPetSummary(),"ordinary item replacement retained summary sentinel");
+    UIItemInfoWnd::DisplayData itemDisplay;Require(detail->GetDisplayDataForQt(&itemDisplay),"ordinary detail fixture missing");
+    property[26]=0;set16(property,27,32767);set16(property,33,0);
+    std::fill(property.begin()+2,property.begin()+26,'N');dispatch(property);
+    Require(detail->GetDisplayDataForQt(&summary) && summary.itemId==501 && summary.name==itemDisplay.name
+        && summary.description.find(std::string(24,'N')+'\n'+utf8(std::string(unmodified)+'\n'+levelPrefix+"22767\n"))==0
+        && summary.description.find(utf8(std::string(unequipped)+'\n'))!=std::string::npos
+        && (itemDisplay.description.empty() || summary.description.find(itemDisplay.description)!=std::string::npos),
+        "alternate summary replaced item, lost appended description, or mishandled max wire name/level");
+    Require(g_windowMgr.m_children.back()==detail && pet.name=="P" && pet.level==10 && pet.job==1011
+        && pet.fullness==-1 && pet.relationship==-32768 && pet.modified==255 && pet.accessoryItemId==65535,
+        "summary did not raise shared detail or mutated normal pet state");
+    g_session.ClearInventoryItems();detail->RefreshBoundItem();
+    Require(detail->HasPetSummary() && detail->HasItem() && detail->GetDisplayDataForQt(&summary) && summary.itemId==501,
+        "alternate summary remained tied to the old live inventory binding");
+    for(int i=2;i<26;i+=2){property[i]=0xb0;property[i+1]=0xa1;}
+    const int savedCodePage=g_codePage;g_codePage=949;dispatch(property);
+    Require(detail->GetDisplayDataForQt(&summary) && summary.description.find(u8"가가가가가가가가가가가가\n")==0,
+        "DBCS wire summary name was not decoded to passive/native UTF8 text");
+    g_codePage=savedCodePage;
+    const auto normalBeforeBoundary=pet;
+    const std::string summaryBeforeBoundary=summary.description;
+    set16(property,27,9999);dispatch(property);
+    Require(pet.level==9999 && detail->GetDisplayDataForQt(&summary) && summary.description==summaryBeforeBoundary,
+        "level9999 incorrectly refreshed alternate summary");
+    set16(property,27,0x8000);dispatch(property);
+    Require(pet.level==-32768 && detail->GetDisplayDataForQt(&summary) && summary.description==summaryBeforeBoundary,
+        "negative signed property level was treated as alternate summary");
+    pet=normalBeforeBoundary;
+    detail->SetItemInfo(previous,0,0);Require(!detail->HasPetSummary(),"returning to ordinary item left pet text active");
     const auto inventory=[&](u16 opcode){
         const int size=ro::net::GetActiveEquipmentItemListEntrySize(opcode);Require(size==20 || size==26,"unexpected selected equipment size");
         std::vector<u8> p(4+size*4);set16(p,0,opcode);set16(p,2,static_cast<u16>(p.size()));
@@ -126,5 +195,5 @@ void PetLifecycleReplay()
         Require(pet.eggIndex==102,"empty equipment list cleared source remembered egg");
     }
     g_session.ClearInventoryItems();Require(pet.eggIndex==102,"inventory clear invented pet egg reset");
-    std::cout<<"{\"case_id\":\"pet_live_state_receive\",\"contract_id\":\"PK27.PET-CONTROL\",\"source01a4\":true,\"actual_actor_act_resource\":true,\"property_widths\":true,\"egg_wire_order\":true,\"alternate_owner_pending\":true,\"outcome\":\"PASS\"}\n";
+    std::cout<<"{\"case_id\":\"pet_live_state_receive\",\"contract_id\":\"PK27.PET-CONTROL\",\"source01a4\":true,\"actual_actor_act_resource\":true,\"property_widths\":true,\"egg_wire_order\":true,\"alternate_shared_detail_owner\":true,\"outcome\":\"PASS\"}\n";
 }

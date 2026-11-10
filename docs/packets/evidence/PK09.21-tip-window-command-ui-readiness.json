@@ -415,5 +415,6 @@
   },
   "runtime_action_checkpoint": "docs/packets/evidence/PK09.21-help-where.md; all22 types have handlers at declared scope; full command window/broad alias and text acceptance remain open",
   "runtime_controller_checkpoint": "docs/packets/evidence/PK09.21-command-controller.md; actual controller/help/native/passive Qt implemented. PetInfo74 now implemented by PK27-pet-window.md; keys68/87 and full destination parity remain open. Historical handler preparation is superseded by these runtime checkpoints.",
-  "runtime_pet_checkpoint": "docs/packets/evidence/PK27-pet-window.md; actual factory88, rename/confirmation/menu, exact egg return, native/passive Qt and input/lifetime checks. Fifteen of17 entry cases represented including six selected no-ops. Full destination fidelity, alternate pet summary and broader gates remain open."
+  "runtime_pet_checkpoint": "docs/packets/evidence/PK27-pet-window.md and PK27-pet-summary.md; actual PetInfo88/controller/menu/confirm/return and alternate property/shared detail owner implemented at declared representation. Fifteen of17 entry cases represented including six selected no-ops; destination text/font/skin, mode26 pet menu, remaining pet lifecycle and broad gates remain open.",
+  "runtime_pet_summary_checkpoint": "docs/packets/evidence/PK27-pet-summary.md; source factory12 maps to existing port UIItemInfoWnd24, preserves retained item and normal pet state, six exact source rows and explicit CP949/UTF8 path. Full font/skin/non-Windows and remaining lifecycle acceptance open."
 }

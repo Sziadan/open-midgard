@@ -21,6 +21,7 @@
 #include "session/SkillActionInfo2.h"
 #include "skill/Skill.h"
 #include "item/Item.h"
+#include "ui/UIItemInfoWnd.h"
 #include "item/ItemUseFeedback.h"
 #include "Mode.h"
 #include "DebugLog.h"
@@ -5274,9 +5275,10 @@ void HandlePetStatus(CGameMode&, const PacketView& packet)
     auto next=g_session.m_petStatus;
     if(!ro::pet::ReadStatus(next,packet.data,packet.packetLength))return;
     if(next.level>=10000){
-        // Source routes this alternate summary to factory12/message29.
-        // The port's item-illustration owner cannot receive that contract.
-        DbgLog("[Pet] alternate property summary awaits source factory12 recipient\n");
+        // Source factory12 is the shared item detail, named ItemInfo in this
+        // port. Port ItemCollection is the separate illustration preview.
+        auto* detail=static_cast<UIItemInfoWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMINFOWND));
+        if(detail)detail->SetPetSummary(next);
         return;
     }
     g_session.m_petStatus=std::move(next);
