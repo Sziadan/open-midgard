@@ -5,6 +5,8 @@
         const auto oldWorld=mode.m_world;const auto oldActors=mode.m_runtimeActors;
         const auto oldCommerce=ro::commerce::state;auto* oldRoom=g_windowMgr.m_chatRoomWnd;auto* oldCart=g_windowMgr.m_selectCartWnd;
         const u32 oldSp=g_session.GetCharacterVitals().sp;
+        const auto oldPending=mode.m_skillUseInfo;const bool oldGood=g_isGoodSkillHanging;
+        const auto oldIdentity=std::make_tuple(g_session.m_aid,g_session.m_gid,g_session.m_homunGID,g_session.m_merGID);
         const auto oldChase=std::make_tuple(mode.m_skillChaseTargetGid,mode.m_skillChaseSkillId,mode.m_skillChaseSkillLevel,
             mode.m_skillChaseRange,mode.m_hasSkillChase,mode.m_hasGroundSkillChase,mode.m_hasTouchSkillChase);
         CWorld world;CPlayer player;CPc target;C3dAttr attr;
@@ -24,6 +26,8 @@
             g_session.ClearHomunSkillItems();for(const auto& row:homun)g_session.SetHomunSkillItem(row);
             g_session.ClearMercSkillItems();for(const auto& row:merc)g_session.SetMercSkillItem(row);
             g_session.UpdateCharacterVital(7,oldSp);
+            mode.m_skillUseInfo=oldPending;g_isGoodSkillHanging=oldGood;
+            std::tie(g_session.m_aid,g_session.m_gid,g_session.m_homunGID,g_session.m_merGID)=oldIdentity;
         }};
         g_windowMgr.m_chatRoomWnd=nullptr;ro::commerce::state.vendingActive=false;
         g_session.ClearSkillItems();g_session.ClearTemporarySkillItems();g_session.ClearHomunSkillItems();g_session.ClearMercSkillItems();
@@ -105,4 +109,56 @@
         Require(g_windowMgr.m_selectCartWnd,"source cart recipient missing before request fallthrough");player.m_effectState=0;
         CPlayer other;other.SendMsg(nullptr,41,999,137,2);other.SendMsg(nullptr,90,7,0,0);
         Require(!mode.m_hasSkillChase && other.m_proceedType.type==3,"unrelated player overwrote current mode proceed");
+        // Actual0147 -> virtual126 ->79/76; incoming stack row, not the
+        // potentially older metadata retained in temporary storage, drives126.
+        g_skillMgr.EnsureLoaded();
+        const auto* decreaseAgi=g_skillMgr.GetSkillMetadata(30);
+        Require(decreaseAgi && decreaseAgi->levelSpCosts==std::vector<int>({15,17,19,21,23,25,27,29,31,33}),
+            "source numeric hash tokens were not retained as SP amounts");
+        Require(g_skillMgr.IsLevelUseSkill(30),"level-use30 lacks source SP table");
+        Require(!g_skillMgr.IsLevelUseSkill(4),"passive4 incorrectly has a level-use source SP table");
+        Require(g_skillMgr.IsLevelUseSkill(0),"unknown0 lacks initialized null-description SP");
+        Require(g_skillMgr.IsLevelUseSkill(7000),"missing7000 does not share source null-description SP");
+        Require(!g_skillMgr.IsLevelUseSkill(-1) && !g_skillMgr.IsLevelUseSkill(8238),"level-use out-of-table safety guard differs");
+        begin(28,3);
+        for(const auto [type,use]:std::array<std::pair<u32,int>,5>{{{1,2},{2,1},{8,3},{16,4},{32,5}}}){
+            autorun(30,type,0xfffe,7,11,1);
+            Require(mode.m_skillUseInfo.id==30 && mode.m_skillUseInfo.level==-2 && mode.m_skillUseInfo.attackRange==11
+                && mode.m_skillUseInfo.useType==use && !g_isGoodSkillHanging
+                && player.m_proceedType.type==3 && player.m_skillId==28 && mode.m_skillChaseSkillId==28,
+                "source126 mapping/79 raw level/range changed old proceed");
+        }
+        autorun(30,3,7,7,99,0);
+        Require(mode.m_skillUseInfo.useType==5 && mode.m_skillUseInfo.level==-2 && mode.m_skillUseInfo.attackRange==11,
+            "source126 treated unknown/combined type as a bitmask");
+        PLAYER_SKILL_INFO passive{};passive.m_isValid=1;passive.SKID=4;passive.level=7;g_session.SetSkillItem(passive);
+        autorun(4,1,99,7,13,0);
+        Require(mode.m_skillUseInfo.id==4 && mode.m_skillUseInfo.level==7 && mode.m_skillUseInfo.attackRange==13 && g_isGoodSkillHanging,
+            "non-level-use79 did not resolve learned level");
+        passive.m_isValid=0;g_session.SetSkillItem(passive);passive.m_isValid=1;passive.level=9;g_session.AddTemporarySkillItem(passive);
+        autorun(4,1,99,7,14,0);
+        Require(mode.m_skillUseInfo.level==0,"source79 invented temporary fallback for non-level-use skill");
+        const auto retainedPending=mode.m_skillUseInfo;const bool retainedGood=g_isGoodSkillHanging;
+        mode.SendMsg(79,0,0,0);
+        Require(mode.m_skillUseInfo.useType==0 && mode.m_skillUseInfo.id==retainedPending.id
+            && mode.m_skillUseInfo.level==retainedPending.level && mode.m_skillUseInfo.attackRange==retainedPending.attackRange
+            && g_isGoodSkillHanging==retainedGood,"source79 null row reset retained fields/global");
+        g_session.m_aid=0x11000001;g_session.m_gid=0x22000002;g_session.m_homunGID=0x33000003;g_session.m_merGID=0x44000004;
+        autorun(30,4,3,7,5,0);skillFrame(30,3,g_session.m_aid);
+        Require(g_session.GetTemporarySkillItemBySkillId(30)->type==2 && mode.m_skillUseInfo.useType==0,
+            "source126 dispatched retained temporary type instead of incoming type");
+        for(const auto [id,gid]:std::array<std::pair<u16,u32>,3>{{{40,g_session.m_aid},{8000,g_session.m_homunGID},{8200,g_session.m_merGID}}}){
+            autorun(id,4,3,7,5,0);skillFrame(id,3,gid);
+            Require(mode.m_skillUseInfo.useType==0 && player.m_proceedType.type==3,"self126 did not reset only pending use type");
+        }
+        autorun(40,4,0xfffe,7,5,0);skillFrame(40,0xfffe,g_session.m_aid);
+        ro::commerce::state.vendingActive=true;mode.m_skillUseInfo.useType=2;autorun(40,4,3,7,5,0);
+        Require(mode.m_skillUseInfo.useType==2 && g_session.GetTemporarySkillItemBySkillId(40)->level==3
+            && SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"vending guard did not preserve arm after temporary receipt");
+        ro::commerce::state.vendingActive=false;player.m_stateId=6;autorun(40,4,3,7,5,0);
+        Require(mode.m_skillUseInfo.useType==0 && SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,
+            "source126 failed to reset pending type after sitting dispatch rejection");
+        autorun(8000,4,3,7,5,0);skillFrame(8000,3,g_session.m_homunGID);player.m_stateId=0;
+        g_session.m_aid=0;autorun(40,4,3,7,5,0);skillFrame(40,3,0);
+        player.SendMsg(nullptr,13,0,0,0);
     }

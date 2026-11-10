@@ -202,7 +202,6 @@ constexpr u32 kStatusAspd = 53;
 constexpr u32 kStatusPlusAspd = 54;
 constexpr u32 kStatusJobLevel = 55;
 constexpr u32 kNotifyEffectBaseLevelUp = 0;
-constexpr u16 kSkillMerchantIdentify = 40;
 constexpr int kEffectStateSightMask = 0x0001;
 constexpr int kEffectStateRuwachMask = 0x2000;
 constexpr int kEffectStateHidingMask = 0x0004;
@@ -1276,40 +1275,6 @@ void ShowIdentifyWindow(const std::vector<unsigned int>& itemIndices)
     window->SetIdentifyItemIndices(itemIndices);
 }
 
-bool SendIdentifySkillUseRequest()
-{
-    const u32 targetGid = g_session.m_gid != 0 ? g_session.m_gid : g_session.m_aid;
-    if (targetGid == 0) {
-        return false;
-    }
-
-    const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
-    bool sent = false;
-    if (profile.id == ro::net::MapGameplaySendProfileId::PacketVer22) {
-        PACKET_CZ_USESKILLTOID_PACKETVER22 packet{};
-        packet.PacketType = profile.useSkillToId;
-        packet.SkillLevel = 1;
-        packet.SkillId = kSkillMerchantIdentify;
-        packet.TargetGID = targetGid;
-        sent = CRagConnection::instance()->SendPacket(
-            reinterpret_cast<const char*>(&packet),
-            static_cast<int>(sizeof(packet)));
-    } else {
-        PACKET_CZ_USESKILLTOID2 packet{};
-        packet.PacketType = profile.useSkillToId;
-        packet.SkillLevel = 1;
-        packet.SkillId = kSkillMerchantIdentify;
-        packet.TargetGID = targetGid;
-        sent = CRagConnection::instance()->SendPacket(
-            reinterpret_cast<const char*>(&packet),
-            static_cast<int>(sizeof(packet)));
-    }
-    DbgLog("[GameMode] autorun skill MC_IDENTIFY request target=%u sent=%d\n",
-        static_cast<unsigned int>(targetGid),
-        sent ? 1 : 0);
-    return sent;
-}
-
 void HandleItemIdentifyList(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 4 || ((packet.packetLength - 4) % 2) != 0) {
@@ -1816,7 +1781,7 @@ bool BuildPlayerSkillListEntry(const u8* entry, PLAYER_SKILL_INFO& outSkill)
 }
 
 // Ref Zc_autorun_skill stores a temporary row before invoking mode126.
-void HandleAutoRunSkill(CGameMode&, const PacketView& packet)
+void HandleAutoRunSkill(CGameMode& mode, const PacketView& packet)
 {
     if(!packet.data || packet.packetId!=0x0147 || packet.packetLength!=39 || packet.data[0]!=0x47 || packet.data[1]!=1)return;
     PLAYER_SKILL_INFO skill{};skill.m_isValid=1;skill.SKID=ReadLE16(packet.data+2);
@@ -1826,9 +1791,7 @@ void HandleAutoRunSkill(CGameMode&, const PacketView& packet)
     skill.attackRange=static_cast<s16>(ReadLE16(packet.data+12));skill.upgradable=packet.data[38];
     skill.skillName=skill.skillIdName;
     g_session.AddTemporarySkillItem(skill);
-    // Existing source126/identify recipient is retained; other automatic
-    // skill UI recipients remain a separate integration gate.
-    if(skill.SKID==kSkillMerchantIdentify)SendIdentifySkillUseRequest();
+    mode.SendMsg(126,reinterpret_cast<msgparam_t>(&skill),skill.level,0);
 }
 
 // Matches Ref Zc_Skillinfo_List filtering for ZC_SKILLINFO_LIST (0x010F) player skills.

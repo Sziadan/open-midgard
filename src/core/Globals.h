@@ -64,3 +64,4 @@ extern CSession g_session;
 extern bool g_multiLang;
 extern s8 g_MessageHi;
 extern u8 NameBalloonShorten,NameBalloonfontBold;
+extern bool g_isGoodSkillHanging;

@@ -1,0 +1,127 @@
+-- Configuring done (2.0s)
+-- Generating done (1.5s)
+-- Build files have been written to: D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-recovery-unit-review
+[  2%] Built target wave_math_checks
+[  2%] Building CXX object CMakeFiles/skill_packet_replay_checks.dir/replay/SkillPacketReplayTests.cpp.obj
+[  3%] Building CXX object CMakeFiles/ambient_sound_checks.dir/AmbientSoundTests.cpp.obj
+[  4%] Built target actor_tint_checks
+[  5%] Building CXX object CMakeFiles/combo_delay_skill272_integration_checks.dir/ComboDelayIntegrationTests.cpp.obj
+[  6%] Building CXX object CMakeFiles/server_sound_checks.dir/ServerSoundTests.cpp.obj
+[  8%] Building CXX object CMakeFiles/wave_dispatch_checks.dir/WaveDispatchTests.cpp.obj
+[  8%] Building CXX object CMakeFiles/forced_motion_checks.dir/ForcedMotionTests.cpp.obj
+[  9%] Building CXX object CMakeFiles/blade_stop_integration_checks.dir/BladeStopIntegrationTests.cpp.obj
+[ 10%] Linking CXX executable ambient_sound_checks.exe
+[ 11%] Building CXX object CMakeFiles/skill_message_checks.dir/SkillMessageTests.cpp.obj
+[ 12%] Linking CXX executable forced_motion_checks.exe
+[ 12%] Linking CXX executable combo_delay_skill272_integration_checks.exe
+[ 13%] Linking CXX executable blade_stop_integration_checks.exe
+[ 14%] Linking CXX executable server_sound_checks.exe
+[ 15%] Linking CXX executable wave_dispatch_checks.exe
+[ 16%] Linking CXX executable skill_message_checks.exe
+[ 16%] Built target ambient_sound_checks
+[ 16%] Built target forced_motion_checks
+[ 16%] Built target combo_delay_skill272_integration_checks
+[ 16%] Built target blade_stop_integration_checks
+[ 17%] Building CXX object CMakeFiles/notify_effect3_checks.dir/NotifyEffect3Tests.cpp.obj
+[ 18%] Building CXX object CMakeFiles/talkbox_chat_contents_checks.dir/TalkboxChatContentsTests.cpp.obj
+[ 18%] Built target server_sound_checks
+[ 18%] Built target wave_dispatch_checks
+[ 19%] Building CXX object CMakeFiles/skill_talkbox_text_checks.dir/SkillTalkboxTextTests.cpp.obj
+[ 19%] Built target skill_message_checks
+[ 20%] Building CXX object CMakeFiles/change_guild_checks.dir/ChangeGuildTests.cpp.obj
+[ 20%] Building CXX object CMakeFiles/show_image_checks.dir/ShowImageTests.cpp.obj
+[ 21%] Linking CXX executable talkbox_chat_contents_checks.exe
+[ 21%] Building CXX object CMakeFiles/guild_skill_checks.dir/GuildSkillTests.cpp.obj
+[ 22%] Building CXX object CMakeFiles/ui_invalidate_checks.dir/UIInvalidateTests.cpp.obj
+[ 23%] Linking CXX executable skill_packet_replay_checks.exe
+[ 24%] Linking CXX executable notify_effect3_checks.exe
+[ 25%] Linking CXX executable skill_talkbox_text_checks.exe
+[ 26%] Linking CXX executable change_guild_checks.exe
+[ 27%] Linking CXX executable show_image_checks.exe
+[ 28%] Linking CXX executable ui_invalidate_checks.exe
+[ 28%] Built target talkbox_chat_contents_checks
+[ 29%] Linking CXX executable guild_skill_checks.exe
+[ 29%] Built target skill_packet_replay_checks
+[ 29%] Built target skill_talkbox_text_checks
+[ 29%] Built target notify_effect3_checks
+[ 30%] Building CXX object CMakeFiles/renderer_frame_checks.dir/RendererFrameTests.cpp.obj
+[ 31%] Building CXX object CMakeFiles/assumptio_depth_checks.dir/AssumptioDepthTests.cpp.obj
+[ 31%] Built target change_guild_checks
+[ 31%] Built target show_image_checks
+[ 31%] Built target ui_invalidate_checks
+[ 31%] Building CXX object CMakeFiles/effect_lifecycle_checks.dir/EffectLifecycleTests.cpp.obj
+[ 32%] Building CXX object CMakeFiles/particle_render_checks.dir/ParticleRenderTests.cpp.obj
+[ 32%] Built target guild_skill_checks
+[ 33%] Building CXX object CMakeFiles/guild_skill_wnd_refresh_checks.dir/D_/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/tools/GuildSkillWndRefreshTests.cpp.obj
+[ 34%] Linking CXX executable renderer_frame_checks.exe
+[ 35%] Linking CXX executable assumptio_depth_checks.exe
+[ 37%] Building CXX object CMakeFiles/spirit_packet_lifecycle_checks.dir/SpiritPacketLifecycleTests.cpp.obj
+[ 37%] Building CXX object CMakeFiles/auto_spell_packet_checks.dir/AutoSpellPacketTests.cpp.obj
+[ 38%] Building CXX object CMakeFiles/spirit_chookgi_integration_checks.dir/SpiritChookgiIntegrationTests.cpp.obj
+[ 38%] Built target renderer_frame_checks
+[ 38%] Built target assumptio_depth_checks
+[ 38%] Linking CXX executable auto_spell_packet_checks.exe
+[ 39%] Building CXX object CMakeFiles/devotion_packet_lifecycle_checks.dir/DevotionPacketLifecycleTests.cpp.obj
+[ 40%] Building CXX object CMakeFiles/recovery_resurrection_packet_checks.dir/RecoveryResurrectionPacketTests.cpp.obj
+[ 40%] Linking CXX executable spirit_packet_lifecycle_checks.exe
+[ 41%] Linking CXX executable guild_skill_wnd_refresh_checks.exe
+[ 42%] Linking CXX executable spirit_chookgi_integration_checks.exe
+[ 42%] Built target auto_spell_packet_checks
+[ 46%] Built target skill_action_info_runtime_parity_checks
+[ 47%] Linking CXX executable devotion_packet_lifecycle_checks.exe
+[ 47%] Built target guild_skill_wnd_refresh_checks
+[ 47%] Built target spirit_packet_lifecycle_checks
+[ 48%] Linking CXX executable recovery_resurrection_packet_checks.exe
+[ 48%] Built target spirit_chookgi_integration_checks
+[ 53%] Built target skill_action_info2_parity_checks
+[ 54%] Building CXX object CMakeFiles/msg_effect_state_lifecycle_checks.dir/MsgEffectStateLifecycleTests.cpp.obj
+[ 55%] Built target ui_spell_list_receiver_checks
+[ 56%] Linking CXX executable particle_render_checks.exe
+[ 58%] Built target skill_tree_model_checks
+[ 59%] Building CXX object CMakeFiles/skill_self_target_checks.dir/SkillSelfTargetTests.cpp.obj
+[ 60%] Building CXX object CMakeFiles/effect_blend_state_checks.dir/EffectBlendStateTests.cpp.obj
+[ 60%] Built target devotion_packet_lifecycle_checks
+[ 60%] Built target recovery_resurrection_packet_checks
+[ 61%] Building CXX object CMakeFiles/heal_timing_checks.dir/HealTimingTests.cpp.obj
+[ 63%] Linking CXX executable msg_effect_state_lifecycle_checks.exe
+[ 63%] Building CXX object CMakeFiles/summon_slave_message_checks.dir/SummonSlaveMessageTests.cpp.obj
+[ 64%] Building CXX object CMakeFiles/skill_walk_stop_checks.dir/SkillWalkStopTests.cpp.obj
+[ 65%] Linking CXX executable skill_self_target_checks.exe
+[ 65%] Built target particle_render_checks
+[ 66%] Linking CXX executable effect_blend_state_checks.exe
+[ 67%] Linking CXX executable heal_timing_checks.exe
+[ 68%] Linking CXX executable summon_slave_message_checks.exe
+[ 69%] Building CXX object CMakeFiles/presentation_regression_checks.dir/PresentationRegressionTests.cpp.obj
+[ 69%] Built target msg_effect_state_lifecycle_checks
+[ 70%] Linking CXX executable skill_walk_stop_checks.exe
+[ 70%] Built target skill_self_target_checks
+[ 70%] Built target heal_timing_checks
+[ 71%] Building CXX object CMakeFiles/cursor_snap_checks.dir/CursorSnapTests.cpp.obj
+[ 71%] Built target effect_blend_state_checks
+[ 71%] Built target summon_slave_message_checks
+[ 72%] Building CXX object CMakeFiles/ground_sampler_checks.dir/GroundSamplerTests.cpp.obj
+[ 72%] Built target skill_walk_stop_checks
+[ 72%] Linking CXX executable presentation_regression_checks.exe
+[ 73%] Building CXX object CMakeFiles/combat_presentation_fix_checks.dir/CombatPresentationFixTests.cpp.obj
+[ 75%] Built target chat_window_state_checks
+[ 77%] Built target chat_notice_checks
+[ 78%] Built target chat_history_view_checks
+[ 79%] Linking CXX executable cursor_snap_checks.exe
+[ 79%] Built target presentation_regression_checks
+[ 81%] Built target chat_history_wrap_checks
+[ 83%] Built target chat_battle_options_checks
+[ 85%] Built target chat_scrollbar_checks
+[ 86%] Built target chat_room_packet_checks
+[ 87%] Built target insult_words_checks
+[ 89%] Built target whisper_names_checks
+[ 91%] Built target source_chat_command_checks
+[ 91%] Built target cursor_snap_checks
+[ 92%] Linking CXX executable combat_presentation_fix_checks.exe
+[ 94%] Built target source_chat_tokenizer_checks
+[ 96%] Built target source_chat_parser_checks
+[ 97%] Built target source_chat_routing_checks
+[ 98%] Linking CXX executable ground_sampler_checks.exe
+[ 98%] Built target combat_presentation_fix_checks
+[ 99%] Built target ground_sampler_checks
+[100%] Linking CXX executable effect_lifecycle_checks.exe
+[100%] Built target effect_lifecycle_checks

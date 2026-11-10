@@ -1,0 +1,109 @@
+{
+  "scope": "Read-only source inventory for receive packet ZC_AUTORUN_SKILL (0x0147), temporary skill storage, and its message-126 call.",
+  "primary_source": [
+    {
+      "location": "Ref/GameModePacket.cpp:1324-1326",
+      "detail": "Receive dispatcher case 327 (0x0147) calls CGameMode::Zc_autorun_skill(this, buf), then exits the dispatch branch."
+    },
+    {
+      "location": "Ref/GameModePacket.cpp:31687-31719",
+      "detail": "Zc_autorun_skill creates SKILL_INFO, sets m_isValid=1, populates fields from the raw packet, resolves the skill ID name, calls CSession::AddTempSkillItem, then calls SendMsg with messageId=126, val1=&skillInfo, val2=skillInfo.level, val3=0. Decompiled spelling is this->CMode::SendMsg; the selected PE confirms this call dispatches virtually through vtable slot offset 0x14 at VA 0x5A1205."
+    },
+    {
+      "location": "Ref/GameMode2.cpp:2169-2174,2861-2864,5751-5789",
+      "detail": "The selected call reaches virtual CGameMode::SendMsg at 0x5833a0; switch case 0x7e is decimal message 126. It treats packed 64-bit val1 as low-DWORD pointer to SKILL_INFO and high-DWORD level, then switches on descriptor type at pointer+8: 1 sends message 79 with selector 2; 2 sends 79 with selector 1; 4 selects recipient GID by SKID family, sends message 76 with SKID/GID/level, then sends 79 with zero arguments; 8, 0x10, and 0x20 send message 79 with selectors 3, 4, and 5; other values return SUT_NOSKILL."
+    },
+    {
+      "location": "Ref/Mode.cpp:95-111",
+      "detail": "The base CMode::SendMsg implementation handles message 2 and 75 only and otherwise returns 0. It is not the selected recipient for the autorun message-126 call according to the PE virtual-call evidence."
+    },
+    {
+      "location": "Ref/Session.cpp:3435-3481",
+      "detail": "AddTempSkillItem appends a new skill snapshot. On duplicate SKID, only level, SKID, spcost, and upgradable are updated; the rest of the existing row is preserved."
+    },
+    {
+      "location": "Ref/Session.cpp:13901-13966",
+      "detail": "GetTempSkillItemInfoBySkillId searches the temporary list by SKID and returns the first match or null; the list is distinct from regular player, homunculus, and mercenary skill lists."
+    }
+  ],
+  "raw_packet_fields": [
+    {
+      "field": "packet id",
+      "offset": 0,
+      "width": 2,
+      "source_dispatch": "0x0147 (decimal 327)"
+    },
+    {
+      "field": "SKID",
+      "offset": 2,
+      "width": 2,
+      "source_expression": "*((_WORD*)buf + 1)"
+    },
+    {
+      "field": "type",
+      "offset": 4,
+      "width": 4,
+      "source_expression": "*((_DWORD*)buf + 1)"
+    },
+    {
+      "field": "level",
+      "offset": 8,
+      "width": "2 signed",
+      "source_expression": "*((__int16*)buf + 4)"
+    },
+    {
+      "field": "spcost",
+      "offset": 10,
+      "width": "2 signed",
+      "source_expression": "*((__int16*)buf + 5)"
+    },
+    {
+      "field": "attackRange",
+      "offset": 12,
+      "width": "2 signed",
+      "source_expression": "*((__int16*)buf + 6)"
+    },
+    {
+      "field": "upgradable",
+      "offset": 38,
+      "width": 1,
+      "source_expression": "*((unsigned __int8*)buf + 38)"
+    }
+  ],
+  "port_mapping": [
+    {
+      "location": "src/gamemode/GameModePacket.cpp:1819-1830, 9014",
+      "detail": "HandleAutoRunSkill is registered for 0x0147. It rejects null data, wrong packet id, length other than 39, or bytes 0-1 other than 47 01. It reads SKID at +2, type +4, signed level/spcost/range at +8/+10/+12, upgradable +38; sets m_isValid=1; applies metadata and copies skillIdName to skillName; inserts through g_session.AddTemporarySkillItem."
+    },
+    {
+      "location": "src/session/Session.h:309,327,334,337,461; src/session/Session.cpp:1734-1752,2020-2023,2060-2073",
+      "detail": "Temporary list and Add/Get/Clear APIs are separate from the normal, guild, homun, and merc skill collections. Duplicate insertion preserves prior metadata and changes only level/SKID/spcost/upgradable."
+    },
+    {
+      "location": "src/gamemode/GameMode.cpp:5641",
+      "detail": "When normal player-skill lookup misses or returns an invalid row, the port falls back to GetTemporarySkillItemBySkillId for skill selection."
+    },
+    {
+      "location": "src/gamemode/GameMode.cpp:11131 onward",
+      "detail": "Port CGameMode::SendMsg has no case 126 branch, and HandleAutoRunSkill does not translate the raw skill type into source selector-79/76 dispatches. Its MC_IDENTIFY branch instead sends SendIdentifySkillUseRequest directly."
+    },
+    {
+      "location": "src/gamemode/GameModePacket.cpp:1828-1830",
+      "detail": "Port does not issue a generic message-126 SendMsg call. It calls SendIdentifySkillUseRequest only when SKID equals kSkillMerchantIdentify; other auto-run skill rows only populate temporary storage."
+    },
+    {
+      "location": "src/gamemode/GameMode.cpp:11131 onward",
+      "detail": "CGameMode::SendMsg has no case 126 in its message switch. Current 0x0147 handler does not route its parsed row or raw arguments into that switch."
+    }
+  ],
+  "parity_observations": [
+    "The packet field offsets, 39-byte framing, temporary-row insertion, and duplicate-row update policy are represented in the port handler/session APIs.",
+    "The source call arguments are a pointer to stack-local SKILL_INFO, its level, and zero. The selected PE confirms virtual dispatch to CGameMode::SendMsg, where case 0x7e/126 dispatches by SKILL_INFO.type.",
+    "The port currently lacks a general message-126 selector dispatch. Its MC_IDENTIFY direct-send path is not equivalent to source type-4 behavior unless recipient and sequencing are proven equivalent."
+  ],
+  "unresolved_questions": [
+    "For type 4, do the port's canonical companion IDs and all supported SKID families reproduce source recipient selection?",
+    "Should the port's MC_IDENTIFY special-case remain attached to 0x0147 handling or be replaced by source type-specific dispatch? Root owns this parity decision."
+  ],
+  "root_review": "Inventory describes baseline before integration. Root verified source and selected PE; authoritative decisions/current gates: PK27-autorun-source-review.json."
+}

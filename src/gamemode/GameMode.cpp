@@ -11185,6 +11185,40 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             }
         }else DispatchSourcePlayerSkill(*this,static_cast<int>(wparam),static_cast<u32>(lparam),static_cast<int>(extra));
         return 0;
+    case 79: {
+        if(ro::commerce::state.vendingActive)return 0;
+        m_skillUseInfo.useType=static_cast<int>(wparam);
+        if(!lparam)return 0; // A null row changes only the use type.
+        const auto& row=*reinterpret_cast<const PLAYER_SKILL_INFO*>(lparam);
+        m_skillUseInfo.id=row.SKID;m_skillUseInfo.attackRange=row.attackRange;
+        g_skillMgr.EnsureLoaded();
+        if(g_skillMgr.IsLevelUseSkill(row.SKID))m_skillUseInfo.level=static_cast<int>(extra);
+        else{
+            const auto* learned=row.SKID>=8000 && row.SKID<8017?g_session.GetHomunSkillItemBySkillId(row.SKID)
+                :row.SKID>=8200 && row.SKID<8238?g_session.GetMercSkillItemBySkillId(row.SKID):g_session.GetSkillItemBySkillId(row.SKID);
+            m_skillUseInfo.level=learned && learned->m_isValid?learned->level:0;
+        }
+        g_isGoodSkillHanging=SKILL_INFO::IsGoodSkillForActor(row.SKID);
+        return 0;
+    }
+    case 126: {
+        if(!wparam)return 0;
+        const auto& row=*reinterpret_cast<const PLAYER_SKILL_INFO*>(wparam);
+        switch(row.type){
+        case 1:SendMsg(79,2,wparam,lparam);break;
+        case 2:SendMsg(79,1,wparam,lparam);break;
+        case 4:{
+            const u32 target=row.SKID>=8000 && row.SKID<8017?g_session.m_homunGID
+                :row.SKID>=8200 && row.SKID<8238?g_session.m_merGID:g_session.m_aid;
+            SendMsg(76,row.SKID,target,lparam);SendMsg(79,0,0,0);break;
+        }
+        case 8:SendMsg(79,3,wparam,lparam);break;
+        case 16:SendMsg(79,4,wparam,lparam);break;
+        case 32:SendMsg(79,5,wparam,lparam);break;
+        default:break;
+        }
+        return 0;
+    }
     case 159: {
         const u16 index=static_cast<u16>(wparam);
         const u8 packet[]={0xa7,0x01,static_cast<u8>(index),static_cast<u8>(index>>8)};

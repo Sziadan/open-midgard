@@ -473,5 +473,18 @@
       "global picker/cursor/lock/lifecycle acceptance"
     ],
     "live_deployed": "not accepted"
+  },
+  "runtime_automatic_skill_checkpoint": {
+    "evidence": "PK27-autorun.md",
+    "validation": "Deploy-OFF all-target and standalone builds pass; focused2/2 in7.20s, application164/164 in53.46s (-j4), standalone473/473 in15.87s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open.",
+    "remaining_strong_gates": [
+      "general useType/range/raw-level pending input",
+      "normal shortcut/list producers",
+      "attack/move/ground/touch lifetimes",
+      "companion identity producers/AI",
+      "global picker/cursor/lock",
+      "resource/deployed data acceptance"
+    ],
+    "live_deployed": "not accepted"
   }
 }

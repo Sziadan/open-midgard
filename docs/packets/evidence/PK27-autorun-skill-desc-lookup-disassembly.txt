@@ -1,0 +1,49 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+005196d0 <.text+0x1186d0>:
+  5196d0:	55                   	push   %ebp
+  5196d1:	8b ec                	mov    %esp,%ebp
+  5196d3:	8a 0d c0 60 7b 00    	mov    0x7b60c0,%cl
+  5196d9:	b0 01                	mov    $0x1,%al
+  5196db:	84 c8                	test   %cl,%al
+  5196dd:	75 21                	jne    0x519700
+  5196df:	8a d1                	mov    %cl,%dl
+  5196e1:	b9 e0 60 7b 00       	mov    $0x7b60e0,%ecx
+  5196e6:	0a d0                	or     %al,%dl
+  5196e8:	88 15 c0 60 7b 00    	mov    %dl,0x7b60c0
+  5196ee:	e8 ad ba ff ff       	call   0x5151a0
+  5196f3:	68 50 97 51 00       	push   $0x519750
+  5196f8:	e8 ba e2 18 00       	call   0x6a79b7
+  5196fd:	83 c4 04             	add    $0x4,%esp
+  519700:	56                   	push   %esi
+  519701:	8b 75 0c             	mov    0xc(%ebp),%esi
+  519704:	8d 45 08             	lea    0x8(%ebp),%eax
+  519707:	8b ce                	mov    %esi,%ecx
+  519709:	50                   	push   %eax
+  51970a:	e8 61 06 00 00       	call   0x519d70
+  51970f:	8b 4e 04             	mov    0x4(%esi),%ecx
+  519712:	89 45 0c             	mov    %eax,0xc(%ebp)
+  519715:	3b c1                	cmp    %ecx,%eax
+  519717:	74 0f                	je     0x519728
+  519719:	8b 55 08             	mov    0x8(%ebp),%edx
+  51971c:	8b 70 0c             	mov    0xc(%eax),%esi
+  51971f:	3b d6                	cmp    %esi,%edx
+  519721:	7c 05                	jl     0x519728
+  519723:	8d 45 0c             	lea    0xc(%ebp),%eax
+  519726:	eb 06                	jmp    0x51972e
+  519728:	89 4d 08             	mov    %ecx,0x8(%ebp)
+  51972b:	8d 45 08             	lea    0x8(%ebp),%eax
+  51972e:	8b 00                	mov    (%eax),%eax
+  519730:	5e                   	pop    %esi
+  519731:	3b c1                	cmp    %ecx,%eax
+  519733:	75 07                	jne    0x51973c
+  519735:	b8 e0 60 7b 00       	mov    $0x7b60e0,%eax
+  51973a:	5d                   	pop    %ebp
+  51973b:	c3                   	ret
+  51973c:	83 c0 10             	add    $0x10,%eax
+  51973f:	5d                   	pop    %ebp
+  519740:	c3                   	ret

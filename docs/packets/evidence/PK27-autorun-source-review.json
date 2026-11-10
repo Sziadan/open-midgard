@@ -1,0 +1,75 @@
+{
+  "status": "root-reviewed partial contract; general pending input and package acceptance remain open",
+  "baseline": "0c24b63c",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "primary": {
+    "receiver": "Ref/GameModePacket.cpp:31687-31719; Zc_autorun_skill5A1170",
+    "mode126": "Ref/GameMode2.cpp:5751-5804; case0x7e",
+    "mode79": "Ref/GameMode2.cpp:4893-4954; case0x4f",
+    "level_classifier": "Ref/SkillInfo.cpp:2021-2026,2173-2268; IsLevelUseSkill515EE0/InitSkillInfoTables515260"
+  },
+  "selected_pe": {
+    "method": "static section-mapped bytes and bounded disassembly; original not executed",
+    "receiver_virtual_call": {
+      "va": "0x5A1205",
+      "bytes": "ff5214",
+      "meaning": "call *0x14(%edx), not direct CMode no-op"
+    },
+    "mode126_branch": "0x588788",
+    "type_byte_table": "0x58B378",
+    "target_table": "0x58B35C",
+    "type_branches": {
+      "1": {
+        "index": 0,
+        "target_va": "0x5887a7"
+      },
+      "2": {
+        "index": 1,
+        "target_va": "0x5887cc"
+      },
+      "4": {
+        "index": 2,
+        "target_va": "0x588816"
+      },
+      "8": {
+        "index": 3,
+        "target_va": "0x588883"
+      },
+      "16": {
+        "index": 4,
+        "target_va": "0x5887f1"
+      },
+      "32": {
+        "index": 5,
+        "target_va": "0x5888a8"
+      },
+      "3": {
+        "index": 6,
+        "target_va": "0x58ae0a"
+      },
+      "31": {
+        "index": 6,
+        "target_va": "0x58ae0a"
+      }
+    },
+    "mode79": "0x588901",
+    "level_classifier_call": "0x58893D ->0x515EE0",
+    "level_asset_push": "0x515513 ->0x705C60",
+    "level_asset_string": "leveluseskillspamount.txt",
+    "flag_loop": "0x51579B..0x5157D5; GetDesc5196D0 returns shared7B60E0 on missing map row; !spUsage.empty(),8238 flags"
+  },
+  "decisions": [
+    "0147 stores the temporary row, then passes its incoming stack row and signed level to virtual126. Do not dispatch from duplicate-retained temporary metadata.",
+    "126 matches exact type values1,2,4,8,16,32, not a bitmask:1->79(2),2->79(1),8->79(3),16->79(4),32->79(5). Others preserve pending state.",
+    "126 type4 sends76 to canonical AID, homunGID8000..8016 or merGID8200..8237, then79(0,null), even on immediate send failure/rejection. No GID fallback or forced rank1.",
+    "79 guards own shop, writes useType, then returns if row null. A null reset preserves id/range/level and good-skill global.",
+    "79 copies id/range from incoming row. Level-use skills keep raw requested level; others read valid normal/homun/merc learned rank or zero, with no temporary fallback.",
+    "Level-use means a nonempty source description SP vector. Numeric hash tokens are values, not skill headers. Missing descriptors share initialized null SP vector containing zero; named descriptors without SP entries are false.",
+    "Arming79 does not retire an older proceed. Broad shortcut/list producers and pending click/cursor consumption still need source integration."
+  ],
+  "representation_limits": [
+    "Existing metadata loader uses the checkout source data path; GRF/resource overrides and independently deployed data-root acceptance remain open.",
+    "Out-of-range level classifier access is guarded deterministically; source direct indexing outside0..8237 is undefined, not claimed equivalent.",
+    "Own-shop predicate is active vending representation. Companion identity acquisition/AI and broader pending actor/ground/touch/picker/cursor/lock lifetimes remain open."
+  ]
+}

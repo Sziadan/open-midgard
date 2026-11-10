@@ -6,6 +6,7 @@
 
 struct SkillMetadata {
     int skillId = 0;
+    bool hasSourceName = false;
     std::string skillIdName;
     std::string displayName;
     std::vector<std::string> descriptionLines;
@@ -18,6 +19,7 @@ public:
     ~CSkillMgr();
 
     bool EnsureLoaded();
+    bool IsLevelUseSkill(int skillId) const;
     const SkillMetadata* GetSkillMetadata(int skillId) const;
     const SkillMetadata* GetSkillMetadataByName(const std::string& skillIdName) const;
     std::string GetSkillIconPath(int skillId) const;

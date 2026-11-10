@@ -120,6 +120,21 @@ const SkillMetadata* CSkillMgr::GetSkillMetadata(int skillId) const
     return &it->second;
 }
 
+bool CSkillMgr::IsLevelUseSkill(int skillId) const
+{
+    constexpr int kSourceLevelUseSkillTableSize = 8238;
+    if (skillId < 0 || skillId >= kSourceLevelUseSkillTableSize) {
+        return false;
+    }
+
+    const SkillMetadata* metadata = GetSkillMetadata(skillId);
+    if (!metadata || !metadata->hasSourceName) {
+        return true;
+    }
+
+    return !metadata->levelSpCosts.empty();
+}
+
 const SkillMetadata* CSkillMgr::GetSkillMetadataByName(const std::string& skillIdName) const
 {
     const auto it = m_idBySkillName.find(ToLowerAscii(skillIdName));
@@ -195,6 +210,7 @@ void CSkillMgr::LoadSkillDisplayNames()
         }
 
         SkillMetadata& metadata = m_byId[it->second];
+        metadata.hasSourceName = true;
         metadata.displayName = tokens[1];
         std::replace(metadata.displayName.begin(), metadata.displayName.end(), '_', ' ');
     }
@@ -254,28 +270,13 @@ void CSkillMgr::LoadSkillLevelSpCosts()
 
     SkillMetadata* currentMetadata = nullptr;
     for (const std::string& rawLine : lines) {
-        const std::string trimmed = TrimAscii(rawLine);
-        if (trimmed.empty()) {
-            continue;
+        for(const auto& rawToken:SplitHashTokens(rawLine)){
+            const auto token=TrimAscii(rawToken);
+            if(token.empty() || token=="@")continue;
+            const auto it=m_idBySkillName.find(ToLowerAscii(token));
+            if(it!=m_idBySkillName.end())currentMetadata=&m_byId[it->second];
+            else if(currentMetadata)currentMetadata->levelSpCosts.push_back(std::atoi(token.c_str()));
         }
-
-        if (trimmed == "@") {
-            currentMetadata = nullptr;
-            continue;
-        }
-
-        if (trimmed.size() > 1 && trimmed.back() == '#') {
-            const std::string skillIdName = trimmed.substr(0, trimmed.size() - 1);
-            const auto it = m_idBySkillName.find(ToLowerAscii(skillIdName));
-            currentMetadata = (it == m_idBySkillName.end()) ? nullptr : &m_byId[it->second];
-            continue;
-        }
-
-        if (!currentMetadata) {
-            continue;
-        }
-
-        currentMetadata->levelSpCosts.push_back(std::atoi(trimmed.c_str()));
     }
 }
 

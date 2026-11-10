@@ -1,0 +1,53 @@
+{
+  "scope": "Data-backed SKILL_INFO::IsLevelUseSkill source semantics and mode79 skill-level selection.",
+  "source_evidence": [
+    {
+      "location": "Ref/SkillInfo.cpp:2021-2026",
+      "detail": "IsLevelUseSkill returns s_isLevelUseSkillList[skillId] directly; this function itself performs no bounds check."
+    },
+    {
+      "location": "Ref/SkillInfo.cpp:2173-2201; selected PE VA 0x515513",
+      "detail": "InitSkillInfoTables tokenizes the source table named by the truncated decompiler symbol aLeveluseskills. The selected PE at 0x515513 pushes 0x705C60, whose NUL-terminated string is exactly leveluseskillspamount.txt. The parser keeps a current skill id, updates it when GetIdBySkillIdName recognizes a token, ignores the @ separator, and parses other tokens with atoi into that skill's SKILL_DESC.spUsage vector."
+    },
+    {
+      "location": "Ref/SkillInfo.cpp:2224-2249",
+      "detail": "It builds 8238 flags for skill IDs 0..8237 inclusive. Each flag is (GetDesc(id).spUsage.size() != 0). GetDesc uses a shared null descriptor when a skill descriptor is absent; InitSkillInfoTables inserts a zero into the null descriptor's spUsage before the flag loop, so missing descriptors also produce true. The resulting raw flag is therefore not a conventional 'listed skills only' membership test."
+    },
+    {
+      "location": "Ref/GameMode2.cpp:4898-4944",
+      "detail": "Message 0x4f (decimal 79) sets pending skillUseType from val1, obtains skill id and attackRange from the selected skill row, and calls IsLevelUseSkill. For a true flag it uses val3 as useLevel. For a false flag it chooses a learned-skill lookup by ID family: homun for 8000..8016, mercenary for 8200..8237, otherwise normal player skill; it uses that row's learned level if valid, else zero."
+    },
+    {
+      "location": "Ref/GameMode2.cpp:5408-5448",
+      "detail": "Messages 0x6a and 0x6b adjust pending useLevel only when IsLevelUseSkill is true, and retrieve the max level through the normal player GetSkillItemInfoBySkillId lookup. The level is clamped to that row's max and to minimum 1."
+    },
+    {
+      "location": "Ref/SkillInfo.cpp:2034-2035,2070-2075,2098-2109,2145-2147,2173-2175",
+      "detail": "Initialization clears the flag vector and skill-desc map, sets up skill name tables if needed, then begins the level-use token table with current ID 1."
+    }
+  ],
+  "asset_inventory": {
+    "source_asset": "Ref/GRF-Content/data/leveluseskillspamount.txt",
+    "present": true,
+    "filename_proof": "Selected PE InitSkillInfoTables VA 0x515513 pushes 0x705C60; that address contains the NUL-terminated filename leveluseskillspamount.txt.",
+    "observed_files": [
+      {
+        "path": "Ref/GRF-Content/data/leveluseskillspamount.txt",
+        "note": "This is the exact token table used by InitSkillInfoTables to establish IsLevelUseSkill flags and per-skill level SP amounts."
+      }
+    ],
+    "limitation": "The filename is established by the selected PE string reference; the source text asset is present in the checkout."
+  },
+  "port_comparison": {
+    "locations": [
+      "src/skill/Skill.h:8-16",
+      "src/skill/Skill.cpp:251-279",
+      "src/gamemode/GameModePacket.cpp:1791-1797"
+    ],
+    "detail": "The port loads the same leveluseskillspamount.txt token blocks into SkillMetadata.levelSpCosts. CSkillMgr::IsLevelUseSkill now uses this data for recognized source-name rows and preserves the source true default for absent metadata or missing source names; source bounds are handled explicitly in the port."
+  },
+  "unresolved": [
+    "IsLevelUseSkill has unchecked direct indexing in the decompiled source, while the table has 8238 entries; source behavior for negative or >=8238 IDs is not safely established."
+  ],
+  "root_review": "Inventory describes baseline before integration. Root verified source and selected PE; authoritative decisions/current gates: PK27-autorun-source-review.json."
+}

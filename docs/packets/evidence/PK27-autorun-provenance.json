@@ -1,0 +1,22 @@
+{
+  "baseline": "0c24b63c",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "9e2727843d40554d525cffda09727fdfcab6f2626e57bc8c2a82a9f73f956618",
+    "src/core/Globals.h": "3dc6cd0a2c30e41c5d0dd11f44063d5ef52d10badec0f66877529b794f44f1e4",
+    "src/core/Globals.cpp": "5e8ccdad6dbee075206613ca29bcd3f88d61ffd0dc41b247e13a6ffa30790b3c",
+    "src/gamemode/GameMode.cpp": "4d9f2ed89d7ead5edb1989d0910c1f49fb81e08a608f07cadae4bc3f65b31fc8",
+    "src/gamemode/GameModePacket.cpp": "2e81a0991a2d624bdfa61d0d7e7af2b1e400694fbf432e4b187053b42c1c9fae",
+    "src/skill/Skill.h": "26647bd96bbaf8bd4060499ea6c973eef79e3c699d5486bc0834c68478a600f0",
+    "src/skill/Skill.cpp": "456573c6424bf12e2cb3e5a924a8b7aa07aad78d8ee9d895632f5b7f9585f61e",
+    "Ref/GRF-Content/data/skillnametable.txt": "8223f74656489e8b3cc4743a0b462ec46ed0bf74a9186b3b022de45bff50e3a4",
+    "Ref/GRF-Content/data/leveluseskillspamount.txt": "9412fe82670bc1399ff23fd6b33ecb375071befe6d6538572d958a53d326c202",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "46d56245c7a6e00802134ecdb93dc918e8f52adf1b60f7cdbd05aa2e5fc9468e",
+    "tools/tests/replay/PlayerSkillProceedReplay.inc": "33a7e478bd6818e148a8c985b199a66fbd71e5bb8ae544a62c4c61f7cdb37486",
+    "tools/tests/replay/PlayerAutoRunFailedSendReplay.inc": "3c949a85bfb0f480b141127ebb761dce9ed79394210c4b988b7f0f81aca19bca"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "installed_unchanged": true,
+  "validation": "Deploy-OFF all-target and standalone builds pass; focused2/2 in7.20s, application164/164 in53.46s (-j4), standalone473/473 in15.87s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open.",
+  "scope": "0147 storage -> virtual126 ->79/76; metadata hash-token repair. General pending input/producer/lifetime and deployed acceptance open."
+}
