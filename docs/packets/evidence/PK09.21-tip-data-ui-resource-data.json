@@ -1,0 +1,153 @@
+{
+  "scope": "Bounded Tip window label/button and CLanguage folder static verification",
+  "selected_executable": {
+    "path": "HighPriest.exe",
+    "sha256": "9ABC36C88376387D85C878C0C879D9AF8EF66EB1F5152638085DC6995E3F4742",
+    "method": "Read-only PE inspection; not executed"
+  },
+  "messages": {
+    "MSI_DIDYOUKNOW": {
+      "id": 175,
+      "hex": "0xAF",
+      "pe_evidence": "HighPriest.exe VA 0x48202C pushes 0xAF before MsgStr call VA 0x514350; same label use is Ref/UIFrameWnd2.cpp:30647-30648 (and navigation refill 13970-13971)"
+    },
+    "MSI_SHOWTIPSATSTARTUP": {
+      "id": 176,
+      "hex": "0xB0",
+      "pe_evidence": "HighPriest.exe VA 0x481F4E pushes 0xB0 before MsgStr call VA 0x514350; repeated at 0x481F69; source Ref/UIFrameWnd2.cpp:30623-30627"
+    }
+  },
+  "tip_buttons": [
+    {
+      "action": "back",
+      "id": 180,
+      "x": 144,
+      "y": "windowHeight - 24",
+      "bitmaps": [
+        {
+          "state": "normal (slot 0)",
+          "filename": "btn_back.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        },
+        {
+          "state": "mouse-on (slot 1)",
+          "filename": "btn_back_a.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        },
+        {
+          "state": "pressed (slot 2)",
+          "filename": "btn_back_b.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        }
+      ]
+    },
+    {
+      "action": "next",
+      "id": 152,
+      "x": 189,
+      "y": "windowHeight - 24",
+      "bitmaps": [
+        {
+          "state": "normal (slot 0)",
+          "filename": "btn_next.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        },
+        {
+          "state": "mouse-on (slot 1)",
+          "filename": "btn_next_a.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        },
+        {
+          "state": "pressed (slot 2)",
+          "filename": "btn_next_b.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        }
+      ]
+    },
+    {
+      "action": "close",
+      "id": 135,
+      "x": 234,
+      "y": "windowHeight - 24",
+      "bitmaps": [
+        {
+          "state": "normal (slot 0)",
+          "filename": "btn_close.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        },
+        {
+          "state": "mouse-on (slot 1)",
+          "filename": "btn_close_a.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        },
+        {
+          "state": "pressed (slot 2)",
+          "filename": "btn_close_b.bmp",
+          "dimensions": "42x20",
+          "bpp": 8
+        }
+      ]
+    }
+  ],
+  "bitmap_evidence": {
+    "source": "Ref/UIFrameWnd2.cpp:30511-30519, 30542-30568",
+    "selected_pe": "HighPriest.exe OnCreate VA 0x481C05-0x481C55 points to bitmap stem strings at VA 0x6F3324-0x6F3360 and 0x6F410C/0x6F4424/0x6F4430, concatenated with .bmp at VA 0x6F1F2C",
+    "dimensions_source": "Recovered GRF assets under Ref/GRF-Content/data/texture/<user-interface>/; BMP headers. Base BMPs are 8-bit, states _a/_b are 8-bit.",
+    "base_file_bytes": {
+      "back": 1244,
+      "next": 1248,
+      "close": 1252
+    },
+    "state_file_bytes": 1956,
+    "state_semantics": "UIBitmapButton::OnDraw uses m_normalBitmapName for state 0, m_mouseonBitmapName for state 1, m_pressedBitmapName for state 2 (Ref/UIControl.cpp:5116-5147); SetBitmapName receives indices 0,1,2 (Ref/UIControl.cpp:8775 onward)."
+  },
+  "textviewer": {
+    "source": "Ref/UIControl2.cpp:2480-2524; CutStringWithColor definition Ref/UISys.cpp:3010-3075",
+    "finding": "For message 29, UITextViewer defaults nonzero val2 to the line limit and calls CutStringWithColor(..., maxNumCharLine, val3 != 0). The Tip caller supplies val2=38 and val3=0, so this is color-aware wrapping with maxNumCharLine=38 and readCR=false; 38 is not a style enum.",
+    "tip_call_source": "Ref/UIFrameWnd2.cpp:30647-30660"
+  },
+  "language_folders": {
+    "source": "Ref/Language.cpp:1580-1582, 1643-1694; LanguageFile at 1951-1974",
+    "pe_constructor": "HighPriest.exe CLanguage::CLanguage VA 0x4FDF30 calls GetUserDefaultLangID through import thunk at VA 0x4FE086 and masks low 10 bits at 0x4FE08C. String references: default English VA 0x6F756C; German 0x6F7578; Turkish 0x6F7580; Portuguese 0x6F758C; Italian 0x6F7598.",
+    "folders": [
+      {
+        "low10_langid": 7,
+        "folder": "german\\",
+        "pe_va": "0x6F7578"
+      },
+      {
+        "low10_langid": 16,
+        "folder": "italian\\",
+        "pe_va": "0x6F7598"
+      },
+      {
+        "low10_langid": 22,
+        "folder": "portuguese\\",
+        "pe_va": "0x6F758C"
+      },
+      {
+        "low10_langid": 31,
+        "folder": "turkish\\",
+        "pe_va": "0x6F7580"
+      },
+      {
+        "low10_langid": "default",
+        "folder": "english\\",
+        "pe_va": "0x6F756C"
+      }
+    ],
+    "lookup": "LanguageFile prepends the selected folder for non-Korea; for .txt/.xml it checks file existence and falls back to the bare filename if absent (Ref/Language.cpp:1954-1974)."
+  },
+  "limits": [
+    "No reliable button dimensions were inferred from window layout; all six-plus-three bitmap dimensions above are from recovered BMP headers.",
+    "Names and folder bytes were checked statically in the selected executable; no executable was run."
+  ]
+}

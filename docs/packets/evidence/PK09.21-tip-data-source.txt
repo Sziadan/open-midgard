@@ -1,0 +1,274 @@
+Ref/TipOfTheDay.cpp:54-83
+54:
+55:
+56: // ================================================
+57: // Original Signature: public: class std::vector<class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::allocator<class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > > > & __thiscall CTipOfTheDay::GetTip(int)
+58: // Decompiled from address: 0x51a350
+59: // ================================================
+60: std::vector<std::string> *__thiscall CTipOfTheDay::GetTip(CTipOfTheDay *this, int index)
+61: {
+62:   int v3; // eax
+63:
+64:   if ( !this->m_bTryLoading )
+65:     CTipOfTheDay::Load(this);
+66:   v3 = *(_DWORD *)&this->gap1[7];
+67:   if ( v3 && index < (unsigned int)((*(_DWORD *)&this->gap1[11] - v3) >> 4) && index >= 0 )
+68:     return (std::vector<std::string> *)(*(_DWORD *)&this->gap1[7] + 16 * index);
+69:   else
+70:     return *(std::vector<std::string> **)&this->gap1[7];
+71: }
+72:
+73:
+74: // ================================================
+75: // Original Signature: public: int __thiscall CTipOfTheDay::Load(void)
+76: // Decompiled from address: 0x51a000
+77: // ================================================
+78: int __thiscall CTipOfTheDay::Load(CTipOfTheDay *this)
+79: {
+80:   int v1; // edi
+81:   char *v2; // esi
+82:   const char *v3; // eax
+83:   DWORD m_size; // esi
+
+Ref/TipOfTheDay.cpp:111-178
+111:
+112:   this->m_bTryLoading = 1;
+113:   v1 = 0;
+114:   v25 = this;
+115:   if ( g_serviceType == ServiceKorea )
+116:     goto LABEL_10;
+117:   v2 = (char *)CLanguage::LanguageFile(g_language, aTipofdayTxt);
+118:   if ( CFile::IsFileExist(v2) )
+119:   {
+120:     CFile::CFile(&fp);
+121:     v32 = 0;
+122:     if ( !CFile::Open(&fp, v2, 0) )
+123:     {
+124:       v32 = -1;
+125:       CFile::~CFile(&fp);
+126:       return 0;
+127:     }
+128:     m_size = fp.m_size;
+129:     fileSize = fp.m_size;
+130:     v6 = (char *)operator new(fp.m_size + 1);
+131:     CFile::Read(&fp, v6, m_size);
+132:     CFile::Close(&fp);
+133:     v32 = -1;
+134:     CFile::~CFile(&fp);
+135:     goto LABEL_14;
+136:   }
+137:   if ( g_serviceType == ServiceAmerica )
+138:   {
+139:     v3 = aTipofthedayETx;
+140:     goto LABEL_11;
+141:   }
+142:   if ( g_serviceType != ServiceJapan )
+143:   {
+144: LABEL_10:
+145:     v3 = aTipofthedayTxt;
+146:     goto LABEL_11;
+147:   }
+148:   v3 = aTipofthedayJTx;
+149: LABEL_11:
+150:   v7 = fopen(v3, Mode);
+151:   v8 = v7;
+152:   if ( !v7 )
+153:     return 0;
+154:   fseek(v7, 0, 2);
+155:   fileSize = ftell(v8);
+156:   v6 = (char *)operator new(fileSize + 1);
+157:   fseek(v8, 0, 0);
+158:   fread(v6, fileSize, 1u, v8);
+159:   fclose(v8);
+160:   m_size = fileSize;
+161:   v1 = 0;
+162: LABEL_14:
+163:   v9 = (std::allocator<std::string >)v31;
+164:   First = 0;
+165:   v6[m_size] = 0;
+166:   v11 = v6;
+167:   tmpList.allocator = v9;
+168:   memset(&tmpList._First, 0, 12);
+169:   v32 = 1;
+170:   i = 0;
+171:   if ( fileSize > 0 )
+172:   {
+173:     while ( 1 )
+174:     {
+175:       v12 = v6[v1];
+176:       if ( v12 == 10 )
+177:         break;
+178:       if ( v12 == 35 )
+
+Ref/TipOfTheDay.cpp:214-265
+214: LABEL_29:
+215:         v1 = i;
+216:       }
+217:       i = ++v1;
+218:       if ( v1 >= fileSize )
+219:         goto LABEL_31;
+220:     }
+221:     v18 = (std::allocator<char>)v31;
+222:     v6[v1] = 0;
+223:     v26.allocator = v18;
+224:     memset(&v26._Ptr, 0, 12);
+225:     std::string::assign(&v26, v11, strlen(v11));
+226:     LOBYTE(v32) = 3;
+227:     std::vector<std::string>::insert(&tmpList, tmpList._Last, 1u, &v26);
+228:     LOBYTE(v32) = 1;
+229:     if ( v26._Ptr )
+230:     {
+231:       v19 = v26._Ptr - 1;
+232:       v20 = *(v26._Ptr - 1);
+233:       if ( !v20 || v20 == -1 )
+234:         operator delete(v19);
+235:       else
+236:         *v19 = v20 - 1;
+237:     }
+238:     memset(&v26._Ptr, 0, 12);
+239:     v11 = &v6[i + 1];
+240:     First = tmpList._First;
+241:     goto LABEL_29;
+242:   }
+243: LABEL_31:
+244:   if ( v6 )
+245:   {
+246:     operator delete(v6);
+247:     First = tmpList._First;
+248:   }
+249:   v21 = tmpList._Last;
+250:   v32 = -1;
+251:   v22 = First;
+252:   if ( First != tmpList._Last )
+253:   {
+254:     do
+255:       std::string::_Tidy(v22++, 1u);
+256:     while ( v22 != v21 );
+257:     First = tmpList._First;
+258:   }
+259:   operator delete(First);
+260:   return 1;
+261: }
+262:
+263:
+264: // ================================================
+265: // Original Signature: static void $E15()
+
+Ref/Language.cpp:1637-1700
+1637:   }
+1638:   else
+1639:   {
+1640:     CodePageFromCharset = g_codePage;
+1641:   }
+1642:   this->m_codePage = CodePageFromCharset;
+1643:   switch ( GetUserDefaultLangID() & 0x3FF )
+1644:   {
+1645:     case 7:
+1646:       this->m_scriptLangId = 7;
+1647:       v9 = strlen(aGerman) + 1;
+1648:       if ( std::string::_Grow(&this->m_languageFolder, v9 - 1, 1u) )
+1649:       {
+1650:         qmemcpy(this->m_languageFolder._Ptr, aGerman, v9 - 1);
+1651:         v7 = v9 - 1;
+1652:         goto LABEL_17;
+1653:       }
+1654:       break;
+1655:     case 0x10:
+1656:       this->m_scriptLangId = 16;
+1657:       v5 = strlen(aItalian);
+1658:       if ( std::string::_Grow(&this->m_languageFolder, v5, 1u) )
+1659:       {
+1660:         qmemcpy(this->m_languageFolder._Ptr, aItalian, v5);
+1661:         std::string::_Eos(&this->m_languageFolder, v5);
+1662:       }
+1663:       break;
+1664:     case 0x16:
+1665:       this->m_scriptLangId = 22;
+1666:       v6 = strlen(aPortuguese) + 1;
+1667:       if ( std::string::_Grow(&this->m_languageFolder, v6 - 1, 1u) )
+1668:       {
+1669:         qmemcpy(this->m_languageFolder._Ptr, aPortuguese, v6 - 1);
+1670:         v7 = v6 - 1;
+1671:         goto LABEL_17;
+1672:       }
+1673:       break;
+1674:     case 0x1F:
+1675:       this->m_scriptLangId = 31;
+1676:       v8 = strlen(aTurkish) + 1;
+1677:       if ( std::string::_Grow(&this->m_languageFolder, v8 - 1, 1u) )
+1678:       {
+1679:         qmemcpy(this->m_languageFolder._Ptr, aTurkish, v8 - 1);
+1680:         v7 = v8 - 1;
+1681:         goto LABEL_17;
+1682:       }
+1683:       break;
+1684:     default:
+1685:       this->m_scriptLangId = 9;
+1686:       v10 = strlen(aEnglish) + 1;
+1687:       if ( std::string::_Grow(&this->m_languageFolder, v10 - 1, 1u) )
+1688:       {
+1689:         qmemcpy(this->m_languageFolder._Ptr, aEnglish, v10 - 1);
+1690:         v7 = v10 - 1;
+1691: LABEL_17:
+1692:         this->m_languageFolder._Len = v7;
+1693:         this->m_languageFolder._Ptr[v7] = 0;
+1694:       }
+1695:       break;
+1696:   }
+1697:   if ( g_serviceType == ServiceVietnam )
+1698:     this->m_codePage = 1258;
+1699:   return this;
+1700: }
+
+Ref/Language.cpp:1951-1978
+1951: // Original Signature: public: char const * __thiscall CLanguage::LanguageFile(char const *)
+1952: // Decompiled from address: 0x4fe640
+1953: // ================================================
+1954: char *__thiscall CLanguage::LanguageFile(CLanguage *this, const char *fName)
+1955: {
+1956:   char *Ptr; // edi
+1957:   CResMgr *v4; // eax
+1958:
+1959:   if ( g_serviceType == ServiceKorea )
+1960:     return (char *)fName;
+1961:   Ptr = this->m_languageFolder._Ptr;
+1962:   if ( !Ptr )
+1963:     Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+1964:   strcpy(byte_78B924, Ptr);
+1965:   strcat(byte_78B924, fName);
+1966:   if ( strstr(fName, aTxt) || strstr(fName, aXml) )
+1967:   {
+1968:     if ( !CFile::IsFileExist(byte_78B924) )
+1969:       return (char *)fName;
+1970:   }
+1971:   else
+1972:   {
+1973:     v4 = g_resMgr();
+1974:     if ( !CResMgr::IsExist(v4, byte_78B924) )
+1975:       return (char *)fName;
+1976:   }
+1977:   return byte_78B924;
+1978: }
+
+Ref/WinMain.cpp:778-798
+778:   RegCloseKey(hResultKey);
+779:   if ( v1 )
+780:     return 0;
+781:   if ( !RegOpenKeyExA(HKEY_LOCAL_MACHINE, g_regPath, 0, 1u, &hKey) )
+782:   {
+783:     reg_Type = 4;
+784:     Datalength = 4;
+785:     RegQueryValueExA(hKey, aIsfullscreenmo, 0, &reg_Type, (LPBYTE)&g_registry.m_isFullScreenMode, &Datalength);
+786:     RegQueryValueExA(hKey, aWidth, 0, &reg_Type, (LPBYTE)&g_registry.m_width, &Datalength);
+787:     RegQueryValueExA(hKey, aHeight, 0, &reg_Type, (LPBYTE)&g_registry.m_height, &Datalength);
+788:     g_registry.m_isFullScreenMode = 0;
+789:     WINDOW_WIDTH = 1024;
+790:     WINDOW_HEIGHT = 768;
+791:     RegQueryValueExA(hKey, aBitperpixel, 0, &reg_Type, (LPBYTE)&g_registry.m_bitPerPixel, &Datalength);
+792:     RegQueryValueExA(hKey, aDevicecnt, 0, &reg_Type, (LPBYTE)&g_registry.m_deviceCnt, &Datalength);
+793:     RegQueryValueExA(hKey, aModecnt, 0, &reg_Type, (LPBYTE)&g_registry.m_modeCnt, &Datalength);
+794:     RegQueryValueExA(hKey, aIsvoodoo, 0, &reg_Type, (LPBYTE)&g_registry.m_isVoodoo, &Datalength);
+795:     RegQueryValueExA(hKey, aShowtipsatstar, 0, &reg_Type, (LPBYTE)&g_showTipsAtStartup, &Datalength);
+796:     g_showTipsAtStartup = 0;
+797:     if ( RegQueryValueExA(hKey, aIslightmap, 0, &reg_Type, (LPBYTE)&g_isLightMap, &Datalength) )
+798:     {

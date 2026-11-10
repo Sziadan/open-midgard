@@ -1,4 +1,5 @@
 #include "ui/UIWhisperWnd.h"
+#include "core/TipOfTheDay.h"
 #include "ui/UIAutoMessageWnd.h"
 #include "ui/UIFriendOptionWnd.h"
 #include "ui/UIMessengerGroupWnd.h"
@@ -510,6 +511,7 @@ int ReadRegistry()
     g_session.LoadBattleMessageOptions();
     g_session.LoadWhisperOptions();
     g_session.LoadSourceCommandOptions();
+    LoadSourceTipOptions();
     ApplyConfiguredWindowSize();
     g_windowMgr.LoadChatWindowPreferences();
     (void)GetConfiguredRenderBackend();

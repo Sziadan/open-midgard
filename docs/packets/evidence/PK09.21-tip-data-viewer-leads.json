@@ -1,0 +1,41 @@
+{
+  "scope": "Tip UITextViewer line breaking, row and scroll contract; source-only",
+  "tip_creation": {
+    "source": "Ref/UIFrameWnd2.cpp:30640-30660",
+    "view": {
+      "x": 10,
+      "y": 22,
+      "width": "parent width - 20 (260 for 280-wide Tip window)",
+      "height": "140 for 180-high Tip window",
+      "itemSpacing": 18,
+      "completeVisibleRows": 7,
+      "calculation": "floor(140 / 18)"
+    },
+    "sendmsg": "Heading and each tip string are sent as message=29, val2=38, val3=0."
+  },
+  "ascii_breaking": {
+    "source": "Ref/Language.cpp:2717-2725; Ref/UISys.cpp:3010-3015, 3068-3145",
+    "finding": "Base CLanguage::GetWordBreak ignores size and returns CharNextExA(g_codePage,text,0); for ASCII that advances one byte. CutStringWithColor scans in those codepage steps, remembers the latest space boundary, skips repeated spaces while updating that boundary, and when the 38-step limit is reached wraps at that remembered boundary; if no space is available it hard-splits at the current step. Thus it is codepage-aware character stepping plus space-preferred wrapping, not a dictionary word-break routine.",
+    "markers": "A ^ followed by six valid hex digits is preserved in output but advances the wrap limit by 7, so it does not count toward the 38 visible steps."
+  },
+  "blank_and_newline": {
+    "source": "Ref/UISys.cpp:3146-3165, 3184-3195; Ref/UIControl2.cpp:2480-2536; Ref/TipOfTheDay.cpp:171-260",
+    "empty": "An empty input string produces no output line in CutStringWithColor; UITextViewer consequently calls AddItem zero times. A blank Tip entry therefore does not occupy a visible row. Nonempty whitespace input follows the ordinary wrapping path.",
+    "lf": "Tip loading splits LF into individual strings before viewer calls. CutStringWithColor itself does not special-case LF. Its CR branch only runs when readCR is true; the Tip viewer passes val3=0/readCR=false, so CR is not removed by this wrapper. The Tip parser does not strip CR; subsequent rendering of an embedded CR is not established here."
+  },
+  "color": {
+    "source": "Ref/UISys.cpp:3068-3078; Ref/UIControl2.cpp:7333-7469",
+    "finding": "Recognized ^ + six-hex color markers remain in each output substring. UITextViewer::OnDraw initializes colorRef to zero, scans every preceding item when vertically scrolled using FindColorMark/InterpretColor, then passes the same colorRef through visible items via TextOutWithDecoration. This carries color state across wrapped rows and across the heading/tip list items; wrapping does not synthesize a repeated color marker."
+  },
+  "viewer_rows_and_scroll": {
+    "source": "Ref/UIControl2.cpp:1038-1073, 2214-2287, 5024-5070, 5388-5448, 7333-7390; Ref/UIFrameWnd2.cpp:30647-30660",
+    "defaults": "UITextViewer constructor sets m_itemSpacing=18 and m_noColor=0. It is a UIListBox; vertical scrollbar is enabled when stored item count exceeds floor(h/18), here 7. Each wrapped output line is one stored item/row.",
+    "page": "UIListBox message 9 moves vertical offset up by h/itemSpacing - 1; message 10 moves it down by the same amount. Here this is 6 rows (one row overlap), clamped to 0..itemCount-7. Message 7 moves by the supplied val1 line count.",
+    "scrollbar": "UIListBox::OnCreate creates a 13-pixel scrollbar child; RecalcScrbarPos sets its max/current range from itemCount and visible row count. Horizontal scrollbar remains disabled in the default listbox state for this viewer."
+  },
+  "separate_cases": {
+    "multilingual": "The base and Thai GetWordBreak implementations both call CharNextExA(g_codePage,...); other language subclasses were not audited. CutStringWithColor has a separate g_multiLang/non-ASCII path that inserts a 3-byte charset marker into subsequent wrapped output rows. Do not reduce this to ASCII byte counts.",
+    "item_markup": "CutStringWithColor also detects valid item indicators via IsValidItemIndicator and may emit a separate item display-name string; this branch is excluded from the plain ASCII text contract.",
+    "limits": "No rendering claim is made for retained CR bytes, invalid color escapes, item-indicator markup, or other language subclasses."
+  }
+}

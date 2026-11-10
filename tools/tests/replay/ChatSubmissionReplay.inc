@@ -6,6 +6,7 @@
 #include "qtui/QtUiRuntime.h"
 #include "world/Weather.h"
 #include "core/Timer.h"
+#include "core/TipOfTheDay.h"
 
 namespace {
 ro::chat::SourceChatModifiers submissionKeys;
@@ -248,6 +249,7 @@ void ChatSubmissionReplay()
 #include "FriendGreetingReplay.inc"
 #include "CommandToggleReplay.inc"
 #include "WeatherCommandReplay.inc"
+#include "TipDataReplay.inc"
     mode.SetSourceChatInputServices(nullptr);
     std::cout<<"{\"case_id\":\"source_chat_submission\",\"contract_id\":\"PK09.21\",\"actual_channel_frames\":true,\"caller_history_before_dispatch\":true,\"manager_buffer\":true,\"source47_11\":true,\"emotion_pending\":true,\"outcome\":\"PASS\"}\n";
 }

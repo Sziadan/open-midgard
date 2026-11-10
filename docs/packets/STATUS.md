@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Tip-data checkpoint (2026-11-10):** [Actual source loader and startup preference](evidence/PK09.21-tip-data.md) restores raw delimiter/lazy/append/resource-versus-CRT behavior and the selected successful-store-read forced-OFF policy. Application160/160 and standalone473/473 pass; deployed executable unchanged. Factory38/Tip42/viewer/navigation/startup-window integration remain next; no placeholder window is substituted. Full packet goal remains unfinished.
+
 **Weather checkpoint (2026-11-10):** [Effect8 and real snow ownership](evidence/PK09.21-weather-command.md) restores021D requests, exact Xmas maps, source stop/reset and actor/world lifetime. Root PE verification corrects older preparatory threshold prose: remaining>300 launches again; <=300 skips. Application160/160 and standalone473/473 pass. Tip42/full command UI and broad/live/deployed gates remain open.
 
 **Command-toggle checkpoint (2026-11-10):** [Selected toggles/composites and live options](evidence/PK09.21-command-toggles.md) integrates21 actions with raw/wrapping scalar state, child47 ordering, locale text flags, source audio close/replay and shared option60 refresh. Application160/160 and standalone473/473 pass; deployed executable unchanged. NoCtrl/fog ownership is now reviewed and canonical; older temporary separation is superseded. Full command UI, effect snow/Tip, action consumers and broad/live/deployed acceptance remain open.

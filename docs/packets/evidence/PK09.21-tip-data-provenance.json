@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "date": "2026-11-10",
+  "baseline": "ef78230253f53ea51a011264163bc9022d787de3",
+  "commit_subject": "packet(PK09.21): restore source tip data and startup options",
+  "scope": "Actual CTipOfTheDay and source settings-adapter dependency; actual Tip42/window/viewer and full packet goal remain unfinished",
+  "runtime_test_sha256": {
+    "src/Types.h": "303dcec86c0766c121167c09c448cf3870fb15787c57178a11e304bae1f01179",
+    "src/core/CMakeLists.txt": "f18615a59665042ee279bc21c4ba17893445d1f6d5f8f3fc4e45767666d303dd",
+    "src/core/File.cpp": "f5e30f773b44bbfc6cabf063e14ab274686b3bd4153962d82221b8a21a150b8c",
+    "src/core/File.h": "804f393e63b16844a2b318f87c1afcf83946f50b4afec7d9fc68d86f3a794c0a",
+    "src/core/Globals.h": "e4812feb698cd69ad726166f5d7ff4012c4388e753d074662fee4cbf7572df34",
+    "src/core/SettingsIni.cpp": "eac915f1585a849e140ec71f25b1713e9f5bb9266cbc1effe146125dd2701d5f",
+    "src/core/SettingsIni.h": "121a1cedb67284ea6126ac205e6d72cdeeab85aded24d6baba1bef86c46db564",
+    "src/core/TipOfTheDay.cpp": "b8cd93afb47135c91ac91eb61c561c85fcebf826b8750d6e30831d36e9ed02d8",
+    "src/core/TipOfTheDay.h": "06ea3143493f0d287c6d0d0179925528bf7da923e4a4d093362e69a268a409b6",
+    "src/main/WinMain.cpp": "eb2956efbadab27f3a152747e36585be1f7a96ee8a3ac7a5de222dfe5f55fb71",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "19dac9c930b2918f8439877fa6f91a02713e92d24477fbce749cbca2262871cf",
+    "tools/tests/replay/PacketStreamReplay.cpp": "338d1fc54e3bbbc72578e5d0d7a8b250bc02713c41a2c53d26cde39d7ce2f489",
+    "tools/tests/replay/TipDataReplay.inc": "a11f01a7685e8ae1aeaa2471b0788b9055e8d43b014b8adcbbba2dd37b02754d"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/TipOfTheDay.cpp": "8a7c93bd5cdff9a4baa9da9b6151cfac03bf0a9ecd18090c2bd4bf3060a109b7",
+    "Ref/Language.cpp": "91e4169f1fab62a29fa122c936d45530f07e8c5aac6861df15d6d2793ac8837f",
+    "Ref/WinMain.cpp": "3cac1c7d4943d1e85b91a336dd084deaa34d01cc29cb6a1b6c3f4fa22803d39c",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIControl2.cpp": "48e3d33d0aa4345fa47b891091ed39688c72b2b78b0e61d095b035d43ce6ce79",
+    "Ref/UISys.cpp": "9efaa402fa8dde2f1854c3f55b5a619da93d0d162459efa960d17f6cf47bf25b"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-tip-data-build.log": "253f28f125f0d7a08e795ddfdc9e2ff47e292b81d7df9bf817cde0d14307efbf",
+    "docs/packets/evidence/PK09.21-tip-data-configure.log": "b6fe650ae3afeb0c17e528f8f1bc78fd50ac7ff2964032d42848b090576c192d",
+    "docs/packets/evidence/PK09.21-tip-data-focused.log": "ae6e9eb095fb84439f250ad7dc319cd852409fb3341a341580072ac52674625d",
+    "docs/packets/evidence/PK09.21-tip-data-restore-deploy.log": "2af566fb6af89bafcc4e7b45ac7c1e5d458f5a3ed7663b1bea3d55b189d422df",
+    "docs/packets/evidence/PK09.21-tip-data-root-ctest.log": "8ccca06b4ddffb2ff1c93e7c9dec28f85c98f93796868403b135c18f697f116a",
+    "docs/packets/evidence/PK09.21-tip-data-source.txt": "baf884ad3c2da37e8174a5c24d41593b5821ed653d5a973aa1b37b82b15ed909",
+    "docs/packets/evidence/PK09.21-tip-data-ui-resource-data.json": "4674448a87a2ec2c7e411ffa62ccfc0b3101e6f98ba9c3d2fc3d6e80e5f1e9d7",
+    "docs/packets/evidence/PK09.21-tip-data-unit-build.log": "b0c53193fc051cd840ca05234d56bd39f0b0a213dc72c95a6018987e32ab61d2",
+    "docs/packets/evidence/PK09.21-tip-data-unit-ctest.log": "86fe9c567283e70e1cb4ec1fe2971d99cec23c785bc02a5c939a6b6061b477fa",
+    "docs/packets/evidence/PK09.21-tip-data-viewer-leads.json": "ebe8ab074e845fd39f71875be8a03ac631e491c840025130b7d27cfc8725a8c2",
+    "docs/packets/evidence/PK09.21-tip-data.md": "86a16fb69f77721f6d128782a03a001c2d6f37ed060380fb8ce445aae423f780"
+  },
+  "application_sha256": "6f317db6a2be4c162b3ee6eecdf741d89f7a365f86f09d37df40c30c443f620b",
+  "installed_oldro_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "validation": {
+    "focused": "1/1;0.89s",
+    "application": "160/160;36.29s",
+    "standalone": "473/473;15.42s",
+    "parser_data": "PASS",
+    "plan_consistency": "PASS"
+  },
+  "limits": [
+    "No actual Tip42/factory38/window/viewer/navigation/startup window integration yet",
+    "Data retains raw resource bytes; codec/render acceptance is separate",
+    "INI successful-open policy maps selected ReadRegistry force-OFF at existing port adapter boundary, not full source registry initialization proof",
+    "No live/installed/visual acceptance"
+  ],
+  "deploy_preference_restored": "ON configure-only; no subsequent build/copy"
+}

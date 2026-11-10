@@ -6,6 +6,7 @@ add_library(ro_core STATIC
     Hash.h      Hash.cpp
     SettingsIni.h SettingsIni.cpp
     UiMessageStrings.h UiMessageStrings.cpp
+    TipOfTheDay.h TipOfTheDay.cpp
     InsultWords.h MannerFilter.h MannerFilter.cpp
     GPak.h      GPak.cpp
     File.h      File.cpp

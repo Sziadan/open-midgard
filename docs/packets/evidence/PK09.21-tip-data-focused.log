@@ -1,0 +1,31 @@
+UpdateCTestConfiguration  from :D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/DartConfiguration.tcl
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 15
+    Start 15: packet_chat_submission_checks
+
+15: Test command: D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\packet_stream_replay_checks.exe "--chat-submission-only"
+15: Working Directory: D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+15: Environment variables:
+15:  OPEN_MIDGARD_DATA_DIR=D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-chat-submission-settings
+15: Test timeout computed to be: 30
+15: {"case_id":"source_command_flags","contract_id":"PK09.21","all23_defaults_and_live_values":true,"actual_boot_bridge":true,"append_not_replace":true,"owner_lifetime":true,"outcome":"PASS"}
+15: {"case_id":"source_chat_ignore","contract_id":"PK09.21","actual_request_frames":true,"framed_D1_D2_D4":true,"pending_before_failure":true,"last_name_not_fifo":true,"outcome":"PASS"}
+15: {"case_id":"source_friend_greeting","contract_id":"PK09.21","actual_friend_frames":true,"global_signed_counter":true,"mode_lifetime":true,"charset_prefix_and_limits":true,"outcome":"PASS"}
+15: {"case_id":"source_command_toggles","contract_id":"PK09.21","scalar_wrap":true,"composite47":true,"locale_text_flags":true,"live_options":true,"outcome":"PASS"}
+15: {"case_id":"source_weather_command","contract_id":"PK09.21","selected_JLE_threshold":true,"real_world_effect_lifetime":true,"exact_maps":true,"packet541":true,"outcome":"PASS"}
+15: {"case_id":"source_tip_data","contract_id":"PK09.21","actual_resource_and_CRT_io":true,"lazy_append_delimiters":true,"selected_startup_policy":true,"outcome":"PASS"}
+15: {"case_id":"source_chat_submission","contract_id":"PK09.21","actual_channel_frames":true,"caller_history_before_dispatch":true,"manager_buffer":true,"source47_11":true,"emotion_pending":true,"outcome":"PASS"}
+1/1 Test #15: packet_chat_submission_checks ....   Passed    0.89 sec
+
+The following tests passed:
+	packet_chat_submission_checks
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.90 sec
