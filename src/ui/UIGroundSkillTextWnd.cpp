@@ -491,7 +491,64 @@ void UIGroundSkillTextWnd::Move(int x,int y)
 
 void UIGroundSkillTextWnd::OnDraw()
 {
-    auto dc=AcquireDrawTarget();if(!dc)return;
+    if (const auto dc = AcquireDrawTarget()) {
+        DrawFrameAtTick(dc, timeGetTime());
+        ReleaseDrawTarget(dc);
+    }
+}
+
+bool UIGroundSkillTextWnd::IsUpdateNeed()
+{
+#if RO_PLATFORM_WINDOWS
+    if (m_trans != m_transTarget) return true;
+#endif
+    return UIWindow::IsUpdateNeed();
+}
+
+void UIGroundSkillTextWnd::DrawFrameAtTick(HDC dc, u32 tick)
+{
+    if (!dc) return;
+    // UIWindow::GetColor uses elapsed time since the capture transition at each draw.
+    const auto step = (tick - m_transTime) / 16;
+    if (m_trans < m_transTarget) m_trans += (std::min)(m_transTarget - m_trans, step);
+    else if (m_trans > m_transTarget) m_trans -= (std::min)(m_trans - m_transTarget, step);
+
+#if RO_PLATFORM_WINDOWS
+    if (m_trans < 255 && m_opacitySurface.EnsureSize(m_w, m_h)) {
+        const RECT frame{m_x,m_y,m_x+m_w,m_y+m_h};
+        RECT visible = frame;
+        RECT clip{};
+        if (GetClipBox(dc, &clip) != ERROR && !IntersectRect(&visible, &frame, &clip)) return;
+        const auto layer = m_opacitySurface.GetDC();
+        const int saved = SaveDC(layer);
+        if (saved) {
+            const bool mapped = SetViewportOrgEx(layer, -m_x, -m_y, nullptr) != FALSE;
+            if (mapped) PaintFrame(layer);
+            RestoreDC(layer, saved);
+            if (mapped) {
+                // The frame body fills the layer. Apply one alpha to its final RGB,
+                // including the edit and buttons, before compositing over the scene.
+                GdiFlush();
+                auto* pixels = m_opacitySurface.GetPixels();
+                const auto scale = [this](u32 channel) { return (channel * m_trans + 127) / 255; };
+                for (std::size_t i = 0, size = static_cast<std::size_t>(m_w) * m_h; i < size; ++i) {
+                    const auto pixel = pixels[i];
+                    pixels[i] = (m_trans << 24) | (scale((pixel >> 16) & 255) << 16)
+                        | (scale((pixel >> 8) & 255) << 8) | scale(pixel & 255);
+                }
+                const int width = visible.right - visible.left;
+                const int height = visible.bottom - visible.top;
+                if (AlphaBlendArgbToHdc(dc, visible.left, visible.top, width, height, pixels, m_w, m_h,
+                        visible.left - m_x, visible.top - m_y, width, height)) return;
+            }
+        }
+    }
+#endif
+    PaintFrame(dc);
+}
+
+void UIGroundSkillTextWnd::PaintFrame(HDC dc)
+{
     const int saved=SaveDC(dc);IntersectClipRect(dc,m_x,m_y,m_x+m_w,m_y+m_h);
     const auto color=[&](int x,int y){const u32 value=GetColorChipRgb(x,y);return RGB((value>>16)&255,(value>>8)&255,value&255);};
     const COLORREF body=m_colorChip.IsValid()?color(2,2):RGB(232,232,232);
@@ -518,7 +575,7 @@ void UIGroundSkillTextWnd::OnDraw()
     PaintButton(dc,*this,m_ok,GetButtonState(118));
     PaintButton(dc,*this,m_cancel,GetButtonState(119));
     DrawChildrenToHdc(dc);
-    RestoreDC(dc,saved);ReleaseDrawTarget(dc);
+    RestoreDC(dc,saved);
 }
 
 void UIGroundSkillTextWnd::CancelPointerCapture()

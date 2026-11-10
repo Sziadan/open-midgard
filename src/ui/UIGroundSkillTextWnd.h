@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIChatRoomSettingsWnd.h"
+#include "render/DC.h"
 #include <array>
 #include <optional>
 #include <string>
@@ -31,6 +32,8 @@ public:
 
     void Move(int x,int y) override;
     void OnDraw() override;
+    bool IsUpdateNeed() override;
+    void DrawFrameAtTick(HDC dc, u32 tick);
     void OnLBtnDown(int x,int y) override;
     void OnLBtnUp(int x,int y) override;
     void OnMouseMove(int x,int y) override;
@@ -78,6 +81,7 @@ private:
     void ReplaceSelection(std::string_view insertion);
     void ApplyEdit(std::string text, std::size_t cursor);
     void FocusEdit();
+    void PaintFrame(HDC dc);
     void ActivateButton(int id);
     void CancelPointerCapture();
 
@@ -88,6 +92,9 @@ private:
     std::array<shopui::BitmapPixels,6> m_frame;
     std::array<std::string,6> m_frameUris;
     shopui::BitmapPixels m_colorChip;
+#if RO_PLATFORM_WINDOWS
+    ArgbDibSurface m_opacitySurface;
+#endif
     bool m_dragging=false;
     int m_dragStartX=0,m_dragStartY=0,m_dragOriginX=0,m_dragOriginY=0;
     std::string m_caption;

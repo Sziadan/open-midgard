@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-**Current ground prompt native paint checkpoint (2026-11-11)**. The Win32 prompt displays preedit with the source selection palette and blink. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-native-paint.md)
+**Current ground prompt opacity checkpoint (2026-11-11)**. The Win32 prompts and their controls now fade as a single layer during drag and recover opacity on release. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-opacity.md)
+
+**Previous ground prompt native paint checkpoint (2026-11-11)**. The Win32 prompt displays preedit with the source selection palette and blink. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-native-paint.md)
 
 **Previous ground prompt keystroke checkpoint (2026-11-11)**. The Win32 ground prompts now render the Traditional Chinese keystroke cells and clear them when composition ends. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-keystrokes.md)
 
@@ -49,7 +51,7 @@
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Verify candidate open, change, and close and the Traditional Chinese keystroke window with a live Windows IME. Check the OS clipboard and original global key actions. Continue skin selection, translucency, snapping, and companion AI using the existing package gates. Keep skill tree window code and assets unchanged.
+**Next work.** Route the ground prompts into the modern gameplay overlay with alpha preserved. Verify candidate open, change, and close and the Traditional Chinese keystroke window with a live Windows IME. Check the OS clipboard and original global key actions. Continue skin selection and companion AI using the existing package gates. Keep skill tree window code and assets unchanged.
 
 The Traditional Chinese keystroke implementation uses the 39 fixed Big5 pairs in the selected executable and the stable slash-key pair from the adjacent slot string. The period key reads uninitialized bytes in the original. The port leaves that cell empty. [Keystroke evidence](evidence/PK27-prompt-keystrokes.md)
 
@@ -57,7 +59,9 @@ For prompt IME work, start with `CLanguage::ProcessImeMessage` at `0x4FEAD0` and
 
 Native composition paint now inserts preedit at the language cursor in a temporary display copy. It uses the selection palette for an active selection and a blinking highlight with a two-pixel minimum for a collapsed selection. Qt retains its own formatting and replacement ranges. [Native paint evidence](evidence/PK27-prompt-native-paint.md)
 
-For frame translucency, trace the selected executable's `UIWindowMgr::Render` call at `0x4DE243` through the `UIWindow` vtable slot at `0x6D3CF4` to `GetColor` at `0x4D9270`. The decompiler labels a different method as `GetColor` in `Ref/UISys.cpp`. Compare the selected routine with `Ref/dhxj/Window/UISys.cpp` and test the whole ground prompt and its child controls over a contrasting surface during capture and release. The prompt already sets the source alpha targets of 128 and 255.
+The Win32 compositor now blends the entire prompt and requests redraws until opacity settles. In `QueueModernOverlayQuad` in `src/gamemode/GameMode.cpp`, the Qt texture and CPU bridge skip managed native windows. The GDI upload branch calls `ConvertOverlayComposeBitsToAlpha`, which forces every non-key pixel opaque. Route the prompt and its IME popups through the active gameplay overlay and verify the final texture over a contrasting scene. [Native opacity evidence](evidence/PK27-prompt-opacity.md)
+
+The selected `UIWindowMgr::MakeWindow` paths for IDs 84 and 101 call `AddWindow` without `CSnapMgr::AddSnapObject`. Preserve the unregistered drag for these prompts. The registered branch of `UIFrameWnd::OnMouseMove` applies to windows explicitly added to the snap graph.
 
 1. Continue [PK09.04](work-items/PK09.04.md) with remaining full item/status/delta/detail contexts, remaining item mutation/status/context acceptance. PK37.07 now covers normal NPC catalog and selected buy/sell right-clicks, exact row snapshots, copied identification/refine/cards, owner collisions, lifetime, scrolling/header/padding, model shrink, reopening and125% WindowProc input. Preserve passive QML input and never resolve an NPC detail through equal-index inventory/cart or catalog rows.
    The strong-agent fallback review is complete at the current representation boundary: primary mode36/44/45 actions reset/setup drag state; transaction submission is separate. Legacy grid GetCurItem clamps a right tail that coordinate GetItemInfo rejects, while the decompiled one-argument lookup is unreliable. Current full-width row UI lacks this mismatch. Do not invent header/blank/normal-left ForceUpdate gestures. Exact legacy geometry/signature behavior remains unaccepted; PK09.11's explicit ForceUpdate API and default raw-key Select toggle remain required.

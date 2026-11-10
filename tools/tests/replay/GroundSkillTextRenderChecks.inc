@@ -29,6 +29,66 @@
                 "outside frame release failed ownership/255 transition target");
             window->OnMouseMove(100,100);Require(window->m_x==-20 && window->m_y==-40,"uncaptured frame followed pointer");
             window->Move(20,20);
+#if RO_PLATFORM_WINDOWS
+            if (id == 84) {
+                ArgbDibSurface opacityDib;
+                Require(opacityDib.EnsureSize(view.width(), view.height()), "opacity DIB failed");
+                constexpr unsigned background = 0xff182c50u;
+                const auto draw = [&](u32 tick) {
+                    std::fill_n(opacityDib.GetPixels(), view.width()*view.height(), background);
+                    window->DrawFrameAtTick(opacityDib.GetDC(), tick);
+                    GdiFlush();
+                };
+                const auto pixel = [&](int x, int y) { return opacityDib.GetPixels()[y*view.width()+x] & 0xffffffu; };
+                const auto* edit = window->GetEditCtrl();
+                const std::array<POINT,3> samples{{{25,79},{edit->m_x+edit->m_w-4,edit->m_y+8},{212,119}}};
+                draw(window->m_transTime);
+                std::array<unsigned,3> opaque{};
+                for (std::size_t i = 0; i < samples.size(); ++i) {
+                    opaque[i] = pixel(samples[i].x, samples[i].y);
+                    Require(opaque[i] != (background & 0xffffffu), "opacity fixture missed the prompt layer");
+                }
+                pointer(WM_LBUTTONDOWN,30,58);
+                Require(window->IsFrameDragging(), "opacity fixture did not capture the prompt");
+                const auto captureTick = window->m_transTime;
+                g_windowMgr.ClearDirtyVisualState();
+                Require(window->IsUpdateNeed() && g_windowMgr.HasDirtyVisualStateExcludingRoMap(),
+                    "overlay cache would stop drawing the transition after clearing ordinary dirty state");
+                draw(captureTick + 16);
+                Require(window->m_trans == 254, "frame alpha did not advance by one after 16 ms");
+                draw(captureTick + 32);
+                Require(window->m_trans == 252, "frame alpha did not apply elapsed time at each source draw");
+                draw(captureTick + 6400);
+                Require(window->m_trans == 128, "frame alpha did not clamp to the drag target");
+                const auto blended = [](unsigned source) {
+                    unsigned result = 0;
+                    for (const unsigned shift : {0u, 8u, 16u}) {
+                        const auto top = ((source >> shift) & 255) * 128;
+                        const auto bottom = ((background >> shift) & 255) * 127;
+                        result |= ((top + 127) / 255 + bottom / 255) << shift;
+                    }
+                    return result;
+                };
+                for (std::size_t i = 0; i < samples.size(); ++i)
+                    Require(pixel(samples[i].x, samples[i].y) == blended(opaque[i]),
+                        "prompt frame, edit, or button was not blended as part of one layer");
+                Require(pixel(2,2) == (background & 0xffffffu), "opacity paint touched the scene outside the prompt");
+                window->Move(-20,20);
+                draw(captureTick + 6400);
+                Require(pixel(samples[1].x-40,samples[1].y) == blended(opaque[1]),
+                    "partially clipped drag lost the translucent edit layer");
+                window->Move(20,20);
+                pointer(WM_LBUTTONUP,400,300);
+                const auto releaseTick = window->m_transTime;
+                draw(releaseTick + 16);
+                Require(window->m_trans == 129, "release did not begin restoring alpha");
+                draw(releaseTick + 6400);
+                Require(window->m_trans == 255 && pixel(samples[0].x, samples[0].y) == opaque[0],
+                    "release did not restore the opaque frame");
+                g_windowMgr.ClearDirtyVisualState();
+                Require(!window->IsUpdateNeed(), "settled opacity left the prompt animated");
+            }
+#endif
             pointer(WM_LBUTTONDOWN,212,119);pointer(WM_MOUSEMOVE,350,180);pointer(WM_LBUTTONUP,350,180);
             g_windowMgr.OnProcess();Require(g_windowMgr.ContainsWindow(window) && window->GetButtonState(118)!=2,
                 "outside button release submitted or left a pressed latch");
@@ -257,7 +317,8 @@
         proof.write(QJsonDocument(QJsonObject{{"outcome","PASS"},{"native_frames",2},{"source_ids_84_101",true},
             {"source_edit_geometry_and_limit",true},{"source_key_frame_footer_button_samples",true},
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
-            {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},{"opacity_compositor_acceptance",false},
+            {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},
+            {"opacity_compositor_acceptance",static_cast<bool>(RO_PLATFORM_WINDOWS)},
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},
             {"source_clipboard_bytes_and_selection",true},{"qt_preedit_cursor_and_replacement",true},
             {"source_candidate_layout_and_native_close",true},{"source_tc_keystroke_cells_and_lifecycle",true},
