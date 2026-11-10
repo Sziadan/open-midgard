@@ -1,0 +1,1426 @@
+--- Ref/UIFrameWnd3.cpp:3400-3486 ---
+3400:       switch ( val1 )
+3401:       {
+3402:         case 118:
+3403:           strcpy(chatBuf, UIEditCtrl::GetText(this->m_commonChat));
+3404:           UIChatEditCtrl::StoreInHistory(this->m_commonChat);
+3405:           m_commonChat = this->m_commonChat;
+3406:           this->m_lastFocusChat = m_commonChat;
+3407:           UIWindowMgr::SetFocusEdit(&g_windowMgr, m_commonChat);
+3408:           if ( !strlen(chatBuf) )
+3409:             return 0;
+3410:           if ( g_serviceType == ServiceAmerica && !CSession::IsOnlyEnglish(&g_session, chatBuf) )
+3411:           {
+3412:             v62 = (char *)MsgStr(MSI_ENGLISHONLY);
+3413:             goto LABEL_131;
+3414:           }
+3415:           if ( UIEditCtrl::GetTextSize(this->m_whisperChat) && chatBuf[0] != 47 )
+3416:           {
+3417:             v63 = strlen(chatBuf) + 1;
+3418:             v64 = v63 - 1;
+3419:             val1 = v63 - 1;
+3420:             if ( std::string::max_size(&g_windowMgr.m_chatMsg) < v63 - 1 )
+3421:               std::_Xlen();
+3422:             Ptr = g_windowMgr.m_chatMsg._Ptr;
+3423:             if ( g_windowMgr.m_chatMsg._Ptr && (v66 = *(g_windowMgr.m_chatMsg._Ptr - 1)) != 0 && v66 != -1 )
+3424:             {
+3425:               if ( v63 == 1 )
+3426:               {
+3427:                 *(g_windowMgr.m_chatMsg._Ptr - 1) = v66 - 1;
+3428:                 std::string::_Tidy(&g_windowMgr.m_chatMsg, 0);
+3429: LABEL_152:
+3430:                 m_curMode = g_modeMgr.m_curMode;
+3431:                 v68 = g_modeMgr.m_curMode->__vftable;
+3432:                 Text = UIEditCtrl::GetText(this->m_whisperChat);
+3433:                 v68->CMode::SendMsg(m_curMode, 11, (int)Text, 0, 0);
+3434:                 return 0;
+3435:               }
+3436:             }
+3437:             else
+3438:             {
+3439:               if ( v63 == 1 )
+3440:               {
+3441:                 std::string::_Tidy(&g_windowMgr.m_chatMsg, 1u);
+3442:                 goto LABEL_152;
+3443:               }
+3444:               if ( g_windowMgr.m_chatMsg._Res <= 0x1F && g_windowMgr.m_chatMsg._Res >= v64 )
+3445:               {
+3446: LABEL_151:
+3447:                 v87 = val1;
+3448:                 qmemcpy(Ptr, chatBuf, val1);
+3449:                 std::string::_Eos(&g_windowMgr.m_chatMsg, v87);
+3450:                 goto LABEL_152;
+3451:               }
+3452:               std::string::_Tidy(&g_windowMgr.m_chatMsg, 1u);
+3453:             }
+3454:             std::string::_Copy(&g_windowMgr.m_chatMsg, v64);
+3455:             Ptr = g_windowMgr.m_chatMsg._Ptr;
+3456:             goto LABEL_151;
+3457:           }
+3458:           `eh vector constructor iterator'(
+3459:             param,
+3460:             0x10u,
+3461:             3,
+3462:             (void (__thiscall *)(void *))std::string::`default constructor closure',
+3463:             (void (__thiscall *)(void *))std::string::~string);
+3464:           i = 2;
+3465:           TalkType = CSession::GetTalkType(&g_session, chatBuf, (int)&val4, param);
+3466:           if ( TalkType == -1 )
+3467:             goto LABEL_168;
+3468:           v71 = &chatBuf[TalkType];
+3469:           v72 = strlen(&chatBuf[TalkType]) + 1;
+3470:           v73 = v72 - 1;
+3471:           if ( std::string::max_size(&g_windowMgr.m_chatMsg) < v72 - 1 )
+3472:             std::_Xlen();
+3473:           v74 = g_windowMgr.m_chatMsg._Ptr;
+3474:           if ( g_windowMgr.m_chatMsg._Ptr && (v75 = *(g_windowMgr.m_chatMsg._Ptr - 1)) != 0 && v75 != -1 )
+3475:           {
+3476:             if ( v72 == 1 )
+3477:             {
+3478:               *(g_windowMgr.m_chatMsg._Ptr - 1) = v75 - 1;
+3479:               std::string::_Tidy(&g_windowMgr.m_chatMsg, 0);
+3480: LABEL_168:
+3481:               g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, (int)val4, (int)param, 0);
+3482:               i = -1;
+3483:               `eh vector destructor iterator'(param, 0x10u, 3, (void (__thiscall *)(void *))std::string::~string);
+3484:               return 0;
+3485:             }
+3486:           }
+--- Ref/UIControl.cpp:9031-9149 ---
+9031: // Original Signature: public: void __thiscall UIChatEditCtrl::StoreInHistory(void)
+9032: // Decompiled from address: 0x447fe0
+9033: // ================================================
+9034: void __thiscall UIChatEditCtrl::StoreInHistory(UIChatEditCtrl *this)
+9035: {
+9036:   unsigned int Len; // eax
+9037:   std::string *First; // ecx
+9038:   std::vector<std::string> *p_m_hisChat; // esi
+9039:   int v5; // eax
+9040:   int m_curHis; // ecx
+9041:   std::string *v7; // eax
+9042:   std::string *v8; // eax
+9043:   const std::string *v9; // esi
+9044:   std::string *v10; // edi
+9045:   char *Ptr; // eax
+9046:   char *v12; // esi
+9047:   unsigned int v13; // edi
+9048:   char *v14; // eax
+9049:   int v15; // edx
+9050:   int v16; // eax
+9051:   std::string *v17; // edx
+9052:   int v18; // ecx
+9053:   char *v19; // eax
+9054:   std::string *Last; // [esp-14h] [ebp-40h]
+9055:   std::string _X; // [esp+4h] [ebp-28h] BYREF
+9056:   unsigned int v22; // [esp+14h] [ebp-18h]
+9057:   char *_S; // [esp+18h] [ebp-14h]
+9058:   std::allocator<char> v24; // [esp+1Fh] [ebp-Dh]
+9059:   int v25; // [esp+28h] [ebp-4h]
+9060:
+9061:   if ( UIWindowMgr::GetFocusEdit(&g_windowMgr) == this )
+9062:     Len = g_language->m_input._Len;
+9063:   else
+9064:     Len = this->m_text._Len;
+9065:   if ( Len )
+9066:   {
+9067:     First = this->m_hisChat._First;
+9068:     p_m_hisChat = &this->m_hisChat;
+9069:     if ( First )
+9070:       v5 = this->m_hisChat._Last - First;
+9071:     else
+9072:       v5 = 0;
+9073:     m_curHis = this->m_curHis;
+9074:     if ( m_curHis == v5 )
+9075:     {
+9076:       v7 = this->m_hisChat._First;
+9077:       if ( v7 && (unsigned int)(this->m_hisChat._Last - v7) >= 0x1E )
+9078:       {
+9079:         this->m_curHis = m_curHis - 1;
+9080:         v8 = this->m_hisChat._First;
+9081:         v9 = v8 + 1;
+9082:         _S = (char *)this->m_hisChat._Last;
+9083:         if ( &v8[1] != (std::string *)_S )
+9084:         {
+9085:           v10 = v8;
+9086:           do
+9087:             std::string::assign(v10++, v9++, 0, std::string::npos);
+9088:           while ( v9 != (const std::string *)_S );
+9089:         }
+9090:         p_m_hisChat = &this->m_hisChat;
+9091:         std::vector<std::string>::_Destroy(&this->m_hisChat, this->m_hisChat._Last - 1, this->m_hisChat._Last);
+9092:         --this->m_hisChat._Last;
+9093:       }
+9094:       if ( UIWindowMgr::GetFocusEdit(&g_windowMgr) == this )
+9095:         UIEditCtrl::RefreshText(this);
+9096:       Ptr = this->m_text._Ptr;
+9097:       _S = (char *)`std::string::_Nullstr'::`2'::_C;
+9098:       if ( Ptr )
+9099:         _S = Ptr;
+9100:       _X.allocator = v24;
+9101:       std::string::_Tidy(&_X, 0);
+9102:       std::string::assign(&_X, _S, strlen(_S));
+9103:       Last = p_m_hisChat->_Last;
+9104:       v25 = 0;
+9105:       std::vector<std::string>::insert(p_m_hisChat, Last, 1u, &_X);
+9106:       v25 = -1;
+9107:       std::string::_Tidy(&_X, 1u);
+9108:     }
+9109:     else
+9110:     {
+9111:       if ( UIWindowMgr::GetFocusEdit(&g_windowMgr) == this )
+9112:         UIEditCtrl::RefreshText(this);
+9113:       v12 = this->m_text._Ptr;
+9114:       if ( !v12 )
+9115:         v12 = (char *)`std::string::_Nullstr'::`2'::_C;
+9116:       v13 = strlen(v12);
+9117:       _S = (char *)&this->m_hisChat._First[this->m_curHis];
+9118:       v22 = v13;
+9119:       if ( std::string::_Grow((std::string *)_S, v13, 1u) )
+9120:       {
+9121:         v14 = _S;
+9122:         qmemcpy(*((void **)_S + 1), v12, v13);
+9123:         *((_DWORD *)_S + 2) = v13;
+9124:         *(_BYTE *)(*((_DWORD *)v14 + 1) + v13) = 0;
+9125:       }
+9126:     }
+9127:     v15 = this->m_curHis + 1;
+9128:     this->m_curHis = v15;
+9129:     v16 = v15;
+9130:     v17 = this->m_hisChat._First;
+9131:     if ( v17 )
+9132:       v18 = this->m_hisChat._Last - v17;
+9133:     else
+9134:       v18 = 0;
+9135:     if ( v16 == v18 )
+9136:     {
+9137:       this->UIEditCtrl::SetText(this, &Buf);
+9138:     }
+9139:     else
+9140:     {
+9141:       v19 = this->m_hisChat._First[v16]._Ptr;
+9142:       if ( !v19 )
+9143:         v19 = (char *)`std::string::_Nullstr'::`2'::_C;
+9144:       this->UIEditCtrl::SetText(this, v19);
+9145:     }
+9146:   }
+9147: }
+9148:
+9149:
+--- Ref/UIFrameWnd.cpp:2855-2922 ---
+2855:         v190 = -1;
+2856:         std::string::_Tidy((std::string *)&strings._First, 1u);
+2857:       }
+2858:       if ( this->m_memberListBox->m_curItem != -1 && title[0] != 47 && !HIBYTE(val1) )
+2859:       {
+2860:         std::string::assign(&g_windowMgr.m_chatMsg, title, strlen(title));
+2861:         v14 = &this->m_memberListBox->m_items._First[this->m_memberListBox->m_curItem];
+2862:         LOBYTE(strings._First) = v14->allocator;
+2863:         std::string::_Tidy((std::string *)&strings._First, 0);
+2864:         std::string::assign((std::string *)&strings._First, v14, 0, std::string::npos);
+2865:         Last = strings._Last;
+2866:         v190 = 1;
+2867:         if ( !strings._Last )
+2868:           Last = (std::string *)`std::string::_Nullstr'::`2'::_C;
+2869:         g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 11, (int)Last, 0, 0);
+2870:         v190 = -1;
+2871:         std::string::_Tidy((std::string *)&strings._First, 1u);
+2872:         goto LABEL_34;
+2873:       }
+2874:       `eh vector constructor iterator'(
+2875:         talkerName,
+2876:         0x10u,
+2877:         3,
+2878:         (void (__thiscall *)(void *))std::string::`default constructor closure',
+2879:         (void (__thiscall *)(void *))std::string::~string);
+2880:       v190 = 2;
+2881:       TalkType = CSession::GetTalkType(&g_session, title, (int)&val1, (std::string *)talkerName);
+2882:       if ( TalkType != -1 )
+2883:         std::string::assign(&g_windowMgr.m_chatMsg, &title[TalkType], strlen(&title[TalkType]));
+2884:       v17 = val1;
+2885:       if ( val1 )
+2886:       {
+2887:         if ( val1 == 51 )
+2888:         {
+2889:           v17 = 52;
+2890:         }
+2891:         else
+2892:         {
+2893:           if ( val1 != 115 )
+2894:           {
+2895: LABEL_33:
+2896:             g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, v17, (int)talkerName, 0);
+2897:             v190 = -1;
+2898:             `eh vector destructor iterator'(talkerName, 0x10u, 3, (void (__thiscall *)(void *))std::string::~string);
+2899: LABEL_34:
+2900:             UIChatEditCtrl::StoreInHistory(this->m_chatEdit);
+2901:             this->m_chatEdit->UIEditCtrl::SetText(this->m_chatEdit, &Buf);
+2902:             UIWindowMgr::SetFocusEdit(&g_windowMgr, this->m_chatEdit);
+2903:             return 0;
+2904:           }
+2905:           v17 = 116;
+2906:         }
+2907:       }
+2908:       else
+2909:       {
+2910:         v17 = 50;
+2911:       }
+2912:       val1 = v17;
+2913:       goto LABEL_33;
+2914:     case 14:
+2915:       if ( val1 != 7 )
+2916:         return 0;
+2917:       v132 = val2;
+2918:       v133 = val3;
+2919:       if ( val2 > 512 )
+2920:         v132 = 512;
+2921:       if ( val3 > 384 )
+2922:         v133 = 384;
+--- Ref/UIFrameWnd2.cpp:14140-14190 ---
+14140:               0x10u,
+14141:               3,
+14142:               (void (__thiscall *)(void *))std::string::`default constructor closure',
+14143:               (void (__thiscall *)(void *))std::string::~string);
+14144:             v55 = 0;
+14145:             TalkType = CSession::GetTalkType(&g_session, chatBuf, (int)&val2, param);
+14146:             if ( TalkType != -1 )
+14147:             {
+14148:               v12 = &chatBuf[TalkType];
+14149:               ia = strlen(&chatBuf[TalkType]);
+14150:               if ( std::string::_Grow(&g_windowMgr.m_chatMsg, ia, 1u) )
+14151:               {
+14152:                 qmemcpy(g_windowMgr.m_chatMsg._Ptr, v12, ia);
+14153:                 std::string::_Eos(&g_windowMgr.m_chatMsg, ia);
+14154:               }
+14155:             }
+14156:             switch ( val2 )
+14157:             {
+14158:               case TT_REQ_EXIT_ROOM:
+14159:                 UIWindowMgr::PostQuit(&g_windowMgr, &this->UIFrameWnd);
+14160:                 break;
+14161:               case TT_REQ_SAVE_CHAT:
+14162:                 UIWhisperWnd::WriteChatToFile(this);
+14163:                 break;
+14164:               case TT_REQ_REPORT_CHAT:
+14165:                 UIWhisperWnd::WriteChatToReportFile(this);
+14166:                 break;
+14167:               default:
+14168:                 g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, val2, (int)param, 0);
+14169:                 break;
+14170:             }
+14171:             v55 = -1;
+14172:             `eh vector destructor iterator'(param, 0x10u, 3, (void (__thiscall *)(void *))std::string::~string);
+14173:             return 0;
+14174:           }
+14175:           else
+14176:           {
+14177:             i = strlen(chatBuf);
+14178:             if ( std::string::_Grow(&g_windowMgr.m_chatMsg, i, 1u) )
+14179:             {
+14180:               qmemcpy(g_windowMgr.m_chatMsg._Ptr, chatBuf, i);
+14181:               std::string::_Eos(&g_windowMgr.m_chatMsg, i);
+14182:             }
+14183:             Ptr = this->m_whisperName._Ptr;
+14184:             if ( !Ptr )
+14185:               Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+14186:             g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 11, (int)Ptr, 0, 0);
+14187:             return 0;
+14188:           }
+14189:         }
+14190:         else
+--- Ref/GameMode.cpp:15923-16048 ---
+15923:   TALKTYPE talkType; // [esp+B48h] [ebp-10h]
+15924:   int v284; // [esp+B54h] [ebp-4h]
+15925:
+15926:   First = g_session.m_cmdOnOffSet._First;
+15927:   v5 = val1;
+15928:   talkType = val1;
+15929:   if ( g_session.m_cmdOnOffSet._First != g_session.m_cmdOnOffSet._Last )
+15930:   {
+15931:     while ( First->second != val1 )
+15932:     {
+15933:       if ( ++First == g_session.m_cmdOnOffSet._Last )
+15934:         goto LABEL_6;
+15935:     }
+15936:     First->first = First->first == 0;
+15937:   }
+15938: LABEL_6:
+15939:   if ( g_windowMgr.m_commandListWnd )
+15940:     g_windowMgr.m_commandListWnd->UIWindow::Invalidate(g_windowMgr.m_commandListWnd);
+15941:   if ( g_serviceType == ServiceVietnam && v5 == TT_REQ_NUM_USER )
+15942:   {
+15943:     v5 = TT_UNKNOWN;
+15944:     talkType = TT_UNKNOWN;
+15945:   }
+15946:   switch ( v5 )
+15947:   {
+15948:     case TT_NORMAL:
+15949:     case TT_NORMAL_FROM_CHATROOM:
+15950:       Ptr = g_windowMgr.m_chatMsg._Ptr;
+15951:       *(float *)&val2 = 0.0;
+15952:       val1 = TT_NORMAL;
+15953:       if ( !g_windowMgr.m_chatMsg._Ptr )
+15954:         Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+15955:       strcpy(&chat2, Ptr);
+15956:       if ( chat2 == 37 )
+15957:       {
+15958:         if ( strlen(&chat2) <= 1 )
+15959:           return;
+15960:         *(float *)&val2 = COERCE_FLOAT(strlen(v276));
+15961:         if ( std::string::_Grow(&g_windowMgr.m_chatMsg, val2, 1u) )
+15962:         {
+15963:           v24 = val2;
+15964:           qmemcpy(g_windowMgr.m_chatMsg._Ptr, v276, val2);
+15965:           g_windowMgr.m_chatMsg._Len = v24;
+15966:           g_windowMgr.m_chatMsg._Ptr[v24] = 0;
+15967:         }
+15968:         val2 = 1;
+15969:       }
+15970:       else if ( chat2 == 36 )
+15971:       {
+15972:         if ( strlen(&chat2) <= 1 )
+15973:           return;
+15974:         dy = strlen(v276);
+15975:         if ( std::string::_Grow(&g_windowMgr.m_chatMsg, dy, 1u) )
+15976:         {
+15977:           v25 = dy;
+15978:           qmemcpy(g_windowMgr.m_chatMsg._Ptr, v276, dy);
+15979:           g_windowMgr.m_chatMsg._Len = v25;
+15980:           g_windowMgr.m_chatMsg._Ptr[v25] = 0;
+15981:         }
+15982:         val1 = TT_BROADCAST;
+15983:       }
+15984:       v26 = 1;
+15985:       if ( !((unsigned __int16)GetAsyncKeyState(17) >> 8) )
+15986:         v26 = val2;
+15987:       v27 = TT_BROADCAST;
+15988:       if ( !((unsigned __int16)GetAsyncKeyState(18) >> 8) )
+15989:         v27 = val1;
+15990:       if ( talkType != TT_NORMAL_FROM_CHATROOM )
+15991:       {
+15992:         if ( g_session.m_isBattleChat )
+15993:         {
+15994:           this->CMode::SendMsg(this, 271, 0, 0, 0);
+15995:           return;
+15996:         }
+15997:         if ( g_session.m_talkType == 2 )
+15998:         {
+15999:           if ( g_guildInfo.m_gdid )
+16000:           {
+16001:             if ( v27 == TT_NORMAL )
+16002:             {
+16003:               this->CMode::SendMsg(this, 142, 0, 0, 0);
+16004:               return;
+16005:             }
+16006:             goto LABEL_83;
+16007:           }
+16008:         }
+16009:         else if ( g_session.m_talkType == 1 )
+16010:         {
+16011:           if ( !v26 && CSession::GetNumParty(&g_session) )
+16012:             goto LABEL_78;
+16013:           goto LABEL_83;
+16014:         }
+16015:         if ( v26 && CSession::GetNumParty(&g_session) )
+16016:         {
+16017: LABEL_78:
+16018:           this->CMode::SendMsg(this, 72, 0, 0, 0);
+16019:           return;
+16020:         }
+16021:         if ( v27 )
+16022:           goto LABEL_86;
+16023: LABEL_83:
+16024:         this->CMode::SendMsg(this, 6, 0, 0, 0);
+16025:         return;
+16026:       }
+16027:       if ( g_session.m_talkType == 2 && g_guildInfo.m_gdid )
+16028:         goto LABEL_86;
+16029:       if ( v26 && CSession::GetNumParty(&g_session) )
+16030:         goto LABEL_78;
+16031:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(6, 0, 0, 0);
+16032:       return;
+16033:     case TT_BROADCAST:
+16034:       this->CMode::SendMsg(this, 7, 0, 0, 0);
+16035:       return;
+16036:     case TT_UNKNOWN:
+16037:       goto $L166370;
+16038:     case TT_DISCONNECT_CHARACTER:
+16039:       this->CMode::SendMsg(this, 14, 0, 0, 0);
+16040:       return;
+16041:     case TT_DISCONNECT_ALL_CHARACTER:
+16042:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(15, 0, 0, 0);
+16043:       return;
+16044:     case TT_REQ_NUM_USER:
+16045:       this->CMode::SendMsg(this, 34, 0, 0, 0);
+16046:       return;
+16047:     case TT_MUSIC_ON_OFF:
+16048:       g_session.m_bgmIsPaused = 1 - g_session.m_bgmIsPaused;
+--- Ref/GameMode.cpp:16165-16215 ---
+16165:       goto LABEL_279;
+16166:     case TT_VOLUME:
+16167:       v85 = *(const char **)(val2 + 4);
+16168:       if ( !v85 )
+16169:         v85 = `std::string::_Nullstr'::`2'::_C;
+16170:       v86 = atoi(v85);
+16171:       v87 = v86;
+16172:       if ( v86 <= 127 )
+16173:       {
+16174:         if ( v86 < 0 )
+16175:           v87 = 0;
+16176:       }
+16177:       else
+16178:       {
+16179:         v87 = 127;
+16180:       }
+16181:       Set2DVolume(v87);
+16182:       Set3DVolume(v87);
+16183:       v88 = MsgStr(MSI_VOLUME_OF_SOUND);
+16184:       sprintf(&msg.m_fileName[8], "%s %d", v88, v87);
+16185:       UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)&msg.m_fileName[8], 6619135, 0, 0);
+16186:       goto LABEL_280;
+16187:     case TT_BVOLUME:
+16188:       v89 = *(const char **)(val2 + 4);
+16189:       if ( !v89 )
+16190:         v89 = `std::string::_Nullstr'::`2'::_C;
+16191:       v90 = atoi(v89);
+16192:       v91 = v90;
+16193:       if ( v90 <= 127 )
+16194:       {
+16195:         if ( v90 < 0 )
+16196:           v91 = 0;
+16197:       }
+16198:       else
+16199:       {
+16200:         v91 = 127;
+16201:       }
+16202:       g_session.m_BgmVolume = v91;
+16203:       SetStreamVolume(v91);
+16204:       v92 = MsgStr(MSI_VOLUME_OF_BGM);
+16205:       sprintf(&msg.m_fileName[8], "%s %d", v92, v91);
+16206:       UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)&msg.m_fileName[8], 6619135, 0, 0);
+16207:       m_optionWnd = g_windowMgr.m_optionWnd;
+16208:       if ( g_windowMgr.m_optionWnd )
+16209:         goto LABEL_257;
+16210:       return;
+16211:     case TT_HELP:
+16212:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+16213:       v96 = MsgStr(MSI_EXPLAIN_OPENTIP);
+16214:       UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v96, 16777060, 0, 0);
+16215:       v97 = MsgStr(MSI_EXPLAIN_HELP);
+--- Ref/GameMode.cpp:16450-16497 ---
+16450:       X = 207;
+16451: LABEL_155:
+16452:       v55 = CRagConnection::instanceR();
+16453:       Xc = CRagConnection::GetPacketSize(v55, X);
+16454:       v56 = CRagConnection::instanceR();
+16455:       CRagConnection::SendPacket(v56, Xc, X_4);
+16456:       return;
+16457:     case TT_REQ_STAND:
+16458:       v94 = this->m_world->m_player;
+16459:       if ( v94 )
+16460:         v94->CGameObject::SendMsg(v94, 0, 30, 0, 0, 0);
+16461:       return;
+16462:     case TT_REQ_SIT:
+16463:       v95 = this->m_world->m_player;
+16464:       if ( v95 )
+16465:         v95->CGameObject::SendMsg(v95, 0, 31, 0, 0, 0);
+16466:       return;
+16467:     case TT_MAKE_CHATROOMMAKEWND:
+16468:       if ( !g_windowMgr.m_merchantShopMakeWnd )
+16469:       {
+16470:         if ( !g_windowMgr.m_merchantItemMyShopWnd )
+16471:         {
+16472:           UIWindowMgr::MakeWindow(&g_windowMgr, WID_CHATROOMMAKEWND);
+16473:           return;
+16474:         }
+16475:         goto LABEL_298;
+16476:       }
+16477:       if ( g_windowMgr.m_merchantItemMyShopWnd )
+16478:       {
+16479: LABEL_298:
+16480:         v167 = MsgStr(MSI_CANT_OPEN_STORE_WHILE_CHAT);
+16481:         UIWindowMgr::ErrorMsg(&g_windowMgr, v167, 0, 1, 0, 0);
+16482:         return;
+16483:       }
+16484:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(91, 0, 0, 0);
+16485:       return;
+16486:     case TT_REQ_EXIT_ROOM:
+16487:       this->CMode::SendMsg(this, 53, 0, 0, 0);
+16488:       return;
+16489:     case TT_REQ_EXCHANGE_ITEM:
+16490:       v203 = val2;
+16491:       *(float *)&val2 = COERCE_FLOAT(`std::string::_Nullstr'::`2'::_C);
+16492:       v204 = *(_DWORD *)(v203 + 4);
+16493:       if ( v204 )
+16494:         val2 = v204;
+16495:       dy = (int)this->m_actorNameList._Tr._Head;
+16496:       v205 = *(std::_Tree<unsigned long,std::pair<unsigned long const ,NamePair>,std::map<unsigned long,NamePair,std::less<unsigned long>,std::allocator<NamePair> >::_Kfn,std::less<unsigned long>,std::allocator<NamePair> >::_Node **)dy;
+16497:       if ( *(_DWORD *)dy == dy )
+--- Ref/GameMode.cpp:16548-16596 ---
+16548:     case TT_REQ_EXPEL_GROUP_MEMBER:
+16549:       v202 = *(const char **)(val2 + 4);
+16550:       if ( !v202 )
+16551:         v202 = `std::string::_Nullstr'::`2'::_C;
+16552:       ((void (__stdcall *)(int, const char *, _DWORD, _DWORD))this->CMode::SendMsg)(68, v202, 0, 0);
+16553:       return;
+16554:     case TT_REQ_EMOTION_SURPRISE:
+16555:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(33, 0, 0, 0);
+16556:       return;
+16557:     case TT_REQ_EMOTION_QUESTION:
+16558:       this->CMode::SendMsg(this, 33, 1, 0, 0);
+16559:       return;
+16560:     case TT_REQ_EMOTION_DELIGHT:
+16561:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 2, 0, 0);
+16562:       return;
+16563:     case TT_REQ_EMOTION_THROB:
+16564:       this->CMode::SendMsg(this, 33, 3, 0, 0);
+16565:       return;
+16566:     case TT_REQ_EMOTION_SWEAT:
+16567:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 4, 0, 0);
+16568:       return;
+16569:     case TT_REQ_EMOTION_AHA:
+16570:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 5, 0, 0);
+16571:       return;
+16572:     case TT_REQ_EMOTION_FRET:
+16573:       this->CMode::SendMsg(this, 33, 6, 0, 0);
+16574:       return;
+16575:     case TT_REQ_EMOTION_ANGER:
+16576:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 7, 0, 0);
+16577:       return;
+16578:     case TT_REQ_EMOTION_MONEY:
+16579:       this->CMode::SendMsg(this, 33, 8, 0, 0);
+16580:       return;
+16581:     case TT_REQ_EMOTION_THINK:
+16582:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 9, 0, 0);
+16583:       return;
+16584:     case TT_REQ_EMOTION_SCISSOR:
+16585:       this->CMode::SendMsg(this, 33, 10, 0, 0);
+16586:       return;
+16587:     case TT_REQ_EMOTION_ROCK:
+16588:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 11, 0, 0);
+16589:       return;
+16590:     case TT_REQ_EMOTION_WRAP:
+16591:       this->CMode::SendMsg(this, 33, 12, 0, 0);
+16592:       return;
+16593:     case TT_OPEN_TIP:
+16594:       if ( !UIWindowMgr::DeleteWindow(&g_windowMgr, WID_TIPOFTHEDAYWND) )
+16595:         UIWindowMgr::MakeWindow(&g_windowMgr, WID_TIPOFTHEDAYWND);
+16596:       return;
+--- Ref/GameMode.cpp:16724-16779 ---
+16724:       return;
+16725:     case TT_REQ_SAVE_CHAT:
+16726:       UIWindowMgr::SendMsg(&g_windowMgr, 6, 0, 0, 0, 0);
+16727:       return;
+16728:     case TT_REQ_SAVE_CHAT_FROM_CHATROOM:
+16729:       UIWindowMgr::SendMsg(&g_windowMgr, 7, 0, 0, 0, 0);
+16730:       return;
+16731:     case TT_MISS_EFFECT_ON_OFF:
+16732:       g_session.m_bMakeMissEffect = 1 - g_session.m_bMakeMissEffect;
+16733:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+16734:       v259 = 6619135;
+16735:       if ( g_session.m_bMakeMissEffect )
+16736:         v67 = MsgStr(MSI_MISS_EFFECT_ON);
+16737:       else
+16738:         v67 = MsgStr(MSI_MISS_EFFECT_OFF);
+16739:       goto LABEL_513;
+16740:     case TT_FIXED_CAMERA_ON_OFF:
+16741:       g_isFixedCamera = 1 - g_isFixedCamera;
+16742:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+16743:       v259 = 6619135;
+16744:       if ( g_isFixedCamera )
+16745:         v67 = MsgStr(MSI_FIXED_CAMERA_ON);
+16746:       else
+16747:         v67 = MsgStr(MSI_FIXED_CAMERA_OFF);
+16748:       goto LABEL_513;
+16749:     case TT_REQ_MAKE_GUILD:
+16750:       v169 = *(const char **)(val2 + 4);
+16751:       if ( !v169 )
+16752:         v169 = `std::string::_Nullstr'::`2'::_C;
+16753:       ((void (__stdcall *)(int, const char *, _DWORD, _DWORD))this->CMode::SendMsg)(125, v169, 0, 0);
+16754:       return;
+16755:     case TT_REQ_BREAK_GUILD:
+16756:       v168 = *(const char **)(val2 + 4);
+16757:       if ( !v168 )
+16758:         v168 = `std::string::_Nullstr'::`2'::_C;
+16759:       ((void (__stdcall *)(int, const char *, _DWORD, _DWORD))this->CMode::SendMsg)(119, v168, 0, 0);
+16760:       return;
+16761:     case TT_GUILD_CHAT:
+16762:       v6 = `std::string::_Nullstr'::`2'::_C;
+16763:       if ( *(_DWORD *)(val2 + 4) )
+16764:         v6 = *(const char **)(val2 + 4);
+16765:       *(float *)&val2 = COERCE_FLOAT(strlen(v6));
+16766:       if ( std::string::_Grow(&g_windowMgr.m_chatMsg, val2, 1u) )
+16767:       {
+16768:         v7 = val2;
+16769:         qmemcpy(g_windowMgr.m_chatMsg._Ptr, v6, val2);
+16770:         g_windowMgr.m_chatMsg._Len = v7;
+16771:         g_windowMgr.m_chatMsg._Ptr[v7] = 0;
+16772:       }
+16773: LABEL_86:
+16774:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(142, 0, 0, 0);
+16775:       return;
+16776:     case TT_FOG:
+16777:       g_session.m_fogOn = 1 - g_session.m_fogOn;
+16778:       CGameMode::MakeFog(this, g_session.m_fogOn);
+16779:       if ( g_session.m_fogOn )
+--- Ref/GameMode.cpp:17109-17180 ---
+17109:       return;
+17110:     case TT_DORIDORI_ON_OFF:
+17111:       v58 = this->m_world->m_player;
+17112:       m_roty = v58->m_roty;
+17113:       v60 = (v58->m_curMotion != 2) + 1;
+17114:       v58->m_curMotion = v60;
+17115:       val2 = (unsigned int)this->__vftable;
+17116:       (*(void (__thiscall **)(CGameMode *, int, int, int, _DWORD))(val2 + 20))(
+17117:         this,
+17118:         152,
+17119:         (int)((__int64)m_roty + 180) / 45 % 8,
+17120:         v60,
+17121:         0);
+17122:       if ( v58->m_stateId == 6 )
+17123:       {
+17124:         m_doritime = this->m_doritime;
+17125:         v62 = 5;
+17126:         v63 = this->m_doritime;
+17127:         do
+17128:         {
+17129:           *v63 = v63[1];
+17130:           ++v63;
+17131:           --v62;
+17132:         }
+17133:         while ( v62 );
+17134:         Time = timeGetTime();
+17135:         v65 = *m_doritime;
+17136:         this->m_doritime[5] = Time;
+17137:         v66 = Time - v65;
+17138:         if ( v66 < 0xBB8 && v66 > 0x5DC )
+17139:         {
+17140:           this->CMode::SendMsg(this, 183, 0, 0, 0);
+17141:           memset(m_doritime, 0, 0x18u);
+17142:         }
+17143:       }
+17144:       return;
+17145:     case TT_BINGBING_ON_OFF:
+17146:       v73 = this->m_world->m_player;
+17147:       v74 = v73->m_roty + 45.0;
+17148:       v73->m_roty = v74;
+17149:       if ( !v76 )
+17150:         v73->m_roty = v74 - 360.0;
+17151:       v77 = this->__vftable;
+17152:       v78 = (__int64)v73->m_roty;
+17153:       v79 = (((int)v78 + 180) / 45) & 0x80000007;
+17154:       if ( ((int)v78 + 180) / 45 < 0 )
+17155:         goto LABEL_238;
+17156:       goto LABEL_239;
+17157:     case TT_BANGBANG_ON_OFF:
+17158:       v80 = this->m_world->m_player;
+17159:       v81 = v80->m_roty - 45.0;
+17160:       v80->m_roty = v81;
+17161:       if ( v83 )
+17162:         v80->m_roty = v81 + 360.0;
+17163:       v77 = this->__vftable;
+17164:       v84 = (__int64)v80->m_roty + 180;
+17165:       v79 = (v84 / 45) & 0x80000007;
+17166:       if ( v84 / 45 < 0 )
+17167: LABEL_238:
+17168:         v79 = (((_BYTE)v79 - 1) | 0xFFFFFFF8) + 1;
+17169: LABEL_239:
+17170:       v77->CMode::SendMsg(this, 152, v79, 0, 0);
+17171:       return;
+17172:     case TT_SKILLFAIL_ON_OFF:
+17173:       g_session.m_isSkillFail = 1 - g_session.m_isSkillFail;
+17174:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+17175:       v259 = 6619135;
+17176:       if ( g_session.m_isSkillFail )
+17177:         v67 = MsgStr(MSI_SKILLFAIL_ON);
+17178:       else
+17179:         v67 = MsgStr(MSI_SKILLFAIL_OFF);
+17180:       goto LABEL_513;
+--- Ref/GameMode.cpp:17434-17560 ---
+17434:     case TT_REQ_TAEKWON:
+17435:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(197, 0, 0, 0);
+17436:       return;
+17437:     case TT_AUTO_MSG_ON_OFF:
+17438:       g_session.m_onAutoMSG = g_session.m_onAutoMSG == 0;
+17439:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+17440:       if ( g_session.m_onAutoMSG )
+17441:       {
+17442:         UIWindowMgr::MakeWindow(&g_windowMgr, WID_AUTOMESSAGEWND);
+17443:         return;
+17444:       }
+17445:       v259 = 6619135;
+17446:       v67 = MsgStr(MSI_AUTO_MSG_OFF);
+17447:       goto LABEL_513;
+17448:     case TT_REQ_EMOTION_SPARK:
+17449:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 52, 0, 0);
+17450:       return;
+17451:     case TT_REQ_EMOTION_CONFUSE:
+17452:       this->CMode::SendMsg(this, 33, 53, 0, 0);
+17453:       return;
+17454:     case TT_REQ_EMOTION_OHNO:
+17455:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 54, 0, 0);
+17456:       return;
+17457:     case TT_REQ_EMOTION_HUM:
+17458:       this->CMode::SendMsg(this, 33, 55, 0, 0);
+17459:       return;
+17460:     case TT_REQ_EMOTION_BLABLA:
+17461:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 56, 0, 0);
+17462:       return;
+17463:     case TT_REQ_EMOTION_OTL:
+17464:       this->CMode::SendMsg(this, 33, 57, 0, 0);
+17465:       return;
+17466:     case TT_REQ_EMOTION_DICE:
+17467:       v213 = rand();
+17468:       this->CMode::SendMsg(this, 33, v213 % 6 + 58, 0, 0);
+17469:       return;
+17470:     case TT_REQ_KILLER_RANK:
+17471:       this->CMode::SendMsg(this, 201, 0, 0, 0);
+17472:       return;
+17473:     case TT_TRACEAI_ON_OFF:
+17474:       g_session.m_onTraceAI = g_session.m_onTraceAI == 0;
+17475:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+17476:       if ( g_session.m_onTraceAI )
+17477:       {
+17478:         GetCurrentDirectoryA(0x100u, curPath);
+17479:         v71 = strstr(curPath, aData);
+17480:         if ( v71 )
+17481:           qmemcpy(curPath, curPath, v71 - curPath);
+17482:         strcat(curPath, aTraceaiTxt);
+17483:         CFile::CFile(&msg);
+17484:         v284 = 2;
+17485:         CFile::Open(&msg, curPath, 0x1001u);
+17486:         CFile::Write(&msg, &Buf, strlen(&Buf));
+17487:         CFile::Close(&msg);
+17488:         v72 = MsgStr(MSI_TRACE_AI_ON);
+17489:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v72, 6619135, 0, 0);
+17490:         v284 = -1;
+17491:         CFile::~CFile(&msg);
+17492:       }
+17493:       else
+17494:       {
+17495:         v259 = 6619135;
+17496:         v67 = MsgStr(MSI_TRACE_AI_OFF);
+17497: LABEL_513:
+17498:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v67, v259, 0, 0);
+17499:       }
+17500:       return;
+17501:     case TT_HOMUN_WAIT:
+17502:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(204, 0, 0, 0);
+17503:       return;
+17504:     case TT_HOMUN_USERAI_ON_OFF:
+17505:       g_session.m_onHoUserAI = g_session.m_onHoUserAI == 0;
+17506:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+17507:       v259 = 6619135;
+17508:       if ( g_session.m_onHoUserAI )
+17509:         v67 = MsgStr(MSI_HOMUN_USERAI_ON);
+17510:       else
+17511:         v67 = MsgStr(MSI_HOMUN_USERAI_OFF);
+17512:       goto LABEL_513;
+17513:     case TT_LOGINOUT_ON_OFF:
+17514:       g_session.m_isLogInOut = 1 - g_session.m_isLogInOut;
+17515:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+17516:       v259 = 6619135;
+17517:       if ( g_session.m_isLogInOut )
+17518:         v67 = MsgStr(MSI_LOGINOUT_ON);
+17519:       else
+17520:         v67 = MsgStr(MSI_LOGINOUT_OFF);
+17521:       goto LABEL_513;
+17522:     case TT_SET3_ON_OFF:
+17523:       g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, 112, 0, 0);
+17524:       g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, 107, 0, 0);
+17525:       g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, 108, 0, 0);
+17526:       g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, 140, 0, 0);
+17527:       g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, 164, 0, 0);
+17528:       g_modeMgr.m_curMode->CMode::SendMsg(g_modeMgr.m_curMode, 47, 134, 0, 0);
+17529:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))g_modeMgr.m_curMode->CMode::SendMsg)(47, 166, 0, 0);
+17530:       return;
+17531:     case TT_SHOPPING_ON_OFF:
+17532:       g_session.m_isShopping = 1 - g_session.m_isShopping;
+17533:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+17534:       v259 = 6619135;
+17535:       if ( g_session.m_isShopping )
+17536:         v67 = MsgStr(MSI_SHOPPING_ON);
+17537:       else
+17538:         v67 = MsgStr(MSI_SHOPPING_OFF);
+17539:       goto LABEL_513;
+17540:     case TT_REQ_MUNAK:
+17541:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(263, 0, 0, 0);
+17542:       return;
+17543:     case TT_REQ_HUNTING:
+17544:       this->CMode::SendMsg(this, 262, 0, 0, 0);
+17545:       return;
+17546:     case TT_REQ_DEATHKNIGHT:
+17547:       this->CMode::SendMsg(this, 264, 0, 0, 0);
+17548:       return;
+17549:     case TT_REQ_EMOTION_LUV:
+17550:       ((void (__stdcall *)(int, int, _DWORD, _DWORD))this->CMode::SendMsg)(33, 65, 0, 0);
+17551:       return;
+17552:     case TT_REQ_COLLECTOR:
+17553:       ((void (__stdcall *)(int, _DWORD, _DWORD, _DWORD))this->CMode::SendMsg)(268, 0, 0, 0);
+17554:       return;
+17555:     case TT_MER_USERAI_ON_OFF:
+17556:       g_session.m_onMerUserAI = g_session.m_onMerUserAI == 0;
+17557:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+17558:       v259 = 6619135;
+17559:       if ( g_session.m_onMerUserAI )
+17560:         v67 = MsgStr(MSI_MER_USERAI_ON);
+--- Ref/GameMode2.cpp:15-70 ---
+15: // Original Signature: bool __cdecl IsSameSentence(int)
+16: // Decompiled from address: 0x583280
+17: // ================================================
+18: unsigned __int8 __cdecl IsSameSentence(int nRepeat)
+19: {
+20:   const char *v1; // eax
+21:   unsigned int v2; // kr04_4
+22:   unsigned int v3; // ebx
+23:   char *Ptr; // edi
+24:   char v5; // al
+25:
+26:   if ( g_serverType != ServerInstantEvent && g_serviceType != ServiceGermany && nRepeat >= 2 )
+27:   {
+28:     UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+29:     v1 = MsgStr(MSI_NO_SAME_SENTANCE);
+30:     UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v1, 255, 0, 0);
+31:     v2 = strlen(&Buf) + 1;
+32:     v3 = v2 - 1;
+33:     if ( v2 - 1 > 0xFFFFFFFD )
+34:       std::_Xlen();
+35:     Ptr = g_windowMgr.m_chatMsg._Ptr;
+36:     if ( g_windowMgr.m_chatMsg._Ptr && (v5 = *(g_windowMgr.m_chatMsg._Ptr - 1)) != 0 && v5 != -1 )
+37:     {
+38:       if ( v2 == 1 )
+39:       {
+40:         *(g_windowMgr.m_chatMsg._Ptr - 1) = v5 - 1;
+41:         g_windowMgr.m_chatMsg._Ptr = 0;
+42:         g_windowMgr.m_chatMsg._Len = 0;
+43:         g_windowMgr.m_chatMsg._Res = 0;
+44:         return 1;
+45:       }
+46:     }
+47:     else
+48:     {
+49:       if ( v2 == 1 )
+50:       {
+51:         std::string::_Tidy(&g_windowMgr.m_chatMsg, 1u);
+52:         return 1;
+53:       }
+54:       if ( g_windowMgr.m_chatMsg._Res <= 0x1F && g_windowMgr.m_chatMsg._Res >= v2 - 1 )
+55:         goto LABEL_17;
+56:       std::string::_Tidy(&g_windowMgr.m_chatMsg, 1u);
+57:     }
+58:     std::string::_Copy(&g_windowMgr.m_chatMsg, v3);
+59:     Ptr = g_windowMgr.m_chatMsg._Ptr;
+60: LABEL_17:
+61:     qmemcpy(Ptr, &Buf, v3);
+62:     g_windowMgr.m_chatMsg._Len = v2 - 1;
+63:     g_windowMgr.m_chatMsg._Ptr[v3] = 0;
+64:     return 1;
+65:   }
+66:   return 0;
+67: }
+68:
+69:
+70: // ================================================
+--- Ref/GameMode2.cpp:2883-2899 ---
+2883:     case 6u:
+2884:       if ( !strlen(UIWindowMgr::GetChatMsg(&g_windowMgr)) || CSession::IsEFST_Berserk(&g_session) == 1 )
+2885:         return SUT_NOSKILL;
+2886:       strcpy(_S, UIWindowMgr::GetChatMsg(&g_windowMgr));
+2887:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, _S) )
+2888:       {
+2889:         UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+2890:         v308 = MsgStr(MSI_NO_SEND_BECAUSE_INSULT);
+2891:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v308, 255, 0, 0);
+2892:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+2893:         return SUT_NOSKILL;
+2894:       }
+2895:       if ( std::operator==(&this->m_lastChat, _S) )
+2896:         ++this->m_sameChatRepeatCnt;
+2897:       else
+2898:         this->m_sameChatRepeatCnt = 0;
+2899:       if ( IsSameSentence(this->m_sameChatRepeatCnt) )
+--- Ref/GameMode2.cpp:3020-3125 ---
+3020:               v327 = MsgStr(MSI_SUPERNOVICE1);
+3021:               sprintf(temp, v327);
+3022:               v588 = MsgStr(MSI_SUPERNOVICE3);
+3023:               cyj = CSession::GetCharName(&g_session);
+3024:               v328 = MsgStr(MSI_SUPERNOVICE2);
+3025:               sprintf(msgBuf, "%s %s%s", v328, cyj, v588);
+3026:               v329 = MsgStr(MSI_SUPERNOVICE4);
+3027:             }
+3028:             sprintf(msg, v329);
+3029:             if ( std::operator==(&this->m_recordChat[9], msg) )
+3030:             {
+3031:               if ( std::operator==(&this->m_recordChat[7], temp) && this->m_world->m_player->m_stateId != 3 )
+3032:               {
+3033:                 WORD1(val1) = 493;
+3034:                 v332 = CRagConnection::instanceR();
+3035:                 cyl = CRagConnection::GetPacketSize(v332, 493);
+3036:                 v333 = CRagConnection::instanceR();
+3037:                 CRagConnection::SendPacket(v333, cyl, (const char *)&val1 + 2);
+3038:               }
+3039:             }
+3040:           }
+3041: LABEL_400:
+3042:           if ( strlen(_S) <= 6
+3043:             || (v334 = &this->m_recordChat[HIDWORD(val1)], !std::operator==(_S, v334))
+3044:             && !std::operator==(chat_p2, v334)
+3045:             && !std::operator==(chat_p1, v334)
+3046:             && !std::operator==(chat_m1, v334)
+3047:             && !std::operator==(chat, v334)
+3048:             || v321() - this->m_recordChatTime[HIDWORD(val1)] >= 0x7530
+3049:             || v321() == this->m_recordChatTime[0]
+3050:             || (++val3, val3 < 3) )
+3051:           {
+3052:             v335 = this->m_recordChatNum;
+3053:             ++HIDWORD(val1);
+3054:             if ( SHIDWORD(val1) > v335 )
+3055:               break;
+3056:             continue;
+3057:           }
+3058:           p_m_strikeNum = &this->m_strikeNum;
+3059:           if ( this->m_strikeNum == 3 )
+3060:           {
+3061:             m_strikeTime = this->m_strikeTime;
+3062:             v338 = 2;
+3063:             do
+3064:             {
+3065:               *m_strikeTime = m_strikeTime[1];
+3066:               --v338;
+3067:               ++m_strikeTime;
+3068:             }
+3069:             while ( v338 );
+3070:             v321 = timeGetTime;
+3071:             *p_m_strikeNum = 2;
+3072:           }
+3073:           this->m_strikeTime[*p_m_strikeNum] = v321();
+3074:           v339 = *p_m_strikeNum;
+3075:           if ( *p_m_strikeNum < 2 || this->m_strikeTime[2] - this->m_strikeTime[0] >= 0x15F90 )
+3076:           {
+3077:             if ( v339 < 3 )
+3078:               *p_m_strikeNum = v339 + 1;
+3079:           }
+3080:           else
+3081:           {
+3082:             CGameMode::ChatDori(this);
+3083:             *p_m_strikeNum = 0;
+3084:           }
+3085:         }
+3086:         else
+3087:         {
+3088:           CGameMode::ChatDori(this);
+3089:           this->m_strikeNum = 0;
+3090:         }
+3091:         break;
+3092:       }
+3093: LABEL_421:
+3094:       for ( i = 0; i < std::vector<int>::size(&stateId); ++i )
+3095:       {
+3096:         if ( *std::vector<int>::operator[](&stateId, i) == 225 )
+3097:         {
+3098:           ChatMsg = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3099:           sprintf(msgBuf, "%s", ChatMsg);
+3100:           v342 = atoi(msgBuf);
+3101:           LOWORD(val1) = 646;
+3102:           WORD1(val1) = v342;
+3103:           v343 = CRagConnection::instanceR();
+3104:           cym = CRagConnection::GetPacketSize(v343, 646);
+3105:           v344 = CRagConnection::instanceR();
+3106:           CRagConnection::SendPacket(v344, cym, (const char *)&val1);
+3107:         }
+3108:       }
+3109:       v590 = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3110:       cyn = CLanguage::GetLanguageCharset(g_language, 0);
+3111:       CharName = CSession::GetCharName(&g_session);
+3112:       sprintf(chat2, "%s : %s%s", CharName, cyn, v590);
+3113:       v634 = 0;
+3114:       v346 = strlen(chat2) + 1;
+3115:       UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3116:       *(_WORD *)&passwd[4] = 243;
+3117:       *(_WORD *)&passwd[6] = v346 - 1 + 5;
+3118:       *(_DWORD *)buf = *(_DWORD *)&passwd[4];
+3119:       qmemcpy(&buf[4], chat2, v346);
+3120:       cyo = *(unsigned __int16 *)&passwd[6];
+3121:       v347 = CRagConnection::instanceR();
+3122:       CRagConnection::SendPacket(v347, cyo, buf);
+3123:       return SUT_NOSKILL;
+3124:     case 7u:
+3125:       strcpy(chat2, UIWindowMgr::GetChatMsg(&g_windowMgr));
+--- Ref/GameMode2.cpp:3226-3288 ---
+3226:     case 0xBu:
+3227:       if ( !strlen(UIWindowMgr::GetChatMsg(&g_windowMgr)) || CSession::IsEFST_Berserk(&g_session) == 1 )
+3228:         return SUT_NOSKILL;
+3229:       v355 = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3230:       strncpy(&_S[24], v355, 0xDEu);
+3231:       v628 = 0;
+3232:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, &_S[24]) )
+3233:       {
+3234:         UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+3235:         v356 = MsgStr(MSI_NO_SEND_BECAUSE_INSULT);
+3236:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v356, 255, 0, 0);
+3237:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3238:         return SUT_NOSKILL;
+3239:       }
+3240:       if ( !g_MessageHi )
+3241:       {
+3242:         if ( std::operator==(&this->m_lastChat, &_S[24]) )
+3243:           ++this->m_sameChatRepeatCnt;
+3244:         else
+3245:           this->m_sameChatRepeatCnt = 0;
+3246:       }
+3247:       if ( !g_session.m_onAutoMSG && IsSameSentence(this->m_sameChatRepeatCnt) )
+3248:         return SUT_NOSKILL;
+3249:       std::string::operator=(&this->m_lastChat, &_S[24]);
+3250:       memset(&v687[12], 0, 25);
+3251:       strcpy(&v687[12], (const char *)val1);
+3252:       std::string::operator=(&this->m_lastWhisperName, &v687[12]);
+3253:       v357 = CSession::GetCharName(&g_session);
+3254:       if ( !strcmp(std::string::c_str(&this->m_lastWhisperName), v357) )
+3255:         goto LABEL_456;
+3256:       if ( g_multiLang )
+3257:       {
+3258:         strcpy(&chat_p2[24], CLanguage::GetLanguageCharset(g_language, 0));
+3259:         cyt = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3260:         strncpy(&chat_p2[27], cyt, 0xDBu);
+3261:       }
+3262:       else
+3263:       {
+3264:         cyu = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3265:         strncpy(&chat_p2[24], cyu, 0xDEu);
+3266:       }
+3267:       v678 = 0;
+3268:       std::string::operator=(&this->m_lastWhisper, &chat_p2[24]);
+3269:       v358 = strlen(&chat_p2[24]) + 1;
+3270:       if ( v358 == 1 || v358 - 1 >= 0xDE )
+3271:       {
+3272: LABEL_456:
+3273:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3274:         return SUT_NOSKILL;
+3275:       }
+3276:       else
+3277:       {
+3278:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3279:         *(_WORD *)&v683[2] = 150;
+3280:         qmemcpy(&v683[6], &v687[12], 0x18u);
+3281:         *(_WORD *)&v683[4] = v358 - 1 + 29;
+3282:         qmemcpy(buf, &v683[2], 0x1Cu);
+3283:         qmemcpy(&buf[28], &chat_p2[24], v358);
+3284:         cyv = *(unsigned __int16 *)&v683[4];
+3285:         v359 = CRagConnection::instanceR();
+3286:         CRagConnection::SendPacket(v359, cyv, buf);
+3287:         return SUT_NOSKILL;
+3288:       }
+--- Ref/GameMode2.cpp:4041-4064 ---
+4041:     case 0x21u:
+4042:       if ( this->m_isReqEmotion || timeGetTime() <= this->m_reqEmotionTick + 2500 )
+4043:         return SUT_NOSKILL;
+4044:       v45 = timeGetTime();
+4045:       v46 = val1;
+4046:       this->m_reqEmotionTick = v45;
+4047:       this->m_isReqEmotion = 1;
+4048:       p_val1 = (__int16 *)&val1 + 2;
+4049:       WORD2(val1) = 191;
+4050:       BYTE6(val1) = v46;
+4051:       cy = 191;
+4052:       goto LABEL_854;
+4053:     case 0x22u:
+4054:       if ( g_serviceType == ServiceChina || g_serviceType == ServiceMalaysia || g_serviceType == ServiceSingapore )
+4055:         return SUT_NOSKILL;
+4056:       WORD1(val1) = 193;
+4057:       p_val1 = (__int16 *)&val1 + 1;
+4058:       cy = 193;
+4059:       goto LABEL_854;
+4060:     case 0x23u:
+4061:       this->m_isReqEmotion = 0;
+4062:       return SUT_NOSKILL;
+4063:     case 0x24u:
+4064:       UIWindowMgr::ShowWindow(&g_windowMgr, WID_ITEMDROPCNTWND, 0);
+--- Ref/GameMode2.cpp:4616-4625 ---
+4616:     case 0x43u:
+4617:       WORD1(val1) = 256;
+4618:       p_val1 = (__int16 *)&val1 + 1;
+4619:       cy = 256;
+4620:       goto LABEL_854;
+4621:     case 0x44u:
+4622:       if ( !g_session.m_amIPartyMaster )
+4623:         return SUT_NOSKILL;
+4624:       v397 = (const char *)val1;
+4625:       *(_WORD *)&v687[8] = 259;
+--- Ref/GameMode2.cpp:4685-4712 ---
+4685:     case 0x48u:
+4686:       if ( !strlen(UIWindowMgr::GetChatMsg(&g_windowMgr)) || CSession::IsEFST_Berserk(&g_session) == 1 )
+4687:         return SUT_NOSKILL;
+4688:       strcpy(chat2, UIWindowMgr::GetChatMsg(&g_windowMgr));
+4689:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, chat2) )
+4690:         goto LABEL_430;
+4691:       if ( std::operator==(&this->m_lastChat, chat2) )
+4692:         ++this->m_sameChatRepeatCnt;
+4693:       else
+4694:         this->m_sameChatRepeatCnt = 0;
+4695:       if ( IsSameSentence(this->m_sameChatRepeatCnt) )
+4696:         return SUT_NOSKILL;
+4697:       std::string::operator=(&this->m_lastChat, chat2);
+4698:       v592 = UIWindowMgr::GetChatMsg(&g_windowMgr);
+4699:       cyr = CLanguage::GetLanguageCharset(g_language, 0);
+4700:       v352 = CSession::GetCharName(&g_session);
+4701:       sprintf(chat, "%s : %s%s", v352, cyr, v592);
+4702:       v353 = strlen(chat) + 1;
+4703:       UIWindowMgr::ClearChatMsg(&g_windowMgr);
+4704:       *(_WORD *)&passwd[4] = 264;
+4705:       *(_WORD *)&passwd[6] = v353 - 1 + 5;
+4706:       *(_DWORD *)buf = *(_DWORD *)&passwd[4];
+4707:       qmemcpy(&buf[4], chat, v353);
+4708:       cys = *(unsigned __int16 *)&passwd[6];
+4709:       v354 = CRagConnection::instanceR();
+4710:       CRagConnection::SendPacket(v354, cys, buf);
+4711:       return SUT_NOSKILL;
+4712:     case 0x49u:
+--- Ref/GameMode2.cpp:5914-5953 ---
+5914:     case 0x8Eu:
+5915:       if ( !strlen(UIWindowMgr::GetChatMsg(&g_windowMgr))
+5916:         || !g_guildInfo.m_gdid
+5917:         || CSession::IsEFST_Berserk(&g_session) == 1 )
+5918:       {
+5919:         return SUT_NOSKILL;
+5920:       }
+5921:       strcpy(chat2, UIWindowMgr::GetChatMsg(&g_windowMgr));
+5922:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, chat2) )
+5923:       {
+5924: LABEL_430:
+5925:         UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+5926:         v348 = MsgStr(MSI_NO_SEND_BECAUSE_INSULT);
+5927:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v348, 255, 0, 0);
+5928:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+5929:         return SUT_NOSKILL;
+5930:       }
+5931:       if ( std::operator==(&this->m_lastChat, chat2) )
+5932:         ++this->m_sameChatRepeatCnt;
+5933:       else
+5934:         this->m_sameChatRepeatCnt = 0;
+5935:       if ( IsSameSentence(this->m_sameChatRepeatCnt) )
+5936:         return SUT_NOSKILL;
+5937:       std::string::operator=(&this->m_lastChat, chat2);
+5938:       v591 = UIWindowMgr::GetChatMsg(&g_windowMgr);
+5939:       cyp = CLanguage::GetLanguageCharset(g_language, 0);
+5940:       v349 = CSession::GetCharName(&g_session);
+5941:       sprintf(chat, "%s : %s%s", v349, cyp, v591);
+5942:       v350 = strlen(chat) + 1;
+5943:       UIWindowMgr::ClearChatMsg(&g_windowMgr);
+5944:       if ( v350 - 1 >= 0x3FC )
+5945:         return SUT_NOSKILL;
+5946:       *(_WORD *)&passwd[4] = 382;
+5947:       *(_WORD *)&passwd[6] = v350 - 1 + 5;
+5948:       *(_DWORD *)buf = *(_DWORD *)&passwd[4];
+5949:       qmemcpy(&buf[4], chat, v350);
+5950:       cyq = *(unsigned __int16 *)&passwd[6];
+5951:       v351 = CRagConnection::instanceR();
+5952:       CRagConnection::SendPacket(v351, cyq, buf);
+5953:       return SUT_NOSKILL;
+--- Ref/GameMode2.cpp:6029-6040 ---
+6029:     case 0x98u:
+6030:       *(_WORD *)passwd = 133;
+6031:       CGameMode::SetPaddingValue(this, &passwd[2], 5);
+6032:       CGameMode::SetPaddingValue(this, &passwd[9], 1);
+6033:       passwd[10] = val1;
+6034:       p_val1 = (__int16 *)passwd;
+6035:       *(_WORD *)&passwd[7] = WORD2(val1);
+6036:       cy = 133;
+6037:       goto LABEL_854;
+6038:     case 0x99u:
+6039:       if ( g_session.m_isLogInOut != 1 )
+6040:         return SUT_NOSKILL;
+--- Ref/GameMode2.cpp:6345-6350 ---
+6345:     case 0xB7u:
+6346:       WORD1(val1) = 487;
+6347:       p_val1 = (__int16 *)&val1 + 1;
+6348:       cy = 487;
+6349:       goto LABEL_854;
+6350:     case 0xB8u:
+--- Ref/GameMode2.cpp:6794-6830 ---
+6794:     case 0x10Fu:
+6795:       if ( !strlen(UIWindowMgr::GetChatMsg(&g_windowMgr)) || CSession::IsEFST_Berserk(&g_session) == 1 )
+6796:         return SUT_NOSKILL;
+6797:       strcpy(chat, UIWindowMgr::GetChatMsg(&g_windowMgr));
+6798:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, chat) )
+6799:       {
+6800:         UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+6801:         v304 = MsgStr(MSI_NO_SEND_BECAUSE_INSULT);
+6802:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v304, 255, 0, 0);
+6803:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+6804:         return SUT_NOSKILL;
+6805:       }
+6806:       if ( std::operator==(&this->m_lastChat, chat) )
+6807:         ++this->m_sameChatRepeatCnt;
+6808:       else
+6809:         this->m_sameChatRepeatCnt = 0;
+6810:       if ( IsSameSentence(this->m_sameChatRepeatCnt) )
+6811:         return SUT_NOSKILL;
+6812:       std::string::operator=(&this->m_lastChat, chat);
+6813:       v587 = UIWindowMgr::GetChatMsg(&g_windowMgr);
+6814:       cyh = CLanguage::GetLanguageCharset(g_language, 0);
+6815:       v305 = CSession::GetCharName(&g_session);
+6816:       sprintf(chat2, "%s : %s%s", v305, cyh, v587);
+6817:       v306 = strlen(chat2) + 1;
+6818:       UIWindowMgr::ClearChatMsg(&g_windowMgr);
+6819:       *(_WORD *)&passwd[4] = 731;
+6820:       *(_WORD *)&passwd[6] = v306 - 1 + 5;
+6821:       *(_DWORD *)buf = *(_DWORD *)&passwd[4];
+6822:       qmemcpy(&buf[4], chat2, v306);
+6823:       cyi = *(unsigned __int16 *)&passwd[6];
+6824:       v307 = CRagConnection::instanceR();
+6825:       CRagConnection::SendPacket(v307, cyi, buf);
+6826:       return SUT_NOSKILL;
+6827:     default:
+6828:       return CMode::SendMsg(&this->CMode, v4, v5, SHIDWORD(val1), val3);
+6829:   }
+6830: }
+--- Ref/Player.cpp:372-390 ---
+372:     case 30:
+373:     case 31:
+374:       if ( !IsEffectStateBurrow(this->m_effectState) )
+375:       {
+376:         v13 = this->m_stateId;
+377:         if ( v13 )
+378:         {
+379:           if ( v13 == 6 )
+380:             GameMode->CMode::SendMsg(GameMode, 150, 3, this->m_proceedTargetGid, 0);
+381:         }
+382:         else
+383:         {
+384:           GameMode->CMode::SendMsg(GameMode, 150, 2, this->m_proceedTargetGid, 0);
+385:         }
+386:       }
+387:       return;
+388:     case 40:
+389:       if ( arg2 == (int *)141 || arg2 == (int *)143 || arg2 == (int *)152 )
+390:       {
+--- Ref/Session.cpp:426-433 ---
+426: // Original Signature: bool __cdecl IsEffectStateBurrow(unsigned long)
+427: // Decompiled from address: 0x66f1d0
+428: // ================================================
+429: bool __cdecl IsEffectStateBurrow(char effectState)
+430: {
+431:   return (effectState & 2) != 0;
+432: }
+433:
+--- Ref/Session.cpp:20426-20516 ---
+20426:   p_m_cmdOnOffSet = &this->m_cmdOnOffSet;
+20427:   Last = this->m_cmdOnOffSet._Last;
+20428:   _X.first = g_session.m_bgmIsPaused == 0;
+20429:   _X.second = TT_MUSIC_ON_OFF;
+20430:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, Last, 1u, &_X);
+20431:   v15 = this->m_cmdOnOffSet._Last;
+20432:   _X.first = g_session.m_isEffectOn;
+20433:   _X.second = TT_EFFECT_ON_OFF;
+20434:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v15, 1u, &_X);
+20435:   v16 = this->m_cmdOnOffSet._Last;
+20436:   _X.first = g_isSoundOn;
+20437:   _X.second = TT_EFFECT_SOUND_ON_OFF;
+20438:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v16, 1u, &_X);
+20439:   v17 = this->m_cmdOnOffSet._Last;
+20440:   _X.first = g_session.m_isBattle;
+20441:   _X.second = TT_BATTLE_ON_OFF;
+20442:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v17, 1u, &_X);
+20443:   v45 = this->m_cmdOnOffSet._Last;
+20444:   _X.first = (unsigned __int8)streamVolume;
+20445:   _X.second = TT_OPEN_TIP;
+20446:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v45, 1u, &_X);
+20447:   v18 = this->m_cmdOnOffSet._Last;
+20448:   _X.first = g_session.m_isNoTrade;
+20449:   _X.second = TT_NOTRADE_ON_OFF;
+20450:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v18, 1u, &_X);
+20451:   v19 = this->m_cmdOnOffSet._Last;
+20452:   _X.first = g_session.m_isNoShift;
+20453:   _X.second = TT_NOSHIFT_ON_OFF;
+20454:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v19, 1u, &_X);
+20455:   _X.first = g_session.m_isNoCtrl;
+20456:   _X.second = TT_NOCTRL_ON_OFF;
+20457:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, this->m_cmdOnOffSet._Last, 1u, &_X);
+20458:   v20 = this->m_cmdOnOffSet._Last;
+20459:   _X.first = g_session.m_isSkillFail;
+20460:   _X.second = TT_SKILLFAIL_ON_OFF;
+20461:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v20, 1u, &_X);
+20462:   v21 = this->m_cmdOnOffSet._Last;
+20463:   _X.second = TT_NOTALKMSG_ON_OFF;
+20464:   _X.first = g_session.m_isNoTalkMsg == 0;
+20465:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v21, 1u, &_X);
+20466:   v22 = this->m_cmdOnOffSet._Last;
+20467:   _X.second = TT_NOTALKMSG2_ON_OFF;
+20468:   _X.first = g_session.m_isNoTalkMsg2 == 0;
+20469:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v22, 1u, &_X);
+20470:   v23 = this->m_cmdOnOffSet._Last;
+20471:   _X.first = g_session.m_isAura;
+20472:   _X.second = TT_AURA_ON_OFF;
+20473:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v23, 1u, &_X);
+20474:   v24 = this->m_cmdOnOffSet._Last;
+20475:   _X.first = g_session.m_isWindow;
+20476:   _X.second = TT_WINDOW_ON_OFF;
+20477:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v24, 1u, &_X);
+20478:   v25 = this->m_cmdOnOffSet._Last;
+20479:   _X.first = g_session.m_bMakeMissEffect;
+20480:   _X.second = TT_MISS_EFFECT_ON_OFF;
+20481:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v25, 1u, &_X);
+20482:   v46 = this->m_cmdOnOffSet._Last;
+20483:   _X.first = 0;
+20484:   _X.second = TT_SET1_ON_OFF;
+20485:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v46, 1u, &_X);
+20486:   _X.first = 0;
+20487:   v47 = this->m_cmdOnOffSet._Last;
+20488:   _X.second = TT_SET2_ON_OFF;
+20489:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v47, 1u, &_X);
+20490:   v26 = this->m_cmdOnOffSet._Last;
+20491:   _X.first = g_session.m_isQuickSpell;
+20492:   _X.second = TT_QUICKSPELL_ON_OFF;
+20493:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v26, 1u, &_X);
+20494:   v27 = this->m_cmdOnOffSet._Last;
+20495:   _X.first = g_session.m_isQuickSpell2;
+20496:   _X.second = TT_QUICKSPELL2_ON_OFF;
+20497:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v27, 1u, &_X);
+20498:   v48 = this->m_cmdOnOffSet._Last;
+20499:   _X.first = 0;
+20500:   _X.second = TT_QUICKSPELL3_ON_OFF;
+20501:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v48, 1u, &_X);
+20502:   v49 = this->m_cmdOnOffSet._Last;
+20503:   _X.first = g_session.m_isShowNameTypeOld;
+20504:   _X.second = TT_SHOW_NAME_TYPE;
+20505:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v49, 1u, &_X);
+20506:   v28 = this->m_cmdOnOffSet._Last;
+20507:   _X.first = g_session.m_fogOn;
+20508:   _X.second = TT_FOG;
+20509:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v28, 1u, &_X);
+20510:   v29 = this->m_cmdOnOffSet._Last;
+20511:   _X.first = g_session.m_isLogInOut;
+20512:   _X.second = TT_LOGINOUT_ON_OFF;
+20513:   std::vector<std::pair<int,enum TALKTYPE>>::insert(&this->m_cmdOnOffSet, v29, 1u, &_X);
+20514:   v30 = this->m_cmdOnOffSet._Last;
+20515:   v31 = this->m_cmdOnOffSet._End - v30;
+20516:   _X.first = g_session.m_isShopping;
+--- Ref/Session.cpp:24390-24418 ---
+24390:   this->m_expDivType = 0;
+24391:   this->m_itemCollectType = 0;
+24392:   this->m_itemDivType = 0;
+24393:   this->m_isItemSnap = 0;
+24394:   this->m_isMonsterSnap = 1;
+24395:   this->m_monsterSnapOn_Skill = 1;
+24396:   this->m_monsterSnapOn_NoSkill = 0;
+24397:   this->m_bMakeMissEffect = 1;
+24398:   this->m_isNoShift = 0;
+24399:   this->m_isQuickSpell = 0;
+24400:   this->m_isQuickSpell2 = 0;
+24401:   this->m_isBattle = 0;
+24402:   this->m_isBattleChat = 0;
+24403:   this->m_isAura = 1;
+24404:   this->m_isNoCtrl = 0;
+24405:   this->m_isSkillFail = 1;
+24406:   this->m_isLogInOut = 1;
+24407:   this->m_isShopping = 0;
+24408:   this->m_isNoTalkMsg = 0;
+24409:   this->m_isNoTalkMsg2 = 0;
+24410:   this->m_isNoTrade = 0;
+24411:   this->m_isBmChat = 0;
+24412:   this->m_isStartBmChat = 0;
+24413:   this->m_isWindow = 0;
+24414:   g_session.m_isQ2begin = 0;
+24415:   this->m_isShowNameTypeOld = 1;
+24416:   this->RandomScreenFlag = 1;
+24417:   this->m_amIParent = 0;
+24418:   memset(&ms, 0, sizeof(ms));

@@ -75,7 +75,7 @@ constexpr int kChatWindowOpacityDefault = 84;
 constexpr int kChatWindowIdleOpacityDefault = 45;
 constexpr size_t kMaxWhisperTargetChars = 24;
 constexpr size_t kMaxInputChars = 180;
-constexpr size_t kMaxInputHistory = 5;
+constexpr size_t kMaxInputHistory = 30;
 constexpr int kChatWheelScrollLines = 3;
 constexpr int kChatTabCount = 4;
 constexpr int kChatFilterCount = 7;
@@ -837,7 +837,7 @@ void UINewChatWnd::SetQtInputText(int field,const std::string& text)
     if(field!=1 && field!=2)return;
     auto& buffer=field==1?m_whisperTargetText:m_inputText;
     buffer=ro::chat::CleanInput(text,field==1?kMaxWhisperTargetChars:kMaxInputChars,field==1?24:kMaxInputChars);
-    m_historyBrowseIndex=-1;m_historyDraft.clear();Invalidate();
+    Invalidate();
 }
 
 const std::string& UINewChatWnd::GetWhisperTargetText() const
@@ -1517,7 +1517,8 @@ bool UINewChatWnd::HandleKeyDown(int virtualKey)
             SetActiveInputField(InputField_Message);
             return true;
         }
-        return SubmitInput();
+        SubmitInput();
+        return true;
     }
 
     if ((virtualKey == VK_UP || virtualKey == VK_DOWN) && m_activeInputField == InputField_None) {
@@ -1556,10 +1557,6 @@ bool UINewChatWnd::HandleKeyDown(int virtualKey)
 
     if (virtualKey == VK_BACK && m_activeInputField != InputField_None) {
         if (std::string* const activeBuffer = GetActiveInputBuffer(); activeBuffer && !activeBuffer->empty()) {
-            if (m_historyBrowseIndex >= 0) {
-                m_historyBrowseIndex = -1;
-                m_historyDraft.clear();
-            }
             ro::chat::EraseLastCharacter(*activeBuffer);
             Invalidate();
         }
@@ -1598,10 +1595,6 @@ bool UINewChatWnd::HandleChar(char c)
         return true;
     }
 
-    if (m_historyBrowseIndex >= 0) {
-        m_historyBrowseIndex = -1;
-        m_historyDraft.clear();
-    }
     *activeBuffer += c;
     Invalidate();
     return true;
@@ -1735,10 +1728,6 @@ void UINewChatWnd::SetActiveInputField(ActiveInputField field)
     }
 
     m_activeInputField = field;
-    if (m_activeInputField != InputField_Message) {
-        m_historyBrowseIndex = -1;
-        m_historyDraft.clear();
-    }
     Invalidate();
 }
 
@@ -1756,62 +1745,38 @@ std::string* UINewChatWnd::GetActiveInputBuffer()
 
 bool UINewChatWnd::SubmitInput()
 {
-    std::string text = m_inputText;
-    if (text.empty()) {
-        SetActiveInputField(InputField_None);
-        return true;
+    const std::string text(m_inputText.c_str());
+    // Source118 copies, stores history/changes editor text, then reasserts
+    // common edit focus before empty/English checks and synchronous dispatch.
+    AddInputHistory(text);
+    SetActiveInputField(InputField_Message);
+    SetWindowFocused(true);
+    g_windowMgr.m_editWindow=this;
+    Invalidate();
+    if(text.empty())return true;
+    if(g_serviceType==ServiceAmerica && std::any_of(text.begin(),text.end(),[](unsigned char c){return c>=0x80;})){
+        ro::UiMessageStrings table;table.Load();const auto notice=table.Get(190,"Only English text is allowed.");
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),255);return false;
     }
-
-    const size_t firstNonSpace = text.find_first_not_of(" \t\r\n");
-    if (firstNonSpace == std::string::npos) {
-        m_inputText.clear();
-        Invalidate();
-        return true;
-    }
-
-    const size_t lastNonSpace = text.find_last_not_of(" \t\r\n");
-    text = text.substr(firstNonSpace, lastNonSpace - firstNonSpace + 1);
-
-    std::string whisperTarget = m_whisperTargetText;
-    const size_t targetFirstNonSpace = whisperTarget.find_first_not_of(" \t\r\n");
-    if (targetFirstNonSpace == std::string::npos) {
-        whisperTarget.clear();
-    } else {
-        const size_t targetLastNonSpace = whisperTarget.find_last_not_of(" \t\r\n");
-        whisperTarget = whisperTarget.substr(targetFirstNonSpace, targetLastNonSpace - targetFirstNonSpace + 1);
-    }
-
-    const msgresult_t sent = g_modeMgr.SendMsg(CGameMode::GameMsg_SubmitChat,
-        reinterpret_cast<msgparam_t>(text.c_str()),
-        reinterpret_cast<msgparam_t>(whisperTarget.c_str()),
-        0);
-    if (sent != 0) {
-        AddInputHistory(text);
-        m_inputText.clear();
-        m_historyBrowseIndex = -1;
-        m_historyDraft.clear();
-        SetActiveInputField(InputField_Message);
-        Invalidate();
-        return true;
-    }
-
-    return false;
+    return g_modeMgr.SendMsg(CGameMode::GameMsg_SubmitChat,reinterpret_cast<msgparam_t>(text.c_str()),
+        reinterpret_cast<msgparam_t>(m_whisperTargetText.c_str()),0)!=0;
 }
 
 void UINewChatWnd::AddInputHistory(const std::string& text)
 {
-    if (text.empty()) {
-        return;
+    if(text.empty())return;
+    // Public port history is newest-first; map the source oldest-first cursor
+    // onto m_historyBrowseIndex. Duplicates are retained, not deduplicated.
+    if(m_historyBrowseIndex<0 || m_historyBrowseIndex>=static_cast<int>(m_inputHistory.size())){
+        if(m_inputHistory.size()>=kMaxInputHistory)m_inputHistory.pop_back();
+        m_inputHistory.insert(m_inputHistory.begin(),text);
+        m_historyBrowseIndex=-1;m_inputText.clear();
+    }else{
+        m_inputHistory[static_cast<std::size_t>(m_historyBrowseIndex)]=text;
+        --m_historyBrowseIndex;
+        m_inputText=m_historyBrowseIndex<0?"":m_inputHistory[static_cast<std::size_t>(m_historyBrowseIndex)];
     }
-
-    auto existing = std::find(m_inputHistory.begin(), m_inputHistory.end(), text);
-    if (existing != m_inputHistory.end()) {
-        m_inputHistory.erase(existing);
-    }
-    m_inputHistory.insert(m_inputHistory.begin(), text);
-    if (m_inputHistory.size() > kMaxInputHistory) {
-        m_inputHistory.resize(kMaxInputHistory);
-    }
+    if(m_historyBrowseIndex<0)m_historyDraft.clear();
 }
 
 void UINewChatWnd::RestorePersistentState(const std::vector<std::string>& inputHistory,

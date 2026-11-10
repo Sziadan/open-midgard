@@ -2185,3 +2185,8 @@ add_executable(source_chat_parser_checks SourceChatParserTests.cpp)
 target_compile_features(source_chat_parser_checks PRIVATE cxx_std_17)
 target_include_directories(source_chat_parser_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 add_test(NAME source_chat_parser_checks COMMAND source_chat_parser_checks)
+
+add_executable(source_chat_routing_checks SourceChatRoutingTests.cpp)
+target_compile_features(source_chat_routing_checks PRIVATE cxx_std_17)
+target_include_directories(source_chat_routing_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
+add_test(NAME source_chat_routing_checks COMMAND source_chat_routing_checks)

@@ -223,6 +223,12 @@ public:
     const std::vector<UIChatEvent>& GetChatEvents() const;
     std::vector<UIChatEvent> GetChatPreviewEvents(size_t maxCount) const;
     void ClearChatEvents();
+    void SetChatMsg(const std::string& text) { m_chatMsg.assign(text.c_str()); }
+    const char* GetChatMsg() const { return m_chatMsg.c_str(); }
+    void ClearChatMsg() { m_chatMsg.clear(); }
+    std::string m_chatMsg;
+    UIWindow* m_commandListWnd=nullptr;
+
     UIWindow* MakeWindow(int windowId);
     bool ToggleWindow(int windowId);
     void RemoveAllWindows();

@@ -2072,7 +2072,9 @@
         "docs/packets/evidence/PK09.21-friend-options.md",
         "docs/packets/evidence/PK09.21-friend-options-provenance.json",
         "docs/packets/evidence/PK09.21-chat-parser.md",
-        "docs/packets/evidence/PK09.21-chat-parser-provenance.json"
+        "docs/packets/evidence/PK09.21-chat-parser-provenance.json",
+        "docs/packets/evidence/PK09.21-chat-submission.md",
+        "docs/packets/evidence/PK09.21-chat-submission-provenance.json"
       ],
       "commit_subject": null
     }

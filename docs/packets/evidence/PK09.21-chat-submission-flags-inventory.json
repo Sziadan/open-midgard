@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "selected_binary": "HighPriest.exe",
+  "evidence_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "scope": "Static PE corroboration for the 23 InitOptionWithRegistry pair writes; no execution",
+  "source_pair_function": "Ref/Session.cpp CSession::InitOptionWithRegistry, 0x64c040, append order at lines 20426-20515",
+  "entries": [
+    {
+      "index": 1,
+      "source_field_value": "g_session.m_bgmIsPaused == 0",
+      "primary_TT_tag": "TT_MUSIC_ON_OFF",
+      "selected_type": 7,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 2,
+      "source_field_value": "g_session.m_isEffectOn",
+      "primary_TT_tag": "TT_EFFECT_ON_OFF",
+      "selected_type": 8,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 3,
+      "source_field_value": "g_isSoundOn",
+      "primary_TT_tag": "TT_EFFECT_SOUND_ON_OFF",
+      "selected_type": 11,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 4,
+      "source_field_value": "g_session.m_isBattle",
+      "primary_TT_tag": "TT_BATTLE_ON_OFF",
+      "selected_type": 134,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 5,
+      "source_field_value": "(unsigned __int8)streamVolume (captured from g_windowMgr.m_tipOfTheDayWnd != 0)",
+      "primary_TT_tag": "TT_OPEN_TIP",
+      "selected_type": 42,
+      "type_evidence": "Parser evidence: alias registration at 0x00664489 maps /tip to type 42 (PK09.21-chat-parser-data.json). The source pair value is separately assigned in InitOptionWithRegistry."
+    },
+    {
+      "index": 6,
+      "source_field_value": "g_session.m_isNoTrade",
+      "primary_TT_tag": "TT_NOTRADE_ON_OFF",
+      "selected_type": 135,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 7,
+      "source_field_value": "g_session.m_isNoShift",
+      "primary_TT_tag": "TT_NOSHIFT_ON_OFF",
+      "selected_type": 105,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 8,
+      "source_field_value": "g_session.m_isNoCtrl",
+      "primary_TT_tag": "TT_NOCTRL_ON_OFF",
+      "selected_type": 108,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 9,
+      "source_field_value": "g_session.m_isSkillFail",
+      "primary_TT_tag": "TT_SKILLFAIL_ON_OFF",
+      "selected_type": 112,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 10,
+      "source_field_value": "g_session.m_isNoTalkMsg == 0",
+      "primary_TT_tag": "TT_NOTALKMSG_ON_OFF",
+      "selected_type": 113,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 11,
+      "source_field_value": "g_session.m_isNoTalkMsg2 == 0",
+      "primary_TT_tag": "TT_NOTALKMSG2_ON_OFF",
+      "selected_type": 147,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 12,
+      "source_field_value": "g_session.m_isAura",
+      "primary_TT_tag": "TT_AURA_ON_OFF",
+      "selected_type": 106,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 13,
+      "source_field_value": "g_session.m_isWindow",
+      "primary_TT_tag": "TT_WINDOW_ON_OFF",
+      "selected_type": 140,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 14,
+      "source_field_value": "g_session.m_bMakeMissEffect",
+      "primary_TT_tag": "TT_MISS_EFFECT_ON_OFF",
+      "selected_type": 53,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 15,
+      "source_field_value": "0",
+      "primary_TT_tag": "TT_SET1_ON_OFF",
+      "selected_type": 114,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 16,
+      "source_field_value": "0",
+      "primary_TT_tag": "TT_SET2_ON_OFF",
+      "selected_type": 137,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 17,
+      "source_field_value": "g_session.m_isQuickSpell",
+      "primary_TT_tag": "TT_QUICKSPELL_ON_OFF",
+      "selected_type": 119,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 18,
+      "source_field_value": "g_session.m_isQuickSpell2",
+      "primary_TT_tag": "TT_QUICKSPELL2_ON_OFF",
+      "selected_type": 120,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 19,
+      "source_field_value": "0",
+      "primary_TT_tag": "TT_QUICKSPELL3_ON_OFF",
+      "selected_type": 121,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 20,
+      "source_field_value": "g_session.m_isShowNameTypeOld",
+      "primary_TT_tag": "TT_SHOW_NAME_TYPE",
+      "selected_type": 107,
+      "type_evidence": "HighPriest.exe static parser branch 0x663c30 writes 0x6b (107); /showname path at 0x6637b3 falls to 0x663c2d."
+    },
+    {
+      "index": 21,
+      "source_field_value": "g_session.m_fogOn",
+      "primary_TT_tag": "TT_FOG",
+      "selected_type": 60,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 22,
+      "source_field_value": "g_session.m_isLogInOut",
+      "primary_TT_tag": "TT_LOGINOUT_ON_OFF",
+      "selected_type": 164,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    },
+    {
+      "index": 23,
+      "source_field_value": "g_session.m_isShopping",
+      "primary_TT_tag": "TT_SHOPPING_ON_OFF",
+      "selected_type": 166,
+      "type_evidence": "PK09.21-chat-parser-data.json no_parameter_aliases source_tag/type mapping."
+    }
+  ],
+  "special_findings": [
+    {
+      "tag": "TT_SHOW_NAME_TYPE",
+      "type": 107,
+      "evidence": "Parser PE 0x663795 tests Korean /\uc774\ub984\ud45c\uc2dc, 0x6637b3 tests /showname; either accepted whole token reaches 0x663c2d, where 0x663c30 writes 0x6b to output TALKTYPE. The source enum association is independently confirmed by Ref/Session.cpp m_cmdOnOffTable pair TT_SHOW_NAME_TYPE with aShowname. It is absent from no_parameter_aliases because this is whole-parameter parsing."
+    },
+    {
+      "tag": "TT_OPEN_TIP",
+      "type": 42,
+      "evidence": "Source writes LOBYTE(streamVolume)=g_windowMgr.m_tipOfTheDayWnd != 0 immediately before appending; the subsequent source first value is (unsigned __int8)streamVolume. This is the captured tip-window visibility boolean, not the earlier registry streamVolume (which is overwritten). Parser evidence has TT_OPEN_TIP type 42."
+    }
+  ],
+  "registry_notes": [
+    "The registry-open failure branch sets m_fogOn=1, m_isEffectOn=1, m_bgmIsPaused=0, g_isSoundOn=1 and audio volumes 100. This branch does not perform per-value queries.",
+    "When key open succeeds, the function queries values; failed queries assign documented fallbacks (effect=1, bgmPaused=0, sound=1, noCtrl=0, missEffect=1, among others).",
+    "Other appended session fields are read after the registry block; use object/global initialization as their default owner. Explicitly visible CSession init values around Ref/Session.cpp: m_isShowNameTypeOld=1, m_isNoShift=0, quickspell and quickspell2=0, m_isBattle=0, m_isAura=1, m_isNoCtrl=0, m_isSkillFail=1, m_isLogInOut=1, m_isShopping=0, m_isNoTalkMsg/m_isNoTalkMsg2=0, m_isNoTrade=0, m_isWindow=0."
+  ],
+  "acceptance_status": "CONTINUATION_LEAD_NOT_IMPLEMENTATION_ACCEPTANCE",
+  "root_review_boundary": "Most selected types are associated through the parser catalog, not independently decoded from every registry pair write. Review actual field/default/registry bindings and initialization lifetime before integration."
+}

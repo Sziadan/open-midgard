@@ -79,10 +79,16 @@ struct MapGameplaySendProfile {
     u16 getCharNameRequest;
     u16 whisper;
     u16 globalMessage;
+
     // Source-selected 20080910 character-ID lookup; zero means unaudited profile.
     u16 characterNameRequest = 0;
     u8 characterNameRequestLength = 0;
     u8 characterNameRequestIdOffset = 0;
+    // Unshuffled channel requests in the selected20080910 registry.
+    u16 partyMessage=0x0108;
+    u16 guildMessage=0x017e;
+    u16 battleMessage=0x02db;
+
 };
 
 struct MapReceiveProfile {

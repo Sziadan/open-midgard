@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-10",
+  "baseline": "5cf298dbea201d3681bad29fd9c76b1625551c55",
+  "commit_subject": "packet(PK09.21): wire source chat submission",
+  "scope": "Production caller/core47/11/buffer/routing/selected actions; remaining cases/options/global-special/editor/broad gates open",
+  "runtime_test_generator_sha256": {
+    "CMakeLists.txt": "3f43dc49483bcba76bc54e3ee06f897d0892f9d27d01f99362d221d8e0a0944a",
+    "src/core/SourceChatEmotions.generated.inc": "d3c9555c036bb28d279c150ffb8394b157784f523622383b91c9b200df86f241",
+    "src/core/SourceChatRouting.h": "be9fdbde50e86b75808d07b460b6a2695aaab532aae90ab7ecb4679a28fab03f",
+    "src/gamemode/GameMode.cpp": "36ca0b81f60dc5db04e970832c8abe54b59de2be84b8fc6af64b49b296731b28",
+    "src/gamemode/GameMode.h": "2ba670c59e676c4f126e800e16a5e3a9cdadb413d71e99903471c26ecf573528",
+    "src/gamemode/SourceChatSubmission.inc": "c431c57ccb28bc70bd290876b81aeaada14878dff91a72e87c3cb91d8dc608a5",
+    "src/network/MapSendProfile.h": "5ffb14c35ddab1613789154ff670c25d1b9eb8935996695f7d7dd14e2d99169a",
+    "src/session/Session.h": "9444b37e2627faa89d64911efc2b623fe50d52aed5692d184a4d50cc87bc7910",
+    "src/ui/UIChatRoomWnd.cpp": "defc1cf326923d99b231d282501d60d96e727aedf5889a7f89d87d1bf2b8d0a5",
+    "src/ui/UINewChatWnd.cpp": "e5798b3447e728837870233dfa2fe3e86b7aaa14397a77c47234bc776304602b",
+    "src/ui/UIWhisperWnd.cpp": "528c5058b972f29789c5b571a08df55399aa9f4129c92047c62ac874008d5ba0",
+    "src/ui/UIWindowMgr.cpp": "bce7c3d4f9458ef3302d5cd7b8bf6804659d9a6d7eff947f2fbfcbb0eeffc486",
+    "src/ui/UIWindowMgr.h": "0673d02a61495d21dffe26d1d7c81cd3c851f1aa705706ce5213ec59cd1ce5d1",
+    "tools/generate_source_chat_parser_data.py": "17d03f7d48afb9021b5d419dcba80d3900e597aa4a1618392692f662d8923bea",
+    "tools/tests/CMakeLists.txt": "528bf13ec6f5283c149b1fd9ce9a489b17b02c57edb5de6172ddbb58cf0ee4fe",
+    "tools/tests/SourceChatRoutingTests.cpp": "7908f0451458a82d041e60bfab4c7755236bd20f9c30035d67262a31db629abd",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "307c416ea5946c8db84fdc429adef6a7978013e1d042fae662ae30b66a5aadc0",
+    "tools/tests/replay/PacketStreamReplay.cpp": "338d1fc54e3bbbc72578e5d0d7a8b250bc02713c41a2c53d26cde39d7ce2f489"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/GameMode2.cpp": "111ca06ba24dc274a4b57f5484c71a0cc30d99952d554033d05221e80fe66217",
+    "Ref/Player.cpp": "afb96e31d3bfd9fa2b151878d456694bcebe1ba03fc441351bebbf7c56291381",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/UIControl.cpp": "1c35fbb92f87961edb4eb6cea00cccd623d7535dc1c48b4cf5e876345d670c59",
+    "Ref/UIFrameWnd.cpp": "80f3382e2e68d228056b3cee614131059d43e445853dde3e0c4dcec369e75ded",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIFrameWnd3.cpp": "ace15e1a1d180c9f9e65709c0518080e6326d19ed799e808623ec37440e9627f",
+    "C:/Users/sziad/source/repos/rathena-master/src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b"
+  },
+  "application_sha256": {
+    "build-mingw-preset/open-midgard.exe": "21a2af5f1e2fc2f12b105acfdccbe0e0d03b7f1d07bfcab28e3788f9db2f5f1e"
+  },
+  "deployed_read_only_sha256": {
+    "D:/Spel/OldRO/open-midgard.exe": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-chat-submission-build.log": "04b8d58c9f2d3eef299fd6396f6111123b3574f4b2b5a1ade8ae70431491ea64",
+    "docs/packets/evidence/PK09.21-chat-submission-cases.log": "9ba81d0e8c28c723a763638cabcfb52ce78eabaf233773eecf6b67bb6e62b40f",
+    "docs/packets/evidence/PK09.21-chat-submission-configure.log": "8ded7f76f3b2c5ee0a6c867e5abb2b4462efb2a9b656ad9961fed8098d6269ca",
+    "docs/packets/evidence/PK09.21-chat-submission-data-check.log": "f695e606f96149b39949a6bd3cb1eec808d607f08744a98950aef9fa1e317e4a",
+    "docs/packets/evidence/PK09.21-chat-submission-data.json": "e5a7a5f7eef5c2de3c4bfc1eb8f722667fc937b61ce5d94c14e81820aae5ece4",
+    "docs/packets/evidence/PK09.21-chat-submission-flags-inventory.json": "705eace865a441a0d3c2030932e5c9bb0521e3c2ab7a469dee9a6064568e7fe8",
+    "docs/packets/evidence/PK09.21-chat-submission-focused.log": "fd18a57daecb684dce9e0f37d494f72c93e62ee764df950f7092595b404a3706",
+    "docs/packets/evidence/PK09.21-chat-submission-pe.txt": "879f302e480e6eacb43417727a2e1a6d3aea5c6904aeac2e3e6d7cd5814cf356",
+    "docs/packets/evidence/PK09.21-chat-submission-restore-deploy-setting.log": "ff1de42cbeb128b9a3c53add390bcb5b9eb9821f38914264211aa58e0926c540",
+    "docs/packets/evidence/PK09.21-chat-submission-root-ctest.log": "98104810d6e204791c527095603881a89c9bee9a1b3fe1dd1e5297fa052ab207",
+    "docs/packets/evidence/PK09.21-chat-submission-source.txt": "35794fcbf185e1c65fa4b8594183ec693f4274f43d3d5010a17e0eddf90deef2",
+    "docs/packets/evidence/PK09.21-chat-submission-unit-build.log": "a0e7043e6492b040938022ff626c7bb9250c44cb229867ba888be64bd4a1099b",
+    "docs/packets/evidence/PK09.21-chat-submission-unit-ctest.log": "0f94d7a27e3341ad0267c9f8586cf9f936f8e921cb7afc8649b2dbb6f404e29c",
+    "docs/packets/evidence/PK09.21-chat-submission.md": "e1986d888873a1524969690e272f70a2cb1207dcd81f37faaed9e88f4d9e1de2"
+  }
+}

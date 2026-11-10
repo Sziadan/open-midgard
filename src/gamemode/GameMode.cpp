@@ -19,6 +19,7 @@
 #include "CursorRenderer.h"
 #include "GameMode.h"
 #include "ui/UIChatRoomWnd.h"
+#include "ui/UIWhisperWnd.h"
 #include "core/ChatRoomRequests.h"
 #include "core/MannerFilter.h"
 #include "ActionRequestSender.h"
@@ -10938,35 +10939,35 @@ bool CGameMode::WriteSourceChat(const std::string& text)
     file.close();return static_cast<bool>(file);
 }
 
-bool CGameMode::SendSourceWhisper(const std::string& target,const std::string& input)
-{
-    std::string text(input.c_str());
-    if(text.empty() || g_session.IsStatusIconActive(107))return false;
-    if(text.size()>222)text.resize(222);
-    auto& filter=ro::GetMannerFilter();filter.EnsureLoaded();
-    const auto reject=[&](int id,const char* fallback){ro::UiMessageStrings table;table.Load();const auto message=table.Get(id,fallback);
-        g_windowMgr.SendMsg(3,0,0,0);g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(message.c_str()),255);return false;};
-    if(filter.IsBadUtf8Sentence(text))return reject(50,"That message cannot be sent.");
-    if(m_hiddenWhisperAcknowledgements==0){
-        if(m_sourceLastSubmittedChat==text){if(m_sourceSameChatRepeatCount<INT_MAX)++m_sourceSameChatRepeatCount;}
-        else m_sourceSameChatRepeatCount=0;
-    }
-    if(!g_session.m_onAutoMSG && g_serverType!=ServerInstantEvent && g_serviceType!=ServiceGermany && m_sourceSameChatRepeatCount>=2)
-        return reject(49,"Please do not repeat the same sentence.");
-    m_sourceLastSubmittedChat=text;m_lastWhisperName=std::string(target.c_str());
-    if(m_lastWhisperName==g_session.GetPlayerName())return false;
-    m_lastWhisper=text;
-    if(text.size()>=222)return false;
-    // The selected packet profile owns opcode/framing; source stores pending
-    // metadata before dispatch and has no invented FIFO for later acknowledgements.
-    return SendWhisperChatMessage(m_lastWhisperName,text);
-}
+#include "SourceChatSubmission.inc"
 
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     switch (msg) {
-    case 47:
-        return wparam==SourceTalk_AutoMessage && ToggleSourceAutoMessage()?1:0;
+    case 47: {
+        const std::array<std::string,3> empty{};
+        return ProcessSourceTalk(static_cast<int>(wparam),lparam?*reinterpret_cast<const std::array<std::string,3>*>(lparam):empty);
+    }
+    case 6: case 72: case 142: case 271:
+        return SendBufferedSourceChat(msg)?1:0;
+    case 11:
+        return wparam && SendBufferedSourceChat(11,reinterpret_cast<const char*>(wparam))?1:0;
+    case 33: {
+        const DWORD now=GetSourceChatTick();
+        if(m_isReqEmotion || now<=m_reqEmotionTick+2500u)return 0;
+        m_reqEmotionTick=GetSourceChatTick();m_isReqEmotion=1;
+        const u8 packet[]={0xbf,0,static_cast<u8>(wparam)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
+    }
+    case 67: {
+        const u8 packet[]={0x00,0x01};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
+    }
+    case 152:return SendChangeDirRequestPacket(static_cast<u8>(lparam),static_cast<u8>(wparam))?1:0;
+    case 183: {
+        const u8 packet[]={0xe7,0x01};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
+    }
     case 114:
         if(!wparam)return 0;
         m_lastWhisperMenuCharacterName=reinterpret_cast<const char*>(wparam);m_menuIdList={11,21};return 0;
@@ -11175,97 +11176,10 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     }
 
     case GameMsg_SubmitChat: {
-        const char* text = reinterpret_cast<const char*>(wparam);
-        if (!text || *text == '\0') {
-            return 0;
-        }
-        // Full source parsing now owns alias recognition for this accepted
-        // message47 leaf. General dispatch and parser side-effect application
-        // remain separate integration work; other existing routes stay below.
-        if(*text=='/'){
-            ro::UiMessageStrings sourceMessages;sourceMessages.Load();
-            ro::chat::SourceChatParseContext sourceContext;
-            if(const auto label=sourceMessages.Find(698))sourceContext.minEffectAlias=*label;
-            const auto sourceTalk=ro::chat::ParseSourceChat(text,sourceContext,[&](std::string_view command){
-                return ro::chat::LookupSourceTalkType(command,[&](int id){return sourceMessages.Find(id);},ro::chat::SourceChatEncoding::Utf8,g_serverType==ServerInstantEvent);
-            });
-            if(sourceTalk.type==SourceTalk_AutoMessage)return SendMsg(47,sourceTalk.type,0,0);
-        }
-        std::string whisperTarget = lparam != 0 ? reinterpret_cast<const char*>(lparam) : std::string();
-        const size_t targetFirstNonSpace = whisperTarget.find_first_not_of(" \t\r\n");
-        if (targetFirstNonSpace == std::string::npos) {
-            whisperTarget.clear();
-        } else {
-            const size_t targetLastNonSpace = whisperTarget.find_last_not_of(" \t\r\n");
-            whisperTarget = whisperTarget.substr(targetFirstNonSpace, targetLastNonSpace - targetFirstNonSpace + 1);
-        }
-
-        if (!whisperTarget.empty()) {
-            const bool sent = SendWhisperChatMessage(whisperTarget, text);
-            if (sent) {
-                m_lastWhisperName = whisperTarget;
-                m_lastWhisper = text;
-            }
-            return sent ? 1 : 0;
-        }
-
-        std::string guildName;
-        const auto guildCommand=ro::guild::ParseCreateCommand(text,guildName);
-        if(guildCommand!=ro::guild::CommandResult::NotCommand) {
-            if(guildCommand==ro::guild::CommandResult::Invalid) {
-                g_windowMgr.PushChatEvent("Usage: /guild \"Guild Name\" (1-23 bytes).",0x00FF4040u,6);
-                return 0;
-            }
-            if(!m_world || !m_world->m_player || !g_session.m_gid)return 0;
-            const auto packet=ro::guild::CreatePacket(g_session.m_gid,guildName);
-            const bool sent=CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()));
-            if(!sent)g_windowMgr.PushChatEvent("Unable to send the guild creation request.",0x00FF4040u,6);
-            DbgLog("[GameMode] guild create request name='%s' sent=%d\n",guildName.c_str(),sent?1:0);
-            return sent?1:0;
-        }
-
-        std::string command = text;
-        std::transform(command.begin(), command.end(), command.begin(), [](unsigned char ch) {
-            return static_cast<char>(std::tolower(ch));
-        });
-        if(command=="/chat" || command=="/coxldqkd"){return g_windowMgr.OpenChatRoomMake(false)?1:0;}
-        if(command=="/autosavechat")return ToggleSourceChatAutoSave()?1:0;
-        const int emotion = ResolveEmotionCommand(command);
-        if (emotion == -2) return 0;
-        if (emotion >= 0) {
-            const DWORD now = timeGetTime();
-            if (m_reqEmotionTick != 0 && now - m_reqEmotionTick < 1000) return 0;
-            const unsigned char packet[] = {0xBF, 0x00, static_cast<unsigned char>(emotion)};
-            const bool sent = CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
-            if (sent) { m_reqEmotionTick = now; m_isReqEmotion = 1; }
-            return sent ? 1 : 0;
-        }
-        if (command == "/sit") {
-            return SendSitStandToggleRequest(*this) ? 1 : 0;
-        }
-        if (command == "/stand") {
-            return SendSitStandRequest(*this, false) ? 1 : 0;
-        }
-        if (command == "/doridori") {
-            if (!m_world || !m_world->m_player) {
-                return 0;
-            }
-            CPc* const playerPc = dynamic_cast<CPc*>(m_world->m_player);
-            if (!playerPc) {
-                return 0;
-            }
-
-            const u8 nextHeadDir = NormalizeHeadDir((playerPc->m_headDir + 1) % 3);
-            const u8 bodyDir = static_cast<u8>(g_session.m_playerDir & 7);
-            const bool sent = SendChangeDirRequestPacket(nextHeadDir, bodyDir);
-            if (sent) {
-                ApplyLocalPlayerDirection(*this, nextHeadDir, bodyDir);
-            }
-            return sent ? 1 : 0;
-        }
-        const bool sent = SendGlobalChatMessage(g_session.GetPlayerName(), text);
-        // Source normal/room dispatch sends only; 008D/008E own speech bubbles.
-        return sent ? 1 : 0;
+        if(!wparam)return 0;
+        auto* origin=reinterpret_cast<UIWindow*>(extra);
+        if(origin && std::find(g_windowMgr.m_children.begin(),g_windowMgr.m_children.end(),origin)==g_windowMgr.m_children.end())origin=nullptr;
+        return SubmitSourceChat(reinterpret_cast<const char*>(wparam),lparam?reinterpret_cast<const char*>(lparam):"",origin)?1:0;
     }
 
     case GameMsg_ToggleSitStand:

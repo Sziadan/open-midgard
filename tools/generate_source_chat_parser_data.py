@@ -86,6 +86,8 @@ def verify(data):
         for site in x['reference_code_addresses']:
             require(struct.pack('<I', address) in at(int(site,16), 12), 'parameter literal reference')
 
+    return at
+
 def render(data):
     lines = ['// Selected InitTalkTypeTable663E20, original registration order.',
              '// All209 inserts +83 push_back entries before stable_sort6663E2.',
@@ -106,20 +108,68 @@ def render(data):
     return {'src/core/SourceChatAliases.generated.inc': aliases,
             'src/core/SourceChatParameterRules.generated.inc': '\n'.join(lines)+'\n'}
 
+def verify_submission(data, parser_data, at):
+    for name, expected in data['reference_sha256'].items():
+        require(hashlib.sha256((ROOT/name).read_bytes()).hexdigest() == expected,
+                'submission reference changed; strong review required: ' + name)
+    types = {x['source_tag']: x['type'] for x in parser_data['no_parameter_aliases']}
+    source = (ROOT/'Ref/GameMode.cpp').read_text(encoding='utf-8')
+    start = source.index('void __thiscall CGameMode::ProcessTalkType(')
+    body = source[start:source.index('// Original Signature:', start)]
+    parts = re.split(r'^    case (TT_\w+):', body, flags=re.M)
+    expected, unregistered = [], []
+    for tag, block in zip(parts[1::2], parts[2::2]):
+        if not tag.startswith('TT_REQ_EMOTION_'):
+            continue
+        if tag not in types:
+            unregistered.append(tag)
+            continue
+        calls = re.findall(r'CMode::SendMsg\(this,\s*(\d+),\s*(\d+)', block)
+        calls += re.findall(r'CMode::SendMsg\)\(\s*(\d+),\s*(\d+)', block)
+        values = [int(value) for message, value in calls if int(message) == 33]
+        if values:
+            value = values[0]
+        else:
+            require(tag == 'TT_REQ_EMOTION_DICE' and '% 6 + 58' in block,
+                    'unresolved exact emotion case: ' + tag)
+            value = -1
+        expected.append({'tag': tag, 'type': types[tag], 'emotion': value})
+    require(expected == data['emotion_routes'] and len(expected) == 60,
+            'source exact-case emotion routes differ')
+    require(unregistered == data['unregistered_primary_emotion_tags'], 'unregistered emotion disposition')
+    table = int(data['switch_table_address'], 16)
+    for index, target in data['no_op_targets'].items():
+        address = struct.unpack('<I', at(table+4*int(index), 4))[0]
+        require(address == int(target, 16), 'selected no-op target')
+        require(at(address, 6) == bytes.fromhex('8b4df45f5e5b'), 'selected no-op epilogue')
+
+def render_submission(data):
+    lines = ['// Primary exact-case33 arguments joined to selected alias types.',
+             'inline constexpr SourceEmotionRoute kSourceEmotionRoutes[] = {']
+    for row in data['emotion_routes']:
+        lines.append(f'    {{{row["type"]}, {row["emotion"]}}}, // {row["tag"]}')
+    lines.append('};')
+    return {'src/core/SourceChatEmotions.generated.inc': '\n'.join(lines)+'\n'}
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
     data = json.loads(DATA.read_text(encoding='utf-8'))
-    verify(data)
-    for name, content in render(data).items():
+    at = verify(data)
+    submission = json.loads((ROOT/'docs/packets/evidence/PK09.21-chat-submission-data.json').read_text(encoding='utf-8'))
+    verify_submission(submission, data, at)
+    outputs = render(data)
+    outputs.update(render_submission(submission))
+    for name, content in outputs.items():
         path = ROOT/name
         if args.check:
             require(path.read_text(encoding='utf-8') == content, 'generated content differs: ' + name)
         else:
             path.write_text(content, encoding='utf-8')
     print('PASS: 292 lookup aliases (209 inserts +83 push_back, 49 resources), 82 parameter aliases; selected PE/source provenance and generated data agree.')
-    print('Data reconstruction only; general dispatch/editor/charset acceptance remains open.')
+    print('PASS: 60 exact-case emotion routes and selected no-op targets agree with primary source/PE.')
+    print('Core dispatch is implemented separately; remaining cases/options/global-special/editor/charset acceptance remains open.')
 
 if __name__ == '__main__':
     main()

@@ -363,6 +363,13 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     target_include_directories(source_chat_command_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME source_chat_command_checks COMMAND source_chat_command_checks)
     add_test(NAME packet_auto_message_checks COMMAND packet_stream_replay_checks --auto-message-only)
+    add_executable(source_chat_routing_checks tools/tests/SourceChatRoutingTests.cpp)
+    target_compile_features(source_chat_routing_checks PRIVATE cxx_std_17)
+    target_include_directories(source_chat_routing_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME source_chat_routing_checks COMMAND source_chat_routing_checks)
+    add_test(NAME packet_chat_submission_checks COMMAND packet_stream_replay_checks --chat-submission-only)
+    set_tests_properties(packet_chat_submission_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-submission-settings")
     add_test(NAME packet_friend_options_checks COMMAND packet_stream_replay_checks --friend-options-only)
     set_tests_properties(packet_friend_options_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-friend-options-settings")

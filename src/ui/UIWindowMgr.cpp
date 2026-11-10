@@ -1831,6 +1831,7 @@ void UIWindowMgr::AddWindowFront(UIWindow* window)
         return;
     }
 
+    if(window==m_commandListWnd)m_commandListWnd=nullptr;
     m_children.remove(window);
     m_children.push_front(window);
     window->SetShow(1);

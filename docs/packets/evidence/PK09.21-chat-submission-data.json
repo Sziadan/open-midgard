@@ -1,0 +1,491 @@
+{
+  "schema": 1,
+  "scope": "Production source caller, manager buffer, core47/11 routing and selected action routes; full command cases/global-special behavior/options initialization remain open",
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/GameMode2.cpp": "111ca06ba24dc274a4b57f5484c71a0cc30d99952d554033d05221e80fe66217",
+    "Ref/Player.cpp": "afb96e31d3bfd9fa2b151878d456694bcebe1ba03fc441351bebbf7c56291381",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/UIControl.cpp": "1c35fbb92f87961edb4eb6cea00cccd623d7535dc1c48b4cf5e876345d670c59",
+    "Ref/UIFrameWnd.cpp": "80f3382e2e68d228056b3cee614131059d43e445853dde3e0c4dcec369e75ded",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIFrameWnd3.cpp": "ace15e1a1d180c9f9e65709c0518080e6326d19ed799e808623ec37440e9627f",
+    "C:/Users/sziad/source/repos/rathena-master/src/map/clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b"
+  },
+  "emotion_routes": [
+    {
+      "tag": "TT_REQ_EMOTION_SURPRISE",
+      "type": 29,
+      "emotion": 0
+    },
+    {
+      "tag": "TT_REQ_EMOTION_QUESTION",
+      "type": 30,
+      "emotion": 1
+    },
+    {
+      "tag": "TT_REQ_EMOTION_DELIGHT",
+      "type": 31,
+      "emotion": 2
+    },
+    {
+      "tag": "TT_REQ_EMOTION_THROB",
+      "type": 32,
+      "emotion": 3
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SWEAT",
+      "type": 33,
+      "emotion": 4
+    },
+    {
+      "tag": "TT_REQ_EMOTION_AHA",
+      "type": 34,
+      "emotion": 5
+    },
+    {
+      "tag": "TT_REQ_EMOTION_FRET",
+      "type": 35,
+      "emotion": 6
+    },
+    {
+      "tag": "TT_REQ_EMOTION_ANGER",
+      "type": 36,
+      "emotion": 7
+    },
+    {
+      "tag": "TT_REQ_EMOTION_MONEY",
+      "type": 37,
+      "emotion": 8
+    },
+    {
+      "tag": "TT_REQ_EMOTION_THINK",
+      "type": 38,
+      "emotion": 9
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SCISSOR",
+      "type": 39,
+      "emotion": 10
+    },
+    {
+      "tag": "TT_REQ_EMOTION_ROCK",
+      "type": 40,
+      "emotion": 11
+    },
+    {
+      "tag": "TT_REQ_EMOTION_WRAP",
+      "type": 41,
+      "emotion": 12
+    },
+    {
+      "tag": "TT_REQ_EMOTION_THANKS",
+      "type": 66,
+      "emotion": 15
+    },
+    {
+      "tag": "TT_REQ_EMOTION_KEK",
+      "type": 67,
+      "emotion": 16
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SORRY",
+      "type": 68,
+      "emotion": 17
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SMILE",
+      "type": 69,
+      "emotion": 18
+    },
+    {
+      "tag": "TT_REQ_EMOTION_PROFUSELY_SWEAT",
+      "type": 70,
+      "emotion": 19
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SCRATCH",
+      "type": 71,
+      "emotion": 20
+    },
+    {
+      "tag": "TT_REQ_EMOTION_BEST",
+      "type": 72,
+      "emotion": 21
+    },
+    {
+      "tag": "TT_REQ_EMOTION_STARE_ABOUT",
+      "type": 73,
+      "emotion": 22
+    },
+    {
+      "tag": "TT_REQ_EMOTION_HUK",
+      "type": 74,
+      "emotion": 23
+    },
+    {
+      "tag": "TT_REQ_EMOTION_O",
+      "type": 75,
+      "emotion": 24
+    },
+    {
+      "tag": "TT_REQ_EMOTION_X",
+      "type": 76,
+      "emotion": 25
+    },
+    {
+      "tag": "TT_REQ_EMOTION_HELP",
+      "type": 77,
+      "emotion": 26
+    },
+    {
+      "tag": "TT_REQ_EMOTION_GO",
+      "type": 78,
+      "emotion": 27
+    },
+    {
+      "tag": "TT_REQ_EMOTION_BIGTHROB",
+      "type": 79,
+      "emotion": 14
+    },
+    {
+      "tag": "TT_REQ_EMOTION_CRY",
+      "type": 80,
+      "emotion": 28
+    },
+    {
+      "tag": "TT_REQ_EMOTION_KIK",
+      "type": 81,
+      "emotion": 29
+    },
+    {
+      "tag": "TT_REQ_EMOTION_CHUP",
+      "type": 82,
+      "emotion": 30
+    },
+    {
+      "tag": "TT_REQ_EMOTION_CHUPCHUP",
+      "type": 83,
+      "emotion": 31
+    },
+    {
+      "tag": "TT_REQ_EMOTION_HNG",
+      "type": 84,
+      "emotion": 32
+    },
+    {
+      "tag": "TT_REQ_EMOTION_OK",
+      "type": 85,
+      "emotion": 33
+    },
+    {
+      "tag": "TT_REQ_EMOTION_STARE",
+      "type": 122,
+      "emotion": 36
+    },
+    {
+      "tag": "TT_REQ_EMOTION_HUNGRY",
+      "type": 123,
+      "emotion": 37
+    },
+    {
+      "tag": "TT_REQ_EMOTION_COOL",
+      "type": 124,
+      "emotion": 38
+    },
+    {
+      "tag": "TT_REQ_EMOTION_MERONG",
+      "type": 125,
+      "emotion": 39
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SHY",
+      "type": 126,
+      "emotion": 40
+    },
+    {
+      "tag": "TT_REQ_EMOTION_GOODBOY",
+      "type": 127,
+      "emotion": 41
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SPTIME",
+      "type": 128,
+      "emotion": 42
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SEXY",
+      "type": 129,
+      "emotion": 43
+    },
+    {
+      "tag": "TT_REQ_EMOTION_COMEON",
+      "type": 130,
+      "emotion": 44
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SLEEPY",
+      "type": 131,
+      "emotion": 45
+    },
+    {
+      "tag": "TT_REQ_EMOTION_CONGRATULATION",
+      "type": 132,
+      "emotion": 46
+    },
+    {
+      "tag": "TT_REQ_EMOTION_HPTIME",
+      "type": 133,
+      "emotion": 47
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SPARK",
+      "type": 153,
+      "emotion": 52
+    },
+    {
+      "tag": "TT_REQ_EMOTION_CONFUSE",
+      "type": 154,
+      "emotion": 53
+    },
+    {
+      "tag": "TT_REQ_EMOTION_OHNO",
+      "type": 155,
+      "emotion": 54
+    },
+    {
+      "tag": "TT_REQ_EMOTION_HUM",
+      "type": 156,
+      "emotion": 55
+    },
+    {
+      "tag": "TT_REQ_EMOTION_BLABLA",
+      "type": 157,
+      "emotion": 56
+    },
+    {
+      "tag": "TT_REQ_EMOTION_OTL",
+      "type": 158,
+      "emotion": 57
+    },
+    {
+      "tag": "TT_REQ_EMOTION_DICE",
+      "type": 159,
+      "emotion": -1
+    },
+    {
+      "tag": "TT_REQ_EMOTION_LUV",
+      "type": 170,
+      "emotion": 65
+    },
+    {
+      "tag": "TT_REQ_EMOTION_HUM2",
+      "type": 186,
+      "emotion": 74
+    },
+    {
+      "tag": "TT_REQ_EMOTION_ABS",
+      "type": 187,
+      "emotion": 75
+    },
+    {
+      "tag": "TT_REQ_EMOTION_OOPS",
+      "type": 188,
+      "emotion": 76
+    },
+    {
+      "tag": "TT_REQ_EMOTION_SPIT",
+      "type": 189,
+      "emotion": 77
+    },
+    {
+      "tag": "TT_REQ_EMOTION_ENE",
+      "type": 190,
+      "emotion": 78
+    },
+    {
+      "tag": "TT_REQ_EMOTION_PANIC",
+      "type": 191,
+      "emotion": 79
+    },
+    {
+      "tag": "TT_REQ_EMOTION_WHISP",
+      "type": 192,
+      "emotion": 80
+    }
+  ],
+  "unregistered_primary_emotion_tags": [
+    "TT_REQ_EMOTION_MOBILE",
+    "TT_REQ_EMOTION_MAIL",
+    "TT_REQ_EMOTION_ANTENNA0",
+    "TT_REQ_EMOTION_ANTENNA1",
+    "TT_REQ_EMOTION_ANTENNA2",
+    "TT_REQ_EMOTION_ANTENNA3"
+  ],
+  "switch_table_address": "0x57C8B4",
+  "no_op_targets": {
+    "2": "0x57C89E",
+    "20": "0x57C89E",
+    "136": "0x57C89E"
+  },
+  "channel_request_ids": {
+    "global_selected23": "0x00F3",
+    "whisper": "0x0096",
+    "party": "0x0108",
+    "guild": "0x017E",
+    "battle": "0x02DB",
+    "party_leave": "0x0100",
+    "novice_doridori": "0x01E7"
+  },
+  "command_flag_initializers": {
+    "status": "INVENTORIED_NOT_INTEGRATED",
+    "entries": [
+      {
+        "source_field_value": "g_session.m_bgmIsPaused == 0",
+        "primary_TT_tag": "TT_MUSIC_ON_OFF",
+        "selected_type": 7,
+        "default_loading_owner": "InitOptionWithRegistry: absent key sets m_bgmIsPaused=0; present key queries Bgmispaused, query failure sets 0; pair stores inverse (music enabled)."
+      },
+      {
+        "source_field_value": "g_session.m_isEffectOn",
+        "primary_TT_tag": "TT_EFFECT_ON_OFF",
+        "selected_type": 8,
+        "default_loading_owner": "InitOptionWithRegistry: absent key sets m_isEffectOn=1; present key queries Iseffecton, query failure sets 1; normalized to bool."
+      },
+      {
+        "source_field_value": "g_isSoundOn",
+        "primary_TT_tag": "TT_EFFECT_SOUND_ON_OFF",
+        "selected_type": 11,
+        "default_loading_owner": "InitOptionWithRegistry: absent key sets 1; present key queries Issoundon, query failure sets 1; normalized to bool."
+      },
+      {
+        "source_field_value": "g_session.m_isBattle",
+        "primary_TT_tag": "TT_BATTLE_ON_OFF",
+        "selected_type": 134,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "(unsigned __int8)streamVolume (captured from g_windowMgr.m_tipOfTheDayWnd != 0)",
+        "primary_TT_tag": "TT_OPEN_TIP",
+        "selected_type": 42,
+        "default_loading_owner": "Tip-of-day window visibility at function entry; no registry load here."
+      },
+      {
+        "source_field_value": "g_session.m_isNoTrade",
+        "primary_TT_tag": "TT_NOTRADE_ON_OFF",
+        "selected_type": 135,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "g_session.m_isNoShift",
+        "primary_TT_tag": "TT_NOSHIFT_ON_OFF",
+        "selected_type": 105,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "g_session.m_isNoCtrl",
+        "primary_TT_tag": "TT_NOCTRL_ON_OFF",
+        "selected_type": 108,
+        "default_loading_owner": "InitOptionWithRegistry: when key exists queries MIsnoctrl, failure sets 0; no-key branch does not assign it here."
+      },
+      {
+        "source_field_value": "g_session.m_isSkillFail",
+        "primary_TT_tag": "TT_SKILLFAIL_ON_OFF",
+        "selected_type": 112,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "g_session.m_isNoTalkMsg == 0",
+        "primary_TT_tag": "TT_NOTALKMSG_ON_OFF",
+        "selected_type": 113,
+        "default_loading_owner": "Preexisting session state; inverse is stored."
+      },
+      {
+        "source_field_value": "g_session.m_isNoTalkMsg2 == 0",
+        "primary_TT_tag": "TT_NOTALKMSG2_ON_OFF",
+        "selected_type": 147,
+        "default_loading_owner": "Preexisting session state; inverse is stored."
+      },
+      {
+        "source_field_value": "g_session.m_isAura",
+        "primary_TT_tag": "TT_AURA_ON_OFF",
+        "selected_type": 106,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "g_session.m_isWindow",
+        "primary_TT_tag": "TT_WINDOW_ON_OFF",
+        "selected_type": 140,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "g_session.m_bMakeMissEffect",
+        "primary_TT_tag": "TT_MISS_EFFECT_ON_OFF",
+        "selected_type": 53,
+        "default_loading_owner": "InitOptionWithRegistry: if key exists queries MBmakemisseffe, failure sets 1; successful value normalized; absent-key branch does not assign it here."
+      },
+      {
+        "source_field_value": "0",
+        "primary_TT_tag": "TT_SET1_ON_OFF",
+        "selected_type": 114,
+        "default_loading_owner": "Constant initialized to 0 in this append; no other source default visible here."
+      },
+      {
+        "source_field_value": "0",
+        "primary_TT_tag": "TT_SET2_ON_OFF",
+        "selected_type": 137,
+        "default_loading_owner": "Constant initialized to 0 in this append; no other source default visible here."
+      },
+      {
+        "source_field_value": "g_session.m_isQuickSpell",
+        "primary_TT_tag": "TT_QUICKSPELL_ON_OFF",
+        "selected_type": 119,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "g_session.m_isQuickSpell2",
+        "primary_TT_tag": "TT_QUICKSPELL2_ON_OFF",
+        "selected_type": 120,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "0",
+        "primary_TT_tag": "TT_QUICKSPELL3_ON_OFF",
+        "selected_type": 121,
+        "default_loading_owner": "Constant initialized to 0 in this append; no other source default visible here."
+      },
+      {
+        "source_field_value": "g_session.m_isShowNameTypeOld",
+        "primary_TT_tag": "TT_SHOW_NAME_TYPE",
+        "selected_type": 107,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function. No matching source_tag exists in selected no_parameter_aliases; left unmapped."
+      },
+      {
+        "source_field_value": "g_session.m_fogOn",
+        "primary_TT_tag": "TT_FOG",
+        "selected_type": 60,
+        "default_loading_owner": "InitOptionWithRegistry: absent key sets m_fogOn=1; this function has no visible registry query for fog."
+      },
+      {
+        "source_field_value": "g_session.m_isLogInOut",
+        "primary_TT_tag": "TT_LOGINOUT_ON_OFF",
+        "selected_type": 164,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      },
+      {
+        "source_field_value": "g_session.m_isShopping",
+        "primary_TT_tag": "TT_SHOPPING_ON_OFF",
+        "selected_type": 166,
+        "default_loading_owner": "Preexisting session state; no registry load for this field in this function."
+      }
+    ]
+  },
+  "known_remaining": [
+    "Initialize the23 command flag pairs from original startup/registry ownership and construct the command-list UI.",
+    "Implement the remaining ProcessTalkType cases, including hi150 action beyond parser message assignment.",
+    "Finish source global6 ten-record similarity/strike ChatDori and special225/super-novice branches.",
+    "Review language charset prefix/wire encoding, exact input limits/IME/caret/selection, full font/skin/global UI.",
+    "Retain independent/deployed gates and the pending live world-entry retry."
+  ]
+}

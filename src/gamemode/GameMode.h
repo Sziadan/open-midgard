@@ -1,7 +1,9 @@
 #pragma once
 #include "core/ChatRoomPackets.h"
+#include "core/SourceChatRouting.h"
 #include "Mode.h"
 #include "audio/Audio.h"
+#include <array>
 #include <map>
 #include <list>
 #include <string>
@@ -15,6 +17,8 @@ class UINameBalloonText;
 class UIPlayerGage;
 class CRagConnection;
 class CGameModePacketRouter;
+class UIWindow;
+struct SourceChatInputServices { ro::chat::SourceChatModifiers (*readModifiers)()=nullptr; u32 (*ticks)()=nullptr; };
 struct GameModePacketLoopResult;
 struct MapTransitionServices;
 
@@ -250,6 +254,14 @@ public:
     int m_sourceSameChatRepeatCount=0;
     int m_sourceAutoSaveChatCount=0;
     bool SendSourceWhisper(const std::string& target,const std::string& text);
+    bool SubmitSourceChat(const std::string& text,const std::string& target,UIWindow* origin=nullptr);
+    msgresult_t ProcessSourceTalk(int type,const std::array<std::string,3>& parameters);
+    bool SendBufferedSourceChat(int operation,const std::string& target={});
+    u32 GetSourceChatTick() const;
+    void SetSourceChatInputServices(const SourceChatInputServices* services) { m_sourceChatInputServices=services; }
+    const SourceChatInputServices* m_sourceChatInputServices=nullptr;
+    std::array<u8,6> m_SiyeonStatus{};
+
     bool ToggleSourceChatAutoSave();
     // Selected PE ProcessTalkType table; secondary dhxj header is shifted.
     static constexpr int SourceTalk_AutoMessage=152;

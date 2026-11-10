@@ -247,7 +247,7 @@ bool UIChatRoomWnd::SubmitInput(){
     const int selected=m_memberView.selected;
     if(m_input[0]!='/' && selected>=0 && selected<static_cast<int>(m_memberRows.size())
         && m_memberRows[selected].name!=g_session.GetPlayerName())target=m_memberRows[selected].name;
-    const bool sent=g_modeMgr.SendMsg(CGameMode::GameMsg_SubmitChat,reinterpret_cast<msgparam_t>(m_input.c_str()),reinterpret_cast<msgparam_t>(target.c_str()),0)!=0;
+    const bool sent=g_modeMgr.SendMsg(CGameMode::GameMsg_SubmitChat,reinterpret_cast<msgparam_t>(m_input.c_str()),reinterpret_cast<msgparam_t>(target.c_str()),reinterpret_cast<msgparam_t>(this))!=0;
     // Original UI stores history and clears after dispatch, independent of send result.
     m_input.clear();m_pendingUtf8.clear();Invalidate();return sent;
 }

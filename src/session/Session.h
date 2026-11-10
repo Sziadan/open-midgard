@@ -171,6 +171,11 @@ public:
     u8   m_sex;
     bool m_isEffectOn;
     bool m_isMinEffect;
+    bool m_isMinEffectOld=false;
+    int m_talkType=0;
+    bool m_isBattleChat=false;
+    std::vector<std::pair<int,int>> m_cmdOnOffSet;
+
     int m_isSkillFail = 1;
     int m_isAura = 1;
     bool m_fogOn;
