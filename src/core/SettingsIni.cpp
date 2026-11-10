@@ -388,3 +388,58 @@ bool SaveSettingsIniString(const char* section, const char* key, const std::stri
     document.sections[section][key] = value;
     return SaveIniDocument(GetOpenMidgardIniPath(), document);
 }
+
+bool LoadSettingsIniIntValues(const char* section, std::vector<std::pair<std::string, int>>& values)
+{
+    if (!section || !*section) {
+        return false;
+    }
+    for (const auto& entry : values) {
+        if (entry.first.empty()) {
+            return false;
+        }
+    }
+
+    std::lock_guard<std::mutex> lock(g_iniMutex);
+    IniDocument document;
+    LoadDocumentWithDefaults(&document, nullptr);
+
+    const auto sectionIt = document.sections.find(section);
+    if (sectionIt == document.sections.end()) {
+        return false;
+    }
+
+    std::vector<std::pair<std::string, int>> loadedValues = values;
+    for (auto& entry : loadedValues) {
+        const auto valueIt = sectionIt->second.find(entry.first);
+        if (valueIt == sectionIt->second.end()) {
+            continue;
+        }
+        int parsedValue = entry.second;
+        if (TryParseInt(valueIt->second, &parsedValue)) {
+            entry.second = parsedValue;
+        }
+    }
+    values.swap(loadedValues);
+    return true;
+}
+
+bool SaveSettingsIniIntValues(const char* section, const std::vector<std::pair<std::string, int>>& values)
+{
+    if (!section || !*section) {
+        return false;
+    }
+    for (const auto& entry : values) {
+        if (entry.first.empty()) {
+            return false;
+        }
+    }
+
+    std::lock_guard<std::mutex> lock(g_iniMutex);
+    IniDocument document;
+    LoadDocumentWithDefaults(&document, nullptr);
+    for (const auto& entry : values) {
+        document.sections[section][entry.first] = std::to_string(entry.second);
+    }
+    return SaveIniDocument(GetOpenMidgardIniPath(), document);
+}

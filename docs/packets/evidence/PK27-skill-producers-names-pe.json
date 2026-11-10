@@ -1,0 +1,3672 @@
+{
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "families": {
+    "Player": {
+      "base": 0,
+      "count": 1039,
+      "default": "Skill not defined !!",
+      "verified_stores": 658,
+      "stores": [
+        {
+          "index": 0,
+          "name": "Zero Skill",
+          "va": "0x51647a"
+        },
+        {
+          "index": 1,
+          "name": "NV_BASIC",
+          "va": "0x516486"
+        },
+        {
+          "index": 2,
+          "name": "SM_SWORD",
+          "va": "0x516492"
+        },
+        {
+          "index": 3,
+          "name": "SM_TWOHAND",
+          "va": "0x51649f"
+        },
+        {
+          "index": 4,
+          "name": "SM_RECOVERY",
+          "va": "0x5164ac"
+        },
+        {
+          "index": 5,
+          "name": "SM_BASH",
+          "va": "0x5164b8"
+        },
+        {
+          "index": 6,
+          "name": "SM_PROVOKE",
+          "va": "0x5164c5"
+        },
+        {
+          "index": 7,
+          "name": "SM_MAGNUM",
+          "va": "0x5164d2"
+        },
+        {
+          "index": 8,
+          "name": "SM_ENDURE",
+          "va": "0x5164de"
+        },
+        {
+          "index": 9,
+          "name": "MG_SRECOVERY",
+          "va": "0x5164eb"
+        },
+        {
+          "index": 10,
+          "name": "MG_SIGHT",
+          "va": "0x5164f8"
+        },
+        {
+          "index": 11,
+          "name": "MG_NAPALMBEAT",
+          "va": "0x516504"
+        },
+        {
+          "index": 12,
+          "name": "MG_SAFETYWALL",
+          "va": "0x516511"
+        },
+        {
+          "index": 13,
+          "name": "MG_SOULSTRIKE",
+          "va": "0x51651e"
+        },
+        {
+          "index": 14,
+          "name": "MG_COLDBOLT",
+          "va": "0x51652a"
+        },
+        {
+          "index": 15,
+          "name": "MG_FROSTDIVER",
+          "va": "0x516537"
+        },
+        {
+          "index": 16,
+          "name": "MG_STONECURSE",
+          "va": "0x516544"
+        },
+        {
+          "index": 17,
+          "name": "MG_FIREBALL",
+          "va": "0x516550"
+        },
+        {
+          "index": 18,
+          "name": "MG_FIREWALL",
+          "va": "0x51655d"
+        },
+        {
+          "index": 19,
+          "name": "MG_FIREBOLT",
+          "va": "0x51656a"
+        },
+        {
+          "index": 20,
+          "name": "MG_LIGHTNINGBOLT",
+          "va": "0x516576"
+        },
+        {
+          "index": 21,
+          "name": "MG_THUNDERSTORM",
+          "va": "0x516583"
+        },
+        {
+          "index": 22,
+          "name": "AL_DP",
+          "va": "0x516590"
+        },
+        {
+          "index": 23,
+          "name": "AL_DEMONBANE",
+          "va": "0x51659c"
+        },
+        {
+          "index": 24,
+          "name": "AL_RUWACH",
+          "va": "0x5165a9"
+        },
+        {
+          "index": 25,
+          "name": "AL_PNEUMA",
+          "va": "0x5165b6"
+        },
+        {
+          "index": 26,
+          "name": "AL_TELEPORT",
+          "va": "0x5165c2"
+        },
+        {
+          "index": 27,
+          "name": "AL_WARP",
+          "va": "0x5165cf"
+        },
+        {
+          "index": 28,
+          "name": "AL_HEAL",
+          "va": "0x5165dc"
+        },
+        {
+          "index": 29,
+          "name": "AL_INCAGI",
+          "va": "0x5165e8"
+        },
+        {
+          "index": 690,
+          "name": "CASH_INCAGI",
+          "va": "0x5165f5"
+        },
+        {
+          "index": 30,
+          "name": "AL_DECAGI",
+          "va": "0x516605"
+        },
+        {
+          "index": 31,
+          "name": "AL_HOLYWATER",
+          "va": "0x516611"
+        },
+        {
+          "index": 32,
+          "name": "AL_CRUCIS",
+          "va": "0x51661e"
+        },
+        {
+          "index": 33,
+          "name": "AL_ANGELUS",
+          "va": "0x51662e"
+        },
+        {
+          "index": 34,
+          "name": "AL_BLESSING",
+          "va": "0x51663d"
+        },
+        {
+          "index": 689,
+          "name": "CASH_BLESSING",
+          "va": "0x51664d"
+        },
+        {
+          "index": 35,
+          "name": "AL_CURE",
+          "va": "0x51665d"
+        },
+        {
+          "index": 36,
+          "name": "MC_INCCARRY",
+          "va": "0x51666c"
+        },
+        {
+          "index": 37,
+          "name": "MC_DISCOUNT",
+          "va": "0x51667c"
+        },
+        {
+          "index": 38,
+          "name": "MC_OVERCHARGE",
+          "va": "0x51668c"
+        },
+        {
+          "index": 39,
+          "name": "MC_PUSHCART",
+          "va": "0x51669b"
+        },
+        {
+          "index": 40,
+          "name": "MC_IDENTIFY",
+          "va": "0x5166ab"
+        },
+        {
+          "index": 41,
+          "name": "MC_VENDING",
+          "va": "0x5166bb"
+        },
+        {
+          "index": 42,
+          "name": "MC_MAMMONITE",
+          "va": "0x5166ca"
+        },
+        {
+          "index": 43,
+          "name": "AC_OWL",
+          "va": "0x5166da"
+        },
+        {
+          "index": 44,
+          "name": "AC_VULTURE",
+          "va": "0x5166ea"
+        },
+        {
+          "index": 45,
+          "name": "AC_CONCENTRATION",
+          "va": "0x5166f9"
+        },
+        {
+          "index": 46,
+          "name": "AC_DOUBLE",
+          "va": "0x516709"
+        },
+        {
+          "index": 499,
+          "name": "HT_POWER",
+          "va": "0x516719"
+        },
+        {
+          "index": 47,
+          "name": "AC_SHOWER",
+          "va": "0x516728"
+        },
+        {
+          "index": 48,
+          "name": "TF_DOUBLE",
+          "va": "0x516738"
+        },
+        {
+          "index": 49,
+          "name": "TF_MISS",
+          "va": "0x516748"
+        },
+        {
+          "index": 50,
+          "name": "TF_STEAL",
+          "va": "0x516757"
+        },
+        {
+          "index": 51,
+          "name": "TF_HIDING",
+          "va": "0x516767"
+        },
+        {
+          "index": 52,
+          "name": "TF_POISON",
+          "va": "0x516777"
+        },
+        {
+          "index": 53,
+          "name": "TF_DETOXIFY",
+          "va": "0x516786"
+        },
+        {
+          "index": 54,
+          "name": "ALL_RESURRECTION",
+          "va": "0x516796"
+        },
+        {
+          "index": 55,
+          "name": "KN_SPEARMASTERY",
+          "va": "0x5167a6"
+        },
+        {
+          "index": 56,
+          "name": "KN_PIERCE",
+          "va": "0x5167b5"
+        },
+        {
+          "index": 57,
+          "name": "KN_BRANDISHSPEAR",
+          "va": "0x5167c5"
+        },
+        {
+          "index": 58,
+          "name": "KN_SPEARSTAB",
+          "va": "0x5167d5"
+        },
+        {
+          "index": 59,
+          "name": "KN_SPEARBOOMERANG",
+          "va": "0x5167e4"
+        },
+        {
+          "index": 60,
+          "name": "KN_TWOHANDQUICKEN",
+          "va": "0x5167f4"
+        },
+        {
+          "index": 61,
+          "name": "KN_AUTOCOUNTER",
+          "va": "0x516804"
+        },
+        {
+          "index": 62,
+          "name": "KN_BOWLINGBASH",
+          "va": "0x516813"
+        },
+        {
+          "index": 63,
+          "name": "KN_RIDING",
+          "va": "0x516823"
+        },
+        {
+          "index": 64,
+          "name": "KN_CAVALIERMASTERY",
+          "va": "0x516833"
+        },
+        {
+          "index": 65,
+          "name": "PR_MACEMASTERY",
+          "va": "0x516842"
+        },
+        {
+          "index": 66,
+          "name": "PR_IMPOSITIO",
+          "va": "0x516852"
+        },
+        {
+          "index": 67,
+          "name": "PR_SUFFRAGIUM",
+          "va": "0x516862"
+        },
+        {
+          "index": 68,
+          "name": "PR_ASPERSIO",
+          "va": "0x516871"
+        },
+        {
+          "index": 69,
+          "name": "PR_BENEDICTIO",
+          "va": "0x516881"
+        },
+        {
+          "index": 694,
+          "name": "ALL_ANGEL_PROTECT",
+          "va": "0x516891"
+        },
+        {
+          "index": 70,
+          "name": "PR_SANCTUARY",
+          "va": "0x5168a0"
+        },
+        {
+          "index": 71,
+          "name": "PR_SLOWPOISON",
+          "va": "0x5168b0"
+        },
+        {
+          "index": 72,
+          "name": "PR_STRECOVERY",
+          "va": "0x5168c0"
+        },
+        {
+          "index": 73,
+          "name": "PR_KYRIE",
+          "va": "0x5168cf"
+        },
+        {
+          "index": 74,
+          "name": "PR_MAGNIFICAT",
+          "va": "0x5168df"
+        },
+        {
+          "index": 75,
+          "name": "PR_GLORIA",
+          "va": "0x5168ef"
+        },
+        {
+          "index": 76,
+          "name": "PR_LEXDIVINA",
+          "va": "0x5168fe"
+        },
+        {
+          "index": 77,
+          "name": "PR_TURNUNDEAD",
+          "va": "0x51690e"
+        },
+        {
+          "index": 78,
+          "name": "PR_LEXAETERNA",
+          "va": "0x51691e"
+        },
+        {
+          "index": 79,
+          "name": "PR_MAGNUS",
+          "va": "0x51692d"
+        },
+        {
+          "index": 80,
+          "name": "WZ_FIREPILLAR",
+          "va": "0x51693d"
+        },
+        {
+          "index": 81,
+          "name": "WZ_SIGHTRASHER",
+          "va": "0x51694d"
+        },
+        {
+          "index": 82,
+          "name": "WZ_FIREIVY",
+          "va": "0x51695c"
+        },
+        {
+          "index": 86,
+          "name": "WZ_WATERBALL",
+          "va": "0x51696c"
+        },
+        {
+          "index": 87,
+          "name": "WZ_ICEWALL",
+          "va": "0x51697c"
+        },
+        {
+          "index": 83,
+          "name": "WZ_METEOR",
+          "va": "0x51698b"
+        },
+        {
+          "index": 84,
+          "name": "WZ_JUPITEL",
+          "va": "0x51699b"
+        },
+        {
+          "index": 85,
+          "name": "WZ_VERMILION",
+          "va": "0x5169ab"
+        },
+        {
+          "index": 88,
+          "name": "WZ_FROSTNOVA",
+          "va": "0x5169ba"
+        },
+        {
+          "index": 89,
+          "name": "WZ_STORMGUST",
+          "va": "0x5169ca"
+        },
+        {
+          "index": 90,
+          "name": "WZ_EARTHSPIKE",
+          "va": "0x5169da"
+        },
+        {
+          "index": 91,
+          "name": "WZ_HEAVENDRIVE",
+          "va": "0x5169e9"
+        },
+        {
+          "index": 92,
+          "name": "WZ_QUAGMIRE",
+          "va": "0x5169f9"
+        },
+        {
+          "index": 93,
+          "name": "WZ_ESTIMATION",
+          "va": "0x516a09"
+        },
+        {
+          "index": 115,
+          "name": "HT_SKIDTRAP",
+          "va": "0x516a18"
+        },
+        {
+          "index": 116,
+          "name": "HT_LANDMINE",
+          "va": "0x516a28"
+        },
+        {
+          "index": 117,
+          "name": "HT_ANKLESNARE",
+          "va": "0x516a38"
+        },
+        {
+          "index": 118,
+          "name": "HT_SHOCKWAVE",
+          "va": "0x516a47"
+        },
+        {
+          "index": 119,
+          "name": "HT_SANDMAN",
+          "va": "0x516a57"
+        },
+        {
+          "index": 688,
+          "name": "GM_SANDMAN",
+          "va": "0x516a67"
+        },
+        {
+          "index": 692,
+          "name": "ALL_CATCRY",
+          "va": "0x516a76"
+        },
+        {
+          "index": 695,
+          "name": "ALL_DREAM_SUMMERNIGHT",
+          "va": "0x516a86"
+        },
+        {
+          "index": 693,
+          "name": "ALL_PARTYFLEE",
+          "va": "0x516a96"
+        },
+        {
+          "index": 120,
+          "name": "HT_FLASHER",
+          "va": "0x516aa5"
+        },
+        {
+          "index": 121,
+          "name": "HT_FREEZINGTRAP",
+          "va": "0x516ab5"
+        },
+        {
+          "index": 122,
+          "name": "HT_BLASTMINE",
+          "va": "0x516ac5"
+        },
+        {
+          "index": 123,
+          "name": "HT_CLAYMORETRAP",
+          "va": "0x516ad4"
+        },
+        {
+          "index": 124,
+          "name": "HT_REMOVETRAP",
+          "va": "0x516ae4"
+        },
+        {
+          "index": 125,
+          "name": "HT_TALKIEBOX",
+          "va": "0x516af4"
+        },
+        {
+          "index": 126,
+          "name": "HT_BEASTBANE",
+          "va": "0x516b03"
+        },
+        {
+          "index": 127,
+          "name": "HT_FALCON",
+          "va": "0x516b13"
+        },
+        {
+          "index": 128,
+          "name": "HT_STEELCROW",
+          "va": "0x516b23"
+        },
+        {
+          "index": 129,
+          "name": "HT_BLITZBEAT",
+          "va": "0x516b32"
+        },
+        {
+          "index": 130,
+          "name": "HT_DETECTING",
+          "va": "0x516b42"
+        },
+        {
+          "index": 131,
+          "name": "HT_SPRINGTRAP",
+          "va": "0x516b52"
+        },
+        {
+          "index": 132,
+          "name": "AS_RIGHT",
+          "va": "0x516b61"
+        },
+        {
+          "index": 133,
+          "name": "AS_LEFT",
+          "va": "0x516b71"
+        },
+        {
+          "index": 134,
+          "name": "AS_KATAR",
+          "va": "0x516b81"
+        },
+        {
+          "index": 135,
+          "name": "AS_CLOAKING",
+          "va": "0x516b90"
+        },
+        {
+          "index": 136,
+          "name": "AS_SONICBLOW",
+          "va": "0x516ba0"
+        },
+        {
+          "index": 137,
+          "name": "AS_GRIMTOOTH",
+          "va": "0x516bb0"
+        },
+        {
+          "index": 138,
+          "name": "AS_ENCHANTPOISON",
+          "va": "0x516bbf"
+        },
+        {
+          "index": 139,
+          "name": "AS_POISONREACT",
+          "va": "0x516bcf"
+        },
+        {
+          "index": 140,
+          "name": "AS_VENOMDUST",
+          "va": "0x516bdf"
+        },
+        {
+          "index": 141,
+          "name": "AS_SPLASHER",
+          "va": "0x516bee"
+        },
+        {
+          "index": 94,
+          "name": "BS_IRON",
+          "va": "0x516bfe"
+        },
+        {
+          "index": 95,
+          "name": "BS_STEEL",
+          "va": "0x516c0e"
+        },
+        {
+          "index": 96,
+          "name": "BS_ENCHANTEDSTONE",
+          "va": "0x516c1d"
+        },
+        {
+          "index": 97,
+          "name": "BS_ORIDEOCON",
+          "va": "0x516c2d"
+        },
+        {
+          "index": 98,
+          "name": "BS_DAGGER",
+          "va": "0x516c3d"
+        },
+        {
+          "index": 99,
+          "name": "BS_SWORD",
+          "va": "0x516c4c"
+        },
+        {
+          "index": 100,
+          "name": "BS_TWOHANDSWORD",
+          "va": "0x516c5c"
+        },
+        {
+          "index": 101,
+          "name": "BS_AXE",
+          "va": "0x516c6c"
+        },
+        {
+          "index": 102,
+          "name": "BS_MACE",
+          "va": "0x516c7b"
+        },
+        {
+          "index": 103,
+          "name": "BS_KNUCKLE",
+          "va": "0x516c8b"
+        },
+        {
+          "index": 104,
+          "name": "BS_SPEAR",
+          "va": "0x516c9b"
+        },
+        {
+          "index": 105,
+          "name": "BS_HILTBINDING",
+          "va": "0x516caa"
+        },
+        {
+          "index": 106,
+          "name": "BS_FINDINGORE",
+          "va": "0x516cba"
+        },
+        {
+          "index": 107,
+          "name": "BS_WEAPONRESEARCH",
+          "va": "0x516cca"
+        },
+        {
+          "index": 108,
+          "name": "BS_REPAIRWEAPON",
+          "va": "0x516cd9"
+        },
+        {
+          "index": 109,
+          "name": "BS_SKINTEMPER",
+          "va": "0x516ce9"
+        },
+        {
+          "index": 110,
+          "name": "BS_HAMMERFALL",
+          "va": "0x516cf9"
+        },
+        {
+          "index": 111,
+          "name": "BS_ADRENALINE",
+          "va": "0x516d08"
+        },
+        {
+          "index": 112,
+          "name": "BS_WEAPONPERFECT",
+          "va": "0x516d18"
+        },
+        {
+          "index": 113,
+          "name": "BS_OVERTHRUST",
+          "va": "0x516d28"
+        },
+        {
+          "index": 114,
+          "name": "BS_MAXIMIZE",
+          "va": "0x516d37"
+        },
+        {
+          "index": 142,
+          "name": "NV_FIRSTAID",
+          "va": "0x516d47"
+        },
+        {
+          "index": 143,
+          "name": "NV_TRICKDEAD",
+          "va": "0x516d57"
+        },
+        {
+          "index": 144,
+          "name": "SM_MOVINGRECOVERY",
+          "va": "0x516d66"
+        },
+        {
+          "index": 145,
+          "name": "SM_FATALBLOW",
+          "va": "0x516d76"
+        },
+        {
+          "index": 146,
+          "name": "SM_AUTOBERSERK",
+          "va": "0x516d86"
+        },
+        {
+          "index": 147,
+          "name": "AC_MAKINGARROW",
+          "va": "0x516d95"
+        },
+        {
+          "index": 148,
+          "name": "AC_CHARGEARROW",
+          "va": "0x516da5"
+        },
+        {
+          "index": 149,
+          "name": "TF_SPRINKLESAND",
+          "va": "0x516db5"
+        },
+        {
+          "index": 150,
+          "name": "TF_BACKSLIDING",
+          "va": "0x516dc4"
+        },
+        {
+          "index": 151,
+          "name": "TF_PICKSTONE",
+          "va": "0x516dd4"
+        },
+        {
+          "index": 152,
+          "name": "TF_THROWSTONE",
+          "va": "0x516de4"
+        },
+        {
+          "index": 153,
+          "name": "MC_CARTREVOLUTION",
+          "va": "0x516df3"
+        },
+        {
+          "index": 154,
+          "name": "MC_CHANGECART",
+          "va": "0x516e03"
+        },
+        {
+          "index": 155,
+          "name": "MC_LOUD",
+          "va": "0x516e13"
+        },
+        {
+          "index": 156,
+          "name": "AL_HOLYLIGHT",
+          "va": "0x516e22"
+        },
+        {
+          "index": 157,
+          "name": "MG_ENERGYCOAT",
+          "va": "0x516e32"
+        },
+        {
+          "index": 158,
+          "name": "NPC_PIERCINGATT",
+          "va": "0x516e42"
+        },
+        {
+          "index": 159,
+          "name": "NPC_MENTALBREAKER",
+          "va": "0x516e51"
+        },
+        {
+          "index": 160,
+          "name": "NPC_RANGEATTACK",
+          "va": "0x516e61"
+        },
+        {
+          "index": 161,
+          "name": "NPC_ATTRICHANGE",
+          "va": "0x516e71"
+        },
+        {
+          "index": 162,
+          "name": "NPC_CHANGEWATER",
+          "va": "0x516e80"
+        },
+        {
+          "index": 163,
+          "name": "NPC_CHANGEGROUND",
+          "va": "0x516e90"
+        },
+        {
+          "index": 164,
+          "name": "NPC_CHANGEFIRE",
+          "va": "0x516ea0"
+        },
+        {
+          "index": 165,
+          "name": "NPC_CHANGEWIND",
+          "va": "0x516eaf"
+        },
+        {
+          "index": 166,
+          "name": "NPC_CHANGEPOISON",
+          "va": "0x516ebf"
+        },
+        {
+          "index": 167,
+          "name": "NPC_CHANGEHOLY",
+          "va": "0x516ecf"
+        },
+        {
+          "index": 168,
+          "name": "NPC_CHANGETELEKINESIS",
+          "va": "0x516ede"
+        },
+        {
+          "index": 170,
+          "name": "NPC_CRITICALSLASH",
+          "va": "0x516eee"
+        },
+        {
+          "index": 171,
+          "name": "NPC_COMBOATTACK",
+          "va": "0x516efe"
+        },
+        {
+          "index": 172,
+          "name": "NPC_GUIDEDATTACK",
+          "va": "0x516f0d"
+        },
+        {
+          "index": 173,
+          "name": "NPC_SELFDESTRUCTION",
+          "va": "0x516f1d"
+        },
+        {
+          "index": 174,
+          "name": "NPC_SPLASHATTACK",
+          "va": "0x516f2d"
+        },
+        {
+          "index": 175,
+          "name": "NPC_SUICIDE",
+          "va": "0x516f3c"
+        },
+        {
+          "index": 176,
+          "name": "NPC_POISON",
+          "va": "0x516f4c"
+        },
+        {
+          "index": 177,
+          "name": "NPC_BLINDATTACK",
+          "va": "0x516f5c"
+        },
+        {
+          "index": 178,
+          "name": "NPC_SILENCEATTACK",
+          "va": "0x516f6b"
+        },
+        {
+          "index": 179,
+          "name": "NPC_STUNATTACK",
+          "va": "0x516f7b"
+        },
+        {
+          "index": 180,
+          "name": "NPC_PETRIFYATTACK",
+          "va": "0x516f8b"
+        },
+        {
+          "index": 181,
+          "name": "NPC_CURSEATTACK",
+          "va": "0x516f9a"
+        },
+        {
+          "index": 182,
+          "name": "NPC_SLEEPATTACK",
+          "va": "0x516faa"
+        },
+        {
+          "index": 183,
+          "name": "NPC_RANDOMATTACK",
+          "va": "0x516fba"
+        },
+        {
+          "index": 184,
+          "name": "NPC_WATERATTACK",
+          "va": "0x516fc9"
+        },
+        {
+          "index": 185,
+          "name": "NPC_GROUNDATTACK",
+          "va": "0x516fd9"
+        },
+        {
+          "index": 186,
+          "name": "NPC_FIREATTACK",
+          "va": "0x516fe9"
+        },
+        {
+          "index": 187,
+          "name": "NPC_WINDATTACK",
+          "va": "0x516ff8"
+        },
+        {
+          "index": 188,
+          "name": "NPC_POISONATTACK",
+          "va": "0x517008"
+        },
+        {
+          "index": 189,
+          "name": "NPC_HOLYATTACK",
+          "va": "0x517018"
+        },
+        {
+          "index": 190,
+          "name": "NPC_DARKNESSATTACK",
+          "va": "0x517027"
+        },
+        {
+          "index": 191,
+          "name": "NPC_TELEKINESISATTACK",
+          "va": "0x517037"
+        },
+        {
+          "index": 192,
+          "name": "NPC_MAGICALATTACK",
+          "va": "0x517047"
+        },
+        {
+          "index": 193,
+          "name": "NPC_METAMORPHOSIS",
+          "va": "0x517056"
+        },
+        {
+          "index": 194,
+          "name": "NPC_PROVOCATION",
+          "va": "0x517066"
+        },
+        {
+          "index": 195,
+          "name": "NPC_SMOKING",
+          "va": "0x517076"
+        },
+        {
+          "index": 196,
+          "name": "NPC_SUMMONSLAVE",
+          "va": "0x517085"
+        },
+        {
+          "index": 197,
+          "name": "NPC_EMOTION",
+          "va": "0x51709a"
+        },
+        {
+          "index": 198,
+          "name": "NPC_TRANSFORMATION",
+          "va": "0x5170aa"
+        },
+        {
+          "index": 199,
+          "name": "NPC_BLOODDRAIN",
+          "va": "0x5170ba"
+        },
+        {
+          "index": 200,
+          "name": "NPC_ENERGYDRAIN",
+          "va": "0x5170c6"
+        },
+        {
+          "index": 201,
+          "name": "NPC_KEEPING",
+          "va": "0x5170d6"
+        },
+        {
+          "index": 202,
+          "name": "NPC_DARKBREATH",
+          "va": "0x5170e6"
+        },
+        {
+          "index": 203,
+          "name": "NPC_DARKBLESSING",
+          "va": "0x5170f6"
+        },
+        {
+          "index": 204,
+          "name": "NPC_BARRIER",
+          "va": "0x517106"
+        },
+        {
+          "index": 205,
+          "name": "NPC_DEFENDER",
+          "va": "0x517116"
+        },
+        {
+          "index": 206,
+          "name": "NPC_LICK",
+          "va": "0x517126"
+        },
+        {
+          "index": 207,
+          "name": "NPC_HALLUCINATION",
+          "va": "0x517136"
+        },
+        {
+          "index": 208,
+          "name": "NPC_REBIRTH",
+          "va": "0x517146"
+        },
+        {
+          "index": 209,
+          "name": "NPC_SUMMONMONSTER",
+          "va": "0x517156"
+        },
+        {
+          "index": 659,
+          "name": "NPC_DRAGONFEAR",
+          "va": "0x517166"
+        },
+        {
+          "index": 199,
+          "name": "NPC_BLOODDRAIN",
+          "va": "0x517176"
+        },
+        {
+          "index": 210,
+          "name": "RG_SNATCHER",
+          "va": "0x517182"
+        },
+        {
+          "index": 211,
+          "name": "RG_STEALCOIN",
+          "va": "0x517191"
+        },
+        {
+          "index": 212,
+          "name": "RG_BACKSTAP",
+          "va": "0x5171a1"
+        },
+        {
+          "index": 213,
+          "name": "RG_TUNNELDRIVE",
+          "va": "0x5171b1"
+        },
+        {
+          "index": 214,
+          "name": "RG_RAID",
+          "va": "0x5171c0"
+        },
+        {
+          "index": 215,
+          "name": "RG_STRIPWEAPON",
+          "va": "0x5171d0"
+        },
+        {
+          "index": 216,
+          "name": "RG_STRIPSHIELD",
+          "va": "0x5171e0"
+        },
+        {
+          "index": 217,
+          "name": "RG_STRIPARMOR",
+          "va": "0x5171ef"
+        },
+        {
+          "index": 218,
+          "name": "RG_STRIPHELM",
+          "va": "0x5171ff"
+        },
+        {
+          "index": 219,
+          "name": "RG_INTIMIDATE",
+          "va": "0x51720f"
+        },
+        {
+          "index": 220,
+          "name": "RG_GRAFFITI",
+          "va": "0x51721e"
+        },
+        {
+          "index": 221,
+          "name": "RG_FLAGGRAFFITI",
+          "va": "0x51722e"
+        },
+        {
+          "index": 222,
+          "name": "RG_CLEANER",
+          "va": "0x51723e"
+        },
+        {
+          "index": 223,
+          "name": "RG_GANGSTER",
+          "va": "0x51724d"
+        },
+        {
+          "index": 224,
+          "name": "RG_COMPULSION",
+          "va": "0x51725d"
+        },
+        {
+          "index": 225,
+          "name": "RG_PLAGIARISM",
+          "va": "0x51726d"
+        },
+        {
+          "index": 226,
+          "name": "AM_AXEMASTERY",
+          "va": "0x51727c"
+        },
+        {
+          "index": 227,
+          "name": "AM_LEARNINGPOTION",
+          "va": "0x51728c"
+        },
+        {
+          "index": 228,
+          "name": "AM_PHARMACY",
+          "va": "0x51729c"
+        },
+        {
+          "index": 229,
+          "name": "AM_DEMONSTRATION",
+          "va": "0x5172ab"
+        },
+        {
+          "index": 230,
+          "name": "AM_ACIDTERROR",
+          "va": "0x5172bb"
+        },
+        {
+          "index": 231,
+          "name": "AM_POTIONPITCHER",
+          "va": "0x5172cb"
+        },
+        {
+          "index": 232,
+          "name": "AM_CANNIBALIZE",
+          "va": "0x5172da"
+        },
+        {
+          "index": 233,
+          "name": "AM_SPHEREMINE",
+          "va": "0x5172ea"
+        },
+        {
+          "index": 234,
+          "name": "AM_CP_WEAPON",
+          "va": "0x5172fa"
+        },
+        {
+          "index": 235,
+          "name": "AM_CP_SHIELD",
+          "va": "0x517309"
+        },
+        {
+          "index": 236,
+          "name": "AM_CP_ARMOR",
+          "va": "0x517319"
+        },
+        {
+          "index": 237,
+          "name": "AM_CP_HELM",
+          "va": "0x517329"
+        },
+        {
+          "index": 238,
+          "name": "AM_BIOETHICS",
+          "va": "0x517338"
+        },
+        {
+          "index": 239,
+          "name": "AM_BIOTECHNOLOGY",
+          "va": "0x517348"
+        },
+        {
+          "index": 240,
+          "name": "AM_CREATECREATURE",
+          "va": "0x517358"
+        },
+        {
+          "index": 241,
+          "name": "AM_CULTIVATION",
+          "va": "0x517367"
+        },
+        {
+          "index": 242,
+          "name": "AM_FLAMECONTROL",
+          "va": "0x517377"
+        },
+        {
+          "index": 243,
+          "name": "AM_CALLHOMUN",
+          "va": "0x517387"
+        },
+        {
+          "index": 244,
+          "name": "AM_REST",
+          "va": "0x517396"
+        },
+        {
+          "index": 245,
+          "name": "AM_DRILLMASTER",
+          "va": "0x5173a6"
+        },
+        {
+          "index": 246,
+          "name": "AM_HEALHOMUN",
+          "va": "0x5173b6"
+        },
+        {
+          "index": 247,
+          "name": "AM_RESURRECTHOMUN",
+          "va": "0x5173c5"
+        },
+        {
+          "index": 248,
+          "name": "CR_TRUST",
+          "va": "0x5173d5"
+        },
+        {
+          "index": 249,
+          "name": "CR_AUTOGUARD",
+          "va": "0x5173e5"
+        },
+        {
+          "index": 250,
+          "name": "CR_SHIELDCHARGE",
+          "va": "0x5173f4"
+        },
+        {
+          "index": 251,
+          "name": "CR_SHIELDBOOMERANG",
+          "va": "0x517404"
+        },
+        {
+          "index": 252,
+          "name": "CR_REFLECTSHIELD",
+          "va": "0x517414"
+        },
+        {
+          "index": 253,
+          "name": "CR_HOLYCROSS",
+          "va": "0x517423"
+        },
+        {
+          "index": 254,
+          "name": "CR_GRANDCROSS",
+          "va": "0x517433"
+        },
+        {
+          "index": 255,
+          "name": "CR_DEVOTION",
+          "va": "0x517443"
+        },
+        {
+          "index": 256,
+          "name": "CR_PROVIDENCE",
+          "va": "0x517452"
+        },
+        {
+          "index": 257,
+          "name": "CR_DEFENDER",
+          "va": "0x517462"
+        },
+        {
+          "index": 258,
+          "name": "CR_SPEARQUICKEN",
+          "va": "0x517472"
+        },
+        {
+          "index": 259,
+          "name": "MO_IRONHAND",
+          "va": "0x517481"
+        },
+        {
+          "index": 260,
+          "name": "MO_SPIRITSRECOVERY",
+          "va": "0x517491"
+        },
+        {
+          "index": 261,
+          "name": "MO_CALLSPIRITS",
+          "va": "0x5174a1"
+        },
+        {
+          "index": 262,
+          "name": "MO_ABSORBSPIRITS",
+          "va": "0x5174b0"
+        },
+        {
+          "index": 263,
+          "name": "MO_TRIPLEATTACK",
+          "va": "0x5174c0"
+        },
+        {
+          "index": 264,
+          "name": "MO_BODYRELOCATION",
+          "va": "0x5174d0"
+        },
+        {
+          "index": 265,
+          "name": "MO_DODGE",
+          "va": "0x5174df"
+        },
+        {
+          "index": 266,
+          "name": "MO_INVESTIGATE",
+          "va": "0x5174ef"
+        },
+        {
+          "index": 267,
+          "name": "MO_FINGEROFFENSIVE",
+          "va": "0x5174ff"
+        },
+        {
+          "index": 268,
+          "name": "MO_STEELBODY",
+          "va": "0x51750e"
+        },
+        {
+          "index": 269,
+          "name": "MO_BLADESTOP",
+          "va": "0x51751e"
+        },
+        {
+          "index": 270,
+          "name": "MO_EXPLOSIONSPIRITS",
+          "va": "0x51752e"
+        },
+        {
+          "index": 271,
+          "name": "MO_EXTREMITYFIST",
+          "va": "0x51753d"
+        },
+        {
+          "index": 272,
+          "name": "MO_CHAINCOMBO",
+          "va": "0x51754d"
+        },
+        {
+          "index": 273,
+          "name": "MO_COMBOFINISH",
+          "va": "0x51755d"
+        },
+        {
+          "index": 274,
+          "name": "SA_ADVANCEDBOOK",
+          "va": "0x51756c"
+        },
+        {
+          "index": 277,
+          "name": "SA_SPELLBREAKER",
+          "va": "0x51757c"
+        },
+        {
+          "index": 275,
+          "name": "SA_CASTCANCEL",
+          "va": "0x51758c"
+        },
+        {
+          "index": 276,
+          "name": "SA_MAGICROD",
+          "va": "0x51759b"
+        },
+        {
+          "index": 278,
+          "name": "SA_FREECAST",
+          "va": "0x5175ab"
+        },
+        {
+          "index": 280,
+          "name": "SA_FLAMELAUNCHER",
+          "va": "0x5175bb"
+        },
+        {
+          "index": 281,
+          "name": "SA_FROSTWEAPON",
+          "va": "0x5175ca"
+        },
+        {
+          "index": 282,
+          "name": "SA_LIGHTNINGLOADER",
+          "va": "0x5175da"
+        },
+        {
+          "index": 283,
+          "name": "SA_SEISMICWEAPON",
+          "va": "0x5175ea"
+        },
+        {
+          "index": 284,
+          "name": "SA_DRAGONOLOGY",
+          "va": "0x5175f9"
+        },
+        {
+          "index": 285,
+          "name": "SA_VOLCANO",
+          "va": "0x517609"
+        },
+        {
+          "index": 286,
+          "name": "SA_DELUGE",
+          "va": "0x517619"
+        },
+        {
+          "index": 287,
+          "name": "SA_VIOLENTGALE",
+          "va": "0x517628"
+        },
+        {
+          "index": 288,
+          "name": "SA_LANDPROTECTOR",
+          "va": "0x51763d"
+        },
+        {
+          "index": 279,
+          "name": "SA_AUTOSPELL",
+          "va": "0x517649"
+        },
+        {
+          "index": 288,
+          "name": "SA_LANDPROTECTOR",
+          "va": "0x517659"
+        },
+        {
+          "index": 289,
+          "name": "SA_DISPELL",
+          "va": "0x517665"
+        },
+        {
+          "index": 290,
+          "name": "SA_ABRACADABRA",
+          "va": "0x517674"
+        },
+        {
+          "index": 291,
+          "name": "SA_MONOCELL",
+          "va": "0x517684"
+        },
+        {
+          "index": 292,
+          "name": "SA_CLASSCHANGE",
+          "va": "0x517694"
+        },
+        {
+          "index": 293,
+          "name": "SA_SUMMONMONSTER",
+          "va": "0x5176a3"
+        },
+        {
+          "index": 294,
+          "name": "SA_REVERSEORCISH",
+          "va": "0x5176b3"
+        },
+        {
+          "index": 295,
+          "name": "SA_DEATH",
+          "va": "0x5176c3"
+        },
+        {
+          "index": 296,
+          "name": "SA_FORTUNE",
+          "va": "0x5176d2"
+        },
+        {
+          "index": 297,
+          "name": "SA_TAMINGMONSTER",
+          "va": "0x5176e2"
+        },
+        {
+          "index": 298,
+          "name": "SA_QUESTION",
+          "va": "0x5176f2"
+        },
+        {
+          "index": 299,
+          "name": "SA_GRAVITY",
+          "va": "0x517701"
+        },
+        {
+          "index": 300,
+          "name": "SA_LEVELUP",
+          "va": "0x517711"
+        },
+        {
+          "index": 301,
+          "name": "SA_INSTANTDEATH",
+          "va": "0x517721"
+        },
+        {
+          "index": 302,
+          "name": "SA_FULLRECOVERY",
+          "va": "0x517730"
+        },
+        {
+          "index": 303,
+          "name": "SA_COMA",
+          "va": "0x517740"
+        },
+        {
+          "index": 304,
+          "name": "BD_ADAPTATION",
+          "va": "0x517750"
+        },
+        {
+          "index": 305,
+          "name": "BD_ENCORE",
+          "va": "0x51775f"
+        },
+        {
+          "index": 306,
+          "name": "BD_LULLABY",
+          "va": "0x51776f"
+        },
+        {
+          "index": 307,
+          "name": "BD_RICHMANKIM",
+          "va": "0x51777f"
+        },
+        {
+          "index": 308,
+          "name": "BD_ETERNALCHAOS",
+          "va": "0x51778e"
+        },
+        {
+          "index": 309,
+          "name": "BD_DRUMBATTLEFIELD",
+          "va": "0x51779e"
+        },
+        {
+          "index": 310,
+          "name": "BD_RINGNIBELUNGEN",
+          "va": "0x5177ae"
+        },
+        {
+          "index": 311,
+          "name": "BD_ROKISWEIL",
+          "va": "0x5177bd"
+        },
+        {
+          "index": 312,
+          "name": "BD_INTOABYSS",
+          "va": "0x5177cd"
+        },
+        {
+          "index": 313,
+          "name": "BD_SIEGFRIED",
+          "va": "0x5177dd"
+        },
+        {
+          "index": 314,
+          "name": "BD_RAGNAROK",
+          "va": "0x5177ec"
+        },
+        {
+          "index": 315,
+          "name": "BA_MUSICALLESSON",
+          "va": "0x5177fc"
+        },
+        {
+          "index": 316,
+          "name": "BA_MUSICALSTRIKE",
+          "va": "0x51780c"
+        },
+        {
+          "index": 317,
+          "name": "BA_DISSONANCE",
+          "va": "0x51781b"
+        },
+        {
+          "index": 318,
+          "name": "BA_FROSTJOKE",
+          "va": "0x51782b"
+        },
+        {
+          "index": 319,
+          "name": "BA_WHISTLE",
+          "va": "0x51783b"
+        },
+        {
+          "index": 320,
+          "name": "BA_ASSASSINCROSS",
+          "va": "0x51784a"
+        },
+        {
+          "index": 321,
+          "name": "BA_POEMBRAGI",
+          "va": "0x51785a"
+        },
+        {
+          "index": 322,
+          "name": "BA_APPLEIDUN",
+          "va": "0x51786a"
+        },
+        {
+          "index": 324,
+          "name": "DC_THROWARROW",
+          "va": "0x517879"
+        },
+        {
+          "index": 325,
+          "name": "DC_UGLYDANCE",
+          "va": "0x517889"
+        },
+        {
+          "index": 326,
+          "name": "DC_SCREAM",
+          "va": "0x517899"
+        },
+        {
+          "index": 327,
+          "name": "DC_HUMMING",
+          "va": "0x5178a8"
+        },
+        {
+          "index": 328,
+          "name": "DC_DONTFORGETME",
+          "va": "0x5178b8"
+        },
+        {
+          "index": 329,
+          "name": "DC_FORTUNEKISS",
+          "va": "0x5178c8"
+        },
+        {
+          "index": 330,
+          "name": "DC_SERVICEFORYOU",
+          "va": "0x5178d7"
+        },
+        {
+          "index": 323,
+          "name": "DC_DANCINGLESSON",
+          "va": "0x5178e7"
+        },
+        {
+          "index": 334,
+          "name": "WE_MALE",
+          "va": "0x5178f7"
+        },
+        {
+          "index": 335,
+          "name": "WE_FEMALE",
+          "va": "0x517906"
+        },
+        {
+          "index": 336,
+          "name": "WE_CALLPARTNER",
+          "va": "0x517916"
+        },
+        {
+          "index": 355,
+          "name": "LK_AURABLADE",
+          "va": "0x517926"
+        },
+        {
+          "index": 356,
+          "name": "LK_PARRYING",
+          "va": "0x517935"
+        },
+        {
+          "index": 357,
+          "name": "LK_CONCENTRATION",
+          "va": "0x517945"
+        },
+        {
+          "index": 358,
+          "name": "LK_TENSIONRELAX",
+          "va": "0x517955"
+        },
+        {
+          "index": 359,
+          "name": "LK_BERSERK",
+          "va": "0x517964"
+        },
+        {
+          "index": 360,
+          "name": "LK_FURY",
+          "va": "0x517974"
+        },
+        {
+          "index": 367,
+          "name": "PA_PRESSURE",
+          "va": "0x517984"
+        },
+        {
+          "index": 368,
+          "name": "PA_SACRIFICE",
+          "va": "0x517993"
+        },
+        {
+          "index": 369,
+          "name": "PA_GOSPEL",
+          "va": "0x5179a3"
+        },
+        {
+          "index": 361,
+          "name": "HP_ASSUMPTIO",
+          "va": "0x5179b3"
+        },
+        {
+          "index": 691,
+          "name": "CASH_ASSUMPTIO",
+          "va": "0x5179c2"
+        },
+        {
+          "index": 362,
+          "name": "HP_BASILICA",
+          "va": "0x5179d2"
+        },
+        {
+          "index": 363,
+          "name": "HP_MEDITATIO",
+          "va": "0x5179e2"
+        },
+        {
+          "index": 364,
+          "name": "HW_SOULDRAIN",
+          "va": "0x5179f1"
+        },
+        {
+          "index": 365,
+          "name": "HW_MAGICCRASHER",
+          "va": "0x517a01"
+        },
+        {
+          "index": 366,
+          "name": "HW_MAGICPOWER",
+          "va": "0x517a11"
+        },
+        {
+          "index": 370,
+          "name": "CH_PALMSTRIKE",
+          "va": "0x517a20"
+        },
+        {
+          "index": 371,
+          "name": "CH_TIGERFIST",
+          "va": "0x517a30"
+        },
+        {
+          "index": 372,
+          "name": "CH_CHAINCRUSH",
+          "va": "0x517a40"
+        },
+        {
+          "index": 373,
+          "name": "PF_HPCONVERSION",
+          "va": "0x517a4f"
+        },
+        {
+          "index": 374,
+          "name": "PF_SOULCHANGE",
+          "va": "0x517a5f"
+        },
+        {
+          "index": 375,
+          "name": "PF_SOULBURN",
+          "va": "0x517a6f"
+        },
+        {
+          "index": 376,
+          "name": "ASC_KATAR",
+          "va": "0x517a7e"
+        },
+        {
+          "index": 377,
+          "name": "ASC_HALLUCINATION",
+          "va": "0x517a8e"
+        },
+        {
+          "index": 379,
+          "name": "ASC_BREAKER",
+          "va": "0x517a9e"
+        },
+        {
+          "index": 380,
+          "name": "SN_SIGHT",
+          "va": "0x517aad"
+        },
+        {
+          "index": 381,
+          "name": "SN_FALCONASSAULT",
+          "va": "0x517abd"
+        },
+        {
+          "index": 382,
+          "name": "SN_SHARPSHOOTING",
+          "va": "0x517acd"
+        },
+        {
+          "index": 383,
+          "name": "SN_WINDWALK",
+          "va": "0x517adc"
+        },
+        {
+          "index": 384,
+          "name": "WS_MELTDOWN",
+          "va": "0x517aec"
+        },
+        {
+          "index": 385,
+          "name": "WS_CREATECOIN",
+          "va": "0x517afc"
+        },
+        {
+          "index": 386,
+          "name": "WS_CREATENUGGET",
+          "va": "0x517b0b"
+        },
+        {
+          "index": 387,
+          "name": "WS_CARTBOOST",
+          "va": "0x517b1b"
+        },
+        {
+          "index": 388,
+          "name": "WS_SYSTEMCREATE",
+          "va": "0x517b2b"
+        },
+        {
+          "index": 389,
+          "name": "ST_CHASEWALK",
+          "va": "0x517b3a"
+        },
+        {
+          "index": 390,
+          "name": "ST_REJECTSWORD",
+          "va": "0x517b4a"
+        },
+        {
+          "index": 391,
+          "name": "ST_STEALBACKPACK",
+          "va": "0x517b5a"
+        },
+        {
+          "index": 392,
+          "name": "CR_ALCHEMY",
+          "va": "0x517b69"
+        },
+        {
+          "index": 393,
+          "name": "CR_SYNTHESISPOTION",
+          "va": "0x517b79"
+        },
+        {
+          "index": 394,
+          "name": "CG_ARROWVULCAN",
+          "va": "0x517b89"
+        },
+        {
+          "index": 395,
+          "name": "CG_MOONLIT",
+          "va": "0x517b98"
+        },
+        {
+          "index": 396,
+          "name": "CG_MARIONETTE",
+          "va": "0x517ba8"
+        },
+        {
+          "index": 397,
+          "name": "LK_SPIRALPIERCE",
+          "va": "0x517bb8"
+        },
+        {
+          "index": 398,
+          "name": "LK_HEADCRUSH",
+          "va": "0x517bc7"
+        },
+        {
+          "index": 399,
+          "name": "LK_JOINTBEAT",
+          "va": "0x517bd7"
+        },
+        {
+          "index": 400,
+          "name": "HW_NAPALMVULCAN",
+          "va": "0x517be7"
+        },
+        {
+          "index": 401,
+          "name": "CH_SOULCOLLECT",
+          "va": "0x517bf6"
+        },
+        {
+          "index": 402,
+          "name": "PF_MINDBREAKER",
+          "va": "0x517c06"
+        },
+        {
+          "index": 403,
+          "name": "PF_MEMORIZE",
+          "va": "0x517c16"
+        },
+        {
+          "index": 404,
+          "name": "PF_FOGWALL",
+          "va": "0x517c25"
+        },
+        {
+          "index": 405,
+          "name": "PF_SPIDERWEB",
+          "va": "0x517c35"
+        },
+        {
+          "index": 406,
+          "name": "ASC_METEORASSAULT",
+          "va": "0x517c45"
+        },
+        {
+          "index": 407,
+          "name": "ASC_CDP",
+          "va": "0x517c54"
+        },
+        {
+          "index": 378,
+          "name": "ASC_EDP",
+          "va": "0x517c64"
+        },
+        {
+          "index": 408,
+          "name": "WE_BABY",
+          "va": "0x517c74"
+        },
+        {
+          "index": 410,
+          "name": "WE_CALLBABY",
+          "va": "0x517c83"
+        },
+        {
+          "index": 409,
+          "name": "WE_CALLPARENT",
+          "va": "0x517c93"
+        },
+        {
+          "index": 411,
+          "name": "TK_RUN",
+          "va": "0x517ca3"
+        },
+        {
+          "index": 412,
+          "name": "TK_READYSTORM",
+          "va": "0x517cb2"
+        },
+        {
+          "index": 413,
+          "name": "TK_STORMKICK",
+          "va": "0x517cc2"
+        },
+        {
+          "index": 414,
+          "name": "TK_READYDOWN",
+          "va": "0x517cd2"
+        },
+        {
+          "index": 415,
+          "name": "TK_DOWNKICK",
+          "va": "0x517ce1"
+        },
+        {
+          "index": 416,
+          "name": "TK_READYTURN",
+          "va": "0x517cf1"
+        },
+        {
+          "index": 417,
+          "name": "TK_TURNKICK",
+          "va": "0x517d01"
+        },
+        {
+          "index": 418,
+          "name": "TK_READYCOUNTER",
+          "va": "0x517d10"
+        },
+        {
+          "index": 419,
+          "name": "TK_COUNTER",
+          "va": "0x517d20"
+        },
+        {
+          "index": 420,
+          "name": "TK_DODGE",
+          "va": "0x517d30"
+        },
+        {
+          "index": 421,
+          "name": "TK_JUMPKICK",
+          "va": "0x517d3f"
+        },
+        {
+          "index": 422,
+          "name": "TK_HPTIME",
+          "va": "0x517d4f"
+        },
+        {
+          "index": 423,
+          "name": "TK_SPTIME",
+          "va": "0x517d5f"
+        },
+        {
+          "index": 424,
+          "name": "TK_POWER",
+          "va": "0x517d6e"
+        },
+        {
+          "index": 425,
+          "name": "TK_SEVENWIND",
+          "va": "0x517d7e"
+        },
+        {
+          "index": 493,
+          "name": "TK_MISSION",
+          "va": "0x517d8e"
+        },
+        {
+          "index": 426,
+          "name": "TK_HIGHJUMP",
+          "va": "0x517d9d"
+        },
+        {
+          "index": 427,
+          "name": "SG_FEEL",
+          "va": "0x517dad"
+        },
+        {
+          "index": 428,
+          "name": "SG_SUN_WARM",
+          "va": "0x517dbd"
+        },
+        {
+          "index": 429,
+          "name": "SG_MOON_WARM",
+          "va": "0x517dcc"
+        },
+        {
+          "index": 430,
+          "name": "SG_STAR_WARM",
+          "va": "0x517ddc"
+        },
+        {
+          "index": 431,
+          "name": "SG_SUN_COMFORT",
+          "va": "0x517dec"
+        },
+        {
+          "index": 432,
+          "name": "SG_MOON_COMFORT",
+          "va": "0x517dfb"
+        },
+        {
+          "index": 433,
+          "name": "SG_STAR_COMFORT",
+          "va": "0x517e0b"
+        },
+        {
+          "index": 434,
+          "name": "SG_HATE",
+          "va": "0x517e1b"
+        },
+        {
+          "index": 435,
+          "name": "SG_SUN_ANGER",
+          "va": "0x517e2a"
+        },
+        {
+          "index": 436,
+          "name": "SG_MOON_ANGER",
+          "va": "0x517e3a"
+        },
+        {
+          "index": 437,
+          "name": "SG_STAR_ANGER",
+          "va": "0x517e4a"
+        },
+        {
+          "index": 438,
+          "name": "SG_SUN_BLESS",
+          "va": "0x517e59"
+        },
+        {
+          "index": 439,
+          "name": "SG_MOON_BLESS",
+          "va": "0x517e69"
+        },
+        {
+          "index": 440,
+          "name": "SG_STAR_BLESS",
+          "va": "0x517e79"
+        },
+        {
+          "index": 441,
+          "name": "SG_DEVIL",
+          "va": "0x517e88"
+        },
+        {
+          "index": 442,
+          "name": "SG_FRIEND",
+          "va": "0x517e98"
+        },
+        {
+          "index": 443,
+          "name": "SG_KNOWLEDGE",
+          "va": "0x517ea8"
+        },
+        {
+          "index": 444,
+          "name": "SG_FUSION",
+          "va": "0x517eb7"
+        },
+        {
+          "index": 445,
+          "name": "SL_ALCHEMIST",
+          "va": "0x517ec7"
+        },
+        {
+          "index": 446,
+          "name": "AM_BERSERKPITCHER",
+          "va": "0x517ed7"
+        },
+        {
+          "index": 447,
+          "name": "SL_MONK",
+          "va": "0x517ee6"
+        },
+        {
+          "index": 448,
+          "name": "SL_STAR",
+          "va": "0x517ef6"
+        },
+        {
+          "index": 449,
+          "name": "SL_SAGE",
+          "va": "0x517f06"
+        },
+        {
+          "index": 450,
+          "name": "SL_CRUSADER",
+          "va": "0x517f15"
+        },
+        {
+          "index": 451,
+          "name": "SL_SUPERNOVICE",
+          "va": "0x517f25"
+        },
+        {
+          "index": 452,
+          "name": "SL_KNIGHT",
+          "va": "0x517f35"
+        },
+        {
+          "index": 453,
+          "name": "SL_WIZARD",
+          "va": "0x517f44"
+        },
+        {
+          "index": 454,
+          "name": "SL_PRIEST",
+          "va": "0x517f54"
+        },
+        {
+          "index": 455,
+          "name": "SL_BARDDANCER",
+          "va": "0x517f64"
+        },
+        {
+          "index": 456,
+          "name": "SL_ROGUE",
+          "va": "0x517f73"
+        },
+        {
+          "index": 457,
+          "name": "SL_ASSASIN",
+          "va": "0x517f83"
+        },
+        {
+          "index": 458,
+          "name": "SL_BLACKSMITH",
+          "va": "0x517f93"
+        },
+        {
+          "index": 459,
+          "name": "BS_ADRENALINE2",
+          "va": "0x517fa2"
+        },
+        {
+          "index": 460,
+          "name": "SL_HUNTER",
+          "va": "0x517fb2"
+        },
+        {
+          "index": 461,
+          "name": "SL_SOULLINKER",
+          "va": "0x517fc2"
+        },
+        {
+          "index": 462,
+          "name": "SL_KAIZEL",
+          "va": "0x517fd1"
+        },
+        {
+          "index": 463,
+          "name": "SL_KAAHI",
+          "va": "0x517fe1"
+        },
+        {
+          "index": 464,
+          "name": "SL_KAUPE",
+          "va": "0x517ff1"
+        },
+        {
+          "index": 465,
+          "name": "SL_KAITE",
+          "va": "0x518000"
+        },
+        {
+          "index": 466,
+          "name": "SL_KAINA",
+          "va": "0x518010"
+        },
+        {
+          "index": 467,
+          "name": "SL_STIN",
+          "va": "0x518020"
+        },
+        {
+          "index": 468,
+          "name": "SL_STUN",
+          "va": "0x51802f"
+        },
+        {
+          "index": 469,
+          "name": "SL_SMA",
+          "va": "0x51803f"
+        },
+        {
+          "index": 470,
+          "name": "SL_SWOO",
+          "va": "0x51804f"
+        },
+        {
+          "index": 471,
+          "name": "SL_SKE",
+          "va": "0x51805e"
+        },
+        {
+          "index": 472,
+          "name": "SL_SKA",
+          "va": "0x51806e"
+        },
+        {
+          "index": 494,
+          "name": "SL_HIGH",
+          "va": "0x51807e"
+        },
+        {
+          "index": 495,
+          "name": "KN_ONEHAND",
+          "va": "0x51808d"
+        },
+        {
+          "index": 496,
+          "name": "AM_TWILIGHT1",
+          "va": "0x51809d"
+        },
+        {
+          "index": 497,
+          "name": "AM_TWILIGHT2",
+          "va": "0x5180ad"
+        },
+        {
+          "index": 498,
+          "name": "AM_TWILIGHT3",
+          "va": "0x5180bc"
+        },
+        {
+          "index": 338,
+          "name": "NPC_DARKCROSS",
+          "va": "0x5180cc"
+        },
+        {
+          "index": 475,
+          "name": "ST_PRESERVE",
+          "va": "0x5180dc"
+        },
+        {
+          "index": 476,
+          "name": "ST_FULLSTRIP",
+          "va": "0x5180eb"
+        },
+        {
+          "index": 477,
+          "name": "WS_WEAPONREFINE",
+          "va": "0x5180fb"
+        },
+        {
+          "index": 478,
+          "name": "CR_SLIMPITCHER",
+          "va": "0x51810b"
+        },
+        {
+          "index": 479,
+          "name": "CR_FULLPROTECTION",
+          "va": "0x51811a"
+        },
+        {
+          "index": 337,
+          "name": "ITM_TOMAHAWK",
+          "va": "0x51812a"
+        },
+        {
+          "index": 480,
+          "name": "PA_SHIELDCHAIN",
+          "va": "0x51813a"
+        },
+        {
+          "index": 481,
+          "name": "HP_MANARECHARGE",
+          "va": "0x518149"
+        },
+        {
+          "index": 482,
+          "name": "PF_DOUBLECASTING",
+          "va": "0x518159"
+        },
+        {
+          "index": 483,
+          "name": "HW_GANBANTEIN",
+          "va": "0x518169"
+        },
+        {
+          "index": 484,
+          "name": "HW_GRAVITATION",
+          "va": "0x518178"
+        },
+        {
+          "index": 485,
+          "name": "WS_CARTTERMINATION",
+          "va": "0x518188"
+        },
+        {
+          "index": 486,
+          "name": "WS_OVERTHRUSTMAX",
+          "va": "0x518198"
+        },
+        {
+          "index": 487,
+          "name": "CG_LONGINGFREEDOM",
+          "va": "0x5181a7"
+        },
+        {
+          "index": 488,
+          "name": "CG_HERMODE",
+          "va": "0x5181b7"
+        },
+        {
+          "index": 490,
+          "name": "CR_ACIDDEMONSTRATION",
+          "va": "0x5181ee"
+        },
+        {
+          "index": 491,
+          "name": "CR_CULTIVATION",
+          "va": "0x518203"
+        },
+        {
+          "index": 1001,
+          "name": "KN_CHARGEATK",
+          "va": "0x518218"
+        },
+        {
+          "index": 1002,
+          "name": "CR_SHRINK",
+          "va": "0x51822d"
+        },
+        {
+          "index": 1003,
+          "name": "AS_SONICACCEL",
+          "va": "0x518242"
+        },
+        {
+          "index": 1004,
+          "name": "AS_VENOMKNIFE",
+          "va": "0x518257"
+        },
+        {
+          "index": 1005,
+          "name": "RG_CLOSECONFINE",
+          "va": "0x51826c"
+        },
+        {
+          "index": 1006,
+          "name": "WZ_SIGHTBLASTER",
+          "va": "0x518281"
+        },
+        {
+          "index": 1007,
+          "name": "SA_CREATECON",
+          "va": "0x518296"
+        },
+        {
+          "index": 1009,
+          "name": "HT_PHANTASMIC",
+          "va": "0x5182ab"
+        },
+        {
+          "index": 1010,
+          "name": "BA_PANGVOICE",
+          "va": "0x5182c0"
+        },
+        {
+          "index": 1011,
+          "name": "DC_WINKCHARM",
+          "va": "0x5182d5"
+        },
+        {
+          "index": 1012,
+          "name": "BS_UNFAIRLYTRICK",
+          "va": "0x5182ea"
+        },
+        {
+          "index": 1013,
+          "name": "BS_GREED",
+          "va": "0x5182ff"
+        },
+        {
+          "index": 1014,
+          "name": "PR_REDEMPTIO",
+          "va": "0x518314"
+        },
+        {
+          "index": 1015,
+          "name": "MO_KITRANSLATION",
+          "va": "0x518329"
+        },
+        {
+          "index": 1016,
+          "name": "MO_BALKYOUNG",
+          "va": "0x51833e"
+        },
+        {
+          "index": 1008,
+          "name": "SA_ELEMENTWATER",
+          "va": "0x518353"
+        },
+        {
+          "index": 1017,
+          "name": "SA_ELEMENTGROUND",
+          "va": "0x51835e"
+        },
+        {
+          "index": 1018,
+          "name": "SA_ELEMENTFIRE",
+          "va": "0x51837d"
+        },
+        {
+          "index": 1019,
+          "name": "SA_ELEMENTWIND",
+          "va": "0x518392"
+        },
+        {
+          "index": 500,
+          "name": "GS_GLITTERING",
+          "va": "0x5183a7"
+        },
+        {
+          "index": 501,
+          "name": "GS_FLING",
+          "va": "0x5183bc"
+        },
+        {
+          "index": 502,
+          "name": "GS_TRIPLEACTION",
+          "va": "0x5183d1"
+        },
+        {
+          "index": 503,
+          "name": "GS_BULLSEYE",
+          "va": "0x5183e6"
+        },
+        {
+          "index": 504,
+          "name": "GS_MADNESSCANCEL",
+          "va": "0x5183fb"
+        },
+        {
+          "index": 505,
+          "name": "GS_ADJUSTMENT",
+          "va": "0x518410"
+        },
+        {
+          "index": 506,
+          "name": "GS_INCREASING",
+          "va": "0x518425"
+        },
+        {
+          "index": 507,
+          "name": "GS_MAGICALBULLET",
+          "va": "0x51843a"
+        },
+        {
+          "index": 508,
+          "name": "GS_CRACKER",
+          "va": "0x51844f"
+        },
+        {
+          "index": 509,
+          "name": "GS_SINGLEACTION",
+          "va": "0x518464"
+        },
+        {
+          "index": 510,
+          "name": "GS_SNAKEEYE",
+          "va": "0x518479"
+        },
+        {
+          "index": 511,
+          "name": "GS_CHAINACTION",
+          "va": "0x51848e"
+        },
+        {
+          "index": 512,
+          "name": "GS_TRACKING",
+          "va": "0x5184a3"
+        },
+        {
+          "index": 513,
+          "name": "GS_DISARM",
+          "va": "0x5184b8"
+        },
+        {
+          "index": 514,
+          "name": "GS_PIERCINGSHOT",
+          "va": "0x5184cd"
+        },
+        {
+          "index": 515,
+          "name": "GS_RAPIDSHOWER",
+          "va": "0x5184e2"
+        },
+        {
+          "index": 516,
+          "name": "GS_DESPERADO",
+          "va": "0x5184f7"
+        },
+        {
+          "index": 517,
+          "name": "GS_GATLINGFEVER",
+          "va": "0x51850c"
+        },
+        {
+          "index": 518,
+          "name": "GS_DUST",
+          "va": "0x518521"
+        },
+        {
+          "index": 519,
+          "name": "GS_FULLBUSTER",
+          "va": "0x518536"
+        },
+        {
+          "index": 520,
+          "name": "GS_SPREADATTACK",
+          "va": "0x51854b"
+        },
+        {
+          "index": 521,
+          "name": "GS_GROUNDDRIFT",
+          "va": "0x518560"
+        },
+        {
+          "index": 522,
+          "name": "NJ_TOBIDOUGU",
+          "va": "0x518575"
+        },
+        {
+          "index": 523,
+          "name": "NJ_SYURIKEN",
+          "va": "0x51858a"
+        },
+        {
+          "index": 524,
+          "name": "NJ_KUNAI",
+          "va": "0x51859f"
+        },
+        {
+          "index": 525,
+          "name": "NJ_HUUMA",
+          "va": "0x5185b4"
+        },
+        {
+          "index": 526,
+          "name": "NJ_ZENYNAGE",
+          "va": "0x5185c9"
+        },
+        {
+          "index": 527,
+          "name": "NJ_TATAMIGAESHI",
+          "va": "0x5185de"
+        },
+        {
+          "index": 528,
+          "name": "NJ_KASUMIKIRI",
+          "va": "0x5185f3"
+        },
+        {
+          "index": 529,
+          "name": "NJ_SHADOWJUMP",
+          "va": "0x518608"
+        },
+        {
+          "index": 530,
+          "name": "NJ_KIRIKAGE",
+          "va": "0x51861d"
+        },
+        {
+          "index": 531,
+          "name": "NJ_UTSUSEMI",
+          "va": "0x518632"
+        },
+        {
+          "index": 532,
+          "name": "NJ_BUNSINJYUTSU",
+          "va": "0x518647"
+        },
+        {
+          "index": 533,
+          "name": "NJ_NINPOU",
+          "va": "0x51865c"
+        },
+        {
+          "index": 534,
+          "name": "NJ_KOUENKA",
+          "va": "0x518671"
+        },
+        {
+          "index": 535,
+          "name": "NJ_KAENSIN",
+          "va": "0x518686"
+        },
+        {
+          "index": 536,
+          "name": "NJ_BAKUENRYU",
+          "va": "0x51869b"
+        },
+        {
+          "index": 537,
+          "name": "NJ_HYOUSENSOU",
+          "va": "0x5186b0"
+        },
+        {
+          "index": 538,
+          "name": "NJ_SUITON",
+          "va": "0x5186bb"
+        },
+        {
+          "index": 539,
+          "name": "NJ_HYOUSYOURAKU",
+          "va": "0x5186da"
+        },
+        {
+          "index": 540,
+          "name": "NJ_HUUJIN",
+          "va": "0x5186ef"
+        },
+        {
+          "index": 541,
+          "name": "NJ_RAIGEKISAI",
+          "va": "0x518704"
+        },
+        {
+          "index": 542,
+          "name": "NJ_KAMAITACHI",
+          "va": "0x518719"
+        },
+        {
+          "index": 543,
+          "name": "NJ_NEN",
+          "va": "0x51872e"
+        },
+        {
+          "index": 544,
+          "name": "NJ_ISSEN",
+          "va": "0x518743"
+        },
+        {
+          "index": 545,
+          "name": "MB_FIGHTING",
+          "va": "0x518758"
+        },
+        {
+          "index": 546,
+          "name": "MB_NEUTRAL",
+          "va": "0x51876d"
+        },
+        {
+          "index": 547,
+          "name": "MB_TAIMING_PUTI",
+          "va": "0x518782"
+        },
+        {
+          "index": 548,
+          "name": "MB_WHITEPOTION",
+          "va": "0x518797"
+        },
+        {
+          "index": 549,
+          "name": "MB_MENTAL",
+          "va": "0x5187ac"
+        },
+        {
+          "index": 550,
+          "name": "MB_CARDPITCHER",
+          "va": "0x5187c1"
+        },
+        {
+          "index": 551,
+          "name": "MB_PETPITCHER",
+          "va": "0x5187d6"
+        },
+        {
+          "index": 552,
+          "name": "MB_BODYSTUDY",
+          "va": "0x5187eb"
+        },
+        {
+          "index": 553,
+          "name": "MB_BODYALTER",
+          "va": "0x518800"
+        },
+        {
+          "index": 554,
+          "name": "MB_PETMEMORY",
+          "va": "0x518815"
+        },
+        {
+          "index": 555,
+          "name": "MB_M_TELEPORT",
+          "va": "0x51882a"
+        },
+        {
+          "index": 556,
+          "name": "MB_B_GAIN",
+          "va": "0x51883f"
+        },
+        {
+          "index": 557,
+          "name": "MB_M_GAIN",
+          "va": "0x518854"
+        },
+        {
+          "index": 558,
+          "name": "MB_MISSION",
+          "va": "0x51885f"
+        },
+        {
+          "index": 559,
+          "name": "MB_MUNAKKNOWLEDGE",
+          "va": "0x51887e"
+        },
+        {
+          "index": 560,
+          "name": "MB_MUNAKBALL",
+          "va": "0x518893"
+        },
+        {
+          "index": 561,
+          "name": "MB_SCROLL",
+          "va": "0x5188a8"
+        },
+        {
+          "index": 562,
+          "name": "MB_B_GATHERING",
+          "va": "0x5188bd"
+        },
+        {
+          "index": 563,
+          "name": "MB_M_GATHERING",
+          "va": "0x5188d2"
+        },
+        {
+          "index": 564,
+          "name": "MB_B_EXCLUDE",
+          "va": "0x5188e7"
+        },
+        {
+          "index": 565,
+          "name": "MB_B_DRIFT",
+          "va": "0x5188fc"
+        },
+        {
+          "index": 566,
+          "name": "MB_B_WALLRUSH",
+          "va": "0x518911"
+        },
+        {
+          "index": 567,
+          "name": "MB_M_WALLRUSH",
+          "va": "0x518926"
+        },
+        {
+          "index": 568,
+          "name": "MB_B_WALLSHIFT",
+          "va": "0x51893b"
+        },
+        {
+          "index": 569,
+          "name": "MB_M_WALLCRASH",
+          "va": "0x518950"
+        },
+        {
+          "index": 570,
+          "name": "MB_M_REINCARNATION",
+          "va": "0x518965"
+        },
+        {
+          "index": 571,
+          "name": "MB_B_EQUIP",
+          "va": "0x51897a"
+        },
+        {
+          "index": 572,
+          "name": "SL_DEATHKNIGHT",
+          "va": "0x51898f"
+        },
+        {
+          "index": 573,
+          "name": "SL_COLLECTOR",
+          "va": "0x5189a4"
+        },
+        {
+          "index": 574,
+          "name": "SL_NINJA",
+          "va": "0x5189b9"
+        },
+        {
+          "index": 575,
+          "name": "SL_GUNNER",
+          "va": "0x5189ce"
+        },
+        {
+          "index": 576,
+          "name": "AM_TWILIGHT4",
+          "va": "0x5189e3"
+        },
+        {
+          "index": 580,
+          "name": "DE_PASSIVE",
+          "va": "0x5189f8"
+        },
+        {
+          "index": 581,
+          "name": "DE_PATTACK",
+          "va": "0x518a03"
+        },
+        {
+          "index": 582,
+          "name": "DE_PSPEED",
+          "va": "0x518a22"
+        },
+        {
+          "index": 583,
+          "name": "DE_PDEFENSE",
+          "va": "0x518a37"
+        },
+        {
+          "index": 584,
+          "name": "DE_PCRITICAL",
+          "va": "0x518a4c"
+        },
+        {
+          "index": 585,
+          "name": "DE_PHP",
+          "va": "0x518a61"
+        },
+        {
+          "index": 586,
+          "name": "DE_PSP",
+          "va": "0x518a76"
+        },
+        {
+          "index": 587,
+          "name": "DE_RESET",
+          "va": "0x518a8b"
+        },
+        {
+          "index": 588,
+          "name": "DE_RANKING",
+          "va": "0x518aa0"
+        },
+        {
+          "index": 589,
+          "name": "DE_PTRIPLE",
+          "va": "0x518ab5"
+        },
+        {
+          "index": 590,
+          "name": "DE_ENERGY",
+          "va": "0x518aca"
+        },
+        {
+          "index": 591,
+          "name": "DE_NIGHTMARE",
+          "va": "0x518adf"
+        },
+        {
+          "index": 592,
+          "name": "DE_SLASH",
+          "va": "0x518af4"
+        },
+        {
+          "index": 593,
+          "name": "DE_COIL",
+          "va": "0x518b09"
+        },
+        {
+          "index": 594,
+          "name": "DE_WAVE",
+          "va": "0x518b1e"
+        },
+        {
+          "index": 595,
+          "name": "DE_REBIRTH",
+          "va": "0x518b33"
+        },
+        {
+          "index": 596,
+          "name": "DE_AURA",
+          "va": "0x518b48"
+        },
+        {
+          "index": 597,
+          "name": "DE_FREEZER",
+          "va": "0x518b5d"
+        },
+        {
+          "index": 598,
+          "name": "DE_CHANGEATTACK",
+          "va": "0x518b72"
+        },
+        {
+          "index": 599,
+          "name": "DE_PUNISH",
+          "va": "0x518b87"
+        },
+        {
+          "index": 600,
+          "name": "DE_POISON",
+          "va": "0x518b9c"
+        },
+        {
+          "index": 601,
+          "name": "DE_INSTANT",
+          "va": "0x518bb1"
+        },
+        {
+          "index": 602,
+          "name": "DE_WARNING",
+          "va": "0x518bc6"
+        },
+        {
+          "index": 603,
+          "name": "DE_RANKEDKNIFE",
+          "va": "0x518bdb"
+        },
+        {
+          "index": 604,
+          "name": "DE_RANKEDGRADIUS",
+          "va": "0x518bf0"
+        },
+        {
+          "index": 605,
+          "name": "DE_GAUGE",
+          "va": "0x518c05"
+        },
+        {
+          "index": 606,
+          "name": "DE_GTIME",
+          "va": "0x518c1a"
+        },
+        {
+          "index": 607,
+          "name": "DE_GPAIN",
+          "va": "0x518c2f"
+        },
+        {
+          "index": 608,
+          "name": "DE_GSKILL",
+          "va": "0x518c44"
+        },
+        {
+          "index": 609,
+          "name": "DE_GKILL",
+          "va": "0x518c59"
+        },
+        {
+          "index": 610,
+          "name": "DE_ACCEL",
+          "va": "0x518c6e"
+        },
+        {
+          "index": 611,
+          "name": "DE_BLOCKDOUBLE",
+          "va": "0x518c83"
+        },
+        {
+          "index": 612,
+          "name": "DE_BLOCKMELEE",
+          "va": "0x518c98"
+        },
+        {
+          "index": 613,
+          "name": "DE_BLOCKFAR",
+          "va": "0x518cad"
+        },
+        {
+          "index": 614,
+          "name": "DE_FRONTATTACK",
+          "va": "0x518cc2"
+        },
+        {
+          "index": 615,
+          "name": "DE_DANGERATTACK",
+          "va": "0x518cd7"
+        },
+        {
+          "index": 616,
+          "name": "DE_TWINATTACK",
+          "va": "0x518cec"
+        },
+        {
+          "index": 617,
+          "name": "DE_WINDATTACK",
+          "va": "0x518d01"
+        },
+        {
+          "index": 618,
+          "name": "DE_WATERATTACK",
+          "va": "0x518d16"
+        },
+        {
+          "index": 619,
+          "name": "DA_ENERGY",
+          "va": "0x518d2b"
+        },
+        {
+          "index": 620,
+          "name": "DA_CLOUD",
+          "va": "0x518d40"
+        },
+        {
+          "index": 621,
+          "name": "DA_FIRSTSLOT",
+          "va": "0x518d55"
+        },
+        {
+          "index": 622,
+          "name": "DA_HEADDEF",
+          "va": "0x518d60"
+        },
+        {
+          "index": 623,
+          "name": "DA_SPACE",
+          "va": "0x518d7f"
+        },
+        {
+          "index": 624,
+          "name": "DA_TRANSFORM",
+          "va": "0x518d94"
+        },
+        {
+          "index": 625,
+          "name": "DA_EXPLOSION",
+          "va": "0x518da9"
+        },
+        {
+          "index": 626,
+          "name": "DA_REWARD",
+          "va": "0x518dbe"
+        },
+        {
+          "index": 627,
+          "name": "DA_CRUSH",
+          "va": "0x518dd3"
+        },
+        {
+          "index": 628,
+          "name": "DA_ITEMREBUILD",
+          "va": "0x518de8"
+        },
+        {
+          "index": 629,
+          "name": "DA_ILLUSION",
+          "va": "0x518dfd"
+        },
+        {
+          "index": 630,
+          "name": "DA_NUETRALIZE",
+          "va": "0x518e12"
+        },
+        {
+          "index": 631,
+          "name": "DA_RUNNER",
+          "va": "0x518e27"
+        },
+        {
+          "index": 632,
+          "name": "DA_TRANSFER",
+          "va": "0x518e3c"
+        },
+        {
+          "index": 633,
+          "name": "DA_WALL",
+          "va": "0x518e51"
+        },
+        {
+          "index": 635,
+          "name": "DA_REVENGE",
+          "va": "0x518e66"
+        },
+        {
+          "index": 636,
+          "name": "DA_EARPLUG",
+          "va": "0x518e7b"
+        },
+        {
+          "index": 637,
+          "name": "DA_CONTRACT",
+          "va": "0x518e90"
+        },
+        {
+          "index": 638,
+          "name": "DA_BLACK",
+          "va": "0x518ea5"
+        },
+        {
+          "index": 639,
+          "name": "DA_DREAM",
+          "va": "0x518eba"
+        },
+        {
+          "index": 640,
+          "name": "DA_MAGICCART",
+          "va": "0x518ecf"
+        },
+        {
+          "index": 641,
+          "name": "DA_COPY",
+          "va": "0x518ee4"
+        },
+        {
+          "index": 642,
+          "name": "DA_CRYSTAL",
+          "va": "0x518ef9"
+        },
+        {
+          "index": 643,
+          "name": "DA_EXP",
+          "va": "0x518f04"
+        },
+        {
+          "index": 644,
+          "name": "DA_CARTSWING",
+          "va": "0x518f23"
+        },
+        {
+          "index": 645,
+          "name": "DA_REBUILD",
+          "va": "0x518f38"
+        },
+        {
+          "index": 646,
+          "name": "DA_JOBCHANGE",
+          "va": "0x518f4d"
+        },
+        {
+          "index": 647,
+          "name": "DA_EDARKNESS",
+          "va": "0x518f62"
+        },
+        {
+          "index": 648,
+          "name": "DA_EGUARDIAN",
+          "va": "0x518f77"
+        },
+        {
+          "index": 649,
+          "name": "DA_TIMEOUT",
+          "va": "0x518f8c"
+        },
+        {
+          "index": 650,
+          "name": "ALL_TIMEIN",
+          "va": "0x518fa1"
+        },
+        {
+          "index": 651,
+          "name": "DA_ZENYRANK",
+          "va": "0x518fb6"
+        },
+        {
+          "index": 652,
+          "name": "DA_ACCESSORYMIX",
+          "va": "0x518fcb"
+        },
+        {
+          "index": 578,
+          "name": "DE_BERSERKAIZER",
+          "va": "0x518fe0"
+        },
+        {
+          "index": 579,
+          "name": "DA_DARKPOWER",
+          "va": "0x518ff5"
+        },
+        {
+          "index": 681,
+          "name": "ALL_INCCARRY",
+          "va": "0x519000"
+        }
+      ]
+    },
+    "Guild": {
+      "base": 10000,
+      "count": 16,
+      "default": "SKILL-UNKNOWN",
+      "verified_stores": 16,
+      "stores": [
+        {
+          "index": 0,
+          "name": "GD_APPROVAL",
+          "va": "0x515f7a"
+        },
+        {
+          "index": 1,
+          "name": "GD_KAFRACONTRACT",
+          "va": "0x515f86"
+        },
+        {
+          "index": 2,
+          "name": "GD_GUARDRESEARCH",
+          "va": "0x515f92"
+        },
+        {
+          "index": 3,
+          "name": "GD_GUARDUP",
+          "va": "0x515f9f"
+        },
+        {
+          "index": 4,
+          "name": "GD_EXTENSION",
+          "va": "0x515fac"
+        },
+        {
+          "index": 5,
+          "name": "GD_GLORYGUILD",
+          "va": "0x515fb8"
+        },
+        {
+          "index": 6,
+          "name": "GD_LEADERSHIP",
+          "va": "0x515fc5"
+        },
+        {
+          "index": 7,
+          "name": "GD_GLORYWOUNDS",
+          "va": "0x515fd2"
+        },
+        {
+          "index": 8,
+          "name": "GD_SOULCOLD",
+          "va": "0x515fde"
+        },
+        {
+          "index": 9,
+          "name": "GD_HAWKEYES",
+          "va": "0x515feb"
+        },
+        {
+          "index": 10,
+          "name": "GD_BATTLEORDER",
+          "va": "0x515ff8"
+        },
+        {
+          "index": 11,
+          "name": "GD_REGENERATION",
+          "va": "0x516004"
+        },
+        {
+          "index": 12,
+          "name": "GD_RESTORE",
+          "va": "0x516011"
+        },
+        {
+          "index": 13,
+          "name": "GD_EMERGENCYCALL",
+          "va": "0x51601e"
+        },
+        {
+          "index": 14,
+          "name": "GD_DEVELOPMENT",
+          "va": "0x51602a"
+        },
+        {
+          "index": 15,
+          "name": "GD_ITEMEMERGENCYCALL",
+          "va": "0x516037"
+        }
+      ]
+    },
+    "Homun": {
+      "base": 8000,
+      "count": 17,
+      "default": "SKILL-UNKNOWN",
+      "verified_stores": 16,
+      "stores": [
+        {
+          "index": 1,
+          "name": "HLIF_HEAL",
+          "va": "0x5160ca"
+        },
+        {
+          "index": 2,
+          "name": "HLIF_AVOID",
+          "va": "0x5160d7"
+        },
+        {
+          "index": 3,
+          "name": "HLIF_BRAIN",
+          "va": "0x5160e3"
+        },
+        {
+          "index": 4,
+          "name": "HLIF_CHANGE",
+          "va": "0x5160f0"
+        },
+        {
+          "index": 5,
+          "name": "HAMI_CASTLE",
+          "va": "0x5160fd"
+        },
+        {
+          "index": 6,
+          "name": "HAMI_DEFENCE",
+          "va": "0x516109"
+        },
+        {
+          "index": 7,
+          "name": "HAMI_SKIN",
+          "va": "0x516116"
+        },
+        {
+          "index": 8,
+          "name": "HAMI_BLOODLUST",
+          "va": "0x516123"
+        },
+        {
+          "index": 9,
+          "name": "HFLI_MOON",
+          "va": "0x51612f"
+        },
+        {
+          "index": 10,
+          "name": "HFLI_FLEET",
+          "va": "0x51613c"
+        },
+        {
+          "index": 11,
+          "name": "HFLI_SPEED",
+          "va": "0x516149"
+        },
+        {
+          "index": 12,
+          "name": "HFLI_SBR44",
+          "va": "0x516155"
+        },
+        {
+          "index": 13,
+          "name": "HVAN_CAPRICE",
+          "va": "0x516162"
+        },
+        {
+          "index": 14,
+          "name": "HVAN_CHAOTIC",
+          "va": "0x51616f"
+        },
+        {
+          "index": 15,
+          "name": "HVAN_INSTRUCT",
+          "va": "0x51617b"
+        },
+        {
+          "index": 16,
+          "name": "HVAN_EXPLOSION",
+          "va": "0x516188"
+        }
+      ]
+    },
+    "Merc": {
+      "base": 8200,
+      "count": 38,
+      "default": "SKILL-UNKNOWN",
+      "verified_stores": 37,
+      "stores": [
+        {
+          "index": 1,
+          "name": "MS_BASH",
+          "va": "0x516216"
+        },
+        {
+          "index": 2,
+          "name": "MS_MAGNUM",
+          "va": "0x516223"
+        },
+        {
+          "index": 3,
+          "name": "MS_BOWLINGBASH",
+          "va": "0x51622f"
+        },
+        {
+          "index": 4,
+          "name": "MS_PARRYING",
+          "va": "0x51623c"
+        },
+        {
+          "index": 5,
+          "name": "MS_REFLECTSHIELD",
+          "va": "0x516249"
+        },
+        {
+          "index": 6,
+          "name": "MS_BERSERK",
+          "va": "0x516255"
+        },
+        {
+          "index": 7,
+          "name": "MA_DOUBLE",
+          "va": "0x516262"
+        },
+        {
+          "index": 8,
+          "name": "MA_SHOWER",
+          "va": "0x51626f"
+        },
+        {
+          "index": 9,
+          "name": "MA_SKIDTRAP",
+          "va": "0x51627b"
+        },
+        {
+          "index": 10,
+          "name": "MA_LANDMINE",
+          "va": "0x516288"
+        },
+        {
+          "index": 11,
+          "name": "MA_SANDMAN",
+          "va": "0x516295"
+        },
+        {
+          "index": 12,
+          "name": "MA_FREEZINGTRAP",
+          "va": "0x5162a1"
+        },
+        {
+          "index": 13,
+          "name": "MA_REMOVETRAP",
+          "va": "0x5162ae"
+        },
+        {
+          "index": 14,
+          "name": "MA_CHARGEARROW",
+          "va": "0x5162bb"
+        },
+        {
+          "index": 15,
+          "name": "MA_SHARPSHOOTING",
+          "va": "0x5162c7"
+        },
+        {
+          "index": 16,
+          "name": "ML_PIERCE",
+          "va": "0x5162d4"
+        },
+        {
+          "index": 17,
+          "name": "ML_BRANDISH",
+          "va": "0x5162e1"
+        },
+        {
+          "index": 18,
+          "name": "ML_SPIRALPIERCE",
+          "va": "0x5162ed"
+        },
+        {
+          "index": 19,
+          "name": "ML_DEFENDER",
+          "va": "0x5162fa"
+        },
+        {
+          "index": 20,
+          "name": "ML_AUTOGUARD",
+          "va": "0x516307"
+        },
+        {
+          "index": 21,
+          "name": "ML_DEVOTION",
+          "va": "0x516313"
+        },
+        {
+          "index": 22,
+          "name": "MER_MAGNIFICAT",
+          "va": "0x516320"
+        },
+        {
+          "index": 23,
+          "name": "MER_QUICKEN",
+          "va": "0x51632d"
+        },
+        {
+          "index": 24,
+          "name": "MER_SIGHT",
+          "va": "0x516339"
+        },
+        {
+          "index": 25,
+          "name": "MER_CRASH",
+          "va": "0x516346"
+        },
+        {
+          "index": 26,
+          "name": "MER_REGAIN",
+          "va": "0x516353"
+        },
+        {
+          "index": 27,
+          "name": "MER_TENDER",
+          "va": "0x51635f"
+        },
+        {
+          "index": 28,
+          "name": "MER_BENEDICTION",
+          "va": "0x51636c"
+        },
+        {
+          "index": 29,
+          "name": "MER_RECUPERATE",
+          "va": "0x516379"
+        },
+        {
+          "index": 30,
+          "name": "MER_MENTALCURE",
+          "va": "0x516385"
+        },
+        {
+          "index": 31,
+          "name": "MER_COMPRESS",
+          "va": "0x516392"
+        },
+        {
+          "index": 32,
+          "name": "MER_PROVOKE",
+          "va": "0x51639f"
+        },
+        {
+          "index": 33,
+          "name": "MER_AUTOBERSERK",
+          "va": "0x5163ae"
+        },
+        {
+          "index": 34,
+          "name": "MER_DECAGI",
+          "va": "0x5163be"
+        },
+        {
+          "index": 35,
+          "name": "MER_SCAPEGOAT",
+          "va": "0x5163ce"
+        },
+        {
+          "index": 36,
+          "name": "MER_LEXDIVINA",
+          "va": "0x5163dd"
+        },
+        {
+          "index": 37,
+          "name": "MER_ESTIMATION",
+          "va": "0x5163ed"
+        }
+      ]
+    }
+  }
+}

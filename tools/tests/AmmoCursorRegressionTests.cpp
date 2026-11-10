@@ -7,7 +7,7 @@
 #include <list>
 #include <vector>
 #include "ItemTab.h"
-using u8=std::uint8_t; using u16=std::uint16_t; using u32=std::uint32_t;
+using s16=std::int16_t; using u8=std::uint8_t; using u16=std::uint16_t; using u32=std::uint32_t;
 using msgparam_t=std::intptr_t;
 void DbgLog(const char*,...) {}
 struct ITEM_INFO {
@@ -18,7 +18,7 @@ struct ITEM_INFO {
     unsigned GetItemId()const{return id;}
 };
 struct SHORTCUT_SLOT { unsigned id=1750; int isSkill=0,count=1; } shortcut;
-struct PLAYER_SKILL_INFO {int level=10;};
+struct PLAYER_SKILL_INFO {int level=10,m_isValid=1;};
 struct Session {
     std::vector<ITEM_INFO> items;
     int m_playerJob=11;u32 m_aid=2000000;
@@ -36,6 +36,8 @@ struct Session {
     }
     const SHORTCUT_SLOT* GetShortcutSlotByAbsoluteIndex(int i){return i>=0&&i<27?&shortcut:nullptr;}
     const PLAYER_SKILL_INFO* GetSkillItemBySkillId(int){return nullptr;}
+    const PLAYER_SKILL_INFO* GetHomunSkillItemBySkillId(int){return nullptr;}
+    const PLAYER_SKILL_INFO* GetMercSkillItemBySkillId(int){return nullptr;}
     const std::list<ITEM_INFO>& GetInventoryItems()const{static std::list<ITEM_INFO> result;result.assign(items.begin(),items.end());return result;}
     const char* GetJobName(int){return "";}
     void GetMonsterSkillInfo(const char*,u16,int&,int&){}

@@ -336,6 +336,14 @@ public:
     const PLAYER_SKILL_INFO* GetTemporarySkillItemBySkillId(int skillId) const;
     const PLAYER_SKILL_INFO* GetHomunSkillItemBySkillId(int skillId) const;
     const PLAYER_SKILL_INFO* GetMercSkillItemBySkillId(int skillId) const;
+    int GetSkillUseLevel(int skillId) const;
+    void SetSkillUseLevel(int skillId, int level);
+    int GetHomunSkillUseLevel(int skillId) const;
+    void SetHomunSkillUseLevel(int skillId, int level);
+    int GetMerSkillUseLevel(int skillId) const;
+    void SetMerSkillUseLevel(int skillId, int level);
+    bool LoadSkillUseLevels(int characterSlot);
+    bool SaveSkillUseLevels(int characterSlot) const;
     void ClearTemporarySkillItems();
     void ClearNpcShopState(bool clearPendingResults = true);
     NpcShopMode GetNpcShopPendingResult() const {
@@ -464,9 +472,12 @@ private:
     std::list<PLAYER_SKILL_INFO> m_skillItems;
     std::list<PLAYER_SKILL_INFO> m_temporarySkillItems;
     std::list<PLAYER_SKILL_INFO> m_guildSkillItems;
+    std::array<int, 1039> m_skillUseLevelList{};
     int m_guildSkillPoint = 0;
     std::list<PLAYER_SKILL_INFO> m_homunSkillItems;
     std::list<PLAYER_SKILL_INFO> m_mercSkillItems;
+    std::array<int, 17> m_homunSkillUseLevelList{};
+    std::array<int, 38> m_merSkillUseLevelList{};
     mutable std::mutex m_jobDisplayNameMutex;
     mutable std::unordered_map<int, std::string> m_jobDisplayNameCache;
     std::vector<ACTIVE_STATUS_ICON> m_activeStatusIcons;

@@ -1839,6 +1839,7 @@ void CLoginMode::OnChangeState(int newState) {
 
         const u8 charNum = m_charInfo[m_selectedCharIndex].CharNum;
         g_session.SetSelectedCharacterAppearance(m_charInfo[m_selectedCharIndex]);
+        g_session.LoadSkillUseLevels(charNum);
         DbgLog("[Login] Selecting char slot %d (name='%.24s')\n",
                (int)charNum, reinterpret_cast<const char*>(m_charInfo[m_selectedCharIndex].name));
 

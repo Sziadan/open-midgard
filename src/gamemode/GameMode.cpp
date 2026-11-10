@@ -574,7 +574,7 @@ void ClearAttackChaseHint(CGameMode& mode);
 void ClearSkillChase(CGameMode& mode);
 bool HasPendingSkillUse(const CGameMode& mode)
 {
-    return mode.m_skillUseInfo.useType!=0 || (mode.m_skillUseInfo.id>0 && mode.m_skillUseInfo.level>0);
+    return mode.m_skillUseInfo.useType!=0;
 }
 void ClearPendingSkillUse(CGameMode& mode);
 void BeginSkillChase(CGameMode& mode, u32 targetGid, int skillId, int skillLevel, int skillRange);
@@ -5663,8 +5663,7 @@ bool DispatchSourcePlayerSkill(CGameMode& mode,int skillId,u32 targetGid,int req
         g_windowMgr.MakeWindow(UIWindowMgr::WID_SELECTCARTWND);
     }
     // The source dispatcher permits zero when both rank lookups miss, and
-    // truncates nonzero raw arguments only at the wire field. Keep the checked
-    // shortcut sender's positive-level policy separate from this primitive.
+    // truncates nonzero raw arguments only at the wire field.
     std::array<u8,sizeof(PACKET_CZ_USESKILLTOID_PACKETVER22)> packet{};int length=0;
     if(!ro::net::BuildActiveUseSkillToIdPacket(static_cast<u16>(skillId),static_cast<u16>(level),targetGid,
         packet.data(),static_cast<int>(packet.size()),&length))return false;
@@ -6137,64 +6136,16 @@ bool RequestShortcutSlotUse(int absoluteSlot)
         return sent;
     }
 
-    const PLAYER_SKILL_INFO* skill = g_session.GetSkillItemBySkillId(static_cast<int>(slot->id));
-    if (!skill || skill->level <= 0) return false;
-    const u16 skillLevel = static_cast<u16>(std::clamp(
-        slot->count > 0 ? static_cast<int>(slot->count) : skill->level, 1, skill->level));
-    if (slot->id == 0 || skillLevel == 0) {
-        return false;
-    }
-
-    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
-    if (!gameMode) {
-        const bool sent = SendUseSkillToIdPacket(
-            static_cast<u16>(slot->id & 0xFFFFu),
-            skillLevel,
-            ResolveShortcutSkillTargetId(nullptr));
-        DbgLog("[GameMode] shortcut skill fallback slot=%d skillId=%u level=%u sent=%d\n",
-            absoluteSlot,
-            static_cast<unsigned int>(slot->id),
-            static_cast<unsigned int>(skillLevel),
-            sent ? 1 : 0);
-        return sent;
-    }
-
-    const u16 skillId = static_cast<u16>(slot->id & 0xFFFFu);
-    switch (ResolveShortcutSkillUseMode(skillId)) {
-    case ShortcutSkillUseMode::CartSelect:
-        return HandleChangeCartSkillUiRequest(*gameMode);
-    case ShortcutSkillUseMode::ImmediateSelf: {
-        ClearSkillChase(*gameMode);
-        gameMode->m_lastMonGid = 0;
-        gameMode->m_lastLockOnMonGid = 0;
-        ClearAttackChaseHint(*gameMode);
-        const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, ResolveSelfSkillTargetId());
-        DbgLog("[GameMode] shortcut self-skill use slot=%d skillId=%u level=%u sent=%d\n",
-            absoluteSlot,
-            static_cast<unsigned int>(slot->id),
-            static_cast<unsigned int>(skillLevel),
-            sent ? 1 : 0);
-        return sent;
-    }
-    case ShortcutSkillUseMode::GroundTarget:
-    case ShortcutSkillUseMode::ActorTarget:
-    case ShortcutSkillUseMode::SkillTarget:
-        ClearSkillChase(*gameMode);
-        gameMode->m_lastMonGid = 0;
-        gameMode->m_lastLockOnMonGid = 0;
-        ClearAttackChaseHint(*gameMode);
-        gameMode->m_skillUseInfo = {};
-        gameMode->m_skillUseInfo.id = static_cast<int>(skillId);
-        gameMode->m_skillUseInfo.level = static_cast<int>(skillLevel);
-        DbgLog("[GameMode] shortcut skill armed slot=%d skillId=%u level=%u useMode=%d\n",
-            absoluteSlot,
-            static_cast<unsigned int>(slot->id),
-            static_cast<unsigned int>(skillLevel),
-            static_cast<int>(ResolveShortcutSkillUseMode(skillId)));
-        return true;
-    }
-
-    return false;
+    const int id=static_cast<int>(slot->id);
+    const auto* skill=id>=8000 && id<8017?g_session.GetHomunSkillItemBySkillId(id)
+        :id>=8200 && id<8238?g_session.GetMercSkillItemBySkillId(id):g_session.GetSkillItemBySkillId(id);
+    if(!skill || !skill->m_isValid || !skill->level)return false;
+    auto* mode=g_modeMgr.GetCurrentGameMode();if(!mode)return false;
+    const PLAYER_SKILL_INFO snapshot=*skill;
+    // Selected UIShortCutWnd4A2E33 sign-extends the packed slot word. The
+    // source caller ignores126's result; activating does not cancel a proceed.
+    mode->SendMsg(126,reinterpret_cast<msgparam_t>(&snapshot),static_cast<s16>(slot->count),0);
+    return true;
 }
 
 bool RequestCartOff()
@@ -10013,6 +9964,8 @@ bool ReplayRequestIdentifyInventoryItem(s16 itemIndex)
 {
     return RequestIdentifyInventoryItem(itemIndex);
 }
+bool ReplayRequestShortcutSlotUse(int slot){return RequestShortcutSlotUse(slot);}
+bool ReplayHasPendingSkillUse(const CGameMode& mode){return HasPendingSkillUse(mode);}
 bool ReplayRequestShortcutSlotUpdate(int absoluteSlotIndex)
 {
     return RequestShortcutSlotUpdate(absoluteSlotIndex);
@@ -10027,69 +9980,22 @@ bool ReplaySendGlobalChatMessage(const char* playerName, const std::string& mess
 }
 #endif
 
+bool ArmPendingSkillUseFromSkillList(int skillId,int family)
+{
+    const auto* skill=family==0?g_session.GetSkillItemBySkillId(skillId)
+        :family==1?g_session.GetHomunSkillItemBySkillId(skillId):family==2?g_session.GetMercSkillItemBySkillId(skillId):nullptr;
+    if(!skill || !skill->m_isValid || !skill->level || !skill->spcost)return false;
+    auto* mode=g_modeMgr.GetCurrentGameMode();if(!mode)return false;
+    const int level=family==0?g_session.GetSkillUseLevel(skillId)
+        :family==1?g_session.GetHomunSkillUseLevel(skillId):g_session.GetMerSkillUseLevel(skillId);
+    const PLAYER_SKILL_INFO snapshot=*skill;
+    mode->SendMsg(126,reinterpret_cast<msgparam_t>(&snapshot),level,0);
+    return true;
+}
+
 bool ArmPendingSkillUseFromSkillList(int skillId)
 {
-    if (skillId <= 0) {
-        return false;
-    }
-
-    const PLAYER_SKILL_INFO* skill = g_session.GetSkillItemBySkillId(skillId);
-    if (!skill || skill->level <= 0) {
-        return false;
-    }
-
-    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
-    if (!gameMode) {
-        return false;
-    }
-
-    const u16 skillIdU = static_cast<u16>(skillId & 0xFFFF);
-    const u16 skillLevel = static_cast<u16>(skill->level > 0 ? skill->level : 1);
-    const int skillInf = skill->type;
-    const ShortcutSkillUseMode skillUseMode = ResolveShortcutSkillUseMode(skillIdU);
-
-    if (skillUseMode == ShortcutSkillUseMode::CartSelect) {
-        return HandleChangeCartSkillUiRequest(*gameMode);
-    }
-
-    if ((skillInf & kSkillInfGroundSkill) != 0) {
-        ClearSkillChase(*gameMode);
-        gameMode->m_lastMonGid = 0;
-        gameMode->m_lastLockOnMonGid = 0;
-        ClearAttackChaseHint(*gameMode);
-        gameMode->m_skillUseInfo = {};
-        gameMode->m_skillUseInfo.id = skillId;
-        gameMode->m_skillUseInfo.level = static_cast<int>(skillLevel);
-        DbgLog("[GameMode] skill list armed ground skillId=%u level=%u\n",
-            static_cast<unsigned int>(skillIdU),
-            static_cast<unsigned int>(skillLevel));
-        return true;
-    }
-
-    if ((skillInf & kSkillInfSelfSkill) != 0) {
-        ClearSkillChase(*gameMode);
-        gameMode->m_lastMonGid = 0;
-        gameMode->m_lastLockOnMonGid = 0;
-        ClearAttackChaseHint(*gameMode);
-        const bool sent = SendUseSkillToIdPacket(skillIdU, skillLevel, ResolveSelfSkillTargetId());
-        DbgLog("[GameMode] skill list self skillId=%u level=%u sent=%d\n",
-            static_cast<unsigned int>(skillIdU),
-            static_cast<unsigned int>(skillLevel),
-            sent ? 1 : 0);
-        return sent;
-    }
-
-    ClearSkillChase(*gameMode);
-    gameMode->m_lastMonGid = 0;
-    gameMode->m_lastLockOnMonGid = 0;
-    ClearAttackChaseHint(*gameMode);
-    gameMode->m_skillUseInfo = {};
-    gameMode->m_skillUseInfo.id = skillId;
-    gameMode->m_skillUseInfo.level = static_cast<int>(skillLevel);
-    DbgLog("[GameMode] skill list armed actor-target skillId=%u level=%u\n",
-        static_cast<unsigned int>(skillIdU),
-        static_cast<unsigned int>(skillLevel));
-    return true;
+    return ArmPendingSkillUseFromSkillList(skillId,0);
 }
 
 bool CGameMode::SendSkillToGroundWithText(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents)
@@ -10348,6 +10254,7 @@ void CGameMode::OnExit() {
     GetProductionGameModePacketRouter().Clear();
     ClearRuntimeActors(*this);
     g_windowMgr.RemoveAllWindows();
+    if(const auto* selected=g_session.GetSelectedCharacterInfo())g_session.SaveSkillUseLevels(selected->CharNum);
     m_groundItemList.clear();
     m_playWaveList.clear();
     m_ambientWaveList.clear();

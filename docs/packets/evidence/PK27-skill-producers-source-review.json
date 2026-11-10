@@ -1,0 +1,23 @@
+{
+  "baseline": "bb4435f2",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "status": "root-reviewed bounded backend leaf; full plan remains open",
+  "user_constraint": "Preserve skill tree window appearance, controls, layout and interactions. No skill-window, tree model/catalog, QML or Qt geometry edits.",
+  "decisions": [
+    "List activation: Ref/UIItemWnd.cpp6266-6287 and6708-6742; valid/nonzero learned/nonzero SP, copied row, saved raw level for explicit normal/homun/merc family; send126. Existing one-argument normal-list API retained, window untouched.",
+    "Shortcut: Ref/UIFrameWnd3.cpp4317-4400 and selected4A2A60; MOVSX slot word4A2E33, virtual126 call4A2E3E. Exact ID family intervals, valid/nonzero learned, no SP predicate, no clamp, no out-of-mode fallback.",
+    "Pending cursor is owned exclusively by nonzero source useType. Null79 retains snapshot fields and stays idle; do not erase retained fields to hide stale ownership.",
+    "Session saved arrays are zero-filled1039/17/38. Primary Ref/Session.cpp20190-20196 shows resize/default initialization; prep inventory function-name InitTable attribution was inaccurate. Reserve normal0, guard companion allocation bounds, retain signed raw ints.",
+    "Primary59D9D0 skill update and678B60 AddSkillItem do not reset saved levels. Ref/dhxj secondary reset is a different implementation and must not be imported.",
+    "InitSkillUseLevelInfoFromReg4DC260 Ref/UIWindowMgr.cpp10744-10826: parent absent leaves arrays, parent present missing/non-level entries become0. Save all values, including0, primary-name+decimal CharNum in normal/homun/merc loop order. HighPriest.exe.c15227 sets g_suPath to SkillUseLevelInfo; previous preparation claiming unresolved is superseded.",
+    "Portable INI adaptation uses SkillUseLevelInfo section and a mutex-protected one-read/one-save batch. Load at selected character send, save at GameMode exit. Do not add UI controls or reset on skill-list update/clear.",
+    "Primary source names are not the2011 server enum. Generator independently verifies all727 ordered initializer stores/defaults against pinned selected PE, including vector accessor4B31D3 and register-materialized strings. Player658 stores/656 unique; guild16,homun16,merc37. Generated1110 backend names preserve aliases and defaults.",
+    "Primary515260 metadata descriptor0 is real with bundled unknown names GD_CHARISMA/SA_BARRENZONE/CG_TAROTCARD. Initializing descriptor0 SP does not initialize shared null SP. Backend flags0=true,4=false,30=true,7000=false,8000=false,8200=false,8001=true,8201=false; presentation metadata unchanged.",
+    "Unknown normal names share persistence key Skill not defined !!; companion bases8000/8200 share SKILL-UNKNOWN. Last save wins; non-level-use aliases still load0. Do not replace primary keys with modern enum names."
+  ],
+  "remaining": [
+    "Canonical ground65/66/77 and125/220 text owners; legacy ground transport is not accepted for raw zero/negative levels.",
+    "Full item/other selector consumers, companion identity/AI, party/guild/PK/siege controls, cursor/picker priority, interruption lifetimes.",
+    "Metadata GRF/resource overrides, installed world-entry acceptance, feeding/talk/follow/reset and the full packet plan. No request/package closure."
+  ]
+}

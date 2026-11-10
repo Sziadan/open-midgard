@@ -118,8 +118,9 @@
             "source numeric hash tokens were not retained as SP amounts");
         Require(g_skillMgr.IsLevelUseSkill(30),"level-use30 lacks source SP table");
         Require(!g_skillMgr.IsLevelUseSkill(4),"passive4 incorrectly has a level-use source SP table");
-        Require(g_skillMgr.IsLevelUseSkill(0),"unknown0 lacks initialized null-description SP");
-        Require(g_skillMgr.IsLevelUseSkill(7000),"missing7000 does not share source null-description SP");
+        Require(g_skillMgr.IsLevelUseSkill(0),"descriptor0 lacks source initialized SP");
+        Require(!g_skillMgr.IsLevelUseSkill(7000),"missing7000 incorrectly inherited descriptor0 SP");
+        Require(g_skillMgr.IsLevelUseSkill(0) && !g_skillMgr.IsLevelUseSkill(8000) && !g_skillMgr.IsLevelUseSkill(8200),"source zero/base descriptor classification mismatch");
         Require(!g_skillMgr.IsLevelUseSkill(-1) && !g_skillMgr.IsLevelUseSkill(8238),"level-use out-of-table safety guard differs");
         begin(28,3);
         for(const auto [type,use]:std::array<std::pair<u32,int>,5>{{{1,2},{2,1},{8,3},{16,4},{32,5}}}){
@@ -201,4 +202,6 @@
         world.m_skillList.clear();ReplayPumpSkillChase(mode);
         Require(player.m_proceedType.type==0 && !mode.m_hasTouchSkillChase,"missing touch target did not retire13");
 #include "SourcePendingActorReplay.inc"
+#include "SkillUiProducerReplay.inc"
+#include "SkillUseLevelPersistenceReplay.inc"
     }

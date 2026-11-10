@@ -6,11 +6,13 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <vector>
 
 namespace {
 
 #include "SkillEnumIdTable.inc"
+#include "SourceSkillNames.inc"
 
 constexpr const char* kUiKorPrefix =
     "texture\\"
@@ -127,12 +129,7 @@ bool CSkillMgr::IsLevelUseSkill(int skillId) const
         return false;
     }
 
-    const SkillMetadata* metadata = GetSkillMetadata(skillId);
-    if (!metadata || !metadata->hasSourceName) {
-        return true;
-    }
-
-    return !metadata->levelSpCosts.empty();
+    return m_sourceLevelUseFlags[static_cast<std::size_t>(skillId)];
 }
 
 const SkillMetadata* CSkillMgr::GetSkillMetadataByName(const std::string& skillIdName) const
@@ -166,6 +163,7 @@ bool CSkillMgr::LoadSkillMetadata()
     LoadSkillDisplayNames();
     LoadSkillDescriptions();
     LoadSkillLevelSpCosts();
+    LoadSourceLevelUseFlags();
     return !m_byId.empty();
 }
 
@@ -210,7 +208,6 @@ void CSkillMgr::LoadSkillDisplayNames()
         }
 
         SkillMetadata& metadata = m_byId[it->second];
-        metadata.hasSourceName = true;
         metadata.displayName = tokens[1];
         std::replace(metadata.displayName.begin(), metadata.displayName.end(), '_', ' ');
     }
@@ -280,9 +277,58 @@ void CSkillMgr::LoadSkillLevelSpCosts()
     }
 }
 
+void CSkillMgr::LoadSourceLevelUseFlags()
+{
+    const auto lookup=[](const std::string& name,int hint){
+        if(hint>=0 && hint<1039 && name==kSourcePlayerSkillNames[hint])return hint;
+        for(int i=0;i<16;++i)if(name==kSourceGuildSkillNames[i])return i+10000;
+        for(int i=0;i<17;++i)if(name==kSourceHomunSkillNames[i])return i+8000;
+        for(int i=0;i<38;++i)if(name==kSourceMercSkillNames[i])return i+8200;
+        for(int i=1;i<1039;++i)if(name==kSourcePlayerSkillNames[i])return i;
+        return 0;
+    };
+    std::map<int,bool> descriptors;std::vector<std::string> lines;int hint=1;
+    ReadLines(GetSkillDataRoot()/"skillnametable.txt",lines);
+    for(const auto& line:lines){
+        const auto tokens=SplitHashTokens(line);
+        if(tokens.size()<2 || TrimAscii(line).rfind("//",0)==0)continue;
+        hint=lookup(TrimAscii(tokens[0]),hint);descriptors[hint]=false;
+    }
+    bool nullHasCost=false;hint=1;
+    ReadLines(GetSkillDataRoot()/"leveluseskillspamount.txt",lines);
+    for(const auto& line:lines){
+        if(TrimAscii(line).rfind("//",0)==0)continue;
+        for(const auto& raw:SplitHashTokens(line)){
+            const auto token=TrimAscii(raw);if(token.empty())continue;
+            const int id=lookup(token,hint);
+            if(id)hint=id;
+            else if(token!="@"){
+                auto item=descriptors.find(hint);
+                if(item==descriptors.end())nullHasCost=true;else item->second=true;
+            }
+        }
+    }
+    // GetDesc(0) can be a real row when the asset contains an unknown name.
+    // Initialize that descriptor's SP vector, rather than always the null row.
+    auto zero=descriptors.find(0);if(zero==descriptors.end())nullHasCost=true;else zero->second=true;
+    for(std::size_t i=0;i<m_sourceLevelUseFlags.size();++i){
+        const auto item=descriptors.find(static_cast<int>(i));
+        m_sourceLevelUseFlags[i]=item==descriptors.end()?nullHasCost:item->second;
+    }
+}
+
 CSkillMgr g_skillMgr;
 
 namespace SKILL_INFO {
+
+const char* GetSkillIdNameBySkillId(int id)
+{
+    if(id>=1 && id<1039)return kSourcePlayerSkillNames[id];
+    if(id>=10000 && id<10016)return kSourceGuildSkillNames[id-10000];
+    if(id>=8000 && id<8017)return kSourceHomunSkillNames[id-8000];
+    if(id>=8200 && id<8238)return kSourceMercSkillNames[id-8200];
+    return kSourcePlayerSkillNames[0];
+}
 
 bool IsSkillNotDelayed(int skillId)
 {

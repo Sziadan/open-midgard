@@ -408,3 +408,4 @@ struct PlayerVitalsScreenMetrics {
 PlayerVitalsScreenMetrics ResolvePlayerVitalsScreenMetrics(const CView* view);
 
 bool ArmPendingSkillUseFromSkillList(int skillId);
+bool ArmPendingSkillUseFromSkillList(int skillId,int family);

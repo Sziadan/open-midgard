@@ -523,5 +523,16 @@
       "Metadata GRF/resource overrides, independently deployed/live acceptance, feeding/talk/follow/reset and the full packet plan."
     ],
     "live_deployed": "not accepted"
+  },
+  "runtime_source_skill_activation_checkpoint": {
+    "evidence": "PK27-skill-producers.md",
+    "validation": "Deploy-OFF all-target and standalone builds pass; focused3/3 in16.75s, application164/164 in56.44s (-j4), standalone473/473 in12.78s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture/pending input pass. DeployON restored configure-only; OldRO unchanged.",
+    "skill_tree_window": "unchanged; user constraint",
+    "remaining_strong_gates": [
+      "Canonical ground65/66/77 and125/220 text owners; legacy ground transport is not accepted for raw zero/negative levels.",
+      "Full item/other selector consumers, companion identity/AI, party/guild/PK/siege controls, cursor/picker priority, interruption lifetimes.",
+      "Metadata GRF/resource overrides, installed world-entry acceptance, feeding/talk/follow/reset and the full packet plan. No request/package closure."
+    ],
+    "live_deployed": "not accepted"
   }
 }

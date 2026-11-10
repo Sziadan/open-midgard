@@ -68,11 +68,13 @@ int main(){
     // Source room context also selects turn-only ground clicks, even standing.
     g_windowMgr.m_chatRoomWnd=&player;moves=turns=0;
     assert(mode.Click(100,200)==1&&turns==1&&moves==0);
-    mode.m_skillUseInfo={28,1};validTarget=true;casts=turns=moves=0;
+    mode.m_skillUseInfo={28,1,5,2};validTarget=true;casts=turns=moves=0;
     assert(mode.Click(100,200)==1&&casts==1&&turns==0&&moves==0);
+    mode.m_skillUseInfo={28,3,5,0};casts=turns=moves=0;
+    assert(mode.Click(100,200)==1&&casts==0&&turns==1&&moves==0);
     g_windowMgr.m_chatRoomWnd=nullptr;
     // NPC modal handling still takes precedence over world actions.
-    modal=true;mode.m_skillUseInfo={28,1};casts=turns=moves=0;
+    modal=true;mode.m_skillUseInfo={28,1,5,2};casts=turns=moves=0;
     assert(mode.Click(100,200)==1&&casts==0&&turns==0&&moves==0);
     std::cout<<"Production click dispatch: Shift skill targeting, invalid targets, ordinary turning/movement and NPC gating passed\n";
 }

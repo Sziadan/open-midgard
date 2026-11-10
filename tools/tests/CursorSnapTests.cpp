@@ -63,8 +63,9 @@ int main() {
     uiBlocked=true; assert(!mode.ResolveCursorDrawPosition(105,105,&x,&y)); uiBlocked=false;
     mode.m_dragType=1; assert(!mode.ResolveCursorDrawPosition(105,105,&x,&y)); mode.m_dragType=0;
     mode.m_isLeftButtonHeld=1; assert(!mode.ResolveCursorDrawPosition(105,105,&x,&y)); mode.m_isLeftButtonHeld=0;
-    mode.m_skillUseInfo={89,10}; assert(!mode.ResolveCursorDrawPosition(210,220,&x,&y));
-    mode.m_skillUseInfo={28,10}; assert(mode.ResolveCursorDrawPosition(210,220,&x,&y));
+    mode.m_skillUseInfo={30,3,12,0}; assert(mode.ResolveCursorDrawPosition(105,105,&x,&y));
+    mode.m_skillUseInfo={89,10,0,1}; assert(!mode.ResolveCursorDrawPosition(210,220,&x,&y));
+    mode.m_skillUseInfo={28,10,0,2}; assert(mode.ResolveCursorDrawPosition(210,220,&x,&y));
     assert(!mode.ResolveCursorDrawPosition(105,105,&x,&y));
     mode.m_skillUseInfo={10000,0,5,2};assert(mode.ResolveCursorDrawPosition(210,220,&x,&y));
     assert(!mode.ResolveCursorDrawPosition(105,105,&x,&y));

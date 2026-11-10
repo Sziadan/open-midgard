@@ -4,6 +4,7 @@
 #include "Packet.h"
 #include "core/ClientInfoLocale.h"
 #include "core/Globals.h"
+#include "core/SettingsIni.h"
 #include "gamemode/ActionRequestSender.h"
 #include "gamemode/Commerce.h"
 #include "gamemode/GameMode.h"
@@ -11,6 +12,7 @@
 #include "gamemode/LoginMode.h"
 #include "gamemode/Mode.h"
 #include "session/Session.h"
+#include "skill/Skill.h"
 #include "qtui/QtUiStateAdapter.h"
 #include "ui/UIChooseWnd.h"
 #include "ui/UIChooseSellBuyWnd.h"
@@ -29,6 +31,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
+#include <sstream>
 #if !RO_PLATFORM_WINDOWS
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -3209,6 +3213,8 @@ void IdentifyItemSelectionProductionSendReplay()
     std::cout << "{\"case_id\":\"identify_item_selection_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0178-item-identify\",\"outcome\":\"PASS\",\"assertions\":\"send failure and identified-item guard; valid item emits four-byte frame\"}" << std::endl;
 }
 
+bool ReplayRequestShortcutSlotUse(int slot);
+bool ReplayHasPendingSkillUse(const CGameMode& mode);
 bool ReplayRequestShortcutSlotUpdate(int absoluteSlotIndex);
 
 void ShortcutSlotUpdateProductionSendReplay()

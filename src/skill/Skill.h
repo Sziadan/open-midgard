@@ -1,12 +1,12 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 struct SkillMetadata {
     int skillId = 0;
-    bool hasSourceName = false;
     std::string skillIdName;
     std::string displayName;
     std::vector<std::string> descriptionLines;
@@ -30,16 +30,19 @@ private:
     void LoadSkillDisplayNames();
     void LoadSkillDescriptions();
     void LoadSkillLevelSpCosts();
+    void LoadSourceLevelUseFlags();
 
     std::unordered_map<int, SkillMetadata> m_byId;
     std::unordered_map<std::string, int> m_idBySkillName;
     bool m_loaded;
+    std::array<bool,8238> m_sourceLevelUseFlags{};
 };
 
 extern CSkillMgr g_skillMgr;
 
 // Ref SKILL_INFO::IsSkillNotDelayed, HighPriest.exe.c:263510.
 namespace SKILL_INFO {
+const char* GetSkillIdNameBySkillId(int skillId);
 bool IsSkillNotDelayed(int skillId);
 bool IsGoodSkillForActor(int skillId);
 }

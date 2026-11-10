@@ -2092,6 +2092,82 @@ const PLAYER_SKILL_INFO* CSession::GetMercSkillItemBySkillId(int skillId) const
     return nullptr;
 }
 
+int CSession::GetSkillUseLevel(int skillId) const
+{
+    if (skillId < 1 || skillId >= static_cast<int>(m_skillUseLevelList.size())) {
+        return 0;
+    }
+    return m_skillUseLevelList[static_cast<size_t>(skillId)];
+}
+
+void CSession::SetSkillUseLevel(int skillId, int level)
+{
+    if (skillId < 1 || skillId >= static_cast<int>(m_skillUseLevelList.size())) {
+        return;
+    }
+    m_skillUseLevelList[static_cast<size_t>(skillId)] = level;
+}
+
+int CSession::GetHomunSkillUseLevel(int skillId) const
+{
+    if (skillId < 8000 || skillId > 8016) {
+        return 0;
+    }
+    return m_homunSkillUseLevelList[static_cast<size_t>(skillId - 8000)];
+}
+
+void CSession::SetHomunSkillUseLevel(int skillId, int level)
+{
+    if (skillId < 8000 || skillId > 8016) {
+        return;
+    }
+    m_homunSkillUseLevelList[static_cast<size_t>(skillId - 8000)] = level;
+}
+
+int CSession::GetMerSkillUseLevel(int skillId) const
+{
+    if (skillId < 8200 || skillId > 8237) {
+        return 0;
+    }
+    return m_merSkillUseLevelList[static_cast<size_t>(skillId - 8200)];
+}
+
+void CSession::SetMerSkillUseLevel(int skillId, int level)
+{
+    if (skillId < 8200 || skillId > 8237) {
+        return;
+    }
+    m_merSkillUseLevelList[static_cast<size_t>(skillId - 8200)] = level;
+}
+
+bool CSession::LoadSkillUseLevels(int characterSlot)
+{
+    if(characterSlot<0 || characterSlot>255)return false;
+    std::vector<std::pair<std::string,int>> values;
+    const auto add=[&](int id){values.emplace_back(std::string(SKILL_INFO::GetSkillIdNameBySkillId(id))+std::to_string(characterSlot),0);};
+    for(int id=1;id<1039;++id)add(id);
+    for(int id=8000;id<8017;++id)add(id);
+    for(int id=8200;id<8238;++id)add(id);
+    if(!LoadSettingsIniIntValues("SkillUseLevelInfo",values))return false;
+    g_skillMgr.EnsureLoaded();std::size_t index=0;
+    const auto read=[&](int id){const int value=values[index++].second;return g_skillMgr.IsLevelUseSkill(id)?value:0;};
+    for(int id=1;id<1039;++id)SetSkillUseLevel(id,read(id));
+    for(int id=8000;id<8017;++id)SetHomunSkillUseLevel(id,read(id));
+    for(int id=8200;id<8238;++id)SetMerSkillUseLevel(id,read(id));
+    return true;
+}
+
+bool CSession::SaveSkillUseLevels(int characterSlot) const
+{
+    if(characterSlot<0 || characterSlot>255)return false;
+    std::vector<std::pair<std::string,int>> values;
+    const auto add=[&](int id,int level){values.emplace_back(std::string(SKILL_INFO::GetSkillIdNameBySkillId(id))+std::to_string(characterSlot),level);};
+    for(int id=1;id<1039;++id)add(id,GetSkillUseLevel(id));
+    for(int id=8000;id<8017;++id)add(id,GetHomunSkillUseLevel(id));
+    for(int id=8200;id<8238;++id)add(id,GetMerSkillUseLevel(id));
+    return SaveSettingsIniIntValues("SkillUseLevelInfo",values);
+}
+
 void CSession::ClearNpcShopState(bool clearPendingResults)
 {
     m_shopChoicePending = false;
