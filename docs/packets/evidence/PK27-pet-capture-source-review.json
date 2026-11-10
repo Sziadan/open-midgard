@@ -1,0 +1,42 @@
+{
+  "subject": "Strong-agent selected-PE review of capture request and taming continuation",
+  "baseline": "08dcec82",
+  "binary": {
+    "path": "HighPriest.exe",
+    "sha256": "9ABC36C88376387D85C878C0C879D9AF8EF66EB1F5152638085DC6995E3F4742",
+    "inspection": "Static PE reads and llvm-objdump only; original executable not run"
+  },
+  "request": {
+    "source": "Ref/GameMode2.cpp:6128-6133; Ref/RunningServer/packet_db.txt:331",
+    "mode": 162,
+    "opcode": "019F",
+    "length": 6,
+    "selected_pe_handler": "0x58A299..0x58A2AE",
+    "selected_pe_handler_bytes": "8b550c8d45ec5066c745ec9f018955ee689f010000e93e0b0000",
+    "meaning": "Load DWORD argument, store019F at packet+0 and unmodified DWORD at+2; common GetPacketSize/SendPacket at58ADF1..58AE05. No target validity, presence, window or skill gate inside sender. Original common return is0; port exposes actual immediate SendPacket result consistently with existing senders.",
+    "call_site": "0x48C0A0 first-selection guard; act=1,dest=7,selected=1 before virtual mode call with message0xA2 and m_monGID",
+    "caller_bytes": "568bf18b467c85c07530b801000000b928c27800894664c746700700000089467ce8ca9907008b4e6c8b106a006a005168a2000000"
+  },
+  "resources": {
+    "0x6f45f8": "SlotMachine.act",
+    "0x6f45e8": "SlotMachine.spr"
+  },
+  "resource_load_bytes": "6a008bd968f8456f00e8c95d09008bc8e8426409008bf86a0068e8456f00897de0e8b15d09008bc8",
+  "root_review_corrections": [
+    "Resource names are root SlotMachine.act and SlotMachine.spr, case preserved. Do not invent a monster/pet/ui prefix.",
+    "CActRes::GetMotion at424A40 (Ref/Action.cpp:2268-2300) returns a default empty motion for an out-of-range frame, not a modulo frame. Source OnDraw tests frame>=motionCount only after attempting the draw; preserve the boundary empty frame and then reset/increment delay. Do not replace with modulo-before-draw.",
+    "Click switches action to1 but does not reset m_curMot, delay, maxDelay or startTick. Reuse does not reset selected, animation or timer; message80/0 changes targetGID only.",
+    "Result packet carries no target or generation. Apply any nonzero outcome to existing owner dest7, zero to dest3; set delay=maxDelay=7 only. Do not create a window for an orphan result or add a correlation gate absent from the wire/source.",
+    "Timer startTick remains unchanged if the destination condition later becomes false. Close only while the condition is true and unsigned elapsed>=2000; retain this distinction from unconditional two-second timeout.",
+    "The sender does not require a live target/window; gate one attempt in the caller before the send and retain that latch even on immediate send failure."
+  ],
+  "remaining_integration": [
+    "019E arms id10000, range5, level0, character type. Current generic id/level pair cannot represent the range/type contract; do not reject zero level or resolve capture through ordinary shortcut metadata.",
+    "ProceedAttack bypasses overweight only for10000. Player message41 still rejects state6 and burrow (capture has none of the allowed skill exceptions); message90 stores level0. Preserve subsequent PT_SKILL state/range/approach gates.",
+    "Mode76(skillId,targetGID,level) excludes targetGID==session pet actorId and creates/reuses factory91,196x256 centered only on creation. No019F until owner click. Do not send an ordinary use-skill request for10000.",
+    "Review primary mouse-pick target predicates and mode78 target-intent consumption before reusing the current generic path. Audit globals/session/map teardown and pending movement invalidation with runtime tests.",
+    "Animation advances in source OnDraw, not wall-clock ACT FPS. Establish one authoritative native/Qt frame-advance path; state-adapter getters and QML must remain passive. Check empty/missing resources and bounded integer arithmetic without silently changing valid-resource sequencing.",
+    "Add actual native WindowProc pointer/cancel/scale, exact SPR/ACT clip placement and factory lifecycle checks plus019E/01A0 real-framing/socket integration. No UI/live/deployed acceptance from sender-only tests."
+  ],
+  "scope": "Sender implemented; target/approach/window/result/animation/reset flow remains open. No package, request classification or discovery row closure."
+}

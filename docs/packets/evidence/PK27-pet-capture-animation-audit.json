@@ -1,0 +1,33 @@
+{
+  "scope": "Read-only source audit of UIPetTamingDeceiveWnd and UIWindowMgr factory ID 91",
+  "source": {
+    "constructor": {"file": "Ref/UIFrameWnd2.cpp", "lines": "2243-2254", "findings": {"m_curAct": 0, "m_curMot": 0, "m_isSelected": 0, "m_delay": 1, "m_destPos": -1, "m_maxDelay": 10000, "m_startTick": -1}},
+    "on_create": {"file": "Ref/UIFrameWnd2.cpp", "lines": "27844-27847", "findings": "Empty; does not initialize controls/resources or alter geometry."},
+    "send_msg": {"file": "Ref/UIFrameWnd2.cpp", "lines": "12423-12443", "findings": "Only message 80 is handled. If val1==0, stores val2 in m_monGID and returns. Otherwise sets m_destPos=val2, m_delay=7, m_maxDelay=7. No other state is changed."},
+    "on_draw": {"file": "Ref/UIFrameWnd2.cpp", "lines": "27854-27935", "findings": "Gets ACT and SPR resources via symbols aSlotmachineAct/aSlotmachineSpr (lines 27880-27883), selects motion index m_curMot/m_delay for m_curAct (27884-27887), draws each clip's sprite using clip x/y plus half window width/height (27907-27917). After drawing, increments m_curMot unless current derived motion equals m_destPos AND m_delay<=m_maxDelay (27925-27927). If derived motion reaches GetMotionCount, resets m_curMot=0 and, when m_destPos!=-1, increments m_delay (27928-27934)."},
+    "on_lbtn_down": {"file": "Ref/UIFrameWnd2.cpp", "lines": "27942-27954", "findings": "Only when m_isSelected is false: sets m_curAct=1, m_destPos=7, m_isSelected=1, then sends game-mode message 162 with m_monGID and zero args. x/y are ignored; no coordinate/hit check here."},
+    "on_process": {"file": "Ref/UIFrameWnd2.cpp", "lines": "27961-27978", "findings": "Invalidates every process call. Computes frame=m_curMot/m_delay. If m_startTick==-1, starts timeGetTime when frame==m_destPos and m_delay<=m_maxDelay. Thereafter deletes window ID 0x5B after same condition remains true for >=0x7D0 (2000 ms). It does not reset the start tick if condition ceases to hold."},
+    "factory_91": {"file": "Ref/UIWindowMgr.cpp", "lines": "6799-6814, 7233-7238", "findings": "Reuses m_petTamingDeceiveWnd if non-null and jumps to common show path (SetShow(1)); existing instance is not recreated/repositioned/reinitialized. First creation allocates 0x80 bytes, assigns manager member, UIWindow::Create(196,256), centers at renderer width/2-98 and height/2-128, then common AddWindow and SetShow. Manager constructor initializes member null at line 11401; manager teardown calls PostQuit and clears it at lines 2533-2536."}
+  },
+  "resource_paths": {
+    "act_symbol": "aSlotmachineAct",
+    "spr_symbol": "aSlotmachineSpr",
+    "resolved_path": null,
+    "uncertainty": "Exact underlying ACT/SPR string/path cannot be determined from the inspected reference source: these symbols are referenced in OnDraw but no declaration/string definition was found in source. Do not infer filenames from symbol spelling."
+  },
+  "transitions": [
+    "Initial: act=0, mot=0, selected=0, delay=1, destination=-1, maxDelay=10000, startTick=-1.",
+    "Message 80 val1=0: store monster GID only.",
+    "Message 80 val1!=0: destination=val2; delay=maxDelay=7.",
+    "First click while not selected: act=1, destination=7, selected=1; send game message 162(monGID,0,0). This click does not set delay/maxDelay.",
+    "Each draw increments mot except while current frame equals destination under delay<=maxDelay. On reaching motion count, mot resets to 0 and destination!= -1 increments delay.",
+    "Process starts a 2-second completion timer only while destination frame is held and delay<=maxDelay; after 2 seconds deletes window numeric ID 0x5B."
+  ],
+  "draw_geometry": "For each ACT clip, destination point is (Clip.x + m_w/2, Clip.y + m_h/2); sprite index from SPR sprite list 0 at Clip.sprIndex. Window factory gives 196x256 and centered origin on first creation. No clipping/hitbox/background handling is visible in this OnDraw implementation.",
+  "input_conditions": "OnLBtnDown ignores x/y and permits exactly the first selection while m_isSelected==0. The underlying framework may gate delivery by window visibility or hit-testing; this function itself has no such test.",
+  "open_questions": [
+    "Resolve aSlotmachineAct/aSlotmachineSpr to actual resource strings from a string table, binary, or other generated source before hardcoding paths.",
+    "Confirm manager AddWindow common path and visibility semantics if implementing lifecycle; inspected factory code shows AddWindow then SetShow only on new instance, while reused path reaches SetShow without AddWindow.",
+    "The timer tests the destination condition on process ticks, but does not reset m_startTick when the condition becomes false; subsequent behavior depends on state progression and should be preserved or intentionally verified."
+  ]
+}

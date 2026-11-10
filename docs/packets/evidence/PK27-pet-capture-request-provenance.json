@@ -1,0 +1,20 @@
+{
+  "baseline": "08dcec82",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "df08c32e5b4ebd9bb2a84933aab8befed22e48a709caa16029c33b1ffd81ddaa",
+    "src/gamemode/GameMode.cpp": "6dcea847efb59228d91408563eb27786271f4680d6e7a7269c8c2c0166eb4837",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "f75a5bc36442a87450005db7a5cac7ed0c4dc21c1690edabf6597e7781b5524b",
+    "tools/tests/replay/PetCaptureRequestReplay.inc": "d658f3666471d015f03d8adb0546d320a469230087ed4fef049a71bb8e32702b"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "installed_unchanged": true,
+  "checks": {
+    "all_target_build": "passed; deploy OFF",
+    "focused": "1/1 in1.46s",
+    "application": "164/164 in50.89s; -j4",
+    "standalone": "not rerun; no standalone target inputs changed; prior473/473 remains historical",
+    "deploy": "ON restored configure-only; no build/deploy after restore",
+    "runtime_capture_flow": "open; sender-only checkpoint"
+  }
+}

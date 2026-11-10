@@ -1,8 +1,10 @@
 # Packet continuation handoff
 
-**Current checkpoint (2026-11-10):** [Pet egg receiver and copied-row selector](evidence/PK27-pet-egg-selector.md) restores01A6, factory90 and mode159/01A7. Reused lists append copies because source75 is ignored; selection preserves source snapshot/failure effects and keyboard/double-click semantics. Deploy-OFF all-target/standalone builds pass; focused2/2 in5.70s, application164/164 in201.47s and standalone473/473 in73.97s. Eighteen native/Qt frame pairs and zero QML warnings include five egg-selector states, source scrollbar/drag/cancel capture and actual125% OK input. Selected-PE/source and plan checks pass separately. Deploy ON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open.
+**Capture request checkpoint (2026-11-10):** [Mode162/019F sender and strong-agent continuation](evidence/PK27-pet-capture-request.md) adds the exact6-byte request and socket/failure replay. All-target deploy-OFF build and application164/164 in50.89s pass. Selected-PE review resolves SlotMachine assets and animation boundary/timer traps. 019E targeting/approach, factory91,01A0 result, animation and reset integration remain open. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open.
 
-**Active step: PK09.21.** Continue [remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Subject: `packet(PK27): restore source pet egg selector`. Preserve earlier source/packet/item/corpse proofs; broad requests, PK47 and independent PK48/49/live/deployed gates remain open. The whole packet plan remains unfinished.
+**Previous egg-selector checkpoint (2026-11-10):** [Pet egg receiver and copied-row selector](evidence/PK27-pet-egg-selector.md) restores01A6, factory90 and mode159/01A7. Reused lists append copies because source75 is ignored; selection preserves source snapshot/failure effects and keyboard/double-click semantics. Deploy-OFF all-target/standalone builds pass; focused2/2 in5.70s, application164/164 in201.47s and standalone473/473 in73.97s. Eighteen native/Qt frame pairs and zero QML warnings include five egg-selector states, source scrollbar/drag/cancel capture and actual125% OK input. Selected-PE/source and plan checks pass separately. Deploy ON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open.
+
+**Active step: PK09.21.** Continue [remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Subject: `packet(PK27): add source pet capture request sender`. Preserve earlier source/packet/item/corpse proofs; broad requests, PK47 and independent PK48/49/live/deployed gates remain open. The whole packet plan remains unfinished.
 
 **World-entry repair:** [same-world handoff fix](evidence/PK05.05-world-entry.md) remains in the rebuilt candidate and its regression passes. OldRO still has the prior executable and requires redeployment/live retry; no installed acceptance is claimed.
 
@@ -24,7 +26,7 @@
    Keep expected receipts independent of editable quotes: new C4/C6/C7, local cancel and storage retain the FIFO; map init/exit and character/session reset clear it. Results must not close current panes or unlock a newer conversation. Cancel sends no empty transaction,0146 or09D4. C8/C9 length is signed16 (aligned max32764/8190 rows), and nonstackable types4/5/7/8/12 stay at one. Do not restore a global suppress-next-result bit or the old delay-consume count-prompt exclusion.
 3. Resume bounded PK46.02 request/profile/send-failure and character paths; its177-row request inventory remains open as a whole; C5/C8/C9 now have bounded PK37.09 proof. NPC/status/mail have concrete source-ready contracts. PK09.02/.03 mapping/route checkpoints are complete; historical dirty-tree gates are superseded.
 
-## Verified current checkpoint
+## Verified egg-selector checkpoint
 
 Deploy-OFF all-target/standalone builds pass; focused2/2 in5.70s, application164/164 in201.47s and standalone473/473 in73.97s. Eighteen native/Qt frame pairs and zero QML warnings include five egg-selector states, source scrollbar/drag/cancel capture and actual125% OK input. Selected-PE/source and plan checks pass separately. Deploy ON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open. See [current evidence](evidence/PK27-pet-egg-selector.md).
 

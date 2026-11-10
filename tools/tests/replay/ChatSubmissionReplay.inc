@@ -320,9 +320,11 @@ void ChatSubmissionReplay()
 #include "PetWindowReplay.inc"
 #include "PetContextMenuReplay.inc"
 #include "PetEggReplay.inc"
+#include "PetCaptureRequestReplay.inc"
     connection->Disconnect();
 #include "PetWindowFailedSendReplay.inc"
 #include "PetEggFailedSendReplay.inc"
+    Require(!mode.SendMsg(162,0x12345678,0,0),"disconnected pet capture request reported success");
     Require(!mode.SendMsg(163,1,0,0) && !mode.SendMsg(158,reinterpret_cast<msgparam_t>("Poring"),0,0),"disconnected pet requests reported success");
     mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
 #include "ChatIgnoreReplay.inc"
