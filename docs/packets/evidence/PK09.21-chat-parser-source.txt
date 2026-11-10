@@ -1,0 +1,1739 @@
+--- Ref/Session.cpp:6524-6578 ---
+6524: // Original Signature: public: enum TALKTYPE __thiscall CSession::GetNoParamTalkType(char const *)
+6525: // Decompiled from address: 0x667280
+6526: // ================================================
+6527: int __thiscall CSession::GetNoParamTalkType(CSession *this, const char *command)
+6528: {
+6529:   std::pair<char const *,enum TALKTYPE> *First; // ebx
+6530:   std::pair<char const *,enum TALKTYPE> *Last; // ecx
+6531:   int v4; // edi
+6532:   int v5; // eax
+6533:   std::pair<char const *,enum TALKTYPE> *v7; // [esp+Ch] [ebp-8h]
+6534:   std::pair<char const *,enum TALKTYPE> *v8; // [esp+10h] [ebp-4h]
+6535:
+6536:   First = this->m_talkTypeTable._First;
+6537:   Last = this->m_talkTypeTable._Last;
+6538:   v8 = First;
+6539:   v4 = Last - First;
+6540:   v7 = Last;
+6541:   if ( v4 > 0 )
+6542:   {
+6543:     do
+6544:     {
+6545:       v5 = v4 / 2;
+6546:       if ( strcmp(First[v4 / 2].first, command) >= 0 )
+6547:       {
+6548:         First = v8;
+6549:         v4 /= 2;
+6550:       }
+6551:       else
+6552:       {
+6553:         First = &v8[v5 + 1];
+6554:         v4 += -1 - v5;
+6555:         v8 = First;
+6556:       }
+6557:     }
+6558:     while ( v4 > 0 );
+6559:     Last = v7;
+6560:   }
+6561:   if ( First == Last || strcmp(First->first, command) )
+6562:     return 3;
+6563:   else
+6564:     return First->second;
+6565: }
+6566:
+6567:
+6568: // ================================================
+6569: // Original Signature: public: float * __thiscall std::vector<float,class std::allocator<float> >::erase(float *,float *)
+6570: // Decompiled from address: 0x403c50
+6571: // ================================================
+6572: std::list<CTexture *>::iterator *__thiscall std::list<CTexture *>::erase(
+6573:         std::list<CTexture *> *this,
+6574:         std::list<CTexture *>::iterator *result,
+6575:         std::list<CTexture *>::iterator __$ReturnUdt)
+6576: {
+6577:   std::list<CTexture *>::_Node *Next; // edi
+6578:
+--- Ref/Session.cpp:7597-8778 ---
+7597: // Original Signature: public: int __thiscall CSession::GetTalkType(char const *,enum TALKTYPE *,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > * const)
+7598: // Decompiled from address: 0x6621d0
+7599: // ================================================
+7600: int __thiscall CSession::GetTalkType(CSession *this, const char *chatBuf, int talkType, std::string *param)
+7601: {
+7602:   int v4; // ebx
+7603:   _DWORD *v7; // edi
+7604:   const char *v8; // edx
+7605:   int v9; // eax
+7606:   int v10; // esi
+7607:   int v11; // eax
+7608:   int v12; // ebx
+7609:   int v13; // edi
+7610:   char *v14; // eax
+7611:   std::string *v15; // ebx
+7612:   signed int v16; // edi
+7613:   int v17; // ebx
+7614:   int v18; // edi
+7615:   char *v19; // eax
+7616:   int v20; // ebx
+7617:   int v21; // edi
+7618:   char *v22; // eax
+7619:   int v23; // ebx
+7620:   int v24; // edi
+7621:   char *v25; // eax
+7622:   int v26; // ebx
+7623:   int v27; // edi
+7624:   char *v28; // eax
+7625:   int v29; // ebx
+7626:   int v30; // edi
+7627:   char *v31; // eax
+7628:   int v32; // ebx
+7629:   int v33; // edi
+7630:   char *v34; // eax
+7631:   std::string *v35; // esi
+7632:   int v36; // ebx
+7633:   int v37; // edi
+7634:   char *v38; // eax
+7635:   int v39; // ebx
+7636:   int v40; // edi
+7637:   char *v41; // eax
+7638:   const std::string *v42; // eax
+7639:   int v43; // ebx
+7640:   int v44; // edi
+7641:   char *v45; // eax
+7642:   int v46; // ebx
+7643:   int v47; // edi
+7644:   char *v48; // eax
+7645:   int v49; // ebx
+7646:   int v50; // edi
+7647:   char *v51; // eax
+7648:   std::string *v52; // edi
+7649:   const std::string *v53; // eax
+7650:   const std::string *v54; // eax
+7651:   std::string *v55; // eax
+7652:   std::string *v56; // eax
+7653:   std::string *v57; // eax
+7654:   std::string *v58; // eax
+7655:   std::string *v59; // eax
+7656:   std::string *v60; // eax
+7657:   std::string *v61; // eax
+7658:   std::string *v62; // eax
+7659:   std::string *v63; // eax
+7660:   const char *v64; // edi
+7661:   std::string *v65; // eax
+7662:   std::string *v66; // eax
+7663:   const std::string *v67; // eax
+7664:   std::string *v68; // eax
+7665:   const std::string *v69; // eax
+7666:   std::string *v70; // eax
+7667:   signed int v71; // edi
+7668:   std::string *v72; // ebx
+7669:   const std::string *v73; // eax
+7670:   std::string *v74; // eax
+7671:   const std::string *v75; // eax
+7672:   std::string *v76; // eax
+7673:   const std::string *v77; // eax
+7674:   std::string *v78; // eax
+7675:   const std::string *v79; // eax
+7676:   std::string *v80; // eax
+7677:   std::string *v81; // eax
+7678:   std::string *v82; // eax
+7679:   std::string *v83; // eax
+7680:   char *v84; // eax
+7681:   unsigned __int8 v85; // bl
+7682:   char v86; // cl
+7683:   std::string *v87; // eax
+7684:   char *v88; // eax
+7685:   unsigned __int8 v89; // bl
+7686:   std::string *v90; // eax
+7687:   char *v91; // eax
+7688:   unsigned __int8 v92; // bl
+7689:   std::string *v93; // eax
+7690:   char *v94; // eax
+7691:   unsigned __int8 v95; // bl
+7692:   std::string *v96; // eax
+7693:   char *v97; // eax
+7694:   unsigned __int8 v98; // bl
+7695:   std::string *v99; // eax
+7696:   char *v100; // eax
+7697:   unsigned __int8 v101; // bl
+7698:   std::string *v102; // eax
+7699:   const std::string *v103; // eax
+7700:   int i; // ebx
+7701:   const std::string *v105; // eax
+7702:   char *v106; // edx
+7703:   std::string *v107; // eax
+7704:   std::string *v108; // eax
+7705:   std::string *v109; // eax
+7706:   const std::string *v110; // eax
+7707:   char *v111; // eax
+7708:   TALKTYPE NoParamTalkType; // eax
+7709:   int m_isMinEffect; // edx
+7710:   const char *v114; // eax
+7711:   int v115; // ebx
+7712:   int v116; // edi
+7713:   char *v117; // eax
+7714:   int StreamVolume; // eax
+7715:   int v119; // ebx
+7716:   int v120; // edi
+7717:   char *Ptr; // eax
+7718:   int v122; // eax
+7719:   char buf[36]; // [esp+Ch] [ebp-58h] BYREF
+7720:   std::string temp; // [esp+30h] [ebp-34h] BYREF
+7721:   CTokenizer t; // [esp+40h] [ebp-24h] BYREF
+7722:   int chatStartOffset; // [esp+50h] [ebp-14h]
+7723:   std::allocator<std::string > _Al; // [esp+57h] [ebp-Dh] BYREF
+7724:   int v128; // [esp+60h] [ebp-4h]
+7725:
+7726:   v4 = 0;
+7727:   chatStartOffset = 0;
+7728:   if ( !chatBuf )
+7729:   {
+7730:     *(_DWORD *)talkType = 3;
+7731:     return -1;
+7732:   }
+7733:   std::vector<std::string>::vector<std::string>(&t.m_token, &_Al);
+7734:   v128 = 0;
+7735:   temp.allocator = (std::allocator<char>)HIBYTE(talkType);
+7736:   std::string::_Tidy(&temp, 0);
+7737:   std::string::assign(&temp, chatBuf, strlen(chatBuf));
+7738:   LOBYTE(v128) = 1;
+7739:   CTokenizer::SetString(&t, &temp);
+7740:   LOBYTE(v128) = 0;
+7741:   std::string::_Tidy(&temp, 1u);
+7742:   if ( !std::vector<std::string>::size(&t.m_token) )
+7743:   {
+7744:     *(_DWORD *)talkType = 3;
+7745:     v128 = -1;
+7746:     std::vector<std::string>::~vector<std::string>(&t.m_token);
+7747:     return -1;
+7748:   }
+7749:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7750:     ErrorMsg(aErrorInCtokeni);
+7751:   MakeStringLower(t.m_token._First);
+7752:   if ( *chatBuf != 47 )
+7753:   {
+7754:     v7 = (_DWORD *)talkType;
+7755:     *(_DWORD *)talkType = 0;
+7756: LABEL_342:
+7757:     if ( *v7 && chatBuf[v4] == 32 )
+7758:     {
+7759:       do
+7760:         v86 = chatBuf[++v4];
+7761:       while ( v86 == 32 );
+7762:     }
+7763:     goto LABEL_345;
+7764:   }
+7765:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7766:     ErrorMsg(aErrorInCtokeni);
+7767:   if ( !std::string::compare(t.m_token._First, asc_7228C0) )
+7768:   {
+7769:     v7 = (_DWORD *)talkType;
+7770:     v4 = 3;
+7771:     *(_DWORD *)talkType = 1;
+7772:     goto LABEL_342;
+7773:   }
+7774:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7775:     ErrorMsg(aErrorInCtokeni);
+7776:   if ( !std::string::compare(t.m_token._First, aB) )
+7777:   {
+7778:     v7 = (_DWORD *)talkType;
+7779:     v4 = 2;
+7780:     *(_DWORD *)talkType = 1;
+7781:     goto LABEL_342;
+7782:   }
+7783:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7784:     ErrorMsg(aErrorInCtokeni);
+7785:   if ( !std::string::compare(t.m_token._First, aLb) )
+7786:   {
+7787:     v7 = (_DWORD *)talkType;
+7788:     v4 = 3;
+7789:     *(_DWORD *)talkType = 87;
+7790:     goto LABEL_342;
+7791:   }
+7792:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7793:     ErrorMsg(aErrorInCtokeni);
+7794:   if ( !std::string::compare(t.m_token._First, asc_7228B0) )
+7795:   {
+7796:     v7 = (_DWORD *)talkType;
+7797:     v4 = 5;
+7798:     *(_DWORD *)talkType = 87;
+7799:     goto LABEL_342;
+7800:   }
+7801:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7802:     ErrorMsg(aErrorInCtokeni);
+7803:   if ( !std::string::compare(t.m_token._First, aNb) )
+7804:   {
+7805:     v7 = (_DWORD *)talkType;
+7806:     v4 = 3;
+7807:     *(_DWORD *)talkType = 90;
+7808:     goto LABEL_342;
+7809:   }
+7810:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7811:     ErrorMsg(aErrorInCtokeni);
+7812:   if ( !std::string::compare(t.m_token._First, asc_7228A4) )
+7813:   {
+7814:     v7 = (_DWORD *)talkType;
+7815:     v4 = 7;
+7816:     *(_DWORD *)talkType = 102;
+7817:     goto LABEL_342;
+7818:   }
+7819:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7820:     ErrorMsg(aErrorInCtokeni);
+7821:   if ( !std::string::compare(t.m_token._First, asc_72289C) )
+7822:   {
+7823:     v7 = (_DWORD *)talkType;
+7824:     v4 = 5;
+7825:     *(_DWORD *)talkType = 90;
+7826:     goto LABEL_342;
+7827:   }
+7828:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7829:     ErrorMsg(aErrorInCtokeni);
+7830:   if ( !std::string::compare(t.m_token._First, aNlb) )
+7831:   {
+7832:     v7 = (_DWORD *)talkType;
+7833:     v4 = 4;
+7834:     *(_DWORD *)talkType = 91;
+7835:     goto LABEL_342;
+7836:   }
+7837:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7838:     ErrorMsg(aErrorInCtokeni);
+7839:   if ( !std::string::compare(t.m_token._First, asc_72288C) )
+7840:   {
+7841:     v7 = (_DWORD *)talkType;
+7842:     v4 = 5;
+7843:     *(_DWORD *)talkType = 91;
+7844:     goto LABEL_342;
+7845:   }
+7846:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7847:     ErrorMsg(aErrorInCtokeni);
+7848:   if ( !std::string::compare(t.m_token._First, aBb) )
+7849:   {
+7850:     v7 = (_DWORD *)talkType;
+7851:     v4 = 3;
+7852:     *(_DWORD *)talkType = 102;
+7853:     goto LABEL_342;
+7854:   }
+7855:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7856:     ErrorMsg(aErrorInCtokeni);
+7857:   if ( !std::string::compare(t.m_token._First, asc_72287C) )
+7858:   {
+7859:     v7 = (_DWORD *)talkType;
+7860:     v4 = 11;
+7861:     *(_DWORD *)talkType = 103;
+7862:     goto LABEL_342;
+7863:   }
+7864:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7865:     ErrorMsg(aErrorInCtokeni);
+7866:   if ( !std::string::compare(t.m_token._First, aMb) )
+7867:   {
+7868:     v7 = (_DWORD *)talkType;
+7869:     v4 = 3;
+7870:     *(_DWORD *)talkType = 103;
+7871:     goto LABEL_342;
+7872:   }
+7873:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7874:     ErrorMsg(aErrorInCtokeni);
+7875:   if ( !std::string::compare(t.m_token._First, aKill) )
+7876:   {
+7877:     v7 = (_DWORD *)talkType;
+7878:     v4 = 5;
+7879:     *(_DWORD *)talkType = 4;
+7880:     goto LABEL_342;
+7881:   }
+7882:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7883:     ErrorMsg(aErrorInCtokeni);
+7884:   if ( !std::string::compare(t.m_token._First, aV) )
+7885:     goto LABEL_403;
+7886:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7887:     ErrorMsg(aErrorInCtokeni);
+7888:   if ( !std::string::compare(t.m_token._First, asc_722868) )
+7889:   {
+7890: LABEL_403:
+7891:     *(_DWORD *)talkType = 12;
+7892:     if ( (int)std::vector<std::string>::size(&t.m_token) >= 2 )
+7893:     {
+7894:       v119 = std::vector<std::string>::size(&t.m_token);
+7895:       if ( v119 <= 1 )
+7896:       {
+7897:         ErrorMsg(aErrorInCtokeni);
+7898:         if ( v119 > 0 )
+7899:         {
+7900:           v120 = 0;
+7901:           do
+7902:           {
+7903:             Ptr = t.m_token._First[v120]._Ptr;
+7904:             if ( !Ptr )
+7905:               Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+7906:             ErrorMsg(Ptr);
+7907:             ++v120;
+7908:             --v119;
+7909:           }
+7910:           while ( v119 );
+7911:         }
+7912:       }
+7913:       goto LABEL_401;
+7914:     }
+7915:     v122 = Get2DVolume();
+7916:     itoa(v122, buf, 10);
+7917:     std::string::assign(param, buf, strlen(buf));
+7918:     goto LABEL_412;
+7919:   }
+7920:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7921:     ErrorMsg(aErrorInCtokeni);
+7922:   if ( !std::string::compare(t.m_token._First, aBv) )
+7923:     goto LABEL_394;
+7924:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7925:     ErrorMsg(aErrorInCtokeni);
+7926:   if ( !std::string::compare(t.m_token._First, asc_72285C) )
+7927:   {
+7928: LABEL_394:
+7929:     *(_DWORD *)talkType = 13;
+7930:     if ( (int)std::vector<std::string>::size(&t.m_token) >= 2 )
+7931:     {
+7932:       v115 = std::vector<std::string>::size(&t.m_token);
+7933:       if ( v115 <= 1 )
+7934:       {
+7935:         ErrorMsg(aErrorInCtokeni);
+7936:         if ( v115 > 0 )
+7937:         {
+7938:           v116 = 0;
+7939:           do
+7940:           {
+7941:             v117 = t.m_token._First[v116]._Ptr;
+7942:             if ( !v117 )
+7943:               v117 = (char *)`std::string::_Nullstr'::`2'::_C;
+7944:             ErrorMsg(v117);
+7945:             ++v116;
+7946:             --v115;
+7947:           }
+7948:           while ( v115 );
+7949:         }
+7950:       }
+7951:       goto LABEL_401;
+7952:     }
+7953:     StreamVolume = GetStreamVolume();
+7954:     itoa(StreamVolume, buf, 10);
+7955:     std::string::assign(param, buf, strlen(buf));
+7956: LABEL_412:
+7957:     chatStartOffset = -1;
+7958:     v4 = -1;
+7959:     goto LABEL_345;
+7960:   }
+7961:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7962:     ErrorMsg(aErrorInCtokeni);
+7963:   if ( !std::string::compare(t.m_token._First, aGc) )
+7964:     goto LABEL_79;
+7965:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7966:     ErrorMsg(aErrorInCtokeni);
+7967:   if ( !std::string::compare(t.m_token._First, aGuildchat) )
+7968:   {
+7969: LABEL_79:
+7970:     if ( (int)std::vector<std::string>::size(&t.m_token) >= 2 )
+7971:     {
+7972:       *(_DWORD *)talkType = 57;
+7973:       if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7974:         ErrorMsg(aErrorInCtokeni);
+7975:       if ( !std::string::compare(t.m_token._First, aGc) )
+7976:         v8 = chatBuf + 4;
+7977:       else
+7978:         v8 = chatBuf + 11;
+7979:       goto LABEL_108;
+7980:     }
+7981:   }
+7982:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7983:     ErrorMsg(aErrorInCtokeni);
+7984:   if ( !std::string::compare(t.m_token._First, aEx_0) )
+7985:     goto LABEL_91;
+7986:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7987:     ErrorMsg(aErrorInCtokeni);
+7988:   if ( !std::string::compare(t.m_token._First, asc_722840) )
+7989:   {
+7990: LABEL_91:
+7991:     if ( (int)std::vector<std::string>::size(&t.m_token) >= 2 )
+7992:     {
+7993:       *(_DWORD *)talkType = 18;
+7994:       if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+7995:         ErrorMsg(aErrorInCtokeni);
+7996:       v9 = std::string::compare(t.m_token._First, aEx_0);
+7997: LABEL_95:
+7998:       if ( v9 )
+7999:         v8 = chatBuf + 6;
+8000:       else
+8001:         v8 = chatBuf + 4;
+8002: LABEL_108:
+8003:       std::string::assign(param, v8, strlen(v8));
+8004:       v4 = -1;
+8005:       goto LABEL_345;
+8006:     }
+8007:   }
+8008:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8009:     ErrorMsg(aErrorInCtokeni);
+8010:   if ( !std::string::compare(t.m_token._First, aIn) )
+8011:     goto LABEL_103;
+8012:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8013:     ErrorMsg(aErrorInCtokeni);
+8014:   if ( !std::string::compare(t.m_token._First, asc_722834) )
+8015:   {
+8016: LABEL_103:
+8017:     if ( (int)std::vector<std::string>::size(&t.m_token) >= 2 )
+8018:     {
+8019:       *(_DWORD *)talkType = 19;
+8020:       if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8021:         ErrorMsg(aErrorInCtokeni);
+8022:       v9 = std::string::compare(t.m_token._First, aIn);
+8023:       goto LABEL_95;
+8024:     }
+8025:   }
+8026:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8027:     ErrorMsg(aErrorInCtokeni);
+8028:   if ( !std::string::compare(t.m_token._First, aRed) )
+8029:   {
+8030:     v4 = -1;
+8031:     chatStartOffset = -1;
+8032:     *(_DWORD *)talkType = 20;
+8033:     talkType = 1;
+8034:     if ( (int)std::vector<std::string>::size(&t.m_token) > 1 )
+8035:     {
+8036:       v10 = 1;
+8037:       do
+8038:       {
+8039:         v11 = std::vector<std::string>::size(&t.m_token);
+8040:         v12 = v11;
+8041:         if ( v10 < 0 || talkType >= v11 )
+8042:         {
+8043:           ErrorMsg(aErrorInCtokeni);
+8044:           if ( v12 > 0 )
+8045:           {
+8046:             v13 = 0;
+8047:             do
+8048:             {
+8049:               v14 = t.m_token._First[v13]._Ptr;
+8050:               if ( !v14 )
+8051:                 v14 = (char *)`std::string::_Nullstr'::`2'::_C;
+8052:               ErrorMsg(v14);
+8053:               ++v13;
+8054:               --v12;
+8055:             }
+8056:             while ( v12 );
+8057:           }
+8058:         }
+8059:         v15 = param;
+8060:         std::string::append(param, &t.m_token._First[v10], 0, std::string::npos);
+8061:         std::string::append(v15, asc_6F26DC, strlen(asc_6F26DC));
+8062:         ++v10;
+8063:         v16 = ++talkType;
+8064:       }
+8065:       while ( v16 < (int)std::vector<std::string>::size(&t.m_token) );
+8066:       v4 = chatStartOffset;
+8067:     }
+8068:     goto LABEL_345;
+8069:   }
+8070:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8071:     ErrorMsg(aErrorInCtokeni);
+8072:   if ( !std::string::compare(t.m_token._First, asc_722824) )
+8073:     goto LABEL_141;
+8074:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8075:     ErrorMsg(aErrorInCtokeni);
+8076:   if ( !std::string::compare(t.m_token._First, aRjfo) )
+8077:     goto LABEL_141;
+8078:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8079:     ErrorMsg(aErrorInCtokeni);
+8080:   if ( !std::string::compare(t.m_token._First, asc_722814) )
+8081:     goto LABEL_141;
+8082:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8083:     ErrorMsg(aErrorInCtokeni);
+8084:   if ( !std::string::compare(t.m_token._First, aRyghks) )
+8085:     goto LABEL_141;
+8086:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8087:     ErrorMsg(aErrorInCtokeni);
+8088:   if ( !std::string::compare(t.m_token._First, aDeal) )
+8089:     goto LABEL_141;
+8090:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8091:     ErrorMsg(aErrorInCtokeni);
+8092:   if ( !std::string::compare(t.m_token._First, asc_7227FC) )
+8093:   {
+8094: LABEL_141:
+8095:     if ( std::vector<std::string>::size(&t.m_token) == 2 )
+8096:     {
+8097:       *(_DWORD *)talkType = 25;
+8098:       v17 = std::vector<std::string>::size(&t.m_token);
+8099:       if ( v17 <= 1 )
+8100:       {
+8101:         ErrorMsg(aErrorInCtokeni);
+8102:         if ( v17 > 0 )
+8103:         {
+8104:           v18 = 0;
+8105:           do
+8106:           {
+8107:             v19 = t.m_token._First[v18]._Ptr;
+8108:             if ( !v19 )
+8109:               v19 = (char *)`std::string::_Nullstr'::`2'::_C;
+8110:             ErrorMsg(v19);
+8111:             ++v18;
+8112:             --v17;
+8113:           }
+8114:           while ( v17 );
+8115:         }
+8116:       }
+8117: LABEL_401:
+8118:       std::string::assign(param, (const std::string *)t.m_token._First + 1, 0, std::string::npos);
+8119:       chatStartOffset = -1;
+8120:       v4 = -1;
+8121:       goto LABEL_345;
+8122:     }
+8123:   }
+8124:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8125:     ErrorMsg(aErrorInCtokeni);
+8126:   if ( !std::string::compare(t.m_token._First, asc_7227F4) )
+8127:     goto LABEL_158;
+8128:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8129:     ErrorMsg(aErrorInCtokeni);
+8130:   if ( !std::string::compare(t.m_token._First, aRlfem) )
+8131:     goto LABEL_158;
+8132:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8133:     ErrorMsg(aErrorInCtokeni);
+8134:   if ( !std::string::compare(t.m_token._First, aGuild) )
+8135:   {
+8136: LABEL_158:
+8137:     if ( std::vector<std::string>::size(&t.m_token) == 2 )
+8138:     {
+8139:       *(_DWORD *)talkType = 55;
+8140:       v20 = std::vector<std::string>::size(&t.m_token);
+8141:       if ( v20 <= 1 )
+8142:       {
+8143:         ErrorMsg(aErrorInCtokeni);
+8144:         if ( v20 > 0 )
+8145:         {
+8146:           v21 = 0;
+8147:           do
+8148:           {
+8149:             v22 = t.m_token._First[v21]._Ptr;
+8150:             if ( !v22 )
+8151:               v22 = (char *)`std::string::_Nullstr'::`2'::_C;
+8152:             ErrorMsg(v22);
+8153:             ++v21;
+8154:             --v20;
+8155:           }
+8156:           while ( v20 );
+8157:         }
+8158:       }
+8159:       goto LABEL_401;
+8160:     }
+8161:   }
+8162:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8163:     ErrorMsg(aErrorInCtokeni);
+8164:   if ( !std::string::compare(t.m_token._First, asc_7227DC) )
+8165:     goto LABEL_175;
+8166:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8167:     ErrorMsg(aErrorInCtokeni);
+8168:   if ( !std::string::compare(t.m_token._First, aGocp) )
+8169:     goto LABEL_175;
+8170:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8171:     ErrorMsg(aErrorInCtokeni);
+8172:   if ( !std::string::compare(t.m_token._First, aBreakguild) )
+8173:   {
+8174: LABEL_175:
+8175:     if ( std::vector<std::string>::size(&t.m_token) == 2 )
+8176:     {
+8177:       *(_DWORD *)talkType = 56;
+8178:       v23 = std::vector<std::string>::size(&t.m_token);
+8179:       if ( v23 <= 1 )
+8180:       {
+8181:         ErrorMsg(aErrorInCtokeni);
+8182:         if ( v23 > 0 )
+8183:         {
+8184:           v24 = 0;
+8185:           do
+8186:           {
+8187:             v25 = t.m_token._First[v24]._Ptr;
+8188:             if ( !v25 )
+8189:               v25 = (char *)`std::string::_Nullstr'::`2'::_C;
+8190:             ErrorMsg(v25);
+8191:             ++v24;
+8192:             --v23;
+8193:           }
+8194:           while ( v23 );
+8195:         }
+8196:       }
+8197:       goto LABEL_401;
+8198:     }
+8199:   }
+8200:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8201:     ErrorMsg(aErrorInCtokeni);
+8202:   if ( !std::string::compare(t.m_token._First, asc_7227C0) )
+8203:     goto LABEL_192;
+8204:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8205:     ErrorMsg(aErrorInCtokeni);
+8206:   if ( !std::string::compare(t.m_token._First, aRuftjd) )
+8207:     goto LABEL_192;
+8208:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8209:     ErrorMsg(aErrorInCtokeni);
+8210:   if ( !std::string::compare(t.m_token._First, aOrganize) )
+8211:   {
+8212: LABEL_192:
+8213:     if ( std::vector<std::string>::size(&t.m_token) == 2 )
+8214:     {
+8215:       *(_DWORD *)talkType = 26;
+8216:       v26 = std::vector<std::string>::size(&t.m_token);
+8217:       if ( v26 <= 1 )
+8218:       {
+8219:         ErrorMsg(aErrorInCtokeni);
+8220:         if ( v26 > 0 )
+8221:         {
+8222:           v27 = 0;
+8223:           do
+8224:           {
+8225:             v28 = t.m_token._First[v27]._Ptr;
+8226:             if ( !v28 )
+8227:               v28 = (char *)`std::string::_Nullstr'::`2'::_C;
+8228:             ErrorMsg(v28);
+8229:             ++v27;
+8230:             --v26;
+8231:           }
+8232:           while ( v26 );
+8233:         }
+8234:       }
+8235:       goto LABEL_401;
+8236:     }
+8237:   }
+8238:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8239:     ErrorMsg(aErrorInCtokeni);
+8240:   if ( !std::string::compare(t.m_token._First, asc_7227A4) )
+8241:     goto LABEL_212;
+8242:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8243:     ErrorMsg(aErrorInCtokeni);
+8244:   if ( !std::string::compare(t.m_token._First, asc_72279C) )
+8245:     goto LABEL_212;
+8246:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8247:     ErrorMsg(aErrorInCtokeni);
+8248:   if ( !std::string::compare(t.m_token._First, aItem) )
+8249:     goto LABEL_212;
+8250:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8251:     ErrorMsg(aErrorInCtokeni);
+8252:   if ( !std::string::compare(t.m_token._First, aMonster) )
+8253:   {
+8254: LABEL_212:
+8255:     if ( std::vector<std::string>::size(&t.m_token) == 2 )
+8256:     {
+8257:       *(_DWORD *)talkType = 48;
+8258:       v29 = std::vector<std::string>::size(&t.m_token);
+8259:       if ( v29 <= 1 )
+8260:       {
+8261:         ErrorMsg(aErrorInCtokeni);
+8262:         if ( v29 > 0 )
+8263:         {
+8264:           v30 = 0;
+8265:           do
+8266:           {
+8267:             v31 = t.m_token._First[v30]._Ptr;
+8268:             if ( !v31 )
+8269:               v31 = (char *)`std::string::_Nullstr'::`2'::_C;
+8270:             ErrorMsg(v31);
+8271:             ++v30;
+8272:             --v29;
+8273:           }
+8274:           while ( v29 );
+8275:         }
+8276:       }
+8277:       goto LABEL_401;
+8278:     }
+8279:   }
+8280:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8281:     ErrorMsg(aErrorInCtokeni);
+8282:   if ( !std::string::compare(t.m_token._First, asc_722780) )
+8283:     goto LABEL_229;
+8284:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8285:     ErrorMsg(aErrorInCtokeni);
+8286:   if ( !std::string::compare(t.m_token._First, aMapmove) )
+8287:     goto LABEL_229;
+8288:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8289:     ErrorMsg(aErrorInCtokeni);
+8290:   if ( !std::string::compare(t.m_token._First, aMm) )
+8291:   {
+8292: LABEL_229:
+8293:     if ( (int)std::vector<std::string>::size(&t.m_token) > 1 )
+8294:     {
+8295:       *(_DWORD *)talkType = 49;
+8296:       v32 = std::vector<std::string>::size(&t.m_token);
+8297:       if ( v32 <= 1 )
+8298:       {
+8299:         ErrorMsg(aErrorInCtokeni);
+8300:         if ( v32 > 0 )
+8301:         {
+8302:           v33 = 0;
+8303:           do
+8304:           {
+8305:             v34 = t.m_token._First[v33]._Ptr;
+8306:             if ( !v34 )
+8307:               v34 = (char *)`std::string::_Nullstr'::`2'::_C;
+8308:             ErrorMsg(v34);
+8309:             ++v33;
+8310:             --v32;
+8311:           }
+8312:           while ( v32 );
+8313:         }
+8314:       }
+8315:       v35 = param;
+8316:       std::string::assign(param, (const std::string *)t.m_token._First + 1, 0, std::string::npos);
+8317:       chatStartOffset = -1;
+8318:       if ( std::vector<std::string>::size(&t.m_token) == 4 )
+8319:       {
+8320:         v36 = std::vector<std::string>::size(&t.m_token);
+8321:         if ( v36 <= 2 )
+8322:         {
+8323:           ErrorMsg(aErrorInCtokeni);
+8324:           if ( v36 > 0 )
+8325:           {
+8326:             v37 = 0;
+8327:             do
+8328:             {
+8329:               v38 = t.m_token._First[v37]._Ptr;
+8330:               if ( !v38 )
+8331:                 v38 = (char *)`std::string::_Nullstr'::`2'::_C;
+8332:               ErrorMsg(v38);
+8333:               ++v37;
+8334:               --v36;
+8335:             }
+8336:             while ( v36 );
+8337:           }
+8338:         }
+8339:         std::string::assign(v35 + 1, (const std::string *)t.m_token._First + 2, 0, std::string::npos);
+8340:         v39 = std::vector<std::string>::size(&t.m_token);
+8341:         if ( v39 <= 3 )
+8342:         {
+8343:           ErrorMsg(aErrorInCtokeni);
+8344:           if ( v39 > 0 )
+8345:           {
+8346:             v40 = 0;
+8347:             do
+8348:             {
+8349:               v41 = t.m_token._First[v40]._Ptr;
+8350:               if ( !v41 )
+8351:                 v41 = (char *)`std::string::_Nullstr'::`2'::_C;
+8352:               ErrorMsg(v41);
+8353:               ++v40;
+8354:               --v39;
+8355:             }
+8356:             while ( v39 );
+8357:           }
+8358:         }
+8359:         std::string::assign(v35 + 2, (const std::string *)t.m_token._First + 3, 0, std::string::npos);
+8360:         v4 = chatStartOffset;
+8361:       }
+8362:       else
+8363:       {
+8364:         v42 = std::string::assign(v35 + 2, a0, strlen(a0));
+8365:         std::string::assign(v35 + 1, v42, 0, std::string::npos);
+8366:         v4 = chatStartOffset;
+8367:       }
+8368:       goto LABEL_345;
+8369:     }
+8370:   }
+8371:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8372:     ErrorMsg(aErrorInCtokeni);
+8373:   if ( !std::string::compare(t.m_token._First, asc_722768) )
+8374:     goto LABEL_260;
+8375:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8376:     ErrorMsg(aErrorInCtokeni);
+8377:   if ( !std::string::compare(t.m_token._First, aWpaud) )
+8378:     goto LABEL_260;
+8379:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8380:     ErrorMsg(aErrorInCtokeni);
+8381:   if ( !std::string::compare(t.m_token._First, aExpel) )
+8382:   {
+8383: LABEL_260:
+8384:     if ( std::vector<std::string>::size(&t.m_token) == 2 )
+8385:     {
+8386:       *(_DWORD *)talkType = 28;
+8387:       v43 = std::vector<std::string>::size(&t.m_token);
+8388:       if ( v43 <= 1 )
+8389:       {
+8390:         ErrorMsg(aErrorInCtokeni);
+8391:         if ( v43 > 0 )
+8392:         {
+8393:           v44 = 0;
+8394:           do
+8395:           {
+8396:             v45 = t.m_token._First[v44]._Ptr;
+8397:             if ( !v45 )
+8398:               v45 = (char *)`std::string::_Nullstr'::`2'::_C;
+8399:             ErrorMsg(v45);
+8400:             ++v44;
+8401:             --v43;
+8402:           }
+8403:           while ( v43 );
+8404:         }
+8405:       }
+8406:       goto LABEL_401;
+8407:     }
+8408:   }
+8409:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8410:     ErrorMsg(aErrorInCtokeni);
+8411:   if ( !std::string::compare(t.m_token._First, aSm) && std::vector<std::string>::size(&t.m_token) == 2 )
+8412:   {
+8413:     *(_DWORD *)talkType = 58;
+8414:     v46 = std::vector<std::string>::size(&t.m_token);
+8415:     if ( v46 <= 1 )
+8416:     {
+8417:       ErrorMsg(aErrorInCtokeni);
+8418:       if ( v46 > 0 )
+8419:       {
+8420:         v47 = 0;
+8421:         do
+8422:         {
+8423:           v48 = t.m_token._First[v47]._Ptr;
+8424:           if ( !v48 )
+8425:             v48 = (char *)`std::string::_Nullstr'::`2'::_C;
+8426:           ErrorMsg(v48);
+8427:           ++v47;
+8428:           --v46;
+8429:         }
+8430:         while ( v46 );
+8431:       }
+8432:     }
+8433:     goto LABEL_401;
+8434:   }
+8435:   if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8436:     ErrorMsg(aErrorInCtokeni);
+8437:   if ( !std::string::compare(t.m_token._First, aResetstate) )
+8438:   {
+8439:     v4 = -1;
+8440:     *(_DWORD *)talkType = 61;
+8441:   }
+8442:   else
+8443:   {
+8444:     if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8445:       ErrorMsg(aErrorInCtokeni);
+8446:     if ( !std::string::compare(t.m_token._First, aResetskill) )
+8447:     {
+8448:       v4 = -1;
+8449:       *(_DWORD *)talkType = 62;
+8450:     }
+8451:     else
+8452:     {
+8453:       if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8454:         ErrorMsg(aErrorInCtokeni);
+8455:       if ( !std::string::compare(t.m_token._First, aChangemaptype) )
+8456:         goto LABEL_293;
+8457:       if ( (int)std::vector<std::string>::size(&t.m_token) <= 0 )
+8458:         ErrorMsg(aErrorInCtokeni);
+8459:       if ( !std::string::compare(t.m_token._First, aCmt) )
+8460:       {
+8461: LABEL_293:
+8462:         if ( std::vector<std::string>::size(&t.m_token) == 4 )
+8463:         {
+8464:           *(_DWORD *)talkType = 63;
+8465:           v49 = std::vector<std::string>::size(&t.m_token);
+8466:           if ( v49 <= 1 )
+8467:           {
+8468:             ErrorMsg(aErrorInCtokeni);
+8469:             if ( v49 > 0 )
+8470:             {
+8471:               v50 = 0;
+8472:               do
+8473:               {
+8474:                 v51 = t.m_token._First[v50]._Ptr;
+8475:                 if ( !v51 )
+8476:                   v51 = (char *)`std::string::_Nullstr'::`2'::_C;
+8477:                 ErrorMsg(v51);
+8478:                 ++v50;
+8479:                 --v49;
+8480:               }
+8481:               while ( v49 );
+8482:             }
+8483:           }
+8484:           v52 = param;
+8485:           std::string::assign(param, (const std::string *)t.m_token._First + 1, 0, std::string::npos);
+8486:           v53 = CTokenizer::operator[](&t, 2);
+8487:           std::string::assign(v52 + 1, v53, 0, std::string::npos);
+8488:           v54 = CTokenizer::operator[](&t, 3);
+8489:           std::string::assign(v52 + 2, v54, 0, std::string::npos);
+8490:           chatStartOffset = -1;
+8491:           v4 = -1;
+8492:           goto LABEL_345;
+8493:         }
+8494:       }
+8495:       v55 = CTokenizer::operator[](&t, 0);
+8496:       if ( !std::string::compare(v55, aEmblem)
+8497:         || (v56 = CTokenizer::operator[](&t, 0), !std::string::compare(v56, asc_722714))
+8498:         || (v57 = CTokenizer::operator[](&t, 0), !std::string::compare(v57, asc_72270C))
+8499:         || (v58 = CTokenizer::operator[](&t, 0), !std::string::compare(v58, aDpaqmffpa))
+8500:         || (v59 = CTokenizer::operator[](&t, 0), !std::string::compare(v59, aDoaqmffpa)) )
+8501:       {
+8502:         v4 = -1;
+8503:         *(_DWORD *)talkType = 64;
+8504:       }
+8505:       else
+8506:       {
+8507:         v60 = CTokenizer::operator[](&t, 0);
+8508:         if ( !std::string::compare(v60, aHide) )
+8509:         {
+8510:           v4 = -1;
+8511:           *(_DWORD *)talkType = 88;
+8512:         }
+8513:         else
+8514:         {
+8515:           v61 = CTokenizer::operator[](&t, 0);
+8516:           if ( !std::string::compare(v61, asc_7015CC)
+8517:             || (v62 = CTokenizer::operator[](&t, 0), !std::string::compare(v62, aFont)) )
+8518:           {
+8519:             v4 = -1;
+8520:             *(_DWORD *)talkType = 92;
+8521:           }
+8522:           else
+8523:           {
+8524:             v63 = CTokenizer::operator[](&t, 0);
+8525:             if ( !std::string::compare(v63, aMineffect)
+8526:               || (v64 = MsgStr(MSI_MINEFFECT), v65 = CTokenizer::operator[](&t, 0), !std::string::compare(v65, v64)) )
+8527:             {
+8528:               v7 = (_DWORD *)talkType;
+8529:               *(_DWORD *)talkType = 20;
+8530:               m_isMinEffect = this->m_isMinEffect;
+8531:               this->m_isMinEffect = 1 - m_isMinEffect;
+8532:               this->m_isMinEffectOld = 1 - m_isMinEffect;
+8533:               if ( this->m_isMinEffect )
+8534:                 v114 = MsgStr(MSI_MINEFFECT_ON);
+8535:               else
+8536:                 v114 = MsgStr(MSI_MINEFFECT_OFF);
+8537:               UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v114, 6619135, 0, 0);
+8538:               goto LABEL_342;
+8539:             }
+8540:             v66 = CTokenizer::operator[](&t, 0);
+8541:             if ( !std::string::compare(v66, aRemove) && std::vector<std::string>::size(&t.m_token) == 2 )
+8542:             {
+8543:               *(_DWORD *)talkType = 95;
+8544:               v67 = CTokenizer::operator[](&t, 1);
+8545:               std::string::assign(param, v67, 0, std::string::npos);
+8546:               v4 = -1;
+8547:             }
+8548:             else
+8549:             {
+8550:               v68 = CTokenizer::operator[](&t, 0);
+8551:               if ( !std::string::compare(v68, aSummon) && std::vector<std::string>::size(&t.m_token) == 2 )
+8552:               {
+8553:                 *(_DWORD *)talkType = 98;
+8554:                 v69 = CTokenizer::operator[](&t, 1);
+8555:                 std::string::assign(param, v69, 0, std::string::npos);
+8556:                 v4 = -1;
+8557:               }
+8558:               else
+8559:               {
+8560:                 v70 = CTokenizer::operator[](&t, 0);
+8561:                 if ( !std::string::compare(v70, aShift) )
+8562:                 {
+8563:                   v71 = 0;
+8564:                   *(_DWORD *)talkType = 96;
+8565:                   if ( (int)(std::vector<std::string>::size(&t.m_token) - 1) > 0 )
+8566:                   {
+8567:                     v72 = param;
+8568:                     do
+8569:                     {
+8570:                       v73 = CTokenizer::operator[](&t, ++v71);
+8571:                       std::string::assign(v72++, v73, 0, std::string::npos);
+8572:                     }
+8573:                     while ( v71 < (int)(std::vector<std::string>::size(&t.m_token) - 1) );
+8574:                   }
+8575:                   v4 = -1;
+8576:                   goto LABEL_345;
+8577:                 }
+8578:                 v74 = CTokenizer::operator[](&t, 0);
+8579:                 if ( !std::string::compare(v74, aRecall) && std::vector<std::string>::size(&t.m_token) == 2 )
+8580:                 {
+8581:                   *(_DWORD *)talkType = 97;
+8582:                   v75 = CTokenizer::operator[](&t, 1);
+8583:                   std::string::assign(param, v75, 0, std::string::npos);
+8584:                   v4 = -1;
+8585:                 }
+8586:                 else
+8587:                 {
+8588:                   v76 = CTokenizer::operator[](&t, 0);
+8589:                   if ( !std::string::compare(v76, aCheck) && std::vector<std::string>::size(&t.m_token) == 2 )
+8590:                   {
+8591:                     *(_DWORD *)talkType = 142;
+8592:                     v77 = CTokenizer::operator[](&t, 1);
+8593:                     std::string::assign(param, v77, 0, std::string::npos);
+8594:                     v4 = -1;
+8595:                   }
+8596:                   else
+8597:                   {
+8598:                     v78 = CTokenizer::operator[](&t, 0);
+8599:                     if ( !std::string::compare(v78, aRc) && std::vector<std::string>::size(&t.m_token) == 2 )
+8600:                     {
+8601:                       *(_DWORD *)talkType = 143;
+8602:                       v79 = CTokenizer::operator[](&t, 1);
+8603:                       std::string::assign(param, v79, 0, std::string::npos);
+8604:                       v4 = -1;
+8605:                     }
+8606:                     else
+8607:                     {
+8608:                       v80 = CTokenizer::operator[](&t, 0);
+8609:                       if ( std::string::compare(v80, asc_7226A4) )
+8610:                       {
+8611:                         v81 = CTokenizer::operator[](&t, 0);
+8612:                         if ( !std::string::compare(v81, asc_722698)
+8613:                           || (v82 = CTokenizer::operator[](&t, 0), !std::string::compare(v82, aShowname)) )
+8614:                         {
+8615:                           v7 = (_DWORD *)talkType;
+8616:                           *(_DWORD *)talkType = 107;
+8617:                         }
+8618:                         else
+8619:                         {
+8620:                           v83 = CTokenizer::operator[](&t, 0);
+8621:                           if ( !std::string::compare(v83, aStr) && (int)std::vector<std::string>::size(&t.m_token) > 1 )
+8622:                           {
+8623:                             v7 = (_DWORD *)talkType;
+8624:                             *(_DWORD *)talkType = 136;
+8625:                             v84 = CTokenizer::operator[](&t, 1)->_Ptr;
+8626:                             if ( !v84 )
+8627:                               v84 = (char *)`std::string::_Nullstr'::`2'::_C;
+8628:                             v85 = atoi(v84);
+8629:                             CModeMgr::GetGameMode(&g_modeMgr)->m_SiyeonStatus[0] = v85;
+8630:                           }
+8631:                           else
+8632:                           {
+8633:                             v87 = CTokenizer::operator[](&t, 0);
+8634:                             if ( !std::string::compare(v87, aAgi) && (int)std::vector<std::string>::size(&t.m_token) > 1 )
+8635:                             {
+8636:                               v7 = (_DWORD *)talkType;
+8637:                               *(_DWORD *)talkType = 136;
+8638:                               v88 = CTokenizer::operator[](&t, 1)->_Ptr;
+8639:                               if ( !v88 )
+8640:                                 v88 = (char *)`std::string::_Nullstr'::`2'::_C;
+8641:                               v89 = atoi(v88);
+8642:                               CModeMgr::GetGameMode(&g_modeMgr)->m_SiyeonStatus[1] = v89;
+8643:                             }
+8644:                             else
+8645:                             {
+8646:                               v90 = CTokenizer::operator[](&t, 0);
+8647:                               if ( !std::string::compare(v90, aLuk)
+8648:                                 && (int)std::vector<std::string>::size(&t.m_token) > 1 )
+8649:                               {
+8650:                                 v7 = (_DWORD *)talkType;
+8651:                                 *(_DWORD *)talkType = 136;
+8652:                                 v91 = CTokenizer::operator[](&t, 1)->_Ptr;
+8653:                                 if ( !v91 )
+8654:                                   v91 = (char *)`std::string::_Nullstr'::`2'::_C;
+8655:                                 v92 = atoi(v91);
+8656:                                 CModeMgr::GetGameMode(&g_modeMgr)->m_SiyeonStatus[2] = v92;
+8657:                               }
+8658:                               else
+8659:                               {
+8660:                                 v93 = CTokenizer::operator[](&t, 0);
+8661:                                 if ( !std::string::compare(v93, aInt)
+8662:                                   && (int)std::vector<std::string>::size(&t.m_token) > 1 )
+8663:                                 {
+8664:                                   v7 = (_DWORD *)talkType;
+8665:                                   *(_DWORD *)talkType = 136;
+8666:                                   v94 = CTokenizer::operator[](&t, 1)->_Ptr;
+8667:                                   if ( !v94 )
+8668:                                     v94 = (char *)`std::string::_Nullstr'::`2'::_C;
+8669:                                   v95 = atoi(v94);
+8670:                                   CModeMgr::GetGameMode(&g_modeMgr)->m_SiyeonStatus[3] = v95;
+8671:                                 }
+8672:                                 else
+8673:                                 {
+8674:                                   v96 = CTokenizer::operator[](&t, 0);
+8675:                                   if ( !std::string::compare(v96, aVit)
+8676:                                     && (int)std::vector<std::string>::size(&t.m_token) > 1 )
+8677:                                   {
+8678:                                     v7 = (_DWORD *)talkType;
+8679:                                     *(_DWORD *)talkType = 136;
+8680:                                     v97 = CTokenizer::operator[](&t, 1)->_Ptr;
+8681:                                     if ( !v97 )
+8682:                                       v97 = (char *)`std::string::_Nullstr'::`2'::_C;
+8683:                                     v98 = atoi(v97);
+8684:                                     CModeMgr::GetGameMode(&g_modeMgr)->m_SiyeonStatus[4] = v98;
+8685:                                   }
+8686:                                   else
+8687:                                   {
+8688:                                     v99 = CTokenizer::operator[](&t, 0);
+8689:                                     if ( std::string::compare(v99, aDex)
+8690:                                       || (int)std::vector<std::string>::size(&t.m_token) <= 1 )
+8691:                                     {
+8692:                                       v102 = CTokenizer::operator[](&t, 0);
+8693:                                       if ( !std::string::compare(v102, aHi_0) )
+8694:                                       {
+8695:                                         std::string::string(&temp, (const std::allocator<char> *)&chatBuf + 3);
+8696:                                         LOBYTE(v128) = 2;
+8697:                                         std::string::assign(&temp, &Buf, strlen(&Buf));
+8698:                                         *(_DWORD *)talkType = 150;
+8699:                                         if ( (int)std::vector<std::string>::size(&t.m_token) > 1 )
+8700:                                         {
+8701:                                           v103 = CTokenizer::operator[](&t, 1);
+8702:                                           std::string::assign(param, v103, 0, std::string::npos);
+8703:                                           for ( i = 1; i < (int)std::vector<std::string>::size(&t.m_token); ++i )
+8704:                                           {
+8705:                                             v105 = CTokenizer::operator[](&t, i);
+8706:                                             std::string::append(&temp, v105, 0, std::string::npos);
+8707:                                             std::string::append(&temp, asc_6F26DC, strlen(asc_6F26DC));
+8708:                                           }
+8709:                                           v106 = temp._Ptr;
+8710:                                           if ( !temp._Ptr )
+8711:                                             v106 = (char *)`std::string::_Nullstr'::`2'::_C;
+8712:                                           std::string::assign(&g_windowMgr.m_chatMsg, v106, strlen(v106));
+8713:                                         }
+8714:                                         v4 = -1;
+8715:                                         LOBYTE(v128) = 0;
+8716:                                         std::string::_Tidy(&temp, 1u);
+8717:                                       }
+8718:                                       else
+8719:                                       {
+8720:                                         v107 = CTokenizer::operator[](&t, 0);
+8721:                                         if ( (!std::string::compare(v107, asc_722650)
+8722:                                            || (v108 = CTokenizer::operator[](&t, 0), !std::string::compare(v108, aCheo))
+8723:                                            || (v109 = CTokenizer::operator[](&t, 0), !std::string::compare(
+8724:                                                                                         v109,
+8725:                                                                                         aInvite)))
+8726:                                           && std::vector<std::string>::size(&t.m_token) == 2 )
+8727:                                         {
+8728:                                           *(_DWORD *)talkType = 183;
+8729:                                           v110 = CTokenizer::operator[](&t, 1);
+8730:                                           std::string::assign(param, v110, 0, std::string::npos);
+8731:                                           v4 = -1;
+8732:                                         }
+8733:                                         else
+8734:                                         {
+8735:                                           v111 = CTokenizer::operator[](&t, 0)->_Ptr;
+8736:                                           if ( !v111 )
+8737:                                             v111 = (char *)`std::string::_Nullstr'::`2'::_C;
+8738:                                           NoParamTalkType = CSession::GetNoParamTalkType(this, v111);
+8739:                                           v4 = -1;
+8740:                                           *(_DWORD *)talkType = NoParamTalkType;
+8741:                                         }
+8742:                                       }
+8743:                                       goto LABEL_345;
+8744:                                     }
+8745:                                     v7 = (_DWORD *)talkType;
+8746:                                     *(_DWORD *)talkType = 136;
+8747:                                     v100 = CTokenizer::operator[](&t, 1)->_Ptr;
+8748:                                     if ( !v100 )
+8749:                                       v100 = (char *)`std::string::_Nullstr'::`2'::_C;
+8750:                                     v101 = atoi(v100);
+8751:                                     CModeMgr::GetGameMode(&g_modeMgr)->m_SiyeonStatus[5] = v101;
+8752:                                   }
+8753:                                 }
+8754:                               }
+8755:                             }
+8756:                           }
+8757:                           v4 = chatStartOffset;
+8758:                         }
+8759:                         goto LABEL_342;
+8760:                       }
+8761:                       v4 = -1;
+8762:                       *(_DWORD *)talkType = 101;
+8763:                     }
+8764:                   }
+8765:                 }
+8766:               }
+8767:             }
+8768:           }
+8769:         }
+8770:       }
+8771:     }
+8772:   }
+8773: LABEL_345:
+8774:   v128 = -1;
+8775:   std::vector<std::string>::~vector<std::string>(&t.m_token);
+8776:   return v4;
+8777: }
+8778:
+--- Ref/Session.cpp:22570-22610 ---
+22570:   _X.first = aDkdlxpatmsoq;
+22571:   _X.second = TT_ITEM_SNAP_ON_OFF;
+22572:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22573:   _X.first = aRkfanfl;
+22574:   _X.second = TT_REQ_SAVE_CHAT;
+22575:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22576:   _X.first = aSavechat;
+22577:   _X.second = TT_REQ_SAVE_CHAT;
+22578:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22579:   _X.first = aMiss;
+22580:   _X.second = TT_MISS_EFFECT_ON_OFF;
+22581:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22582:   if ( g_serverType != ServerInstantEvent )
+22583:   {
+22584:     _X.first = aNoshift;
+22585:     _X.second = TT_NOSHIFT_ON_OFF;
+22586:     std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22587:     _X.first = aNoctrl;
+22588:     _X.second = TT_NOCTRL_ON_OFF;
+22589:     std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22590:     _X.first = aNs;
+22591:     _X.second = TT_NOSHIFT_ON_OFF;
+22592:     std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22593:     _X.first = aNc;
+22594:     _X.second = TT_NOCTRL_ON_OFF;
+22595:     std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22596:   }
+22597:   _X.first = aWindow;
+22598:   _X.second = TT_WINDOW_ON_OFF;
+22599:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22600:   _X.first = aWi;
+22601:   _X.second = TT_WINDOW_ON_OFF;
+22602:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22603:   _X.first = aAura;
+22604:   _X.second = TT_AURA_ON_OFF;
+22605:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22606:   _X.first = aDoridori;
+22607:   _X.second = TT_DORIDORI_ON_OFF;
+22608:   std::vector<std::pair<char const *,enum TALKTYPE>>::insert(&this->m_talkTypeTable, this->m_talkTypeTable._Last, &_X);
+22609:   _X.first = aBingbing;
+22610:   _X.second = TT_BINGBING_ON_OFF;
+--- Ref/Session.cpp:23575-23600 ---
+23575:           &_X.second);
+23576:   std::vector<std::pair<char const *,enum TALKTYPE>>::push_back(&this->m_talkTypeTable, v81);
+23577:   _X.second = TT_REQ_OPEN_EQUIPEDITEM_ONOFF;
+23578:   _V2 = (TALKTYPE)aWkdqlrhdro;
+23579:   v82 = std::pair<char const *,enum TALKTYPE>::pair<char const *,enum TALKTYPE>(
+23580:           &v166,
+23581:           (const char *const *)&_V2,
+23582:           &_X.second);
+23583:   std::vector<std::pair<char const *,enum TALKTYPE>>::push_back(&this->m_talkTypeTable, v82);
+23584:   _X.second = TT_REQ_OPEN_EQUIPEDITEM_ONOFF;
+23585:   _V2 = (TALKTYPE)aEqopen;
+23586:   v83 = std::pair<char const *,enum TALKTYPE>::pair<char const *,enum TALKTYPE>(
+23587:           &v166,
+23588:           (const char *const *)&_V2,
+23589:           &_X.second);
+23590:   std::vector<std::pair<char const *,enum TALKTYPE>>::push_back(&this->m_talkTypeTable, v83);
+23591:   second = (DComp)_X.second;
+23592:   v164 = std::vector<std::pair<char const *,enum TALKTYPE>>::end(&this->m_talkTypeTable);
+23593:   v84 = std::vector<std::pair<char const *,enum TALKTYPE>>::begin(&this->m_talkTypeTable);
+23594:   std::stable_sort(v84, v164, second);
+23595:   _X.second = TT_BATTLE_ON_OFF;
+23596:   _V2 = (TALKTYPE)aBattlemode;
+23597:   v85 = std::pair<char const *,enum TALKTYPE>::pair<char const *,enum TALKTYPE>(
+23598:           &v166,
+23599:           (const char *const *)&_V2,
+23600:           &_X.second);
+--- Ref/Util.cpp:2110-2290 ---
+2110:
+2111:
+2112: // ================================================
+2113: // Original Signature: public: void __thiscall CTokenizer::SetString(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)
+2114: // Decompiled from address: 0x527280
+2115: // ================================================
+2116: void __thiscall CTokenizer::SetString(CTokenizer *this, const std::string *a)
+2117: {
+2118:   unsigned int Len; // edx
+2119:   std::string *First; // edi
+2120:   std::vector<std::string> *v4; // esi
+2121:   signed int v5; // ebx
+2122:   bool v6; // cc
+2123:   char *v7; // eax
+2124:   const char *v8; // eax
+2125:   char *v9; // eax
+2126:   char *v10; // eax
+2127:   const char *v11; // ecx
+2128:   char *v12; // eax
+2129:   const char *v13; // ecx
+2130:   const char *v14; // eax
+2131:   char *v15; // eax
+2132:   char *v16; // eax
+2133:   char *v17; // eax
+2134:   const char *v18; // ecx
+2135:   int v19; // eax
+2136:   char v20; // cl
+2137:   const char *v21; // ecx
+2138:   char *Ptr; // eax
+2139:   const char *v23; // eax
+2140:   char v24; // dl
+2141:   unsigned int v25; // ebx
+2142:   std::string *v26; // [esp-Ch] [ebp-464h]
+2143:   std::string *v27; // [esp-8h] [ebp-460h]
+2144:   std::string *Last; // [esp-8h] [ebp-460h]
+2145:   char buffer[1024]; // [esp+Ch] [ebp-44Ch] BYREF
+2146:   std::string v30; // [esp+40Ch] [ebp-4Ch] BYREF
+2147:   std::string _X; // [esp+41Ch] [ebp-3Ch] BYREF
+2148:   std::string v32; // [esp+42Ch] [ebp-2Ch] BYREF
+2149:   signed int v33; // [esp+43Ch] [ebp-1Ch]
+2150:   std::vector<std::string> *p_m_token; // [esp+440h] [ebp-18h]
+2151:   lexMode curMode; // [esp+444h] [ebp-14h]
+2152:   int curOffset; // [esp+448h] [ebp-10h]
+2153:   int v37; // [esp+454h] [ebp-4h]
+2154:
+2155:   Len = a->_Len;
+2156:   First = this->m_token._First;
+2157:   p_m_token = &this->m_token;
+2158:   v33 = Len;
+2159:   curOffset = 0;
+2160:   curMode = lm_read;
+2161:   std::vector<std::string>::_Destroy(&this->m_token, First, this->m_token._Last);
+2162:   v4 = p_m_token;
+2163:   v5 = 0;
+2164:   v6 = v33 <= 0;
+2165:   p_m_token->_Last = First;
+2166:   if ( v6 )
+2167:     return;
+2168:   do
+2169:   {
+2170:     switch ( curMode )
+2171:     {
+2172:       case lm_quote:
+2173:         v21 = `std::string::_Nullstr'::`2'::_C;
+2174:         Ptr = a->_Ptr;
+2175:         if ( Ptr )
+2176:           v21 = &Ptr[v5];
+2177:         if ( *v21 == 34 )
+2178:         {
+2179:           v30.allocator = (std::allocator<char>)HIBYTE(a);
+2180:           buffer[curOffset] = 0;
+2181:           std::string::_Tidy(&v30, 0);
+2182:           std::string::assign(&v30, buffer, strlen(buffer));
+2183:           Last = v4->_Last;
+2184:           v37 = 0;
+2185:           std::vector<std::string>::insert(v4, Last, &v30);
+2186:           v37 = -1;
+2187:           std::string::_Tidy(&v30, 1u);
+2188:           curMode = lm_skip;
+2189:           curOffset = 0;
+2190:           break;
+2191:         }
+2192:         if ( Ptr )
+2193:           v23 = &Ptr[v5];
+2194:         else
+2195:           v23 = `std::string::_Nullstr'::`2'::_C;
+2196:         v24 = *v23;
+2197:         v19 = curOffset;
+2198:         buffer[curOffset] = v24;
+2199:         goto LABEL_46;
+2200:       case lm_read:
+2201:         v11 = `std::string::_Nullstr'::`2'::_C;
+2202:         v12 = a->_Ptr;
+2203:         if ( v12 )
+2204:           v11 = &v12[v5];
+2205:         if ( *v11 == 47 )
+2206:         {
+2207:           v13 = `std::string::_Nullstr'::`2'::_C;
+2208:           if ( v12 )
+2209:             v13 = &v12[v5 + 1];
+2210:           if ( *v13 == 47 )
+2211:             return;
+2212:         }
+2213:         if ( v12 )
+2214:           v14 = &v12[v5];
+2215:         else
+2216:           v14 = `std::string::_Nullstr'::`2'::_C;
+2217:         if ( !isspace(*v14)
+2218:           || ((v15 = a->_Ptr) != 0 ? (v16 = &v15[v5]) : (v16 = (char *)`std::string::_Nullstr'::`2'::_C), *v16 < 0) )
+2219:         {
+2220:           v17 = a->_Ptr;
+2221:           v18 = `std::string::_Nullstr'::`2'::_C;
+2222:           if ( v17 )
+2223:             v18 = &v17[v5];
+2224:           if ( *v18 == 34 )
+2225:           {
+2226:             curOffset = 0;
+2227:             curMode = lm_quote;
+2228:             break;
+2229:           }
+2230:           if ( v17 )
+2231:           {
+2232:             v20 = v17[v5];
+2233:             v19 = curOffset;
+2234:             buffer[curOffset] = v20;
+2235:           }
+2236:           else
+2237:           {
+2238:             v19 = curOffset;
+2239:             buffer[curOffset] = `std::string::_Nullstr'::`2'::_C[0];
+2240:           }
+2241: LABEL_46:
+2242:           curOffset = v19 + 1;
+2243:           break;
+2244:         }
+2245:         if ( v5 )
+2246:         {
+2247:           buffer[curOffset] = 0;
+2248:           _X.allocator = (std::allocator<char>)HIBYTE(a);
+2249:           std::string::_Tidy(&_X, 0);
+2250:           std::string::assign(&_X, buffer, strlen(buffer));
+2251:           v27 = v4->_Last;
+2252:           v37 = 1;
+2253:           std::vector<std::string>::insert(v4, v27, &_X);
+2254:           v37 = -1;
+2255:           std::string::_Tidy(&_X, 1u);
+2256:           curOffset = 0;
+2257:         }
+2258:         curMode = lm_skip;
+2259:         break;
+2260:       case lm_skip:
+2261:         v7 = a->_Ptr;
+2262:         v8 = v7 ? &v7[v5] : `std::string::_Nullstr'::`2'::_C;
+2263:         if ( !isspace(*v8)
+2264:           || ((v9 = a->_Ptr) != 0 ? (v10 = &v9[v5]) : (v10 = (char *)`std::string::_Nullstr'::`2'::_C), *v10 < 0) )
+2265:         {
+2266:           curMode = lm_read;
+2267:           --v5;
+2268:         }
+2269:         break;
+2270:     }
+2271:     ++v5;
+2272:   }
+2273:   while ( v5 < v33 );
+2274:   if ( curMode != lm_skip && v5 )
+2275:   {
+2276:     v32.allocator = (std::allocator<char>)HIBYTE(a);
+2277:     buffer[curOffset] = 0;
+2278:     std::string::_Tidy(&v32, 0);
+2279:     v25 = strlen(buffer);
+2280:     if ( std::string::_Grow(&v32, v25, 1u) )
+2281:     {
+2282:       qmemcpy(v32._Ptr, buffer, v25);
+2283:       std::string::_Eos(&v32, v25);
+2284:       v4 = p_m_token;
+2285:     }
+2286:     v26 = v4->_Last;
+2287:     v37 = 2;
+2288:     std::vector<std::string>::insert(v4, v26, 1u, &v32);
+2289:     v37 = -1;
+2290:     std::string::_Tidy(&v32, 1u);
+--- Ref/GameMode.cpp:15920-15960 ---
+15920:   _BYTE v280[24]; // [esp+B2Ah] [ebp-2Eh] OVERLAPPED BYREF
+15921:   char v281; // [esp+B42h] [ebp-16h]
+15922:   int dy; // [esp+B44h] [ebp-14h]
+15923:   TALKTYPE talkType; // [esp+B48h] [ebp-10h]
+15924:   int v284; // [esp+B54h] [ebp-4h]
+15925:
+15926:   First = g_session.m_cmdOnOffSet._First;
+15927:   v5 = val1;
+15928:   talkType = val1;
+15929:   if ( g_session.m_cmdOnOffSet._First != g_session.m_cmdOnOffSet._Last )
+15930:   {
+15931:     while ( First->second != val1 )
+15932:     {
+15933:       if ( ++First == g_session.m_cmdOnOffSet._Last )
+15934:         goto LABEL_6;
+15935:     }
+15936:     First->first = First->first == 0;
+15937:   }
+15938: LABEL_6:
+15939:   if ( g_windowMgr.m_commandListWnd )
+15940:     g_windowMgr.m_commandListWnd->UIWindow::Invalidate(g_windowMgr.m_commandListWnd);
+15941:   if ( g_serviceType == ServiceVietnam && v5 == TT_REQ_NUM_USER )
+15942:   {
+15943:     v5 = TT_UNKNOWN;
+15944:     talkType = TT_UNKNOWN;
+15945:   }
+15946:   switch ( v5 )
+15947:   {
+15948:     case TT_NORMAL:
+15949:     case TT_NORMAL_FROM_CHATROOM:
+15950:       Ptr = g_windowMgr.m_chatMsg._Ptr;
+15951:       *(float *)&val2 = 0.0;
+15952:       val1 = TT_NORMAL;
+15953:       if ( !g_windowMgr.m_chatMsg._Ptr )
+15954:         Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+15955:       strcpy(&chat2, Ptr);
+15956:       if ( chat2 == 37 )
+15957:       {
+15958:         if ( strlen(&chat2) <= 1 )
+15959:           return;
+15960:         *(float *)&val2 = COERCE_FLOAT(strlen(v276));
+--- Ref/GameMode2.cpp:3226-3288 ---
+3226:     case 0xBu:
+3227:       if ( !strlen(UIWindowMgr::GetChatMsg(&g_windowMgr)) || CSession::IsEFST_Berserk(&g_session) == 1 )
+3228:         return SUT_NOSKILL;
+3229:       v355 = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3230:       strncpy(&_S[24], v355, 0xDEu);
+3231:       v628 = 0;
+3232:       if ( CInsultFilter::IsBadSentence(&g_insultFilter, &_S[24]) )
+3233:       {
+3234:         UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+3235:         v356 = MsgStr(MSI_NO_SEND_BECAUSE_INSULT);
+3236:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v356, 255, 0, 0);
+3237:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3238:         return SUT_NOSKILL;
+3239:       }
+3240:       if ( !g_MessageHi )
+3241:       {
+3242:         if ( std::operator==(&this->m_lastChat, &_S[24]) )
+3243:           ++this->m_sameChatRepeatCnt;
+3244:         else
+3245:           this->m_sameChatRepeatCnt = 0;
+3246:       }
+3247:       if ( !g_session.m_onAutoMSG && IsSameSentence(this->m_sameChatRepeatCnt) )
+3248:         return SUT_NOSKILL;
+3249:       std::string::operator=(&this->m_lastChat, &_S[24]);
+3250:       memset(&v687[12], 0, 25);
+3251:       strcpy(&v687[12], (const char *)val1);
+3252:       std::string::operator=(&this->m_lastWhisperName, &v687[12]);
+3253:       v357 = CSession::GetCharName(&g_session);
+3254:       if ( !strcmp(std::string::c_str(&this->m_lastWhisperName), v357) )
+3255:         goto LABEL_456;
+3256:       if ( g_multiLang )
+3257:       {
+3258:         strcpy(&chat_p2[24], CLanguage::GetLanguageCharset(g_language, 0));
+3259:         cyt = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3260:         strncpy(&chat_p2[27], cyt, 0xDBu);
+3261:       }
+3262:       else
+3263:       {
+3264:         cyu = UIWindowMgr::GetChatMsg(&g_windowMgr);
+3265:         strncpy(&chat_p2[24], cyu, 0xDEu);
+3266:       }
+3267:       v678 = 0;
+3268:       std::string::operator=(&this->m_lastWhisper, &chat_p2[24]);
+3269:       v358 = strlen(&chat_p2[24]) + 1;
+3270:       if ( v358 == 1 || v358 - 1 >= 0xDE )
+3271:       {
+3272: LABEL_456:
+3273:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3274:         return SUT_NOSKILL;
+3275:       }
+3276:       else
+3277:       {
+3278:         UIWindowMgr::ClearChatMsg(&g_windowMgr);
+3279:         *(_WORD *)&v683[2] = 150;
+3280:         qmemcpy(&v683[6], &v687[12], 0x18u);
+3281:         *(_WORD *)&v683[4] = v358 - 1 + 29;
+3282:         qmemcpy(buf, &v683[2], 0x1Cu);
+3283:         qmemcpy(&buf[28], &chat_p2[24], v358);
+3284:         cyv = *(unsigned __int16 *)&v683[4];
+3285:         v359 = CRagConnection::instanceR();
+3286:         CRagConnection::SendPacket(v359, cyv, buf);
+3287:         return SUT_NOSKILL;
+3288:       }
+--- Ref/GameMode2.cpp:4338-4348 ---
+4338:           v29);
+4339:         UIWindowMgr::AddWindowFront(&g_windowMgr, &this->m_playerGage->UIGage);
+4340:         return SUT_NOSKILL;
+4341:       }
+4342:     case 0x2Fu:
+4343:       CGameMode::ProcessTalkType(this, val1, SHIDWORD(val1));
+4344:       return SUT_NOSKILL;
+4345:     case 0x30u:
+4346:       v379 = val1;
+4347:       std::string::operator=(&this->m_lastChatroomInfo.title, (const std::string *)val1);
+4348:       this->m_lastChatroomInfo.roomType = *(_DWORD *)(v379 + 32);
+
+--- Ref/Util.cpp:2746-2874 (source lowercasing) ---
+2746: // Original Signature: void __cdecl MakeStringLower(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > &)
+2747: // Decompiled from address: 0x526e40
+2748: // ================================================
+2749: // write access to const memory has been detected, the output may be wrong!
+2750: void __cdecl MakeStringLower(std::string *s)
+2751: {
+2752:   unsigned int v1; // ebx
+2753:   unsigned int Len; // eax
+2754:   char *Ptr; // ecx
+2755:   char v4; // cl
+2756:   char *v5; // eax
+2757:   char *v6; // eax
+2758:   unsigned int v7; // ecx
+2759:   char *v8; // eax
+2760:   char v9; // al
+2761:   char *v10; // eax
+2762:   char *v11; // eax
+2763:   unsigned int v12; // edi
+2764:   char *v13; // eax
+2765:   char v14; // al
+2766:   char *v15; // ecx
+2767:   char v16; // al
+2768:   char *v17; // eax
+2769:
+2770:   v1 = 0;
+2771:   Len = s->_Len;
+2772:   if ( Len )
+2773:   {
+2774:     do
+2775:     {
+2776:       Ptr = s->_Ptr;
+2777:       if ( Ptr )
+2778:       {
+2779:         v4 = *(Ptr - 1);
+2780:         if ( v4 && v4 != -1 )
+2781:           std::string::_Grow(s, Len, 0);
+2782:         v5 = s->_Ptr;
+2783:         if ( v5 )
+2784:           *(v5 - 1) = -1;
+2785:         v6 = &s->_Ptr[v1];
+2786:       }
+2787:       else
+2788:       {
+2789:         v6 = (char *)`std::string::_Nullstr'::`2'::_C;
+2790:       }
+2791:       if ( *v6 <= 0 )
+2792:       {
+2793:         ++v1;
+2794:       }
+2795:       else
+2796:       {
+2797:         v7 = s->_Len;
+2798:         if ( v7 >= v1 && (v8 = s->_Ptr) != 0 )
+2799:         {
+2800:           v9 = *(v8 - 1);
+2801:           if ( v9 && v9 != -1 )
+2802:             std::string::_Grow(s, v7, 0);
+2803:           v10 = s->_Ptr;
+2804:           if ( v10 )
+2805:             *(v10 - 1) = -1;
+2806:           v11 = &s->_Ptr[v1];
+2807:         }
+2808:         else
+2809:         {
+2810:           v11 = (char *)`std::string::_Nullstr'::`2'::_C;
+2811:         }
+2812:         if ( !isupper(*v11) )
+2813:           goto LABEL_42;
+2814:         v12 = s->_Len;
+2815:         if ( v12 >= v1 )
+2816:         {
+2817:           v13 = s->_Ptr;
+2818:           if ( v13 )
+2819:           {
+2820:             v14 = *(v13 - 1);
+2821:             if ( v14 && v14 != -1 )
+2822:             {
+2823:               if ( v12 > 0xFFFFFFFD )
+2824:                 std::_Xlen();
+2825:               v15 = s->_Ptr;
+2826:               if ( v15 )
+2827:               {
+2828:                 v16 = *(v15 - 1);
+2829:                 if ( v16 )
+2830:                 {
+2831:                   if ( v16 != -1 )
+2832:                   {
+2833:                     if ( !v12 )
+2834:                     {
+2835:                       *(v15 - 1) = v16 - 1;
+2836:                       std::string::_Tidy(s, 0);
+2837:                       goto LABEL_37;
+2838:                     }
+2839: LABEL_36:
+2840:                     std::string::_Copy(s, s->_Len);
+2841:                     goto LABEL_37;
+2842:                   }
+2843:                 }
+2844:               }
+2845:               if ( !v12 )
+2846:               {
+2847:                 if ( v15 )
+2848:                   std::string::_Eos(s, s->_Len);
+2849:                 goto LABEL_37;
+2850:               }
+2851:               if ( s->_Res < v12 )
+2852:                 goto LABEL_36;
+2853:             }
+2854: LABEL_37:
+2855:             v17 = s->_Ptr;
+2856:             if ( v17 )
+2857:               *(v17 - 1) = -1;
+2858:             s->_Ptr[v1] += 32;
+2859:             goto LABEL_42;
+2860:           }
+2861:         }
+2862:         `std::string::_Nullstr'::`2'::_C[0] += 32;
+2863:       }
+2864: LABEL_42:
+2865:       Len = s->_Len;
+2866:       ++v1;
+2867:     }
+2868:     while ( Len > v1 );
+2869:   }
+2870: }
+2871:
+2872:
+2873: // ================================================
+2874: // Original Signature: void __cdecl std::_Construct(struct std::pair<long const ,struct POINTER_FUNC> *,struct std::pair<long const ,struct POINTER_FUNC> const &)

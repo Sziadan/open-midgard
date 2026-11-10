@@ -1,0 +1,4202 @@
+{
+  "schema": 1,
+  "selected_binary": "HighPriest.exe",
+  "scope": "Pure GetTalkType/tokenizer/lookup reconstruction; runtime general dispatcher and parser side-effect application remain unaccepted",
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/Util.cpp": "a4c7edbe5999f733d3caa1101f2eea7f17b1b571e87d91bc90bc501cf7cb6523",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/GameMode2.cpp": "111ca06ba24dc274a4b57f5484c71a0cc30d99952d554033d05221e80fe66217"
+  },
+  "no_parameter_aliases": [
+    {
+      "alias_address": "0x00723228",
+      "alias_raw_hex": "2F68656C70",
+      "alias_cp949": "/help",
+      "type": 14,
+      "registration_call_address": "0x00663E5F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_HELP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723224",
+      "alias_raw_hex": "2F68",
+      "alias_cp949": "/h",
+      "type": 14,
+      "registration_call_address": "0x00663E78",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_HELP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723218",
+      "alias_raw_hex": "2F6B696C6C616C6C",
+      "alias_cp949": "/killall",
+      "type": 5,
+      "registration_call_address": "0x00663E95",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_DISCONNECT_ALL_CHARACTER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x0072320C",
+      "alias_raw_hex": "2F776A71746872776B",
+      "alias_cp949": "/wjqthrwk",
+      "type": 6,
+      "registration_call_address": "0x00663EB3",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_NUM_USER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723204",
+      "alias_raw_hex": "2F736E726E",
+      "alias_cp949": "/snrn",
+      "type": 6,
+      "registration_call_address": "0x00663ECC",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_NUM_USER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231FC",
+      "alias_raw_hex": "2F77686F",
+      "alias_cp949": "/who",
+      "type": 6,
+      "registration_call_address": "0x00663EE5",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_NUM_USER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231F8",
+      "alias_raw_hex": "2F77",
+      "alias_cp949": "/w",
+      "type": 6,
+      "registration_call_address": "0x00663EFE",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_NUM_USER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231F0",
+      "alias_raw_hex": "2F646D61646B72",
+      "alias_cp949": "/dmadkr",
+      "type": 7,
+      "registration_call_address": "0x00663F1B",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MUSIC_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231E8",
+      "alias_raw_hex": "2F62676D",
+      "alias_cp949": "/bgm",
+      "type": 7,
+      "registration_call_address": "0x00663F38",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MUSIC_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231E0",
+      "alias_raw_hex": "2F656666656374",
+      "alias_cp949": "/effect",
+      "type": 8,
+      "registration_call_address": "0x00663F55",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_EFFECT_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231D4",
+      "alias_raw_hex": "2F646C767072786D",
+      "alias_cp949": "/dlvprxm",
+      "type": 8,
+      "registration_call_address": "0x00663F72",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_EFFECT_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231CC",
+      "alias_raw_hex": "2F736F756E64",
+      "alias_cp949": "/sound",
+      "type": 11,
+      "registration_call_address": "0x00663F8F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_EFFECT_SOUND_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231C0",
+      "alias_raw_hex": "2F677972686B646D61",
+      "alias_cp949": "/gyrhkdma",
+      "type": 11,
+      "registration_call_address": "0x00663FAC",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_EFFECT_SOUND_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231B8",
+      "alias_raw_hex": "2F736B6970",
+      "alias_cp949": "/skip",
+      "type": 10,
+      "registration_call_address": "0x00663FC9",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_FRAMESKIP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722848",
+      "alias_raw_hex": "2F6578",
+      "alias_cp949": "/ex",
+      "type": 15,
+      "registration_call_address": "0x00663FE6",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_WHISPER_LIST",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231B0",
+      "alias_raw_hex": "2F696E616C6C",
+      "alias_cp949": "/inall",
+      "type": 17,
+      "registration_call_address": "0x00664003",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_WHISPER_STATE_IN",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231A8",
+      "alias_raw_hex": "2F6578616C6C",
+      "alias_cp949": "/exall",
+      "type": 16,
+      "registration_call_address": "0x00664020",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_WHISPER_STATE_EX",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007231A0",
+      "alias_raw_hex": "2F736974",
+      "alias_cp949": "/sit",
+      "type": 22,
+      "registration_call_address": "0x0066403D",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_SIT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723198",
+      "alias_raw_hex": "2F646B7377726C",
+      "alias_cp949": "/dkswrl",
+      "type": 22,
+      "registration_call_address": "0x0066405A",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_SIT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723190",
+      "alias_raw_hex": "2F7374616E64",
+      "alias_cp949": "/stand",
+      "type": 21,
+      "registration_call_address": "0x00664077",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_STAND",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723188",
+      "alias_raw_hex": "2F746A726C",
+      "alias_cp949": "/tjrl",
+      "type": 21,
+      "registration_call_address": "0x00664094",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_STAND",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x0072317C",
+      "alias_raw_hex": "2F636F786C64716B64",
+      "alias_cp949": "/coxldqkd",
+      "type": 23,
+      "registration_call_address": "0x006640B1",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAKE_CHATROOMMAKEWND",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723174",
+      "alias_raw_hex": "2F63686174",
+      "alias_cp949": "/chat",
+      "type": 23,
+      "registration_call_address": "0x006640CE",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAKE_CHATROOMMAKEWND",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x0072316C",
+      "alias_raw_hex": "2F786B6678686C",
+      "alias_cp949": "/xkfxhl",
+      "type": 27,
+      "registration_call_address": "0x006640EB",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_LEAVE_GROUP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723164",
+      "alias_raw_hex": "2F6C65617665",
+      "alias_cp949": "/leave",
+      "type": 27,
+      "registration_call_address": "0x00664108",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_LEAVE_GROUP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x0072315C",
+      "alias_raw_hex": "2F73746174",
+      "alias_cp949": "/stat",
+      "type": 2,
+      "registration_call_address": "0x00664125",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_STAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 29,
+      "registration_call_address": "0x0066414B",
+      "dynamic_msg_id": 544,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_SURPRISE",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 30,
+      "registration_call_address": "0x00664171",
+      "dynamic_msg_id": 545,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_QUESTION",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723150",
+      "alias_raw_hex": "2F64656C69676874",
+      "alias_cp949": "/delight",
+      "type": 31,
+      "registration_call_address": "0x0066418E",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_DELIGHT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723148",
+      "alias_raw_hex": "2F67686B",
+      "alias_cp949": "/ghk",
+      "type": 36,
+      "registration_call_address": "0x006641AB",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_ANGER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723140",
+      "alias_raw_hex": "2F66726574",
+      "alias_cp949": "/fret",
+      "type": 35,
+      "registration_call_address": "0x006641C8",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_FRET",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723138",
+      "alias_raw_hex": "2F576B776D64",
+      "alias_cp949": "/Wkwmd",
+      "type": 35,
+      "registration_call_address": "0x006641E5",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_FRET",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x006F385C",
+      "alias_raw_hex": "2F71",
+      "alias_cp949": "/q",
+      "type": 24,
+      "registration_call_address": "0x00664202",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EXIT_ROOM",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723130",
+      "alias_raw_hex": "2F726C516D61",
+      "alias_cp949": "/rlQma",
+      "type": 31,
+      "registration_call_address": "0x0066421F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_DELIGHT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723128",
+      "alias_raw_hex": "2F6865617274",
+      "alias_cp949": "/heart",
+      "type": 32,
+      "registration_call_address": "0x0066423C",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_THROB",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723120",
+      "alias_raw_hex": "2F676B786D",
+      "alias_cp949": "/gkxm",
+      "type": 32,
+      "registration_call_address": "0x00664259",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_THROB",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723118",
+      "alias_raw_hex": "2F7377656174",
+      "alias_cp949": "/sweat",
+      "type": 33,
+      "registration_call_address": "0x00664276",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SWEAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723110",
+      "alias_raw_hex": "2F456B61",
+      "alias_cp949": "/Eka",
+      "type": 33,
+      "registration_call_address": "0x00664293",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SWEAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723108",
+      "alias_raw_hex": "2F776E616A72",
+      "alias_cp949": "/wnajr",
+      "type": 40,
+      "registration_call_address": "0x006642B0",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_ROCK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723104",
+      "alias_raw_hex": "2F7168",
+      "alias_cp949": "/qh",
+      "type": 41,
+      "registration_call_address": "0x006642CD",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_WRAP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723100",
+      "alias_raw_hex": "2F626F",
+      "alias_cp949": "/bo",
+      "type": 41,
+      "registration_call_address": "0x006642EA",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_WRAP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230F8",
+      "alias_raw_hex": "2F726B646E6C",
+      "alias_cp949": "/rkdnl",
+      "type": 39,
+      "registration_call_address": "0x00664307",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SCISSOR",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230F0",
+      "alias_raw_hex": "2F67617769",
+      "alias_cp949": "/gawi",
+      "type": 39,
+      "registration_call_address": "0x00664324",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SCISSOR",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230E8",
+      "alias_raw_hex": "2F62617769",
+      "alias_cp949": "/bawi",
+      "type": 40,
+      "registration_call_address": "0x00664341",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_ROCK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230E0",
+      "alias_raw_hex": "2F716B646E6C",
+      "alias_cp949": "/qkdnl",
+      "type": 40,
+      "registration_call_address": "0x0066435E",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_ROCK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230D8",
+      "alias_raw_hex": "2F77686B7679",
+      "alias_cp949": "/whkvy",
+      "type": 9,
+      "registration_call_address": "0x0066437B",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAP_POS",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230D0",
+      "alias_raw_hex": "2F776B647468",
+      "alias_cp949": "/wkdth",
+      "type": 9,
+      "registration_call_address": "0x00664398",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAP_POS",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230C8",
+      "alias_raw_hex": "2F7768657265",
+      "alias_cp949": "/where",
+      "type": 9,
+      "registration_call_address": "0x006643B5",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAP_POS",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 38,
+      "registration_call_address": "0x006643DB",
+      "dynamic_msg_id": 554,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_THINK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230C0",
+      "alias_raw_hex": "2F6D6F6E6579",
+      "alias_cp949": "/money",
+      "type": 37,
+      "registration_call_address": "0x006643F8",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_MONEY",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230B8",
+      "alias_raw_hex": "2F656873",
+      "alias_cp949": "/ehs",
+      "type": 37,
+      "registration_call_address": "0x00664415",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_MONEY",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230B0",
+      "alias_raw_hex": "2F616E676572",
+      "alias_cp949": "/anger",
+      "type": 36,
+      "registration_call_address": "0x00664432",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_ANGER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230A8",
+      "alias_raw_hex": "2F616861",
+      "alias_cp949": "/aha",
+      "type": 34,
+      "registration_call_address": "0x0066444F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_AHA",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007230A0",
+      "alias_raw_hex": "2F646B676B",
+      "alias_cp949": "/dkgk",
+      "type": 34,
+      "registration_call_address": "0x0066446C",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_AHA",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x006F441C",
+      "alias_raw_hex": "2F746970",
+      "alias_cp949": "/tip",
+      "type": 42,
+      "registration_call_address": "0x00664489",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_OPEN_TIP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723098",
+      "alias_raw_hex": "2F726C646A72",
+      "alias_cp949": "/rldjr",
+      "type": 43,
+      "registration_call_address": "0x006644A6",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REMEMBER_WARPPOINT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723090",
+      "alias_raw_hex": "2F6D656D6F",
+      "alias_cp949": "/memo",
+      "type": 43,
+      "registration_call_address": "0x006644C3",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REMEMBER_WARPPOINT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723088",
+      "alias_raw_hex": "2F736E6170",
+      "alias_cp949": "/snap",
+      "type": 46,
+      "registration_call_address": "0x006644E0",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_ATTACK_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723080",
+      "alias_raw_hex": "2F746D736F71",
+      "alias_cp949": "/tmsoq",
+      "type": 46,
+      "registration_call_address": "0x006644FD",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_ATTACK_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723074",
+      "alias_raw_hex": "2F736B696C6C736E6170",
+      "alias_cp949": "/skillsnap",
+      "type": 45,
+      "registration_call_address": "0x0066451A",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SKILL_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723068",
+      "alias_raw_hex": "2F746D7A6C66746D736F71",
+      "alias_cp949": "/tmzlftmsoq",
+      "type": 45,
+      "registration_call_address": "0x00664537",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SKILL_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x0072305C",
+      "alias_raw_hex": "2F6974656D736E6170",
+      "alias_cp949": "/itemsnap",
+      "type": 47,
+      "registration_call_address": "0x00664554",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_ITEM_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x0072304C",
+      "alias_raw_hex": "2F646B646C787061746D736F71",
+      "alias_cp949": "/dkdlxpatmsoq",
+      "type": 47,
+      "registration_call_address": "0x00664571",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_ITEM_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723040",
+      "alias_raw_hex": "2F726B66616E666C",
+      "alias_cp949": "/rkfanfl",
+      "type": 51,
+      "registration_call_address": "0x0066458E",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_SAVE_CHAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723034",
+      "alias_raw_hex": "2F7361766563686174",
+      "alias_cp949": "/savechat",
+      "type": 51,
+      "registration_call_address": "0x006645AB",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_SAVE_CHAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x0072302C",
+      "alias_raw_hex": "2F6D697373",
+      "alias_cp949": "/miss",
+      "type": 53,
+      "registration_call_address": "0x006645C8",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MISS_EFFECT_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723020",
+      "alias_raw_hex": "2F6E6F7368696674",
+      "alias_cp949": "/noshift",
+      "type": 105,
+      "registration_call_address": "0x006645EE",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOSHIFT_ON_OFF",
+      "ordinary_server_only": true
+    },
+    {
+      "alias_address": "0x00723018",
+      "alias_raw_hex": "2F6E6F6374726C",
+      "alias_cp949": "/noctrl",
+      "type": 108,
+      "registration_call_address": "0x0066460B",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOCTRL_ON_OFF",
+      "ordinary_server_only": true
+    },
+    {
+      "alias_address": "0x00723014",
+      "alias_raw_hex": "2F6E73",
+      "alias_cp949": "/ns",
+      "type": 105,
+      "registration_call_address": "0x00664628",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOSHIFT_ON_OFF",
+      "ordinary_server_only": true
+    },
+    {
+      "alias_address": "0x00723010",
+      "alias_raw_hex": "2F6E63",
+      "alias_cp949": "/nc",
+      "type": 108,
+      "registration_call_address": "0x00664645",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOCTRL_ON_OFF",
+      "ordinary_server_only": true
+    },
+    {
+      "alias_address": "0x00723008",
+      "alias_raw_hex": "2F77696E646F77",
+      "alias_cp949": "/window",
+      "type": 140,
+      "registration_call_address": "0x00664662",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_WINDOW_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723004",
+      "alias_raw_hex": "2F7769",
+      "alias_cp949": "/wi",
+      "type": 140,
+      "registration_call_address": "0x0066467F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_WINDOW_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FFC",
+      "alias_raw_hex": "2F61757261",
+      "alias_cp949": "/aura",
+      "type": 106,
+      "registration_call_address": "0x0066469C",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_AURA_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FF0",
+      "alias_raw_hex": "2F646F7269646F7269",
+      "alias_cp949": "/doridori",
+      "type": 109,
+      "registration_call_address": "0x006646B9",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_DORIDORI_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FE4",
+      "alias_raw_hex": "2F62696E6762696E67",
+      "alias_cp949": "/bingbing",
+      "type": 110,
+      "registration_call_address": "0x006646D6",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_BINGBING_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FD8",
+      "alias_raw_hex": "2F62616E6762616E67",
+      "alias_cp949": "/bangbang",
+      "type": 111,
+      "registration_call_address": "0x006646F3",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_BANGBANG_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FCC",
+      "alias_raw_hex": "2F736B696C6C6661696C",
+      "alias_cp949": "/skillfail",
+      "type": 112,
+      "registration_call_address": "0x00664710",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SKILLFAIL_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FC8",
+      "alias_raw_hex": "2F7366",
+      "alias_cp949": "/sf",
+      "type": 112,
+      "registration_call_address": "0x0066472D",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SKILLFAIL_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FBC",
+      "alias_raw_hex": "2F6C6F67696E6F7574",
+      "alias_cp949": "/loginout",
+      "type": 164,
+      "registration_call_address": "0x0066474A",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_LOGINOUT_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FB8",
+      "alias_raw_hex": "2F6C69",
+      "alias_cp949": "/li",
+      "type": 164,
+      "registration_call_address": "0x00664767",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_LOGINOUT_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FAC",
+      "alias_raw_hex": "2F73686F7070696E67",
+      "alias_cp949": "/shopping",
+      "type": 166,
+      "registration_call_address": "0x00664784",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SHOPPING_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722FA8",
+      "alias_raw_hex": "2F7368",
+      "alias_cp949": "/sh",
+      "type": 166,
+      "registration_call_address": "0x006647A1",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SHOPPING_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F9C",
+      "alias_raw_hex": "2F717569636B7370656C6C",
+      "alias_cp949": "/quickspell",
+      "type": 119,
+      "registration_call_address": "0x006647BE",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_QUICKSPELL_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F98",
+      "alias_raw_hex": "2F7131",
+      "alias_cp949": "/q1",
+      "type": 119,
+      "registration_call_address": "0x006647DB",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_QUICKSPELL_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F88",
+      "alias_raw_hex": "2F717569636B7370656C6C32",
+      "alias_cp949": "/quickspell2",
+      "type": 120,
+      "registration_call_address": "0x006647F8",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_QUICKSPELL2_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F84",
+      "alias_raw_hex": "2F7132",
+      "alias_cp949": "/q2",
+      "type": 120,
+      "registration_call_address": "0x00664815",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_QUICKSPELL2_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F80",
+      "alias_raw_hex": "2F7133",
+      "alias_cp949": "/q3",
+      "type": 121,
+      "registration_call_address": "0x00664832",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_QUICKSPELL3_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F74",
+      "alias_raw_hex": "2F6E6F74616C6B6D7367",
+      "alias_cp949": "/notalkmsg",
+      "type": 113,
+      "registration_call_address": "0x0066484F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOTALKMSG_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F70",
+      "alias_raw_hex": "2F6E6D",
+      "alias_cp949": "/nm",
+      "type": 113,
+      "registration_call_address": "0x0066486C",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOTALKMSG_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F64",
+      "alias_raw_hex": "2F6E6F74616C6B6D736732",
+      "alias_cp949": "/notalkmsg2",
+      "type": 147,
+      "registration_call_address": "0x00664889",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOTALKMSG2_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F5C",
+      "alias_raw_hex": "2F6E6D32",
+      "alias_cp949": "/nm2",
+      "type": 147,
+      "registration_call_address": "0x006648A6",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOTALKMSG2_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F50",
+      "alias_raw_hex": "2F6E6F7472616465",
+      "alias_cp949": "/notrade",
+      "type": 135,
+      "registration_call_address": "0x006648C3",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOTRADE_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F4C",
+      "alias_raw_hex": "2F6E74",
+      "alias_cp949": "/nt",
+      "type": 135,
+      "registration_call_address": "0x006648E0",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_NOTRADE_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F44",
+      "alias_raw_hex": "2F73657431",
+      "alias_cp949": "/set1",
+      "type": 114,
+      "registration_call_address": "0x006648FD",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SET1_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F3C",
+      "alias_raw_hex": "2F73657432",
+      "alias_cp949": "/set2",
+      "type": 137,
+      "registration_call_address": "0x0066491A",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SET2_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F34",
+      "alias_raw_hex": "2F73657433",
+      "alias_cp949": "/set3",
+      "type": 165,
+      "registration_call_address": "0x00664937",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SET3_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F2C",
+      "alias_raw_hex": "2F63616D657261",
+      "alias_cp949": "/camera",
+      "type": 54,
+      "registration_call_address": "0x00664954",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_FIXED_CAMERA_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F28",
+      "alias_raw_hex": "2F7470",
+      "alias_cp949": "/tp",
+      "type": 59,
+      "registration_call_address": "0x00664971",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_TESTPACKET",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F20",
+      "alias_raw_hex": "2F666F67",
+      "alias_cp949": "/fog",
+      "type": 60,
+      "registration_call_address": "0x0066498E",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_FOG",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F1C",
+      "alias_raw_hex": "2FA4C7",
+      "alias_cp949": "/\u3157",
+      "type": 14,
+      "registration_call_address": "0x006649AB",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_HELP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F14",
+      "alias_raw_hex": "2FC3A4C6C3B9E6",
+      "alias_cp949": "/\ucc44\ud305\ubc29",
+      "type": 23,
+      "registration_call_address": "0x006649C8",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAKE_CHATROOMMAKEWND",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F0C",
+      "alias_raw_hex": "2FC3CEA4B5",
+      "alias_cp949": "/\ucd18\u3145",
+      "type": 23,
+      "registration_call_address": "0x006649E5",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAKE_CHATROOMMAKEWND",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722F04",
+      "alias_raw_hex": "2FC1A2BCD3C0DA",
+      "alias_cp949": "/\uc811\uc18d\uc790",
+      "type": 6,
+      "registration_call_address": "0x006649FE",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_NUM_USER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EFC",
+      "alias_raw_hex": "2FB4A9B1B8",
+      "alias_cp949": "/\ub204\uad6c",
+      "type": 6,
+      "registration_call_address": "0x00664A17",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_NUM_USER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EF8",
+      "alias_raw_hex": "2FA4B8",
+      "alias_cp949": "/\u3148",
+      "type": 6,
+      "registration_call_address": "0x00664A30",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_NUM_USER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EF4",
+      "alias_raw_hex": "2FC1C8",
+      "alias_cp949": "/\uc8a8",
+      "type": 6,
+      "registration_call_address": "0x00664A49",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_NUM_USER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EEC",
+      "alias_raw_hex": "2FC0BDBEC7",
+      "alias_cp949": "/\uc74c\uc545",
+      "type": 7,
+      "registration_call_address": "0x00664A66",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MUSIC_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EE4",
+      "alias_raw_hex": "2FA4D0C8E5",
+      "alias_cp949": "/\u3160\ud750",
+      "type": 7,
+      "registration_call_address": "0x00664A83",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MUSIC_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EDC",
+      "alias_raw_hex": "2FC0CCC6E5C6AE",
+      "alias_cp949": "/\uc774\ud399\ud2b8",
+      "type": 8,
+      "registration_call_address": "0x00664AA0",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_EFFECT_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722ED4",
+      "alias_raw_hex": "2FC8BFB0FAC0BD",
+      "alias_cp949": "/\ud6a8\uacfc\uc74c",
+      "type": 11,
+      "registration_call_address": "0x00664ABD",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_EFFECT_SOUND_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722ECC",
+      "alias_raw_hex": "2FB3AAA4C1A4C4",
+      "alias_cp949": "/\ub098\u3151\u3154",
+      "type": 10,
+      "registration_call_address": "0x00664ADA",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_FRAMESKIP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722840",
+      "alias_raw_hex": "2FC2F7B4DC",
+      "alias_cp949": "/\ucc28\ub2e8",
+      "type": 15,
+      "registration_call_address": "0x00664AF7",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_WHISPER_LIST",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EC0",
+      "alias_raw_hex": "2FC7D8C1A6C0FCBACE",
+      "alias_cp949": "/\ud574\uc81c\uc804\ubd80",
+      "type": 17,
+      "registration_call_address": "0x00664B14",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_WHISPER_STATE_IN",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EB4",
+      "alias_raw_hex": "2FC2F7B4DCC0FCBACE",
+      "alias_cp949": "/\ucc28\ub2e8\uc804\ubd80",
+      "type": 16,
+      "registration_call_address": "0x00664B31",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_WHISPER_STATE_EX",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EAC",
+      "alias_raw_hex": "2FBEC9B1E2",
+      "alias_cp949": "/\uc549\uae30",
+      "type": 22,
+      "registration_call_address": "0x00664B4E",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_SIT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EA8",
+      "alias_raw_hex": "2F866E",
+      "alias_cp949": "/\ub0e3",
+      "type": 22,
+      "registration_call_address": "0x00664B6B",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_SIT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722EA0",
+      "alias_raw_hex": "2FBCADB1E2",
+      "alias_cp949": "/\uc11c\uae30",
+      "type": 21,
+      "registration_call_address": "0x00664B88",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_STAND",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E98",
+      "alias_raw_hex": "2FA4A4A4B5B9B6",
+      "alias_cp949": "/\u3134\u3145\ubb49",
+      "type": 21,
+      "registration_call_address": "0x00664BA5",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_STAND",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E94",
+      "alias_raw_hex": "2FA4B2",
+      "alias_cp949": "/\u3142",
+      "type": 24,
+      "registration_call_address": "0x00664BC2",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EXIT_ROOM",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E8C",
+      "alias_raw_hex": "2FC5BBC5F0",
+      "alias_cp949": "/\ud0c8\ud1f4",
+      "type": 27,
+      "registration_call_address": "0x00664BDF",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_LEAVE_GROUP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 31,
+      "registration_call_address": "0x00664C05",
+      "dynamic_msg_id": 546,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_DELIGHT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 32,
+      "registration_call_address": "0x00664C2B",
+      "dynamic_msg_id": 547,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_THROB",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 33,
+      "registration_call_address": "0x00664C51",
+      "dynamic_msg_id": 549,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_SWEAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E84",
+      "alias_raw_hex": "2FC1D6B8D4",
+      "alias_cp949": "/\uc8fc\uba39",
+      "type": 40,
+      "registration_call_address": "0x00664C6E",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_ROCK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E80",
+      "alias_raw_hex": "2FBAB8",
+      "alias_cp949": "/\ubcf4",
+      "type": 41,
+      "registration_call_address": "0x00664C8B",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_WRAP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E78",
+      "alias_raw_hex": "2FB0A1C0A7",
+      "alias_cp949": "/\uac00\uc704",
+      "type": 39,
+      "registration_call_address": "0x00664CA8",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SCISSOR",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E70",
+      "alias_raw_hex": "2FB9D9C0A7",
+      "alias_cp949": "/\ubc14\uc704",
+      "type": 40,
+      "registration_call_address": "0x00664CC5",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_ROCK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E68",
+      "alias_raw_hex": "2FC1C2C7A5",
+      "alias_cp949": "/\uc88c\ud45c",
+      "type": 9,
+      "registration_call_address": "0x00664CE2",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAP_POS",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E60",
+      "alias_raw_hex": "2FC0E5BCD2",
+      "alias_cp949": "/\uc7a5\uc18c",
+      "type": 9,
+      "registration_call_address": "0x00664CFF",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MAP_POS",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 37,
+      "registration_call_address": "0x00664D25",
+      "dynamic_msg_id": 553,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_MONEY",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 36,
+      "registration_call_address": "0x00664D4B",
+      "dynamic_msg_id": 552,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_ANGER",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 35,
+      "registration_call_address": "0x00664D71",
+      "dynamic_msg_id": 551,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_FRET",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 34,
+      "registration_call_address": "0x00664D97",
+      "dynamic_msg_id": 550,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_AHA",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E58",
+      "alias_raw_hex": "2FBBFEA4C4",
+      "alias_cp949": "/\uc0e4\u3154",
+      "type": 42,
+      "registration_call_address": "0x00664DB4",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_OPEN_TIP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E50",
+      "alias_raw_hex": "2FB1E2BEEF",
+      "alias_cp949": "/\uae30\uc5b5",
+      "type": 43,
+      "registration_call_address": "0x00664DD1",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REMEMBER_WARPPOINT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E48",
+      "alias_raw_hex": "2FB4A9B8DE",
+      "alias_cp949": "/\ub204\uba54",
+      "type": 46,
+      "registration_call_address": "0x00664DEE",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_ATTACK_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E40",
+      "alias_raw_hex": "2FBDBAB3C0",
+      "alias_cp949": "/\uc2a4\ub0c5",
+      "type": 46,
+      "registration_call_address": "0x00664E0B",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_ATTACK_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E30",
+      "alias_raw_hex": "2FB3AAA4C1A4D3A4D3B4A9B8DE",
+      "alias_cp949": "/\ub098\u3151\u3163\u3163\ub204\uba54",
+      "type": 45,
+      "registration_call_address": "0x00664E28",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SKILL_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E24",
+      "alias_raw_hex": "2FBDBAC5B3BDBAB3C0",
+      "alias_cp949": "/\uc2a4\ud0ac\uc2a4\ub0c5",
+      "type": 45,
+      "registration_call_address": "0x00664E45",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SKILL_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E18",
+      "alias_raw_hex": "2FA4C1A4B5B5E5B4A9B8DE",
+      "alias_cp949": "/\u3151\u3145\ub4dc\ub204\uba54",
+      "type": 47,
+      "registration_call_address": "0x00664E62",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_ITEM_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E0C",
+      "alias_raw_hex": "2FBEC6C0CCC5DBBDBAB3C0",
+      "alias_cp949": "/\uc544\uc774\ud15c\uc2a4\ub0c5",
+      "type": 47,
+      "registration_call_address": "0x00664E7F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_ITEM_SNAP_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722E04",
+      "alias_raw_hex": "2FB0A5B9ABB8AE",
+      "alias_cp949": "/\uac08\ubb34\ub9ac",
+      "type": 51,
+      "registration_call_address": "0x00664E9C",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_SAVE_CHAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DF4",
+      "alias_raw_hex": "2F6175746F7361766563686174",
+      "alias_cp949": "/autosavechat",
+      "type": 104,
+      "registration_call_address": "0x00664EB9",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_AUTO_SAVE_CHAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DE8",
+      "alias_raw_hex": "2F6F626A6C69676874",
+      "alias_cp949": "/objlight",
+      "type": 65,
+      "registration_call_address": "0x00664ED6",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_TOGGLE_OBJLIGHT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DDC",
+      "alias_raw_hex": "2F6C6F6164696E67",
+      "alias_cp949": "/loading",
+      "type": 144,
+      "registration_call_address": "0x00664EF3",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_RANDOM_LOADING_SCREEN_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DD0",
+      "alias_raw_hex": "2F6D696E6967616D65",
+      "alias_cp949": "/minigame",
+      "type": 172,
+      "registration_call_address": "0x00664F10",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MINIGAME_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DC8",
+      "alias_raw_hex": "2FBDC5B0ED",
+      "alias_cp949": "/\uc2e0\uace0",
+      "type": 115,
+      "registration_call_address": "0x00664F2D",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_REPORT_CHAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DC0",
+      "alias_raw_hex": "2F746C737268",
+      "alias_cp949": "/tlsrh",
+      "type": 115,
+      "registration_call_address": "0x00664F4A",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_REPORT_CHAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DB8",
+      "alias_raw_hex": "2F7265706F7274",
+      "alias_cp949": "/report",
+      "type": 115,
+      "registration_call_address": "0x00664F67",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_REPORT_CHAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DAC",
+      "alias_raw_hex": "2F626174746C656D6F6465",
+      "alias_cp949": "/battlemode",
+      "type": 134,
+      "registration_call_address": "0x00664F84",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_BATTLE_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722DA8",
+      "alias_raw_hex": "2F626D",
+      "alias_cp949": "/bm",
+      "type": 134,
+      "registration_call_address": "0x00664FA1",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_BATTLE_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D9C",
+      "alias_raw_hex": "2F626174746C6563686174",
+      "alias_cp949": "/battlechat",
+      "type": 185,
+      "registration_call_address": "0x00664FBE",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_BATTLECHAT_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D94",
+      "alias_raw_hex": "2FC0FCC0E5",
+      "alias_cp949": "/\uc804\uc7a5",
+      "type": 185,
+      "registration_call_address": "0x00664FDB",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_BATTLECHAT_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D88",
+      "alias_raw_hex": "2F707670696E666F",
+      "alias_cp949": "/pvpinfo",
+      "type": 141,
+      "registration_call_address": "0x00664FF8",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SHOW_PVP_INFO",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D84",
+      "alias_raw_hex": "2F7069",
+      "alias_cp949": "/pi",
+      "type": 141,
+      "registration_call_address": "0x00665015",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SHOW_PVP_INFO",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D78",
+      "alias_raw_hex": "2FC0DAB5BFC0C0B4E4",
+      "alias_cp949": "/\uc790\ub3d9\uc751\ub2f5",
+      "type": 152,
+      "registration_call_address": "0x00665032",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_AUTO_MSG_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D6C",
+      "alias_raw_hex": "2F6175746F6D7367",
+      "alias_cp949": "/automsg",
+      "type": 152,
+      "registration_call_address": "0x0066504F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_AUTO_MSG_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D68",
+      "alias_raw_hex": "2F616D",
+      "alias_cp949": "/am",
+      "type": 152,
+      "registration_call_address": "0x0066506C",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_AUTO_MSG_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D5C",
+      "alias_raw_hex": "2F74726163656169",
+      "alias_cp949": "/traceai",
+      "type": 161,
+      "registration_call_address": "0x00665089",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_TRACEAI_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D50",
+      "alias_raw_hex": "2FC8A3B9AEC1F6B4C9",
+      "alias_cp949": "/\ud638\ubb38\uc9c0\ub2a5",
+      "type": 163,
+      "registration_call_address": "0x006650A6",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_HOMUN_USERAI_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D48",
+      "alias_raw_hex": "2F686F6169",
+      "alias_cp949": "/hoai",
+      "type": 163,
+      "registration_call_address": "0x006650C3",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_HOMUN_USERAI_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D3C",
+      "alias_raw_hex": "2FBFEBBAB4C1F6B4C9",
+      "alias_cp949": "/\uc6a9\ubcd1\uc9c0\ub2a5",
+      "type": 173,
+      "registration_call_address": "0x006650E0",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MER_USERAI_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D34",
+      "alias_raw_hex": "2F6D65726169",
+      "alias_cp949": "/merai",
+      "type": 173,
+      "registration_call_address": "0x006650FD",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_MER_USERAI_ON_OFF",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 79,
+      "registration_call_address": "0x00665123",
+      "dynamic_msg_id": 548,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_BIGTHROB",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 66,
+      "registration_call_address": "0x00665149",
+      "dynamic_msg_id": 555,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_THANKS",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D30",
+      "alias_raw_hex": "2FA4A3",
+      "alias_cp949": "/\u3133",
+      "type": 66,
+      "registration_call_address": "0x00665166",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_THANKS",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 67,
+      "registration_call_address": "0x0066518C",
+      "dynamic_msg_id": 556,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_KEK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 68,
+      "registration_call_address": "0x006651B2",
+      "dynamic_msg_id": 557,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_SORRY",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D28",
+      "alias_raw_hex": "2F736F727279",
+      "alias_cp949": "/sorry",
+      "type": 68,
+      "registration_call_address": "0x006651CF",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SORRY",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 69,
+      "registration_call_address": "0x006651F5",
+      "dynamic_msg_id": 558,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_SMILE",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D20",
+      "alias_raw_hex": "2FC7CFC7CF",
+      "alias_cp949": "/\ud558\ud558",
+      "type": 69,
+      "registration_call_address": "0x00665212",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SMILE",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D1C",
+      "alias_raw_hex": "2FA4B7",
+      "alias_cp949": "/\u3147",
+      "type": 69,
+      "registration_call_address": "0x0066522F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SMILE",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D14",
+      "alias_raw_hex": "2F736D696C65",
+      "alias_cp949": "/smile",
+      "type": 69,
+      "registration_call_address": "0x0066524C",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_SMILE",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D10",
+      "alias_raw_hex": "2FA4A1",
+      "alias_cp949": "/\u3131",
+      "type": 31,
+      "registration_call_address": "0x00665269",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_DELIGHT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 70,
+      "registration_call_address": "0x0066528F",
+      "dynamic_msg_id": 559,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_PROFUSELY_SWEAT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 71,
+      "registration_call_address": "0x006652B5",
+      "dynamic_msg_id": 560,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_SCRATCH",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 72,
+      "registration_call_address": "0x006652DB",
+      "dynamic_msg_id": 561,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_BEST",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D08",
+      "alias_raw_hex": "2FBFF8C3F2",
+      "alias_cp949": "/\uc6d0\uce04",
+      "type": 72,
+      "registration_call_address": "0x006652F8",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_BEST",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722D04",
+      "alias_raw_hex": "2FA4BA",
+      "alias_cp949": "/\u314a",
+      "type": 72,
+      "registration_call_address": "0x00665315",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_BEST",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CF8",
+      "alias_raw_hex": "2F656D6F74696F6E",
+      "alias_cp949": "/emotion",
+      "type": 86,
+      "registration_call_address": "0x00665332",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SHOW_EMOTIONLIST",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CEC",
+      "alias_raw_hex": "2F636C69706D6F757365",
+      "alias_cp949": "/clipmouse",
+      "type": 117,
+      "registration_call_address": "0x0066534F",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_CLIPMOUSE",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CE0",
+      "alias_raw_hex": "2F6C696768746D6170",
+      "alias_cp949": "/lightmap",
+      "type": 118,
+      "registration_call_address": "0x0066536C",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_LIGHTMAP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 73,
+      "registration_call_address": "0x00665392",
+      "dynamic_msg_id": 562,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_STARE_ABOUT",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 74,
+      "registration_call_address": "0x006653B8",
+      "dynamic_msg_id": 563,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_HUK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CDC",
+      "alias_raw_hex": "2FA4BE",
+      "alias_cp949": "/\u314e",
+      "type": 74,
+      "registration_call_address": "0x006653D5",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_HUK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 75,
+      "registration_call_address": "0x006653FB",
+      "dynamic_msg_id": 564,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_O",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CD8",
+      "alias_raw_hex": "2F6F",
+      "alias_cp949": "/o",
+      "type": 75,
+      "registration_call_address": "0x00665418",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_O",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 76,
+      "registration_call_address": "0x0066543E",
+      "dynamic_msg_id": 565,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_X",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CD4",
+      "alias_raw_hex": "2F78",
+      "alias_cp949": "/x",
+      "type": 76,
+      "registration_call_address": "0x0066545B",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_X",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 77,
+      "registration_call_address": "0x00665481",
+      "dynamic_msg_id": 566,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_HELP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CCC",
+      "alias_raw_hex": "2FA4BAA4BA",
+      "alias_cp949": "/\u314a\u314a",
+      "type": 77,
+      "registration_call_address": "0x0066549E",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_HELP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00723228",
+      "alias_raw_hex": "2F68656C70",
+      "alias_cp949": "/help",
+      "type": 77,
+      "registration_call_address": "0x006654BB",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_HELP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 78,
+      "registration_call_address": "0x006654E1",
+      "dynamic_msg_id": 567,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_GO",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 80,
+      "registration_call_address": "0x00665507",
+      "dynamic_msg_id": 568,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_CRY",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 81,
+      "registration_call_address": "0x0066552D",
+      "dynamic_msg_id": 569,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_KIK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CC8",
+      "alias_raw_hex": "2FC5B1",
+      "alias_cp949": "/\ud0a5",
+      "type": 81,
+      "registration_call_address": "0x0066554A",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_KIK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CC4",
+      "alias_raw_hex": "2FA4BB",
+      "alias_cp949": "/\u314b",
+      "type": 81,
+      "registration_call_address": "0x00665567",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_KIK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CBC",
+      "alias_raw_hex": "2FC4C9C4C9",
+      "alias_cp949": "/\ucf00\ucf00",
+      "type": 81,
+      "registration_call_address": "0x00665584",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_KIK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 82,
+      "registration_call_address": "0x006655AA",
+      "dynamic_msg_id": 570,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_CHUP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 83,
+      "registration_call_address": "0x006655D0",
+      "dynamic_msg_id": 571,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_CHUPCHUP",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 84,
+      "registration_call_address": "0x006655F6",
+      "dynamic_msg_id": 572,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_HNG",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CB4",
+      "alias_raw_hex": "2FB2F4B4F6",
+      "alias_cp949": "/\ub044\ub355",
+      "type": 85,
+      "registration_call_address": "0x00665613",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_OK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 85,
+      "registration_call_address": "0x00665639",
+      "dynamic_msg_id": 573,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_OK",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x007024E0",
+      "alias_raw_hex": "2FC0CCB8F0BCC7",
+      "alias_cp949": "/\uc774\ubaa8\uc158",
+      "type": 86,
+      "registration_call_address": "0x00665656",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_SHOW_EMOTIONLIST",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 122,
+      "registration_call_address": "0x0066567C",
+      "dynamic_msg_id": 772,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_STARE",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": "0x00722CB0",
+      "alias_raw_hex": "2FA4B9",
+      "alias_cp949": "/\u3149",
+      "type": 122,
+      "registration_call_address": "0x00665699",
+      "registration_kind": "insert",
+      "dynamic_msg_id": null,
+      "source_tag": "TT_REQ_EMOTION_STARE",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 123,
+      "registration_call_address": "0x006656BF",
+      "dynamic_msg_id": 773,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_HUNGRY",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 124,
+      "registration_call_address": "0x006656E5",
+      "dynamic_msg_id": 774,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_COOL",
+      "ordinary_server_only": false
+    },
+    {
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "type": 125,
+      "registration_call_address": "0x0066570B",
+      "dynamic_msg_id": 775,
+      "alias_resolution": "MsgStr result; ID from PE argument push",
+      "registration_kind": "insert",
+      "source_tag": "TT_REQ_EMOTION_MERONG",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066572D",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 776,
+      "type": 126,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_SHY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665753",
+      "alias_address": "0x00722CAC",
+      "alias_raw_hex": "2FBACE",
+      "alias_cp949": "/\ubd80",
+      "dynamic_msg_id": null,
+      "type": 126,
+      "source_tag": "TT_REQ_EMOTION_SHY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665782",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 777,
+      "type": 127,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_GOODBOY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006657B1",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 778,
+      "type": 128,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_SPTIME",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006657D7",
+      "alias_address": "0x00722CA8",
+      "alias_raw_hex": "2FBFA5",
+      "alias_cp949": "/\uc5e0",
+      "dynamic_msg_id": null,
+      "type": 128,
+      "source_tag": "TT_REQ_EMOTION_SPTIME",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665806",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 779,
+      "type": 129,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_SEXY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665835",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 780,
+      "type": 130,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_COMEON",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665864",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 781,
+      "type": 131,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_SLEEPY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066588A",
+      "alias_address": "0x00722EF8",
+      "alias_raw_hex": "2FA4B8",
+      "alias_cp949": "/\u3148",
+      "dynamic_msg_id": null,
+      "type": 131,
+      "source_tag": "TT_REQ_EMOTION_SLEEPY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006658B9",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 782,
+      "type": 132,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_CONGRATULATION",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006658DF",
+      "alias_address": "0x00722CA0",
+      "alias_raw_hex": "2FA4BAA4BB",
+      "alias_cp949": "/\u314a\u314b",
+      "dynamic_msg_id": null,
+      "type": 132,
+      "source_tag": "TT_REQ_EMOTION_CONGRATULATION",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066590E",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 783,
+      "type": 133,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_HPTIME",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665934",
+      "alias_address": "0x00722C9C",
+      "alias_raw_hex": "2FC7C7",
+      "alias_cp949": "/\ud53c",
+      "dynamic_msg_id": null,
+      "type": 133,
+      "source_tag": "TT_REQ_EMOTION_HPTIME",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066595A",
+      "alias_address": "0x00722C98",
+      "alias_raw_hex": "2F6531",
+      "alias_cp949": "/e1",
+      "dynamic_msg_id": null,
+      "type": 122,
+      "source_tag": "TT_REQ_EMOTION_STARE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665980",
+      "alias_address": "0x00722C94",
+      "alias_raw_hex": "2F6532",
+      "alias_cp949": "/e2",
+      "dynamic_msg_id": null,
+      "type": 123,
+      "source_tag": "TT_REQ_EMOTION_HUNGRY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006659A6",
+      "alias_address": "0x00722C90",
+      "alias_raw_hex": "2F6533",
+      "alias_cp949": "/e3",
+      "dynamic_msg_id": null,
+      "type": 124,
+      "source_tag": "TT_REQ_EMOTION_COOL",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006659CC",
+      "alias_address": "0x00722C8C",
+      "alias_raw_hex": "2F6534",
+      "alias_cp949": "/e4",
+      "dynamic_msg_id": null,
+      "type": 125,
+      "source_tag": "TT_REQ_EMOTION_MERONG",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006659F2",
+      "alias_address": "0x00722C88",
+      "alias_raw_hex": "2F6535",
+      "alias_cp949": "/e5",
+      "dynamic_msg_id": null,
+      "type": 126,
+      "source_tag": "TT_REQ_EMOTION_SHY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665A18",
+      "alias_address": "0x00722C84",
+      "alias_raw_hex": "2F6536",
+      "alias_cp949": "/e6",
+      "dynamic_msg_id": null,
+      "type": 127,
+      "source_tag": "TT_REQ_EMOTION_GOODBOY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665A3E",
+      "alias_address": "0x00722C80",
+      "alias_raw_hex": "2F6537",
+      "alias_cp949": "/e7",
+      "dynamic_msg_id": null,
+      "type": 128,
+      "source_tag": "TT_REQ_EMOTION_SPTIME",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665A64",
+      "alias_address": "0x00722C7C",
+      "alias_raw_hex": "2F6538",
+      "alias_cp949": "/e8",
+      "dynamic_msg_id": null,
+      "type": 129,
+      "source_tag": "TT_REQ_EMOTION_SEXY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665A8A",
+      "alias_address": "0x00722C78",
+      "alias_raw_hex": "2F6539",
+      "alias_cp949": "/e9",
+      "dynamic_msg_id": null,
+      "type": 130,
+      "source_tag": "TT_REQ_EMOTION_COMEON",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665AB0",
+      "alias_address": "0x00722C70",
+      "alias_raw_hex": "2F653130",
+      "alias_cp949": "/e10",
+      "dynamic_msg_id": null,
+      "type": 131,
+      "source_tag": "TT_REQ_EMOTION_SLEEPY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665AD6",
+      "alias_address": "0x00722C68",
+      "alias_raw_hex": "2F653131",
+      "alias_cp949": "/e11",
+      "dynamic_msg_id": null,
+      "type": 132,
+      "source_tag": "TT_REQ_EMOTION_CONGRATULATION",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665AFC",
+      "alias_address": "0x00722C60",
+      "alias_raw_hex": "2F653132",
+      "alias_cp949": "/e12",
+      "dynamic_msg_id": null,
+      "type": 133,
+      "source_tag": "TT_REQ_EMOTION_HPTIME",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665B2B",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 945,
+      "type": 153,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_SPARK",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665B5A",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 946,
+      "type": 154,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_CONFUSE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665B89",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 947,
+      "type": 155,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_OHNO",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665BAF",
+      "alias_address": "0x00722C58",
+      "alias_raw_hex": "2FC7D1BCFB",
+      "alias_cp949": "/\ud55c\uc228",
+      "dynamic_msg_id": null,
+      "type": 155,
+      "source_tag": "TT_REQ_EMOTION_OHNO",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665BDE",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 948,
+      "type": 156,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_HUM",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665C0D",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 949,
+      "type": 157,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_BLABLA",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665C33",
+      "alias_address": "0x00722C4C",
+      "alias_raw_hex": "2FBDC3B2F8BDC3B2F8",
+      "alias_cp949": "/\uc2dc\ub04c\uc2dc\ub04c",
+      "dynamic_msg_id": null,
+      "type": 157,
+      "source_tag": "TT_REQ_EMOTION_BLABLA",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665C62",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 950,
+      "type": 158,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_OTL",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665C91",
+      "alias_address": null,
+      "alias_raw_hex": null,
+      "alias_cp949": null,
+      "dynamic_msg_id": 951,
+      "type": 159,
+      "alias_resolution": "MsgStr result; ID is immediate argument to call 0x514350",
+      "source_tag": "TT_REQ_EMOTION_DICE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665CB7",
+      "alias_address": "0x00722C44",
+      "alias_raw_hex": "2F64696365",
+      "alias_cp949": "/dice",
+      "dynamic_msg_id": null,
+      "type": 159,
+      "source_tag": "TT_REQ_EMOTION_DICE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665CDD",
+      "alias_address": "0x00722C3C",
+      "alias_raw_hex": "2F653133",
+      "alias_cp949": "/e13",
+      "dynamic_msg_id": null,
+      "type": 153,
+      "source_tag": "TT_REQ_EMOTION_SPARK",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665D03",
+      "alias_address": "0x00722C34",
+      "alias_raw_hex": "2F653134",
+      "alias_cp949": "/e14",
+      "dynamic_msg_id": null,
+      "type": 154,
+      "source_tag": "TT_REQ_EMOTION_CONFUSE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665D29",
+      "alias_address": "0x00722C2C",
+      "alias_raw_hex": "2F653135",
+      "alias_cp949": "/e15",
+      "dynamic_msg_id": null,
+      "type": 155,
+      "source_tag": "TT_REQ_EMOTION_OHNO",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665D4F",
+      "alias_address": "0x00722C24",
+      "alias_raw_hex": "2F653136",
+      "alias_cp949": "/e16",
+      "dynamic_msg_id": null,
+      "type": 156,
+      "source_tag": "TT_REQ_EMOTION_HUM",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665D75",
+      "alias_address": "0x00722C1C",
+      "alias_raw_hex": "2F653137",
+      "alias_cp949": "/e17",
+      "dynamic_msg_id": null,
+      "type": 157,
+      "source_tag": "TT_REQ_EMOTION_BLABLA",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665D9B",
+      "alias_address": "0x00722C14",
+      "alias_raw_hex": "2F653138",
+      "alias_cp949": "/e18",
+      "dynamic_msg_id": null,
+      "type": 158,
+      "source_tag": "TT_REQ_EMOTION_OTL",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665DC1",
+      "alias_address": "0x00722C0C",
+      "alias_raw_hex": "2F653139",
+      "alias_cp949": "/e19",
+      "dynamic_msg_id": null,
+      "type": 159,
+      "source_tag": "TT_REQ_EMOTION_DICE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665DE7",
+      "alias_address": "0x00722C04",
+      "alias_raw_hex": "2F6F746C",
+      "alias_cp949": "/otl",
+      "dynamic_msg_id": null,
+      "type": 158,
+      "source_tag": "TT_REQ_EMOTION_OTL",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665E0D",
+      "alias_address": "0x00722BFC",
+      "alias_raw_hex": "2FB7AFBAEA",
+      "alias_cp949": "/\ub7ec\ube0c",
+      "dynamic_msg_id": null,
+      "type": 170,
+      "source_tag": "TT_REQ_EMOTION_LUV",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665E33",
+      "alias_address": "0x00722BF4",
+      "alias_raw_hex": "2F653230",
+      "alias_cp949": "/e20",
+      "dynamic_msg_id": null,
+      "type": 170,
+      "source_tag": "TT_REQ_EMOTION_LUV",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665E59",
+      "alias_address": "0x00722BEC",
+      "alias_raw_hex": "2F653237",
+      "alias_cp949": "/e27",
+      "dynamic_msg_id": null,
+      "type": 186,
+      "source_tag": "TT_REQ_EMOTION_HUM2",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665E7F",
+      "alias_address": "0x00722BE4",
+      "alias_raw_hex": "2F653238",
+      "alias_cp949": "/e28",
+      "dynamic_msg_id": null,
+      "type": 187,
+      "source_tag": "TT_REQ_EMOTION_ABS",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665EA5",
+      "alias_address": "0x00722BDC",
+      "alias_raw_hex": "2F653239",
+      "alias_cp949": "/e29",
+      "dynamic_msg_id": null,
+      "type": 188,
+      "source_tag": "TT_REQ_EMOTION_OOPS",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665ECB",
+      "alias_address": "0x00722BD4",
+      "alias_raw_hex": "2F653330",
+      "alias_cp949": "/e30",
+      "dynamic_msg_id": null,
+      "type": 189,
+      "source_tag": "TT_REQ_EMOTION_SPIT",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665EF1",
+      "alias_address": "0x00722BCC",
+      "alias_raw_hex": "2F653331",
+      "alias_cp949": "/e31",
+      "dynamic_msg_id": null,
+      "type": 190,
+      "source_tag": "TT_REQ_EMOTION_ENE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665F17",
+      "alias_address": "0x00722BC4",
+      "alias_raw_hex": "2F653332",
+      "alias_cp949": "/e32",
+      "dynamic_msg_id": null,
+      "type": 191,
+      "source_tag": "TT_REQ_EMOTION_PANIC",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665F3D",
+      "alias_address": "0x00722BBC",
+      "alias_raw_hex": "2F653333",
+      "alias_cp949": "/e33",
+      "dynamic_msg_id": null,
+      "type": 192,
+      "source_tag": "TT_REQ_EMOTION_WHISP",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665F63",
+      "alias_address": "0x00722BB8",
+      "alias_raw_hex": "2FC8EC",
+      "alias_cp949": "/\ud760",
+      "dynamic_msg_id": null,
+      "type": 186,
+      "source_tag": "TT_REQ_EMOTION_HUM2",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665F89",
+      "alias_address": "0x00722BB4",
+      "alias_raw_hex": "2FB8DB",
+      "alias_cp949": "/\uba4d",
+      "dynamic_msg_id": null,
+      "type": 187,
+      "source_tag": "TT_REQ_EMOTION_ABS",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665FAF",
+      "alias_address": "0x00722BB0",
+      "alias_raw_hex": "2FBFF3",
+      "alias_cp949": "/\uc6c1",
+      "dynamic_msg_id": null,
+      "type": 188,
+      "source_tag": "TT_REQ_EMOTION_OOPS",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665FD5",
+      "alias_address": "0x00722BAC",
+      "alias_raw_hex": "2FC0A1",
+      "alias_cp949": "/\uc6e9",
+      "dynamic_msg_id": null,
+      "type": 189,
+      "source_tag": "TT_REQ_EMOTION_SPIT",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00665FFB",
+      "alias_address": "0x00722BA4",
+      "alias_raw_hex": "2FC5BBB7C2",
+      "alias_cp949": "/\ud0c8\ub825",
+      "dynamic_msg_id": null,
+      "type": 190,
+      "source_tag": "TT_REQ_EMOTION_ENE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666021",
+      "alias_address": "0x00722B9C",
+      "alias_raw_hex": "2FB0F8C8B2",
+      "alias_cp949": "/\uacf5\ud669",
+      "dynamic_msg_id": null,
+      "type": 191,
+      "source_tag": "TT_REQ_EMOTION_PANIC",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666047",
+      "alias_address": "0x00722B94",
+      "alias_raw_hex": "2FC0A7BDBAC6DB",
+      "alias_cp949": "/\uc704\uc2a4\ud37c",
+      "dynamic_msg_id": null,
+      "type": 192,
+      "source_tag": "TT_REQ_EMOTION_WHISP",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066606D",
+      "alias_address": "0x00722B8C",
+      "alias_raw_hex": "2F68756D",
+      "alias_cp949": "/hum",
+      "dynamic_msg_id": null,
+      "type": 186,
+      "source_tag": "TT_REQ_EMOTION_HUM2",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666093",
+      "alias_address": "0x00722B84",
+      "alias_raw_hex": "2F616273",
+      "alias_cp949": "/abs",
+      "dynamic_msg_id": null,
+      "type": 187,
+      "source_tag": "TT_REQ_EMOTION_ABS",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006660B9",
+      "alias_address": "0x00722B7C",
+      "alias_raw_hex": "2F6F6F7073",
+      "alias_cp949": "/oops",
+      "dynamic_msg_id": null,
+      "type": 188,
+      "source_tag": "TT_REQ_EMOTION_OOPS",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006660DF",
+      "alias_address": "0x00722B74",
+      "alias_raw_hex": "2F73706974",
+      "alias_cp949": "/spit",
+      "dynamic_msg_id": null,
+      "type": 189,
+      "source_tag": "TT_REQ_EMOTION_SPIT",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666105",
+      "alias_address": "0x00722B6C",
+      "alias_raw_hex": "2F656E65",
+      "alias_cp949": "/ene",
+      "dynamic_msg_id": null,
+      "type": 190,
+      "source_tag": "TT_REQ_EMOTION_ENE",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066612B",
+      "alias_address": "0x00722B64",
+      "alias_raw_hex": "2F70616E6963",
+      "alias_cp949": "/panic",
+      "dynamic_msg_id": null,
+      "type": 191,
+      "source_tag": "TT_REQ_EMOTION_PANIC",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666151",
+      "alias_address": "0x00722B5C",
+      "alias_raw_hex": "2F7768697370",
+      "alias_cp949": "/whisp",
+      "dynamic_msg_id": null,
+      "type": 192,
+      "source_tag": "TT_REQ_EMOTION_WHISP",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666177",
+      "alias_address": "0x00722B58",
+      "alias_raw_hex": "2F6877",
+      "alias_cp949": "/hw",
+      "dynamic_msg_id": null,
+      "type": 162,
+      "source_tag": "TT_HOMUN_WAIT",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066619D",
+      "alias_address": "0x00722B50",
+      "alias_raw_hex": "2FA4C7A4B8",
+      "alias_cp949": "/\u3157\u3148",
+      "dynamic_msg_id": null,
+      "type": 162,
+      "source_tag": "TT_HOMUN_WAIT",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006661C3",
+      "alias_address": "0x00722B44",
+      "alias_raw_hex": "2F626C61636B736D697468",
+      "alias_cp949": "/blacksmith",
+      "dynamic_msg_id": null,
+      "type": 145,
+      "source_tag": "TT_REQ_BLACKSMITH",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006661E9",
+      "alias_address": "0x00722B38",
+      "alias_raw_hex": "2F616C6368656D697374",
+      "alias_cp949": "/alchemist",
+      "dynamic_msg_id": null,
+      "type": 146,
+      "source_tag": "TT_REQ_ALCHEMIST",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066620F",
+      "alias_address": "0x00722B2C",
+      "alias_raw_hex": "2F7461656B776F6E",
+      "alias_cp949": "/taekwon",
+      "dynamic_msg_id": null,
+      "type": 151,
+      "source_tag": "TT_REQ_TAEKWON",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666235",
+      "alias_address": "0x00722B28",
+      "alias_raw_hex": "2F6C76",
+      "alias_cp949": "/lv",
+      "dynamic_msg_id": null,
+      "type": 148,
+      "source_tag": "TT_LEVEL",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066625B",
+      "alias_address": "0x00722B24",
+      "alias_raw_hex": "2F7370",
+      "alias_cp949": "/sp",
+      "dynamic_msg_id": null,
+      "type": 149,
+      "source_tag": "TT_SP",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666281",
+      "alias_address": "0x00722B20",
+      "alias_raw_hex": "2F706B",
+      "alias_cp949": "/pk",
+      "dynamic_msg_id": null,
+      "type": 160,
+      "source_tag": "TT_REQ_KILLER_RANK",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006662A7",
+      "alias_address": "0x00722B14",
+      "alias_raw_hex": "2F68756E74696E67",
+      "alias_cp949": "/hunting",
+      "dynamic_msg_id": null,
+      "type": 168,
+      "source_tag": "TT_REQ_HUNTING",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006662CD",
+      "alias_address": "0x00722B10",
+      "alias_raw_hex": "2F636E",
+      "alias_cp949": "/cn",
+      "dynamic_msg_id": null,
+      "type": 180,
+      "source_tag": "TT_COPY_NAME",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006662F3",
+      "alias_address": "0x00722B04",
+      "alias_raw_hex": "2FC3CAB4EBB0C5BACE",
+      "alias_cp949": "/\ucd08\ub300\uac70\ubd80",
+      "dynamic_msg_id": null,
+      "type": 182,
+      "source_tag": "TT_REQ_REFUSE_INVITE_PARTY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666319",
+      "alias_address": "0x00722AF8",
+      "alias_raw_hex": "2FC3CAB4EBBCF6B6F4",
+      "alias_cp949": "/\ucd08\ub300\uc218\ub77d",
+      "dynamic_msg_id": null,
+      "type": 181,
+      "source_tag": "TT_REQ_ACCEPT_INVITE_PARTY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066633F",
+      "alias_address": "0x00722AF0",
+      "alias_raw_hex": "2F726566757365",
+      "alias_cp949": "/refuse",
+      "dynamic_msg_id": null,
+      "type": 182,
+      "source_tag": "TT_REQ_REFUSE_INVITE_PARTY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x00666365",
+      "alias_address": "0x00722AE8",
+      "alias_raw_hex": "2F616363657074",
+      "alias_cp949": "/accept",
+      "dynamic_msg_id": null,
+      "type": 181,
+      "source_tag": "TT_REQ_ACCEPT_INVITE_PARTY",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x0066638B",
+      "alias_address": "0x00722ADC",
+      "alias_raw_hex": "2FC0E5BAF1B0F8B0B3",
+      "alias_cp949": "/\uc7a5\ube44\uacf5\uac1c",
+      "dynamic_msg_id": null,
+      "type": 184,
+      "source_tag": "TT_REQ_OPEN_EQUIPEDITEM_ONOFF",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006663B1",
+      "alias_address": "0x00722AD0",
+      "alias_raw_hex": "2F776B64716C726864726F",
+      "alias_cp949": "/wkdqlrhdro",
+      "dynamic_msg_id": null,
+      "type": 184,
+      "source_tag": "TT_REQ_OPEN_EQUIPEDITEM_ONOFF",
+      "ordinary_server_only": false
+    },
+    {
+      "registration_kind": "push_back",
+      "registration_call_address": "0x006663D7",
+      "alias_address": "0x00722AC8",
+      "alias_raw_hex": "2F65716F70656E",
+      "alias_cp949": "/eqopen",
+      "dynamic_msg_id": null,
+      "type": 184,
+      "source_tag": "TT_REQ_OPEN_EQUIPEDITEM_ONOFF",
+      "ordinary_server_only": false
+    }
+  ],
+  "parameter_aliases": [
+    {
+      "address": "0x7228c0",
+      "bytes_hex": "2f a4 d0",
+      "decoded_text": "/\u3160",
+      "reference_code_addresses": [
+        "0x662307"
+      ],
+      "kind": "Tail",
+      "type": 1,
+      "value": 3
+    },
+    {
+      "address": "0x7228bc",
+      "bytes_hex": "2f 62",
+      "decoded_text": "/b",
+      "reference_code_addresses": [
+        "0x662344"
+      ],
+      "kind": "Tail",
+      "type": 1,
+      "value": 2
+    },
+    {
+      "address": "0x7228b8",
+      "bytes_hex": "2f 6c 62",
+      "decoded_text": "/lb",
+      "reference_code_addresses": [
+        "0x662381"
+      ],
+      "kind": "Tail",
+      "type": 87,
+      "value": 3
+    },
+    {
+      "address": "0x7228b0",
+      "bytes_hex": "2f a4 d3 a4 d0",
+      "decoded_text": "/\u3163\u3160",
+      "reference_code_addresses": [
+        "0x6623be"
+      ],
+      "kind": "Tail",
+      "type": 87,
+      "value": 5
+    },
+    {
+      "address": "0x7228ac",
+      "bytes_hex": "2f 6e 62",
+      "decoded_text": "/nb",
+      "reference_code_addresses": [
+        "0x6623fb"
+      ],
+      "kind": "Tail",
+      "type": 90,
+      "value": 3
+    },
+    {
+      "address": "0x7228a4",
+      "bytes_hex": "2f c6 c4 b6 f5 b8 bb",
+      "decoded_text": "/\ud30c\ub780\ub9d0",
+      "reference_code_addresses": [
+        "0x662438"
+      ],
+      "kind": "Tail",
+      "type": 102,
+      "value": 7
+    },
+    {
+      "address": "0x72289c",
+      "bytes_hex": "2f a4 cc a4 d0",
+      "decoded_text": "/\u315c\u3160",
+      "reference_code_addresses": [
+        "0x662475"
+      ],
+      "kind": "Tail",
+      "type": 90,
+      "value": 5
+    },
+    {
+      "address": "0x722894",
+      "bytes_hex": "2f 6e 6c 62",
+      "decoded_text": "/nlb",
+      "reference_code_addresses": [
+        "0x6624b2"
+      ],
+      "kind": "Tail",
+      "type": 91,
+      "value": 4
+    },
+    {
+      "address": "0x72288c",
+      "bytes_hex": "2f a4 cf a4 d0",
+      "decoded_text": "/\u315f\u3160",
+      "reference_code_addresses": [
+        "0x6624ef"
+      ],
+      "kind": "Tail",
+      "type": 91,
+      "value": 5
+    },
+    {
+      "address": "0x722888",
+      "bytes_hex": "2f 62 62",
+      "decoded_text": "/bb",
+      "reference_code_addresses": [
+        "0x66252c"
+      ],
+      "kind": "Tail",
+      "type": 102,
+      "value": 3
+    },
+    {
+      "address": "0x72287c",
+      "bytes_hex": "2f c1 f6 bf aa c6 c4 b6 f5 b8 bb",
+      "decoded_text": "/\uc9c0\uc5ed\ud30c\ub780\ub9d0",
+      "reference_code_addresses": [
+        "0x662569"
+      ],
+      "kind": "Tail",
+      "type": 103,
+      "value": 11
+    },
+    {
+      "address": "0x722878",
+      "bytes_hex": "2f 6d 62",
+      "decoded_text": "/mb",
+      "reference_code_addresses": [
+        "0x6625a6"
+      ],
+      "kind": "Tail",
+      "type": 103,
+      "value": 3
+    },
+    {
+      "address": "0x722870",
+      "bytes_hex": "2f 6b 69 6c 6c",
+      "decoded_text": "/kill",
+      "reference_code_addresses": [
+        "0x6625e3"
+      ],
+      "kind": "Tail",
+      "type": 4,
+      "value": 5
+    },
+    {
+      "address": "0x72286c",
+      "bytes_hex": "2f 76",
+      "decoded_text": "/v",
+      "reference_code_addresses": [
+        "0x662620"
+      ],
+      "kind": "Volume",
+      "type": 12,
+      "value": 0
+    },
+    {
+      "address": "0x722868",
+      "bytes_hex": "2f a4 bd",
+      "decoded_text": "/\u314d",
+      "reference_code_addresses": [
+        "0x66264e"
+      ],
+      "kind": "Volume",
+      "type": 12,
+      "value": 0
+    },
+    {
+      "address": "0x722864",
+      "bytes_hex": "2f 62 76",
+      "decoded_text": "/bv",
+      "reference_code_addresses": [
+        "0x66267c"
+      ],
+      "kind": "Volume",
+      "type": 13,
+      "value": 0
+    },
+    {
+      "address": "0x72285c",
+      "bytes_hex": "2f a4 d0 a4 bd",
+      "decoded_text": "/\u3160\u314d",
+      "reference_code_addresses": [
+        "0x6626aa"
+      ],
+      "kind": "Volume",
+      "type": 13,
+      "value": 0
+    },
+    {
+      "address": "0x722858",
+      "bytes_hex": "2f 67 63",
+      "decoded_text": "/gc",
+      "reference_code_addresses": [
+        "0x6626d8",
+        "0x662742"
+      ],
+      "kind": "RawParam",
+      "type": 57,
+      "value": 4
+    },
+    {
+      "address": "0x72284c",
+      "bytes_hex": "2f 67 75 69 6c 64 63 68 61 74",
+      "decoded_text": "/guildchat",
+      "reference_code_addresses": [
+        "0x662702"
+      ],
+      "kind": "RawParam",
+      "type": 57,
+      "value": 11
+    },
+    {
+      "address": "0x722848",
+      "bytes_hex": "2f 65 78",
+      "decoded_text": "/ex",
+      "reference_code_addresses": [
+        "0x662782",
+        "0x6627e9"
+      ],
+      "kind": "RawParam",
+      "type": 18,
+      "value": 4
+    },
+    {
+      "address": "0x722840",
+      "bytes_hex": "2f c2 f7 b4 dc",
+      "decoded_text": "/\ucc28\ub2e8",
+      "reference_code_addresses": [
+        "0x6627ac"
+      ],
+      "kind": "RawParam",
+      "type": 18,
+      "value": 6
+    },
+    {
+      "address": "0x72283c",
+      "bytes_hex": "2f 69 6e",
+      "decoded_text": "/in",
+      "reference_code_addresses": [
+        "0x662825",
+        "0x66288c"
+      ],
+      "kind": "RawParam",
+      "type": 19,
+      "value": 4
+    },
+    {
+      "address": "0x722834",
+      "bytes_hex": "2f c7 d8 c1 a6",
+      "decoded_text": "/\ud574\uc81c",
+      "reference_code_addresses": [
+        "0x66284f"
+      ],
+      "kind": "RawParam",
+      "type": 19,
+      "value": 6
+    },
+    {
+      "address": "0x72282c",
+      "bytes_hex": "2f 72 65 64",
+      "decoded_text": "/red",
+      "reference_code_addresses": [
+        "0x6628d6"
+      ],
+      "kind": "Join",
+      "type": 20,
+      "value": 0
+    },
+    {
+      "address": "0x722824",
+      "bytes_hex": "2f b0 c5 b7 a1",
+      "decoded_text": "/\uac70\ub798",
+      "reference_code_addresses": [
+        "0x6629cc"
+      ],
+      "kind": "One",
+      "type": 25,
+      "value": 0
+    },
+    {
+      "address": "0x72281c",
+      "bytes_hex": "2f 72 6a 66 6f",
+      "decoded_text": "/rjfo",
+      "reference_code_addresses": [
+        "0x6629fa"
+      ],
+      "kind": "One",
+      "type": 25,
+      "value": 0
+    },
+    {
+      "address": "0x722814",
+      "bytes_hex": "2f b1 b3 c8 af",
+      "decoded_text": "/\uad50\ud658",
+      "reference_code_addresses": [
+        "0x662a28"
+      ],
+      "kind": "One",
+      "type": 25,
+      "value": 0
+    },
+    {
+      "address": "0x72280c",
+      "bytes_hex": "2f 72 79 67 68 6b 73",
+      "decoded_text": "/ryghks",
+      "reference_code_addresses": [
+        "0x662a52"
+      ],
+      "kind": "One",
+      "type": 25,
+      "value": 0
+    },
+    {
+      "address": "0x722804",
+      "bytes_hex": "2f 64 65 61 6c",
+      "decoded_text": "/deal",
+      "reference_code_addresses": [
+        "0x662a7c"
+      ],
+      "kind": "One",
+      "type": 25,
+      "value": 0
+    },
+    {
+      "address": "0x7227fc",
+      "bytes_hex": "2f a4 b7 a4 a7 b9 cc",
+      "decoded_text": "/\u3147\u3137\ubbf8",
+      "reference_code_addresses": [
+        "0x662aa6"
+      ],
+      "kind": "One",
+      "type": 25,
+      "value": 0
+    },
+    {
+      "address": "0x7227f4",
+      "bytes_hex": "2f b1 e6 b5 e5",
+      "decoded_text": "/\uae38\ub4dc",
+      "reference_code_addresses": [
+        "0x662b34"
+      ],
+      "kind": "One",
+      "type": 55,
+      "value": 0
+    },
+    {
+      "address": "0x7227ec",
+      "bytes_hex": "2f 72 6c 66 65 6d",
+      "decoded_text": "/rlfem",
+      "reference_code_addresses": [
+        "0x662b5e"
+      ],
+      "kind": "One",
+      "type": 55,
+      "value": 0
+    },
+    {
+      "address": "0x7227e4",
+      "bytes_hex": "2f 67 75 69 6c 64",
+      "decoded_text": "/guild",
+      "reference_code_addresses": [
+        "0x662b88"
+      ],
+      "kind": "One",
+      "type": 55,
+      "value": 0
+    },
+    {
+      "address": "0x7227dc",
+      "bytes_hex": "2f c7 d8 c3 bc",
+      "decoded_text": "/\ud574\uccb4",
+      "reference_code_addresses": [
+        "0x662c2f"
+      ],
+      "kind": "One",
+      "type": 56,
+      "value": 0
+    },
+    {
+      "address": "0x7227d4",
+      "bytes_hex": "2f 67 6f 63 70",
+      "decoded_text": "/gocp",
+      "reference_code_addresses": [
+        "0x662c59"
+      ],
+      "kind": "One",
+      "type": 56,
+      "value": 0
+    },
+    {
+      "address": "0x7227c8",
+      "bytes_hex": "2f 62 72 65 61 6b 67 75 69 6c 64",
+      "decoded_text": "/breakguild",
+      "reference_code_addresses": [
+        "0x662c83"
+      ],
+      "kind": "One",
+      "type": 56,
+      "value": 0
+    },
+    {
+      "address": "0x7227c0",
+      "bytes_hex": "2f b0 e1 bc ba",
+      "decoded_text": "/\uacb0\uc131",
+      "reference_code_addresses": [
+        "0x662d2b"
+      ],
+      "kind": "One",
+      "type": 26,
+      "value": 0
+    },
+    {
+      "address": "0x7227b8",
+      "bytes_hex": "2f 72 75 66 74 6a 64",
+      "decoded_text": "/ruftjd",
+      "reference_code_addresses": [
+        "0x662d55"
+      ],
+      "kind": "One",
+      "type": 26,
+      "value": 0
+    },
+    {
+      "address": "0x7227ac",
+      "bytes_hex": "2f 6f 72 67 61 6e 69 7a 65",
+      "decoded_text": "/organize",
+      "reference_code_addresses": [
+        "0x662d7f"
+      ],
+      "kind": "One",
+      "type": 26,
+      "value": 0
+    },
+    {
+      "address": "0x7227a4",
+      "bytes_hex": "2f b8 f3 bd ba c5 cd",
+      "decoded_text": "/\ubaac\uc2a4\ud130",
+      "reference_code_addresses": [
+        "0x662e0d"
+      ],
+      "kind": "One",
+      "type": 48,
+      "value": 0
+    },
+    {
+      "address": "0x72279c",
+      "bytes_hex": "2f be c6 c0 cc c5 db",
+      "decoded_text": "/\uc544\uc774\ud15c",
+      "reference_code_addresses": [
+        "0x662e37"
+      ],
+      "kind": "One",
+      "type": 48,
+      "value": 0
+    },
+    {
+      "address": "0x722794",
+      "bytes_hex": "2f 69 74 65 6d",
+      "decoded_text": "/item",
+      "reference_code_addresses": [
+        "0x662e61"
+      ],
+      "kind": "One",
+      "type": 48,
+      "value": 0
+    },
+    {
+      "address": "0x722788",
+      "bytes_hex": "2f 6d 6f 6e 73 74 65 72",
+      "decoded_text": "/monster",
+      "reference_code_addresses": [
+        "0x662e8b"
+      ],
+      "kind": "One",
+      "type": 48,
+      "value": 0
+    },
+    {
+      "address": "0x722780",
+      "bytes_hex": "2f b8 ca c0 cc b5 bf",
+      "decoded_text": "/\ub9f5\uc774\ub3d9",
+      "reference_code_addresses": [
+        "0x662f32"
+      ],
+      "kind": "Map",
+      "type": 49,
+      "value": 0
+    },
+    {
+      "address": "0x722774",
+      "bytes_hex": "2f 6d 61 70 6d 6f 76 65",
+      "decoded_text": "/mapmove",
+      "reference_code_addresses": [
+        "0x662f5c"
+      ],
+      "kind": "Map",
+      "type": 49,
+      "value": 0
+    },
+    {
+      "address": "0x722770",
+      "bytes_hex": "2f 6d 6d",
+      "decoded_text": "/mm",
+      "reference_code_addresses": [
+        "0x662f86"
+      ],
+      "kind": "Map",
+      "type": 49,
+      "value": 0
+    },
+    {
+      "address": "0x722768",
+      "bytes_hex": "2f c1 a6 b8 ed",
+      "decoded_text": "/\uc81c\uba85",
+      "reference_code_addresses": [
+        "0x663132"
+      ],
+      "kind": "One",
+      "type": 28,
+      "value": 0
+    },
+    {
+      "address": "0x722760",
+      "bytes_hex": "2f 77 70 61 75 64",
+      "decoded_text": "/wpaud",
+      "reference_code_addresses": [
+        "0x66315c"
+      ],
+      "kind": "One",
+      "type": 28,
+      "value": 0
+    },
+    {
+      "address": "0x722758",
+      "bytes_hex": "2f 65 78 70 65 6c",
+      "decoded_text": "/expel",
+      "reference_code_addresses": [
+        "0x663186"
+      ],
+      "kind": "One",
+      "type": 28,
+      "value": 0
+    },
+    {
+      "address": "0x722754",
+      "bytes_hex": "2f 73 6d",
+      "decoded_text": "/sm",
+      "reference_code_addresses": [
+        "0x663214"
+      ],
+      "kind": "One",
+      "type": 58,
+      "value": 0
+    },
+    {
+      "address": "0x722748",
+      "bytes_hex": "2f 72 65 73 65 74 73 74 61 74 65",
+      "decoded_text": "/resetstate",
+      "reference_code_addresses": [
+        "0x6632a2"
+      ],
+      "kind": "Bare",
+      "type": 61,
+      "value": 0
+    },
+    {
+      "address": "0x72273c",
+      "bytes_hex": "2f 72 65 73 65 74 73 6b 69 6c 6c",
+      "decoded_text": "/resetskill",
+      "reference_code_addresses": [
+        "0x6632dd"
+      ],
+      "kind": "Bare",
+      "type": 62,
+      "value": 0
+    },
+    {
+      "address": "0x72272c",
+      "bytes_hex": "2f 63 68 61 6e 67 65 6d 61 70 74 79 70 65",
+      "decoded_text": "/changemaptype",
+      "reference_code_addresses": [
+        "0x663318"
+      ],
+      "kind": "Three",
+      "type": 63,
+      "value": 0
+    },
+    {
+      "address": "0x722724",
+      "bytes_hex": "2f 63 6d 74",
+      "decoded_text": "/cmt",
+      "reference_code_addresses": [
+        "0x663342"
+      ],
+      "kind": "Three",
+      "type": 63,
+      "value": 0
+    },
+    {
+      "address": "0x72271c",
+      "bytes_hex": "2f 65 6d 62 6c 65 6d",
+      "decoded_text": "/emblem",
+      "reference_code_addresses": [
+        "0x66341a"
+      ],
+      "kind": "Bare",
+      "type": 64,
+      "value": 0
+    },
+    {
+      "address": "0x722714",
+      "bytes_hex": "2f bf a5 ba ed b7 bd",
+      "decoded_text": "/\uc5e0\ube14\ub818",
+      "reference_code_addresses": [
+        "0x663438"
+      ],
+      "kind": "Bare",
+      "type": 64,
+      "value": 0
+    },
+    {
+      "address": "0x72270c",
+      "bytes_hex": "2f be da ba ed b7 bd",
+      "decoded_text": "/\uc570\ube14\ub818",
+      "reference_code_addresses": [
+        "0x663456"
+      ],
+      "kind": "Bare",
+      "type": 64,
+      "value": 0
+    },
+    {
+      "address": "0x722700",
+      "bytes_hex": "2f 64 70 61 71 6d 66 66 70 61",
+      "decoded_text": "/dpaqmffpa",
+      "reference_code_addresses": [
+        "0x663474"
+      ],
+      "kind": "Bare",
+      "type": 64,
+      "value": 0
+    },
+    {
+      "address": "0x7226f4",
+      "bytes_hex": "2f 64 6f 61 71 6d 66 66 70 61",
+      "decoded_text": "/doaqmffpa",
+      "reference_code_addresses": [
+        "0x663492"
+      ],
+      "kind": "Bare",
+      "type": 64,
+      "value": 0
+    },
+    {
+      "address": "0x7226ec",
+      "bytes_hex": "2f 68 69 64 65",
+      "decoded_text": "/hide",
+      "reference_code_addresses": [
+        "0x6634b0"
+      ],
+      "kind": "Bare",
+      "type": 88,
+      "value": 0
+    },
+    {
+      "address": "0x7226e4",
+      "bytes_hex": "2f 66 6f 6e 74",
+      "decoded_text": "/font",
+      "reference_code_addresses": [
+        "0x6634f9"
+      ],
+      "kind": "Bare",
+      "type": 92,
+      "value": 0
+    },
+    {
+      "address": "0x7015cc",
+      "bytes_hex": "2f c6 f9 c6 ae",
+      "decoded_text": "/\ud3f0\ud2b8",
+      "reference_code_addresses": [
+        "0x6634db"
+      ],
+      "kind": "Bare",
+      "type": 92,
+      "value": 0
+    },
+    {
+      "address": "0x7226d8",
+      "bytes_hex": "2f 6d 69 6e 65 66 66 65 63 74",
+      "decoded_text": "/mineffect",
+      "reference_code_addresses": [
+        "0x663517"
+      ],
+      "kind": "MinEffect",
+      "type": 20,
+      "value": 0
+    },
+    {
+      "address": "0x7226d0",
+      "bytes_hex": "2f 72 65 6d 6f 76 65",
+      "decoded_text": "/remove",
+      "reference_code_addresses": [
+        "0x66355e"
+      ],
+      "kind": "One",
+      "type": 95,
+      "value": 0
+    },
+    {
+      "address": "0x7226c8",
+      "bytes_hex": "2f 73 75 6d 6d 6f 6e",
+      "decoded_text": "/summon",
+      "reference_code_addresses": [
+        "0x6635b2"
+      ],
+      "kind": "One",
+      "type": 98,
+      "value": 0
+    },
+    {
+      "address": "0x7226c0",
+      "bytes_hex": "2f 73 68 69 66 74",
+      "decoded_text": "/shift",
+      "reference_code_addresses": [
+        "0x663606"
+      ],
+      "kind": "Shift",
+      "type": 96,
+      "value": 0
+    },
+    {
+      "address": "0x7226b8",
+      "bytes_hex": "2f 72 65 63 61 6c 6c",
+      "decoded_text": "/recall",
+      "reference_code_addresses": [
+        "0x66366e"
+      ],
+      "kind": "One",
+      "type": 97,
+      "value": 0
+    },
+    {
+      "address": "0x7226b0",
+      "bytes_hex": "2f 63 68 65 63 6b",
+      "decoded_text": "/check",
+      "reference_code_addresses": [
+        "0x6636c2"
+      ],
+      "kind": "One",
+      "type": 142,
+      "value": 0
+    },
+    {
+      "address": "0x7226ac",
+      "bytes_hex": "2f 72 63",
+      "decoded_text": "/rc",
+      "reference_code_addresses": [
+        "0x663716"
+      ],
+      "kind": "One",
+      "type": 143,
+      "value": 0
+    },
+    {
+      "address": "0x7226a4",
+      "bytes_hex": "2f bf e4 b1 dd",
+      "decoded_text": "/\uc694\uae08",
+      "reference_code_addresses": [
+        "0x66376a"
+      ],
+      "kind": "Bare",
+      "type": 101,
+      "value": 0
+    },
+    {
+      "address": "0x722698",
+      "bytes_hex": "2f c0 cc b8 a7 c7 a5 bd c3",
+      "decoded_text": "/\uc774\ub984\ud45c\uc2dc",
+      "reference_code_addresses": [
+        "0x663795"
+      ],
+      "kind": "Whole",
+      "type": 107,
+      "value": 0
+    },
+    {
+      "address": "0x72268c",
+      "bytes_hex": "2f 73 68 6f 77 6e 61 6d 65",
+      "decoded_text": "/showname",
+      "reference_code_addresses": [
+        "0x6637b3"
+      ],
+      "kind": "Whole",
+      "type": 107,
+      "value": 0
+    },
+    {
+      "address": "0x722684",
+      "bytes_hex": "2f 73 74 72 2b",
+      "decoded_text": "/str+",
+      "reference_code_addresses": [
+        "0x6637d1"
+      ],
+      "kind": "Stat",
+      "type": 136,
+      "value": 0
+    },
+    {
+      "address": "0x72267c",
+      "bytes_hex": "2f 61 67 69 2b",
+      "decoded_text": "/agi+",
+      "reference_code_addresses": [
+        "0x663875"
+      ],
+      "kind": "Stat",
+      "type": 136,
+      "value": 1
+    },
+    {
+      "address": "0x722674",
+      "bytes_hex": "2f 6c 75 6b 2b",
+      "decoded_text": "/luk+",
+      "reference_code_addresses": [
+        "0x6638db"
+      ],
+      "kind": "Stat",
+      "type": 136,
+      "value": 2
+    },
+    {
+      "address": "0x72266c",
+      "bytes_hex": "2f 69 6e 74 2b",
+      "decoded_text": "/int+",
+      "reference_code_addresses": [
+        "0x663941"
+      ],
+      "kind": "Stat",
+      "type": 136,
+      "value": 3
+    },
+    {
+      "address": "0x722664",
+      "bytes_hex": "2f 76 69 74 2b",
+      "decoded_text": "/vit+",
+      "reference_code_addresses": [
+        "0x6639a7"
+      ],
+      "kind": "Stat",
+      "type": 136,
+      "value": 4
+    },
+    {
+      "address": "0x72265c",
+      "bytes_hex": "2f 64 65 78 2b",
+      "decoded_text": "/dex+",
+      "reference_code_addresses": [
+        "0x663a0d"
+      ],
+      "kind": "Stat",
+      "type": 136,
+      "value": 5
+    },
+    {
+      "address": "0x722658",
+      "bytes_hex": "2f 68 69",
+      "decoded_text": "/hi",
+      "reference_code_addresses": [
+        "0x663a73"
+      ],
+      "kind": "Hi",
+      "type": 150,
+      "value": 0
+    },
+    {
+      "address": "0x722650",
+      "bytes_hex": "2f c3 ca b4 eb",
+      "decoded_text": "/\ucd08\ub300",
+      "reference_code_addresses": [
+        "0x663b84"
+      ],
+      "kind": "One",
+      "type": 183,
+      "value": 0
+    },
+    {
+      "address": "0x722648",
+      "bytes_hex": "2f 63 68 65 6f",
+      "decoded_text": "/cheo",
+      "reference_code_addresses": [
+        "0x663b9e"
+      ],
+      "kind": "One",
+      "type": 183,
+      "value": 0
+    },
+    {
+      "address": "0x722640",
+      "bytes_hex": "2f 69 6e 76 69 74 65",
+      "decoded_text": "/invite",
+      "reference_code_addresses": [
+        "0x663bb8"
+      ],
+      "kind": "One",
+      "type": 183,
+      "value": 0
+    }
+  ],
+  "selected_message_ids": {
+    "min_effect_alias": 698,
+    "min_effect_on": 687,
+    "min_effect_off": 688,
+    "invalid_command": 95
+  },
+  "no_parameter_table_bounds": {
+    "first_registration": "0x663E5F",
+    "last_registration": "0x6663D7",
+    "sort_begin": "0x6663E2",
+    "insert_count": 209,
+    "push_back_count": 83
+  },
+  "safety_boundaries": [
+    "Tokenizer avoids the original fixed buffer overflow.",
+    "Shift exposes parameterOverflow rather than overrunning three caller strings.",
+    "Fixed tail offsets are bounded before creating string views."
+  ],
+  "unicode_boundary": "Separate CP949 byte and UTF-8 alias modes; UTF-8 adapts literal prefix byte counts. This is not full legacy codepage/editor acceptance.",
+  "lowercase_model": "Selected MakeStringLower526E40 skips a signed nonpositive byte plus its following byte; legacy CP949 preserves trail ASCII. UTF8 adapter folds ASCII without skipping a following character."
+}

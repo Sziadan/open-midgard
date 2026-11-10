@@ -1,0 +1,25 @@
+UpdateCTestConfiguration  from :D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/DartConfiguration.tcl
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 13
+    Start 13: packet_auto_message_checks
+
+13: Test command: D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\packet_stream_replay_checks.exe "--auto-message-only"
+13: Working Directory: D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+13: Environment variables:
+13:  OPEN_MIDGARD_DATA_DIR=D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/packet-auto-message-settings
+13: Test timeout computed to be: 30
+13: {"case_id":"source_auto_message","contract_id":"PK09.21","actual_0097_0096":true,"account_default940":true,"selected_edit100":true,"toggle_submit_escape_delete_distinct":true,"outcome":"PASS"}
+1/1 Test #13: packet_auto_message_checks .......   Passed    0.14 sec
+
+The following tests passed:
+	packet_auto_message_checks
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.15 sec

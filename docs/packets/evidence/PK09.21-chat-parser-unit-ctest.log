@@ -1,0 +1,949 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-recovery-unit-review
+        Start 111: effect_coverage_audit
+        Start 161: aura2_render_source_check
+        Start 460: ammo_cursor_regression_checks
+        Start 163: 3dtexture_render_source_check
+        Start  26: guild_skill_wnd_refresh_checks
+        Start 472: source_chat_parser_checks
+  1/472 Test #472: source_chat_parser_checks .............................   Passed    0.03 sec
+        Start 357: effect326_327_foot_source_check
+  2/472 Test #357: effect326_327_foot_source_check .......................   Passed    0.42 sec
+        Start  39: prim_onprocess_inventory_source_check
+  3/472 Test  #26: guild_skill_wnd_refresh_checks ........................   Passed    0.58 sec
+        Start 425: effects349_356_waterfall_source_check
+  4/472 Test  #39: prim_onprocess_inventory_source_check .................   Passed    0.34 sec
+        Start 365: effect348_source_check
+  5/472 Test #425: effects349_356_waterfall_source_check .................   Passed    0.34 sec
+        Start 436: effect468_473_beginasura1_source_check
+  6/472 Test #365: effect348_source_check ................................   Passed    0.30 sec
+        Start 429: effect650_map_magic_zone_source_check
+  7/472 Test #436: effect468_473_beginasura1_source_check ................   Passed    0.30 sec
+        Start 360: effects497_499_slim_potion_source_check
+  8/472 Test #163: 3dtexture_render_source_check .........................   Passed    1.32 sec
+        Start 437: effect277_294_bottom_vertical_source_check
+  9/472 Test #429: effect650_map_magic_zone_source_check .................   Passed    0.29 sec
+        Start 325: effect265_412_tanji_source_check
+ 10/472 Test #360: effects497_499_slim_potion_source_check ...............   Passed    0.29 sec
+        Start 426: effects363_364_509_519_545_vallentine_source_check
+ 11/472 Test #437: effect277_294_bottom_vertical_source_check ............   Passed    0.30 sec
+        Start 428: effect522_gravitation_source_check
+ 12/472 Test #325: effect265_412_tanji_source_check ......................   Passed    0.29 sec
+        Start 438: effect281_288_bottom_music_source_check
+ 13/472 Test #426: effects363_364_509_519_545_vallentine_source_check ....   Passed    0.35 sec
+        Start 312: effect167_169_str_mapping_source_check
+ 14/472 Test #460: ammo_cursor_regression_checks .........................   Passed    1.89 sec
+        Start 201: effect602_source_check
+ 15/472 Test #428: effect522_gravitation_source_check ....................   Passed    0.28 sec
+        Start 327: effect375_actor_light_source_check
+ 16/472 Test #438: effect281_288_bottom_music_source_check ...............   Passed    0.31 sec
+        Start 349: effect410_rainbow_source_check
+ 17/472 Test #312: effect167_169_str_mapping_source_check ................   Passed    0.27 sec
+        Start 294: turnundead_caller_source_check
+ 18/472 Test #201: effect602_source_check ................................   Passed    0.30 sec
+        Start 356: effect448_foot_source_check
+ 19/472 Test #327: effect375_actor_light_source_check ....................   Passed    0.30 sec
+        Start 323: effect208_211_potion_str_source_check
+ 20/472 Test #349: effect410_rainbow_source_check ........................   Passed    0.32 sec
+        Start 368: effect310_particle_up_source_check
+ 21/472 Test #294: turnundead_caller_source_check ........................   Passed    0.27 sec
+        Start 359: effects557_560_bluefall_source_check
+ 22/472 Test #356: effect448_foot_source_check ...........................   Passed    0.27 sec
+        Start 430: effect651_map_particle_source_check
+ 23/472 Test #323: effect208_211_potion_str_source_check .................   Passed    0.32 sec
+        Start 424: effects358_360_ghost_source_check
+ 24/472 Test #368: effect310_particle_up_source_check ....................   Passed    0.32 sec
+        Start 364: effects671_672_land_protector_source_check
+ 25/472 Test #359: effects557_560_bluefall_source_check ..................   Passed    0.33 sec
+        Start 362: effect517_bottom_hermode_source_check
+ 26/472 Test #424: effects358_360_ghost_source_check .....................   Passed    0.29 sec
+        Start 318: effect188_yunta3_str_source_check
+ 27/472 Test #430: effect651_map_particle_source_check ...................   Passed    0.35 sec
+        Start 319: effect189_195_str_mappings_source_check
+ 28/472 Test #364: effects671_672_land_protector_source_check ............   Passed    0.35 sec
+        Start 372: effect554_texture_set_source_check
+ 29/472 Test #362: effect517_bottom_hermode_source_check .................   Passed    0.29 sec
+        Start 423: effects610_611_texture_cues_source_check
+ 30/472 Test #318: effect188_yunta3_str_source_check .....................   Passed    0.29 sec
+        Start 427: effects561_562_portal3_source_check
+ 31/472 Test #319: effect189_195_str_mappings_source_check ...............   Passed    0.29 sec
+        Start 471: source_chat_tokenizer_checks
+ 32/472 Test #161: aura2_render_source_check .............................   Passed    3.16 sec
+        Start 324: effect242_404_land_protector_source_check
+ 33/472 Test #471: source_chat_tokenizer_checks ..........................   Passed    0.04 sec
+        Start 197: sma2_552_source_check
+ 34/472 Test #372: effect554_texture_set_source_check ....................   Passed    0.32 sec
+        Start 311: effect171_venomdust2_source_check
+ 35/472 Test #423: effects610_611_texture_cues_source_check ..............   Passed    0.33 sec
+        Start 198: particlepath556_source_check
+ 36/472 Test #427: effects561_562_portal3_source_check ...................   Passed    0.33 sec
+        Start 308: effect118_fireivy_source_check
+ 37/472 Test #197: sma2_552_source_check .................................   Passed    0.30 sec
+        Start 404: effect253_heal_blue_source_check
+ 38/472 Test #324: effect242_404_land_protector_source_check .............   Passed    0.34 sec
+        Start 316: effect182_186_str_mapping_source_check
+ 39/472 Test #311: effect171_venomdust2_source_check .....................   Passed    0.34 sec
+        Start 419: effects222_252_defender_source_check
+ 40/472 Test #198: particlepath556_source_check ..........................   Passed    0.30 sec
+        Start 352: effect297_pokjuk_source_check
+ 41/472 Test #308: effect118_fireivy_source_check ........................   Passed    0.30 sec
+        Start 279: cartrevolution_caller_source_check
+ 42/472 Test #316: effect182_186_str_mapping_source_check ................   Passed    0.29 sec
+        Start 355: effect447_foot_source_check
+ 43/472 Test #404: effect253_heal_blue_source_check ......................   Passed    0.33 sec
+        Start 420: effects312_313_320_325_heal_source_check
+ 44/472 Test #419: effects222_252_defender_source_check ..................   Passed    0.28 sec
+        Start 326: effect374_basilica_source_check
+ 45/472 Test #352: effect297_pokjuk_source_check .........................   Passed    0.28 sec
+        Start 421: effect314_exit2_source_check
+ 46/472 Test #279: cartrevolution_caller_source_check ....................   Passed    0.27 sec
+        Start 295: waterball2_caller_source_check
+ 47/472 Test #355: effect447_foot_source_check ...........................   Passed    0.28 sec
+        Start 280: cloaking_inline_source_check
+ 48/472 Test #420: effects312_313_320_325_heal_source_check ..............   Passed    0.28 sec
+        Start 414: effect32_napalm_beat_source_check
+ 49/472 Test #326: effect374_basilica_source_check .......................   Passed    0.28 sec
+        Start 374: effect24_fireball_source_check
+ 50/472 Test #421: effect314_exit2_source_check ..........................   Passed    0.28 sec
+        Start 199: effect537_source_check
+ 51/472 Test #295: waterball2_caller_source_check ........................   Passed    0.28 sec
+        Start 385: effect34_teleportation_source_check
+ 52/472 Test #280: cloaking_inline_source_check ..........................   Passed    0.27 sec
+        Start 203: effect440_source_check
+ 53/472 Test #414: effect32_napalm_beat_source_check .....................   Passed    0.28 sec
+        Start 358: effect340_callzone_source_check
+ 54/472 Test #199: effect537_source_check ................................   Passed    0.28 sec
+        Start 320: effect213_214_str_mappings_source_check
+ 55/472 Test #374: effect24_fireball_source_check ........................   Passed    0.31 sec
+        Start 417: effects436_437_sphere_energy_source_check
+ 56/472 Test #385: effect34_teleportation_source_check ...................   Passed    0.32 sec
+        Start 298: effect380_inline_source_check
+ 57/472 Test #203: effect440_source_check ................................   Passed    0.30 sec
+        Start 287: curseattack_inline_source_check
+ 58/472 Test #358: effect340_callzone_source_check .......................   Passed    0.31 sec
+        Start 310: effect165_banjjakii_source_check
+ 59/472 Test #320: effect213_214_str_mappings_source_check ...............   Passed    0.27 sec
+        Start 361: effect513_ground_sample_source_check
+ 60/472 Test #417: effects436_437_sphere_energy_source_check .............   Passed    0.28 sec
+        Start 281: coin_caller_source_check
+ 61/472 Test #298: effect380_inline_source_check .........................   Passed    0.27 sec
+        Start 289: decagility_caller_source_check
+ 62/472 Test #287: curseattack_inline_source_check .......................   Passed    0.28 sec
+        Start 315: effect181_mentalbreak_str_source_check
+ 63/472 Test #310: effect165_banjjakii_source_check ......................   Passed    0.27 sec
+        Start 435: effect467_beginasura1_source_check
+ 64/472 Test #361: effect513_ground_sample_source_check ..................   Passed    0.27 sec
+        Start 418: effect119_detecting_source_check
+ 65/472 Test #281: coin_caller_source_check ..............................   Passed    0.26 sec
+        Start 296: revive_caller_source_check
+ 66/472 Test #315: effect181_mentalbreak_str_source_check ................   Passed    0.26 sec
+        Start 317: effect187_yunta2_str_source_check
+ 67/472 Test #289: decagility_caller_source_check ........................   Passed    0.32 sec
+        Start 293: spearbmr_caller_source_check
+ 68/472 Test #435: effect467_beginasura1_source_check ....................   Passed    0.28 sec
+        Start 204: effect365_source_check
+ 69/472 Test #418: effect119_detecting_source_check ......................   Passed    0.27 sec
+        Start 304: effect501_inline_source_check
+ 70/472 Test #296: revive_caller_source_check ............................   Passed    0.26 sec
+        Start 314: effect185_suicide_str_source_check
+ 71/472 Test #317: effect187_yunta2_str_source_check .....................   Passed    0.26 sec
+        Start 313: effect183_hit2blue_source_check
+ 72/472 Test #293: spearbmr_caller_source_check ..........................   Passed    0.27 sec
+        Start 285: crashearth_orphan_source_check
+ 73/472 Test #204: effect365_source_check ................................   Passed    0.27 sec
+        Start 292: lockon_caller_source_check
+ 74/472 Test #304: effect501_inline_source_check .........................   Passed    0.26 sec
+        Start 307: effect116_waterball_source_check
+ 75/472 Test #314: effect185_suicide_str_source_check ....................   Passed    0.27 sec
+        Start 309: effect138_firepillar_source_check
+ 76/472 Test #313: effect183_hit2blue_source_check .......................   Passed    0.28 sec
+        Start 270: detoxication_caller_source_check
+ 77/472 Test #285: crashearth_orphan_source_check ........................   Passed    0.27 sec
+        Start  68: grannypc_onprocess_source_check
+ 78/472 Test #292: lockon_caller_source_check ............................   Passed    0.27 sec
+        Start 283: concentration_caller_source_check
+ 79/472 Test #307: effect116_waterball_source_check ......................   Passed    0.27 sec
+        Start 290: detecting_caller_source_check
+ 80/472 Test #309: effect138_firepillar_source_check .....................   Passed    0.26 sec
+        Start 286: cure_inline_source_check
+ 81/472 Test #270: detoxication_caller_source_check ......................   Passed    0.27 sec
+        Start 200: effect599_source_check
+ 82/472 Test  #68: grannypc_onprocess_source_check .......................   Passed    0.28 sec
+        Start 299: effect403_inline_source_check
+ 83/472 Test #283: concentration_caller_source_check .....................   Passed    0.27 sec
+        Start 322: effect204_210_clipwave_str_source_check
+ 84/472 Test #290: detecting_caller_source_check .........................   Passed    0.28 sec
+        Start 175: prim3dparticle_render_source_check
+ 85/472 Test #286: cure_inline_source_check ..............................   Passed    0.28 sec
+        Start  64: process_damage_situation_scope_check
+ 86/472 Test #200: effect599_source_check ................................   Passed    0.27 sec
+        Start 138: intimidate227_source_check
+ 87/472 Test #299: effect403_inline_source_check .........................   Passed    0.27 sec
+        Start 344: effect581_forest_light_source_check
+ 88/472 Test #322: effect204_210_clipwave_str_source_check ...............   Passed    0.28 sec
+        Start  75: player_pt_touch_skill_route_source_check
+ 89/472 Test #175: prim3dparticle_render_source_check ....................   Passed    0.24 sec
+        Start  73: player_pt_skill_route_source_check
+ 90/472 Test #344: effect581_forest_light_source_check ...................   Passed    0.17 sec
+ 91/472 Test  #64: process_damage_situation_scope_check ..................   Passed    0.28 sec
+        Start 243: effect669_wideb_poison_source_check
+        Start 422: effects689_691_696_texture_animation_source_check
+ 92/472 Test  #75: player_pt_touch_skill_route_source_check ..............   Passed    0.19 sec
+        Start 108: clif_skill_update_source_check
+ 93/472 Test #138: intimidate227_source_check ............................   Passed    0.22 sec
+        Start 212: effect9_source_check
+ 94/472 Test #243: effect669_wideb_poison_source_check ...................   Passed    0.11 sec
+        Start 396: effect29_str_only_source_check
+ 95/472 Test #212: effect9_source_check ..................................   Passed    0.11 sec
+        Start 114: effect_sprite_source_check
+ 96/472 Test  #73: player_pt_skill_route_source_check ....................   Passed    0.22 sec
+        Start 448: skill_tree_catalog_checks
+ 97/472 Test #422: effects689_691_696_texture_animation_source_check .....   Passed    0.18 sec
+        Start 346: effect673_poison_source_check
+ 98/472 Test #108: clif_skill_update_source_check ........................   Passed    0.17 sec
+        Start 162: cross_texture_render_source_check
+ 99/472 Test #396: effect29_str_only_source_check ........................   Passed    0.11 sec
+        Start 106: clif_skill_setunit_source_check
+100/472 Test #114: effect_sprite_source_check ............................   Passed    0.16 sec
+        Start 129: effects565_569_moonlight_str_source_check
+101/472 Test #448: skill_tree_catalog_checks .............................   Passed    0.17 sec
+        Start  43: primitive_anim_texture_source_check
+102/472 Test #346: effect673_poison_source_check .........................   Passed    0.17 sec
+        Start 123: effect159_top_rank_source_check
+103/472 Test #106: clif_skill_setunit_source_check .......................   Passed    0.14 sec
+        Start 215: effect97_fire_pillar_bomb_source_check
+104/472 Test #162: cross_texture_render_source_check .....................   Passed    0.16 sec
+        Start 196: effect505_source_check
+105/472 Test  #43: primitive_anim_texture_source_check ...................   Passed    0.09 sec
+        Start 126: effects121_122_sonic_blow_source_check
+106/472 Test #123: effect159_top_rank_source_check .......................   Passed    0.11 sec
+        Start 470: source_chat_command_checks
+107/472 Test #215: effect97_fire_pillar_bomb_source_check ................   Passed    0.11 sec
+        Start  76: session_average_ping_source_check
+108/472 Test #129: effects565_569_moonlight_str_source_check .............   Passed    0.17 sec
+109/472 Test #196: effect505_source_check ................................   Passed    0.11 sec
+        Start 132: elemental_change_casting_source_check
+        Start 190: rg_coin_caller_source_check
+110/472 Test #470: source_chat_command_checks ............................   Passed    0.04 sec
+        Start 373: effect601_sight2_source_check
+111/472 Test #126: effects121_122_sonic_blow_source_check ................   Passed    0.13 sec
+        Start 147: hitline_render_source_check
+112/472 Test  #76: session_average_ping_source_check .....................   Passed    0.13 sec
+        Start 354: gumgang_emitter_source_check
+113/472 Test #132: elemental_change_casting_source_check .................   Passed    0.17 sec
+114/472 Test #190: rg_coin_caller_source_check ...........................   Passed    0.16 sec
+115/472 Test #373: effect601_sight2_source_check .........................   Passed    0.16 sec
+        Start 177: prim3dcircle_render_source_check
+        Start 128: effects593_598_food_str_source_check
+        Start 469: whisper_names_checks
+116/472 Test #147: hitline_render_source_check ...........................   Passed    0.11 sec
+        Start 395: effects23_25_str_only_source_check
+117/472 Test #469: whisper_names_checks ..................................   Passed    0.03 sec
+        Start 109: skill_cast_ack_source_check
+118/472 Test #177: prim3dcircle_render_source_check ......................   Passed    0.12 sec
+        Start 121: effect128_overthrust_source_check
+119/472 Test #354: gumgang_emitter_source_check ..........................   Passed    0.18 sec
+        Start 103: clif_skill_nodamage_source_check
+120/472 Test #128: effects593_598_food_str_source_check ..................   Passed    0.13 sec
+        Start 333: effect392_kyrie_guard_source_check
+121/472 Test #395: effects23_25_str_only_source_check ....................   Passed    0.13 sec
+        Start 105: clif_skill_poseffect_source_check
+122/472 Test #109: skill_cast_ack_source_check ...........................   Passed    0.13 sec
+        Start 127: effects635_636_str_prefix_source_check
+123/472 Test #103: clif_skill_nodamage_source_check ......................   Passed    0.13 sec
+        Start 205: effect302_source_check
+124/472 Test #121: effect128_overthrust_source_check .....................   Passed    0.15 sec
+        Start 239: effect649_str_ignored_result_source_check
+125/472 Test #333: effect392_kyrie_guard_source_check ....................   Passed    0.13 sec
+        Start 403: effect248_providence_source_check
+126/472 Test #105: clif_skill_poseffect_source_check .....................   Passed    0.16 sec
+        Start  54: cart_revolution_source_check
+127/472 Test #127: effects635_636_str_prefix_source_check ................   Passed    0.15 sec
+        Start 139: shockwave145_source_check
+128/472 Test #205: effect302_source_check ................................   Passed    0.12 sec
+        Start 143: airtexture416_source_check
+129/472 Test #239: effect649_str_ignored_result_source_check .............   Passed    0.12 sec
+        Start 367: effect620_bottom_volcano_source_check
+130/472 Test #403: effect248_providence_source_check .....................   Passed    0.13 sec
+        Start 366: effect405_bottom_magnus_source_check
+131/472 Test #139: shockwave145_source_check .............................   Passed    0.12 sec
+        Start 399: effect61_warp_zone_source_check
+132/472 Test  #54: cart_revolution_source_check ..........................   Passed    0.15 sec
+        Start 386: effect33_ruwach_source_check
+133/472 Test #143: airtexture416_source_check ............................   Passed    0.14 sec
+        Start 182: hitline_caller_source_check
+134/472 Test #367: effect620_bottom_volcano_source_check .................   Passed    0.14 sec
+        Start 208: effect301_pokjuk_sound_source_check
+135/472 Test #366: effect405_bottom_magnus_source_check ..................   Passed    0.14 sec
+        Start 251: effect13_source_check
+136/472 Test #399: effect61_warp_zone_source_check .......................   Passed    0.14 sec
+        Start 116: effects123_132_grim_tooth_source_check
+137/472 Test #386: effect33_ruwach_source_check ..........................   Passed    0.17 sec
+        Start  74: player_pt_ground_skill_route_source_check
+138/472 Test #208: effect301_pokjuk_sound_source_check ...................   Passed    0.11 sec
+        Start 219: effects124_127_poison_react_source_check
+139/472 Test #182: hitline_caller_source_check ...........................   Passed    0.13 sec
+        Start 152: sma2_render_source_check
+140/472 Test #251: effect13_source_check .................................   Passed    0.12 sec
+        Start 193: tripleattack_caller_source_check
+141/472 Test #116: effects123_132_grim_tooth_source_check ................   Passed    0.14 sec
+        Start 115: effect603_firehit_source_check
+142/472 Test #152: sma2_render_source_check ..............................   Passed    0.10 sec
+        Start  47: actor_setstate_source_check
+143/472 Test #219: effects124_127_poison_react_source_check ..............   Passed    0.12 sec
+        Start 225: effect136_slowp_source_check
+144/472 Test  #74: player_pt_ground_skill_route_source_check .............   Passed    0.14 sec
+        Start  70: player_premove_route_source_check
+145/472 Test #193: tripleattack_caller_source_check ......................   Passed    0.12 sec
+        Start 351: effect434_hitline3basic_source_check
+146/472 Test #115: effect603_firehit_source_check ........................   Passed    0.14 sec
+        Start 122: hitdark_effects180_184_source_check
+147/472 Test  #47: actor_setstate_source_check ...........................   Passed    0.12 sec
+        Start 237: effect609_cook_fail_source_check
+148/472 Test #225: effect136_slowp_source_check ..........................   Passed    0.14 sec
+        Start 117: effect142_heavens_drive_source_check
+149/472 Test  #70: player_premove_route_source_check .....................   Passed    0.14 sec
+150/472 Test #351: effect434_hitline3basic_source_check ..................   Passed    0.13 sec
+        Start 261: begin_asura_caller_source_check
+        Start 141: shieldcharge246_source_check
+151/472 Test #122: hitdark_effects180_184_source_check ...................   Passed    0.14 sec
+        Start 118: effects20_125_enchant_poison_source_check
+152/472 Test #237: effect609_cook_fail_source_check ......................   Passed    0.15 sec
+        Start 130: effects491_492_507_508_str_source_check
+153/472 Test #261: begin_asura_caller_source_check .......................   Passed    0.13 sec
+        Start 140: magicrod244_source_check
+154/472 Test #117: effect142_heavens_drive_source_check ..................   Passed    0.14 sec
+155/472 Test #141: shieldcharge246_source_check ..........................   Passed    0.13 sec
+        Start 336: effects397_398_level99_source_check
+        Start 439: skill_cast_cancel_source_check
+156/472 Test #118: effects20_125_enchant_poison_source_check .............   Passed    0.13 sec
+        Start 104: clif_skill_damage_source_check
+157/472 Test #130: effects491_492_507_508_str_source_check ...............   Passed    0.14 sec
+        Start 209: effect333_source_check
+158/472 Test #140: magicrod244_source_check ..............................   Passed    0.12 sec
+        Start 334: effects390_391_clipwave_callers_source_check
+159/472 Test #336: effects397_398_level99_source_check ...................   Passed    0.13 sec
+        Start 378: effect46_sandwind_source_check
+160/472 Test #439: skill_cast_cancel_source_check ........................   Passed    0.13 sec
+        Start 394: effect7_exit_source_check
+161/472 Test #104: clif_skill_damage_source_check ........................   Passed    0.13 sec
+        Start 343: effects539_541_throw_items_source_check
+162/472 Test #334: effects390_391_clipwave_callers_source_check ..........   Passed    0.12 sec
+163/472 Test #209: effect333_source_check ................................   Passed    0.13 sec
+        Start 369: effects515_516_592_weather_cloud_source_check
+        Start 273: removetrap_caller_source_check
+164/472 Test #378: effect46_sandwind_source_check ........................   Passed    0.12 sec
+        Start 119: effects109_110_str_init_source_check
+165/472 Test #394: effect7_exit_source_check .............................   Passed    0.12 sec
+        Start 223: effects133_134_terminal_str_source_check
+166/472 Test #343: effects539_541_throw_items_source_check ...............   Passed    0.12 sec
+        Start 268: endure_caller_source_check
+167/472 Test #273: removetrap_caller_source_check ........................   Passed    0.11 sec
+        Start 274: blitzbeat_caller_source_check
+168/472 Test #369: effects515_516_592_weather_cloud_source_check .........   Passed    0.13 sec
+        Start 157: colorpaper_render_source_check
+169/472 Test #223: effects133_134_terminal_str_source_check ..............   Passed    0.11 sec
+        Start 277: bottom2_caller_source_check
+170/472 Test #119: effects109_110_str_init_source_check ..................   Passed    0.13 sec
+        Start  92: actor_sendmsg_pk_effect_source_check
+171/472 Test #268: endure_caller_source_check ............................   Passed    0.09 sec
+        Start 192: linelink_caller_source_check
+172/472 Test #157: colorpaper_render_source_check ........................   Passed    0.10 sec
+        Start 178: prim3dcylinder_render_source_check
+173/472 Test #277: bottom2_caller_source_check ...........................   Passed    0.10 sec
+174/472 Test #274: blitzbeat_caller_source_check .........................   Passed    0.12 sec
+        Start 244: effect677_cwound_wideb_source_check
+        Start 135: kyrie112_source_check
+175/472 Test  #92: actor_sendmsg_pk_effect_source_check ..................   Passed    0.12 sec
+        Start 247: effect106_blastmine_source_check
+176/472 Test #192: linelink_caller_source_check ..........................   Passed    0.16 sec
+        Start 238: effect646_str_ignored_result_source_check
+177/472 Test #178: prim3dcylinder_render_source_check ....................   Passed    0.12 sec
+        Start 136: repairweapon101_source_check
+178/472 Test #244: effect677_cwound_wideb_source_check ...................   Passed    0.12 sec
+        Start 137: maxpower104_source_check
+179/472 Test #135: kyrie112_source_check .................................   Passed    0.12 sec
+        Start 413: effect31_fire_arrow_source_check
+180/472 Test #247: effect106_blastmine_source_check ......................   Passed    0.12 sec
+        Start 242: effect668_dragonfear_source_check
+181/472 Test #238: effect646_str_ignored_result_source_check .............   Passed    0.11 sec
+        Start 124: effect162_snow_source_check
+182/472 Test #136: repairweapon101_source_check ..........................   Passed    0.13 sec
+        Start 246: effect103_weapon_perfection_source_check
+183/472 Test #137: maxpower104_source_check ..............................   Passed    0.13 sec
+        Start 248: effect107_claymore_source_check
+184/472 Test #413: effect31_fire_arrow_source_check ......................   Passed    0.12 sec
+185/472 Test #242: effect668_dragonfear_source_check .....................   Passed    0.11 sec
+        Start 305: effect704_inline_source_check
+        Start  85: actor_sendmsg_aura_source_check
+186/472 Test #124: effect162_snow_source_check ...........................   Passed    0.10 sec
+        Start 401: effects231_247_259_260_mappillar_source_check
+187/472 Test #248: effect107_claymore_source_check .......................   Passed    0.11 sec
+        Start 262: energy_drain_caller_source_check
+188/472 Test #246: effect103_weapon_perfection_source_check ..............   Passed    0.16 sec
+189/472 Test  #85: actor_sendmsg_aura_source_check .......................   Passed    0.14 sec
+        Start 188: stin_sma_caller_source_check
+        Start 245: effect102_crash_earth_source_check
+190/472 Test #305: effect704_inline_source_check .........................   Passed    0.16 sec
+        Start 227: effect141_pneuma_source_check
+191/472 Test #401: effects231_247_259_260_mappillar_source_check .........   Passed    0.11 sec
+        Start 250: effect74_source_check
+192/472 Test #262: energy_drain_caller_source_check ......................   Passed    0.15 sec
+        Start 342: effect512_chemical3_source_check
+193/472 Test #188: stin_sma_caller_source_check ..........................   Passed    0.12 sec
+        Start 339: effect514_gi_explosion_source_check
+194/472 Test #245: effect102_crash_earth_source_check ....................   Passed    0.12 sec
+        Start 332: effect488_flower_cast_source_check
+195/472 Test #227: effect141_pneuma_source_check .........................   Passed    0.12 sec
+        Start 179: prim2dcircle_render_source_check
+196/472 Test #250: effect74_source_check .................................   Passed    0.11 sec
+        Start 256: twilight_caller_source_check
+197/472 Test #342: effect512_chemical3_source_check ......................   Passed    0.10 sec
+        Start 206: effect300_chemical_protection_source_check
+198/472 Test #339: effect514_gi_explosion_source_check ...................   Passed    0.11 sec
+        Start 221: effects130_250_twohand_source_check
+199/472 Test #332: effect488_flower_cast_source_check ....................   Passed    0.11 sec
+        Start 213: effect95_quagmire_source_check
+200/472 Test #179: prim2dcircle_render_source_check ......................   Passed    0.12 sec
+        Start 434: effects652_654_damage_number_source_check
+201/472 Test #256: twilight_caller_source_check ..........................   Passed    0.12 sec
+        Start 260: peong_caller_source_check
+202/472 Test #206: effect300_chemical_protection_source_check ............   Passed    0.11 sec
+        Start 345: effect582_super_angel_source_check
+203/472 Test #221: effects130_250_twohand_source_check ...................   Passed    0.12 sec
+        Start  99: skill_action_info_source_check
+204/472 Test #213: effect95_quagmire_source_check ........................   Passed    0.15 sec
+205/472 Test #434: effects652_654_damage_number_source_check .............   Passed    0.15 sec
+        Start 337: effect401_napalm_hit_source_check
+        Start 113: bash3d_callers_source_check
+206/472 Test #260: peong_caller_source_check .............................   Passed    0.15 sec
+        Start 291: dragon_smoke_caller_source_check
+207/472 Test #345: effect582_super_angel_source_check ....................   Passed    0.11 sec
+        Start 269: soulstrike_caller_source_check
+208/472 Test  #99: skill_action_info_source_check ........................   Passed    0.16 sec
+        Start 241: effect699_str_ignored_result_source_check
+209/472 Test #337: effect401_napalm_hit_source_check .....................   Passed    0.12 sec
+        Start  91: actor_sendmsg_emotion_source_check
+210/472 Test #113: bash3d_callers_source_check ...........................   Passed    0.12 sec
+211/472 Test #291: dragon_smoke_caller_source_check ......................   Passed    0.12 sec
+        Start 217: effect111_spring_trap_source_check
+        Start 240: effect670_str_ignored_result_source_check
+212/472 Test #269: soulstrike_caller_source_check ........................   Passed    0.11 sec
+        Start 226: effect139_sandman_source_check
+213/472 Test  #91: actor_sendmsg_emotion_source_check ....................   Passed    0.11 sec
+        Start 353: effects298_299_throw_item_source_check
+214/472 Test #241: effect699_str_ignored_result_source_check .............   Passed    0.12 sec
+        Start  11: blade_stop_integration_source_check
+215/472 Test #217: effect111_spring_trap_source_check ....................   Passed    0.11 sec
+        Start 431: effects342_564_couple_casting_source_check
+216/472 Test #240: effect670_str_ignored_result_source_check .............   Passed    0.12 sec
+        Start 220: effect129_venom_splasher_source_check
+217/472 Test #226: effect139_sandman_source_check ........................   Passed    0.12 sec
+        Start  93: actor_sendmsg_crusis_source_check
+218/472 Test  #11: blade_stop_integration_source_check ...................   Passed    0.10 sec
+        Start 348: effect337_job_lv_up_source_check
+219/472 Test #431: effects342_564_couple_casting_source_check ............   Passed    0.14 sec
+220/472 Test #353: effects298_299_throw_item_source_check ................   Passed    0.16 sec
+221/472 Test #220: effect129_venom_splasher_source_check .................   Passed    0.14 sec
+        Start 265: runstop_caller_source_check
+        Start 231: effect158_job_level_up_source_check
+        Start  53: party_effect_source_check
+222/472 Test  #93: actor_sendmsg_crusis_source_check .....................   Passed    0.14 sec
+        Start 249: effect90_source_check
+223/472 Test #348: effect337_job_lv_up_source_check ......................   Passed    0.16 sec
+        Start 253: soulbreaker361_source_check
+224/472 Test #265: runstop_caller_source_check ...........................   Passed    0.12 sec
+        Start  24: effect_lifecycle_checks
+225/472 Test #231: effect158_job_level_up_source_check ...................   Passed    0.12 sec
+        Start 389: effect0_hit1_source_check
+226/472 Test  #53: party_effect_source_check .............................   Passed    0.12 sec
+227/472 Test #249: effect90_source_check .................................   Passed    0.12 sec
+        Start 409: effect21_detoxication_source_check
+        Start  95: actor_sendmsg_chat_prohibit_release_source_check
+228/472 Test  #24: effect_lifecycle_checks ...............................   Passed    0.04 sec
+        Start 228: effect153_concentration_source_check
+229/472 Test #253: soulbreaker361_source_check ...........................   Passed    0.12 sec
+        Start 235: effect235_cp949_str_source_check
+230/472 Test #389: effect0_hit1_source_check .............................   Passed    0.10 sec
+        Start 187: chimto_caller_source_check
+231/472 Test #409: effect21_detoxication_source_check ....................   Passed    0.10 sec
+        Start 233: effect157_level_up_source_check
+232/472 Test  #95: actor_sendmsg_chat_prohibit_release_source_check ......   Passed    0.10 sec
+        Start 211: effect8_source_check
+233/472 Test #228: effect153_concentration_source_check ..................   Passed    0.12 sec
+        Start 377: effect47_torch_source_check
+234/472 Test #235: effect235_cp949_str_source_check ......................   Passed    0.11 sec
+        Start 207: effect303_chemical2_source_check
+235/472 Test #187: chimto_caller_source_check ............................   Passed    0.11 sec
+        Start 224: effect135_ice_crash_source_check
+236/472 Test #233: effect157_level_up_source_check .......................   Passed    0.15 sec
+        Start 194: soulparticle506_source_check
+237/472 Test #211: effect8_source_check ..................................   Passed    0.15 sec
+238/472 Test #377: effect47_torch_source_check ...........................   Passed    0.13 sec
+        Start 252: effect92_source_check
+        Start 276: bottom_caller_source_check
+239/472 Test #207: effect303_chemical2_source_check ......................   Passed    0.11 sec
+        Start 214: effect96_fire_pillar_source_check
+240/472 Test #224: effect135_ice_crash_source_check ......................   Passed    0.15 sec
+        Start 331: effect487_black_devil_source_check
+241/472 Test #194: soulparticle506_source_check ..........................   Passed    0.12 sec
+        Start 222: effect131_autocounter_source_check
+242/472 Test #252: effect92_source_check .................................   Passed    0.12 sec
+        Start 133: aspersio86_source_check
+243/472 Test #276: bottom_caller_source_check ............................   Passed    0.12 sec
+        Start 341: effect493_enchant_poison2_source_check
+244/472 Test #214: effect96_fire_pillar_source_check .....................   Passed    0.12 sec
+        Start 229: effect154_refine_success_source_check
+245/472 Test #133: aspersio86_source_check ...............................   Passed    0.09 sec
+        Start  94: actor_sendmsg_status_effect_source_check
+246/472 Test #331: effect487_black_devil_source_check ....................   Passed    0.11 sec
+        Start 230: effect155_refine_failed_source_check
+247/472 Test #222: effect131_autocounter_source_check ....................   Passed    0.12 sec
+        Start 216: effect108_freezing_source_check
+248/472 Test #341: effect493_enchant_poison2_source_check ................   Passed    0.12 sec
+        Start 234: effect197_sleep_source_check
+249/472 Test #229: effect154_refine_success_source_check .................   Passed    0.12 sec
+        Start 165: prim3dquadhorn2_source_check
+250/472 Test  #94: actor_sendmsg_status_effect_source_check ..............   Passed    0.11 sec
+        Start 191: grandcross_caller_source_check
+251/472 Test #230: effect155_refine_failed_source_check ..................   Passed    0.12 sec
+        Start 102: skill_action_info2_source_check
+252/472 Test #216: effect108_freezing_source_check .......................   Passed    0.12 sec
+        Start 335: effect394_sphere_wind_source_check
+253/472 Test #234: effect197_sleep_source_check ..........................   Passed    0.15 sec
+        Start 159: effect339_magnum2_emitter_source_check
+254/472 Test #165: prim3dquadhorn2_source_check ..........................   Passed    0.12 sec
+        Start 321: effect199_pong_str_variants_source_check
+255/472 Test #191: grandcross_caller_source_check ........................   Passed    0.11 sec
+        Start 218: effect113_magnus_source_check
+256/472 Test #102: skill_action_info2_source_check .......................   Passed    0.11 sec
+        Start  96: actor_sendmsg_cursor_ice_source_check
+257/472 Test #335: effect394_sphere_wind_source_check ....................   Passed    0.15 sec
+        Start 210: effect6_source_check
+258/472 Test #159: effect339_magnum2_emitter_source_check ................   Passed    0.11 sec
+        Start 202: effect273_source_check
+259/472 Test #321: effect199_pong_str_variants_source_check ..............   Passed    0.11 sec
+        Start 146: prim3dtexturebillboard_source_check
+260/472 Test #218: effect113_magnus_source_check .........................   Passed    0.11 sec
+        Start 186: teihit_caller_source_check
+261/472 Test  #96: actor_sendmsg_cursor_ice_source_check .................   Passed    0.11 sec
+        Start  28: auto_spell_packet_source_check
+262/472 Test #210: effect6_source_check ..................................   Passed    0.11 sec
+        Start 195: effect502_source_check
+263/472 Test #146: prim3dtexturebillboard_source_check ...................   Passed    0.10 sec
+264/472 Test #202: effect273_source_check ................................   Passed    0.11 sec
+        Start  71: runtime_wave_pending_producers_source_check
+        Start 258: spherewind2_caller_source_check
+265/472 Test  #28: auto_spell_packet_source_check ........................   Passed    0.10 sec
+        Start 184: hitline5_caller_source_check
+266/472 Test #186: teihit_caller_source_check ............................   Passed    0.12 sec
+        Start 232: effect156_job_change_source_check
+267/472 Test #258: spherewind2_caller_source_check .......................   Passed    0.10 sec
+        Start 181: prim2dquad_render_source_check
+268/472 Test #195: effect502_source_check ................................   Passed    0.13 sec
+        Start 416: effects37_38_43_agility_source_check
+269/472 Test  #71: runtime_wave_pending_producers_source_check ...........   Passed    0.17 sec
+        Start 155: stin5_render_source_check
+270/472 Test #184: hitline5_caller_source_check ..........................   Passed    0.15 sec
+271/472 Test #232: effect156_job_change_source_check .....................   Passed    0.14 sec
+        Start 183: hitline4_caller_source_check
+        Start 338: effect402_portal_wind_source_check
+272/472 Test #181: prim2dquad_render_source_check ........................   Passed    0.13 sec
+        Start 120: effects143_144_146_152_str_init_source_check
+273/472 Test #416: effects37_38_43_agility_source_check ..................   Passed    0.16 sec
+        Start 330: effect454_dark_casting_source_check
+274/472 Test #155: stin5_render_source_check .............................   Passed    0.12 sec
+        Start 391: effect2_hit3_source_check
+275/472 Test #338: effect402_portal_wind_source_check ....................   Passed    0.12 sec
+        Start 142: strip_equipment269_272_source_check
+276/472 Test #183: hitline4_caller_source_check ..........................   Passed    0.14 sec
+        Start 185: hitline3_caller_source_check
+277/472 Test #120: effects143_144_146_152_str_init_source_check ..........   Passed    0.12 sec
+        Start 189: shield_boomerang_caller_source_check
+278/472 Test #330: effect454_dark_casting_source_check ...................   Passed    0.12 sec
+        Start  38: prim2dflash_source_check
+279/472 Test #391: effect2_hit3_source_check .............................   Passed    0.12 sec
+        Start 370: effect622_thunder_storm2_source_check
+280/472 Test #142: strip_equipment269_272_source_check ...................   Passed    0.12 sec
+        Start 255: guard_caller_source_check
+281/472 Test #185: hitline3_caller_source_check ..........................   Passed    0.12 sec
+        Start  48: actor_processstate_source_check
+282/472 Test #189: shield_boomerang_caller_source_check ..................   Passed    0.12 sec
+        Start  37: recovery_resurrection_packet_source_check
+283/472 Test  #38: prim2dflash_source_check ..............................   Passed    0.12 sec
+284/472 Test #370: effect622_thunder_storm2_source_check .................   Passed    0.12 sec
+        Start 264: blur_caller_source_check
+        Start 412: effect28_frost_diver2_source_check
+285/472 Test #255: guard_caller_source_check .............................   Passed    0.11 sec
+        Start 411: effect27_frost_diver_source_check
+286/472 Test  #48: actor_processstate_source_check .......................   Passed    0.11 sec
+        Start 350: effect428_hitline3zero_source_check
+287/472 Test  #37: recovery_resurrection_packet_source_check .............   Passed    0.14 sec
+        Start  89: actor_sendmsg_move_update_source_check
+288/472 Test #412: effect28_frost_diver2_source_check ....................   Passed    0.11 sec
+        Start  78: actor_sendmsg_effect_cases_source_check
+289/472 Test #264: blur_caller_source_check ..............................   Passed    0.13 sec
+        Start 393: effects4_5_hit5_hit6_source_check
+290/472 Test #411: effect27_frost_diver_source_check .....................   Passed    0.12 sec
+        Start  30: spirits2_packet_source_check
+291/472 Test #350: effect428_hitline3zero_source_check ...................   Passed    0.12 sec
+        Start 134: stormgust89_source_check
+292/472 Test  #89: actor_sendmsg_move_update_source_check ................   Passed    0.11 sec
+        Start 415: effects35_36_portal_source_check
+293/472 Test  #78: actor_sendmsg_effect_cases_source_check ...............   Passed    0.10 sec
+        Start 329: effects446_449_body_light_source_check
+294/472 Test #134: stormgust89_source_check ..............................   Passed    0.09 sec
+        Start 402: effect224_wind_source_check
+295/472 Test #393: effects4_5_hit5_hit6_source_check .....................   Passed    0.16 sec
+296/472 Test  #30: spirits2_packet_source_check ..........................   Passed    0.15 sec
+        Start  62: player_processstate_source_check
+        Start 149: airtexture_render_source_check
+297/472 Test #415: effects35_36_portal_source_check ......................   Passed    0.11 sec
+        Start  83: actor_sendmsg_effect_detach_source_check
+298/472 Test #329: effects446_449_body_light_source_check ................   Passed    0.10 sec
+        Start 383: effect40_signum_source_check
+299/472 Test #402: effect224_wind_source_check ...........................   Passed    0.15 sec
+300/472 Test  #62: player_processstate_source_check ......................   Passed    0.10 sec
+        Start 125: effect163_sakura_source_check
+        Start 376: effect48_spray_pond_source_check
+301/472 Test #149: airtexture_render_source_check ........................   Passed    0.10 sec
+        Start 379: effect45_firefly_source_check
+302/472 Test  #83: actor_sendmsg_effect_detach_source_check ..............   Passed    0.10 sec
+        Start 406: effect18_steal_source_check
+303/472 Test #383: effect40_signum_source_check ..........................   Passed    0.10 sec
+        Start 407: effect16_bash_source_check
+304/472 Test #125: effect163_sakura_source_check .........................   Passed    0.11 sec
+        Start 169: prim3dtexture_initializer_source_check
+305/472 Test #376: effect48_spray_pond_source_check ......................   Passed    0.11 sec
+        Start  90: actor_sendmsg_move_subcell_source_check
+306/472 Test #379: effect45_firefly_source_check .........................   Passed    0.14 sec
+307/472 Test #406: effect18_steal_source_check ...........................   Passed    0.12 sec
+        Start 340: effects523_536_tarot_source_check
+        Start  84: actor_sendmsg_inventory_source_check
+308/472 Test #407: effect16_bash_source_check ............................   Passed    0.12 sec
+        Start   7: combo_delay_skill272_integration_source_check
+309/472 Test #169: prim3dtexture_initializer_source_check ................   Passed    0.10 sec
+        Start 173: prim3dcylinder_initializer_source_check
+310/472 Test  #90: actor_sendmsg_move_subcell_source_check ...............   Passed    0.14 sec
+        Start 131: effect695_map_fireworks_source_check
+311/472 Test #340: effects523_536_tarot_source_check .....................   Passed    0.11 sec
+        Start 257: particle_time_spread_caller_source_check
+312/472 Test  #84: actor_sendmsg_inventory_source_check ..................   Passed    0.11 sec
+        Start 400: effects223_225_236_238_261_263_volcano_source_check
+313/472 Test   #7: combo_delay_skill272_integration_source_check .........   Passed    0.11 sec
+        Start 288: darkbreath_inline_source_check
+314/472 Test #173: prim3dcylinder_initializer_source_check ...............   Passed    0.10 sec
+        Start 168: prim3dcircle_initializer_source_check
+315/472 Test #131: effect695_map_fireworks_source_check ..................   Passed    0.09 sec
+        Start 363: effect551_sma_source_check
+316/472 Test #257: particle_time_spread_caller_source_check ..............   Passed    0.11 sec
+        Start 174: prim2dcircle_initializer_source_check
+317/472 Test #400: effects223_225_236_238_261_263_volcano_source_check ...   Passed    0.10 sec
+        Start 387: effect17_magnum_break_source_check
+318/472 Test #288: darkbreath_inline_source_check ........................   Passed    0.15 sec
+        Start 160: aura_render_source_check
+319/472 Test #168: prim3dcircle_initializer_source_check .................   Passed    0.12 sec
+        Start 171: prim3dflash_initializer_source_check
+320/472 Test #363: effect551_sma_source_check ............................   Passed    0.10 sec
+        Start 392: effect3_hit4_source_check
+321/472 Test #174: prim2dcircle_initializer_source_check .................   Passed    0.09 sec
+        Start 151: electric2_render_source_check
+322/472 Test #387: effect17_magnum_break_source_check ....................   Passed    0.15 sec
+        Start 408: effect14_heal_sp_source_check
+323/472 Test #160: aura_render_source_check ..............................   Passed    0.11 sec
+324/472 Test #171: prim3dflash_initializer_source_check ..................   Passed    0.10 sec
+        Start 381: effect42_blessing_source_check
+        Start 275: blood_drain_caller_source_check
+325/472 Test #392: effect3_hit4_source_check .............................   Passed    0.11 sec
+        Start 347: effect590_job_lv_up2_source_check
+326/472 Test #151: electric2_render_source_check .........................   Passed    0.10 sec
+        Start 375: effect50_firesplashhit_source_check
+327/472 Test #408: effect14_heal_sp_source_check .........................   Passed    0.11 sec
+        Start 397: effect49_fire_hit_source_check
+328/472 Test #381: effect42_blessing_source_check ........................   Passed    0.11 sec
+        Start 302: effect457_inline_source_check
+329/472 Test #275: blood_drain_caller_source_check .......................   Passed    0.11 sec
+330/472 Test #347: effect590_job_lv_up2_source_check .....................   Passed    0.10 sec
+        Start 398: effects52_64_70_str_only_source_check
+        Start 468: insult_words_checks
+331/472 Test #375: effect50_firesplashhit_source_check ...................   Passed    0.14 sec
+        Start 405: effect10_coin_source_check
+332/472 Test #397: effect49_fire_hit_source_check ........................   Passed    0.10 sec
+        Start  35: devotion_packet_source_check
+333/472 Test #468: insult_words_checks ...................................   Passed    0.08 sec
+334/472 Test #302: effect457_inline_source_check .........................   Passed    0.10 sec
+        Start 382: effect41_angelus_source_check
+        Start  86: actor_sendmsg_move_path_source_check
+335/472 Test #398: effects52_64_70_str_only_source_check .................   Passed    0.11 sec
+        Start 259: soulbreaker2_caller_source_check
+336/472 Test #405: effect10_coin_source_check ............................   Passed    0.10 sec
+        Start  29: spirits_packet_source_check
+337/472 Test  #35: devotion_packet_source_check ..........................   Passed    0.10 sec
+        Start 301: effect445_inline_source_check
+338/472 Test #382: effect41_angelus_source_check .........................   Passed    0.10 sec
+        Start 410: effect26_ice_arrow_source_check
+339/472 Test  #86: actor_sendmsg_move_path_source_check ..................   Passed    0.10 sec
+        Start 390: effect1_hit2_source_check
+340/472 Test #259: soulbreaker2_caller_source_check ......................   Passed    0.10 sec
+        Start  79: actor_sendmsg_color_cases_source_check
+341/472 Test  #29: spirits_packet_source_check ...........................   Passed    0.10 sec
+        Start 384: effect39_aqua_source_check
+342/472 Test #301: effect445_inline_source_check .........................   Passed    0.10 sec
+        Start 156: wind_render_source_check
+343/472 Test #410: effect26_ice_arrow_source_check .......................   Passed    0.10 sec
+        Start  87: actor_sendmsg_spawn_source_check
+344/472 Test #390: effect1_hit2_source_check .............................   Passed    0.10 sec
+        Start 282: coldhit_caller_source_check
+345/472 Test  #79: actor_sendmsg_color_cases_source_check ................   Passed    0.10 sec
+        Start 164: prim3dquadhorn_render_source_check
+346/472 Test #384: effect39_aqua_source_check ............................   Passed    0.10 sec
+        Start  88: actor_sendmsg_identity_source_check
+347/472 Test #156: wind_render_source_check ..............................   Passed    0.10 sec
+        Start  81: actor_sendmsg_position_case_source_check
+348/472 Test  #87: actor_sendmsg_spawn_source_check ......................   Passed    0.10 sec
+        Start 371: effect624_stin5_source_check
+349/472 Test #282: coldhit_caller_source_check ...........................   Passed    0.10 sec
+        Start 440: status_state_source_check
+350/472 Test #164: prim3dquadhorn_render_source_check ....................   Passed    0.15 sec
+        Start 150: electric_render_source_check
+351/472 Test  #88: actor_sendmsg_identity_source_check ...................   Passed    0.10 sec
+        Start 148: hitline3_render_source_check
+352/472 Test  #81: actor_sendmsg_position_case_source_check ..............   Passed    0.10 sec
+        Start 284: cone_caller_source_check
+353/472 Test #371: effect624_stin5_source_check ..........................   Passed    0.10 sec
+        Start 172: prim3dcylinderhalf_initializer_source_check
+354/472 Test #440: status_state_source_check .............................   Passed    0.10 sec
+        Start 158: magnum2_render_source_check
+355/472 Test #150: electric_render_source_check ..........................   Passed    0.10 sec
+        Start 271: yufitel_caller_source_check
+356/472 Test #148: hitline3_render_source_check ..........................   Passed    0.11 sec
+        Start 263: portal_wind_caller_source_check
+357/472 Test #284: cone_caller_source_check ..............................   Passed    0.10 sec
+        Start 267: exit_caller_source_check
+358/472 Test #172: prim3dcylinderhalf_initializer_source_check ...........   Passed    0.14 sec
+        Start 278: bowlingbash_caller_source_check
+359/472 Test #158: magnum2_render_source_check ...........................   Passed    0.14 sec
+        Start  77: dummy_effect_launcher_source_check
+360/472 Test #271: yufitel_caller_source_check ...........................   Passed    0.11 sec
+        Start 328: effect442_body_light_source_check
+361/472 Test #263: portal_wind_caller_source_check .......................   Passed    0.10 sec
+        Start 380: effect44_smoke_source_check
+362/472 Test #267: exit_caller_source_check ..............................   Passed    0.14 sec
+        Start 180: prim2dtexture_render_source_check
+363/472 Test #278: bowlingbash_caller_source_check .......................   Passed    0.10 sec
+        Start 167: prim3dsphere_initializer_source_check
+364/472 Test  #77: dummy_effect_launcher_source_check ....................   Passed    0.10 sec
+        Start  20: ui_invalidate_source_check
+365/472 Test #328: effect442_body_light_source_check .....................   Passed    0.10 sec
+        Start  44: groundskill_source_check
+366/472 Test #380: effect44_smoke_source_check ...........................   Passed    0.10 sec
+        Start 272: flasher_caller_source_check
+367/472 Test #180: prim2dtexture_render_source_check .....................   Passed    0.10 sec
+        Start 236: effect608_cook_success_source_check
+368/472 Test #167: prim3dsphere_initializer_source_check .................   Passed    0.10 sec
+        Start 170: prim2dflash_initializer_source_check
+369/472 Test  #20: ui_invalidate_source_check ............................   Passed    0.10 sec
+        Start 388: effect12_saint_casting_source_check
+370/472 Test  #44: groundskill_source_check ..............................   Passed    0.09 sec
+        Start 303: effect466_inline_source_check
+371/472 Test #272: flasher_caller_source_check ...........................   Passed    0.09 sec
+        Start 176: prim3dsegment_render_source_check
+372/472 Test #236: effect608_cook_success_source_check ...................   Passed    0.10 sec
+        Start  80: actor_sendmsg_vanish_source_check
+373/472 Test #170: prim2dflash_initializer_source_check ..................   Passed    0.14 sec
+374/472 Test #388: effect12_saint_casting_source_check ...................   Passed    0.13 sec
+375/472 Test #303: effect466_inline_source_check .........................   Passed    0.12 sec
+        Start 166: prim3dline_initializer_source_check
+        Start  82: actor_sendmsg_target_case_source_check
+        Start 266: cartboost_caller_source_check
+376/472 Test #176: prim3dsegment_render_source_check .....................   Passed    0.13 sec
+        Start  65: soundmaker_source_check
+377/472 Test  #80: actor_sendmsg_vanish_source_check .....................   Passed    0.14 sec
+        Start  69: player_onprocess_source_audit
+378/472 Test #166: prim3dline_initializer_source_check ...................   Passed    0.10 sec
+379/472 Test  #82: actor_sendmsg_target_case_source_check ................   Passed    0.09 sec
+        Start 254: npcstop_caller_source_check
+        Start 145: prim3dsphere_source_check
+380/472 Test #266: cartboost_caller_source_check .........................   Passed    0.10 sec
+        Start  63: processsound_source_check
+381/472 Test  #65: soundmaker_source_check ...............................   Passed    0.10 sec
+        Start 154: stin_render_source_check
+382/472 Test  #69: player_onprocess_source_audit .........................   Passed    0.10 sec
+        Start 300: effect413_inline_source_check
+383/472 Test #254: npcstop_caller_source_check ...........................   Passed    0.13 sec
+384/472 Test #145: prim3dsphere_source_check .............................   Passed    0.13 sec
+385/472 Test  #63: processsound_source_check .............................   Passed    0.12 sec
+        Start 153: sma_render_source_check
+        Start  55: pc_setstate_source_check
+        Start  60: setattrstate_source_check
+386/472 Test #154: stin_render_source_check ..............................   Passed    0.13 sec
+        Start 466: chat_scrollbar_checks
+387/472 Test #466: chat_scrollbar_checks .................................   Passed    0.03 sec
+        Start 432: effect605_stop_message_source_check
+388/472 Test #300: effect413_inline_source_check .........................   Passed    0.14 sec
+        Start 433: effect563_mode_message_source_check
+389/472 Test #153: sma_render_source_check ...............................   Passed    0.10 sec
+        Start  58: npc_setstate_source_check
+390/472 Test  #55: pc_setstate_source_check ..............................   Passed    0.10 sec
+        Start  72: player_proceed_source_comparison
+391/472 Test  #60: setattrstate_source_check .............................   Passed    0.10 sec
+        Start 297: effect198_noop_source_check
+392/472 Test #432: effect605_stop_message_source_check ...................   Passed    0.12 sec
+        Start 306: effect105_inline_source_check
+393/472 Test #433: effect563_mode_message_source_check ...................   Passed    0.10 sec
+        Start 107: clif_skill_disappear_source_check
+394/472 Test  #58: npc_setstate_source_check .............................   Passed    0.10 sec
+        Start  59: npc_sendmsg_source_check
+395/472 Test  #72: player_proceed_source_comparison ......................   Passed    0.10 sec
+        Start  56: pc_processstate_source_check
+396/472 Test #297: effect198_noop_source_check ...........................   Passed    0.14 sec
+        Start 112: effect_dispatch_source_check
+397/472 Test #306: effect105_inline_source_check .........................   Passed    0.13 sec
+398/472 Test #107: clif_skill_disappear_source_check .....................   Passed    0.11 sec
+399/472 Test  #59: npc_sendmsg_source_check ..............................   Passed    0.10 sec
+        Start 144: prim3dline_source_check
+        Start 445: recovery_number_receiver_source_check
+        Start  57: player_setstate_source_check
+400/472 Test  #56: pc_processstate_source_check ..........................   Passed    0.11 sec
+        Start  67: actor_tint_source_check
+401/472 Test #112: effect_dispatch_source_check ..........................   Passed    0.13 sec
+        Start  42: primitive_anim_motion_source_check
+402/472 Test #111: effect_coverage_audit .................................   Passed   14.11 sec
+        Start  98: actor_am_skill_source_check
+403/472 Test #144: prim3dline_source_check ...............................   Passed    0.15 sec
+404/472 Test #445: recovery_number_receiver_source_check .................   Passed    0.14 sec
+405/472 Test  #57: player_setstate_source_check ..........................   Passed    0.13 sec
+406/472 Test  #67: actor_tint_source_check ...............................   Passed    0.12 sec
+        Start  52: make_party_effect_source_check
+        Start  40: effectprim_sendmsg_source_check
+        Start  49: process_effect_state_source_check
+        Start  66: pc_onprocess_source_check
+407/472 Test  #42: primitive_anim_motion_source_check ....................   Passed    0.14 sec
+        Start  97: actor_am_action_source_check
+408/472 Test  #98: actor_am_skill_source_check ...........................   Passed    0.09 sec
+        Start  51: mandra_attack_effect_source_check
+409/472 Test  #52: make_party_effect_source_check ........................   Passed    0.09 sec
+        Start  41: initsegment_source_check
+410/472 Test  #40: effectprim_sendmsg_source_check .......................   Passed    0.09 sec
+        Start  45: process_wba_source_check
+411/472 Test  #49: process_effect_state_source_check .....................   Passed    0.14 sec
+        Start  50: make_special_attack_effect_source_check
+412/472 Test  #66: pc_onprocess_source_check .............................   Passed    0.14 sec
+        Start  46: force_animation2_source_check
+413/472 Test  #97: actor_am_action_source_check ..........................   Passed    0.09 sec
+        Start 455: skill_walk_frame_checks
+414/472 Test  #51: mandra_attack_effect_source_check .....................   Passed    0.09 sec
+        Start 444: falcon_equip_parity_check
+415/472 Test  #41: initsegment_source_check ..............................   Passed    0.09 sec
+        Start 465: chat_battle_options_checks
+416/472 Test #465: chat_battle_options_checks ............................   Passed    0.03 sec
+        Start 467: chat_room_packet_checks
+417/472 Test #455: skill_walk_frame_checks ...............................   Passed    0.06 sec
+        Start  33: spirit_chookgi_integration_source_check
+418/472 Test  #45: process_wba_source_check ..............................   Passed    0.18 sec
+419/472 Test #467: chat_room_packet_checks ...............................   Passed    0.06 sec
+        Start 441: skill_packet_actor_lookup_source_check
+        Start 443: msg_effect_state_lifecycle_source_check
+420/472 Test #444: falcon_equip_parity_check .............................   Passed    0.12 sec
+421/472 Test  #50: make_special_attack_effect_source_check ...............   Passed    0.14 sec
+422/472 Test  #46: force_animation2_source_check .........................   Passed    0.14 sec
+        Start  22: frame_submission_source_check
+        Start  61: wba_acceptance_trace_check
+        Start 446: doc_hygiene_check
+423/472 Test  #33: spirit_chookgi_integration_source_check ...............   Passed    0.10 sec
+        Start 450: combat_overlay_order_checks
+424/472 Test #441: skill_packet_actor_lookup_source_check ................   Passed    0.06 sec
+        Start 457: cursor_snap_checks
+425/472 Test #443: msg_effect_state_lifecycle_source_check ...............   Passed    0.07 sec
+        Start 462: chat_notice_checks
+426/472 Test  #22: frame_submission_source_check .........................   Passed    0.10 sec
+        Start 442: msg_effect_state_lifecycle_checks
+427/472 Test  #61: wba_acceptance_trace_check ............................   Passed    0.10 sec
+428/472 Test #446: doc_hygiene_check .....................................   Passed    0.10 sec
+429/472 Test #457: cursor_snap_checks ....................................   Passed    0.06 sec
+430/472 Test #450: combat_overlay_order_checks ...........................   Passed    0.07 sec
+        Start 464: chat_history_wrap_checks
+        Start 452: heal_timing_checks
+        Start   6: combo_delay_skill272_integration_checks
+        Start   8: wave_dispatch_checks
+431/472 Test #462: chat_notice_checks ....................................   Passed    0.12 sec
+432/472 Test #464: chat_history_wrap_checks ..............................   Passed    0.06 sec
+        Start  27: auto_spell_packet_checks
+        Start 454: skill_walk_stop_checks
+433/472 Test #442: msg_effect_state_lifecycle_checks .....................   Passed    0.09 sec
+434/472 Test #452: heal_timing_checks ....................................   Passed    0.07 sec
+435/472 Test   #6: combo_delay_skill272_integration_checks ...............   Passed    0.07 sec
+        Start   2: skill_packet_replay_checks
+        Start  25: particle_render_checks
+        Start 463: chat_history_view_checks
+436/472 Test  #27: auto_spell_packet_checks ..............................   Passed    0.07 sec
+        Start 451: effect_blend_state_checks
+437/472 Test   #8: wave_dispatch_checks ..................................   Passed    0.13 sec
+438/472 Test #454: skill_walk_stop_checks ................................   Passed    0.07 sec
+        Start   5: server_sound_checks
+        Start  10: blade_stop_integration_checks
+439/472 Test   #2: skill_packet_replay_checks ............................   Passed    0.12 sec
+440/472 Test  #25: particle_render_checks ................................   Passed    0.07 sec
+441/472 Test #463: chat_history_view_checks ..............................   Passed    0.07 sec
+        Start 449: skill_self_target_checks
+        Start  16: change_guild_checks
+        Start 110: ui_spell_list_receiver_checks
+442/472 Test #451: effect_blend_state_checks .............................   Passed    0.12 sec
+443/472 Test  #16: change_guild_checks ...................................   Passed    0.05 sec
+        Start 453: summon_slave_message_checks
+        Start 459: combat_presentation_fix_checks
+444/472 Test   #5: server_sound_checks ...................................   Passed    0.13 sec
+445/472 Test  #10: blade_stop_integration_checks .........................   Passed    0.08 sec
+446/472 Test #449: skill_self_target_checks ..............................   Passed    0.07 sec
+        Start  23: assumptio_depth_checks
+        Start 458: ground_sampler_checks
+        Start  19: ui_invalidate_checks
+447/472 Test #110: ui_spell_list_receiver_checks .........................   Passed    0.12 sec
+        Start 456: presentation_regression_checks
+448/472 Test #453: summon_slave_message_checks ...........................   Passed    0.08 sec
+449/472 Test #459: combat_presentation_fix_checks ........................   Passed    0.08 sec
+        Start  13: notify_effect3_checks
+        Start 461: chat_window_state_checks
+450/472 Test  #23: assumptio_depth_checks ................................   Passed    0.12 sec
+451/472 Test  #19: ui_invalidate_checks ..................................   Passed    0.07 sec
+        Start  12: skill_message_checks
+        Start  17: show_image_checks
+452/472 Test #458: ground_sampler_checks .................................   Passed    0.09 sec
+453/472 Test #456: presentation_regression_checks ........................   Passed    0.07 sec
+        Start  15: skill_talkbox_text_checks
+        Start   9: forced_motion_checks
+454/472 Test  #13: notify_effect3_checks .................................   Passed    0.12 sec
+455/472 Test #461: chat_window_state_checks ..............................   Passed    0.07 sec
+456/472 Test  #12: skill_message_checks ..................................   Passed    0.07 sec
+457/472 Test  #17: show_image_checks .....................................   Passed    0.06 sec
+        Start  18: guild_skill_checks
+        Start  21: renderer_frame_checks
+        Start  32: spirit_chookgi_integration_checks
+        Start  36: recovery_resurrection_packet_checks
+458/472 Test  #15: skill_talkbox_text_checks .............................   Passed    0.12 sec
+459/472 Test  #18: guild_skill_checks ....................................   Passed    0.06 sec
+460/472 Test  #21: renderer_frame_checks .................................   Passed    0.06 sec
+461/472 Test  #32: spirit_chookgi_integration_checks .....................   Passed    0.06 sec
+        Start  31: spirit_packet_lifecycle_checks
+        Start 447: skill_tree_model_checks
+        Start  14: talkbox_chat_contents_checks
+        Start   3: ambient_sound_checks
+462/472 Test   #9: forced_motion_checks ..................................   Passed    0.13 sec
+463/472 Test  #36: recovery_resurrection_packet_checks ...................   Passed    0.11 sec
+464/472 Test  #31: spirit_packet_lifecycle_checks ........................   Passed    0.06 sec
+        Start  34: devotion_packet_lifecycle_checks
+        Start 101: skill_action_info2_runtime_parity
+        Start   1: wave_math_checks
+465/472 Test  #14: talkbox_chat_contents_checks ..........................   Passed    0.07 sec
+        Start 100: skill_action_info_runtime_parity
+466/472 Test #447: skill_tree_model_checks ...............................   Passed    0.11 sec
+467/472 Test   #3: ambient_sound_checks ..................................   Passed    0.06 sec
+        Start   4: actor_tint_checks
+468/472 Test  #34: devotion_packet_lifecycle_checks ......................   Passed    0.07 sec
+469/472 Test #101: skill_action_info2_runtime_parity .....................   Passed    0.03 sec
+470/472 Test   #1: wave_math_checks ......................................   Passed    0.03 sec
+471/472 Test #100: skill_action_info_runtime_parity ......................   Passed    0.03 sec
+472/472 Test   #4: actor_tint_checks .....................................   Passed    0.03 sec
+
+100% tests passed, 0 tests failed out of 472
+
+Total Test time (real) =  15.21 sec

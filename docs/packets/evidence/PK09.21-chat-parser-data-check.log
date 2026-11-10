@@ -1,0 +1,2 @@
+PASS: 292 lookup aliases (209 inserts +83 push_back, 49 resources), 82 parameter aliases; selected PE/source provenance and generated data agree.
+Data reconstruction only; general dispatch/editor/charset acceptance remains open.

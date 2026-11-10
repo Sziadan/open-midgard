@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -19,6 +20,10 @@ public:
         }
     }
     bool Load();
+    std::optional<std::string_view> Find(unsigned index) const {
+        if(index>=m_rows.size())return std::nullopt;
+        return std::string_view(m_rows[index]);
+    }
     std::string Get(unsigned index,const char* fallback) const {
         return index<m_rows.size() ? m_rows[index] : std::string(fallback);
     }

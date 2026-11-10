@@ -1,6 +1,8 @@
 #include "core/UiMessageStrings.h"
 #include "core/SettingsIni.h"
 #include "core/SourceChatCommand.h"
+#include "core/SourceChatParser.h"
+#include "core/SourceChatAliases.h"
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -11177,8 +11179,18 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         if (!text || *text == '\0') {
             return 0;
         }
-        const auto sourceCommand=ro::chat::SourceChatCommandToken(text);
-        if(sourceCommand=="/am" || sourceCommand=="/automsg" || sourceCommand==u8"/자동응답")return SendMsg(47,SourceTalk_AutoMessage,0,0);
+        // Full source parsing now owns alias recognition for this accepted
+        // message47 leaf. General dispatch and parser side-effect application
+        // remain separate integration work; other existing routes stay below.
+        if(*text=='/'){
+            ro::UiMessageStrings sourceMessages;sourceMessages.Load();
+            ro::chat::SourceChatParseContext sourceContext;
+            if(const auto label=sourceMessages.Find(698))sourceContext.minEffectAlias=*label;
+            const auto sourceTalk=ro::chat::ParseSourceChat(text,sourceContext,[&](std::string_view command){
+                return ro::chat::LookupSourceTalkType(command,[&](int id){return sourceMessages.Find(id);},ro::chat::SourceChatEncoding::Utf8,g_serverType==ServerInstantEvent);
+            });
+            if(sourceTalk.type==SourceTalk_AutoMessage)return SendMsg(47,sourceTalk.type,0,0);
+        }
         std::string whisperTarget = lparam != 0 ? reinterpret_cast<const char*>(lparam) : std::string();
         const size_t targetFirstNonSpace = whisperTarget.find_first_not_of(" \t\r\n");
         if (targetFirstNonSpace == std::string::npos) {

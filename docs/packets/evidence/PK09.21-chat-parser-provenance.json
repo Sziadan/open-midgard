@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-10",
+  "baseline": "077a4ee92f88a52a51556235742a5204c992f670",
+  "commit_subject": "packet(PK09.21): reconstruct source chat parsing",
+  "scope": "Full pure parser/tokenizer/catalog; production accepted auto lookup; general caller/dispatcher/effects/editor/charset/independent gates remain open",
+  "runtime_test_generator_sha256": {
+    ".gitignore": "ad4cc30cee1a08998d089fe6a8f954cf251b5b245ba0ab33b9ded55ee7a213b8",
+    "src/core/SourceChatAliases.generated.inc": "386f82661bec376aa1d7c0caf7b97c48665cda3957697717c754a110afae67d9",
+    "src/core/SourceChatAliases.h": "6ffafe5151d5ca18ee81abb5fa6daaefb317ee86ebeb6902026274a7f0d69274",
+    "src/core/SourceChatCommand.h": "eba608c68b685955f3bf92c8f1bc5ad12f49d532b3824c5077f6dd7ddaab6e0c",
+    "src/core/SourceChatParameterRules.generated.inc": "da5ce5b0e0595a874023e4a7a304f1bdf1dbd7fda05ead3c0b221efacd57f8d4",
+    "src/core/SourceChatParser.h": "861a8387d4ab3efdc014133b0dcd5dfecae821dcebbbbe150ce66a616d0b1f74",
+    "src/core/SourceChatTokenizer.h": "1fe1ee1a5457f2c398533f0ef703b5bbac3ec3a4c19c8d8414a66c9f9f01ab85",
+    "src/core/UiMessageStrings.h": "7f360c98cf02b7146b073cfd8a09dc211cbf033e5715faf2068c0d9e1e13f82c",
+    "src/gamemode/GameMode.cpp": "799f94625b7a37f958cc435cd6e26cfa65d6821921a8df14f02a3f42359dac4d",
+    "tools/generate_source_chat_parser_data.py": "1fdeeb792b9903671513e4bbe8cbff882fd98373dfdc2935ccfd61851b63c59b",
+    "tools/tests/CMakeLists.txt": "d9d42f4d1aaa3db0cb0e80fa4e163d5f021aeeaf7f3a6d32f7d90c702ff6cb24",
+    "tools/tests/SourceChatParserTests.cpp": "e8ecd942fe9f0636a02a86a09a2e8e51de9c7b59d986c4f0fabea15b14de260a",
+    "tools/tests/SourceChatTokenizerTests.cpp": "79070cc06a452ddf61508b5fec371bd1e19de32495998da42859d500bdef0b32",
+    "tools/tests/replay/AutoMessageReplay.inc": "bb701cb02059f80b257398ef7fee88459f8de5f2461748d0484bce88ba92630c"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/Session.cpp": "5ddc85c0f08ab0722a09c7e7cec69a92695bd8bdd4cfcc65adf6da0b467e5cc5",
+    "Ref/Util.cpp": "a4c7edbe5999f733d3caa1101f2eea7f17b1b571e87d91bc90bc501cf7cb6523",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/GameMode2.cpp": "111ca06ba24dc274a4b57f5484c71a0cc30d99952d554033d05221e80fe66217"
+  },
+  "application_sha256": {
+    "build-mingw-preset/open-midgard.exe": "58a8c2799d2fdecb79612a83af1a66b854df9509d72efc572b7638f880332921"
+  },
+  "deployed_read_only_sha256": {
+    "D:/Spel/OldRO/open-midgard.exe": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-chat-parser-build.log": "4fad58c184a5f455eb884087c38a858e3441929338b7e7cae1ca799476a100e6",
+    "docs/packets/evidence/PK09.21-chat-parser-cases.log": "b9803054dd05da98f8b77b4255820e23cbcc4cdd496e0e75b56fe980c988657b",
+    "docs/packets/evidence/PK09.21-chat-parser-configure.log": "8ded7f76f3b2c5ee0a6c867e5abb2b4462efb2a9b656ad9961fed8098d6269ca",
+    "docs/packets/evidence/PK09.21-chat-parser-data-check.log": "a251d4baf2974eaf4fd66ec84b83e7968191a89717a40192a95d56597c8eb0eb",
+    "docs/packets/evidence/PK09.21-chat-parser-data.json": "159ca96ad63c4386e7780c428aed68ad73905ffb8e286b8651ae69b9ce09dc30",
+    "docs/packets/evidence/PK09.21-chat-parser-pe.txt": "4e2d8d65d6a5003e49876d3a6aaa7b8d33e2543adee1f305987cc53a59266c57",
+    "docs/packets/evidence/PK09.21-chat-parser-restore-deploy-setting.log": "8ed5c3c0fd992abed7dc3157ac3dcd5fc2d974e77d0a9d1bb4adca2c0e043408",
+    "docs/packets/evidence/PK09.21-chat-parser-root-ctest.log": "420318aa3a7d53fd3b731f0fcd5297079f9247ee25ff337645ff3f324957ff01",
+    "docs/packets/evidence/PK09.21-chat-parser-source.txt": "09ccdfdc16fc703cc75febf2ad0c9383ee179a5065539f39302d1d577dd811a6",
+    "docs/packets/evidence/PK09.21-chat-parser-unit-build.log": "4ac886d0cc2d8aa55c1c3125f7ead0322e69b44e63af8e662ce86d0dc6b3808c",
+    "docs/packets/evidence/PK09.21-chat-parser-unit-ctest.log": "299118578bab65e2c81a08e9e122f5fcb0f37a0bad870c55427e99b4d7448ed1",
+    "docs/packets/evidence/PK09.21-chat-parser.md": "d5a1dff477f8e8405933a5f582f1841c0c296816591cd778cdb15e38ecc34f65"
+  }
+}

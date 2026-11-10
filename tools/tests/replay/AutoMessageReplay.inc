@@ -41,9 +41,9 @@ void AutoMessageReplay()
 #else
     setenv("OPEN_MIDGARD_DATA_DIR",(restore.resource/"settings").string().c_str(),1);
 #endif
-    const auto language=[](int empty=-1){std::ofstream file("msgstringtable.txt",std::ios::binary);
+    const auto language=[](int empty=-1,bool aliasCollision=false){std::ofstream file("msgstringtable.txt",std::ios::binary);
         const std::map<int,std::string> labels={{940,"DEFAULT REPLY"},{941,"[AUTO] "},{942,"ENABLED"},{943,"DISABLED"},{944,"Configure <reply>"}};
-        for(int i=0;i<=944;++i){const auto found=labels.find(i);if(i!=empty && found!=labels.end())file<<found->second;file<<"#\r\n";}
+        for(int i=0;i<=944;++i){const auto found=labels.find(i);if(aliasCollision && i==544)file<<"/am";else if(i!=empty && found!=labels.end())file<<found->second;file<<"#\r\n";}
     };
     language();g_readFolderFirst=1;g_codePage=65001;g_serviceType=ServiceAmerica;
     ro::GetMannerFilter().Clear();g_session.SetActiveStatusIcon(107,false,0);
@@ -63,6 +63,9 @@ void AutoMessageReplay()
     Require(g_session.m_strAutoMSG=="character sentinel" && g_session.m_onAutoMSG,"character006B reset account auto-message state");
     g_session.m_strAutoMSG="DEFAULT REPLY";g_session.m_onAutoMSG=false;SkillPacketReplayAccess::SetCurrent(&mode);
     const auto command=[&](const std::string& text,const char* target=""){return mode.SendMsg(CGameMode::GameMsg_SubmitChat,reinterpret_cast<msgparam_t>(text.c_str()),reinterpret_cast<msgparam_t>(target),0)!=0;};
+    language(-1,true);command("/am");
+    Require(!g_session.m_onAutoMSG && !g_windowMgr.m_autoMessageWnd,"hardcoded auto whitelist bypassed earlier selected MsgStr544/type29 alias");
+    language();
     Require(command("/AM ignored","NotAWhisper") && g_session.m_onAutoMSG && g_windowMgr.m_autoMessageWnd,"uppercase/argument auto command was sent as a targeted whisper");
     auto* editor=g_windowMgr.m_autoMessageWnd;const auto client=g_windowMgr.GetChatClientRect();
     mode.SendMsg(47,153,0,0);Require(g_session.m_onAutoMSG && g_windowMgr.m_autoMessageWnd==editor,"secondary header153 was used as selected auto talk type");

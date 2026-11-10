@@ -202,3 +202,5 @@ tools/tests/__pycache__/
 !tools/tests/check_prim2dtexture_render.py
 !tools/tests/check_prim2dquad_render.py
 !tools/tests/check_prim2dcircle_render.py
+
+!tools/generate_source_chat_parser_data.py

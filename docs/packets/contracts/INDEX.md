@@ -142,3 +142,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [Auto-message configuration](../evidence/PK09.21-auto-message.md) now integrates WID116,100-byte selected edit, source submit/Escape/delete distinctions, actual47/152, three aliases and accepted0069 default940. Preserve selected152 versus secondary153, centered UIY, assignment padding and load/login/teardown ownership. Actual messenger preference controls and full global/main parser/editor/art/Qt/scale acceptance remain open under the current work item.
 
 [Messenger preference controls](../evidence/PK09.21-friend-options.md) accept actual168/68/147, selected labels, independent runtime toggles, cached geometry, shutdown persistence and native/QML input/stacking. Full command/ignore/editor/art and broad/deployed gates remain open.
+
+[Source parser model](../evidence/PK09.21-chat-parser.md) records the complete292/82 selected catalog/parameter model, full tokenizer and real auto-route precedence regression. Runtime general command dispatch, parser effects and original caller integration remain open.
