@@ -3755,3 +3755,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Ground prompt skin selection
 
 **Current ground prompt skin checkpoint (2026-11-11)**. Ground prompt artwork and IME palettes now honor the selected directory skin in gameplay. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin.md)
+
+## 2026-11-11 Ground prompt ZIP skins
+
+**Current ground prompt ZIP skin checkpoint (2026-11-11)**. The ground prompts now load selected ZIP skins in gameplay using the existing skin setting. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin-zip.md)

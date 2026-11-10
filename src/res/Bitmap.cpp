@@ -594,6 +594,16 @@ bool LoadBgraPixelsFromGameData(const char* path, u32** outPixels, int* outWidth
         return false;
     }
 
+    int size = 0;
+    unsigned char* bytes = g_fileMgr.GetData(path, &size);
+    const bool decoded = LoadBgraPixelsFromMemory(bytes, size, outPixels, outWidth, outHeight);
+    delete[] bytes;
+    return decoded;
+}
+
+bool LoadBgraPixelsFromMemory(const unsigned char* bytes, int size, u32** outPixels, int* outWidth, int* outHeight)
+{
+    if (!outPixels) return false;
     *outPixels = nullptr;
     if (outWidth) {
         *outWidth = 0;
@@ -602,18 +612,12 @@ bool LoadBgraPixelsFromGameData(const char* path, u32** outPixels, int* outWidth
         *outHeight = 0;
     }
 
-    int size = 0;
-    unsigned char* bytes = g_fileMgr.GetData(path, &size);
-    if (!bytes || size <= 0) {
-        delete[] bytes;
-        return false;
-    }
+    if (!bytes || size <= 0) return false;
 
     int width = 0;
     int height = 0;
     u32* pixels = nullptr;
     const bool decoded = LoadImageFromMemory(bytes, size, width, height, pixels);
-    delete[] bytes;
     if (!decoded || !pixels || width <= 0 || height <= 0) {
         delete[] pixels;
         return false;

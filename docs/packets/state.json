@@ -829,9 +829,10 @@
         "docs/packets/evidence/PK27-prompt-native-paint.md",
         "docs/packets/evidence/PK27-prompt-opacity.md",
         "docs/packets/evidence/PK27-prompt-modern-overlay.md",
-        "docs/packets/evidence/PK27-prompt-skin.md"
+        "docs/packets/evidence/PK27-prompt-skin.md",
+        "docs/packets/evidence/PK27-prompt-skin-zip.md"
       ],
-      "commit_subject": "packet(PK27): resolve selected ground prompt skins"
+      "commit_subject": "packet(PK27): load ground prompt ZIP skins"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -873,9 +874,10 @@
         "docs/packets/evidence/PK27-prompt-native-paint.md",
         "docs/packets/evidence/PK27-prompt-opacity.md",
         "docs/packets/evidence/PK27-prompt-modern-overlay.md",
-        "docs/packets/evidence/PK27-prompt-skin.md"
+        "docs/packets/evidence/PK27-prompt-skin.md",
+        "docs/packets/evidence/PK27-prompt-skin-zip.md"
       ],
-      "commit_subject": "packet(PK27): resolve selected ground prompt skins"
+      "commit_subject": "packet(PK27): load ground prompt ZIP skins"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -913,9 +915,10 @@
         "docs/packets/evidence/PK27-prompt-native-paint.md",
         "docs/packets/evidence/PK27-prompt-opacity.md",
         "docs/packets/evidence/PK27-prompt-modern-overlay.md",
-        "docs/packets/evidence/PK27-prompt-skin.md"
+        "docs/packets/evidence/PK27-prompt-skin.md",
+        "docs/packets/evidence/PK27-prompt-skin-zip.md"
       ],
-      "commit_subject": "packet(PK27): resolve selected ground prompt skins"
+      "commit_subject": "packet(PK27): load ground prompt ZIP skins"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -951,9 +954,10 @@
         "docs/packets/evidence/PK27-prompt-native-paint.md",
         "docs/packets/evidence/PK27-prompt-opacity.md",
         "docs/packets/evidence/PK27-prompt-modern-overlay.md",
-        "docs/packets/evidence/PK27-prompt-skin.md"
+        "docs/packets/evidence/PK27-prompt-skin.md",
+        "docs/packets/evidence/PK27-prompt-skin-zip.md"
       ],
-      "commit_subject": "packet(PK27): resolve selected ground prompt skins"
+      "commit_subject": "packet(PK27): load ground prompt ZIP skins"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -1792,7 +1796,8 @@
         "docs/packets/evidence/PK27-prompt-native-paint.md",
         "docs/packets/evidence/PK27-prompt-opacity.md",
         "docs/packets/evidence/PK27-prompt-modern-overlay.md",
-        "docs/packets/evidence/PK27-prompt-skin.md"
+        "docs/packets/evidence/PK27-prompt-skin.md",
+        "docs/packets/evidence/PK27-prompt-skin-zip.md"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
@@ -2315,7 +2320,8 @@
         "docs/packets/evidence/PK27-prompt-native-paint.md",
         "docs/packets/evidence/PK27-prompt-opacity.md",
         "docs/packets/evidence/PK27-prompt-modern-overlay.md",
-        "docs/packets/evidence/PK27-prompt-skin.md"
+        "docs/packets/evidence/PK27-prompt-skin.md",
+        "docs/packets/evidence/PK27-prompt-skin-zip.md"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

@@ -403,6 +403,84 @@
             Require(g_windowMgr.MakeWindow(84) == prompt && prompt->GetColorChipRgb(2,2) == 0xdc9246u
                 && rgb(prompt->GetFrameBitmap(0)) == 0xd24240u && candidateCorner() == 0xa25d19u,
                 "cached prompt did not refresh skin artwork, palette, and candidate lattice together");
+
+            QByteArray zip;
+            QByteArray directory;
+            const auto u16le = [](QByteArray& bytes, unsigned value) {
+                bytes.append(static_cast<char>(value));
+                bytes.append(static_cast<char>(value >> 8));
+            };
+            const auto u32le = [&](QByteArray& bytes, unsigned value) {
+                u16le(bytes, value);
+                u16le(bytes, value >> 16);
+            };
+            const auto zipBitmap = [&](const QByteArray& name, int width, int height, QColor color,
+                    bool deflate, bool corruptCrc = false) {
+                QImage image(width, height, QImage::Format_RGB32);
+                image.fill(color);
+                QByteArray bmp;
+                QBuffer buffer(&bmp);
+                Require(buffer.open(QIODevice::WriteOnly) && image.save(&buffer, "BMP"), "ZIP skin fixture encode failed");
+                unsigned crc = 0xffffffffu;
+                for (const unsigned char byte : bmp) {
+                    crc ^= byte;
+                    for (int bit = 0; bit < 8; ++bit)
+                        crc = (crc >> 1) ^ ((crc & 1) ? 0xedb88320u : 0u);
+                }
+                crc = ~crc;
+                if (corruptCrc) crc ^= 1;
+                QByteArray encoded = bmp;
+                if (deflate) {
+                    // qCompress adds a four-byte length and a zlib wrapper.
+                    const auto wrapped = qCompress(bmp);
+                    Require(wrapped.size() > 10, "ZIP skin fixture compression failed");
+                    encoded = wrapped.mid(6, wrapped.size() - 10);
+                }
+                const auto offset = static_cast<unsigned>(zip.size());
+                QByteArray header;
+                u16le(header, 20);
+                u16le(header, 0);
+                u16le(header, deflate ? 8 : 0);
+                u32le(header, 0);
+                u32le(header, crc);
+                u32le(header, static_cast<unsigned>(encoded.size()));
+                u32le(header, static_cast<unsigned>(bmp.size()));
+                u16le(header, static_cast<unsigned>(name.size()));
+                u16le(header, 0);
+                u32le(zip, 0x04034b50u);
+                zip += header + name + encoded;
+                u32le(directory, 0x02014b50u);
+                u16le(directory, 20);
+                directory += header;
+                u32le(directory, 0);
+                u16le(directory, 0);
+                u32le(directory, 0);
+                u32le(directory, offset);
+                directory += name;
+            };
+            zipBitmap("COLORCHIP.BMP",32,8,QColor("#42ac6c"),true);
+            zipBitmap("PacketSkinZip/Basic_Interface/Titlebar_Left.BMP",12,17,QColor("#314972"),true);
+            zipBitmap("skin\\PacketSkinZip\\btn_ok.bmp",28,18,QColor("#723149"),false);
+            zipBitmap("basic_interface/titlebar_right.bmp",12,17,QColor("#993164"),false,true);
+            const auto centralOffset = static_cast<unsigned>(zip.size());
+            zip += directory;
+            u32le(zip, 0x06054b50u);
+            u32le(zip, 0);
+            u16le(zip, 4);
+            u16le(zip, 4);
+            u32le(zip, static_cast<unsigned>(directory.size()));
+            u32le(zip, centralOffset);
+            u16le(zip, 0);
+            {
+                QFile archive(QStringLiteral("skin/PacketSkinZip.zip"));
+                Require(archive.open(QIODevice::WriteOnly) && archive.write(zip) == zip.size(), "ZIP skin fixture save failed");
+            }
+            Require(SaveSettingsIniString("Graphics","SkinName","PacketSkinZip"), "ZIP skin setting save failed");
+            Require(g_windowMgr.MakeWindow(84) == prompt && prompt->GetColorChipRgb(2,2) == 0x42ac6cu
+                && rgb(prompt->GetFrameBitmap(0)) == 0x314972u && rgb(prompt->GetFrameBitmap(1)) == 0x4042d2u
+                && rgb(prompt->GetButton(118)->bitmaps[0]) == 0x723149u,
+                "ZIP skin entry lookup, decoding, or CRC fallback differed");
+            Require(!std::filesystem::exists("_tmpskin_/PacketSkinZip"), "ZIP skin created an extraction directory");
             Require(SaveSettingsIniString("Graphics","SkinName","<Basic Skin>"), "basic skin setting save failed");
             Require(g_windowMgr.MakeWindow(84) == prompt && prompt->GetColorChipRgb(2,2) == 0x123456u,
                 "basic skin did not restore the original palette");
@@ -414,6 +492,7 @@
             {"source_edit_geometry_and_limit",true},{"source_key_frame_footer_button_samples",true},
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",true},
+            {"zip_skin_resource_acceptance",true},
             {"opacity_compositor_acceptance",static_cast<bool>(RO_PLATFORM_WINDOWS)},
             {"modern_prompt_upload_alpha",static_cast<bool>(RO_PLATFORM_WINDOWS)},
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},

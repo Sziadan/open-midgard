@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current ground prompt skin checkpoint (2026-11-11)**. Ground prompt artwork and IME palettes now honor the selected directory skin in gameplay. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin.md)
+**Current ground prompt ZIP skin checkpoint (2026-11-11)**. The ground prompts now load selected ZIP skins in gameplay using the existing skin setting. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin-zip.md)
+
+**Previous ground prompt skin checkpoint (2026-11-11)**. Ground prompt artwork and IME palettes now honor the selected directory skin in gameplay. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin.md)
 
 **Previous ground prompt modern overlay checkpoint (2026-11-11)**. The Windows modern gameplay queue now submits the prompt and its IME popups with premultiplied alpha. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-modern-overlay.md)
 

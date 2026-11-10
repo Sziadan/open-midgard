@@ -28,3 +28,5 @@ private:
 };
 
 bool LoadBgraPixelsFromGameData(const char* path, u32** outPixels, int* outWidth = nullptr, int* outHeight = nullptr);
+bool LoadBgraPixelsFromMemory(const unsigned char* bytes, int size, u32** outPixels,
+    int* outWidth = nullptr, int* outHeight = nullptr);

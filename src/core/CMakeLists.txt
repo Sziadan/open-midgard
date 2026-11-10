@@ -12,6 +12,7 @@ add_library(ro_core STATIC
     SourceTextCodec.h SourceTextCodec.cpp
     GPak.h      GPak.cpp
     File.h      File.cpp
+    ZipEntry.h ZipEntry.cpp
     Globals.h   Globals.cpp
     ClientInfoLocale.h Locale.cpp
     Xml.h       Xml.cpp
@@ -37,7 +38,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(ZLIB)
 
-target_link_libraries(ro_core PRIVATE zlibstatic)
+add_library(ro_minizip_reader STATIC
+    ${zlib_SOURCE_DIR}/contrib/minizip/ioapi.c
+    ${zlib_SOURCE_DIR}/contrib/minizip/unzip.c
+)
+target_include_directories(ro_minizip_reader PUBLIC ${zlib_SOURCE_DIR}/contrib/minizip)
+target_link_libraries(ro_minizip_reader PRIVATE zlibstatic)
+
+target_link_libraries(ro_core PRIVATE zlibstatic ro_minizip_reader)
 
 if(WIN32)
     target_link_libraries(ro_core PRIVATE winmm.lib)

@@ -8,6 +8,7 @@
 #include "core/Timer.h"
 #include "core/SourceTextCodec.h"
 #include "core/UiMessageStrings.h"
+#include "core/ZipEntry.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
@@ -15,6 +16,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #if defined(_WIN32)
 #include <imm.h>
 #endif
@@ -307,6 +309,27 @@ const char* GroundPromptLanguageFolder()
     return "english\\";
 }
 
+shopui::BitmapPixels LoadGroundPromptZipBitmap(const std::string& skin, const char* name, bool transparent)
+{
+    const std::string path = "skin/" + skin + ".zip";
+    auto bytes = ro::ReadZipEntry(path, name);
+    if (bytes.empty()) bytes = ro::ReadZipEntry(path, skin + "/" + name);
+    if (bytes.empty()) bytes = ro::ReadZipEntry(path, "skin/" + skin + "/" + name);
+    if (bytes.empty()) return {};
+
+    shopui::BitmapPixels bitmap;
+    u32* pixels = nullptr;
+    if (!LoadBgraPixelsFromMemory(bytes.data(), static_cast<int>(bytes.size()), &pixels, &bitmap.width, &bitmap.height))
+        return {};
+    const std::unique_ptr<u32[]> decoded(pixels);
+    bitmap.pixels.assign(pixels, pixels + static_cast<std::size_t>(bitmap.width) * bitmap.height);
+    if (transparent) {
+        for (auto& pixel : bitmap.pixels)
+            if ((pixel & 0xffffffu) == 0xff00ffu) pixel = 0;
+    }
+    return bitmap;
+}
+
 shopui::BitmapPixels LoadGroundPromptBitmap(const std::string& skin, const char* name, bool transparent = true)
 {
     const auto load = [&](const std::string& path) {
@@ -316,6 +339,8 @@ shopui::BitmapPixels LoadGroundPromptBitmap(const std::string& skin, const char*
     };
     if (!skin.empty()) {
         auto bitmap = load("skin\\" + skin + "\\" + name);
+        if (bitmap.IsValid()) return bitmap;
+        bitmap = LoadGroundPromptZipBitmap(skin, name, transparent);
         if (bitmap.IsValid()) return bitmap;
     }
 
