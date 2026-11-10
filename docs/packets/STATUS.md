@@ -1,8 +1,8 @@
 # Packet implementation status
 
-**Current checkpoint (2026-11-10):** [Actual Tip window and source controls](evidence/PK09.21-tip-window.md) implements factory38/command42, viewer/navigation/scroll, checkbox, startup once guard and native/passive Qt lifetime. Root PE corrects earlier leads to260x125, six rows and page5; source Enter=Back180, Escape=unhandled117. Application161/161 and standalone473/473 pass; eight native/Qt frame pairs retained. Rich Tip text/skin and the full command window remain open.
+**Current checkpoint (2026-11-10):** [Command request/turn actions](evidence/PK09.21-command-actions.md) implements eight previously missing action rows through actual parser/mode/socket paths, selected WHO guards, PVP both identifiers and BANGBANG/raw152 semantics. Application161/161 and standalone473/473 pass. HELP14/WHERE9 and full command window/help/recipient/native-passive Qt integration remain open; preserve the prior Tip UI proof and rich-text/skin gates.
 
-**Active step: PK09.21.** Continue [remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Subject: `packet(PK09.21): restore Tip window and source controls`. Preserve earlier source/packet/item/corpse proofs; broad requests, PK47 and independent PK48/49/live/deployed gates remain open. The whole packet plan remains unfinished.
+**Active step: PK09.21.** Continue [remaining chat lifecycle](work-items/PK09.21.md) under still-open PK09.04. Subject: `packet(PK09.21): restore command requests and turn actions`. Preserve earlier source/packet/item/corpse proofs; broad requests, PK47 and independent PK48/49/live/deployed gates remain open. The whole packet plan remains unfinished.
 
 **World-entry repair:** [same-world handoff fix](evidence/PK05.05-world-entry.md) remains in the rebuilt candidate and its regression passes. OldRO still has the prior executable and requires redeployment/live retry; no installed acceptance is claimed.
 

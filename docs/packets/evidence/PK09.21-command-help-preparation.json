@@ -1,0 +1,817 @@
+{
+  "schema": 1,
+  "status": "selected_pe_static_numeric_bundle",
+  "binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "source_function": {
+    "file": "Ref/GameMode.cpp",
+    "symbol": "CGameMode::ProcessTalkType(TALKTYPE,unsigned int)",
+    "va": "0x00578f10",
+    "case": "TT_HELP (talktype 14 / 0x0e)",
+    "source_case_start_line": 16211,
+    "source_case_end_line": 16372
+  },
+  "numeric_method": "For the first 70 source MsgStr calls, pair each source symbol in order with the immediate push immediately preceding the selected PE call to MsgStr at 0x00514350 in the TT_HELP case. For the four random-tail messages, record each literal ID push in the PE and its jump to the shared MsgStr call at 0x0057c889. Numeric IDs are not inferred from enum ordinal counting.",
+  "initial_ui_behavior": {
+    "sendmsg_va": "0x004e9cb0",
+    "window_manager_global_va": "0x00768758",
+    "clear": {
+      "sendmsg_type": 3,
+      "parameters": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pe_block_start_va": "0x0057ab04",
+      "source_line": 16211,
+      "note": "Four zero parameters followed by type 3, then manager this in ECX."
+    },
+    "append": {
+      "sendmsg_type": 1,
+      "color": 16777060,
+      "color_hex": "0x00ffff64",
+      "other_parameters": [
+        0,
+        0
+      ],
+      "source_line": 16215,
+      "note": "For each emitted string, MsgStr result is passed as text to SendMsg type 1 with color 16777060."
+    }
+  },
+  "items": [
+    {
+      "order": 1,
+      "symbol": "MSI_EXPLAIN_OPENTIP",
+      "id": 177,
+      "id_hex": "0xb1",
+      "pe_push_va": "0x0057ab1b",
+      "pe_msgstr_call_va": "0x0057ab20",
+      "source_line": 16213,
+      "emission": "unconditional"
+    },
+    {
+      "order": 2,
+      "symbol": "MSI_EXPLAIN_HELP",
+      "id": 33,
+      "id_hex": "0x21",
+      "pe_push_va": "0x0057ab3c",
+      "pe_msgstr_call_va": "0x0057ab3e",
+      "source_line": 16215,
+      "emission": "unconditional"
+    },
+    {
+      "order": 3,
+      "symbol": "MSI_EXPLAIN_WHO",
+      "id": 34,
+      "id_hex": "0x22",
+      "pe_push_va": "0x0057ab5a",
+      "pe_msgstr_call_va": "0x0057ab5c",
+      "source_line": 16217,
+      "emission": "unconditional"
+    },
+    {
+      "order": 4,
+      "symbol": "MSI_EXPLAIN_MUSIC",
+      "id": 35,
+      "id_hex": "0x23",
+      "pe_push_va": "0x0057ab78",
+      "pe_msgstr_call_va": "0x0057ab7a",
+      "source_line": 16219,
+      "emission": "unconditional"
+    },
+    {
+      "order": 5,
+      "symbol": "MSI_EXPLAIN_SOUND",
+      "id": 36,
+      "id_hex": "0x24",
+      "pe_push_va": "0x0057ab96",
+      "pe_msgstr_call_va": "0x0057ab98",
+      "source_line": 16221,
+      "emission": "unconditional"
+    },
+    {
+      "order": 6,
+      "symbol": "MSI_EXPLAIN_EFFECT",
+      "id": 37,
+      "id_hex": "0x25",
+      "pe_push_va": "0x0057abb4",
+      "pe_msgstr_call_va": "0x0057abb6",
+      "source_line": 16223,
+      "emission": "unconditional"
+    },
+    {
+      "order": 7,
+      "symbol": "MSI_EXPLAIN_POS",
+      "id": 38,
+      "id_hex": "0x26",
+      "pe_push_va": "0x0057abd2",
+      "pe_msgstr_call_va": "0x0057abd4",
+      "source_line": 16225,
+      "emission": "unconditional"
+    },
+    {
+      "order": 8,
+      "symbol": "MSI_EXPLAIN_FRAMESKIP",
+      "id": 39,
+      "id_hex": "0x27",
+      "pe_push_va": "0x0057abf0",
+      "pe_msgstr_call_va": "0x0057abf2",
+      "source_line": 16227,
+      "emission": "unconditional"
+    },
+    {
+      "order": 9,
+      "symbol": "MSI_EXPLAIN_SOUNDVOLUME",
+      "id": 40,
+      "id_hex": "0x28",
+      "pe_push_va": "0x0057ac0e",
+      "pe_msgstr_call_va": "0x0057ac10",
+      "source_line": 16229,
+      "emission": "unconditional"
+    },
+    {
+      "order": 10,
+      "symbol": "MSI_EXPLAIN_BGMVOLUME",
+      "id": 41,
+      "id_hex": "0x29",
+      "pe_push_va": "0x0057ac2c",
+      "pe_msgstr_call_va": "0x0057ac2e",
+      "source_line": 16231,
+      "emission": "unconditional"
+    },
+    {
+      "order": 11,
+      "symbol": "MSI_EXPLAIN_SAYISOLATION",
+      "id": 42,
+      "id_hex": "0x2a",
+      "pe_push_va": "0x0057ac4a",
+      "pe_msgstr_call_va": "0x0057ac4c",
+      "source_line": 16233,
+      "emission": "unconditional"
+    },
+    {
+      "order": 12,
+      "symbol": "MSI_EXPLAIN_LIST_SAYISOLATION_CHAR",
+      "id": 43,
+      "id_hex": "0x2b",
+      "pe_push_va": "0x0057ac68",
+      "pe_msgstr_call_va": "0x0057ac6a",
+      "source_line": 16235,
+      "emission": "unconditional"
+    },
+    {
+      "order": 13,
+      "symbol": "MSI_EXPLAIN_SAY_PERMIT",
+      "id": 44,
+      "id_hex": "0x2c",
+      "pe_push_va": "0x0057ac86",
+      "pe_msgstr_call_va": "0x0057ac88",
+      "source_line": 16237,
+      "emission": "unconditional"
+    },
+    {
+      "order": 14,
+      "symbol": "MSI_EXPLAIN_SAY_PERMITALL",
+      "id": 45,
+      "id_hex": "0x2d",
+      "pe_push_va": "0x0057aca4",
+      "pe_msgstr_call_va": "0x0057aca6",
+      "source_line": 16239,
+      "emission": "unconditional"
+    },
+    {
+      "order": 15,
+      "symbol": "MSI_EXPLAIN_SAY_ISOLATEALL",
+      "id": 46,
+      "id_hex": "0x2e",
+      "pe_push_va": "0x0057acc2",
+      "pe_msgstr_call_va": "0x0057acc4",
+      "source_line": 16241,
+      "emission": "unconditional"
+    },
+    {
+      "order": 16,
+      "symbol": "MSI_EXPLAIN_PARTY",
+      "id": 107,
+      "id_hex": "0x6b",
+      "pe_push_va": "0x0057ace0",
+      "pe_msgstr_call_va": "0x0057ace2",
+      "source_line": 16243,
+      "emission": "unconditional"
+    },
+    {
+      "order": 17,
+      "symbol": "MSI_EXPLAIN_SIT",
+      "id": 132,
+      "id_hex": "0x84",
+      "pe_push_va": "0x0057acfe",
+      "pe_msgstr_call_va": "0x0057ad03",
+      "source_line": 16245,
+      "emission": "unconditional"
+    },
+    {
+      "order": 18,
+      "symbol": "MSI_EXPLAIN_STAND",
+      "id": 133,
+      "id_hex": "0x85",
+      "pe_push_va": "0x0057ad1f",
+      "pe_msgstr_call_va": "0x0057ad24",
+      "source_line": 16247,
+      "emission": "unconditional"
+    },
+    {
+      "order": 19,
+      "symbol": "MSI_EXPLAIN_MAKE_CHAT",
+      "id": 134,
+      "id_hex": "0x86",
+      "pe_push_va": "0x0057ad40",
+      "pe_msgstr_call_va": "0x0057ad45",
+      "source_line": 16249,
+      "emission": "unconditional"
+    },
+    {
+      "order": 20,
+      "symbol": "MSI_EXPLAIN_EXIT_CHAT_ROOM",
+      "id": 135,
+      "id_hex": "0x87",
+      "pe_push_va": "0x0057ad61",
+      "pe_msgstr_call_va": "0x0057ad66",
+      "source_line": 16251,
+      "emission": "unconditional"
+    },
+    {
+      "order": 21,
+      "symbol": "MSI_EXPLAIN_ORGANIZE_PARTY",
+      "id": 137,
+      "id_hex": "0x89",
+      "pe_push_va": "0x0057ad82",
+      "pe_msgstr_call_va": "0x0057ad87",
+      "source_line": 16253,
+      "emission": "unconditional"
+    },
+    {
+      "order": 22,
+      "symbol": "MSI_EXPLAIN_LEAVE_PARTY",
+      "id": 138,
+      "id_hex": "0x8a",
+      "pe_push_va": "0x0057ada3",
+      "pe_msgstr_call_va": "0x0057ada8",
+      "source_line": 16255,
+      "emission": "unconditional"
+    },
+    {
+      "order": 23,
+      "symbol": "MSI_EXPLAIN_EXPEL_PARTY_MEMBER",
+      "id": 139,
+      "id_hex": "0x8b",
+      "pe_push_va": "0x0057adc4",
+      "pe_msgstr_call_va": "0x0057adc9",
+      "source_line": 16257,
+      "emission": "unconditional"
+    },
+    {
+      "order": 24,
+      "symbol": "MSI_EXPLAIN_TIP2",
+      "id": 48,
+      "id_hex": "0x30",
+      "pe_push_va": "0x0057ade5",
+      "pe_msgstr_call_va": "0x0057ade7",
+      "source_line": 16259,
+      "emission": "unconditional"
+    },
+    {
+      "order": 25,
+      "symbol": "MSI_EXPLAIN_TIP3",
+      "id": 108,
+      "id_hex": "0x6c",
+      "pe_push_va": "0x0057ae03",
+      "pe_msgstr_call_va": "0x0057ae05",
+      "source_line": 16261,
+      "emission": "unconditional"
+    },
+    {
+      "order": 26,
+      "symbol": "MSI_EXPLAIN_TIP4",
+      "id": 140,
+      "id_hex": "0x8c",
+      "pe_push_va": "0x0057ae21",
+      "pe_msgstr_call_va": "0x0057ae26",
+      "source_line": 16263,
+      "emission": "unconditional"
+    },
+    {
+      "order": 27,
+      "symbol": "MSI_EXPLAIN_TIP5",
+      "id": 141,
+      "id_hex": "0x8d",
+      "pe_push_va": "0x0057ae42",
+      "pe_msgstr_call_va": "0x0057ae47",
+      "source_line": 16265,
+      "emission": "unconditional"
+    },
+    {
+      "order": 28,
+      "symbol": "MSI_EXPLAIN_TIP6",
+      "id": 142,
+      "id_hex": "0x8e",
+      "pe_push_va": "0x0057ae63",
+      "pe_msgstr_call_va": "0x0057ae68",
+      "source_line": 16267,
+      "emission": "unconditional"
+    },
+    {
+      "order": 29,
+      "symbol": "MSI_EXPLAIN_TIP7",
+      "id": 154,
+      "id_hex": "0x9a",
+      "pe_push_va": "0x0057ae84",
+      "pe_msgstr_call_va": "0x0057ae89",
+      "source_line": 16269,
+      "emission": "unconditional"
+    },
+    {
+      "order": 30,
+      "symbol": "MSI_EXPLAIN_TIP8",
+      "id": 155,
+      "id_hex": "0x9b",
+      "pe_push_va": "0x0057aea5",
+      "pe_msgstr_call_va": "0x0057aeaa",
+      "source_line": 16271,
+      "emission": "unconditional"
+    },
+    {
+      "order": 31,
+      "symbol": "MSI_EXPLAIN_TIP9",
+      "id": 156,
+      "id_hex": "0x9c",
+      "pe_push_va": "0x0057aec6",
+      "pe_msgstr_call_va": "0x0057aecb",
+      "source_line": 16273,
+      "emission": "unconditional"
+    },
+    {
+      "order": 32,
+      "symbol": "MSI_EXPLAIN_TIP10",
+      "id": 157,
+      "id_hex": "0x9d",
+      "pe_push_va": "0x0057aee7",
+      "pe_msgstr_call_va": "0x0057aeec",
+      "source_line": 16275,
+      "emission": "unconditional"
+    },
+    {
+      "order": 33,
+      "symbol": "MSI_EXPLAIN_TIP11",
+      "id": 158,
+      "id_hex": "0x9e",
+      "pe_push_va": "0x0057af08",
+      "pe_msgstr_call_va": "0x0057af0d",
+      "source_line": 16277,
+      "emission": "unconditional"
+    },
+    {
+      "order": 34,
+      "symbol": "MSI_EXPLAIN_TIP12",
+      "id": 173,
+      "id_hex": "0xad",
+      "pe_push_va": "0x0057af29",
+      "pe_msgstr_call_va": "0x0057af2e",
+      "source_line": 16279,
+      "emission": "unconditional"
+    },
+    {
+      "order": 35,
+      "symbol": "MSI_EXPLAIN_TIP13",
+      "id": 211,
+      "id_hex": "0xd3",
+      "pe_push_va": "0x0057af4a",
+      "pe_msgstr_call_va": "0x0057af4f",
+      "source_line": 16281,
+      "emission": "unconditional"
+    },
+    {
+      "order": 36,
+      "symbol": "MSI_EXPLAIN_SNAP",
+      "id": 275,
+      "id_hex": "0x113",
+      "pe_push_va": "0x0057af6b",
+      "pe_msgstr_call_va": "0x0057af70",
+      "source_line": 16283,
+      "emission": "unconditional"
+    },
+    {
+      "order": 37,
+      "symbol": "MSI_EXPLAIN_SAVE_CHAT",
+      "id": 313,
+      "id_hex": "0x139",
+      "pe_push_va": "0x0057af8c",
+      "pe_msgstr_call_va": "0x0057af91",
+      "source_line": 16285,
+      "emission": "unconditional"
+    },
+    {
+      "order": 38,
+      "symbol": "MSI_REPORTCOMMAND_EXPLANATION",
+      "id": 757,
+      "id_hex": "0x2f5",
+      "pe_push_va": "0x0057afad",
+      "pe_msgstr_call_va": "0x0057afb2",
+      "source_line": 16287,
+      "emission": "unconditional"
+    },
+    {
+      "order": 39,
+      "symbol": "MSI_EXPLAIN_CAMERA_MISS",
+      "id": 321,
+      "id_hex": "0x141",
+      "pe_push_va": "0x0057afce",
+      "pe_msgstr_call_va": "0x0057afd3",
+      "source_line": 16289,
+      "emission": "unconditional"
+    },
+    {
+      "order": 40,
+      "symbol": "MSI_EXPLAIN_WHISPER_LIST_WND",
+      "id": 349,
+      "id_hex": "0x15d",
+      "pe_push_va": "0x0057afef",
+      "pe_msgstr_call_va": "0x0057aff4",
+      "source_line": 16291,
+      "emission": "unconditional"
+    },
+    {
+      "order": 41,
+      "symbol": "MSI_EXPLAIN_FOG",
+      "id": 736,
+      "id_hex": "0x2e0",
+      "pe_push_va": "0x0057b010",
+      "pe_msgstr_call_va": "0x0057b015",
+      "source_line": 16293,
+      "emission": "unconditional"
+    },
+    {
+      "order": 42,
+      "symbol": "MSI_EXPLAIN_PVP_INFO",
+      "id": 852,
+      "id_hex": "0x354",
+      "pe_push_va": "0x0057b031",
+      "pe_msgstr_call_va": "0x0057b036",
+      "source_line": 16295,
+      "emission": "unconditional"
+    },
+    {
+      "order": 43,
+      "symbol": "MSI_EXPLAIN_NOTALKMSG2",
+      "id": 907,
+      "id_hex": "0x38b",
+      "pe_push_va": "0x0057b052",
+      "pe_msgstr_call_va": "0x0057b057",
+      "source_line": 16297,
+      "emission": "unconditional"
+    },
+    {
+      "order": 44,
+      "symbol": "MSI_EXPLAIN_BINGBING",
+      "id": 727,
+      "id_hex": "0x2d7",
+      "pe_push_va": "0x0057b073",
+      "pe_msgstr_call_va": "0x0057b078",
+      "source_line": 16299,
+      "emission": "unconditional"
+    },
+    {
+      "order": 45,
+      "symbol": "MSI_EXPLAIN_BANGBANG",
+      "id": 728,
+      "id_hex": "0x2d8",
+      "pe_push_va": "0x0057b094",
+      "pe_msgstr_call_va": "0x0057b099",
+      "source_line": 16301,
+      "emission": "unconditional"
+    },
+    {
+      "order": 46,
+      "symbol": "MSI_EXPLAIN_AURA",
+      "id": 710,
+      "id_hex": "0x2c6",
+      "pe_push_va": "0x0057b0b5",
+      "pe_msgstr_call_va": "0x0057b0ba",
+      "source_line": 16303,
+      "emission": "unconditional"
+    },
+    {
+      "order": 47,
+      "symbol": "MSI_EXPLAIN_SHOWNAMETYPE",
+      "id": 715,
+      "id_hex": "0x2cb",
+      "pe_push_va": "0x0057b0d6",
+      "pe_msgstr_call_va": "0x0057b0db",
+      "source_line": 16305,
+      "emission": "unconditional"
+    },
+    {
+      "order": 48,
+      "symbol": "MSI_EXPLAIN_QUICKSPELL3",
+      "id": 771,
+      "id_hex": "0x303",
+      "pe_push_va": "0x0057b0f7",
+      "pe_msgstr_call_va": "0x0057b0fc",
+      "source_line": 16307,
+      "emission": "unconditional"
+    },
+    {
+      "order": 49,
+      "symbol": "MSI_EXPLAIN_SET1",
+      "id": 735,
+      "id_hex": "0x2df",
+      "pe_push_va": "0x0057b118",
+      "pe_msgstr_call_va": "0x0057b11d",
+      "source_line": 16309,
+      "emission": "unconditional"
+    },
+    {
+      "order": 50,
+      "symbol": "MSI_EXPLAIN_DORIDORI",
+      "id": 724,
+      "id_hex": "0x2d4",
+      "pe_push_va": "0x0057b139",
+      "pe_msgstr_call_va": "0x0057b13e",
+      "source_line": 16311,
+      "emission": "unconditional"
+    },
+    {
+      "order": 51,
+      "symbol": "MSI_EXPLAIN_QUICKSPELL",
+      "id": 767,
+      "id_hex": "0x2ff",
+      "pe_push_va": "0x0057b15a",
+      "pe_msgstr_call_va": "0x0057b15f",
+      "source_line": 16313,
+      "emission": "unconditional"
+    },
+    {
+      "order": 52,
+      "symbol": "MSI_EXPLAIN_EMOTION",
+      "id": 784,
+      "id_hex": "0x310",
+      "pe_push_va": "0x0057b17b",
+      "pe_msgstr_call_va": "0x0057b180",
+      "source_line": 16315,
+      "emission": "unconditional"
+    },
+    {
+      "order": 53,
+      "symbol": "MSI_EXPLAIN_HI",
+      "id": 918,
+      "id_hex": "0x396",
+      "pe_push_va": "0x0057b19c",
+      "pe_msgstr_call_va": "0x0057b1a1",
+      "source_line": 16317,
+      "emission": "unconditional"
+    },
+    {
+      "order": 54,
+      "symbol": "MSI_EXPLAIN_NOTRADE",
+      "id": 804,
+      "id_hex": "0x324",
+      "pe_push_va": "0x0057b1bd",
+      "pe_msgstr_call_va": "0x0057b1c2",
+      "source_line": 16319,
+      "emission": "unconditional"
+    },
+    {
+      "order": 55,
+      "symbol": "MSI_EXPLAIN_BATTLE",
+      "id": 787,
+      "id_hex": "0x313",
+      "pe_push_va": "0x0057b1de",
+      "pe_msgstr_call_va": "0x0057b1e3",
+      "source_line": 16321,
+      "emission": "unconditional"
+    },
+    {
+      "order": 56,
+      "symbol": "MSI_EXPLAIN_BATTLE2",
+      "id": 788,
+      "id_hex": "0x314",
+      "pe_push_va": "0x0057b1ff",
+      "pe_msgstr_call_va": "0x0057b204",
+      "source_line": 16323,
+      "emission": "unconditional"
+    },
+    {
+      "order": 57,
+      "symbol": "MSI_EXPLAIN_BATTLE3",
+      "id": 795,
+      "id_hex": "0x31b",
+      "pe_push_va": "0x0057b220",
+      "pe_msgstr_call_va": "0x0057b225",
+      "source_line": 16325,
+      "emission": "unconditional"
+    },
+    {
+      "order": 58,
+      "symbol": "MSI_EXPLAIN_BATTLE4",
+      "id": 796,
+      "id_hex": "0x31c",
+      "pe_push_va": "0x0057b241",
+      "pe_msgstr_call_va": "0x0057b246",
+      "source_line": 16327,
+      "emission": "unconditional"
+    },
+    {
+      "order": 59,
+      "symbol": "MSI_EXPLAIN_ALCHEMIST",
+      "id": 924,
+      "id_hex": "0x39c",
+      "pe_push_va": "0x0057b262",
+      "pe_msgstr_call_va": "0x0057b267",
+      "source_line": 16329,
+      "emission": "unconditional"
+    },
+    {
+      "order": 60,
+      "symbol": "MSI_EXPLAIN_BLACKSMITH",
+      "id": 923,
+      "id_hex": "0x39b",
+      "pe_push_va": "0x0057b283",
+      "pe_msgstr_call_va": "0x0057b288",
+      "source_line": 16331,
+      "emission": "unconditional"
+    },
+    {
+      "order": 61,
+      "symbol": "MSI_EXPLAIN_WINDOW",
+      "id": 849,
+      "id_hex": "0x351",
+      "pe_push_va": "0x0057b2a4",
+      "pe_msgstr_call_va": "0x0057b2a9",
+      "source_line": 16333,
+      "emission": "unconditional"
+    },
+    {
+      "order": 62,
+      "symbol": "MSI_EXPLAIN_SKILLFAIL",
+      "id": 729,
+      "id_hex": "0x2d9",
+      "pe_push_va": "0x0057b2c5",
+      "pe_msgstr_call_va": "0x0057b2ca",
+      "source_line": 16335,
+      "emission": "unconditional"
+    },
+    {
+      "order": 63,
+      "symbol": "MSI_EXPLAIN_NOTALKMSG",
+      "id": 732,
+      "id_hex": "0x2dc",
+      "pe_push_va": "0x0057b2e6",
+      "pe_msgstr_call_va": "0x0057b2eb",
+      "source_line": 16337,
+      "emission": "unconditional"
+    },
+    {
+      "order": 64,
+      "symbol": "MSI_EXPLAIN_NOSHIFT",
+      "id": 700,
+      "id_hex": "0x2bc",
+      "pe_push_va": "0x0057b307",
+      "pe_msgstr_call_va": "0x0057b30c",
+      "source_line": 16339,
+      "emission": "unconditional"
+    },
+    {
+      "order": 65,
+      "symbol": "MSI_EXPLAIN_NOCTRL",
+      "id": 716,
+      "id_hex": "0x2cc",
+      "pe_push_va": "0x0057b328",
+      "pe_msgstr_call_va": "0x0057b32d",
+      "source_line": 16341,
+      "emission": "unconditional"
+    },
+    {
+      "order": 66,
+      "symbol": "MSI_EXPLAIN_QUICKSPELL2",
+      "id": 770,
+      "id_hex": "0x302",
+      "pe_push_va": "0x0057b349",
+      "pe_msgstr_call_va": "0x0057b34e",
+      "source_line": 16343,
+      "emission": "unconditional"
+    },
+    {
+      "order": 67,
+      "symbol": "MSI_EXPLAIN_LOGINOUT",
+      "id": 1043,
+      "id_hex": "0x413",
+      "pe_push_va": "0x0057b36a",
+      "pe_msgstr_call_va": "0x0057b36f",
+      "source_line": 16345,
+      "emission": "unconditional"
+    },
+    {
+      "order": 68,
+      "symbol": "MSI_EXPLAIN_SHOPPING",
+      "id": 1107,
+      "id_hex": "0x453",
+      "pe_push_va": "0x0057b38b",
+      "pe_msgstr_call_va": "0x0057b390",
+      "source_line": 16347,
+      "emission": "unconditional"
+    },
+    {
+      "order": 69,
+      "symbol": "MSI_EXPLAIN_ALTY",
+      "id": 925,
+      "id_hex": "0x39d",
+      "pe_push_va": "0x0057b3ac",
+      "pe_msgstr_call_va": "0x0057b3b1",
+      "source_line": 16349,
+      "emission": "unconditional"
+    },
+    {
+      "order": 70,
+      "symbol": "MSI_EXPLAIN_HUNTING",
+      "id": 1191,
+      "id_hex": "0x4a7",
+      "pe_push_va": "0x0057b3cd",
+      "pe_msgstr_call_va": "0x0057b3d2",
+      "source_line": 16351,
+      "emission": "unconditional"
+    },
+    {
+      "order": 71,
+      "symbol": "MSI_EXPLAIN_SACHING1",
+      "id": 921,
+      "id_hex": "0x399",
+      "pe_push_va": "0x0057b400",
+      "pe_msgstr_call_va": "0x0057c889",
+      "source_line": 16355,
+      "emission": "conditional tail; immediate pushes then jumps to shared MsgStr call"
+    },
+    {
+      "order": 72,
+      "symbol": "MSI_EXPLAIN_SACHING2",
+      "id": 922,
+      "id_hex": "0x39a",
+      "pe_push_va": "0x0057b421",
+      "pe_msgstr_call_va": "0x0057c889",
+      "source_line": 16358,
+      "emission": "conditional tail; immediate pushes then jumps to shared MsgStr call"
+    },
+    {
+      "order": 73,
+      "symbol": "MSI_EXPLAIN_BRIGHT",
+      "id": 760,
+      "id_hex": "0x2f8",
+      "pe_push_va": "0x0057b444",
+      "pe_msgstr_call_va": "0x0057c889",
+      "source_line": 16364,
+      "emission": "conditional tail; immediate pushes then jumps to shared MsgStr call"
+    },
+    {
+      "order": 74,
+      "symbol": "MSI_EXPLAIN_LAG",
+      "id": 789,
+      "id_hex": "0x315",
+      "pe_push_va": "0x0057b46b",
+      "pe_msgstr_call_va": "0x0057c889",
+      "source_line": 16370,
+      "emission": "conditional tail; immediate pushes then jumps to shared MsgStr call"
+    }
+  ],
+  "conditional_tail": {
+    "source_line": 16353,
+    "paths": [
+      {
+        "condition": "rand() % 10 < 4",
+        "emits": [
+          "MSI_EXPLAIN_SACHING1",
+          "MSI_EXPLAIN_SACHING2"
+        ]
+      },
+      {
+        "condition": "otherwise rand() % 5 < 2",
+        "emits": [
+          "MSI_EXPLAIN_BRIGHT"
+        ]
+      },
+      {
+        "condition": "otherwise rand() % 3 < 2",
+        "emits": [
+          "MSI_EXPLAIN_LAG"
+        ]
+      },
+      {
+        "condition": "otherwise rand() % 3 >= 2",
+        "emits": []
+      }
+    ],
+    "note": "First 70 strings are emitted unconditionally in order. The tail is mutually exclusive and emits zero, one, or two strings; source labels contain random modulo logic."
+  },
+  "evidence_files": {
+    "source": "Ref/GameMode.cpp",
+    "pe_disassembly": "build-recovery-unit-review/command-process-talk-pe.txt",
+    "prior_symbol_order": "docs/packets/evidence/PK09.21-command-action-preparation.json"
+  }
+}

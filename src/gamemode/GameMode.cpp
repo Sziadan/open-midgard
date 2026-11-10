@@ -4685,7 +4685,7 @@ bool SendMoveRequestPacket(int dstX, int dstY)
     return sent;
 }
 
-bool SendChangeDirRequestPacket(u8 headDir, u8 dir)
+bool SendChangeDirRequestPacket(u16 headDir, u8 dir,bool normalizeDir=true)
 {
     const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
     bool sent = false;
@@ -4693,7 +4693,7 @@ bool SendChangeDirRequestPacket(u8 headDir, u8 dir)
         PACKET_CZ_CHANGE_DIRECTION_LEGACY packet{};
         packet.PacketType = profile.changeDir;
         packet.HeadDir = static_cast<u16>(headDir);
-        packet.Dir = static_cast<u8>(dir & 7);
+        packet.Dir = normalizeDir?static_cast<u8>(dir & 7):dir;
         sent = CRagConnection::instance()->SendPacket(
             reinterpret_cast<const char*>(&packet),
             static_cast<int>(sizeof(packet)));
@@ -4703,7 +4703,7 @@ bool SendChangeDirRequestPacket(u8 headDir, u8 dir)
         FillPacketPadding(packet.padding0, static_cast<int>(sizeof(packet.padding0)));
         packet.HeadDir = static_cast<u16>(headDir);
         FillPacketPadding(&packet.padding1, 1);
-        packet.Dir = static_cast<u8>(dir & 7);
+        packet.Dir = normalizeDir?static_cast<u8>(dir & 7):dir;
         sent = CRagConnection::instance()->SendPacket(
             reinterpret_cast<const char*>(&packet),
             static_cast<int>(sizeof(packet)));
@@ -10971,7 +10971,17 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]={0x00,0x01};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
     }
-    case 152:return SendChangeDirRequestPacket(static_cast<u8>(lparam),static_cast<u8>(wparam))?1:0;
+    case 34:
+        if(g_serviceType==ServiceChina || g_serviceType==ServiceMalaysia || g_serviceType==ServiceSingapore)return 0;
+        [[fallthrough]];
+    case 83:case 194:case 195:case 197:case 262: {
+        // Selected mode recipients, not TALKTYPE numbers. These requests are
+        // fixed two-byte source opcodes, independent of movement profiles.
+        const u16 opcode=msg==34?193:msg==83?285:msg==194?535:msg==195?536:msg==197?549:633;
+        const std::array<u8,2> packet{{static_cast<u8>(opcode),static_cast<u8>(opcode>>8)}};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
+    }
+    case 152:return SendChangeDirRequestPacket(static_cast<u16>(lparam),static_cast<u8>(wparam),false)?1:0;
     case 183: {
         const u8 packet[]={0xe7,0x01};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;

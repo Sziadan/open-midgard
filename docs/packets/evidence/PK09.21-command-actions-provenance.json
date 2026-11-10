@@ -1,0 +1,12 @@
+{
+  "baseline": "1a8d246f",
+  "hashes": {
+    "src/gamemode/GameMode.cpp": "c6fa4a3433ba888ed357bad6fc0f0188ccb8fbe774d1f25bd9a9c8736597f8d0",
+    "src/gamemode/SourceChatSubmission.inc": "2e15486cc8419cc87f4f0e71786f56089341c0fc0b3ce49159c3d431068a853b",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "a678a9abb5a98d4e14aa9bc0b8685606a5836404694dd4486ff8ff14eb2067e1",
+    "build-mingw-preset/open-midgard.exe": "2a7095bd5825c5554268d16bc00a36d4cba1f1cf710ec11faead0932c04996fe"
+  },
+  "deployed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "deployment": "OFF during build/tests; ON restored configure-only; installed executable unchanged",
+  "scope": "eight command actions and source152 recipient; full plan remains open"
+}

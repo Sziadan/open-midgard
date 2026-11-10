@@ -8,7 +8,7 @@
       "label": "/taekwon",
       "action_type": 151,
       "action_type_hex": "0x97",
-      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+      "handler_status": "Implemented: source recipient197 sends0225."
     },
     {
       "row": 2,
@@ -22,14 +22,14 @@
       "label": "/blacksmith",
       "action_type": 145,
       "action_type_hex": "0x91",
-      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+      "handler_status": "Implemented: source recipient194 sends0217."
     },
     {
       "row": 4,
       "label": "/alchemist",
       "action_type": 146,
       "action_type_hex": "0x92",
-      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+      "handler_status": "Implemented: source recipient195 sends0218."
     },
     {
       "row": 5,
@@ -43,7 +43,7 @@
       "label": "/who",
       "action_type": 6,
       "action_type_hex": "0x06",
-      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+      "handler_status": "Implemented: source recipient34 sends00C1; service guards and Vietnam slash prelude retained."
     },
     {
       "row": 7,
@@ -85,7 +85,7 @@
       "label": "/memo",
       "action_type": 43,
       "action_type_hex": "0x2b",
-      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+      "handler_status": "Implemented: source recipient83 sends011D."
     },
     {
       "row": 13,
@@ -113,7 +113,7 @@
       "label": "/bangbang",
       "action_type": 111,
       "action_type_hex": "0x6f",
-      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+      "handler_status": "Implemented: source subtract45/single-wrap and raw152 heading request with head0."
     },
     {
       "row": 17,
@@ -148,14 +148,14 @@
       "label": "/pvpinfo",
       "action_type": 141,
       "action_type_hex": "0x8d",
-      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+      "handler_status": "Implemented: PK-zone-only020F length10, account and character IDs."
     },
     {
       "row": 22,
       "label": "/hunting",
       "action_type": 168,
       "action_type_hex": "0xa8",
-      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+      "handler_status": "Implemented: source recipient262 sends0279."
     }
   ],
   "window_rows": {
@@ -412,5 +412,6 @@
   "root_review": {
     "missing_action_count": 10,
     "corrections": "Root checked current mode67 frame0100 and manager6 export ownership; prior subagent prose mislabeled these. Handler presence is preparation, not proof of full action acceptance. Window numeric fields still need root ProcessPushButton routing review."
-  }
+  },
+  "runtime_action_checkpoint": "docs/packets/evidence/PK09.21-command-actions.md; full command window still missing"
 }

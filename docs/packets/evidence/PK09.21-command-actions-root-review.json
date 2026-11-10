@@ -1,0 +1,96 @@
+{
+  "schema": "command-action-root-review/v1",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "source_refs": [
+    "Ref/GameMode.cpp:16044,17157,17300,17335,17434,17543",
+    "Ref/GameMode2.cpp:4053,4973,6029,6459,6464,6475,6716",
+    "Ref/packet.cpp fixed packet-length initialization"
+  ],
+  "dispatch_table": "0x0058ae84 indexed by mode message minus1",
+  "requests": [
+    {
+      "talk_type": 6,
+      "mode_message": 34,
+      "opcode": 193,
+      "length": 2,
+      "selected_target": "0x583f86",
+      "selected_prefix_hex": "a114c2780083f8030f84766e000083f8080f846d6e000083f8090f84646e00008d4d0e66c7450ec1005168c1000000e9376e00008b9bb40000008b15cc447b00528bcbe8b281f7ff8bd085d20f84326e00008b82c402000085c0"
+    },
+    {
+      "talk_type": 43,
+      "mode_message": 83,
+      "opcode": 285,
+      "length": 2,
+      "selected_target": "0x588fee",
+      "selected_prefix_hex": "8d550e66c7450e1d0152681d010000e9ef1d00008d450e66c7450e2a0150682a010000e9db1d00008d4d0e66c7450e2e0151682e010000e9c71d0000b9181f7b00e8dcf40c008bd88b451083f80166c78564f1ffffb2018d14dd"
+    },
+    {
+      "talk_type": 145,
+      "mode_message": 194,
+      "opcode": 535,
+      "length": 2,
+      "selected_target": "0x584029",
+      "selected_prefix_hex": "8d550e66c7450e1702526817020000e9b46d00008d450e66c7450e1802506818020000e9a06d00008d4d0e66c7450e3702516837020000e98c6d00008d550e66c7450e2502526825020000e9786d00008d450c66c7450c810250"
+    },
+    {
+      "talk_type": 146,
+      "mode_message": 195,
+      "opcode": 536,
+      "length": 2,
+      "selected_target": "0x58403d",
+      "selected_prefix_hex": "8d450e66c7450e1802506818020000e9a06d00008d4d0e66c7450e3702516837020000e98c6d00008d550e66c7450e2502526825020000e9786d00008d450c66c7450c81025066c7450ed20f6881020000e95e6d00008d4d0c66"
+    },
+    {
+      "talk_type": 151,
+      "mode_message": 197,
+      "opcode": 549,
+      "length": 2,
+      "selected_target": "0x584065",
+      "selected_prefix_hex": "8d550e66c7450e2502526825020000e9786d00008d450c66c7450c81025066c7450ed20f6881020000e95e6d00008d4d0c66c7450c81025166c7450ed30f6881020000e9446d00008d550c66c7450c81025266c7450ed40f6881"
+    },
+    {
+      "talk_type": 168,
+      "mode_message": 262,
+      "opcode": 633,
+      "length": 2,
+      "selected_target": "0x58acdc",
+      "selected_prefix_hex": "8d550e66c7450e7902526879020000e901010000b9181f7b00e826d80c0085c00f84870000008b836c02000085c0757d8d850cffffff6a0050b9181f7b0066c745e88802e81b1f0d00668b8d1cffffffc745fc4100000066894d"
+    }
+  ],
+  "who_guards": "Recipient34 blocks symbolic China/Malaysia/Singapore (selected PE numeric3/8/9; current port enum values4/16/17). Vietnam WHO is rewritten to UNKNOWN in the existing slash prelude; direct recipient34 is not blocked for Vietnam.",
+  "pvp": {
+    "talk_type": 141,
+    "opcode": 527,
+    "length": 10,
+    "guard": "world.m_isPKZone != 0",
+    "fields": [
+      "WORD opcode+0",
+      "DWORD aid+2",
+      "DWORD gid+6"
+    ],
+    "selected_span_va": "0x0057a3df",
+    "selected_span_hex": "8b8bb400000039715c0f84b02400008b1560327b00a164327b008d4de066c745e00f0251680f0200008955e28945e6e83df6e9ff8bc8e886f4e9ff50e830f6e9ff8bc8e829f3e9ff"
+  },
+  "bangbang": {
+    "talk_type": 111,
+    "selected_span_va": "0x0057a6db",
+    "selected_span_hex": "8b93b40000008b4a3cd94138d82520716d00d81528c76c00d95138dfe0f6c401740bd805f4c96c00d95938eb02ddd8d941388b3b5656e8aad812008bc8b8b7600bb681c1b4000000f7e903d1c1fa058bc2c1e81f03d081e20700008079054a83caf8425268980000008bcbff5714",
+    "constants": {
+      "0x6d7120": 45.0,
+      "0x6cc728": 0.0,
+      "0x6cc9f4": 360.0
+    },
+    "wrap": "subtract45; if below0 add360 once; no repeated normalization",
+    "heading": "__ftol2 yaw; low DWORD +180 modulo32; signed /45 then signed remainder8; message152 with head0",
+    "invalid_conversion": "x86 integer-indefinite has low DWORD0; port explicitly avoids C++ invalid-conversion UB. Nonfinite incoming yaw is rejected as in existing turn commands.",
+    "local_head": "does not change retained head direction or current motion"
+  },
+  "source_direction_recipient": {
+    "message": 152,
+    "target": "0x0058a010",
+    "selected_prefix_hex": "8d55ea6a05528bcb66c745e88500e8dd76feff8d45f16a01508bcbe8d076feff8a4d0c668b5510884df28d45e80fbf4de850668955ef51e9a50d0000833d7c437b00010f85b10d00008b451083e80074334874155f5e33c05b8b4df464890d000000008be55dc210008b550c5268",
+    "fields": "WORD head at+7, raw BYTE body at+10, no &7",
+    "port_profile_boundary": "Existing legacy5/packetver23 eleven-byte profile selection remains; source152 preserves WORD head/raw BYTE body, ordinary movement callers retain normalization."
+  },
+  "remaining": "HELP14 and WHERE9 still missing; full command window/controller/help balloons/manager window recipients/native-passive Qt and the full plan remain open."
+}

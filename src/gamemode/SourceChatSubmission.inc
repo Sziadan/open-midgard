@@ -154,6 +154,12 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return SendMsg(33,route.emotion>=0?route.emotion:std::rand()%6+58,0,0);
     }
     switch(type){
+    case 6:return SendMsg(34,0,0,0);
+    case 43:return SendMsg(83,0,0,0);
+    case 145:return SendMsg(194,0,0,0);
+    case 146:return SendMsg(195,0,0,0);
+    case 151:return SendMsg(197,0,0,0);
+    case 168:return SendMsg(262,0,0,0);
     case 42:
         if(g_windowMgr.m_tipOfTheDayWnd){g_windowMgr.DeleteWindow(g_windowMgr.m_tipOfTheDayWnd);return 1;}
         return g_windowMgr.MakeWindow(UIWindowMgr::WID_TIPOFTHEDAYWND)?1:0;
@@ -261,6 +267,30 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
     }
     case 57:g_windowMgr.SetChatMsg(parameters[0]);return SendMsg(142,0,0,0);
+    case 111: {
+        if(!m_world || !m_world->m_player || !std::isfinite(m_world->m_player->m_roty))return 0;
+        auto* player=m_world->m_player;
+        player->m_roty-=45.0f;
+        if(player->m_roty<0.0f)player->m_roty+=360.0f;
+        // Selected57A6DB: truncate yaw through __ftol2, use its low DWORD,
+        // ADD32(180), signed /45 and signed remainder8. Invalid conversion
+        // yields x86 integer-indefinite (low DWORD0); avoid C++ overflow/UB.
+        const double yaw=player->m_roty;
+        const u32 low=yaw>=-9223372036854775808.0 && yaw<9223372036854775808.0
+            ?static_cast<u32>(static_cast<s64>(yaw)):0u;
+        const u32 bits=low+180u;s32 signedAngle;std::memcpy(&signedAngle,&bits,sizeof(signedAngle));
+        const int body=(signedAngle/45)%8;
+        if(auto* pc=dynamic_cast<CPc*>(player))pc->InvalidateBillboard();
+        return SendMsg(152,body,0,0);
+    }
+    case 141: {
+        if(!m_world || !m_world->m_isPKZone)return 0;
+        // Selected57A3DF copies both adjacent source session DWORDs, aid/gid.
+        std::array<u8,10> packet{{0x0f,0x02}};
+        for(int i=0;i<4;++i){packet[2+i]=static_cast<u8>(static_cast<u32>(g_session.m_aid)>>(8*i));
+            packet[6+i]=static_cast<u8>(static_cast<u32>(g_session.m_gid)>>(8*i));}
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
+    }
     case 109: case 110: {
         if(!m_world || !m_world->m_player || !std::isfinite(m_world->m_player->m_roty))return 0;
         auto* actor=m_world->m_player;auto* pc=dynamic_cast<CPc*>(actor);if(!pc)return 0;

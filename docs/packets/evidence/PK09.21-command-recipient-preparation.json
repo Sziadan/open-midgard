@@ -1,0 +1,88 @@
+{
+  "schema": "command-recipient-source-review/v1",
+  "scope": "read-only bounded static source review; no runtime/GUI acceptance",
+  "reviewed_inputs": [
+    "docs/packets/evidence/PK09.21-command-table-seed.md",
+    "docs/packets/evidence/PK09.21-command-root-routes.json"
+  ],
+  "findings": [
+    {
+      "id": "basic-info-message-recipients",
+      "source_evidence": [
+        "Ref/UIWindowMgr.cpp:4104-4108 (E/128)",
+        "Ref/UIWindowMgr.cpp:4117-4126 (G/59)",
+        "Ref/UIWindowMgr.cpp:4127-4133 (J/88)",
+        "Ref/UIWindowMgr.cpp:4146-4156 (P/53)",
+        "Ref/UIWindowMgr.cpp:4163-4181 (Q/129)",
+        "Ref/UIWindowMgr.cpp:4207-4216 (S/130)",
+        "Ref/UIWindowMgr.cpp:4261-4270 (V/136)",
+        "src/ui/UIBasicInfoWnd.cpp:443-488 (current port SendMsg recipients)"
+      ],
+      "source_contract": {
+        "button126": "When the source owner m_basicInfoWnd exists, send message 6 with wparam 126 and return 1; without owner return 0. Current UIBasicInfoWnd::SendMsg routes 126 to ToggleWindow(WID_STATUSWND), returns 1.",
+        "button127": "Owner required; send message 6 / wparam 127, return 1. Current port routes to ToggleWindow(WID_OPTIONWND), returns 1.",
+        "button128": "Owner required; send message 6 / wparam 128, return 1. Current port routes to ToggleWindow(WID_ITEMWND), returns 1.",
+        "button129": "Owner required; send message 6 / wparam 129, return 1. Current port routes to ToggleWindow(WID_EQUIPWND), returns 1.",
+        "button130": "Owner required; send message 6 / wparam 130, return 1. Current port routes to ToggleWindow(WID_SKILLLISTWND), returns 1.",
+        "button136": "Owner required; send message 6 / wparam 136, return 1. Current port routes to SetMiniMode(true), returns 1."
+      },
+      "port_discrepancies": [
+        "Current hotkey handling does not preserve the source owner guard for 126/127/128/129/130/136: HandleHotkeyBeforeFocusedUi routes several keys directly to ToggleWindow, and there is no V/136 route. Current handler has no Alt+V case.",
+        "Current direct hotkey mapping differs from source dispatch: source Q sends 129 (equipment) and S sends 130 (skill); current Alt+Q/Alt+S route those same windows directly. Source V sends 136 (mini mode); current port omits it. Current Alt+A/Alt+E/Alt+O/Alt+G also bypass the basic-info owner and route directly."
+      ],
+      "port_evidence": [
+        "src/ui/UIWindowMgr.cpp:3065-3105",
+        "src/ui/UIBasicInfoWnd.cpp:443-488"
+      ]
+    },
+    {
+      "id": "guild-party-pet-lifecycle",
+      "source_evidence": [
+        "Ref/UIWindowMgr.cpp:4117-4126 (Guild key G, delete id 59 then create WID_GUILDWND)",
+        "Ref/UIWindowMgr.cpp:4127-4133 (Pet key J, delete id 88 then create WID_PETINFOWND)",
+        "Ref/UIWindowMgr.cpp:4146-4156 (Party key P, delete id 53 then count-party-gated create WID_PARTYSETTINGWND)",
+        "src/ui/UIWindowMgr.cpp:1448-1466 (current MakeWindow PartyOption/Guild only)",
+        "src/ui/UIWindowMgr.cpp:1778-1825 (current ToggleWindow behavior)",
+        "src/ui/UIWindowMgr.h:145-168 (current window ID inventory)"
+      ],
+      "source_contract": {
+        "guild": "If basic-info owner exists and guild ID is nonzero, attempt DeleteWindow(59); only if absent, create WID_GUILDWND. Return 1 even when guards prevent an operation.",
+        "pet": "If basic-info owner exists, attempt DeleteWindow(88); only if absent, create WID_PETINFOWND. Return 1 even when owner is absent.",
+        "party_setting": "If basic-info owner exists, first attempt DeleteWindow(53); only if it was absent and GetNumParty()!=0, create WID_PARTYSETTINGWND. Return 1 even when guard prevents an operation."
+      },
+      "port_discrepancies": [
+        "Current Alt+G calls ToggleWindow(WID_GUILDWND) without the source basic-info-owner or nonzero-guild-ID guard and uses visible-state toggle semantics instead of delete-before-create. A retained hidden guild instance is shown by MakeWindow rather than deleted as the source DeleteWindow-first branch requires.",
+        "Current manager has WID_PARTYOPTIONWND (0x95), not WID_PARTYSETTINGWND (source ID 53); no party-setting hotkey/lifecycle route was found in current manager code.",
+        "Current manager has no WID_PETINFOWND or pet-info hotkey/lifecycle route."
+      ]
+    },
+    {
+      "id": "up-button",
+      "source_evidence": ["Ref/UIWindowMgr.cpp:12587-12623"],
+      "source_contract": "UpButton picks the first non-null target in priority order: choose, say-dialog, combo-box, choose-warp, metal-list, edit-window. It sends message 18 to that one target. If none exists, it walks children and sends message 18 to every child whose IsFrameWnd() is true.",
+      "port_discrepancy": "No equivalent manager UpButton or general message-18 frame broadcast was found. Current OnKeyDown routes Up/Down specifically to select-server and to a few focused/modal controls; other arrows fall through. Evidence: src/ui/UIWindowMgr.cpp:3211-3337."
+    },
+    {
+      "id": "detail-level-key68",
+      "source_evidence": ["Ref/UIWindowMgr.cpp:4094-4103"],
+      "source_contract": "Key 68 (D) changes screen 110 or 120 to 100; screen 2 to 1; all other screen states are unchanged. Each path returns 0; it does not create a detail-level window.",
+      "port_discrepancy": "No D/detail-level screen transition or SetcurScreen implementation was found under src/ui; current pre-focus hotkey switch has no D case. Evidence: src/ui/UIWindowMgr.cpp:3065-3105."
+    },
+    {
+      "id": "command-list-entrypoint",
+      "source_evidence": [
+        "Ref/UIWindowMgr.cpp:7092-7106 (MakeWindow case 112 constructs/re-shows command list)",
+        "Ref/UIWindowMgr.cpp:2681-2687 (message 0x70 closes/posts quit for an existing command list)",
+        "Ref/UIWindowMgr.cpp:13479 (window-ID enumeration includes 112)",
+        "Ref/GameMode.cpp:15939-15940 (invalidates an existing command list only)",
+        "Ref/UIFrameWnd2.cpp:8023-8067 (command list SendMsg handles close/scroll/invalidate, no open call)"
+      ],
+      "result": "No accessible source caller opening window 112 outside UIWindowMgr::MakeWindow was found in the bounded reference tree search. These references only close, invalidate, define, or handle the command-list window. ProcessPushButton key VK_Y (89) is default for the selected invocation per command-root-routes.json; key 121 is VK_F10 and its case routes chat behavior, not command-list creation. Alt+Y tooltip text is not source proof of an entry point.",
+      "port_discrepancy": "Current port retains m_commandListWnd for deletion bookkeeping but has no WID_COMMANDLISTWND/factory case or opening route. Evidence: src/ui/UIWindowMgr.h:231; src/ui/UIWindowMgr.cpp:1858; manager window-ID/factory at src/ui/UIWindowMgr.h:145-168 and src/ui/UIWindowMgr.cpp:1360-1770."
+    }
+  ],
+  "limitations": [
+    "Reference tree has no Ref/UIBasicInfoWnd.cpp; original UIBasicInfoWnd recipient implementation itself was not available for direct source comparison. The button recipient descriptions distinguish the original manager calls from the current port's SendMsg implementation.",
+    "Static review only. No original executable was run, and no source behavior is inferred from tooltip text or absent evidence."
+  ]
+}

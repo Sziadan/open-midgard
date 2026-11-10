@@ -1,0 +1,125 @@
+{
+  "status": "source-contract-downstream-review-not-acceptance",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "selected_dispatch": {
+    "source_action": "Ref/GameMode.cpp CGameMode::ProcessTalkType, 0x578f10",
+    "virtual_mode_override": "Ref/GameMode2.cpp CGameMode::SendMsg(int,int,int,int), 0x5833a0; switch ((unsigned int)messageId), starts at line 2863",
+    "base_fallback": "Ref/Mode.cpp CMode::SendMsg, 0x504330 only handles message 2 and 75; the listed ranking IDs are handled by the CGameMode override.",
+    "common_packet_tail": "Ref/GameMode2.cpp:5745-5750; GetPacketSize(CRagConnection, opcode), then SendPacket(connection,size,packetBytes), then return SUT_NOSKILL.",
+    "packet_size_table": "Ref/packet.cpp:193-195 and initialization entries below; all target outgoing opcode entries resolve to a fixed packet size of 2 bytes."
+  },
+  "routes": [
+    {
+      "label": "/who",
+      "talk_type": 6,
+      "mode_message": 34,
+      "dispatch_arm": "Ref/GameMode2.cpp:4053 (case 0x22u)",
+      "guard": "If g_serviceType is ServiceChina, ServiceMalaysia, or ServiceSingapore, return SUT_NOSKILL without sending. Otherwise send.",
+      "packet": {
+        "opcode": 193,
+        "hex": "0x00c1",
+        "length_bytes": 2,
+        "payload": "none"
+      },
+      "packet_size_ref": "Ref/packet.cpp:1158-1164",
+      "note": "The selected ProcessTalkType first rewrites talk type 6 to TT_UNKNOWN for ServiceVietnam, so that service does not reach the mode message 34 call at all (Ref/GameMode.cpp:15941-15945)."
+    },
+    {
+      "label": "/memo",
+      "talk_type": 43,
+      "mode_message": 83,
+      "dispatch_arm": "Ref/GameMode2.cpp:4973 (case 0x53u)",
+      "guard": "No branch guard in this arm.",
+      "packet": {
+        "opcode": 285,
+        "hex": "0x011d",
+        "length_bytes": 2,
+        "payload": "none"
+      },
+      "packet_size_ref": "Ref/packet.cpp:1410-1416"
+    },
+    {
+      "label": "/blacksmith",
+      "talk_type": 145,
+      "mode_message": 194,
+      "dispatch_arm": "Ref/GameMode2.cpp:6459 (case 0xC2u)",
+      "guard": "No branch guard in this arm.",
+      "packet": {
+        "opcode": 535,
+        "hex": "0x0217",
+        "length_bytes": 2,
+        "payload": "none"
+      },
+      "packet_size_ref": "Ref/packet.cpp:2307-2308"
+    },
+    {
+      "label": "/alchemist",
+      "talk_type": 146,
+      "mode_message": 195,
+      "dispatch_arm": "Ref/GameMode2.cpp:6464 (case 0xC3u)",
+      "guard": "No branch guard in this arm.",
+      "packet": {
+        "opcode": 536,
+        "hex": "0x0218",
+        "length_bytes": 2,
+        "payload": "none"
+      },
+      "packet_size_ref": "Ref/packet.cpp:2309-2310"
+    },
+    {
+      "label": "/taekwon",
+      "talk_type": 151,
+      "mode_message": 197,
+      "dispatch_arm": "Ref/GameMode2.cpp:6475 (case 0xC5u)",
+      "guard": "No branch guard in this arm.",
+      "packet": {
+        "opcode": 549,
+        "hex": "0x0225",
+        "length_bytes": 2,
+        "payload": "none"
+      },
+      "packet_size_ref": "Ref/packet.cpp:2311-2312"
+    },
+    {
+      "label": "/hunting",
+      "talk_type": 168,
+      "mode_message": 262,
+      "dispatch_arm": "Ref/GameMode2.cpp:6716 (case 0x106u)",
+      "guard": "No branch guard in this arm.",
+      "packet": {
+        "opcode": 633,
+        "hex": "0x0279",
+        "length_bytes": 2,
+        "payload": "none"
+      },
+      "packet_size_ref": "Ref/packet.cpp:2893-2894"
+    }
+  ],
+  "port_status": {
+    "dispatcher": "Current src/gamemode/GameMode.cpp:10952-10958 implements SendMsg(47,type,parameters) -> ProcessSourceTalk, but its mode-message switch has no cases 34, 83, 194, 195, 197, or 262 (see switch labels at lines 10955-11407).",
+    "packet_primitives": "Current code has CRagConnection packet sending and packet-size/profile infrastructure elsewhere; the selected routing arms and these specific two-byte ranking requests are not implemented by these six ProcessSourceTalk types.",
+    "scope": "This confirms the selected PE sends ranking queries end to end as fixed two-byte server requests except for the stated /who service restrictions; it does not establish server response behavior."
+  },
+  "caveats": [
+    "Ref/GameMode2.cpp labels the override signature with damaged inferred parameter types (UIAuctionWnd*, __int64) despite the displayed intended signature int(int,int,int,int); message switch routing and packet bytes are explicit in the decompilation, while a bit-for-bit ABI claim is outside this review.",
+    "Packet sizes are selected from the PE's packet-length map via GetPacketSize, not immediate constants in each arm; the listed map entries are fixed size 2."
+  ],
+  "heading_152": {
+    "label": "/bangbang",
+    "talk_type": 111,
+    "mode_message": 152,
+    "selected_dispatch_arm": "Ref/GameMode2.cpp:6029-6035, case 0x98u in CGameMode::SendMsg @0x5833a0",
+    "selected_packet": {
+      "opcode": 133,
+      "hex": "0x0085",
+      "length_bytes": 11,
+      "layout": "bytes 0..1 opcode 133; bytes 2..6 padding via CGameMode::SetPaddingValue(this,&passwd[2],5); bytes 7..8 are WORD2(val1), the high 16 bits representing second mode parameter; byte 9 padding via SetPaddingValue(this,&passwd[9],1); byte 10 is low byte of val1 (the direction argument)."
+    },
+    "action_argument_source": "Ref/GameMode.cpp:17157-17170 (ProcessTalkType @0x578f10) computes v79 from yaw and calls CMode::SendMsg(this,152,v79,0,0).",
+    "selected_action_value": "The action computes (int(yaw)+180)/45 using signed arithmetic and masks with 0x80000007; for negative quotient it jumps to normalization `(((byte)value - 1) | 0xfffffff8) + 1`. The 152 send arm itself does not apply &7: it truncates val1 into the packet direction byte. Thus the selected source normalization is upstream in the /bangbang action.",
+    "packet_size_ref": "Ref/packet.cpp:1060-1066 (opcode 133 fixed length 11); common send at Ref/GameMode2.cpp:5745-5750",
+    "padding_ref": "Ref/GameMode.cpp:3585-3610, CGameMode::SetPaddingValue @0x571700; derives nonconstant padding from timeGetTime.",
+    "port_compare": "Current src/gamemode/GameMode.cpp:10974 maps message 152 to SendChangeDirRequestPacket(headDir=lparam,dir=wparam); helper at 4688-4704 sets HeadDir from lparam and masks Dir with &7 before send. With ProcessTalkType args (v79,0,0), port sends headDir=0 and direction=v79 &7. For ordinary finite yaw the selected action computes heading 0..7; the low-level port mask is an extra truncation rule, and exact malformed/non-finite yaw parity has not been established.",
+    "ambiguity": "Decompiled v83 wrap condition in the selected yaw update remains unclear from source listing. This extension records source code/decompilation evidence only; it does not claim behavioral parity for malformed yaw."
+  }
+}

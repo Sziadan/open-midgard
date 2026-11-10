@@ -244,6 +244,37 @@ void ChatSubmissionReplay()
         Require(peer.ReceiveExact(2)==std::vector<u8>({0xe7,1}) && player.m_curMotion==2 && player.m_headDir==2
             && std::all_of(std::begin(mode.m_doritime),std::end(mode.m_doritime),[](u32 value){return value==0;}),"source doridori head toggle/streak request/reset changed");
         player.m_roty=315;Require(submit("/bingbing"),"source bingbing dispatch failed");direction(2,4);Require(player.m_roty==0,"source bingbing did not wrap its body angle");
+        struct TurnCase {float before,after;int body;};
+        const TurnCase turns[]={{0,315,3},{45,0,4},{360,315,3},{-360,-45,3},{45.5f,0.5f,4},{-900,-585,255}};
+        for(const auto& turn:turns){player.m_roty=turn.before;player.m_headDir=2;player.m_curMotion=2;
+            Require(submit("/bangbang"),"source bangbang parser/dispatch failed");direction(0,turn.body);
+            Require(player.m_roty==turn.after && player.m_headDir==2 && player.m_curMotion==2,
+                "bangbang wrap/head-state semantics changed");}
+        player.m_roty=1.0e30f;Require(submit("/bangbang"),"large finite bangbang request failed");direction(0,4);
+        Require(mode.SendMsg(152,0xab,0x1234,0)!=0,"source direction recipient failed");direction(0x1234,0xab);
+        const auto oldAid=g_session.m_aid,oldGid=g_session.m_gid;
+        struct RestoreIds {decltype(g_session.m_aid) aid;decltype(g_session.m_gid) gid;
+            ~RestoreIds(){g_session.m_aid=aid;g_session.m_gid=gid;}} restoreIds{oldAid,oldGid};
+        g_session.m_aid=0x12345678;g_session.m_gid=0x90abcdef;
+        world.m_isPKZone=0;Require(!submit("/pvpinfo"),"non-PK pvpinfo request was sent");
+        Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"non-PK pvpinfo leaked a frame");
+        for(int zone:{1,-1}){world.m_isPKZone=zone;Require(submit("/pvpinfo"),"PK pvpinfo parser/dispatch failed");
+            Require(peer.ReceiveExact(10)==std::vector<u8>({0x0f,0x02,0x78,0x56,0x34,0x12,0xef,0xcd,0xab,0x90}),
+                "pvpinfo must send both account and character IDs in the selected10-byte request");}
+    }
+    {
+        const ServiceType previous=g_serviceType;
+        struct RestoreService {ServiceType value;~RestoreService(){g_serviceType=value;}} restoreService{previous};
+        g_serviceType=ServiceKorea;
+        const std::pair<const char*,u16> requests[]={{"/who",193},{"/memo",285},{"/blacksmith",535},{"/alchemist",536},{"/taekwon",549},{"/hunting",633}};
+        for(const auto& request:requests){Require(submit(request.first),"source request command dispatch failed");
+            Require(peer.ReceiveExact(2)==std::vector<u8>({static_cast<u8>(request.second),static_cast<u8>(request.second>>8)}),"source command request opcode/length changed");}
+        for(auto service:{ServiceChina,ServiceMalaysia,ServiceSingapore}){g_serviceType=service;Require(!submit("/who"),"source WHO service guard missing");}
+        g_serviceType=ServiceVietnam;g_windowMgr.ClearChatEvents();Require(!submit("/who"),"Vietnam WHO must use unknown-command feedback");
+        const auto& events=g_windowMgr.GetChatEvents();Require(!events.empty(),"Vietnam WHO lost unknown-command feedback");
+        Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"guarded WHO leaked a network frame");
+        // The Vietnam restriction belongs to the slash prelude, not recipient34.
+        Require(mode.SendMsg(34,0,0,0)!=0 && peer.ReceiveExact(2)==std::vector<u8>({0xc1,0}),"direct recipient34 acquired an extra Vietnam guard");
     }
     connection->Disconnect();mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
 #include "ChatIgnoreReplay.inc"
