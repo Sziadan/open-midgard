@@ -154,3 +154,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [Source startup command flags](../evidence/PK09.21-command-flags.md) binds23 status pairs, persisted source options, actual audio/Tip snapshots and owner lifetime. Full command-list UI/actions and legacy options remain open.
 
 [Friend greeting and shared reply/language state](../evidence/PK09.21-friend-greeting.md) pins150, signed global counter/mode lifetime, private charset prefixes and corrected selected UI data. Full command UI and remaining action/render/deployed gates stay open.
+
+[Pet control prerequisites](PK27.PET-CONTROL.md) pins implemented mode158/163 frames and pending actual PetInfo owner, menu, job/egg/actor/receive/reset dependencies. PK27 remains open.

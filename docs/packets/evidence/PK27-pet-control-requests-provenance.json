@@ -1,0 +1,23 @@
+{
+  "baseline": "fd68f10d",
+  "sha256": {
+    "src/gamemode/GameMode.cpp": "1367fb1274d38deaae8a436d66dfa18a0f11cb7b8e39b38ee9b8bbcfbda890fe",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "a3b25bbc68130d7e418b6507938ab756ff313d847eb582fe99282c4051d43c1f",
+    "tools/tests/replay/PetRequestReplay.inc": "32e6d90657aba8f76aef8d2632a544e5005656a226682a3403e9c5ceb8a74f54",
+    "build-mingw-preset/open-midgard.exe": "702abe255d9368d75e6c2c572e2d88aa342641770bc4a42f09597d7fcb496673",
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742"
+  },
+  "selected_server_sha256": {
+    "clif_packetdb.hpp": "7195306b619d50a2f9d71e20ea06a65743ca2f6484c7551706a6938bcfa5518b",
+    "clif.cpp": "e00eddae72d4569f126efc91ed645cad0d99b4d0b6460790a441354e4b1afa69",
+    "pet.cpp": "43ee63394f4e5301e032ad006fb4c3dd87f717e0efb935ab33d4fa9758b85065"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "validation": {
+    "application": "162/162 35.36s",
+    "standalone": "473/473 15.13s",
+    "peer": "source_chat_submission via actual CGameMode and CRagConnection; six name cases, seven action cases, null/no-frame and disconnected failures"
+  },
+  "deployment": "OFF for build/tests; ON restored configure-only; OldRO unchanged",
+  "scope": "Only source request recipients; full callers/UI/state/receive/PK27/PK09.21 and packet plan remain open"
+}

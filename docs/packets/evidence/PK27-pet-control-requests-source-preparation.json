@@ -1,0 +1,131 @@
+{
+  "purpose": "Read-only source/PE and pinned-snapshot follow-up for PetInfo74, correcting menu-to-action mapping and documenting packet/state dependencies.",
+  "status": "Static source plus local pinned registry/docs only; no runtime acceptance, code changes, builds, tests, executable launch, or network lookup.",
+  "source_command": {
+    "key": "Source command list labels key value 74 Alt+J PetInfo. The original key handler sees Alt+J, requires the basic-info owner, deletes/toggles source WID 88, and calls MakeWindow(WID_PETINFOWND) (Ref/UIWindowMgr.cpp:4127-4132). MakeWindow factory 88 returns without creating when m_petJob == -1 (Ref/UIWindowMgr.cpp:6763-6784). The request-0 pet-info snapshot is a separate command-menu action (GameMode2 message id 163 argument 0, Ref/GameMode2.cpp:3875-3880), not the hotkey route.",
+    "owner_context": "GameMode2 cases 0x1D-0x21 are CGameMode::SendMsg message-dispatch cases in Ref/GameMode2.cpp (function decompiled from 0x5833a0), with m_menuTargetAID state elsewhere in the same function. Do not relabel them as chat emotion values or infer an unrelated chat caller from their numeric values. The actual PetInfoWnd menu actions are independently proven in UIPetInfoWnd::SendMsg."
+  },
+  "menu_to_request_mapping": [
+    {
+      "menu_index": 0,
+      "label": "Feeding",
+      "send_message": 163,
+      "arg": 1,
+      "request_opcode": "0x01A1",
+      "selected_server_action": "feed",
+      "comment": "feed requires confirmation"
+    },
+    {
+      "menu_index": 1,
+      "label": "Performance",
+      "send_message": 163,
+      "arg": 2,
+      "request_opcode": "0x01A1",
+      "selected_server_action": "performance"
+    },
+    {
+      "menu_index": 2,
+      "label": "Accessory Off",
+      "send_message": 163,
+      "arg": 4,
+      "request_opcode": "0x01A1",
+      "selected_server_action": "unequip accessory"
+    },
+    {
+      "menu_index": 3,
+      "label": "Return Egg",
+      "send_message": 163,
+      "arg": 3,
+      "request_opcode": "0x01A1",
+      "selected_server_action": "return pet to egg",
+      "comment": "also mutates local egg/pet state and closes/deletes PetInfo window"
+    }
+  ],
+  "outgoing_frames": {
+    "rename": "UIPetInfoWnd button id 118 sends CGameMode::SendMsg id 158 with edit text. In Ref/GameMode2.cpp CGameMode::SendMsg branch 0x9E writes packet opcode 421 decimal = 0x01A5 at bytes 0-1; copies at most 24 name bytes into bytes 2-25 and NUL terminates a full-length copy; generic tail obtains GetPacketSize(421) and sends that frame. Selected PK01.02 registry assigns 0x01A5 fixed length 26 to clif_parse_ChangePetName, offsets 2,0.",
+    "pet_action": "PetInfoWnd command menu sends CGameMode::SendMsg id 163 with one-byte values 1,2,4,3 per mapping above. In Ref/GameMode2.cpp branch 0xA3 writes packet opcode 417 decimal = 0x01A1 at bytes 0-1 and the low-byte argument at byte 2; generic tail obtains GetPacketSize(417) and sends. Selected PK01.02 registry assigns 0x01A1 fixed length 3 to clif_parse_PetMenu, offsets 2,0.",
+    "framing": "The selected registry evidence is the pinned local server final registry CSV; Ref/GameMode2.cpp is the PE-decompiled client sender path. This is static frame proof, not live server acceptance evidence."
+  },
+  "server_contract": {
+    "selected_pinned_evidence": "docs/packets/evidence/PK01.02-server-registry-final.csv assigns 0x01A1 / 3 bytes / clif_parse_PetMenu / offsets 2,0 and 0x01A5 / 26 bytes / clif_parse_ChangePetName / offsets 2,0. docs/packets/evidence/PK46.04-bounded-self-review.md:829-832 records the pinned selected parser bodies as forwarding menu type, fixed name, or target ID to pet helpers. docs/packets/evidence/PK46.02-map-pet-request-gaps.md records that the current client has no pet request sender/action and leaves rows open. These local pinned artifacts do not include the selected helper-body source, so do not claim a stronger selected-server business-rule trace.",
+    "corroborating_unselected_reference": "Ref/eAthena_src_2011/map/clif.c:12073-12083 documents CZ_COMMAND_PET, one type byte and values 0 info, 1 feed, 2 performance, 3 return egg, 4 unequip accessory; lines 12141-12145 documents 24-byte CZ_RENAME_PET input passed to pet_change_name. Ref/eAthena_src_2011/map/pet.c:581-626 shows pet-present/intimacy/incubation guards, type dispatch, and rename flag/name validation before forwarding. This is an unselected historical source tree, supplemental only, not proof of the pinned 20080910 helper behavior.",
+    "pinned_pet_status_contract": "docs/packets/contracts/PK07.PET-STATUS.md and docs/packets/evidence/PK07.01-source-contract.md specify selected 20080910 0x01A2 35-byte status layout with name, modified, level, fullness, relationship, accessory id; the packet carries no actor ID or job. Local PE decompile Ref/GameModePacket.cpp:24392-24431 additionally proves values with wire level >=10000 are reinterpreted as Item Collection data (subtract 10000, open WID_ITEMCOLLECTIONWND, copy other fields); otherwise pet fields are copied into legacy pet session state. Current HandlePetStatus always calls ReadStatus, so this legacy receive-side branch distinction/state path is not represented by current handler."
+  },
+  "legacy_state_and_lifecycle": {
+    "factory_gate": "Factory 88 (WID_PETINFOWND) returns immediately if m_petJob == -1, otherwise reuses or allocates and owns m_petInfoWnd. The gate depends on pet actor/job state, not merely receipt of the status packet.",
+    "pet_job": "Session constructor initializes m_petJob=-1 (Ref/Session.cpp:18033-18040); login transitions reset it (Ref/LoginMode.cpp:1269-1276 and 1683-1688). Packet 420 decimal (0x01A4) dispatches Zc_Change_Pet_Status (Ref/GameModePacket.cpp:1728-1729); type 0 records pet GID and actor job; types 1/2 refresh job from the pet actor when found (10149-10176). UI factory source is Ref/UIWindowMgr.cpp:6763-6784.",
+    "egg_index": "Inventory snapshot branches set m_petEggIndex when IsPetEgg(itemId) and item is damaged/incubated (Ref/GameModePacket.cpp:11010-11011, 11103-11104, 11199-11200). Return Egg from the PetInfo menu sends request type 3 then reads that exact item, clears its damaged flag, writes it back, sets egg index and pet job to -1, invalidates item UI if present, and deletes PetInfoWnd (Ref/UIFrameWnd.cpp:6307-6319). The separate CGameMode::SendMsg menu action also contains a return-to-egg path with the same local mutations (Ref/GameMode2.cpp:3855-3869); this path is not a server-confirmed ack in the traced client code.",
+    "current_port_gap": "Current src/core/PetState.h status includes valid/name/modified/level/fullness/relationship/accessoryItemId; it comes only from HandlePetStatus (src/gamemode/GameModePacket.cpp:5262-5265, registered for 0x01A2 at 8835-8838). It has no pet job/GID/egg index and packet status cannot prove legacy factory eligibility. Search of current Session/GameMode found no m_petJob or m_petEggIndex equivalents; m_petStatus has no reset path in Session.cpp/GameMode.cpp in inspected source, so stale valid status across lifecycle transitions remains a gap."
+  },
+  "corrected_ui_source": {
+    "creation_and_lifetime": "Ref/UIWindowMgr.cpp:6763-6784, 7775-7777: source factory ID / WID 88; job gate; owned/reused m_petInfoWnd; size 280x160; default x/y; sends message 34 to load/save PetInfoWndInfo; getter returns owner.",
+    "controls": "Ref/UIFrameWnd.cpp:11623-11925: close id 135; rename editor plus button id 118 shown only before one-time rename; menu selector control id 202 at (150,44); action menu strings are inserted in exact order Feeding, Performance, Accessory Off, Return Egg (6178-6239). Ref/UIFrameWnd.cpp:6136-6155 handles rename request id 158 and local one-time flag; 6166-6283 opens and positions command menu; 6285-6340 handles remembered position, action commands, and close/default behavior."
+  },
+  "references": [
+    {
+      "path": "Ref/GameMode2.cpp",
+      "lines": "2169-2174, 6083-6100, 6134-6139, 5745-5750",
+      "detail": "CGameMode::SendMsg is decompiled from PE address 0x5833a0; mode 158 rename -> opcode 421/0x01A5, bounded 24-byte name frame; mode 163 arg -> opcode 417/0x01A1 and low-byte action; common GetPacketSize/SendPacket tail."
+    },
+    {
+      "path": "Ref/UIFrameWnd.cpp",
+      "lines": "6178-6239, 6292-6324, 6307-6319",
+      "detail": "Correct action menu order and mapping; return egg local cleanup."
+    },
+    {
+      "path": "Ref/GameModePacket.cpp",
+      "lines": "1721-1733, 10141-10216, 24392-24431",
+      "detail": "PE-decompiled incoming pet state dispatch and Item Collection special branch."
+    },
+    {
+      "path": "docs/packets/evidence/PK01.02-server-registry-final.csv",
+      "lines": "0x01A1 row 158; 0x01A5 row 160",
+      "detail": "Pinned selected fixed request lengths, parser symbols and argument offsets."
+    },
+    {
+      "path": "docs/packets/evidence/PK46.04-bounded-self-review.md",
+      "lines": "829-832",
+      "detail": "Pinned parser-body summary, but selected pet helper bodies not copied into local snapshot."
+    },
+    {
+      "path": "docs/packets/evidence/PK46.02-map-pet-request-gaps.md",
+      "lines": "3-7",
+      "detail": "Existing request gap evidence; client requests/senders remain unreviewed and no rows are closed."
+    },
+    {
+      "path": "docs/packets/contracts/PK07.PET-STATUS.md",
+      "lines": "1-31",
+      "detail": "Pinned 20080910 0x01A2 status wire contract and no actor identity/job warning."
+    },
+    {
+      "path": "Ref/eAthena_src_2011/map/clif.c",
+      "lines": "12073-12083, 12141-12145",
+      "detail": "Historical, unselected corroboration for request offsets/types/actions; not selected-server business-rule proof."
+    },
+    {
+      "path": "Ref/eAthena_src_2011/map/pet.c",
+      "lines": "581-626",
+      "detail": "Historical, unselected pet-action and rename helper behavior; not selected-server business-rule proof."
+    },
+    {
+      "path": "Ref/Session.cpp",
+      "lines": "18033-18040",
+      "detail": "Original pet job and egg index initialization."
+    },
+    {
+      "path": "Ref/LoginMode.cpp",
+      "lines": "1269-1276, 1683-1688",
+      "detail": "Original pet job reset at login transition."
+    },
+    {
+      "path": "Ref/GameModePacket.cpp",
+      "lines": "11010-11011, 11103-11104, 11199-11200",
+      "detail": "Original inventory packet handlers identify the incubated pet egg slot."
+    },
+    {
+      "path": "src/core/PetState.h",
+      "lines": "10-55",
+      "detail": "Current parsed pet status data fields and exact packet validation."
+    }
+  ]
+}

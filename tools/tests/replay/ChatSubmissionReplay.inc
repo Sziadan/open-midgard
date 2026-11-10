@@ -310,7 +310,10 @@ void ChatSubmissionReplay()
     }
 #include "WhereCommandReplay.inc"
 #include "CommandWindowReplay.inc"
-    connection->Disconnect();mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
+#include "PetRequestReplay.inc"
+    connection->Disconnect();
+    Require(!mode.SendMsg(163,1,0,0) && !mode.SendMsg(158,reinterpret_cast<msgparam_t>("Poring"),0,0),"disconnected pet requests reported success");
+    mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
 #include "ChatIgnoreReplay.inc"
 #include "FriendGreetingReplay.inc"
 #include "CommandToggleReplay.inc"

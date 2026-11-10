@@ -3647,3 +3647,7 @@ Baseline4537f651. Root implements actual HELP14 and WHERE9 paths and session-own
 ## 2026-11-10: command controller and shared help owner
 
 Restored factory112/controller/native/passive Qt and mode-owned per-frame help; reviewed shorter-table UB dispositions, source scrollbar/hover/frame contracts, party permission and actual owner retirement. Focused2/2 in2.50s, complete application162/162 in39.82s and standalone473/473 in16.33s pass. Six capture pairs retained. Three generators and world-entry regression pass. Deployment remains read-only; user preference restored ON by configure only. Next real recipients68/74/87, full party positive-confirm and remaining full-plan gates. Evidence: `evidence/PK09.21-command-controller.md`. Subject: `packet(PK09.21): restore command controller and shared help owner`.
+
+## 2026-11-10: real pet request prerequisites
+
+Implemented source mode158/163 senders01A5/26 and01A1/3, preserving raw name truncation/NUL and low-byte action semantics with zeroed undefined stack padding. Actual peer tests cover short/empty/boundary/overlong/DBCS/embedded-NUL names, actions0..4 and truncation, null rejection, no local mutation and disconnected failures. Selected PE and hash-matched server parser/helper evidence retained. Application162/162 in35.36s and standalone473/473 in15.13s pass. Actual PetInfo74 UI/state/receive/lifetime and whole PK27/PK09.21/plan remain open. Evidence: `evidence/PK27-pet-control-requests.md`. Subject: `packet(PK27): restore source pet request recipients`.

@@ -10982,6 +10982,22 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
     }
     case 152:return SendChangeDirRequestPacket(static_cast<u16>(lparam),static_cast<u8>(wparam),false)?1:0;
+    case 158: {
+        if(!wparam)return 0;
+        // Selected CZ_RENAME_PET: the24-byte field ends in NUL when the
+        // source truncates a long name. Zero the otherwise undefined tail.
+        std::array<u8,26> packet{};packet[0]=0xa5;packet[1]=0x01;
+        const char* name=reinterpret_cast<const char*>(wparam);
+        std::size_t count=0;while(count<23 && name[count])++count;
+        std::memcpy(packet.data()+2,name,count);
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
+    }
+    case 163: {
+        // CZ_COMMAND_PET takes the source argument's low byte. Permission,
+        // confirmation and local egg/window changes belong to the callers.
+        const u8 packet[]={0xa1,0x01,static_cast<u8>(wparam)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
+    }
     case 183: {
         const u8 packet[]={0xe7,0x01};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;

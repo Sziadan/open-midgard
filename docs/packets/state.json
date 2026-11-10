@@ -787,14 +787,20 @@
       "commit_subject": null
     },
     "PK27.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK27-pet-control-requests.md",
+        "docs/packets/contracts/PK27.PET-CONTROL.md"
+      ],
+      "commit_subject": "packet(PK27): restore source pet request recipients"
     },
     "PK27.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK27-pet-control-requests.md",
+        "docs/packets/contracts/PK27.PET-CONTROL.md"
+      ],
+      "commit_subject": "packet(PK27): restore source pet request recipients"
     },
     "PK27.03": {
       "status": "NOT_STARTED",
@@ -1613,7 +1619,9 @@
         "docs/packets/evidence/PK46.02-unimplemented-cart-transfer-request-paths.md",
         "docs/packets/evidence/PK46.02-unimplemented-chat-room-request-paths.md",
         "docs/packets/evidence/PK46.02-unmatched-registered-request-paths.md",
-        "docs/packets/evidence/PK46.02-inventory-link-audit-2026-11-05.md"
+        "docs/packets/evidence/PK46.02-inventory-link-audit-2026-11-05.md",
+        "docs/packets/evidence/PK27-pet-control-requests.md",
+        "docs/packets/contracts/PK27.PET-CONTROL.md"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
@@ -2098,7 +2106,9 @@
         "docs/packets/evidence/PK09.21-command-actions.md",
         "docs/packets/evidence/PK09.21-help-where.md",
         "docs/packets/evidence/PK09.21-command-controller.md",
-        "docs/packets/evidence/PK09.21-command-controller-provenance.json"
+        "docs/packets/evidence/PK09.21-command-controller-provenance.json",
+        "docs/packets/evidence/PK27-pet-control-requests.md",
+        "docs/packets/contracts/PK27.PET-CONTROL.md"
       ],
       "commit_subject": "packet(PK09.21): restore command controller and shared help owner"
     }

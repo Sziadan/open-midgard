@@ -6,6 +6,9 @@
 
 **World-entry repair:** [same-world handoff fix](evidence/PK05.05-world-entry.md) remains in the rebuilt candidate and its regression passes. OldRO still has the prior executable and requires redeployment/live retry; no installed acceptance is claimed.
 
+**Pet recipient prerequisites (2026-11-10):** [Mode158/163 request senders](evidence/PK27-pet-control-requests.md) now send exact01A5/26 and01A1/3 frames through production sockets. Application162/162 and standalone473/473 pass. PetInfo74 remains pending: source factory88 needs actual pet job/actor/egg ownership, edit/menu/confirmation and receive/reset paths, including01A2 level>=10000 alternate-owner dispatch. Follow the [pet-control contract](contracts/PK27.PET-CONTROL.md); never create the owner from stale Status::valid alone. PK27 and PK09.21 remain open.
+
+
 ## Continue here
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
