@@ -23,7 +23,7 @@ private:
 
 class UIFriendOptionCheckBox : public UIButton {
 public:
-    UIFriendOptionCheckBox(std::string label,bool checked);
+    UIFriendOptionCheckBox(std::string label,bool checked,int maximumWidth=265);
     const std::string& GetLabel() const { return m_text; }
     bool IsChecked() const { return m_checked; }
     const shopui::BitmapPixels& GetBitmap() const { return m_checked?m_on:m_off; }

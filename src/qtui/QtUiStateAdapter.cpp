@@ -4,6 +4,8 @@
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIAutoMessageWnd.h"
 #include "ui/UIFriendOptionWnd.h"
+#include "ui/UITipOfTheDayWnd.h"
+#include "ui/ChatScrollBarUi.h"
 #include "QtUiStateAdapter.h"
 
 #include "QtUiState.h"
@@ -1946,6 +1948,25 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
                 {"artwork",QString::fromStdString(button.uris[status])},{"imageWidth",bitmap.width},{"imageHeight",bitmap.height},{"pressed",status==2}}}};
     }
     chatUi.insert("autoMessage",autoMessage);
+    QVariantMap tipData;
+    if(const auto* window=dynamic_cast<UITipOfTheDayWnd*>(g_windowMgr.m_tipOfTheDayWnd)){
+        QVariantList buttons,rows;const auto* viewer=window->GetViewer();const auto bar=viewer->GetScrollBar();
+        for(const auto* button:window->GetButtons()){const int status=button->GetVisualState();const auto& art=button->GetButton();const auto& bitmap=art.bitmaps[status];
+            buttons.push_back(QVariantMap{{"id",button->m_id},{"x",button->m_x-window->m_x},{"y",button->m_y-window->m_y},
+                {"width",button->m_w},{"height",button->m_h},{"label",ToQString(button->m_text)},{"state",status},
+                {"artwork",QString::fromStdString(art.uris[status])},{"imageWidth",bitmap.width},{"imageHeight",bitmap.height}});}
+        for(int i=viewer->GetOffset();i<static_cast<int>(viewer->GetRows().size()) && i<viewer->GetOffset()+bar.page;++i){QVariantList spans;
+            for(const auto& span:viewer->GetRows()[i])spans.push_back(QVariantMap{{"text",ToQString(span.text)},{"color",QString("#%1").arg(span.color,6,16,QChar('0'))}});
+            rows.push_back(QVariantMap{{"spans",spans}});}
+        const auto* check=window->GetStartupCheckBox();const auto& checkArt=check->GetBitmap();
+        const auto rect=[](RECT r){return QVariantMap{{"x",int(r.left)},{"y",int(r.top)},{"width",int(r.right-r.left)},{"height",int(r.bottom-r.top)}};};
+        const RECT rail{viewer->m_w-13,0,viewer->m_w,viewer->m_h};const auto layout=ro::chat::ScrollLayout(rail,bar);
+        tipData={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},{"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
+            {"rows",rows},{"buttons",buttons},{"scroll",QVariantMap{{"visible",bar.maximum>0},{"track",rect(rail)},{"thumb",rect(layout.thumb)},{"up",rect(layout.up)},{"down",rect(layout.down)}}},
+            {"check",QVariantMap{{"x",check->m_x-window->m_x},{"y",check->m_y-window->m_y},{"width",check->m_w},{"height",check->m_h},{"label",ToQString(check->GetLabel())},
+                {"checked",check->IsChecked()},{"artwork",QString::fromStdString(check->GetBitmapUri())},{"imageWidth",checkArt.width},{"imageHeight",checkArt.height}}}};
+    }
+    chatUi.insert("tip",tipData);
     QVariantList whisperWindows;
     const auto whisperRect=[](RECT r){return QVariantMap{{"x",static_cast<int>(r.left)},{"y",static_cast<int>(r.top)},
         {"width",static_cast<int>(r.right-r.left)},{"height",static_cast<int>(r.bottom-r.top)}};};

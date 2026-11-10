@@ -8,6 +8,8 @@
 #include "UIWhisperWnd.h"
 #include "UIAutoMessageWnd.h"
 #include "UIFriendOptionWnd.h"
+#include "UITipOfTheDayWnd.h"
+#include "core/TipOfTheDay.h"
 #include "audio/Audio.h"
 #include "res/Res.h"
 #include "core/UiMessageStrings.h"
@@ -991,7 +993,7 @@ bool UIWindowMgr::IsWhisperPreferenceInputWindow(const UIWindow* window) const
 {
     if(!window)return false;
     if(window->m_parent==m_messengerGroupWnd && window->m_id==168)return true;
-    for(const auto* owner=window;owner;owner=owner->m_parent)if(owner==m_friendOptionWnd)return true;
+    for(const auto* owner=window;owner;owner=owner->m_parent)if(owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd)return true;
     return false;
 }
 
@@ -1228,6 +1230,7 @@ void UIWindowMgr::ShowRoomValidationMessage(int messageId)
     if(m_modalWindow)return;
     if(m_autoMessageWnd)m_autoMessageWnd->CancelPointerCapture();
     if(m_friendOptionWnd)m_friendOptionWnd->CancelPointerCapture();
+    if(auto* tip=dynamic_cast<UITipOfTheDayWnd*>(m_tipOfTheDayWnd))tip->CancelPointerCapture();
     if(m_messengerGroupWnd)m_messengerGroupWnd->CancelSourcePointerCapture();
     for(const auto& entry:m_whisperWindows)entry.second->CancelPointerCapture();
     ro::UiMessageStrings table;table.Load();
@@ -1322,6 +1325,10 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             m_friendOptionWnd->SendMsg(nullptr,34,reinterpret_cast<msgparam_t>(&m_friendOptionWindowInfo),0,0);
         }
         m_friendOptionWnd->SetShow(1);return m_friendOptionWnd;
+    case WID_TIPOFTHEDAYWND:
+        if(!m_tipOfTheDayWnd){auto* tip=new UITipOfTheDayWnd();m_tipOfTheDayWnd=tip;const auto client=GetChatClientRect();
+            tip->Move((client.right-640)/2+200,120*client.bottom/480);m_children.push_back(tip);}
+        m_tipOfTheDayWnd->SetShow(1);return m_tipOfTheDayWnd;
     case WID_AUTOMESSAGEWND:
         if(!m_autoMessageWnd){m_autoMessageWnd=new UIAutoMessageWnd();m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),m_autoMessageWnd);}
         m_autoMessageWnd->SetShow(1);m_autoMessageWnd->FocusForDraw();return m_autoMessageWnd;
@@ -1847,6 +1854,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         return;
     }
 
+    const bool deletingTip=window==m_tipOfTheDayWnd;
     if(window==m_commandListWnd)m_commandListWnd=nullptr;
     if(window==m_tipOfTheDayWnd)m_tipOfTheDayWnd=nullptr;
 
@@ -1856,7 +1864,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
+        && (deletingTip || IsWhisperPreferenceInputWindow(window) || window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -2594,6 +2602,13 @@ void UIWindowMgr::HideLoadingScreen()
     SetWallpaper(nullptr);
 }
 
+bool UIWindowMgr::OpenSourceStartupTip()
+{
+    if(m_tipStartupChecked)return false;m_tipStartupChecked=true;
+    if(!g_showTipsAtStartup || !g_tipOfTheDay.GetNumTip())return false;
+    return MakeWindow(WID_TIPOFTHEDAYWND)!=nullptr;
+}
+
 void UIWindowMgr::InitializeSourceCommandFlags()
 {
     g_session.InitializeSourceCommandFlags(CAudio::GetInstance()->IsBgmPaused(),g_isSoundOn,m_tipOfTheDayWnd!=nullptr);
@@ -2691,7 +2706,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
         }
     }
 
-    if(hit==m_chatWnd && (m_editWindow==m_chatRoomWnd || m_editWindow==m_chatRoomPasswordWnd || m_editWindow==m_chatRoomMakeWnd || m_editWindow==m_chatRoomChangeWnd || m_editWindow==m_autoMessageWnd || dynamic_cast<UIWhisperWnd*>(m_editWindow)))m_editWindow=nullptr;
+    if(hit==m_chatWnd && (m_editWindow==m_chatRoomWnd || m_editWindow==m_chatRoomPasswordWnd || m_editWindow==m_chatRoomMakeWnd || m_editWindow==m_chatRoomChangeWnd || m_editWindow==m_autoMessageWnd || m_editWindow==m_tipOfTheDayWnd || dynamic_cast<UIWhisperWnd*>(m_editWindow)))m_editWindow=nullptr;
     m_captureWindow = hit;
 
     if (hit) {
@@ -2700,6 +2715,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             topLevel = topLevel->m_parent;
         }
         if (topLevel) {
+            if(dynamic_cast<UITipOfTheDayWnd*>(topLevel)){m_editWindow=topLevel;if(m_chatWnd)m_chatWnd->ClearInputFocus();}
             auto found = std::find(m_children.begin(), m_children.end(), topLevel);
             if (found != m_children.end() && std::next(found) != m_children.end()) {
                 m_children.erase(found);
@@ -3161,6 +3177,7 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
     }
 
     if(m_autoMessageWnd && m_autoMessageWnd->m_show){if(!isAltDown && !isCtrlDown)m_autoMessageWnd->OnKeyDown(virtualKey);return true;}
+    if(auto* tip=dynamic_cast<UITipOfTheDayWnd*>(m_editWindow)){if(tip->m_show){if(!isAltDown && !isCtrlDown)tip->OnKeyDown(virtualKey);return true;}}
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){if(!isAltDown && !isCtrlDown)whisper->OnKeyDown(virtualKey);return true;}}
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_editWindow)){
         if(settings->m_show){if(!isAltDown && !isCtrlDown)settings->OnKeyDown(virtualKey);return true;}
@@ -3272,6 +3289,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
     }
 
     if(m_autoMessageWnd && m_autoMessageWnd->m_show){m_autoMessageWnd->OnKeyDown(virtualKey);return;}
+    if(auto* tip=dynamic_cast<UITipOfTheDayWnd*>(m_editWindow)){if(tip->m_show){tip->OnKeyDown(virtualKey);return;}}
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow)){if(whisper->m_show){whisper->OnKeyDown(virtualKey);return;}}
     if(auto* settings=dynamic_cast<UIChatRoomSettingsWnd*>(m_editWindow)){if(settings->m_show){settings->OnKeyDown(virtualKey);return;}}
     if(m_chatRoomPasswordWnd && m_chatRoomPasswordWnd->m_show && m_editWindow==m_chatRoomPasswordWnd){m_chatRoomPasswordWnd->OnKeyDown(virtualKey);return;}

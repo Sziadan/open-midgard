@@ -529,6 +529,10 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
             "${CMAKE_CURRENT_BINARY_DIR}/packet-chat-state-renders" "chat-state")
         set_tests_properties(packet_chat_state_render_checks PROPERTIES TIMEOUT 60
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-chat-render-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        add_test(NAME packet_tip_window_render_checks COMMAND packet_item_render_checks
+            "${CMAKE_CURRENT_BINARY_DIR}/packet-tip-window-renders" "tip-window")
+        set_tests_properties(packet_tip_window_render_checks PROPERTIES TIMEOUT 60
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-tip-window-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
         add_test(NAME packet_item_use_feedback_render_checks COMMAND packet_item_render_checks
             "${CMAKE_CURRENT_BINARY_DIR}/packet-item-use-feedback-renders" "item-use-feedback")
         set_tests_properties(packet_item_use_feedback_render_checks PROPERTIES TIMEOUT 60

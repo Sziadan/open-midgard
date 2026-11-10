@@ -1,0 +1,416 @@
+{
+  "status": "source-preparation-not-acceptance",
+  "source": "docs/packets/evidence/PK09.21-friend-greeting-command-ui-data.json",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "actions": [
+    {
+      "row": 1,
+      "label": "/taekwon",
+      "action_type": 151,
+      "action_type_hex": "0x97",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": 2,
+      "label": "/hi",
+      "action_type": 150,
+      "action_type_hex": "0x96",
+      "handler_status": "Implemented: sends greeting to each friend through whisper path, advances source greeting counter, sends notice."
+    },
+    {
+      "row": 3,
+      "label": "/blacksmith",
+      "action_type": 145,
+      "action_type_hex": "0x91",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": 4,
+      "label": "/alchemist",
+      "action_type": 146,
+      "action_type_hex": "0x92",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": 5,
+      "label": "/help",
+      "action_type": 14,
+      "action_type_hex": "0x0e",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": "6",
+      "label": "/who",
+      "action_type": 6,
+      "action_type_hex": "0x06",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": 7,
+      "label": "/sit",
+      "action_type": 22,
+      "action_type_hex": "0x16",
+      "handler_status": "Implemented: action request toggles sitting/standing when player state allows."
+    },
+    {
+      "row": 8,
+      "label": "/stand",
+      "action_type": 21,
+      "action_type_hex": "0x15",
+      "handler_status": "Implemented: action request toggles sitting/standing when player state allows."
+    },
+    {
+      "row": 9,
+      "label": "/q",
+      "action_type": 24,
+      "action_type_hex": "0x18",
+      "handler_status": "Implemented: forwards to SendMsg(53) (leave/quit flow)."
+    },
+    {
+      "row": 10,
+      "label": "/leave",
+      "action_type": 27,
+      "action_type_hex": "0x1b",
+      "handler_status": "Implemented dispatch to mode67; current mode67 sends two-byte0100 party leave, not party creation."
+    },
+    {
+      "row": 11,
+      "label": "/where",
+      "action_type": 9,
+      "action_type_hex": "0x09",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": 12,
+      "label": "/memo",
+      "action_type": 43,
+      "action_type_hex": "0x2b",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": 13,
+      "label": "/chat",
+      "action_type": 23,
+      "action_type_hex": "0x17",
+      "handler_status": "Implemented: opens chat-room creation UI through OpenChatRoomMake(false)."
+    },
+    {
+      "row": 14,
+      "label": "/savechat",
+      "action_type": 51,
+      "action_type_hex": "0x33",
+      "handler_status": "Implemented dispatch to manager6, which writes complete normal/battle chat exports; this is not the104 auto-save toggle."
+    },
+    {
+      "row": 15,
+      "label": "/doridori",
+      "action_type": 109,
+      "action_type_hex": "0x6d",
+      "handler_status": "Implemented: head-direction action; may trigger the double-doridori follow-up."
+    },
+    {
+      "row": 16,
+      "label": "/bangbang",
+      "action_type": 111,
+      "action_type_hex": "0x6f",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": 17,
+      "label": "/bingbing",
+      "action_type": 110,
+      "action_type_hex": "0x6e",
+      "handler_status": "Implemented: rotates player direction by 45 degrees and sends direction update."
+    },
+    {
+      "row": 18,
+      "label": "/ex",
+      "action_type": 15,
+      "action_type_hex": "0x0f",
+      "handler_status": "Implemented: sends emotion request packet."
+    },
+    {
+      "row": 19,
+      "label": "/inall",
+      "action_type": 17,
+      "action_type_hex": "0x11",
+      "handler_status": "Implemented: requests whisper settings update and clears local exclusions after send attempt."
+    },
+    {
+      "row": 20,
+      "label": "/exall",
+      "action_type": 16,
+      "action_type_hex": "0x10",
+      "handler_status": "Implemented: requests whisper settings update."
+    },
+    {
+      "row": 21,
+      "label": "/pvpinfo",
+      "action_type": 141,
+      "action_type_hex": "0x8d",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    },
+    {
+      "row": 22,
+      "label": "/hunting",
+      "action_type": 168,
+      "action_type_hex": "0xa8",
+      "handler_status": "Missing: no ProcessSourceTalk case; falls through to awaiting-integration default."
+    }
+  ],
+  "window_rows": {
+    "standard_entries": [
+      {
+        "row": 1,
+        "label": "Chat",
+        "window_id": 67,
+        "window_id_hex": "0x43",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 2,
+        "label": "Status",
+        "window_id": 65,
+        "window_id_hex": "0x41",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 3,
+        "label": "DetailLevel",
+        "window_id": 68,
+        "window_id_hex": "0x44",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support. MakeWindow(68) is the friend-option window under the current named enum; it does not establish this command table row handling."
+      },
+      {
+        "row": 4,
+        "label": "Option",
+        "window_id": 79,
+        "window_id_hex": "0x4f",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 5,
+        "label": "Items",
+        "window_id": 69,
+        "window_id_hex": "0x45",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 6,
+        "label": "Merchant",
+        "window_id": 87,
+        "window_id_hex": "0x57",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 7,
+        "label": "Skill",
+        "window_id": 83,
+        "window_id_hex": "0x53",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 8,
+        "label": "Equipment",
+        "window_id": 81,
+        "window_id_hex": "0x51",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 9,
+        "label": "BasicInfo",
+        "window_id": 86,
+        "window_id_hex": "0x56",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 10,
+        "label": "Guild",
+        "window_id": 71,
+        "window_id_hex": "0x47",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 11,
+        "label": "PartySetting",
+        "window_id": 80,
+        "window_id_hex": "0x50",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 12,
+        "label": "FriendOption",
+        "window_id": 73,
+        "window_id_hex": "0x49",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support. MakeWindow(73) is item-identify under the current named enum; it does not establish this command table row handling."
+      },
+      {
+        "row": 13,
+        "label": "Messenger",
+        "window_id": 90,
+        "window_id_hex": "0x5a",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 14,
+        "label": "WhisperList",
+        "window_id": 72,
+        "window_id_hex": "0x48",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 15,
+        "label": "Emotion",
+        "window_id": 77,
+        "window_id_hex": "0x4d",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 16,
+        "label": "EmotionList",
+        "window_id": 76,
+        "window_id_hex": "0x4c",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 17,
+        "label": "PetInfo",
+        "window_id": 74,
+        "window_id_hex": "0x4a",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      }
+    ],
+    "brazil_entries": [
+      {
+        "row": 1,
+        "label": "Sala de Chat",
+        "window_id": 67,
+        "window_id_hex": "0x43",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 2,
+        "label": "Atributos",
+        "window_id": 65,
+        "window_id_hex": "0x41",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 3,
+        "label": "Detalhes",
+        "window_id": 68,
+        "window_id_hex": "0x44",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support. MakeWindow(68) is the friend-option window under the current named enum; it does not establish this command table row handling."
+      },
+      {
+        "row": 4,
+        "label": "Configura\u00e7\u00e3o (raw bytes 43 6f 6e 66 69 67 75 72 61 e7 e3 6f)",
+        "window_id": 79,
+        "window_id_hex": "0x4f",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 5,
+        "label": "Invent?io (raw bytes 49 6e 76 65 6e 74 3f 69 6f)",
+        "window_id": 69,
+        "window_id_hex": "0x45",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 6,
+        "label": "Carrinho",
+        "window_id": 87,
+        "window_id_hex": "0x57",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 7,
+        "label": "Habilidades",
+        "window_id": 83,
+        "window_id_hex": "0x53",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 8,
+        "label": "Equipamentos",
+        "window_id": 81,
+        "window_id_hex": "0x51",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 9,
+        "label": "Inf. B?icas (raw bytes 49 6e 66 2e 20 42 3f 69 63 61 73)",
+        "window_id": 86,
+        "window_id_hex": "0x56",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 10,
+        "label": "Cl? (raw bytes 43 6c 3f)",
+        "window_id": 71,
+        "window_id_hex": "0x47",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 11,
+        "label": "Conf. Grupo",
+        "window_id": 80,
+        "window_id_hex": "0x50",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 12,
+        "label": "Conf. Contatos",
+        "window_id": 73,
+        "window_id_hex": "0x49",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support. MakeWindow(73) is item-identify under the current named enum; it does not establish this command table row handling."
+      },
+      {
+        "row": 13,
+        "label": "Grupo",
+        "window_id": 90,
+        "window_id_hex": "0x5a",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 14,
+        "label": "Contatos",
+        "window_id": 72,
+        "window_id_hex": "0x48",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 15,
+        "label": "Atalhos",
+        "window_id": 77,
+        "window_id_hex": "0x4d",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 16,
+        "label": "Lista Emoticons",
+        "window_id": 76,
+        "window_id_hex": "0x4c",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      },
+      {
+        "row": 17,
+        "label": "Bicho de Est.? (raw source bytes see dump)",
+        "window_id": 74,
+        "window_id_hex": "0x4a",
+        "handler_status": "No source command-window ProcessPushButton path or table-derived routing found. Numeric collisions in MakeWindow must not be treated as command-row support."
+      }
+    ]
+  },
+  "integration_notes": [
+    "Action row numeric values are ProcessSourceTalk action types, passed through mode SendMsg(47); they are not UI button IDs or window IDs.",
+    "Window table values are the selected binary command-window IDs; do not treat them as mode47 action types or per-button IDs.",
+    "SourceChatSubmission.inc contains the implemented ProcessSourceTalk action handlers; unhandled recognized types reach its explicit awaiting-integration default.",
+    "No UICommandListWnd or ProcessPushButton implementation was found under src; window-table UI execution is missing from this source tree.",
+    "Brazil labels retain source-derived mojibake/raw-byte evidence in the authoritative inventory; this summary preserves labels as decoded there."
+  ],
+  "root_review": {
+    "missing_action_count": 10,
+    "corrections": "Root checked current mode67 frame0100 and manager6 export ownership; prior subagent prose mislabeled these. Handler presence is preparation, not proof of full action acceptance. Window numeric fields still need root ProcessPushButton routing review."
+  }
+}

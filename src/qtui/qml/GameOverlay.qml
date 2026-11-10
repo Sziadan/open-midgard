@@ -4389,6 +4389,7 @@ Item {
     RoChatRoom { parent: uiLayer; roomData: (uiState.chatWindowUi || {}).room || ({}) }
     RoWhisperWindows { parent: uiLayer; windows: (uiState.chatWindowUi || {}).whisperWindows || [] }
     RoAutoMessage { parent: uiLayer; editorData: (uiState.chatWindowUi || {}).autoMessage || ({}) }
+    RoTipOfTheDay { parent: uiLayer; tipData: (uiState.chatWindowUi || {}).tip || ({}) }
     RoFriendOptions { parent: uiLayer; optionData: (uiState.chatWindowUi || {}).friendOptions || ({}) }
 
 }

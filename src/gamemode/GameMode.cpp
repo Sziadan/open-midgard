@@ -10095,6 +10095,7 @@ void CGameMode::OnInit(const char* worldName) {
 
     g_windowMgr.RemoveAllWindows();
     g_windowMgr.SetLoginStatus("");
+    g_windowMgr.OpenSourceStartupTip();
     m_loadingWallpaperName = ChooseRandomLoadingWallpaper();
     g_windowMgr.ShowLoadingScreen(m_loadingWallpaperName, "Preparing loading screen...", 0.02f);
 

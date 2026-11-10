@@ -2092,7 +2092,8 @@
         "docs/packets/evidence/PK09.21-friend-greeting-provenance.json",
         "docs/packets/evidence/PK09.21-command-toggles.md",
         "docs/packets/evidence/PK09.21-weather-command.md",
-        "docs/packets/evidence/PK09.21-tip-data.md"
+        "docs/packets/evidence/PK09.21-tip-data.md",
+        "docs/packets/evidence/PK09.21-tip-window.md"
       ],
       "commit_subject": null
     }

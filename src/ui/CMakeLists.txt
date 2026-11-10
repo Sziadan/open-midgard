@@ -3,6 +3,8 @@ add_library(ro_ui STATIC
     UIFriendOptionWnd.cpp
     UIAutoMessageWnd.h
     UIAutoMessageWnd.cpp
+    UITipOfTheDayWnd.h
+    UITipOfTheDayWnd.cpp
     UIWhisperWnd.h
     UIWhisperWnd.cpp
     UIGuildWnd.h

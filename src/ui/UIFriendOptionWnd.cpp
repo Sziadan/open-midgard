@@ -44,16 +44,16 @@ void UIFriendOptionButton::OnDraw()
 {
     auto dc=AcquireDrawTarget();if(!dc)return;const auto& bitmap=m_button.bitmaps[GetVisualState()];
     if(bitmap.IsValid())shopui::DrawBitmapPixelsTransparent(dc,bitmap,{m_x,m_y,m_x+bitmap.width,m_y+bitmap.height});
-    else {const int shade=m_pressed?180:210;shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(shade,shade,shade));Text(dc,{m_x,m_y,m_x+m_w,m_y+m_h},m_id==135?"x":"*");}
+    else {const int shade=m_pressed?180:210;shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(shade,shade,shade));Text(dc,{m_x,m_y,m_x+m_w,m_y+m_h},m_text.empty()?(m_id==135?"x":"*"):m_text);}
     ReleaseDrawTarget(dc);
 }
-UIFriendOptionCheckBox::UIFriendOptionCheckBox(std::string label,bool checked):m_checked(checked)
+UIFriendOptionCheckBox::UIFriendOptionCheckBox(std::string label,bool checked,int maximumWidth):m_checked(checked)
 {
     m_id=147;m_text=std::move(label);int width=static_cast<int>(m_text.size())*6;
 #if RO_ENABLE_QT6_UI
     QFont font("Segoe UI");font.setPixelSize(12);width=QFontMetrics(font).horizontalAdvance(QString::fromUtf8(m_text.c_str()));
 #endif
-    Create((std::min)(width+12,265),12);m_on=LoadChatRoomSkinBitmap("checkbox_1.bmp");m_off=LoadChatRoomSkinBitmap("checkbox_0.bmp");
+    Create((std::min)(width+12,maximumWidth),12);m_on=LoadChatRoomSkinBitmap("checkbox_1.bmp");m_off=LoadChatRoomSkinBitmap("checkbox_0.bmp");
     m_onUri=ChatRoomBitmapUri(m_on);m_offUri=ChatRoomBitmapUri(m_off);
 }
 void UIFriendOptionCheckBox::OnLBtnDown(int,int)

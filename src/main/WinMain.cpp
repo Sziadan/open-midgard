@@ -1,4 +1,5 @@
 #include "ui/UIWhisperWnd.h"
+#include "ui/UITipOfTheDayWnd.h"
 #include "core/TipOfTheDay.h"
 #include "ui/UIAutoMessageWnd.h"
 #include "ui/UIFriendOptionWnd.h"
@@ -529,6 +530,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (g_windowMgr.m_chatRoomWnd) g_windowMgr.m_chatRoomWnd->CancelPointerCapture();
         if (g_windowMgr.m_autoMessageWnd)g_windowMgr.m_autoMessageWnd->CancelPointerCapture();
         if (g_windowMgr.m_friendOptionWnd)g_windowMgr.m_friendOptionWnd->CancelPointerCapture();
+        if(auto* tip=dynamic_cast<UITipOfTheDayWnd*>(g_windowMgr.m_tipOfTheDayWnd))tip->CancelPointerCapture();
         if (g_windowMgr.m_messengerGroupWnd)g_windowMgr.m_messengerGroupWnd->CancelSourcePointerCapture();
         for(const auto& entry:g_windowMgr.m_whisperWindows)entry.second->CancelPointerCapture();
         if(g_windowMgr.m_chatRoomMakeWnd)g_windowMgr.m_chatRoomMakeWnd->CancelPointerCapture();

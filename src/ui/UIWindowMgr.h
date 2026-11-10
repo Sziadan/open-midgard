@@ -146,6 +146,7 @@ public:
         WID_PARTYOPTIONWND    = 0x95,
         WID_GUILDWND          = 0x96,
         WID_OPTIONWND         = 13,
+        WID_TIPOFTHEDAYWND    = 38,
         WID_EQUIPWND          = 14,
         WID_SKILLLISTWND      = 15,
         WID_SPELLLISTWND      = 99,
@@ -229,6 +230,8 @@ public:
     std::string m_chatMsg;
     UIWindow* m_commandListWnd=nullptr;
     UIWindow* m_tipOfTheDayWnd=nullptr;
+    bool m_tipStartupChecked=false;
+    bool OpenSourceStartupTip();
     void InitializeSourceCommandFlags();
 
     UIWindow* MakeWindow(int windowId);

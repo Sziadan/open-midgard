@@ -1,0 +1,432 @@
+Ref/UIWindowMgr.cpp:5704-5730
+5704:       return m_basicInfoWnd;
+5705:     case 38:
+5706:       m_basicInfoWnd = (UIBasicInfoWnd *)this->m_tipOfTheDayWnd;
+5707:       if ( m_basicInfoWnd )
+5708:         goto LABEL_695;
+5709:       v52 = (UITipOfTheDayWnd *)operator new(0x6Cu);
+5710:       windowId = (int)v52;
+5711:       v191 = 40;
+5712:       if ( v52 )
+5713:         m_basicInfoWnd = (UIBasicInfoWnd *)UITipOfTheDayWnd::UITipOfTheDayWnd(v52);
+5714:       else
+5715:         m_basicInfoWnd = 0;
+5716:       v191 = -1;
+5717:       this->m_tipOfTheDayWnd = (UITipOfTheDayWnd *)m_basicInfoWnd;
+5718:       UIWindow::Create(m_basicInfoWnd, 280, 180);
+5719:       m_basicInfoWnd->UIWindow::Move(
+5720:         m_basicInfoWnd,
+5721:         (g_renderer->m_width - 640) / 2 + 200,
+5722:         120 * g_renderer->m_height / 480);
+5723:       windowId = (int)m_basicInfoWnd;
+5724:       std::list<UIWindow *>::insert(
+5725:         &this->m_children,
+5726:         &result,
+5727:         (std::list<UIWindow *>::iterator)this->m_children._Head,
+5728:         (UIWindow *const *)&windowId);
+5729:       m_basicInfoWnd->UIWindow::SetShow(m_basicInfoWnd, 1);
+5730:       return m_basicInfoWnd;
+
+Ref/UIFrameWnd.cpp:651-665
+651: // ================================================
+652: // Original Signature: public: __thiscall UIFrameWnd::UIFrameWnd(void)
+653: // Decompiled from address: 0x455e20
+654: // ================================================
+655: UIFrameWnd *__thiscall UIFrameWnd::UIFrameWnd(UIFrameWnd *this)
+656: {
+657:   UIWindow::UIWindow(this);
+658:   this->__vftable = (UIFrameWnd_vtbl *)&UIFrameWnd::`vftable';
+659:   this->m_defPushId = 117;
+660:   this->m_defCancelPushId = 117;
+661:   this->m_startGlobalX = 0;
+662:   this->m_startGlobalY = 0;
+663:   return this;
+664: }
+665:
+
+Ref/UIFrameWnd2.cpp:30593-30665
+30593:     v17 = (int)(v54 + 4) < 12;
+30594:     v53 += 2;
+30595:     v54 += 4;
+30596:   }
+30597:   while ( v17 );
+30598:   this->m_defPushId = 180;
+30599:   v18 = (UITextViewer *)operator new(0x9Cu);
+30600:   Block = v18;
+30601:   LOBYTE(v55) = 8;
+30602:   if ( v18 )
+30603:     v19 = UITextViewer::UITextViewer(v18);
+30604:   else
+30605:     v19 = 0;
+30606:   this->m_textViewer = v19;
+30607:   v20 = v19->__vftable;
+30608:   LOBYTE(v55) = 0;
+30609:   v20->UIListBox::Create2(v19, 10, 22, cx - 20, (int)&cy[-4]._Last + 1, 0);
+30610:   CSkinMgr::GetColorChipColor(&g_skinMgr, 2, 2, &rr, &gg, &bb);
+30611:   this->m_textViewer->m_bgR = rr;
+30612:   this->m_textViewer->m_bgG = gg;
+30613:   this->m_textViewer->m_bgB = bb;
+30614:   UIWindow::AddChild(this, this->m_textViewer);
+30615:   this->m_showTipsAtStartup = g_showTipsAtStartup;
+30616:   v21 = (UICheckBox *)operator new(0x7Cu);
+30617:   LOBYTE(v55) = 9;
+30618:   if ( v21 )
+30619:     v22 = UICheckBox::UICheckBox(v21);
+30620:   else
+30621:     v22 = 0;
+30622:   LOBYTE(v55) = 0;
+30623:   v23 = MsgStr(MSI_SHOWTIPSATSTARTUP);
+30624:   TextWidth = UIWindow::GetTextWidth(this, v23, 0, 0, 12, 0);
+30625:   UIWindow::Create(v22, TextWidth + 12, 12);
+30626:   v25 = MsgStr(MSI_SHOWTIPSATSTARTUP);
+30627:   UICheckBox::SetBitmap2(v22, &onBitmapName, &offBitmapName, v25);
+30628:   v22->UIWindow::Move(v22, 10, (int)&cy[-2]._End);
+30629:   UICheckBox::SetCheck(v22, this->m_showTipsAtStartup);
+30630:   UIWindow::AddChild(this, v22);
+30631:   if ( !g_tipOfTheDay.m_bTryLoading )
+30632:     CTipOfTheDay::Load(&g_tipOfTheDay);
+30633:   if ( *(_DWORD *)&g_tipOfTheDay.gap1[7]
+30634:     && ((*(_DWORD *)&g_tipOfTheDay.gap1[11] - *(_DWORD *)&g_tipOfTheDay.gap1[7]) & 0xFFFFFFF0) != 0 )
+30635:   {
+30636:     v26 = rand();
+30637:     if ( !g_tipOfTheDay.m_bTryLoading )
+30638:       CTipOfTheDay::Load(&g_tipOfTheDay);
+30639:     if ( *(_DWORD *)&g_tipOfTheDay.gap1[7] )
+30640:       v27 = (*(_DWORD *)&g_tipOfTheDay.gap1[11] - *(_DWORD *)&g_tipOfTheDay.gap1[7]) >> 4;
+30641:     else
+30642:       v27 = 0;
+30643:     this->m_indexOfTip = v26 % v27;
+30644:     v28 = CTipOfTheDay::GetTip(&g_tipOfTheDay, v26 % v27);
+30645:     v29 = this->m_textViewer->__vftable;
+30646:     stringList = v28;
+30647:     v30 = MsgStr(MSI_DIDYOUKNOW);
+30648:     v29->UIWindow::SendMsg(this->m_textViewer, 0, 29, (int)v30, 38, 0, 0);
+30649:     v31 = 0;
+30650:     for ( i = 0; ; ++i )
+30651:     {
+30652:       First = stringList->_First;
+30653:       if ( !First || v31 >= stringList->_Last - First )
+30654:         break;
+30655:       v34 = First[i]._Ptr;
+30656:       if ( !v34 )
+30657:         v34 = `std::string::_Nullstr'::`2'::_C;
+30658:       this->m_textViewer->UIWindow::SendMsg(this->m_textViewer, 0, 29, (int)v34, 38, 0, 0);
+30659:       ++v31;
+30660:     }
+30661:   }
+30662:   if ( pathName._Ptr )
+30663:   {
+30664:     v35 = *(pathName._Ptr - 1);
+30665:     if ( !v35 || v35 == -1 )
+
+Ref/UIFrameWnd2.cpp:13901-13983
+13901:   if ( message == 6 )
+13902:   {
+13903:     switch ( (unsigned int)val1 )
+13904:     {
+13905:       case 0x87u:
+13906:         UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x26);
+13907:         return 0;
+13908:       case 0x93u:
+13909:         v15 = val2;
+13910:         p_m_showTipsAtStartup = &this->m_showTipsAtStartup;
+13911:         val2 = 0;
+13912:         this->m_showTipsAtStartup = v15;
+13913:         g_showTipsAtStartup = v15;
+13914:         if ( RegCreateKeyExA(HKEY_LOCAL_MACHINE, g_regPath, 0, 0, 0, 0xF003Fu, 0, &val1, (LPDWORD)&val2) )
+13915:           return 0;
+13916:         RegSetValueExA(val1, aShowtipsatstar, 0, 4u, (const BYTE *)p_m_showTipsAtStartup, 4u);
+13917:         RegCloseKey(val1);
+13918:         return 0;
+13919:       case 0x98u:
+13920:         if ( !g_tipOfTheDay.m_bTryLoading )
+13921:           CTipOfTheDay::Load(&g_tipOfTheDay);
+13922:         if ( !*(_DWORD *)&g_tipOfTheDay.gap1[7]
+13923:           || ((*(_DWORD *)&g_tipOfTheDay.gap1[11] - *(_DWORD *)&g_tipOfTheDay.gap1[7]) & 0xFFFFFFF0) == 0 )
+13924:         {
+13925:           return 0;
+13926:         }
+13927:         ++this->m_indexOfTip;
+13928:         if ( !g_tipOfTheDay.m_bTryLoading )
+13929:           CTipOfTheDay::Load(&g_tipOfTheDay);
+13930:         if ( *(_DWORD *)&g_tipOfTheDay.gap1[7] )
+13931:           v20 = (*(_DWORD *)&g_tipOfTheDay.gap1[11] - *(_DWORD *)&g_tipOfTheDay.gap1[7]) >> 4;
+13932:         else
+13933:           v20 = 0;
+13934:         if ( this->m_indexOfTip >= v20 )
+13935:           this->m_indexOfTip = 0;
+13936:         goto LABEL_24;
+13937:       case 0xB4u:
+13938:         if ( !g_tipOfTheDay.m_bTryLoading )
+13939:           CTipOfTheDay::Load(&g_tipOfTheDay);
+13940:         if ( !*(_DWORD *)&g_tipOfTheDay.gap1[7]
+13941:           || ((*(_DWORD *)&g_tipOfTheDay.gap1[11] - *(_DWORD *)&g_tipOfTheDay.gap1[7]) & 0xFFFFFFF0) == 0 )
+13942:         {
+13943:           return 0;
+13944:         }
+13945:         v17 = this->m_indexOfTip - 1;
+13946:         this->m_indexOfTip = v17;
+13947:         if ( v17 < 0 )
+13948:         {
+13949:           if ( !g_tipOfTheDay.m_bTryLoading )
+13950:             CTipOfTheDay::Load(&g_tipOfTheDay);
+13951:           if ( *(_DWORD *)&g_tipOfTheDay.gap1[7] )
+13952:             v18 = (*(_DWORD *)&g_tipOfTheDay.gap1[11] - *(_DWORD *)&g_tipOfTheDay.gap1[7]) >> 4;
+13953:           else
+13954:             v18 = 0;
+13955:           this->m_indexOfTip = v18 - 1;
+13956:         }
+13957: LABEL_24:
+13958:         Tip = CTipOfTheDay::GetTip(&g_tipOfTheDay, this->m_indexOfTip);
+13959:         this->UIWindow::SendMsg(this, 0, 29, (int)Tip, 0, 0, 0);
+13960:         result = 0;
+13961:         break;
+13962:       default:
+13963:         return 0;
+13964:     }
+13965:   }
+13966:   else if ( message == 29 )
+13967:   {
+13968:     this->m_textViewer->UIListBox::ClearAllItems(this->m_textViewer);
+13969:     v9 = this->m_textViewer->__vftable;
+13970:     v10 = MsgStr(MSI_DIDYOUKNOW);
+13971:     v9->UIWindow::SendMsg(this->m_textViewer, 0, 29, (int)v10, 38, 0, 0);
+13972:     v11 = 0;
+13973:     for ( i = 0; ; i += 16 )
+13974:     {
+13975:       v13 = *((_DWORD *)val1 + 1);
+13976:       if ( !v13 || v11 >= (*((_DWORD *)val1 + 2) - v13) >> 4 )
+13977:         break;
+13978:       v14 = *(const char **)(i + v13 + 4);
+13979:       if ( !v14 )
+13980:         v14 = `std::string::_Nullstr'::`2'::_C;
+13981:       this->m_textViewer->UIWindow::SendMsg(this->m_textViewer, 0, 29, (int)v14, 38, 0, 0);
+13982:       ++v11;
+13983:     }
+
+Ref/UIControl2.cpp:7383-7423
+7383:   if ( First )
+7384:     v8 = this->m_items._Last - First;
+7385:   else
+7386:     v8 = 0;
+7387:   v9 = m_vertViewOffset + this->m_h / v6;
+7388:   if ( v9 >= v8 )
+7389:   {
+7390:     v10 = this->m_items._First;
+7391:     if ( !v10 )
+7392:     {
+7393:       lastItem = 0;
+7394:       goto LABEL_15;
+7395:     }
+7396:     v9 = this->m_items._Last - v10;
+7397:   }
+7398:   lastItem = v9;
+7399: LABEL_15:
+7400:   v11 = 0;
+7401:   colorRef = 0;
+7402:   if ( m_vertViewOffset > 0 )
+7403:   {
+7404:     v26 = m_vertViewOffset;
+7405:     do
+7406:     {
+7407:       v12 = &this->m_items._First[v11];
+7408:       Ptr = v12->_Ptr;
+7409:       if ( !Ptr )
+7410:         Ptr = `std::string::_Nullstr'::`2'::_C;
+7411:       v14 = &Ptr[v12->_Len];
+7412:       if ( Ptr < v14 )
+7413:       {
+7414:         do
+7415:         {
+7416:           ColorMark = UIWindow::FindColorMark(this, Ptr, v14);
+7417:           Ptr = UIWindow::InterpretColor(this, ColorMark, &colorRef);
+7418:         }
+7419:         while ( Ptr < v14 );
+7420:         m_vertViewOffset = v27;
+7421:       }
+7422:       ++v11;
+7423:       --v26;
+
+Ref/UIControl2.cpp:7454-7477
+7454:           break;
+7455:         m_vertViewOffset = v27;
+7456:       }
+7457:     }
+7458:   }
+7459:   else if ( m_vertViewOffset < lastItem )
+7460:   {
+7461:     v17 = m_vertViewOffset;
+7462:     do
+7463:     {
+7464:       v18 = &this->m_items._First[v17];
+7465:       v19 = (const char *)v18->_Len;
+7466:       v20 = v18->_Ptr;
+7467:       if ( !v20 )
+7468:         v20 = `std::string::_Nullstr'::`2'::_C;
+7469:       UIWindow::TextOutWithDecoration(this, 3, this->m_itemSpacing * (v16 - v27) + 4, v20, v19, &colorRef, 0, 12);
+7470:       ++v16;
+7471:       ++v17;
+7472:     }
+7473:     while ( v16 < lastItem );
+7474:   }
+7475: }
+7476:
+7477:
+
+Ref/UIControl2.cpp:2210-2299
+2210: // ================================================
+2211: // Original Signature: public: virtual int __thiscall UIListBox::SendMsg(class UIWindow *,int,int,int,int,int)
+2212: // Decompiled from address: 0x44c650
+2213: // ================================================
+2214: int __thiscall UIListBox::SendMsg(
+2215:         UIListBox *this,
+2216:         UIWindow *sender,
+2217:         int message,
+2218:         int val1,
+2219:         int val2,
+2220:         int val3,
+2221:         int val4)
+2222: {
+2223:   std::string *v8; // ecx
+2224:   int v9; // eax
+2225:   std::string *v10; // ecx
+2226:   int v11; // eax
+2227:   int v12; // eax
+2228:   int v14; // ecx
+2229:   unsigned int v15; // edx
+2230:   std::string *v16; // ecx
+2231:   int v17; // eax
+2232:   std::string *v18; // ecx
+2233:   int v19; // eax
+2234:   int m_vertViewOffset; // edi
+2235:   int v21; // ecx
+2236:   std::string *First; // eax
+2237:   int v23; // ecx
+2238:   int v24; // edx
+2239:   std::string *v25; // ecx
+2240:   int v26; // eax
+2241:   UIWindow *m_parent; // ecx
+2242:   int m_horzViewOffset; // edi
+2243:   int v29; // ecx
+2244:   int v30; // eax
+2245:   UIWindow *v31; // ecx
+2246:
+2247:   switch ( message )
+2248:   {
+2249:     case 7:
+2250:     case 9:
+2251:     case 10:
+2252:       m_vertViewOffset = this->m_vertViewOffset;
+2253:       if ( message == 9 )
+2254:       {
+2255:         v21 = m_vertViewOffset - this->m_h / this->m_itemSpacing + 1;
+2256:       }
+2257:       else
+2258:       {
+2259:         if ( message == 10 )
+2260:         {
+2261:           this->m_vertViewOffset = this->m_h / this->m_itemSpacing + m_vertViewOffset - 1;
+2262:           goto LABEL_38;
+2263:         }
+2264:         v21 = m_vertViewOffset + val1;
+2265:       }
+2266:       this->m_vertViewOffset = v21;
+2267: LABEL_38:
+2268:       if ( this->m_vertViewOffset < 0 )
+2269:         this->m_vertViewOffset = 0;
+2270:       First = this->m_items._First;
+2271:       if ( First )
+2272:         v23 = this->m_items._Last - First;
+2273:       else
+2274:         v23 = 0;
+2275:       v24 = this->m_horzScrEnabled - this->m_h / this->m_itemSpacing;
+2276:       if ( this->m_vertViewOffset > (unsigned int)(v24 + v23) )
+2277:       {
+2278:         v25 = this->m_items._First;
+2279:         if ( v25 )
+2280:           v26 = this->m_items._Last - v25;
+2281:         else
+2282:           v26 = 0;
+2283:         this->m_vertViewOffset = v26 + v24;
+2284:       }
+2285:       this->m_vertScrollBar->m_curPos = this->m_vertViewOffset;
+2286:       this->m_vertScrollBar->UIWindow::Invalidate(this->m_vertScrollBar);
+2287:       this->UIWindow::Invalidate(this);
+2288:       if ( this->m_isTransParent )
+2289:       {
+2290:         m_parent = this->m_parent;
+2291:         if ( m_parent )
+2292:           m_parent->UIWindow::Invalidate(m_parent);
+2293:       }
+2294:       return this->m_vertViewOffset - m_vertViewOffset;
+2295:     case 8:
+2296:     case 11:
+2297:     case 12:
+2298:       m_horzViewOffset = this->m_horzViewOffset;
+2299:       if ( message == 11 )
+
+Ref/UIControl2.cpp:2475-2494
+2475:       return 0;
+2476:     }
+2477:     return 0;
+2478:   }
+2479:   if ( message != 29 )
+2480:     return UIListBox::SendMsg(this, sender, message, (int)val1, val2, val3, val4);
+2481:   v9 = 0;
+2482:   v10 = 35;
+2483:   if ( val2 )
+2484:     v10 = val2;
+2485:   if ( val2 == 138 )
+2486:   {
+2487:     memset(&strings._First, 0, 12);
+2488:     strings.allocator = (std::allocator<std::string >)HIBYTE(val1);
+2489:     v29 = 0;
+2490:     CutString(val1, &strings, 38);
+2491:     i = 0;
+2492:     for ( j = 0; ; ++j )
+2493:     {
+2494:       First = strings._First;
+
+Ref/UIFrameWnd.cpp:8170-8211
+8170: // Original Signature: public: virtual void __thiscall UIFrameWnd::OnLBtnDown(int,int)
+8171: // Decompiled from address: 0x455ea0
+8172: // ================================================
+8173: void __thiscall UIFrameWnd::OnLBtnDown(UIFrameWnd *this, int x, int y)
+8174: {
+8175:   int v4; // edx
+8176:   int m_x; // eax
+8177:   int m_y; // ecx
+8178:   int gy; // [esp+4h] [ebp-8h] BYREF
+8179:   int gx; // [esp+8h] [ebp-4h] BYREF
+8180:
+8181:   if ( this )
+8182:   {
+8183:     UIWindowMgr::SetCapture(&g_windowMgr, this);
+8184:     gx = x;
+8185:     gy = y;
+8186:     UIWindow::GetGlobalCoor(this, &gx, &gy);
+8187:     v4 = gy;
+8188:     m_x = this->m_x;
+8189:     this->m_startGlobalX = gx;
+8190:     m_y = this->m_y;
+8191:     this->m_startGlobalY = v4;
+8192:     this->m_orgX = m_x;
+8193:     this->m_orgY = m_y;
+8194:     this->m_transTarget = 128;
+8195:     this->m_transTime = timeGetTime();
+8196:     CSnapMgr::BeginMove(&g_snapMgr, this);
+8197:   }
+8198: }
+8199:
+8200:
+8201: // ================================================
+8202: // Original Signature: public: virtual void __thiscall UIFrameWnd::OnLBtnUp(int,int)
+8203: // Decompiled from address: 0x455f10
+8204: // ================================================
+8205: void __thiscall UIFrameWnd::OnLBtnUp(UIFrameWnd *this, int x, int y)
+8206: {
+8207:   if ( UIWindowMgr::GetCapture(&g_windowMgr) == this )
+8208:   {
+8209:     this->m_transTarget = 255;
+8210:     this->m_transTime = timeGetTime();
+8211:     UIWindowMgr::ReleaseCapture(&g_windowMgr);

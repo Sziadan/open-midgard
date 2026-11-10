@@ -154,6 +154,9 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return SendMsg(33,route.emotion>=0?route.emotion:std::rand()%6+58,0,0);
     }
     switch(type){
+    case 42:
+        if(g_windowMgr.m_tipOfTheDayWnd){g_windowMgr.DeleteWindow(g_windowMgr.m_tipOfTheDayWnd);return 1;}
+        return g_windowMgr.MakeWindow(UIWindowMgr::WID_TIPOFTHEDAYWND)?1:0;
     case 8: {
         g_session.m_isEffectOn=!g_session.m_isEffectOn;
         if(CWeather::IsSnowMap(m_rswName)){

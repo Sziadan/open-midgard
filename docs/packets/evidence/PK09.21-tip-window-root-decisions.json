@@ -1,0 +1,41 @@
+{
+  "selected_image": "HighPriest.exe",
+  "root_decisions": [
+    {
+      "subject": "viewer height",
+      "evidence": "481EA3 loads cy from EBP+0C; 481EAD LEA -0x37(%edi); 481EB4 pushes cy-55 into Create2",
+      "result": "180-55=125 pixels; prior140-pixel preparatory leads are superseded"
+    },
+    {
+      "subject": "row count/page",
+      "evidence": "44F3D5 stores immediate0x12 into itemSpacing; floor125/18=6",
+      "result": "six complete rows; page5, not seven/page6"
+    },
+    {
+      "subject": "child/order",
+      "evidence": "Tip OnCreate creates/adds three bitmap buttons, then viewer, then checkbox; factory list insert uses sentinel _Head end iterator",
+      "result": "append owner to managed list; child checkbox is above buttons on overlap, including long labels"
+    },
+    {
+      "subject": "default frame keys",
+      "evidence": "UIFrameWnd constructor defaults both IDs117; Tip OnCreate overrides default push180 only",
+      "result": "selected/focused Enter =>Back180, Escape =>unhandled117, no invented close action"
+    },
+    {
+      "subject": "raw scroll messages",
+      "evidence": "UIListBox44C650 source switch7/9/10 and selected PE; UITextViewer18/19 guard by vertical-scroll enable and return0",
+      "result": "retain ADD32 and unsigned upper comparison, even direct short-list offsets; hidden wheel/18/19 do not move"
+    },
+    {
+      "subject": "frame parent hit",
+      "evidence": "UIFrameWnd455EA0 begins capture/move on any nonnull parent hit, not just titlebar",
+      "result": "Tip overrides modern title-only restriction; native blank-margin drag is tested. Shared drag translucency/snap registration remains separate."
+    }
+  ],
+  "open_text_and_art": [
+    "Full item-indicator/charset-marker/language-subclass CutStringWithColor branches",
+    "Retained CR rendering, complete locale/font/codec transitions",
+    "Source skin chip2,2 and frame artwork palette acceptance; declared fixture checks use known colors/bitmap assets",
+    "Shared frame drag translucency/time and complete source snap-registration behavior"
+  ]
+}
