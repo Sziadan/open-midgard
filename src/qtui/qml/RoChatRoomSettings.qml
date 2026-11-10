@@ -90,5 +90,6 @@ Item {
             Text { objectName: "sourceRoomValidationText"; anchors.fill: parent; text: forms.message.text || ""; wrapMode: Text.WordWrap; font.pixelSize: 12; font.family: "Segoe UI"; textFormat: Text.PlainText }
         }
         SourceButton { button: forms.message.button || ({}) }
+        SourceButton { visible: forms.message.hasCancel || false; button: forms.message.cancelButton || ({}) }
     }
 }

@@ -1,0 +1,291 @@
+{
+  "purpose": "Evidence contract for restoring UIPetInfoWnd portrait rendering.",
+  "selected_pe": {
+    "path": "HighPriest.exe",
+    "sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "encoding": "legacy path literals are CP949 byte strings; shown paths decoded from those bytes.",
+    "address_mapping": "For these literals selected PE preferred VA = image base 0x00400000 + file offset (e.g. byte_6F3990 at file offset 0x2F3990)."
+  },
+  "source_evidence": [
+    {
+      "source": "Ref/Session2.cpp:3581-3739",
+      "claim": "GetPetIllustName(int job,int IsAccEquiped,char*) selects one of the table entries below. The IsAccEquiped parameter is not read in the decompiled function; accessory-equipped state does not change illustration filename."
+    },
+    {
+      "source": "Ref/UIFrameWnd.cpp:12167-12268",
+      "claim": "Pet portrait block only runs for m_petJob != -1 and 1000 <= job < 1986. It loads Monster\\%s.act/.spr using the job-name table, selects action=0,motion=0, tries the illust bitmap first; if CResMgr::IsExist succeeds and Get returns non-null it draws at (5,21). Otherwise renders motion clips in the portrait viewport."
+    },
+    {
+      "source": "HighPriest.exe bytes at listed offsets; Ref/Session2.cpp byte_724xxx references",
+      "claim": "BMP literal filenames and path encoding provenance. String references have VA = file offset + 0x400000."
+    },
+    {
+      "source": "HighPriest.exe file offset 0x2F3980 / 0x2F3990; Ref/UIFrameWnd.cpp:12172-12173",
+      "claim": "The selected PE contains CP949 literals 몬스터\\%s.act at 0x2F3980 (VA 0x6F3980) and 몬스터\\%s.spr at 0x2F3990 (VA 0x6F3990)."
+    }
+  ],
+  "job_to_illustration": [
+    {
+      "job": 1011,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_촌촌.bmp",
+      "file_offset": "0x324CE8",
+      "preferred_va": "0x00724CE8"
+    },
+    {
+      "job": 1014,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_스포아.bmp",
+      "file_offset": "0x324BB8",
+      "preferred_va": "0x00724BB8"
+    },
+    {
+      "job": 1019,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_페코페코.bmp",
+      "file_offset": "0x324D0C",
+      "preferred_va": "0x00724D0C"
+    },
+    {
+      "job": 1023,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_오크워리어.bmp",
+      "file_offset": "0x324C24",
+      "preferred_va": "0x00724C24"
+    },
+    {
+      "job": 1026,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_무낙.bmp",
+      "file_offset": "0x324C4C",
+      "preferred_va": "0x00724C4C"
+    },
+    {
+      "job": 1029,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_이시스.bmp",
+      "file_offset": "0x324C70",
+      "preferred_va": "0x00724C70"
+    },
+    {
+      "job": 1031,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_포포링.bmp",
+      "file_offset": "0x324B24",
+      "preferred_va": "0x00724B24"
+    },
+    {
+      "job": 1035,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_헌터플라이.bmp",
+      "file_offset": "0x324AFC",
+      "preferred_va": "0x00724AFC"
+    },
+    {
+      "job": 1042,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_스틸촌촌.bmp",
+      "file_offset": "0x324B48",
+      "preferred_va": "0x00724B48"
+    },
+    {
+      "job": 1049,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_픽키.bmp",
+      "file_offset": "0x324C00",
+      "preferred_va": "0x00724C00"
+    },
+    {
+      "job": 1052,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_로커.bmp",
+      "file_offset": "0x324BDC",
+      "preferred_va": "0x00724BDC"
+    },
+    {
+      "job": 1056,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_스모키.bmp",
+      "file_offset": "0x324B70",
+      "preferred_va": "0x00724B70"
+    },
+    {
+      "job": 1057,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_요요.bmp",
+      "file_offset": "0x324B94",
+      "preferred_va": "0x00724B94"
+    },
+    {
+      "job": 1063,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_루나틱.bmp",
+      "file_offset": "0x324810",
+      "preferred_va": "0x00724810"
+    },
+    {
+      "job": 1077,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_포이즌스포아.bmp",
+      "file_offset": "0x324AD0",
+      "preferred_va": "0x00724AD0"
+    },
+    {
+      "job": 1101,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_바포메트.bmp",
+      "file_offset": "0x324D34",
+      "preferred_va": "0x00724D34"
+    },
+    {
+      "job": 1107,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_데져트울프새끼.bmp",
+      "file_offset": "0x324CBC",
+      "preferred_va": "0x00724CBC"
+    },
+    {
+      "job": 1109,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_데비루치.bmp",
+      "file_offset": "0x324C94",
+      "preferred_va": "0x00724C94"
+    },
+    {
+      "job": 1110,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_도깨비.bmp",
+      "file_offset": "0x324AAC",
+      "preferred_va": "0x00724AAC"
+    },
+    {
+      "job": 1113,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_드롭프스.bmp",
+      "file_offset": "0x3249F0",
+      "preferred_va": "0x007249F0"
+    },
+    {
+      "job": 1122,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_고블린_단검.bmp",
+      "file_offset": "0x32499C",
+      "preferred_va": "0x0072499C"
+    },
+    {
+      "job": 1123,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_고블린_플레일.bmp",
+      "file_offset": "0x324970",
+      "preferred_va": "0x00724970"
+    },
+    {
+      "job": 1125,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_고블린_해머.bmp",
+      "file_offset": "0x324944",
+      "preferred_va": "0x00724944"
+    },
+    {
+      "job": 1155,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_쁘띠.bmp",
+      "file_offset": "0x324A88",
+      "preferred_va": "0x00724A88"
+    },
+    {
+      "job": 1167,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_세비지베베.bmp",
+      "file_offset": "0x324A60",
+      "preferred_va": "0x00724A60"
+    },
+    {
+      "job": 1170,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_소희.bmp",
+      "file_offset": "0x324A3C",
+      "preferred_va": "0x00724A3C"
+    },
+    {
+      "job": 1188,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_본건.bmp",
+      "file_offset": "0x324A18",
+      "preferred_va": "0x00724A18"
+    },
+    {
+      "job": 1200,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_ZHERLTHSH.bmp",
+      "file_offset": "0x3249C8",
+      "preferred_va": "0x007249C8"
+    },
+    {
+      "job": 1208,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_배회하는자.bmp",
+      "file_offset": "0x32491C",
+      "preferred_va": "0x0072491C"
+    },
+    {
+      "job": 1245,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_고블린_이벤트.bmp",
+      "file_offset": "0x3248CC",
+      "preferred_va": "0x007248CC"
+    },
+    {
+      "job": 1275,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_ALICE.bmp",
+      "file_offset": "0x3248F8",
+      "preferred_va": "0x007248F8"
+    },
+    {
+      "job": 1382,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_디아볼릭.bmp",
+      "file_offset": "0x32487C",
+      "preferred_va": "0x0072487C"
+    },
+    {
+      "job": 1385,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_지상딜리터.bmp",
+      "file_offset": "0x3248A4",
+      "preferred_va": "0x007248A4"
+    },
+    {
+      "job": 1519,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_청이.bmp",
+      "file_offset": "0x324834",
+      "preferred_va": "0x00724834"
+    },
+    {
+      "job": 1815,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_떡_이벤트.bmp",
+      "file_offset": "0x3247E8",
+      "preferred_va": "0x007247E8"
+    },
+    {
+      "job": 1879,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_루나틱.bmp",
+      "file_offset": "0x324810",
+      "preferred_va": "0x00724810"
+    },
+    {
+      "job": 1963,
+      "path": "data\\texture\\유저인터페이스\\illust\\펫_청이.bmp",
+      "file_offset": "0x324834",
+      "preferred_va": "0x00724834"
+    }
+  ],
+  "fallback_mapping": {
+    "default": "data\\texture\\유저인터페이스\\illust\\펫_포링.bmp",
+    "jobs": [
+      1000,
+      1985
+    ],
+    "condition": "Every job in the UI range not explicitly listed maps to the default illustration. Explicit IDs 1063 and 1879 map to 펫_루나틱.bmp."
+  },
+  "portrait_layout": {
+    "bitmap_origin": [
+      5,
+      21
+    ],
+    "fallback_viewport_size": [
+      90,
+      155
+    ],
+    "fallback_action": [
+      0,
+      0
+    ],
+    "first_clip_base": "first clip (index 0) is centered at x=(90-spriteWidth)/2 and y=(134-spriteHeight)/2. alignx=-firstClip.x, aligny=-firstClip.y. srcx=(90-spriteWidth)/2, srcy=(134-spriteHeight)/2.",
+    "later_clip_origin": "x=clip.x+alignx+srcx; y=clip.y+aligny+srcy. Each clip is clipped to [0,90)x[0,155), then rendered at global (5+x,21+y). Clip order is preserved.",
+    "clip_crop": "At left/top underflow destination coordinate is clamped to 0; width/height are reduced when right/bottom exceed viewport. The original call passes Clip.flags, isHalfW+1 and isHalfH+1 as sprite rendering parameters."
+  },
+  "resource_formats": {
+    "spr": "src/res/Sprite.cpp LoadFromBuffer: little-endian header {u16 id=20563 (0x5053),u16 version<=0x0201,u16 indexedCount}; version >=0x0200 adds u16 rgbaCount; version >=0x0101 stores 1024-byte palette at file tail. Indexed images are {u16 width,u16 height,pixels}; version >=0x0201 uses u16 compressedSize then zero-run stream. RGBA image rows are read bottom-up as RGBA bytes. Indexed sprite index 0 transparent; palette colors used for clipType 0.",
+    "act": "src/world/GameActor.cpp CActRes::LoadFromBuffer and Ref/dhxj/Resource/Action.cpp: header {u16 id=17217 (0x4341),u16 version,u16 actions,u8 reserved[10]}; then action motion counts, each motion has two RECTs, sprite count and clip records. Version <0x0200 clips are {int x,y,sprIndex,flags}; >=0x0200 add RGBA, zoom and angle and clipType; >=0x0204 uses separate zoomX/Y; >=0x0205 adds logical width,height per clip; events/attachment points/delays are version-gated. ACT v>=0x0200 x/y are sprite centers converted to top-left by ReCalcClipXY; logical size doubles half-width/half-height images."
+  },
+  "available_render_helpers": {
+    "sprite_decode": "CSprRes::LoadFromBuffer decodes indexed and RGBA SPR banks; GetSprite(clipType,index); palette m_pal[256].",
+    "act_decode": "CActRes::LoadFromBuffer parses action/motion clips and applies ReCalcClipXY from sprite dimensions or ACT v0x205 logical dimensions.",
+    "compositor": "src/render/DC.cpp BlitMotionToArgb/DrawActMotionToArgb render motion layers to ARGB, with alpha, palette, color modulation and horizontal flip; DrawActMotionToHdc blends a motion to an HDC using bounding box. shopui::DrawBitmapPixelsTransparent uses AlphaBlendArgbToHdc and should handle BMP illustration pixels."
+  },
+  "fidelity_notes": [
+    "Use a decoded CBitmapRes/GameData bitmap and draw at the literal origin, no scaling, only if both IsExist and Get succeed; otherwise use the action0/motion0 SPR/ACT composition.",
+    "BlitMotionToArgb is a useful decoder/compositor foundation but its normal positioning uses already converted clip top-lefts at a caller-supplied base and computes whole-motion bounds; portrait needs special first-clip anchoring and explicit 90x155 clipping.",
+    "Current BlitMotionToArgb only applies flags bit 0 horizontal flip, palette/RGBA alpha and clip color modulation. It does not apply clip zoom, rotation, full renderer flip/crop flags, or emulate the original isHalfW/isHalfH texture args. For exact legacy fallback rendering, preserve the UIFrameWnd coordinate equations/clip order and apply sprite texture sampling crop consistently; assess whether pet assets rely on zoom/rotation/half-size flags.",
+    "Reference renderer clamps x/y to viewport and shrinks width/height but passes no explicit source offset change for negative origin; crop details depend on legacy sprite renderer flags/UV behavior."
+  ]
+}

@@ -2689,6 +2689,13 @@ const char* CSession::GetPetAccActName(int accessoryItemId) const
     return kSourcePetAccessoryPaths[std::size(kSourcePetAccessoryPaths)-1].path;
 }
 
+const char* CSession::GetPetIllustName(int job,int) const
+{
+    #include "core/SourcePetIllustrationPaths.generated.inc"
+    for(const auto& entry:kSourcePetIllustrationPaths)if(entry.job==job)return entry.path;
+    return kSourcePetIllustrationPaths[std::size(kSourcePetIllustrationPaths)-1].path;
+}
+
 char* CSession::GetJobActName(int job, int sex, char* buf)
 {
     const char* sexToken = GetSexToken(sex);

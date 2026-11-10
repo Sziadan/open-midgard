@@ -1,0 +1,9 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 15: packet_chat_submission_checks
+1/2 Test #15: packet_chat_submission_checks .....   Passed    1.29 sec
+    Start 56: packet_pet_window_render_checks
+2/2 Test #56: packet_pet_window_render_checks ...   Passed    1.70 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   2.99 sec

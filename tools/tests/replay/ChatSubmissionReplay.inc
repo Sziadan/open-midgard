@@ -12,6 +12,7 @@
 #include "ui/UITransBalloonText.h"
 #include "ui/UIPartyOptionWnd.h"
 #include "ui/UIBasicInfoWnd.h"
+#include "ui/UIPetInfoWnd.h"
 #include "core/SourceCommandListTables.h"
 
 namespace {
@@ -84,7 +85,11 @@ void ChatSubmissionReplay()
         {711,"T711"},{712,"T712"},{717,""},{718,"T718"},{722,"T722"},{723,"T723"},{730,"T730"},{731,"T731"},
         {733,"T733"},{734,"T734"},{765,"T765"},{766,"T766"},{768,"T768"},{769,"T769"},{785,"T785"},{786,"T786"},
         {805,"T805"},{806,"T806"},{850,"T850"},{851,"T851"},{908,"T908"},{909,"T909"},{1044,"T1044"},{1045,"T1045"},{1108,"T1108"},{1109,"T1109"},
-        {687,"MIN ON"},{688,"MIN OFF"},{698,"/tiny"},{940,"Default"},{943,"Auto off"},{944,"Configure"}};
+        {687,"MIN ON"},{688,"MIN OFF"},{698,"/tiny"},{940,"Default"},{943,"Auto off"},{944,"Configure"},
+        {407,"Name"},{408,"Level"},{584,"Pet Info"},{585,"Hunger"},{586,"Intimacy"},
+        {592,"Feed"},{593,"Performance"},{594,"Return Egg"},{595,"Accessory Off"},{597,"Accessory"},{598,"Equipped"},{600,"Unequipped"},{601,"Feed now?"},
+        {667,"Very hungry"},{668,"Hungry"},{669,"Normal"},{670,"Full"},{671,"Very full"},{672,"Very awkward"},{673,"Awkward"},{674,"Friendly"},{675,"Very friendly"},{676,"Unknown"},
+        {682,"Name too long"},{683,"Rename to %s once?"},{1021,"Hate"},{1022,"Very hate"}};
         for(int i=0;i<=1191;++i){const auto found=labels.find(i);if(found!=labels.end())file<<found->second;
             else if(std::find(std::begin(expectedSourceHelpIds),std::end(expectedSourceHelpIds),i)!=std::end(expectedSourceHelpIds)
                     || i==921 || i==922 || i==760 || i==789)file<<"HELP-"<<i;
@@ -311,7 +316,9 @@ void ChatSubmissionReplay()
 #include "WhereCommandReplay.inc"
 #include "CommandWindowReplay.inc"
 #include "PetRequestReplay.inc"
+#include "PetWindowReplay.inc"
     connection->Disconnect();
+#include "PetWindowFailedSendReplay.inc"
     Require(!mode.SendMsg(163,1,0,0) && !mode.SendMsg(158,reinterpret_cast<msgparam_t>("Poring"),0,0),"disconnected pet requests reported success");
     mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
 #include "ChatIgnoreReplay.inc"
@@ -322,5 +329,5 @@ void ChatSubmissionReplay()
 #include "TipWindowReplay.inc"
     mode.SetSourceChatInputServices(nullptr);
     std::cout<<"{\"case_id\":\"source_chat_submission\",\"contract_id\":\"PK09.21\",\"actual_channel_frames\":true,\"caller_history_before_dispatch\":true,\"manager_buffer\":true,\"source47_11\":true,\"emotion_pending\":true,"
-        "\"source_command_controller\":true,\"shared_help_owner\":true,\"window_keys_pending\":[68,74,87],\"outcome\":\"PASS\"}\n";
+        "\"source_command_controller\":true,\"shared_help_owner\":true,\"pet_info_controller\":true,\"window_keys_pending\":[68,87],\"outcome\":\"PASS\"}\n";
 }

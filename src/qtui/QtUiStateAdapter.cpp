@@ -5,6 +5,7 @@
 #include "ui/UIAutoMessageWnd.h"
 #include "ui/UIFriendOptionWnd.h"
 #include "ui/UICommandListWnd.h"
+#include "ui/UIPetInfoWnd.h"
 #include "ui/UITipOfTheDayWnd.h"
 #include "ui/UITransBalloonText.h"
 #include "ui/ChatScrollBarUi.h"
@@ -2038,12 +2039,65 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
             {"width",menu->m_w},{"height",menu->m_h},{"hover",menu->GetHoverIndex()},{"rows",rows}};
     }
     chatUi.insert("roomMenu",roomMenu);
+    QVariantMap petInfo;
+    if (auto* window = g_windowMgr.m_petInfoWnd) {
+        QVariantList framePieces, texts, buttons;
+        for (const auto& piece : window->GetFramePieces()) {
+            framePieces.push_back(QVariantMap{{"x",piece.x},{"y",piece.y},
+                {"width",piece.bitmap.width},{"height",piece.bitmap.height},
+                {"artwork",QString::fromStdString(piece.uri)},{"phase",piece.phase}});
+        }
+        for (const auto& row : window->GetDisplayTexts()) {
+            const COLORREF color = static_cast<COLORREF>(row.color);
+            texts.push_back(QVariantMap{{"x",row.x},{"y",row.y},
+                {"text",QString::fromUtf8(row.text.c_str())},
+                {"color",QColor(GetRValue(color),GetGValue(color),GetBValue(color)).name()}});
+        }
+        for (const auto* button : window->GetButtons()) {
+            if (!button) continue;
+            const int status = button->GetVisualState();
+            const auto& art = button->GetButton();
+            const auto& bitmap = art.bitmaps[status];
+            buttons.push_back(QVariantMap{{"id",button->m_id},
+                {"x",button->m_x-window->m_x},{"y",button->m_y-window->m_y},
+                {"width",button->m_w},{"height",button->m_h},
+                {"artwork",QString::fromStdString(art.uris[status])},
+                {"imageWidth",bitmap.width},{"imageHeight",bitmap.height},{"state",status},
+                {"pressed",button->IsLogicallyPressed()},{"label",button->m_id==135?QStringLiteral("x"):QStringLiteral("*")}});
+        }
+        const auto& portrait = window->GetPortrait();
+        const UIEditCtrl* edit = window->GetNameEdit();
+        const int editX = edit ? edit->m_x-window->m_x : -100;
+        const int editY = edit ? edit->m_y-window->m_y : -100;
+        const bool editVisible = edit && editX >= 0;
+        const int job = g_session.m_petStatus.job;
+        petInfo = QVariantMap{{"visible",IsGameplayWindowVisible(state,window)},
+            {"layer",SourceManagedWindowLayer(window)},
+            {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
+            {"framePieces",framePieces},{"texts",texts},{"buttons",buttons},
+            {"portrait",QVariantMap{{"x",5},{"y",21},{"width",portrait.bitmap.width},{"height",portrait.bitmap.height},
+                {"artwork",QString::fromStdString(portrait.uri)}}},
+            {"commandBoxVisible",job>=1000 && job<=1985},{"commandBoxColor",QStringLiteral("#e6e6fa")},
+            {"edit",QVariantMap{{"visible",editVisible},{"x",editX},
+                {"y",editY},{"width",edit?edit->m_w:0},{"height",edit?edit->m_h:0},
+                {"text",editVisible?QString::fromUtf8(window->GetEditDisplayText().c_str()):QString()},
+                {"focused",edit && g_windowMgr.m_editWindow==edit}}}};
+        if (auto* menu = window->GetCommandMenu()) {
+            QVariantList rows;
+            for (const auto& label : menu->GetLabels()) rows.push_back(QString::fromUtf8(label.c_str()));
+            petInfo.insert("menu",QVariantMap{{"visible",menu->m_show!=0},
+                {"layer",SourceManagedWindowLayer(menu)},
+                {"x",menu->m_x},{"y",menu->m_y},{"width",110},{"height",64},
+                {"selection",menu->GetSelection()},{"rows",rows}});
+        }
+    }
+    chatUi.insert("petInfo",petInfo);
     const auto roomButton=[](const RoomSettingsButton& button,int status){
         const auto bounds=button.Bounds();const auto& bitmap=button.bitmaps[status];
         return QVariantMap{{"id",button.id},{"x",static_cast<int>(bounds.left)},{"y",static_cast<int>(bounds.top)},
             {"width",static_cast<int>(bounds.right-bounds.left)},{"height",static_cast<int>(bounds.bottom-bounds.top)},
             {"imageWidth",bitmap.width},{"imageHeight",bitmap.height},{"artwork",QString::fromStdString(button.uris[status])},
-            {"pressed",status==2},{"label",button.id==118?"OK":button.id==119?"Cancel":button.id==135?"x":"v"}};
+            {"pressed",status==2},{"label",button.id==118 || button.id==121?"OK":button.id==119 || button.id==122?"Cancel":button.id==135?"x":"v"}};
     };
     QVariantList settings;
     for(const auto* window:{g_windowMgr.m_chatRoomMakeWnd,g_windowMgr.m_chatRoomChangeWnd}){
@@ -2065,7 +2119,9 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
     if(const auto* window=g_windowMgr.m_roomMessageBox){
         message={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},
             {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
-            {"text",ToQString(window->GetText())},{"messageId",window->GetMessageId()},{"button",roomButton(window->GetButton(),window->IsPressed()?2:0)}};
+            {"text",ToQString(window->GetText())},{"messageId",window->GetMessageId()},
+            {"hasCancel",window->HasCancel()},{"button",roomButton(window->GetButton(),window->IsPressed()?2:0)},
+            {"cancelButton",roomButton(window->GetCancelButton(),window->IsCancelPressed()?2:0)}};
     }
     chatUi.insert("roomMessage",message);
     QVariantList roomTitles;

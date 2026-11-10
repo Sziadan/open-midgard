@@ -76,6 +76,7 @@ class UIItemDropCntWnd;
 class UISayDialogWnd;
 class UINpcMenuWnd;
 class UIPlayerContextMenuWnd;
+class UIPetInfoWnd;
 class UIJoinPartyAcceptWnd;
 class UIMessengerGroupWnd;
 class UIPartyOptionWnd;
@@ -148,6 +149,7 @@ public:
         WID_OPTIONWND         = 13,
         WID_TIPOFTHEDAYWND    = 38,
         WID_COMMANDLISTWND    = 112,
+        WID_PETINFOWND        = 88,
         WID_EQUIPWND          = 14,
         WID_SKILLLISTWND      = 15,
         WID_SPELLLISTWND      = 99,
@@ -230,12 +232,15 @@ public:
     void ClearChatMsg() { m_chatMsg.clear(); }
     std::string m_chatMsg;
     UIWindow* m_commandListWnd=nullptr;
+    UIPetInfoWnd* m_petInfoWnd=nullptr;
+    SubChatWindowInfo m_petInfoWindowInfo{150,100,280,200};
     UIWindow* m_tipOfTheDayWnd=nullptr;
     bool m_tipStartupChecked=false;
     bool OpenSourceStartupTip();
     void InitializeSourceCommandFlags();
 
     UIWindow* MakeWindow(int windowId);
+    bool ContainsWindow(const UIWindow* window) const;
     bool ProcessSourceCommandWindowKey(int virtualKey);
     bool ToggleWindow(int windowId);
     void RemoveAllWindows();

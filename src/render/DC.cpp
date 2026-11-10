@@ -233,6 +233,25 @@ bool TryAlphaBlendArgbToDibSection(HDC hdc,
         return false;
     }
 
+    int firstColumn=0,firstRow=0,lastColumn=srcWidth,lastRow=srcHeight;
+#if RO_PLATFORM_WINDOWS
+    // Direct DIB writes bypass GDI's clipping and coordinate mapping. Keep
+    // the fast path for an ordinary pixel DC with a rectangular clip only.
+    POINT viewport{},window{};
+    if(GetMapMode(hdc)!=MM_TEXT || GetGraphicsMode(hdc)!=GM_COMPATIBLE
+        || !GetViewportOrgEx(hdc,&viewport) || !GetWindowOrgEx(hdc,&window)
+        || viewport.x || viewport.y || window.x || window.y)return false;
+    RECT clip{};const int region=GetClipBox(hdc,&clip);
+    if(region==NULLREGION)return true;
+    if(region==ERROR || region==COMPLEXREGION)return false;
+    const int left=(std::max)(dstX,static_cast<int>(clip.left));
+    const int top=(std::max)(dstY,static_cast<int>(clip.top));
+    const int right=(std::min)(dstX+dstWidth,static_cast<int>(clip.right));
+    const int bottom=(std::min)(dstY+dstHeight,static_cast<int>(clip.bottom));
+    if(left>=right || top>=bottom)return true;
+    firstColumn=left-dstX;firstRow=top-dstY;lastColumn=right-dstX;lastRow=bottom-dstY;
+#endif
+
     // Row orientation cannot be read back from GetObject: on current Windows
     // builds (observed on 10.0.26300) dsBmih.biHeight comes back positive even
     // for DIB sections created with a negative height, which made every UI
@@ -247,11 +266,11 @@ bool TryAlphaBlendArgbToDibSection(HDC hdc,
     }
 
     unsigned int* targetBits = static_cast<unsigned int*>(dibSection.dsBm.bmBits);
-    for (int row = 0; row < srcHeight; ++row) {
+    for (int row = firstRow; row < lastRow; ++row) {
         const int destRowIndex = topDown ? (dstY + row) : (targetHeight - 1 - (dstY + row));
         unsigned int* dstRow = targetBits + static_cast<size_t>(destRowIndex) * static_cast<size_t>(stridePixels) + static_cast<size_t>(dstX);
         const unsigned int* srcRow = pixels + static_cast<size_t>(srcY + row) * static_cast<size_t>(pixelWidth) + static_cast<size_t>(srcX);
-        for (int col = 0; col < srcWidth; ++col) {
+        for (int col = firstColumn; col < lastColumn; ++col) {
             AlphaBlendPixel(dstRow[col], srcRow[col]);
         }
     }

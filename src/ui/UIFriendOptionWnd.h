@@ -10,6 +10,7 @@ public:
     UIFriendOptionButton(int id,const char* normal,const char* hover,const char* pressed,int width,int height);
     const RoomSettingsButton& GetButton() const { return m_button; }
     int GetVisualState() const { return m_hover?(m_pressed?2:1):0; }
+    bool IsLogicallyPressed() const {return m_pressed;}
     void CancelPointerCapture();
     void OnDraw() override;
     void OnLBtnDown(int x,int y) override;

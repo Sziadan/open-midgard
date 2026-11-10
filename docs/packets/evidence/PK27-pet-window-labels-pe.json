@@ -1,0 +1,76 @@
+{
+  "subject": "UIPetInfoWnd selected HighPriest.exe label and status mapping",
+  "binary": "HighPriest.exe (PE32 i386, preferred image base 0x00400000)",
+  "method": "Read-only inspection of selected PE x86 instructions at the decompiled function VAs; MsgStr call arguments are immediate numeric pushes in the binary. Symbol names are paired to those immediate IDs by matching the call sites in Ref/UIFrameWnd.cpp. This does not infer runtime strings or rely on enum position.",
+  "function_evidence": {
+    "OnDraw": "PE VA 0x00467DF0; Ref/UIFrameWnd.cpp OnDraw",
+    "SendMsg": "PE VA 0x00468610; Ref/UIFrameWnd.cpp SendMsg",
+    "msgstr_callee": "PE VA 0x00514350",
+    "enum_ordinal_cross_check": "Ref/dhxj/MsgStrings.h only; not used as the ID evidence"
+  },
+  "ids": [
+    {"symbol":"MSI_PET_INFO","id":584,"hex":"0x248","site":"OnDraw 0x0046802B"},
+    {"symbol":"MSI_NAME","id":407,"hex":"0x197","site":"OnDraw 0x0046806A"},
+    {"symbol":"MSI_LEVEL","id":408,"hex":"0x198","site":"OnDraw 0x0046808B"},
+    {"symbol":"MSI_PET_HUNGRY","id":585,"hex":"0x249","site":"OnDraw 0x004680AC"},
+    {"symbol":"MSI_PET_FRIENDLY","id":586,"hex":"0x24A","site":"OnDraw 0x004680CD"},
+    {"symbol":"MSI_VERY_HUNGRY","id":667,"hex":"0x29B","site":"OnDraw 0x004680F4"},
+    {"symbol":"MSI_HUNGRY","id":668,"hex":"0x29C","site":"OnDraw 0x00468105"},
+    {"symbol":"MSI_NORMAL","id":669,"hex":"0x29D","site":"OnDraw 0x00468116 and 0x004681E3"},
+    {"symbol":"MSI_REPLETE","id":670,"hex":"0x29E","site":"OnDraw 0x00468127"},
+    {"symbol":"MSI_VERY_REPLETE","id":671,"hex":"0x29F","site":"OnDraw 0x00468138"},
+    {"symbol":"MSI_VERY_AWKWARD","id":672,"hex":"0x2A0","site":"OnDraw 0x004681BB"},
+    {"symbol":"MSI_AWKWARD","id":673,"hex":"0x2A1","site":"OnDraw 0x004681CE"},
+    {"symbol":"MSI_FRIENDLY","id":674,"hex":"0x2A2","site":"OnDraw 0x004681F8"},
+    {"symbol":"MSI_VERY_FRIENDLY","id":675,"hex":"0x2A3","site":"OnDraw 0x0046820D"},
+    {"symbol":"MSI_UNKNOWN","id":676,"hex":"0x2A4","site":"OnDraw 0x0046813F and 0x00468214"},
+    {"symbol":"MSI_VERYHATE","id":1022,"hex":"0x3FE","site":"OnDraw 0x004681A8"},
+    {"symbol":"MSI_HATE","id":1021,"hex":"0x3FD","site":"OnDraw 0x004681B4"},
+    {"symbol":"MSI_PET_ACCESSARY","id":597,"hex":"0x255","site":"OnDraw 0x004685B5"},
+    {"symbol":"MSI_ITEM_EQUIPED","id":598,"hex":"0x256","site":"OnDraw 0x004685DC"},
+    {"symbol":"MSI_ITEM_UNEQUIPED","id":600,"hex":"0x258","site":"OnDraw 0x004685E3"},
+    {"symbol":"MSI_PET_FEEDING","id":592,"hex":"0x250","site":"SendMsg 0x004687DB"},
+    {"symbol":"MSI_PET_PERFORMANCE","id":593,"hex":"0x251","site":"SendMsg 0x00468834"},
+    {"symbol":"MSI_PET_RETURN_EGG","id":594,"hex":"0x252","site":"SendMsg 0x00468889"},
+    {"symbol":"MSI_PET_ACC_OFF","id":595,"hex":"0x253","site":"SendMsg 0x004688DE"},
+    {"symbol":"MSI_PETNAME_IN23","id":682,"hex":"0x2AA","site":"SendMsg 0x00468AE5"},
+    {"symbol":"MSI_PETNAME_CHANGE_ONLYONCE","id":683,"hex":"0x2AB","site":"SendMsg 0x00468B0B and 0x00468B25"},
+    {"symbol":"MSI_SURE_TO_FEED_PET","id":601,"hex":"0x259","site":"SendMsg 0x00468678"}
+  ],
+  "status_selection": {
+    "hunger": [
+      {"condition":"0 <= petHungry <= 10","symbol":"MSI_VERY_HUNGRY","id":667},
+      {"condition":"10 < petHungry <= 25","symbol":"MSI_HUNGRY","id":668},
+      {"condition":"25 < petHungry <= 75","symbol":"MSI_NORMAL","id":669},
+      {"condition":"75 < petHungry <= 90","symbol":"MSI_REPLETE","id":670},
+      {"condition":"90 < petHungry <= 100","symbol":"MSI_VERY_REPLETE","id":671},
+      {"condition":"petHungry < 0 or petHungry > 100","symbol":"MSI_UNKNOWN","id":676}
+    ],
+    "intimacy_petFriendly": [
+      {"condition":"petFriendly < 0 or petFriendly > 1000","symbol":"MSI_UNKNOWN","id":676},
+      {"condition":"player job 4050..4052 inclusive and 0 <= petFriendly <= 20","symbol":"MSI_VERYHATE","id":1022},
+      {"condition":"player job 4050..4052 inclusive and 20 < petFriendly <= 40","symbol":"MSI_HATE","id":1021},
+      {"condition":"0 <= petFriendly <= 100 and (player job outside 4050..4052), or 40 < petFriendly <= 100 for any job","symbol":"MSI_VERY_AWKWARD","id":672},
+      {"condition":"100 < petFriendly <= 250","symbol":"MSI_AWKWARD","id":673},
+      {"condition":"250 < petFriendly <= 750","symbol":"MSI_NORMAL","id":669},
+      {"condition":"750 < petFriendly <= 900","symbol":"MSI_FRIENDLY","id":674},
+      {"condition":"900 < petFriendly <= 1000","symbol":"MSI_VERY_FRIENDLY","id":675}
+    ],
+    "note": "Each upper endpoint is inclusive, from cmp/jle branches in PE OnDraw. For jobs 4050..4052 only the 0..40 band differs; values 41..100 follow the same very-awkward result as other jobs."
+  },
+  "dynamic_text_and_confirmation": {
+    "title": "MSI_PET_INFO (584) is passed to sprintf(windowName, format) without substitutions, then drawn at (5,2).",
+    "fixed_labels": [
+      {"symbol":"MSI_NAME","id":407,"xy":[100,24]},
+      {"symbol":"MSI_LEVEL","id":408,"xy":[100,44]},
+      {"symbol":"MSI_PET_HUNGRY","id":585,"xy":[100,69]},
+      {"symbol":"MSI_PET_FRIENDLY","id":586,"xy":[100,89]}
+    ],
+    "values": "Pet level is converted to base-10 text and drawn at (135,44); selected hunger status at (145,69); selected intimacy status at (145,89). TextOutA uses default color argument 0 for these labels and values.",
+    "renamed_name": "When m_isPetNameModified is true, g_session.m_petName is drawn at (135,24) in 0x00FF00 and overdrawn at (136,24) in 0x001E1E1E. Otherwise OnDraw does not render that name value.",
+    "rename_once": "For rename button id 118, strlen(name) < 24 selects MSI_PETNAME_CHANGE_ONLYONCE (683), used as an sprintf format with the proposed name, then shown with ErrorMsg(...,2,0,0,0). Response 122 cancels. Any other response sends game message 158 with the name, marks the name modified, copies it, hides editor/button at (-100,-100), and invalidates.",
+    "rename_too_long": "strlen(name) >= 24 selects MSI_PETNAME_IN23 (682) and ErrorMsg(...,0,1,0,0); no rename submission occurs.",
+    "feed_confirm": "Menu action 0 (feed) selects MSI_SURE_TO_FEED_PET (601), shown with ErrorMsg(...,2,0,0,0). Only response 121 sends game message 163 with value 1."
+  },
+  "verification_limits": "IDs and branch predicates above are verified against selected PE instruction immediates/control flow. Actual localized MsgStr string contents, font rendering, and live window behavior were not inspected; HighPriest.exe was not executed."
+}

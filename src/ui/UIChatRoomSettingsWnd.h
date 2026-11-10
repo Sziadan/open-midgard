@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include "UIChatRoomEntry.h"
 #include <array>
 
@@ -69,7 +70,13 @@ public:
     int GetMessageId() const { return m_messageId; }
     const RoomSettingsButton& GetButton() const { return m_ok; }
     bool IsPressed() const { return m_pressed; }
-    void Dismiss();
+    void Dismiss(bool accepted=true);
+    void ConfigureConfirmation(UIWindow* owner,std::function<void(bool)> completion);
+    UIWindow* GetSourceOwner() const {return m_sourceOwner;}
+    void SetSourceOwner(UIWindow* owner){m_sourceOwner=owner;}
+    bool HasCancel() const {return static_cast<bool>(m_completion);}
+    const RoomSettingsButton& GetCancelButton() const {return m_cancel;}
+    bool IsCancelPressed() const {return m_cancelPressed;}
     void CancelPointerCapture();
     void OnDraw() override;
     void OnLBtnDown(int x,int y) override;
@@ -83,6 +90,10 @@ private:
     int m_messageId;
     UIWindow* m_previousEdit;
     RoomSettingsButton m_ok;
+    RoomSettingsButton m_cancel;
+    UIWindow* m_sourceOwner=nullptr;
+    std::function<void(bool)> m_completion;
+    bool m_cancelPressed=false;
     bool m_pressed=false,m_dragging=false;
     int m_startX=0,m_startY=0,m_oldX=0,m_oldY=0;
 };

@@ -191,6 +191,7 @@ int main(int argc,char** argv) {
         const bool specialOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="special-names";
         const bool tipOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="tip-window";
         const bool commandOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="command-window";
+        const bool petOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="pet-window";
         const bool rentalOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="rental-items";
         const bool commerceDetailsOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="commerce-details";
         const bool itemCategoriesOnly=argc>2 && QString::fromLocal8Bit(argv[2])=="item-categories";
@@ -377,6 +378,13 @@ int main(int argc,char** argv) {
             view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
             SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
             std::cout<<"PASS source Tip native/Qt controls and lifetime\n";return 0;
+        }
+        if(petOnly) {
+            CheckPetWindowUi(app,view,state,mode,adapter,output);
+            Require(errors==0,"pet UI emitted QML warnings/errors");
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS source pet controller native/Qt and modal lifetime\n";return 0;
         }
         if(commandOnly) {
             CheckCommandWindowUi(app,view,state,mode,adapter,output);

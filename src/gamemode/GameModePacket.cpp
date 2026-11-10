@@ -50,6 +50,7 @@
 #include "ui/UIShortCutWnd.h"
 #include "ui/UIStatusWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIPetInfoWnd.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
 #include "world/RagEffect.h"
@@ -5279,6 +5280,7 @@ void HandlePetStatus(CGameMode&, const PacketView& packet)
         return;
     }
     g_session.m_petStatus=std::move(next);
+    if(g_windowMgr.m_petInfoWnd)g_windowMgr.m_petInfoWnd->RefreshReceivedName();
     InvalidatePetInfo();
 }
 

@@ -1,0 +1,67 @@
+{
+  "scope": "Read-only inventory of current production UI/input APIs relevant to implementing the source UIPetInfoWnd.",
+  "status": "The checked-out production source does not implement UIPetInfoWnd or UIEditCtrl2. Pet behavior/layout details below are from retained source-preparation evidence and the generated decompilation header; those are evidence of the original client, not reusable implementations in src/.",
+  "pet_source_evidence": {
+    "original_window": "UIPetInfoWnd is source WID 88, factory-gated on petJob != -1; source-preparation evidence records 280x160 creation, the UIEditCtrl2 80x16 editor with maxchar 50, and a name-rename button. See docs/packets/evidence/PK27-pet-window-preparation.json:1-19 and HighPriest.exe.utf8.h:11568-11576.",
+    "source_controls_and_menu": "Pet command button id 202 opens a 110x64 four-row source menu; row 0 is feed and requires confirmation, row 1 performance, row 2 accessory off, row 3 return egg. Source evidence says actions route through UIPetInfoWnd::SendMsg and names the source strings. See docs/packets/evidence/PK27-pet-window-preparation.json:174-189. Rename is one-time: source accepts the rename-button path only when m_isPetNameModified is false, asks MSI_PETNAME_CHANGE_ONLYONCE, sends game message 158 when accepted, sets/stores the modified name, and hides editor/button; length >=24 shows MSI_PETNAME_IN23. Packet preparation records the 24-byte server name field. See docs/packets/evidence/PK27-pet-window-preparation.json:167 and docs/packets/evidence/PK27-pet-control-requests-source-preparation.json:45-46.",
+    "async_requirement": "The source feed action is explicitly marked as confirmation-gated. Production src has no pet owner/menu/confirmation controller to carry that pending choice. Preserve confirmation as a user decision before sending the feed action; do not call the action when merely opening/selecting the feed row. Source rename is separately a one-time confirm path. Source prep does not expose a reusable confirmation callback API in this checkout."
+  },
+  "production_reusable_apis": {
+    "text_editor": {
+      "symbol": "UIEditCtrl",
+      "files": ["src/ui/UIWindow.h:156-177", "src/ui/UIWindow.cpp:736-829"],
+      "capabilities": "SetText/GetText, frame color, per-char input, backspace, optional numeric-only type, m_maxchar byte cap, focus via CanReceiveKeyInput() true.",
+      "limitations": "Generated HighPriest.exe.utf8.h shows original UIEditCtrl2 is an empty subclass of UIEditCtrl, with no added members or method overrides, so it inherits base editing behavior. Its OnChar details are not present in retained Ref source here. Current production UIEditCtrl uses std::string, compares m_maxchar to byte length, appends char bytes, and backspace pops one byte; it has no selection/caret editing, UTF-16 text event, composition/preedit, or IME commit path. Current source controls do not establish whether the original m_maxchar counted encoded bytes or visible characters. OnChar accepts bytes >= 0x20 and only has special numeric filtering. Pet source config is 80x16/maxchar 50 (docs/packets/evidence/PK27-pet-window-preparation.json:17)."
+    },
+    "focused_input_dispatch": {
+      "symbols": ["UIWindowMgr::OnLBtnDown", "UIWindowMgr::OnChar", "UIWindowMgr::OnKeyDown", "UIWindowMgr::HitTestWindow"],
+      "files": ["src/ui/UIWindowMgr.cpp:2750-2787", "src/ui/UIWindowMgr.cpp:3037-3048", "src/ui/UIWindowMgr.cpp:3069-3111", "src/ui/UIWindowMgr.cpp:3260-3391"],
+      "semantics": "Hit testing returns the topmost visible window (or the shown modal). Mouse-down stores the hit widget in m_captureWindow and stores it in m_editWindow only when CanReceiveKeyInput() is true, then calls OnLBtnDown. OnChar routes modal first, then NPC input, blocking dialogs, known focused editors/chat, then the generic m_editWindow. Keydown routes modal and specialized focused windows, then hotkeys/windows. A pet editor added as a child must be included in the right ownership/focus routing and cleared on hide/delete."
+    },
+    "native_window_messages": {
+      "symbol": "WindowProc",
+      "file": "src/main/WinMain.cpp:528-709",
+      "semantics": "HandleQtUiRuntimeWindowMessage(msg,wParam,lParam) gets first refusal. Native fallback handles WM_CHAR by converting one wchar_t with WideCharToMultiByte(CP_ACP) then passing each byte to UIWindowMgr::OnChar; WM_KEYDOWN and WM_SYSKEYDOWN call OnKeyDown. Message loop uses TranslateMessage/DispatchMessageW at WinMain.cpp:790-791. Native fallback has no WM_IME_* cases and no WM_UNICHAR text routing (WM_UNICHAR/UNICODE_NOCHAR is only acknowledged at line 528). Thus the existing native text path is byte/ACP only, unlike Unicode text input."
+    },
+    "qt_runtime_input": {
+      "symbol": "QtChatInput::HandleWindowMessage",
+      "file": "src/qtui/QtChatInput.cpp:128-166",
+      "semantics": "When Qt runtime claims a focused Qt editor it handles WM_CHAR and WM_UNICHAR, surrogate pairs, WM_IME_SETCONTEXT, START/COMPOSITION/END, composition preedit and result commit, caret/candidate placement, and focus-loss composition reset. This is a Qt-editor-specific path selected through HandleQtUiRuntimeWindowMessage, not an allowlist/IME handler for native UIWindow/UIEditCtrl widgets."
+    }
+  },
+  "popup_and_confirmation": {
+    "player_context_menu": {
+      "symbol": "UIPlayerContextMenuWnd::SetMenu/SubmitSelection/HideMenu",
+      "files": ["src/ui/UIPlayerContextMenuWnd.h:10-58", "src/ui/UIPlayerContextMenuWnd.cpp:291-341", "src/ui/UIWindowMgr.cpp:1423-1432"],
+      "semantics": "A reusable managed popup instance exists, dynamically sizes rows, positions/shows, hides on selection, then immediately dispatches GameMsg_RequestPlayerContextAction(targetAid, actionId). It is explicitly player/AID-context behavior with a hard-coded 264px layout and player-action side effect; not the pet menu and has no confirmation step/callback. Do not wire pet feed into this API."
+    },
+    "modal_message": {
+      "symbol": "UIWindowMgr::ShowRoomValidationMessage; UIChatRoomMessageBox::Dismiss",
+      "files": ["src/ui/UIWindowMgr.cpp:1229-1245", "src/ui/UIChatRoomSettingsWnd.h:65-88", "src/ui/UIChatRoomSettingsWnd.cpp:195-215"],
+      "semantics": "This is the existing asynchronous modal ownership pattern (m_modalWindow), routes input before regular UI, and returns to prior edit focus on dismiss. It is a one-button validation/error notice: Enter, Escape, or OK only dismiss it; it has no confirm/cancel result or action callback, and ShowRoomValidationMessage refuses if another modal is active. It cannot stand in for source feed confirmation without changing its semantics."
+    },
+    "other_candidate_apis": "UIChooseWnd is the four-option game escape menu, not a generic confirmation. UINpcInputWnd is NPC/game numeric/string submission and not a pet rename editor/confirm API. UIWindowMgr declares WID_NOTICECONFIRMWND, and the generated header has UINoticeConfirmWnd, but no production implementation/factory case was found; do not treat that ID/decompilation type as an available API."
+  },
+  "manager_integration_constraints": {
+    "focus_capture": "UIWindowMgr::OnLBtnDown assigns m_captureWindow to the deepest hit widget; m_editWindow gets the hit only when CanReceiveKeyInput() succeeds. Existing dialog windows that use Win32 SetCapture are specifically enumerated; a pet edit control does not require pointer capture for keyboard focus but its lifetime must not leave a dangling m_editWindow.",
+    "modal_priority": "HitTestWindow, HasWindowAtPoint, OnChar and OnKeyDown prioritize m_modalWindow while shown. ShowRoomValidationMessage clears current capture/edit focus before owning that slot. A new confirmation must have explicit affirmative/cancel outcomes and asynchronous lifetime; current dismissal-only room notice does not expose them.",
+    "menu_behavior": "Existing UIWindowMgr separately manages the player context menu, closes it on outside pointer-down, consumes chars while visible, and forwards keys to HandleKeyDown. That behavior is tied to m_playerContextMenuWnd and is not a general arbitrary popup registry.",
+    "text_encoding": "Native WindowProc collapses WM_CHAR to CP_ACP bytes and UIEditCtrl caps raw std::string bytes. Source rename carries an explicit 24-byte server field per retained packet evidence; byte limits and source-name constraints should be applied deliberately rather than assuming Unicode editor character count equals bytes."
+  },
+  "source_locations": [
+    "docs/packets/evidence/PK27-pet-window-preparation.json",
+    "docs/packets/evidence/PK27-pet-control-requests-source-preparation.json",
+    "HighPriest.exe.utf8.h",
+    "src/ui/UIWindow.h",
+    "src/ui/UIWindow.cpp",
+    "src/ui/UIWindowMgr.h",
+    "src/ui/UIWindowMgr.cpp",
+    "src/ui/UIPlayerContextMenuWnd.h",
+    "src/ui/UIPlayerContextMenuWnd.cpp",
+    "src/ui/UIChatRoomSettingsWnd.h",
+    "src/ui/UIChatRoomSettingsWnd.cpp",
+    "src/ui/UINpcInputWnd.h",
+    "src/main/WinMain.cpp",
+    "src/qtui/QtChatInput.cpp"
+  ]
+}

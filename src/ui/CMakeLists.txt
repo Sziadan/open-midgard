@@ -7,6 +7,8 @@ add_library(ro_ui STATIC
     UITipOfTheDayWnd.cpp
     UICommandListWnd.h
     UICommandListWnd.cpp
+    UIPetInfoWnd.h
+    UIPetInfoWnd.cpp
     UITransBalloonText.h
     UITransBalloonText.cpp
     UIWhisperWnd.h

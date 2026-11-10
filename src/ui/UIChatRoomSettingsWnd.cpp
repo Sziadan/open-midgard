@@ -40,7 +40,7 @@ void PaintButton(HDC dc,const UIWindow& owner,const RoomSettingsButton& button,i
     if(image.IsValid())shopui::DrawBitmapPixelsTransparent(dc,image,{bounds.left,bounds.top,bounds.left+image.width,bounds.top+image.height});
     else {
         const int shade=state==2?180:210;shopui::FillRectColor(dc,bounds,RGB(shade,shade,shade));
-        const char* label=button.id==118?"OK":button.id==119?"Cancel":button.id==135?"x":"v";
+        const char* label=button.id==118 || button.id==121?"OK":button.id==119 || button.id==122?"Cancel":button.id==135?"x":"v";
         Text(dc,bounds,label);
     }
 }
@@ -197,24 +197,33 @@ UIChatRoomMessageBox::UIChatRoomMessageBox(std::string text,int messageId):m_tex
     Create(280,120);const auto client=g_windowMgr.GetChatClientRect();Move((client.right-640)/2+185,(client.bottom-480)/2+180);
     m_ok=Button(118,189,96,"btn_ok.bmp","btn_ok_a.bmp","btn_ok_b.bmp");
 }
-void UIChatRoomMessageBox::Dismiss()
+void UIChatRoomMessageBox::ConfigureConfirmation(UIWindow* owner,std::function<void(bool)> completion)
 {
-    const auto previous=m_previousEdit;g_windowMgr.DeleteWindow(this);
-    if(std::find(g_windowMgr.m_children.begin(),g_windowMgr.m_children.end(),previous)!=g_windowMgr.m_children.end())g_windowMgr.m_editWindow=previous;
+    m_sourceOwner=owner;m_completion=std::move(completion);
+    m_ok=Button(121,150,96,"btn_ok.bmp","btn_ok_a.bmp","btn_ok_b.bmp");
+    m_cancel=Button(122,215,96,"btn_cancel.bmp","btn_cancel_a.bmp","btn_cancel_b.bmp");
 }
-void UIChatRoomMessageBox::CancelPointerCapture(){m_pressed=m_dragging=false;if(g_windowMgr.m_captureWindow==this)g_windowMgr.m_captureWindow=nullptr;Invalidate();}
+void UIChatRoomMessageBox::Dismiss(bool accepted)
+{
+    auto completion=std::move(m_completion);
+    const auto previous=m_previousEdit;g_windowMgr.DeleteWindow(this);
+    if(g_windowMgr.ContainsWindow(previous))g_windowMgr.m_editWindow=previous;
+    if(completion)completion(accepted);
+}
+void UIChatRoomMessageBox::CancelPointerCapture(){m_pressed=m_cancelPressed=m_dragging=false;if(g_windowMgr.m_captureWindow==this)g_windowMgr.m_captureWindow=nullptr;Invalidate();}
 void UIChatRoomMessageBox::OnLBtnDown(int x,int y)
 {
     if(In(m_ok.Bounds(),x-m_x,y-m_y)){m_pressed=true;Invalidate();return;}
+    if(HasCancel() && In(m_cancel.Bounds(),x-m_x,y-m_y)){m_cancelPressed=true;Invalidate();return;}
     if(In({10,22,270,87},x-m_x,y-m_y))return;
     m_dragging=true;m_startX=x;m_startY=y;m_oldX=m_x;m_oldY=m_y;
 }
-void UIChatRoomMessageBox::OnLBtnUp(int x,int y){const bool dismiss=m_pressed && In(m_ok.Bounds(),x-m_x,y-m_y);CancelPointerCapture();if(dismiss)Dismiss();}
+void UIChatRoomMessageBox::OnLBtnUp(int x,int y){const bool ok=m_pressed && In(m_ok.Bounds(),x-m_x,y-m_y),cancel=m_cancelPressed && In(m_cancel.Bounds(),x-m_x,y-m_y);CancelPointerCapture();if(ok || cancel)Dismiss(ok);}
 void UIChatRoomMessageBox::OnMouseMove(int x,int y){if(m_dragging)Move(m_oldX+x-m_startX,m_oldY+y-m_startY);}
-void UIChatRoomMessageBox::OnKeyDown(int key){if(key==VK_RETURN || key==VK_ESCAPE)Dismiss();}
+void UIChatRoomMessageBox::OnKeyDown(int key){if(key==VK_RETURN || key==VK_ESCAPE)Dismiss(key==VK_RETURN || !HasCancel());}
 void UIChatRoomMessageBox::OnDraw()
 {
     auto dc=AcquireDrawTarget();if(!dc)return;shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(232,232,232));
     shopui::FillRectColor(dc,Global({10,22,270,87},*this),RGB(242,242,242));Text(dc,Global({10,22,270,87},*this),m_text,true);
-    PaintButton(dc,*this,m_ok,m_pressed?2:0);ReleaseDrawTarget(dc);
+    PaintButton(dc,*this,m_ok,m_pressed?2:0);if(HasCancel())PaintButton(dc,*this,m_cancel,m_cancelPressed?2:0);ReleaseDrawTarget(dc);
 }
