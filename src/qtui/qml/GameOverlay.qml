@@ -2040,11 +2040,13 @@ Item {
     }
 
     RoFrame {
+        id: sourceMessengerFrame
         x: uiState.friendPartyX
         y: uiState.friendPartyY
         width: uiState.friendPartyWidth
         height: uiState.friendPartyHeight
         visible: uiState.friendPartyVisible
+        z: uiState.friendPartyData.layer || 0
         Text {
             x: 12
             y: 2
@@ -2251,6 +2253,7 @@ Item {
                     x: 6
                     y: 4
                     text: uiState.friendPartyData.summaryTitle || ""
+                    visible: (uiState.friendPartyData.currentTab || 0) !== 0
                     color: theme.ink
                     font.family: theme.fontFamily
                     font.pixelSize: 10
@@ -2258,10 +2261,10 @@ Item {
                 }
 
                 Text {
-                    x: 86
-                    width: parent.width - 92
-                    y: 4
-                    text: uiState.friendPartyData.summaryValue || ""
+                    x: (uiState.friendPartyData.currentTab || 0) === 0 ? 112 : 86
+                    width: parent.width - x - 6
+                    y: (uiState.friendPartyData.currentTab || 0) === 0 ? 11 : 4
+                    text: (uiState.friendPartyData.currentTab || 0) === 0 ? (uiState.friendPartyData.summaryTitle || "")+": "+(uiState.friendPartyData.summaryValue || "") : (uiState.friendPartyData.summaryValue || "")
                     color: theme.ink
                     font.family: theme.fontFamily
                     font.pixelSize: 10
@@ -2273,6 +2276,7 @@ Item {
                     y: 18
                     width: parent.width - 12
                     text: uiState.friendPartyData.summarySecondaryValue || ""
+                    visible: (uiState.friendPartyData.currentTab || 0) !== 0
                     color: theme.ink
                     font.family: theme.fontFamily
                     font.pixelSize: 10
@@ -2280,6 +2284,16 @@ Item {
                 }
             }
         }
+    }
+
+    Item {
+        readonly property var button: uiState.friendPartyData.sourceOptions || ({})
+        parent: sourceMessengerFrame
+        objectName: "sourceMessengerFriendOptions"
+        x: (button.x || 0)-uiState.friendPartyX; y: (button.y || 0)-uiState.friendPartyY; width: button.width || 0; height: button.height || 0
+        visible: uiState.friendPartyVisible && !!button.visible
+        Rectangle { anchors.fill: parent; visible: !parent.button.artwork; color: parent.button.state===2?"#b4b4b4":"#d2d2d2"; Text { text: "*"; color: "black"; font.family: "Segoe UI"; font.pixelSize: 12 } }
+        Image { width: parent.button.imageWidth || 0; height: parent.button.imageHeight || 0; source: parent.button.artwork || ""; smooth: false }
     }
 
     RoFrame {
@@ -4375,5 +4389,6 @@ Item {
     RoChatRoom { parent: uiLayer; roomData: (uiState.chatWindowUi || {}).room || ({}) }
     RoWhisperWindows { parent: uiLayer; windows: (uiState.chatWindowUi || {}).whisperWindows || [] }
     RoAutoMessage { parent: uiLayer; editorData: (uiState.chatWindowUi || {}).autoMessage || ({}) }
+    RoFriendOptions { parent: uiLayer; optionData: (uiState.chatWindowUi || {}).friendOptions || ({}) }
 
 }

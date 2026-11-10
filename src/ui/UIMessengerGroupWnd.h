@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+class UIFriendOptionButton;
 
 class UIMessengerGroupWnd : public UIFrameWnd {
 public:
@@ -16,6 +17,8 @@ public:
         std::string label;
         bool visible = true;
         bool active = false;
+        std::string artwork;
+        int imageWidth=0,imageHeight=0,state=0;
     };
 
     struct DisplayRow {
@@ -74,6 +77,9 @@ public:
     bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const;
     int GetQtTabCount() const;
     bool GetQtTabDisplayForQt(int index, QtButtonDisplay* outData) const;
+    bool GetQtFriendOptionButtonDisplay(QtButtonDisplay* outData) const;
+    UIFriendOptionButton* GetFriendOptionButton() const { return m_friendOptionButton; }
+    void CancelSourcePointerCapture();
 
 private:
     enum TabId {
@@ -102,4 +108,5 @@ private:
     bool m_controlsCreated;
     unsigned long long m_lastVisualStateToken;
     bool m_hasVisualStateToken;
+    UIFriendOptionButton* m_friendOptionButton=nullptr;
 };

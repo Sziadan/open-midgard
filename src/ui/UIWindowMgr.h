@@ -46,6 +46,7 @@ class UIChatRoomWnd;
 class UIWhisperWnd;
 class UIChatRoomMenuWnd;
 class UIAutoMessageWnd;
+class UIFriendOptionWnd;
 class UIChatRoomSettingsWnd;
 class UIChatRoomMessageBox;
 class UIChatRoomPasswordWnd;
@@ -111,6 +112,7 @@ public:
     // Window IDs (Ref-faithful, from decompiled address space)
     enum WindowId {
         WID_AUTOMESSAGEWND = 116,
+        WID_FRIENDOPTIONWND = 68,
         WID_SUBCHATST = 137,
         WID_SUBCHATBT = 138,
         WID_SUBCHATMINI = 140,
@@ -280,6 +282,9 @@ public:
     SubChatWindowInfo m_whisperWindowInfo{0,347,280,120};
     UIChatRoomMenuWnd* m_chatRoomMenuWnd=nullptr;
     UIAutoMessageWnd* m_autoMessageWnd=nullptr;
+    UIFriendOptionWnd* m_friendOptionWnd=nullptr;
+    SubChatWindowInfo m_friendOptionWindowInfo{200,120,280,120};
+    bool IsWhisperPreferenceInputWindow(const UIWindow* window) const;
     bool WriteWhisperChatToFile(const std::string& name);
     bool AddFriendCharName(const std::string& name);
     UIChatRoomPasswordWnd* m_chatRoomPasswordWnd = nullptr;

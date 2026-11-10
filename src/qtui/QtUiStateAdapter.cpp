@@ -3,6 +3,7 @@
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIAutoMessageWnd.h"
+#include "ui/UIFriendOptionWnd.h"
 #include "QtUiStateAdapter.h"
 
 #include "QtUiState.h"
@@ -1915,17 +1916,27 @@ void PopulateStatusState(QtUiState* state)
     state->setStatusData(data);
 }
 
+double SourceManagedWindowLayer(const UIWindow* window)
+{
+    int index=0,mainIndex=0,windowIndex=0;
+    for(const auto* child:g_windowMgr.m_children){if(child==g_windowMgr.m_chatWnd)mainIndex=index;if(child==window)windowIndex=index;++index;}
+    return (windowIndex-mainIndex)*0.0001;
+}
 void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
 {
-    const auto chatLayer = [](const UIWindow* window) {
-        int index = 0, mainIndex = 0, windowIndex = 0;
-        for (const auto* child : g_windowMgr.m_children) {
-            if (child == g_windowMgr.m_chatWnd) mainIndex = index;
-            if (child == window) windowIndex = index;
-            ++index;
-        }
-        return (windowIndex - mainIndex) * 0.0001;
-    };
+    const auto chatLayer=SourceManagedWindowLayer;
+    QVariantMap friendOptions;
+    if(const auto* window=g_windowMgr.m_friendOptionWnd){
+        QVariantList checks;
+        for(int i=0;i<3;++i){const auto* row=window->GetCheckBox(i);const auto& bitmap=row->GetBitmap();checks.push_back(QVariantMap{
+            {"x",row->m_x-window->m_x},{"y",row->m_y-window->m_y},{"width",row->m_w},{"height",row->m_h},{"label",ToQString(row->GetLabel())},
+            {"checked",row->IsChecked()},{"artwork",QString::fromStdString(row->GetBitmapUri())},{"imageWidth",bitmap.width},{"imageHeight",bitmap.height}});}
+        const auto* close=window->GetCloseButton();const int status=close->GetVisualState();const auto& bitmap=close->GetButton().bitmaps[status];
+        friendOptions={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},{"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
+            {"caption",ToQString(window->GetCaption())},{"checks",checks},{"close",QVariantMap{{"x",close->m_x-window->m_x},{"y",close->m_y-window->m_y},{"width",close->m_w},{"height",close->m_h},
+                {"artwork",QString::fromStdString(close->GetButton().uris[status])},{"imageWidth",bitmap.width},{"imageHeight",bitmap.height},{"state",status}}}};
+    }
+    chatUi.insert("friendOptions",friendOptions);
     QVariantMap autoMessage;
     if(const auto* window=g_windowMgr.m_autoMessageWnd){
         const auto& button=window->GetButton();const auto bounds=button.Bounds();const int status=window->GetButtonState();const auto& bitmap=button.bitmaps[status];
@@ -2587,6 +2598,11 @@ void PopulateFriendPartyState(QtUiState* state)
             actionButtons.push_back(button);
         }
         data.insert(QStringLiteral("actionButtons"), actionButtons);
+        data.insert("layer",SourceManagedWindowLayer(friendPartyWnd));
+        UIMessengerGroupWnd::QtButtonDisplay sourceButton{};
+        if(friendPartyWnd->GetQtFriendOptionButtonDisplay(&sourceButton))data.insert("sourceOptions",QVariantMap{
+            {"id",sourceButton.id},{"x",sourceButton.x},{"y",sourceButton.y},{"width",sourceButton.width},{"height",sourceButton.height},{"visible",sourceButton.visible},
+            {"label",ToQString(sourceButton.label)},{"artwork",QString::fromStdString(sourceButton.artwork)},{"imageWidth",sourceButton.imageWidth},{"imageHeight",sourceButton.imageHeight},{"state",sourceButton.state}});
     }
 
     state->setFriendPartyData(data);
@@ -4197,6 +4213,7 @@ QObject* QtUiStateAdapter::stateObject() const
 }
 
 void QtUiStateAdapter::syncChat() { PopulateChatWindowState(m_state); }
+void QtUiStateAdapter::syncMessenger() { PopulateFriendPartyState(m_state); }
 
 void QtUiStateAdapter::setLastInput(const QString& value)
 {

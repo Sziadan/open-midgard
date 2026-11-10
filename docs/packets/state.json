@@ -2068,7 +2068,9 @@
         "docs/packets/evidence/PK09.21-whisper-workflow.md",
         "docs/packets/evidence/PK09.21-whisper-workflow-provenance.json",
         "docs/packets/evidence/PK09.21-auto-message.md",
-        "docs/packets/evidence/PK09.21-auto-message-provenance.json"
+        "docs/packets/evidence/PK09.21-auto-message-provenance.json",
+        "docs/packets/evidence/PK09.21-friend-options.md",
+        "docs/packets/evidence/PK09.21-friend-options-provenance.json"
       ],
       "commit_subject": null
     }

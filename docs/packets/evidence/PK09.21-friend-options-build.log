@@ -1,0 +1,306 @@
+[  6%] Built target zlibstatic
+[  6%] Built target chat_window_state_checks
+[  8%] Built target chat_notice_checks
+[ 17%] Built target lua51
+[ 18%] Built target chat_history_view_checks
+[ 19%] Built target chat_history_wrap_checks
+[ 20%] Built target source_chat_command_checks
+[ 20%] Built target chat_battle_options_checks
+[ 21%] Built target whisper_names_checks
+[ 21%] Built target insult_words_checks
+[ 22%] Built target chat_room_packet_checks
+[ 23%] Built target chat_scrollbar_checks
+[ 24%] Building CXX object tools/tests/recovery_delta/CMakeFiles/recovery_resurrection_packet_checks.dir/__/RecoveryResurrectionPacketTests.cpp.obj
+[ 24%] Built target party_position_state_checks
+[ 30%] Built target zlib
+[ 31%] Built target example
+[ 32%] Built target minigzip
+[ 33%] Built target example64
+[ 37%] Built target ro_core
+[ 37%] Built target minigzip64
+[ 38%] Built target ro_pathfinder
+[ 39%] Built target ro_cipher
+[ 41%] Built target ro_network
+[ 43%] Built target ro_audio
+[ 48%] Built target ro_res
+[ 49%] Built target ro_input
+[ 50%] Built target ro_skill
+[ 51%] Built target ro_security
+[ 52%] Built target ro_item
+[ 52%] Built target ro_lua
+[ 53%] Linking CXX executable recovery_resurrection_packet_checks.exe
+[ 53%] Built target use_skill_to_pos_info_packet_checks
+[ 53%] Building CXX object src/session/CMakeFiles/ro_session.dir/Session.cpp.obj
+[ 55%] Built target ro_render3d
+[ 57%] Built target ro_render
+[ 57%] Built target recovery_resurrection_packet_checks
+[ 57%] Linking CXX static library libro_session.a
+[ 58%] Built target ro_session
+[ 58%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIFriendOptionWnd.cpp.obj
+[ 59%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIAutoMessageWnd.cpp.obj
+[ 59%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIWhisperWnd.cpp.obj
+[ 59%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIGuildWnd.cpp.obj
+[ 59%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/QtSkillTree.cpp.obj
+[ 59%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIChatRoomSettingsWnd.cpp.obj
+[ 60%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIChatRoomEntry.cpp.obj
+[ 61%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UILoginWnd.cpp.obj
+[ 61%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISelectServerWnd.cpp.obj
+[ 61%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISelectCharWnd.cpp.obj
+[ 62%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIMakeCharWnd.cpp.obj
+[ 62%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UINewChatWnd.cpp.obj
+[ 62%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISubChatWnd.cpp.obj
+[ 63%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIChatRoomWnd.cpp.obj
+[ 63%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIBasicInfoWnd.cpp.obj
+[ 63%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIStatusWnd.cpp.obj
+[ 63%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISayDialogWnd.cpp.obj
+[ 63%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UINpcMenuWnd.cpp.obj
+[ 64%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIPlayerContextMenuWnd.cpp.obj
+[ 64%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIJoinPartyAcceptWnd.cpp.obj
+[ 64%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIMessengerGroupWnd.cpp.obj
+[ 65%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIPartyOptionWnd.cpp.obj
+[ 65%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UINpcInputWnd.cpp.obj
+[ 65%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIChooseSellBuyWnd.cpp.obj
+[ 66%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UINotifyLevelUpWnd.cpp.obj
+[ 66%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemWnd.cpp.obj
+[ 67%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIStorageWnd.cpp.obj
+[ 67%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemInfoWnd.cpp.obj
+[ 67%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UINotifyItemObtainWnd.cpp.obj
+[ 68%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemCollectionWnd.cpp.obj
+[ 68%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemCompositionWnd.cpp.obj
+[ 68%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemIdentifyWnd.cpp.obj
+[ 69%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISkillSelectWnd.cpp.obj
+[ 69%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIShortCutWnd.cpp.obj
+[ 69%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemShopWnd.cpp.obj
+[ 70%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemPurchaseWnd.cpp.obj
+[ 70%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemSellWnd.cpp.obj
+[ 70%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIMinimapWnd.cpp.obj
+[ 71%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIEquipWnd.cpp.obj
+[ 71%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISkillDescribeWnd.cpp.obj
+[ 71%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISkillListWnd.cpp.obj
+[ 72%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIChooseWnd.cpp.obj
+[ 72%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIOptionWnd.cpp.obj
+[ 73%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIFrameWnd.cpp.obj
+[ 73%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIWindowMgr.cpp.obj
+[ 73%] Linking CXX static library libro_ui.a
+[ 78%] Built target ro_ui
+[ 78%] Building CXX object src/world/CMakeFiles/ro_world.dir/GameActor.cpp.obj
+[ 78%] Linking CXX static library libro_world.a
+[ 88%] Built target ro_world
+[ 89%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/Mode.cpp.obj
+[ 89%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/LoginMode.cpp.obj
+[ 90%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/GameMode.cpp.obj
+[ 91%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/GameModePacket.cpp.obj
+[ 92%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/Commerce.cpp.obj
+[ 92%] Linking CXX static library libro_gamemode.a
+[ 92%] Built target ro_gamemode
+[ 92%] Built target ro_qtui_autogen_timestamp_deps
+[ 93%] Building CXX object src/main/CMakeFiles/ro_main.dir/WinMain.cpp.obj
+[ 93%] Building CXX object src/main/CMakeFiles/ro_main.dir/HealRenderPreview.cpp.obj
+[ 93%] Automatic MOC for target ro_qtui
+[ 93%] Built target ro_qtui_autogen
+[ 93%] Automatic RCC for QtUiSpikeAssets.qrc
+[ 94%] Building CXX object src/qtui/CMakeFiles/ro_qtui.dir/QtUiSpikeBridge.cpp.obj
+[ 95%] Building CXX object src/qtui/CMakeFiles/ro_qtui.dir/QtUiStateAdapter.cpp.obj
+[ 95%] Building CXX object src/qtui/CMakeFiles/ro_qtui.dir/QtCommerce.cpp.obj
+[ 95%] Building CXX object src/qtui/CMakeFiles/ro_qtui.dir/QtPlatformWindow.cpp.obj
+[ 96%] Building CXX object src/qtui/CMakeFiles/ro_qtui.dir/ro_qtui_autogen/EWIEGA46WW/qrc_QtUiSpikeAssets.cpp.obj
+[ 96%] Linking CXX static library libro_main.a
+[ 96%] Built target ro_main
+[ 96%] Linking CXX static library libro_qtui.a
+[ 96%] Built target ro_qtui
+[ 96%] Building CXX object CMakeFiles/packet_stream_replay_checks.dir/tools/tests/replay/PacketStreamReplay.cpp.obj
+[ 97%] Building CXX object CMakeFiles/packet_item_render_checks.dir/tools/tests/replay/ItemColourRenderChecks.cpp.obj
+[ 97%] Building CXX object CMakeFiles/packet_minimap_render_checks.dir/tools/tests/replay/MinimapRenderChecks.cpp.obj
+[ 98%] Linking CXX executable skill_packet_replay_runtime_checks.exe
+[ 98%] Building CXX object CMakeFiles/open_midgard.dir/src/main/WinMain.cpp.obj
+[ 98%] Building RC object CMakeFiles/open_midgard.dir/src/main/OpenMidgard.rc.obj
+[ 99%] Built target skill_packet_replay_runtime_checks
+[ 99%] Linking CXX executable open-midgard.exe
+Deploying Qt runtime and notices to D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+[100%] Linking CXX executable packet_minimap_render_checks.exe
+Adding local dependencyD:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/libgcc_s_seh-1.dll
+Adding local dependencyD:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/libwinpthread-1.dll
+Adding local dependencyD:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/libstdc++-6.dll
+D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\open-midgard.exe 64 bit, release executable [QML]
+Scanning D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\src\qtui\qml:
+QML imports:
+  'QtQuick' C:\Qt\6.11.0\mingw_64\qml\QtQuick
+  'QtQml' C:\Qt\6.11.0\mingw_64\qml\QtQml
+  'QML' C:\Qt\6.11.0\mingw_64\qml\QML
+  'QtQml.Models' C:\Qt\6.11.0\mingw_64\qml\QtQml\Models
+  'QtQml.WorkerScript' C:\Qt\6.11.0\mingw_64\qml\QtQml\WorkerScript
+Adding in plugin type generic for module: Qt6Gui
+Adding in plugin type iconengines for module: Qt6Gui
+Adding Qt6Svg for qsvgicon.dll from plugin type: iconengines
+Adding in plugin type imageformats for module: Qt6Gui
+Adding in plugin type networkinformation for module: Qt6Network
+Adding in plugin type platforms for module: Qt6Gui
+Adding in plugin type qmltooling for module: Qt6Qml
+Adding Qt6Quick3DUtils for qmldbg_quick3dprofiler.dll from plugin type: qmltooling
+Adding in plugin type tls for module: Qt6Network
+Skipping plugin qopensslbackend.dll. Use -force-openssl or specify -openssl-root if you want to use it.
+Performing additional pass of finding Qt plugins due to updated Qt module list: Qt6Core Qt6Gui Qt6Network Qt6OpenGL Qt6Qml Qt6QmlMeta Qt6QmlModels Qt6QmlWorkerScript Qt6Quick Qt6Quick3DUtils Qt6Svg
+Adding in plugin type generic for module: Qt6Gui
+Adding in plugin type iconengines for module: Qt6Gui
+Adding in plugin type imageformats for module: Qt6Gui
+Adding in plugin type networkinformation for module: Qt6Network
+Adding in plugin type platforms for module: Qt6Gui
+Adding in plugin type qmltooling for module: Qt6Qml
+Adding in plugin type tls for module: Qt6Network
+Skipping plugin qopensslbackend.dll. Use -force-openssl or specify -openssl-root if you want to use it.
+Direct dependencies: Qt6Core Qt6Gui Qt6Network Qt6OpenGL Qt6Qml Qt6QmlMeta Qt6QmlModels Qt6QmlWorkerScript Qt6Quick
+All dependencies   : Qt6Core Qt6Gui Qt6Network Qt6OpenGL Qt6Qml Qt6QmlMeta Qt6QmlModels Qt6QmlWorkerScript Qt6Quick
+To be deployed     : Qt6Core Qt6Gui Qt6Network Qt6OpenGL Qt6Qml Qt6QmlMeta Qt6QmlModels Qt6QmlWorkerScript Qt6Quick Qt6Quick3DUtils Qt6Svg
+Qt6Core.dll is up to date.
+Qt6Gui.dll is up to date.
+Qt6Network.dll is up to date.
+Qt6OpenGL.dll is up to date.
+Qt6Qml.dll is up to date.
+Qt6QmlMeta.dll is up to date.
+Qt6QmlModels.dll is up to date.
+Qt6QmlWorkerScript.dll is up to date.
+Qt6Quick.dll is up to date.
+Qt6Quick3DUtils.dll is up to date.
+Qt6Svg.dll is up to date.
+opengl32sw.dll is up to date.
+D3Dcompiler_47.dll is up to date.
+dxcompiler.dll is up to date.
+libgcc_s_seh-1.dll is up to date.
+libstdc++-6.dll is up to date.
+libwinpthread-1.dll is up to date.
+Creating directory D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/generic.
+Updating qtuiotouchplugin.dll.
+Creating directory D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/iconengines.
+Updating qsvgicon.dll.
+Creating directory D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/imageformats.
+Updating qgif.dll.
+Updating qico.dll.
+Updating qjpeg.dll.
+Updating qsvg.dll.
+Creating directory D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/networkinformation.
+Updating qnetworklistmanager.dll.
+Creating directory D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/platforms.
+Updating qwindows.dll.
+Creating directory D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qmltooling.
+Updating qmldbg_debugger.dll.
+Updating qmldbg_inspector.dll.
+Updating qmldbg_local.dll.
+Updating qmldbg_messages.dll.
+Updating qmldbg_native.dll.
+Updating qmldbg_nativedebugger.dll.
+Updating qmldbg_preview.dll.
+Updating qmldbg_profiler.dll.
+Updating qmldbg_quick3dprofiler.dll.
+Updating qmldbg_quickeventreplay.dll.
+Updating qmldbg_quickprofiler.dll.
+Updating qmldbg_server.dll.
+Updating qmldbg_tcp.dll.
+Creating directory D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/tls.
+Updating qcertonlybackend.dll.
+Updating qschannelbackend.dll.
+Creating D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\qml...
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick.
+Updating qtquick2plugin.dll.
+Updating plugins.qmltypes.
+Updating qmldir.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Basic.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Basic/impl.
+Skipping C:\Qt\6.11.0\mingw_64\qml\QtQuick\Controls\designer.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/FluentWinUI3.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/FluentWinUI3/dark.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/FluentWinUI3/dark/images.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/FluentWinUI3/icons.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/FluentWinUI3/impl.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/FluentWinUI3/light.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/FluentWinUI3/light/images.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Fusion.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Fusion/impl.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Imagine.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Imagine/impl.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/impl.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Material.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Material/impl.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Universal.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Universal/impl.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Windows.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Windows/images.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Controls/Windows/impl.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Dialogs.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Dialogs/quickimpl.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Dialogs/quickimpl/qml.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Dialogs/quickimpl/qml/+Fusion.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Dialogs/quickimpl/qml/+Imagine.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Dialogs/quickimpl/qml/+Material.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_High[100%] Built target packet_minimap_render_checks
+Priest2008_Release/build-mingw-preset/qml/QtQuick/Dialogs/quickimpl/qml/+Universal.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Effects.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Layouts.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/LocalStorage.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/NativeStyle.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/NativeStyle/controls.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/NativeStyle/util.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Particles.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Shapes.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Shapes/DesignHelpers.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Templates.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Timeline.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Timeline/BlendTrees.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/tooling.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/VectorImage.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/VectorImage/Helpers.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQuick/Window.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQml.
+Updating qmlplugin.dll.
+Updating plugins.qmltypes.
+Updating qmldir.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQml/Models.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQml/WorkerScript.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QtQml/XmlListModel.
+Creating D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/qml/QML.
+Updating plugins.qmltypes.
+Updating qmldir.
+Updating modelsplugin.dll.
+Updating plugins.qmltypes.
+Updating qmldir.
+Updating workerscriptplugin.dll.
+Updating plugins.qmltypes.
+Updating qmldir.
+Creating D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\build-mingw-preset\translations...
+Creating qt_ar.qm...
+Creating qt_bg.qm...
+Creating qt_ca.qm...
+Creating qt_cs.qm...
+Creating qt_da.qm...
+Creating qt_de.qm...
+Creating qt_en.qm...
+Creating qt_es.qm...
+Creating qt_fa.qm...
+Creating qt_fi.qm...
+Creating qt_fr.qm...
+Creating qt_gd.qm...
+Creating qt_he.qm...
+Creating qt_hr.qm...
+Creating qt_hu.qm...
+Creating qt_it.qm...
+Creating qt_ja.qm...
+Creating qt_ka.qm...
+Creating qt_ko.qm...
+Creating qt_lg.qm...
+Creating qt_lv.qm...
+Creating qt_nl.qm...
+Creating qt_nn.qm...
+Creating qt_pl.qm...
+Creating qt_pt_BR.qm...
+Creating qt_ru.qm...
+Creating qt_sk.qm...
+Creating qt_sv.qm...
+Creating qt_tr.qm...
+Creating qt_uk.qm...
+Creating qt_zh_CN.qm...
+Creating qt_zh_TW.qm...
+[100%] Built target open_midgard
+[100%] Linking CXX executable packet_item_render_checks.exe
+[100%] Built target packet_item_render_checks
+[100%] Linking CXX executable packet_stream_replay_checks.exe
+[100%] Built target packet_stream_replay_checks

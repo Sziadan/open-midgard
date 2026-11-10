@@ -17,6 +17,7 @@ public:
     QObject* stateObject() const;
     void setLastInput(const QString& value);
     void syncChat();
+    void syncMessenger();
     void syncMinimap();
     bool syncMenu(RenderBackendType activeBackend,
         RenderBackendType nativeOverlayBackend);

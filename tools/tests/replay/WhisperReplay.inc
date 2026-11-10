@@ -1,4 +1,5 @@
 #include "ui/UIWhisperWnd.h"
+#include "ui/UIFriendOptionWnd.h"
 #include "core/WhisperNames.h"
 #include "core/SettingsIni.h"
 #include "core/MannerFilter.h"
@@ -277,7 +278,7 @@ void WhisperPreferencesReplay(const std::string& action)
     if(action=="write"){
         g_session.m_isShowWhisperWnd=g_session.m_isShowWhisperWnd_Friend=g_session.m_isPlayWhisperOpenSound=false;
         Require(g_session.SaveWhisperOptions(),"source whisper preference writer failed");
-        g_windowMgr.m_whisperWindowInfo={13,17,311,151};g_windowMgr.SaveChatWindowPreferences();
+        g_windowMgr.m_whisperWindowInfo={13,17,311,151};g_windowMgr.m_friendOptionWindowInfo={29,31,280,120};g_windowMgr.SaveChatWindowPreferences();
     }else if(action=="read"){
         g_session.m_isShowWhisperWnd=g_session.m_isShowWhisperWnd_Friend=g_session.m_isPlayWhisperOpenSound=true;
         ReadRegistry();Require(!g_session.m_isShowWhisperWnd && !g_session.m_isShowWhisperWnd_Friend && !g_session.m_isPlayWhisperOpenSound,"fresh startup did not load source whisper options");
@@ -286,10 +287,15 @@ void WhisperPreferencesReplay(const std::string& action)
         Require(g_windowMgr.OpenWhisperWindow("Restored"),"saved whisper owner did not open");auto* window=g_windowMgr.m_whisperWindows.at("Restored");
         Require(window->m_x==13 && window->m_y==17 && window->m_w==280 && window->m_h==120 && info.width==311 && info.height==151,"source whisper cached/raw size and quantized window order changed");
         g_windowMgr.DeleteWindow(window);Require(g_windowMgr.m_whisperWindows.empty() && LoadSettingsIniInt("UIWindows","WhisperWndW",0)==311,"individual deletion leaked name map or prematurely saved geometry");
+        auto* options=static_cast<UIFriendOptionWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_FRIENDOPTIONWND));
+        Require(options && options->m_x==29 && options->m_y==31 && options->m_w==280 && options->m_h==120,"fresh friend-options geometry did not restore");
+        options->Move(41,43);g_windowMgr.DeleteWindow(options);
+        Require(g_windowMgr.m_friendOptionWindowInfo.x==41 && LoadSettingsIniInt("UIWindows","FriendOptionWndX",-1)==29,"friend-options close failed to snapshot or wrote geometry immediately");
     }else {
         const auto path=GetOpenMidgardIniPath();std::error_code error;std::filesystem::remove(path,error);
         g_session.m_isShowWhisperWnd=g_session.m_isShowWhisperWnd_Friend=g_session.m_isPlayWhisperOpenSound=false;
         ReadRegistry();Require(g_session.m_isShowWhisperWnd && g_session.m_isShowWhisperWnd_Friend && g_session.m_isPlayWhisperOpenSound,"missing whisper preferences did not default enabled");
+        Require(g_windowMgr.m_friendOptionWindowInfo.x==200 && g_windowMgr.m_friendOptionWindowInfo.y==120 && g_windowMgr.m_friendOptionWindowInfo.width==280 && g_windowMgr.m_friendOptionWindowInfo.height==120,"missing friend-options geometry default changed");
         SaveSettingsIniInt("Option","m_isShowWhisperWnd",0);SaveSettingsIniInt("Option","m_isShowWhisperWnd_Friend",1);SaveSettingsIniInt("Option","m_isPlayWhisperOpenSound",0);
         ReadRegistry();Require(g_session.m_isShowWhisperWnd && g_session.m_isShowWhisperWnd_Friend && !g_session.m_isPlayWhisperOpenSound,"source friend preference did not force base enabled");
         Require(LoadSettingsIniInt("Option","m_isShowWhisperWnd",-1)==0,"startup normalization wrote preferences immediately");

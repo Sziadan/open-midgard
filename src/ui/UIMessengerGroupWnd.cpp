@@ -3,6 +3,8 @@
 
 #include "UIPartyOptionWnd.h"
 #include "UIWindowMgr.h"
+#include "UIFriendOptionWnd.h"
+#include "core/UiMessageStrings.h"
 #include "gamemode/GameMode.h"
 #include "render/DC.h"
 #include "session/Session.h"
@@ -156,6 +158,7 @@ void UIMessengerGroupWnd::SetShow(int show)
 void UIMessengerGroupWnd::Move(int x, int y)
 {
     UIWindow::Move(x, y);
+    if(m_friendOptionButton)m_friendOptionButton->Move(x+83,y+m_h-40);
 }
 
 bool UIMessengerGroupWnd::IsUpdateNeed()
@@ -173,6 +176,11 @@ msgresult_t UIMessengerGroupWnd::SendMsg(UIWindow* sender, int msg, msgparam_t w
     (void)wparam;
     (void)lparam;
     (void)extra;
+    if(msg==6 && wparam==168 && m_currentTab==TabFriend){
+        if(g_windowMgr.m_friendOptionWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_friendOptionWnd);
+        else g_windowMgr.MakeWindow(UIWindowMgr::WID_FRIENDOPTIONWND);
+        return 0;
+    }
 
     if (msg == 23) {
         NormalizeStateForData();
@@ -194,6 +202,8 @@ void UIMessengerGroupWnd::OnCreate(int x, int y)
     Create(kWindowWidth, kWindowHeight);
     m_id = UIWindowMgr::WID_MESSENGERGROUPWND;
     m_controlsCreated = true;
+    m_friendOptionButton=new UIFriendOptionButton(168,"basic_interface\\mesbtn_04.bmp","basic_interface\\mesbtn_04_a.bmp","basic_interface\\mesbtn_04_b.bmp",24,24);
+    ro::UiMessageStrings table;table.Load();m_friendOptionButton->SetToolTip(table.Get(355,"Friend settings").c_str());AddChild(m_friendOptionButton);
 
     int savedX = 0;
     int savedY = 0;
@@ -302,9 +312,15 @@ void UIMessengerGroupWnd::OnDraw()
     const RECT footerTitleRect{ footerRect.left + 6, footerRect.top + 1, footerRect.left + 84, footerMidY };
     const RECT footerValueRect{ footerRect.left + 86, footerRect.top + 1, footerRect.right - 6, footerMidY };
     const RECT footerSecondaryRect{ footerRect.left + 6, footerMidY - 1, footerRect.right - 6, footerRect.bottom - 1 };
-    DrawTextLine(hdc, footerTitleRect, display.summaryTitle.c_str(), RGB(68, 58, 44), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-    DrawTextLine(hdc, footerValueRect, display.summaryValue.c_str(), RGB(48, 48, 48), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
-    DrawTextLine(hdc, footerSecondaryRect, display.summarySecondaryValue.c_str(), RGB(48, 48, 48), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+    if(m_currentTab==TabFriend){
+        const auto summary=display.summaryTitle+": "+display.summaryValue;
+        DrawTextLine(hdc,{m_x+122,footerRect.top+1,footerRect.right-6,footerRect.bottom-1},summary.c_str(),RGB(48,48,48),DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
+    }else {
+        DrawTextLine(hdc, footerTitleRect, display.summaryTitle.c_str(), RGB(68, 58, 44), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+        DrawTextLine(hdc, footerValueRect, display.summaryValue.c_str(), RGB(48, 48, 48), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+        DrawTextLine(hdc, footerSecondaryRect, display.summarySecondaryValue.c_str(), RGB(48, 48, 48), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+    }
+    DrawChildrenToHdc(hdc);
 
     ReleaseDrawTarget(hdc);
     m_lastVisualStateToken = BuildVisualStateToken();
@@ -571,6 +587,18 @@ bool UIMessengerGroupWnd::GetQtTabDisplayForQt(int index, QtButtonDisplay* outDa
     outData->active = (index == m_currentTab);
     return true;
 }
+bool UIMessengerGroupWnd::GetQtFriendOptionButtonDisplay(QtButtonDisplay* outData) const
+{
+    if(!outData || !m_friendOptionButton)return false;
+    const auto* button=m_friendOptionButton;const int state=button->GetVisualState();const auto& image=button->GetButton().bitmaps[state];
+    outData->id=168;outData->x=button->m_x;outData->y=button->m_y;outData->width=button->m_w;outData->height=button->m_h;
+    outData->label=button->m_toolTip;outData->visible=button->m_show!=0;outData->artwork=button->GetButton().uris[state];outData->imageWidth=image.width;outData->imageHeight=image.height;outData->state=state;return true;
+}
+void UIMessengerGroupWnd::CancelSourcePointerCapture()
+{
+    m_isDragging=0;if(m_friendOptionButton)m_friendOptionButton->CancelPointerCapture();
+    if(g_windowMgr.m_captureWindow==m_friendOptionButton)g_windowMgr.m_captureWindow=nullptr;
+}
 
 void UIMessengerGroupWnd::NormalizeStateForData()
 {
@@ -587,6 +615,7 @@ void UIMessengerGroupWnd::NormalizeStateForData()
 void UIMessengerGroupWnd::SetCurrentTab(int tabId)
 {
     const int clampedTab = std::clamp(tabId, 0, 1);
+    if(m_friendOptionButton)m_friendOptionButton->SetShow(clampedTab==TabFriend?1:0);
     if (m_currentTab == clampedTab) {
         return;
     }

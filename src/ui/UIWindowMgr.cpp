@@ -7,6 +7,7 @@
 #include "UIChatRoomSettingsWnd.h"
 #include "UIWhisperWnd.h"
 #include "UIAutoMessageWnd.h"
+#include "UIFriendOptionWnd.h"
 #include "audio/Audio.h"
 #include "res/Res.h"
 #include "core/UiMessageStrings.h"
@@ -984,7 +985,14 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
 bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 {
     const auto* hit = HitTestWindow(x, y);
-    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || hit==m_autoMessageWnd || dynamic_cast<const UIWhisperWnd*>(hit));
+    return hit && (hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || hit==m_autoMessageWnd || IsWhisperPreferenceInputWindow(hit) || dynamic_cast<const UIWhisperWnd*>(hit));
+}
+bool UIWindowMgr::IsWhisperPreferenceInputWindow(const UIWindow* window) const
+{
+    if(!window)return false;
+    if(window->m_parent==m_messengerGroupWnd && window->m_id==168)return true;
+    for(const auto* owner=window;owner;owner=owner->m_parent)if(owner==m_friendOptionWnd)return true;
+    return false;
 }
 
 RECT UIWindowMgr::GetChatClientRect() const
@@ -1002,6 +1010,8 @@ RECT UIWindowMgr::GetChatClientRect() const
 
 void UIWindowMgr::LoadChatWindowPreferences()
 {
+    m_friendOptionWindowInfo={LoadSettingsIniInt("UIWindows","FriendOptionWndX",200),LoadSettingsIniInt("UIWindows","FriendOptionWndY",120),
+        LoadSettingsIniInt("UIWindows","FriendOptionWndW",280),LoadSettingsIniInt("UIWindows","FriendOptionWndH",120)};
     m_whisperWindowInfo={LoadSettingsIniInt("UIWindows","WhisperWndX",0),LoadSettingsIniInt("UIWindows","WhisperWndY",347),
         LoadSettingsIniInt("UIWindows","WhisperWndW",280),LoadSettingsIniInt("UIWindows","WhisperWndH",120)};
     // Selected source reads height/placement/show but never reads the status
@@ -1032,6 +1042,8 @@ void UIWindowMgr::LoadChatWindowPreferences()
 
 void UIWindowMgr::SaveChatWindowPreferences() const
 {
+    SaveSettingsIniInt("UIWindows","FriendOptionWndX",m_friendOptionWindowInfo.x);SaveSettingsIniInt("UIWindows","FriendOptionWndY",m_friendOptionWindowInfo.y);
+    SaveSettingsIniInt("UIWindows","FriendOptionWndW",m_friendOptionWindowInfo.width);SaveSettingsIniInt("UIWindows","FriendOptionWndH",m_friendOptionWindowInfo.height);
     SaveSettingsIniInt("UIWindows","WhisperWndX",m_whisperWindowInfo.x);SaveSettingsIniInt("UIWindows","WhisperWndY",m_whisperWindowInfo.y);
     SaveSettingsIniInt("UIWindows","WhisperWndW",m_whisperWindowInfo.width);SaveSettingsIniInt("UIWindows","WhisperWndH",m_whisperWindowInfo.height);
     // Shutdown calls this after RemoveAllWindows has snapshotted every owner.
@@ -1215,6 +1227,8 @@ void UIWindowMgr::ShowRoomValidationMessage(int messageId)
 {
     if(m_modalWindow)return;
     if(m_autoMessageWnd)m_autoMessageWnd->CancelPointerCapture();
+    if(m_friendOptionWnd)m_friendOptionWnd->CancelPointerCapture();
+    if(m_messengerGroupWnd)m_messengerGroupWnd->CancelSourcePointerCapture();
     for(const auto& entry:m_whisperWindows)entry.second->CancelPointerCapture();
     ro::UiMessageStrings table;table.Load();
     const char* fallback=messageId==13?"Please enter a room title.":messageId==14?"That title cannot be used.":messageId==15?"Please enter a password."
@@ -1300,6 +1314,14 @@ bool UIWindowMgr::OpenChatRoomMake(bool toggle)
 UIWindow* UIWindowMgr::MakeWindow(int windowId)
 {
     switch (windowId) {
+    case WID_FRIENDOPTIONWND:
+        if(!m_friendOptionWnd){
+            m_friendOptionWnd=new UIFriendOptionWnd();const auto client=GetChatClientRect();
+            m_friendOptionWnd->Move((client.right-640)/2+200,120*client.bottom/480);
+            m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),m_friendOptionWnd);
+            m_friendOptionWnd->SendMsg(nullptr,34,reinterpret_cast<msgparam_t>(&m_friendOptionWindowInfo),0,0);
+        }
+        m_friendOptionWnd->SetShow(1);return m_friendOptionWnd;
     case WID_AUTOMESSAGEWND:
         if(!m_autoMessageWnd){m_autoMessageWnd=new UIAutoMessageWnd();m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),m_autoMessageWnd);}
         m_autoMessageWnd->SetShow(1);m_autoMessageWnd->FocusForDraw();return m_autoMessageWnd;
@@ -1831,7 +1853,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     };
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
-        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || dynamic_cast<UIWhisperWnd*>(window));
+        && (window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
     if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
@@ -1888,6 +1910,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if (window == m_roomMessageBox)m_roomMessageBox=nullptr;
     if (window == m_chatRoomMenuWnd)m_chatRoomMenuWnd=nullptr;
     if (window == m_autoMessageWnd)m_autoMessageWnd=nullptr;
+    if (window == m_friendOptionWnd){m_friendOptionWnd->StoreInfo();m_friendOptionWnd=nullptr;}
     if (window == m_chatRoomPasswordWnd) m_chatRoomPasswordWnd=nullptr;
     if (window == m_chatRoomWnd) { m_chatRoomWnd->StoreInfo();m_chatRoomWnd=nullptr; }
     if (window == m_subChatWndST) { m_subChatWndST->StoreInfo(); m_subChatWndST = nullptr; }
@@ -2677,7 +2700,7 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);
-        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || hit==m_autoMessageWnd || dynamic_cast<UIWhisperWnd*>(hit)))
+        if (g_hMainWnd && (hit == m_chatWnd || hit == m_subChatWndST || hit == m_subChatWndBT || hit == m_subChatMiniWnd || hit == m_battleMsgOptionWnd || hit == m_chatRoomWnd || hit == m_chatRoomPasswordWnd || hit==m_chatRoomMakeWnd || hit==m_chatRoomChangeWnd || hit==m_roomMessageBox || hit==m_chatRoomMenuWnd || hit==m_autoMessageWnd || IsWhisperPreferenceInputWindow(hit) || dynamic_cast<UIWhisperWnd*>(hit)))
             SetCapture(g_hMainWnd);
     }
 }
@@ -2722,7 +2745,7 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
 void UIWindowMgr::OnLBtnUp(int x, int y)
 {
     const bool chatCapture = m_captureWindow && (m_captureWindow == m_chatWnd || m_captureWindow == m_subChatWndST
-        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd || m_captureWindow==m_chatRoomMakeWnd || m_captureWindow==m_chatRoomChangeWnd || m_captureWindow==m_roomMessageBox || m_captureWindow==m_chatRoomMenuWnd || m_captureWindow==m_autoMessageWnd || dynamic_cast<UIWhisperWnd*>(m_captureWindow));
+        || m_captureWindow == m_subChatWndBT || m_captureWindow == m_subChatMiniWnd || m_captureWindow == m_battleMsgOptionWnd || m_captureWindow == m_chatRoomWnd || m_captureWindow == m_chatRoomPasswordWnd || m_captureWindow==m_chatRoomMakeWnd || m_captureWindow==m_chatRoomChangeWnd || m_captureWindow==m_roomMessageBox || m_captureWindow==m_chatRoomMenuWnd || m_captureWindow==m_autoMessageWnd || IsWhisperPreferenceInputWindow(m_captureWindow) || dynamic_cast<UIWhisperWnd*>(m_captureWindow));
     if (m_captureWindow) {
         m_captureWindow->OnLBtnUp(x, y);
         m_captureWindow = nullptr;

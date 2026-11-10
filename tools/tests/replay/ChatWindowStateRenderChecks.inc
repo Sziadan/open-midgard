@@ -5,6 +5,7 @@
 #include "ChatRoomActionsRenderChecks.inc"
 #include "WhisperRenderChecks.inc"
 #include "AutoMessageRenderChecks.inc"
+#include "FriendOptionsRenderChecks.inc"
 #include "ChatBattleOptionsRenderChecks.inc"
 #include "ui/UINewChatWnd.h"
 
@@ -393,5 +394,6 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     CheckChatRoomActionsUi(app,view,state,mode,adapter,output);
     CheckWhisperUi(app,view,state,mode,adapter,output);
     CheckAutoMessageUi(app,view,state,mode,adapter,output);
+    CheckFriendOptionsUi(app,view,state,mode,adapter,output);
 
 }

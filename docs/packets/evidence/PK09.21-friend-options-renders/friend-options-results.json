@@ -1,0 +1,12 @@
+{
+    "actual_messenger168": true,
+    "captured_child_teardown": true,
+    "child147_down_notification": true,
+    "empty_long_labels": true,
+    "max_bitmap_bounds": true,
+    "native_capture_cancel_release": true,
+    "native_qml_frames": 16,
+    "outcome": "PASS",
+    "parent_entry_stacking": true,
+    "scale125": true
+}

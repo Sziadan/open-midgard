@@ -1,0 +1,598 @@
+--- Ref/UIMessengerWnd.cpp:515-554 ---
+515: int __thiscall UIFriendOptionWnd::SendMsg(
+516:         UIFriendOptionWnd *this,
+517:         UICheckBox *sender,
+518:         int message,
+519:         FriendOptionWndInfo *val1,
+520:         int val2,
+521:         int val3,
+522:         int val4)
+523: {
+524:   if ( message == 6 )
+525:   {
+526:     if ( val1 == (FriendOptionWndInfo *)135 )
+527:     {
+528:       UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x44);
+529:     }
+530:     else if ( val1 == (FriendOptionWndInfo *)147 )
+531:     {
+532:       if ( this->m_showWhisperWndCheckBox == sender )
+533:       {
+534:         g_session.m_isShowWhisperWnd = val2;
+535:         return 0;
+536:       }
+537:       if ( this->m_showFriendWhisperWndCheckBox == sender )
+538:       {
+539:         g_session.m_isShowWhisperWnd_Friend = val2;
+540:         return 0;
+541:       }
+542:       if ( this->m_playWhisperOpenSoundCheckBox == sender )
+543:       {
+544:         g_session.m_isPlayWhisperOpenSound = val2;
+545:         return 0;
+546:       }
+547:     }
+548:     return 0;
+549:   }
+550:   else if ( message == 34 )
+551:   {
+552:     this->m_info = val1;
+553:     if ( !FriendOptionWndInfo::IsValidInfo(val1) )
+554:       FriendOptionWndInfo::MakeDefault(this->m_info);
+--- Ref/UIMessengerWnd.cpp:900-936 ---
+900:           }
+901:           v145 = -1;
+902:           std::string::_Tidy((std::string *)&buf[36], 1u);
+903:           if ( !*(_DWORD *)&buf[24] )
+904:             return 0;
+905:           v78 = (char *)(*(_DWORD *)&buf[24] - 1);
+906:           v79 = *(_BYTE *)(*(_DWORD *)&buf[24] - 1);
+907:           if ( v79 && v79 != -1 )
+908:             goto LABEL_161;
+909:           goto LABEL_162;
+910:         case 168:
+911:           if ( !this->m_curRadioBtn )
+912:           {
+913:             if ( UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x44) )
+914:               return 0;
+915:             UIWindowMgr::MakeWindow(&g_windowMgr, 68);
+916:             return 0;
+917:           }
+918:           if ( !UIWindowMgr::DeleteWindow(&g_windowMgr, (UISelCharForUServerWnd *)0x35)
+919:             && CSession::GetNumParty(&g_session)
+920:             && this->m_curRadioBtn == 1 )
+921:           {
+922:             UIWindowMgr::MakeWindow(&g_windowMgr, 53);
+923:             return 0;
+924:           }
+925:           return 0;
+926:         case 169:
+927:           if ( this->m_curItem == -1 )
+928:             return 0;
+929:           UIMessengerGroupWnd::GetItemInfoBySequence(this, &info, this->m_curItem);
+930:           v145 = 22;
+931:           if ( info.isValid )
+932:           {
+933:             if ( this->m_curRadioBtn )
+934:             {
+935:               v81 = CSession::GetCharName(&g_session);
+936:               if ( std::string::compare(&info.characterName, 0, info.characterName._Len, v81, strlen(v81)) )
+--- Ref/UIMessengerWnd.cpp:1610-1810 ---
+1610: // Decompiled from address: 0x4d0b80
+1611: // ================================================
+1612: void __thiscall UIFriendOptionWnd::OnCreate(UIFriendOptionWnd *this, int cx, int cy)
+1613: {
+1614:   const char *v4; // eax
+1615:   signed int v5; // edi
+1616:   UICheckBox *v6; // eax
+1617:   UICheckBox *v7; // eax
+1618:   const char *v8; // eax
+1619:   const char *v9; // eax
+1620:   signed int v10; // edi
+1621:   UICheckBox *v11; // eax
+1622:   UICheckBox *v12; // eax
+1623:   const char *v13; // eax
+1624:   const char *v14; // eax
+1625:   signed int v15; // edi
+1626:   UICheckBox *v16; // eax
+1627:   UICheckBox *v17; // eax
+1628:   const char *v18; // eax
+1629:   int m_w; // esi
+1630:   int v20; // esi
+1631:   void *v21; // edi
+1632:   UIBitmapButton *v22; // eax
+1633:   UIBitmapButton *v23; // eax
+1634:   const std::string *v24; // eax
+1635:   char *Ptr; // eax
+1636:   const std::string *v26; // eax
+1637:   char *v27; // eax
+1638:   _BYTE *v28; // ecx
+1639:   char v29; // al
+1640:   char *v30; // ecx
+1641:   char v31; // al
+1642:   const std::string *v32; // eax
+1643:   char *v33; // eax
+1644:   char *v34; // ecx
+1645:   char v35; // al
+1646:   char *v36; // ecx
+1647:   char v37; // al
+1648:   char v38; // al
+1649:   char *buttonName2[8]; // [esp+Ch] [ebp-74h] BYREF
+1650:   std::string v40; // [esp+2Ch] [ebp-54h] BYREF
+1651:   std::string result; // [esp+3Ch] [ebp-44h] BYREF
+1652:   std::string preBmpName2; // [esp+4Ch] [ebp-34h] BYREF
+1653:   int posX[3]; // [esp+5Ch] [ebp-24h] BYREF
+1654:   int v44; // [esp+68h] [ebp-18h]
+1655:   void *Block; // [esp+6Ch] [ebp-14h]
+1656:   std::allocator<char> v46; // [esp+73h] [ebp-Dh]
+1657:   int v47; // [esp+7Ch] [ebp-4h]
+1658:
+1659:   v4 = MsgStr(MSI_AUTOOPEN_1ON1_WINDOW);
+1660:   v5 = UIWindow::GetTextWidth(this, v4, 0, 0, 12, 0) + 12;
+1661:   if ( v5 >= this->m_w - 15 )
+1662:     v5 = this->m_w - 15;
+1663:   v6 = (UICheckBox *)operator new(0x7Cu);
+1664:   Block = v6;
+1665:   v47 = 0;
+1666:   if ( v6 )
+1667:     v7 = UICheckBox::UICheckBox(v6);
+1668:   else
+1669:     v7 = 0;
+1670:   v47 = -1;
+1671:   this->m_showWhisperWndCheckBox = v7;
+1672:   UIWindow::Create(v7, v5, 12);
+1673:   v8 = MsgStr(MSI_AUTOOPEN_1ON1_WINDOW);
+1674:   UICheckBox::SetBitmap2(this->m_showWhisperWndCheckBox, &onBitmapName, &offBitmapName, v8);
+1675:   this->m_showWhisperWndCheckBox->UIWindow::Move(this->m_showWhisperWndCheckBox, 6, 21);
+1676:   UICheckBox::SetCheck(this->m_showWhisperWndCheckBox, g_session.m_isShowWhisperWnd);
+1677:   UIWindow::AddChild(this, this->m_showWhisperWndCheckBox);
+1678:   v9 = MsgStr(MSI_AUTOOPENWHISPERLISTWND_FRIEND);
+1679:   v10 = UIWindow::GetTextWidth(this, v9, 0, 0, 12, 0) + 12;
+1680:   if ( v10 >= this->m_w - 15 )
+1681:     v10 = this->m_w - 15;
+1682:   v11 = (UICheckBox *)operator new(0x7Cu);
+1683:   Block = v11;
+1684:   v47 = 1;
+1685:   if ( v11 )
+1686:     v12 = UICheckBox::UICheckBox(v11);
+1687:   else
+1688:     v12 = 0;
+1689:   v47 = -1;
+1690:   this->m_showFriendWhisperWndCheckBox = v12;
+1691:   UIWindow::Create(v12, v10, 12);
+1692:   v13 = MsgStr(MSI_AUTOOPENWHISPERLISTWND_FRIEND);
+1693:   UICheckBox::SetBitmap2(this->m_showFriendWhisperWndCheckBox, &onBitmapName, &offBitmapName, v13);
+1694:   this->m_showFriendWhisperWndCheckBox->UIWindow::Move(this->m_showFriendWhisperWndCheckBox, 6, 37);
+1695:   UICheckBox::SetCheck(this->m_showFriendWhisperWndCheckBox, g_session.m_isShowWhisperWnd_Friend);
+1696:   UIWindow::AddChild(this, this->m_showFriendWhisperWndCheckBox);
+1697:   v14 = MsgStr(MSI_WHISPER_OPEN_SOUND);
+1698:   v15 = UIWindow::GetTextWidth(this, v14, 0, 0, 12, 0) + 12;
+1699:   if ( v15 >= this->m_w - 15 )
+1700:     v15 = this->m_w - 15;
+1701:   v16 = (UICheckBox *)operator new(0x7Cu);
+1702:   Block = v16;
+1703:   v47 = 2;
+1704:   if ( v16 )
+1705:     v17 = UICheckBox::UICheckBox(v16);
+1706:   else
+1707:     v17 = 0;
+1708:   v47 = -1;
+1709:   this->m_playWhisperOpenSoundCheckBox = v17;
+1710:   UIWindow::Create(v17, v15, 12);
+1711:   v18 = MsgStr(MSI_WHISPER_OPEN_SOUND);
+1712:   UICheckBox::SetBitmap2(this->m_playWhisperOpenSoundCheckBox, &onBitmapName, &offBitmapName, v18);
+1713:   this->m_playWhisperOpenSoundCheckBox->UIWindow::Move(this->m_playWhisperOpenSoundCheckBox, 6, 53);
+1714:   UICheckBox::SetCheck(this->m_playWhisperOpenSoundCheckBox, g_session.m_isPlayWhisperOpenSound);
+1715:   UIWindow::AddChild(this, this->m_playWhisperOpenSoundCheckBox);
+1716:   m_w = this->m_w;
+1717:   preBmpName2._Len = 0;
+1718:   preBmpName2._Res = 0;
+1719:   posX[2] = 0;
+1720:   memset(&buttonName2[1], 0, 0x1Cu);
+1721:   v20 = m_w - 14;
+1722:   posX[1] = v20;
+1723:   v44 = 0;
+1724:   preBmpName2.allocator = v46;
+1725:   std::string::_Tidy(&preBmpName2, 0);
+1726:   v21 = (void *)strlen(&byte_6F2D10);
+1727:   Block = v21;
+1728:   if ( std::string::_Grow(&preBmpName2, (unsigned int)v21, 1u) )
+1729:   {
+1730:     qmemcpy(preBmpName2._Ptr, &byte_6F2D10, (unsigned int)v21);
+1731:     std::string::_Eos(&preBmpName2, (unsigned int)v21);
+1732:     v20 = posX[1];
+1733:   }
+1734:   v47 = 3;
+1735:   v22 = (UIBitmapButton *)operator new(0xA4u);
+1736:   Block = v22;
+1737:   LOBYTE(v47) = 4;
+1738:   if ( v22 )
+1739:     v23 = UIBitmapButton::UIBitmapButton(v22);
+1740:   else
+1741:     v23 = 0;
+1742:   this->m_sysButton = v23;
+1743:   LOBYTE(v47) = 3;
+1744:   v24 = std::operator+((std::string *)posX, &preBmpName2, aClose);
+1745:   LOBYTE(v47) = 5;
+1746:   Ptr = std::operator+(&result, v24, aOffBmp)->_Ptr;
+1747:   LOBYTE(v47) = 6;
+1748:   if ( !Ptr )
+1749:     Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+1750:   UIBitmapButton::SetBitmapName(this->m_sysButton, Ptr, 0);
+1751:   LOBYTE(v47) = 5;
+1752:   std::string::_Tidy(&result, 1u);
+1753:   LOBYTE(v47) = 3;
+1754:   std::string::_Tidy((std::string *)posX, 1u);
+1755:   v26 = std::operator+(&result, &preBmpName2, aClose);
+1756:   LOBYTE(v47) = 7;
+1757:   v27 = std::operator+((std::string *)posX, v26, aOnBmp)->_Ptr;
+1758:   LOBYTE(v47) = 8;
+1759:   if ( !v27 )
+1760:     v27 = (char *)`std::string::_Nullstr'::`2'::_C;
+1761:   UIBitmapButton::SetBitmapName(this->m_sysButton, v27, 1);
+1762:   if ( posX[1] )
+1763:   {
+1764:     v28 = (_BYTE *)(posX[1] - 1);
+1765:     v29 = *(_BYTE *)(posX[1] - 1);
+1766:     if ( !v29 || v29 == -1 )
+1767:       operator delete(v28);
+1768:     else
+1769:       *v28 = v29 - 1;
+1770:   }
+1771:   posX[1] = 0;
+1772:   posX[2] = 0;
+1773:   v44 = 0;
+1774:   LOBYTE(v47) = 3;
+1775:   if ( result._Ptr )
+1776:   {
+1777:     v30 = result._Ptr - 1;
+1778:     v31 = *(result._Ptr - 1);
+1779:     if ( !v31 || v31 == -1 )
+1780:       operator delete(v30);
+1781:     else
+1782:       *v30 = v31 - 1;
+1783:   }
+1784:   v32 = std::operator+(&v40, &preBmpName2, aClose);
+1785:   LOBYTE(v47) = 9;
+1786:   v33 = std::operator+(&result, v32, aOnBmp)->_Ptr;
+1787:   LOBYTE(v47) = 10;
+1788:   if ( !v33 )
+1789:     v33 = (char *)`std::string::_Nullstr'::`2'::_C;
+1790:   UIBitmapButton::SetBitmapName(this->m_sysButton, v33, 2);
+1791:   if ( result._Ptr )
+1792:   {
+1793:     v34 = result._Ptr - 1;
+1794:     v35 = *(result._Ptr - 1);
+1795:     if ( !v35 || v35 == -1 )
+1796:       operator delete(v34);
+1797:     else
+1798:       *v34 = v35 - 1;
+1799:   }
+1800:   memset(&result._Ptr, 0, 12);
+1801:   LOBYTE(v47) = 3;
+1802:   if ( v40._Ptr )
+1803:   {
+1804:     v36 = v40._Ptr - 1;
+1805:     v37 = *(v40._Ptr - 1);
+1806:     if ( !v37 || v37 == -1 )
+1807:       operator delete(v36);
+1808:     else
+1809:       *v36 = v37 - 1;
+1810:   }
+--- Ref/UIMessengerWnd.cpp:1830-1940 ---
+1830: // ================================================
+1831: void __thiscall UIFriendOptionWnd::OnDraw(UIFriendOptionWnd *this)
+1832: {
+1833:   CResMgr *v2; // eax
+1834:   CBitmapRes *v3; // eax
+1835:   CResMgr *v4; // eax
+1836:   CBitmapRes *v5; // eax
+1837:   int v6; // edi
+1838:   int v7; // ebx
+1839:   CResMgr *v8; // eax
+1840:   CBitmapRes *v9; // eax
+1841:   const char *v10; // eax
+1842:   const char *v11; // eax
+1843:   unsigned __int16 v12; // dx
+1844:   unsigned __int16 v13; // ax
+1845:   CResMgr *v14; // eax
+1846:   CBitmapRes *v15; // eax
+1847:   CResMgr *v16; // eax
+1848:   CBitmapRes *v17; // eax
+1849:   int v18; // edi
+1850:   int v19; // ebx
+1851:   CResMgr *v20; // eax
+1852:   CBitmapRes *v21; // eax
+1853:   const char *v22; // [esp-8h] [ebp-20h]
+1854:   const char *v23; // [esp-8h] [ebp-20h]
+1855:   const char *v24; // [esp-8h] [ebp-20h]
+1856:   const char *v25; // [esp-8h] [ebp-20h]
+1857:   const char *v26; // [esp-8h] [ebp-20h]
+1858:   const char *v27; // [esp-8h] [ebp-20h]
+1859:   unsigned int rr; // [esp+Ch] [ebp-Ch] BYREF
+1860:   unsigned int gg; // [esp+10h] [ebp-8h] BYREF
+1861:   unsigned int bb; // [esp+14h] [ebp-4h] BYREF
+1862:
+1863:   v22 = UIBmp(&byte_6F2DE0);
+1864:   v2 = g_resMgr();
+1865:   v3 = (CBitmapRes *)CResMgr::Get(v2, v22, 0);
+1866:   UIWindow::DrawBitmap(this, 0, 0, v3, 0);
+1867:   v23 = UIBmp(&byte_6F2DAC);
+1868:   v4 = g_resMgr();
+1869:   v5 = (CBitmapRes *)CResMgr::Get(v4, v23, 0);
+1870:   UIWindow::DrawBitmap(this, this->m_w - v5->m_width, 0, v5, 0);
+1871:   if ( (this->m_w - 24) / 12 + ((this->m_w - 24) % 12 != 0) > 0 )
+1872:   {
+1873:     v6 = 12;
+1874:     v7 = (this->m_w - 24) / 12 + ((this->m_w - 24) % 12 != 0);
+1875:     do
+1876:     {
+1877:       v24 = UIBmp(&byte_6F2D7C);
+1878:       v8 = g_resMgr();
+1879:       v9 = (CBitmapRes *)CResMgr::Get(v8, v24, 0);
+1880:       UIWindow::DrawBitmap(this, v6, 0, v9, 0);
+1881:       v6 += 12;
+1882:       --v7;
+1883:     }
+1884:     while ( v7 );
+1885:   }
+1886:   v10 = MsgStr(MSI_FRIEND_SETTING);
+1887:   UIWindow::TextOutA(this, 5, 3, v10, 0, 0, 12, 0xFFFFFFu);
+1888:   v11 = MsgStr(MSI_FRIEND_SETTING);
+1889:   UIWindow::TextOutA(this, 4, 2, v11, 0, 0, 12, 0);
+1890:   CSkinMgr::GetColorChipColor(&g_skinMgr, 14, 6, &rr, &gg, &bb);
+1891:   HIBYTE(v12) = bb;
+1892:   LOBYTE(v12) = gg;
+1893:   UIWindow::DrawBox(this, 0, 17, this->m_w, this->m_h - 17, (unsigned __int8)rr | (v12 << 8));
+1894:   CSkinMgr::GetColorChipColor(&g_skinMgr, 2, 2, &rr, &gg, &bb);
+1895:   HIBYTE(v13) = bb;
+1896:   LOBYTE(v13) = gg;
+1897:   UIWindow::DrawBox(this, 1, 17, this->m_w - 2, this->m_h - 17, (unsigned __int8)rr | (v13 << 8));
+1898:   v25 = UIBmp(&byte_6F2EAC);
+1899:   v14 = g_resMgr();
+1900:   v15 = (CBitmapRes *)CResMgr::Get(v14, v25, 0);
+1901:   UIWindow::DrawBitmap(this, 0, this->m_h - v15->m_height, v15, 0);
+1902:   v26 = UIBmp(&byte_6F2E78);
+1903:   v16 = g_resMgr();
+1904:   v17 = (CBitmapRes *)CResMgr::Get(v16, v26, 0);
+1905:   UIWindow::DrawBitmap(this, this->m_w - v17->m_width, this->m_h - v17->m_height, v17, 0);
+1906:   if ( (this->m_w - 42) / 21 + ((this->m_w - 42) % 21 != 0) > 0 )
+1907:   {
+1908:     v18 = 21;
+1909:     v19 = (this->m_w - 42) / 21 + ((this->m_w - 42) % 21 != 0);
+1910:     do
+1911:     {
+1912:       v27 = UIBmp(&byte_6F2EDC);
+1913:       v20 = g_resMgr();
+1914:       v21 = (CBitmapRes *)CResMgr::Get(v20, v27, 0);
+1915:       UIWindow::DrawBitmap(this, v18, this->m_h - v21->m_height, v21, 0);
+1916:       v18 += 21;
+1917:       --v19;
+1918:     }
+1919:     while ( v19 );
+1920:   }
+1921: }
+1922:
+1923:
+1924: // ================================================
+1925: // Original Signature: public: virtual void __thiscall UIFriendOptionWnd::StoreInfo(void)
+1926: // Decompiled from address: 0x4d13c0
+1927: // ================================================
+1928: void __thiscall UIFriendOptionWnd::StoreInfo(UIFriendOptionWnd *this)
+1929: {
+1930:   FriendOptionWndInfo *m_info; // eax
+1931:
+1932:   m_info = this->m_info;
+1933:   if ( m_info )
+1934:   {
+1935:     m_info->w = this->m_w;
+1936:     this->m_info->h = this->m_h;
+1937:     this->m_info->x = this->m_x;
+1938:     this->m_info->y = this->m_y;
+1939:   }
+1940: }
+--- Ref/UIMessengerWnd.cpp:2260-2300 ---
+2260:   do
+2261:   {
+2262:     v34 = (UIBitmapButton *)operator new(0xA4u);
+2263:     preBmpName2._Res = (unsigned int)v34;
+2264:     LOBYTE(v85) = 13;
+2265:     if ( v34 )
+2266:       v35 = UIBitmapButton::UIBitmapButton(v34);
+2267:     else
+2268:       v35 = 0;
+2269:     *m_button = v35;
+2270:     LOBYTE(v85) = 12;
+2271:     v36 = std::operator+(&v69, &pathName, *(const char **)(v83 - 4));
+2272:     LOBYTE(v85) = 14;
+2273:     v37 = std::operator+((std::string *)posX, v36, aBmp_2)->_Ptr;
+2274:     LOBYTE(v85) = 15;
+2275:     if ( !v37 )
+2276:       v37 = (char *)`std::string::_Nullstr'::`2'::_C;
+2277:     UIBitmapButton::SetBitmapName(*m_button, v37, 0);
+2278:     if ( posX_4 )
+2279:     {
+2280:       v38 = (_BYTE *)(posX_4 - 1);
+2281:       v39 = *(_BYTE *)(posX_4 - 1);
+2282:       if ( !v39 || v39 == -1 )
+2283:         operator delete(v38);
+2284:       else
+2285:         *v38 = v39 - 1;
+2286:     }
+2287:     posX_4 = 0;
+2288:     titleText[0] = 0;
+2289:     titleText[1] = 0;
+2290:     LOBYTE(v85) = 12;
+2291:     if ( v69._Ptr )
+2292:     {
+2293:       v40 = v69._Ptr - 1;
+2294:       v41 = *(v69._Ptr - 1);
+2295:       if ( !v41 || v41 == -1 )
+2296:         operator delete(v40);
+2297:       else
+2298:         *v40 = v41 - 1;
+2299:     }
+2300:     memset(&v69._Ptr, 0, 12);
+--- Ref/UIRectInfo.cpp:223-247 ---
+223: BOOL __thiscall FriendOptionWndInfo::IsValidInfo(FriendOptionWndInfo *this)
+224: {
+225:   int y; // ecx
+226:   BOOL result; // eax
+227:
+228:   result = 0;
+229:   if ( this->w == 280 && this->h == 120 && this->x >= 0 && this->x <= g_renderer->m_width - 280 )
+230:   {
+231:     y = this->y;
+232:     if ( y >= 0 && y <= g_renderer->m_height - 120 )
+233:       return 1;
+234:   }
+235:   return result;
+236: }
+237:
+238:
+239: // ================================================
+240: // Original Signature: public: int __thiscall GuildWndInfo::IsValidInfo(void)
+241: // Decompiled from address: 0x4d4f10
+242: // ================================================
+243: BOOL __thiscall GuildWndInfo::IsValidInfo(GuildWndInfo *this)
+244: {
+245:   int w; // esi
+246:   int h; // edi
+247:   int y; // eax
+--- Ref/UIRectInfo.cpp:1105-1120 ---
+1105: // Original Signature: public: void __thiscall FriendOptionWndInfo::MakeDefault(void)
+1106: // Decompiled from address: 0x4d5a40
+1107: // ================================================
+1108: void __thiscall FriendOptionWndInfo::MakeDefault(FriendOptionWndInfo *this)
+1109: {
+1110:   this->x = 200;
+1111:   this->y = 120;
+1112:   this->w = 280;
+1113:   this->h = 120;
+1114: }
+1115:
+1116:
+1117: // ================================================
+1118: // Original Signature: public: void __thiscall GuildWndInfo::MakeDefault(void)
+1119: // Decompiled from address: 0x4d4f70
+1120: // ================================================
+--- Ref/UIControl.cpp:5600-5636 ---
+5600: // Original Signature: public: virtual void __thiscall UICheckBox::OnLBtnDown(int,int)
+5601: // Decompiled from address: 0x440a60
+5602: // ================================================
+5603: void __thiscall UICheckBox::OnLBtnDown(UICheckBox *this, int x, int y)
+5604: {
+5605:   UICheckBox_vtbl *v4; // edx
+5606:   UIWindow *m_parent; // ecx
+5607:
+5608:   if ( !this->m_isDisabled )
+5609:   {
+5610:     v4 = this->__vftable;
+5611:     this->m_state = 1 - this->m_state;
+5612:     v4->UIWindow::Invalidate(this);
+5613:     m_parent = this->m_parent;
+5614:     if ( m_parent )
+5615:       m_parent->UIWindow::SendMsg(m_parent, this, 6, this->m_id, this->m_state, 0, 0);
+5616:   }
+5617: }
+5618:
+5619:
+5620: // ================================================
+5621: // Original Signature: public: virtual void __thiscall UICheckBox::OnMouseShape(int,int)
+5622: // Decompiled from address: 0x440bf0
+5623: // ================================================
+5624: void __thiscall UICheckBox::OnMouseShape(UICheckBox *this, int x, int y)
+5625: {
+5626:   CMode::SetCursorAction(g_modeMgr.m_curMode, 2);
+5627: }
+5628:
+5629:
+5630: // ================================================
+5631: // Original Signature: public: virtual void __thiscall UIColorButton::OnDraw(void)
+5632: // Decompiled from address: 0x4416b0
+5633: // ================================================
+5634: void __thiscall UIColorButton::OnDraw(UIColorButton *this)
+5635: {
+5636:   char *Ptr; // eax
+--- Ref/UIControl.cpp:8772-8830 ---
+8772: // Original Signature: public: void __thiscall UIBitmapButton::SetBitmapName(char const *,int)
+8773: // Decompiled from address: 0x441b80
+8774: // ================================================
+8775: void __thiscall UIBitmapButton::SetBitmapName(UIBitmapButton *this, const char *bitmapName, int buttonState)
+8776: {
+8777:   CResMgr *v5; // eax
+8778:   CRes *v6; // eax
+8779:   int m_lockCnt; // ecx
+8780:   int m_timeStamp; // eax
+8781:   std::string *p_m_pressedBitmapName; // ebx
+8782:   unsigned int v10; // kr04_4
+8783:   unsigned int v11; // edi
+8784:   char *Ptr; // ecx
+8785:   char v13; // al
+8786:   unsigned int Res; // eax
+8787:   char *v15; // ecx
+8788:   unsigned int v16; // kr08_4
+8789:   unsigned int v17; // eax
+8790:   std::string *p_m_normalBitmapName; // ebx
+8791:   unsigned int v19; // edi
+8792:   char *v20; // ecx
+8793:   const char *v21; // [esp-8h] [ebp-14h]
+8794:   const char *bitmapNamea; // [esp+14h] [ebp+8h]
+8795:
+8796:   v21 = bitmapName;
+8797:   if ( g_serviceType )
+8798:     v21 = UIBmp(bitmapName);
+8799:   v5 = g_resMgr();
+8800:   v6 = CResMgr::Get(v5, v21, 0);
+8801:   if ( v6 )
+8802:   {
+8803:     m_lockCnt = v6[1].m_lockCnt;
+8804:     if ( m_lockCnt > this->m_bitmapWidth )
+8805:       this->m_bitmapWidth = m_lockCnt;
+8806:     m_timeStamp = v6[1].m_timeStamp;
+8807:     if ( m_timeStamp > this->m_bitmapHeight )
+8808:       this->m_bitmapHeight = m_timeStamp;
+8809:     if ( buttonState )
+8810:     {
+8811:       if ( buttonState != 1 )
+8812:       {
+8813:         if ( buttonState != 2 )
+8814:           return;
+8815:         p_m_pressedBitmapName = &this->m_pressedBitmapName;
+8816:         v10 = strlen(bitmapName) + 1;
+8817:         v11 = v10 - 1;
+8818:         bitmapNamea = (const char *)(v10 - 1);
+8819:         if ( std::string::max_size(p_m_pressedBitmapName) < v10 - 1 )
+8820:           std::_Xlen();
+8821:         Ptr = p_m_pressedBitmapName->_Ptr;
+8822:         if ( Ptr )
+8823:         {
+8824:           v13 = *(Ptr - 1);
+8825:           if ( v13 )
+8826:           {
+8827:             if ( v13 != -1 )
+8828:             {
+8829:               if ( v10 == 1 )
+8830:               {
+--- Ref/UIWindowMgr.cpp:6375-6395 ---
+6375:     case 68:
+6376:       m_basicInfoWnd = (UIBasicInfoWnd *)this->m_friendOptionWnd;
+6377:       if ( m_basicInfoWnd )
+6378:         goto LABEL_695;
+6379:       v44 = (UIFriendOptionWnd *)operator new(0x74u);
+6380:       windowId = (int)v44;
+6381:       v191 = 36;
+6382:       if ( v44 )
+6383:         m_basicInfoWnd = (UIBasicInfoWnd *)UIFriendOptionWnd::UIFriendOptionWnd(v44);
+6384:       else
+6385:         m_basicInfoWnd = 0;
+6386:       v191 = -1;
+6387:       this->m_friendOptionWnd = (UIFriendOptionWnd *)m_basicInfoWnd;
+6388:       UIWindow::Create(m_basicInfoWnd, 280, 120);
+6389:       m_basicInfoWnd->UIWindow::Move(
+6390:         m_basicInfoWnd,
+6391:         (g_renderer->m_width - 640) / 2 + 200,
+6392:         120 * g_renderer->m_height / 480);
+6393:       windowId = (int)m_basicInfoWnd;
+6394:       std::list<UIWindow *>::insert(
+6395:         &this->m_children,

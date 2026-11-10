@@ -1,0 +1,17 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start 14: packet_friend_options_checks
+1/6 Test #14: packet_friend_options_checks ................   Passed    0.36 sec
+    Start 15: packet_world_entry_handoff_checks
+2/6 Test #15: packet_world_entry_handoff_checks ...........   Passed    0.11 sec
+    Start 17: packet_whisper_preferences_write_checks
+3/6 Test #17: packet_whisper_preferences_write_checks .....   Passed    0.11 sec
+    Start 18: packet_whisper_preferences_read_checks
+4/6 Test #18: packet_whisper_preferences_read_checks ......   Passed    0.08 sec
+    Start 19: packet_whisper_preferences_default_checks
+5/6 Test #19: packet_whisper_preferences_default_checks ...   Passed    0.41 sec
+    Start 50: packet_chat_state_render_checks
+6/6 Test #50: packet_chat_state_render_checks .............   Passed   13.88 sec
+
+100% tests passed, 0 tests failed out of 6
+
+Total Test time (real) =  14.96 sec

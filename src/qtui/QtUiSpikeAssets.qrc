@@ -7,6 +7,7 @@
     <file>qml/RoChatRoom.qml</file>
     <file>qml/RoWhisperWindows.qml</file>
     <file>qml/RoAutoMessage.qml</file>
+    <file>qml/RoFriendOptions.qml</file>
     <file>qml/RoChatRoomEntries.qml</file>
     <file>qml/RoChatRoomSettings.qml</file>
         <file>qml/GameOverlay.qml</file>
