@@ -1,0 +1,63 @@
+{
+  "baseline": "6a907e44",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "skill_tree_normalized_sha256": {
+    "src/ui/GuildSkillWndRows.cpp": "e3419a1bbe8d8882e681cfd9b483a3c7eb179a316b08cc804dfe434114514848",
+    "src/ui/GuildSkillWndRows.h": "4b7807d11f8a8133c007abbd0580c9e4faf8fe87360794ac948470ef9f96e88c",
+    "src/ui/QtSkillTree.cpp": "7d85bd905111fa2339b7db2d18bc316168fc9f687d7d3fbc9d0560f5d5a47ca0",
+    "src/ui/QtSkillTree.h": "044a594816b93b66993bd4a7ce035b9b7f8e1944d33c120b24872e5add659248",
+    "src/ui/SkillTreeModel.cpp": "0db81a6621a89450bc4408428313bce57d919dd2f8d5f8cf2a05810923dcc21e",
+    "src/ui/SkillTreeModel.h": "ead1459b20df5ac4658b1014409900b49429abc72f4e1a372c79cd5abae4c9e1",
+    "src/ui/UISkillDescribeWnd.cpp": "400248169acac3cdfda3c109e25590c13aacb792f68cb17667554d9056f35b8d",
+    "src/ui/UISkillDescribeWnd.h": "b6de88b7468f80617a03f2479e50d48ff1616e3a9551040fda115c4f76f6b956",
+    "src/ui/UISkillListWnd.cpp": "f4ad39059d53d083491e4d39be7fd2c28b795abb6d6cdc29233ee8e209fc024d",
+    "src/ui/UISkillListWnd.h": "277f1c27080d9c699d29f38d2bbb26daf1c3160a4a36d5a0efaa446531c169a3",
+    "src/ui/UISkillSelectWnd.cpp": "c6e8632fb8cacd85d38664af3a5bd11cc5c97b5e83dcb02633d9a89d82bb7bda",
+    "src/ui/UISkillSelectWnd.h": "d5f3ea0510b7e221ce397fa34b02d47db684b336eb579f7f5a082cf0200973c1",
+    "src/qtui/qml/RoSkillTree.qml": "1b5672061738a4234f60e89881a9b5986d42b1cf00e82d259d205a9943454b92",
+    "src/qtui/SkillTreeGeometry.h": "d4bd7a28e27757473d297ec8d144b601b66239d5c70b1fe3fe0833b89c01db75",
+    "src/qtui/data/skill_tree_catalog.json": "8ba49297694461942e2d55bf6ad5a90ae05e5de062e16388c464983ab912ef42"
+  },
+  "sha256": {
+    "src/main/WinMain.cpp": "70b190f054f010c62210733708da377b9e77f374a749ea1844ccb9b6355692f3",
+    "src/qtui/QtPlatformWindow.cpp": "e8799fff1396622f050f695e86939bbb25dab585b63fc7a5a0b4aa9840f9d145",
+    "src/ui/UIGroundSkillTextWnd.cpp": "3d2127404ba829b5796de789f05c9842220b8ae17838784edf10fbac4329546f",
+    "src/ui/UIGroundSkillTextWnd.h": "9fa68209e8253f22409bc74d275e12ec422315d66db2e9138aaabb33f6759cf1",
+    "src/ui/UIWindowMgr.cpp": "595984317a46969bf678a84a90c7fad09645f07fb80cb80c7a721716eff8da85",
+    "tools/tests/replay/GroundSkillTextRenderChecks.inc": "1f04b03eecef9a47c297baaaf9fa9772cfd3b4c9aa6600a865a93ed7f467cd5a",
+    "tools/tests/replay/PetWindowRenderChecks.inc": "16b6dc1f20256b58086331e7c4398585e2b6783c462ac3fa3f55ff5ba42c9661",
+    "build-mingw-preset/open-midgard.exe": "480dca710536e87b47c6328144ab076f286ff998c3c491d4eb807c14c43b23e2"
+  },
+  "anchors": {
+    "focus": "Ref/UIControl.cpp OnLBtnDown 0x444370 and OnBeginEdit 0x444520",
+    "paint": "Ref/UIControl.cpp DrawEditText 0x444D30 and DrawSelectionBox 0x4452C0",
+    "limit": "Ref/UIControl.cpp SetTextByMaxChar 0x444A30",
+    "key": "Ref/Language.cpp OnKeyDown 0x4FF2A0 and OnChar 0x4FF040",
+    "commit": "Ref/Language.cpp GetImeResultStr 0x4FF810"
+  },
+  "render": {
+    "custom_skin_resource_acceptance": false,
+    "native_character_and_qt_commit": true,
+    "native_frames": 2,
+    "native_keyboard_acceptance": false,
+    "native_windowproc_input": true,
+    "opacity_compositor_acceptance": false,
+    "outcome": "PASS",
+    "pointer_capture_and_outside_release": true,
+    "skill_tree_window_changed": false,
+    "source_codepage_editor_limit": true,
+    "source_colorchip_acceptance": false,
+    "source_edit_geometry_and_limit": true,
+    "source_ids_84_101": true,
+    "source_key_frame_footer_button_samples": true,
+    "source_selection_and_replacement": true,
+    "unregistered_frame_drag": true,
+    "valid_colorchip_sample_and_paint": true
+  },
+  "remaining": [
+    "Clipboard shortcuts",
+    "Live IME preedit, candidate positioning, and replacement ranges",
+    "Original font metrics and full native keyboard acceptance"
+  ]
+}

@@ -820,9 +820,10 @@
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
         "docs/packets/evidence/PK27-prompt-input.md",
         "docs/packets/evidence/PK27-prompt-text.md",
-        "docs/packets/evidence/PK27-prompt-codec.md"
+        "docs/packets/evidence/PK27-prompt-codec.md",
+        "docs/packets/evidence/PK27-prompt-selection.md"
       ],
-      "commit_subject": "packet(PK27): preserve ground skill service text encoding"
+      "commit_subject": "packet(PK27): restore ground prompt selection and caret"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -855,9 +856,10 @@
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
         "docs/packets/evidence/PK27-prompt-input.md",
         "docs/packets/evidence/PK27-prompt-text.md",
-        "docs/packets/evidence/PK27-prompt-codec.md"
+        "docs/packets/evidence/PK27-prompt-codec.md",
+        "docs/packets/evidence/PK27-prompt-selection.md"
       ],
-      "commit_subject": "packet(PK27): preserve ground skill service text encoding"
+      "commit_subject": "packet(PK27): restore ground prompt selection and caret"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -886,9 +888,10 @@
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
         "docs/packets/evidence/PK27-prompt-input.md",
         "docs/packets/evidence/PK27-prompt-text.md",
-        "docs/packets/evidence/PK27-prompt-codec.md"
+        "docs/packets/evidence/PK27-prompt-codec.md",
+        "docs/packets/evidence/PK27-prompt-selection.md"
       ],
-      "commit_subject": "packet(PK27): preserve ground skill service text encoding"
+      "commit_subject": "packet(PK27): restore ground prompt selection and caret"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -915,9 +918,10 @@
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
         "docs/packets/evidence/PK27-prompt-input.md",
         "docs/packets/evidence/PK27-prompt-text.md",
-        "docs/packets/evidence/PK27-prompt-codec.md"
+        "docs/packets/evidence/PK27-prompt-codec.md",
+        "docs/packets/evidence/PK27-prompt-selection.md"
       ],
-      "commit_subject": "packet(PK27): preserve ground skill service text encoding"
+      "commit_subject": "packet(PK27): restore ground prompt selection and caret"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -1747,7 +1751,8 @@
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
-        "docs/packets/evidence/PK27-prompt-codec.md"
+        "docs/packets/evidence/PK27-prompt-codec.md",
+        "docs/packets/evidence/PK27-prompt-selection.md"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
@@ -2261,7 +2266,8 @@
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
         "docs/packets/evidence/PK27-prompt-input.md",
         "docs/packets/evidence/PK27-prompt-text.md",
-        "docs/packets/evidence/PK27-prompt-codec.md"
+        "docs/packets/evidence/PK27-prompt-codec.md",
+        "docs/packets/evidence/PK27-prompt-selection.md"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

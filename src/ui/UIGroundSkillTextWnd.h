@@ -35,12 +35,16 @@ public:
     void OnUtf16Character(char16_t codeUnit);
     void CommitText(std::u16string_view text);
     void OnKeyDown(int key) override;
+    bool HandleEditKey(int key, bool extendSelection);
     bool CanReceiveKeyInput() const override { return true; }
     bool IsFrameWnd() override { return true; }
     msgresult_t SendMsg(UIWindow*,int,msgparam_t,msgparam_t,msgparam_t) override;
 
 private:
     friend class GroundSkillTextEditCtrl;
+    friend class UIWindowMgr;
+    void SyncSelection();
+    void UpdateText(std::string text, std::size_t cursor);
     void FocusEdit();
     void ActivateButton(int id);
     void CancelPointerCapture();
@@ -56,6 +60,7 @@ private:
     int m_dragStartX=0,m_dragStartY=0,m_dragOriginX=0,m_dragOriginY=0;
     std::string m_caption;
     std::string m_prompt;
+    std::string m_selectionText;
     char16_t m_highSurrogate=0;
     int m_pressed=0;
     int m_hover=0;

@@ -3719,3 +3719,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-10 Ground prompt service encoding
 
 **Current ground prompt encoding checkpoint (2026-11-10)**. Ground text now uses the service codepage on the wire and UTF-8 in the editor and skill bubble. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 17.03s. [Evidence](evidence/PK27-prompt-codec.md)
+
+## 2026-11-10 Ground prompt selection
+
+**Current ground prompt selection checkpoint (2026-11-10)**. Talkie Box and Graffiti now support caret navigation, Shift selection, and replacement by typed text or an IME commit. All 164 application checks and 473 standalone checks passed. The focused suite passed all 3 checks. [Evidence](evidence/PK27-prompt-selection.md)

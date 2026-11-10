@@ -581,6 +581,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // The translated WM_CHAR owns native Backspace.
             return 0;
         }
+        if (msg == WM_KEYDOWN) {
+            const bool shift = (GetKeyState(VK_SHIFT)&0x8000)!=0;
+            const bool control = (GetKeyState(VK_CONTROL)&0x8000)!=0;
+            if ((!control || shift) && prompt->HandleEditKey(static_cast<int>(wParam),shift)) return 0;
+        }
         if (msg == WM_CHAR || msg == WM_IME_CHAR) {
             prompt->OnUtf16Character(static_cast<char16_t>(wParam));
             return 0;

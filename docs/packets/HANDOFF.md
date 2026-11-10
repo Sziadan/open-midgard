@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-**Current ground prompt encoding checkpoint (2026-11-10)**. Ground text now uses the service codepage on the wire and UTF-8 in the editor and skill bubble. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 17.03s. [Evidence](evidence/PK27-prompt-codec.md)
+**Current ground prompt selection checkpoint (2026-11-10)**. Talkie Box and Graffiti now support caret navigation, Shift selection, and replacement by typed text or an IME commit. All 164 application checks and 473 standalone checks passed. The focused suite passed all 3 checks. [Evidence](evidence/PK27-prompt-selection.md)
+
+**Previous ground prompt encoding checkpoint (2026-11-10)**. Ground text now uses the service codepage on the wire and UTF-8 in the editor and skill bubble. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 17.03s. [Evidence](evidence/PK27-prompt-codec.md)
 
 **Previous ground prompt text checkpoint (2026-11-10)**. Native and Qt text now reach the focused ground prompt. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 16.99s. Live IME, selection, and source packet encoding remain open. [Evidence](evidence/PK27-prompt-text.md)
 
@@ -37,7 +39,7 @@
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Verify live IME, selection and the original global key actions. Continue skin selection, translucency, snapping, companion AI, and the full packet plan. Preserve the skill tree window.
+**Next work.** Verify clipboard shortcuts, live IME preedit and candidate positioning, replacement ranges, and original global key actions in the ground prompts. Continue skin selection, translucency, snapping, and companion AI using the existing package gates. Keep skill tree window code and assets unchanged.
 
 1. Continue [PK09.04](work-items/PK09.04.md) with remaining full item/status/delta/detail contexts, remaining item mutation/status/context acceptance. PK37.07 now covers normal NPC catalog and selected buy/sell right-clicks, exact row snapshots, copied identification/refine/cards, owner collisions, lifetime, scrolling/header/padding, model shrink, reopening and125% WindowProc input. Preserve passive QML input and never resolve an NPC detail through equal-index inventory/cart or catalog rows.
    The strong-agent fallback review is complete at the current representation boundary: primary mode36/44/45 actions reset/setup drag state; transaction submission is separate. Legacy grid GetCurItem clamps a right tail that coordinate GetItemInfo rejects, while the decompiled one-argument lookup is unreliable. Current full-width row UI lacks this mismatch. Do not invent header/blank/normal-left ForceUpdate gestures. Exact legacy geometry/signature behavior remains unaccepted; PK09.11's explicit ForceUpdate API and default raw-key Select toggle remain required.

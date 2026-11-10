@@ -1336,7 +1336,7 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
     case WID_TALKBOXTRAPINPUTWND:case WID_GRAFFISTRBOXWND:{
         auto*& window=m_groundSkillTextWindows[windowId==WID_TALKBOXTRAPINPUTWND?0:1];
         if(!window){window=new UIGroundSkillTextWnd(windowId);m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),window);}
-        window->SetShow(1);m_editWindow=window;
+        window->SetShow(1);window->FocusEdit();
         if(m_chatWnd)m_chatWnd->ClearInputFocus();
         return window;
     }
@@ -2845,8 +2845,8 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
             }
         }
 
-        // Track focused edit control
-        if (hit->CanReceiveKeyInput()) {
+        // Ground prompts handle their own focus transition.
+        if (hit->CanReceiveKeyInput() && !GroundSkillTextOwner(hit)) {
             m_editWindow = hit;
         }
         hit->OnLBtnDown(x, y);

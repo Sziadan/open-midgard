@@ -45,7 +45,7 @@
             Require(std::string(window->GetEditCtrl()->GetText()) == "x", "Backspace did not remove exactly one multibyte character");
             window->GetEditCtrl()->SetText(std::string(77, 'a').c_str());
             WindowProc(g_hMainWnd, WM_CHAR, 0x00e9, 0);
-            Require(std::string(window->GetEditCtrl()->GetText()) == std::string(77, 'a'), "input limit split a multibyte character");
+            Require(std::string(window->GetEditCtrl()->GetText()) == std::string(77, 'a') + " ", "source limit did not replace the cut character with padding");
             WindowProc(g_hMainWnd, WM_KEYDOWN, VK_RETURN, 0);
             WindowProc(g_hMainWnd, WM_CHAR, 13, 0);
             WindowProc(g_hMainWnd, WM_KEYDOWN, VK_ESCAPE, 0);
@@ -66,6 +66,16 @@
                 commit.setCommitString(QString::fromUtf8("\xe3\x81\x82"));
                 QCoreApplication::sendEvent(host, &commit);
                 Require(std::string(window->GetEditCtrl()->GetText()) == "\xc3\xa9\xe3\x81\x82", "Qt key or IME commit did not reach the prompt exactly once");
+                QKeyEvent left(QEvent::KeyPress,Qt::Key_Left,Qt::NoModifier);
+                QCoreApplication::sendEvent(host,&left);
+                QKeyEvent shiftLeft(QEvent::KeyPress,Qt::Key_Left,Qt::ShiftModifier);
+                QCoreApplication::sendEvent(host,&shiftLeft);
+                Require(window->GetEditCtrl()->m_selectionOrigin == 2 && window->GetEditCtrl()->m_selectionCursor == 0,
+                    "Qt shift-left did not select one complete UTF-8 character");
+                QInputMethodEvent replacement;
+                replacement.setCommitString(QStringLiteral("Q"));
+                QCoreApplication::sendEvent(host,&replacement);
+                Require(std::string(window->GetEditCtrl()->GetText()) == "Q\xe3\x81\x82", "IME commit did not replace the selection");
             }
             g_codePage = 949;
             window->GetEditCtrl()->SetText("");
@@ -74,6 +84,23 @@
             window->OnKeyDown(VK_BACK);
             Require(std::strlen(window->GetEditCtrl()->GetText()) == 38*3, "Backspace truncated text expanded by the codepage conversion");
             g_codePage = 65001;
+            window->GetEditCtrl()->SetText("a\xc3\xa9z");
+            WindowProc(g_hMainWnd,WM_KEYDOWN,VK_HOME,0);
+            WindowProc(g_hMainWnd,WM_KEYDOWN,VK_RIGHT,0);
+            WindowProc(g_hMainWnd,WM_KEYDOWN,VK_DELETE,0);
+            Require(std::string(window->GetEditCtrl()->GetText()) == "az", "native Delete split a multibyte character");
+            window->GetEditCtrl()->SetText("Focus selection");
+            g_windowMgr.m_editWindow = nullptr;
+            pointer(WM_LBUTTONDOWN,50,75); pointer(WM_LBUTTONUP,50,75);
+            Require(window->GetEditCtrl()->m_selectionOrigin == 0 && window->GetEditCtrl()->m_selectionCursor == 15,
+                "focus entry did not select the existing text");
+            ArgbDibSurface selectionDib;
+            Require(selectionDib.EnsureSize(view.width(),view.height()),"selection DIB failed");
+            g_windowMgr.DrawVisibleWindowsToHdc(selectionDib.GetDC(),true);
+            const QImage selection(reinterpret_cast<uchar*>(selectionDib.GetPixels()),view.width(),view.height(),view.width()*4,QImage::Format_RGB32);
+            Require(selection.pixelColor(46,70)==QColor("#de9944"),"selection highlight did not use the source palette sample");
+            WindowProc(g_hMainWnd,WM_CHAR,'!',0);
+            Require(std::string(window->GetEditCtrl()->GetText()) == "!", "native character did not replace focus selection");
             window->GetEditCtrl()->SetText("Ground skill fixture!");
             for(int i=0;i<6;++i)Require(window->GetFrameBitmap(i).IsValid(),"source text frame fixture failed raw-key asset lookup");
             ArgbDibSurface dib;Require(dib.EnsureSize(view.width(),view.height()),"ground text DIB failed");
@@ -96,5 +123,5 @@
             {"source_edit_geometry_and_limit",true},{"source_key_frame_footer_button_samples",true},
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},{"opacity_compositor_acceptance",false},
-            {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},{"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
+            {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},{"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},{"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
     }

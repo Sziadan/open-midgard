@@ -124,7 +124,10 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     }};
     const auto saveBitmap=[&](const std::string& relative,const BitmapFixture& spec){
         QImage image(spec.width,spec.height,QImage::Format_RGB32);image.fill(QColor(spec.color));
-        if(std::string(spec.name)=="colorchip.bmp")image.setPixelColor(20,6,QColor("#a1b2c3"));
+        if (std::string(spec.name)=="colorchip.bmp") {
+            image.setPixelColor(20,6,QColor("#a1b2c3"));
+            image.setPixelColor(6,2,QColor("#de9944"));
+        }
         QByteArray bytes;QBuffer buffer(&bytes);buffer.open(QIODevice::WriteOnly);
         Require(image.save(&buffer,"BMP"),"pet bitmap fixture encoding failed");
         const auto archive=assets/"source-bitmaps"/std::filesystem::path(relative);

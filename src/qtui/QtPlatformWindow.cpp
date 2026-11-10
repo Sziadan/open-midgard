@@ -52,6 +52,8 @@ constexpr int kVkMenu = 0x12;
 constexpr int kVkEscape = 0x1B;
 constexpr int kVkPrior = 0x21;
 constexpr int kVkNext = 0x22;
+constexpr int kVkEnd = 0x23;
+constexpr int kVkHome = 0x24;
 constexpr int kVkLeft = 0x25;
 constexpr int kVkUp = 0x26;
 constexpr int kVkRight = 0x27;
@@ -113,6 +115,8 @@ int MapQtKeyToVirtualKey(int key)
     case Qt::Key_Escape: return kVkEscape;
     case Qt::Key_PageUp: return kVkPrior;
     case Qt::Key_PageDown: return kVkNext;
+    case Qt::Key_End: return kVkEnd;
+    case Qt::Key_Home: return kVkHome;
     case Qt::Key_Left: return kVkLeft;
     case Qt::Key_Up: return kVkUp;
     case Qt::Key_Right: return kVkRight;
@@ -218,7 +222,9 @@ protected:
     {
         const int virtualKey = MapQtKeyToVirtualKey(event->key());
         if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
-            prompt->OnKeyDown(virtualKey);
+            const bool shift = event->modifiers().testFlag(Qt::ShiftModifier);
+            const bool control = event->modifiers().testFlag(Qt::ControlModifier);
+            if (!control || shift) prompt->HandleEditKey(virtualKey,shift);
             if (!(event->modifiers() & (Qt::AltModifier | Qt::ControlModifier))
                 || event->modifiers().testFlag(Qt::GroupSwitchModifier))
                 prompt->CommitText(event->text().toStdU16String());

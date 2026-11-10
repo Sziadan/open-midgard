@@ -13,6 +13,7 @@
 
 #if RO_ENABLE_QT6_UI
 #include <QFont>
+#include <QFontMetrics>
 #include <QImage>
 #include <QPainter>
 #endif
@@ -28,7 +29,7 @@ RECT GlobalBounds(RECT r,const UIWindow& owner)
     r.left+=owner.m_x;r.right+=owner.m_x;r.top+=owner.m_y;r.bottom+=owner.m_y;return r;
 }
 
-void DrawText(HDC dc,RECT rect,const std::string& value,COLORREF color)
+void DrawText(HDC dc,RECT rect,const std::string& value,COLORREF color,bool utf8=false)
 {
     if(rect.right<=rect.left || rect.bottom<=rect.top)return;
 #if RO_ENABLE_QT6_UI
@@ -37,12 +38,43 @@ void DrawText(HDC dc,RECT rect,const std::string& value,COLORREF color)
     QPainter painter(&image);QFont font("Segoe UI");font.setPixelSize(12);painter.setFont(font);
     painter.setPen(QColor::fromRgb(GetRValue(color),GetGValue(color),GetBValue(color)));
     painter.drawText(image.rect(),Qt::AlignLeft|Qt::AlignTop|Qt::TextSingleLine,
-                     QString::fromLocal8Bit(value.c_str()));
+                     utf8 ? QString::fromStdString(value) : QString::fromLocal8Bit(value.c_str()));
     painter.end();
     AlphaBlendArgbToHdc(dc,rect.left,rect.top,image.width(),image.height(),
                         reinterpret_cast<const unsigned int*>(image.constBits()),image.width(),image.height());
 #else
-    shopui::DrawWindowTextRect(dc,rect,value,color,DT_LEFT|DT_TOP|DT_SINGLELINE|DT_NOPREFIX);
+    const auto encoded = utf8 ? ro::EncodeSourceText(value, 0) : std::optional<std::string>(value);
+    if (encoded) shopui::DrawWindowTextRect(dc,rect,*encoded,color,DT_LEFT|DT_TOP|DT_SINGLELINE|DT_NOPREFIX);
+#endif
+}
+
+std::size_t PreviousCharacter(std::string_view text, std::size_t offset)
+{
+    if (!offset) return 0;
+    --offset;
+    while (offset && (static_cast<unsigned char>(text[offset]) & 0xc0) == 0x80) --offset;
+    return offset;
+}
+
+std::size_t NextCharacter(std::string_view text, std::size_t offset)
+{
+    if (offset == text.size()) return offset;
+    ++offset;
+    while (offset < text.size() && (static_cast<unsigned char>(text[offset]) & 0xc0) == 0x80) ++offset;
+    return offset;
+}
+
+int EditTextWidth(HDC dc, std::string_view text)
+{
+#if RO_ENABLE_QT6_UI
+    QFont font("Segoe UI");
+    font.setPixelSize(12);
+    return QFontMetrics(font).horizontalAdvance(QString::fromUtf8(text.data(), text.size()));
+#else
+    const auto encoded = ro::EncodeSourceText(text, 0);
+    SIZE size{};
+    if (encoded) GetTextExtentPoint32A(dc, encoded->data(), static_cast<int>(encoded->size()), &size);
+    return size.cx;
 #endif
 }
 
@@ -72,11 +104,38 @@ public:
     explicit GroundSkillTextEditCtrl(UIGroundSkillTextWnd* owner):m_owner(owner){}
     void OnDraw() override
     {
-        if(!m_show)return;auto dc=AcquireDrawTarget();if(!dc)return;
-        const int saved=SaveDC(dc);IntersectClipRect(dc,m_x,m_y,m_x+m_w,m_y+m_h);
+        if (!m_show) return;
+        auto dc = AcquireDrawTarget();
+        if (!dc) return;
+        m_owner->SyncSelection();
+        const bool focused = g_windowMgr.GetFocusedGroundSkillText() == m_owner;
+        const auto cursor = static_cast<std::size_t>(m_selectionCursor);
+        const auto anchor = static_cast<std::size_t>(m_selectionOrigin);
+        const std::string_view text(m_text);
+        if (!focused || (std::min)(anchor,cursor) == 0) m_scrollStart = 0;
+        m_scrollStart = (std::min)(m_scrollStart,cursor);
+        while (m_scrollStart && m_scrollStart < text.size() && (static_cast<unsigned char>(text[m_scrollStart]) & 0xc0) == 0x80)
+            --m_scrollStart;
+        while (focused && m_scrollStart < cursor && EditTextWidth(dc,text.substr(m_scrollStart,cursor-m_scrollStart)) > m_w-12)
+            m_scrollStart = NextCharacter(text,m_scrollStart);
+        const int originX = m_x+3;
+        const auto pixel = [&](std::size_t offset) {
+            return originX + EditTextWidth(dc,text.substr(m_scrollStart,offset > m_scrollStart ? offset-m_scrollStart : 0));
+        };
+        const int saved = SaveDC(dc);
+        IntersectClipRect(dc,m_x,m_y,m_x+m_w,m_y+m_h);
         shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(m_r,m_g,m_b));
-        DrawText(dc,{m_x+m_xOffset,m_y+m_yOffset,m_x+m_w-2,m_y+m_h},m_text,RGB(m_textR,m_textG,m_textB));
-        RestoreDC(dc,saved);ReleaseDrawTarget(dc);
+        if (focused && anchor != cursor) {
+            const auto rgb = m_owner->GetColorChip().IsValid() ? m_owner->GetColorChipRgb(6,2) : 0xb4cde6u;
+            shopui::FillRectColor(dc,{pixel((std::min)(anchor,cursor)),m_y,pixel((std::max)(anchor,cursor)),m_y+m_h},
+                RGB((rgb>>16)&255,(rgb>>8)&255,rgb&255));
+        }
+        const auto textColor = RGB(m_textR,m_textG,m_textB);
+        DrawText(dc,{originX,m_y+m_yOffset,m_x+m_w,m_y+m_h},std::string(text.substr(m_scrollStart)),textColor,true);
+        if (focused && anchor == cursor && ((timeGetTime()/500)&1)==0)
+            DrawText(dc,{pixel(cursor)-2,m_y+m_yOffset,m_x+m_w,m_y+m_h},"|",textColor);
+        RestoreDC(dc,saved);
+        ReleaseDrawTarget(dc);
     }
     void OnLBtnDown(int x,int y) override
     {
@@ -85,6 +144,7 @@ public:
     }
 private:
     UIGroundSkillTextWnd* m_owner;
+    std::size_t m_scrollStart = 0;
 };
 
 UIGroundSkillTextWnd::UIGroundSkillTextWnd(int windowId)
@@ -132,8 +192,17 @@ int UIGroundSkillTextWnd::GetButtonState(int id) const
 void UIGroundSkillTextWnd::FocusEdit()
 {
     if(m_show && !g_windowMgr.m_modalWindow){
+        const bool wasFocused = g_windowMgr.GetFocusedGroundSkillText() == this;
         g_windowMgr.m_editWindow=this;
-        if(m_editCtrl)m_editCtrl->m_hasFocus=true;
+        if (m_editCtrl) {
+            SyncSelection();
+            m_editCtrl->m_hasFocus=true;
+            if (!wasFocused) {
+                m_editCtrl->m_selectionOrigin=0;
+                m_editCtrl->m_selectionCursor=static_cast<int>(m_editCtrl->m_text.size());
+                m_editCtrl->Invalidate();
+            }
+        }
         if(g_windowMgr.m_chatWnd)g_windowMgr.m_chatWnd->ClearInputFocus();
     }
 }
@@ -241,12 +310,27 @@ void UIGroundSkillTextWnd::OnUtf16Character(char16_t codeUnit)
     CommitText(pair ? std::u16string_view(units.data(), 2) : std::u16string_view(&codeUnit, 1));
 }
 
+void UIGroundSkillTextWnd::SyncSelection()
+{
+    if (m_editCtrl->m_text != m_selectionText) {
+        m_selectionText = m_editCtrl->m_text;
+        m_editCtrl->m_selectionOrigin = m_editCtrl->m_selectionCursor = static_cast<int>(m_selectionText.size());
+    }
+}
+
+void UIGroundSkillTextWnd::UpdateText(std::string text, std::size_t cursor)
+{
+    m_editCtrl->m_text = std::move(text);
+    m_selectionText = m_editCtrl->m_text;
+    m_editCtrl->m_selectionOrigin = m_editCtrl->m_selectionCursor = static_cast<int>(cursor);
+    m_editCtrl->Invalidate();
+}
+
 void UIGroundSkillTextWnd::CommitText(std::u16string_view text)
 {
     m_highSurrogate = 0;
     if (!m_editCtrl) return;
-    std::string next = m_editCtrl->GetText();
-    const int codePage = ro::SelectedSourceTextCodePage();
+    std::string insertion;
     for (std::size_t i = 0; i < text.size(); ++i) {
         char32_t code = text[i];
         if (code >= 0xd800 && code <= 0xdbff) {
@@ -255,38 +339,85 @@ void UIGroundSkillTextWnd::CommitText(std::u16string_view text)
         }
         if (code < 0x20 || (code >= 0xdc00 && code <= 0xdfff)) continue;
         const int count = code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
-        const auto previousSize = next.size();
         if (count == 1) {
-            next += static_cast<char>(code);
+            insertion += static_cast<char>(code);
         } else {
             constexpr unsigned prefixes[]{0, 0, 0xc0, 0xe0, 0xf0};
-            next += static_cast<char>(prefixes[count] | (code >> (6 * (count - 1))));
+            insertion += static_cast<char>(prefixes[count] | (code >> (6 * (count - 1))));
             for (int shift = 6 * (count - 2); shift >= 0; shift -= 6)
-                next += static_cast<char>(0x80 | ((code >> shift) & 0x3f));
-        }
-        const auto encoded = ro::EncodeSourceText(next, codePage);
-        if (!encoded || encoded->size() > static_cast<std::size_t>(m_editCtrl->m_maxchar)) {
-            next.resize(previousSize);
-            break;
+                insertion += static_cast<char>(0x80 | ((code >> shift) & 0x3f));
         }
     }
-    if (next != m_editCtrl->m_text) {
-        m_editCtrl->m_text = std::move(next);
-        m_editCtrl->Invalidate();
+    if (insertion.empty()) return;
+    SyncSelection();
+    const auto begin = static_cast<std::size_t>((std::min)(m_editCtrl->m_selectionOrigin,m_editCtrl->m_selectionCursor));
+    const auto end = static_cast<std::size_t>((std::max)(m_editCtrl->m_selectionOrigin,m_editCtrl->m_selectionCursor));
+    std::string next = m_editCtrl->m_text;
+    next.replace(begin,end-begin,insertion);
+    const int codePage = ro::SelectedSourceTextCodePage();
+    const auto limit = static_cast<std::size_t>(m_editCtrl->m_maxchar);
+    auto encoded = ro::EncodeSourceText(next,codePage);
+    if (!encoded) return;
+    if (encoded->size() > limit) {
+        // Source SetTextByMaxChar keeps the prefix at a character boundary,
+        // then fills the remaining byte positions with spaces.
+        std::size_t retained = 0;
+        std::size_t retainedBytes = 0;
+        while (retained < next.size()) {
+            const auto boundary = NextCharacter(next,retained);
+            const auto prefix = ro::EncodeSourceText(std::string_view(next).substr(0,boundary),codePage);
+            if (!prefix || prefix->size() > limit) break;
+            retained = boundary;
+            retainedBytes = prefix->size();
+        }
+        next.resize(retained);
+        next.append(limit-retainedBytes,' ');
     }
+    const auto cursor = (std::min)(begin+insertion.size(),next.size());
+    UpdateText(std::move(next),cursor);
+}
+
+bool UIGroundSkillTextWnd::HandleEditKey(int key, bool extendSelection)
+{
+    if (!m_editCtrl) return false;
+    m_highSurrogate = 0;
+    SyncSelection();
+    const auto origin = static_cast<std::size_t>(m_editCtrl->m_selectionOrigin);
+    auto cursor = static_cast<std::size_t>(m_editCtrl->m_selectionCursor);
+    const auto& text = m_editCtrl->m_text;
+    switch (key) {
+    case VK_HOME: cursor = 0; break;
+    case VK_END: cursor = text.size(); break;
+    case VK_LEFT: cursor = PreviousCharacter(text,cursor); break;
+    case VK_RIGHT: cursor = NextCharacter(text,cursor); break;
+    case VK_BACK:
+    case VK_DELETE: {
+        if (key == VK_DELETE && extendSelection) return true;
+        auto begin = (std::min)(origin,cursor);
+        auto end = (std::max)(origin,cursor);
+        if (begin == end) {
+            if (key == VK_BACK) begin = PreviousCharacter(text,begin);
+            else end = NextCharacter(text,end);
+        }
+        if (begin != end) {
+            auto next = text;
+            next.erase(begin,end-begin);
+            UpdateText(std::move(next),begin);
+        }
+        return true;
+    }
+    default: return false;
+    }
+    m_editCtrl->m_selectionCursor = static_cast<int>(cursor);
+    if (!extendSelection) m_editCtrl->m_selectionOrigin = m_editCtrl->m_selectionCursor;
+    m_editCtrl->Invalidate();
+    return true;
 }
 
 void UIGroundSkillTextWnd::OnKeyDown(int key)
 {
     m_highSurrogate = 0;
-    if (key != VK_BACK || !m_editCtrl) return;
-    std::string text = m_editCtrl->GetText();
-    if (text.empty()) return;
-    std::size_t end = text.size() - 1;
-    while (end && (static_cast<unsigned char>(text[end]) & 0xc0) == 0x80) --end;
-    text.resize(end);
-    m_editCtrl->m_text = std::move(text);
-    m_editCtrl->Invalidate();
+    HandleEditKey(key,(GetKeyState(VK_SHIFT)&0x8000)!=0);
 }
 
 void UIGroundSkillTextWnd::ActivateButton(int id)
