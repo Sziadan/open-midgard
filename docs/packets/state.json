@@ -2095,7 +2095,8 @@
         "docs/packets/evidence/PK09.21-tip-data.md",
         "docs/packets/evidence/PK09.21-tip-window.md",
         "docs/packets/evidence/PK09.21-command-table-seed.md",
-        "docs/packets/evidence/PK09.21-command-actions.md"
+        "docs/packets/evidence/PK09.21-command-actions.md",
+        "docs/packets/evidence/PK09.21-help-where.md"
       ],
       "commit_subject": null
     }

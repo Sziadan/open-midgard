@@ -4,6 +4,7 @@
 namespace {
 struct SourceEmotionRoute {int type,emotion;};
 #include "core/SourceChatEmotions.generated.inc"
+#include "core/SourceChatHelpMessages.generated.inc"
 std::string SourceChatLabel(int id,const char* fallback)
 {
     ro::UiMessageStrings table;table.Load();return table.Get(id,fallback);
@@ -18,6 +19,16 @@ int InvertSourceCommandInt(int value)
     // Selected x86 SUB wraps modulo32, including nonboolean saved state.
     const u32 bits=1u-static_cast<u32>(value);s32 result;
     std::memcpy(&result,&bits,sizeof(result));return result;
+}
+s32 SourceWhereCoordinate(float position,int extent,int zoom)
+{
+    if(zoom==0)return 0;
+    // Selected579A10: signed integer half, integer zoom rounded through float,
+    // x87 quotient/add then a double spill before floor/__ftol2's low DWORD.
+    const double value=static_cast<double>(static_cast<long double>(position)/static_cast<float>(zoom)+extent/2);
+    const double integral=std::floor(value);
+    if(!std::isfinite(integral) || integral< -9223372036854775808.0 || integral>=9223372036854775808.0)return 0;
+    const u32 bits=static_cast<u32>(static_cast<s64>(integral));s32 result;std::memcpy(&result,&bits,sizeof(result));return result;
 }
 void RefreshSourceOptions()
 {
@@ -154,6 +165,30 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return SendMsg(33,route.emotion>=0?route.emotion:std::rand()%6+58,0,0);
     }
     switch(type){
+    case 9: {
+        if(!m_world || !m_world->m_player || !m_world->m_attr)return 0;
+        const auto* attr=m_world->m_attr;const auto& position=m_world->m_player->m_pos;
+        const int x=SourceWhereCoordinate(position.x,attr->m_width,attr->m_zoom);
+        const int y=SourceWhereCoordinate(position.z,attr->m_height,attr->m_zoom);
+        std::string filename(std::begin(m_rswName),std::find(std::begin(m_rswName),std::end(m_rswName),'\0'));
+        std::string stem=filename;if(stem.size()>4)stem.resize(stem.size()-4);
+        const auto text=g_session.GetMapName(filename.c_str())+"("+stem+") : "+std::to_string(x)+", "+std::to_string(y);
+        g_windowMgr.SendMsg(3,0,0,0);g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text.c_str()),6619135);
+        if(g_serviceType!=ServiceGermany)g_windowMgr.SendMsg(20,reinterpret_cast<msgparam_t>(text.c_str()),6619135);
+        return 1;
+    }
+    case 14: {
+        g_windowMgr.SendMsg(3,0,0,0);
+        ro::UiMessageStrings table;table.Load();
+        const auto show=[&](int id){const auto text=table.Get(id,"");g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text.c_str()),16777060);};
+        for(int id:kSourceHelpMessageIds)show(id);
+        // The source consumes a second/third shared RNG draw only when the
+        // earlier branch fails. The first branch emits BOTH warning rows.
+        if(std::rand()%10<4){show(kSourceHelpTailMessages[0]);show(kSourceHelpTailMessages[1]);}
+        else if(std::rand()%5<2)show(kSourceHelpTailMessages[2]);
+        else if(std::rand()%3<2)show(kSourceHelpTailMessages[3]);
+        return 1;
+    }
     case 6:return SendMsg(34,0,0,0);
     case 43:return SendMsg(83,0,0,0);
     case 145:return SendMsg(194,0,0,0);

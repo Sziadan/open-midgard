@@ -2,6 +2,7 @@
 #include "core/Vitals.h"
 #include "core/GuildState.h"
 #include "core/PetState.h"
+#include "core/SourceMapNames.h"
 #include <algorithm>
 #include <array>
 #include <deque>
@@ -154,6 +155,9 @@ public:
     std::vector<std::string> m_exNameList;
     void LoadWhisperOptions();
     bool SaveWhisperOptions() const;
+    bool InitMapNameTable();
+    std::string GetMapName(const char* rswName) const;
+    ro::SourceMapNames m_mapNameTable;
     bool IsExName(const char* name) const;
     bool IsGuildMember(const char* name) const;
     bool IsCheatName(const char* name) const;

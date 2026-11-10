@@ -3,6 +3,7 @@
 #include "../DebugLog.h"
 #include "Globals.h"
 #include "File.h"
+#include "session/Session.h"
 #include <fstream>
 #include <vector>
 #include <string>
@@ -450,6 +451,7 @@ void SelectClientInfo(int connectionIndex) {
     if (lang) g_serviceType = (ServiceType)std::atoi(lang->GetContents().c_str());
     ApplySourceChatLanguageMode();
     ro::GetMannerFilter().Load();
+    g_session.InitMapNameTable();
 
     XMLElement* registration = connection->FindChild("registrationweb");
     if (registration) g_regstrationWeb = registration->GetContents();

@@ -1,0 +1,51 @@
+{
+  "schema": "source-help-where-root-review/v1",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "help": {
+    "counts": {
+      "ordered": 70,
+      "tail_alternatives": 4
+    },
+    "provenance": "All74 instruction immediates and MsgStr call targets checked by generate_source_command_list_tables.py.",
+    "control_flow_va": "0x0057b3e7",
+    "control_flow_hex": "e829cf120099b90a000000f7f983fa047d3256566864ffff006899030000e8468ff9ff83c404b958877600506a01e896e8f6ff56566864ffff00689a030000e95e140000e8e5ce120099b905000000f7f983fa027d1156566864ffff0068f8020000e93b140000e8c2ce120099b903000000f7f983fa020f8d3a14000056566864ffff006815030000e914140000",
+    "semantics": "rand()%10<4 emits921,922; else rand()%5<2 emits760; else rand()%3<2 emits789; otherwise no tail. No eager draws.",
+    "negative_checks": [
+      "wrong help message ID rejected",
+      "reordered help messages rejected",
+      "wrong MsgStr call target rejected"
+    ]
+  },
+  "map_names": {
+    "lookup": "0x006678d0",
+    "lookup_hex": "558bec6aff6838a16c0064a100000000506489250000000083ec188a450b5356894dec576a008d4ddc8845dce83ff9dbff8b750883c9ff8bfe33c0f2aef7d1496a018bd98d4ddc53e80311dcff84c0741c8b7de08bcb8bd153c1e902f3a58bca83e103f3a48d4ddce8c310dcffbf5c5c700083c9ff33c08b1588c86c00f2aef7d149c745fc000000005152685c5c70008d4ddce838c0ebff3b0588c86c00746883f80472638d70fc8b45e43bc6bf030000007305e8a03003008d4ddce8cf11dcff8b45e48bc82bce83f90373068bf985ff76358b4de02bc603ce2bc7508d14395251e8c90a04008b75e483c40c2bf78d4ddc6a0056e85610dcff84c0740a8b45e08975e4c60430008b7de0c745f08cc86c0085ff7403897df08b45ec8b88d02000008b80d42000008bd8894d082bd98945ecc1fb0385db7e5e8bc38b75f0992bc28bf8d1ff8b0cf98a118ac23a16751c84c074148a51018ac23a5601750e83c10283c60284c075e033c0eb051bc083d8ff85c07d138b450883caff2bd78d4cf80803da894d08eb028bdf8b4d0885db7fa88b7de08b45ec3bc8745785ffbe8cc86c0074028bf78b018a188ad33a1e751c84d274148a58018ad33a5e01750e83c00283c60284d275e033c0eb051bc083d8ff85c0751d8b710485ff74488a47ff84c0740b3cff7407fec88847ffeb364f57eb2a68bb000000e884c8eaff8b4de083c40485c98bf0741c8a41ff84c0740b3cff7407fec88841ffeb0a4951e8e716030083c4048b4df48bc65f5e5b64890d0000",
+    "instance_delimiter_va": "0x00705c5c",
+    "instance_delimiter_hex": "40",
+    "comment_va": "0x006f8060",
+    "comment_hex": "2f2f",
+    "unknown_msgstr_id": 187,
+    "successful_value": "selected667AA5 loads pair.second at+4",
+    "primary_sources": [
+      "Ref/Session.cpp:5718,9404",
+      "Ref/ItemInfo.cpp:1877",
+      "Ref/Language.cpp:1951",
+      "Ref/File.cpp:602"
+    ],
+    "resource_policy": "OS user-language folder for non-Korea; CFile IsFileExist checks archives and disk; missing localized path falls back to base; selected open failure clears table and fails.",
+    "grammar": "whole file byte scan; LF resets token start, CR also writes NUL; # emits token unless token begins//; no trim/case/charset conversion; C-string semantics at embedded NUL.",
+    "sort": "strcmp key order and lower_bound, no invented first/last duplicate-key override",
+    "undefined_disposition": "ignore lone odd token instead of reading a nonexistent partner"
+  },
+  "where": {
+    "type": 9,
+    "selected_va": "0x00579a10",
+    "selected_hex": "8b8bb400000083ec088b413c8b494083c0048b5008d9008b81100100008955f0db811801000099d95d0c2bc2d1f88945ecdb45ecd9c9d8750cdec1dd1c24e815061300e868e512008945e48b83b40000008b48408b8114010000992bc2d1f88945ecdb45ecd945f0d8750cdec1dd1c24e8e305130083c408e833e512008d73508945ec33c08bfe83c9ff89750cf2ae8a550f6a01f7d1498855bc8bd98d4dbc538945c08945c48945c8e862efeaff84c074208b7dc08bcb8bc1c1e902f3a58bc883e103f3a48b4dc08b750c895dc4c60419008b45c4c745fc0100000083f80476738d78fc3bc7725f8b1d88c86c007305e8240f12008d4dbce853f0eaff8b45c48bc82bcf3bcb73028bd985db76468b4dc02bc32bc78d14195003d703cf5251e84ce912008b7dc483c40c2bfb8d4dbc6a0057e8d9eeeaff84c074198b45c0897dc4c6043800eb0d2bf86a00578d4dbce8dcd2eaff8b45c085c07505b88cc86c008b4dec8b55e451525056b9181f7b00e84cdd0e00508d8538ffffff68d826710050e862de120083c418b9588776006a006a006a006a006a03e80301f7ff6a006a008d8d38ffffff68ffff6400516a01b958877600e8e700f7ff833d14c278000a741c6a006a008d9538ffffff68ffff6400526a14b958877600e8c200f7ff8b4dc0e9411d0000a1a0437b00ba01000000",
+    "axes": "m_player pointer+4 readfloat0 and DWORD8: original actor position.x and position.z",
+    "coordinate": "signed extent/2; float(int zoom); extended quotient/add then double spill; floor and low DWORD of truncating signed64 conversion",
+    "invalid_arithmetic": "zero zoom, nonfinite/out-of-int64 floor use selected integer-indefinite low DWORD0, avoiding C++ invalid-cast UB",
+    "text": "source GetMapName(original filename) + (filename with last4 bytes removed iff length>4) + : signed coordinates",
+    "ui": "manager3 then manager1/color6619135; manager20 same text/color except Germany",
+    "unsafe_dispositions": "missing world/player/attr rejected; filename bounded to40-byte member and output uses owned string instead of overflowing source stack buffer"
+  },
+  "scope": "HELP14 and WHERE9 actual handlers/lookup; full command UI/help balloons/window-key recipients and full plan remain open"
+}

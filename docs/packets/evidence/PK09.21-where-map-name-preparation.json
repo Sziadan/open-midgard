@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "purpose": "Read-only contract review for CSession::GetMapName / TALKTYPE9",
+  "scope": "Source and selected PE evidence only; no executable run",
+  "selected_pe": {
+    "path": "HighPriest.exe",
+    "sha256": "9ABC36C88376387D85C878C0C879D9AF8EF66EB1F5152638085DC6995E3F4742"
+  },
+  "legacy_contract": {
+    "GetMapName": {
+      "reference": "Ref/Session.cpp:5718-5826",
+      "pe_va": "0x6678d0",
+      "observed": [
+        "Copies the supplied C string to a temporary std::string.",
+        "Searches the temporary string for the literal held in asc_705C5C; conditional string surgery is applied when the match position is >= 4. The decompile does not name that literal, and the exact transformation should be checked against the selected PE before porting.",
+        "Searches m_mapNameTable using strcmp in a lower-bound style binary search; comparison is case-sensitive.",
+        "On exact match returns pair.second (the localized/display string); on miss returns MsgStr(MSI_NOWHERE)."
+      ],
+      "do_not_assume": "Do not infer case folding, basename behavior, or a conventional extension strip from the decompiled variable names alone."
+    },
+    "table_init": {
+      "reference": "Ref/Session.cpp:9404-9485",
+      "pe_va": "0x667690",
+      "observed": [
+        "Calls CommonObject::TokenFileToPCharList(&m_objParser, &pCharList, aMapnametableTx, 0).",
+        "Treats returned pointers as alternating key and value strings, inserts pairs into m_mapNameTable, then sorts pairs by first string using strcmp.",
+        "The init return value is the parser's success byte."
+      ],
+      "init_context": "Ref/Session.cpp:20201-20210, PE VA 0x64cf50: InitLanguageTable calls InitMsgStrings, loads manner filter and pet talk table, then calls InitMapNameTable; item/skill info tables follow."
+    },
+    "token_file_parser": {
+      "reference": "Ref/ItemInfo.cpp:1877-2000",
+      "pe_va": "0x50d340",
+      "observed": [
+        "If g_language is non-null, resolves the requested filename with CLanguage::LanguageFile; otherwise uses the filename directly.",
+        "Reads the whole file as bytes, NUL-terminates it, and scans CR/LF-delimited records. For type=0, a '#' terminates a record and the record start plus pointer to text after '#' form alternating fields; a record beginning with the parser's two-byte comment marker is skipped.",
+        "CR terminates and inserts a nonempty record; the '#' path inserts the key and then a null separator when type==2. Map table uses type=0."
+      ],
+      "caveat": "Parser's two-byte comment marker is the unnamed asc_6F8060 constant in this decompile; not decoded here. LF-only record termination is not fully equivalent to CRLF in the decompiled control flow."
+    },
+    "language_service_policy": {
+      "reference": "Ref/Language.cpp:1951-1975",
+      "pe_va": "0x4fe640",
+      "observed": [
+        "For ServiceKorea, LanguageFile always returns the original filename.",
+        "For other services, builds languageFolder + filename. For names containing .txt or .xml, returns the localized path only when CFile::IsFileExist says it exists; otherwise falls back to original filename.",
+        "For other resource types, checks g_resMgr()->IsExist on the localized path and otherwise falls back to original filename."
+      ],
+      "map_table_effect": "mapnametable.txt uses the .txt disk-existence branch. TokenFileToPCharList then opens that selected path via CFile::Open."
+    },
+    "resource_file": {
+      "path": "Ref/GRF-Content/data/mapnametable.txt",
+      "bytes": 21692,
+      "sample_records": [
+        "evt_zombie.rsw#Run_From_Zombie#",
+        "veins.rsw#Veins, the Canyon Village#",
+        "ve_in.rsw#Inside Veins#"
+      ],
+      "grammar_evidence": "Source table demonstrates literal filename.rsw#label# records. Legacy parser mode 0 exposes key/value fields separated at '#'; labels can contain punctuation. The parser itself is byte-oriented and does not transcode these strings."
+    }
+  },
+  "current_port_equivalents": {
+    "session": "No CSession::GetMapName equivalent found under src/.",
+    "warp_label_resource": {
+      "reference": "src/ui/UISkillSelectWnd.cpp:128-180",
+      "observed": [
+        "MapDisplayNames loads the first available of mapnametable.txt, data\\mapnametable.txt, data/mapnametable.txt using g_fileMgr.GetData.",
+        "Parses first '#' as key/label split, lowercases the key stem, strips map extension through MapStem, converts labels from CP949 to UTF-8 on Windows/iconv platforms, and inserts into an unordered_map.",
+        "Missing resource returns an empty map; WarpDestinationLabel falls back to the supplied map name (except random => Random)."
+      ]
+    },
+    "resource_class": {
+      "reference": "src/core/File.h:100-114; src/core/File.cpp:335-385",
+      "observed": "CFileMgr::GetData resolves configured disk/PAK sources and returns owned bytes."
+    },
+    "scope_difference": "This existing loader is warp-destination UI support; it does not provide CSession::GetMapName or its MSI_NOWHERE fallback."
+  },
+  "notes": [
+    "Selected PE identity matches the documented canonical SHA-256 in docs/skill/MISMATCHES.md.",
+    "Function VAs above are the addresses printed in the checked-in decompilation headers, not independently disassembled or runtime-validated in this review."
+  ]
+}

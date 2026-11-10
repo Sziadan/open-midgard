@@ -1,0 +1,84 @@
+[  7%] Built target zlibstatic
+[ 20%] Built target lua51
+[ 27%] Built target ro_core
+[ 28%] Built target ro_pathfinder
+[ 29%] Built target ro_cipher
+[ 32%] Built target ro_network
+[ 38%] Built target ro_res
+[ 39%] Built target ro_skill
+[ 41%] Built target ro_audio
+[ 43%] Built target ro_input
+[ 44%] Built target ro_item
+[ 46%] Built target ro_render3d
+[ 46%] Built target ro_lua
+[ 46%] Built target ro_security
+[ 48%] Building CXX object src/session/CMakeFiles/ro_session.dir/Session.cpp.obj
+[ 50%] Built target ro_render
+[ 50%] Linking CXX static library libro_session.a
+[ 51%] Built target ro_session
+[ 51%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIFriendOptionWnd.cpp.obj
+[ 51%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIAutoMessageWnd.cpp.obj
+[ 51%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIWhisperWnd.cpp.obj
+[ 51%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIGuildWnd.cpp.obj
+[ 51%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/QtSkillTree.cpp.obj
+[ 51%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/GuildSkillWndRows.cpp.obj
+[ 51%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISelectCharWnd.cpp.obj
+[ 51%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIMakeCharWnd.cpp.obj
+[ 53%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UINewChatWnd.cpp.obj
+[ 53%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISubChatWnd.cpp.obj
+[ 53%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIChatRoomWnd.cpp.obj
+[ 54%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIBasicInfoWnd.cpp.obj
+[ 54%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIStatusWnd.cpp.obj
+[ 54%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIMessengerGroupWnd.cpp.obj
+[ 54%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIPartyOptionWnd.cpp.obj
+[ 54%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIChooseSellBuyWnd.cpp.obj
+[ 55%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemWnd.cpp.obj
+[ 55%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIStorageWnd.cpp.obj
+[ 56%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemInfoWnd.cpp.obj
+[ 58%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemCompositionWnd.cpp.obj
+[ 58%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemIdentifyWnd.cpp.obj
+[ 58%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISkillSelectWnd.cpp.obj
+[ 59%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIShortCutWnd.cpp.obj
+[ 59%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemShopWnd.cpp.obj
+[ 59%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemPurchaseWnd.cpp.obj
+[ 60%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIItemSellWnd.cpp.obj
+[ 60%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIMinimapWnd.cpp.obj
+[ 60%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIEquipWnd.cpp.obj
+[ 61%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISkillDescribeWnd.cpp.obj
+[ 61%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UISkillListWnd.cpp.obj
+[ 61%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIOptionWnd.cpp.obj
+[ 62%] Building CXX object src/ui/CMakeFiles/ro_ui.dir/UIWindowMgr.cpp.obj
+[ 62%] Linking CXX static library libro_ui.a
+[ 75%] Built target ro_ui
+[ 75%] Building CXX object src/world/CMakeFiles/ro_world.dir/World.cpp.obj
+[ 76%] Building CXX object src/world/CMakeFiles/ro_world.dir/GameActor.cpp.obj
+[ 76%] Building CXX object src/world/CMakeFiles/ro_world.dir/RagEffect.cpp.obj
+[ 76%] Building CXX object src/world/CMakeFiles/ro_world.dir/SkillSpecialEffect.cpp.obj
+[ 77%] Building CXX object src/world/CMakeFiles/ro_world.dir/ArrowEffect.cpp.obj
+[ 77%] Building CXX object src/world/CMakeFiles/ro_world.dir/SkillUnit.cpp.obj
+[ 79%] Building CXX object src/world/CMakeFiles/ro_world.dir/GameActorMsgHandler.cpp.obj
+[ 79%] Building CXX object src/world/CMakeFiles/ro_world.dir/MsgEffect.cpp.obj
+[ 79%] Linking CXX static library libro_world.a
+[ 88%] Built target ro_world
+[ 88%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/CursorRenderer.cpp.obj
+[ 88%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/LoginMode.cpp.obj
+[ 90%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/GameMode.cpp.obj
+[ 90%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/View.cpp.obj
+[ 91%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/GameModePacket.cpp.obj
+[ 92%] Building CXX object src/gamemode/CMakeFiles/ro_gamemode.dir/Commerce.cpp.obj
+[ 92%] Linking CXX static library libro_gamemode.a
+[ 93%] Built target ro_gamemode
+[ 93%] Built target ro_qtui_autogen_timestamp_deps
+[ 95%] Building CXX object src/main/CMakeFiles/ro_main.dir/WinMain.cpp.obj
+[ 95%] Building CXX object src/main/CMakeFiles/ro_main.dir/HealRenderPreview.cpp.obj
+[ 95%] Built target ro_qtui_autogen
+[ 96%] Building CXX object src/qtui/CMakeFiles/ro_qtui.dir/QtUiSpikeBridge.cpp.obj
+[ 96%] Building CXX object src/qtui/CMakeFiles/ro_qtui.dir/QtUiStateAdapter.cpp.obj
+[ 97%] Building CXX object src/qtui/CMakeFiles/ro_qtui.dir/QtCommerce.cpp.obj
+[ 97%] Linking CXX static library libro_main.a
+[ 97%] Built target ro_main
+[ 98%] Linking CXX static library libro_qtui.a
+[ 98%] Built target ro_qtui
+[100%] Building CXX object CMakeFiles/packet_stream_replay_checks.dir/tools/tests/replay/PacketStreamReplay.cpp.obj
+[100%] Linking CXX executable packet_stream_replay_checks.exe
+[100%] Built target packet_stream_replay_checks

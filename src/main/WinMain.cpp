@@ -823,6 +823,7 @@ static bool InitClientSystems()
         return false;
     }
     g_windowMgr.InitializeSourceCommandFlags();
+    g_session.InitMapNameTable();
 
     if (!g_buabridge.Initialize()) {
         ErrorMsg("Lua runtime initialization failed.");

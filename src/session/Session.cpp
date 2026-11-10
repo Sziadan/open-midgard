@@ -3,6 +3,7 @@
 #include "Session.h"
 #include "core/Globals.h"
 #include "core/SettingsIni.h"
+#include "core/UiMessageStrings.h"
 #include "../core/File.h"
 #include "../core/ClientInfoLocale.h"
 #include "../core/Xml.h"
@@ -1216,6 +1217,13 @@ CSession::CSession() : m_aid(0), m_authCode(0), m_sex(0), m_isEffectOn(true), m_
 
 CSession::~CSession()
 {
+}
+
+bool CSession::InitMapNameTable(){return m_mapNameTable.Load();}
+std::string CSession::GetMapName(const char* rswName) const
+{
+    if(const auto* name=m_mapNameTable.Find(rswName))return *name;
+    ro::UiMessageStrings table;table.Load();return table.Get(187,"");
 }
 
 bool CSession::InitAccountInfo()

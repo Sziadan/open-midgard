@@ -1,0 +1,26 @@
+{
+  "baseline": "4537f651",
+  "sha256": {
+    "src/core/SourceMapNames.h": "17dc9b9f36ff9bf04b94faa65d12abdf782afb3f473fd72868d530f82f1d166b",
+    "src/core/SourceMapNames.cpp": "2ac2c255d395cd412eb429b06581ebb8ecbc4eef0efcbffceb973f00797e4e1f",
+    "src/core/SourceChatHelpMessages.generated.inc": "d132415e0ad9ff64abd39bae6d88daa52c1967d79ed25d28cfa62b5ae7b318fc",
+    "src/core/CMakeLists.txt": "9ec75115dc69945c0c86749e47a9e8afcb1ff3d0fe33ff2df63c07e3160c9521",
+    "src/core/Locale.cpp": "ed3f0780ba1ba0d0f4c4a7a2de2740635fabbf448b8361bc8116c95a394910c9",
+    "src/gamemode/SourceChatSubmission.inc": "1130f02e328903f89dff29796377fe232554a19b94845698f66b1653a14960c0",
+    "src/main/WinMain.cpp": "16af9a03e7ca58e6eb484b3076a400db6206baefac3588198022aa074b85a9e6",
+    "src/session/Session.h": "6a4d7f01e5ebcca4c7dc9487baa2a82b20f1498b0f67f229ae0b87b8cdce4408",
+    "src/session/Session.cpp": "e64ae74c6f36aa2483ac68a99c9a5d9a556022ac151fe56a309415ae7b304660",
+    "tools/generate_source_command_list_tables.py": "582e03528e6531c9602bfcc7941197d71aca47177fe9adc38ba4bc1922887924",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "cccdd9f12d7b57ce1a3ceb938a1422a6d3cd398f3fead221048e473cac5b68ef",
+    "tools/tests/replay/WhereCommandReplay.inc": "6572602b320d53673b1aa4ba0572b2634043c02ff2159e2be8be2d31cd996ce4",
+    "build-mingw-preset/open-midgard.exe": "59d3fb04ae295b09ac0dd444df3a455c268ff4c194f4f354227772adc934a1f2"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "validation": {
+    "focused": "1/1 1.15s",
+    "application": "161/161 35.67s",
+    "standalone": "473/473 15.16s"
+  },
+  "deployment": "OFF during builds/tests; ON restored configure-only; installed executable unchanged",
+  "scope": "HELP14, WHERE9 and shared source map-name owner; full command UI and full plan remain open"
+}

@@ -10,6 +10,10 @@
 #include "ui/UITipOfTheDayWnd.h"
 
 namespace {
+// Golden selected /help order, independently retained from57AB1B..57B3CD.
+constexpr int expectedSourceHelpIds[]={177,33,34,35,36,37,38,39,40,41,42,43,44,45,46,107,132,133,134,135,
+    137,138,139,48,108,140,141,142,154,155,156,157,158,173,211,275,313,757,321,349,736,852,907,727,728,
+    710,715,771,735,724,767,784,918,804,787,788,795,796,924,923,849,729,732,700,716,770,1043,1107,925,1191};
 ro::chat::SourceChatModifiers submissionKeys;
 u32 submissionTick=10000;
 u16 submissionLanguage=0x0409;
@@ -71,12 +75,15 @@ void ChatSubmissionReplay()
     setenv("OPEN_MIDGARD_DATA_DIR",(restore.resource/"settings").string().c_str(),1);
 #endif
     {std::ofstream file("msgstringtable.txt",std::ios::binary);const std::map<int,std::string> labels={{25,"SOUND"},{26,"MUSIC"},{58,"ALL DENIED"},{59,""},{60,"ALL ALLOWED"},{61,"ALL ALLOW FAIL"},{62,"EMPTY LIST"},{63,"EXCLUSION LIST"},{193," IGNORE OK"},{194," IGNORE FAIL1"},{195,""},{196," ALLOW OK"},{197," ALLOW FAIL1"},{198," ALLOW FAIL2"},{49,"REPEAT"},{50,"MANNER"},{95,"INVALID"},{190,"ENGLISH"},{544,"/!"},{545,"/?"},
-        {175,"Did you know?"},{176,"Show tips at startup"},{23,"EFFECT ON"},{24,"EFFECT OFF"},{27,"T27"},{28,"T28"},{31,"T31"},{32,"T32"},{317,"T317"},{318,"T318"},{701,"T701"},{702,"T702"},
+        {175,"Did you know?"},{176,"Show tips at startup"},{187,"NOWHERE"},{23,"EFFECT ON"},{24,"EFFECT OFF"},{27,"T27"},{28,"T28"},{31,"T31"},{32,"T32"},{317,"T317"},{318,"T318"},{701,"T701"},{702,"T702"},
         {711,"T711"},{712,"T712"},{717,""},{718,"T718"},{722,"T722"},{723,"T723"},{730,"T730"},{731,"T731"},
         {733,"T733"},{734,"T734"},{765,"T765"},{766,"T766"},{768,"T768"},{769,"T769"},{785,"T785"},{786,"T786"},
         {805,"T805"},{806,"T806"},{850,"T850"},{851,"T851"},{908,"T908"},{909,"T909"},{1044,"T1044"},{1045,"T1045"},{1108,"T1108"},{1109,"T1109"},
         {687,"MIN ON"},{688,"MIN OFF"},{698,"/tiny"},{940,"Default"},{943,"Auto off"},{944,"Configure"}};
-        for(int i=0;i<=1109;++i){const auto found=labels.find(i);if(found!=labels.end())file<<found->second;file<<"#\r\n";}}
+        for(int i=0;i<=1191;++i){const auto found=labels.find(i);if(found!=labels.end())file<<found->second;
+            else if(std::find(std::begin(expectedSourceHelpIds),std::end(expectedSourceHelpIds),i)!=std::end(expectedSourceHelpIds)
+                    || i==921 || i==922 || i==760 || i==789)file<<"HELP-"<<i;
+            file<<"#\r\n";}}
     {std::ofstream file("manner.txt");file<<"forbidden#\r\n";}
     g_readFolderFirst=1;g_codePage=65001;g_serviceType=ServiceAmerica;g_serverType=ServerNormal;
     g_session.m_talkType=0;g_session.m_isBattleChat=false;g_session.m_onAutoMSG=false;g_session.m_cmdOnOffSet.clear();
@@ -276,6 +283,27 @@ void ChatSubmissionReplay()
         // The Vietnam restriction belongs to the slash prelude, not recipient34.
         Require(mode.SendMsg(34,0,0,0)!=0 && peer.ReceiveExact(2)==std::vector<u8>({0xc1,0}),"direct recipient34 acquired an extra Vietnam guard");
     }
+    {
+        unsigned seen=0;
+        for(unsigned seed=0;seed<1024 && seen!=15;++seed){
+            std::srand(seed);std::vector<int> expected(std::begin(expectedSourceHelpIds),std::end(expectedSourceHelpIds));
+            unsigned branch;
+            if(std::rand()%10<4){expected.push_back(921);expected.push_back(922);branch=1;}
+            else if(std::rand()%5<2){expected.push_back(760);branch=2;}
+            else if(std::rand()%3<2){expected.push_back(789);branch=4;}
+            else branch=8;
+            const int next=std::rand();std::srand(seed);g_windowMgr.ClearChatEvents();
+            Require(submit("/help"),"source HELP parser/action failed");
+            Require(std::rand()==next,"HELP changed shared RNG short-circuit consumption");
+            const auto& events=g_windowMgr.GetChatEvents();Require(events.size()==expected.size(),"HELP row count/two-row warning tail changed");
+            for(std::size_t i=0;i<expected.size();++i)Require(events[i].text=="HELP-"+std::to_string(expected[i]) && events[i].color==0x64ffffu,
+                "HELP selected message order/color changed");
+            seen|=branch;
+        }
+        Require(seen==15,"HELP replay did not cover all four random-tail outcomes");
+        Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"HELP emitted a network request");
+    }
+#include "WhereCommandReplay.inc"
     connection->Disconnect();mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
 #include "ChatIgnoreReplay.inc"
 #include "FriendGreetingReplay.inc"
