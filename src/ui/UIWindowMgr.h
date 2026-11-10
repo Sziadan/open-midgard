@@ -207,13 +207,16 @@ public:
     void OnProcess();
     void OnDraw();
     void InvalidateUpdateNeededUI();
-    void DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap);
+    void DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap, bool includeGroundPrompts = true);
+#if RO_PLATFORM_WINDOWS
+    bool BuildGroundSkillPromptOverlay(ArgbDibSurface& surface, RECT client, u32 tick, RECT& bounds);
+#endif
     bool HasDirtyVisualState() const;
     bool HasDirtyVisualStateExcludingRoMap() const;
     bool HasRoMapDirtyVisualState() const;
     void ClearDirtyVisualState();
     void ClearDirtyVisualStateExcludingRoMap();
-    void OnDrawExcludingRoMapToHdc(HDC targetDC);
+    void OnDrawExcludingRoMapToHdc(HDC targetDC, bool includeGroundPrompts = true);
     bool DrawRoMapToHdc(HDC targetDC, int x, int y);
     bool GetRoMapRect(RECT* outRect) const;
     void RenderWallPaper();

@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-**Current ground prompt opacity checkpoint (2026-11-11)**. The Win32 prompts and their controls now fade as a single layer during drag and recover opacity on release. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-opacity.md)
+**Current ground prompt modern overlay checkpoint (2026-11-11)**. The Windows modern gameplay queue now submits the prompt and its IME popups with premultiplied alpha. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-modern-overlay.md)
+
+**Previous ground prompt opacity checkpoint (2026-11-11)**. The Win32 prompts and their controls now fade as a single layer during drag and recover opacity on release. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-opacity.md)
 
 **Previous ground prompt native paint checkpoint (2026-11-11)**. The Win32 prompt displays preedit with the source selection palette and blink. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-native-paint.md)
 
@@ -51,7 +53,7 @@
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Route the ground prompts into the modern gameplay overlay with alpha preserved. Verify candidate open, change, and close and the Traditional Chinese keystroke window with a live Windows IME. Check the OS clipboard and original global key actions. Continue skin selection and companion AI using the existing package gates. Keep skill tree window code and assets unchanged.
+**Next work.** Verify the ground prompts in a live modern gameplay frame, including non-default UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Continue skin selection and companion AI using the existing package gates. Keep skill tree window code and assets unchanged.
 
 The Traditional Chinese keystroke implementation uses the 39 fixed Big5 pairs in the selected executable and the stable slash-key pair from the adjacent slot string. The period key reads uninitialized bytes in the original. The port leaves that cell empty. [Keystroke evidence](evidence/PK27-prompt-keystrokes.md)
 
@@ -59,7 +61,9 @@ For prompt IME work, start with `CLanguage::ProcessImeMessage` at `0x4FEAD0` and
 
 Native composition paint now inserts preedit at the language cursor in a temporary display copy. It uses the selection palette for an active selection and a blinking highlight with a two-pixel minimum for a collapsed selection. Qt retains its own formatting and replacement ranges. [Native paint evidence](evidence/PK27-prompt-native-paint.md)
 
-The Win32 compositor now blends the entire prompt and requests redraws until opacity settles. In `QueueModernOverlayQuad` in `src/gamemode/GameMode.cpp`, the Qt texture and CPU bridge skip managed native windows. The GDI upload branch calls `ConvertOverlayComposeBitsToAlpha`, which forces every non-key pixel opaque. Route the prompt and its IME popups through the active gameplay overlay and verify the final texture over a contrasting scene. [Native opacity evidence](evidence/PK27-prompt-opacity.md)
+The Windows modern gameplay queue now submits the prompts and IME popups as a premultiplied layer after the common overlay route. The replay verifies the upload pixels before GPU submission. For live acceptance, inspect the presented texture over a contrasting scene and check that gameplay modals retain priority. [Modern overlay evidence](evidence/PK27-prompt-modern-overlay.md)
+
+For skin selection, start with `CSkinMgr::SetCurrentSkinNum` and `GetColorChipColor` in `Ref/skin.cpp`. Trace `UIBmp` before changing the port loader. The prompts cache frame and button bitmaps, the color chip, and the candidate lattice separately. Use a custom-skin fixture that distinguishes those resources from the default artwork.
 
 The selected `UIWindowMgr::MakeWindow` paths for IDs 84 and 101 call `AddWindow` without `CSnapMgr::AddSnapObject`. Preserve the unregistered drag for these prompts. The registered branch of `UIFrameWnd::OnMouseMove` applies to windows explicitly added to the snap graph.
 

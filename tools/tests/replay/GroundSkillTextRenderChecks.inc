@@ -72,6 +72,23 @@
                 for (std::size_t i = 0; i < samples.size(); ++i)
                     Require(pixel(samples[i].x, samples[i].y) == blended(opaque[i]),
                         "prompt frame, edit, or button was not blended as part of one layer");
+                ArgbDibSurface upload;
+                RECT uploadBounds{};
+                const RECT client{0,0,view.width(),view.height()};
+                Require(g_windowMgr.BuildGroundSkillPromptOverlay(upload, client, captureTick + 6400, uploadBounds),
+                    "modern prompt texture could not be composed");
+                Require(uploadBounds.left == window->m_x && uploadBounds.top == window->m_y
+                    && upload.GetWidth() == window->m_w && upload.GetHeight() == window->m_h,
+                    "modern prompt texture was not cropped to the frame");
+                for (std::size_t i = 0; i < samples.size(); ++i) {
+                    unsigned expected = 0x80000000u;
+                    for (const unsigned shift : {0u, 8u, 16u})
+                        expected |= ((((opaque[i] >> shift) & 255) * 128 + 127) / 255) << shift;
+                    const auto index = (samples[i].y - uploadBounds.top) * upload.GetWidth()
+                        + samples[i].x - uploadBounds.left;
+                    Require(upload.GetPixels()[index] == expected,
+                        "modern upload lost the prompt's premultiplied frame, edit, or button alpha");
+                }
                 Require(pixel(2,2) == (background & 0xffffffu), "opacity paint touched the scene outside the prompt");
                 window->Move(-20,20);
                 draw(captureTick + 6400);
@@ -223,6 +240,14 @@
                 window->SetImeCandidates({{"\xe3\x81\x82"}, 0, 0, 0});
                 Require(renderCandidates({0,0,view.width(),view.height()}, below + 10) == QColor("#de9944"),
                     "Japanese candidate did not draw its source highlight below the edit");
+#if RO_PLATFORM_WINDOWS
+                ArgbDibSurface candidateUpload;
+                RECT candidateBounds{};
+                Require(g_windowMgr.BuildGroundSkillPromptOverlay(candidateUpload,
+                    {0,0,view.width(),view.height()}, timeGetTime(), candidateBounds), "modern candidate layer failed");
+                Require(candidateUpload.GetPixels()[(below + 10)*candidateUpload.GetWidth()+sampleX] == 0xffde9944u
+                    && candidateUpload.GetPixels()[0] == 0u, "modern candidate layer lost opaque popup and transparent scene pixels");
+#endif
                 Require(renderCandidates({0,0,view.width(),below + 20}, above + 10) == QColor("#de9944"),
                     "candidate did not flip above the edit when the bottom edge overflowed");
 #if defined(_WIN32)
@@ -319,6 +344,7 @@
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},
             {"opacity_compositor_acceptance",static_cast<bool>(RO_PLATFORM_WINDOWS)},
+            {"modern_prompt_upload_alpha",static_cast<bool>(RO_PLATFORM_WINDOWS)},
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},
             {"source_clipboard_bytes_and_selection",true},{"qt_preedit_cursor_and_replacement",true},
             {"source_candidate_layout_and_native_close",true},{"source_tc_keystroke_cells_and_lifecycle",true},

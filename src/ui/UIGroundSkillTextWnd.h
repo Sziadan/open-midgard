@@ -34,6 +34,9 @@ public:
     void OnDraw() override;
     bool IsUpdateNeed() override;
     void DrawFrameAtTick(HDC dc, u32 tick);
+#if RO_PLATFORM_WINDOWS
+    bool DrawFrameToOverlay(HDC dc, POINT origin, u32 tick);
+#endif
     void OnLBtnDown(int x,int y) override;
     void OnLBtnUp(int x,int y) override;
     void OnMouseMove(int x,int y) override;
@@ -50,12 +53,13 @@ public:
         unsigned lastPage = 0;
     };
     void SetImeCandidates(ImeCandidatePage page);
-    void DrawImeCandidates(HDC dc, RECT client);
+    bool HasImePopup() const;
+    void DrawImeCandidates(HDC dc, RECT client, bool alphaTarget = false);
     void RecordImeKeystroke(int key);
     void RetainLastImeKeystroke();
     void ClearImeKeystrokes();
     std::optional<std::array<std::string, 4>> ImeKeystrokeCells() const;
-    void DrawImeKeystrokes(HDC dc, RECT client);
+    void DrawImeKeystrokes(HDC dc, RECT client, bool alphaTarget = false);
 #if defined(_WIN32)
     bool HandleNativeImeCandidates(HWND hwnd, WPARAM event, LPARAM lists);
 #endif
@@ -82,6 +86,10 @@ private:
     void ApplyEdit(std::string text, std::size_t cursor);
     void FocusEdit();
     void PaintFrame(HDC dc);
+    void AdvanceOpacity(u32 tick);
+#if RO_PLATFORM_WINDOWS
+    bool BlendFrame(HDC dc, int x, int y);
+#endif
     void ActivateButton(int id);
     void CancelPointerCapture();
 

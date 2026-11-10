@@ -979,6 +979,76 @@ void SyncRendererToWindowSize()
     }
 }
 
+#if RO_PLATFORM_WINDOWS
+RECT GroundPromptLogicalViewport(RECT client, bool scaled)
+{
+    if (!scaled) return client;
+    return {0,0,UiScaleRawToLogicalCoordinate(client.right),UiScaleRawToLogicalCoordinate(client.bottom)};
+}
+
+RECT GroundPromptScreenBounds(RECT bounds, bool scaled)
+{
+    if (!scaled) return bounds;
+    return {UiScaleLogicalToRawCoordinate(bounds.left),UiScaleLogicalToRawCoordinate(bounds.top),
+        UiScaleLogicalToRawCoordinate(bounds.right),UiScaleLogicalToRawCoordinate(bounds.bottom)};
+}
+
+bool QueueGroundSkillPromptOverlayQuad(RECT client, bool scaled)
+{
+    static ArgbDibSurface surface;
+    RECT bounds{};
+    if (!g_windowMgr.BuildGroundSkillPromptOverlay(surface, GroundPromptLogicalViewport(client, scaled),
+            timeGetTime(), bounds)) return false;
+    const int width = bounds.right - bounds.left;
+    const int height = bounds.bottom - bounds.top;
+    if (width <= 0 || height <= 0) return true;
+
+    static CTexture* texture = nullptr;
+    static int textureWidth = 0;
+    static int textureHeight = 0;
+    if (!texture || textureWidth != width || textureHeight != height) {
+        delete texture;
+        texture = new CTexture();
+        if (!texture->Create(width, height, PF_A8R8G8B8, false)) {
+            delete texture;
+            texture = nullptr;
+            return false;
+        }
+        textureWidth = width;
+        textureHeight = height;
+    }
+    if (!GetRenderDevice().UpdateTextureResource(texture, 0, 0, width, height, surface.GetPixels(),
+            true, width * static_cast<int>(sizeof(unsigned)))) return false;
+
+    auto* face = g_renderer.BorrowNullRP();
+    if (!face) return false;
+    const auto screen = GroundPromptScreenBounds(bounds, scaled);
+    const float left = OverlayScreenEdge(screen.left);
+    const float top = OverlayScreenEdge(screen.top);
+    const float right = OverlayScreenEdge(screen.right);
+    const float bottom = OverlayScreenEdge(screen.bottom);
+    const float maxU = static_cast<float>(width) / texture->m_w;
+    const float maxV = static_cast<float>(height) / texture->m_h;
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = texture;
+    face->mtPreset = 3;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_ONE;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = g_windowMgr.HasGameplayInputModal() ? 0.99f : 1.75f;
+    face->m_verts[0] = {left,top,0.0f,1.0f,0xFFFFFFFFu,0xFF000000u,0.0f,0.0f};
+    face->m_verts[1] = {right,top,0.0f,1.0f,0xFFFFFFFFu,0xFF000000u,maxU,0.0f};
+    face->m_verts[2] = {left,bottom,0.0f,1.0f,0xFFFFFFFFu,0xFF000000u,0.0f,maxV};
+    face->m_verts[3] = {right,bottom,0.0f,1.0f,0xFFFFFFFFu,0xFF000000u,maxU,maxV};
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
+}
+#endif
+
 bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick)
 {
     const bool trackMovePerf = mode.m_world && mode.m_world->m_player && mode.m_world->m_player->m_isMoving;
@@ -1115,7 +1185,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
             const double uiDrawStartMs = trackMovePerf ? QpcNowMs() : 0.0;
             if (!allowQtCpuBridge) {
-                g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeSurface.GetDC());
+                g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeSurface.GetDC(), !RO_PLATFORM_WINDOWS);
             } else {
                 g_windowMgr.ClearDirtyVisualState();
             }
@@ -1245,6 +1315,9 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         qtFace->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, qtMaxU, qtMaxV };
         g_renderer.AddRP(qtFace, 1 | 8);
     }
+#if RO_PLATFORM_WINDOWS
+    if (!mapLoadingActive) return QueueGroundSkillPromptOverlayQuad(clientRect, qtRuntimeEnabled);
+#endif
     return true;
 }
 
@@ -2275,18 +2348,30 @@ void DrawGameplayFallbackToWindow(
     const bool qtGameplayRuntimeEnabled = IsQtUiRuntimeEnabled()
         && GetRenderDevice().GetLegacyDevice() == nullptr;
     if (qtGameplayRuntimeEnabled) {
-        if (cursorAlreadyQueued) {
-            return;
-        }
         HDC windowDc = GetDC(g_hMainWnd);
         if (windowDc) {
-            const double cursorHdcStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
-            DrawModeCursorToHdc(windowDc, cursorActNum, mouseAnimStartTick);
-            if (trackMovePerfFrame) {
-                g_overlayMovePerfStats.fallbackCursorHdcMs += QpcNowMs() - cursorHdcStartMs;
+#if RO_PLATFORM_WINDOWS
+            RECT client{};
+            if (GetClientRect(g_hMainWnd, &client)) {
+                static ArgbDibSurface surface;
+                RECT bounds{};
+                if (g_windowMgr.BuildGroundSkillPromptOverlay(surface, GroundPromptLogicalViewport(client, true),
+                        timeGetTime(), bounds) && bounds.right > bounds.left && bounds.bottom > bounds.top) {
+                    const auto screen = GroundPromptScreenBounds(bounds, true);
+                    AlphaBlendArgbToHdc(windowDc, screen.left, screen.top, screen.right-screen.left,
+                        screen.bottom-screen.top, surface.GetPixels(), surface.GetWidth(), surface.GetHeight());
+                }
+            }
+#endif
+            if (!cursorAlreadyQueued) {
+                const double cursorHdcStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
+                DrawModeCursorToHdc(windowDc, cursorActNum, mouseAnimStartTick);
+                if (trackMovePerfFrame) {
+                    g_overlayMovePerfStats.fallbackCursorHdcMs += QpcNowMs() - cursorHdcStartMs;
+                }
             }
             ReleaseDC(g_hMainWnd, windowDc);
-        } else if (allowCursorWithoutWindowDc) {
+        } else if (!cursorAlreadyQueued && allowCursorWithoutWindowDc) {
             const double cursorStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
             DrawModeCursor(cursorActNum, mouseAnimStartTick);
             if (trackMovePerfFrame) {

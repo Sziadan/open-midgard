@@ -3747,3 +3747,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Ground prompt opacity
 
 **Current ground prompt opacity checkpoint (2026-11-11)**. The Win32 prompts and their controls now fade as a single layer during drag and recover opacity on release. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-opacity.md)
+
+## 2026-11-11 Ground prompt modern overlay
+
+**Current ground prompt modern overlay checkpoint (2026-11-11)**. The Windows modern gameplay queue now submits the prompt and its IME popups with premultiplied alpha. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-modern-overlay.md)

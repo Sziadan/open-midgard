@@ -132,6 +132,21 @@ RECT ImePopupBounds(const UIEditCtrl& edit, RECT client, int anchor, int width, 
     return {x,y,x+width,y+height};
 }
 
+void FillImeRect(HDC dc, RECT rect, COLORREF color, bool alphaTarget)
+{
+    if (!alphaTarget) {
+        shopui::FillRectColor(dc, rect, color);
+        return;
+    }
+    const int width = rect.right - rect.left;
+    const int height = rect.bottom - rect.top;
+    if (width <= 0 || height <= 0) return;
+    const auto pixel = 0xff000000u | (GetRValue(color) << 16) | (GetGValue(color) << 8) | GetBValue(color);
+    static thread_local std::vector<unsigned> solid;
+    solid.assign(static_cast<std::size_t>(width) * height, pixel);
+    AlphaBlendArgbToHdc(dc, rect.left, rect.top, width, height, solid.data(), width, height);
+}
+
 #if defined(_WIN32)
 std::string InputUtf8(std::u16string_view text);
 
@@ -508,44 +523,58 @@ bool UIGroundSkillTextWnd::IsUpdateNeed()
 void UIGroundSkillTextWnd::DrawFrameAtTick(HDC dc, u32 tick)
 {
     if (!dc) return;
+    AdvanceOpacity(tick);
+#if RO_PLATFORM_WINDOWS
+    if (m_trans < 255 && BlendFrame(dc, m_x, m_y)) return;
+#endif
+    PaintFrame(dc);
+}
+
+void UIGroundSkillTextWnd::AdvanceOpacity(u32 tick)
+{
     // UIWindow::GetColor uses elapsed time since the capture transition at each draw.
     const auto step = (tick - m_transTime) / 16;
     if (m_trans < m_transTarget) m_trans += (std::min)(m_transTarget - m_trans, step);
     else if (m_trans > m_transTarget) m_trans -= (std::min)(m_trans - m_transTarget, step);
+}
 
 #if RO_PLATFORM_WINDOWS
-    if (m_trans < 255 && m_opacitySurface.EnsureSize(m_w, m_h)) {
-        const RECT frame{m_x,m_y,m_x+m_w,m_y+m_h};
-        RECT visible = frame;
-        RECT clip{};
-        if (GetClipBox(dc, &clip) != ERROR && !IntersectRect(&visible, &frame, &clip)) return;
-        const auto layer = m_opacitySurface.GetDC();
-        const int saved = SaveDC(layer);
-        if (saved) {
-            const bool mapped = SetViewportOrgEx(layer, -m_x, -m_y, nullptr) != FALSE;
-            if (mapped) PaintFrame(layer);
-            RestoreDC(layer, saved);
-            if (mapped) {
-                // The frame body fills the layer. Apply one alpha to its final RGB,
-                // including the edit and buttons, before compositing over the scene.
-                GdiFlush();
-                auto* pixels = m_opacitySurface.GetPixels();
-                const auto scale = [this](u32 channel) { return (channel * m_trans + 127) / 255; };
-                for (std::size_t i = 0, size = static_cast<std::size_t>(m_w) * m_h; i < size; ++i) {
-                    const auto pixel = pixels[i];
-                    pixels[i] = (m_trans << 24) | (scale((pixel >> 16) & 255) << 16)
-                        | (scale((pixel >> 8) & 255) << 8) | scale(pixel & 255);
-                }
-                const int width = visible.right - visible.left;
-                const int height = visible.bottom - visible.top;
-                if (AlphaBlendArgbToHdc(dc, visible.left, visible.top, width, height, pixels, m_w, m_h,
-                        visible.left - m_x, visible.top - m_y, width, height)) return;
-            }
-        }
-    }
-#endif
-    PaintFrame(dc);
+bool UIGroundSkillTextWnd::DrawFrameToOverlay(HDC dc, POINT origin, u32 tick)
+{
+    AdvanceOpacity(tick);
+    return BlendFrame(dc, m_x - origin.x, m_y - origin.y);
 }
+
+bool UIGroundSkillTextWnd::BlendFrame(HDC dc, int x, int y)
+{
+    if (!dc || !m_opacitySurface.EnsureSize(m_w, m_h)) return false;
+    const RECT frame{x,y,x+m_w,y+m_h};
+    RECT visible = frame;
+    RECT clip{};
+    if (GetClipBox(dc, &clip) != ERROR && !IntersectRect(&visible, &frame, &clip)) return true;
+    const auto layer = m_opacitySurface.GetDC();
+    const int saved = SaveDC(layer);
+    if (!saved) return false;
+    const bool mapped = SetViewportOrgEx(layer, -m_x, -m_y, nullptr) != FALSE;
+    if (mapped) PaintFrame(layer);
+    RestoreDC(layer, saved);
+    if (!mapped) return false;
+
+    // The frame body fills the layer. Apply one alpha after painting the controls.
+    GdiFlush();
+    auto* pixels = m_opacitySurface.GetPixels();
+    const auto scale = [this](u32 channel) { return (channel * m_trans + 127) / 255; };
+    for (std::size_t i = 0, size = static_cast<std::size_t>(m_w) * m_h; i < size; ++i) {
+        const auto pixel = pixels[i];
+        pixels[i] = (m_trans << 24) | (scale((pixel >> 16) & 255) << 16)
+            | (scale((pixel >> 8) & 255) << 8) | scale(pixel & 255);
+    }
+    const int width = visible.right - visible.left;
+    const int height = visible.bottom - visible.top;
+    return AlphaBlendArgbToHdc(dc, visible.left, visible.top, width, height, pixels, m_w, m_h,
+        visible.left - x, visible.top - y, width, height);
+}
+#endif
 
 void UIGroundSkillTextWnd::PaintFrame(HDC dc)
 {
@@ -761,7 +790,14 @@ std::optional<std::array<std::string, 4>> UIGroundSkillTextWnd::ImeKeystrokeCell
     return cells;
 }
 
-void UIGroundSkillTextWnd::DrawImeKeystrokes(HDC dc, RECT client)
+bool UIGroundSkillTextWnd::HasImePopup() const
+{
+    const int codePage = ro::SelectedSourceTextCodePage();
+    return (UsesSourceCandidates(codePage) && !m_candidates.entries.empty())
+        || (codePage == 950 && !m_imeKeystrokes.empty());
+}
+
+void UIGroundSkillTextWnd::DrawImeKeystrokes(HDC dc, RECT client, bool alphaTarget)
 {
     if (!m_editCtrl || client.right <= client.left || client.bottom <= client.top) return;
     const auto cells = ImeKeystrokeCells();
@@ -777,10 +813,10 @@ void UIGroundSkillTextWnd::DrawImeKeystrokes(HDC dc, RECT client)
         const auto rgb = GetColorChipRgb(x, y);
         return RGB((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255);
     };
-    shopui::FillRectColor(dc, bounds, chip(22, 2, RGB(90,90,90)));
+    FillImeRect(dc, bounds, chip(22, 2, RGB(90,90,90)), alphaTarget);
     if (bounds.right - bounds.left > 2)
-        shopui::FillRectColor(dc, {bounds.left+1,bounds.top+1,bounds.right-1,bounds.bottom-1},
-            chip(2, 2, RGB(232,232,232)));
+        FillImeRect(dc, {bounds.left+1,bounds.top+1,bounds.right-1,bounds.bottom-1},
+            chip(2, 2, RGB(232,232,232)), alphaTarget);
     for (std::size_t i = 0; i < cells->size(); ++i) {
         const int x = bounds.left + 2 + static_cast<int>(i) * 14;
         DrawText(dc, {x,bounds.top+2,bounds.right,bounds.bottom}, (*cells)[i], RGB(0,0,0), true);
@@ -814,7 +850,7 @@ bool UIGroundSkillTextWnd::HandleNativeImeCandidates(HWND hwnd, WPARAM event, LP
 }
 #endif
 
-void UIGroundSkillTextWnd::DrawImeCandidates(HDC dc, RECT client)
+void UIGroundSkillTextWnd::DrawImeCandidates(HDC dc, RECT client, bool alphaTarget)
 {
     const int codePage = ro::SelectedSourceTextCodePage();
     if (!m_editCtrl || m_candidates.entries.empty() || !UsesSourceCandidates(codePage)) return;
@@ -872,10 +908,10 @@ void UIGroundSkillTextWnd::DrawImeCandidates(HDC dc, RECT client)
         draw(2, bounds.right - frame[2].width, y);
         draw(5, x, bounds.bottom - frame[5].height);
         draw(7, bounds.right - frame[7].width, bounds.bottom - frame[7].height);
-        shopui::FillRectColor(dc, {x+14,y+14,bounds.right-14,bounds.bottom-14}, body);
+        FillImeRect(dc, {x+14,y+14,bounds.right-14,bounds.bottom-14}, body, alphaTarget);
     } else {
-        shopui::FillRectColor(dc, bounds, chip(22, 2, RGB(90,90,90)));
-        shopui::FillRectColor(dc, {x+1,y+1,bounds.right-1,bounds.bottom-1}, body);
+        FillImeRect(dc, bounds, chip(22, 2, RGB(90,90,90)), alphaTarget);
+        FillImeRect(dc, {x+1,y+1,bounds.right-1,bounds.bottom-1}, body, alphaTarget);
     }
 
     int textX = x + (vertical ? 10 : 14);
@@ -883,7 +919,7 @@ void UIGroundSkillTextWnd::DrawImeCandidates(HDC dc, RECT client)
     for (std::size_t i = 0; i < labels.size(); ++i) {
         const bool selected = static_cast<int>(i) == m_candidates.selection;
         if (vertical && selected)
-            shopui::FillRectColor(dc, {textX-2,textY-2,textX+widths[i]+2,textY+14}, chip(6, 2, RGB(180,205,230)));
+            FillImeRect(dc, {textX-2,textY-2,textX+widths[i]+2,textY+14}, chip(6, 2, RGB(180,205,230)), alphaTarget);
         const COLORREF color = selected && (codePage == 936 || codePage == 950) ? RGB(255,0,0) : RGB(0,0,0);
         DrawText(dc, {textX,textY,bounds.right,bounds.bottom}, labels[i], color, true);
         if (vertical) textY += 20;
@@ -899,8 +935,8 @@ void UIGroundSkillTextWnd::DrawImeCandidates(HDC dc, RECT client)
             for (int dy = -8; dy <= 8; ++dy) {
                 const int edge = tip + direction * (std::abs(dy) * 6 / 8);
                 const int base = tip + direction * 6;
-                shopui::FillRectColor(dc, {(std::min)(edge,base),y+18+dy,
-                    (std::max)(edge,base)+1,y+19+dy}, color);
+                FillImeRect(dc, {(std::min)(edge,base),y+18+dy,
+                    (std::max)(edge,base)+1,y+19+dy}, color, alphaTarget);
             }
         };
         arrow(x + 8, 1, m_candidates.page > 0);

@@ -827,9 +827,10 @@
         "docs/packets/evidence/PK27-prompt-candidates.md",
         "docs/packets/evidence/PK27-prompt-keystrokes.md",
         "docs/packets/evidence/PK27-prompt-native-paint.md",
-        "docs/packets/evidence/PK27-prompt-opacity.md"
+        "docs/packets/evidence/PK27-prompt-opacity.md",
+        "docs/packets/evidence/PK27-prompt-modern-overlay.md"
       ],
-      "commit_subject": "packet(PK27): composite ground prompt drag opacity"
+      "commit_subject": "packet(PK27): queue ground prompts in modern gameplay"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -869,9 +870,10 @@
         "docs/packets/evidence/PK27-prompt-candidates.md",
         "docs/packets/evidence/PK27-prompt-keystrokes.md",
         "docs/packets/evidence/PK27-prompt-native-paint.md",
-        "docs/packets/evidence/PK27-prompt-opacity.md"
+        "docs/packets/evidence/PK27-prompt-opacity.md",
+        "docs/packets/evidence/PK27-prompt-modern-overlay.md"
       ],
-      "commit_subject": "packet(PK27): composite ground prompt drag opacity"
+      "commit_subject": "packet(PK27): queue ground prompts in modern gameplay"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -907,9 +909,10 @@
         "docs/packets/evidence/PK27-prompt-candidates.md",
         "docs/packets/evidence/PK27-prompt-keystrokes.md",
         "docs/packets/evidence/PK27-prompt-native-paint.md",
-        "docs/packets/evidence/PK27-prompt-opacity.md"
+        "docs/packets/evidence/PK27-prompt-opacity.md",
+        "docs/packets/evidence/PK27-prompt-modern-overlay.md"
       ],
-      "commit_subject": "packet(PK27): composite ground prompt drag opacity"
+      "commit_subject": "packet(PK27): queue ground prompts in modern gameplay"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -943,9 +946,10 @@
         "docs/packets/evidence/PK27-prompt-candidates.md",
         "docs/packets/evidence/PK27-prompt-keystrokes.md",
         "docs/packets/evidence/PK27-prompt-native-paint.md",
-        "docs/packets/evidence/PK27-prompt-opacity.md"
+        "docs/packets/evidence/PK27-prompt-opacity.md",
+        "docs/packets/evidence/PK27-prompt-modern-overlay.md"
       ],
-      "commit_subject": "packet(PK27): composite ground prompt drag opacity"
+      "commit_subject": "packet(PK27): queue ground prompts in modern gameplay"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -1782,7 +1786,8 @@
         "docs/packets/evidence/PK27-prompt-candidates.md",
         "docs/packets/evidence/PK27-prompt-keystrokes.md",
         "docs/packets/evidence/PK27-prompt-native-paint.md",
-        "docs/packets/evidence/PK27-prompt-opacity.md"
+        "docs/packets/evidence/PK27-prompt-opacity.md",
+        "docs/packets/evidence/PK27-prompt-modern-overlay.md"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
@@ -2303,7 +2308,8 @@
         "docs/packets/evidence/PK27-prompt-candidates.md",
         "docs/packets/evidence/PK27-prompt-keystrokes.md",
         "docs/packets/evidence/PK27-prompt-native-paint.md",
-        "docs/packets/evidence/PK27-prompt-opacity.md"
+        "docs/packets/evidence/PK27-prompt-opacity.md",
+        "docs/packets/evidence/PK27-prompt-modern-overlay.md"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

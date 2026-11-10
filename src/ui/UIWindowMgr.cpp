@@ -2294,7 +2294,45 @@ void UIWindowMgr::ClearDirtyVisualStateExcludingRoMap()
     }
 }
 
-void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
+#if RO_PLATFORM_WINDOWS
+bool UIWindowMgr::BuildGroundSkillPromptOverlay(ArgbDibSurface& surface, RECT client, u32 tick, RECT& bounds)
+{
+    bounds = {};
+    auto* focused = GetFocusedGroundSkillText();
+    const bool hasPopup = focused && focused->HasImePopup();
+    if (hasPopup) {
+        bounds = client;
+    } else {
+        for (const auto* prompt : m_groundSkillTextWindows) {
+            if (!prompt || !prompt->m_show) continue;
+            const RECT frame{prompt->m_x,prompt->m_y,prompt->m_x+prompt->m_w,prompt->m_y+prompt->m_h};
+            RECT visible{};
+            if (IntersectRect(&visible, &frame, &client)) UnionRect(&bounds, &bounds, &visible);
+        }
+    }
+    const int width = bounds.right - bounds.left;
+    const int height = bounds.bottom - bounds.top;
+    if (width <= 0 || height <= 0) return true;
+    if (!surface.EnsureSize(width, height)) return false;
+
+    GdiFlush();
+    std::fill_n(surface.GetPixels(), static_cast<std::size_t>(width) * height, 0u);
+    const auto dc = surface.GetDC();
+    for (auto* child : m_children) {
+        auto* prompt = dynamic_cast<UIGroundSkillTextWnd*>(child);
+        if (prompt && prompt->m_show && !prompt->DrawFrameToOverlay(dc, {bounds.left,bounds.top}, tick))
+            return false;
+    }
+    if (hasPopup) {
+        // Gameplay viewports start at (0, 0), so popup drawing uses client coordinates.
+        focused->DrawImeCandidates(dc, client, true);
+        focused->DrawImeKeystrokes(dc, client, true);
+    }
+    return true;
+}
+#endif
+
+void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap, bool includeGroundPrompts)
 {
     if (!g_hMainWnd || !targetDC) {
         return;
@@ -2307,13 +2345,16 @@ void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
         if (child
             && ContainsManagedWindow(*this, child)
             && child->m_show != 0
+            && (includeGroundPrompts || !GroundSkillTextOwner(child))
             && (includeRoMap || child != m_roMapWnd)) {
             child->DrawToHdc(targetDC);
         }
     }
-    if (auto* prompt = GetFocusedGroundSkillText()) {
-        prompt->DrawImeCandidates(targetDC, clientRect);
-        prompt->DrawImeKeystrokes(targetDC, clientRect);
+    if (includeGroundPrompts) {
+        if (auto* prompt = GetFocusedGroundSkillText()) {
+            prompt->DrawImeCandidates(targetDC, clientRect);
+            prompt->DrawImeKeystrokes(targetDC, clientRect);
+        }
     }
     if (m_itemWnd && m_itemWnd->m_show != 0) {
         m_itemWnd->DrawHoverOverlay(targetDC, clientRect);
@@ -2497,9 +2538,9 @@ void UIWindowMgr::OnDraw() {
     }
 }
 
-void UIWindowMgr::OnDrawExcludingRoMapToHdc(HDC targetDC)
+void UIWindowMgr::OnDrawExcludingRoMapToHdc(HDC targetDC, bool includeGroundPrompts)
 {
-    DrawVisibleWindowsToHdc(targetDC, false);
+    DrawVisibleWindowsToHdc(targetDC, false, includeGroundPrompts);
 }
 
 bool UIWindowMgr::DrawRoMapToHdc(HDC targetDC, int x, int y)

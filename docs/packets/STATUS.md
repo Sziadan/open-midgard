@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current ground prompt opacity checkpoint (2026-11-11)**. The Win32 prompts and their controls now fade as a single layer during drag and recover opacity on release. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-opacity.md)
+**Current ground prompt modern overlay checkpoint (2026-11-11)**. The Windows modern gameplay queue now submits the prompt and its IME popups with premultiplied alpha. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-modern-overlay.md)
+
+**Previous ground prompt opacity checkpoint (2026-11-11)**. The Win32 prompts and their controls now fade as a single layer during drag and recover opacity on release. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-opacity.md)
 
 **Previous ground prompt native paint checkpoint (2026-11-11)**. The Win32 prompt displays preedit with the source selection palette and blink. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-native-paint.md)
 
