@@ -2311,6 +2311,7 @@ void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
             child->DrawToHdc(targetDC);
         }
     }
+    if (auto* prompt = GetFocusedGroundSkillText()) prompt->DrawImeCandidates(targetDC, clientRect);
     if (m_itemWnd && m_itemWnd->m_show != 0) {
         m_itemWnd->DrawHoverOverlay(targetDC, clientRect);
     }

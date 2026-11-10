@@ -1,0 +1,63 @@
+{
+  "baseline": "5d4ad653",
+  "original_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "skill_tree_normalized_sha256": {
+    "src/ui/GuildSkillWndRows.cpp": "e3419a1bbe8d8882e681cfd9b483a3c7eb179a316b08cc804dfe434114514848",
+    "src/ui/GuildSkillWndRows.h": "4b7807d11f8a8133c007abbd0580c9e4faf8fe87360794ac948470ef9f96e88c",
+    "src/ui/QtSkillTree.cpp": "7d85bd905111fa2339b7db2d18bc316168fc9f687d7d3fbc9d0560f5d5a47ca0",
+    "src/ui/QtSkillTree.h": "044a594816b93b66993bd4a7ce035b9b7f8e1944d33c120b24872e5add659248",
+    "src/ui/SkillTreeModel.cpp": "0db81a6621a89450bc4408428313bce57d919dd2f8d5f8cf2a05810923dcc21e",
+    "src/ui/SkillTreeModel.h": "ead1459b20df5ac4658b1014409900b49429abc72f4e1a372c79cd5abae4c9e1",
+    "src/ui/UISkillDescribeWnd.cpp": "400248169acac3cdfda3c109e25590c13aacb792f68cb17667554d9056f35b8d",
+    "src/ui/UISkillDescribeWnd.h": "b6de88b7468f80617a03f2479e50d48ff1616e3a9551040fda115c4f76f6b956",
+    "src/ui/UISkillListWnd.cpp": "f4ad39059d53d083491e4d39be7fd2c28b795abb6d6cdc29233ee8e209fc024d",
+    "src/ui/UISkillListWnd.h": "277f1c27080d9c699d29f38d2bbb26daf1c3160a4a36d5a0efaa446531c169a3",
+    "src/ui/UISkillSelectWnd.cpp": "c6e8632fb8cacd85d38664af3a5bd11cc5c97b5e83dcb02633d9a89d82bb7bda",
+    "src/ui/UISkillSelectWnd.h": "d5f3ea0510b7e221ce397fa34b02d47db684b336eb579f7f5a082cf0200973c1",
+    "src/qtui/qml/RoSkillTree.qml": "1b5672061738a4234f60e89881a9b5986d42b1cf00e82d259d205a9943454b92",
+    "src/qtui/SkillTreeGeometry.h": "d4bd7a28e27757473d297ec8d144b601b66239d5c70b1fe3fe0833b89c01db75",
+    "src/qtui/data/skill_tree_catalog.json": "8ba49297694461942e2d55bf6ad5a90ae05e5de062e16388c464983ab912ef42"
+  },
+  "sha256": {
+    "src/main/WinMain.cpp": "bae7ab10ee6e7fbd885ee30f30e80602aec70a6331c1baff22426aa3caf69ab9",
+    "src/qtui/QtPlatformWindow.cpp": "80a6ee413303ec8cbe22777dafa506a61b88f7088a8492dfc3fcd655e4b100ec",
+    "src/ui/UIGroundSkillTextWnd.cpp": "b8e5eb6e5baa647d1ea3ced07bdba8da128103f1e01b8c9c80327cf2b7cbe80a",
+    "src/ui/UIGroundSkillTextWnd.h": "bf15252f999a288be96ab89bb817d760e3a14de73c84acbcc807702c0e583d17",
+    "src/ui/UIWindowMgr.cpp": "782c5cc8727f4035fca6b9f837249a63a76cceeef08f95751bb6a96d40d57e6b",
+    "tools/tests/replay/GroundSkillTextRenderChecks.inc": "35a0c0c3e7231fbedbf23e70a205207a93830cfeffe04c979d21aeba02c4f637",
+    "tools/tests/replay/PetWindowRenderChecks.inc": "298a911763f3086366718cd67af2fd02e0b61bd9f1e1701d8e7026440ea28b8c",
+    "build-mingw-preset/open-midgard.exe": "313cf7373f5f4fc664c0fc2263c7a08d115eac90f2c9411545844c36ab8a6d11"
+  },
+  "anchors": {
+    "source_list": "Ref/Language.cpp CLanguage::GetImeCandidateList 0x4FFB20 and GetCandidateString 0x4FEA70",
+    "layout": "Ref/UIControl.cpp UIEditCtrl::UpdateCandidate 0x444C30",
+    "candidate_paint": "Ref/UIImeWnd.cpp UICandidateWnd::SendMsg 0x4B6A90 and OnDraw 0x4B6D10",
+    "lattice": "Ref/UIFrameWnd.cpp DrawLatticeFrame with selected binary strings at 0x6F2834 through 0x6F28D4 and 0x6F2F74 through 0x6F2F94",
+    "imm_contract": "https://learn.microsoft.com/en-us/windows/win32/intl/imn-opencandidate"
+  },
+  "render": {
+    "custom_skin_resource_acceptance": false,
+    "native_character_and_qt_commit": true,
+    "native_frames": 2,
+    "native_keyboard_acceptance": false,
+    "native_windowproc_input": true,
+    "opacity_compositor_acceptance": false,
+    "outcome": "PASS",
+    "pointer_capture_and_outside_release": true,
+    "qt_preedit_cursor_and_replacement": true,
+    "skill_tree_window_changed": false,
+    "source_candidate_layout_and_native_close": true,
+    "source_clipboard_bytes_and_selection": true,
+    "source_codepage_editor_limit": true,
+    "source_colorchip_acceptance": false,
+    "source_edit_geometry_and_limit": true,
+    "source_ids_84_101": true,
+    "source_key_frame_footer_button_samples": true,
+    "source_selection_and_replacement": true,
+    "unregistered_frame_drag": true,
+    "valid_colorchip_sample_and_paint": true
+  },
+  "live_ime_candidate_acceptance": false,
+  "source_keystroke_window_acceptance": false
+}

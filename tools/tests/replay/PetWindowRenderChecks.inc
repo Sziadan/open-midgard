@@ -13,6 +13,9 @@
 #include "qtui/QtPlatformWindow.h"
 #include <QInputMethodEvent>
 #include <QKeyEvent>
+#if defined(_WIN32)
+#include <imm.h>
+#endif
 #include "qtui/QtUiStateAdapter.h"
 #include "session/Session.h"
 #include "res/Res.h"

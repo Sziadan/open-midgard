@@ -151,7 +151,10 @@ protected:
 
     void focusOutEvent(QFocusEvent* event) override
     {
-        if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) prompt->CancelComposition();
+        if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
+            prompt->CancelComposition();
+            prompt->SetImeCandidates({});
+        }
         QWindow::focusOutEvent(event);
         sendMessage(kWmActivate, kWaInactive, 0);
     }
@@ -216,6 +219,24 @@ protected:
         }
         return QWindow::event(event);
     }
+
+#if defined(_WIN32)
+    bool nativeEvent(const QByteArray& type, void* message, qintptr* result) override
+    {
+        if (type == "windows_generic_MSG") {
+            const auto& native = *static_cast<const MSG*>(message);
+            if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
+                if (native.message == WM_IME_ENDCOMPOSITION) prompt->SetImeCandidates({});
+                if (native.message == WM_IME_NOTIFY
+                    && prompt->HandleNativeImeCandidates(native.hwnd, native.wParam, native.lParam)) {
+                    if (result) *result = 0;
+                    return true;
+                }
+            }
+        }
+        return QWindow::nativeEvent(type, message, result);
+    }
+#endif
 
     void keyPressEvent(QKeyEvent* event) override
     {

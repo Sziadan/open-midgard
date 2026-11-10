@@ -149,6 +149,31 @@
             g_windowMgr.DrawVisibleWindowsToHdc(selectionDib.GetDC(),true);
             const QImage selection(reinterpret_cast<uchar*>(selectionDib.GetPixels()),view.width(),view.height(),view.width()*4,QImage::Format_RGB32);
             Require(selection.pixelColor(46,70)==QColor("#de9944"),"selection highlight did not use the source palette sample");
+            if (id == 84) {
+                g_codePage = 932;
+                const auto* edit = window->GetEditCtrl();
+                const int below = edit->m_y + edit->m_h + 6;
+                const int above = edit->m_y - 34 - 6;
+                const int sampleX = edit->m_x + 8;
+                const auto renderCandidates = [&](RECT client, int y) {
+                    std::fill_n(selectionDib.GetPixels(), view.width()*view.height(), 0xff181b20u);
+                    window->DrawImeCandidates(selectionDib.GetDC(), client);
+                    return selection.pixelColor(sampleX, y);
+                };
+                window->SetImeCandidates({{"\xe3\x81\x82"}, 0, 0, 0});
+                Require(renderCandidates({0,0,view.width(),view.height()}, below + 10) == QColor("#de9944"),
+                    "Japanese candidate did not draw its source highlight below the edit");
+                Require(renderCandidates({0,0,view.width(),below + 20}, above + 10) == QColor("#de9944"),
+                    "candidate did not flip above the edit when the bottom edge overflowed");
+#if defined(_WIN32)
+                WindowProc(g_hMainWnd, WM_IME_NOTIFY, IMN_CLOSECANDIDATE, 1);
+#else
+                window->SetImeCandidates({});
+#endif
+                Require(renderCandidates({0,0,view.width(),view.height()}, below + 10) == QColor("#181b20"),
+                    "native close notification left the candidate popup visible");
+                g_codePage = 65001;
+            }
             WindowProc(g_hMainWnd,WM_CHAR,'!',0);
             Require(std::string(window->GetEditCtrl()->GetText()) == "!", "native character did not replace focus selection");
             window->GetEditCtrl()->SetText("Ground skill fixture!");
@@ -175,6 +200,7 @@
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},{"opacity_compositor_acceptance",false},
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},
             {"source_clipboard_bytes_and_selection",true},{"qt_preedit_cursor_and_replacement",true},
+            {"source_candidate_layout_and_native_close",true},
             {"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},
             {"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
     }

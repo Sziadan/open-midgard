@@ -823,9 +823,10 @@
         "docs/packets/evidence/PK27-prompt-codec.md",
         "docs/packets/evidence/PK27-prompt-selection.md",
         "docs/packets/evidence/PK27-prompt-clipboard.md",
-        "docs/packets/evidence/PK27-prompt-ime.md"
+        "docs/packets/evidence/PK27-prompt-ime.md",
+        "docs/packets/evidence/PK27-prompt-candidates.md"
       ],
-      "commit_subject": "packet(PK27): route ground prompt IME composition"
+      "commit_subject": "packet(PK27): draw ground prompt IME candidates"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -861,9 +862,10 @@
         "docs/packets/evidence/PK27-prompt-codec.md",
         "docs/packets/evidence/PK27-prompt-selection.md",
         "docs/packets/evidence/PK27-prompt-clipboard.md",
-        "docs/packets/evidence/PK27-prompt-ime.md"
+        "docs/packets/evidence/PK27-prompt-ime.md",
+        "docs/packets/evidence/PK27-prompt-candidates.md"
       ],
-      "commit_subject": "packet(PK27): route ground prompt IME composition"
+      "commit_subject": "packet(PK27): draw ground prompt IME candidates"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -895,9 +897,10 @@
         "docs/packets/evidence/PK27-prompt-codec.md",
         "docs/packets/evidence/PK27-prompt-selection.md",
         "docs/packets/evidence/PK27-prompt-clipboard.md",
-        "docs/packets/evidence/PK27-prompt-ime.md"
+        "docs/packets/evidence/PK27-prompt-ime.md",
+        "docs/packets/evidence/PK27-prompt-candidates.md"
       ],
-      "commit_subject": "packet(PK27): route ground prompt IME composition"
+      "commit_subject": "packet(PK27): draw ground prompt IME candidates"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -927,9 +930,10 @@
         "docs/packets/evidence/PK27-prompt-codec.md",
         "docs/packets/evidence/PK27-prompt-selection.md",
         "docs/packets/evidence/PK27-prompt-clipboard.md",
-        "docs/packets/evidence/PK27-prompt-ime.md"
+        "docs/packets/evidence/PK27-prompt-ime.md",
+        "docs/packets/evidence/PK27-prompt-candidates.md"
       ],
-      "commit_subject": "packet(PK27): route ground prompt IME composition"
+      "commit_subject": "packet(PK27): draw ground prompt IME candidates"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -1762,7 +1766,8 @@
         "docs/packets/evidence/PK27-prompt-codec.md",
         "docs/packets/evidence/PK27-prompt-selection.md",
         "docs/packets/evidence/PK27-prompt-clipboard.md",
-        "docs/packets/evidence/PK27-prompt-ime.md"
+        "docs/packets/evidence/PK27-prompt-ime.md",
+        "docs/packets/evidence/PK27-prompt-candidates.md"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
@@ -2279,7 +2284,8 @@
         "docs/packets/evidence/PK27-prompt-codec.md",
         "docs/packets/evidence/PK27-prompt-selection.md",
         "docs/packets/evidence/PK27-prompt-clipboard.md",
-        "docs/packets/evidence/PK27-prompt-ime.md"
+        "docs/packets/evidence/PK27-prompt-ime.md",
+        "docs/packets/evidence/PK27-prompt-candidates.md"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

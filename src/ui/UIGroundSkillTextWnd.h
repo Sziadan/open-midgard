@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 class UIEditCtrl;
 class QInputMethodEvent;
@@ -39,6 +40,17 @@ public:
     void CommitText(std::u16string_view text);
     void SetComposition(std::u16string_view text, int cursor = -1, bool visible = true);
     void CancelComposition();
+    struct ImeCandidatePage {
+        std::vector<std::string> entries;
+        int selection = -1;
+        unsigned page = 0;
+        unsigned lastPage = 0;
+    };
+    void SetImeCandidates(ImeCandidatePage page);
+    void DrawImeCandidates(HDC dc, RECT client);
+#if defined(_WIN32)
+    bool HandleNativeImeCandidates(HWND hwnd, WPARAM event, LPARAM lists);
+#endif
 #if RO_ENABLE_QT6_UI
     void ApplyInputMethod(const QInputMethodEvent& event);
     void QueryInputMethod(QInputMethodQueryEvent& event);
@@ -76,6 +88,11 @@ private:
     std::string m_prompt;
     std::string m_selectionText;
     std::string m_preedit;
+    ImeCandidatePage m_candidates;
+    std::optional<std::array<shopui::BitmapPixels, 8>> m_candidateFrame;
+#if defined(_WIN32)
+    bool m_systemCandidates = false;
+#endif
     std::size_t m_preeditCursor=0;
     bool m_preeditCursorVisible=true;
     char16_t m_highSurrogate=0;

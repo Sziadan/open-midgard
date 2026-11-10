@@ -11,7 +11,12 @@
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
 
+#include <algorithm>
+#include <cstdlib>
 #include <cstring>
+#if defined(_WIN32)
+#include <imm.h>
+#endif
 
 #if RO_ENABLE_QT6_UI
 #if !defined(_WIN32)
@@ -67,6 +72,53 @@ public:
 private:
     bool m_open;
 };
+#endif
+
+bool UsesSourceCandidates(int codePage)
+{
+    return codePage == 932 || codePage == 936 || codePage == 949 || codePage == 950;
+}
+
+#if defined(_WIN32)
+std::string InputUtf8(std::u16string_view text);
+
+std::optional<UIGroundSkillTextWnd::ImeCandidatePage> ReadImeCandidatePage(HIMC context)
+{
+    // Read the first list, as CLanguage::GetImeCandidateList does.
+    const DWORD size = ImmGetCandidateListW(context, 0, nullptr, 0);
+    constexpr auto headerSize = offsetof(CANDIDATELIST, dwOffset);
+    if (size < headerSize) return std::nullopt;
+    std::vector<DWORD> storage((static_cast<std::size_t>(size) + sizeof(DWORD) - 1) / sizeof(DWORD));
+    auto* list = reinterpret_cast<CANDIDATELIST*>(storage.data());
+    const DWORD read = ImmGetCandidateListW(context, 0, list, size);
+    if (read < headerSize || read > size || list->dwSize < headerSize || list->dwSize > read) return std::nullopt;
+    if (list->dwCount > (list->dwSize - headerSize) / sizeof(DWORD) || list->dwPageStart >= list->dwCount
+        || !list->dwPageSize) return std::nullopt;
+
+    UIGroundSkillTextWnd::ImeCandidatePage page;
+    page.page = list->dwPageStart / list->dwPageSize;
+    page.lastPage = (list->dwCount - 1) / list->dwPageSize;
+    const DWORD count = (std::min)({list->dwPageSize, list->dwCount - list->dwPageStart, DWORD{9}});
+    const auto* bytes = reinterpret_cast<const char*>(storage.data());
+    const auto offsetsEnd = headerSize + static_cast<std::size_t>(list->dwCount) * sizeof(DWORD);
+    for (DWORD row = 0; row < count; ++row) {
+        const DWORD index = list->dwPageStart + row;
+        const DWORD offset = storage[headerSize / sizeof(DWORD) + index];
+        if (offset < offsetsEnd || offset >= list->dwSize || offset % sizeof(char16_t)) return std::nullopt;
+        std::u16string candidate;
+        for (std::size_t cursor = offset; cursor + sizeof(char16_t) <= list->dwSize; cursor += sizeof(char16_t)) {
+            char16_t unit;
+            std::memcpy(&unit, bytes + cursor, sizeof(unit));
+            if (!unit) break;
+            candidate += unit;
+        }
+        const auto terminatedSize = (candidate.size() + 1) * sizeof(char16_t);
+        if (terminatedSize > list->dwSize - offset) return std::nullopt;
+        page.entries.push_back(InputUtf8(candidate));
+        if (index == list->dwSelection) page.selection = static_cast<int>(row);
+    }
+    return page;
+}
 #endif
 
 bool Contains(RECT r,int x,int y)
@@ -238,6 +290,12 @@ public:
         UIEditCtrl::OnLBtnDown(x,y);
         if(m_owner)m_owner->FocusEdit();
     }
+    int CandidateX(HDC dc)
+    {
+        m_owner->SyncSelection();
+        const auto display = MakeDisplay(dc, true);
+        return Pixel(dc, display.text, (std::min)(display.anchor, display.cursor)) - 3;
+    }
 #if RO_ENABLE_QT6_UI
     QRect CursorRectangle()
     {
@@ -338,6 +396,7 @@ void UIGroundSkillTextWnd::FocusEdit()
             m_editCtrl->m_hasFocus=true;
             if (!wasFocused) {
                 CancelComposition();
+                SetImeCandidates({});
                 m_editCtrl->m_selectionOrigin=0;
                 m_editCtrl->m_selectionCursor=static_cast<int>(m_editCtrl->m_text.size());
                 m_editCtrl->Invalidate();
@@ -503,6 +562,140 @@ void UIGroundSkillTextWnd::CancelComposition()
     static_cast<GroundSkillTextEditCtrl*>(m_editCtrl)->m_compositionFormats.clear();
 #endif
     m_editCtrl->Invalidate();
+}
+
+void UIGroundSkillTextWnd::SetImeCandidates(ImeCandidatePage page)
+{
+#if defined(_WIN32)
+    if (page.entries.empty()) m_systemCandidates = false;
+#endif
+    if (page.entries.size() > 9) page.entries.resize(9);
+    if (m_candidates.entries.empty() && page.entries.empty()) return;
+    m_candidates = std::move(page);
+    Invalidate();
+}
+
+#if defined(_WIN32)
+bool UIGroundSkillTextWnd::HandleNativeImeCandidates(HWND hwnd, WPARAM event, LPARAM lists)
+{
+    if (lists != 1 || !UsesSourceCandidates(ro::SelectedSourceTextCodePage())) return false;
+    if (event == IMN_CLOSECANDIDATE) {
+        const bool owned = !m_candidates.entries.empty();
+        SetImeCandidates({});
+        return owned;
+    }
+    if (event != IMN_OPENCANDIDATE && event != IMN_CHANGECANDIDATE) return false;
+    if (event == IMN_OPENCANDIDATE) m_systemCandidates = false;
+    if (m_systemCandidates) return false;
+    if (const HIMC context = ImmGetContext(hwnd)) {
+        auto page = ReadImeCandidatePage(context);
+        ImmReleaseContext(hwnd, context);
+        if (page) {
+            SetImeCandidates(std::move(*page));
+            return true;
+        }
+    }
+    if (!m_candidates.entries.empty()) return true;
+    m_systemCandidates = true;
+    return false;
+}
+#endif
+
+void UIGroundSkillTextWnd::DrawImeCandidates(HDC dc, RECT client)
+{
+    const int codePage = ro::SelectedSourceTextCodePage();
+    if (!m_editCtrl || m_candidates.entries.empty() || !UsesSourceCandidates(codePage)) return;
+    if (client.right <= client.left || client.bottom <= client.top) return;
+
+    const bool vertical = codePage == 932;
+    std::vector<std::string> labels;
+    std::vector<int> widths;
+    int contentWidth = 0;
+    for (const auto& entry : m_candidates.entries) {
+        labels.push_back(std::to_string(labels.size() + 1) + " " + entry);
+        const int width = EditTextWidth(dc, labels.back());
+        widths.push_back(width);
+        contentWidth = vertical ? (std::max)(contentWidth, width + 8) : contentWidth + width + 8;
+    }
+    const int width = (std::min)(contentWidth + 22, static_cast<int>(client.right - client.left));
+    const int height = vertical ? static_cast<int>(labels.size()) * 20 + 14 : 34;
+    const auto anchor = static_cast<GroundSkillTextEditCtrl*>(m_editCtrl)->CandidateX(dc);
+    const int x = (std::clamp)(anchor, static_cast<int>(client.left), static_cast<int>(client.right) - width);
+    int y = m_editCtrl->m_y + m_editCtrl->m_h + 6;
+    if (y + height > client.bottom) y = m_editCtrl->m_y - height - 6;
+    y = (std::max)(y, static_cast<int>(client.top));
+    const RECT bounds{x,y,x+width,y+height};
+    const int saved = SaveDC(dc);
+    if (!saved) return;
+    IntersectClipRect(dc, client.left, client.top, client.right, client.bottom);
+    IntersectClipRect(dc, bounds.left, bounds.top, bounds.right, bounds.bottom);
+
+    const auto chip = [&](int sx, int sy, COLORREF fallback) {
+        if (!m_colorChip.IsValid()) return fallback;
+        const auto rgb = GetColorChipRgb(sx, sy);
+        return RGB((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255);
+    };
+    const auto body = chip(2, 2, RGB(232,232,232));
+    if (!m_candidateFrame) {
+        const char* names[]{"sysbox_lu.bmp","sysbox_mu.bmp","sysbox_ru.bmp","sysbox_lm.bmp",
+            "sysbox_rm.bmp","sysbox_ld.bmp","sysbox_md.bmp","sysbox_rd.bmp"};
+        m_candidateFrame.emplace();
+        for (std::size_t i = 0; i < m_candidateFrame->size(); ++i)
+            (*m_candidateFrame)[i] = LoadChatRoomSkinBitmap(names[i]);
+    }
+    const auto& frame = *m_candidateFrame;
+    if (width >= 28 && std::all_of(frame.begin(), frame.end(), [](const auto& tile) { return tile.IsValid(); })) {
+        const auto draw = [&](int tile, int left, int top) {
+            const auto& bitmap = frame[tile];
+            shopui::DrawBitmapPixelsTransparent(dc, bitmap, {left,top,left+bitmap.width,top+bitmap.height});
+        };
+        for (int tx = x + 14; tx < bounds.right - 14; tx += 14) {
+            draw(1, tx, y);
+            draw(6, tx, bounds.bottom - frame[6].height);
+        }
+        for (int ty = y + 14; ty < bounds.bottom - 14; ty += 14) {
+            draw(3, x, ty);
+            draw(4, bounds.right - frame[4].width, ty);
+        }
+        draw(0, x, y);
+        draw(2, bounds.right - frame[2].width, y);
+        draw(5, x, bounds.bottom - frame[5].height);
+        draw(7, bounds.right - frame[7].width, bounds.bottom - frame[7].height);
+        shopui::FillRectColor(dc, {x+14,y+14,bounds.right-14,bounds.bottom-14}, body);
+    } else {
+        shopui::FillRectColor(dc, bounds, chip(22, 2, RGB(90,90,90)));
+        shopui::FillRectColor(dc, {x+1,y+1,bounds.right-1,bounds.bottom-1}, body);
+    }
+
+    int textX = x + (vertical ? 10 : 14);
+    int textY = y + 12;
+    for (std::size_t i = 0; i < labels.size(); ++i) {
+        const bool selected = static_cast<int>(i) == m_candidates.selection;
+        if (vertical && selected)
+            shopui::FillRectColor(dc, {textX-2,textY-2,textX+widths[i]+2,textY+14}, chip(6, 2, RGB(180,205,230)));
+        const COLORREF color = selected && (codePage == 936 || codePage == 950) ? RGB(255,0,0) : RGB(0,0,0);
+        DrawText(dc, {textX,textY,bounds.right,bounds.bottom}, labels[i], color, true);
+        if (vertical) textY += 20;
+        else textX += widths[i] + 8;
+    }
+    if (vertical) {
+        const auto label = std::to_string(m_candidates.page + 1) + " / " + std::to_string(m_candidates.lastPage + 1);
+        const int right = x + 110;
+        DrawText(dc, {right-EditTextWidth(dc,label),y+192,bounds.right,bounds.bottom}, label, RGB(0,0,0), true);
+    } else {
+        const auto arrow = [&](int tip, int direction, bool active) {
+            const auto color = static_cast<COLORREF>(active ? 16752496 : 13816530);
+            for (int dy = -8; dy <= 8; ++dy) {
+                const int edge = tip + direction * (std::abs(dy) * 6 / 8);
+                const int base = tip + direction * 6;
+                shopui::FillRectColor(dc, {(std::min)(edge,base),y+18+dy,
+                    (std::max)(edge,base)+1,y+19+dy}, color);
+            }
+        };
+        arrow(x + 8, 1, m_candidates.page > 0);
+        arrow(bounds.right - 8, -1, m_candidates.page < m_candidates.lastPage);
+    }
+    RestoreDC(dc, saved);
 }
 
 #if RO_ENABLE_QT6_UI

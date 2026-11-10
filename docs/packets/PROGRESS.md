@@ -3731,3 +3731,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-10 Ground prompt IME
 
 **Current ground prompt IME checkpoint (2026-11-10)**. The ground prompts now render preedit independently of the committed text and support Qt IME cursor queries and replacement ranges. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-ime.md)
+
+## 2026-11-11 Ground prompt candidates
+
+**Current ground prompt candidate checkpoint (2026-11-11)**. The focused ground prompts can render Windows IMM candidates in the source layouts. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-candidates.md)

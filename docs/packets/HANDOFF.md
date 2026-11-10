@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-**Current ground prompt IME checkpoint (2026-11-10)**. The ground prompts now render preedit independently of the committed text and support Qt IME cursor queries and replacement ranges. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-ime.md)
+**Current ground prompt candidate checkpoint (2026-11-11)**. The focused ground prompts can render Windows IMM candidates in the source layouts. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-candidates.md)
+
+**Previous ground prompt IME checkpoint (2026-11-10)**. The ground prompts now render preedit independently of the committed text and support Qt IME cursor queries and replacement ranges. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-ime.md)
 
 **Previous ground prompt clipboard checkpoint (2026-11-10)**. Talkie Box and Graffiti now route the original clipboard shortcuts through the selected service codepage. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-clipboard.md)
 
@@ -43,7 +45,11 @@
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Verify the ground prompts with a live IME and the OS clipboard. Restore the source candidate and keystroke windows and check native composition highlighting and original global key actions. Continue skin selection, translucency, snapping, and companion AI using the existing package gates. Keep skill tree window code and assets unchanged.
+**Next work.** Verify candidate open, change, and close with a live Windows IME and check the OS clipboard. Restore the Traditional Chinese keystroke window and check native composition highlighting and original global key actions. Continue skin selection, translucency, snapping, and companion AI using the existing package gates. Keep skill tree window code and assets unchanged.
+
+For the Traditional Chinese keystroke window, trace the key-to-slot table in `CLanguageTC::CLanguageTC`, the update and clear paths in `Ref/Language.cpp`, and the four fixed text cells in `UIKeyStrokeWnd::OnDraw`. The source derives the cells from key history and a Big5 table. Windows reading text alone does not establish this behavior.
+
+Use the selected executable as the table oracle. The constructor at `0x500530` copies 78 bytes from `0x6F75E8` before a loop over 41 key slots. Those bytes differ from the alternate table in `Ref/dhxj/Framework/Language.cpp`. Trace the stack bytes read by the final two iterations before assigning glyphs to those keys.
 
 For prompt IME work, start with `CLanguage::ProcessImeMessage` at `0x4FEAD0` and `GetLanguageText` at `0x4FE510` in `Ref/Language.cpp`. Keep transient composition separate from the text sent in `007E`. For source geometry and painting, trace `UIEditCtrl::DrawEditText` at `0x444D30` and `UpdateCandidate` at `0x444C30` in `Ref/UIControl.cpp`, then `UICandidateWnd::OnDraw` at `0x4B6D10` and `UIKeyStrokeWnd::OnDraw` at `0x4B7140` in `Ref/UIImeWnd.cpp`. The original positions the candidate window below the focused edit, clamps it at the right edge, and flips it above the edit when it would overflow the bottom. Verify candidate placement separately from the Qt cursor rectangle. During live verification, check the first composition keystroke after moving focus into the prompt.
 

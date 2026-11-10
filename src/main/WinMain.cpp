@@ -577,8 +577,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
-        if (msg == WM_KILLFOCUS || msg == WM_IME_STARTCOMPOSITION || msg == WM_IME_ENDCOMPOSITION)
+        if (msg == WM_KILLFOCUS || msg == WM_IME_STARTCOMPOSITION || msg == WM_IME_ENDCOMPOSITION) {
             prompt->CancelComposition();
+            prompt->SetImeCandidates({});
+        }
+        if (msg == WM_IME_NOTIFY && prompt->HandleNativeImeCandidates(hwnd, wParam, lParam))
+            return 0;
         if (msg == WM_IME_SETCONTEXT)
             return DefWindowProcW(hwnd, msg, wParam, lParam & ~static_cast<LPARAM>(ISC_SHOWUICOMPOSITIONWINDOW));
         if (msg == WM_KEYDOWN && (wParam == VK_BACK || wParam == VK_RETURN || wParam == VK_ESCAPE)) {
