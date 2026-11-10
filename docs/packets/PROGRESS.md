@@ -3707,3 +3707,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-10: canonical ground proceed and text owners
 
 **Current ground proceed checkpoint (2026-11-10):** [Canonical65/66/77 and text owners](evidence/PK27-ground-proceed.md) replaces legacy ground transport, preserves raw levels/cells and adds source125/220 prompts84/101 through144. Skill tree unchanged. Deploy-OFF all-target and standalone builds pass; focused3/3 in17.85s, application164/164 in56.92s (-j4), standalone473/473 in13.17s (-j8). Twenty-two prior native/Qt frame pairs, two added native text-prompt frames and real Vulkan ground/capture/pending input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open. Next text color-chip/keyboard/drag/focus/lifetimes, companion/control/picker and remaining plan gates. Subject: `packet(PK27): restore canonical ground proceed and text owners`.
+
+## 2026-11-10 Ground prompt input and palette
+
+**Current ground prompt checkpoint (2026-11-10)**. Dragging, pointer release, typing and available palette sampling passed native replays. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 18.69s, with native input and two palette renders. The full packet plan remains active. [Evidence](evidence/PK27-prompt-input.md)

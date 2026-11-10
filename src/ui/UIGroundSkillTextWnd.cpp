@@ -4,6 +4,7 @@
 #include "UIWindowMgr.h"
 #include "UINewChatWnd.h"
 #include "core/Globals.h"
+#include "core/Timer.h"
 #include "core/UiMessageStrings.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
@@ -87,7 +88,7 @@ private:
 
 UIGroundSkillTextWnd::UIGroundSkillTextWnd(int windowId)
 {
-    m_id=windowId;Create(280,120);
+    m_id=windowId;Create(280,120);m_trans=m_transTarget=255;m_transTime=timeGetTime();
     const RECT client=g_windowMgr.GetChatClientRect();
     Move((client.right-640)/2+185,300*client.bottom/480-60);
 
@@ -101,9 +102,18 @@ UIGroundSkillTextWnd::UIGroundSkillTextWnd(int windowId)
         "basic_interface\\titlebar_mid.bmp","basic_interface\\btnbar_left2.bmp",
         "basic_interface\\btnbar_right2.bmp","basic_interface\\btnbar_mid2.bmp"};
     for(std::size_t i=0;i<m_frame.size();++i){m_frame[i]=LoadChatRoomSkinBitmap(frameNames[i]);m_frameUris[i]=ChatRoomBitmapUri(m_frame[i]);}
+    m_colorChip=LoadChatRoomSkinBitmap("colorchip.bmp",false);
     ro::UiMessageStrings messages;messages.Load();
     m_caption=messages.Get(435,"Talkbox");m_prompt=messages.Get(436,"Enter text");
     FocusEdit();
+}
+
+u32 UIGroundSkillTextWnd::GetColorChipRgb(int x,int y) const
+{
+    // Selected CBitmapRes::GetColor42C5D0 uses top-down x+y*width and red
+    // for an out-of-range pixel; CSkinMgr43D3E0 ignores the alpha byte.
+    if(!m_colorChip.IsValid() || x<0 || y<0 || x>=m_colorChip.width || y>=m_colorChip.height)return 0x00ff0000u;
+    return m_colorChip.pixels[static_cast<std::size_t>(y)*m_colorChip.width+x]&0x00ffffffu;
 }
 
 const RoomSettingsButton* UIGroundSkillTextWnd::GetButton(int id) const
@@ -137,10 +147,10 @@ void UIGroundSkillTextWnd::OnDraw()
 {
     auto dc=AcquireDrawTarget();if(!dc)return;
     const int saved=SaveDC(dc);IntersectClipRect(dc,m_x,m_y,m_x+m_w,m_y+m_h);
-    shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(232,232,232));
-    // The port does not expose the source skin color-chip table. Use the
-    // source frame artwork where available and neutral fallback colors for
-    // the missing color-chip(2,2)/(20,6) fills.
+    const auto color=[&](int x,int y){const u32 value=GetColorChipRgb(x,y);return RGB((value>>16)&255,(value>>8)&255,value&255);};
+    const COLORREF body=m_colorChip.IsValid()?color(2,2):RGB(232,232,232);
+    const COLORREF border=m_colorChip.IsValid()?color(20,6):RGB(90,90,90);
+    shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},body);
     const auto& titleLeft=m_frame[0];const auto& titleRight=m_frame[1];const auto& titleMid=m_frame[2];
     if(titleMid.IsValid())for(int x=12;x<m_w-12;x+=12)
         shopui::DrawBitmapPixelsTransparent(dc,titleMid,{m_x+x,m_y,m_x+x+titleMid.width,m_y+titleMid.height});
@@ -151,8 +161,8 @@ void UIGroundSkillTextWnd::OnDraw()
         shopui::DrawBitmapPixelsTransparent(dc,footerMid,{m_x+x,m_y+m_h-footerMid.height,m_x+x+footerMid.width,m_y+m_h});
     if(footerLeft.IsValid())shopui::DrawBitmapPixelsTransparent(dc,footerLeft,{m_x,m_y+m_h-footerLeft.height,m_x+footerLeft.width,m_y+m_h});
     if(footerRight.IsValid())shopui::DrawBitmapPixelsTransparent(dc,footerRight,{m_x+m_w-footerRight.width,m_y+m_h-footerRight.height,m_x+m_w,m_y+m_h});
-    shopui::FillRectColor(dc,{m_x,m_y+17,m_x+1,m_y+m_h-21},RGB(90,90,90));
-    shopui::FillRectColor(dc,{m_x+m_w-1,m_y+17,m_x+m_w,m_y+m_h-21},RGB(90,90,90));
+    shopui::FillRectColor(dc,{m_x,m_y+17,m_x+1,m_y+m_h-21},border);
+    shopui::FillRectColor(dc,{m_x+m_w-1,m_y+17,m_x+m_w,m_y+m_h-21},border);
     if(m_id==84){
         DrawText(dc,{m_x+17,m_y+3,m_x+m_w-8,m_y+17},m_caption,RGB(255,255,255));
         DrawText(dc,{m_x+16,m_y+2,m_x+m_w-8,m_y+16},m_caption,RGB(0,0,0));
@@ -167,20 +177,24 @@ void UIGroundSkillTextWnd::OnDraw()
 
 void UIGroundSkillTextWnd::CancelPointerCapture()
 {
-    m_pressed=0;
+    if(m_dragging && g_windowMgr.m_captureWindow==this){m_transTarget=255;m_transTime=timeGetTime();}
+    m_pressed=0;m_dragging=false;
     if(g_windowMgr.m_captureWindow==this){g_windowMgr.m_captureWindow=nullptr;if(g_hMainWnd && GetCapture()==g_hMainWnd)ReleaseCapture();}
     Invalidate();
 }
 
 void UIGroundSkillTextWnd::OnLBtnDown(int x,int y)
 {
-    FocusEdit();const int localX=x-m_x,localY=y-m_y;
+    FocusEdit();m_pressed=0;m_dragging=false;const int localX=x-m_x,localY=y-m_y;
     if(Contains(m_ok.Bounds(),localX,localY))m_pressed=118;
     else if(Contains(m_cancel.Bounds(),localX,localY))m_pressed=119;
     else if(m_editCtrl && Contains({m_editCtrl->m_x,m_editCtrl->m_y,m_editCtrl->m_x+m_editCtrl->m_w,m_editCtrl->m_y+m_editCtrl->m_h},x,y)){
         m_editCtrl->OnLBtnDown(x,y);
+    }else{
+        m_dragging=true;m_dragStartX=x;m_dragStartY=y;m_dragOriginX=m_x;m_dragOriginY=m_y;
+        m_transTarget=128;m_transTime=timeGetTime();
     }
-    if(m_pressed){g_windowMgr.m_captureWindow=this;if(g_hMainWnd)SetCapture(g_hMainWnd);}
+    if(m_pressed || m_dragging){g_windowMgr.m_captureWindow=this;if(g_hMainWnd)SetCapture(g_hMainWnd);}
     Invalidate();
 }
 
@@ -194,6 +208,8 @@ void UIGroundSkillTextWnd::OnLBtnUp(int x,int y)
 
 void UIGroundSkillTextWnd::OnMouseMove(int x,int y)
 {
+    if(m_dragging && g_windowMgr.m_captureWindow==this)
+        Move(m_dragOriginX+x-m_dragStartX,m_dragOriginY+y-m_dragStartY);
     OnMouseHover(x,y);
 }
 

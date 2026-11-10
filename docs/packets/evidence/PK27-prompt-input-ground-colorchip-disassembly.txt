@@ -1,0 +1,102 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0043d3e0 <.text+0x3c3e0>:
+  43d3e0:	55                   	push   %ebp
+  43d3e1:	8b ec                	mov    %esp,%ebp
+  43d3e3:	6a 00                	push   $0x0
+  43d3e5:	68 84 25 6f 00       	push   $0x6f2584
+  43d3ea:	e8 11 73 0d 00       	call   0x514700
+  43d3ef:	83 c4 04             	add    $0x4,%esp
+  43d3f2:	50                   	push   %eax
+  43d3f3:	e8 f8 48 0e 00       	call   0x521cf0
+  43d3f8:	8b c8                	mov    %eax,%ecx
+  43d3fa:	e8 71 4f 0e 00       	call   0x522370
+  43d3ff:	8b 4d 0c             	mov    0xc(%ebp),%ecx
+  43d402:	8b 55 08             	mov    0x8(%ebp),%edx
+  43d405:	51                   	push   %ecx
+  43d406:	52                   	push   %edx
+  43d407:	8b c8                	mov    %eax,%ecx
+  43d409:	e8 c2 f1 fe ff       	call   0x42c5d0
+  43d40e:	8b 55 10             	mov    0x10(%ebp),%edx
+  43d411:	89 45 0c             	mov    %eax,0xc(%ebp)
+  43d414:	33 c9                	xor    %ecx,%ecx
+  43d416:	8a 4d 0e             	mov    0xe(%ebp),%cl
+  43d419:	89 0a                	mov    %ecx,(%edx)
+  43d41b:	8b 55 14             	mov    0x14(%ebp),%edx
+  43d41e:	33 c9                	xor    %ecx,%ecx
+  43d420:	8a cc                	mov    %ah,%cl
+  43d422:	25 ff 00 00 00       	and    $0xff,%eax
+  43d427:	89 0a                	mov    %ecx,(%edx)
+  43d429:	8b 4d 18             	mov    0x18(%ebp),%ecx
+  43d42c:	89 01                	mov    %eax,(%ecx)
+  43d42e:	5d                   	pop    %ebp
+  43d42f:	c2 14 00             	ret    $0x14
+  43d432:	90                   	nop
+  43d433:	90                   	nop
+  43d434:	90                   	nop
+  43d435:	90                   	nop
+  43d436:	90                   	nop
+  43d437:	90                   	nop
+  43d438:	90                   	nop
+  43d439:	90                   	nop
+  43d43a:	90                   	nop
+  43d43b:	90                   	nop
+  43d43c:	90                   	nop
+  43d43d:	90                   	nop
+  43d43e:	90                   	nop
+  43d43f:	90                   	nop
+  43d440:	55                   	push   %ebp
+  43d441:	8b ec                	mov    %esp,%ebp
+  43d443:	8b 45 08             	mov    0x8(%ebp),%eax
+  43d446:	83 f8 ff             	cmp    $0xffffffff,%eax
+  43d449:	75 12                	jne    0x43d45d
+  43d44b:	a1 4c 86 76 00       	mov    0x76864c,%eax
+  43d450:	85 c0                	test   %eax,%eax
+  43d452:	75 1d                	jne    0x43d471
+  43d454:	b8 8c c8 6c 00       	mov    $0x6cc88c,%eax
+  43d459:	5d                   	pop    %ebp
+  43d45a:	c2 04 00             	ret    $0x4
+  43d45d:	8b 51 1c             	mov    0x1c(%ecx),%edx
+  43d460:	c1 e0 04             	shl    $0x4,%eax
+  43d463:	03 c2                	add    %edx,%eax
+  43d465:	8b 40 04             	mov    0x4(%eax),%eax
+  43d468:	85 c0                	test   %eax,%eax
+  43d46a:	75 05                	jne    0x43d471
+  43d46c:	b8 8c c8 6c 00       	mov    $0x6cc88c,%eax
+  43d471:	5d                   	pop    %ebp
+  43d472:	c2 04 00             	ret    $0x4
+  43d475:	90                   	nop
+  43d476:	90                   	nop
+  43d477:	90                   	nop
+  43d478:	90                   	nop
+  43d479:	90                   	nop
+  43d47a:	90                   	nop
+  43d47b:	90                   	nop
+  43d47c:	90                   	nop
+  43d47d:	90                   	nop
+  43d47e:	90                   	nop
+  43d47f:	90                   	nop
+  43d480:	55                   	push   %ebp
+  43d481:	8b ec                	mov    %esp,%ebp
+  43d483:	8b 55 08             	mov    0x8(%ebp),%edx
+  43d486:	83 fa ff             	cmp    $0xffffffff,%edx
+  43d489:	75 12                	jne    0x43d49d
+  43d48b:	a1 4c 86 76 00       	mov    0x76864c,%eax
+  43d490:	85 c0                	test   %eax,%eax
+  43d492:	75 1d                	jne    0x43d4b1
+  43d494:	b8 8c c8 6c 00       	mov    $0x6cc88c,%eax
+  43d499:	5d                   	pop    %ebp
+  43d49a:	c2 04 00             	ret    $0x4
+  43d49d:	8b 41 2c             	mov    0x2c(%ecx),%eax
+  43d4a0:	c1 e2 04             	shl    $0x4,%edx
+  43d4a3:	03 c2                	add    %edx,%eax
+  43d4a5:	8b 40 04             	mov    0x4(%eax),%eax
+  43d4a8:	85 c0                	test   %eax,%eax
+  43d4aa:	75 05                	jne    0x43d4b1
+  43d4ac:	b8                   	.byte 0xb8
+  43d4ad:	8c c8                	mov    %cs,%eax
+  43d4af:	6c                   	insb   (%dx),%es:(%edi)

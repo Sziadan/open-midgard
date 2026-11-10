@@ -817,9 +817,10 @@
         "docs/packets/evidence/PK27-skill-producers.md",
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
-        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json",
+        "docs/packets/evidence/PK27-prompt-input.md"
       ],
-      "commit_subject": "packet(PK27): restore canonical ground proceed and text owners"
+      "commit_subject": "packet(PK27): restore ground prompt capture and palette sampling"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -849,9 +850,10 @@
         "docs/packets/evidence/PK27-skill-producers.md",
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
-        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json",
+        "docs/packets/evidence/PK27-prompt-input.md"
       ],
-      "commit_subject": "packet(PK27): restore canonical ground proceed and text owners"
+      "commit_subject": "packet(PK27): restore ground prompt capture and palette sampling"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -877,9 +879,10 @@
         "docs/packets/evidence/PK27-skill-producers.md",
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
-        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json",
+        "docs/packets/evidence/PK27-prompt-input.md"
       ],
-      "commit_subject": "packet(PK27): restore canonical ground proceed and text owners"
+      "commit_subject": "packet(PK27): restore ground prompt capture and palette sampling"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -903,9 +906,10 @@
         "docs/packets/evidence/PK27-skill-producers.md",
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
-        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json",
+        "docs/packets/evidence/PK27-prompt-input.md"
       ],
-      "commit_subject": "packet(PK27): restore canonical ground proceed and text owners"
+      "commit_subject": "packet(PK27): restore ground prompt capture and palette sampling"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -2245,7 +2249,8 @@
         "docs/packets/evidence/PK27-skill-producers.md",
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
-        "docs/packets/evidence/PK27-ground-proceed-source-review.json"
+        "docs/packets/evidence/PK27-ground-proceed-source-review.json",
+        "docs/packets/evidence/PK27-prompt-input.md"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

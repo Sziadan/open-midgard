@@ -1008,7 +1008,7 @@ bool UIWindowMgr::IsWhisperPreferenceInputWindow(const UIWindow* window) const
     if(!window)return false;
     if(window->m_parent==m_messengerGroupWnd && window->m_id==168)return true;
     if(dynamic_cast<const UIPetCommandMenu*>(window))return true;
-    for(const auto* owner=window;owner;owner=owner->m_parent)if(owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd || owner==m_commandListWnd || owner==m_petInfoWnd || owner==m_petEggListWnd || owner==m_petTamingDeceiveWnd)return true;
+    for(const auto* owner=window;owner;owner=owner->m_parent)if(dynamic_cast<const UIGroundSkillTextWnd*>(owner) || owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd || owner==m_commandListWnd || owner==m_petInfoWnd || owner==m_petEggListWnd || owner==m_petTamingDeceiveWnd)return true;
     return false;
 }
 

@@ -18,6 +18,9 @@ public:
     const std::string& GetPrompt() const { return m_prompt; }
     const std::string& GetFrameUri(int index) const { return m_frameUris.at(static_cast<std::size_t>(index)); }
     const shopui::BitmapPixels& GetFrameBitmap(int index) const { return m_frame.at(static_cast<std::size_t>(index)); }
+    const shopui::BitmapPixels& GetColorChip() const { return m_colorChip; }
+    u32 GetColorChipRgb(int x,int y) const;
+    bool IsFrameDragging() const { return m_dragging; }
     const RoomSettingsButton* GetButton(int id) const;
     int GetButtonState(int id) const;
 
@@ -45,6 +48,9 @@ private:
     RoomSettingsButton m_cancel;
     std::array<shopui::BitmapPixels,6> m_frame;
     std::array<std::string,6> m_frameUris;
+    shopui::BitmapPixels m_colorChip;
+    bool m_dragging=false;
+    int m_dragStartX=0,m_dragStartY=0,m_dragOriginX=0,m_dragOriginY=0;
     std::string m_caption;
     std::string m_prompt;
     int m_pressed=0;

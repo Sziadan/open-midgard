@@ -101,7 +101,8 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     makeDirectory(assets.string()+"\\data\\texture\\"+encodedUi+"\\illust");
 
     struct BitmapFixture {const char* name;int width,height;const char* color;bool basic;};
-    const std::array<BitmapFixture,24> bitmaps{{
+    const std::array<BitmapFixture,25> bitmaps{{
+        {"colorchip.bmp",32,8,"#123456",false},
         {"titlebar_left.bmp",12,17,"#d24240",true},{"titlebar_right.bmp",12,17,"#4042d2",true},
         {"titlebar_mid.bmp",12,17,"#42d240",true},{"sysboxs_ld.bmp",8,8,"#d2d240",false},
         {"sysboxs_rd.bmp",8,8,"#42d2d2",false},
@@ -120,6 +121,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
     }};
     const auto saveBitmap=[&](const std::string& relative,const BitmapFixture& spec){
         QImage image(spec.width,spec.height,QImage::Format_RGB32);image.fill(QColor(spec.color));
+        if(std::string(spec.name)=="colorchip.bmp")image.setPixelColor(20,6,QColor("#a1b2c3"));
         QByteArray bytes;QBuffer buffer(&bytes);buffer.open(QIODevice::WriteOnly);
         Require(image.save(&buffer,"BMP"),"pet bitmap fixture encoding failed");
         const auto archive=assets/"source-bitmaps"/std::filesystem::path(relative);

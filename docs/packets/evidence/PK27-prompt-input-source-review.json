@@ -1,0 +1,56 @@
+{
+  "baseline": "10306b6a",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "skill_tree_normalized_sha256": {
+    "src/ui/GuildSkillWndRows.cpp": "e3419a1bbe8d8882e681cfd9b483a3c7eb179a316b08cc804dfe434114514848",
+    "src/ui/GuildSkillWndRows.h": "4b7807d11f8a8133c007abbd0580c9e4faf8fe87360794ac948470ef9f96e88c",
+    "src/ui/QtSkillTree.cpp": "7d85bd905111fa2339b7db2d18bc316168fc9f687d7d3fbc9d0560f5d5a47ca0",
+    "src/ui/QtSkillTree.h": "044a594816b93b66993bd4a7ce035b9b7f8e1944d33c120b24872e5add659248",
+    "src/ui/SkillTreeModel.cpp": "0db81a6621a89450bc4408428313bce57d919dd2f8d5f8cf2a05810923dcc21e",
+    "src/ui/SkillTreeModel.h": "ead1459b20df5ac4658b1014409900b49429abc72f4e1a372c79cd5abae4c9e1",
+    "src/ui/UISkillDescribeWnd.cpp": "400248169acac3cdfda3c109e25590c13aacb792f68cb17667554d9056f35b8d",
+    "src/ui/UISkillDescribeWnd.h": "b6de88b7468f80617a03f2479e50d48ff1616e3a9551040fda115c4f76f6b956",
+    "src/ui/UISkillListWnd.cpp": "f4ad39059d53d083491e4d39be7fd2c28b795abb6d6cdc29233ee8e209fc024d",
+    "src/ui/UISkillListWnd.h": "277f1c27080d9c699d29f38d2bbb26daf1c3160a4a36d5a0efaa446531c169a3",
+    "src/ui/UISkillSelectWnd.cpp": "c6e8632fb8cacd85d38664af3a5bd11cc5c97b5e83dcb02633d9a89d82bb7bda",
+    "src/ui/UISkillSelectWnd.h": "d5f3ea0510b7e221ce397fa34b02d47db684b336eb579f7f5a082cf0200973c1",
+    "src/qtui/qml/RoSkillTree.qml": "1b5672061738a4234f60e89881a9b5986d42b1cf00e82d259d205a9943454b92",
+    "src/qtui/SkillTreeGeometry.h": "d4bd7a28e27757473d297ec8d144b601b66239d5c70b1fe3fe0833b89c01db75",
+    "src/qtui/data/skill_tree_catalog.json": "8ba49297694461942e2d55bf6ad5a90ae05e5de062e16388c464983ab912ef42"
+  },
+  "render": {
+    "custom_skin_resource_acceptance": false,
+    "native_frames": 2,
+    "native_keyboard_acceptance": false,
+    "native_windowproc_input": true,
+    "opacity_compositor_acceptance": false,
+    "outcome": "PASS",
+    "pointer_capture_and_outside_release": true,
+    "skill_tree_window_changed": false,
+    "source_colorchip_acceptance": false,
+    "source_edit_geometry_and_limit": true,
+    "source_ids_84_101": true,
+    "source_key_frame_footer_button_samples": true,
+    "unregistered_frame_drag": true,
+    "valid_colorchip_sample_and_paint": true
+  },
+  "remaining": [
+    "Trace CLanguage::OnChar and IME delivery to the focused edit before changing prompt Enter or Escape behavior.",
+    "Implement and verify selected-skin and language resource resolution, source translucency rendering, and registered-window snapping and focus lifetimes.",
+    "Continue companion identity and AI, broader cursor and picker rules, and the remaining packet plan. Installed world entry requires separate validation."
+  ],
+  "anchors": {
+    "frame": "Ref/UIFrameWnd.cpp 8170-8271 and Talkbox vtable 6CF3AC slots 26, 28, 31",
+    "palette": "Ref/skin.cpp 915-939 and Ref/MsgStrings.cpp 242 onward. Selected 43D3E0 loads CP949 UI colorchip.bmp, 42C5D0 reads x+y*width and returns red outside bounds.",
+    "keyboard": "Selected 4E8080 maps Return 13 to 65 before switch dispatch. 4E8BA9 calls 5C2F60 ExeMenu (Ref/HP_Battle.cpp 1835). The distinct raw-13 default-push branch does not establish a physical Enter route. Ref/WinMain.cpp 1104 onward sends WM_CHAR through CLanguage."
+  },
+  "sha256": {
+    "src/ui/UIGroundSkillTextWnd.cpp": "cb3b75f88ec2e19df99fdd4441220bb3edfc15450462f7a50fd5a8440e10da6b",
+    "src/ui/UIGroundSkillTextWnd.h": "4dc292ae37685622e4ddcf142d891eb61695c9ae642c37a9b606cd202e6e612f",
+    "src/ui/UIWindowMgr.cpp": "f890622e39b730469761354b365a6ab4f949b8f090c7b4744c96199d2114d1fa",
+    "tools/tests/replay/GroundSkillTextRenderChecks.inc": "06a9d4f04419492b09542ebe2c27e8766e4391781778ca2246cfd93a2c51c730",
+    "tools/tests/replay/PetWindowRenderChecks.inc": "9b53e374bd4a8512596f2d1c41adcd153039dca9ff4c20a75ef44bb9d5f4017c",
+    "build-mingw-preset/open-midgard.exe": "c61d83024e258da33bbd0a28b3c00c757cdfc97a585a22455154ccccf97f89ac"
+  }
+}
