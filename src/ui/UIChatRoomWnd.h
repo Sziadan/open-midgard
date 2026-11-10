@@ -43,7 +43,7 @@ public:
     bool SubmitInput();
     void OpenMemberMenu(int x,int y);
     const std::vector<RoomMenuItem>& GetMenuItems() const { return m_menuItems; }
-    bool WriteChatToFile();
+    bool WriteChatToFile(bool report=false);
     bool IsFrameWnd() override { return true; }
     bool CanReceiveKeyInput() const override { return true; }
     void OnDraw() override;

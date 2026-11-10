@@ -2593,6 +2593,10 @@ void UIWindowMgr::HideLoadingScreen()
 }
 
 void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t noticeType, msgparam_t talker) {
+    if(msg==6){if(m_chatWnd)m_chatWnd->WriteChatToFile();return;}
+    if(msg==7 || msg==18){if(m_chatRoomWnd)m_chatRoomWnd->WriteChatToFile(msg==18);return;}
+    // Selected manager17 has no case: main /report intentionally has no action.
+    if(msg==17)return;
     if(msg==14){if(wparam)OpenWhisperWindow(reinterpret_cast<const char*>(wparam),reinterpret_cast<const char*>(lparam));return;}
     if(msg==5){
         if(m_chatRoomWnd && wparam)m_chatRoomWnd->SendMsg(nullptr,37,wparam,lparam,0);

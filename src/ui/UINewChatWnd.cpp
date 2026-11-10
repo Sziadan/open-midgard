@@ -26,6 +26,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -610,6 +614,41 @@ UINewChatWnd::UINewChatWnd()
 }
 
 UINewChatWnd::~UINewChatWnd() = default;
+
+bool UINewChatWnd::WriteChatToFile()
+{
+    const auto base=GetOpenMidgardIniPath().parent_path();
+    std::error_code error;
+    std::filesystem::create_directories(base/"Chat",error);
+    if(error)return false;
+    bool saved=false;
+    for(int stream=0;stream<2;++stream){
+        const bool battle=stream!=0;
+        const auto directory=base/(battle?"Chat_BM":"Chat");
+        if(battle){std::filesystem::create_directories(directory,error);if(error)return saved;}
+        auto path=directory/(battle?"Chat_BM.txt":"Chat.txt");
+        unsigned suffix=0;
+        while(std::filesystem::exists(path,error)){
+            std::ostringstream name;
+            name<<"Chat"<<std::setfill('0')<<std::setw(3)<<++suffix<<(battle?"_BM.txt":".txt");
+            path=directory/name.str();
+            if(error || !suffix)return saved;
+        }
+        if(error)return saved;
+        std::ofstream file(path,std::ios::binary);
+        if(!file)continue; // Original still attempts the second stream after fopen failure.
+        for(const auto& row:m_sourceHistory[stream]){
+            for(char c:row.text){if(c=='\n')file.put('\r');file.put(c);}
+            file.write("\r\n",2);
+        }
+        file.close(); // Original reports success once fopen succeeds.
+        saved=true;
+        const auto notice=path.u8string()+" is Saved.";
+        g_windowMgr.SendMsg(3,0,0,0);
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),65280);
+    }
+    return saved;
+}
 
 void UINewChatWnd::LoadSettings(int* outWindowWidth, int* outWindowHeight)
 {

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "date": "2026-11-10",
+  "baseline": "659592a5e644982063a328b88a1c3653199d4785",
+  "commit_subject": "packet(PK09.21): restore main and room chat exports",
+  "scope": "Main/room51/52/115/116 save/report dispatch; remaining full packet-plan gates open",
+  "runtime_test_sha256": {
+    "src/gamemode/SourceChatSubmission.inc": "d589bc877d553f0fca83d27f2e9a94ce8737c3d9e6dca4acf6b5c28031704484",
+    "src/ui/UIChatRoomWnd.cpp": "8804fa6465374c3eac9537850a02e507fe2197ba1a30643237eb8da5633ded22",
+    "src/ui/UIChatRoomWnd.h": "da2cf43010b10b910205c35fd7b6d71fb808b29661ac872b75246abb0c991493",
+    "src/ui/UINewChatWnd.cpp": "3fc2b01eacae64335849cfdfa8b49e0695cbe4e387eedd739d63e69a2b9d303e",
+    "src/ui/UINewChatWnd.h": "a3ac6ac14215810be2d94fb27fe1ce44f5a41cb6040109fb2ae53a2d3a40e7a3",
+    "src/ui/UIWindowMgr.cpp": "22aa40f9469436d54edbbf1cf97ba619c3569901cd57114bfb217380d08c5a39",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "658dfb9d9ae4bd7a3a4061691a148b8dfb509045d557884db2e7539025191c6d"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/UIFrameWnd.cpp": "80f3382e2e68d228056b3cee614131059d43e445853dde3e0c4dcec369e75ded",
+    "Ref/UIFrameWnd3.cpp": "ace15e1a1d180c9f9e65709c0518080e6326d19ed799e808623ec37440e9627f",
+    "Ref/UIControl2.cpp": "48e3d33d0aa4345fa47b891091ed39688c72b2b78b0e61d095b035d43ce6ce79"
+  },
+  "application_sha256": {
+    "build-mingw-preset/open-midgard.exe": "51abc64238b7749e2665d87a74ed725d4aa6f7d755c4ef984f31e7404c99c370",
+    "build-mingw-preset/packet_stream_replay_checks.exe": "dca8d11e8772113f9f3a8a9fd9cbc7f019c0591b8c158489bc0dbc7df516809a"
+  },
+  "deployed_read_only_sha256": {
+    "D:/Spel/OldRO/open-midgard.exe": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-chat-exports-build.log": "5ba53e814cf11aa1c63e4daeb98f4882601a0e9a95d0d5e1b1235ea6b4cd4a3d",
+    "docs/packets/evidence/PK09.21-chat-exports-configure.log": "1fb9f8a22f9bcea301ce085e5185a4968ab9b5df265a2c96a01008d077fa8ef8",
+    "docs/packets/evidence/PK09.21-chat-exports-contract.json": "8993dc0f6f53452c9137855e2742340f026cc61633cdda06432e9a6d1bdb0a72",
+    "docs/packets/evidence/PK09.21-chat-exports-data-check.log": "f695e606f96149b39949a6bd3cb1eec808d607f08744a98950aef9fa1e317e4a",
+    "docs/packets/evidence/PK09.21-chat-exports-focused.log": "45f08c223c68650891e3446e62cc7bde883b47a4771c2f18f93e9f455b828e2c",
+    "docs/packets/evidence/PK09.21-chat-exports-pe.txt": "4ecd3e13bc61c8f8b5638b57750ebf970787c46f8cef2bbadca3bac57a38d8aa",
+    "docs/packets/evidence/PK09.21-chat-exports-plan-check.log": "9db87cb07fff32518d0fee379cde3ba582fd95c76703109c3267dff701ce2d2c",
+    "docs/packets/evidence/PK09.21-chat-exports-restore-deploy-setting.log": "17f277582b5c1068893fd7207da0ba719878c68c00c8e61cbee484b8d4b1f28c",
+    "docs/packets/evidence/PK09.21-chat-exports-root-ctest.log": "a2f32de60a4b4bdc9385c9ec2d4ba87b259873979105faf74a606ad05965dded",
+    "docs/packets/evidence/PK09.21-chat-exports-source.txt": "43a2d9978a4200d12ad8f193db53380e93dfb31c30d5d0fd3f2349e76bfecf3d",
+    "docs/packets/evidence/PK09.21-chat-exports-unit-build.log": "ff0a8c6e2d3d7f086fd8ec9c75963e481c24379e4aa69f750952993761e25c23",
+    "docs/packets/evidence/PK09.21-chat-exports-unit-ctest.log": "7efc31a69f985c3b1766021a944d9fbd81d276c08b5ce3bd933fe1122e393d93",
+    "docs/packets/evidence/PK09.21-chat-exports.md": "f94c109935e126adc4374731b481a840d5ccc63abd7091bba3f66a8315351dc7"
+  }
+}

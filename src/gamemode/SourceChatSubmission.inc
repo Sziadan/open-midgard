@@ -154,7 +154,8 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
     case 24:return SendMsg(53,0,0,0);
     case 26:return SendMsg(GameMsg_RequestPartyCreate,reinterpret_cast<msgparam_t>(parameters[0].c_str()),0,0);
     case 27:return SendMsg(67,0,0,0);
-    case 52:return g_windowMgr.m_chatRoomWnd && g_windowMgr.m_chatRoomWnd->WriteChatToFile()?1:0;
+    case 51:case 52:case 115:case 116:
+        g_windowMgr.SendMsg(type==51?6:type==52?7:type==115?17:18,0,0,0);return 1;
     case 55: {
         const auto& name=parameters[0];
         if(name.empty() || name.size()>23 || !m_world || !m_world->m_player || !g_session.m_gid)return 0;

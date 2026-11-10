@@ -144,6 +144,62 @@ void ChatSubmissionReplay()
     Require(!submit("/?"),"pending source emotion was not guarded");mode.m_isReqEmotion=0;submissionTick=12500;Require(!submit("/?"),"source emotion exact2500 boundary changed");
     submissionTick=12501;Require(submit("/?"),"source emotion after2500 was blocked");Require(peer.ReceiveExact(3)==std::vector<u8>({0xbf,0,1}),"source question emotion argument was shifted");
     Require(submit("/leave"),"source leave-party command failed");Require(peer.ReceiveExact(2)==std::vector<u8>({0,1}),"source leave-party command used disband/kick semantics");
+    // Source51 exports BOTH complete histories, independently of the visible tab/filter.
+    {
+        UINewChatWnd exported;
+        struct RestoreMain {UINewChatWnd* borrowed;UINewChatWnd* chat;UIWindow* edit;~RestoreMain(){g_windowMgr.m_children.remove(borrowed);g_windowMgr.m_chatWnd=chat;g_windowMgr.m_editWindow=edit;}} restoreMain{&exported,g_windowMgr.m_chatWnd,g_windowMgr.m_editWindow};
+        g_windowMgr.m_chatWnd=&exported;
+        exported.ReceiveSourceNotice("Normal",0xffffff,ro::chat::NoticeRoute::Normal,static_cast<ro::chat::NoticeType>(0));
+        exported.ReceiveSourceNotice("Battle",0xffffff,ro::chat::NoticeRoute::Command,static_cast<ro::chat::NoticeType>(0));
+        const auto base=GetOpenMidgardIniPath().parent_path();
+        const auto bytes=[](const std::filesystem::path& path){std::ifstream file(path,std::ios::binary);return std::string(std::istreambuf_iterator<char>(file),{});};
+        const auto saveEventStart=g_windowMgr.GetChatEvents().size();
+        exported.SelectSourceTab(1);exported.FocusQtInput(2);exported.SetQtInputText(2,"/SAVECHAT");
+        Require(exported.HandleKeyDown(VK_RETURN),"main save Enter not consumed");
+        Require(bytes(base/"Chat"/"Chat.txt")=="Normal\r\n" && bytes(base/"Chat_BM"/"Chat_BM.txt")=="Battle\r\n","main save did not export separate complete histories/CRLF bytes");
+        // Inspect unsplit event notices: long temporary paths can span several history rows.
+        Require(g_windowMgr.GetChatEvents().size()==saveEventStart+2 && g_windowMgr.GetChatEvents()[saveEventStart].text==(base/"Chat"/"Chat.txt").u8string()+" is Saved."
+            && g_windowMgr.GetChatEvents()[saveEventStart+1].text==(base/"Chat_BM"/"Chat_BM.txt").u8string()+" is Saved.","dual export notices/order differ");
+        exported.SetQtInputText(2,"/savechat");exported.HandleKeyDown(VK_RETURN);
+        Require(bytes(base/"Chat"/"Chat.txt")=="Normal\r\n" && bytes(base/"Chat_BM"/"Chat001_BM.txt")=="Battle\r\n"
+            && bytes(base/"Chat"/"Chat001.txt").rfind("Normal\r\n",0)==0,"main collision suffix or no-overwrite behavior differs");
+        const auto events=g_windowMgr.GetChatEvents().size();
+        g_session.m_cmdOnOffSet={{0,115},{0,116}};
+        exported.SetQtInputText(2,"/report");exported.HandleKeyDown(VK_RETURN);
+        Require(g_windowMgr.GetChatEvents().size()==events && !std::filesystem::exists(base/"Report") && g_session.m_cmdOnOffSet[0].first==1,
+            "main report should enter47 prelude then selected manager17 no-op");
+        std::filesystem::create_directories(base/"Report");
+        {std::ofstream file(base/"Report"/"SourceLocal.txt");file<<"keep";}
+        room->SetInputText("/report");Require(room->SubmitInput(),"room report remap failed");
+        Require(bytes(base/"Report"/"SourceLocal.txt")=="keep" && !std::filesystem::exists(base/"Report"/"SourceLocal001.txt")
+            && g_windowMgr.GetChatEvents().back().text==(base/"Report"/"SourceLocal001.txt").u8string()+" is Saved."
+            && g_session.m_cmdOnOffSet[1].first==1,"room report must use local name/collision and success-only stub");
+        auto roomInfo=room->GetInfo();roomInfo.title="Room:/Name";room->SetInfo(roomInfo);room->Append("Room export",0xabcdef);
+        room->SetInputText("/savechat");Require(room->SubmitInput() && bytes(base/"Chat"/"Room__Name.txt")=="Room export\r\n","room52 save did not enter manager7/title export");
+        const auto absentEvents=g_windowMgr.GetChatEvents().size();
+        g_windowMgr.m_chatWnd=nullptr;g_windowMgr.m_chatRoomWnd=nullptr;
+        g_windowMgr.SendMsg(6,0,0,0);g_windowMgr.SendMsg(7,0,0,0);g_windowMgr.SendMsg(17,0,0,0);g_windowMgr.SendMsg(18,0,0,0);
+        g_windowMgr.m_chatWnd=&exported;g_windowMgr.m_chatRoomWnd=room;
+        Require(g_windowMgr.GetChatEvents().size()==absentEvents,"save/report manager created absent owners or notices");
+        // Directory failure suppresses both streams; second-directory failure preserves first success.
+        const auto failBase=base/"export-failure";std::filesystem::create_directories(failBase);
+#if RO_PLATFORM_WINDOWS
+        _putenv_s("OPEN_MIDGARD_DATA_DIR",failBase.string().c_str());
+#else
+        setenv("OPEN_MIDGARD_DATA_DIR",failBase.string().c_str(),1);
+#endif
+        {std::ofstream file(failBase/"Chat");file<<"blocked";}
+        const auto before=g_windowMgr.GetChatEvents().size();
+        Require(!exported.WriteChatToFile() && g_windowMgr.GetChatEvents().size()==before && !std::filesystem::exists(failBase/"Chat_BM"),"first directory failure should abort dual export");
+        std::filesystem::remove(failBase/"Chat");{std::ofstream file(failBase/"Chat_BM");file<<"blocked";}
+        Require(exported.WriteChatToFile() && std::filesystem::is_regular_file(failBase/"Chat"/"Chat.txt") && g_windowMgr.GetChatEvents().size()==before+1,
+            "second directory failure discarded first success or emitted a second notice");
+#if RO_PLATFORM_WINDOWS
+        _putenv_s("OPEN_MIDGARD_DATA_DIR",base.string().c_str());
+#else
+        setenv("OPEN_MIDGARD_DATA_DIR",base.string().c_str(),1);
+#endif
+    }
     // Private save/report/quit are consumed by the original caller before47.
     Require(g_windowMgr.OpenWhisperWindow("PrivateScope",nullptr),"private command entry failed");
     auto* privateWindow=g_windowMgr.m_whisperWindows.at("PrivateScope");

@@ -146,3 +146,5 @@ Independent reviewer: `/root/pk01_p0_review` (gpt-6-astra, high reasoning). Revi
 [Source parser model](../evidence/PK09.21-chat-parser.md) records the complete292/82 selected catalog/parameter model, full tokenizer and real auto-route precedence regression. Runtime general command dispatch, parser effects and original caller integration remain open.
 
 [Source caller/core dispatch](../evidence/PK09.21-chat-submission.md) adds real Enter -> parser ->47/11 -> channel/selected action proof and shared buffer/repeat ownership. Remaining source cases/options initialization/global-special/editor/render/deployed gates stay open.
+
+[Main/room save and report dispatch](../evidence/PK09.21-chat-exports.md) pins manager6/7/17/18, separate main history exports and selected report no-op/stub behavior. Remaining PK09.21 and broad/live/deployed gates stay open.

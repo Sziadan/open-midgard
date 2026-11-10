@@ -78,6 +78,7 @@ public:
     ChatWindowLayoutDisplay GetLayoutDisplay() const;
 
     void AddChatLine(const char* text, u32 color, u8 channel, u32 tick);
+    bool WriteChatToFile();
     bool ReceiveSourceNotice(const char* text, u32 uiRgb, ro::chat::NoticeRoute route,
         ro::chat::NoticeType type, const char* talker = nullptr);
     const std::vector<SubChatRow>& GetSourceHistory(bool command) const { return m_sourceHistory[command ? 1 : 0]; }

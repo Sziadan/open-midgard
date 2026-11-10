@@ -2074,7 +2074,10 @@
         "docs/packets/evidence/PK09.21-chat-parser.md",
         "docs/packets/evidence/PK09.21-chat-parser-provenance.json",
         "docs/packets/evidence/PK09.21-chat-submission.md",
-        "docs/packets/evidence/PK09.21-chat-submission-provenance.json"
+        "docs/packets/evidence/PK09.21-chat-submission-provenance.json",
+        "docs/packets/evidence/PK09.21-chat-exports.md",
+        "docs/packets/evidence/PK09.21-chat-exports-contract.json",
+        "docs/packets/evidence/PK09.21-chat-exports-provenance.json"
       ],
       "commit_subject": null
     }

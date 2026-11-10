@@ -215,23 +215,27 @@ void UIChatRoomWnd::OpenMemberMenu(int x,int y)
     g_windowMgr.m_chatRoomMenuWnd=new UIChatRoomMenuWnd(m_menuItems,x,y);
     g_windowMgr.m_children.push_back(g_windowMgr.m_chatRoomMenuWnd);
 }
-bool UIChatRoomWnd::WriteChatToFile()
+bool UIChatRoomWnd::WriteChatToFile(bool report)
 {
-    std::string title(m_info.title.c_str());for(auto& c:title)if(std::string_view("\\/:*?\"<>|").find(c)!=std::string_view::npos)c='_';
+    std::string title(report?g_session.m_playerName:m_info.title.c_str());for(auto& c:title)if(std::string_view("\\/:*?\"<>|").find(c)!=std::string_view::npos)c='_';
     // The port's writable application-data owner replaces original g_baseDir3.
-    const auto directory=GetOpenMidgardIniPath().parent_path()/"Chat";std::error_code error;
+    const auto directory=GetOpenMidgardIniPath().parent_path()/(report?"Report":"Chat");std::error_code error;
     std::filesystem::create_directories(directory,error);if(error)return false;
     auto path=directory/std::filesystem::u8path(title+".txt");unsigned suffix=0;
     while(std::filesystem::exists(path,error)){
         std::ostringstream name;name<<title<<std::setfill('0')<<std::setw(3)<<++suffix<<".txt";
         path=directory/std::filesystem::u8path(name.str());if(error || !suffix)return false;
     }
-    if(error)return false;std::ofstream file(path,std::ios::binary);if(!file)return false;
-    // Original Windows fopen("w") translates every LF, including embedded LFs.
-    // Spell this out so exports have identical bytes on every host.
-    for(const auto& row:m_rows){for(char c:row.text){if(c=='\n')file.put('\r');file.put(c);}file.write("\r\n",2);}
-    // Source UIChatHisBox::WriteChatToFile returns success after any open.
-    file.close();
+    if(error)return false;
+    if(!report){
+        std::ofstream file(path,std::ios::binary);if(!file)return false;
+        // Original Windows fopen("w") translates every LF, including embedded LFs.
+        // Spell this out so exports have identical bytes on every host.
+        for(const auto& row:m_rows){for(char c:row.text){if(c=='\n')file.put('\r');file.put(c);}file.write("\r\n",2);}
+        // Source UIChatHisBox::WriteChatToFile returns success after any open.
+        file.close();
+    }
+    // Selected UIChatHisBox::WriteChatToReportFile44E720 succeeds without a file.
     const auto notice=path.u8string()+" is Saved.";g_windowMgr.SendMsg(3,0,0,0);
     g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(notice.c_str()),65280);return true;
 }

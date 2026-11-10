@@ -1,0 +1,359 @@
+## Ref/GameMode.cpp:16725
+16725:     case TT_REQ_SAVE_CHAT:
+16726:       UIWindowMgr::SendMsg(&g_windowMgr, 6, 0, 0, 0, 0);
+16727:       return;
+16728:     case TT_REQ_SAVE_CHAT_FROM_CHATROOM:
+16729:       UIWindowMgr::SendMsg(&g_windowMgr, 7, 0, 0, 0, 0);
+16730:       return;
+16731:     case TT_MISS_EFFECT_ON_OFF:
+
+## Ref/GameMode.cpp:17196
+17196:     case TT_REQ_REPORT_CHAT:
+17197:       UIWindowMgr::SendMsg(&g_windowMgr, 17, 0, 0, 0, 0);
+17198:       return;
+17199:     case TT_REQ_REPORT_CHAT_FROM_CHATROOM:
+17200:       UIWindowMgr::SendMsg(&g_windowMgr, 18, 0, 0, 0, 0);
+17201:       return;
+17202:     case TT_LIGHTMAP:
+
+## Ref/UIWindowMgr.cpp:9104
+9104: // ================================================
+9105: // Original Signature: public: int __thiscall UIWindowMgr::SendMsg(int,int,int,int,int)
+9106: // Decompiled from address: 0x4e9cb0
+9107: // ================================================
+9108: int __thiscall UIWindowMgr::SendMsg(
+9109:         UIWindowMgr *this,
+9110:         unsigned int message,
+9111:         char *val1,
+9112:         int val2,
+9113:         unsigned int val3,
+9114:         UIWindow *val4)
+9115: {
+9116:   char *v7; // esi
+9117:   UIWhisperWnd *v8; // eax
+
+## Ref/UIWindowMgr.cpp:9339
+9339:       m_chatRoomWnd = this->m_chatRoomWnd;
+9340:       if ( m_chatRoomWnd )
+9341:         m_chatRoomWnd->UIWindow::SendMsg(m_chatRoomWnd, 0, 37, (int)val1, val2, 0, 0);
+9342:       return 0;
+9343:     case 6u:
+9344:       v27 = this->m_chatWnd;
+9345:       if ( v27 )
+9346:         UINewChatWnd::WriteChatToFile(v27);
+9347:       return 0;
+9348:     case 7u:
+9349:       v26 = this->m_chatRoomWnd;
+9350:       if ( v26 )
+9351:         UIChatRoomWnd::WriteChatToFile(v26);
+9352:       return 0;
+9353:     case 8u:
+
+## Ref/UIWindowMgr.cpp:9482
+9482:     case 0x12u:
+9483:       v28 = this->m_chatRoomWnd;
+9484:       if ( v28 )
+9485:         UIChatRoomWnd::WriteChatToReportFile(v28);
+9486:       return 0;
+9487:     default:
+9488:       return 0;
+9489:   }
+9490: }
+
+## Ref/UIFrameWnd3.cpp:9854
+9854: // ================================================
+9855: // Original Signature: public: void __thiscall UINewChatWnd::WriteChatToFile(void)
+9856: // Decompiled from address: 0x49d370
+9857: // ================================================
+9858: void __thiscall UINewChatWnd::WriteChatToFile(UINewChatWnd *this)
+9859: {
+9860:   UINewChatWnd *v1; // ebx
+9861:   int v2; // edi
+9862:   unsigned int v3; // kr04_4
+9863:   unsigned int v4; // ebx
+9864:   unsigned int v5; // kr08_4
+9865:   unsigned int v6; // esi
+9866:   unsigned int v7; // ebx
+9867:   char *Ptr; // eax
+9868:   int v9; // edi
+9869:   unsigned int v10; // kr10_4
+9870:   unsigned int v11; // esi
+9871:   unsigned int v12; // ebx
+9872:   char *v13; // eax
+9873:   char v14; // al
+9874:   char tmp[2048]; // [esp+Ch] [ebp-834h] BYREF
+9875:   UINewChatWnd *v16; // [esp+80Ch] [ebp-34h]
+9876:   std::string v17; // [esp+810h] [ebp-30h] BYREF
+9877:   std::string chatStoreMsg; // [esp+820h] [ebp-20h] BYREF
+9878:   std::allocator<char> v19; // [esp+833h] [ebp-Dh]
+9879:   int v20; // [esp+83Ch] [ebp-4h]
+9880:
+9881:   v1 = this;
+9882:   v16 = this;
+9883:   v2 = 0;
+9884:   sprintf(tmp, "%s\\Chat", g_baseDir3);
+9885:   if ( !access(tmp, 0) || !_mkdir(tmp) )
+9886:   {
+9887:     sprintf(tmp, "%s\\Chat\\Chat.txt", g_baseDir3);
+9888:     while ( !access(tmp, 0) )
+9889:       sprintf(tmp, "%s\\Chat\\Chat%03d.txt", g_baseDir3, ++v2);
+9890:     if ( UIChatHisBox::WriteChatToFile(v1->m_listBox, tmp) )
+9891:     {
+9892:       chatStoreMsg.allocator = v19;
+9893:       std::string::_Tidy(&chatStoreMsg, 0);
+9894:       v3 = strlen(tmp) + 1;
+9895:       v4 = v3 - 1;
+9896:       if ( std::string::_Grow(&chatStoreMsg, v3 - 1, 1u) )
+9897:       {
+9898:         qmemcpy(chatStoreMsg._Ptr, tmp, v4);
+9899:         chatStoreMsg._Len = v3 - 1;
+9900:         chatStoreMsg._Ptr[v4] = 0;
+9901:       }
+9902:       v5 = strlen(aIsSaved) + 1;
+9903:       v20 = 0;
+9904:       v6 = v5 - 1;
+9905:       if ( std::string::npos - chatStoreMsg._Len <= v5 - 1 )
+9906:         std::_Xlen();
+9907:       if ( v5 != 1 )
+9908:       {
+9909:         v7 = chatStoreMsg._Len + v6;
+9910:         if ( std::string::_Grow(&chatStoreMsg, chatStoreMsg._Len + v6, 0) )
+9911:         {
+9912:           qmemcpy(&chatStoreMsg._Ptr[chatStoreMsg._Len], aIsSaved, v6);
+9913:           std::string::_Eos(&chatStoreMsg, v7);
+9914:         }
+9915:       }
+9916:       UIWindowMgr::SendMsg(&g_windowMgr, 3u, 0, 0, 0, 0);
+9917:       Ptr = chatStoreMsg._Ptr;
+9918:       if ( !chatStoreMsg._Ptr )
+9919:         Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+9920:       UIWindowMgr::SendMsg(&g_windowMgr, 1u, Ptr, 65280, 0, 0);
+9921:       v20 = -1;
+9922:       std::string::_Tidy(&chatStoreMsg, 1u);
+9923:       v1 = v16;
+9924:     }
+9925:     v9 = 0;
+9926:     sprintf(tmp, "%s\\Chat_BM", g_baseDir3);
+9927:     if ( !access(tmp, 0) || !_mkdir(tmp) )
+9928:     {
+9929:       sprintf(tmp, "%s\\Chat_BM\\Chat_BM.txt", g_baseDir3);
+9930:       while ( !access(tmp, 0) )
+9931:         sprintf(tmp, "%s\\Chat_BM\\Chat%03d_BM.txt", g_baseDir3, ++v9);
+9932:       if ( UIChatHisBox::WriteChatToFile(v1->m_cmdListBox, tmp) )
+9933:       {
+9934:         v17.allocator = v19;
+9935:         memset(&v17._Ptr, 0, 12);
+9936:         std::string::assign(&v17, tmp, strlen(tmp));
+9937:         v10 = strlen(aIsSaved) + 1;
+9938:         v20 = 1;
+9939:         v11 = v10 - 1;
+9940:         if ( std::string::npos - v17._Len <= v10 - 1 )
+9941:           std::_Xlen();
+9942:         if ( v10 != 1 )
+9943:         {
+9944:           v12 = v17._Len + v11;
+9945:           if ( std::string::_Grow(&v17, v17._Len + v11, 0) )
+9946:           {
+9947:             qmemcpy(&v17._Ptr[v17._Len], aIsSaved, v11);
+9948:             v17._Len = v12;
+9949:             v17._Ptr[v12] = 0;
+9950:           }
+9951:         }
+9952:         UIWindowMgr::SendMsg(&g_windowMgr, 3u, 0, 0, 0, 0);
+9953:         v13 = v17._Ptr;
+9954:         if ( !v17._Ptr )
+9955:           v13 = (char *)`std::string::_Nullstr'::`2'::_C;
+9956:         UIWindowMgr::SendMsg(&g_windowMgr, 1u, v13, 65280, 0, 0);
+9957:         if ( v17._Ptr )
+9958:         {
+9959:           v14 = *(v17._Ptr - 1);
+9960:           if ( !v14 || v14 == -1 )
+9961:             operator delete(v17._Ptr - 1);
+9962:           else
+9963:             *(v17._Ptr - 1) = v14 - 1;
+9964:         }
+9965:       }
+9966:     }
+9967:   }
+9968: }
+9969:
+9970:
+
+## Ref/UIFrameWnd.cpp:14232
+14232: // Original Signature: public: void __thiscall UIChatRoomWnd::WriteChatToReportFile(void)
+14233: // Decompiled from address: 0x463e30
+14234: // ================================================
+14235: void __thiscall UIChatRoomWnd::WriteChatToReportFile(UIChatRoomWnd *this)
+14236: {
+14237:   char *CharName; // esi
+14238:   unsigned int v2; // ebx
+14239:   unsigned int Len; // eax
+14240:   unsigned int v4; // esi
+14241:   signed int v5; // edi
+14242:   char *v6; // eax
+14243:   char v7; // al
+14244:   char *Ptr; // eax
+14245:   char *v9; // eax
+14246:   unsigned int v10; // kr08_4
+14247:   unsigned int v11; // ebx
+14248:   unsigned int v12; // kr0C_4
+14249:   unsigned int v13; // esi
+14250:   unsigned int v14; // ebx
+14251:   char *v15; // eax
+14252:   char v16; // al
+14253:   char v17; // al
+14254:   char tmp[2048]; // [esp+0h] [ebp-838h] BYREF
+14255:   UIChatRoomWnd *v19; // [esp+800h] [ebp-38h]
+14256:   std::string chatStoreMsg; // [esp+804h] [ebp-34h] BYREF
+14257:   std::string strCharacter; // [esp+814h] [ebp-24h] BYREF
+14258:   int captureCnt; // [esp+824h] [ebp-14h]
+14259:   std::allocator<char> v23; // [esp+82Bh] [ebp-Dh]
+14260:   int v24; // [esp+834h] [ebp-4h]
+14261:
+14262:   v19 = this;
+14263:   captureCnt = 0;
+14264:   sprintf(tmp, "%s\\Report", g_baseDir3);
+14265:   if ( !access(tmp, 0) || !_mkdir(tmp) )
+14266:   {
+14267:     CharName = CSession::GetCharName(&g_session);
+14268:     strCharacter.allocator = v23;
+14269:     std::string::_Tidy(&strCharacter, 0);
+14270:     v2 = strlen(CharName);
+14271:     if ( std::string::_Grow(&strCharacter, v2, 1u) )
+14272:     {
+14273:       qmemcpy(strCharacter._Ptr, CharName, v2);
+14274:       std::string::_Eos(&strCharacter, v2);
+14275:     }
+14276:     Len = strCharacter._Len;
+14277:     v4 = 0;
+14278:     v24 = 0;
+14279:     v5 = strCharacter._Len;
+14280:     if ( (int)strCharacter._Len > 0 )
+14281:     {
+14282:       while ( 1 )
+14283:       {
+14284:         if ( Len >= v4 && strCharacter._Ptr )
+14285:         {
+14286:           std::string::_Freeze(&strCharacter);
+14287:           v6 = &strCharacter._Ptr[v4];
+14288:         }
+14289:         else
+14290:         {
+14291:           v6 = (char *)`std::string::_Nullstr'::`2'::_C;
+14292:         }
+14293:         v7 = *v6;
+14294:         if ( v7 == 92 || v7 == 47 || v7 == 58 || v7 == 42 || v7 == 63 || v7 == 34 || v7 == 60 || v7 == 62 || v7 == 124 )
+14295:           *std::string::operator[](&strCharacter, v4) = 95;
+14296:         if ( (int)++v4 >= v5 )
+14297:           break;
+14298:         Len = strCharacter._Len;
+14299:       }
+14300:     }
+14301:     Ptr = strCharacter._Ptr;
+14302:     if ( !strCharacter._Ptr )
+14303:       Ptr = (char *)`std::string::_Nullstr'::`2'::_C;
+14304:     sprintf(tmp, "%s\\Report\\%s.txt", g_baseDir3, Ptr);
+14305:     while ( !access(tmp, 0) )
+14306:     {
+14307:       v9 = strCharacter._Ptr;
+14308:       ++captureCnt;
+14309:       if ( !strCharacter._Ptr )
+14310:         v9 = (char *)`std::string::_Nullstr'::`2'::_C;
+14311:       sprintf(tmp, "%s\\Report\\%s%03d.txt", g_baseDir3, v9, captureCnt);
+14312:     }
+14313:     if ( UIChatHisBox::WriteChatToReportFile(v19->m_listBox, tmp) )
+14314:     {
+14315:       chatStoreMsg.allocator = v23;
+14316:       std::string::_Tidy(&chatStoreMsg, 0);
+14317:       v10 = strlen(tmp) + 1;
+14318:       v11 = v10 - 1;
+14319:       if ( std::string::_Grow(&chatStoreMsg, v10 - 1, 1u) )
+14320:       {
+14321:         qmemcpy(chatStoreMsg._Ptr, tmp, v11);
+14322:         chatStoreMsg._Len = v10 - 1;
+14323:         chatStoreMsg._Ptr[v11] = 0;
+14324:       }
+14325:       v12 = strlen(aIsSaved) + 1;
+14326:       LOBYTE(v24) = 1;
+14327:       v13 = v12 - 1;
+14328:       if ( std::string::npos - chatStoreMsg._Len <= v12 - 1 )
+14329:         std::_Xlen();
+14330:       if ( v12 != 1 )
+14331:       {
+14332:         v14 = chatStoreMsg._Len + v13;
+14333:         if ( std::string::_Grow(&chatStoreMsg, chatStoreMsg._Len + v13, 0) )
+14334:         {
+14335:           qmemcpy(&chatStoreMsg._Ptr[chatStoreMsg._Len], aIsSaved, v13);
+14336:           std::string::_Eos(&chatStoreMsg, v14);
+14337:         }
+14338:       }
+14339:       UIWindowMgr::SendMsg(&g_windowMgr, 3u, 0, 0, 0, 0);
+14340:       v15 = chatStoreMsg._Ptr;
+14341:       if ( !chatStoreMsg._Ptr )
+14342:         v15 = (char *)`std::string::_Nullstr'::`2'::_C;
+14343:       UIWindowMgr::SendMsg(&g_windowMgr, 1u, v15, 65280, 0, 0);
+14344:       if ( chatStoreMsg._Ptr )
+14345:       {
+14346:         v16 = *(chatStoreMsg._Ptr - 1);
+
+## Ref/UIControl2.cpp:1111
+1111: // ================================================
+1112: // Original Signature: public: int __thiscall UIChatHisBox::WriteChatToFile(char const *)
+1113: // Decompiled from address: 0x44e650
+1114: // ================================================
+1115: int __thiscall UIChatHisBox::WriteChatToFile(UIChatHisBox *this, const char *fileName)
+1116: {
+1117:   int result; // eax
+1118:   FILE *v4; // edi
+1119:   std::string *First; // ecx
+1120:   int v6; // eax
+1121:   int v7; // esi
+1122:   int v8; // ebx
+1123:   std::string *v9; // edx
+1124:   const char *Ptr; // eax
+1125:
+1126:   result = (int)fopen(fileName, aW);
+1127:   v4 = (FILE *)result;
+1128:   if ( result )
+1129:   {
+1130:     First = this->m_items._First;
+1131:     HIBYTE(fileName) = 10;
+1132:     if ( First )
+1133:       v6 = this->m_items._Last - First;
+1134:     else
+1135:       v6 = 0;
+1136:     if ( v6 > 0 )
+1137:     {
+1138:       v7 = 0;
+1139:       v8 = v6;
+1140:       do
+1141:       {
+1142:         v9 = this->m_items._First;
+1143:         Ptr = v9[v7]._Ptr;
+1144:         if ( !Ptr )
+1145:           Ptr = `std::string::_Nullstr'::`2'::_C;
+1146:         fwrite(Ptr, v9[v7]._Len, 1u, v4);
+1147:         fwrite((char *)&fileName + 3, 1u, 1u, v4);
+1148:         ++v7;
+1149:         --v8;
+1150:       }
+1151:       while ( v8 );
+1152:     }
+1153:     fclose(v4);
+1154:     return 1;
+1155:   }
+1156:   return result;
+1157: }
+1158:
+1159:
+1160: // ================================================
+1161: // Original Signature: public: int __thiscall UIChatHisBox::WriteChatToReportFile(char const *)
+1162: // Decompiled from address: 0x44e720
+1163: // ================================================
+1164: int __thiscall UIChatHisBox::WriteChatToReportFile(UIChatHisBox *this, const char *fileName)
+1165: {
+1166:   return 1;
+1167: }
+1168:
+1169:
+1170: // ================================================

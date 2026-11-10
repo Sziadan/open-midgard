@@ -1,0 +1,100 @@
+{
+  "topic": "chat save/report reference contract",
+  "reference_executable": "HighPriest.exe",
+  "reference_executable_architecture": "pei-i386",
+  "static_only": true,
+  "source_evidence": {
+    "Ref/GameMode.cpp": [
+      {
+        "line": 16725,
+        "case": "TT_REQ_SAVE_CHAT",
+        "dispatch": "UIWindowMgr::SendMsg(6, 0, 0, 0, 0)"
+      },
+      {
+        "line": 16728,
+        "case": "TT_REQ_SAVE_CHAT_FROM_CHATROOM",
+        "dispatch": "UIWindowMgr::SendMsg(7, 0, 0, 0, 0)"
+      },
+      {
+        "line": 17196,
+        "case": "TT_REQ_REPORT_CHAT",
+        "dispatch": "UIWindowMgr::SendMsg(17, 0, 0, 0, 0)"
+      },
+      {
+        "line": 17199,
+        "case": "TT_REQ_REPORT_CHAT_FROM_CHATROOM",
+        "dispatch": "UIWindowMgr::SendMsg(18, 0, 0, 0, 0)"
+      }
+    ],
+    "Ref/UIWindowMgr.cpp": {
+      "function": "UIWindowMgr::SendMsg",
+      "address": "0x4e9cb0",
+      "line": 9108,
+      "case6": "UINewChatWnd::WriteChatToFile",
+      "case7": "UIChatRoomWnd::WriteChatToFile",
+      "case17": "no switch case; default returns 0",
+      "case18": "UIChatRoomWnd::WriteChatToReportFile"
+    },
+    "Ref/UIFrameWnd3.cpp": {
+      "function": "UINewChatWnd::WriteChatToFile",
+      "address": "0x49d370",
+      "line": 9858,
+      "files": [
+        "<g_baseDir3>\\Chat\\Chat.txt",
+        "<g_baseDir3>\\Chat\\Chat001.txt ...",
+        "<g_baseDir3>\\Chat_BM\\Chat_BM.txt",
+        "<g_baseDir3>\\Chat_BM\\Chat001_BM.txt ..."
+      ],
+      "ordering": "normal chat first, then battle-mode chat; each chooses first unused name and emits saved notice only when writer succeeds"
+    },
+    "Ref/UIFrameWnd.cpp": [
+      {
+        "function": "UIChatRoomWnd::WriteChatToFile",
+        "address": "0x464150",
+        "line": 14109,
+        "filename": "<g_baseDir3>\\Chat\\<sanitized room title>.txt",
+        "collision_suffix": "001, 002, ..."
+      },
+      {
+        "function": "UIChatRoomWnd::WriteChatToReportFile",
+        "address": "0x463e30",
+        "line": 14235,
+        "filename": "<g_baseDir3>\\Report\\<sanitized local character name>.txt",
+        "collision_suffix": "001, 002, ...",
+        "source_name": "CSession::GetCharName(&g_session)",
+        "sanitization": "Windows invalid filename characters replaced with underscore"
+      }
+    ],
+    "Ref/UIControl2.cpp": [
+      {
+        "function": "UIChatHisBox::WriteChatToFile",
+        "address": "0x44e650",
+        "line": 1115,
+        "behavior": "opens text-mode file, writes each history item using its stored byte length followed by LF, closes, returns1 on open success; returns0 on fopen failure; Windows text mode translates every LF"
+      },
+      {
+        "function": "UIChatHisBox::WriteChatToReportFile",
+        "address": "0x44e720",
+        "line": 1164,
+        "behavior": "stub returns 1 without opening/writing a file"
+      }
+    ]
+  },
+  "binary_evidence": {
+    "manager_function": "0x4e9cb0",
+    "dispatch": "message-1 indexed jump table at 0x4ea41c",
+    "table_targets": {
+      "message6": "0x4ea01a",
+      "message7": "0x4ea002",
+      "message17": "0x4ea404 default/return path",
+      "message18": "0x4ea032"
+    },
+    "calls": {
+      "0x4ea028": "call 0x49d370 (UINewChatWnd::WriteChatToFile)",
+      "0x4ea010": "call 0x464150 (UIChatRoomWnd::WriteChatToFile)",
+      "0x4ea040": "call 0x463e30 (UIChatRoomWnd::WriteChatToReportFile)"
+    },
+    "report_writer": "0x44e720 is a RET 4 stub returning EAX=1 (confirming source body)"
+  },
+  "root_review": "Root independently decoded indexed table at4EA41C: entries6=4EA01A,7=4EA002,17=4EA404,18=4EA032 and verified actual calls; report stub retained."
+}

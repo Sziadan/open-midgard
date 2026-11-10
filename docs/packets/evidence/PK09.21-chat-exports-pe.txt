@@ -1,0 +1,65 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004e9cb0 <.text+0xe8cb0>:
+  4e9cb0:	55                   	push   %ebp
+  4e9cb1:	8b ec                	mov    %esp,%ebp
+  4e9cb3:	6a ff                	push   $0xffffffff
+  4e9cb5:	68 6c 55 6c 00       	push   $0x6c556c
+  4e9cba:	64 a1 00 00 00 00    	mov    %fs:0x0,%eax
+  4e9cc0:	50                   	push   %eax
+  4e9cc1:	64 89 25 00 00 00 00 	mov    %esp,%fs:0x0
+  4e9cc8:	83 ec 68             	sub    $0x68,%esp
+  4e9ccb:	8b 45 08             	mov    0x8(%ebp),%eax
+  4e9cce:	53                   	push   %ebx
+  4e9ccf:	48                   	dec    %eax
+  4e9cd0:	8b d9                	mov    %ecx,%ebx
+  4e9cd2:	56                   	push   %esi
+  4e9cd3:	83 f8 13             	cmp    $0x13,%eax
+  4e9cd6:	57                   	push   %edi
+  4e9cd7:	89 5d f0             	mov    %ebx,-0x10(%ebp)
+  4e9cda:	0f 87 24 07 00 00    	ja     0x4ea404
+  4e9ce0:	ff 24 85 1c a4 4e 00 	jmp    *0x4ea41c(,%eax,4)
+
+HighPriest.exe:     file format pei-i386
+
+Contents of section .text:
+ 4ea41c 75a04e00 b4a34e00 89a34e00 66a34e00  u.N...N...N.f.N.
+ 4ea42c 4aa04e00 1aa04e00 02a04e00 d6a34e00  J.N...N...N...N.
+ 4ea43c d6a34e00 fba34e00 04a44e00 04a44e00  ..N...N...N...N.
+ 4ea44c 04a44e00 e79c4e00 04a44e00 04a44e00  ..N...N...N...N.
+ 4ea45c 04a44e00 32a04e00 04a44e00 75a04e00  ..N.2.N...N.u.N.
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004ea002 <.text+0xe9002>:
+  4ea002:	8b 8b 10 01 00 00    	mov    0x110(%ebx),%ecx
+  4ea008:	85 c9                	test   %ecx,%ecx
+  4ea00a:	0f 84 f4 03 00 00    	je     0x4ea404
+  4ea010:	e8 3b a1 f7 ff       	call   0x464150
+  4ea015:	e9 ea 03 00 00       	jmp    0x4ea404
+  4ea01a:	8b 8b 84 00 00 00    	mov    0x84(%ebx),%ecx
+  4ea020:	85 c9                	test   %ecx,%ecx
+  4ea022:	0f 84 dc 03 00 00    	je     0x4ea404
+  4ea028:	e8 43 33 fb ff       	call   0x49d370
+  4ea02d:	e9 d2 03 00 00       	jmp    0x4ea404
+  4ea032:	8b 8b 10 01 00 00    	mov    0x110(%ebx),%ecx
+  4ea038:	85 c9                	test   %ecx,%ecx
+  4ea03a:	0f 84 c4 03 00 00    	je     0x4ea404
+  4ea040:	e8 eb 9d f7 ff       	call   0x463e30
+  4ea045:	e9 ba 03 00 00       	jmp    0x4ea404
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+0044e720 <.text+0x4d720>:
+  44e720:	b8 01 00 00 00       	mov    $0x1,%eax
+  44e725:	c2 04 00             	ret    $0x4
