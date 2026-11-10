@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current ground prompt candidate checkpoint (2026-11-11)**. The focused ground prompts can render Windows IMM candidates in the source layouts. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-candidates.md)
+**Current ground prompt keystroke checkpoint (2026-11-11)**. The Win32 ground prompts now render the Traditional Chinese keystroke cells and clear them when composition ends. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-keystrokes.md)
+
+**Previous ground prompt candidate checkpoint (2026-11-11)**. The focused ground prompts can render Windows IMM candidates in the source layouts. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-candidates.md)
 
 **Previous ground prompt IME checkpoint (2026-11-10)**. The ground prompts now render preedit independently of the committed text and support Qt IME cursor queries and replacement ranges. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-ime.md)
 

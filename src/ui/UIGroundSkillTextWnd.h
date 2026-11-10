@@ -48,6 +48,11 @@ public:
     };
     void SetImeCandidates(ImeCandidatePage page);
     void DrawImeCandidates(HDC dc, RECT client);
+    void RecordImeKeystroke(int key);
+    void RetainLastImeKeystroke();
+    void ClearImeKeystrokes();
+    std::optional<std::array<std::string, 4>> ImeKeystrokeCells() const;
+    void DrawImeKeystrokes(HDC dc, RECT client);
 #if defined(_WIN32)
     bool HandleNativeImeCandidates(HWND hwnd, WPARAM event, LPARAM lists);
 #endif
@@ -89,6 +94,7 @@ private:
     std::string m_selectionText;
     std::string m_preedit;
     ImeCandidatePage m_candidates;
+    std::vector<int> m_imeKeystrokes;
     std::optional<std::array<shopui::BitmapPixels, 8>> m_candidateFrame;
 #if defined(_WIN32)
     bool m_systemCandidates = false;

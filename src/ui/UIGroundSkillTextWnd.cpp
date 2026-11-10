@@ -79,6 +79,59 @@ bool UsesSourceCandidates(int codePage)
     return codePage == 932 || codePage == 936 || codePage == 949 || codePage == 950;
 }
 
+struct TcKeystroke {
+    int slot;
+    unsigned bytes;
+};
+
+TcKeystroke LookupTcKeystroke(int key)
+{
+    // Selected client constructor at 0x500530. Entries are raw Big5 byte pairs.
+    constexpr std::array<int, 41> keys{
+        '1','2','3','4','5','6','7','8','9','0','A','B','C','D','E','F','G','H','I','J',
+        'K','L','N','M','O','P','Q','R','S','T','U','V','W','X','Y','Z',0xbd,0xba,0xbc,0xbe,0xbf,
+    };
+    constexpr std::string_view slotOrder = "11441443331111111132331233111121111133333";
+    constexpr std::array<unsigned, 41> glyphs{
+        0xa374,0xa378,0xa3be,0xa3bf,0xa3a4,0xa3bd,0xa3bb,0xa3ab,
+        0xa3af,0xa3b3,0xa376,0xa3a7,0x3f3f,0x3fa3,0xa2a3,0xa6a3,
+        0xa9a3,0xaca3,0xb9a3,0xada3,0xb1a3,0xaaa3,0xbaa3,0xb0a3,
+        0xb4a3,0x75a3,0xa1a3,0x7aa3,0xa53f,0xa3a3,0xa379,0x3fa3,
+        0xa8a3,0x77a3,0xb7a3,0xb5a3,0xaea3,0xb2a3,0xb600,
+        0,      // VK_OEM_PERIOD reads uninitialized stack bytes in the selected binary.
+        0x3131, // VK_OEM_2 reads the first two bytes of the adjacent slot string.
+    };
+    static_assert(keys.size() == slotOrder.size() && keys.size() == glyphs.size());
+    const auto entry = std::find(keys.begin(), keys.end(), key);
+    if (entry == keys.end()) return {4, 0};
+    const auto i = static_cast<std::size_t>(entry - keys.begin());
+    return {slotOrder[i] - '1', glyphs[i]};
+}
+
+std::string DecodeTcKeystroke(unsigned pair)
+{
+    if (!pair) return {};
+    const char bytes[]{static_cast<char>(pair >> 8), static_cast<char>(pair & 0xff)};
+    const std::string_view text(bytes, bytes[1] ? 2 : 1);
+    if (const auto decoded = ro::DecodeSourceText(text, 950)) return *decoded;
+    std::string display;
+    for (const unsigned char byte : text) {
+        if (byte < 0x80) display += static_cast<char>(byte);
+        else display += "\xef\xbf\xbd";
+    }
+    return display;
+}
+
+RECT ImePopupBounds(const UIEditCtrl& edit, RECT client, int anchor, int width, int height)
+{
+    width = (std::min)(width, static_cast<int>(client.right - client.left));
+    const int x = (std::clamp)(anchor, static_cast<int>(client.left), static_cast<int>(client.right) - width);
+    int y = edit.m_y + edit.m_h + 6;
+    if (y + height > client.bottom) y = edit.m_y - height - 6;
+    y = (std::max)(y, static_cast<int>(client.top));
+    return {x,y,x+width,y+height};
+}
+
 #if defined(_WIN32)
 std::string InputUtf8(std::u16string_view text);
 
@@ -296,6 +349,12 @@ public:
         const auto display = MakeDisplay(dc, true);
         return Pixel(dc, display.text, (std::min)(display.anchor, display.cursor)) - 3;
     }
+    int KeystrokeX(HDC dc)
+    {
+        m_owner->SyncSelection();
+        const auto display = MakeDisplay(dc, true);
+        return Pixel(dc, display.text, display.cursor) - 3;
+    }
 #if RO_ENABLE_QT6_UI
     QRect CursorRectangle()
     {
@@ -397,6 +456,7 @@ void UIGroundSkillTextWnd::FocusEdit()
             if (!wasFocused) {
                 CancelComposition();
                 SetImeCandidates({});
+                ClearImeKeystrokes();
                 m_editCtrl->m_selectionOrigin=0;
                 m_editCtrl->m_selectionCursor=static_cast<int>(m_editCtrl->m_text.size());
                 m_editCtrl->Invalidate();
@@ -575,6 +635,78 @@ void UIGroundSkillTextWnd::SetImeCandidates(ImeCandidatePage page)
     Invalidate();
 }
 
+void UIGroundSkillTextWnd::RecordImeKeystroke(int key)
+{
+    if (ro::SelectedSourceTextCodePage() != 950) return;
+    if (key == VK_BACK) {
+        if (m_imeKeystrokes.empty()) return;
+        m_imeKeystrokes.pop_back();
+    } else {
+        const int slot = LookupTcKeystroke(key).slot;
+        const auto previous = std::find_if(m_imeKeystrokes.begin(), m_imeKeystrokes.end(),
+            [slot](int stroke) { return LookupTcKeystroke(stroke).slot == slot; });
+        if (previous != m_imeKeystrokes.end()) m_imeKeystrokes.erase(previous);
+        m_imeKeystrokes.push_back(key);
+    }
+    Invalidate();
+}
+
+void UIGroundSkillTextWnd::RetainLastImeKeystroke()
+{
+    if (m_imeKeystrokes.empty()) return;
+    const int last = m_imeKeystrokes.back();
+    m_imeKeystrokes.clear();
+    if (LookupTcKeystroke(last).slot < 4) m_imeKeystrokes.push_back(last);
+    Invalidate();
+}
+
+void UIGroundSkillTextWnd::ClearImeKeystrokes()
+{
+    if (m_imeKeystrokes.empty()) return;
+    m_imeKeystrokes.clear();
+    Invalidate();
+}
+
+std::optional<std::array<std::string, 4>> UIGroundSkillTextWnd::ImeKeystrokeCells() const
+{
+    if (ro::SelectedSourceTextCodePage() != 950 || m_imeKeystrokes.empty()
+        || (m_imeKeystrokes.size() == 1 && LookupTcKeystroke(m_imeKeystrokes.front()).slot == 4))
+        return std::nullopt;
+    std::array<std::string, 4> cells{"??", "??", {}, {}};
+    for (const auto key : m_imeKeystrokes) {
+        const auto stroke = LookupTcKeystroke(key);
+        if (stroke.slot < 4) cells[stroke.slot] = DecodeTcKeystroke(stroke.bytes);
+    }
+    return cells;
+}
+
+void UIGroundSkillTextWnd::DrawImeKeystrokes(HDC dc, RECT client)
+{
+    if (!m_editCtrl || client.right <= client.left || client.bottom <= client.top) return;
+    const auto cells = ImeKeystrokeCells();
+    if (!cells) return;
+    const auto anchor = static_cast<GroundSkillTextEditCtrl*>(m_editCtrl)->KeystrokeX(dc);
+    const auto bounds = ImePopupBounds(*m_editCtrl, client, anchor, 60, 18);
+    const int saved = SaveDC(dc);
+    if (!saved) return;
+    IntersectClipRect(dc, client.left, client.top, client.right, client.bottom);
+    IntersectClipRect(dc, bounds.left, bounds.top, bounds.right, bounds.bottom);
+    const auto chip = [&](int x, int y, COLORREF fallback) {
+        if (!m_colorChip.IsValid()) return fallback;
+        const auto rgb = GetColorChipRgb(x, y);
+        return RGB((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255);
+    };
+    shopui::FillRectColor(dc, bounds, chip(22, 2, RGB(90,90,90)));
+    if (bounds.right - bounds.left > 2)
+        shopui::FillRectColor(dc, {bounds.left+1,bounds.top+1,bounds.right-1,bounds.bottom-1},
+            chip(2, 2, RGB(232,232,232)));
+    for (std::size_t i = 0; i < cells->size(); ++i) {
+        const int x = bounds.left + 2 + static_cast<int>(i) * 14;
+        DrawText(dc, {x,bounds.top+2,bounds.right,bounds.bottom}, (*cells)[i], RGB(0,0,0), true);
+    }
+    RestoreDC(dc, saved);
+}
+
 #if defined(_WIN32)
 bool UIGroundSkillTextWnd::HandleNativeImeCandidates(HWND hwnd, WPARAM event, LPARAM lists)
 {
@@ -617,14 +749,12 @@ void UIGroundSkillTextWnd::DrawImeCandidates(HDC dc, RECT client)
         widths.push_back(width);
         contentWidth = vertical ? (std::max)(contentWidth, width + 8) : contentWidth + width + 8;
     }
-    const int width = (std::min)(contentWidth + 22, static_cast<int>(client.right - client.left));
     const int height = vertical ? static_cast<int>(labels.size()) * 20 + 14 : 34;
     const auto anchor = static_cast<GroundSkillTextEditCtrl*>(m_editCtrl)->CandidateX(dc);
-    const int x = (std::clamp)(anchor, static_cast<int>(client.left), static_cast<int>(client.right) - width);
-    int y = m_editCtrl->m_y + m_editCtrl->m_h + 6;
-    if (y + height > client.bottom) y = m_editCtrl->m_y - height - 6;
-    y = (std::max)(y, static_cast<int>(client.top));
-    const RECT bounds{x,y,x+width,y+height};
+    const auto bounds = ImePopupBounds(*m_editCtrl, client, anchor, contentWidth + 22, height);
+    const int x = bounds.left;
+    const int y = bounds.top;
+    const int width = bounds.right - bounds.left;
     const int saved = SaveDC(dc);
     if (!saved) return;
     IntersectClipRect(dc, client.left, client.top, client.right, client.bottom);

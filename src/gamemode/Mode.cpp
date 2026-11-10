@@ -9,6 +9,10 @@
 #include "render3d/RenderDevice.h"
 #include "res/Texture.h"
 #include "ui/UIWindowMgr.h"
+#if RO_PLATFORM_WINDOWS
+#include "ui/UIGroundSkillTextWnd.h"
+#include <imm.h>
+#endif
 #include "ui/UITransBalloonText.h"
 #include "main/WinMain.h"
 #include <cstring>
@@ -280,6 +284,12 @@ void CModeMgr::Run(int startMode, const char* worldName,const ModeRunServices* s
                 break;
             }
             MainLoopWatchdogSetStage("DispatchMessage");
+#if RO_PLATFORM_WINDOWS
+            if (msg.hwnd == g_hMainWnd && msg.message == WM_KEYDOWN && msg.wParam == VK_PROCESSKEY) {
+                if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText())
+                    prompt->RecordImeKeystroke(static_cast<int>(ImmGetVirtualKey(msg.hwnd)));
+            }
+#endif
             TranslateMessage(&msg);
 #if RO_PLATFORM_WINDOWS
             DispatchMessageW(&msg);

@@ -172,6 +172,36 @@
 #endif
                 Require(renderCandidates({0,0,view.width(),view.height()}, below + 10) == QColor("#181b20"),
                     "native close notification left the candidate popup visible");
+                g_codePage = 950;
+                window->HandleEditKey(VK_HOME, false);
+                window->RecordImeKeystroke('1');
+                window->RecordImeKeystroke('2');
+                window->RecordImeKeystroke('3');
+                auto cells = window->ImeKeystrokeCells();
+                Require(cells && (*cells)[0] == "\xe3\x84\x89" && (*cells)[3] == "\xcb\x87",
+                    "Traditional Chinese keys did not occupy their selected-client slots");
+                window->RecordImeKeystroke(VK_BACK);
+                cells = window->ImeKeystrokeCells();
+                Require(cells && (*cells)[3].empty(), "IME Backspace did not remove the last stroke");
+                window->RecordImeKeystroke(0xbf);
+#if defined(_WIN32)
+                WindowProc(g_hMainWnd, WM_IME_COMPOSITION, 0, GCS_COMPSTR);
+#else
+                window->RetainLastImeKeystroke();
+#endif
+                cells = window->ImeKeystrokeCells();
+                Require(cells && (*cells)[0] == "??" && (*cells)[2] == "11",
+                    "composition update did not keep just the latest selected-client stroke");
+                window->DrawImeKeystrokes(selectionDib.GetDC(), {0,0,view.width(),view.height()});
+                Require(selection.pixelColor(edit->m_x + 1, below + 1) == QColor("#123456"),
+                    "keystroke window did not draw the source interior color");
+#if defined(_WIN32)
+                WindowProc(g_hMainWnd, WM_IME_ENDCOMPOSITION, 0, 0);
+#else
+                window->ClearImeKeystrokes();
+#endif
+                Require(!window->ImeKeystrokeCells(), "IME end left the keystroke window visible");
+                window->HandleEditKey(VK_END, true);
                 g_codePage = 65001;
             }
             WindowProc(g_hMainWnd,WM_CHAR,'!',0);
@@ -200,7 +230,7 @@
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},{"opacity_compositor_acceptance",false},
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},
             {"source_clipboard_bytes_and_selection",true},{"qt_preedit_cursor_and_replacement",true},
-            {"source_candidate_layout_and_native_close",true},
+            {"source_candidate_layout_and_native_close",true},{"source_tc_keystroke_cells_and_lifecycle",true},
             {"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},
             {"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
     }

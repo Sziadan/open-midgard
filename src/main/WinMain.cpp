@@ -581,6 +581,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             prompt->CancelComposition();
             prompt->SetImeCandidates({});
         }
+        if (msg == WM_KILLFOCUS || msg == WM_IME_ENDCOMPOSITION)
+            prompt->ClearImeKeystrokes();
         if (msg == WM_IME_NOTIFY && prompt->HandleNativeImeCandidates(hwnd, wParam, lParam))
             return 0;
         if (msg == WM_IME_SETCONTEXT)
@@ -612,6 +614,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
         if (msg == WM_IME_COMPOSITION) {
+            if (lParam & GCS_COMPSTR) prompt->RetainLastImeKeystroke();
             if (HIMC context = ImmGetContext(hwnd)) {
                 const auto read = [context](DWORD kind) -> std::optional<std::u16string> {
                     const LONG bytes = ImmGetCompositionStringW(context, kind, nullptr, 0);

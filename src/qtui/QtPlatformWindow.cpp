@@ -154,6 +154,7 @@ protected:
         if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
             prompt->CancelComposition();
             prompt->SetImeCandidates({});
+            prompt->ClearImeKeystrokes();
         }
         QWindow::focusOutEvent(event);
         sendMessage(kWmActivate, kWaInactive, 0);

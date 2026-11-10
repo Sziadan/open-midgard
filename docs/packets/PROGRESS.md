@@ -3735,3 +3735,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Ground prompt candidates
 
 **Current ground prompt candidate checkpoint (2026-11-11)**. The focused ground prompts can render Windows IMM candidates in the source layouts. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-candidates.md)
+
+## 2026-11-11 Ground prompt keystrokes
+
+**Current ground prompt keystroke checkpoint (2026-11-11)**. The Win32 ground prompts now render the Traditional Chinese keystroke cells and clear them when composition ends. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-keystrokes.md)
