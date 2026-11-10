@@ -4,6 +4,7 @@
 #include "UIWindowMgr.h"
 #include "UINewChatWnd.h"
 #include "core/Globals.h"
+#include "core/SettingsIni.h"
 #include "core/Timer.h"
 #include "core/SourceTextCodec.h"
 #include "core/UiMessageStrings.h"
@@ -284,11 +285,59 @@ int EditTextWidth(HDC dc, std::string_view text)
 #endif
 }
 
-RoomSettingsButton MakeButton(int id,int x,int y,const char* normal,const char* hover,const char* pressed)
+std::string SelectedGroundPromptSkin()
+{
+    if (!g_modeMgr.GetCurrentGameMode()) return {};
+    auto name = LoadSettingsIniString("Graphics", "SkinName", "");
+    if (name == "<Basic Skin>" || name == "." || name == ".." || name.find_first_of("/\\:") != std::string::npos)
+        return {};
+    return name;
+}
+
+const char* GroundPromptLanguageFolder()
+{
+#if RO_PLATFORM_WINDOWS
+    switch (PRIMARYLANGID(GetUserDefaultLangID())) {
+    case LANG_GERMAN: return "german\\";
+    case LANG_ITALIAN: return "italian\\";
+    case LANG_PORTUGUESE: return "portuguese\\";
+    case LANG_TURKISH: return "turkish\\";
+    }
+#endif
+    return "english\\";
+}
+
+shopui::BitmapPixels LoadGroundPromptBitmap(const std::string& skin, const char* name, bool transparent = true)
+{
+    const auto load = [&](const std::string& path) {
+        auto bitmap = shopui::LoadBitmapPixelsFromGameData(path, transparent);
+        if (bitmap.IsValid()) return bitmap;
+        return shopui::LoadBitmapPixelsFromGameData("data\\" + path, transparent);
+    };
+    if (!skin.empty()) {
+        auto bitmap = load("skin\\" + skin + "\\" + name);
+        if (bitmap.IsValid()) return bitmap;
+    }
+
+    if (g_serviceType != ServiceKorea) {
+        constexpr const char* sourceDirectory = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\";
+        const std::string canonical = std::string(sourceDirectory) + name;
+        auto bitmap = load(std::string("texture\\") + GroundPromptLanguageFolder() + canonical);
+        if (bitmap.IsValid()) return bitmap;
+        // LanguageFile returns the original path when its localized asset is absent.
+        bitmap = load("texture\\" + canonical);
+        if (bitmap.IsValid()) return bitmap;
+        bitmap = load(std::string("texture\\UI\\") + name);
+        if (bitmap.IsValid()) return bitmap;
+    }
+    return LoadChatRoomSkinBitmap(name, transparent);
+}
+
+RoomSettingsButton MakeButton(const std::string& skin,int id,int x,int y,const char* normal,const char* hover,const char* pressed)
 {
     RoomSettingsButton button;button.id=id;button.x=x;button.y=y;
     const char* names[]={normal,hover,pressed};
-    for(int i=0;i<3;++i){button.bitmaps[i]=LoadChatRoomSkinBitmap(names[i]);button.uris[i]=ChatRoomBitmapUri(button.bitmaps[i]);}
+    for(int i=0;i<3;++i){button.bitmaps[i]=LoadGroundPromptBitmap(skin,names[i]);button.uris[i]=ChatRoomBitmapUri(button.bitmaps[i]);}
     return button;
 }
 
@@ -445,16 +494,27 @@ UIGroundSkillTextWnd::UIGroundSkillTextWnd(int windowId)
     edit->Create(240,16);edit->Move(m_x+22,m_y+50);edit->m_maxchar=78;
     edit->SetFrameColor(242,242,242);m_editCtrl=edit;AddChild(edit);
 
-    m_ok=MakeButton(118,189,96,"btn_ok.bmp","btn_ok_a.bmp","btn_ok_b.bmp");
-    m_cancel=MakeButton(119,234,96,"btn_cancel.bmp","btn_cancel_a.bmp","btn_cancel_b.bmp");
-    const char* frameNames[]={"basic_interface\\titlebar_left.bmp","basic_interface\\titlebar_right.bmp",
-        "basic_interface\\titlebar_mid.bmp","basic_interface\\btnbar_left2.bmp",
-        "basic_interface\\btnbar_right2.bmp","basic_interface\\btnbar_mid2.bmp"};
-    for(std::size_t i=0;i<m_frame.size();++i){m_frame[i]=LoadChatRoomSkinBitmap(frameNames[i]);m_frameUris[i]=ChatRoomBitmapUri(m_frame[i]);}
-    m_colorChip=LoadChatRoomSkinBitmap("colorchip.bmp",false);
+    RefreshSkin();
     ro::UiMessageStrings messages;messages.Load();
     m_caption=messages.Get(435,"Talkbox");m_prompt=messages.Get(436,"Enter text");
     FocusEdit();
+}
+
+void UIGroundSkillTextWnd::RefreshSkin()
+{
+    const auto selected = SelectedGroundPromptSkin();
+    if (m_skinName == selected && m_skinService == g_serviceType) return;
+    m_skinName = selected;
+    m_skinService = g_serviceType;
+    m_ok=MakeButton(m_skinName,118,189,96,"btn_ok.bmp","btn_ok_a.bmp","btn_ok_b.bmp");
+    m_cancel=MakeButton(m_skinName,119,234,96,"btn_cancel.bmp","btn_cancel_a.bmp","btn_cancel_b.bmp");
+    const char* frameNames[]={"basic_interface\\titlebar_left.bmp","basic_interface\\titlebar_right.bmp",
+        "basic_interface\\titlebar_mid.bmp","basic_interface\\btnbar_left2.bmp",
+        "basic_interface\\btnbar_right2.bmp","basic_interface\\btnbar_mid2.bmp"};
+    for(std::size_t i=0;i<m_frame.size();++i){m_frame[i]=LoadGroundPromptBitmap(m_skinName,frameNames[i]);m_frameUris[i]=ChatRoomBitmapUri(m_frame[i]);}
+    m_colorChip=LoadGroundPromptBitmap(m_skinName,"colorchip.bmp",false);
+    m_candidateFrame.reset();
+    Invalidate();
 }
 
 u32 UIGroundSkillTextWnd::GetColorChipRgb(int x,int y) const
@@ -888,7 +948,7 @@ void UIGroundSkillTextWnd::DrawImeCandidates(HDC dc, RECT client, bool alphaTarg
             "sysbox_rm.bmp","sysbox_ld.bmp","sysbox_md.bmp","sysbox_rd.bmp"};
         m_candidateFrame.emplace();
         for (std::size_t i = 0; i < m_candidateFrame->size(); ++i)
-            (*m_candidateFrame)[i] = LoadChatRoomSkinBitmap(names[i]);
+            (*m_candidateFrame)[i] = LoadGroundPromptBitmap(m_skinName,names[i]);
     }
     const auto& frame = *m_candidateFrame;
     if (width >= 28 && std::all_of(frame.begin(), frame.end(), [](const auto& tile) { return tile.IsValid(); })) {

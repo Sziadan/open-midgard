@@ -337,12 +337,83 @@
             pointer(WM_LBUTTONDOWN,30,55);g_windowMgr.DeleteWindow(window);
             Require(!g_windowMgr.m_captureWindow && GetCapture()!=g_hMainWnd,"owner deletion retained native capture");
         }
+        {
+            CGameMode gameMode;
+            struct RestoreSkinContext {
+                QByteArray iniDirectory = qgetenv("OPEN_MIDGARD_DATA_DIR");
+                bool hadIniDirectory = qEnvironmentVariableIsSet("OPEN_MIDGARD_DATA_DIR");
+                CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+                int codePage = g_codePage;
+                ~RestoreSkinContext()
+                {
+                    if (hadIniDirectory) qputenv("OPEN_MIDGARD_DATA_DIR", iniDirectory);
+                    else qunsetenv("OPEN_MIDGARD_DATA_DIR");
+                    SkillPacketReplayAccess::SetCurrent(mode);
+                    g_codePage = codePage;
+                }
+            } restoreSkin;
+            Require(!g_modeMgr.GetCurrentMode() || restoreSkin.mode, "skin fixture requires a gameplay or empty mode");
+            const auto iniDirectory = std::filesystem::absolute("ground-skin-settings");
+            std::filesystem::create_directories(iniDirectory);
+            Require(qputenv("OPEN_MIDGARD_DATA_DIR", QByteArray::fromStdString(iniDirectory.string())),
+                "could not isolate the skin settings fixture");
+            Require(GetOpenMidgardIniPath().parent_path() == iniDirectory, "skin fixture would write outside its settings directory");
+            const auto bitmap = [](const std::filesystem::path& path, int width, int height, QColor color) {
+                std::filesystem::create_directories(path.parent_path());
+                QImage image(width,height,QImage::Format_RGB32);
+                image.fill(color);
+                Require(image.save(QString::fromStdString(path.string()), "BMP"), "ground skin bitmap save failed");
+            };
+            bitmap("skin/PacketSkinA/basic_interface/titlebar_left.bmp",12,17,QColor("#123abc"));
+            bitmap("skin/PacketSkinA/colorchip.bmp",32,8,QColor("#26b478"));
+            bitmap("skin/PacketSkinA/btn_ok.bmp",28,18,QColor("#8e6040"));
+            bitmap("skin/PacketSkinB/colorchip.bmp",32,8,QColor("#dc9246"));
+            for (const char* name : {"sysbox_lu.bmp","sysbox_mu.bmp","sysbox_ru.bmp","sysbox_lm.bmp",
+                    "sysbox_rm.bmp","sysbox_ld.bmp","sysbox_md.bmp","sysbox_rd.bmp"}) {
+                bitmap(std::filesystem::path("skin/PacketSkinA") / name,14,14,QColor("#317ac5"));
+                bitmap(std::filesystem::path("skin/PacketSkinB") / name,14,14,QColor("#a25d19"));
+            }
+            Require(SaveSettingsIniString("Graphics","SkinName","PacketSkinA"), "skin setting save failed");
+            SkillPacketReplayAccess::SetCurrent(nullptr);
+            auto* prompt = static_cast<UIGroundSkillTextWnd*>(g_windowMgr.MakeWindow(84));
+            Require(prompt && prompt->GetColorChipRgb(2,2) == 0x123456u,
+                "selected skin applied outside the gameplay mode");
+            prompt->Move(20,20);
+            SkillPacketReplayAccess::SetCurrent(&gameMode);
+            Require(g_windowMgr.MakeWindow(84) == prompt, "skin reload replaced the managed prompt");
+            const auto rgb = [](const shopui::BitmapPixels& pixels) {
+                return pixels.IsValid() ? pixels.pixels.front() & 0xffffffu : 0u;
+            };
+            Require(prompt->GetColorChipRgb(2,2) == 0x26b478u
+                && rgb(prompt->GetFrameBitmap(0)) == 0x123abcu
+                && rgb(prompt->GetFrameBitmap(1)) == 0x4042d2u
+                && rgb(prompt->GetButton(118)->bitmaps[0]) == 0x8e6040u,
+                "selected skin precedence or per-resource fallback differed");
+            g_codePage = 932;
+            prompt->SetImeCandidates({{"candidate"},0,0,0});
+            const auto candidateCorner = [&] {
+                ArgbDibSurface surface;
+                Require(surface.EnsureSize(view.width(),view.height()), "skin popup DIB failed");
+                prompt->DrawImeCandidates(surface.GetDC(), {0,0,view.width(),view.height()}, true);
+                const auto* edit = prompt->GetEditCtrl();
+                return surface.GetPixels()[(edit->m_y+edit->m_h+7)*surface.GetWidth()+edit->m_x+1] & 0xffffffu;
+            };
+            Require(candidateCorner() == 0x317ac5u, "selected skin candidate lattice did not load");
+            Require(SaveSettingsIniString("Graphics","SkinName","PacketSkinB"), "replacement skin setting save failed");
+            Require(g_windowMgr.MakeWindow(84) == prompt && prompt->GetColorChipRgb(2,2) == 0xdc9246u
+                && rgb(prompt->GetFrameBitmap(0)) == 0xd24240u && candidateCorner() == 0xa25d19u,
+                "cached prompt did not refresh skin artwork, palette, and candidate lattice together");
+            Require(SaveSettingsIniString("Graphics","SkinName","<Basic Skin>"), "basic skin setting save failed");
+            Require(g_windowMgr.MakeWindow(84) == prompt && prompt->GetColorChipRgb(2,2) == 0x123456u,
+                "basic skin did not restore the original palette");
+            g_windowMgr.DeleteWindow(prompt);
+        }
         g_windowMgr.m_editWindow=oldFocus;
         QFile proof(output+"/ground-text-window-render-results.json");Require(proof.open(QIODevice::WriteOnly),"ground text proof open failed");
         proof.write(QJsonDocument(QJsonObject{{"outcome","PASS"},{"native_frames",2},{"source_ids_84_101",true},
             {"source_edit_geometry_and_limit",true},{"source_key_frame_footer_button_samples",true},
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
-            {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},
+            {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",true},
             {"opacity_compositor_acceptance",static_cast<bool>(RO_PLATFORM_WINDOWS)},
             {"modern_prompt_upload_alpha",static_cast<bool>(RO_PLATFORM_WINDOWS)},
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},

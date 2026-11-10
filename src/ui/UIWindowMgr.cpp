@@ -1336,6 +1336,7 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
     case WID_TALKBOXTRAPINPUTWND:case WID_GRAFFISTRBOXWND:{
         auto*& window=m_groundSkillTextWindows[windowId==WID_TALKBOXTRAPINPUTWND?0:1];
         if(!window){window=new UIGroundSkillTextWnd(windowId);m_children.insert(std::find(m_children.begin(),m_children.end(),m_modalWindow),window);}
+        else window->RefreshSkin();
         window->SetShow(1);window->FocusEdit();
         if(m_chatWnd)m_chatWnd->ClearInputFocus();
         return window;

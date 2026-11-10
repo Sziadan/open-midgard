@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-**Current ground prompt modern overlay checkpoint (2026-11-11)**. The Windows modern gameplay queue now submits the prompt and its IME popups with premultiplied alpha. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-modern-overlay.md)
+**Current ground prompt skin checkpoint (2026-11-11)**. Ground prompt artwork and IME palettes now honor the selected directory skin in gameplay. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-skin.md)
+
+**Previous ground prompt modern overlay checkpoint (2026-11-11)**. The Windows modern gameplay queue now submits the prompt and its IME popups with premultiplied alpha. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-modern-overlay.md)
 
 **Previous ground prompt opacity checkpoint (2026-11-11)**. The Win32 prompts and their controls now fade as a single layer during drag and recover opacity on release. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-opacity.md)
 
@@ -53,7 +55,7 @@
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Verify the ground prompts in a live modern gameplay frame, including non-default UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Continue skin selection and companion AI using the existing package gates. Keep skill tree window code and assets unchanged.
+**Next work.** Continue ZIP skin loading, the original skin picker, and companion AI using the existing package gates. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
 
 The Traditional Chinese keystroke implementation uses the 39 fixed Big5 pairs in the selected executable and the stable slash-key pair from the adjacent slot string. The period key reads uninitialized bytes in the original. The port leaves that cell empty. [Keystroke evidence](evidence/PK27-prompt-keystrokes.md)
 
@@ -63,7 +65,7 @@ Native composition paint now inserts preedit at the language cursor in a tempora
 
 The Windows modern gameplay queue now submits the prompts and IME popups as a premultiplied layer after the common overlay route. The replay verifies the upload pixels before GPU submission. For live acceptance, inspect the presented texture over a contrasting scene and check that gameplay modals retain priority. [Modern overlay evidence](evidence/PK27-prompt-modern-overlay.md)
 
-For skin selection, start with `CSkinMgr::SetCurrentSkinNum` and `GetColorChipColor` in `Ref/skin.cpp`. Trace `UIBmp` before changing the port loader. The prompts cache frame and button bitmaps, the color chip, and the candidate lattice separately. Use a custom-skin fixture that distinguishes those resources from the default artwork.
+Directory skins now use `[Graphics] SkinName` in `open-midgard.ini`. Reopening a prompt refreshes cached frame and button art, the color chip, and the IME lattice when the selection changes. For ZIP skins, trace `CSkinMgr::ExtractFilesIfZipSkin` in `Ref/skin.cpp` and verify the expected archive entry names. The pinned zlib source includes a minizip reader, and `CBitmapRes::LoadFromBuffer` can decode bitmap entries in memory. The original picker is in `Ref/UIFrameWnd2.cpp` near `SetCurrentSkinNum`. [Directory skin evidence](evidence/PK27-prompt-skin.md)
 
 The selected `UIWindowMgr::MakeWindow` paths for IDs 84 and 101 call `AddWindow` without `CSnapMgr::AddSnapObject`. Preserve the unregistered drag for these prompts. The registered branch of `UIFrameWnd::OnMouseMove` applies to windows explicitly added to the snap graph.
 

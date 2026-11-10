@@ -85,6 +85,7 @@ private:
     void ReplaceSelection(std::string_view insertion);
     void ApplyEdit(std::string text, std::size_t cursor);
     void FocusEdit();
+    void RefreshSkin();
     void PaintFrame(HDC dc);
     void AdvanceOpacity(u32 tick);
 #if RO_PLATFORM_WINDOWS
@@ -107,6 +108,8 @@ private:
     int m_dragStartX=0,m_dragStartY=0,m_dragOriginX=0,m_dragOriginY=0;
     std::string m_caption;
     std::string m_prompt;
+    std::string m_skinName;
+    int m_skinService = -1;
     std::string m_selectionText;
     std::string m_preedit;
     ImeCandidatePage m_candidates;

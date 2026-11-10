@@ -8,6 +8,7 @@
 #include "ui/UiScale.h"
 #include "main/WinMain.h"
 #include "core/Globals.h"
+#include "core/SettingsIni.h"
 #include "gamemode/Mode.h"
 #include "qtui/QtUiState.h"
 #include "qtui/QtPlatformWindow.h"
