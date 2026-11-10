@@ -65,6 +65,7 @@
 #include "world/RagEffect.h"
 #include "world/3dActor.h"
 #include "world/World.h"
+#include "world/Weather.h"
 #include "world/Emotion.h"
 #include "main/WinMain.h"
 
@@ -452,9 +453,11 @@ void LaunchMapWeatherEffect(CGameMode& mode)
         return;
     }
 
-    const std::string mapName = ToLowerAsciiMapName(mode.m_rswName);
-    const int effectId = (mapName == "xmas.rsw" || mapName == "xmas_fild01.rsw")
-        ? 162 : ResolveRefWeatherCloudEffectId(mode.m_rswName);
+    if (CWeather::IsSnowMap(mode.m_rswName)) {
+        g_Weather.LaunchSnow();
+        return;
+    }
+    const int effectId = ResolveRefWeatherCloudEffectId(mode.m_rswName);
     if (effectId == 0) {
         return;
     }
@@ -7472,6 +7475,7 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 
 void ClearRuntimeActors(CGameMode& mode)
 {
+    g_Weather.Reset();
     mode.m_characterNameCache.clear();
     mode.m_characterNameReqTimer.clear();
     CWorld* const world = mode.m_world ? mode.m_world : &g_world;
@@ -10569,6 +10573,7 @@ void CGameMode::OnUpdate() {
                 m_world->UpdateActors();
                 CleanupPendingActorDespawns(*this);
             }
+            g_Weather.Process();
             if (m_view && m_world) {
                 m_world->ProcessActorSkillRechargeGages(m_view->GetViewMatrix(), m_view->GetCameraLongitude());
             }
@@ -10596,6 +10601,7 @@ void CGameMode::OnUpdate() {
             m_world->UpdateActors();
             CleanupPendingActorDespawns(*this);
         }
+        g_Weather.Process();
         if (m_world->m_player) {
             if (CPlayer* const localPlayer = dynamic_cast<CPlayer*>(m_world->m_player)) {
                 localPlayer->ProcessPreMove();

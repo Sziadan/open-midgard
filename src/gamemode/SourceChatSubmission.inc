@@ -154,6 +154,16 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return SendMsg(33,route.emotion>=0?route.emotion:std::rand()%6+58,0,0);
     }
     switch(type){
+    case 8: {
+        g_session.m_isEffectOn=!g_session.m_isEffectOn;
+        if(CWeather::IsSnowMap(m_rswName)){
+            if(g_session.m_isEffectOn)g_Weather.LaunchSnow();else g_Weather.StopSnow();
+        }
+        g_windowMgr.SendMsg(3,0,0,0);
+        SourceChatNotice(g_session.m_isEffectOn?23:24,"",6619135);
+        const std::array<u8,6> packet{{0x1d,0x02,static_cast<u8>(g_session.m_isEffectOn?0:1),0,0,0}};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
+    }
     case 7: {
         auto* audio=CAudio::GetInstance();audio->ToggleSourceBgm(m_streamFileName.c_str());
         g_windowMgr.SendMsg(3,0,0,0);

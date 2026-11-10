@@ -1,0 +1,134 @@
+Ref/GameMode.cpp:16046-16089
+16046:       return;
+16047:     case TT_MUSIC_ON_OFF:
+16048:       g_session.m_bgmIsPaused = 1 - g_session.m_bgmIsPaused;
+16049:       if ( g_session.m_bgmIsPaused )
+16050:         CloseStream();
+16051:       else
+16052:         PlayStream(streamFileName);
+16053:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+16054:       if ( g_session.m_bgmIsPaused )
+16055:         v68 = MsgStr(MSI_BGM_OFF);
+16056:       else
+16057:         v68 = MsgStr(MSI_BGM_ON);
+16058:       goto LABEL_279;
+16059:     case TT_EFFECT_ON_OFF:
+16060:       v52 = 1 - g_session.m_isEffectOn;
+16061:       m_rswName = this->m_rswName;
+16062:       g_session.m_isEffectOn = 1 - g_session.m_isEffectOn;
+16063:       if ( !strcmp(aXmasFild01Rsw, this->m_rswName) || !strcmp(aXmasRsw, m_rswName) )
+16064:       {
+16065:         if ( v52 )
+16066:           CWeather::LaunchSnow(&g_Weather);
+16067:         else
+16068:           CWeather::StopSnow(&g_Weather);
+16069:       }
+16070:       UIWindowMgr::SendMsg(&g_windowMgr, 3, 0, 0, 0, 0);
+16071:       if ( g_session.m_isEffectOn )
+16072:       {
+16073:         v54 = MsgStr(MSI_EFFECT_ON);
+16074:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v54, 6619135, 0, 0);
+16075:         *(_WORD *)&v280[18] = 541;
+16076:         *(_DWORD *)&v280[20] = 0;
+16077:       }
+16078:       else
+16079:       {
+16080:         v57 = MsgStr(MSI_EFFECT_OFF);
+16081:         UIWindowMgr::SendMsg(&g_windowMgr, 1, (int)v57, 6619135, 0, 0);
+16082:         *(_WORD *)&v280[18] = 541;
+16083:         *(_DWORD *)&v280[20] = 1;
+16084:       }
+16085:       X_4 = &v280[18];
+16086:       X = 541;
+16087:       goto LABEL_155;
+16088:     case TT_MAP_POS:
+16089:       m_world = this->m_world;
+
+Ref/RagEffectPrim.cpp:6480-6496
+6480: // Original Signature: public: void __thiscall CWeather::LaunchSnow(void)
+6481: // Decompiled from address: 0x649ab0
+6482: // ================================================
+6483: void __thiscall CWeather::LaunchSnow(CWeather *this)
+6484: {
+6485:   CRagEffect *m_Effect; // eax
+6486:   CPlayer *m_player; // ecx
+6487:   vector3d v4; // [esp-10h] [ebp-20h] BYREF
+6488:
+6489:   m_Effect = this->m_Effect;
+6490:   if ( !m_Effect || m_Effect->m_duration - m_Effect->m_stateCnt > 300 )
+6491:   {
+6492:     m_player = CModeMgr::GetGameMode(&g_modeMgr)->m_world->m_player;
+6493:     memset(&v4, 0, sizeof(v4));
+6494:     this->m_pPlayer = m_player;
+6495:     this->m_Effect = CAbleToMakeEffect::LaunchEffect(m_player, 162, v4, 0.0);
+6496:   }
+
+Ref/RagEffectPrim.cpp:6529-6554
+6529:       v3 = this->m_Diffuse.y + 0.0049999999;
+6530:       goto LABEL_12;
+6531:     }
+6532:   }
+6533:   if ( this->m_Effect && !CAbleToMakeEffect::IsExistEffect(this->m_pPlayer, this->m_Effect) )
+6534:     this->m_Effect = 0;
+6535:   m_nDayCount = this->m_nDayCount;
+6536:   v5 = (1.0 - this->m_Ambient.x) * (1.0 - this->m_Diffuse.x);
+6537:   this->m_nDayCount = m_nDayCount + 1;
+6538:   this->m_EnvDiff.x = 1.0 - v5;
+6539:   this->m_EnvDiff.y = 1.0 - (1.0 - this->m_Ambient.y) * (1.0 - this->m_Diffuse.y);
+6540:   this->m_EnvDiff.z = 1.0 - (1.0 - this->m_Ambient.z) * (1.0 - this->m_Diffuse.z);
+6541:   if ( m_nDayCount == 2880 )
+6542:     this->m_nDayCount = 0;
+6543: }
+6544:
+6545:
+6546: // ================================================
+6547: // Original Signature: public: void __thiscall CWeather::Reset(void)
+6548: // Decompiled from address: 0x649b50
+6549: // ================================================
+6550: void __thiscall CWeather::Reset(CWeather *this)
+6551: {
+6552:   this->m_Effect = 0;
+6553: }
+6554:
+
+Ref/RagEffectPrim.cpp:6683-6694
+6683: // ================================================
+6684: // Original Signature: public: void __thiscall CWeather::StopSnow(void)
+6685: // Decompiled from address: 0x649b30
+6686: // ================================================
+6687: void __thiscall CWeather::StopSnow(CWeather *this)
+6688: {
+6689:   CRagEffect *m_Effect; // eax
+6690:
+6691:   m_Effect = this->m_Effect;
+6692:   if ( m_Effect )
+6693:     m_Effect->m_duration = m_Effect->m_stateCnt + 300;
+6694: }
+
+Ref/GameActor.cpp:301-326
+301:
+302: // ================================================
+303: // Original Signature: public: bool __thiscall CAbleToMakeEffect::IsExistEffect(class CRagEffect *)
+304: // Decompiled from address: 0x559b20
+305: // ================================================
+306: unsigned __int8 __thiscall CAbleToMakeEffect::IsExistEffect(CAbleToMakeEffect *this, CRagEffect *pEffect)
+307: {
+308:   std::list<CRagEffect *>::_Node *Head; // ecx
+309:   std::list<CRagEffect *>::_Node *Next; // eax
+310:
+311:   if ( !this->m_effectList._Size )
+312:     return 0;
+313:   Head = this->m_effectList._Head;
+314:   Next = Head->_Next;
+315:   if ( Head->_Next == Head )
+316:     return 0;
+317:   while ( Next->_Value != pEffect )
+318:   {
+319:     Next = Next->_Next;
+320:     if ( Next == Head )
+321:       return 0;
+322:   }
+323:   return 1;
+324: }
+325:
+326:

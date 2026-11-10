@@ -7,6 +7,7 @@
 #include "MsgEffect.h"
 #include "RagEffect.h"
 #include "World.h"
+#include "Weather.h"
 #include "audio/Audio.h"
 #include "core/ClientInfoLocale.h"
 #include "gamemode/GameMode.h"
@@ -4644,6 +4645,7 @@ void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, m
 
 CGameActor::~CGameActor()
 {
+    g_Weather.OnActorDeleted(this);
     if(m_chatTitle)g_windowMgr.DeleteWindow(m_chatTitle);
     if (Gr2MonsterModel(m_job)) ReleaseGr2Monster(m_gid);
     DestroySkillRechargeGage();

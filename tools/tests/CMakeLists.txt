@@ -291,6 +291,10 @@ set(weather_map_helpers "${weather_map_lower_name}\n${weather_map_match_name}\n$
 extract_body(weather_map_launch "${mode_source}" "void LaunchMapWeatherEffect(CGameMode& mode)" "void UpdateMapAudio(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WeatherMapBodies.inc"
     "${weather_map_helpers}\n${weather_map_launch}")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/Weather.cpp" weather_snow_source)
+string(REGEX REPLACE "#include [^\n]*\n" "" weather_snow_bodies "${weather_snow_source}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WeatherSnowBodies.inc" "${weather_snow_bodies}")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ../../src/world/Weather.cpp)
 extract_body(project_point "${effect_source}" "bool ProjectPoint(" "float ResolveEffectPixelRatio(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ProjectPointBody.inc" "${project_point}")
 extract_body(attr_wave_tables "${session_source}" "constexpr const char* kEnemyHitNormalWaves[]" "struct JobTokenEntry")

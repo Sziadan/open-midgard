@@ -5,6 +5,8 @@ add_library(ro_world STATIC
     3dActor.cpp
     World.h
     World.cpp
+    Weather.h
+    Weather.cpp
     GameActor.h
     GameActor.cpp
     RagEffect.h

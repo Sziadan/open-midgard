@@ -13,10 +13,12 @@
 #include <type_traits>
 #include <set>
 #include <utility>
+#include "Weather.h"
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
 using u32 = std::uint32_t;
+using s32 = std::int32_t;
 using msgparam_t = std::intptr_t;
 int g_isSkipFrame = 1;
 u32 g_effectLogicStep=0;
@@ -866,6 +868,7 @@ struct CGameActor : CAbleToMakeEffect {
 };
 #include "EffectLifecycleBodies.inc"
 
+#include "WeatherSnowBodies.inc"
 #include "WeatherMapBodies.inc"
 #include "StrOnlyDispatchBody.inc"
 #include "CastingEmitterBodies.inc"
@@ -5981,7 +5984,24 @@ int main()
         LaunchMapWeatherEffect(gameMode);
         check(weatherPlayer.launches==2&&weatherPlayer.m_effectList.back()->GetEffectType()==515,
             "a later map-load launch selects the new map variant");
+        std::strncpy(gameMode.m_rswName,"xmas.rsw",sizeof(gameMode.m_rswName)-1);
+        LaunchMapWeatherEffect(gameMode);
+        check(g_Weather.m_Effect && g_Weather.m_Effect->GetEffectType()==162 && weatherPlayer.launches==3,
+            "actual map-load snow branch uses the weather handle");
+        auto* snow=g_Weather.m_Effect;snow->m_stateCnt=123;snow->m_duration=423;
+        g_Weather.LaunchSnow();check(g_Weather.m_Effect==snow && weatherPlayer.launches==3,"selected JLE skips exactly300 remaining");
+        snow->m_duration=424;g_Weather.LaunchSnow();check(g_Weather.m_Effect!=snow && weatherPlayer.launches==4,"selected JLE launches above300 remaining");
+        snow=g_Weather.m_Effect;snow->m_stateCnt=INT32_MAX-100;g_Weather.StopSnow();
+        check(snow->m_duration==INT32_MIN+199,"source StopSnow ADD preserves signed32 wrap");
+        snow->m_stateCnt=INT32_MAX;snow->m_duration=INT32_MIN;g_Weather.LaunchSnow();
+        check(g_Weather.m_Effect==snow && weatherPlayer.launches==4,"wrapped signed remaining1 skips launch");
+        snow->m_stateCnt=INT32_MIN;snow->m_duration=INT32_MAX;g_Weather.LaunchSnow();
+        check(g_Weather.m_Effect==snow && weatherPlayer.launches==4,"wrapped signed remaining-1 skips launch");
+        snow->m_stateCnt=0;snow->m_duration=3;g_Weather.Reset();
+        check(!g_Weather.m_Effect && g_Weather.m_pPlayer==&weatherPlayer && weatherPlayer.m_effectList.size()==4,
+            "source Reset forgets only snow handle without deleting world effects");
         weatherPlayer.DetachEffects();g_world.UpdateGameObjects();
+        g_Weather.m_pPlayer=nullptr;
         g_world.m_player=nullptr;gameMode.m_world=&g_world;
     }
     CAbleToMakeEffect actor;

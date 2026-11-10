@@ -1,0 +1,8 @@
+{
+  "read_registry": "0x68b680",
+  "show_tips_global_va": "0x7254a0",
+  "initial_dword": 1,
+  "query_name": "SHOWTIPSATSTARTUP",
+  "root_review": "68B7C2 pushes ShowTips DWORD7254A0, 68B7D2 queries registry, 68B7EB stores EDI (zero from68B6FF) into7254A0 unconditionally on successful key-open path. Primary ReadRegistry forced zero is corroborated, not decompiler ambiguity. Failure before query path retains initial/global value. Full startup/default/modern persistence integration remains a root decision.",
+  "write_instruction_bytes": "893da0547200"
+}

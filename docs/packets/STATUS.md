@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Weather checkpoint (2026-11-10):** [Effect8 and real snow ownership](evidence/PK09.21-weather-command.md) restores021D requests, exact Xmas maps, source stop/reset and actor/world lifetime. Root PE verification corrects older preparatory threshold prose: remaining>300 launches again; <=300 skips. Application160/160 and standalone473/473 pass. Tip42/full command UI and broad/live/deployed gates remain open.
+
 **Command-toggle checkpoint (2026-11-10):** [Selected toggles/composites and live options](evidence/PK09.21-command-toggles.md) integrates21 actions with raw/wrapping scalar state, child47 ordering, locale text flags, source audio close/replay and shared option60 refresh. Application160/160 and standalone473/473 pass; deployed executable unchanged. NoCtrl/fog ownership is now reviewed and canonical; older temporary separation is superseded. Full command UI, effect snow/Tip, action consumers and broad/live/deployed acceptance remain open.
 
 **World-entry repair (2026-11-10):** [same-world handoff regression](evidence/PK05.05-world-entry.md) fixes a loading-screen deadlock after accepted login plus same-map0091. The manager now honors the explicit request and retires the terminal mode. Real packet/mode-loop regression, root157/157 and standalone470/470 pass. OldRO retains the prior executable; the rebuilt candidate needs redeployment and live retry. Active packet-plan work remains PK09.21.

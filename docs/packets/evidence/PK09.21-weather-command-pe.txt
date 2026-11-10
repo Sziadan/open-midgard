@@ -1,0 +1,71 @@
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00649ab0 <.text+0x248ab0>:
+  649ab0:	55                   	push   %ebp
+  649ab1:	8b ec                	mov    %esp,%ebp
+  649ab3:	83 ec 0c             	sub    $0xc,%esp
+  649ab6:	56                   	push   %esi
+  649ab7:	8b f1                	mov    %ecx,%esi
+  649ab9:	8b 46 48             	mov    0x48(%esi),%eax
+  649abc:	85 c0                	test   %eax,%eax
+  649abe:	74 16                	je     0x649ad6
+  649ac0:	8b 88 3c 01 00 00    	mov    0x13c(%eax),%ecx
+  649ac6:	8b 90 38 01 00 00    	mov    0x138(%eax),%edx
+  649acc:	2b ca                	sub    %edx,%ecx
+  649ace:	81 f9 2c 01 00 00    	cmp    $0x12c,%ecx
+  649ad4:	7e 50                	jle    0x649b26
+  649ad6:	b9 28 c2 78 00       	mov    $0x78c228,%ecx
+  649adb:	e8 b0 bf eb ff       	call   0x505a90
+  649ae0:	8b 90 b4 00 00 00    	mov    0xb4(%eax),%edx
+  649ae6:	6a 00                	push   $0x0
+  649ae8:	83 ec 0c             	sub    $0xc,%esp
+  649aeb:	c7 45 f4 00 00 00 00 	movl   $0x0,-0xc(%ebp)
+  649af2:	8b 4a 3c             	mov    0x3c(%edx),%ecx
+  649af5:	8b 55 f4             	mov    -0xc(%ebp),%edx
+  649af8:	8b c4                	mov    %esp,%eax
+  649afa:	c7 45 f8 00 00 00 00 	movl   $0x0,-0x8(%ebp)
+  649b01:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%ebp)
+  649b08:	68 a2 00 00 00       	push   $0xa2
+  649b0d:	89 10                	mov    %edx,(%eax)
+  649b0f:	8b 55 f8             	mov    -0x8(%ebp),%edx
+  649b12:	89 4e 14             	mov    %ecx,0x14(%esi)
+  649b15:	89 50 04             	mov    %edx,0x4(%eax)
+  649b18:	8b 55 fc             	mov    -0x4(%ebp),%edx
+  649b1b:	89 50 08             	mov    %edx,0x8(%eax)
+  649b1e:	e8 4d fb f0 ff       	call   0x559670
+  649b23:	89 46 48             	mov    %eax,0x48(%esi)
+  649b26:	5e                   	pop    %esi
+  649b27:	8b e5                	mov    %ebp,%esp
+  649b29:	5d                   	pop    %ebp
+  649b2a:	c3                   	ret
+  649b2b:	90                   	nop
+  649b2c:	90                   	nop
+  649b2d:	90                   	nop
+  649b2e:	90                   	nop
+  649b2f:	90                   	nop
+  649b30:	8b 41 48             	mov    0x48(%ecx),%eax
+  649b33:	85 c0                	test   %eax,%eax
+  649b35:	74 12                	je     0x649b49
+  649b37:	8b 88 38 01 00 00    	mov    0x138(%eax),%ecx
+  649b3d:	81 c1 2c 01 00 00    	add    $0x12c,%ecx
+  649b43:	89 88 3c 01 00 00    	mov    %ecx,0x13c(%eax)
+  649b49:	c3                   	ret
+  649b4a:	90                   	nop
+  649b4b:	90                   	nop
+  649b4c:	90                   	nop
+  649b4d:	90                   	nop
+  649b4e:	90                   	nop
+  649b4f:	90                   	nop
+  649b50:	c7 41 48 00 00 00 00 	movl   $0x0,0x48(%ecx)
+  649b57:	c3                   	ret
+  649b58:	90                   	nop
+  649b59:	90                   	nop
+  649b5a:	90                   	nop
+  649b5b:	90                   	nop
+  649b5c:	90                   	nop
+  649b5d:	90                   	nop
+  649b5e:	90                   	nop
+  649b5f:	90                   	nop

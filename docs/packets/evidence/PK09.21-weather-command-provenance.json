@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "date": "2026-11-10",
+  "baseline": "6fa4a3ada2bd876b520f93eb59ae4e78d8a5f4ed",
+  "commit_subject": "packet(PK09.21): restore effect command and snow lifecycle",
+  "scope": "Effect8/021D and actual global snow handle/actor/world lifecycle, selected threshold correction; whole packet goal remains unfinished",
+  "runtime_test_sha256": {
+    "src/gamemode/GameMode.cpp": "e40d2234e70d5a3b2017984e8e6e0b920c9e284005352dfc83d56611b2a3d870",
+    "src/gamemode/GameMode.h": "bdc906f7d34fee0c81c2ee8a24b60a4561c6c5fb4ae8d1bdd9e5e1dc979652cc",
+    "src/gamemode/SourceChatSubmission.inc": "3e77126a0aad7c47bb3faaa81efbe2594433553fc8a951cd3087422558d4dd23",
+    "src/network/Connection.cpp": "780b39ecf6327dc7798eaf54ac80b937a20575ff5e29ac87f75a8ed306749f07",
+    "src/world/CMakeLists.txt": "58ac182e12e79714dda1569fb711ec6f90a4d17810e29351a36bd402a9dc73d7",
+    "src/world/GameActor.cpp": "4fe212e310e776722aa5008132bfbd50a41f546b3f8a51419fdbb10fd33fdf5d",
+    "src/world/GameActor.h": "1f52a616df03ee07ddaeef6d247a1d4bae122e9bbb5b2ceb881e719fd7b4dab8",
+    "src/world/RagEffect.cpp": "856be11466d3f0f725d61e4dccb568aab3c9354b9c05abe7155fd8a41d4eeb94",
+    "src/world/RagEffect.h": "c01c365fcceae965cc4584d40c08f279f62422e0f90ca3a38f4466589c4d5b96",
+    "src/world/RagEffectDurationTable.generated.inc": "af42fa1a20e1f20d6fe4f02aeef3e2be1e745815898e09ad9638267501c6c1b7",
+    "src/world/Weather.cpp": "fea91c9560a395aff12d44cdc6b05f8d9b3082af9e9139320c4c8487788ea887",
+    "src/world/Weather.h": "433ad35287ab5793cf6d733c7ba40f750dfece3fadc00a2d441bae2863d8e1a5",
+    "src/world/World.cpp": "c5477a29dfee84a0a4b4e6e87914ef6a14768afcde19c8563bb81aed6a8f680a",
+    "tools/tests/CMakeLists.txt": "ade82304c819e1785051f3b30ce0f5b7a569f51e6a09820ae5fd3951be52c5c4",
+    "tools/tests/EffectLifecycleTests.cpp": "0b4598831cee1bb3abbd916d158ac8d8e735bb620fa96fed36df8ce00393fe4f",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "c90bee59886c0d21cda26e73b15b7a8b6aee221366eb165707a90584070cc8da",
+    "tools/tests/replay/PacketStreamReplay.cpp": "338d1fc54e3bbbc72578e5d0d7a8b250bc02713c41a2c53d26cde39d7ce2f489",
+    "tools/tests/replay/WeatherCommandReplay.inc": "3a7b6bea2439b2f3206125e2d89825312855969d036f18025672151cce8d0ea9"
+  },
+  "reference_sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "Ref/GameMode.cpp": "5de1c3f55efaa4ece81833a1d11d14594ea6c3f5b43f222ff43b5be6c644903c",
+    "Ref/GameActor.cpp": "60686f1ea817285db0c60bf755d1f978d932870ac35319f7e22cc1ee8dd12f92",
+    "Ref/RagEffectPrim.cpp": "cdbd389f0623318e9c5cf31475bc89f742bffc1c8cbac6773b33391c85b1bc48",
+    "Ref/TipOfTheDay.cpp": "8a7c93bd5cdff9a4baa9da9b6151cfac03bf0a9ecd18090c2bd4bf3060a109b7",
+    "Ref/UIFrameWnd2.cpp": "a4492392a5ba84e124283fcc5250d811d5d9a44bc32975b9c63feb9d81e991cb",
+    "Ref/UIWindowMgr.cpp": "176786bc43c8d53f9bdeaebd992a273b5d1cac90a22106fa5d73ace7d4d32437",
+    "Ref/WinMain.cpp": "3cac1c7d4943d1e85b91a336dd084deaa34d01cc29cb6a1b6c3f4fa22803d39c"
+  },
+  "artifact_sha256": {
+    "docs/packets/evidence/PK09.21-weather-command-build.log": "8df069f0b8ac65080d1ec9e75a238f489f67e1ccf566fc6b2dfb86afa3fcc5e1",
+    "docs/packets/evidence/PK09.21-weather-command-configure.log": "f225f24dda8f6de50e293d220f65fe9c10d5cb33f97990bfc033a7816acbebac",
+    "docs/packets/evidence/PK09.21-weather-command-focused.log": "82ebad3c4098071c04065b58824ed4da949902b03fb903f73f4962e75002c102",
+    "docs/packets/evidence/PK09.21-weather-command-pe.txt": "d1c0781f75dc132f98fb6c2c6e3539e4cf4807b8dd0d561096f96d54e44bfe06",
+    "docs/packets/evidence/PK09.21-weather-command-restore-deploy.log": "a69b115dbbd3f4f55d56654acab43d3f69e891cde935d38b45cd04d629d33079",
+    "docs/packets/evidence/PK09.21-weather-command-root-ctest.log": "7334a34366c420beeda8ec7759b25fa1481481492a3d9a9ec3081a0bacf20b25",
+    "docs/packets/evidence/PK09.21-weather-command-source.txt": "39636ddc96f9c1faf2ed26134b7690b52765e790fe51776e334d06f81672ae18",
+    "docs/packets/evidence/PK09.21-weather-command-tip-leads.json": "b342a81240e28c2b89cf16ed8af8d96f9f2ecd2c19657e6777146cabf662eff1",
+    "docs/packets/evidence/PK09.21-weather-command-tip-registry-pe.txt": "69039e3e4882c91db04e8e097b59a8fe0e8d39872298359be3004b1e957adced",
+    "docs/packets/evidence/PK09.21-weather-command-tip-registry-review.json": "c4ba3f991626bd4994a657ec741eb7610c96b51855cc7a2a32a6b82263bbb0b4",
+    "docs/packets/evidence/PK09.21-weather-command-unit-build.log": "520fec5444346e7071082012761eb9c9351ca494cadcec15fa04a97238cd3cd4",
+    "docs/packets/evidence/PK09.21-weather-command-unit-ctest.log": "7e2316ccfe4fa95fa0a9e29489790183fc0cc172e8251ab06d8a0b901d4bdb25",
+    "docs/packets/evidence/PK09.21-weather-command.md": "7d8358c2f428f209e1aa029d1a6aa98571ac163c545954f3b8bb3481bb119f39"
+  },
+  "generated_coverage_sha256": "3578b1379d69b744acb57df3de5dd48a461de3127b0533f4ae95110db4bf49f3",
+  "application_sha256": "e22b574cd638f9b8906d7a81d46a935d820c23252192b3d3c49696ac4a53fd5f",
+  "installed_oldro_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "validation": {
+    "focused": "1/1;0.90s",
+    "application": "160/160;34.49s",
+    "standalone": "473/473;14.37s",
+    "parser_data": "PASS",
+    "plan_consistency": "PASS"
+  },
+  "selected_branch": "649AD4 JLE return; remaining>300 launches, <=300 skips. Prior preparatory idempotence test wording is superseded.",
+  "limits": [
+    "No snow rendering/art/live/installed acceptance",
+    "Final production expiry fixture uses existing message80 to reach last tick; controller delayed expiry assignment tested separately",
+    "Standalone wrap tests use actual Weather.cpp bodies with declared lightweight effect/owner fixture",
+    "Full Tip42/command UI/remaining actions/global6/consumers/legacy options/encoding/render/broad gates remain open"
+  ],
+  "deploy_preference_restored": "ON configure-only; no subsequent build/copy"
+}
