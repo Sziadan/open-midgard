@@ -1,0 +1,15 @@
+{
+  "baseline": "56033e90",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "ca1738c3d38680d0be1696b0911edc07019e4ca3c5bf350a05af7df382ae5a50",
+    "src/gamemode/GameMode.cpp": "036258bdae9ea3cdd6e0611329cf08ebb289c8fd3dd2914bff1bc72f48bdcb38",
+    "src/world/GameActor.cpp": "4efcb7fed15ea8f00495bfd209ac04e480037d8f6ba09ed9694152298541c660",
+    "tools/tests/check_player_pt_touch_skill_route.py": "6b59eabf79d331a87a28531260be4459fb993526c5c9236cf03d7b4a99288472",
+    "tools/tests/replay/PlayerSkillProceedReplay.inc": "3326159206b325b52ec6edd701924bc60a4b1189a79bad09d22acfeedc865d7d",
+    "tools/tests/replay/PlayerAutoRunFailedSendReplay.inc": "fafa22f6252697ba816fc8ae517b80e6ad50d262bd926c18b8eb4b4db86333c1"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "installed_unchanged": true,
+  "validation": "Deploy-OFF all-target and standalone builds pass; focused2/2 in6.87s, application164/164 in51.51s (-j4), standalone473/473 in12.76s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open."
+}

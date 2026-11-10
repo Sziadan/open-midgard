@@ -1,0 +1,77 @@
+{
+  "scope": "Audit of source-review comments/reports that infer a base no-op or override recipient from decompiler SendMsg spelling. Candidate status is not proof of the actual dispatch target; require the selected PE callsite for that.",
+  "search_result": "The strongest candidate is the pet-feed message-161 report. A command-action report also asserts override handling for CMode-qualified ranking calls without per-call selected-PE evidence in that report. No CGameObject::SendMsg base-no-op assertion was found in the narrow searched review/test/code set.",
+  "candidates": [
+    {
+      "file": "build-recovery-unit-review/pet-feed-result-source-audit.json",
+      "report_lines": [
+        28,
+        63
+      ],
+      "source_calls": [
+        {
+          "location": "Ref/GameModePacket.cpp:11403-11404",
+          "context": "01A3 success invokes CMode::SendMsg(message 161) twice with pet talk number and emotion."
+        },
+        {
+          "location": "Ref/GameActor.cpp:1747-1748",
+          "context": "Pet result path also invokes CMode::SendMsg(message 161) twice."
+        }
+      ],
+      "wording": "Report says the decompiled base CMode handler ignores 161 because Ref/Mode.cpp only shows cases 2 and 75, while also saying effective virtual routing remains unresolved.",
+      "risk": "This is a direct base-no-op inference from the decompiled method name/body, despite the later caveat. Do not conclude the call selected CMode::SendMsg from the spelling; selected PE target for these message-161 callsites is not established by this audit."
+    },
+    {
+      "file": "build-recovery-unit-review/command-action-downstream-dispatch.json",
+      "report_line": 7,
+      "source_calls": [
+        {
+          "location": "Ref/GameMode.cpp:17434",
+          "context": "ProcessTalkType emits CMode::SendMsg(this,197,0,0,0) for the Taekwon command."
+        },
+        {
+          "location": "Ref/GameMode.cpp:17335,17338",
+          "context": "ProcessTalkType emits mode messages 194 and 195 for Blacksmith and Alchemist commands."
+        },
+        {
+          "location": "Ref/GameMode.cpp:16597,17543",
+          "context": "ProcessTalkType emits mode messages 83 and 262 for memo and hunting commands."
+        }
+      ],
+      "wording": "The report calls CMode::SendMsg the base fallback and states that listed ranking IDs are handled by the CGameMode override.",
+      "risk": "CGameMode::SendMsg has matching switch arms, but per-call dispatch is not proved by the source spelling. Verify selected callsite virtual dispatch before treating these messages as reaching the override. The report's paired command-action-missing-contract.json explicitly leaves reachability unverified, which is appropriately cautious."
+    },
+    {
+      "file": "build-recovery-unit-review/command-action-missing-contract.json",
+      "report_lines": [
+        24,
+        34,
+        44,
+        64,
+        84,
+        114
+      ],
+      "wording": "Several caller-local contracts say CMode::SendMsg(messageId); return and note no local state change. The report separately marks downstream service reachability unverified.",
+      "risk": "These are caller-local descriptions rather than a claim that the base handler is a no-op. Preserve the downstream caveat; a review consumer could otherwise read 'no local state change' as an end-to-end no-op."
+    }
+  ],
+  "positive_controls": [
+    {
+      "location": "Ref/Player.cpp:368-397; selected PE VA 0x5E5880",
+      "context": "CPlayer's proceed-state path issues CMode-qualified SendMsg(message 150) calls. Root's selected PE check confirms the call at 0x5E5880 is virtual (ff 52 14), so source class spelling alone does not prove base dispatch.",
+      "downstream_source": "Ref/GameMode2.cpp:6013-6021, CGameMode::SendMsg case 0x96/message 150 emits packet opcode 400.",
+      "interpretation": "Verified example showing why decompiler CMode::SendMsg spelling must not be used as a base-target assertion."
+    },
+    {
+      "location": "Ref/GameModePacket.cpp:31717; selected PE VA 0x5A1205",
+      "context": "Zc_autorun_skill has decompiler spelling this->CMode::SendMsg(message 126); root verified virtual dispatch through vtable offset 0x14, which reaches the CGameMode message-126 skill-type branch.",
+      "interpretation": "Second verified example; the source audit at autorun126-source-inventory.json was corrected to describe the CGameMode case 0x7e (126)."
+    }
+  ],
+  "method_notes": [
+    "Ref/Mode.h:35-36 declares CMode::SendMsg virtual.",
+    "Ref/Mode.cpp:95-111 shows the CMode implementation's own cases, but its body alone does not identify the dynamic target of a callsite.",
+    "The root-supplied selected-PE evidence for messages 150 and 126 is recorded as verified. Other candidate callsites listed above remain unverified here; no dispatch target is inferred from their source spelling."
+  ],
+  "status": "source-preparation-not-acceptance; selected-PE verification remains required for candidates"
+}

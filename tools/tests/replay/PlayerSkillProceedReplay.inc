@@ -9,7 +9,7 @@
         const auto oldIdentity=std::make_tuple(g_session.m_aid,g_session.m_gid,g_session.m_homunGID,g_session.m_merGID);
         const auto oldChase=std::make_tuple(mode.m_skillChaseTargetGid,mode.m_skillChaseSkillId,mode.m_skillChaseSkillLevel,
             mode.m_skillChaseRange,mode.m_hasSkillChase,mode.m_hasGroundSkillChase,mode.m_hasTouchSkillChase);
-        CWorld world;CPlayer player;CPc target;C3dAttr attr;
+        CWorld world;CPlayer player;CPc target;C3dAttr attr;CSkill unit;
         attr.m_width=attr.m_height=64;attr.m_zoom=10;attr.m_cells.resize(64*64);
         world.m_attr=&attr;world.m_player=&player;player.m_pos={75,0,0};player.m_stateId=0;
         target.m_gid=0x77000001;target.m_job=1002;target.m_pos={100,0,0};world.RegisterActor(&target);
@@ -18,6 +18,7 @@
             if(g_windowMgr.m_selectCartWnd && g_windowMgr.m_selectCartWnd!=oldCart)g_windowMgr.DeleteWindow(g_windowMgr.m_selectCartWnd);
             g_windowMgr.m_chatRoomWnd=oldRoom;ro::commerce::state=oldCommerce;
             world.UnregisterActor(&target);world.m_player=nullptr;world.m_attr=nullptr;
+            world.m_skillList.clear();
             mode.m_world=oldWorld;mode.m_runtimeActors=oldActors;
             std::tie(mode.m_skillChaseTargetGid,mode.m_skillChaseSkillId,mode.m_skillChaseSkillLevel,
                 mode.m_skillChaseRange,mode.m_hasSkillChase,mode.m_hasGroundSkillChase,mode.m_hasTouchSkillChase)=oldChase;
@@ -161,4 +162,42 @@
         autorun(8000,4,3,7,5,0);skillFrame(8000,3,g_session.m_homunGID);player.m_stateId=0;
         g_session.m_aid=0;autorun(40,4,3,7,5,0);skillFrame(40,3,0);
         player.SendMsg(nullptr,13,0,0,0);
+        unit.m_aid=0x77000002;unit.m_job=141;unit.m_pos={100,0,0};world.m_skillList.push_back(&unit);
+        const auto touch=[&](int id,int level,int range=5){
+            const SKILL_USE_INFO pending{id,level,range,5};
+            player.SendMsg(nullptr,103,unit.m_aid,reinterpret_cast<msgparam_t>(&pending),0);
+        };
+        const auto actionFrame=[&](u32 gid,u8 action){
+            const bool padded=ro::net::GetActiveMapGameplaySendProfile().id==ro::net::MapGameplaySendProfileId::PacketVer22;
+            const auto p=peer.ReceiveExact(padded?19:7);const std::size_t offset=padded?5:2;
+            Require(p[0]==(padded?0x90:0x37) && p[1]==(padded?1:4)
+                && p[offset]==static_cast<u8>(gid) && p[offset+1]==static_cast<u8>(gid>>8)
+                && p[offset+2]==static_cast<u8>(gid>>16) && p[offset+3]==static_cast<u8>(gid>>24) && p.back()==action,
+                "source virtual150 action frame mismatch");
+        };
+        touch(0,0);Require(player.m_proceedType.type==6 && mode.m_hasTouchSkillChase && mode.m_touchSkillTargetAid==unit.m_aid,
+            "103 failed to synchronize canonical touch proceed");
+        ReplayPumpSkillChase(mode);actionFrame(unit.m_aid,0);
+        Require(player.m_proceedType.type==6 && mode.m_hasTouchSkillChase,"special zero touch retired after29");
+        ReplayPumpSkillChase(mode);actionFrame(unit.m_aid,0);
+        player.SendMsg(nullptr,29,0x55000001,141,0);actionFrame(0x55000001,0);
+        player.SendMsg(nullptr,29,0x55000001,999,0);actionFrame(unit.m_aid,0);
+        player.m_stateId=6;touch(28,9,99);
+        Require(player.m_proceedType.type==6 && player.m_skillId==0 && player.m_skillUseLevel==0 && player.m_skillAttackRange==5,
+            "rejected103 replaced old touch snapshot");
+        player.m_stateId=0;player.m_effectState=2;touch(28,9,99);
+        Require(mode.m_touchSkillId==0 && mode.m_touchSkillLevel==0 && mode.m_touchSkillRange==5,
+            "burrow rejected103 changed mode transport");player.m_effectState=0;
+        touch(28,0);ReplayPumpSkillChase(mode);skillFrame(28,7,unit.m_aid);
+        Require(player.m_proceedType.type==0 && !mode.m_hasTouchSkillChase && player.m_skillId==28,
+            "ordinary touch did not dispatch42/76 then retire13");
+        touch(28,65536);ReplayPumpSkillChase(mode);skillFrame(28,0,unit.m_aid);
+        touch(65536,2);ReplayPumpSkillChase(mode);skillFrame(0,2,unit.m_aid);
+        touch(0,0);player.m_stateId=-1;ReplayPumpSkillChase(mode);
+        Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0 && player.m_proceedType.type==6,
+            "touch source unsigned lower-state guard accepted negative state");
+        player.m_stateId=16;ReplayPumpSkillChase(mode);actionFrame(unit.m_aid,0);player.m_stateId=0;
+        mode.SendMsg(150,511,0,0);actionFrame(0,255);
+        world.m_skillList.clear();ReplayPumpSkillChase(mode);
+        Require(player.m_proceedType.type==0 && !mode.m_hasTouchSkillChase,"missing touch target did not retire13");
     }

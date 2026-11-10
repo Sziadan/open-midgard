@@ -3,13 +3,14 @@
         const auto oldCommerce=ro::commerce::state;const bool oldGood=g_isGoodSkillHanging;
         const auto oldChase=std::make_tuple(mode.m_skillChaseTargetGid,mode.m_skillChaseSkillId,mode.m_skillChaseSkillLevel,
             mode.m_skillChaseRange,mode.m_hasSkillChase,mode.m_hasGroundSkillChase,mode.m_hasTouchSkillChase);
-        CWorld world;CPlayer player;CPc target;C3dAttr attr;
+        CWorld world;CPlayer player;CPc target;C3dAttr attr;CSkill unit;
         attr.m_width=attr.m_height=64;attr.m_zoom=10;attr.m_cells.resize(64*64);
         world.m_player=&player;world.m_attr=&attr;player.m_pos={75,0,0};player.m_stateId=0;
         target.m_gid=0x77000001;target.m_pos={100,0,0};target.m_job=1002;world.RegisterActor(&target);
         mode.m_world=&world;mode.m_runtimeActors.clear();mode.m_runtimeActors[target.m_gid]=&target;
         struct RestoreAutoRunFailure {std::function<void()> fn;~RestoreAutoRunFailure(){fn();}} restore{[&]{
             world.UnregisterActor(&target);world.m_player=nullptr;world.m_attr=nullptr;
+            world.m_skillList.clear();
             mode.m_world=oldWorld;mode.m_runtimeActors=oldActors;mode.m_skillUseInfo=oldPending;
             ro::commerce::state=oldCommerce;g_isGoodSkillHanging=oldGood;
             std::tie(mode.m_skillChaseTargetGid,mode.m_skillChaseSkillId,mode.m_skillChaseSkillLevel,
@@ -26,4 +27,11 @@
         ReplayPumpSkillChase(mode);
         Require(player.m_proceedType.type==0 && !mode.m_hasSkillChase && player.m_skillId==28 && player.m_skillUseLevel==2,
             "failed ordinary42 dispatch did not retire13 while retaining stored skill fields");
+        unit.m_aid=0x77000002;unit.m_job=141;unit.m_pos={100,0,0};world.m_skillList.push_back(&unit);
+        const SKILL_USE_INFO zeroTouch{0,0,5,5};player.SendMsg(nullptr,103,unit.m_aid,reinterpret_cast<msgparam_t>(&zeroTouch),0);
+        ReplayPumpSkillChase(mode);
+        Require(player.m_proceedType.type==6 && mode.m_hasTouchSkillChase,"failed29/150 send retired source touch proceed");
+        const SKILL_USE_INFO ordinaryTouch{28,2,5,5};player.SendMsg(nullptr,103,unit.m_aid,reinterpret_cast<msgparam_t>(&ordinaryTouch),0);
+        ReplayPumpSkillChase(mode);
+        Require(player.m_proceedType.type==0 && !mode.m_hasTouchSkillChase,"failed touch42/76 send did not retire13");
     }

@@ -118,7 +118,13 @@ exe_mode_send = normalize(extract_definition(
 ))
 assert ref_mode_send == exe_mode_send, "CMode::SendMsg Ref/EXE full body mismatch"
 assert "messageId == 2" in ref_mode_send and "messageId == 75" in ref_mode_send
-assert "150" not in re.findall(r"messageId\s*==\s*(\d+)", ref_mode_send), "message 150 is no longer a source no-op"
+ref_game_mode_send = normalize(extract_definition(
+    ROOT / "Ref/GameMode2.cpp",
+    "SKILL_USE_TYPE __thiscall CGameMode::SendMsg(",
+))
+action_branch=branch(ref_game_mode_send,"case 0x96u:","case 0x97u:")
+assert "= 400;" in action_branch and "v687[38] = val1" in action_branch
+assert "HIDWORD(val1)" in action_branch
 
 mode_source = ROOT / "src/gamemode/GameMode.cpp"
 input_route = extract_definition(mode_source, "bool TryRequestPendingSkillFromScreenPoint(")
@@ -148,10 +154,11 @@ ordered = (
     "mode.GetClientCoor(skillTileX, skillTileY, targetWorldX, targetWorldZ)",
     "static_cast<double>(5 * skillRange) * normalizedDirectionX",
     "kTouchRefNeighborOrder",
-    "player->m_stateId >= 2 && player->m_stateId != 4 && player->m_stateId < 16",
+    "static_cast<u32>(player->m_stateId) >= 2 && player->m_stateId != 4 && player->m_stateId < 16",
     "distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell",
     "if (specialSkillUnitJob && skillId == 0)",
-    "SendUseSkillToIdPacket(skillId, skillLevel, targetAid)",
+    "player->SendMsg(nullptr,29,0,0,0)",
+    "player->SendMsg(nullptr,42,0,0,0)",
     "player->m_destCellX == approachTileX && player->m_destCellZ == approachTileY",
     "player->m_stateId == 2 && !specialSkillUnitJob",
     "player->m_destCellX = approachTileX",
@@ -161,12 +168,19 @@ ordered = (
 positions = [touch_pump.find(token) for token in ordered]
 assert all(position >= 0 for position in positions), "missing current PT_TOUCH_SKILL route operation"
 assert positions == sorted(positions), "current PT_TOUCH_SKILL operation order changed"
-assert "ClearSkillChase(mode);" in touch_pump
+assert touch_pump.find("player->SendMsg(nullptr,13,0,0,0)",touch_pump.index("player->SendMsg(nullptr,42,0,0,0)"))>=0
+assert "serverInRange" not in touch_pump
 special_zero_branch = touch_pump[
     touch_pump.index("if (specialSkillUnitJob && skillId == 0)"):
     touch_pump.index("} else {", touch_pump.index("if (specialSkillUnitJob && skillId == 0)"))
 ]
 assert "return;" in special_zero_branch and "SendAttackRequestPacket" not in special_zero_branch
+player_route=extract_definition(ROOT/"src/world/GameActor.cpp","void CPlayer::SendMsg(")
+assert "case 103:" in player_route and "case 29:" in player_route
+assert "mode->SendMsg(150,0," in player_route
+assert "m_proceedType.type=6" in player_route
+mode_route=extract_definition(mode_source,"msgresult_t CGameMode::SendMsg(")
+assert "case 150:" in mode_route and "ro::net::BuildActiveActionRequestPacket" in mode_route
 assert "{{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}}, {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}}" in normalize(touch_pump)
 
 print("PT_TOUCH_SKILL source branch, skill-unit click entry and current persistent modern route anchors/order pass.")

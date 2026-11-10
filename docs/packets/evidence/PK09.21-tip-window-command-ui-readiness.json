@@ -486,5 +486,17 @@
       "resource/deployed data acceptance"
     ],
     "live_deployed": "not accepted"
+  },
+  "runtime_touch_skill_checkpoint": {
+    "evidence": "PK27-touch-proceed.md",
+    "validation": "Deploy-OFF all-target and standalone builds pass; focused2/2 in6.87s, application164/164 in51.51s (-j4), standalone473/473 in12.76s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open.",
+    "remaining_strong_gates": [
+      "general pending useType/range/raw-level mouse/cursor/actor/ground/touch consumption",
+      "normal shortcut/list producers and source78 clearing",
+      "source65/66/77 ground canonical lifecycle and special text windows",
+      "companion identity producers/AI, party/guild/PK/siege picker/lock",
+      "resource/deployed/live and all broader packet-plan gates"
+    ],
+    "live_deployed": "not accepted"
   }
 }

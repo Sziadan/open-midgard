@@ -4547,7 +4547,7 @@ void ClearSkillChase(CGameMode& mode)
 {
     if(mode.m_world && mode.m_world->m_player){
         auto* player=mode.m_world->m_player;
-        if(player->m_proceedType.type==3){
+        if(player->m_proceedType.type==3 || player->m_proceedType.type==6){
             player->m_proceedType.type=0;player->m_isAttackRequest=0;
         }
     }
@@ -5759,17 +5759,11 @@ void BeginSkillChase(CGameMode& mode, u32 targetGid, u16 skillId, u16 skillLevel
     mode.SynchronizePlayerSkillProceed(player);
 }
 
-void BeginTouchSkillChase(CGameMode& mode, u32 targetAid, u16 skillId, u16 skillLevel, int skillRange)
+void BeginTouchSkillChase(CGameMode& mode, u32 targetAid, int skillId, int skillLevel, int skillRange)
 {
-    mode.m_lastMonGid = 0;
-    mode.m_lastLockOnMonGid = 0;
-    mode.m_touchSkillTargetAid = targetAid;
-    mode.m_touchSkillId = static_cast<int>(skillId);
-    mode.m_touchSkillLevel = static_cast<int>(skillLevel);
-    mode.m_touchSkillRange = skillRange;
-    mode.m_hasGroundSkillChase = 0;
-    mode.m_hasTouchSkillChase = 1;
-    mode.m_hasSkillChase = 1;
+    if(!mode.m_world || !mode.m_world->m_player)return;
+    const SKILL_USE_INFO pending{skillId,skillLevel,skillRange,5};
+    mode.m_world->m_player->SendMsg(nullptr,103,targetAid,reinterpret_cast<msgparam_t>(&pending),0);
 }
 
 bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int screenY)
@@ -5807,7 +5801,6 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
         if (specialSkillUnitJob ? !excludedSpecialSkill : skillUseMode == ShortcutSkillUseMode::SkillTarget) {
             const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId));
             const int skillRange = skillInfo ? skillInfo->attackRange : 0;
-            ClearSkillChase(mode);
             BeginTouchSkillChase(mode, hoveredSkill->m_aid, skillId, skillLevel, skillRange);
             ClearAttackChaseHint(mode);
             ClearPendingSkillUse(mode);
@@ -7169,12 +7162,11 @@ void PumpSkillChaseRequest(CGameMode& mode)
         CSkill* target = targetAid != 0 ? mode.m_world->GetSkillByAID(targetAid) : nullptr;
         if (!target) {
             // Missing source target resolves to message 13 (clear proceed).
-            ClearSkillChase(mode);
+            player->SendMsg(nullptr,13,0,0,0);
             return;
         }
 
-        const u16 skillId = static_cast<u16>(mode.m_touchSkillId & 0xFFFF);
-        const u16 skillLevel = static_cast<u16>(mode.m_touchSkillLevel & 0xFFFF);
+        const int skillId = mode.m_touchSkillId;
         const int skillRange = mode.m_touchSkillRange;
         C3dAttr* attr = mode.m_world->m_attr;
         if (!attr || attr->m_zoom <= 0 || attr->m_width <= 0 || attr->m_height <= 0
@@ -7236,7 +7228,7 @@ void PumpSkillChaseRequest(CGameMode& mode)
             }
         }
 
-        if (player->m_stateId >= 2 && player->m_stateId != 4 && player->m_stateId < 16) {
+        if (static_cast<u32>(player->m_stateId) >= 2 && player->m_stateId != 4 && player->m_stateId < 16) {
             return;
         }
 
@@ -7249,19 +7241,17 @@ void PumpSkillChaseRequest(CGameMode& mode)
         const double distance = std::sqrt(static_cast<double>(distanceSquared));
         const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
             && player->m_destCellZ == sourceTileY;
-        const bool serverInRange = IsServerCellWithinSkillRange(skillTileX, skillTileY, skillRange);
-        if ((distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) && serverInRange) {
+        if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
             const bool specialSkillUnitJob = target->m_job == 141 || target->m_job == 143 || target->m_job == 152;
             if (specialSkillUnitJob && skillId == 0) {
-                // Ref message 29 issues base CMode message 150 and returns
-                // without message 13. The base handler has no message-150
-                // behavior, so preserve the source no-op and pending intent.
+                // Source29 invokes virtual mode150 and retains PT_TOUCH_SKILL.
+                player->SendMsg(nullptr,29,0,0,0);
                 return;
             } else {
                 // Ref message 42 maps to mode message 76 and actor-skill use.
-                SendUseSkillToIdPacket(skillId, skillLevel, targetAid);
+                player->SendMsg(nullptr,42,0,0,0);
             }
-            ClearSkillChase(mode);
+            player->SendMsg(nullptr,13,0,0,0);
             return;
         }
 
@@ -9904,6 +9894,11 @@ void CGameMode::SynchronizePlayerSkillProceed(CPlayer* player,bool retire)
         m_skillChaseSkillLevel=player->m_skillUseLevel;m_skillChaseRange=player->m_skillAttackRange;
         m_hasSkillChase=1;m_hasGroundSkillChase=0;m_hasTouchSkillChase=0;
         m_lastMonGid=0;m_lastLockOnMonGid=0;ClearAttackChaseHint(*this);ClearPickupIntent(*this);
+    }else if(player->m_proceedType.type==6){
+        m_touchSkillTargetAid=player->m_proceedTargetGid;m_touchSkillId=player->m_skillId;
+        m_touchSkillLevel=player->m_skillUseLevel;m_touchSkillRange=player->m_skillAttackRange;
+        m_hasSkillChase=1;m_hasTouchSkillChase=1;m_hasGroundSkillChase=0;
+        m_lastMonGid=0;m_lastLockOnMonGid=0;
     }else if(retire){
         ClearSkillChase(*this);m_lastMonGid=0;m_lastLockOnMonGid=0;ClearAttackChaseHint(*this);
     }
@@ -11185,6 +11180,12 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             }
         }else DispatchSourcePlayerSkill(*this,static_cast<int>(wparam),static_cast<u32>(lparam),static_cast<int>(extra));
         return 0;
+    case 150: {
+        std::array<u8,sizeof(PACKET_CZ_ACTION_REQUEST_PACKETVER22)> packet{};int length=0;
+        if(ro::net::BuildActiveActionRequestPacket(static_cast<u32>(lparam),static_cast<u8>(wparam),packet.data(),static_cast<int>(packet.size()),&length))
+            CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),length);
+        return 0;
+    }
     case 79: {
         if(ro::commerce::state.vendingActive)return 0;
         m_skillUseInfo.useType=static_cast<int>(wparam);

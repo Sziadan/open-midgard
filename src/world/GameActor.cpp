@@ -8834,6 +8834,9 @@ void CPlayer::SendMsg(CGameObject* sender,int message,msgparam_t arg1,msgparam_t
     case 15:
         if(m_proceedType.type==3){if(mode)mode->SendMsg(28,0,0,0);return;}
         break;
+    case 29:
+        if(mode)mode->SendMsg(150,0,(arg2==141 || arg2==143 || arg2==152)?arg1:m_proceedTargetGid,0);
+        return;
     case 41:{
         const int skill=static_cast<int>(arg2);
         if(m_stateId!=6 && (!(m_effectState&0x0002) || skill==137 || skill==212 || skill==529 || skill==530 || skill==592)){
@@ -8846,6 +8849,13 @@ void CPlayer::SendMsg(CGameObject* sender,int message,msgparam_t arg1,msgparam_t
         if(mode)mode->SendMsg(76,m_skillId,m_proceedTargetGid,m_skillUseLevel);
         return;
     case 90:m_skillUseLevel=static_cast<int>(arg1);sync();return;
+    case 103:
+        if(arg2 && m_stateId!=6 && !(m_effectState&0x0002)){
+            const auto& pending=*reinterpret_cast<const SKILL_USE_INFO*>(arg2);
+            m_proceedType.type=6;m_skillId=pending.id;m_skillUseLevel=pending.level;
+            m_skillAttackRange=pending.attackRange;m_proceedTargetGid=static_cast<u32>(arg1);sync();
+        }
+        return;
     default:break;
     }
     CPc::SendMsg(sender,message,arg1,arg2,arg3);

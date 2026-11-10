@@ -1,0 +1,93 @@
+{
+  "scope": "Source pending-skill mode initialization, cursor feedback, click consumption and clearing, with the current port path mapped for comparison.",
+  "source_enum": {
+    "location": "Ref/dhxj/GameMode.h:101-102",
+    "note": "Values are implicit by declaration order.",
+    "values": [
+      {
+        "value": 0,
+        "name": "SUT_NOSKILL"
+      },
+      {
+        "value": 1,
+        "name": "SUT_TO_GROUND"
+      },
+      {
+        "value": 2,
+        "name": "SUT_TO_CHARACTER"
+      },
+      {
+        "value": 3,
+        "name": "SUT_TO_ITEM"
+      },
+      {
+        "value": 4,
+        "name": "SUT_TO_ALL"
+      },
+      {
+        "value": 5,
+        "name": "SUT_TO_SKILL"
+      },
+      {
+        "value": 6,
+        "name": "SUT_TO_SKILLGROUND_WITHTALKBOX"
+      },
+      {
+        "value": 7,
+        "name": "SUT_TO_GETHER_MONSTER"
+      }
+    ]
+  },
+  "source_branches": [
+    {
+      "location": "Ref/GameMode2.cpp:4893-4944 (CGameMode::SendMsg, case 0x4f / message 79)",
+      "detail": "Sets pending useType from message val1, reads SKID and attackRange from the passed skill row. If IsLevelUseSkill(SKID) is true, pending useLevel is the incoming val3. Otherwise it fetches the learned row level by SKID family: homun [8000,8017), merc [8200,8238), player otherwise; invalid/missing learned row yields useLevel 0. It computes g_isGoodSkillHanging and returns without clearing pending mode."
+    },
+    {
+      "location": "Ref/GameMode.cpp:5272-5445 (ProcessActorPick)",
+      "detail": "SUT_TO_GROUND bypasses actor pick processing entirely, leaving the screen click to ground picking. Other use types allow actor pick and delegate selected actors to ProcessObjClick."
+    },
+    {
+      "location": "Ref/GameMode.cpp:5449-5623 (ProcessGroundPick)",
+      "detail": "SUT_TO_CHARACTER, SUT_TO_ITEM, and SUT_TO_ALL return from ground handling. For a valid ground attr cell, SUT_TO_GROUND plus left-button down sends player message 65(skillId,x,y) and message 90(stored useLevel). Homun/merc ground-skill paths also use stored skillId/useLevel for AI commands; eligible merc ground skills are restricted to [8200,8238)."
+    },
+    {
+      "location": "Ref/GameMode.cpp:5810-5818, 5985-6018, 6438-6467, 6508-6546, 6710-6768 (ProcessObjClick)",
+      "detail": "Actor-click branches test SUT_TO_CHARACTER or SUT_TO_ALL for character targeting and apply IsGoodSkillForActor/Shift/no-shift policy. The NPC/job 45 branch sets cursor action 7; some other NPC-like jobs set cursor action 1; targetable/good-skill paths can set action 11. For eligible monster targets and PCs, useType 2 or 4 sends player message 41(targetGid, stored skillId, stored attackRange), then message 90(stored useLevel); these use the pending snapshot, not a fresh learned-row lookup. The PC path also allows targets for actor PK state or PK/siege maps, subject to its branch checks. Skill-unit classType 2 accepts SUT_TO_SKILL for ordinary skill units; jobs 141/143/152 accept other pending types except skill IDs 215-218, and the click sends message 103(targetGid,&m_skillUseInfo,0)."
+    },
+    {
+      "location": "Ref/GameMode.cpp:14135-14169",
+      "detail": "The mouse processing path calls ProcessActorPick then ProcessGroundPick. After pick processing, left-button-down sends mode message 78. It uses cursor action 10 when a pending useType remains but no pick handler claimed the action; otherwise it returns to cursor action 0 when idle."
+    },
+    {
+      "location": "Ref/GameMode2.cpp:4887-4892; Ref/GameMode.cpp:14135-14169,10954-10956",
+      "detail": "Mode message 78 is case 0x4e and clears pending useType, skillId, useLevel, and g_isGoodSkillHanging (but does not clear attackRange). Since input sends message 78 after pick dispatch on button-down, the pending mode is retired even after the selected action or an unhandled click."
+    },
+    {
+      "location": "Ref/GameMode2.cpp:5408-5448",
+      "detail": "Messages 0x6a/0x6b adjust the pending level only for IsLevelUseSkill skills; they fetch max level from the normal player-skill row, clamp to max, and enforce minimum level 1."
+    }
+  ],
+  "port_mapping": [
+    {
+      "location": "src/gamemode/GameMode.cpp:5748-5753, 5775-5887",
+      "detail": "HasPendingSkillUse currently requires id>0 and level>0, except capture skill 10000 with level 0 and useType 2. TryRequestPendingSkillFromScreenPoint uses the skill ID's learned metadata type to classify actor, ground, skill-unit, immediate-self or cart behavior; actor/ground/skill-unit paths obtain attackRange from the regular learned-skill row and use the pending ID/level. Successful paths clear pending state; the click owner consumes invalid pending clicks too, but does not call TryRequest when HasPendingSkillUse is false."
+    },
+    {
+      "location": "src/gamemode/GameMode.cpp:2971-3000, 3200-3250, 11309-11321",
+      "detail": "Cursor behavior is a port-side classifier over learned-skill type bits plus special IDs; it shows ground/actor/skill-target cursors and forbids unpickable targets. The click handler takes ownership of a pending click, calls TryRequestPendingSkillFromScreenPoint, then returns after clearing unrelated movement/attack intent."
+    },
+    {
+      "location": "src/gamemode/GameMode.cpp:5748-5753",
+      "detail": "ClearPendingSkillUse clears id, level, and useType, leaving attackRange untouched."
+    }
+  ],
+  "gaps_and_questions": [
+    "Port HasPendingSkillUse is level-gated, whereas the source mouse input checks useType; a source pending skill with level 0 can still own a click. The capture exception covers only skill 10000/useType 2.",
+    "Source mode 79 classifies by the useType supplied by message 126 and snapshots attackRange and selected level into m_skillUseInfo. Port classifies the interaction from skill metadata type bits and does not preserve all source SUT enum values as the classifier.",
+    "Source message 78 retires pending fields after every left-button-down following actor/ground dispatch; port clears pending state on accepted target actions and does not visibly clear an invalid pending click in TryRequestPendingSkillFromScreenPoint. The outer click does still consume the event.",
+    "The source enum includes SUT_TO_ITEM, SUT_TO_SKILLGROUND_WITHTALKBOX, and SUT_TO_GETHER_MONSTER. The reviewed world ProcessGroundPick/ProcessObjClick regions do not fully establish all UI/item and mode-specific consumers for values 3, 6, and 7; avoid treating their world-click behavior as fully inventoried.",
+    "Source click-target eligibility and cursor behavior depend on actor class/job, IsGoodSkillForActor, Shift, m_isNoShift, party/guild state, and PK/siege state. The port's current generic classifier/actor target path needs parity decisions for those cases."
+  ],
+  "root_review": "Preparation inventory, not acceptance. Root source review and next work are recorded in PK27-touch-proceed.md."
+}

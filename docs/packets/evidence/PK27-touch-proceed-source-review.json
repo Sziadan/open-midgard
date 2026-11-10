@@ -1,0 +1,41 @@
+{
+  "status": "root-reviewed partial contract; broader pending input/package acceptance open",
+  "baseline": "56033e90",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "primary": {
+    "player103": "Ref/Player.cpp:498-509; guarded PT_TOUCH_SKILL6 snapshot",
+    "touch_runner": "Ref/Player.cpp:1251-1308; special jobs141/143/152 zero-skill29 versus42/13",
+    "player29": "Ref/Player.cpp:365-371; virtual150, canonical target except special supplied job arguments",
+    "mode150": "Ref/GameMode2.cpp:6013-6022; CZ_ACTION_REQUEST400, padded target+5/action+18"
+  },
+  "selected_pe": {
+    "method": "static section-mapped bytes and bounded disassembly; original never executed",
+    "player29_canonical_call": {
+      "va": "0x5E5880",
+      "bytes": "ff5214"
+    },
+    "player29_supplied_call": {
+      "va": "0x5E589D",
+      "bytes": "ff5214"
+    },
+    "mode150_opcode_store": {
+      "va": "0x589FA7",
+      "bytes": "66c745d49001"
+    }
+  },
+  "decisions": [
+    "The old source gate misinterpreted base-typed decompiler SendMsg syntax as a no-op; selected calls use the virtual mode slot0x14. Real source recipient150 sends an action request.",
+    "103 copies id/range/raw32 level/target only outside state6/burrow; rejection preserves the previous proceed and snapshot. Mode transport follows canonical player PT_TOUCH_SKILL6.",
+    "Special jobs141/143/152 and raw skillId exactly0 send player29/virtual150 and retain the proceed, including failed send and subsequent pumps. Nonzero raw skillId truncating to wire0 is still ordinary42/76.",
+    "Ordinary touch dispatches canonical42/76 then13 even on failure. Missing target13 retires. Level0 fallback and wire truncation belong to source76.",
+    "Source touch distance/projection and state bounds are retained; the extra server-cell range gate is removed. Negative states follow source unsigned lower bound plus signed upper comparison.",
+    "Raw150 encodes the active profile action frame without the checked attack wrapper target0 rejection; low-byte action and low-DWORD target are retained."
+  ],
+  "remaining": [
+    "general pending useType/range/raw-level mouse/cursor/actor/ground/touch consumption",
+    "normal shortcut/list producers and source78 clearing",
+    "source65/66/77 ground canonical lifecycle and special text windows",
+    "companion identity producers/AI, party/guild/PK/siege picker/lock",
+    "resource/deployed/live and all broader packet-plan gates"
+  ]
+}
