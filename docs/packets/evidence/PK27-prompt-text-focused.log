@@ -1,0 +1,11 @@
+Test project D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset
+    Start  1: packet_stream_replay_checks
+1/3 Test  #1: packet_stream_replay_checks .......   Passed   10.05 sec
+    Start 15: packet_chat_submission_checks
+2/3 Test #15: packet_chat_submission_checks .....   Passed    1.69 sec
+    Start 56: packet_pet_window_render_checks
+3/3 Test #56: packet_pet_window_render_checks ...   Passed    5.25 sec
+
+100% tests passed, 0 tests failed out of 3
+
+Total Test time (real) =  16.99 sec

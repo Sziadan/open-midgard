@@ -20,3 +20,7 @@ target_link_libraries(ro_main PUBLIC
     ro_core
     ro_cipher
 )
+
+if(WIN32)
+    target_link_libraries(ro_main PUBLIC imm32)
+endif()

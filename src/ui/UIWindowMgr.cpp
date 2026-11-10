@@ -1142,6 +1142,7 @@ bool UIWindowMgr::HasActiveNpcDialog() const
 
 bool UIWindowMgr::CanRouteQtChatInput() const
 {
+    if (GetFocusedGroundSkillText()) return false;
     if(m_autoMessageWnd && m_autoMessageWnd->m_show)return false;
     if(auto* whisper=dynamic_cast<UIWhisperWnd*>(m_editWindow))if(whisper->m_show)return false;
     if(m_modalWindow && m_modalWindow->m_show)return false;
@@ -3129,6 +3130,13 @@ bool UIWindowMgr::HasNativePopupAtPoint(int x,int y) const
     const UIWindow* windows[]={m_itemInfoWnd,m_cardInfoWnd,m_skillDescribeWnd,m_chatRoomMenuWnd};
     for(const auto* w:windows)if(w&&w->m_show&&x>=w->m_x&&y>=w->m_y&&x<w->m_x+w->m_w&&y<w->m_y+w->m_h)return true;
     return false;
+}
+
+UIGroundSkillTextWnd* UIWindowMgr::GetFocusedGroundSkillText() const
+{
+    if (HasGameplayInputModal() || HasFrontMenuUiVisible()) return nullptr;
+    auto* prompt = GroundSkillTextOwner(m_editWindow);
+    return prompt && prompt->m_show ? prompt : nullptr;
 }
 
 void UIWindowMgr::OnChar(char c)

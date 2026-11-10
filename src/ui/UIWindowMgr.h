@@ -266,6 +266,7 @@ public:
     void OnMouseMove(int x, int y);
     bool OnWheel(int x, int y, int delta);
     void OnChar(char c);
+    UIGroundSkillTextWnd* GetFocusedGroundSkillText() const;
     void OnKeyDown(int virtualKey);
     bool OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown);
     ShortcutKeyBinding GetShortcutKeyBinding(int slotIndex) const;

@@ -3,6 +3,7 @@
 #include "UIChatRoomSettingsWnd.h"
 #include <array>
 #include <string>
+#include <string_view>
 
 class UIEditCtrl;
 
@@ -31,6 +32,8 @@ public:
     void OnMouseMove(int x,int y) override;
     void OnMouseHover(int x,int y) override;
     void OnChar(char c) override;
+    void OnUtf16Character(char16_t codeUnit);
+    void CommitText(std::u16string_view text);
     void OnKeyDown(int key) override;
     bool CanReceiveKeyInput() const override { return true; }
     bool IsFrameWnd() override { return true; }
@@ -53,6 +56,7 @@ private:
     int m_dragStartX=0,m_dragStartY=0,m_dragOriginX=0,m_dragOriginY=0;
     std::string m_caption;
     std::string m_prompt;
+    char16_t m_highSurrogate=0;
     int m_pressed=0;
     int m_hover=0;
 };

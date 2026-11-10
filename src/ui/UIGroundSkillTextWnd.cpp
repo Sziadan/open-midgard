@@ -222,14 +222,60 @@ void UIGroundSkillTextWnd::OnMouseHover(int x,int y)
 
 void UIGroundSkillTextWnd::OnChar(char c)
 {
-    if(m_editCtrl)m_editCtrl->OnChar(c);
+    OnUtf16Character(static_cast<unsigned char>(c));
+}
+
+void UIGroundSkillTextWnd::OnUtf16Character(char16_t codeUnit)
+{
+    if (codeUnit == u'\b') {
+        OnKeyDown(VK_BACK);
+        return;
+    }
+    if (codeUnit >= 0xd800 && codeUnit <= 0xdbff) {
+        m_highSurrogate = codeUnit;
+        return;
+    }
+    const std::array<char16_t,2> units{m_highSurrogate, codeUnit};
+    const bool pair = m_highSurrogate && codeUnit >= 0xdc00 && codeUnit <= 0xdfff;
+    CommitText(pair ? std::u16string_view(units.data(), 2) : std::u16string_view(&codeUnit, 1));
+}
+
+void UIGroundSkillTextWnd::CommitText(std::u16string_view text)
+{
+    m_highSurrogate = 0;
+    if (!m_editCtrl) return;
+    std::string next = m_editCtrl->GetText();
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        char32_t code = text[i];
+        if (code >= 0xd800 && code <= 0xdbff) {
+            if (i + 1 == text.size() || text[i + 1] < 0xdc00 || text[i + 1] > 0xdfff) continue;
+            code = 0x10000 + ((code - 0xd800) << 10) + (text[++i] - 0xdc00);
+        }
+        if (code < 0x20 || (code >= 0xdc00 && code <= 0xdfff)) continue;
+        const int count = code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+        if (next.size() + count > static_cast<std::size_t>(m_editCtrl->m_maxchar)) break;
+        if (count == 1) {
+            next += static_cast<char>(code);
+        } else {
+            constexpr unsigned prefixes[]{0, 0, 0xc0, 0xe0, 0xf0};
+            next += static_cast<char>(prefixes[count] | (code >> (6 * (count - 1))));
+            for (int shift = 6 * (count - 2); shift >= 0; shift -= 6)
+                next += static_cast<char>(0x80 | ((code >> shift) & 0x3f));
+        }
+    }
+    m_editCtrl->SetText(next.c_str());
 }
 
 void UIGroundSkillTextWnd::OnKeyDown(int key)
 {
-    if(key==VK_RETURN){SendMsg(this,0,0,0,0);return;}
-    if(key==VK_ESCAPE){SendMsg(this,1,0,0,0);return;}
-    if(m_editCtrl)m_editCtrl->OnKeyDown(key);
+    m_highSurrogate = 0;
+    if (key != VK_BACK || !m_editCtrl) return;
+    std::string text = m_editCtrl->GetText();
+    if (text.empty()) return;
+    std::size_t end = text.size() - 1;
+    while (end && (static_cast<unsigned char>(text[end]) & 0xc0) == 0x80) --end;
+    text.resize(end);
+    m_editCtrl->SetText(text.c_str());
 }
 
 void UIGroundSkillTextWnd::ActivateButton(int id)

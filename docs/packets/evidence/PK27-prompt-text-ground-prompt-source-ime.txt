@@ -1,0 +1,79 @@
+
+HighPriest.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+004ff810 <.text+0xfe810>:
+  4ff810:	55                   	push   %ebp
+  4ff811:	8b ec                	mov    %esp,%ebp
+  4ff813:	81 ec 0c 03 00 00    	sub    $0x30c,%esp
+  4ff819:	a1 f8 4c 7b 00       	mov    0x7b4cf8,%eax
+  4ff81e:	53                   	push   %ebx
+  4ff81f:	56                   	push   %esi
+  4ff820:	57                   	push   %edi
+  4ff821:	8b f1                	mov    %ecx,%esi
+  4ff823:	50                   	push   %eax
+  4ff824:	89 75 f8             	mov    %esi,-0x8(%ebp)
+  4ff827:	e8 e2 d3 18 00       	call   0x68cc0e
+  4ff82c:	8b f8                	mov    %eax,%edi
+  4ff82e:	85 ff                	test   %edi,%edi
+  4ff830:	0f 85 8f 00 00 00    	jne    0x4ff8c5
+  4ff836:	8b be 84 00 00 00    	mov    0x84(%esi),%edi
+  4ff83c:	8b 1d 88 c8 6c 00    	mov    0x6cc888,%ebx
+  4ff842:	81 c6 80 00 00 00    	add    $0x80,%esi
+  4ff848:	89 7d fc             	mov    %edi,-0x4(%ebp)
+  4ff84b:	85 ff                	test   %edi,%edi
+  4ff84d:	74 2a                	je     0x4ff879
+  4ff84f:	8a 47 ff             	mov    -0x1(%edi),%al
+  4ff852:	84 c0                	test   %al,%al
+  4ff854:	74 23                	je     0x4ff879
+  4ff856:	3c ff                	cmp    $0xff,%al
+  4ff858:	74 1f                	je     0x4ff879
+  4ff85a:	6a 01                	push   $0x1
+  4ff85c:	8b ce                	mov    %esi,%ecx
+  4ff85e:	e8 dd 79 f2 ff       	call   0x427240
+  4ff863:	83 c9 ff             	or     $0xffffffff,%ecx
+  4ff866:	33 c0                	xor    %eax,%eax
+  4ff868:	f2 ae                	repnz scas %es:(%edi),%al
+  4ff86a:	f7 d1                	not    %ecx
+  4ff86c:	49                   	dec    %ecx
+  4ff86d:	51                   	push   %ecx
+  4ff86e:	8b 4d fc             	mov    -0x4(%ebp),%ecx
+  4ff871:	51                   	push   %ecx
+  4ff872:	8b ce                	mov    %esi,%ecx
+  4ff874:	e8 b7 6c f3 ff       	call   0x436530
+  4ff879:	8b 46 08             	mov    0x8(%esi),%eax
+  4ff87c:	3b c3                	cmp    %ebx,%eax
+  4ff87e:	73 02                	jae    0x4ff882
+  4ff880:	8b d8                	mov    %eax,%ebx
+  4ff882:	85 db                	test   %ebx,%ebx
+  4ff884:	0f 86 74 01 00 00    	jbe    0x4ff9fe
+  4ff88a:	8b 4e 04             	mov    0x4(%esi),%ecx
+  4ff88d:	2b c3                	sub    %ebx,%eax
+  4ff88f:	50                   	push   %eax
+  4ff890:	8d 14 19             	lea    (%ecx,%ebx,1),%edx
+  4ff893:	52                   	push   %edx
+  4ff894:	51                   	push   %ecx
+  4ff895:	e8 e6 8b 1a 00       	call   0x6a8480
+  4ff89a:	8b 7e 08             	mov    0x8(%esi),%edi
+  4ff89d:	83 c4 0c             	add    $0xc,%esp
+  4ff8a0:	2b fb                	sub    %ebx,%edi
+  4ff8a2:	8b ce                	mov    %esi,%ecx
+  4ff8a4:	6a 00                	push   $0x0
+  4ff8a6:	57                   	push   %edi
+  4ff8a7:	e8 74 91 f2 ff       	call   0x428a20
+  4ff8ac:	84 c0                	test   %al,%al
+  4ff8ae:	0f 84 4a 01 00 00    	je     0x4ff9fe
+  4ff8b4:	8b 46 04             	mov    0x4(%esi),%eax
+  4ff8b7:	89 7e 08             	mov    %edi,0x8(%esi)
+  4ff8ba:	c6 04 38 00          	movb   $0x0,(%eax,%edi,1)
+  4ff8be:	5f                   	pop    %edi
+  4ff8bf:	5e                   	pop    %esi
+  4ff8c0:	5b                   	pop    %ebx
+  4ff8c1:	8b e5                	mov    %ebp,%esp
+  4ff8c3:	5d                   	pop    %ebp
+  4ff8c4:	c3                   	ret
+  4ff8c5:	8d 8d f4 fc ff ff    	lea    -0x30c(%ebp),%ecx
+  4ff8cb:	68                   	.byte 0x68
+  4ff8cc:	00 02                	add    %al,(%edx)

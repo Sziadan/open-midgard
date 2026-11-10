@@ -1,4 +1,6 @@
 #include "ui/UIWhisperWnd.h"
+#include "ui/UIGroundSkillTextWnd.h"
+#include <imm.h>
 #include "ui/UITipOfTheDayWnd.h"
 #include "ui/UICommandListWnd.h"
 #include "ui/UIPetInfoWnd.h"
@@ -572,6 +574,47 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     default:
         break;
+    }
+
+    if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
+        if (msg == WM_KEYDOWN && (wParam == VK_BACK || wParam == VK_RETURN || wParam == VK_ESCAPE)) {
+            // The translated WM_CHAR owns native Backspace.
+            return 0;
+        }
+        if (msg == WM_CHAR || msg == WM_IME_CHAR) {
+            prompt->OnUtf16Character(static_cast<char16_t>(wParam));
+            return 0;
+        }
+        if (msg == WM_UNICHAR) {
+            if (wParam <= 0xffff) {
+                const auto unit = static_cast<char16_t>(wParam);
+                prompt->CommitText(std::u16string_view(&unit, 1));
+            } else if (wParam <= 0x10ffff) {
+                const auto value = wParam - 0x10000;
+                const char16_t pair[]{static_cast<char16_t>(0xd800 + (value >> 10)),
+                                      static_cast<char16_t>(0xdc00 + (value & 0x3ff))};
+                prompt->CommitText(std::u16string_view(pair, 2));
+            }
+            return 0;
+        }
+        if (msg == WM_IME_COMPOSITION && (lParam & GCS_RESULTSTR)) {
+            if (HIMC context = ImmGetContext(hwnd)) {
+                const LONG size = ImmGetCompositionStringW(context, GCS_RESULTSTR, nullptr, 0);
+                std::u16string result;
+                if (size > 0 && size % sizeof(char16_t) == 0) {
+                    result.resize(static_cast<std::size_t>(size) / sizeof(char16_t));
+                    if (ImmGetCompositionStringW(context, GCS_RESULTSTR, result.data(), size) != size)
+                        result.clear();
+                }
+                ImmReleaseContext(hwnd, context);
+                if (!result.empty()) {
+                    prompt->CommitText(result);
+                    // DefWindowProc must not deliver the same result as WM_IME_CHAR.
+                    const LPARAM composition = lParam & ~static_cast<LPARAM>(GCS_RESULTSTR);
+                    return composition ? DefWindowProcW(hwnd, msg, wParam, composition) : 0;
+                }
+            }
+        }
     }
 
     if (HandleQtUiRuntimeWindowMessage(msg, wParam, lParam)) {

@@ -818,9 +818,10 @@
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
-        "docs/packets/evidence/PK27-prompt-input.md"
+        "docs/packets/evidence/PK27-prompt-input.md",
+        "docs/packets/evidence/PK27-prompt-text.md"
       ],
-      "commit_subject": "packet(PK27): restore ground prompt capture and palette sampling"
+      "commit_subject": "packet(PK27): route native and Qt text to ground prompts"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -851,9 +852,10 @@
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
-        "docs/packets/evidence/PK27-prompt-input.md"
+        "docs/packets/evidence/PK27-prompt-input.md",
+        "docs/packets/evidence/PK27-prompt-text.md"
       ],
-      "commit_subject": "packet(PK27): restore ground prompt capture and palette sampling"
+      "commit_subject": "packet(PK27): route native and Qt text to ground prompts"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -880,9 +882,10 @@
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
-        "docs/packets/evidence/PK27-prompt-input.md"
+        "docs/packets/evidence/PK27-prompt-input.md",
+        "docs/packets/evidence/PK27-prompt-text.md"
       ],
-      "commit_subject": "packet(PK27): restore ground prompt capture and palette sampling"
+      "commit_subject": "packet(PK27): route native and Qt text to ground prompts"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -907,9 +910,10 @@
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
-        "docs/packets/evidence/PK27-prompt-input.md"
+        "docs/packets/evidence/PK27-prompt-input.md",
+        "docs/packets/evidence/PK27-prompt-text.md"
       ],
-      "commit_subject": "packet(PK27): restore ground prompt capture and palette sampling"
+      "commit_subject": "packet(PK27): route native and Qt text to ground prompts"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -2250,7 +2254,8 @@
         "docs/packets/evidence/PK27-skill-producers-source-review.json",
         "docs/packets/evidence/PK27-ground-proceed.md",
         "docs/packets/evidence/PK27-ground-proceed-source-review.json",
-        "docs/packets/evidence/PK27-prompt-input.md"
+        "docs/packets/evidence/PK27-prompt-input.md",
+        "docs/packets/evidence/PK27-prompt-text.md"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

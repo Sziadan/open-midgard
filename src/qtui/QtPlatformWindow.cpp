@@ -5,6 +5,7 @@
 
 #include "DebugLog.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIGroundSkillTextWnd.h"
 
 #include <QCloseEvent>
 #include <QCoreApplication>
@@ -12,6 +13,8 @@
 #include <QFocusEvent>
 #include <QGuiApplication>
 #include <QKeyEvent>
+#include <QInputMethodEvent>
+#include <QInputMethodQueryEvent>
 #include <QMouseEvent>
 #include <QPointF>
 #include <QWheelEvent>
@@ -192,9 +195,36 @@ protected:
         QWindow::wheelEvent(event);
     }
 
+    bool event(QEvent* event) override
+    {
+        if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
+            if (event->type() == QEvent::InputMethod) {
+                auto* input = static_cast<QInputMethodEvent*>(event);
+                prompt->CommitText(input->commitString().toStdU16String());
+                return true;
+            }
+            if (event->type() == QEvent::InputMethodQuery) {
+                auto* query = static_cast<QInputMethodQueryEvent*>(event);
+                query->setValue(Qt::ImEnabled, true);
+                const auto* edit = prompt->GetEditCtrl();
+                query->setValue(Qt::ImCursorRectangle, QRect(edit->m_x, edit->m_y, 1, edit->m_h));
+                return true;
+            }
+        }
+        return QWindow::event(event);
+    }
+
     void keyPressEvent(QKeyEvent* event) override
     {
         const int virtualKey = MapQtKeyToVirtualKey(event->key());
+        if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
+            prompt->OnKeyDown(virtualKey);
+            if (!(event->modifiers() & (Qt::AltModifier | Qt::ControlModifier))
+                || event->modifiers().testFlag(Qt::GroupSwitchModifier))
+                prompt->CommitText(event->text().toStdU16String());
+            event->accept();
+            return;
+        }
         if (g_windowMgr.OnQtKeyDown(
                 virtualKey,
                 event->modifiers().testFlag(Qt::AltModifier),

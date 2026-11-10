@@ -35,6 +35,39 @@
             pointer(WM_LBUTTONDOWN,50,75);pointer(WM_LBUTTONUP,50,75);
             WindowProc(g_hMainWnd,WM_CHAR,'!',0);
             Require(std::string(window->GetEditCtrl()->GetText())=="Ground skill fixture!","native edit focus/typing did not reach model");
+            window->GetEditCtrl()->SetText("x");
+            WindowProc(g_hMainWnd, WM_CHAR, 0xd83d, 0);
+            Require(std::string(window->GetEditCtrl()->GetText()) == "x", "partial surrogate entered the prompt");
+            WindowProc(g_hMainWnd, WM_CHAR, 0xde42, 0);
+            Require(std::string(window->GetEditCtrl()->GetText()) == "x\xf0\x9f\x99\x82", "native surrogate pair was not committed once");
+            WindowProc(g_hMainWnd, WM_KEYDOWN, VK_BACK, 0);
+            WindowProc(g_hMainWnd, WM_CHAR, 8, 0);
+            Require(std::string(window->GetEditCtrl()->GetText()) == "x", "Backspace did not remove exactly one multibyte character");
+            window->GetEditCtrl()->SetText(std::string(77, 'a').c_str());
+            WindowProc(g_hMainWnd, WM_CHAR, 0x00e9, 0);
+            Require(std::string(window->GetEditCtrl()->GetText()) == std::string(77, 'a'), "input limit split a multibyte character");
+            WindowProc(g_hMainWnd, WM_KEYDOWN, VK_RETURN, 0);
+            WindowProc(g_hMainWnd, WM_CHAR, 13, 0);
+            WindowProc(g_hMainWnd, WM_KEYDOWN, VK_ESCAPE, 0);
+            WindowProc(g_hMainWnd, WM_CHAR, 27, 0);
+            g_windowMgr.OnProcess();
+            Require(g_windowMgr.ContainsWindow(window), "physical key injected a prompt button message");
+            if (id == 84) {
+                struct QtInputWindow {
+                    RoNativeWindowHandle handle{};
+                    ~QtInputWindow() { if (handle) RoQtDestroyMainWindow(handle); }
+                } inputWindow;
+                Require(RoQtCreateMainWindow("Ground prompt input replay", 120, 80, false, nullptr, &inputWindow.handle), "Qt input host creation failed");
+                auto* host = RoQtGetQWindow(inputWindow.handle);
+                window->GetEditCtrl()->SetText("");
+                QKeyEvent key(QEvent::KeyPress, Qt::Key_E, Qt::NoModifier, QString::fromUtf8("\xc3\xa9"));
+                QCoreApplication::sendEvent(host, &key);
+                QInputMethodEvent commit;
+                commit.setCommitString(QString::fromUtf8("\xe3\x81\x82"));
+                QCoreApplication::sendEvent(host, &commit);
+                Require(std::string(window->GetEditCtrl()->GetText()) == "\xc3\xa9\xe3\x81\x82", "Qt key or IME commit did not reach the prompt exactly once");
+            }
+            window->GetEditCtrl()->SetText("Ground skill fixture!");
             for(int i=0;i<6;++i)Require(window->GetFrameBitmap(i).IsValid(),"source text frame fixture failed raw-key asset lookup");
             ArgbDibSurface dib;Require(dib.EnsureSize(view.width(),view.height()),"ground text DIB failed");
             std::fill_n(dib.GetPixels(),view.width()*view.height(),0xff181b20u);
@@ -56,5 +89,5 @@
             {"source_edit_geometry_and_limit",true},{"source_key_frame_footer_button_samples",true},
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},{"opacity_compositor_acceptance",false},
-            {"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},{"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
+            {"native_character_and_qt_commit",true},{"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},{"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
     }

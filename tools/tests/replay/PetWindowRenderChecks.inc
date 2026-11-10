@@ -10,6 +10,9 @@
 #include "core/Globals.h"
 #include "gamemode/Mode.h"
 #include "qtui/QtUiState.h"
+#include "qtui/QtPlatformWindow.h"
+#include <QInputMethodEvent>
+#include <QKeyEvent>
 #include "qtui/QtUiStateAdapter.h"
 #include "session/Session.h"
 #include "res/Res.h"

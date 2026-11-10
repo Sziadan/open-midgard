@@ -3711,3 +3711,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-10 Ground prompt input and palette
 
 **Current ground prompt checkpoint (2026-11-10)**. Dragging, pointer release, typing and available palette sampling passed native replays. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 18.69s, with native input and two palette renders. The full packet plan remains active. [Evidence](evidence/PK27-prompt-input.md)
+
+## 2026-11-10 Ground prompt character input
+
+**Current ground prompt text checkpoint (2026-11-10)**. Native and Qt text now reach the focused ground prompt. All 164 application checks and 473 standalone checks passed. The focused suite passed 3 checks in 16.99s. Live IME, selection, and source packet encoding remain open. [Evidence](evidence/PK27-prompt-text.md)
