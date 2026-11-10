@@ -1,0 +1,43 @@
+  575418:	8b 55 08             	mov    0x8(%ebp),%edx
+  57541b:	8b 9e b8 03 00 00    	mov    0x3b8(%esi),%ebx
+  575421:	81 fb 10 27 00 00    	cmp    $0x2710,%ebx
+  575427:	8b 7a 18             	mov    0x18(%edx),%edi
+  57542a:	74 73                	je     0x57549f
+  57542c:	8b 0d 28 33 7b 00    	mov    0x7b3328,%ecx
+  575432:	83 f9 01             	cmp    $0x1,%ecx
+  575435:	7f 05                	jg     0x57543c
+  575437:	b9 01 00 00 00       	mov    $0x1,%ecx
+  57543c:	a1 34 33 7b 00       	mov    0x7b3334,%eax
+  575441:	8d 04 80             	lea    (%eax,%eax,4),%eax
+  575444:	8d 04 80             	lea    (%eax,%eax,4),%eax
+  575447:	c1 e0 02             	shl    $0x2,%eax
+  57544a:	99                   	cltd
+  57544b:	f7 f9                	idiv   %ecx
+  57544d:	83 f8 5a             	cmp    $0x5a,%eax
+  575450:	7c 4d                	jl     0x57549f
+  575452:	6a 00                	push   $0x0
+  575454:	6a 00                	push   $0x0
+  575456:	6a 00                	push   $0x0
+  575458:	6a 00                	push   $0x0
+  57545a:	6a 03                	push   $0x3
+  57545c:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  575461:	e8 4a 48 f7 ff       	call   0x4e9cb0
+  575466:	6a 00                	push   $0x0
+  575468:	6a 00                	push   $0x0
+  57546a:	68 ff 00 00 00       	push   $0xff
+  57546f:	68 33 01 00 00       	push   $0x133
+  575474:	e8 d7 ee f9 ff       	call   0x514350
+  575479:	83 c4 04             	add    $0x4,%esp
+  57547c:	b9 58 87 76 00       	mov    $0x768758,%ecx
+  575481:	50                   	push   %eax
+  575482:	6a 01                	push   $0x1
+  575484:	e8 27 48 f7 ff       	call   0x4e9cb0
+  575489:	8b 45 0c             	mov    0xc(%ebp),%eax
+  57548c:	c7 86 0c 05 00 00 01 	movl   $0x1,0x50c(%esi)
+  575493:	00 00 00 
+  575496:	5f                   	pop    %edi
+  575497:	5e                   	pop    %esi
+  575498:	5b                   	pop    %ebx
+  575499:	8b e5                	mov    %ebp,%esp
+  57549b:	5d                   	pop    %ebp
+  57549c:	c2 08 00             	ret    $0x8

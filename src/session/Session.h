@@ -175,6 +175,8 @@ public:
     // Source companion identity owners. PK28/29 receive producers remain open;
     // capture picking must compare these IDs, rather than infer ownership.
     u32 m_homunGID=0,m_merGID=0;
+    // Selected 0x00B0 decodes signed wire dword/10; source initialization zeros both.
+    int m_weight=0,m_maxWeight=0;
     u8   m_sex;
     bool m_isEffectOn;
     bool m_isMinEffect;

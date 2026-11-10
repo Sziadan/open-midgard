@@ -1,0 +1,35 @@
+{
+  "baseline": "4d6f8e29",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "fb7c493c3e9c1376d3cfbd30c8257b08abc5f0408ba0fdfa83b86b0e963a5db1",
+    "CMakeLists.txt": "c5f340acabb1cf4884863a3fb1719a1bfc7d6676c8692d7f04fecd5ea2398a4f",
+    "tools/tests/CMakeLists.txt": "c957cc75b33437407953a123b6980019869ed7eaf289c6d60b3cbfa254f7ec73",
+    "src/core/SourceWeight.h": "d4380a69efa13ce988882e132ba748b12cfff7d6bcec69ab7bd5ce213c7aad3b",
+    "src/session/Session.h": "6b0d1c8944c4212d894d888bef788ff62373ae41675559d865a11fe08608c6ed",
+    "src/gamemode/GameMode.cpp": "b919770165c76fb3177478b39045682cb0d9489d11ec31888efd3fe1bf8ef450",
+    "src/gamemode/GameModePacket.cpp": "e695625a93f6b6b12f57c272fba30d2e99ba20e18b0a3058c93f92a11349ade8",
+    "tools/tests/SkillTargetClickTests.cpp": "ab9900a84d898f8db15bfb66846dcbee90af11e7c47ef8cdc896abdad6356ae8",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "d05ea39b84adc7083084f3ce399d90b3345e6ec04c92489c10f5752a8f80c1cd",
+    "tools/tests/replay/PlayerSkillProceedReplay.inc": "3a809d0af484ce60ba91de1a9713cb931d429fd9fbb1872a26ec11b4f38de309",
+    "tools/tests/replay/SourcePendingActorReplay.inc": "a18453f1b08f426941dbb002d9f91ee6fed244201c869f8fa55b9f0ac5d53813",
+    "tools/tests/replay/PetCaptureWorldInputRenderChecks.inc": "09a5f91168513f185fd5b2e264a154f428410b6b1103b7b6cd9ef976b3a4d15d"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "installed_unchanged": true,
+  "validation": "Deploy-OFF all-target and standalone builds pass; focused3/3 in14.78s, application164/164 in53.56s (-j4), standalone473/473 in12.71s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture plus temporary-skill world input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open.",
+  "pending_world_input": {
+    "incoming_range_snapshot": true,
+    "miss_consumed_without_move": true,
+    "native_windowproc": true,
+    "negative_level_retained": true,
+    "outcome": "PASS",
+    "real_billboard_picker": true,
+    "registered_0147": true,
+    "scene_backend": "Vulkan",
+    "skill": 30,
+    "temporary_duplicate_range_retained": true,
+    "virtual126_79": true,
+    "zero_level_consumed": true
+  }
+}

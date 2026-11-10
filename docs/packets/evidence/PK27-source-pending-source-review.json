@@ -1,0 +1,46 @@
+{
+  "status": "root-reviewed partial contract; legacy producers/ground/full cursor and deployed gates open",
+  "baseline": "4d6f8e29",
+  "selected_binary_sha256": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+  "primary": {
+    "source_actor_input": "Ref/GameMode.cpp:5985-6018,6390-6508,6520-6660,6694-6834; ProcessObjClick574760",
+    "source_skill_units": "Ref/GameMode.cpp:6694-6714;103 uses current pending snapshot, special jobs141/143/152 exclude215..218",
+    "source_clear": "Ref/GameMode.cpp:14135-14169; mode78 after button-down pick processing; Ref/GameMode2.cpp:4887-4892",
+    "weight_fields": "HighPriest.exe.h:8079,8082 signed int; Ref/Session.cpp:24231-24232 initialized0",
+    "weight_producer": "Ref/GameModePacket.cpp:23567-23649;00B0 Zc_Par_Change596950, IDs24/25",
+    "notices": "HighPriest.exe.h:3777-3780;306/307 warnings,308/309 releases; status type7, colors255/FFFF00"
+  },
+  "selected_pe": {
+    "method": "static section-mapped bytes and bounded disassembly; original not executed",
+    "weight_decode": {
+      "va": "0x59708F..0x5970A5",
+      "bytes": "8b4e04b867666666f7e9c1fa028bc2c1e81f03d08bca894e04",
+      "meaning": "signed /10 despite decompiler DWORD expression"
+    },
+    "max_weight_decode": {
+      "va": "0x597222..0x597238",
+      "bytes": "8b4e04b867666666f7e9c1fa028bcac1e91f03d18bca",
+      "meaning": "signed /10"
+    },
+    "weight_percent": {
+      "va": "0x57543C..0x575450",
+      "bytes": "a134337b008d04808d0480c1e00299f7f983f85a",
+      "meaning": "32-bit wrap multiply100; CDQ/IDIV; signed >=90; denominator signed clamp1"
+    }
+  },
+  "decisions": [
+    "Source nonzero useType owns input even when id/level0 or negative. Character2/ALL4 actor and skill-unit5 paths use the stored raw id/level/range, not a fresh learned-row classification.",
+    "Character actor predicates preserve good/harmful Shift inversion, monster NoShift override and Alt guard, fresh PC exclusion of blanket NoShift, self/merc ALL overrides and homunculus231 exception. Port self identity includes the actual player pointer as well as canonical AID; another actor is not excluded merely for matching character GID.",
+    "Source actor41/90 uses raw32 values; widening BeginSkillChase prevents premature u16 truncation. Source103 consumes the current snapshot rather than duplicate-retained temporary metadata.",
+    "00B0 IDs24/25 divide reinterpreted signed32 wire values by10. Decompiler DWORD syntax does not establish unsigned arithmetic; selected IMUL66666667/SAR/sign correction proves signed.",
+    "Percent multiplication wraps32 bits, then signed division clamps maxWeight<=1 to1. Ordinary source actor skill blocks at90%, preserves older proceed on rejection, and10000 bypasses weight.",
+    "Weight receipts emit source50/90 crossing warnings and releases. MaxWeight increases can release thresholds; decreases do not invent warnings.00B1 is not an added weight producer.",
+    "78 clears selector/id/level/good-skill global, retains range and does not cancel a prior player proceed; source input invokes it after a miss as well as a hit."
+  ],
+  "remaining": [
+    "Migrate legacy shortcut/skill-list producers, then remove HasPendingSkillUse positive-level/type0 fallback; retained79 idle fields must not reactivate old intent.",
+    "Ground65/66/77 canonical pipeline and125/220 text owners; current ground path is still legacy transport and not accepted for raw zero/negative levels.",
+    "Full item/other selector consumers, companion AI/identity producers, source mouse/control/party/guild/PK/siege cursor and picker priority lifetimes.",
+    "Metadata GRF/resource overrides, independently deployed/live acceptance, feeding/talk/follow/reset and the full packet plan."
+  ]
+}

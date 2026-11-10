@@ -1,0 +1,56 @@
+{
+  "scope": "Original skill-list and shortcut skill activation source compared with the current port helpers. This is a source inventory only; base-qualified CMode::SendMsg calls are not treated as proof of a non-virtual target.",
+  "skill_type_values": {
+    "source": "Ref/dhxj/packet.h:1477-1486",
+    "values": {
+      "0": "SKILLTYPE_PASSIVE",
+      "1": "SKILLTYPE_TOCHARACTER",
+      "2": "SKILLTYPE_TOGROUND",
+      "4": "SKILLTYPE_TOME (self/immediate)",
+      "8": "SKILLTYPE_TOITEM",
+      "16": "SKILLTYPE_TOALL",
+      "32": "SKILLTYPE_TOSKILL"
+    }
+  },
+  "skill_list_activation": {
+    "producer": "Ref/UIItemWnd.cpp:6266-6287 and 6708-6742, UISkillListWnd::SendMsg",
+    "trigger": "Message 6 / button ID 0x76 (118) requires m_curItem != -1, calls GetSkillInfo for the selected row, and proceeds only when m_isValid and learned level are nonzero, then only when spcost is nonzero. It forwards the row via its own message 58.",
+    "family_and_row": "Message 58 uses m_typeWnd: 0 player skill, 1 homunculus skill, 2 mercenary skill. The row's skill ID is itemName._Ptr; the chosen use level comes from CSession::GetSkillUseLevel, GetHomunSkillUseLevel, or GetMerSkillUseLevel, respectively. Those getters read the saved per-skill use-level tables; player getter bounds IDs to 1..1038 and returns 0 otherwise (Ref/Session.cpp:7561-7569).",
+    "mode_call": "For each family it calls the active mode with message 126, passing the SKILL_INFO pointer and chosen use level (Ref/UIItemWnd.cpp:6717-6740). The return value is ignored; the UI handler returns 0.",
+    "dbl_click_path": "The native row activation is the internal message-6/button-118 path above. The precise mouse double-click-to-button event mapping is outside these inspected handler lines; do not infer it from the method name alone.",
+    "source_mode_mapping": "Ref/GameMode2.cpp:5751-5795 (message 126) reads SKILL_INFO.type at offset +8. Type 1 forwards to mode message 79 with use type 2; type 2 forwards use type 1; type 4 chooses self target by ID family (homunculus IDs 8000..8016 => m_homunGID, mercenary IDs 8200..8237 => m_merGID, otherwise player aid), calls message 76, then message 79 use type 0; types 8,16,32 forward use types 3,4,5. Other types, including passive type 0, hit default and do nothing. The forwarding message return is not used to accept/reject producer activation.",
+    "mode_79_level_rule": "Ref/GameMode2.cpp:4893-4947 (message 79) first rejects while merchant-my-shop window exists; stores incoming use type; requires a non-null SKILL_INFO pointer; reads skill ID and attackRange from the supplied record. If IsLevelUseSkill(ID), stores the producer-supplied raw level. Otherwise it resolves skill metadata from the player/homunculus/mercenary table selected by ID ranges (8000..8016 and 8200..8237) and uses that record's learned level when valid, else 0. It updates g_isGoodSkillHanging from IsGoodSkillForActor and returns SUT_NOSKILL as a message result. No producer consumes this result.",
+    "guards_and_gaps": [
+      "The list producer guards row validity, learned level, and nonzero SP cost before message 126.",
+      "The 126-to-79 path uses skill metadata type, not a hard-coded ID classification; passive type 0 has no activation branch.",
+      "A zero saved use-level is intentionally passed through. Mode 79 uses it directly for level-use skills, and uses learned level for other skills.",
+      "No positive-level substitution is performed by the source producer; level selection is the raw saved table entry."
+    ]
+  },
+  "shortcut_activation": {
+    "producer": "Ref/UIFrameWnd3.cpp:4125 onward (UIShortCutWnd::SendMsg), especially message 41 at 4317-4400; shortcut mouse double-click enters message 41 at 8508-8518. Keyboard dispatch sends message 41 with slot/bank values from UIWindowMgr::ExcuteMsgInBattleMode at Ref/UIWindowMgr.cpp:2978-3105.",
+    "slot_and_family": "Message 41 selects shortcut slots using the active bank/slot count, checks the selected entry's isSkill flag, then resolves its skill ID through player, homunculus (8000..8016), or mercenary (8200..8237) skill tables. Item entries take a separate item-use path. It only arms a skill when the resolved skill has skillPos and upgradable/nonzero metadata in the decompiler's field interpretation; the branch then calls the mode with message 126 and the resolved skill record.",
+    "level_argument": "The shortcut message-126 call passes a raw 16-bit field derived from the shortcut slot structure as its level argument (Ref/UIFrameWnd3.cpp:4393-4398). Slot count/use-level is visibly stored and rendered as the shortcut count in this class (e.g. 4202-4216 and 8835-8850); because the exact 4397 pointer arithmetic is decompiler-reconstructed, confirm that it is precisely the count field against selected PE before relying on that field-level interpretation.",
+    "result_and_guards": "The message-126 return value is discarded. The handler does not pass a success result back to the keyboard or double-click producer. The message-41 branch validates the shortcut entry as a skill and uses resolved metadata; source does not show an explicit 'passive' branch here because type handling is deferred to message 126.",
+    "self_cart_and_passive": "The same mode-126 mapping applies after shortcut activation. Type 4 performs an immediate self-targeted mode-76 call and then mode-79 use type 0. Cart/self family selection is by ID range. Type 0 passive has no message-126 activation case. Ground, character, item, all-target, and target-skill routes map by the skillInfo type values above.",
+    "input_mapping": "UIWindowMgr::ExcuteMsgInBattleMode maps configured key-down codes to UIShortCutWnd message 41, using index values 0..8 and a bank selector in val2; it suppresses shortcut handling in battle chat. The code excerpts do not establish the literal key names without resolving the key-code constants."
+  },
+  "current_port_comparison": {
+    "skill_list": {
+      "symbol": "src/gamemode/GameMode.cpp:10030-10093, ArmPendingSkillUseFromSkillList(int)",
+      "observed_behavior": "Accepts player skills only through GetSkillItemBySkillId and learned level > 0; sets selected level to learned skill level rather than saved GetSkillUseLevel. Uses skill type bits for ground/self and otherwise arms actor targeting. It treats CartSelect via a hard-coded skill-ID mode before type routing. For self skills it sends immediately; for ground/actor it clears prior chase/mode state and returns true.",
+      "source_parity_notes": "Unlike source list UI, it lacks the row m_isValid/nonzero-SP-cost checks, does not resolve homunculus or mercenary rows, substitutes learned level for the saved per-skill selection, and routes passive/no-target types into the default actor-target branch. The current function returns bool to its caller, unlike the source UI's discarded SendMsg result."
+    },
+    "shortcut": {
+      "symbol": "src/gamemode/GameMode.cpp:6117-6196, RequestShortcutSlotUse(int); mode resolver at 2971-3002",
+      "observed_behavior": "Reads shortcut slot ID/isSkill; resolves a player learned skill, rejects absent/nonpositive level, and picks slot count when positive else learned level, clamped to 1..learned level. Without a current mode it sends an ID-targeted skill packet fallback. With a mode it resolves cart/self/ground/actor/skill-target through a hard-coded ID table; self sends directly, cart opens the cart UI, and target modes clear chase and arm m_skillUseInfo id/level.",
+      "source_parity_notes": "Current path differs from source UIShortCutWnd's family-specific skill metadata resolution and metadata-type based message-126 route. Current shortcut level is explicitly clamped, while source passes the slot's raw use-level/count field (pending PE confirmation for exact field at the reconstructed pointer expression). Source uses a family-aware self actor ID; current ResolveSelfSkillTargetId behavior should be separately audited if cross-family shortcut use matters."
+    }
+  },
+  "unresolved": [
+    "Confirm the decompiler's message-41 shortcut level expression at Ref/UIFrameWnd3.cpp:4397 against selected PE bytes; source clearly passes a raw 16-bit slot-derived value, but the local source expression does not name its field.",
+    "Confirm whether the message-6/button-118 UI row event is the precise activation event for native skill-list double-click; the observed event handler and message-58 path are established, but mouse-to-message mapping was not traced in this bounded pass.",
+    "The dynamic recipient for base-qualified CMode::SendMsg remains subject to selected-PE validation; inventory records calls and source branches only."
+  ],
+  "status": "source-preparation-not-acceptance; root primary/selected-PE review remains required before migration"
+}

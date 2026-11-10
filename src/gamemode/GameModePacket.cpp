@@ -33,6 +33,7 @@
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "core/UiMessageStrings.h"
+#include "core/SourceWeight.h"
 #include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UISayDialogWnd.h"
 #include "ui/UINpcMenuWnd.h"
@@ -2967,6 +2968,34 @@ void UpdateStatusSummaryFromPacket00BD(CGameMode& mode, const PacketView& packet
     InvalidateStatusWindows();
 }
 
+bool ApplySourceWeightParam(u32 statusType,u32 value)
+{
+    if(statusType!=24 && statusType!=25)return false;
+    const int oldWeight=g_session.m_weight,oldMax=g_session.m_maxWeight;
+    const int before=ro::stats::SourceWeightPercent(oldWeight,oldMax);
+    if(statusType==24)g_session.m_weight=static_cast<s32>(value)/10;
+    else g_session.m_maxWeight=static_cast<s32>(value)/10;
+    const int after=ro::stats::SourceWeightPercent(g_session.m_weight,g_session.m_maxWeight);
+    const auto notice=[](unsigned id,bool released){
+        ro::UiMessageStrings table;table.Load();
+        const char* fallback=id==306?"You cannot recover HP or SP while overweight.":id==307?"You cannot attack while overweight."
+            :id==308?"You can recover HP and SP again.":"You can attack again.";
+        const auto text=table.Get(id,fallback);
+        g_windowMgr.SendMsg(3,0,0,0);
+        g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text.c_str()),released?0xffff00:255,7,0);
+    };
+    if(oldMax){
+        if(statusType==24 && after>before){
+            if(after>=50 && before<50)notice(306,false);
+            if(after>=90 && before<90)notice(307,false);
+        }else if((statusType==24 && after<before) || (statusType==25 && oldMax<g_session.m_maxWeight)){
+            if(after<50 && before>=50)notice(308,true);
+            if(after<90 && before>=90)notice(309,true);
+        }
+    }
+    InvalidateStatusWindows();return true;
+}
+
 void HandleSelfStatusParam(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 8) {
@@ -2979,6 +3008,8 @@ void HandleSelfStatusParam(CGameMode& mode, const PacketView& packet)
         | (static_cast<u32>(packet.data[5]) << 8)
         | (static_cast<u32>(packet.data[6]) << 16)
         | (static_cast<u32>(packet.data[7]) << 24);
+
+    if(packet.packetId==0x00b0 && ApplySourceWeightParam(statusType,value))return;
 
     u32 previousValue = 0;
     bool hadPreviousValue = false;

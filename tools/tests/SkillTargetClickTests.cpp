@@ -22,8 +22,6 @@ void ClearPickupIntent(CGameMode&){}
 void ClearAttackChaseHint(CGameMode&){}
 void ClearSkillChase(CGameMode&){++skillChaseClears;}
 void ClearPendingSkillUse(CGameMode& mode){mode.m_skillUseInfo.id=0;mode.m_skillUseInfo.level=0;mode.m_skillUseInfo.useType=0;}
-int petCaptures=0;
-bool TryRequestPetCaptureFromScreenPoint(CGameMode&,int,int){++petCaptures;return validTarget;}
 bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode,int,int){
     ++casts;
     if(!validTarget)return false;
@@ -38,27 +36,28 @@ void UpdateHeldMoveTargetFromScreenPoint(CGameMode&,int,int){}
 void PumpHeldMoveRequest(CGameMode&){++moves;}
 #include "SkillTargetClickBodies.inc"
 int main(){
-    {CGameMode mode;mode.m_skillUseInfo={28,0,5,2};assert(!HasPendingSkillUse(mode));
+    {CGameMode mode;mode.m_skillUseInfo={28,0,5,2};assert(HasPendingSkillUse(mode));
+        mode.m_skillUseInfo.level=-2;assert(HasPendingSkillUse(mode));
         mode.m_skillUseInfo={10000,0,5,0};assert(!HasPendingSkillUse(mode));}
     for(bool valid:{false,true}){
-        CGameMode mode;mode.m_skillUseInfo={10000,0,5,2};validTarget=valid;petCaptures=0;
-        assert(mode.Click(100,200)==1 && petCaptures==1 && mode.m_skillUseInfo.id==0
+        CGameMode mode;mode.m_skillUseInfo={10000,0,5,2};validTarget=valid;casts=0;
+        assert(mode.Click(100,200)==1 && casts==1 && mode.m_skillUseInfo.id==0
             && mode.m_skillUseInfo.level==0 && mode.m_skillUseInfo.useType==0 && mode.m_skillUseInfo.attackRange==5);
     }
     // Actor-target and ground-target shortcuts must both work with Shift held.
     for(int skill:{28,89})for(bool modifier:{false,true}){
-        CGameMode mode;mode.m_skillUseInfo={skill,1};
+        CGameMode mode;mode.m_skillUseInfo={skill,1,5,skill==89?1:2};
         shift=modifier;validTarget=true;
         casts=turns=moves=attacks=pickups=talks=selections=skillChaseClears=0;
         assert(mode.Click(100,200)==1);
         assert(casts==1&&turns==0&&moves==0&&attacks==0&&pickups==0&&skillChaseClears==0);
         assert(mode.m_skillUseInfo.id==0&&!mode.m_isLeftButtonHeld);
     }
-    // Invalid skill targets retain targeting; they must not turn or walk.
-    CGameMode mode;mode.m_skillUseInfo={28,1};shift=true;validTarget=false;
+    // Source78 consumes invalid character-target clicks without turning or walking.
+    CGameMode mode;mode.m_skillUseInfo={28,1,5,2};shift=true;validTarget=false;
     casts=turns=moves=attacks=0;
     assert(mode.Click(100,200)==1&&casts==1&&turns==0&&moves==0&&attacks==0);
-    assert(mode.m_skillUseInfo.id==28);
+    assert(mode.m_skillUseInfo.id==0 && mode.m_skillUseInfo.useType==0 && mode.m_skillUseInfo.attackRange==5);
     // Ordinary Shift-click and seated turning retain their existing behavior.
     mode.m_skillUseInfo={};turns=casts=0;
     assert(mode.Click(100,200)==1&&turns==1&&casts==0);

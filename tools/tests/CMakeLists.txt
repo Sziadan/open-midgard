@@ -2087,7 +2087,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/GroundTextureModeBody.inc" "${ground_sam
 extract_body(cursor_snap_item "${cursor_snap_world}" "bool CWorld::FindHoveredGroundItemScreen(" "bool CWorld::HasWarpAtAttrCell(")
 extract_body(cursor_snap_resolve "${cursor_snap_world}" "bool CWorld::ResolveCursorSnap(" "bool CWorld::FindHoveredSkillScreen(")
 extract_body(cursor_snap_draw "${cursor_snap_mode}" "bool CGameMode::ResolveCursorDrawPosition(" "std::string CGameMode::ResolveCharacterName(")
-extract_body(cursor_snap_pending "${cursor_snap_mode}" "bool HasPendingSkillUse(" "bool TryRequestPetCaptureFromScreenPoint(")
+extract_body(cursor_snap_pending "${cursor_snap_mode}" "bool HasPendingSkillUse(" "void ClearPendingSkillUse(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CursorSnapBodies.inc" "${cursor_snap_item}\n${cursor_snap_resolve}\n${cursor_snap_pending}\n${cursor_snap_draw}")
 # Keep the production Vulkan sampler cache and selector together inside the test device.
 string(FIND "${ground_sampler_device}" "    struct SamplerCacheEntry {" ground_sampler_start)

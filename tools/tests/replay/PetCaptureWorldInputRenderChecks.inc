@@ -139,4 +139,52 @@
             {"registered_019e",true},{"capture_skill",mode.m_skillChaseSkillId},{"level",mode.m_skillChaseSkillLevel},
             {"range",mode.m_skillChaseRange},{"source_proceed_type",player.m_proceedType.type},
             {"pending_intent_consumed",true}}).toJson(QJsonDocument::Compact));
+        {
+            const auto temporary=g_session.GetTemporarySkillItems();
+            const int weight=g_session.m_weight,maxWeight=g_session.m_maxWeight,noShift=g_session.m_isNoShift;
+            const bool good=g_isGoodSkillHanging;
+            struct RestoreSourcePendingInput {std::function<void()> fn;~RestoreSourcePendingInput(){fn();}} restorePending{[&]{
+                player.SendMsg(nullptr,13,0,0,0);
+                g_session.ClearTemporarySkillItems();for(const auto& row:temporary)g_session.AddTemporarySkillItem(row);
+                g_session.m_weight=weight;g_session.m_maxWeight=maxWeight;g_session.m_isNoShift=noShift;g_isGoodSkillHanging=good;
+            }};
+            g_session.m_weight=0;g_session.m_maxWeight=1000;g_session.m_isNoShift=1;g_session.ClearTemporarySkillItems();
+            for(const auto [level,range]:std::array<std::pair<u16,int>,2>{{{0,3},{0xfffe,2}}}){
+                player.SendMsg(nullptr,13,0,0,0);
+                std::array<u8,39> packet{};packet[0]=0x47;packet[1]=1;packet[2]=30;packet[4]=1;
+                packet[8]=static_cast<u8>(level);packet[9]=static_cast<u8>(level>>8);packet[12]=static_cast<u8>(range);
+                Require(router.Dispatch(mode,{0x0147,39,packet.data()}),"registered temporary skill did not dispatch to126/79");
+                Require(mode.m_skillUseInfo.useType==2 && mode.m_skillUseInfo.attackRange==range,
+                    "temporary row selector/range was replaced by learned metadata");
+                WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(rawX,rawY));
+                WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(rawX,rawY));
+                Require(player.m_proceedType.type==3 && player.m_proceedTargetGid==monster.m_gid && player.m_skillId==30
+                    && player.m_skillUseLevel==static_cast<s16>(level) && player.m_skillAttackRange==range
+                    && mode.m_hasSkillChase && mode.m_skillChaseSkillId==30 && mode.m_skillChaseRange==range,
+                    "real world temporary skill click lost raw level/range/player41/90");
+                Require(!mode.m_skillUseInfo.useType && !mode.m_skillUseInfo.id && !mode.m_skillUseInfo.level
+                    && mode.m_skillUseInfo.attackRange==range && !g_isGoodSkillHanging,"world click did not consume through source78");
+                Require(g_session.GetTemporarySkillItemBySkillId(30)->attackRange==3,
+                    "incoming duplicate range incorrectly replaced temporary storage metadata");
+            }
+            int missX=-1,missY=-1;
+            for(int y=20;y<view.height() && missX<0;y+=40)for(int x=20;x<view.width();x+=40){
+                CGameActor* hit=nullptr;
+                if(!g_windowMgr.HasWindowAtPoint(x,y) && !world.FindHoveredActorScreen(camera.GetViewMatrix(),camera.GetCameraLongitude(),
+                    x,y,&hit,nullptr,nullptr,true)){missX=x;missY=y;break;}
+            }
+            Require(missX>=0,"source pending input fixture has no unoccluded miss point");
+            player.SendMsg(nullptr,13,0,0,0);PLAYER_SKILL_INFO row{};row.SKID=30;row.attackRange=4;
+            mode.SendMsg(79,2,reinterpret_cast<msgparam_t>(&row),0);
+            WindowProc(g_hMainWnd,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(missX,missY));
+            WindowProc(g_hMainWnd,WM_LBUTTONUP,0,MAKELPARAM(missX,missY));
+            Require(!mode.m_skillUseInfo.useType && !mode.m_hasSkillChase && !mode.m_isLeftButtonHeld
+                && player.m_proceedType.type==0,"source character-target miss failed78 or started a world intent");
+            QFile pendingProof(output+"/pending-skill-world-input-results.json");
+            Require(pendingProof.open(QIODevice::WriteOnly),"pending world input proof open failed");
+            pendingProof.write(QJsonDocument(QJsonObject{{"outcome","PASS"},{"registered_0147",true},{"virtual126_79",true},
+                {"scene_backend","Vulkan"},{"real_billboard_picker",true},{"native_windowproc",true},{"skill",30},
+                {"zero_level_consumed",true},{"negative_level_retained",true},{"incoming_range_snapshot",true},
+                {"temporary_duplicate_range_retained",true},{"miss_consumed_without_move",true}}).toJson(QJsonDocument::Compact));
+        }
     }

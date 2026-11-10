@@ -811,9 +811,11 @@
         "docs/packets/evidence/PK27-autorun.md",
         "docs/packets/evidence/PK27-autorun-source-review.json",
         "docs/packets/evidence/PK27-touch-proceed.md",
-        "docs/packets/evidence/PK27-touch-proceed-source-review.json"
+        "docs/packets/evidence/PK27-touch-proceed-source-review.json",
+        "docs/packets/evidence/PK27-source-pending.md",
+        "docs/packets/evidence/PK27-source-pending-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore canonical touch skill action dispatch"
+      "commit_subject": "packet(PK27): connect source pending actor input and weight state"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -837,9 +839,11 @@
         "docs/packets/evidence/PK27-autorun.md",
         "docs/packets/evidence/PK27-autorun-source-review.json",
         "docs/packets/evidence/PK27-touch-proceed.md",
-        "docs/packets/evidence/PK27-touch-proceed-source-review.json"
+        "docs/packets/evidence/PK27-touch-proceed-source-review.json",
+        "docs/packets/evidence/PK27-source-pending.md",
+        "docs/packets/evidence/PK27-source-pending-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore canonical touch skill action dispatch"
+      "commit_subject": "packet(PK27): connect source pending actor input and weight state"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -859,9 +863,11 @@
         "docs/packets/evidence/PK27-autorun.md",
         "docs/packets/evidence/PK27-autorun-source-review.json",
         "docs/packets/evidence/PK27-touch-proceed.md",
-        "docs/packets/evidence/PK27-touch-proceed-source-review.json"
+        "docs/packets/evidence/PK27-touch-proceed-source-review.json",
+        "docs/packets/evidence/PK27-source-pending.md",
+        "docs/packets/evidence/PK27-source-pending-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore canonical touch skill action dispatch"
+      "commit_subject": "packet(PK27): connect source pending actor input and weight state"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -879,9 +885,11 @@
         "docs/packets/evidence/PK27-autorun.md",
         "docs/packets/evidence/PK27-autorun-source-review.json",
         "docs/packets/evidence/PK27-touch-proceed.md",
-        "docs/packets/evidence/PK27-touch-proceed-source-review.json"
+        "docs/packets/evidence/PK27-touch-proceed-source-review.json",
+        "docs/packets/evidence/PK27-source-pending.md",
+        "docs/packets/evidence/PK27-source-pending-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore canonical touch skill action dispatch"
+      "commit_subject": "packet(PK27): connect source pending actor input and weight state"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -1704,7 +1712,9 @@
         "docs/packets/evidence/PK27-autorun.md",
         "docs/packets/evidence/PK27-autorun-source-review.json",
         "docs/packets/evidence/PK27-touch-proceed.md",
-        "docs/packets/evidence/PK27-touch-proceed-source-review.json"
+        "docs/packets/evidence/PK27-touch-proceed-source-review.json",
+        "docs/packets/evidence/PK27-source-pending.md",
+        "docs/packets/evidence/PK27-source-pending-source-review.json"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
@@ -2209,7 +2219,9 @@
         "docs/packets/evidence/PK27-autorun.md",
         "docs/packets/evidence/PK27-autorun-source-review.json",
         "docs/packets/evidence/PK27-touch-proceed.md",
-        "docs/packets/evidence/PK27-touch-proceed-source-review.json"
+        "docs/packets/evidence/PK27-touch-proceed-source-review.json",
+        "docs/packets/evidence/PK27-source-pending.md",
+        "docs/packets/evidence/PK27-source-pending-source-review.json"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

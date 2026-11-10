@@ -11,8 +11,8 @@
             mode.m_skillChaseRange,mode.m_hasSkillChase,mode.m_hasGroundSkillChase,mode.m_hasTouchSkillChase);
         CWorld world;CPlayer player;CPc target;C3dAttr attr;CSkill unit;
         attr.m_width=attr.m_height=64;attr.m_zoom=10;attr.m_cells.resize(64*64);
-        world.m_attr=&attr;world.m_player=&player;player.m_pos={75,0,0};player.m_stateId=0;
-        target.m_gid=0x77000001;target.m_job=1002;target.m_pos={100,0,0};world.RegisterActor(&target);
+        world.m_attr=&attr;world.m_player=&player;world.m_isPKZone=0;world.m_isSiegeMode=0;player.m_pos={75,0,0};player.m_stateId=0;
+        target.m_gid=0x77000001;target.m_job=1002;target.m_isPc=0;target.m_headType=0;target.m_pos={100,0,0};world.RegisterActor(&target);
         mode.m_world=&world;mode.m_runtimeActors.clear();mode.m_runtimeActors[target.m_gid]=&target;
         struct RestorePlayerProceed {std::function<void()> fn;~RestorePlayerProceed(){fn();}} restore{[&]{
             if(g_windowMgr.m_selectCartWnd && g_windowMgr.m_selectCartWnd!=oldCart)g_windowMgr.DeleteWindow(g_windowMgr.m_selectCartWnd);
@@ -200,4 +200,5 @@
         mode.SendMsg(150,511,0,0);actionFrame(0,255);
         world.m_skillList.clear();ReplayPumpSkillChase(mode);
         Require(player.m_proceedType.type==0 && !mode.m_hasTouchSkillChase,"missing touch target did not retire13");
+#include "SourcePendingActorReplay.inc"
     }

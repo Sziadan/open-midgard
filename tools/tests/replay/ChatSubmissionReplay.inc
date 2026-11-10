@@ -17,8 +17,10 @@
 #include "ui/UIPetTamingDeceiveWnd.h"
 #include "ui/UISelectCartWnd.h"
 #include "skill/Skill.h"
+#include "core/SourceWeight.h"
 #include "core/SourceCommandListTables.h"
 bool ReplayTryPetCaptureOnActor(CGameMode&,CGameActor*,bool,bool,bool);
+bool ReplayTrySourceSkillOnActor(CGameMode&,CGameActor*,bool,bool,bool);
 void ReplayPumpSkillChase(CGameMode&);
 
 namespace {
@@ -87,7 +89,9 @@ void ChatSubmissionReplay()
     setenv("OPEN_MIDGARD_DATA_DIR",(restore.resource/"settings").string().c_str(),1);
 #endif
     {std::ofstream file("msgstringtable.txt",std::ios::binary);const std::map<int,std::string> labels={{25,"SOUND"},{26,"MUSIC"},{58,"ALL DENIED"},{59,""},{60,"ALL ALLOWED"},{61,"ALL ALLOW FAIL"},{62,"EMPTY LIST"},{63,"EXCLUSION LIST"},{193," IGNORE OK"},{194," IGNORE FAIL1"},{195,""},{196," ALLOW OK"},{197," ALLOW FAIL1"},{198," ALLOW FAIL2"},{49,"REPEAT"},{50,"MANNER"},{95,"INVALID"},{190,"ENGLISH"},{544,"/!"},{545,"/?"},
-        {175,"Did you know?"},{176,"Show tips at startup"},{187,"NOWHERE"},{294,"ONLY PARTY MASTER"},{23,"EFFECT ON"},{24,"EFFECT OFF"},{27,"T27"},{28,"T28"},{31,"T31"},{32,"T32"},{317,"T317"},{318,"T318"},{701,"T701"},{702,"T702"},
+        {175,"Did you know?"},{176,"Show tips at startup"},{187,"NOWHERE"},{294,"ONLY PARTY MASTER"},
+        {306,"WEIGHT NO RECOVER"},{307,"WEIGHT NO ATTACK"},{308,"WEIGHT RECOVER RESTORED"},{309,"WEIGHT ATTACK RESTORED"},
+        {23,"EFFECT ON"},{24,"EFFECT OFF"},{27,"T27"},{28,"T28"},{31,"T31"},{32,"T32"},{317,"T317"},{318,"T318"},{701,"T701"},{702,"T702"},
         {711,"T711"},{712,"T712"},{717,""},{718,"T718"},{722,"T722"},{723,"T723"},{730,"T730"},{731,"T731"},
         {733,"T733"},{734,"T734"},{765,"T765"},{766,"T766"},{768,"T768"},{769,"T769"},{785,"T785"},{786,"T786"},
         {805,"T805"},{806,"T806"},{850,"T850"},{851,"T851"},{908,"T908"},{909,"T909"},{1044,"T1044"},{1045,"T1045"},{1108,"T1108"},{1109,"T1109"},

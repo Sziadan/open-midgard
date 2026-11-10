@@ -498,5 +498,30 @@
       "resource/deployed/live and all broader packet-plan gates"
     ],
     "live_deployed": "not accepted"
+  },
+  "runtime_source_pending_actor_checkpoint": {
+    "evidence": "PK27-source-pending.md",
+    "validation": "Deploy-OFF all-target and standalone builds pass; focused3/3 in14.78s, application164/164 in53.56s (-j4), standalone473/473 in12.71s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture plus temporary-skill world input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open.",
+    "world_input": {
+      "incoming_range_snapshot": true,
+      "miss_consumed_without_move": true,
+      "native_windowproc": true,
+      "negative_level_retained": true,
+      "outcome": "PASS",
+      "real_billboard_picker": true,
+      "registered_0147": true,
+      "scene_backend": "Vulkan",
+      "skill": 30,
+      "temporary_duplicate_range_retained": true,
+      "virtual126_79": true,
+      "zero_level_consumed": true
+    },
+    "remaining_strong_gates": [
+      "Migrate legacy shortcut/skill-list producers, then remove HasPendingSkillUse positive-level/type0 fallback; retained79 idle fields must not reactivate old intent.",
+      "Ground65/66/77 canonical pipeline and125/220 text owners; current ground path is still legacy transport and not accepted for raw zero/negative levels.",
+      "Full item/other selector consumers, companion AI/identity producers, source mouse/control/party/guild/PK/siege cursor and picker priority lifetimes.",
+      "Metadata GRF/resource overrides, independently deployed/live acceptance, feeding/talk/follow/reset and the full packet plan."
+    ],
+    "live_deployed": "not accepted"
   }
 }

@@ -1,0 +1,47 @@
+{
+  "scope": "Source weight/max-weight ownership, producer packets and ordinary actor-skill weight eligibility, compared with current port state and receivers.",
+  "source_fields_and_producers": [
+    {
+      "location": "Ref/GameModePacket.cpp:795-800, Ref/GameModePacket.cpp:23329-23332",
+      "detail": "Receive dispatcher packet 176 (0x00B0) calls CGameMode::Zc_Par_Change; packet 177 calls Zc_Longpar_Change. Zc_Par_Change reads the parameter ID from WORD at buf+2 and a 32-bit value at buf+4. The selected PE proves that the 32-bit wire value is interpreted as signed before division by 10 (see VA range below); the decompiler's DWORD expression does not preserve this signedness."
+    },
+    {
+      "location": "Ref/GameModePacket.cpp:23567-23588,23615-23626; selected PE VA 0x59708F-0x5970A3",
+      "detail": "Zc_Par_Change parameter 0x18 updates g_session.m_weight and parameter 0x19 updates g_session.m_maxWeight. The selected PE sequence `mov 66666667; imul; sar edx,2; sign correction` implements signed 32-bit division by 10 (truncating toward zero); therefore both assignments use reinterpret_s32(wireDWORD)/10, not unsigned DWORD division. They are separate self-session values in source CSession, with wire values scaled by 10."
+    },
+    {
+      "location": "Ref/Session.cpp:24231-24232",
+      "detail": "CSession initialization sets m_maxWeight and m_weight to zero. The selected packet arithmetic proves signed integer division for their wire updates; a member declaration/type was not found in the available Ref/Session.h text."
+    }
+  ],
+  "source_actor_eligibility": [
+    {
+      "location": "Ref/GameMode.cpp:6431-6438, 6474-6483 (CGameMode::ProcessObjClick)",
+      "detail": "Before ordinary actor-target processing, the source clamps the denominator to 1 when m_maxWeight <= 1, then checks 100*m_weight/denominator >= 90. At/over the threshold it shows MSI_NO_ATTACK_OVERWEIGHT and returns before the normal actor skill message path. These guards are skipped when the selected skill ID is 10000. Similar repeated guards occur in additional actor/PC and companion branches."
+    }
+  ],
+  "port_state_and_receivers": [
+    {
+      "location": "src/session/Session.h and src/session/Session.cpp",
+      "detail": "No player m_weight/m_maxWeight fields, getters, or setters are present in the current CSession implementation."
+    },
+    {
+      "location": "src/gamemode/GameModePacket.cpp:2970-3044, 1586-1660, 9024-9028",
+      "detail": "Port registers 0x00B0 and 0x00B1 to HandleSelfStatusParam. That handler currently parses status type from bytes 2-3 and a u32 value from bytes 4-7, then passes it through ApplySelfStatusUpdate/ApplySelfStatusUpdateToSession. The session updater has no cases for source parameter IDs 0x18/0x19, so these signed-scaled weight values are not retained. The 0x00BE handler is a different status-point-cost path and is not the source weight producer."
+    },
+    {
+      "location": "src/gamemode/GameModePacket.cpp:6674-6683",
+      "detail": "HandleCartInfo parses cart weight and maxWeight as DWORDs at +6/+10 but only logs them; these are cart data and do not supply the source player CSession weight fields."
+    },
+    {
+      "location": "src/gamemode/GameMode.cpp:6874-6890, 5775-5887",
+      "detail": "The port pending actor-skill click path arms/dispatches actor skill intent without player weight/maxWeight state or the source >=90% rejection guard. A nearby comment says source player41 has guards, though the ordinary eligibility decision occurs in the source ProcessObjClick caller before message 41; capture has a separate 10000 exception."
+    }
+  ],
+  "gaps_and_questions": [
+    "Port packet framing already routes 0x00B0 through HandleSelfStatusParam, but the source IDs 0x18 (weight) and 0x19 (max weight) are not mapped into persistent session state; source /10 scaling and status threshold presentation are consequently absent from this receive path.",
+    "Without persistent player weight values, the port cannot reproduce source ordinary actor-skill eligibility checks at 90%. Whether to also reproduce the source 50% notification transitions is outside this bounded actor-eligibility audit.",
+    "Historical unsigned interpretation from the decompiled DWORD expression is superseded by the selected PE arithmetic at 0x59708F-0x5970A3. For negative wire values the source performs signed division by 10 with truncation toward zero; root owns the port conversion and arithmetic implementation."
+  ],
+  "root_review": "Baseline inventory before this implementation; signed decode supersedes the misleading decompiler DWORD spelling. See PK27-source-pending-source-review.json."
+}

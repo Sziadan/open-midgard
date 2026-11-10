@@ -1,0 +1,27 @@
+# Source pending actor input and weight state
+
+Baseline4d6f8e29. Source character/ALL selectors2/4 now drive real actor clicks from the incoming id/range/raw level snapshot, independently of learned-skill metadata. Source skill-unit selection uses103 and the same current snapshot, including temporary-only rows. Zero and negative levels can own a click. Mode78 consumes pending selector/id/level/good-skill state after a hit or miss while retaining range and any older proceed. BeginSkillChase now keeps raw32 fields until dispatch. Basic cursor classification follows the selector instead of the learned row.
+
+Actor policy extends the primary capture predicates to ordinary skills: good/harmful Shift inversion, monster NoShift and Alt behavior, fresh PC policy, self/merc ALL overrides, homunculus231 exception and source weight90 guard. Port self identity includes the actual player pointer plus canonical AID, since its stored actor ID can differ; a separate actor sharing the character GID is still targetable. Capture10000 still bypasses weight. Guard rejection retains an older queued player proceed and its level. Full companion AI and source cursor/lock/picker lifetimes remain open.
+
+00B0 status24/25 now store session weight/maxWeight and source crossing notices. Selected PE confirms SIGNED wire division by10, despite decompiled DWORD syntax. Percent multiplication wraps32 bits before signed division with maxWeight<=1 clamped to1. Weight changes warn/release at50/90; maximum-capacity increases can release, while decreases do not invent warnings. Notice IDs306..309, status type7, colors and ordering are retained. Known empty message-table rows remain empty; tests explicitly seed the four labels.00B1 does not acquire weight ownership.
+
+## Verification
+
+Deploy-OFF all-target and standalone builds pass; focused3/3 in14.78s, application164/164 in53.56s (-j4), standalone473/473 in12.71s (-j8). Twenty-two native/Qt frame pairs and real Vulkan capture plus temporary-skill world input pass. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the full plan remain open.
+
+Real-socket/receiver replay covers source raw0/negative/65536 levels, temporary-only state, modifier policies, self/merc ALL and homunculus231,89/90 weight guard and10000 exemption, signed/high-bit/truncation/overflow boundaries,00B1 exclusion, crossing notice IDs/colors/order and78 retained range/global clearing. The real Vulkan scene/billboard picker and native WindowProc additionally exercise registered0147 ->126/79 -> click -> player41/90 with zero and negative levels, incoming duplicate range versus retained temporary metadata, and a miss consumed without movement. Existing capture input still passes independently.
+
+The broader run exposed a local-player identity regression and an existing shared-INI race. The player-pointer self predicate is retained and tested with distinct stored/canonical IDs. Combined replay and standalone corpse lifecycle now use separate settings directories; the intentional write/read restart fixture remains shared. Full parallel application checks run with that isolation.
+
+[Root source/selected-PE review](PK27-source-pending-source-review.json), [provenance](PK27-source-pending-provenance.json), [world input](PK27-source-pending-pending-skill-world-input-results.json), [application checks](PK27-source-pending-root-ctest.log), [standalone checks](PK27-source-pending-unit-ctest.log). Original HighPriest was inspected statically and not executed.
+
+## Continue; full source input is not accepted yet
+
+FIRST migrate normal shortcut and skill-list producers through the source routes, then remove the legacy positive-level/type0 fallback in HasPendingSkillUse. This fallback can currently treat retained positive-level fields after null79 as legacy armed intent. Do not erase source79 retained fields to hide that mismatch. Preserve raw levels, copied range, no old-proceed cancellation merely on arming and source exact type matching.
+
+Review primary UISkillListWnd message58/activation at Ref/UIItemWnd.cpp6266-6287,6708-6742 and shortcut message41 at Ref/UIFrameWnd3.cpp4317-4400. The [producer inventory](PK27-source-pending-ui-producer-preparation.json) is preparation, not acceptance: verify the saved family use-level owners, validity/level/SP predicates and selected shortcut-level expression before migration. Do not replace the saved use level with an assumed positive learned rank.
+
+Then restore canonical ground65/66/77, its distinct level lookup, and125/220 text owners. Ground input still uses legacy transport; raw zero/negative ground levels and its interruption/text lifetimes are not accepted. Full item/other selector consumers, source78 actor/ground ordering, companion identity producers/AI, party/guild/PK/siege cursor/control/picker priority and complete interruption lifetimes remain open. Basic cursor selector mapping is not full cursor acceptance.
+
+Keep the signed decode and32-bit wrapping percent; do not infer unsigned arithmetic from DWORD decompiler spelling. Preserve source maxWeight-increase-only release behavior and10000 exemption. Metadata GRF/resource and independent deployed data, feeding01A3/022F, mode161/01A9, actor action/dialogue01AA, follow/reset/failure, command68/87, request discovery, PK47 and independent PK48/49/live/deployed gates remain open. No package or request classification is closed by this checkpoint.
