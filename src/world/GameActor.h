@@ -529,7 +529,7 @@ public:
 
     int m_destCellX, m_destCellZ;
     u32 m_attackReqTime, m_preMoveStartTick;
-    PROCEEDTYPE m_proceedType;
+    PROCEEDTYPE m_proceedType{};
     int m_preMoveOn, m_attackMode, m_isAttackRequest, m_isWaitingMoveAck, m_isPreengageStateOfMove;
     u32 m_proceedTargetGid, m_totalAttackReqCnt, m_tickOfMoveForAttack, m_moveReqTick, m_standTick;
     int m_skillId, m_skillAttackRange, m_skillUseLevel, m_gSkillDx, m_gSkillDy, m_preengageXOfMove, m_preengageYOfMove;

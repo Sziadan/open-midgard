@@ -1,0 +1,51 @@
+{
+  "baseline": "040c2540",
+  "sha256": {
+    "HighPriest.exe": "9abc36c88376387d85c878c0c879d9af8ef66eb1f5152638085dc6995e3f4742",
+    "build-mingw-preset/open-midgard.exe": "e924414a3eb80bd44a33a77077b05ff53de489dec84925b78574f9214fc3c975",
+    "src/gamemode/GameMode.cpp": "733ed74d432266a082e3637e01cdc9216453fb8254681e651ba93de65b6177e3",
+    "src/gamemode/GameMode.h": "4c95f730531c20dcabc883bf8b28b64b05bc4e3703da3d56f52c5a4dd63ef585",
+    "src/gamemode/GameModePacket.cpp": "5f21d7a1288c4c505148b477a91149906f60cf19c7242f6f2992d6d9238e3e04",
+    "src/network/GronPacket.cpp": "9bb3c2c0dca9d5e187c2a8a1c3151de74525d7d0a233b31983bac8252bb6b6cc",
+    "src/session/Session.h": "e464d321f1a8f05cc836b2fc172939d32816b8a0206ad4bbfe64bc7ef708664c",
+    "src/world/GameActor.h": "e4bb10a41ba22aef2f424b0e75083e5601c46a243732dee5ca382b57718b69ff",
+    "tools/tests/CMakeLists.txt": "39d8f63549f235a79327d3f6e0b56414e08710d0a40a51612e779f718747b2e7",
+    "tools/tests/CursorSnapTests.cpp": "43be9f3d217486039f8f66f7f428bc047cfb0f99cd6c8eb364dfa30aa26af7f9",
+    "tools/tests/SkillTargetClickTests.cpp": "dd86d9fcaecfe1593f2603a724911e6b6814d3a4e5c63379e69efe4b1a870753",
+    "tools/tests/check_player_pt_skill_route.py": "07b22adc013710869cf06761fc1e0356d0034e599bc05f99571fd0bcd5d42ab5",
+    "tools/tests/replay/ChatSubmissionReplay.inc": "86fdc71c45c9ee9ad344ac8293d8661f34565ad236777e1227ca3f10f2ac84f5",
+    "tools/tests/replay/PetCaptureTargetReplay.inc": "5a84967e2a68d157a1edbbc1b47a9db046b23efa775263ac55df49ecb33d5050",
+    "tools/tests/replay/PetWindowRenderChecks.inc": "954f212d6bf1837dc0ff513f804cb81d0787237b39b0da10801d3d7828b7865a",
+    "tools/tests/replay/PetCaptureWorldInputRenderChecks.inc": "1a4c3c6f7593f53d4225561e3eef852d748bbddd59c67c01a6fb55d3e949bb41"
+  },
+  "installed_sha256": "bb0a0a659df2906527e49efc008383d626b0d6b408d0567825247bea61333230",
+  "installed_unchanged": true,
+  "checks": {
+    "all_target_build": "passed; deploy OFF",
+    "standalone_build": "passed",
+    "application": "164/164 in51.90s; -j4",
+    "standalone": "473/473 in14.33s; -j8",
+    "render_pairs": 22,
+    "qml_warnings": 0,
+    "real_world_input": {
+      "actor_gid": 3342338,
+      "capture_skill": 10000,
+      "level": 0,
+      "native_windowproc": true,
+      "outcome": "PASS",
+      "pending_intent_consumed": true,
+      "range": 5,
+      "real_billboard_picker": true,
+      "real_scene_texture": true,
+      "registered_019e": true,
+      "scene_backend": "Vulkan",
+      "screen_x": 925,
+      "screen_y": 344,
+      "source_proceed_type": 3,
+      "texture_height": 81,
+      "texture_width": 170
+    },
+    "deploy": "ON restored configure-only; no build/deployment after restore"
+  },
+  "scope": "primary019E arm/pick/approach/mode76/window162/019F/01A0 chain; broader player/companion/picker/live gates open"
+}

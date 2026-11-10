@@ -1,0 +1,55 @@
+{
+  "task": "capture target pick predicates, bounded trace",
+  "source_root": "D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release",
+  "skill_id_10000": {
+    "refs": [
+      "src/skill/Skill.cpp:318-425",
+      "Ref/GameMode.cpp:5991-6004",
+      "Ref/GameMode.cpp:6064-6073"
+    ],
+    "finding": "For skill ID 10000, IsGoodSkillForActor returns false: it exceeds 1015, so lines 418-425 require the ID to be within 8226..8231, which 10000 is not. The good-skill conditional therefore does not invert the Shift test."
+  },
+  "ground_pick": {
+    "refs": [
+      "Ref/GameMode.cpp:5499-5512",
+      "Ref/GameMode.cpp:5619-5643",
+      "Ref/GameMode.cpp:5645-5703"
+    ],
+    "finding": "ProcessGroundPick immediately returns the incoming processType for SUT_TO_CHARACTER, SUT_TO_ITEM, and SUT_TO_ALL before GetGroundAttrPos or any movement logic. For other skill modes, SUT_TO_GROUND on BTN_DOWN sends player message 65(skillId,x,y) then 90(level). The normal no-skill ground movement path may send player message 16 for Shift/chat-room/player-state-6, otherwise message 17 after valid/closest-cell checks. Thus an empty-world click while capture is armed does not enter ground movement in this function."
+  },
+  "npc_jobs": {
+    "refs": [
+      "Ref/GameMode.cpp:5961-5990",
+      "Ref/GameMode.cpp:6154-6194",
+      "Ref/GameMode.cpp:6197-6210"
+    ],
+    "finding": "For classType 0, job 45 gets cursor action 7 and processType=2 at 5965-5970. For non-PC jobs 46..999, on the ordinary click path with player state 0 or 6, ProcessObjClick converts the actor's world position to map coordinates, sends player message 16 there and sends contact packet type 1 / PacketType 144 for that actor GID, then returns at 6192. This special NPC path returns before standard actor-skill target dispatch. Jobs <=45 and >=4000 bypass the 46..999 special branch. Jobs 1000..3999 enter the standard non-PC actor predicates when click is actionable."
+  },
+  "pc_targets": {
+    "refs": [
+      "Ref/GameMode.cpp:6064-6132",
+      "Ref/GameMode.cpp:14962-15033",
+      "Ref/GameMode.cpp:15035-15089",
+      "Ref/GameMode.cpp:15286-15394"
+    ],
+    "finding": "PC targets are first filtered through party/guild/PvP/siege relations. ProcessObjClick computes target eligibility from Shift (GetAsyncKeyState(16)); for character-target/all skills it flips that Shift interpretation only when IsGoodSkillForActor is true. Ally party/guild can suppress attack eligibility, while PK-state/PK-zone/event-PvP and siege rules alter that suppression; m_isNoShift==1 forces the subsequent eligibility variable true. The live PC must be in a non-dead state (stateId != 3) for the normal active-target branch. ProcessPcPick repeats equivalent group/PK/Shift gates. At click BTN_DOWN, an eligible PC plus no Alt enters the approach/attack branch; control/siege/noCtrl gates choose path. With a pending nonzero skill-use type 2 or 4, it sends player message 41(target gid, skill id, attack range) plus 90(level); skillId==10000 bypasses overweight rejection."
+  },
+  "click_clear_context": {
+    "refs": [
+      "Ref/GameMode.cpp:14114-14145",
+      "Ref/GameMode2.cpp:4887-4897"
+    ],
+    "finding": "ProcessInput picks the actor and runs ground handling before issuing mode message 78 on left BTN_DOWN. Root's trace confirms the mode78 receiver clears pending intent. Therefore background clicks with SUT_TO_CHARACTER avoid ground movement and then clear intent in the later mode78 dispatch; actor clicks are subject to their actor-specific branches before that dispatch. New skill message 0x4F replaces skill fields but does not itself chase-clear prior player proceed state."
+  },
+  "unknowns": [
+    "This trace does not enumerate every PC eligibility subcondition or all actor classType branches; it summarizes the generic classType-0 PC path and ProcessPcPick gates relevant to skill 10000.",
+    "The immediate mode78 clearing effect is relied on from the root's already verified trace; this file did not re-trace the mode-message receiver implementation.",
+    "In the NPC 46..999 path, the packet send depends on player state being 0 or 6; other states return without contact packet or message16."
+  ],
+  "root_review_overrides": [
+    "Use primary Ref/SkillInfo.cpp1910-1919 for10000 false; port Skill.cpp alone is not independent proof.",
+    "NPC player16 is turn/head direction, not approach. Selected four-coordinate CalcDir at5552D0 and call5E5A2C are verified in PK27-pet-capture-target-source-review.json.",
+    "The ordinary non-PC monster branch is strictly job>1000 &&job<4000, not inclusive1000. Source class4 jobs6001..6047/objectType9 overrides class3 marked/head100 (Ref/GameActor.cpp5267-5284).",
+    "Do not merge hover/cursor/locked-PC eligibility with fresh click. The fresh PC branch recomputes Shift/PK-state/PK-zone and excludes aid/self; NoShift is not a blanket fresh-PC-click override. Full party/guild/event/siege cursor/lock and companion AI redirection remain open."
+  ]
+}

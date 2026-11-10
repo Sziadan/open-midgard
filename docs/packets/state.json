@@ -803,9 +803,11 @@
         "docs/packets/evidence/PK27-pet-capture-request.md",
         "docs/packets/evidence/PK27-pet-capture-source-review.json",
         "docs/packets/evidence/PK27-pet-taming.md",
-        "docs/packets/evidence/PK27-pet-capture-input-audit.json"
+        "docs/packets/evidence/PK27-pet-capture-input-audit.json",
+        "docs/packets/evidence/PK27-pet-capture-target.md",
+        "docs/packets/evidence/PK27-pet-capture-target-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore source pet taming window and result"
+      "commit_subject": "packet(PK27): connect source pet capture targeting and approach"
     },
     "PK27.02": {
       "status": "IN_PROGRESS",
@@ -821,9 +823,11 @@
         "docs/packets/evidence/PK27-pet-capture-request.md",
         "docs/packets/evidence/PK27-pet-capture-source-review.json",
         "docs/packets/evidence/PK27-pet-taming.md",
-        "docs/packets/evidence/PK27-pet-capture-input-audit.json"
+        "docs/packets/evidence/PK27-pet-capture-input-audit.json",
+        "docs/packets/evidence/PK27-pet-capture-target.md",
+        "docs/packets/evidence/PK27-pet-capture-target-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore source pet taming window and result"
+      "commit_subject": "packet(PK27): connect source pet capture targeting and approach"
     },
     "PK27.03": {
       "status": "IN_PROGRESS",
@@ -835,9 +839,11 @@
         "docs/packets/evidence/PK27-pet-context-menu.md",
         "docs/packets/evidence/PK27-pet-egg-selector.md",
         "docs/packets/evidence/PK27-pet-taming.md",
-        "docs/packets/evidence/PK27-pet-capture-input-audit.json"
+        "docs/packets/evidence/PK27-pet-capture-input-audit.json",
+        "docs/packets/evidence/PK27-pet-capture-target.md",
+        "docs/packets/evidence/PK27-pet-capture-target-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore source pet taming window and result"
+      "commit_subject": "packet(PK27): connect source pet capture targeting and approach"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",
@@ -847,9 +853,11 @@
         "docs/packets/evidence/PK27-pet-context-menu.md",
         "docs/packets/evidence/PK27-pet-egg-selector.md",
         "docs/packets/evidence/PK27-pet-taming.md",
-        "docs/packets/evidence/PK27-pet-capture-input-audit.json"
+        "docs/packets/evidence/PK27-pet-capture-input-audit.json",
+        "docs/packets/evidence/PK27-pet-capture-target.md",
+        "docs/packets/evidence/PK27-pet-capture-target-source-review.json"
       ],
-      "commit_subject": "packet(PK27): restore source pet taming window and result"
+      "commit_subject": "packet(PK27): connect source pet capture targeting and approach"
     },
     "PK28.01": {
       "status": "NOT_STARTED",
@@ -1664,7 +1672,9 @@
         "docs/packets/evidence/PK27-pet-capture-request.md",
         "docs/packets/evidence/PK27-pet-capture-source-review.json",
         "docs/packets/evidence/PK27-pet-taming.md",
-        "docs/packets/evidence/PK27-pet-capture-input-audit.json"
+        "docs/packets/evidence/PK27-pet-capture-input-audit.json",
+        "docs/packets/evidence/PK27-pet-capture-target.md",
+        "docs/packets/evidence/PK27-pet-capture-target-source-review.json"
       ],
       "commit_subject": "packet(PK46.02): record direction layout mismatch"
     },
@@ -2161,7 +2171,9 @@
         "docs/packets/evidence/PK27-pet-capture-request.md",
         "docs/packets/evidence/PK27-pet-capture-source-review.json",
         "docs/packets/evidence/PK27-pet-taming.md",
-        "docs/packets/evidence/PK27-pet-capture-input-audit.json"
+        "docs/packets/evidence/PK27-pet-capture-input-audit.json",
+        "docs/packets/evidence/PK27-pet-capture-target.md",
+        "docs/packets/evidence/PK27-pet-capture-target-source-review.json"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

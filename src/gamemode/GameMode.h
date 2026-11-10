@@ -56,6 +56,8 @@ struct ColorCellPos2 {
 struct SKILL_USE_INFO {
     int id;
     int level;
+    int attackRange=0;
+    int useType=0;
 };
 
 struct SHOW_IMAGE_INFO {

@@ -14,6 +14,8 @@
 #include "res/Res.h"
 #include "res/ActRes.h"
 #include "res/Sprite.h"
+#include "render/Renderer.h"
+#include "render3d/RenderDevice.h"
 #include <QBuffer>
 #include <QColor>
 #include <QFile>
@@ -455,6 +457,7 @@ void CheckPetWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
 #include "PetContextMenuRenderChecks.inc"
 #include "PetEggRenderChecks.inc"
 #include "PetTamingRenderChecks.inc"
+#include "PetCaptureWorldInputRenderChecks.inc"
     QFile results(output+"/pet-window-render-results.json");
     Require(results.open(QIODevice::WriteOnly),"pet render result file open failed");
     results.write(QJsonDocument(QJsonObject{{"frames",frames},{"synthetic_source_key_frame_button_portrait_bitmaps",true},

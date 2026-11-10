@@ -1,0 +1,42 @@
+{
+  "subject": "Strong-agent capture input/policy/approach and NPC turn review",
+  "baseline": "040c2540",
+  "binary_sha256": "9ABC36C88376387D85C878C0C879D9AF8EF66EB1F5152638085DC6995E3F4742",
+  "binary_execution": "Not executed; static bytes and llvm-objdump only",
+  "source_contract": [
+    "019E fixed2 arms mode skill10000/range5/level0/character2 (Ref/GameModePacket.cpp1695 and1967). It replaces mode intent only; no player13/chase clear.",
+    "World ProcessInput picks actor/ground first, then on left-down dispatches78 (14139-14145); mode78 clears type/id/level (Ref/GameMode2.cpp4887-4892). It does not clear stored attackRange. Ground picking returns immediately for character intent (Ref/GameMode.cpp5499-5512).",
+    "Source actor pick class3 marks job1001..3999/head100; class4 for companion jobs6001..6047 or objectType9 overrides class3 (Ref/GameActor.cpp5267-5284). IsHomun is6001..6016 (Ref/Session2.cpp1940). Do not collapse these to the port general monster/NPC predicates.",
+    "Primary IsGoodSkillForActor(10000) is false: Ref/SkillInfo.cpp1910-1919, not only the port copy. Monster click allows noShift or !Shift, requires !Alt (GameMode.cpp6199-6210,6406-6417). PC fresh click uses Shift/PK-state/PK-zone and excludes session aid/self; do not alias a colliding character gid to account/actor aid. Class4 applies its own PK/siege/owned companion ID rules (6712-6800).",
+    "Player41 rejects state6/burrow for10000; accepted fields are PT_SKILL3,target,id,range. Player90 sets level0 regardless of41 acceptance (Ref/Player.cpp400-425,484-486). Capture bypasses overweight in both control branches (Ref/GameMode.cpp6427-6504).",
+    "PT_SKILL approach uses existing source-reviewed actor range/destination/projection gates, and player42 leads mode76. On dispatch/missing actor source13 retires proceed/isAttackRequest. Capture10000 must never call ordinary skill request sender. Mode76 excludes session pet actorId, then source factory91; click162 sends019F and01A0 feedback stays separate.",
+    "NPC jobs46..999 in player state0/6 turn through player16, then emit contact0090/type1. They do not approach (Ref/GameMode.cpp6154-6194; Ref/Player.cpp273-335). Portal45 is separate. Stored continuous rotation, head and motion are updated before raw152 send, even if sending fails."
+  ],
+  "npc_selected_pe": {
+    "calc_dir_four_coordinates_va": "0x5552D0",
+    "calc_dir_bytes": "558becd94510d86508d94514d8650cd9e0d9f3d835786e6d00d80d50c86c00d815f4c96c00dfe0f6c4017506d825f4c96c00d81528c76c00dfe0f6c4017406d805f4c96c005dc21000",
+    "meaning": "Four stack floats, atan2(targetX-sourceX,-(targetZ-sourceZ)), divide by selected float pi, multiply180, normalize once, returnST0; no member-store. This resolves earlier overload/VA ambiguity.",
+    "player16_calc_call_va": "0x5E5A2C",
+    "player16_call_bytes": "e89ff8f6ffd94638d8e1e885250c003bc38945107d080568010000894510db4510dc05a86e6d00dc0d986e6d00e862250c008bc83bcb7d0383c10883f9087c0383e908",
+    "turn_branches_va": "0x5E5A6F..0x5E5B44",
+    "turn_branches_bytes": "3bcb750ed95e38899e84030000e9c300000083f904750ed95e38899e84030000e9b0000000bb010000003bcb7515399e84030000745dddd8899e84030000e992000000ba020000003bca740583f903752bd9c0d80520716d00899e84030000d815f4c96c00d95638dfe0f6c401750bd825f4c96c00d95e38eb02ddd883f9077521399684030000740addd8899684030000eb42d95e38c7868403000000000000eb3383f905740583f9067527d82520716d00899684030000d81528c76c00d95638dfe0f6c401740bd805f4c96c00d95e38eb02ddd8",
+    "turn_branch_meaning": "Truncate current-angle difference, add360 if negative, round integer delta to octant; 1/7 first change head then body on repetition; 2/3 add45 and wrap>=360;5/6 subtract45 and wrap<0. The decompiler flag temporaries v27/v30 are ordinary comparisons, not undefined input.",
+    "constants": {
+      "0x6d6e78": 3.141592025756836,
+      "0x6cc850": 180.0,
+      "0x6cc9f4": 360.0,
+      "0x6cc728": 0.0,
+      "0x6d7120": 45.0,
+      "0x6d6ea8": 22.5,
+      "0x6d6e98": 0.022222222222222223
+    },
+    "packet_direction_va": "0x5E5B44 onward",
+    "packet_direction_meaning": "Read stored float rotation, truncate, add180, signed divide45, signed remainder8; dispatch raw152 with head. Do not normalize through ordinary cell-delta movement or mutate facing only on successful send."
+  },
+  "boundaries_still_open": [
+    "PK28/29 receive producers for source canonical m_homunGID/m_merGID are not implemented by this leaf. These initialized identity slots and predicate tests do not accept live ownership acquisition.",
+    "Existing global picker priority/opaque bounds, party/guild/event/siege cursor/lock behavior, modifier redirection to living companion AI and whole player proceed/normal skill chase state lifetimes remain broader integration gates. Do not close them from current functional capture tests.",
+    "In particular, source player90 can overwrite useLevel after a rejected41 while an old generic proceed exists. Current common generic mode chase shadow is not claimed fully canonical by capture-only player fields; review interruption/reentrancy and generic level dispatch before full player/proceed acceptance.",
+    "No original game execution, real SlotMachine art/palette proof, live server capture or installed/deployed/world-entry acceptance."
+  ]
+}

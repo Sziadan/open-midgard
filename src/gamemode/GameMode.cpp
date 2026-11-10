@@ -571,6 +571,12 @@ bool IsServerCellWithinSkillRangeOfActor(const CGameMode& mode, const CGameActor
 bool SendUseSkillToIdPacket(u16 skillId, u16 skillLevel, u32 targetGid);
 void ClearAttackChaseHint(CGameMode& mode);
 void ClearSkillChase(CGameMode& mode);
+bool HasPendingSkillUse(const CGameMode& mode)
+{
+    return (mode.m_skillUseInfo.id > 0 && mode.m_skillUseInfo.level > 0)
+        || (mode.m_skillUseInfo.id==10000 && mode.m_skillUseInfo.level==0 && mode.m_skillUseInfo.useType==2);
+}
+bool TryRequestPetCaptureFromScreenPoint(CGameMode& mode,int screenX,int screenY);
 void ClearPendingSkillUse(CGameMode& mode);
 void BeginSkillChase(CGameMode& mode, u32 targetGid, u16 skillId, u16 skillLevel, int skillRange);
 void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc);
@@ -2935,6 +2941,22 @@ bool IsPcLikeHoverActor(const CGameActor* actor)
     return actor && actor->m_isPc;
 }
 
+enum class PetCaptureActorKind { None, Npc, Monster, Pc, Homun, Companion };
+PetCaptureActorKind ClassifyPetCaptureActor(const CGameActor* actor)
+{
+    if(!actor)return PetCaptureActorKind::None;
+    const int job=actor->m_job;
+    // Source class4 overrides the marked-pet class3 assignment.
+    if(actor->m_objectType==9 || (job>6000 && job<6048))
+        return job>6000 && job<=6016?PetCaptureActorKind::Homun:PetCaptureActorKind::Companion;
+    if(job>1000 && job<4000 && actor->m_headType==100)return PetCaptureActorKind::None;
+    if(job==45)return PetCaptureActorKind::None;
+    if(actor->m_isPc)return PetCaptureActorKind::Pc;
+    if(job>45 && job<1000)return PetCaptureActorKind::Npc;
+    if(job>1000 && job<4000)return PetCaptureActorKind::Monster;
+    return PetCaptureActorKind::None;
+}
+
 void SetModeCursorAction(CGameMode& mode, CursorAction cursorActNum)
 {
     mode.SetCursorAction(cursorActNum);
@@ -2956,6 +2978,7 @@ enum class ShortcutSkillUseMode {
 
 ShortcutSkillUseMode ResolveShortcutSkillUseMode(u16 skillId)
 {
+    if(skillId==10000)return ShortcutSkillUseMode::ActorTarget;
     if (skillId == kSkillMerchantChangeCart) {
         return ShortcutSkillUseMode::CartSelect;
     }
@@ -3185,10 +3208,10 @@ void UpdateGameplayCursor(CGameMode& mode)
         &hoveredActor,
         nullptr,
         nullptr,
-        mode.m_skillUseInfo.id != 0 && mode.m_skillUseInfo.level > 0
+        HasPendingSkillUse(mode)
             && ResolveShortcutSkillUseMode(static_cast<u16>(mode.m_skillUseInfo.id & 0xFFFF)) == ShortcutSkillUseMode::ActorTarget);
 
-    if (mode.m_skillUseInfo.id != 0 && mode.m_skillUseInfo.level > 0) {
+    if (HasPendingSkillUse(mode)) {
         const ShortcutSkillUseMode skillUseMode = ResolveShortcutSkillUseMode(
             static_cast<u16>(mode.m_skillUseInfo.id & 0xFFFF));
         switch (skillUseMode) {
@@ -3196,7 +3219,15 @@ void UpdateGameplayCursor(CGameMode& mode)
             SetModeCursorAction(mode, hasHoverAttrCell ? CursorAction::SkillTarget : CursorAction::Forbidden);
             return;
         case ShortcutSkillUseMode::ActorTarget:
-            if (hasHoveredActor && hoveredActor && !IsNpcLikeHoverActor(hoveredActor)) {
+            if(mode.m_skillUseInfo.id==10000 && mode.m_skillUseInfo.useType==2){
+                const auto kind=ClassifyPetCaptureActor(hoveredActor);
+                const bool pcTarget=(GetKeyState(VK_SHIFT)&0x8000)!=0 || g_session.m_isNoShift==1
+                    || (hoveredActor && hoveredActor->m_pkState) || (mode.m_world && mode.m_world->m_isPKZone);
+                SetModeCursorAction(mode,kind==PetCaptureActorKind::Monster?CursorAction::SkillTargetAlt
+                    :kind==PetCaptureActorKind::Npc?CursorAction::Talk
+                    :kind==PetCaptureActorKind::Pc?(pcTarget?CursorAction::SkillTargetAlt:CursorAction::SkillTarget)
+                    :hoveredActor && hoveredActor->m_job==45?CursorAction::Portal:CursorAction::Arrow);
+            }else if (hasHoveredActor && hoveredActor && !IsNpcLikeHoverActor(hoveredActor)) {
                 SetModeCursorAction(mode, CursorAction::SkillTargetAlt);
             } else {
                 SetModeCursorAction(mode, CursorAction::Forbidden);
@@ -4514,6 +4545,12 @@ void ClearAttackChaseHint(CGameMode& mode)
 
 void ClearSkillChase(CGameMode& mode)
 {
+    if(mode.m_skillChaseSkillId==10000 && mode.m_world && mode.m_world->m_player){
+        auto* player=mode.m_world->m_player;
+        if(player->m_skillId==10000 && player->m_proceedType.type==3){
+            player->m_proceedType.type=0;player->m_isAttackRequest=0;
+        }
+    }
     mode.m_skillChaseTargetGid = 0;
     mode.m_lastSkillChaseRequestTick = 0;
     mode.m_skillChaseSkillId = 0;
@@ -5666,11 +5703,7 @@ void ClearPendingSkillUse(CGameMode& mode)
 {
     mode.m_skillUseInfo.id = 0;
     mode.m_skillUseInfo.level = 0;
-}
-
-bool HasPendingSkillUse(const CGameMode& mode)
-{
-    return mode.m_skillUseInfo.id > 0 && mode.m_skillUseInfo.level > 0;
+    mode.m_skillUseInfo.useType = 0;
 }
 
 void BeginSkillChase(CGameMode& mode, u32 targetGid, u16 skillId, u16 skillLevel, int skillRange)
@@ -6089,6 +6122,7 @@ bool RequestShortcutSlotUse(int absoluteSlot)
         gameMode->m_lastMonGid = 0;
         gameMode->m_lastLockOnMonGid = 0;
         ClearAttackChaseHint(*gameMode);
+        gameMode->m_skillUseInfo = {};
         gameMode->m_skillUseInfo.id = static_cast<int>(skillId);
         gameMode->m_skillUseInfo.level = static_cast<int>(skillLevel);
         DbgLog("[GameMode] shortcut skill armed slot=%d skillId=%u level=%u useMode=%d\n",
@@ -6750,6 +6784,83 @@ bool TryRequestNpcTalkFromScreenPoint(CGameMode& mode, int screenX, int screenY)
     return true;
 }
 
+void TurnPlayerTowardCaptureNpc(CGameMode& mode,const CGameActor& target)
+{
+    auto* player=mode.m_world->m_player;
+    auto* attr=mode.m_world->m_attr;
+    if(!attr || attr->m_zoom<=0)return;
+    int x=0,y=0;mode.GetServerCoor(target.m_pos.x,target.m_pos.z,x,y);
+    float wx=0,wz=0;mode.GetClientCoor(x,y,wx,wz);
+    const float dx=wx-player->m_pos.x,dz=wz-player->m_pos.z;
+    double angle=std::atan2(static_cast<double>(dx),-static_cast<double>(dz))/static_cast<double>(3.141592f)*180.0;
+    if(angle>=360)angle-=360;if(angle<0)angle+=360;
+    if(!std::isfinite(angle) || !std::isfinite(player->m_roty))return;
+    int delta=static_cast<int>(player->m_roty-angle);if(delta<0)delta+=360;
+    int sector=static_cast<int>((delta+22.5)/45.0);if(sector<0)sector+=8;if(sector>=8)sector-=8;
+    switch(sector){
+    case 0:case 4:player->m_roty=static_cast<float>(angle);player->m_headDir=0;break;
+    case 1:case 7:{
+        const int head=sector==1?1:2;
+        if(player->m_headDir!=head)player->m_headDir=head;
+        else{player->m_roty=static_cast<float>(angle);player->m_headDir=0;}
+        break;
+    }
+    case 2:case 3:{double body=angle+45.0;if(body>=360)body-=360;player->m_headDir=1;player->m_roty=static_cast<float>(body);break;}
+    case 5:case 6:{double body=angle-45.0;if(body<0)body+=360;player->m_headDir=2;player->m_roty=static_cast<float>(body);break;}
+    default:return;
+    }
+    player->m_curMotion=player->m_headDir;
+    const int direction=(static_cast<int>(player->m_roty)+180)/45%8;
+    // Source message16 mutates local facing before the raw152 send attempt.
+    mode.SendMsg(152,direction,player->m_headDir,0);
+}
+
+bool TryRequestPetCaptureOnActor(CGameMode& mode,CGameActor* target,bool shift,bool alt,bool control)
+{
+    if(mode.m_skillUseInfo.id!=10000 || mode.m_skillUseInfo.level!=0 || mode.m_skillUseInfo.useType!=2)return false;
+    if(!mode.m_world || !mode.m_world->m_player || !target)return false;
+    auto* player=mode.m_world->m_player;const auto kind=ClassifyPetCaptureActor(target);
+    if(kind==PetCaptureActorKind::Npc){
+        if(player->m_stateId!=0 && player->m_stateId!=6)return false;
+        TurnPlayerTowardCaptureNpc(mode,*target);RequestNpcContact(target->m_gid);return true;
+    }
+    bool eligible=false;
+    switch(kind){
+    case PetCaptureActorKind::Monster:eligible=(!shift || g_session.m_isNoShift==1) && !alt;break;
+    case PetCaptureActorKind::Pc:
+        eligible=target!=player && target->m_gid!=g_session.m_aid
+            && (shift || target->m_pkState || mode.m_world->m_isPKZone);break;
+    case PetCaptureActorKind::Homun:
+        eligible=(mode.m_world->m_isPKZone || mode.m_world->m_isSiegeMode) && target->m_gid!=g_session.m_homunGID;break;
+    case PetCaptureActorKind::Companion:
+        eligible=(shift || target->m_pkState || mode.m_world->m_isPKZone || mode.m_world->m_isSiegeMode)
+            && target->m_gid!=g_session.m_merGID;break;
+    default:break;
+    }
+    if(!eligible)return false;
+    mode.m_isCtrlLock=!mode.m_world->m_isSiegeMode && (control || g_session.m_isNoCtrl==1);
+    // Source player41 has these guards even though capture bypasses weight.
+    // Message90 follows whether or not41 replaced the proceed state.
+    if(player->m_stateId==6 || (player->m_effectState&0x0002)){
+        player->m_skillUseLevel=0;return true;
+    }
+    ClearSkillChase(mode);ClearAttackChaseHint(mode);ClearPickupIntent(mode);
+    BeginSkillChase(mode,target->m_gid,10000,0,mode.m_skillUseInfo.attackRange);
+    player->m_proceedType.type=3;player->m_proceedTargetGid=target->m_gid;
+    player->m_skillId=10000;player->m_skillAttackRange=mode.m_skillUseInfo.attackRange;player->m_skillUseLevel=0;
+    return true;
+}
+
+bool TryRequestPetCaptureFromScreenPoint(CGameMode& mode,int screenX,int screenY)
+{
+    if(!mode.m_world || !mode.m_view || !mode.m_world->m_player || mode.m_canRotateView)return false;
+    CGameActor* target=nullptr;
+    if(!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),mode.m_view->GetCameraLongitude(),
+        screenX,screenY,&target,nullptr,nullptr,true))return false;
+    return TryRequestPetCaptureOnActor(mode,target,(GetKeyState(VK_SHIFT)&0x8000)!=0,
+        (GetKeyState(VK_MENU)&0x8000)!=0,(GetKeyState(VK_CONTROL)&0x8000)!=0);
+}
+
 bool TryRequestAttackFromScreenPoint(CGameMode& mode, int screenX, int screenY)
 {
     if (!mode.m_world || !mode.m_view || mode.m_canRotateView) {
@@ -7161,7 +7272,7 @@ void PumpSkillChaseRequest(CGameMode& mode)
     const u16 skillId = static_cast<u16>(mode.m_skillChaseSkillId & 0xFFFF);
     const u16 skillLevel = static_cast<u16>(mode.m_skillChaseSkillLevel & 0xFFFF);
     const int skillRange = mode.m_skillChaseRange;
-    if (skillId == 0 || skillLevel == 0) {
+    if (skillId == 0 || (skillLevel == 0 && skillId!=10000)) {
         ClearSkillChase(mode);
         return;
     }
@@ -7250,12 +7361,15 @@ void PumpSkillChaseRequest(CGameMode& mode)
     if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
         // Ref message 42 dispatches mode message 76, then message 13 clears
         // the proceed state even when the packet send cannot be completed.
-        const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid);
-        DbgLog("[GameMode] source-range skill dispatch skillId=%u level=%u target=%u sent=%d\n",
-            static_cast<unsigned int>(skillId),
-            static_cast<unsigned int>(skillLevel),
-            static_cast<unsigned int>(mode.m_skillChaseTargetGid),
-            sent ? 1 : 0);
+        if(skillId==10000){
+            mode.SendMsg(76,skillId,mode.m_skillChaseTargetGid,skillLevel);
+            DbgLog("[GameMode] pet capture target handoff target=%u\n",static_cast<unsigned int>(mode.m_skillChaseTargetGid));
+        }else{
+            const bool sent=SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid);
+            DbgLog("[GameMode] source-range skill dispatch skillId=%u level=%u target=%u sent=%d\n",
+                static_cast<unsigned int>(skillId),static_cast<unsigned int>(skillLevel),
+                static_cast<unsigned int>(mode.m_skillChaseTargetGid),sent ? 1 : 0);
+        }
         ClearSkillChase(mode);
         return;
     }
@@ -9762,6 +9876,11 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
 }
 
 #if defined(RO_PACKET_REPLAY_TESTS)
+bool ReplayTryPetCaptureOnActor(CGameMode& mode,CGameActor* target,bool shift,bool alt,bool control)
+{
+    return TryRequestPetCaptureOnActor(mode,target,shift,alt,control);
+}
+void ReplayPumpSkillChase(CGameMode& mode){PumpSkillChaseRequest(mode);}
 bool ReplaySendMapMoveRequestPacket(int dstX, int dstY)
 {
     return SendMoveRequestPacket(dstX, dstY);
@@ -9870,6 +9989,7 @@ bool ArmPendingSkillUseFromSkillList(int skillId)
         gameMode->m_lastMonGid = 0;
         gameMode->m_lastLockOnMonGid = 0;
         ClearAttackChaseHint(*gameMode);
+        gameMode->m_skillUseInfo = {};
         gameMode->m_skillUseInfo.id = skillId;
         gameMode->m_skillUseInfo.level = static_cast<int>(skillLevel);
         DbgLog("[GameMode] skill list armed ground skillId=%u level=%u\n",
@@ -9895,6 +10015,7 @@ bool ArmPendingSkillUseFromSkillList(int skillId)
     gameMode->m_lastMonGid = 0;
     gameMode->m_lastLockOnMonGid = 0;
     ClearAttackChaseHint(*gameMode);
+    gameMode->m_skillUseInfo = {};
     gameMode->m_skillUseInfo.id = skillId;
     gameMode->m_skillUseInfo.level = static_cast<int>(skillLevel);
     DbgLog("[GameMode] skill list armed actor-target skillId=%u level=%u\n",
@@ -9962,7 +10083,7 @@ bool CGameMode::ResolveCursorDrawPosition(int rawX, int rawY, int* drawX, int* d
     if (!m_world || !m_view || m_mapLoadingStage != MapLoading_None
         || m_canRotateView || m_isLeftButtonHeld || m_dragType != 0
         || IsWorldHoverBlockedByUi(rawX, rawY)) return false;
-    const bool pendingSkill = m_skillUseInfo.id != 0 && m_skillUseInfo.level > 0;
+    const bool pendingSkill = HasPendingSkillUse(*this);
     if (pendingSkill) {
         const auto useMode = ResolveShortcutSkillUseMode(static_cast<u16>(m_skillUseInfo.id & 0xFFFF));
         if (useMode != ShortcutSkillUseMode::ActorTarget) return false;
@@ -10676,7 +10797,7 @@ void CGameMode::OnUpdate() {
             const int prevMouseY = m_oldMouseY;
             const bool cursorMoved = cursorPos.x != prevMouseX || cursorPos.y != prevMouseY;
             playerMovingForHover = m_world && m_world->m_player && m_world->m_player->m_isMoving;
-            needsPreciseHover = m_isLeftButtonHeld || (m_skillUseInfo.id != 0 && m_skillUseInfo.level > 0);
+            needsPreciseHover = m_isLeftButtonHeld || HasPendingSkillUse(*this);
             const DWORD hoverNow = GetTickCount();
             const bool shouldRefreshHover = !playerMovingForHover
                 || needsPreciseHover
@@ -11095,6 +11216,15 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case GameMsg_LButtonDown: {
         const int mouseX = static_cast<int>(wparam);
         const int mouseY = static_cast<int>(lparam);
+        if(m_skillUseInfo.id==10000 && m_skillUseInfo.level==0 && m_skillUseInfo.useType==2){
+            if(!m_isOnQuest && !m_isPlayerDead && !g_windowMgr.HasActiveNpcDialog())
+                TryRequestPetCaptureFromScreenPoint(*this,mouseX,mouseY);
+            // Source ProcessInput sends mode78 after actor/ground picking,
+            // including a miss. Character targeting never starts ground move.
+            ClearPendingSkillUse(*this);
+            m_isLeftButtonHeld=0;m_hasHeldMoveTarget=0;
+            return 1;
+        }
         if (m_isOnQuest || g_windowMgr.HasActiveNpcDialog()) {
             m_isLeftButtonHeld = 0;
             m_hasHeldMoveTarget = 0;

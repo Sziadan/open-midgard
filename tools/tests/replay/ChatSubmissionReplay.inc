@@ -16,6 +16,8 @@
 #include "ui/UIPetEggListWnd.h"
 #include "ui/UIPetTamingDeceiveWnd.h"
 #include "core/SourceCommandListTables.h"
+bool ReplayTryPetCaptureOnActor(CGameMode&,CGameActor*,bool,bool,bool);
+void ReplayPumpSkillChase(CGameMode&);
 
 namespace {
 // Golden selected /help order, independently retained from57AB1B..57B3CD.
@@ -323,6 +325,7 @@ void ChatSubmissionReplay()
 #include "PetEggReplay.inc"
 #include "PetCaptureRequestReplay.inc"
 #include "PetTamingReplay.inc"
+#include "PetCaptureTargetReplay.inc"
     connection->Disconnect();
 #include "PetWindowFailedSendReplay.inc"
 #include "PetEggFailedSendReplay.inc"

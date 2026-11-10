@@ -33,7 +33,7 @@ struct CWorld {
 };
 enum class ShortcutSkillUseMode { ActorTarget,GroundTarget,SkillTarget };
 ShortcutSkillUseMode ResolveShortcutSkillUseMode(u16 id) {
-    return id==28?ShortcutSkillUseMode::ActorTarget:ShortcutSkillUseMode::GroundTarget;
+    return id==28 || id==10000?ShortcutSkillUseMode::ActorTarget:ShortcutSkillUseMode::GroundTarget;
 }
 bool uiBlocked=false;
 bool IsWorldHoverBlockedByUi(int,int) { return uiBlocked; }
@@ -42,7 +42,7 @@ struct CGameMode {
     static constexpr int MapLoading_None=0;
     CWorld* m_world=nullptr; View* m_view=&view;
     int m_mapLoadingStage=0,m_canRotateView=0,m_isLeftButtonHeld=0,m_dragType=0;
-    struct { int id=0,level=0; } m_skillUseInfo;
+    struct { int id=0,level=0,attackRange=0,useType=0; } m_skillUseInfo;
     bool ResolveCursorDrawPosition(int,int,int*,int*) const;
 };
 #include "CursorSnapBodies.inc"
@@ -65,6 +65,8 @@ int main() {
     mode.m_isLeftButtonHeld=1; assert(!mode.ResolveCursorDrawPosition(105,105,&x,&y)); mode.m_isLeftButtonHeld=0;
     mode.m_skillUseInfo={89,10}; assert(!mode.ResolveCursorDrawPosition(210,220,&x,&y));
     mode.m_skillUseInfo={28,10}; assert(mode.ResolveCursorDrawPosition(210,220,&x,&y));
+    assert(!mode.ResolveCursorDrawPosition(105,105,&x,&y));
+    mode.m_skillUseInfo={10000,0,5,2};assert(mode.ResolveCursorDrawPosition(210,220,&x,&y));
     assert(!mode.ResolveCursorDrawPosition(105,105,&x,&y));
     std::cout << "Production cursor checks passed: minimum pick bounds, item/monster centers, physical input preserved, UI/drag/ground targeting excluded\n";
 }

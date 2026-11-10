@@ -5288,6 +5288,14 @@ void HandlePetStatus(CGameMode&, const PacketView& packet)
     InvalidatePetInfo();
 }
 
+void HandlePetCaptureArm(CGameMode& mode,const PacketView& packet)
+{
+    if(!packet.data || packet.packetId!=0x019E || packet.packetLength!=2
+        || packet.data[0]!=0x9e || packet.data[1]!=0x01)return;
+    // This replaces pending mode intent only, not a queued player proceed.
+    mode.m_skillUseInfo={10000,0,5,2};
+}
+
 void HandlePetCaptureResult(CGameMode&,const PacketView& packet)
 {
     if(!packet.data || packet.packetId!=0x01A0 || packet.packetLength!=3
@@ -8922,6 +8930,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01AD, HandleMakingArrowList);
     router.Register(0x01A2, HandlePetStatus);
     router.Register(0x01A0, HandlePetCaptureResult);
+    router.Register(0x019E, HandlePetCaptureArm);
     router.Register(0x01A6, HandlePetEggList);
     router.Register(0x01A4, HandlePetStatusChange);
     router.Register(0x0235, HandleHomunSkillList);

@@ -1,0 +1,56 @@
+{
+  "task": "NPC click turn-direction source and port comparison",
+  "primary_refs": {
+    "npc_click": [
+      "Ref/GameMode.cpp:6154-6194"
+    ],
+    "turn_message": [
+      "Ref/Player.cpp:273-335"
+    ],
+    "grid_to_client_center": [
+      "Ref/GameMode.cpp:10275-10289"
+    ],
+    "two_coordinate_calcdir": [
+      "Ref/GameActor.cpp:1021-1034 (VA 0x555270)"
+    ],
+    "four_coordinate_source_formula": [
+      "Ref/dhxj/GameActor.cpp:396-405",
+      "src/world/RagEffect.cpp:24885-24893 (VA annotation 0x5552D0)"
+    ],
+    "npc_process_state": [
+      "Ref/Player.cpp:273-277"
+    ]
+  },
+  "npc_message16_semantics": "Correction: in the non-PC job 46..999 branch, message 16 is sent with the NPC's converted grid cell at Ref/GameMode.cpp:6183, followed by packet type 144 carrying the NPC GID and contact type 1 at 6184-6191. It is not an approach request. Player message16 returns for states other than 0, 4, or 6 (Player.cpp:273-277); this NPC branch only issues the message when player state is 0 or 6 (GameMode.cpp:6170-6194).",
+  "grid_to_client_center": "GetClientCoor converts integer grid cell (sx,sy) to client/world coordinates cx=((sx-width/2)*zoom)+(zoom/2), cz=((sy-height/2)*zoom)+(zoom/2). The half-cell offset targets the cell center. Ref/GameMode.cpp:10278-10289.",
+  "calcdir": {
+    "va": "0x555270",
+    "formula": "angle = atan2(targetX - currentX, -(targetZ - currentZ)) / 3.141592 * 180.0; assign to m_roty, subtract 360 once if >=360, add 360 once if <0.",
+    "evidence": "The primary decomp body at Ref/GameActor.cpp:1021-1034 is labeled with the four-coordinate signature but decompiles as object-relative CalcDir(this,x,z), using this->m_pos as origin. The four-coordinate equivalent is explicit in Ref/dhxj/GameActor.cpp:396-405 and annotated at src/world/RagEffect.cpp:24885-24893 as VA 0x5552D0. Player.cpp:278 calls the four-coordinate form with player's current position and GetClientCoor's result."
+  },
+  "raw_mode152_direction": {
+    "evidence": "Player.cpp:278-334 computes target angle v23, then a wrapped angular difference from current m_roty (add 360 when negative), rounds to nearest 45-degree sector with floor((delta+22.5)*1/45), and selects head/body turn. Sectors 0/4 face target with head=0; 1 and 7 first turn head (if not already there), otherwise body; 2/3 set head=1 and body angle target+45; 5/6 set head=2 and body angle target-45. The sent mode152 arguments are raw packetDir=(int)((int64)m_roty+180)/45 % 8 and headDir. Current mode message handling maps message 152 at src/gamemode/GameMode.cpp:11021 to SendChangeDirRequestPacket(head=lparam,dir=wparam,normalizeDir=false), so it preserves that already-quantized direction byte."
+  },
+  "port_comparison": {
+    "refs": [
+      "src/gamemode/GameMode.cpp:4425-4485",
+      "src/gamemode/GameMode.cpp:4739-4764",
+      "src/gamemode/GameMode.cpp:4703-4725"
+    ],
+    "finding": "ResolveRefTurnOnlyDirectionRequest mirrors the source's eight-sector delta/head-turn policy in packet-direction space: it normalizes current body minus target direction, preserves body while changing head for sectors 1/7, and uses target\u00c2\u00b11 for sectors 2/3 or 5/6. ApplyLocalPlayerDirection reconstructs m_roty as 45*(dir+4), updates seated action/motion and PC headDir. SendChangeDirRequestPacket's non-normalizing mode supports message152's already-quantized byte. The port operates from target direction octant, whereas the original Player message16 path derives that octant from the requested target grid-cell center and continuous world angle."
+  },
+  "skill10000_primary_evidence": {
+    "refs": [
+      "Ref/SkillInfo.cpp:1910-1919"
+    ],
+    "finding": "Primary evidence for IsGoodSkillForActor(10000)==false: IDs above 1015 are allowed only through 8231, so 10000 returns zero."
+  },
+  "unknowns": [
+    "Ref/GameActor.cpp's 0x555270 annotation and body disagree on whether this is the two-coordinate member or four-coordinate overload. The matching four-coordinate implementation is supported by the older source and the 0x5552D0 VA comment, but no independently decompiled body at that VA was located in this bounded trace.",
+    "The port helper comparison is direction-octant equivalent; this trace did not establish that every caller supplies an octant derived from the same target world point as the original message16 flow."
+  ],
+  "root_review_overrides": [
+    "The overload/VA question is resolved by static selected-PE reads and disassembly: CalcDir5552D0 takes four stack floats, returns normalized atan2 angle without member writes; actual player16 caller5E5A2C. See PK27-pet-capture-target-source-review.json for pinned bytes/constants.",
+    "Source decompiler v27/v30 are ordinary wrap comparisons. Root verified branch2/3 >=360 and branch5/6 <0 at5E5AC0..5E5B42. Preserve continuous float facing before raw152 send; do not reuse sign-only cell movement turn or mutate facing only after successful send."
+  ]
+}

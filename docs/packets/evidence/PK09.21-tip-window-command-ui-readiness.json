@@ -432,5 +432,34 @@
     "validation": "Deploy-OFF all-target and standalone builds pass; focused2/2 in6.40s, application164/164 in53.44s (-j4) and standalone473/473 in16.17s (-j8). Twenty-two native/Qt frame pairs and zero QML warnings include four taming states. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open.",
     "render_pairs": 22,
     "live_deployed": "not accepted"
+  },
+  "runtime_pet_capture_target_checkpoint": {
+    "evidence": "PK27-pet-capture-target.md",
+    "validation": "Deploy-OFF all-target and standalone builds pass; application164/164 in51.90s (-j4) and standalone473/473 in14.33s (-j8). Twenty-two native/Qt frame pairs and zero QML warnings pass, plus real Vulkan texture/picker/WindowProc capture input. DeployON restored configure-only; OldRO unchanged. PK27/PK09.21 and the whole plan remain open.",
+    "world_input": {
+      "actor_gid": 3342338,
+      "capture_skill": 10000,
+      "level": 0,
+      "native_windowproc": true,
+      "outcome": "PASS",
+      "pending_intent_consumed": true,
+      "range": 5,
+      "real_billboard_picker": true,
+      "real_scene_texture": true,
+      "registered_019e": true,
+      "scene_backend": "Vulkan",
+      "screen_x": 925,
+      "screen_y": 344,
+      "source_proceed_type": 3,
+      "texture_height": 81,
+      "texture_width": 170
+    },
+    "remaining_strong_gates": [
+      "shared player/proceed interruption/reentrancy",
+      "PK28/29 companion identity producers",
+      "companion AI modifiers",
+      "global picker/cursor/lock/lifecycle acceptance"
+    ],
+    "live_deployed": "not accepted"
   }
 }

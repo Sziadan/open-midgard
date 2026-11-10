@@ -130,7 +130,7 @@ ordered_current = (
     "double distance = std::sqrt(static_cast<double>(distanceSquared))",
     "distance -= 20.0f",
     "if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell)",
-    "const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)",
+    "SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)",
     "player->m_destCellX == chaseTileX && player->m_destCellZ == chaseTileY",
     "player->m_stateId == 2",
     "std::atan2(static_cast<long double>(target->m_pos.x - player->m_pos.x)",
@@ -142,8 +142,12 @@ ordered_current = (
 positions = [targeted_pump_route.find(token) for token in ordered_current]
 assert all(position >= 0 for position in positions), "missing current PT_SKILL route operation"
 assert positions == sorted(positions), "current PT_SKILL source operations changed order"
-dispatch_pos = targeted_pump_route.find("const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)")
+dispatch_pos = targeted_pump_route.find("SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)")
 assert dispatch_pos >= 0 and targeted_pump_route.find("ClearSkillChase(mode);", dispatch_pos) > dispatch_pos
+capture_dispatch = targeted_pump_route.index("if(skillId==10000)")
+capture_handoff = targeted_pump_route.index("mode.SendMsg(76,skillId,mode.m_skillChaseTargetGid,skillLevel)")
+assert capture_dispatch < capture_handoff < dispatch_pos
+assert targeted_pump_route.find("}else{", capture_handoff) < dispatch_pos, "capture must not also send an ordinary skill request"
 assert "IsAttackTargetWithinRange" not in targeted_pump_route
 assert "ResolveAttackChaseCell" not in targeted_pump_route
 assert "m_isLeftButtonHeld" not in targeted_pump_route and "m_hasHeldMoveTarget" not in targeted_pump_route

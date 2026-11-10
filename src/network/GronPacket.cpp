@@ -265,6 +265,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
         SetPacketSize(0x0199, 4);               // ZC_NOTIFY_MAPPROPERTY
     SetPacketSize(0x0192, 24);
     SetPacketSize(0x019B, 10);
+    SetPacketSize(0x019E, 2);               // ZC_START_CAPTURE
     SetPacketSize(0x01A0, 3);               // ZC_TRYCAPTURE_MONSTER
     SetPacketSize(0x01A2, 35);              // ZC_PROPERTY_PET (20080910; no guarded job word)
     SetPacketSize(0x01A3, 5);

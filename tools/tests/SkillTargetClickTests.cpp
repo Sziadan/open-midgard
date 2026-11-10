@@ -6,10 +6,10 @@ struct CGameActor {int m_isSitting=0,m_baseAction=0,m_curAction=0;} player;
 struct World {CGameActor* m_player=&player;} world;
 struct CGameMode {
     World* m_world=&world;
-    int m_isOnQuest=0,m_isLeftButtonHeld=0,m_hasHeldMoveTarget=0;
+    int m_isOnQuest=0,m_isPlayerDead=0,m_isLeftButtonHeld=0,m_hasHeldMoveTarget=0;
     int m_lastMoveRequestCellX=-1,m_lastMoveRequestCellY=-1,m_lastMoveRequestTick=0,m_lastAttackRequestTick=0;
     int m_lastMonGid=0,m_lastLockOnMonGid=0,m_leftBtnClickTick=0;
-    struct {int id=0,level=0;} m_skillUseInfo;
+    struct {int id=0,level=0,attackRange=0,useType=0;} m_skillUseInfo;
     int Click(msgparam_t wparam,msgparam_t lparam);
 };
 bool modal=false,shift=false,validTarget=true;
@@ -21,7 +21,9 @@ struct {void* m_chatRoomWnd=nullptr;bool HasActiveNpcDialog(){return modal;}} g_
 void ClearPickupIntent(CGameMode&){}
 void ClearAttackChaseHint(CGameMode&){}
 void ClearSkillChase(CGameMode&){++skillChaseClears;}
-void ClearPendingSkillUse(CGameMode& mode){mode.m_skillUseInfo={};}
+void ClearPendingSkillUse(CGameMode& mode){mode.m_skillUseInfo.id=0;mode.m_skillUseInfo.level=0;mode.m_skillUseInfo.useType=0;}
+int petCaptures=0;
+bool TryRequestPetCaptureFromScreenPoint(CGameMode&,int,int){++petCaptures;return validTarget;}
 bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode,int,int){
     ++casts;
     if(!validTarget)return false;
@@ -36,6 +38,13 @@ void UpdateHeldMoveTargetFromScreenPoint(CGameMode&,int,int){}
 void PumpHeldMoveRequest(CGameMode&){++moves;}
 #include "SkillTargetClickBodies.inc"
 int main(){
+    {CGameMode mode;mode.m_skillUseInfo={28,0,5,2};assert(!HasPendingSkillUse(mode));
+        mode.m_skillUseInfo={10000,0,5,0};assert(!HasPendingSkillUse(mode));}
+    for(bool valid:{false,true}){
+        CGameMode mode;mode.m_skillUseInfo={10000,0,5,2};validTarget=valid;petCaptures=0;
+        assert(mode.Click(100,200)==1 && petCaptures==1 && mode.m_skillUseInfo.id==0
+            && mode.m_skillUseInfo.level==0 && mode.m_skillUseInfo.useType==0 && mode.m_skillUseInfo.attackRange==5);
+    }
     // Actor-target and ground-target shortcuts must both work with Shift held.
     for(int skill:{28,89})for(bool modifier:{false,true}){
         CGameMode mode;mode.m_skillUseInfo={skill,1};

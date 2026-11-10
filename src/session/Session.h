@@ -172,6 +172,9 @@ public:
     u32  m_authCode;
     u32  m_userLevel;
     u32  m_gid;
+    // Source companion identity owners. PK28/29 receive producers remain open;
+    // capture picking must compare these IDs, rather than infer ownership.
+    u32 m_homunGID=0,m_merGID=0;
     u8   m_sex;
     bool m_isEffectOn;
     bool m_isMinEffect;
