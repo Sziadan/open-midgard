@@ -2,6 +2,7 @@
 
 #include "UIChatRoomSettingsWnd.h"
 #include <array>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -36,6 +37,9 @@ public:
     void CommitText(std::u16string_view text);
     void OnKeyDown(int key) override;
     bool HandleEditKey(int key, bool extendSelection);
+    bool HandleClipboardKey(int key, bool shift, bool control, HWND owner);
+    std::optional<std::string> CopySelectionBytes();
+    void PasteSelectionBytes(std::string_view bytes);
     bool CanReceiveKeyInput() const override { return true; }
     bool IsFrameWnd() override { return true; }
     msgresult_t SendMsg(UIWindow*,int,msgparam_t,msgparam_t,msgparam_t) override;
@@ -45,6 +49,7 @@ private:
     friend class UIWindowMgr;
     void SyncSelection();
     void UpdateText(std::string text, std::size_t cursor);
+    void ReplaceSelection(std::string_view insertion);
     void FocusEdit();
     void ActivateButton(int id);
     void CancelPointerCapture();

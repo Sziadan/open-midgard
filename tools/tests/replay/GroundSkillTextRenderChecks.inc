@@ -76,6 +76,22 @@
                 replacement.setCommitString(QStringLiteral("Q"));
                 QCoreApplication::sendEvent(host,&replacement);
                 Require(std::string(window->GetEditCtrl()->GetText()) == "Q\xe3\x81\x82", "IME commit did not replace the selection");
+
+                g_codePage = 932;
+                window->HandleEditKey(VK_END, false);
+                QCoreApplication::sendEvent(host, &shiftLeft);
+                const auto copied = window->CopySelectionBytes();
+                Require(copied && *copied == "\x82\xa0", "reverse selection did not copy exact CP932 bytes");
+                QKeyEvent shiftedCopy(QEvent::KeyPress, Qt::Key_X, Qt::ShiftModifier | Qt::ControlModifier);
+                QCoreApplication::sendEvent(host, &shiftedCopy);
+                Require(window->CopySelectionBytes() == copied, "Ctrl+Shift+X bypassed source Shift precedence");
+                constexpr char paste[] = "\x82\xa2\r\n\0ignored";
+                window->PasteSelectionBytes(std::string_view(paste, sizeof(paste) - 1));
+                Require(std::string(window->GetEditCtrl()->GetText()) == "Q\xe3\x81\x84\r\n", "clipboard insertion lost CP932, CRLF, or the NUL boundary");
+                Require(!window->CopySelectionBytes(), "clipboard insertion did not collapse the selection");
+                window->GetEditCtrl()->SetText(std::string(77, 'a').c_str());
+                window->PasteSelectionBytes("\x82\xa0");
+                Require(std::string(window->GetEditCtrl()->GetText()) == std::string(77, 'a') + " ", "clipboard insertion bypassed the wire byte limit");
             }
             g_codePage = 949;
             window->GetEditCtrl()->SetText("");
@@ -123,5 +139,7 @@
             {"source_edit_geometry_and_limit",true},{"source_key_frame_footer_button_samples",true},
             {"valid_colorchip_sample_and_paint",true},{"native_windowproc_input",true},{"unregistered_frame_drag",true},
             {"pointer_capture_and_outside_release",true},{"custom_skin_resource_acceptance",false},{"opacity_compositor_acceptance",false},
-            {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},{"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},{"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
+            {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},
+            {"source_clipboard_bytes_and_selection",true},{"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},
+            {"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
     }

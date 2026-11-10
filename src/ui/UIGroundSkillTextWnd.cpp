@@ -11,7 +11,14 @@
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
 
+#include <cstring>
+
 #if RO_ENABLE_QT6_UI
+#if !defined(_WIN32)
+#include <QClipboard>
+#include <QGuiApplication>
+#include <QMimeData>
+#endif
 #include <QFont>
 #include <QFontMetrics>
 #include <QImage>
@@ -19,6 +26,47 @@
 #endif
 
 namespace {
+#if defined(_WIN32)
+class PromptClipboard {
+public:
+    explicit PromptClipboard(HWND owner) : m_open(OpenClipboard(owner) != FALSE) {}
+    ~PromptClipboard() { if (m_open) CloseClipboard(); }
+    PromptClipboard(const PromptClipboard&) = delete;
+    PromptClipboard& operator=(const PromptClipboard&) = delete;
+
+    std::optional<std::string> Read() const
+    {
+        if (!m_open) return std::nullopt;
+        const auto handle = GetClipboardData(CF_TEXT);
+        if (!handle) return std::nullopt;
+        const auto size = GlobalSize(handle);
+        const auto* bytes = static_cast<const char*>(GlobalLock(handle));
+        if (!bytes) return std::nullopt;
+        const auto* end = static_cast<const char*>(std::memchr(bytes, 0, size));
+        std::optional<std::string> result;
+        if (end) result.emplace(bytes, end);
+        GlobalUnlock(handle);
+        return result;
+    }
+
+    void Write(const std::string& bytes) const
+    {
+        if (!m_open) return;
+        const auto handle = GlobalAlloc(GMEM_MOVEABLE, bytes.size() + 1);
+        if (!handle) return;
+        if (auto* destination = GlobalLock(handle)) {
+            std::memcpy(destination, bytes.c_str(), bytes.size() + 1);
+            GlobalUnlock(handle);
+            if (EmptyClipboard() && SetClipboardData(CF_TEXT, handle)) return;
+        }
+        GlobalFree(handle);
+    }
+
+private:
+    bool m_open;
+};
+#endif
+
 bool Contains(RECT r,int x,int y)
 {
     return x>=r.left && x<r.right && y>=r.top && y<r.bottom;
@@ -348,7 +396,11 @@ void UIGroundSkillTextWnd::CommitText(std::u16string_view text)
                 insertion += static_cast<char>(0x80 | ((code >> shift) & 0x3f));
         }
     }
-    if (insertion.empty()) return;
+    if (!insertion.empty()) ReplaceSelection(insertion);
+}
+
+void UIGroundSkillTextWnd::ReplaceSelection(std::string_view insertion)
+{
     SyncSelection();
     const auto begin = static_cast<std::size_t>((std::min)(m_editCtrl->m_selectionOrigin,m_editCtrl->m_selectionCursor));
     const auto end = static_cast<std::size_t>((std::max)(m_editCtrl->m_selectionOrigin,m_editCtrl->m_selectionCursor));
@@ -375,6 +427,65 @@ void UIGroundSkillTextWnd::CommitText(std::u16string_view text)
     }
     const auto cursor = (std::min)(begin+insertion.size(),next.size());
     UpdateText(std::move(next),cursor);
+}
+
+std::optional<std::string> UIGroundSkillTextWnd::CopySelectionBytes()
+{
+    if (!m_editCtrl) return std::nullopt;
+    SyncSelection();
+    const auto begin = (std::min)(m_editCtrl->m_selectionOrigin, m_editCtrl->m_selectionCursor);
+    const auto end = (std::max)(m_editCtrl->m_selectionOrigin, m_editCtrl->m_selectionCursor);
+    if (begin == end) return std::nullopt;
+    return ro::EncodeSourceText(std::string_view(m_editCtrl->m_text).substr(begin, end - begin),
+        ro::SelectedSourceTextCodePage());
+}
+
+void UIGroundSkillTextWnd::PasteSelectionBytes(std::string_view bytes)
+{
+    m_highSurrogate = 0;
+    if (!m_editCtrl) return;
+    const auto decoded = ro::DecodeSourceText(bytes.substr(0, bytes.find('\0')), ro::SelectedSourceTextCodePage());
+    if (decoded) ReplaceSelection(*decoded);
+}
+
+bool UIGroundSkillTextWnd::HandleClipboardKey(int key, bool shift, bool control, HWND owner)
+{
+    // CLanguage gives Shift precedence when both modifiers are down.
+    const bool copy = !shift && control && key == 'C';
+    const bool cut = shift ? key == VK_DELETE : control && key == 'X';
+    const bool paste = shift ? key == VK_INSERT : control && key == 'V';
+    if (!m_editCtrl || (!copy && !cut && !paste)) return false;
+    m_highSurrogate = 0;
+
+    const auto selection = paste ? std::nullopt : CopySelectionBytes();
+#if defined(_WIN32)
+    if (paste || selection) {
+        PromptClipboard clipboard(owner);
+        if (paste) {
+            if (const auto bytes = clipboard.Read()) PasteSelectionBytes(*bytes);
+        } else {
+            clipboard.Write(*selection);
+        }
+    }
+#elif RO_ENABLE_QT6_UI
+    if (auto* clipboard = QGuiApplication::clipboard()) {
+        const int codePage = ro::SelectedSourceTextCodePage();
+        if (paste) {
+            const auto* mime = clipboard->mimeData();
+            if (mime && mime->hasText()) {
+                if (const auto bytes = ro::EncodeSourceText(mime->text().toUtf8().toStdString(), codePage))
+                    PasteSelectionBytes(*bytes);
+            }
+        } else if (selection) {
+            if (const auto text = ro::DecodeSourceText(*selection, codePage))
+                clipboard->setText(QString::fromUtf8(text->data(), text->size()));
+        }
+    }
+#endif
+    // The source deletes the selection even if opening the clipboard fails.
+    if (cut && m_editCtrl->m_selectionOrigin != m_editCtrl->m_selectionCursor)
+        HandleEditKey(VK_DELETE, false);
+    return true;
 }
 
 bool UIGroundSkillTextWnd::HandleEditKey(int key, bool extendSelection)

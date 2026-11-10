@@ -224,6 +224,15 @@ protected:
         if (auto* prompt = g_windowMgr.GetFocusedGroundSkillText()) {
             const bool shift = event->modifiers().testFlag(Qt::ShiftModifier);
             const bool control = event->modifiers().testFlag(Qt::ControlModifier);
+            HWND clipboardOwner = nullptr;
+#if defined(_WIN32)
+            clipboardOwner = reinterpret_cast<HWND>(winId());
+#endif
+            if (!(event->modifiers() & (Qt::AltModifier | Qt::GroupSwitchModifier))
+                && prompt->HandleClipboardKey(virtualKey, shift, control, clipboardOwner)) {
+                event->accept();
+                return;
+            }
             if (!control || shift) prompt->HandleEditKey(virtualKey,shift);
             if (!(event->modifiers() & (Qt::AltModifier | Qt::ControlModifier))
                 || event->modifiers().testFlag(Qt::GroupSwitchModifier))

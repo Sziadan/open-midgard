@@ -584,6 +584,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (msg == WM_KEYDOWN) {
             const bool shift = (GetKeyState(VK_SHIFT)&0x8000)!=0;
             const bool control = (GetKeyState(VK_CONTROL)&0x8000)!=0;
+            if (prompt->HandleClipboardKey(static_cast<int>(wParam), shift, control, hwnd)) return 0;
             if ((!control || shift) && prompt->HandleEditKey(static_cast<int>(wParam),shift)) return 0;
         }
         if (msg == WM_CHAR || msg == WM_IME_CHAR) {
