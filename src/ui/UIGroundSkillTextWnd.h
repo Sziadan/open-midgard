@@ -38,7 +38,7 @@ public:
     void OnChar(char c) override;
     void OnUtf16Character(char16_t codeUnit);
     void CommitText(std::u16string_view text);
-    void SetComposition(std::u16string_view text, int cursor = -1, bool visible = true);
+    void SetNativeComposition(std::u16string_view text);
     void CancelComposition();
     struct ImeCandidatePage {
         std::vector<std::string> entries;
@@ -73,6 +73,7 @@ private:
     friend class GroundSkillTextEditCtrl;
     friend class UIWindowMgr;
     void SyncSelection();
+    void SetComposition(std::u16string_view text, int cursor, bool visible, bool native);
     void UpdateText(std::string text, std::size_t cursor);
     void ReplaceSelection(std::string_view insertion);
     void ApplyEdit(std::string text, std::size_t cursor);
@@ -101,6 +102,7 @@ private:
 #endif
     std::size_t m_preeditCursor=0;
     bool m_preeditCursorVisible=true;
+    bool m_nativePreedit=false;
     char16_t m_highSurrogate=0;
     int m_pressed=0;
     int m_hover=0;

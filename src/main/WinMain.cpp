@@ -626,7 +626,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 };
                 const auto result = lParam & GCS_RESULTSTR ? read(GCS_RESULTSTR) : std::nullopt;
                 const auto preedit = lParam & (GCS_COMPSTR | GCS_CURSORPOS) ? read(GCS_COMPSTR) : std::nullopt;
-                const auto cursor = preedit ? ImmGetCompositionStringW(context, GCS_CURSORPOS, nullptr, 0) : -1;
                 ImmReleaseContext(hwnd, context);
                 if (result) {
                     prompt->CancelComposition();
@@ -634,7 +633,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     lParam &= ~static_cast<LPARAM>(GCS_RESULTSTR);
                 }
                 if (preedit) {
-                    prompt->SetComposition(*preedit, cursor);
+                    prompt->SetNativeComposition(*preedit);
                     lParam &= ~static_cast<LPARAM>(GCS_COMPSTR | GCS_CURSORPOS);
                 }
                 if (result || preedit) return lParam ? DefWindowProcW(hwnd, msg, wParam, lParam) : 0;

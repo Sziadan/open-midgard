@@ -26,6 +26,7 @@
 #include <QBuffer>
 #include <QColor>
 #include <QFile>
+#include <QFontMetrics>
 #include <QGuiApplication>
 #include <QImage>
 #include <QJsonDocument>

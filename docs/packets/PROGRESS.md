@@ -3739,3 +3739,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Ground prompt keystrokes
 
 **Current ground prompt keystroke checkpoint (2026-11-11)**. The Win32 ground prompts now render the Traditional Chinese keystroke cells and clear them when composition ends. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-keystrokes.md)
+
+## 2026-11-11 Ground prompt native composition paint
+
+**Current ground prompt native paint checkpoint (2026-11-11)**. The Win32 prompt displays preedit with the source selection palette and blink. All 164 application checks, 473 standalone checks, and 3 focused checks passed. [Evidence](evidence/PK27-prompt-native-paint.md)

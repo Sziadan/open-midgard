@@ -201,8 +201,38 @@
                 window->ClearImeKeystrokes();
 #endif
                 Require(!window->ImeKeystrokeCells(), "IME end left the keystroke window visible");
-                window->HandleEditKey(VK_END, true);
                 g_codePage = 65001;
+
+                window->GetEditCtrl()->SetText("WW");
+                window->HandleEditKey(VK_HOME, false);
+                window->HandleEditKey(VK_END, true);
+                window->SetNativeComposition(u"WWWW");
+                g_windowMgr.DrawVisibleWindowsToHdc(selectionDib.GetDC(), true);
+                QFont font("Segoe UI");
+                font.setPixelSize(12);
+                const QFontMetrics metrics(font);
+                const int four = metrics.horizontalAdvance(QStringLiteral("WWWW"));
+                const int six = metrics.horizontalAdvance(QStringLiteral("WWWWWW"));
+                const int nativeSample = edit->m_x + 3 + (four + six) / 2;
+                Require(selection.pixelColor(nativeSample, edit->m_y) == QColor("#de9944"),
+                    "native composition replaced selected display text instead of extending the source highlight");
+                Require(std::string(edit->GetText()) == "WW", "native composition changed the committed prompt");
+                window->CancelComposition();
+                window->HandleEditKey(VK_HOME, false);
+                window->SetNativeComposition(u"WWWW");
+                bool sampledPhase = false;
+                for (int attempt = 0; attempt < 8 && !sampledPhase; ++attempt) {
+                    const auto before = timeGetTime() / 500;
+                    g_windowMgr.DrawVisibleWindowsToHdc(selectionDib.GetDC(), true);
+                    if (before != timeGetTime() / 500) continue;
+                    const QColor expected = (before & 1) == 0 ? QColor("#de9944") : QColor(edit->m_r, edit->m_g, edit->m_b);
+                    Require(selection.pixelColor(edit->m_x + 4, edit->m_y) == expected,
+                        "collapsed native composition did not follow the source blink phase");
+                    sampledPhase = true;
+                }
+                Require(sampledPhase, "unable to capture a stable composition blink phase");
+                window->CancelComposition();
+                window->HandleEditKey(VK_END, true);
             }
             WindowProc(g_hMainWnd,WM_CHAR,'!',0);
             Require(std::string(window->GetEditCtrl()->GetText()) == "!", "native character did not replace focus selection");
@@ -231,6 +261,7 @@
             {"native_character_and_qt_commit",true},{"source_codepage_editor_limit",true},{"source_selection_and_replacement",true},
             {"source_clipboard_bytes_and_selection",true},{"qt_preedit_cursor_and_replacement",true},
             {"source_candidate_layout_and_native_close",true},{"source_tc_keystroke_cells_and_lifecycle",true},
+            {"source_native_composition_highlight",true},
             {"native_keyboard_acceptance",false},{"source_colorchip_acceptance",false},
             {"skill_tree_window_changed",false}}).toJson(QJsonDocument::Compact));
     }
