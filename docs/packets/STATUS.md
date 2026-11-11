@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Siege actor emblem checkpoint (2026-11-11)**. The actor packet and concealment paths now control siege emblem eligibility. The gameplay render pass uses the existing downloaded emblem texture. Production lifecycle replay passed. Native pixel and live verification remain open. [Evidence](evidence/PK19-siege-actor-emblems.md)
+**Native siege emblem checkpoint (2026-11-11)**. Vulkan captures verified the downloaded and legacy graffiti badges, with no emblem pixels outside siege, during concealment, or for a mismatched version. [Evidence](evidence/PK19-siege-emblem-native-verification.md)
+
+**Previous siege actor emblem checkpoint (2026-11-11)**. The actor packet and concealment paths control siege emblem eligibility. Production lifecycle replay passed. [Evidence](evidence/PK19-siege-actor-emblems.md)
 
 **Standing resurrection action checkpoint (2026-11-11)**. The dead-player menu now offers item 7621 recovery in eligible maps and sends the selected two-byte request. Packet and Qt state replay passed. Live recovery and rendered menu acceptance remain open. [Evidence](evidence/PK19-standing-resurrection.md)
 

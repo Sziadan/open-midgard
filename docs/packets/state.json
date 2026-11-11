@@ -642,9 +642,10 @@
         "docs/packets/evidence/PK19-map-properties.md",
         "docs/packets/evidence/PK19-map-property-lifetime.md",
         "docs/packets/evidence/PK19-standing-resurrection.md",
-        "docs/packets/evidence/PK19-siege-actor-emblems.md"
+        "docs/packets/evidence/PK19-siege-actor-emblems.md",
+        "docs/packets/evidence/PK19-siege-emblem-native-verification.md"
       ],
-      "commit_subject": "packet(PK19.03): restore siege actor emblems"
+      "commit_subject": "packet(PK19.03): verify siege emblems and restore graffiti"
     },
     "PK19.04": {
       "status": "NOT_STARTED",

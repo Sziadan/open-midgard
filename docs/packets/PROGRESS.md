@@ -3855,3 +3855,7 @@ PK19.03 applies the selected death, token and map-rule gates to the standing res
 ## 2026-11-11 Siege actor emblems
 
 PK19.03 restores the siege actor emblem lifecycle and uses the existing emblem texture cache in gameplay rendering. Actor entry, concealment, reveal, and removal passed production replay. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK19-siege-actor-emblems.md)
+
+## 2026-11-11 Native siege emblem verification
+
+PK19.03 verifies the downloaded siege badge and restores the compressed legacy EBM fallback. Six Vulkan captures passed. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK19-siege-emblem-native-verification.md)

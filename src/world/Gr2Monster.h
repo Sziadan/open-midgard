@@ -33,11 +33,13 @@ struct Gr2MonsterState {
     vector3d light, diffuse, ambient;
     float attackSpeedFactor=1.0f;
     u32 guildId=0, emblemVersion=0;
+    CTexture* graffitiEmblem = nullptr;
 };
 
 // Shared by all flag instances owned by this guild. A new version replaces the
 // cached texture; missing data never exposes the model's green placeholder.
 CTexture* Gr2GuildEmblemTexture(u32 guildId,u32 version,const std::vector<unsigned char>* bitmap=nullptr);
+CTexture* GetGuildGraffitiTexture(u32 guildId);
 u32 PrepareGuildEmblem(CGameMode& mode,u32 guildId,u32 advertisedVersion);
 
 bool RenderGr2Monster(const Gr2MonsterState& state, const matrix& view);

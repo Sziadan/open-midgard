@@ -12,6 +12,7 @@
 #include "session/Session.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
+#include "gamemode/Mode.h"
 #include "gamemode/Commerce.h"
 #include "network/Connection.h"
 #include "gamemode/View.h"
@@ -40,6 +41,7 @@
 #include "Types.h"
 #include "DebugLog.h"
 #include <windows.h>
+#include <zlib.h>
 #if RO_ENABLE_QT6_UI
 #include "qtui/QtUiStateAdapter.h"
 #include "qtui/QtUiState.h"
@@ -184,10 +186,137 @@ static void RunMapCellRenderPreview(std::string_view scene)
     GetRenderDevice().Present(false);
 }
 
+static void RunSiegeEmblemRenderPreview(std::string_view scene)
+{
+    const bool graffiti = scene == "graffiti" || scene == "missing-graffiti";
+    if (scene != "visible" && scene != "ordinary" && scene != "hidden" && scene != "wrong-version" && !graffiti) {
+        DbgLog("[SiegeEmblemPreview] unknown scene\n");
+        return;
+    }
+    struct PreviewMode final : CGameMode {
+        std::function<void(CGameMode&)> render;
+        void OnInit(const char*) override {}
+        void OnExit() override {}
+        int OnRun() override {
+            render(*this);
+            g_modeMgr.Quit();
+            return 1;
+        }
+    };
+    ModeRunServices services;
+    services.createMode = [&](int) -> CMode* {
+        auto* mode = new PreviewMode();
+        mode->render = [&](CGameMode& active) {
+            constexpr u32 gid = 0x01123402;
+            CWorld world;
+            CPlayer player;
+            player.m_gid = gid;
+            g_session.m_gid = gid;
+            world.m_ground = new C3dGround();
+            world.m_player = &player;
+            active.m_world = &world;
+            active.m_runtimeActors[gid] = &player;
+            CGameModePacketRouter router;
+            RegisterDefaultGameModePacketHandlers(router);
+            const auto dispatch = [&](const auto& frame) {
+                PacketView packet{};
+                int consumed = 0;
+                return TryReadPacket(frame.data(), static_cast<int>(frame.size()), packet, consumed)
+                    && consumed == static_cast<int>(frame.size()) && router.Dispatch(active, packet);
+            };
+            const auto paint = [&] {
+                if (scene != "ordinary" && !dispatch(std::array<u8, 4>{0x99, 1, 3, 0})) {
+                    return false;
+                }
+                std::array<u8, 53> spawn{0x79, 0, 2, 0x34, 0x12, 1, 150};
+                spawn[14] = 7;
+                spawn[16] = 1;
+                spawn[34] = scene == "missing-graffiti" ? 13 : 12;
+                spawn[38] = graffiti ? 0 : 4;
+                spawn[51] = 30;
+                if (!dispatch(spawn) || player.m_hasSiegeEmblem != (scene != "ordinary")) {
+                    return false;
+                }
+                if (scene == "hidden"
+                    && (!dispatch(std::array<u8, 13>{0x19, 1, 2, 0x34, 0x12, 1, 0, 0, 0, 0, 4, 0, 0})
+                        || player.m_hasSiegeEmblem)) {
+                    return false;
+                }
+
+                // A 12-by-12 red square on a keyed 24-by-24 bitmap.
+                std::array<u8, 54 + 24 * 24 * 3> bitmap{};
+                const auto put = [](auto& bytes, size_t offset, u32 value, size_t count) {
+                    for (size_t i = 0; i < count; ++i) {
+                        bytes[offset + i] = static_cast<u8>(value >> (8 * i));
+                    }
+                };
+                bitmap[0] = 'B';
+                bitmap[1] = 'M';
+                put(bitmap, 2, static_cast<u32>(bitmap.size()), 4);
+                put(bitmap, 10, 54, 4);
+                put(bitmap, 14, 40, 4);
+                put(bitmap, 18, 24, 4);
+                put(bitmap, 22, 24, 4);
+                put(bitmap, 26, 1, 2);
+                put(bitmap, 28, 24, 2);
+                for (int y = 0; y < 24; ++y) {
+                    for (int x = 0; x < 24; ++x) {
+                        const bool red = x >= 6 && x < 18 && y >= 6 && y < 18;
+                        const auto offset = 54 + (y * 24 + x) * 3;
+                        bitmap[offset] = red ? 0 : 255;
+                        bitmap[offset + 2] = 255;
+                    }
+                }
+                uLongf length = compressBound(static_cast<uLong>(bitmap.size()));
+                std::vector<u8> emblem(12 + length);
+                if (compress2(emblem.data() + 12, &length, bitmap.data(),
+                        static_cast<uLong>(bitmap.size()), Z_BEST_SPEED) != Z_OK) {
+                    return false;
+                }
+                emblem.resize(12 + length);
+                put(emblem, 0, 0x0152, 2);
+                put(emblem, 2, static_cast<u32>(emblem.size()), 2);
+                put(emblem, 4, 12, 4);
+                put(emblem, 8, scene == "wrong-version" ? 5 : 4, 4);
+                if (!graffiti && (!dispatch(emblem) || active.m_guildEmblems.count(12) != 1)) {
+                    return false;
+                }
+
+                player.m_pos = {};
+                CView view;
+                view.SetWorld(&world);
+                view.SetInitialCamera(0, 45, 300);
+                view.OnCalcViewInfo();
+                g_renderer.m_nClearColor = 0xFF202020;
+                g_renderer.ClearBackground();
+                g_renderer.Clear(0);
+                view.OnRender();
+                g_renderer.DrawScene();
+                GetRenderDevice().Present(false);
+                DbgLog("[SiegeEmblemPreview] scene=%s siege=%d eligible=%d\n",
+                    scene.data(), world.m_isSiegeMode, player.m_hasSiegeEmblem);
+                return true;
+            };
+            if (!paint()) {
+                DbgLog("[SiegeEmblemPreview] packet setup failed\n");
+            }
+            active.m_runtimeActors.clear();
+            active.m_world = nullptr;
+        };
+        return mode;
+    };
+    services.presentLoading = [](const char*, float) {};
+    g_modeMgr.Run(1, "siege-emblem-preview.rsw", &services);
+}
+
 // Opt-in native render fixture. Uses installed assets and the selected graphics
 // backend, without entering a game mode, logging in, or saving settings.
 void RunHealRenderPreview()
 {
+    if (const char* scene = std::getenv("RO_SIEGE_EMBLEM_PREVIEW")) {
+        RunSiegeEmblemRenderPreview(scene);
+        return;
+    }
     if (const char* scene = std::getenv("RO_MAP_CELL_PREVIEW")) {
         RunMapCellRenderPreview(scene);
         return;

@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <zlib.h>
 
 namespace {
 struct CpuAsset {
@@ -50,6 +51,37 @@ std::map<std::string,std::future<std::unique_ptr<CpuAsset>>> pending;
 std::map<u32,std::unique_ptr<Instance>> instances;
 struct GuildTexture {u32 version;std::unique_ptr<CTexture> texture;};
 std::map<u32,GuildTexture> guildTextures;
+std::map<u32,std::unique_ptr<CTexture>> graffitiTextures;
+
+std::unique_ptr<CTexture> BuildGuildEmblemTexture(const unsigned char* bytes, int size, bool graffiti)
+{
+    CBitmapRes decoded;
+    if (!decoded.LoadFromBuffer("guild-emblem.bmp", bytes, size) || !decoded.m_data
+        || (!graffiti && (decoded.m_width != ro::guild::FlagEmblemSize
+            || decoded.m_height != ro::guild::FlagEmblemSize))) {
+        return nullptr;
+    }
+    constexpr int extent = ro::guild::FlagTextureSize;
+    std::array<u32, extent * extent> pixels{};
+    if (graffiti) {
+        const int width = (std::min)(decoded.m_width, ro::guild::FlagEmblemSize);
+        const int height = (std::min)(decoded.m_height, ro::guild::FlagEmblemSize);
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                const u32 pixel = decoded.m_data[y * decoded.m_width + x];
+                pixels[y * extent + x] = ro::guild::IsEmblemKey(pixel) ? 0 : pixel | 0xFF000000u;
+            }
+        }
+    } else {
+        pixels = ro::guild::FlagEmblemCanvas(decoded.m_data);
+    }
+    auto texture = std::make_unique<CTexture>();
+    if (!texture->Create(extent, extent, PF_A8R8G8B8, false)) {
+        return nullptr;
+    }
+    texture->Update(0, 0, extent, extent, pixels.data(), true, extent * 4);
+    return texture;
+}
 
 std::vector<unsigned char> ReadBytes(const std::string& path)
 {
@@ -228,7 +260,9 @@ bool RenderGr2Instance(const Gr2MonsterState& state,const matrix& view,Instance&
         // Until an emblem resource is available, Ref uses a transparent image;
         // omitting that surface is equivalent and leaves the banner intact.
         const bool guildMark=!corpse && state.job==722 && meshIndex==1;
-        CTexture* emblem=guildMark?Gr2GuildEmblemTexture(state.guildId,state.emblemVersion):nullptr;
+        CTexture* emblem = guildMark
+            ? (state.graffitiEmblem ? state.graffitiEmblem : Gr2GuildEmblemTexture(state.guildId, state.emblemVersion))
+            : nullptr;
         if(guildMark && !emblem)continue;
         const unsigned before=triangles;
         if(mesh.batches.empty())continue;
@@ -366,23 +400,41 @@ bool Gr2MonsterMotionFinished(u32 gid,int state,u32 start)
     return found!=instances.end() && found->second->state==state && found->second->start==start && found->second->finished;
 }
 void ReleaseGr2Monster(u32 gid) {instances.erase(gid);}
-void ClearGr2Monsters() {pending.clear();instances.clear();assets.clear();guildTextures.clear();}
+void ClearGr2Monsters() {pending.clear();instances.clear();assets.clear();guildTextures.clear();graffitiTextures.clear();}
 void PreloadGr2Monsters() {for(int job:{1288,722,1324,1285,1286,1287})StartAsset(job);}
 void WaitForGr2Monsters() {for(auto& load:pending)load.second.wait();}
 
+CTexture* GetGuildGraffitiTexture(u32 guildId)
+{
+    if (!guildId) return nullptr;
+    auto [entry, inserted] = graffitiTextures.try_emplace(guildId);
+    if (!inserted) {
+        return entry->second.get();
+    }
+    const std::string path = "data\\texture\\effect\\flagGraffiti" + std::to_string(guildId) + ".ebm";
+    std::array<unsigned char, 8192> compressed{};
+    std::array<unsigned char, 8192> bitmap{};
+    CFile file;
+    if (!file.Open(path.c_str()) || file.Size() <= 0 || file.Size() > static_cast<int>(compressed.size())
+        || !file.Read(compressed.data(), static_cast<u32>(file.Size()))) {
+        return nullptr;
+    }
+    uLongf length = static_cast<uLongf>(bitmap.size());
+    if (uncompress(bitmap.data(), &length, compressed.data(), static_cast<uLong>(file.Size())) != Z_OK) {
+        return nullptr;
+    }
+    entry->second = BuildGuildEmblemTexture(bitmap.data(), static_cast<int>(length), true);
+    return entry->second.get();
+}
+
 CTexture* Gr2GuildEmblemTexture(u32 guildId,u32 version,const std::vector<unsigned char>* bitmap)
 {
-    if(!guildId || !version)return nullptr;
+    if (!guildId || !version) return nullptr;
     const auto found=guildTextures.find(guildId);
     if(found!=guildTextures.end() && found->second.version==version)return found->second.texture.get();
     if(!bitmap || bitmap->empty())return nullptr;
-    CBitmapRes decoded;
-    if(!decoded.LoadFromBuffer("guild-emblem.bmp",bitmap->data(),static_cast<int>(bitmap->size())) || decoded.m_width!=24 || decoded.m_height!=24 || !decoded.m_data)return nullptr;
-    auto pixels=ro::guild::FlagEmblemCanvas(decoded.m_data);
-    auto texture=std::make_unique<CTexture>();
-    constexpr int extent=ro::guild::FlagTextureSize;
-    if(!texture->Create(extent,extent,PF_A8R8G8B8,false))return nullptr;
-    texture->Update(0,0,extent,extent,pixels.data(),true,extent*4);
+    auto texture = BuildGuildEmblemTexture(bitmap->data(), static_cast<int>(bitmap->size()), false);
+    if (!texture) return nullptr;
     CTexture* result=texture.get();guildTextures[guildId]={version,std::move(texture)};
     DbgLog("[GuildFlag] cached emblem guild=%u version=%u\n",guildId,version);
     return result;

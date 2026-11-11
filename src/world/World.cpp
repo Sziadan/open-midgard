@@ -6890,9 +6890,16 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
         }
 
         if (Gr2MonsterModel(pc->m_job)) {
-            u32 flagVersion=static_cast<u32>(pc->m_emblemVersion);
-            if(pc->m_job==722 && pc->m_gdid>0) {
-                if(auto* mode=g_modeMgr.GetCurrentGameMode())flagVersion=PrepareGuildEmblem(*mode,static_cast<u32>(pc->m_gdid),flagVersion);
+            u32 flagVersion = pc->m_emblemVersion > 0 ? static_cast<u32>(pc->m_emblemVersion) : 0;
+            CTexture* graffiti = nullptr;
+            if (pc->m_job == 722 && pc->m_gdid > 0) {
+                const u32 guild = static_cast<u32>(pc->m_gdid);
+                if (!flagVersion) {
+                    graffiti = GetGuildGraffitiTexture(guild);
+                }
+                if (auto* mode = g_modeMgr.GetCurrentGameMode(); mode && !graffiti) {
+                    flagVersion = PrepareGuildEmblem(*mode, guild, flagVersion);
+                }
             }
             const u32 now=timeGetTime();
             u32 alpha=pc->IsHideFadeActive(now)?pc->GetHideFadeAlpha(now):255u;
@@ -6906,7 +6913,7 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
                 pc->m_isSingleColor!=0,pc->m_colorOfSingleColor);
             const Gr2MonsterState state{pc->m_gid,pc->m_job,pc->m_stateId,pc->m_stateStartTick,
                 pc->m_pos,pc->m_roty,pc->m_zoom,pc->m_isMotionFreezed!=0,
-                color,m_bgLightDir,m_bgDiffuseCol,m_bgAmbientCol,pc->m_modifyFactorOfmotionSpeed2,static_cast<u32>(pc->m_gdid),flagVersion};
+                color,m_bgLightDir,m_bgDiffuseCol,m_bgAmbientCol,pc->m_modifyFactorOfmotionSpeed2,static_cast<u32>(pc->m_gdid),flagVersion,graffiti};
             if(RenderGr2Monster(state,viewMatrix))m_billboardFrameCacheDirty=true;
         }
         BillboardScreenEntry entry{};
@@ -6986,7 +6993,7 @@ void CWorld::RenderSiegeEmblems(const matrix& viewMatrix) const
     }
     const auto draw = [&](const CGameActor* actor) {
         if (!actor || !actor->m_hasSiegeEmblem || actor->m_headType == 100 || actor->m_gdid <= 0
-            || actor->m_emblemVersion <= 0 || !actor->ShouldDrawSprite(timeGetTime())) {
+            || !actor->ShouldDrawSprite(timeGetTime())) {
             return;
         }
         tlvertex3d point{};
@@ -6994,8 +7001,11 @@ void CWorld::RenderSiegeEmblems(const matrix& viewMatrix) const
             return;
         }
         const u32 guild = static_cast<u32>(actor->m_gdid);
-        const u32 version = PrepareGuildEmblem(*mode, guild, static_cast<u32>(actor->m_emblemVersion));
-        CTexture* texture = Gr2GuildEmblemTexture(guild, version);
+        const u32 version = actor->m_emblemVersion > 0 ? static_cast<u32>(actor->m_emblemVersion) : 0;
+        if (version && PrepareGuildEmblem(*mode, guild, version) != version) {
+            return;
+        }
+        CTexture* texture = version ? Gr2GuildEmblemTexture(guild, version) : GetGuildGraffitiTexture(guild);
         if (!texture) {
             return;
         }
