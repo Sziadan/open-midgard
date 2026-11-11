@@ -74,6 +74,13 @@ void NpcShowEfstReplay()
     CGameActor hidden;
     CGameActor packetStateOnly;
     CGameActor pcHidden;
+    CGameActor bladePc;
+    CGameActor bladeNpc;
+    CGameActor bladePose15;
+    CGameActor bladePose4016;
+    CGameActor bladePose4038;
+    CGameActor bodyThenBlade;
+    CGameActor bladeThenBody;
     nonPc.m_gid = 0x11000001u; nonPc.m_isPc = 0;
     pc.m_gid = 0x11000002u; pc.m_isPc = 1;
     maskFirst.m_gid = 0x11000003u; maskFirst.m_isPc = 0;
@@ -81,7 +88,15 @@ void NpcShowEfstReplay()
     hidden.m_gid = 0x11000005u; hidden.m_isPc = 0;
     packetStateOnly.m_gid = 0x11000006u; packetStateOnly.m_isPc = 0;
     pcHidden.m_gid = 0x11000007u; pcHidden.m_isPc = 1;
-    CGameActor* const actors[] = { &nonPc, &pc, &maskFirst, &statusFirst, &hidden, &packetStateOnly, &pcHidden };
+    bladePc.m_gid = 0x11000008u; bladePc.m_isPc = 1;
+    bladeNpc.m_gid = 0x11000009u; bladeNpc.m_isPc = 0;
+    bladePose15.m_gid = 0x1100000au; bladePose15.m_isPc = 1; bladePose15.m_job = 15;
+    bladePose4016.m_gid = 0x1100000bu; bladePose4016.m_isPc = 1; bladePose4016.m_job = 4016;
+    bladePose4038.m_gid = 0x1100000cu; bladePose4038.m_isPc = 1; bladePose4038.m_job = 4038;
+    bodyThenBlade.m_gid = 0x1100000du; bodyThenBlade.m_isPc = 0;
+    bladeThenBody.m_gid = 0x1100000eu; bladeThenBody.m_isPc = 0;
+    CGameActor* const actors[] = { &nonPc, &pc, &maskFirst, &statusFirst, &hidden, &packetStateOnly, &pcHidden,
+        &bladePc, &bladeNpc, &bladePose15, &bladePose4016, &bladePose4038, &bodyThenBlade, &bladeThenBody };
     mode.m_world = &world;
     for (CGameActor* actor : actors) {
         world.m_actorList.push_back(actor);
@@ -91,6 +106,59 @@ void NpcShowEfstReplay()
     g_session.m_isEffectOn = 1;
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
+
+    // Blade-stop is an independent render claim. The three special PC jobs
+    // render a fixed pose without mutating the actor's force-animation fields.
+    CGameActor* const ordinary[] = { &bladePc, &bladeNpc };
+    for (CGameActor* actor : ordinary) {
+        actor->SetArgb(137, 121, 91, 41);
+        const u32 underlyingTint = actor->GetRenderTint();
+        DispatchNpcShowEfst(mode, router, actor->m_gid, 0, 1, 0x20u);
+        Require(actor->IsMotionFrozen(), "OPT3 blade-stop did not freeze an ordinary PC/non-PC");
+        Require(actor->GetRenderTint() == ((underlyingTint & 0xff000000u) | 0x00404040u),
+            "blade-stop gray overlay changed alpha or failed to gray RGB");
+        DispatchNpcShowEfst(mode, router, actor->m_gid, 0, 1, 0);
+        Require(!actor->IsMotionFrozen(), "OPT3 blade-stop clear retained ordinary freeze");
+        Require(actor->GetRenderTint() == underlyingTint,
+            "blade-stop clear failed to restore underlying actor tint");
+    }
+    CGameActor* const poseActors[] = { &bladePose15, &bladePose4016, &bladePose4038 };
+    for (CGameActor* actor : poseActors) {
+        actor->m_forceAct = 37; actor->m_forceMot = 2;
+        actor->m_isForceAnimation = 1; actor->m_isForceAnimFinish = 1;
+        actor->SetAction(24, 1, 0);
+        DispatchNpcShowEfst(mode, router, actor->m_gid, 0, 1, 0x20u);
+        int poseAction = -1, poseMotion = -1;
+        Require(actor->GetBladeStopPose(poseAction, poseMotion)
+            && poseAction == 96 + actor->Get8Dir(actor->m_roty) && poseMotion == 4,
+            "special blade-stop PC job did not expose directional action 96 motion 4");
+        Require(actor->m_forceAct == 37 && actor->m_forceMot == 2
+            && actor->m_isForceAnimation == 1 && actor->m_isForceAnimFinish == 1,
+            "blade-stop pose overwrote independent forced-animation state");
+        DispatchNpcShowEfst(mode, router, actor->m_gid, 0, 1, 0);
+        Require(!actor->GetBladeStopPose(poseAction, poseMotion), "blade-stop clear retained special pose");
+    }
+
+    // Body-freeze and blade-stop must release independently in either order.
+    bodyThenBlade.SetArgb(128, 90, 100, 110);
+    bodyThenBlade.SetAttrState(1, 0, 0, false);
+    DispatchNpcShowEfst(mode, router, bodyThenBlade.m_gid, 0, 1, 0x20u);
+    bodyThenBlade.SetAttrState(0, 0, 0, false);
+    Require(bodyThenBlade.IsMotionFrozen() && bodyThenBlade.GetRenderTint() == 0x80404040u,
+        "clearing body state erased the remaining blade-stop freeze/tint");
+    DispatchNpcShowEfst(mode, router, bodyThenBlade.m_gid, 0, 1, 0);
+    Require(!bodyThenBlade.IsMotionFrozen() && bodyThenBlade.GetRenderTint() == 0x80ffffffu,
+        "blade clear left stale freeze/tint after body-first release");
+
+    bladeThenBody.SetArgb(128, 90, 100, 110);
+    DispatchNpcShowEfst(mode, router, bladeThenBody.m_gid, 0, 1, 0x20u);
+    bladeThenBody.SetAttrState(2, 0, 0, false);
+    DispatchNpcShowEfst(mode, router, bladeThenBody.m_gid, 0, 1, 0);
+    Require(bladeThenBody.IsMotionFrozen() && bladeThenBody.GetRenderTint() == 0x800080ffu,
+        "clearing blade-stop erased body-owned freeze/tint in reverse order");
+    bladeThenBody.SetAttrState(0, 0, 0, false);
+    Require(!bladeThenBody.IsMotionFrozen() && bladeThenBody.GetRenderTint() == 0x80ffffffu,
+        "body clear did not release body freeze and restore underlying sprite RGB/alpha");
 
     struct RestoreNpcShowEfst {
         CGameMode& mode;
@@ -278,5 +346,5 @@ void NpcShowEfstReplay()
     Require(mode.m_runtimeActors.size() == std::size(actors)
         && world.m_gameObjectList.size() == worldEffectsBeforeUnknown,
         "unknown actor 028A created actor or effect state");
-    std::cout << "{\"case_id\":\"npc_show_efst_replay\",\"contract_id\":\"PK22.02\",\"literal_028a\":true,\"nonpc_effects\":[420,427,254,655,667],\"pc_effect_matrix\":[166,203,254,418,544,419,424,586,655,474,382,368,394,396,375,617],\"selector_options\":[130,128,169],\"shared_claim_end_orders\":2,\"status188_snapshot_dual_release\":true,\"terminal_effects\":[540,656],\"hidden_pc_effects\":[203,254,418,586],\"removal_only_110_375\":true,\"unknown_actor_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
+    std::cout << "{\"case_id\":\"npc_show_efst_replay\",\"contract_id\":\"PK22.02\",\"literal_028a\":true,\"blade_stop\":{\"ordinary_freeze\":true,\"special_jobs\":[15,4016,4038],\"forced_fields_preserved\":true,\"gray_rgb_alpha_preserved\":true,\"body_release_orders\":2},\"nonpc_effects\":[420,427,254,655,667],\"pc_effect_matrix\":[166,203,254,418,544,419,424,586,655,474,382,368,394,396,375,617],\"selector_options\":[130,128,169],\"shared_claim_end_orders\":2,\"status188_snapshot_dual_release\":true,\"terminal_effects\":[540,656],\"hidden_pc_effects\":[203,254,418,586],\"removal_only_110_375\":true,\"unknown_actor_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
 }

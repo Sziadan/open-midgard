@@ -110,6 +110,9 @@ public:
     void SetForceAnimEndTick(u32 tick);
     void ProcessForcedMotion();
     void SetArgb(int alpha, int red, int green, int blue);
+    bool IsMotionFrozen() const;
+    bool GetBladeStopPose(int& action, int& motion);
+    u32 GetRenderTint() const;
 
     vector3d m_pos;
     std::string m_bodyPaletteName;
@@ -190,6 +193,10 @@ public:
     virtual void SetTlvert(float x, float y);
     virtual void SetAction(int act, int mot, int type);
     virtual void ProcessMotion();
+
+protected:
+    enum class BladeStopPresentation { None, Frozen, Pose };
+    BladeStopPresentation m_bladeStop = BladeStopPresentation::None;
 };
 
 class CAbleToMakeEffect : public CRenderObject {

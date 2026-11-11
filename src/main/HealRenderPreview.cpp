@@ -309,7 +309,7 @@ static void RunSiegeEmblemRenderPreview(std::string_view scene)
     g_modeMgr.Run(1, "siege-emblem-preview.rsw", &services);
 }
 
-static void RunNpcClassChangeRenderPreview()
+static void RunNpcClassChangeRenderPreview(std::string_view scene)
 {
     WaitForGr2Monsters();
     CWorld world;
@@ -376,6 +376,28 @@ static void RunNpcClassChangeRenderPreview()
             static_cast<int>((entry->top + entry->bottom) * 0.5f),
             &hovered, nullptr, nullptr, false) && hovered == actor;
     };
+    if (scene == "blade-baseline" || scene == "blade-stop" || scene == "blade-restored") {
+        g_renderer.m_eyeRight = {1.0f, 0.0f, 0.0f};
+        g_renderer.m_eyeUp = {0.0f, diagonal, -diagonal};
+        g_renderer.m_eyeForward = {0.0f, diagonal, diagonal};
+        g_renderer.m_hpc = g_renderer.m_vpc = 3500;
+        actor->SetArgb(-1, 200, 210, 220);
+        std::array<u8, 18> showEfst{0x8a, 0x02, gid, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0x20};
+        bool routed = scene == "blade-baseline" || dispatch(showEfst);
+        if (scene == "blade-restored") {
+            showEfst[14] = 0;
+            routed = routed && dispatch(showEfst);
+        }
+        const bool active = scene == "blade-stop";
+        const bool correct = actor->IsMotionFrozen() == active
+            && (actor->GetRenderTint() & 0x00ffffffu) == (active ? 0x00404040u : 0x00c8d2dcu);
+        // Draw the same motion in every capture so only the tint can differ.
+        actor->m_isMotionFreezed = 1;
+        render();
+        report("blade-stop-render", routed && correct && canPick() && actor->m_billboardTexture);
+        mode.OnExit();
+        return;
+    }
     RECT bounds{};
     const auto run = [&] {
         render();
@@ -432,8 +454,8 @@ static void RunNpcClassChangeRenderPreview()
 // backend, without entering a game mode, logging in, or saving settings.
 void RunHealRenderPreview()
 {
-    if (std::getenv("RO_NPC_CLASS_CHANGE_PREVIEW")) {
-        RunNpcClassChangeRenderPreview();
+    if (const char* scene = std::getenv("RO_NPC_CLASS_CHANGE_PREVIEW")) {
+        RunNpcClassChangeRenderPreview(scene);
         return;
     }
     if (const char* scene = std::getenv("RO_SIEGE_EMBLEM_PREVIEW")) {

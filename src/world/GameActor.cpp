@@ -1605,7 +1605,7 @@ int ResolvePcMotionIndex(const CPc* actor, int action, const std::string& bodyAc
     }
 
     const int motionCount = bodyActRes->GetMotionCount(action);
-    if (actor->m_isMotionFreezed) {
+    if (actor->IsMotionFrozen()) {
         return std::clamp(actor->m_curMotion, 0, (std::max)(0, motionCount - 1));
     }
     if (motionCount <= 1) {
@@ -1656,7 +1656,7 @@ int ResolveTimedMotionIndex(const CGameActor& actor, CActRes* actRes, int action
     }
 
     const int motionCount = actRes->GetMotionCount(resolvedAction);
-    if (actor.m_isMotionFreezed) {
+    if (actor.IsMotionFrozen()) {
         return std::clamp(actor.m_curMotion, 0, (std::max)(0, motionCount - 1));
     }
     if (motionCount <= 1) {
@@ -1776,7 +1776,7 @@ int ResolveSpriteMotionIndex(const CGameActor& actor, CActRes* actRes, int actio
         resolvedAction -= 8;
         motionCount = actRes->GetMotionCount(resolvedAction);
     }
-    if (actor.m_isMotionFreezed) {
+    if (actor.IsMotionFrozen()) {
         return std::clamp(actor.m_curMotion, 0, (std::max)(0, motionCount - 1));
     }
     if (motionCount <= 1) {
@@ -1906,7 +1906,7 @@ void ResolveTransientSpriteState(const CGameActor& actor,
         return;
     }
 
-    if (actor.m_isMotionFinished || actor.m_isMotionFreezed) {
+    if (actor.m_isMotionFinished || actor.IsMotionFrozen()) {
         *outMotion = (std::min)(actor.m_curMotion, motionCount - 1);
         return;
     }
@@ -4091,7 +4091,32 @@ void CRenderObject::SetAction(int act, int mot, int type) {
     }
 }
 
+bool CRenderObject::IsMotionFrozen() const
+{
+    return m_isMotionFreezed != 0 || m_bladeStop == BladeStopPresentation::Frozen;
+}
+
+bool CRenderObject::GetBladeStopPose(int& action, int& motion)
+{
+    if (m_bladeStop != BladeStopPresentation::Pose) {
+        return false;
+    }
+    action = 96 + Get8Dir(m_roty);
+    motion = 4;
+    return true;
+}
+
+u32 CRenderObject::GetRenderTint() const
+{
+    return m_bladeStop == BladeStopPresentation::None
+        ? m_u28.m_sprArgb
+        : (m_u28.m_sprArgb & 0xff000000u) | 0x00404040u;
+}
+
 void CRenderObject::ProcessMotion() {
+    if (m_bladeStop == BladeStopPresentation::Pose) {
+        return;
+    }
     if (const CGameActor* actor = dynamic_cast<const CGameActor*>(this)) {
         if (Gr2MonsterModel(actor->m_job)) {
             // Original C3dGrannyGameActor::ProcessMotion0x565670 marks state3
@@ -4170,7 +4195,7 @@ void CRenderObject::ProcessMotion() {
         return;
     }
 
-    if (m_isMotionFinished || m_isMotionFreezed) {
+    if (m_isMotionFinished || IsMotionFrozen()) {
         m_curMotion = (std::min)(m_curMotion, motionCount - 1);
         if (trackMotionWaveEventsInProcessMotion) {
             m_oldBaseAction = m_baseAction;
@@ -4919,7 +4944,7 @@ u8 CGameActor::ProcessState() {
         const float dz = m_pos.z - prevPos.z;
         m_dist += std::sqrt(dx * dx + dz * dz);
 
-        if (!m_isNeverAnimation && !m_isMotionFreezed) {
+        if (!m_isNeverAnimation && !IsMotionFrozen()) {
             m_curAction = m_baseAction + Get8Dir(m_roty);
             const auto ProcessMotionWithDist = [this]() {
                 const int motionCount = m_actRes ? m_actRes->GetMotionCount(m_curAction) : 0;
@@ -5365,6 +5390,12 @@ void CGameActor::RefreshShowEfstVisuals(bool status655Ending)
 {
     const bool hidden = (m_effectState & (kEffectStateHidingMask | kEffectStateBurrowMask)) != 0;
     if (!hidden) m_visibleShowEfst = m_showEfst;
+    if ((m_showEfst & 0x20u) == 0) {
+        m_bladeStop = BladeStopPresentation::None;
+    } else if (!hidden) {
+        const bool usesPose = m_isPc && (m_job == 15 || m_job == 4016 || m_job == 4038);
+        m_bladeStop = usesPose ? BladeStopPresentation::Pose : BladeStopPresentation::Frozen;
+    }
 
     struct RequestedEffect {
         int id;
@@ -8557,7 +8588,12 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
             return true;
         };
 
-        if (IsTransientActionActive(*this, bodyActRes, m_curAction)) {
+        int bladeStopAction = 0;
+        int bladeStopMotion = 0;
+        if (GetBladeStopPose(bladeStopAction, bladeStopMotion)) {
+            bodyAction = bladeStopAction;
+            headMotion = bladeStopMotion;
+        } else if (IsTransientActionActive(*this, bodyActRes, m_curAction)) {
             bodyAction = m_curAction;
             headMotion = m_curMotion;
         } else {

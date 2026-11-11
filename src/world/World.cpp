@@ -2749,6 +2749,15 @@ u32 ResolveBackgroundActorUpdateInterval(const C3dActor& actor,
     return kBackgroundAnimVeryFarInterval;
 }
 
+u32 ResolveActorRenderColor(const CPc& actor, u32 visibilityAlpha)
+{
+    const u32 tint = actor.GetRenderTint();
+    return ro::actor::ResolveBillboardColor(visibilityAlpha,
+        static_cast<u8>(tint >> 24), static_cast<u8>(tint >> 16),
+        static_cast<u8>(tint >> 8), static_cast<u8>(tint),
+        actor.m_isSingleColor != 0, actor.m_colorOfSingleColor);
+}
+
 bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
 {
     constexpr float kBillboardDepthBias = kActorBillboardDepthBias;
@@ -2781,13 +2790,7 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
         g_world.m_ground->GetActorLightIntensity(actor->m_pos.x, actor->m_pos.z, lightRed, lightGreen, lightBlue);
     }
     const u32 billboardColor = ro::actor::ApplyLightIntensity(
-        ro::actor::ResolveBillboardColor(alpha,
-            actor->m_u28.m_sprColor.u.s.a,
-            actor->m_u28.m_sprColor.u.s.r,
-            actor->m_u28.m_sprColor.u.s.g,
-            actor->m_u28.m_sprColor.u.s.b,
-            actor->m_isSingleColor != 0,
-            actor->m_colorOfSingleColor),
+        ResolveActorRenderColor(*actor, alpha),
         lightRed,
         lightGreen,
         lightBlue);
@@ -6949,12 +6952,9 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
                 const u32 fade=now<pc->m_vanishTime?(std::min)(255u,(pc->m_vanishTime-now)>>1):0u;
                 alpha=(std::min)(alpha,fade);
             }
-            const u32 color=ro::actor::ResolveBillboardColor(alpha,
-                pc->m_u28.m_sprColor.u.s.a,pc->m_u28.m_sprColor.u.s.r,
-                pc->m_u28.m_sprColor.u.s.g,pc->m_u28.m_sprColor.u.s.b,
-                pc->m_isSingleColor!=0,pc->m_colorOfSingleColor);
+            const u32 color=ResolveActorRenderColor(*pc, alpha);
             const Gr2MonsterState state{pc->m_gid,pc->m_job,pc->m_stateId,pc->m_stateStartTick,
-                pc->m_pos,pc->m_roty,pc->m_zoom,pc->m_isMotionFreezed!=0,
+                pc->m_pos,pc->m_roty,pc->m_zoom,pc->IsMotionFrozen(),
                 color,m_bgLightDir,m_bgDiffuseCol,m_bgAmbientCol,pc->m_modifyFactorOfmotionSpeed2,static_cast<u32>(pc->m_gdid),flagVersion,graffiti};
             if(RenderGr2Monster(state,viewMatrix))m_billboardFrameCacheDirty=true;
         }

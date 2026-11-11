@@ -80,12 +80,28 @@ for channel in ("alpha", "red", "green", "blue"):
 assert "(std::max)(0, (std::min)(255, advanced))" in TINT_HEADER
 assert "tickProvider() > startTick + 100u" in TINT_HEADER
 
+_, render_tint = body(CURRENT_ACTOR, "u32 CRenderObject::GetRenderTint() const")
+assert "m_bladeStop == BladeStopPresentation::None" in render_tint
+assert "? m_u28.m_sprArgb" in render_tint
+assert "(m_u28.m_sprArgb & 0xff000000u) | 0x00404040u" in render_tint
+
+_, actor_color = body(CURRENT_WORLD, "u32 ResolveActorRenderColor(const CPc& actor, u32 visibilityAlpha)")
+assert "const u32 tint = actor.GetRenderTint();" in actor_color
+assert "ro::actor::ResolveBillboardColor(visibilityAlpha," in actor_color
+for token in ("static_cast<u8>(tint >> 24)", "static_cast<u8>(tint >> 16)",
+              "static_cast<u8>(tint >> 8)", "static_cast<u8>(tint)",
+              "actor.m_isSingleColor != 0", "actor.m_colorOfSingleColor"):
+    assert token in actor_color
+
 _, billboard = body(CURRENT_WORLD, "bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)")
-assert "ro::actor::ResolveBillboardColor(alpha," in billboard
-for token in ("m_u28.m_sprColor.u.s.a", "m_u28.m_sprColor.u.s.r",
-              "m_u28.m_sprColor.u.s.g", "m_u28.m_sprColor.u.s.b",
-              "m_isSingleColor != 0", "m_colorOfSingleColor"):
-    assert token in billboard
+assert "actor->IsHideFadeActive(now)" in billboard
+assert "actor->GetHideFadeAlpha(now)" in billboard
+assert "if (actor->m_vanishTime != 0)" in billboard
+assert "if (now > actor->m_vanishTime)" in billboard
+assert "actor->m_vanishTime - now" in billboard
+assert "g_world.m_ground->GetActorLightIntensity(actor->m_pos.x, actor->m_pos.z, lightRed, lightGreen, lightBlue)" in billboard
+assert "ro::actor::ApplyLightIntensity(" in billboard
+assert "ResolveActorRenderColor(*actor, alpha)" in billboard
 assert "verts[index].color = billboardColor" in billboard
 resolve_marker = "inline std::uint32_t ResolveBillboardColor("
 resolve = TINT_HEADER[TINT_HEADER.index(resolve_marker):]
