@@ -742,7 +742,8 @@
       "evidence": [
         "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
         "docs/packets/work-items/PK22.04.md",
-        "docs/packets/evidence/PK22.02-blade-stop.md"
+        "docs/packets/evidence/PK22.02-blade-stop.md",
+        "docs/packets/evidence/PK22.04-showefst-lifecycle.md"
       ],
       "commit_subject": null
     },

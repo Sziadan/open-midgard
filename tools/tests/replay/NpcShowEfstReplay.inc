@@ -107,6 +107,22 @@ void NpcShowEfstReplay()
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
 
+    DispatchNpcShowEfst(mode, router, bladeNpc.m_gid, 0x40u, 99, 0);
+    Require(!bladeNpc.m_is99 && bladeNpc.m_effectState == 0,
+        "level-99 028A ignored the incoming cloak gate or changed the actor's OPTION");
+    DispatchNpcShowEfst(mode, router, bladeNpc.m_gid, 0, 99, 0);
+    Require(bladeNpc.m_is99 && bladeNpc.m_99 == 99,
+        "uncloaked level-99 028A did not start aura presentation");
+
+    g_session.m_isEffectOn = 0;
+    DispatchNpcShowEfst(mode, router, bladeNpc.m_gid, 0, 1, 0x10u);
+    RequireActorEffectCount(bladeNpc, 254, 0, "disabled effects did not suppress ShowEFST launch");
+    g_session.m_isEffectOn = 1;
+    DispatchNpcShowEfst(mode, router, bladeNpc.m_gid, 0, 1, 0x10u);
+    RequireActorEffectCount(bladeNpc, 254, 1, "ShowEFST refresh did not retry a suppressed launch");
+    DispatchNpcShowEfst(mode, router, bladeNpc.m_gid, 0, 1, 0);
+    RequireActorEffectCount(bladeNpc, 254, 0, "ShowEFST clear did not detach the retried effect");
+
     // Blade-stop is an independent render claim. The three special PC jobs
     // render a fixed pose without mutating the actor's force-animation fields.
     CGameActor* const ordinary[] = { &bladePc, &bladeNpc };
@@ -244,6 +260,26 @@ void NpcShowEfstReplay()
     SendShowEfstStatus(pc, 188, false);
     RequireActorEffectCount(pc, 166, 0, "status 188 release did not remove its final 166 claim");
 
+    SendShowEfstStatus(pc, 2, true);
+    SendShowEfstStatus(pc, 25, true);
+    SendShowEfstStatus(pc, 31, true);
+    RequireActorEffectCount(pc, 166, 1, "selector status icons stacked shared effect 166");
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 180.0f, 180.0f, 250.0f),
+        "latest selector status did not supply its 166 variant");
+    SendShowEfstStatus(pc, 2, true);
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 200.0f, 200.0f, 0.0f),
+        "refreshing an active selector did not restore its precedence");
+    SendShowEfstStatus(pc, 161, true);
+    SendShowEfstStatus(pc, 2, false);
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 200.0f, 200.0f, 0.0f),
+        "status 2 release removed the variant still owned by status 161");
+    SendShowEfstStatus(pc, 161, false);
+    SendShowEfstStatus(pc, 31, false);
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 250.0f, 150.0f, 150.0f),
+        "ending later selectors did not expose the remaining status 25 variant");
+    SendShowEfstStatus(pc, 25, false);
+    RequireActorEffectCount(pc, 166, 0, "ending the final selector status left effect 166 attached");
+
     // Non-PC OPT3 add/remove uses separate terminal effects exactly once.
     DispatchNpcShowEfst(mode, router, nonPc.m_gid, 0, 1, allNonPcBits);
     DispatchNpcShowEfst(mode, router, nonPc.m_gid, 0, 1, 0);
@@ -346,5 +382,95 @@ void NpcShowEfstReplay()
     Require(mode.m_runtimeActors.size() == std::size(actors)
         && world.m_gameObjectList.size() == worldEffectsBeforeUnknown,
         "unknown actor 028A created actor or effect state");
-    std::cout << "{\"case_id\":\"npc_show_efst_replay\",\"contract_id\":\"PK22.02\",\"literal_028a\":true,\"blade_stop\":{\"ordinary_freeze\":true,\"special_jobs\":[15,4016,4038],\"forced_fields_preserved\":true,\"gray_rgb_alpha_preserved\":true,\"body_release_orders\":2},\"nonpc_effects\":[420,427,254,655,667],\"pc_effect_matrix\":[166,203,254,418,544,419,424,586,655,474,382,368,394,396,375,617],\"selector_options\":[130,128,169],\"shared_claim_end_orders\":2,\"status188_snapshot_dual_release\":true,\"terminal_effects\":[540,656],\"hidden_pc_effects\":[203,254,418,586],\"removal_only_110_375\":true,\"unknown_actor_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
+
+    // Isolated heap-owned actor lifetime through selected 0079 spawn, 028A
+    // refresh, and 0080 vanish. The selected 0079 layout carries OPT3@42.
+    CGameMode lifecycleMode;
+    lifecycleMode.m_world = &g_world;
+    CMode* const modeBeforeLifecycle = SkillPacketReplayAccess::Current();
+    const int modeTypeBeforeLifecycle = SkillPacketReplayAccess::CurrentType();
+    std::list<CGameActor*> savedGlobalActors;
+    std::list<CGameObject*> savedGlobalObjects;
+    savedGlobalActors.swap(g_world.m_actorList);
+    savedGlobalObjects.swap(g_world.m_gameObjectList);
+    struct RestoreShowEfstLifecycle {
+        CGameMode& mode;
+        std::list<CGameActor*>& actors;
+        std::list<CGameObject*>& objects;
+        CMode* oldMode;
+        int oldModeType;
+        ~RestoreShowEfstLifecycle()
+        {
+            for (auto& entry : mode.m_runtimeActors) {
+                if (mode.m_world) {
+                    mode.m_world->NotifyActorDeleted(entry.second);
+                    mode.m_world->UnregisterActor(entry.second);
+                }
+                delete entry.second;
+            }
+            mode.m_runtimeActors.clear();
+            for (CGameActor* actor : mode.m_deferredActorDeletes) delete actor;
+            mode.m_deferredActorDeletes.clear();
+            if (mode.m_world) mode.m_world->UpdateGameObjects();
+            actors.swap(g_world.m_actorList);
+            objects.swap(g_world.m_gameObjectList);
+            mode.m_world = nullptr;
+            SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+        }
+    } restoreLifecycle{lifecycleMode, savedGlobalActors, savedGlobalObjects,
+        modeBeforeLifecycle, modeTypeBeforeLifecycle};
+    SkillPacketReplayAccess::SetCurrent(&lifecycleMode);
+    constexpr u32 lifecycleGid = 0x11f00001u;
+    std::array<u8, 53> spawn{0x79, 0};
+    for (unsigned byte = 0; byte < 4; ++byte) {
+        spawn[2 + byte] = static_cast<u8>(lifecycleGid >> (byte * 8));
+    }
+    spawn[14] = 0xea; spawn[15] = 0x03; // job 1002
+    spawn[42] = 0x30; // OPT3 0x20 blade-stop plus 0x10 effect 254.
+    spawn[51] = 1; // clevel
+    PacketView spawnView{};
+    int spawnConsumed = 0;
+    Require(ro::net::GetActiveMapReceiveProfile().actorSpawnLegacySpawn == 0x0079
+        && TryReadPacket(spawn.data(), static_cast<int>(spawn.size()), spawnView, spawnConsumed)
+        && spawnConsumed == static_cast<int>(spawn.size()) && spawnView.packetId == 0x0079
+        && router.Dispatch(lifecycleMode, spawnView),
+        "selected literal 0x0079 spawn packet did not dispatch");
+    const auto spawnedIt = lifecycleMode.m_runtimeActors.find(lifecycleGid);
+    Require(spawnedIt != lifecycleMode.m_runtimeActors.end() && spawnedIt->second
+        && spawnedIt->second->IsMotionFrozen(),
+        "selected 0x0079 spawn did not instantiate heap actor with its OPT3 snapshot");
+    CGameActor* const spawnedActor = spawnedIt->second;
+    RequireActorEffectCount(*spawnedActor, 254, 1,
+        "selected 0x0079 OPT3 spawn omitted its owned effect 254");
+    DispatchNpcShowEfst(lifecycleMode, router, lifecycleGid, 0, 1, 0x30u);
+    RequireActorEffectCount(*spawnedActor, 254, 1,
+        "real 0x028A refresh stacked the spawned actor's owned effect");
+    CRagEffect* const detachedEffect = FindActorEffect(*spawnedActor, 254);
+
+    std::array<u8, 7> vanish{0x80, 0};
+    for (unsigned byte = 0; byte < 4; ++byte) {
+        vanish[2 + byte] = static_cast<u8>(lifecycleGid >> (byte * 8));
+    }
+    vanish[6] = 0; // ordinary vanish/removal
+    PacketView vanishView{};
+    int vanishConsumed = 0;
+    Require(TryReadPacket(vanish.data(), static_cast<int>(vanish.size()), vanishView, vanishConsumed)
+        && vanishConsumed == static_cast<int>(vanish.size()) && vanishView.packetId == 0x0080
+        && router.Dispatch(lifecycleMode, vanishView),
+        "literal 0x0080 vanish did not dispatch");
+    Require(lifecycleMode.m_runtimeActors.count(lifecycleGid) == 0
+        && lifecycleMode.m_deferredActorDeletes.size() == 1
+        && std::find(g_world.m_actorList.begin(), g_world.m_actorList.end(), spawnedActor) == g_world.m_actorList.end()
+        && spawnedActor->m_effectList.empty(),
+        "0x0080 vanish did not remove the actor and detach its effect before deferred deletion");
+    Require(g_world.m_gameObjectList.size() == 1 && detachedEffect && detachedEffect->OnProcess() == 0,
+        "0x0080 vanish did not leave the detached effect to the world sweep");
+    g_world.UpdateGameObjects();
+    // The frame can sweep detached effects before deferred actor deletion.
+    delete lifecycleMode.m_deferredActorDeletes.front();
+    lifecycleMode.m_deferredActorDeletes.clear();
+    Require(g_world.m_actorList.empty() && g_world.m_gameObjectList.empty()
+        && lifecycleMode.m_runtimeActors.empty() && lifecycleMode.m_deferredActorDeletes.empty(),
+        "normal world sweep retained the vanished actor or detached effect");
+    std::cout << "{\"case_id\":\"npc_show_efst_replay\",\"contract_id\":\"PK22.02\",\"lifecycle_contract_id\":\"PK22.04\",\"literal_028a\":true,\"spawn_vanish_lifecycle\":{\"spawn\":\"0079\",\"spawn_opt3\":true,\"refresh\":\"028A\",\"vanish\":\"0080\",\"owned_effect_detached\":true,\"normal_world_cleanup\":true},\"blade_stop\":{\"ordinary_freeze\":true,\"special_jobs\":[15,4016,4038],\"forced_fields_preserved\":true,\"gray_rgb_alpha_preserved\":true,\"body_release_orders\":2},\"nonpc_effects\":[420,427,254,655,667],\"pc_effect_matrix\":[166,203,254,418,544,419,424,586,655,474,382,368,394,396,375,617],\"selector_options\":[130,128,169],\"shared_claim_end_orders\":2,\"status188_snapshot_dual_release\":true,\"terminal_effects\":[540,656],\"hidden_pc_effects\":[203,254,418,586],\"removal_only_110_375\":true,\"unknown_actor_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
