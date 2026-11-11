@@ -749,9 +749,13 @@
       "commit_subject": "packet(PK22.04): verify status ownership through map exit"
     },
     "PK22.05": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK22.05-showefst-verification.md",
+        "docs/packets/contracts/PK22.SHOWEFST-LIFETIME.json",
+        "docs/packets/evidence/PK22.04-showefst-lifecycle.md"
+      ],
+      "commit_subject": "packet(PK22.05): verify selected ShowEFST and status routes"
     },
     "PK23.01": {
       "status": "NOT_STARTED",

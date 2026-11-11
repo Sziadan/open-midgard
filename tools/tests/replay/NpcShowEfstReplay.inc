@@ -56,6 +56,21 @@ void SendShowEfstStatus(CGameActor& actor, int status, bool enabled)
     actor.SendMsg(&actor, 110, status, enabled ? 1 : 0, 0);
 }
 
+void DispatchShowEfstStatus(CGameMode& mode, CGameModePacketRouter& router,
+    u32 gid, u16 status, bool enabled)
+{
+    std::array<u8, 9> bytes{0x96, 0x01, static_cast<u8>(status), static_cast<u8>(status >> 8),
+        0, 0, 0, 0, static_cast<u8>(enabled)};
+    for (unsigned byte = 0; byte < 4; ++byte) {
+        bytes[4 + byte] = static_cast<u8>(gid >> (byte * 8));
+    }
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
+        && consumed == static_cast<int>(bytes.size()) && packet.packetId == 0x0196
+        && router.Dispatch(mode, packet), "selected literal 0x0196 did not dispatch");
+}
+
 CGameActor* SpawnShowEfstReplayActor(CGameMode& mode, CGameModePacketRouter& router,
     u32 gid, u16 job, u16 opt3)
 {
@@ -287,10 +302,10 @@ void NpcShowEfstReplay()
     // OPT3 snapshot first, then release icon claims one by one.
     DispatchNpcShowEfst(mode, router, maskFirst.m_gid, 0, 1, 0x00010010u);
     SendShowEfstStatus(maskFirst, 87, true);
-    SendShowEfstStatus(maskFirst, 235, true);
+    DispatchShowEfstStatus(mode, router, maskFirst.m_gid, 235, true);
     SendShowEfstStatus(maskFirst, 97, true);
     SendShowEfstStatus(maskFirst, 87, true);
-    SendShowEfstStatus(maskFirst, 235, true);
+    DispatchShowEfstStatus(mode, router, maskFirst.m_gid, 235, true);
     SendShowEfstStatus(maskFirst, 97, true);
     RequireActorEffectCount(maskFirst, 254, 1, "duplicate status-110 claims duplicated effect 254");
     RequireActorEffectCount(maskFirst, 655, 1, "duplicate status-110 claim duplicated effect 655");
@@ -299,7 +314,7 @@ void NpcShowEfstReplay()
     RequireActorEffectCount(maskFirst, 655, 1, "mask end incorrectly removed shared 655 claim");
     SendShowEfstStatus(maskFirst, 87, false);
     RequireActorEffectCount(maskFirst, 254, 1, "status 87 end removed 254 still claimed by status 235");
-    SendShowEfstStatus(maskFirst, 235, false);
+    DispatchShowEfstStatus(mode, router, maskFirst.m_gid, 235, false);
     RequireActorEffectCount(maskFirst, 254, 0, "last 254 status claim did not remove the shared effect");
     SendShowEfstStatus(maskFirst, 97, false);
     RequireActorEffectCount(maskFirst, 655, 0, "last 655 status claim did not remove the shared effect");
@@ -308,10 +323,10 @@ void NpcShowEfstReplay()
     // Release icon claims first and OPT3 snapshot last; terminal still occurs once.
     DispatchNpcShowEfst(mode, router, statusFirst.m_gid, 0, 1, 0x00010010u);
     SendShowEfstStatus(statusFirst, 87, true);
-    SendShowEfstStatus(statusFirst, 235, true);
+    DispatchShowEfstStatus(mode, router, statusFirst.m_gid, 235, true);
     SendShowEfstStatus(statusFirst, 97, true);
     SendShowEfstStatus(statusFirst, 87, false);
-    SendShowEfstStatus(statusFirst, 235, false);
+    DispatchShowEfstStatus(mode, router, statusFirst.m_gid, 235, false);
     SendShowEfstStatus(statusFirst, 97, false);
     RequireActorEffectCount(statusFirst, 254, 1, "status-first order lost OPTION 254 claim");
     RequireActorEffectCount(statusFirst, 655, 1, "status-first order lost OPTION 655 claim");
@@ -324,7 +339,7 @@ void NpcShowEfstReplay()
     // both owners exist, the OPT3 snapshot wins; after it clears, the icon's
     // option 128 representation remains until its own release.
     DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0x1u);
-    SendShowEfstStatus(pc, 188, true);
+    DispatchShowEfstStatus(mode, router, pc.m_gid, 188, true);
     RequireActorEffectCount(pc, 166, 1, "status 188 duplicated the shared 166 snapshot effect");
     Require(EffectPositionEquals(FindActorEffect(pc, 166), 200.0f, 200.0f, 0.0f),
         "OPT3 selector did not retain precedence over status 188's option 128");
@@ -332,7 +347,7 @@ void NpcShowEfstReplay()
     RequireActorEffectCount(pc, 166, 1, "OPT3 clear removed a remaining status 188 claim");
     Require(EffectPositionEquals(FindActorEffect(pc, 166), 250.0f, 150.0f, 150.0f),
         "remaining status 188 claim did not restore marker option 128");
-    SendShowEfstStatus(pc, 188, false);
+    DispatchShowEfstStatus(mode, router, pc.m_gid, 188, false);
     RequireActorEffectCount(pc, 166, 0, "status 188 release did not remove its final 166 claim");
 
     SendShowEfstStatus(pc, 2, true);

@@ -145,7 +145,9 @@ assert all(claim_routes[status] == effect_ids for status, (_, effect_ids) in sho
     "status-110 claim effect mapping differs from RefreshShowEfstVisuals"
 assert "m_showEfstIconClaims.rbegin()" in showefst and "switch (*it)" in showefst
 assert "wanted->marker == instance.marker && wanted->option == instance.option" in showefst
-assert "if (present) continue;" in showefst, "snapshot/icon reconciliation may duplicate another producer's effect"
+assert "if (hasAttached(wanted.id)) continue;" in showefst, "snapshot/icon reconciliation may duplicate another producer's effect"
+assert "effect && effect->GetEffectType() == id" in showefst, "effect guard must search attached effects"
+assert "!hidden && !hasAttached(418)" in showefst, "snapshot companion 544 must observe the primary 418 start guard"
 assert "if (id == 420 && nonPc) LaunchEffect(540);" in showefst
 assert "if (id == 655 && (nonPc || status655Ending)) LaunchEffect(656);" in showefst
 claims_impl = norm(src110)
