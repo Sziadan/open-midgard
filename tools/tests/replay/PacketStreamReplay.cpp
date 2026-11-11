@@ -2492,6 +2492,7 @@ void CompanionIdentityReplay()
     homun[55] = 0x45;
     homun[62] = 0xf0;
     homun[69] = 5;
+    g_windowMgr.ClearChatEvents();
     Require(!TryReadPacket(homun.data(), 69, packet, consumed), "homunculus accepted the short snapshot layout");
     Require(TryReadPacket(homun.data(), 71, packet, consumed) && consumed == 71 && router.Dispatch(mode, packet),
         "homunculus snapshot did not frame and dispatch");
@@ -2499,6 +2500,16 @@ void CompanionIdentityReplay()
     Require(hs.name == std::string(24, '%') && hs.nameModified == 1 && hs.level == 7
         && hs.hunger == 10 && hs.accessory == 0xf000 && hs.combat.hp == -1 && hs.combat.sp == 0x45
         && hs.experience == -268435456 && hs.combat.attackRange == 5, "homunculus snapshot field layout differed");
+    Require(hs.lastWarnedHunger == 10 && g_windowMgr.GetChatEvents().size() == 1
+        && g_windowMgr.GetChatEvents().front().color == 0xff0000u, "homunculus hunger notice lost the selected route or color");
+    homun[29] = 11;
+    Require(router.Dispatch(mode, packet), "non-warning hunger snapshot was unhandled");
+    homun[29] = 10;
+    Require(router.Dispatch(mode, packet) && g_windowMgr.GetChatEvents().size() == 1,
+        "repeated hunger threshold produced another warning");
+    homun[29] = 5;
+    Require(router.Dispatch(mode, packet) && hs.lastWarnedHunger == 5
+        && g_windowMgr.GetChatEvents().size() == 2, "a different hunger threshold did not warn");
 
     std::array<u8, 8> parameter{0xa2, 0x02, 7, 0, 0xff, 0xff, 0xff, 0xff};
     Require(TryReadPacket(parameter.data(), 8, packet, consumed) && consumed == 8 && router.Dispatch(mode, packet)
@@ -2557,6 +2568,51 @@ void CompanionIdentityReplay()
         && homunActor.emotions == 1, "feed failure without a homunculus did not retain the notices");
     mode.m_world = nullptr;
     g_windowMgr.ClearChatEvents();
+
+    g_session.m_homunGID = homunActor.m_gid;
+    g_session.m_homunStatus.alive = false;
+    g_session.m_merStatus.alive = false;
+    const auto dispatchActor = [&](auto& bytes) {
+        Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
+            && consumed == static_cast<int>(bytes.size()) && router.Dispatch(mode, packet),
+            "companion actor packet did not frame and dispatch");
+    };
+    const auto putGid = [](u8* dst, u32 gid) {
+        for (unsigned i = 0; i < 4; ++i) dst[i] = static_cast<u8>(gid >> (8 * i));
+    };
+    const auto spawn = [&](u32 gid, u16 job) {
+        std::array<u8, 53> entry{0x79, 0};
+        putGid(entry.data() + 2, gid);
+        entry[14] = static_cast<u8>(job);
+        entry[15] = static_cast<u8>(job >> 8);
+        dispatchActor(entry);
+    };
+    const auto vanish = [&](u32 gid, u8 reason) {
+        std::array<u8, 7> removal{0x80};
+        putGid(removal.data() + 2, gid);
+        removal[6] = reason;
+        dispatchActor(removal);
+    };
+    std::array<u8, 42> npcEntry{0x7c, 0, 9};
+    putGid(npcEntry.data() + 3, homunActor.m_gid);
+    npcEntry[21] = 0x71;
+    npcEntry[22] = 0x17;
+    dispatchActor(npcEntry);
+    Require(!hs.alive, "dedicated NPC entry set the companion alive flag");
+    vanish(homunActor.m_gid, 0);
+    spawn(homunActor.m_gid, 6001);
+    spawn(otherActor.m_gid, 6017);
+    Require(hs.alive && ms.alive, "registered companion entries did not set alive flags");
+    vanish(homunActor.m_gid, 0);
+    Require(hs.alive, "ordinary companion removal cleared the alive flag");
+    spawn(homunActor.m_gid, 6001);
+    vanish(homunActor.m_gid, 1);
+    Require(!hs.alive && ms.alive && g_session.m_homunGID == homunActor.m_gid,
+        "homunculus death did not clear only the owned alive flag");
+    spawn(homunActor.m_gid, 6001);
+    Require(!hs.alive, "an update to an existing companion marked it alive again");
+    vanish(homunActor.m_gid, 0);
+    vanish(otherActor.m_gid, 0);
 
     g_session.m_homunGID = oldHomun;
     g_session.m_merGID = oldMerc;

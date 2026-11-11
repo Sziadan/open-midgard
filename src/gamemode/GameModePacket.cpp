@@ -1961,6 +1961,14 @@ void HandleHomunProperty(CGameMode&, const PacketView& packet)
     status.nextExperience = ReadCompanionI32(data + 63);
     status.skillPoints = static_cast<s16>(ReadLE16(data + 67));
     status.combat.attackRange = static_cast<s16>(ReadLE16(data + 69));
+    const int hunger = status.hunger;
+    if ((hunger == 1 || hunger == 5 || hunger == 10) && hunger != status.lastWarnedHunger) {
+        ro::UiMessageStrings strings;
+        strings.Load();
+        const auto message = strings.Get(1018, "Your homunculus is hungry.");
+        g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(message.c_str()), 0xff);
+        status.lastWarnedHunger = hunger;
+    }
 }
 
 void HandleHomunFeedResult(CGameMode& mode, const PacketView& packet)
@@ -6119,12 +6127,26 @@ void LogActorPacketSeenOnce(const PacketView& packet)
 void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
 {
     const bool isPc = ShouldTreatActorAsPc(state.objectType, state.job);
+    const auto& receiveProfile = ro::net::GetActiveMapReceiveProfile();
+    // The dedicated legacy NPC entry has no companion-alive branch.
+    const bool newCompanionEntry = state.gid != 0
+        && state.packetId != receiveProfile.actorSpawnLegacyNpc
+        && state.packetId != receiveProfile.actorSpawnLegacyAlt
+        && (state.gid == g_session.m_homunGID || state.gid == g_session.m_merGID)
+        && (IsNpcLikeJob(state.job) || IsHomunOrMercenaryJob(state.job) || state.objectType == 9)
+        && !FindRuntimeActorForVanish(mode, state.gid)
+        && (!mode.m_world || !mode.m_world->GetGameActorByAID(state.gid));
     CGameActor* actor = EnsureRuntimeActor(
         mode,
         state.gid,
         isPc || ShouldUseSpriteBillboardActor(state.objectType, state.job));
     if (!actor) {
         return;
+    }
+
+    if (newCompanionEntry) {
+        if (state.gid == g_session.m_homunGID) g_session.m_homunStatus.alive = true;
+        if (state.gid == g_session.m_merGID) g_session.m_merStatus.alive = true;
     }
 
     const bool hadResolvedIdentity = actor->m_job != 0 || actor->m_objectType != 0 || actor->m_isPc != 0;

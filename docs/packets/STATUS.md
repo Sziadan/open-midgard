@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current homunculus feed checkpoint (2026-11-11)**. The registered `022F` path now applies feeding success state and missing-food feedback. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homun-feed.md)
+**Current companion lifecycle checkpoint (2026-11-11)**. Companion actor entries and homunculus death now update the session alive flags. Homunculus hunger warnings use the selected thresholds. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-lifecycle.md)
+
+**Previous homunculus feed checkpoint (2026-11-11)**. The registered `022F` path now applies feeding success state and missing-food feedback. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homun-feed.md)
 
 **Previous companion status checkpoint (2026-11-11)**. The selected homunculus and mercenary status packets now populate the session snapshots. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status.md)
 

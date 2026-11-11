@@ -1,8 +1,10 @@
 # Packet continuation handoff
 
-**Current homunculus feed checkpoint (2026-11-11)**. The registered `022F` path now applies feeding success state and missing-food feedback. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homun-feed.md)
+**Current companion lifecycle checkpoint (2026-11-11)**. Companion actor entries and homunculus death now update the session alive flags. Homunculus hunger warnings use the selected thresholds. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-lifecycle.md)
 
-For companion lifecycle, trace actor message 28 at `0x55D530` in `Ref/GameActor.cpp` and the mercenary dismissal action in `Ref/UIFrameWnd.cpp`. The owned homunculus death branch clears its alive flag and target state. The mercenary branch has different conditions. For hunger notices, `Zc_Property_Homun` compares levels 1, 5, and 10 against the previous warned level. The selected binary uses message 1018 and COLORREF `0xFF` at `0x5AF1A8` through `0x5AF1C0`.
+**Previous homunculus feed checkpoint (2026-11-11)**. The registered `022F` path now applies feeding success state and missing-food feedback. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homun-feed.md)
+
+For the next companion lifecycle branches, trace skill 244 in `Zc_Use_Skill` at `0x58CB50` and the mercenary dismissal action that sends mode message 200 with subtype 2 in `Ref/UIFrameWnd.cpp`. Start status window work from `UIHomunInfoWnd::OnCreate` and `UIMerInfoWnd::OnCreate` in that file.
 
 **Previous companion status checkpoint (2026-11-11)**. The selected homunculus and mercenary status packets now populate the session snapshots. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status.md)
 
@@ -68,7 +70,7 @@ For companion lifecycle, trace actor message 28 at `0x55D530` in `Ref/GameActor.
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Continue companion actor lifecycle, hunger notices, and status windows. Use the selected executable’s inactive companion Lua VM as the baseline for modifier routing. Compare the Graphics skin control with the original dropdown and verify live selection. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
+**Next work.** Continue companion status windows, summon and dismissal requests, and the selected skill 244 reset. Use the selected executable’s inactive companion Lua VM as the baseline for modifier routing. Compare the Graphics skin control with the original dropdown and verify live selection. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
 
 The Traditional Chinese keystroke implementation uses the 39 fixed Big5 pairs in the selected executable and the stable slash-key pair from the adjacent slot string. The period key reads uninitialized bytes in the original. The port leaves that cell empty. [Keystroke evidence](evidence/PK27-prompt-keystrokes.md)
 

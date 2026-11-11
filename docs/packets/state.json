@@ -977,16 +977,18 @@
       "evidence": [
         "docs/packets/evidence/PK27-companion-identity.md",
         "docs/packets/evidence/PK28-companion-status.md",
-        "docs/packets/evidence/PK28-homun-feed.md"
+        "docs/packets/evidence/PK28-homun-feed.md",
+        "docs/packets/evidence/PK28-companion-lifecycle.md"
       ],
-      "commit_subject": "packet(PK28): handle homunculus feed results"
+      "commit_subject": "packet(PK28): track companion actor lifecycle"
     },
     "PK28.03": {
       "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK28-homun-feed.md"
+        "docs/packets/evidence/PK28-homun-feed.md",
+        "docs/packets/evidence/PK28-companion-lifecycle.md"
       ],
-      "commit_subject": "packet(PK28): handle homunculus feed results"
+      "commit_subject": "packet(PK28): track companion actor lifecycle"
     },
     "PK28.04": {
       "status": "NOT_STARTED",
@@ -1005,9 +1007,10 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK27-companion-identity.md",
-        "docs/packets/evidence/PK28-companion-status.md"
+        "docs/packets/evidence/PK28-companion-status.md",
+        "docs/packets/evidence/PK28-companion-lifecycle.md"
       ],
-      "commit_subject": "packet(PK28): receive companion status snapshots"
+      "commit_subject": "packet(PK28): track companion actor lifecycle"
     },
     "PK29.03": {
       "status": "NOT_STARTED",
