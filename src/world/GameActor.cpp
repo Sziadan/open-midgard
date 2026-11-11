@@ -8255,6 +8255,36 @@ void CPc::SetModifyFactorOfmotionSpeed(int attackMT)
     m_modifyFactorOfmotionSpeed2 = m_modifyFactorOfmotionSpeed;
 }
 
+void CPc::ReplaceNpcClass(int job)
+{
+    if (Gr2MonsterModel(m_job)) {
+        ReleaseGr2Monster(m_gid);
+    }
+
+    // The old ACT/SPR pointers are borrowed. A pet accessory ACT holds a
+    // separate lock and overrides the job ACT until the appearance changes.
+    if (m_petAccessoryActRes) {
+        m_petAccessoryActRes->Unlock();
+        m_petAccessoryActRes = nullptr;
+    }
+    m_petAccessoryActName.clear();
+    m_actRes = nullptr;
+    m_sprRes = nullptr;
+    m_cachedNonPcResourceJob = -1;
+    m_cachedNonPcActRes = nullptr;
+    m_cachedNonPcSprRes = nullptr;
+
+    m_job = job;
+    m_sex = 0;
+    ReleaseActorBillboardTexture(*this);
+    m_billboardTextureWidth = 0;
+    m_billboardTextureHeight = 0;
+    m_billboardAnchorX = 0;
+    m_billboardAnchorY = 0;
+    m_billboardOpaqueBounds = {};
+    InvalidateBillboard();
+}
+
 void CPc::InvalidateBillboard()
 {
     for (CTexture*& texture : m_assumptioAuraTextures) {

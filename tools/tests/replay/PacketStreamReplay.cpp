@@ -13,6 +13,7 @@
 #include "gamemode/Mode.h"
 #include "item/Item.h"
 #include "pathfinder/PathFinder.h"
+#include "res/Texture.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
 #include "qtui/QtUiStateAdapter.h"
@@ -5508,6 +5509,7 @@ void GlobalChatProductionSendReplay()
 #include "CharacterNameReplay.inc"
 #include "RentalItemReplay.inc"
 #include "NpcShopTransactionReplay.inc"
+#include "NpcClassChangeReplay.inc"
 
 int main(int argc,char** argv){try{
 #if RO_ENABLE_QT6_UI
@@ -5550,6 +5552,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--chat-notice-only") { ChatNoticeRoutingReplay(); ChatNoticeProducerReplay(); CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--chat-state-only") { ChatWindowStateReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--corpse-only") { CorpsePacketReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--npc-class-change-only") { NpcClassChangeReplay();CConnection::Cleanup();return 0; }
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();

@@ -68,6 +68,7 @@
 #include <cstring>
 #include <cstdio>
 #include <initializer_list>
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>
@@ -8868,6 +8869,29 @@ void HandleActorFont(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleNpcClassChange(CGameMode& mode, const PacketView& packet)
+{
+    if (!mode.m_world || !packet.data || packet.packetLength != 11) {
+        return;
+    }
+
+    const u32 gid = ReadLE32(packet.data + 2);
+    // The original receiver passes zero to SetSprAct and skips byte 6.
+    const u32 wireJob = ReadLE32(packet.data + 7);
+    if (gid == 0 || wireJob > static_cast<u32>((std::numeric_limits<int>::max)())) {
+        return;
+    }
+
+    auto* actor = dynamic_cast<CPc*>(mode.m_world->GetGameActorByAID(gid));
+    const int job = static_cast<int>(wireJob);
+    if (!actor || actor->m_isPc || actor->m_job == job) {
+        return;
+    }
+
+    actor->ReplaceNpcClass(job);
+    mode.m_world->InvalidateBillboardFrameCache();
+}
+
 void HandleActorSpriteChange(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 11) {
@@ -9352,7 +9376,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x013B, HandleActionFailure);
     router.Register(0x013C, HandleEquipAmmo);
     router.Register(0x013E, HandleSkillCastAck);
-    router.Register(0x01B0, HandleIgnorePacket);
+    router.Register(0x01B0, HandleNpcClassChange);
     RegisterHandlerIfValid(router, receiveProfile.partyHpUpdateBasic, HandlePartyHpUpdate);
     router.Register(0x0107, HandlePartyPosition);
     RegisterHandlerIfValid(router, receiveProfile.partyMemberAddedBasic, HandlePartyMemberAdded);

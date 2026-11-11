@@ -669,7 +669,8 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
-        "docs/packets/work-items/PK20.02.md"
+        "docs/packets/work-items/PK20.02.md",
+        "docs/packets/evidence/PK20.02-npc-class-change.md"
       ],
       "commit_subject": null
     },

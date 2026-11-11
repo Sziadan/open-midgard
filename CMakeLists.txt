@@ -329,6 +329,7 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     endif()
     add_test(NAME packet_stream_replay_checks COMMAND packet_stream_replay_checks)
     add_test(NAME packet_corpse_lifecycle_checks COMMAND packet_stream_replay_checks --corpse-only)
+    add_test(NAME packet_npc_class_change_checks COMMAND packet_stream_replay_checks --npc-class-change-only)
     add_test(NAME packet_chat_state_checks COMMAND packet_stream_replay_checks --chat-state-only)
     add_test(NAME packet_chat_notice_checks COMMAND packet_stream_replay_checks --chat-notice-only)
     set_tests_properties(packet_chat_notice_checks PROPERTIES TIMEOUT 30
@@ -436,6 +437,8 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-replay-settings")
     set_tests_properties(packet_corpse_lifecycle_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-corpse-settings")
+    set_tests_properties(packet_npc_class_change_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-npc-class-change-settings")
     add_executable(party_position_state_checks tools/tests/PartyPositionTests.cpp)
     target_compile_features(party_position_state_checks PRIVATE cxx_std_17)
     target_include_directories(party_position_state_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")

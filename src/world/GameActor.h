@@ -479,6 +479,7 @@ public:
     virtual void SetModifyFactorOfmotionSpeed(int attackMT) override;
 
     void InvalidateBillboard();
+    void ReplaceNpcClass(int job);
     bool EnsureBillboardTexture(float cameraLongitude);
     void WarmupCommonBillboardCache();
 
