@@ -3,6 +3,7 @@
 #include "core/GuildState.h"
 #include "core/PetState.h"
 #include "core/SourceMapNames.h"
+#include "core/SourceMapTypeTable.h"
 #include <algorithm>
 #include <array>
 #include <deque>
@@ -222,6 +223,8 @@ public:
     bool m_isEffectOn;
     bool m_isMinEffect;
     bool m_isMinEffectOld=false;
+    int m_curMapType = 0;
+    ro::SourceMapTypeTable m_mapTypeInfo;
     int m_talkType=0;
     bool m_isBattleChat=false;
     std::vector<std::pair<int,int>> m_cmdOnOffSet;

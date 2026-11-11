@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current pending companion actor skill checkpoint (2026-11-11)**. Pending companion skills aimed at ordinary actors now follow the selected inactive AI branch and consume the click. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-pending-companion-actor-skills.md)
+**Current map property checkpoint (2026-11-11)**. The legacy `0199` and `01D6` receivers now apply map state and the original ally gates feed gameplay targeting. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK19-map-properties.md)
+
+**Previous pending companion actor skill checkpoint (2026-11-11)**. Pending companion skills aimed at ordinary actors now follow the selected inactive AI branch and consume the click. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-pending-companion-actor-skills.md)
 
 **Previous companion actor targeting checkpoint (2026-11-11)**. Alt-clicking an eligible actor records companion selection and toggles an existing attack target. Actor death clears matching targets. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-actor-targets.md)
 

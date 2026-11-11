@@ -4645,6 +4645,40 @@ bool TryHandleCompanionGroundClick(CGameMode& mode, int screenX, int screenY)
     return g_session.ApplyCompanionGroundClick(x, y, alt, shift);
 }
 
+bool IsPcAttackEligibleForMap(const CGameMode& mode, const CGameActor& target, bool baseEligible)
+{
+    if (!mode.m_world) return false;
+    const auto* player = mode.m_world->m_player;
+    const bool sameGuild = player && target.m_gdid && target.m_gdid == player->m_gdid;
+    const bool pvpMap = mode.m_world->m_isPKZone || mode.m_world->m_isEventPVPMode;
+    const auto& party = g_session.GetPartyList();
+    const bool sameParty = pvpMap && std::any_of(party.begin(), party.end(),
+        [&](const FRIEND_INFO& member) { return member.AID == target.m_gid; });
+    bool eligible = baseEligible;
+    const int type = g_session.m_curMapType;
+    if (g_session.m_mapTypeInfo.Enabled(type, ro::SourceMapTypeTable::AllyParty)) {
+        if (!sameParty) eligible = true;
+    } else if (g_session.m_mapTypeInfo.Enabled(type, ro::SourceMapTypeTable::AllyGuild) && !sameGuild) {
+        eligible = true;
+    }
+    if (target.m_pkState || pvpMap) {
+        if (!sameParty) eligible = true;
+    } else if (mode.m_world->m_isSiegeMode && !sameGuild) {
+        eligible = true;
+    }
+    return eligible;
+}
+
+bool IsMonsterAttackEligibleForMap(const CGameMode& mode, const CGameActor& target, bool baseEligible)
+{
+    const auto* player = mode.m_world ? mode.m_world->m_player : nullptr;
+    const bool sameGuild = player && target.m_gdid && target.m_gdid == player->m_gdid;
+    const bool guildAllies = g_session.m_mapTypeInfo.Enabled(g_session.m_curMapType,
+        ro::SourceMapTypeTable::AllyGuild);
+    const bool siege = mode.m_world && mode.m_world->m_isSiegeMode;
+    return (baseEligible && !(sameGuild && (guildAllies || siege))) || g_session.m_isNoShift == 1;
+}
+
 bool TryHandleCompanionActorClick(CGameMode& mode, int screenX, int screenY)
 {
     if (!(GetKeyState(VK_MENU) & 0x8000)
@@ -4658,13 +4692,8 @@ bool TryHandleCompanionActorClick(CGameMode& mode, int screenX, int screenY)
 
     const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
     if (IsPcLikeHoverActor(actor)) {
-        const bool pvpMap = mode.m_world->m_isPKZone || mode.m_world->m_isEventPVPMode;
-        const auto& party = g_session.GetPartyList();
-        const bool sameParty = pvpMap && std::any_of(party.begin(), party.end(),
-            [&](const FRIEND_INFO& member) { return member.AID == actor->m_gid; });
-        const bool pvp = actor->m_pkState || pvpMap;
-        if (actor->m_stateId == 3 || (!shift && g_session.m_isNoShift != 1
-            && !mode.m_world->m_isSiegeMode && !(pvp && !sameParty))) return false;
+        if (actor->m_stateId == 3 || (!IsPcAttackEligibleForMap(mode, *actor, shift)
+            && g_session.m_isNoShift != 1 && !mode.m_world->m_isSiegeMode)) return false;
     } else if (!IsMonsterLikeHoverActor(actor) || IsNpcLikeHoverActor(actor)) {
         return false;
     }
@@ -6878,10 +6907,10 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
     if (kind == PetCaptureActorKind::Monster || kind == PetCaptureActorKind::Pc) {
         const int skillId = mode.m_skillUseInfo.id;
         const bool homunculusSkill = g_session.m_homunStatus.alive && skillId >= 8000 && skillId < 8017;
-        const bool attackEligible = (kind == PetCaptureActorKind::Monster ? (good ? shift : !shift) : (good ? !shift : shift))
-            || g_session.m_isNoShift == 1 || (kind == PetCaptureActorKind::Pc
-                && (target->m_pkState || mode.m_world->m_isPKZone || mode.m_world->m_isEventPVPMode
-                    || mode.m_world->m_isSiegeMode));
+        const bool attackEligible = kind == PetCaptureActorKind::Monster
+            ? IsMonsterAttackEligibleForMap(mode, *target, good ? shift : !shift)
+            : IsPcAttackEligibleForMap(mode, *target, good ? !shift : shift)
+                || g_session.m_isNoShift == 1 || mode.m_world->m_isSiegeMode;
         const bool mercenarySkill = g_session.m_merStatus.alive && skillId >= 8200 && skillId < 8238 && attackEligible;
         if (kind == PetCaptureActorKind::Monster && alt) {
             if (g_session.m_homunStatus.alive) g_session.m_homunTarget.SelectActor(target->m_gid, shift);
@@ -6894,10 +6923,10 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
     }
     bool eligible=false;
     switch(kind){
-    case PetCaptureActorKind::Monster:eligible=((good?shift:!shift) || g_session.m_isNoShift==1) && !alt;break;
+    case PetCaptureActorKind::Monster:eligible=IsMonsterAttackEligibleForMap(mode,*target,good?shift:!shift) && !alt;break;
     case PetCaptureActorKind::Pc:
         eligible=((target!=player && target->m_gid!=g_session.m_aid) || all)
-            && ((good?!shift:shift) || target->m_pkState || mode.m_world->m_isPKZone);break;
+            && IsPcAttackEligibleForMap(mode,*target,good?!shift:shift);break;
     case PetCaptureActorKind::Homun:
         eligible=mode.m_skillUseInfo.id==231 || ((mode.m_world->m_isPKZone || mode.m_world->m_isSiegeMode)
             && target->m_gid!=g_session.m_homunGID);break;
@@ -6947,6 +6976,10 @@ bool TryRequestAttackFromScreenPoint(CGameMode& mode, int screenX, int screenY)
     if (!IsMonsterLikeHoverActor(hoveredActor)) {
         return false;
     }
+
+    const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    if ((GetKeyState(VK_MENU) & 0x8000)
+        || !IsMonsterAttackEligibleForMap(mode, *hoveredActor, !shift)) return true;
 
     if (!SendAttackRequestPacket(hoveredActor->m_gid, kActionRequestContinuousAttack)) {
         return false;

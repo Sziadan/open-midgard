@@ -2018,6 +2018,50 @@ void HandleHomunStatus(CGameMode& mode, const PacketView& packet)
     if (actor) status.job = actor->m_job;
 }
 
+void HandleNotifyMapProperty(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 4) return;
+    const int property = static_cast<s16>(ReadLE16(packet.data + 2));
+    g_session.m_isMinEffect = g_session.m_isMinEffectOld;
+    if (mode.m_world) {
+        if (property == 1 || property == 5) mode.m_world->m_isPKZone = 1;
+        else if (property == 2) mode.m_world->m_isEventPVPMode = 1;
+        else if (property == 3) {
+            mode.m_world->m_isSiegeMode = 1;
+            g_session.m_isMinEffect = true;
+        }
+    }
+    if (property == 4) {
+        ro::UiMessageStrings strings;
+        strings.Load();
+        const auto text = strings.Get(855, "This is a PK Zone.");
+        g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(text.c_str()), 0x9b9bff);
+    }
+    if (g_serviceType != ServiceKorea) g_session.m_mapTypeInfo.Clear();
+}
+
+void HandleNotifyMapProperty2(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 4) return;
+    const int type = static_cast<s16>(ReadLE16(packet.data + 2));
+    g_session.m_curMapType = type;
+    g_session.m_isMinEffect = g_session.m_isMinEffectOld;
+    g_session.m_mapTypeInfo.EnsureLoaded();
+    if (!mode.m_world) return;
+
+    if (type == 5 || type == 6) {
+        mode.m_world->m_isPKZone = 1;
+    } else if (type != 11 && type != 12) {
+        if (type == 8 || type == 18 || g_session.m_mapTypeInfo.Enabled(type, ro::SourceMapTypeTable::Siege)) {
+            mode.m_world->m_isSiegeMode = 1;
+            g_session.m_isMinEffect = true;
+        } else if (type == 19) {
+            mode.m_world->m_isBattleFieldMode = 1;
+            mode.m_world->m_isPKZone = 1;
+        }
+    }
+}
+
 void HandleLocalizedSystemNotice(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 4) return;
@@ -9278,8 +9322,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01D3, HandleSound);
     router.Register(0x01D2, HandleComboDelay);
     router.Register(0x01D1, HandleBladeStop);
-        router.Register(0x0199, HandleIgnorePacket); // map property state; keep framing aligned until consumed
-    router.Register(0x01D6, HandleIgnorePacket); // map type / mapflags hint; framing only for now
+    router.Register(0x0199, HandleNotifyMapProperty);
+    router.Register(0x01D6, HandleNotifyMapProperty2);
     router.Register(0x01D7, HandleActorSpriteChange);
     RegisterHandlerIfValid(router, receiveProfile.skillDamageNotifyExtended, HandleSkillDamageNotify);
     router.Register(0x01E1, HandleSpirits2);

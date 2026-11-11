@@ -610,19 +610,25 @@
       "commit_subject": null
     },
     "PK19.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK19-map-properties.md"
+      ],
+      "commit_subject": "packet(PK19): restore legacy map property state"
     },
     "PK19.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK19-map-properties.md"
+      ],
+      "commit_subject": "packet(PK19): restore legacy map property state"
     },
     "PK19.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK19-map-properties.md"
+      ],
+      "commit_subject": "packet(PK19): restore legacy map property state"
     },
     "PK19.04": {
       "status": "NOT_STARTED",
@@ -997,9 +1003,10 @@
         "docs/packets/evidence/PK28-companion-summon-requests.md",
         "docs/packets/evidence/PK28-companion-ground-targets.md",
         "docs/packets/evidence/PK28-companion-actor-targets.md",
-        "docs/packets/evidence/PK28-pending-companion-actor-skills.md"
+        "docs/packets/evidence/PK28-pending-companion-actor-skills.md",
+        "docs/packets/evidence/PK19-map-properties.md"
       ],
-      "commit_subject": "packet(PK28): honor companion actor skill interception"
+      "commit_subject": "packet(PK19): restore legacy map property state"
     },
     "PK28.04": {
       "status": "NOT_STARTED",
@@ -1028,9 +1035,10 @@
         "docs/packets/evidence/PK28-companion-summon-requests.md",
         "docs/packets/evidence/PK28-companion-ground-targets.md",
         "docs/packets/evidence/PK28-companion-actor-targets.md",
-        "docs/packets/evidence/PK28-pending-companion-actor-skills.md"
+        "docs/packets/evidence/PK28-pending-companion-actor-skills.md",
+        "docs/packets/evidence/PK19-map-properties.md"
       ],
-      "commit_subject": "packet(PK28): honor companion actor skill interception"
+      "commit_subject": "packet(PK19): restore legacy map property state"
     },
     "PK29.03": {
       "status": "NOT_STARTED",

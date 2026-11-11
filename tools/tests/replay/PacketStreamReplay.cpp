@@ -3022,6 +3022,144 @@ void PendingCompanionActorSkillReplay()
     mode.m_world = nullptr;
 }
 
+void MapTypePropertyReplay()
+{
+    struct RecordingPlayer : CPlayer {
+        int commands = 0;
+        void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override { ++commands; }
+    } player;
+    CGameMode mode;
+    CWorld world;
+    world.m_player = &player;
+    mode.m_world = &world;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto oldType = g_session.m_curMapType;
+    const auto oldTable = g_session.m_mapTypeInfo;
+    const auto oldMinEffect = g_session.m_isMinEffect;
+    const auto oldMinEffectPreference = g_session.m_isMinEffectOld;
+    const auto oldParty = g_session.m_partyList;
+    const auto oldWeight = g_session.m_weight;
+    const auto oldMaxWeight = g_session.m_maxWeight;
+    const auto oldNoShift = g_session.m_isNoShift;
+    g_session.m_isMinEffectOld = false;
+    g_session.m_weight = 0;
+    g_session.m_maxWeight = 1000;
+    g_session.m_isNoShift = 0;
+    g_session.m_partyList.clear();
+
+    std::string table = "// source loader uses fifteen values per type\r\n";
+    for (int row = 0; row < 30; ++row) {
+        for (int column = 0; column < 15; ++column) {
+            const bool enabled = (row == 5 && column == 7) || (row == 7 && column == 8)
+                || (row == 9 && column == 9);
+            table += enabled ? "1 " : "0 ";
+            if ((row * 15 + column + 1) % 10 == 0) table += "/* physical row */\r\n";
+        }
+    }
+    const auto oldPath = std::filesystem::current_path();
+    const auto tableRoot = std::filesystem::temp_directory_path()
+        / ("open-midgard-map-type-" + std::to_string(Clock::now().time_since_epoch().count()));
+    const auto tablePath = tableRoot / "data" / "mapinfotable.scp";
+    std::filesystem::create_directories(tablePath.parent_path());
+    std::ofstream tableFile(tablePath, std::ios::binary);
+    tableFile << table;
+    tableFile.close();
+    Require(tableFile.good(), "could not write the map type resource fixture");
+    const auto oldFolderFirst = g_readFolderFirst;
+    std::filesystem::current_path(tableRoot);
+    g_readFolderFirst = 1;
+    const bool loaded = g_session.m_mapTypeInfo.Load();
+    g_readFolderFirst = oldFolderFirst;
+    std::filesystem::current_path(oldPath);
+    std::filesystem::remove(tablePath);
+    std::filesystem::remove(tablePath.parent_path());
+    std::filesystem::remove(tableRoot);
+    Require(loaded, "map type resource loader did not resolve the data path");
+    Require(g_session.m_mapTypeInfo.Enabled(5, ro::SourceMapTypeTable::AllyParty)
+        && g_session.m_mapTypeInfo.Enabled(7, ro::SourceMapTypeTable::AllyGuild)
+        && !g_session.m_mapTypeInfo.Enabled(-1, ro::SourceMapTypeTable::Siege)
+        && !g_session.m_mapTypeInfo.Enabled(30, ro::SourceMapTypeTable::Siege),
+        "map property table did not retain the selected columns and bounds");
+    const auto dispatch = [&](u16 type, u16 opcode = 0x01d6) {
+        const std::array<u8, 4> bytes{static_cast<u8>(opcode), static_cast<u8>(opcode >> 8),
+            static_cast<u8>(type), static_cast<u8>(type >> 8)};
+        PacketView packet{};
+        int consumed = 0;
+        Require(!TryReadPacket(bytes.data(), 3, packet, consumed), "short map type packet framed");
+        Require(TryReadPacket(bytes.data(), 4, packet, consumed) && consumed == 4 && router.Dispatch(mode, packet),
+            "map type packet did not frame and dispatch");
+    };
+    dispatch(5);
+    Require(g_session.m_curMapType == 5 && world.m_isPKZone && !world.m_isSiegeMode,
+        "PK map type did not set the source world flag");
+    dispatch(8);
+    Require(world.m_isPKZone && world.m_isSiegeMode && g_session.m_isMinEffect,
+        "siege map type did not retain prior flags and force minimal effects");
+    dispatch(11);
+    Require(world.m_isSiegeMode && !g_session.m_isMinEffect,
+        "map type did not restore the stored effect preference");
+    world.m_isSiegeMode = 0;
+    dispatch(19);
+    Require(world.m_isBattleFieldMode && world.m_isPKZone, "battlefield type did not update both world flags");
+    dispatch(9);
+    Require(world.m_isSiegeMode && g_session.m_isMinEffect, "map table siege property was not consumed");
+    dispatch(0xffff);
+    Require(g_session.m_curMapType == -1 && !g_session.m_isMinEffect, "unknown signed map type lost its safe state");
+
+    CGameActor target;
+    target.m_gid = 0x12345678;
+    target.m_isPc = 1;
+    target.m_gdid = player.m_gdid = 17;
+    mode.m_skillUseInfo = {5, 1, 10, 2};
+    world.m_isPKZone = world.m_isSiegeMode = world.m_isBattleFieldMode = 0;
+    dispatch(7);
+    Require(!ReplayTrySourceSkillOnActor(mode, &target, false, false, false) && !player.commands,
+        "guild ally map allowed an ordinary hostile skill on the same guild");
+    target.m_gdid = 18;
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false) && player.commands == 2,
+        "guild ally map did not enable the hostile skill against another guild");
+    FRIEND_INFO member{};
+    member.AID = target.m_gid;
+    g_session.m_partyList.push_back(member);
+    player.commands = 0;
+    dispatch(5);
+    Require(!ReplayTrySourceSkillOnActor(mode, &target, false, false, false) && !player.commands,
+        "party ally map enabled a hostile skill against its party");
+    g_session.m_partyList.clear();
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false) && player.commands == 2,
+        "party ally map did not enable a hostile skill against a nonmember");
+
+    const auto oldService = g_serviceType;
+    g_serviceType = ServiceKorea;
+    dispatch(2, 0x0199);
+    Require(world.m_isEventPVPMode && g_session.m_mapTypeInfo.Enabled(5, ro::SourceMapTypeTable::AllyParty),
+        "event PvP property did not retain the Korean map table");
+    g_serviceType = ServiceTaiwan;
+    dispatch(3, 0x0199);
+    Require(world.m_isSiegeMode && g_session.m_isMinEffect
+        && !g_session.m_mapTypeInfo.Enabled(5, ro::SourceMapTypeTable::AllyParty),
+        "siege property did not force minimum effects and clear the non-Korean map table");
+    g_windowMgr.ClearChatEvents();
+    dispatch(4, 0x0199);
+    const auto& notices = g_windowMgr.GetChatEvents();
+    Require(notices.size() == 1 && !notices.front().text.empty() && notices.front().color == 0xff9b9bu
+        && !g_session.m_isMinEffect && g_session.m_curMapType == 5,
+        "PK notice property did not retain the map type and restore the effect preference");
+    g_windowMgr.ClearChatEvents();
+    g_serviceType = oldService;
+
+    g_session.m_curMapType = oldType;
+    g_session.m_mapTypeInfo = oldTable;
+    g_session.m_isMinEffect = oldMinEffect;
+    g_session.m_isMinEffectOld = oldMinEffectPreference;
+    g_session.m_partyList = oldParty;
+    g_session.m_weight = oldWeight;
+    g_session.m_maxWeight = oldMaxWeight;
+    g_session.m_isNoShift = oldNoShift;
+    mode.m_world = nullptr;
+}
+
 void CompanionTargetReplay()
 {
     CSession session;
@@ -5420,6 +5558,7 @@ int main(int argc,char** argv){try{
     CompanionSkillListReplay();
     LocalizedSystemNoticeReplay();
     PendingCompanionActorSkillReplay();
+    MapTypePropertyReplay();
     CompanionTargetReplay();
     CompanionSummonReplay();
     GuildMemberLoginNoticeReplay();

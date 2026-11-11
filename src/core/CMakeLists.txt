@@ -8,6 +8,7 @@ add_library(ro_core STATIC
     UiMessageStrings.h UiMessageStrings.cpp
     TipOfTheDay.h TipOfTheDay.cpp
     SourceMapNames.h SourceMapNames.cpp
+    SourceMapTypeTable.h SourceMapTypeTable.cpp
     InsultWords.h MannerFilter.h MannerFilter.cpp
     SourceTextCodec.h SourceTextCodec.cpp
     GPak.h      GPak.cpp
