@@ -2056,7 +2056,7 @@ void HandleMapPropertyRowUpdate(CGameMode&, const PacketView& packet)
         reinterpret_cast<const char*>(packet.data + 6), static_cast<std::size_t>(packet.packetLength - 6)));
 }
 
-void HandleLocalizedSystemNotice(CGameMode&, const PacketView& packet)
+void HandleLocalizedSystemNotice(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 4) return;
 
@@ -2070,6 +2070,18 @@ void HandleLocalizedSystemNotice(CGameMode&, const PacketView& packet)
     case 1268: fallback = "You have released the mercenary."; break;
     case 1269: fallback = "The mercenary has run away."; break;
     default: break;
+    }
+    // Selected mercenary_delete sends these owner-only notices before the
+    // ordinary out-of-sight removal, which also happens during movement.
+    if (messageId == 1266 || messageId == 1267) {
+        g_session.m_merGID = 0;
+        g_session.m_merStatus = {};
+        g_session.m_merTarget = {};
+        g_session.ClearMercSkillItems();
+        g_windowMgr.CloseCompanionWindows(false);
+        if (mode.m_skillUseInfo.id >= 8200 && mode.m_skillUseInfo.id < 8238) {
+            mode.SendMsg(78, 0, 0, 0);
+        }
     }
     ro::UiMessageStrings strings;
     strings.Load();

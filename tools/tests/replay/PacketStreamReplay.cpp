@@ -2711,8 +2711,33 @@ void CompanionIdentityReplay()
     Require(hs.alive && hs.job == 6001 && g_session.m_homunGID == reentryHomun
         && ms.alive && ms.job == 6017 && g_session.m_merGID == reentryMerc,
         "selected companion spawn-before-identity sequence did not restore local ownership");
-    vanish(reentryHomun, 0);
     vanish(reentryMerc, 0);
+    Require(ms.alive && g_session.m_merGID == reentryMerc,
+        "out-of-sight removal retired the active mercenary contract");
+
+    for (u16 messageId : {u16{1266}, u16{1267}}) {
+        dispatchActor(npcEntry);
+        dispatchActor(reentryMercIdentity);
+        g_session.SetMercSkillItem(skill);
+        g_session.m_merTarget = {reentryHomun, 8, 9, true, true, true};
+        const int pendingSkill = messageId == 1266 ? 8201 : 28;
+        mode.m_skillUseInfo = {pendingSkill, 1, 5, 2};
+        Require(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND)
+            && g_windowMgr.MakeWindow(UIWindowMgr::WID_MERSKILLLISTWND),
+            "could not open active mercenary windows before terminal notice");
+        std::array<u8, 4> notice{0x91, 0x02, static_cast<u8>(messageId), static_cast<u8>(messageId >> 8)};
+        dispatchActor(notice);
+        Require(!ms.alive && ms.job == -1 && g_session.m_merGID == 0
+            && g_session.m_merTarget.gid == 0 && !g_session.m_merTarget.attacking
+            && g_session.GetMercSkillItems().empty()
+            && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd,
+            "terminal mercenary notice left active contract state or controls");
+        Require(mode.m_skillUseInfo.id == (messageId == 1266 ? 0 : pendingSkill)
+            && hs.alive && g_session.m_homunGID == reentryHomun,
+            "terminal mercenary notice mishandled pending skill or homunculus state");
+        vanish(reentryMerc, 0);
+    }
+    vanish(reentryHomun, 0);
     mode.m_world = nullptr;
 
     g_session.m_homunGID = oldHomun;
@@ -2954,6 +2979,8 @@ void LocalizedSystemNoticeReplay()
     RegisterDefaultGameModePacketHandlers(router);
     const auto oldMerc = g_session.m_merStatus;
     const auto oldGid = g_session.m_merGID;
+    const auto oldTarget = g_session.m_merTarget;
+    const auto oldSkills = g_session.GetMercSkillItems();
     g_session.m_merGID = 0x12345678;
     g_session.m_merStatus.job = 6017;
     g_session.m_merStatus.alive = true;
@@ -2984,12 +3011,13 @@ void LocalizedSystemNoticeReplay()
             && events[i + 1].source.route == ro::chat::NoticeRoute::Command,
             "localized notice lost the source text, color, or paired routes");
     }
-    Require(events[0].text != events[2].text && g_session.m_merStatus.alive && g_session.m_merGID == 0x12345678
-        && g_windowMgr.m_merInfoWnd == info && g_windowMgr.m_merSkillListWnd == skills,
-        "mercenary system notices changed companion state or shared a message");
-    g_windowMgr.CloseCompanionWindows(false);
+    Require(events[0].text != events[2].text && !g_session.m_merStatus.alive && g_session.m_merGID == 0
+        && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd,
+        "mercenary system notices failed to retire the contract or shared a message");
     g_session.m_merStatus = oldMerc;
     g_session.m_merGID = oldGid;
+    g_session.m_merTarget = oldTarget;
+    for (const auto& entry : oldSkills) g_session.SetMercSkillItem(entry);
     g_windowMgr.ClearChatEvents();
 }
 
