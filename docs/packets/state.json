@@ -775,8 +775,11 @@
       "commit_subject": "packet(PK23.02): inventory skill handler branches and owners"
     },
     "PK23.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK23.03-skill-message-rejection.md",
+        "docs/packets/evidence/PK23.02-skill-handler-inventory.md"
+      ],
       "commit_subject": null
     },
     "PK23.04": {

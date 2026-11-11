@@ -1,0 +1,4 @@
+# opcode	hexBytes	comment
+0x0215	150215000000	Mapped Gospel status-cleared notice (code 0x15)
+0x0215	1502FFFFFFFF	Unmapped notice code is ignored
+0x0215	150216000000	Following coalesced frame emits the Gospel immunity notice

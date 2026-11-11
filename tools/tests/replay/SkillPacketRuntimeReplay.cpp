@@ -4,12 +4,14 @@
 #include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
 #include "gamemode/Mode.h"
+#include "item/Item.h"
 #include "network/GronPacket.h"
 #include "res/Bitmap.h"
 #include "res/ModelRes.h"
 #include "render/Renderer.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
+#include "ui/UIWindowMgr.h"
 #include "world/3dActor.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
@@ -867,9 +869,9 @@ bool IsSkillFailAckScenario(const std::string& path)
 void ReplaySkillFailAck(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
-    Require(packets.size() == 23 && std::all_of(packets.begin(), packets.end(), [](const ScenarioPacket& packet) {
+    Require(packets.size() == 25 && std::all_of(packets.begin(), packets.end(), [](const ScenarioPacket& packet) {
         return packet.opcode == 0x0110 && packet.bytes.size() == 10;
-    }), "skill-failure acknowledgement replay requires twenty-three fixed 10-byte 0x0110 packets");
+    }), "skill-failure acknowledgement replay requires twenty-five fixed 10-byte 0x0110 packets");
     Fixture fixture(path);
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
@@ -906,23 +908,31 @@ void ReplaySkillFailAck(const std::string& path)
 
     const std::vector<int> expectedNoticeIds = {
         0xCA, 0xCB, 0x328, 0xDB, 0xE9, 0xEF, 0xF6, 0xF7, 0x244, 0x11D,
-        0xA0, 0xD6, 0xCD, 0xCF, 0x17F, 0x518, 0x518, 0xCC
+        0xA0, 0xD6, 0xCD, 0xCF, 0x17F, 0x518, 0x518, 0xCC, -1
     };
     std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
     Require(static_cast<bool>(runtimeLog), "production runtime log was not created for 0x0110 replay");
     std::vector<int> actualNoticeIds;
     std::string logLine;
     constexpr const char* noticePrefix = "[GameMode] skill fail notice msgId=";
+    const std::string requiredItemText = "[" + g_ttemmgr.GetDisplayName(678, true, false) + "] required '1' amount.";
+    bool foundRequiredItem = false;
     while (std::getline(runtimeLog, logLine)) {
         const std::size_t marker = logLine.find(noticePrefix);
         if (marker != std::string::npos) {
             actualNoticeIds.push_back(std::stoi(logLine.substr(marker + std::strlen(noticePrefix))));
+            if (logLine.find(requiredItemText, marker) != std::string::npos) foundRequiredItem = true;
         }
     }
     Require(actualNoticeIds == expectedNoticeIds,
         "0x0110 Ref message IDs or cause/skill-fail gates differ from the expected source order");
-    std::cout << "SkillFailAck opcode=0x0110 packets=23 notices=" << actualNoticeIds.size()
-        << " motionUnfreeze=23 emotionRequestCleared=1\n";
+    Require(foundRequiredItem, "0x0110 cause 71 did not use the separate item ID and signed quantity");
+    const auto& chatEvents = g_windowMgr.GetChatEvents();
+    Require(std::count_if(chatEvents.begin(), chatEvents.end(), [&](const auto& event) {
+        return event.text == requiredItemText;
+    }) == 1, "0x0110 cause 71 did not deliver exactly one item requirement to chat");
+    std::cout << "SkillFailAck opcode=0x0110 packets=" << packets.size() << " notices=" << actualNoticeIds.size()
+        << " motionUnfreeze=" << packets.size() << " emotionRequestCleared=1 requiredItem=1\n";
 }
 
 bool IsGroundArrowShowerScenario(const std::string& path)
@@ -1040,6 +1050,43 @@ void ReplaySkillDamagePosition(const std::string& path)
         runningDamage += 10;
     }
     std::cout << "SkillDamagePosition opcode=0x0115 source=unit:100 skill=18 target=2 cell=(12,23) damage=30 div=3\n";
+}
+
+void ReplaySkillMessagePacket(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 3, "0215 replay requires mapped, unmapped, and coalesced mapped messages");
+    std::vector<u8> stream;
+    for (const ScenarioPacket& item : packets) {
+        Require(item.opcode == 0x0215 && item.bytes.size() == 6,
+            "0215 replay packet must be a fixed six-byte frame");
+        stream.insert(stream.end(), item.bytes.begin(), item.bytes.end());
+    }
+
+    Fixture fixture(path);
+    g_windowMgr.ClearChatEvents();
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    size_t offset = 0;
+    int dispatched = 0;
+    while (offset < stream.size()) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(stream.data() + offset, static_cast<int>(stream.size() - offset), packet, consumed),
+            "production packet reader rejected coalesced 0215 stream");
+        Require(packet.packetId == 0x0215 && consumed == 6,
+            "0215 framing consumed bytes from the following coalesced frame");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch 0215 frame");
+        offset += static_cast<size_t>(consumed);
+        ++dispatched;
+    }
+    const auto& events = g_windowMgr.GetChatEvents();
+    Require(dispatched == 3 && offset == stream.size(), "coalesced 0215 stream boundary was not preserved");
+    Require(events.size() == 2
+        && events[0].text == "All abnormal status effects have been removed."
+        && events[1].text == "You will be immune to abnormal status effects for the next minute.",
+        "mapped/unmapped 0215 notices or following frame dispatch differs");
+    std::cout << "SkillMessage opcode=0x0215 frames=3 mappedNotices=2 coalescedBoundary=preserved\n";
 }
 
 void ReplaySkillDamageExtendedExtra(const std::string& path)
@@ -2563,6 +2610,8 @@ int main(int argc, char** argv)
             ReplayMonsterGroundSkill(argv[1]);
         } else if (IsLordOfVermilionScenario(argv[1])) {
             ReplayLordOfVermilion(argv[1]);
+        } else if (std::string(argv[1]).find("skill_message_0215") != std::string::npos) {
+            ReplaySkillMessagePacket(argv[1]);
         } else if (IsSkillDamagePositionScenario(argv[1])) {
             ReplaySkillDamagePosition(argv[1]);
         } else if (IsSkillDamageExtendedExtraScenario(argv[1])) {

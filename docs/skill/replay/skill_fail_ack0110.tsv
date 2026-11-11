@@ -23,3 +23,5 @@
 0x0110	10011C0000000000000B	Unknown cause returns without a notice
 0x0110	10010100090000000000	Skill 1 unsupported btype returns without a notice
 0x0110	10016300000000000000	Other skill cause 0 uses generic skill-failed notice id 0xCC when enabled
+0x0110	10017A010100A6020047	Selected cause 71 carries quantity 1 and Poison Bottle item ID 678 in separate fields
+0x0110	10017A01FFFFA6020047	Negative quantity produces no item requirement notice

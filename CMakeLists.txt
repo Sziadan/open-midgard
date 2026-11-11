@@ -765,6 +765,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_skill_fail_ack_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_fail_ack0110.tsv")
+    add_test(NAME skill_packet_replay_skill_message_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_message_0215.tsv")
     add_test(NAME skill_packet_replay_trap_reveal_lifecycle_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/trap_reveal_lifecycle.tsv")

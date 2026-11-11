@@ -4,6 +4,8 @@ Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` pref
 
 `actor_action.tsv` is a 29-byte `0x008A` framing/router fixture used by the standalone smoke test to exercise production `TryReadPacket`, `CGameModePacketRouter`, and `HandleActorActionNotify` logic against lightweight doubles, including malformed and unknown packet rejection. `blessing34.tsv` is a 15-byte `0x011A` successful Blessing34 notify at level3; it checks Ref target effect42.
 
+`skill_message_0215.tsv` replays three fixed six-byte `0x0215` frames from one coalesced stream through production framing and routing: mapped Gospel notice `0x15`, an unmapped value, and a subsequent mapped notice. It checks that unknown notice codes remain silent and the following frame boundary is preserved.
+
 `cast_cancel01b9.tsv` is a 6-byte `0x01B9` cast-cancel packet. The runner seeds begin-spell and magic-target effects on the player, routes the packet through the default router, and checks Ref actor-message order84,87,83 and detachment of both effects.
 
 `firewall_unit_lifecycle.tsv` contains a 16-byte `0x011F` Fire Wall unit entry (job127, unit AID100, cell10,20) followed by a 6-byte `0x0120` removal. It checks the production `CSkill` world lists, terrain-mapped unit position, Fire Wall wave, and removal. Between entry and removal it calls the real `CSkill::OnProcess` at nominal 24 ms intervals until the Ref 3-second lifetime expires, checking loop effect25 and measured expiry timing.

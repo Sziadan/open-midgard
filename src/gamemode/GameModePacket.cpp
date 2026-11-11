@@ -4283,7 +4283,7 @@ void StartSitStandAnimation(CGameActor* actor, bool sitting)
 struct SkillFailNotice
 {
     int messageId = -1;
-    const char* message = nullptr;
+    std::string message;
     int color = kSystemNoticeColor;
 };
 
@@ -4293,7 +4293,7 @@ struct SkillFailNoticeSet
     std::size_t count = 0;
 };
 
-SkillFailNoticeSet ResolveSkillFailNotices(u16 skillId, u32 btype, u8 cause, bool skillFailEnabled)
+SkillFailNoticeSet ResolveSkillFailNotices(u16 skillId, s16 reason, u16 itemId, u8 cause, bool skillFailEnabled)
 {
     SkillFailNoticeSet result;
     if (cause == 0) {
@@ -4308,12 +4308,12 @@ SkillFailNoticeSet ResolveSkillFailNotices(u16 skillId, u32 btype, u8 cause, boo
                 "You haven't learned enough skills to Shout.",
                 "You haven't learned enough skills for Pking.",
             };
-            if (btype < std::size(basicSkillMessageIds)) {
-                result.notices[result.count++] = { basicSkillMessageIds[btype], basicSkillMessages[btype] };
-            } else if (btype == 7) {
+            if (reason >= 0 && static_cast<std::size_t>(reason) < std::size(basicSkillMessageIds)) {
+                result.notices[result.count++] = { basicSkillMessageIds[reason], basicSkillMessages[reason] };
+            } else if (reason == 7) {
                 result.notices[result.count++] = { 0x17F, "You haven't learned enough skills for aligning.", 255 };
                 result.notices[result.count++] = { 0x518, "Insufficient Skill Level for joining a Party." };
-            } else if (btype == 8) {
+            } else if (reason == 8) {
                 result.notices[result.count++] = { 0x518, "Insufficient Skill Level for joining a Party." };
             }
         } else if (skillId == 27) {
@@ -4361,6 +4361,11 @@ SkillFailNoticeSet ResolveSkillFailNotices(u16 skillId, u32 btype, u8 cause, boo
         if (!skillFailEnabled) return result;
         result.notices[0] = { 0x11D, "Skill has failed." };
         break;
+    case 71: // rAthena USESKILL_FAIL_NEED_ITEM supplies a quantity and item ID.
+        if (itemId == 0 || reason <= 0) return result;
+        result.notices[0] = { -1, "[" + g_ttemmgr.GetDisplayName(itemId, true, false)
+            + "] required '" + std::to_string(reason) + "' amount." };
+        break;
     default:
         return result;
     }
@@ -4376,7 +4381,8 @@ void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
     }
 
     const u16 skillId = ReadLE16(packet.data + 2);
-    const u32 btype = ReadLE32(packet.data + 4);
+    const s16 reason = static_cast<s16>(ReadLE16(packet.data + 4));
+    const u16 itemId = ReadLE16(packet.data + 6);
     const u8 result = packet.data[8];
     const u8 cause = packet.data[9];
     // Ref Zc_Ack_Touseskill releases the local motion freeze for every result.
@@ -4396,23 +4402,24 @@ void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
             player->SetState(0);
         }
     }
-    if (cause == 0 && skillId == 1 && btype == 1) {
+    if (cause == 0 && skillId == 1 && reason == 1) {
         mode.m_isReqEmotion = 0;
     }
-    const SkillFailNoticeSet notices = ResolveSkillFailNotices(skillId, btype, cause, g_session.m_isSkillFail == 1);
+    const SkillFailNoticeSet notices = ResolveSkillFailNotices(skillId, reason, itemId, cause, g_session.m_isSkillFail == 1);
 
-    DbgLog("[GameMode] skill fail ack opcode=0x%04X skill=%u num=%u result=%u cause=%u noticeCount=%u\n",
+    DbgLog("[GameMode] skill fail ack opcode=0x%04X skill=%u reason=%d item=%u result=%u cause=%u noticeCount=%u\n",
         packet.packetId,
         static_cast<unsigned int>(skillId),
-        static_cast<unsigned int>(btype),
+        static_cast<int>(reason),
+        static_cast<unsigned int>(itemId),
         static_cast<unsigned int>(result),
         static_cast<unsigned int>(cause),
         static_cast<unsigned int>(notices.count));
     for (std::size_t index = 0; index < notices.count; ++index) {
         const SkillFailNotice& notice = notices.notices[index];
-        DbgLog("[GameMode] skill fail notice msgId=%d msg='%s'\n", notice.messageId, notice.message);
+        DbgLog("[GameMode] skill fail notice msgId=%d msg='%s'\n", notice.messageId, notice.message.c_str());
         g_windowMgr.SendMsg(kUiChatEventMsg,
-            reinterpret_cast<msgparam_t>(notice.message),
+            reinterpret_cast<msgparam_t>(notice.message.c_str()),
             notice.color);
     }
 }
