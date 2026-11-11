@@ -1,4 +1,6 @@
 add_library(ro_ui STATIC
+    UIMonsterInfoWnd.h
+    UIMonsterInfoWnd.cpp
     UIGroundSkillTextWnd.h
     UIGroundSkillTextWnd.cpp
     UIFriendOptionWnd.h

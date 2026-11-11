@@ -66,6 +66,7 @@ class UIItemCollectionWnd;
 class UIItemCompositionWnd;
 class UIItemIdentifyWnd;
 class UISkillSelectWnd;
+class UIMonsterInfoWnd;
 class UIQuestWnd;
 class UIBasicInfoWnd;
 class UINotifyLevelUpWnd;
@@ -176,6 +177,7 @@ public:
         WID_SHORTCUTWND       = 23,
         WID_SELECTCARTWND     = 0x5F,
         WID_SKILLSELECTWND    = 0x60,
+        WID_MONSTERINFOWND    = 77,
         WID_STORAGEWND        = 50,
         WID_CHOOSEWND         = 17,
         WID_ROMAPWND          = 0x93,
@@ -393,6 +395,7 @@ public:
     UIItemCompositionWnd* m_itemCompositionWnd;
     UIItemIdentifyWnd* m_itemIdentifyWnd;
     UISkillSelectWnd* m_skillSelectWnd;
+    UIMonsterInfoWnd* m_monsterInfoWnd = nullptr;
     UIQuestWnd* m_questWnd;
     UIBasicInfoWnd* m_basicInfoWnd;
     UINotifyLevelUpWnd* m_notifyLevelUpWnd;

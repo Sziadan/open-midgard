@@ -102,6 +102,7 @@ public:
     bool SendWarpMapSelection(const std::string& mapName);
     bool CancelWarpMapSelection();
     bool SendMakingArrowSelection(u16 itemId);
+    bool SendAutoSpellSelection(u32 skillId, const std::vector<unsigned int>& offeredSkillIds);
     void SynchronizePlayerSkillProceed(CPlayer* player,bool retire=false);
 
     enum MapLoadingStage {

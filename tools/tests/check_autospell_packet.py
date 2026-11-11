@@ -87,13 +87,15 @@ assert actual == expected, f"PE handler bytes differ: {actual.hex(' ')}"
 
 implementation_body = function_body(implementation, "void HandleAutoSpellList(")
 impl_branches = (
-    "packet.packetLength < 30",
+    "packet.packetId != 0x01CD || packet.packetLength != 30",
     "index < 7",
     "packet.data + 2 + index * 4",
-    "if (!hasAnySpell)",
-    "WID_SPELLLISTWND",
+    "skillId != 0 && skillId <= 0xFFFFu",
+    "if (skillIds.empty())",
+    "IsAutoSpellSelection()",
+    "WID_SKILLSELECTWND",
     "if (!window)",
-    "window->SendMsg(nullptr, 31",
+    "window->SetAutoSpellSkills(skillIds)",
 )
 impl_positions = [implementation_body.index(branch) for branch in impl_branches]
 assert impl_positions == sorted(impl_positions)

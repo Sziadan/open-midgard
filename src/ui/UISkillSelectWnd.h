@@ -10,6 +10,7 @@
 // Selection dialog for skills that wait on a player choice after the cast.
 // Warp Portal and Teleport level 2 list map names from ZC_WARPLIST (0x011C).
 // Create Arrow lists material items from ZC_MAKINGARROW_LIST (0x01AD).
+// Auto Spell lists selectable skills from ZC_AUTOSPELLLIST (0x01CD).
 class UISkillSelectWnd : public UIFrameWnd {
 public:
     struct DisplayButton {
@@ -74,6 +75,8 @@ public:
 
     void SetWarpDestinations(unsigned short skillId, const std::vector<std::string>& mapNames);
     void SetMakingArrowItems(const std::vector<unsigned int>& itemIds);
+    void SetAutoSpellSkills(const std::vector<unsigned int>& skillIds);
+    bool IsAutoSpellSelection() const { return m_kind == Kind::AutoSpell; }
     bool GetDisplayDataForQt(DisplayData* outData) const;
 
 private:
@@ -81,6 +84,7 @@ private:
         None = 0,
         Warp,
         Arrow,
+        AutoSpell,
     };
 
     struct Entry {

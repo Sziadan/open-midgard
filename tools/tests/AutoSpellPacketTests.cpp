@@ -18,25 +18,28 @@ struct PacketView {
 class CGameMode {};
 
 struct UIWindow {
-    struct Message { int id; msgparam_t value; };
-    std::vector<Message> messages;
-    int SendMsg(UIWindow*, int message, msgparam_t wparam, msgparam_t, msgparam_t)
-    {
-        messages.push_back({message, wparam});
-        return 0;
-    }
+    virtual ~UIWindow() = default;
+};
+
+struct UISkillSelectWnd : UIWindow {
+    std::vector<unsigned int> skillIds;
+    bool autoSpell = false;
+    void SetAutoSpellSkills(const std::vector<unsigned int>& values) { skillIds = values; autoSpell = true; }
+    bool IsAutoSpellSelection() const { return autoSpell; }
 };
 
 struct UIWindowMgr {
-    enum { WID_SPELLLISTWND = 99 };
+    enum { WID_SKILLSELECTWND = 100 };
     int makeWindowCalls = 0;
     UIWindow* window = nullptr;
+    UISkillSelectWnd* m_skillSelectWnd = nullptr;
     UIWindow* MakeWindow(int windowId)
     {
-        assert(windowId == WID_SPELLLISTWND);
+        assert(windowId == WID_SKILLSELECTWND);
         ++makeWindowCalls;
         return window;
     }
+    void DeleteWindow(UIWindow* value) { if (value == m_skillSelectWnd) m_skillSelectWnd = nullptr; }
 };
 
 UIWindowMgr g_windowMgr;
@@ -67,26 +70,39 @@ int main()
     HandleAutoSpellList(mode, PacketView{0x01CD, 30, bytes.data()});
     assert(g_windowMgr.makeWindowCalls == 0); // all seven IDs are zero
 
-    UIWindow window;
+    UISkillSelectWnd window;
     g_windowMgr.window = &window;
+    g_windowMgr.m_skillSelectWnd = &window;
     WriteLE32(bytes.data() + 2, 5101);
     WriteLE32(bytes.data() + 6, 0);
     WriteLE32(bytes.data() + 10, 5102);
     WriteLE32(bytes.data() + 26, 5107);
     HandleAutoSpellList(mode, PacketView{0x01CD, 30, bytes.data()});
     assert(g_windowMgr.makeWindowCalls == 1);
-    assert(window.messages.size() == 3);
-    assert(window.messages[0].id == 31 && window.messages[0].value == 5101);
-    assert(window.messages[1].id == 31 && window.messages[1].value == 5102);
-    assert(window.messages[2].id == 31 && window.messages[2].value == 5107);
+    assert(window.skillIds == std::vector<unsigned int>({5101, 5102, 5107}));
 
-    g_windowMgr = {};
-    bytes.fill(0); // Clear all seven entries, including slots 2 and 6 from the prior case.
+    // A replacement snapshot replaces earlier entries and retains packet order.
+    bytes.fill(0);
+    WriteLE32(bytes.data() + 14, 5203);
+    WriteLE32(bytes.data() + 26, 5207);
     HandleAutoSpellList(mode, PacketView{0x01CD, 30, bytes.data()});
-    assert(g_windowMgr.makeWindowCalls == 0); // no window for an empty list
+    assert(window.skillIds == std::vector<unsigned int>({5203, 5207}));
+
+    // An all-zero snapshot closes an existing auto-spell selector.
+    bytes.fill(0);
+    HandleAutoSpellList(mode, PacketView{0x01CD, 30, bytes.data()});
+    assert(g_windowMgr.m_skillSelectWnd == nullptr);
+
+    // IDs outside the server's u16 skill selection domain are not offered.
+    g_windowMgr = {};
+    g_windowMgr.window = &window;
+    WriteLE32(bytes.data() + 2, 0x10000);
+    HandleAutoSpellList(mode, PacketView{0x01CD, 30, bytes.data()});
+    assert(g_windowMgr.makeWindowCalls == 0);
 
     g_windowMgr = {};
     g_windowMgr.window = nullptr;
+    bytes.fill(0);
     WriteLE32(bytes.data() + 2, 5200);
     HandleAutoSpellList(mode, PacketView{0x01CD, 30, bytes.data()});
     assert(g_windowMgr.makeWindowCalls == 1); // failed creation suppresses messages
@@ -94,6 +110,8 @@ int main()
     g_windowMgr = {};
     HandleAutoSpellList(mode, PacketView{0x01CD, 29, bytes.data()});
     HandleAutoSpellList(mode, PacketView{0x01CD, 30, nullptr});
+    assert(g_windowMgr.makeWindowCalls == 0);
+    HandleAutoSpellList(mode, PacketView{0x01CE, 30, bytes.data()});
     assert(g_windowMgr.makeWindowCalls == 0);
     return 0;
 }

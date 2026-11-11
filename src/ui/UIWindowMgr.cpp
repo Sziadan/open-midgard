@@ -38,6 +38,7 @@
 #include "UIItemCompositionWnd.h"
 #include "UIItemIdentifyWnd.h"
 #include "UISkillSelectWnd.h"
+#include "UIMonsterInfoWnd.h"
 #include "UIItemInfoWnd.h"
 #include "UINotifyItemObtainWnd.h"
 #include "UIItemWnd.h"
@@ -1680,6 +1681,12 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         if(!m_petTamingDeceiveWnd){m_petTamingDeceiveWnd=new UIPetTamingDeceiveWnd();m_children.push_back(m_petTamingDeceiveWnd);}
         m_petTamingDeceiveWnd->SetShow(1);return m_petTamingDeceiveWnd;
 
+    case WID_MONSTERINFOWND:
+        if (!m_monsterInfoWnd) m_monsterInfoWnd = new UIMonsterInfoWnd();
+        m_children.remove(m_monsterInfoWnd);
+        m_children.push_back(m_monsterInfoWnd);
+        m_monsterInfoWnd->SetShow(1);
+        return m_monsterInfoWnd;
     case WID_SKILLSELECTWND:
         if (!m_skillSelectWnd) {
             m_skillSelectWnd = new UISkillSelectWnd();
@@ -2170,6 +2177,9 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     }
     if (window == m_skillSelectWnd) {
         m_skillSelectWnd = nullptr;
+    }
+    if (window == m_monsterInfoWnd) {
+        m_monsterInfoWnd = nullptr;
     }
     if (window == m_equipWnd) {
         m_equipWnd = nullptr;

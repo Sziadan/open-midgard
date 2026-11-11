@@ -45,6 +45,7 @@
 #include "ui/UIItemCompositionWnd.h"
 #include "ui/UIItemIdentifyWnd.h"
 #include "ui/UISkillSelectWnd.h"
+#include "ui/UIMonsterInfoWnd.h"
 #include "ui/UIItemInfoWnd.h"
 #include "ui/UIItemWnd.h"
 #include "ui/UIStorageWnd.h"
@@ -5298,6 +5299,62 @@ void HandleWarpMapList(CGameMode& mode, const PacketView& packet)
     ShowWarpDestinationWindow(mode);
 }
 
+// 0x011E ZC_ACK_REMEMBER_WARPPOINT, selected 20080910 layout: type at byte 2.
+void HandleMemoResult(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetId != 0x011E || packet.packetLength < 3) {
+        return;
+    }
+
+    unsigned int messageId = 0;
+    u32 colorRef = 0;
+    const char* fallback = "";
+    switch (packet.data[2]) {
+    case 0: // rAthena WARPPOINT_SUCCESS / Ref MSI_WARPPOINTSTORED
+        messageId = 217;
+        colorRef = 0x00FFFF00u; // RGB(0, 255, 255), original cyan
+        fallback = "Saved location as a Memo Point for Warp Skill.";
+        break;
+    case 1: // rAthena WARPPOINT_LOW_LEVEL / Ref MSI_NOTENOUGHSKILLLEVEL
+        messageId = 214;
+        colorRef = 0x000000FFu; // RGB(255, 0, 0), original red
+        fallback = "Skill Level is not high enough.";
+        break;
+    case 2: // rAthena WARPPOINT_NOT_LEARNED / Ref MSI_NOWARPSKILL
+        messageId = 216;
+        colorRef = 0x000000FFu;
+        fallback = "You haven't learned Warp.";
+        break;
+    default:
+        return;
+    }
+
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const std::string message = strings.Get(messageId, fallback);
+    RecordChat(mode, message, ro::chat::ColorRefToUiRgb(colorRef), kChatChannelSystem);
+}
+
+void HandleMonsterEstimate(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 29) return;
+
+    UIMonsterInfoWnd::Estimate estimate;
+    estimate.job = ReadLE16(packet.data + 2);
+    if ((estimate.job >= 1285 && estimate.job <= 1287) || estimate.job == 1829 || estimate.job == 1830) return;
+    estimate.level = ReadLE16(packet.data + 4);
+    estimate.size = ReadLE16(packet.data + 6);
+    estimate.hp = ReadLE32(packet.data + 8);
+    estimate.defense = static_cast<s16>(ReadLE16(packet.data + 12));
+    estimate.race = ReadLE16(packet.data + 14);
+    estimate.magicDefense = static_cast<s16>(ReadLE16(packet.data + 16));
+    estimate.element = ReadLE16(packet.data + 18);
+    std::copy_n(packet.data + 20, estimate.rates.size(), estimate.rates.begin());
+
+    auto* window = static_cast<UIMonsterInfoWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MONSTERINFOWND));
+    if (window) window->SetEstimate(estimate);
+}
+
 void HandleMakingArrowList(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetId != 0x01AD || packet.packetLength < 4 || ((packet.packetLength - 4) % 2) != 0) {
@@ -5616,30 +5673,31 @@ void HandleShowImage2(CGameMode& mode, const PacketView& packet)
 
 void HandleAutoSpellList(CGameMode&, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 30) {
+    if (!packet.data || packet.packetId != 0x01CD || packet.packetLength != 30) {
         return;
     }
 
-    bool hasAnySpell = false;
+    std::vector<unsigned int> skillIds;
+    skillIds.reserve(7);
     for (size_t index = 0; index < 7; ++index) {
-        if (ReadLE32(packet.data + 2 + index * 4) != 0) {
-            hasAnySpell = true;
+        const u32 skillId = ReadLE32(packet.data + 2 + index * 4);
+        if (skillId != 0 && skillId <= 0xFFFFu) {
+            skillIds.push_back(skillId);
         }
     }
-    if (!hasAnySpell) {
+    if (skillIds.empty()) {
+        if (g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsAutoSpellSelection()) {
+            g_windowMgr.DeleteWindow(g_windowMgr.m_skillSelectWnd);
+        }
         return;
     }
 
-    UIWindow* const window = g_windowMgr.MakeWindow(UIWindowMgr::WID_SPELLLISTWND);
+    UISkillSelectWnd* const window = dynamic_cast<UISkillSelectWnd*>(
+        g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
     if (!window) {
         return;
     }
-    for (size_t index = 0; index < 7; ++index) {
-        const u32 skillId = ReadLE32(packet.data + 2 + index * 4);
-        if (skillId != 0) {
-            window->SendMsg(nullptr, 31, static_cast<msgparam_t>(skillId), 0, 0);
-        }
-    }
+    window->SetAutoSpellSkills(skillIds);
 }
 
 void DecodePosDir(const u8* src, int& posX, int& posY, int& dir)
@@ -9146,6 +9204,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0110, HandleSkillFailAck);
     router.Register(0x0111, HandlePlayerSkillAdd);
     router.Register(0x011C, HandleWarpMapList);
+    router.Register(0x011E, HandleMemoResult);
+    router.Register(0x018C, HandleMonsterEstimate);
     router.Register(0x01AD, HandleMakingArrowList);
     router.Register(0x01A2, HandlePetStatus);
     router.Register(0x01A0, HandlePetCaptureResult);

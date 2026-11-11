@@ -5,6 +5,7 @@
 #include "core/ClientInfoLocale.h"
 #include "core/Globals.h"
 #include "core/SettingsIni.h"
+#include "core/UiMessageStrings.h"
 #include "core/Timer.h"
 #include "gamemode/ActionRequestSender.h"
 #include "gamemode/Commerce.h"
@@ -39,6 +40,8 @@
 #include "ui/UIGuildWnd.h"
 #include "ui/UIMinimapWnd.h"
 #include "ui/UIStatusWnd.h"
+#include "ui/UISkillSelectWnd.h"
+#include "ui/UIMonsterInfoWnd.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
 #include "world/World.h"
@@ -5543,6 +5546,9 @@ void GlobalChatProductionSendReplay()
 #include "StatusSummary214Replay.inc"
 #include "StatusResourceWidthsReplay.inc"
 #include "Pk24ActorOrderingReplay.inc"
+#include "MemoPacketReplay.inc"
+#include "MonsterEstimateReplay.inc"
+#include "AutoSpellChoiceReplay.inc"
 
 int main(int argc,char** argv){try{
 #if RO_ENABLE_QT6_UI
@@ -5593,6 +5599,9 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--status-summary-0214-only") { StatusSummary214Replay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--status-resource-widths-only") { StatusResourceWidthsReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--actor-resource-ordering-only") { Pk24ActorOrderingReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--memo-result-only") { MemoPacketReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--monster-estimate-only") { MonsterEstimateReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--autospell-choice-only") { AutoSpellChoiceProductionReplay();CConnection::Cleanup();return 0; }
     if (argc > 1 && std::string(argv[1]) == "--npc-show-efst-map-exit") {
         // OnExit clears process-wide windows and session state.
         NpcShowEfstMapExitReplay();

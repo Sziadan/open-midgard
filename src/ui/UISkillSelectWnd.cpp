@@ -6,6 +6,7 @@
 #include "item/Item.h"
 #include "main/WinMain.h"
 #include "session/Session.h"
+#include "skill/Skill.h"
 #include "UIWindowMgr.h"
 
 #include <windows.h>
@@ -394,6 +395,30 @@ void UISkillSelectWnd::SetMakingArrowItems(const std::vector<unsigned int>& item
     Invalidate();
 }
 
+void UISkillSelectWnd::SetAutoSpellSkills(const std::vector<unsigned int>& skillIds)
+{
+    m_kind = Kind::AutoSpell;
+    m_skillId = 0;
+    m_title = "Auto Spell";
+    m_emptyText = "No skills available.";
+    m_entries.clear();
+    m_entries.reserve(skillIds.size());
+    for (unsigned int skillId : skillIds) {
+        if (skillId == 0 || skillId > 0xFFFFu) {
+            continue;
+        }
+        Entry entry;
+        entry.itemId = skillId;
+        const SkillMetadata* metadata = g_skillMgr.GetSkillMetadata(static_cast<int>(skillId));
+        entry.label = metadata && !metadata->displayName.empty()
+            ? metadata->displayName
+            : std::to_string(skillId);
+        m_entries.push_back(std::move(entry));
+    }
+    ResetInteraction();
+    Invalidate();
+}
+
 bool UISkillSelectWnd::HasValidSelection() const
 {
     return m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_entries.size());
@@ -453,6 +478,13 @@ void UISkillSelectWnd::SubmitSelection()
         sent = gameMode->SendWarpMapSelection(entry.mapName);
     } else if (m_kind == Kind::Arrow && entry.itemId != 0 && entry.itemId <= 0xFFFFu) {
         sent = gameMode->SendMakingArrowSelection(static_cast<unsigned short>(entry.itemId));
+    } else if (m_kind == Kind::AutoSpell && entry.itemId != 0 && entry.itemId <= 0xFFFFu) {
+        std::vector<unsigned int> offeredSkillIds;
+        offeredSkillIds.reserve(m_entries.size());
+        for (const Entry& offered : m_entries) {
+            offeredSkillIds.push_back(offered.itemId);
+        }
+        sent = gameMode->SendAutoSpellSelection(entry.itemId, offeredSkillIds);
     }
     if (sent) {
         g_windowMgr.DeleteWindow(this);

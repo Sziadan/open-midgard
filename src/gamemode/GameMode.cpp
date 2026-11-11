@@ -10119,6 +10119,28 @@ bool CGameMode::SendMakingArrowSelection(u16 itemId)
     return sent;
 }
 
+bool CGameMode::SendAutoSpellSelection(u32 skillId, const std::vector<unsigned int>& offeredSkillIds)
+{
+    if (skillId == 0 || skillId > 0xFFFFu
+        || std::find(offeredSkillIds.begin(), offeredSkillIds.end(), skillId) == offeredSkillIds.end()) {
+        return false;
+    }
+
+    const std::array<u8, 6> packet = {
+        0xCE, 0x01,
+        static_cast<u8>(skillId),
+        static_cast<u8>(skillId >> 8),
+        0, 0,
+    };
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(packet.data()),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] autospell skillId=%u sent=%d\n",
+        static_cast<unsigned int>(skillId),
+        sent ? 1 : 0);
+    return sent;
+}
+
 bool CGameMode::ResolveCursorDrawPosition(int rawX, int rawY, int* drawX, int* drawY) const
 {
     if (!m_world || !m_view || m_mapLoadingStage != MapLoading_None

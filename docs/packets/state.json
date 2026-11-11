@@ -858,8 +858,11 @@
       "commit_subject": "packet(PK26.01): establish selected special skill choice contract"
     },
     "PK26.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK26.02-memo-estimate-autospell.md",
+        "docs/packets/contracts/PK26.SPECIAL-SKILL-CHOICES.md"
+      ],
       "commit_subject": null
     },
     "PK26.03": {

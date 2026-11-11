@@ -190,6 +190,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0115, 35);
     SetPacketSize(0x0117, 18);
     SetPacketSize(0x011C, 68);             // ZC_WARPLIST (skill id + four 16-byte map names)
+    SetPacketSize(0x011E, 3);              // ZC_ACK_REMEMBER_WARPPOINT
     SetPacketSize(0x0119, 13);
     SetPacketSize(0x011A, 15);
     SetPacketSize(0x011F, 16);
@@ -204,6 +205,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0176,106);SetPacketSize(0x017F,kVariablePacketSize);
     SetPacketSize(0x0181,3);SetPacketSize(0x0182,106);SetPacketSize(0x0184,10);SetPacketSize(0x0185,34);
     SetPacketSize(0x018B, 4); // ZC_ACK_REQ_DISCONNECT
+    SetPacketSize(0x018C, 29);              // ZC_MONSTER_INFO
     SetPacketSize(0x016a,30);SetPacketSize(0x0169,3);SetPacketSize(0x0249,3);
     SetPacketSize(0x012B, 2);              // ZC_CLEAR_CART
     SetPacketSize(0x012F, kVariablePacketSize);
@@ -281,6 +283,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x01AC, 6);
     SetPacketSize(0x01AD, kVariablePacketSize);
     SetPacketSize(0x01AE, 4);
+    SetPacketSize(0x01CD, 30);              // ZC_AUTOSPELLLIST: seven fixed 32-bit skill IDs
+    SetPacketSize(0x01CE, 6);               // CZ_SELECTAUTOSPELL: 32-bit skill ID
     SetPacketSize(0x01AF, 4);
     SetPacketSize(0x01B0, 11);
     SetPacketSize(0x01B1, 7);
