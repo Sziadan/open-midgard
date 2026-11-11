@@ -56,7 +56,82 @@ void SendShowEfstStatus(CGameActor& actor, int status, bool enabled)
     actor.SendMsg(&actor, 110, status, enabled ? 1 : 0, 0);
 }
 
+CGameActor* SpawnShowEfstReplayActor(CGameMode& mode, CGameModePacketRouter& router,
+    u32 gid, u16 job, u16 opt3)
+{
+    std::array<u8, 53> spawn{0x79, 0};
+    for (unsigned byte = 0; byte < 4; ++byte) {
+        spawn[2 + byte] = static_cast<u8>(gid >> (byte * 8));
+    }
+    spawn[14] = static_cast<u8>(job);
+    spawn[15] = static_cast<u8>(job >> 8);
+    spawn[42] = static_cast<u8>(opt3);
+    spawn[43] = static_cast<u8>(opt3 >> 8);
+    spawn[51] = 1; // clevel
+    PacketView view{};
+    int consumed = 0;
+    Require(ro::net::GetActiveMapReceiveProfile().actorSpawnLegacySpawn == 0x0079
+        && TryReadPacket(spawn.data(), static_cast<int>(spawn.size()), view, consumed)
+        && consumed == static_cast<int>(spawn.size()) && view.packetId == 0x0079
+        && router.Dispatch(mode, view), "selected literal 0x0079 spawn packet did not dispatch");
+    const auto found = mode.m_runtimeActors.find(gid);
+    Require(found != mode.m_runtimeActors.end() && found->second,
+        "selected literal 0x0079 spawn did not create a runtime actor");
+    return found->second;
+}
+
 } // namespace
+
+void NpcShowEfstMapExitReplay()
+{
+    SetCase("npc_show_efst_map_exit_replay", "PK22.04", "PK22-04-missing-texture-map-exit",
+        "selected 0079 spawn -> effect processing -> CGameMode::OnExit -> world sweep");
+    Require(g_world.m_actorList.empty() && g_world.m_gameObjectList.empty(),
+        "ShowEFST map exit fixture needs an isolated world");
+    constexpr char texture[] = "effect\\fire_ivy.bmp";
+    const std::string missingTextureKey = std::string("@ck:") + texture;
+    Require(ResolveTexturePath(texture).empty() && !g_texMgr.m_missingTexTable.count(missingTextureKey),
+        "ShowEFST map exit fixture needs an uncached, missing Fire Ivy texture");
+
+    CGameMode mode;
+    mode.m_world = &g_world;
+    CMode* const oldMode = SkillPacketReplayAccess::Current();
+    const int oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    g_session.m_isEffectOn = 1;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    constexpr u32 gid = 0x11f00002u;
+    constexpr u32 fireIvy = 0x200u;
+    CGameActor* const actor = SpawnShowEfstReplayActor(mode, router, gid, 1, fireIvy);
+    Require(actor->m_isPc != 0, "Fire Ivy fixture did not spawn a PC");
+    RequireActorEffectCount(*actor, 394, 1, "Fire Ivy OPT3 snapshot omitted effect 394");
+
+    const int oldSkipFrame = g_isSkipFrame;
+    g_isSkipFrame = 1;
+    g_world.UpdateGameObjects();
+    g_isSkipFrame = oldSkipFrame;
+    Require(g_texMgr.m_missingTexTable.count(missingTextureKey) == 1,
+        "effect 394 did not process its missing-texture branch");
+    DispatchNpcShowEfst(mode, router, gid, 0, 1, fireIvy);
+    RequireActorEffectCount(*actor, 394, 1, "refresh stacked a Fire Ivy effect after a missing texture");
+    DispatchNpcShowEfst(mode, router, gid, 0, 1, 0);
+    g_world.UpdateGameObjects();
+    Require(actor->m_effectList.empty() && g_world.m_gameObjectList.empty(),
+        "clearing Fire Ivy left a claim or world object after a missing texture");
+    DispatchNpcShowEfst(mode, router, gid, 0, 1, fireIvy);
+    RequireActorEffectCount(*actor, 394, 1, "Fire Ivy could not reattach after clear and sweep");
+
+    mode.OnExit();
+    Require(mode.m_runtimeActors.empty() && mode.m_deferredActorDeletes.empty()
+        && g_world.m_actorList.empty() && !mode.m_world,
+        "map exit left the actor or its mode ownership alive");
+    g_world.UpdateGameObjects();
+    Require(g_world.m_gameObjectList.empty(), "map exit left an active ShowEFST world object");
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    std::cout << "{\"case_id\":\"npc_show_efst_map_exit_replay\",\"contract_id\":\"PK22.04\","
+        "\"missing_texture_processed\":true,\"clear_and_reattach\":true,\"map_exit_swept_effect\":true,\"outcome\":\"PASS\"}\n";
+}
 
 void NpcShowEfstReplay()
 {
@@ -319,6 +394,47 @@ void NpcShowEfstReplay()
     RequireActorEffectCount(pc, 617, 0, "PC OPT3 mask clear retained effect 617");
     RequireActorEffectCount(pc, 656, 0, "PC OPTION mask end incorrectly launched non-PC terminal 656");
 
+    // Status-110 icons overlap these OPT3-owned effects. Release the snapshot
+    // first and require each icon claim (including status 86's extra 166) to
+    // survive until its own status end.
+    struct SharedIconOverlap {
+        int status;
+        u32 opt3;
+        std::vector<int> effects;
+    };
+    const SharedIconOverlap sharedIconOverlaps[] = {
+        {86, 0x8u, {203, 166}},
+        {103, 0x40u, {367, 474}},
+        {121, 0x400u, {396}}, {122, 0x400u, {396}},
+        {107, 0x80u, {368}}, {113, 0x100u, {382}},
+        {123, 0x200u, {394}}, {153, 0x2000u, {419}},
+        {165, 0x1000u, {418, 544}}, {166, 0x1000u, {418, 544}},
+        {167, 0x1000u, {418, 544}}, {232, 0x1000u, {418, 544}},
+        {207, 0x4000u, {617}}, {263, 0x20000u, {586}},
+    };
+    for (const SharedIconOverlap& overlap : sharedIconOverlaps) {
+        SendShowEfstStatus(pc, overlap.status, true);
+        DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, overlap.opt3);
+        for (const int id : overlap.effects) {
+            RequireActorEffectCount(pc, id, 1,
+                "shared icon/OPT3 overlap omitted or duplicated a requested effect");
+        }
+        DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0);
+        for (const int id : overlap.effects) {
+            RequireActorEffectCount(pc, id, 1,
+                "OPT3 clear removed a still-active status-110 shared effect claim");
+        }
+        SendShowEfstStatus(pc, overlap.status, false);
+        for (const int id : overlap.effects) {
+            RequireActorEffectCount(pc, id, 0,
+                "status-110 end retained a shared effect after its final claim");
+        }
+    }
+    Require(pc.LaunchEffect(395) != nullptr, "could not stage status 121's independent effect 395");
+    SendShowEfstStatus(pc, 121, true);
+    RequireActorEffectCount(pc, 395, 0, "status 121 did not release its independent effect 395");
+    SendShowEfstStatus(pc, 121, false);
+
     // Hidden PC OPT3 suppresses these four effects and reveals them again from
     // the retained snapshot; the non-PC set differs (tested below).
     constexpr u32 pcHideSensitive = 0x00021018u; // 203, 254, 418, 586.
@@ -421,25 +537,9 @@ void NpcShowEfstReplay()
         modeBeforeLifecycle, modeTypeBeforeLifecycle};
     SkillPacketReplayAccess::SetCurrent(&lifecycleMode);
     constexpr u32 lifecycleGid = 0x11f00001u;
-    std::array<u8, 53> spawn{0x79, 0};
-    for (unsigned byte = 0; byte < 4; ++byte) {
-        spawn[2 + byte] = static_cast<u8>(lifecycleGid >> (byte * 8));
-    }
-    spawn[14] = 0xea; spawn[15] = 0x03; // job 1002
-    spawn[42] = 0x30; // OPT3 0x20 blade-stop plus 0x10 effect 254.
-    spawn[51] = 1; // clevel
-    PacketView spawnView{};
-    int spawnConsumed = 0;
-    Require(ro::net::GetActiveMapReceiveProfile().actorSpawnLegacySpawn == 0x0079
-        && TryReadPacket(spawn.data(), static_cast<int>(spawn.size()), spawnView, spawnConsumed)
-        && spawnConsumed == static_cast<int>(spawn.size()) && spawnView.packetId == 0x0079
-        && router.Dispatch(lifecycleMode, spawnView),
-        "selected literal 0x0079 spawn packet did not dispatch");
-    const auto spawnedIt = lifecycleMode.m_runtimeActors.find(lifecycleGid);
-    Require(spawnedIt != lifecycleMode.m_runtimeActors.end() && spawnedIt->second
-        && spawnedIt->second->IsMotionFrozen(),
+    CGameActor* const spawnedActor = SpawnShowEfstReplayActor(lifecycleMode, router, lifecycleGid, 1002, 0x30);
+    Require(spawnedActor->IsMotionFrozen(),
         "selected 0x0079 spawn did not instantiate heap actor with its OPT3 snapshot");
-    CGameActor* const spawnedActor = spawnedIt->second;
     RequireActorEffectCount(*spawnedActor, 254, 1,
         "selected 0x0079 OPT3 spawn omitted its owned effect 254");
     DispatchNpcShowEfst(lifecycleMode, router, lifecycleGid, 0, 1, 0x30u);
@@ -472,5 +572,5 @@ void NpcShowEfstReplay()
     Require(g_world.m_actorList.empty() && g_world.m_gameObjectList.empty()
         && lifecycleMode.m_runtimeActors.empty() && lifecycleMode.m_deferredActorDeletes.empty(),
         "normal world sweep retained the vanished actor or detached effect");
-    std::cout << "{\"case_id\":\"npc_show_efst_replay\",\"contract_id\":\"PK22.02\",\"lifecycle_contract_id\":\"PK22.04\",\"literal_028a\":true,\"spawn_vanish_lifecycle\":{\"spawn\":\"0079\",\"spawn_opt3\":true,\"refresh\":\"028A\",\"vanish\":\"0080\",\"owned_effect_detached\":true,\"normal_world_cleanup\":true},\"blade_stop\":{\"ordinary_freeze\":true,\"special_jobs\":[15,4016,4038],\"forced_fields_preserved\":true,\"gray_rgb_alpha_preserved\":true,\"body_release_orders\":2},\"nonpc_effects\":[420,427,254,655,667],\"pc_effect_matrix\":[166,203,254,418,544,419,424,586,655,474,382,368,394,396,375,617],\"selector_options\":[130,128,169],\"shared_claim_end_orders\":2,\"status188_snapshot_dual_release\":true,\"terminal_effects\":[540,656],\"hidden_pc_effects\":[203,254,418,586],\"removal_only_110_375\":true,\"unknown_actor_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
+    std::cout << "{\"case_id\":\"npc_show_efst_replay\",\"contract_id\":\"PK22.02\",\"lifecycle_contract_id\":\"PK22.04\",\"literal_028a\":true,\"spawn_vanish_lifecycle\":{\"spawn\":\"0079\",\"spawn_opt3\":true,\"refresh\":\"028A\",\"vanish\":\"0080\",\"owned_effect_detached\":true,\"normal_world_cleanup\":true},\"blade_stop\":{\"ordinary_freeze\":true,\"special_jobs\":[15,4016,4038],\"forced_fields_preserved\":true,\"gray_rgb_alpha_preserved\":true,\"body_release_orders\":2},\"nonpc_effects\":[420,427,254,655,667],\"pc_effect_matrix\":[166,203,254,418,544,419,424,586,655,474,382,368,394,396,375,617],\"selector_options\":[130,128,169],\"shared_claim_end_orders\":2,\"shared_icon_overlap_statuses\":[86,103,121,122,107,113,123,153,165,166,167,232],\"status188_snapshot_dual_release\":true,\"terminal_effects\":[540,656],\"hidden_pc_effects\":[203,254,418,586],\"removal_only_110_375\":true,\"unknown_actor_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
 }

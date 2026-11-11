@@ -5,6 +5,7 @@
 #include "core/ClientInfoLocale.h"
 #include "core/Globals.h"
 #include "core/SettingsIni.h"
+#include "core/Timer.h"
 #include "gamemode/ActionRequestSender.h"
 #include "gamemode/Commerce.h"
 #include "gamemode/GameMode.h"
@@ -14,6 +15,7 @@
 #include "item/Item.h"
 #include "pathfinder/PathFinder.h"
 #include "res/Texture.h"
+#include "render/Renderer.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
 #include "qtui/QtUiStateAdapter.h"
@@ -5582,6 +5584,12 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--npc-dialogue-actions-only") { NpcDialogueActionsReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-progress-only") { NpcProgressReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-show-efst-only") { NpcShowEfstReplay();CConnection::Cleanup();return 0; }
+    if (argc > 1 && std::string(argv[1]) == "--npc-show-efst-map-exit") {
+        // OnExit clears process-wide windows and session state.
+        NpcShowEfstMapExitReplay();
+        CConnection::Cleanup();
+        return 0;
+    }
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();
