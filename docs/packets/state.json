@@ -820,9 +820,13 @@
       "commit_subject": "packet(PK24.03): frame effect values and replay actor resource ordering"
     },
     "PK24.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK24.04-resource-and-state-verification.md",
+        "docs/packets/contracts/PK24.RESOURCE-STATE.md",
+        "docs/packets/evidence/PK24.03-selected-actor-and-resource-ordering.md"
+      ],
+      "commit_subject": "packet(PK24.04): verify selected resource state and discovery ownership"
     },
     "PK25.01": {
       "status": "COMPLETED",

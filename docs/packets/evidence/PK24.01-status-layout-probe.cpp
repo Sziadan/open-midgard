@@ -68,9 +68,18 @@ CHECK_FIELD(ZC_NOTIFY_EFFECT3, aid, uint32, 2);
 CHECK_FIELD(ZC_NOTIFY_EFFECT3, effectId, uint32, 6);
 CHECK_FIELD(ZC_NOTIFY_EFFECT3, num, uint32, 10);
 
+static_assert(spawn_unitType == 0x02ed && sizeof(packet_spawn_unit) == 59);
+static_assert(idle_unitType == 0x02ee && sizeof(packet_idle_unit) == 60);
+static_assert(spawn_unit2Type == 0x007c && sizeof(packet_spawn_unit2) == 42);
+static_assert(idle_unit2Type == 0x0078 && sizeof(packet_idle_unit2) == 55);
+static_assert(offsetof(packet_spawn_unit, GID) == 2);
+static_assert(offsetof(packet_spawn_unit2, GID) == 3 && offsetof(packet_spawn_unit2, job) == 21);
+static_assert(offsetof(packet_idle_unit2, GID) == 3 && offsetof(packet_idle_unit2, virtue) == 43);
+
 int main()
 {
     std::printf("PACKETVER=%d PACKETVER_SAK_NUM=%d MAX_EXP=%lld\n",
         PACKETVER, PACKETVER_SAK_NUM, static_cast<long long>(MAX_EXP));
     std::puts("PASS 00B0/8 00B1/8 00BC/6 00BD/44 00BE/5 0141/14 0229/15 013D/6 0284/14");
+    std::puts("PASS selected actor entry 02ED/59 02EE/60 007C/42 0078/55");
 }
