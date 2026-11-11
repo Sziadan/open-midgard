@@ -2,6 +2,16 @@ cmake_minimum_required(VERSION 3.20)
 project(SkillParityChecks LANGUAGES CXX)
 enable_testing()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+if(WIN32 AND MINGW)
+    get_filename_component(mingw_runtime_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    set(mingw_test_runtime "${CMAKE_CURRENT_BINARY_DIR}/mingw-test-runtime.cmake")
+    # Read PATH at test time so CTest keeps the caller's environment.
+    file(GENERATE OUTPUT "${mingw_test_runtime}"
+        CONTENT "set(ENV{PATH} \"${mingw_runtime_dir};\$ENV{PATH}\")\n")
+    set_property(DIRECTORY APPEND PROPERTY TEST_INCLUDE_FILES "${mingw_test_runtime}")
+endif()
+
 function(extract_body variable source start_marker end_marker)
     string(FIND "${source}" "${start_marker}" body_start)
     if(body_start LESS 0)
