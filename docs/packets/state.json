@@ -849,9 +849,13 @@
       "commit_subject": "packet(PK25.04): verify NPC dialogue retries and notice histories"
     },
     "PK26.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK26.SPECIAL-SKILL-CHOICES.md",
+        "docs/packets/evidence/PK26.01-choice-layout-probe.cpp",
+        "docs/packets/evidence/PK26.01-selected-layout.md"
+      ],
+      "commit_subject": "packet(PK26.01): establish selected special skill choice contract"
     },
     "PK26.02": {
       "status": "NOT_STARTED",
