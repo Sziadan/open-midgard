@@ -324,6 +324,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x022B, 57);
     SetPacketSize(0x022C, 65);
     SetPacketSize(0x022E, 71);               // Selected homunculus property snapshot
+    SetPacketSize(0x022F, 5);                // Homunculus feeding result
     SetPacketSize(0x0230, 12);               // Homunculus status and owner GID
     SetPacketSize(0x0235, kVariablePacketSize);
     SetPacketSize(0x0239, 11);

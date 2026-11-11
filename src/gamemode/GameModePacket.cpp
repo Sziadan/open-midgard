@@ -1963,6 +1963,28 @@ void HandleHomunProperty(CGameMode&, const PacketView& packet)
     status.combat.attackRange = static_cast<s16>(ReadLE16(data + 69));
 }
 
+void HandleHomunFeedResult(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 5) return;
+    if (packet.data[2] != 0) {
+        g_session.m_homunStatus.stateId = 29;
+        return;
+    }
+
+    ITEM_INFO food{};
+    food.SetItemId(ReadLE16(packet.data + 3));
+    ro::UiMessageStrings strings;
+    strings.Load();
+    std::string message = strings.Get(591, "You have no '%s'.");
+    if (const auto argument = message.find("%s"); argument != std::string::npos)
+        message.replace(argument, 2, food.GetItemName());
+    constexpr u32 color = 0x1e1ef5;
+    g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(message.c_str()), color);
+    g_windowMgr.SendMsg(20, reinterpret_cast<msgparam_t>(message.c_str()), color);
+    if (auto* actor = mode.m_world ? mode.m_world->GetGameActorByAID(g_session.m_homunGID) : nullptr)
+        actor->SendMsg(nullptr, 21, 4, 0, 0);
+}
+
 void HandleHomunStatus(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 12) return;
@@ -9038,6 +9060,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01A6, HandlePetEggList);
     router.Register(0x01A4, HandlePetStatusChange);
     router.Register(0x022E, HandleHomunProperty);
+    router.Register(0x022F, HandleHomunFeedResult);
     router.Register(0x0230, HandleHomunStatus);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);

@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current companion status checkpoint (2026-11-11)**. The selected homunculus and mercenary status packets now populate the session snapshots. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status.md)
+**Current homunculus feed checkpoint (2026-11-11)**. The registered `022F` path now applies feeding success state and missing-food feedback. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homun-feed.md)
+
+**Previous companion status checkpoint (2026-11-11)**. The selected homunculus and mercenary status packets now populate the session snapshots. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status.md)
 
 **Previous companion identity checkpoint (2026-11-11)**. The selected `0230` and `029B` receive paths now establish companion GIDs. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-companion-identity.md)
 

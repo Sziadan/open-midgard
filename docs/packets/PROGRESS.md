@@ -3771,3 +3771,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Companion status packets
 
 **Current companion status checkpoint (2026-11-11)**. The selected homunculus and mercenary status packets now populate the session snapshots. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status.md)
+
+## 2026-11-11 Homunculus feeding result
+
+**Current homunculus feed checkpoint (2026-11-11)**. The registered `022F` path now applies feeding success state and missing-food feedback. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homun-feed.md)

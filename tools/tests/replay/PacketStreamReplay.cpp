@@ -11,6 +11,7 @@
 #include "gamemode/GameModePacket.h"
 #include "gamemode/LoginMode.h"
 #include "gamemode/Mode.h"
+#include "item/Item.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
 #include "qtui/QtUiStateAdapter.h"
@@ -25,6 +26,8 @@
 #include "ui/UINewChatWnd.h"
 #include "ui/UIGuildWnd.h"
 #include "ui/UIMinimapWnd.h"
+#include "world/GameActor.h"
+#include "world/World.h"
 #include <algorithm>
 #include <array>
 #include <cerrno>
@@ -2514,6 +2517,46 @@ void CompanionIdentityReplay()
     parameter[2] = 0xff;
     Require(router.Dispatch(mode, packet) && ms.combat.sp == -1 && ms.combat.hp == 0x10023,
         "unknown mercenary parameter changed the snapshot");
+
+    struct FeedActor : CGameActor {
+        int emotions = 0;
+        void SendMsg(CGameObject* sender, int message, msgparam_t first, msgparam_t second, msgparam_t third) override
+        {
+            Require(!sender && message == 21 && first == 4 && second == 0 && third == 0,
+                "homunculus feeding sent the wrong actor message");
+            ++emotions;
+        }
+    } homunActor, otherActor;
+    homunActor.m_gid = g_session.m_homunGID;
+    otherActor.m_gid = g_session.m_merGID;
+    CWorld world;
+    world.m_actorList.push_back(&homunActor);
+    world.m_actorList.push_back(&otherActor);
+    mode.m_world = &world;
+    std::array<u8, 5> feed{0x2f, 0x02, 2, 0xf5, 1};
+    g_windowMgr.ClearChatEvents();
+    Require(!TryReadPacket(feed.data(), 4, packet, consumed), "short homunculus feed result framed");
+    Require(TryReadPacket(feed.data(), 5, packet, consumed) && consumed == 5 && router.Dispatch(mode, packet)
+        && hs.stateId == 29 && homunActor.emotions == 0 && g_windowMgr.GetChatEvents().empty(),
+        "homunculus feed success did not set state 29 without failure effects");
+    feed[2] = 0;
+    Require(router.Dispatch(mode, packet), "homunculus feed failure did not dispatch");
+    const auto& feedEvents = g_windowMgr.GetChatEvents();
+    ITEM_INFO food{};
+    food.SetItemId(501);
+    const auto foodName = food.GetItemName();
+    Require(feedEvents.size() == 2 && feedEvents[0].text == feedEvents[1].text
+        && !foodName.empty() && feedEvents[0].text.find(foodName) != std::string::npos
+        && feedEvents[0].color == 0xf51e1eu && feedEvents[1].color == 0xf51e1eu
+        && feedEvents[0].source.route == ro::chat::NoticeRoute::Normal
+        && feedEvents[1].source.route == ro::chat::NoticeRoute::Command
+        && hs.stateId == 29 && homunActor.emotions == 1 && otherActor.emotions == 0,
+        "homunculus feed failure lost the food name, notice routes, or actor emotion");
+    g_session.m_homunGID = 0;
+    Require(router.Dispatch(mode, packet) && g_windowMgr.GetChatEvents().size() == 4
+        && homunActor.emotions == 1, "feed failure without a homunculus did not retain the notices");
+    mode.m_world = nullptr;
+    g_windowMgr.ClearChatEvents();
 
     g_session.m_homunGID = oldHomun;
     g_session.m_merGID = oldMerc;

@@ -967,22 +967,26 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK27-companion-identity.md",
-        "docs/packets/evidence/PK28-companion-status.md"
+        "docs/packets/evidence/PK28-companion-status.md",
+        "docs/packets/evidence/PK28-homun-feed.md"
       ],
-      "commit_subject": "packet(PK28): receive companion status snapshots"
+      "commit_subject": "packet(PK28): handle homunculus feed results"
     },
     "PK28.02": {
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK27-companion-identity.md",
-        "docs/packets/evidence/PK28-companion-status.md"
+        "docs/packets/evidence/PK28-companion-status.md",
+        "docs/packets/evidence/PK28-homun-feed.md"
       ],
-      "commit_subject": "packet(PK28): receive companion status snapshots"
+      "commit_subject": "packet(PK28): handle homunculus feed results"
     },
     "PK28.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK28-homun-feed.md"
+      ],
+      "commit_subject": "packet(PK28): handle homunculus feed results"
     },
     "PK28.04": {
       "status": "NOT_STARTED",
