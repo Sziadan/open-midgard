@@ -11,7 +11,10 @@ add_library(ro_session STATIC
     PetTalk.cpp
 )
 
-target_include_directories(ro_session PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(ro_session PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src
+)
 target_compile_definitions(ro_session PRIVATE RO_SOURCE_ROOT="${CMAKE_SOURCE_DIR}")
 target_link_libraries(ro_session PUBLIC
     ro_core

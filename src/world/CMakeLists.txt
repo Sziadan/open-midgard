@@ -27,6 +27,14 @@ add_library(ro_world STATIC
     Granny.h
     Granny.cpp
     Gr2Monster.cpp
+    ../companion_ai/CompanionAiConfig.h
+    ../companion_ai/CompanionAiTypes.h
+    ../companion_ai/CompanionAiRuntime.h
+    ../companion_ai/CompanionAiRuntime.cpp
+    ../companion_ai/CompanionAiBrain.h
+    ../companion_ai/CompanionAiBrain.cpp
+    ../companion_ai/CompanionAiController.h
+    ../companion_ai/CompanionAiController.cpp
     ../res/Gr2Reader.cpp
     ../res/Gr2Pose.cpp
     ../res/gr2/Gr2File.cpp
@@ -43,10 +51,17 @@ add_library(ro_world STATIC
     ../res/gr2/Gr2Decode.cpp
 )
 
-target_include_directories(ro_world PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(ro_world PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src
+)
 target_link_libraries(ro_world PUBLIC
     ro_core
     ro_res
     ro_ui
     ro_pathfinder
+    ro_network
+    ro_session
+    ro_skill
 )
+target_link_libraries(ro_world PRIVATE zlibstatic)

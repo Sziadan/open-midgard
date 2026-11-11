@@ -1,5 +1,6 @@
 #pragma once
 #include "Types.h"
+#include "companion_ai/CompanionAiTypes.h"
 #include "res/Sprite.h"
 #include "res/ActRes.h"
 #include "Granny.h"
@@ -77,8 +78,12 @@ struct WBA {
     int effectLevel = 1;
     int sourceSkillId = -1;
 };
-struct _MSG2AI { u8 gap[32]; };
+using Msg2Ai = companion_ai::Msg2Ai;
 struct PROCEEDTYPE { int type; };
+
+namespace companion_ai {
+class Controller;
+}
 
 constexpr int kGameActorAttackStateId = 2;
 constexpr int kGameActorDeathStateId = 3;
@@ -306,11 +311,11 @@ public:
     u32 m_effectLaunchStep;
     u32 m_hideFadeStartTick, m_hideFadeEndTick;
     int m_actorType, m_bIsMemberAndVisible, m_gdid, m_emblemVersion;
-    void* m_homunAI; // CMercenaryAI
-    void* m_merAI;   // CMercenaryAI
+    companion_ai::Controller* m_homunAI = nullptr;
+    companion_ai::Controller* m_merAI = nullptr;
     u8 m_objectType;
     bool m_corpseCreated = false;
-    _MSG2AI m_homunMsg, m_homunResMsg, m_merMsg, m_merResMsg;
+    Msg2Ai m_homunMsg, m_homunResMsg, m_merMsg, m_merResMsg;
     CMsgEffect* m_birdEffect;
     CMsgEffect* m_iceEffect;
     CMsgEffect* m_curseEffect;

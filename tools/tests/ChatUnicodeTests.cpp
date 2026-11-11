@@ -17,8 +17,6 @@
 #include <QKeyEvent>
 #include <QImage>
 #include <QDir>
-#include <QElapsedTimer>
-#include <QThread>
 #include <memory>
 #include <cassert>
 #include <iostream>
@@ -56,7 +54,8 @@ int main(int argc,char** argv) {
     assert(native);
     auto message=root->findChild<QQuickItem*>("chatMessageEditor");
     auto whisper=root->findChild<QQuickItem*>("chatWhisperEditor");
-    auto history=root->findChild<QQuickItem*>("chatHistoryEditor");assert(message && whisper && history);
+    auto* historyPane=root->findChild<QQuickItem*>("chatHistoryPane");
+    assert(message && whisper && historyPane);
     auto click=[&](QQuickItem* item,int x=4) {
         const auto point=item->mapToScene({static_cast<qreal>(x),12});
         const auto position=MAKELPARAM(static_cast<int>(point.x()),static_cast<int>(point.y()));
@@ -88,33 +87,17 @@ int main(int argc,char** argv) {
     click(whisper);app.clipboard()->setText(QString(20,QChar(0x65E5)));shortcut('V');
     assert(state.chatWindowWhisperTargetText().toUtf8().size()==24);
     assert(whisper->property("text").toString()==state.chatWindowWhisperTargetText());
+    // Source history/scrollbar input is native-owned; QtChatInput must leave
+    // the history pane alone so arrows, drag and wheel can reach UINewChatWnd.
     QVariantList lines;
     for(auto text:{QString::fromUtf8("First: åäö Привет"),QString::fromUtf8("Second: 日本語 <b>literal</b>")})lines.push_back(QVariantMap{{"text",text},{"color","#f0e0c0"}});
     state.setChatWindowLines(lines);app.processEvents();
-    click(history);
-    shortcut('A');shortcut('C');
-    assert(app.clipboard()->text().contains(QString::fromUtf8("åäö Привет")));
-    assert(app.clipboard()->text().contains(QString::fromUtf8("日本語 <b>literal</b>")));
-    const auto copied=app.clipboard()->text();
-    // New arrivals must not destroy an in-progress selection.
-    lines.push_back(QVariantMap{{"text","New message"},{"color","#ffffff"}});state.setChatWindowLines(lines);app.processEvents();
-    shortcut('C');assert(app.clipboard()->text()==copied);
-    QMetaObject::invokeMethod(history,"deselect");app.processEvents();
-    const auto begin=history->mapToScene({1,5}),end=history->mapToScene({200,35});
-    bridge.handle(native,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(int(begin.x()),int(begin.y())),true);
-    bridge.handle(native,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(int(end.x()),int(end.y())),true);
-    bridge.handle(native,WM_LBUTTONUP,0,MAKELPARAM(int(end.x()),int(end.y())),true);
-    assert(!history->property("selectedText").toString().isEmpty());
-    shortcut('C');assert(app.clipboard()->text().contains('\n'));
-    QMetaObject::invokeMethod(history,"deselect");app.processEvents();
-    for(int i=0;i<30;++i)lines.push_back(QVariantMap{{"text",QString("Line %1: åäö 日本語").arg(i)},{"color","#f0e0c0"}});
-    state.setChatWindowLines(lines);app.processEvents();app.processEvents();
-    auto* transcript=root->findChild<QQuickItem*>("chatTranscript");assert(transcript);
-    const double before=transcript->property("contentY").toDouble();
+    const auto historyPoint=historyPane->mapToScene({4,12});
+    const auto historyPos=MAKELPARAM(static_cast<int>(historyPoint.x()),static_cast<int>(historyPoint.y()));
+    assert(!bridge.handle(native,WM_LBUTTONDOWN,MK_LBUTTON,historyPos,true));
+    assert(whisper->hasActiveFocus());
     POINT scrollPoint{30,30};ClientToScreen(native,&scrollPoint);
-    bridge.handle(native,WM_MOUSEWHEEL,MAKEWPARAM(0,120),MAKELPARAM(scrollPoint.x,scrollPoint.y),true);
-    QElapsedTimer wheelTimer;wheelTimer.start();while(wheelTimer.elapsed()<250) {app.processEvents();QThread::msleep(5);}
-    assert(transcript->property("contentY").toDouble()<before);
+    assert(!bridge.handle(native,WM_MOUSEWHEEL,MAKEWPARAM(0,120),MAKELPARAM(scrollPoint.x,scrollPoint.y),true));
     // Scene coordinates must also work when the game's GUI scale changes.
     root->setScale(1.5);window.setGeometry(0,0,960,390);window.contentItem()->setSize({960,390});
     click(message);const auto previous=state.chatWindowInputText();bridge.handle(native,WM_CHAR,0x00F6,0,true);
@@ -136,5 +119,5 @@ int main(int argc,char** argv) {
     assert(view.status()==QQuickView::Ready);view.resize(640,260);view.show();
     for(int i=0;i<5;++i)app.processEvents();
     const auto image=view.grabWindow();assert(!image.isNull());assert(image.save("build-chat-tests/chat-unicode.png"));
-    std::cout<<"PASS: glyph coverage; native UTF-16/surrogates; edit/copy/cut/paste; IME preedit/commit; UTF-8 limits; selectable multiline history\n";
+    std::cout<<"PASS: glyph coverage; native UTF-16/surrogates; edit/copy/cut/paste; IME preedit/commit; UTF-8 limits; history input left to native owner\n";
 }

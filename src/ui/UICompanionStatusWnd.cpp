@@ -148,7 +148,8 @@ void UICompanionStatusWnd::RefreshReceivedName()
     if (!m_nameEdit) return;
     const auto& status = g_session.m_homunStatus;
     m_nameEdit->SetText(status.name.c_str());
-    const bool canRename = !status.nameModified;
+    // Ref UIHomunInfoWnd gates rename with (m_isHomunNameModified & 1).
+    const bool canRename = (status.nameModified & 0x1) == 0;
     m_nameEdit->SetShow(canRename);
     m_buttons.back()->SetShow(canRename);
     if (!canRename && g_windowMgr.m_editWindow == m_nameEdit)
@@ -331,6 +332,9 @@ void UICompanionStatusWnd::ApplyConfirmedAction(msgparam_t action)
         g_modeMgr.SendMsg(199, reinterpret_cast<msgparam_t>(name.c_str()), 0, 0);
         g_session.m_homunStatus.name = name;
         g_session.m_homunStatus.nameModified = 1;
+        if (auto* mode = g_modeMgr.GetCurrentGameMode(); mode && g_session.m_homunGID != 0) {
+            mode->m_actorNameListByGID[g_session.m_homunGID].name = name;
+        }
         RefreshReceivedName();
     } else if (action == kFeed) {
         g_modeMgr.SendMsg(198, 1, 0, 0);

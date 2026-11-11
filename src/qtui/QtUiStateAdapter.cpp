@@ -4672,10 +4672,13 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
                 } else {
                     mode.m_world->GetActorScreenMarker(viewMatrix, cameraLongitude, hoveredActor->m_gid, &anchorX, nullptr, &anchorY);
                 }
-                if(hoveredActor->m_isPc) {
-                    const auto metrics=ResolvePlayerVitalsScreenMetrics(mode.m_view);
-                    anchorY += metrics.topDelta+metrics.totalHeight+metrics.namePadding;
-                } else anchorY += kQtActorLabelVerticalOffset;
+                // Owned companions draw the same zoom-scaled HP/SP overlay as the
+                // local player, so their hover name must clear those bars too.
+                if (hoveredActor->m_isPc || ActorHasPlayerStyleVitalsOverlay(hoveredActor)) {
+                    anchorY += ResolvePlayerStyleVitalsNameOffsetY(mode.m_view);
+                } else {
+                    anchorY += kQtActorLabelVerticalOffset;
+                }
                 const QStringList lines=ToQString(ResolveActorLabel(mode,hoveredActor)).split('\n');
                 auto nameplate=MakeCenteredAnchor(lines.value(0),
                     anchorX,

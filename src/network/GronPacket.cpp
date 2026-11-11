@@ -367,6 +367,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0858, kVariablePacketSize);
     SetPacketSize(0x0814, 86);
     SetPacketSize(0x0816, 6);
+    SetPacketSize(0x02C1, kVariablePacketSize); // ZC_NPC_CHAT (colored system/NPC message)
+    SetPacketSize(0x02C2, kVariablePacketSize); // ZC_FORMATSTRING_MSG
     SetPacketSize(0x02C9, 3);
     SetPacketSize(0x02D7, kVariablePacketSize);
     SetPacketSize(0x02D9, 10);              // ZC_CONFIG

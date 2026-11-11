@@ -1,6 +1,7 @@
 #include "core/WhisperNames.h"
 #include "world/Gr2Monster.h"
 #include "Session.h"
+#include "companion_ai/CompanionAiRuntime.h"
 #include "core/Globals.h"
 #include "core/SettingsIni.h"
 #include "core/UiMessageStrings.h"
@@ -1647,19 +1648,32 @@ bool CSession::ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool sh
     }
 
     CompanionTargetState* target = nullptr;
-    if (m_homunStatus.alive) target = &m_homunTarget;
-    else if (m_merStatus.alive) target = &m_merTarget;
+    companion_ai::Kind kind = companion_ai::Kind::Homunculus;
+    if (m_homunStatus.alive) {
+        target = &m_homunTarget;
+        kind = companion_ai::Kind::Homunculus;
+    } else if (m_merStatus.alive) {
+        target = &m_merTarget;
+        kind = companion_ai::Kind::Mercenary;
+    }
     if (!target) return false;
 
     if (target->selected) {
         target->selected = false;
-    } else if (!shift) {
-        target->gid = 0;
-        target->cellX = cellX;
-        target->cellY = cellY;
-        target->moving = true;
-        target->attacking = false;
+        return true;
     }
+
+    target->gid = 0;
+    target->cellX = cellX;
+    target->cellY = cellY;
+    target->moving = true;
+    target->attacking = false;
+
+    companion_ai::Msg2Ai msg;
+    msg.command = companion_ai::MOVE_CMD;
+    msg.x = cellX;
+    msg.y = cellY;
+    companion_ai::Runtime::QueueCommand(kind, msg, shift);
     return true;
 }
 
@@ -1678,8 +1692,20 @@ void CompanionTargetState::SelectActor(u32 actorGid, bool shift)
 
 void CSession::ApplyCompanionActorClick(u32 gid, bool shift)
 {
-    if (m_homunStatus.alive) m_homunTarget.SelectActor(gid, shift);
-    if (m_merStatus.alive) m_merTarget.SelectActor(gid, shift);
+    auto queueAttack = [&](bool alive, CompanionTargetState& target, companion_ai::Kind kind) {
+        if (!alive) return;
+        // Ref uses a select-then-confirm cursor for non-shift attacks. Rebuild keeps
+        // CompanionTargetState for UI and issues ATTACK_OBJECT_CMD immediately so
+        // the native AI receives the order on the same click.
+        target.SelectActor(gid, shift);
+        companion_ai::Msg2Ai msg;
+        msg.command = companion_ai::ATTACK_OBJECT_CMD;
+        msg.targetId = gid;
+        companion_ai::Runtime::QueueCommand(kind, msg, shift);
+    };
+
+    queueAttack(m_homunStatus.alive, m_homunTarget, companion_ai::Kind::Homunculus);
+    queueAttack(m_merStatus.alive, m_merTarget, companion_ai::Kind::Mercenary);
 }
 
 void CSession::ClearDefeatedCompanionTarget(u32 gid)

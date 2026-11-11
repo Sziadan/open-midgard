@@ -61,11 +61,13 @@
             armSource(28,1);Require(!ReplayTrySourceSkillOnActor(mode,&pc,false,false,false),"single-character skill selected canonical self");
             armSource(28,1,3,4);Require(ReplayTrySourceSkillOnActor(mode,&pc,false,false,false),"source ALL selector failed canonical self override");
             player.SendMsg(nullptr,13,0,0,0);g_session.m_aid=0;
-            player.m_isPc=1;player.m_gid=0x55000001;
+            player.m_isPc=1;player.m_gid=0x55000001;g_session.m_gid=0x55000001;g_session.m_aid=0x66000002;
             armSource(28,1);Require(!ReplayTrySourceSkillOnActor(mode,&player,false,false,false),
                 "single-character skill selected local player with distinct stored ID");
-            armSource(28,1,3,4);Require(ReplayTrySourceSkillOnActor(mode,&player,false,false,false),
+            armSource(28,1,3,4);Require(ReplayTrySourceSkillOnActor(mode,&player,false,false,false)
+                && player.m_proceedTargetGid==g_session.m_aid,
                 "ALL selector failed local player representation override");player.SendMsg(nullptr,13,0,0,0);
+            g_session.m_aid=0;
             armSource(30,1);g_session.m_isNoShift=1;
             Require(!ReplayTrySourceSkillOnActor(mode,&pc,false,false,false),"fresh PC click acquired blanket NoShift override");
             pc.m_pkState=1;Require(ReplayTrySourceSkillOnActor(mode,&pc,false,false,false),"PC PK-state override missing");player.SendMsg(nullptr,13,0,0,0);

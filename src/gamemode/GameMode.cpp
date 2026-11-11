@@ -22,6 +22,8 @@
 #include "core/MannerFilter.h"
 #include "core/SourceTextCodec.h"
 #include "ui/UIChatRoomWnd.h"
+#include "ui/UIChatRoomSettingsWnd.h"
+#include "ui/UICompanionStatusWnd.h"
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIPetInfoWnd.h"
 #include "ui/UIPetTamingDeceiveWnd.h"
@@ -50,6 +52,7 @@
 #include "res/Sprite.h"
 #include "res/WorldRes.h"
 #include "session/Session.h"
+#include "companion_ai/CompanionAiRuntime.h"
 #include "skill/Skill.h"
 #include "ui/UIMinimapWnd.h"
 #include "ui/UiScale.h"
@@ -153,6 +156,29 @@ PlayerVitalsScreenMetrics ResolvePlayerVitalsScreenMetrics(const CView* view)
     metrics.hoverNameExtra = metrics.totalHeight + metrics.namePadding + metrics.topDelta - 10;
     metrics.qtNameExtra = metrics.topDelta + (metrics.totalHeight - baseTotalHeight);
     return metrics;
+}
+
+bool ActorHasPlayerStyleVitalsOverlay(const CGameActor* actor)
+{
+    if (!actor || actor->m_gid == 0) {
+        return false;
+    }
+    if (actor->m_gid == g_session.m_gid || actor->m_gid == g_session.m_aid) {
+        return true;
+    }
+    if (g_session.m_homunStatus.alive && actor->m_gid == g_session.m_homunGID) {
+        return true;
+    }
+    if (g_session.m_merStatus.alive && actor->m_gid == g_session.m_merGID) {
+        return true;
+    }
+    return false;
+}
+
+int ResolvePlayerStyleVitalsNameOffsetY(const CView* view)
+{
+    const PlayerVitalsScreenMetrics metrics = ResolvePlayerVitalsScreenMetrics(view);
+    return metrics.topDelta + metrics.totalHeight + metrics.namePadding;
 }
 
 namespace {
@@ -569,6 +595,7 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode);
 bool QueueHoverLabelsOverlayQuad(CGameMode& mode);
 bool QueueMsgEffectsOverlayQuad();
 bool QueuePlayerVitalsOverlayQuad(CGameMode& mode);
+bool QueueOwnedCompanionVitalsOverlayQuads(CGameMode& mode);
 bool IsMapLoadingActive(const CGameMode& mode);
 bool IsMonsterLikeHoverActor(const CGameActor* actor);
 bool IsWalkableAttrCell(const CGameMode& mode, int tileX, int tileY);
@@ -2046,8 +2073,9 @@ bool QueueHoverLabelsOverlayQuad(CGameMode& mode)
         }
         drawX = labelX - (textSize.cx / 2);
         drawY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
-        if (hoveredActor == mode.m_world->m_player || hoveredActor->m_gid == g_session.m_gid) {
-            drawY += ResolvePlayerVitalsScreenMetrics(mode.m_view).hoverNameExtra;
+        if (ActorHasPlayerStyleVitalsOverlay(hoveredActor)
+            || hoveredActor == mode.m_world->m_player) {
+            drawY += ResolvePlayerStyleVitalsNameOffsetY(mode.m_view);
         }
         textColor = ResolveHoverNameColor(hoveredActor);
     }
@@ -2324,6 +2352,261 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
     face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
     g_renderer.AddRP(face, 1 | 8);
     return true;
+}
+
+bool QueueVitalsOverlayQuadAt(CGameMode& mode,
+    u32 ownerGid,
+    int labelX,
+    int labelY,
+    s64 hp,
+    s64 maxHp,
+    s64 sp,
+    s64 maxSp,
+    float sortKey,
+    const char* textureDebugName)
+{
+    if (!g_hMainWnd || !mode.m_view || ownerGid == 0) {
+        return false;
+    }
+    if (maxHp <= 0 && maxSp <= 0) {
+        return false;
+    }
+
+    const PlayerVitalsScreenMetrics metrics = ResolvePlayerVitalsScreenMetrics(mode.m_view);
+    const int totalHeight = metrics.totalHeight;
+    const int outerWidth = metrics.barWidth + metrics.border * 2;
+    const int outerLeft = labelX - (outerWidth / 2);
+    const int barTop = labelY + metrics.topDelta;
+    RECT vitalsRect{
+        outerLeft,
+        barTop,
+        outerLeft + outerWidth,
+        barTop + totalHeight,
+    };
+
+    RECT clientRect{};
+    GetClientRect(g_hMainWnd, &clientRect);
+    RECT clippedRect{};
+    IntersectRect(&clippedRect, &vitalsRect, &clientRect);
+    const int width = clippedRect.right - clippedRect.left;
+    const int height = clippedRect.bottom - clippedRect.top;
+    if (width <= 0 || height <= 0) {
+        return false;
+    }
+
+    struct CompanionVitalsSlot {
+        CTexture* texture = nullptr;
+        int textureWidth = 0;
+        int textureHeight = 0;
+        std::vector<unsigned int> composePixels;
+        bool textureValid = false;
+        std::uint64_t stateToken = 0ull;
+        u32 boundGid = 0;
+    };
+    static CompanionVitalsSlot s_slots[2];
+    CompanionVitalsSlot* slot = nullptr;
+    for (CompanionVitalsSlot& candidate : s_slots) {
+        if (candidate.boundGid == ownerGid) {
+            slot = &candidate;
+            break;
+        }
+    }
+    if (!slot) {
+        for (CompanionVitalsSlot& candidate : s_slots) {
+            if (candidate.boundGid == 0) {
+                slot = &candidate;
+                break;
+            }
+        }
+    }
+    if (!slot) {
+        slot = &s_slots[0];
+    }
+    slot->boundGid = ownerGid;
+
+    if (!slot->texture || slot->textureWidth != width || slot->textureHeight != height) {
+        delete slot->texture;
+        slot->texture = new CTexture();
+        if (!slot->texture || !slot->texture->Create(width, height, PF_A8R8G8B8, false)) {
+            delete slot->texture;
+            slot->texture = nullptr;
+            slot->textureWidth = 0;
+            slot->textureHeight = 0;
+            slot->boundGid = 0;
+            return false;
+        }
+        SetTextureDebugName(slot->texture, textureDebugName ? textureDebugName : "__overlay_companion_vitals__");
+        slot->textureWidth = width;
+        slot->textureHeight = height;
+        slot->composePixels.assign(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+        slot->textureValid = false;
+        slot->stateToken = 0ull;
+    } else if (slot->composePixels.size() != static_cast<size_t>(width) * static_cast<size_t>(height)) {
+        slot->composePixels.assign(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+        slot->textureValid = false;
+    }
+
+    std::uint64_t vitalsStateToken = 1469598103934665603ull;
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(ownerGid));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hp)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(maxHp)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(sp)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(maxSp)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(labelX)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(barTop)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(metrics.barWidth)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(metrics.barHeight)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(width)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(height)));
+
+    if (!slot->textureValid || vitalsStateToken != slot->stateToken) {
+        std::fill(slot->composePixels.begin(), slot->composePixels.end(), 0u);
+        const int localOuterLeft = outerLeft - clippedRect.left;
+        const int localOuterTop = barTop - clippedRect.top;
+        RECT outerRect{
+            localOuterLeft,
+            localOuterTop,
+            localOuterLeft + outerWidth,
+            localOuterTop + totalHeight,
+        };
+        FillSolidRectArgb(slot->composePixels.data(), width, height, outerRect, RGB(0, 0, 0));
+
+        const int innerLeft = outerRect.left + metrics.border;
+        const int innerTop = outerRect.top + metrics.border;
+        RECT hpRect{ innerLeft, innerTop, innerLeft + metrics.barWidth, innerTop + metrics.barHeight };
+        RECT spRect{
+            innerLeft,
+            hpRect.bottom + metrics.border,
+            innerLeft + metrics.barWidth,
+            hpRect.bottom + metrics.border + metrics.barHeight,
+        };
+        FillSolidRectArgb(slot->composePixels.data(), width, height, hpRect, RGB(255, 255, 255));
+        FillSolidRectArgb(slot->composePixels.data(), width, height, spRect, RGB(255, 255, 255));
+
+        if (maxHp > 0) {
+            const s64 clampedHp = (std::min)(hp, maxHp);
+            const int hpFillWidth = VitalBarFill(clampedHp, maxHp, metrics.barWidth);
+            if (hpFillWidth > 0) {
+                RECT hpFillRect{ hpRect.left, hpRect.top, hpRect.left + hpFillWidth, hpRect.bottom };
+                const bool lowHp = clampedHp * 4 < maxHp;
+                FillSolidRectArgb(
+                    slot->composePixels.data(),
+                    width,
+                    height,
+                    hpFillRect,
+                    lowHp ? RGB(220, 32, 32) : RGB(48, 192, 48));
+            }
+        }
+
+        if (maxSp > 0) {
+            const s64 clampedSp = (std::min)(sp, maxSp);
+            const int spFillWidth = VitalBarFill(clampedSp, maxSp, metrics.barWidth);
+            if (spFillWidth > 0) {
+                RECT spFillRect{ spRect.left, spRect.top, spRect.left + spFillWidth, spRect.bottom };
+                FillSolidRectArgb(slot->composePixels.data(), width, height, spFillRect, RGB(48, 96, 220));
+            }
+        }
+
+        slot->texture->Update(0,
+            0,
+            width,
+            height,
+            slot->composePixels.data(),
+            true,
+            width * static_cast<int>(sizeof(unsigned int)));
+        slot->textureValid = true;
+        slot->stateToken = vitalsStateToken;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    const float left = OverlayScreenEdge(clippedRect.left);
+    const float top = OverlayScreenEdge(clippedRect.top);
+    const float right = OverlayScreenEdge(clippedRect.right);
+    const float bottom = OverlayScreenEdge(clippedRect.bottom);
+    const unsigned int overlayContentWidth = slot->texture->m_surfaceUpdateWidth > 0
+        ? slot->texture->m_surfaceUpdateWidth
+        : static_cast<unsigned int>(width);
+    const unsigned int overlayContentHeight = slot->texture->m_surfaceUpdateHeight > 0
+        ? slot->texture->m_surfaceUpdateHeight
+        : static_cast<unsigned int>(height);
+    const float maxU = slot->texture->m_w != 0
+        ? static_cast<float>(overlayContentWidth) / static_cast<float>(slot->texture->m_w)
+        : 1.0f;
+    const float maxV = slot->texture->m_h != 0
+        ? static_cast<float>(overlayContentHeight) / static_cast<float>(slot->texture->m_h)
+        : 1.0f;
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = slot->texture;
+    face->mtPreset = 3;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = sortKey;
+
+    face->m_verts[0] = { left, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { right, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { left, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
+}
+
+bool QueueOwnedCompanionVitalsOverlayQuads(CGameMode& mode)
+{
+    if (!mode.m_world || !mode.m_view) {
+        return false;
+    }
+
+    bool queued = false;
+    const matrix& viewMatrix = mode.m_view->GetViewMatrix();
+    const float cameraLongitude = mode.m_view->GetCameraLongitude();
+
+    auto queueOwned = [&](u32 gid, bool alive, const CompanionCombatStatus& combat, const char* debugName, float sortKey) {
+        if (!alive || gid == 0) {
+            return;
+        }
+        if (!mode.m_world->GetGameActorByAID(gid)) {
+            return;
+        }
+        int centerX = 0;
+        int labelY = 0;
+        if (!mode.m_world->GetActorScreenMarker(viewMatrix, cameraLongitude, gid, &centerX, nullptr, &labelY)) {
+            return;
+        }
+        if (QueueVitalsOverlayQuadAt(mode,
+                gid,
+                centerX,
+                labelY,
+                combat.hp,
+                combat.maxHp,
+                combat.sp,
+                combat.maxSp,
+                sortKey,
+                debugName)) {
+            queued = true;
+        }
+    };
+
+    queueOwned(g_session.m_homunGID,
+        g_session.m_homunStatus.alive,
+        g_session.m_homunStatus.combat,
+        "__overlay_homun_vitals__",
+        kPlayerVitalsOverlaySortKey - 0.001f);
+    queueOwned(g_session.m_merGID,
+        g_session.m_merStatus.alive,
+        g_session.m_merStatus.combat,
+        "__overlay_mer_vitals__",
+        kPlayerVitalsOverlaySortKey - 0.002f);
+    return queued;
 }
 
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc)
@@ -3423,6 +3706,27 @@ bool ShouldUseServerNameForHoverActor(const CGameActor* actor)
     return actor->m_objectType == 6;
 }
 
+std::string ResolveOwnedCompanionHoverName(const CGameActor* actor)
+{
+    if (!actor || actor->m_gid == 0) {
+        return std::string();
+    }
+
+    // Companion windows already show m_homunStatus/m_merStatus.name from 0x022E / 0x029B.
+    // Hover must use those custom names too — not JobNameTable stems (ARCHER06, AMISTR, ...).
+    if (g_session.m_homunStatus.alive
+        && actor->m_gid == g_session.m_homunGID
+        && !g_session.m_homunStatus.name.empty()) {
+        return g_session.m_homunStatus.name;
+    }
+    if (g_session.m_merStatus.alive
+        && actor->m_gid == g_session.m_merGID
+        && !g_session.m_merStatus.name.empty()) {
+        return g_session.m_merStatus.name;
+    }
+    return std::string();
+}
+
 std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor)
 {
     if (!actor) {
@@ -3434,6 +3738,10 @@ std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor)
         if (playerName && *playerName) {
             return playerName;
         }
+    }
+
+    if (const std::string companionName = ResolveOwnedCompanionHoverName(actor); !companionName.empty()) {
+        return companionName;
     }
 
     const auto cachedNameIt = mode.m_actorNameListByGID.find(actor->m_gid);
@@ -3698,9 +4006,10 @@ void DrawHoveredActorName(CGameMode& mode, HDC hdc)
     drawDc.GetTextExtentPoint32A(label.c_str(), static_cast<int>(label.size()), &textSize);
     const int textWidth = textSize.cx;
     const int drawX = labelX - (textWidth / 2);
-        int drawY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
-    if (hoveredActor == mode.m_world->m_player || hoveredActor->m_gid == g_session.m_gid) {
-            drawY += ResolvePlayerVitalsScreenMetrics(mode.m_view).hoverNameExtra;
+    int drawY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
+    if (ActorHasPlayerStyleVitalsOverlay(hoveredActor)
+        || hoveredActor == mode.m_world->m_player) {
+        drawY += ResolvePlayerStyleVitalsNameOffsetY(mode.m_view);
     }
     DrawOutlinedScreenText(hdc, drawX, drawY, label.c_str(), ResolveHoverNameColor(hoveredActor));
 }
@@ -4235,10 +4544,16 @@ void ReplayPersistedStatusVisuals(CGameMode& mode)
     // on the new player. Status icons stay in the session and the server does
     // not send them again, so they have to be launched once the map is ready.
     CGameActor* actor = mode.m_world ? static_cast<CGameActor*>(mode.m_world->m_player) : nullptr;
-    if (!actor && g_session.m_gid != 0) {
-        const auto it = mode.m_runtimeActors.find(g_session.m_gid);
-        if (it != mode.m_runtimeActors.end()) {
-            actor = it->second;
+    if (!actor) {
+        const u32 selfActorId = g_session.m_aid != 0 ? g_session.m_aid : g_session.m_gid;
+        if (selfActorId != 0) {
+            auto it = mode.m_runtimeActors.find(selfActorId);
+            if (it == mode.m_runtimeActors.end() && g_session.m_gid != 0 && g_session.m_gid != selfActorId) {
+                it = mode.m_runtimeActors.find(g_session.m_gid);
+            }
+            if (it != mode.m_runtimeActors.end()) {
+                actor = it->second;
+            }
         }
     }
     if (!actor) {
@@ -4775,8 +5090,13 @@ bool ResolveAttackChaseSourceTile(const CGameMode& mode, int* outTileX, int* out
         return false;
     }
 
-    if (mode.m_world && mode.m_world->m_player && mode.m_world->m_player->m_isMoving && g_session.m_gid != 0) {
-        const auto runtimeIt = mode.m_runtimeActors.find(g_session.m_gid);
+    if (mode.m_world && mode.m_world->m_player && mode.m_world->m_player->m_isMoving
+        && (g_session.m_aid != 0 || g_session.m_gid != 0)) {
+        const u32 selfActorId = g_session.m_aid != 0 ? g_session.m_aid : g_session.m_gid;
+        auto runtimeIt = mode.m_runtimeActors.find(selfActorId);
+        if (runtimeIt == mode.m_runtimeActors.end() && g_session.m_gid != 0 && g_session.m_gid != selfActorId) {
+            runtimeIt = mode.m_runtimeActors.find(g_session.m_gid);
+        }
         if (runtimeIt != mode.m_runtimeActors.end() && runtimeIt->second) {
             const CGameActor* actor = runtimeIt->second;
             size_t activeIndex = 0;
@@ -6953,8 +7273,13 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
         g_windowMgr.SendMsg(3,0,0,0);g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text.c_str()),255,0,0);
         return true;
     }
-    BeginSkillChase(mode,target->m_gid,mode.m_skillUseInfo.id,mode.m_skillUseInfo.level,mode.m_skillUseInfo.attackRange);
-    if(ordinaryActor){mode.m_lastMonGid=target->m_gid;mode.m_lastLockOnMonGid=target->m_gid;}
+    // Ref CPlayer keeps the local actor GID as AID; chase/use-skill must send
+    // that canonical id even if an older bootstrap still stored character GID.
+    // Do not treat another actor as self merely because its id matches char GID.
+    const bool selfTarget = target == player || target->m_gid == g_session.m_aid;
+    const u32 chaseGid = selfTarget ? ResolveSelfSkillTargetId() : target->m_gid;
+    BeginSkillChase(mode,chaseGid,mode.m_skillUseInfo.id,mode.m_skillUseInfo.level,mode.m_skillUseInfo.attackRange);
+    if(ordinaryActor){mode.m_lastMonGid=chaseGid;mode.m_lastLockOnMonGid=chaseGid;}
     return true;
 }
 
@@ -7697,22 +8022,39 @@ void DestroyDeferredRuntimeActors(CGameMode& mode)
 
 void EnsureBootstrapSelfActor(CGameMode& mode)
 {
-    if (g_session.m_gid == 0) {
+    // Ref CPlayer::OnInit assigns m_gid = GetAid(). Account AID is the map
+    // identity used for pick/self-skill targeting; character GID alone is not.
+    const u32 selfActorId = g_session.m_aid != 0 ? g_session.m_aid
+        : (g_session.m_gid != 0 ? g_session.m_gid : 0u);
+    if (selfActorId == 0) {
         return;
     }
 
     CGameActor* actor = nullptr;
     bool createdActor = false;
-    const auto it = mode.m_runtimeActors.find(g_session.m_gid);
+    auto it = mode.m_runtimeActors.find(selfActorId);
+    if (it == mode.m_runtimeActors.end() && g_session.m_gid != 0 && g_session.m_gid != selfActorId) {
+        it = mode.m_runtimeActors.find(g_session.m_gid);
+    }
+    if (it == mode.m_runtimeActors.end() && g_session.m_aid != 0 && g_session.m_aid != selfActorId) {
+        it = mode.m_runtimeActors.find(g_session.m_aid);
+    }
     if (it != mode.m_runtimeActors.end()) {
         actor = it->second;
+        if (actor && actor->m_gid != selfActorId) {
+            if (it->first != selfActorId) {
+                mode.m_runtimeActors.erase(it);
+                mode.m_runtimeActors[selfActorId] = actor;
+            }
+            actor->m_gid = selfActorId;
+        }
     } else {
         actor = new CPlayer();
         if (!actor) {
             return;
         }
 
-        actor->m_gid = g_session.m_gid;
+        actor->m_gid = selfActorId;
         actor->m_isVisible = 1;
         actor->m_stateId = 0;
         actor->m_oldstateId = 0;
@@ -7779,10 +8121,12 @@ void EnsureBootstrapSelfActor(CGameMode& mode)
         actor->m_moveEndPos = actor->m_pos;
         actor->m_path.Reset();
         actor->m_msgEffectList.clear();
-        mode.m_runtimeActors.emplace(g_session.m_gid, actor);
+        mode.m_runtimeActors.emplace(selfActorId, actor);
         createdActor = true;
 
-        DbgLog("[GameMode] bootstrap self actor gid=%u map='%s' pos=%d,%d dir=%d\n",
+        DbgLog("[GameMode] bootstrap self actor gid=%u aid=%u charGid=%u map='%s' pos=%d,%d dir=%d\n",
+            selfActorId,
+            g_session.m_aid,
             g_session.m_gid,
             g_session.m_curMap,
             g_session.m_playerPosX,
@@ -10623,6 +10967,7 @@ int  CGameMode::OnRun() {
             g_overlayMovePerfStats.queueLockedTargetMs += QpcNowMs() - lockedTargetStartMs;
         }
         QueuePlayerVitalsOverlayQuad(*this);
+        QueueOwnedCompanionVitalsOverlayQuads(*this);
         if (!IsQtUiRuntimeEnabled()) {
             QueueHoverLabelsOverlayQuad(*this);
         }
@@ -11299,6 +11644,68 @@ bool CGameMode::OpenPetContextMenu(CGameActor* actor,int logicalX,int logicalY)
     menu->Move(logicalX+1,logicalY+1);g_windowMgr.m_chatRoomMenuWnd=menu;
     g_windowMgr.m_children.push_back(menu);return true;
 }
+bool CGameMode::OpenHomunculusContextMenu(CGameActor* actor,int logicalX,int logicalY)
+{
+    // Ref MakeMenu: owned homunculus gets MENUID_HOMUN_SHOWINFO/FEEDING/FOLLOW.
+    if (!m_world || !actor || g_windowMgr.m_storageWnd || g_windowMgr.m_modalWindow
+        || !g_session.m_homunStatus.alive || actor->m_gid != g_session.m_homunGID
+        || m_world->GetGameActorByAID(actor->m_gid) != actor) {
+        return false;
+    }
+    const int job = actor->m_job;
+    if (!((job >= 45 && job < 4000) || (job > 6000 && job < 6048) || actor->m_objectType == 9)) {
+        return false;
+    }
+    if (g_windowMgr.m_chatRoomMenuWnd) {
+        g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomMenuWnd);
+    }
+    m_menuIdList = {37, 38, 39};
+    m_menuTargetAID = actor->m_gid;
+    ro::UiMessageStrings table;
+    table.Load();
+    const int labels[] = {1112, 1113, 1114};
+    const char* fallbacks[] = {"Homunculus Information", "Feed Homunculus", "Stand By"};
+    std::vector<RoomMenuItem> items;
+    for (std::size_t i = 0; i < m_menuIdList.size(); ++i) {
+        items.push_back({m_menuIdList[i], table.Get(labels[i], fallbacks[i])});
+    }
+    auto* menu = new UIChatRoomMenuWnd(items, logicalX, logicalY, true);
+    menu->Move(logicalX + 1, logicalY + 1);
+    g_windowMgr.m_chatRoomMenuWnd = menu;
+    g_windowMgr.m_children.push_back(menu);
+    return true;
+}
+bool CGameMode::OpenMercenaryContextMenu(CGameActor* actor,int logicalX,int logicalY)
+{
+    // Ref MakeMenu: owned mercenary gets MENUID_MER_SHOWINFO/FOLLOW.
+    if (!m_world || !actor || g_windowMgr.m_storageWnd || g_windowMgr.m_modalWindow
+        || !g_session.m_merStatus.alive || actor->m_gid != g_session.m_merGID
+        || m_world->GetGameActorByAID(actor->m_gid) != actor) {
+        return false;
+    }
+    const int job = actor->m_job;
+    if (!((job >= 45 && job < 4000) || (job > 6000 && job < 6048) || actor->m_objectType == 9)) {
+        return false;
+    }
+    if (g_windowMgr.m_chatRoomMenuWnd) {
+        g_windowMgr.DeleteWindow(g_windowMgr.m_chatRoomMenuWnd);
+    }
+    m_menuIdList = {40, 41};
+    m_menuTargetAID = actor->m_gid;
+    ro::UiMessageStrings table;
+    table.Load();
+    const int labels[] = {1112, 1114};
+    const char* fallbacks[] = {"Mercenary Information", "Stand By"};
+    std::vector<RoomMenuItem> items;
+    for (std::size_t i = 0; i < m_menuIdList.size(); ++i) {
+        items.push_back({m_menuIdList[i], table.Get(labels[i], fallbacks[i])});
+    }
+    auto* menu = new UIChatRoomMenuWnd(items, logicalX, logicalY, true);
+    menu->Move(logicalX + 1, logicalY + 1);
+    g_windowMgr.m_chatRoomMenuWnd = menu;
+    g_windowMgr.m_children.push_back(menu);
+    return true;
+}
 bool CGameMode::WriteSourceChat(const std::string& text)
 {
     if(!g_session.m_isSaveChat || !CanAutoSaveSourceChat())return false;
@@ -11476,6 +11883,54 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             if(g_windowMgr.m_petInfoWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_petInfoWnd);
             else g_windowMgr.MakeWindow(UIWindowMgr::WID_PETINFOWND);
             break;
+        case 37: // MENUID_HOMUN_SHOWINFO
+            SendMsg(198, 0, 0, 0);
+            if (g_windowMgr.m_homunInfoWnd) {
+                g_windowMgr.DeleteWindow(static_cast<UIWindow*>(g_windowMgr.m_homunInfoWnd));
+            } else {
+                g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND);
+            }
+            break;
+        case 38: { // MENUID_HOMUN_FEEDING
+            if (g_windowMgr.m_modalWindow) break;
+            ro::UiMessageStrings table;
+            table.Load();
+            const auto text = table.Get(601, "Are you sure that you want to feed your pet?");
+            const auto generation = g_modeMgr.GetOperationGeneration();
+            const u32 homunGid = g_session.m_homunGID;
+            auto* box = new UIChatRoomMessageBox(text, 601);
+            box->ConfigureConfirmation(nullptr, [this, generation, homunGid](bool accepted) {
+                if (accepted && g_modeMgr.GetOperationGeneration() == generation
+                    && homunGid != 0 && homunGid == g_session.m_homunGID) {
+                    SendMsg(198, 1, 0, 0);
+                }
+            });
+            g_windowMgr.m_roomMessageBox = box;
+            g_windowMgr.m_children.push_back(box);
+            g_windowMgr.m_modalWindow = box;
+            g_windowMgr.m_editWindow = nullptr;
+            break;
+        }
+        case 39: { // MENUID_HOMUN_FOLLOW
+            companion_ai::Msg2Ai msg;
+            msg.command = companion_ai::FOLLOW_CMD;
+            companion_ai::Runtime::QueueCommand(companion_ai::Kind::Homunculus, msg, false);
+            break;
+        }
+        case 40: // MENUID_MER_SHOWINFO
+            SendMsg(200, 1, 0, 0);
+            if (g_windowMgr.m_merInfoWnd) {
+                g_windowMgr.DeleteWindow(static_cast<UIWindow*>(g_windowMgr.m_merInfoWnd));
+            } else {
+                g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND);
+            }
+            break;
+        case 41: { // MENUID_MER_FOLLOW
+            companion_ai::Msg2Ai msg;
+            msg.command = companion_ai::FOLLOW_CMD;
+            companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, msg, false);
+            break;
+        }
         }
         return 0;
     }
@@ -11882,7 +12337,32 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             m_lastRButtonClickTick = GetTickCount();
             m_lastRButtonClickX = static_cast<int>(wparam);
             m_lastRButtonClickY = static_cast<int>(lparam);
-            if (!TryOpenPlayerContextMenu(*this, static_cast<int>(wparam), static_cast<int>(lparam))) {
+            const int screenX = static_cast<int>(wparam);
+            const int screenY = static_cast<int>(lparam);
+            bool openedCompanionMenu = false;
+            if (m_world && m_view && !(GetAsyncKeyState(VK_SHIFT) & 0x8000)) {
+                CGameActor* hoveredActor = nullptr;
+                if (m_world->FindHoveredActorScreen(m_view->GetViewMatrix(),
+                        m_view->GetCameraLongitude(),
+                        screenX,
+                        screenY,
+                        &hoveredActor,
+                        nullptr,
+                        nullptr)
+                    && hoveredActor) {
+                    const int logicalX = IsQtUiRuntimeEnabled()
+                        ? UiScaleRawToLogicalCoordinate(screenX)
+                        : screenX;
+                    const int logicalY = IsQtUiRuntimeEnabled()
+                        ? UiScaleRawToLogicalCoordinate(screenY)
+                        : screenY;
+                    openedCompanionMenu = OpenHomunculusContextMenu(hoveredActor, logicalX, logicalY)
+                        || OpenMercenaryContextMenu(hoveredActor, logicalX, logicalY);
+                }
+            }
+            if (openedCompanionMenu) {
+                g_windowMgr.ClosePlayerContextMenu();
+            } else if (!TryOpenPlayerContextMenu(*this, screenX, screenY)) {
                 g_windowMgr.ClosePlayerContextMenu();
                 m_menuTargetAID = 0;
             }

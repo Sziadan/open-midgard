@@ -2555,6 +2555,25 @@ void CompanionIdentityReplay()
     Require(router.Dispatch(mode, packet) && ms.combat.sp == -1 && ms.combat.hp == 0x10023,
         "unknown mercenary parameter changed the snapshot");
 
+    const auto homunCombat = hs.combat;
+    const auto dispatchMercStat = [&](u8 type, u8 valueLow, u8 valueHigh) {
+        parameter = {0xa2, 0x02, type, 0, valueLow, valueHigh, 0, 0};
+        Require(TryReadPacket(parameter.data(), parameter.size(), packet, consumed)
+            && consumed == parameter.size() && router.Dispatch(mode, packet),
+            "selected mercenary stat update did not frame and dispatch");
+    };
+    dispatchMercStat(0x2b, 0x23, 0x81);
+    dispatchMercStat(0x2d, 31, 0);
+    dispatchMercStat(0x2f, 46, 0);
+    dispatchMercStat(0x34, 17, 0);
+    Require(ms.combat.magicAttack == 0x8123 && ms.combat.defense == 31
+        && ms.combat.magicDefense == 46 && ms.combat.critical == 17
+        && ms.combat.attack == -7 && ms.combat.sp == -1,
+        "selected mercenary stat updates changed the wrong field or value");
+    Require(hs.combat.magicAttack == homunCombat.magicAttack && hs.combat.defense == homunCombat.defense
+        && hs.combat.magicDefense == homunCombat.magicDefense && hs.combat.critical == homunCombat.critical,
+        "mercenary stat updates changed homunculus combat state");
+
     struct FeedActor : CGameActor {
         int emotions = 0;
         void SendMsg(CGameObject* sender, int message, msgparam_t first, msgparam_t second, msgparam_t third) override

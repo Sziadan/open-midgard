@@ -567,6 +567,25 @@ struct PACKET_CZ_CONTACTNPC {
     u8  Type;
 };
 
+// Homunculus / mercenary move & attack (RunningServer packet_db: 0x0232/9, 0x0233/11, 0x0234/6).
+struct PACKET_CZ_REQUEST_MOVENPC {
+    u16 PacketType;    // 0x0232
+    u32 GID;
+    u8  dest[3];
+};
+
+struct PACKET_CZ_REQUEST_ACTNPC {
+    u16 PacketType;    // 0x0233
+    u32 GID;
+    u32 targetGID;
+    u8  action;
+};
+
+struct PACKET_CZ_REQUEST_MOVETOOWNER {
+    u16 PacketType;    // 0x0234
+    u32 GID;
+};
+
 struct PACKET_CZ_NPC_SELECTMENU {
     u16 PacketType;    // 0x00B8
     u32 NpcId;
@@ -773,6 +792,9 @@ static_assert(sizeof(PACKET_CZ_TAKE_ITEM_LEGACY) == 6, "PACKET_CZ_TAKE_ITEM_LEGA
 static_assert(sizeof(PACKET_CZ_REQ_WEAR_EQUIP) == 6, "PACKET_CZ_REQ_WEAR_EQUIP size mismatch");
 static_assert(sizeof(PACKET_CZ_REQ_TAKEOFF_EQUIP) == 4, "PACKET_CZ_REQ_TAKEOFF_EQUIP size mismatch");
 static_assert(sizeof(PACKET_CZ_CONTACTNPC) == 7, "PACKET_CZ_CONTACTNPC size mismatch");
+static_assert(sizeof(PACKET_CZ_REQUEST_MOVENPC) == 9, "PACKET_CZ_REQUEST_MOVENPC size mismatch");
+static_assert(sizeof(PACKET_CZ_REQUEST_ACTNPC) == 11, "PACKET_CZ_REQUEST_ACTNPC size mismatch");
+static_assert(sizeof(PACKET_CZ_REQUEST_MOVETOOWNER) == 6, "PACKET_CZ_REQUEST_MOVETOOWNER size mismatch");
 static_assert(sizeof(PACKET_CZ_NPC_SELECTMENU) == 7, "PACKET_CZ_NPC_SELECTMENU size mismatch");
 static_assert(sizeof(PACKET_CZ_NPC_NEXT_CLICK) == 6, "PACKET_CZ_NPC_NEXT_CLICK size mismatch");
 static_assert(sizeof(PACKET_CZ_NPC_INPUT_NUMBER) == 10, "PACKET_CZ_NPC_INPUT_NUMBER size mismatch");

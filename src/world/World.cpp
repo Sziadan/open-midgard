@@ -77,6 +77,25 @@ constexpr float kPlayerBillboardDepthHeightBiasFactor = 0.45f;
 constexpr float kPlayerBillboardTopDepthForwardBiasScale = 0.85f;
 constexpr int kActorLabelBaseYOffset = 4;
 constexpr int kPlayerLabelBaseYOffset = 22;
+
+bool IsCompanionLabelActor(const CGameActor* actor)
+{
+    if (!actor) {
+        return false;
+    }
+    const int job = actor->m_job;
+    return actor->m_objectType == 9 || (job >= 6001 && job <= 6047);
+}
+
+int ResolveActorLabelBaseYOffset(const CGameActor* actor)
+{
+    // Homunculus/mercenary use the same under-feet gap as the local player so
+    // player-style HP/SP bars and hover names clear the sprite.
+    if (actor && (actor->m_isPc || IsCompanionLabelActor(actor))) {
+        return kPlayerLabelBaseYOffset;
+    }
+    return kActorLabelBaseYOffset;
+}
 constexpr int kActorSpeechBubbleHeadGapPx = 26;
 constexpr int kActorSpeechBubbleMinOffsetPx = 88;
 constexpr int kActorSpeechBubbleMaxOffsetPx = 164;
@@ -7163,7 +7182,7 @@ bool CWorld::GetActorScreenMarker(const matrix& viewMatrix,
             }
             if (outLabelY) {
                 *outLabelY = static_cast<int>(std::lround(liveEntry.baseY))
-                    + (actor->m_isPc ? kPlayerLabelBaseYOffset : kActorLabelBaseYOffset);
+                    + ResolveActorLabelBaseYOffset(actor);
             }
             return true;
         }
@@ -7182,7 +7201,7 @@ bool CWorld::GetActorScreenMarker(const matrix& viewMatrix,
     }
     if (outLabelY) {
         *outLabelY = static_cast<int>(std::lround(projectedBase.y))
-            + (actor->m_isPc ? kPlayerLabelBaseYOffset : kActorLabelBaseYOffset);
+            + ResolveActorLabelBaseYOffset(actor);
     }
     return true;
 }
@@ -7344,12 +7363,16 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
                 *outLabelX = static_cast<int>(std::lround(it->baseX));
             }
             if (outLabelY) {
-                *outLabelY = static_cast<int>(std::lround(it->baseY)) + kActorLabelBaseYOffset;
+                *outLabelY = static_cast<int>(std::lround(it->baseY))
+                    + ResolveActorLabelBaseYOffset(liveActor);
             }
             return true;
         }
 
-        if (!IsMonsterLikeHoverActor(liveActor)) {
+        // Companions share the sticky expanded pick size Ref uses for class-type 4
+        // actors; excluding the 6001-6047 range left small homun sprites hard to hit.
+        const bool companionSticky = IsCompanionLabelActor(liveActor);
+        if (!IsMonsterLikeHoverActor(liveActor) && !companionSticky) {
             continue;
         }
 
@@ -7380,7 +7403,8 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
             *outLabelX = static_cast<int>(std::lround(stickyEntry->baseX));
         }
         if (outLabelY) {
-            *outLabelY = static_cast<int>(std::lround(stickyEntry->baseY)) + kActorLabelBaseYOffset;
+            *outLabelY = static_cast<int>(std::lround(stickyEntry->baseY))
+                + ResolveActorLabelBaseYOffset(stickyActor);
         }
         return true;
     }

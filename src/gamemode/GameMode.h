@@ -293,6 +293,8 @@ public:
     static constexpr int SourceTalk_AutoMessage=152;
     bool ToggleSourceAutoMessage();
     bool OpenPetContextMenu(CGameActor* actor,int logicalX,int logicalY);
+    bool OpenHomunculusContextMenu(CGameActor* actor,int logicalX,int logicalY);
+    bool OpenMercenaryContextMenu(CGameActor* actor,int logicalX,int logicalY);
     bool WriteSourceChat(const std::string& text);
     std::string GetSourceAutoSaveChatPath() const;
     int m_noMove;
@@ -430,6 +432,10 @@ struct PlayerVitalsScreenMetrics {
 };
 
 PlayerVitalsScreenMetrics ResolvePlayerVitalsScreenMetrics(const CView* view);
+// True when the actor draws the dual HP/SP overlay (local player or owned companion).
+bool ActorHasPlayerStyleVitalsOverlay(const CGameActor* actor);
+// Qt/HDC nameplate offset so hover names sit just below those bars at any zoom.
+int ResolvePlayerStyleVitalsNameOffsetY(const CView* view);
 
 bool ArmPendingSkillUseFromSkillList(int skillId);
 bool ArmPendingSkillUseFromSkillList(int skillId,int family);

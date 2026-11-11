@@ -1850,10 +1850,12 @@ static void HandleSkillInfoListByTarget(CGameMode&, const PacketView& packet, Sk
             }
             g_session.SetMercSkillItem(skillInfo);
         }
-        DbgLog("[GameMode] skill list entry skid=%d level=%d sp=%d upgradable=%d\n",
+        DbgLog("[GameMode] skill list entry skid=%d type=%d level=%d sp=%d range=%d upgradable=%d\n",
             skillInfo.SKID,
+            skillInfo.type,
             skillInfo.level,
             skillInfo.spcost,
+            skillInfo.attackRange,
             skillInfo.upgradable);
     }
 }
@@ -1923,15 +1925,26 @@ void ReadCompanionCombat(CompanionCombatStatus& status, const u8* data)
     status.attackSpeed = static_cast<s16>(ReadLE16(data + 14));
 }
 
-void HandleHomunProperty(CGameMode&, const PacketView& packet)
+void CacheOwnedCompanionActorName(CGameMode& mode, u32 gid, const std::string& name)
+{
+    if (gid == 0 || name.empty()) {
+        return;
+    }
+    mode.m_actorNameListByGID[gid].name = name;
+}
+
+void HandleHomunProperty(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 71) return;
     auto& status = g_session.m_homunStatus;
     const auto* data = packet.data;
     const auto name = ExtractFixedPacketString(packet, 2, 24);
-    const bool nameChanged = status.name != name || status.nameModified != data[26];
+    // Ref only uses bit0 of the flags byte as the rename lock.
+    const u8 renameFlag = static_cast<u8>(data[26] & 0x1);
+    const bool nameChanged = status.name != name || status.nameModified != renameFlag;
     status.name = name;
-    status.nameModified = data[26];
+    status.nameModified = renameFlag;
+    CacheOwnedCompanionActorName(mode, g_session.m_homunGID, status.name);
     if (nameChanged && g_windowMgr.m_homunInfoWnd) g_windowMgr.m_homunInfoWnd->RefreshReceivedName();
     status.level = static_cast<s16>(ReadLE16(data + 27));
     status.hunger = static_cast<s16>(ReadLE16(data + 29));
@@ -1946,6 +1959,9 @@ void HandleHomunProperty(CGameMode&, const PacketView& packet)
     status.nextExperience = ReadCompanionI32(data + 63);
     status.skillPoints = static_cast<s16>(ReadLE16(data + 67));
     status.combat.attackRange = static_cast<s16>(ReadLE16(data + 69));
+    if (g_windowMgr.m_homunInfoWnd) {
+        g_windowMgr.m_homunInfoWnd->Invalidate();
+    }
     const int hunger = status.hunger;
     if ((hunger == 1 || hunger == 5 || hunger == 10) && hunger != status.lastWarnedHunger) {
         ro::UiMessageStrings strings;
@@ -1993,6 +2009,7 @@ void HandleHomunStatus(CGameMode& mode, const PacketView& packet)
     case 0:
         g_session.m_homunGID = gid;
         if (actor) status.alive = true;
+        CacheOwnedCompanionActorName(mode, gid, status.name);
         break;
     case 1: status.intimacy = ReadCompanionI32(packet.data + 8); break;
     case 2: status.hunger = ReadCompanionI32(packet.data + 8); break;
@@ -2100,6 +2117,7 @@ void HandleMercenaryInit(CGameMode& mode, const PacketView& packet)
         status.job = actor->m_job;
     ReadCompanionCombat(status.combat, data + 6);
     status.name = ExtractFixedPacketString(packet, 22, 24);
+    CacheOwnedCompanionActorName(mode, g_session.m_merGID, status.name);
     status.level = static_cast<s16>(ReadLE16(data + 46));
     status.combat.hp = ReadCompanionI32(data + 48);
     status.combat.maxHp = ReadCompanionI32(data + 52);
@@ -2123,7 +2141,11 @@ void HandleMercenaryParameter(CGameMode&, const PacketView& packet)
     case 7: status.combat.sp = value; break;
     case 8: status.combat.maxSp = value; break;
     case 0x29: status.combat.attack = value; break;
+    case 0x2b: status.combat.magicAttack = value; break;
+    case 0x2d: status.combat.defense = value; break;
+    case 0x2f: status.combat.magicDefense = value; break;
     case 0x31: status.combat.hit = value; break;
+    case 0x34: status.combat.critical = value; break;
     case 0x35: status.combat.attackSpeed = value; break;
     case 0xa5: status.combat.flee = value; break;
     case 0xbd: status.kills = value; break;
@@ -7697,6 +7719,35 @@ void HandleGuildNotification(CGameMode& mode,const PacketView& packet){
 
 #include "ChatRoomPacketHandlers.inc"
 
+void HandleNpcChat(CGameMode& mode, const PacketView& packet)
+{
+    // Ref: Zc_Npc_Chat (0x02C1) / rAthena ZC_NPC_CHAT
+    // Layout: <len>.W <id>.L <color>.L <message>.?B
+    if (!packet.data || packet.packetLength < 13) {
+        return;
+    }
+
+    const u32 actorId = ReadLE32(packet.data + 4);
+    if (std::find(g_session.m_exAidList.begin(), g_session.m_exAidList.end(), actorId)
+        != g_session.m_exAidList.end()) {
+        return;
+    }
+
+    const u32 colorRef = ReadLE32(packet.data + 8);
+    const std::string text = ExtractPacketString(packet, 12);
+    if (text.empty()) {
+        return;
+    }
+
+    // Match Ref UIWindowMgr::SendMsg(..., 1, chatMsg, color, 0, 0).
+    RecordChat(mode, text, ro::chat::ColorRefToUiRgb(colorRef), kChatChannelSystem,
+        {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None, {}});
+    ApplyActorChatBubble(mode, actorId, text);
+    if (g_session.m_isSaveChat) {
+        mode.WriteSourceChat(text);
+    }
+}
+
 void HandleNotifyChat(CGameMode& mode, const PacketView& packet)
 {
     // Ref: Zc_Notify_Chat (0x008D)
@@ -9513,6 +9564,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00D1, HandleWhisperSettingPc);
     router.Register(0x00D2, HandleWhisperSettingState);
     router.Register(0x00D4, HandleWhisperExclusionList);
+    router.Register(0x02C1, HandleNpcChat);
     RegisterHandlerIfValid(router, receiveProfile.broadcastBasic, HandleBroadcast);
     router.Register(0x00B4, HandleNpcDialogText);
     router.Register(0x00B5, HandleNpcDialogNext);

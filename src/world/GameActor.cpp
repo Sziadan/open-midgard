@@ -1,4 +1,5 @@
 #include "GameActor.h"
+#include "companion_ai/CompanionAiController.h"
 #include "ui/UIChatRoomWnd.h"
 #include "CorpseState.h"
 #include "Gr2Monster.h"
@@ -1274,6 +1275,16 @@ bool ResolveNonPcBillboardComposeConfig(const CPc& actor,
 {
     if (!outConfig) {
         return false;
+    }
+
+    // Humanoid mercs layer head/weapon like PCs (RenderMercenary); use the PC canvas.
+    const int displayJob = ResolveDisplayJob(actor);
+    if (displayJob >= 6017 && displayJob <= 6046) {
+        outConfig->width = kPlayerBillboardComposeWidth;
+        outConfig->height = kPlayerBillboardComposeHeight;
+        outConfig->anchorX = kPlayerBillboardAnchorX;
+        outConfig->anchorY = kPlayerBillboardAnchorY;
+        return true;
     }
 
     CActRes* actRes = nullptr;
@@ -3294,6 +3305,51 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
 
 } // namespace
 
+bool IsHumanoidMercenaryJob(int job)
+{
+    return job >= 6017 && job <= 6046;
+}
+
+// HighPriest.exe CNpc::SetSprJob (0x5d73b0): data\sprite\인간족\몸통\%s
+// Job stems @ 0x71F128 / 0x71F11C / 0x71F110. Build with separate tokens (Session.cpp style)
+// — a single "data\\sprite\\\x..\\\x.." literal was optimized away by MinGW (function became `return false`).
+bool BuildMercenaryHumanoidBodyPaths(int job, char* actPath, char* sprPath)
+{
+    if (!IsHumanoidMercenaryJob(job) || !actPath || !sprPath) {
+        return false;
+    }
+
+    static const char kHuman[] = { '\xC0', '\xCE', '\xB0', '\xA3', '\xC1', '\xB7', 0 }; // 인간족
+    static const char kBody[] = { '\xB8', '\xF6', '\xC5', '\xEB', 0 }; // 몸통
+    static const char kMale[] = { '\xB3', '\xB2', 0 }; // 남
+    static const char kFemale[] = { '\xBF', '\xA9', 0 }; // 여
+    static const char kArcher[] = { '\xC8', '\xB0', '\xBF', '\xEB', '\xBA', '\xB4', 0 }; // 활용병
+    static const char kLancer[] = { '\xC3', '\xA2', '\xBF', '\xEB', '\xBA', '\xB4', 0 }; // 창용병
+    static const char kSword[] = { '\xB0', '\xCB', '\xBF', '\xEB', '\xBA', '\xB4', 0 }; // 검용병
+
+    const char* sexDir = kMale;
+    const char* bodyName = kSword;
+    if (job <= 6026) {
+        sexDir = kFemale;
+        bodyName = kArcher;
+    } else if (job <= 6036) {
+        sexDir = kMale;
+        bodyName = kLancer;
+    }
+
+    std::sprintf(actPath, "data\\sprite\\%s\\%s\\%s\\%s.act", kHuman, kBody, sexDir, bodyName);
+    std::sprintf(sprPath, "data\\sprite\\%s\\%s\\%s\\%s.spr", kHuman, kBody, sexDir, bodyName);
+    return true;
+}
+
+bool TryResolveMercenaryHumanoidBodyPaths(int job, char* actPath, char* sprPath)
+{
+    if (!BuildMercenaryHumanoidBodyPaths(job, actPath, sprPath)) {
+        return false;
+    }
+    return g_resMgr.IsExist(actPath) && g_resMgr.IsExist(sprPath);
+}
+
 bool ResolveNonPcSpritePaths(int job, char (&actPath)[MAX_PATH], char (&sprPath)[MAX_PATH])
 {
     const char* const jobName = g_session.GetJobName(job);
@@ -3305,11 +3361,30 @@ bool ResolveNonPcSpritePaths(int job, char (&actPath)[MAX_PATH], char (&sprPath)
 
     if (job >= 1000) {
         if (job >= 6001 && job <= 6047) {
-            const char* const spriteRoot = (job >= 6017 && job <= 6046)
-                ? "data\\sprite\\mercenary\\"
-                : "data\\sprite\\homun\\";
-            std::sprintf(actPath, "%s%s.act", spriteRoot, spriteName);
-            std::sprintf(sprPath, "%s%s.spr", spriteRoot, spriteName);
+            // Prefer Ref-style stems (LIF/AMISTR/ARCHER01). Also accept a leftover MER_ prefix.
+            const char* stem = spriteName;
+            if (stem && (std::strncmp(stem, "MER_", 4) == 0 || std::strncmp(stem, "mer_", 4) == 0)) {
+                stem += 4;
+            }
+
+            if (IsHumanoidMercenaryJob(job)) {
+                // HighPriest.exe CNpc::SetSprJob: 인간족\몸통\%s (not Mer\ARCHER01 / homun\).
+                if (TryResolveMercenaryHumanoidBodyPaths(job, actPath, sprPath)) {
+                    return true;
+                }
+                // Still prefer the EXE body path even if the GRF probe failed (load may still succeed).
+                return BuildMercenaryHumanoidBodyPaths(job, actPath, sprPath);
+            }
+
+            const char* const spriteRoot = "data\\sprite\\homun\\";
+            if (TryResolveNonPcSpritePaths(spriteRoot, stem, actPath, sprPath)) {
+                return true;
+            }
+            if (TryResolveNonPcSpritePaths(spriteRoot, spriteName, actPath, sprPath)) {
+                return true;
+            }
+            std::sprintf(actPath, "%s%s.act", spriteRoot, stem);
+            std::sprintf(sprPath, "%s%s.spr", spriteRoot, stem);
             return true;
         }
 
@@ -3381,6 +3456,236 @@ void LogNonPcBillboardFailureOnce(int job, const char* jobName, int bodyAction, 
 
 CActRes* ResolveRuntimeActorActRes(CRenderObject* object);
 
+// Ref CRenderObject::RenderMercenary (HighPriest.exe 0x556010 / Ref/GameActor.cpp:9913).
+// Layers: body, head (attach), weapon, weapon-flash, then rank-10 accessories.
+bool DrawMercenaryLayerSprite(BillboardComposeSurface& bitmap,
+    int drawX,
+    int drawY,
+    int bodyAction,
+    int motion,
+    const char* actPath,
+    const char* sprPath,
+    const CMotion* bodyMotion,
+    const CMotion* headMotion,
+    bool attachToBody,
+    bool attachToHead)
+{
+    if (!actPath || !*actPath || !sprPath || !*sprPath) {
+        return false;
+    }
+
+    CActRes* actRes = g_resMgr.GetAs<CActRes>(actPath);
+    CSprRes* sprRes = g_resMgr.GetAs<CSprRes>(sprPath);
+    if (!actRes || !sprRes) {
+        return false;
+    }
+
+    int layerMotion = motion;
+    // Ref: idle facing actions (< 8) lock motion frame 0.
+    if (bodyAction < 8) {
+        layerMotion = 0;
+    }
+
+    const CMotion* layerMotionPtr = actRes->GetMotion(bodyAction, layerMotion);
+    if (!layerMotionPtr) {
+        layerMotionPtr = actRes->GetMotion(bodyAction, 0);
+    }
+    if (!layerMotionPtr) {
+        return false;
+    }
+
+    POINT offset{};
+    if (attachToBody && bodyMotion) {
+        ApplyAttachPointDelta(bodyMotion, layerMotionPtr, &offset);
+    } else if (attachToHead && headMotion && bodyMotion) {
+        POINT headOffset{};
+        ApplyAttachPointDelta(bodyMotion, headMotion, &headOffset);
+        offset.x += headOffset.x;
+        offset.y += headOffset.y;
+        ApplyAttachPointDelta(headMotion, layerMotionPtr, &offset);
+    }
+
+    bitmap.BltSprite(drawX + offset.x, drawY + offset.y, sprRes, const_cast<CMotion*>(layerMotionPtr), sprRes->m_pal);
+    return true;
+}
+
+const char* ResolveMercenaryWeaponStem(int merJob)
+{
+    // HighPriest.exe RenderMercenary case 2 literals @ 0x711B04 / 0x711ACC / 0x711A94.
+    if (merJob >= 6017 && merJob <= 6026) {
+        return "\xC0\xCE\xB0\xA3\xC1\xB7\\\xBF\xEB\xBA\xB4\\\xC8\xB0\xBF\xEB\xBA\xB4_\xC8\xB0"; // 인간족\용병\활용병_활
+    }
+    if (merJob >= 6027 && merJob <= 6036) {
+        return "\xC0\xCE\xB0\xA3\xC1\xB7\\\xBF\xEB\xBA\xB4\\\xC3\xA2\xBF\xEB\xBA\xB4_\xC3\xA2"; // 인간족\용병\창용병_창
+    }
+    if (merJob >= 6037 && merJob <= 6046) {
+        return "\xC0\xCE\xB0\xA3\xC1\xB7\\\xBF\xEB\xBA\xB4\\\xB0\xCB\xBF\xEB\xBA\xB4_\xB0\xCB"; // 인간족\용병\검용병_검
+    }
+    return nullptr;
+}
+
+const char* ResolveMercenaryWeaponFlashStem(int merJob)
+{
+    // Archer has no flash layer (case 3 continues). Literals @ 0x711A58 / 0x711A18.
+    if (merJob >= 6027 && merJob <= 6036) {
+        return "\xC0\xCE\xB0\xA3\xC1\xB7\\\xBF\xEB\xBA\xB4\\\xC3\xA2\xBF\xEB\xBA\xB4_\xC3\xA2_\xB0\xCB\xB1\xA4"; // 창용병_창_검광
+    }
+    if (merJob >= 6037 && merJob <= 6046) {
+        return "\xC0\xCE\xB0\xA3\xC1\xB7\\\xBF\xEB\xBA\xB4\\\xB0\xCB\xBF\xEB\xBA\xB4_\xB0\xCB_\xB0\xCB\xB1\xA4"; // 검용병_검_검광
+    }
+    return nullptr;
+}
+
+const char* ResolveMercenaryAccessoryStem(int merJob, int layer)
+{
+    // Ref RenderMercenary cases 4-7: 악세사리\%s with these PE stems.
+    if (layer == 4) {
+        switch (merJob) {
+        case 6017: return "\xBF\xA9\\\xBF\xA9_\xC5\xD0\xB8\xF0\xC0\xDA"; // 여\여_털모자
+        case 6018: return "\xBF\xA9\\\xBF\xA9_\xB0\xF1\xB5\xE5\xC7\xF7\xB5\xE5\xB1\xE2\xBE\xEE"; // 여\여_골든헤드기어
+        case 6019: return "\xBF\xA9\\\xBF\xA9_\xB4\xEB\xC7\xFC\xB1\xDD\xB9\xE6\xBF\xEF"; // 여\여_대형금방울
+        case 6020: return "\xBF\xA9\\\xBF\xA9_\xBF\xA3\xB8\xAE\xBD\xBA\xB8\xF0\xC0\xDA"; // 여\여_엘리스모자
+        case 6021: return "\xBF\xA9\\\xBF\xA9_\xB0\xA1\xBA\xCE\xC5\xB0\xB0\xA1\xB8\xE9"; // 여\여_가부키가면
+        case 6022: return "\xBF\xA9\\\xBF\xA9_\xBF\xA9\xBF\xD5\xC0\xC7\xC5\xF0\xB1\xB8"; // 여\여_여왕의투구
+        case 6023: return "\xBF\xA9\\\xBF\xA9_\xC1\xF6\xB8\xA3\xC5\xB8\xBD\xBA\xB0\xA1\xB8\xE9"; // 여\여_지르타스가면
+        case 6024: return "\xBF\xA9\\\xBF\xA9_\xBD\xC7\xB9\xF6\xC6\xBC\xBE\xC6\xB6\xF3"; // 여\여_실버티아라
+        case 6025: return "\xBF\xA9\\\xBF\xA9_\xB0\xED\xBE\xE7\xC0\xCC\xB8\xF0\xC0\xDA"; // 여\여_고양이모자
+        case 6026: return "\xBF\xA9\\\xBF\xA9_\xBF\xB9\xBB\xF6\xB8\xAE\xBA\xBB"; // 여\여_예쁜리본
+        case 6027: return "\xB3\xB2\\\xB3\xB2_\xB0\xA3\xC8\xA3\xB8\xF0"; // 남\남_간호모
+        case 6028: return "\xB3\xB2\\\xB3\xB2_\xB0\xCB\xC0\xBA\xB4\xAD\xB0\xA1\xB8\xAE\xB0\xB3"; // 남\남_검은눈가리개
+        case 6029: return "\xB3\xB2\\\xB3\xB2_\xB0\xED\xBA\xED\xB8\xB0\xB0\xA1\xB8\xE9" "4\xC8\xA3"; // 남\남_고블린가면4호
+        case 6030: return "\xB3\xB2\\\xB3\xB2_\xBE\xE7\xB8\xF0\xC0\xDA"; // 남\남_양모자
+        case 6031: return "\xB3\xB2\\\xB3\xB2_\xB1\xC7\xC2\xFB\xC0\xBA\xB3\xCA\xB1\xB8\xB8\xAE"; // 남\남_귀찮은너구리
+        case 6032: return "\xB3\xB2\\\xB3\xB2_\xB5\xB7\xC0\xD2\xC0\xBA\xC0\xDA\xC0\xC7\xB8\xB6\xC0\xBD"; // 남\남_돈잃은자의마음
+        case 6033: return "\xB3\xB2\\\xB3\xB2_\xB8\xB6\xB8\xAE\xBF\xC0\xB3\xDD\xB8\xF0\xC0\xDA"; // 남\남_마리오넷모자
+        case 6034: return "\xB3\xB2\\\xB3\xB2_\xB6\xF3\xC0\xCC\xBF\xC3\xB8\xB6\xBD\xBA\xC5\xA9"; // 남\남_라이온마스크
+        case 6035: return "\xB3\xB2\\\xB3\xB2_\xC5\xAC\xB7\xCE\xBD\xBA\xC7\xEF\xB8\xDE"; // 남\남_클로스헬멧
+        case 6036: return "\xB3\xB2\\\xB3\xB2_\xB7\xCE\xB5\xE5\xC4\xAB\xC8\xA3\xC0\xC7\xBB\xF3"; // 남\남_로드카호의뿔
+        case 6037: return "\xB3\xB2\\\xB3\xB2_\xB9\xDD\xC3\xA2\xB0\xED"; // 남\남_반창고
+        case 6038: return "\xB3\xB2\\\xB3\xB2_\xBA\xD0\xB3\xEB\xC0\xD4"; // 남\남_분노입
+        case 6039: return "\xB3\xB2\\\xB3\xB2_\xC4\xDA\xB3\xEF\xB8\xAE\xB8\xF0\xC0\xDA"; // 남\남_코끼리모자
+        case 6040: return "\xB3\xB2\\\xB3\xB2_\xBE\xDF\xB1\xB8\xB8\xF0\xC0\xDA"; // 남\남_야구모자
+        case 6041: return "\xB3\xB2\\\xB3\xB2_\xC0\xE5\xB7\xC1\xB0\xC7"; // 남\남_장례건
+        case 6042: return "\xB3\xB2\\\xB3\xB2_\xBA\xCE\xBF\xEB"; // 남\남_부용
+        case 6043: return "\xB3\xB2\\\xB3\xB2_\xC5\xB8\xC0\xCC\xB0\xC5\xB8\xB6\xBD\xBA\xC5\xA9"; // 남\남_타이거마스크
+        case 6044: return "\xB3\xB2\\\xB3\xB2_\xC3\xCA\xBD\xB9\xB4\xDE\xC5\xF0\xB1\xB8"; // 남\남_초승달투구
+        case 6045: return "\xB3\xB2\\\xB3\xB2_\xBF\xA3\xC1\xA4\xB8\xB5\xB8\xF0\xC0\xDA"; // 남\남_엔젤링모자
+        case 6046: return "\xB3\xB2\\\xB3\xB2_\xC5\xC2\xBE\xE7\xBD\xC5\xC0\xC7\xB8\xF0\xC0\xDA"; // 남\남_태양신의모자
+        default: return nullptr;
+        }
+    }
+
+    // Layers 5-7 only for rank-10 jobs (6026/6036/6046).
+    if (merJob != 6026 && merJob != 6036 && merJob != 6046) {
+        return nullptr;
+    }
+    if (layer == 5) {
+        if (merJob == 6026) return "\xBF\xA9\\\xBF\xA9_\xB2\xBF\xC0\xD4"; // 여\여_꽃잎
+        if (merJob == 6036) return "\xB3\xB2\\\xB3\xB2_\xC5\xE4\xBD\xBA\xC6\xAE"; // 남\남_토스트
+        return "\xB3\xB2\\\xB3\xB2_\xB4\xE3\xB9\xE8"; // 남\남_담배
+    }
+    if (layer == 6) {
+        if (merJob == 6026) return "\xBF\xA9\\\xBF\xA9_\xBF\xE4\xC1\xA4\xC0\xC7\xB1\xC7"; // 여\여_요정의귀
+        return "\xB3\xB2\\\xB3\xB2_\xBF\xE4\xC1\xA4\xC0\xC7\xB1\xC7"; // 남\남_요정의귀
+    }
+    if (layer == 7) {
+        if (merJob == 6026) return "\xBF\xA9\\\xBF\xA9_\xB9\xCC\xBD\xBA\xC6\xBD\xB7\xCE\xC1\xEE"; // 여\여_미스틱로즈
+        if (merJob == 6036) return "\xB3\xB2\\\xB3\xB2_\xC5\xB0\xC5\xB0\xBF\xEC\xBD\xBA\xB4\xAD\xB0\xA1\xB8\xAE\xB0\xB3"; // 남\남_타키우스눈가리개
+        return "\xB3\xB2\\\xB3\xB2_\xBD\xC3\xC0\xCC\xC5\xAC\xB7\xD3\xBD\xBA\xBE\xC6\xC0\xCC"; // 남\남_사이클롭스아이
+    }
+    return nullptr;
+}
+
+bool DrawMercenaryBillboard(BillboardComposeSurface& bitmap,
+    const CPc& actor,
+    int drawX,
+    int drawY,
+    int bodyAction,
+    int motion,
+    int* outJob)
+{
+    const int merJob = ResolveDisplayJob(actor);
+    CActRes* bodyActRes = nullptr;
+    CSprRes* bodySprRes = nullptr;
+    const CMotion* bodyMotion = nullptr;
+    if (!ResolveNonPcBillboardMotion(actor, bodyAction, motion, &bodyActRes, &bodySprRes, &bodyMotion)
+        || !bodyActRes
+        || !bodySprRes
+        || !bodyMotion) {
+        return false;
+    }
+
+    // Match Ref idle lock so body/head attach points stay aligned.
+    int layerMotion = motion;
+    if (bodyAction < 8) {
+        layerMotion = 0;
+        const CMotion* idleMotion = bodyActRes->GetMotion(bodyAction, 0);
+        if (idleMotion) {
+            bodyMotion = idleMotion;
+        }
+    }
+
+    bitmap.BltSprite(drawX, drawY, bodySprRes, const_cast<CMotion*>(bodyMotion), bodySprRes->m_pal);
+
+    // Head: (MerJob % 23) + 1, female for archer / male otherwise. Paths via Session GetHead*.
+    int headId = (merJob % 23) + 1;
+    const int sex = (merJob >= 6017 && merJob <= 6026) ? 0 : 1;
+    char headAct[MAX_PATH] = {};
+    char headSpr[MAX_PATH] = {};
+    g_session.GetHeadActName(merJob, &headId, sex, headAct);
+    g_session.GetHeadSprName(merJob, &headId, sex, headSpr);
+
+    CActRes* headActRes = g_resMgr.GetAs<CActRes>(headAct);
+    CSprRes* headSprRes = g_resMgr.GetAs<CSprRes>(headSpr);
+    const CMotion* headMotion = nullptr;
+    if (headActRes && headSprRes) {
+        headMotion = headActRes->GetMotion(bodyAction, layerMotion);
+        if (!headMotion) {
+            headMotion = headActRes->GetMotion(bodyAction, 0);
+        }
+        if (headMotion) {
+            POINT headOffset{};
+            ApplyAttachPointDelta(bodyMotion, headMotion, &headOffset);
+            bitmap.BltSprite(drawX + headOffset.x,
+                drawY + headOffset.y,
+                headSprRes,
+                const_cast<CMotion*>(headMotion),
+                headSprRes->m_pal);
+        }
+    }
+
+    char actPath[MAX_PATH] = {};
+    char sprPath[MAX_PATH] = {};
+    if (const char* weaponStem = ResolveMercenaryWeaponStem(merJob)) {
+        std::sprintf(actPath, "data\\sprite\\%s.act", weaponStem);
+        std::sprintf(sprPath, "data\\sprite\\%s.spr", weaponStem);
+        DrawMercenaryLayerSprite(bitmap, drawX, drawY, bodyAction, layerMotion, actPath, sprPath, bodyMotion, headMotion, false, false);
+    }
+    if (const char* flashStem = ResolveMercenaryWeaponFlashStem(merJob)) {
+        std::sprintf(actPath, "data\\sprite\\%s.act", flashStem);
+        std::sprintf(sprPath, "data\\sprite\\%s.spr", flashStem);
+        DrawMercenaryLayerSprite(bitmap, drawX, drawY, bodyAction, layerMotion, actPath, sprPath, bodyMotion, headMotion, false, false);
+    }
+
+    // Rank cosmetics: layers 4 always, 5-7 only for *10 jobs (Ref ML>=5 gate).
+    const int maxLayer = (merJob == 6026 || merJob == 6036 || merJob == 6046) ? 7 : 4;
+    for (int layer = 4; layer <= maxLayer; ++layer) {
+        const char* accStem = ResolveMercenaryAccessoryStem(merJob, layer);
+        if (!accStem) {
+            continue;
+        }
+        // EXE: 악세사리\%s — Session kAccessorySpriteRoot is data\sprite\악세사리\
+        std::sprintf(actPath, "data\\sprite\\\xBE\xC7\xBC\xBC\xBB\xE7\xB8\xAE\\%s.act", accStem);
+        std::sprintf(sprPath, "data\\sprite\\\xBE\xC7\xBC\xBC\xBB\xE7\xB8\xAE\\%s.spr", accStem);
+        DrawMercenaryLayerSprite(bitmap, drawX, drawY, bodyAction, layerMotion, actPath, sprPath, bodyMotion, headMotion, false, true);
+    }
+
+    if (outJob) {
+        *outJob = merJob;
+    }
+    return true;
+}
+
 bool DrawNonPcBillboard(BillboardComposeSurface& bitmap,
     const CPc& actor,
     int drawX,
@@ -3389,6 +3694,10 @@ bool DrawNonPcBillboard(BillboardComposeSurface& bitmap,
     int motion,
     int* outJob)
 {
+    if (IsHumanoidMercenaryJob(ResolveDisplayJob(actor))) {
+        return DrawMercenaryBillboard(bitmap, actor, drawX, drawY, bodyAction, motion, outJob);
+    }
+
     CActRes* actRes = nullptr;
     CSprRes* sprRes = nullptr;
     const CMotion* spriteMotion = nullptr;
@@ -4686,6 +4995,10 @@ void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, m
 
 CGameActor::~CGameActor()
 {
+    delete m_homunAI;
+    m_homunAI = nullptr;
+    delete m_merAI;
+    m_merAI = nullptr;
     if(m_petAccessoryActRes)m_petAccessoryActRes->Unlock();
     g_Weather.OnActorDeleted(this);
     if(m_chatTitle)g_windowMgr.DeleteWindow(m_chatTitle);
@@ -5180,6 +5493,9 @@ u8 CGameActor::ProcessState() {
             }
         }
     }
+
+    // Ref CNpc::OnProcess: owned homunculus / mercenary AI tick.
+    companion_ai::TickOwnedCompanionActor(*this);
 
     return 1;
 }
@@ -6126,6 +6442,15 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             g_windowMgr.CloseCompanionWindows(true);
             g_session.m_homunTarget = {};
             g_session.m_homunStatus.alive = false;
+            delete m_homunAI;
+            m_homunAI = nullptr;
+        }
+        if (m_gid != 0 && m_gid == g_session.m_merGID) {
+            g_windowMgr.CloseCompanionWindows(false);
+            g_session.m_merTarget = {};
+            g_session.m_merStatus.alive = false;
+            delete m_merAI;
+            m_merAI = nullptr;
         }
         // An in-progress flinch with an empty queue does not hold the death
         // pose; holding it there is what pushes the death cry past the fall.

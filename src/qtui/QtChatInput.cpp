@@ -52,7 +52,10 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
 {
 #if RO_PLATFORM_WINDOWS
     if(!m_window || !m_root)return false;
-    const std::array<const char*,3> editors={"chatHistoryEditor","chatWhisperEditor","chatMessageEditor"};
+    // History/scrollbar input is owned by UINewChatWnd. Only the whisper and
+    // message editors are Qt text surfaces; stealing chatHistoryPane clicks or
+    // wheels would block source scrollbar arrows, paging, drag and wheel.
+    const std::array<const char*,2> editors={"chatWhisperEditor","chatMessageEditor"};
     std::vector<QQuickItem*> panels;
     std::function<void(QQuickItem*)> collect=[&](QQuickItem* item){if(item->isVisible() && item->property("nativeInteractive").toBool())panels.push_back(item);for(auto* child:item->childItems())collect(child);};
     collect(m_root);
@@ -61,35 +64,35 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
     auto editor=[&](int index) {return m_root->findChild<QQuickItem*>(editors[index]);};
     auto focused=[&]() -> QQuickItem* {
         if(guildEnabled && inGuild(m_window->activeFocusItem()))return m_window->activeFocusItem();
-        if(enabled)for(int i=0;i<3;++i)if(auto* item=editor(i);item && item->isVisible() && item->hasActiveFocus())return item;
+        if(enabled)for(int i=0;i<2;++i)if(auto* item=editor(i);item && item->isVisible() && item->hasActiveFocus())return item;
         return nullptr;
     };
     if(!enabled && !guildEnabled) {
-        for(int i=0;i<3;++i)if(auto* item=editor(i))item->setFocus(false);
+        for(int i=0;i<2;++i)if(auto* item=editor(i))item->setFocus(false);
         if(m_pointerGrab && GetCapture()==nativeWindow)ReleaseCapture();
         m_pointerGrab=false;m_composing=false;m_highSurrogate={};return false;
     }
     const QPointF point(static_cast<short>(lParam&0xFFFF),static_cast<short>((lParam>>16)&0xFFFF));
-    const std::array<const char*,3> regions={"chatHistoryPane","chatWhisperField","chatMessageField"};
+    const std::array<const char*,2> regions={"chatWhisperField","chatMessageField"};
     int hit=-1;
-    if(enabled)for(int i=0;i<3;++i)if(auto* item=m_root->findChild<QQuickItem*>(regions[i]);item && item->isVisible() && item->contains(item->mapFromScene(point)))hit=i;
+    if(enabled)for(int i=0;i<2;++i)if(auto* item=m_root->findChild<QQuickItem*>(regions[i]);item && item->isVisible() && item->contains(item->mapFromScene(point)))hit=i;
     auto* guild=guildEnabled?panelAt(point):nullptr;
-    if(guild)hit=3;
+    if(guild)hit=2;
     if(msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK || msg==WM_LBUTTONUP || msg==WM_MOUSEMOVE || msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP) {
         const bool down=msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK || msg==WM_RBUTTONDOWN;
         if(down && hit<0) {
             if(inGuild(m_window->activeFocusItem()))m_window->activeFocusItem()->setFocus(false);
-            // Header/tab/resize gestures keep the current editor focused.
+            // Header/tab/history/scrollbar/resize gestures keep the current editor focused.
             // Clicks outside the chat panel relinquish keyboard focus.
             auto* panel=m_root->findChild<QQuickItem*>("chatWindowPanel");
             if(!panel)panel=m_root;
             if(panel->isVisible() && panel->contains(panel->mapFromScene(point)))return false;
-            for(int i=0;i<3;++i)if(auto* item=editor(i))item->setFocus(false);
+            for(int i=0;i<2;++i)if(auto* item=editor(i))item->setFocus(false);
             m_highSurrogate={};return false;
         }
         if(hit<0 && !m_pointerGrab)return false;
         if(down) {
-            if(hit==3)guild->forceActiveFocus();
+            if(hit==2)guild->forceActiveFocus();
             else if(auto* item=editor(hit))item->forceActiveFocus();
             SetCapture(nativeWindow);m_pointerGrab=true;
         }
@@ -103,12 +106,11 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
     }
     if(msg==WM_CAPTURECHANGED) {m_pointerGrab=false;return false;}
     if(msg==WM_MOUSEWHEEL) {
+        // Chat history wheel scrolling is native-owned. Only guild panels keep
+        // a Qt wheel surface here.
         POINT client{static_cast<LONG>(point.x()),static_cast<LONG>(point.y())};ScreenToClient(nativeWindow,&client);
-        auto* pane=m_root->findChild<QQuickItem*>("chatHistoryPane");
         const QPointF clientPoint(client.x,client.y);
-        const bool guildHit=guildEnabled && panelAt(clientPoint);
-        const bool chatHit=enabled && pane && pane->isVisible() && pane->contains(pane->mapFromScene(clientPoint));
-        if(!guildHit && !chatHit)return false;
+        if(!(guildEnabled && panelAt(clientPoint)))return false;
         QWheelEvent event(QPointF(client.x,client.y),point,{},QPoint(0,static_cast<short>((wParam>>16)&0xFFFF)),Qt::NoButton,Modifiers(),Qt::NoScrollPhase,false);
         QCoreApplication::sendEvent(m_window,&event);return true;
     }

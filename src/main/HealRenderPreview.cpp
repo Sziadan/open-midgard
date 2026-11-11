@@ -340,7 +340,9 @@ static void RunNpcClassChangeRenderPreview(std::string_view scene)
             && consumed == static_cast<int>(bytes.size()) && router.Dispatch(mode, packet);
     };
     const auto change = [&](int job) {
-        return dispatch(std::array<u8, 11>{0xb0, 1, gid, 0, 0, 0, 0,
+        return dispatch(std::array<u8, 11>{0xb0, 1,
+            static_cast<u8>(gid), static_cast<u8>(gid >> 8),
+            static_cast<u8>(gid >> 16), static_cast<u8>(gid >> 24), 0,
             static_cast<u8>(job), static_cast<u8>(job >> 8), 0, 0})
             && world.GetGameActorByAID(gid) == actor && actor->m_job == job;
     };
@@ -453,7 +455,9 @@ static void RunNpcClassChangeRenderPreview(std::string_view scene)
         if (!change(1286)) return false;
         render();
         if (!GetGr2MonsterBounds(gid, &bounds)) return false;
-        return report("despawn", dispatch(std::array<u8, 7>{0x80, 0, gid, 0, 0, 0, 0})
+        return report("despawn", dispatch(std::array<u8, 7>{0x80, 0,
+            static_cast<u8>(gid), static_cast<u8>(gid >> 8),
+            static_cast<u8>(gid >> 16), static_cast<u8>(gid >> 24), 0})
             && !world.GetGameActorByAID(gid) && !canPick() && GetGr2MonsterBounds(peerGid, &bounds));
     };
     const bool passed = run();

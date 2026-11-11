@@ -20,6 +20,7 @@ target_link_libraries(ro_main PUBLIC
     ro_core
     ro_cipher
 )
+target_link_libraries(ro_main PRIVATE zlibstatic)
 
 if(WIN32)
     target_link_libraries(ro_main PUBLIC imm32)
