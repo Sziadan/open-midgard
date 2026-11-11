@@ -3292,10 +3292,12 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
     return bodyOk || headOk || accessoryBottomOk || accessoryMidOk || accessoryTopOk || weaponOk || weaponLayer6Ok || shieldOk;
 }
 
-bool ResolveNonPcSpritePaths(int job, char* actPath, char* sprPath)
+} // namespace
+
+bool ResolveNonPcSpritePaths(int job, char (&actPath)[MAX_PATH], char (&sprPath)[MAX_PATH])
 {
     const char* const jobName = g_session.GetJobName(job);
-    if (!jobName || !*jobName || !actPath || !sprPath) {
+    if (!jobName || !*jobName) {
         return false;
     }
 
@@ -3330,6 +3332,8 @@ bool ResolveNonPcSpritePaths(int job, char* actPath, char* sprPath)
     std::sprintf(sprPath, "%s%s.spr", "data\\sprite\\NPC\\", spriteName);
     return true;
 }
+
+namespace {
 
 void LogNonPcResourceResolvedOnce(int job, const char* jobName, const char* actPath, const char* sprPath)
 {

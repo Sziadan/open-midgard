@@ -2,6 +2,57 @@
 
 #include "UIShopCommon.h"
 #include "UIWindowMgr.h"
+#include "render/DC.h"
+#include "world/GameActor.h"
+
+#include <algorithm>
+#include <vector>
+
+namespace {
+
+void DrawMonsterPortrait(HDC hdc, int x, int y, u16 job)
+{
+    char actPath[MAX_PATH]{};
+    char sprPath[MAX_PATH]{};
+    if (!ResolveNonPcSpritePaths(job, actPath, sprPath)) {
+        return;
+    }
+
+    auto* act = g_resMgr.GetAs<CActRes>(actPath);
+    auto* sprite = g_resMgr.GetAs<CSprRes>(sprPath);
+    const CMotion* motion = act ? act->GetMotion(0, 0) : nullptr;
+    if (!sprite || !motion || motion->sprClips.empty()) {
+        return;
+    }
+
+    CSprClip clip = motion->sprClips.front();
+    const SprImg* image = sprite->GetSprite(clip.clipType, clip.sprIndex);
+    if (!image || image->width <= 0 || image->height <= 0) {
+        return;
+    }
+
+    // The estimate uses the clip's image and flip, independent of the actor's pose offsets and tint.
+    clip.x = clip.y = 0;
+    clip.r = clip.g = clip.b = clip.a = 255;
+    CMotion portrait{};
+    portrait.sprClips.push_back(clip);
+    const int width = image->width;
+    const int height = image->height;
+    if (width < 200 && height < 200) {
+        DrawActMotionToHdc(hdc, x - width / 2, y - height / 2, sprite, &portrait, sprite->m_pal);
+        return;
+    }
+
+    const int drawWidth = (std::max)(1, width / 2);
+    const int drawHeight = (std::max)(1, height / 2);
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * height);
+    if (DrawActMotionToArgb(pixels.data(), width, height, 0, 0, sprite, &portrait, sprite->m_pal)) {
+        AlphaBlendArgbToHdc(hdc, x - drawWidth / 2, y - drawHeight / 2, drawWidth, drawHeight,
+            pixels.data(), width, height);
+    }
+}
+
+} // namespace
 
 UIMonsterInfoWnd::UIMonsterInfoWnd()
 {
@@ -24,10 +75,11 @@ RECT UIMonsterInfoWnd::GetCloseRect() const
 void UIMonsterInfoWnd::OnDraw()
 {
     if (!m_show) return;
-    HDC hdc = AcquireMainWindowDrawTarget();
+    HDC hdc = AcquireDrawTarget();
     if (!hdc) return;
 
     shopui::DrawFrameWindow(hdc, shopui::MakeRect(m_x, m_y, m_w, m_h), "Monster Information");
+    DrawMonsterPortrait(hdc, m_x + 60, m_y + 102, m_estimate.job);
     const auto drawText = [&](int x, int y, int width, const std::string& text) {
         shopui::DrawWindowTextRect(hdc, shopui::MakeRect(m_x + x, m_y + y, width, 18), text,
             RGB(0, 0, 0), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
@@ -59,7 +111,7 @@ void UIMonsterInfoWnd::OnDraw()
     shopui::FillRectColor(hdc, GetCloseRect(), m_closePressed ? RGB(185, 199, 222) : RGB(231, 226, 214));
     shopui::FrameRectColor(hdc, GetCloseRect(), RGB(127, 122, 112));
     shopui::DrawWindowTextRect(hdc, GetCloseRect(), "Close", RGB(0, 0, 0), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-    ReleaseMainWindowDrawTarget(hdc);
+    ReleaseDrawTarget(hdc);
 }
 
 void UIMonsterInfoWnd::OnLBtnDown(int x, int y)

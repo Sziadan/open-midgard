@@ -12,6 +12,8 @@
 class CGameObject;
 class CGameActor;
 
+bool ResolveNonPcSpritePaths(int job, char (&actPath)[MAX_PATH], char (&sprPath)[MAX_PATH]);
+
 // One id per logic step. ProcessEffectState consumes it so the Sight/Ruwach
 // relaunch counter stays on the same clock as effect 22/33.
 void BeginEffectStateLogicStep();

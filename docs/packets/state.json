@@ -858,13 +858,14 @@
       "commit_subject": "packet(PK26.01): establish selected special skill choice contract"
     },
     "PK26.02": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK26.02-memo-estimate-autospell.md",
         "docs/packets/evidence/PK26.02-warp-arrow-lifecycle.md",
+        "docs/packets/evidence/PK26.02-monster-portrait.md",
         "docs/packets/contracts/PK26.SPECIAL-SKILL-CHOICES.md"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK26.02): render the monster estimate portrait"
     },
     "PK26.03": {
       "status": "NOT_STARTED",
