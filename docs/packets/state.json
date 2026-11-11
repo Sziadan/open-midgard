@@ -696,18 +696,18 @@
       "commit_subject": "packet(PK21.01): establish selected NPC progress contract"
     },
     "PK21.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK21.02-npc-progress-replay.md"],
+      "commit_subject": "packet(PK21.02): implement selected NPC progress wire lifecycle"
     },
     "PK21.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK21.03-npc-progress-lifecycle.md"],
+      "commit_subject": "packet(PK21.03): verify NPC progress teardown and input scope"
     },
     "PK21.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK21.03-npc-progress-lifecycle.md"],
       "commit_subject": null
     },
     "PK22.01": {

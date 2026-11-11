@@ -1,5 +1,6 @@
 #include "gamemode/View.h"
 #include "ui/UIStorageWnd.h"
+#include "ui/UIRechargeGage.h"
 #include "world/GameActor.h"
 #include "world/World.h"
 
@@ -536,6 +537,10 @@ void MapTransitionLifetimeReplay()
         mode.m_world = &world;
         mode.m_view = &view;
         mode.m_mapLoadingStage = CGameMode::MapLoading_None;
+        mode.StartNpcProgress(3, timeGetTime());
+        UIRechargeGage* const progressGauge = mode.GetNpcProgressGauge();
+        Require(progressGauge != nullptr && g_windowMgr.ContainsWindow(progressGauge),
+            "could not seed the real NPC progress gauge before same-map warp");
         mode.m_isOnQuest = 1;
         mode.m_isPlayerDead = 1;
         std::snprintf(mode.m_rswName, sizeof(mode.m_rswName), "%s", "prontera.rsw");
@@ -578,6 +583,10 @@ void MapTransitionLifetimeReplay()
         const u16 expectedAck = ro::net::GetActiveMapGameplaySendProfile().notifyActorInit;
         Require(ack == std::vector<u8>{static_cast<u8>(expectedAck & 0xffu), static_cast<u8>(expectedAck >> 8)},
             "same-map warp did not send the production load-end acknowledgement");
+        Require(mode.GetNpcProgressGauge() == nullptr && !g_windowMgr.ContainsWindow(progressGauge),
+            "same-map warp retained the NPC progress gauge/window");
+        Require(SelectSocket(ackPeer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+            "same-map progress teardown emitted an unexpected progress-cancel acknowledgement");
         Require(g_session.GetInventoryItems().empty(),
             "same-map load-end acknowledgement retained old inventory snapshot rows");
         Require(!g_session.IsStorageOpen() && g_session.GetStorageItems().empty()
