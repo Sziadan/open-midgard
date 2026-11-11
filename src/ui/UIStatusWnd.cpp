@@ -746,8 +746,8 @@ UIStatusWnd::DisplayData UIStatusWnd::BuildDisplayData() const
         data.baseStats[3] = static_cast<int>(info->Int);
         data.baseStats[4] = static_cast<int>(info->Dex);
         data.baseStats[5] = static_cast<int>(info->Luk);
-        data.statusPoint = (std::max)(0, static_cast<int>(info->sppoint));
     }
+    data.statusPoint = g_session.GetStatusPoints();
 
     data.plusStats[0] = (std::max)(0, g_session.m_plusStr);
     data.plusStats[1] = (std::max)(0, g_session.m_plusAgi);

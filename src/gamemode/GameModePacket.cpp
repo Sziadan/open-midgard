@@ -1453,6 +1453,37 @@ u16 ClampPrimaryStatTotal(s32 base, s32 bonus)
     return static_cast<u16>(std::clamp<std::int64_t>(total, 0, std::numeric_limits<u16>::max()));
 }
 
+struct PrimaryStatFields {
+    u8 CHARACTER_INFO::* cardBase;
+    int CSession::* bonus;
+    u16 CGameActor::* actorTotal;
+};
+
+constexpr std::array<PrimaryStatFields, 6> kPrimaryStatFields{{
+    {&CHARACTER_INFO::Str, &CSession::m_plusStr, &CGameActor::m_Str},
+    {&CHARACTER_INFO::Agi, &CSession::m_plusAgi, &CGameActor::m_Agi},
+    {&CHARACTER_INFO::Vit, &CSession::m_plusVit, &CGameActor::m_Vit},
+    {&CHARACTER_INFO::Int, &CSession::m_plusInt, &CGameActor::m_Int},
+    {&CHARACTER_INFO::Dex, &CSession::m_plusDex, &CGameActor::m_Dex},
+    {&CHARACTER_INFO::Luk, &CSession::m_plusLuk, &CGameActor::m_Luk},
+}};
+
+const PrimaryStatFields* FindPrimaryStat(u32 statusType)
+{
+    if (statusType < kStatusStr || statusType > kStatusLuk) return nullptr;
+    return &kPrimaryStatFields[statusType - kStatusStr];
+}
+
+void ApplyPrimaryStatBase(CGameMode& mode, const PrimaryStatFields& fields, s32 base)
+{
+    if (auto* character = g_session.GetMutableSelectedCharacterInfo()) {
+        character->*fields.cardBase = static_cast<u8>(std::clamp<s32>(base, 0, 0xff));
+    }
+    if (auto* player = mode.m_world ? mode.m_world->m_player : nullptr) {
+        player->*fields.actorTotal = ClampPrimaryStatTotal(base, g_session.*fields.bonus);
+    }
+}
+
 void SyncLocalPlayerPrimaryStatsFromSession(CGameMode& mode)
 {
     CPlayer* player = mode.m_world ? mode.m_world->m_player : nullptr;
@@ -1465,12 +1496,9 @@ void SyncLocalPlayerPrimaryStatsFromSession(CGameMode& mode)
         return;
     }
 
-    player->m_Str = ClampPrimaryStatTotal(info->Str, g_session.m_plusStr);
-    player->m_Agi = ClampPrimaryStatTotal(info->Agi, g_session.m_plusAgi);
-    player->m_Vit = ClampPrimaryStatTotal(info->Vit, g_session.m_plusVit);
-    player->m_Int = ClampPrimaryStatTotal(info->Int, g_session.m_plusInt);
-    player->m_Dex = ClampPrimaryStatTotal(info->Dex, g_session.m_plusDex);
-    player->m_Luk = ClampPrimaryStatTotal(info->Luk, g_session.m_plusLuk);
+    for (const auto& fields : kPrimaryStatFields) {
+        player->*fields.actorTotal = ClampPrimaryStatTotal(info->*fields.cardBase, g_session.*fields.bonus);
+    }
 }
 
 bool ApplyCombatStatusParamToSession(u32 statusType, int value, bool aspdIsRawMotion)
@@ -1528,8 +1556,8 @@ void ApplyStatusBaseAndCostSummary(CGameMode& mode,
     const std::array<int, 6>& baseStats,
     const std::array<int, 6>& statCosts)
 {
+    g_session.SetStatusPoints(statusPoint);
     if (CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo()) {
-        info->sppoint = static_cast<s16>((std::min)(statusPoint, static_cast<int>(std::numeric_limits<s16>::max())));
         info->Str = static_cast<u8>((std::min)(baseStats[0], 0xFF));
         info->Agi = static_cast<u8>((std::min)(baseStats[1], 0xFF));
         info->Vit = static_cast<u8>((std::min)(baseStats[2], 0xFF));
@@ -1568,6 +1596,9 @@ bool ApplySelfStatusUpdateToSession(u32 statusType, u32 value)
     case kStatusNextJobExp:
         g_session.SetNextJobExpValue(value);
         return true;
+    case kStatusStatusPoint:
+        g_session.SetStatusPoints(static_cast<s32>(value));
+        return true;
     default:
         break;
     }
@@ -1597,9 +1628,6 @@ bool ApplySelfStatusUpdateToSession(u32 statusType, u32 value)
         return true;
     case kStatusZeny:
         info->money = static_cast<int>(value);
-        return true;
-    case kStatusStatusPoint:
-        info->sppoint = static_cast<s16>(ClampToU16(value));
         return true;
     case kStatusSkillPoint:
         info->jobpoint = static_cast<s16>(ClampToU16(value));
@@ -2949,84 +2977,12 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
 
 bool ApplySelfStatUpdate(CGameMode& mode, u32 statusType, s32 baseValue, s32 plusValue)
 {
-    switch (statusType) {
-    case kStatusStr:
-        g_session.m_plusStr = static_cast<int>(plusValue);
-        break;
-    case kStatusAgi:
-        g_session.m_plusAgi = static_cast<int>(plusValue);
-        break;
-    case kStatusVit:
-        g_session.m_plusVit = static_cast<int>(plusValue);
-        break;
-    case kStatusInt:
-        g_session.m_plusInt = static_cast<int>(plusValue);
-        break;
-    case kStatusDex:
-        g_session.m_plusDex = static_cast<int>(plusValue);
-        break;
-    case kStatusLuk:
-        g_session.m_plusLuk = static_cast<int>(plusValue);
-        break;
-    default:
-        break;
-    }
+    const auto* fields = FindPrimaryStat(statusType);
+    if (!fields) return false;
 
-    CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo();
-    if (info) {
-        const auto cardValue = static_cast<u8>(std::clamp<s32>(baseValue, 0, 0xff));
-        switch (statusType) {
-        case kStatusStr:
-            info->Str = cardValue;
-            break;
-        case kStatusAgi:
-            info->Agi = cardValue;
-            break;
-        case kStatusVit:
-            info->Vit = cardValue;
-            break;
-        case kStatusInt:
-            info->Int = cardValue;
-            break;
-        case kStatusDex:
-            info->Dex = cardValue;
-            break;
-        case kStatusLuk:
-            info->Luk = cardValue;
-            break;
-        default:
-            break;
-        }
-    }
-
-    if (!mode.m_world || !mode.m_world->m_player) {
-        return info != nullptr;
-    }
-
-    const u16 totalValue = ClampPrimaryStatTotal(baseValue, plusValue);
-    CPlayer* player = mode.m_world->m_player;
-    switch (statusType) {
-    case kStatusStr:
-        player->m_Str = totalValue;
-        return true;
-    case kStatusAgi:
-        player->m_Agi = totalValue;
-        return true;
-    case kStatusVit:
-        player->m_Vit = totalValue;
-        return true;
-    case kStatusInt:
-        player->m_Int = totalValue;
-        return true;
-    case kStatusDex:
-        player->m_Dex = totalValue;
-        return true;
-    case kStatusLuk:
-        player->m_Luk = totalValue;
-        return true;
-    default:
-        return false;
-    }
+    g_session.*fields->bonus = plusValue;
+    ApplyPrimaryStatBase(mode, *fields, baseValue);
+    return true;
 }
 
 void InvalidateStatusWindows()
@@ -3282,33 +3238,9 @@ void HandleStatusChangeAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo();
-    if (info) {
-        switch (statusType) {
-        case kStatusStr:
-            info->Str = static_cast<u8>(value);
-            break;
-        case kStatusAgi:
-            info->Agi = static_cast<u8>(value);
-            break;
-        case kStatusVit:
-            info->Vit = static_cast<u8>(value);
-            break;
-        case kStatusInt:
-            info->Int = static_cast<u8>(value);
-            break;
-        case kStatusDex:
-            info->Dex = static_cast<u8>(value);
-            break;
-        case kStatusLuk:
-            info->Luk = static_cast<u8>(value);
-            break;
-        default:
-            break;
-        }
+    if (const auto* fields = FindPrimaryStat(statusType)) {
+        ApplyPrimaryStatBase(mode, *fields, value);
     }
-
-    SyncLocalPlayerPrimaryStatsFromSession(mode);
     InvalidateStatusWindows();
 }
 

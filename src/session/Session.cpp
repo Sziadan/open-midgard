@@ -1396,6 +1396,7 @@ void CSession::SetSelectedCharacterAppearance(const CHARACTER_INFO& info)
     m_characterVitals = { static_cast<u16>(info.hp), static_cast<u16>(info.maxhp),
         static_cast<u16>(info.sp), static_cast<u16>(info.maxsp) };
     m_hasSelectedCharacterInfo = true;
+    SetStatusPoints(info.sppoint);
     m_skillItems.clear();
     ClearActiveStatusIcons();
     m_hasBaseExpValue = false;
@@ -1469,6 +1470,14 @@ const CHARACTER_INFO* CSession::GetSelectedCharacterInfo() const
 CHARACTER_INFO* CSession::GetMutableSelectedCharacterInfo()
 {
     return m_hasSelectedCharacterInfo ? &m_selectedCharacterInfo : nullptr;
+}
+
+void CSession::SetStatusPoints(int value)
+{
+    m_statusPoints = (std::max)(0, value);
+    if (auto* character = GetMutableSelectedCharacterInfo()) {
+        character->sppoint = static_cast<s16>((std::min)(m_statusPoints, 32767));
+    }
 }
 
 void CSession::SetBaseExpValue(u32 value)

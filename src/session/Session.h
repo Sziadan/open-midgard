@@ -330,6 +330,8 @@ public:
     CHARACTER_INFO* GetMutableSelectedCharacterInfo();
     const CharacterVitals& GetCharacterVitals() const { return m_characterVitals; }
     bool UpdateCharacterVital(u32 type, u32 value) { return m_characterVitals.Update(type, value); }
+    int GetStatusPoints() const { return m_statusPoints; }
+    void SetStatusPoints(int value);
     void SetBaseExpValue(u32 value);
     void SetNextBaseExpValue(u32 value);
     void SetJobExpValue(u32 value);
@@ -502,6 +504,7 @@ private:
     u32 m_averagePingTime;
     CHARACTER_INFO m_selectedCharacterInfo;
     CharacterVitals m_characterVitals;
+    int m_statusPoints = 0;
     bool m_hasSelectedCharacterInfo;
     u32 m_baseExpValue;
     u32 m_nextBaseExpValue;

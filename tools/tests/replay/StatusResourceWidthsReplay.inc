@@ -25,8 +25,9 @@ void StatusResourceWidthsReplay()
             && packet.packetId == opcode && consumed == static_cast<int>(bytes.size())
             && router.Dispatch(mode, packet), "status-width frame did not route through production");
     };
-    const auto stat = [&](s32 base, s32 bonus) {
-        std::array<u8, 14> bytes{0x41, 0x01, 13};
+    const auto stat = [&](s32 base, s32 bonus, u32 kind = 13) {
+        std::array<u8, 14> bytes{0x41, 0x01};
+        write(bytes, 2, kind);
         write(bytes, 6, base);
         write(bytes, 10, bonus);
         dispatch(bytes, 0x0141);
@@ -60,10 +61,26 @@ void StatusResourceWidthsReplay()
         && g_session.m_itemDefPower == -10 && g_session.m_plusDefPower == -20
         && g_session.m_mdefPower == -6 && g_session.m_plusMdefPower == -16 && g_session.m_aspd == 150,
         "00BD summary lost signed combat values, points/cost widths, or the active stat bonus");
+    stat(1000, 2, 14);
+    param(0x00b0, 9, 70000);
+    dispatch(std::array<u8, 6>{0xbc, 0, 13, 0, 0, 255}, 0x00bc);
+    Require(selected->Str == 40 && player.m_Str == 35 && player.m_Agi == 1002,
+        "failed 00BC acknowledgement changed a primary stat");
     dispatch(std::array<u8, 6>{0xbc, 0, 13, 0, 1, 255}, 0x00bc);
     dispatch(std::array<u8, 5>{0xbe, 0, 32, 0, 255}, 0x00be);
-    Require(selected->Str == 255 && player.m_Str == 250 && g_session.m_standardStr == 255,
-        "00BC or 00BE narrowed its unsigned byte or discarded the active stat bonus");
+    Require(selected->Str == 255 && player.m_Str == 250 && g_session.m_standardStr == 255
+        && player.m_Agi == 1002 && g_session.GetStatusPoints() == 70000 && selected->sppoint == INT16_MAX,
+        "00BC/00BE discarded a bonus, refreshed an unrelated stat, or changed the status-point total");
+    UIStatusWnd statusWindow;
+    UIStatusWnd::DisplayData display{};
+    Require(statusWindow.GetDisplayDataForQt(&display) && display.statusPoint == 70000,
+        "status display narrowed the full-width point total");
+    param(0x00b0, 9, static_cast<u32>(INT32_MAX));
+    Require(statusWindow.GetDisplayDataForQt(&display) && display.statusPoint == INT32_MAX,
+        "selected signed status-point ceiling did not reach the display");
+    param(0x00b0, 9, static_cast<u32>(-1));
+    Require(g_session.GetStatusPoints() == 0 && selected->sppoint == 0,
+        "negative status-point parameter appeared as a positive balance");
 
     param(0x00b0, 5, 0x80000001u);
     param(0x00b0, 6, 0xffffffffu);

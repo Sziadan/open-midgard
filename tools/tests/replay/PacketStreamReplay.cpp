@@ -38,6 +38,7 @@
 #include "ui/UINewChatWnd.h"
 #include "ui/UIGuildWnd.h"
 #include "ui/UIMinimapWnd.h"
+#include "ui/UIStatusWnd.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
 #include "world/World.h"
