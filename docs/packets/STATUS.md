@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Standing resurrection action checkpoint (2026-11-11)**. The dead-player menu now offers item 7621 recovery in eligible maps and sends the selected two-byte request. Packet and Qt state replay passed. Live recovery and rendered menu acceptance remain open. [Evidence](evidence/PK19-standing-resurrection.md)
+
 **Map property lifetime checkpoint (2026-11-11)**. Real game-mode entry resets the four world rule flags. Loaded same-map reuse retains them, and session values follow their packet handlers. [Evidence](evidence/PK19-map-property-lifetime.md)
 
 **Dynamic map cell native verification (2026-11-11)**. Vulkan captures on installed Prontera assets verified that `0192` removes the hover highlight on a blocked cell and restores it when the cell is walkable. Production pathfinding and lifecycle replay passed. Independent PK48 and live server checks remain pending. [Evidence](evidence/PK18.04-map-cell-native-verification.md)

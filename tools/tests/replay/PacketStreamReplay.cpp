@@ -52,7 +52,9 @@
 #include <thread>
 #include <vector>
 #if RO_ENABLE_QT6_UI
+#include "render3d/RenderBackend.h"
 #include <QGuiApplication>
+#include <QVariant>
 #endif
 #if !RO_PLATFORM_WINDOWS
 #include <fcntl.h>
@@ -5524,6 +5526,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--pet-lifecycle-only") {PetLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--world-entry-handoff-only") {ModeLoopHandoffReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--map-cell-load-only") {MapCellLoadLifecycleReplay();CConnection::Cleanup();return 0;}
+    if(argc>1 && std::string(argv[1])=="--standing-resurrection-only") {StandingResurrectionReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--corpse-gr2-native") { CorpseNativePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--whisper-only") {WhisperReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--auto-message-only") {AutoMessageReplay();CConnection::Cleanup();return 0;}
@@ -5677,6 +5680,7 @@ int main(int argc,char** argv){try{
     SelectedInventoryCartRouteIsolationReplay();
     MapReceivePreambleReplay();
     MapTransitionLifetimeReplay();
+    StandingResurrectionReplay();
     ModeLoopHandoffReplay();
     CartItemWireFieldsReplay();
     InventoryMapEntryReplay();

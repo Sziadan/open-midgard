@@ -4101,6 +4101,8 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
     mode.m_attackChaseRange = 0;
     mode.m_hasAttackChaseHint = 0;
     mode.m_isLeftButtonHeld = 0;
+    mode.m_isOnQuest = 0;
+    mode.m_isPlayerDead = 0;
     mode.m_sentLoadEndAck = 0;
     mode.m_mapLoadingStage = CGameMode::MapLoading_None;
     mode.m_mapLoadingStartTick = 0;
@@ -8753,6 +8755,9 @@ void HandleActorVanish(CGameMode& mode, const PacketView& packet)
             if (IsLocalPlayerActor(mode, gid)) {
                 mode.m_isOnQuest = 1;
                 mode.m_isPlayerDead = 1;
+                if (g_serviceType != ServiceTaiwan && mode.CanRequestStandingResurrection()) {
+                    g_windowMgr.MakeWindow(UIWindowMgr::WID_CHOOSEWND);
+                }
             }
 
             DbgLog("[GameMode] death vanish gid=%u self=%d despawnAt=%u\n",

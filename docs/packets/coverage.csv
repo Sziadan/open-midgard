@@ -548,7 +548,7 @@ AUDIT-0x028E,0x028E,login/char,S2C,PK44,PK01;PK02;PK47;PK48,"Selected server leg
 AUDIT-0x028F,0x028F,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,"Selected server legacy rename forms, two-step state and result branches traced in PK44.CHAR-RENAME.md; client path unconfirmed.",UNREVIEWED,PK44.CHAR-RENAME
 AUDIT-0x0290,0x0290,login/char,S2C,PK44,PK01;PK02;PK47;PK48,"Selected server legacy rename forms, two-step state and result branches traced in PK44.CHAR-RENAME.md; client path unconfirmed.",UNREVIEWED,PK44.CHAR-RENAME
 AUDIT-0x0291,0x0291,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0292,0x0292,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0292,0x0292,map,C2S,PK47,PK01;PK02;PK48;PK46;PK19,Selected 20080910 two-byte standing resurrection request with source-backed recovery action and loopback wire verification,C2S_ONLY,PK19.STANDING-RESURRECTION
 AUDIT-0x0293,0x0293,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0294,0x0294,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0297,0x0297,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-commerce-cart-item-lists.md: variable-length client cart-list route and replacement behavior traced; selected 20080910 uses 0x02E9 normal and 0x02D2 equipment lists while 0x0297 is another profile branch. Server field schema and replay remain open.,UNREVIEWED,

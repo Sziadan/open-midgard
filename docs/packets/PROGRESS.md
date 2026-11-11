@@ -3847,3 +3847,7 @@ PK18.04 verifies the selected `0192` receiver on Prontera assets. The blocked fr
 ## 2026-11-11 Legacy map property lifetime
 
 PK19 resets the four world rule flags on real game-mode entry. Loopback replay covers loaded same-map retention, replacement, and the next property packet's effect-preference restoration. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK19-map-property-lifetime.md)
+
+## 2026-11-11 Standing resurrection action
+
+PK19.03 applies the selected death, token and map-rule gates to the standing resurrection menu and wire sender. Production replay verifies the projected action, blocked sends, literal request, and server-driven recovery. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK19-standing-resurrection.md)

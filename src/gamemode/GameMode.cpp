@@ -10304,6 +10304,18 @@ void CGameMode::MakeFog(int fogOn)
     ApplyRefFogForMap(m_rswName, fogOn);
 }
 
+bool CGameMode::CanRequestStandingResurrection() const
+{
+    if (!m_isPlayerDead || !m_world || m_world->m_isPKZone || m_world->m_isSiegeMode
+        || m_world->m_isEventPVPMode) {
+        return false;
+    }
+    const auto& items = g_session.GetInventoryItems();
+    return std::any_of(items.begin(), items.end(), [](const ITEM_INFO& item) {
+        return item.m_itemIndex != 0 && item.m_num > 0 && item.GetItemId() == 7621;
+    });
+}
+
 void CGameMode::OnExit() {
     g_session.InvalidatePartyPositions();
     g_session.ClearNpcShopState();
@@ -11523,6 +11535,15 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
 
     case GameMsg_RequestReturnToSavePoint:
         return RequestReturnToSavePoint() ? 1 : 0;
+
+    case GameMsg_RequestStandingResurrection: {
+        if (!CanRequestStandingResurrection()) {
+            return 0;
+        }
+        // CZ_STANDING_RESURRECTION has no payload.
+        const char packet[]{static_cast<char>(0x92), 0x02};
+        return CRagConnection::instance()->SendPacket(packet, sizeof(packet)) ? 1 : 0;
+    }
 
     case GameMsg_RequestEquipInventoryItem:
         return RequestEquipInventoryItem(

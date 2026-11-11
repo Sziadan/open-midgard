@@ -22,6 +22,7 @@ public:
     int GetPressedIndex() const;
     int GetEntryCount() const;
     const char* GetEntryLabelForQt(int index) const;
+    void RefreshRecoveryOption();
 
 private:
     enum MenuEntry {
@@ -29,7 +30,8 @@ private:
         MenuEntry_ReturnToGame = 1,
         MenuEntry_ExitToWindows = 2,
         MenuEntry_ReturnToSavePoint = 3,
-        MenuEntry_Count = 4,
+        MenuEntry_StandingResurrection = 4,
+        MenuEntry_Count = 5,
     };
 
     void EnsureCreated();

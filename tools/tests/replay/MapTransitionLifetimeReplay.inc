@@ -274,6 +274,102 @@ void MapCellLoadLifecycleReplay()
     std::cout << "{\"case_id\":\"map_cell_load_lifecycle\",\"contract_id\":\"PK18.03\",\"outcome\":\"PASS\"}" << std::endl;
 }
 
+void StandingResurrectionReplay()
+{
+    SetCase("standing_resurrection", "PK19.03", "PK01.02-final-0292",
+        "self-death -> recovery menu -> mode request -> loopback wire -> resurrection");
+    MapTransitionLifetimeSnapshot saved;
+    const auto service = g_serviceType;
+    g_serviceType = ServiceKorea;
+    if (g_windowMgr.m_chooseWnd) {
+        g_windowMgr.DeleteWindow(g_windowMgr.m_chooseWnd);
+    }
+    g_session.ClearInventoryItems();
+
+    CGameMode mode;
+    CWorld world;
+    CPlayer player;
+    constexpr u32 gid = 0x12345678;
+    g_session.m_gid = gid;
+    player.m_gid = gid;
+    world.m_player = &player;
+    mode.m_world = &world;
+    mode.m_runtimeActors[gid] = &player;
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+
+    const auto request = [&] {
+        return mode.SendMsg(CGameMode::GameMsg_RequestStandingResurrection, 0, 0, 0);
+    };
+    Require(!request(), "standing resurrection was offered while alive");
+    ITEM_INFO token{};
+    token.m_itemIndex = 7;
+    token.m_num = 2;
+    token.SetItemId(7621);
+    g_session.SetInventoryItem(token);
+    Require(!request(), "token allowed an alive player to send standing resurrection");
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const auto& frame) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(frame.data(), static_cast<int>(frame.size()), packet, consumed)
+            && consumed == static_cast<int>(frame.size()) && router.Dispatch(mode, packet),
+            "standing resurrection fixture failed to route a packet");
+    };
+    dispatch(std::array<u8, 7>{0x80, 0x00, 0x78, 0x56, 0x34, 0x12, 1});
+    auto* menu = g_windowMgr.m_chooseWnd;
+    Require(mode.m_isPlayerDead && menu && menu->m_show && menu->GetEntryCount() == 5,
+        "eligible self-death did not open the recovery option");
+#if RO_ENABLE_QT6_UI
+    QtUiStateAdapter adapter;
+    const auto projectedOptions = [&] {
+        Require(adapter.syncGameplay(mode, RenderBackendType::LegacyDirect3D7,
+            RenderBackendType::LegacyDirect3D7, -1, -1), "recovery menu did not project to Qt");
+        return adapter.stateObject()->property("chooseMenuOptions").toList();
+    };
+    const auto options = projectedOptions();
+    Require(options.size() == 5 && options.back().toString() == QStringLiteral("Use Token of Siegfried"),
+        "Qt menu did not expose the standing resurrection option");
+#endif
+    const std::array<int CWorld::*, 3> blockedRules{
+        &CWorld::m_isPKZone, &CWorld::m_isSiegeMode, &CWorld::m_isEventPVPMode};
+    for (const auto rule : blockedRules) {
+        world.*rule = 1;
+        Require(menu->GetEntryCount() == 4 && !request(),
+            "restricted map exposed or sent standing resurrection");
+        world.*rule = 0;
+    }
+    g_session.ClearInventoryItems();
+    Require(menu->GetEntryCount() == 4 && !request(), "missing token permitted standing resurrection");
+#if RO_ENABLE_QT6_UI
+    Require(projectedOptions().size() == 4, "Qt menu retained an unavailable recovery option");
+#endif
+    g_session.SetInventoryItem(token);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(20)) == 0,
+        "blocked standing resurrection sent bytes");
+    menu->OnKeyDown(VK_UP);
+    menu->OnKeyDown(VK_UP);
+    Require(menu->GetSelectedIndex() == 4, "keyboard could not select the recovery option");
+    menu->OnKeyDown(VK_RETURN);
+    Require(peer.ReceiveExact(2) == std::vector<u8>{0x92, 0x02}
+        && !menu->m_show && mode.m_isPlayerDead && g_session.GetInventoryItems().front().m_num == 2,
+        "recovery request changed death or inventory state locally");
+
+    dispatch(std::array<u8, 8>{0x48, 0x01, 0x78, 0x56, 0x34, 0x12, 1, 0});
+    Require(!mode.m_isPlayerDead && menu->GetEntryCount() == 4 && !request(),
+        "self resurrection did not remove the recovery option");
+    connection->Disconnect();
+    g_windowMgr.DeleteWindow(menu);
+    mode.m_world = nullptr;
+    g_serviceType = service;
+    saved.Restore();
+    std::cout << "{\"case_id\":\"standing_resurrection\",\"contract_id\":\"PK19.03\",\"outcome\":\"PASS\"}" << std::endl;
+}
+
 void MapTransitionLifetimeReplay()
 {
     SetCase("map_transition_lifetime", "PK14.06", "PK14.06-map-transition-selected-0091-0092-0071",
@@ -367,6 +463,8 @@ void MapTransitionLifetimeReplay()
         mode.m_world = &world;
         mode.m_view = &view;
         mode.m_mapLoadingStage = CGameMode::MapLoading_None;
+        mode.m_isOnQuest = 1;
+        mode.m_isPlayerDead = 1;
         std::snprintf(mode.m_rswName, sizeof(mode.m_rswName), "%s", "prontera.rsw");
         mode.m_partyPosList[0x30303030u].x = 25;
         mode.m_partyPosList[0x30303030u].y = 35;
@@ -416,6 +514,8 @@ void MapTransitionLifetimeReplay()
         RequirePartyInvalidated(revision, before.imageRevision, "same-map warp reuse");
         Require(mode.m_mapLoadingStage == CGameMode::MapLoading_None && mode.m_world == &world && mode.m_view == &view,
             "same-map reuse discarded the loaded world/view");
+        Require(!mode.m_isPlayerDead && !mode.m_isOnQuest,
+            "same-map reuse retained the previous death state");
         Require(world.GetMapCellType(1, 1) == 5 && attr.GetCell(1, 1)->flag == 0,
             "same-map reuse lost the active map cell update");
         Require(world.m_isPKZone && world.m_isSiegeMode && world.m_isBattleFieldMode

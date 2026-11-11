@@ -152,6 +152,7 @@ public:
             GameMsg_RequestPartyDisband = 20036,
                 GameMsg_RequestPartyInvite = 20037,
                 GameMsg_RequestPartyInviteReply = 20038,
+        GameMsg_RequestStandingResurrection = 20043,
     };
 
     enum PlayerContextAction {
@@ -184,6 +185,7 @@ public:
     virtual msgresult_t SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     virtual void OnChangeState(int newState) override;
     void MakeFog(int fogOn);
+    bool CanRequestStandingResurrection() const;
     // Ref/GameMode.cpp:11527. hideTime is in 24 Hz frames.
     void MakeArrowEffectPos(const vector3d& sourcePos, const vector3d& targetPos, float hideTime);
     void MakeArrowEffect(const vector3d& sourcePos, unsigned int targetGid, float hideTime, int job);

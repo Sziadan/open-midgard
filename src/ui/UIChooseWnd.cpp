@@ -23,7 +23,6 @@ constexpr int kButtonWidth = 221;
 constexpr int kButtonHeight = 20;
 constexpr int kButtonSpacing = 3;
 constexpr int kMenuButtonBaseId = 200;
-constexpr int kMenuEntryCount = 4;
 constexpr int kWindowCornerRadius = 8;
 
 std::string ToLowerAscii(std::string value)
@@ -153,14 +152,15 @@ void FillRoundedRectColor(HDC hdc, const RECT& rc, COLORREF color, int radius)
 
 const char* GetEntryBitmapName(int index, int stateIndex)
 {
-    static const char* kBitmaps[kMenuEntryCount][3] = {
+    static const char* kBitmaps[][3] = {
         { "esc_01a.bmp", "esc_01b.bmp", "esc_01c.bmp" },
         { "esc_02a.bmp", "esc_02b.bmp", "esc_02c.bmp" },
         { "esc_03a.bmp", "esc_03b.bmp", "esc_03c.bmp" },
         { "esc_04a.bmp", "esc_04b.bmp", "esc_04c.bmp" },
+        { "esc_05a.bmp", "esc_05b.bmp", "esc_05c.bmp" },
     };
 
-    if (index < 0 || index >= kMenuEntryCount || stateIndex < 0 || stateIndex >= 3) {
+    if (index < 0 || index >= static_cast<int>(std::size(kBitmaps)) || stateIndex < 0 || stateIndex >= 3) {
         return "";
     }
 
@@ -171,7 +171,7 @@ const char* GetEntryBitmapName(int index, int stateIndex)
 
 UIChooseWnd::UIChooseWnd()
     : m_controlsCreated(false),
-      m_entryButtons{ nullptr, nullptr, nullptr, nullptr },
+      m_entryButtons{},
       m_selectedIndex(MenuEntry_ReturnToGame),
       m_pressedIndex(-1)
 {
@@ -197,6 +197,7 @@ void UIChooseWnd::SetShow(int show)
     }
 
     EnsureCreated();
+    RefreshRecoveryOption();
     if (!g_hMainWnd) {
         return;
     }
@@ -231,6 +232,7 @@ void UIChooseWnd::OnCreate(int cx, int cy)
     Move((cx - m_w) / 2, (cy - m_h) / 2);
 
     if (IsQtUiRuntimeEnabled()) {
+        RefreshRecoveryOption();
         return;
     }
 
@@ -247,6 +249,26 @@ void UIChooseWnd::OnCreate(int cx, int cy)
     }
 
     LayoutButtons();
+    RefreshRecoveryOption();
+}
+
+void UIChooseWnd::RefreshRecoveryOption()
+{
+    const bool available = GetEntryCount() == MenuEntry_Count;
+    const int height = kDefaultHeight + (available ? kButtonHeight + kButtonSpacing : 0);
+    if (m_h != height) {
+        Resize(m_w, height);
+    }
+    if (auto* button = m_entryButtons[MenuEntry_StandingResurrection]) {
+        button->SetShow(available);
+    }
+    if (!available && m_selectedIndex == MenuEntry_StandingResurrection) {
+        m_selectedIndex = MenuEntry_ReturnToGame;
+        SyncSelectionVisuals();
+    }
+    if (!available && m_pressedIndex == MenuEntry_StandingResurrection) {
+        m_pressedIndex = -1;
+    }
 }
 
 void UIChooseWnd::LayoutButtons()
@@ -270,7 +292,8 @@ RECT UIChooseWnd::GetEntryRect(int index) const
 
 int UIChooseWnd::HitTestEntry(int x, int y) const
 {
-    for (int index = 0; index < MenuEntry_Count; ++index) {
+    const int entryCount = GetEntryCount();
+    for (int index = 0; index < entryCount; ++index) {
         const RECT entryRect = GetEntryRect(index);
         if (x >= entryRect.left && x < entryRect.right && y >= entryRect.top && y < entryRect.bottom) {
             return index;
@@ -295,7 +318,8 @@ void UIChooseWnd::UpdateSelectedIndexFromHover() const
         return;
     }
 
-    for (int index = 0; index < MenuEntry_Count; ++index) {
+    const int entryCount = GetEntryCount();
+    for (int index = 0; index < entryCount; ++index) {
         if (g_windowMgr.m_lastHitWindow == m_entryButtons[index]) {
             const_cast<UIChooseWnd*>(this)->m_selectedIndex = index;
             return;
@@ -336,6 +360,13 @@ msgresult_t UIChooseWnd::ActivateSelection()
         }
         return 0;
 
+    case MenuEntry_StandingResurrection:
+        if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStandingResurrection, 0, 0, 0) != 0) {
+            CloseMenu();
+            return 1;
+        }
+        return 0;
+
     default:
         CloseMenu();
         return 1;
@@ -345,6 +376,7 @@ msgresult_t UIChooseWnd::ActivateSelection()
 void UIChooseWnd::OnDraw()
 {
     EnsureCreated();
+    RefreshRecoveryOption();
     if (IsQtUiRuntimeEnabled()) {
         return;
     }
@@ -420,7 +452,7 @@ msgresult_t UIChooseWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, m
         return 0;
     }
 
-    if (wparam >= kMenuButtonBaseId && wparam < kMenuButtonBaseId + MenuEntry_Count) {
+    if (wparam >= kMenuButtonBaseId && wparam < kMenuButtonBaseId + GetEntryCount()) {
         m_selectedIndex = static_cast<int>(wparam - kMenuButtonBaseId);
         return ActivateSelection();
     }
@@ -430,6 +462,7 @@ msgresult_t UIChooseWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, m
 
 void UIChooseWnd::OnKeyDown(int virtualKey)
 {
+    RefreshRecoveryOption();
     UpdateSelectedIndexFromHover();
 
     switch (virtualKey) {
@@ -442,12 +475,12 @@ void UIChooseWnd::OnKeyDown(int virtualKey)
         break;
 
     case VK_UP:
-        m_selectedIndex = (m_selectedIndex <= 0) ? (MenuEntry_Count - 1) : (m_selectedIndex - 1);
+        m_selectedIndex = (m_selectedIndex <= 0) ? (GetEntryCount() - 1) : (m_selectedIndex - 1);
         SyncSelectionVisuals();
         break;
 
     case VK_DOWN:
-        m_selectedIndex = (m_selectedIndex + 1) % MenuEntry_Count;
+        m_selectedIndex = (m_selectedIndex + 1) % GetEntryCount();
         SyncSelectionVisuals();
         break;
 
@@ -468,7 +501,8 @@ int UIChooseWnd::GetPressedIndex() const
 
 int UIChooseWnd::GetEntryCount() const
 {
-    return MenuEntry_Count;
+    const auto* mode = dynamic_cast<const CGameMode*>(g_modeMgr.GetCurrentMode());
+    return mode && mode->CanRequestStandingResurrection() ? MenuEntry_Count : MenuEntry_StandingResurrection;
 }
 
 const char* UIChooseWnd::GetEntryLabelForQt(int index) const
@@ -482,6 +516,8 @@ const char* UIChooseWnd::GetEntryLabelForQt(int index) const
         return "Exit To Windows";
     case MenuEntry_ReturnToSavePoint:
         return "Return To Save Point";
+    case MenuEntry_StandingResurrection:
+        return "Use Token of Siegfried";
     default:
         return "";
     }

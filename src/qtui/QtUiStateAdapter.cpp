@@ -1446,7 +1446,7 @@ void PopulateChooseMenuState(QtUiState* state)
         return;
     }
 
-    const UIChooseWnd* const chooseWnd = g_windowMgr.m_chooseWnd;
+    UIChooseWnd* const chooseWnd = g_windowMgr.m_chooseWnd;
     const bool visible = IsGameplayWindowVisible(state, chooseWnd);
     state->setChooseMenuVisible(visible);
     if (!visible) {
@@ -1457,6 +1457,7 @@ void PopulateChooseMenuState(QtUiState* state)
         return;
     }
 
+    chooseWnd->RefreshRecoveryOption();
     state->setChooseMenuGeometry(chooseWnd->m_x, chooseWnd->m_y, chooseWnd->m_w, chooseWnd->m_h);
     state->setChooseMenuSelectedIndex(chooseWnd->GetSelectedIndex());
     state->setChooseMenuPressedIndex(chooseWnd->GetPressedIndex());
