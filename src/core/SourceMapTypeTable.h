@@ -16,6 +16,7 @@ public:
     void Clear();
     bool Load();
     void Parse(std::string_view bytes);
+    void ApplyRowUpdate(int mapType, std::string_view bytes);
     bool Enabled(int mapType, Property property);
 
 private:

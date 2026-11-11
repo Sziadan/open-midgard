@@ -625,7 +625,7 @@ AUDIT-0x02E3,0x02E3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x02E4,0x02E4,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02E5,0x02E5,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02E6,0x02E6,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x02E7,0x02E7,map,unresolved,PK19,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x02E7,0x02E7,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,PK19.MAP-PROPERTIES
 AUDIT-0x02E8,0x02E8,map,S2C,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02E9,0x02E9,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x02EA,0x02EA,map,S2C,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

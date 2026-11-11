@@ -3823,3 +3823,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Legacy map property state
 
 **Current map property checkpoint (2026-11-11)**. The legacy `0199` and `01D6` receivers now apply map state and the original ally gates feed gameplay targeting. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK19-map-properties.md)
+
+## 2026-11-11 Legacy map property row updates
+
+The variable `02E7` receiver now applies bounded updates to the map property table. All 164 application checks and 473 standalone checks passed. The packet plan records the player skill tree window boundary for future skill work. [Evidence](evidence/PK19-map-property-row-updates.md)

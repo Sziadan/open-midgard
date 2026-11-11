@@ -8,6 +8,16 @@
 
 namespace ro {
 
+namespace {
+int ReadMapProperty(const char* text)
+{
+    const long number = std::strtol(text, nullptr, 10);
+    return static_cast<int>(std::clamp(number,
+        static_cast<long>((std::numeric_limits<int>::min)()),
+        static_cast<long>((std::numeric_limits<int>::max)())));
+}
+}
+
 void SourceMapTypeTable::EnsureLoaded()
 {
     if (!m_initialized) Load();
@@ -52,12 +62,25 @@ void SourceMapTypeTable::Parse(std::string_view bytes)
             const auto start = offset;
             while (offset < bytes.size() && !space(bytes[offset])) ++offset;
             const std::string token(bytes.substr(start, offset - start));
-            const long number = std::strtol(token.c_str(), nullptr, 10);
-            m_values[count / kProperties][count % kProperties] = static_cast<int>(std::clamp(number,
-                static_cast<long>((std::numeric_limits<int>::min)()),
-                static_cast<long>((std::numeric_limits<int>::max)())));
+            m_values[count / kProperties][count % kProperties] = ReadMapProperty(token.c_str());
             ++count;
         }
+    }
+}
+
+void SourceMapTypeTable::ApplyRowUpdate(int mapType, std::string_view bytes)
+{
+    if (mapType < 0 || static_cast<std::size_t>(mapType) >= kMapTypes || bytes.empty()) return;
+    const auto start = static_cast<std::size_t>(mapType) * kProperties;
+    if (bytes.size() > kMapTypes * kProperties - start) return;
+    EnsureLoaded();
+
+    // The selected receiver advances one byte between decimal reads.
+    // A terminated copy keeps each suffix inside this packet.
+    const std::string payload(bytes);
+    for (std::size_t offset = 0; offset < payload.size(); ++offset) {
+        const auto entry = start + offset;
+        m_values[entry / kProperties][entry % kProperties] = ReadMapProperty(payload.c_str() + offset);
     }
 }
 

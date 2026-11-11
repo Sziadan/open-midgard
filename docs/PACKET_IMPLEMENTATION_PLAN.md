@@ -12,7 +12,9 @@ Created 2026-11-03. This is an execution specification, not a claim that any run
 
 Read this document, [STATUS](packets/STATUS.md), [HANDOFF](packets/HANDOFF.md), then the assigned card in [WORK_PACKAGES](packets/WORK_PACKAGES.md). The machine inventory is [coverage.csv](packets/coverage.csv); task metadata is [work-packages.json](packets/work-packages.json). The original evidence is [packet audit](packet-audit/README.md). Use the [research runbook](packets/RESEARCH_RUNBOOK.md) for concrete source-navigation and task-splitting examples. Do one numbered leaf step at a time. Every completed leaf step requires its own self-reviewed commit and a user-facing progress update. Independent strong-agent review happens afterward and is not required between steps. Never claim a package complete because its decoder compiles.
 
-The process follows [the skill implementation plan](SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md): bounded units, source comparisons, evidence, independent progress records and resumable checkpoints. Its original-executable precedence and UI exclusions do **not** apply here. Necessary Qt interfaces, user actions, replies, failures and state transitions are part of packet completion.
+The process follows [the skill implementation plan](SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md) for bounded units, source comparisons, evidence, independent progress records and resumable checkpoints. Apply the source precedence below. Necessary Qt interfaces, user actions, replies, failures and state transitions are part of packet completion.
+
+Keep the player skill tree window, its model, layout, catalog and assets unchanged. Implement missing skill behavior through existing interfaces and the gameplay, packet, targeting, and session owners. If a packet step appears to require a change to the player skill tree window, record the gap and continue the work that fits this scope.
 
 ## Authority and information sources
 

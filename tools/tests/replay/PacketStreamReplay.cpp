@@ -3149,6 +3149,35 @@ void MapTypePropertyReplay()
     g_windowMgr.ClearChatEvents();
     g_serviceType = oldService;
 
+    const auto updateRow = [&](u16 row, const std::string& payload) {
+        const auto length = static_cast<u16>(6 + payload.size());
+        std::vector<u8> bytes{0xe7, 0x02, static_cast<u8>(length), static_cast<u8>(length >> 8),
+            static_cast<u8>(row), static_cast<u8>(row >> 8)};
+        bytes.insert(bytes.end(), payload.begin(), payload.end());
+        bytes.push_back('1');
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
+            && consumed == length && router.Dispatch(mode, packet), "map row update did not frame and dispatch");
+    };
+    updateRow(7, "0000000010");
+    Require(g_session.m_mapTypeInfo.Enabled(7, ro::SourceMapTypeTable::AllyParty)
+        && g_session.m_mapTypeInfo.Enabled(7, ro::SourceMapTypeTable::AllyGuild)
+        && !g_session.m_mapTypeInfo.Enabled(7, ro::SourceMapTypeTable::Siege)
+        && g_session.m_curMapType == 5, "map update lost decimal suffixes or read the next frame");
+    updateRow(28, std::string(24, '0') + "1");
+    Require(g_session.m_mapTypeInfo.Enabled(29, ro::SourceMapTypeTable::Siege),
+        "map update did not advance across the source table stride");
+    updateRow(29, std::string(16, '0'));
+    updateRow(0xffff, "0");
+    Require(g_session.m_mapTypeInfo.Enabled(29, ro::SourceMapTypeTable::Siege)
+        && g_session.m_mapTypeInfo.Enabled(7, ro::SourceMapTypeTable::AllyGuild),
+        "out-of-range map update changed existing properties");
+    world.m_isSiegeMode = 0;
+    dispatch(29);
+    Require(world.m_isSiegeMode && g_session.m_isMinEffect,
+        "map type dispatch did not use the row update");
+
     g_session.m_curMapType = oldType;
     g_session.m_mapTypeInfo = oldTable;
     g_session.m_isMinEffect = oldMinEffect;

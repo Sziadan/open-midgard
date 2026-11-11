@@ -2062,6 +2062,14 @@ void HandleNotifyMapProperty2(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleMapPropertyRowUpdate(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6 || ReadLE16(packet.data + 2) != packet.packetLength) return;
+    const int type = static_cast<s16>(ReadLE16(packet.data + 4));
+    g_session.m_mapTypeInfo.ApplyRowUpdate(type, std::string_view(
+        reinterpret_cast<const char*>(packet.data + 6), static_cast<std::size_t>(packet.packetLength - 6)));
+}
+
 void HandleLocalizedSystemNotice(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 4) return;
@@ -9348,7 +9356,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02D5, HandleIgnorePacket);
     router.Register(0x02DA, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.actorActionNotifyExtended, HandleActorActionNotify);
-    router.Register(0x02E7, HandleIgnorePacket);
+    router.Register(0x02E7, HandleMapPropertyRowUpdate);
     router.Register(0x0196, HandlePacket0196);
     router.Register(0x043F, HandlePacket043F);
     router.Register(0x028A, HandleNpcShowEfstUpdate);
