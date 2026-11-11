@@ -5609,7 +5609,7 @@ void HandlePetFeedResult(CGameMode& mode, const PacketView& packet)
     }
     const int hunger = PetReactionState(pet.oldFullness);
     const int friendship = PetReactionState(pet.relationship / 10);
-    // Ref CSession::InitPetEmotionTable, feeding action 0.
+    // Ref CSession::InitPetTables, feeding action 0.
     constexpr int feedEmotions[5][5] = {
         {32, 32, 20, 33, 18},
         {20, 20, 33, 18, 15},

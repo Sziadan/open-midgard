@@ -60,6 +60,21 @@
         player.m_stateId=0;player.m_effectState=2;player.m_skillUseLevel=9;
         Require(ReplayTryPetCaptureOnActor(mode,&monster,false,false,false) && !mode.m_hasSkillChase
             && player.m_skillUseLevel==0,"burrow capture guard mismatch");player.m_effectState=0;
+        player.m_proceedType.type=3;player.m_proceedTargetGid=0x66000055;player.m_skillId=28;
+        player.m_skillAttackRange=4;player.m_skillUseLevel=6;
+        mode.SynchronizePlayerSkillProceed(&player);
+        player.m_stateId=6;
+        Require(ReplayTryPetCaptureOnActor(mode,&monster,false,false,false)
+            && player.m_proceedType.type==3 && player.m_proceedTargetGid==0x66000055
+            && player.m_skillId==28 && player.m_skillAttackRange==4 && player.m_skillUseLevel==0
+            && mode.m_hasSkillChase && !mode.m_hasGroundSkillChase && !mode.m_hasTouchSkillChase
+            && mode.m_skillChaseTargetGid==0x66000055 && mode.m_skillChaseSkillId==28
+            && mode.m_skillChaseRange==4 && mode.m_skillChaseSkillLevel==0
+            && mode.m_skillUseInfo.id==10000 && mode.m_skillUseInfo.level==0,
+            "rejected capture41 overwrote old chase or failed to sync unconditional level90");
+        player.SendMsg(nullptr,13,0,0,0);player.m_stateId=0;
+        Require(!mode.m_hasSkillChase && mode.m_skillUseInfo.id==10000,
+            "rejected capture old-chase fixture did not retire cleanly");
         pc.m_isPc=1;pc.m_job=1;pc.m_gid=g_session.m_gid==g_session.m_aid?0x66000002:g_session.m_gid;
         Require(!ReplayTryPetCaptureOnActor(mode,&pc,false,false,false),"unshifted non-PK PC captured");
         Require(ReplayTryPetCaptureOnActor(mode,&pc,true,false,false) && mode.m_skillChaseTargetGid==pc.m_gid,"Shift PC target or char-ID collision handling mismatch");
