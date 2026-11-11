@@ -1,6 +1,10 @@
 # Packet continuation handoff
 
-**Current companion identity checkpoint (2026-11-11)**. The selected `0230` and `029B` receive paths now establish companion GIDs. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-companion-identity.md)
+**Current companion status checkpoint (2026-11-11)**. The selected homunculus and mercenary status packets now populate the session snapshots. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status.md)
+
+For the homunculus feed result, follow case 559 to `Zc_Feed_Pet` in `Ref/GameModePacket.cpp`. The five-byte `022F` frame uses byte 2 as the success flag and a 16-bit food ID at offset 3. Success sets state 29. Failure shows the missing-food message and sends emotion 4 to the current homunculus when that actor exists.
+
+**Previous companion identity checkpoint (2026-11-11)**. The selected `0230` and `029B` receive paths now establish companion GIDs. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-companion-identity.md)
 
 **Previous ground prompt skin control checkpoint (2026-11-11)**. Gameplay Graphics settings now select Basic Skin, directory skins, and ZIP skins for the ground prompts. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-prompt-picker.md)
 
@@ -61,7 +65,7 @@
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Continue PK28 and PK29 status and lifecycle fields. Use the selected executable’s inactive companion Lua VM as the baseline for modifier routing. Compare the Graphics skin control with the original dropdown and verify live selection. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
+**Next work.** Continue the homunculus 022F feed result, companion actor lifecycle, and status windows. Use the selected executable’s inactive companion Lua VM as the baseline for modifier routing. Compare the Graphics skin control with the original dropdown and verify live selection. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
 
 The Traditional Chinese keystroke implementation uses the 39 fixed Big5 pairs in the selected executable and the stable slash-key pair from the adjacent slot string. The period key reads uninitialized bytes in the original. The port leaves that cell empty. [Keystroke evidence](evidence/PK27-prompt-keystrokes.md)
 

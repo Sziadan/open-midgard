@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current companion identity checkpoint (2026-11-11)**. The selected `0230` and `029B` receive paths now establish companion GIDs. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-companion-identity.md)
+**Current companion status checkpoint (2026-11-11)**. The selected homunculus and mercenary status packets now populate the session snapshots. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status.md)
+
+**Previous companion identity checkpoint (2026-11-11)**. The selected `0230` and `029B` receive paths now establish companion GIDs. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-companion-identity.md)
 
 **Previous ground prompt skin control checkpoint (2026-11-11)**. Gameplay Graphics settings now select Basic Skin, directory skins, and ZIP skins for the ground prompts. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-prompt-picker.md)
 

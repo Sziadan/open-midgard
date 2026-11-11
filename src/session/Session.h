@@ -144,6 +144,32 @@ constexpr int kShortcutSlotsPerPage = 9;
 constexpr int kShortcutPageCount = 3;
 constexpr int kShortcutSlotCount = kShortcutSlotsPerPage * kShortcutPageCount;
 
+struct CompanionCombatStatus {
+    int attack = 0, magicAttack = 0, hit = 0, critical = 0;
+    int defense = 0, magicDefense = 0, flee = 0, attackSpeed = 0;
+    int hp = 0, maxHp = 0, sp = 0, maxSp = 0, attackRange = 0;
+};
+
+struct HomunculusStatus {
+    std::string name;
+    CompanionCombatStatus combat;
+    int level = 0, hunger = 0, intimacy = 0, skillPoints = 0;
+    int job = 0;
+    bool alive = false;
+    u8 nameModified = 0;
+    u32 accessory = 0;
+    int experience = 0, nextExperience = 0;
+};
+
+struct MercenaryStatus {
+    std::string name;
+    CompanionCombatStatus combat;
+    int level = 0, faith = 0;
+    int job = 0;
+    bool alive = false;
+    int expiresAt = 0, calls = 0, kills = 0;
+};
+
 class CSession
 {
 public:
@@ -175,6 +201,8 @@ public:
     // Source companion identity owners. PK28/29 receive producers remain open;
     // capture picking must compare these IDs, rather than infer ownership.
     u32 m_homunGID=0,m_merGID=0;
+    HomunculusStatus m_homunStatus;
+    MercenaryStatus m_merStatus;
     // Selected 0x00B0 decodes signed wire dword/10; source initialization zeros both.
     int m_weight=0,m_maxWeight=0;
     u8   m_sex;

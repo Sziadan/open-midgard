@@ -966,16 +966,18 @@
     "PK28.01": {
       "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK27-companion-identity.md"
+        "docs/packets/evidence/PK27-companion-identity.md",
+        "docs/packets/evidence/PK28-companion-status.md"
       ],
-      "commit_subject": "packet(PK27): receive companion identities"
+      "commit_subject": "packet(PK28): receive companion status snapshots"
     },
     "PK28.02": {
       "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK27-companion-identity.md"
+        "docs/packets/evidence/PK27-companion-identity.md",
+        "docs/packets/evidence/PK28-companion-status.md"
       ],
-      "commit_subject": "packet(PK27): receive companion identities"
+      "commit_subject": "packet(PK28): receive companion status snapshots"
     },
     "PK28.03": {
       "status": "NOT_STARTED",
@@ -990,16 +992,18 @@
     "PK29.01": {
       "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK27-companion-identity.md"
+        "docs/packets/evidence/PK27-companion-identity.md",
+        "docs/packets/evidence/PK28-companion-status.md"
       ],
-      "commit_subject": "packet(PK27): receive companion identities"
+      "commit_subject": "packet(PK28): receive companion status snapshots"
     },
     "PK29.02": {
       "status": "IN_PROGRESS",
       "evidence": [
-        "docs/packets/evidence/PK27-companion-identity.md"
+        "docs/packets/evidence/PK27-companion-identity.md",
+        "docs/packets/evidence/PK28-companion-status.md"
       ],
-      "commit_subject": "packet(PK27): receive companion identities"
+      "commit_subject": "packet(PK28): receive companion status snapshots"
     },
     "PK29.03": {
       "status": "NOT_STARTED",

@@ -1919,18 +1919,112 @@ void HandleHomunSkillList(CGameMode& mode, const PacketView& packet)
     HandleSkillInfoListByTarget(mode, packet, SkillInfoListTarget::Homun);
 }
 
-void HandleHomunIdentity(CGameMode&, const PacketView& packet)
+std::string ExtractFixedPacketString(const PacketView& packet, size_t offset, size_t fieldSize);
+
+int ReadCompanionI32(const u8* data)
 {
-    // Zc_Change_Mer_Status uses subtype zero to establish the homunculus GID.
-    if (!packet.data || packet.packetLength != 12 || packet.data[3] != 0) return;
-    g_session.m_homunGID = ReadLE32(packet.data + 4);
+    const u32 bits = ReadLE32(data);
+    s32 value;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
 }
 
-void HandleMercenaryInit(CGameMode&, const PacketView& packet)
+void ReadCompanionCombat(CompanionCombatStatus& status, const u8* data)
+{
+    status.attack = static_cast<s16>(ReadLE16(data));
+    status.magicAttack = static_cast<s16>(ReadLE16(data + 2));
+    status.hit = static_cast<s16>(ReadLE16(data + 4));
+    status.critical = static_cast<s16>(ReadLE16(data + 6));
+    status.defense = static_cast<s16>(ReadLE16(data + 8));
+    status.magicDefense = static_cast<s16>(ReadLE16(data + 10));
+    status.flee = static_cast<s16>(ReadLE16(data + 12));
+    status.attackSpeed = static_cast<s16>(ReadLE16(data + 14));
+}
+
+void HandleHomunProperty(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 71) return;
+    auto& status = g_session.m_homunStatus;
+    const auto* data = packet.data;
+    status.name = ExtractFixedPacketString(packet, 2, 24);
+    status.nameModified = data[26];
+    status.level = static_cast<s16>(ReadLE16(data + 27));
+    status.hunger = static_cast<s16>(ReadLE16(data + 29));
+    status.intimacy = static_cast<s16>(ReadLE16(data + 31));
+    status.accessory = ReadLE16(data + 33);
+    ReadCompanionCombat(status.combat, data + 35);
+    status.combat.hp = static_cast<s16>(ReadLE16(data + 51));
+    status.combat.maxHp = static_cast<s16>(ReadLE16(data + 53));
+    status.combat.sp = static_cast<s16>(ReadLE16(data + 55));
+    status.combat.maxSp = static_cast<s16>(ReadLE16(data + 57));
+    status.experience = ReadCompanionI32(data + 59);
+    status.nextExperience = ReadCompanionI32(data + 63);
+    status.skillPoints = static_cast<s16>(ReadLE16(data + 67));
+    status.combat.attackRange = static_cast<s16>(ReadLE16(data + 69));
+}
+
+void HandleHomunStatus(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 12) return;
+    const auto gid = ReadLE32(packet.data + 4);
+    const auto* actor = mode.m_world ? mode.m_world->GetGameActorByAID(gid) : nullptr;
+    auto& status = g_session.m_homunStatus;
+    switch (packet.data[3]) {
+    case 0:
+        g_session.m_homunGID = gid;
+        if (actor) status.alive = true;
+        break;
+    case 1: status.intimacy = ReadCompanionI32(packet.data + 8); break;
+    case 2: status.hunger = ReadCompanionI32(packet.data + 8); break;
+    case 3:
+        if (actor) status.accessory = ReadLE32(packet.data + 8);
+        return;
+    default: return;
+    }
+    if (actor) status.job = actor->m_job;
+}
+
+void HandleMercenaryInit(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 80) return;
+    auto& status = g_session.m_merStatus;
+    const auto* data = packet.data;
     g_session.ClearMercSkillItems();
-    g_session.m_merGID = ReadLE32(packet.data + 2);
+    g_session.m_merGID = ReadLE32(data + 2);
+    status.alive = true;
+    if (const auto* actor = mode.m_world ? mode.m_world->GetGameActorByAID(g_session.m_merGID) : nullptr)
+        status.job = actor->m_job;
+    ReadCompanionCombat(status.combat, data + 6);
+    status.name = ExtractFixedPacketString(packet, 22, 24);
+    status.level = static_cast<s16>(ReadLE16(data + 46));
+    status.combat.hp = ReadCompanionI32(data + 48);
+    status.combat.maxHp = ReadCompanionI32(data + 52);
+    status.combat.sp = ReadCompanionI32(data + 56);
+    status.combat.maxSp = ReadCompanionI32(data + 60);
+    status.expiresAt = ReadCompanionI32(data + 64);
+    status.faith = static_cast<s16>(ReadLE16(data + 68));
+    status.calls = ReadCompanionI32(data + 70);
+    status.kills = ReadCompanionI32(data + 74);
+    status.combat.attackRange = static_cast<s16>(ReadLE16(data + 78));
+}
+
+void HandleMercenaryParameter(CGameMode&, const PacketView& packet)
+{
+    auto& status = g_session.m_merStatus;
+    if (!packet.data || packet.packetLength != 8 || !status.alive) return;
+    const auto value = ReadCompanionI32(packet.data + 4);
+    switch (ReadLE16(packet.data + 2)) {
+    case 5: status.combat.hp = value; break;
+    case 6: status.combat.maxHp = value; break;
+    case 7: status.combat.sp = value; break;
+    case 8: status.combat.maxSp = value; break;
+    case 0x29: status.combat.attack = value; break;
+    case 0x31: status.combat.hit = value; break;
+    case 0x35: status.combat.attackSpeed = value; break;
+    case 0xa5: status.combat.flee = value; break;
+    case 0xbd: status.kills = value; break;
+    case 0xbe: status.faith = value; break;
+    }
 }
 
 void HandleMercSkillList(CGameMode& mode, const PacketView& packet)
@@ -8943,12 +9037,14 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x019E, HandlePetCaptureArm);
     router.Register(0x01A6, HandlePetEggList);
     router.Register(0x01A4, HandlePetStatusChange);
-    router.Register(0x0230, HandleHomunIdentity);
+    router.Register(0x022E, HandleHomunProperty);
+    router.Register(0x0230, HandleHomunStatus);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);
     router.Register(0x029B, HandleMercenaryInit);
     router.Register(0x029D, HandleMercSkillList);
     router.Register(0x029E, HandleMercSkillUpdate);
+    router.Register(0x02A2, HandleMercenaryParameter);
     RegisterHandlerIfValid(router, receiveProfile.skillDamageNotifyBasic, HandleSkillDamageNotify);
     RegisterHandlerIfValid(router, receiveProfile.skillDamagePositionNotify, HandleSkillDamagePositionNotify);
     RegisterHandlerIfValid(router, receiveProfile.groundSkillNotify, HandleGroundSkillNotify);

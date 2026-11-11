@@ -2438,9 +2438,13 @@ void CompanionIdentityReplay()
     RegisterDefaultGameModePacketHandlers(router);
     const auto oldHomun = g_session.m_homunGID;
     const auto oldMerc = g_session.m_merGID;
+    const auto oldHomunStatus = g_session.m_homunStatus;
+    const auto oldMercStatus = g_session.m_merStatus;
     const auto oldSkills = g_session.GetMercSkillItems();
     g_session.m_homunGID = 0;
     g_session.m_merGID = 0;
+    g_session.m_homunStatus = {};
+    g_session.m_merStatus = {};
     PLAYER_SKILL_INFO skill{};
     skill.SKID = 8201;
     g_session.SetMercSkillItem(skill);
@@ -2454,6 +2458,12 @@ void CompanionIdentityReplay()
     bytes[13] = 0x02;
     bytes[14] = 0x22;
     bytes[17] = 0xf2;
+    bytes[18] = 0xf9;
+    bytes[19] = 0xff;
+    bytes[34] = 'M';
+    bytes[60] = 0x23;
+    bytes[62] = 0x01;
+    bytes[91] = 0x01;
     PacketView packet{};
     int consumed = 0;
     Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed) && consumed == 12,
@@ -2462,17 +2472,53 @@ void CompanionIdentityReplay()
         "homunculus identity did not retain the unsigned GID");
     bytes[3] = 1;
     bytes[4] = 0x33;
-    Require(router.Dispatch(mode, packet) && g_session.m_homunGID == 0xf1000011u,
-        "non-identity homunculus status replaced the GID");
+    bytes[10] = 1;
+    Require(router.Dispatch(mode, packet) && g_session.m_homunGID == 0xf1000011u
+        && g_session.m_homunStatus.intimacy == 65536, "homunculus status lost the 32-bit update or replaced the GID");
+
+    std::array<u8, 71> homun{};
+    homun[0] = 0x2e;
+    homun[1] = 0x02;
+    std::fill_n(homun.begin() + 2, 24, '%');
+    homun[26] = 1;
+    homun[27] = 7;
+    homun[29] = 10;
+    homun[34] = 0xf0;
+    homun[51] = 0xff;
+    homun[52] = 0xff;
+    homun[55] = 0x45;
+    homun[62] = 0xf0;
+    homun[69] = 5;
+    Require(!TryReadPacket(homun.data(), 69, packet, consumed), "homunculus accepted the short snapshot layout");
+    Require(TryReadPacket(homun.data(), 71, packet, consumed) && consumed == 71 && router.Dispatch(mode, packet),
+        "homunculus snapshot did not frame and dispatch");
+    const auto& hs = g_session.m_homunStatus;
+    Require(hs.name == std::string(24, '%') && hs.nameModified == 1 && hs.level == 7
+        && hs.hunger == 10 && hs.accessory == 0xf000 && hs.combat.hp == -1 && hs.combat.sp == 0x45
+        && hs.experience == -268435456 && hs.combat.attackRange == 5, "homunculus snapshot field layout differed");
+
+    std::array<u8, 8> parameter{0xa2, 0x02, 7, 0, 0xff, 0xff, 0xff, 0xff};
+    Require(TryReadPacket(parameter.data(), 8, packet, consumed) && consumed == 8 && router.Dispatch(mode, packet)
+        && g_session.m_merStatus.combat.sp == 0, "mercenary parameter bypassed the alive gate");
     Require(!TryReadPacket(bytes.data() + 12, 72, packet, consumed),
         "mercenary init accepted the shorter incompatible layout");
     Require(TryReadPacket(bytes.data() + 12, 80, packet, consumed) && consumed == 80,
         "mercenary init did not frame at the selected length");
     Require(router.Dispatch(mode, packet) && g_session.m_merGID == 0xf2000022u
         && g_session.GetMercSkillItems().empty(), "mercenary init did not set identity and clear the previous skills");
+    const auto& ms = g_session.m_merStatus;
+    Require(ms.alive && ms.name == "M" && ms.combat.attack == -7 && ms.combat.hp == 0x10023
+        && ms.combat.attackRange == 256, "mercenary init field layout differed");
+    Require(TryReadPacket(parameter.data(), 8, packet, consumed) && router.Dispatch(mode, packet)
+        && ms.combat.sp == -1, "mercenary parameter lost the signed 32-bit value");
+    parameter[2] = 0xff;
+    Require(router.Dispatch(mode, packet) && ms.combat.sp == -1 && ms.combat.hp == 0x10023,
+        "unknown mercenary parameter changed the snapshot");
 
     g_session.m_homunGID = oldHomun;
     g_session.m_merGID = oldMerc;
+    g_session.m_homunStatus = oldHomunStatus;
+    g_session.m_merStatus = oldMercStatus;
     for (const auto& entry : oldSkills) g_session.SetMercSkillItem(entry);
 }
 
