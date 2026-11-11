@@ -666,18 +666,21 @@
       "commit_subject": "packet(PK20.01): verify selected NPC class change contract"
     },
     "PK20.02": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
         "docs/packets/work-items/PK20.02.md",
-        "docs/packets/evidence/PK20.02-npc-class-change.md"
+        "docs/packets/evidence/PK20.02-npc-class-change.md",
+        "docs/packets/evidence/PK20.03-npc-class-native.md"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK20.02): apply NPC class changes in place"
     },
     "PK20.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK20.03-npc-class-native.md"
+      ],
+      "commit_subject": "packet(PK20.03): verify native NPC class replacement"
     },
     "PK20.04": {
       "status": "NOT_STARTED",

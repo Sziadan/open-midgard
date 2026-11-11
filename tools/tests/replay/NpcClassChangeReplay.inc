@@ -21,6 +21,8 @@ void NpcClassChangeReplay()
     CMsgEffect child;
     npc.m_gid = 0x11223344u;
     npc.m_job = 100;
+    npc.m_sex = 1;
+    npc.m_bodyPalette = 3;
     npc.m_xSize = 17;
     npc.m_ySize = 23;
     npc.m_pos = vector3d{ 4.0f, 5.0f, 6.0f };
@@ -56,6 +58,8 @@ void NpcClassChangeReplay()
     world.m_billboardFrameCacheValid = true;
     dispatch(npc.m_gid, 101, 0xa5);
     Require(npc.m_job == 101, "01B0 did not update the existing NPC class");
+    Require(npc.m_sex == 0 && npc.m_bodyPalette == 0,
+        "01B0 did not reset the NPC appearance sex and palette");
     Require(world.GetGameActorByAID(npc.m_gid) == &npc && mode.m_runtimeActors.at(npc.m_gid) == &npc
         && npc.m_msgEffectList.size() == 1 && npc.m_msgEffectList.front() == &child
         && child.m_masterGid == npc.m_gid && child.m_masterActor == &npc,

@@ -309,10 +309,133 @@ static void RunSiegeEmblemRenderPreview(std::string_view scene)
     g_modeMgr.Run(1, "siege-emblem-preview.rsw", &services);
 }
 
+static void RunNpcClassChangeRenderPreview()
+{
+    WaitForGr2Monsters();
+    CWorld world;
+    CGameMode mode;
+    mode.m_world = &world;
+    auto addActor = [&](u32 gid, int job, float x) {
+        auto* actor = new CPc();
+        actor->m_gid = gid;
+        actor->m_job = job;
+        actor->m_isVisible = 1;
+        actor->m_isVisibleBody = 1;
+        actor->m_pos.x = x;
+        actor->m_xSize = 12;
+        actor->m_ySize = 8;
+        mode.m_runtimeActors.emplace(gid, actor);
+        world.RegisterActor(actor);
+        return actor;
+    };
+    constexpr u32 gid = 17;
+    constexpr u32 peerGid = 18;
+    CPc* actor = addActor(gid, 1002, 0.0f);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const auto& bytes) {
+        PacketView packet{};
+        int consumed = 0;
+        return TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
+            && consumed == static_cast<int>(bytes.size()) && router.Dispatch(mode, packet);
+    };
+    const auto change = [&](int job) {
+        return dispatch(std::array<u8, 11>{0xb0, 1, gid, 0, 0, 0, 0,
+            static_cast<u8>(job), static_cast<u8>(job >> 8), 0, 0})
+            && world.GetGameActorByAID(gid) == actor && actor->m_job == job;
+    };
+    const auto report = [](const char* step, bool ok) {
+        DbgLog("[NpcClassChangePreview] %s=%d\n", step, ok ? 1 : 0);
+        return ok;
+    };
+
+    matrix view{};
+    constexpr float diagonal = 0.70710678f;
+    view.m[0][0] = view.m[3][3] = 1.0f;
+    view.m[1][1] = view.m[1][2] = view.m[2][2] = diagonal;
+    view.m[2][1] = -diagonal;
+    view.m[3][2] = 500.0f;
+    g_renderer.m_hpc = g_renderer.m_vpc = 1750;
+    g_renderer.m_xoffset = 320;
+    g_renderer.m_yoffset = 240;
+    g_renderer.m_screenXFactor = g_renderer.m_screenYFactor = 1;
+    const auto render = [&] {
+        g_renderer.m_nClearColor = 0xFF202020;
+        g_renderer.ClearBackground();
+        g_renderer.Clear(0);
+        world.RenderActors(view, 0);
+        g_renderer.DrawScene();
+        GetRenderDevice().Present(false);
+    };
+    const auto canPick = [&] {
+        CGameActor* hovered = nullptr;
+        world.FindHoveredActorScreen(view, 0, 0, 0, &hovered, nullptr, nullptr, false);
+        const auto* entry = world.FindBillboardFrameEntryByGid(gid);
+        return entry && world.FindHoveredActorScreen(view, 0,
+            static_cast<int>((entry->left + entry->right) * 0.5f),
+            static_cast<int>((entry->top + entry->bottom) * 0.5f),
+            &hovered, nullptr, nullptr, false) && hovered == actor;
+    };
+    RECT bounds{};
+    const auto run = [&] {
+        render();
+        const CActRes* poringAct = actor->m_cachedNonPcActRes;
+        if (!report("initial-sprite", canPick() && actor->m_billboardTexture && poringAct)) return false;
+        if (!report("sprite-cache-cleared", change(1023) && !actor->m_billboardTexture
+            && !world.FindBillboardFrameEntryByGid(gid))) return false;
+        render();
+        if (!report("replacement-sprite", canPick() && actor->m_billboardTexture
+            && actor->m_cachedNonPcActRes && actor->m_cachedNonPcActRes != poringAct)) return false;
+        if (!change(32767)) return false;
+        render();
+        if (!report("missing-sprite", !canPick() && !actor->m_billboardTexture)) return false;
+        if (!change(111) || !change(111)) return false;
+        render();
+        if (!report("hidden-hotspot", canPick() && !actor->m_billboardTexture
+            && actor->m_xSize == 12 && actor->m_ySize == 8)) return false;
+        if (!change(1285)) return false;
+        addActor(peerGid, 1285, 80.0f);
+        render();
+        if (!report("first-gr2", canPick() && GetGr2MonsterBounds(gid, &bounds)
+            && GetGr2MonsterBounds(peerGid, &bounds))) return false;
+        if (!report("same-gr2", change(1285) && GetGr2MonsterBounds(gid, &bounds))) return false;
+        if (!report("old-gr2-cleared", change(1286) && !GetGr2MonsterBounds(gid, &bounds)
+            && !canPick() && GetGr2MonsterBounds(peerGid, &bounds))) return false;
+        render();
+        if (!report("replacement-gr2", canPick() && GetGr2MonsterBounds(gid, &bounds)
+            && GetGr2MonsterBounds(peerGid, &bounds))) return false;
+        if (!change(1324)) return false;
+        render();
+        if (!report("missing-gr2", !canPick() && !GetGr2MonsterBounds(gid, &bounds)
+            && GetGr2MonsterBounds(peerGid, &bounds))) return false;
+        if (!change(1286)) return false;
+        render();
+        if (!GetGr2MonsterBounds(gid, &bounds)) return false;
+        if (!report("gr2-to-sprite-cleared", change(1002) && !GetGr2MonsterBounds(gid, &bounds))) return false;
+        render();
+        if (!report("restored-sprite", canPick() && actor->m_billboardTexture
+            && actor->m_cachedNonPcActRes == poringAct)) return false;
+        if (!change(1286)) return false;
+        render();
+        if (!GetGr2MonsterBounds(gid, &bounds)) return false;
+        return report("despawn", dispatch(std::array<u8, 7>{0x80, 0, gid, 0, 0, 0, 0})
+            && !world.GetGameActorByAID(gid) && !canPick() && GetGr2MonsterBounds(peerGid, &bounds));
+    };
+    const bool passed = run();
+    mode.OnExit();
+    report("map-exit", !GetGr2MonsterBounds(gid, &bounds) && !GetGr2MonsterBounds(peerGid, &bounds)
+        && world.m_actorList.empty() && mode.m_deferredActorDeletes.empty());
+    report("sequence", passed);
+}
+
 // Opt-in native render fixture. Uses installed assets and the selected graphics
 // backend, without entering a game mode, logging in, or saving settings.
 void RunHealRenderPreview()
 {
+    if (std::getenv("RO_NPC_CLASS_CHANGE_PREVIEW")) {
+        RunNpcClassChangeRenderPreview();
+        return;
+    }
     if (const char* scene = std::getenv("RO_SIEGE_EMBLEM_PREVIEW")) {
         RunSiegeEmblemRenderPreview(scene);
         return;

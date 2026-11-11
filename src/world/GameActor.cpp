@@ -8276,6 +8276,7 @@ void CPc::ReplaceNpcClass(int job)
 
     m_job = job;
     m_sex = 0;
+    m_bodyPalette = 0;
     ReleaseActorBillboardTexture(*this);
     m_billboardTextureWidth = 0;
     m_billboardTextureHeight = 0;

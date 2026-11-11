@@ -1032,6 +1032,34 @@ void SubmitScreenSpaceRotatedQuad(const tlvertex3d& anchor,
     g_renderer.AddRP(face, renderFlags);
 }
 
+float ResolveActorShadowZoom(const CPc& actor)
+{
+    if (!actor.m_isPc) {
+        // Non-player entries from Ref/Session.cpp::InitShadowFactorWithJob.
+        // Resolve by the current class so spawn and 01B0 use the same scale.
+        switch (actor.m_job) {
+        case 111: case 1025: case 1030: case 1037:
+        case 1078: case 1079: case 1080: case 1081:
+        case 1082: case 1083: case 1084: case 1085: case 1127: case 1685:
+            return 0.0f;
+        case 1070:
+            return 0.1f;
+        case 1047: case 1048:
+            return 0.2f;
+        case 1008: case 1049: case 1050: case 1051:
+            return 0.3f;
+        case 1004: case 1005: case 1007: case 1011: case 1035: case 1042:
+        case 1091: case 1167: case 1174: case 1175: case 1686:
+            return 0.5f;
+        case 1401:
+            return 1.6f;
+        case 1040: case 1365: case 1785: case 1885: case 1916:
+            return 2.0f;
+        }
+    }
+    return actor.m_shadowZoom > 0.0f ? actor.m_shadowZoom : 1.0f;
+}
+
 bool ComputeActorShadowRect(const CWorld::BillboardScreenEntry& entry,
     const matrix& viewMatrix,
     float zoom,
@@ -1049,7 +1077,7 @@ bool ComputeActorShadowRect(const CWorld::BillboardScreenEntry& entry,
         return false;
     }
 
-    const float shadowZoom = actor->m_shadowZoom > 0.0f ? actor->m_shadowZoom : 1.0f;
+    const float shadowZoom = ResolveActorShadowZoom(*actor);
     if (zoom == 0.0f || shadowZoom == 0.0f) {
         return false;
     }
@@ -1101,7 +1129,7 @@ void RenderCachedActorShadow(const CWorld::BillboardScreenEntry& entry, const ma
     }
 
     const float actorZoom = actor->m_zoom > 0.0f ? actor->m_zoom : 1.0f;
-    const float shadowZoom = actor->m_shadowZoom > 0.0f ? actor->m_shadowZoom : 1.0f;
+    const float shadowZoom = ResolveActorShadowZoom(*actor);
     if (actorZoom <= 0.0f || shadowZoom <= 0.0f) {
         return;
     }
