@@ -42,7 +42,9 @@
         g_windowMgr.MakeWindow(UIWindowMgr::WID_PETINFOWND);select(4);ExpectFrame(peer.peer.value,{0xa1,0x01,3});
         Require(pet.job==-1 && pet.eggIndex==-1 && !g_windowMgr.m_petInfoWnd && !g_session.GetInventoryItemByIndex(1234)->m_isDamaged,
             "actor return egg did not apply exact local state and owner cleanup");
-        select(0);ExpectFrame(peer.peer.value,{0xa1,0x01,0});
+        Require(!mode.OpenPetContextMenu(&actor,123,234),
+            "actor awaiting server disappearance still opened the owned pet menu after return");
+        mode.m_menuIdList={33};mode.SendMsg(26,0,0,0);ExpectFrame(peer.peer.value,{0xa1,0x01,0});
         Require(!g_windowMgr.m_petInfoWnd,"context Info request0 bypassed actual factory job gate");
         mode.m_menuIdList={30};mode.SendMsg(26,-1,0,0);mode.SendMsg(26,1,0,0);
         Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"out-of-range menu selection sent frame");

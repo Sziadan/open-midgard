@@ -3919,6 +3919,12 @@ bool IsSameMapAlreadyLoaded(const CGameMode& mode, const MapChangeInfo& info)
 
 void PrepareSameMapWarpReuse(CGameMode& mode)
 {
+    g_session.m_petStatus.ResetMapState();
+    if (auto* box = g_windowMgr.m_roomMessageBox; box && box->GetMessageId() == 601 && box->HasCancel())
+        box->Dismiss(false);
+    if (g_windowMgr.m_petInfoWnd) g_windowMgr.DeleteWindow(g_windowMgr.m_petInfoWnd);
+    if (g_windowMgr.m_petTamingDeceiveWnd) g_windowMgr.DeleteWindow(g_windowMgr.m_petTamingDeceiveWnd);
+    if (g_windowMgr.m_petEggListWnd) g_windowMgr.DeleteWindow(g_windowMgr.m_petEggListWnd);
     CPlayer* const player = mode.m_world ? mode.m_world->m_player : nullptr;
     if (!player) {
         return;
@@ -5568,9 +5574,11 @@ void HandlePetStatusChange(CGameMode& mode,const PacketView& packet)
         InvalidatePetInfo();break;
     case 3:
         if(actor){
-            pet.accessoryItemId=value;
             actor->SetPetAccessoryActName(value?g_session.GetPetAccActName(value):nullptr);
-            if(actorId==pet.actorId)InvalidatePetInfo();
+            if(actorId==pet.actorId){
+                pet.accessoryItemId=value;
+                InvalidatePetInfo();
+            }
         }
         break;
     case 4:

@@ -94,6 +94,12 @@ void PetLifecycleReplay()
         const bool saved=WriteFile(handle,header,16,&written,nullptr)!=0;CloseHandle(handle);
         Require(saved && written==16,"source-key pet ACT fixture write failed");}
     CSprRes priorSpr;actor.m_sprRes=&priorSpr;actor.m_cachedNonPcSprRes=&priorSpr;
+    const u32 ownedPetActorId=pet.actorId;pet.actorId=0x777;
+    invalidationProbe.m_isDirty=0;dispatch(change(3,actor.m_gid,10001));
+    Require(pet.accessoryItemId==77 && actor.m_petAccessoryActName==path && actor.m_actRes
+        && actor.m_sprRes==&priorSpr && actor.m_cachedNonPcSprRes==&priorSpr && !invalidationProbe.m_isDirty,
+        "remote pet accessory appearance changed owned pet state or skipped actor appearance");
+    pet.actorId=ownedPetActorId;
     invalidationProbe.m_isDirty=0;dispatch(change(3,actor.m_gid,10001));
     Require(pet.accessoryItemId==10001 && actor.m_petAccessoryActName==path && actor.m_actRes
         && actor.m_sprRes==&priorSpr && actor.m_cachedNonPcSprRes==&priorSpr && invalidationProbe.m_isDirty,"pet accessory did not replace ACT alone");

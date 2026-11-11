@@ -21,6 +21,13 @@ struct Status {
     std::int32_t job = -1;
     std::uint32_t actorId = 0;
     std::int32_t eggIndex = -1;
+
+    void ResetMapState()
+    {
+        const auto inventoryEgg = eggIndex;
+        *this = {};
+        eggIndex = inventoryEgg;
+    }
 };
 
 inline std::uint16_t ReadU16(const unsigned char* p)

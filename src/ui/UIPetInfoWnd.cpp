@@ -270,7 +270,7 @@ void UIPetInfoWnd::ReturnEggLocally()
 {
     const auto& pet=g_session.m_petStatus;
     if(const auto* source=g_session.GetInventoryItemByIndex(static_cast<unsigned int>(pet.eggIndex))){auto item=*source;item.m_isDamaged=0;g_session.SetInventoryItem(item);}
-    g_session.m_petStatus.eggIndex=-1;g_session.m_petStatus.job=-1;
+    g_session.m_petStatus = {};
     if(g_windowMgr.m_itemWnd)g_windowMgr.m_itemWnd->Invalidate();
     if(g_windowMgr.m_petInfoWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_petInfoWnd);
 }

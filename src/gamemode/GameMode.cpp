@@ -10454,6 +10454,7 @@ bool CGameMode::CanRequestStandingResurrection() const
 }
 
 void CGameMode::OnExit() {
+    g_session.m_petStatus.ResetMapState();
     g_session.InvalidatePartyPositions();
     g_session.ClearNpcShopState();
     ClearPendingDisconnectAction();

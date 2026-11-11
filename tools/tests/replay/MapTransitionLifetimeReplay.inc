@@ -1,6 +1,7 @@
 #include "gamemode/View.h"
 #include "ui/UIStorageWnd.h"
 #include "ui/UIRechargeGage.h"
+#include "ui/UIPetInfoWnd.h"
 #include "world/GameActor.h"
 #include "world/World.h"
 
@@ -567,6 +568,13 @@ void MapTransitionLifetimeReplay()
         g_windowMgr.MakeWindow(UIWindowMgr::WID_STORAGEWND);
         Require(g_windowMgr.m_storageWnd && g_windowMgr.m_storageWnd->m_show,
             "could not open the real storage window before same-map warp");
+        const auto savedPet = g_session.m_petStatus;
+        g_session.m_petStatus.valid = true;
+        g_session.m_petStatus.actorId = 0x66550002;
+        g_session.m_petStatus.job = 1002;
+        g_session.m_petStatus.eggIndex = 123;
+        UIPetInfoWnd::ConfirmFeed(nullptr);
+        Require(g_windowMgr.m_roomMessageBox, "could not stage a pet feed confirmation before same-map warp");
         const auto frame = MapChangeFrame(0x0091, "prontera", 80, 90);
         auto cellThenWarp = MapCellUpdateFrame(1, 1, 5, "prontera.gat");
         g_session.m_mapTypeInfo.Clear();
@@ -600,6 +608,11 @@ void MapTransitionLifetimeReplay()
         Require(!mode.m_isPlayerDead && !mode.m_isOnQuest,
             "same-map reuse retained the previous death state");
         Require(mode.m_compassPosList.empty(), "same-map reuse retained a compass marker");
+        Require(!g_session.m_petStatus.valid && g_session.m_petStatus.actorId == 0
+            && g_session.m_petStatus.job == -1 && g_session.m_petStatus.eggIndex == 123,
+            "same-map warp retained the previous pet actor or lost its inventory egg link");
+        Require(!g_windowMgr.m_roomMessageBox, "same-map warp retained the previous pet feed confirmation");
+        g_session.m_petStatus = savedPet;
         Require(world.GetMapCellType(1, 1) == 5 && attr.GetCell(1, 1)->flag == 0,
             "same-map reuse lost the active map cell update");
         Require(world.m_isPKZone && world.m_isSiegeMode && world.m_isBattleFieldMode
