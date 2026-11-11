@@ -13,6 +13,7 @@
 #include "UICommandListWnd.h"
 #include "UIPetInfoWnd.h"
 #include "UICompanionStatusWnd.h"
+#include "UICompanionSkillListWnd.h"
 #include "UIPetEggListWnd.h"
 #include "UIPetTamingDeceiveWnd.h"
 #include "core/TipOfTheDay.h"
@@ -1008,7 +1009,8 @@ bool UIWindowMgr::IsWhisperPreferenceInputWindow(const UIWindow* window) const
 {
     if(!window)return false;
     for (const auto* owner = window; owner; owner = owner->m_parent)
-        if (owner == m_homunInfoWnd || owner == m_merInfoWnd) return true;
+        if (owner == m_homunInfoWnd || owner == m_merInfoWnd
+            || owner == m_homunSkillListWnd || owner == m_merSkillListWnd) return true;
     if(window->m_parent==m_messengerGroupWnd && window->m_id==168)return true;
     if(dynamic_cast<const UIPetCommandMenu*>(window))return true;
     for(const auto* owner=window;owner;owner=owner->m_parent)if(dynamic_cast<const UIGroundSkillTextWnd*>(owner) || owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd || owner==m_commandListWnd || owner==m_petInfoWnd || owner==m_petEggListWnd || owner==m_petTamingDeceiveWnd)return true;
@@ -1364,6 +1366,21 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             const int height = viewport.bottom - viewport.top;
             window->Move(std::clamp((width - 640) / 2 + 185, 0, std::max(0, width - window->m_w)),
                 std::clamp((height - 480) / 2 + 340, 0, std::max(0, height - window->m_h)));
+            m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), window);
+        }
+        window->SetShow(1);
+        return window;
+    }
+    case WID_HOMUNSKILLLISTWND:
+    case WID_MERSKILLLISTWND: {
+        auto*& window = windowId == WID_HOMUNSKILLLISTWND ? m_homunSkillListWnd : m_merSkillListWnd;
+        if (!window) {
+            window = new UICompanionSkillListWnd(windowId);
+            const auto viewport = GetChatClientRect();
+            const int width = viewport.right - viewport.left;
+            const int height = viewport.bottom - viewport.top;
+            window->Move(std::clamp((width - 640) / 2 + 200, 0, std::max(0, width - window->m_w)),
+                std::clamp((height - 480) / 2 + 200, 0, std::max(0, height - window->m_h)));
             m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), window);
         }
         window->SetShow(1);
@@ -1840,6 +1857,12 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
 
 bool UIWindowMgr::ToggleWindow(int windowId)
 {
+    if (windowId == WID_HOMUNSKILLLISTWND || windowId == WID_MERSKILLLISTWND) {
+        auto* window = windowId == WID_HOMUNSKILLLISTWND ? m_homunSkillListWnd : m_merSkillListWnd;
+        if (!window) return MakeWindow(windowId) != nullptr;
+        DeleteWindow(window);
+        return false;
+    }
     if (windowId==WID_BATTLEMSGOPTION) {
         if (m_battleMsgOptionWnd) {DeleteWindow(m_battleMsgOptionWnd);return false;}
         return MakeWindow(windowId)!=nullptr;
@@ -1945,6 +1968,12 @@ bool UIWindowMgr::ProcessSourceCommandWindowKey(int key)
     if(!m_basicInfoWnd)return false;m_basicInfoWnd->SendMsg(nullptr,6,button,0,0);return true;
 }
 
+void UIWindowMgr::CloseCompanionWindows(bool homunculus)
+{
+    DeleteWindow(homunculus ? m_homunInfoWnd : m_merInfoWnd);
+    DeleteWindow(homunculus ? m_homunSkillListWnd : m_merSkillListWnd);
+}
+
 void UIWindowMgr::DeleteWindow(UIWindow* window)
 {
     DeleteWindowImpl(window,false);
@@ -1977,7 +2006,8 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     const bool deletingPet=window==m_petInfoWnd;
     const bool deletingPetEgg=window==m_petEggListWnd;
     const bool deletingPetTaming=window==m_petTamingDeceiveWnd;
-    const bool deletingCompanion = window == m_homunInfoWnd || window == m_merInfoWnd;
+    const bool deletingCompanion = window == m_homunInfoWnd || window == m_merInfoWnd
+        || window == m_homunSkillListWnd || window == m_merSkillListWnd;
     const bool deletingGroundText=GroundSkillTextOwner(window)!=nullptr;
     for(auto*& owner:m_groundSkillTextWindows)if(owner==window)owner=nullptr;
     if(window==m_commandListWnd)m_commandListWnd=nullptr;
@@ -1985,6 +2015,8 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if(window==m_petInfoWnd){m_petInfoWnd->StoreInfo();m_petInfoWnd=nullptr;}
     if (window == m_homunInfoWnd) m_homunInfoWnd = nullptr;
     if (window == m_merInfoWnd) m_merInfoWnd = nullptr;
+    if (window == m_homunSkillListWnd) m_homunSkillListWnd = nullptr;
+    if (window == m_merSkillListWnd) m_merSkillListWnd = nullptr;
     if(deletingPetEgg)m_petEggListWnd=nullptr;
     if(deletingPetTaming)m_petTamingDeceiveWnd=nullptr;
 
@@ -3200,9 +3232,10 @@ bool UIWindowMgr::HasNativePopupAtPoint(int x,int y) const
 {
     const UIWindow* windows[]={m_itemInfoWnd,m_cardInfoWnd,m_skillDescribeWnd,m_chatRoomMenuWnd};
     for(const auto* w:windows)if(w&&w->m_show&&x>=w->m_x&&y>=w->m_y&&x<w->m_x+w->m_w&&y<w->m_y+w->m_h)return true;
-    if (m_homunInfoWnd || m_merInfoWnd) {
+    if (m_homunInfoWnd || m_merInfoWnd || m_homunSkillListWnd || m_merSkillListWnd) {
         for (const auto* hit = HitTestWindow(x, y); hit; hit = hit->m_parent) {
-            if (hit == m_homunInfoWnd || hit == m_merInfoWnd) return true;
+            if (hit == m_homunInfoWnd || hit == m_merInfoWnd
+                || hit == m_homunSkillListWnd || hit == m_merSkillListWnd) return true;
         }
     }
     return false;

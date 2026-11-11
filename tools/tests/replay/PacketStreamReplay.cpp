@@ -24,6 +24,7 @@
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UICompanionStatusWnd.h"
+#include "ui/UICompanionSkillListWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "ui/UIFriendOptionWnd.h"
 #include "ui/UINewChatWnd.h"
@@ -2642,20 +2643,22 @@ void CompanionIdentityReplay()
     g_session.m_aid = 0x01234567;
     g_session.m_homunStatus.alive = true;
     homunWindow = g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND);
-    Require(homunWindow, "could not reopen homunculus status before skill 244");
+    Require(homunWindow && g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNSKILLLISTWND),
+        "could not reopen homunculus windows before skill 244");
     std::array<u8, 15> reset{0x1a, 0x01, 244};
     putGid(reset.data() + 6, g_session.m_aid);
     putGid(reset.data() + 10, otherActor.m_gid);
     reset[14] = 1;
     dispatchActor(reset);
-    Require(hs.alive && g_windowMgr.m_homunInfoWnd == homunWindow,
+    Require(hs.alive && g_windowMgr.m_homunInfoWnd == homunWindow && g_windowMgr.m_homunSkillListWnd,
         "another player's skill 244 cleared the local homunculus");
     putGid(reset.data() + 6, otherActor.m_gid);
     putGid(reset.data() + 10, g_session.m_aid);
     reset[14] = 0;
     dispatchActor(reset);
     Require(!hs.alive && ms.alive && g_session.m_homunGID == homunActor.m_gid && hs.stateId == 29
-        && !g_windowMgr.m_homunInfoWnd && g_windowMgr.m_merInfoWnd == mercWindow,
+        && !g_windowMgr.m_homunInfoWnd && !g_windowMgr.m_homunSkillListWnd
+        && g_windowMgr.m_merInfoWnd == mercWindow,
         "local skill 244 did not reset the homunculus status window and alive flag");
     Require(mercWindow->SendMsg(nullptr, 6, 135, 0, 0) && !g_windowMgr.m_merInfoWnd,
         "mercenary status close button did not delete its window");
@@ -2754,21 +2757,100 @@ void CompanionCommandReplay()
     Require(peer.ReceiveExact(26) == shortPacket && !homun->GetNameEdit()
         && g_session.m_homunStatus.name == shortName && g_session.m_homunStatus.nameModified,
         "confirmed rename did not send and consume the one-time editor");
+    Require(homun->SendMsg(nullptr, 6, 223, 0, 0) && g_windowMgr.m_homunSkillListWnd,
+        "homunculus skill button did not open its own list");
     confirm(homun, 225, true);
     Require(peer.ReceiveExact(5) == std::vector<u8>{0x2d, 0x02, 0, 0, 2}
-        && !g_session.m_homunStatus.alive && !g_windowMgr.m_homunInfoWnd && g_session.m_merStatus.alive,
+        && !g_session.m_homunStatus.alive && !g_windowMgr.m_homunInfoWnd
+        && !g_windowMgr.m_homunSkillListWnd && g_session.m_merStatus.alive,
         "confirmed homunculus dismissal did not close only the homunculus status");
 
     auto* merc = static_cast<UICompanionStatusWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND));
     Require(merc, "mercenary status did not open for dismissal");
+    Require(merc->SendMsg(nullptr, 6, 283, 0, 0) && g_windowMgr.m_merSkillListWnd,
+        "mercenary skill button did not open its own list");
     confirm(merc, 284, true);
     Require(peer.ReceiveExact(3) == std::vector<u8>{0x9f, 0x02, 2}
-        && !g_session.m_merStatus.alive && !g_windowMgr.m_merInfoWnd,
+        && !g_session.m_merStatus.alive && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd,
         "confirmed mercenary dismissal did not close its status");
     g_session.m_homunStatus = oldHomunculus;
     g_session.m_merStatus = oldMercenary;
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
     connection->Disconnect();
+}
+
+void CompanionSkillListReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto oldHomun = g_session.GetHomunSkillItems();
+    const auto oldMerc = g_session.GetMercSkillItems();
+    const auto oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    const auto oldHomunUse = g_session.GetHomunSkillUseLevel(8000);
+    const auto oldMercUse = g_session.GetMerSkillUseLevel(8200);
+    SkillPacketReplayAccess::SetCurrent(&mode);
+
+    const auto listPacket = [&](u16 opcode, u16 skillId, u8 count) {
+        std::vector<u8> bytes(4 + 37 * count);
+        bytes[0] = static_cast<u8>(opcode);
+        bytes[1] = static_cast<u8>(opcode >> 8);
+        bytes[2] = static_cast<u8>(bytes.size());
+        for (u8 i = 0; i < count; ++i) {
+            auto* row = bytes.data() + 4 + 37 * i;
+            row[0] = static_cast<u8>(skillId + i);
+            row[1] = static_cast<u8>((skillId + i) >> 8);
+            row[2] = 1;
+            row[6] = 4;
+            row[8] = 7;
+        }
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), view, consumed)
+            && consumed == static_cast<int>(bytes.size()) && router.Dispatch(mode, view),
+            "companion skill list packet did not frame and dispatch");
+    };
+    listPacket(0x0235, 8000, 3);
+    listPacket(0x029d, 8200, 1);
+    auto* homun = static_cast<UICompanionSkillListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNSKILLLISTWND));
+    auto* merc = static_cast<UICompanionSkillListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERSKILLLISTWND));
+    Require(homun && merc && homun->GetRows().size() == 2 && merc->GetRows().size() == 1
+        && homun->GetRows().front().id == 8000 && merc->GetRows().front().id == 8200,
+        "companion list mixed caches or rendered the wrong rows");
+    homun->OnWheel(-1);
+    Require(homun->GetRows().front().id == 8001, "companion list did not scroll to the next row");
+    homun->OnWheel(1);
+    g_session.SetHomunSkillUseLevel(8000, 2);
+    g_session.SetMerSkillUseLevel(8200, 3);
+    homun->OnLBtnDown(homun->m_x + 10, homun->m_y + 22);
+    homun->OnMouseMove(homun->m_x + 30, homun->m_y + 22);
+    Require(mode.m_dragInfo.skillId == 8000 && mode.m_dragInfo.skillLevel == 2
+        && mode.m_dragType == static_cast<int>(DragType::ShortcutSkill),
+        "companion row did not carry its family skill and use level into shortcut drag");
+    merc->OnLBtnDblClk(merc->m_x + 10, merc->m_y + 22);
+    Require(mode.m_skillUseInfo.id == 8200 && mode.m_skillUseInfo.useType == 2,
+        "double-click did not arm the mercenary skill");
+    const std::array<u8, 11> update{0x39, 0x02, 0x40, 0x1f, 5, 0, 11, 0, 1, 0, 0};
+    PacketView updated{};
+    int consumed = 0;
+    Require(TryReadPacket(update.data(), static_cast<int>(update.size()), updated, consumed)
+        && consumed == 11 && router.Dispatch(mode, updated)
+        && homun->GetRows().front().level == 5 && homun->GetRows().front().spCost == 11
+        && merc->GetRows().front().level == 4, "companion update changed the wrong open list");
+    listPacket(0x0235, 8000, 0);
+    Require(homun->GetRows().empty() && merc->GetRows().size() == 1,
+        "empty homunculus list packet did not refresh only its family");
+
+    g_windowMgr.CloseCompanionWindows(true);
+    g_windowMgr.CloseCompanionWindows(false);
+    g_session.ClearHomunSkillItems();
+    g_session.ClearMercSkillItems();
+    for (const auto& row : oldHomun) g_session.SetHomunSkillItem(row);
+    for (const auto& row : oldMerc) g_session.SetMercSkillItem(row);
+    g_session.SetHomunSkillUseLevel(8000, oldHomunUse);
+    g_session.SetMerSkillUseLevel(8200, oldMercUse);
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
 void GuildMemberLoginNoticeReplay(){
@@ -5048,6 +5130,7 @@ int main(int argc,char** argv){try{
     Login3ClientInfoHashRequestReplay();
     CompanionIdentityReplay();
     CompanionCommandReplay();
+    CompanionSkillListReplay();
     GuildMemberLoginNoticeReplay();
     PartyMarkerGameModeExitReplay();
     SelectedInventoryCartRouteIsolationReplay();

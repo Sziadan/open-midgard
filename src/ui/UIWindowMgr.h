@@ -81,6 +81,7 @@ class UINpcMenuWnd;
 class UIPlayerContextMenuWnd;
 class UIPetInfoWnd;
 class UICompanionStatusWnd;
+class UICompanionSkillListWnd;
 class UIPetTamingDeceiveWnd;
 class UIJoinPartyAcceptWnd;
 class UIMessengerGroupWnd;
@@ -158,7 +159,9 @@ public:
         WID_COMMANDLISTWND    = 112,
         WID_PETINFOWND        = 88,
         WID_HOMUNINFOWND      = 113,
+        WID_HOMUNSKILLLISTWND = 114,
         WID_MERINFOWND        = 132,
+        WID_MERSKILLLISTWND   = 133,
         WID_SELECTPETEGGWND   = 90,
         WID_PETTAMINGDECEIVEWND = 91,
         WID_EQUIPWND          = 14,
@@ -249,6 +252,8 @@ public:
     UIPetInfoWnd* m_petInfoWnd=nullptr;
     UICompanionStatusWnd* m_homunInfoWnd = nullptr;
     UICompanionStatusWnd* m_merInfoWnd = nullptr;
+    UICompanionSkillListWnd* m_homunSkillListWnd = nullptr;
+    UICompanionSkillListWnd* m_merSkillListWnd = nullptr;
     SubChatWindowInfo m_petInfoWindowInfo{150,100,280,200};
     UIWindow* m_tipOfTheDayWnd=nullptr;
     bool m_tipStartupChecked=false;
@@ -261,6 +266,7 @@ public:
     bool ToggleWindow(int windowId);
     void RemoveAllWindows();
     void DeleteWindow(UIWindow* window);
+    void CloseCompanionWindows(bool homunculus);
     void PostQuit(UIWindow* window);
     void ProcessSourceHoverFrame(int logicalX,int logicalY);
     void AddWindowFront(UIWindow* window);

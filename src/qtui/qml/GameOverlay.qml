@@ -4392,6 +4392,11 @@ Item {
         model: (uiState.chatWindowUi || {}).companionStatus || []
         delegate: RoCompanionStatus { required property var modelData; status: modelData }
     }
+    Repeater {
+        parent: uiLayer
+        model: (uiState.chatWindowUi || {}).companionSkillLists || []
+        delegate: RoCompanionSkillList { required property var modelData; list: modelData }
+    }
     RoPetEggList { parent: root; uiScale: root.uiScale; eggData: (uiState.chatWindowUi || {}).petEgg || ({}) }
     RoPetTaming { parent: root; uiScale: root.uiScale; tamingData: (uiState.chatWindowUi || {}).petTaming || ({}) }
     RoChatRoomEntries { parent: uiLayer; titleItems: (uiState.chatWindowUi || {}).roomTitles || []; passwordData: (uiState.chatWindowUi || {}).roomPassword || ({}) }

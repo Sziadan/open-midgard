@@ -3791,3 +3791,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Companion status actions
 
 **Current companion action checkpoint (2026-11-11)**. Homunculus feed, rename, and dismissal and mercenary dismissal now run through the selected status controls and confirmation callbacks. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status-actions.md)
+
+## 2026-11-11 Companion skill lists
+
+**Current companion skill list checkpoint (2026-11-11)**. The status buttons open independent packet-backed companion lists with scrolling, skill activation, descriptions, and shortcut dragging. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-skill-lists.md)

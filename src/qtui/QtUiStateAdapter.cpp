@@ -7,6 +7,7 @@
 #include "ui/UICommandListWnd.h"
 #include "ui/UIPetInfoWnd.h"
 #include "ui/UICompanionStatusWnd.h"
+#include "ui/UICompanionSkillListWnd.h"
 #include "ui/UIPetEggListWnd.h"
 #include "ui/UIPetTamingDeceiveWnd.h"
 #include "ui/ChatScrollBarUi.h"
@@ -2128,6 +2129,21 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
             {"texts", texts}, {"gauges", gauges}, {"buttons", buttons}, {"nameEdit", nameEdit}});
     }
     chatUi.insert("companionStatus", companionStatus);
+    QVariantList companionSkillLists;
+    for (auto* window : {g_windowMgr.m_homunSkillListWnd, g_windowMgr.m_merSkillListWnd}) {
+        if (!window || !IsGameplayWindowVisible(state, window)) continue;
+        QVariantList rows;
+        for (const auto& row : window->GetRows()) {
+            rows.push_back(QVariantMap{{"y", row.y}, {"name", ToQString(row.name)}, {"level", row.level},
+                {"spCost", row.spCost}, {"selected", row.selected}, {"icon", ToQString(row.icon->uri)}});
+        }
+        const auto& close = window->GetCloseButton();
+        companionSkillLists.push_back(QVariantMap{{"layer", SourceManagedWindowLayer(window)},
+            {"x", window->m_x}, {"y", window->m_y}, {"width", window->m_w}, {"height", window->m_h},
+            {"title", ToQString(window->GetTitle())}, {"footer", ToQString(window->GetFooter())},
+            {"close", ToQString(close.GetButton().uris[close.GetVisualState()])}, {"rows", rows}});
+    }
+    chatUi.insert("companionSkillLists", companionSkillLists);
     const auto roomButton=[](const RoomSettingsButton& button,int status){
         const auto bounds=button.Bounds();const auto& bitmap=button.bitmaps[status];
         return QVariantMap{{"id",button.id},{"x",static_cast<int>(bounds.left)},{"y",static_cast<int>(bounds.top)},

@@ -21,6 +21,8 @@ constexpr int kRename = 118;
 constexpr int kFeed = 224;
 constexpr int kDismissHomunculus = 225;
 constexpr int kDismissMercenary = 284;
+constexpr int kHomunculusSkills = 223;
+constexpr int kMercenarySkills = 283;
 constexpr int kWidth = 280;
 constexpr int kHeight = 180;
 
@@ -119,6 +121,7 @@ UICompanionStatusWnd::UICompanionStatusWnd(int windowId)
         m_w - 14, 3, "Close");
     if (windowId == UIWindowMgr::WID_HOMUNINFOWND) {
         addAction(kDismissHomunculus, "btn_del", 187, 44, "Delete");
+        addAction(kHomunculusSkills, "btn_skill", 232, 44, "Skills");
         addAction(kFeed, "btn_feed", 210, 155, "Feed");
         addAction(kRename, "btn_rewrite", 232, 21, "Rename");
         m_nameEdit = new CompanionNameEdit;
@@ -130,6 +133,7 @@ UICompanionStatusWnd::UICompanionStatusWnd(int windowId)
         RefreshReceivedName();
     } else {
         addAction(kDismissMercenary, "btn_fired", 187, 44, "Dismiss");
+        addAction(kMercenarySkills, "btn_skill", 232, 44, "Skills");
     }
 }
 
@@ -271,6 +275,10 @@ msgresult_t UICompanionStatusWnd::SendMsg(UIWindow* sender, int msg, msgparam_t 
             return 1;
         }
         if (m_id == UIWindowMgr::WID_HOMUNINFOWND) {
+            if (wparam == kHomunculusSkills) {
+                g_windowMgr.ToggleWindow(UIWindowMgr::WID_HOMUNSKILLLISTWND);
+                return 1;
+            }
             if (wparam == kFeed) {
                 ShowPrompt(601, PromptText(601, "Are you sure that you want to feed your pet?"), true, wparam);
                 return 1;
@@ -279,6 +287,9 @@ msgresult_t UICompanionStatusWnd::SendMsg(UIWindow* sender, int msg, msgparam_t 
                 ShowPrompt(955, PromptText(955, "Permanently delete this Homunculus?"), true, wparam);
                 return 1;
             }
+        } else if (wparam == kMercenarySkills) {
+            g_windowMgr.ToggleWindow(UIWindowMgr::WID_MERSKILLLISTWND);
+            return 1;
         } else if (wparam == kDismissMercenary) {
             ShowPrompt(1370, PromptText(1370, "Delete this mercenary and its growth history?"), true, wparam);
             return 1;
@@ -327,6 +338,6 @@ void UICompanionStatusWnd::ApplyConfirmedAction(msgparam_t action)
         g_modeMgr.SendMsg(homunculus ? 198 : 200, 2, 0, 0);
         if (homunculus) g_session.m_homunStatus.alive = false;
         else g_session.m_merStatus.alive = false;
-        g_windowMgr.DeleteWindow(this);
+        g_windowMgr.CloseCompanionWindows(homunculus);
     }
 }

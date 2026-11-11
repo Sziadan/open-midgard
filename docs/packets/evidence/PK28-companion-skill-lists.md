@@ -1,0 +1,7 @@
+# Companion skill lists
+
+The selected status callbacks 223 and 283 in `Ref/UIFrameWnd.cpp` toggle the companion skill lists. `Ref/UIWindowMgr.cpp` selectors 114 and 133 create 280 by 120 instances with separate family selectors. The new native and Qt views use the existing homunculus and mercenary packet caches. The base layout shows two rows with skill icon, learned level, and SP cost. The homunculus footer reads the current skill point count.
+
+`Ref/UIItemWnd.cpp` around 16274 routes valid, learned skills with an SP cost through mode message 126 on double-click. Around 16304, the source starts the family drag for valid learned active skills with the corresponding use level. The port uses the existing family-aware mode dispatch and shared shortcut drag payload. Right-click uses the existing description window. Dismissal closes both windows for the matching companion. The homunculus death and local skill 244 reset close both homunculus windows.
+
+Replay exercises both family list packets, live row updates, empty list replacement, wheel scrolling, shortcut drag payload, double-click arming, and skill-window closure on dismiss and local skill 244. All 164 application checks and 473 standalone checks passed. The player skill tree files and the installed OldRO executable matched baseline. The full source skin, list layout modes, scrollbar controls, homunculus skill upgrades, target cleanup, and live verification remain open.

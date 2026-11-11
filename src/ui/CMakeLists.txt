@@ -13,6 +13,8 @@ add_library(ro_ui STATIC
     UIPetInfoWnd.cpp
     UICompanionStatusWnd.h
     UICompanionStatusWnd.cpp
+    UICompanionSkillListWnd.h
+    UICompanionSkillListWnd.cpp
     UIPetTamingDeceiveWnd.h
     UIPetTamingDeceiveWnd.cpp
     UIPetEggListWnd.h

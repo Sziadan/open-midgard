@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current companion action checkpoint (2026-11-11)**. Homunculus feed, rename, and dismissal and mercenary dismissal now run through the selected status controls and confirmation callbacks. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status-actions.md)
+**Current companion skill list checkpoint (2026-11-11)**. The status buttons open independent packet-backed companion lists with scrolling, skill activation, descriptions, and shortcut dragging. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+
+**Previous companion action checkpoint (2026-11-11)**. Homunculus feed, rename, and dismissal and mercenary dismissal now run through the selected status controls and confirmation callbacks. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status-actions.md)
 
 **Previous companion status window checkpoint (2026-11-11)**. Alt+R and Ctrl+R open the homunculus and mercenary status windows from the session snapshots. Homunculus death and the local skill 244 reset close its window. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status-windows.md)
 

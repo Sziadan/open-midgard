@@ -1258,9 +1258,10 @@ public:
                     GetUiLogicalY(lParam));
                 return true;
             }
-            if (!HasFrontMenuUiVisible()
+            if (!HasFrontMenuUiVisible() && !nativePopup
                 && g_windowMgr.m_chatWnd
                 && g_windowMgr.m_chatWnd->m_show != 0
+                && (!g_windowMgr.m_captureWindow || g_windowMgr.m_chatWnd->IsQtPointerCaptured())
                 && (g_windowMgr.m_chatWnd->IsQtPointerCaptured()
                     || g_windowMgr.m_chatWnd->IsQtInteractionPoint(GetUiLogicalX(lParam), GetUiLogicalY(lParam)))) {
                 return g_windowMgr.m_chatWnd->HandleQtMouseMove(
@@ -1413,7 +1414,7 @@ public:
             return false;
 
         case WM_MOUSEWHEEL:
-            if (!HasFrontMenuUiVisible()
+            if (!HasFrontMenuUiVisible() && !nativePopup
                 && g_windowMgr.m_chatWnd
                 && g_windowMgr.m_chatWnd->m_show != 0
                 && g_windowMgr.m_chatWnd->HandleQtWheel(

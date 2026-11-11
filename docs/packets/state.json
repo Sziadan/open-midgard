@@ -990,9 +990,10 @@
         "docs/packets/evidence/PK28-companion-lifecycle.md",
         "docs/packets/evidence/PK28-companion-commands.md",
         "docs/packets/evidence/PK28-companion-status-windows.md",
-        "docs/packets/evidence/PK28-companion-status-actions.md"
+        "docs/packets/evidence/PK28-companion-status-actions.md",
+        "docs/packets/evidence/PK28-companion-skill-lists.md"
       ],
-      "commit_subject": "packet(PK28): wire companion status actions"
+      "commit_subject": "packet(PK28): wire companion skill lists"
     },
     "PK28.04": {
       "status": "NOT_STARTED",
@@ -1015,9 +1016,10 @@
         "docs/packets/evidence/PK28-companion-lifecycle.md",
         "docs/packets/evidence/PK28-companion-commands.md",
         "docs/packets/evidence/PK28-companion-status-windows.md",
-        "docs/packets/evidence/PK28-companion-status-actions.md"
+        "docs/packets/evidence/PK28-companion-status-actions.md",
+        "docs/packets/evidence/PK28-companion-skill-lists.md"
       ],
-      "commit_subject": "packet(PK28): wire companion status actions"
+      "commit_subject": "packet(PK28): wire companion skill lists"
     },
     "PK29.03": {
       "status": "NOT_STARTED",
