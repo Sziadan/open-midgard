@@ -691,9 +691,9 @@
       "commit_subject": "packet(PK20.04): close selected NPC class verification"
     },
     "PK21.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK21.01-npc-progress-contract.md"],
+      "commit_subject": "packet(PK21.01): establish selected NPC progress contract"
     },
     "PK21.02": {
       "status": "NOT_STARTED",
