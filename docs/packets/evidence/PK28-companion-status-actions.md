@@ -1,0 +1,7 @@
+# Companion status actions
+
+The selected `UIHomunInfoWnd::SendMsg` at `0x46ABF0` handles button IDs 118, 224, and 225. Rename rejects 24 or more source bytes, prompts for confirmation, sends mode message 199, and hides its editor and button after acceptance. Feed and dismissal send mode message 198 with actions 1 and 2 after confirmation. `UIMerInfoWnd::SendMsg` at `0x46BB10` handles button 284 and sends mode message 200 with action 2. The selected `MsgStr` call for mercenary dismissal uses 1370 at `0x46BBFC`. The port loads prompts 601, 938, 939, 955, and 1370 through the existing message table.
+
+The native and Qt views use the selected action bitmaps. The confirmation retains its owning window and captures the mode generation and companion GID. Acceptance applies the corresponding send and local action if those still match. Dismissal closes the status window and clears the companion alive flag. Target cleanup and companion skill list cleanup depend on those features having owners. The player skill tree source and assets matched baseline.
+
+The replay opens Feed by clicking its native button, exercises cancel and accept, routes character input through the focused name editor, checks the 24-byte error, and captures the accepted rename and both dismissals through the production socket. All 164 application checks and 473 standalone checks passed. The OldRO executable matched baseline. Live input, prompts, and server behavior remain to be verified.

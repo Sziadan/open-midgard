@@ -275,6 +275,7 @@ public:
     bool OnWheel(int x, int y, int delta);
     void OnChar(char c);
     UIGroundSkillTextWnd* GetFocusedGroundSkillText() const;
+    UIEditCtrl* GetFocusedCompanionNameEdit() const;
     void RefreshGroundPromptSkins();
     void OnKeyDown(int virtualKey);
     bool OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown);

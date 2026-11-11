@@ -24,6 +24,8 @@
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UICompanionStatusWnd.h"
+#include "ui/UIChatRoomSettingsWnd.h"
+#include "ui/UIFriendOptionWnd.h"
 #include "ui/UINewChatWnd.h"
 #include "ui/UIGuildWnd.h"
 #include "ui/UIMinimapWnd.h"
@@ -2697,6 +2699,75 @@ void CompanionCommandReplay()
         && peer.ReceiveExact(26) == longPacket, "homunculus rename did not terminate a truncated name");
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
         "companion commands emitted unexpected trailing bytes");
+
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    const auto oldHomunculus = g_session.m_homunStatus;
+    const auto oldMercenary = g_session.m_merStatus;
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    g_session.m_homunStatus = {};
+    g_session.m_homunStatus.job = 6001;
+    g_session.m_homunStatus.alive = true;
+    g_session.m_merStatus.job = 6017;
+    g_session.m_merStatus.alive = true;
+    auto* homun = static_cast<UICompanionStatusWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND));
+    Require(homun && homun->GetNameEdit(), "homunculus status did not expose the one-time editor");
+
+    const auto confirm = [&](UICompanionStatusWnd* window, int action, bool accept) {
+        Require(window->SendMsg(nullptr, 6, action, 0, 0) && g_windowMgr.m_roomMessageBox
+            && g_windowMgr.m_roomMessageBox->GetSourceOwner() == window
+            && g_windowMgr.m_roomMessageBox->HasCancel(), "companion action lacked its owned confirmation");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+            "companion action sent before confirmation");
+        g_windowMgr.m_roomMessageBox->Dismiss(accept);
+    };
+    const auto& buttons = homun->GetButtons();
+    const auto feed = std::find_if(buttons.begin(), buttons.end(), [](const auto* button) { return button->m_id == 224; });
+    Require(feed != buttons.end(), "homunculus status did not create the feed button");
+    g_windowMgr.OnLBtnDown((*feed)->m_x + 2, (*feed)->m_y + 2);
+    g_windowMgr.OnLBtnUp((*feed)->m_x + 2, (*feed)->m_y + 2);
+    Require(g_windowMgr.m_roomMessageBox && g_windowMgr.m_roomMessageBox->GetMessageId() == 601,
+        "clicking Feed did not open the selected prompt");
+    g_windowMgr.m_roomMessageBox->Dismiss(false);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "cancelled feed emitted a packet");
+    confirm(homun, 224, true);
+    Require(peer.ReceiveExact(5) == std::vector<u8>{0x2d, 0x02, 0, 0, 1}
+        && g_session.m_homunStatus.alive && g_windowMgr.m_homunInfoWnd == homun,
+        "confirmed feed changed the owner or emitted the wrong packet");
+
+    auto* edit = homun->GetNameEdit();
+    edit->SetText("123456789012345678901234");
+    Require(homun->SendMsg(nullptr, 6, 118, 0, 0) && g_windowMgr.m_roomMessageBox
+        && !g_windowMgr.m_roomMessageBox->HasCancel() && g_windowMgr.m_roomMessageBox->GetMessageId() == 938,
+        "24-byte rename did not show the source length error");
+    g_windowMgr.m_roomMessageBox->Dismiss();
+    edit->SetText("");
+    g_windowMgr.OnLBtnDown(edit->m_x + 2, edit->m_y + 2);
+    g_windowMgr.OnLBtnUp(edit->m_x + 2, edit->m_y + 2);
+    for (const char letter : std::string_view(shortName)) g_windowMgr.OnChar(letter);
+    Require(std::string_view(edit->GetText()) == shortName, "focused name editor did not receive character input");
+    confirm(homun, 118, false);
+    Require(homun->GetNameEdit() == edit && !g_session.m_homunStatus.nameModified,
+        "cancelled rename consumed the one-time editor");
+    confirm(homun, 118, true);
+    Require(peer.ReceiveExact(26) == shortPacket && !homun->GetNameEdit()
+        && g_session.m_homunStatus.name == shortName && g_session.m_homunStatus.nameModified,
+        "confirmed rename did not send and consume the one-time editor");
+    confirm(homun, 225, true);
+    Require(peer.ReceiveExact(5) == std::vector<u8>{0x2d, 0x02, 0, 0, 2}
+        && !g_session.m_homunStatus.alive && !g_windowMgr.m_homunInfoWnd && g_session.m_merStatus.alive,
+        "confirmed homunculus dismissal did not close only the homunculus status");
+
+    auto* merc = static_cast<UICompanionStatusWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND));
+    Require(merc, "mercenary status did not open for dismissal");
+    confirm(merc, 284, true);
+    Require(peer.ReceiveExact(3) == std::vector<u8>{0x9f, 0x02, 2}
+        && !g_session.m_merStatus.alive && !g_windowMgr.m_merInfoWnd,
+        "confirmed mercenary dismissal did not close its status");
+    g_session.m_homunStatus = oldHomunculus;
+    g_session.m_merStatus = oldMercenary;
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
     connection->Disconnect();
 }
 

@@ -1947,8 +1947,11 @@ void HandleHomunProperty(CGameMode&, const PacketView& packet)
     if (!packet.data || packet.packetLength != 71) return;
     auto& status = g_session.m_homunStatus;
     const auto* data = packet.data;
-    status.name = ExtractFixedPacketString(packet, 2, 24);
+    const auto name = ExtractFixedPacketString(packet, 2, 24);
+    const bool nameChanged = status.name != name || status.nameModified != data[26];
+    status.name = name;
     status.nameModified = data[26];
+    if (nameChanged && g_windowMgr.m_homunInfoWnd) g_windowMgr.m_homunInfoWnd->RefreshReceivedName();
     status.level = static_cast<s16>(ReadLE16(data + 27));
     status.hunger = static_cast<s16>(ReadLE16(data + 29));
     status.intimacy = static_cast<s16>(ReadLE16(data + 31));

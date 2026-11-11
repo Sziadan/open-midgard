@@ -1,18 +1,26 @@
 #include "UICompanionStatusWnd.h"
 
 #include "UIShopCommon.h"
+#include "UIFriendOptionWnd.h"
 #include "UIWindowMgr.h"
 #include "../core/SourceTextCodec.h"
+#include "../core/UiMessageStrings.h"
+#include "../gamemode/Mode.h"
 #include "../item/Item.h"
 #include "../session/Session.h"
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <ctime>
 
 namespace {
 
 constexpr int kClose = 135;
+constexpr int kRename = 118;
+constexpr int kFeed = 224;
+constexpr int kDismissHomunculus = 225;
+constexpr int kDismissMercenary = 284;
 constexpr int kWidth = 280;
 constexpr int kHeight = 180;
 
@@ -51,21 +59,96 @@ std::string DisplayName(const std::string& name)
     return ro::DecodeSourceText(name, ro::SelectedSourceTextCodePage()).value_or(name);
 }
 
+std::string PromptText(int id, const char* fallback)
+{
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto text = DisplayName(strings.Get(id, fallback));
+    // The shared confirmation box renders plain text.
+    for (auto pos = text.find('^'); pos != std::string::npos; pos = text.find('^', pos)) {
+        if (pos + 7 <= text.size()
+            && std::all_of(text.begin() + pos + 1, text.begin() + pos + 7,
+                [](unsigned char ch) { return std::isxdigit(ch) != 0; })) {
+            text.erase(pos, 7);
+        } else {
+            ++pos;
+        }
+    }
+    return text;
+}
+
+class CompanionNameEdit final : public UIEditCtrl {
+public:
+    void OnChar(char c) override
+    {
+        if (c != '\b') {
+            UIEditCtrl::OnChar(c);
+        } else if (!m_text.empty()) {
+            const int codePage = ro::SelectedSourceTextCodePage();
+            do {
+                m_text.pop_back();
+            } while (!m_text.empty() && !ro::DecodeSourceText(m_text, codePage));
+            Invalidate();
+        }
+    }
+
+    void OnKeyDown(int key) override
+    {
+        if (key == VK_BACK) OnChar('\b');
+    }
+};
+
 } // namespace
 
 UICompanionStatusWnd::UICompanionStatusWnd(int windowId)
-    : m_closeButton(new UIBitmapButton)
 {
     m_id = windowId;
     Create(kWidth, kHeight);
-    m_closeButton->m_id = kClose;
-    m_closeButton->SetBitmapName("basic_interface\\sys_close_off.bmp", 0);
-    m_closeButton->SetBitmapName("basic_interface\\sys_close_on.bmp", 1);
-    m_closeButton->SetBitmapName("basic_interface\\sys_close_on.bmp", 2);
-    m_closeButton->SetToolTip("Close");
-    m_closeButton->Create(11, 11);
-    m_closeButton->Move(m_w - 14, 3);
-    AddChild(m_closeButton);
+    const auto addButton = [&](UIFriendOptionButton* button, int x, int y, const char* label) {
+        button->Move(x, y);
+        button->SetToolTip(label);
+        m_buttons.push_back(button);
+        AddChild(button);
+    };
+    const auto addAction = [&](int id, const std::string& asset, int x, int y, const char* label) {
+        addButton(new UIFriendOptionButton(id, (asset + ".bmp").c_str(), (asset + "_a.bmp").c_str(),
+            (asset + "_b.bmp").c_str(), 40, 20), x, y, label);
+    };
+    addButton(new UIFriendOptionButton(kClose, "basic_interface\\sys_close_off.bmp",
+        "basic_interface\\sys_close_on.bmp", "basic_interface\\sys_close_on.bmp", 11, 11),
+        m_w - 14, 3, "Close");
+    if (windowId == UIWindowMgr::WID_HOMUNINFOWND) {
+        addAction(kDismissHomunculus, "btn_del", 187, 44, "Delete");
+        addAction(kFeed, "btn_feed", 210, 155, "Feed");
+        addAction(kRename, "btn_rewrite", 232, 21, "Rename");
+        m_nameEdit = new CompanionNameEdit;
+        m_nameEdit->Create(80, 16);
+        m_nameEdit->Move(135, 24);
+        m_nameEdit->m_maxchar = 50;
+        m_nameEdit->SetFrameColor(232, 232, 232);
+        AddChild(m_nameEdit);
+        RefreshReceivedName();
+    } else {
+        addAction(kDismissMercenary, "btn_fired", 187, 44, "Dismiss");
+    }
+}
+
+std::string UICompanionStatusWnd::GetEditDisplayText() const
+{
+    return m_nameEdit ? DisplayName(m_nameEdit->GetText()) : std::string{};
+}
+
+void UICompanionStatusWnd::RefreshReceivedName()
+{
+    if (!m_nameEdit) return;
+    const auto& status = g_session.m_homunStatus;
+    m_nameEdit->SetText(status.name.c_str());
+    const bool canRename = !status.nameModified;
+    m_nameEdit->SetShow(canRename);
+    m_buttons.back()->SetShow(canRename);
+    if (!canRename && g_windowMgr.m_editWindow == m_nameEdit)
+        g_windowMgr.m_editWindow = nullptr;
+    Invalidate();
 }
 
 UICompanionStatusWnd::Display UICompanionStatusWnd::GetDisplay() const
@@ -98,7 +181,8 @@ UICompanionStatusWnd::Display UICompanionStatusWnd::GetDisplay() const
 
     addText(5, 2, 246, homunculusWindow ? "Homunculus" : MercenaryTitle(mercenary.job));
     addText(100, 24, 34, "Name");
-    addText(135, 24, 137, DisplayName(homunculusWindow ? homunculus.name : mercenary.name));
+    if (!GetNameEdit())
+        addText(135, 24, 137, DisplayName(homunculusWindow ? homunculus.name : mercenary.name));
     addText(100, 47, 34, "Level");
     addText(135, 47, 72, std::to_string(homunculusWindow ? homunculus.level : mercenary.level));
     addText(100, 70, 17, "HP");
@@ -136,8 +220,10 @@ UICompanionStatusWnd::Display UICompanionStatusWnd::GetDisplay() const
 
 void UICompanionStatusWnd::Move(int x, int y)
 {
-    m_closeButton->Move(x + m_w - 14, y + 3);
+    const int dx = x - m_x;
+    const int dy = y - m_y;
     UIFrameWnd::Move(x, y);
+    for (auto* child : m_children) child->Move(child->m_x + dx, child->m_y + dy);
 }
 
 void UICompanionStatusWnd::OnDraw()
@@ -166,9 +252,81 @@ void UICompanionStatusWnd::OnDraw()
 
 msgresult_t UICompanionStatusWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
-    if (msg == 6 && wparam == kClose) {
-        g_windowMgr.DeleteWindow(this);
-        return 1;
+    if (msg == 6) {
+        if (wparam == kClose) {
+            g_windowMgr.DeleteWindow(this);
+            return 1;
+        }
+        if (wparam == kRename && GetNameEdit()) {
+            const std::string name = m_nameEdit->GetText();
+            if (name.size() >= 24) {
+                ShowPrompt(938, PromptText(938, "Please give your Homunculus a name no longer than 23 letters."),
+                    false, wparam);
+            } else {
+                auto text = PromptText(939, "You can name a Homunculus only once. Use the name %s?");
+                if (const auto pos = text.find("%s"); pos != std::string::npos)
+                    text.replace(pos, 2, DisplayName(name));
+                ShowPrompt(939, std::move(text), true, wparam);
+            }
+            return 1;
+        }
+        if (m_id == UIWindowMgr::WID_HOMUNINFOWND) {
+            if (wparam == kFeed) {
+                ShowPrompt(601, PromptText(601, "Are you sure that you want to feed your pet?"), true, wparam);
+                return 1;
+            }
+            if (wparam == kDismissHomunculus) {
+                ShowPrompt(955, PromptText(955, "Permanently delete this Homunculus?"), true, wparam);
+                return 1;
+            }
+        } else if (wparam == kDismissMercenary) {
+            ShowPrompt(1370, PromptText(1370, "Delete this mercenary and its growth history?"), true, wparam);
+            return 1;
+        }
     }
     return UIFrameWnd::SendMsg(sender, msg, wparam, lparam, extra);
+}
+
+void UICompanionStatusWnd::ShowPrompt(int messageId, std::string text, bool confirmation, msgparam_t action)
+{
+    if (g_windowMgr.m_modalWindow) return;
+    const auto generation = g_modeMgr.GetOperationGeneration();
+    const bool homunculus = m_id == UIWindowMgr::WID_HOMUNINFOWND;
+    const auto gid = homunculus ? g_session.m_homunGID : g_session.m_merGID;
+    auto* box = new UIChatRoomMessageBox(std::move(text), messageId);
+    box->SetSourceOwner(this);
+    if (confirmation) {
+        box->ConfigureConfirmation(this, [this, generation, homunculus, gid, action](bool accepted) {
+            if (accepted && g_modeMgr.GetOperationGeneration() == generation
+                && gid == (homunculus ? g_session.m_homunGID : g_session.m_merGID)
+                && g_windowMgr.ContainsWindow(this)) {
+                ApplyConfirmedAction(action);
+            }
+        });
+    }
+    g_windowMgr.m_roomMessageBox = box;
+    g_windowMgr.m_children.push_back(box);
+    g_windowMgr.m_modalWindow = box;
+    g_windowMgr.m_editWindow = nullptr;
+}
+
+void UICompanionStatusWnd::ApplyConfirmedAction(msgparam_t action)
+{
+    if (action == kRename) {
+        if (!GetNameEdit()) return;
+        const std::string name = m_nameEdit->GetText();
+        if (name.size() >= 24) return;
+        g_modeMgr.SendMsg(199, reinterpret_cast<msgparam_t>(name.c_str()), 0, 0);
+        g_session.m_homunStatus.name = name;
+        g_session.m_homunStatus.nameModified = 1;
+        RefreshReceivedName();
+    } else if (action == kFeed) {
+        g_modeMgr.SendMsg(198, 1, 0, 0);
+    } else {
+        const bool homunculus = action == kDismissHomunculus;
+        g_modeMgr.SendMsg(homunculus ? 198 : 200, 2, 0, 0);
+        if (homunculus) g_session.m_homunStatus.alive = false;
+        else g_session.m_merStatus.alive = false;
+        g_windowMgr.DeleteWindow(this);
+    }
 }

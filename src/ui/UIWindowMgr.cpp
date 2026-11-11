@@ -3215,6 +3215,14 @@ UIGroundSkillTextWnd* UIWindowMgr::GetFocusedGroundSkillText() const
     return prompt && prompt->m_show ? prompt : nullptr;
 }
 
+UIEditCtrl* UIWindowMgr::GetFocusedCompanionNameEdit() const
+{
+    if (!m_editWindow || !m_homunInfoWnd || !m_homunInfoWnd->m_show
+        || (m_modalWindow && m_modalWindow->m_show)) return nullptr;
+    auto* edit = m_homunInfoWnd->GetNameEdit();
+    return edit == m_editWindow ? edit : nullptr;
+}
+
 void UIWindowMgr::RefreshGroundPromptSkins()
 {
     for (auto* prompt : m_groundSkillTextWindows)
@@ -3224,6 +3232,10 @@ void UIWindowMgr::RefreshGroundPromptSkins()
 void UIWindowMgr::OnChar(char c)
 {
     if(m_modalWindow && m_modalWindow->m_show){m_modalWindow->OnChar(c);return;}
+    if (auto* edit = GetFocusedCompanionNameEdit()) {
+        edit->OnChar(c);
+        return;
+    }
     if(m_petInfoWnd && m_editWindow)for(auto* focus=m_editWindow;focus;focus=focus->m_parent)
         if(focus==m_petInfoWnd){m_editWindow->OnChar(c);return;}
     if (c == '\r' || c == '\n') {
@@ -3402,6 +3414,11 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
         return true;
     }
 
+    if (auto* edit = GetFocusedCompanionNameEdit(); edit && virtualKey == VK_BACK) {
+        edit->OnKeyDown(virtualKey);
+        return true;
+    }
+
     if (m_storageWnd && m_storageWnd->m_show != 0 && virtualKey == VK_ESCAPE) {
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStorageClose, 0, 0, 0) != 0;
     }
@@ -3450,6 +3467,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
     }
 
     if(auto* menu=dynamic_cast<UIPetCommandMenu*>(m_editWindow)){menu->OnKeyDown(virtualKey);return;}
+    if (GetFocusedCompanionNameEdit()) return; // The native character event owns text and Backspace.
     if(m_petInfoWnd && m_editWindow){
         for(auto* focus=m_editWindow;focus;focus=focus->m_parent)if(focus==m_petInfoWnd){m_editWindow->OnKeyDown(virtualKey);return;}
     }

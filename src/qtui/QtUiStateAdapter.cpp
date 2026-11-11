@@ -2100,7 +2100,7 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
     for (const auto* window : {g_windowMgr.m_homunInfoWnd, g_windowMgr.m_merInfoWnd}) {
         if (!window || !IsGameplayWindowVisible(state, window)) continue;
         const auto display = window->GetDisplay();
-        QVariantList texts, gauges;
+        QVariantList texts, gauges, buttons;
         for (const auto& row : display.text) {
             texts.push_back(QVariantMap{{"x", row.x}, {"y", row.y}, {"width", row.width},
                 {"text", ToQString(row.value)}, {"rightAligned", row.rightAligned}});
@@ -2110,9 +2110,22 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
                 {"height", gauge.height}, {"filledWidth", gauge.filledWidth},
                 {"color", QColor(GetRValue(gauge.color), GetGValue(gauge.color), GetBValue(gauge.color)).name()}});
         }
+        for (const auto* button : window->GetButtons()) {
+            if (!button->m_show) continue;
+            const auto& artwork = button->GetButton().uris[button->GetVisualState()];
+            buttons.push_back(QVariantMap{{"x", button->m_x - window->m_x}, {"y", button->m_y - window->m_y},
+                {"width", button->m_w}, {"height", button->m_h}, {"artwork", ToQString(artwork)},
+                {"label", button->m_id == 135 ? QStringLiteral("×") : ToQString(button->m_toolTip)}});
+        }
+        QVariantMap nameEdit;
+        if (const auto* edit = window->GetNameEdit()) {
+            nameEdit = {{"visible", true}, {"x", edit->m_x - window->m_x}, {"y", edit->m_y - window->m_y},
+                {"width", edit->m_w}, {"height", edit->m_h}, {"text", ToQString(window->GetEditDisplayText())},
+                {"focused", g_windowMgr.m_editWindow == edit}};
+        }
         companionStatus.push_back(QVariantMap{{"layer", SourceManagedWindowLayer(window)},
             {"x", window->m_x}, {"y", window->m_y}, {"width", window->m_w}, {"height", window->m_h},
-            {"texts", texts}, {"gauges", gauges}});
+            {"texts", texts}, {"gauges", gauges}, {"buttons", buttons}, {"nameEdit", nameEdit}});
     }
     chatUi.insert("companionStatus", companionStatus);
     const auto roomButton=[](const RoomSettingsButton& button,int status){

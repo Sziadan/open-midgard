@@ -38,6 +38,7 @@
 #include "ui/UIOptionWnd.h"
 #include "ui/UiScale.h"
 #include "ui/UIWindowMgr.h"
+#include "core/SourceTextCodec.h"
 #include "ui/UINewChatWnd.h"
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
@@ -770,7 +771,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         const wchar_t character=static_cast<wchar_t>(wParam);
         char bytes[8]{};
-        const int count=WideCharToMultiByte(CP_ACP,0,&character,1,bytes,sizeof(bytes),nullptr,nullptr);
+        const UINT codePage = g_windowMgr.GetFocusedCompanionNameEdit() ? ro::SelectedSourceTextCodePage() : CP_ACP;
+        const int count=WideCharToMultiByte(codePage,0,&character,1,bytes,sizeof(bytes),nullptr,nullptr);
         for(int i=0;i<count;++i)g_windowMgr.OnChar(bytes[i]);
         return 0;
     }

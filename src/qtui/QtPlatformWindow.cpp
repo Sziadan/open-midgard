@@ -5,6 +5,7 @@
 
 #include "DebugLog.h"
 #include "ui/UIWindowMgr.h"
+#include "core/SourceTextCodec.h"
 #include "ui/UIGroundSkillTextWnd.h"
 
 #include <QCloseEvent>
@@ -218,6 +219,16 @@ protected:
                 return true;
             }
         }
+        if (g_windowMgr.GetFocusedCompanionNameEdit() && event->type() == QEvent::InputMethod) {
+            const auto& commit = static_cast<QInputMethodEvent*>(event)->commitString();
+            if (const auto bytes = ro::EncodeSourceText(commit.toStdString(), ro::SelectedSourceTextCodePage()))
+                for (const char byte : *bytes) g_windowMgr.OnChar(byte);
+            return true;
+        }
+        if (g_windowMgr.GetFocusedCompanionNameEdit() && event->type() == QEvent::InputMethodQuery) {
+            static_cast<QInputMethodQueryEvent*>(event)->setValue(Qt::ImEnabled, true);
+            return true;
+        }
         return QWindow::event(event);
     }
 
@@ -268,6 +279,16 @@ protected:
                 event->modifiers().testFlag(Qt::AltModifier),
                 event->modifiers().testFlag(Qt::ControlModifier),
                 event->modifiers().testFlag(Qt::ShiftModifier))) {
+            event->accept();
+            return;
+        }
+
+        if (g_windowMgr.GetFocusedCompanionNameEdit()) {
+            if (!(event->modifiers() & (Qt::AltModifier | Qt::ControlModifier))
+                || event->modifiers().testFlag(Qt::GroupSwitchModifier)) {
+                if (const auto bytes = ro::EncodeSourceText(event->text().toStdString(), ro::SelectedSourceTextCodePage()))
+                    for (const char byte : *bytes) g_windowMgr.OnChar(byte);
+            }
             event->accept();
             return;
         }
