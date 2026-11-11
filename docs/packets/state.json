@@ -876,9 +876,12 @@
       "commit_subject": "packet(PK26.03): implement selected Star Gladiator notices and confirmation"
     },
     "PK26.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK26.SPECIAL-SKILL-CHOICES.md",
+        "docs/packets/evidence/PK26.04-verification.md"
+      ],
+      "commit_subject": "packet(PK26.04): verify selected special skill routes"
     },
     "PK27.01": {
       "status": "IN_PROGRESS",
