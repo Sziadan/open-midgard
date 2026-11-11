@@ -2786,13 +2786,15 @@ void CompanionSkillListReplay()
     RegisterDefaultGameModePacketHandlers(router);
     const auto oldHomun = g_session.GetHomunSkillItems();
     const auto oldMerc = g_session.GetMercSkillItems();
+    const auto oldHomunStatus = g_session.m_homunStatus;
     const auto oldMode = SkillPacketReplayAccess::Current();
     const auto oldModeType = SkillPacketReplayAccess::CurrentType();
     const auto oldHomunUse = g_session.GetHomunSkillUseLevel(8000);
     const auto oldMercUse = g_session.GetMerSkillUseLevel(8200);
     SkillPacketReplayAccess::SetCurrent(&mode);
+    g_session.m_homunStatus.skillPoints = 0;
 
-    const auto listPacket = [&](u16 opcode, u16 skillId, u8 count) {
+    const auto listPacket = [&](u16 opcode, u16 skillId, u8 count, u8 level = 4) {
         std::vector<u8> bytes(4 + 37 * count);
         bytes[0] = static_cast<u8>(opcode);
         bytes[1] = static_cast<u8>(opcode >> 8);
@@ -2802,8 +2804,9 @@ void CompanionSkillListReplay()
             row[0] = static_cast<u8>(skillId + i);
             row[1] = static_cast<u8>((skillId + i) >> 8);
             row[2] = 1;
-            row[6] = 4;
+            row[6] = level;
             row[8] = 7;
+            row[36] = 1;
         }
         PacketView view{};
         int consumed = 0;
@@ -2831,13 +2834,49 @@ void CompanionSkillListReplay()
     merc->OnLBtnDblClk(merc->m_x + 10, merc->m_y + 22);
     Require(mode.m_skillUseInfo.id == 8200 && mode.m_skillUseInfo.useType == 2,
         "double-click did not arm the mercenary skill");
+    Require(!homun->GetRows().front().upgrade && !merc->GetRows().front().upgrade,
+        "upgrade control ignored family or point gating");
+    homun->Move(20, 20);
+    merc->Move(330, 20);
+    g_session.m_homunStatus.skillPoints = 1;
+    const auto row = homun->GetRows().front();
+    Require(row.upgrade && !merc->GetRows().front().upgrade, "homunculus upgrade control failed its family gate");
+    const int upgradeX = homun->m_x + row.upgradeX + 1;
+    const int upgradeY = homun->m_y + row.y + row.upgradeY + 1;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    g_windowMgr.OnLBtnDown(upgradeX, upgradeY);
+    g_windowMgr.OnLBtnUp(upgradeX + row.upgradeSize, upgradeY);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "released-outside upgrade emitted a packet");
+    const auto clickUpgrade = [&] {
+        g_windowMgr.OnLBtnDown(upgradeX, upgradeY);
+        g_windowMgr.OnLBtnUp(upgradeX, upgradeY);
+    };
+    clickUpgrade();
+    Require(peer.ReceiveExact(4) == std::vector<u8>{0x12, 0x01, 0x40, 0x1f}
+        && mode.m_isReqUpgradeSkillLevel && g_session.m_homunStatus.skillPoints == 1
+        && homun->GetRows().front().level == 4,
+        "homunculus upgrade did not send the selected request or updated state before the server");
+    clickUpgrade();
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "pending upgrade emitted a duplicate packet");
     const std::array<u8, 11> update{0x39, 0x02, 0x40, 0x1f, 5, 0, 11, 0, 1, 0, 0};
     PacketView updated{};
     int consumed = 0;
     Require(TryReadPacket(update.data(), static_cast<int>(update.size()), updated, consumed)
         && consumed == 11 && router.Dispatch(mode, updated)
         && homun->GetRows().front().level == 5 && homun->GetRows().front().spCost == 11
-        && merc->GetRows().front().level == 4, "companion update changed the wrong open list");
+        && !homun->GetRows().front().upgrade && !mode.m_isReqUpgradeSkillLevel
+        && merc->GetRows().front().level == 4, "companion update did not acknowledge only the matching row");
+    const std::array<u8, 71> property{0x2e, 0x02};
+    Require(TryReadPacket(property.data(), static_cast<int>(property.size()), updated, consumed)
+        && consumed == 71 && router.Dispatch(mode, updated)
+        && g_session.m_homunStatus.skillPoints == 0, "homunculus property did not refresh skill points");
+    listPacket(0x0235, 8000, 3, 5);
+    Require(homun->GetRows().front().level == 5 && !homun->GetRows().front().upgrade,
+        "refreshed homunculus list bypassed the updated skill point gate");
     listPacket(0x0235, 8000, 0);
     Require(homun->GetRows().empty() && merc->GetRows().size() == 1,
         "empty homunculus list packet did not refresh only its family");
@@ -2848,9 +2887,11 @@ void CompanionSkillListReplay()
     g_session.ClearMercSkillItems();
     for (const auto& row : oldHomun) g_session.SetHomunSkillItem(row);
     for (const auto& row : oldMerc) g_session.SetMercSkillItem(row);
+    g_session.m_homunStatus = oldHomunStatus;
     g_session.SetHomunSkillUseLevel(8000, oldHomunUse);
     g_session.SetMerSkillUseLevel(8200, oldMercUse);
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    connection->Disconnect();
 }
 
 void LocalizedSystemNoticeReplay()

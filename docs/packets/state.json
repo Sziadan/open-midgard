@@ -979,9 +979,10 @@
         "docs/packets/evidence/PK28-companion-status.md",
         "docs/packets/evidence/PK28-homun-feed.md",
         "docs/packets/evidence/PK28-companion-lifecycle.md",
-        "docs/packets/evidence/PK28-companion-commands.md"
+        "docs/packets/evidence/PK28-companion-commands.md",
+        "docs/packets/evidence/PK28-homunculus-skill-upgrade.md"
       ],
-      "commit_subject": "packet(PK28): restore companion command packets"
+      "commit_subject": "packet(PK28): wire homunculus skill upgrades"
     },
     "PK28.03": {
       "status": "IN_PROGRESS",
@@ -991,9 +992,10 @@
         "docs/packets/evidence/PK28-companion-commands.md",
         "docs/packets/evidence/PK28-companion-status-windows.md",
         "docs/packets/evidence/PK28-companion-status-actions.md",
-        "docs/packets/evidence/PK28-companion-skill-lists.md"
+        "docs/packets/evidence/PK28-companion-skill-lists.md",
+        "docs/packets/evidence/PK28-homunculus-skill-upgrade.md"
       ],
-      "commit_subject": "packet(PK28): wire companion skill lists"
+      "commit_subject": "packet(PK28): wire homunculus skill upgrades"
     },
     "PK28.04": {
       "status": "NOT_STARTED",

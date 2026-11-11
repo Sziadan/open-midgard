@@ -54,7 +54,7 @@ Rectangle {
             height: 32
             color: modelData.selected ? "#e1ebfc" : "white"
             Image {
-                x: 4
+                x: 42
                 y: 4
                 width: 24
                 height: 24
@@ -62,25 +62,44 @@ Rectangle {
                 smooth: false
             }
             Text {
-                x: 35
-                y: 7
-                width: 135
+                x: 110
+                y: 4
+                width: 164
                 text: row.modelData.name
                 elide: Text.ElideRight
                 font.pixelSize: 12
                 textFormat: Text.PlainText
             }
             Text {
-                x: 175
-                y: 7
+                x: 110
+                y: 17
                 text: "Lv " + row.modelData.level
                 font.pixelSize: 12
             }
             Text {
-                x: 222
-                y: 7
+                x: 173
+                y: 17
                 text: "SP " + row.modelData.spCost
                 font.pixelSize: 12
+            }
+            Rectangle {
+                visible: row.modelData.upgradeVisible
+                x: row.modelData.upgradeX - row.x
+                y: row.modelData.upgradeY
+                width: row.modelData.upgradeSize
+                height: width
+                color: row.modelData.upgradeArt ? "transparent" : "#e8e8e8"
+                Image {
+                    anchors.fill: parent
+                    source: row.modelData.upgradeArt
+                    smooth: false
+                }
+                Text {
+                    anchors.centerIn: parent
+                    visible: !row.modelData.upgradeArt
+                    text: "+"
+                    font.pixelSize: 12
+                }
             }
         }
     }

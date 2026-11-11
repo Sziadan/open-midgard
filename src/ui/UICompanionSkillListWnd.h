@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIFrameWnd.h"
+#include <array>
 #include <list>
 #include <map>
 #include <vector>
@@ -22,6 +23,10 @@ public:
         bool selected;
         std::string name;
         const Icon* icon;
+        const Icon* upgrade;
+        int upgradeX;
+        int upgradeY;
+        int upgradeSize;
     };
 
     explicit UICompanionSkillListWnd(int windowId);
@@ -41,7 +46,9 @@ public:
 
 private:
     const PLAYER_SKILL_INFO* SkillAt(int x, int y) const;
+    const PLAYER_SKILL_INFO* UpgradeAt(int x, int y) const;
     const std::list<PLAYER_SKILL_INFO>& Skills() const;
+    bool CanUpgrade(const PLAYER_SKILL_INFO& skill) const;
     int MaxOffset() const;
     int UseLevel(int skillId) const;
     const Icon* GetIcon(int skillId);
@@ -49,8 +56,10 @@ private:
     const int m_family;
     UIFriendOptionButton* m_close;
     std::map<int, Icon> m_icons;
+    std::array<Icon, 2> m_upgradeArt;
     int m_offset = 0;
     int m_selectedSkill = 0;
     int m_dragSkill = 0;
+    int m_pressedUpgradeSkill = 0;
     POINT m_dragStart{};
 };

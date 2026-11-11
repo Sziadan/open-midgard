@@ -16,6 +16,9 @@ constexpr int kTitleHeight = 17;
 constexpr int kRowHeight = 32;
 constexpr int kVisibleRows = 2;
 constexpr int kClose = 135;
+constexpr int kUpgradeX = 78;
+constexpr int kUpgradeYOffset = 4;
+constexpr int kUpgradeSize = 24;
 }
 
 UICompanionSkillListWnd::UICompanionSkillListWnd(int windowId)
@@ -28,6 +31,13 @@ UICompanionSkillListWnd::UICompanionSkillListWnd(int windowId)
     m_close->Move(m_w - 14, 3);
     m_close->SetToolTip("Close");
     AddChild(m_close);
+    if (m_family == 1) {
+        const char* paths[] = {"basic_interface\\skill_up_a.bmp", "basic_interface\\skill_up_c.bmp"};
+        for (std::size_t i = 0; i < m_upgradeArt.size(); ++i) {
+            m_upgradeArt[i].pixels = LoadChatRoomSkinBitmap(paths[i]);
+            m_upgradeArt[i].uri = ChatRoomBitmapUri(m_upgradeArt[i].pixels);
+        }
+    }
 }
 
 const std::list<PLAYER_SKILL_INFO>& UICompanionSkillListWnd::Skills() const
@@ -47,6 +57,22 @@ const PLAYER_SKILL_INFO* UICompanionSkillListWnd::SkillAt(int x, int y) const
     const int index = std::min(m_offset, MaxOffset()) + rowY / kRowHeight;
     const auto& skills = Skills();
     return index < static_cast<int>(skills.size()) ? &*std::next(skills.begin(), index) : nullptr;
+}
+
+bool UICompanionSkillListWnd::CanUpgrade(const PLAYER_SKILL_INFO& skill) const
+{
+    return m_family == 1 && g_session.m_homunStatus.skillPoints > 0
+        && skill.m_isValid && skill.upgradable;
+}
+
+const PLAYER_SKILL_INFO* UICompanionSkillListWnd::UpgradeAt(int x, int y) const
+{
+    const auto* skill = SkillAt(x, y);
+    if (!skill || !CanUpgrade(*skill)) return nullptr;
+    const int localX = x - m_x - kUpgradeX;
+    const int rowY = (y - m_y - kTitleHeight) % kRowHeight;
+    return localX >= 0 && localX < kUpgradeSize
+        && rowY >= kUpgradeYOffset && rowY < kUpgradeYOffset + kUpgradeSize ? skill : nullptr;
 }
 
 int UICompanionSkillListWnd::UseLevel(int skillId) const
@@ -74,7 +100,9 @@ std::vector<UICompanionSkillListWnd::Row> UICompanionSkillListWnd::GetRows()
     std::vector<Row> rows;
     for (int i = 0; i < kVisibleRows && entry != skills.end(); ++i, ++entry) {
         rows.push_back({entry->SKID, kTitleHeight + i * kRowHeight, entry->level,
-            entry->spcost, entry->SKID == m_selectedSkill, entry->skillName, GetIcon(entry->SKID)});
+            entry->spcost, entry->SKID == m_selectedSkill, entry->skillName, GetIcon(entry->SKID),
+            CanUpgrade(*entry) ? &m_upgradeArt[entry->SKID == m_pressedUpgradeSkill ? 1 : 0] : nullptr,
+            kUpgradeX, kUpgradeYOffset, kUpgradeSize});
     }
     return rows;
 }
@@ -114,10 +142,21 @@ void UICompanionSkillListWnd::OnDraw()
                 RGB(225, 235, 252));
         const auto& pixels = row.icon->pixels;
         shopui::DrawBitmapPixelsTransparent(dc, pixels,
-            {m_x + 6, m_y + row.y + 4, m_x + 30, m_y + row.y + 28});
-        text(37, row.y + 7, 135, row.name);
-        text(177, row.y + 7, 42, "Lv " + std::to_string(row.level));
-        text(224, row.y + 7, 53, "SP " + std::to_string(row.spCost));
+            {m_x + 44, m_y + row.y + 4, m_x + 68, m_y + row.y + 28});
+        text(112, row.y + 4, 164, row.name);
+        text(112, row.y + 17, 58, "Lv " + std::to_string(row.level));
+        text(175, row.y + 17, 83, "SP " + std::to_string(row.spCost));
+        if (row.upgrade) {
+            const int x = m_x + row.upgradeX;
+            const int y = m_y + row.y + row.upgradeY;
+            const RECT bounds{x, y, x + row.upgradeSize, y + row.upgradeSize};
+            if (row.upgrade->pixels.IsValid()) {
+                shopui::DrawBitmapPixelsTransparent(dc, row.upgrade->pixels, bounds);
+            } else {
+                shopui::FillRectColor(dc, bounds, RGB(232, 232, 232));
+                text(row.upgradeX + 7, row.y + row.upgradeY + 4, 12, "+");
+            }
+        }
     }
     DrawChildrenToHdc(dc);
     ReleaseDrawTarget(dc);
@@ -126,6 +165,12 @@ void UICompanionSkillListWnd::OnDraw()
 void UICompanionSkillListWnd::OnLBtnDown(int x, int y)
 {
     m_dragSkill = 0;
+    m_pressedUpgradeSkill = 0;
+    if (const auto* upgrade = UpgradeAt(x, y)) {
+        m_pressedUpgradeSkill = upgrade->SKID;
+        Invalidate();
+        return;
+    }
     if (const auto* row = SkillAt(x, y)) {
         m_selectedSkill = row->SKID;
         if (row->m_isValid && row->level && row->type) {
@@ -140,6 +185,7 @@ void UICompanionSkillListWnd::OnLBtnDown(int x, int y)
 
 void UICompanionSkillListWnd::OnLBtnDblClk(int x, int y)
 {
+    if (UpgradeAt(x, y)) return;
     if (const auto* row = SkillAt(x, y)) {
         m_selectedSkill = row->SKID;
         ArmPendingSkillUseFromSkillList(row->SKID, m_family);
@@ -152,6 +198,16 @@ void UICompanionSkillListWnd::OnLBtnDblClk(int x, int y)
 void UICompanionSkillListWnd::OnLBtnUp(int x, int y)
 {
     m_dragSkill = 0;
+    if (m_pressedUpgradeSkill) {
+        const int pressedSkill = m_pressedUpgradeSkill;
+        m_pressedUpgradeSkill = 0;
+        const auto* row = UpgradeAt(x, y);
+        auto* mode = g_modeMgr.GetCurrentGameMode();
+        if (row && row->SKID == pressedSkill && mode && !mode->m_isReqUpgradeSkillLevel)
+            mode->SendMsg(CGameMode::GameMsg_RequestUpgradeSkillLevel, pressedSkill, 0, 0);
+        Invalidate();
+        return;
+    }
     UIFrameWnd::OnLBtnUp(x, y);
 }
 
