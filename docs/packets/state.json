@@ -720,7 +720,8 @@
       "evidence": [
         "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
         "docs/packets/work-items/PK22.02.md",
-        "docs/packets/evidence/PK22.02-showefst-shared-visuals.md"
+        "docs/packets/evidence/PK22.02-showefst-shared-visuals.md",
+        "docs/packets/evidence/PK22.02-showefst-pc-visuals.md"
       ],
       "commit_subject": null
     },

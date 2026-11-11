@@ -212,7 +212,6 @@ constexpr int kEffectStateHidingMask = 0x0004;
 constexpr int kEffectStateSpecialHidingMask = 0x0040;
 constexpr int kEffectStateBurrowMask = 0x0002;
 constexpr int kEffectStateFalconMask = 0x0010;
-constexpr int kShowEfstAssumptioMask = 0x00000800;
 constexpr int kEffectStatePushCartMask = 0x0008 | 0x0080 | 0x0100 | 0x0200 | 0x0400;
 constexpr u16 kSkillIdHiding = 51;
 constexpr u16 kSkillIdCloaking = 135;
@@ -619,9 +618,7 @@ CGameActor* ResolveSkillPacketActor(CGameMode& mode, u32 aid)
 void HandleNpcShowEfstUpdate(CGameMode& mode, const PacketView& packet)
 {
     // Ref ZC_NPC_SHOWEFST_UPDATE (0x028A): id.L@2, effectState.L@6,
-    // level.L@10, showEFST.L@14. GameModeShowEFST's PC Assumptio branch
-    // launches effect 375 only when OPT3_ASSUMPTIO (0x800) is set and the
-    // actor is not hiding/burrowed.
+    // level.L@10, showEFST.L@14. OPTION remains owned by the attribute-state path.
     if (!packet.data || packet.packetLength < 18) {
         return;
     }
@@ -640,15 +637,6 @@ void HandleNpcShowEfstUpdate(CGameMode& mode, const PacketView& packet)
     }
     actor->SetShowEfst(showEfst);
 
-    const int actorEffectState = actor->m_effectState;
-    const bool hiding = HasEffectStateFlag(actorEffectState, kEffectStateHidingMask)
-        || HasEffectStateFlag(actorEffectState, kEffectStateBurrowMask);
-    if (actor->m_isPc
-        && !hiding
-        && HasEffectStateFlag(showEfst, kShowEfstAssumptioMask)
-        && !EffectExists(actor, 375)) {
-        actor->LaunchEffect(375, vector3d{}, 0.0f);
-    }
 }
 
 CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)
@@ -6371,13 +6359,6 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
     if (state.showEfst) actor->SetShowEfst(*state.showEfst);
     else actor->RefreshShowEfstVisuals();
     ActivateSiegeEmblem(mode, *actor);
-    // OPT3_OVERTHRUST is 0x2, which means burrow in OPTION. Combining
-    // these fields makes buffed blacksmiths invisible (and confuses carts).
-    if (isPc && (state.showEfst.value_or(0) & kShowEfstAssumptioMask)
-        && !(state.effectState & (kEffectStateHidingMask | kEffectStateBurrowMask | kEffectStateSpecialHidingMask))
-        && !EffectExists(actor, 375)) {
-        actor->LaunchEffect(375, vector3d{}, 0.0f);
-    }
 
     // Ref/GameModePacket.cpp GameModeShowEFST: clevel 99 starts message 126
     // unless the actor is in cloak. Hiding and burrow are handled inside 126.

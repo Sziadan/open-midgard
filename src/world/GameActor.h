@@ -363,8 +363,13 @@ public:
 private:
     u32 m_showEfst = 0;
     u32 m_visibleShowEfst = 0;
-    u8 m_showEfstIconClaims = 0;
-    std::map<int, CRagEffect*> m_showEfstVisuals;
+    std::vector<int> m_showEfstIconClaims;
+    struct ShowEfstInstance {
+        CRagEffect* effect;
+        int marker;
+        int option;
+    };
+    std::map<int, ShowEfstInstance> m_showEfstVisuals;
 };
 
 class CMsgEffect : public CGameObject {

@@ -103,17 +103,61 @@ source_routes = {
     277: [456], 278: [456], 279: [456], 280: [456], 281: [456],
 }
 source_aliases = {2: 161, 25: 188, 87: 235, 165: 232, 166: 232, 167: 232, 200: 201}
-current_aliases = {25: 188, 68: 149, 165: 232, 166: 232, 167: 232, 200: 201, 277: 281, 278: 281, 279: 281, 280: 281}
-shared_routes = {87: "updateVisualClaim(0x1u)", 235: "updateVisualClaim(0x2u)", 97: "updateVisualClaim(0x4u, true)"}
-showefst = norm(body(ACTOR, "void CGameActor::RefreshShowEfstVisuals("))
-assert "reconcile(254," in showefst and "m_showEfstIconClaims & 0x3u" in showefst
-assert "reconcile(655," in showefst and "m_showEfstIconClaims & 0x4u" in showefst and "? 656 : 0" in showefst
-assert "RefreshShowEfstVisuals(!enabled && end655)" in src110
+current_aliases = {
+    2: 123, 25: 123, 31: 123, 86: 123, 87: 123, 97: 123, 107: 123, 113: 123, 122: 123,
+    68: 149, 153: 263, 161: 263, 188: 263, 207: 263, 235: 263,
+    165: 232, 166: 232, 167: 232, 200: 201,
+    277: 281, 278: 281, 279: 281, 280: 281,
+}
+claim_routes = {
+    2: [166], 25: [166], 31: [166], 86: [203, 166], 87: [254], 97: [655],
+    103: [474], 107: [368], 113: [382], 121: [396], 122: [396], 123: [394],
+    153: [419], 161: [166], 165: [418, 544], 166: [418, 544], 167: [418, 544],
+    188: [166], 207: [617], 232: [418, 544], 235: [254], 263: [586],
+}
+claim_side_effects = {103: [367], 121: [395]}
+showefst_body = body(ACTOR, "void CGameActor::RefreshShowEfstVisuals(")
+showefst = norm(showefst_body)
+showefst_claim_specs = (
+    ((2, 161), "case 2: case 161: request(166, 0xffff, 130); break;", (166,)),
+    ((25, 188), "case 25: case 188: request(166, 0xffff, 128); break;", (166,)),
+    ((31,), "case 31: request(166, 0xffff, 169); break;", (166,)),
+    ((86,), "case 86: request(203); request(166, 0xfffe, 128); break;", (203, 166)),
+    ((87, 235), "case 87: case 235: request(254); break;", (254,)),
+    ((97,), "case 97: request(655); break;", (655,)),
+    ((103,), "case 103: request(474); break;", (474,)),
+    ((107,), "case 107: request(368); break;", (368,)),
+    ((113,), "case 113: request(382); break;", (382,)),
+    ((121, 122), "case 121: case 122: request(396); break;", (396,)),
+    ((123,), "case 123: request(394); break;", (394,)),
+    ((153,), "case 153: request(419); break;", (419,)),
+    ((165, 166, 167, 232), "case 165: case 166: case 167: case 232: request(418); request(544); break;", (418, 544)),
+    ((207,), "case 207: request(617, 0xffff, 130); break;", (617,)),
+    ((263,), "case 263: request(586); break;", (586,)),
+)
+showefst_claims = {}
+for status_ids, group, effect_ids in showefst_claim_specs:
+    assert group in showefst, f"RefreshShowEfstVisuals claim branch changed: {group}"
+    for status in status_ids:
+        showefst_claims[status] = (group, list(effect_ids))
+assert set(claim_routes) == set(showefst_claims), "status-110 claim coverage differs from RefreshShowEfstVisuals"
+assert all(claim_routes[status] == effect_ids for status, (_, effect_ids) in showefst_claims.items()), \
+    "status-110 claim effect mapping differs from RefreshShowEfstVisuals"
+assert "m_showEfstIconClaims.rbegin()" in showefst and "switch (*it)" in showefst
+assert "wanted->marker == instance.marker && wanted->option == instance.option" in showefst
+assert "if (present) continue;" in showefst, "snapshot/icon reconciliation may duplicate another producer's effect"
+assert "if (id == 420 && nonPc) LaunchEffect(540);" in showefst
+assert "if (id == 655 && (nonPc || status655Ending)) LaunchEffect(656);" in showefst
+claims_impl = norm(src110)
+assert "claims.erase(std::remove(claims.begin(), claims.end(), skillStatus), claims.end()); if (enabled) claims.push_back(skillStatus); RefreshShowEfstVisuals(!enabled && skillStatus == 97);" in claims_impl
+assert "effect != owned && effect->GetEffectType() == id" in src110, "message 110 may remove a ShowEFST-owned instance by ID"
 assert set(source_routes) | {29, 34, 264, 266} == source_ids | {149}
 for skill, expected in source_routes.items():
     implementation_branch = norm(switch_branch(src110, "skillStatus", current_aliases.get(skill, skill)))
-    if skill in shared_routes:
-        assert shared_routes[skill] in implementation_branch, f"message110 subcase {skill}: missing shared effect claim"
+    if skill in claim_routes:
+        assert "updateVisualClaim();" in implementation_branch, f"message110 subcase {skill}: missing shared effect claim"
+        assert all(str(effect) in implementation_branch for effect in claim_side_effects.get(skill, [])), \
+            f"message110 subcase {skill}: distinct direct side effect omitted"
     else:
         assert all(str(effect) in implementation_branch for effect in expected), f"message110 subcase {skill}: implementation branch omitted effect id(s) {expected}"
     source_id = source_aliases.get(skill, skill)
@@ -122,6 +166,10 @@ for skill, expected in source_routes.items():
         assert all(str(effect) in source_branch for effect in expected), f"source subcase {source_id} lacks effect id(s) {expected}"
 
 assert "m_isTrickDead = 0" in src110 and "m_isLieOnGround = 0" in src110 and "SetAction(64, 4, 1)" in src110
+assert "removeUnclaimed(375); RefreshShowEfstVisuals(); return;" in norm(switch_branch(src110, "skillStatus", 110))
+assert "if (!enabled) { removeUnclaimed(424); RefreshShowEfstVisuals(); }" in norm(switch_branch(src110, "skillStatus", current_aliases[68]))
+assert "if (enabled) launch(367);" in norm(switch_branch(src110, "skillStatus", 103))
+assert "removeOne(395);" in norm(switch_branch(src110, "skillStatus", 121))
 assert "SetNightMode(enabled)" in src110 and "void CWorld::SetNightMode(bool enabled)" in WORLD
 night_marker = "void __thiscall CWeather::Process(CWeather *this)\n{"
 ref_night, exe_night = body(REF_PRIM, night_marker), body(EXE_PRIM, night_marker)

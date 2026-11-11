@@ -123,6 +123,11 @@ def launch_sources(ids: set[int]) -> dict[int, set[str]]:
                 effect_id = int(match.group(1))
                 if effect_id in ids:
                     result[effect_id].add(rel)
+        if rel == "src/world/GameActor.cpp":
+            show_efst = body(text, "void CGameActor::RefreshShowEfstVisuals(")
+            for effect_id in map(int, re.findall(r"\brequest\(\s*(\d+)\b", show_efst)):
+                if effect_id in ids:
+                    result[effect_id].add(rel)
     return result
 
 

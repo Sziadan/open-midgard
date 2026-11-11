@@ -32,6 +32,20 @@ int CountActorEffect(const CGameActor& actor, int effectId)
         [effectId](const CRagEffect* effect) { return effect && effect->GetEffectType() == effectId; }));
 }
 
+CRagEffect* FindActorEffect(CGameActor& actor, int effectId)
+{
+    const auto found = std::find_if(actor.m_effectList.begin(), actor.m_effectList.end(),
+        [effectId](CRagEffect* effect) { return effect && effect->GetEffectType() == effectId; });
+    return found == actor.m_effectList.end() ? nullptr : *found;
+}
+
+bool EffectPositionEquals(const CRagEffect* effect, float x, float y, float z)
+{
+    if (!effect) return false;
+    const vector3d& position = effect->EffectPosition();
+    return position.x == x && position.y == y && position.z == z;
+}
+
 void RequireActorEffectCount(const CGameActor& actor, int effectId, int expected, const char* message)
 {
     Require(CountActorEffect(actor, effectId) == expected, message);
@@ -59,13 +73,15 @@ void NpcShowEfstReplay()
     CGameActor statusFirst;
     CGameActor hidden;
     CGameActor packetStateOnly;
+    CGameActor pcHidden;
     nonPc.m_gid = 0x11000001u; nonPc.m_isPc = 0;
     pc.m_gid = 0x11000002u; pc.m_isPc = 1;
     maskFirst.m_gid = 0x11000003u; maskFirst.m_isPc = 0;
     statusFirst.m_gid = 0x11000004u; statusFirst.m_isPc = 0;
     hidden.m_gid = 0x11000005u; hidden.m_isPc = 0;
     packetStateOnly.m_gid = 0x11000006u; packetStateOnly.m_isPc = 0;
-    CGameActor* const actors[] = { &nonPc, &pc, &maskFirst, &statusFirst, &hidden, &packetStateOnly };
+    pcHidden.m_gid = 0x11000007u; pcHidden.m_isPc = 1;
+    CGameActor* const actors[] = { &nonPc, &pc, &maskFirst, &statusFirst, &hidden, &packetStateOnly, &pcHidden };
     mode.m_world = &world;
     for (CGameActor* actor : actors) {
         world.m_actorList.push_back(actor);
@@ -145,6 +161,21 @@ void NpcShowEfstReplay()
     RequireActorEffectCount(statusFirst, 655, 0, "OPTION end did not release shared 655 after status-first order");
     RequireActorEffectCount(statusFirst, 656, 1, "status-first OPTION end did not create one terminal 656");
 
+    // Icon status 188 aliases the second selector's 166 representation. While
+    // both owners exist, the OPT3 snapshot wins; after it clears, the icon's
+    // option 128 representation remains until its own release.
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0x1u);
+    SendShowEfstStatus(pc, 188, true);
+    RequireActorEffectCount(pc, 166, 1, "status 188 duplicated the shared 166 snapshot effect");
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 200.0f, 200.0f, 0.0f),
+        "OPT3 selector did not retain precedence over status 188's option 128");
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0);
+    RequireActorEffectCount(pc, 166, 1, "OPT3 clear removed a remaining status 188 claim");
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 250.0f, 150.0f, 150.0f),
+        "remaining status 188 claim did not restore marker option 128");
+    SendShowEfstStatus(pc, 188, false);
+    RequireActorEffectCount(pc, 166, 0, "status 188 release did not remove its final 166 claim");
+
     // Non-PC OPT3 add/remove uses separate terminal effects exactly once.
     DispatchNpcShowEfst(mode, router, nonPc.m_gid, 0, 1, allNonPcBits);
     DispatchNpcShowEfst(mode, router, nonPc.m_gid, 0, 1, 0);
@@ -154,15 +185,52 @@ void NpcShowEfstReplay()
     RequireActorEffectCount(nonPc, 427, 0, "OPT3 0x4 effect survived its mask end");
     RequireActorEffectCount(nonPc, 667, 0, "OPT3 0x8000 effect survived its mask end");
 
-    // PC actors intentionally expose only the 254/655 subset of these flags.
-    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, allNonPcBits);
-    RequireActorEffectCount(pc, 254, 1, "PC snapshot omitted effect 254");
-    RequireActorEffectCount(pc, 655, 1, "PC snapshot omitted effect 655");
-    for (const int id : {420, 427, 667}) {
-        RequireActorEffectCount(pc, id, 0, "PC snapshot incorrectly activated non-PC effect");
+    // PC selector precedence and independent effect mask. The all-bits snapshot
+    // must select only the first 166 color variant and still launch each other
+    // independently selected effect once.
+    constexpr u32 allPcBits = 0x0003ffffu;
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, allPcBits);
+    const int pcEffectIds[] = {166,203,254,418,544,419,424,586,655,474,382,368,394,396,375};
+    for (const int id : pcEffectIds) {
+        RequireActorEffectCount(pc, id, 1, "PC snapshot omitted or duplicated an expected OPT3 effect");
     }
+    RequireActorEffectCount(pc, 617, 0, "PC 0x4000 selector overrode the earlier 0x1 selector");
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 200.0f, 200.0f, 0.0f),
+        "PC selector precedence did not choose 0x1 / marker option 130");
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, allPcBits);
+    RequireActorEffectCount(pc, 166, 1, "duplicate PC snapshot stacked selector effect 166");
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0x2u);
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 250.0f, 150.0f, 150.0f),
+        "PC 0x2 selector did not set marker option 128");
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0x4u);
+    Require(EffectPositionEquals(FindActorEffect(pc, 166), 180.0f, 180.0f, 250.0f),
+        "PC 0x4 selector did not set marker option 169");
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0x4000u);
+    RequireActorEffectCount(pc, 166, 0, "PC 0x4000 selector retained obsolete 166");
+    RequireActorEffectCount(pc, 617, 1, "PC 0x4000 selector omitted effect 617");
     DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0);
+    for (const int id : pcEffectIds) {
+        RequireActorEffectCount(pc, id, 0, "PC OPT3 mask clear retained an effect claim");
+    }
+    RequireActorEffectCount(pc, 617, 0, "PC OPT3 mask clear retained effect 617");
     RequireActorEffectCount(pc, 656, 0, "PC OPTION mask end incorrectly launched non-PC terminal 656");
+
+    // Hidden PC OPT3 suppresses these four effects and reveals them again from
+    // the retained snapshot; the non-PC set differs (tested below).
+    constexpr u32 pcHideSensitive = 0x00021018u; // 203, 254, 418, 586.
+    pcHidden.SetAttrState(0, 0x4, 0, false);
+    Require(pcHidden.LaunchEffect(203) && pcHidden.LaunchEffect(203),
+        "could not stage unrelated instances for hidden ShowEFST cleanup");
+    DispatchNpcShowEfst(mode, router, pcHidden.m_gid, 0, 1, pcHideSensitive);
+    RequireActorEffectCount(pcHidden, 203, 1, "hidden snapshot did not remove exactly one unrelated 203");
+    DispatchNpcShowEfst(mode, router, pcHidden.m_gid, 0, 1, pcHideSensitive);
+    for (const int id : {203,254,418,586}) {
+        RequireActorEffectCount(pcHidden, id, 0, "hidden PC retained a hide-sensitive OPT3 effect");
+    }
+    pcHidden.SetAttrState(0, 0, 0, false);
+    for (const int id : {203,254,418,586}) {
+        RequireActorEffectCount(pcHidden, id, 1, "revealed PC did not restore a hide-sensitive OPT3 effect");
+    }
 
     // The incoming OPTION field is not authoritative for the current actor
     // concealment state: current visible actor state permits effect 254.
@@ -188,10 +256,27 @@ void NpcShowEfstReplay()
     Require(packetStateOnly.m_effectList.size() == 1 && packetStateOnly.m_effectList.front() == external,
         "snapshot clear detached an effect it did not create");
 
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0x800u);
+    SendShowEfstStatus(pc, 110, false);
+    RequireActorEffectCount(pc, 375, 1,
+        "removal-only status 110 removed the remaining OPT3-owned Assumptio claim");
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0);
+    RequireActorEffectCount(pc, 375, 0,
+        "clearing the final OPT3-owned Assumptio claim retained effect 375");
+
+    CRagEffect* const external375 = pc.LaunchEffect(375);
+    Require(external375, "unrelated 375 effect setup failed");
+    SendShowEfstStatus(pc, 110, false);
+    RequireActorEffectCount(pc, 375, 0,
+        "removal-only status 110 did not remove an unclaimed Assumptio effect");
+    SendShowEfstStatus(pc, 110, true);
+    RequireActorEffectCount(pc, 375, 0,
+        "removal-only status 110 incorrectly created an Assumptio effect on activation");
+
     const size_t worldEffectsBeforeUnknown = world.m_gameObjectList.size();
     DispatchNpcShowEfst(mode, router, 0xdeadbeefu, 0, 1, allNonPcBits);
     Require(mode.m_runtimeActors.size() == std::size(actors)
         && world.m_gameObjectList.size() == worldEffectsBeforeUnknown,
         "unknown actor 028A created actor or effect state");
-    std::cout << "{\"case_id\":\"npc_show_efst_replay\",\"contract_id\":\"PK22.02\",\"literal_028a\":true,\"nonpc_effects\":[420,427,254,655,667],\"shared_claim_end_orders\":2,\"terminal_effects\":[540,656],\"pc_subset\":[254,655],\"hidden_254_suppression_reveal\":true,\"unknown_actor_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
+    std::cout << "{\"case_id\":\"npc_show_efst_replay\",\"contract_id\":\"PK22.02\",\"literal_028a\":true,\"nonpc_effects\":[420,427,254,655,667],\"pc_effect_matrix\":[166,203,254,418,544,419,424,586,655,474,382,368,394,396,375,617],\"selector_options\":[130,128,169],\"shared_claim_end_orders\":2,\"status188_snapshot_dual_release\":true,\"terminal_effects\":[540,656],\"hidden_pc_effects\":[203,254,418,586],\"removal_only_110_375\":true,\"unknown_actor_ignored\":true,\"outcome\":\"PASS\"}" << std::endl;
 }

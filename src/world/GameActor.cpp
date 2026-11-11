@@ -5346,6 +5346,18 @@ bool CGameActor::ProcessStatusMsgEffectMessage(int msg)
 void CGameActor::SetShowEfst(u32 opt3)
 {
     m_showEfst = opt3;
+    if ((m_effectState & (kEffectStateHidingMask | kEffectStateBurrowMask)) != 0) {
+        // The original hidden snapshot removes one instance of each effect.
+        // A managed instance is removed by reconciliation below.
+        for (const int id : {203, 254, 418, 586}) {
+            if (id == 586 && !m_isPc) continue;
+            const auto owned = m_showEfstVisuals.find(id);
+            if (owned == m_showEfstVisuals.end()
+                || std::find(m_effectList.begin(), m_effectList.end(), owned->second.effect) == m_effectList.end()) {
+                RemoveEffectById(id);
+            }
+        }
+    }
     RefreshShowEfstVisuals();
 }
 
@@ -5354,44 +5366,112 @@ void CGameActor::RefreshShowEfstVisuals(bool status655Ending)
     const bool hidden = (m_effectState & (kEffectStateHidingMask | kEffectStateBurrowMask)) != 0;
     if (!hidden) m_visibleShowEfst = m_showEfst;
 
-    const auto reconcile = [this](int id, bool wanted, int endEffect = 0) {
-        auto current = m_showEfstVisuals.find(id);
-        if (current != m_showEfstVisuals.end()
-            && std::find(m_effectList.begin(), m_effectList.end(), current->second) == m_effectList.end()) {
-            m_showEfstVisuals.erase(current);
-            current = m_showEfstVisuals.end();
+    struct RequestedEffect {
+        int id;
+        int marker;
+        int option;
+    };
+    std::vector<RequestedEffect> desired;
+    const bool nonPc = m_isPc == 0;
+    const auto findDesired = [&desired](int id) {
+        return std::find_if(desired.begin(), desired.end(), [id](const auto& entry) { return entry.id == id; });
+    };
+    const auto request = [&](int id, int marker = 0, int option = 0) {
+        if (hidden && (id == 203 || id == 254 || id == 418 || (!nonPc && id == 586))) {
+            return;
         }
-        if (wanted && current == m_showEfstVisuals.end()) {
-            // Other producers can attach the same effect. Only record and
-            // release the instance created for these snapshot/icon claims.
-            const bool present = std::any_of(m_effectList.begin(), m_effectList.end(), [id](const auto* effect) {
-                return effect && effect->GetEffectType() == id;
-            });
-            if (!present) {
-                if (auto* effect = LaunchEffect(id)) m_showEfstVisuals.emplace(id, effect);
-            }
-        } else if (!wanted && current != m_showEfstVisuals.end()) {
-            const bool removed = RemoveAttachedEffect(current->second);
-            m_showEfstVisuals.erase(current);
-            if (removed && endEffect != 0) LaunchEffect(endEffect);
-        }
+        if (findDesired(id) == desired.end()) desired.push_back({id, marker, option});
     };
 
     const u32 opt3 = m_visibleShowEfst;
-    const bool nonPc = m_isPc == 0;
-    reconcile(420, nonPc && (opt3 & 0x2u) != 0, nonPc ? 540 : 0);
-    reconcile(427, nonPc && (opt3 & 0x4u) != 0);
-    reconcile(254, !hidden && ((opt3 & 0x10u) != 0 || (m_showEfstIconClaims & 0x3u) != 0));
-    reconcile(655, (opt3 & 0x10000u) != 0 || (m_showEfstIconClaims & 0x4u) != 0,
-        nonPc || status655Ending ? 656 : 0);
-    reconcile(667, nonPc && (opt3 & 0x8000u) != 0);
+    if (nonPc) {
+        if (opt3 & 0x2u) request(420);
+        if (opt3 & 0x4u) request(427);
+        if (opt3 & 0x10u) request(254);
+        if (opt3 & 0x10000u) request(655);
+        if (opt3 & 0x8000u) request(667);
+    } else {
+        if (opt3 & 0x1u) request(166, 0xffff, 130);
+        else if (opt3 & 0x2u) request(166, 0xffff, 128);
+        else if (opt3 & 0x4u) request(166, 0xffff, 169);
+        else if (opt3 & 0x4000u) request(617);
+
+        if (opt3 & 0x8u) request(203);
+        if (opt3 & 0x10u) request(254);
+        if (opt3 & 0x1000u) {
+            request(418);
+            request(544);
+        }
+        if (opt3 & 0x2000u) request(419);
+        if (opt3 & 0x8000u) request(424);
+        if (opt3 & 0x20000u) request(586);
+        if (opt3 & 0x10000u) request(655);
+        if (opt3 & 0x40u) request(474);
+        if (opt3 & 0x100u) request(382);
+        if (opt3 & 0x80u) request(368);
+        if (opt3 & 0x200u) request(394);
+        if (opt3 & 0x400u) request(396);
+        if (opt3 & 0x800u) request(375);
+    }
+
+    // A snapshot chooses the shared representation first. Where no snapshot
+    // claims the effect, the most recently refreshed icon chooses its variant.
+    for (auto it = m_showEfstIconClaims.rbegin(); it != m_showEfstIconClaims.rend(); ++it) {
+        switch (*it) {
+        case 2: case 161: request(166, 0xffff, 130); break;
+        case 25: case 188: request(166, 0xffff, 128); break;
+        case 31: request(166, 0xffff, 169); break;
+        case 86: request(203); request(166, 0xfffe, 128); break;
+        case 87: case 235: request(254); break;
+        case 97: request(655); break;
+        case 103: request(474); break;
+        case 107: request(368); break;
+        case 113: request(382); break;
+        case 121: case 122: request(396); break;
+        case 123: request(394); break;
+        case 153: request(419); break;
+        case 165: case 166: case 167: case 232: request(418); request(544); break;
+        case 207: request(617, 0xffff, 130); break;
+        case 263: request(586); break;
+        }
+    }
+
+    for (auto it = m_showEfstVisuals.begin(); it != m_showEfstVisuals.end();) {
+        const int id = it->first;
+        const auto& instance = it->second;
+        const auto wanted = findDesired(id);
+        const bool listed = std::find(m_effectList.begin(), m_effectList.end(), instance.effect) != m_effectList.end();
+        if (listed && wanted != desired.end()
+            && wanted->marker == instance.marker && wanted->option == instance.option) {
+            ++it;
+            continue;
+        }
+        const bool removed = listed && RemoveAttachedEffect(instance.effect);
+        it = m_showEfstVisuals.erase(it);
+        if (removed && wanted == desired.end()) {
+            if (id == 420 && nonPc) LaunchEffect(540);
+            if (id == 655 && (nonPc || status655Ending)) LaunchEffect(656);
+        }
+    }
+
+    for (const auto& wanted : desired) {
+        // Leave instances attached by unrelated producers under their own ownership.
+        const bool present = std::any_of(m_effectList.begin(), m_effectList.end(), [&wanted](const auto* effect) {
+            return effect && effect->GetEffectType() == wanted.id;
+        });
+        if (present) continue;
+        if (auto* effect = LaunchEffect(wanted.id)) {
+            if (wanted.marker) effect->SendMsg(effect, 44, wanted.marker, wanted.option, 0);
+            m_showEfstVisuals.emplace(wanted.id, ShowEfstInstance{effect, wanted.marker, wanted.option});
+        }
+    }
 }
 
 void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
 {
     if (msg == 23 && src) {
         const auto found = std::find_if(m_showEfstVisuals.begin(), m_showEfstVisuals.end(),
-            [src](const auto& entry) { return entry.second == src; });
+            [src](const auto& entry) { return entry.second.effect == src; });
         if (found != m_showEfstVisuals.end()) m_showEfstVisuals.erase(found);
     }
 #if defined(RO_SKILL_REPLAY_TRACE)
@@ -5495,17 +5575,12 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 110: {
         const int skillStatus = static_cast<int>(par1);
         const bool enabled = par2 != 0;
-        const auto updateVisualClaim = [this, enabled](u8 visualClaim, bool end655 = false) {
-            if (enabled) m_showEfstIconClaims |= visualClaim;
-            else m_showEfstIconClaims &= static_cast<u8>(~visualClaim);
-            RefreshShowEfstVisuals(!enabled && end655);
+        const auto updateVisualClaim = [this, enabled, skillStatus] {
+            auto& claims = m_showEfstIconClaims;
+            claims.erase(std::remove(claims.begin(), claims.end(), skillStatus), claims.end());
+            if (enabled) claims.push_back(skillStatus);
+            RefreshShowEfstVisuals(!enabled && skillStatus == 97);
         };
-        switch (skillStatus) {
-        case 87: updateVisualClaim(0x1u); return;
-        case 235: updateVisualClaim(0x2u); return;
-        case 97: updateVisualClaim(0x4u, true); return;
-        default: break;
-        }
         auto hasEffect = [this](int effectId) {
             return std::any_of(m_effectList.begin(), m_effectList.end(), [effectId](const CRagEffect* effect) {
                 return effect && effect->GetEffectType() == effectId;
@@ -5522,9 +5597,14 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         auto launch = [this](int effectId) {
             return LaunchEffect(effectId, vector3d{}, 0.0f);
         };
-        auto launchMarked = [&launch](int effectId, int marker, int option) {
-            if (CRagEffect* effect = launch(effectId)) {
-                effect->SendMsg(effect, 44, marker, option, 0);
+        auto removeUnclaimed = [this](int id) {
+            const auto claim = m_showEfstVisuals.find(id);
+            const auto* owned = claim == m_showEfstVisuals.end() ? nullptr : claim->second.effect;
+            for (auto it = m_effectList.begin(); it != m_effectList.end();) {
+                CRagEffect* effect = *it++;
+                if (effect && effect != owned && effect->GetEffectType() == id) {
+                    RemoveAttachedEffect(effect);
+                }
             }
         };
         auto replace = [&removeAll, &launch, enabled](int effectId) {
@@ -5537,13 +5617,16 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         if (skillStatus <= 149) {
             switch (skillStatus) {
             case 2:
-                removeAll(166);
-                if (enabled) launchMarked(166, 0xFFFF, 130);
-                return;
             case 25:
-            case 188:
-                removeAll(166);
-                if (enabled) launchMarked(166, 0xFFFF, 128);
+            case 31:
+            case 86:
+            case 87:
+            case 97:
+            case 107:
+            case 113:
+            case 122:
+            case 123:
+                updateVisualClaim();
                 return;
             case 29:
                 if (!enabled) {
@@ -5559,12 +5642,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
                     m_isMotionFreezed = 1;
                 }
                 return;
-            case 31:
-                removeAll(166);
-                if (enabled) launchMarked(166, 0xFFFF, 169);
-                return;
             case 34:
-            case 264:
                 // The source only toggles legacy delayed skill-sound globals here.
                 return;
             case 68:
@@ -5574,39 +5652,31 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
                         if (mode->m_world) mode->m_world->SetNightMode(enabled);
                     }
                 }
-                if (!enabled) removeAll(424);
-                return;
-            case 86:
-                removeAll(203);
-                if (enabled) launch(203);
-                removeAll(166);
-                if (enabled) launchMarked(166, 0xFFFE, 128);
+                if (!enabled) {
+                    removeUnclaimed(424);
+                    RefreshShowEfstVisuals();
+                }
                 return;
             case 95:
                 removeAll(453);
                 return;
             case 103:
                 removeAll(367);
-                removeAll(474);
-                if (enabled) {
-                    launch(367);
-                    launch(474);
-                }
+                if (enabled) launch(367);
+                updateVisualClaim();
                 return;
             case 105:
                 removeOne(369);
                 if (enabled) launch(369);
                 return;
-            case 107: replace(368); return;
-            case 110: removeAll(375); return;
-            case 113: replace(382); return;
+            case 110:
+                removeUnclaimed(375);
+                RefreshShowEfstVisuals();
+                return;
             case 121:
                 removeOne(395);
-                removeAll(396);
-                if (enabled) launch(396);
+                updateVisualClaim();
                 return;
-            case 122: replace(396); return;
-            case 123: replace(394); return;
             case 133:
                 if (hasEffect(442)) launch(443);
                 removeOne(442);
@@ -5632,11 +5702,12 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             }
             return;
         case 153:
-            replace(419);
-            return;
         case 161:
-            removeAll(166);
-            if (enabled) launchMarked(166, 0xFFFF, 130);
+        case 188:
+        case 235:
+        case 207:
+        case 263:
+            updateVisualClaim();
             return;
         case 159:
             if (enabled) launch(546);
@@ -5652,21 +5723,14 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         case 166:
         case 167:
         case 232:
-            removeAll(418);
-            removeAll(544);
-            if (enabled) {
-                launch(418);
-                launch(544);
-            }
+            updateVisualClaim();
             return;
         case 198: replace(601); return;
         case 200:
         case 201: replace(604); return;
-        case 207:
-            removeAll(617);
-            if (enabled) launchMarked(617, 0xFFFF, 130);
+        case 264:
+            // Legacy delayed skill-sound globals have no runtime owner here.
             return;
-        case 263: replace(586); return;
         case 266:
             return;
         case 277:
