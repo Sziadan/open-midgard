@@ -373,6 +373,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x02E7, kVariablePacketSize);
     SetPacketSize(0x02E9, kVariablePacketSize);
     SetPacketSize(0x02E8, kVariablePacketSize);
+    SetPacketSize(0x02F0, 10);             // ZC_PROGRESS
+    SetPacketSize(0x02F2, 2);              // ZC_PROGRESS_CANCEL
     SetPacketSize(0x0459, 8);
     SetPacketSize(0x045A, 10);
     SetPacketSize(0x045B, kVariablePacketSize);

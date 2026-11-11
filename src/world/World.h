@@ -20,6 +20,7 @@ class CView;
 class CTexture;
 class CGndRes;
 class C3dWorldRes;
+class UIRechargeGage;
 
 enum class WorldProjectileVisual {
     Arrow,
@@ -326,7 +327,8 @@ public:
     void UpdateBackgroundObjects(const matrix* viewMatrix);
     void UpdateActors();
     void ProcessActorChatRoomTitles(const matrix& viewMatrix);
-    void ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude);
+    void ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude,
+        UIRechargeGage* npcProgressGauge = nullptr);
     void RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, float cameraLongitude, float cameraLatitude);
     void RenderActors(const matrix& viewMatrix, float cameraLongitude);
     void RenderSiegeEmblems(const matrix& viewMatrix) const;

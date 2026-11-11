@@ -55,6 +55,7 @@
 #include "ui/UiScale.h"
 #include "ui/UINpcMenuWnd.h"
 #include "ui/UIPlayerContextMenuWnd.h"
+#include "ui/UIRechargeGage.h"
 #include "ui/UISayDialogWnd.h"
 #include "ui/UIWindow.h"
 #include "ui/UIOptionWnd.h"
@@ -7648,6 +7649,7 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 void ClearRuntimeActors(CGameMode& mode)
 {
     g_Weather.Reset();
+    mode.ClearNpcProgress();
     mode.m_compassPosList.clear();
     mode.m_characterNameCache.clear();
     mode.m_characterNameReqTimer.clear();
@@ -10200,6 +10202,60 @@ CGameMode::CGameMode()
 }
 
 CGameMode::~CGameMode() {
+    ClearNpcProgress();
+}
+
+void CGameMode::StartNpcProgress(u32 seconds, u32 now)
+{
+    if (!m_world || !m_world->m_player || seconds > 0x7fffffffu / 1000u) {
+        return;
+    }
+    if (!m_npcProgressGauge) {
+        m_npcProgressGauge = new UIRechargeGage();
+        m_npcProgressGauge->Create(60, 6);
+        g_windowMgr.AddWindowFront(m_npcProgressGauge);
+        m_npcProgressGauge->SetShow(0);
+    }
+    m_npcProgressStartTick = now;
+    m_npcProgressDuration = seconds * 1000u;
+    m_npcProgressGauge->SetAmount(0, static_cast<int>(m_npcProgressDuration));
+}
+
+void CGameMode::ClearNpcProgress()
+{
+    if (!m_npcProgressGauge) {
+        return;
+    }
+    auto* const gauge = m_npcProgressGauge;
+    m_npcProgressGauge = nullptr;
+    m_npcProgressStartTick = 0;
+    m_npcProgressDuration = 0;
+    if (g_windowMgr.ContainsWindow(gauge)) {
+        g_windowMgr.DeleteWindow(gauge);
+    }
+}
+
+void CGameMode::FinishNpcProgress(CRagConnection& connection)
+{
+    if (!m_npcProgressGauge) {
+        return;
+    }
+    ClearNpcProgress();
+    constexpr char packet[] = {static_cast<char>(0xf1), 0x02}; // CZ_PROGRESS
+    connection.SendPacket(packet, static_cast<int>(sizeof(packet)));
+}
+
+void CGameMode::UpdateNpcProgress(CRagConnection& connection, u32 now)
+{
+    if (!m_npcProgressGauge) {
+        return;
+    }
+    const u32 elapsed = now - m_npcProgressStartTick;
+    if (elapsed > m_npcProgressDuration) {
+        FinishNpcProgress(connection);
+        return;
+    }
+    m_npcProgressGauge->SetAmount(static_cast<int>(elapsed), static_cast<int>(m_npcProgressDuration));
 }
 
 void CGameMode::OnInit(const char* worldName) {
@@ -10696,6 +10752,7 @@ bool CGameMode::ProcessNetworkUpdate(CRagConnection& connection, CGameModePacket
     if (m_terminalNetworkHandled) return false;
     // A UI or other production caller may already have scheduled a handoff.
     if (g_modeMgr.GetOperationGeneration() != m_networkModeOperationGeneration) {
+        ClearNpcProgress();
         m_terminalNetworkHandled = true;
         return false;
     }
@@ -10704,10 +10761,12 @@ bool CGameMode::ProcessNetworkUpdate(CRagConnection& connection, CGameModePacket
         *this, connection, router, packetBudget);
     if (outResult) *outResult = packetLoop;
     if (packetLoop.modeOperationRequested) {
+        ClearNpcProgress();
         m_terminalNetworkHandled = true;
         return false;
     }
     if (!connection.IsOpen()) {
+        ClearNpcProgress();
         m_terminalNetworkHandled = true;
         ClearPendingDisconnectAction();
         g_session.m_pendingReturnToCharSelect = 0;
@@ -10721,6 +10780,7 @@ bool CGameMode::ProcessNetworkUpdate(CRagConnection& connection, CGameModePacket
         return false;
     }
     if (ApplyDisconnectTimeoutAfterPacketLoop(packetLoop, nowTick)) {
+        ClearNpcProgress();
         m_terminalNetworkHandled = true;
         return false;
     }
@@ -10738,6 +10798,7 @@ void CGameMode::OnUpdate() {
     const DWORD packetEnd = GetTickCount();
     const int packetsProcessed = packetLoop.packetsProcessed;
 
+    UpdateNpcProgress(*conn, timeGetTime());
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);
     SendTimeSyncRequest(*this, false);
@@ -10777,7 +10838,7 @@ void CGameMode::OnUpdate() {
             }
             g_Weather.Process();
             if (m_view && m_world) {
-                m_world->ProcessActorSkillRechargeGages(m_view->GetViewMatrix(), m_view->GetCameraLongitude());
+                m_world->ProcessActorSkillRechargeGages(m_view->GetViewMatrix(), m_view->GetCameraLongitude(), m_npcProgressGauge);
             }
             const matrix* viewMatrix = m_view ? &m_view->GetViewMatrix() : nullptr;
             m_world->UpdateBackgroundObjects(viewMatrix);
@@ -10842,7 +10903,7 @@ void CGameMode::OnUpdate() {
 
     if (m_world && m_view) {
         const double skillRechargeStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
-        m_world->ProcessActorSkillRechargeGages(m_view->GetViewMatrix(), m_view->GetCameraLongitude());
+        m_world->ProcessActorSkillRechargeGages(m_view->GetViewMatrix(), m_view->GetCameraLongitude(), m_npcProgressGauge);
         if (trackMovePerfFrame) {
             g_gameModeMovePerfStats.skillRechargeCalls += 1;
             g_gameModeMovePerfStats.skillRechargeMs += QpcNowMs() - skillRechargeStartMs;

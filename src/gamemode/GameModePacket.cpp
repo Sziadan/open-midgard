@@ -3852,6 +3852,21 @@ enum : u8 {
     kChatChannelSystem = 6,
 };
 
+void HandleNpcProgress(CGameMode& mode, const PacketView& packet)
+{
+    if (packet.data && packet.packetLength == 10) {
+        // Zc_Progress uses the duration and leaves the gauge's original colors in place.
+        mode.StartNpcProgress(ReadLE32(packet.data + 6), timeGetTime());
+    }
+}
+
+void HandleNpcProgressCancel(CGameMode& mode, const PacketView& packet)
+{
+    if (packet.data && packet.packetLength == 2) {
+        mode.FinishNpcProgress(*CRagConnection::instance());
+    }
+}
+
 void HandleCompass(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 23) {
@@ -8475,6 +8490,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    mode.ClearNpcProgress();
     mode.m_compassPosList.clear();
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
     ro::commerce::CloseTransactions();
@@ -9456,6 +9472,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02DA, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.actorActionNotifyExtended, HandleActorActionNotify);
     router.Register(0x02E7, HandleMapPropertyRowUpdate);
+    router.Register(0x02F0, HandleNpcProgress);
+    router.Register(0x02F2, HandleNpcProgressCancel);
     router.Register(0x0196, HandlePacket0196);
     router.Register(0x043F, HandlePacket043F);
     router.Register(0x028A, HandleNpcShowEfstUpdate);

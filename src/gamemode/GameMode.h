@@ -17,6 +17,7 @@ class CGameActor;
 class CPlayer;
 class UINameBalloonText;
 class UIPlayerGage;
+class UIRechargeGage;
 class CRagConnection;
 class CGameModePacketRouter;
 class UIWindow;
@@ -182,6 +183,11 @@ public:
     // Production frame gate, kept independent of world/audio initialization.
     bool ProcessNetworkUpdate(CRagConnection& connection, CGameModePacketRouter& router,
         int packetBudget, u32 nowTick, GameModePacketLoopResult* outResult = nullptr);
+    void StartNpcProgress(u32 seconds, u32 now);
+    void FinishNpcProgress(CRagConnection& connection);
+    void UpdateNpcProgress(CRagConnection& connection, u32 now);
+    void ClearNpcProgress();
+    UIRechargeGage* GetNpcProgressGauge() const { return m_npcProgressGauge; }
     // Borrowed services must remain alive through dispatch; nullptr restores defaults.
     void SetMapTransitionServices(const MapTransitionServices* services) { m_mapTransitionServices = services; }
     const MapTransitionServices* GetMapTransitionServices() const { return m_mapTransitionServices; }
@@ -397,6 +403,9 @@ public:
     std::vector<CGameActor*> m_deferredActorDeletes;
 
 private:
+    UIRechargeGage* m_npcProgressGauge = nullptr;
+    u32 m_npcProgressStartTick = 0;
+    u32 m_npcProgressDuration = 0;
     bool m_terminalNetworkHandled = false;
     u64 m_networkModeOperationGeneration = 0;
     const MapTransitionServices* m_mapTransitionServices = nullptr;

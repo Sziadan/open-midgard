@@ -28,6 +28,7 @@
 #include "ui/UIItemPurchaseWnd.h"
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIRechargeGage.h"
 #include "ui/UICompanionStatusWnd.h"
 #include "ui/UICompanionSkillListWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
@@ -5531,6 +5532,7 @@ void GlobalChatProductionSendReplay()
 #include "NpcClassChangeReplay.inc"
 #include "CompassMarkerReplay.inc"
 #include "NpcDialogueActionsReplay.inc"
+#include "NpcProgressReplay.inc"
 
 int main(int argc,char** argv){try{
 #if RO_ENABLE_QT6_UI
@@ -5576,6 +5578,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--npc-class-change-only") { NpcClassChangeReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--compass-only") { CompassMarkerReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-dialogue-actions-only") { NpcDialogueActionsReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--npc-progress-only") { NpcProgressReplay();CConnection::Cleanup();return 0; }
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();

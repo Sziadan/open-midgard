@@ -2473,13 +2473,20 @@ void PopulateRechargeGaugeState(QtUiState* state)
     }
 
     const UIRechargeGage* rechargeGauge = nullptr;
-    for (UIWindow* const window : g_windowMgr.m_children) {
-        UIRechargeGage* const gauge = dynamic_cast<UIRechargeGage*>(window);
-        if (!gauge || gauge->m_show == 0) {
-            continue;
+    if (const auto* mode = g_modeMgr.GetCurrentGameMode()) {
+        const auto* gauge = mode->GetNpcProgressGauge();
+        if (gauge && gauge->m_show != 0) {
+            rechargeGauge = gauge;
         }
-        rechargeGauge = gauge;
-        break;
+    }
+    if (!rechargeGauge) {
+        for (UIWindow* const window : g_windowMgr.m_children) {
+            UIRechargeGage* const gauge = dynamic_cast<UIRechargeGage*>(window);
+            if (gauge && gauge->m_show != 0) {
+                rechargeGauge = gauge;
+                break;
+            }
+        }
     }
 
     const bool visible = rechargeGauge != nullptr && !IsGameplayUiSuppressed(state);

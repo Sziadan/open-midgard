@@ -1,4 +1,5 @@
 #include "World.h"
+#include "ui/UIRechargeGage.h"
 #include "ActorSpriteDepth.h"
 #include "world/CursorSnap.h"
 #include "world/GameActor.h"
@@ -6745,8 +6746,12 @@ void CWorld::ProcessActorChatRoomTitles(const matrix& viewMatrix)
     update(m_player);for(auto* actor:m_actorList)if(actor!=m_player)update(actor);
 }
 
-void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude)
+void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude,
+    UIRechargeGage* npcProgressGauge)
 {
+    if (npcProgressGauge && !m_player) {
+        npcProgressGauge->SetShow(0);
+    }
     int clientHeight = 480;
     if (g_hMainWnd) {
         RECT clientRect{};
@@ -6767,6 +6772,9 @@ void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float came
         int topY = 0;
         int labelY = 0;
         if (!GetActorScreenMarker(viewMatrix, cameraLongitude, actor->m_gid, &centerX, &topY, &labelY)) {
+            if (npcProgressGauge && actor == m_player) {
+                npcProgressGauge->SetShow(0);
+            }
             if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
                 if (pcActor->m_gage) {
                     pcActor->m_gage->Move(-100, -100);
@@ -6777,6 +6785,12 @@ void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float came
 
         if (actor->m_skillRechargeGage) {
             actor->ProcessSkillRechargeGageOverlay(centerX, topY);
+        }
+        if (npcProgressGauge && actor == m_player) {
+            const int castGaugeHeight = actor->m_skillRechargeGage ? actor->m_skillRechargeGage->m_h + 2 : 0;
+            npcProgressGauge->Move(centerX - npcProgressGauge->m_w / 2,
+                topY - npcProgressGauge->m_h - 2 - castGaugeHeight);
+            npcProgressGauge->SetShow(1);
         }
 
         if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
