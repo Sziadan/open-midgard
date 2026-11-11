@@ -329,6 +329,7 @@ public:
     void ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude);
     void RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, float cameraLongitude, float cameraLatitude);
     void RenderActors(const matrix& viewMatrix, float cameraLongitude);
+    void RenderSiegeEmblems(const matrix& viewMatrix) const;
     bool GetPlayerScreenLabel(const matrix& viewMatrix,
         float cameraLongitude,
         int* outLabelX,

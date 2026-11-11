@@ -3851,3 +3851,7 @@ PK19 resets the four world rule flags on real game-mode entry. Loopback replay c
 ## 2026-11-11 Standing resurrection action
 
 PK19.03 applies the selected death, token and map-rule gates to the standing resurrection menu and wire sender. Production replay verifies the projected action, blocked sends, literal request, and server-driven recovery. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK19-standing-resurrection.md)
+
+## 2026-11-11 Siege actor emblems
+
+PK19.03 restores the siege actor emblem lifecycle and uses the existing emblem texture cache in gameplay rendering. Actor entry, concealment, reveal, and removal passed production replay. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK19-siege-actor-emblems.md)

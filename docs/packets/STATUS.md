@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Siege actor emblem checkpoint (2026-11-11)**. The actor packet and concealment paths now control siege emblem eligibility. The gameplay render pass uses the existing downloaded emblem texture. Production lifecycle replay passed. Native pixel and live verification remain open. [Evidence](evidence/PK19-siege-actor-emblems.md)
+
 **Standing resurrection action checkpoint (2026-11-11)**. The dead-player menu now offers item 7621 recovery in eligible maps and sends the selected two-byte request. Packet and Qt state replay passed. Live recovery and rendered menu acceptance remain open. [Evidence](evidence/PK19-standing-resurrection.md)
 
 **Map property lifetime checkpoint (2026-11-11)**. Real game-mode entry resets the four world rule flags. Loaded same-map reuse retains them, and session values follow their packet handlers. [Evidence](evidence/PK19-map-property-lifetime.md)

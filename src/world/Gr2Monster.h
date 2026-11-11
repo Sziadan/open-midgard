@@ -38,7 +38,7 @@ struct Gr2MonsterState {
 // Shared by all flag instances owned by this guild. A new version replaces the
 // cached texture; missing data never exposes the model's green placeholder.
 CTexture* Gr2GuildEmblemTexture(u32 guildId,u32 version,const std::vector<unsigned char>* bitmap=nullptr);
-u32 PrepareGr2FlagEmblem(CGameMode& mode,u32 guildId,u32 advertisedVersion);
+u32 PrepareGuildEmblem(CGameMode& mode,u32 guildId,u32 advertisedVersion);
 
 bool RenderGr2Monster(const Gr2MonsterState& state, const matrix& view);
 bool GetGr2MonsterBounds(u32 gid, RECT* bounds);

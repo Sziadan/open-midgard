@@ -19,6 +19,7 @@
 #include "render3d/Device.h"
 #include "render3d/RenderDevice.h"
 #include "core/File.h"
+#include "core/GuildFlagTexture.h"
 #include "core/Timer.h"
 #include "res/ActRes.h"
 #include "res/GndRes.h"
@@ -6891,7 +6892,7 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
         if (Gr2MonsterModel(pc->m_job)) {
             u32 flagVersion=static_cast<u32>(pc->m_emblemVersion);
             if(pc->m_job==722 && pc->m_gdid>0) {
-                if(auto* mode=g_modeMgr.GetCurrentGameMode())flagVersion=PrepareGr2FlagEmblem(*mode,static_cast<u32>(pc->m_gdid),flagVersion);
+                if(auto* mode=g_modeMgr.GetCurrentGameMode())flagVersion=PrepareGuildEmblem(*mode,static_cast<u32>(pc->m_gdid),flagVersion);
             }
             const u32 now=timeGetTime();
             u32 alpha=pc->IsHideFadeActive(now)?pc->GetHideFadeAlpha(now):255u;
@@ -6975,6 +6976,61 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
         }
     }
     m_lastRenderStats.billboardRenderMs = WorldNowMs() - billboardRenderStartMs;
+}
+
+void CWorld::RenderSiegeEmblems(const matrix& viewMatrix) const
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!m_isSiegeMode || !mode || mode->m_world != this || g_renderer.m_height <= 0) {
+        return;
+    }
+    const auto draw = [&](const CGameActor* actor) {
+        if (!actor || !actor->m_hasSiegeEmblem || actor->m_headType == 100 || actor->m_gdid <= 0
+            || actor->m_emblemVersion <= 0 || !actor->ShouldDrawSprite(timeGetTime())) {
+            return;
+        }
+        tlvertex3d point{};
+        if (!ProjectPoint(g_renderer, viewMatrix, actor->m_pos, &point)) {
+            return;
+        }
+        const u32 guild = static_cast<u32>(actor->m_gdid);
+        const u32 version = PrepareGuildEmblem(*mode, guild, static_cast<u32>(actor->m_emblemVersion));
+        CTexture* texture = Gr2GuildEmblemTexture(guild, version);
+        if (!texture) {
+            return;
+        }
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) {
+            return;
+        }
+        const float ratio = point.oow * g_renderer.m_hpc * 0.14285715f / (g_renderer.m_height * 0.0017447917f);
+        const float left = static_cast<float>(static_cast<int>(static_cast<int>(point.x) - (5 * g_renderer.m_width / 640) * ratio));
+        const float top = static_cast<float>(static_cast<int>(static_cast<int>(point.y) - (100 * g_renderer.m_height / 480) * ratio));
+        constexpr float size = static_cast<float>(ro::guild::FlagEmblemSize);
+        constexpr float uv = size / ro::guild::FlagTextureSize;
+        face->primType = D3DPT_TRIANGLESTRIP;
+        face->verts = face->m_verts;
+        face->numVerts = 4;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 3;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+        face->alphaSortKey = 0.0f;
+        face->m_verts[0] = {left, top, 0.0f, 1.0f, 0xffffffff, 0xff000000, 0.0f, 0.0f};
+        face->m_verts[1] = {left + size, top, 0.0f, 1.0f, 0xffffffff, 0xff000000, uv, 0.0f};
+        face->m_verts[2] = {left, top + size, 0.0f, 1.0f, 0xffffffff, 0xff000000, 0.0f, uv};
+        face->m_verts[3] = {left + size, top + size, 0.0f, 1.0f, 0xffffffff, 0xff000000, uv, uv};
+        g_renderer.AddRP(face, 1 | 8);
+    };
+    draw(m_player);
+    for (const auto* actor : m_actorList) {
+        if (actor != m_player) {
+            draw(actor);
+        }
+    }
 }
 
 bool CWorld::GetPlayerScreenLabel(const matrix& viewMatrix,

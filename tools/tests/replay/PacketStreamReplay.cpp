@@ -5527,6 +5527,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--world-entry-handoff-only") {ModeLoopHandoffReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--map-cell-load-only") {MapCellLoadLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--standing-resurrection-only") {StandingResurrectionReplay();CConnection::Cleanup();return 0;}
+    if(argc>1 && std::string(argv[1])=="--siege-emblem-only") {SiegeActorEmblemReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--corpse-gr2-native") { CorpseNativePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--whisper-only") {WhisperReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--auto-message-only") {AutoMessageReplay();CConnection::Cleanup();return 0;}
@@ -5681,6 +5682,7 @@ int main(int argc,char** argv){try{
     MapReceivePreambleReplay();
     MapTransitionLifetimeReplay();
     StandingResurrectionReplay();
+    SiegeActorEmblemReplay();
     ModeLoopHandoffReplay();
     CartItemWireFieldsReplay();
     InventoryMapEntryReplay();

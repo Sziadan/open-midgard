@@ -301,12 +301,12 @@ void RunHealRenderPreview()
                     std::ifstream input(std::getenv("RO_HEAL_PREVIEW_FLAG_EMBLEM"),std::ios::binary);
                     const std::vector<unsigned char> bitmap((std::istreambuf_iterator<char>(input)),std::istreambuf_iterator<char>());
                     packetMode.m_guildEmblems[65543]={3,bitmap};
-                    const u32 resolved=PrepareGr2FlagEmblem(packetMode,65543,0);
+                    const u32 resolved=PrepareGuildEmblem(packetMode,65543,0);
                     auto* emblemTexture=Gr2GuildEmblemTexture(65543,3);
                     const bool cached=resolved==3 && emblemTexture!=nullptr;
                     DbgLog("[GuildFlagPreview] referencePadding=%d\n",emblemTexture && emblemTexture->m_w==32 && emblemTexture->m_h==32 && emblemTexture->m_surfaceUpdateWidth==32 && emblemTexture->m_surfaceUpdateHeight==32);
-                    const bool missing=PrepareGr2FlagEmblem(packetMode,65544,0)==0;
-                    const bool newVersion=PrepareGr2FlagEmblem(packetMode,65543,4)==0;
+                    const bool missing=PrepareGuildEmblem(packetMode,65544,0)==0;
+                    const bool newVersion=PrepareGuildEmblem(packetMode,65543,4)==0;
                     monster.m_emblemVersion=static_cast<int>(resolved);
                     const bool isolated=!Gr2GuildEmblemTexture(65544,3) && !Gr2GuildEmblemTexture(65543,4);
                     // Populate the hit cache before the first model has bounds.

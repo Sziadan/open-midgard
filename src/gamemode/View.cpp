@@ -1003,6 +1003,7 @@ void CView::OnRender()
             m_world->m_gameObjectList.size());
     }
     m_world->RenderActors(m_viewMatrix, m_cur.longitude);
+    m_world->RenderSiegeEmblems(m_viewMatrix);
     static bool loggedActorStageDone = false;
     if (!loggedActorStageDone) {
         loggedActorStageDone = true;

@@ -274,6 +274,75 @@ void MapCellLoadLifecycleReplay()
     std::cout << "{\"case_id\":\"map_cell_load_lifecycle\",\"contract_id\":\"PK18.03\",\"outcome\":\"PASS\"}" << std::endl;
 }
 
+void SiegeActorEmblemReplay()
+{
+    SetCase("siege_actor_emblem", "PK19.03", "legacy-actor-and-option",
+        "map property -> actor packet -> emblem eligibility -> option transition -> vanish");
+    MapTransitionLifetimeSnapshot saved;
+    const auto service = g_serviceType;
+    g_serviceType = ServiceKorea;
+    g_session.m_gid = 0;
+    g_session.m_aid = 0;
+    CGameMode mode;
+    CWorld world;
+    mode.m_world = &world;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const auto& bytes) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
+            && consumed == static_cast<int>(bytes.size()) && router.Dispatch(mode, packet),
+            "siege emblem packet did not frame and dispatch");
+    };
+    const auto spawn = [&](u8 id, u16 job, u8 head, u8 effect = 0) {
+        std::array<u8, 53> frame{0x79, 0, id, 0x34, 0x12, 0x01, 150};
+        frame[12] = effect;
+        frame[14] = static_cast<u8>(job);
+        frame[15] = static_cast<u8>(job >> 8);
+        frame[16] = head;
+        frame[34] = 12;
+        frame[38] = 4;
+        frame[46] = 4;
+        frame[47] = 1;
+        frame[51] = 30;
+        dispatch(frame);
+        const u32 gid = 0x01123400u + id;
+        const auto actor = mode.m_runtimeActors.find(gid);
+        Require(actor != mode.m_runtimeActors.end(), "siege emblem actor did not spawn");
+        return actor->second;
+    };
+    const auto option = [&](u8 id, u8 effect) {
+        dispatch(std::array<u8, 13>{0x19, 0x01, id, 0x34, 0x12, 0x01, 0, 0, 0, 0, effect, 0, 0});
+    };
+    Require(!spawn(1, 7, 1)->m_hasSiegeEmblem, "ordinary map created a siege emblem");
+    dispatch(std::array<u8, 4>{0x99, 0x01, 3, 0});
+    CGameActor* actor = spawn(2, 7, 1);
+    Require(actor->m_hasSiegeEmblem && actor->m_gdid == 12 && actor->m_emblemVersion == 4,
+        "siege PC did not bind its advertised emblem");
+    Require(spawn(3, 1285, 1)->m_hasSiegeEmblem, "siege guardian did not bind an emblem");
+    Require(!spawn(4, 7, 100)->m_hasSiegeEmblem, "head type 100 received a siege emblem");
+    Require(!spawn(5, 7, 1, 4)->m_hasSiegeEmblem, "hidden actor received a siege emblem");
+    option(2, 4);
+    Require(!actor->m_hasSiegeEmblem, "hiding retained the siege emblem");
+    option(2, 0);
+    Require(actor->m_hasSiegeEmblem, "visible actor did not regain the siege emblem");
+    option(2, 2);
+    Require(!actor->m_hasSiegeEmblem, "burrow retained the siege emblem");
+    g_serviceType = ServiceChina;
+    option(2, 0);
+    Require(!actor->m_hasSiegeEmblem, "restricted service recreated a siege emblem after hiding");
+    Require(spawn(6, 7, 1)->m_hasSiegeEmblem, "regional reveal rule incorrectly blocked a spawn emblem");
+    for (u8 id = 1; id <= 6; ++id) {
+        dispatch(std::array<u8, 7>{0x80, 0, id, 0x34, 0x12, 0x01, 0});
+    }
+    Require(mode.m_runtimeActors.empty(), "vanish retained siege emblem actor ownership");
+    mode.m_world = nullptr;
+    g_serviceType = service;
+    saved.Restore();
+    std::cout << "{\"case_id\":\"siege_actor_emblem\",\"contract_id\":\"PK19.03\",\"outcome\":\"PASS\"}" << std::endl;
+}
+
 void StandingResurrectionReplay()
 {
     SetCase("standing_resurrection", "PK19.03", "PK01.02-final-0292",

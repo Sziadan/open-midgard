@@ -388,7 +388,7 @@ CTexture* Gr2GuildEmblemTexture(u32 guildId,u32 version,const std::vector<unsign
     return result;
 }
 
-u32 PrepareGr2FlagEmblem(CGameMode& mode,u32 guildId,u32 advertisedVersion)
+u32 PrepareGuildEmblem(CGameMode& mode,u32 guildId,u32 advertisedVersion)
 {
     if(!guildId)return 0;
     const auto cached=mode.m_guildEmblems.find(guildId);

@@ -109,7 +109,7 @@ pre-render hit-cache recovery, legacy ownership fields, emblem isolation,
 ownership removal, guardian picking, and the production 0090 NPC click route.
 
 Flag spawns may report emblem version 0 even for an owned castle. Treat this
-as unspecified and request the guild's current emblem. PrepareGr2FlagEmblem
+as unspecified and request the guild's current emblem. PrepareGuildEmblem
 resolves the version from the server's 0152 reply before texture lookup, and
 shares the download throttle with the guild UI. Native fixtures reproduce a
 version-zero flag and test missing, matching and newer advertised versions.

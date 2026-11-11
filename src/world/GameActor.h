@@ -256,6 +256,7 @@ public:
     u32 m_speed;
     int m_isCounter, m_isTrickDead, m_isPlayHitWave, m_isAsuraAttack;
     char* m_emblemWnd;
+    bool m_hasSiegeEmblem = false;
     char* m_WordDisplayWnd;
     char m_hitWaveName[128];
     u32 m_colorEndTick;

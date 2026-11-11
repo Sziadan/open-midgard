@@ -6032,6 +6032,7 @@ void InitializeRuntimeActorDefaults(CGameActor* actor, u32 gid)
     actor->m_headType = 0;
     actor->m_gdid = 0;
     actor->m_emblemVersion = 0;
+    actor->m_hasSiegeEmblem = false;
     actor->m_charfont = 0;
     actor->m_objectType = 0;
     actor->m_actorType = 0;
@@ -6229,6 +6230,17 @@ void LogActorPacketSeenOnce(const PacketView& packet)
         packet.packetLength);
 }
 
+void ActivateSiegeEmblem(const CGameMode& mode, CGameActor& actor)
+{
+    constexpr int hidden = kEffectStateHidingMask | kEffectStateBurrowMask | kEffectStateSpecialHidingMask;
+    const bool guardian = actor.m_job >= 1285 && actor.m_job <= 1287;
+    if (mode.m_world && mode.m_world->m_isSiegeMode && (actor.m_isPc || guardian)
+        && actor.m_headType != 100 && actor.m_gdid > 0 && !IsGravityAid(actor.m_gid)
+        && (IsGravityAid(g_session.m_aid) || !(actor.m_effectState & hidden))) {
+        actor.m_hasSiegeEmblem = true;
+    }
+}
+
 void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
 {
     const bool isPc = ShouldTreatActorAsPc(state.objectType, state.job);
@@ -6314,6 +6326,7 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
     }
 
     RefreshActorEffectStatePresentation(actor, oldEffectState);
+    ActivateSiegeEmblem(mode, *actor);
     // OPT3_OVERTHRUST is 0x2, which means burrow in OPTION. Combining
     // these fields makes buffed blacksmiths invisible (and confuses carts).
     if (isPc && (state.showEfst & kShowEfstAssumptioMask)
@@ -7047,6 +7060,16 @@ void HandleActorStateChange(CGameMode& mode, const PacketView& packet)
     state.healthState = healthState;
     state.pkState = pkState;
     actor->SendMsg(actor, 43, reinterpret_cast<msgparam_t>(&state), 0, 0);
+
+    constexpr int hidden = kEffectStateHidingMask | kEffectStateBurrowMask | kEffectStateSpecialHidingMask;
+    if ((oldEffectState ^ actor->m_effectState) & hidden) {
+        if (actor->m_effectState & hidden) {
+            actor->m_hasSiegeEmblem = false;
+        } else if (g_serviceType != ServiceChina && g_serviceType != ServiceMalaysia
+            && g_serviceType != ServiceSingapore) {
+            ActivateSiegeEmblem(mode, *actor);
+        }
+    }
 
     const bool localPlayer = IsLocalPlayerActor(mode, gid);
     if (localPlayer) {
