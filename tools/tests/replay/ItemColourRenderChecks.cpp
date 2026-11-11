@@ -15,12 +15,16 @@
 #include "ui/UIItemSellWnd.h"
 #include "ui/UINpcInputWnd.h"
 #include "main/WinMain.h"
+#include "network/Connection.h"
+#include "render/Renderer.h"
 #include "ui/UIItemInfoWnd.h"
 #include "ui/UINewChatWnd.h"
 #include "ui/UiScale.h"
 #include "ui/UIStorageWnd.h"
 #include "ui/UIShopCommon.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIRechargeGage.h"
+#include "world/GameActor.h"
 #include "world/World.h"
 #include <QGuiApplication>
 #include <QQuickView>
@@ -180,6 +184,7 @@ template<class Window> QImage Native(Window& window,QRgb expected,int width=Widt
 #include "RecoveryDeltaRenderChecks.inc"
 #include "StandingResurrectionRenderChecks.inc"
 #include "ChatWindowStateRenderChecks.inc"
+#include "NpcProgressRenderChecks.inc"
 
 int main(int argc,char** argv) {
     qputenv("QT_QUICK_BACKEND","software");qputenv("QT_QPA_PLATFORM","offscreen");
@@ -211,6 +216,7 @@ int main(int argc,char** argv) {
         const bool recoveryDelta=argc>2 && QString::fromLocal8Bit(argv[2])=="recovery-delta";
         const bool standingResurrection=argc>2 && QString::fromLocal8Bit(argv[2])=="standing-resurrection";
         const bool chatState=argc>2 && QString::fromLocal8Bit(argv[2])=="chat-state";
+        const bool npcProgressRender=argc>2 && QString::fromLocal8Bit(argv[2])=="npc-progress";
         const bool itemUseFeedback=argc>2 && QString::fromLocal8Bit(argv[2])=="item-use-feedback";
         const bool itemObtain=argc>2 && QString::fromLocal8Bit(argv[2])=="item-obtain";
         const bool inventoryMutations=argc>2 && QString::fromLocal8Bit(argv[2])=="inventory-mutations";
@@ -330,6 +336,17 @@ int main(int argc,char** argv) {
         QObject::connect(view.engine(),&QQmlEngine::warnings,[&](const QList<QQmlError>& list){errors+=int(list.size());for(const auto& e:list)std::cerr<<e.toString().toStdString()<<'\n';});
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"actual item QML failed to load");view.show();Frames(app,view);
+        if(npcProgressRender) {
+            CheckNpcProgressRender(app,view,state,mode,world,camera,adapter,output);
+            Require(errors==0,"NPC progress rendering emitted QML errors");
+            QFile file(output+"/npc-progress-render-results.json");
+            Require(file.open(QIODevice::WriteOnly),"NPC progress render results open failed");
+            file.write(QJsonDocument(QJsonObject{{"native_half_fill_background_edge",true},
+                {"qt_half_fill_background",true},{"cancel_hidden",true},{"qml_errors",errors},{"outcome","PASS"}}).toJson());
+            view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
+            std::cout<<"PASS NPC progress native and Qt rendering\n";return 0;
+        }
         if(itemTabsStartupChild || itemGeometryChild || itemDetailGeometryChild || itemCardDetailChild || inventoryShowChild) {
             Require(argc>3,"inventory tab persistence child stage missing");
             if(inventoryShowChild)CheckInventoryShowChild(app,view,state,mode,inventory,adapter,output,QString::fromLocal8Bit(argv[3]));

@@ -319,6 +319,7 @@ Item {
     }
 
     RoFrame {
+        objectName: "npcRechargeGauge"
         showTitle: false
         showShadow: false
         z: 1500

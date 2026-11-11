@@ -45,7 +45,15 @@ void UIRechargeGage::OnDraw()
     if (!hdc) {
         return;
     }
+    DrawNativeToHdc(hdc);
+    ReleaseDrawTarget(hdc);
+}
 
+void UIRechargeGage::DrawNativeToHdc(HDC hdc)
+{
+    if (!hdc || m_show == 0) {
+        return;
+    }
     RECT outer{ m_x, m_y, m_x + m_w, m_y + m_h };
     HBRUSH edgeBrush = CreateSolidBrush(RGB(m_edgeR, m_edgeG, m_edgeB));
     FillRect(hdc, &outer, edgeBrush);
@@ -69,5 +77,4 @@ void UIRechargeGage::OnDraw()
     }
 
     DrawChildrenToHdc(hdc);
-    ReleaseDrawTarget(hdc);
 }

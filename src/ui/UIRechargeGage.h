@@ -10,6 +10,7 @@ public:
     void SetAmount(int amount, int totalAmount);
     bool ShouldDoHitTest() override;
     void OnDraw() override;
+    void DrawNativeToHdc(HDC hdc);
     int GetAmount() const;
     int GetTotalAmount() const;
 
