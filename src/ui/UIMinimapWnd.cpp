@@ -316,7 +316,8 @@ bool BuildMarkerPoint(const RECT& attrArea,
     int bitmapHeight,
     int cellX,
     int cellY,
-    POINT* outPoint)
+    POINT* outPoint,
+    bool rejectOutside = false)
 {
     if (!outPoint) {
         return false;
@@ -328,8 +329,12 @@ bool BuildMarkerPoint(const RECT& attrArea,
         return false;
     }
 
-    const float normX = static_cast<float>(cellX - attrArea.left) / static_cast<float>(attrWidth);
-    const float normY = 1.0f - (static_cast<float>(cellY - attrArea.top) / static_cast<float>(attrHeight));
+    if (rejectOutside && (cellX < attrArea.left || cellX >= attrArea.right
+        || cellY < attrArea.top || cellY >= attrArea.bottom)) {
+        return false;
+    }
+    const float normX = (static_cast<float>(cellX) - attrArea.left) / static_cast<float>(attrWidth);
+    const float normY = 1.0f - ((static_cast<float>(cellY) - attrArea.top) / static_cast<float>(attrHeight));
     const float clampedNormX = (std::max)(0.0f, (std::min)(1.0f, normX));
     const float clampedNormY = (std::max)(0.0f, (std::min)(1.0f, normY));
 
@@ -607,7 +612,7 @@ bool UIRoMapWnd::IsUpdateNeed()
     if (m_isDirty != 0 || !m_hasVisualStateToken) {
         return true;
     }
-    return BuildVisualStateToken() != m_lastVisualStateToken;
+    return BuildVisualStateToken(timeGetTime()) != m_lastVisualStateToken;
 }
 
 msgresult_t UIRoMapWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
@@ -721,7 +726,7 @@ void UIRoMapWnd::OnProcess()
     Invalidate();
 }
 
-void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
+void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY, u32 now)
 {
     if (!hdc) {
         return;
@@ -856,9 +861,14 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
         for (const auto& entry : gameMode->m_guildPosList) {
             drawWorldPoint(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, RGB(24, 24, 24), 2);
         }
-        if (g_windowMgr.m_isDrawCompass != 0) {
-            for (const auto& entry : gameMode->m_compassPosList) {
-                drawWorldPoint(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, RGB(24, 24, 24), 3);
+        for (const auto& entry : gameMode->m_compassPosList) {
+            const auto& marker = entry.second;
+            POINT pt{};
+            if (marker.IsVisible(now) && BuildMarkerPoint(attrArea, drawRect, zoomedView, srcRect,
+                    m_mapBitmapWidth, m_mapBitmapHeight, marker.x, marker.y, &pt, true)) {
+                const COLORREF color = RGB((marker.color >> 16) & 0xffu, (marker.color >> 8) & 0xffu, marker.color & 0xffu);
+                FillSolidRect(hdc, RECT{pt.x - 4, pt.y - 1, pt.x + 4, pt.y + 1}, color);
+                FillSolidRect(hdc, RECT{pt.x - 1, pt.y - 4, pt.x + 1, pt.y + 4}, color);
             }
         }
     }
@@ -907,7 +917,7 @@ void UIRoMapWnd::OnDraw()
 
     if (IsQtUiRuntimeEnabled()) {
         UpdateMinimapBitmap();
-        m_lastVisualStateToken = BuildVisualStateToken();
+        m_lastVisualStateToken = BuildVisualStateToken(timeGetTime());
         m_hasVisualStateToken = true;
         m_isDirty = 0;
         return;
@@ -931,7 +941,8 @@ void UIRoMapWnd::DrawToHdc(HDC hdc, int drawX, int drawY)
     EnsureCreated();
     UpdateMinimapBitmap();
 
-    const unsigned long long visualStateToken = BuildVisualStateToken();
+    const u32 now = timeGetTime();
+    const unsigned long long visualStateToken = BuildVisualStateToken(now);
     if (!m_hasVisualStateToken || visualStateToken != m_lastVisualStateToken) {
         InvalidateRenderCache();
     }
@@ -939,14 +950,14 @@ void UIRoMapWnd::DrawToHdc(HDC hdc, int drawX, int drawY)
     EnsureRenderCache();
     if (m_renderCacheSurface.IsValid()) {
         if (m_renderCacheDirty) {
-            DrawWindowContents(m_renderCacheSurface.GetDC(), 0, 0);
+            DrawWindowContents(m_renderCacheSurface.GetDC(), 0, 0, now);
             m_renderCacheDirty = false;
         }
         if (!BlitArgbCacheToHdc(hdc, drawX, drawY, m_w, m_h, m_renderCacheSurface.GetBits())) {
-            DrawWindowContents(hdc, drawX, drawY);
+            DrawWindowContents(hdc, drawX, drawY, now);
         }
     } else {
-        DrawWindowContents(hdc, drawX, drawY);
+        DrawWindowContents(hdc, drawX, drawY, now);
     }
 
     DrawCloseButton(hdc, drawX, drawY);
@@ -980,8 +991,9 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
     mutableThis->EnsureCreated();
     mutableThis->UpdateMinimapBitmap();
 
+    const u32 now = timeGetTime();
     DisplayData data{};
-    data.imageRevision = static_cast<int>(BuildVisualStateToken() & 0x7fffffff);
+    data.imageRevision = static_cast<int>(BuildVisualStateToken(now) & 0x7fffffff);
 
     const RECT mapRect{ m_x + kBodyInset, m_y + kMapTop, m_x + kBodyInset + kMapSize, m_y + kMapTop + kMapSize };
     data.mapX = mapRect.left;
@@ -1061,9 +1073,10 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
         }
     }
 
-    auto appendMarker = [&](int cellX, int cellY, COLORREF fillColor, int radius) {
+    auto appendMarker = [&](int cellX, int cellY, u32 fillColor, int radius, bool compass = false) {
         POINT pt{};
-        if (!BuildMarkerPoint(attrArea, drawRect, zoomedView, srcRect, m_mapBitmapWidth, m_mapBitmapHeight, cellX, cellY, &pt)) {
+        if (!BuildMarkerPoint(attrArea, drawRect, zoomedView, srcRect, m_mapBitmapWidth, m_mapBitmapHeight,
+                cellX, cellY, &pt, compass)) {
             return;
         }
         DisplayMarker marker{};
@@ -1071,6 +1084,7 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
         marker.y = pt.y;
         marker.radius = radius;
         marker.color = static_cast<unsigned int>(fillColor & 0x00FFFFFFu);
+        marker.compass = compass;
         data.markers.push_back(marker);
     };
 
@@ -1083,9 +1097,10 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
         for (const auto& entry : gameMode->m_guildPosList) {
             appendMarker(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, 2);
         }
-        if (g_windowMgr.m_isDrawCompass != 0) {
-            for (const auto& entry : gameMode->m_compassPosList) {
-                appendMarker(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, 3);
+        for (const auto& entry : gameMode->m_compassPosList) {
+            const auto& marker = entry.second;
+            if (marker.IsVisible(now)) {
+                appendMarker(marker.x, marker.y, marker.color, 4, true);
             }
         }
     }
@@ -1493,7 +1508,7 @@ std::string UIRoMapWnd::GetCurrentMinimapBitmapName() const
     return bitmapName;
 }
 
-unsigned long long UIRoMapWnd::BuildVisualStateToken() const
+unsigned long long UIRoMapWnd::BuildVisualStateToken(u32 now) const
 {
     unsigned long long hash = 1469598103934665603ull;
     const auto mixValue = [&hash](unsigned long long value) {
@@ -1512,7 +1527,6 @@ unsigned long long UIRoMapWnd::BuildVisualStateToken() const
     mixValue(static_cast<unsigned long long>(m_y));
     mixValue(static_cast<unsigned long long>(m_w));
     mixValue(static_cast<unsigned long long>(m_h));
-    mixValue(static_cast<unsigned long long>(g_windowMgr.m_isDrawCompass));
     mixValue(static_cast<unsigned long long>(g_windowMgr.m_miniMapZoomFactor * 100.0f));
     mixString(GetCurrentMinimapBitmapName());
     mixString(m_loadedBitmapPath);
@@ -1529,5 +1543,16 @@ unsigned long long UIRoMapWnd::BuildVisualStateToken() const
         }
     }
 
+    if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        for (const auto& entry : gameMode->m_compassPosList) {
+            const auto& marker = entry.second;
+            if (marker.IsVisible(now)) {
+                mixValue(entry.first);
+                mixValue(static_cast<u32>(marker.x));
+                mixValue(static_cast<u32>(marker.y));
+                mixValue(marker.color);
+            }
+        }
+    }
     return hash;
 }

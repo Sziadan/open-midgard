@@ -83,6 +83,18 @@ std::vector<u8> PositionRecord(u16 x, u16 y) {
     return {7,1,42,0,0,0,u8(x),u8(x>>8),u8(y),u8(y>>8)};
 }
 
+std::vector<u8> CompassRecord(u32 type, u32 x, u32 y, u8 id, u32 color) {
+    std::vector<u8> bytes(23, 0);
+    bytes[0] = 0x44; bytes[1] = 0x01;
+    const auto put32 = [&bytes](size_t offset, u32 value) {
+        for (int i = 0; i < 4; ++i) bytes[offset + size_t(i)] = u8(value >> (i * 8));
+    };
+    put32(6, type); put32(10, x); put32(14, y);
+    bytes[18] = id;
+    put32(19, color);
+    return bytes;
+}
+
 void Dispatch(CGameMode& mode, const std::vector<u8>& bytes) {
     PacketView packet{}; int consumed = 0;
     Require(TryReadPacket(bytes.data(), int(bytes.size()), packet, consumed), "render fixture did not frame");
@@ -114,6 +126,11 @@ void SaveImage(const QImage& image, const QString& path) {
 
 bool IsRgb(const QImage& image, int x, int y, QRgb rgb) {
     return (image.pixel(x,y) & 0x00ffffffu) == (rgb & 0x00ffffffu);
+}
+
+void RequireCompassCross(const QImage& image, int x, int y, QRgb color, const char* message) {
+    for (int dx = -4; dx < 4; ++dx) Require(IsRgb(image, x + dx, y, color), message);
+    for (int dy = -4; dy < 4; ++dy) Require(IsRgb(image, x, y + dy, color), message);
 }
 }
 
@@ -251,6 +268,22 @@ int main(int argc, char** argv) {
             Require(!IsRgb(lastNative,x,y,partyRgb),"native party marker leaked outside the map rectangle");
             Require(!IsRgb(lastQt,x,y,partyRgb),"Qt party marker leaked outside the map rectangle");
         }
+        constexpr u32 compassRgb = 0x00ef32a1u;
+        constexpr int compassX = 133;
+        constexpr int compassY = 77;
+        Dispatch(mode,CompassRecord(1,75,65,9,compassRgb));
+        Require(mode.m_compassPosList.size() == 1 && mode.m_compassPosList.at(9).type == 1,
+            "production 0144 type-1 compass marker was not retained");
+        capture("compass-visible",compassX,compassY,true,2,compassRgb,compassRgb);
+        RequireCompassCross(lastNative,compassX,compassY,compassRgb,"native 0144 marker is not the expected 8x2 plus 2x8 cross");
+        RequireCompassCross(lastQt,compassX,compassY,compassRgb,"Qt 0144 marker is not the expected 8x2 plus 2x8 cross");
+        mode.m_compassPosList.at(9).startTime = timeGetTime() - 1800u;
+        capture("compass-blink-hidden",compassX,compassY,false,1);
+        Dispatch(mode,CompassRecord(1,75,65,9,compassRgb));
+        capture("compass-blink-visible",compassX,compassY,true,2,compassRgb,compassRgb);
+        Dispatch(mode,CompassRecord(2,0,0,9,0));
+        Require(mode.m_compassPosList.empty(),"production 0144 type-2 packet did not remove the compass marker");
+        capture("compass-removed",compassX,compassY,false,1);
         Dispatch(mode,PositionRecord(25,35));
         MapTransitionServices services;
         services.presentLoading = [](const char*,float) {};

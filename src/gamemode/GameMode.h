@@ -49,10 +49,14 @@ struct ColorCellPos {
     u32 color;
 };
 
-struct ColorCellPos2 {
+struct CompassMarker {
     int x, y;
     u32 color;
-    u32 color2;
+    u32 type;
+    u32 startTime;
+
+    bool IsExpired(u32 now) const { return type == 0 && now - startTime > 15000u; }
+    bool IsVisible(u32 now) const { return !IsExpired(now) && (now - startTime) % 1000u < 500u; }
 };
 
 struct SKILL_USE_INFO {
@@ -236,7 +240,8 @@ public:
     std::map<u32, u32> m_aidList;
     std::map<u32, ColorCellPos> m_partyPosList;
     std::map<u32, ColorCellPos> m_guildPosList;
-    std::map<u32, ColorCellPos2> m_compassPosList;
+    std::map<u32, CompassMarker> m_compassPosList;
+    void PruneCompassMarkers(u32 now);
     
     std::vector<int> m_menuIdList;
     u16 m_warpSkillId = 0;

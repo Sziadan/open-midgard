@@ -788,23 +788,23 @@
       "commit_subject": null
     },
     "PK25.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK25.01-dialogue-script-scope.md"],
+      "commit_subject": "packet(PK25.01): scope NPC dialogue and messages"
     },
     "PK25.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK25.02-input-handoff-audit.md"],
+      "commit_subject": "packet(PK25.02): audit dialogue input handoffs"
     },
     "PK25.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK25.03-compass-and-notices.md"],
+      "commit_subject": "packet(PK25.03): render compass markers and verify map notices"
     },
     "PK25.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK25.04-verification-boundary.md"],
       "commit_subject": null
     },
     "PK26.01": {

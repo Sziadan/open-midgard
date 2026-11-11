@@ -3844,6 +3844,7 @@ void PopulateMinimapState(QtUiState* state)
             entry.insert(QStringLiteral("x"), marker.x);
             entry.insert(QStringLiteral("y"), marker.y);
             entry.insert(QStringLiteral("radius"), marker.radius);
+            entry.insert(QStringLiteral("compass"), marker.compass);
             entry.insert(QStringLiteral("color"), QStringLiteral("#%1").arg(marker.color & 0x00FFFFFFu, 6, 16, QLatin1Char('0')));
             markers.push_back(entry);
         }

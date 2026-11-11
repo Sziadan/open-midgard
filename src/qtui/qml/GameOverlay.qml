@@ -1525,13 +1525,21 @@ Item {
                 delegate: Rectangle {
                     required property var modelData
                     x: modelData.x - (uiState.minimapData.mapX || 0) - modelData.radius
-                    y: modelData.y - (uiState.minimapData.mapY || 0) - modelData.radius
-                    width: modelData.radius * 2 + 1
-                    height: modelData.radius * 2 + 1
-                    radius: width / 2
+                    y: modelData.y - (uiState.minimapData.mapY || 0) - (modelData.compass ? 1 : modelData.radius)
+                    width: modelData.compass ? 8 : modelData.radius * 2 + 1
+                    height: modelData.compass ? 2 : modelData.radius * 2 + 1
+                    radius: modelData.compass ? 0 : width / 2
                     color: modelData.color
-                    border.width: 1
+                    border.width: modelData.compass ? 0 : 1
                     border.color: theme.ink
+                    Rectangle {
+                        visible: parent.modelData.compass
+                        x: 3
+                        y: -3
+                        width: 2
+                        height: 8
+                        color: parent.color
+                    }
                 }
             }
 

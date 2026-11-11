@@ -330,6 +330,9 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_test(NAME packet_stream_replay_checks COMMAND packet_stream_replay_checks)
     add_test(NAME packet_corpse_lifecycle_checks COMMAND packet_stream_replay_checks --corpse-only)
     add_test(NAME packet_npc_class_change_checks COMMAND packet_stream_replay_checks --npc-class-change-only)
+    add_test(NAME packet_compass_checks COMMAND packet_stream_replay_checks --compass-only)
+    set_tests_properties(packet_compass_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-compass-settings")
     add_test(NAME packet_chat_state_checks COMMAND packet_stream_replay_checks --chat-state-only)
     add_test(NAME packet_chat_notice_checks COMMAND packet_stream_replay_checks --chat-notice-only)
     set_tests_properties(packet_chat_notice_checks PROPERTIES TIMEOUT 30

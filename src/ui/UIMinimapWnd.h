@@ -19,6 +19,7 @@ public:
         int radius = 0;
         // Packed 0x00RRGGBB, shared with the Qt marker model (not Win32 COLORREF).
         unsigned int color = 0;
+        bool compass = false;
     };
 
     struct DisplayData {
@@ -75,11 +76,11 @@ private:
     void EnsureRenderCache();
     void ReleaseRenderCache();
     void InvalidateRenderCache();
-    void DrawWindowContents(HDC hdc, int baseX, int baseY);
+    void DrawWindowContents(HDC hdc, int baseX, int baseY, u32 now);
     void UpdateMinimapBitmap();
     RECT GetCloseButtonRect() const;
     std::string GetCurrentMinimapBitmapName() const;
-    unsigned long long BuildVisualStateToken() const;
+    unsigned long long BuildVisualStateToken(u32 now) const;
 
     bool m_controlsCreated;
     UIBitmapButton* m_closeButton;

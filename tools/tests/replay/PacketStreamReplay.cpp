@@ -5510,6 +5510,7 @@ void GlobalChatProductionSendReplay()
 #include "RentalItemReplay.inc"
 #include "NpcShopTransactionReplay.inc"
 #include "NpcClassChangeReplay.inc"
+#include "CompassMarkerReplay.inc"
 
 int main(int argc,char** argv){try{
 #if RO_ENABLE_QT6_UI
@@ -5553,6 +5554,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--chat-state-only") { ChatWindowStateReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--corpse-only") { CorpsePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-class-change-only") { NpcClassChangeReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--compass-only") { CompassMarkerReplay();CConnection::Cleanup();return 0; }
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();

@@ -7635,6 +7635,7 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 void ClearRuntimeActors(CGameMode& mode)
 {
     g_Weather.Reset();
+    mode.m_compassPosList.clear();
     mode.m_characterNameCache.clear();
     mode.m_characterNameReqTimer.clear();
     CWorld* const world = mode.m_world ? mode.m_world : &g_world;
@@ -10362,7 +10363,21 @@ void CGameMode::OnExit() {
     m_lastActorBootstrapPacketTick = 0;
     m_loadingWallpaperName.clear();
 }
+void CGameMode::PruneCompassMarkers(u32 now)
+{
+    for (auto it = m_compassPosList.begin(); it != m_compassPosList.end();) {
+        if (it->second.IsExpired(now)) {
+            it = m_compassPosList.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 int  CGameMode::OnRun() {
+    if (!m_compassPosList.empty()) {
+        PruneCompassMarkers(timeGetTime());
+    }
     if(m_world && m_world->m_player){
         int x=0,y=0;GetServerCoor(m_world->m_player->m_pos.x,m_world->m_player->m_pos.z,x,y);
         std::map<u32,ro::commerce::TradePeer> peers;

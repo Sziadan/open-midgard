@@ -3852,6 +3852,29 @@ enum : u8 {
     kChatChannelSystem = 6,
 };
 
+void HandleCompass(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 23) {
+        return;
+    }
+
+    // Zc_compass ignores the NPC ID and keys the marker by the byte at 18.
+    const u32 type = ReadLE32(packet.data + 6);
+    const u32 id = packet.data[18];
+    if (type == 2) {
+        mode.m_compassPosList.erase(id);
+        return;
+    }
+
+    mode.m_compassPosList[id] = CompassMarker{
+        static_cast<int>(ReadLE32(packet.data + 10)),
+        static_cast<int>(ReadLE32(packet.data + 14)),
+        ReadLE32(packet.data + 19) | 0xFF000000u,
+        type,
+        timeGetTime(),
+    };
+}
+
 void HandleNotifyMapInfo(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 4) {
@@ -3860,7 +3883,8 @@ void HandleNotifyMapInfo(CGameMode& mode, const PacketView& packet)
 
     const u16 type = ReadLE16(packet.data + 2);
     const char* message = nullptr;
-    u32 color = 0x00FFFF00u;
+    // Ref supplies Win32 COLORREF 0x00FFFF00; chat stores packed RGB.
+    u32 color = 0x0000FFFFu;
     switch (type) {
     case 0:
         message = "Teleport is not allowed in this area.";
@@ -4041,7 +4065,6 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
     mode.m_characterNameReqTimer.clear();
     mode.m_partyPosList.clear();
     mode.m_guildPosList.clear();
-    mode.m_compassPosList.clear();
     mode.m_pickupReqItemNaidList.clear();
     mode.m_groundItemList.clear();
 
@@ -8451,6 +8474,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    mode.m_compassPosList.clear();
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
     ro::commerce::CloseTransactions();
     ApplyMapChangeSessionState(info);
@@ -8779,6 +8803,13 @@ void HandleActorVanish(CGameMode& mode, const PacketView& packet)
             if (IsLocalPlayerActor(mode, gid)) {
                 mode.m_isOnQuest = 1;
                 mode.m_isPlayerDead = 1;
+                for (auto it = mode.m_compassPosList.begin(); it != mode.m_compassPosList.end();) {
+                    if (it->second.type != 0) {
+                        it = mode.m_compassPosList.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
                 if (g_serviceType != ServiceTaiwan && mode.CanRequestStandingResurrection()) {
                     g_windowMgr.MakeWindow(UIWindowMgr::WID_CHOOSEWND);
                 }
@@ -9289,6 +9320,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00CB, HandleNpcShopSellResult);
     router.Register(0x0142, HandleNpcDialogNumberInput);
     router.Register(0x01D4, HandleNpcDialogStringInput);
+    router.Register(0x0144, HandleCompass);
     router.Register(0x0189, HandleNotifyMapInfo);
     RegisterHandlerIfValid(router, receiveProfile.broadcastColored, HandleBroadcast);
     router.Register(0x02DC, HandleBattlefieldChat);

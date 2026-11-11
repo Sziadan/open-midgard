@@ -389,7 +389,11 @@ void StandingResurrectionReplay()
             && consumed == static_cast<int>(frame.size()) && router.Dispatch(mode, packet),
             "standing resurrection fixture failed to route a packet");
     };
+    mode.m_compassPosList[1] = {20, 20, 0xffffffffu, 1, timeGetTime()};
+    mode.m_compassPosList[2] = {21, 21, 0xffffffffu, 0, timeGetTime()};
     dispatch(std::array<u8, 7>{0x80, 0x00, 0x78, 0x56, 0x34, 0x12, 1});
+    Require(mode.m_compassPosList.size() == 1 && mode.m_compassPosList.count(2),
+        "self death did not clear persistent compass markers while retaining timed markers");
     auto* menu = g_windowMgr.m_chooseWnd;
     Require(mode.m_isPlayerDead && menu && menu->m_show && menu->GetEntryCount() == 5,
         "eligible self-death did not open the recovery option");
@@ -537,6 +541,7 @@ void MapTransitionLifetimeReplay()
         std::snprintf(mode.m_rswName, sizeof(mode.m_rswName), "%s", "prontera.rsw");
         mode.m_partyPosList[0x30303030u].x = 25;
         mode.m_partyPosList[0x30303030u].y = 35;
+        mode.m_compassPosList[1] = {20, 20, 0xffffffffu, 1, timeGetTime()};
         int presentations = 0;
         int handoffs = 0;
         MapTransitionServices services;
@@ -585,6 +590,7 @@ void MapTransitionLifetimeReplay()
             "same-map reuse discarded the loaded world/view");
         Require(!mode.m_isPlayerDead && !mode.m_isOnQuest,
             "same-map reuse retained the previous death state");
+        Require(mode.m_compassPosList.empty(), "same-map reuse retained a compass marker");
         Require(world.GetMapCellType(1, 1) == 5 && attr.GetCell(1, 1)->flag == 0,
             "same-map reuse lost the active map cell update");
         Require(world.m_isPKZone && world.m_isSiegeMode && world.m_isBattleFieldMode

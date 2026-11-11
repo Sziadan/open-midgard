@@ -221,6 +221,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0140, 22);
     SetPacketSize(0x0141, 14);
     SetPacketSize(0x0142, 6);
+    SetPacketSize(0x0144, 23);             // ZC_COMPASS
     SetPacketSize(0x0189, 4);              // ZC_NOTIFY_MAPINFO
     SetPacketSize(0x0148, 8);
     SetPacketSize(0x014C, kVariablePacketSize);
