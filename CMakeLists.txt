@@ -340,6 +340,7 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_test(NAME packet_npc_show_efst_checks COMMAND packet_stream_replay_checks --npc-show-efst-only)
     add_test(NAME packet_status_resource_widths_checks COMMAND packet_stream_replay_checks --status-resource-widths-only)
     add_test(NAME packet_status_summary_0214_checks COMMAND packet_stream_replay_checks --status-summary-0214-only)
+    add_test(NAME packet_actor_resource_ordering_checks COMMAND packet_stream_replay_checks --actor-resource-ordering-only)
     set_tests_properties(packet_npc_show_efst_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-npc-show-efst-settings")
     add_test(NAME packet_npc_show_efst_map_exit_checks COMMAND packet_stream_replay_checks --npc-show-efst-map-exit)

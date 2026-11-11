@@ -812,9 +812,12 @@
       "commit_subject": "packet(PK24.02): retain full status points and isolate stat acknowledgements"
     },
     "PK24.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK24.03-selected-actor-and-resource-ordering.md",
+        "docs/packets/evidence/PK24.05-effect-resource-authority.md"
+      ],
+      "commit_subject": "packet(PK24.03): frame effect values and replay actor resource ordering"
     },
     "PK24.04": {
       "status": "NOT_STARTED",
