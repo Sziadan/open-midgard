@@ -474,6 +474,7 @@ public:
     void LaunchSkillSpecialEffect(int skillId, int level, CGameActor* source, CGameActor* target);
     // Ref/Session2.cpp:3259. `act` is set to -1 when the monster XML has no entry.
     void GetMonsterSkillInfo(const char* monsterName, int skillId, int& act, int& loopType);
+    std::string GetPetSpeech(int job, int hunger, int action);
     int GetSex() const;
     char* GetJobActName(int job, int sex, char* buf);
     const char* GetPetAccActName(int accessoryItemId) const;
@@ -539,6 +540,8 @@ private:
     std::vector<ForceAnimTick> m_forceAnimEndTick;
     bool m_monsterSkillInfoLoaded = false;
     XMLDocument m_monsterSkillInfo;
+    bool m_petTalkLoaded = false;
+    XMLDocument m_petTalk;
 };
 
 extern CSession g_session;

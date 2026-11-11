@@ -4,36 +4,13 @@
 #include "DebugLog.h"
 #include "core/File.h"
 #include "core/Globals.h"
+#include "core/SourceTextCodec.h"
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
 namespace {
-
-// Ref/MsgStrings.cpp:101. Korea (service type 0) stores these XML keys encoded.
-char* DataTxtDecode(char* str)
-{
-    if (g_serviceType != ServiceKorea || str == nullptr) {
-        return str;
-    }
-    const int length = static_cast<int>(std::strlen(str));
-    for (int index = 0; index < length; ++index) {
-        unsigned char value = static_cast<unsigned char>(str[index]);
-        if (value >= 0x61u && value <= 0x7Au) {
-            value = static_cast<unsigned char>(static_cast<int>(-37) - static_cast<int>(value));
-        }
-        if (value < 0x41u || value > 0x5Au) {
-            if (value >= 0xB0u && value <= 0xBFu) {
-                value = static_cast<unsigned char>(111 - static_cast<int>(value));
-            }
-        } else {
-            value = static_cast<unsigned char>(static_cast<int>(-101) - static_cast<int>(value));
-        }
-        str[index] = static_cast<char>(value);
-    }
-    return str;
-}
 
 void DecodeInto(char* dest, int destSize, const char* source)
 {
@@ -46,7 +23,7 @@ void DecodeInto(char* dest, int destSize, const char* source)
     }
     std::strncpy(dest, source, static_cast<size_t>(destSize - 1));
     dest[destSize - 1] = '\0';
-    DataTxtDecode(dest);
+    ro::DecodeSourceResourceText(dest);
 }
 
 // Ref/Session.cpp:10663 for showLevel == 1. The showLevel == 7 Gravity-aid
@@ -77,7 +54,7 @@ void CSession::GetMonsterSkillInfo(const char* monsterName, int skillId, int& ac
         if (bytes != nullptr && size > 0) {
             m_monsterSkillInfo.ReadDocument(reinterpret_cast<const char*>(bytes),
                 reinterpret_cast<const char*>(bytes) + size);
-            std::free(bytes);
+            delete[] bytes;
         }
     }
 
@@ -90,7 +67,7 @@ void CSession::GetMonsterSkillInfo(const char* monsterName, int skillId, int& ac
 
     char skillKey[16];
     std::snprintf(skillKey, sizeof(skillKey), "_%d", skillId);
-    DataTxtDecode(skillKey);
+    ro::DecodeSourceResourceText(skillKey);
 
     // Ref copies the name, lowercases it, then DataTxtDecode.
     char nameKey[256];
@@ -103,7 +80,7 @@ void CSession::GetMonsterSkillInfo(const char* monsterName, int skillId, int& ac
             *cursor = static_cast<char>(value - 'A' + 'a');
         }
     }
-    DataTxtDecode(nameKey);
+    ro::DecodeSourceResourceText(nameKey);
 
     XMLElement* monster = table->FindChild(nameKey);
     if (monster == nullptr) {

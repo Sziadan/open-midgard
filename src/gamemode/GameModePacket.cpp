@@ -1967,16 +1967,10 @@ void HandleHomunProperty(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleHomunFeedResult(CGameMode& mode, const PacketView& packet)
+void ShowMissingPetFood(u16 foodId)
 {
-    if (!packet.data || packet.packetLength != 5) return;
-    if (packet.data[2] != 0) {
-        g_session.m_homunStatus.stateId = 29;
-        return;
-    }
-
     ITEM_INFO food{};
-    food.SetItemId(ReadLE16(packet.data + 3));
+    food.SetItemId(foodId);
     ro::UiMessageStrings strings;
     strings.Load();
     std::string message = strings.Get(591, "You have no '%s'.");
@@ -1985,6 +1979,17 @@ void HandleHomunFeedResult(CGameMode& mode, const PacketView& packet)
     constexpr u32 color = 0x1e1ef5;
     g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(message.c_str()), color);
     g_windowMgr.SendMsg(20, reinterpret_cast<msgparam_t>(message.c_str()), color);
+}
+
+void HandleHomunFeedResult(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 5) return;
+    if (packet.data[2] != 0) {
+        g_session.m_homunStatus.stateId = 29;
+        return;
+    }
+
+    ShowMissingPetFood(ReadLE16(packet.data + 3));
     if (auto* actor = mode.m_world ? mode.m_world->GetGameActorByAID(g_session.m_homunGID) : nullptr)
         actor->SendMsg(nullptr, 21, 4, 0, 0);
 }
@@ -5576,6 +5581,47 @@ void HandlePetStatusChange(CGameMode& mode,const PacketView& packet)
     }
 }
 
+int PetReactionState(int percent)
+{
+    if (percent > 100) return 0;
+    if (percent > 90) return 4;
+    if (percent > 75) return 3;
+    if (percent > 25) return 2;
+    return percent > 10 ? 1 : 0;
+}
+
+void HandlePetFeedResult(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 5) {
+        return;
+    }
+    if (packet.data[2] == 0) {
+        ShowMissingPetFood(ReadLE16(packet.data + 3));
+        return;
+    }
+    if (packet.data[2] != 1) {
+        return;
+    }
+
+    const auto& pet = g_session.m_petStatus;
+    if (pet.job < 1000 || pet.job > 0xffff) {
+        return;
+    }
+    const int hunger = PetReactionState(pet.oldFullness);
+    const int friendship = PetReactionState(pet.relationship / 10);
+    // Ref CSession::InitPetEmotionTable, feeding action 0.
+    constexpr int feedEmotions[5][5] = {
+        {32, 32, 20, 33, 18},
+        {20, 20, 33, 18, 15},
+        {32, 20, 33, 18, 15},
+        {32, 32, 20, 33, 18},
+        {23, 32, 32, 20, 20},
+    };
+    const int voiceBase = pet.job < 1519 && g_session.m_sex == 1 ? 50000 : 90000;
+    mode.SendMsg(161, voiceBase + (pet.job - 1000) * 100 + hunger, 0, 0);
+    mode.SendMsg(161, feedEmotions[hunger][friendship], 0, 0);
+}
+
 void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 12 || mode.m_world == nullptr) {
@@ -7498,6 +7544,42 @@ void ApplyActorChatBubble(CGameMode& mode, u32 actorId, const std::string& chatT
     actor->SetChatBubbleText(bubbleText, ComputeActorChatBubbleUntilTick(bubbleText, now));
 }
 
+void HandlePetAction(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 10 || !mode.m_world) {
+        return;
+    }
+    const u32 actorId = ReadLE32(packet.data + 2);
+    auto* actor = mode.m_world->GetGameActorByAID(actorId);
+    if (!actor) {
+        return;
+    }
+    const int action = ReadCompanionI32(packet.data + 6);
+    if (action < 50000) {
+        actor->SendMsg(nullptr, 21, action, 0, 0);
+        return;
+    }
+
+    const int code = action - (action >= 90000 ? 90000 : 50000);
+    const int job = 1000 + code / 100 % 1000;
+    const std::string speech = g_session.GetPetSpeech(job, code % 10, code / 10 % 10);
+    if (speech.empty()) {
+        return;
+    }
+    std::string name = mode.ResolveCharacterName(actorId);
+    if (name.empty() && actorId == g_session.m_petStatus.actorId) {
+        name = g_session.m_petStatus.name;
+    }
+    if (name.empty()) {
+        return;
+    }
+    actor->SetChatBubbleText(speech, ComputeActorChatBubbleUntilTick(speech, GetTickCount()));
+    if (g_session.m_isNoTalkMsg != 1 && g_session.m_isNoTalkMsg2 != 1) {
+        RecordChat(mode, name + " : " + speech, 0x00fafafau, kChatChannelNormal,
+            {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Chat, {}});
+    }
+}
+
 void PropagateChatToUi(const ChatEntry& entry, const ro::chat::NoticeSource& source)
 {
     if (entry.text.empty()) {
@@ -9348,6 +9430,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x019E, HandlePetCaptureArm);
     router.Register(0x01A6, HandlePetEggList);
     router.Register(0x01A4, HandlePetStatusChange);
+    router.Register(0x01A3, HandlePetFeedResult);
+    router.Register(0x01AA, HandlePetAction);
     router.Register(0x022E, HandleHomunProperty);
     router.Register(0x022F, HandleHomunFeedResult);
     router.Register(0x0230, HandleHomunStatus);

@@ -9,6 +9,19 @@
 
 namespace ro {
 
+void DecodeSourceResourceText(char* text)
+{
+    // Ref/MsgStrings.cpp:101. Korean XML resources use an involutive byte mapping.
+    if (g_serviceType != ServiceKorea || !text) return;
+    for (; *text; ++text) {
+        auto byte = static_cast<unsigned char>(*text);
+        if (byte >= 'a' && byte <= 'z') byte = static_cast<unsigned char>(-37 - byte);
+        if (byte >= 'A' && byte <= 'Z') byte = static_cast<unsigned char>(-101 - byte);
+        else if (byte >= 0xb0 && byte <= 0xbf) byte = static_cast<unsigned char>(111 - byte);
+        *text = static_cast<char>(byte);
+    }
+}
+
 int SelectedSourceTextCodePage()
 {
     if (g_codePage) return g_codePage;

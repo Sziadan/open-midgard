@@ -7,6 +7,7 @@
 namespace ro {
 
 int SelectedSourceTextCodePage();
+void DecodeSourceResourceText(char* text);
 std::optional<std::string> EncodeSourceText(std::string_view utf8, int codePage);
 std::optional<std::string> DecodeSourceText(std::string_view bytes, int codePage);
 

@@ -8,6 +8,7 @@ add_library(ro_session STATIC
     SkillActionInfo2.h
     SkillActionInfo2.cpp
     MonsterSkillInfo.cpp
+    PetTalk.cpp
 )
 
 target_include_directories(ro_session PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -11339,6 +11339,17 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         std::memcpy(packet.data()+2,name,count);
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
     }
+    case 161: {
+        const s32 action = static_cast<s32>(wparam);
+        // Ref's show-level 3 master check has no reachable allow branch.
+        if (action == -1 || (action >= 50000 && g_session.m_petStatus.relationship / 10 < 90)) {
+            return 0;
+        }
+        const u32 bits = static_cast<u32>(action);
+        const u8 packet[] = {0xa9, 0x01, static_cast<u8>(bits), static_cast<u8>(bits >> 8),
+            static_cast<u8>(bits >> 16), static_cast<u8>(bits >> 24)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet)) ? 1 : 0;
+    }
     case 163: {
         // CZ_COMMAND_PET takes the source argument's low byte. Permission,
         // confirmation and local egg/window changes belong to the callers.
