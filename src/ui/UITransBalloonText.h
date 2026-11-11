@@ -4,7 +4,7 @@
 class CMode;
 class UITransBalloonText : public UIWindow {
 public:
-    explicit UITransBalloonText(CMode* owner);
+    explicit UITransBalloonText(CMode* owner, int fontPixels = 12, bool transparentBackground = false);
     ~UITransBalloonText() override;
     void DetachOwner(){m_owner=nullptr;}
     void SetText(const char* text,int maximumBytes);
@@ -20,6 +20,8 @@ public:
 private:
     CMode* m_owner;
     std::vector<std::string> m_lines,m_displayLines;
+    int m_fontPixels;
+    bool m_transparentBackground;
     int m_lineHeight=12;
     u32 m_fontColor=0xffffff;
 };

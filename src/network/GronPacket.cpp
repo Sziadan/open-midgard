@@ -324,6 +324,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x020A, 10);
     SetPacketSize(0x0214, 42);
     SetPacketSize(0x0215, 6);               // ZC_SKILLMSG
+    SetPacketSize(0x020E, 32);              // ZC_STARSKILL, effective 20080910 size
+    SetPacketSize(0x0253, 3);               // ZC_STARPLACE
     SetPacketSize(0x0220, 10);
     SetPacketSize(0x0229, 15);
     SetPacketSize(0x022A, 58);

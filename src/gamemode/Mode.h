@@ -56,7 +56,7 @@ public:
     void ProcessHelpBalloon(u32 now);
     UITransBalloonText* GetHelpBalloon() const {return m_helpBalloon;}
     u32 GetHelpBalloonTick() const {return m_helpBalloonTick;}
-    void HelpBalloonDeleted(UITransBalloonText* window);
+    virtual void HelpBalloonDeleted(UITransBalloonText* window);
 
 protected:
     virtual void OnChangeState(int newState) {}

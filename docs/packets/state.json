@@ -868,9 +868,12 @@
       "commit_subject": "packet(PK26.02): render the monster estimate portrait"
     },
     "PK26.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK26.SPECIAL-SKILL-CHOICES.md",
+        "docs/packets/evidence/PK26.03-star-skill.md"
+      ],
+      "commit_subject": "packet(PK26.03): implement selected Star Gladiator notices and confirmation"
     },
     "PK26.04": {
       "status": "NOT_STARTED",

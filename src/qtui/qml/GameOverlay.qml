@@ -3295,6 +3295,9 @@ Item {
                 anchors.centerIn: parent
                 visible: (uiState.skillSelectData.rows || []).length === 0
                 text: uiState.skillSelectData.emptyText || "Nothing to select."
+                width: parent.width - 16
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
                 color: theme.muted
                 font.family: theme.fontFamily
                 font.pixelSize: 10

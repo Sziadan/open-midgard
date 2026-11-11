@@ -315,7 +315,8 @@ inline void DrawWindowTextRectQt(HDC hdc, const RECT& rect, const std::string& t
     painter.setRenderHint(QPainter::TextAntialiasing, false);
     painter.setFont(font);
     painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
-    painter.drawText(QRect(0, 0, width, height), ToQtTextAlignment(format) | Qt::TextSingleLine, label);
+    const int textLayout = (format & DT_WORDBREAK) ? Qt::TextWordWrap : Qt::TextSingleLine;
+    painter.drawText(QRect(0, 0, width, height), ToQtTextAlignment(format) | textLayout, label);
     AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
 }
 #endif

@@ -76,6 +76,8 @@ public:
     void SetWarpDestinations(unsigned short skillId, const std::vector<std::string>& mapNames);
     void SetMakingArrowItems(const std::vector<unsigned int>& itemIds);
     void SetAutoSpellSkills(const std::vector<unsigned int>& skillIds);
+    void SetStarPlaceConfirmation(u8 which, std::string prompt);
+    bool IsStarPlaceConfirmation(u8 which) const;
     bool IsAutoSpellSelection() const { return m_kind == Kind::AutoSpell; }
     bool IsWarpSelection() const { return m_kind == Kind::Warp; }
     bool IsMakingArrowSelection() const { return m_kind == Kind::Arrow; }
@@ -87,6 +89,7 @@ private:
         Warp,
         Arrow,
         AutoSpell,
+        StarPlace,
     };
 
     struct Entry {

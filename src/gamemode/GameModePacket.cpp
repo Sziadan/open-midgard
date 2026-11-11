@@ -73,6 +73,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <zlib.h>
 
@@ -7686,6 +7687,131 @@ std::string ExtractFixedPacketString(const u8* data, size_t length)
     return value;
 }
 
+using StarNoticeArguments = std::initializer_list<std::pair<char, std::string_view>>;
+
+std::optional<std::string> FormatStarNotice(std::string_view format, StarNoticeArguments arguments)
+{
+    std::string message;
+    auto argument = arguments.begin();
+    for (size_t i = 0; i < format.size(); ++i) {
+        if (format[i] != '%') {
+            message += format[i];
+            continue;
+        }
+        if (++i == format.size()) {
+            return std::nullopt;
+        }
+        const char type = format[i];
+        if (type == '%') {
+            message += '%';
+        } else if (argument != arguments.end()
+            && (type == argument->first || (type == 'u' && argument->first == 'd'))) {
+            message += argument->second;
+            ++argument;
+        } else {
+            return std::nullopt;
+        }
+    }
+    if (argument != arguments.end() || message.empty()) {
+        return std::nullopt;
+    }
+    return message;
+}
+
+void ShowLocalizedStarNotice(CGameMode& mode, unsigned id, const std::string& fallback,
+    StarNoticeArguments arguments)
+{
+    ro::UiMessageStrings strings;
+    strings.Load();
+    if (const auto localized = strings.Find(id)) {
+        if (const auto message = FormatStarNotice(*localized, arguments)) {
+            mode.ShowStarSkillNotice(*message, timeGetTime());
+            return;
+        }
+    }
+    if (const auto message = FormatStarNotice(fallback, arguments)) {
+        mode.ShowStarSkillNotice(*message, timeGetTime());
+    }
+}
+
+void HandleStarSkill(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 32) {
+        return;
+    }
+    constexpr std::array<const char*, 3> celestialNames = {"Sun", "Moon", "Stars"};
+    constexpr unsigned starPlaceMessageBase = 837; // MSI_STARPLACE1 through MSI_STARPLACE6
+    constexpr unsigned starMonsterMessageBase = 843; // MSI_STARMONSTER1 through MSI_STARMONSTER6
+    const u8 star = packet.data[30];
+    const u8 result = packet.data[31];
+    std::string target = ExtractFixedPacketString(packet.data + 2, 24);
+    int effect = 0;
+    switch (result) {
+    case 0:
+    case 1:
+    case 10:
+    case 11: {
+        if (star >= celestialNames.size()) {
+            return;
+        }
+        const bool hatred = result >= 10;
+        const bool info = result == 1 || result == 11;
+        const unsigned messageId = (hatred ? starMonsterMessageBase : starPlaceMessageBase) + (info ? 3 : 0) + star;
+        if (hatred && target.empty()) {
+            const s32 job = static_cast<s32>(ReadLE32(packet.data + 26));
+            const char* name = g_session.GetJobName(job);
+            target = name && *name ? name : std::to_string(job);
+        }
+        const auto player = ExtractFixedPacketString(reinterpret_cast<const u8*>(g_session.m_playerName),
+            sizeof(g_session.m_playerName));
+        const std::string designation = std::string(hatred ? "target of the " : "place of the ") + celestialNames[star];
+        const std::string fallback = info ? "%s's " + designation + " is %s."
+            : "%s designated %s as the " + designation + ".";
+        ShowLocalizedStarNotice(mode, messageId, fallback, {{'s', player}, {'s', target}});
+        if (info) {
+            effect = 543;
+            PlayWave("effect\\piring.wav", 0.0f, -250.0f, 0.0f);
+        }
+        break;
+    }
+    case 20: {
+        const std::string progress = std::to_string(star);
+        ShowLocalizedStarNotice(mode, 927, "[TaeKwon Mission] Target: %s (%d%%)", {{'s', target}, {'d', progress}}); // MSI_TAEKWON_MISSION
+        effect = 543;
+        break;
+    }
+    case 30:
+        ShowLocalizedStarNotice(mode, 1033, "Your designated places and targets have been reset.", {}); // MSI_STAR_ANGEL
+        effect = 432;
+        break;
+    default:
+        return;
+    }
+    if (effect != 0 && mode.m_world && mode.m_world->m_player) {
+        mode.m_world->m_player->LaunchEffect(effect);
+    }
+}
+
+void HandleStarPlace(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 3 || packet.data[2] > 2) {
+        return;
+    }
+    mode.m_warpSkillId = 0;
+    mode.m_warpMapDestinations.clear();
+    auto* window = static_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
+    if (!window) {
+        return;
+    }
+    ro::UiMessageStrings strings;
+    strings.Load();
+    std::string prompt = strings.Get(1028, "Register this map permanently?"); // MSI_STARPLACE_ACCEPT
+    if (prompt.empty()) {
+        prompt = "Register this map permanently?";
+    }
+    window->SetStarPlaceConfirmation(packet.data[2], std::move(prompt));
+}
+
 void ApplyCachedPartyHpToVisibleActor(CGameMode& mode, u32 aid, const std::string& characterName)
 {
     if (aid == 0 || characterName.empty()) {
@@ -9240,6 +9366,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0139, HandleAttackFailureForDistance);
     router.Register(0x013A, HandleAttackRange);
     router.Register(0x0215, HandleSkillMessage);
+    router.Register(0x020E, HandleStarSkill);
+    router.Register(0x0253, HandleStarPlace);
     RegisterHandlerIfValid(router, receiveProfile.actorStateChangeExtended, HandleActorStateChange);
     router.Register(0x0121, HandleCartInfo);
     router.Register(0x012B, HandleCartOff);

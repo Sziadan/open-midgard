@@ -103,6 +103,10 @@ public:
     bool CancelWarpMapSelection();
     bool SendMakingArrowSelection(u16 itemId);
     bool SendAutoSpellSelection(u32 skillId, const std::vector<unsigned int>& offeredSkillIds);
+    bool SendStarPlaceAcceptance(u8 which);
+    void ShowStarSkillNotice(const std::string& text, u32 now);
+    void UpdateStarSkillNotice(u32 now);
+    void HelpBalloonDeleted(UITransBalloonText* window) override;
     void SynchronizePlayerSkillProceed(CPlayer* player,bool retire=false);
 
     enum MapLoadingStage {
@@ -314,7 +318,8 @@ public:
     
     UINameBalloonText* m_nameBalloon;
     UINameBalloonText* m_targetNameBalloon;
-    UITransBalloonText* m_broadcastBalloon;
+    UITransBalloonText* m_starSkillNotice;
+    u32 m_starSkillNoticeTick;
     UIPlayerGage* m_playerGage;
     UITransBalloonText* m_skillNameBalloon;
     UITransBalloonText* m_skillMsgBalloon;

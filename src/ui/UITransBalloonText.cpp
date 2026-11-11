@@ -49,7 +49,13 @@ std::string Display(const std::string& raw)
     out+=Utf8(raw.substr(start),page);return out;
 }
 }
-UITransBalloonText::UITransBalloonText(CMode* owner):m_owner(owner){m_id=117;Create(8,8);}
+UITransBalloonText::UITransBalloonText(CMode* owner, int fontPixels, bool transparentBackground)
+    : m_owner(owner), m_fontPixels(fontPixels), m_transparentBackground(transparentBackground),
+      m_lineHeight(fontPixels)
+{
+    m_id = 117;
+    Create(8, 8);
+}
 UITransBalloonText::~UITransBalloonText(){if(m_owner)m_owner->HelpBalloonDeleted(this);}
 std::string UITransBalloonText::ReplaceUnderbars(const char* text)
 {
@@ -71,13 +77,13 @@ void UITransBalloonText::SetText(const char* text,int maximumBytes)
     if(charset<input.size())for(std::size_t i=1;i<m_lines.size();++i)m_lines[i].insert(0,input.substr(charset,3));
     int width=0;
 #if RO_ENABLE_QT6_UI
-    QFont font("Segoe UI");font.setPixelSize(12);const QFontMetrics metrics(font);m_lineHeight=metrics.height();
+    QFont font("Segoe UI");font.setPixelSize(m_fontPixels);const QFontMetrics metrics(font);m_lineHeight=metrics.height();
 #endif
     for(const auto& line:m_lines){m_displayLines.push_back(Display(line));
 #if RO_ENABLE_QT6_UI
         width=(std::max)(width,metrics.horizontalAdvance(QString::fromUtf8(m_displayLines.back().c_str())));
 #else
-        width=(std::max)(width,static_cast<int>(m_displayLines.back().size())*6);
+        width=(std::max)(width,static_cast<int>(m_displayLines.back().size())*m_fontPixels/2);
 #endif
     }
     if(!m_lines.empty())Resize(width+12,4+static_cast<int>(m_lines.size())*(m_lineHeight+4));Invalidate();
@@ -86,14 +92,17 @@ void UITransBalloonText::OnDraw()
 {
     auto dc=AcquireDrawTarget();if(!dc)return;
 #if RO_ENABLE_QT6_UI
-    QImage image(m_w,m_h,QImage::Format_ARGB32_Premultiplied);image.fill(QColor(0,0,0,136));
-    QPainter painter(&image);QFont font("Segoe UI");font.setPixelSize(12);painter.setFont(font);int y=4;
+    QImage image(m_w,m_h,QImage::Format_ARGB32_Premultiplied);image.fill(QColor(0,0,0,m_transparentBackground ? 0 : 136));
+    QPainter painter(&image);QFont font("Segoe UI");font.setPixelSize(m_fontPixels);painter.setFont(font);int y=4;
     for(const auto& line:m_displayLines){painter.setPen(Qt::black);painter.drawText(QRect(7,y+1,m_w-7,m_lineHeight),Qt::AlignLeft|Qt::AlignTop|Qt::TextSingleLine,QString::fromUtf8(line.c_str()));
         painter.setPen(QColor::fromRgb(m_fontColor));painter.drawText(QRect(6,y,m_w-6,m_lineHeight),Qt::AlignLeft|Qt::AlignTop|Qt::TextSingleLine,QString::fromUtf8(line.c_str()));y+=m_lineHeight+4;}
     painter.end();AlphaBlendArgbToHdc(dc,m_x,m_y,m_w,m_h,reinterpret_cast<const unsigned int*>(image.constBits()),m_w,m_h);
 #else
-    const std::vector<unsigned int> background(static_cast<std::size_t>(m_w)*m_h,0x88000000u);
-    AlphaBlendArgbToHdc(dc,m_x,m_y,m_w,m_h,background.data(),m_w,m_h);int y=4;
+    if (!m_transparentBackground) {
+        const std::vector<unsigned int> background(static_cast<std::size_t>(m_w)*m_h,0x88000000u);
+        AlphaBlendArgbToHdc(dc,m_x,m_y,m_w,m_h,background.data(),m_w,m_h);
+    }
+    int y=4;
     for(const auto& line:m_displayLines){shopui::DrawWindowTextRect(dc,{m_x+7,m_y+y+1,m_x+m_w,m_y+y+1+m_lineHeight},line,RGB(0,0,0),DT_LEFT|DT_TOP|DT_SINGLELINE|DT_NOPREFIX);
         shopui::DrawWindowTextRect(dc,{m_x+6,m_y+y,m_x+m_w,m_y+y+m_lineHeight},line,RGB((m_fontColor>>16)&255,(m_fontColor>>8)&255,m_fontColor&255),DT_LEFT|DT_TOP|DT_SINGLELINE|DT_NOPREFIX);y+=m_lineHeight+4;}
 #endif

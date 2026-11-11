@@ -419,6 +419,27 @@ void UISkillSelectWnd::SetAutoSpellSkills(const std::vector<unsigned int>& skill
     Invalidate();
 }
 
+void UISkillSelectWnd::SetStarPlaceConfirmation(u8 which, std::string prompt)
+{
+    m_kind = Kind::StarPlace;
+    m_skillId = 0;
+    m_title = "Feeling";
+    m_emptyText = std::move(prompt);
+    Entry entry;
+    entry.itemId = which;
+    m_entries.clear();
+    m_entries.push_back(std::move(entry));
+    ResetInteraction();
+    m_selectedIndex = 0;
+    Invalidate();
+}
+
+bool UISkillSelectWnd::IsStarPlaceConfirmation(u8 which) const
+{
+    return m_kind == Kind::StarPlace && which <= 2 && HasValidSelection()
+        && m_entries[static_cast<size_t>(m_selectedIndex)].itemId == which;
+}
+
 bool UISkillSelectWnd::HasValidSelection() const
 {
     return m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_entries.size());
@@ -426,6 +447,9 @@ bool UISkillSelectWnd::HasValidSelection() const
 
 int UISkillSelectWnd::HitTestVisibleRow(int x, int y) const
 {
+    if (m_kind == Kind::StarPlace) {
+        return -1;
+    }
     const int entryCount = static_cast<int>(m_entries.size());
     const int firstIndex = std::clamp(m_viewOffset, 0, GetMaxViewOffset(entryCount));
     const int visibleCount = (std::min)(kVisibleRows, entryCount - firstIndex);
@@ -485,6 +509,8 @@ void UISkillSelectWnd::SubmitSelection()
             offeredSkillIds.push_back(offered.itemId);
         }
         sent = gameMode->SendAutoSpellSelection(entry.itemId, offeredSkillIds);
+    } else if (m_kind == Kind::StarPlace) {
+        sent = gameMode->SendStarPlaceAcceptance(static_cast<u8>(entry.itemId));
     }
     if (sent) {
         g_windowMgr.DeleteWindow(this);
@@ -535,7 +561,11 @@ void UISkillSelectWnd::OnDraw()
     shopui::FillRectColor(hdc, listRect, RGB(255, 255, 255));
     shopui::FrameRectColor(hdc, listRect, RGB(196, 192, 181));
 
-    if (entryCount <= 0) {
+    if (m_kind == Kind::StarPlace) {
+        RECT promptRect = listRect;
+        InflateRect(&promptRect, -8, -8);
+        shopui::DrawWindowTextRect(hdc, promptRect, m_emptyText, RGB(0, 0, 0), DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
+    } else if (entryCount <= 0) {
         shopui::DrawWindowTextRect(hdc, listRect, m_emptyText.c_str(), RGB(80, 80, 80), DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
     } else {
         const int firstIndex = m_viewOffset;
@@ -787,7 +817,7 @@ bool UISkillSelectWnd::GetDisplayDataForQt(DisplayData* outData) const
 
     const int entryCount = static_cast<int>(m_entries.size());
     const int firstIndex = std::clamp(m_viewOffset, 0, GetMaxViewOffset(entryCount));
-    const int visibleCount = (std::min)(kVisibleRows, entryCount - firstIndex);
+    const int visibleCount = m_kind == Kind::StarPlace ? 0 : (std::min)(kVisibleRows, entryCount - firstIndex);
     data.rows.reserve(static_cast<size_t>((std::max)(0, visibleCount)));
     for (int drawIndex = 0; drawIndex < visibleCount; ++drawIndex) {
         const Entry& entry = m_entries[static_cast<size_t>(firstIndex + drawIndex)];

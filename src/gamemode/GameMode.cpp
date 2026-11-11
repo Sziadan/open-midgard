@@ -60,6 +60,8 @@
 #include "ui/UIWindow.h"
 #include "ui/UIOptionWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UISkillSelectWnd.h"
+#include "ui/UITransBalloonText.h"
 #include "ui/UIChooseSellBuyWnd.h"
 #include "render/DrawUtil.h"
 #include "render/Prim.h"
@@ -10119,6 +10121,17 @@ bool CGameMode::SendMakingArrowSelection(u16 itemId)
     return sent;
 }
 
+bool CGameMode::SendStarPlaceAcceptance(u8 which)
+{
+    const auto* window = g_windowMgr.m_skillSelectWnd;
+    if (!window || !window->IsStarPlaceConfirmation(which)) {
+        return false;
+    }
+    const std::array<u8, 3> packet = {0x54, 0x02, which};
+    return CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(packet.data()), static_cast<int>(packet.size()));
+}
+
 bool CGameMode::SendAutoSpellSelection(u32 skillId, const std::vector<unsigned int>& offeredSkillIds)
 {
     if (skillId == 0 || skillId > 0xFFFFu
@@ -10191,7 +10204,7 @@ CGameMode::CGameMode()
       m_syncRequestTime(0), m_usedCachesUnloadTick(0), m_reqEmotionTick(0),
       m_reqTickChatRoom(0), m_reqTickMerchantShop(0), m_isReqEmotion(0),
       m_fixedLongitude(0.0f), m_lastCouplePacketAid(0), m_lastCouplePacketGid(0),
-      m_nameBalloon(nullptr), m_targetNameBalloon(nullptr), m_broadcastBalloon(nullptr),
+      m_nameBalloon(nullptr), m_targetNameBalloon(nullptr), m_starSkillNotice(nullptr), m_starSkillNoticeTick(0),
       m_playerGage(nullptr), m_skillNameBalloon(nullptr), m_skillMsgBalloon(nullptr), m_skillUsedMsgBalloon(nullptr),
       m_skillUsedTick(0), m_broadCastTick(0), m_nameDisplayed(0), m_nameDisplayed2(0),
       m_waitingUseItemAck(0), m_waitingItemThrowAck(0), m_waitingReqStatusAck(0),
@@ -10225,6 +10238,38 @@ CGameMode::CGameMode()
 
 CGameMode::~CGameMode() {
     ClearNpcProgress();
+    if (m_starSkillNotice) {
+        g_windowMgr.DeleteWindow(m_starSkillNotice);
+    }
+}
+
+void CGameMode::HelpBalloonDeleted(UITransBalloonText* window)
+{
+    CMode::HelpBalloonDeleted(window);
+    if (m_starSkillNotice == window) {
+        m_starSkillNotice = nullptr;
+    }
+}
+
+void CGameMode::ShowStarSkillNotice(const std::string& text, u32 now)
+{
+    if (!m_starSkillNotice) {
+        m_starSkillNotice = new UITransBalloonText(this, 14, true);
+        m_starSkillNotice->SetFontColor(0xC8C8FF); // Ref COLORREF 0x00FFC8C8.
+        g_windowMgr.m_children.push_back(m_starSkillNotice);
+        m_starSkillNotice->SetShow(1);
+    }
+    m_starSkillNoticeTick = now;
+    m_starSkillNotice->SetText(text.c_str(), 72);
+    const RECT client = g_windowMgr.GetChatClientRect();
+    m_starSkillNotice->Move((client.right + client.left - m_starSkillNotice->m_w) / 2, 51);
+}
+
+void CGameMode::UpdateStarSkillNotice(u32 now)
+{
+    if (m_starSkillNotice && now - m_starSkillNoticeTick > 20000u) {
+        g_windowMgr.DeleteWindow(m_starSkillNotice);
+    }
 }
 
 void CGameMode::StartNpcProgress(u32 seconds, u32 now)
@@ -10820,6 +10865,7 @@ void CGameMode::OnUpdate() {
     const DWORD packetEnd = GetTickCount();
     const int packetsProcessed = packetLoop.packetsProcessed;
 
+    UpdateStarSkillNotice(timeGetTime());
     UpdateNpcProgress(*conn, timeGetTime());
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);

@@ -5550,6 +5550,8 @@ void GlobalChatProductionSendReplay()
 #include "MonsterEstimateReplay.inc"
 #include "AutoSpellChoiceReplay.inc"
 #include "SkillChoiceLifecycleReplay.inc"
+#include "ui/UITransBalloonText.h"
+#include "StarSkillReplay.inc"
 
 int main(int argc,char** argv){try{
 #if RO_ENABLE_QT6_UI
@@ -5604,6 +5606,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--monster-estimate-only") { MonsterEstimateReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--autospell-choice-only") { AutoSpellChoiceProductionReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--skill-choice-lifecycle-only") { SkillChoiceLifecycleProductionReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--star-skill-only") { StarSkillProductionReplay();CConnection::Cleanup();return 0; }
     if (argc > 1 && std::string(argv[1]) == "--npc-show-efst-map-exit") {
         // OnExit clears process-wide windows and session state.
         NpcShowEfstMapExitReplay();
