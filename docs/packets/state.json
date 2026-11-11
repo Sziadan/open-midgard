@@ -621,9 +621,10 @@
       "commit_subject": "packet(PK18.04): verify dynamic map cells with native captures"
     },
     "PK19.01": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
-        "docs/packets/evidence/PK19-map-properties.md"
+        "docs/packets/evidence/PK19-map-properties.md",
+        "docs/packets/evidence/PK19.04-map-properties-verification.md"
       ],
       "commit_subject": "packet(PK19): restore legacy map property state"
     },
@@ -637,7 +638,7 @@
       "commit_subject": "packet(PK19): apply legacy map property row updates"
     },
     "PK19.03": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK19-map-properties.md",
         "docs/packets/evidence/PK19-map-property-lifetime.md",
@@ -649,9 +650,12 @@
       "commit_subject": "packet(PK19.03): verify standing resurrection menu rendering"
     },
     "PK19.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK19.MAP-PROPERTIES.md",
+        "docs/packets/evidence/PK19.04-map-properties-verification.md"
+      ],
+      "commit_subject": "packet(PK19.04): verify selected map property coverage"
     },
     "PK20.01": {
       "status": "NOT_STARTED",

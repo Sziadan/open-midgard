@@ -3863,3 +3863,7 @@ PK19.03 verifies the downloaded siege badge and restores the compressed legacy E
 ## 2026-11-11 Standing resurrection menu rendering
 
 PK19.03 verifies both native bitmap and Qt recovery menu frames before and after an event PvP restriction. All 165 application and 473 standalone checks passed. [Evidence](evidence/PK19-recovery-menu-rendering.md)
+
+## 2026-11-11 Selected map property verification
+
+PK19.04 verifies the active `0199` and `01D6` paths and records the selected-profile dispositions of `02E7` and `099B`. Production replay and the native and Qt captures cover the implemented rule consumers. [Evidence](evidence/PK19.04-map-properties-verification.md)

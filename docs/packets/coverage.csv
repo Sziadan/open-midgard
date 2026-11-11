@@ -305,7 +305,7 @@ AUDIT-0x0195,0x0195,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.02-actor-name-ack trac
 AUDIT-0x0196,0x0196,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0197,0x0197,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0198,0x0198,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0199,0x0199,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,PK19.MAP-PROPERTIES
+AUDIT-0x0199,0x0199,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Selected four-byte map property emitter, lifecycle and gameplay gates verified through production replay and native and Qt rendering; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK19.MAP-PROPERTIES
 AUDIT-0x019A,0x019A,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x019B,0x019B,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-notify-effect-019b traces selected 10-byte S2C ZC_NOTIFY_EFFECT and AREA route with client mapping; unsupported codes and replay remain open,UNREVIEWED,
 AUDIT-0x019C,0x019C,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -366,7 +366,7 @@ AUDIT-0x01D2,0x01D2,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-combo-delay.md: fix
 AUDIT-0x01D3,0x01D3,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-sound-loop.md: fixed 35-byte frame and bounded name with one-shot loop and stop branches traced at GameModePacket.cpp:972. Server action contract duration units name encoding and replay remain open.,UNREVIEWED,
 AUDIT-0x01D4,0x01D4,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01D5,0x01D5,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01D6,0x01D6,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,PK19.MAP-PROPERTIES
+AUDIT-0x01D6,0x01D6,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Selected four-byte map type and battleground emitter verified with production replay of map state and rule consumers; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK19.MAP-PROPERTIES
 AUDIT-0x01D7,0x01D7,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01D8,0x01D8,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01D9,0x01D9,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -625,7 +625,7 @@ AUDIT-0x02E3,0x02E3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x02E4,0x02E4,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02E5,0x02E5,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02E6,0x02E6,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x02E7,0x02E7,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,PK19.MAP-PROPERTIES
+AUDIT-0x02E7,0x02E7,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Selected source has a variable registry placeholder and no emitter; selected client compatibility receiver has synthetic replay",INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK19.MAP-PROPERTIES
 AUDIT-0x02E8,0x02E8,map,S2C,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02E9,0x02E9,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x02EA,0x02EA,map,S2C,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
@@ -914,7 +914,7 @@ AUDIT-0x097E,0x097E,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol f
 AUDIT-0x0988,0x0988,map,S2C,PK44,PK01;PK02;PK47;PK48,PK44.02.001 source-confirmed clan identity and selected-config guards,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.CLAN.0988-20131223+
 AUDIT-0x0989,0x0989,map,S2C,PK44,PK01;PK02;PK47;PK48,PK44.02.001 source-confirmed clan identity and selected-config guards,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.CLAN.0989-20131223+
 AUDIT-0x098E,0x098E,map,S2C,PK44,PK01;PK02;PK47;PK48,PK44.02.001 source-confirmed clan identity and selected-config guards,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.CLAN.098E-20131223+
-AUDIT-0x099B,0x099B,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x099B,0x099B,map,S2C,PK47,PK01;PK02;PK48;PK19,Map property type and flags emitter requires PACKETVER 20121010 or newer; selected MAIN 20080910 emits 0199,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK19.MAP-PROPERTIES
 AUDIT-0x099D,0x099D,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
 AUDIT-0x09A0,0x09A0,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
 AUDIT-0x09A1,0x09A1,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
