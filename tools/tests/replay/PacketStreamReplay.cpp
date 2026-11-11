@@ -2853,6 +2853,52 @@ void CompanionSkillListReplay()
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
+void LocalizedSystemNoticeReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto oldMerc = g_session.m_merStatus;
+    const auto oldGid = g_session.m_merGID;
+    g_session.m_merGID = 0x12345678;
+    g_session.m_merStatus.job = 6017;
+    g_session.m_merStatus.alive = true;
+    auto* info = g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND);
+    auto* skills = g_windowMgr.MakeWindow(UIWindowMgr::WID_MERSKILLLISTWND);
+    Require(info && skills, "could not open mercenary windows for the system notice");
+    g_windowMgr.ClearChatEvents();
+
+    const std::array<u8, 12> stream{
+        0x91, 0x02, 0xf2, 0x04,  // Expiry
+        0x91, 0x02, 0xf3, 0x04,  // Death
+        0x91, 0x02, 0xc5, 0x04   // Red party notice
+    };
+    PacketView view{};
+    int consumed = 0;
+    Require(!TryReadPacket(stream.data(), 3, view, consumed), "short localized notice framed");
+    for (std::size_t offset = 0; offset < stream.size(); offset += 4) {
+        Require(TryReadPacket(stream.data() + offset, static_cast<int>(stream.size() - offset), view, consumed)
+            && consumed == 4 && router.Dispatch(mode, view), "localized notice did not frame and dispatch");
+    }
+    const auto& events = g_windowMgr.GetChatEvents();
+    Require(g_windowMgr.m_chatWndShow && events.size() == 6, "localized notices did not show both chat routes");
+    for (std::size_t i = 0; i < events.size(); i += 2) {
+        const auto color = i < 4 ? 0xffffffu : 0xff0000u;
+        Require(!events[i].text.empty() && events[i].text == events[i + 1].text
+            && events[i].color == color && events[i + 1].color == color
+            && events[i].source.route == ro::chat::NoticeRoute::Normal
+            && events[i + 1].source.route == ro::chat::NoticeRoute::Command,
+            "localized notice lost the source text, color, or paired routes");
+    }
+    Require(events[0].text != events[2].text && g_session.m_merStatus.alive && g_session.m_merGID == 0x12345678
+        && g_windowMgr.m_merInfoWnd == info && g_windowMgr.m_merSkillListWnd == skills,
+        "mercenary system notices changed companion state or shared a message");
+    g_windowMgr.CloseCompanionWindows(false);
+    g_session.m_merStatus = oldMerc;
+    g_session.m_merGID = oldGid;
+    g_windowMgr.ClearChatEvents();
+}
+
 void GuildMemberLoginNoticeReplay(){
     SetCase("guild_member_login_notice_01f2","PK06.GUILD-MEMBER-LOGIN","PK06-01f2-selected-source-literal","ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ReadWindowPacket");
     Require(ro::net::GetPacketSize(0x01f2)==20,"selected 0x01F2 receive size is not 20 bytes");
@@ -5131,6 +5177,7 @@ int main(int argc,char** argv){try{
     CompanionIdentityReplay();
     CompanionCommandReplay();
     CompanionSkillListReplay();
+    LocalizedSystemNoticeReplay();
     GuildMemberLoginNoticeReplay();
     PartyMarkerGameModeExitReplay();
     SelectedInventoryCartRouteIsolationReplay();

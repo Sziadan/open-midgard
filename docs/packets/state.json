@@ -1017,9 +1017,10 @@
         "docs/packets/evidence/PK28-companion-commands.md",
         "docs/packets/evidence/PK28-companion-status-windows.md",
         "docs/packets/evidence/PK28-companion-status-actions.md",
-        "docs/packets/evidence/PK28-companion-skill-lists.md"
+        "docs/packets/evidence/PK28-companion-skill-lists.md",
+        "docs/packets/evidence/PK29-localized-system-notice.md"
       ],
-      "commit_subject": "packet(PK28): wire companion skill lists"
+      "commit_subject": "packet(PK29): receive localized system notices"
     },
     "PK29.03": {
       "status": "NOT_STARTED",

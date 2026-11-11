@@ -2018,6 +2018,33 @@ void HandleHomunStatus(CGameMode& mode, const PacketView& packet)
     if (actor) status.job = actor->m_job;
 }
 
+void HandleLocalizedSystemNotice(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 4) return;
+
+    const u16 messageId = ReadLE16(packet.data + 2);
+    const char* fallback = "";
+    switch (messageId) {
+    case 1221: fallback = "The party member was not summoned because you are not the party leader."; break;
+    case 1222: fallback = "There is no party member to summon in the current map."; break;
+    case 1266: fallback = "The mercenary contract has expired."; break;
+    case 1267: fallback = "The mercenary has died."; break;
+    case 1268: fallback = "You have released the mercenary."; break;
+    case 1269: fallback = "The mercenary has run away."; break;
+    default: break;
+    }
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const auto text = strings.Get(messageId, fallback);
+    if (text.empty()) return;
+
+    // Selected Zc_Msg at 0x5B0A20 shows chat and forwards the same notice twice.
+    const u32 color = messageId == 1221 || messageId == 1222 ? 0x000000ffu : 0x00ffffffu;
+    g_windowMgr.SendMsg(3, 0, 0);
+    g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(text.c_str()), color);
+    g_windowMgr.SendMsg(20, reinterpret_cast<msgparam_t>(text.c_str()), color);
+}
+
 void HandleMercenaryInit(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 80) return;
@@ -9095,6 +9122,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0230, HandleHomunStatus);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);
+    router.Register(0x0291, HandleLocalizedSystemNotice);
     router.Register(0x029B, HandleMercenaryInit);
     router.Register(0x029D, HandleMercSkillList);
     router.Register(0x029E, HandleMercSkillUpdate);

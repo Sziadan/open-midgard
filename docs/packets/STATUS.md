@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current companion skill list checkpoint (2026-11-11)**. The status buttons open independent packet-backed companion lists with scrolling, skill activation, descriptions, and shortcut dragging. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+**Current localized system notice checkpoint (2026-11-11)**. The map receiver frames and displays `0291`, including selected mercenary expiry and death. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK29-localized-system-notice.md)
+
+**Previous companion skill list checkpoint (2026-11-11)**. The status buttons open independent packet-backed companion lists with scrolling, skill activation, descriptions, and shortcut dragging. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-skill-lists.md)
 
 **Previous companion action checkpoint (2026-11-11)**. Homunculus feed, rename, and dismissal and mercenary dismissal now run through the selected status controls and confirmation callbacks. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status-actions.md)
 
