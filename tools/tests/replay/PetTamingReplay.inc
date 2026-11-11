@@ -37,16 +37,37 @@
             && window->m_x==x && window->m_y==y && window->IsSelected(),"reuse recreated/repositioned/reset selected taming owner");
         g_windowMgr.OnLBtnDown(x+20,y+20);g_windowMgr.OnLBtnUp(x+20,y+20);
         Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"reused selected taming owner retried capture");
-        result(0);Require(window->GetDestination()==3 && window->GetDelay()==7 && window->GetMaxDelay()==7,"zero capture result mismatch");
-        result(1);Require(window->GetDestination()==7,"nonzero capture result mismatch");
-        result(0xff);Require(window->GetDestination()==7,"high-bit capture result was not treated as nonzero");
         const u8 shortFrame[]={0xa0,1};const u8 wrongOpcode[]={0xa1,1,0};const u8 longFrame[]={0xa0,1,0,0};
         for(const auto& packet:std::array<PacketView,4>{{{0x01a0,2,shortFrame},{0x01a0,3,wrongOpcode},
                 {0x01a0,4,longFrame},{0x01a0,3,nullptr}}})receiver.Dispatch(mode,packet);
-        Require(window->GetDestination()==7 && window->GetDelay()==7,"malformed capture result mutated owner");
+        Require(window->GetDestination()==7 && window->GetDelay()==1
+            && connection->IsWaitingForPetCaptureResult(),"malformed capture result mutated owner or consumed the request");
+        result(0);Require(window->GetDestination()==3 && window->GetDelay()==7 && window->GetMaxDelay()==7,"zero capture result mismatch");
+        result(1);Require(window->GetDestination()==3,"duplicate result changed an already resolved capture");
+        result(0xff);Require(window->GetDestination()==3,"unsolicited high-bit result changed the owner");
         Require(g_session.m_petStatus.actorId==0x12345678u && g_session.m_petStatus.job==savedPet.job
             && g_session.m_petStatus.eggIndex==savedPet.eggIndex,"capture result derived pet presence/egg/job");
         g_windowMgr.m_captureWindow=window;g_windowMgr.DeleteWindow(window);
         Require(!g_windowMgr.m_petTamingDeceiveWnd && !g_windowMgr.m_captureWindow,"deleted taming owner retained manager capture");
-        result(0);Require(!g_windowMgr.m_petTamingDeceiveWnd,"late capture result recreated owner");
+        // A sent request outlives its deleted owner. Its result drains the
+        // connection slot but must not be delivered to the next fresh owner.
+        mode.SendMsg(76,10000,0x11223344,0);
+        auto* expired=g_windowMgr.m_petTamingDeceiveWnd;
+        Require(expired!=nullptr,"expired-owner fixture missing first window");
+        expired->OnLBtnDown(expired->m_x,expired->m_y);
+        Require(peer.ReceiveExact(6)==std::vector<u8>({0x9f,1,0x44,0x33,0x22,0x11}),"expired-owner fixture request bytes differ");
+        g_windowMgr.DeleteWindow(expired);
+        mode.SendMsg(76,10000,0x55667788,0);
+        auto* fresh=g_windowMgr.m_petTamingDeceiveWnd;
+        Require(fresh && !fresh->IsSelected() && fresh->GetDestination()==-1,"fresh owner was not unsubmitted");
+        fresh->OnLBtnDown(fresh->m_x,fresh->m_y);
+        Require(!fresh->IsSelected() && SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,
+            "new prompt submitted before the previous result was drained");
+        result(0);Require(fresh->GetDestination()==-1 && !fresh->IsSelected(),"old owner's late result reached fresh owner");
+        result(1);Require(fresh->GetDestination()==-1,"duplicate old result reached fresh owner");
+        fresh->OnLBtnDown(fresh->m_x,fresh->m_y);
+        Require(peer.ReceiveExact(6)==std::vector<u8>({0x9f,1,0x88,0x77,0x66,0x55}),"fresh owner request bytes differ");
+        result(0xff);Require(fresh->GetDestination()==7 && fresh->GetDelay()==7 && fresh->GetMaxDelay()==7,
+            "fresh request high-bit result did not resolve as success");
+        result(0);Require(fresh->GetDestination()==7,"duplicate fresh result changed the resolved owner");
     }

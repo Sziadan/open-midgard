@@ -87,6 +87,9 @@ public:
     ReceiveError GetLastReceiveError() const { return m_lastReceiveError; }
     // Send a fully assembled packet (data includes the 2-byte PacketType header).
     bool SendPacket(const char* data, int len);
+    bool SendPetCaptureRequest(u32 targetGid);
+    bool IsWaitingForPetCaptureResult() const { return m_waitingForPetCaptureResult; }
+    bool ConsumePetCaptureResult();
     bool RecvPacket(char* buffer);
     bool ExpectRawAccountIdEcho(u32 expectedAccountId);
 
@@ -97,6 +100,7 @@ protected:
 private:
     friend struct PacketStreamReplayAccess;
     bool m_waitingForRawAccountIdEcho = false;
+    bool m_waitingForPetCaptureResult = false;
     u32 m_expectedRawAccountIdEcho = 0;
     ReceiveError m_lastReceiveError = ReceiveError::None;
 };

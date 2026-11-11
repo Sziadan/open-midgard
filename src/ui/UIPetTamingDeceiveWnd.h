@@ -11,6 +11,7 @@ public:
     UIPetTamingDeceiveWnd();
     void PrepareDrawFrame();
     void ProcessAt(u32 now);
+    void ApplyCaptureResult(bool captured);
     void OnProcess() override;
     void OnDraw() override;
     void OnLBtnDown(int,int) override;
@@ -31,6 +32,7 @@ private:
     int m_action=0;
     std::int64_t m_motionTick=0;
     bool m_selected=false;
+    bool m_awaitingResult=false;
     int m_delay=1,m_destination=-1,m_maxDelay=10000;
     u32 m_startTick=0xffffffffu;
     int m_artAction=-1,m_artFrame=-1;

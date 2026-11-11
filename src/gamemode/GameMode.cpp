@@ -11438,12 +11438,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
     }
     case 162: {
-        // CZ_CATCH_PET takes the source argument's low DWORD. Target choice,
-        // approach and the one-attempt latch belong to the taming window path.
-        const u32 target=static_cast<u32>(wparam);
-        const u8 packet[]={0x9f,0x01,static_cast<u8>(target),static_cast<u8>(target>>8),
-            static_cast<u8>(target>>16),static_cast<u8>(target>>24)};
-        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
+        return CRagConnection::instance()->SendPetCaptureRequest(static_cast<u32>(wparam)) ? 1 : 0;
     }
     case 183: {
         const u8 packet[]={0xe7,0x01};

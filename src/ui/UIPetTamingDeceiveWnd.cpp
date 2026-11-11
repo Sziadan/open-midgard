@@ -3,6 +3,7 @@
 #include "UIChatRoomEntry.h"
 #include "core/Globals.h"
 #include "gamemode/Mode.h"
+#include "network/Connection.h"
 #include "res/Res.h"
 #include "res/ActRes.h"
 #include "res/Sprite.h"
@@ -27,9 +28,16 @@ msgresult_t UIPetTamingDeceiveWnd::SendMsg(UIWindow*,int message,msgparam_t valu
 
 void UIPetTamingDeceiveWnd::OnLBtnDown(int,int)
 {
-    if(m_selected)return;
+    if(m_selected || CRagConnection::instance()->IsWaitingForPetCaptureResult())return;
     m_action=1;m_destination=7;m_selected=true;
-    g_modeMgr.SendMsg(162,m_monGid,0,0);
+    m_awaitingResult = g_modeMgr.SendMsg(162,m_monGid,0,0) != 0;
+}
+
+void UIPetTamingDeceiveWnd::ApplyCaptureResult(bool captured)
+{
+    if (!m_awaitingResult) return;
+    m_awaitingResult = false;
+    SendMsg(nullptr, 80, 1, captured ? 7 : 3, 0);
 }
 
 void UIPetTamingDeceiveWnd::ProcessAt(u32 now)

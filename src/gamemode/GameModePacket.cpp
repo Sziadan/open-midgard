@@ -5,6 +5,7 @@
 #include "Commerce.h"
 #include "LoginMode.h"
 
+#include "network/Connection.h"
 #include "network/GronPacket.h"
 #include "network/MapSendProfile.h"
 #include "network/Packet.h"
@@ -76,18 +77,6 @@
 #include <string_view>
 #include <vector>
 #include <zlib.h>
-
-class CConnection {
-public:
-    bool Connect(const char* ip, int port);
-    void Disconnect();
-};
-
-class CRagConnection : public CConnection {
-public:
-    static CRagConnection* instance();
-    bool SendPacket(const char* data, int len);
-};
 
 namespace {
 
@@ -5562,8 +5551,9 @@ void HandlePetCaptureResult(CGameMode&,const PacketView& packet)
 {
     if(!packet.data || packet.packetId!=0x01A0 || packet.packetLength!=3
         || packet.data[0]!=0xa0 || packet.data[1]!=0x01)return;
+    if (!CRagConnection::instance()->ConsumePetCaptureResult()) return;
     if(auto* window=g_windowMgr.m_petTamingDeceiveWnd)
-        window->SendMsg(nullptr,80,1,packet.data[2]?7:3,0);
+        window->ApplyCaptureResult(packet.data[2] != 0);
 }
 
 void HandlePetEggList(CGameMode&,const PacketView& packet)

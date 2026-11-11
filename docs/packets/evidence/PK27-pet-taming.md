@@ -1,5 +1,7 @@
 # Source pet taming window and capture result
 
+The [capture result ownership checkpoint](PK27.03-capture-result-ownership.md) adds connection-scoped reply handling to the original prompt and animation implementation described here.
+
 Baseline3924a5b5. Source factory91 is now an actual196x256 UIFrameWnd owner, with mode76(skill10000,targetGID,level) creating/reusing it unless targetGID equals session pet actorId. Only new instances center in logical client geometry; reused owners preserve position, stack, selection, motion, delay and timer and only receive a new targetGID. The owner has no child controls or invented selector keyboard actions. Its full rectangle receives native manager input; the first down sets action1/dest7/selected before sending mode162/019F. It keeps that one-attempt latch even on immediate send failure. Subsequent clicks, including after reuse, do not resend.
 
 Registered01A0 now has the actual3-byte receive-size entry in both supported table profiles, real framing and strict raw-header/view validation. Any nonzero result selects destination7, zero selects3; both set delay=maxDelay=7. Results affect an existing owner only, without target/generation correlation or derived pet job/egg/presence. Orphan and malformed results have no local effect. Source initial click already sets dest7 with maxDelay10000; closure is not made contingent on receiving a result.

@@ -484,6 +484,7 @@ CRagConnection* CRagConnection::instance()
 void CRagConnection::OnConnect()
 {
     m_waitingForRawAccountIdEcho = false;
+    m_waitingForPetCaptureResult = false;
     m_expectedRawAccountIdEcho = 0;
     m_lastReceiveError = ReceiveError::None;
 }
@@ -491,6 +492,7 @@ void CRagConnection::OnConnect()
 void CRagConnection::OnClose()
 {
     m_waitingForRawAccountIdEcho = false;
+    m_waitingForPetCaptureResult = false;
     m_expectedRawAccountIdEcho = 0;
 }
 
@@ -508,6 +510,23 @@ bool CRagConnection::SendPacket(const char* data, int len)
 {
     if (!data || len <= 0) return false;
     return Send(data, len) >= 0;
+}
+
+bool CRagConnection::SendPetCaptureRequest(u32 targetGid)
+{
+    // 01A0 has no target ID. Keep one 019F in flight on this connection.
+    if (m_waitingForPetCaptureResult) return false;
+    const u8 packet[] = {0x9f, 0x01, static_cast<u8>(targetGid), static_cast<u8>(targetGid >> 8),
+        static_cast<u8>(targetGid >> 16), static_cast<u8>(targetGid >> 24)};
+    m_waitingForPetCaptureResult = SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
+    return m_waitingForPetCaptureResult;
+}
+
+bool CRagConnection::ConsumePetCaptureResult()
+{
+    if (!m_waitingForPetCaptureResult) return false;
+    m_waitingForPetCaptureResult = false;
+    return true;
 }
 
 bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)

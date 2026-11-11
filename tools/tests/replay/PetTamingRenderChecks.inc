@@ -60,9 +60,6 @@
             && sourceAct->GetMotion(0,0)->sprClips[0].x==-98 && sourceAct->GetMotion(0,0)->sprClips[0].y==-128
             && sourceAct->GetMotion(0,0)->sprClips[1].x==-1 && sourceAct->GetMotion(0,0)->sprClips[1].y==-1,
             "ACT center-to-top-left source fixture oracle differs");
-        CGameModePacketRouter router;RegisterDefaultGameModePacketHandlers(router);
-        const auto dispatch=[&](u8 result){const u8 packet[]={0xa0,0x01,result};
-            Require(router.Dispatch(mode,{0x01a0,3,packet}),"registered pet capture result handler did not dispatch");};
         const auto open=[&](u32 gid){mode.SendMsg(76,10000,gid,0);auto* w=g_windowMgr.m_petTamingDeceiveWnd;
             Require(w && w->GetTargetGid()==gid,"mode76 did not create and initialize taming owner");return w;};
         const auto captureTaming=[&](const QString& stem,UIPetTamingDeceiveWnd* w){
@@ -113,7 +110,8 @@
         Require(taming->IsSelected()&&taming->GetAction()==1&&taming->GetDestination()==7,
             "native manager click did not select actual taming owner");captureTaming("selected",taming);
         Require(taming->GetMotionTick()>=tickBeforeClick,"first click unexpectedly reset the source animation tick");
-        dispatch(0);Require(taming->GetDestination()==3&&taming->GetDelay()==7,"failed 01A0 result did not set fail destination");
+        taming->SendMsg(nullptr,80,1,3,0);
+        Require(taming->GetDestination()==3&&taming->GetDelay()==7,"failed result did not set fail destination");
         captureTaming("failed-result",taming);
         g_windowMgr.DeleteWindow(taming);SetRuntimeUiScalePercent(125);state->setUiScale(GetConfiguredUiScaleFactor());
         taming=open(0x12345679);const int sx=UiScaleLogicalToRawCoordinate(taming->m_x+98),sy=UiScaleLogicalToRawCoordinate(taming->m_y+128);

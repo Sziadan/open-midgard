@@ -8,6 +8,7 @@
             Require(peer.ReceiveExact(6)==std::vector<u8>({0x9f,0x01,static_cast<u8>(expected),
                 static_cast<u8>(expected>>8),static_cast<u8>(expected>>16),static_cast<u8>(expected>>24)}),
                 "mode162 did not emit exact little-endian019F/6 target frame");
+            Require(connection->ConsumePetCaptureResult(),"direct capture sender did not retain one outstanding result");
             Require(g_session.m_petStatus.job==pet.job && g_session.m_petStatus.eggIndex==pet.eggIndex
                 && g_session.m_petStatus.actorId==pet.actorId && mode.m_skillUseInfo.id==pendingSkill.id
                 && mode.m_skillUseInfo.level==pendingSkill.level && g_windowMgr.m_children==roots
