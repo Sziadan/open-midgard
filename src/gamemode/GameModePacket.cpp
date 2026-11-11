@@ -3919,6 +3919,7 @@ bool IsSameMapAlreadyLoaded(const CGameMode& mode, const MapChangeInfo& info)
 
 void PrepareSameMapWarpReuse(CGameMode& mode)
 {
+    mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
     if (auto* box = g_windowMgr.m_roomMessageBox; box && box->GetMessageId() == 601 && box->HasCancel())
         box->Dismiss(false);
@@ -3970,6 +3971,11 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
 
     player->m_targetGid = 0;
     player->m_proceedTargetGid = 0;
+    // The Ref same-map reload constructs a new player. The reused player
+    // must retire the action queued against actors from the old scene.
+    player->m_isAttackRequest = 0;
+    player->m_proceedType.type = 0;
+    mode.SynchronizePlayerSkillProceed(player, true);
     player->m_zoom = 1.0f;
     player->m_shadowOn = 1;
     player->m_shadowZoom = 1.0f;
@@ -6315,7 +6321,9 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
     actor->m_clevel = static_cast<u16>(state.clevel);
     actor->m_xSize = state.xSize;
     actor->m_ySize = state.ySize;
-    actor->m_headType = state.headType;
+    // The Ref actor entry and walk handlers mark object type 7 as a pet,
+    // independently of the server-configurable hair value.
+    actor->m_headType = state.objectType == 7 ? 100 : state.headType;
     actor->m_gdid = state.guildId;
     actor->m_emblemVersion = state.emblemVersion;
     // Flag NPCs carry the owner in the two head accessory words and the
@@ -9130,7 +9138,7 @@ void HandleActorSpriteChange(CGameMode& mode, const PacketView& packet)
         billboardDirty = true;
         break;
     case kLookHair:
-        actor->m_headType = static_cast<int>(value);
+        actor->m_headType = actor->m_objectType == 7 ? 100 : static_cast<int>(value);
         if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
             pcActor->m_head = static_cast<int>(value);
         }

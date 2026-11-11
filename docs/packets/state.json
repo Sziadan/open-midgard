@@ -979,6 +979,7 @@
     "PK27.03": {
       "status": "IN_PROGRESS",
       "evidence": [
+        "docs/packets/evidence/PK27.03-pet-follow-and-warp.md",
         "docs/packets/evidence/PK27.03-pet-map-ownership.md",
         "docs/packets/evidence/PK27-pet-live-state.md",
         "docs/packets/evidence/PK27-pet-live-state-provenance.json",
@@ -1017,7 +1018,7 @@
         "docs/packets/evidence/PK27-prompt-skin-zip.md",
         "docs/packets/evidence/PK27-prompt-picker.md"
       ],
-      "commit_subject": "packet(PK27.03): scope pet ownership to the active map"
+      "commit_subject": "packet(PK27.03): preserve pet follow identity and retire warp chases"
     },
     "PK27.04": {
       "status": "IN_PROGRESS",

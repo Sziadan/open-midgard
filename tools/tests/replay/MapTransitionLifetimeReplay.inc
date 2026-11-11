@@ -573,6 +573,14 @@ void MapTransitionLifetimeReplay()
         g_session.m_petStatus.actorId = 0x66550002;
         g_session.m_petStatus.job = 1002;
         g_session.m_petStatus.eggIndex = 123;
+        player.m_proceedType.type = 3;
+        player.m_proceedTargetGid = 0x66550003;
+        player.m_skillId = 10000;
+        player.m_skillUseLevel = 0;
+        player.m_skillAttackRange = 5;
+        mode.m_skillUseInfo = {10000, 0, 5, 2};
+        mode.SynchronizePlayerSkillProceed(&player);
+        Require(mode.m_hasSkillChase, "could not stage a queued capture before same-map warp");
         UIPetInfoWnd::ConfirmFeed(nullptr);
         Require(g_windowMgr.m_roomMessageBox, "could not stage a pet feed confirmation before same-map warp");
         const auto frame = MapChangeFrame(0x0091, "prontera", 80, 90);
@@ -612,6 +620,10 @@ void MapTransitionLifetimeReplay()
             && g_session.m_petStatus.job == -1 && g_session.m_petStatus.eggIndex == 123,
             "same-map warp retained the previous pet actor or lost its inventory egg link");
         Require(!g_windowMgr.m_roomMessageBox, "same-map warp retained the previous pet feed confirmation");
+        Require(player.m_proceedType.type == 0 && player.m_proceedTargetGid == 0
+            && !mode.m_hasSkillChase && mode.m_skillChaseTargetGid == 0
+            && mode.m_skillUseInfo.id == 0 && mode.m_skillUseInfo.useType == 0,
+            "same-map warp retained the capture chase for the outgoing scene");
         g_session.m_petStatus = savedPet;
         Require(world.GetMapCellType(1, 1) == 5 && attr.GetCell(1, 1)->flag == 0,
             "same-map reuse lost the active map cell update");
