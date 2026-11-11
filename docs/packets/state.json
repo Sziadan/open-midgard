@@ -794,9 +794,14 @@
       "commit_subject": "packet(PK23.04): verify selected skill receive and ownership"
     },
     "PK24.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK24.RESOURCE-STATE.md",
+        "docs/packets/evidence/PK24.01-status-layout-probe.cpp",
+        "docs/packets/evidence/PK24.01-status-layout-probe.md",
+        "docs/packets/evidence/PK24.01-resource-state-scope.md"
+      ],
+      "commit_subject": "packet(PK24.01): establish selected resource and actor state contract"
     },
     "PK24.02": {
       "status": "NOT_STARTED",
