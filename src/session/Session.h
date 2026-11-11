@@ -171,6 +171,12 @@ struct MercenaryStatus {
     int expiresAt = 0, calls = 0, kills = 0;
 };
 
+struct CompanionTargetState {
+    u32 gid = 0;
+    int cellX = 0, cellY = 0;
+    bool moving = false, selected = false, attacking = false;
+};
+
 class CSession
 {
 public:
@@ -204,6 +210,9 @@ public:
     u32 m_homunGID=0,m_merGID=0;
     HomunculusStatus m_homunStatus;
     MercenaryStatus m_merStatus;
+    CompanionTargetState m_homunTarget;
+    CompanionTargetState m_merTarget;
+    bool ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool shift);
     // Selected 0x00B0 decodes signed wire dword/10; source initialization zeros both.
     int m_weight=0,m_maxWeight=0;
     u8   m_sex;

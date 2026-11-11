@@ -5962,6 +5962,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         // Ref/GameActor.cpp:3306. A queued hit still has to land first.
         if (m_gid != 0 && m_gid == g_session.m_homunGID) {
             g_windowMgr.CloseCompanionWindows(true);
+            g_session.m_homunTarget = {};
             g_session.m_homunStatus.alive = false;
         }
         // An in-progress flinch with an empty queue does not hold the death

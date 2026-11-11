@@ -994,9 +994,10 @@
         "docs/packets/evidence/PK28-companion-status-actions.md",
         "docs/packets/evidence/PK28-companion-skill-lists.md",
         "docs/packets/evidence/PK28-homunculus-skill-upgrade.md",
-        "docs/packets/evidence/PK28-companion-summon-requests.md"
+        "docs/packets/evidence/PK28-companion-summon-requests.md",
+        "docs/packets/evidence/PK28-companion-ground-targets.md"
       ],
-      "commit_subject": "packet(PK28): verify companion summon requests"
+      "commit_subject": "packet(PK28): restore companion ground targeting"
     },
     "PK28.04": {
       "status": "NOT_STARTED",
@@ -1022,9 +1023,10 @@
         "docs/packets/evidence/PK28-companion-status-actions.md",
         "docs/packets/evidence/PK28-companion-skill-lists.md",
         "docs/packets/evidence/PK29-localized-system-notice.md",
-        "docs/packets/evidence/PK28-companion-summon-requests.md"
+        "docs/packets/evidence/PK28-companion-summon-requests.md",
+        "docs/packets/evidence/PK28-companion-ground-targets.md"
       ],
-      "commit_subject": "packet(PK28): verify companion summon requests"
+      "commit_subject": "packet(PK28): restore companion ground targeting"
     },
     "PK29.03": {
       "status": "NOT_STARTED",

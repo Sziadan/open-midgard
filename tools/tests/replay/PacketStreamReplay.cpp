@@ -2940,6 +2940,34 @@ void LocalizedSystemNoticeReplay()
     g_windowMgr.ClearChatEvents();
 }
 
+void CompanionGroundTargetReplay()
+{
+    CSession session;
+    Require(!session.ApplyCompanionGroundClick(5, 8, true, false), "Alt ground click without a companion was consumed");
+    session.m_merStatus.alive = true;
+    session.m_merTarget = {17, 1, 2, false, false, true};
+    Require(session.ApplyCompanionGroundClick(5, 8, true, false)
+        && session.m_merTarget.moving && !session.m_merTarget.attacking
+        && session.m_merTarget.gid == 0 && session.m_merTarget.cellX == 5 && session.m_merTarget.cellY == 8,
+        "mercenary Alt ground click did not replace its target with a cell");
+    session.m_homunStatus.alive = true;
+    session.m_homunTarget = {18, 2, 3, false, true, true};
+    Require(session.ApplyCompanionGroundClick(9, 11, true, true)
+        && !session.m_homunTarget.selected && session.m_homunTarget.attacking && session.m_homunTarget.gid == 18,
+        "Alt+Shift ground click did not clear an existing selection first");
+    Require(session.ApplyCompanionGroundClick(9, 11, true, true)
+        && session.m_homunTarget.gid == 18 && !session.m_homunTarget.moving,
+        "Alt+Shift changed local target without an active AI VM");
+    Require(session.ApplyCompanionGroundClick(9, 11, true, false)
+        && session.m_homunTarget.moving && session.m_homunTarget.cellX == 9 && session.m_homunTarget.cellY == 11
+        && session.m_merTarget.moving && session.m_merTarget.cellX == 5 && session.m_merTarget.cellY == 8,
+        "homunculus ground click did not take precedence over the mercenary");
+    Require(!session.ApplyCompanionGroundClick(1, 1, false, false)
+        && !session.m_homunTarget.moving && !session.m_merTarget.moving
+        && !session.m_homunTarget.cellX && !session.m_merTarget.cellX,
+        "ordinary ground click did not reset companion targets and continue");
+}
+
 void CompanionSummonReplay()
 {
     SetCase("companion_summon_requests", "PK28.03", "PK28-selected-companion-summon",
@@ -5286,6 +5314,7 @@ int main(int argc,char** argv){try{
     CompanionCommandReplay();
     CompanionSkillListReplay();
     LocalizedSystemNoticeReplay();
+    CompanionGroundTargetReplay();
     CompanionSummonReplay();
     GuildMemberLoginNoticeReplay();
     PartyMarkerGameModeExitReplay();

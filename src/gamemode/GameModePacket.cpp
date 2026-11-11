@@ -5139,6 +5139,7 @@ void HandleSkillNoDamageNotify(CGameMode& mode, const PacketView& packet)
 
     if (skillId == 244 && srcGid == g_session.m_aid) {
         g_windowMgr.CloseCompanionWindows(true);
+        g_session.m_homunTarget = {};
         g_session.m_homunStatus.alive = false;
     }
 

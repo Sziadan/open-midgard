@@ -1,0 +1,7 @@
+# Companion ground targeting
+
+The selected `ProcessGroundPick` in `Ref/GameMode.cpp:5452` checks the ground cell before companion input. The homunculus branch at `:5757` precedes the mercenary branch at `:5525`. Alt consumes the click for the first live companion. It first clears an existing selection, otherwise Shift takes the inactive direct-command path, and plain Alt records the cell, clears the target GID and attack flag, and sets the movement flag. The regular ground click resets live companion target state and continues. The source writes the local target fields outside the Lua VM checks.
+
+The Win32 gameplay input applies those transitions to a ground pick before movement or a pending ground skill. Actor and item picks remain on their existing routes. Homunculus death, local skill 244, and confirmed dismissal clear the appropriate companion target. The selected inactive Lua VM remains the baseline.
+
+The replay checks precedence with two live companions, mercenary fallback, clearing a selection, Alt+Shift consumption, ordinary ground reset, and the no-companion case. The production click fixture checks that consumed clicks bypass ordinary movement and ground casts and that character casts keep their existing dispatch. All 164 application checks and 473 standalone checks passed. The player skill tree and OldRO executable matched baseline. Actor targeting and live input verification remain open.

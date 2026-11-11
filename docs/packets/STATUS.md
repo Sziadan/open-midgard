@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current companion summon checkpoint (2026-11-11)**. The existing skill-list and shortcut senders cover Call Homunculus and mercenary scroll use. The selected wire requests are now covered by replay. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-summon-requests.md)
+**Current companion ground targeting checkpoint (2026-11-11)**. Ground clicks now retain the selected companion target transitions with the inactive Lua VM. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-ground-targets.md)
+
+**Previous companion summon checkpoint (2026-11-11)**. The existing skill-list and shortcut senders cover Call Homunculus and mercenary scroll use. The selected wire requests are now covered by replay. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-summon-requests.md)
 
 **Previous homunculus upgrade checkpoint (2026-11-11)**. The companion list sends the selected `0112` skill-up request when the server snapshot grants points and the row is upgradable. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homunculus-skill-upgrade.md)
 

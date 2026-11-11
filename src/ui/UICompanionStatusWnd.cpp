@@ -336,8 +336,13 @@ void UICompanionStatusWnd::ApplyConfirmedAction(msgparam_t action)
     } else {
         const bool homunculus = action == kDismissHomunculus;
         g_modeMgr.SendMsg(homunculus ? 198 : 200, 2, 0, 0);
-        if (homunculus) g_session.m_homunStatus.alive = false;
-        else g_session.m_merStatus.alive = false;
+        if (homunculus) {
+            g_session.m_homunTarget = {};
+            g_session.m_homunStatus.alive = false;
+        } else {
+            g_session.m_merTarget = {};
+            g_session.m_merStatus.alive = false;
+        }
         g_windowMgr.CloseCompanionWindows(homunculus);
     }
 }

@@ -4625,6 +4625,26 @@ bool ShouldUseTurnOnlyGroundClick(const CGameMode& mode)
     return looksSeated || isShiftHeld || hasChatRoomContext;
 }
 
+bool TryHandleCompanionGroundClick(CGameMode& mode, int screenX, int screenY)
+{
+    if ((!g_session.m_homunStatus.alive && !g_session.m_merStatus.alive)
+        || !mode.m_world || !mode.m_view || mode.m_canRotateView || mode.m_isPlayerDead) return false;
+
+    CGameActor* actor = nullptr;
+    CItem* item = nullptr;
+    const auto& viewMatrix = mode.m_view->GetViewMatrix();
+    if ((mode.m_world->FindHoveredActorScreen(viewMatrix, mode.m_view->GetCameraLongitude(),
+             screenX, screenY, &actor, nullptr, nullptr) && actor)
+        || (mode.m_world->FindHoveredGroundItemScreen(viewMatrix,
+             screenX, screenY, &item, nullptr, nullptr) && item)) return false;
+
+    int x = 0, y = 0;
+    if (!mode.m_view->ScreenToHoveredAttrCell(screenX, screenY, &x, &y)) return false;
+    const bool alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
+    const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    return g_session.ApplyCompanionGroundClick(x, y, alt, shift);
+}
+
 bool WorldToAttrCell(const CWorld* world, float worldX, float worldZ, int* outTileX, int* outTileY);
 bool ResolveMoveSourceTile(const CGameMode& mode, int* outTileX, int* outTileY);
 
@@ -11239,8 +11259,12 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const int mouseX = static_cast<int>(wparam);
         const int mouseY = static_cast<int>(lparam);
         if(m_skillUseInfo.useType!=0){
-            if(!m_isOnQuest && !m_isPlayerDead && !g_windowMgr.HasActiveNpcDialog())
-                TryRequestPendingSkillFromScreenPoint(*this,mouseX,mouseY);
+            if(!m_isOnQuest && !m_isPlayerDead && !g_windowMgr.HasActiveNpcDialog()) {
+                const bool companionGroundClick = m_skillUseInfo.useType == 1
+                    && TryHandleCompanionGroundClick(*this, mouseX, mouseY);
+                if (!companionGroundClick)
+                    TryRequestPendingSkillFromScreenPoint(*this,mouseX,mouseY);
+            }
             // Source ProcessInput sends mode78 after actor/ground picking,
             // including a miss. Character targeting never starts ground move.
             ClearPendingSkillUse(*this);
@@ -11275,6 +11299,11 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         }
 
         if (m_world && m_world->m_player) {
+            if (TryHandleCompanionGroundClick(*this, mouseX, mouseY)) {
+                m_isLeftButtonHeld = 0;
+                m_hasHeldMoveTarget = 0;
+                return 1;
+            }
             if (ShouldUseTurnOnlyGroundClick(*this)) {
                 ClearPickupIntent(*this);
                 m_lastMonGid = 0;

@@ -1619,6 +1619,31 @@ void CSession::ClearHomunSkillItems()
     m_homunSkillItems.clear();
 }
 
+bool CSession::ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool shift)
+{
+    if (!alt) {
+        if (m_homunStatus.alive) m_homunTarget = {};
+        if (m_merStatus.alive) m_merTarget = {};
+        return false;
+    }
+
+    CompanionTargetState* target = nullptr;
+    if (m_homunStatus.alive) target = &m_homunTarget;
+    else if (m_merStatus.alive) target = &m_merTarget;
+    if (!target) return false;
+
+    if (target->selected) {
+        target->selected = false;
+    } else if (!shift) {
+        target->gid = 0;
+        target->cellX = cellX;
+        target->cellY = cellY;
+        target->moving = true;
+        target->attacking = false;
+    }
+    return true;
+}
+
 void CSession::ClearMercSkillItems()
 {
     m_mercSkillItems.clear();
