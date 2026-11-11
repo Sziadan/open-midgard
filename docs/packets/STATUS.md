@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Dynamic map cell source checkpoint (2026-11-11)**. PK18.01 establishes the selected `0192` layout, GAT type mapping, Ice Wall lifecycle, and the collision and hover consumers for implementation. [Evidence](evidence/PK18.01-dynamic-map-cell-scope.md)
+
 **Current map property checkpoint (2026-11-11)**. The variable `02E7` receiver now applies bounded updates to the map property table. The selected server source registers the frame, and the receiver is verified with synthetic replay. [Evidence](evidence/PK19-map-property-row-updates.md)
 
 **Previous map property checkpoint (2026-11-11)**. The legacy `0199` and `01D6` receivers now apply map state and the original ally gates feed gameplay targeting. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK19-map-properties.md)

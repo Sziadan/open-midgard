@@ -3827,3 +3827,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Legacy map property row updates
 
 The variable `02E7` receiver now applies bounded updates to the map property table. All 164 application checks and 473 standalone checks passed. The packet plan records the player skill tree window boundary for future skill work. [Evidence](evidence/PK19-map-property-row-updates.md)
+
+## 2026-11-11 Dynamic map cell contract
+
+PK18.01 establishes the fixed `0192` wire layout and selected client GAT flag write. The scope records movement and hover consumers, the separate Ice Wall visual path, and map loading and reuse requirements. [Evidence](evidence/PK18.01-dynamic-map-cell-scope.md)
