@@ -1628,6 +1628,16 @@ void CSession::ClearHomunSkillItems()
     m_homunSkillItems.clear();
 }
 
+void CSession::ResetCompanionMapState()
+{
+    m_homunGID = 0;
+    m_merGID = 0;
+    m_homunStatus.alive = false;
+    m_merStatus.alive = false;
+    m_homunTarget = {};
+    m_merTarget = {};
+}
+
 bool CSession::ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool shift)
 {
     if (!alt) {

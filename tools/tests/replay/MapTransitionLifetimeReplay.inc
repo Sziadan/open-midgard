@@ -569,6 +569,20 @@ void MapTransitionLifetimeReplay()
         Require(g_windowMgr.m_storageWnd && g_windowMgr.m_storageWnd->m_show,
             "could not open the real storage window before same-map warp");
         const auto savedPet = g_session.m_petStatus;
+        const auto savedHomunGid = g_session.m_homunGID;
+        const auto savedMerGid = g_session.m_merGID;
+        const auto savedHomun = g_session.m_homunStatus;
+        const auto savedMer = g_session.m_merStatus;
+        const auto savedHomunTarget = g_session.m_homunTarget;
+        const auto savedMerTarget = g_session.m_merTarget;
+        g_session.m_homunGID = 0x66550010;
+        g_session.m_merGID = 0x66550011;
+        g_session.m_homunStatus.alive = true;
+        g_session.m_homunStatus.hunger = 45;
+        g_session.m_merStatus.alive = true;
+        g_session.m_merStatus.calls = 12;
+        g_session.m_homunTarget = {0x66550012, 9, 10, true, true, true};
+        g_session.m_merTarget = {0x66550013, 11, 12, true, true, true};
         g_session.m_petStatus.valid = true;
         g_session.m_petStatus.actorId = 0x66550002;
         g_session.m_petStatus.job = 1002;
@@ -620,11 +634,27 @@ void MapTransitionLifetimeReplay()
             && g_session.m_petStatus.job == -1 && g_session.m_petStatus.eggIndex == 123,
             "same-map warp retained the previous pet actor or lost its inventory egg link");
         Require(!g_windowMgr.m_roomMessageBox, "same-map warp retained the previous pet feed confirmation");
+        const auto emptyCompanionTarget = [](const CompanionTargetState& target) {
+            return target.gid == 0 && target.cellX == 0 && target.cellY == 0
+                && !target.moving && !target.selected && !target.attacking;
+        };
+        Require(g_session.m_homunGID == 0 && g_session.m_merGID == 0
+            && !g_session.m_homunStatus.alive && !g_session.m_merStatus.alive
+            && emptyCompanionTarget(g_session.m_homunTarget) && emptyCompanionTarget(g_session.m_merTarget),
+            "same-map warp retained an outgoing companion identity or target order");
+        Require(g_session.m_homunStatus.hunger == 45 && g_session.m_merStatus.calls == 12,
+            "same-map warp discarded companion properties unrelated to actor identity");
         Require(player.m_proceedType.type == 0 && player.m_proceedTargetGid == 0
             && !mode.m_hasSkillChase && mode.m_skillChaseTargetGid == 0
             && mode.m_skillUseInfo.id == 0 && mode.m_skillUseInfo.useType == 0,
             "same-map warp retained the capture chase for the outgoing scene");
         g_session.m_petStatus = savedPet;
+        g_session.m_homunGID = savedHomunGid;
+        g_session.m_merGID = savedMerGid;
+        g_session.m_homunStatus = savedHomun;
+        g_session.m_merStatus = savedMer;
+        g_session.m_homunTarget = savedHomunTarget;
+        g_session.m_merTarget = savedMerTarget;
         Require(world.GetMapCellType(1, 1) == 5 && attr.GetCell(1, 1)->flag == 0,
             "same-map reuse lost the active map cell update");
         Require(world.m_isPKZone && world.m_isSiegeMode && world.m_isBattleFieldMode

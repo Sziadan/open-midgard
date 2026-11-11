@@ -207,13 +207,13 @@ public:
     u32  m_authCode;
     u32  m_userLevel;
     u32  m_gid;
-    // Source companion identity owners. PK28/29 receive producers remain open;
-    // capture picking must compare these IDs, rather than infer ownership.
+    // Companion ownership comes from the map server's identity packets.
     u32 m_homunGID=0,m_merGID=0;
     HomunculusStatus m_homunStatus;
     MercenaryStatus m_merStatus;
     CompanionTargetState m_homunTarget;
     CompanionTargetState m_merTarget;
+    void ResetCompanionMapState();
     bool ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool shift);
     void ApplyCompanionActorClick(u32 gid, bool shift);
     void ClearDefeatedCompanionTarget(u32 gid);

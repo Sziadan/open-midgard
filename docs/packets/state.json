@@ -1086,6 +1086,7 @@
     "PK28.03": {
       "status": "IN_PROGRESS",
       "evidence": [
+        "docs/packets/evidence/PK28.03-companion-map-reset.md",
         "docs/packets/evidence/PK28-homun-feed.md",
         "docs/packets/evidence/PK28-companion-lifecycle.md",
         "docs/packets/evidence/PK28-companion-commands.md",
@@ -1099,7 +1100,7 @@
         "docs/packets/evidence/PK28-pending-companion-actor-skills.md",
         "docs/packets/evidence/PK19-map-properties.md"
       ],
-      "commit_subject": "packet(PK19): restore legacy map property state"
+      "commit_subject": "packet(PK28.03): reset companion actor ownership at map handoff"
     },
     "PK28.04": {
       "status": "NOT_STARTED",
@@ -1117,6 +1118,7 @@
     "PK29.02": {
       "status": "IN_PROGRESS",
       "evidence": [
+        "docs/packets/evidence/PK28.03-companion-map-reset.md",
         "docs/packets/evidence/PK27-companion-identity.md",
         "docs/packets/evidence/PK28-companion-status.md",
         "docs/packets/evidence/PK28-companion-lifecycle.md",

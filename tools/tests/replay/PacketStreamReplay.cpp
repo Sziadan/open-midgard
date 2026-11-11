@@ -2688,6 +2688,33 @@ void CompanionIdentityReplay()
         "mercenary status close button did not delete its window");
     g_session.m_aid = oldAid;
 
+    g_session.ResetCompanionMapState();
+    mode.m_world = &g_world;
+    constexpr u32 reentryHomun = 0xf1000041u;
+    constexpr u32 reentryMerc = 0xf2000042u;
+    npcEntry[2] = 8;
+    putGid(npcEntry.data() + 3, reentryHomun);
+    dispatchActor(npcEntry);
+    npcEntry[2] = 9;
+    putGid(npcEntry.data() + 3, reentryMerc);
+    npcEntry[21] = 0x81; // 6017, the selected mercenary job.
+    dispatchActor(npcEntry);
+    Require(!hs.alive && !ms.alive && g_session.m_homunGID == 0 && g_session.m_merGID == 0,
+        "nearby companion entries claimed ownership before the server identity packets");
+
+    std::array<u8, 12> reentryHomunIdentity{0x30, 0x02};
+    putGid(reentryHomunIdentity.data() + 4, reentryHomun);
+    dispatchActor(reentryHomunIdentity);
+    std::array<u8, 80> reentryMercIdentity{0x9b, 0x02};
+    putGid(reentryMercIdentity.data() + 2, reentryMerc);
+    dispatchActor(reentryMercIdentity);
+    Require(hs.alive && hs.job == 6001 && g_session.m_homunGID == reentryHomun
+        && ms.alive && ms.job == 6017 && g_session.m_merGID == reentryMerc,
+        "selected companion spawn-before-identity sequence did not restore local ownership");
+    vanish(reentryHomun, 0);
+    vanish(reentryMerc, 0);
+    mode.m_world = nullptr;
+
     g_session.m_homunGID = oldHomun;
     g_session.m_merGID = oldMerc;
     g_session.m_homunStatus = oldHomunStatus;

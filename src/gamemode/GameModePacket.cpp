@@ -3937,6 +3937,7 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
 {
     mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
+    g_session.ResetCompanionMapState();
     if (auto* box = g_windowMgr.m_roomMessageBox; box && box->GetMessageId() == 601 && box->HasCancel())
         box->Dismiss(false);
     if (g_windowMgr.m_petInfoWnd) g_windowMgr.DeleteWindow(g_windowMgr.m_petInfoWnd);

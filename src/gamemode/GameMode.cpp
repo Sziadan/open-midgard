@@ -7650,6 +7650,7 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 
 void ClearRuntimeActors(CGameMode& mode)
 {
+    g_session.ResetCompanionMapState();
     g_Weather.Reset();
     mode.ClearNpcProgress();
     mode.m_compassPosList.clear();
