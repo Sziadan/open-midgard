@@ -45,11 +45,13 @@
 #include <array>
 #include <cerrno>
 #include <chrono>
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <type_traits>
 #include <sstream>
 #if !RO_PLATFORM_WINDOWS
 #include <sys/ioctl.h>
@@ -5537,6 +5539,8 @@ void GlobalChatProductionSendReplay()
 #include "NpcDialogueActionsReplay.inc"
 #include "NpcProgressReplay.inc"
 #include "NpcShowEfstReplay.inc"
+#include "StatusSummary214Replay.inc"
+#include "StatusResourceWidthsReplay.inc"
 
 int main(int argc,char** argv){try{
 #if RO_ENABLE_QT6_UI
@@ -5584,6 +5588,8 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--npc-dialogue-actions-only") { NpcDialogueActionsReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-progress-only") { NpcProgressReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-show-efst-only") { NpcShowEfstReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--status-summary-0214-only") { StatusSummary214Replay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--status-resource-widths-only") { StatusResourceWidthsReplay();CConnection::Cleanup();return 0; }
     if (argc > 1 && std::string(argv[1]) == "--npc-show-efst-map-exit") {
         // OnExit clears process-wide windows and session state.
         NpcShowEfstMapExitReplay();

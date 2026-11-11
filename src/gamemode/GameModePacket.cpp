@@ -1447,6 +1447,12 @@ int ConvertRawAspdToDisplay(int rawMotion)
     return (std::max)(0, (2000 - clampedMotion) / 10);
 }
 
+u16 ClampPrimaryStatTotal(s32 base, s32 bonus)
+{
+    const auto total = static_cast<std::int64_t>(base) + bonus;
+    return static_cast<u16>(std::clamp<std::int64_t>(total, 0, std::numeric_limits<u16>::max()));
+}
+
 void SyncLocalPlayerPrimaryStatsFromSession(CGameMode& mode)
 {
     CPlayer* player = mode.m_world ? mode.m_world->m_player : nullptr;
@@ -1459,12 +1465,12 @@ void SyncLocalPlayerPrimaryStatsFromSession(CGameMode& mode)
         return;
     }
 
-    player->m_Str = ClampToU16(static_cast<u32>(info->Str) + static_cast<u32>((std::max)(0, g_session.m_plusStr)));
-    player->m_Agi = ClampToU16(static_cast<u32>(info->Agi) + static_cast<u32>((std::max)(0, g_session.m_plusAgi)));
-    player->m_Vit = ClampToU16(static_cast<u32>(info->Vit) + static_cast<u32>((std::max)(0, g_session.m_plusVit)));
-    player->m_Int = ClampToU16(static_cast<u32>(info->Int) + static_cast<u32>((std::max)(0, g_session.m_plusInt)));
-    player->m_Dex = ClampToU16(static_cast<u32>(info->Dex) + static_cast<u32>((std::max)(0, g_session.m_plusDex)));
-    player->m_Luk = ClampToU16(static_cast<u32>(info->Luk) + static_cast<u32>((std::max)(0, g_session.m_plusLuk)));
+    player->m_Str = ClampPrimaryStatTotal(info->Str, g_session.m_plusStr);
+    player->m_Agi = ClampPrimaryStatTotal(info->Agi, g_session.m_plusAgi);
+    player->m_Vit = ClampPrimaryStatTotal(info->Vit, g_session.m_plusVit);
+    player->m_Int = ClampPrimaryStatTotal(info->Int, g_session.m_plusInt);
+    player->m_Dex = ClampPrimaryStatTotal(info->Dex, g_session.m_plusDex);
+    player->m_Luk = ClampPrimaryStatTotal(info->Luk, g_session.m_plusLuk);
 }
 
 bool ApplyCombatStatusParamToSession(u32 statusType, int value, bool aspdIsRawMotion)
@@ -1523,9 +1529,7 @@ void ApplyStatusBaseAndCostSummary(CGameMode& mode,
     const std::array<int, 6>& statCosts)
 {
     if (CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo()) {
-        if (statusPoint >= 0) {
-            info->sppoint = static_cast<s16>(ClampToU16(static_cast<u32>(statusPoint)));
-        }
+        info->sppoint = static_cast<s16>((std::min)(statusPoint, static_cast<int>(std::numeric_limits<s16>::max())));
         info->Str = static_cast<u8>((std::min)(baseStats[0], 0xFF));
         info->Agi = static_cast<u8>((std::min)(baseStats[1], 0xFF));
         info->Vit = static_cast<u8>((std::min)(baseStats[2], 0xFF));
@@ -1540,39 +1544,6 @@ void ApplyStatusBaseAndCostSummary(CGameMode& mode,
     g_session.m_standardInt = (std::max)(0, statCosts[3]);
     g_session.m_standardDex = (std::max)(0, statCosts[4]);
     g_session.m_standardLuk = (std::max)(0, statCosts[5]);
-    SyncLocalPlayerPrimaryStatsFromSession(mode);
-}
-
-void ApplyCombatStatusSummary(CGameMode& mode,
-    int attack,
-    int refineAttack,
-    int matkMax,
-    int matkMin,
-    int itemDef,
-    int plusDef,
-    int mdef,
-    int plusMdef,
-    int hit,
-    int flee,
-    int plusFlee,
-    int critical,
-    int aspdDisplay,
-    int plusAspd)
-{
-    g_session.m_attPower = (std::max)(0, attack);
-    g_session.m_refiningPower = (std::max)(0, refineAttack);
-    g_session.m_maxMatkPower = (std::max)(0, matkMax);
-    g_session.m_minMatkPower = (std::max)(0, matkMin);
-    g_session.m_itemDefPower = (std::max)(0, itemDef);
-    g_session.m_plusDefPower = (std::max)(0, plusDef);
-    g_session.m_mdefPower = (std::max)(0, mdef);
-    g_session.m_plusMdefPower = (std::max)(0, plusMdef);
-    g_session.m_hitSuccessValue = (std::max)(0, hit);
-    g_session.m_avoidSuccessValue = (std::max)(0, flee);
-    g_session.m_plusAvoidSuccessValue = (std::max)(0, plusFlee);
-    g_session.m_criticalSuccessValue = (std::max)(0, critical);
-    g_session.m_aspd = (std::max)(0, aspdDisplay);
-    g_session.m_plusAspd = (std::max)(0, plusAspd);
     SyncLocalPlayerPrimaryStatsFromSession(mode);
 }
 
@@ -2976,7 +2947,7 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
     }
 }
 
-bool ApplySelfStatUpdate(CGameMode& mode, u32 statusType, u32 baseValue, u32 plusValue)
+bool ApplySelfStatUpdate(CGameMode& mode, u32 statusType, s32 baseValue, s32 plusValue)
 {
     switch (statusType) {
     case kStatusStr:
@@ -3003,24 +2974,25 @@ bool ApplySelfStatUpdate(CGameMode& mode, u32 statusType, u32 baseValue, u32 plu
 
     CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo();
     if (info) {
+        const auto cardValue = static_cast<u8>(std::clamp<s32>(baseValue, 0, 0xff));
         switch (statusType) {
         case kStatusStr:
-            info->Str = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            info->Str = cardValue;
             break;
         case kStatusAgi:
-            info->Agi = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            info->Agi = cardValue;
             break;
         case kStatusVit:
-            info->Vit = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            info->Vit = cardValue;
             break;
         case kStatusInt:
-            info->Int = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            info->Int = cardValue;
             break;
         case kStatusDex:
-            info->Dex = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            info->Dex = cardValue;
             break;
         case kStatusLuk:
-            info->Luk = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            info->Luk = cardValue;
             break;
         default:
             break;
@@ -3031,7 +3003,7 @@ bool ApplySelfStatUpdate(CGameMode& mode, u32 statusType, u32 baseValue, u32 plu
         return info != nullptr;
     }
 
-    const u16 totalValue = ClampToU16(baseValue + plusValue);
+    const u16 totalValue = ClampPrimaryStatTotal(baseValue, plusValue);
     CPlayer* player = mode.m_world->m_player;
     switch (statusType) {
     case kStatusStr:
@@ -3094,47 +3066,30 @@ void UpdateStatusPointCost(u32 statusType, int value)
     }
 }
 
-void UpdateStatusSummaryFromPacket214(CGameMode& mode, const PacketView& packet)
+void HandleGmStatusSummary(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 42) {
         return;
     }
 
-    const std::array<int, 6> baseStats = {
-        static_cast<int>(packet.data[2]),
-        static_cast<int>(packet.data[4]),
-        static_cast<int>(packet.data[6]),
-        static_cast<int>(packet.data[8]),
-        static_cast<int>(packet.data[10]),
-        static_cast<int>(packet.data[12]),
-    };
-    const std::array<int, 6> statCosts = {
-        static_cast<int>(packet.data[3]),
-        static_cast<int>(packet.data[5]),
-        static_cast<int>(packet.data[7]),
-        static_cast<int>(packet.data[9]),
-        static_cast<int>(packet.data[11]),
-        static_cast<int>(packet.data[13]),
+    const auto combat = [&](int offset) { return static_cast<s16>(ReadLE16(packet.data + offset)); };
+    const auto sendLine = [](u32 color, const char* format, auto... values) {
+        char text[256];
+        std::snprintf(text, sizeof(text), format, values...);
+        g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(text), color);
     };
 
-    ApplyStatusBaseAndCostSummary(mode, -1, baseStats, statCosts);
-    ApplyCombatStatusSummary(mode,
-        static_cast<int>(ReadLE16(packet.data + 14)),
-        static_cast<int>(ReadLE16(packet.data + 16)),
-        static_cast<int>(ReadLE16(packet.data + 18)),
-        static_cast<int>(ReadLE16(packet.data + 20)),
-        static_cast<int>(ReadLE16(packet.data + 22)),
-        static_cast<int>(ReadLE16(packet.data + 24)),
-        static_cast<int>(ReadLE16(packet.data + 26)),
-        static_cast<int>(ReadLE16(packet.data + 28)),
-        static_cast<int>(ReadLE16(packet.data + 30)),
-        static_cast<int>(ReadLE16(packet.data + 32)),
-        static_cast<int>(ReadLE16(packet.data + 34)),
-        static_cast<int>(ReadLE16(packet.data + 36)),
-        static_cast<int>(ReadLE16(packet.data + 38)),
-        static_cast<int>(ReadLE16(packet.data + 40)));
-
-    InvalidateStatusWindows();
+    // Ref Zc_Ack_Status_GM prints the inspected character's stats to chat.
+    sendLine(0xffff, "             STR=%3d      AGI=%3d      VIT=%3d      INT=%3d      DEX=%3d      LUK=%d",
+        packet.data[2], packet.data[4], packet.data[6], packet.data[8], packet.data[10], packet.data[12]);
+    sendLine(65335, "standard STR=%3d      AGI=%3d      VIT=%3d      INT=%3d      DEX=%3d      LUK=%2d",
+        packet.data[3], packet.data[5], packet.data[7], packet.data[9], packet.data[11], packet.data[13]);
+    sendLine(0xffff, "    attPower=%3d    refiningPow=%3d    MAXmatPow=%3d    MINmatPower=%3d       ASPD=%3d",
+        combat(14), combat(16), combat(18), combat(20), combat(38));
+    sendLine(65335, "itemdefPow=%3d     plusdefPow=%3d    mdefPower=%3d    plusmdefPow=%3d    plusASPD=%3d",
+        combat(22), combat(24), combat(26), combat(28), combat(40));
+    sendLine(0xffff, "hitSuccessVal=%3d    avoidSuccessVal=%3d    plusAvoidSuccessValue=%3d",
+        combat(30), combat(32), combat(34));
 }
 
 void UpdateStatusSummaryFromPacket00BD(CGameMode& mode, const PacketView& packet)
@@ -3161,21 +3116,13 @@ void UpdateStatusSummaryFromPacket00BD(CGameMode& mode, const PacketView& packet
     };
 
     ApplyStatusBaseAndCostSummary(mode, static_cast<int>(ReadLE16(packet.data + 2)), baseStats, statCosts);
-    ApplyCombatStatusSummary(mode,
-        static_cast<int>(ReadLE16(packet.data + 16)),
-        static_cast<int>(ReadLE16(packet.data + 18)),
-        static_cast<int>(ReadLE16(packet.data + 20)),
-        static_cast<int>(ReadLE16(packet.data + 22)),
-        static_cast<int>(ReadLE16(packet.data + 24)),
-        static_cast<int>(ReadLE16(packet.data + 26)),
-        static_cast<int>(ReadLE16(packet.data + 28)),
-        static_cast<int>(ReadLE16(packet.data + 30)),
-        static_cast<int>(ReadLE16(packet.data + 32)),
-        static_cast<int>(ReadLE16(packet.data + 34)),
-        static_cast<int>(ReadLE16(packet.data + 36)),
-        static_cast<int>(ReadLE16(packet.data + 38)),
-        ConvertRawAspdToDisplay(static_cast<int>(ReadLE16(packet.data + 40))),
-        static_cast<int>(ReadLE16(packet.data + 42)));
+    constexpr std::array<u32, 14> combatTypes = { kStatusAtk, kStatusRefineAtk,
+        kStatusMatkMax, kStatusMatkMin, kStatusDef, kStatusDefBonus, kStatusMdef, kStatusMdefBonus,
+        kStatusHit, kStatusFlee, kStatusFleeBonus, kStatusCritical, kStatusAspd, kStatusPlusAspd };
+    for (std::size_t index = 0; index < combatTypes.size(); ++index) {
+        const auto value = static_cast<s16>(ReadLE16(packet.data + 16 + index * 2));
+        ApplyCombatStatusParamToSession(combatTypes[index], value, true);
+    }
 
     InvalidateStatusWindows();
 }
@@ -3294,11 +3241,11 @@ void HandleSelfStatInfo(CGameMode& mode, const PacketView& packet)
     }
 
     const u32 statusType = ReadLE32(packet.data + 2);
-    const u32 baseValue = ReadLE32(packet.data + 6);
-    const u32 plusValue = ReadLE32(packet.data + 10);
+    const auto baseValue = static_cast<s32>(ReadLE32(packet.data + 6));
+    const auto plusValue = static_cast<s32>(ReadLE32(packet.data + 10));
     if (ApplySelfStatUpdate(mode, statusType, baseValue, plusValue)) {
         CPlayer* player = mode.m_world ? mode.m_world->m_player : nullptr;
-        DbgLog("[GameMode] self stat type=%u base=%u plus=%u str=%u agi=%u vit=%u int=%u dex=%u luk=%u\n",
+        DbgLog("[GameMode] self stat type=%u base=%d plus=%d str=%u agi=%u vit=%u int=%u dex=%u luk=%u\n",
             statusType,
             baseValue,
             plusValue,
@@ -3310,11 +3257,6 @@ void HandleSelfStatInfo(CGameMode& mode, const PacketView& packet)
             static_cast<unsigned int>(player ? player->m_Luk : 0));
         InvalidateStatusWindows();
     }
-}
-
-void HandleStatusSummary(CGameMode& mode, const PacketView& packet)
-{
-    UpdateStatusSummaryFromPacket214(mode, packet);
 }
 
 void HandleInitialStatusSummary(CGameMode& mode, const PacketView& packet)
@@ -9450,7 +9392,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0207, HandleFriendRequest);
     router.Register(0x0209, HandleFriendAdd);
     router.Register(0x020A, HandleFriendDelete);
-    router.Register(0x0214, HandleStatusSummary);
+    router.Register(0x0214, HandleGmStatusSummary);
     RegisterHandlerIfValid(router, receiveProfile.partyInviteAckExtended, HandlePartyInviteAck);
     router.Register(0x02D9, HandleIgnorePacket); // config state; 0x02DA notify already routes separately
     router.Register(0x02DD, HandleIgnorePacket);

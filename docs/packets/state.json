@@ -804,8 +804,11 @@
       "commit_subject": "packet(PK24.01): establish selected resource and actor state contract"
     },
     "PK24.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK24.02-status-width-and-gm-summary.md",
+        "docs/packets/evidence/PK24.02-width-audit.md"
+      ],
       "commit_subject": null
     },
     "PK24.03": {
