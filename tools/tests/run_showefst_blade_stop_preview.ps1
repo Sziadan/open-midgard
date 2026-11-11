@@ -1,7 +1,8 @@
 param(
     [string]$BuildDirectory = (Join-Path $PSScriptRoot '../../build-mingw-preset'),
     [string]$FixtureDirectory = (Join-Path $PSScriptRoot '../../build-mingw-preset/showefst-blade-stop-preview'),
-    [string]$PetAssetsDirectory = (Join-Path $PSScriptRoot '../../build-mingw-preset/packet-pet-window-renders/pet-window-assets')
+    [string]$PetAssetsDirectory = (Join-Path $PSScriptRoot '../../build-mingw-preset/packet-pet-window-renders/pet-window-assets'),
+    [string]$PcDataGrf
 )
 $ErrorActionPreference = 'Stop'
 $buildRoot = [IO.Path]::GetFullPath($BuildDirectory)
@@ -65,12 +66,24 @@ foreach ($name in $environmentNames) { $savedEnvironment[$name] = [Environment]:
 $executableHash = (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash
 $captures = @{}
 $scenarioNames = @('blade-baseline','blade-stop','blade-restored')
+$pcArchive = $null
+if ($PcDataGrf) {
+    $PcDataGrf = (Get-Item -LiteralPath $PcDataGrf -ErrorAction Stop).FullName
+    $scenarioNames += 'blade-pc-pose'
+}
 $logPattern = Join-Path $stage 'debug_hp_*.log'
 try {
     $env:OPEN_MIDGARD_DATA_DIR = $settings
     $env:OPEN_MIDGARD_RENDER_BACKEND = 'vulkan'
     $env:RO_HEAL_PREVIEW_ASSETS = $stage
     foreach ($scenario in $scenarioNames) {
+        $marker = 'blade-stop-render=1'
+        if ($scenario -eq 'blade-pc-pose') {
+            $marker = 'blade-stop-pc-pose=1'
+            # Stage the read-only asset archive on the same volume without copying it.
+            $pcArchive = Join-Path $stage 'data.grf'
+            New-Item -ItemType HardLink -Path $pcArchive -Target $PcDataGrf | Out-Null
+        }
         $capture = Join-Path $fixtureRoot ($scenario + '.bmp')
         if (Test-Path -LiteralPath $capture) { Remove-Item -LiteralPath $capture -Force }
         Get-ChildItem -Path $logPattern -ErrorAction SilentlyContinue | Remove-Item -Force
@@ -90,8 +103,8 @@ try {
         }
         $log = Get-ChildItem -Path $logPattern -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
-        if (-not $log -or -not (Get-Content -LiteralPath $log.FullName -Raw).Contains('[NpcClassChangePreview] blade-stop-render=1')) {
-            throw "Native blade-stop preview '$scenario' log is missing blade-stop-render=1."
+        if (-not $log -or -not (Get-Content -LiteralPath $log.FullName -Raw).Contains("[NpcClassChangePreview] $marker")) {
+            throw "Native blade-stop preview '$scenario' log is missing $marker."
         }
         $captures[$scenario] = Read-BmpPixels $capture
         $captures[$scenario].path = $capture
@@ -143,10 +156,25 @@ try {
         baselineActorPixels=$foreground;bladeStopActorPixels=$tintedForeground;changedPixels=$changed;
         darkenedPixels=$darkened;backgroundChangedPixels=$backgroundChanged;alphaChangedPixels=$alphaChanged;
         executableSha256=$executableHash}
+    if ($captures.ContainsKey('blade-pc-pose')) {
+        $pose = $captures['blade-pc-pose']
+        $posePixels = 0
+        for ($i = 0; $i -lt $pose.pixels.Length; $i += 4) {
+            if ($pose.pixels[$i] -ne 0x20 -or $pose.pixels[$i+1] -ne 0x20 -or $pose.pixels[$i+2] -ne 0x20) {
+                ++$posePixels
+            }
+        }
+        if ($posePixels -lt 24) { throw "Expected visible PC pose, captured $posePixels foreground pixels." }
+        $result.pcPose = $pose.path
+        $result.pcPosePixels = $posePixels
+    }
     $json = $result | ConvertTo-Json -Depth 4 -Compress
     $json | Set-Content -LiteralPath (Join-Path $fixtureRoot 'showefst-blade-stop-preview-results.json') -Encoding utf8
     Write-Output $json
 } finally {
+    if ($pcArchive -and (Test-Path -LiteralPath $pcArchive -PathType Leaf)) {
+        Remove-Item -LiteralPath $pcArchive -Force
+    }
     foreach ($name in $environmentNames) {
         [Environment]::SetEnvironmentVariable($name,$savedEnvironment[$name],'Process')
     }

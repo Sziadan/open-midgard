@@ -376,11 +376,17 @@ static void RunNpcClassChangeRenderPreview(std::string_view scene)
             static_cast<int>((entry->top + entry->bottom) * 0.5f),
             &hovered, nullptr, nullptr, false) && hovered == actor;
     };
-    if (scene == "blade-baseline" || scene == "blade-stop" || scene == "blade-restored") {
+    const bool pcBladeStop = scene == "blade-pc-pose";
+    if (pcBladeStop || scene == "blade-baseline" || scene == "blade-stop" || scene == "blade-restored") {
         g_renderer.m_eyeRight = {1.0f, 0.0f, 0.0f};
         g_renderer.m_eyeUp = {0.0f, diagonal, -diagonal};
         g_renderer.m_eyeForward = {0.0f, diagonal, diagonal};
         g_renderer.m_hpc = g_renderer.m_vpc = 3500;
+        if (pcBladeStop) {
+            actor->m_job = 15;
+            actor->m_isPc = 1;
+            actor->m_head = 1;
+        }
         actor->SetArgb(-1, 200, 210, 220);
         std::array<u8, 18> showEfst{0x8a, 0x02, gid, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0x20};
         bool routed = scene == "blade-baseline" || dispatch(showEfst);
@@ -388,13 +394,20 @@ static void RunNpcClassChangeRenderPreview(std::string_view scene)
             showEfst[14] = 0;
             routed = routed && dispatch(showEfst);
         }
-        const bool active = scene == "blade-stop";
-        const bool correct = actor->IsMotionFrozen() == active
+        const bool active = scene == "blade-stop" || pcBladeStop;
+        const bool correct = actor->IsMotionFrozen() == (active && !pcBladeStop)
             && (actor->GetRenderTint() & 0x00ffffffu) == (active ? 0x00404040u : 0x00c8d2dcu);
-        // Draw the same motion in every capture so only the tint can differ.
-        actor->m_isMotionFreezed = 1;
+        // Draw the same NPC motion in every capture so only the tint can differ.
+        if (!pcBladeStop) actor->m_isMotionFreezed = 1;
         render();
-        report("blade-stop-render", routed && correct && canPick() && actor->m_billboardTexture);
+        const bool rendered = routed && correct && canPick() && actor->m_billboardTexture;
+        if (pcBladeStop) {
+            report("blade-stop-pc-pose", rendered
+                && actor->m_cachedBillboardBodyAction == 96 + actor->Get8Dir(actor->m_roty)
+                && actor->m_cachedBillboardHeadMotion == 4);
+        } else {
+            report("blade-stop-render", rendered);
+        }
         mode.OnExit();
         return;
     }
