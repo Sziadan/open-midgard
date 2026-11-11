@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 using u8 = std::uint8_t;
@@ -15,7 +16,11 @@ struct PacketView {
     const u8* data;
 };
 
-class CGameMode {};
+class CGameMode {
+public:
+    u16 m_warpSkillId = 0;
+    std::vector<std::string> m_warpMapDestinations;
+};
 
 struct UIWindow {
     virtual ~UIWindow() = default;

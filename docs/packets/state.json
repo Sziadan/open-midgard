@@ -861,6 +861,7 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK26.02-memo-estimate-autospell.md",
+        "docs/packets/evidence/PK26.02-warp-arrow-lifecycle.md",
         "docs/packets/contracts/PK26.SPECIAL-SKILL-CHOICES.md"
       ],
       "commit_subject": null

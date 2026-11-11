@@ -344,6 +344,7 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_test(NAME packet_memo_result_checks COMMAND packet_stream_replay_checks --memo-result-only)
     add_test(NAME packet_monster_estimate_checks COMMAND packet_stream_replay_checks --monster-estimate-only)
     add_test(NAME packet_autospell_choice_checks COMMAND packet_stream_replay_checks --autospell-choice-only)
+    add_test(NAME packet_skill_choice_lifecycle_checks COMMAND packet_stream_replay_checks --skill-choice-lifecycle-only)
     set_tests_properties(packet_npc_show_efst_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-npc-show-efst-settings")
     add_test(NAME packet_npc_show_efst_map_exit_checks COMMAND packet_stream_replay_checks --npc-show-efst-map-exit)

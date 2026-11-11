@@ -77,6 +77,8 @@ public:
     void SetMakingArrowItems(const std::vector<unsigned int>& itemIds);
     void SetAutoSpellSkills(const std::vector<unsigned int>& skillIds);
     bool IsAutoSpellSelection() const { return m_kind == Kind::AutoSpell; }
+    bool IsWarpSelection() const { return m_kind == Kind::Warp; }
+    bool IsMakingArrowSelection() const { return m_kind == Kind::Arrow; }
     bool GetDisplayDataForQt(DisplayData* outData) const;
 
 private:

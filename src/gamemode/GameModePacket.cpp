@@ -5256,10 +5256,11 @@ void ShowWarpDestinationWindow(CGameMode& mode)
 {
     if (IsRandomOnlyTeleport(mode.m_warpSkillId, mode.m_warpMapDestinations)) {
         const std::string randomName = mode.m_warpMapDestinations.front();
-        CloseSkillSelectWindow();
-        mode.SendWarpMapSelection(randomName);
-        DbgLog("[GameMode] teleport level 1 random warp sent map='%s'\n", randomName.c_str());
-        return;
+        if (mode.SendWarpMapSelection(randomName)) {
+            CloseSkillSelectWindow();
+            DbgLog("[GameMode] teleport level 1 random warp sent map='%s'\n", randomName.c_str());
+            return;
+        }
     }
 
     UISkillSelectWnd* const window = dynamic_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
@@ -5293,7 +5294,9 @@ void HandleWarpMapList(CGameMode& mode, const PacketView& packet)
 
     if (mode.m_warpMapDestinations.empty()) {
         mode.m_warpSkillId = 0;
-        CloseSkillSelectWindow();
+        if (g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsWarpSelection()) {
+            CloseSkillSelectWindow();
+        }
         return;
     }
     ShowWarpDestinationWindow(mode);
@@ -5361,10 +5364,6 @@ void HandleMakingArrowList(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    if (mode.m_warpSkillId != 0) {
-        mode.CancelWarpMapSelection();
-    }
-
     std::vector<unsigned int> itemIds;
     const int count = (packet.packetLength - 4) / 2;
     itemIds.reserve(static_cast<size_t>(count));
@@ -5375,6 +5374,15 @@ void HandleMakingArrowList(CGameMode& mode, const PacketView& packet)
         }
     }
 
+    if (itemIds.empty()) {
+        if (g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsMakingArrowSelection()) {
+            CloseSkillSelectWindow();
+        }
+        return;
+    }
+
+    mode.m_warpSkillId = 0;
+    mode.m_warpMapDestinations.clear();
     UISkillSelectWnd* const window = dynamic_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
     if (!window) {
         return;
@@ -5671,7 +5679,7 @@ void HandleShowImage2(CGameMode& mode, const PacketView& packet)
     mode.SendMsg(113, reinterpret_cast<msgparam_t>(imageName), imageType, 0);
 }
 
-void HandleAutoSpellList(CGameMode&, const PacketView& packet)
+void HandleAutoSpellList(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetId != 0x01CD || packet.packetLength != 30) {
         return;
@@ -5692,6 +5700,8 @@ void HandleAutoSpellList(CGameMode&, const PacketView& packet)
         return;
     }
 
+    mode.m_warpSkillId = 0;
+    mode.m_warpMapDestinations.clear();
     UISkillSelectWnd* const window = dynamic_cast<UISkillSelectWnd*>(
         g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
     if (!window) {

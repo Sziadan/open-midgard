@@ -498,8 +498,10 @@ void UISkillSelectWnd::CancelSelection()
         if (!gameMode || !gameMode->CancelWarpMapSelection()) {
             return;
         }
-    } else if (m_kind == Kind::Arrow && gameMode) {
-        gameMode->SendMakingArrowSelection(0);
+    } else if (m_kind == Kind::Arrow) {
+        if (!gameMode || !gameMode->SendMakingArrowSelection(0)) {
+            return;
+        }
     }
     g_windowMgr.DeleteWindow(this);
 }
