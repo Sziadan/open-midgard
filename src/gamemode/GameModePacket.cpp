@@ -1919,6 +1919,20 @@ void HandleHomunSkillList(CGameMode& mode, const PacketView& packet)
     HandleSkillInfoListByTarget(mode, packet, SkillInfoListTarget::Homun);
 }
 
+void HandleHomunIdentity(CGameMode&, const PacketView& packet)
+{
+    // Zc_Change_Mer_Status uses subtype zero to establish the homunculus GID.
+    if (!packet.data || packet.packetLength != 12 || packet.data[3] != 0) return;
+    g_session.m_homunGID = ReadLE32(packet.data + 4);
+}
+
+void HandleMercenaryInit(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 80) return;
+    g_session.ClearMercSkillItems();
+    g_session.m_merGID = ReadLE32(packet.data + 2);
+}
+
 void HandleMercSkillList(CGameMode& mode, const PacketView& packet)
 {
     HandleSkillInfoListByTarget(mode, packet, SkillInfoListTarget::Merc);
@@ -8929,8 +8943,10 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x019E, HandlePetCaptureArm);
     router.Register(0x01A6, HandlePetEggList);
     router.Register(0x01A4, HandlePetStatusChange);
+    router.Register(0x0230, HandleHomunIdentity);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);
+    router.Register(0x029B, HandleMercenaryInit);
     router.Register(0x029D, HandleMercSkillList);
     router.Register(0x029E, HandleMercSkillUpdate);
     RegisterHandlerIfValid(router, receiveProfile.skillDamageNotifyBasic, HandleSkillDamageNotify);

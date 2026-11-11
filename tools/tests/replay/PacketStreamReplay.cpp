@@ -2431,6 +2431,51 @@ void Login3ClientInfoHashRequestReplay()
     std::cout << "{\"case_id\":\"login3_clientinfo_hash_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-01fa-md5-clientinfo-selected-source\",\"production_entry\":\"ConnectAccount -> 0x01DB -> 0x01DC -> OnAckHash -> 0x01FA\",\"request_01db_hex\":\"" << Hex(capturedHashRequest) << "\",\"challenge_hex\":\"" << Hex(challenge) << "\",\"expected_01fa_hex\":\"" << Hex(expectedLogin) << "\",\"captured_01fa_hex\":\"" << Hex(capturedLogin) << "\",\"clientinfo_from_selected_profile\":1,\"challenge_digest_matches_independent_vector\":true,\"challenge_request_automatic_for_login3\":true,\"handshake_cleared\":true,\"network_scope\":\"loopback mock account server only\",\"outcome\":\"PASS\"}\n";
 }
 
+void CompanionIdentityReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto oldHomun = g_session.m_homunGID;
+    const auto oldMerc = g_session.m_merGID;
+    const auto oldSkills = g_session.GetMercSkillItems();
+    g_session.m_homunGID = 0;
+    g_session.m_merGID = 0;
+    PLAYER_SKILL_INFO skill{};
+    skill.SKID = 8201;
+    g_session.SetMercSkillItem(skill);
+
+    std::array<u8, 92> bytes{};
+    bytes[0] = 0x30;
+    bytes[1] = 0x02;
+    bytes[4] = 0x11;
+    bytes[7] = 0xf1;
+    bytes[12] = 0x9b;
+    bytes[13] = 0x02;
+    bytes[14] = 0x22;
+    bytes[17] = 0xf2;
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed) && consumed == 12,
+        "homunculus identity did not frame at 12 bytes");
+    Require(router.Dispatch(mode, packet) && g_session.m_homunGID == 0xf1000011u,
+        "homunculus identity did not retain the unsigned GID");
+    bytes[3] = 1;
+    bytes[4] = 0x33;
+    Require(router.Dispatch(mode, packet) && g_session.m_homunGID == 0xf1000011u,
+        "non-identity homunculus status replaced the GID");
+    Require(!TryReadPacket(bytes.data() + 12, 72, packet, consumed),
+        "mercenary init accepted the shorter incompatible layout");
+    Require(TryReadPacket(bytes.data() + 12, 80, packet, consumed) && consumed == 80,
+        "mercenary init did not frame at the selected length");
+    Require(router.Dispatch(mode, packet) && g_session.m_merGID == 0xf2000022u
+        && g_session.GetMercSkillItems().empty(), "mercenary init did not set identity and clear the previous skills");
+
+    g_session.m_homunGID = oldHomun;
+    g_session.m_merGID = oldMerc;
+    for (const auto& entry : oldSkills) g_session.SetMercSkillItem(entry);
+}
+
 void GuildMemberLoginNoticeReplay(){
     SetCase("guild_member_login_notice_01f2","PK06.GUILD-MEMBER-LOGIN","PK06-01f2-selected-source-literal","ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ReadWindowPacket");
     Require(ro::net::GetPacketSize(0x01f2)==20,"selected 0x01F2 receive size is not 20 bytes");
@@ -4706,6 +4751,7 @@ int main(int argc,char** argv){try{
     LoginPollTransientStatusReplay();
     LoginCharConnectionFailureReplay();
     Login3ClientInfoHashRequestReplay();
+    CompanionIdentityReplay();
     GuildMemberLoginNoticeReplay();
     PartyMarkerGameModeExitReplay();
     SelectedInventoryCartRouteIsolationReplay();

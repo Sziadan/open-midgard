@@ -3763,3 +3763,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Ground prompt skin control
 
 **Current ground prompt skin control checkpoint (2026-11-11)**. Gameplay Graphics settings now select Basic Skin, directory skins, and ZIP skins for the ground prompts. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-prompt-picker.md)
+
+## 2026-11-11 Companion identity packets
+
+**Current companion identity checkpoint (2026-11-11)**. The selected `0230` and `029B` receive paths now establish companion GIDs. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK27-companion-identity.md)

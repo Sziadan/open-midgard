@@ -964,14 +964,18 @@
       "commit_subject": "packet(PK27): expose ground prompt skin selection"
     },
     "PK28.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK27-companion-identity.md"
+      ],
+      "commit_subject": "packet(PK27): receive companion identities"
     },
     "PK28.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK27-companion-identity.md"
+      ],
+      "commit_subject": "packet(PK27): receive companion identities"
     },
     "PK28.03": {
       "status": "NOT_STARTED",
@@ -984,14 +988,18 @@
       "commit_subject": null
     },
     "PK29.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK27-companion-identity.md"
+      ],
+      "commit_subject": "packet(PK27): receive companion identities"
     },
     "PK29.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK27-companion-identity.md"
+      ],
+      "commit_subject": "packet(PK27): receive companion identities"
     },
     "PK29.03": {
       "status": "NOT_STARTED",
@@ -2327,7 +2335,8 @@
         "docs/packets/evidence/PK27-prompt-modern-overlay.md",
         "docs/packets/evidence/PK27-prompt-skin.md",
         "docs/packets/evidence/PK27-prompt-skin-zip.md",
-        "docs/packets/evidence/PK27-prompt-picker.md"
+        "docs/packets/evidence/PK27-prompt-picker.md",
+        "docs/packets/evidence/PK27-companion-identity.md"
       ],
       "commit_subject": "packet(PK27): restore source pet egg selector"
     }

@@ -323,6 +323,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x022A, 58);
     SetPacketSize(0x022B, 57);
     SetPacketSize(0x022C, 65);
+    SetPacketSize(0x0230, 12);               // Homunculus status and owner GID
     SetPacketSize(0x0235, kVariablePacketSize);
     SetPacketSize(0x0239, 11);
     SetPacketSize(0x023A, 4);                 // Storage password request from server registry
@@ -342,6 +343,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x02D3, 4);
     SetPacketSize(0x02D4, 29);
     SetPacketSize(0x02D5, 2);
+    SetPacketSize(0x029B, 80);               // Selected mercenary initialization
     SetPacketSize(0x029D, kVariablePacketSize);
     SetPacketSize(0x029E, 11);
     SetPacketSize(0x07F7, kVariablePacketSize);
