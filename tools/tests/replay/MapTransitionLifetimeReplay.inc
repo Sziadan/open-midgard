@@ -141,6 +141,109 @@ void FeedProductionMapFrame(CGameMode& mode, CGameModePacketRouter& router,
 
 } // namespace
 
+void MapCellLoadLifecycleReplay()
+{
+    SetCase("map_cell_load_lifecycle", "PK18.03", "loose-gat",
+        "map stream -> game mode update -> terrain bootstrap");
+    MapTransitionLifetimeSnapshot saved;
+    const auto fixture = std::filesystem::current_path()
+        / ("pk18" + std::to_string(GetCurrentProcessId() % 1000000) + ".gat");
+    struct Cleanup {
+        MapTransitionLifetimeSnapshot& saved;
+        const std::filesystem::path& fixture;
+        ~Cleanup()
+        {
+            std::error_code error;
+            std::filesystem::remove(fixture, error);
+            saved.Restore();
+        }
+    } cleanup{saved, fixture};
+
+    // Two 3x3 dimensions and nine flat, walkable GAT cells.
+    std::array<u8, 14 + 9 * 20> gat{'G', 'R', 'A', 'T', 1, 2, 3, 0, 0, 0, 3};
+    std::ofstream out(fixture, std::ios::binary);
+    out.write(reinterpret_cast<const char*>(gat.data()), gat.size());
+    out.close();
+    Require(out.good(), "could not write the GAT lifecycle fixture");
+    const std::string map = fixture.stem().string();
+    const std::string worldName = map + ".rsw";
+    const std::string gatName = map + ".gat";
+    g_resMgr.RegisterType("gat", "", new C3dAttr());
+    g_session.m_gid = 0;
+    g_session.m_pendingReturnToCharSelect = 0;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+
+    const auto sendUpdates = [&](CGameMode& mode, std::vector<u8> packets) {
+        peer.Send(packets);
+        std::vector<char> pending(packets.size());
+        const auto deadline = Clock::now() + kTimeout;
+        while (connection->Recv(pending.data(), static_cast<int>(pending.size()), true) == 0) {
+            Require(Clock::now() < deadline, "timed out waiting for early map cell packets");
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        Require(connection->IsOpen(), "connection closed before early map cell packets arrived");
+        mode.OnUpdate();
+    };
+    const auto bindGat = [](CGameMode& mode) {
+        for (int step = 0; step < 8 && mode.m_world && !mode.m_world->m_attr; ++step) {
+            mode.OnUpdate();
+        }
+        Require(mode.m_world && mode.m_world->m_attr, "production bootstrap did not bind the GAT fixture");
+    };
+
+    CGameMode first;
+    first.OnInit(worldName.c_str());
+    auto updates = MapCellUpdateFrame(1, 1, 5, gatName);
+    for (const auto& update : {
+            MapCellUpdateFrame(0, 1, 5, gatName),
+            MapCellUpdateFrame(0, 1, 0, gatName),
+            MapCellUpdateFrame(1, 0, 5, "other.gat"),
+            MapCellUpdateFrame(3, 0, 5, gatName),
+            MapCellUpdateFrame(2, 1, 7, gatName)}) {
+        updates.insert(updates.end(), update.begin(), update.end());
+    }
+    sendUpdates(first, std::move(updates));
+    Require(first.m_world && !first.m_world->m_attr, "early update was not received before GAT binding");
+    bindGat(first);
+    C3dAttr* const base = first.m_world->m_attr;
+    Require(first.m_world->GetMapCellType(1, 1) == 5
+        && first.m_world->IsMapCellWalkable(0, 1) && first.m_world->IsMapCellWalkable(1, 0)
+        && first.m_world->IsMapCellWalkable(0, 2) && first.m_world->IsMapCellWalkable(2, 1)
+        && base->GetCell(1, 1)->flag == 0,
+        "binding GAT lost a valid update or applied a rejected update");
+    first.OnExit();
+    Require(g_world.m_attr == nullptr, "game mode exit retained terrain");
+
+    // A real mode replacement may reopen the same cached asset before the old load finishes.
+    CGameMode replacement;
+    replacement.OnInit(worldName.c_str());
+    sendUpdates(replacement, MapCellUpdateFrame(2, 2, 5, gatName));
+    Require(replacement.m_world && !replacement.m_world->m_attr, "replacement skipped its loading boundary");
+    bindGat(replacement);
+    Require(replacement.m_world->m_attr == base && replacement.m_world->IsMapCellWalkable(1, 1)
+        && replacement.m_world->GetMapCellType(2, 2) == 5,
+        "replacement lost its early update or inherited the old world's cell");
+    replacement.OnExit();
+
+    // Leaving before GAT exists must discard even an accepted pending update.
+    CGameMode abandoned;
+    abandoned.OnInit(worldName.c_str());
+    sendUpdates(abandoned, MapCellUpdateFrame(1, 2, 5, gatName));
+    Require(abandoned.m_world && !abandoned.m_world->m_attr, "abandoned update was not pending");
+    abandoned.OnExit();
+    CGameMode reentry;
+    reentry.OnInit(worldName.c_str());
+    bindGat(reentry);
+    Require(reentry.m_world->m_attr == base && reentry.m_world->IsMapCellWalkable(1, 2)
+        && reentry.m_world->IsMapCellWalkable(2, 2),
+        "reentry inherited active or pending cell updates");
+    reentry.OnExit();
+    connection->Disconnect();
+    std::cout << "{\"case_id\":\"map_cell_load_lifecycle\",\"contract_id\":\"PK18.03\",\"outcome\":\"PASS\"}" << std::endl;
+}
+
 void MapTransitionLifetimeReplay()
 {
     SetCase("map_transition_lifetime", "PK14.06", "PK14.06-map-transition-selected-0091-0092-0071",
@@ -219,6 +322,11 @@ void MapTransitionLifetimeReplay()
         CPlayer player;
         player.m_gid = g_session.m_gid;
         CView view;
+        C3dAttr attr;
+        attr.m_width = 3;
+        attr.m_height = 3;
+        attr.m_cells.resize(9);
+        world.SetMapTerrain(&attr);
         world.m_player = &player;
         world.m_ground = new C3dGround{};
         world.m_ground->m_width = 200;
@@ -253,10 +361,12 @@ void MapTransitionLifetimeReplay()
         Require(g_windowMgr.m_storageWnd && g_windowMgr.m_storageWnd->m_show,
             "could not open the real storage window before same-map warp");
         const auto frame = MapChangeFrame(0x0091, "prontera", 80, 90);
-        inputPeer.Send(frame);
-        WaitKernelPending(mapInput, static_cast<int>(frame.size()));
+        auto cellThenWarp = MapCellUpdateFrame(1, 1, 5, "prontera.gat");
+        cellThenWarp.insert(cellThenWarp.end(), frame.begin(), frame.end());
+        inputPeer.Send(cellThenWarp);
+        WaitKernelPending(mapInput, static_cast<int>(cellThenWarp.size()));
         const GameModePacketLoopResult loop = ProcessGameModePacketLoop(mode, mapInput, router, 8);
-        Require(loop.packetsDispatched == 1 && !loop.modeOperationRequested,
+        Require(loop.packetsDispatched == 2 && !loop.modeOperationRequested,
             "same-map warp did not stay on the loaded map");
         Require(presentations == 0 && handoffs == 0, "loaded same-map warp selected external orchestration");
         const std::vector<u8> ack = ackPeer.ReceiveExact(2);
@@ -273,6 +383,8 @@ void MapTransitionLifetimeReplay()
         RequirePartyInvalidated(revision, before.imageRevision, "same-map warp reuse");
         Require(mode.m_mapLoadingStage == CGameMode::MapLoading_None && mode.m_world == &world && mode.m_view == &view,
             "same-map reuse discarded the loaded world/view");
+        Require(world.GetMapCellType(1, 1) == 5 && attr.GetCell(1, 1)->flag == 0,
+            "same-map reuse lost the active map cell update");
         Require(mode.m_characterNameCache.empty() && mode.m_characterNameReqTimer.empty(),"same-map reuse retained character-name state");
         Require(mode.m_partyPosList.empty() && mode.m_runtimeActors.at(g_session.m_gid) == &player,
             "same-map reuse did not clear legacy dots while retaining the player");

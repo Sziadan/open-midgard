@@ -5739,23 +5739,54 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
     }
 }
 
-void CWorld::ApplyMapCellType(int x, int y, int type)
+void CWorld::BeginMapTerrainLoad()
 {
-    const CAttrCell* cell = m_attr ? m_attr->GetCell(x, y) : nullptr;
-    if (!cell || type < 0 || type > 6) {
-        return;
-    }
-    const auto index = static_cast<size_t>(cell - m_attr->m_cells.data());
-    if (cell->flag == type) {
-        m_mapCellTypes.erase(index);
-    } else {
-        m_mapCellTypes.insert_or_assign(index, type);
-    }
+    m_attr = nullptr;
+    m_mapCellTypes.clear();
+    m_waitingForMapTerrain = true;
 }
 
-void CWorld::ClearMapCellTypes()
+void CWorld::SetMapTerrain(C3dAttr* attr)
 {
-    m_mapCellTypes.clear();
+    if (!m_waitingForMapTerrain && m_attr == attr) {
+        return;
+    }
+    m_attr = attr;
+    if (!m_waitingForMapTerrain || !attr) {
+        m_mapCellTypes.clear();
+    } else {
+        for (auto update = m_mapCellTypes.begin(); update != m_mapCellTypes.end();) {
+            const auto [x, y] = update->first;
+            const CAttrCell* cell = attr->GetCell(x, y);
+            if (!cell || cell->flag == update->second) {
+                update = m_mapCellTypes.erase(update);
+            } else {
+                ++update;
+            }
+        }
+    }
+    m_waitingForMapTerrain = false;
+}
+
+void CWorld::ApplyMapCellType(int x, int y, int type)
+{
+    if (x < 0 || y < 0 || type < 0 || type > 6) {
+        return;
+    }
+    const std::pair<int, int> position{x, y};
+    if (m_waitingForMapTerrain) {
+        m_mapCellTypes.insert_or_assign(position, type);
+        return;
+    }
+    const CAttrCell* cell = m_attr ? m_attr->GetCell(x, y) : nullptr;
+    if (!cell) {
+        return;
+    }
+    if (cell->flag == type) {
+        m_mapCellTypes.erase(position);
+    } else {
+        m_mapCellTypes.insert_or_assign(position, type);
+    }
 }
 
 int CWorld::GetMapCellType(int x, int y) const
@@ -5764,8 +5795,7 @@ int CWorld::GetMapCellType(int x, int y) const
     if (!cell) {
         return 1;
     }
-    const auto index = static_cast<size_t>(cell - m_attr->m_cells.data());
-    const auto delta = m_mapCellTypes.find(index);
+    const auto delta = m_mapCellTypes.find({x, y});
     return delta == m_mapCellTypes.end() ? cell->flag : delta->second;
 }
 

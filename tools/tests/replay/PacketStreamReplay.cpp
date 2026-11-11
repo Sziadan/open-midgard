@@ -3023,6 +3023,21 @@ void PendingCompanionActorSkillReplay()
     mode.m_world = nullptr;
 }
 
+std::vector<u8> MapCellUpdateFrame(u16 x, u16 y, u16 type, std::string_view name)
+{
+    Require(name.size() <= 16, "map cell fixture name exceeds its wire field");
+    std::vector<u8> bytes(24);
+    bytes[0] = 0x92;
+    bytes[1] = 0x01;
+    const std::array<u16, 3> fields{x, y, type};
+    for (size_t index = 0; index < fields.size(); ++index) {
+        bytes[2 + index * 2] = static_cast<u8>(fields[index]);
+        bytes[3 + index * 2] = static_cast<u8>(fields[index] >> 8);
+    }
+    std::copy(name.begin(), name.end(), bytes.begin() + 8);
+    return bytes;
+}
+
 void MapCellUpdateReplay()
 {
     C3dAttr attr;
@@ -3041,9 +3056,8 @@ void MapCellUpdateReplay()
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
     const auto dispatch = [&](u16 x, u16 y, u16 type, std::string_view name) {
-        std::array<u8, 25> bytes{0x92, 0x01, static_cast<u8>(x), static_cast<u8>(x >> 8),
-            static_cast<u8>(y), static_cast<u8>(y >> 8), static_cast<u8>(type), static_cast<u8>(type >> 8)};
-        std::copy(name.begin(), name.end(), bytes.begin() + 8);
+        auto bytes = MapCellUpdateFrame(x, y, type, name);
+        bytes.push_back(0);
         PacketView packet{};
         int consumed = 0;
         Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
@@ -5509,6 +5523,7 @@ int main(int argc,char** argv){try{
     Require(CConnection::Startup(),"socket startup failed");
     if(argc>1 && std::string(argv[1])=="--pet-lifecycle-only") {PetLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--world-entry-handoff-only") {ModeLoopHandoffReplay();CConnection::Cleanup();return 0;}
+    if(argc>1 && std::string(argv[1])=="--map-cell-load-only") {MapCellLoadLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--corpse-gr2-native") { CorpseNativePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--whisper-only") {WhisperReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--auto-message-only") {AutoMessageReplay();CConnection::Cleanup();return 0;}
@@ -5695,5 +5710,6 @@ int main(int argc,char** argv){try{
     AutoMessageReplay();
     FriendOptionsReplay();
     ChatSubmissionReplay();
+    MapCellLoadLifecycleReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

@@ -380,13 +380,15 @@ public:
         float delayFrames = 0.0f);
     bool HasWarpAtAttrCell(int attrX, int attrY) const;
     void RenderBackgroundObjects(const matrix& viewMatrix) const;
+    void BeginMapTerrainLoad();
+    void SetMapTerrain(C3dAttr* attr);
     void ApplyMapCellType(int x, int y, int type);
-    void ClearMapCellTypes();
     int GetMapCellType(int x, int y) const;
     bool IsMapCellWalkable(int x, int y) const;
 
 private:
-    std::map<size_t, int> m_mapCellTypes;
+    bool m_waitingForMapTerrain = false;
+    std::map<std::pair<int, int>, int> m_mapCellTypes;
 };
 
 extern CWorld g_world;

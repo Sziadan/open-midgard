@@ -3835,3 +3835,7 @@ PK18.01 establishes the fixed `0192` wire layout and selected client GAT flag wr
 ## 2026-11-11 Dynamic map cell updates
 
 PK18.02 routes `0192` updates to world-scoped cell state and shares that state across movement, skill approach, and the hover renderer. Production replay verifies path detours and restoration with a shared immutable base GAT. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK18.02-dynamic-map-cell-updates.md)
+
+## 2026-11-11 Dynamic map cell loading and replacement
+
+PK18.03 stages matching `0192` updates until GAT binding and clears the previous world's state on replacement. The focused replay verified early placement, restore before binding, and same-name replacement and reentry with a cached GAT asset. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK18.03-map-cell-loading.md)

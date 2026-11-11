@@ -9505,8 +9505,10 @@ void EnsureBootstrapWorldAssets(const CGameMode& mode)
             }
             if (!cache.attrPath.empty()) {
                 cache.attrRes = g_resMgr.GetAs<C3dAttr>(cache.attrPath.c_str());
-                if (cache.attrRes && mode.m_world) {
-                    mode.m_world->m_attr = cache.attrRes;
+            }
+            if (mode.m_world) {
+                mode.m_world->SetMapTerrain(cache.attrRes);
+                if (cache.attrRes) {
                     mode.m_world->RebuildSceneGraph();
                 }
             }
@@ -10231,6 +10233,8 @@ void CGameMode::OnInit(const char* worldName) {
         BuildMinimapName(worldName, m_minimapBmpName, sizeof(m_minimapBmpName));
     }
 
+    // A mode replacement can restart the same map before the old bootstrap finished.
+    ResetBootstrapWorldCache(GetBootstrapWorldCache());
     m_world = &g_world;
     if (m_world) {
         m_world->m_curMode = this;
@@ -10238,8 +10242,7 @@ void CGameMode::OnInit(const char* worldName) {
         m_world->ClearFixedObjects();
         m_world->m_ground = nullptr;
         m_world->m_player = nullptr;
-        m_world->ClearMapCellTypes();
-        m_world->m_attr = nullptr;
+        m_world->BeginMapTerrainLoad();
     }
     m_view = nullptr;
     m_mousePointer = nullptr;
@@ -10319,8 +10322,7 @@ void CGameMode::OnExit() {
         m_world->ClearBackgroundObjects();
         m_world->ClearFixedObjects();
         m_world->ClearGround();
-        m_world->ClearMapCellTypes();
-        m_world->m_attr = nullptr;
+        m_world->SetMapTerrain(nullptr);
         m_world->m_rootNode.m_attr = nullptr;
         SetRect(&m_world->m_rootNode.m_attrArea, 0, 0, 0, 0);
     }

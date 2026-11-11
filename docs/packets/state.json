@@ -605,9 +605,11 @@
       "commit_subject": "packet(PK18.02): apply dynamic map cell updates"
     },
     "PK18.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK18.03-map-cell-loading.md"
+      ],
+      "commit_subject": "packet(PK18.03): retain map cell updates through terrain loading"
     },
     "PK18.04": {
       "status": "NOT_STARTED",
