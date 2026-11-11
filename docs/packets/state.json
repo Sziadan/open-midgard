@@ -683,9 +683,12 @@
       "commit_subject": "packet(PK20.03): verify native NPC class replacement"
     },
     "PK20.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/evidence/PK20.04-npc-class-verification.md",
+        "docs/packets/evidence/PK20.03-npc-class-native.md"
+      ],
+      "commit_subject": "packet(PK20.04): close selected NPC class verification"
     },
     "PK21.01": {
       "status": "NOT_STARTED",
