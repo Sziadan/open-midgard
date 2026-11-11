@@ -1,0 +1,6 @@
+# Actor setup uses role, AID, job and cell coordinates.
+# actor	source	1 0 16 16
+# actor	target	2 0 18 16
+# actor	actor	3 0 16 18
+# opcode	packet_hex	source note
+0x013E	3E0103000000020000000A00140022000000000040060000	PK23.03: timed beneficial skill by remote actor3 onto objectType9 target2

@@ -1,0 +1,6 @@
+# Actor setup uses role, AID, job and cell coordinates.
+# actor	source	1 0 16 16
+# actor	target	2 0 18 16
+# actor	actor	3 0 16 18
+# opcode	packet_hex	source note
+0x01B9	B90103000000	PK23.03: cancel remote actor3 while not casting

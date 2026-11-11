@@ -1,0 +1,10 @@
+# opcode	hexBytes	comment
+0x011A	1A011C00FFFF020000000100000000	Failed actor result still faces and announces with the signed value
+0x011A	1A011C00C700020000000100000001	Successful Heal attaches effect 7 to actor destination
+0x011A	1A011C00C700010000000100000000	Self destination preserves facing and attaches no effect on failure
+0x011A	1A011C00C700020000000000000001	Source zero still permits the actor destination result
+0x011A	1A011C00C700840300000100000001	Missing actor destination attaches no effect
+0x011A	1A010C000100080006000100000000	Packed target cell x6 y8 faces the cell even on failure
+0x011F	1F0164000000010000000A0014008501	Create skill unit 100 for Remove Trap destination
+0x011A	1A017C000100640000000100000000	Failed Remove Trap faces the unit without effect 100
+0x011A	1A017C000100640000000100000001	Successful Remove Trap attaches effect 100 to the unit

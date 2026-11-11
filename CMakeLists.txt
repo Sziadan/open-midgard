@@ -762,6 +762,12 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_cast_cancel_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/cast_cancel01b9.tsv")
+    add_test(NAME skill_packet_replay_pk23_cast_actor_targets_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/pk23_cast_actor_targets.tsv")
+    add_test(NAME skill_packet_replay_pk23_remote_cast_cancel_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/pk23_remote_cast_cancel.tsv")
     add_test(NAME skill_packet_replay_skill_fail_ack_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_fail_ack0110.tsv")
@@ -795,6 +801,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_ankle_snare_trap_trigger_lifecycle_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/ankle_snare_trap_trigger_lifecycle.tsv")
+    add_test(NAME skill_packet_replay_ankle_snare_dummy_reveal_selected_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/ankle_snare_dummy_reveal_selected.tsv")
     add_test(NAME skill_packet_replay_shockwave_trap_trigger_lifecycle_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/shockwave_trap_trigger_lifecycle.tsv")
@@ -834,6 +843,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_selected_skill_damage_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_damage_selected_01de.tsv")
+    add_test(NAME skill_packet_replay_no_damage_result_targets_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_result_targets_011a.tsv")
     add_test(NAME skill_packet_replay_skill_damage_position_0115_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_damage_position_0115.tsv")
@@ -938,6 +950,10 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_cast_cancel_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set_tests_properties(skill_packet_replay_pk23_cast_actor_targets_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set_tests_properties(skill_packet_replay_pk23_remote_cast_cancel_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_skill_fail_ack_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_trap_reveal_lifecycle_checks PROPERTIES
@@ -958,6 +974,8 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_ankle_snare_trap_trigger_lifecycle_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set_tests_properties(skill_packet_replay_ankle_snare_dummy_reveal_selected_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_shockwave_trap_trigger_lifecycle_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_skid_trap_trigger_lifecycle_checks PROPERTIES
@@ -975,6 +993,7 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         skill_packet_replay_skill_damage2_662_checks
         skill_packet_replay_skill_damage2_141_levelFFFF_checks
         skill_packet_replay_selected_skill_damage_checks
+        skill_packet_replay_no_damage_result_targets_checks
         skill_packet_replay_ground_skill_wave362_checks
         skill_packet_replay_ground_skill_wave369_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")

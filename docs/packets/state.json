@@ -775,13 +775,14 @@
       "commit_subject": "packet(PK23.02): inventory skill handler branches and owners"
     },
     "PK23.03": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK23.03-skill-message-rejection.md",
         "docs/packets/evidence/PK23.03-damage-cast-talkbox.md",
+        "docs/packets/evidence/PK23.03-targets-and-hidden-unit.md",
         "docs/packets/evidence/PK23.02-skill-handler-inventory.md"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK23.03): verify result targets and selected trap reveal"
     },
     "PK23.04": {
       "status": "NOT_STARTED",

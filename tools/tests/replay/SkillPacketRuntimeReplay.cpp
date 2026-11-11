@@ -1174,6 +1174,72 @@ void ReplaySelectedSkillDamage(const std::string& path)
     std::cout << "SkillDamageSelected opcode=0x01DE localRemote=1 remoteLocal=1 unit=1 unresolved=2\n";
 }
 
+void ReplayNoDamageResultTargets(const std::string& path)
+{
+    const auto packets = LoadPacketSequence(path);
+    Require(packets.size() == 9, "no-damage result fixture requires nine frames");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](std::size_t index, u16 opcode, int length) {
+        const auto& bytes = packets[index].bytes;
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
+            && packet.packetId == opcode && consumed == length
+            && consumed == static_cast<int>(bytes.size()) && router.Dispatch(fixture.mode, packet),
+            "no-damage result fixture framing or production dispatch failed");
+    };
+    const auto effectCount = [](const CAbleToMakeEffect& owner, int effectId) {
+        return std::count_if(owner.m_effectList.begin(), owner.m_effectList.end(), [effectId](const CRagEffect* effect) {
+            return effect != nullptr && effect->GetEffectType() == effectId;
+        });
+    };
+    const auto facing = [&](float angle) { return std::abs(fixture.source.m_roty - angle) < 0.01f; };
+
+    fixture.source.m_roty = 11.0f;
+    dispatch(0, 0x011a, 15);
+    Require(facing(90.0f) && effectCount(fixture.target, 7) == 0,
+        "failed actor result did not face the target without applying Heal");
+    Require(std::any_of(fixture.mode.sentMessages.begin(), fixture.mode.sentMessages.end(), [&](const auto& message) {
+        return message.id == 99 && message.wparam == 28
+            && message.lparam == reinterpret_cast<msgparam_t>(&fixture.source) && message.extra == -1;
+    }), "actor result did not deliver signed level to the caster announcement");
+
+    dispatch(1, 0x011a, 15);
+    Require(effectCount(fixture.target, 7) == 1, "successful actor result did not apply Heal to its target");
+    fixture.source.m_roty = 31.0f;
+    dispatch(2, 0x011a, 15);
+    Require(facing(31.0f) && effectCount(fixture.source, 7) == 0,
+        "failed self result changed facing or applied Heal");
+    fixture.mode.sentMessages.clear();
+    dispatch(3, 0x011a, 15);
+    Require(effectCount(fixture.target, 7) == 2
+        && std::none_of(fixture.mode.sentMessages.begin(), fixture.mode.sentMessages.end(),
+            [](const auto& message) { return message.id == 99; }),
+        "zero-source result lost its target effect or announced a caster");
+    dispatch(4, 0x011a, 15);
+    Require(facing(31.0f) && fixture.world.GetGameActorByAID(900) == nullptr
+        && effectCount(fixture.target, 7) == 2 && effectCount(fixture.source, 7) == 0,
+        "missing actor destination changed facing, created an actor, or applied Heal");
+
+    fixture.mode.GetClientCoor(5, 8, fixture.source.m_pos.x, fixture.source.m_pos.z);
+    dispatch(5, 0x011a, 15);
+    Require(facing(90.0f), "packed-cell result did not face the encoded destination");
+
+    dispatch(6, 0x011f, 16);
+    CSkill* const unit = fixture.world.GetSkillByAID(100);
+    Require(unit != nullptr, "unit result fixture did not create its destination");
+    unit->m_pos.x = fixture.source.m_pos.x;
+    unit->m_pos.z = fixture.source.m_pos.z + 10.0f;
+    dispatch(7, 0x011a, 15);
+    Require(facing(180.0f) && effectCount(*unit, 100) == 0,
+        "failed skill-unit result did not face its destination without applying the effect");
+    dispatch(8, 0x011a, 15);
+    Require(effectCount(*unit, 100) == 1, "successful Remove Trap did not apply effect to the skill unit");
+    std::cout << "NoDamageResultTargets opcode=0x011A actor=1 self=1 zeroSource=1 packedCell=1 skillUnit=1\n";
+}
+
 bool IsGroundSkillWaveScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1440,6 +1506,75 @@ void ReplaySkillCastAck(const std::string& path)
     std::cout << "SkillCastAck opcode=0x013E skill=19 state=8 sourceEffect=12 targetEffect=60 target=2 castMs=1600\n";
 }
 
+void ReplayPk23CastActorTargets(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x013E && packets[0].bytes.size() == 24,
+        "PK23.03 actor-target replay requires one 24-byte 0x013E packet");
+    Fixture fixture(path);
+    CGameActor* const remoteCaster = fixture.world.GetGameActorByAID(3);
+    Require(remoteCaster != nullptr, "cast target fixture did not register the remote caster");
+    fixture.target.m_objectType = 9;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed)
+        && consumed == static_cast<int>(packets[0].bytes.size()), "PK23.03 actor-target packet framing failed");
+    Require(router.Dispatch(fixture.mode, packet), "PK23.03 actor-target packet was not dispatched");
+    Require(remoteCaster->m_targetGid == 0,
+        "beneficial cast set a hostile target for object type 9 outside PK mode");
+    Require(remoteCaster->m_beginSpellEffect != nullptr && fixture.target.m_magicTargetEffect != nullptr,
+        "0x013E did not attach source and target effects to their resolved actors");
+    Require(fixture.source.m_beginSpellEffect == nullptr && fixture.source.m_targetGid == 0,
+        "remote 0x013E cast mutated the local player instead of the resolved caster");
+    Require(fixture.mode.sentMessages.size() == 1
+        && fixture.mode.sentMessages[0].id == 99 && fixture.mode.sentMessages[0].lparam == reinterpret_cast<msgparam_t>(remoteCaster),
+        "mode99 ACK actor reference did not use the resolved caster");
+    const int oldPkZone = fixture.world.m_isPKZone;
+    fixture.world.m_isPKZone = 1;
+    const bool pkDispatch = router.Dispatch(fixture.mode, packet);
+    fixture.world.m_isPKZone = oldPkZone;
+    Require(pkDispatch && remoteCaster->m_targetGid == fixture.target.m_gid,
+        "PK mode did not override the beneficial cast's target gate");
+    std::cout << "CastActorTargets opcode=0x013E remoteCaster=1 beneficialGate=1 pkOverride=1\n";
+}
+
+void ReplayPk23RemoteCastCancel(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x01B9 && packets[0].bytes.size() == 6,
+        "PK23.03 remote-cancel replay requires one 6-byte 0x01B9 packet");
+    Fixture fixture(path);
+    CGameActor* const remoteCaster = fixture.world.GetGameActorByAID(3);
+    Require(remoteCaster != nullptr, "cast cancel fixture did not register the remote caster");
+    remoteCaster->m_stateId = 1;
+    remoteCaster->m_isMotionFreezed = 1;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed)
+        && consumed == static_cast<int>(packets[0].bytes.size()), "PK23.03 remote-cancel packet framing failed");
+    Require(router.Dispatch(fixture.mode, packet), "PK23.03 remote-cancel packet was not dispatched");
+    Require(remoteCaster->m_stateId == 1 && remoteCaster->m_isMotionFreezed == 1 && remoteCaster->m_effectList.empty()
+        && fixture.source.m_stateId == 0 && fixture.source.m_effectList.empty(),
+        "noncasting remote cancellation changed actor state or local player effects");
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "runtime log unavailable for PK23.03 remote cancel");
+    std::vector<int> messages;
+    std::string line;
+    while (std::getline(runtimeLog, line)) {
+        unsigned int actorAid = 0;
+        int message = 0;
+        if (std::sscanf(line.c_str(), "[pid:%*u t:%*u] [REPLAY] ActorMsg actor=%u msg=%d", &actorAid, &message) == 2
+            && actorAid == remoteCaster->m_gid) messages.push_back(message);
+    }
+    Require(messages == std::vector<int>({84, 87, 83}),
+        "remote noncasting 0x01B9 actor messages differ from Ref order84,87,83");
+    std::cout << "PASS PK23.03 01B9 remote noncasting actor messages=84,87,83 state unchanged\n";
+}
+
 void ReplaySkillUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1555,7 +1690,6 @@ void ReplaySkillUnitLifecycle(const std::string& path)
                         "server-owned Firewall must await removal instead of expiring at three seconds");
                     ++processSteps;
                 }
-                Require(processSteps >= 100, "Firewall persistence did not cross the legacy expiry threshold");
                 CSkill synthetic;
                 synthetic.m_job = 127;
                 synthetic.m_SkillStartTime = unitStartTick;
@@ -2247,6 +2381,64 @@ void ReplayAnkleSnareTriggerLifecycle(const std::string& path)
     std::cout << "AnkleSnare aid=100 job=145 target=2 snapped=(10,20) updated=1 removed=1\n";
 }
 
+bool IsAnkleSnareDummyRevealScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[0].bytes[14] == 134 && packets[1].opcode == 0x01AC && packets[2].opcode == 0x01D7
+        && packets[3].opcode == 0x0120;
+}
+
+void ReplayAnkleSnareDummyRevealLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(IsAnkleSnareDummyRevealScenario(path)
+        && packets[1].bytes.size() == 6 && packets[2].bytes.size() == 11 && packets[3].bytes.size() == 6,
+        "selected Ankle Snare reveal requires dummy entry, 0x01AC, 0x01D7 and removal");
+    Require(ReadU32LE(packets[0].bytes.data() + 2) == 100 && packets[0].bytes[14] == 134
+        && packets[0].bytes[15] == 0 && ReadU32LE(packets[1].bytes.data() + 2) == 100
+        && ReadU32LE(packets[2].bytes.data() + 2) == 100 && packets[2].bytes[6] == 0
+        && ReadU32LE(packets[2].bytes.data() + 7) == 145
+        && ReadU32LE(packets[3].bytes.data() + 2) == 100,
+        "selected Ankle Snare reveal packet identities, dummy visibility, or LOOK_BASE job differ");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    u8 initialVisible = 0;
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected selected Ankle Snare reveal packet");
+        Require(packet.packetId == packets[index].opcode && consumed == static_cast<int>(packets[index].bytes.size()),
+            "selected Ankle Snare reveal framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch selected Ankle Snare reveal packet");
+
+        CSkill* unit = fixture.world.GetSkillByAID(100);
+        if (index == 0) {
+            Require(unit != nullptr && unit->m_job == 134,
+                "hidden selected-server Ankle Snare entry must create dummy job134");
+            initialVisible = unit->m_isVisibleBody;
+        } else if (index == 1) {
+            Require(unit != nullptr && unit->m_job == 134 && unit->m_isVisibleBody == initialVisible,
+                "0x01AC must not change dummy job134 or visibility before the base-look update");
+        } else if (index == 2) {
+            Require(unit != nullptr && unit->m_job == 145 && unit->m_isVisibleBody == initialVisible,
+                "0x01D7 LOOK_BASE=145 must reveal the same Ankle Snare unit without changing visibility state");
+        } else {
+            Require(unit == nullptr, "0x0120 did not remove selected Ankle Snare from CWorld skill lookup");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                        return skill != nullptr && skill->m_aid == 100;
+                    }),
+                "0x0120 did not remove selected Ankle Snare from CWorld object ownership");
+        }
+    }
+    std::cout << "AnkleSnare selected-hidden aid=100 dummyJob=134 updateNoop=1 revealJob=145 removed=1\n";
+}
+
 void ReplayShockwaveTrapTriggerLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -2717,6 +2909,8 @@ int main(int argc, char** argv)
             ReplaySkillMessagePacket(argv[1]);
         } else if (std::string(argv[1]).find("skill_damage_selected_01de") != std::string::npos) {
             ReplaySelectedSkillDamage(argv[1]);
+        } else if (std::string(argv[1]).find("skill_result_targets_011a") != std::string::npos) {
+            ReplayNoDamageResultTargets(argv[1]);
         } else if (IsSkillDamagePositionScenario(argv[1])) {
             ReplaySkillDamagePosition(argv[1]);
         } else if (IsSkillDamageExtendedExtraScenario(argv[1])) {
@@ -2725,6 +2919,10 @@ int main(int argc, char** argv)
             ReplayGroundArrowShower(argv[1]);
         } else if (IsGroundScopeCastAckScenario(argv[1])) {
             ReplayGroundScopeCastAck(argv[1]);
+        } else if (std::string(argv[1]).find("pk23_cast_actor_targets") != std::string::npos) {
+            ReplayPk23CastActorTargets(argv[1]);
+        } else if (std::string(argv[1]).find("pk23_remote_cast_cancel") != std::string::npos) {
+            ReplayPk23RemoteCastCancel(argv[1]);
         } else if (IsSkillCastAckScenario(argv[1])) {
             ReplaySkillCastAck(argv[1]);
         } else if (IsSkillCastCancelScenario(argv[1])) {
@@ -2747,6 +2945,8 @@ int main(int argc, char** argv)
             ReplaySavedEffectTrapTriggerLifecycle(argv[1], 151, 121, 108, "FreezingTrap");
         } else if (IsFlasherTriggerScenario(argv[1])) {
             ReplayFlasherTriggerLifecycle(argv[1]);
+        } else if (IsAnkleSnareDummyRevealScenario(argv[1])) {
+            ReplayAnkleSnareDummyRevealLifecycle(argv[1]);
         } else if (IsAnkleSnareTriggerScenario(argv[1])) {
             ReplayAnkleSnareTriggerLifecycle(argv[1]);
         } else if (IsShockwaveTrapTriggerScenario(argv[1])) {

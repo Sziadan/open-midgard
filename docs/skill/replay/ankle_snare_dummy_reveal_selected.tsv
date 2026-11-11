@@ -1,0 +1,5 @@
+# opcode	hexBytes	comment
+0x011F	1F0164000000020000000A0014008600	Selected hidden Ankle Snare entry uses UNT_DUMMYSKILL job134 and visible=0
+0x01AC	AC0164000000	Selected Ankle Snare trigger update precedes trap-look change
+0x01D7	D701640000000091000000	clif_changetraplook sends LOOK_BASE=Ankle Snare job145
+0x0120	200164000000	Remove Ankle Snare after SC_ANKLE expires
