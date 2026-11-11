@@ -103,11 +103,19 @@ source_routes = {
     277: [456], 278: [456], 279: [456], 280: [456], 281: [456],
 }
 source_aliases = {2: 161, 25: 188, 87: 235, 165: 232, 166: 232, 167: 232, 200: 201}
-current_aliases = {25: 188, 68: 149, 87: 235, 165: 232, 166: 232, 167: 232, 200: 201, 277: 281, 278: 281, 279: 281, 280: 281}
+current_aliases = {25: 188, 68: 149, 165: 232, 166: 232, 167: 232, 200: 201, 277: 281, 278: 281, 279: 281, 280: 281}
+shared_routes = {87: "updateVisualClaim(0x1u)", 235: "updateVisualClaim(0x2u)", 97: "updateVisualClaim(0x4u, true)"}
+showefst = norm(body(ACTOR, "void CGameActor::RefreshShowEfstVisuals("))
+assert "reconcile(254," in showefst and "m_showEfstIconClaims & 0x3u" in showefst
+assert "reconcile(655," in showefst and "m_showEfstIconClaims & 0x4u" in showefst and "? 656 : 0" in showefst
+assert "RefreshShowEfstVisuals(!enabled && end655)" in src110
 assert set(source_routes) | {29, 34, 264, 266} == source_ids | {149}
 for skill, expected in source_routes.items():
     implementation_branch = norm(switch_branch(src110, "skillStatus", current_aliases.get(skill, skill)))
-    assert all(str(effect) in implementation_branch for effect in expected), f"message110 subcase {skill}: implementation branch omitted effect id(s) {expected}"
+    if skill in shared_routes:
+        assert shared_routes[skill] in implementation_branch, f"message110 subcase {skill}: missing shared effect claim"
+    else:
+        assert all(str(effect) in implementation_branch for effect in expected), f"message110 subcase {skill}: implementation branch omitted effect id(s) {expected}"
     source_id = source_aliases.get(skill, skill)
     if skill not in (68, 149, 160, 152, 134, 133, 121, 97, 207, 277, 278, 279, 280, 281, 159):
         source_branch = norm(switch_branch(ref110, "arg1", source_id))

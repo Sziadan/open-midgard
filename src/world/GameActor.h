@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <map>
 
 // Forward declarations
 class CGameObject;
@@ -199,6 +200,7 @@ public:
     CRagEffect* LaunchEffect(int effectId, vector3d deltaPos = vector3d{ 0.0f, 0.0f, 0.0f }, float fRot = 0.0f);
     void DetachEffects();
     void RemoveEffectById(int effectId);
+    bool RemoveAttachedEffect(CRagEffect* effect);
     void SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
 
     int m_efId;
@@ -350,11 +352,19 @@ public:
     void Am_Groundskill(const int* arg);
     void StartMoveToCell(int cellX, int cellY, int pathFlag);
     void SetAttrState(int bodyState, int effectState, int healthState, bool changedNow);
+    void SetShowEfst(u32 opt3);
+    void RefreshShowEfstVisuals(bool status655Ending = false);
     CMsgEffect* SpawnMsgSprite(int processType, const char* spritePath, const char* actPath, int action, float zoom);
     void DeleteMatchingEffect(CMsgEffect* effect);
     void DeleteTotalNumber(int kind);
     void ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTopY);
     void DestroySkillRechargeGage();
+
+private:
+    u32 m_showEfst = 0;
+    u32 m_visibleShowEfst = 0;
+    u8 m_showEfstIconClaims = 0;
+    std::map<int, CRagEffect*> m_showEfstVisuals;
 };
 
 class CMsgEffect : public CGameObject {

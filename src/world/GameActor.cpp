@@ -4447,6 +4447,18 @@ void CAbleToMakeEffect::DetachEffects()
     m_magicTargetEffect = nullptr;
 }
 
+bool CAbleToMakeEffect::RemoveAttachedEffect(CRagEffect* effect)
+{
+    if (!effect) return false;
+    const auto found = std::find(m_effectList.begin(), m_effectList.end(), effect);
+    if (found == m_effectList.end()) return false;
+    m_effectList.erase(found);
+    if (m_beginSpellEffect == effect) m_beginSpellEffect = nullptr;
+    if (m_magicTargetEffect == effect) m_magicTargetEffect = nullptr;
+    effect->SendMsg(this, 24, 0, 0, 0);
+    return true;
+}
+
 // Ref/GameActor.cpp:2330-2540 (0x559B60). The attachment list does not own
 // the objects; message 24 disconnects them until the world's next sweep.
 void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t)
@@ -5331,8 +5343,57 @@ bool CGameActor::ProcessStatusMsgEffectMessage(int msg)
     }
 }
 
+void CGameActor::SetShowEfst(u32 opt3)
+{
+    m_showEfst = opt3;
+    RefreshShowEfstVisuals();
+}
+
+void CGameActor::RefreshShowEfstVisuals(bool status655Ending)
+{
+    const bool hidden = (m_effectState & (kEffectStateHidingMask | kEffectStateBurrowMask)) != 0;
+    if (!hidden) m_visibleShowEfst = m_showEfst;
+
+    const auto reconcile = [this](int id, bool wanted, int endEffect = 0) {
+        auto current = m_showEfstVisuals.find(id);
+        if (current != m_showEfstVisuals.end()
+            && std::find(m_effectList.begin(), m_effectList.end(), current->second) == m_effectList.end()) {
+            m_showEfstVisuals.erase(current);
+            current = m_showEfstVisuals.end();
+        }
+        if (wanted && current == m_showEfstVisuals.end()) {
+            // Other producers can attach the same effect. Only record and
+            // release the instance created for these snapshot/icon claims.
+            const bool present = std::any_of(m_effectList.begin(), m_effectList.end(), [id](const auto* effect) {
+                return effect && effect->GetEffectType() == id;
+            });
+            if (!present) {
+                if (auto* effect = LaunchEffect(id)) m_showEfstVisuals.emplace(id, effect);
+            }
+        } else if (!wanted && current != m_showEfstVisuals.end()) {
+            const bool removed = RemoveAttachedEffect(current->second);
+            m_showEfstVisuals.erase(current);
+            if (removed && endEffect != 0) LaunchEffect(endEffect);
+        }
+    };
+
+    const u32 opt3 = m_visibleShowEfst;
+    const bool nonPc = m_isPc == 0;
+    reconcile(420, nonPc && (opt3 & 0x2u) != 0, nonPc ? 540 : 0);
+    reconcile(427, nonPc && (opt3 & 0x4u) != 0);
+    reconcile(254, !hidden && ((opt3 & 0x10u) != 0 || (m_showEfstIconClaims & 0x3u) != 0));
+    reconcile(655, (opt3 & 0x10000u) != 0 || (m_showEfstIconClaims & 0x4u) != 0,
+        nonPc || status655Ending ? 656 : 0);
+    reconcile(667, nonPc && (opt3 & 0x8000u) != 0);
+}
+
 void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
 {
+    if (msg == 23 && src) {
+        const auto found = std::find_if(m_showEfstVisuals.begin(), m_showEfstVisuals.end(),
+            [src](const auto& entry) { return entry.second == src; });
+        if (found != m_showEfstVisuals.end()) m_showEfstVisuals.erase(found);
+    }
 #if defined(RO_SKILL_REPLAY_TRACE)
     if (msg == 88) {
         DbgLog("[REPLAY] SendMsg88 actor=%u value=%lld color=%lld kind=%lld\n",
@@ -5434,6 +5495,17 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 110: {
         const int skillStatus = static_cast<int>(par1);
         const bool enabled = par2 != 0;
+        const auto updateVisualClaim = [this, enabled](u8 visualClaim, bool end655 = false) {
+            if (enabled) m_showEfstIconClaims |= visualClaim;
+            else m_showEfstIconClaims &= static_cast<u8>(~visualClaim);
+            RefreshShowEfstVisuals(!enabled && end655);
+        };
+        switch (skillStatus) {
+        case 87: updateVisualClaim(0x1u); return;
+        case 235: updateVisualClaim(0x2u); return;
+        case 97: updateVisualClaim(0x4u, true); return;
+        default: break;
+        }
         auto hasEffect = [this](int effectId) {
             return std::any_of(m_effectList.begin(), m_effectList.end(), [effectId](const CRagEffect* effect) {
                 return effect && effect->GetEffectType() == effectId;
@@ -5510,22 +5582,8 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
                 removeAll(166);
                 if (enabled) launchMarked(166, 0xFFFE, 128);
                 return;
-            case 87:
-            case 235:
-                replace(254);
-                return;
             case 95:
                 removeAll(453);
-                return;
-            case 97:
-                if (!enabled) {
-                    while (hasEffect(655)) {
-                        removeOne(655);
-                        launch(656);
-                    }
-                } else if (!hasEffect(655)) {
-                    launch(655);
-                }
                 return;
             case 103:
                 removeAll(367);

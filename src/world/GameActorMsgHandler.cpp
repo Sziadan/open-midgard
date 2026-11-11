@@ -1119,4 +1119,7 @@ void CGameActor::SetAttrState(int bodyState, int effectState, int healthState, b
     if ((m_healthState & 0x83) == 0 && m_bodyState != 1 && m_bodyState != 2 && m_bodyState != 6) {
         ClearActorTint(*this);
     }
+    if (((oldEffectState ^ m_effectState) & (kHidingBit | kBurrowBit)) != 0) {
+        RefreshShowEfstVisuals();
+    }
 }

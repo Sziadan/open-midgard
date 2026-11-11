@@ -70,6 +70,7 @@
 #include <initializer_list>
 #include <limits>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 #include <zlib.h>
@@ -628,7 +629,7 @@ void HandleNpcShowEfstUpdate(CGameMode& mode, const PacketView& packet)
     const u32 actorId = ReadLE32(packet.data + 2);
     const int effectState = static_cast<int>(ReadLE32(packet.data + 6));
     const int level = static_cast<int>(ReadLE32(packet.data + 10));
-    const int showEfst = static_cast<int>(ReadLE32(packet.data + 14));
+    const u32 showEfst = ReadLE32(packet.data + 14);
     CGameActor* actor = ResolveSkillPacketActor(mode, actorId);
     if (!actor) {
         return;
@@ -637,6 +638,7 @@ void HandleNpcShowEfstUpdate(CGameMode& mode, const PacketView& packet)
     if (level == 99 && !HasEffectStateFlag(effectState, kEffectStateSpecialHidingMask)) {
         actor->SendMsg(actor, 126, 0, 0, 0);
     }
+    actor->SetShowEfst(showEfst);
 
     const int actorEffectState = actor->m_effectState;
     const bool hiding = HasEffectStateFlag(actorEffectState, kEffectStateHidingMask)
@@ -5903,7 +5905,7 @@ struct RuntimeActorState {
     int bodyState = 0;
     int healthState = 0;
     int effectState = 0;
-    u32 showEfst = 0; // OPT3 is a separate namespace from OPTION.
+    std::optional<u32> showEfst; // OPT3 is separate from OPTION and absent on some records.
 
     int pkState = 0;
     int clevel = 0;
@@ -6366,10 +6368,12 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
     }
 
     RefreshActorEffectStatePresentation(actor, oldEffectState);
+    if (state.showEfst) actor->SetShowEfst(*state.showEfst);
+    else actor->RefreshShowEfstVisuals();
     ActivateSiegeEmblem(mode, *actor);
     // OPT3_OVERTHRUST is 0x2, which means burrow in OPTION. Combining
     // these fields makes buffed blacksmiths invisible (and confuses carts).
-    if (isPc && (state.showEfst & kShowEfstAssumptioMask)
+    if (isPc && (state.showEfst.value_or(0) & kShowEfstAssumptioMask)
         && !(state.effectState & (kEffectStateHidingMask | kEffectStateBurrowMask | kEffectStateSpecialHidingMask))
         && !EffectExists(actor, 375)) {
         actor->LaunchEffect(375, vector3d{}, 0.0f);

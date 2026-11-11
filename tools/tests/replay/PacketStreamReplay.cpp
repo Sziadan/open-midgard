@@ -37,6 +37,7 @@
 #include "ui/UIGuildWnd.h"
 #include "ui/UIMinimapWnd.h"
 #include "world/GameActor.h"
+#include "world/RagEffect.h"
 #include "world/World.h"
 #include <algorithm>
 #include <array>
@@ -5533,6 +5534,7 @@ void GlobalChatProductionSendReplay()
 #include "CompassMarkerReplay.inc"
 #include "NpcDialogueActionsReplay.inc"
 #include "NpcProgressReplay.inc"
+#include "NpcShowEfstReplay.inc"
 
 int main(int argc,char** argv){try{
 #if RO_ENABLE_QT6_UI
@@ -5579,6 +5581,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--compass-only") { CompassMarkerReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-dialogue-actions-only") { NpcDialogueActionsReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-progress-only") { NpcProgressReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--npc-show-efst-only") { NpcShowEfstReplay();CConnection::Cleanup();return 0; }
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();
