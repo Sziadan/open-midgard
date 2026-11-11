@@ -14,6 +14,7 @@ struct CGameMode {
 };
 bool modal=false,shift=false,validTarget=true;
 bool companionGround=false;
+bool companionActor=false;
 int casts=0,turns=0,moves=0,attacks=0,pickups=0,talks=0,selections=0,skillChaseClears=0;
 constexpr int VK_SHIFT=16;
 int GetKeyState(int){return shift?0x8000:0;}
@@ -34,6 +35,7 @@ bool TryRequestAttackFromScreenPoint(CGameMode&,int,int){++attacks;return false;
 bool TryRequestNpcTalkFromScreenPoint(CGameMode&,int,int){++talks;return false;}
 bool TrySelectPcTargetFromScreenPoint(CGameMode&,int,int){++selections;return false;}
 bool TryHandleCompanionGroundClick(CGameMode&,int,int){return companionGround;}
+bool TryHandleCompanionActorClick(CGameMode&,int,int){return companionActor;}
 void UpdateHeldMoveTargetFromScreenPoint(CGameMode&,int,int){}
 void PumpHeldMoveRequest(CGameMode&){++moves;}
 #include "SkillTargetClickBodies.inc"
@@ -83,6 +85,9 @@ int main(){
     casts=turns=moves=0;
     assert(mode.Click(100,200)==1&&casts==0&&turns==0&&moves==0&&!mode.m_isLeftButtonHeld);
     companionGround=false;
+    companionActor=true;attacks=pickups=turns=moves=0;
+    assert(mode.Click(100,200)==1&&attacks==0&&pickups==0&&turns==0&&moves==0);
+    companionActor=false;
     // NPC modal handling still takes precedence over world actions.
     modal=true;mode.m_skillUseInfo={28,1,5,2};casts=turns=moves=0;
     assert(mode.Click(100,200)==1&&casts==0&&turns==0&&moves==0);

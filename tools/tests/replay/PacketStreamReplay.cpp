@@ -2447,6 +2447,8 @@ void CompanionIdentityReplay()
     const auto oldMerc = g_session.m_merGID;
     const auto oldHomunStatus = g_session.m_homunStatus;
     const auto oldMercStatus = g_session.m_merStatus;
+    const auto oldHomunTarget = g_session.m_homunTarget;
+    const auto oldMercTarget = g_session.m_merTarget;
     const auto oldSkills = g_session.GetMercSkillItems();
     g_session.m_homunGID = 0;
     g_session.m_merGID = 0;
@@ -2606,6 +2608,7 @@ void CompanionIdentityReplay()
     npcEntry[22] = 0x17;
     dispatchActor(npcEntry);
     Require(!hs.alive, "dedicated NPC entry set the companion alive flag");
+    g_session.m_merTarget = {homunActor.m_gid, 0, 0, false, true, true};
     vanish(homunActor.m_gid, 0);
     spawn(homunActor.m_gid, 6001);
     spawn(otherActor.m_gid, 6017);
@@ -2629,8 +2632,12 @@ void CompanionIdentityReplay()
     vanish(homunActor.m_gid, 0);
     Require(hs.alive && g_windowMgr.m_homunInfoWnd == homunWindow,
         "ordinary companion removal reset the homunculus status window");
+    Require(g_session.m_merTarget.gid == homunActor.m_gid && g_session.m_merTarget.attacking,
+        "ordinary actor removal cleared the mercenary's target");
     spawn(homunActor.m_gid, 6001);
     vanish(homunActor.m_gid, 1);
+    Require(!g_session.m_merTarget.gid && !g_session.m_merTarget.attacking
+        && !g_session.m_merTarget.selected, "actor death did not clear the mercenary's matching target");
     Require(!hs.alive && ms.alive && g_session.m_homunGID == homunActor.m_gid
         && !g_windowMgr.m_homunInfoWnd && g_windowMgr.m_merInfoWnd == mercWindow,
         "homunculus death did not clear only the owned alive flag");
@@ -2668,6 +2675,8 @@ void CompanionIdentityReplay()
     g_session.m_merGID = oldMerc;
     g_session.m_homunStatus = oldHomunStatus;
     g_session.m_merStatus = oldMercStatus;
+    g_session.m_homunTarget = oldHomunTarget;
+    g_session.m_merTarget = oldMercTarget;
     for (const auto& entry : oldSkills) g_session.SetMercSkillItem(entry);
 }
 
@@ -2940,7 +2949,7 @@ void LocalizedSystemNoticeReplay()
     g_windowMgr.ClearChatEvents();
 }
 
-void CompanionGroundTargetReplay()
+void CompanionTargetReplay()
 {
     CSession session;
     Require(!session.ApplyCompanionGroundClick(5, 8, true, false), "Alt ground click without a companion was consumed");
@@ -2966,6 +2975,29 @@ void CompanionGroundTargetReplay()
         && !session.m_homunTarget.moving && !session.m_merTarget.moving
         && !session.m_homunTarget.cellX && !session.m_merTarget.cellX,
         "ordinary ground click did not reset companion targets and continue");
+
+    session.ApplyCompanionActorClick(23, false);
+    Require(session.m_homunTarget.gid == 23 && session.m_merTarget.gid == 23
+        && session.m_homunTarget.selected && session.m_merTarget.selected
+        && session.m_homunTarget.attacking && session.m_merTarget.attacking,
+        "Alt actor click did not mark both live companions");
+    session.ApplyCompanionActorClick(23, false);
+    Require(!session.m_homunTarget.attacking && !session.m_merTarget.attacking
+        && session.m_homunTarget.selected && session.m_merTarget.selected,
+        "same-actor click did not toggle attack while keeping selection");
+    session.m_homunTarget.selected = false;
+    session.ApplyCompanionActorClick(24, true);
+    Require(session.m_homunTarget.selected && session.m_homunTarget.gid == 23
+        && session.m_merTarget.gid == 23 && !session.m_merTarget.attacking,
+        "Alt+Shift actor click rewrote the target with the VM inactive");
+    session.m_merStatus.alive = false;
+    session.ApplyCompanionActorClick(25, false);
+    Require(session.m_homunTarget.gid == 25 && session.m_merTarget.gid == 23,
+        "actor click selected a target for a dismissed mercenary");
+    session.ClearDefeatedCompanionTarget(25);
+    Require(!session.m_homunTarget.gid && !session.m_homunTarget.selected
+        && !session.m_homunTarget.attacking && session.m_merTarget.gid == 23,
+        "actor death cleared an unrelated companion target");
 }
 
 void CompanionSummonReplay()
@@ -5314,7 +5346,7 @@ int main(int argc,char** argv){try{
     CompanionCommandReplay();
     CompanionSkillListReplay();
     LocalizedSystemNoticeReplay();
-    CompanionGroundTargetReplay();
+    CompanionTargetReplay();
     CompanionSummonReplay();
     GuildMemberLoginNoticeReplay();
     PartyMarkerGameModeExitReplay();

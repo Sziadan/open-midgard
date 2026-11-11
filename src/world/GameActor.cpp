@@ -5960,6 +5960,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         return;
     case 28:
         // Ref/GameActor.cpp:3306. A queued hit still has to land first.
+        g_session.ClearDefeatedCompanionTarget(m_gid);
         if (m_gid != 0 && m_gid == g_session.m_homunGID) {
             g_windowMgr.CloseCompanionWindows(true);
             g_session.m_homunTarget = {};

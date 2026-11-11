@@ -213,6 +213,8 @@ public:
     CompanionTargetState m_homunTarget;
     CompanionTargetState m_merTarget;
     bool ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool shift);
+    void ApplyCompanionActorClick(u32 gid, bool shift);
+    void ClearDefeatedCompanionTarget(u32 gid);
     // Selected 0x00B0 decodes signed wire dword/10; source initialization zeros both.
     int m_weight=0,m_maxWeight=0;
     u8   m_sex;

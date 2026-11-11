@@ -4645,6 +4645,34 @@ bool TryHandleCompanionGroundClick(CGameMode& mode, int screenX, int screenY)
     return g_session.ApplyCompanionGroundClick(x, y, alt, shift);
 }
 
+bool TryHandleCompanionActorClick(CGameMode& mode, int screenX, int screenY)
+{
+    if (!(GetKeyState(VK_MENU) & 0x8000)
+        || (!g_session.m_homunStatus.alive && !g_session.m_merStatus.alive)
+        || !mode.m_world || !mode.m_view || mode.m_canRotateView || mode.m_isPlayerDead) return false;
+
+    CGameActor* actor = nullptr;
+    if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
+            mode.m_view->GetCameraLongitude(), screenX, screenY, &actor, nullptr, nullptr)
+        || !actor || !actor->m_gid || actor == mode.m_world->m_player) return false;
+
+    const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    if (IsPcLikeHoverActor(actor)) {
+        const bool pvpMap = mode.m_world->m_isPKZone || mode.m_world->m_isEventPVPMode;
+        const auto& party = g_session.GetPartyList();
+        const bool sameParty = pvpMap && std::any_of(party.begin(), party.end(),
+            [&](const FRIEND_INFO& member) { return member.AID == actor->m_gid; });
+        const bool pvp = actor->m_pkState || pvpMap;
+        if (actor->m_stateId == 3 || (!shift && g_session.m_isNoShift != 1
+            && !mode.m_world->m_isSiegeMode && !(pvp && !sameParty))) return false;
+    } else if (!IsMonsterLikeHoverActor(actor) || IsNpcLikeHoverActor(actor)) {
+        return false;
+    }
+
+    g_session.ApplyCompanionActorClick(actor->m_gid, shift);
+    return true;
+}
+
 bool WorldToAttrCell(const CWorld* world, float worldX, float worldZ, int* outTileX, int* outTileY);
 bool ResolveMoveSourceTile(const CGameMode& mode, int* outTileX, int* outTileY);
 
@@ -11299,7 +11327,8 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         }
 
         if (m_world && m_world->m_player) {
-            if (TryHandleCompanionGroundClick(*this, mouseX, mouseY)) {
+            if (TryHandleCompanionActorClick(*this, mouseX, mouseY)
+                || TryHandleCompanionGroundClick(*this, mouseX, mouseY)) {
                 m_isLeftButtonHeld = 0;
                 m_hasHeldMoveTarget = 0;
                 return 1;

@@ -1644,6 +1644,35 @@ bool CSession::ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool sh
     return true;
 }
 
+void CSession::ApplyCompanionActorClick(u32 gid, bool shift)
+{
+    if (!gid) return;
+    const auto select = [gid, shift](CompanionTargetState& target) {
+        if (!shift) {
+            if (target.attacking && target.gid == gid) {
+                target.attacking = false;
+            } else {
+                target = {gid, 0, 0, false, true, true};
+            }
+        }
+        target.selected = true;
+    };
+    if (m_homunStatus.alive) select(m_homunTarget);
+    if (m_merStatus.alive) select(m_merTarget);
+}
+
+void CSession::ClearDefeatedCompanionTarget(u32 gid)
+{
+    if (!gid) return;
+    for (auto* target : {&m_homunTarget, &m_merTarget}) {
+        if (target->gid == gid) {
+            target->gid = 0;
+            target->selected = false;
+            target->attacking = false;
+        }
+    }
+}
+
 void CSession::ClearMercSkillItems()
 {
     m_mercSkillItems.clear();
