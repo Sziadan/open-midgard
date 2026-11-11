@@ -435,6 +435,20 @@ void NpcShowEfstReplay()
     RequireActorEffectCount(pc, 395, 0, "status 121 did not release its independent effect 395");
     SendShowEfstStatus(pc, 121, false);
 
+    CRagEffect* const external418 = pc.LaunchEffect(418);
+    Require(external418 != nullptr, "could not stage an existing effect 418");
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0x1000u);
+    RequireActorEffectCount(pc, 418, 1, "OPT3 stacked an existing 418");
+    RequireActorEffectCount(pc, 544, 0, "OPT3 started companion 544 despite the existing 418 guard");
+    SendShowEfstStatus(pc, 165, true);
+    RequireActorEffectCount(pc, 544, 1, "existing 418 blocked an independent status claim on 544");
+    DispatchNpcShowEfst(mode, router, pc.m_gid, 0, 1, 0);
+    RequireActorEffectCount(pc, 544, 1, "OPT3 clear detached icon-owned companion 544");
+    SendShowEfstStatus(pc, 165, false);
+    RequireActorEffectCount(pc, 544, 0, "icon release left companion 544 attached");
+    Require(FindActorEffect(pc, 418) == external418, "shared claim release detached unrelated 418");
+    pc.SendMsg(&pc, 109, 418, 0, 0);
+
     // Hidden PC OPT3 suppresses these four effects and reveals them again from
     // the retained snapshot; the non-PC set differs (tested below).
     constexpr u32 pcHideSensitive = 0x00021018u; // 203, 254, 418, 586.

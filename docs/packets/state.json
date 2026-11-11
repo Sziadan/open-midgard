@@ -716,15 +716,16 @@
       "commit_subject": "packet(PK22.01): verify selected ShowEFST field and delivery contract"
     },
     "PK22.02": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/STRONG-UNBLOCK-2026-11-05.md",
         "docs/packets/work-items/PK22.02.md",
         "docs/packets/evidence/PK22.02-showefst-shared-visuals.md",
         "docs/packets/evidence/PK22.02-showefst-pc-visuals.md",
-        "docs/packets/evidence/PK22.02-blade-stop.md"
+        "docs/packets/evidence/PK22.02-blade-stop.md",
+        "docs/packets/evidence/PK22.02-paired-effects.md"
       ],
-      "commit_subject": null
+      "commit_subject": "packet(PK22.02): preserve the ShowEFST paired-effect guard"
     },
     "PK22.03": {
       "status": "COMPLETED",

@@ -5407,6 +5407,11 @@ void CGameActor::RefreshShowEfstVisuals(bool status655Ending)
     const auto findDesired = [&desired](int id) {
         return std::find_if(desired.begin(), desired.end(), [id](const auto& entry) { return entry.id == id; });
     };
+    const auto hasAttached = [this](int id) {
+        return std::any_of(m_effectList.begin(), m_effectList.end(), [id](const auto* effect) {
+            return effect && effect->GetEffectType() == id;
+        });
+    };
     const auto request = [&](int id, int marker = 0, int option = 0) {
         if (hidden && (id == 203 || id == 254 || id == 418 || (!nonPc && id == 586))) {
             return;
@@ -5431,7 +5436,9 @@ void CGameActor::RefreshShowEfstVisuals(bool status655Ending)
         if (opt3 & 0x10u) request(254);
         if (opt3 & 0x1000u) {
             request(418);
-            request(544);
+            // Ref starts the pair only when 418 was absent. Keep an existing
+            // snapshot-owned companion until release, and let icons claim it independently.
+            if (m_showEfstVisuals.count(544) || (!hidden && !hasAttached(418))) request(544);
         }
         if (opt3 & 0x2000u) request(419);
         if (opt3 & 0x8000u) request(424);
@@ -5487,10 +5494,7 @@ void CGameActor::RefreshShowEfstVisuals(bool status655Ending)
 
     for (const auto& wanted : desired) {
         // Leave instances attached by unrelated producers under their own ownership.
-        const bool present = std::any_of(m_effectList.begin(), m_effectList.end(), [&wanted](const auto* effect) {
-            return effect && effect->GetEffectType() == wanted.id;
-        });
-        if (present) continue;
+        if (hasAttached(wanted.id)) continue;
         if (auto* effect = LaunchEffect(wanted.id)) {
             if (wanted.marker) effect->SendMsg(effect, 44, wanted.marker, wanted.option, 0);
             m_showEfstVisuals.emplace(wanted.id, ShowEfstInstance{effect, wanted.marker, wanted.option});
