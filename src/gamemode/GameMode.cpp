@@ -10242,6 +10242,11 @@ void CGameMode::OnInit(const char* worldName) {
         m_world->ClearFixedObjects();
         m_world->m_ground = nullptr;
         m_world->m_player = nullptr;
+        // The selected client constructs a fresh CWorld here.
+        m_world->m_isPKZone = 0;
+        m_world->m_isSiegeMode = 0;
+        m_world->m_isBattleFieldMode = 0;
+        m_world->m_isEventPVPMode = 0;
         m_world->BeginMapTerrainLoad();
     }
     m_view = nullptr;

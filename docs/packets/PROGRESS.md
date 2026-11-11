@@ -3843,3 +3843,7 @@ PK18.03 stages matching `0192` updates until GAT binding and clears the previous
 ## 2026-11-11 Dynamic map cell native verification
 
 PK18.04 verifies the selected `0192` receiver on Prontera assets. The blocked frame matches the no-hover control, the restored frame matches baseline, and production pathfinding reflects the cell type. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK18.04-map-cell-native-verification.md)
+
+## 2026-11-11 Legacy map property lifetime
+
+PK19 resets the four world rule flags on real game-mode entry. Loopback replay covers loaded same-map retention, replacement, and the next property packet's effect-preference restoration. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK19-map-property-lifetime.md)

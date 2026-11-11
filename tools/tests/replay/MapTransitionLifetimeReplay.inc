@@ -5,6 +5,12 @@
 
 namespace {
 
+constexpr std::array<u8, 12> kLegacyMapRuleFrames{
+    0x99, 0x01, 2, 0, // Event PvP
+    0xd6, 0x01, 19, 0, // Battleground and PK
+    0x99, 0x01, 3, 0, // Siege and forced minimum effects
+};
+
 struct MapTransitionLifetimeSnapshot {
     u32 aid = g_session.m_aid;
     u32 gid = g_session.m_gid;
@@ -14,6 +20,10 @@ struct MapTransitionLifetimeSnapshot {
     int playerY = g_session.m_playerPosY;
     int playerDir = g_session.m_playerDir;
     int pendingReturn = g_session.m_pendingReturnToCharSelect;
+    int mapType = g_session.m_curMapType;
+    bool minEffect = g_session.m_isMinEffect;
+    bool minEffectPreference = g_session.m_isMinEffectOld;
+    ro::SourceMapTypeTable mapTypeTable = g_session.m_mapTypeInfo;
     std::string map = g_session.m_curMap;
     LocalGuildInfo localGuild = g_session.m_localGuild;
     ro::guild::WindowState guildWindow = g_session.m_guildWindow;
@@ -40,6 +50,10 @@ struct MapTransitionLifetimeSnapshot {
         g_session.m_playerPosY = playerY;
         g_session.m_playerDir = playerDir;
         g_session.m_pendingReturnToCharSelect = pendingReturn;
+        g_session.m_curMapType = mapType;
+        g_session.m_isMinEffect = minEffect;
+        g_session.m_isMinEffectOld = minEffectPreference;
+        g_session.m_mapTypeInfo = mapTypeTable;
         std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", map.c_str());
         g_session.m_localGuild = localGuild;
         g_session.m_guildWindow = guildWindow;
@@ -196,6 +210,9 @@ void MapCellLoadLifecycleReplay()
     CGameMode first;
     first.OnInit(worldName.c_str());
     auto updates = MapCellUpdateFrame(1, 1, 5, gatName);
+    g_session.m_mapTypeInfo.Clear();
+    g_session.m_isMinEffectOld = false;
+    updates.insert(updates.end(), kLegacyMapRuleFrames.begin(), kLegacyMapRuleFrames.end());
     for (const auto& update : {
             MapCellUpdateFrame(0, 1, 5, gatName),
             MapCellUpdateFrame(0, 1, 0, gatName),
@@ -208,6 +225,10 @@ void MapCellLoadLifecycleReplay()
     Require(first.m_world && !first.m_world->m_attr, "early update was not received before GAT binding");
     bindGat(first);
     C3dAttr* const base = first.m_world->m_attr;
+    Require(first.m_world->m_isPKZone && first.m_world->m_isSiegeMode
+        && first.m_world->m_isBattleFieldMode && first.m_world->m_isEventPVPMode
+        && g_session.m_curMapType == 19 && g_session.m_isMinEffect,
+        "old world did not receive its map rules");
     Require(first.m_world->GetMapCellType(1, 1) == 5
         && first.m_world->IsMapCellWalkable(0, 1) && first.m_world->IsMapCellWalkable(1, 0)
         && first.m_world->IsMapCellWalkable(0, 2) && first.m_world->IsMapCellWalkable(2, 1)
@@ -219,7 +240,16 @@ void MapCellLoadLifecycleReplay()
     // A real mode replacement may reopen the same cached asset before the old load finishes.
     CGameMode replacement;
     replacement.OnInit(worldName.c_str());
-    sendUpdates(replacement, MapCellUpdateFrame(2, 2, 5, gatName));
+    Require(replacement.m_world == &g_world && !g_world.m_isPKZone && !g_world.m_isSiegeMode
+        && !g_world.m_isBattleFieldMode && !g_world.m_isEventPVPMode,
+        "replacement inherited the previous world's map rules");
+    Require(g_session.m_curMapType == 19 && g_session.m_isMinEffect && !g_session.m_isMinEffectOld,
+        "world replacement reset packet-owned session state");
+    auto replacementUpdates = MapCellUpdateFrame(2, 2, 5, gatName);
+    replacementUpdates.insert(replacementUpdates.end(), {0x99, 0x01, 0, 0});
+    sendUpdates(replacement, std::move(replacementUpdates));
+    Require(!g_session.m_isMinEffect && g_session.m_curMapType == 19,
+        "neutral map property failed to restore the saved effect preference");
     Require(replacement.m_world && !replacement.m_world->m_attr, "replacement skipped its loading boundary");
     bindGat(replacement);
     Require(replacement.m_world->m_attr == base && replacement.m_world->IsMapCellWalkable(1, 1)
@@ -362,11 +392,14 @@ void MapTransitionLifetimeReplay()
             "could not open the real storage window before same-map warp");
         const auto frame = MapChangeFrame(0x0091, "prontera", 80, 90);
         auto cellThenWarp = MapCellUpdateFrame(1, 1, 5, "prontera.gat");
+        g_session.m_mapTypeInfo.Clear();
+        g_session.m_isMinEffectOld = false;
+        cellThenWarp.insert(cellThenWarp.end(), kLegacyMapRuleFrames.begin(), kLegacyMapRuleFrames.end());
         cellThenWarp.insert(cellThenWarp.end(), frame.begin(), frame.end());
         inputPeer.Send(cellThenWarp);
         WaitKernelPending(mapInput, static_cast<int>(cellThenWarp.size()));
         const GameModePacketLoopResult loop = ProcessGameModePacketLoop(mode, mapInput, router, 8);
-        Require(loop.packetsDispatched == 2 && !loop.modeOperationRequested,
+        Require(loop.packetsDispatched == 5 && !loop.modeOperationRequested,
             "same-map warp did not stay on the loaded map");
         Require(presentations == 0 && handoffs == 0, "loaded same-map warp selected external orchestration");
         const std::vector<u8> ack = ackPeer.ReceiveExact(2);
@@ -385,6 +418,9 @@ void MapTransitionLifetimeReplay()
             "same-map reuse discarded the loaded world/view");
         Require(world.GetMapCellType(1, 1) == 5 && attr.GetCell(1, 1)->flag == 0,
             "same-map reuse lost the active map cell update");
+        Require(world.m_isPKZone && world.m_isSiegeMode && world.m_isBattleFieldMode
+            && world.m_isEventPVPMode && g_session.m_curMapType == 19 && g_session.m_isMinEffect,
+            "same-map reuse lost the active map rules");
         Require(mode.m_characterNameCache.empty() && mode.m_characterNameReqTimer.empty(),"same-map reuse retained character-name state");
         Require(mode.m_partyPosList.empty() && mode.m_runtimeActors.at(g_session.m_gid) == &player,
             "same-map reuse did not clear legacy dots while retaining the player");
