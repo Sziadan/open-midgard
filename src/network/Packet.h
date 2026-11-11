@@ -178,6 +178,7 @@ constexpr u16 kSelectMenu = 0x00B8;
 constexpr u16 kNextClick = 0x00B9;
 constexpr u16 kInputNumber = 0x0143;
 constexpr u16 kInputString = 0x01D5;
+constexpr int kInputStringMaxBytes = 70;
 constexpr u16 kCloseDialog = 0x0146;
 }
 

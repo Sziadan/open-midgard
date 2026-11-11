@@ -87,6 +87,10 @@ void CompassMarkerReplay()
     Require(mode.m_compassPosList.empty(), "PruneCompassMarkers retained an expired timed marker");
 
     mode.m_waitingUseItemAck = 1;
+    g_windowMgr.EnsureChatWindowVisible();
+    auto* chat = g_windowMgr.m_chatWnd;
+    const size_t normalBefore = chat->GetSourceHistory(false).size();
+    const size_t commandBefore = chat->GetSourceHistory(true).size();
     const size_t noticesBefore = g_windowMgr.GetChatEvents().size();
     FeedCompassReplayPacket(mode, {0x89, 0x01, 0xff, 0});
     Require(g_windowMgr.GetChatEvents().size() == noticesBefore && mode.m_waitingUseItemAck == 1,
@@ -98,9 +102,17 @@ void CompassMarkerReplay()
     for (u8 type = 0; type < messages.size(); ++type) {
         FeedCompassReplayPacket(mode, {0x89, 0x01, type, 0});
         const auto& notice = g_windowMgr.GetChatEvents().back();
-        Require(notice.text == messages[type] && notice.color == (type == 0 ? 0x00ff0000u : 0x0000ffffu)
+        const u32 color = type == 0 ? 0x00ff0000u : 0x0000ffffu;
+        Require(notice.text == messages[type] && notice.color == color
             && mode.m_waitingUseItemAck == (type == 3 ? 0 : 1),
             "0189 did not preserve the selected type text, color or item acknowledgement");
+        const auto& normal = chat->GetSourceHistory(false);
+        const auto& command = chat->GetSourceHistory(true);
+        Require(normal.size() == normalBefore + type + 1 && command.size() == commandBefore + type + 1
+            && normal.back().text == messages[type] && command.back().text == messages[type]
+            && normal.back().color == color && command.back().color == color
+            && g_windowMgr.GetChatEvents().size() == noticesBefore + type + 1,
+            "0189 did not append once to both source histories and once to unified chat");
     }
 
     std::cout << "{\"case_id\":\"compass_marker_0144\",\"contract_id\":\"PK25.03\",\"fixture_id\":\"PK25-03-selected-20080910-0144-23-byte\",\"input_frame_hex\":\"" << Hex(timed)

@@ -392,17 +392,15 @@ bool UISayDialogWnd::HandleKeyDown(int virtualKey)
     }
 
     if (virtualKey == VK_RETURN && m_actionButton == ActionButton::Next && m_npcId != 0) {
-        m_clearOnNextText = true;
-        ClearAction();
-        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcNext, m_npcId, 0, 0) != 0;
+        SubmitAction();
+        return true;
     }
 
     if ((virtualKey == VK_RETURN || virtualKey == VK_ESCAPE)
         && m_actionButton == ActionButton::Close
         && m_npcId != 0) {
-        const u32 npcId = m_npcId;
-        g_windowMgr.CloseNpcDialogWindows();
-        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcCloseDialog, npcId, 0, 0) != 0;
+        SubmitAction();
+        return true;
     }
 
     return true;
@@ -465,15 +463,22 @@ void UISayDialogWnd::OnLBtnUp(int x, int y)
         return;
     }
 
-    PlayUiButtonSound();
+    SubmitAction();
+}
+
+void UISayDialogWnd::SubmitAction()
+{
     if (m_actionButton == ActionButton::Next) {
-        m_clearOnNextText = true;
-        ClearAction();
-        g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcNext, m_npcId, 0, 0);
+        if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcNext, m_npcId, 0, 0) != 0) {
+            m_clearOnNextText = true;
+            ClearAction();
+            PlayUiButtonSound();
+        }
         return;
     }
 
-    const u32 npcId = m_npcId;
-    g_windowMgr.CloseNpcDialogWindows();
-    g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcCloseDialog, npcId, 0, 0);
+    if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcCloseDialog, m_npcId, 0, 0) != 0) {
+        PlayUiButtonSound();
+        g_windowMgr.CloseNpcDialogWindows();
+    }
 }

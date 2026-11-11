@@ -370,13 +370,15 @@ void UINpcMenuWnd::SubmitSelection(u8 choice)
         return;
     }
     const u32 npcId = m_npcId;
+    if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcSelectMenu, npcId, choice, 0) == 0) {
+        return;
+    }
     if (choice == 0xFF) {
         g_windowMgr.CloseNpcDialogWindows();
     } else {
         HideMenu();
     }
     PlayUiButtonSound();
-    g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcSelectMenu, npcId, choice, 0);
 }
 
 bool UINpcMenuWnd::HandleKeyDown(int virtualKey)

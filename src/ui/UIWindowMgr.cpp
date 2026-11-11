@@ -2877,7 +2877,7 @@ void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgpara
 void UIWindowMgr::PushSourceChatEvent(const char* text, u32 uiRgb, u8 channel, ro::chat::NoticeRoute route,
     ro::chat::NoticeType type, const char* talker, u32 tick)
 {
-    if (!text || (route != ro::chat::NoticeRoute::Normal && route != ro::chat::NoticeRoute::Command)) return;
+    if (!text || route == ro::chat::NoticeRoute::Unspecified) return;
     uiRgb = uiRgb ? uiRgb & 0x00ffffffu : 0x00ffffffu;
     if (m_chatWnd) {
         if (ro::chat::IsNoticeSentinel(text) || !m_chatWnd->ReceiveSourceNotice(text, uiRgb, route, type, talker)) return;

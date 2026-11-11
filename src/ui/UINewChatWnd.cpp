@@ -717,7 +717,7 @@ void UINewChatWnd::SaveSettings() const
 bool UINewChatWnd::ReceiveSourceNotice(const char* text, u32 uiRgb, ro::chat::NoticeRoute route,
     ro::chat::NoticeType type, const char* speaker)
 {
-    if (!text || (route != ro::chat::NoticeRoute::Normal && route != ro::chat::NoticeRoute::Command)) return false;
+    if (!text || route == ro::chat::NoticeRoute::Unspecified) return false;
     const std::string original(text);
     std::string talker = speaker ? speaker : "";
     const int numericType = static_cast<int>(type);
@@ -728,8 +728,9 @@ bool UINewChatWnd::ReceiveSourceNotice(const char* text, u32 uiRgb, ro::chat::No
     if ((g_serviceType == ServiceGermany || g_serviceType == ServiceVietnam) && talker.size() > 24) return false;
     if (talker == g_session.GetPlayerName()) talker.clear();
     const auto segments = ro::chat::SplitNotice(original);
-    const bool normal = route == ro::chat::NoticeRoute::Normal && numericType != 8 && numericType != 9;
-    const bool command = route == ro::chat::NoticeRoute::Command ||
+    const bool both = route == ro::chat::NoticeRoute::NormalAndCommand;
+    const bool normal = (route == ro::chat::NoticeRoute::Normal || both) && numericType != 8 && numericType != 9;
+    const bool command = route == ro::chat::NoticeRoute::Command || both ||
         (numericType >= 1 && numericType <= 13 && g_session.m_battleMsgOnOffSet[numericType - 1]);
     for (const auto& segment : segments) {
         const auto append = [&](int kind, UISubChatHisWnd* detached) {

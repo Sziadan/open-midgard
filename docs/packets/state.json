@@ -803,9 +803,9 @@
       "commit_subject": "packet(PK25.03): render compass markers and verify map notices"
     },
     "PK25.04": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": ["docs/packets/evidence/PK25.04-verification-boundary.md"],
-      "commit_subject": null
+      "commit_subject": "packet(PK25.04): verify NPC dialogue retries and notice histories"
     },
     "PK26.01": {
       "status": "NOT_STARTED",

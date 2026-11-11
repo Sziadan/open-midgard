@@ -436,20 +436,23 @@ bool UINpcInputWnd::SubmitCurrentText()
     const int submitGameMessage = m_submitGameMessage;
     const msgparam_t submitWparam = m_submitWparam;
     const std::string textCopy = text;
-    HideInput();
-    PlayUiButtonSound();
 
+    bool sent = false;
     if (submitAction == SubmitAction::NpcNumber) {
-        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcInputNumber, npcId, std::strtoul(textCopy.c_str(), nullptr, 10), 0) != 0;
-    }
-    if (submitAction == SubmitAction::NpcString) {
-        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcInputString, npcId, reinterpret_cast<msgparam_t>(textCopy.c_str()), 0) != 0;
-    }
-    if (submitAction == SubmitAction::GameMessage) {
+        sent = g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcInputNumber, npcId, std::strtoul(textCopy.c_str(), nullptr, 10), 0) != 0;
+    } else if (submitAction == SubmitAction::NpcString) {
+        sent = g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcInputString, npcId, reinterpret_cast<msgparam_t>(textCopy.c_str()), 0) != 0;
+    } else if (submitAction == SubmitAction::GameMessage) {
+        HideInput();
+        PlayUiButtonSound();
         return g_modeMgr.SendMsg(submitGameMessage, submitWparam, static_cast<msgparam_t>(numericValue), 0) != 0;
     }
 
-    return false;
+    if (sent) {
+        HideInput();
+        PlayUiButtonSound();
+    }
+    return sent;
 }
 
 bool UINpcInputWnd::IsGameNumberPromptFor(int gameMessage) const
@@ -466,10 +469,10 @@ void UINpcInputWnd::CancelInput()
     }
 
     const u32 npcId = m_npcId;
-    HideInput();
-    PlayUiButtonSound();
-    g_windowMgr.CloseNpcDialogWindows();
-    g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcCloseDialog, npcId, 0, 0);
+    if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcCloseDialog, npcId, 0, 0) != 0) {
+        PlayUiButtonSound();
+        g_windowMgr.CloseNpcDialogWindows();
+    }
 }
 
 bool UINpcInputWnd::HandleKeyDown(int virtualKey)

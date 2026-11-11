@@ -21,6 +21,9 @@
 #include "ui/UIGroundSkillTextWnd.h"
 #include "core/MannerFilter.h"
 #include "ui/UIChooseSellBuyWnd.h"
+#include "ui/UINpcInputWnd.h"
+#include "ui/UINpcMenuWnd.h"
+#include "ui/UISayDialogWnd.h"
 #include "ui/UIItemShopWnd.h"
 #include "ui/UIItemPurchaseWnd.h"
 #include "ui/UIItemSellWnd.h"
@@ -4015,6 +4018,22 @@ void NpcInputStringProductionSendReplay()
     const std::vector<u8> expected{0xD5,0x01,0x0B,0x00,0x44,0x33,0x22,0x11,0x48,0x69,0x00};
     Require(captured == expected,
         "production NPC string sender bytes differ from the independent variable-frame fixture");
+
+    const int savedCodePage = g_codePage;
+    g_codePage = 950;
+    std::string boundary;
+    for (int i = 0; i < 35; ++i) {
+        boundary += "\xe4\xb8\xad"; // U+4E2D, encoded A4 A4 in CP950.
+    }
+    const bool rejected = !ReplayRequestNpcInputString(0x11223344, (boundary + "x").c_str());
+    const bool accepted = ReplayRequestNpcInputString(0x11223344, boundary.c_str());
+    g_codePage = savedCodePage;
+    Require(rejected && accepted, "NPC string limit did not count encoded CP950 bytes");
+    auto encodedExpected = std::vector<u8>{0xd5, 0x01, 79, 0, 0x44, 0x33, 0x22, 0x11};
+    encodedExpected.insert(encodedExpected.end(), 70, 0xa4);
+    encodedExpected.push_back(0);
+    Require(peer.ReceiveExact(79) == encodedExpected,
+        "NPC input did not send the exact encoded 70-byte boundary and terminator");
     connection->Disconnect();
     std::cout << "{\"case_id\":\"npc_input_string_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-01d5-npc-string-input\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"invalid_and_oversize_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
@@ -5511,6 +5530,7 @@ void GlobalChatProductionSendReplay()
 #include "NpcShopTransactionReplay.inc"
 #include "NpcClassChangeReplay.inc"
 #include "CompassMarkerReplay.inc"
+#include "NpcDialogueActionsReplay.inc"
 
 int main(int argc,char** argv){try{
 #if RO_ENABLE_QT6_UI
@@ -5555,6 +5575,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--corpse-only") { CorpsePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-class-change-only") { NpcClassChangeReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--compass-only") { CompassMarkerReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--npc-dialogue-actions-only") { NpcDialogueActionsReplay();CConnection::Cleanup();return 0; }
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();

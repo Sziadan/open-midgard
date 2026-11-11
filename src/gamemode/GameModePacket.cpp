@@ -3904,7 +3904,8 @@ void HandleNotifyMapInfo(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    RecordChat(mode, message, color, kChatChannelSystem);
+    RecordChat(mode, message, color, kChatChannelSystem,
+        {ro::chat::NoticeRoute::NormalAndCommand, ro::chat::NoticeType::None, {}});
 }
 
 struct ChatEntry {

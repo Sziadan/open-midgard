@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace ro::chat {
-enum class NoticeRoute { Unspecified = 0, Normal = 1, Command = 20 };
+enum class NoticeRoute { Unspecified = 0, Normal = 1, Command = 20, NormalAndCommand };
 enum class NoticeType {
     None = 0, Chat = 1, Whisper = 2, Party = 3, Guild = 4, ObtainItem = 5,
     Equip = 6, Status = 7, PartyItem = 8, PartyStatus = 9, FailedSkill = 10,

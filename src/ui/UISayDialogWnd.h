@@ -33,6 +33,7 @@ public:
     bool GetActionRectForQt(RECT* outRect) const;
 
 private:
+    void SubmitAction();
     enum class ActionButton {
         None = 0,
         Next,

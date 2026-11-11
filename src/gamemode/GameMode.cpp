@@ -6362,18 +6362,29 @@ bool RequestNpcInputString(u32 npcId, const char* text)
         return false;
     }
 
-    const size_t textLen = std::strlen(text);
-    const size_t packetLen = sizeof(PACKET_CZ_NPC_INPUT_STRING) + textLen + 1;
-    if (packetLen > 0xFFFFu) {
+    const int codePage = ro::SelectedSourceTextCodePage();
+    const auto encoded = ro::EncodeSourceText(text, codePage);
+    if (!encoded || encoded->size() > PacketProfile::LegacyNpcScriptSend::kInputStringMaxBytes) {
+        return false;
+    }
+    auto& filter = ro::GetMannerFilter();
+    filter.EnsureLoaded();
+    if (filter.IsBadEncodedSentence(*encoded, codePage)) {
+        ro::UiMessageStrings table;
+        table.Load();
+        const auto notice = table.Get(50, "Cannot send because of inappropriate language.");
+        g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice.c_str()), 255, 0, 0);
         return false;
     }
 
+    const size_t textLen = encoded->size();
+    const size_t packetLen = sizeof(PACKET_CZ_NPC_INPUT_STRING) + textLen + 1;
     std::vector<u8> bytes(packetLen, 0);
     auto* packet = reinterpret_cast<PACKET_CZ_NPC_INPUT_STRING*>(bytes.data());
     packet->PacketType = PacketProfile::LegacyNpcScriptSend::kInputString;
     packet->PacketLength = static_cast<u16>(packetLen);
     packet->NpcId = npcId;
-    std::memcpy(bytes.data() + sizeof(PACKET_CZ_NPC_INPUT_STRING), text, textLen);
+    std::memcpy(bytes.data() + sizeof(PACKET_CZ_NPC_INPUT_STRING), encoded->data(), textLen);
 
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(bytes.data()),
@@ -6387,10 +6398,6 @@ bool RequestNpcInputString(u32 npcId, const char* text)
 
 bool RequestNpcCloseDialog(u32 npcId)
 {
-    if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-        gameMode->m_isOnQuest = 0;
-        gameMode->m_lastNaid = 0;
-    }
     if (npcId == 0) {
         return false;
     }
@@ -6402,6 +6409,12 @@ bool RequestNpcCloseDialog(u32 npcId)
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
+    if (sent) {
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->m_isOnQuest = 0;
+            gameMode->m_lastNaid = 0;
+        }
+    }
     DbgLog("[GameMode] npc close npc=%u sent=%d\n",
         static_cast<unsigned int>(npcId),
         sent ? 1 : 0);
