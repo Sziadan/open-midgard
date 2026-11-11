@@ -80,6 +80,7 @@ class UISayDialogWnd;
 class UINpcMenuWnd;
 class UIPlayerContextMenuWnd;
 class UIPetInfoWnd;
+class UICompanionStatusWnd;
 class UIPetTamingDeceiveWnd;
 class UIJoinPartyAcceptWnd;
 class UIMessengerGroupWnd;
@@ -156,6 +157,8 @@ public:
         WID_TIPOFTHEDAYWND    = 38,
         WID_COMMANDLISTWND    = 112,
         WID_PETINFOWND        = 88,
+        WID_HOMUNINFOWND      = 113,
+        WID_MERINFOWND        = 132,
         WID_SELECTPETEGGWND   = 90,
         WID_PETTAMINGDECEIVEWND = 91,
         WID_EQUIPWND          = 14,
@@ -244,6 +247,8 @@ public:
     std::string m_chatMsg;
     UIWindow* m_commandListWnd=nullptr;
     UIPetInfoWnd* m_petInfoWnd=nullptr;
+    UICompanionStatusWnd* m_homunInfoWnd = nullptr;
+    UICompanionStatusWnd* m_merInfoWnd = nullptr;
     SubChatWindowInfo m_petInfoWindowInfo{150,100,280,200};
     UIWindow* m_tipOfTheDayWnd=nullptr;
     bool m_tipStartupChecked=false;

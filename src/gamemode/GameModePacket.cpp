@@ -54,6 +54,7 @@
 #include "ui/UIShortCutWnd.h"
 #include "ui/UIStatusWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UICompanionStatusWnd.h"
 #include "ui/UIPetInfoWnd.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
@@ -5107,6 +5108,7 @@ void HandleSkillNoDamageNotify(CGameMode& mode, const PacketView& packet)
     const u8 result = packet.data[14];
 
     if (skillId == 244 && srcGid == g_session.m_aid) {
+        g_windowMgr.DeleteWindow(g_windowMgr.m_homunInfoWnd);
         g_session.m_homunStatus.alive = false;
     }
 

@@ -12,6 +12,7 @@
 #include "UITipOfTheDayWnd.h"
 #include "UICommandListWnd.h"
 #include "UIPetInfoWnd.h"
+#include "UICompanionStatusWnd.h"
 #include "UIPetEggListWnd.h"
 #include "UIPetTamingDeceiveWnd.h"
 #include "core/TipOfTheDay.h"
@@ -1006,6 +1007,8 @@ bool UIWindowMgr::IsChatAuxiliaryAtPoint(int x, int y) const
 bool UIWindowMgr::IsWhisperPreferenceInputWindow(const UIWindow* window) const
 {
     if(!window)return false;
+    for (const auto* owner = window; owner; owner = owner->m_parent)
+        if (owner == m_homunInfoWnd || owner == m_merInfoWnd) return true;
     if(window->m_parent==m_messengerGroupWnd && window->m_id==168)return true;
     if(dynamic_cast<const UIPetCommandMenu*>(window))return true;
     for(const auto* owner=window;owner;owner=owner->m_parent)if(dynamic_cast<const UIGroundSkillTextWnd*>(owner) || owner==m_friendOptionWnd || owner==m_tipOfTheDayWnd || owner==m_commandListWnd || owner==m_petInfoWnd || owner==m_petEggListWnd || owner==m_petTamingDeceiveWnd)return true;
@@ -1348,6 +1351,24 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             m_children.push_back(m_petInfoWnd);m_petInfoWnd->SendMsg(nullptr,34,reinterpret_cast<msgparam_t>(&m_petInfoWindowInfo),0,0);
         }
         m_petInfoWnd->SetShow(1);return m_petInfoWnd;
+    case WID_HOMUNINFOWND:
+    case WID_MERINFOWND: {
+        const bool homunculus = windowId == WID_HOMUNINFOWND;
+        const int job = homunculus ? g_session.m_homunStatus.job : g_session.m_merStatus.job;
+        if (job == -1) return nullptr;
+        auto*& window = homunculus ? m_homunInfoWnd : m_merInfoWnd;
+        if (!window) {
+            window = new UICompanionStatusWnd(windowId);
+            const auto viewport = GetChatClientRect();
+            const int width = viewport.right - viewport.left;
+            const int height = viewport.bottom - viewport.top;
+            window->Move(std::clamp((width - 640) / 2 + 185, 0, std::max(0, width - window->m_w)),
+                std::clamp((height - 480) / 2 + 340, 0, std::max(0, height - window->m_h)));
+            m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), window);
+        }
+        window->SetShow(1);
+        return window;
+    }
     case WID_FRIENDOPTIONWND:
         if(!m_friendOptionWnd){
             m_friendOptionWnd=new UIFriendOptionWnd();const auto client=GetChatClientRect();
@@ -1956,11 +1977,14 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     const bool deletingPet=window==m_petInfoWnd;
     const bool deletingPetEgg=window==m_petEggListWnd;
     const bool deletingPetTaming=window==m_petTamingDeceiveWnd;
+    const bool deletingCompanion = window == m_homunInfoWnd || window == m_merInfoWnd;
     const bool deletingGroundText=GroundSkillTextOwner(window)!=nullptr;
     for(auto*& owner:m_groundSkillTextWindows)if(owner==window)owner=nullptr;
     if(window==m_commandListWnd)m_commandListWnd=nullptr;
     if(window==m_tipOfTheDayWnd)m_tipOfTheDayWnd=nullptr;
     if(window==m_petInfoWnd){m_petInfoWnd->StoreInfo();m_petInfoWnd=nullptr;}
+    if (window == m_homunInfoWnd) m_homunInfoWnd = nullptr;
+    if (window == m_merInfoWnd) m_merInfoWnd = nullptr;
     if(deletingPetEgg)m_petEggListWnd=nullptr;
     if(deletingPetTaming)m_petTamingDeceiveWnd=nullptr;
 
@@ -1971,7 +1995,8 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     const bool localChatCapture = window == m_chatWnd && m_chatWnd && m_chatWnd->IsQtPointerCaptured();
     const bool nativeChatCapture = belongsToWindow(m_captureWindow)
         && (deletingTip || deletingCommand || deletingPet || deletingPetEgg || deletingPetTaming || deletingGroundText || IsWhisperPreferenceInputWindow(window) || window == m_chatWnd || window == m_subChatWndST || window == m_subChatWndBT || window == m_subChatMiniWnd || window == m_battleMsgOptionWnd || window == m_chatRoomWnd || window == m_chatRoomPasswordWnd || window==m_chatRoomMakeWnd || window==m_chatRoomChangeWnd || window==m_roomMessageBox || window==m_chatRoomMenuWnd || window==m_autoMessageWnd || window==m_friendOptionWnd || window==m_messengerGroupWnd || dynamic_cast<UIWhisperWnd*>(window));
-    if ((localChatCapture || nativeChatCapture) && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
+    if ((localChatCapture || nativeChatCapture || (deletingCompanion && belongsToWindow(m_captureWindow)))
+        && g_hMainWnd && GetCapture() == g_hMainWnd) ReleaseCapture();
     if (belongsToWindow(m_captureWindow)) {
         m_captureWindow = nullptr;
     }
@@ -3175,6 +3200,11 @@ bool UIWindowMgr::HasNativePopupAtPoint(int x,int y) const
 {
     const UIWindow* windows[]={m_itemInfoWnd,m_cardInfoWnd,m_skillDescribeWnd,m_chatRoomMenuWnd};
     for(const auto* w:windows)if(w&&w->m_show&&x>=w->m_x&&y>=w->m_y&&x<w->m_x+w->m_w&&y<w->m_y+w->m_h)return true;
+    if (m_homunInfoWnd || m_merInfoWnd) {
+        for (const auto* hit = HitTestWindow(x, y); hit; hit = hit->m_parent) {
+            if (hit == m_homunInfoWnd || hit == m_merInfoWnd) return true;
+        }
+    }
     return false;
 }
 
@@ -3247,6 +3277,21 @@ bool UIWindowMgr::HasFrontMenuUiVisible() const
 
 bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi)
 {
+    if (virtualKey == 'R' && (isAltDown || isCtrlDown) && !hasFrontMenuUi && m_basicInfoWnd
+        && !HasGameplayInputModal()) {
+        bool handled = false;
+        if (isAltDown && g_session.m_homunStatus.alive) {
+            if (m_homunInfoWnd) DeleteWindow(m_homunInfoWnd);
+            else MakeWindow(WID_HOMUNINFOWND);
+            handled = true;
+        }
+        if (isCtrlDown && g_session.m_merStatus.alive) {
+            if (m_merInfoWnd) DeleteWindow(m_merInfoWnd);
+            else MakeWindow(WID_MERINFOWND);
+            handled = true;
+        }
+        if (handled) return true;
+    }
     if(isAltDown && virtualKey=='J' && !hasFrontMenuUi)return ProcessSourceCommandWindowKey(74);
     if (virtualKey==VK_ESCAPE && !hasFrontMenuUi && m_battleMsgOptionWnd && m_battleMsgOptionWnd->m_show
         && !HasGameplayInputModal() && CanRouteQtChatInput()) {

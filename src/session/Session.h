@@ -155,7 +155,7 @@ struct HomunculusStatus {
     CompanionCombatStatus combat;
     int level = 0, hunger = 0, intimacy = 0, skillPoints = 0;
     int lastWarnedHunger = 0;
-    int job = 0, stateId = 0;
+    int job = -1, stateId = 0;
     bool alive = false;
     u8 nameModified = 0;
     u32 accessory = 0;
@@ -166,7 +166,7 @@ struct MercenaryStatus {
     std::string name;
     CompanionCombatStatus combat;
     int level = 0, faith = 0;
-    int job = 0;
+    int job = -1;
     bool alive = false;
     int expiresAt = 0, calls = 0, kills = 0;
 };

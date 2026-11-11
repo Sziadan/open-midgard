@@ -23,6 +23,7 @@
 #include "ui/UIItemPurchaseWnd.h"
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UICompanionStatusWnd.h"
 #include "ui/UINewChatWnd.h"
 #include "ui/UIGuildWnd.h"
 #include "ui/UIMinimapWnd.h"
@@ -2448,6 +2449,9 @@ void CompanionIdentityReplay()
     g_session.m_merGID = 0;
     g_session.m_homunStatus = {};
     g_session.m_merStatus = {};
+    Require(!g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND)
+        && !g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND),
+        "companion status opened before the companion job was known");
     PLAYER_SKILL_INFO skill{};
     skill.SKID = 8201;
     g_session.SetMercSkillItem(skill);
@@ -2603,11 +2607,29 @@ void CompanionIdentityReplay()
     spawn(homunActor.m_gid, 6001);
     spawn(otherActor.m_gid, 6017);
     Require(hs.alive && ms.alive, "registered companion entries did not set alive flags");
+    g_session.m_homunStatus.job = 6001;
+    g_session.m_merStatus.job = 6017;
+    auto* homunWindow = g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND);
+    auto* mercWindow = g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND);
+    Require(homunWindow && mercWindow && homunWindow != mercWindow
+        && g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND) == homunWindow,
+        "companion status windows did not retain separate instances");
+    Require(g_windowMgr.HasNativePopupAtPoint(mercWindow->m_x + 5, mercWindow->m_y + 5),
+        "companion status did not claim pointer input from the Qt chat bridge");
+    const auto homunDisplay = g_windowMgr.m_homunInfoWnd->GetDisplay();
+    const auto mercDisplay = g_windowMgr.m_merInfoWnd->GetDisplay();
+    Require(homunDisplay.gauges.size() == 4 && mercDisplay.gauges.size() == 2
+        && homunDisplay.gauges[3].filledWidth == hs.hunger * 102 / 100
+        && std::any_of(mercDisplay.text.begin(), mercDisplay.text.end(), [](const auto& row) {
+            return row.value == "Archer Mercenary";
+        }), "companion snapshots did not reach their respective status windows");
     vanish(homunActor.m_gid, 0);
-    Require(hs.alive, "ordinary companion removal cleared the alive flag");
+    Require(hs.alive && g_windowMgr.m_homunInfoWnd == homunWindow,
+        "ordinary companion removal reset the homunculus status window");
     spawn(homunActor.m_gid, 6001);
     vanish(homunActor.m_gid, 1);
-    Require(!hs.alive && ms.alive && g_session.m_homunGID == homunActor.m_gid,
+    Require(!hs.alive && ms.alive && g_session.m_homunGID == homunActor.m_gid
+        && !g_windowMgr.m_homunInfoWnd && g_windowMgr.m_merInfoWnd == mercWindow,
         "homunculus death did not clear only the owned alive flag");
     spawn(homunActor.m_gid, 6001);
     Require(!hs.alive, "an update to an existing companion marked it alive again");
@@ -2617,18 +2639,24 @@ void CompanionIdentityReplay()
     const auto oldAid = g_session.m_aid;
     g_session.m_aid = 0x01234567;
     g_session.m_homunStatus.alive = true;
+    homunWindow = g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND);
+    Require(homunWindow, "could not reopen homunculus status before skill 244");
     std::array<u8, 15> reset{0x1a, 0x01, 244};
     putGid(reset.data() + 6, g_session.m_aid);
     putGid(reset.data() + 10, otherActor.m_gid);
     reset[14] = 1;
     dispatchActor(reset);
-    Require(hs.alive, "another player's skill 244 cleared the local homunculus");
+    Require(hs.alive && g_windowMgr.m_homunInfoWnd == homunWindow,
+        "another player's skill 244 cleared the local homunculus");
     putGid(reset.data() + 6, otherActor.m_gid);
     putGid(reset.data() + 10, g_session.m_aid);
     reset[14] = 0;
     dispatchActor(reset);
-    Require(!hs.alive && ms.alive && g_session.m_homunGID == homunActor.m_gid && hs.stateId == 29,
-        "local skill 244 did not clear only the homunculus alive flag");
+    Require(!hs.alive && ms.alive && g_session.m_homunGID == homunActor.m_gid && hs.stateId == 29
+        && !g_windowMgr.m_homunInfoWnd && g_windowMgr.m_merInfoWnd == mercWindow,
+        "local skill 244 did not reset the homunculus status window and alive flag");
+    Require(mercWindow->SendMsg(nullptr, 6, 135, 0, 0) && !g_windowMgr.m_merInfoWnd,
+        "mercenary status close button did not delete its window");
     g_session.m_aid = oldAid;
 
     g_session.m_homunGID = oldHomun;

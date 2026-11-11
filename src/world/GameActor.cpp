@@ -30,6 +30,7 @@
 #include "ui/UIPcGage.h"
 #include "ui/UIRechargeGage.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UICompanionStatusWnd.h"
 
 #include <array>
 #include <algorithm>
@@ -5960,7 +5961,10 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         return;
     case 28:
         // Ref/GameActor.cpp:3306. A queued hit still has to land first.
-        if (m_gid != 0 && m_gid == g_session.m_homunGID) g_session.m_homunStatus.alive = false;
+        if (m_gid != 0 && m_gid == g_session.m_homunGID) {
+            g_windowMgr.DeleteWindow(g_windowMgr.m_homunInfoWnd);
+            g_session.m_homunStatus.alive = false;
+        }
         // An in-progress flinch with an empty queue does not hold the death
         // pose; holding it there is what pushes the death cry past the fall.
         if (m_stateId != kDeathStateId

@@ -6,6 +6,7 @@
 #include "ui/UIFriendOptionWnd.h"
 #include "ui/UICommandListWnd.h"
 #include "ui/UIPetInfoWnd.h"
+#include "ui/UICompanionStatusWnd.h"
 #include "ui/UIPetEggListWnd.h"
 #include "ui/UIPetTamingDeceiveWnd.h"
 #include "ui/ChatScrollBarUi.h"
@@ -2095,6 +2096,25 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         }
     }
     chatUi.insert("petInfo",petInfo);
+    QVariantList companionStatus;
+    for (const auto* window : {g_windowMgr.m_homunInfoWnd, g_windowMgr.m_merInfoWnd}) {
+        if (!window || !IsGameplayWindowVisible(state, window)) continue;
+        const auto display = window->GetDisplay();
+        QVariantList texts, gauges;
+        for (const auto& row : display.text) {
+            texts.push_back(QVariantMap{{"x", row.x}, {"y", row.y}, {"width", row.width},
+                {"text", ToQString(row.value)}, {"rightAligned", row.rightAligned}});
+        }
+        for (const auto& gauge : display.gauges) {
+            gauges.push_back(QVariantMap{{"x", gauge.x}, {"y", gauge.y}, {"width", gauge.width},
+                {"height", gauge.height}, {"filledWidth", gauge.filledWidth},
+                {"color", QColor(GetRValue(gauge.color), GetGValue(gauge.color), GetBValue(gauge.color)).name()}});
+        }
+        companionStatus.push_back(QVariantMap{{"layer", SourceManagedWindowLayer(window)},
+            {"x", window->m_x}, {"y", window->m_y}, {"width", window->m_w}, {"height", window->m_h},
+            {"texts", texts}, {"gauges", gauges}});
+    }
+    chatUi.insert("companionStatus", companionStatus);
     const auto roomButton=[](const RoomSettingsButton& button,int status){
         const auto bounds=button.Bounds();const auto& bitmap=button.bitmaps[status];
         return QVariantMap{{"id",button.id},{"x",static_cast<int>(bounds.left)},{"y",static_cast<int>(bounds.top)},

@@ -3783,3 +3783,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Companion commands and skill 244
 
 **Current companion command checkpoint (2026-11-11)**. Mode messages 198 through 200 now send the selected companion commands. Skill 244 resets the local homunculus alive flag. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-commands.md)
+
+## 2026-11-11 Companion status windows
+
+**Current companion status window checkpoint (2026-11-11)**. Alt+R and Ctrl+R open the homunculus and mercenary status windows from the session snapshots. Homunculus death and the local skill 244 reset close its window. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status-windows.md)

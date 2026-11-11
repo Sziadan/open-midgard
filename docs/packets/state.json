@@ -988,9 +988,10 @@
       "evidence": [
         "docs/packets/evidence/PK28-homun-feed.md",
         "docs/packets/evidence/PK28-companion-lifecycle.md",
-        "docs/packets/evidence/PK28-companion-commands.md"
+        "docs/packets/evidence/PK28-companion-commands.md",
+        "docs/packets/evidence/PK28-companion-status-windows.md"
       ],
-      "commit_subject": "packet(PK28): restore companion command packets"
+      "commit_subject": "packet(PK28): show companion status windows"
     },
     "PK28.04": {
       "status": "NOT_STARTED",
@@ -1011,9 +1012,10 @@
         "docs/packets/evidence/PK27-companion-identity.md",
         "docs/packets/evidence/PK28-companion-status.md",
         "docs/packets/evidence/PK28-companion-lifecycle.md",
-        "docs/packets/evidence/PK28-companion-commands.md"
+        "docs/packets/evidence/PK28-companion-commands.md",
+        "docs/packets/evidence/PK28-companion-status-windows.md"
       ],
-      "commit_subject": "packet(PK28): restore companion command packets"
+      "commit_subject": "packet(PK28): show companion status windows"
     },
     "PK29.03": {
       "status": "NOT_STARTED",
