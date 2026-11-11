@@ -16,6 +16,7 @@
 #include "network/Connection.h"
 #include "gamemode/View.h"
 #include "network/MapSendProfile.h"
+#include "pathfinder/PathFinder.h"
 #include "qtui/QtUiRuntime.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UINewChatWnd.h"
@@ -31,6 +32,7 @@
 #include "res/GndRes.h"
 #include <cstdlib>
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <functional>
 #include <fstream>
@@ -92,10 +94,104 @@ static void RunCorpseRenderPreview()
     g_world.ClearFixedObjects();
 }
 
+static void RunMapCellRenderPreview(std::string_view scene)
+{
+    if (scene != "baseline" && scene != "blocked" && scene != "restored" && scene != "no-hover") {
+        DbgLog("[MapCellPreview] unknown scene\n");
+        return;
+    }
+
+    auto* map = g_resMgr.GetAs<C3dWorldRes>("data\\prontera.rsw");
+    if (!map) {
+        DbgLog("[MapCellPreview] missing Prontera RSW\n");
+        return;
+    }
+    auto* attr = g_resMgr.GetAs<C3dAttr>(("data\\" + map->m_attrFile).c_str());
+    auto* ground = g_resMgr.GetAs<CGndRes>(("data\\" + map->m_gndFile).c_str());
+    CWorld world;
+    world.SetMapTerrain(attr);
+    if (!attr || !ground || !world.BuildGroundFromGnd(*ground, map->m_lightDir, map->m_diffuseCol,
+            map->m_ambientCol, map->m_waterLevel, map->m_waterType, map->m_waterAnimSpeed,
+            map->m_wavePitch, map->m_waveSpeed, map->m_waveHeight)) {
+        DbgLog("[MapCellPreview] missing Prontera GAT or GND\n");
+        return;
+    }
+
+    g_session.m_playerPosX = 156;
+    g_session.m_playerPosY = 184;
+    CView view;
+    view.SetWorld(&world);
+    view.SetInitialCamera(0.0f, 45.0f, 300.0f);
+    view.OnCalcViewInfo();
+    const int screenX = g_renderer.m_width / 2;
+    const int screenY = g_renderer.m_height / 2;
+    int x = 0;
+    int y = 0;
+    if (!view.ScreenToHoveredAttrCell(screenX, screenY, &x, &y) || !world.IsMapCellWalkable(x, y)) {
+        DbgLog("[MapCellPreview] no walkable cell at camera center x=%d y=%d\n", x, y);
+        return;
+    }
+    const int baseType = world.GetMapCellType(x, y);
+    CPathFinder pathFinder;
+    pathFinder.SetMap(&world);
+    CPathInfo path;
+    constexpr std::array<std::pair<int, int>, 4> neighbors{{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}};
+    const auto neighbor = std::find_if(neighbors.begin(), neighbors.end(), [&](const auto& offset) {
+        return world.IsMapCellWalkable(x + offset.first, y + offset.second);
+    });
+    if (neighbor == neighbors.end()) {
+        DbgLog("[MapCellPreview] no walkable neighbor at %d,%d\n", x, y);
+        return;
+    }
+    const auto canReach = [&] {
+        return pathFinder.FindPath(0, x + neighbor->first, y + neighbor->second, 8, 8, x, y, 150, &path);
+    };
+
+    CGameMode mode;
+    mode.m_world = &world;
+    std::snprintf(mode.m_rswName, sizeof(mode.m_rswName), "%s", "prontera.rsw");
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto applyType = [&](int type) {
+        std::array<u8, 24> frame{0x92, 0x01, static_cast<u8>(x), static_cast<u8>(x >> 8),
+            static_cast<u8>(y), static_cast<u8>(y >> 8), static_cast<u8>(type), 0};
+        constexpr std::string_view name = "prontera.gat";
+        std::copy(name.begin(), name.end(), frame.begin() + 8);
+        PacketView packet{};
+        int consumed = 0;
+        return TryReadPacket(frame.data(), static_cast<int>(frame.size()), packet, consumed)
+            && consumed == static_cast<int>(frame.size()) && router.Dispatch(mode, packet)
+            && world.GetMapCellType(x, y) == type;
+    };
+    if (!canReach()
+        || ((scene == "blocked" || scene == "restored") && (!applyType(5) || canReach()))
+        || (scene == "restored" && (!applyType(baseType) || !canReach()))
+        || attr->GetCell(x, y)->flag != baseType) {
+        DbgLog("[MapCellPreview] cell routing or path assertion failed\n");
+        return;
+    }
+    if (scene != "no-hover") {
+        view.UpdateHoverCellFromScreen(screenX, screenY);
+    }
+
+    DbgLog("[MapCellPreview] scene=%s x=%d y=%d base=%d effective=%d reachable=%d\n",
+        scene.data(), x, y, baseType, world.GetMapCellType(x, y), canReach());
+    g_renderer.m_nClearColor = 0xFF202020;
+    g_renderer.ClearBackground();
+    g_renderer.Clear(0);
+    view.OnRender();
+    g_renderer.DrawScene();
+    GetRenderDevice().Present(false);
+}
+
 // Opt-in native render fixture. Uses installed assets and the selected graphics
 // backend, without entering a game mode, logging in, or saving settings.
 void RunHealRenderPreview()
 {
+    if (const char* scene = std::getenv("RO_MAP_CELL_PREVIEW")) {
+        RunMapCellRenderPreview(scene);
+        return;
+    }
     if (std::getenv("RO_HEAL_PREVIEW_CORPSE")) { RunCorpseRenderPreview();return; }
     if (std::getenv("RO_HEAL_PREVIEW_MONSTER")) WaitForGr2Monsters();
     const char* previewMap=std::getenv("RO_HEAL_PREVIEW_MAP");

@@ -298,7 +298,7 @@ AUDIT-0x018E,0x018E,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x018F,0x018F,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0190,0x0190,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0191,0x0191,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-talkbox-chat-contents traces fixed 86-byte S2C unit ID and 80-byte message field with pinned emitter; text semantics/replay remain open,UNREVIEWED,
-AUDIT-0x0192,0x0192,map,S2C,PK18,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0192,0x0192,map,S2C,PK18,PK01;PK02;PK47;PK48;PK45,"Selected 20080910 map-cell emitter and client GAT mutation verified through production framing, pathfinding, map lifecycle replay and native Prontera captures; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK18.MAP-CELLS
 AUDIT-0x0193,0x0193,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0194,0x0194,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.05 verifies selected CID reply/request/cache; PK09.09 verifies producer-name native/Qt refresh; broader actor/historical/discovery and independent acceptance remain open,UNREVIEWED,
 AUDIT-0x0195,0x0195,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.02-actor-name-ack traces selected 102-byte S2C full name/party/guild/position response; cache lifecycle and replay remain open,UNREVIEWED,

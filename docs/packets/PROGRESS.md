@@ -3839,3 +3839,7 @@ PK18.02 routes `0192` updates to world-scoped cell state and shares that state a
 ## 2026-11-11 Dynamic map cell loading and replacement
 
 PK18.03 stages matching `0192` updates until GAT binding and clears the previous world's state on replacement. The focused replay verified early placement, restore before binding, and same-name replacement and reentry with a cached GAT asset. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK18.03-map-cell-loading.md)
+
+## 2026-11-11 Dynamic map cell native verification
+
+PK18.04 verifies the selected `0192` receiver on Prontera assets. The blocked frame matches the no-hover control, the restored frame matches baseline, and production pathfinding reflects the cell type. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK18.04-map-cell-native-verification.md)

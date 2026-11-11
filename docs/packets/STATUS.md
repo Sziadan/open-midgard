@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Dynamic map cell native verification (2026-11-11)**. Vulkan captures on installed Prontera assets verified that `0192` removes the hover highlight on a blocked cell and restores it when the cell is walkable. Production pathfinding and lifecycle replay passed. Independent PK48 and live server checks remain pending. [Evidence](evidence/PK18.04-map-cell-native-verification.md)
+
 **Dynamic map cell loading checkpoint (2026-11-11)**. Matching `0192` updates are retained until GAT binding. Reuse retains the world state, and mode replacement starts a fresh terrain bootstrap. [Evidence](evidence/PK18.03-map-cell-loading.md)
 
 **Dynamic map cell implementation checkpoint (2026-11-11)**. In a loaded world, `0192` now updates the effective GAT type used by movement, skill approach and the hover renderer. Early updates and rendered acceptance remain open. [Evidence](evidence/PK18.02-dynamic-map-cell-updates.md)

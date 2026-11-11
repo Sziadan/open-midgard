@@ -597,10 +597,11 @@
       "commit_subject": "packet(PK18.01): establish dynamic map cell contract"
     },
     "PK18.02": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK18.01-dynamic-map-cell-scope.md",
-        "docs/packets/evidence/PK18.02-dynamic-map-cell-updates.md"
+        "docs/packets/evidence/PK18.02-dynamic-map-cell-updates.md",
+        "docs/packets/evidence/PK18.04-map-cell-native-verification.md"
       ],
       "commit_subject": "packet(PK18.02): apply dynamic map cell updates"
     },
@@ -612,9 +613,12 @@
       "commit_subject": "packet(PK18.03): retain map cell updates through terrain loading"
     },
     "PK18.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK18.MAP-CELLS.md",
+        "docs/packets/evidence/PK18.04-map-cell-native-verification.md"
+      ],
+      "commit_subject": "packet(PK18.04): verify dynamic map cells with native captures"
     },
     "PK19.01": {
       "status": "IN_PROGRESS",
