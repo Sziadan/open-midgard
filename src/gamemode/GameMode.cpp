@@ -9935,6 +9935,18 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
 }
 }
 
+void CGameMode::RetireMercenaryContract()
+{
+    g_session.m_merGID = 0;
+    g_session.m_merStatus = {};
+    g_session.m_merTarget = {};
+    g_session.ClearMercSkillItems();
+    g_windowMgr.CloseCompanionWindows(false);
+    if (m_skillUseInfo.id >= 8200 && m_skillUseInfo.id < 8238) {
+        SendMsg(78, 0, 0, 0);
+    }
+}
+
 void CGameMode::SynchronizePlayerSkillProceed(CPlayer* player,bool retire)
 {
     if(!m_world || m_world->m_player!=player || !player)return;

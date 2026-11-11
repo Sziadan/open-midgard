@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+**Current mercenary checkpoint (2026-11-11)**. Selected expiry, mercenary death, confirmed dismissal, and owner death now retire the mercenary contract. Dismissal leaves the contract intact if the send fails. Continue PK29.02 with `HandleMercenaryParameter` in `src/gamemode/GameModePacket.cpp`. Add the four selected `02A2` parameters currently skipped (`0x2B` MATK, `0x2D` DEF, `0x2F` MDEF, `0x34` critical). Compare `clif_mercenary_updatestatus` and its `status_calc_mercenary` callers in selected rAthena, then extend `CompanionIdentityReplay` to check active updates and isolation from homunculus state. [Contract evidence](evidence/PK29.02-mercenary-contract-end.md)
+
 **Current map property checkpoint (2026-11-11)**. The variable `02E7` receiver now applies bounded updates to the map property table. The selected server source registers the frame, and the receiver is verified with synthetic replay. [Evidence](evidence/PK19-map-property-row-updates.md)
 
 **Previous map property checkpoint (2026-11-11)**. The legacy `0199` and `01D6` receivers now apply map state and the original ally gates feed gameplay targeting. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK19-map-properties.md)

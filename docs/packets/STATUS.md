@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Mercenary contract retirement checkpoint (2026-11-11)**. PK29.02 covers selected expiry and death notices, confirmed dismissal, and owner death in replay. Six application checks and 473 standalone checks passed. Selected incremental stat coverage and live contract verification remain open. [Evidence](evidence/PK29.02-mercenary-contract-end.md)
+
 **Selected map property verification (2026-11-11)**. PK19 covers the active `0199` and `01D6` layouts, world lifetime, gameplay rules, and recovery and siege presentation. The `02E7` compatibility receiver has synthetic replay, and the newer `099B` layout is inactive for the selected profile. Independent review and live verification remain open. [Evidence](evidence/PK19.04-map-properties-verification.md)
 
 **Standing resurrection render checkpoint (2026-11-11)**. Native bitmap and Qt captures show the recovery choice for an eligible character. The event PvP packet removes the row from both menus. All 165 application and 473 standalone checks passed. [Evidence](evidence/PK19-recovery-menu-rendering.md)

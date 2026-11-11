@@ -2737,6 +2737,32 @@ void CompanionIdentityReplay()
             "terminal mercenary notice mishandled pending skill or homunculus state");
         vanish(reentryMerc, 0);
     }
+
+    dispatchActor(npcEntry);
+    dispatchActor(reentryMercIdentity);
+    g_session.SetMercSkillItem(skill);
+    g_session.m_merTarget = {reentryHomun, 8, 9, true, true, true};
+    mode.m_skillUseInfo = {8201, 1, 5, 2};
+    Require(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND)
+        && g_windowMgr.MakeWindow(UIWindowMgr::WID_MERSKILLLISTWND),
+        "could not open active mercenary windows before owner death");
+
+    CPlayer owner;
+    owner.m_gid = 0xf1000033;
+    auto* oldPlayer = g_world.m_player;
+    g_world.m_player = &owner;
+    vanish(reentryMerc, 0);
+    Require(ms.alive && g_session.m_merGID == reentryMerc,
+        "mercenary removal preceding owner death retired the contract early");
+    vanish(owner.m_gid, 1);
+    g_world.UnregisterActor(&owner);
+    g_world.m_player = oldPlayer;
+    Require(mode.m_isPlayerDead && !ms.alive && ms.job == -1 && g_session.m_merGID == 0
+        && g_session.m_merTarget.gid == 0 && g_session.GetMercSkillItems().empty()
+        && mode.m_skillUseInfo.id == 0 && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd
+        && hs.alive && g_session.m_homunGID == reentryHomun,
+        "local owner death did not retire only the mercenary contract");
+
     vanish(reentryHomun, 0);
     mode.m_world = nullptr;
 
@@ -2785,6 +2811,9 @@ void CompanionCommandReplay()
     const auto oldModeType = SkillPacketReplayAccess::CurrentType();
     const auto oldHomunculus = g_session.m_homunStatus;
     const auto oldMercenary = g_session.m_merStatus;
+    const auto oldMercGid = g_session.m_merGID;
+    const auto oldMercTarget = g_session.m_merTarget;
+    const auto oldMercSkills = g_session.GetMercSkillItems();
     SkillPacketReplayAccess::SetCurrent(&mode);
     g_session.m_homunStatus = {};
     g_session.m_homunStatus.job = 6001;
@@ -2845,16 +2874,48 @@ void CompanionCommandReplay()
 
     auto* merc = static_cast<UICompanionStatusWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND));
     Require(merc, "mercenary status did not open for dismissal");
+    g_session.m_merGID = 0xf1000034;
+    g_session.m_merTarget = {0xf1000035, 8, 9, true, true, true};
+    PLAYER_SKILL_INFO mercSkill{};
+    mercSkill.SKID = 8201;
+    g_session.SetMercSkillItem(mercSkill);
+    mode.m_skillUseInfo = {8201, 1, 5, 2};
     Require(merc->SendMsg(nullptr, 6, 283, 0, 0) && g_windowMgr.m_merSkillListWnd,
         "mercenary skill button did not open its own list");
     confirm(merc, 284, true);
     Require(peer.ReceiveExact(3) == std::vector<u8>{0x9f, 0x02, 2}
-        && !g_session.m_merStatus.alive && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd,
-        "confirmed mercenary dismissal did not close its status");
+        && !g_session.m_merStatus.alive && g_session.m_merStatus.job == -1
+        && g_session.m_merGID == 0 && g_session.m_merTarget.gid == 0
+        && g_session.GetMercSkillItems().empty() && mode.m_skillUseInfo.id == 0
+        && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd,
+        "confirmed mercenary dismissal left active contract state or controls");
+
+    connection->Disconnect();
+    g_session.m_merStatus = {};
+    g_session.m_merStatus.job = 6017;
+    g_session.m_merStatus.alive = true;
+    g_session.m_merGID = 0xf1000034;
+    g_session.m_merTarget = {0xf1000035, 8, 9, true, true, true};
+    g_session.SetMercSkillItem(mercSkill);
+    mode.m_skillUseInfo = {8201, 1, 5, 2};
+    merc = static_cast<UICompanionStatusWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND));
+    Require(merc && merc->SendMsg(nullptr, 6, 283, 0, 0) && g_windowMgr.m_merSkillListWnd
+        && merc->SendMsg(nullptr, 6, 284, 0, 0) && g_windowMgr.m_roomMessageBox,
+        "could not open mercenary dismissal after disconnect");
+    g_windowMgr.m_roomMessageBox->Dismiss(true);
+    Require(g_session.m_merStatus.alive && g_session.m_merGID == 0xf1000034
+        && g_session.m_merTarget.gid == 0xf1000035 && g_session.GetMercSkillItems().size() == 1
+        && mode.m_skillUseInfo.id == 8201 && g_windowMgr.m_merInfoWnd == merc && g_windowMgr.m_merSkillListWnd,
+        "failed dismissal send retired the mercenary contract");
+    g_windowMgr.CloseCompanionWindows(false);
+    g_session.ClearMercSkillItems();
+
     g_session.m_homunStatus = oldHomunculus;
     g_session.m_merStatus = oldMercenary;
+    g_session.m_merGID = oldMercGid;
+    g_session.m_merTarget = oldMercTarget;
+    for (const auto& entry : oldMercSkills) g_session.SetMercSkillItem(entry);
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
-    connection->Disconnect();
 }
 
 void CompanionSkillListReplay()

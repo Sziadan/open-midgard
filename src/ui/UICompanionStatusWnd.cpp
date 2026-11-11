@@ -6,6 +6,7 @@
 #include "../core/SourceTextCodec.h"
 #include "../core/UiMessageStrings.h"
 #include "../gamemode/Mode.h"
+#include "../gamemode/GameMode.h"
 #include "../item/Item.h"
 #include "../session/Session.h"
 
@@ -334,15 +335,13 @@ void UICompanionStatusWnd::ApplyConfirmedAction(msgparam_t action)
     } else if (action == kFeed) {
         g_modeMgr.SendMsg(198, 1, 0, 0);
     } else {
-        const bool homunculus = action == kDismissHomunculus;
-        g_modeMgr.SendMsg(homunculus ? 198 : 200, 2, 0, 0);
-        if (homunculus) {
+        if (action == kDismissHomunculus) {
+            g_modeMgr.SendMsg(198, 2, 0, 0);
             g_session.m_homunTarget = {};
             g_session.m_homunStatus.alive = false;
-        } else {
-            g_session.m_merTarget = {};
-            g_session.m_merStatus.alive = false;
+            g_windowMgr.CloseCompanionWindows(true);
+        } else if (auto* mode = g_modeMgr.GetCurrentGameMode(); mode && mode->SendMsg(200, 2, 0, 0)) {
+            mode->RetireMercenaryContract();
         }
-        g_windowMgr.CloseCompanionWindows(homunculus);
     }
 }

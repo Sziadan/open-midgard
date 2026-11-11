@@ -3867,3 +3867,7 @@ PK19.03 verifies both native bitmap and Qt recovery menu frames before and after
 ## 2026-11-11 Selected map property verification
 
 PK19.04 verifies the active `0199` and `01D6` paths and records the selected-profile dispositions of `02E7` and `099B`. Production replay and the native and Qt captures cover the implemented rule consumers. [Evidence](evidence/PK19.04-map-properties-verification.md)
+
+## 2026-11-11 Mercenary contract retirement
+
+PK29.02 now handles confirmed dismissal and the selected owner-death packet sequence. The replay checks wire bytes, failed-send retention, and complete local retirement. Six application checks and 473 standalone checks passed. [Evidence](evidence/PK29.02-mercenary-contract-end.md)

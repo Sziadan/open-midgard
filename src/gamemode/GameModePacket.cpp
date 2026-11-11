@@ -2074,14 +2074,7 @@ void HandleLocalizedSystemNotice(CGameMode& mode, const PacketView& packet)
     // Selected mercenary_delete sends these owner-only notices before the
     // ordinary out-of-sight removal, which also happens during movement.
     if (messageId == 1266 || messageId == 1267) {
-        g_session.m_merGID = 0;
-        g_session.m_merStatus = {};
-        g_session.m_merTarget = {};
-        g_session.ClearMercSkillItems();
-        g_windowMgr.CloseCompanionWindows(false);
-        if (mode.m_skillUseInfo.id >= 8200 && mode.m_skillUseInfo.id < 8238) {
-            mode.SendMsg(78, 0, 0, 0);
-        }
+        mode.RetireMercenaryContract();
     }
     ro::UiMessageStrings strings;
     strings.Load();
@@ -9004,6 +8997,9 @@ void HandleActorVanish(CGameMode& mode, const PacketView& packet)
         if (CGameActor* actor = FindRuntimeActorForVanish(mode, gid)) {
             BeginActorDeath(mode, *actor, gid);
             if (IsLocalPlayerActor(mode, gid)) {
+                // Selected pc_dead ends the owner's mercenary contract
+                // without emitting a localized terminal notice.
+                mode.RetireMercenaryContract();
                 mode.m_isOnQuest = 1;
                 mode.m_isPlayerDead = 1;
                 for (auto it = mode.m_compassPosList.begin(); it != mode.m_compassPosList.end();) {
