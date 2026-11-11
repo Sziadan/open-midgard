@@ -993,9 +993,10 @@
         "docs/packets/evidence/PK28-companion-status-windows.md",
         "docs/packets/evidence/PK28-companion-status-actions.md",
         "docs/packets/evidence/PK28-companion-skill-lists.md",
-        "docs/packets/evidence/PK28-homunculus-skill-upgrade.md"
+        "docs/packets/evidence/PK28-homunculus-skill-upgrade.md",
+        "docs/packets/evidence/PK28-companion-summon-requests.md"
       ],
-      "commit_subject": "packet(PK28): wire homunculus skill upgrades"
+      "commit_subject": "packet(PK28): verify companion summon requests"
     },
     "PK28.04": {
       "status": "NOT_STARTED",
@@ -1020,9 +1021,10 @@
         "docs/packets/evidence/PK28-companion-status-windows.md",
         "docs/packets/evidence/PK28-companion-status-actions.md",
         "docs/packets/evidence/PK28-companion-skill-lists.md",
-        "docs/packets/evidence/PK29-localized-system-notice.md"
+        "docs/packets/evidence/PK29-localized-system-notice.md",
+        "docs/packets/evidence/PK28-companion-summon-requests.md"
       ],
-      "commit_subject": "packet(PK29): receive localized system notices"
+      "commit_subject": "packet(PK28): verify companion summon requests"
     },
     "PK29.03": {
       "status": "NOT_STARTED",

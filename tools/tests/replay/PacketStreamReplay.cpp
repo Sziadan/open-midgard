@@ -2940,6 +2940,73 @@ void LocalizedSystemNoticeReplay()
     g_windowMgr.ClearChatEvents();
 }
 
+void CompanionSummonReplay()
+{
+    SetCase("companion_summon_requests", "PK28.03", "PK28-selected-companion-summon",
+        "skill list or shortcut -> game-mode request -> selected map sender");
+    const auto& profile = ro::net::GetActiveMapGameplaySendProfile();
+    Require(profile.useSkillToId == 0x0438 && profile.useItem == 0x0439,
+        "companion summon replay requires the selected map send profile");
+
+    constexpr int callSkillId = 243;
+    constexpr u16 scrollIndex = 64998;
+    constexpr int shortcutIndex = 5;
+    const auto oldSkills = g_session.GetSkillItems();
+    const auto oldSlot = *g_session.GetShortcutSlotByAbsoluteIndex(shortcutIndex);
+    const auto oldAid = g_session.m_aid;
+    const auto homunculusGid = g_session.m_homunGID;
+    const auto mercenaryGid = g_session.m_merGID;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+
+    CGameMode mode;
+    CPlayer player;
+    CWorld world;
+    world.m_player = &player;
+    mode.m_world = &world;
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    g_session.m_aid = 0x11223344;
+    PLAYER_SKILL_INFO skill{};
+    skill.m_isValid = 1;
+    skill.SKID = callSkillId;
+    skill.type = 4; // Selected self-target skill.
+    skill.level = 1;
+    skill.spcost = 10;
+    g_session.SetSkillItem(skill);
+    g_session.SetShortcutSlotByAbsoluteIndex(shortcutIndex, 1, callSkillId, 1);
+
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    const std::vector<u8> call{0x38, 0x04, 1, 0, 0xf3, 0, 0x44, 0x33, 0x22, 0x11};
+    Require(ArmPendingSkillUseFromSkillList(callSkillId) && peer.ReceiveExact(10) == call,
+        "Call Homunculus from the skill list did not send a self-target skill request");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestShortcutUse, shortcutIndex, 0, 0)
+        && peer.ReceiveExact(10) == call, "Call Homunculus from a shortcut differed from skill-list use");
+
+    Require(!g_session.GetInventoryItemByIndex(scrollIndex), "mercenary scroll fixture index was already occupied");
+    ITEM_INFO scroll{};
+    scroll.SetItemId(12153);
+    scroll.m_itemIndex = scrollIndex;
+    scroll.m_num = 1;
+    g_session.SetInventoryItem(scroll);
+    g_session.SetShortcutSlotByAbsoluteIndex(shortcutIndex, 0, 12153, 1);
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestShortcutUse, shortcutIndex, 0, 0)
+        && peer.ReceiveExact(8) == std::vector<u8>{0x39, 0x04, 0xe6, 0xfd, 0x44, 0x33, 0x22, 0x11},
+        "mercenary scroll did not send the selected inventory use request");
+    Require(g_session.m_homunGID == homunculusGid && g_session.m_merGID == mercenaryGid,
+        "companion request changed ownership before a server packet");
+
+    connection->Disconnect();
+    g_session.RemoveInventoryItem(scrollIndex, scroll.m_num);
+    g_session.SetShortcutSlotByAbsoluteIndex(shortcutIndex, oldSlot.isSkill, oldSlot.id, oldSlot.count);
+    g_session.ClearSkillItems();
+    for (const auto& previous : oldSkills) g_session.SetSkillItem(previous);
+    g_session.m_aid = oldAid;
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    mode.m_world = nullptr;
+}
+
 void GuildMemberLoginNoticeReplay(){
     SetCase("guild_member_login_notice_01f2","PK06.GUILD-MEMBER-LOGIN","PK06-01f2-selected-source-literal","ProcessGameModePacketLoop -> CRagConnection::RecvPacket -> production router -> ReadWindowPacket");
     Require(ro::net::GetPacketSize(0x01f2)==20,"selected 0x01F2 receive size is not 20 bytes");
@@ -5219,6 +5286,7 @@ int main(int argc,char** argv){try{
     CompanionCommandReplay();
     CompanionSkillListReplay();
     LocalizedSystemNoticeReplay();
+    CompanionSummonReplay();
     GuildMemberLoginNoticeReplay();
     PartyMarkerGameModeExitReplay();
     SelectedInventoryCartRouteIsolationReplay();

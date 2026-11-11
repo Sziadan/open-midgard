@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current homunculus upgrade checkpoint (2026-11-11)**. The companion list sends the selected `0112` skill-up request when the server snapshot grants points and the row is upgradable. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homunculus-skill-upgrade.md)
+**Current companion summon checkpoint (2026-11-11)**. The existing skill-list and shortcut senders cover Call Homunculus and mercenary scroll use. The selected wire requests are now covered by replay. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-summon-requests.md)
+
+**Previous homunculus upgrade checkpoint (2026-11-11)**. The companion list sends the selected `0112` skill-up request when the server snapshot grants points and the row is upgradable. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homunculus-skill-upgrade.md)
 
 **Previous localized system notice checkpoint (2026-11-11)**. The map receiver frames and displays `0291`, including selected mercenary expiry and death. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK29-localized-system-notice.md)
 
