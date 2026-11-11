@@ -3815,3 +3815,7 @@ Restored01A6/source factory90/mode159/01A7 with actual native/passive Qt. Root P
 ## 2026-11-11 Companion actor targeting
 
 **Current companion actor targeting checkpoint (2026-11-11)**. Alt-clicking an eligible actor records companion selection and toggles an existing attack target. Actor death clears matching targets. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-actor-targets.md)
+
+## 2026-11-11 Pending companion actor skills
+
+**Current pending companion actor skill checkpoint (2026-11-11)**. Pending companion skills aimed at ordinary actors now follow the selected inactive AI branch and consume the click. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-pending-companion-actor-skills.md)

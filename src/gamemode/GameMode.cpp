@@ -6875,6 +6875,23 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
     }
     const bool good=SKILL_INFO::IsGoodSkillForActor(mode.m_skillUseInfo.id);
     const bool all=mode.m_skillUseInfo.useType==4;
+    if (kind == PetCaptureActorKind::Monster || kind == PetCaptureActorKind::Pc) {
+        const int skillId = mode.m_skillUseInfo.id;
+        const bool homunculusSkill = g_session.m_homunStatus.alive && skillId >= 8000 && skillId < 8017;
+        const bool attackEligible = (kind == PetCaptureActorKind::Monster ? (good ? shift : !shift) : (good ? !shift : shift))
+            || g_session.m_isNoShift == 1 || (kind == PetCaptureActorKind::Pc
+                && (target->m_pkState || mode.m_world->m_isPKZone || mode.m_world->m_isEventPVPMode
+                    || mode.m_world->m_isSiegeMode));
+        const bool mercenarySkill = g_session.m_merStatus.alive && skillId >= 8200 && skillId < 8238 && attackEligible;
+        if (kind == PetCaptureActorKind::Monster && alt) {
+            if (g_session.m_homunStatus.alive) g_session.m_homunTarget.SelectActor(target->m_gid, shift);
+            if (!homunculusSkill && g_session.m_merStatus.alive)
+                g_session.m_merTarget.SelectActor(target->m_gid, shift);
+        }
+        // Selected companion actor-skill branches consume the click even
+        // when their AI actor or Lua VM is unavailable.
+        if (homunculusSkill || mercenarySkill) return true;
+    }
     bool eligible=false;
     switch(kind){
     case PetCaptureActorKind::Monster:eligible=((good?shift:!shift) || g_session.m_isNoShift==1) && !alt;break;

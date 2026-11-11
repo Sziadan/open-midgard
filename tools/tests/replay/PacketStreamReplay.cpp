@@ -2949,6 +2949,79 @@ void LocalizedSystemNoticeReplay()
     g_windowMgr.ClearChatEvents();
 }
 
+bool ReplayTrySourceSkillOnActor(CGameMode& mode, CGameActor* target, bool shift, bool alt, bool control);
+
+void PendingCompanionActorSkillReplay()
+{
+    struct RecordingPlayer : CPlayer {
+        std::vector<int> commands;
+        void SendMsg(CGameObject*, int message, msgparam_t, msgparam_t, msgparam_t) override
+        {
+            commands.push_back(message);
+        }
+    } player;
+    CGameMode mode;
+    CWorld world;
+    world.m_player = &player;
+    mode.m_world = &world;
+    CGameActor target;
+    target.m_gid = 0x12345678;
+    target.m_job = 1002;
+    const auto oldHomun = g_session.m_homunStatus;
+    const auto oldMerc = g_session.m_merStatus;
+    const auto oldHomunTarget = g_session.m_homunTarget;
+    const auto oldMercTarget = g_session.m_merTarget;
+    const auto oldNoShift = g_session.m_isNoShift;
+    const auto oldWeight = g_session.m_weight;
+    const auto oldMaxWeight = g_session.m_maxWeight;
+    g_session.m_isNoShift = 0;
+    g_session.m_weight = 0;
+    g_session.m_maxWeight = 1000;
+    g_session.m_homunStatus.alive = true;
+    g_session.m_merStatus.alive = true;
+    g_session.m_homunTarget = {};
+    g_session.m_merTarget = {17, 1, 2, false, false, false};
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+
+    mode.m_skillUseInfo = {8004, 1, 10, 2};
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false)
+        && player.commands.empty(), "inactive homunculus skill fell through to the player");
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, true, false)
+        && g_session.m_homunTarget.gid == target.m_gid && g_session.m_homunTarget.attacking
+        && g_session.m_merTarget.gid == 17 && !g_session.m_merTarget.selected,
+        "pending homunculus skill did not stop after its own actor target branch");
+    mode.m_skillUseInfo = {8201, 1, 10, 2};
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, true, false)
+        && player.commands.empty() && g_session.m_merTarget.gid == target.m_gid,
+        "inactive mercenary skill fell through to the player");
+    target.m_isPc = 1;
+    target.m_job = 0;
+    mode.m_skillUseInfo = {8004, 1, 10, 2};
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false)
+        && player.commands.empty(), "homunculus skill on a PC fell through to the player");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "inactive companion actor skills emitted player network bytes");
+
+    target.m_isPc = 0;
+    target.m_job = 1002;
+    mode.m_skillUseInfo = {5, 1, 10, 2};
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false)
+        && player.commands == std::vector<int>{41, 90},
+        "ordinary player skill did not retain its existing actor dispatch");
+
+    connection->Disconnect();
+    g_session.m_homunStatus = oldHomun;
+    g_session.m_merStatus = oldMerc;
+    g_session.m_homunTarget = oldHomunTarget;
+    g_session.m_merTarget = oldMercTarget;
+    g_session.m_isNoShift = oldNoShift;
+    g_session.m_weight = oldWeight;
+    g_session.m_maxWeight = oldMaxWeight;
+    mode.m_world = nullptr;
+}
+
 void CompanionTargetReplay()
 {
     CSession session;
@@ -5346,6 +5419,7 @@ int main(int argc,char** argv){try{
     CompanionCommandReplay();
     CompanionSkillListReplay();
     LocalizedSystemNoticeReplay();
+    PendingCompanionActorSkillReplay();
     CompanionTargetReplay();
     CompanionSummonReplay();
     GuildMemberLoginNoticeReplay();

@@ -175,6 +175,7 @@ struct CompanionTargetState {
     u32 gid = 0;
     int cellX = 0, cellY = 0;
     bool moving = false, selected = false, attacking = false;
+    void SelectActor(u32 actorGid, bool shift);
 };
 
 class CSession

@@ -1644,21 +1644,23 @@ bool CSession::ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool sh
     return true;
 }
 
+void CompanionTargetState::SelectActor(u32 actorGid, bool shift)
+{
+    if (!actorGid) return;
+    if (!shift) {
+        if (attacking && gid == actorGid) {
+            attacking = false;
+        } else {
+            *this = {actorGid, 0, 0, false, true, true};
+        }
+    }
+    selected = true;
+}
+
 void CSession::ApplyCompanionActorClick(u32 gid, bool shift)
 {
-    if (!gid) return;
-    const auto select = [gid, shift](CompanionTargetState& target) {
-        if (!shift) {
-            if (target.attacking && target.gid == gid) {
-                target.attacking = false;
-            } else {
-                target = {gid, 0, 0, false, true, true};
-            }
-        }
-        target.selected = true;
-    };
-    if (m_homunStatus.alive) select(m_homunTarget);
-    if (m_merStatus.alive) select(m_merTarget);
+    if (m_homunStatus.alive) m_homunTarget.SelectActor(gid, shift);
+    if (m_merStatus.alive) m_merTarget.SelectActor(gid, shift);
 }
 
 void CSession::ClearDefeatedCompanionTarget(u32 gid)

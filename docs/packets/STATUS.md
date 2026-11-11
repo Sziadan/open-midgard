@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current companion actor targeting checkpoint (2026-11-11)**. Alt-clicking an eligible actor records companion selection and toggles an existing attack target. Actor death clears matching targets. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-actor-targets.md)
+**Current pending companion actor skill checkpoint (2026-11-11)**. Pending companion skills aimed at ordinary actors now follow the selected inactive AI branch and consume the click. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-pending-companion-actor-skills.md)
+
+**Previous companion actor targeting checkpoint (2026-11-11)**. Alt-clicking an eligible actor records companion selection and toggles an existing attack target. Actor death clears matching targets. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-actor-targets.md)
 
 **Previous companion ground targeting checkpoint (2026-11-11)**. Ground clicks now retain the selected companion target transitions with the inactive Lua VM. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-ground-targets.md)
 
