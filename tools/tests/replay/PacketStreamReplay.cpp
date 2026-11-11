@@ -2614,11 +2614,62 @@ void CompanionIdentityReplay()
     vanish(homunActor.m_gid, 0);
     vanish(otherActor.m_gid, 0);
 
+    const auto oldAid = g_session.m_aid;
+    g_session.m_aid = 0x01234567;
+    g_session.m_homunStatus.alive = true;
+    std::array<u8, 15> reset{0x1a, 0x01, 244};
+    putGid(reset.data() + 6, g_session.m_aid);
+    putGid(reset.data() + 10, otherActor.m_gid);
+    reset[14] = 1;
+    dispatchActor(reset);
+    Require(hs.alive, "another player's skill 244 cleared the local homunculus");
+    putGid(reset.data() + 6, otherActor.m_gid);
+    putGid(reset.data() + 10, g_session.m_aid);
+    reset[14] = 0;
+    dispatchActor(reset);
+    Require(!hs.alive && ms.alive && g_session.m_homunGID == homunActor.m_gid && hs.stateId == 29,
+        "local skill 244 did not clear only the homunculus alive flag");
+    g_session.m_aid = oldAid;
+
     g_session.m_homunGID = oldHomun;
     g_session.m_merGID = oldMerc;
     g_session.m_homunStatus = oldHomunStatus;
     g_session.m_merStatus = oldMercStatus;
     for (const auto& entry : oldSkills) g_session.SetMercSkillItem(entry);
+}
+
+void CompanionCommandReplay()
+{
+    CGameMode mode;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+
+    Require(mode.SendMsg(198, 0x101, 0, 0) == 1
+        && peer.ReceiveExact(5) == std::vector<u8>{0x2d, 0x02, 0, 0, 1},
+        "homunculus command differed from selected wire layout");
+    Require(mode.SendMsg(200, 0x102, 0, 0) == 1
+        && peer.ReceiveExact(3) == std::vector<u8>{0x9f, 0x02, 2},
+        "mercenary dismissal differed from selected wire layout");
+
+    Require(mode.SendMsg(199, 0, 0, 0) == 0, "homunculus rename accepted a null name");
+    const char shortName[] = "Al";
+    const std::vector<u8> shortPacket = [] {
+        std::vector<u8> bytes{0x31, 0x02, 'A', 'l'};
+        bytes.resize(26);
+        return bytes;
+    }();
+    Require(mode.SendMsg(199, reinterpret_cast<msgparam_t>(shortName), 0, 0) == 1
+        && peer.ReceiveExact(26) == shortPacket, "homunculus rename did not zero-pad a short name");
+    const char longName[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    std::vector<u8> longPacket{0x31, 0x02};
+    longPacket.insert(longPacket.end(), longName, longName + 23);
+    longPacket.push_back(0);
+    Require(mode.SendMsg(199, reinterpret_cast<msgparam_t>(longName), 0, 0) == 1
+        && peer.ReceiveExact(26) == longPacket, "homunculus rename did not terminate a truncated name");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "companion commands emitted unexpected trailing bytes");
+    connection->Disconnect();
 }
 
 void GuildMemberLoginNoticeReplay(){
@@ -4897,6 +4948,7 @@ int main(int argc,char** argv){try{
     LoginCharConnectionFailureReplay();
     Login3ClientInfoHashRequestReplay();
     CompanionIdentityReplay();
+    CompanionCommandReplay();
     GuildMemberLoginNoticeReplay();
     PartyMarkerGameModeExitReplay();
     SelectedInventoryCartRouteIsolationReplay();

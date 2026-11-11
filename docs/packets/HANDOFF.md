@@ -1,10 +1,14 @@
 # Packet continuation handoff
 
-**Current companion lifecycle checkpoint (2026-11-11)**. Companion actor entries and homunculus death now update the session alive flags. Homunculus hunger warnings use the selected thresholds. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-lifecycle.md)
+**Current companion command checkpoint (2026-11-11)**. Mode messages 198 through 200 now send the selected companion commands. Skill 244 resets the local homunculus alive flag. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-commands.md)
+
+**Previous companion lifecycle checkpoint (2026-11-11)**. Companion actor entries and homunculus death now update the session alive flags. Homunculus hunger warnings use the selected thresholds. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-lifecycle.md)
 
 **Previous homunculus feed checkpoint (2026-11-11)**. The registered `022F` path now applies feeding success state and missing-food feedback. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homun-feed.md)
 
-For the next companion lifecycle branches, trace skill 244 in `Zc_Use_Skill` at `0x58CB50` and the mercenary dismissal action that sends mode message 200 with subtype 2 in `Ref/UIFrameWnd.cpp`. Start status window work from `UIHomunInfoWnd::OnCreate` and `UIMerInfoWnd::OnCreate` in that file.
+Start companion status windows from `UIHomunInfoWnd::OnCreate` and `UIMerInfoWnd::OnCreate` in `Ref/UIFrameWnd.cpp`. `Ref/UIWindowMgr.cpp` opens them with selectors 113 and 132 when the corresponding job differs from -1. Read fields from the existing session snapshots.
+
+In `UIHomunInfoWnd::SendMsg`, callbacks `0xE0` and `0xE1` send message 198 with actions 1 and 2 after confirmation. `UIMerInfoWnd::SendMsg` callback `0x11C` sends message 200 with action 2 after confirmation. Both dismissal callbacks then close the relevant companion windows and clear local target and alive state. Keep those side effects in the confirmed callback. When companion window and target state have owners, wire their cleanup for the local skill 244 reset. Keep the player skill tree window and its assets unchanged.
 
 **Previous companion status checkpoint (2026-11-11)**. The selected homunculus and mercenary status packets now populate the session snapshots. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-status.md)
 
@@ -70,7 +74,7 @@ For the next companion lifecycle branches, trace skill 244 in `Zc_Use_Skill` at 
 
 **Command-window root review (2026-11-10):** [table seed and routing corrections](evidence/PK09.21-command-table-seed.md) adds immutable selected-byte tables and strict PE-backed generator. All79 numeric stores and96 caption bindings verify; full UI remains open. Merchant87 remaps to Up38; six advertised rows are selected no-ops; DetailLevel68 changes screen state; VK121 is F10, not lowercase-y/Alt+Y. Initialize undefined viewOffset+78 to0 and suppress only selected-table out-of-bounds activation while preserving common23-count hit/scroll. Follow the evidence's integration instructions and preparatory hover/action inventories; do not implement older route-agent guesses.
 
-**Next work.** Continue companion status windows, summon and dismissal requests, and the selected skill 244 reset. Use the selected executable’s inactive companion Lua VM as the baseline for modifier routing. Compare the Graphics skin control with the original dropdown and verify live selection. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
+**Next work.** Continue companion status windows, confirmed action callbacks, and summon request tracing. Use the selected executable’s inactive companion Lua VM as the baseline for modifier routing. Compare the Graphics skin control with the original dropdown and verify live selection. Verify the ground prompts in a live modern gameplay frame, including UI scaling, candidate open and close, Traditional Chinese keystrokes, and dragging. Check the OS clipboard and original global key actions. Keep skill tree window code and assets unchanged.
 
 The Traditional Chinese keystroke implementation uses the 39 fixed Big5 pairs in the selected executable and the stable slash-key pair from the adjacent slot string. The period key reads uninitialized bytes in the original. The port leaves that cell empty. [Keystroke evidence](evidence/PK27-prompt-keystrokes.md)
 

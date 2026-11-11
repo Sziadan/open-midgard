@@ -1,6 +1,8 @@
 # Packet implementation status
 
-**Current companion lifecycle checkpoint (2026-11-11)**. Companion actor entries and homunculus death now update the session alive flags. Homunculus hunger warnings use the selected thresholds. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-lifecycle.md)
+**Current companion command checkpoint (2026-11-11)**. Mode messages 198 through 200 now send the selected companion commands. Skill 244 resets the local homunculus alive flag. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-commands.md)
+
+**Previous companion lifecycle checkpoint (2026-11-11)**. Companion actor entries and homunculus death now update the session alive flags. Homunculus hunger warnings use the selected thresholds. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-lifecycle.md)
 
 **Previous homunculus feed checkpoint (2026-11-11)**. The registered `022F` path now applies feeding success state and missing-food feedback. All 164 application checks and 473 standalone checks passed. [Evidence](evidence/PK28-homun-feed.md)
 

@@ -5106,6 +5106,10 @@ void HandleSkillNoDamageNotify(CGameMode& mode, const PacketView& packet)
     const u32 srcGid = ReadLE32(packet.data + 10);
     const u8 result = packet.data[14];
 
+    if (skillId == 244 && srcGid == g_session.m_aid) {
+        g_session.m_homunStatus.alive = false;
+    }
+
     DeliverUseSkill(mode, srcGid, dstGid, skillId, rawLevel, result != 0);
 
     DbgLog("[GameMode] skill nodamage src=%u dst=%u skill=%u value=%d result=%u\n",

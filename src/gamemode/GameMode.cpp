@@ -11098,6 +11098,24 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]={0xa1,0x01,static_cast<u8>(wparam)};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
     }
+    case 198: {
+        // CZ_COMMAND_HOMUN carries a zero type and a one-byte command.
+        const u8 packet[] = {0x2d, 0x02, 0, 0, static_cast<u8>(wparam)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet)) ? 1 : 0;
+    }
+    case 199: {
+        if (!wparam) return 0;
+        std::array<u8, 26> packet{0x31, 0x02};
+        const char* name = reinterpret_cast<const char*>(wparam);
+        std::size_t count = 0;
+        while (count < 23 && name[count]) ++count;
+        std::memcpy(packet.data() + 2, name, count);
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), static_cast<int>(packet.size())) ? 1 : 0;
+    }
+    case 200: {
+        const u8 packet[] = {0x9f, 0x02, static_cast<u8>(wparam)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet)) ? 1 : 0;
+    }
     case 77:
         if(wparam)DispatchSourceGroundSkill(*reinterpret_cast<const std::array<int,4>*>(wparam));
         return 0;
