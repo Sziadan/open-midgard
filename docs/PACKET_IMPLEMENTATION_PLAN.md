@@ -70,6 +70,8 @@ cmake --build --preset build-mingw-qt-x64 -j 6
 
 Verify `RO_ENABLE_DEV_DEPLOY:BOOL=OFF` in `build-mingw-preset/CMakeCache.txt` before building. Confirm compiler/Qt paths from the preset rather than assuming another machine has the same install. PK03 must document confirmed focused test commands/targets; do not invent a CTest target or claim an old VS test tree passed. Existing starting points include `tools/tests/check_commerce.py`, `check_guild_window.py`, `check_send_queue.py`, `tools/tests/replay/CMakeLists.txt`, `UseSkillToPosInfoPacketTests.cpp`. Inspect each script first: old text-skill tests can encode the incorrect Ref layout and must be corrected with a server oracle.
 
+Reconfigure and rebuild `tools/tests` before running its standalone suite with `ctest --test-dir <build-dir> --output-on-failure`. CTest sets up the MinGW compiler directory for checks that build and run temporary executables. Rebuild stale standalone binaries before launching them directly.
+
 Use build-directory fixtures and localhost mock servers, installed assets read-only. Do not deploy to or run `D:/Spel/OldRO/open-midgard.exe`, kill the user's client, restart/reconfigure the server, or transact on live accounts as an automated test. Native mouse fixtures must run serially. Obtain separately authorized live validation when required. External rAthena modifications belong to an explicitly authorized separate server patch, never an incidental client fix.
 
 ## Schedule and exit gates

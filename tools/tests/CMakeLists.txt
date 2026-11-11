@@ -3,10 +3,15 @@ project(SkillParityChecks LANGUAGES CXX)
 enable_testing()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
+if(WIN32 AND MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # Standalone test executables also run directly from IDEs and shells.
+    add_link_options(-static)
+endif()
+
 if(WIN32 AND MINGW)
     get_filename_component(mingw_runtime_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
     set(mingw_test_runtime "${CMAKE_CURRENT_BINARY_DIR}/mingw-test-runtime.cmake")
-    # Read PATH at test time so CTest keeps the caller's environment.
+    # CTest also runs scripts that invoke the compiler and launch temporary executables.
     file(GENERATE OUTPUT "${mingw_test_runtime}"
         CONTENT "set(ENV{PATH} \"${mingw_runtime_dir};\$ENV{PATH}\")\n")
     set_property(DIRECTORY APPEND PROPERTY TEST_INCLUDE_FILES "${mingw_test_runtime}")
