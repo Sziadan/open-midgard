@@ -54,10 +54,15 @@ struct CGameActor {
     template<class... Args>void SetForceAnimation(Args...){}
     CRagEffect* LaunchEffect(int,vector3d,float){return nullptr;}
 };
-struct CPlayer:CGameActor {u32 m_targetGid=0,m_proceedTargetGid=0;} player;
+struct CPlayer:CGameActor {
+    u32 m_targetGid=0,m_proceedTargetGid=0;
+    struct { int type=0; } m_proceedType;
+    int m_isAttackRequest=0;
+} player;
 struct CGroundScope {void SendMsg(void*,int,msgparam_t,msgparam_t,msgparam_t){}};
 struct World {CPlayer* m_player=&player;int m_isPKZone=0,m_isSiegeMode=0;std::vector<CGroundScope*> m_gameObjectList;} world;
 struct CGameMode {
+    enum { GameMsg_LButtonUp = 20001 };
     World* m_world=&world;
     int m_waitingWearEquipAck=0,m_waitingTakeoffEquipAck=0,m_waitingUseItemAck=0,m_lastCardItemIndex=0;
     u32 m_lastMonGid=0,m_lastLockOnMonGid=0,m_attackChaseTargetGid=0;
@@ -66,7 +71,11 @@ struct CGameMode {
     bool m_hasCursorSnap=false;
     int m_cursorSnapRawX=0,m_cursorSnapRawY=0,m_cursorSnapDrawX=0,m_cursorSnapDrawY=0;
     void GetClientCoor(int,int,float&,float&){}
-    void SendMsg(int,msgparam_t,msgparam_t,msgparam_t){}
+    bool releasedInput=false, retiredProceed=false;
+    void SendMsg(int msg,msgparam_t,msgparam_t,msgparam_t){
+        if(msg==GameMsg_LButtonUp)releasedInput=true;
+    }
+    void SynchronizePlayerSkillProceed(CPlayer*,bool retire){retiredProceed=retire;}
 } mode;
 struct {CGameMode* GetCurrentGameMode(){return &mode;}} g_modeMgr;
 bool knownCartActive=false;
@@ -204,10 +213,12 @@ int main(){
     mode.m_lastMonGid=mode.m_lastLockOnMonGid=mode.m_attackChaseTargetGid=100;
     mode.m_hasAttackChaseHint=mode.m_hasSkillChase=mode.m_hasGroundSkillChase=1;
     player.m_targetGid=player.m_proceedTargetGid=100;
+    player.m_proceedType.type=3;player.m_isAttackRequest=1;
     u8 failure[]={0x3b,1,0,0};
     HandleActionFailure(mode,{failure,4,0x13b});
     assert(g_windowMgr.last=="Please equip the proper ammunition first."&&g_windowMgr.color==255);
     assert(!mode.m_lastLockOnMonGid&&!mode.m_hasAttackChaseHint&&!mode.m_hasSkillChase&&!player.m_targetGid);
+    assert(mode.releasedInput&&mode.retiredProceed&&!player.m_proceedType.type&&!player.m_isAttackRequest);
     const int notices=g_windowMgr.count;
     HandleActionFailure(mode,{failure,3,0x13b});
     failure[2]=99;HandleActionFailure(mode,{failure,4,0x13b});

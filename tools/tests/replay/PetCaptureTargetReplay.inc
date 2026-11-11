@@ -121,4 +121,30 @@
         mode.m_runtimeActors.erase(monster.m_gid);ReplayPumpSkillChase(mode);
         Require(!mode.m_hasSkillChase && player.m_proceedType.type==0 && !g_windowMgr.m_petTamingDeceiveWnd,
             "missing target did not retire capture proceed without owner");
+
+        auto vanishTargetOwner=std::make_unique<CPc>();auto* vanishTarget=vanishTargetOwner.get();
+        vanishTarget->m_gid=0x66000005;vanishTarget->m_job=1002;vanishTarget->m_isPc=0;vanishTarget->m_pos={100,0,0};
+        world.RegisterActor(vanishTarget);mode.m_runtimeActors[vanishTarget->m_gid]=vanishTarget;
+        struct RestoreVanishTarget {CGameMode& mode;CWorld& world;CPc* actor;~RestoreVanishTarget(){
+            auto it=mode.m_runtimeActors.find(actor->m_gid);if(it!=mode.m_runtimeActors.end()&&it->second==actor)mode.m_runtimeActors.erase(it);
+            world.UnregisterActor(actor);
+            mode.m_deferredActorDeletes.erase(std::remove(mode.m_deferredActorDeletes.begin(),mode.m_deferredActorDeletes.end(),actor),mode.m_deferredActorDeletes.end());
+        }} restoreVanishTarget{mode,world,vanishTarget};
+        arm();Require(ReplayTryPetCaptureOnActor(mode,vanishTarget,false,false,false),"vanish fixture capture target was rejected");
+        arm(); // Keep a manually armed capture intent pending while the queued target disappears.
+        Require(player.m_proceedTargetGid==vanishTarget->m_gid&&mode.m_hasSkillChase
+            &&mode.m_skillUseInfo.id==10000,"vanish fixture did not retain both queued target and pending manual intent");
+        mode.SendMsg(76,10000,vanishTarget->m_gid,0);
+        Require(g_windowMgr.m_petTamingDeceiveWnd&&g_windowMgr.m_petTamingDeceiveWnd->GetTargetGid()==vanishTarget->m_gid,
+            "vanish fixture did not create an unsubmitted target window");
+        receive({0x80,0x00,0x05,0x00,0x00,0x66,0x00});
+        Require(mode.m_runtimeActors.count(vanishTarget->m_gid)==0&&!mode.m_hasSkillChase
+            &&player.m_proceedType.type==0&&player.m_proceedTargetGid==0,
+            "production 0080 removal did not retire the queued capture proceed");
+        Require(mode.m_skillUseInfo.id==10000&&mode.m_skillUseInfo.level==0&&mode.m_skillUseInfo.useType==2,
+            "target removal consumed an already-pending manual capture intent");
+        Require(!g_windowMgr.m_petTamingDeceiveWnd,"target removal retained an unsubmitted taming window");
+        ReplayPumpSkillChase(mode);
+        Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,
+            "retired capture target generated another replay packet");
     }

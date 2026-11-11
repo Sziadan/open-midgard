@@ -2837,6 +2837,31 @@ void HandleEquipAmmo(CGameMode& mode, const PacketView& packet)
     DbgLog("[GameMode] ammunition equip ack index=%u\n", itemIndex);
 }
 
+void RetirePlayerSkillProceed(CGameMode& mode, CPlayer& player)
+{
+    if (player.m_proceedType.type == 3 || player.m_proceedType.type == 4 || player.m_proceedType.type == 6) {
+        player.m_proceedType.type = 0;
+        player.m_isAttackRequest = 0;
+    }
+    mode.SynchronizePlayerSkillProceed(&player, true);
+}
+
+void RetireActorTarget(CGameMode& mode, u32 gid)
+{
+    if (gid == 0) return;
+    auto* player = mode.m_world ? mode.m_world->m_player : nullptr;
+    if (player && player->m_proceedTargetGid == gid) {
+        player->m_proceedTargetGid = 0;
+        if (player->m_proceedType.type == 3 || player->m_proceedType.type == 6) {
+            RetirePlayerSkillProceed(mode, *player);
+        }
+    }
+    if (auto* window = g_windowMgr.m_petTamingDeceiveWnd;
+        window && window->GetTargetGid() == gid && !window->IsSelected()) {
+        g_windowMgr.DeleteWindow(window);
+    }
+}
+
 void HandleActionFailure(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 4) return;
@@ -2858,6 +2883,7 @@ void HandleActionFailure(CGameMode& mode, const PacketView& packet)
     }
     if (type <= 2) {
         // Stop retrying a server-rejected action until the user tries again.
+        mode.SendMsg(CGameMode::GameMsg_LButtonUp, 0, 0, 0);
         mode.m_lastMonGid = 0;
         mode.m_lastLockOnMonGid = 0;
         mode.m_hasAttackChaseHint = 0;
@@ -2868,6 +2894,7 @@ void HandleActionFailure(CGameMode& mode, const PacketView& packet)
             CPlayer* player = mode.m_world->m_player;
             player->m_targetGid = 0;
             player->m_proceedTargetGid = 0;
+            RetirePlayerSkillProceed(mode, *player);
         }
     }
     if (message) g_windowMgr.SendMsg(kUiChatEventMsg, reinterpret_cast<msgparam_t>(message), color);
@@ -6179,9 +6206,7 @@ void BeginActorDeath(CGameMode& mode, CGameActor& actor, u32 gid)
     actor.m_willBeDead = 0;
     actor.SendMsg(&actor, 28, 0, 0, 0);
 
-    if (mode.m_world && mode.m_world->m_player && mode.m_world->m_player->m_proceedTargetGid == gid) {
-        mode.m_world->m_player->m_proceedTargetGid = 0;
-    }
+    RetireActorTarget(mode, gid);
 
     if (CPc* pcActor = dynamic_cast<CPc*>(&actor)) {
         pcActor->InvalidateBillboard();
@@ -7430,9 +7455,7 @@ void RemoveRuntimeActor(CGameMode& mode, u32 gid)
     if (mode.m_attackChaseTargetGid == gid) {
         mode.m_attackChaseTargetGid = 0;
     }
-    if (mode.m_world && mode.m_world->m_player && mode.m_world->m_player->m_proceedTargetGid == gid) {
-        mode.m_world->m_player->m_proceedTargetGid = 0;
-    }
+    RetireActorTarget(mode, gid);
 
     const auto it = mode.m_runtimeActors.find(gid);
     if (it == mode.m_runtimeActors.end()) {

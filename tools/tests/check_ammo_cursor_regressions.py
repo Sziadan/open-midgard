@@ -61,7 +61,8 @@ def main():
     with tempfile.TemporaryDirectory(prefix='ro_ammo_cursor_') as directory:
         build = pathlib.Path(directory)
         (build / 'AmmoPacketBodies.inc').write_text('\n'.join(function(packet, name) for name in [
-            'bool BuildNormalInventoryItem(', 'void HandleEquipAmmo(', 'void HandleActionFailure(']), encoding='utf-8')
+            'bool BuildNormalInventoryItem(', 'void HandleEquipAmmo(', 'void RetirePlayerSkillProceed(',
+            'void HandleActionFailure(']), encoding='utf-8')
         (build / 'AmmoRequestBodies.inc').write_text('\n'.join(function(mode, name) for name in [
             'bool RequestEquipInventoryItem(', 'bool RequestUnequipInventoryItem(',
             'bool RequestUseInventoryItem(', 'bool RequestShortcutSlotUse(']), encoding='utf-8')

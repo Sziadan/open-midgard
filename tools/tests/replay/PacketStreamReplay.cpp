@@ -4635,6 +4635,10 @@ void ActionFailureProductionReceiveReplay()
     const u32 savedPlayerJob = g_session.m_playerJob;
     g_session.m_playerJob = 25;
     CGameMode mode;
+    CWorld world;
+    CPlayer player;
+    world.m_player = &player;
+    mode.m_world = &world;
     TestConnection connection;
     CGameModePacketRouter& router = GetProductionGameModePacketRouter();
     router.Clear();
@@ -4647,6 +4651,12 @@ void ActionFailureProductionReceiveReplay()
         mode.m_attackChaseTargetGid = 13;
         mode.m_hasSkillChase = 1;
         mode.m_hasGroundSkillChase = 1;
+        mode.m_isLeftButtonHeld = 1;
+        mode.m_hasHeldMoveTarget = 1;
+        player.m_proceedType.type = 3;
+        player.m_proceedTargetGid = 13;
+        player.m_skillId = 10000;
+        player.m_isAttackRequest = 1;
     };
     auto sendFailureType = [&](u16 type) {
         const std::vector<u8> frame{0x3B, 0x01, static_cast<u8>(type), static_cast<u8>(type >> 8)};
@@ -4658,12 +4668,15 @@ void ActionFailureProductionReceiveReplay()
     auto retryStateCleared = [&]() {
         return mode.m_lastMonGid == 0 && mode.m_lastLockOnMonGid == 0
             && mode.m_hasAttackChaseHint == 0 && mode.m_attackChaseTargetGid == 0
-            && mode.m_hasSkillChase == 0 && mode.m_hasGroundSkillChase == 0;
+            && mode.m_hasSkillChase == 0 && mode.m_hasGroundSkillChase == 0
+            && !mode.m_isLeftButtonHeld && !mode.m_hasHeldMoveTarget
+            && player.m_proceedType.type == 0 && player.m_proceedTargetGid == 0 && !player.m_isAttackRequest;
     };
     auto requireRetryStateRetained = [&]() {
         Require(mode.m_lastMonGid == 11 && mode.m_lastLockOnMonGid == 12
             && mode.m_hasAttackChaseHint == 1 && mode.m_attackChaseTargetGid == 13
-            && mode.m_hasSkillChase == 1 && mode.m_hasGroundSkillChase == 1,
+            && mode.m_hasSkillChase == 1 && mode.m_hasGroundSkillChase == 1
+            && mode.m_isLeftButtonHeld && mode.m_hasHeldMoveTarget && player.m_proceedType.type == 3,
             "non-clearing action-failure type changed retry state");
     };
 
