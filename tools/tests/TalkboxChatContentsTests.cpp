@@ -2,6 +2,8 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <string>
 #include <unordered_map>
 
 using u8 = std::uint8_t;
@@ -19,7 +21,7 @@ class CSkill {
 public:
     u32 m_aid = 0;
     int message = -1;
-    msgparam_t arg1 = 0;
+    std::string text;
     msgparam_t arg2 = -1;
     msgparam_t arg3 = -1;
     int calls = 0;
@@ -27,7 +29,7 @@ public:
     void SendMsg(CSkill*, int messageId, msgparam_t first, msgparam_t second, msgparam_t third)
     {
         message = messageId;
-        arg1 = first;
+        text = reinterpret_cast<const char*>(first);
         arg2 = second;
         arg3 = third;
         ++calls;
@@ -83,9 +85,7 @@ int main()
     HandleTalkboxChatContents(mode, PacketView{0x0191, 86, bytes.data()});
     assert(skill.calls == 1);
     assert(skill.message == 7);
-    assert(skill.arg1 == reinterpret_cast<msgparam_t>(bytes.data() + 6));
-    assert(reinterpret_cast<const char*>(skill.arg1)[0] == 'h');
-    assert(reinterpret_cast<const char*>(skill.arg1)[1] == 'i');
+    assert(skill.text == "hi");
     assert(skill.arg2 == 0 && skill.arg3 == 0);
 
     HandleTalkboxChatContents(mode, PacketView{0x0191, 86, bytes.data()});

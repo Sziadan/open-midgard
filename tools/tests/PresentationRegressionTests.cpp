@@ -19,6 +19,7 @@ struct CActRes {
 };
 struct CGameActor {
     int m_isMotionFreezed=1,m_curMotion=3,m_stateId=0,m_isMoving=0;
+    bool IsMotionFrozen() const { return m_isMotionFreezed != 0; }
     u32 m_stateStartTick=1;
     float m_attackMotion=-1,m_motionSpeed=1,m_dist=7;
 };

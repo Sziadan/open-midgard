@@ -183,6 +183,7 @@ struct CAbleToMakeEffect : CRenderObject {
     CRagEffect* m_magicTargetEffect = nullptr;
     void RemoveEffectById(int);
     void DetachEffects();
+    bool RemoveAttachedEffect(CRagEffect*);
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
     CRagEffect* LaunchEffect(int, vector3d, float);
     int launches = 0;

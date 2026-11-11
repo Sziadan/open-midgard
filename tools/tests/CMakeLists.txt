@@ -1916,7 +1916,7 @@ extract_body(msg_status_spawn "${msg_effect_actor_source}"
 extract_body(msg_status_release "${msg_effect_actor_source}"
     "void ReleaseMsgSprite(" "bool CGameActor::ProcessStatusMsgEffectMessage(")
 extract_body(msg_status_dispatch "${msg_effect_actor_source}"
-    "bool CGameActor::ProcessStatusMsgEffectMessage(" "void CGameActor::SendMsg(")
+    "bool CGameActor::ProcessStatusMsgEffectMessage(" "void CGameActor::SetShowEfst(")
 extract_body(msg_owner_dispatch "${msg_effect_source}"
     "bool CMsgEffect::ProcessOwnerMessage(" "void CMsgEffect::SendMsg(")
 extract_body(msg_effect_send "${msg_effect_source}"
