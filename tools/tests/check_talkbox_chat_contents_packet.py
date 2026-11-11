@@ -42,7 +42,10 @@ assert re.search(r"^0x0191,86\s*$", packet_db, re.M)
 
 assert "packet.packetLength < 86" in impl_body
 assert "ResolveSkillPacketUnit(mode, ReadLE32(packet.data + 2))" in impl_body
-assert "skill->SendMsg(skill, 7, reinterpret_cast<msgparam_t>(packet.data + 6), 0, 0)" in impl_body
+compact_impl = compact(impl_body)
+assert re.search(r"std::array<char,81>\w+\{\};", compact_impl)
+assert re.search(r"std::memcpy\(\w+\.data\(\),packet\.data\+6,\w+\.size\(\)-1\);", compact_impl)
+assert re.search(r"skill->SendMsg\(skill,7,reinterpret_cast<msgparam_t>\(\w+\.data\(\)\),0,0\);", compact_impl)
 assert "router.Register(0x0191, HandleTalkboxChatContents);" in impl
 
 pe_offset = int.from_bytes(binary[0x3C:0x40], "little")

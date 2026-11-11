@@ -1127,6 +1127,53 @@ void ReplaySkillDamageExtendedExtra(const std::string& path)
     std::cout << "SkillDamageExtended opcode=0x01DE skill=" << skillId << " target=2 effect=" << expectedEffect << "\n";
 }
 
+void ReplaySelectedSkillDamage(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 6, "selected damage fixture requires six frames");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](std::size_t index, u16 expectedOpcode, int expectedLength) {
+        const auto& bytes = packets[index].bytes;
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
+            && packet.packetId == expectedOpcode && consumed == expectedLength
+            && consumed == static_cast<int>(bytes.size()) && router.Dispatch(fixture.mode, packet),
+            "selected damage fixture framing or production dispatch failed");
+    };
+
+    dispatch(0, 0x01de, 33);
+    Require(fixture.target.m_willBeAttackedList.size() == 1, "local caster did not queue a remote hit");
+    const WBA& remoteHit = fixture.target.m_willBeAttackedList.back();
+    Require(remoteHit.targetGid == 1 && remoteHit.sourceSkillId == 18 && remoteHit.damage == 70000
+        && remoteHit.effectLevel == -2 && remoteHit.tCellX == -1 && remoteHit.tCellY == -1
+        && std::abs(remoteHit.attackedSpeedFactor - 1.0f) < 0.001f,
+        "extended damage, signed level, target, or attacked delay did not reach the hit queue");
+
+    dispatch(1, 0x01de, 33);
+    Require(fixture.source.m_willBeAttackedList.size() == 1, "remote caster did not queue a local hit");
+    const WBA& localHit = fixture.source.m_willBeAttackedList.back();
+    Require(localHit.targetGid == 2 && localHit.damage == -1 && localHit.effectLevel == 2,
+        "signed damage did not reach the local player");
+
+    dispatch(2, 0x01de, 33);
+    dispatch(3, 0x01de, 33);
+    Require(fixture.target.m_willBeAttackedList.size() == 1 && fixture.source.m_willBeAttackedList.size() == 1
+        && fixture.world.GetGameActorByAID(900) == nullptr,
+        "unresolved source or destination created a hit or actor");
+
+    dispatch(4, 0x011f, 16);
+    Require(fixture.world.GetSkillByAID(100) != nullptr, "source skill unit was not created");
+    dispatch(5, 0x01de, 33);
+    Require(fixture.target.m_willBeAttackedList.size() == 2, "unit caster did not queue its hit");
+    const WBA& unitHit = fixture.target.m_willBeAttackedList.back();
+    Require(unitHit.targetGid == 100 && unitHit.damage == 70 && unitHit.effectLevel == -1,
+        "selected extended damage did not preserve unit source and signed level");
+    std::cout << "SkillDamageSelected opcode=0x01DE localRemote=1 remoteLocal=1 unit=1 unresolved=2\n";
+}
+
 bool IsGroundSkillWaveScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1297,6 +1344,53 @@ bool IsSkillCastAckScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
     return packets.size() == 1 && packets[0].opcode == 0x013E && packets[0].bytes.size() == 24;
+}
+
+bool IsGroundScopeCastAckScenario(const std::string& path)
+{
+    return path.find("cast_ack_ground_scope") != std::string::npos;
+}
+
+void ReplayGroundScopeCastAck(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 2 && packets[0].opcode == 0x013E && packets[1].opcode == 0x01B9,
+        "ground-scope cast fixture requires ACK and cancel frames");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const ScenarioPacket& item, int expectedLength) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(item.bytes.data(), static_cast<int>(item.bytes.size()), packet, consumed)
+            && packet.packetId == item.opcode && consumed == expectedLength
+            && consumed == static_cast<int>(item.bytes.size()) && router.Dispatch(fixture.mode, packet),
+            "ground-scope cast fixture framing or production dispatch failed");
+    };
+    const auto countScopes = [&fixture]() {
+        return std::count_if(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+            [](const CGameObject* object) { return dynamic_cast<const CGroundScope*>(object) != nullptr; });
+    };
+    const std::ptrdiff_t scopesBefore = countScopes();
+    dispatch(packets[0], 24);
+
+    Require(countScopes() == scopesBefore + 1, "ground cast ACK did not add exactly one CGroundScope");
+    auto scopeIt = std::find_if(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+        [](CGameObject* object) { return dynamic_cast<CGroundScope*>(object) != nullptr; });
+    Require(scopeIt != fixture.world.m_gameObjectList.end() && (*scopeIt)->OnProcess() != 0,
+        "new ground scope was not active immediately after cast ACK");
+    Require(fixture.source.m_skillRechargeEndTick - fixture.source.m_skillRechargeStartTick == 1600,
+        "ground ACK did not start the selected cast interval");
+    dispatch(packets[1], 6);
+    Require(!fixture.source.m_beginSpellEffect && !fixture.source.m_skillRechargeGage,
+        "cancel did not clear the caster's begin effect and cast bar");
+    Require(countScopes() == scopesBefore + 1 && (*scopeIt)->OnProcess() != 0,
+        "actor cancel ended the independent ground scope before its deadline");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1700));
+    fixture.world.UpdateGameObjects();
+    Require(countScopes() == scopesBefore, "expired ground scope survived the production world object sweep");
+    std::cout << "GroundScopeCastAck opcode=0x013E skill=89 castMs=1600 actorCancel=1 expiry=swept\n";
 }
 
 void ReplaySkillCastAck(const std::string& path)
@@ -2347,7 +2441,8 @@ void ReplayTalkieBoxTriggerLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
     Require(packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
-        && packets[1].opcode == 0x0191 && packets[1].bytes.size() == 86
+        && packets[1].opcode == 0x0191 && packets[1].bytes.size() == 87
+        && packets[1].bytes.back() == 0x5A
         && packets[2].opcode == 0x01D7 && packets[2].bytes.size() == 11
         && packets[3].opcode == 0x0120 && packets[3].bytes.size() == 6,
         "Talkie Box trigger requires entry, text contents, used-trap update, and removal packets");
@@ -2364,6 +2459,13 @@ void ReplayTalkieBoxTriggerLifecycle(const std::string& path)
         int consumed = 0;
         Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
             "production packet reader rejected Talkie Box trigger packet");
+        if (index == 1) {
+            Require(consumed == 86 && packets[index].bytes[consumed] == 0x5A,
+                "0x0191 fixed-width text handling consumed the following marker byte");
+        } else {
+            Require(consumed == static_cast<int>(packets[index].bytes.size()),
+                "Talkie Box lifecycle packet framing differs from scenario metadata");
+        }
         Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Talkie Box packet");
         CSkill* unit = fixture.world.GetSkillByAID(100);
         if (index == 0) {
@@ -2371,8 +2473,9 @@ void ReplayTalkieBoxTriggerLifecycle(const std::string& path)
                 "Talkie Box entry did not create unit job153");
         } else if (index == 1) {
             Require(unit != nullptr && unit->m_job == 153
-                    && unit->GetChatBubbleText() == "TRAP TRIGGERED",
-                "0x0191 did not attach Talkie Box text to job153 before used-trap conversion");
+                    && unit->GetChatBubbleText().size() == 80
+                    && unit->GetChatBubbleText() == std::string(80, 'A'),
+                "0x0191 did not bound the full non-NUL 80-byte Talkie Box field before used-trap conversion");
         } else if (index == 2) {
             Require(unit != nullptr && unit->m_job == 140,
                 "0x01D7 did not convert triggered Talkie Box to used-trap job140");
@@ -2386,7 +2489,7 @@ void ReplayTalkieBoxTriggerLifecycle(const std::string& path)
                 "0x0120 did not remove triggered Talkie Box from CWorld object ownership list");
         }
     }
-    std::cout << "TalkieBox aid=100 job=153 text=TRAP TRIGGERED activeJob=140 removed=1\n";
+    std::cout << "TalkieBox aid=100 job=153 text_bytes=80 nonnul=1 activeJob=140 removed=1\n";
 }
 
 void ReplayWarpUnitLifecycle(const std::string& path)
@@ -2612,12 +2715,16 @@ int main(int argc, char** argv)
             ReplayLordOfVermilion(argv[1]);
         } else if (std::string(argv[1]).find("skill_message_0215") != std::string::npos) {
             ReplaySkillMessagePacket(argv[1]);
+        } else if (std::string(argv[1]).find("skill_damage_selected_01de") != std::string::npos) {
+            ReplaySelectedSkillDamage(argv[1]);
         } else if (IsSkillDamagePositionScenario(argv[1])) {
             ReplaySkillDamagePosition(argv[1]);
         } else if (IsSkillDamageExtendedExtraScenario(argv[1])) {
             ReplaySkillDamageExtendedExtra(argv[1]);
         } else if (IsGroundArrowShowerScenario(argv[1])) {
             ReplayGroundArrowShower(argv[1]);
+        } else if (IsGroundScopeCastAckScenario(argv[1])) {
+            ReplayGroundScopeCastAck(argv[1]);
         } else if (IsSkillCastAckScenario(argv[1])) {
             ReplaySkillCastAck(argv[1]);
         } else if (IsSkillCastCancelScenario(argv[1])) {

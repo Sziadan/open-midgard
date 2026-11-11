@@ -816,6 +816,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_cast_ack013e_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/cast_ack013e.tsv")
+    add_test(NAME skill_packet_replay_cast_ack_ground_scope_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/cast_ack_ground_scope.tsv")
     add_test(NAME skill_packet_replay_cast_announcement_checks
         COMMAND skill_packet_replay_runtime_checks --cast-announcements
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/cast_ack013e.tsv")
@@ -828,6 +831,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_skill_damage2_141_levelFFFF_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_damage2_141_levelFFFF.tsv")
+    add_test(NAME skill_packet_replay_selected_skill_damage_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_damage_selected_01de.tsv")
     add_test(NAME skill_packet_replay_skill_damage_position_0115_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_damage_position_0115.tsv")
@@ -963,10 +969,12 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     set_tests_properties(skill_packet_replay_venom_dust_trigger_lifecycle_checks
         skill_packet_replay_talkie_box_trigger_lifecycle_checks
         skill_packet_replay_cast_ack013e_checks
+        skill_packet_replay_cast_ack_ground_scope_checks
         skill_packet_replay_cast_announcement_checks
         skill_packet_replay_arrow_shower47_checks
         skill_packet_replay_skill_damage2_662_checks
         skill_packet_replay_skill_damage2_141_levelFFFF_checks
+        skill_packet_replay_selected_skill_damage_checks
         skill_packet_replay_ground_skill_wave362_checks
         skill_packet_replay_ground_skill_wave369_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")

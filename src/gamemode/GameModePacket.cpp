@@ -5479,7 +5479,9 @@ void HandleTalkboxChatContents(CGameMode& mode, const PacketView& packet)
 
     CSkill* skill = ResolveSkillPacketUnit(mode, ReadLE32(packet.data + 2));
     if (skill != nullptr) {
-        skill->SendMsg(skill, 7, reinterpret_cast<msgparam_t>(packet.data + 6), 0, 0);
+        std::array<char, 81> text{};
+        std::memcpy(text.data(), packet.data + 6, text.size() - 1);
+        skill->SendMsg(skill, 7, reinterpret_cast<msgparam_t>(text.data()), 0, 0);
     }
 }
 

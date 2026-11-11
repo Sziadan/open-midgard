@@ -778,6 +778,7 @@
       "status": "IN_PROGRESS",
       "evidence": [
         "docs/packets/evidence/PK23.03-skill-message-rejection.md",
+        "docs/packets/evidence/PK23.03-damage-cast-talkbox.md",
         "docs/packets/evidence/PK23.02-skill-handler-inventory.md"
       ],
       "commit_subject": null
