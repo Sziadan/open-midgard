@@ -758,9 +758,13 @@
       "commit_subject": "packet(PK22.05): verify selected ShowEFST and status routes"
     },
     "PK23.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": [
+        "docs/packets/contracts/PK23.SKILL-RECEIVE.md",
+        "docs/packets/evidence/PK23.01-skill-layout-probe.md",
+        "docs/packets/evidence/PK23.01-skill-layout-probe.cpp"
+      ],
+      "commit_subject": "packet(PK23.01): establish selected skill receive contract"
     },
     "PK23.02": {
       "status": "NOT_STARTED",
