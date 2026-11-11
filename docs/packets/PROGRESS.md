@@ -3859,3 +3859,7 @@ PK19.03 restores the siege actor emblem lifecycle and uses the existing emblem t
 ## 2026-11-11 Native siege emblem verification
 
 PK19.03 verifies the downloaded siege badge and restores the compressed legacy EBM fallback. Six Vulkan captures passed. All 164 application and 473 standalone checks passed. [Evidence](evidence/PK19-siege-emblem-native-verification.md)
+
+## 2026-11-11 Standing resurrection menu rendering
+
+PK19.03 verifies both native bitmap and Qt recovery menu frames before and after an event PvP restriction. All 165 application and 473 standalone checks passed. [Evidence](evidence/PK19-recovery-menu-rendering.md)

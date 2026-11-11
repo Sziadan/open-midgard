@@ -137,6 +137,7 @@ public:
 
     void SetBitmapName(const char* name, int stateIndex);
     void OnDraw() override;
+    void DrawNativeToHdc(HDC hdc);
     void OnLBtnDown(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;
     void OnMouseMove(int x, int y) override;

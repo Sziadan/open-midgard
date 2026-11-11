@@ -178,6 +178,7 @@ template<class Window> QImage Native(Window& window,QRgb expected,int width=Widt
 #include "ItemObtainRenderChecks.inc"
 #include "ItemUseFeedbackRenderChecks.inc"
 #include "RecoveryDeltaRenderChecks.inc"
+#include "StandingResurrectionRenderChecks.inc"
 #include "ChatWindowStateRenderChecks.inc"
 
 int main(int argc,char** argv) {
@@ -208,6 +209,7 @@ int main(int argc,char** argv) {
         const bool itemCardDetail=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail";
         const bool itemCardDetailChild=argc>2 && QString::fromLocal8Bit(argv[2])=="item-card-detail-child";
         const bool recoveryDelta=argc>2 && QString::fromLocal8Bit(argv[2])=="recovery-delta";
+        const bool standingResurrection=argc>2 && QString::fromLocal8Bit(argv[2])=="standing-resurrection";
         const bool chatState=argc>2 && QString::fromLocal8Bit(argv[2])=="chat-state";
         const bool itemUseFeedback=argc>2 && QString::fromLocal8Bit(argv[2])=="item-use-feedback";
         const bool itemObtain=argc>2 && QString::fromLocal8Bit(argv[2])=="item-obtain";
@@ -235,6 +237,10 @@ int main(int argc,char** argv) {
             std::cout<<"PASS source inventory tab startup and runtime retention\n";return 0;
         }
         InventoryTabViewportFixture inventoryTabViewport;
+        if (standingResurrection) {
+            SetRuntimeUiScalePercent(100);
+            inventoryTabViewport.Create("read-small");
+        }
         if(inventoryMutations || itemObtain || itemUseFeedback || recoveryDelta) {
             SetRuntimeUiScalePercent(100);inventoryTabViewport.Create("inventory-mutations");
         }
@@ -406,6 +412,19 @@ int main(int argc,char** argv) {
             view.hide();g_windowMgr.RemoveAllWindows();g_windowMgr.m_itemWnd=nullptr;g_windowMgr.m_storageWnd=nullptr;
             SkillPacketReplayAccess::SetCurrent(nullptr);mode.m_world=nullptr;mode.m_view=nullptr;
             std::cout<<"PASS recovery-delta native/Qt values, zero QML errors\n";return 0;
+        }
+        if (standingResurrection) {
+            CheckStandingResurrectionMenu(app, view, *state, mode, inventory, adapter, output);
+            Require(errors == 0, "recovery menu emitted QML warnings or errors");
+            view.hide();
+            g_windowMgr.RemoveAllWindows();
+            g_windowMgr.m_itemWnd = nullptr;
+            g_windowMgr.m_storageWnd = nullptr;
+            SkillPacketReplayAccess::SetCurrent(nullptr);
+            mode.m_world = nullptr;
+            mode.m_view = nullptr;
+            std::cout << "PASS standing resurrection native and Qt menu frames\n";
+            return 0;
         }
         if(itemUseFeedback) {
             CheckItemUseFeedbackUi(app,view,state,mode,inventory,adapter,output);

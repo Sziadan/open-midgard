@@ -12,6 +12,7 @@ public:
     void SetShow(int show) override;
     void OnCreate(int cx, int cy) override;
     void OnDraw() override;
+    void DrawNativeToHdc(HDC hdc);
     void OnLBtnDown(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;
@@ -35,6 +36,7 @@ private:
     };
 
     void EnsureCreated();
+    void EnsureNativeButtons();
     void LayoutButtons();
     RECT GetEntryRect(int index) const;
     int HitTestEntry(int x, int y) const;

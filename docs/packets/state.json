@@ -643,9 +643,10 @@
         "docs/packets/evidence/PK19-map-property-lifetime.md",
         "docs/packets/evidence/PK19-standing-resurrection.md",
         "docs/packets/evidence/PK19-siege-actor-emblems.md",
-        "docs/packets/evidence/PK19-siege-emblem-native-verification.md"
+        "docs/packets/evidence/PK19-siege-emblem-native-verification.md",
+        "docs/packets/evidence/PK19-recovery-menu-rendering.md"
       ],
-      "commit_subject": "packet(PK19.03): verify siege emblems and restore graffiti"
+      "commit_subject": "packet(PK19.03): verify standing resurrection menu rendering"
     },
     "PK19.04": {
       "status": "NOT_STARTED",

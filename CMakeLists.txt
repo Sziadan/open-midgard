@@ -530,6 +530,10 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
             "${CMAKE_CURRENT_BINARY_DIR}/packet-recovery-delta-renders" "recovery-delta")
         set_tests_properties(packet_recovery_delta_render_checks PROPERTIES TIMEOUT 60
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-recovery-delta-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
+        add_test(NAME packet_standing_resurrection_render_checks COMMAND packet_item_render_checks
+            "${CMAKE_CURRENT_BINARY_DIR}/packet-standing-resurrection-renders" "standing-resurrection")
+        set_tests_properties(packet_standing_resurrection_render_checks PROPERTIES TIMEOUT 60
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-standing-resurrection-settings;QT_QPA_PLATFORM_PLUGIN_PATH=${RO_PACKET_QT_PREFIX}/plugins/platforms")
         add_test(NAME packet_chat_state_render_checks COMMAND packet_item_render_checks
             "${CMAKE_CURRENT_BINARY_DIR}/packet-chat-state-renders" "chat-state")
         set_tests_properties(packet_chat_state_render_checks PROPERTIES TIMEOUT 60

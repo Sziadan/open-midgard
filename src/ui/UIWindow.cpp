@@ -647,6 +647,15 @@ void UIBitmapButton::OnDraw()
         return;
     }
 
+    DrawNativeToHdc(hdc);
+    ReleaseDrawTarget(hdc);
+}
+
+void UIBitmapButton::DrawNativeToHdc(HDC hdc)
+{
+    if (!hdc || !m_show) {
+        return;
+    }
     const shopui::BitmapPixels* drawBmp = nullptr;
     if (m_state == 1 && m_pressedBitmap.IsValid()) {
         drawBmp = &m_pressedBitmap;
@@ -667,7 +676,6 @@ void UIBitmapButton::OnDraw()
         shopui::DrawBitmapPixelsTransparent(hdc, *drawBmp, dst);
     }
     DrawChildrenToHdc(hdc);
-    ReleaseDrawTarget(hdc);
 }
 
 void UIBitmapButton::OnLBtnDown(int x, int y)

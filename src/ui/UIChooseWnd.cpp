@@ -231,8 +231,15 @@ void UIChooseWnd::OnCreate(int cx, int cy)
     Create(kDefaultWidth, kDefaultHeight);
     Move((cx - m_w) / 2, (cy - m_h) / 2);
 
-    if (IsQtUiRuntimeEnabled()) {
-        RefreshRecoveryOption();
+    if (!IsQtUiRuntimeEnabled()) {
+        EnsureNativeButtons();
+    }
+    RefreshRecoveryOption();
+}
+
+void UIChooseWnd::EnsureNativeButtons()
+{
+    if (m_entryButtons[0]) {
         return;
     }
 
@@ -249,7 +256,7 @@ void UIChooseWnd::OnCreate(int cx, int cy)
     }
 
     LayoutButtons();
-    RefreshRecoveryOption();
+    SyncSelectionVisuals();
 }
 
 void UIChooseWnd::RefreshRecoveryOption()
@@ -389,14 +396,23 @@ void UIChooseWnd::OnDraw()
         return;
     }
 
-    LayoutButtons();
+    DrawNativeToHdc(hdc);
+    ReleaseDrawTarget(hdc);
+}
 
+void UIChooseWnd::DrawNativeToHdc(HDC hdc)
+{
+    if (!hdc || !m_show) {
+        return;
+    }
+    EnsureNativeButtons();
+    RefreshRecoveryOption();
+    LayoutButtons();
     const RECT panel = MakeRect(m_x, m_y, m_w, m_h);
     FillRoundedRectColor(hdc, panel, RGB(255, 255, 255), kWindowCornerRadius);
-
-    DrawChildrenToHdc(hdc);
-
-    ReleaseDrawTarget(hdc);
+    for (auto* button : m_entryButtons) {
+        button->DrawNativeToHdc(hdc);
+    }
 }
 
 void UIChooseWnd::OnLBtnDown(int x, int y)

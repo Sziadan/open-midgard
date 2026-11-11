@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Standing resurrection render checkpoint (2026-11-11)**. Native bitmap and Qt captures show the recovery choice for an eligible character. The event PvP packet removes the row from both menus. All 165 application and 473 standalone checks passed. [Evidence](evidence/PK19-recovery-menu-rendering.md)
+
 **Native siege emblem checkpoint (2026-11-11)**. Vulkan captures verified the downloaded and legacy graffiti badges, with no emblem pixels outside siege, during concealment, or for a mismatched version. [Evidence](evidence/PK19-siege-emblem-native-verification.md)
 
 **Previous siege actor emblem checkpoint (2026-11-11)**. The actor packet and concealment paths control siege emblem eligibility. Production lifecycle replay passed. [Evidence](evidence/PK19-siege-actor-emblems.md)
