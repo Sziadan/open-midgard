@@ -12,6 +12,7 @@
 #include "gamemode/LoginMode.h"
 #include "gamemode/Mode.h"
 #include "item/Item.h"
+#include "pathfinder/PathFinder.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
 #include "qtui/QtUiStateAdapter.h"
@@ -3022,6 +3023,71 @@ void PendingCompanionActorSkillReplay()
     mode.m_world = nullptr;
 }
 
+void MapCellUpdateReplay()
+{
+    C3dAttr attr;
+    attr.m_width = 3;
+    attr.m_height = 3;
+    attr.m_cells.resize(9);
+    attr.m_cells[4].h1 = 12.0f;
+    CWorld world;
+    CWorld otherWorld;
+    world.m_attr = &attr;
+    otherWorld.m_attr = &attr;
+    CGameMode mode;
+    mode.m_world = &world;
+    std::memcpy(mode.m_rswName, "prontera.rsw", sizeof("prontera.rsw"));
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](u16 x, u16 y, u16 type, std::string_view name) {
+        std::array<u8, 25> bytes{0x92, 0x01, static_cast<u8>(x), static_cast<u8>(x >> 8),
+            static_cast<u8>(y), static_cast<u8>(y >> 8), static_cast<u8>(type), static_cast<u8>(type >> 8)};
+        std::copy(name.begin(), name.end(), bytes.begin() + 8);
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed)
+            && consumed == 24 && router.Dispatch(mode, packet), "map cell update did not frame and dispatch");
+    };
+
+    CPathFinder pathFinder;
+    pathFinder.SetMap(&world);
+    CPathInfo path;
+    const auto findPath = [&] { return pathFinder.FindPath(10, 0, 1, 8, 8, 2, 1, 150, &path); };
+    const auto usesCenter = [&] {
+        return std::any_of(path.m_cells.begin(), path.m_cells.end(),
+            [](const PathCell& cell) { return cell.x == 1 && cell.y == 1; });
+    };
+    Require(findPath() && usesCenter(), "baseline route skipped the center");
+
+    dispatch(1, 1, 5, "PRONTERA.GAT");
+    dispatch(1, 1, 5, "prontera.gat");
+    Require(world.GetMapCellType(1, 1) == 5 && !world.IsMapCellWalkable(1, 1)
+        && otherWorld.GetMapCellType(1, 1) == 0 && attr.m_cells[4].h1 == 12.0f,
+        "Ice Wall changed the base GAT or failed to update the effective cell");
+    Require(findPath() && !usesCenter(), "movement path did not detour around Ice Wall");
+
+    dispatch(1, 1, 0, "other.gat");
+    dispatch(1, 1, 0, "");
+    dispatch(1, 1, 7, "prontera.gat");
+    dispatch(0xffff, 1, 5, "prontera.gat");
+    dispatch(3, 0, 5, "prontera.gat");
+    Require(world.GetMapCellType(1, 1) == 5 && world.IsMapCellWalkable(0, 1),
+        "invalid update changed a map cell");
+
+    for (const u16 type : {0, 2, 3, 4, 6}) {
+        dispatch(1, 1, type, "prontera.gat");
+        Require(world.GetMapCellType(1, 1) == type && findPath() && usesCenter(),
+            "walkable cell type did not restore the direct path");
+    }
+    dispatch(1, 1, 1, "prontera.gat");
+    Require(!world.IsMapCellWalkable(1, 1) && findPath() && !usesCenter(),
+        "blocked cell did not prevent direct movement");
+    dispatch(1, 1, 0, "prontera.gat");
+    Require(findPath() && usesCenter(), "restoration to base did not restore the direct path");
+    mode.m_world = nullptr;
+}
+
 void MapTypePropertyReplay()
 {
     struct RecordingPlayer : CPlayer {
@@ -5587,6 +5653,7 @@ int main(int argc,char** argv){try{
     CompanionSkillListReplay();
     LocalizedSystemNoticeReplay();
     PendingCompanionActorSkillReplay();
+    MapCellUpdateReplay();
     MapTypePropertyReplay();
     CompanionTargetReplay();
     CompanionSummonReplay();

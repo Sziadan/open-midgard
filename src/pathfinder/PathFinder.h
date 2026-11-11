@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-class C3dAttr;
+class CWorld;
 struct CPathInfo;
 
 class CPathFinder {
@@ -9,7 +9,7 @@ public:
     ~CPathFinder();
 
     void Reset();
-    void SetMap(C3dAttr* newMap);
+    void SetMap(const CWorld* world);
     bool FindPath(unsigned int startTime,
         int sx,
         int sy,
@@ -24,7 +24,7 @@ private:
     bool IsWalkable(int x, int y) const;
     bool IsConnected(int sx, int sy, int dx, int dy) const;
 
-    C3dAttr* m_map;
+    const CWorld* m_world;
 };
 
 extern CPathFinder g_pathFinder;

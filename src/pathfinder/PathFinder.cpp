@@ -116,7 +116,7 @@ void StampPathTimes(CPathInfo* pathInfo,
 CPathFinder g_pathFinder;
 
 CPathFinder::CPathFinder()
-	: m_map(nullptr)
+	: m_world(nullptr)
 {
 }
 
@@ -128,19 +128,14 @@ void CPathFinder::Reset()
 {
 }
 
-void CPathFinder::SetMap(C3dAttr* newMap)
+void CPathFinder::SetMap(const CWorld* world)
 {
-	m_map = newMap;
+	m_world = world;
 }
 
 bool CPathFinder::IsWalkable(int x, int y) const
 {
-	if (!m_map || x < 0 || y < 0 || x >= m_map->m_width || y >= m_map->m_height) {
-		return false;
-	}
-
-	const CAttrCell& cell = m_map->m_cells[static_cast<size_t>(y) * static_cast<size_t>(m_map->m_width) + static_cast<size_t>(x)];
-	return cell.flag == 0;
+	return m_world && m_world->IsMapCellWalkable(x, y);
 }
 
 bool CPathFinder::IsConnected(int sx, int sy, int dx, int dy) const
@@ -177,7 +172,7 @@ bool CPathFinder::FindPath(unsigned int startTime,
 
 	// Ref: sx/sy is the start cell, cellX/cellY is the 0..15 sub-cell inside
 	// it, and dx/dy is the destination cell. A same-cell move is not a path.
-	if (!m_map || !IsWalkable(sx, sy) || !IsWalkable(dx, dy) || (sx == dx && sy == dy)) {
+	if (!IsWalkable(sx, sy) || !IsWalkable(dx, dy) || (sx == dx && sy == dy)) {
 		return false;
 	}
 
@@ -262,22 +257,22 @@ bool CPathFinder::FindPath(unsigned int startTime,
 		int dc[4] = { 0, 0, 0, 0 };
 		int freeMask = 0;
 
-		if (current.y + 1 < m_map->m_height && IsWalkable(current.x, current.y + 1)) {
+		if (IsWalkable(current.x, current.y + 1)) {
 			freeMask |= 1;
 			dc[0] = (current.y >= dy) ? 20 : 0;
 			enqueueOrRelax(current.x, current.y + 1, dist, cost + dc[0], current.x, current.y);
 		}
-		if (current.x - 1 >= 0 && IsWalkable(current.x - 1, current.y)) {
+		if (IsWalkable(current.x - 1, current.y)) {
 			freeMask |= 2;
 			dc[1] = (current.x <= dx) ? 20 : 0;
 			enqueueOrRelax(current.x - 1, current.y, dist, cost + dc[1], current.x, current.y);
 		}
-		if (current.y - 1 >= 0 && IsWalkable(current.x, current.y - 1)) {
+		if (IsWalkable(current.x, current.y - 1)) {
 			freeMask |= 4;
 			dc[2] = (current.y <= dy) ? 20 : 0;
 			enqueueOrRelax(current.x, current.y - 1, dist, cost + dc[2], current.x, current.y);
 		}
-		if (current.x + 1 < m_map->m_width && IsWalkable(current.x + 1, current.y)) {
+		if (IsWalkable(current.x + 1, current.y)) {
 			freeMask |= 8;
 			dc[3] = (current.x >= dx) ? 20 : 0;
 			enqueueOrRelax(current.x + 1, current.y, dist, cost + dc[3], current.x, current.y);

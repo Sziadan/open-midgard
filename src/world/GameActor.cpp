@@ -7233,7 +7233,7 @@ void CGameActor::StartMoveToCell(int cellX, int cellY, int pathFlag)
     m_moveEndPos.y = gameMode->m_world->m_attr->GetHeight(worldX, worldZ);
     m_moveEndTime = m_moveStartTime;
 
-    g_pathFinder.SetMap(gameMode->m_world->m_attr);
+    g_pathFinder.SetMap(gameMode->m_world);
     // Message 19's third argument is the path delay in ms per cell.
     // Snap (MO_BODYRELOCATION) passes 15, so the caster dashes to the cell
     // the ground-skill packet already committed on the server. A zero delay

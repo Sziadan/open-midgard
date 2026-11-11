@@ -3498,6 +3498,20 @@ std::string ExtractFixedPacketString(const PacketView& packet, size_t offset, si
     return std::string(reinterpret_cast<const char*>(packet.data + offset), len);
 }
 
+void HandleUpdateMapInfo(CGameMode& mode, const PacketView& packet)
+{
+    if (!mode.m_world || !packet.data || packet.packetLength != 24) {
+        return;
+    }
+    const std::string map = ToLowerAsciiStatus(NormalizeMapName(ExtractFixedPacketString(packet, 8, 16)));
+    const std::string currentMap = ToLowerAsciiStatus(NormalizeMapName(mode.m_rswName));
+    if (map.empty() || map != currentMap) {
+        return;
+    }
+    mode.m_world->ApplyMapCellType(static_cast<s16>(ReadLE16(packet.data + 2)),
+        static_cast<s16>(ReadLE16(packet.data + 4)), static_cast<s16>(ReadLE16(packet.data + 6)));
+}
+
 struct NpcMenuOption {
     std::string text;
     u8 choice = 0;
@@ -7181,7 +7195,7 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     actor->m_moveEndTime = actor->m_moveStartTime;
 
     if (mode.m_world && mode.m_world->m_attr && actor->m_moveSrcX >= 0 && actor->m_moveSrcY >= 0) {
-        g_pathFinder.SetMap(mode.m_world->m_attr);
+        g_pathFinder.SetMap(mode.m_world);
         const bool localPlayer = IsLocalPlayerActor(mode, gid);
         if (localPlayer && g_session.m_speed != 0) {
             actor->m_speed = g_session.m_speed;
@@ -9322,7 +9336,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0148, HandleActorResurrection);
     RegisterHandlerIfValid(router, receiveProfile.notifyEffectBasic, HandleNotifyEffect);
     router.Register(0x01B9, HandleSkillCastCancel);
-    router.Register(0x0192, HandleIgnorePacket);
+    router.Register(0x0192, HandleUpdateMapInfo);
     RegisterHandlerIfValid(router, receiveProfile.skillUnitSetExtended, HandleSkillUnitSet2);
     router.Register(0x01AC, HandleSkillUpdate);
     router.Register(0x01CF, HandleDevotionList);

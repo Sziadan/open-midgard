@@ -45,6 +45,7 @@ public:
     CRes* Clone() override;
     void Reset() override;
     float GetHeight(float x, float z) const;
+    const CAttrCell* GetCell(int x, int y) const;
 
     int m_width;
     int m_height;
@@ -379,6 +380,13 @@ public:
         float delayFrames = 0.0f);
     bool HasWarpAtAttrCell(int attrX, int attrY) const;
     void RenderBackgroundObjects(const matrix& viewMatrix) const;
+    void ApplyMapCellType(int x, int y, int type);
+    void ClearMapCellTypes();
+    int GetMapCellType(int x, int y) const;
+    bool IsMapCellWalkable(int x, int y) const;
+
+private:
+    std::map<size_t, int> m_mapCellTypes;
 };
 
 extern CWorld g_world;

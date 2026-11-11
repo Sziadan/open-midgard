@@ -4518,6 +4518,15 @@ CRes* C3dAttr::Clone()
     return new C3dAttr();
 }
 
+const CAttrCell* C3dAttr::GetCell(int x, int y) const
+{
+    if (x < 0 || x >= m_width || y < 0 || y >= m_height) {
+        return nullptr;
+    }
+    const auto index = static_cast<size_t>(y) * static_cast<size_t>(m_width) + static_cast<size_t>(x);
+    return index < m_cells.size() ? &m_cells[index] : nullptr;
+}
+
 void C3dAttr::Reset()
 {
     m_width = 0;
@@ -5728,6 +5737,42 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
             }
         }
     }
+}
+
+void CWorld::ApplyMapCellType(int x, int y, int type)
+{
+    const CAttrCell* cell = m_attr ? m_attr->GetCell(x, y) : nullptr;
+    if (!cell || type < 0 || type > 6) {
+        return;
+    }
+    const auto index = static_cast<size_t>(cell - m_attr->m_cells.data());
+    if (cell->flag == type) {
+        m_mapCellTypes.erase(index);
+    } else {
+        m_mapCellTypes.insert_or_assign(index, type);
+    }
+}
+
+void CWorld::ClearMapCellTypes()
+{
+    m_mapCellTypes.clear();
+}
+
+int CWorld::GetMapCellType(int x, int y) const
+{
+    const CAttrCell* cell = m_attr ? m_attr->GetCell(x, y) : nullptr;
+    if (!cell) {
+        return 1;
+    }
+    const auto index = static_cast<size_t>(cell - m_attr->m_cells.data());
+    const auto delta = m_mapCellTypes.find(index);
+    return delta == m_mapCellTypes.end() ? cell->flag : delta->second;
+}
+
+bool CWorld::IsMapCellWalkable(int x, int y) const
+{
+    const int type = GetMapCellType(x, y);
+    return type >= 0 && type <= 6 && type != 1 && type != 5;
 }
 
 CWorld::CWorld() 

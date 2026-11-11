@@ -4805,7 +4805,7 @@ bool CanFindMovePath(const CGameMode& mode, int sx, int sy, int cellX, int cellY
         return false;
     }
 
-    g_pathFinder.SetMap(mode.m_world->m_attr);
+    g_pathFinder.SetMap(mode.m_world);
     CPathInfo pathInfo;
     return g_pathFinder.FindPath(timeGetTime(), sx, sy, cellX, cellY, dx, dy, 150, &pathInfo);
 }
@@ -4817,15 +4817,7 @@ bool CanFindMovePath(const CGameMode& mode, int sx, int sy, int dx, int dy)
 
 bool IsWalkableAttrCell(const CGameMode& mode, int tileX, int tileY)
 {
-    if (!mode.m_world || !mode.m_world->m_attr || tileX < 0 || tileY < 0
-        || tileX >= mode.m_world->m_attr->m_width || tileY >= mode.m_world->m_attr->m_height
-        || mode.m_world->m_attr->m_cells.empty()) {
-        return false;
-    }
-
-    const CAttrCell& cell = mode.m_world->m_attr->m_cells[
-        static_cast<size_t>(tileY) * static_cast<size_t>(mode.m_world->m_attr->m_width) + static_cast<size_t>(tileX)];
-    return cell.flag == 0;
+    return mode.m_world && mode.m_world->IsMapCellWalkable(tileX, tileY);
 }
 
 bool IsOccupiedActorCell(const CGameMode& mode, int tileX, int tileY, u32 ignoredActorA = 0, u32 ignoredActorB = 0)
@@ -7160,20 +7152,13 @@ void PumpSkillChaseRequest(CGameMode& mode)
             {{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}},
             {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}},
         }};
-        const auto isSourceWalkableGroundCell = [attr](int x, int y) {
-            if (x < 0 || x >= attr->m_width || y < 0 || y >= attr->m_height) {
-                return false;
-            }
-            const CAttrCell& cell = attr->m_cells[static_cast<size_t>(x + y * attr->m_width)];
-            return cell.flag != 1 && cell.flag != 5;
-        };
-        if (!isSourceWalkableGroundCell(approachTileX, approachTileY)) {
+        if (!mode.m_world->IsMapCellWalkable(approachTileX, approachTileY)) {
             const int projectedX = approachTileX;
             const int projectedY = approachTileY;
             for (const auto& offset : kGroundRefNeighborOrder) {
                 approachTileX = projectedX + offset[0];
                 approachTileY = projectedY + offset[1];
-                if (isSourceWalkableGroundCell(approachTileX, approachTileY)) {
+                if (mode.m_world->IsMapCellWalkable(approachTileX, approachTileY)) {
                     break;
                 }
             }
@@ -7268,20 +7253,13 @@ void PumpSkillChaseRequest(CGameMode& mode)
             {{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}},
             {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}},
         }};
-        const auto isSourceWalkableTouchCell = [attr](int x, int y) {
-            if (x < 0 || x >= attr->m_width || y < 0 || y >= attr->m_height) {
-                return false;
-            }
-            const CAttrCell& cell = attr->m_cells[static_cast<size_t>(x + y * attr->m_width)];
-            return cell.flag != 1 && cell.flag != 5;
-        };
-        if (!isSourceWalkableTouchCell(approachTileX, approachTileY)) {
+        if (!mode.m_world->IsMapCellWalkable(approachTileX, approachTileY)) {
             const int projectedX = approachTileX;
             const int projectedY = approachTileY;
             for (const auto& offset : kTouchRefNeighborOrder) {
                 approachTileX = projectedX + offset[0];
                 approachTileY = projectedY + offset[1];
-                if (isSourceWalkableTouchCell(approachTileX, approachTileY)) {
+                if (mode.m_world->IsMapCellWalkable(approachTileX, approachTileY)) {
                     break;
                 }
             }
@@ -7393,20 +7371,13 @@ void PumpSkillChaseRequest(CGameMode& mode)
         {{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}},
         {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}},
     }};
-    const auto isSourceWalkableCell = [attr](int x, int y) {
-        if (x < 0 || x >= attr->m_width || y < 0 || y >= attr->m_height) {
-            return false;
-        }
-        const CAttrCell& cell = attr->m_cells[static_cast<size_t>(x + y * attr->m_width)];
-        return cell.flag != 1 && cell.flag != 5;
-    };
-    if (!isSourceWalkableCell(chaseTileX, chaseTileY)) {
+    if (!mode.m_world->IsMapCellWalkable(chaseTileX, chaseTileY)) {
         const int projectedX = chaseTileX;
         const int projectedY = chaseTileY;
         for (const auto& offset : kRefNeighborOrder) {
             chaseTileX = projectedX + offset[0];
             chaseTileY = projectedY + offset[1];
-            if (isSourceWalkableCell(chaseTileX, chaseTileY)) {
+            if (mode.m_world->IsMapCellWalkable(chaseTileX, chaseTileY)) {
                 break;
             }
         }
@@ -10267,6 +10238,7 @@ void CGameMode::OnInit(const char* worldName) {
         m_world->ClearFixedObjects();
         m_world->m_ground = nullptr;
         m_world->m_player = nullptr;
+        m_world->ClearMapCellTypes();
         m_world->m_attr = nullptr;
     }
     m_view = nullptr;
@@ -10347,6 +10319,7 @@ void CGameMode::OnExit() {
         m_world->ClearBackgroundObjects();
         m_world->ClearFixedObjects();
         m_world->ClearGround();
+        m_world->ClearMapCellTypes();
         m_world->m_attr = nullptr;
         m_world->m_rootNode.m_attr = nullptr;
         SetRect(&m_world->m_rootNode.m_attrArea, 0, 0, 0, 0);

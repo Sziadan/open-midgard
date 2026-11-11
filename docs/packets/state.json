@@ -597,9 +597,12 @@
       "commit_subject": "packet(PK18.01): establish dynamic map cell contract"
     },
     "PK18.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/evidence/PK18.01-dynamic-map-cell-scope.md",
+        "docs/packets/evidence/PK18.02-dynamic-map-cell-updates.md"
+      ],
+      "commit_subject": "packet(PK18.02): apply dynamic map cell updates"
     },
     "PK18.03": {
       "status": "NOT_STARTED",
