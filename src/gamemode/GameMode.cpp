@@ -3823,33 +3823,9 @@ bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
         return false;
     }
 
-    const std::string targetName = ResolveHoveredActorName(mode, hoveredActor);
-    const u32 targetAid = hoveredActor->m_gid;
-    auto* menuWnd = static_cast<UIPlayerContextMenuWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_PLAYERCONTEXTMENUWND));
-    if (!menuWnd) {
-        return false;
-    }
-
     const int menuX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(screenX) : screenX;
     const int menuY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(screenY) : screenY;
-
-    mode.m_menuTargetAID = targetAid;
-    mode.m_lastWhisperMenuCharacterName = targetName;
-    auto entries = BuildPlayerContextMenuEntries(targetName);
-    if (mode.CanRequestAdoption(targetAid)) {
-        ro::UiMessageStrings strings;
-        strings.Load();
-        auto label = strings.Get(887, "Send an adoption request to %s");
-        if (const auto placeholder = label.find("%s"); placeholder != std::string::npos) {
-            label.replace(placeholder, 2, targetName);
-        }
-        entries.push_back({CGameMode::PlayerContext_RequestAdoption, std::move(label)});
-    }
-    menuWnd->SetMenu(targetAid, targetName, entries, menuX, menuY);
-    DbgLog("[GameMode] opened player context menu targetAid=%u targetName='%s'\n",
-        static_cast<unsigned int>(targetAid),
-        targetName.c_str());
-    return true;
+    return mode.OpenPlayerContextMenu(hoveredActor->m_gid, ResolveHoveredActorName(mode, hoveredActor), menuX, menuY);
 }
 
 const char* GetPlayerContextActionName(CGameMode::PlayerContextAction action)
@@ -10892,6 +10868,29 @@ bool SendAdoptionPacket(u8 opcode, u32 first, u32 second = 0, bool accepted = fa
     return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
         opcode == 0xf9 ? 6 : 14);
 }
+}
+
+bool CGameMode::OpenPlayerContextMenu(u32 targetAid, const std::string& targetName, int x, int y)
+{
+    auto* menu = static_cast<UIPlayerContextMenuWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_PLAYERCONTEXTMENUWND));
+    if (!menu) return false;
+
+    m_menuTargetAID = targetAid;
+    m_lastWhisperMenuCharacterName = targetName;
+    auto entries = BuildPlayerContextMenuEntries(targetName);
+    if (CanRequestAdoption(targetAid)) {
+        ro::UiMessageStrings strings;
+        strings.Load();
+        auto label = strings.Get(887, "Send an adoption request to %s");
+        if (const auto placeholder = label.find("%s"); placeholder != std::string::npos) {
+            label.replace(placeholder, 2, targetName);
+        }
+        entries.push_back({PlayerContext_RequestAdoption, std::move(label)});
+    }
+    menu->SetMenu(targetAid, targetName, entries, x, y);
+    DbgLog("[GameMode] opened player context menu targetAid=%u targetName='%s'\n",
+        static_cast<unsigned int>(targetAid), targetName.c_str());
+    return true;
 }
 
 bool CGameMode::CanRequestAdoption(u32 candidate) const

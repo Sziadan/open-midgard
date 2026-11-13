@@ -117,6 +117,7 @@ public:
     void UpdateAdoptionInvitation();
     void ClearAdoptionInvitation();
     bool CanRequestAdoption(u32 candidate) const;
+    bool OpenPlayerContextMenu(u32 targetAid, const std::string& targetName, int x, int y);
 
     enum MapLoadingStage {
         MapLoading_None = 0,

@@ -255,7 +255,12 @@ void UIPlayerContextMenuWnd::OnDraw()
     if (!hdc) {
         return;
     }
+    DrawMenu(hdc);
+    ReleaseDrawTarget(hdc);
+}
 
+void UIPlayerContextMenuWnd::DrawMenu(HDC hdc) const
+{
     RECT outer = MakeRect(m_x, m_y, m_w, m_h);
     RECT inner = MakeRect(m_x + kMenuBorder, m_y + kMenuBorder, m_w - 2 * kMenuBorder, m_h - 2 * kMenuBorder);
     FillRoundedRect(hdc, outer, RGB(130, 130, 130), RGB(130, 130, 130), kMenuCornerRadius);
@@ -285,7 +290,6 @@ void UIPlayerContextMenuWnd::OnDraw()
     }
 
     SelectObject(hdc, oldFont);
-    ReleaseDrawTarget(hdc);
 }
 
 void UIPlayerContextMenuWnd::SetMenu(u32 targetAid,

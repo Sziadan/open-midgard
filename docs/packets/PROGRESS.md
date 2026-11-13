@@ -3985,3 +3985,5 @@ PK28.04 and PK29.04 distinguish monster sprites from actual monster actors durin
 PK16.04 verifies that the equipment preview, remove-option control, and privacy control occupy separate, aligned regions in both layouts. The Falcon source check and all 473 standalone checks passed. [Evidence](evidence/PK16.04-verification-boundary.md)
 
 PK30.04 renders both candidate prompts in native and Qt and verifies the full English warning, both controls, and invitation cleanup. [Evidence](evidence/PK30.01-relationship-wire.md)
+
+PK30.04 verifies the eligible adoption action and its omission for an ineligible baby character in the native and Qt player menus. [Evidence](evidence/PK30.01-relationship-wire.md)

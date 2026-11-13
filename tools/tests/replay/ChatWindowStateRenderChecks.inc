@@ -398,5 +398,6 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     CheckWhisperUi(app,view,state,mode,adapter,output);
     CheckAutoMessageUi(app,view,state,mode,adapter,output);
     CheckFriendOptionsUi(app,view,state,mode,adapter,output);
+    CheckAdoptionParentMenu(app,view,state,mode,output);
 
 }

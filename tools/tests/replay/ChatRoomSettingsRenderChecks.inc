@@ -1,4 +1,5 @@
 #include "ui/UIChatRoomSettingsWnd.h"
+#include "ui/UIPlayerContextMenuWnd.h"
 #include "core/MannerFilter.h"
 
 void CheckChatRoomSettingsUi(QGuiApplication& app,QQuickView& view,QtUiState* state,
@@ -143,4 +144,82 @@ void CheckChatRoomSettingsUi(QGuiApplication& app,QQuickView& view,QtUiState* st
     Require(!g_windowMgr.m_roomMessageBox && !g_windowMgr.m_modalWindow
         && !Find(view.rootObject(), "sourceRoomValidation")->isVisible(),
         "adoption teardown retained the warning");
+}
+
+void CheckAdoptionParentMenu(QGuiApplication& app, QQuickView& view, QtUiState* state,
+    CGameMode& mode, const QString& output)
+{
+    auto* world = mode.m_world;
+    Require(world, "adoption parent menu fixture needs a world");
+    CGameActor candidate;
+    candidate.m_gid = 0xabc001;
+    candidate.m_isPc = 1;
+    candidate.m_job = 0;
+    world->RegisterActor(&candidate);
+    CHARACTER_INFO parent{};
+    parent.level = 70;
+    parent.job = 7;
+    g_session.SetSelectedCharacterAppearance(parent);
+    PLAYER_SKILL_INFO recall{};
+    recall.SKID = 336;
+    recall.m_isValid = 1;
+    recall.level = 1;
+    g_session.SetSkillItem(recall);
+    FRIEND_INFO member{};
+    member.isValid = 1;
+    member.AID = candidate.m_gid;
+    member.characterName = "Candidate";
+    g_session.m_partyList = {member};
+    SetRuntimeUiScalePercent(100);
+    state->setUiScale(1.0);
+    const auto capture = [&](bool eligible, const QString& name) {
+        Require(mode.OpenPlayerContextMenu(candidate.m_gid, "Candidate", 60, 60),
+            "could not open the production player menu");
+        auto* menu = g_windowMgr.m_playerContextMenuWnd;
+        const auto& entries = menu->GetEntries();
+        const auto count = std::count_if(entries.begin(), entries.end(), [](const auto& entry) {
+            return entry.actionId == CGameMode::PlayerContext_RequestAdoption;
+        });
+        Require(count == (eligible ? 1 : 0), "native adoption menu eligibility differs");
+        PopulateCommerceUi(state, mode, false);
+        Frames(app, view);
+        auto* panel = Find(view.rootObject(), "commerce_playerMenu");
+        auto* row = Find(view.rootObject(), "commerceContext10");
+        Require(panel && panel->isVisible() && (row && row->isVisible()) == eligible,
+            "Qt adoption menu eligibility differs");
+
+        ArgbDibSurface dib;
+        Require(dib.EnsureSize(view.width(), view.height()), "adoption menu native DIB failed");
+        std::fill_n(dib.GetPixels(), view.width() * view.height(), 0xff181b20u);
+        menu->DrawMenu(dib.GetDC());
+        const auto native = QImage(reinterpret_cast<uchar*>(dib.GetPixels()), view.width(), view.height(),
+            view.width() * 4, QImage::Format_RGB32).copy();
+        const auto qt = view.grabWindow().convertToFormat(QImage::Format_RGB32);
+        if (eligible) {
+            Require(entries.back().label.find("Candidate") != std::string::npos
+                && row->property("label").toString() == QString::fromStdString(entries.back().label),
+                "adoption action label lost the candidate name");
+            const auto qtBounds = row->mapRectToScene(QRectF(0, 0, row->width(), row->height())).toAlignedRect();
+            const auto panelBounds = panel->mapRectToScene(QRectF(0, 0, panel->width(), panel->height())).toAlignedRect();
+            Require(qt.rect().contains(qtBounds) && panelBounds.contains(qtBounds),
+                "Qt adoption row extends outside its visible menu");
+            // The final native row is surrounded by 24 pixels of bottom padding.
+            const QRect nativeRow(menu->m_x + 12, menu->m_y + menu->m_h - 54, 220, 30);
+            int textPixels = 0;
+            for (int y = nativeRow.top(); y <= nativeRow.bottom(); ++y) {
+                for (int x = nativeRow.left(); x <= nativeRow.right(); ++x) {
+                    if (native.pixelColor(x, y).value() < 80) ++textPixels;
+                }
+            }
+            Require(textPixels > 40, "native adoption row has no rendered text");
+        }
+        Require(native.save(output + "/" + name + ".native.png")
+            && qt.save(output + "/" + name + ".qml.png"), "could not save adoption parent menu frames");
+        g_windowMgr.ClosePlayerContextMenu();
+    };
+    capture(true, "adoption-parent-eligible");
+    candidate.m_job = 4023;
+    capture(false, "adoption-parent-ineligible");
+    world->UnregisterActor(&candidate);
+    PopulateCommerceUi(state, mode, false);
 }

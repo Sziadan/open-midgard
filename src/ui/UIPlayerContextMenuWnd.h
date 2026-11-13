@@ -18,6 +18,7 @@ public:
     void SetShow(int show) override;
     void StoreInfo() override;
     void OnDraw() override;
+    void DrawMenu(HDC dc) const;
     void OnLBtnDown(int x, int y) override;
     void OnMouseMove(int x, int y) override;
     void OnMouseHover(int x, int y) override;
