@@ -4145,3 +4145,5 @@ PK46.02 links twelve selected auction, cash-shop, battleground and booking reque
 PK46.03 corrects the selected immediate character-deletion request and adds confirmation and reply ownership. [Evidence](evidence/PK46.03-character-delete-selected-replay.md)
 
 PK46.03 adds scheduled deletion framing and login-mode transport for reservation, confirmation and cancellation. Character-selection integration remains open. [Evidence](evidence/PK46.03-scheduled-deletion-wire.md)
+
+PK46.03 connects scheduled deletion to the PacketVer23 character-selection action, including the birth-date prompt, explicit final confirmation and unknown deadline recovery. [Evidence](evidence/PK46.03-scheduled-deletion-controls.md)

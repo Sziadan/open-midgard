@@ -99,7 +99,14 @@ struct PacketStreamReplayAccess {
 };
 
 struct LoginModeReplayAccess : CLoginMode {
+    using DeleteChoice = CharacterDeleteChoice;
     bool confirmDelete = false;
+    DeleteChoice deleteChoice = DeleteChoice::Immediate;
+    std::string deleteBirthDate;
+    DeleteChoice ChooseCharacterDeletion(const CHARACTER_INFO&, std::string& birthDate) override {
+        birthDate = deleteBirthDate;
+        return deleteChoice;
+    }
     bool ConfirmCharacterDeletion(const CHARACTER_INFO&) override { return confirmDelete; }
     void EnterCharacterSelectionForReplay() {
         m_subMode = LoginSubMode_CharSelect;
@@ -2298,10 +2305,12 @@ void LoginScheduledDeletionReplay()
     LoginModeReplayAccess mode;
     LoginModeReplayAccess::SeedCharacterForSelection(mode, 2);
     mode.EnterCharacterSelectionForReplay();
-    using Action = CLoginMode::ScheduledDeleteAction;
+    using Action = LoginModeReplayAccess::DeleteChoice;
     constexpr u32 gid = 0x12345678;
     const auto request = [&](Action action, std::string_view birthDate = {}) {
-        return mode.RequestScheduledDeletion(action, gid, birthDate);
+        mode.deleteChoice = action;
+        mode.deleteBirthDate = birthDate;
+        return mode.SendMsg(CLoginMode::LoginMsg_RequestDeleteCharacter, 2, 0, 0) != 0;
     };
     const auto reply = [&](const std::vector<u8>& bytes, const char* expected) {
         peer.Send(bytes);
@@ -2313,7 +2322,8 @@ void LoginScheduledDeletionReplay()
         } while (Clock::now() < deadline);
         throw std::runtime_error("scheduled deletion reply did not apply its result");
     };
-    Require(request(Action::Reserve) && !request(Action::Cancel), "reservation did not own the request");
+    Require(!request(Action::Close) && request(Action::Reserve) && !request(Action::Cancel),
+        "closing the dialog sent a request or reservation did not own the request");
     Require(peer.ReceiveExact(6) == std::vector<u8>({0x27, 8, 0x78, 0x56, 0x34, 0x12}), "reservation request bytes differ");
     reply({0x28, 8, 0x79, 0x56, 0x34, 0x12, 1, 0, 0, 0, 0, 0, 0, 0,
            0x28, 8, 0x78, 0x56, 0x34, 0x12, 1, 0, 0, 0, 4, 3, 2, 0xf1},
@@ -2329,6 +2339,8 @@ void LoginScheduledDeletionReplay()
     reply({0x28, 8, 0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0, 0, 0, 0, 0},
         "Login: character was already queued for deletion.");
     Require(mode.GetScheduledDeletions().at(gid) == 0, "duplicate reservation fabricated a deadline");
+    Require(!request(Action::Confirm, "990102"), "scheduled deletion bypassed final confirmation");
+    mode.confirmDelete = true;
     Require(!request(Action::Confirm, "99-01-02") && request(Action::Confirm, "990102"), "birth date validation differs");
     const std::vector<u8> confirmation{0x29, 8, 0x78, 0x56, 0x34, 0x12, '9', '9', '0', '1', '0', '2'};
     Require(peer.ReceiveExact(12) == confirmation, "confirmation did not use six raw birth date bytes");

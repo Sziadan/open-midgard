@@ -123,6 +123,8 @@ public:
     std::string m_strErrorInfo;
 
 protected:
+    enum class CharacterDeleteChoice { Close, Immediate, Reserve, Cancel, Confirm };
+    virtual CharacterDeleteChoice ChooseCharacterDeletion(const CHARACTER_INFO& character, std::string& birthDate);
     virtual bool ConfirmCharacterDeletion(const CHARACTER_INFO& character);
 
 private:

@@ -36,6 +36,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cstdlib>
+#include <ctime>
 #include <cstdio>
 #include <string>
 #include <string_view>
@@ -1632,15 +1633,31 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
             return 0;
         }
         const u32 gid = m_charInfo[deleteIndex].GID;
-        if (!ConfirmCharacterDeletion(m_charInfo[deleteIndex])) {
+        const auto stillSelected = [&] {
+            return m_isConnected && m_subMode == LoginSubMode_CharSelect && m_nextSubMode == -1
+                && !m_pendingDeleteCharGid && !m_pendingScheduledDeleteReply && deleteIndex < m_numChar
+                && m_charInfo[deleteIndex].CharNum == requestedSlot && m_charInfo[deleteIndex].GID == gid;
+        };
+        std::string birthDate;
+        const auto choice = ChooseCharacterDeletion(m_charInfo[deleteIndex], birthDate);
+        if (!stillSelected()) {
             return 0;
         }
-        if (!m_isConnected || m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1
-            || m_pendingScheduledDeleteReply
-            || deleteIndex >= m_numChar || m_charInfo[deleteIndex].CharNum != requestedSlot
-            || m_charInfo[deleteIndex].GID != gid) {
+        switch (choice) {
+        case CharacterDeleteChoice::Reserve:
+            return RequestScheduledDeletion(ScheduledDeleteAction::Reserve, gid);
+        case CharacterDeleteChoice::Cancel:
+            return RequestScheduledDeletion(ScheduledDeleteAction::Cancel, gid);
+        case CharacterDeleteChoice::Confirm:
+            if (!ConfirmCharacterDeletion(m_charInfo[deleteIndex]) || !stillSelected()) return 0;
+            return RequestScheduledDeletion(ScheduledDeleteAction::Confirm, gid, birthDate);
+        case CharacterDeleteChoice::Immediate:
+            if (!ConfirmCharacterDeletion(m_charInfo[deleteIndex])) return 0;
+            break;
+        case CharacterDeleteChoice::Close:
             return 0;
         }
+        if (!stillSelected()) return 0;
 
         m_selectedCharIndex = deleteIndex;
         m_selectedCharSlot = static_cast<int>(m_charInfo[deleteIndex].CharNum);
@@ -1693,6 +1710,116 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
     }
 
     return 0;
+}
+
+CLoginMode::CharacterDeleteChoice CLoginMode::ChooseCharacterDeletion(
+    const CHARACTER_INFO& character, std::string& birthDate)
+{
+#if RO_PLATFORM_WINDOWS
+    if (ro::net::GetActiveCharacterPacketProfile().id == ro::net::PacketVersionId::PacketVer23) {
+        struct DialogData {
+            std::wstring name;
+            std::wstring status;
+            std::string& birthDate;
+        };
+        constexpr WORD nameId = 100, statusId = 101, dateId = 102;
+        constexpr WORD immediateId = 103, reserveId = 104, cancelId = 105, confirmId = 106;
+        const auto reservation = m_scheduledDeletions.find(character.GID);
+        std::wstring status = L"Reservation status unavailable. The server can check or cancel an existing reservation.";
+        if (reservation != m_scheduledDeletions.end()) {
+            status = L"Queued for deletion. The server did not supply a deadline.";
+            if (reservation->second) {
+                const auto deadline = static_cast<std::time_t>(reservation->second);
+                const auto* utc = std::gmtime(&deadline);
+                wchar_t formatted[40]{};
+                if (utc && std::wcsftime(formatted, std::size(formatted), L"%Y-%m-%d %H:%M UTC", utc)) {
+                    status = std::wstring(L"Deletion can be confirmed from ") + formatted + L".";
+                }
+            }
+        }
+        wchar_t name[sizeof(character.name) + 1]{};
+        const auto* rawName = reinterpret_cast<const char*>(character.name);
+        const int nameLength = static_cast<int>(std::find(rawName, rawName + sizeof(character.name), '\0') - rawName);
+        if (nameLength) MultiByteToWideChar(CP_ACP, 0, rawName, nameLength, name, static_cast<int>(std::size(name)) - 1);
+        DialogData data{std::wstring(L"Character: ") + name, std::move(status), birthDate};
+
+        // DialogBoxIndirect requires DWORD alignment for each item.
+        std::vector<WORD> words;
+        const auto append = [&](DWORD value) {
+            words.push_back(LOWORD(value));
+            words.push_back(HIWORD(value));
+        };
+        const auto label = [&](const wchar_t* value) {
+            while (*value) words.push_back(*value++);
+            words.push_back(0);
+        };
+        append(WS_POPUP | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_CENTER | DS_SETFONT);
+        append(0);
+        words.insert(words.end(), {9, 0, 0, 262, 108, 0, 0});
+        label(L"Delete character");
+        words.push_back(9);
+        label(L"Segoe UI");
+        const auto item = [&](WORD id, WORD kind, DWORD style, WORD x, WORD y, WORD w, WORD h, const wchar_t* title) {
+            if (words.size() % 2) words.push_back(0);
+            append(WS_CHILD | WS_VISIBLE | style);
+            append(0);
+            words.insert(words.end(), {x, y, w, h, id, 0xffff, kind});
+            label(title);
+            words.push_back(0);
+        };
+        item(nameId, 0x82, SS_NOPREFIX, 8, 7, 246, 12, L"");
+        item(statusId, 0x82, SS_NOPREFIX, 8, 22, 246, 22, L"");
+        item(0xffff, 0x82, 0, 8, 49, 113, 12, L"Birth date (YYMMDD):");
+        item(dateId, 0x81, WS_TABSTOP | WS_BORDER | ES_NUMBER | ES_AUTOHSCROLL, 123, 47, 57, 14, L"");
+        item(reserveId, 0x80, WS_TABSTOP, 8, 68, 82, 14, L"Schedule deletion");
+        item(cancelId, 0x80, WS_TABSTOP, 96, 68, 78, 14, L"Cancel reservation");
+        item(confirmId, 0x80, WS_TABSTOP, 180, 68, 74, 14, L"Confirm deletion");
+        item(immediateId, 0x80, WS_TABSTOP, 8, 88, 82, 14, L"Delete immediately");
+        item(IDCANCEL, 0x80, WS_TABSTOP | BS_DEFPUSHBUTTON, 180, 88, 74, 14, L"Close");
+        const auto callback = +[](HWND dialog, UINT message, WPARAM key, LPARAM parameter) -> INT_PTR {
+            if (message == WM_INITDIALOG) {
+                auto* state = reinterpret_cast<DialogData*>(parameter);
+                SetWindowLongPtrW(dialog, DWLP_USER, parameter);
+                SetDlgItemTextW(dialog, nameId, state->name.c_str());
+                SetDlgItemTextW(dialog, statusId, state->status.c_str());
+                SendDlgItemMessageW(dialog, dateId, EM_LIMITTEXT, 6, 0);
+                SetFocus(GetDlgItem(dialog, IDCANCEL));
+                return FALSE;
+            }
+            if (message == WM_CLOSE) {
+                EndDialog(dialog, IDCANCEL);
+                return TRUE;
+            }
+            if (message != WM_COMMAND) return FALSE;
+            const WORD id = LOWORD(key);
+            if (id == confirmId) {
+                char date[7]{};
+                if (GetDlgItemTextA(dialog, dateId, date, 7) != 6) {
+                    SetDlgItemTextW(dialog, statusId, L"Enter six digits for the birth date before confirming deletion.");
+                    SetFocus(GetDlgItem(dialog, dateId));
+                    return TRUE;
+                }
+                auto* state = reinterpret_cast<DialogData*>(GetWindowLongPtrW(dialog, DWLP_USER));
+                state->birthDate.assign(date, 6);
+            } else if (id != reserveId && id != cancelId && id != immediateId && id != IDCANCEL) {
+                return FALSE;
+            }
+            EndDialog(dialog, id);
+            return TRUE;
+        };
+        const auto selected = DialogBoxIndirectParamW(GetModuleHandleW(nullptr),
+            reinterpret_cast<const DLGTEMPLATE*>(words.data()), g_hMainWnd, callback, reinterpret_cast<LPARAM>(&data));
+        if (selected == -1) SetLoginStatus("Login: could not open the character deletion dialog.");
+        switch (selected) {
+        case reserveId: return CharacterDeleteChoice::Reserve;
+        case cancelId: return CharacterDeleteChoice::Cancel;
+        case confirmId: return CharacterDeleteChoice::Confirm;
+        case immediateId: return CharacterDeleteChoice::Immediate;
+        default: return CharacterDeleteChoice::Close;
+        }
+    }
+#endif
+    return CharacterDeleteChoice::Immediate;
 }
 
 bool CLoginMode::ConfirmCharacterDeletion(const CHARACTER_INFO& character)
