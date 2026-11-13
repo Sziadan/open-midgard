@@ -294,7 +294,7 @@ void ChatSubmissionReplay()
         const ServiceType previous=g_serviceType;
         struct RestoreService {ServiceType value;~RestoreService(){g_serviceType=value;}} restoreService{previous};
         g_serviceType=ServiceKorea;
-        const std::pair<const char*,u16> requests[]={{"/who",193},{"/memo",285},{"/blacksmith",535},{"/alchemist",536},{"/taekwon",549},{"/hunting",633}};
+        const std::pair<const char*,u16> requests[]={{"/who",193},{"/memo",285},{"/blacksmith",535},{"/alchemist",536},{"/taekwon",549},{"/pk",567},{"/hunting",633}};
         for(const auto& request:requests){Require(submit(request.first),"source request command dispatch failed");
             Require(peer.ReceiveExact(2)==std::vector<u8>({static_cast<u8>(request.second),static_cast<u8>(request.second>>8)}),"source command request opcode/length changed");}
         for(auto service:{ServiceChina,ServiceMalaysia,ServiceSingapore}){g_serviceType=service;Require(!submit("/who"),"source WHO service guard missing");}

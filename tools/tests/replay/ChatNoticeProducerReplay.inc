@@ -1,3 +1,31 @@
+void LegacyRankingReplay()
+{
+    SetCase("legacy_ranking", "PK39.02", "selected-legacy-rank-list-and-points", "map packet loop -> ranking chat");
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    g_windowMgr.ClearChatEvents();
+    const std::string fullName = "ABCDEFGHIJKLMNOPQRSTUVWX";
+    const std::array<u8, 4> lists{0x19, 0x1a, 0x26, 0x38};
+    const std::array<u8, 4> points{0x1b, 0x1c, 0x24, 0x36};
+    for (size_t i = 0; i < lists.size(); ++i) {
+        std::vector<u8> list(282, 0);
+        list[0] = lists[i]; list[1] = 2;
+        std::copy(fullName.begin(), fullName.end(), list.begin() + 218);
+        list[278] = 0x34; list[279] = 0x12;
+        Require(connection.QueueBytes(list) && connection.QueueBytes({points[i],2,0xf9,0xff,0xff,0xff,19,0,0,0}),
+            "could not queue ranking list and points");
+        Require(ProcessGameModePacketLoop(mode, connection, router, 2).packetsDispatched == 2
+            && !connection.BufferedBytes(), "rank frame consumed bytes from the following point result");
+        const auto& events = g_windowMgr.GetChatEvents();
+        Require(events.size() == 13 && events[10].text.find(fullName) != std::string::npos
+            && events[10].text.find("4660") != std::string::npos && events[12].text.find("-7") != std::string::npos
+            && events[12].text.find("19") != std::string::npos, "rank rows or point notification differ");
+        g_windowMgr.ClearChatEvents();
+    }
+}
+
 void MvpRewardReplay()
 {
     SetCase("mvp_reward", "PK39.02", "selected-010a-010d-mvp", "map packet loop -> chat and actor message 36");

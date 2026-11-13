@@ -1360,8 +1360,8 @@
     },
     "PK39.02": {
       "status": "IN_PROGRESS",
-      "evidence": ["docs/packets/evidence/PK39.02-mvp-rewards.md"],
-      "commit_subject": "packet(PK39.02): receive MVP rewards and winner effects"
+      "evidence": ["docs/packets/evidence/PK39.02-mvp-rewards.md", "docs/packets/evidence/PK39.02-legacy-ranking.md"],
+      "commit_subject": "packet(PK39.02): receive legacy rankings and restore killer request"
     },
     "PK39.03": {
       "status": "NOT_STARTED",

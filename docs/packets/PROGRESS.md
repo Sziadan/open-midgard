@@ -4077,3 +4077,5 @@ PK38.02 verifies the floor item entry, drop, and disappearance layouts and rejec
 PK38.04 verifies twelve inactive forms against the selected profile and assigns eleven shared rows to their feature owners. Eight focused checks passed. Live and independent verification remain open. [Evidence](evidence/PK38.04-item-action-verification.md)
 
 PK39.02 frames MVP rewards and routes the notices and winner effect. [Evidence](evidence/PK39.02-mvp-rewards.md)
+
+PK39.02 frames legacy ranking lists and signed point changes and restores `/pk` submission. [Evidence](evidence/PK39.02-legacy-ranking.md)

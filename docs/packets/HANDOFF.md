@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK39.02 implements MVP reward notices and winner effect routing for `010A` through `010D`. Continue with the ranking families and live boss reward verification. [MVP evidence](evidence/PK39.02-mvp-rewards.md)
+PK39.02 implements MVP rewards and legacy ranking lists and point notices. `/pk` now sends the selected Killer ranking request. Continue PK39.03 with manner and colored notices, and verify boss rewards and ranking output live. [MVP evidence](evidence/PK39.02-mvp-rewards.md) · [Ranking evidence](evidence/PK39.02-legacy-ranking.md)
 
 PK38.04 traces shared packet owners and selected-profile inactive variants. Continue live item-action verification and retain the separate PK48 review. [Item action verification](evidence/PK38.04-item-action-verification.md)
 

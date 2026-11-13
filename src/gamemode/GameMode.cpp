@@ -12033,10 +12033,10 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case 34:
         if(g_serviceType==ServiceChina || g_serviceType==ServiceMalaysia || g_serviceType==ServiceSingapore)return 0;
         [[fallthrough]];
-    case 83:case 194:case 195:case 197:case 262: {
+    case 83:case 194:case 195:case 197:case 201:case 262: {
         // Selected mode recipients, not TALKTYPE numbers. These requests are
         // fixed two-byte source opcodes, independent of movement profiles.
-        const u16 opcode=msg==34?193:msg==83?285:msg==194?535:msg==195?536:msg==197?549:633;
+        const u16 opcode=msg==34?193:msg==83?285:msg==194?535:msg==195?536:msg==197?549:msg==201?567:633;
         const std::array<u8,2> packet{{static_cast<u8>(opcode),static_cast<u8>(opcode>>8)}};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
     }

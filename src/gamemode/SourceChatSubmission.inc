@@ -210,6 +210,7 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
     case 145:return SendMsg(194,0,0,0);
     case 146:return SendMsg(195,0,0,0);
     case 151:return SendMsg(197,0,0,0);
+    case 160:return SendMsg(201,0,0,0);
     case 168:return SendMsg(262,0,0,0);
     case 42:
         if(g_windowMgr.m_tipOfTheDayWnd){g_windowMgr.DeleteWindow(g_windowMgr.m_tipOfTheDayWnd);return 1;}

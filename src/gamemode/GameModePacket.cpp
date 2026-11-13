@@ -8721,6 +8721,61 @@ void HandleMvpReward(CGameMode& mode, const PacketView& packet)
     RecordChat(mode, message, dropped ? 0x00FF0000u : 0x0000FFFFu, kChatChannelSystem);
 }
 
+void HandleLegacyRanking(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data) return;
+    const char* name = nullptr;
+    u32 headingColor = 0x009b9b9b;
+    u32 rowColor = 0x00cdcdcd;
+    unsigned messageId = 0;
+    switch (packet.packetId) {
+    case 0x0219: name = "Blacksmith"; break;
+    case 0x021A: name = "Alchemist"; headingColor = 0x009bcd9b; rowColor = 0x00cdffcd; break;
+    case 0x0226: name = "Taekwon"; headingColor = 0x009b9bcd; rowColor = 0x00cdcdff; break;
+    case 0x0238: name = "Killer"; break;
+    case 0x021B: name = "Blacksmith"; messageId = 901; break;
+    case 0x021C: name = "Alchemist"; messageId = 902; break;
+    case 0x0224: name = "Taekwon"; messageId = 926; break;
+    case 0x0236: name = "Slayer"; messageId = 953; break;
+    default: return;
+    }
+
+    if (messageId) {
+        if (packet.packetLength != 10) return;
+        const auto gained = std::to_string(static_cast<s32>(ReadLE32(packet.data + 2)));
+        const auto total = std::to_string(ReadLE32(packet.data + 6));
+        ro::UiMessageStrings strings;
+        strings.Load();
+        auto message = strings.Get(messageId, "");
+        const auto first = message.find("%d");
+        const auto second = first == std::string::npos ? first : message.find("%d", first + 2);
+        if (second != std::string::npos) {
+            message.replace(second, 2, total);
+            message.replace(first, 2, gained);
+        } else {
+            message = "[Point] You have been rewarded with " + gained + " " + name
+                + " rank points. Your point total is " + total + ".";
+        }
+        RecordChat(mode, message, rowColor, kChatChannelSystem);
+        return;
+    }
+
+    constexpr size_t rowCount = 10;
+    constexpr size_t nameWidth = 24;
+    constexpr size_t pointsOffset = 2 + rowCount * nameWidth;
+    if (packet.packetLength != pointsOffset + rowCount * sizeof(u32)) return;
+    RecordChat(mode, std::string("--- ") + name + " Rank ---", headingColor, kChatChannelSystem);
+    for (size_t row = 0; row < rowCount; ++row) {
+        const auto character = ExtractFixedPacketString(packet, 2 + row * nameWidth, nameWidth);
+        const auto points = ReadLE32(packet.data + pointsOffset + row * sizeof(u32));
+        char line[96];
+        std::snprintf(line, sizeof(line), "%s[ %u ] %16s  :  %4u POINT", row == 9 ? "" : " ",
+            static_cast<unsigned>(row + 1), character.c_str(), static_cast<unsigned>(points));
+        RecordChat(mode, line, rowColor, kChatChannelSystem);
+    }
+    RecordChat(mode, "--------------------", headingColor, kChatChannelSystem);
+}
+
 void HandleDivorceNotice(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 26) return;
@@ -10188,6 +10243,9 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01E6, HandleRecallPartnerName);
     router.Register(0x01EA, HandleWeddingEffect);
     for (const u16 opcode : {0x010A, 0x010B, 0x010C, 0x010D}) router.Register(opcode, HandleMvpReward);
+    for (const u16 opcode : {0x0219, 0x021A, 0x021B, 0x021C, 0x0224, 0x0226, 0x0236, 0x0238}) {
+        router.Register(opcode, HandleLegacyRanking);
+    }
     router.Register(0x01F6, HandleAdoptionInvitation);
     router.Register(0x0216, HandleAdoptionResult);
     router.Register(0x0206, HandleFriendState);
