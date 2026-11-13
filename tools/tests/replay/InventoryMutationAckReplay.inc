@@ -75,6 +75,28 @@ void InventoryMutationAckReplay()
             && i->m_deleteTime==0x10203040 && i->m_isYours==1;
     };
 
+    const std::vector<u8> floorEntry{0x9d,0,0x44,0x33,0x22,0x11,0xf5,1,1,12,0,14,0,3,0,5,6};
+    dispatch(floorEntry, "existing floor item");
+    constexpr u32 floorGid = 0x11223344;
+    auto ground = mode.m_groundItemList.find(floorGid);
+    Require(ground != mode.m_groundItemList.end() && ground->second.itemId == 501
+        && ground->second.amount == 3 && ground->second.tileX == 12 && ground->second.tileY == 14
+        && ground->second.subX == 5 && ground->second.subY == 6 && !ground->second.pendingDropAnimation,
+        "existing floor item fields differ");
+    const std::vector<u8> floorDrop{0x9e,0,0x44,0x33,0x22,0x11,0xf5,1,1,12,0,14,0,7,8,4,0};
+    dispatch(floorDrop, "dropped floor item");
+    Require(ground->second.amount == 4 && ground->second.subX == 7 && ground->second.subY == 8
+        && ground->second.pendingDropAnimation, "dropped floor item fields differ");
+    auto invalidDrop = floorDrop;
+    invalidDrop[15] = 0;
+    dispatch(invalidDrop, "zero-quantity floor item");
+    Require(ground->second.amount == 4, "invalid drop overwrote a valid floor item");
+    mode.m_pickupReqItemNaidList = {floorGid};
+    mode.m_lastPickupRequestTick = 123;
+    dispatch({0xa1,0,0x44,0x33,0x22,0x11}, "floor item disappearance");
+    Require(mode.m_groundItemList.empty() && mode.m_pickupReqItemNaidList.empty() && !mode.m_lastPickupRequestTick,
+        "floor disappearance retained the item or its pending pickup");
+
     // Additive pickup stack preserves the existing item's raw metadata; valid failures clean pending state.
     constexpr u16 pickupSlot = 66;
     seed();

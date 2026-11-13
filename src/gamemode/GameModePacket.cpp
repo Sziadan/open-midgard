@@ -2767,7 +2767,7 @@ void UpsertGroundItem(CGameMode& mode,
 
 void HandleGroundItemEntry(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 17) {
+    if (!packet.data || packet.packetLength != 17) {
         return;
     }
 
@@ -2781,27 +2781,22 @@ void HandleGroundItemEntry(CGameMode& mode, const PacketView& packet)
     const u16 tileX = ReadLE16(packet.data + 9);
     const u16 tileY = ReadLE16(packet.data + 11);
 
-    if (!ro::net::IsActiveGroundItemDroppedPacket(packet.packetId)) {
-        const u16 amount = ReadLE16(packet.data + 13);
-        const u8 subX = packet.data[15];
-        const u8 subY = packet.data[16];
-        UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY, false);
-        return;
-    }
-
-    const u8 subX = packet.data[13];
-    const u8 subY = packet.data[14];
-    const u16 amount = ReadLE16(packet.data + 15);
-    UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY, true);
+    const bool dropped = ro::net::IsActiveGroundItemDroppedPacket(packet.packetId);
+    const u16 amount = ReadLE16(packet.data + (dropped ? 15 : 13));
+    if (!objectId || !itemId || !amount || identified > 1) return;
+    const u8 subX = packet.data[dropped ? 13 : 15];
+    const u8 subY = packet.data[dropped ? 14 : 16];
+    UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY, dropped);
 }
 
 void HandleGroundItemDisappear(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 6) {
+    if (!packet.data || packet.packetLength != 6) {
         return;
     }
 
     const u32 objectId = ReadLE32(packet.data + 2);
+    if (!objectId) return;
     const auto stateIt = mode.m_groundItemList.find(objectId);
     const bool hadState = stateIt != mode.m_groundItemList.end();
     const u32 itemId = hadState ? stateIt->second.itemId : 0;

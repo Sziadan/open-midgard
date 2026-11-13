@@ -4071,3 +4071,5 @@ PK38.02 validates storage transfer identity and applies slot counts from the ser
 PK38.01 inventories selected item actions and identifies the missing `07FD` monster and NPC obtain announcement receive path. [Evidence](evidence/PK38.01-item-action-inventory.md)
 
 PK38.01 adds selected `07FD` monster and NPC announcement framing and broadcast presentation. [Evidence](evidence/PK38.01-item-action-inventory.md)
+
+PK38.02 verifies the floor item entry, drop, and disappearance layouts and rejects invalid entries before mutating pickup state. [Evidence](evidence/PK38.01-item-action-inventory.md)
