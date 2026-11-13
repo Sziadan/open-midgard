@@ -3953,3 +3953,5 @@ PK28.04 and PK29.04 bound stalled manual movement and pace automatic and manual 
 ## Selected privacy configuration
 
 PK16.01 traced `02D8/02D9`, `02DA`, and `02C8/02C9` to the selected server's independent state fields, request handlers, and restore calls. [Evidence](evidence/PK16.01-privacy-wire.md)
+
+PK16.02 adds the confirmed equipment, recall, and party invitation settings and production loopback replay for outgoing commands and restored state. [Evidence](evidence/PK16.01-privacy-wire.md)

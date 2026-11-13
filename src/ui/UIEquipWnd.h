@@ -85,6 +85,7 @@ private:
     unsigned long long BuildVisualStateToken() const;
 
     bool m_controlsCreated;
+    bool m_visibilityPressed = false;
     int m_fullHeight;
     std::array<UIBitmapButton*, 3> m_systemButtons;
     shopui::BitmapPixels m_backgroundLeft;

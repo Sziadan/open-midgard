@@ -191,6 +191,9 @@ public:
     ~CSession();
     bool m_isShowWhisperWnd=true,m_isShowWhisperWnd_Friend=true,m_isPlayWhisperOpenSound=true;
     bool m_onAutoMSG=false,m_isSaveChat=false;
+    bool m_showEquipmentToOthers = false;
+    bool m_refuseRecall = false;
+    bool m_refusePartyInvites = false;
     std::string m_strAutoMSG;
     std::vector<std::string> m_exNameList;
     void LoadWhisperOptions();

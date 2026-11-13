@@ -21,7 +21,7 @@ struct Layout {
     int width=equipmentLayout::width;
     int height=0;
     std::array<Rect,11> cards{},icons{},names{};
-    Rect preview,removeOption;
+    Rect preview,removeOption,visibility;
 };
 inline Layout Build(const std::array<int,11>& nameHeights = {}, bool compact=false) {
     Layout result;
@@ -35,6 +35,7 @@ inline Layout Build(const std::array<int,11>& nameHeights = {}, bool compact=fal
         }
         result.preview={76,32,104,160};
         result.removeOption={76,202,104,24};
+        result.visibility={76,232,104,24};
         return result;
     }
     std::array<int,6> heights{{52,52,52,52,52,52}};
@@ -51,8 +52,9 @@ inline Layout Build(const std::array<int,11>& nameHeights = {}, bool compact=fal
         result.names[i]={left[i]?x+50:x+8,top+20,nameWidth,height-26};
     }
     const int centerBottom=tops[5]-6;
-    result.preview={centerX,40,centerWidth,centerBottom-40-34};
-    result.removeOption={centerX,centerBottom-24,centerWidth,24};
+    result.preview={centerX,40,centerWidth,centerBottom-40-64};
+    result.removeOption={centerX,centerBottom-54,centerWidth,24};
+    result.visibility={centerX,centerBottom-24,centerWidth,24};
     return result;
 }
 }

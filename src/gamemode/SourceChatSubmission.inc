@@ -34,6 +34,12 @@ void RefreshSourceOptions()
 {
     if(g_windowMgr.m_optionWnd)g_windowMgr.m_optionWnd->SendMsg(nullptr,60,0,0,0);
 }
+
+bool SendPrivacyConfiguration(u8 type, bool enabled)
+{
+    const u8 packet[] = {0xd8, 0x02, type, 0, 0, 0, static_cast<u8>(enabled), 0, 0, 0};
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
+}
 }
 
 u32 CGameMode::GetSourceChatTick() const
@@ -61,6 +67,9 @@ bool CGameMode::SubmitSourceChat(const std::string& input,const std::string& tar
     if(!target.empty() && text[0]!='/'){
         g_windowMgr.SetChatMsg(text);
         return SendMsg(11,reinterpret_cast<msgparam_t>(target.c_str()),0,0)!=0;
+    }
+    if (text == "/refuserecall" || text == "/acceptrecall") {
+        return SendPrivacyConfiguration(1, text == "/refuserecall");
     }
     ro::UiMessageStrings messages;if(text[0]=='/')messages.Load();
     ro::chat::SourceChatParseContext context;
@@ -165,6 +174,13 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return SendMsg(33,route.emotion>=0?route.emotion:std::rand()%6+58,0,0);
     }
     switch(type){
+    case 181: // /accept
+    case 182: { // /refuse
+        const u8 packet[] = {0xc8, 0x02, static_cast<u8>(type == 182)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
+    }
+    case 184: // /eqopen
+        return SendMsg(270, !g_session.m_showEquipmentToOthers, 0, 0);
     case 9: {
         if(!m_world || !m_world->m_player || !m_world->m_attr)return 0;
         const auto* attr=m_world->m_attr;const auto& position=m_world->m_player->m_pos;

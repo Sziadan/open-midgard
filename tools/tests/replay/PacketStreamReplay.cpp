@@ -34,6 +34,7 @@
 #include "ui/UIWindowMgr.h"
 #include "ui/UIRechargeGage.h"
 #include "ui/UICompanionStatusWnd.h"
+#include "ui/UIEquipWnd.h"
 #include "ui/UICompanionSkillListWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "ui/UIFriendOptionWnd.h"
@@ -2490,6 +2491,72 @@ void ElementalSnapshotReplay()
     Require(Receive(connection, frame) && frame == next && connection.BufferedBytes() == 0,
         "elemental snapshot disrupted the next map packet");
     g_session.m_elementalStatus = oldElemental;
+}
+
+void PrivacyConfigurationReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    g_session.m_showEquipmentToOthers = false;
+    g_session.m_refuseRecall = false;
+    g_session.m_refusePartyInvites = false;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!mode.SubmitSourceChat("/eqopen", "") && !mode.SubmitSourceChat("/refuserecall", "")
+        && !mode.SubmitSourceChat("/refuse", ""), "closed connection accepted a privacy change");
+    LoopbackPeer peer(*connection);
+    Require(mode.SubmitSourceChat("/eqopen", "") && mode.SubmitSourceChat("/refuserecall", "")
+        && mode.SubmitSourceChat("/refuse", ""), "privacy request send failed");
+    Require(peer.ReceiveExact(23) == std::vector<u8>{
+        0xd8, 2, 0, 0, 0, 0, 1, 0, 0, 0,
+        0xd8, 2, 1, 0, 0, 0, 1, 0, 0, 0,
+        0xc8, 2, 1}, "privacy requests emitted incorrect bytes");
+    Require(!g_session.m_showEquipmentToOthers && !g_session.m_refuseRecall
+        && !g_session.m_refusePartyInvites, "privacy request changed state before acknowledgement");
+
+    TestConnection input;
+    LoopbackPeer server(input);
+    const auto receive = [&](const std::vector<u8>& frames, int count) {
+        server.Send(frames);
+        WaitKernelPending(input, static_cast<int>(frames.size()));
+        Require(ProcessGameModePacketLoop(mode, input, router, count).packetsDispatched == count,
+            "privacy acknowledgement did not frame and dispatch");
+    };
+    g_windowMgr.ClearChatEvents();
+    receive({0xd9, 2, 1, 0, 0, 0, 1, 0, 0, 0, 0xd9, 2, 2, 0, 0, 0, 1, 0, 0, 0,
+        0xd9, 2, 0, 0, 0, 0, 2, 0, 0, 0}, 3);
+    Require(!g_session.m_showEquipmentToOthers && g_session.m_refuseRecall
+        && g_windowMgr.GetChatEvents().size() == 1, "another configuration value changed equipment privacy");
+    receive({0xd9, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0xc9, 2, 1}, 2);
+    Require(g_session.m_showEquipmentToOthers && g_session.m_refuseRecall
+        && g_session.m_refusePartyInvites && g_windowMgr.GetChatEvents().size() == 3,
+        "privacy acknowledgement did not apply independent state and notices");
+
+    UIEquipWnd equipment;
+    equipment.SetShow(1);
+    UIEquipWnd::QtButtonDisplay visibility;
+    Require(equipment.GetQtSystemButtonDisplayForQt(5, &visibility) && visibility.visible
+        && visibility.label == "Public gear", "equipment control did not show confirmed visibility");
+    equipment.OnLBtnDown(visibility.x + 1, visibility.y + 1);
+    equipment.OnLBtnUp(visibility.x + 1, visibility.y + 1);
+    Require(peer.ReceiveExact(10) == std::vector<u8>{0xd8, 2, 0, 0, 0, 0, 0, 0, 0, 0}
+        && g_session.m_showEquipmentToOthers, "equipment control changed before the server reply");
+    Require(mode.SubmitSourceChat("/accept", "") && peer.ReceiveExact(3) == std::vector<u8>{0xc8, 2, 0},
+        "allow party invites did not send the correct request");
+    connection->Disconnect();
+    LoopbackPeer reconnect(*connection);
+    receive({0xda, 2, 0, 0xc9, 2, 0, 0xd9, 2, 1, 0, 0, 0, 0, 0, 0, 0}, 3);
+    Require(!g_session.m_showEquipmentToOthers && !g_session.m_refuseRecall
+        && !g_session.m_refusePartyInvites
+        && equipment.GetQtSystemButtonDisplayForQt(5, &visibility) && visibility.label == "Private gear",
+        "reconnect snapshots did not restore all settings independently");
+    g_windowMgr.ClearChatEvents();
+    connection->Disconnect();
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
 void CompanionIdentityReplay()
@@ -6438,6 +6505,7 @@ int main(int argc,char** argv){try{
     LoginCharConnectionFailureReplay();
     Login3ClientInfoHashRequestReplay();
     ElementalSnapshotReplay();
+    PrivacyConfigurationReplay();
     CompanionIdentityReplay();
     CompanionCommandReplay();
     CompanionSkillListReplay();

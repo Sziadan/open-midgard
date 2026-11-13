@@ -2081,6 +2081,51 @@ void HandleMapPropertyRowUpdate(CGameMode&, const PacketView& packet)
         reinterpret_cast<const char*>(packet.data + 6), static_cast<std::size_t>(packet.packetLength - 6)));
 }
 
+void ApplyEquipmentVisibility(bool visible)
+{
+    g_session.m_showEquipmentToOthers = visible;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const auto notice = strings.Get(visible ? 1359 : 1358, visible
+        ? "Open your equipment information to the public."
+        : "Do not open your equipment information to the public.");
+    g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice.c_str()), 6619135);
+    if (g_windowMgr.m_equipWnd) g_windowMgr.m_equipWnd->Invalidate();
+}
+
+void HandlePrivacyConfiguration(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 10) return;
+    const u32 type = ReadLE32(packet.data + 2);
+    const u32 enabled = ReadLE32(packet.data + 6);
+    if (enabled > 1) return;
+    if (type == 0) ApplyEquipmentVisibility(enabled != 0);
+    if (type == 1) {
+        g_session.m_refuseRecall = enabled != 0;
+        const char* notice = enabled ? "Recall requests are blocked." : "Recall requests are allowed.";
+        g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice), 6619135);
+    }
+}
+
+void HandleEquipmentVisibility(CGameMode&, const PacketView& packet)
+{
+    if (packet.data && packet.packetLength == 3 && packet.data[2] <= 1) {
+        ApplyEquipmentVisibility(packet.data[2] != 0);
+    }
+}
+
+void HandlePartyInvitePrivacy(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 3 || packet.data[2] > 1) return;
+    const bool refuse = packet.data[2] != 0;
+    g_session.m_refusePartyInvites = refuse;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const auto notice = strings.Get(refuse ? 1325 : 1326,
+        refuse ? "Block all party invitations." : "Allow all party invitations.");
+    g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice.c_str()), 6619135);
+}
+
 void HandleLocalizedSystemNotice(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 4) return;
@@ -9737,18 +9782,18 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x020A, HandleFriendDelete);
     router.Register(0x0214, HandleGmStatusSummary);
     RegisterHandlerIfValid(router, receiveProfile.partyInviteAckExtended, HandlePartyInviteAck);
-    router.Register(0x02D9, HandleIgnorePacket); // config state; 0x02DA notify already routes separately
+    router.Register(0x02D9, HandlePrivacyConfiguration);
     router.Register(0x02DD, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.partyHpUpdateExtended, HandlePartyHpUpdate);
     router.Register(0x0283, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.partyInviteRequestExtended, HandlePartyInviteRequest);
-    router.Register(0x02C9, HandleIgnorePacket);
+    router.Register(0x02C9, HandlePartyInvitePrivacy);
     router.Register(0x02B1, HandleIgnorePacket);
     router.Register(0x02B2, HandleIgnorePacket);
     router.Register(0x02B9, HandleShortcutKeyList);
     router.Register(0x02D3, HandleIgnorePacket);
     router.Register(0x02D5, HandleIgnorePacket);
-    router.Register(0x02DA, HandleIgnorePacket);
+    router.Register(0x02DA, HandleEquipmentVisibility);
     RegisterHandlerIfValid(router, receiveProfile.actorActionNotifyExtended, HandleActorActionNotify);
     router.Register(0x02E7, HandleMapPropertyRowUpdate);
     router.Register(0x02F0, HandleNpcProgress);

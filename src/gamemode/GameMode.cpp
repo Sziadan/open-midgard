@@ -10867,6 +10867,9 @@ bool CGameMode::CanRequestStandingResurrection() const
 }
 
 void CGameMode::OnExit() {
+    g_session.m_showEquipmentToOthers = false;
+    g_session.m_refuseRecall = false;
+    g_session.m_refusePartyInvites = false;
     g_session.m_petStatus.ResetMapState();
     g_session.InvalidatePartyPositions();
     g_session.ClearNpcShopState();
@@ -11833,6 +11836,8 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]={0xa1,0x01,static_cast<u8>(wparam)};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
     }
+    case 270:
+        return SendPrivacyConfiguration(0, wparam != 0);
     case 198: {
         // CZ_COMMAND_HOMUN carries a zero type and a one-byte command.
         const u8 packet[] = {0x2d, 0x02, 0, 0, static_cast<u8>(wparam)};

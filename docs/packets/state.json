@@ -555,9 +555,9 @@
       "commit_subject": "packet(PK16.01): trace selected privacy configuration"
     },
     "PK16.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK16.01-privacy-wire.md"],
+      "commit_subject": "packet(PK16.02): apply server-confirmed privacy settings"
     },
     "PK16.03": {
       "status": "NOT_STARTED",

@@ -64,6 +64,12 @@ constexpr int kButtonIdClose = 135;
 constexpr int kButtonIdMini = 136;
 constexpr int kButtonIdRemoveOption = 138;
 constexpr int kButtonIdCompact = 145;
+constexpr int kButtonIdVisibility = 146;
+
+const char* EquipmentVisibilityLabel()
+{
+    return g_session.m_showEquipmentToOthers ? "Public gear" : "Private gear";
+}
 constexpr const char* kUiKorPrefix =
     "texture\\"
     "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA"
@@ -1070,6 +1076,7 @@ void UIEquipWnd::SetShow(int show)
     UIWindow::SetShow(show);
     if (show == 0) {
         m_hoveredSlot = -1;
+        m_visibilityPressed = false;
     }
     if (show != 0) {
         EnsureCreated();
@@ -1121,6 +1128,8 @@ msgresult_t UIEquipWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, ms
         return 1;
     case kButtonIdRemoveOption:
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestCartOff, 0, 0, 0);
+    case kButtonIdVisibility:
+        return g_modeMgr.SendMsg(270, !g_session.m_showEquipmentToOthers, 0, 0);
     case kButtonIdClose:
         SetShow(0);
         return 1;
@@ -1278,6 +1287,11 @@ void UIEquipWnd::OnDraw()
             DrawWindowText(hdc, centerPanel.left + 14, centerPanel.top + 68, "No Preview", RGB(90, 90, 90));
         }
 
+        const auto& visibility = m_layout.visibility;
+        const RECT visibilityRect = MakeEquipRect(m_x, m_y, visibility.x, visibility.y, visibility.width, visibility.height);
+        FillRectColor(hdc, visibilityRect, RGB(230, 230, 230));
+        FrameRectColor(hdc, visibilityRect, RGB(120, 120, 120));
+        DrawWindowTextRect(hdc, visibilityRect, EquipmentVisibilityLabel(), RGB(0, 0, 0), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         if (GetLocalPlayerRemoveOptionLabel()) {
             const RECT removeOptionRect = MakeEquipRect(m_x, m_y, m_layout.removeOption.x, m_layout.removeOption.y, m_layout.removeOption.width, m_layout.removeOption.height);
             FillRectColor(hdc, removeOptionRect, RGB(170, 76, 58));
@@ -1326,6 +1340,12 @@ void UIEquipWnd::OnDraw()
 
 void UIEquipWnd::OnLBtnDown(int x, int y)
 {
+    m_visibilityPressed = false;
+    const auto& visibility = m_layout.visibility;
+    if (!IsMiniMode() && IsPointInRect(MakeEquipRect(m_x, m_y, visibility.x, visibility.y, visibility.width, visibility.height), x, y)) {
+        m_visibilityPressed = true;
+        return;
+    }
     m_dragArmed = false;
     m_dragItemId = 0;
     m_dragItemIndex = 0;
@@ -1387,6 +1407,14 @@ void UIEquipWnd::OnLBtnDown(int x, int y)
 
 void UIEquipWnd::OnLBtnUp(int x, int y)
 {
+    if (m_visibilityPressed) {
+        m_visibilityPressed = false;
+        const auto& visibility = m_layout.visibility;
+        if (!IsMiniMode() && IsPointInRect(MakeEquipRect(m_x, m_y, visibility.x, visibility.y, visibility.width, visibility.height), x, y)) {
+            SendMsg(this, 6, kButtonIdVisibility, 0, 0);
+        }
+        return;
+    }
     m_dragArmed = false;
     m_dragItemId = 0;
     m_dragItemIndex = 0;
@@ -1654,7 +1682,7 @@ bool UIEquipWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
 
 int UIEquipWnd::GetQtSystemButtonCount() const
 {
-    return 5;
+    return 6;
 }
 
 bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const
@@ -1704,6 +1732,15 @@ bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDa
         outData->visible = m_h > kMiniHeight && label;
         return true;
     }
+    case 5:
+        outData->id = kButtonIdVisibility;
+        outData->x = m_x + m_layout.visibility.x;
+        outData->y = m_y + m_layout.visibility.y;
+        outData->width = m_layout.visibility.width;
+        outData->height = m_layout.visibility.height;
+        outData->label = EquipmentVisibilityLabel();
+        outData->visible = !IsMiniMode();
+        return true;
     case 4:
         outData->id = kButtonIdCompact;
         outData->x = m_x + m_w - 42;

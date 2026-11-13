@@ -95,14 +95,15 @@ RoFrame {
         model: panel.info.systemButtons || []
         delegate: RoChromeButton {
             required property var modelData
-            objectName: modelData.id === 138 ? "equipmentRemoveOption" : ""
+            objectName: modelData.id === 138 ? "equipmentRemoveOption"
+                       : modelData.id === 146 ? "equipmentVisibility" : ""
             z: 1
             x: modelData.x - panel.x; y: modelData.y - panel.y
             width: modelData.width; height: modelData.height
             visible: modelData.visible; label: modelData.label
             icon: modelData.icon || ""
             titleControl: modelData.id === 145
-            labelSize: modelData.id === 138 ? 10 : 8
+            labelSize: modelData.id === 138 || modelData.id === 146 ? 10 : 8
         }
     }
 }

@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK16.01 records the selected server contract for equipment visibility, recall refusal, and party-invite refusal. Implement those confirmed settings in PK16.02, including the separate `02DA` and `02C9` map-entry snapshots. Continue the whisper, blocklist, user-count, and friends contract audit in PK16.03. PK16 gates PK30 alongside completed PK25. [Privacy packet evidence](evidence/PK16.01-privacy-wire.md)
+PK16.02 wires server-confirmed equipment visibility, recall refusal, and party invitation refusal. Continue PK16.03 with `00C1/00C2` user count and `00CF–00D4` whisper blocks, then audit the existing whisper and friend receivers against their selected emitters. Trace `clif_parse_HowManyConnections` and `clif_parse_PMIgnore` first. Replay request and failure variants through the production packet loop. PK16 gates PK30 alongside completed PK25. [Privacy packet evidence](evidence/PK16.01-privacy-wire.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
