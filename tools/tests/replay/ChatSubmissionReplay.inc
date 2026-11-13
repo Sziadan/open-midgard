@@ -280,6 +280,17 @@ void ChatSubmissionReplay()
     std::fill(defaultMapMove.begin() + 18, defaultMapMove.end(), 0);
     Require(submit("/mm geffen") && peer.ReceiveExact(22) == defaultMapMove,
         "mm did not default absent coordinates to zero");
+    const std::array<const char*, 4> warpCommands{
+        "/remove Target", "/shift Target", "/recall Target", "/summon Target"};
+    for (size_t i = 0; i < warpCommands.size(); ++i) {
+        std::vector<u8> expected{static_cast<u8>(0xba + i), 1, 'T', 'a', 'r', 'g', 'e', 't'};
+        expected.resize(26);
+        Require(submit(warpCommands[i]) && peer.ReceiveExact(26) == expected,
+            "GM player warp did not send the selected name and opcode");
+    }
+    Require(!submit("/shift") && !submit("/shift abcdefghijklmnopqrstuvwx")
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "empty or oversized GM warp name emitted a request");
     for (const auto& sample : std::array<std::tuple<const char*, bool, const char*>, 6>{{
         {"/b notice", false, "SourceLocal: notice"}, {"/lb notice", true, "SourceLocal: notice"},
         {"/nb notice", false, "notice"}, {"/nlb notice", true, "notice"},
@@ -551,6 +562,7 @@ void ChatSubmissionReplay()
     Require(!submit("/resetstate"), "character reset reported success on a closed connection");
     Require(!submit("/cmt 1 2 0"), "map-cell command reported success on a closed connection");
     Require(!submit("/mm geffen"), "map-move command reported success on a closed connection");
+    Require(!submit("/shift Target"), "GM player warp reported success on a closed connection");
     Require(!submit("/b offline") && !*g_windowMgr.GetChatMsg(),
         "broadcast reported success or retained its buffer after failed transport");
     Require(!submit("/hide"), "hide reported success on a closed connection");

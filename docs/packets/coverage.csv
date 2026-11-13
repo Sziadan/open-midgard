@@ -338,10 +338,10 @@ AUDIT-0x01B6,0x01B6,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x01B7,0x01B7,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01B8,0x01B8,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01B9,0x01B9,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01BA,0x01BA,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01BB,0x01BB,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01BC,0x01BC,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01BD,0x01BD,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01BA,0x01BA,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM player warp request captured from source chat,C2S_ONLY,PK46.02-GM-PLAYER-WARP
+AUDIT-0x01BB,0x01BB,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM player warp request captured from source chat,C2S_ONLY,PK46.02-GM-PLAYER-WARP
+AUDIT-0x01BC,0x01BC,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM player warp request captured from source chat,C2S_ONLY,PK46.02-GM-PLAYER-WARP
+AUDIT-0x01BD,0x01BD,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM player warp request captured from source chat,C2S_ONLY,PK46.02-GM-PLAYER-WARP
 AUDIT-0x01BE,0x01BE,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01BF,0x01BF,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01C0,0x01C0,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,

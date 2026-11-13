@@ -442,6 +442,10 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
     }
     case 88:
         return SendMsg(157, 64, 0, 0);
+    case 95: case 96: case 97: case 98: {
+        if (parameters[0].find('\0') != std::string::npos) return 0;
+        return SendMsg(169 + type - 95, reinterpret_cast<msgparam_t>(parameters[0].c_str()), 0, 0);
+    }
     case 3:SourceChatNotice(95,"Invalid command.",65535);return 0;
     case 12: case 13: {
         const int value=(std::max)(0,(std::min)(127,static_cast<int>(ro::chat::SourceChatAtoi(parameters[0]))));

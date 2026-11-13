@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 connects the selected `/remove`, `/shift`, `/recall`, and `/summon` requests. The current server resolves all four by character name. Verify permission denial and movement in both directions live. [GM player warp](evidence/PK46.02-map-gm-shift-gaps.md#pk4602-gm-player-warp)
+
 PK46.02 connects the six selected GM broadcast aliases to global `0099` and map-local `019C`. The selected server applies permission checks and controls delivery and color. Verify both scopes and permission denial live. [Broadcast wire and server behavior](evidence/PK46.02-unmatched-registered-request-paths.md#pk4602-gm-broadcast)
 
 PK46.02 connects `/mapmove` and `/mm` to the selected `0140` GM request. The server controls permission, map and coordinates. Verify same-server and cross-server moves and permission denials live. [Map-move request](evidence/PK46.02-map-move-alternate-0140.md#pk4602-gm-map-move)

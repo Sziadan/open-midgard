@@ -12484,6 +12484,15 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]{0x9d, 0x01, 0x40, 0, 0, 0};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet)) ? 1 : 0;
     }
+    case 169: case 170: case 171: case 172: {
+        if (!wparam) return 0;
+        const std::string_view name(reinterpret_cast<const char*>(wparam));
+        if (name.empty() || name.size() > 23) return 0;
+        std::array<u8, 26> packet{static_cast<u8>(0xba + msg - 169), 0x01};
+        std::copy(name.begin(), name.end(), packet.begin() + 2);
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
+            static_cast<int>(packet.size())) ? 1 : 0;
+    }
     case 158: {
         if(!wparam)return 0;
         // Selected CZ_RENAME_PET: the24-byte field ends in NUL when the
