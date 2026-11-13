@@ -1394,9 +1394,9 @@
       "commit_subject": "packet(PK40.04): classify banking outside the selected profile"
     },
     "PK40.05": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK40.05-selected-verification.md"],
+      "commit_subject": "packet(PK40.05): verify selected auction and cash shop coverage"
     },
     "PK41.01": {
       "status": "NOT_STARTED",

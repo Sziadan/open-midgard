@@ -951,7 +951,7 @@ Each financial flow is a separate bounded child step with source-backed evidence
 
 ### Discovery ownership
 
-31 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+32 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 ## PK41 â€” Battleground identity and state
 
@@ -1108,7 +1108,7 @@ No catch-all task completion without per-row contracts/classification. Add newly
 
 ### Discovery ownership
 
-369 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+368 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 ## PK48 â€” Independent certification review
 

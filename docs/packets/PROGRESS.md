@@ -4111,3 +4111,5 @@ PK40.02 connects auction browsing, staging, registration and listing actions to 
 PK40.03 connects the selected NPC cash-shop catalog, purchase and result to the existing shop windows. Replay checks split payment and quote-owned balances. [Evidence](evidence/PK40.03-npc-cash-shop.md)
 
 PK40.03 adds explicit Kafra contribution input and split confirmation. Replacement catalogs retire stale confirmations. [Evidence](evidence/PK40.03-npc-cash-shop.md)
+
+PK40.05 adjudicates eight client-to-server requests and seven inactive auction and cash-shop identities. Active receive acceptance remains open. [Evidence](evidence/PK40.05-selected-verification.md)
