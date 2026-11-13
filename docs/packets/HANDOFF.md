@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.03 now has scheduled character-deletion transport. Continue with the character-selection controls, including confirmation with a six-digit birth date and cancellation after reconnect. The selected list omits the deadline and an already-queued reply carries zero. Show unknown dates explicitly and let the server decide readiness. [Scheduled deletion](evidence/PK46.03-scheduled-deletion-wire.md)
+
 PK46.03 corrects the PacketVer23 immediate character-deletion request and preserves the PacketVer22 client format. Continue with live immediate deletion on a disposable character, the scheduled-deletion family, and pre-auth failure handling. PK46.02 still has remaining per-request traces. [Character deletion](evidence/PK46.03-character-delete-selected-replay.md) · [Outbound crosswalk](evidence/PK46.02-commerce-battleground-booking-crosswalk.md)
 
 PK43.03 connects the selected booking register and delete commands and the `0803` registration result. Continue live registration, duplicate, deletion, and re-registration on the same character. Verify that the selected deployment emits no `0807` and that reconnect clears an outstanding registration. Buying-store and store-search discovery rows are inactive for MAIN 20080910. [Selected booking](evidence/PK43.03-selected-party-booking.md) · [Store and booking inventory](evidence/PK43.01-selected-store-booking-inventory.md)

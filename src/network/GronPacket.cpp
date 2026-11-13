@@ -42,6 +42,9 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x006E, 3);               // HC_REFUSE_MAKECHAR
     SetPacketSize(0x006F, 2);               // HC_ACCEPT_DELETECHAR
     SetPacketSize(0x0070, 3);               // HC_REFUSE_DELETECHAR
+    SetPacketSize(0x0828, 14);              // HC_DELETE_CHAR3_RESERVED
+    SetPacketSize(0x082A, 10);              // HC_DELETE_CHAR3
+    SetPacketSize(0x082C, 10);              // HC_DELETE_CHAR3_CANCEL
     SetPacketSize(0x0071, 28);
     SetPacketSize(0x0072, 25);
     SetPacketSize(0x0073, 11);

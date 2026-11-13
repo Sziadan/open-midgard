@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <map>
+#include <string_view>
 
 // Forward declarations
 class UIWaitWnd;
@@ -87,6 +89,9 @@ public:
     CHARACTER_INFO* GetCharInfo() { return m_charInfo; }
     const CHARACTER_INFO* GetCharInfo() const { return m_charInfo; }
     int GetCharCount() const { return m_numChar; }
+    enum class ScheduledDeleteAction { Reserve, Confirm, Cancel };
+    bool RequestScheduledDeletion(ScheduledDeleteAction action, u32 gid, std::string_view birthDate = {});
+    const std::map<u32, u32>& GetScheduledDeletions() const { return m_scheduledDeletions; }
 
     // Memory layout from HighPriest.exe.h:31161
     int m_charParam[8];
@@ -123,6 +128,12 @@ protected:
 private:
     friend struct LoginModeReplayAccess;
     void SetLoginStatus(const char* status);
+    void ResetScheduledDeletion();
+    void HandleScheduledDeletionReply(u16 opcode, const std::vector<u8>& packet);
+    void ApplyCharacterDeletion(u32 gid, int slot);
+    std::map<u32, u32> m_scheduledDeletions;
+    u32 m_pendingScheduledDeleteGid = 0;
+    u16 m_pendingScheduledDeleteReply = 0;
     static std::string FormatLoginDisconnectMessage(const std::vector<u8>& packet);
     static std::string FormatLoginRefusalMessage(const std::vector<u8>& packet);
     std::string m_deferredLoginStatus;

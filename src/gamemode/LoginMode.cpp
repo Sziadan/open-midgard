@@ -1406,6 +1406,7 @@ void CLoginMode::OnInit(const char* worldName) {
 }
 
 void CLoginMode::OnExit() {
+    ResetScheduledDeletion();
     g_session.InvalidatePartyPositions();
     RefreshMainWindowTitle();
 }
@@ -1454,6 +1455,7 @@ void CLoginMode::OnUpdate() {
             m_isConnected = 0;
             m_pendingDeleteCharGid = 0;
             m_pendingDeleteCharSlot = -1;
+            ResetScheduledDeletion();
             m_nextSubMode = LoginSubMode_Login;
             return;
         }
@@ -1536,6 +1538,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
 
     case LoginMsg_ReturnToLogin:
     case LoginMsg_Disconnect:
+        ResetScheduledDeletion();
         m_pendingDeleteCharGid = 0;
         m_pendingDeleteCharSlot = -1;
         CRagConnection::instance()->Disconnect();
@@ -1592,6 +1595,10 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
     case LoginMsg_SelectCharacter:
         if (wparam >= 0 && wparam < m_numChar) {
             const int selectedIndex = static_cast<int>(wparam);
+            if (m_pendingScheduledDeleteReply || m_scheduledDeletions.count(m_charInfo[selectedIndex].GID)) {
+                SetLoginStatus("Login: this character is awaiting a deletion result or is queued for deletion.");
+                return 0;
+            }
             m_selectedCharIndex = selectedIndex;
             m_selectedCharSlot = static_cast<int>(m_charInfo[selectedIndex].CharNum);
             g_session.SetSelectedCharacterAppearance(m_charInfo[selectedIndex]);
@@ -1601,6 +1608,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
         return 0;
 
     case LoginMsg_RequestMakeCharacter: {
+        if (m_pendingScheduledDeleteReply) return 0;
         m_selectedCharSlot = static_cast<int>(wparam);
         m_nextSubMode = LoginSubMode_MakeChar;
         return 1;
@@ -1612,7 +1620,8 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
             return 0;
         }
 
-        if (m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1 || m_pendingDeleteCharGid) {
+        if (m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1 || m_pendingDeleteCharGid
+            || m_pendingScheduledDeleteReply) {
             return 0;
         }
         const int requestedSlot = static_cast<int>(wparam);
@@ -1627,6 +1636,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
             return 0;
         }
         if (!m_isConnected || m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1
+            || m_pendingScheduledDeleteReply
             || deleteIndex >= m_numChar || m_charInfo[deleteIndex].CharNum != requestedSlot
             || m_charInfo[deleteIndex].GID != gid) {
             return 0;
@@ -2050,6 +2060,10 @@ void CLoginMode::PollNetwork()
         if (pkt.size() < 2) continue;
 
         const u16 id = static_cast<u16>(pkt[0]) | (static_cast<u16>(pkt[1]) << 8);
+        if (id == 0x0828 || id == 0x082A || id == 0x082C) {
+            HandleScheduledDeletionReply(id, pkt);
+            continue;
+        }
         if ((id == 0x006F || id == 0x0070) && (m_subMode != LoginSubMode_DeleteChar || !m_pendingDeleteCharGid)) {
             continue;
         }
@@ -2708,9 +2722,103 @@ void CLoginMode::OnRefuseMakeChar(const std::vector<u8>& raw)
     m_nextSubMode = LoginSubMode_CharSelect;
 }
 
-// ---------------------------------------------------------------------------
-// 0x006F  HC_ACCEPT_DELETECHAR  – char server deleted the selected character
-// ---------------------------------------------------------------------------
+void CLoginMode::ResetScheduledDeletion()
+{
+    m_scheduledDeletions.clear();
+    m_pendingScheduledDeleteGid = 0;
+    m_pendingScheduledDeleteReply = 0;
+}
+
+bool CLoginMode::RequestScheduledDeletion(ScheduledDeleteAction action, u32 gid, std::string_view birthDate)
+{
+    if (!m_isConnected || m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1
+        || m_pendingDeleteCharGid || m_pendingScheduledDeleteReply || !gid
+        || ro::net::GetActiveCharacterPacketProfile().id != ro::net::PacketVersionId::PacketVer23) {
+        return false;
+    }
+    const auto* character = std::find_if(m_charInfo, m_charInfo + m_numChar,
+        [gid](const auto& entry) { return entry.GID == gid; });
+    if (character == m_charInfo + m_numChar) return false;
+
+    u16 opcode = 0x0827;
+    size_t size = 6;
+    std::array<u8, 12> bytes{};
+    switch (action) {
+    case ScheduledDeleteAction::Reserve:
+        break;
+    case ScheduledDeleteAction::Cancel:
+        opcode = 0x082B;
+        break;
+    case ScheduledDeleteAction::Confirm:
+        if (birthDate.size() != 6 || !std::all_of(birthDate.begin(), birthDate.end(),
+                [](char c) { return c >= '0' && c <= '9'; })) return false;
+        opcode = 0x0829;
+        size = bytes.size();
+        std::copy(birthDate.begin(), birthDate.end(), bytes.begin() + 6);
+        break;
+    }
+    bytes[0] = static_cast<u8>(opcode);
+    bytes[1] = static_cast<u8>(opcode >> 8);
+    for (unsigned i = 0; i < 4; ++i) bytes[2 + i] = static_cast<u8>(gid >> (8 * i));
+    if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(bytes.data()), static_cast<int>(size))) {
+        SetLoginStatus("Login: failed to send scheduled deletion request.");
+        return false;
+    }
+    m_pendingScheduledDeleteGid = gid;
+    m_pendingScheduledDeleteReply = opcode + 1;
+    SetLoginStatus("Login: waiting for scheduled deletion response...");
+    return true;
+}
+
+void CLoginMode::HandleScheduledDeletionReply(u16 opcode, const std::vector<u8>& packet)
+{
+    if (m_subMode != LoginSubMode_CharSelect || opcode != m_pendingScheduledDeleteReply
+        || packet.size() != (opcode == 0x0828 ? 14u : 10u)) return;
+    const auto readWord = [&](size_t offset) {
+        return u32(packet[offset]) | (u32(packet[offset + 1]) << 8)
+            | (u32(packet[offset + 2]) << 16) | (u32(packet[offset + 3]) << 24);
+    };
+    const u32 gid = readWord(2);
+    if (gid != m_pendingScheduledDeleteGid) return;
+    m_pendingScheduledDeleteGid = 0;
+    m_pendingScheduledDeleteReply = 0;
+    const auto* character = std::find_if(m_charInfo, m_charInfo + m_numChar,
+        [gid](const auto& entry) { return entry.GID == gid; });
+    if (character == m_charInfo + m_numChar) return;
+
+    const u32 result = readWord(6);
+    if (opcode == 0x0828) {
+        if (result == 1) {
+            m_scheduledDeletions[gid] = readWord(10);
+            SetLoginStatus("Login: character queued for deletion.");
+        } else if (result == 0) {
+            m_scheduledDeletions.try_emplace(gid, 0);
+            SetLoginStatus("Login: character was already queued for deletion.");
+        } else if (result == 4 || result == 5) {
+            SetLoginStatus("Login: party or guild membership prevents scheduling deletion.");
+        } else {
+            SetLoginStatus("Login: could not schedule character deletion.");
+        }
+    } else if (opcode == 0x082C) {
+        if (result == 1) {
+            m_scheduledDeletions.erase(gid);
+            SetLoginStatus("Login: scheduled character deletion canceled.");
+        } else {
+            SetLoginStatus("Login: could not cancel scheduled character deletion.");
+        }
+    } else if (result == 1) {
+        ApplyCharacterDeletion(gid, character->CharNum);
+        m_nextSubMode = LoginSubMode_CharSelect;
+    } else if (result == 4) {
+        SetLoginStatus("Login: character deletion is not queued or its delay has not elapsed.");
+    } else if (result == 5) {
+        SetLoginStatus("Login: the birth date did not match.");
+    } else {
+        SetLoginStatus("Login: scheduled character deletion failed.");
+    }
+}
+
+// 0x006F HC_ACCEPT_DELETECHAR
 void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
 {
     if (raw.size() != 2 || m_subMode != LoginSubMode_DeleteChar || !m_pendingDeleteCharGid) {
@@ -2719,13 +2827,19 @@ void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
 
     const u32 deletedGid = m_pendingDeleteCharGid;
     const int deletedSlot = m_pendingDeleteCharSlot;
+    m_pendingDeleteCharGid = 0;
+    m_pendingDeleteCharSlot = -1;
+    ApplyCharacterDeletion(deletedGid, deletedSlot);
+    m_nextSubMode = LoginSubMode_CharSelect;
+}
+
+void CLoginMode::ApplyCharacterDeletion(u32 deletedGid, int deletedSlot)
+{
     int writeIndex = 0;
     bool removed = false;
     for (int readIndex = 0; readIndex < m_numChar; ++readIndex) {
         const CHARACTER_INFO& info = m_charInfo[readIndex];
-        const bool matchesPendingDelete = deletedGid != 0
-            ? info.GID == deletedGid
-            : static_cast<int>(info.CharNum) == deletedSlot;
+        const bool matchesPendingDelete = info.GID == deletedGid;
         if (matchesPendingDelete && !removed) {
             removed = true;
             continue;
@@ -2742,8 +2856,7 @@ void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
     m_numChar = writeIndex;
     m_selectedCharSlot = deletedSlot >= 0 ? deletedSlot : 0;
     m_selectedCharIndex = -1;
-    m_pendingDeleteCharGid = 0;
-    m_pendingDeleteCharSlot = -1;
+    m_scheduledDeletions.erase(deletedGid);
     ClearSelectedCharacterIfMatches(deletedGid);
 
     DbgLog("[Login] HC_ACCEPT_DELETECHAR: gid=%u slot=%d removed=%d totalChars=%d\n",
@@ -2754,7 +2867,6 @@ void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
     m_deferredLoginStatus = removed ? "Login: character deleted successfully."
         : "Login: delete acknowledged, but the character was not found locally.";
     SetLoginStatus(m_deferredLoginStatus.c_str());
-    m_nextSubMode = LoginSubMode_CharSelect;
 }
 
 // ---------------------------------------------------------------------------
@@ -2874,6 +2986,7 @@ void CLoginMode::OnZcAcceptEnter(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnDisconnectMsg(const std::vector<u8>& raw)
 {
+    ResetScheduledDeletion();
     ResetAccountLoginHandshake();
     const std::string message = FormatLoginDisconnectMessage(raw);
     const u8 code = (raw.size() > 2) ? raw[2] : 0;

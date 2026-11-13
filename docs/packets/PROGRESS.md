@@ -4143,3 +4143,5 @@ PK43.04 checks booking result branches, local send failure and selected zero-len
 PK46.02 links twelve selected auction, cash-shop, battleground and booking request captures and the open instance destroy contract to the outbound inventory. [Evidence](evidence/PK46.02-commerce-battleground-booking-crosswalk.md)
 
 PK46.03 corrects the selected immediate character-deletion request and adds confirmation and reply ownership. [Evidence](evidence/PK46.03-character-delete-selected-replay.md)
+
+PK46.03 adds scheduled deletion framing and login-mode transport for reservation, confirmation and cancellation. Character-selection integration remains open. [Evidence](evidence/PK46.03-scheduled-deletion-wire.md)

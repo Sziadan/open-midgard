@@ -2289,6 +2289,58 @@ void LoginCharacterDeletionReplay()
     connection->Disconnect();
 }
 
+void LoginScheduledDeletionReplay()
+{
+    SetCase("login_scheduled_deletion", "PK44.CHAR-DELETE", "selected-0827-082c", "login sender -> scheduled replies");
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::SeedCharacterForSelection(mode, 2);
+    mode.EnterCharacterSelectionForReplay();
+    using Action = CLoginMode::ScheduledDeleteAction;
+    constexpr u32 gid = 0x12345678;
+    const auto request = [&](Action action, std::string_view birthDate = {}) {
+        return mode.RequestScheduledDeletion(action, gid, birthDate);
+    };
+    const auto reply = [&](const std::vector<u8>& bytes, const char* expected) {
+        peer.Send(bytes);
+        const auto deadline = Clock::now() + kTimeout;
+        do {
+            LoginModeReplayAccess::RunPollNetwork(mode);
+            if (g_windowMgr.GetLoginStatus() == expected) return;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        } while (Clock::now() < deadline);
+        throw std::runtime_error("scheduled deletion reply did not apply its result");
+    };
+    Require(request(Action::Reserve) && !request(Action::Cancel), "reservation did not own the request");
+    Require(peer.ReceiveExact(6) == std::vector<u8>({0x27, 8, 0x78, 0x56, 0x34, 0x12}), "reservation request bytes differ");
+    reply({0x28, 8, 0x79, 0x56, 0x34, 0x12, 1, 0, 0, 0, 0, 0, 0, 0,
+           0x28, 8, 0x78, 0x56, 0x34, 0x12, 1, 0, 0, 0, 4, 3, 2, 0xf1},
+        "Login: character queued for deletion.");
+    Require(mode.GetScheduledDeletions().size() == 1 && mode.GetScheduledDeletions().at(gid) == 0xf1020304
+        && !mode.SendMsg(CLoginMode::LoginMsg_SelectCharacter, 0, 0, 0), "reservation lost CID, absolute deadline, or select gate");
+    Require(request(Action::Cancel), "queued cancellation could not be sent");
+    Require(peer.ReceiveExact(6) == std::vector<u8>({0x2b, 8, 0x78, 0x56, 0x34, 0x12}), "cancel request bytes differ");
+    reply({0x2c, 8, 0x78, 0x56, 0x34, 0x12, 1, 0, 0, 0}, "Login: scheduled character deletion canceled.");
+    Require(mode.GetScheduledDeletions().empty() && mode.GetCharCount() == 1, "cancel removed the character or retained its date");
+    Require(request(Action::Reserve), "could not query existing reservation through reserve");
+    peer.ReceiveExact(6);
+    reply({0x28, 8, 0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0, 0, 0, 0, 0},
+        "Login: character was already queued for deletion.");
+    Require(mode.GetScheduledDeletions().at(gid) == 0, "duplicate reservation fabricated a deadline");
+    Require(!request(Action::Confirm, "99-01-02") && request(Action::Confirm, "990102"), "birth date validation differs");
+    const std::vector<u8> confirmation{0x29, 8, 0x78, 0x56, 0x34, 0x12, '9', '9', '0', '1', '0', '2'};
+    Require(peer.ReceiveExact(12) == confirmation, "confirmation did not use six raw birth date bytes");
+    reply({0x2a, 8, 0x78, 0x56, 0x34, 0x12, 4, 0, 0, 0},
+        "Login: character deletion is not queued or its delay has not elapsed.");
+    Require(mode.GetCharCount() == 1 && request(Action::Confirm, "990102"), "rejection removed character or prevented retry");
+    Require(peer.ReceiveExact(12) == confirmation, "confirmation retry changed bytes");
+    reply({0x2a, 8, 0x78, 0x56, 0x34, 0x12, 1, 0, 0, 0}, "Login: character deleted successfully.");
+    Require(!mode.GetCharCount() && mode.GetScheduledDeletions().empty(), "scheduled success did not retire both character and deadline");
+    connection->Disconnect();
+}
+
 void LoginCharacterCreationRefusalReplay()
 {
     SetCase("login_character_creation_refusal", "PK44.CHAR-CREATE", "PK44-006e-create-refusal-results-selected-source", "CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnRefuseMakeChar");
@@ -7448,6 +7500,7 @@ int main(int argc,char** argv){try{
             (selected ? ro::net::PacketVersionId::PacketVer23 : ro::net::PacketVersionId::PacketVer22),
             "character deletion fixture did not select its profile");
         LoginCharacterDeletionReplay();
+        if (selected) LoginScheduledDeletionReplay();
         CConnection::Cleanup();
         return 0;
     }
@@ -7632,6 +7685,7 @@ int main(int argc,char** argv){try{
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();
     LoginCharacterDeletionReplay();
+    LoginScheduledDeletionReplay();
     LoginPasswordHashChallengeReplay();
     LoginPollTransientStatusReplay();
     LoginCharConnectionFailureReplay();
