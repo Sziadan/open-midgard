@@ -9144,6 +9144,7 @@ int main(int argc,char** argv){try{
     CartClearContentsReplay();
     CartActorPresenceReplay();
     CharacterNameReplyIsolationReplay();
+    ActorNameRequestReplyReplay();
     CharacterNameRequestReplyReplay();
     RentalItemPacketReplay();
     CorpsePacketReplay();

@@ -10573,10 +10573,15 @@ void HandleActorNameAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    if (CGameActor* actor = EnsureRuntimeActor(mode, gid)) {
-        if (!actor->m_isPc && actor->m_objectType == 6) {
-            name = SanitizeNpcDisplayName(std::move(name));
-        }
+    CGameActor* actor = FindRuntimeActorForVanish(mode, gid);
+    if (!actor && mode.m_world) {
+        actor = mode.m_world->GetGameActorByAID(gid);
+    }
+    if (!actor) {
+        return;
+    }
+    if (!actor->m_isPc && actor->m_objectType == 6) {
+        name = SanitizeNpcDisplayName(std::move(name));
     }
 
     if (name.empty()) {

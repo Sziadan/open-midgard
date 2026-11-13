@@ -1,3 +1,85 @@
+std::string ReplayResolveHoveredActorName(CGameMode& mode, CGameActor& actor);
+
+void ActorNameRequestReplyReplay()
+{
+    SetCase("actor_name_request_reply", "PK46.02", "selected-008c-0095-0195",
+        "production hover label and sender -> loopback -> actor-name handler");
+    constexpr u32 npcId = 0x12345678;
+    constexpr u32 playerId = npcId + 1;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    CGameMode mode;
+    auto npcOwner = std::make_unique<CGameActor>();
+    CGameActor& npc = *npcOwner;
+    npc.m_gid = npcId;
+    npc.m_objectType = 6;
+    CGameActor player;
+    player.m_gid = playerId;
+    player.m_isPc = 1;
+    mode.m_runtimeActors.emplace(npcId, &npc);
+    mode.m_runtimeActors.emplace(playerId, &player);
+    Require(ReplayResolveHoveredActorName(mode, npc) == "NPC" && mode.m_actorNameByGIDReqTimer.empty(),
+        "offline hover armed the actor name retry timer");
+    LoopbackPeer peer(*connection);
+    const auto expectRequest = [&](CGameActor& actor, u8 firstIdByte) {
+        ReplayResolveHoveredActorName(mode, actor);
+        auto bytes = peer.ReceiveExact(11);
+        std::fill_n(bytes.begin() + 2, 5, 0);
+        Require(bytes == std::vector<u8>{0x8c, 0, 0, 0, 0, 0, 0, firstIdByte, 0x56, 0x34, 0x12},
+            "hover name request differs from selected registry");
+    };
+    expectRequest(npc, 0x78);
+    ReplayResolveHoveredActorName(mode, npc);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "hover name request flooded during the cooldown");
+    mode.m_actorNameByGIDReqTimer[npcId] = GetTickCount() - 1000u;
+    expectRequest(npc, 0x78);
+    expectRequest(player, 0x79);
+
+    TestConnection input;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& frame) {
+        Require(input.QueueBytes(frame)
+            && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "actor name reply did not pass production framing and routing");
+    };
+    std::vector<u8> npcReply(30, 0);
+    const std::array<u8, 6> npcHeader{0x95, 0, 0x78, 0x56, 0x34, 0x12};
+    std::copy(npcHeader.begin(), npcHeader.end(), npcReply.begin());
+    std::memcpy(npcReply.data() + 6, "Guide#internal", 14);
+    mode.m_characterNameCache[npcId] = "Character";
+    dispatch(npcReply);
+    Require(ReplayResolveHoveredActorName(mode, npc) == "Guide"
+        && mode.m_actorNameByGIDReqTimer.count(npcId) == 0
+        && mode.m_characterNameCache.at(npcId) == "Character",
+        "NPC reply did not resolve the hover label independently of character names");
+
+    std::vector<u8> playerReply(102, 0);
+    const std::array<u8, 6> playerHeader{0x95, 1, 0x79, 0x56, 0x34, 0x12};
+    std::copy(playerHeader.begin(), playerHeader.end(), playerReply.begin());
+    std::memcpy(playerReply.data() + 6, "Trader", 6);
+    std::memcpy(playerReply.data() + 30, "Friends", 7);
+    std::memcpy(playerReply.data() + 54, "Guild", 5);
+    std::memcpy(playerReply.data() + 78, "Officer", 7);
+    dispatch(playerReply);
+    const auto& entry = mode.m_actorNameListByGID.at(playerId);
+    Require(entry.name == "Trader" && entry.partyName == "Friends" && entry.guildName == "Guild"
+        && entry.guildTitle == "Officer" && mode.m_actorNameByGIDReqTimer.count(playerId) == 0,
+        "full actor name reply did not populate the player label and affiliations");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "resolved actor label sent another name request");
+    dispatch({0x80, 0, 0x78, 0x56, 0x34, 0x12, 0});
+    mode.m_deferredActorDeletes.clear();
+    Require(mode.m_runtimeActors.count(npcId) == 0 && mode.m_actorNameListByGID.count(npcId) == 0,
+        "actor removal did not clear the NPC and its name");
+    dispatch(npcReply);
+    Require(mode.m_runtimeActors.count(npcId) == 0 && mode.m_actorNameListByGID.count(npcId) == 0
+        && mode.m_actorNameList.count(npcId) == 0, "late name reply recreated a vanished actor");
+    mode.m_runtimeActors.clear();
+    connection->Disconnect();
+}
+
 void CharacterNameReplyIsolationReplay()
 {
     SetCase("character_name_reply_isolation", "PK45.05", "selected-20080910-0194-character-id",

@@ -39,7 +39,7 @@ AUDIT-0x0088,0x0088,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-position-corr
 AUDIT-0x0089,0x0089,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected eight-byte time request and ordered reply continuation verified in card composition recovery replay,C2S_ONLY,PK46.02-map-time-sync-request
 AUDIT-0x008A,0x008A,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.02-actor-action-notify traces legacy 29-byte 0x008A branch below PACKETVER 20071113; pinned 20080910 uses 0x02E1; legacy replay remains open,UNREVIEWED,
 AUDIT-0x008B,0x008B,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x008C,0x008C,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,PK46.02-map-actor-name-request.md: selected modern 11-byte actor-name request carries GID at offset 7 and matches final registry; legacy profile reuses 0x008C for global chat. Name-response lifecycle and replay remain open.,UNREVIEWED,
+AUDIT-0x008C,0x008C,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Selected actor name request captured from hover and replayed through both reply forms,C2S_ONLY,PK46.02-map-actor-name-request
 AUDIT-0x008D,0x008D,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x008E,0x008E,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0090,0x0090,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected seven-byte contact request captured; live NPC subtype outcomes remain open,C2S_ONLY,PK46.02-map-npc-contact-request
@@ -60,7 +60,7 @@ AUDIT-0x009E,0x009E,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x009F,0x009F,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,PacketVer22 item-use frame and reply lifecycle captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x00A0,0x00A0,map,unresolved,PK38,PK01;PK02;PK47;PK48;PK45,Selected clif_additem uses 02D4,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x00A1,0x00A1,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00A2,0x00A2,map,C2S,PK47,PK01;PK02;PK48;PK46,"PK45.05 verifies selected 20080910 C2S SolveCharName 00A2/15/CID@11; original discovery profile/historical identity remains PK47, broader request audit PK46",UNREVIEWED,
+AUDIT-0x00A2,0x00A2,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected character name request captured with CID at offset 11 and isolated reply cache,C2S_ONLY,PK45.CHARACTER-NAME
 AUDIT-0x00A3,0x00A3,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x00A4,0x00A4,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x00A5,0x00A5,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

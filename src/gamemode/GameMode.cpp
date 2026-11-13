@@ -10764,6 +10764,11 @@ void CGameMode::SynchronizePlayerSkillProceed(CPlayer* player,bool retire)
 }
 
 #if defined(RO_PACKET_REPLAY_TESTS)
+std::string ReplayResolveHoveredActorName(CGameMode& mode, CGameActor& actor)
+{
+    return ResolveHoveredActorName(mode, &actor);
+}
+
 void ReplayAdvanceMapLoading(CGameMode& mode, u32 now)
 {
     AdvanceMapLoading(mode, now);

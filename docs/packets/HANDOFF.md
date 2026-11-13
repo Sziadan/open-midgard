@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 captures selected actor and character name requests. Actor name replies now update existing actors and cannot recreate one after a visibility removal. Live native and Qt labels and historical profile variants remain open. [Actor lookup evidence](evidence/PK46.02-map-actor-name-request.md)
+
 PK46.02 verifies the selected save-point and quit requests through the chooser. A `00B3` result 0 now releases a pending character-select request and reports the refusal without leaving the map. Live save-point respawn, character-server refusal, and quit remain open. [Character-select reply](evidence/PK45.03-return-character-select-ack.md) · [Disconnect contract](contracts/PK03.04.DISCONNECT-ACK.md)
 
 PK46.02 keeps map loading active if `007D` fails to send, retries once, and returns to sign-in if the retry also fails. Same-map reuse retains its world while waiting for that retry. Verify load completion and actor bootstrap against the deployed server. [Load-end evidence](evidence/PK46.02-map-load-end-ack.md)
