@@ -38,7 +38,7 @@ def generate():
         previous={r['discovery_id']:r for r in csv.DictReader(path.open(encoding='utf-8',newline=''))}
         for r in rows:
             old=previous.get(r['discovery_id'])
-            if old and old.get('classification')!='UNREVIEWED':
+            if old and (old.get('classification')!='UNREVIEWED' or old.get('canonical_contracts')):
                 for k in ('primary_package','secondary_packages','assignment_basis','classification','canonical_contracts'): r[k]=old[k]
     with path.open('w',encoding='utf-8',newline='') as f:
         w=csv.DictWriter(f,fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)

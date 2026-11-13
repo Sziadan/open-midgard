@@ -1349,9 +1349,9 @@
       "commit_subject": "packet(PK38.03): replay identification after silent rejection"
     },
     "PK38.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK38.04-item-action-verification.md"],
+      "commit_subject": "packet(PK38.04): verify selected item action coverage"
     },
     "PK39.01": {
       "status": "NOT_STARTED",

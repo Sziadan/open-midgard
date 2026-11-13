@@ -420,7 +420,7 @@ P11: UI must reflect a rejected change and server restore after reconnect. Frien
 
 ### Discovery ownership
 
-18 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+20 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 Finding P11: Equipment/privacy and party-invite settings are discarded.
 
@@ -842,7 +842,7 @@ Source-prove list record sizes, slots/card options, selection indexes and materi
 
 ### Discovery ownership
 
-6 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+10 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 ## PK36 â€” Storage password challenge
 
@@ -893,7 +893,7 @@ Verify every production sender/server parser, partial purchases, quantities/pric
 
 ### Discovery ownership
 
-39 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+41 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 ## PK38 â€” Item use and equipment action parity
 
@@ -912,7 +912,7 @@ Per-action source-derived requests/results, inventory indices and quantities. Ve
 
 ### Discovery ownership
 
-52 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+41 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 ## PK39 â€” MVP rankings PvP manner and messages
 
@@ -1066,7 +1066,7 @@ Tier: **S**. Dependencies: PK20, PK22, PK24.
 
 ### Discovery ownership
 
-52 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+51 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 ## PK46 â€” Exhaustive outbound parser parity
 
@@ -1108,7 +1108,7 @@ No catch-all task completion without per-row contracts/classification. Add newly
 
 ### Discovery ownership
 
-370 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
+369 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
 
 ## PK48 â€” Independent certification review
 
