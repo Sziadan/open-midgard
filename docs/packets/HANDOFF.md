@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK38.01 traces the selected item-action registry and emitters. The next implementation gap is `07FD` monster and NPC obtain announcements. The selected emitter can send them even though the box variant is gated to later versions. Use the actual transmitted name lengths and replay a following packet on the same stream. [Item action inventory](evidence/PK38.01-item-action-inventory.md)
+PK38.01 traces the selected item-action registry and emitters. `07FD` now frames the selected monster and NPC announcements and presents them in broadcast chat. Replay verifies a fragmented frame and a subsequent ordinary broadcast. Verify deployed emission and localized wording. Continue PK38.04 and the remaining discovery dispositions. [Item action inventory](evidence/PK38.01-item-action-inventory.md)
 
 PK38.02 verifies item use, drop, pickup, equipment, and personal storage transfers in replay. Continue the PK38.01 source inventory and PK38.04 verification, including live storage, equipped appearance, party loot, and rapid pickup retargeting. Match `009F` legacy pickup to its own server profile before changing it. [Item-use evidence](evidence/PK38.02-item-use.md) · [Drop evidence](evidence/PK46.02-map-drop-item-request.md) · [Pickup evidence](evidence/PK46.02-map-take-item-request.md) · [Equipment evidence](evidence/PK38.02-equipment.md) · [Storage evidence](evidence/PK46.02-storage-transfer-requests.md)
 

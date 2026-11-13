@@ -7554,6 +7554,7 @@ int main(int argc,char** argv){try{
     ChatWindowStateReplay();
     ChatNoticeRoutingReplay();
     ChatNoticeProducerReplay();
+    SpecialItemObtainReplay();
     ChatPrimaryViewReplay();
     ChatPrimarySpeechReplay();
     ChatDetachedViewReplay();

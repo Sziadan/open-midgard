@@ -1336,7 +1336,7 @@
     "PK38.01": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK38.01-item-action-inventory.md"],
-      "commit_subject": "packet(PK38.01): trace selected item action identities"
+      "commit_subject": "packet(PK38.01): receive selected special item announcements"
     },
     "PK38.02": {
       "status": "IN_PROGRESS",

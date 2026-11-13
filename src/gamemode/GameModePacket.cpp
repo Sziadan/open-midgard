@@ -8901,6 +8901,39 @@ void HandleBroadcast(CGameMode& mode, const PacketView& packet)
     RecordChat(mode, payload.text, payload.color, kChatChannelBroadcast);
 }
 
+void HandleSpecialItemObtain(CGameMode& mode, const PacketView& packet)
+{
+    constexpr size_t nameLength = 24;
+    constexpr size_t characterOffset = 8;
+    constexpr size_t monsterLengthOffset = characterOffset + nameLength;
+    constexpr size_t monsterOffset = monsterLengthOffset + 1;
+    if (!packet.data || packet.packetLength < monsterLengthOffset
+        || ReadLE16(packet.data + 2) != packet.packetLength || packet.data[7] != nameLength) return;
+
+    const auto kind = packet.data[4];
+    const auto itemId = ReadLE16(packet.data + 5);
+    if (!itemId) return;
+    std::string monster;
+    if (kind == 1) {
+        // The selected emitter counts the length byte as part of the 24-byte tail.
+        if (packet.packetLength != monsterLengthOffset + nameLength || packet.data[monsterLengthOffset] != nameLength) return;
+        monster = ExtractFixedPacketString(packet, monsterOffset, nameLength - 1);
+        if (monster.empty()) return;
+    } else if (kind != 2 || packet.packetLength != monsterLengthOffset) {
+        return;
+    }
+
+    const auto character = ExtractFixedPacketString(packet, characterOffset, nameLength);
+    if (character.empty()) return;
+    const auto item = g_ttemmgr.GetDisplayName(itemId, true, false);
+    std::string message = character + " obtained " + item;
+    if (!monster.empty()) message += " from " + monster;
+    else message += " from an NPC";
+    message += '.';
+    mode.m_broadCastTick = GetTickCount();
+    RecordChat(mode, message, 0x0000FFFF, kChatChannelBroadcast);
+}
+
 void RequestTransitionMode(const MapTransitionServices* services, int modeType, const char* worldName)
 {
     if (services && services->requestMode) {
@@ -9984,6 +10017,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00D4, HandleWhisperExclusionList);
     router.Register(0x02C1, HandleNpcChat);
     RegisterHandlerIfValid(router, receiveProfile.broadcastBasic, HandleBroadcast);
+    router.Register(0x07FD, HandleSpecialItemObtain);
     router.Register(0x00B4, HandleNpcDialogText);
     router.Register(0x00B5, HandleNpcDialogNext);
     router.Register(0x00B6, HandleNpcDialogClose);

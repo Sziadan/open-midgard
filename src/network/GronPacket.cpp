@@ -432,6 +432,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x06CA, 8);
     SetPacketSize(0x06CE, 10);
     SetPacketSize(0x07FA, 8);
+    SetPacketSize(0x07FD, kVariablePacketSize); // Special item obtain announcement
     SetPacketSize(0x02DC, kVariablePacketSize);
 
     g_buildPacketSizeTable = nullptr;

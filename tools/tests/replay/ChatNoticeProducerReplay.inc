@@ -1,3 +1,43 @@
+void SpecialItemObtainReplay()
+{
+    SetCase("special_item_obtain", "PK38.01", "selected-07fd-monster-npc",
+        "ProcessGameModePacketLoop -> 07FD item obtain broadcast");
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    g_windowMgr.ClearChatEvents();
+    const std::string character = "Collector";
+    const std::string monster = "ABCDEFGHIJKLMNOPQRSTUVW";
+    std::vector<u8> npc(32, 0);
+    npc[0] = 0xfd; npc[1] = 7; npc[2] = 32; npc[4] = 2;
+    npc[5] = 0xf5; npc[6] = 1; npc[7] = 24;
+    std::copy(character.begin(), character.end(), npc.begin() + 8);
+    auto drop = npc;
+    drop.resize(56);
+    drop[2] = 56; drop[4] = 1; drop[32] = 24;
+    std::copy(monster.begin(), monster.end(), drop.begin() + 33);
+    auto bad = drop;
+    bad[32] = 25;
+    std::vector<u8> tail(drop.begin() + 20, drop.end());
+    tail.insert(tail.end(), bad.begin(), bad.end());
+    tail.insert(tail.end(), npc.begin(), npc.end());
+    const std::vector<u8> broadcast{0x9a, 0, 9, 0, 'n', 'e', 'x', 't', 0};
+    tail.insert(tail.end(), broadcast.begin(), broadcast.end());
+    Require(connection.QueueBytes({drop.begin(), drop.begin() + 20}), "could not queue partial 07FD");
+    Require(ProcessGameModePacketLoop(mode, connection, router, 4).packetsProcessed == 0
+        && connection.BufferedBytes() == 20 && g_windowMgr.GetChatEvents().empty(), "partial 07FD dispatched early");
+    Require(connection.QueueBytes(tail), "could not queue the rest of the announcement stream");
+    Require(ProcessGameModePacketLoop(mode, connection, router, 4).packetsDispatched == 4
+        && !connection.BufferedBytes(), "07FD did not preserve following frames");
+    const auto& events = g_windowMgr.GetChatEvents();
+    Require(events.size() == 3 && events[0].text.find(character) != std::string::npos
+        && events[0].text.find(monster) != std::string::npos && events[1].text.find(character) != std::string::npos
+        && events[1].text.find(monster) == std::string::npos && events[2].text == "next",
+        "07FD presentation, malformed-frame isolation, or subsequent broadcast differs");
+    g_windowMgr.ClearChatEvents();
+}
+
 void ChatNoticeProducerReplay()
 {
     SetCase("chat_notice_producer_source_metadata", "PK09.21",
