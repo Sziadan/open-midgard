@@ -13,7 +13,7 @@ void RentalItemPacketReplay()
             g_windowMgr.ClearChatEvents();for(const auto& e:chat)g_windowMgr.PushChatEvent(e.text.c_str(),e.color,e.channel,e.tick);}
     } restore;
     g_session.ClearInventoryItems();g_windowMgr.ClearChatEvents();
-    ITEM_INFO item;item.SetItemId(1201);item.m_itemIndex=291;item.m_itemType=5;item.m_num=3;
+    ITEM_INFO item;item.SetItemId(1201);item.m_itemIndex=35;item.m_itemType=5;item.m_num=3;
     item.m_isIdentified=1;item.m_deleteTime=1704067200;g_session.SetInventoryItem(item);
     CGameMode mode;TestConnection connection;
     auto& router=GetProductionGameModePacketRouter();router.Clear();RegisterDefaultGameModePacketHandlers(router);
@@ -35,18 +35,18 @@ void RentalItemPacketReplay()
             "rental counter did not use floored minutes or seconds");
         Require(events[before].text.find(seconds/60?"minutes":"seconds")!=std::string::npos,"rental units differ from primary");
         if(last)Require(events.back().text.find("1 minute")!=std::string::npos,"last-minute warning missing");
-        Require(g_session.GetInventoryItemByIndex(291)->m_num==3
-            && g_session.GetInventoryItemByIndex(291)->m_deleteTime==1704067200,"counter changed inventory quantity/absolute expiry");
+        Require(g_session.GetInventoryItemByIndex(35)->m_num==3
+            && g_session.GetInventoryItemByIndex(35)->m_deleteTime==1704067200,"counter changed inventory quantity/absolute expiry");
     }
-    dispatch({0x99,2,0x23,1,0xb1,4});
-    Require(g_session.GetInventoryItemByIndex(291) && g_session.GetInventoryItemByIndex(291)->m_num==2,
+    dispatch({0x99,2,0x23,0,0xb1,4});
+    Require(g_session.GetInventoryItemByIndex(35) && g_session.GetInventoryItemByIndex(35)->m_num==2,
         "0299 did not apply primary one-item decrement");
     Require(g_windowMgr.GetChatEvents().back().text.find("deleted from the Inventory")!=std::string::npos,
         "rental deletion notice missing");
     // Selected pc_inventory_rentals then emits the full pre-deletion count via 00AF.
-    dispatch({0xaf,0,0x23,1,3,0});
-    Require(!g_session.GetInventoryItemByIndex(291),"rental follow-up full removal left stale inventory");
-    dispatch({0x99,2,0x23,1,0xb1,4});dispatch({0xaf,0,0x23,1,3,0});
+    dispatch({0xaf,0,0x23,0,3,0});
+    Require(!g_session.GetInventoryItemByIndex(35),"rental follow-up full removal left stale inventory");
+    dispatch({0x99,2,0x23,0,0xb1,4});dispatch({0xaf,0,0x23,0,3,0});
     Require(g_session.GetInventoryItems().empty(),"repeated removal resurrected an expired item");
     std::cout<<"{\"case_id\":\"rental_item_counter_and_delete\",\"contract_id\":\"PK33.05\",\"routes\":[\"0298\",\"0299\",\"00AF\"],\"outcome\":\"PASS\"}"<<std::endl;
 }

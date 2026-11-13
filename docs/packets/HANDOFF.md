@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK38.02 validates item-use replies and preserves card selection during unrelated use. Continue with production replay of drop rejection and positive inventory removal, then pickup, equip and unequip, and storage transfers. Match `009F` legacy pickup to its own server profile before changing it. [Item-use evidence](evidence/PK38.02-item-use.md)
+PK38.02 validates item-use replies and preserves card selection during unrelated use. Drop replay covers stale prompts, rejection and retry, positive removal, and same-map cleanup. Next review pickup ownership and framing, equip and unequip, and storage transfers. Match `009F` legacy pickup to its own server profile before changing it. [Item-use evidence](evidence/PK38.02-item-use.md) · [Drop evidence](evidence/PK46.02-map-drop-item-request.md)
 
 PK38.03 replays card use, list receipt, and chooser submission through the selected packet bytes and applies `017D` only to the matching submitted request. Native and Qt capture verify the chooser and its cancellation. Ordered time replies allow recovery after a silent rejection. Continue with live carding and map-entry timing verification. Identification replay also verifies reopening and submitting from a new `0177` after an unanswered request. Repeat that sequence live alongside Item Appraisal, Magnifier, cancellation, and rendered chooser comparison. [Card composition evidence](evidence/PK38.03-card-composition.md) · [Identification evidence](evidence/PK38.03-item-identification.md)
 

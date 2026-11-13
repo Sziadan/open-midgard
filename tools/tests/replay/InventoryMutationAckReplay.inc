@@ -139,12 +139,17 @@ void InventoryMutationAckReplay()
     pickupFailure(7,"",true);
 
     // Basic zero-count drop rejection is a correction only; positive removal is authoritative.
-    seed(); mode.m_waitingItemThrowAck=0x1234;
-    auto drop=frame(0x00AF,6); put16(drop,2,0x1234); put16(drop,4,0); dispatch(drop,"zero-count drop reject");
-    Require(preserved(find(0x1234),5) && mode.m_waitingItemThrowAck==0,"drop rejection changed item or retained matching pending state");
+    constexpr u16 dropIndex = 64;
+    seed();
+    ITEM_INFO dropItem = *find(0x1234);
+    dropItem.m_itemIndex = dropIndex;
+    g_session.SetInventoryItem(dropItem);
+    mode.m_waitingItemThrowAck=dropIndex;
+    auto drop=frame(0x00AF,6); put16(drop,2,dropIndex); put16(drop,4,0); dispatch(drop,"zero-count drop reject");
+    Require(preserved(find(dropIndex),5) && mode.m_waitingItemThrowAck==0,"drop rejection changed item or retained matching pending state");
     mode.m_waitingItemThrowAck=0x7777; put16(drop,4,2); dispatch(drop,"partial drop");
-    Require(preserved(find(0x1234),3) && mode.m_waitingItemThrowAck==0x7777,"partial drop count/pending correlation differs");
-    put16(drop,4,3); dispatch(drop,"full drop"); Require(find(0x1234)==nullptr,"full drop did not remove row");
+    Require(preserved(find(dropIndex),3) && mode.m_waitingItemThrowAck==0x7777,"partial drop count/pending correlation differs");
+    put16(drop,4,3); dispatch(drop,"full drop"); Require(find(dropIndex)==nullptr,"full drop did not remove row");
 
     // Basic and extended use acknowledgements carry the authoritative remainder; failures and unknown rows are harmless.
     constexpr u16 useIndex = 65;

@@ -5105,6 +5105,80 @@ void UseItemProductionSendReplay()
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
+void DropItemProductionReplay()
+{
+    SetCase("drop_item_production_replay", "PK38.02", "PK46.02-0116-item-drop",
+        "UIWindowMgr::OnLBtnUp -> UINpcInputWnd -> drop sender and removal router");
+    constexpr u16 slot = 101;
+    Require(!g_session.GetInventoryItemByIndex(slot), "drop replay slot is occupied");
+    ITEM_INFO item{};
+    item.m_itemIndex = slot;
+    item.m_num = 3;
+    item.SetItemId(501);
+    g_session.SetInventoryItem(item);
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const int oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), bytes.size(), view, consumed)
+            && consumed == bytes.size() && router.Dispatch(mode, view), "drop reply did not frame and dispatch");
+    };
+    const auto releaseInventoryDrag = [&](int amount) {
+        mode.m_dragType = static_cast<int>(DragType::ShortcutItem);
+        mode.m_dragInfo.type = mode.m_dragType;
+        mode.m_dragInfo.source = static_cast<int>(DragSource::InventoryWindow);
+        mode.m_dragInfo.itemIndex = slot;
+        mode.m_dragInfo.itemId = item.GetItemId();
+        mode.m_dragInfo.itemCount = amount;
+        g_windowMgr.OnLBtnUp(30000, 30000);
+    };
+
+    releaseInventoryDrag(3);
+    auto* prompt = g_windowMgr.m_npcInputWnd;
+    Require(prompt && prompt->IsGameNumberPromptFor(CGameMode::GameMsg_RequestDropInventoryItem),
+        "dropping a stack did not open its amount prompt");
+    item.SetItemId(502);
+    g_session.SetInventoryItem(item);
+    prompt->HandleKeyDown(VK_RETURN);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0
+        && !mode.m_waitingItemThrowAck, "stale prompt dropped a replacement item");
+
+    releaseInventoryDrag(3);
+    item.m_num = 2;
+    g_session.SetInventoryItem(item);
+    prompt->HandleKeyDown(VK_RETURN);
+    Require(peer.ReceiveExact(10) == std::vector<u8>{0x16, 1, 0, 0, 0, 101, 0, 0, 2, 0},
+        "stack drop did not send the selected request with the current quantity cap");
+    Require(mode.m_waitingItemThrowAck == slot && g_session.GetInventoryItemByIndex(slot)->m_num == 2,
+        "drop changed inventory before the server replied");
+    Require(!mode.SendMsg(CGameMode::GameMsg_RequestDropInventoryItem, slot, 1, item.GetItemId()),
+        "drop accepted a repeat while the first request was pending");
+    dispatch({0xaf, 0, 101, 0, 0, 0});
+    Require(!mode.m_waitingItemThrowAck && g_session.GetInventoryItemByIndex(slot)->m_num == 2,
+        "drop rejection changed inventory or blocked retry");
+    releaseInventoryDrag(1);
+    Require(peer.ReceiveExact(10) == std::vector<u8>{0x16, 1, 0, 0, 0, 101, 0, 0, 1, 0},
+        "single drop did not send the selected request");
+    dispatch({0xaf, 0, 101, 0, 1, 0});
+    Require(!mode.m_waitingItemThrowAck && g_session.GetInventoryItemByIndex(slot)->m_num == 1,
+        "successful drop did not subtract the acknowledged amount");
+    dispatch({0xfa, 0x07, 0, 0, 101, 0, 0, 0});
+    Require(g_session.GetInventoryItemByIndex(slot), "zero-count extended removal erased the stack");
+    dispatch({0xaf, 0, 101, 0, 1, 0});
+    Require(!g_session.GetInventoryItemByIndex(slot), "unsolicited removal did not remove the final item");
+    connection->Disconnect();
+    g_windowMgr.DeleteWindow(prompt);
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+}
+
 void SkillTargetProductionSendReplay()
 {
     SetCase("skill_target_production_send", "PK46.02", "PK46.02-0438-packetver23-skill-target",
@@ -7194,6 +7268,7 @@ int main(int argc,char** argv){try{
     NpcShopTransactionReplay();
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();
+    DropItemProductionReplay();
     SkillTargetProductionSendReplay();
     TakeItemProductionSendReplay();
     ChangeDirectionProductionSendReplay();

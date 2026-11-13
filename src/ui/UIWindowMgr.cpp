@@ -3069,14 +3069,16 @@ void UIWindowMgr::OnLBtnUp(int x, int y)
                             CGameMode::GameMsg_RequestDropInventoryItem,
                             static_cast<msgparam_t>(gameMode->m_dragInfo.itemIndex),
                             static_cast<u32>(dropAmount),
-                            static_cast<u32>(dropAmount));
+                            static_cast<u32>(dropAmount),
+                            nullptr,
+                            gameMode->m_dragInfo.itemId);
                     }
                 } else {
                     g_modeMgr.SendMsg(
                         CGameMode::GameMsg_RequestDropInventoryItem,
                         gameMode->m_dragInfo.itemIndex,
                         dropAmount,
-                        0);
+                        gameMode->m_dragInfo.itemId);
                 }
             }
             if (gameMode->m_dragInfo.source == static_cast<int>(DragSource::ShortcutWindow)

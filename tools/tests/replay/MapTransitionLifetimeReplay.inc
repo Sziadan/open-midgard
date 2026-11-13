@@ -634,6 +634,11 @@ void MapTransitionLifetimeReplay()
         Require(ProcessGameModePacketLoop(mode, mapInput, router, 1).packetsDispatched == 1
             && g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsProductionSelection(),
             "could not stage a production chooser before same-map warp");
+        auto* dropPrompt = static_cast<UINpcInputWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_NPCINPUTWND));
+        Require(dropPrompt, "could not stage an inventory drop prompt before same-map warp");
+        dropPrompt->OpenGameNumberPrompt("Enter amount to drop", CGameMode::GameMsg_RequestDropInventoryItem,
+            101, 2, 2, nullptr, 501);
+        mode.m_waitingItemThrowAck = 101;
         auto cellThenWarp = MapCellUpdateFrame(1, 1, 5, "prontera.gat");
         g_session.m_mapTypeInfo.Clear();
         g_session.m_isMinEffectOld = false;
@@ -648,6 +653,9 @@ void MapTransitionLifetimeReplay()
             "same-map warp kept a friend invitation actionable");
         mode.UpdateAdoptionInvitation();
         Require(!g_windowMgr.m_skillSelectWnd, "same-map warp retained the production chooser");
+        Require(!mode.m_waitingItemThrowAck && (!g_windowMgr.m_npcInputWnd
+            || !g_windowMgr.m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestDropInventoryItem)),
+            "same-map warp retained the drop request or amount prompt");
         Require(!g_windowMgr.m_roomMessageBox, "same-map warp kept an adoption invitation actionable");
         Require(presentations == 0 && handoffs == 0, "loaded same-map warp selected external orchestration");
         const std::vector<u8> ack = ackPeer.ReceiveExact(2);

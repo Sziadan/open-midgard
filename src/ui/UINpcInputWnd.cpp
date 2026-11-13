@@ -350,6 +350,7 @@ void UINpcInputWnd::OpenForMode(u32 npcId, InputMode mode, SubmitAction action, 
     m_submitAction = action;
     m_submitGameMessage = 0;
     m_submitWparam = 0;
+    m_submitExtra = 0;
     m_maxNumberValue = 0;
     m_dialogLabel = label ? label : ((mode == InputMode::Number) ? "Enter a number" : "Enter text");
     m_inputPlaceholder.clear();
@@ -373,11 +374,13 @@ void UINpcInputWnd::OpenString(u32 npcId)
     OpenForMode(npcId, InputMode::String, SubmitAction::NpcString, "Enter text");
 }
 
-void UINpcInputWnd::OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue, u32 maxValue, const char* placeholder)
+void UINpcInputWnd::OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue,
+    u32 maxValue, const char* placeholder, msgparam_t extra)
 {
     OpenForMode(0, InputMode::Number, SubmitAction::GameMessage, label && *label ? label : "Enter amount");
     m_submitGameMessage = gameMessage;
     m_submitWparam = wparam;
+    m_submitExtra = extra;
     m_maxNumberValue = maxValue;
     m_inputPlaceholder = placeholder ? placeholder : "";
 
@@ -398,6 +401,7 @@ void UINpcInputWnd::HideInput()
     m_submitAction = SubmitAction::None;
     m_submitGameMessage = 0;
     m_submitWparam = 0;
+    m_submitExtra = 0;
     m_maxNumberValue = 0;
     m_dialogLabel = "Enter text";
     m_inputPlaceholder.clear();
@@ -435,6 +439,7 @@ bool UINpcInputWnd::SubmitCurrentText()
     const SubmitAction submitAction = m_submitAction;
     const int submitGameMessage = m_submitGameMessage;
     const msgparam_t submitWparam = m_submitWparam;
+    const msgparam_t submitExtra = m_submitExtra;
     const std::string textCopy = text;
 
     bool sent = false;
@@ -445,7 +450,7 @@ bool UINpcInputWnd::SubmitCurrentText()
     } else if (submitAction == SubmitAction::GameMessage) {
         HideInput();
         PlayUiButtonSound();
-        return g_modeMgr.SendMsg(submitGameMessage, submitWparam, static_cast<msgparam_t>(numericValue), 0) != 0;
+        return g_modeMgr.SendMsg(submitGameMessage, submitWparam, static_cast<msgparam_t>(numericValue), submitExtra) != 0;
     }
 
     if (sent) {

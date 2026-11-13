@@ -6479,14 +6479,15 @@ bool RequestComposeCardIntoEquipment(s16 cardItemIndex, s16 equipItemIndex)
     return sent;
 }
 
-bool RequestDropInventoryItem(u16 itemIndex, u16 amount)
+bool RequestDropInventoryItem(u16 itemIndex, u16 amount, unsigned expectedItemId)
 {
-    if (itemIndex == 0 || amount == 0) {
+    if (static_cast<unsigned>(itemIndex) - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || amount == 0 || !expectedItemId) {
         return false;
     }
 
     const ITEM_INFO* item = g_session.GetInventoryItemByIndex(itemIndex);
-    if (!item || item->m_itemIndex == 0 || item->m_num <= 0 || item->m_wearLocation != 0) {
+    if (!item || item->GetItemId() != expectedItemId || item->m_num <= 0 || item->m_wearLocation != 0) {
         return false;
     }
 
@@ -12484,7 +12485,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         return RequestUseInventoryItem(static_cast<u16>(wparam)) ? 1 : 0;
 
     case GameMsg_RequestDropInventoryItem:
-        return RequestDropInventoryItem(static_cast<u16>(wparam), static_cast<u16>(lparam)) ? 1 : 0;
+        return RequestDropInventoryItem(static_cast<u16>(wparam), static_cast<u16>(lparam), static_cast<unsigned>(extra)) ? 1 : 0;
 
     case GameMsg_RequestUpgradeSkillLevel:
         return RequestUpgradeSkillLevel(static_cast<u16>(wparam)) ? 1 : 0;

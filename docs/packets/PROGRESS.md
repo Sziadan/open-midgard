@@ -4059,3 +4059,5 @@ PK28.04 and PK29.04 replay cancellation while both companion families are moving
 PK38.03 replays a new identification menu after a silently rejected request and verifies the next request and inventory update. The application replay, corpse lifecycle, skill-choice lifecycle, and world-entry handoff checks passed. [Evidence](evidence/PK38.03-item-identification.md)
 
 PK38.02 validates item-use requests and replies, applies remaining quantities to the matching inventory row, and preserves card selection across item use. The standalone ammunition fixture now uses the current inventory-category replacement routine. [Evidence](evidence/PK38.02-item-use.md)
+
+PK38.02 binds a drop prompt to the dragged item, validates inventory removal frames, and retires pending drops on map change. [Evidence](evidence/PK46.02-map-drop-item-request.md)

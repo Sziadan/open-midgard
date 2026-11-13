@@ -2871,18 +2871,23 @@ void HandleItemRemove(CGameMode& mode, const PacketView& packet)
     unsigned int itemIndex = 0;
     int amount = 0;
     if (!ro::net::IsActiveExtendedItemRemovePacket(packet.packetId)) {
-        if (packet.packetLength < 6) {
+        if (packet.packetLength != 6) {
             return;
         }
         itemIndex = ReadLE16(packet.data + 2);
         amount = static_cast<int>(ReadLE16(packet.data + 4));
     } else {
-        if (packet.packetLength < 8) {
+        if (packet.packetLength != 8) {
             return;
         }
         itemIndex = ReadLE16(packet.data + 4);
         amount = static_cast<int>(ReadLE16(packet.data + 6));
+        // Only the basic form defines a zero-count drop rejection.
+        if (amount == 0) return;
     }
+
+    if (itemIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || amount > ro::item_snapshot::kMaxStackAmount) return;
 
     if (mode.m_waitingItemThrowAck == static_cast<int>(itemIndex)) {
         mode.m_waitingItemThrowAck = 0;
@@ -2890,11 +2895,12 @@ void HandleItemRemove(CGameMode& mode, const PacketView& packet)
 
     // The selected pre-20091117 server reports a rejected drop as a basic
     // 0x00AF acknowledgement with count zero. It is not an inventory removal.
-    if (packet.packetId == 0x00AF && amount == 0) {
+    if (amount == 0) {
         return;
     }
 
     g_session.RemoveInventoryItem(itemIndex, amount);
+    RefreshInventoryDependentWindows();
 }
 
 void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
@@ -9110,6 +9116,11 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     mode.ClearCraftingSelection();
     mode.ClearItemComposition();
     mode.ClearItemIdentification();
+    mode.m_waitingItemThrowAck = 0;
+    if (auto* input = g_windowMgr.m_npcInputWnd;
+        input && input->IsGameNumberPromptFor(CGameMode::GameMsg_RequestDropInventoryItem)) {
+        input->HideInput();
+    }
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",
