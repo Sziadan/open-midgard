@@ -4131,3 +4131,5 @@ PK42.02 receives the four instance state frames, handles cancellation and termin
 PK42.03 adds the native and Qt Memorial Dungeon window and deadline display. Continue the selected destroy command and live verification. [Evidence](evidence/PK42.03-instance-window.md)
 
 PK42.04 traces a concrete mismatch between the instance displayed in a broadcast snapshot and the target selected by `02CF`. The action remains open. [Evidence](evidence/PK42.04-instance-target-ownership.md)
+
+PK43.01 distinguishes disabled buying stores and store search from the reachable early party booking parsers. It records the registration result and the missing delete acknowledgement length. [Evidence](evidence/PK43.01-selected-store-booking-inventory.md)

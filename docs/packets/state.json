@@ -1439,9 +1439,9 @@
       "commit_subject": "packet(PK42.04): trace instance destruction target ownership"
     },
     "PK43.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK43.01-selected-store-booking-inventory.md"],
+      "commit_subject": "packet(PK43.01): trace selected store and booking applicability"
     },
     "PK43.02": {
       "status": "NOT_STARTED",
