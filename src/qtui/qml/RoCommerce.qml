@@ -287,6 +287,95 @@ Item {
         }
     }
     RoCommercePanel {
+        id: inbox
+        objectName: "commerce_mailInbox"
+        kind: "mailInbox"
+        info: hub.view.mailInbox || ({})
+        caption: "Mail inbox"
+        z: 5
+        Column {
+            parent: inbox.body
+            anchors.fill: parent
+            spacing: 6
+            Button {
+                objectName: "mailInboxRefresh"
+                label: hub.view.mailNew ? "Refresh inbox · New mail" : "Refresh inbox"
+                width: hub.view.mailNew ? 160 : 100
+                enabled: !hub.view.mailReadPending && !mail.visible && !hub.view.mailPending
+                onClicked: hub.send("refreshMail")
+            }
+            ListView {
+                width: parent.width
+                height: 110
+                clip: true
+                model: hub.view.mailMessages || []
+                delegate: Button {
+                    required property var modelData
+                    width: ListView.view.width
+                    primary: modelData.id === hub.view.mailSelected
+                    enabled: !hub.view.mailReadPending && !mail.visible && !hub.view.mailPending
+                    onClicked: hub.send("readMail", {id: modelData.id})
+                    Text {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        verticalAlignment: Text.AlignVCenter
+                        text: (modelData.read ? "" : "• ") + modelData.sender + "  " + modelData.title
+                        textFormat: Text.PlainText
+                        elide: Text.ElideRight
+                        font.pixelSize: 11
+                        color: parent.primary ? theme.titleText : theme.ink
+                    }
+                }
+            }
+            Flickable {
+                width: parent.width
+                height: Math.max(0, parent.height - 180)
+                clip: true
+                contentHeight: details.height
+                Column {
+                    id: details
+                    width: parent.width
+                    spacing: 5
+                    property var message: hub.view.mailDetail
+                    Text {
+                        width: parent.width
+                        text: details.message ? details.message.title + "\n" + details.message.sender : ""
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        font.bold: true
+                        color: theme.ink
+                    }
+                    Text {
+                        width: parent.width
+                        text: details.message ? details.message.body : ""
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        color: theme.ink
+                    }
+                    Text {
+                        width: parent.width
+                        visible: text.length > 0
+                        text: {
+                            const m = details.message
+                            if (!m) return ""
+                            const item = m.item ? m.amount + " × " + m.item : ""
+                            return m.zeny ? (item ? item + "\n" : "") + m.zeny + " Zeny" : item
+                        }
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        color: theme.muted
+                    }
+                }
+            }
+            Status {
+                width: parent.width
+                height: 32
+                text: hub.view.mailReadPending ? "Waiting for the message…" : (hub.view.status || "")
+            }
+        }
+    }
+    RoCommercePanel {
         id:mail; objectName:"commerce_mail"; kind:"mail"; info:hub.view.mail||({}); caption:"Write mail"; z:6
         Column { parent:mail.body; anchors.fill:parent; spacing:8
             Text { text:"Recipient"; color:theme.muted; font.pixelSize:11 }

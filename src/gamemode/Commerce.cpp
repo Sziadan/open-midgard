@@ -2,6 +2,7 @@
 #include "GameMode.h"
 #include "GameModePacket.h"
 #include "ItemSnapshot.h"
+#include "core/SourceTextCodec.h"
 #include "network/Connection.h"
 #include "session/Session.h"
 #include "ui/UIWindowMgr.h"
@@ -19,6 +20,69 @@ u32 read(const u8* p,int bytes=2){u32 v=0;for(int i=0;i<bytes;++i)v|=u32(p[i])<<
 void put(std::vector<u8>& p,int at,u32 v,int bytes=2){for(int i=0;i<bytes;++i)p[at+i]=u8(v>>(8*i));}
 std::vector<u8> packet(u16 op,int size){std::vector<u8> p(size);put(p,0,op);return p;}
 std::string text(const u8* p,int length){int n=0;while(n<length && p[n])++n;return std::string(reinterpret_cast<const char*>(p),n);}
+std::string mailText(const u8* p, int length)
+{
+    auto bytes = text(p, length);
+    return DecodeSourceText(bytes, SelectedSourceTextCodePage()).value_or(std::move(bytes));
+}
+
+bool receiveMailList(const u8* p, int length)
+{
+    constexpr int rowLength = 73;
+    if (length < 8 || read(p + 2) != static_cast<u32>(length)) return false;
+    const u32 count = read(p + 4, 4);
+    if (count > 30 || length != 8 + rowLength * static_cast<int>(count)) return false;
+
+    std::map<u32, MailHeader> headers;
+    for (const u8* row = p + 8; row != p + length; row += rowLength) {
+        const u32 id = read(row, 4);
+        if (id == 0 || row[44] > 1) return false;
+        MailHeader header{mailText(row + 4, 40), mailText(row + 45, 24),
+            read(row + 69, 4), row[44] != 0};
+        if (!headers.emplace(id, std::move(header)).second) return false;
+    }
+
+    auto& inbox = state.inbox;
+    inbox.headers = std::move(headers);
+    for (auto it = inbox.details.begin(); it != inbox.details.end();) {
+        if (inbox.headers.count(it->first)) ++it;
+        else it = inbox.details.erase(it);
+    }
+    if (!inbox.headers.count(inbox.selectedId)) inbox.selectedId = 0;
+    return true;
+}
+
+bool receiveMailDetail(const u8* p, int length)
+{
+    if (length < 101 || read(p + 2) != static_cast<u32>(length)) return false;
+    const int bodyLength = p[99];
+    if (bodyLength > 199 || length != 101 + bodyLength || p[100 + bodyLength] != 0
+        || std::memchr(p + 100, 0, bodyLength)) return false;
+    const u32 id = read(p + 4, 4);
+    if (id == 0) return false;
+
+    auto& inbox = state.inbox;
+    if (inbox.pendingReadId != id) return true;
+    MailDetail detail;
+    detail.title = mailText(p + 8, 40);
+    detail.sender = mailText(p + 48, 24);
+    detail.body = mailText(p + 100, bodyLength);
+    detail.zeny = read(p + 76, 4);
+    detail.itemAmount = read(p + 80, 4);
+    detail.item.SetItemId(read(p + 84));
+    detail.item.m_itemType = static_cast<int>(read(p + 86));
+    detail.item.m_isIdentified = p[88];
+    detail.item.m_isDamaged = p[89];
+    detail.item.m_refiningLevel = p[90];
+    for (int i = 0; i < 4; ++i) detail.item.m_slot[i] = static_cast<int>(read(p + 91 + 2 * i));
+
+    inbox.pendingReadId = 0;
+    if (auto header = inbox.headers.find(id); header != inbox.headers.end()) {
+        header->second.read = true;
+    }
+    inbox.details.insert_or_assign(id, std::move(detail));
+    return true;
+}
 bool send(const std::vector<u8>& p){if(CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(p.data()),int(p.size())))return true;state.status="Connection lost: request was not sent.";return false;}
 bool simple(u16 op){return send(packet(op,2));}
 void note(const std::string& message){state.status=message;g_windowMgr.PushChatEvent(message.c_str(),0x0080C0FFu,6);}
@@ -67,7 +131,7 @@ ITEM_INFO item(const u8* p,bool equip,int size){
     return i;
 }
 void remove(std::map<u32,ITEM_INFO>& list,u32 index,u32 amount){auto it=list.find(index);if(it==list.end())return;if(amount>=u32(it->second.m_num))list.erase(it);else it->second.m_num-=int(amount);}
-Window* window(const std::string& name){if(name=="cart")return &state.cart;if(name=="vending")return &state.vending;if(name=="trade")return &state.trade;if(name=="shop")return &state.shop;if(name=="mail")return &state.mail;if(name=="equipment")return &state.equipment;return nullptr;}
+Window* window(const std::string& name){if(name=="cart")return &state.cart;if(name=="vending")return &state.vending;if(name=="trade")return &state.trade;if(name=="shop")return &state.shop;if(name=="mail")return &state.mail;if(name=="equipment")return &state.equipment;if(name=="mailInbox")return &state.mailInbox;return nullptr;}
 }
 void Reset(){state=State{};state.vending.x=800;state.trade.x=360;state.trade.width=380;state.trade.height=170;state.shop.x=420;state.mail.x=480;state.equipment.x=480;}
 void ResetForMapEntry()
@@ -78,22 +142,25 @@ void ResetForMapEntry()
     g_session.CloseStorage();
     g_windowMgr.CloseStorageWindows();
     const Window previous[] = {state.cart, state.vending, state.trade,
-        state.shop, state.mail, state.equipment};
+        state.shop, state.mail, state.equipment, state.mailInbox};
     // A same-connection warp can be followed by the outstanding unkeyed mail result.
     const bool mailPending = state.mailPending && CRagConnection::instance()->IsOpen();
+    MailInbox inbox;
+    if (CRagConnection::instance()->IsOpen()) inbox = std::move(state.inbox);
     const int inventoryTab = g_windowMgr.m_itemWnd
         ? g_windowMgr.m_itemWnd->GetCurrentTab() : g_windowMgr.GetInventoryTabSelection();
     Reset();
     Window* windows[] = {&state.cart, &state.vending, &state.trade,
-        &state.shop, &state.mail, &state.equipment};
-    for (int i = 0; i < 6; ++i) {
+        &state.shop, &state.mail, &state.equipment, &state.mailInbox};
+    for (size_t i = 0; i < std::size(windows); ++i) {
         windows[i]->x = previous[i].x;
         windows[i]->y = previous[i].y;
     }
     state.inventoryTab = inventoryTab;
     state.mailPending = mailPending;
+    state.inbox = std::move(inbox);
 }
-void CloseTransactions(){closeShopQuote();state.cart.visible=state.vending.visible=state.trade.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=state.vendingOpenCanceled=false;state.shopBoards.clear();state.cartItems.clear();}
+void CloseTransactions(){closeShopQuote();state.cart.visible=state.vending.visible=state.trade.visible=state.mail.visible=state.equipment.visible=state.mailInbox.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=state.vendingOpenCanceled=false;state.shopBoards.clear();state.cartItems.clear();}
 void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
     state.clock=now;state.tradePeers=std::move(peers);
     if(tradeCancelPending() || (!state.tradeWaiting&&!state.tradeIncoming))return;
@@ -106,8 +173,8 @@ void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
     requestTradeCancellation(tooDistant?"The other player is too far away. Canceling trade."
         :expired?"Trade request expired. Canceling trade.":"The other player is no longer nearby. Canceling trade.");
 }
-bool HasInput(){return !state.shopBoards.empty()||state.cart.visible||state.vending.visible||state.trade.visible||state.shop.visible||state.mail.visible||state.equipment.visible||!state.promptKind.empty()||(g_windowMgr.m_itemWnd && g_windowMgr.m_itemWnd->m_show)||(g_windowMgr.m_playerContextMenuWnd&&g_windowMgr.m_playerContextMenuWnd->m_show);}
-bool HitTest(int x,int y){for(const auto* w:{&state.cart,&state.vending,&state.trade,&state.shop,&state.mail,&state.equipment})if(w->visible && x>=w->x && y>=w->y && x<w->x+w->width && y<w->y+w->height)return true;return !state.promptKind.empty();}
+bool HasInput(){return !state.shopBoards.empty()||state.cart.visible||state.vending.visible||state.trade.visible||state.shop.visible||state.mail.visible||state.equipment.visible||state.mailInbox.visible||!state.promptKind.empty()||(g_windowMgr.m_itemWnd && g_windowMgr.m_itemWnd->m_show)||(g_windowMgr.m_playerContextMenuWnd&&g_windowMgr.m_playerContextMenuWnd->m_show);}
+bool HitTest(int x,int y){for(const auto* w:{&state.cart,&state.vending,&state.trade,&state.shop,&state.mail,&state.equipment,&state.mailInbox})if(w->visible && x>=w->x && y>=w->y && x<w->x+w->width && y<w->y+w->height)return true;return !state.promptKind.empty();}
 
 bool Receive(CGameMode&,const PacketView& v){
     if(!v.data||v.packetLength<2)return false;const auto* p=v.data;const int n=v.packetLength;const auto op=v.packetId;
@@ -354,6 +421,36 @@ bool Receive(CGameMode&,const PacketView& v){
     }
     case 0x169:if(n<3)return false;note(p[2]==2?"Guild invitation accepted.":p[2]==3?"Guild invitation failed: guild is full.":p[2]==0?"Player already belongs to a guild.":"Guild invitation declined.");return true;
     case 0x2d7:{if(n<43||(n-43)%26)return false;std::vector<ITEM_INFO> items;for(int at=43;at<n;at+=26)items.push_back(item(p+at,true,26));state.viewedEquipment=std::move(items);state.equipment.visible=true;state.partner=text(p+4,24);state.status="Equipment shared by this player.";return true;}
+    case 0x240:
+        return receiveMailList(p, n);
+    case 0x242:
+        return receiveMailDetail(p, n);
+    case 0x24a:
+        if (n != 70) return false;
+        if (read(p + 2, 4) && (!state.inbox.notification || state.inbox.notification->id != read(p + 2, 4))) {
+            g_windowMgr.PushChatEvent("New mail has arrived.", 0x0080C0FFu, 6);
+        }
+        state.inbox.notification = MailNotification{read(p + 2, 4), mailText(p + 6, 40), mailText(p + 46, 24)};
+        return true;
+    case 0x260: {
+        if (n != 6) return false;
+        const u32 type = read(p + 2, 4);
+        if (type > 1) return false;
+        state.mailInbox.visible = type == 0;
+        if (state.mailInbox.visible && !busy() && !state.mail.visible
+            && !state.mailPending && !state.inbox.pendingReadId) {
+            simple(0x23f);
+        }
+        return true;
+    }
+    case 0x274:
+        if (n != 8) return false;
+        if (state.inbox.pendingReadId && state.inbox.pendingReadId == read(p + 2, 4) && read(p + 6)) {
+            state.inbox.details.erase(state.inbox.pendingReadId);
+            state.inbox.pendingReadId = 0;
+            state.status = "This message is no longer available. Refresh the inbox.";
+        }
+        return true;
     case 0x249:
         if (n < 3) return false;
         if (!state.mailPending) return true;
@@ -532,6 +629,19 @@ bool Action(const Command& c){
         std::vector<u8> p;if(state.promptKind=="guild"){p=packet(0x16b,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else if(state.promptKind=="alliance"){p=packet(0x172,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else return false;
         if(!send(p))return false;state.promptKind.clear();return true;
     }
+    if (c.action == "refreshMail" || c.action == "readMail") {
+        // Either request can reset the server's staged compose resources.
+        if (!state.mailInbox.visible || busy() || state.mail.visible || state.mailPending
+            || state.inbox.pendingReadId) return false;
+        if (c.action == "refreshMail") return simple(0x23f);
+        if (!state.inbox.headers.count(c.target)
+            || c.target > static_cast<u32>((std::numeric_limits<int>::max)())) return false;
+        auto p = packet(0x241, 6);
+        put(p, 2, c.target, 4);
+        if (!send(p)) return false;
+        state.inbox.selectedId = state.inbox.pendingReadId = c.target;
+        return true;
+    }
     if (c.action == "mail") {
         if (state.mailPending) {
             state.status = "Sending mail; waiting for the server.";
@@ -594,6 +704,7 @@ bool PlayerAction(int action,u32 target,const std::string& name){
         return sent;
     }
     case CGameMode::PlayerContext_SendMail:
+        if (state.inbox.pendingReadId) return false;
         if (state.mailPending) {
             state.status = "Sending mail; waiting for the server.";
             return false;

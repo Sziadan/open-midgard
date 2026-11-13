@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK32.02 adds the selected legacy inbox snapshot, detail and new-mail receivers, with a Qt inbox opened by the server's `0260`. It sends `023F` to refresh and `0241` to read. Verify rendered rows, text encoding, and NPC or server service availability against the deployed profile. Continue with claim coordination and the attachment and delete/return work in PK32.03 and PK32.04. [Inbox implementation and replay](work-items/PK32.02.md)
+
 PK32 and PK46.02 now reconcile the legacy mail composer reset and send. The composer preserves ownership of an unkeyed send result during a same-connection warp, blocks another draft reset while the result is pending, and uses the selected server's 199-byte body limit. Continue PK32 with the inbox list, read and notification model described in the [mail state contract](contracts/PK32.LEGACY-MAIL-STATE.md). Verify non-ASCII text and actual delivery against the deployed character server. [Draft reset evidence](evidence/PK46.02-map-mail-window-request.md) · [Send evidence](evidence/PK46.02-map-mail-send-request.md)
 
 PK37 and PK46.02 connect direct cart and storage transfers through the existing windows. Production replay captures `0128` and `0129`, and verifies separate cart and storage source slots. Verify physical drops and quantity prompts in both directions, overlapping windows, and live destination refresh and refusal. [Cart request evidence](evidence/PK46.02-cart-npc-shop-crosswalk.md)

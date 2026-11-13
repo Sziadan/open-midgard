@@ -1,6 +1,7 @@
 #pragma once
 #include "item/Item.h"
 #include <map>
+#include <optional>
 #include <vector>
 class CGameMode;
 struct PacketView;
@@ -9,6 +10,28 @@ struct Window {bool visible=false;int x=380,y=130,width=400,height=420;};
 struct Offer {ITEM_INFO item;u32 amount=0,price=0;};
 struct TradePeer {std::string name;int distance=0;};
 enum class TradeCancellation { None, Decline, Cancel };
+struct MailHeader {
+    std::string title, sender;
+    u32 sentAt = 0;
+    bool read = false;
+};
+struct MailDetail {
+    std::string title, sender, body;
+    u32 zeny = 0;
+    u32 itemAmount = 0;
+    ITEM_INFO item;
+};
+struct MailNotification {
+    u32 id = 0;
+    std::string title, sender;
+};
+struct MailInbox {
+    std::map<u32, MailHeader> headers;
+    std::map<u32, MailDetail> details;
+    std::optional<MailNotification> notification;
+    u32 selectedId = 0;
+    u32 pendingReadId = 0;
+};
 struct Command {
     std::string action,from,to,text,subject,body;
     u32 index=0,amount=0,price=0,target=0;
@@ -17,7 +40,7 @@ struct Command {
     u32 itemId=0;
 };
 struct State {
-    Window cart,vending,trade,shop,mail,equipment;
+    Window cart,vending,trade,shop,mail,equipment,mailInbox;
     bool hasCart=false,vendingActive=false,vendingPending=false,tradeIncoming=false,tradeActive=false,tradeWaiting=false;
     bool localLocked=false,remoteLocked=false,lockPending=false,commitPending=false,mailPending=false;
     bool vendingOpenCanceled=false;
@@ -29,6 +52,7 @@ struct State {
     std::map<u32,TradePeer> tradePeers;
     int inventoryTab=0;
     std::string partner,shopTitle,mailTo,status;
+    MailInbox inbox;
     std::map<u32,ITEM_INFO> cartItems;
     std::vector<Offer> draft,localOffer,remoteOffer,shopItems;
     std::map<u32,std::string> shopBoards;

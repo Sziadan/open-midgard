@@ -89,6 +89,26 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     data["trade"]=geometry(s.trade,suppressed);data["tradeIncoming"]=s.tradeIncoming;data["tradeActive"]=s.tradeActive;data["tradeWaiting"]=s.tradeWaiting;data["localLocked"]=s.localLocked;data["remoteLocked"]=s.remoteLocked;data["lockPending"]=s.lockPending;data["commitPending"]=s.commitPending;data["addPending"]=s.tradeAddPending;
     data["localOffer"]=offers(s.localOffer);data["remoteOffer"]=offers(s.remoteOffer);data["localZeny"]=s.localZeny;data["remoteZeny"]=s.remoteZeny;data["partner"]=str(s.partner);
     data["shop"]=geometry(s.shop,suppressed);data["shopItems"]=offers(s.shopItems);data["mail"]=geometry(s.mail,suppressed);data["mailTo"]=str(s.mailTo);data["mailPending"]=s.mailPending;data["equipment"]=geometry(s.equipment,suppressed);data["equipmentItems"]=equipment;
+    data["mailInbox"] = geometry(s.mailInbox, suppressed);
+    data["mailSelected"] = s.inbox.selectedId;
+    data["mailReadPending"] = s.inbox.pendingReadId != 0;
+    if (s.mailInbox.visible) {
+        QVariantList messages;
+        for (auto it = s.inbox.headers.rbegin(); it != s.inbox.headers.rend(); ++it) {
+            const auto& [id, header] = *it;
+            messages.push_back(QVariantMap{{"id", id}, {"title", str(header.title)},
+                {"sender", str(header.sender)}, {"read", header.read}});
+        }
+        data["mailMessages"] = messages;
+        if (const auto it = s.inbox.details.find(s.inbox.selectedId); it != s.inbox.details.end()) {
+            const auto& detail = it->second;
+            data["mailDetail"] = QVariantMap{{"title", str(detail.title)}, {"sender", str(detail.sender)},
+                {"body", str(detail.body)}, {"zeny", detail.zeny}, {"amount", detail.itemAmount},
+                {"item", detail.item.GetItemId() ? str(detail.item.GetDisplayName()) : QString{}}};
+        }
+        if (s.inbox.notification && s.inbox.notification->id
+            && !s.inbox.headers.count(s.inbox.notification->id)) data["mailNew"] = true;
+    }
     data["promptKind"]=(suppressed || s.promptKind=="friend")?QString():str(s.promptKind);data["promptName"]=str(s.promptName);data["status"]=str(s.status);QVariantMap menu;
     if(auto* w=g_windowMgr.m_playerContextMenuWnd;w && w->m_show && !suppressed){
         menu={{"visible",true},{"x",w->m_x},{"y",w->m_y},{"width",w->m_w},{"height",w->m_h},{"name",str(w->GetTargetName())},{"target",w->GetTargetAid()}};
@@ -158,6 +178,7 @@ void BindCommerceUi(QtUiState* ui){
         }
         if(action=="describe"){DescribeCommerceItem(args);return;}
         if (action == "transfer") c.itemId = args.value("id").toUInt();
+        if (action == "readMail") c.target = args.value("id").toUInt();
         if(!Action(c) && state.status.empty())state.status="Action unavailable. Check the quantity and current transaction state.";
     });
 }

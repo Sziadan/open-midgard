@@ -218,6 +218,11 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x018B, 4); // ZC_ACK_REQ_DISCONNECT
     SetPacketSize(0x018C, 29);              // ZC_MONSTER_INFO
     SetPacketSize(0x016a,30);SetPacketSize(0x0169,3);SetPacketSize(0x0249,3);
+    SetPacketSize(0x0240, kVariablePacketSize); // Legacy inbox snapshot
+    SetPacketSize(0x0242, kVariablePacketSize); // Legacy mail detail
+    SetPacketSize(0x024A, 70);                 // Legacy new-mail notification
+    SetPacketSize(0x0260, 6);                  // Legacy inbox open / close
+    SetPacketSize(0x0274, 8);                  // Legacy return / missing read result
     SetPacketSize(0x012B, 2);              // ZC_CLEAR_CART
     SetPacketSize(0x012F, kVariablePacketSize);
     SetPacketSize(0x0147, 39);              // ZC_AUTORUN_SKILL (e.g. Magnifier -> MC_IDENTIFY)

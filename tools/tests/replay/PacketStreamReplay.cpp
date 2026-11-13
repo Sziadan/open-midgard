@@ -6888,6 +6888,112 @@ void MailResultProductionReceiveReplay()
     std::cout << "{\"case_id\":\"mail_result_production_receive\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0249-mail-result\",\"partial_frame_buffered\":true,\"failure_retained_composer\":true,\"success_closed_composer\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
+void MailInboxProductionReplay()
+{
+    SetCase("mail_inbox_production", "PK32.02", "selected-legacy-mail",
+        "Commerce action and production receive router");
+    using namespace ro::commerce;
+    const State saved = state;
+    Reset();
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    const auto dispatch = [&](const std::vector<u8>& frame) {
+        Require(input.QueueBytes(frame)
+            && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "legacy mail frame did not reach the production route");
+    };
+    dispatch({0x60, 0x02, 0, 0, 0, 0});
+    Require(state.mailInbox.visible && peer.ReceiveExact(2) == std::vector<u8>{0x3f, 0x02},
+        "server-opened inbox did not refresh");
+    const auto makeList = [](int count) {
+        const int size = 8 + 73 * count;
+        std::vector<u8> frame(size, 0);
+        frame[0] = 0x40;
+        frame[1] = 0x02;
+        frame[2] = static_cast<u8>(size);
+        frame[3] = static_cast<u8>(size >> 8);
+        frame[4] = static_cast<u8>(count);
+        for (int i = 0; i < count; ++i) {
+            auto row = frame.begin() + 8 + i * 73;
+            row[0] = static_cast<u8>(i + 1);
+            std::fill_n(row + 4, 40, 'T');
+            row[45] = 'A';
+            row[69] = 17;
+        }
+        return frame;
+    };
+    dispatch(makeList(0));
+    Require(state.inbox.headers.empty(), "empty inbox created rows");
+    auto list = makeList(30);
+    Require(input.QueueBytes({list[0], list[1], list[2]})
+        && ProcessGameModePacketLoop(mode, input, router, 1).packetsProcessed == 0,
+        "partial inbox frame was consumed");
+    dispatch(std::vector<u8>(list.begin() + 3, list.end()));
+    Require(state.inbox.headers.size() == 30 && state.inbox.headers.at(1).title == std::string(40, 'T')
+        && state.inbox.headers.at(1).sender == "A" && state.inbox.headers.at(1).sentAt == 17,
+        "selected inbox layout lost list fields");
+    dispatch(makeList(31));
+    auto malformedList = makeList(2);
+    malformedList[81] = 1;
+    dispatch(malformedList);
+    Require(state.inbox.headers.size() == 30, "invalid inbox replaced valid state");
+
+    Command readMail;
+    readMail.action = "readMail";
+    readMail.target = 1;
+    state.mail.visible = true;
+    Require(!Action(readMail), "mail read was allowed with an active composer");
+    state.mail.visible = false;
+    Require(Action(readMail) && peer.ReceiveExact(6) == std::vector<u8>{0x41, 0x02, 1, 0, 0, 0},
+        "client did not request the selected mail ID");
+    readMail.target = 2;
+    Require(!Action(readMail) && state.inbox.selectedId == 1, "second click retargeted pending read");
+    dispatch({0x74, 0x02, 2, 0, 0, 0, 1, 0});
+    Require(state.inbox.pendingReadId == 1, "unrelated return failure settled read");
+    std::vector<u8> detail(104, 0);
+    detail[0] = 0x42; detail[1] = 0x02; detail[2] = 104; detail[4] = 1;
+    detail[8] = 'T'; detail[48] = 'A';
+    detail[76] = 25; detail[80] = 2; detail[84] = 0xf5; detail[85] = 1; detail[91] = 7;
+    detail[99] = 3; detail[100] = 'H'; detail[101] = 'e'; detail[102] = 'y';
+    auto malformedDetail = detail;
+    malformedDetail.back() = '!';
+    dispatch(malformedDetail);
+    Require(state.inbox.details.empty() && state.inbox.pendingReadId == 1,
+        "unterminated detail settled the read");
+    dispatch(detail);
+    const auto& opened = state.inbox.details.at(1);
+    Require(!state.inbox.pendingReadId && state.inbox.headers.at(1).read && opened.body == "Hey"
+        && opened.zeny == 25 && opened.itemAmount == 2 && opened.item.GetItemId() == 501
+        && opened.item.m_slot[0] == 7, "selected detail lost message or attachment fields");
+    dispatch(makeList(1));
+    std::vector<u8> notice(70, 0);
+    notice[0] = 0x4a; notice[1] = 0x02; notice[6] = 'N'; notice[46] = 'A';
+    dispatch(notice);
+    Require(state.inbox.notification && state.inbox.notification->id == 0
+        && state.inbox.notification->title == "N" && !state.inbox.headers.count(0),
+        "zero-ID unread update corrupted inbox rows");
+    notice[2] = 7;
+    dispatch(notice);
+    Require(state.inbox.notification->id == 7 && !state.inbox.headers.count(7),
+        "new-mail notification fabricated an inbox row");
+    readMail.target = 1;
+    Require(Action(readMail) && peer.ReceiveExact(6) == std::vector<u8>{0x41, 0x02, 1, 0, 0, 0},
+        "could not request a read before missing-ID result");
+    dispatch({0x74, 0x02, 1, 0, 0, 0, 1, 0});
+    Require(!state.inbox.pendingReadId && state.inbox.details.empty(),
+        "missing-ID response retained pending or stale mail detail");
+    dispatch({0x60, 0x02, 1, 0, 0, 0});
+    Require(!state.mailInbox.visible, "server close left the inbox visible");
+    connection->Disconnect();
+    state = saved;
+    std::cout << "{\"case_id\":\"mail_inbox_production\",\"contract_id\":\"PK32.02\",\"outcome\":\"PASS\"}\n";
+}
+
 void MapLoadEndAckProductionSendReplay()
 {
     SetCase("map_load_end_ack_production_send", "PK46.02", "PK46.02-007d-selected-server-literal",
@@ -9162,6 +9268,7 @@ int main(int argc,char** argv){try{
     MailComposerProductionSendReplay();
     MailSendProductionReplay();
     MailResultProductionReceiveReplay();
+    MailInboxProductionReplay();
     StorageCloseProductionSendReplay();
     StorageTransferProductionReplay();
     ActionFailureProductionReceiveReplay();

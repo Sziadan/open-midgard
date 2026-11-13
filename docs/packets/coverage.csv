@@ -468,9 +468,9 @@ AUDIT-0x023B,0x023B,map,C2S,PK36,PK01;PK02;PK47;PK48;PK46,Registered clif_parse_
 AUDIT-0x023C,0x023C,map,S2C,PK36,PK01;PK02;PK47;PK48;PK45,Result emitter has no caller in the selected source. See PK36.01-storage-password-applicability.md.,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK36.STORAGE-PASSWORD
 AUDIT-0x023D,0x023D,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x023E,0x023E,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x023F,0x023F,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x023F,0x023F,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy inbox refresh captured from the server-opened inbox,C2S_ONLY,PK32.02-LEGACY-MAIL-INBOX
 AUDIT-0x0240,0x0240,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0241,0x0241,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0241,0x0241,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy mail read captured with the requested message ID,C2S_ONLY,PK32.02-LEGACY-MAIL-INBOX
 AUDIT-0x0242,0x0242,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0243,0x0243,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0244,0x0244,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
