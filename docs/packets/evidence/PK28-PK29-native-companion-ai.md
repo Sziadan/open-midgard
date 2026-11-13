@@ -12,4 +12,6 @@ Companion actor death clears the controller and both immediate and reserved mail
 
 Replay covers both homunculus mailboxes at death, an internal reserved order across vaporize and reactivation, the deletion snapshot, failed dismissal send, mercenary replacement and same-GID refresh, and both mailboxes at production same-map warp. Fresh follow input after reactivation produces the selected `0234` request.
 
-PK28.04 and PK29.04 stay in progress. Next check recovery and send frequency for ordinary manual movement and follow. The remaining live checks cover both companion families across combat, follow, dismissal, and map changes. Installed skin comparison remains a separate UI check.
+Ordinary manual movement uses the same observed-progress deadline as casts. It tracks the final destination across waypoints, so a failed segment releases the move without leaving an internal waypoint ahead of user-reserved orders. The selected `clif_parse_HomMoveToMaster` accepts the six-byte `0234` only for an owned mercenary or active homunculus and requests walking near its owner without a dedicated acknowledgement. Automatic and manual follow share a speed-scaled send interval and wait for an available owner. Replay drives both stall clocks and verifies the nine-byte move and six-byte follow frames, queue release, unavailable owner, and automatic follow after toggling.
+
+PK28.04 and PK29.04 stay in progress. The remaining live checks cover both companion families across combat, follow, dismissal, and map changes. Installed skin comparison remains a separate UI check.

@@ -3,6 +3,7 @@
 #include "CompanionAiRuntime.h"
 
 #include <deque>
+#include <optional>
 
 namespace companion_ai {
 
@@ -22,6 +23,8 @@ private:
     void ProcessCommand(const Msg2Ai& msg);
     bool ContinueApproach(const Position& destination);
     void CancelApproach();
+    u32 MovementStallDelay() const;
+    void RequestFollow(const Position& owner);
 
     void OnMOVE_CMD(int x, int y);
     void OnSTOP_CMD();
@@ -59,6 +62,9 @@ private:
     u32 m_enemy = 0;
     int m_destX = 0;
     int m_destY = 0;
+    Position m_moveDestination;
+    Position m_followDestination;
+    std::optional<u32> m_lastFollowRequest;
     int m_patrolX = 0;
     int m_patrolY = 0;
     u32 m_myId = 0;

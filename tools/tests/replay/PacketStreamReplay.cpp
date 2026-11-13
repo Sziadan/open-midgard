@@ -3513,6 +3513,24 @@ void PendingCompanionActorSkillReplay()
     tickCompanion(mercenary);
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "expired actor approach continued to emit requests");
+    companion_ai::Msg2Ai manualMove;
+    manualMove.command = companion_ai::MOVE_CMD;
+    manualMove.x = 16;
+    manualMove.y = 10;
+    Require(companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, manualMove, false),
+        "could not queue manual companion movement");
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == approachRequest, "manual move sent the wrong packet");
+    Require(companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, manualMove, true),
+        "could not reserve another manual move");
+    tickCompanion(mercenary, 1200);
+    Require(peer.ReceiveExact(9) == approachRequest, "manual move did not retry after a stall");
+    tickCompanion(mercenary, 1200);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "manual move sent a second retry");
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == approachRequest, "stalled manual movement blocked a reserved order");
     mode.GetClientCoor(15, 10, mercenary.m_pos.x, mercenary.m_pos.z);
 
     mode.GetClientCoor(15, 10, homunculus.m_pos.x, homunculus.m_pos.z);
@@ -3650,8 +3668,35 @@ void PendingCompanionActorSkillReplay()
         "reactivated mercenary emitted a stale request");
     orderFollow(companion_ai::Kind::Mercenary, false);
     tickCompanion(mercenary);
-    Require(peer.ReceiveExact(6) == std::vector<u8>{0x34, 0x02, 0x42, 0, 0, 0xf1},
+    const std::vector<u8> followRequest{0x34, 0x02, 0x42, 0, 0, 0xf1};
+    Require(peer.ReceiveExact(6) == followRequest,
         "reactivated mercenary ignored a fresh order");
+    mode.GetClientCoor(8, 10, player.m_pos.x, player.m_pos.z);
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "manual follow spammed requests without observed motion");
+    tickCompanion(mercenary, 1200);
+    Require(peer.ReceiveExact(6) == followRequest, "manual follow did not retry after its interval");
+
+    world.m_player = nullptr;
+    orderFollow(companion_ai::Kind::Mercenary, false); // Toggle off.
+    tickCompanion(mercenary);
+    orderFollow(companion_ai::Kind::Mercenary, false); // Toggle back on without an owner.
+    tickCompanion(mercenary, 1200);
+    tickCompanion(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "follow emitted a request without an available owner");
+    world.m_player = &player;
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(6) == followRequest, "manual follow did not recover when the owner returned");
+    orderFollow(companion_ai::Kind::Mercenary, false);
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "automatic follow bypassed the shared interval after a toggle");
+    tickCompanion(mercenary, 1200);
+    Require(peer.ReceiveExact(6) == followRequest, "automatic follow did not retry after its interval");
     world.m_attr = nullptr;
 
     world.UnregisterActor(&target);

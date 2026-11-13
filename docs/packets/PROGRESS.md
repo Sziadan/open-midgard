@@ -3945,3 +3945,7 @@ PK28.04 and PK29.04 give actor and ground casts a bounded retry when a companion
 ## Companion order cleanup
 
 PK28.04 and PK29.04 clear both actor mailboxes and the C++ controller on lifecycle reset. Replay covers death and reactivation, the owner rest and deletion snapshots, mercenary replacement and refresh, and same-map reuse. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+## Companion movement recovery
+
+PK28.04 and PK29.04 bound stalled manual movement and pace automatic and manual follow requests. Replay covers reserved order release, a missing owner, and a return to automatic follow. [Evidence](evidence/PK28-PK29-native-companion-ai.md)

@@ -78,7 +78,7 @@ bool Brain::ContinueApproach(const Position& destination)
     }
 
     // 0232 has no dedicated reply. Allow time for several cells plus network delay.
-    const u32 stallDelay = std::max(1000u, 3u * m_runtime.GetWalkCellDuration(m_myId));
+    const u32 stallDelay = MovementStallDelay();
     const bool stalled = m_now - approach.lastProgress >= stallDelay;
     if (stalled && approach.retried) {
         return false;
@@ -108,28 +108,16 @@ void Brain::CancelApproach()
     m_approach = {};
 }
 
+u32 Brain::MovementStallDelay() const
+{
+    return std::max(1000u, 3u * m_runtime.GetWalkCellDuration(m_myId));
+}
+
 void Brain::OnMOVE_CMD(int x, int y)
 {
     m_runtime.Trace("OnMOVE_CMD");
-    if (x == m_destX && y == m_destY && m_runtime.GetMotion(m_myId) == MOTION_MOVE) {
-        return;
-    }
-
-    const Position cur = m_runtime.GetPosition(m_myId);
-    if (cur.valid() && (std::abs(x - cur.x) + std::abs(y - cur.y) > kLongMoveManhattan)) {
-        Msg2Ai reserved;
-        reserved.command = MOVE_CMD;
-        reserved.x = x;
-        reserved.y = y;
-        m_resCmdList.push_front(reserved);
-        x = (x + cur.x) / 2;
-        y = (y + cur.y) / 2;
-    }
-
-    m_runtime.Move(m_myId, x, y);
     m_state = MOVE_CMD_ST;
-    m_destX = x;
-    m_destY = y;
+    m_moveDestination = {x, y};
     m_enemy = 0;
     m_skill = 0;
 }
@@ -208,11 +196,11 @@ void Brain::OnSKILL_AREA_CMD(int level, int skill, int x, int y)
 void Brain::OnFOLLOW_CMD()
 {
     if (m_state != FOLLOW_CMD_ST) {
-        m_runtime.MoveToOwner(m_myId);
         m_state = FOLLOW_CMD_ST;
         const Position owner = m_runtime.GetPosition(m_runtime.OwnerId());
-        m_destX = owner.x;
-        m_destY = owner.y;
+        if (owner.valid() && m_runtime.GetPosition(m_myId).valid()) {
+            RequestFollow(owner);
+        }
         m_enemy = 0;
         m_skill = 0;
         m_runtime.Trace("OnFOLLOW_CMD");
@@ -251,7 +239,7 @@ void Brain::OnIDLE_ST()
     }
 
     const int distance = m_runtime.GetDistanceFromOwner(m_myId);
-    if (distance > kFollowDistance || distance == -1) {
+    if (distance > kFollowDistance) {
         m_state = FOLLOW_ST;
         m_runtime.Trace("IDLE_ST -> FOLLOW_ST");
     }
@@ -260,12 +248,14 @@ void Brain::OnIDLE_ST()
 void Brain::OnFOLLOW_ST()
 {
     m_runtime.Trace("OnFOLLOW_ST");
-    if (m_runtime.GetDistanceFromOwner(m_myId) <= kFollowDistance) {
+    const Position owner = m_runtime.GetPosition(m_runtime.OwnerId());
+    const Position me = m_runtime.GetPosition(m_myId);
+    if (!owner.valid() || !me.valid()
+        || m_runtime.GetDistance(owner.x, owner.y, me.x, me.y) <= kFollowDistance) {
         m_state = IDLE_ST;
         m_runtime.Trace("FOLLOW_ST -> IDLE_ST");
     } else if (m_runtime.GetMotion(m_myId) == MOTION_STAND) {
-        m_runtime.MoveToOwner(m_myId);
-        m_runtime.Trace("FOLLOW_ST -> FOLLOW_ST");
+        RequestFollow(owner);
     }
 }
 
@@ -343,8 +333,24 @@ void Brain::OnMOVE_CMD_ST()
 {
     m_runtime.Trace("OnMOVE_CMD_ST");
     const Position cur = m_runtime.GetPosition(m_myId);
-    if (cur.valid() && cur.x == m_destX && cur.y == m_destY) {
-        m_state = IDLE_ST;
+    if (!cur.valid() || !m_moveDestination.valid()
+        || m_moveDestination.x > kMaxMoveCoordinate || m_moveDestination.y > kMaxMoveCoordinate
+        || (cur.x == m_moveDestination.x && cur.y == m_moveDestination.y)) {
+        CancelApproach();
+        return;
+    }
+
+    Position waypoint = m_approach.destination;
+    if (!waypoint.valid() || (cur.x == waypoint.x && cur.y == waypoint.y)) {
+        m_approach = {};
+        waypoint = m_moveDestination;
+        while (std::abs(waypoint.x - cur.x) + std::abs(waypoint.y - cur.y) > kLongMoveManhattan) {
+            waypoint.x = (waypoint.x + cur.x) / 2;
+            waypoint.y = (waypoint.y + cur.y) / 2;
+        }
+    }
+    if (!ContinueApproach(waypoint)) {
+        CancelApproach();
     }
 }
 
@@ -446,22 +452,23 @@ void Brain::OnFOLLOW_CMD_ST()
         return;
     }
 
-    int d = m_runtime.GetDistance(owner.x, owner.y, me.x, me.y);
-    if (d <= kFollowDistance) {
+    if (m_runtime.GetDistance(owner.x, owner.y, me.x, me.y) <= kFollowDistance) {
         return;
     }
 
-    if (m_runtime.GetMotion(m_myId) == MOTION_MOVE) {
-        d = m_runtime.GetDistance(owner.x, owner.y, m_destX, m_destY);
-        if (d > kFollowDistance) {
-            m_runtime.MoveToOwner(m_myId);
-            m_destX = owner.x;
-            m_destY = owner.y;
-        }
-    } else {
+    if (m_runtime.GetMotion(m_myId) == MOTION_STAND || !m_followDestination.valid()
+        || m_runtime.GetDistance(owner.x, owner.y, m_followDestination.x, m_followDestination.y) > kFollowDistance) {
+        RequestFollow(owner);
+    }
+}
+
+void Brain::RequestFollow(const Position& owner)
+{
+    // A rejected 0234 has no reply. Keep following, with at most one request per interval.
+    if (!m_lastFollowRequest || m_now - *m_lastFollowRequest >= MovementStallDelay()) {
         m_runtime.MoveToOwner(m_myId);
-        m_destX = owner.x;
-        m_destY = owner.y;
+        m_lastFollowRequest = m_now;
+        m_followDestination = owner;
     }
 }
 

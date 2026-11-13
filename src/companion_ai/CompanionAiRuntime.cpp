@@ -25,7 +25,7 @@ constexpr int kEffectStateBurrowMask = 0x0002;
 
 bool EncodeDest(int dstX, int dstY, u8 outDest[3])
 {
-    if (!outDest || dstX < 0 || dstX > 1023 || dstY < 0 || dstY > 1023) {
+    if (!outDest || dstX < 0 || dstX > kMaxMoveCoordinate || dstY < 0 || dstY > kMaxMoveCoordinate) {
         return false;
     }
     outDest[0] = static_cast<u8>((dstX >> 2) & 0xFF);

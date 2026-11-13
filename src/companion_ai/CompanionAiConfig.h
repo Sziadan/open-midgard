@@ -93,6 +93,7 @@ constexpr int kFollowDistance = 3;          // IDLE→FOLLOW / FOLLOW arrive
 constexpr int kOutOfSightDistance = 20;     // IsOutOfSight
 constexpr int kLongMoveManhattan = 15;      // OnMOVE_CMD split waypoint
 constexpr int kServerPathLimitManhattan = 24; // MercLuaFunc l_Move gate
+constexpr int kMaxMoveCoordinate = 1023;     // Packed 10-bit X and Y in 0232.
 constexpr int kReservedCmdQueueCap = 10;
 constexpr int kDefaultAttackRange = 1;
 

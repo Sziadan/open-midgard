@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Companion movement recovery**. PK28.04 and PK29.04 verify that a stalled manual move releases its queue and that automatic and manual follow share a retry interval. Live verification remains open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
 **Native companion lifecycle orders**. PK28.04 and PK29.04 cover order cleanup on death, vaporize, deletion, identity replacement, and same-map reuse. Same-GID mercenary refresh preserves orders. Live verification remains open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 **Companion skill approach recovery**. PK28.04 and PK29.04 verify stalled actor and ground approaches, movement progress, and the release of a reserved cast after a failed approach. Queued-order cleanup across lifecycle transitions and live verification remain open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
