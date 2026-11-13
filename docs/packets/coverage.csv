@@ -42,7 +42,7 @@ AUDIT-0x008B,0x008B,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x008C,0x008C,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,PK46.02-map-actor-name-request.md: selected modern 11-byte actor-name request carries GID at offset 7 and matches final registry; legacy profile reuses 0x008C for global chat. Name-response lifecycle and replay remain open.,UNREVIEWED,
 AUDIT-0x008D,0x008D,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x008E,0x008E,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0090,0x0090,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0090,0x0090,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected seven-byte contact request captured; live NPC subtype outcomes remain open,C2S_ONLY,PK46.02-map-npc-contact-request
 AUDIT-0x0091,0x0091,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0092,0x0092,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0093,0x0093,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -81,8 +81,8 @@ AUDIT-0x00B4,0x00B4,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x00B5,0x00B5,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00B6,0x00B6,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00B7,0x00B7,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00B8,0x00B8,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00B9,0x00B9,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x00B8,0x00B8,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected menu response captured from dialogue UI including cancellation and sparse source ordinal,C2S_ONLY,PK46.02-map-npc-menu-selection-request
+AUDIT-0x00B9,0x00B9,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected next action captured after offline retry from production dialogue UI,C2S_ONLY,PK46.02-map-npc-next-request
 AUDIT-0x00BA,0x00BA,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00BB,0x00BB,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00BC,0x00BC,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -220,10 +220,10 @@ AUDIT-0x013F,0x013F,map,C2S,PK47,PK01;PK02;PK48;PK46;PK38,Source identity traced
 AUDIT-0x0140,0x0140,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,PK45.03-c2s-owner-scope-review.md: selected 20080910 registry maps 0x0140 length 22 to clif_parse_MapMove; focused client search found no sender. Feature owner and matching client profile remain unresolved.,UNREVIEWED,
 AUDIT-0x0141,0x0141,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0142,0x0142,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0143,0x0143,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0143,0x0143,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected numeric response captured with zero UI retry and signed-boundary bit patterns,C2S_ONLY,PK46.02-map-npc-number-input-request
 AUDIT-0x0144,0x0144,map,S2C,PK25,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0145,0x0145,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-show-image traces legacy 16-byte client path without size-table entry; pinned server uses 0x01B3; 0x0145 framing/profile support unresolved,UNREVIEWED,
-AUDIT-0x0146,0x0146,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0146,0x0146,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected close action captured after offline retry from production dialogue UI,C2S_ONLY,PK46.02-map-npc-dialog-close-request
 AUDIT-0x0147,0x0147,map,S2C,PK45,PK01;PK02;PK47;PK48;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x0148,0x0148,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-resurrection traces pinned 8-byte S2C emitter with ignored type and AREA route; broader lifecycle replay remains open,UNREVIEWED,
 AUDIT-0x0149,0x0149,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -365,7 +365,7 @@ AUDIT-0x01D1,0x01D1,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-blade-stop.md: sele
 AUDIT-0x01D2,0x01D2,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-combo-delay.md: fixed 10-byte AID and tick packet cached by session and applied to live actor; skill action 272 later consumes cached tick. Tick epoch cache cleanup and replay remain open.,UNREVIEWED,
 AUDIT-0x01D3,0x01D3,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-sound-loop.md: fixed 35-byte frame and bounded name with one-shot loop and stop branches traced at GameModePacket.cpp:972. Server action contract duration units name encoding and replay remain open.,UNREVIEWED,
 AUDIT-0x01D4,0x01D4,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01D5,0x01D5,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x01D5,0x01D5,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected string response captured from production dialogue UI with retry and encoded byte limits,C2S_ONLY,PK46.02-map-npc-string-input-request
 AUDIT-0x01D6,0x01D6,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Selected four-byte map type and battleground emitter verified with production replay of map state and rule consumers; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK19.MAP-PROPERTIES
 AUDIT-0x01D7,0x01D7,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01D8,0x01D8,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -583,7 +583,7 @@ AUDIT-0x02B6,0x02B6,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Selected quest activat
 AUDIT-0x02B7,0x02B7,map,S2C,PK50,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02B8,0x02B8,map,S2C,PK15,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x02B9,0x02B9,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-shortcut-key-list.md: selected 191-byte 2008 SAK snapshot with 27 seven-byte hotkey records matches client decoder and full session replacement. UI slot mapping persistence semantics and replay remain open.,UNREVIEWED,
-AUDIT-0x02BA,0x02BA,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x02BA,0x02BA,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected shortcut update captured from native drag with destination-before-clear ordering and offline state preservation,C2S_ONLY,PK46.02-map-shortcut-slot-update-request
 AUDIT-0x02BB,0x02BB,map,S2C,PK33,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02BC,0x02BC,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02BF,0x02BF,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,

@@ -3130,13 +3130,10 @@ void UIWindowMgr::OnLBtnUp(int x, int y)
             if (gameMode->m_dragInfo.source == static_cast<int>(DragSource::ShortcutWindow)
                 && gameMode->m_dragInfo.shortcutSlotAbsoluteIndex >= 0
                 && dropTarget != m_shortCutWnd) {
-                if (g_session.ClearShortcutSlotByAbsoluteIndex(gameMode->m_dragInfo.shortcutSlotAbsoluteIndex)) {
-                    g_modeMgr.SendMsg(
-                        CGameMode::GameMsg_RequestShortcutUpdate,
-                        gameMode->m_dragInfo.shortcutSlotAbsoluteIndex,
-                        0,
-                        0);
-                }
+                const SHORTCUT_SLOT emptySlot{};
+                g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUpdate,
+                    gameMode->m_dragInfo.shortcutSlotAbsoluteIndex,
+                    reinterpret_cast<msgparam_t>(&emptySlot), 0);
             }
             gameMode->m_dragType = static_cast<int>(DragType::None);
             gameMode->m_dragInfo = DRAG_INFO{};

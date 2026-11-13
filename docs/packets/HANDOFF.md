@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 reconciles six NPC send rows with the production contact and dialogue replays. Shortcut moves now send their destination before clearing the source, and rejected socket sends preserve the affected local slots. Verify NPC subtype and script outcomes and shortcut persistence after relog against the selected server. [Request reconciliation](evidence/PK46.02-request-reconciliation.md) · [Shortcut evidence](evidence/PK46.02-map-shortcut-slot-update-request.md)
+
 PK46.02 fixes the PacketVer22 targeted-skill fields at selected `0072` offsets 6/10/21. The focused combat send replay also covers `0190` and stop-before-repeat ordering. Ground skill `0113` now links the production player-proceed replay. Live skill outcomes and later profile variants remain open. [Targeted-skill evidence](evidence/PK46.02-map-skill-target-request-0438.md) · [Ground proceed evidence](evidence/PK27-ground-proceed.md)
 
 PK46.02 now captures both zone-entry layouts after the character server's `0071` and verifies the GameMode switch after `02EB`. The selected server accepts both request layouts. The legacy `0072` zone overrides require a separate server profile because selected `0072` is targeted skill use. Movement, direction, time sync, default attack, and default targeted skill outbound rows now link their production captures. Continue the alternate gameplay profile and live entry checks. [Zone-entry evidence](evidence/PK46.02-map-zone-entry-request.md)

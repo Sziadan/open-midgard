@@ -44,6 +44,7 @@
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIWindowMgr.h"
 #include "ui/UIRechargeGage.h"
+#include "ui/UIShortCutWnd.h"
 #include "ui/UICompanionStatusWnd.h"
 #include "ui/UIEquipWnd.h"
 #include "ui/UIMessengerGroupWnd.h"
@@ -6196,11 +6197,26 @@ void ShortcutSlotUpdateProductionSendReplay()
     const SHORTCUT_SLOT* const originalPtr = g_session.GetShortcutSlotByAbsoluteIndex(slotIndex);
     Require(originalPtr != nullptr, "shortcut fixture slot is outside the session array");
     const SHORTCUT_SLOT original = *originalPtr;
+    constexpr int destinationIndex = 0;
+    const SHORTCUT_SLOT originalDestination = *g_session.GetShortcutSlotByAbsoluteIndex(destinationIndex);
     g_session.SetShortcutSlotByAbsoluteIndex(slotIndex, 1, 0x11223344, 0x5566);
+    g_session.SetShortcutSlotByAbsoluteIndex(destinationIndex, 0, 501, 0);
 
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
-    Require(!ReplayRequestShortcutSlotUpdate(-1), "shortcut sender reported success without an open connection");
+    Require(!ReplayRequestShortcutSlotUpdate(slotIndex), "shortcut sender reported success without an open connection");
+    CGameMode mode;
+    CMode* const previousMode = SkillPacketReplayAccess::Current();
+    const int previousModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    UIShortCutWnd shortcut;
+    DRAG_INFO drag{};
+    drag.source = static_cast<int>(DragSource::ShortcutWindow);
+    drag.shortcutSlotAbsoluteIndex = slotIndex;
+    shortcut.DragAndDrop(shortcut.m_x + 8, shortcut.m_y + 8, &drag);
+    Require(g_session.GetShortcutSlotByAbsoluteIndex(destinationIndex)->id == 501
+        && g_session.GetShortcutSlotByAbsoluteIndex(slotIndex)->id == 0x11223344,
+        "offline shortcut move changed one or both slots");
     LoopbackPeer peer(*connection);
     Require(!ReplayRequestShortcutSlotUpdate(-1), "shortcut sender accepted an invalid absolute slot");
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
@@ -6210,8 +6226,19 @@ void ShortcutSlotUpdateProductionSendReplay()
     const std::vector<u8> expected{0xBA,0x02,0x05,0x00,0x01,0x44,0x33,0x22,0x11,0x66,0x55};
     Require(captured == expected,
         "production shortcut sender bytes differ from the selected eleven-byte server frame");
+    shortcut.DragAndDrop(shortcut.m_x + 8, shortcut.m_y + 8, &drag);
+    Require(peer.ReceiveExact(11) == std::vector<u8>{0xba, 0x02, 0, 0, 1, 0x44, 0x33, 0x22, 0x11, 0x66, 0x55},
+        "shortcut move did not queue the destination first");
+    Require(peer.ReceiveExact(11) == std::vector<u8>{0xba, 0x02, 5, 0, 0, 0, 0, 0, 0, 0, 0},
+        "shortcut move did not clear the source after the destination");
+    Require(g_session.GetShortcutSlotByAbsoluteIndex(destinationIndex)->id == 0x11223344
+        && !g_session.GetShortcutSlotByAbsoluteIndex(slotIndex)->id,
+        "successful shortcut move did not update both local slots");
     connection->Disconnect();
+    SkillPacketReplayAccess::Restore(previousMode, previousModeType);
     g_session.SetShortcutSlotByAbsoluteIndex(slotIndex, original.isSkill, original.id, original.count);
+    g_session.SetShortcutSlotByAbsoluteIndex(destinationIndex, originalDestination.isSkill,
+        originalDestination.id, originalDestination.count);
     std::cout << "{\"case_id\":\"shortcut_slot_update_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-02ba-hotkey\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"slot_restored\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 

@@ -312,7 +312,10 @@ void UIShortCutWnd::DragAndDrop(int x, int y, const DRAG_INFO* const info)
         return;
     }
 
-    bool changed = false;
+    const auto updateSlot = [](int index, const SHORTCUT_SLOT& replacement) {
+        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUpdate, index,
+            reinterpret_cast<msgparam_t>(&replacement), 0) != 0;
+    };
     if (info->source == static_cast<int>(DragSource::ShortcutWindow)
         && info->shortcutSlotAbsoluteIndex >= 0) {
         const int targetAbsoluteSlot = GetAbsoluteSlotIndex(visibleSlot);
@@ -328,34 +331,24 @@ void UIShortCutWnd::DragAndDrop(int x, int y, const DRAG_INFO* const info)
             return;
         }
 
-        changed = g_session.SetShortcutSlotByAbsoluteIndex(
-            targetAbsoluteSlot,
-            sourceSlot->isSkill,
-            sourceSlot->id,
-            sourceSlot->count);
-        const bool cleared = g_session.ClearShortcutSlotByAbsoluteIndex(info->shortcutSlotAbsoluteIndex);
-        if (changed) {
-            g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUpdate, targetAbsoluteSlot, 0, 0);
-        }
-        if (cleared) {
-            g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUpdate, info->shortcutSlotAbsoluteIndex, 0, 0);
-        }
-        if (changed || cleared) {
+        if (updateSlot(targetAbsoluteSlot, *sourceSlot)) {
+            updateSlot(info->shortcutSlotAbsoluteIndex, SHORTCUT_SLOT{});
             Invalidate();
         }
         return;
     }
 
+    SHORTCUT_SLOT replacement{};
     if (info->type == static_cast<int>(DragType::ShortcutItem) && info->itemId != 0) {
-        changed = g_session.SetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(visibleSlot), 0, info->itemId, 0);
+        replacement.id = info->itemId;
     } else if (info->type == static_cast<int>(DragType::ShortcutSkill) && info->skillId != 0) {
         const unsigned short skillLevel = static_cast<unsigned short>((std::max)(1, info->skillLevel));
-        changed = g_session.SetShortcutSlotByAbsoluteIndex(GetAbsoluteSlotIndex(visibleSlot), 1, static_cast<unsigned int>(info->skillId), skillLevel);
+        replacement.isSkill = 1;
+        replacement.id = static_cast<unsigned int>(info->skillId);
+        replacement.count = skillLevel;
     }
 
-    if (changed) {
-        const int absoluteSlot = GetAbsoluteSlotIndex(visibleSlot);
-        g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUpdate, absoluteSlot, 0, 0);
+    if (replacement.id && updateSlot(GetAbsoluteSlotIndex(visibleSlot), replacement)) {
         Invalidate();
     }
 }

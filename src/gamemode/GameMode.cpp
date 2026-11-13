@@ -6331,23 +6331,30 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
     return false;
 }
 
-bool RequestShortcutSlotUpdate(int absoluteSlotIndex)
+bool RequestShortcutSlotUpdate(int absoluteSlotIndex, const SHORTCUT_SLOT* replacement = nullptr)
 {
-    const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByAbsoluteIndex(absoluteSlotIndex);
-    if (!slot) {
+    const SHORTCUT_SLOT* current = g_session.GetShortcutSlotByAbsoluteIndex(absoluteSlotIndex);
+    if (!current) {
         return false;
+    }
+    const SHORTCUT_SLOT& slot = replacement ? *replacement : *current;
+    if (replacement && current->id == slot.id && current->isSkill == slot.isSkill && current->count == slot.count) {
+        return true;
     }
 
     PACKET_CZ_SHORTCUT_KEY_CHANGE packet{};
     packet.PacketType = PacketProfile::LegacyShortcutSend::kKeyChange;
     packet.Index = static_cast<u16>(absoluteSlotIndex);
-    packet.IsSkill = slot->id != 0 ? static_cast<u8>(slot->isSkill != 0 ? 1 : 0) : 0;
-    packet.Id = slot->id;
-    packet.Count = slot->count;
+    packet.IsSkill = slot.id != 0 && slot.isSkill != 0 ? 1 : 0;
+    packet.Id = slot.id;
+    packet.Count = slot.id != 0 ? slot.count : 0;
 
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
+    if (sent && replacement) {
+        g_session.SetShortcutSlotByAbsoluteIndex(absoluteSlotIndex, packet.IsSkill, packet.Id, packet.Count);
+    }
     DbgLog("[GameMode] shortcut update slot=%d skill=%u id=%u count=%u sent=%d\n",
         absoluteSlotIndex,
         static_cast<unsigned int>(packet.IsSkill),
@@ -12922,7 +12929,8 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         return RequestCloseStorage() ? 1 : 0;
 
     case GameMsg_RequestShortcutUpdate:
-        return RequestShortcutSlotUpdate(static_cast<int>(wparam)) ? 1 : 0;
+        return RequestShortcutSlotUpdate(static_cast<int>(wparam),
+            reinterpret_cast<const SHORTCUT_SLOT*>(lparam)) ? 1 : 0;
 
     case GameMsg_RequestShortcutUse:
         return RequestShortcutSlotUse(static_cast<int>(wparam)) ? 1 : 0;
