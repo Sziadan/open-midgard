@@ -228,6 +228,30 @@ void ItemCompositionResultReplay()
     dispatch(success);
     Require(g_session.GetInventoryItemByIndex(100)->m_num==1 && g_session.GetInventoryItemByIndex(101)->m_slot[0]==0,
         "composition result changed a replacement equipment row");
+
+    mode.m_mapLoadingStage=CGameMode::MapLoading_SendLoadAck;
+    Require(!mode.SendTimeSyncRequest(true),
+        "time request was counted before load-end acknowledgment");
+    mode.m_mapLoadingStage=CGameMode::MapLoading_None;
+    Require(mode.SendTimeSyncRequest(true), "could not send the earlier time request");
+    const auto& profile=ro::net::GetActiveMapGameplaySendProfile();
+    const int tickLength=ro::net::IsLegacyMapGameplaySendProfile()?6:8;
+    const auto expectTick = [&] {
+        const auto bytes=peer.ReceiveExact(tickLength);
+        Require((bytes[0] | (bytes[1]<<8))==profile.tickSend, "composition recovery sent the wrong time request");
+    };
+    expectTick();
+    mode.m_pendingItemComposition={100,101,4001,1202,{}};
+    Require(mode.SendTimeSyncRequest(false), "pending composition did not queue a time request");
+    expectTick();
+    dispatch({0x7f,0,1,0,0,0});
+    Require(mode.m_pendingItemComposition.cardIndex==100, "older time reply retired the pending composition");
+    dispatch({0x7f,0,2,0,0,0});
+    Require(!mode.m_pendingItemComposition.cardIndex && g_session.GetInventoryItemByIndex(100)->m_num==1,
+        "silent composition rejection did not release the request without consuming a card");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestUseInventoryItem,100,0,0)
+        && peer.ReceiveExact(4)==std::vector<u8>({0x7a,1,100,0}), "card use could not be retried after silent rejection");
+    mode.ClearItemComposition();
     g_session.RemoveInventoryItem(100,1);
     g_session.RemoveInventoryItem(101,1);
     g_windowMgr.ClearChatEvents();

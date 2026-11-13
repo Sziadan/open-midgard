@@ -4047,3 +4047,5 @@ PK38.03 validates card composition lists and binds each result to the submitted 
 PK38.03 verifies the actual inventory action and chooser submission through the selected `017A` and `017C` frames. [Evidence](evidence/PK38.03-card-composition.md)
 
 PK38.03 captures the card composition chooser in native and Qt and verifies cancellation through the window manager. [Evidence](evidence/PK38.03-card-composition.md)
+
+PK38.03 uses a time reply ordered after card submission to release a silently rejected request. [Evidence](evidence/PK38.03-card-composition.md)

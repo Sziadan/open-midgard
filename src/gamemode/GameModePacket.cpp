@@ -3388,6 +3388,11 @@ void HandleNotifyTime(CGameMode& mode, const PacketView& packet)
         g_session.SetServerTime(serverTick);
     }
     mode.m_receiveSyneRequestTime = 1;
+    const auto reply = CRagConnection::instance()->ConsumeTimeSyncReply();
+    if (reply && reply == mode.m_pendingItemComposition.completionSync) {
+        mode.ClearItemComposition();
+        g_windowMgr.PushChatEvent("Item compounding did not complete. Select the card and try again.", kSystemNoticeColor, 6);
+    }
     ++mode.m_numNotifyTime;
     const u32 receiveTick = timeGetTime();
     g_session.RecalcAveragePingTime(receiveTick - mode.m_syncRequestTime);

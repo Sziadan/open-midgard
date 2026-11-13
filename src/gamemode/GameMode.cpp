@@ -4756,10 +4756,14 @@ bool SendLoadEndAckPacket()
 
 bool SendTimeSyncRequest(CGameMode& mode, bool syncNow)
 {
+    // Before load-end the selected map server can silently drop time requests.
+    if (mode.m_mapLoadingStage != CGameMode::MapLoading_None && !mode.m_sentLoadEndAck) return false;
     const u32 now = timeGetTime();
     const bool waitingForReply = mode.m_syncRequestTime != 0 && mode.m_receiveSyneRequestTime == 0;
     const u32 intervalMs = waitingForReply ? kTimeSyncReplyRetryMs : kTimeSyncIntervalMs;
-    if (!syncNow && mode.m_syncRequestTime != 0 && now <= mode.m_syncRequestTime + intervalMs) {
+    const bool needsCompositionSync = mode.m_pendingItemComposition.cardIndex
+        && !mode.m_pendingItemComposition.completionSync;
+    if (!syncNow && !needsCompositionSync && mode.m_syncRequestTime != 0 && now <= mode.m_syncRequestTime + intervalMs) {
         return false;
     }
 
@@ -4778,8 +4782,12 @@ bool SendTimeSyncRequest(CGameMode& mode, bool syncNow)
         sent = CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
     }
 
-    mode.m_receiveSyneRequestTime = 0;
-    mode.m_syncRequestTime = now;
+    if (sent) {
+        mode.m_receiveSyneRequestTime = 0;
+        mode.m_syncRequestTime = now;
+        const auto request = CRagConnection::instance()->RecordTimeSyncRequest();
+        if (needsCompositionSync) mode.m_pendingItemComposition.completionSync = request;
+    }
     DbgLog("[GameMode] time sync request opcode=0x%04X tick=%u sent=%d\n",
         profile.tickSend,
         now,
@@ -10574,6 +10582,11 @@ void CGameMode::ClearItemComposition()
     if (auto* window = g_windowMgr.m_itemCompositionWnd) g_windowMgr.DeleteWindow(window);
 }
 
+bool CGameMode::SendTimeSyncRequest(bool syncNow)
+{
+    return ::SendTimeSyncRequest(*this, syncNow);
+}
+
 bool CGameMode::SendStarPlaceAcceptance(u8 which)
 {
     const auto* window = g_windowMgr.m_skillSelectWnd;
@@ -10875,8 +10888,6 @@ void CGameMode::OnInit(const char* worldName) {
         g_session.m_playerPosX,
         g_session.m_playerPosY,
         g_session.m_playerDir);
-
-    SendTimeSyncRequest(*this, true);
 
     CAudio* audio = CAudio::GetInstance();
     if (audio && m_rswName[0] != '\0') {
@@ -11480,7 +11491,7 @@ void CGameMode::OnUpdate() {
     UpdateNpcProgress(*conn, timeGetTime());
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);
-    SendTimeSyncRequest(*this, false);
+    SendTimeSyncRequest(false);
     const bool trackMovePerfFrame = IsMovePerfActive(*this);
     if (trackMovePerfFrame) {
         g_gameModeMovePerfStats.frames += 1;

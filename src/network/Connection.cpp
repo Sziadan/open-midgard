@@ -494,6 +494,13 @@ void CRagConnection::OnClose()
     m_waitingForRawAccountIdEcho = false;
     m_waitingForPetCaptureResult = false;
     m_expectedRawAccountIdEcho = 0;
+    m_timeSyncRequestsSent = 0;
+    m_timeSyncRepliesReceived = 0;
+}
+
+u64 CRagConnection::ConsumeTimeSyncReply()
+{
+    return m_timeSyncRepliesReceived < m_timeSyncRequestsSent ? ++m_timeSyncRepliesReceived : 0;
 }
 
 bool CRagConnection::ExpectRawAccountIdEcho(u32 expectedAccountId)
