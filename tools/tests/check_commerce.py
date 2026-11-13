@@ -2,16 +2,19 @@
 from pathlib import Path
 import os
 import subprocess
+import sys
 root=Path(__file__).resolve().parents[2]
 build=root/'build-mingw-preset/commerce-check'
 build.mkdir(exist_ok=True)
-source=(root/'src/gamemode/Commerce.cpp').read_text(encoding='utf-8')
-(build/'Commerce.inc').write_text(source[source.index('namespace ro::commerce {'):])
 compiler=Path('C:/Qt/Tools/mingw1310_64/bin/g++.exe')
-exe=build/'protocol.exe'
-subprocess.run([str(compiler),'-std=c++17','-DNOMINMAX','-O2','-I'+str(root/'src'),'-I'+str(build),str(root/'tools/tests/CommerceTests.cpp'),'-o',str(exe)],check=True)
 env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
-subprocess.run([str(exe)],env=env,check=True)
+mail_only = sys.argv[1:] == ['--mail-only']
+if not mail_only:
+    source=(root/'src/gamemode/Commerce.cpp').read_text(encoding='utf-8')
+    (build/'Commerce.inc').write_text(source[source.index('namespace ro::commerce {'):])
+    exe=build/'protocol.exe'
+    subprocess.run([str(compiler),'-std=c++17','-DNOMINMAX','-O2','-I'+str(root/'src'),'-I'+str(build),str(root/'tools/tests/CommerceTests.cpp'),'-o',str(exe)],check=True)
+    subprocess.run([str(exe)],env=env,check=True)
 
 from PIL import Image, ImageStat
 client=root/'build-mingw-preset/open-midgard.exe'
@@ -22,7 +25,7 @@ def client_log(pid):
     log='\n'.join(p.read_text(errors='replace') for p in files)
     marker=log.rfind('[Build] marker=')
     return log[marker:] if marker>=0 else log
-for case in ('inventory','vending','trade','incoming','mail','equipment','context','prompt','shopboard'):
+for case in (('mail',) if mail_only else ('inventory','vending','trade','incoming','mail','equipment','context','prompt','shopboard')):
     target=build/case;target.mkdir(exist_ok=True)
     (target/'open-midgard.ini').write_text('[Graphics]\nWidth=1280\nHeight=800\nSSAO=0\nRenderScale=100\nTextureUpscale=1\nWindowMode=0\n[Renderer]\nBackend=3\n')
     runenv={k:v for k,v in os.environ.items() if not k.startswith('RO_HEAL_PREVIEW_')}
@@ -49,7 +52,7 @@ for case in ('inventory','vending','trade','incoming','mail','equipment','contex
     if case!='shopboard':assert max(ImageStat.Stat(frame.crop((10,60,370,360))).stddev)>10,'Blank inventory'
     if case=='inventory':
         assert sum(max(c)-min(c)>45 for c in frame.crop((29,141,61,173)).getdata())>15,'Item icon missing'
-print('PASS Vulkan: inventory, cart, vending, trade and invitation, mail, equipment inspection, context menu, guild invitation and vendor board render without QML errors')
+print('PASS Vulkan: mail renders without QML errors' if mail_only else 'PASS Vulkan: commerce windows render without QML errors')
 
 import socket
 import threading
@@ -60,7 +63,10 @@ expected={
     'context':bytes.fromhex('e400e7030000'),
     'prompt':bytes.fromhex('6b010700000001000000'),
     'shopboard':bytes.fromhex('3001e703000034010c00e703000001000200'),
+    'mail':bytes.fromhex('47020200030000004702020000000000'),
 }
+if mail_only:
+    expected = {'mail': expected['mail']}
 for case,wire in expected.items():
     target=build/(case+'-input');target.mkdir(exist_ok=True)
     (target/'open-midgard.ini').write_text('[Graphics]\nWidth=1280\nHeight=800\nSSAO=0\nRenderScale=100\nTextureUpscale=1\nWindowMode=0\n[Renderer]\nBackend=3\n')
@@ -84,14 +90,16 @@ for case,wire in expected.items():
     thread.join(timeout=5);assert not thread.is_alive()
     log=client_log(process.pid)
     (target/'client.log').write_text(log)
-    assert f'[CommerceInputPreview] case={case} passed=1' in log,log[-6000:]
+    input_log = '\n'.join(line for line in log.splitlines() if '[CommerceInputPreview]' in line)
+    assert f'[CommerceInputPreview] case={case} passed=1' in input_log, input_log
     # The hover fixture can also request its actor name using packetver23's
     # padded 11-byte 008c. Inspect every frame; exclude only that known request.
-    at=0;commerce_wire=bytearray();sizes={0x8c:11,0x126:8,0x127:8,0xe8:8,0xeb:2,0xef:2,0xe4:6,0x130:6,0x134:12,0x16b:10}
+    at=0;commerce_wire=bytearray();sizes={0x8c:11,0x126:8,0x127:8,0xe8:8,0xeb:2,0xef:2,0xe4:6,0x130:6,0x134:12,0x16b:10,0x247:8}
     while at<len(captured):
         op=int.from_bytes(captured[at:at+2],'little');assert op in sizes,(case,captured.hex(),hex(op))
         size=sizes[op];assert at+size<=len(captured)
         if op!=0x8c:commerce_wire.extend(captured[at:at+size])
         at+=size
     assert bytes(commerce_wire)==wire,(case,captured.hex(),wire.hex())
-print('PASS native input + loopback: bidirectional inventory/cart drag and quantity, cart/vending drag and drag-out removal, trade offer/lock/commit and player-menu trade, shop-bubble browsing and purchases send exact packets')
+print('PASS native input + loopback: mail attachment stage and removal send exact packets' if mail_only
+    else 'PASS native input + loopback: commerce actions send exact packets')

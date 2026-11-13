@@ -464,6 +464,7 @@ Item {
                 width: parent.width
                 spacing: 8
                 Text {
+                    objectName: "mailComposerAttachment"
                     width: parent.width - 100
                     height: 28
                     verticalAlignment: Text.AlignVCenter
@@ -476,6 +477,7 @@ Item {
                     color: theme.muted
                 }
                 Button {
+                    objectName: "mailComposerRemoveItem"
                     width: 92
                     label: "Remove item"
                     enabled: !!hub.view.mailAttachment && !hub.view.mailPending && !hub.view.mailAttachmentPending

@@ -890,7 +890,13 @@ void RunHealRenderPreview()
                 }
                 if(type=="vending"){const u8 open[]={0x2d,1,4,0};router.Dispatch(mode,{0x12d,4,open});state.vending.x=800;state.vending.y=60;state.draft.push_back({potion,3,250});}
                 if(type=="trade"||type=="incoming"){state.cart.visible=false;state.trade.visible=true;state.trade.x=390;state.trade.y=60;state.partner="Trading Partner";state.tradeIncoming=type=="incoming";state.tradeActive=type=="trade";if(state.tradeActive){state.trade.width=660;state.trade.height=420;}state.localOffer.push_back({potion,2,0});state.remoteOffer.push_back({armor,1,0});state.remoteZeny=500;}
-                if(type=="mail"){state.cart.visible=false;state.mail.visible=true;state.mailTo="Recipient";}
+                if(type=="mail"){
+                    mode.CloseFriendInvitation();
+                    inventory->SetCurrentTab(0);
+                    state.cart.visible=false;
+                    state.mail.visible=true;
+                    state.mailTo="Recipient";
+                }
                 if(type=="equipment"){
                     state.cart.visible=false;std::array<u8,69> viewEquip{};viewEquip[0]=0xd7;viewEquip[1]=2;viewEquip[2]=69;std::memcpy(viewEquip.data()+4,"Test Player",11);std::copy(cartEquip.begin()+4,cartEquip.end(),viewEquip.begin()+43);
                     router.Dispatch(mode,{0x2d7,69,viewEquip.data()});DbgLog("[CommercePreview] equipmentViewRoute=%d\n",state.equipment.visible&&state.viewedEquipment.size()==1);
@@ -988,6 +994,24 @@ void RunHealRenderPreview()
                     const bool locked=click("commerceLockTrade")&&commerceState.lockPending;
                     const u8 local[]={0xec,0,0},remote[]={0xec,0,1};Receive(mode,{0xec,3,local});Receive(mode,{0xec,3,remote});render();
                     const bool committed=click("commerceCommitTrade")&&commerceState.commitPending;result=offered&&locked&&committed;
+                }else if(type=="mail"){
+                    auto* composer=item("commerce_mail");
+                    const bool staged=composer && drag("commerceTile_inventory_2",point(composer))
+                        && quantity() && commerceState.mailAttachment.pending
+                        && commerceState.mailAttachment.pending->amount==3;
+                    const u8 ack[]={0x55,2,2,0,0};
+                    router.Dispatch(mode,{0x255,5,ack});render();
+                    const auto* attachmentLabel=item("mailComposerAttachment");
+                    const bool shown=commerceState.mailAttachment.staged.has_value()
+                        && attachmentLabel && attachmentLabel->property("text").toString().startsWith("3 ");
+                    const bool remove=click("mailComposerRemoveItem")
+                        && commerceState.mailAttachment.pending
+                        && commerceState.mailAttachment.pending->amount==0;
+                    router.Dispatch(mode,{0x255,5,ack});render();
+                    const auto* inventoryItem=g_session.GetInventoryItemByIndex(2);
+                    result=staged && shown && remove && !commerceState.mailAttachment.staged
+                        && inventoryItem && inventoryItem->m_num==8;
+                    DbgLog("[CommerceInputPreview] mailStage=%d mailShown=%d mailRemove=%d\n",staged,shown,remove);
                 }else if(type=="context")result=click("commerceContext1")&&commerceState.tradeWaiting;
                 else if(type=="prompt")result=click("commercePromptAccept")&&commerceState.promptKind.empty();
                 else if(type=="shopboard"){

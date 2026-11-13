@@ -1224,8 +1224,10 @@
       "commit_subject": null
     },
     "PK32.05": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "IN_PROGRESS",
+      "evidence": [
+        "docs/packets/work-items/PK32.05.md"
+      ],
       "commit_subject": null
     },
     "PK33.01": {
