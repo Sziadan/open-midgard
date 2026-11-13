@@ -104,6 +104,26 @@ Rectangle {
         }
     }
 
+    Rectangle {
+        visible: window.list.scrollHeight > 0
+        x: window.list.scrollX
+        y: 14
+        width: 15
+        height: window.height - 38
+        color: "#e3e7ee"
+
+        Rectangle {
+            x: 2
+            y: window.list.scrollY - parent.y
+            width: parent.width - 4
+            height: window.list.scrollHeight
+            color: "#a4adbd"
+        }
+
+        Text { x: 3; text: "^"; font.pixelSize: 12 }
+        Text { x: 3; y: parent.height - 15; text: "v"; font.pixelSize: 12 }
+    }
+
     Text {
         x: 16
         y: window.height - 20

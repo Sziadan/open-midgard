@@ -33,6 +33,7 @@ public:
     std::vector<Row> GetRows();
     std::string GetTitle() const;
     std::string GetFooter() const;
+    RECT GetScrollThumb() const;
     const UIFriendOptionButton& GetCloseButton() const { return *m_close; }
     void Move(int x, int y) override;
     void OnDraw() override;
@@ -50,6 +51,8 @@ private:
     const std::list<PLAYER_SKILL_INFO>& Skills() const;
     bool CanUpgrade(const PLAYER_SKILL_INFO& skill) const;
     int MaxOffset() const;
+    int VisibleRows() const;
+    void ScrollBy(int rows);
     int UseLevel(int skillId) const;
     const Icon* GetIcon(int skillId);
 
@@ -60,6 +63,7 @@ private:
     std::map<int, Icon> m_icons;
     std::array<Icon, 2> m_upgradeArt;
     int m_offset = 0;
+    int m_thumbGrab = -1;
     int m_selectedSkill = 0;
     int m_dragSkill = 0;
     int m_pressedUpgradeSkill = 0;

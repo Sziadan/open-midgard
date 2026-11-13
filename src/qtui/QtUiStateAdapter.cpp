@@ -2142,10 +2142,13 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
                 {"upgradeArt", row.upgrade ? ToQString(row.upgrade->uri) : QString()}});
         }
         const auto& close = window->GetCloseButton();
+        const RECT scrollThumb = window->GetScrollThumb();
         companionSkillLists.push_back(QVariantMap{{"layer", SourceManagedWindowLayer(window)},
             {"x", window->m_x}, {"y", window->m_y}, {"width", window->m_w}, {"height", window->m_h},
             {"title", ToQString(window->GetTitle())}, {"footer", ToQString(window->GetFooter())},
-            {"close", ToQString(close.GetButton().uris[close.GetVisualState()])}, {"rows", rows}});
+            {"close", ToQString(close.GetButton().uris[close.GetVisualState()])}, {"rows", rows},
+            {"scrollX", static_cast<int>(scrollThumb.left)}, {"scrollY", static_cast<int>(scrollThumb.top)},
+            {"scrollHeight", static_cast<int>(scrollThumb.bottom - scrollThumb.top)}});
     }
     chatUi.insert("companionSkillLists", companionSkillLists);
     const auto roomButton=[](const RoomSettingsButton& button,int status){

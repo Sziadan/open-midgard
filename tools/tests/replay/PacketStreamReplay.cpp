@@ -3090,6 +3090,19 @@ void CompanionSkillListReplay()
     homun->OnWheel(-1);
     Require(homun->GetRows().front().id == 8001, "companion list did not scroll to the next row");
     homun->OnWheel(1);
+    homun->Move(10, 10);
+    merc->Move(310, 10);
+    const int scrollX = homun->m_x + homun->m_w - 8;
+    const int scrollDown = homun->m_y + homun->m_h - 29;
+    g_windowMgr.OnLBtnDown(scrollX, scrollDown);
+    g_windowMgr.OnLBtnUp(scrollX, scrollDown);
+    Require(homun->GetRows().front().id == 8001 && merc->GetScrollThumb().bottom == 0,
+        "companion down arrow did not advance its own list");
+    const auto thumb = homun->GetScrollThumb();
+    g_windowMgr.OnLBtnDown(scrollX, homun->m_y + thumb.top + 2);
+    g_windowMgr.OnMouseMove(scrollX, homun->m_y + 14);
+    g_windowMgr.OnLBtnUp(scrollX, homun->m_y + 14);
+    Require(homun->GetRows().front().id == 8000, "dragging the companion scrollbar did not return to the first row");
     g_session.SetHomunSkillUseLevel(8000, 2);
     g_session.SetMerSkillUseLevel(8200, 3);
     homun->OnLBtnDown(homun->m_x + 10, homun->m_y + 22);

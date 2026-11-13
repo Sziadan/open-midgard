@@ -3915,3 +3915,7 @@ PK28.04 closes companion controls and invalidates learned skill rows and job ide
 ## Companion window captions and placement
 
 PK28.04 uses the selected caption and footer entries and persists the four companion window positions independently. The replay covers skill list localization and close/reopen placement. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+
+## Companion skill scrolling
+
+PK28.04 adds the companion list scrollbar and verifies wheel, arrow, and thumb input through replay. Six focused application checks, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)

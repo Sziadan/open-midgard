@@ -1,5 +1,7 @@
 # Companion skill lists
 
+The companion scrollbar uses the reference row count `(height - 38) / 32` and is shown when the learned list exceeds that count. Arrows step one row, the track pages by visible rows minus one, and the wheel is capped at three rows per event. Dragging the thumb updates the same offset used for draw and hit testing. The Qt overlay reads the thumb geometry from the native window. Replay verifies wheel input, the down arrow, thumb dragging, and independent family scroll state. Six focused application checks and 473 standalone checks passed. Qt lint passed. The reference resize path and scrollbar skin remain open.
+
 `Ref/UIItemWnd.cpp:16080` uses message IDs 937 and 1262 for the two companion captions and 284 for the skill-point footer. Both native and Qt use the same localized strings. The selected server sends homunculus skill points in `022E`. The mercenary footer displays zero because the selected mercenary packets supply no skill-point total.
 
 The four companion windows restore independent saved positions. `Ref/UIWindowMgr.cpp` passes separate placement records on window creation. The port stores position in `UIWindows` settings when the window closes, checks the saved coordinates against the current viewport, and keeps the existing default placement and window dimensions. Replay verifies localization lookup and independent skill-list positions across close and reopen.

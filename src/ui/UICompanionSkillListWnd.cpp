@@ -15,7 +15,8 @@
 namespace {
 constexpr int kTitleHeight = 17;
 constexpr int kRowHeight = 32;
-constexpr int kVisibleRows = 2;
+constexpr int kScrollWidth = 15;
+constexpr int kScrollTop = 14;
 constexpr int kClose = 135;
 constexpr int kUpgradeX = 78;
 constexpr int kUpgradeYOffset = 4;
@@ -53,13 +54,35 @@ const std::list<PLAYER_SKILL_INFO>& UICompanionSkillListWnd::Skills() const
 
 int UICompanionSkillListWnd::MaxOffset() const
 {
-    return std::max(0, static_cast<int>(Skills().size()) - kVisibleRows);
+    return std::max(0, static_cast<int>(Skills().size()) - VisibleRows());
+}
+
+int UICompanionSkillListWnd::VisibleRows() const
+{
+    return std::max(1, (m_h - 38) / kRowHeight);
+}
+
+RECT UICompanionSkillListWnd::GetScrollThumb() const
+{
+    const int maxOffset = MaxOffset();
+    const int trackHeight = m_h - 38 - 2 * kScrollWidth;
+    if (maxOffset == 0 || trackHeight <= 0) return {};
+    const int height = std::clamp(trackHeight * VisibleRows() / static_cast<int>(Skills().size()), std::min(8, trackHeight), trackHeight);
+    const int top = kScrollTop + kScrollWidth + (trackHeight - height) * std::min(m_offset, maxOffset) / maxOffset;
+    return {m_w - kScrollWidth, top, m_w, top + height};
+}
+
+void UICompanionSkillListWnd::ScrollBy(int rows)
+{
+    const int maxOffset = MaxOffset();
+    m_offset = std::clamp(std::min(m_offset, maxOffset) + rows, 0, maxOffset);
+    Invalidate();
 }
 
 const PLAYER_SKILL_INFO* UICompanionSkillListWnd::SkillAt(int x, int y) const
 {
     const int rowY = y - m_y - kTitleHeight;
-    if (x < m_x || x >= m_x + m_w || rowY < 0 || rowY >= kRowHeight * kVisibleRows) return nullptr;
+    if (x < m_x || x >= m_x + m_w - kScrollWidth || rowY < 0 || rowY >= kRowHeight * VisibleRows()) return nullptr;
     const int index = std::min(m_offset, MaxOffset()) + rowY / kRowHeight;
     const auto& skills = Skills();
     return index < static_cast<int>(skills.size()) ? &*std::next(skills.begin(), index) : nullptr;
@@ -104,7 +127,7 @@ std::vector<UICompanionSkillListWnd::Row> UICompanionSkillListWnd::GetRows()
     const auto& skills = Skills();
     auto entry = std::next(skills.begin(), std::min(m_offset, MaxOffset()));
     std::vector<Row> rows;
-    for (int i = 0; i < kVisibleRows && entry != skills.end(); ++i, ++entry) {
+    for (int i = 0; i < VisibleRows() && entry != skills.end(); ++i, ++entry) {
         rows.push_back({entry->SKID, kTitleHeight + i * kRowHeight, entry->level,
             entry->spcost, entry->SKID == m_selectedSkill, entry->skillName, GetIcon(entry->SKID),
             CanUpgrade(*entry) ? &m_upgradeArt[entry->SKID == m_pressedUpgradeSkill ? 1 : 0] : nullptr,
@@ -169,6 +192,17 @@ void UICompanionSkillListWnd::OnDraw()
             }
         }
     }
+    const RECT thumb = GetScrollThumb();
+    if (thumb.bottom > thumb.top) {
+        const int left = m_x + thumb.left;
+        const int right = m_x + thumb.right;
+        const int top = m_y + kScrollTop;
+        const int bottom = top + m_h - 38;
+        shopui::FillRectColor(dc, {left, top, right, bottom}, RGB(227, 231, 238));
+        shopui::FillRectColor(dc, {left + 2, m_y + thumb.top, right - 2, m_y + thumb.bottom}, RGB(164, 173, 189));
+        text(thumb.left + 3, kScrollTop, 12, "^");
+        text(thumb.left + 3, bottom - m_y - kScrollWidth, 12, "v");
+    }
     DrawChildrenToHdc(dc);
     ReleaseDrawTarget(dc);
 }
@@ -177,6 +211,18 @@ void UICompanionSkillListWnd::OnLBtnDown(int x, int y)
 {
     m_dragSkill = 0;
     m_pressedUpgradeSkill = 0;
+    m_thumbGrab = -1;
+    const RECT thumb = GetScrollThumb();
+    const int localY = y - m_y;
+    if (thumb.bottom > thumb.top && x >= m_x + thumb.left && x < m_x + thumb.right
+        && localY >= kScrollTop && localY < kScrollTop + m_h - 38) {
+        if (localY < kScrollTop + kScrollWidth) ScrollBy(-1);
+        else if (localY >= kScrollTop + m_h - 38 - kScrollWidth) ScrollBy(1);
+        else if (localY < thumb.top) ScrollBy(1 - VisibleRows());
+        else if (localY >= thumb.bottom) ScrollBy(VisibleRows() - 1);
+        else m_thumbGrab = localY - thumb.top;
+        return;
+    }
     if (const auto* upgrade = UpgradeAt(x, y)) {
         m_pressedUpgradeSkill = upgrade->SKID;
         Invalidate();
@@ -196,6 +242,10 @@ void UICompanionSkillListWnd::OnLBtnDown(int x, int y)
 
 void UICompanionSkillListWnd::OnLBtnDblClk(int x, int y)
 {
+    if (x >= m_x + m_w - kScrollWidth && y >= m_y + kScrollTop) {
+        OnLBtnDown(x, y);
+        return;
+    }
     if (UpgradeAt(x, y)) return;
     if (const auto* row = SkillAt(x, y)) {
         m_selectedSkill = row->SKID;
@@ -208,6 +258,10 @@ void UICompanionSkillListWnd::OnLBtnDblClk(int x, int y)
 
 void UICompanionSkillListWnd::OnLBtnUp(int x, int y)
 {
+    if (m_thumbGrab >= 0) {
+        m_thumbGrab = -1;
+        return;
+    }
     m_dragSkill = 0;
     if (m_pressedUpgradeSkill) {
         const int pressedSkill = m_pressedUpgradeSkill;
@@ -224,6 +278,16 @@ void UICompanionSkillListWnd::OnLBtnUp(int x, int y)
 
 void UICompanionSkillListWnd::OnMouseMove(int x, int y)
 {
+    if (m_thumbGrab >= 0) {
+        const RECT thumb = GetScrollThumb();
+        const int travel = m_h - 38 - 2 * kScrollWidth - (thumb.bottom - thumb.top);
+        if (thumb.bottom > thumb.top && travel > 0) {
+            const int position = std::clamp(y - m_y - m_thumbGrab - kScrollTop - kScrollWidth, 0, travel);
+            m_offset = (position * MaxOffset() + travel / 2) / travel;
+            Invalidate();
+        }
+        return;
+    }
     UIFrameWnd::OnMouseMove(x, y);
     if (!m_dragSkill) return;
     const auto dx = static_cast<long long>(x) - m_dragStart.x;
@@ -255,8 +319,8 @@ void UICompanionSkillListWnd::OnRBtnDown(int x, int y)
 void UICompanionSkillListWnd::OnWheel(int delta)
 {
     if (!delta) return;
-    m_offset = std::clamp(m_offset + (delta > 0 ? -1 : 1), 0, MaxOffset());
-    Invalidate();
+    const int step = std::min(VisibleRows() - 1, 3);
+    ScrollBy(delta > 0 ? -step : step);
 }
 
 msgresult_t UICompanionSkillListWnd::SendMsg(UIWindow* sender, int msg, msgparam_t action, msgparam_t lparam, msgparam_t extra)

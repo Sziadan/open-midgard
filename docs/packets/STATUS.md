@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Companion skill scrolling**. PK28.04 shares the row offset across draw, input, and native/Qt scrollbar geometry. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+
 **Companion window captions and placement**. PK28.04 uses the selected message entries and restores separate positions for both families. Six focused application checks and 473 standalone checks passed. Layout modes, scrollbar parity, and live UI verification remain open. [Evidence](evidence/PK28-companion-skill-lists.md)
 
 **Companion windows on map transition**. PK28.04 replay verifies that same-map reuse closes both companion families' controls, clears learned rows and actor jobs, and cancels a companion skill drag. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28.03-companion-map-reset.md)
