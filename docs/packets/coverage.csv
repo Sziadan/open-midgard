@@ -309,7 +309,7 @@ AUDIT-0x0199,0x0199,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Selected four-byte ma
 AUDIT-0x019A,0x019A,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x019B,0x019B,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-notify-effect-019b traces selected 10-byte S2C ZC_NOTIFY_EFFECT and AREA route with client mapping; unsupported codes and replay remain open,UNREVIEWED,
 AUDIT-0x019C,0x019C,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x019D,0x019D,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x019D,0x019D,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected six-byte GM visibility toggle captured. Server permission and visibility remain authoritative.,C2S_ONLY,PK46.02-GM-HIDE
 AUDIT-0x019E,0x019E,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x019F,0x019F,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Selected six-byte taming request captured from the target and taming window flow,C2S_ONLY,PK46.02-PET-CONTROL-REQUESTS
 AUDIT-0x01A0,0x01A0,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

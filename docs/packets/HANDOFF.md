@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 connects the selected `/hide` command to `019D`. The server owns permission and visibility, and the client applies the resulting actor option update. Verify allowed and denied commands and visibility from a second client live. [Hide request evidence](evidence/PK46.02-map-production-reset-gm-gaps.md#pk4602-gm-hide)
+
 PK46.02 connects the selected stat and skill reset commands to `0197`. The server owns permission and resulting stats and skills. Verify allowed and denied commands live. [Character reset evidence](evidence/PK46.02-map-production-reset-gm-gaps.md)
 
 The selected `/effect` command sends `021D`. The separate minimum-effects command is local. The selected Memorial Dungeon `02CF` carries a command with no target field and needs authoritative target ownership before the client can use it. [Effects evidence](evidence/PK46.02-map-pvp-ranking-refine-hom-gaps.md) · [Instance target evidence](evidence/PK42.04-instance-target-ownership.md)

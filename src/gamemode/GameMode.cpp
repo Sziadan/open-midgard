@@ -12442,6 +12442,11 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]{0x97, 0x01, static_cast<u8>(wparam), 0};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet)) ? 1 : 0;
     }
+    case 157: {
+        if (wparam != 64) return 0;
+        const u8 packet[]{0x9d, 0x01, 0x40, 0, 0, 0};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet)) ? 1 : 0;
+    }
     case 158: {
         if(!wparam)return 0;
         // Selected CZ_RENAME_PET: the24-byte field ends in NUL when the

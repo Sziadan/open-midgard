@@ -258,6 +258,32 @@ void ChatSubmissionReplay()
         "resetstate did not send the selected stat reset");
     Require(submit("/resetskill") && peer.ReceiveExact(4) == std::vector<u8>{0x97, 1, 1, 0},
         "resetskill did not send the selected skill reset");
+    {
+        CPlayer player;
+        CWorld world;
+        player.m_gid = 0xf2000042;
+        world.m_player = &player;
+        auto* previousWorld = mode.m_world;
+        mode.m_world = &world;
+        const auto previousEffect = player.m_effectState;
+        Require(!mode.SendMsg(157, 0, 0, 0), "unknown hide request value was accepted");
+        Require(submit("/hide") && peer.ReceiveExact(6) == std::vector<u8>{0x9d, 1, 64, 0, 0, 0}
+            && player.m_effectState == previousEffect,
+            "hide did not send the selected frame or changed server-owned visibility locally");
+        CGameModePacketRouter hideRouter;
+        RegisterDefaultGameModePacketHandlers(hideRouter);
+        TestConnection input;
+        const auto applyOption = [&](u8 option) {
+            Require(input.QueueBytes({0x29, 2, 0x42, 0, 0, 0xf2, 0, 0, 0, 0, option, 0, 0, 0, 0})
+                && ProcessGameModePacketLoop(mode, input, hideRouter, 1).packetsDispatched == 1
+                && player.m_effectState == option,
+                "server visibility update did not reach the local actor");
+        };
+        applyOption(64);
+        applyOption(0);
+        world.m_player = nullptr;
+        mode.m_world = previousWorld;
+    }
     mode.m_reqEmotionTick=0;mode.m_isReqEmotion=0;Require(submit("/!"),"registered source emotion did not route47->33");
     Require(peer.ReceiveExact(3)==std::vector<u8>({0xbf,0,0}) && mode.m_isReqEmotion && mode.m_reqEmotionTick==10000,"source emotion0/pending/time/frame differs");
     Require(!submit("/?"),"pending source emotion was not guarded");mode.m_isReqEmotion=0;submissionTick=12500;Require(!submit("/?"),"source emotion exact2500 boundary changed");
@@ -486,6 +512,7 @@ void ChatSubmissionReplay()
 #include "PlayerSkillProceedReplay.inc"
     connection->Disconnect();
     Require(!submit("/resetstate"), "character reset reported success on a closed connection");
+    Require(!submit("/hide"), "hide reported success on a closed connection");
 #include "PlayerAutoRunFailedSendReplay.inc"
 #include "PetWindowFailedSendReplay.inc"
 #include "PetEggFailedSendReplay.inc"
