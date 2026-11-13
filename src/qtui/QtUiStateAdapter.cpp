@@ -106,6 +106,28 @@
 #include <string>
 #include <vector>
 
+bool ro::guild::SendEmblemUpload(CGameMode& mode, const QImage& image, QString& error)
+{
+    const auto& guild = g_session.m_localGuild;
+    if (!guild.guildId || !guild.isMaster) {
+        error = QStringLiteral("Only the guild master can upload an emblem.");
+        return false;
+    }
+    const auto packet = EmblemUploadPacket(image, error);
+    if (packet.isEmpty()) return false;
+    if (!CRagConnection::instance()->SendPacket(packet.constData(), static_cast<int>(packet.size()))) {
+        error = QStringLiteral("Unable to upload guild emblem. Please check your connection.");
+        return false;
+    }
+    mode.m_pendingEmblemGuild = guild.guildId;
+    mode.m_pendingEmblemVersion = guild.emblemVersion;
+    mode.m_pendingEmblemTick = GetTickCount();
+    mode.m_pendingEmblemData.assign(packet.begin() + 4, packet.end());
+    DbgLog("[GuildEmblem] request guild=%u bytes=%d version=%u\n",
+        guild.guildId, static_cast<int>(packet.size()), guild.emblemVersion);
+    return true;
+}
+
 namespace {
 
 void RequestGuildEmblemUpload()
@@ -154,20 +176,13 @@ void RequestGuildEmblemUpload()
             return;
         }
         QString error;
-        const QByteArray packet = ro::guild::EmblemUploadPacket(reader.read(), error);
-        if (packet.isEmpty()) {
+        const QImage image = reader.read();
+        if (g_session.m_gid != characterId || g_session.m_localGuild.guildId != guildId) return;
+        if (!ro::guild::SendEmblemUpload(*mode, image, error)) {
             g_windowMgr.PushChatEvent(error.toUtf8().constData(), 0x00FF4040u, 6);
             return;
         }
-        if (!g_session.m_localGuild.isMaster || g_session.m_localGuild.guildId != guildId) return;
-        if (CRagConnection::instance()->SendPacket(packet.constData(), static_cast<int>(packet.size()))) {
-            mode->m_pendingEmblemGuild=guildId;
-            mode->m_pendingEmblemVersion=g_session.m_localGuild.emblemVersion;
-            mode->m_pendingEmblemTick=GetTickCount();
-            mode->m_pendingEmblemData.assign(packet.begin()+4,packet.end());
-            DbgLog("[GuildEmblem] request guild=%u bytes=%d version=%u\n",guildId,static_cast<int>(packet.size()),mode->m_pendingEmblemVersion);
-            g_windowMgr.PushChatEvent("Guild emblem request sent; waiting for server confirmation.", 0x0080C0FFu, 6);
-        } else g_windowMgr.PushChatEvent("Unable to upload guild emblem. Please check your connection.", 0x00FF4040u, 6);
+        g_windowMgr.PushChatEvent("Guild emblem request sent; waiting for server confirmation.", 0x0080C0FFu, 6);
     });
     if(!started)g_windowMgr.PushChatEvent("The guild emblem picker is already open.",0x0080C0FFu,6);
 #else

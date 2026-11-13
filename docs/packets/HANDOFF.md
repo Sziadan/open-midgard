@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK46.02 now records selected guild administration and alliance replies. Continue with guild emblem transfer and the missing alliance and opposition producers. Keep party `0102` open for the item-option UI and server contract. PK37 still owns direct storage/cart transfers `0128` and `0129`. [Guild administration crosswalk](evidence/PK46.02-guild-admin-crosswalk.md) · [Party and guild crosswalk](evidence/PK46.02-party-guild-crosswalk.md)
+PK46.02 now records selected guild administration, alliance replies, and emblem transfers. Continue with the missing alliance initiation, opposition, and relation removal producers. Keep party `0102` open for the item-option UI and server contract. PK37 still owns direct storage/cart transfers `0128` and `0129`. [Guild administration crosswalk](evidence/PK46.02-guild-admin-crosswalk.md) · [Party and guild crosswalk](evidence/PK46.02-party-guild-crosswalk.md)
 
 PK46.03 connects scheduled character deletion to the PacketVer23 Delete action. Verify the Windows dialog visually and use a disposable test character to check scheduling, reconnect, cancellation, birth-date refusal and confirmation after the deadline. The selected list omits the deadline and an already-queued reply carries zero. [Scheduled deletion controls](evidence/PK46.03-scheduled-deletion-controls.md)
 

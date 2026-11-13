@@ -4171,3 +4171,5 @@ PK46.02 reconciles four chat, six room, and three friend requests against the se
 PK46.02 reconciles five party and four guild requests. The new guild reply fixture checks accept and decline from the production invitation path. [Party and guild evidence](evidence/PK46.02-party-guild-crosswalk.md)
 
 PK46.02 verifies the Qt guild administration sends and alliance invitation replies in production replay. [Guild administration evidence](evidence/PK46.02-guild-admin-crosswalk.md)
+
+PK46.02 captures guild emblem download and upload requests and verifies the version and payload checks for upload confirmation. [Guild emblem evidence](evidence/PK46.02-guild-admin-crosswalk.md#pk4602-guild-emblem-requests)

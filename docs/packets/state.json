@@ -1965,7 +1965,7 @@
         "docs/packets/evidence/PK27-prompt-skin-zip.md",
         "docs/packets/evidence/PK27-prompt-picker.md"
       ],
-      "commit_subject": "packet(PK46.02): verify guild administration requests"
+      "commit_subject": "packet(PK46.02): verify guild emblem transfers"
     },
     "PK46.03": {
       "status": "IN_PROGRESS",

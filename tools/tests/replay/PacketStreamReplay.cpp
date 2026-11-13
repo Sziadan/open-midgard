@@ -23,6 +23,8 @@
 #include "qtui/QtUiStateAdapter.h"
 #if RO_ENABLE_QT6_UI
 #include "qtui/QtUiState.h"
+#include "qtui/GuildEmblemUpload.h"
+#include "world/Gr2Monster.h"
 #endif
 #include "ui/UIChooseWnd.h"
 #include "ui/UIGroundSkillTextWnd.h"
@@ -7536,6 +7538,71 @@ void ChangeCartProductionSendReplay()
 }
 
 #if RO_ENABLE_QT6_UI
+void GuildEmblemProductionReplay()
+{
+    SetCase("guild_emblem_production", "PK46.02", "selected-0151-0153",
+        "emblem resolver and picker send continuation -> production socket -> 0152 router");
+    const auto savedGuild = g_session.m_localGuild;
+    g_session.m_localGuild.guildId = 7;
+    g_session.m_localGuild.isMaster = true;
+    g_session.m_localGuild.emblemVersion = 2;
+    CGameMode mode;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    QImage image(24, 24, QImage::Format_RGB32);
+    image.fill(qRgb(20, 40, 60));
+    QString error;
+    Require(!ro::guild::SendEmblemUpload(mode, image, error) && !mode.m_pendingEmblemGuild,
+        "failed upload created a pending confirmation");
+    Require(!PrepareGuildEmblem(mode, 7, 2) && mode.m_emblemRequestTicks.empty(),
+        "failed download created a request throttle");
+    {
+        LoopbackPeer peer(*connection);
+        PrepareGuildEmblem(mode, 7, 2);
+        Require(peer.ReceiveExact(6) == std::vector<u8>{0x51, 1, 7, 0, 0, 0},
+            "emblem download request wire fields differ");
+        PrepareGuildEmblem(mode, 7, 2);
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
+            "emblem resolver repeated a throttled request");
+        g_session.m_localGuild.isMaster = false;
+        Require(!ro::guild::SendEmblemUpload(mode, image, error) && !mode.m_pendingEmblemGuild,
+            "a non-master could upload an emblem");
+        g_session.m_localGuild.isMaster = true;
+        Require(ro::guild::SendEmblemUpload(mode, image, error)
+                && mode.m_pendingEmblemGuild == 7 && mode.m_pendingEmblemVersion == 2,
+            "successful upload did not track its guild and version");
+        const auto header = peer.ReceiveExact(4);
+        const size_t length = header[2] | (size_t(header[3]) << 8);
+        Require(header[0] == 0x53 && header[1] == 1 && length > 4 && length <= 2052,
+            "emblem upload header differs");
+        const auto payload = peer.ReceiveExact(length - 4);
+        Require(payload == mode.m_pendingEmblemData, "upload confirmation tracks different compressed bytes");
+
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        std::vector<u8> reply{0x52, 1, static_cast<u8>(length + 8), static_cast<u8>((length + 8) >> 8),
+            7, 0, 0, 0, 2, 0, 0, 0};
+        reply.insert(reply.end(), payload.begin(), payload.end());
+        const auto receive = [&] {
+            PacketView packet{};
+            int consumed = 0;
+            Require(TryReadPacket(reply.data(), reply.size(), packet, consumed)
+                    && consumed == static_cast<int>(reply.size()) && router.Dispatch(mode, packet),
+                "emblem reply did not frame and dispatch");
+        };
+        receive();
+        Require(mode.m_pendingEmblemGuild == 7 && mode.m_guildEmblems.at(7).version == 2,
+            "old emblem version confirmed the upload or failed to populate the cache");
+        reply[8] = 3;
+        receive();
+        Require(!mode.m_pendingEmblemGuild && mode.m_pendingEmblemData.empty()
+                && mode.m_guildEmblems.at(7).version == 3 && !mode.m_emblemRequestTicks.count(7),
+            "matching emblem reply did not confirm the upload and refresh its cache");
+    }
+    connection->Disconnect();
+    g_session.m_localGuild = savedGuild;
+}
+
 void GuildAdminProductionSendReplay()
 {
     SetCase("guild_admin_production_send", "PK46.02", "selected-guild-admin-actions",
@@ -7971,6 +8038,7 @@ int main(int argc,char** argv){try{
     CartTransferProductionSendReplay();
     ChangeCartProductionSendReplay();
 #if RO_ENABLE_QT6_UI
+    GuildEmblemProductionReplay();
     GuildAdminProductionSendReplay();
 #endif
     GuildReplyProductionSendReplay();

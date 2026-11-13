@@ -5,7 +5,11 @@
 #include <QString>
 #include "GuildEmblemImage.h"
 
+class CGameMode;
+
 namespace ro::guild {
+bool SendEmblemUpload(CGameMode& mode, const QImage& image, QString& error);
+
 // CZ_REGISTER_GUILD_EMBLEM_IMG contains a zlib stream, without qCompress's
 // four-byte uncompressed-size prefix. Emit a canonical bottom-up 24-bit BMP.
 inline QByteArray EmblemUploadPacket(const QImage& image, QString& error)

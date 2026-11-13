@@ -234,9 +234,9 @@ AUDIT-0x014D,0x014D,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected guild permiss
 AUDIT-0x014E,0x014E,map,S2C,PK11,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x014F,0x014F,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Selected guild refresh subtypes captured,C2S_ONLY,PK46.02-GUILD-MEMBERSHIP-REQUESTS
 AUDIT-0x0150,0x0150,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0151,0x0151,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-emblem-request.md: both client resolvers send the six-byte guild-ID request with a shared five-second per-guild throttle; selected registry identifies clif_parse_GuildRequestEmblem. Response/cache lifecycle remains open.,UNREVIEWED,
+AUDIT-0x0151,0x0151,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,World emblem download and request throttle captured,C2S_ONLY,PK46.02-GUILD-EMBLEM-REQUESTS
 AUDIT-0x0152,0x0152,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0153,0x0153,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0153,0x0153,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Emblem upload frame and matching version confirmation captured,C2S_ONLY,PK46.02-GUILD-EMBLEM-REQUESTS
 AUDIT-0x0154,0x0154,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0155,0x0155,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected Qt guild member rank request captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x0156,0x0156,map,S2C,PK11,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
