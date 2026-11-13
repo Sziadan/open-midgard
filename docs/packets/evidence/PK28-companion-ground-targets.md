@@ -1,5 +1,9 @@
 # Companion ground targeting
 
+The native pending ground skill path queues command 8 when the owned companion actor is available. The existing ground proceed path handles an unavailable actor. The controller sends `007E` and skips a move request when already in range. Selected rAthena `clif_packetdb.hpp:531,879` registers `007E` and `0113` with the same level, ID and coordinate offsets. Both reach `clif_parse_UseSkillToPosSub` in `clif.cpp:13001`, where the skill family selects the companion caster.
+
+`PendingCompanionActorSkillReplay` also checks an in-range mercenary `MA_LANDMINE` request at the picked cell, all 102 bytes of `007E`, no extra move request, and the missing-actor fallback. Six focused application checks and 473 standalone checks passed. Live and out-of-range casts remain unverified.
+
 The selected `ProcessGroundPick` in `Ref/GameMode.cpp:5452` checks the ground cell before companion input. The homunculus branch at `:5757` precedes the mercenary branch at `:5525`. Alt consumes the click for the first live companion. It first clears an existing selection, otherwise Shift takes the inactive direct-command path, and plain Alt records the cell, clears the target GID and attack flag, and sets the movement flag. The regular ground click resets live companion target state and continues. The source writes the local target fields outside the Lua VM checks.
 
 The Win32 gameplay input applies those transitions to a ground pick before movement or a pending ground skill. Actor and item picks remain on their existing routes. Homunculus death, local skill 244, and confirmed dismissal clear the appropriate companion target. The selected inactive Lua VM remains the baseline.

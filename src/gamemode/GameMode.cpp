@@ -6253,6 +6253,29 @@ void BeginTouchSkillChase(CGameMode& mode, u32 targetAid, int skillId, int skill
     mode.m_world->m_player->SendMsg(nullptr,103,targetAid,reinterpret_cast<msgparam_t>(&pending),0);
 }
 
+bool RequestPendingGroundSkill(CGameMode& mode, int x, int y, bool shift)
+{
+    const auto pending = mode.m_skillUseInfo;
+    const bool homunculus = g_session.m_homunStatus.alive && pending.id > 8000 && pending.id < 8017;
+    const bool mercenary = g_session.m_merStatus.alive && pending.id > 8200 && pending.id < 8238;
+    if (homunculus || mercenary) {
+        companion_ai::Msg2Ai command;
+        command.command = companion_ai::SKILL_AREA_CMD;
+        command.skillLevel = pending.level;
+        command.skillId = pending.id;
+        command.x = x;
+        command.y = y;
+        const auto kind = homunculus ? companion_ai::Kind::Homunculus : companion_ai::Kind::Mercenary;
+        if (companion_ai::Runtime::QueueCommand(kind, command, shift)) {
+            return true;
+        }
+    }
+
+    mode.m_world->m_player->SendMsg(nullptr, 65, pending.id, x, y);
+    mode.m_world->m_player->SendMsg(nullptr, 90, pending.level, 0, 0);
+    return true;
+}
+
 bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int screenY)
 {
     if (!HasPendingSkillUse(mode) || !mode.m_world || !mode.m_world->m_player || !mode.m_view || mode.m_canRotateView) {
@@ -6282,10 +6305,7 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
 
     if(mode.m_skillUseInfo.useType==1){
         int x=-1,y=-1;if(!mode.m_view->ScreenToHoveredAttrCell(screenX,screenY,&x,&y))return false;
-        const auto pending=mode.m_skillUseInfo;
-        mode.m_world->m_player->SendMsg(nullptr,65,pending.id,x,y);
-        mode.m_world->m_player->SendMsg(nullptr,90,pending.level,0,0);
-        return true;
+        return RequestPendingGroundSkill(mode, x, y, (GetKeyState(VK_SHIFT) & 0x8000) != 0);
     }
 
     return false;
@@ -10330,6 +10350,10 @@ bool ReplayTryPetCaptureOnActor(CGameMode& mode,CGameActor* target,bool shift,bo
 bool ReplayTrySourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,bool alt,bool control)
 {
     return TryRequestSourceSkillOnActor(mode,target,shift,alt,control);
+}
+bool ReplayRequestPendingGroundSkill(CGameMode& mode, int x, int y, bool shift)
+{
+    return RequestPendingGroundSkill(mode, x, y, shift);
 }
 void ReplayPumpSkillChase(CGameMode& mode){PumpSkillChaseRequest(mode);}
 void ReplayClearSkillChase(CGameMode& mode){ClearSkillChase(mode);}

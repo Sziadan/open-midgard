@@ -153,7 +153,11 @@ void Brain::OnSKILL_OBJECT_CMD(int level, int skill, u32 id)
 void Brain::OnSKILL_AREA_CMD(int level, int skill, int x, int y)
 {
     m_runtime.Trace("OnSKILL_AREA_CMD");
-    m_runtime.Move(m_myId, x, y);
+    const Position current = m_runtime.GetPosition(m_myId);
+    if (current.valid() && m_runtime.GetDistance(current.x, current.y, x, y)
+        > m_runtime.GetSkillAttackRange(m_myId, skill)) {
+        m_runtime.Move(m_myId, x, y);
+    }
     m_destX = x;
     m_destY = y;
     m_skillLevel = level;

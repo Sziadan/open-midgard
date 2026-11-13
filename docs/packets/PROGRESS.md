@@ -3879,3 +3879,7 @@ Adopted `a40a4c01` as the companion baseline. It completes selected `02A2` stat 
 ## 2026-11-13 Native companion actor skills
 
 PK28.03 queues pending actor skills to the C++ companion controller. Replay checks both companion families, including a reserved order, and the selected `0438` bytes. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-pending-companion-actor-skills.md)
+
+## 2026-11-13 Native companion ground skills
+
+PK28.03 queues pending ground skills to the C++ companion controller when the owned actor is available. The replay verifies the selected `007E` bytes and the missing-actor fallback. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-ground-targets.md)

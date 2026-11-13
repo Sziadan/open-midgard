@@ -56,7 +56,7 @@ public:
     bool IsOutOfSight(u32 id1, u32 id2) const;
     bool IsInAttackSight(u32 id1, u32 id2, int skillId) const;
 
-    static void QueueCommand(Kind kind, const Msg2Ai& msg, bool reserved);
+    static bool QueueCommand(Kind kind, const Msg2Ai& msg, bool reserved);
     static CGameActor* FindCompanionActor(Kind kind);
 
 private:

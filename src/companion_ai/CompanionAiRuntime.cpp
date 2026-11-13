@@ -336,13 +336,14 @@ Msg2Ai Runtime::ConsumeResMsg(u32 myId)
     return msg;
 }
 
-void Runtime::QueueCommand(Kind kind, const Msg2Ai& msg, bool reserved)
+bool Runtime::QueueCommand(Kind kind, const Msg2Ai& msg, bool reserved)
 {
     CGameActor* actor = FindCompanionActor(kind);
     if (!actor) {
-        return;
+        return false;
     }
     MsgSlot(*actor, kind, reserved) = msg;
+    return true;
 }
 
 void Runtime::Move(u32 id, int x, int y) const

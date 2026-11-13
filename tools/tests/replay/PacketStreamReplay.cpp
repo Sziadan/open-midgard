@@ -3106,6 +3106,7 @@ void LocalizedSystemNoticeReplay()
 }
 
 bool ReplayTrySourceSkillOnActor(CGameMode& mode, CGameActor* target, bool shift, bool alt, bool control);
+bool ReplayRequestPendingGroundSkill(CGameMode& mode, int x, int y, bool shift);
 
 void PendingCompanionActorSkillReplay()
 {
@@ -3198,6 +3199,29 @@ void PendingCompanionActorSkillReplay()
     requireCompanionSkill(homunculus, 8004, 0x44, 0x1f, true);
     requireCompanionSkill(mercenary, 8201, 0x09, 0x20, false);
 
+    C3dAttr attr;
+    attr.m_width = attr.m_height = 20;
+    attr.m_zoom = 5;
+    world.m_attr = &attr;
+    mercenary.m_pos.x = mercenary.m_pos.z = 0;
+    mode.m_skillUseInfo = {8210, 2, 1, 1};
+    Require(ReplayRequestPendingGroundSkill(mode, 11, 10, false) && player.commands.empty(),
+        "active mercenary ground skill entered the player route");
+    mode.m_skillUseInfo = {};
+    companion_ai::TickOwnedCompanionActor(mercenary);
+    std::vector<u8> groundRequest(102, 0);
+    groundRequest[0] = 0x7e;
+    groundRequest[5] = 2;
+    groundRequest[9] = 0x12;
+    groundRequest[10] = 0x20;
+    groundRequest[12] = 11;
+    groundRequest[20] = 10;
+    Require(peer.ReceiveExact(groundRequest.size()) == groundRequest,
+        "in-range ground skill emitted a move or the wrong skill request");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "mercenary ground skill emitted an extra request");
+    world.m_attr = nullptr;
+
     world.UnregisterActor(&target);
     world.UnregisterActor(&homunculus);
     world.UnregisterActor(&mercenary);
@@ -3208,6 +3232,11 @@ void PendingCompanionActorSkillReplay()
     Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false)
         && player.commands == std::vector<int>{41, 90},
         "ordinary player skill did not retain its existing actor dispatch");
+
+    player.commands.clear();
+    mode.m_skillUseInfo = {8210, 2, 1, 1};
+    Require(ReplayRequestPendingGroundSkill(mode, 11, 10, false) && player.commands == std::vector<int>{65, 90},
+        "missing mercenary actor did not preserve the ground skill fallback");
 
     connection->Disconnect();
     g_session.m_homunStatus = oldHomun;

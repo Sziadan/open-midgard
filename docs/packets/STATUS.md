@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Native companion actor skills (2026-11-13)**. PK28.03 replay covers immediate and reserved actor skill commands through the C++ controller and selected `0438` sender. Ground commands and live validation remain open. [Evidence](evidence/PK28-pending-companion-actor-skills.md)
+**Native companion skills (2026-11-13)**. PK28.03 replay covers immediate and reserved actor skill commands and an in-range mercenary ground skill through the C++ controller. Live validation and the remaining mercenary support skills are open. [Actor evidence](evidence/PK28-pending-companion-actor-skills.md) and [ground evidence](evidence/PK28-companion-ground-targets.md)
 
 **Native companion checkpoint (2026-11-13)**. PK29.02 replay covers contract retirement and selected `029B` and `02A2` stat updates. Reserved ground orders preserve the current target. Six focused application checks and 473 standalone checks passed. Native pending skill dispatch and live contract verification remain open. [Evidence](evidence/PK29.02-mercenary-contract-end.md)
 
