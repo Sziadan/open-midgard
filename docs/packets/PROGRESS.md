@@ -4169,3 +4169,5 @@ PK46.02 captures PacketVer22 item use through the production sender and reconcil
 PK46.02 reconciles four chat, six room, and three friend requests against the selected registry and production loopback captures. [Chat and social evidence](evidence/PK46.02-chat-social-crosswalk.md)
 
 PK46.02 reconciles five party and four guild requests. The new guild reply fixture checks accept and decline from the production invitation path. [Party and guild evidence](evidence/PK46.02-party-guild-crosswalk.md)
+
+PK46.02 verifies the Qt guild administration sends and alliance invitation replies in production replay. [Guild administration evidence](evidence/PK46.02-guild-admin-crosswalk.md)

@@ -21,6 +21,9 @@
 #include "session/Session.h"
 #include "skill/Skill.h"
 #include "qtui/QtUiStateAdapter.h"
+#if RO_ENABLE_QT6_UI
+#include "qtui/QtUiState.h"
+#endif
 #include "ui/UIChooseWnd.h"
 #include "ui/UIGroundSkillTextWnd.h"
 #include "core/MannerFilter.h"
@@ -7532,22 +7535,86 @@ void ChangeCartProductionSendReplay()
     std::cout << "{\"case_id\":\"change_cart_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-01af-change-cart\",\"outcome\":\"PASS\",\"assertions\":\"closed connection fails; types 0 and 6 rejected; types 1 through 5 emit four-byte frames\"}" << std::endl;
 }
 
-void GuildReplyProductionSendReplay()
+#if RO_ENABLE_QT6_UI
+void GuildAdminProductionSendReplay()
 {
-    SetCase("guild_reply_production_send", "PK46.02", "PK01.02-final-016b-guild-reply",
-        "016A receive -> Commerce::Action(prompt) -> production socket");
+    SetCase("guild_admin_production_send", "PK46.02", "selected-guild-admin-actions",
+        "QtUiState::guildAction -> production socket");
+    const auto savedGuild = g_session.m_localGuild;
+    const auto savedWindow = g_session.m_guildWindow;
+    const auto savedAid = g_session.m_aid;
+    const auto savedCid = g_session.m_gid;
+    g_session.m_localGuild.guildId = 7;
+    g_session.m_localGuild.isMaster = true;
+    g_session.m_guildWindow.menuFlags = 0x82;
+    g_session.m_guildWindow.members = {{11, 13}};
+    g_session.m_aid = 17;
+    g_session.m_gid = 19;
+    auto* window = g_windowMgr.MakeWindow(UIWindowMgr::WID_GUILDWND);
+    Require(window, "guild action fixture could not create its window");
+    QtUiStateAdapter adapter;
+    auto* ui = qobject_cast<QtUiState*>(adapter.stateObject());
+    Require(ui, "guild action fixture could not access the production Qt adapter");
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    {
+        LoopbackPeer peer(*connection);
+        ui->guildAction("notice", {{"subject", "Title"}, {"body", "Body"}});
+        std::vector<u8> notice{0x6e, 1, 7, 0, 0, 0, 'T', 'i', 't', 'l', 'e'};
+        notice.resize(66);
+        notice.insert(notice.end(), {'B', 'o', 'd', 'y'});
+        notice.resize(186);
+        Require(peer.ReceiveExact(notice.size()) == notice, "guild notice wire fields differ");
+
+        ui->guildAction("position", {{"id", 3}, {"tax", 5}, {"invite", true}, {"expel", true}, {"name", "Rank"}});
+        std::vector<u8> rank{0x61, 1, 44, 0, 3, 0, 0, 0, 17, 0, 0, 0,
+            3, 0, 0, 0, 5, 0, 0, 0, 'R', 'a', 'n', 'k'};
+        rank.resize(44);
+        Require(peer.ReceiveExact(rank.size()) == rank, "guild rank wire fields differ");
+
+        ui->guildAction("memberPosition", {{"character", 99}, {"position", 3}});
+        ui->guildAction("memberPosition", {{"character", 13}, {"position", 3}});
+        Require(peer.ReceiveExact(16) == std::vector<u8>{0x55, 1, 16, 0, 11, 0, 0, 0, 13, 0, 0, 0, 3, 0, 0, 0},
+            "guild member rank wire fields differ");
+        ui->guildAction("leave", {{"confirmed", true}});
+        g_session.m_localGuild.isMaster = false;
+        ui->guildAction("leave", {{"confirmed", false}});
+        ui->guildAction("leave", {{"confirmed", true}, {"reason", "Bye"}});
+        std::vector<u8> leave{0x59, 1, 7, 0, 0, 0, 17, 0, 0, 0, 19, 0, 0, 0, 'B', 'y', 'e'};
+        leave.resize(54);
+        Require(peer.ReceiveExact(leave.size()) == leave && g_session.m_localGuild.guildId == 7,
+            "guild leave wire fields or server-owned membership differ");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
+            "guild admin actions emitted extra bytes");
+    }
+    connection->Disconnect();
+    g_windowMgr.DeleteWindow(window);
+    g_session.m_localGuild = savedGuild;
+    g_session.m_guildWindow = savedWindow;
+    g_session.m_aid = savedAid;
+    g_session.m_gid = savedCid;
+}
+#endif
+
+void GuildReplyProductionSendReplay(bool alliance = false)
+{
+    SetCase("guild_reply_production_send", "PK46.02",
+        alliance ? "PK01.02-final-0172-alliance-reply" : "PK01.02-final-016b-guild-reply",
+        "invitation receive -> Commerce::Action(prompt) -> production socket");
     const auto savedCommerce = ro::commerce::state;
     ro::commerce::Reset();
     CGameMode mode;
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
-    const std::array<u8, 30> invitation{0x6a, 1, 0x44, 0x33, 0x22, 0x11, 'G'};
+    const char* const kind = alliance ? "alliance" : "guild";
+    const u8 opcode = alliance ? 0x72 : 0x6b;
+    const std::array<u8, 30> invitation{static_cast<u8>(opcode - 1), 1, 0x44, 0x33, 0x22, 0x11, 'G'};
     const auto receiveInvitation = [&] {
         PacketView packet{};
         int consumed = 0;
         Require(TryReadPacket(invitation.data(), invitation.size(), packet, consumed)
                 && consumed == invitation.size() && router.Dispatch(mode, packet)
-                && ro::commerce::state.promptKind == "guild"
+                && ro::commerce::state.promptKind == kind
                 && ro::commerce::state.promptId == 0x11223344,
             "guild invitation did not establish the reply owner");
     };
@@ -7558,18 +7625,18 @@ void GuildReplyProductionSendReplay()
     reply.action = "prompt";
     reply.amount = 1;
     receiveInvitation();
-    Require(!ro::commerce::Action(reply) && ro::commerce::state.promptKind == "guild",
+    Require(!ro::commerce::Action(reply) && ro::commerce::state.promptKind == kind,
         "failed guild reply discarded its prompt");
     {
         LoopbackPeer peer(*connection);
         Require(ro::commerce::Action(reply) && ro::commerce::state.promptKind.empty()
-                && peer.ReceiveExact(10) == std::vector<u8>{0x6b, 1, 0x44, 0x33, 0x22, 0x11, 1, 0, 0, 0},
+                && peer.ReceiveExact(10) == std::vector<u8>{opcode, 1, 0x44, 0x33, 0x22, 0x11, 1, 0, 0, 0},
             "guild acceptance did not send the selected frame");
         Require(!ro::commerce::Action(reply), "duplicate guild reply was accepted");
         receiveInvitation();
         reply.amount = 0;
         Require(ro::commerce::Action(reply) && ro::commerce::state.promptKind.empty()
-                && peer.ReceiveExact(10) == std::vector<u8>{0x6b, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 0, 0},
+                && peer.ReceiveExact(10) == std::vector<u8>{opcode, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 0, 0},
             "guild decline did not send the selected frame");
         Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
             "guild reply emitted extra bytes");
@@ -7903,7 +7970,11 @@ int main(int argc,char** argv){try{
     ExitToWindowsProductionSendReplay();
     CartTransferProductionSendReplay();
     ChangeCartProductionSendReplay();
+#if RO_ENABLE_QT6_UI
+    GuildAdminProductionSendReplay();
+#endif
     GuildReplyProductionSendReplay();
+    GuildReplyProductionSendReplay(true);
     FriendReplyProductionSendReplay();
     GlobalChatProductionSendReplay();
     MailComposerProductionSendReplay();

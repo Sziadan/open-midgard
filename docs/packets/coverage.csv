@@ -238,11 +238,11 @@ AUDIT-0x0151,0x0151,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-embl
 AUDIT-0x0152,0x0152,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0153,0x0153,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0154,0x0154,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0155,0x0155,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-member-position-request.md: master-only request requires a listed member and position below 20 then sends a 16-byte ID/position frame; selected parser is variable-length. Server result remains open.,UNREVIEWED,
+AUDIT-0x0155,0x0155,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected Qt guild member rank request captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x0156,0x0156,map,S2C,PK11,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0157,0x0157,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0158,0x0158,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0159,0x0159,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-leave-request.md: confirmed non-master action sends a 54-byte guild/account/character/reason frame; selected registry matches clif_parse_GuildLeave. Server effects and replay remain open.,UNREVIEWED,
+AUDIT-0x0159,0x0159,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected confirmed Qt guild leave captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x015A,0x015A,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x015B,0x015B,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x015C,0x015C,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -250,7 +250,7 @@ AUDIT-0x015D,0x015D,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ign
 AUDIT-0x015E,0x015E,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x015F,0x015F,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0160,0x0160,map,S2C,PK11,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0161,0x0161,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-position-info-request.md: master-only request serializes a 44-byte position metadata frame with ID/tax/name guards; selected registry identifies clif_parse_GuildChangePositionInfo. Server field semantics and replay remain open.,UNREVIEWED,
+AUDIT-0x0161,0x0161,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected Qt guild rank metadata captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x0162,0x0162,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0163,0x0163,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0164,0x0164,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -263,11 +263,11 @@ AUDIT-0x016A,0x016A,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x016B,0x016B,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected guild invitation accept and decline captured,C2S_ONLY,PK46.02-GUILD-MEMBERSHIP-REQUESTS
 AUDIT-0x016C,0x016C,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x016D,0x016D,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x016E,0x016E,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-notice-request.md: guild-master update serializes 186 bytes with guild ID and UTF-8 subject/body limits matching selected clif_parse_GuildChangeNotice. Server update behavior and replay remain open.,UNREVIEWED,
+AUDIT-0x016E,0x016E,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected Qt guild notice update captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x016F,0x016F,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0170,0x0170,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0171,0x0171,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0172,0x0172,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-alliance-reply-request.md: alliance prompt sends a 10-byte prompt-ID/answer frame and clears only on send success; selected registry matches clif_parse_GuildReplyAlliance. Prompt correlation and result remain open.,UNREVIEWED,
+AUDIT-0x0172,0x0172,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected alliance acceptance and decline captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x0173,0x0173,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0174,0x0174,map,S2C,PK11,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0175,0x0175,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
