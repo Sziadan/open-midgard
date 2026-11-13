@@ -291,6 +291,18 @@ void ChatSubmissionReplay()
     Require(!submit("/shift") && !submit("/shift abcdefghijklmnopqrstuvwx")
         && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "empty or oversized GM warp name emitted a request");
+    Require(!submit("/check") && !submit("/rc abcdefghijklmnopqrstuvwx")
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "empty or oversized GM query name emitted a request");
+    std::vector<u8> checkFrame{0x13, 2, 'T', 'a', 'r', 'g', 'e', 't'};
+    checkFrame.resize(26);
+    Require(submit("/check Target") && peer.ReceiveExact(26) == checkFrame
+        && g_windowMgr.GetChatEvents().back().text == "[ Target ]",
+        "check did not send the selected frame and display the target header");
+    auto rcFrame = checkFrame;
+    rcFrame[0] = 0x12;
+    Require(submit("/rc Target") && peer.ReceiveExact(26) == rcFrame,
+        "rc did not send the selected frame");
     for (const auto& sample : std::array<std::tuple<const char*, bool, const char*>, 6>{{
         {"/b notice", false, "SourceLocal: notice"}, {"/lb notice", true, "SourceLocal: notice"},
         {"/nb notice", false, "notice"}, {"/nlb notice", true, "notice"},
@@ -563,6 +575,8 @@ void ChatSubmissionReplay()
     Require(!submit("/cmt 1 2 0"), "map-cell command reported success on a closed connection");
     Require(!submit("/mm geffen"), "map-move command reported success on a closed connection");
     Require(!submit("/shift Target"), "GM player warp reported success on a closed connection");
+    Require(!submit("/check Target") && !submit("/rc Target"),
+        "GM command reported success on a closed connection");
     Require(!submit("/b offline") && !*g_windowMgr.GetChatMsg(),
         "broadcast reported success or retained its buffer after failed transport");
     Require(!submit("/hide"), "hide reported success on a closed connection");
