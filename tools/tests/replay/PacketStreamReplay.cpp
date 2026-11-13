@@ -4062,6 +4062,31 @@ void PendingCompanionActorSkillReplay()
         0x78, 0x56, 0x34, 0x12, 0}, "mercenary owner defense picked a corpse over a living attacker");
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "automatic companion targeting emitted an extra request");
+
+    mode.GetClientCoor(20, 10, target.m_pos.x, target.m_pos.z);
+    const std::vector<u8> chaseRequest{0x32, 0x02, 0x42, 0, 0, 0xf1, 5, 0, 0xa0};
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == chaseRequest, "mercenary did not follow its attack target out of range");
+    tickCompanion(mercenary, 1200);
+    Require(peer.ReceiveExact(9) == chaseRequest, "stalled basic attack chase did not retry once");
+    tickCompanion(mercenary, 1200);
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "mercenary immediately reacquired the stalled attack target");
+    Require(companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, manualMove, true),
+        "could not reserve a move after a stalled attack chase");
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == approachRequest, "stalled attack chase blocked a reserved move");
+    mode.GetClientCoor(16, 10, mercenary.m_pos.x, mercenary.m_pos.z);
+    tickCompanion(mercenary);
+    tickCompanion(mercenary, 1200);
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == chaseRequest, "mercenary did not reconsider the target after the retry interval");
+    mode.GetClientCoor(15, 10, mercenary.m_pos.x, mercenary.m_pos.z);
+    mode.GetClientCoor(16, 10, target.m_pos.x, target.m_pos.z);
+
     world.UnregisterActor(&corpse);
     target.m_targetGid = 0;
     homunculus.m_job = 6001;

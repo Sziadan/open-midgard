@@ -23,6 +23,7 @@ private:
     void ProcessCommand(const Msg2Ai& msg);
     bool ContinueApproach(const Position& destination);
     void CancelApproach();
+    bool CanAcquireEnemy(u32 id) const;
     u32 MovementStallDelay() const;
     void RequestFollow(const Position& owner);
 
@@ -60,6 +61,8 @@ private:
     Runtime m_runtime;
     int m_state = IDLE_ST;
     u32 m_enemy = 0;
+    u32 m_stalledEnemy = 0;
+    u32 m_chaseStalledAt = 0;
     int m_destX = 0;
     int m_destY = 0;
     Position m_moveDestination;

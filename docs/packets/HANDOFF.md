@@ -1,8 +1,8 @@
 # Packet continuation handoff
 
-PK30.04 now replays the selected post-adoption job, experience and skill changes. Next verify the candidate warning and eligible parent menu in both renderers, including the full warning text and cancellation on map reuse. The selected live adoption flow and independent review remain open. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
+Continue PK28.04 and PK29.04 using `src/companion_ai` as the implementation for both families. Use Ref's Lua and input call sites to check expected behavior. Start with a live pass for each family covering idle acquisition or owner defense, manual attack and cancellation, blocked pursuit with a queued order, manual movement and follow, dismissal, and map re-entry. Record the observed input, packet, and actor or UI result for each case. Use replay for deterministic stall and timing cases. Keep installed-skin comparison and independent review open until verified. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
-PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
+PK30.04 replays the selected post-adoption job, experience and skill changes. Verify the candidate warning and eligible parent menu in both renderers, including the full warning text and cancellation on map reuse. The selected live adoption flow and independent review remain open. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
 
 PK28.04 covers companion skill level controls and the native/Qt bitmap frame. Replay verifies cast and drag levels, both bounds, SP display, and release outside. Installed-skin comparison and live UI verification remain open. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
 

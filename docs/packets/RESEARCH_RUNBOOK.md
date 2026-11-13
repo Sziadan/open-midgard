@@ -15,6 +15,15 @@ rg -n 'HandleIgnorePacket|RegisterPacket|SetPacketSize' src/gamemode/GameModePac
 
 The audit compiler probes demonstrate effective configuration and packed layouts. Inspect `tools/audit_packets.py` before copying its commands. Follow definitions/includes and final registrations; a grep hit from an inactive guard proves nothing. For a feature, find all server emitters, all parser registrations, their callers and associated module result branches. Find the Ref receiver and follow all Session/actor/UI calls. Record exact field/branch evidence in a contract; the plan's seed opcodes are navigation aids, not a replacement for that work.
 
+## Running Windows MinGW tests
+
+Prepend the runtime directory for the compiler recorded in the test build's `CMakeCache.txt` to `PATH` in the same PowerShell invocation as CTest. The Qt MinGW kit used by `build-mingw-preset` and `build-recovery-unit-review` keeps `libgcc_s_seh-1.dll`, `libstdc++-6.dll`, and `libwinpthread-1.dll` in `C:/Qt/Tools/mingw1310_64/bin`. The standalone suite also needs this directory even when the application build already has its DLLs beside the executable.
+
+```powershell
+$env:Path = "C:\Qt\Tools\mingw1310_64\bin;$env:Path"
+ctest --test-dir build-recovery-unit-review --output-on-failure
+```
+
 ## Example: PK07 pet framing (bounded M task)
 
 1. Check the packed pet status structure under20080910, including the >=20081126 extra-field guard; verify active emitter size35, current client37 and router behavior. Derive a35-byte fixture independently from server bytes. Record fields individually, IDs/units and layout guards.

@@ -275,18 +275,13 @@ void Brain::OnCHASE_ST()
         return;
     }
 
-    const Position enemyPos = m_runtime.GetPosition(m_enemy);
-    if (m_skill != 0) {
-        if (!ContinueApproach(enemyPos)) {
-            CancelApproach();
+    if (!ContinueApproach(m_runtime.GetPosition(m_enemy))) {
+        if (m_skill == 0) {
+            // Leave time for queued orders and follow before automatically acquiring this target again.
+            m_stalledEnemy = m_enemy;
+            m_chaseStalledAt = m_now;
         }
-        return;
-    }
-    if (enemyPos.valid() && (m_destX != enemyPos.x || m_destY != enemyPos.y)) {
-        m_destX = enemyPos.x;
-        m_destY = enemyPos.y;
-        m_runtime.Move(m_myId, m_destX, m_destY);
-        m_runtime.Trace("CHASE_ST -> CHASE_ST : DESTCHANGED_IN");
+        CancelApproach();
     }
 }
 
@@ -301,14 +296,7 @@ void Brain::OnATTACK_ST()
     }
     if (!m_runtime.IsInAttackSight(m_myId, m_enemy, m_skill)) {
         m_state = CHASE_ST;
-        if (m_skill != 0) {
-            OnCHASE_ST();
-        } else {
-            const Position enemyPos = m_runtime.GetPosition(m_enemy);
-            m_destX = enemyPos.x;
-            m_destY = enemyPos.y;
-            m_runtime.Move(m_myId, m_destX, m_destY);
-        }
+        OnCHASE_ST();
         m_runtime.Trace("ATTACK_ST -> CHASE_ST  : ENEMY_OUTATTACKSIGHT_IN");
         return;
     }
@@ -472,6 +460,12 @@ void Brain::RequestFollow(const Position& owner)
     }
 }
 
+bool Brain::CanAcquireEnemy(u32 id) const
+{
+    return (id != m_stalledEnemy || m_now - m_chaseStalledAt >= MovementStallDelay())
+        && m_runtime.CanTargetForAttack(id);
+}
+
 u32 Brain::GetOwnerEnemy(u32 myid)
 {
     u32 result = 0;
@@ -480,7 +474,7 @@ u32 Brain::GetOwnerEnemy(u32 myid)
     int minDis = kOutOfSightDistance + 1;
 
     for (u32 v : actors) {
-        if (!m_runtime.CanTargetForAttack(v)) {
+        if (!CanAcquireEnemy(v)) {
             continue;
         }
         if (m_runtime.GetTarget(v) != owner) {
@@ -545,7 +539,7 @@ u32 Brain::GetMyEnemyA(u32 myid)
     const auto actors = m_runtime.GetActors();
     int minDis = kOutOfSightDistance + 1;
     for (u32 v : actors) {
-        if (!m_runtime.CanTargetForAttack(v)) {
+        if (!CanAcquireEnemy(v)) {
             continue;
         }
         if (m_runtime.GetTarget(v) != myid) {
@@ -566,7 +560,7 @@ u32 Brain::GetMyEnemyB(u32 myid)
     const auto actors = m_runtime.GetActors();
     int minDis = kOutOfSightDistance + 1;
     for (u32 v : actors) {
-        if (!m_runtime.CanTargetForAttack(v)) {
+        if (!CanAcquireEnemy(v)) {
             continue;
         }
         if (!m_runtime.IsMonster(v)) {

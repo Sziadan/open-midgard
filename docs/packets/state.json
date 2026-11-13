@@ -1110,7 +1110,7 @@
         "docs/packets/evidence/PK28-companion-skill-lists.md",
         "docs/packets/evidence/PK28-PK29-native-companion-ai.md"
       ],
-      "commit_subject": "packet(PK28.04/PK29.04): recover companion movement and pace follow"
+      "commit_subject": "packet(PK28.04/PK29.04): recover stalled companion attack chase"
     },
     "PK29.01": {
       "status": "IN_PROGRESS",
@@ -1152,7 +1152,7 @@
         "docs/packets/evidence/PK29.04-mercenary-refresh.md",
         "docs/packets/evidence/PK28-PK29-native-companion-ai.md"
       ],
-      "commit_subject": "packet(PK28.04/PK29.04): recover companion movement and pace follow"
+      "commit_subject": "packet(PK28.04/PK29.04): recover stalled companion attack chase"
     },
     "PK30.01": {
       "status": "IN_PROGRESS",
