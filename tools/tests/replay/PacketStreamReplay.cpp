@@ -471,11 +471,11 @@ void SelectedInventoryCartRouteIsolationReplay()
     Require(g_session.GetInventoryItemByIndex(81) != nullptr && g_session.GetInventoryItemByIndex(8002) == nullptr,
             "equipment inventory replacement changed the normal category");
 
-    dispatch(makePacket(0x02E9, 22, 8301, 9301, 3, 6), "normal cart");
-    Require(ro::commerce::state.cartItems.count(8301) == 1 && ro::commerce::state.cartItems.count(8101) == 0
+    dispatch(makePacket(0x02E9, 22, 101, 9301, 3, 6), "normal cart");
+    Require(ro::commerce::state.cartItems.count(101) == 1 && ro::commerce::state.cartItems.count(8101) == 0
             && ro::commerce::state.cartItems.count(8102) == 1, "normal cart replacement changed the equipment-cart category");
-    dispatch(makePacket(0x02D2, 26, 8302, 9302, 4, 1), "equipment cart");
-    Require(ro::commerce::state.cartItems.count(8302) == 1 && ro::commerce::state.cartItems.count(8301) == 1
+    dispatch(makePacket(0x02D2, 26, 2, 9302, 4, 1), "equipment cart");
+    Require(ro::commerce::state.cartItems.count(2) == 1 && ro::commerce::state.cartItems.count(101) == 1
             && ro::commerce::state.cartItems.count(8102) == 0, "equipment cart replacement changed the normal-cart category");
     Require(g_session.GetInventoryItemByIndex(81) != nullptr && g_session.GetInventoryItemByIndex(82) != nullptr,
             "cart list dispatch modified inventory state");
@@ -483,16 +483,16 @@ void SelectedInventoryCartRouteIsolationReplay()
     // Historical normal-cart compatibility bytes have an 18-byte row, not an
     // equipment inventory row. Prove the final dispatch owner, not just a predicate.
     const std::vector<u8> historicalCart = {
-        0xef,1,22,0, 0x6f,0x20,0x57,0x24,3,1,2,0,0,0,
+        0xef,1,22,0, 100,0,0x57,0x24,3,1,2,0,0,0,
         0xa1,0xa1,0xb2,0xb2,0xc3,0xc3,0xd4,0xd4
     };
     dispatch(historicalCart, "historical 0x01EF normal cart compatibility");
     Require(g_session.GetInventoryItems().size()==2 && g_session.GetInventoryItemByIndex(82)
             && g_session.GetInventoryItemByIndex(82)->m_wearLocation==1,
             "historical 0x01EF changed selected equipment inventory");
-    Require(ro::commerce::state.cartItems.count(0x206f)==1
-            && ro::commerce::state.cartItems.at(0x206f).m_num==2
-            && ro::commerce::state.cartItems.count(8302)==1,
+    Require(ro::commerce::state.cartItems.count(100)==1
+            && ro::commerce::state.cartItems.at(100).m_num==2
+            && ro::commerce::state.cartItems.count(2)==1,
             "historical 0x01EF did not dispatch uniquely to normal cart compatibility");
 
     dispatch(makePacket(0x02E8, 22, 83, 9203, 3, 4), "normal inventory after equipment");
@@ -7042,6 +7042,7 @@ int main(int argc,char** argv){try{
     SiegeActorEmblemReplay();
     ModeLoopHandoffReplay();
     CartItemWireFieldsReplay();
+    StorageSnapshotReplay();
     InventoryMapEntryReplay();
     InventoryMutationAckReplay();
     ItemUseFeedbackReplay();

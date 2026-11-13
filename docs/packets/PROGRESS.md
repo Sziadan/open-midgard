@@ -3991,3 +3991,5 @@ PK30.04 verifies the eligible adoption action and its omission for an ineligible
 PK34.01 establishes the selected inventory, cart, and storage snapshot wire contracts and reset boundaries. The compiled server-header probe passed. [Evidence](evidence/PK34.01-item-snapshot-contract.md)
 
 PK34.02 and PK34.03 validate and replace normal and equipment inventory lists atomically, including reuse of an index by a different category. [Evidence](evidence/PK34.01-item-snapshot-contract.md)
+
+PK34.02 and PK34.03 apply the same validation to cart and storage. Storage receives lists before opening, preserves items on nonzero counts, and clears them on a zero count. [Evidence](evidence/PK34.01-item-snapshot-contract.md)

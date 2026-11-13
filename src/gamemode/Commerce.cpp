@@ -1,6 +1,7 @@
 #include "Commerce.h"
 #include "GameMode.h"
 #include "GameModePacket.h"
+#include "ItemSnapshot.h"
 #include "network/Connection.h"
 #include "session/Session.h"
 #include "ui/UIWindowMgr.h"
@@ -84,7 +85,22 @@ bool Receive(CGameMode&,const PacketView& v){
     if(!v.data||v.packetLength<2)return false;const auto* p=v.data;const int n=v.packetLength;const auto op=v.packetId;
     int entry=0;bool equip=false;
     switch(op){case 0x123:entry=10;break;case 0x1ef:entry=18;break;case 0x2e9:entry=22;break;case 0x122:entry=20;equip=true;break;case 0x297:entry=24;equip=true;break;case 0x2d2:entry=26;equip=true;break;}
-    if(entry){if(n<4||(n-4)%entry)return false;auto next=state.cartItems;for(auto it=next.begin();it!=next.end();)if((it->second.m_itemType==4||it->second.m_itemType==5||it->second.m_itemType==7||it->second.m_itemType==8)==equip)it=next.erase(it);else ++it;for(int at=4;at<n;at+=entry){auto i=item(p+at,equip,entry);if(i.m_itemIndex && i.GetItemId() && i.m_num>0)next[i.m_itemIndex]=i;}state.cartItems=std::move(next);state.hasCart=true;return true;}
+    if (entry) {
+        std::map<u32, ITEM_INFO> next;
+        using namespace item_snapshot;
+        if (!Stage<kFirstInventoryIndex, kInventorySlots>(v, entry, equip, [&](const u8* row) {
+                auto decoded = item(row, equip, entry);
+                next.emplace(decoded.m_itemIndex, std::move(decoded));
+                return true;
+            })) return false;
+
+        for (const auto& [index, existing] : state.cartItems) {
+            if (IsEquipmentType(existing.m_itemType) != equip) next.try_emplace(index, existing);
+        }
+        state.cartItems.swap(next);
+        state.hasCart = true;
+        return true;
+    }
     switch(op){
     case 0x110:if(n<10)return false;if(read(p+2)==41 && p[8]==0){state.vendingPending=false;state.vendingActive=false;state.status="Vending was rejected by the server. Check the skill, cart and selected items.";}return true;
     case 0x121:if(n<14)return false;state.hasCart=true;state.cartCount=read(p+2);state.cartCapacity=read(p+4);state.cartWeight=read(p+6,4);state.cartMaxWeight=read(p+10,4);return true;

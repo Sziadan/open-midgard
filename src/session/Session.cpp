@@ -1,6 +1,7 @@
 #include "core/WhisperNames.h"
 #include "world/Gr2Monster.h"
 #include "Session.h"
+#include "gamemode/ItemSnapshot.h"
 #include "companion_ai/CompanionAiRuntime.h"
 #include "core/Globals.h"
 #include "core/SettingsIni.h"
@@ -1527,24 +1528,35 @@ void CSession::ClearInventoryItems()
     m_inventoryItems.clear();
 }
 
-bool CSession::ReplaceInventoryCategory(bool equipment, std::list<ITEM_INFO> items)
+namespace {
+bool ReplaceItemCategory(std::list<ITEM_INFO>& current, bool equipment, std::list<ITEM_INFO>& items)
 {
     bool replacedWornEquipment = false;
-    for (auto it = m_inventoryItems.begin(); it != m_inventoryItems.end(); ) {
-        const bool wasEquipment = it->m_itemType == 4 || it->m_itemType == 5
-            || it->m_itemType == 7 || it->m_itemType == 8;
+    for (auto it = current.begin(); it != current.end(); ) {
+        const bool wasEquipment = ro::item_snapshot::IsEquipmentType(it->m_itemType);
         const bool reusedIndex = std::any_of(items.begin(), items.end(), [&](const ITEM_INFO& item) {
             return item.m_itemIndex == it->m_itemIndex;
         });
         if (wasEquipment == equipment || reusedIndex) {
             replacedWornEquipment |= wasEquipment && it->m_wearLocation != 0;
-            it = m_inventoryItems.erase(it);
+            it = current.erase(it);
         } else {
             ++it;
         }
     }
-    m_inventoryItems.splice(m_inventoryItems.end(), items);
+    current.splice(current.end(), items);
     return replacedWornEquipment;
+}
+}
+
+bool CSession::ReplaceInventoryCategory(bool equipment, std::list<ITEM_INFO> items)
+{
+    return ReplaceItemCategory(m_inventoryItems, equipment, items);
+}
+
+void CSession::ReplaceStorageCategory(bool equipment, std::list<ITEM_INFO> items)
+{
+    ReplaceItemCategory(m_storageItems, equipment, items);
 }
 
 void CSession::ClearStorageItems()

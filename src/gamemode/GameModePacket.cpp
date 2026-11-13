@@ -1,4 +1,5 @@
 #include "GameModePacket.h"
+#include "ItemSnapshot.h"
 #include "world/Corpse.h"
 #include "world/GrannyCorpse.h"
 #include "world/Gr2Monster.h"
@@ -2364,41 +2365,35 @@ void HandleShortcutKeyList(CGameMode&, const PacketView& packet)
     DbgLog("[GameMode] shortcut key list synced slots=%d\n", kShortcutSlotCount);
 }
 
-void ApplyInventoryList(CGameMode& mode, const PacketView& packet, bool equipment)
+bool StageSessionItemList(const PacketView& packet, bool equipment, bool storage, std::list<ITEM_INFO>& items)
 {
-    constexpr size_t kInventorySlots = 100;
-    constexpr unsigned kFirstInventoryIndex = 2;
-    constexpr unsigned kMaxStackAmount = 30000;
-    if (!packet.data || packet.packetLength < 4 || ReadLE16(packet.data + 2) != packet.packetLength) {
-        return;
-    }
     const int stride = equipment ? ro::net::GetActiveEquipmentItemListEntrySize(packet.packetId)
         : ro::net::GetActiveStackableItemListEntrySize(packet.packetId);
-    const size_t payload = packet.packetLength - 4;
-    if (stride <= 0 || payload % stride != 0 || payload / stride > kInventorySlots) {
-        return;
-    }
-
-    std::array<bool, kFirstInventoryIndex + kInventorySlots> seen{};
-    std::list<ITEM_INFO> items;
-    unsigned int eggIndex = 0;
-    for (size_t offset = 4; offset < packet.packetLength; offset += stride) {
-        const auto* row = packet.data + offset;
-        const auto index = ReadLE16(row);
-        const auto quantity = equipment ? 1u : ReadLE16(row + 6);
-        if (index < kFirstInventoryIndex || index >= seen.size() || seen[index]
-            || ReadLE16(row + 2) == 0 || quantity == 0 || quantity > kMaxStackAmount) {
-            return;
-        }
-        seen[index] = true;
+    const auto stageRow = [&](const u8* row) {
         ITEM_INFO item;
         if (!(equipment ? BuildEquipInventoryItem(packet, row, item) : BuildNormalInventoryItem(packet, row, item))) {
-            return;
+            return false;
         }
-        if (equipment && item.GetItemId() >= 9001 && item.GetItemId() < 9050 && item.m_isDamaged) {
-            eggIndex = index;
-        }
+        if (storage) item.m_wearLocation = 0;
         items.push_back(std::move(item));
+        return true;
+    };
+    using namespace ro::item_snapshot;
+    return storage ? Stage<kFirstStorageIndex, kStorageSlots>(packet, stride, equipment, stageRow)
+        : Stage<kFirstInventoryIndex, kInventorySlots>(packet, stride, equipment, stageRow);
+}
+
+void ApplyInventoryList(CGameMode& mode, const PacketView& packet, bool equipment)
+{
+    std::list<ITEM_INFO> items;
+    if (!StageSessionItemList(packet, equipment, false, items)) return;
+    unsigned int eggIndex = 0;
+    if (equipment) {
+        for (const auto& item : items) {
+            if (item.GetItemId() >= 9001 && item.GetItemId() < 9050 && item.m_isDamaged) {
+                eggIndex = item.m_itemIndex;
+            }
+        }
     }
 
     const bool replacedWornEquipment = g_session.ReplaceInventoryCategory(equipment, std::move(items));
@@ -2471,6 +2466,8 @@ void HandleStorageStatus(CGameMode&, const PacketView& packet)
 
     const int currentCount = static_cast<int>(ReadLE16(packet.data + 2));
     const int maxCount = static_cast<int>(ReadLE16(packet.data + 4));
+    // An empty refresh has no category frames. The count still establishes emptiness.
+    if (currentCount == 0) g_session.ClearStorageItems();
     g_session.OpenStorage(currentCount, maxCount);
     g_session.ClearNpcShopState(false);
     g_windowMgr.CloseNpcDialogWindows();
@@ -2480,61 +2477,22 @@ void HandleStorageStatus(CGameMode&, const PacketView& packet)
     DbgLog("[GameMode] storage status current=%d max=%d\n", currentCount, maxCount);
 }
 
+void ApplyStorageList(const PacketView& packet, bool equipment)
+{
+    std::list<ITEM_INFO> items;
+    if (StageSessionItemList(packet, equipment, true, items)) {
+        g_session.ReplaceStorageCategory(equipment, std::move(items));
+    }
+}
+
 void HandleNormalStorageList(CGameMode&, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 4) {
-        return;
-    }
-
-    if (!ro::net::IsActiveNormalStorageListPacket(packet.packetId)) {
-        return;
-    }
-
-    const int entrySizeValue = ro::net::GetActiveStackableItemListEntrySize(packet.packetId);
-    if (entrySizeValue <= 0) {
-        return;
-    }
-    const size_t entrySize = static_cast<size_t>(entrySizeValue);
-    const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
-    if (payloadSize % entrySize != 0) {
-        return;
-    }
-
-    for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
-        ITEM_INFO itemInfo;
-        if (BuildNormalInventoryItem(packet, packet.data + offset, itemInfo)) {
-            g_session.SetStorageItem(itemInfo);
-        }
-    }
+    if (ro::net::IsActiveNormalStorageListPacket(packet.packetId)) ApplyStorageList(packet, false);
 }
 
 void HandleEquipStorageList(CGameMode&, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 4) {
-        return;
-    }
-
-    if (!ro::net::IsActiveEquipStorageListPacket(packet.packetId)) {
-        return;
-    }
-
-    const int entrySizeValue = ro::net::GetActiveEquipmentItemListEntrySize(packet.packetId);
-    if (entrySizeValue <= 0) {
-        return;
-    }
-    const size_t entrySize = static_cast<size_t>(entrySizeValue);
-    const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
-    if (payloadSize % entrySize != 0) {
-        return;
-    }
-
-    for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
-        ITEM_INFO itemInfo;
-        if (BuildEquipInventoryItem(packet, packet.data + offset, itemInfo)) {
-            itemInfo.m_wearLocation = 0;
-            g_session.SetStorageItem(itemInfo);
-        }
-    }
+    if (ro::net::IsActiveEquipStorageListPacket(packet.packetId)) ApplyStorageList(packet, true);
 }
 
 void HandleStorageItemAdded(CGameMode&, const PacketView& packet)

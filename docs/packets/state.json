@@ -1256,12 +1256,12 @@
     "PK34.02": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK34.02-friend-snapshot.md", "docs/packets/evidence/PK34.01-item-snapshot-contract.md"],
-      "commit_subject": "packet(PK34.02/PK34.03): replace inventory snapshots atomically"
+      "commit_subject": "packet(PK34.02/PK34.03): replace cart and storage snapshots atomically"
     },
     "PK34.03": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK34.02-friend-snapshot.md", "docs/packets/evidence/PK34.01-item-snapshot-contract.md"],
-      "commit_subject": "packet(PK34.02/PK34.03): replace inventory snapshots atomically"
+      "commit_subject": "packet(PK34.02/PK34.03): replace cart and storage snapshots atomically"
     },
     "PK34.04": {
       "status": "NOT_STARTED",

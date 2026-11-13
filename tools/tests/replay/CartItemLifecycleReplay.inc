@@ -30,33 +30,33 @@ void CartStackDeltaReplay()
 
     // Literal 0x0121 (14 bytes), then 0x02E9 with one 22-byte normal row.
     dispatch({0x21,0x01, 1,0, 100,0, 0x20,0x03,0,0, 0x10,0x27,0,0}, "cart counters");
-    const std::vector<u8> normal = {0xE9,0x02,26,0,0x24,1,0xD6,6,10,1,9,0,0,0x80,
+    const std::vector<u8> normal = {0xE9,0x02,26,0,4,0,0xD6,6,10,1,9,0,0,0x80,
         0,0,0,0,0,0,0,0,0,0,0,0};
     dispatch(normal, "normal cart snapshot");
     Require(ro::commerce::state.hasCart && ro::commerce::state.cartCount == 1
         && ro::commerce::state.cartCapacity == 100 && ro::commerce::state.cartWeight == 800
         && ro::commerce::state.cartMaxWeight == 10000, "0121 counters were not decoded literally");
-    const auto item = ro::commerce::state.cartItems.find(0x0124);
+    const auto item = ro::commerce::state.cartItems.find(4);
     Require(item != ro::commerce::state.cartItems.end() && item->second.GetItemId() == 1750
         && item->second.m_itemType == 10 && item->second.m_num == 9
         && item->second.m_location == 0x8000, "02E9 snapshot row fields differ from fixture");
 
     // 01C5 carries amount plus ordinary item attributes, but has no location field.
     // A same-index stack delta must retain location from the existing snapshot.
-    dispatch({0xC5,0x01, 0x24,0x01, 3,0,0,0, 0xD6,0x06, 10,1,0,0,
+    dispatch({0xC5,0x01, 4,0, 3,0,0,0, 0xD6,0x06, 10,1,0,0,
         0,0,0,0,0,0,0,0}, "typed cart stack delta");
-    Require(ro::commerce::state.cartItems.at(0x0124).m_num == 12
-        && ro::commerce::state.cartItems.at(0x0124).m_location == 0x8000,
+    Require(ro::commerce::state.cartItems.at(4).m_num == 12
+        && ro::commerce::state.cartItems.at(4).m_location == 0x8000,
         "01C5 stack delta did not accumulate while preserving uncarried location");
     Require(ro::commerce::state.cartCount == 1 && ro::commerce::state.cartWeight == 800,
         "cart delta changed 0121 counters before a new status packet");
 
-    dispatch({0x25,0x01, 0x24,0x01, 5,0,0,0}, "partial cart removal");
-    Require(ro::commerce::state.cartItems.at(0x0124).m_num == 7
+    dispatch({0x25,0x01, 4,0, 5,0,0,0}, "partial cart removal");
+    Require(ro::commerce::state.cartItems.at(4).m_num == 7
         && ro::commerce::state.cartCount == 1 && ro::commerce::state.cartWeight == 800,
         "0125 partial removal or counter retention is wrong");
-    dispatch({0x25,0x01, 0x24,0x01, 7,0,0,0}, "full cart removal");
-    Require(ro::commerce::state.cartItems.count(0x0124) == 0
+    dispatch({0x25,0x01, 4,0, 7,0,0,0}, "full cart removal");
+    Require(ro::commerce::state.cartItems.count(4) == 0
         && ro::commerce::state.cartCount == 1 && ro::commerce::state.cartWeight == 800,
         "0125 full removal did not remove row or incorrectly changed status counters");
 
@@ -68,25 +68,25 @@ void CartStackDeltaReplay()
     dispatch({0x2C,0x01, 0}, "cart weight failure");
     Require(ro::commerce::state.status == "Cart transfer failed: cart weight limit."
         && ro::commerce::state.cartCount == 1 && ro::commerce::state.cartWeight == 800
-        && ro::commerce::state.cartItems.at(0x0124).m_num==9,
+        && ro::commerce::state.cartItems.at(4).m_num==9,
         "012C result 0 text or state preservation is wrong");
     dispatch({0x2C,0x01, 1}, "cart capacity failure");
     Require(ro::commerce::state.status == "Cart transfer failed: cart item capacity limit."
         && ro::commerce::state.cartCount == 1 && ro::commerce::state.cartWeight == 800
-        && ro::commerce::state.cartItems.at(0x0124).m_num==9,
+        && ro::commerce::state.cartItems.at(4).m_num==9,
         "012C result 1 text or state preservation is wrong");
     const auto noticeCount=g_windowMgr.GetChatEvents().size();const auto lastStatus=ro::commerce::state.status;
     dispatch({0x2c,1,2},"unknown cart failure result");
     Require(g_windowMgr.GetChatEvents().size()==noticeCount && ro::commerce::state.status==lastStatus,
         "unknown cart result invented a failure notice");
     // Re-add the cart leg of a failed withdrawal after a partial removal.
-    dispatch({0x25,1,0x24,1,2,0,0,0},"withdrawal decrement");
-    dispatch({0xc5,1,0x24,1,2,0,0,0,0xd6,6,10,1,0,0,0,0,0,0,0,0,0,0},"withdrawal rollback add");
-    Require(ro::commerce::state.cartItems.at(0x0124).m_num==9
-        && ro::commerce::state.cartItems.at(0x0124).m_location==0x8000,"cart rollback lost quantity or uncarried metadata");
+    dispatch({0x25,1,4,0,2,0,0,0},"withdrawal decrement");
+    dispatch({0xc5,1,4,0,2,0,0,0,0xd6,6,10,1,0,0,0,0,0,0,0,0,0,0},"withdrawal rollback add");
+    Require(ro::commerce::state.cartItems.at(4).m_num==9
+        && ro::commerce::state.cartItems.at(4).m_location==0x8000,"cart rollback lost quantity or uncarried metadata");
     // A new index copies every carried field; missing fields remain unspecified/default.
-    dispatch({0xc5,1,0x25,1,1,0,0,0,0xb1,4,4,1,1,3,0x11,0x11,0x22,0x22,0x33,0x33,0x44,0x44},"new typed cart item");
-    const auto& added=ro::commerce::state.cartItems.at(0x125);
+    dispatch({0xc5,1,5,0,1,0,0,0,0xb1,4,4,1,1,3,0x11,0x11,0x22,0x22,0x33,0x33,0x44,0x44},"new typed cart item");
+    const auto& added=ro::commerce::state.cartItems.at(5);
     Require(added.GetItemId()==1201 && added.m_itemType==4 && added.m_num==1 && added.m_isIdentified==1
         && added.m_isDamaged==1 && added.m_refiningLevel==3 && added.m_slot[0]==0x1111
         && added.m_slot[1]==0x2222 && added.m_slot[2]==0x3333 && added.m_slot[3]==0x4444,
@@ -124,7 +124,7 @@ void CartClearContentsReplay()
     };
 
     dispatch({0x21,0x01, 12,0, 100,0, 0x40,0x06,0,0, 0x10,0x27,0,0}, "cart counters");
-    dispatch({0xE9,0x02,26,0,0x24,1,0xD6,6,10,1,9,0,0,0x80,
+    dispatch({0xE9,0x02,26,0,4,0,0xD6,6,10,1,9,0,0,0x80,
         0,0,0,0,0,0,0,0,0,0,0,0}, "normal cart snapshot");
     auto& state = ro::commerce::state;
     state.cart.visible = true;
