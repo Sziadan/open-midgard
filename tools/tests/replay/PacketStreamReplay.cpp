@@ -5959,6 +5959,44 @@ void StatusIncreaseProductionSendReplay()
     const std::vector<u8> expected{0xBB,0x00,0x0D,0x00,0x01, 0xBB,0x00,0x12,0x00,0x01};
     Require(captured == expected,
         "production status sender bytes differ from the selected five-byte server frames");
+    CGameMode mode;
+    CWorld world;
+    CPlayer player;
+    world.m_player = &player;
+    mode.m_world = &world;
+    const int oldPoints = g_session.GetStatusPoints();
+    const int oldCost = g_session.m_standardStr;
+    const int oldBonus = g_session.m_plusStr;
+    auto* character = g_session.GetMutableSelectedCharacterInfo();
+    const u8 oldStrength = character ? character->Str : 0;
+    g_session.SetStatusPoints(12);
+    g_session.m_standardStr = 5;
+    g_session.m_plusStr = 3;
+    player.m_Str = 42;
+    TestConnection input;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto reply = [&](const std::vector<u8>& bytes) {
+        Require(input.QueueBytes(bytes) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "stat result did not reach the production router");
+    };
+    reply({0xbc, 0, 13, 0, 0, 0});
+    Require(player.m_Str == 42 && g_session.GetStatusPoints() == 12 && g_session.m_standardStr == 5,
+        "refused stat increase changed the stat, points or cost");
+    reply({0xbe, 0, 32, 0, 6});
+    reply({0xb0, 0, 9, 0, 7, 0, 0, 0});
+    reply({0xbc, 0, 13, 0, 1, 40});
+    Require(player.m_Str == 43 && g_session.GetStatusPoints() == 7 && g_session.m_standardStr == 6,
+        "stat success did not apply the server cost, points and base stat");
+    reply({0xbc, 0, 13, 0, 1, 255});
+    reply({0x41, 0x01, 13, 0, 0, 0, 0x04, 0x01, 0, 0, 3, 0, 0, 0});
+    Require(player.m_Str == 263, "full-width stat update did not replace the capped acknowledgment");
+    g_session.SetStatusPoints(oldPoints);
+    g_session.m_standardStr = oldCost;
+    g_session.m_plusStr = oldBonus;
+    if (character) character->Str = oldStrength;
+    mode.m_world = nullptr;
+    world.m_player = nullptr;
     connection->Disconnect();
     std::cout << "{\"case_id\":\"status_increase_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00bb-statusup\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"invalid_ids_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
@@ -6150,6 +6188,38 @@ void SkillUpgradeProductionSendReplay()
     const std::vector<u8> expected{0x12,0x01,0x34,0x12};
     Require(captured == expected,
         "production skill-up sender bytes differ from the selected four-byte server frame");
+    CGameMode mode;
+    auto* previousMode = SkillPacketReplayAccess::Current();
+    const int previousType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    const auto savedSkills = g_session.GetSkillItems();
+    g_session.ClearSkillItems();
+    PLAYER_SKILL_INFO skill{};
+    skill.SKID = 28;
+    skill.level = 1;
+    skill.m_isValid = 1;
+    g_session.SetSkillItem(skill);
+    auto* character = g_session.GetMutableSelectedCharacterInfo();
+    Require(character != nullptr, "skill upgrade replay requires a selected character");
+    const auto previousPoints = character->jobpoint;
+    character->jobpoint = 2;
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestUpgradeSkillLevel, 28, 0, 0)
+        && peer.ReceiveExact(4) == std::vector<u8>{0x12, 1, 28, 0}
+        && mode.m_isReqUpgradeSkillLevel && g_session.GetSkillItemBySkillId(28)->level == 1,
+        "player skill request changed the learned level before server reply");
+    TestConnection input;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    Require(input.QueueBytes({0x0e, 1, 28, 0, 2, 0, 14, 0, 9, 0, 1,
+        0xb0, 0, 12, 0, 1, 0, 0, 0})
+        && ProcessGameModePacketLoop(mode, input, router, 2).packetsDispatched == 2,
+        "player skill result and skill point update did not reach the production router");
+    Require(!mode.m_isReqUpgradeSkillLevel && g_session.GetSkillItemBySkillId(28)->level == 2
+        && character->jobpoint == 1, "accepted skill result did not update the learned level and points");
+    character->jobpoint = previousPoints;
+    g_session.ClearSkillItems();
+    for (const auto& saved : savedSkills) g_session.SetSkillItem(saved);
+    SkillPacketReplayAccess::Restore(previousMode, previousType);
     connection->Disconnect();
     std::cout << "{\"case_id\":\"skill_upgrade_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0112-skillup\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"zero_skill_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
 }

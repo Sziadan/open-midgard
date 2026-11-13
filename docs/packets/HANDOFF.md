@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 verifies the stat increase and skill upgrade requests and replays the server's successful stat, cost, and point updates. Stat refusal preserves the current values. Ineligible skill upgrades are silent in the selected server. Live upgrade eligibility and the UI's response to a silent skill rejection remain open. [Upgrade evidence](evidence/PK46.02-request-reconciliation.md)
+
 PK46.02 links the current whisper block and list commands and the equipment lookup request to their production replays. The six-byte auction stop request is verified in the outbound inventory. Its shared `025D` reply identity stays open for PK40 live verification. [Whisper settings](evidence/PK46.02-map-private-message-ignore-requests.md) · [Equipment lookup](evidence/PK16.04-verification-boundary.md) · [Auction verification](evidence/PK40.05-selected-verification.md)
 
 PK46.02 captures selected actor and character name requests. Actor name replies now update existing actors and cannot recreate one after a visibility removal. Live native and Qt labels and historical profile variants remain open. [Actor lookup evidence](evidence/PK46.02-map-actor-name-request.md)

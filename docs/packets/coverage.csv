@@ -84,7 +84,7 @@ AUDIT-0x00B7,0x00B7,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x00B8,0x00B8,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected menu response captured from dialogue UI including cancellation and sparse source ordinal,C2S_ONLY,PK46.02-map-npc-menu-selection-request
 AUDIT-0x00B9,0x00B9,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected next action captured after offline retry from production dialogue UI,C2S_ONLY,PK46.02-map-npc-next-request
 AUDIT-0x00BA,0x00BA,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x00BB,0x00BB,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x00BB,0x00BB,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Selected stat request captured with success refusal point cost and full-width continuation replay,C2S_ONLY,PK46.02-map-status-increase-request
 AUDIT-0x00BC,0x00BC,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00BD,0x00BD,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00BE,0x00BE,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -171,7 +171,7 @@ AUDIT-0x010E,0x010E,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x010F,0x010F,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0110,0x0110,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0111,0x0111,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0112,0x0112,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0112,0x0112,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Selected skill upgrade captured with successful learned level and skill point continuation,C2S_ONLY,PK46.02-map-skill-up-request
 AUDIT-0x0113,0x0113,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Selected 22-byte ground skill request captured from player proceed; live skill effects remain open,C2S_ONLY,PK27-ground-proceed
 AUDIT-0x0114,0x0114,map,unresolved,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0115,0x0115,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
