@@ -2154,6 +2154,16 @@ void HandleMercenaryParameter(CGameMode&, const PacketView& packet)
     }
 }
 
+void HandleElementalInfo(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 22) return;
+    const auto* data = packet.data;
+    const u32 gid = ReadLE32(data + 2);
+    if (gid == 0) return;
+    g_session.m_elementalStatus = {gid, ReadLE32(data + 6), ReadLE32(data + 10),
+        ReadLE32(data + 14), ReadLE32(data + 18)};
+}
+
 void HandleMercSkillList(CGameMode& mode, const PacketView& packet)
 {
     HandleSkillInfoListByTarget(mode, packet, SkillInfoListTarget::Merc);
@@ -9724,6 +9734,9 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x028A, HandleNpcShowEfstUpdate);
     router.Register(0x0814, HandleIgnorePacket);
     router.Register(0x0816, HandleIgnorePacket);
+    if (receiveProfile.id == ro::net::PacketVersionId::PacketVer23) {
+        router.Register(0x081D, HandleElementalInfo);
+    }
 
     // Newer actor entry packet family from Ref switch (v4 set).
     RegisterHandlerIfValid(router, receiveProfile.actorSpawnModernIdle, HandleActorSpawnSkeleton);

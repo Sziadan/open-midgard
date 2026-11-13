@@ -172,6 +172,11 @@ struct MercenaryStatus {
     int expiresAt = 0, calls = 0, kills = 0;
 };
 
+struct ElementalStatus {
+    u32 gid = 0;
+    u32 hp = 0, maxHp = 0, sp = 0, maxSp = 0;
+};
+
 struct CompanionTargetState {
     u32 gid = 0;
     int cellX = 0, cellY = 0;
@@ -211,6 +216,7 @@ public:
     u32 m_homunGID=0,m_merGID=0;
     HomunculusStatus m_homunStatus;
     MercenaryStatus m_merStatus;
+    ElementalStatus m_elementalStatus;
     CompanionTargetState m_homunTarget;
     CompanionTargetState m_merTarget;
     void ResetCompanionMapState();

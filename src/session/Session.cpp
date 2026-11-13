@@ -1631,6 +1631,7 @@ void CSession::ClearHomunSkillItems()
 
 void CSession::ResetCompanionMapState()
 {
+    m_elementalStatus = {};
     m_homunGID = 0;
     m_merGID = 0;
     m_homunStatus.alive = false;

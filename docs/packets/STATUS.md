@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Selected elemental snapshot (2026-11-13)**. PK29.03 frames the direct `081D` send for persisted elementals on the selected server and stores the snapshot separately from the homunculus and mercenary. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.03-elemental-snapshot.md)
+
 **Native companion attack cancellation (2026-11-13)**. PK28.04 replay verifies manual attack and cancellation for both companion families. Six focused application checks and 473 standalone checks passed. The main replay also passed two consecutive reruns. [Evidence](evidence/PK28-companion-actor-targets.md)
 
 **Native companion cast progress (2026-11-13)**. PK28.03 replay verifies busy-animation retention for actor and ground skills and the mercenary ground approach within the legacy move limit. Six focused application checks and 473 standalone checks passed. Live validation and long approaches remain open. [Evidence](evidence/PK28-companion-ground-targets.md)

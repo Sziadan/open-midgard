@@ -3895,3 +3895,7 @@ PK28.03 retains actor and ground casts through a busy animation. The mercenary g
 ## 2026-11-13 Native companion attack cancellation
 
 PK28.04 verifies the initial manual attack, the zero-target cancellation, and supersession of reserved orders for both companion families. Six focused application checks and 473 standalone checks passed. The main replay passed two consecutive reruns. [Evidence](evidence/PK28-companion-actor-targets.md)
+
+## 2026-11-13 Selected elemental snapshot
+
+PK29.03 verifies that a saved elemental can produce `081D` on MAIN 20080910. The receiver handles the fixed frame, preserves the following map packet, and clears the snapshot at map reset. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.03-elemental-snapshot.md)

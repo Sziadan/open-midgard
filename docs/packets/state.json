@@ -1137,9 +1137,9 @@
       "commit_subject": "packet(PK29.02): route selected mercenary support skills"
     },
     "PK29.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK29.03-elemental-snapshot.md"],
+      "commit_subject": "packet(PK29.03): receive persisted elemental snapshots"
     },
     "PK29.04": {
       "status": "NOT_STARTED",

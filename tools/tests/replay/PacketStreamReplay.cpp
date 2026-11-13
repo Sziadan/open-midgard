@@ -2456,6 +2456,42 @@ void Login3ClientInfoHashRequestReplay()
     std::cout << "{\"case_id\":\"login3_clientinfo_hash_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-01fa-md5-clientinfo-selected-source\",\"production_entry\":\"ConnectAccount -> 0x01DB -> 0x01DC -> OnAckHash -> 0x01FA\",\"request_01db_hex\":\"" << Hex(capturedHashRequest) << "\",\"challenge_hex\":\"" << Hex(challenge) << "\",\"expected_01fa_hex\":\"" << Hex(expectedLogin) << "\",\"captured_01fa_hex\":\"" << Hex(capturedLogin) << "\",\"clientinfo_from_selected_profile\":1,\"challenge_digest_matches_independent_vector\":true,\"challenge_request_automatic_for_login3\":true,\"handshake_cleared\":true,\"network_scope\":\"loopback mock account server only\",\"outcome\":\"PASS\"}\n";
 }
 
+void ElementalSnapshotReplay()
+{
+    SetCase("elemental_snapshot", "PK29.03", "selected-rathena-081d",
+        "CRagConnection::RecvPacket -> default map router");
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto oldElemental = g_session.m_elementalStatus;
+    const auto homunGid = g_session.m_homunGID;
+    const auto mercGid = g_session.m_merGID;
+    TestConnection connection;
+    LoopbackPeer peer(connection);
+    const std::vector<u8> snapshot{0x1d, 0x08, 0x78, 0x56, 0x34, 0x12,
+        1, 0, 0, 0x80, 2, 0, 0, 0x80, 3, 0, 0, 0, 4, 0, 0, 0};
+    const std::vector<u8> next{0x80, 0, 0x99, 0, 0, 0, 0};
+    Require(connection.QueueBytes({snapshot.begin(), snapshot.begin() + 9}), "could not queue partial elemental frame");
+    std::vector<u8> frame;
+    Require(!Receive(connection, frame) && connection.BufferedBytes() == 9,
+        "partial elemental frame was consumed or lost");
+    std::vector<u8> tail(snapshot.begin() + 9, snapshot.end());
+    tail.insert(tail.end(), next.begin(), next.end());
+    Require(connection.QueueBytes(tail) && Receive(connection, frame) && frame == snapshot,
+        "elemental snapshot did not frame at 22 bytes");
+    PacketView view{};
+    int consumed = 0;
+    Require(TryReadPacket(frame.data(), frame.size(), view, consumed) && router.Dispatch(mode, view),
+        "elemental snapshot did not dispatch");
+    const auto& status = g_session.m_elementalStatus;
+    Require(status.gid == 0x12345678 && status.hp == 0x80000001 && status.maxHp == 0x80000002
+        && status.sp == 3 && status.maxSp == 4 && g_session.m_homunGID == homunGid && g_session.m_merGID == mercGid,
+        "elemental snapshot decoded incorrectly or changed another companion");
+    Require(Receive(connection, frame) && frame == next && connection.BufferedBytes() == 0,
+        "elemental snapshot disrupted the next map packet");
+    g_session.m_elementalStatus = oldElemental;
+}
+
 void CompanionIdentityReplay()
 {
     CGameMode mode;
@@ -2711,7 +2747,12 @@ void CompanionIdentityReplay()
         "mercenary status close button did not delete its window");
     g_session.m_aid = oldAid;
 
+    const auto oldElemental = g_session.m_elementalStatus;
+    g_session.m_elementalStatus = {0x12345678, 1, 2, 3, 4};
     g_session.ResetCompanionMapState();
+    Require(g_session.m_elementalStatus.gid == 0 && g_session.m_elementalStatus.maxSp == 0,
+        "companion map reset retained the previous elemental snapshot");
+    g_session.m_elementalStatus = oldElemental;
     mode.m_world = &g_world;
     constexpr u32 reentryHomun = 0xf1000041u;
     constexpr u32 reentryMerc = 0xf2000042u;
@@ -6067,6 +6108,7 @@ int main(int argc,char** argv){try{
     LoginPollTransientStatusReplay();
     LoginCharConnectionFailureReplay();
     Login3ClientInfoHashRequestReplay();
+    ElementalSnapshotReplay();
     CompanionIdentityReplay();
     CompanionCommandReplay();
     CompanionSkillListReplay();
