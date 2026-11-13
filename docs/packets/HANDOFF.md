@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 reconciles the selected Warp, Making Arrow, item appraisal, and card composition requests against the current production captures. Live Teleport and portal outcomes, crafting, appraisal, and card insertion remain open. Continue the outbound review with the selected movement, action, and zone-entry profiles before adjudicating legacy aliases. [Request reconciliation](evidence/PK46.02-request-reconciliation.md)
+
 PK46.02 connects selected stop-attack `0118` before a Ctrl or no-control repeat attack outside siege maps, and sends Super Novice prayer `01ED` from qualifying public speech. Verify target switching and the prayer effect live. Require a selected-client call site for any separate skill interruption before expanding the producer. The outbound inventory now links the AutoSpell, Star Place, and standing resurrection requests to their production replays. [Stop-attack evidence](evidence/PK46.02-map-stop-attack-0118.md) · [Prayer evidence](evidence/PK46.02-super-novice-prayer.md) · [Request reconciliation](evidence/PK46.02-request-reconciliation.md)
 
 PK50.04 covers quest expiry, completion during a click, and journal teardown and rebuild across connections in replay. Continue live verification and independent PK48 review. The [quest verification](evidence/PK50.04-quest-verification.md) records newer quest packet gates.

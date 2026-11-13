@@ -180,7 +180,7 @@ AUDIT-0x0117,0x0117,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x0118,0x0118,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected stop request before locked monster attack captured,C2S_ONLY,PK46.02-stop-attack-0118
 AUDIT-0x0119,0x0119,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-state-change traces legacy 13-byte S2C 0x0119 branch; pinned 20080910 selects 15-byte 0x0229; runtime state replay remains open,UNREVIEWED,
 AUDIT-0x011A,0x011A,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x011B,0x011B,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x011B,0x011B,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Selected twenty-byte Warp or Teleport choice and cancellation captured on the production socket,C2S_ONLY,PK26.SPECIAL-SKILL-CHOICES
 AUDIT-0x011C,0x011C,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x011D,0x011D,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Memo chat command and two-byte request captured; 011E result replay is separate,C2S_ONLY,PK26.04
 AUDIT-0x011E,0x011E,map,S2C,PK26,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
@@ -326,7 +326,7 @@ AUDIT-0x01AA,0x01AA,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x01AB,0x01AB,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01AC,0x01AC,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01AD,0x01AD,map,S2C,PK29,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01AE,0x01AE,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01AE,0x01AE,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected four-byte Making Arrow material and cancellation captured on the production socket,C2S_ONLY,PK26.SPECIAL-SKILL-CHOICES
 AUDIT-0x01AF,0x01AF,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected four-byte cart appearance request captured,C2S_ONLY,PK46.02-CART-REQUESTS
 AUDIT-0x01B0,0x01B0,map,S2C,PK20,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01B1,0x01B1,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
