@@ -3993,3 +3993,5 @@ PK34.01 establishes the selected inventory, cart, and storage snapshot wire cont
 PK34.02 and PK34.03 validate and replace normal and equipment inventory lists atomically, including reuse of an index by a different category. [Evidence](evidence/PK34.01-item-snapshot-contract.md)
 
 PK34.02 and PK34.03 apply the same validation to cart and storage. Storage receives lists before opening, preserves items on nonzero counts, and clears them on a zero count. [Evidence](evidence/PK34.01-item-snapshot-contract.md)
+
+PK34.04 replays the storage window reopening after a same-map reset with one populated category and the trailing count packet. [Evidence](evidence/PK34.01-item-snapshot-contract.md)

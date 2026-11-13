@@ -714,6 +714,26 @@ void MapTransitionLifetimeReplay()
         Require(mode.m_partyPosList.empty() && mode.m_runtimeActors.at(g_session.m_gid) == &player,
             "same-map reuse did not clear legacy dots while retaining the player");
 
+        // clif_refresh_storagewindow sends only populated categories, then 00F2.
+        // The pre-warp equipment row must remain gone when only the normal list arrives.
+        const std::vector<u8> restoredStorage = {
+            0xea, 0x02, 26, 0, 1, 0, 0xf5, 1, 0, 1, 5, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0xf2, 0, 1, 0, 0x58, 2,
+        };
+        inputPeer.Send(restoredStorage);
+        WaitKernelPending(mapInput, static_cast<int>(restoredStorage.size()));
+        Require(ProcessGameModePacketLoop(mode, mapInput, router, 8).packetsDispatched == 2,
+            "storage restoration after same-map warp did not dispatch both packets");
+        const auto* stored = g_session.GetStorageItemByIndex(1);
+        Require(g_session.IsStorageOpen() && g_session.GetStorageCurrentCount() == 1
+            && g_session.GetStorageItems().size() == 1 && stored && stored->GetItemId() == 501
+            && stored->m_num == 5 && !g_session.GetStorageItemByIndex(oldEquipment.m_itemIndex)
+            && g_windowMgr.m_storageWnd && g_windowMgr.m_storageWnd->m_show,
+            "same-map storage restoration did not reopen with only the fresh category");
+        g_session.CloseStorage();
+        g_windowMgr.CloseStorageWindows();
+
         // The same name alone must not select reuse while map loading is active.
         SeedMapTransitionMarker("prontera");
         const u64 loadingRevision = g_session.GetPartyPositionRevision();

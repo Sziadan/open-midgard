@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK34.02 and PK34.03 validate and replace inventory, cart, storage, and friend snapshots atomically. Next run the PK34.04 source and UI lifecycle review. Review selected emitters that omit categories, including a nonempty already-open storage refresh with only one category present. `00F2` zero clears the whole storage, while a nonzero count preserves the rows. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)
+PK34.04 verifies storage reopen after a same-map refresh when the server omits one category. Inventory, cart, storage, and friend snapshot validation are implemented. Live capture and independent PK48 review remain open. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)
 
 Continue PK28.04 and PK29.04 using `src/companion_ai` as the implementation for both families. Use Ref's Lua and input call sites to check expected behavior. Start with a live pass for each family covering idle acquisition or owner defense, manual attack and cancellation, blocked pursuit with a queued order, manual movement and follow, dismissal, and map re-entry. Record the observed input, packet, and actor or UI result for each case. Use replay for deterministic stall and timing cases. Keep installed-skin comparison and independent review open until verified. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 

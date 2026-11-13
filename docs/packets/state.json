@@ -1264,9 +1264,9 @@
       "commit_subject": "packet(PK34.02/PK34.03): replace cart and storage snapshots atomically"
     },
     "PK34.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK34.01-item-snapshot-contract.md"],
+      "commit_subject": "packet(PK34.04): verify storage reopen after same-map refresh"
     },
     "PK35.01": {
       "status": "NOT_STARTED",
