@@ -47,6 +47,30 @@ void MannerAndColoredNoticeReplay()
     world.UnregisterActor(&actor);
 }
 
+void PvpPointsReplay()
+{
+    SetCase("pvp_points", "PK39.02", "selected-0210-pvp-points", "map packet loop -> PvP points chat");
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    g_windowMgr.ClearChatEvents();
+    Require(connection.QueueBytes({0x10,2,0xef,0xcd,0xab,0x90,0x78,0x56,0x34,0x12,
+        23,0,0,0,47,0,0,0,0xf9,0xff,0xff,0xff, 0x9a,0,9,0,'n','e','x','t',0}),
+        "could not queue PvP points and broadcast");
+    Require(ProcessGameModePacketLoop(mode, connection, router, 2).packetsDispatched == 2
+        && !connection.BufferedBytes(), "PvP points reply did not preserve stream alignment");
+    const auto& events = g_windowMgr.GetChatEvents();
+    Require(events.size() == 2 && events[0].color == 0x0000ffffu && events[1].text == "next",
+        "PvP points reply did not reach cyan system chat");
+    const auto wins = events[0].text.find("23");
+    const auto losses = events[0].text.find("47");
+    const auto points = events[0].text.find("-7");
+    Require(wins < losses && losses < points && points != std::string::npos,
+        "PvP points notice lost wins, losses or signed points");
+    g_windowMgr.ClearChatEvents();
+}
+
 void LegacyRankingReplay()
 {
     SetCase("legacy_ranking", "PK39.02", "selected-legacy-rank-list-and-points", "map packet loop -> ranking chat");

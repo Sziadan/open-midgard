@@ -273,6 +273,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x01FE, 5);               // ZC_ACK_ITEMREPAIR
     SetPacketSize(0x0221, kVariablePacketSize); // ZC_NOTIFY_WEAPONITEMLIST
     SetPacketSize(0x0222, 6);               // CZ_REQ_WEAPONREFINE
+    SetPacketSize(0x0210, 22);              // ZC_ACK_PVPPOINT
     for (const u16 opcode : {0x0219, 0x021A, 0x0226, 0x0238}) SetPacketSize(opcode, 282);
     for (const u16 opcode : {0x021B, 0x021C, 0x0224, 0x0236}) SetPacketSize(opcode, 10);
     SetPacketSize(0x0223, 8);               // ZC_ACK_WEAPONREFINE

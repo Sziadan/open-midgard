@@ -4085,3 +4085,5 @@ PK39.03 adds manner notices and signed actor honor and verifies colored chat and
 PK28.04 and PK29.04 use bounded waypoints when the native approach exceeds the companion move sender's range. Replay covers diagonal pursuit and a mercenary ground cast across two move requests. The handoff records the dual-companion input checks and the MinGW runtime needed for CTest. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 PK39.01 inventories all 27 primary rows, identifies active PvP rank and points packets, and traces the profile gates for the four later ranking variants. [Evidence](evidence/PK39.01-selected-inventory.md)
+
+PK39.02 receives the signed PvP points reply and verifies the existing `/pvpinfo` producer through the selected wire frames. [Evidence](evidence/PK39.02-pvp-points.md)

@@ -8760,6 +8760,25 @@ void HandleMvpReward(CGameMode& mode, const PacketView& packet)
     RecordChat(mode, message, dropped ? 0x00FF0000u : 0x0000FFFFu, kChatChannelSystem);
 }
 
+void HandlePvpPoints(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 22) return;
+
+    const auto wins = std::to_string(static_cast<s32>(ReadLE32(packet.data + 10)));
+    const auto losses = std::to_string(static_cast<s32>(ReadLE32(packet.data + 14)));
+    const auto points = std::to_string(static_cast<s32>(ReadLE32(packet.data + 18)));
+    const NoticeArguments args{{'d', wins}, {'d', losses}, {'d', points}};
+    constexpr auto fallback = "Wins: %d, losses: %d, PvP points: %d.";
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto notice = FormatLocalizedNotice(strings.Get(853, fallback), args);
+    if (!notice) notice = FormatLocalizedNotice(fallback, args);
+    if (!notice) return;
+
+    g_windowMgr.SendMsg(3, 0, 0);
+    RecordChat(mode, *notice, 0x0000ffffu, kChatChannelSystem);
+}
+
 void HandleLegacyRanking(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data) return;
@@ -10285,6 +10304,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01E6, HandleRecallPartnerName);
     router.Register(0x01EA, HandleWeddingEffect);
     for (const u16 opcode : {0x010A, 0x010B, 0x010C, 0x010D}) router.Register(opcode, HandleMvpReward);
+    router.Register(0x0210, HandlePvpPoints);
     for (const u16 opcode : {0x0219, 0x021A, 0x021B, 0x021C, 0x0224, 0x0226, 0x0236, 0x0238}) {
         router.Register(opcode, HandleLegacyRanking);
     }
