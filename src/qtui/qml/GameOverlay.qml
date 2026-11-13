@@ -3281,10 +3281,26 @@ Item {
             label: root.objectOrEmpty(uiState.skillSelectData.closeButton).label || "X"
         }
 
+        Text {
+            objectName: "skillChoiceRecipe"
+            x: 8
+            y: 27
+            width: parent.width - 16
+            height: uiState.skillSelectData.recipeHeight || 0
+            visible: height > 0
+            clip: true
+            text: uiState.skillSelectData.recipeDescription || ""
+            textFormat: Text.PlainText
+            wrapMode: Text.WordWrap
+            color: theme.ink
+            font.family: theme.fontFamily
+            font.pixelSize: 12
+        }
+
         Rectangle {
             id: skillSelectList
             x: 8
-            y: 27
+            y: 27 + (uiState.skillSelectData.recipeHeight || 0)
             width: Math.max(0, parent.width - 30)
             height: 128
             color: theme.fieldFill

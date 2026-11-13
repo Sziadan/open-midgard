@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK35.05 captures the shared native and Qt choice window for production, weapon refine, repair, and cooking. Continue the reference material-slot and recipe-description presentation, then verify the live crafting paths. Other cooking make types still need applicability evidence. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
+PK35.05 captures the shared native and Qt choice window for production, weapon refine, repair, and cooking. Production confirmation reads the reference recipe descriptions. Continue the reference material slots and placement, then verify the live crafting paths. Other cooking make types still need applicability evidence. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
 
 PK34.04 verifies storage reopen after a same-map refresh when the server omits one category. Inventory, cart, storage, and friend snapshot validation are implemented. Live capture and independent PK48 review remain open. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)
 

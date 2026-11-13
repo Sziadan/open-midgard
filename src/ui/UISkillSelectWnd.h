@@ -54,6 +54,8 @@ public:
     struct DisplayData {
         std::string title;
         std::string emptyText;
+        std::string recipeDescription;
+        int recipeHeight = 0;
         DisplayButton closeButton;
         DisplayButton okButton;
         DisplayButton cancelButton;
@@ -115,6 +117,7 @@ private:
 
     RECT GetCloseButtonRect() const;
     RECT GetListRect() const;
+    int GetRecipeHeight() const;
     RECT GetRowRect(int visibleRow) const;
     RECT GetScrollTrackRect() const;
     RECT GetScrollThumbRect(int entryCount) const;
@@ -136,6 +139,7 @@ private:
     Kind m_kind;
     u16 m_productionItem = 0;
     std::array<u16, 3> m_productionMaterials{};
+    std::string m_recipeDescription;
     std::vector<std::array<u8, 13>> m_repairRows;
     unsigned short m_skillId;
     std::string m_title;

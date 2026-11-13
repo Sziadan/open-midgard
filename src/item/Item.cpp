@@ -490,6 +490,12 @@ std::string CItemMgr::GetDescription(unsigned int itemId)
 	return std::string();
 }
 
+std::string CItemMgr::GetRecipeDescription(unsigned int itemId)
+{
+	if (const ItemMetadata* metadata = GetMetadata(itemId)) return metadata->recipeDescription;
+	return {};
+}
+
 std::string CItemMgr::GetExpiryDisplayText(u32 unixSeconds)
 {
 	if (!unixSeconds) return {};
@@ -773,6 +779,7 @@ bool CItemMgr::LoadDescriptionTable()
 {
 	const bool loadedUnidentified = ParseDescriptionBlocks("num2itemdesctable.txt");
 	const bool loadedIdentified = ParseDescriptionBlocks("idnum2itemdesctable.txt");
+	ParseDescriptionBlocks("metalprocessitemlist.txt", &ItemMetadata::recipeDescription);
 	return loadedUnidentified || loadedIdentified;
 }
 
@@ -900,7 +907,7 @@ bool CItemMgr::ParseIntegerPairTable(const char* fileName, void (*assignValue)(I
 	return true;
 }
 
-bool CItemMgr::ParseDescriptionBlocks(const char* fileName)
+bool CItemMgr::ParseDescriptionBlocks(const char* fileName, std::string ItemMetadata::* field)
 {
 	std::string text;
 	if (!LoadTextFileFromGameData(fileName, text)) {
@@ -927,7 +934,7 @@ bool CItemMgr::ParseDescriptionBlocks(const char* fileName)
 		}
 
 		if (line == "#") {
-			m_metadata[currentItemId].description = description.str();
+			m_metadata[currentItemId].*field = description.str();
 			currentItemId = 0;
 			collecting = false;
 			continue;

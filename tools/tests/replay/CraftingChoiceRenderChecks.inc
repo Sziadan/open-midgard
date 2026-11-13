@@ -53,8 +53,13 @@ void CheckCraftingChoices(QGuiApplication& app, QQuickView& view, QtUiState* sta
     production->HandleKeyDown(VK_DOWN);
     production->HandleKeyDown(VK_RETURN);
     capture("craft-production-confirm", 0);
+    auto* recipe = Find(view.rootObject(), "skillChoiceRecipe");
+    Require(recipe && recipe->isVisible() && recipe->property("text").toString() == "1 Iron\n10 Jellopy"
+        && recipe->property("contentHeight").toReal() <= recipe->height(),
+        "production confirmation did not display the full recipe description");
     Dispatch(mode, {0x21, 2, 17, 0, 2, 0, 0xb1, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0});
     capture("craft-weapon-refine", 1201);
+    Require(!recipe->isVisible(), "recipe text leaked into the weapon refine chooser");
     Dispatch(mode, {0xfc, 1, 17, 0, 0, 0, 0xb1, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0});
     capture("craft-repair", 1201);
     Dispatch(mode, {0x5a, 2, 8, 0, 1, 0, 0xad, 0x2e});

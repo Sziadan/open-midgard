@@ -46,6 +46,7 @@ struct ItemMetadata {
     std::string unidentifiedResourceName;
     std::string identifiedResourceName;
     std::string description;
+    std::string recipeDescription;
     int slotCount = 0;
     std::string cardIllustName;
 };
@@ -67,6 +68,7 @@ public:
     std::string GetItemName(const ITEM_INFO& item, bool includeSlotSuffix = true);
     std::string GetEquipDisplayName(const ITEM_INFO& item, bool includeSlotSuffix = true);
     std::string GetDescription(unsigned int itemId);
+    std::string GetRecipeDescription(unsigned int itemId);
     std::string GetExpiryDisplayText(u32 unixSeconds);
     std::vector<std::string> GetRentalTimeNotices(unsigned int itemId, u32 seconds);
     std::string GetRentalDeleteNotice(unsigned int itemId);
@@ -100,7 +102,7 @@ private:
     bool ParsePairTable(const char* fileName, void (*assignValue)(ItemMetadata&, std::string&&),
         std::unordered_set<unsigned int>* descriptorIds = nullptr);
     bool ParseIntegerPairTable(const char* fileName, void (*assignValue)(ItemMetadata&, int));
-    bool ParseDescriptionBlocks(const char* fileName);
+    bool ParseDescriptionBlocks(const char* fileName, std::string ItemMetadata::* field = &ItemMetadata::description);
     bool ParseIdSetTable(const char* fileName, std::unordered_set<unsigned int>& outSet);
 
     bool m_loaded;

@@ -24,6 +24,7 @@ constexpr int kWindowHeight = 221;
 constexpr int kCloseButtonSize = 12;
 constexpr int kPadding = 8;
 constexpr int kListTop = 27;
+constexpr int kRecipeHeight = 112;
 constexpr int kRowHeight = 32;
 constexpr int kVisibleRows = 4;
 constexpr int kIconBoxSize = 24;
@@ -258,7 +259,13 @@ RECT UISkillSelectWnd::GetCloseButtonRect() const
 RECT UISkillSelectWnd::GetListRect() const
 {
     const int width = m_w - (kPadding * 2) - kScrollBarGap - kScrollBarWidth;
-    return shopui::MakeRect(m_x + kPadding, m_y + kListTop, width, kRowHeight * kVisibleRows);
+    return shopui::MakeRect(m_x + kPadding, m_y + kListTop + GetRecipeHeight(), width, kRowHeight * kVisibleRows);
+}
+
+int UISkillSelectWnd::GetRecipeHeight() const
+{
+    return m_kind == Kind::ProductionMaterials && !m_recipeDescription.empty()
+        ? kRecipeHeight : 0;
 }
 
 RECT UISkillSelectWnd::GetRowRect(int visibleRow) const
@@ -338,6 +345,7 @@ void UISkillSelectWnd::UpdateScrollFromThumbPosition(int globalY, int entryCount
 
 void UISkillSelectWnd::ResetInteraction()
 {
+    Resize(m_w, kWindowHeight + GetRecipeHeight());
     m_hoveredIndex = -1;
     m_selectedIndex = -1;
     m_viewOffset = 0;
@@ -416,6 +424,7 @@ void UISkillSelectWnd::RefreshProductionMaterials()
 {
     m_kind = Kind::ProductionMaterials;
     m_title = g_ttemmgr.GetDisplayName(m_productionItem, true);
+    m_recipeDescription = g_ttemmgr.GetRecipeDescription(m_productionItem);
     m_entries = {{"Create", {}, 0}};
     const auto filled = std::count_if(m_productionMaterials.begin(), m_productionMaterials.end(), [](u16 id) { return id != 0; });
     if (filled) {
@@ -660,6 +669,12 @@ void UISkillSelectWnd::OnDraw()
     const RECT bounds = shopui::MakeRect(m_x, m_y, m_w, m_h);
     shopui::DrawFrameWindow(hdc, bounds, m_title.c_str());
 
+    if (const int height = GetRecipeHeight()) {
+        const auto recipeRect = shopui::MakeRect(m_x + kPadding, m_y + kListTop, m_w - 2 * kPadding, height - 4);
+        shopui::DrawWindowTextRect(hdc, recipeRect, m_recipeDescription,
+            RGB(0, 0, 0), DT_LEFT | DT_TOP | DT_WORDBREAK | DT_NOPREFIX);
+    }
+
     const RECT closeRect = GetCloseButtonRect();
     const RECT listRect = GetListRect();
     const RECT trackRect = GetScrollTrackRect();
@@ -900,6 +915,8 @@ bool UISkillSelectWnd::GetDisplayDataForQt(DisplayData* outData) const
     DisplayData data{};
     data.title = m_title;
     data.emptyText = m_emptyText;
+    data.recipeHeight = GetRecipeHeight();
+    if (data.recipeHeight) data.recipeDescription = m_recipeDescription;
 
     const RECT closeRect = GetCloseButtonRect();
     data.closeButton.x = closeRect.left;

@@ -272,6 +272,12 @@ int main(int argc,char** argv) {
             Require(source.open(QIODevice::ReadOnly),"source rental description missing");const auto bytes=source.readAll();
             QFile target(output+"/data/idnum2itemdesctable.txt");Require(target.open(QIODevice::WriteOnly) && target.write(bytes)==bytes.size(),"copy rental description failed");
         }
+        if(chatState) {
+            const QByteArray recipe("1201#\n1 Iron\n10 Jellopy\n#\n");
+            QFile target(output + "/data/metalprocessitemlist.txt");
+            Require(target.open(QIODevice::WriteOnly) && target.write(recipe) == recipe.size(),
+                "write crafting recipe fixture failed");
+        }
         if(itemDetailGeometryChild) {
             QByteArray description;
             for(const auto id:{501,1201}) {

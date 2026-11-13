@@ -3510,6 +3510,8 @@ void PopulateSkillSelectState(QtUiState* state)
     if (skillSelectWnd->GetDisplayDataForQt(&display)) {
         data.insert(QStringLiteral("title"), ToQString(display.title));
         data.insert(QStringLiteral("emptyText"), ToQString(display.emptyText));
+        data.insert(QStringLiteral("recipeDescription"), ToQString(display.recipeDescription));
+        data.insert(QStringLiteral("recipeHeight"), display.recipeHeight);
 
         QVariantMap closeButton;
         closeButton.insert(QStringLiteral("x"), display.closeButton.x);
