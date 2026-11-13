@@ -1170,9 +1170,9 @@
       "commit_subject": "packet(PK30.03): wire adoption request and consent"
     },
     "PK30.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK30.01-relationship-wire.md"],
+      "commit_subject": "packet(PK30.04): verify post-adoption state updates"
     },
     "PK31.01": {
       "status": "NOT_STARTED",

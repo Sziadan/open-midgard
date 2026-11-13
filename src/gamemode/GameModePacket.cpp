@@ -1780,7 +1780,9 @@ void HandleAutoRunSkill(CGameMode& mode, const PacketView& packet)
 // Matches Ref Zc_Skillinfo_List filtering for ZC_SKILLINFO_LIST (0x010F) player skills.
 static bool IsPlayerSkillTreeSkid(int skid)
 {
-    return skid > 0 && skid < 0x40F;
+    // Selected rAthena grants WE_CHEERUP to adopted characters and includes it
+    // in the next full skill snapshot.
+    return (skid > 0 && skid < 0x40F) || skid == 5065;
 }
 
 static bool IsHomunSkillTreeSkid(int skid)
@@ -9388,7 +9390,7 @@ void HandleActorSpriteChange(CGameMode& mode, const PacketView& packet)
 
     const u32 gid = ReadLE32(packet.data + 2);
     const u8 type = packet.data[6];
-    const u32 value = ReadLE32(packet.data + 7);
+    const u32 value = type == kLookWeapon ? ReadLE32(packet.data + 7) : ReadLE16(packet.data + 7);
     if (gid == 0) {
         return;
     }

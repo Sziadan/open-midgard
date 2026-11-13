@@ -2661,6 +2661,44 @@ void AdoptionConsentReplay()
             CGameMode::PlayerContext_RequestAdoption, 0)
             && peer.ReceiveExact(6) == std::vector<u8>{0xf9, 1, 0x77, 0, 0, 0},
             "eligible adoption did not emit the candidate account ID");
+        const int oldJob = g_session.m_playerJob;
+        const auto oldAid = g_session.m_aid;
+        CPlayer child;
+        child.m_gid = g_session.m_aid = 0x45;
+        world.m_player = &child;
+        const auto receiveTransition = [&](const std::vector<u8>& frames, int count) {
+            server.Send(frames);
+            WaitKernelPending(input, static_cast<int>(frames.size()));
+            Require(ProcessGameModePacketLoop(mode, input, router, count).packetsDispatched == count,
+                "post-adoption update did not dispatch");
+        };
+        receiveTransition({0xd7, 1, 0x45, 0, 0, 0, 0, 0xb7, 0x0f, 0, 0,
+            0xb0, 0, 55, 0, 12, 0, 0, 0,
+            0xb1, 0, 2, 0, 75, 0, 0, 0, 0xb1, 0, 23, 0, 100, 0, 0, 0}, 4);
+        int progress = 0;
+        Require(child.m_job == 4023 && g_session.m_playerJob == 4023 && character->job == 4023
+            && character->joblevel == 12 && g_session.TryGetJobExpPercent(&progress) && progress == 75,
+            "post-adoption job or restored progress did not reach the local character");
+        std::vector<u8> addedSkills;
+        std::vector<u8> snapshot{0x0f, 1, 115, 0};
+        for (const int id : {408, 409, 5065}) {
+            std::array<u8, 37> row{static_cast<u8>(id), static_cast<u8>(id >> 8)};
+            row[6] = 1;
+            addedSkills.insert(addedSkills.end(), {0x11, 1});
+            addedSkills.insert(addedSkills.end(), row.begin(), row.end());
+            snapshot.insert(snapshot.end(), row.begin(), row.end());
+        }
+        receiveTransition(addedSkills, 3);
+        Require(g_session.GetSkillItemBySkillId(5065), "adoption skill grant was dropped");
+        receiveTransition(snapshot, 1);
+        Require(g_session.GetSkillItemBySkillId(408) && g_session.GetSkillItemBySkillId(409)
+            && g_session.GetSkillItemBySkillId(5065), "restored baby skill snapshot lost an adoption skill");
+        receiveTransition({0xd7, 1, 0x77, 0, 0, 0, 0, 0xb7, 0x0f, 1, 0}, 1);
+        Require(candidate.m_job == 4023 && !mode.CanRequestAdoption(candidate.m_gid),
+            "remote baby job update retained adoption eligibility");
+        g_session.m_aid = oldAid;
+        g_session.m_playerJob = oldJob;
+        world.m_player = nullptr;
         g_session.m_partyList = oldParty;
         g_session.ClearSkillItems();
         for (const auto& skill : oldSkills) g_session.SetSkillItem(skill);

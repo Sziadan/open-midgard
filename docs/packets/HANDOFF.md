@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK30.03 implements adoption initiation and two-stage consent for the selected server. Continue PK30.04 with the relationship source and UI review, including the candidate prompt and eligible parent menu in both renderers. Check the selected server's post-adoption job and skill updates against the existing client receivers before closing coverage. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
+PK30.04 now replays the selected post-adoption job, experience and skill changes. Next verify the candidate warning and eligible parent menu in both renderers, including the full warning text and cancellation on map reuse. The selected live adoption flow and independent review remain open. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 

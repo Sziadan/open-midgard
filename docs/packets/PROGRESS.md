@@ -3975,3 +3975,5 @@ PK30.01 traces the selected relationship packets, and PK30.02 adds divorce and a
 PK30.02 receives the selected recall name and wedding effect through the map packet router. [Evidence](evidence/PK30.01-relationship-wire.md)
 
 PK30.03 adds the eligible player menu request and shared two-stage adoption confirmation. [Evidence](evidence/PK30.01-relationship-wire.md)
+
+PK30.04 verifies the selected post-adoption job transition and retains Cheer Up across full skill snapshots. [Evidence](evidence/PK30.01-relationship-wire.md)
