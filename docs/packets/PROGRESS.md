@@ -4139,3 +4139,5 @@ PK43.02 classifies ten buying-store discovery rows as inactive for MAIN 20080910
 PK43.03 connects selected booking registration, deletion and registration results, and dispositions the inactive booking and store-search identities. [Evidence](evidence/PK43.03-selected-party-booking.md)
 
 PK43.04 checks booking result branches, local send failure and selected zero-length delete replies. Live receive acceptance remains open. [Evidence](evidence/PK43.04-booking-self-review.md)
+
+PK46.02 links twelve selected auction, cash-shop, battleground and booking request captures and the open instance destroy contract to the outbound inventory. [Evidence](evidence/PK46.02-commerce-battleground-booking-crosswalk.md)

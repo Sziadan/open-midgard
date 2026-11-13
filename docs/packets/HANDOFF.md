@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 now links the selected commerce, battleground and booking senders to the outbound inventory. Continue per-request tracing for the remaining families. PK46.03 still carries the selected character-deletion layout mismatch and pre-auth failure handling. [Outbound crosswalk](evidence/PK46.02-commerce-battleground-booking-crosswalk.md) · [Character delete evidence](evidence/PK46.03-character-delete-ui-mismatch.md)
+
 PK43.03 connects the selected booking register and delete commands and the `0803` registration result. Continue live registration, duplicate, deletion, and re-registration on the same character. Verify that the selected deployment emits no `0807` and that reconnect clears an outstanding registration. Buying-store and store-search discovery rows are inactive for MAIN 20080910. [Selected booking](evidence/PK43.03-selected-party-booking.md) · [Store and booking inventory](evidence/PK43.01-selected-store-booking-inventory.md)
 
 PK42.03 connects the native and Qt Memorial Dungeon window, Alt+B toggle, and absolute countdowns. PK42.04 finds that the server can broadcast a replacement snapshot without updating the recipient's `02CF` destroy target. Keep the window read-only until an authoritative target contract or a single-instance deployment invariant is established. [Instance window](evidence/PK42.03-instance-window.md) · [Destroy target evidence](evidence/PK42.04-instance-target-ownership.md)
