@@ -2226,6 +2226,7 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         message={{"visible",IsGameplayWindowVisible(state,window)},{"layer",chatLayer(window)},
             {"x",window->m_x},{"y",window->m_y},{"width",window->m_w},{"height",window->m_h},
             {"text",ToQString(window->GetText())},{"messageId",window->GetMessageId()},
+            {"bodyHeight",window->GetMessageBodyHeight()},
             {"hasCancel",window->HasCancel()},{"button",roomButton(window->GetButton(),window->IsPressed()?2:0)},
             {"cancelButton",roomButton(window->GetCancelButton(),window->IsCancelPressed()?2:0)}};
     }

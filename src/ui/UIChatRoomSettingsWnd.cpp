@@ -203,6 +203,14 @@ void UIChatRoomMessageBox::ConfigureConfirmation(UIWindow* owner,std::function<v
     m_ok=Button(121,150,96,"btn_ok.bmp","btn_ok_a.bmp","btn_ok_b.bmp");
     m_cancel=Button(122,215,96,"btn_cancel.bmp","btn_cancel_a.bmp","btn_cancel_b.bmp");
 }
+void UIChatRoomMessageBox::SetMessageBodyHeight(int height)
+{
+    const int delta = height - m_bodyHeight;
+    m_bodyHeight = height;
+    m_ok.y += delta;
+    m_cancel.y += delta;
+    Resize(m_w, m_h + delta);
+}
 void UIChatRoomMessageBox::Dismiss(bool accepted)
 {
     auto completion=std::move(m_completion);
@@ -219,7 +227,7 @@ void UIChatRoomMessageBox::OnLBtnDown(int x,int y)
 {
     if(In(m_ok.Bounds(),x-m_x,y-m_y)){m_pressed=true;Invalidate();return;}
     if(HasCancel() && In(m_cancel.Bounds(),x-m_x,y-m_y)){m_cancelPressed=true;Invalidate();return;}
-    if(In({10,22,270,87},x-m_x,y-m_y))return;
+    if(In({10,22,270,22+m_bodyHeight},x-m_x,y-m_y))return;
     m_dragging=true;m_startX=x;m_startY=y;m_oldX=m_x;m_oldY=m_y;
 }
 void UIChatRoomMessageBox::OnLBtnUp(int x,int y){const bool ok=m_pressed && In(m_ok.Bounds(),x-m_x,y-m_y),cancel=m_cancelPressed && In(m_cancel.Bounds(),x-m_x,y-m_y);CancelPointerCapture();if(ok || cancel)Dismiss(ok);}
@@ -228,6 +236,6 @@ void UIChatRoomMessageBox::OnKeyDown(int key){if(key==VK_RETURN || key==VK_ESCAP
 void UIChatRoomMessageBox::OnDraw()
 {
     auto dc=AcquireDrawTarget();if(!dc)return;shopui::FillRectColor(dc,{m_x,m_y,m_x+m_w,m_y+m_h},RGB(232,232,232));
-    shopui::FillRectColor(dc,Global({10,22,270,87},*this),RGB(242,242,242));Text(dc,Global({10,22,270,87},*this),m_text,true);
+    shopui::FillRectColor(dc,Global({10,22,270,22+m_bodyHeight},*this),RGB(242,242,242));Text(dc,Global({10,22,270,22+m_bodyHeight},*this),m_text,true);
     PaintButton(dc,*this,m_ok,m_pressed?2:0);if(HasCancel())PaintButton(dc,*this,m_cancel,m_cancelPressed?2:0);ReleaseDrawTarget(dc);
 }

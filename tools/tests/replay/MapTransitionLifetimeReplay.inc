@@ -627,6 +627,7 @@ void MapTransitionLifetimeReplay()
         ro::commerce::state.promptKind = "friend";
         ro::commerce::state.promptId = 9;
         ro::commerce::state.promptChar = 10;
+        mode.ReceiveAdoptionInvitation(9, 10, "Parent");
         auto cellThenWarp = MapCellUpdateFrame(1, 1, 5, "prontera.gat");
         g_session.m_mapTypeInfo.Clear();
         g_session.m_isMinEffectOld = false;
@@ -639,6 +640,8 @@ void MapTransitionLifetimeReplay()
             "same-map warp did not stay on the loaded map");
         Require(ro::commerce::state.promptKind.empty() && !ro::commerce::state.promptId,
             "same-map warp kept a friend invitation actionable");
+        mode.UpdateAdoptionInvitation();
+        Require(!g_windowMgr.m_roomMessageBox, "same-map warp kept an adoption invitation actionable");
         Require(presentations == 0 && handoffs == 0, "loaded same-map warp selected external orchestration");
         const std::vector<u8> ack = ackPeer.ReceiveExact(2);
         const u16 expectedAck = ro::net::GetActiveMapGameplaySendProfile().notifyActorInit;

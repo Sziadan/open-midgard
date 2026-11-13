@@ -73,6 +73,8 @@ public:
     void Dismiss(bool accepted=true);
     void Close();
     void ConfigureConfirmation(UIWindow* owner,std::function<void(bool)> completion);
+    void SetMessageBodyHeight(int height);
+    int GetMessageBodyHeight() const { return m_bodyHeight; }
     UIWindow* GetSourceOwner() const {return m_sourceOwner;}
     void SetSourceOwner(UIWindow* owner){m_sourceOwner=owner;}
     bool HasCancel() const {return static_cast<bool>(m_completion);}
@@ -89,6 +91,7 @@ public:
 private:
     std::string m_text;
     int m_messageId;
+    int m_bodyHeight = 65;
     UIWindow* m_previousEdit;
     RoomSettingsButton m_ok;
     RoomSettingsButton m_cancel;

@@ -317,6 +317,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x01EF, kVariablePacketSize);
     SetPacketSize(0x01F0, kVariablePacketSize);
     SetPacketSize(0x01F3, 10);
+    SetPacketSize(0x01F6, 34);              // ZC_REQ_BABY
     SetPacketSize(0x01F8, 2);
     SetPacketSize(0x01FF, 10);              // ZC_HIGHJUMP (clif_slide)
     SetPacketSize(0x0201, kVariablePacketSize);

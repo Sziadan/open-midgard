@@ -2580,6 +2580,97 @@ void RelationshipNoticeReplay()
     g_windowMgr.ClearChatEvents();
 }
 
+void AdoptionConsentReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    LoopbackPeer server(input);
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+
+    std::vector<u8> invitation(34, 0);
+    invitation[0] = 0xf6;
+    invitation[1] = 1;
+    invitation[2] = 0x44;
+    invitation[6] = 0x55;
+    invitation[10] = 'P';
+    const auto deliver = [&] {
+        server.Send(invitation);
+        WaitKernelPending(input, static_cast<int>(invitation.size()));
+        Require(ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "adoption invitation did not frame and dispatch");
+    };
+    deliver();
+    Require(g_windowMgr.m_roomMessageBox && g_windowMgr.m_roomMessageBox->GetMessageId() == 794,
+        "adoption invitation did not open consent");
+    g_windowMgr.m_roomMessageBox->Dismiss(true);
+    Require(g_windowMgr.m_roomMessageBox && g_windowMgr.m_roomMessageBox->GetMessageId() == 888
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "initial adoption consent sent before the consequences warning");
+    g_windowMgr.m_roomMessageBox->Dismiss(true);
+    Require(peer.ReceiveExact(14) == std::vector<u8>{0xf7, 1, 0x44, 0, 0, 0, 0x55, 0, 0, 0, 1, 0, 0, 0},
+        "adoption acceptance did not send both parent account IDs");
+
+    deliver();
+    g_windowMgr.m_roomMessageBox->Dismiss(true);
+    invitation[2] = 0x66;
+    deliver();
+    Require(g_windowMgr.m_roomMessageBox && g_windowMgr.m_roomMessageBox->GetMessageId() == 794,
+        "replacement adoption did not restart consent");
+    g_windowMgr.m_roomMessageBox->Dismiss(false);
+    Require(peer.ReceiveExact(14) == std::vector<u8>{0xf7, 1, 0x66, 0, 0, 0, 0x55, 0, 0, 0, 0, 0, 0, 0},
+        "adoption decline did not address the replacement invitation");
+    deliver();
+    mode.ClearAdoptionInvitation();
+    mode.UpdateAdoptionInvitation();
+    Require(!g_windowMgr.m_roomMessageBox && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "adoption teardown sent a reply or reopened the prompt");
+    Require(!mode.SendMsg(CGameMode::GameMsg_RequestPlayerContextAction, 0x77,
+        CGameMode::PlayerContext_RequestAdoption, 0), "ineligible adoption request was sent");
+    {
+        auto* character = g_session.GetMutableSelectedCharacterInfo();
+        Require(character, "adoption replay needs the selected character from login replay");
+        const auto oldCharacter = *character;
+        const auto oldSkills = g_session.GetSkillItems();
+        const auto oldParty = g_session.GetPartyList();
+        CWorld world;
+        CGameActor candidate;
+        candidate.m_gid = 0x77;
+        candidate.m_isPc = 1;
+        candidate.m_job = 0;
+        world.RegisterActor(&candidate);
+        mode.m_world = &world;
+        character->level = 70;
+        character->job = 7;
+        g_session.ClearSkillItems();
+        PLAYER_SKILL_INFO recall{};
+        recall.SKID = 336;
+        recall.m_isValid = 1;
+        recall.level = 1;
+        g_session.SetSkillItem(recall);
+        FRIEND_INFO member{};
+        member.isValid = 1;
+        member.AID = candidate.m_gid;
+        member.GID = 0x99;
+        member.characterName = "Candidate";
+        g_session.m_partyList = {member};
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestPlayerContextAction, candidate.m_gid,
+            CGameMode::PlayerContext_RequestAdoption, 0)
+            && peer.ReceiveExact(6) == std::vector<u8>{0xf9, 1, 0x77, 0, 0, 0},
+            "eligible adoption did not emit the candidate account ID");
+        g_session.m_partyList = oldParty;
+        g_session.ClearSkillItems();
+        for (const auto& skill : oldSkills) g_session.SetSkillItem(skill);
+        *character = oldCharacter;
+        world.UnregisterActor(&candidate);
+        mode.m_world = nullptr;
+    }
+    connection->Disconnect();
+}
+
 void SocialNoticeReplay()
 {
     CGameMode mode;
@@ -6834,6 +6925,7 @@ int main(int argc,char** argv){try{
     Login3ClientInfoHashRequestReplay();
     ElementalSnapshotReplay();
     RelationshipNoticeReplay();
+    AdoptionConsentReplay();
     SocialNoticeReplay();
     FriendRemovalReplay();
     PrivacyConfigurationReplay();

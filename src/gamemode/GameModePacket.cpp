@@ -8548,6 +8548,13 @@ void HandleAdoptionResult(CGameMode&, const PacketView& packet)
     g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice.c_str()), 10198015);
 }
 
+void HandleAdoptionInvitation(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 34) return;
+    mode.ReceiveAdoptionInvitation(ReadLE32(packet.data + 2), ReadLE32(packet.data + 6),
+        ExtractFixedPacketString(packet, 10, 24));
+}
+
 void HandleUserCount(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 6) return;
@@ -8921,6 +8928,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
     ro::commerce::CloseTransactions();
     mode.CloseFriendInvitation();
+    mode.ClearAdoptionInvitation();
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",
@@ -9895,6 +9903,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0205, HandleDivorceNotice);
     router.Register(0x01E6, HandleRecallPartnerName);
     router.Register(0x01EA, HandleWeddingEffect);
+    router.Register(0x01F6, HandleAdoptionInvitation);
     router.Register(0x0216, HandleAdoptionResult);
     router.Register(0x0206, HandleFriendState);
     router.Register(0x0207, HandleFriendRequest);

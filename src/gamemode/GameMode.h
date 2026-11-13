@@ -113,6 +113,10 @@ public:
     void RetireMercenaryContract();
     void UpdateFriendInvitation();
     void CloseFriendInvitation();
+    void ReceiveAdoptionInvitation(u32 parent, u32 partner, std::string name);
+    void UpdateAdoptionInvitation();
+    void ClearAdoptionInvitation();
+    bool CanRequestAdoption(u32 candidate) const;
 
     enum MapLoadingStage {
         MapLoading_None = 0,
@@ -180,6 +184,7 @@ public:
         PlayerContext_SendMail,
         PlayerContext_RejectWhispering,
         PlayerContext_AllowWhispering=9, // 8 is an existing commerce request action.
+        PlayerContext_RequestAdoption = 10,
     };
 
     CGameMode();
@@ -322,6 +327,12 @@ public:
     u32 m_lastCouplePacketAid;
     u32 m_lastCouplePacketGid;
     std::string m_recallPartnerName;
+    struct AdoptionInvitation {
+        u32 parent = 0;
+        u32 partner = 0;
+        std::string name;
+        bool reviewingConsequences = false;
+    } m_adoptionInvitation;
     
     UINameBalloonText* m_nameBalloon;
     UINameBalloonText* m_targetNameBalloon;

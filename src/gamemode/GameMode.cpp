@@ -3835,7 +3835,17 @@ bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
 
     mode.m_menuTargetAID = targetAid;
     mode.m_lastWhisperMenuCharacterName = targetName;
-    menuWnd->SetMenu(targetAid, targetName, BuildPlayerContextMenuEntries(targetName), menuX, menuY);
+    auto entries = BuildPlayerContextMenuEntries(targetName);
+    if (mode.CanRequestAdoption(targetAid)) {
+        ro::UiMessageStrings strings;
+        strings.Load();
+        auto label = strings.Get(887, "Send an adoption request to %s");
+        if (const auto placeholder = label.find("%s"); placeholder != std::string::npos) {
+            label.replace(placeholder, 2, targetName);
+        }
+        entries.push_back({CGameMode::PlayerContext_RequestAdoption, std::move(label)});
+    }
+    menuWnd->SetMenu(targetAid, targetName, entries, menuX, menuY);
     DbgLog("[GameMode] opened player context menu targetAid=%u targetName='%s'\n",
         static_cast<unsigned int>(targetAid),
         targetName.c_str());
@@ -10868,6 +10878,86 @@ bool CGameMode::CanRequestStandingResurrection() const
 
 namespace {
 constexpr int kFriendInvitationMessageId = 818;
+constexpr int kAdoptionInvitationMessageId = 794;
+constexpr int kAdoptionConsequencesMessageId = 888;
+
+bool SendAdoptionPacket(u8 opcode, u32 first, u32 second = 0, bool accepted = false)
+{
+    std::array<u8, 14> packet{opcode, 1};
+    for (unsigned i = 0; i < 4; ++i) {
+        packet[2 + i] = static_cast<u8>(first >> (8 * i));
+        packet[6 + i] = static_cast<u8>(second >> (8 * i));
+    }
+    packet[10] = static_cast<u8>(accepted);
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
+        opcode == 0xf9 ? 6 : 14);
+}
+}
+
+bool CGameMode::CanRequestAdoption(u32 candidate) const
+{
+    const auto* character = g_session.GetSelectedCharacterInfo();
+    if (!character || character->level < 70 || (character->job >= 4023 && character->job <= 4045)
+        || !candidate || candidate == g_session.m_aid || !m_world) return false;
+    const auto* actor = m_world->GetGameActorByAID(candidate);
+    if (!IsPcLikeHoverActor(actor) || actor->m_job < 0 || (actor->m_job > 6 && actor->m_job != 23)) return false;
+    const auto hasSkill = [](int id) {
+        const auto* skill = g_session.GetSkillItemBySkillId(id);
+        return skill && skill->m_isValid && skill->level > 0;
+    };
+    if (!hasSkill(336) || hasSkill(409) || hasSkill(410)) return false;
+    const auto* member = g_session.FindPartyMemberByAid(candidate);
+    return member && member->isValid;
+}
+
+void CGameMode::ClearAdoptionInvitation()
+{
+    if (auto* box = g_windowMgr.m_roomMessageBox; box && box->HasCancel()
+        && (box->GetMessageId() == kAdoptionInvitationMessageId
+            || box->GetMessageId() == kAdoptionConsequencesMessageId)) {
+        box->Close();
+    }
+    m_adoptionInvitation = {};
+}
+
+void CGameMode::ReceiveAdoptionInvitation(u32 parent, u32 partner, std::string name)
+{
+    if (!parent || !partner || parent == partner || name.empty()) return;
+    ClearAdoptionInvitation();
+    m_adoptionInvitation = {parent, partner, std::move(name)};
+    UpdateAdoptionInvitation();
+}
+
+void CGameMode::UpdateAdoptionInvitation()
+{
+    const auto& invite = m_adoptionInvitation;
+    if (!invite.parent || g_windowMgr.m_modalWindow) return;
+    const bool consequences = invite.reviewingConsequences;
+    const auto parent = invite.parent;
+    const auto partner = invite.partner;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const int messageId = consequences ? kAdoptionConsequencesMessageId : kAdoptionInvitationMessageId;
+    auto message = consequences
+        ? strings.Get(messageId, "Adoption limits stats, reduces maximum HP and SP, and prevents advancement to a Transcendent Class. Continue?")
+        : invite.name + strings.Get(messageId, " wishes to adopt you. Do you accept?");
+    auto* box = new UIChatRoomMessageBox(std::move(message), messageId);
+    const auto generation = g_modeMgr.GetOperationGeneration();
+    box->ConfigureConfirmation(nullptr, [this, parent, partner, consequences, generation](bool accept) {
+        if (g_modeMgr.GetOperationGeneration() != generation
+            || m_adoptionInvitation.parent != parent || m_adoptionInvitation.partner != partner) return;
+        if (accept && !consequences) {
+            m_adoptionInvitation.reviewingConsequences = true;
+            UpdateAdoptionInvitation();
+            return;
+        }
+        if (SendAdoptionPacket(0xf7, parent, partner, accept)) ClearAdoptionInvitation();
+    });
+    if (consequences) box->SetMessageBodyHeight(105);
+    g_windowMgr.m_roomMessageBox = box;
+    g_windowMgr.m_children.push_back(box);
+    g_windowMgr.m_modalWindow = box;
+    g_windowMgr.m_editWindow = nullptr;
 }
 
 void CGameMode::CloseFriendInvitation()
@@ -10912,6 +11002,7 @@ void CGameMode::UpdateFriendInvitation()
 
 void CGameMode::OnExit() {
     CloseFriendInvitation();
+    ClearAdoptionInvitation();
     ro::commerce::CloseTransactions();
     g_session.m_showEquipmentToOthers = false;
     g_session.m_refuseRecall = false;
@@ -11331,6 +11422,7 @@ void CGameMode::OnUpdate() {
 
     UpdateStarSkillNotice(timeGetTime());
     UpdateFriendInvitation();
+    UpdateAdoptionInvitation();
     UpdateNpcProgress(*conn, timeGetTime());
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);
@@ -12431,6 +12523,9 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case GameMsg_RequestPlayerContextAction: {
         const PlayerContextAction action = static_cast<PlayerContextAction>(lparam);
         const u32 targetAid = static_cast<u32>(wparam);
+        if (action == PlayerContext_RequestAdoption) {
+            return CanRequestAdoption(targetAid) && SendAdoptionPacket(0xf9, targetAid);
+        }
         if (action == PlayerContext_AskJoinParty) {
             DbgLog("[GameMode] player context action targetAid=%u action=%d (%s)\n",
                 static_cast<unsigned int>(targetAid),

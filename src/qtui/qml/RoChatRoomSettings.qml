@@ -90,7 +90,7 @@ Item {
         scale: forms.parent.scale; transformOrigin: Item.TopLeft
         z: 10000; visible: forms.message.visible || false; color: "#e8e8e8"; clip: true
         Rectangle {
-            x: 10; y: 22; width: 260; height: 65; color: "#f2f2f2"; clip: true
+            x: 10; y: 22; width: 260; height: forms.message.bodyHeight || 65; color: "#f2f2f2"; clip: true
             Text { objectName: "sourceRoomValidationText"; anchors.fill: parent; text: forms.message.text || ""; wrapMode: Text.WordWrap; font.pixelSize: 12; font.family: "Segoe UI"; textFormat: Text.PlainText }
         }
         SourceButton { button: forms.message.button || ({}) }

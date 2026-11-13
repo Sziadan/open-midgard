@@ -33,6 +33,7 @@ public:
     u32 GetTargetAid() const;
     const std::string& GetTargetName() const;
     const std::vector<std::string>& GetOptions() const;
+    const std::vector<PlayerContextMenuEntry>& GetEntries() const { return m_entries; }
     int GetSelectedIndex() const;
     int GetHoverIndex() const;
     bool IsOkPressed() const;

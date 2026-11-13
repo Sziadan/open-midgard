@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Relationship packets**. PK30.02 receives divorce, adoption failures, partner recall names, and wedding effects. Adoption consent remains open. [Evidence](evidence/PK30.01-relationship-wire.md)
+**Relationship packets**. PK30.03 wires adoption initiation and consent alongside divorce, recall, and wedding receive paths. PK30.04 review and live verification remain open. [Evidence](evidence/PK30.01-relationship-wire.md)
 
 **Social packets**. PK16.04 reviews the selected privacy and social paths and verifies equipment lookup refusal. PK34 validates and replaces friend snapshots atomically. Independent review and live verification remain open. [Verification evidence](evidence/PK16.04-verification-boundary.md)
 
