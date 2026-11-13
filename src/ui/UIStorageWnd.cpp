@@ -847,7 +847,7 @@ void UIStorageWnd::OnLBtnDblClk(int x, int y)
                     CGameMode::GameMsg_RequestStorageWithdrawItem,
                     static_cast<int>(item->m_itemIndex),
                     (std::max)(1, item->m_num),
-                    0) != 0) {
+                    item->GetItemId()) != 0) {
                 return;
             }
         }
@@ -1090,7 +1090,7 @@ void UIStorageWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
                 CGameMode::GameMsg_RequestStorageStoreItem,
                 static_cast<msgparam_t>(dragInfo->itemIndex),
                 static_cast<u32>(storeAmount),
-                static_cast<u32>(storeAmount));
+                static_cast<u32>(storeAmount), nullptr, dragInfo->itemId);
         }
         return;
     }
@@ -1099,7 +1099,7 @@ void UIStorageWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
             CGameMode::GameMsg_RequestStorageStoreItem,
             static_cast<int>(dragInfo->itemIndex),
             storeAmount,
-            0) != 0) {
+            dragInfo->itemId) != 0) {
         Invalidate();
         if (g_windowMgr.m_itemWnd) {
             g_windowMgr.m_itemWnd->Invalidate();

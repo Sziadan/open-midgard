@@ -6971,16 +6971,18 @@ bool RequestNpcShopCancel()
     return true;
 }
 
-bool RequestMoveInventoryItemToStorage(u16 itemIndex, u32 amount)
+bool RequestMoveInventoryItemToStorage(u16 itemIndex, u32 amount, unsigned itemId)
 {
-    if (!g_session.IsStorageOpen() || itemIndex == 0 || amount == 0) {
+    const auto* item = g_session.GetInventoryItemByIndex(itemIndex);
+    if (!g_session.IsStorageOpen() || !amount || !itemId || !item || item->GetItemId() != itemId || item->m_num <= 0
+        || static_cast<unsigned>(itemIndex) - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots) {
         return false;
     }
 
     PACKET_CZ_MOVE_ITEM_TO_STORE packet{};
     packet.PacketType = PacketProfile::ActiveStorageSend::kMoveToStorage;
     packet.ItemIndex = itemIndex;
-    packet.Count = amount;
+    packet.Count = (std::min)(amount, static_cast<u32>(item->m_num));
 
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
@@ -6992,16 +6994,18 @@ bool RequestMoveInventoryItemToStorage(u16 itemIndex, u32 amount)
     return sent;
 }
 
-bool RequestMoveStorageItemToInventory(u16 itemIndex, u32 amount)
+bool RequestMoveStorageItemToInventory(u16 itemIndex, u32 amount, unsigned itemId)
 {
-    if (!g_session.IsStorageOpen() || itemIndex == 0 || amount == 0) {
+    const auto* item = g_session.GetStorageItemByIndex(itemIndex);
+    if (!g_session.IsStorageOpen() || !amount || !itemId || !item || item->GetItemId() != itemId || item->m_num <= 0
+        || static_cast<unsigned>(itemIndex) - ro::item_snapshot::kFirstStorageIndex >= ro::item_snapshot::kStorageSlots) {
         return false;
     }
 
     PACKET_CZ_MOVE_ITEM_FROM_STORE packet{};
     packet.PacketType = PacketProfile::ActiveStorageSend::kMoveFromStorage;
     packet.ItemIndex = itemIndex;
-    packet.Count = amount;
+    packet.Count = (std::min)(amount, static_cast<u32>(item->m_num));
 
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
@@ -12543,10 +12547,10 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     }
 
     case GameMsg_RequestStorageStoreItem:
-        return RequestMoveInventoryItemToStorage(static_cast<u16>(wparam), static_cast<u32>(lparam)) ? 1 : 0;
+        return RequestMoveInventoryItemToStorage(static_cast<u16>(wparam), static_cast<u32>(lparam), static_cast<unsigned>(extra)) ? 1 : 0;
 
     case GameMsg_RequestStorageWithdrawItem:
-        return RequestMoveStorageItemToInventory(static_cast<u16>(wparam), static_cast<u32>(lparam)) ? 1 : 0;
+        return RequestMoveStorageItemToInventory(static_cast<u16>(wparam), static_cast<u32>(lparam), static_cast<unsigned>(extra)) ? 1 : 0;
 
     case GameMsg_RequestStorageClose:
         return RequestCloseStorage() ? 1 : 0;

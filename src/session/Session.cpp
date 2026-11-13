@@ -1795,30 +1795,10 @@ void CSession::AddStorageItem(const ITEM_INFO& itemInfo)
 
     if (it != m_storageItems.end()) {
         it->m_num += itemInfo.m_num;
-        if (itemInfo.GetItemId() != 0) {
-            it->SetItemId(itemInfo.GetItemId());
-        }
-        if (itemInfo.m_itemType != 0) {
-            it->m_itemType = itemInfo.m_itemType;
-        }
-        if (itemInfo.m_location != 0) {
-            it->m_location = itemInfo.m_location;
-        }
-        if (itemInfo.m_wearLocation != 0) {
-            it->m_wearLocation = itemInfo.m_wearLocation;
-        }
-        it->m_isIdentified = itemInfo.m_isIdentified;
-        it->m_isDamaged = itemInfo.m_isDamaged;
-        it->m_refiningLevel = itemInfo.m_refiningLevel;
-        it->m_deleteTime = itemInfo.m_deleteTime;
-        std::memcpy(it->m_slot, itemInfo.m_slot, sizeof(it->m_slot));
         return;
     }
 
     m_storageItems.push_back(itemInfo);
-    if (m_storageOpen) {
-        ++m_storageCurrentCount;
-    }
 }
 
 void CSession::AddInventoryItem(const ITEM_INFO& itemInfo)
@@ -1940,9 +1920,6 @@ void CSession::RemoveStorageItem(unsigned int itemIndex, int amount)
 
         if (amount <= 0 || it->m_num <= amount) {
             m_storageItems.erase(it);
-            if (m_storageOpen) {
-                m_storageCurrentCount = (std::max)(0, m_storageCurrentCount - 1);
-            }
         } else {
             it->m_num -= amount;
         }

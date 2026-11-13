@@ -853,7 +853,7 @@ void UIItemWnd::OnLBtnDblClk(int x, int y)
                         CGameMode::GameMsg_RequestStorageStoreItem,
                         static_cast<int>(item->m_itemIndex),
                         (std::max)(1, item->m_num),
-                        0) != 0) {
+                        item->GetItemId()) != 0) {
                     return;
                 }
             } else if (item && CanUseInventoryItemOnDoubleClick(*item)) {
@@ -911,7 +911,7 @@ void UIItemWnd::TryActivateItemAtPoint(int x, int y)
             CGameMode::GameMsg_RequestStorageStoreItem,
             static_cast<int>(item->m_itemIndex),
             (std::max)(1, item->m_num),
-            0);
+            item->GetItemId());
         return;
     }
 
@@ -1179,7 +1179,7 @@ void UIItemWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
                     CGameMode::GameMsg_RequestStorageWithdrawItem,
                     static_cast<msgparam_t>(dragInfo->itemIndex),
                     static_cast<u32>(withdrawAmount),
-                    static_cast<u32>(withdrawAmount));
+                    static_cast<u32>(withdrawAmount), nullptr, dragInfo->itemId);
             }
             return;
         }
@@ -1188,7 +1188,7 @@ void UIItemWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
                 CGameMode::GameMsg_RequestStorageWithdrawItem,
                 static_cast<int>(dragInfo->itemIndex),
                 withdrawAmount,
-                0) != 0) {
+                dragInfo->itemId) != 0) {
             Invalidate();
             if (g_windowMgr.m_storageWnd) {
                 g_windowMgr.m_storageWnd->Invalidate();

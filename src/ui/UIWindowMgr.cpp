@@ -1237,6 +1237,10 @@ void UIWindowMgr::CloseNpcShopQuantityPrompt()
 
 void UIWindowMgr::CloseStorageWindows()
 {
+    if (m_npcInputWnd && (m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestStorageStoreItem)
+        || m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestStorageWithdrawItem))) {
+        m_npcInputWnd->HideInput();
+    }
     if (m_storageWnd) {
         m_storageWnd->SetShow(0);
         m_storageWnd->StoreInfo();

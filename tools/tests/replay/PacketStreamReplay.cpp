@@ -5931,6 +5931,86 @@ void MailComposerProductionSendReplay()
 
 bool ReplayRequestCloseStorage();
 
+void StorageTransferProductionReplay()
+{
+    SetCase("storage_transfer_production", "PK38.02", "selected-0094-00f7-storage",
+        "storage quantity prompt -> game-mode sender and storage mutation router");
+    constexpr u16 inventorySlot = 100;
+    constexpr u16 storageSlot = 70;
+    Require(!g_session.IsStorageOpen() && !g_session.GetInventoryItemByIndex(inventorySlot),
+        "storage fixture requires closed storage and a free inventory slot");
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), bytes.size(), view, consumed)
+            && consumed == bytes.size() && router.Dispatch(mode, view), "storage frame did not dispatch");
+    };
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    g_session.OpenStorage(2, 600);
+    ITEM_INFO item{};
+    item.m_itemIndex = inventorySlot;
+    item.SetItemId(501);
+    item.m_num = 2;
+    g_session.SetInventoryItem(item);
+    auto* prompt = static_cast<UINpcInputWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_NPCINPUTWND));
+    Require(prompt, "storage fixture could not open the amount prompt");
+    prompt->OpenGameNumberPrompt("Store", CGameMode::GameMsg_RequestStorageStoreItem, inventorySlot, 5, 5, nullptr, 502);
+    prompt->HandleKeyDown(VK_RETURN);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "stale storage prompt sent a request");
+    prompt->OpenGameNumberPrompt("Store", CGameMode::GameMsg_RequestStorageStoreItem, inventorySlot, 5, 5, nullptr, 501);
+    prompt->HandleKeyDown(VK_RETURN);
+    Require(peer.ReceiveExact(14) == std::vector<u8>{0x94,0,0,0,0,0,0,100,0,0,2,0,0,0},
+        "store frame or current-stack clamp differs");
+    Require(g_session.GetInventoryItemByIndex(inventorySlot)->m_num == 2, "store changed inventory before its reply");
+    const std::vector<u8> add{0xc4,1,70,0,2,0,0,0,0xf5,1,0,1,0,0,0,0,0,0,0,0,0,0};
+    dispatch(add);
+    dispatch({0xf2,0,3,0,0x58,2});
+    dispatch({0xaf,0,100,0,2,0});
+    Require(!g_session.GetInventoryItemByIndex(inventorySlot) && g_session.GetStorageItemByIndex(storageSlot)->m_num == 2,
+        "store replies did not move the stack");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestStorageWithdrawItem, storageSlot, 2, 501)
+        && peer.ReceiveExact(22) == std::vector<u8>{0xf7,0,0,0,0,0,0,0,0,0,0,0,0,0,70,0,0,0,2,0,0,0},
+        "withdraw frame differs");
+    dispatch({0xf6,0,70,0,0,0,0,0});
+    Require(g_session.GetStorageItemByIndex(storageSlot)->m_num == 2, "failed withdrawal erased storage");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestStorageWithdrawItem, storageSlot, 2, 501)
+        && peer.ReceiveExact(22) == std::vector<u8>{0xf7,0,0,0,0,0,0,0,0,0,0,0,0,0,70,0,0,0,2,0,0,0},
+        "withdrawal could not retry after rejection");
+    std::vector<u8> award(29, 0);
+    award[0] = 0xd4;
+    award[1] = 2;
+    award[2] = 100;
+    award[4] = 2;
+    award[6] = 0xf5;
+    award[7] = 1;
+    award[8] = 1;
+    dispatch(award);
+    dispatch({0xf2,0,2,0,0x58,2});
+    dispatch({0xf6,0,70,0,2,0,0,0});
+    Require(!g_session.GetStorageItemByIndex(storageSlot) && g_session.GetStorageCurrentCount() == 2
+        && g_session.GetInventoryItemByIndex(inventorySlot)->m_num == 2,
+        "storage removal subtracted from the authoritative slot count a second time");
+    prompt->OpenGameNumberPrompt("Withdraw", CGameMode::GameMsg_RequestStorageWithdrawItem, storageSlot, 2, 2, nullptr, 501);
+    dispatch({0xf8,0});
+    dispatch(add);
+    Require(!g_session.IsStorageOpen() && !g_session.GetStorageItemByIndex(storageSlot)
+        && !prompt->IsGameNumberPromptFor(CGameMode::GameMsg_RequestStorageWithdrawItem),
+        "storage close retained its prompt or accepted a subsequent delta");
+    connection->Disconnect();
+    g_session.RemoveInventoryItem(inventorySlot, 0);
+    g_windowMgr.DeleteWindow(prompt);
+    SkillPacketReplayAccess::Restore(oldMode, oldType);
+}
+
 void StorageCloseProductionSendReplay()
 {
     SetCase("storage_close_production_send", "PK46.02", "PK01.02-final-0193-close-kafra",
@@ -7349,6 +7429,7 @@ int main(int argc,char** argv){try{
     MailSendProductionReplay();
     MailResultProductionReceiveReplay();
     StorageCloseProductionSendReplay();
+    StorageTransferProductionReplay();
     ActionFailureProductionReceiveReplay();
     PartyInviteProductionSendReplay();
     PartyInviteReplyProductionSendReplay();

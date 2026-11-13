@@ -2492,19 +2492,18 @@ void HandleEquipInventoryList(CGameMode& mode, const PacketView& packet)
 
 bool BuildStorageItemFromAddPacket(const PacketView& packet, ITEM_INFO& outItem)
 {
-    if (!packet.data) {
-        return false;
-    }
+    if (!packet.data || !ro::net::IsActiveStorageItemAddedPacket(packet.packetId)) return false;
+    const bool typed = ro::net::IsActiveStorageItemAddedTypedPacket(packet.packetId);
+    if (packet.packetLength != (typed ? 22 : 21)) return false;
 
     outItem = ITEM_INFO{};
     outItem.m_itemIndex = ReadLE16(packet.data + 2);
-    outItem.m_num = static_cast<int>(ReadLE32(packet.data + 4));
+    const auto amount = ReadLE32(packet.data + 4);
+    if (!amount || amount > ro::item_snapshot::kMaxStackAmount) return false;
+    outItem.m_num = static_cast<int>(amount);
     outItem.SetItemId(ReadLE16(packet.data + 8));
 
-    if (packet.packetId == ro::net::GetActiveMapReceiveProfile().storageItemAddedBasic) {
-        if (packet.packetLength < 21) {
-            return false;
-        }
+    if (!typed) {
         outItem.m_isIdentified = packet.data[10];
         outItem.m_isDamaged = packet.data[11];
         outItem.m_refiningLevel = packet.data[12];
@@ -2512,10 +2511,7 @@ bool BuildStorageItemFromAddPacket(const PacketView& packet, ITEM_INFO& outItem)
         outItem.m_slot[1] = ReadLE16(packet.data + 15);
         outItem.m_slot[2] = ReadLE16(packet.data + 17);
         outItem.m_slot[3] = ReadLE16(packet.data + 19);
-    } else if (ro::net::IsActiveStorageItemAddedTypedPacket(packet.packetId)) {
-        if (packet.packetLength < 22) {
-            return false;
-        }
+    } else {
         outItem.m_itemType = packet.data[10];
         outItem.m_isIdentified = packet.data[11];
         outItem.m_isDamaged = packet.data[12];
@@ -2524,27 +2520,29 @@ bool BuildStorageItemFromAddPacket(const PacketView& packet, ITEM_INFO& outItem)
         outItem.m_slot[1] = ReadLE16(packet.data + 16);
         outItem.m_slot[2] = ReadLE16(packet.data + 18);
         outItem.m_slot[3] = ReadLE16(packet.data + 20);
-    } else {
-        return false;
     }
 
-    if (outItem.m_num <= 0) {
-        outItem.m_num = 1;
-    }
-    return outItem.m_itemIndex != 0;
+    return outItem.m_itemIndex - ro::item_snapshot::kFirstStorageIndex < ro::item_snapshot::kStorageSlots
+        && outItem.GetItemId() && outItem.m_isIdentified <= 1 && outItem.m_isDamaged <= 1;
 }
 
 void HandleStorageStatus(CGameMode&, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 6) {
+    if (!packet.data || packet.packetLength != 6) {
         return;
     }
 
     const int currentCount = static_cast<int>(ReadLE16(packet.data + 2));
     const int maxCount = static_cast<int>(ReadLE16(packet.data + 4));
+    if (currentCount > maxCount || maxCount > ro::item_snapshot::kStorageSlots) return;
     // An empty refresh has no category frames. The count still establishes emptiness.
     if (currentCount == 0) g_session.ClearStorageItems();
+    const bool wasOpen = g_session.IsStorageOpen();
     g_session.OpenStorage(currentCount, maxCount);
+    if (wasOpen) {
+        if (g_windowMgr.m_storageWnd) g_windowMgr.m_storageWnd->Invalidate();
+        return;
+    }
     g_session.ClearNpcShopState(false);
     g_windowMgr.CloseNpcDialogWindows();
     g_windowMgr.CloseNpcShopWindows();
@@ -2574,11 +2572,15 @@ void HandleEquipStorageList(CGameMode&, const PacketView& packet)
 void HandleStorageItemAdded(CGameMode&, const PacketView& packet)
 {
     ITEM_INFO itemInfo;
-    if (!BuildStorageItemFromAddPacket(packet, itemInfo)) {
+    if (!g_session.IsStorageOpen() || !BuildStorageItemFromAddPacket(packet, itemInfo)) {
         return;
     }
+    if (const auto* existing = g_session.GetStorageItemByIndex(itemInfo.m_itemIndex);
+        existing && (existing->GetItemId() != itemInfo.GetItemId()
+            || existing->m_num > static_cast<int>(ro::item_snapshot::kMaxStackAmount) - itemInfo.m_num)) return;
 
     g_session.AddStorageItem(itemInfo);
+    if (g_windowMgr.m_storageWnd) g_windowMgr.m_storageWnd->Invalidate();
     DbgLog("[GameMode] storage add pkt=0x%04X index=%u amount=%d item=%u type=%u\n",
         static_cast<unsigned int>(packet.packetId),
         static_cast<unsigned int>(itemInfo.m_itemIndex),
@@ -2589,23 +2591,22 @@ void HandleStorageItemAdded(CGameMode&, const PacketView& packet)
 
 void HandleStorageItemRemoved(CGameMode&, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 8) {
+    if (!g_session.IsStorageOpen() || !packet.data || packet.packetLength != 8) {
         return;
     }
 
     const unsigned int itemIndex = ReadLE16(packet.data + 2);
-    const int amount = static_cast<int>(ReadLE32(packet.data + 4));
+    const auto amount = ReadLE32(packet.data + 4);
     // The selected server uses a zero-count 0x00F6 as a failed-transfer
     // correction. It must not erase the storage row.
-    if (amount <= 0) {
-        DbgLog("[GameMode] storage remove ignored index=%u amount=%d\n",
-            itemIndex,
-            amount);
+    if (!amount || amount > ro::item_snapshot::kMaxStackAmount
+        || itemIndex - ro::item_snapshot::kFirstStorageIndex >= ro::item_snapshot::kStorageSlots) {
         return;
     }
 
-    g_session.RemoveStorageItem(itemIndex, amount);
-    DbgLog("[GameMode] storage remove index=%u amount=%d\n",
+    g_session.RemoveStorageItem(itemIndex, static_cast<int>(amount));
+    if (g_windowMgr.m_storageWnd) g_windowMgr.m_storageWnd->Invalidate();
+    DbgLog("[GameMode] storage remove index=%u amount=%u\n",
         static_cast<unsigned int>(itemIndex),
         amount);
 }
