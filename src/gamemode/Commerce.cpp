@@ -169,7 +169,28 @@ bool Receive(CGameMode&,const PacketView& v){
         }
         return true;
     }
-    case 0xe9:{if(n<19||!state.tradeActive)return false;const u32 amount=read(p+2,4),id=read(p+6);if(!id)state.remoteZeny=amount;else{Offer o;o.amount=amount;o.item.SetItemId(id);o.item.m_num=int(amount);o.item.m_isIdentified=p[8];o.item.m_isDamaged=p[9];o.item.m_refiningLevel=p[10];for(int k=0;k<4;++k)o.item.m_slot[k]=read(p+11+2*k);state.remoteOffer.push_back(o);}return true;}
+    case 0xe9:{
+        if(n!=19 || !state.tradeActive)return false;
+        const u32 amount=read(p+2,4), id=read(p+6);
+        if(amount>static_cast<u32>(std::numeric_limits<int>::max()))return false;
+        if(!id){
+            state.remoteZeny=amount;
+            return true;
+        }
+        if(!amount)return false;
+        // Ref gives each incoming item its own display slot. The frame has no inventory index.
+        if(state.remoteOffer.size()>=10)return true;
+        Offer offer;
+        offer.amount=amount;
+        offer.item.SetItemId(id);
+        offer.item.m_num=static_cast<int>(amount);
+        offer.item.m_isIdentified=p[8];
+        offer.item.m_isDamaged=p[9];
+        offer.item.m_refiningLevel=p[10];
+        for(int k=0;k<4;++k)offer.item.m_slot[k]=read(p+11+2*k);
+        state.remoteOffer.push_back(std::move(offer));
+        return true;
+    }
     case 0xea:{
         if(n!=5 || p[4]>2)return false;
         if(!state.tradeActive || !state.tradeAddPending || read(p+2)!=state.pendingTrade.item.m_itemIndex)return true;
@@ -199,7 +220,18 @@ bool Receive(CGameMode&,const PacketView& v){
         if(hadTrade)note("Trade canceled. No exchange was completed.");
         return true;
     }
-    case 0xf0:if(n<3)return false;if(!state.tradeActive)return true;if(state.tradeCancellation==TradeCancellation::Cancel){note(p[2]?"Trade failed.":"Trade completed.");state.tradeActive=false;return true;}tradeReset();state.trade.visible=false;note(p[2]?"Trade failed.":"Trade completed.");return true;
+    case 0xf0:
+        if(n!=3 || p[2]>1)return false;
+        if(!state.tradeActive || !state.commitPending)return true;
+        if(state.tradeCancellation==TradeCancellation::Cancel){
+            state.tradeActive=false;
+            state.commitPending=false;
+        }else{
+            tradeReset();
+            state.trade.visible=false;
+        }
+        note(p[2]?"Trade failed.":"Trade completed.");
+        return true;
     case 0xf1:state.localOffer.clear();state.localZeny=0;state.localLocked=state.lockPending=false;return true;
     case 0x16a:if(n<30)return false;state.promptKind="guild";state.promptId=read(p+2,4);state.promptName=text(p+6,24);return true;
     case 0x207: {

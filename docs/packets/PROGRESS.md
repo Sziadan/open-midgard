@@ -4027,3 +4027,5 @@ PK36.04 verifies that the inactive storage password frames drain through product
 PK37.03 keeps trade cancellation pending until the server responds and handles acceptance that crosses the cancel request. [Evidence](evidence/PK37.03-trade-cancellation.md)
 
 PK37.03 verifies local offer increments at capacity, matching add acknowledgments, and lock side validation. [Evidence](evidence/PK37.03-trade-cancellation.md)
+
+PK37.03 preserves the reference's ten remote offer rows and applies final results to a pending local commit. [Evidence](evidence/PK37.03-trade-cancellation.md)

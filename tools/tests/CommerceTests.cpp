@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <limits>
 void ITEM_INFO::SetItemId(unsigned int id){m_itemName=std::to_string(id);}
 unsigned int ITEM_INFO::GetItemId()const{return m_itemName.empty()?0:unsigned(std::stoul(m_itemName));}
 struct CGameMode {

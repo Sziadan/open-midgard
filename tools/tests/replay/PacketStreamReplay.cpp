@@ -6416,12 +6416,41 @@ void TradeCommitProductionSendReplay()
 
     {
         LoopbackPeer peer(*connection);
+        CGameMode mode;
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        TestConnection input;
+        const auto dispatch = [&](const std::vector<u8>& frame) {
+            Require(input.QueueBytes(frame) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+                "trade result fixture did not dispatch");
+        };
+        auto& trade = ro::commerce::state;
+        dispatch({0xf0, 0, 0});
+        Require(trade.tradeActive, "unowned completion closed the current trade");
+        const std::vector<u8> remote{0xe9, 0, 2, 0, 0, 0, 0xf5, 1, 1, 0, 3, 4, 0, 5, 0, 6, 0, 7, 0};
+        auto invalid = remote;
+        invalid[5] = 0x80;
+        dispatch(invalid);
+        Require(trade.remoteOffer.empty(), "negative amount created a remote offer row");
+        for(int i=0;i<11;++i)dispatch(remote);
+        Require(trade.remoteOffer.size()==10 && trade.remoteOffer.front().amount==2
+            && trade.remoteOffer.back().item.m_slot[3]==7, "remote offer did not retain ten separate ordered rows");
+        auto zeny = remote;
+        zeny[2] = 42;
+        zeny[6] = zeny[7] = 0;
+        dispatch(zeny);
+        Require(trade.remoteZeny==42 && trade.remoteOffer.size()==10, "remote Zeny used an item slot");
         Require(ro::commerce::Action(commit) && ro::commerce::state.commitPending,
             "valid two-sided trade commit did not enter pending state");
         Require(peer.ReceiveExact(2) == std::vector<u8>({0xef, 0x00}),
             "trade commit did not emit the selected two-byte frame");
         Require(!ro::commerce::Action(commit) && ro::commerce::state.commitPending,
             "duplicate trade commit was not suppressed while pending");
+        dispatch({0xf0, 0, 2});
+        Require(trade.commitPending && trade.tradeActive, "unknown result consumed the pending commit");
+        dispatch({0xf0, 0, 0});
+        Require(!trade.commitPending && !trade.tradeActive && trade.remoteOffer.empty(),
+            "successful result did not retire its trade");
     }
 
     connection->Disconnect();
