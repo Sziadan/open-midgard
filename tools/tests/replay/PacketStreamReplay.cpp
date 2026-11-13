@@ -179,8 +179,8 @@ struct LoginModeReplayAccess : CLoginMode {
     static void RunNotifyZonesvr(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnNotifyZonesvr(packet);
     }
-    static bool ZoneEndpointMatches(const LoginModeReplayAccess& mode) {
-        return std::string(mode.m_zoneAddr) == "10.0.0.1" && mode.m_zonePort == 6121;
+    static bool ZoneEndpointMatches(const LoginModeReplayAccess& mode, u16 port) {
+        return std::string(mode.m_zoneAddr) == "127.0.0.1" && mode.m_zonePort == port;
     }
     static void RunAcceptLogin(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnAcceptLogin(packet);
@@ -2231,12 +2231,23 @@ void LoginCharacterRefusalReplay()
     std::cout << "{\"case_id\":\"login_character_refusal\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006c-refuse-enter-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnRefuseChar -> ShowLoginErrorDialog -> Disconnect -> Login\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":3,\"result\":0,\"status\":\"Char server refused entry (code 0).\",\"connected_state_cleared\":true,\"returns_to_login\":true,\"connection_closed\":true,\"visible_modal_not_verified\":true,\"outcome\":\"PASS\"}\n";
 }
 
-void LoginZoneServerNotificationReplay()
+void LoginZoneServerNotificationReplay(bool packetVer22 = false)
 {
     SetCase("login_zone_server_notification", "PK44.CHAR-LIST-ENTRY", "PK44-0071-zonesvr-selected-source", "CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnNotifyZonesvr");
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
     LoopbackPeer peer(*connection);
+    SocketOwner zoneListener(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+    Require(zoneListener.value != INVALID_SOCKET, "mock zone-server socket creation failed");
+    sockaddr_in zoneAddress{};
+    zoneAddress.sin_family = AF_INET;
+    zoneAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    Require(bind(zoneListener.value, reinterpret_cast<sockaddr*>(&zoneAddress), sizeof(zoneAddress)) == 0
+        && listen(zoneListener.value, 1) == 0, "mock zone-server listener setup failed");
+    socklen_t zoneAddressLength = sizeof(zoneAddress);
+    Require(getsockname(zoneListener.value, reinterpret_cast<sockaddr*>(&zoneAddress), &zoneAddressLength) == 0,
+        "mock zone-server port query failed");
+    const u16 zonePort = ntohs(zoneAddress.sin_port);
     LoginModeReplayAccess mode;
     mode.EnterCharacterSelectionForReplay();
     LoginModeReplayAccess::SeedCharacterForSelection(mode, 7);
@@ -2253,12 +2264,12 @@ void LoginZoneServerNotificationReplay()
     packet[4] = 0x20;
     packet[5] = 0x10;
     std::memcpy(packet.data() + 6, "prontera.gat", 12);
-    packet[22] = 10;
+    packet[22] = 127;
     packet[23] = 0;
     packet[24] = 0;
     packet[25] = 1;
-    packet[26] = 0xe9;
-    packet[27] = 0x17;
+    packet[26] = static_cast<u8>(zonePort);
+    packet[27] = static_cast<u8>(zonePort >> 8);
 
     const u32 oldGid = g_session.m_gid;
     char oldMap[sizeof(g_session.m_curMap)]{};
@@ -2281,7 +2292,7 @@ void LoginZoneServerNotificationReplay()
     }
     Require(g_session.m_gid == 0x10203040u && std::string(g_session.m_curMap) == "prontera",
         "0x0071 character ID or map extension parsing differs from the selected-source fixture");
-    Require(LoginModeReplayAccess::ZoneEndpointMatches(mode),
+    Require(LoginModeReplayAccess::ZoneEndpointMatches(mode, zonePort),
         "0x0071 zone IP or port conversion differs from selected-source wire bytes");
     Require(g_session.m_localGuild.guildId == 0 && g_session.m_localGuild.name.empty()
             && g_session.m_guildWindow.id == 0 && !g_session.m_guildWindow.loaded
@@ -2291,6 +2302,63 @@ void LoginZoneServerNotificationReplay()
         "0x0071 did not transition to ZoneConnect");
     Require(!LoginModeReplayAccess::IsConnected(mode) && !connection->IsOpen(),
         "0x0071 did not clear char-server connection state");
+
+    const u32 oldAid = g_session.m_aid;
+    const u32 oldAuth = g_session.m_authCode;
+    const u8 oldSex = g_session.m_sex;
+    const auto oldModeManager = g_modeMgr;
+    const u32 oldServerTime = g_session.GetServerTime();
+    const int oldX = g_session.m_playerPosX;
+    const int oldY = g_session.m_playerPosY;
+    const int oldDir = g_session.m_playerDir;
+    g_session.m_aid = 0x11223344;
+    g_session.m_authCode = 0x55667788;
+    g_session.m_sex = 1;
+    mode.EnterPendingSubModeForReplay();
+    Require(connection->IsOpen() && LoginModeReplayAccess::IsConnected(mode),
+        "ZoneConnect did not open the endpoint from 0x0071");
+    Require(SelectSocket(zoneListener.value, true, false, std::chrono::milliseconds(2000)) > 0,
+        "zone listener did not receive the production connection");
+    SocketOwner zonePeer(accept(zoneListener.value, nullptr, nullptr));
+    Require(zonePeer.value != INVALID_SOCKET, "zone listener could not accept the production connection");
+    const auto request = ReceiveExactSocket(zonePeer.value, packetVer22 ? 26 : 19);
+    const std::vector<u8> prefix{0x36, 0x04, 0x44, 0x33, 0x22, 0x11, 0x40, 0x30, 0x20, 0x10,
+        0x88, 0x77, 0x66, 0x55};
+    const auto matchesField = [&](size_t expectedOffset, size_t wireOffset) {
+        return std::equal(prefix.begin() + expectedOffset, prefix.begin() + expectedOffset + 4,
+            request.begin() + wireOffset);
+    };
+    if (packetVer22) {
+        Require(request[0] == 0x9b && request[1] == 0 && matchesField(2, 4) && matchesField(6, 9)
+            && matchesField(10, 17) && request[25] == 1, "PacketVer22 zone request fields differ");
+    } else {
+        Require(std::equal(prefix.begin(), prefix.end(), request.begin()) && request[18] == 1,
+            "PacketVer23 zone request fields differ");
+    }
+    Require(SelectSocket(zonePeer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "selected zone request exceeded its registered frame length");
+    const std::array<u8, 13> acceptEnter{0xeb, 0x02, 0x78, 0x56, 0x34, 0x12, 0x27, 0x0b, 0x86, 5, 5, 0, 0};
+    Require(::send(zonePeer.value, reinterpret_cast<const char*>(acceptEnter.data()),
+        static_cast<int>(acceptEnter.size()), 0) == static_cast<int>(acceptEnter.size()),
+        "mock zone peer could not send acceptance");
+    const auto acceptDeadline = Clock::now() + kTimeout;
+    while (g_modeMgr.GetOperationGeneration() == oldModeManager.GetOperationGeneration() && Clock::now() < acceptDeadline) {
+        LoginModeReplayAccess::RunPollNetwork(mode);
+        if (g_modeMgr.GetOperationGeneration() == oldModeManager.GetOperationGeneration()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    Require(g_modeMgr.GetOperationGeneration() != oldModeManager.GetOperationGeneration()
+        && g_modeMgr.GetRequestedModeType() == 1 && g_session.m_playerPosX == 156
+        && g_session.m_playerPosY == 184 && g_session.m_playerDir == 6 && connection->IsOpen(),
+        "selected zone acceptance did not schedule GameMode with the accepted position");
+    connection->Disconnect();
+    g_modeMgr = oldModeManager;
+    g_session.m_aid = oldAid;
+    g_session.m_authCode = oldAuth;
+    g_session.m_sex = oldSex;
+    g_session.SetPlayerPosDir(oldX, oldY, oldDir);
+    g_session.SetServerTime(oldServerTime + 72); // GetServerTime includes the production interpolation lead.
 
     {
         LoopbackPeer wrongCharacter(*connection);
@@ -2317,7 +2385,12 @@ void LoginZoneServerNotificationReplay()
     g_session.m_localGuild = oldLocalGuild;
     g_session.m_guildWindow = oldGuildWindow;
     g_windowMgr.RemoveAllWindows();
-    std::cout << "{\"case_id\":\"login_zone_server_notification\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0071-zonesvr-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnNotifyZonesvr\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":28,\"character_id\":270544960,\"map_wire_name\":\"prontera.gat\",\"map_result\":\"prontera\",\"ip_wire_bytes_hex\":\"0a000001\",\"zone_ip\":\"10.0.0.1\",\"port_wire_bytes_hex\":\"e917\",\"zone_port\":6121,\"stale_guild_state_cleared\":true,\"zone_connect_transition\":true,\"char_connection_closed\":true,\"production_framing_dispatch\":true,\"visible_zone_ui_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_zone_entry_selected\",\"contract_id\":\"PK46.02\",\"captured_packet_hex\":\""
+        << Hex(request) << "\",\"accept_enter_opcode\":\"02eb\",\"outcome\":\"PASS\"}\n";
+    std::cout << "{\"case_id\":\"login_zone_server_notification\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\","
+        << "\"fixture_id\":\"PK44-0071-zonesvr-selected-source\",\"input_frame_hex\":\"" << Hex(packet)
+        << "\",\"zone_ip\":\"127.0.0.1\",\"zone_port\":" << zonePort
+        << ",\"stale_guild_state_cleared\":true,\"zone_connect_transition\":true,\"char_connection_closed\":true,\"outcome\":\"PASS\"}\n";
 }
 
 void LoginCharacterDeletionReplay()
@@ -8655,6 +8728,7 @@ int main(int argc,char** argv){try{
     }
     if(argc>1 && std::string(argv[1])=="--pet-lifecycle-only") {PetLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--world-entry-handoff-only") {ModeLoopHandoffReplay();CConnection::Cleanup();return 0;}
+    if(argc>1 && std::string(argv[1])=="--zone-entry-22") {LoginZoneServerNotificationReplay(true);CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--map-cell-load-only") {MapCellLoadLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--standing-resurrection-only") {StandingResurrectionReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--siege-emblem-only") {SiegeActorEmblemReplay();CConnection::Cleanup();return 0;}
