@@ -4079,6 +4079,26 @@ void PendingCompanionActorSkillReplay()
     g_session.m_homunStatus.combat.attackSpeed = 1;
     g_session.m_merStatus.combat.attackSpeed = 1;
 
+    mode.GetClientCoor(20, 10, target.m_pos.x, target.m_pos.z);
+    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    for (CGameActor* caster : {&homunculus, &mercenary}) {
+        tickCompanion(*caster);
+        Require(peer.ReceiveExact(9) == std::vector<u8>{0x32, 0x02, static_cast<u8>(caster->m_gid),
+            0, 0, 0xf1, 5, 0, 0xa0}, "manual attack did not start companion pursuit");
+        caster->m_stateId = companion_ai::MOTION_MOVE;
+    }
+    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    for (CGameActor* caster : {&homunculus, &mercenary}) {
+        tickCompanion(*caster);
+        Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
+            0, 0, 0xf1, 0, 0, 0, 0, 0}, "canceling pursuit did not clear the server attack target");
+        tickCompanion(*caster, 3000);
+        caster->m_stateId = companion_ai::MOTION_STAND;
+    }
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "canceled pursuit emitted a movement retry");
+    mode.GetClientCoor(16, 10, target.m_pos.x, target.m_pos.z);
+
     CGameActor corpse;
     corpse.m_gid = 0x12345679;
     corpse.m_job = target.m_job;
