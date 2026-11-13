@@ -304,12 +304,17 @@ public:
     s8& m_hiddenWhisperAcknowledgements=g_MessageHi; // Alias; constructing a mode must not reset it.
     std::string m_sourceLastSubmittedChat;
     int m_sourceSameChatRepeatCount=0;
+    std::array<std::string, 10> m_prayerSpeech;
+    std::array<u32, 10> m_prayerSpeechTicks{};
+    std::size_t m_prayerSpeechNext = 0;
+    std::size_t m_prayerSpeechCount = 0;
     int m_sourceAutoSaveChatCount=0;
     bool SendSourceWhisper(const std::string& target,const std::string& text);
     std::string GetSourceChatCharset() const;
     bool SubmitSourceChat(const std::string& text,const std::string& target,UIWindow* origin=nullptr);
     msgresult_t ProcessSourceTalk(int type,const std::array<std::string,3>& parameters);
     bool SendBufferedSourceChat(int operation,const std::string& target={});
+    void CheckSuperNovicePrayer(const std::string& text, u32 now);
     u32 GetSourceChatTick() const;
     void SetSourceChatInputServices(const SourceChatInputServices* services) { m_sourceChatInputServices=services; }
     const SourceChatInputServices* m_sourceChatInputServices=nullptr;

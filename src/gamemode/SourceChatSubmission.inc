@@ -208,6 +208,39 @@ bool CGameMode::SendSourceWhisper(const std::string& target,const std::string& t
     return SendMsg(11,reinterpret_cast<msgparam_t>(target.c_str()),0,0)!=0;
 }
 
+void CGameMode::CheckSuperNovicePrayer(const std::string& text, u32 now)
+{
+    m_prayerSpeech[m_prayerSpeechNext] = text;
+    m_prayerSpeechTicks[m_prayerSpeechNext] = now;
+    m_prayerSpeechNext = (m_prayerSpeechNext + 1) % m_prayerSpeech.size();
+    m_prayerSpeechCount = (std::min)(m_prayerSpeechCount + 1, m_prayerSpeech.size());
+
+    constexpr int superNovice = 23;
+    constexpr int superBaby = 4045;
+    if (m_prayerSpeechCount != m_prayerSpeech.size()
+        || (g_session.m_playerJob != superNovice && g_session.m_playerJob != superBaby)
+        || !m_world || !m_world->m_player || m_isPlayerDead || m_world->m_player->m_stateId == 3) {
+        return;
+    }
+    const u32 elapsed = now - m_prayerSpeechTicks[m_prayerSpeechNext];
+    if (elapsed != 0 && elapsed < 10000) {
+        return;
+    }
+
+    ro::UiMessageStrings strings;
+    if (!strings.Load()) return;
+    const auto matches = [&](unsigned messageId, std::size_t slot) {
+        const auto phrase = strings.Find(messageId);
+        if (!phrase || phrase->empty()) return false;
+        const auto& line = m_prayerSpeech[(m_prayerSpeechNext + slot) % m_prayerSpeech.size()];
+        return line == *phrase || line == ro::DecodeSourceText(*phrase, ro::SelectedSourceTextCodePage()).value_or("");
+    };
+    if (matches(790, 7) && matches(793, 9)) {
+        const u8 packet[]{0xED, 0x01};
+        CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
+    }
+}
+
 bool CGameMode::SendBufferedSourceChat(int operation,const std::string& target)
 {
     const bool whisper=operation==11;
@@ -241,7 +274,12 @@ bool CGameMode::SendBufferedSourceChat(int operation,const std::string& target)
     // Source clears before the length guard and network attempt.
     g_windowMgr.ClearChatMsg();
     if(operation==142 && payload.size()>=0x3fcu)return false;
-    if(operation==6)return SendGlobalChatMessage(g_session.GetPlayerName(),text);
+    if (operation == 6) {
+        if (CRagConnection::instance()->IsOpen()) {
+            CheckSuperNovicePrayer(text, GetSourceChatTick());
+        }
+        return SendGlobalChatMessage(g_session.GetPlayerName(), text);
+    }
     const u16 opcode=operation==72?profile.partyMessage:operation==142?profile.guildMessage:profile.battleMessage;
     const std::size_t length=payload.size()+5;
     if(length>0xffffu)return false;

@@ -95,6 +95,7 @@ void ChatSubmissionReplay()
         {23,"EFFECT ON"},{24,"EFFECT OFF"},{27,"T27"},{28,"T28"},{31,"T31"},{32,"T32"},{317,"T317"},{318,"T318"},{701,"T701"},{702,"T702"},
         {711,"T711"},{712,"T712"},{717,""},{718,"T718"},{722,"T722"},{723,"T723"},{730,"T730"},{731,"T731"},
         {733,"T733"},{734,"T734"},{765,"T765"},{766,"T766"},{768,"T768"},{769,"T769"},{785,"T785"},{786,"T786"},
+        {790,"First prayer line"},{793,"Last prayer line"},
         {805,"T805"},{806,"T806"},{850,"T850"},{851,"T851"},{908,"T908"},{909,"T909"},{1044,"T1044"},{1045,"T1045"},{1108,"T1108"},{1109,"T1109"},
         {687,"MIN ON"},{688,"MIN OFF"},{698,"/tiny"},{940,"Default"},{943,"Auto off"},{944,"Configure"},
         {407,"Name"},{408,"Level"},{584,"Pet Info"},{585,"Hunger"},{586,"Intimacy"},
@@ -350,6 +351,39 @@ void ChatSubmissionReplay()
         for(int zone:{1,-1}){world.m_isPKZone=zone;Require(submit("/pvpinfo"),"PK pvpinfo parser/dispatch failed");
             Require(peer.ReceiveExact(10)==std::vector<u8>({0x0f,0x02,0x78,0x56,0x34,0x12,0xef,0xcd,0xab,0x90}),
                 "pvpinfo must send both account and character IDs in the selected10-byte request");}
+    }
+    {
+        CWorld world;
+        CPlayer player;
+        CGameMode prayerMode;
+        prayerMode.SetSourceChatInputServices(&services);
+        prayerMode.m_world = &world;
+        world.m_player = &player;
+        const int oldJob = g_session.m_playerJob;
+        const auto prayer = [&](int job, int state, u32 elapsed, bool expected) {
+            g_session.m_playerJob = job;
+            player.m_stateId = state;
+            const u32 start = submissionTick + 1000;
+            for (int index = 0; index < 10; ++index) {
+                submissionTick = index == 9 ? start + elapsed : start + index;
+                const std::string line = index == 7 ? "First prayer line" : index == 9 ? "Last prayer line"
+                    : "Prayer filler " + std::to_string(index);
+                Require(prayerMode.SubmitSourceChat(line, ""), "prayer fixture could not send public speech");
+                if (index == 9 && expected) {
+                    Require(peer.ReceiveExact(2) == std::vector<u8>{0xED, 1},
+                        "prayer did not precede the final speech frame");
+                }
+                named(profile.globalMessage, line);
+            }
+        };
+        prayer(23, 0, 9999, false);
+        prayer(23, 3, 10000, false);
+        prayer(0, 0, 10000, false);
+        prayer(23, 0, 10000, true);
+        prayer(4045, 0, 10000, true);
+        g_session.m_playerJob = oldJob;
+        prayerMode.m_world = nullptr;
+        world.m_player = nullptr;
     }
     {
         const ServiceType previous=g_serviceType;

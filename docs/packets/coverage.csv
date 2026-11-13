@@ -389,7 +389,7 @@ AUDIT-0x01E9,0x01E9,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional sou
 AUDIT-0x01EA,0x01EA,map,S2C,PK30,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01EB,0x01EB,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01EC,0x01EC,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01ED,0x01ED,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x01ED,0x01ED,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Selected public prayer request captured,C2S_ONLY,PK46.02-super-novice-prayer
 AUDIT-0x01EE,0x01EE,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01EF,0x01EF,map,unresolved,PK09,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01F0,0x01F0,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
