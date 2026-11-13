@@ -7969,6 +7969,9 @@ void RemoveRuntimeActor(CGameMode& mode, u32 gid)
 
     if (it->second) {
         CGameActor* actor = it->second;
+        // The actor owns the native controller and its pending orders.
+        if (gid == g_session.m_homunGID) g_session.m_homunTarget = {};
+        if (gid == g_session.m_merGID) g_session.m_merTarget = {};
         if (mode.m_world) {
             mode.m_world->NotifyActorDeleted(actor);
             mode.m_world->UnregisterActor(actor);

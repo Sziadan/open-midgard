@@ -1666,19 +1666,13 @@ bool CSession::ApplyCompanionGroundClick(companion_ai::Kind kind, int cellX, int
         return true;
     }
 
-    if (!shift) {
-        target.gid = 0;
-        target.cellX = cellX;
-        target.cellY = cellY;
-        target.moving = true;
-        target.attacking = false;
-    }
-
     companion_ai::Msg2Ai msg;
     msg.command = companion_ai::MOVE_CMD;
     msg.x = cellX;
     msg.y = cellY;
-    companion_ai::Runtime::QueueCommand(kind, msg, shift);
+    if (companion_ai::Runtime::QueueCommand(kind, msg, shift) && !shift) {
+        target = {0, cellX, cellY, true, false, false};
+    }
     return true;
 }
 
@@ -1700,15 +1694,18 @@ bool CSession::ApplyCompanionActorClick(companion_ai::Kind kind, u32 gid, bool s
     const bool homunculus = kind == companion_ai::Kind::Homunculus;
     if (!gid || !(homunculus ? m_homunStatus.alive : m_merStatus.alive)) return false;
     auto& target = homunculus ? m_homunTarget : m_merTarget;
-    target.SelectActor(gid, shift);
+    auto nextTarget = target;
+    nextTarget.SelectActor(gid, shift);
     companion_ai::Msg2Ai msg;
-    if (shift || target.attacking) {
+    if (shift || nextTarget.attacking) {
         msg.command = companion_ai::ATTACK_OBJECT_CMD;
         msg.targetId = gid;
     } else {
         msg.command = companion_ai::STOP_CMD;
     }
-    companion_ai::Runtime::QueueCommand(kind, msg, shift);
+    if (companion_ai::Runtime::QueueCommand(kind, msg, shift)) {
+        target = nextTarget;
+    }
     return true;
 }
 

@@ -3620,9 +3620,14 @@ void CompanionIdentityReplay()
         && std::any_of(mercDisplay.text.begin(), mercDisplay.text.end(), [](const auto& row) {
             return row.value == "Archer Mercenary";
         }), "companion snapshots did not reach their respective status windows");
+    g_session.m_homunTarget = {otherActor.m_gid, 0, 0, false, true, true};
     vanish(homunActor.m_gid, 0);
-    Require(hs.alive && g_windowMgr.m_homunInfoWnd == homunWindow,
-        "ordinary companion removal reset the homunculus status window");
+    Require(hs.alive && g_session.m_homunGID == homunActor.m_gid
+        && g_windowMgr.m_homunInfoWnd == homunWindow,
+        "ordinary companion removal reset homunculus identity or the status window");
+    Require(!g_session.m_homunTarget.gid && !g_session.m_homunTarget.selected
+        && !g_session.m_homunTarget.attacking,
+        "ordinary companion removal retained the retired controller's attack selection");
     Require(g_session.m_merTarget.gid == homunActor.m_gid && g_session.m_merTarget.attacking,
         "ordinary actor removal cleared the mercenary's target");
     spawn(homunActor.m_gid, 6001);
@@ -3690,9 +3695,12 @@ void CompanionIdentityReplay()
     Require(hs.alive && hs.job == 6001 && g_session.m_homunGID == reentryHomun
         && ms.alive && ms.job == 6017 && g_session.m_merGID == reentryMerc,
         "selected companion spawn-before-identity sequence did not restore local ownership");
+    g_session.m_merTarget = {reentryHomun, 0, 0, false, true, true};
     vanish(reentryMerc, 0);
     Require(ms.alive && g_session.m_merGID == reentryMerc,
         "out-of-sight removal retired the active mercenary contract");
+    Require(!g_session.m_merTarget.gid && !g_session.m_merTarget.selected && !g_session.m_merTarget.attacking,
+        "out-of-sight removal retained the retired mercenary controller's attack selection");
 
     g_session.SetMercSkillItem(skill);
     g_session.m_merTarget = {reentryHomun, 8, 9, false, true, true};
@@ -4332,8 +4340,28 @@ void PendingCompanionActorSkillReplay()
     g_session.m_homunGID = homunculus.m_gid;
     g_session.m_merGID = mercenary.m_gid;
     world.RegisterActor(&target);
+    for (const auto kind : {companion_ai::Kind::Homunculus, companion_ai::Kind::Mercenary}) {
+        Require(g_session.ApplyCompanionActorClick(kind, target.m_gid, false)
+            && g_session.ApplyCompanionGroundClick(kind, 16, 10, true, false),
+            "missing companion let a manual order fall through to player input");
+    }
+    Require(!g_session.m_homunTarget.selected && !g_session.m_homunTarget.attacking
+        && !g_session.m_homunTarget.moving && g_session.m_merTarget.gid == 17
+        && !g_session.m_merTarget.selected && !g_session.m_merTarget.moving,
+        "missing companion changed selection despite having no order mailbox");
     world.RegisterActor(&homunculus);
     world.RegisterActor(&mercenary);
+    for (const auto kind : {companion_ai::Kind::Homunculus, companion_ai::Kind::Mercenary}) {
+        Require(g_session.ApplyCompanionActorClick(kind, target.m_gid, false),
+            "visible companion did not handle its first manual order");
+    }
+    Require(homunculus.m_homunMsg.command == companion_ai::ATTACK_OBJECT_CMD
+        && mercenary.m_merMsg.command == companion_ai::ATTACK_OBJECT_CMD,
+        "first post-entry click canceled an attack that never queued");
+    homunculus.m_homunMsg.Clear();
+    mercenary.m_merMsg.Clear();
+    g_session.m_homunTarget = {};
+    g_session.m_merTarget = {17, 1, 2, false, false, false};
 
     u32 companionTime = 100;
     const auto tickCompanion = [&](CGameActor& caster, u32 elapsed = 16) {
@@ -5130,7 +5158,29 @@ void MapTypePropertyReplay()
 void CompanionTargetReplay()
 {
     using companion_ai::Kind;
-    CSession session;
+    auto& session = g_session;
+    const auto savedHomun = session.m_homunStatus;
+    const auto savedMerc = session.m_merStatus;
+    const auto savedHomunGid = session.m_homunGID;
+    const auto savedMercGid = session.m_merGID;
+    const auto savedHomunTarget = session.m_homunTarget;
+    const auto savedMercTarget = session.m_merTarget;
+    auto* savedMode = SkillPacketReplayAccess::Current();
+    const int savedModeType = SkillPacketReplayAccess::CurrentType();
+    CGameMode mode;
+    CWorld world;
+    CGameActor homunculus;
+    CGameActor mercenary;
+    mode.m_world = &world;
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    session.m_homunGID = homunculus.m_gid = 0xf1000041;
+    session.m_merGID = mercenary.m_gid = 0xf1000042;
+    world.RegisterActor(&homunculus);
+    world.RegisterActor(&mercenary);
+    session.m_homunStatus.alive = false;
+    session.m_merStatus.alive = false;
+    session.m_homunTarget = {};
+    session.m_merTarget = {};
     Require(!session.ApplyCompanionGroundClick(Kind::Mercenary, 5, 8, true, false),
         "Alt ground click without a companion was consumed");
     session.m_merStatus.alive = true;
@@ -5193,6 +5243,16 @@ void CompanionTargetReplay()
     Require(!session.m_homunTarget.gid && !session.m_homunTarget.selected
         && !session.m_homunTarget.attacking && session.m_merTarget.gid == 23,
         "actor death cleared an unrelated companion target");
+    session.m_homunStatus = savedHomun;
+    session.m_merStatus = savedMerc;
+    session.m_homunGID = savedHomunGid;
+    session.m_merGID = savedMercGid;
+    session.m_homunTarget = savedHomunTarget;
+    session.m_merTarget = savedMercTarget;
+    world.UnregisterActor(&homunculus);
+    world.UnregisterActor(&mercenary);
+    mode.m_world = nullptr;
+    SkillPacketReplayAccess::Restore(savedMode, savedModeType);
 }
 
 void CompanionSummonReplay()

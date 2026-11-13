@@ -16,7 +16,7 @@
 
 **Companion input and movement**. PK28.04 and PK29.04 route Alt+right to the homunculus and Alt+left to the mercenary. Replay verifies independent orders and cancellation, recovery from stalled pursuit, and paced follow during an attack animation. Physical input and live server movement remain open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
-**Native companion lifecycle orders**. PK28.04 and PK29.04 cover order cleanup on death, vaporize, deletion, identity replacement, and same-map reuse. Same-GID mercenary refresh preserves orders. Live verification remains open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+**Native companion lifecycle orders**. PK28.04 and PK29.04 cover order cleanup on death, vaporize, deletion, identity replacement, and same-map reuse. Same-GID mercenary refresh preserves orders. Visibility removal clears the retired controller's selection and preserves the owner status. A click before the actor appears leaves selection unchanged. Live verification remains open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 **Companion skill approach recovery**. PK28.04 and PK29.04 verify stalled actor and ground approaches, movement progress, and the release of a reserved cast after a failed approach. Queued-order cleanup across lifecycle transitions and live verification remain open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
