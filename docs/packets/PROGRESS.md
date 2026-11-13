@@ -3981,3 +3981,5 @@ PK30.04 verifies the selected post-adoption job transition and retains Cheer Up 
 PK28.04 and PK29.04 verify bounded recovery from a stalled basic attack chase, including reserved movement and delayed automatic reacquisition. The handoff prioritizes live companion verification using the C++ controller. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 PK28.04 and PK29.04 distinguish monster sprites from actual monster actors during native acquisition. The reference input audit found no producer for attack-area, patrol, or hold. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+PK16.04 verifies that the equipment preview, remove-option control, and privacy control occupy separate, aligned regions in both layouts. The Falcon source check and all 473 standalone checks passed. [Evidence](evidence/PK16.04-verification-boundary.md)

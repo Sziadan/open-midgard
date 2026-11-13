@@ -2934,6 +2934,25 @@ void PrivacyConfigurationReplay()
     UIEquipWnd equipment;
     equipment.SetShow(1);
     UIEquipWnd::QtButtonDisplay visibility;
+    const auto checkEquipmentControls = [&] {
+        UIEquipWnd::QtButtonDisplay removeOption;
+        UIEquipWnd::DisplayData display;
+        Require(equipment.GetDisplayDataForQt(&display)
+            && equipment.GetQtSystemButtonDisplayForQt(3, &removeOption) && removeOption.id == 138
+            && equipment.GetQtSystemButtonDisplayForQt(5, &visibility) && visibility.id == 146,
+            "equipment preview did not publish both option controls");
+        Require(removeOption.x == equipment.m_x + display.preview.x
+            && visibility.x == removeOption.x && visibility.width == removeOption.width
+            && removeOption.width == display.preview.width
+            && removeOption.y >= equipment.m_y + display.preview.y + display.preview.height
+            && visibility.y >= removeOption.y + removeOption.height,
+            "equipment remove-option and privacy controls overlap or do not align with the preview");
+    };
+    checkEquipmentControls();
+    equipment.SendMsg(&equipment, 6, 145, 0, 0);
+    Require(equipment.IsCompactMode(), "equipment did not enter compact layout");
+    checkEquipmentControls();
+    equipment.SendMsg(&equipment, 6, 145, 0, 0);
     Require(equipment.GetQtSystemButtonDisplayForQt(5, &visibility) && visibility.visible
         && visibility.label == "Public gear", "equipment control did not show confirmed visibility");
     equipment.OnLBtnDown(visibility.x + 1, visibility.y + 1);

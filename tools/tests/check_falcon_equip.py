@@ -53,11 +53,8 @@ if "outData->visible = m_h > kMiniHeight && label;" not in ui:
     raise SystemExit("shared remove-option visibility is not limited to expanded equipment with an active option")
 if "outData->label = label ? label : \"\";" not in ui:
     raise SystemExit("Qt equipment control does not publish its dynamic option label")
-layout = (ROOT / "src/ui/EquipmentLayout.h").read_text(encoding="utf-8")
-if "Rect preview,removeOption;" not in layout or "result.removeOption={centerX,centerBottom-24,centerWidth,24};" not in layout:
-    raise SystemExit("equipment remove-option placement no longer follows the shared preview layout")
 qt_equipment = (ROOT / "src/qtui/qml/RoEquipment.qml").read_text(encoding="utf-8")
-if 'objectName: modelData.id === 138 ? "equipmentRemoveOption" : ""' not in qt_equipment or "visible: modelData.visible; label: modelData.label" not in qt_equipment:
+if 'objectName: modelData.id === 138 ? "equipmentRemoveOption"' not in qt_equipment or "visible: modelData.visible; label: modelData.label" not in qt_equipment:
     raise SystemExit("Qt equipment view does not render the shared dynamic remove-option control")
 if packet.count("outState.effectState = static_cast<int>(option);") != 4 or packet.count("outState.showEfst = opt3;") != 4:
     raise SystemExit("actor spawn decoders must retain option state and opt3 visibility in their separate fields")

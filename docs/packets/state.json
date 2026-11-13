@@ -567,7 +567,7 @@
     "PK16.04": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK16.04-verification-boundary.md"],
-      "commit_subject": "packet(PK16.04): verify privacy and social paths"
+      "commit_subject": "packet(PK16.04): verify equipment controls after privacy layout change"
     },
     "PK17.01": {
       "status": "NOT_STARTED",
