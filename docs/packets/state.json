@@ -1109,7 +1109,7 @@
         "docs/packets/evidence/PK28.03-companion-map-reset.md",
         "docs/packets/evidence/PK28-companion-skill-lists.md"
       ],
-      "commit_subject": "packet(PK28.04): restore companion skill list bitmap skin"
+      "commit_subject": "packet(PK28.04): select companion skill cast levels"
     },
     "PK29.01": {
       "status": "IN_PROGRESS",

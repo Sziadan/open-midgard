@@ -24,6 +24,9 @@ constexpr int kMini = 136;
 constexpr int kUpgradeX = 78;
 constexpr int kUpgradeYOffset = 4;
 constexpr int kUpgradeSize = 24;
+constexpr int kLevelDownX = 112;
+constexpr int kLevelUpX = 192;
+constexpr int kLevelButtonSize = 14;
 }
 
 UICompanionSkillListWnd::UICompanionSkillListWnd(int windowId)
@@ -173,6 +176,23 @@ int UICompanionSkillListWnd::UseLevel(int skillId) const
     return m_family == 1 ? g_session.GetHomunSkillUseLevel(skillId) : g_session.GetMerSkillUseLevel(skillId);
 }
 
+int UICompanionSkillListWnd::EffectiveUseLevel(const PLAYER_SKILL_INFO& skill) const
+{
+    const int saved = UseLevel(skill.SKID);
+    return saved > 0 && saved <= skill.level ? saved : skill.level;
+}
+
+int UICompanionSkillListWnd::LevelControlAt(int x, int y) const
+{
+    const auto* row = SkillAt(x, y);
+    if (!row || !row->m_isValid || row->level <= 0 || !g_skillMgr.IsLevelUseSkill(row->SKID)
+        || (y - m_y - kTitleHeight) % kRowHeight < 17) return 0;
+    const int localX = x - m_x;
+    if (localX >= kLevelDownX && localX < kLevelDownX + kLevelButtonSize) return -1;
+    if (localX >= kLevelUpX && localX < kLevelUpX + kLevelButtonSize) return 1;
+    return 0;
+}
+
 const UICompanionSkillListWnd::Icon* UICompanionSkillListWnd::GetIcon(int skillId)
 {
     const auto [entry, inserted] = m_icons.try_emplace(skillId);
@@ -192,10 +212,18 @@ std::vector<UICompanionSkillListWnd::Row> UICompanionSkillListWnd::GetRows()
     auto entry = std::next(skills.begin(), std::min(m_offset, MaxOffset()));
     std::vector<Row> rows;
     for (int i = 0; i < VisibleRows() && entry != skills.end(); ++i, ++entry) {
+        const bool selectable = entry->m_isValid && entry->level > 0 && g_skillMgr.IsLevelUseSkill(entry->SKID);
+        const int level = selectable ? EffectiveUseLevel(*entry) : entry->level;
+        int spCost = entry->spcost;
+        if (selectable) {
+            const auto* metadata = g_skillMgr.GetSkillMetadata(entry->SKID);
+            if (metadata && static_cast<std::size_t>(level) <= metadata->levelSpCosts.size())
+                spCost = metadata->levelSpCosts[level - 1];
+        }
         rows.push_back({entry->SKID, kTitleHeight + i * kRowHeight, entry->level,
-            entry->spcost, entry->SKID == m_selectedSkill, entry->skillName, GetIcon(entry->SKID),
+            spCost, entry->SKID == m_selectedSkill, entry->skillName, GetIcon(entry->SKID),
             CanUpgrade(*entry) ? &m_upgradeArt[entry->SKID == m_pressedUpgradeSkill ? 1 : 0] : nullptr,
-            kUpgradeX, kUpgradeYOffset, kUpgradeSize});
+            kUpgradeX, kUpgradeYOffset, kUpgradeSize, level, selectable});
     }
     return rows;
 }
@@ -264,8 +292,14 @@ void UICompanionSkillListWnd::OnDraw()
         shopui::DrawBitmapPixelsTransparent(dc, pixels,
             {m_x + 44, m_y + row.y + 4, m_x + 68, m_y + row.y + 28});
         text(112, row.y + 4, m_w - kScrollWidth - 112, row.name);
-        text(112, row.y + 17, 58, "Lv " + std::to_string(row.level));
-        text(175, row.y + 17, m_w - kScrollWidth - 175, "SP " + std::to_string(row.spCost));
+        if (row.levelSelectable) {
+            text(kLevelDownX, row.y + 17, kLevelButtonSize, "-");
+            text(130, row.y + 17, 60, std::to_string(row.useLevel) + " / " + std::to_string(row.level));
+            text(kLevelUpX, row.y + 17, kLevelButtonSize, "+");
+        } else {
+            text(112, row.y + 17, 58, "Lv " + std::to_string(row.level));
+        }
+        text(211, row.y + 17, m_w - kScrollWidth - 211, "SP " + std::to_string(row.spCost));
         if (row.upgrade) {
             const int x = m_x + row.upgradeX;
             const int y = m_y + row.y + row.upgradeY;
@@ -302,6 +336,12 @@ void UICompanionSkillListWnd::OnLBtnDown(int x, int y)
 {
     m_dragSkill = 0;
     m_pressedUpgradeSkill = 0;
+    m_pressedLevelSkill = 0;
+    m_pressedLevelDelta = LevelControlAt(x, y);
+    if (m_pressedLevelDelta) {
+        m_pressedLevelSkill = SkillAt(x, y)->SKID;
+        return;
+    }
     m_thumbGrab = -1;
     if (x >= m_x + m_w - kResizeGrip && x < m_x + m_w
         && y >= m_y + m_h - kResizeGrip && y < m_y + m_h) {
@@ -345,10 +385,17 @@ void UICompanionSkillListWnd::OnLBtnDblClk(int x, int y)
         OnLBtnDown(x, y);
         return;
     }
-    if (UpgradeAt(x, y)) return;
+    if (UpgradeAt(x, y) || LevelControlAt(x, y)) return;
     if (const auto* row = SkillAt(x, y)) {
         m_selectedSkill = row->SKID;
-        ArmPendingSkillUseFromSkillList(row->SKID, m_family);
+        if (row->m_isValid && row->level > 0 && row->spcost && g_skillMgr.IsLevelUseSkill(row->SKID)) {
+            if (auto* mode = g_modeMgr.GetCurrentGameMode()) {
+                const PLAYER_SKILL_INFO snapshot = *row;
+                mode->SendMsg(126, reinterpret_cast<msgparam_t>(&snapshot), EffectiveUseLevel(snapshot), 0);
+            }
+        } else {
+            ArmPendingSkillUseFromSkillList(row->SKID, m_family);
+        }
         Invalidate();
     } else {
         UIFrameWnd::OnLBtnDown(x, y);
@@ -366,6 +413,22 @@ void UICompanionSkillListWnd::OnLBtnUp(int x, int y)
         return;
     }
     m_dragSkill = 0;
+    if (m_pressedLevelSkill) {
+        const int id = m_pressedLevelSkill;
+        const int delta = m_pressedLevelDelta;
+        m_pressedLevelSkill = 0;
+        if (LevelControlAt(x, y) == delta) {
+            const auto* row = SkillAt(x, y);
+            if (row->SKID == id) {
+                const int level = static_cast<int>(std::clamp(static_cast<long long>(UseLevel(id)) + delta,
+                    1LL, static_cast<long long>(row->level)));
+                if (m_family == 1) g_session.SetHomunSkillUseLevel(id, level);
+                else g_session.SetMerSkillUseLevel(id, level);
+                Invalidate();
+            }
+        }
+        return;
+    }
     if (m_pressedUpgradeSkill) {
         const int pressedSkill = m_pressedUpgradeSkill;
         m_pressedUpgradeSkill = 0;
@@ -410,7 +473,8 @@ void UICompanionSkillListWnd::OnMouseMove(int x, int y)
             mode->m_dragInfo.type = mode->m_dragType;
             mode->m_dragInfo.source = static_cast<int>(DragSource::SkillListWindow);
             mode->m_dragInfo.skillId = skill->SKID;
-            mode->m_dragInfo.skillLevel = UseLevel(skill->SKID);
+            mode->m_dragInfo.skillLevel = g_skillMgr.IsLevelUseSkill(skill->SKID)
+                ? EffectiveUseLevel(*skill) : UseLevel(skill->SKID);
             Invalidate();
         }
     }

@@ -110,17 +110,19 @@ Rectangle {
                 textFormat: Text.PlainText
             }
             Text {
-                x: 110
+                x: row.modelData.levelSelectable ? 128 : 110
                 y: 17
-                text: "Lv " + row.modelData.level
+                text: row.modelData.levelSelectable ? row.modelData.useLevel + " / " + row.modelData.level : "Lv " + row.modelData.level
                 font.pixelSize: 12
             }
             Text {
-                x: 173
+                x: 209
                 y: 17
                 text: "SP " + row.modelData.spCost
                 font.pixelSize: 12
             }
+            Text { x: 110; y: 17; visible: row.modelData.levelSelectable; text: "-"; font.pixelSize: 12 }
+            Text { x: 190; y: 17; visible: row.modelData.levelSelectable; text: "+"; font.pixelSize: 12 }
             Rectangle {
                 visible: row.modelData.upgradeVisible
                 x: row.modelData.upgradeX - row.x

@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Companion skill use levels**. PK28.04 verifies level controls, family-specific saved levels, SP cost, and cast and drag payloads. The production replay, native/Qt render fixture, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+
 **Companion list skin**. PK28.04 verifies the frame, Mini button, scrollbar, and resize grip with paired native and Qt captures using synthetic bitmap fixtures. The production packet replay also passed. Live comparison with the installed skin remains open. [Evidence](evidence/PK28-companion-skill-lists.md)
 
 **Companion skill list resizing**. PK28.04 verifies resize snapping, visible row updates, and independent geometry restore. Six focused application checks, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)

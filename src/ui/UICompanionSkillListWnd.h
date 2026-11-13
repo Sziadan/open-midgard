@@ -32,6 +32,8 @@ public:
         int upgradeX;
         int upgradeY;
         int upgradeSize;
+        int useLevel;
+        bool levelSelectable;
     };
 
     explicit UICompanionSkillListWnd(int windowId);
@@ -63,6 +65,8 @@ private:
     int VisibleRows() const;
     void ScrollBy(int rows);
     int UseLevel(int skillId) const;
+    int EffectiveUseLevel(const PLAYER_SKILL_INFO& skill) const;
+    int LevelControlAt(int x, int y) const;
     const Icon* GetIcon(int skillId);
 
     const int m_family;
@@ -88,5 +92,7 @@ private:
     int m_selectedSkill = 0;
     int m_dragSkill = 0;
     int m_pressedUpgradeSkill = 0;
+    int m_pressedLevelSkill = 0;
+    int m_pressedLevelDelta = 0;
     POINT m_dragStart{};
 };

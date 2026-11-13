@@ -3929,3 +3929,7 @@ PK28.04 adds the companion resize grip and persists separate list dimensions. Re
 PK28.04 uses the game-data frame and control bitmaps in the companion list. Replay verifies the reference Mini behavior. Six focused application checks, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
 
 The render replay samples matching native and Qt pixels for the frame, Mini button, scrollbar arrow and thumb, and resize grip. It uses synthetic bitmaps loaded through the production resolver. The frame loader preserves opaque frame pixels. [Evidence](evidence/PK28-companion-skill-lists.md)
+
+## Companion skill use levels
+
+PK28.04 adds bounded level controls for companion skills with level-use metadata. Replay verifies release outside, level bounds, Heal SP cost, and the cast and shortcut drag level. The production replay, native/Qt render fixture, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)

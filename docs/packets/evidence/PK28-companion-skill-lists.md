@@ -1,5 +1,7 @@
 # Companion skill lists
 
+Companion rows with level-use metadata show the selected and learned levels and the corresponding SP cost. The decrease and increase controls follow the reference row positions and clamp the family-specific saved value to 1 through the learned level. The companion window uses the displayed level for casts and shortcut drags. The shared skill dispatcher retains its existing raw-level behavior for other callers.
+
 The companion list uses the existing title, side, footer, scrollbar, and resize bitmaps through the game-data resolver. Native drawing and the Qt overlay share the same bitmap geometry. The original list creates Base, Mini, and Close with IDs 134, 136, and 135 in `Ref/UIItemWnd.cpp:15521`. Its action switch handles Close and has no Base or Mini branch. Replay clicks Mini through the window manager and checks that the list stays open at its current height. Live visual comparison and original pressed scrollbar art remain open.
 
 The companion scenario in `packet_command_window_render_checks` writes paired native and Qt captures to the build tree. It verifies exact pixels for the title, side and footer frame, Mini button, scrollbar arrow and thumb, and resize grip. It loads synthetic bitmaps through the production asset resolver, so the evidence covers bitmap loading, placement and layering. The installed asset appearance remains unverified.

@@ -2136,6 +2136,7 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         QVariantList rows;
         for (const auto& row : window->GetRows()) {
             rows.push_back(QVariantMap{{"y", row.y}, {"name", ToQString(row.name)}, {"level", row.level},
+                {"useLevel", row.useLevel}, {"levelSelectable", row.levelSelectable},
                 {"spCost", row.spCost}, {"selected", row.selected}, {"icon", ToQString(row.icon->uri)},
                 {"upgradeVisible", row.upgrade != nullptr}, {"upgradeX", row.upgradeX},
                 {"upgradeY", row.upgradeY}, {"upgradeSize", row.upgradeSize},

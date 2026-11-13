@@ -3051,6 +3051,7 @@ void CompanionSkillListReplay()
     const auto oldMode = SkillPacketReplayAccess::Current();
     const auto oldModeType = SkillPacketReplayAccess::CurrentType();
     const auto oldHomunUse = g_session.GetHomunSkillUseLevel(8000);
+    const auto oldHealUse = g_session.GetHomunSkillUseLevel(8001);
     const auto oldMercUse = g_session.GetMerSkillUseLevel(8200);
     SkillPacketReplayAccess::SetCurrent(&mode);
     g_session.m_homunStatus.skillPoints = 0;
@@ -3121,6 +3122,29 @@ void CompanionSkillListReplay()
         "companion resize did not snap geometry or expose the extra row");
     g_session.SetHomunSkillUseLevel(8000, 2);
     g_session.SetMerSkillUseLevel(8200, 3);
+    g_session.SetHomunSkillUseLevel(8001, 4);
+    const int healLevelY = homun->m_y + 17 + 32 + 18;
+    const auto clickLevel = [&](int x, int releaseY) {
+        g_windowMgr.OnLBtnDown(homun->m_x + x, healLevelY);
+        g_windowMgr.OnLBtnUp(homun->m_x + x, releaseY);
+    };
+    clickLevel(113, healLevelY - 18);
+    Require(g_session.GetHomunSkillUseLevel(8001) == 4, "releasing outside changed the companion use level");
+    for (int i = 0; i < 4; ++i) clickLevel(113, healLevelY);
+    const auto healRow = homun->GetRows()[1];
+    Require(healRow.levelSelectable && healRow.useLevel == 1 && healRow.spCost == 13
+        && g_session.GetMerSkillUseLevel(8200) == 3, "companion level controls did not clamp or update the per-level cost");
+    clickLevel(193, healLevelY);
+    homun->OnLBtnDblClk(homun->m_x + 10, healLevelY - 14);
+    Require(mode.m_skillUseInfo.id == 8001 && mode.m_skillUseInfo.level == 2,
+        "companion skill cast did not use the adjusted level");
+    homun->OnLBtnDown(homun->m_x + 10, healLevelY - 14);
+    homun->OnMouseMove(homun->m_x + 30, healLevelY - 14);
+    Require(mode.m_dragInfo.skillId == 8001 && mode.m_dragInfo.skillLevel == 2,
+        "companion skill drag did not use the adjusted level");
+    for (int i = 0; i < 4; ++i) clickLevel(193, healLevelY);
+    Require(g_session.GetHomunSkillUseLevel(8001) == 4,
+        "companion use level exceeded the learned level");
     homun->OnLBtnDown(homun->m_x + 10, homun->m_y + 22);
     homun->OnMouseMove(homun->m_x + 30, homun->m_y + 22);
     Require(mode.m_dragInfo.skillId == 8000 && mode.m_dragInfo.skillLevel == 2
@@ -3196,6 +3220,7 @@ void CompanionSkillListReplay()
     for (const auto& row : oldMerc) g_session.SetMercSkillItem(row);
     g_session.m_homunStatus = oldHomunStatus;
     g_session.SetHomunSkillUseLevel(8000, oldHomunUse);
+    g_session.SetHomunSkillUseLevel(8001, oldHealUse);
     g_session.SetMerSkillUseLevel(8200, oldMercUse);
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
     connection->Disconnect();
