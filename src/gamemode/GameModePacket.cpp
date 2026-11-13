@@ -1367,6 +1367,34 @@ void HandleItemCompositionAck(CGameMode&, const PacketView& packet)
         result);
 }
 
+void HandleItemRefineResult(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 8) return;
+    const auto result = ReadLE16(packet.data + 2);
+    const auto index = ReadLE16(packet.data + 4);
+    const auto refine = ReadLE16(packet.data + 6);
+    // The server stores refine in a byte. Result 3 belongs to the later refine UI.
+    if (result > 2 || refine > 255) return;
+
+    if (const auto* item = g_session.GetInventoryItemByIndex(index)) {
+        auto updated = *item;
+        updated.m_refiningLevel = refine;
+        g_session.SetInventoryItem(updated);
+    }
+    if (result <= 1) {
+        const bool success = result == 0;
+        ro::UiMessageStrings strings;
+        strings.Load();
+        const auto message = success ? strings.Get(498, "Upgrade has been completed successfully.")
+            : strings.Get(499, "Upgrade has failed.");
+        g_windowMgr.PushSourceChatEvent(message.c_str(), 0x00ffff00u, 6,
+            ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None);
+        if (mode.m_world && mode.m_world->m_player && !g_session.m_isMinEffect) {
+            mode.m_world->m_player->LaunchEffect(success ? 154 : 155);
+        }
+    }
+}
+
 void HandleRecovery(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6) return;
@@ -9758,6 +9786,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0177, HandleItemIdentifyList);
     router.Register(0x017D, HandleItemCompositionAck);
     router.Register(0x0179, HandleItemIdentifyAck);
+    router.Register(0x0188, HandleItemRefineResult);
     router.Register(0x00F2, HandleStorageStatus);
     RegisterHandlerIfValid(router, receiveProfile.storageItemAddedBasic, HandleStorageItemAdded);
     router.Register(0x00F6, HandleStorageItemRemoved);

@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK35.01 establishes the selected crafting layouts. Start PK35.02 with `0188` NPC refine results and test the following inventory delta sequence. The production and weapon-refine selection contracts are distinct and use `018D/018E/018F` and `0221/0222/0223`, respectively. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
+PK35.02 handles `0188` NPC refine results alongside the authoritative inventory deltas. Continue with the production selection and result packets `018D/018E/018F`, then the separate weapon-refine skill flow `0221/0222/0223`. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
 
 PK34.04 verifies storage reopen after a same-map refresh when the server omits one category. Inventory, cart, storage, and friend snapshot validation are implemented. Live capture and independent PK48 review remain open. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)
 

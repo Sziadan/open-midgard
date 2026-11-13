@@ -258,6 +258,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0177, kVariablePacketSize);
     SetPacketSize(0x0178, 4);
     SetPacketSize(0x0179, 5);
+    SetPacketSize(0x0188, 8);               // ZC_ACK_ITEMREFINING
     SetPacketSize(0x0193, 2);
     SetPacketSize(0x0194, 30);
     SetPacketSize(0x0298, 8);               // selected rental: item ID + seconds

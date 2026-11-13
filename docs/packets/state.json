@@ -1274,9 +1274,9 @@
       "commit_subject": "packet(PK35.01): trace selected crafting wire contracts"
     },
     "PK35.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK35.01-crafting-wire.md"],
+      "commit_subject": "packet(PK35.02): receive NPC refine results"
     },
     "PK35.03": {
       "status": "NOT_STARTED",

@@ -162,3 +162,44 @@ void InventoryItemFieldsReplay()
 
     std::cout << "{\"case_id\":\"inventory_item_wire_fields_20080910\",\"contract_id\":\"PK09.04\",\"routes\":[\"02E8\",\"02D0\",\"013C\",\"00AC\"],\"normal_and_equip_fields\":true,\"category_replacement_both_orders\":true,\"malformed_atomicity\":true,\"empty_categories\":true,\"ammo_wear_refresh\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
+
+void ItemRefineResultReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection connection;
+    const auto dispatch = [&](const std::vector<u8>& bytes, int count = 1) {
+        Require(connection.QueueBytes(bytes), "refine result fixture could not queue frames");
+        Require(ProcessGameModePacketLoop(mode, connection, router, count).packetsDispatched == count
+            && !connection.BufferedBytes(), "refine result did not frame and dispatch");
+    };
+    ITEM_INFO seed{};
+    seed.m_itemIndex = 87;
+    seed.SetItemId(1201);
+    seed.m_itemType = 5;
+    seed.m_num = 1;
+    seed.m_refiningLevel = 4;
+    g_session.SetInventoryItem(seed);
+    g_windowMgr.ClearChatEvents();
+    const auto findItem = [] { return g_session.GetInventoryItemByIndex(87); };
+    dispatch({0x88, 1, 0, 0, 87, 0, 5, 0});
+    Require(findItem() && findItem()->m_refiningLevel == 5 && findItem()->m_num == 1,
+        "refine success did not update the existing item");
+    dispatch({0x88, 1, 2, 0, 87, 0, 3, 0});
+    dispatch({0x88, 1, 3, 0, 87, 0, 7, 0});
+    dispatch({0x88, 1, 0, 0, 87, 0, 0, 1});
+    Require(findItem() && findItem()->m_refiningLevel == 3,
+        "downgrade or invalid refine result changed the wrong value");
+    dispatch({0x88, 1, 1, 0, 87, 0, 0, 0});
+    Require(findItem() && findItem()->m_refiningLevel == 0 && g_windowMgr.GetChatEvents().size() == 2,
+        "refine failure removed an item or result notices differed");
+    dispatch({0xaf, 0, 87, 0, 1, 0, 0x88, 1, 0, 0, 87, 0, 6, 0}, 2);
+    Require(!findItem(), "refine result resurrected an absent item after removal");
+    dispatch({0xd4, 2, 87, 0, 1, 0, 0xb1, 4, 1, 0, 6, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 0, 5, 0, 0, 0, 0, 0, 0, 0});
+    Require(findItem() && findItem()->m_refiningLevel == 6 && findItem()->GetItemId() == 1201,
+        "authoritative add did not restore the refined item after removal");
+    g_session.RemoveInventoryItem(87, 1);
+    g_windowMgr.ClearChatEvents();
+}
