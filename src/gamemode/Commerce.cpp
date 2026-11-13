@@ -170,8 +170,26 @@ bool Receive(CGameMode&,const PacketView& v){
         return true;
     }
     case 0xe9:{if(n<19||!state.tradeActive)return false;const u32 amount=read(p+2,4),id=read(p+6);if(!id)state.remoteZeny=amount;else{Offer o;o.amount=amount;o.item.SetItemId(id);o.item.m_num=int(amount);o.item.m_isIdentified=p[8];o.item.m_isDamaged=p[9];o.item.m_refiningLevel=p[10];for(int k=0;k<4;++k)o.item.m_slot[k]=read(p+11+2*k);state.remoteOffer.push_back(o);}return true;}
-    case 0xea:if(n<5)return false;if(state.tradeAddPending && read(p+2)==state.pendingTrade.item.m_itemIndex){if(p[4]==0){auto old=std::find_if(state.localOffer.begin(),state.localOffer.end(),[&](const auto& o){return o.item.m_itemIndex==state.pendingTrade.item.m_itemIndex;});if(old==state.localOffer.end())state.localOffer.push_back(state.pendingTrade);else old->amount+=state.pendingTrade.amount;}else state.status="Server rejected the offered item or amount.";state.tradeAddPending=false;}return true;
-    case 0xec:if(n<3||!state.tradeActive)return false;if(p[2]==0){state.localLocked=true;state.lockPending=false;}else state.remoteLocked=true;return true;
+    case 0xea:{
+        if(n!=5 || p[4]>2)return false;
+        if(!state.tradeActive || !state.tradeAddPending || read(p+2)!=state.pendingTrade.item.m_itemIndex)return true;
+        if(p[4]==0){
+            auto old=std::find_if(state.localOffer.begin(),state.localOffer.end(),[&](const auto& offer){
+                return offer.item.m_itemIndex==state.pendingTrade.item.m_itemIndex;
+            });
+            if(old==state.localOffer.end())state.localOffer.push_back(state.pendingTrade);
+            else old->amount+=state.pendingTrade.amount;
+        }else state.status="Server rejected the offered item or amount.";
+        state.tradeAddPending=false;
+        state.pendingTrade={};
+        return true;
+    }
+    case 0xec:
+        if(n!=3 || p[2]>1)return false;
+        if(!state.tradeActive)return false;
+        if(p[2]==0){state.localLocked=true;state.lockPending=false;}
+        else state.remoteLocked=true;
+        return true;
     case 0xee:{
         if(n!=2)return false;
         const bool hadTrade = state.tradeActive || state.tradeWaiting || state.tradeIncoming;
@@ -281,7 +299,17 @@ bool Action(const Command& c){
     if(c.action=="offerTrade"||c.action=="tradeZeny"){
         if(tradeCancelPending()||!state.tradeActive||state.localLocked||state.lockPending||state.tradeAddPending||(!c.amount && c.action!="tradeZeny"))return false;Offer o;
         if(c.action=="tradeZeny"){const auto* player=g_session.GetSelectedCharacterInfo();if(!player||c.amount>u32(std::max(0,player->money)))return false;o.amount=c.amount;}
-        else{const auto* i=g_session.GetInventoryItemByIndex(c.index);if(!i||i->m_wearLocation||i->m_deleteTime||c.amount>32767)return false;u32 offered=0;for(const auto& old:state.localOffer)if(old.item.m_itemIndex==c.index)offered+=old.amount;if(offered+c.amount>u32(i->m_num)||state.localOffer.size()>=10)return false;o={*i,c.amount,0};}
+        else{
+            const auto* i=g_session.GetInventoryItemByIndex(c.index);
+            if(!i || !i->GetItemId() || i->m_num<=0 || i->m_wearLocation || i->m_deleteTime || c.amount>32767)return false;
+            const auto existing=std::find_if(state.localOffer.begin(),state.localOffer.end(),[&](const auto& row){
+                return row.item.m_itemIndex==c.index;
+            });
+            if(existing==state.localOffer.end()){
+                if(state.localOffer.size()>=10 || c.amount>u32(i->m_num))return false;
+            }else if(existing->item.GetItemId()!=i->GetItemId() || u64(existing->amount)+c.amount>u32(i->m_num))return false;
+            o={*i,c.amount,0};
+        }
         auto p=packet(0xe8,8);put(p,2,o.item.m_itemIndex);put(p,4,c.amount,4);if(!send(p))return false;
         // rAthena does not echo a Zeny-add acknowledgement to the sender.
         // This is the editable offer, not the character's actual balance.

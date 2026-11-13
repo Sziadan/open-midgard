@@ -4025,3 +4025,5 @@ PK36.01 traces the three storage password frames, the registered parser stub, an
 PK36.04 verifies that the inactive storage password frames drain through production framing without opening storage or emitting a reply. PK36.02 and PK36.03 await an active server contract. [Evidence](evidence/PK36.01-storage-password-applicability.md)
 
 PK37.03 keeps trade cancellation pending until the server responds and handles acceptance that crosses the cancel request. [Evidence](evidence/PK37.03-trade-cancellation.md)
+
+PK37.03 verifies local offer increments at capacity, matching add acknowledgments, and lock side validation. [Evidence](evidence/PK37.03-trade-cancellation.md)

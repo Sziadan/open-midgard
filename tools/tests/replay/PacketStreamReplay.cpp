@@ -6484,6 +6484,7 @@ void TradeAddItemProductionSendReplay()
     ITEM_INFO item{};
     item.m_itemIndex = itemIndex;
     item.m_num = 5;
+    item.SetItemId(501);
     g_session.SetInventoryItem(item);
     ro::commerce::Reset();
     ro::commerce::state.tradeActive = true;
@@ -6507,6 +6508,33 @@ void TradeAddItemProductionSendReplay()
             "trade-item offer did not emit the selected eight-byte frame");
         Require(!ro::commerce::Action(offer) && ro::commerce::state.tradeAddPending,
             "duplicate trade-item offer was not suppressed while awaiting acknowledgement");
+
+        CGameMode mode;
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        TestConnection input;
+        const auto dispatch = [&](const std::vector<u8>& frame) {
+            Require(input.QueueBytes(frame) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+                "trade offer reply did not dispatch");
+        };
+        dispatch({0xea, 0, 0, 0, 0});
+        dispatch({0xea, 0, 0xe8, 0xfd, 9});
+        dispatch({0xec, 0, 2});
+        Require(ro::commerce::state.tradeAddPending && ro::commerce::state.localOffer.empty()
+            && !ro::commerce::state.remoteLocked, "unrelated trade reply changed the pending offer or lock");
+        dispatch({0xea, 0, 0xe8, 0xfd, 0});
+        auto& trade = ro::commerce::state;
+        Require(!trade.tradeAddPending && trade.localOffer.size() == 1 && trade.localOffer.front().amount == 2,
+            "matching acknowledgement did not apply the offered amount");
+        trade.localOffer.resize(10);
+        Require(ro::commerce::Action(offer) && peer.ReceiveExact(expected.size()) == expected,
+            "existing stack could not be increased with ten occupied slots");
+        dispatch({0xea, 0, 0xe8, 0xfd, 0});
+        Require(trade.localOffer.size() == 10 && trade.localOffer.front().amount == 4
+            && g_session.GetInventoryItemByIndex(itemIndex)->m_num == 5,
+            "repeated add did not merge without changing inventory");
+        dispatch({0xec, 0, 1});
+        Require(trade.remoteLocked && !trade.localLocked, "remote lock was applied to the wrong side");
     }
 
     connection->Disconnect();
