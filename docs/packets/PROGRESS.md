@@ -4031,3 +4031,5 @@ PK37.03 verifies local offer increments at capacity, matching add acknowledgment
 PK37.03 preserves the reference's ten remote offer rows and applies final results to a pending local commit. [Evidence](evidence/PK37.03-trade-cancellation.md)
 
 PK37.03 verifies the remote offers, Zeny, and lock labels in Qt and captures the window before and after a matching trade result. [Evidence](evidence/PK37.03-trade-cancellation.md)
+
+PK37.02 validates the buyer and owner vending snapshots before replacing their current rows. [Evidence](evidence/PK37.02-vending-snapshots.md)

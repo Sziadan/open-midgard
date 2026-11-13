@@ -140,7 +140,52 @@ bool Receive(CGameMode&,const PacketView& v){
     case 0x125:if(n<8)return false;remove(state.cartItems,read(p+2),read(p+4,4));return true;
     case 0x12c:if(n<3||p[2]>1)return false;note(p[2]==0?"Cart transfer failed: cart weight limit.":"Cart transfer failed: cart item capacity limit.");return true;
     case 0x12d:if(n<4)return false;state.vendingSlots=std::min<u32>(12,read(p+2));state.vending.visible=state.cart.visible=true;state.draft.clear();state.vendingActive=state.vendingPending=false;state.status="Drag cart items here, then set quantities and prices.";return true;
-    case 0x136:case 0x133:{if(n<8||(n-8)%22)return false;std::vector<Offer> offers;for(int at=8;at<n;at+=22){Offer o;o.price=read(p+at,4);o.amount=read(p+at+(op==0x136?6:4));o.item.m_itemIndex=read(p+at+(op==0x136?4:6));o.item.m_itemType=p[at+8];o.item.SetItemId(read(p+at+9));o.item.m_isIdentified=p[at+11];o.item.m_isDamaged=p[at+12];o.item.m_refiningLevel=p[at+13];o.item.m_num=int(o.amount);for(int k=0;k<4;++k)o.item.m_slot[k]=read(p+at+14+k*2);offers.push_back(o);}if(op==0x136){state.draft=offers;state.vendingActive=true;state.vendingPending=false;state.vending.visible=true;state.status="Shop is open.";}else{state.shopItems=offers;state.sellerId=read(p+4,4);state.shop.visible=true;state.status="Select an item and quantity to purchase.";}return true;}
+    case 0x136:case 0x133:{
+        constexpr int headerSize = 8;
+        constexpr int rowSize = 22;
+        constexpr int maxOffers = 12;
+        if(n<headerSize || read(p+2)!=n || (n-headerSize)%rowSize || (n-headerSize)/rowSize>maxOffers)return false;
+        const u32 owner = read(p+4,4);
+        if(!owner)return false;
+        const bool ownShop = op==0x136;
+        std::array<bool,item_snapshot::kInventorySlots> seen{};
+        std::vector<Offer> offers;
+        offers.reserve((n-headerSize)/rowSize);
+        for(int at=headerSize;at<n;at+=rowSize){
+            const auto* row = p+at;
+            const auto index = read(row+(ownShop?4:6));
+            const auto amount = read(row+(ownShop?6:4));
+            const auto id = read(row+9);
+            const unsigned slot = index-item_snapshot::kFirstInventoryIndex;
+            if(slot>=seen.size() || seen[slot] || !amount || amount>item_snapshot::kMaxStackAmount || !id)return false;
+            seen[slot]=true;
+            Offer offer;
+            offer.price=read(row,4);
+            offer.amount=amount;
+            offer.item.m_itemIndex=index;
+            offer.item.m_itemType=row[8];
+            offer.item.SetItemId(id);
+            offer.item.m_isIdentified=row[11];
+            offer.item.m_isDamaged=row[12];
+            offer.item.m_refiningLevel=row[13];
+            offer.item.m_num=static_cast<int>(amount);
+            for(int k=0;k<4;++k)offer.item.m_slot[k]=read(row+14+k*2);
+            offers.push_back(std::move(offer));
+        }
+        if(ownShop){
+            state.draft=std::move(offers);
+            state.vendingActive=true;
+            state.vendingPending=false;
+            state.vending.visible=true;
+            state.status="Shop is open.";
+        }else{
+            state.shopItems=std::move(offers);
+            state.sellerId=owner;
+            state.shop.visible=true;
+            state.status="Select an item and quantity to purchase.";
+        }
+        return true;
+    }
     case 0x137:if(n<6)return false;for(auto& o:state.draft)if(o.item.m_itemIndex==read(p+2))o.amount=o.amount>read(p+4)?o.amount-read(p+4):0;state.draft.erase(std::remove_if(state.draft.begin(),state.draft.end(),[](const auto& o){return !o.amount;}),state.draft.end());return true;
     case 0x135:if(n<7)return false;if(!p[6])for(auto& o:state.shopItems)if(o.item.m_itemIndex==read(p+2))o.amount=o.amount>read(p+4)?o.amount-read(p+4):0;state.status=p[6]?"Purchase failed: funds, weight, stock or shop changed.":"Purchase confirmed.";return true;
     case 0x138:if(n<3)return false;state.vendingPending=false;if(p[2]){state.vendingActive=false;state.status="The server could not open your shop.";}return true;

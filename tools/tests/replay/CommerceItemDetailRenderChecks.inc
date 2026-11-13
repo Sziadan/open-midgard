@@ -86,12 +86,12 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     rightClick("commerceTile_cart_3",1202,false,"cart-collision");
 
     // Literal server snapshots exercise both offer layouts and their itemIndex identity.
-    hidePanels();Dispatch(mode,offerPacket(0x136,1202,291,2,true));
+    hidePanels();Dispatch(mode,offerPacket(0x136,1202,91,2,true));
     state.vending.visible=true;state.cart.visible=false;sync();
-    rightClick("commerceTile_vending_291",1202,true,"vending");
-    hidePanels();Dispatch(mode,offerPacket(0x133,1201,291,4,false));state.shop.visible=true;sync();
-    rightClick("commerceDetail_shop_291",1201,false,"shop");
-    SetRuntimeUiScalePercent(125);rightClick("commerceDetail_shop_291",1201,false,"scaled-shop");
+    rightClick("commerceTile_vending_91",1202,true,"vending");
+    hidePanels();Dispatch(mode,offerPacket(0x133,1201,91,4,false));state.shop.visible=true;sync();
+    rightClick("commerceDetail_shop_91",1201,false,"shop");
+    SetRuntimeUiScalePercent(125);rightClick("commerceDetail_shop_91",1201,false,"scaled-shop");
     SetRuntimeUiScalePercent(100);
 
     // 00E7 opens the real trade panel; 00E9 rows have no item index, so row ordinals select distinct snapshots.
@@ -112,8 +112,8 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     state.equipment.visible=true;sync();rightClick("commerceDetail_equipment_291",1202,true,"viewed-equipment");
 
     // Snapshot details remain the selected item after their source panel/list changes.
-    hidePanels();Dispatch(mode,offerPacket(0x133,1202,291,1,true));state.shop.visible=true;sync();
-    rightClick("commerceDetail_shop_291",1202,true,"shop-snapshot");
+    hidePanels();Dispatch(mode,offerPacket(0x133,1202,91,1,true));state.shop.visible=true;sync();
+    rightClick("commerceDetail_shop_91",1202,true,"shop-snapshot");
     state.shopItems.clear();state.shop.visible=false;state.cartItems.erase(3);sync();
     Dispatch(mode,{0xaf,0,3,0,1,0});sync();
     UIItemInfoWnd::DisplayData retained;Require(g_windowMgr.m_itemInfoWnd->GetDisplayDataForQt(&retained)
@@ -132,7 +132,7 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     state.draft.clear();state.vending.visible=true;
     noOpen(QVariantMap{{"from","vending"},{"index",291},{"id",1202}},"missing-vending-row-with-cart-collision");
     state.shopItems={{cartItem,1,1}};state.shop.visible=false;
-    noOpen(QVariantMap{{"from","shop"},{"index",291},{"id",1202}},"hidden-source-panel");
+    noOpen(QVariantMap{{"from","shop"},{"index",91},{"id",1202}},"hidden-source-panel");
     state.trade.visible=true;state.tradeActive=true;
     noOpen(QVariantMap{{"from","trade-remote"},{"index",0},{"row",8},{"id",1202}},"missing-remote-row");
     noOpen(QVariantMap{{"from","trade-remote"},{"index",0},{"row",-1},{"id",1202}},"negative-remote-row");

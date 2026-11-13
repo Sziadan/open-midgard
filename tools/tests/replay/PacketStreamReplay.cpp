@@ -6642,14 +6642,31 @@ void VendingPurchaseProductionSendReplay()
         "Commerce::Action(buy) -> production CRagConnection::SendPacket");
     const ro::commerce::State savedState = ro::commerce::state;
     ro::commerce::Reset();
-    ro::commerce::state.sellerId = 0x11223344;
-    ro::commerce::Offer listed{};
-    listed.item.m_itemIndex = 0x1234;
-    listed.amount = 7;
-    ro::commerce::state.shopItems.push_back(listed);
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    const std::vector<u8> listing{0x33,1,30,0,0x44,0x33,0x22,0x11,
+        0,0,0,0,7,0,101,0,3,0xf5,1,1,0,0,0,0,0,0,0,0,0,0};
+    const auto dispatch = [&](const std::vector<u8>& frame) {
+        Require(input.QueueBytes(frame) && ProcessGameModePacketLoop(mode,input,router,1).packetsDispatched==1
+            && !input.BufferedBytes(), "vending snapshot did not dispatch");
+    };
+    dispatch(listing);
+    auto duplicate = listing;
+    duplicate.insert(duplicate.end(),listing.begin()+8,listing.end());
+    duplicate[2] = static_cast<u8>(duplicate.size());
+    duplicate[4] = 0x55;
+    dispatch(duplicate);
+    auto outOfRange = listing;
+    outOfRange[14] = 102;
+    outOfRange[4] = 0x66;
+    dispatch(outOfRange);
+    Require(ro::commerce::state.sellerId==0x11223344 && ro::commerce::state.shopItems.size()==1
+        && ro::commerce::state.shopItems.front().price==0, "invalid vending snapshot replaced the valid quote");
     ro::commerce::Command buy{};
     buy.action = "buy";
-    buy.index = 0x1234;
+    buy.index = 101;
     buy.amount = 2;
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
@@ -6666,7 +6683,7 @@ void VendingPurchaseProductionSendReplay()
         Require(ro::commerce::Action(buy), "valid vending purchase was rejected by the production action");
         const std::vector<u8> expected{
             0x34, 0x01, 0x0c, 0x00, 0x44, 0x33, 0x22, 0x11,
-            0x02, 0x00, 0x34, 0x12
+            0x02, 0x00, 101, 0x00
         };
         Require(peer.ReceiveExact(expected.size()) == expected,
             "vending purchase did not emit the selected 12-byte transaction frame");

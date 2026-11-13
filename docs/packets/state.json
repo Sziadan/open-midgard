@@ -1319,9 +1319,9 @@
       "commit_subject": null
     },
     "PK37.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK37.02-vending-snapshots.md"],
+      "commit_subject": "packet(PK37.02): validate selected vending snapshots"
     },
     "PK37.03": {
       "status": "IN_PROGRESS",

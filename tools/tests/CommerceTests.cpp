@@ -50,7 +50,7 @@ int main(){
     const auto opening=socket->sent.back();assert(opening.size()==93&&opening[0]==0xb2&&opening[1]==1&&opening[2]==93&&opening[84]==1&&opening[85]==2&&opening[87]==3&&opening[89]==250);
     assert(receive({0x10,1,41,0,0,0,0,0,0,0})&&!state.vendingPending);assert(Action(c));
     c.action="transfer";assert(!Action(c)); // Opening shop locks transfers.
-    std::vector<u8> opened(30);opened[0]=0x36;opened[1]=1;opened[2]=30;opened[8]=250;opened[12]=2;opened[14]=3;opened[17]=0xf5;opened[18]=1;opened[19]=1;
+    std::vector<u8> opened(30);opened[0]=0x36;opened[1]=1;opened[2]=30;opened[4]=101;opened[8]=250;opened[12]=2;opened[14]=3;opened[17]=0xf5;opened[18]=1;opened[19]=1;
     assert(receive(opened)&&state.vendingActive&&!state.vendingPending);c.action="close";c.to="vending";assert(Action(c));assert(socket->sent.back()==std::vector<u8>({0x2e,1}));
     assert(receive({0xe7,0,0})&&!state.trade.visible&&g_windowMgr.lastChat.find("too far")!=std::string::npos);
     assert(receive({0xe7,0,5})&&g_windowMgr.lastChat.find("busy")!=std::string::npos);
