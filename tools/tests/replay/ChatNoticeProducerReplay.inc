@@ -47,6 +47,34 @@ void MannerAndColoredNoticeReplay()
     world.UnregisterActor(&actor);
 }
 
+void AuctionResultNoticeReplay()
+{
+    SetCase("auction_results", "PK40.02", "selected-0250-025d-auction-notices", "map packet loop -> auction chat");
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    g_windowMgr.ClearChatEvents();
+    std::vector<u8> frames;
+    for (u8 result = 0; result <= 10; ++result) {
+        frames.insert(frames.end(), {0x50, 0x02, result});
+    }
+    for (u8 result = 0; result <= 3; ++result) {
+        frames.insert(frames.end(), {0x5d, 0x02, result, 0});
+    }
+    frames.insert(frames.end(), {0x5d, 0x02, 1, 1, 0x9a, 0, 9, 0, 'n', 'e', 'x', 't', 0});
+    Require(connection.QueueBytes(frames), "could not queue auction notices and broadcast");
+    Require(ProcessGameModePacketLoop(mode, connection, router, 17).packetsDispatched == 17
+        && !connection.BufferedBytes(), "four-byte auction close reply lost stream alignment");
+    const auto& events = g_windowMgr.GetChatEvents();
+    Require(events.size() == 14 && events.back().text == "next", "auction results lost a notice or accepted an unknown code");
+    for (std::size_t i = 0; i < 13; ++i) {
+        const u32 color = i == 1 || i == 6 || i == 10 ? 0x00ffffffu : 0x00ff0000u;
+        Require(!events[i].text.empty() && events[i].color == color, "auction result lost its reference notice color");
+    }
+    g_windowMgr.ClearChatEvents();
+}
+
 void PvpRankReplay()
 {
     SetCase("pvp_rank", "PK39.02", "selected-019a-pvp-rank", "map packet loop -> actor rank and badge");

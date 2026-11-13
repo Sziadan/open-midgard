@@ -4095,3 +4095,5 @@ PK39.04 classifies the five selected requests and five inactive identities. Focu
 PK40.01 traces legacy auction and NPC cash-shop packets, the direction-specific `025D` close collision, and the later bank and cash-sale gates. [Evidence](evidence/PK40.01-selected-commerce-inventory.md)
 
 PK40.04 classifies all ten bank request and reply rows as inactive for MAIN 20080910 based on the 20130717 guards. [Evidence](evidence/PK40.01-selected-commerce-inventory.md)
+
+PK40.02 adds `0250` and inbound `025D` framing and source result notices. Production replay checks all 13 recognized results and alignment into the following frame. [Evidence](evidence/PK40.02-auction-result-notices.md)

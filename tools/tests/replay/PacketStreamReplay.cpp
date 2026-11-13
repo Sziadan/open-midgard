@@ -7399,6 +7399,7 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--chat-notice-only") {
         ChatNoticeRoutingReplay();
         ChatNoticeProducerReplay();
+        AuctionResultNoticeReplay();
         MvpRewardReplay();
         LegacyRankingReplay();
         PvpRankReplay();
@@ -7598,6 +7599,7 @@ int main(int argc,char** argv){try{
     ChatWindowStateReplay();
     ChatNoticeRoutingReplay();
     ChatNoticeProducerReplay();
+    AuctionResultNoticeReplay();
     SpecialItemObtainReplay();
     MvpRewardReplay();
     LegacyRankingReplay();

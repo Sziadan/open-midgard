@@ -8769,6 +8769,50 @@ void HandleMvpReward(CGameMode& mode, const PacketView& packet)
     RecordChat(mode, message, dropped ? 0x00FF0000u : 0x0000FFFFu, kChatChannelSystem);
 }
 
+void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data) return;
+
+    struct Notice {
+        unsigned messageId;
+        const char* fallback;
+        u32 color;
+    };
+    constexpr u32 white = 0x00ffffffu;
+    constexpr u32 red = 0x00ff0000u;
+    constexpr Notice results[] = {
+        {1034, "You have failed to bid in the auction.", red},
+        {1035, "You have successfully bid in the auction.", white},
+        {1036, "The auction has been canceled.", red},
+        {1037, "An auction with at least one bidder cannot be canceled.", red},
+        {1103, "You cannot register more than five items at a time.", red},
+        {1111, "You do not have enough Zeny to pay the auction fee.", red},
+        {1088, "You have won the auction.", white},
+        {1089, "You have failed to win the auction.", red},
+        {1090, "You do not have enough Zeny.", red},
+        {1104, "You cannot place more than five bids at a time.", red},
+    };
+    constexpr Notice closeResults[] = {
+        {1096, "You have ended the auction.", white},
+        {1097, "You cannot end the auction.", red},
+        {1098, "The auction ID is incorrect.", red},
+    };
+
+    const Notice* notice = nullptr;
+    if (packet.packetId == 0x0250 && packet.packetLength == 3) {
+        const auto result = packet.data[2];
+        if (result < std::size(results)) notice = &results[result];
+    } else if (packet.packetId == 0x025D && packet.packetLength == 4) {
+        const auto result = ReadLE16(packet.data + 2);
+        if (result < std::size(closeResults)) notice = &closeResults[result];
+    }
+    if (!notice) return;
+
+    ro::UiMessageStrings strings;
+    strings.Load();
+    RecordChat(mode, strings.Get(notice->messageId, notice->fallback), notice->color, kChatChannelSystem);
+}
+
 void HandlePvpRank(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 14 || !mode.m_world || !mode.m_world->m_isPKZone) return;
@@ -10369,6 +10413,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01EA, HandleWeddingEffect);
     for (const u16 opcode : {0x010A, 0x010B, 0x010C, 0x010D}) router.Register(opcode, HandleMvpReward);
     router.Register(0x019A, HandlePvpRank);
+    router.Register(0x0250, HandleAuctionResultNotice);
+    router.Register(0x025D, HandleAuctionResultNotice);
     router.Register(0x0210, HandlePvpPoints);
     for (const u16 opcode : {0x0219, 0x021A, 0x021B, 0x021C, 0x0224, 0x0226, 0x0236, 0x0238}) {
         router.Register(opcode, HandleLegacyRanking);

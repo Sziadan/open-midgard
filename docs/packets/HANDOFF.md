@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK40.01 establishes the legacy auction and NPC cash-shop contracts. Start PK40.02 with direction-specific `025D` framing, then verify result routing and build the auction window and request lifecycle. PK40.03 uses the selected single-item cash-shop exchange. PK40.04 classifies the ten banking rows as inactive in MAIN 20080910. [Financial packet inventory](evidence/PK40.01-selected-commerce-inventory.md)
+PK40.02 frames `0250` and the inbound four-byte `025D` close reply and displays their global result notices. Continue with `0252`, `0256`, and `025F`, the auction window and request lifecycle, and code 6 search refresh. Serialize the outbound `025D` request as six bytes. PK40.03 uses the selected single-item cash-shop exchange. PK40.04 classifies the ten banking rows as inactive in MAIN 20080910. [Financial packet inventory](evidence/PK40.01-selected-commerce-inventory.md) · [Auction result evidence](evidence/PK40.02-auction-result-notices.md)
 
 PK39.04 records five verified request identities and five inactive identities for MAIN 20080910. Continue live boss rewards, rankings, PvP and mute transitions. Verify rank badge rendering and sound against a live rank change, including hide and zero reset. PK48 owns independent review. [Selected verification](evidence/PK39.04-selected-verification.md) · [Selected inventory](evidence/PK39.01-selected-inventory.md)
 
