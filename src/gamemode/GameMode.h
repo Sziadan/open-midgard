@@ -364,6 +364,11 @@ public:
     bool RequestAuctionStageItem(u16 inventoryIndex);
     bool CancelAuctionStaging();
     bool ApplyAuctionStageResult(u16 index, u8 result);
+    enum class AuctionTransaction { None, Register, Bid, Cancel, Stop };
+    bool RequestAuctionRegistration(u32 startingPrice, u32 buyNow, u16 hours);
+    bool RequestAuctionTransaction(AuctionTransaction action, const AuctionSearchRow& quote, u32 bid = 0);
+    void ApplyAuctionTransactionResult(u16 opcode, u16 result);
+    AuctionTransaction m_auctionTransaction = AuctionTransaction::None;
     struct AuctionStagingState {
         u16 pendingIndex = 0;
         u32 pendingItemId = 0;

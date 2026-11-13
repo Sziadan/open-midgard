@@ -8877,6 +8877,8 @@ void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
     }
     if (!notice) return;
 
+    mode.ApplyAuctionTransactionResult(packet.packetId,
+        packet.packetId == 0x0250 ? packet.data[2] : ReadLE16(packet.data + 2));
     ro::UiMessageStrings strings;
     strings.Load();
     RecordChat(mode, strings.Get(notice->messageId, notice->fallback), notice->color, kChatChannelSystem);

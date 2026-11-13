@@ -181,6 +181,53 @@ void AuctionSearchSnapshotReplay()
     dispatch(returnedItem);
     Require(g_session.GetInventoryItemByIndex(42)->m_num == 2, "search cancellation changed the inventory total");
     dispatch(page);
+    using Transaction = CGameMode::AuctionTransaction;
+    requestStage();
+    dispatch({0x56,2,42,0,0});
+    Require(!mode.RequestAuctionRegistration(100, 100, 1) && !mode.RequestAuctionRegistration(100, 200, 49),
+        "registration accepted invalid prices or duration");
+    Require(mode.RequestAuctionRegistration(100, 200, 48)
+        && server.ReceiveExact(12) == std::vector<u8>{0x4d,2,100,0,0,0,200,0,0,0,48,0},
+        "registration did not serialize the staged item prices and duration");
+    Require(!mode.RequestAuctionRegistration(100, 200, 48), "duplicate registration reached the server");
+    dispatch({0x50,2,1});
+    Require(!mode.m_auctionStaging.stagedIndex && g_session.GetInventoryItemByIndex(42)->m_num == 1
+        && server.ReceiveExact(4) == std::vector<u8>{0x5c,2,0,0},
+        "registration success did not consume the reservation or refresh own sales");
+    dispatch(page);
+    const auto bidQuote = state.rows.front();
+    auto staleQuote = bidQuote;
+    ++staleQuote.price;
+    Require(!mode.RequestAuctionTransaction(Transaction::Bid, staleQuote, 0x12345679)
+        && !mode.RequestAuctionTransaction(Transaction::Bid, bidQuote, bidQuote.price),
+        "auction accepted a stale quote or an insufficient bid");
+    Require(mode.RequestAuctionTransaction(Transaction::Bid, bidQuote, 0x12345679)
+        && server.ReceiveExact(10) == std::vector<u8>{0x4f,2,0x42,0,0,0,0x79,0x56,0x34,0x12},
+        "auction bid did not serialize the selected quote");
+    dispatch({0x50,2,7});
+    Require(mode.m_auctionTransaction == Transaction::Bid && !mode.RequestAuctionSearch({}),
+        "unsolicited loss released a pending bid");
+    dispatch({0x50,2,1});
+    Require(mode.m_auctionTransaction == Transaction::None && state.awaitingReply
+        && state.query.kind == Kind::OwnBids, "successful bid did not own the server-pushed bid page");
+    dispatch(page);
+    const std::string oldName = g_session.GetPlayerName();
+    std::snprintf(g_session.m_playerName, sizeof(g_session.m_playerName), "%s", seller.c_str());
+    Require(mode.RequestAuctionTransaction(Transaction::Stop, state.rows.front())
+        && server.ReceiveExact(6) == std::vector<u8>{0x5d,2,0x42,0,0,0},
+        "stop request did not preserve the six-byte outbound opcode");
+    dispatch({0x5d,2,0,0});
+    Require(state.awaitingReply && state.query.kind == Kind::OwnSales,
+        "successful stop did not own the server-pushed sales page");
+    auto noBidder = page;
+    std::fill(noBidder.begin() + 67, noBidder.begin() + 91, 0);
+    dispatch(noBidder);
+    Require(mode.RequestAuctionTransaction(Transaction::Cancel, state.rows.front())
+        && server.ReceiveExact(6) == std::vector<u8>{0x4e,2,0x42,0,0,0}, "cancel did not send the selected sale ID");
+    dispatch({0x5d,2,2,0});
+    Require(mode.m_auctionTransaction == Transaction::None && !state.awaitingReply,
+        "cancel failure through the close reply did not release its transaction");
+    std::snprintf(g_session.m_playerName, sizeof(g_session.m_playerName), "%s", oldName.c_str());
     g_session.ClearInventoryItems();
     for (const auto& item : inventory) g_session.SetInventoryItem(item);
     g_windowMgr.ClearChatEvents();

@@ -8032,6 +8032,7 @@ void ClearRuntimeActors(CGameMode& mode)
     mode.m_pvpRankStartTick = 0;
     mode.m_auctionSearch = {};
     mode.m_auctionStaging = {};
+    mode.m_auctionTransaction = CGameMode::AuctionTransaction::None;
     mode.m_recallPartnerName.clear();
     mode.ResetCompanionMapState();
     g_Weather.Reset();
@@ -10348,7 +10349,8 @@ void ResetCompanionActorOrders(CWorld* world, u32 gid, companion_ai::Kind kind)
 
 bool CGameMode::RequestAuctionSearch(const AuctionSearchQuery& query)
 {
-    if (!m_auctionSearch.open || m_auctionSearch.awaitingReply) return false;
+    if (!m_auctionSearch.open || m_auctionSearch.awaitingReply
+        || m_auctionTransaction != AuctionTransaction::None) return false;
 
     const auto type = static_cast<u16>(query.kind);
     const bool ownList = query.kind == AuctionSearchKind::OwnSales || query.kind == AuctionSearchKind::OwnBids;
@@ -10399,6 +10401,7 @@ void CGameMode::CloseAuctionSearch()
 bool CGameMode::RequestAuctionStageItem(u16 inventoryIndex)
 {
     if (!m_auctionSearch.open || m_auctionStaging.pendingIndex || m_auctionStaging.stagedIndex
+        || m_auctionTransaction != AuctionTransaction::None
         || inventoryIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots) return false;
 
     const auto* item = g_session.GetInventoryItemByIndex(inventoryIndex);
@@ -10454,6 +10457,96 @@ bool CGameMode::ApplyAuctionStageResult(u16 index, u8 result)
     staging.pendingItemId = 0;
     staging.discardReply = false;
     return inventoryChanged;
+}
+
+bool CGameMode::RequestAuctionRegistration(u32 startingPrice, u32 buyNow, u16 hours)
+{
+    if (!m_auctionSearch.open || m_auctionSearch.awaitingReply || !m_auctionStaging.stagedIndex
+        || m_auctionTransaction != AuctionTransaction::None || !startingPrice || startingPrice >= buyNow
+        || buyNow > 0x7fffffffu || hours < 1 || hours > 48) return false;
+
+    std::array<u8, 12> packet{0x4d, 2};
+    for (std::size_t i = 0; i < 4; ++i) {
+        packet[2 + i] = static_cast<u8>(startingPrice >> (8 * i));
+        packet[6 + i] = static_cast<u8>(buyNow >> (8 * i));
+    }
+    packet[10] = static_cast<u8>(hours);
+    if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size())) return false;
+    m_auctionTransaction = AuctionTransaction::Register;
+    return true;
+}
+
+bool CGameMode::RequestAuctionTransaction(AuctionTransaction action, const AuctionSearchRow& quote, u32 bid)
+{
+    if (!m_auctionSearch.open || m_auctionSearch.awaitingReply || m_auctionStaging.pendingIndex
+        || m_auctionStaging.stagedIndex || m_auctionTransaction != AuctionTransaction::None || !quote.auctionId) return false;
+
+    const auto& rows = m_auctionSearch.rows;
+    const auto current = std::find_if(rows.begin(), rows.end(), [&](const AuctionSearchRow& row) {
+        return row.auctionId == quote.auctionId && row.seller == quote.seller && row.buyer == quote.buyer
+            && row.price == quote.price && row.buyNow == quote.buyNow;
+    });
+    if (current == rows.end()) return false;
+    const bool ownsSale = current->seller == g_session.GetPlayerName();
+    u8 opcode;
+    int length = 6;
+    switch (action) {
+    case AuctionTransaction::Bid:
+        if (ownsSale || bid <= current->price || bid > 0x7fffffffu) return false;
+        opcode = 0x4f;
+        length = 10;
+        break;
+    case AuctionTransaction::Cancel:
+        if (!ownsSale || !current->buyer.empty()) return false;
+        opcode = 0x4e;
+        break;
+    case AuctionTransaction::Stop:
+        if (!ownsSale || current->buyer.empty()) return false;
+        opcode = 0x5d;
+        break;
+    default: return false;
+    }
+
+    std::array<u8, 10> packet{opcode, 2};
+    for (std::size_t i = 0; i < 4; ++i) {
+        packet[2 + i] = static_cast<u8>(quote.auctionId >> (8 * i));
+        packet[6 + i] = static_cast<u8>(bid >> (8 * i));
+    }
+    if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), length)) return false;
+    m_auctionTransaction = action;
+    return true;
+}
+
+void CGameMode::ApplyAuctionTransactionResult(u16 opcode, u16 result)
+{
+    using Transaction = AuctionTransaction;
+    const auto action = m_auctionTransaction;
+    const bool closeReply = opcode == 0x025D;
+    if (closeReply) {
+        if (action != Transaction::Cancel && action != Transaction::Stop) return;
+    } else {
+        switch (action) {
+        case Transaction::Register: if (result != 1 && result != 2 && result != 4 && result != 5) return; break;
+        case Transaction::Bid: if (result != 0 && result != 1 && result != 8 && result != 9) return; break;
+        case Transaction::Cancel: if (result != 2 && result != 3) return; break;
+        default: return;
+        }
+    }
+
+    m_auctionTransaction = Transaction::None;
+    if (action == Transaction::Register) {
+        if (result == 1) m_auctionStaging = {};
+        else CancelAuctionStaging();
+    }
+    // The selected map server pushes a fresh own list after a successful bid or stop.
+    if ((action == Transaction::Bid && result == 1) || (action == Transaction::Stop && result == 0)) {
+        m_auctionSearch.awaitingReply = true;
+        m_auctionSearch.discardReply = !m_auctionSearch.open;
+        m_auctionSearch.query = {action == Transaction::Bid ? AuctionSearchKind::OwnBids : AuctionSearchKind::OwnSales};
+    } else if (m_auctionSearch.open && (action == Transaction::Register
+        || (action == Transaction::Cancel && !closeReply && result == 2))) {
+        RequestAuctionSearch({AuctionSearchKind::OwnSales});
+    }
 }
 
 void CGameMode::ResetCompanionMapState()

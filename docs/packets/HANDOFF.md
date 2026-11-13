@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK40.02 sends the selected auction search and stage requests and applies their replies. Continue with the visible auction window, registration and bid, and recovery for requests the server drops silently. Serialize the outbound `025D` request as six bytes. PK40.03 uses the selected single-item cash-shop exchange. PK40.04 classifies the ten banking rows as inactive in MAIN 20080910. [Financial packet inventory](evidence/PK40.01-selected-commerce-inventory.md) · [Auction staging evidence](evidence/PK40.02-auction-item-staging.md)
+PK40.02 sends the selected auction search, staging, registration, bid, cancel, and stop requests. Continue with the visible auction controls, live confirmation and refund checks, and recovery for requests the server drops silently. PK40.03 uses the selected single-item cash-shop exchange. PK40.04 classifies the ten banking rows as inactive in MAIN 20080910. [Financial packet inventory](evidence/PK40.01-selected-commerce-inventory.md) · [Auction transaction evidence](evidence/PK40.02-auction-transactions.md)
 
 PK39.04 records five verified request identities and five inactive identities for MAIN 20080910. Continue live boss rewards, rankings, PvP and mute transitions. Verify rank badge rendering and sound against a live rank change, including hide and zero reset. PK48 owns independent review. [Selected verification](evidence/PK39.04-selected-verification.md) · [Selected inventory](evidence/PK39.01-selected-inventory.md)
 

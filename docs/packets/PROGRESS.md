@@ -4103,3 +4103,5 @@ PK40.02 validates auction search pages and retires them on server close or map c
 PK40.02 sends the selected initial browse, price and own-list requests and drains late results before reusing a closed auction search. [Evidence](evidence/PK40.02-auction-search-snapshot.md)
 
 PK40.02 stages one auction item and correlates the `0256` reply, including the raw-index failure branch and a late reply after search. [Evidence](evidence/PK40.02-auction-item-staging.md)
+
+PK40.02 sends registration, bid, cancel, and stop requests and receives their selected replies and server-pushed own lists. [Evidence](evidence/PK40.02-auction-transactions.md)
