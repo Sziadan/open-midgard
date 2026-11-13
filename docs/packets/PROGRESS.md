@@ -4155,3 +4155,5 @@ PK46.03 returns to login after failed account authentication sends or a missing 
 PK46.03 tracks character selection and creation through the reply or a bounded wait, with sign-in recovery after an unanswered or failed request. [Evidence](evidence/PK46.03-loginmode-character-send-paths.md)
 
 PK46.02 reconciles six selected companion requests with the registry and production replay. Status actions and C++ movement, attack, stop, and follow now have current outbound evidence in the inventory. [Evidence](evidence/PK46.02-companion-request-crosswalk.md)
+
+PK46.02 reconciles five selected pet requests with the registry and production replay, including the pet-emotion frames produced by a successful feed result. [Evidence](evidence/PK46.02-pet-request-crosswalk.md)

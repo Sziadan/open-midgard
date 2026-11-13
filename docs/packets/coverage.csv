@@ -311,17 +311,17 @@ AUDIT-0x019B,0x019B,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-notify-effect-019b 
 AUDIT-0x019C,0x019C,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x019D,0x019D,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x019E,0x019E,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x019F,0x019F,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x019F,0x019F,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Selected six-byte taming request captured from the target and taming window flow,C2S_ONLY,PK46.02-PET-CONTROL-REQUESTS
 AUDIT-0x01A0,0x01A0,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x01A1,0x01A1,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x01A1,0x01A1,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Selected three-byte pet menu request captured through owned pet actions,C2S_ONLY,PK46.02-PET-CONTROL-REQUESTS
 AUDIT-0x01A2,0x01A2,map,S2C,PK07,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01A3,0x01A3,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01A4,0x01A4,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x01A5,0x01A5,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x01A5,0x01A5,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Selected 26-byte pet rename captured through the confirmed pet window action,C2S_ONLY,PK46.02-PET-CONTROL-REQUESTS
 AUDIT-0x01A6,0x01A6,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x01A7,0x01A7,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01A7,0x01A7,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected four-byte incubator egg selection captured through the egg window,C2S_ONLY,PK46.02-PET-CONTROL-REQUESTS
 AUDIT-0x01A8,0x01A8,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01A9,0x01A9,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01A9,0x01A9,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected six-byte pet speech and emotion request captured from feed results,C2S_ONLY,PK46.02-PET-EMOTION-REQUEST
 AUDIT-0x01AA,0x01AA,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01AB,0x01AB,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01AC,0x01AC,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
