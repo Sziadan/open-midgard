@@ -280,7 +280,7 @@ void UIItemCompositionWnd::OnDraw()
         return;
     }
 
-    HDC hdc = AcquireMainWindowDrawTarget();
+    HDC hdc = AcquireDrawTarget();
     if (!hdc) {
         return;
     }
@@ -381,7 +381,7 @@ void UIItemCompositionWnd::OnDraw()
     shopui::FrameRectColor(hdc, cancelRect, RGB(140, 133, 120));
     shopui::DrawWindowTextRect(hdc, cancelRect, "Cancel", RGB(0, 0, 0), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
-    ReleaseMainWindowDrawTarget(hdc);
+    ReleaseDrawTarget(hdc);
 }
 
 void UIItemCompositionWnd::OnLBtnDblClk(int x, int y)

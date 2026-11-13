@@ -3453,6 +3453,7 @@ Item {
     }
 
     RoFrame {
+        objectName: "itemCompositionWindow"
         x: uiState.itemCompositionX
         y: uiState.itemCompositionY
         width: uiState.itemCompositionWidth
@@ -3504,6 +3505,7 @@ Item {
 
                 delegate: Rectangle {
                     required property var modelData
+                    objectName: "itemCompositionRow" + modelData.itemIndex
                     x: (modelData.x || 0) - uiState.itemCompositionX - itemCompositionList.x
                     y: (modelData.y || 0) - uiState.itemCompositionY - itemCompositionList.y
                     width: modelData.width || 0
@@ -3532,6 +3534,7 @@ Item {
                     }
 
                     Text {
+                        objectName: "itemCompositionItemLabel"
                         x: 34
                         y: 5
                         width: parent.width - 70

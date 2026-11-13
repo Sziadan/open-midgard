@@ -1,4 +1,5 @@
 #include "ui/UISkillSelectWnd.h"
+#include "ui/UIItemCompositionWnd.h"
 
 void CheckCraftingChoices(QGuiApplication& app, QQuickView& view, QtUiState* state,
     CGameMode& mode, QtUiStateAdapter& adapter, const QString& output)
@@ -131,4 +132,51 @@ void CheckCraftingChoices(QGuiApplication& app, QQuickView& view, QtUiState* sta
     auto* panel = Find(view.rootObject(), "skillChoiceWindow");
     Require(!g_windowMgr.m_skillSelectWnd && panel && !panel->isVisible(),
         "crafting choice teardown retained a projected window");
+
+    ITEM_INFO card{};
+    card.m_itemIndex=100;
+    card.SetItemId(4001);
+    card.m_itemType=6;
+    card.m_num=1;
+    g_session.SetInventoryItem(card);
+    ITEM_INFO equipment{};
+    equipment.m_itemIndex=101;
+    equipment.SetItemId(1201);
+    equipment.m_itemType=5;
+    equipment.m_isIdentified=1;
+    equipment.m_num=1;
+    g_session.SetInventoryItem(equipment);
+    mode.m_lastCardItemIndex=100;
+    Dispatch(mode,{0x7b,1,6,0,101,0});
+    auto* composition=g_windowMgr.m_itemCompositionWnd;
+    UIItemCompositionWnd::DisplayData choice;
+    Require(composition && composition->GetDisplayDataForQt(&choice) && choice.rows.size()==1,
+        "card composition list did not show its offered equipment");
+    sync();
+    auto* compositionPanel=Find(view.rootObject(),"itemCompositionWindow");
+    auto* row=compositionPanel?Find(compositionPanel,"itemCompositionRow101"):nullptr;
+    auto* label=row?Find(row,"itemCompositionItemLabel"):nullptr;
+    Require(label && label->isVisible() && label->property("text").toString()==QString::fromStdString(choice.rows.front().label),
+        "Qt composition chooser did not show the equipment label");
+    ArgbDibSurface dib;
+    Require(dib.EnsureSize(view.width(),view.height()),"composition native surface failed");
+    std::fill_n(dib.GetPixels(),view.width()*view.height(),0xff181b20u);
+    composition->DrawToHdc(dib.GetDC());
+    const QImage native=QImage(reinterpret_cast<uchar*>(dib.GetPixels()),view.width(),view.height(),view.width()*4,QImage::Format_RGB32).copy();
+    const auto qt=view.grabWindow().convertToFormat(QImage::Format_RGB32);
+    const auto& shown=choice.rows.front();
+    const QRect nativeLabel(shown.x+34,shown.y+4,shown.width-72,12);
+    const auto qtLabel=label->mapRectToScene(label->boundingRect()).toAlignedRect().intersected(qt.rect());
+    Require(native.rect().contains(nativeLabel) && PixelsNear(native,nativeLabel,0xff000000u)>4
+        && PixelsNear(qt,qtLabel,0xff25313cu)>4,"composition equipment label did not paint");
+    Require(native.save(output+"/card-composition.native.png") && qt.save(output+"/card-composition.qml.png"),
+        "composition chooser capture failed");
+    const auto& cancel=choice.cancelButton;
+    g_windowMgr.OnLBtnDown(cancel.x+4,cancel.y+4);
+    g_windowMgr.OnLBtnUp(cancel.x+4,cancel.y+4);
+    sync();
+    Require(!g_windowMgr.m_itemCompositionWnd && !compositionPanel->isVisible() && !mode.m_lastCardItemIndex,
+        "card composition cancel left the chooser or card selection active");
+    g_session.RemoveInventoryItem(100,1);
+    g_session.RemoveInventoryItem(101,1);
 }
