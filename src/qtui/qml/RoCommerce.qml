@@ -330,7 +330,7 @@ Item {
             }
             Flickable {
                 width: parent.width
-                height: Math.max(0, parent.height - 180)
+                height: Math.max(0, parent.height - 215)
                 clip: true
                 contentHeight: details.height
                 Column {
@@ -368,10 +368,27 @@ Item {
                     }
                 }
             }
+            Button {
+                objectName: "mailInboxClaim"
+                width: 145
+                label: hub.view.mailClaimPending ? "Check attachments" : "Claim attachments"
+                enabled: !hub.view.mailReadPending && !mail.visible && !hub.view.mailPending
+                    && (hub.view.mailClaimPending ? hub.view.mailClaimCanCheck
+                        : !!hub.view.mailDetail && (!!hub.view.mailDetail.zeny
+                            || (!!hub.view.mailDetail.item && !!hub.view.mailDetail.amount)))
+                onClicked: {
+                    if (hub.view.mailClaimPending)
+                        hub.send("checkMailClaim")
+                    else
+                        hub.send("claimMail", {id: hub.view.mailSelected})
+                }
+            }
             Status {
                 width: parent.width
                 height: 32
-                text: hub.view.mailReadPending ? "Waiting for the message…" : (hub.view.status || "")
+                text: hub.view.mailReadPending ? "Waiting for the message…"
+                    : hub.view.mailClaimCanCheck ? "Attachment status unconfirmed. Check your inventory and Zeny."
+                    : hub.view.mailClaimPending ? "Waiting for mail attachments…" : (hub.view.status || "")
             }
         }
     }

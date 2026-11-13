@@ -25,12 +25,21 @@ struct MailNotification {
     u32 id = 0;
     std::string title, sender;
 };
+struct MailClaim {
+    u32 id = 0;
+    u32 sentAt = 0;
+    unsigned successesRemaining = 0;
+    u8 refusal = 0;
+    bool needsReadback = false;
+    bool terminalReadRequested = false;
+};
 struct MailInbox {
     std::map<u32, MailHeader> headers;
     std::map<u32, MailDetail> details;
     std::optional<MailNotification> notification;
     u32 selectedId = 0;
     u32 pendingReadId = 0;
+    std::optional<MailClaim> claim;
 };
 struct Command {
     std::string action,from,to,text,subject,body;
@@ -68,6 +77,7 @@ void ResetForMapEntry();
 void CloseTransactions();
 bool Receive(CGameMode&,const PacketView&);
 bool Action(const Command&);
+bool MailClaimCanCheck(u32 now);
 bool SendFriendInvitationReply(u32 aid, u32 cid, bool accept);
 bool PlayerAction(int action,u32 target,const std::string& name);
 bool HasInput();

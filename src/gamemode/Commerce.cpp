@@ -16,6 +16,7 @@
 namespace ro::commerce {
 State state;
 namespace {
+constexpr u32 kMailClaimWaitMs = 15000;
 u32 read(const u8* p,int bytes=2){u32 v=0;for(int i=0;i<bytes;++i)v|=u32(p[i])<<(8*i);return v;}
 void put(std::vector<u8>& p,int at,u32 v,int bytes=2){for(int i=0;i<bytes;++i)p[at+i]=u8(v>>(8*i));}
 std::vector<u8> packet(u16 op,int size){std::vector<u8> p(size);put(p,0,op);return p;}
@@ -80,11 +81,44 @@ bool receiveMailDetail(const u8* p, int length)
     if (auto header = inbox.headers.find(id); header != inbox.headers.end()) {
         header->second.read = true;
     }
+    if (inbox.claim && inbox.claim->id == id && inbox.claim->terminalReadRequested) {
+        auto& claim = *inbox.claim;
+        claim.terminalReadRequested = false;
+        if (claim.refusal || (!detail.itemAmount && !detail.zeny)) {
+            state.status = claim.refusal == 2 ? "Attachment claim refused. Check inventory capacity."
+                : claim.refusal ? "Attachment claim refused." : "Mail attachments received.";
+            inbox.claim.reset();
+        }
+    }
     inbox.details.insert_or_assign(id, std::move(detail));
     return true;
 }
 bool send(const std::vector<u8>& p){if(CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(p.data()),int(p.size())))return true;state.status="Connection lost: request was not sent.";return false;}
 bool simple(u16 op){return send(packet(op,2));}
+bool busy();
+bool requestMailRead(u32 id)
+{
+    auto p = packet(0x241, 6);
+    put(p, 2, id, 4);
+    if (!send(p)) return false;
+    auto& inbox = state.inbox;
+    inbox.pendingReadId = id;
+    if (inbox.claim && inbox.claim->id == id && inbox.claim->needsReadback) {
+        inbox.claim->terminalReadRequested = true;
+    }
+    return true;
+}
+
+void receiveMailClaimResult(u8 result)
+{
+    auto& inbox = state.inbox;
+    if (!inbox.claim || inbox.claim->needsReadback) return;
+    auto& claim = *inbox.claim;
+    if (result == 0 && --claim.successesRemaining != 0) return;
+    claim.refusal = result;
+    claim.needsReadback = true;
+    if (!inbox.pendingReadId && !state.mail.visible && !state.mailPending && !busy()) requestMailRead(claim.id);
+}
 void note(const std::string& message){state.status=message;g_windowMgr.PushChatEvent(message.c_str(),0x0080C0FFu,6);}
 bool named(u16 op,const std::string& name,int size=26){if(name.empty()||name.size()>23)return false;auto p=packet(op,size);std::copy(name.begin(),name.end(),p.begin()+2);return send(p);}
 void tradeReset(){state.trade.width=380;state.trade.height=170;state.tradeIncoming=state.tradeActive=state.tradeWaiting=state.localLocked=state.remoteLocked=state.lockPending=state.commitPending=state.tradeAddPending=false;state.tradeCancellation=TradeCancellation::None;state.localOffer.clear();state.remoteOffer.clear();state.localZeny=state.remoteZeny=0;}
@@ -425,6 +459,10 @@ bool Receive(CGameMode&,const PacketView& v){
         return receiveMailList(p, n);
     case 0x242:
         return receiveMailDetail(p, n);
+    case 0x245:
+        if (n != 3 || p[2] > 2) return false;
+        receiveMailClaimResult(p[2]);
+        return true;
     case 0x24a:
         if (n != 70) return false;
         if (read(p + 2, 4) && (!state.inbox.notification || state.inbox.notification->id != read(p + 2, 4))) {
@@ -447,6 +485,9 @@ bool Receive(CGameMode&,const PacketView& v){
         if (n != 8) return false;
         if (state.inbox.pendingReadId && state.inbox.pendingReadId == read(p + 2, 4) && read(p + 6)) {
             state.inbox.details.erase(state.inbox.pendingReadId);
+            if (auto& claim = state.inbox.claim; claim && claim->id == state.inbox.pendingReadId) {
+                claim->terminalReadRequested = false;
+            }
             state.inbox.pendingReadId = 0;
             state.status = "This message is no longer available. Refresh the inbox.";
         }
@@ -629,17 +670,35 @@ bool Action(const Command& c){
         std::vector<u8> p;if(state.promptKind=="guild"){p=packet(0x16b,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else if(state.promptKind=="alliance"){p=packet(0x172,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else return false;
         if(!send(p))return false;state.promptKind.clear();return true;
     }
-    if (c.action == "refreshMail" || c.action == "readMail") {
+    if (c.action == "refreshMail" || c.action == "readMail" || c.action == "claimMail"
+        || c.action == "checkMailClaim") {
+        auto& inbox = state.inbox;
         // Either request can reset the server's staged compose resources.
         if (!state.mailInbox.visible || busy() || state.mail.visible || state.mailPending
-            || state.inbox.pendingReadId) return false;
+            || inbox.pendingReadId) return false;
         if (c.action == "refreshMail") return simple(0x23f);
-        if (!state.inbox.headers.count(c.target)
-            || c.target > static_cast<u32>((std::numeric_limits<int>::max)())) return false;
-        auto p = packet(0x241, 6);
-        put(p, 2, c.target, 4);
-        if (!send(p)) return false;
-        state.inbox.selectedId = state.inbox.pendingReadId = c.target;
+        if (c.action == "checkMailClaim") {
+            return MailClaimCanCheck(GetTickCount()) && requestMailRead(inbox.claim->id);
+        }
+        if (!inbox.headers.count(c.target) || c.target > static_cast<u32>((std::numeric_limits<int>::max)())) {
+            return false;
+        }
+        if (c.action == "claimMail") {
+            if (inbox.claim || inbox.selectedId != c.target) return false;
+            const auto detail = inbox.details.find(c.target);
+            if (detail == inbox.details.end()) return false;
+            const auto& attachment = detail->second;
+            const unsigned components = (attachment.itemAmount != 0 && attachment.item.GetItemId() != 0)
+                + (attachment.zeny != 0);
+            if (!components) return false;
+            auto p = packet(0x244, 6);
+            put(p, 2, c.target, 4);
+            if (!send(p)) return false;
+            inbox.claim = MailClaim{c.target, GetTickCount(), components};
+            return true;
+        }
+        if (!requestMailRead(c.target)) return false;
+        inbox.selectedId = c.target;
         return true;
     }
     if (c.action == "mail") {
@@ -669,6 +728,12 @@ bool Action(const Command& c){
         return true;
     }
     state.status="That action is unavailable in the current state.";return false;
+}
+
+bool MailClaimCanCheck(u32 now)
+{
+    const auto& claim = state.inbox.claim;
+    return claim && (claim->needsReadback || now - claim->sentAt >= kMailClaimWaitMs);
 }
 
 bool SendFriendInvitationReply(u32 aid, u32 cid, bool accept)

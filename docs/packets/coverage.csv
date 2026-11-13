@@ -473,7 +473,7 @@ AUDIT-0x0240,0x0240,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x0241,0x0241,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy mail read captured with the requested message ID,C2S_ONLY,PK32.02-LEGACY-MAIL-INBOX
 AUDIT-0x0242,0x0242,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0243,0x0243,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0244,0x0244,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0244,0x0244,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy attachment claim captured with the requested mail ID,C2S_ONLY,PK32.03-LEGACY-MAIL-CLAIM
 AUDIT-0x0245,0x0245,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0246,0x0246,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy combined draft reset from the composer. Production replay verifies type 0 and pending-send protection.,C2S_ONLY,PK46.02-MAIL-DRAFT-RESET
 AUDIT-0x0247,0x0247,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

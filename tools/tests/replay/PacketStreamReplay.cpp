@@ -6970,6 +6970,79 @@ void MailInboxProductionReplay()
     Require(!state.inbox.pendingReadId && state.inbox.headers.at(1).read && opened.body == "Hey"
         && opened.zeny == 25 && opened.itemAmount == 2 && opened.item.GetItemId() == 501
         && opened.item.m_slot[0] == 7, "selected detail lost message or attachment fields");
+
+    Command claimMail;
+    claimMail.action = "claimMail";
+    claimMail.target = 1;
+    const std::vector<u8> claimRequest{0x44, 0x02, 1, 0, 0, 0};
+    const std::vector<u8> detailRequest{0x41, 0x02, 1, 0, 0, 0};
+    const std::vector<u8> claimSuccess{0x45, 0x02, 0};
+    auto emptyDetail = detail;
+    std::fill(emptyDetail.begin() + 76, emptyDetail.begin() + 99, 0);
+    const auto beginClaim = [&] {
+        Require(Action(claimMail) && peer.ReceiveExact(6) == claimRequest && state.inbox.claim,
+            "claim did not capture the selected mail ID");
+    };
+    beginClaim();
+    dispatch(claimSuccess);
+    Require(state.inbox.claim && state.inbox.claim->successesRemaining == 1
+        && state.inbox.details.at(1).zeny == 25 && !Action(claimMail),
+        "first success in a combined claim changed counts or released the claim");
+    readMail.target = 2;
+    Require(Action(readMail) && peer.ReceiveExact(6) == std::vector<u8>{0x41, 0x02, 2, 0, 0, 0},
+        "claim blocked reading an unrelated message");
+    auto secondDetail = emptyDetail;
+    secondDetail[4] = 2;
+    dispatch(secondDetail);
+    dispatch(claimSuccess);
+    Require(peer.ReceiveExact(6) == detailRequest && state.inbox.selectedId == 2,
+        "claim readback used the UI selection instead of its original message ID");
+    dispatch(emptyDetail);
+    Require(!state.inbox.claim && !state.inbox.details.at(1).zeny
+        && !state.inbox.details.at(1).itemAmount && state.inbox.selectedId == 2,
+        "both successes and readback did not settle the original claim");
+
+    readMail.target = 1;
+    Require(Action(readMail) && peer.ReceiveExact(6) == detailRequest, "could not stage claim denial");
+    dispatch(detail);
+    beginClaim();
+    state.mail.visible = true;
+    Command refreshMail;
+    refreshMail.action = "refreshMail";
+    Require(!Action(refreshMail), "inbox refresh was allowed during composition");
+    dispatch({0x45, 0x02, 2});
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "claim refusal started a compose-clearing readback while composing");
+    state.mail.visible = false;
+    Command checkClaim;
+    checkClaim.action = "checkMailClaim";
+    Require(Action(checkClaim) && peer.ReceiveExact(6) == detailRequest,
+        "capacity refusal could not check current attachments");
+    dispatch(detail);
+    Require(!state.inbox.claim && state.inbox.details.at(1).itemAmount == 2,
+        "capacity refusal removed the still-attached item");
+
+    beginClaim();
+    state.inbox.claim->sentAt -= 15000;
+    Require(Action(checkClaim) && peer.ReceiveExact(6) == detailRequest,
+        "timed-out claim could not check the original message");
+    dispatch(emptyDetail);
+    Require(state.inbox.claim && !Action(claimMail),
+        "reservation readback was treated as successful delivery without an acknowledgement");
+    dispatch(claimSuccess);
+    Require(state.inbox.claim && state.inbox.claim->successesRemaining == 1
+        && !Action(claimMail), "partial delivery allowed a new unkeyed claim");
+    Require(Action(checkClaim) && peer.ReceiveExact(6) == detailRequest,
+        "partial delivery could not check the original message");
+    dispatch(claimSuccess);
+    dispatch(emptyDetail);
+    Require(state.inbox.claim && state.inbox.claim->needsReadback,
+        "a read sent before terminal acknowledgement settled the claim");
+    Require(Action(checkClaim) && peer.ReceiveExact(6) == detailRequest,
+        "terminal acknowledgement could not request a fresh readback");
+    dispatch(emptyDetail);
+    Require(!state.inbox.claim, "post-acknowledgement readback did not settle the claim");
+
     dispatch(makeList(1));
     std::vector<u8> notice(70, 0);
     notice[0] = 0x4a; notice[1] = 0x02; notice[6] = 'N'; notice[46] = 'A';
