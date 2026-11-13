@@ -304,7 +304,7 @@ AUDIT-0x0194,0x0194,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.05 verifies selected C
 AUDIT-0x0195,0x0195,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.02-actor-name-ack traces selected 102-byte S2C full name/party/guild/position response; cache lifecycle and replay remain open,UNREVIEWED,
 AUDIT-0x0196,0x0196,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0197,0x0197,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected stat and skill reset requests captured via source commands,C2S_ONLY,PK46.02-CHARACTER-RESET
-AUDIT-0x0198,0x0198,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0198,0x0198,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM map-cell request and authoritative terrain update replay,C2S_ONLY,PK46.02-MAP-CELL-COMMAND
 AUDIT-0x0199,0x0199,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Selected four-byte map property emitter, lifecycle and gameplay gates verified through production replay and native and Qt rendering; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK19.MAP-PROPERTIES
 AUDIT-0x019A,0x019A,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x019B,0x019B,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-notify-effect-019b traces selected 10-byte S2C ZC_NOTIFY_EFFECT and AREA route with client mapping; unsupported codes and replay remain open,UNREVIEWED,

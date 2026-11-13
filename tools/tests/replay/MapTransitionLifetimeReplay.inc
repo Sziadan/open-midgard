@@ -242,6 +242,13 @@ void MapCellLoadLifecycleReplay()
         && first.m_world->IsMapCellWalkable(0, 2) && first.m_world->IsMapCellWalkable(2, 1)
         && base->GetCell(1, 1)->flag == 0,
         "binding GAT lost a valid update or applied a rejected update");
+    Require(first.SendMsg(156, 0, 2, 1)
+        && peer.ReceiveExact(8) == std::vector<u8>{0x98, 1, 0, 0, 2, 0, 1, 0}
+        && first.m_world->IsMapCellWalkable(0, 2),
+        "map-cell request changed local terrain before the server update");
+    sendUpdates(first, MapCellUpdateFrame(0, 2, 1, gatName));
+    Require(!first.m_world->IsMapCellWalkable(0, 2),
+        "server map-cell response did not change local walkability");
     first.OnExit();
     Require(g_world.m_attr == nullptr, "game mode exit retained terrain");
 

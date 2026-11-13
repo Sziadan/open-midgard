@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 connects `/changemaptype` and `/cmt` to the selected GM map-cell request. Terrain updates are applied from the server's `0192` broadcast. Verify map-cell permission and propagation to a second client live. [Map-cell command evidence](evidence/PK46.02-map-production-reset-gm-gaps.md#pk4602-map-cell-command)
+
 PK46.02 connects the selected `/hide` command to `019D`. The server owns permission and visibility, and the client applies the resulting actor option update. Verify allowed and denied commands and visibility from a second client live. [Hide request evidence](evidence/PK46.02-map-production-reset-gm-gaps.md#pk4602-gm-hide)
 
 PK46.02 connects the selected stat and skill reset commands to `0197`. The server owns permission and resulting stats and skills. Verify allowed and denied commands live. [Character reset evidence](evidence/PK46.02-map-production-reset-gm-gaps.md)

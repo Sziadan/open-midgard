@@ -413,6 +413,16 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
     case 2: case 20: case 136:return 1; // Selected jump table returns without an action.
     case 61: case 62:
         return SendMsg(155, type - 61, 0, 0);
+    case 63: {
+        std::array<int, 3> values{};
+        for (size_t i = 0; i < values.size(); ++i) {
+            const auto& token = parameters[i];
+            const auto* end = token.data() + token.size();
+            const auto parsed = std::from_chars(token.data(), end, values[i]);
+            if (parsed.ec != std::errc{} || parsed.ptr != end) return 0;
+        }
+        return SendMsg(156, values[0], values[1], values[2]);
+    }
     case 88:
         return SendMsg(157, 64, 0, 0);
     case 3:SourceChatNotice(95,"Invalid command.",65535);return 0;

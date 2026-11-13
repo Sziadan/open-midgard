@@ -258,6 +258,16 @@ void ChatSubmissionReplay()
         "resetstate did not send the selected stat reset");
     Require(submit("/resetskill") && peer.ReceiveExact(4) == std::vector<u8>{0x97, 1, 1, 0},
         "resetskill did not send the selected skill reset");
+    Require(!submit("/cmt x 1 0") && !submit("/cmt 1 -1 0") && !submit("/cmt 65536 1 0")
+        && !submit("/cmt 1 2 99999999999")
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "invalid map-cell arguments emitted a request");
+    Require(submit("/changemaptype 4660 22136 0")
+        && peer.ReceiveExact(8) == std::vector<u8>{0x98, 1, 0x34, 0x12, 0x78, 0x56, 0, 0},
+        "changemaptype did not preserve coordinate order or zero type");
+    Require(submit("/cmt 1 2 -7")
+        && peer.ReceiveExact(8) == std::vector<u8>{0x98, 1, 1, 0, 2, 0, 1, 0},
+        "cmt did not normalize nonzero type to one");
     {
         CPlayer player;
         CWorld world;
@@ -512,6 +522,7 @@ void ChatSubmissionReplay()
 #include "PlayerSkillProceedReplay.inc"
     connection->Disconnect();
     Require(!submit("/resetstate"), "character reset reported success on a closed connection");
+    Require(!submit("/cmt 1 2 0"), "map-cell command reported success on a closed connection");
     Require(!submit("/hide"), "hide reported success on a closed connection");
 #include "PlayerAutoRunFailedSendReplay.inc"
 #include "PetWindowFailedSendReplay.inc"
