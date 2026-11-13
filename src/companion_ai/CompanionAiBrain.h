@@ -23,6 +23,7 @@ private:
     void ProcessCommand(const Msg2Ai& msg);
     bool ContinueApproach(const Position& destination);
     void CancelApproach();
+    void AbandonChase();
     bool CanAcquireEnemy(u32 id) const;
     u32 MovementStallDelay() const;
     void RequestFollow(const Position& owner);

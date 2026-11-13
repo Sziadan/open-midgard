@@ -108,6 +108,14 @@ void Brain::CancelApproach()
     m_approach = {};
 }
 
+void Brain::AbandonChase()
+{
+    if (m_skill == 0) {
+        m_runtime.ClearAttackSelection(m_enemy);
+    }
+    CancelApproach();
+}
+
 u32 Brain::MovementStallDelay() const
 {
     return std::max(1000u, 3u * m_runtime.GetWalkCellDuration(m_myId));
@@ -264,7 +272,7 @@ void Brain::OnCHASE_ST()
     m_runtime.Trace("OnCHASE_ST");
     if (m_runtime.IsOutOfSight(m_myId, m_enemy) || m_runtime.GetMotion(m_enemy) == MOTION_DEAD
         || (m_skill == 0 && !m_runtime.CanTargetForAttack(m_enemy))) {
-        CancelApproach();
+        AbandonChase();
         m_runtime.Trace("CHASE_ST -> IDLE_ST : ENEMY_OUTSIGHT_IN");
         return;
     }
@@ -281,7 +289,7 @@ void Brain::OnCHASE_ST()
             m_stalledEnemy = m_enemy;
             m_chaseStalledAt = m_now;
         }
-        CancelApproach();
+        AbandonChase();
     }
 }
 
@@ -290,7 +298,7 @@ void Brain::OnATTACK_ST()
     m_runtime.Trace("OnATTACK_ST");
     if (m_runtime.IsOutOfSight(m_myId, m_enemy) || m_runtime.GetMotion(m_enemy) == MOTION_DEAD
         || (m_skill == 0 && !m_runtime.CanTargetForAttack(m_enemy))) {
-        CancelApproach();
+        AbandonChase();
         m_runtime.Trace("ATTACK_ST -> IDLE_ST");
         return;
     }

@@ -8,6 +8,8 @@ Continue PK28.04 and PK29.04 using `src/companion_ai` as the implementation for 
 
 Native acquisition distinguishes monsters from NPCs and companions with monster sprites. The checked reference input call sites issue move, attack-object, skill, and follow commands. Attack-area, patrol, and hold have handlers without a known input producer. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
+The production replay now verifies that abandoning a stalled basic attack clears the click selection and allows an immediate manual retry. During live verification, record the result of repeat Alt-click while actively attacking and after a stalled chase for each family. Also record any automatic reacquisition after an explicit stop. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
+
 PK30.04 replays post-adoption job, experience and skill changes and captures both candidate prompts and parent-menu eligibility in native and Qt. The selected live adoption flow and independent review remain open. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
 
 PK28.04 covers companion skill level controls and the native/Qt bitmap frame. Replay verifies cast and drag levels, both bounds, SP display, and release outside. Installed-skin comparison and live UI verification remain open. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)

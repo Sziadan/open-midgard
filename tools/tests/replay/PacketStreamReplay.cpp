@@ -4095,6 +4095,14 @@ void PendingCompanionActorSkillReplay()
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "automatic companion targeting emitted an extra request");
 
+    const auto clickMercenaryTarget = [&] {
+        g_session.m_homunStatus.alive = false;
+        g_session.ApplyCompanionActorClick(target.m_gid, false);
+        g_session.m_homunStatus.alive = true;
+    };
+    clickMercenaryTarget();
+    Require(g_session.m_merTarget.attacking, "manual mercenary attack did not select its target");
+    tickCompanion(mercenary);
     mode.GetClientCoor(20, 10, target.m_pos.x, target.m_pos.z);
     const std::vector<u8> chaseRequest{0x32, 0x02, 0x42, 0, 0, 0xf1, 5, 0, 0xa0};
     tickCompanion(mercenary);
@@ -4104,6 +4112,8 @@ void PendingCompanionActorSkillReplay()
     tickCompanion(mercenary, 1200);
     tickCompanion(mercenary);
     tickCompanion(mercenary);
+    Require(!g_session.m_merTarget.attacking && !g_session.m_merTarget.selected && g_session.m_merTarget.gid == 0,
+        "stalled manual attack left a stale mercenary selection");
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "mercenary immediately reacquired the stalled attack target");
     Require(companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, manualMove, true),
@@ -4116,6 +4126,11 @@ void PendingCompanionActorSkillReplay()
     tickCompanion(mercenary, 1200);
     tickCompanion(mercenary);
     Require(peer.ReceiveExact(9) == chaseRequest, "mercenary did not reconsider the target after the retry interval");
+    clickMercenaryTarget();
+    Require(g_session.m_merTarget.attacking && mercenary.m_merMsg.command == companion_ai::ATTACK_OBJECT_CMD,
+        "first click after a stalled chase cancelled instead of issuing a fresh attack");
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == chaseRequest, "manual attack did not retry the abandoned target");
     mode.GetClientCoor(15, 10, mercenary.m_pos.x, mercenary.m_pos.z);
     mode.GetClientCoor(16, 10, target.m_pos.x, target.m_pos.z);
 

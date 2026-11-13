@@ -443,6 +443,14 @@ void Runtime::StopAttack(u32 id) const
     CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
 }
 
+void Runtime::ClearAttackSelection(u32 enemyId) const
+{
+    auto& selection = m_kind == Kind::Homunculus ? g_session.m_homunTarget : g_session.m_merTarget;
+    if (selection.attacking && selection.gid == enemyId) {
+        selection = {};
+    }
+}
+
 SkillSendResult Runtime::SkillObject(u32 id, int level, int skillId, u32 targetId) const
 {
     if (!IsOwnedCompanion(id) || level <= 0 || skillId <= 0 || targetId == 0) {

@@ -4011,3 +4011,7 @@ PK35.03 handles repair choices, full row echo, cancel, and notices while the tar
 PK35.04 handles the selected cooking recipe list, selection, and cancel packets. [Evidence](evidence/PK35.01-crafting-wire.md)
 
 PK35.05 adds native and Qt render coverage for the four crafting lists and the production confirmation. [Evidence](evidence/PK35.01-crafting-wire.md)
+
+PK35.05 loads and displays the reference production recipe descriptions. Native and Qt capture, skill-choice lifecycle, and production replay passed. [Evidence](evidence/PK35.01-crafting-wire.md)
+
+PK28.04 and PK29.04 clear stale attack selections when the C++ controller abandons pursuit. Production replay verifies manual retry and reserved movement after a stall. Corpse lifecycle, world-entry handoff, and skill-choice lifecycle also passed. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
