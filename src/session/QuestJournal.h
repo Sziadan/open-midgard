@@ -4,6 +4,7 @@
 
 #include <array>
 #include <map>
+#include <optional>
 #include <string>
 
 namespace ro::quest {
@@ -17,10 +18,11 @@ struct Objective {
     u32 monsterId = 0;
     u16 currentCount = 0;
     std::string name;
+    std::optional<u16> requiredCount;
 };
 
 struct Mission {
-    u32 startedAt = 0;
+    std::optional<u32> startedAt;
     u32 expiresAt = 0;
     u16 objectiveCount = 0;
     std::array<Objective, 3> objectives;

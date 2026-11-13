@@ -14371,8 +14371,8 @@
         "questAddType"
       ],
       "server_size": 107,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 107,
+      "client_handler": "HandleQuestAdd",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14385,11 +14385,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 2271,
       "review": ""
     },
     {
@@ -14397,8 +14396,8 @@
       "stage": "map",
       "names": [],
       "server_size": 6,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 6,
+      "client_handler": "HandleQuestRemove",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14411,11 +14410,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 2289,
       "review": ""
     },
     {
@@ -14425,8 +14423,8 @@
         "questUpdateType"
       ],
       "server_size": -1,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": -1,
+      "client_handler": "HandleQuestProgress",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14439,11 +14437,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 2299,
       "review": ""
     },
     {
@@ -14474,8 +14471,8 @@
       "stage": "map",
       "names": [],
       "server_size": 7,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 7,
+      "client_handler": "HandleQuestStatus",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14488,11 +14485,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 2337,
       "review": ""
     },
     {

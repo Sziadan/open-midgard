@@ -6760,6 +6760,92 @@ void QuestSnapshotProductionReplay()
     journal = std::move(saved);
 }
 
+void QuestIncrementalProductionReplay()
+{
+    SetCase("quest_incremental_production", "PK50.03", "PK50.03-legacy-quest-updates",
+        "production quest add, objective, activation, and removal paths");
+    constexpr u32 questId = 0x12345678;
+    auto saved = std::move(g_session.m_questJournal);
+    auto& journal = g_session.m_questJournal;
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), bytes.size(), packet, consumed)
+                && consumed == static_cast<int>(bytes.size()) && router.Dispatch(mode, packet),
+            "incremental quest frame did not dispatch");
+    };
+
+    std::vector<u8> add(107);
+    const std::array<u8, 17> header{
+        0xB3, 2, 0x78, 0x56, 0x34, 0x12, 1, 0xAA, 0xBB, 0xCC, 0xDD, 0x08, 0x07, 0x06, 0x82, 3, 0};
+    std::copy(header.begin(), header.end(), add.begin());
+    for (int slot = 0; slot < 3; ++slot) {
+        const int offset = 17 + 30 * slot;
+        add[offset] = slot == 2 ? 0xEA : 0xE9;
+        add[offset + 1] = 3;
+        add[offset + 6] = static_cast<u8>('A' + slot);
+    }
+    dispatch(add);
+    const auto& mission = journal.missions.at(questId);
+    Require(journal.states.at(questId) == ro::quest::State::Active && mission.objectiveCount == 3
+            && !mission.startedAt && mission.expiresAt == 0x82060708,
+        "quest add did not apply membership and expiry or interpreted an incomplete start time");
+    add[15] = 4;
+    dispatch(add);
+    Require(mission.objectiveCount == 3, "malformed add displaced a known mission");
+
+    const std::vector<u8> progress{
+        0xB5, 2, 42, 0, 3, 0,
+        0x78, 0x56, 0x34, 0x12, 0xE9, 3, 0, 0, 10, 0, 2, 0,
+        0x78, 0x56, 0x34, 0x12, 0xE9, 3, 0, 0, 30, 0, 9, 0,
+        0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0, 5, 0, 3, 0};
+    dispatch(progress);
+    dispatch(progress);
+    Require(mission.objectives[0].requiredCount == 10 && mission.objectives[0].currentCount == 2
+            && mission.objectives[1].requiredCount == 30 && mission.objectives[1].currentCount == 9
+            && mission.objectives[2].requiredCount == 5 && mission.objectives[2].currentCount == 3
+            && mission.objectives[2].monsterId == 1002 && mission.objectives[2].name == "C",
+        "objective update lost repeated or generic objective identity");
+    auto malformed = progress;
+    malformed[16] = 7;
+    malformed[22] = 0;
+    dispatch(malformed);
+    Require(mission.objectives[0].currentCount == 2, "a malformed later row partially applied progress");
+
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!mode.SendMsg(CGameMode::GameMsg_RequestQuestActive, questId, 0, 0)
+            && journal.states.at(questId) == ro::quest::State::Active,
+        "failed quest activation request changed local state");
+    LoopbackPeer peer(*connection);
+    Require(!mode.SendMsg(CGameMode::GameMsg_RequestQuestActive, questId + 1, 0, 0)
+            && !mode.SendMsg(CGameMode::GameMsg_RequestQuestActive, questId, 1, 0)
+            && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "unknown quest or unchanged state sent an activation request");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestQuestActive, questId, 0, 0)
+            && peer.ReceiveExact(7) == std::vector<u8>{0xB6, 2, 0x78, 0x56, 0x34, 0x12, 0}
+            && journal.states.at(questId) == ro::quest::State::Active,
+        "deactivation request did not preserve the server-confirmed state");
+    dispatch({0xB7, 2, 0x78, 0x56, 0x34, 0x12, 0});
+    Require(journal.states.at(questId) == ro::quest::State::Inactive
+            && mode.SendMsg(CGameMode::GameMsg_RequestQuestActive, questId, 1, 0)
+            && peer.ReceiveExact(7) == std::vector<u8>{0xB6, 2, 0x78, 0x56, 0x34, 0x12, 1},
+        "server deactivation or reactivation request did not apply");
+    dispatch({0xB7, 2, 0x78, 0x56, 0x34, 0x12, 1});
+    Require(journal.states.at(questId) == ro::quest::State::Active, "server reactivation did not apply");
+    dispatch({0xB4, 2, 0x78, 0x56, 0x34, 0x12});
+    dispatch({0xB4, 2, 0x78, 0x56, 0x34, 0x12});
+    dispatch(progress);
+    dispatch({0xB7, 2, 0x78, 0x56, 0x34, 0x12, 1});
+    Require(journal.states.empty() && journal.missions.empty(),
+        "completion retained quest state or stale updates resurrected it");
+    connection->Disconnect();
+    journal = std::move(saved);
+}
+
 void PartyInviteChatProductionReplay()
 {
     SetCase("party_invite_chat_production", "PK46.02", "PK46.02-party-invite-chat",
@@ -8490,6 +8576,7 @@ int main(int argc,char** argv){try{
     PartyInviteReplyProductionSendReplay();
     PartyInviteChatProductionReplay();
     QuestSnapshotProductionReplay();
+    QuestIncrementalProductionReplay();
     PartyCreateProductionSendReplay();
     PartyOptionChangeProductionSendReplay();
     PartyDisbandProductionSendReplay();

@@ -2229,6 +2229,23 @@ void HandleQuestList(CGameMode&, const PacketView& packet)
     g_session.m_questJournal.states.swap(states);
 }
 
+bool ReadQuestMission(const PacketView& packet, size_t expiryOffset, ro::quest::Mission& mission)
+{
+    const u8* expiry = packet.data + expiryOffset;
+    mission.expiresAt = ReadLE32(expiry);
+    mission.objectiveCount = ReadLE16(expiry + 4);
+    if (mission.objectiveCount > mission.objectives.size()) {
+        return false;
+    }
+    size_t offset = expiryOffset + 6;
+    for (u16 slot = 0; slot < mission.objectiveCount; ++slot, offset += 30) {
+        mission.objectives[slot] = {
+            ReadLE32(packet.data + offset), ReadLE16(packet.data + offset + 4),
+            ExtractFixedPacketString(packet, offset + 6, 24), std::nullopt};
+    }
+    return true;
+}
+
 void HandleQuestMissions(CGameMode&, const PacketView& packet)
 {
     constexpr int stride = 104;
@@ -2238,27 +2255,95 @@ void HandleQuestMissions(CGameMode&, const PacketView& packet)
     }
 
     std::map<u32, ro::quest::Mission> missions;
-    const u8* row = packet.data + 8;
-    for (u32 index = 0; index < count; ++index, row += stride) {
-        const u32 id = ReadLE32(row);
+    size_t offset = 8;
+    for (u32 index = 0; index < count; ++index, offset += stride) {
+        const u32 id = ReadLE32(packet.data + offset);
         ro::quest::Mission mission;
-        mission.startedAt = ReadLE32(row + 4);
-        mission.expiresAt = ReadLE32(row + 8);
-        mission.objectiveCount = ReadLE16(row + 12);
-        if (id == 0 || mission.objectiveCount > mission.objectives.size()) {
-            return;
-        }
-        const u8* objective = row + 14;
-        for (u16 slot = 0; slot < mission.objectiveCount; ++slot, objective += 30) {
-            mission.objectives[slot] = {
-                ReadLE32(objective), ReadLE16(objective + 4),
-                ExtractFixedPacketString(packet, static_cast<size_t>(objective - packet.data) + 6, 24)};
-        }
-        if (!missions.emplace(id, std::move(mission)).second) {
+        mission.startedAt = ReadLE32(packet.data + offset + 4);
+        if (id == 0 || !ReadQuestMission(packet, offset + 8, mission)
+            || !missions.emplace(id, std::move(mission)).second) {
             return;
         }
     }
     g_session.m_questJournal.missions.swap(missions);
+}
+
+void HandleQuestAdd(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 107) {
+        return;
+    }
+    const u32 id = ReadLE32(packet.data + 2);
+    const u8 state = packet.data[6];
+    ro::quest::Mission mission;
+    if (id == 0 || state > static_cast<u8>(ro::quest::State::Active)
+        || !ReadQuestMission(packet, 11, mission)) {
+        return;
+    }
+    // The selected server writes only the low byte of the start time here.
+    auto& journal = g_session.m_questJournal;
+    journal.missions.insert_or_assign(id, std::move(mission));
+    journal.states.insert_or_assign(id, static_cast<ro::quest::State>(state));
+}
+
+void HandleQuestRemove(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 6) {
+        return;
+    }
+    const u32 id = ReadLE32(packet.data + 2);
+    g_session.m_questJournal.states.erase(id);
+    g_session.m_questJournal.missions.erase(id);
+}
+
+void HandleQuestProgress(CGameMode&, const PacketView& packet)
+{
+    constexpr int headerSize = 6;
+    constexpr int stride = 12;
+    if (!packet.data || packet.packetLength < headerSize + stride
+        || ReadLE16(packet.data + 2) != packet.packetLength) {
+        return;
+    }
+    const u16 count = ReadLE16(packet.data + 4);
+    if (packet.packetLength != headerSize + stride * count) {
+        return;
+    }
+    const u8* firstRow = packet.data + headerSize;
+    const u32 id = ReadLE32(firstRow);
+    auto& journal = g_session.m_questJournal;
+    auto mission = journal.missions.find(id);
+    if (mission == journal.missions.end() || journal.states.count(id) == 0
+        || count != mission->second.objectiveCount) {
+        return;
+    }
+
+    // The server sends a full objective array in database order. Repeat IDs
+    // and generic objectives still own separate slots.
+    constexpr u32 poringId = 1002;
+    auto objectives = mission->second.objectives;
+    const u8* row = firstRow;
+    for (u16 slot = 0; slot < count; ++slot, row += stride) {
+        auto& objective = objectives[slot];
+        if (ReadLE32(row) != id
+            || (ReadLE32(row + 4) != objective.monsterId && objective.monsterId != poringId)) {
+            return;
+        }
+        objective.requiredCount = ReadLE16(row + 8);
+        objective.currentCount = ReadLE16(row + 10);
+    }
+    mission->second.objectives = std::move(objectives);
+}
+
+void HandleQuestStatus(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 7 || packet.data[6] > 1) {
+        return;
+    }
+    auto& states = g_session.m_questJournal.states;
+    const auto entry = states.find(ReadLE32(packet.data + 2));
+    if (entry != states.end()) {
+        entry->second = static_cast<ro::quest::State>(packet.data[6]);
+    }
 }
 
 void HandlePartyInvitePrivacy(CGameMode&, const PacketView& packet)
@@ -10843,6 +10928,10 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0803, HandlePartyBookingRegistration);
     router.Register(0x02B1, HandleQuestList);
     router.Register(0x02B2, HandleQuestMissions);
+    router.Register(0x02B3, HandleQuestAdd);
+    router.Register(0x02B4, HandleQuestRemove);
+    router.Register(0x02B5, HandleQuestProgress);
+    router.Register(0x02B7, HandleQuestStatus);
     router.Register(0x02B9, HandleShortcutKeyList);
     router.Register(0x02D3, HandleIgnorePacket);
     router.Register(0x02D5, HandleIgnorePacket);

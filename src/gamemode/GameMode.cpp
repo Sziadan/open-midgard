@@ -12935,6 +12935,19 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case GameMsg_RequestPartyDisband:
         return RequestDisbandParty() ? 1 : 0;
 
+    case GameMsg_RequestQuestActive: {
+        const u32 id = static_cast<u32>(wparam);
+        const auto& states = g_session.m_questJournal.states;
+        const auto quest = states.find(id);
+        const auto active = lparam != 0 ? ro::quest::State::Active : ro::quest::State::Inactive;
+        if (m_mapLoadingStage != MapLoading_None || quest == states.end() || quest->second == active) {
+            return 0;
+        }
+        const u8 packet[] = {0xB6, 0x02, static_cast<u8>(id), static_cast<u8>(id >> 8),
+            static_cast<u8>(id >> 16), static_cast<u8>(id >> 24), static_cast<u8>(active)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
+    }
+
     case GameMsg_RequestPartyInvite:
         if (g_session.GetNumParty() == 0) {
             g_windowMgr.PushChatEvent("Create a party before inviting other players.", 0x00FF4040u, 6);
