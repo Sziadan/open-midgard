@@ -262,6 +262,18 @@ int main(int argc, char** argv) {
         capture("player-over-guild-and-party",51,126,true,2,0x00f5e07eu,0x00ffffffu);
         mode.m_guildPosList.clear();
         g_session.SetPlayerPosDir(50,50,0);
+        std::vector<u8> teammatePosition(36, 0);
+        teammatePosition[0] = 0xdf;
+        teammatePosition[1] = 2;
+        teammatePosition[2] = 79;
+        teammatePosition[32] = 75;
+        teammatePosition[34] = 65;
+        Dispatch(mode, teammatePosition);
+        constexpr u32 battlegroundRgb = 0x006edbffu;
+        capture("battleground-teammate",133,77,true,2,battlegroundRgb,battlegroundRgb);
+        std::fill(teammatePosition.begin() + 32, teammatePosition.end(), 0xff);
+        Dispatch(mode, teammatePosition);
+        capture("battleground-teammate-removed",133,77,false,1);
         Dispatch(mode,PositionRecord(0,50));
         capture("left-map-edge",10,102,true);
         for (int y=98; y<=106; ++y) for (int x=5; x<10; ++x) {
@@ -291,9 +303,14 @@ int main(int argc, char** argv) {
         mode.SetMapTransitionServices(&services);
         std::vector<u8> mapChange(22,0); mapChange[0]=0x91;
         std::memcpy(mapChange.data()+2,"geffen",6); mapChange[18]=10; mapChange[20]=20;
+        teammatePosition[32] = 75; teammatePosition[33] = 0;
+        teammatePosition[34] = 65; teammatePosition[35] = 0;
+        Dispatch(mode, teammatePosition);
         Dispatch(mode,mapChange);
         Require(g_session.GetNumParty()==1,"map transition discarded party membership");
         capture("map-transition",51,126,false);
+        Require(!IsRgb(lastNative,133,77,battlegroundRgb) && !IsRgb(lastQt,133,77,battlegroundRgb),
+            "map transition retained the battleground teammate marker");
         for (bool reconnectSucceeds : {true,false}) {
             std::snprintf(g_session.m_curMap,sizeof(g_session.m_curMap),"pk14_fixture");
             Dispatch(mode,MemberRecord(false));

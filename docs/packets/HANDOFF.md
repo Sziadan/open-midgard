@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK41.01 establishes the selected battleground contracts. Continue PK41.02 with camp identity, scores, team HP and minimap markers. PK41.03 owns team chat and teardown. The selected server disables the later queue system at startup. [Battleground inventory](evidence/PK41.01-selected-battleground-inventory.md)
+PK41.02 receives battleground camp identity, scores, team HP and minimap positions. Continue the opposing-camp marker by identifying the bitmap referenced by `Ref/UIControl.cpp::UIWordDisplayWnd::OnDraw` and tracing its actor lifetime and visibility gates in `Ref/GameMode.cpp::MakeWordDisplayWnd`. Verify both renderers with an ally, an opponent whose camp shares the ally's low byte, a hidden opponent, a Gravity AID, and an actor leaving sight. PK41.03 owns team chat and the chat-mode reset. The selected server disables the later queue system at startup. [Battleground state](evidence/PK41.02-battleground-state.md) · [Battleground inventory](evidence/PK41.01-selected-battleground-inventory.md)
 
 PK40.05 records the selected request and inactive identities. Continue with dedicated auction and cash-shop render comparisons, live acceptance, and PK48 review. The selected server's four-byte close reply uses `025D`. Its registered `025E` only supplies the server's length. [Commerce verification](evidence/PK40.05-selected-verification.md)
 

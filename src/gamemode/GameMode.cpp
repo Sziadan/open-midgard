@@ -8121,6 +8121,7 @@ void ClearRuntimeActors(CGameMode& mode)
     mode.m_auctionStaging = {};
     mode.m_auctionTransaction = CGameMode::AuctionTransaction::None;
     mode.m_recallPartnerName.clear();
+    mode.ResetBattlegroundMapState();
     mode.ResetCompanionMapState();
     g_Weather.Reset();
     mode.ClearNpcProgress();
@@ -10633,6 +10634,17 @@ void CGameMode::ApplyAuctionTransactionResult(u16 opcode, u16 result)
     } else if (m_auctionSearch.open && (action == Transaction::Register
         || (action == Transaction::Cancel && !closeReply && result == 2))) {
         RequestAuctionSearch({AuctionSearchKind::OwnSales});
+    }
+}
+
+void CGameMode::ResetBattlegroundMapState()
+{
+    m_battlegroundCamp = 0;
+    m_battlegroundScoreA = 0;
+    m_battlegroundScoreB = 0;
+    m_battlegroundPosList.clear();
+    if (m_world && m_world->m_player) {
+        m_world->m_player->m_camp = 0;
     }
 }
 

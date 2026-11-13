@@ -15372,7 +15372,7 @@
       "names": [],
       "server_size": 32,
       "client_size": 32,
-      "client_handler": "HandleIgnorePacket",
+      "client_handler": "HandleBattlegroundCamp",
       "server_parser": "",
       "server_emitters": [
         {
@@ -15389,20 +15389,19 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "ignored/stubbed"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": 1054,
-      "review": "",
-      "ignored_behavior_required": "Battleground team/emblem identity."
+      "client_handler_line": 10515,
+      "review": ""
     },
     {
       "opcode": "0x02DE",
       "stage": "map",
       "names": [],
       "server_size": 6,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 6,
+      "client_handler": "HandleBattlegroundScore",
       "server_parser": "",
       "server_emitters": [
         {
@@ -15419,11 +15418,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 10516,
       "review": ""
     },
     {
@@ -15431,8 +15429,8 @@
       "stage": "map",
       "names": [],
       "server_size": 36,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 36,
+      "client_handler": "HandleBattlegroundPosition",
       "server_parser": "",
       "server_emitters": [
         {
@@ -15449,11 +15447,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 10517,
       "review": ""
     },
     {
@@ -15463,8 +15460,8 @@
         "HEADER_ZC_BATTLEFIELD_NOTIFY_HP"
       ],
       "server_size": 34,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 34,
+      "client_handler": "HandleBattlegroundHp",
       "server_parser": "",
       "server_emitters": [
         {
@@ -15477,11 +15474,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 10518,
       "review": ""
     },
     {

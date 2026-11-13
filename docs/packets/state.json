@@ -1404,9 +1404,9 @@
       "commit_subject": "packet(PK41.01): inventory selected battleground contracts"
     },
     "PK41.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK41.02-battleground-state.md"],
+      "commit_subject": "packet(PK41.02): receive selected battleground state"
     },
     "PK41.03": {
       "status": "NOT_STARTED",

@@ -1,6 +1,6 @@
 # Packet implementation audit
 
-Snapshot: 2026-11-03. Client default `packetver23`; rAthena custom `PACKETVER 20080910`, `PACKETVER_SAK_NUM 20080910`.
+Baseline snapshot: 2026-11-03. Client default `packetver23`; rAthena custom `PACKETVER 20080910`, `PACKETVER_SAK_NUM 20080910`. The counts below describe the baseline. PK41.02 updates the four battleground state rows in the machine inventory and the two receive lists.
 
 This is a client-facing login/character/map protocol audit, not a request to implement inter-server login/char/map traffic in the client. No gameplay code or server code was changed during this audit.
 
@@ -290,7 +290,6 @@ Sources: [trade.cpp:108](C:/Users/sziad/source/repos/rathena-master/src/map/trad
 - **0x02D5** — Inter-server disconnect/transition. Client length: 2; server: 2.
 - **0x02D9** — Server configuration result/state. Client length: 10; server: 10.
 - **0x02DA** — Equipment-sharing/config notification. Client length: 3; server: 3.
-- **0x02DD** — Battleground team/emblem identity. Client length: 32; server: 32.
 - **0x02E7** — Extended map-property state. Client length: -1; server: -1.
 - **0x0814** — Buying-store board/list entry; newer family. Client length: 86; server: None.
 - **0x0816** — Buying-store board removal; newer family. Client length: 6; server: None.
@@ -398,9 +397,6 @@ Each row below is unimplemented at dispatch, but not every row is proven reachab
 - **0x02CC · legacy numeric opcode** — server size 4; client size 0; clif_instance_changewait. active sender/reference plus known wire layout.
 - **0x02CD · legacy numeric opcode** — server size 71; client size 0; clif_instance_status. active sender/reference plus known wire layout.
 - **0x02CE · legacy numeric opcode** — server size 10; client size 0; clif_instance_changestatus. active sender/reference plus known wire layout.
-- **0x02DE · legacy numeric opcode** — server size 6; client size 0; clif_bg_updatescore, clif_bg_updatescore_single. active sender/reference plus known wire layout.
-- **0x02DF · legacy numeric opcode** — server size 36; client size 0; clif_bg_xy, clif_bg_xy_remove. active sender/reference plus known wire layout.
-- **0x02E0 · HEADER_ZC_BATTLEFIELD_NOTIFY_HP** — server size 34; client size 0; clif_bg_hp. active sender/reference plus known wire layout.
 - **0x02F0 · legacy numeric opcode** — server size 10; client size 0; clif_progressbar. active sender/reference plus known wire layout.
 - **0x02F2 · legacy numeric opcode** — server size 2; client size 0; clif_progressbar_abort. active sender/reference plus known wire layout.
 - **0x0440 · HEADER_ZC_MILLENNIUMSHIELD** — server size 10; client size 0; no sender established by scan. declared/registered; runtime emission not established.

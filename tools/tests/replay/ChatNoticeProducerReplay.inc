@@ -47,6 +47,89 @@ void MannerAndColoredNoticeReplay()
     world.UnregisterActor(&actor);
 }
 
+void BattlegroundStateReplay()
+{
+    SetCase("battleground_state", "PK41.02", "selected-02dd-02e0", "map packets -> camps, chat, markers and actor HP");
+    CGameMode mode;
+    CWorld world;
+    CPlayer local;
+    CPc remote;
+    CPc mercenary;
+    const auto oldAid = g_session.m_aid;
+    const auto oldMercenaryGid = g_session.m_merGID;
+    g_session.m_aid = 0x10;
+    g_session.m_merGID = mercenary.m_gid = 0x30;
+    local.m_gid = 0x11;
+    remote.m_gid = 0x20;
+    world.m_player = &local;
+    world.RegisterActor(&remote);
+    world.RegisterActor(&mercenary);
+    mode.m_world = &world;
+    TestConnection input;
+    auto& router = GetProductionGameModePacketRouter();
+    const auto dispatch = [&](const std::vector<u8>& bytes, int count = 1) {
+        Require(input.QueueBytes(bytes), "could not queue battleground packet");
+        Require(ProcessGameModePacketLoop(mode, input, router, count).packetsDispatched == count
+            && !input.BufferedBytes(), "battleground packets did not frame and dispatch");
+    };
+    g_windowMgr.ClearChatEvents();
+    dispatch({0xde, 2, 0xfe, 0xff, 0x2c, 1});
+    const auto& chat = g_windowMgr.GetChatEvents();
+    Require(mode.m_battlegroundCamp == 0 && mode.m_battlegroundScoreA == -2
+        && mode.m_battlegroundScoreB == 300 && chat.size() == 1
+        && chat.back().text == "[ Camp A = -2 , Camp B = 300 ]" && chat.back().color == 0x00c8c8c8,
+        "battleground score state or system notice differs");
+
+    std::vector<u8> camp(32);
+    camp[0] = 0xdd; camp[1] = 2; camp[2] = 0x10; camp[30] = 0x42; camp[31] = 1;
+    auto campStream = camp;
+    camp[2] = 0x20; camp[31] = 2;
+    campStream.insert(campStream.end(), camp.begin(), camp.end());
+    dispatch(campStream, 2);
+    Require(mode.m_battlegroundCamp == 0x142 && local.m_camp == 0x142 && remote.m_camp == 0x242,
+        "camp packets lost the upper byte or used character GID for the local AID");
+
+    std::vector<u8> position(36);
+    position[0] = 0xdf; position[1] = 2; position[2] = 0x40;
+    position[32] = 0x2c; position[33] = 1; position[34] = 45;
+    dispatch(position);
+    Require(mode.m_battlegroundPosList.count(0x40) == 1 && mode.m_battlegroundPosList.at(0x40).x == 300
+        && mode.m_battlegroundPosList.at(0x40).y == 45 && mode.m_partyPosList.empty()
+        && mode.m_guildPosList.empty(), "teammate marker depended on actor visibility or changed another marker list");
+    position[2] = 0x10;
+    dispatch(position);
+    Require(mode.m_battlegroundPosList.count(0x10) == 0, "self position added a teammate marker");
+    position[2] = 0x40; position[32] = 0xff; position[33] = 0xff;
+    dispatch(position);
+    Require(mode.m_battlegroundPosList.at(0x40).x == 300, "partial removal sentinel changed a marker");
+    position[34] = 0xff; position[35] = 0xff;
+    dispatch(position);
+    Require(mode.m_battlegroundPosList.empty(), "removal sentinel retained the teammate marker");
+
+    std::vector<u8> hp(34);
+    hp[0] = 0xe0; hp[1] = 2; hp[2] = 0x20; hp[30] = 74; hp[32] = 100;
+    dispatch(hp);
+    Require(remote.m_Hp == 74 && remote.m_MaxHp == 100 && remote.m_gage,
+        "scaled battleground HP did not reach the actor gauge");
+    hp[30] = 0; hp[32] = 0xff; hp[33] = 0x7f;
+    dispatch(hp);
+    Require(remote.m_Hp == 0 && remote.m_MaxHp == 32767, "zero HP or unscaled maximum was lost");
+    hp[30] = 74; hp[32] = 0; hp[33] = 0;
+    dispatch(hp);
+    Require(remote.m_Hp == 0 && remote.m_MaxHp == 32767, "invalid maximum changed the gauge");
+    hp[2] = 0x30; hp[32] = 100;
+    dispatch(hp);
+    Require(!mercenary.m_gage, "battleground HP opened a mercenary gauge");
+    remote.SendMsg(0, 35, 0, 0, 0);
+    world.UnregisterActor(&remote);
+    world.UnregisterActor(&mercenary);
+    world.m_player = nullptr;
+    mode.m_world = nullptr;
+    g_session.m_aid = oldAid;
+    g_session.m_merGID = oldMercenaryGid;
+    g_windowMgr.ClearChatEvents();
+}
+
 void CashShopReplay()
 {
     SetCase("npc_cash_shop", "PK40.03", "selected-0287-0289", "NPC shop purchase and balance update");

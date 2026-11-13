@@ -9255,6 +9255,82 @@ void HandleBattlefieldChat(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleBattlegroundCamp(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 32) {
+        return;
+    }
+
+    const u32 aid = ReadLE32(packet.data + 2);
+    const u16 camp = ReadLE16(packet.data + 30);
+    if (aid && aid == g_session.m_aid) {
+        mode.m_battlegroundCamp = camp;
+        if (mode.m_world && mode.m_world->m_player) {
+            mode.m_world->m_player->m_camp = camp;
+        }
+    } else if (aid && mode.m_world) {
+        if (auto* actor = mode.m_world->GetGameActorByAID(aid)) {
+            actor->m_camp = camp;
+        }
+    }
+}
+
+void HandleBattlegroundScore(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 6) {
+        return;
+    }
+
+    mode.m_battlegroundScoreA = static_cast<s16>(ReadLE16(packet.data + 2));
+    mode.m_battlegroundScoreB = static_cast<s16>(ReadLE16(packet.data + 4));
+    char message[64];
+    std::snprintf(message, sizeof(message), "[ Camp A = %d , Camp B = %d ]",
+        mode.m_battlegroundScoreA, mode.m_battlegroundScoreB);
+    RecordChat(mode, message, ro::chat::ColorRefToUiRgb(13158600u), kChatChannelSystem);
+}
+
+void HandleBattlegroundPosition(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 36) {
+        return;
+    }
+
+    const u32 aid = ReadLE32(packet.data + 2);
+    if (!aid || aid == g_session.m_aid) {
+        return;
+    }
+
+    const int x = static_cast<s16>(ReadLE16(packet.data + 32));
+    const int y = static_cast<s16>(ReadLE16(packet.data + 34));
+    if (x == -1 && y == -1) {
+        mode.m_battlegroundPosList.erase(aid);
+    } else if (x >= 0 && y >= 0) {
+        constexpr u32 kBattlegroundMarkerColor = 0x006EDBFFu;
+        mode.m_battlegroundPosList[aid] = {x, y, kBattlegroundMarkerColor};
+    }
+}
+
+void HandleBattlegroundHp(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 34 || !mode.m_world) {
+        return;
+    }
+
+    const u32 aid = ReadLE32(packet.data + 2);
+    if (!aid || aid == g_session.m_merGID) {
+        return;
+    }
+
+    const int hp = static_cast<s16>(ReadLE16(packet.data + 30));
+    const int maxHp = static_cast<s16>(ReadLE16(packet.data + 32));
+    if (hp < 0 || maxHp <= 0) {
+        return;
+    }
+    if (auto* actor = mode.m_world->GetGameActorByAID(aid)) {
+        actor->SendMsg(0, 34, hp, maxHp, 0);
+    }
+}
+
 void HandleAckWhisper(CGameMode& mode, const PacketView& packet)
 {
     if(!packet.data || packet.packetLength!=3)return;
@@ -9555,6 +9631,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
 
     mode.ClearNpcProgress();
     mode.m_compassPosList.clear();
+    mode.ResetBattlegroundMapState();
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
     ro::commerce::CloseTransactions();
     mode.CloseFriendInvitation();
@@ -10435,6 +10512,10 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0189, HandleNotifyMapInfo);
     RegisterHandlerIfValid(router, receiveProfile.broadcastColored, HandleBroadcast);
     router.Register(0x02DC, HandleBattlefieldChat);
+    router.Register(0x02DD, HandleBattlegroundCamp);
+    router.Register(0x02DE, HandleBattlegroundScore);
+    router.Register(0x02DF, HandleBattlegroundPosition);
+    router.Register(0x02E0, HandleBattlegroundHp);
     RegisterHandlerIfValid(router, receiveProfile.actorNameAckBasic, HandleActorNameAck);
     RegisterHandlerIfValid(router, receiveProfile.characterNameAck, HandleCharacterNameAck);
     RegisterHandlerIfValid(router, receiveProfile.actorNameAckFull, HandleActorNameAck);
@@ -10577,7 +10658,6 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0214, HandleGmStatusSummary);
     RegisterHandlerIfValid(router, receiveProfile.partyInviteAckExtended, HandlePartyInviteAck);
     router.Register(0x02D9, HandlePrivacyConfiguration);
-    router.Register(0x02DD, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.partyHpUpdateExtended, HandlePartyHpUpdate);
     router.Register(0x0283, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.partyInviteRequestExtended, HandlePartyInviteRequest);

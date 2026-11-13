@@ -861,6 +861,9 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY, u32 now)
         for (const auto& entry : gameMode->m_guildPosList) {
             drawWorldPoint(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, RGB(24, 24, 24), 2);
         }
+        for (const auto& entry : gameMode->m_battlegroundPosList) {
+            drawWorldPoint(entry.second.x, entry.second.y, entry.second.color, RGB(24, 24, 24), 2);
+        }
         for (const auto& entry : gameMode->m_compassPosList) {
             const auto& marker = entry.second;
             POINT pt{};
@@ -1096,6 +1099,9 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
         }
         for (const auto& entry : gameMode->m_guildPosList) {
             appendMarker(entry.second.x, entry.second.y, entry.second.color & 0x00FFFFFFu, 2);
+        }
+        for (const auto& entry : gameMode->m_battlegroundPosList) {
+            appendMarker(entry.second.x, entry.second.y, entry.second.color, 2);
         }
         for (const auto& entry : gameMode->m_compassPosList) {
             const auto& marker = entry.second;
@@ -1544,6 +1550,13 @@ unsigned long long UIRoMapWnd::BuildVisualStateToken(u32 now) const
     }
 
     if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        mixValue(gameMode->m_battlegroundPosList.size());
+        for (const auto& entry : gameMode->m_battlegroundPosList) {
+            mixValue(entry.first);
+            mixValue(static_cast<u32>(entry.second.x));
+            mixValue(static_cast<u32>(entry.second.y));
+            mixValue(entry.second.color);
+        }
         for (const auto& entry : gameMode->m_compassPosList) {
             const auto& marker = entry.second;
             if (marker.IsVisible(now)) {

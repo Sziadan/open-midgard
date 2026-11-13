@@ -271,6 +271,11 @@ public:
     std::map<u32, u32> m_aidList;
     std::map<u32, ColorCellPos> m_partyPosList;
     std::map<u32, ColorCellPos> m_guildPosList;
+    std::map<u32, ColorCellPos> m_battlegroundPosList;
+    u16 m_battlegroundCamp = 0;
+    s16 m_battlegroundScoreA = 0;
+    s16 m_battlegroundScoreB = 0;
+    void ResetBattlegroundMapState();
     std::map<u32, CompassMarker> m_compassPosList;
     void PruneCompassMarkers(u32 now);
     

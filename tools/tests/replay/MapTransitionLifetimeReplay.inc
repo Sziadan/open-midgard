@@ -541,6 +541,10 @@ void MapTransitionLifetimeReplay()
         player.m_pk_rank = 1;
         player.m_pk_total = 12;
         mode.m_pvpRankStartTick = 100;
+        mode.m_battlegroundCamp = player.m_camp = 0x123;
+        mode.m_battlegroundScoreA = 5;
+        mode.m_battlegroundScoreB = 8;
+        mode.m_battlegroundPosList.emplace(123, ColorCellPos{4, 5, 0x6edbff});
         mode.m_auctionSearch.open = true;
         mode.m_auctionSearch.pages = 3;
         mode.m_auctionSearch.rows.emplace_back();
@@ -689,6 +693,9 @@ void MapTransitionLifetimeReplay()
         Require(!mode.m_isPlayerDead && !mode.m_isOnQuest,
             "same-map reuse retained the previous death state");
         Require(mode.m_compassPosList.empty(), "same-map reuse retained a compass marker");
+        Require(!player.m_camp && !mode.m_battlegroundCamp && !mode.m_battlegroundScoreA
+            && !mode.m_battlegroundScoreB && mode.m_battlegroundPosList.empty(),
+            "same-map reuse retained battleground scene state");
         Require(!g_session.m_petStatus.valid && g_session.m_petStatus.actorId == 0
             && g_session.m_petStatus.job == -1 && g_session.m_petStatus.eggIndex == 123,
             "same-map warp retained the previous pet actor or lost its inventory egg link");

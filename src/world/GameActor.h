@@ -190,7 +190,7 @@ public:
     u8 m_BodyTime2, m_BodyTime3;
     u16 m_FlyMove;
     u8 m_FlyNow;
-    char m_camp;
+    u16 m_camp;
     u16 m_charfont;
     u8 m_BodyAni, m_BodyAct, m_BodyAniFrame;
     CSprRes* m_sprRes;

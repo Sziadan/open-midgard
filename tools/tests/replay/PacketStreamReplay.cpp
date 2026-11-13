@@ -7408,6 +7408,7 @@ int main(int argc,char** argv){try{
         PvpRankReplay();
         PvpPointsReplay();
         MannerAndColoredNoticeReplay();
+        BattlegroundStateReplay();
         CConnection::Cleanup();
         return 0;
     }
@@ -7611,6 +7612,7 @@ int main(int argc,char** argv){try{
     PvpRankReplay();
     PvpPointsReplay();
     MannerAndColoredNoticeReplay();
+    BattlegroundStateReplay();
     ChatPrimaryViewReplay();
     ChatPrimarySpeechReplay();
     ChatDetachedViewReplay();
