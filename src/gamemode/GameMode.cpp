@@ -12426,6 +12426,19 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]={0x00,0x01};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
     }
+    case 105: {
+        if (!wparam || lparam < 0 || lparam > 0xffff || extra < 0 || extra > 0xffff) return 0;
+        const std::string_view map(reinterpret_cast<const char*>(wparam));
+        if (map.empty() || map.size() > 15) return 0;
+        std::array<u8, 22> packet{0x40, 0x01};
+        std::copy(map.begin(), map.end(), packet.begin() + 2);
+        packet[18] = static_cast<u8>(lparam);
+        packet[19] = static_cast<u8>(lparam >> 8);
+        packet[20] = static_cast<u8>(extra);
+        packet[21] = static_cast<u8>(extra >> 8);
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
+            static_cast<int>(packet.size())) ? 1 : 0;
+    }
     case 34:
         if(g_serviceType==ServiceChina || g_serviceType==ServiceMalaysia || g_serviceType==ServiceSingapore)return 0;
         [[fallthrough]];

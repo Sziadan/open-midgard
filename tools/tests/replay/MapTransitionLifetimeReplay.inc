@@ -511,6 +511,15 @@ void MapTransitionLifetimeReplay()
             g_modeMgr.Switch(type, worldName);
         };
         mode.SetMapTransitionServices(&services);
+        singleton->Disconnect();
+        LoopbackPeer movePeer(*singleton);
+        const std::vector<u8> request{0x40, 0x01, 'g', 'e', 'f', 'f', 'e', 'n',
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 0, 52, 0};
+        Require(mode.SendMsg(105, reinterpret_cast<msgparam_t>("geffen"), 41, 52)
+            && movePeer.ReceiveExact(request.size()) == request
+            && g_session.m_curMap == std::string("prontera") && handoffs == 0,
+            "map-move request changed the world before the selected server reply");
+        singleton->Disconnect();
         GameModePacketLoopResult loop{};
         FeedProductionMapFrame(mode, router, mapChangeAtoB, loop);
         Require(loop.packetsProcessed == 1 && loop.packetsDispatched == 1 && loop.modeOperationRequested,

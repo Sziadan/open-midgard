@@ -217,7 +217,7 @@ AUDIT-0x013C,0x013C,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x013D,0x013D,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-recovery-notification traces 6-byte S2C HP/SP wire contract and pinned emitter; AP caller is unpinned and runtime behavior remains open,UNREVIEWED,
 AUDIT-0x013E,0x013E,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x013F,0x013F,map,C2S,PK47,PK01;PK02;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
-AUDIT-0x0140,0x0140,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,PK45.03-c2s-owner-scope-review.md: selected 20080910 registry maps 0x0140 length 22 to clif_parse_MapMove; focused client search found no sender. Feature owner and matching client profile remain unresolved.,UNREVIEWED,
+AUDIT-0x0140,0x0140,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,Selected GM map-move command captured through source chat and map handoff,C2S_ONLY,PK46.02-GM-MAP-MOVE
 AUDIT-0x0141,0x0141,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0142,0x0142,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0143,0x0143,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected numeric response captured with zero UI retry and signed-boundary bit patterns,C2S_ONLY,PK46.02-map-npc-number-input-request

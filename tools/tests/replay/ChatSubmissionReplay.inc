@@ -268,6 +268,18 @@ void ChatSubmissionReplay()
     Require(submit("/cmt 1 2 -7")
         && peer.ReceiveExact(8) == std::vector<u8>{0x98, 1, 1, 0, 2, 0, 1, 0},
         "cmt did not normalize nonzero type to one");
+    Require(!submit("/mm") && !submit("/mm prontera -1 10") && !submit("/mm prontera 10 65536")
+        && !submit("/mm prontera 10x 20") && !submit("/mm abcdefghijklmnop")
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "invalid map-move arguments emitted a request");
+    const std::vector<u8> mapMove{0x40, 0x01, 'g', 'e', 'f', 'f', 'e', 'n',
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x34, 0x12, 0x78, 0x56};
+    Require(submit("/mapmove geffen 4660 22136") && peer.ReceiveExact(22) == mapMove,
+        "mapmove did not send the selected name and coordinates");
+    auto defaultMapMove = mapMove;
+    std::fill(defaultMapMove.begin() + 18, defaultMapMove.end(), 0);
+    Require(submit("/mm geffen") && peer.ReceiveExact(22) == defaultMapMove,
+        "mm did not default absent coordinates to zero");
     {
         CPlayer player;
         CWorld world;
@@ -523,6 +535,7 @@ void ChatSubmissionReplay()
     connection->Disconnect();
     Require(!submit("/resetstate"), "character reset reported success on a closed connection");
     Require(!submit("/cmt 1 2 0"), "map-cell command reported success on a closed connection");
+    Require(!submit("/mm geffen"), "map-move command reported success on a closed connection");
     Require(!submit("/hide"), "hide reported success on a closed connection");
 #include "PlayerAutoRunFailedSendReplay.inc"
 #include "PetWindowFailedSendReplay.inc"

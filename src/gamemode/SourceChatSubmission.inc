@@ -411,6 +411,17 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return 1;
     }
     case 2: case 20: case 136:return 1; // Selected jump table returns without an action.
+    case 49: {
+        std::array<int, 2> coordinates{};
+        for (size_t i = 0; i < coordinates.size(); ++i) {
+            const auto& token = parameters[i + 1];
+            const auto* end = token.data() + token.size();
+            const auto parsed = std::from_chars(token.data(), end, coordinates[i]);
+            if (parsed.ec != std::errc{} || parsed.ptr != end) return 0;
+        }
+        if (parameters[0].find('\0') != std::string::npos) return 0;
+        return SendMsg(105, reinterpret_cast<msgparam_t>(parameters[0].c_str()), coordinates[0], coordinates[1]);
+    }
     case 61: case 62:
         return SendMsg(155, type - 61, 0, 0);
     case 63: {
