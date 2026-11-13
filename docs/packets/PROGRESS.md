@@ -4087,3 +4087,5 @@ PK28.04 and PK29.04 use bounded waypoints when the native approach exceeds the c
 PK39.01 inventories all 27 primary rows, identifies active PvP rank and points packets, and traces the profile gates for the four later ranking variants. [Evidence](evidence/PK39.01-selected-inventory.md)
 
 PK39.02 receives the signed PvP points reply and verifies the existing `/pvpinfo` producer through the selected wire frames. [Evidence](evidence/PK39.02-pvp-points.md)
+
+PK39.02 receives PvP rank updates, applies rank state and badges, and clears reused-player rank state on same-map warp. [Evidence](evidence/PK39.02-pvp-rank.md)

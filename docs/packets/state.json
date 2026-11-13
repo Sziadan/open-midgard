@@ -1360,8 +1360,8 @@
     },
     "PK39.02": {
       "status": "IN_PROGRESS",
-      "evidence": ["docs/packets/evidence/PK39.02-mvp-rewards.md", "docs/packets/evidence/PK39.02-legacy-ranking.md", "docs/packets/evidence/PK39.02-pvp-points.md"],
-      "commit_subject": "packet(PK39.02): receive selected PvP points reply"
+      "evidence": ["docs/packets/evidence/PK39.02-mvp-rewards.md", "docs/packets/evidence/PK39.02-legacy-ranking.md", "docs/packets/evidence/PK39.02-pvp-points.md", "docs/packets/evidence/PK39.02-pvp-rank.md"],
+      "commit_subject": "packet(PK39.02): receive PvP rank updates and actor badges"
     },
     "PK39.03": {
       "status": "IN_PROGRESS",

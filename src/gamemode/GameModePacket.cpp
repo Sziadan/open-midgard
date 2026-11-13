@@ -202,6 +202,7 @@ constexpr int kEffectStateRuwachMask = 0x2000;
 constexpr int kEffectStateHidingMask = 0x0004;
 constexpr int kEffectStateSpecialHidingMask = 0x0040;
 constexpr int kEffectStateBurrowMask = 0x0002;
+constexpr int kPvpTopRankEffect = 159;
 constexpr int kEffectStateFalconMask = 0x0010;
 constexpr int kEffectStatePushCartMask = 0x0008 | 0x0080 | 0x0100 | 0x0200 | 0x0400;
 constexpr u16 kSkillIdHiding = 51;
@@ -4075,6 +4076,7 @@ bool IsSameMapAlreadyLoaded(const CGameMode& mode, const MapChangeInfo& info)
 
 void PrepareSameMapWarpReuse(CGameMode& mode)
 {
+    mode.m_pvpRankStartTick = 0;
     mode.m_recallPartnerName.clear();
     mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
@@ -4097,6 +4099,10 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
     if (!player) {
         return;
     }
+
+    player->m_pk_rank = 0;
+    player->m_pk_total = 0;
+    player->RemoveEffectById(kPvpTopRankEffect);
 
     for (auto it = mode.m_runtimeActors.begin(); it != mode.m_runtimeActors.end(); ) {
         CGameActor* actor = it->second;
@@ -7405,6 +7411,9 @@ void HandleActorStateChange(CGameMode& mode, const PacketView& packet)
     if ((oldEffectState ^ actor->m_effectState) & hidden) {
         if (actor->m_effectState & hidden) {
             actor->m_hasSiegeEmblem = false;
+            if (!IsLocalPlayerActor(mode, gid) && !IsGravityAid(g_session.m_aid)) {
+                actor->RemoveEffectById(kPvpTopRankEffect);
+            }
         } else if (g_serviceType != ServiceChina && g_serviceType != ServiceMalaysia
             && g_serviceType != ServiceSingapore) {
             ActivateSiegeEmblem(mode, *actor);
@@ -8758,6 +8767,61 @@ void HandleMvpReward(CGameMode& mode, const PacketView& packet)
 
     g_windowMgr.SendMsg(3, 0, 0);
     RecordChat(mode, message, dropped ? 0x00FF0000u : 0x0000FFFFu, kChatChannelSystem);
+}
+
+void HandlePvpRank(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 14 || !mode.m_world || !mode.m_world->m_isPKZone) return;
+
+    const auto aid = ReadLE32(packet.data + 2);
+    const auto rank = static_cast<s32>(ReadLE32(packet.data + 6));
+    const auto total = static_cast<s32>(ReadLE32(packet.data + 10));
+    auto& world = *mode.m_world;
+    const bool local = world.m_player && aid == g_session.m_aid;
+    auto* actor = local ? world.m_player : FindActorByPacketGid(world, aid);
+    if (!actor) return;
+
+    constexpr int hidden = kEffectStateHidingMask | kEffectStateBurrowMask | kEffectStateSpecialHidingMask;
+    if (!local && (actor->m_effectState & hidden)) return;
+
+    if (local) {
+        const int previousRank = world.m_player->m_pk_rank;
+        if (rank != 1) mode.m_pvpRankStartTick = 0;
+        else if (previousRank != 1) mode.m_pvpRankStartTick = timeGetTime();
+
+        if (previousRank != rank) {
+            if ((previousRank <= 10) != (rank <= 10)) {
+                const bool entered = rank <= 10;
+                constexpr auto enteredText = "%s entered the PvP top ten at rank %d.";
+                constexpr auto leftText = "%s left the PvP top ten at rank %d.";
+                const auto fallback = entered ? enteredText : leftText;
+                const auto rankText = std::to_string(rank);
+                const NoticeArguments args{{'s', g_session.GetPlayerName()}, {'d', rankText}};
+                ro::UiMessageStrings strings;
+                strings.Load();
+                auto notice = FormatLocalizedNotice(strings.Get(entered ? 582 : 583, fallback), args);
+                if (!notice) notice = FormatLocalizedNotice(fallback, args);
+                if (notice) RecordChat(mode, *notice, 0x00ffff00u, kChatChannelSystem);
+            }
+            PlayWave("effect\\number_change.wav", 0.0f, 0.0f, 0.0f, 250, 40, 1.0f);
+        }
+    }
+
+    if (IsGravityAid(aid) && !IsGravityAid(g_session.m_aid)) return;
+    if (auto* pc = dynamic_cast<CPc*>(actor)) {
+        pc->m_pk_rank = rank;
+        pc->m_pk_total = total;
+    } else if (auto* granny = dynamic_cast<CGrannyPc*>(actor)) {
+        granny->m_pk_rank = rank;
+        granny->m_pk_total = total;
+    }
+
+    actor->RemoveEffectById(kPvpTopRankEffect);
+    if (rank >= 1 && rank <= 10) {
+        if (auto* effect = actor->LaunchEffect(kPvpTopRankEffect)) {
+            effect->SendMsg(actor, 44, rank, 0, 0);
+        }
+    }
 }
 
 void HandlePvpPoints(CGameMode& mode, const PacketView& packet)
@@ -10304,6 +10368,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01E6, HandleRecallPartnerName);
     router.Register(0x01EA, HandleWeddingEffect);
     for (const u16 opcode : {0x010A, 0x010B, 0x010C, 0x010D}) router.Register(opcode, HandleMvpReward);
+    router.Register(0x019A, HandlePvpRank);
     router.Register(0x0210, HandlePvpPoints);
     for (const u16 opcode : {0x0219, 0x021A, 0x021B, 0x021C, 0x0224, 0x0226, 0x0236, 0x0238}) {
         router.Register(opcode, HandleLegacyRanking);

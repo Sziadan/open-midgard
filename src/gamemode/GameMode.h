@@ -336,6 +336,7 @@ public:
     u32 m_lastCouplePacketAid;
     u32 m_lastCouplePacketGid;
     std::string m_recallPartnerName;
+    u32 m_pvpRankStartTick = 0;
     struct AdoptionInvitation {
         u32 parent = 0;
         u32 partner = 0;

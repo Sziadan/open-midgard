@@ -47,6 +47,75 @@ void MannerAndColoredNoticeReplay()
     world.UnregisterActor(&actor);
 }
 
+void PvpRankReplay()
+{
+    SetCase("pvp_rank", "PK39.02", "selected-019a-pvp-rank", "map packet loop -> actor rank and badge");
+    CPlayer player;
+    CPc remote;
+    CWorld world;
+    CGameMode mode;
+    world.m_player = &player;
+    mode.m_world = &world;
+    remote.m_gid = 0x55;
+    world.RegisterActor(&remote);
+    const auto oldAid = g_session.m_aid;
+    const auto oldEffects = g_session.m_isEffectOn;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    player.m_gid = g_session.m_aid = 0x44;
+    g_session.m_isEffectOn = true;
+    g_windowMgr.ClearChatEvents();
+
+    TestConnection connection;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto update = [&](u8 aid, u32 rank, u8 total) {
+        Require(connection.QueueBytes({0x9a,1,aid,0,0,0, static_cast<u8>(rank), static_cast<u8>(rank >> 8),
+            static_cast<u8>(rank >> 16), static_cast<u8>(rank >> 24), total,0,0,0}), "could not queue PvP rank");
+        Require(ProcessGameModePacketLoop(mode, connection, router, 1).packetsDispatched == 1
+            && !connection.BufferedBytes(), "could not frame and dispatch PvP rank");
+    };
+    const auto badges = [](const CGameActor& actor) {
+        return std::count_if(actor.m_effectList.begin(), actor.m_effectList.end(), [](const CRagEffect* effect) {
+            return effect && effect->GetEffectType() == 159;
+        });
+    };
+    update(0x44, 1, 12);
+    Require(player.m_pk_rank == 0 && badges(player) == 0, "PvP rank applied outside a PK zone");
+    world.m_isPKZone = 1;
+    update(0x44, 11, 12);
+    update(0x44, 1, 12);
+    const auto rankStart = mode.m_pvpRankStartTick;
+    Require(player.m_pk_rank == 1 && player.m_pk_total == 12 && rankStart != 0 && badges(player) == 1,
+        "rank-one entry did not update local rank, timer and badge");
+    update(0x44, 1, 13);
+    Require(player.m_pk_total == 13 && mode.m_pvpRankStartTick == rankStart && badges(player) == 1
+        && g_windowMgr.GetChatEvents().size() == 2, "rank-one refresh changed its timer or stacked badges or notices");
+    update(0x44, 0, 0);
+    Require(player.m_pk_rank == 0 && player.m_pk_total == 0 && !mode.m_pvpRankStartTick && badges(player) == 0,
+        "PvP rank reset retained local state");
+
+    remote.m_effectState = 0x0004;
+    update(0x55, 4, 12);
+    update(0x66, 2, 12);
+    Require(remote.m_pk_rank == 0 && badges(remote) == 0, "hidden actor received a PvP badge");
+    remote.m_effectState = 0;
+    update(0x55, 4, 12);
+    Require(remote.m_pk_rank == 4 && remote.m_pk_total == 12 && badges(remote) == 1,
+        "visible remote rank did not apply its state and badge");
+    update(0x55, 0xffffffffu, 12);
+    Require(remote.m_pk_rank == -1 && badges(remote) == 0, "hidden-rank sentinel left a badge");
+    Require(g_windowMgr.GetChatEvents().size() == 2, "remote or reset rank emitted a local notice");
+    g_windowMgr.ClearChatEvents();
+    world.UnregisterActor(&remote);
+    world.m_player = nullptr;
+    mode.m_world = nullptr;
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    g_session.m_aid = oldAid;
+    g_session.m_isEffectOn = oldEffects;
+}
+
 void PvpPointsReplay()
 {
     SetCase("pvp_points", "PK39.02", "selected-0210-pvp-points", "map packet loop -> PvP points chat");

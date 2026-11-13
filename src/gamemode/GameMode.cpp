@@ -8029,6 +8029,7 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 
 void ClearRuntimeActors(CGameMode& mode)
 {
+    mode.m_pvpRankStartTick = 0;
     mode.m_recallPartnerName.clear();
     mode.ResetCompanionMapState();
     g_Weather.Reset();

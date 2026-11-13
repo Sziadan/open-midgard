@@ -7591,6 +7591,7 @@ int main(int argc,char** argv){try{
     SpecialItemObtainReplay();
     MvpRewardReplay();
     LegacyRankingReplay();
+    PvpRankReplay();
     PvpPointsReplay();
     MannerAndColoredNoticeReplay();
     ChatPrimaryViewReplay();
