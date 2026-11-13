@@ -244,6 +244,13 @@ void ChatSubmissionReplay()
     g_session.m_guildWindow.id=0;Require(!submit("/gc stale guild") && std::string(g_windowMgr.GetChatMsg())=="stale guild","guild guard should retain parser-owned tail");
     Require(!submit("%") && std::string(g_windowMgr.GetChatMsg())=="%","empty percent prefix should not clear source message");
     Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"rejected source messages leaked packets");
+    const bool previousMinEffect = g_session.m_isMinEffect;
+    Require(submit("/tiny") && g_session.m_isMinEffect != previousMinEffect
+        && g_session.m_isMinEffectOld == g_session.m_isMinEffect,
+        "minimum effects did not update the local preference");
+    Require(submit("/tiny") && g_session.m_isMinEffect == previousMinEffect
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "minimum effects sent a packet or failed to restore the preference");
     mode.m_reqEmotionTick=0;mode.m_isReqEmotion=0;Require(submit("/!"),"registered source emotion did not route47->33");
     Require(peer.ReceiveExact(3)==std::vector<u8>({0xbf,0,0}) && mode.m_isReqEmotion && mode.m_reqEmotionTick==10000,"source emotion0/pending/time/frame differs");
     Require(!submit("/?"),"pending source emotion was not guarded");mode.m_isReqEmotion=0;submissionTick=12500;Require(!submit("/?"),"source emotion exact2500 boundary changed");

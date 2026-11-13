@@ -313,6 +313,9 @@ void InstanceStatusReplay()
     Require(status.phase == Phase::Active && !status.idleDeadline && status.expiration == 0xf1001234u,
         "idle timer stop replaced the lifetime deadline");
     auto* instanceWindow = g_windowMgr.m_instanceWnd;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
     Require(instanceWindow->GetDisplay(static_cast<u64>(status.expiration) + 1).details.back() == "0:00:00"
         && status.phase == Phase::Active, "countdown expiry changed server-owned status");
     instanceWindow->OnLBtnDown(instanceWindow->m_x + 190, instanceWindow->m_y + 5);
@@ -322,6 +325,9 @@ void InstanceStatusReplay()
     Require(!instanceWindow->m_show, "repeated active update reopened a hidden window");
     Require(g_windowMgr.OnQtKeyDown('B', true, false, false) && instanceWindow->m_show,
         "Alt+B did not reopen the active instance window");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "closing or reopening the instance status sent a request");
+    connection->Disconnect();
     dispatch({0xce, 2, 0, 0, 0, 0, 1, 2, 3, 4});
     Require(status.phase == Phase::Ready && status.idleDeadline == 0x04030201, "idle timer update did not restore ready phase");
     dispatch({0xce, 2, 1, 1, 0, 0, 0, 0, 0, 0});

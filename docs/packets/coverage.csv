@@ -434,7 +434,7 @@ AUDIT-0x0219,0x0219,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x021A,0x021A,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x021B,0x021B,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x021C,0x021C,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x021D,0x021D,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x021D,0x021D,map,C2S,PK47,PK01;PK02;PK48;PK46,Registered six-byte server less-effects preference. The selected client command changes only local state.,C2S_ONLY,PK46.02-MINIMUM-EFFECTS
 AUDIT-0x021E,0x021E,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x021F,0x021F,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0220,0x0220,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -601,7 +601,7 @@ AUDIT-0x02CB,0x02CB,map,S2C,PK42,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x02CC,0x02CC,map,S2C,PK42,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02CD,0x02CD,map,S2C,PK42,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02CE,0x02CE,map,S2C,PK42,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x02CF,0x02CF,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x02CF,0x02CF,map,C2S,PK47,PK01;PK02;PK48;PK46,Registered six-byte instance command. The visible instance does not establish the server target.,C2S_ONLY,PK42.04-INSTANCE-COMMAND
 AUDIT-0x02D0,0x02D0,map,S2C,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02D1,0x02D1,map,S2C,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02D2,0x02D2,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
