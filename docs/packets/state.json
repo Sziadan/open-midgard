@@ -562,7 +562,7 @@
     "PK16.03": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK16.03-social-wire.md"],
-      "commit_subject": "packet(PK16.03): confirm messenger friend removal"
+      "commit_subject": "packet(PK16.03): guard friend invitation replies"
     },
     "PK16.04": {
       "status": "NOT_STARTED",

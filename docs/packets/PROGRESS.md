@@ -3959,3 +3959,5 @@ PK16.02 adds the confirmed equipment, recall, and party invitation settings and 
 PK16.03 adds user-count and friend-result notices and documents the selected whisper-block branches. [Evidence](evidence/PK16.03-social-wire.md)
 
 PK16.03 adds the messenger delete confirmation, the selected `0203` request, and exact AID/CID matching for `020A`. [Evidence](evidence/PK16.03-social-wire.md)
+
+PK16.03 binds friend replies to the displayed invitation and restores the reference auto-decline branch. [Evidence](evidence/PK16.03-social-wire.md)

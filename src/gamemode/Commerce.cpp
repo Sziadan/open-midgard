@@ -63,7 +63,7 @@ void ResetForMapEntry()
     }
     state.inventoryTab = inventoryTab;
 }
-void CloseTransactions(){state.cart.visible=state.vending.visible=state.trade.visible=state.shop.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=false;state.shopBoards.clear();state.cartItems.clear();}
+void CloseTransactions(){state.cart.visible=state.vending.visible=state.trade.visible=state.shop.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=false;state.shopBoards.clear();state.cartItems.clear();}
 void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
     state.clock=now;state.tradePeers=std::move(peers);
     if(!state.tradeWaiting&&!state.tradeIncoming)return;
@@ -122,7 +122,17 @@ bool Receive(CGameMode&,const PacketView& v){
     case 0xf0:if(n<3)return false;tradeReset();state.trade.visible=false;note(p[2]?"Trade failed.":"Trade completed.");return true;
     case 0xf1:state.localOffer.clear();state.localZeny=0;state.localLocked=state.lockPending=false;return true;
     case 0x16a:if(n<30)return false;state.promptKind="guild";state.promptId=read(p+2,4);state.promptName=text(p+6,24);return true;
-    case 0x207:if(n<34)return false;state.promptKind="friend";state.promptId=read(p+2,4);state.promptChar=read(p+6,4);state.promptName=text(p+10,24);return true;
+    case 0x207: {
+        if (n != 34) return false;
+        const u32 aid = read(p + 2, 4), cid = read(p + 6, 4);
+        const auto name = text(p + 10, 24);
+        if (!aid || !cid || name.empty()) return false;
+        state.promptKind = "friend";
+        state.promptId = aid;
+        state.promptChar = cid;
+        state.promptName = name;
+        return true;
+    }
     case 0x169:if(n<3)return false;note(p[2]==2?"Guild invitation accepted.":p[2]==3?"Guild invitation failed: guild is full.":p[2]==0?"Player already belongs to a guild.":"Guild invitation declined.");return true;
     case 0x2d7:{if(n<43||(n-43)%26)return false;std::vector<ITEM_INFO> items;for(int at=43;at<n;at+=26)items.push_back(item(p+at,true,26));state.viewedEquipment=std::move(items);state.equipment.visible=true;state.partner=text(p+4,24);state.status="Equipment shared by this player.";return true;}
     case 0x249:if(n<3)return false;state.mailPending=false;note(p[2]?"Mail could not be sent.":"Mail sent.");if(!p[2])state.mail.visible=false;return true;
@@ -204,7 +214,16 @@ bool Action(const Command& c){
     if(c.action=="commitTrade"){if(!state.tradeActive||!state.localLocked||!state.remoteLocked||state.commitPending)return false;if(!simple(0xef))return false;state.commitPending=true;state.status="Final confirmation sent; waiting for the server.";return true;}
     if(c.action=="buy"){auto found=std::find_if(state.shopItems.begin(),state.shopItems.end(),[&](const auto& o){return o.item.m_itemIndex==c.index;});if(found==state.shopItems.end()||!c.amount||c.amount>found->amount||busy())return false;auto p=packet(0x134,12);put(p,2,12);put(p,4,state.sellerId,4);put(p,8,c.amount);put(p,10,c.index);return send(p);}
     if(c.action=="prompt"){
-        std::vector<u8> p;if(state.promptKind=="guild"){p=packet(0x16b,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else if(state.promptKind=="alliance"){p=packet(0x172,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else if(state.promptKind=="friend"){p=packet(0x208,14);put(p,2,state.promptId,4);put(p,6,state.promptChar,4);put(p,10,c.amount?1:0,4);}else return false;
+        if (c.from == "friend" || state.promptKind == "friend") {
+            if (c.from != state.promptKind || !c.promptAid || !c.promptCid
+                || c.promptAid != state.promptId || c.promptCid != state.promptChar
+                || !SendFriendInvitationReply(c.promptAid, c.promptCid, c.amount != 0)) return false;
+            state.promptKind.clear();
+            state.promptName.clear();
+            state.promptId = state.promptChar = 0;
+            return true;
+        }
+        std::vector<u8> p;if(state.promptKind=="guild"){p=packet(0x16b,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else if(state.promptKind=="alliance"){p=packet(0x172,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else return false;
         if(!send(p))return false;state.promptKind.clear();return true;
     }
     if(c.action=="mail"){
@@ -213,6 +232,16 @@ bool Action(const Command& c){
         if(!send(p))return false;state.mailPending=true;state.status="Sending mail; waiting for the server.";return true;
     }
     state.status="That action is unavailable in the current state.";return false;
+}
+
+bool SendFriendInvitationReply(u32 aid, u32 cid, bool accept)
+{
+    if (!aid || !cid) return false;
+    auto reply = packet(0x208, 14);
+    put(reply, 2, aid, 4);
+    put(reply, 6, cid, 4);
+    put(reply, 10, accept, 4);
+    return send(reply);
 }
 
 bool PlayerAction(int action,u32 target,const std::string& name){

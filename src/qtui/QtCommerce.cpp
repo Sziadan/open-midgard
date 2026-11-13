@@ -90,6 +90,8 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     data["localOffer"]=offers(s.localOffer);data["remoteOffer"]=offers(s.remoteOffer);data["localZeny"]=s.localZeny;data["remoteZeny"]=s.remoteZeny;data["partner"]=str(s.partner);
     data["shop"]=geometry(s.shop,suppressed);data["shopItems"]=offers(s.shopItems);data["mail"]=geometry(s.mail,suppressed);data["mailTo"]=str(s.mailTo);data["mailPending"]=s.mailPending;data["equipment"]=geometry(s.equipment,suppressed);data["equipmentItems"]=equipment;
     data["promptKind"]=suppressed?QString():str(s.promptKind);data["promptName"]=str(s.promptName);data["status"]=str(s.status);QVariantMap menu;
+    data["promptAid"] = s.promptId;
+    data["promptCid"] = s.promptChar;
     if(auto* w=g_windowMgr.m_playerContextMenuWnd;w && w->m_show && !suppressed){
         menu={{"visible",true},{"x",w->m_x},{"y",w->m_y},{"width",w->m_w},{"height",w->m_h},{"name",str(w->GetTargetName())},{"target",w->GetTargetAid()}};
         const char* labels[]={"View equipment","Request trade","Invite to party","Invite to guild","Whisper","Add friend","Send mail","Block whispers"};QVariantList actions;
@@ -137,6 +139,8 @@ void BindCommerceUi(QtUiState* ui){
             else if(!PlayerAction(command,id,name)&&state.status.empty())g_windowMgr.PushChatEvent("That player action is unavailable right now.",0x00FF8080u,6);return;
         }
         Command c;c.action=action.toStdString();c.from=args.value("from").toString().toStdString();c.to=args.value("to").toString().toStdString();c.index=args.value("index").toUInt();c.amount=args.value("amount").toUInt();c.price=args.value("price").toUInt();c.text=args.value("text").toString().toUtf8().toStdString();c.subject=args.value("subject").toString().toUtf8().toStdString();c.body=args.value("body").toString().toUtf8().toStdString();c.x=args.value("x").toInt();c.y=args.value("y").toInt();c.tab=args.value("tab").toInt();
+        c.promptAid = args.value("promptAid").toUInt();
+        c.promptCid = args.value("promptCid").toUInt();
         if(action=="externalDrop"){
             const auto* item=g_session.GetInventoryItemByIndex(c.index);auto* mode=g_modeMgr.GetCurrentGameMode();
             if(!item||!mode||state.tradeActive||state.vendingActive)return;

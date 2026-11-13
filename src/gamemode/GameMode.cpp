@@ -10867,6 +10867,7 @@ bool CGameMode::CanRequestStandingResurrection() const
 }
 
 void CGameMode::OnExit() {
+    ro::commerce::CloseTransactions();
     g_session.m_showEquipmentToOthers = false;
     g_session.m_refuseRecall = false;
     g_session.m_refusePartyInvites = false;

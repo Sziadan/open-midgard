@@ -6319,6 +6319,9 @@ void FriendReplyProductionSendReplay()
     ro::commerce::state.promptChar = 0x55667788;
     ro::commerce::Command reply{};
     reply.action = "prompt";
+    reply.from = "friend";
+    reply.promptAid = 0x11223344;
+    reply.promptCid = 0x55667788;
     reply.amount = 1;
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
@@ -6341,6 +6344,8 @@ void FriendReplyProductionSendReplay()
     ro::commerce::state.promptKind = "friend";
     ro::commerce::state.promptId = 0x01020304;
     ro::commerce::state.promptChar = 0xA1B2C3D4;
+    reply.promptAid = 0x01020304;
+    reply.promptCid = 0xA1B2C3D4;
     reply.amount = 0;
     {
         LoopbackPeer peer(*connection);
@@ -6354,6 +6359,44 @@ void FriendReplyProductionSendReplay()
             "friend decline did not emit the selected 14-byte frame");
     }
     connection->Disconnect();
+    {
+        CGameMode mode;
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        LoopbackPeer peer(*connection);
+        std::array<u8, 34> invitation{7, 2, 9, 0, 0, 0, 10, 0, 0, 0, 'A'};
+        PacketView packet{};
+        int consumed = 0;
+        const auto deliver = [&] {
+            Require(TryReadPacket(invitation.data(), invitation.size(), packet, consumed)
+                && router.Dispatch(mode, packet), "friend invitation did not dispatch");
+        };
+        const auto noTrade = g_session.m_isNoTrade;
+        g_session.m_isNoTrade = 0;
+        deliver();
+        reply.promptAid = 9;
+        reply.promptCid = 10;
+        invitation[2] = 0;
+        deliver();
+        Require(ro::commerce::state.promptId == 9, "invalid friend invite replaced the visible prompt");
+        invitation[2] = 11;
+        deliver();
+        Require(ro::commerce::state.promptId == 11 && !ro::commerce::Action(reply),
+            "stale reply was applied to the replacement invitation");
+        g_session.m_isNoTrade = 1;
+        invitation[2] = 12;
+        deliver();
+        Require(peer.ReceiveExact(14) == std::vector<u8>{8, 2, 12, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0}
+            && ro::commerce::state.promptId == 11, "no-trade invitation did not decline independently");
+        g_session.m_isNoTrade = noTrade;
+        ro::commerce::CloseTransactions();
+        reply.promptAid = 11;
+        Require(!ro::commerce::Action(reply), "a closed invitation remained actionable");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+            "stale friend invitation emitted a reply");
+        connection->Disconnect();
+        g_windowMgr.ClearChatEvents();
+    }
     ro::commerce::state = savedState;
     std::cout << "{\"case_id\":\"friend_reply_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0208-friend-reply\",\"outcome\":\"PASS\",\"assertions\":\"failed send preserves prompt; accept/decline emit 14-byte frames with IDs and answer values\"}" << std::endl;
 }

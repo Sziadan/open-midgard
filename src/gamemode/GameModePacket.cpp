@@ -8548,13 +8548,16 @@ void HandleFriendDelete(CGameMode&, const PacketView& packet)
 
 void HandleFriendRequest(CGameMode& mode, const PacketView& packet)
 {
-    ro::commerce::Receive(mode,packet);
-    if (!packet.data || packet.packetLength < 34) {
+    if (!packet.data || packet.packetLength != 34) return;
+    const u32 aid = ReadLE32(packet.data + 2);
+    const u32 cid = ReadLE32(packet.data + 6);
+    const std::string friendName = ExtractFixedPacketString(packet.data + 10, 24);
+    if (!aid || !cid || friendName.empty()) return;
+    if (IsNameYellow(g_session.m_aid) || g_session.m_isNoTrade) {
+        ro::commerce::SendFriendInvitationReply(aid, cid, false);
         return;
     }
-
-    const std::string friendName = ExtractFixedPacketString(packet.data + 10, 24);
-    if (!friendName.empty()) {
+    if (ro::commerce::Receive(mode, packet)) {
         RecordChat(mode, std::string("Friend request from ") + friendName + ".", 0x00FFFF00, kChatChannelSystem);
     }
 }

@@ -12,6 +12,7 @@ struct Command {
     std::string action,from,to,text,subject,body;
     u32 index=0,amount=0,price=0,target=0;
     int x=0,y=0,tab=0;
+    u32 promptAid=0,promptCid=0;
 };
 struct State {
     Window cart,vending,trade,shop,mail,equipment;
@@ -38,6 +39,7 @@ void ResetForMapEntry();
 void CloseTransactions();
 bool Receive(CGameMode&,const PacketView&);
 bool Action(const Command&);
+bool SendFriendInvitationReply(u32 aid, u32 cid, bool accept);
 bool PlayerAction(int action,u32 target,const std::string& name);
 bool HasInput();
 bool HitTest(int x,int y);
