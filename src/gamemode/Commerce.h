@@ -1,5 +1,6 @@
 #pragma once
 #include "item/Item.h"
+#include <array>
 #include <map>
 #include <optional>
 #include <vector>
@@ -17,6 +18,7 @@ struct MailHeader {
 };
 struct MailDetail {
     std::string title, sender, body;
+    std::array<u8, 24> senderWire{};
     u32 zeny = 0;
     u32 itemAmount = 0;
     ITEM_INFO item;
@@ -33,6 +35,12 @@ struct MailClaim {
     bool needsReadback = false;
     bool terminalReadRequested = false;
 };
+enum class MailRemovalKind { Delete, Return };
+struct MailRemoval {
+    MailRemovalKind kind;
+    u32 id;
+    u32 sentAt;
+};
 struct MailInbox {
     std::map<u32, MailHeader> headers;
     std::map<u32, MailDetail> details;
@@ -40,6 +48,7 @@ struct MailInbox {
     u32 selectedId = 0;
     u32 pendingReadId = 0;
     std::optional<MailClaim> claim;
+    std::optional<MailRemoval> removal;
 };
 struct Command {
     std::string action,from,to,text,subject,body;
@@ -78,6 +87,7 @@ void CloseTransactions();
 bool Receive(CGameMode&,const PacketView&);
 bool Action(const Command&);
 bool MailClaimCanCheck(u32 now);
+bool MailRemovalTimedOut(u32 now);
 bool SendFriendInvitationReply(u32 aid, u32 cid, bool accept);
 bool PlayerAction(int action,u32 target,const std::string& name);
 bool HasInput();

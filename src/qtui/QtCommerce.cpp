@@ -94,6 +94,8 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     data["mailReadPending"] = s.inbox.pendingReadId != 0;
     data["mailClaimPending"] = s.inbox.claim.has_value();
     data["mailClaimCanCheck"] = MailClaimCanCheck(GetTickCount());
+    data["mailRemovalPending"] = s.inbox.removal.has_value();
+    data["mailRemovalTimedOut"] = MailRemovalTimedOut(GetTickCount());
     if (s.mailInbox.visible) {
         QVariantList messages;
         for (auto it = s.inbox.headers.rbegin(); it != s.inbox.headers.rend(); ++it) {
@@ -180,7 +182,8 @@ void BindCommerceUi(QtUiState* ui){
         }
         if(action=="describe"){DescribeCommerceItem(args);return;}
         if (action == "transfer") c.itemId = args.value("id").toUInt();
-        if (action == "readMail" || action == "claimMail") c.target = args.value("id").toUInt();
+        if (action == "readMail" || action == "claimMail" || action == "deleteMail" || action == "returnMail")
+            c.target = args.value("id").toUInt();
         if(!Action(c) && state.status.empty())state.status="Action unavailable. Check the quantity and current transaction state.";
     });
 }

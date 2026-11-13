@@ -7043,6 +7043,47 @@ void MailInboxProductionReplay()
     dispatch(emptyDetail);
     Require(!state.inbox.claim, "post-acknowledgement readback did not settle the claim");
 
+    Command deleteMail;
+    deleteMail.action = "deleteMail";
+    deleteMail.target = 1;
+    Command returnMail = deleteMail;
+    returnMail.action = "returnMail";
+    const std::vector<u8> deleteRequest{0x43, 0x02, 1, 0, 0, 0};
+    std::vector<u8> returnRequest(30, 0);
+    returnRequest[0] = 0x73; returnRequest[1] = 0x02; returnRequest[2] = 1; returnRequest[6] = 'A';
+    Require(Action(deleteMail) && peer.ReceiveExact(6) == deleteRequest
+        && state.inbox.headers.count(1) && state.inbox.removal,
+        "delete did not retain the row pending the server acknowledgement");
+    dispatch({0x74, 0x02, 1, 0, 0, 0, 1, 0});
+    dispatch({0x57, 0x02, 2, 0, 0, 0, 0, 0});
+    Require(state.inbox.removal && state.inbox.headers.count(2),
+        "a wrong-family or wrong-ID result changed inbox state");
+    state.inbox.removal->sentAt -= 15000;
+    dispatch({0x60, 0x02, 1, 0, 0, 0});
+    dispatch({0x60, 0x02, 0, 0, 0, 0});
+    Require(MailRemovalTimedOut(GetTickCount()) && peer.ReceiveExact(2) == std::vector<u8>{0x3f, 0x02}
+        && !Action(readMail) && !Action(returnMail), "reopening a timed-out operation lost reply ownership");
+    dispatch({0x57, 0x02, 1, 0, 0, 0, 1, 0});
+    Require(!state.inbox.removal && state.inbox.headers.count(1), "delete refusal removed the message");
+    Require(Action(returnMail) && peer.ReceiveExact(30) == returnRequest,
+        "return did not send the selected message ID and sender");
+    Require(!Action(readMail) && !Action(deleteMail), "return allowed an overlapping read or delete");
+    dispatch({0x74, 0x02, 1, 0, 0, 0, 0, 0});
+    Require(!state.inbox.removal && !state.inbox.headers.count(1) && !state.inbox.details.count(1)
+        && state.inbox.selectedId == 0, "return success did not clear the matching message and selection");
+    dispatch({0x57, 0x02, 2, 0, 0, 0, 0, 0});
+    Require(state.inbox.headers.count(2), "unowned late delete removed a message");
+    readMail.target = 2;
+    Require(Action(readMail) && peer.ReceiveExact(6) == std::vector<u8>{0x41, 0x02, 2, 0, 0, 0},
+        "could not stage successful delete");
+    dispatch(secondDetail);
+    deleteMail.target = 2;
+    Require(Action(deleteMail) && peer.ReceiveExact(6) == std::vector<u8>{0x43, 0x02, 2, 0, 0, 0},
+        "could not delete the second message");
+    dispatch({0x57, 0x02, 2, 0, 0, 0, 0, 0});
+    Require(!state.inbox.removal && !state.inbox.headers.count(2) && !state.inbox.details.count(2),
+        "delete success did not remove the matching message");
+
     dispatch(makeList(1));
     std::vector<u8> notice(70, 0);
     notice[0] = 0x4a; notice[1] = 0x02; notice[6] = 'N'; notice[46] = 'A';

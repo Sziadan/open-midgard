@@ -293,6 +293,14 @@ Item {
         info: hub.view.mailInbox || ({})
         caption: "Mail inbox"
         z: 5
+        property string removalAction: ""
+        property int removalId: 0
+        readonly property int selectedMailId: hub.view.mailSelected || 0
+        readonly property bool canRemove: !!hub.view.mailDetail && !!hub.view.mailSelected
+            && !hub.view.mailReadPending && !hub.view.mailClaimPending && !hub.view.mailRemovalPending
+            && !mail.visible && !hub.view.mailPending
+        onVisibleChanged: if (!visible) removalAction = ""
+        onSelectedMailIdChanged: removalAction = ""
         Column {
             parent: inbox.body
             anchors.fill: parent
@@ -313,7 +321,8 @@ Item {
                     required property var modelData
                     width: ListView.view.width
                     primary: modelData.id === hub.view.mailSelected
-                    enabled: !hub.view.mailReadPending && !mail.visible && !hub.view.mailPending
+                    enabled: !hub.view.mailReadPending && !hub.view.mailRemovalPending
+                        && !mail.visible && !hub.view.mailPending
                     onClicked: hub.send("readMail", {id: modelData.id})
                     Text {
                         anchors.fill: parent
@@ -330,7 +339,7 @@ Item {
             }
             Flickable {
                 width: parent.width
-                height: Math.max(0, parent.height - 215)
+                height: Math.max(0, parent.height - 256)
                 clip: true
                 contentHeight: details.height
                 Column {
@@ -372,7 +381,8 @@ Item {
                 objectName: "mailInboxClaim"
                 width: 145
                 label: hub.view.mailClaimPending ? "Check attachments" : "Claim attachments"
-                enabled: !hub.view.mailReadPending && !mail.visible && !hub.view.mailPending
+                enabled: !hub.view.mailReadPending && !hub.view.mailRemovalPending
+                    && !mail.visible && !hub.view.mailPending
                     && (hub.view.mailClaimPending ? hub.view.mailClaimCanCheck
                         : !!hub.view.mailDetail && (!!hub.view.mailDetail.zeny
                             || (!!hub.view.mailDetail.item && !!hub.view.mailDetail.amount)))
@@ -383,10 +393,49 @@ Item {
                         hub.send("claimMail", {id: hub.view.mailSelected})
                 }
             }
+            Row {
+                spacing: 8
+                readonly property bool confirming: inbox.removalAction !== ""
+                    && inbox.removalId === hub.view.mailSelected && inbox.canRemove
+                Button {
+                    objectName: "mailInboxDelete"
+                    width: 125
+                    label: parent.confirming
+                        ? (inbox.removalAction === "deleteMail" ? "Confirm delete" : "Confirm return")
+                        : "Delete"
+                    enabled: parent.confirming || (inbox.canRemove && !hub.view.mailDetail.amount
+                        && !hub.view.mailDetail.zeny)
+                    onClicked: {
+                        if (parent.confirming) {
+                            hub.send(inbox.removalAction, {id: inbox.removalId})
+                            inbox.removalAction = ""
+                        } else {
+                            inbox.removalId = hub.view.mailSelected
+                            inbox.removalAction = "deleteMail"
+                        }
+                    }
+                }
+                Button {
+                    objectName: "mailInboxReturn"
+                    width: 125
+                    label: parent.confirming ? "Cancel" : "Return to sender"
+                    enabled: parent.confirming || (inbox.canRemove && !!hub.view.mailDetail.sender)
+                    onClicked: {
+                        if (parent.confirming) {
+                            inbox.removalAction = ""
+                        } else {
+                            inbox.removalId = hub.view.mailSelected
+                            inbox.removalAction = "returnMail"
+                        }
+                    }
+                }
+            }
             Status {
                 width: parent.width
                 height: 32
-                text: hub.view.mailReadPending ? "Waiting for the message…"
+                text: hub.view.mailRemovalTimedOut ? "Message status unconfirmed. Refresh the inbox or reconnect."
+                    : hub.view.mailRemovalPending ? "Waiting for the server to update the message…"
+                    : hub.view.mailReadPending ? "Waiting for the message…"
                     : hub.view.mailClaimCanCheck ? "Attachment status unconfirmed. Check your inventory and Zeny."
                     : hub.view.mailClaimPending ? "Waiting for mail attachments…" : (hub.view.status || "")
             }

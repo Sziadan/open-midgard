@@ -669,6 +669,8 @@ void MapTransitionLifetimeReplay()
         ro::commerce::state.mail.visible = true;
         ro::commerce::state.mailPending = true;
         ro::commerce::state.inbox.claim = ro::commerce::MailClaim{7, 0, 1};
+        ro::commerce::state.inbox.removal = ro::commerce::MailRemoval{
+            ro::commerce::MailRemovalKind::Return, 8, 0};
         auto cellThenWarp = MapCellUpdateFrame(1, 1, 5, "prontera.gat");
         g_session.m_mapTypeInfo.Clear();
         g_session.m_isMinEffectOld = false;
@@ -683,6 +685,8 @@ void MapTransitionLifetimeReplay()
             "same-map warp discarded ownership of the unkeyed mail reply");
         Require(ro::commerce::state.inbox.claim && ro::commerce::state.inbox.claim->id == 7,
             "same-map warp discarded ownership of the unkeyed attachment reply");
+        Require(ro::commerce::state.inbox.removal && ro::commerce::state.inbox.removal->id == 8,
+            "same-map warp discarded ownership of the pending mail return");
         Require(mapInput.QueueBytes({0x49, 0x02, 0})
             && ProcessGameModePacketLoop(mode, mapInput, router, 1).packetsDispatched == 1
             && !ro::commerce::state.mailPending,
@@ -866,6 +870,8 @@ void MapTransitionLifetimeReplay()
         g_session.m_partyBookingRegistrationPending = true;
         ro::commerce::state.mailPending = true;
         ro::commerce::state.inbox.claim = ro::commerce::MailClaim{7, 0, 1};
+        ro::commerce::state.inbox.removal = ro::commerce::MailRemoval{
+            ro::commerce::MailRemovalKind::Delete, 8, 0};
         g_session.m_pendingReturnToCharSelect = reconnectSucceeds ? 0 : 1;
         Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),
             "could not seed pending action before server move");
@@ -891,6 +897,7 @@ void MapTransitionLifetimeReplay()
             Require(!g_session.m_partyBookingRegistrationPending, "booking reply remained pending across reconnect");
             Require(!ro::commerce::state.mailPending, "mail reply remained pending across reconnect");
             Require(!ro::commerce::state.inbox.claim, "mail attachment claim remained pending across reconnect");
+            Require(!ro::commerce::state.inbox.removal, "mail removal remained pending across reconnect");
             Require(g_session.m_questJournal.states.empty() && g_session.m_questJournal.missions.empty()
                     && !g_windowMgr.m_questWnd, "old quest journal or window survived into the next connection");
             const auto* member = g_session.FindPartyMemberByAid(0x30303030u);

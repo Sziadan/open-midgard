@@ -17,6 +17,7 @@ namespace ro::commerce {
 State state;
 namespace {
 constexpr u32 kMailClaimWaitMs = 15000;
+constexpr u32 kMailRemovalWaitMs = 15000;
 u32 read(const u8* p,int bytes=2){u32 v=0;for(int i=0;i<bytes;++i)v|=u32(p[i])<<(8*i);return v;}
 void put(std::vector<u8>& p,int at,u32 v,int bytes=2){for(int i=0;i<bytes;++i)p[at+i]=u8(v>>(8*i));}
 std::vector<u8> packet(u16 op,int size){std::vector<u8> p(size);put(p,0,op);return p;}
@@ -67,6 +68,7 @@ bool receiveMailDetail(const u8* p, int length)
     MailDetail detail;
     detail.title = mailText(p + 8, 40);
     detail.sender = mailText(p + 48, 24);
+    std::copy_n(p + 48, detail.senderWire.size(), detail.senderWire.begin());
     detail.body = mailText(p + 100, bodyLength);
     detail.zeny = read(p + 76, 4);
     detail.itemAmount = read(p + 80, 4);
@@ -106,6 +108,23 @@ bool requestMailRead(u32 id)
     if (inbox.claim && inbox.claim->id == id && inbox.claim->needsReadback) {
         inbox.claim->terminalReadRequested = true;
     }
+    return true;
+}
+
+bool receiveMailRemoval(MailRemovalKind kind, u32 id, u32 result)
+{
+    auto& inbox = state.inbox;
+    if (!inbox.removal || inbox.removal->kind != kind || inbox.removal->id != id) return false;
+    inbox.removal.reset();
+    if (result != 0) {
+        state.status = kind == MailRemovalKind::Return ? "The server refused to return the message."
+            : "The server refused to delete the message.";
+        return true;
+    }
+    inbox.headers.erase(id);
+    inbox.details.erase(id);
+    if (inbox.selectedId == id) inbox.selectedId = 0;
+    state.status = kind == MailRemovalKind::Return ? "Message returned." : "Message deleted.";
     return true;
 }
 
@@ -481,8 +500,13 @@ bool Receive(CGameMode&,const PacketView& v){
         }
         return true;
     }
+    case 0x257:
+        if (n != 8) return false;
+        receiveMailRemoval(MailRemovalKind::Delete, read(p + 2, 4), read(p + 6));
+        return true;
     case 0x274:
         if (n != 8) return false;
+        if (receiveMailRemoval(MailRemovalKind::Return, read(p + 2, 4), read(p + 6))) return true;
         if (state.inbox.pendingReadId && state.inbox.pendingReadId == read(p + 2, 4) && read(p + 6)) {
             state.inbox.details.erase(state.inbox.pendingReadId);
             if (auto& claim = state.inbox.claim; claim && claim->id == state.inbox.pendingReadId) {
@@ -671,17 +695,35 @@ bool Action(const Command& c){
         if(!send(p))return false;state.promptKind.clear();return true;
     }
     if (c.action == "refreshMail" || c.action == "readMail" || c.action == "claimMail"
-        || c.action == "checkMailClaim") {
+        || c.action == "checkMailClaim" || c.action == "deleteMail" || c.action == "returnMail") {
         auto& inbox = state.inbox;
         // Either request can reset the server's staged compose resources.
         if (!state.mailInbox.visible || busy() || state.mail.visible || state.mailPending
             || inbox.pendingReadId) return false;
         if (c.action == "refreshMail") return simple(0x23f);
+        if (inbox.removal) return false;
         if (c.action == "checkMailClaim") {
             return MailClaimCanCheck(GetTickCount()) && requestMailRead(inbox.claim->id);
         }
         if (!inbox.headers.count(c.target) || c.target > static_cast<u32>((std::numeric_limits<int>::max)())) {
             return false;
+        }
+        if (c.action == "deleteMail" || c.action == "returnMail") {
+            if (inbox.claim || inbox.selectedId != c.target) return false;
+            const auto detail = inbox.details.find(c.target);
+            if (detail == inbox.details.end()) return false;
+            const bool returning = c.action == "returnMail";
+            const auto& message = detail->second;
+            if (returning ? message.senderWire.front() == 0 : message.itemAmount != 0 || message.zeny != 0) {
+                return false;
+            }
+            auto p = packet(returning ? 0x273 : 0x243, returning ? 30 : 6);
+            put(p, 2, c.target, 4);
+            if (returning) std::copy(message.senderWire.begin(), message.senderWire.end(), p.begin() + 6);
+            if (!send(p)) return false;
+            inbox.removal = MailRemoval{returning ? MailRemovalKind::Return : MailRemovalKind::Delete,
+                c.target, GetTickCount()};
+            return true;
         }
         if (c.action == "claimMail") {
             if (inbox.claim || inbox.selectedId != c.target) return false;
@@ -734,6 +776,12 @@ bool MailClaimCanCheck(u32 now)
 {
     const auto& claim = state.inbox.claim;
     return claim && (claim->needsReadback || now - claim->sentAt >= kMailClaimWaitMs);
+}
+
+bool MailRemovalTimedOut(u32 now)
+{
+    const auto& removal = state.inbox.removal;
+    return removal && now - removal->sentAt >= kMailRemovalWaitMs;
 }
 
 bool SendFriendInvitationReply(u32 aid, u32 cid, bool accept)
