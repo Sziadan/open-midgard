@@ -361,6 +361,16 @@ public:
     };
     bool RequestAuctionSearch(const AuctionSearchQuery& query);
     void CloseAuctionSearch();
+    bool RequestAuctionStageItem(u16 inventoryIndex);
+    bool CancelAuctionStaging();
+    bool ApplyAuctionStageResult(u16 index, u8 result);
+    struct AuctionStagingState {
+        u16 pendingIndex = 0;
+        u32 pendingItemId = 0;
+        u16 stagedIndex = 0;
+        u32 stagedItemId = 0;
+        bool discardReply = false;
+    } m_auctionStaging;
     struct AuctionSearchState {
         bool open = false;
         bool awaitingReply = false;

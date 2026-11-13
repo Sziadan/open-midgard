@@ -279,6 +279,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0223, 8);               // ZC_ACK_WEAPONREFINE
     SetPacketSize(0x0250, 3);               // ZC_AUCTION_RESULT
     SetPacketSize(0x0252, kVariablePacketSize); // ZC_AUCTION_ITEM_REQ_SEARCH
+    SetPacketSize(0x0256, 5);               // ZC_ACK_AUCTION_ADD_ITEM
     SetPacketSize(0x025D, 4);               // Selected server emits close ACK under the request opcode.
     SetPacketSize(0x025F, 6);               // ZC_AUCTION_WINDOWS
     SetPacketSize(0x025A, kVariablePacketSize); // ZC_MAKINGITEM_LIST

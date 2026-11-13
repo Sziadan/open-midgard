@@ -4101,3 +4101,5 @@ PK40.02 adds `0250` and inbound `025D` framing and source result notices. Produc
 PK40.02 validates auction search pages and retires them on server close or map change. The selected source uses search type 6 for own sales, which affects how the initial general browse should be wired. [Evidence](evidence/PK40.02-auction-search-snapshot.md)
 
 PK40.02 sends the selected initial browse, price and own-list requests and drains late results before reusing a closed auction search. [Evidence](evidence/PK40.02-auction-search-snapshot.md)
+
+PK40.02 stages one auction item and correlates the `0256` reply, including the raw-index failure branch and a late reply after search. [Evidence](evidence/PK40.02-auction-item-staging.md)

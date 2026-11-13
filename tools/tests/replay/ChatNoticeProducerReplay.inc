@@ -133,6 +133,57 @@ void AuctionSearchSnapshotReplay()
         "auction win did not refresh the active search");
     dispatch(page);
     g_windowMgr.ClearChatEvents();
+    const auto inventory = g_session.GetInventoryItems();
+    g_session.ClearInventoryItems();
+    ITEM_INFO itemToStage;
+    itemToStage.m_itemIndex = 42;
+    itemToStage.SetItemId(1201);
+    itemToStage.m_num = 2;
+    itemToStage.m_isIdentified = 1;
+    g_session.SetInventoryItem(itemToStage);
+    const std::vector<u8> stage{0x4c,2,42,0,1,0,0,0};
+    const auto requestStage = [&] {
+        Require(mode.RequestAuctionStageItem(42), "valid auction stage request was rejected");
+        const auto sent = server.ReceiveExact(stage.size());
+        Require(sent == stage, "auction stage request bytes differed: " + Hex(sent));
+    };
+    requestStage();
+    dispatch({0x56,2,40,0,0});
+    Require(mode.m_auctionStaging.pendingIndex == 42, "raw-index success claimed the pending item");
+    dispatch({0x56,2,40,0,1});
+    Require(!mode.m_auctionStaging.pendingIndex && !mode.m_auctionStaging.stagedIndex,
+        "raw-index rejection left the staging request active");
+    requestStage();
+    dispatch({0x56,2,42,0,0});
+    dispatch({0x56,2,42,0,0});
+    Require(mode.m_auctionStaging.stagedIndex == 42 && mode.m_auctionStaging.stagedItemId == 1201
+        && g_session.GetInventoryItemByIndex(42)->m_num == 1,
+        "staging success did not reserve exactly one item");
+    const u16 pickup = ro::net::GetActiveMapReceiveProfile().itemPickupAckExtended;
+    std::vector<u8> returnedItem(29);
+    returnedItem[0] = static_cast<u8>(pickup);
+    returnedItem[1] = static_cast<u8>(pickup >> 8);
+    returnedItem[2] = 42;
+    returnedItem[4] = 1;
+    returnedItem[6] = 0xb1;
+    returnedItem[7] = 4;
+    returnedItem[8] = 1;
+    Require(mode.CancelAuctionStaging() && server.ReceiveExact(4) == std::vector<u8>{0x4b,2,1,0},
+        "staging cancel did not send the selected request");
+    dispatch(returnedItem);
+    Require(g_session.GetInventoryItemByIndex(42)->m_num == 2, "cancel return did not restore exactly one item");
+    requestStage();
+    Require(mode.RequestAuctionSearch({}) && server.ReceiveExact(browse.size()) == browse,
+        "could not start a search while staging a pending item");
+    dispatch({0x56,2,42,0,0});
+    Require(!mode.m_auctionStaging.pendingIndex && !mode.m_auctionStaging.stagedIndex,
+        "a stage acknowledgement revived the selection canceled by search");
+    dispatch(returnedItem);
+    Require(g_session.GetInventoryItemByIndex(42)->m_num == 2, "search cancellation changed the inventory total");
+    dispatch(page);
+    g_session.ClearInventoryItems();
+    for (const auto& item : inventory) g_session.SetInventoryItem(item);
+    g_windowMgr.ClearChatEvents();
     dispatch({0x5f,2,1,0,0,0});
     dispatch(page);
     Require(!state.open && !state.pages && state.rows.empty(), "auction close retained or accepted late results");

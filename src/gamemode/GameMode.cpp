@@ -8031,6 +8031,7 @@ void ClearRuntimeActors(CGameMode& mode)
 {
     mode.m_pvpRankStartTick = 0;
     mode.m_auctionSearch = {};
+    mode.m_auctionStaging = {};
     mode.m_recallPartnerName.clear();
     mode.ResetCompanionMapState();
     g_Weather.Reset();
@@ -10376,16 +10377,83 @@ bool CGameMode::RequestAuctionSearch(const AuctionSearchQuery& query)
 
     m_auctionSearch.query = query;
     m_auctionSearch.awaitingReply = true;
+    // Both selected search parsers cancel the server's staged item.
+    m_auctionStaging.stagedIndex = 0;
+    m_auctionStaging.stagedItemId = 0;
+    m_auctionStaging.discardReply = m_auctionStaging.pendingIndex != 0;
     return true;
 }
 
 void CGameMode::CloseAuctionSearch()
 {
+    m_auctionStaging.stagedIndex = 0;
+    m_auctionStaging.stagedItemId = 0;
+    m_auctionStaging.discardReply = m_auctionStaging.pendingIndex != 0;
     // The search reply has no request ID, so drain any outstanding page before reuse.
     const bool awaitingReply = m_auctionSearch.awaitingReply;
     m_auctionSearch = {};
     m_auctionSearch.awaitingReply = awaitingReply;
     m_auctionSearch.discardReply = awaitingReply;
+}
+
+bool CGameMode::RequestAuctionStageItem(u16 inventoryIndex)
+{
+    if (!m_auctionSearch.open || m_auctionStaging.pendingIndex || m_auctionStaging.stagedIndex
+        || inventoryIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots) return false;
+
+    const auto* item = g_session.GetInventoryItemByIndex(inventoryIndex);
+    if (!item || !item->GetItemId() || item->m_num < 1 || !item->m_isIdentified || item->m_wearLocation
+        || item->m_deleteTime) return false;
+
+    const u8 packet[] = {0x4c, 0x02, static_cast<u8>(inventoryIndex), static_cast<u8>(inventoryIndex >> 8), 1, 0, 0, 0};
+    if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet))) return false;
+
+    m_auctionStaging.pendingIndex = inventoryIndex;
+    m_auctionStaging.pendingItemId = item->GetItemId();
+    return true;
+}
+
+bool CGameMode::CancelAuctionStaging()
+{
+    auto& staging = m_auctionStaging;
+    if (!staging.stagedIndex && (!staging.pendingIndex || staging.discardReply)) return true;
+
+    const u8 packet[] = {0x4b, 0x02, 1, 0};
+    const bool sent = CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
+    if (sent) {
+        staging.stagedIndex = 0;
+        staging.stagedItemId = 0;
+        staging.discardReply = staging.pendingIndex != 0;
+    }
+    return sent;
+}
+
+bool CGameMode::ApplyAuctionStageResult(u16 index, u8 result)
+{
+    auto& staging = m_auctionStaging;
+    if (!staging.pendingIndex || result > 1
+        || (index != staging.pendingIndex && (result == 0 || index != staging.pendingIndex - 2))) return false;
+
+    bool inventoryChanged = false;
+    if (result == 0) {
+        const auto* item = g_session.GetInventoryItemByIndex(staging.pendingIndex);
+        if (item && item->GetItemId() == staging.pendingItemId && item->m_num > 0) {
+            if (m_auctionSearch.open && !staging.discardReply) {
+                staging.stagedIndex = staging.pendingIndex;
+                staging.stagedItemId = staging.pendingItemId;
+            }
+            // Registration suppresses its deletion packet. Cancel instead returns
+            // the reserved unit with the ordinary item pickup acknowledgement.
+            g_session.RemoveInventoryItem(staging.pendingIndex, 1);
+            inventoryChanged = true;
+        } else if (m_auctionSearch.open && !staging.discardReply) {
+            CancelAuctionStaging();
+        }
+    }
+    staging.pendingIndex = 0;
+    staging.pendingItemId = 0;
+    staging.discardReply = false;
+    return inventoryChanged;
 }
 
 void CGameMode::ResetCompanionMapState()

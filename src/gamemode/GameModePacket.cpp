@@ -8776,6 +8776,7 @@ void HandleAuctionWindow(CGameMode& mode, const PacketView& packet)
     const u32 type = ReadLE32(packet.data + 2);
     if (type > 1) return;
     if (type == 1) {
+        mode.CancelAuctionStaging();
         mode.CloseAuctionSearch();
     } else if (!mode.m_auctionSearch.open) {
         mode.m_auctionSearch.open = true;
@@ -8827,6 +8828,14 @@ void HandleAuctionSearchResults(CGameMode& mode, const PacketView& packet)
 
     search.pages = ReadLE32(packet.data + 4);
     search.rows = std::move(rows);
+}
+
+void HandleAuctionStageResult(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 5) return;
+    if (mode.ApplyAuctionStageResult(ReadLE16(packet.data + 2), packet.data[4])) {
+        RefreshInventoryDependentWindows();
+    }
 }
 
 void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
@@ -10479,6 +10488,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x019A, HandlePvpRank);
     router.Register(0x0250, HandleAuctionResultNotice);
     router.Register(0x0252, HandleAuctionSearchResults);
+    router.Register(0x0256, HandleAuctionStageResult);
     router.Register(0x025D, HandleAuctionResultNotice);
     router.Register(0x025F, HandleAuctionWindow);
     router.Register(0x0210, HandlePvpPoints);
