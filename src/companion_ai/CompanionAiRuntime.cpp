@@ -14,7 +14,6 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
-#include <windows.h>
 
 namespace companion_ai {
 namespace {
@@ -412,14 +411,13 @@ bool Runtime::CanTargetForAttack(u32 id) const
     return target && target->m_stateId != MOTION_DEAD && !IsHiddenFromAi(*target, id);
 }
 
-void Runtime::Attack(u32 id, u32 enemyId) const
+void Runtime::Attack(u32 id, u32 enemyId, u32 now)
 {
     if (!IsOwnedCompanion(id) || !FindActor(id) || !CanTargetForAttack(enemyId)) {
         return;
     }
 
-    const u32 now = timeGetTime();
-    if (m_lastAttackTick != 0 && (now - m_lastAttackTick) < static_cast<u32>(AttackIntervalMs())) {
+    if (m_lastAttackTarget == enemyId && now - m_lastAttackTick < static_cast<u32>(AttackIntervalMs())) {
         return;
     }
 
@@ -429,18 +427,21 @@ void Runtime::Attack(u32 id, u32 enemyId) const
     packet.targetGID = enemyId;
     packet.action = kActionAttack;
     if (CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet))) {
+        m_lastAttackTarget = enemyId;
         m_lastAttackTick = now;
     }
 }
 
-void Runtime::StopAttack(u32 id) const
+void Runtime::StopAttack(u32 id)
 {
     if (!IsOwnedCompanion(id)) {
         return;
     }
     // The selected server clears the attack target when it resolves GID zero.
     const PACKET_CZ_REQUEST_ACTNPC packet{kPacketRequestActNpc, id, 0, kActionAttack};
-    CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
+    if (CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet))) {
+        m_lastAttackTarget = 0;
+    }
 }
 
 void Runtime::ClearAttackSelection(u32 enemyId) const

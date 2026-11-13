@@ -4027,8 +4027,8 @@ void PendingCompanionActorSkillReplay()
     mode.GetClientCoor(16, 10, target.m_pos.x, target.m_pos.z);
     homunculus.m_job = 6001;
     mercenary.m_job = 6017;
-    g_session.m_homunStatus.combat.attackSpeed = 1;
-    g_session.m_merStatus.combat.attackSpeed = 1;
+    g_session.m_homunStatus.combat.attackSpeed = 2000;
+    g_session.m_merStatus.combat.attackSpeed = 2000;
     g_session.m_homunTarget = {};
     g_session.m_merTarget = {};
     g_session.ApplyCompanionActorClick(target.m_gid, false);
@@ -4059,6 +4059,24 @@ void PendingCompanionActorSkillReplay()
     if (SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) != 0) {
         throw std::runtime_error("cancelling a manual attack emitted extra opcode " + Hex(peer.ReceiveExact(2)));
     }
+    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    for (CGameActor* caster : {&homunculus, &mercenary}) {
+        tickCompanion(*caster);
+        tickCompanion(*caster);
+        Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
+            0, 0, 0xf1, 0x78, 0x56, 0x34, 0x12, 0}, "fresh attack was delayed by the canceled attack's cooldown");
+        tickCompanion(*caster);
+    }
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "repeated attacks bypassed the cooldown");
+    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    for (CGameActor* caster : {&homunculus, &mercenary}) {
+        tickCompanion(*caster);
+        Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
+            0, 0, 0xf1, 0, 0, 0, 0, 0}, "replayed attack did not stop");
+    }
+    g_session.m_homunStatus.combat.attackSpeed = 1;
+    g_session.m_merStatus.combat.attackSpeed = 1;
 
     CGameActor corpse;
     corpse.m_gid = 0x12345679;

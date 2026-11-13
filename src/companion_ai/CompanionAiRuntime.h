@@ -48,8 +48,8 @@ public:
 
     bool Move(u32 id, int x, int y) const;
     void MoveToOwner(u32 id) const;
-    void Attack(u32 id, u32 enemyId) const;
-    void StopAttack(u32 id) const;
+    void Attack(u32 id, u32 enemyId, u32 now);
+    void StopAttack(u32 id);
     void ClearAttackSelection(u32 enemyId) const;
     SkillSendResult SkillObject(u32 id, int level, int skillId, u32 targetId) const;
     SkillSendResult SkillGround(u32 id, int level, int skillId, int x, int y) const;
@@ -70,7 +70,8 @@ private:
     int AttackIntervalMs() const;
 
     Kind m_kind;
-    mutable u32 m_lastAttackTick = 0;
+    u32 m_lastAttackTarget = 0;
+    u32 m_lastAttackTick = 0;
 };
 
 } // namespace companion_ai

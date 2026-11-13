@@ -310,7 +310,7 @@ void Brain::OnATTACK_ST()
     }
 
     if (m_skill == 0) {
-        m_runtime.Attack(m_myId, m_enemy);
+        m_runtime.Attack(m_myId, m_enemy, m_now);
     } else {
         const auto result = m_runtime.SkillObject(m_myId, m_skillLevel, m_skill, m_enemy);
         if (result == SkillSendResult::Retry) {
@@ -402,7 +402,7 @@ void Brain::OnHOLD_CMD_ST()
     if (m_enemy != 0) {
         const int d = m_runtime.GetDistance2(m_enemy, m_myId);
         if (d != -1 && d <= m_runtime.GetAttackRange(m_myId) && m_runtime.CanTargetForAttack(m_enemy)) {
-            m_runtime.Attack(m_myId, m_enemy);
+            m_runtime.Attack(m_myId, m_enemy, m_now);
         } else {
             m_enemy = 0;
         }
