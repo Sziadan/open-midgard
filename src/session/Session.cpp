@@ -1663,11 +1663,13 @@ bool CSession::ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool sh
         return true;
     }
 
-    target->gid = 0;
-    target->cellX = cellX;
-    target->cellY = cellY;
-    target->moving = true;
-    target->attacking = false;
+    if (!shift) {
+        target->gid = 0;
+        target->cellX = cellX;
+        target->cellY = cellY;
+        target->moving = true;
+        target->attacking = false;
+    }
 
     companion_ai::Msg2Ai msg;
     msg.command = companion_ai::MOVE_CMD;

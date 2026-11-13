@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Mercenary contract retirement checkpoint (2026-11-11)**. PK29.02 covers selected expiry and death notices, confirmed dismissal, and owner death in replay. Six application checks and 473 standalone checks passed. Selected incremental stat coverage and live contract verification remain open. [Evidence](evidence/PK29.02-mercenary-contract-end.md)
+**Native companion checkpoint (2026-11-13)**. PK29.02 replay covers contract retirement and selected `029B` and `02A2` stat updates. Reserved ground orders preserve the current target. Six focused application checks and 473 standalone checks passed. Native pending skill dispatch and live contract verification remain open. [Evidence](evidence/PK29.02-mercenary-contract-end.md)
 
 **Selected map property verification (2026-11-11)**. PK19 covers the active `0199` and `01D6` layouts, world lifetime, gameplay rules, and recovery and siege presentation. The `02E7` compatibility receiver has synthetic replay, and the newer `099B` layout is inactive for the selected profile. Independent review and live verification remain open. [Evidence](evidence/PK19.04-map-properties-verification.md)
 

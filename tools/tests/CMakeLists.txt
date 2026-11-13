@@ -2001,9 +2001,14 @@ add_test(NAME skill_tree_catalog_checks
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_tree_catalog.py")
 
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/World.cpp" skill_self_target_world)
+extract_body(skill_self_target_companion_label "${skill_self_target_world}"
+    "constexpr int kActorLabelBaseYOffset" "int ResolveActorLabelBaseYOffset(")
+extract_body(skill_self_target_label_offset "${skill_self_target_world}"
+    "int ResolveActorLabelBaseYOffset(" "constexpr int kActorSpeechBubbleHeadGapPx")
 extract_body(skill_self_target_picker "${skill_self_target_world}"
     "bool CWorld::FindHoveredActorScreen(" "bool CWorld::ResolveCursorSnap(")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SkillSelfTargetPicker.inc" "${skill_self_target_picker}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SkillSelfTargetPicker.inc"
+    "${skill_self_target_companion_label}\n${skill_self_target_label_offset}\n${skill_self_target_picker}")
 add_executable(skill_self_target_checks SkillSelfTargetTests.cpp)
 target_include_directories(skill_self_target_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src)
 target_compile_features(skill_self_target_checks PRIVATE cxx_std_17)

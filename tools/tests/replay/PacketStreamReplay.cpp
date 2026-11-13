@@ -2540,6 +2540,8 @@ void CompanionIdentityReplay()
     std::array<u8, 8> parameter{0xa2, 0x02, 7, 0, 0xff, 0xff, 0xff, 0xff};
     Require(TryReadPacket(parameter.data(), 8, packet, consumed) && consumed == 8 && router.Dispatch(mode, packet)
         && g_session.m_merStatus.combat.sp == 0, "mercenary parameter bypassed the alive gate");
+    bytes[20] = 0x22;
+    bytes[21] = 0x80;
     Require(!TryReadPacket(bytes.data() + 12, 72, packet, consumed),
         "mercenary init accepted the shorter incompatible layout");
     Require(TryReadPacket(bytes.data() + 12, 80, packet, consumed) && consumed == 80,
@@ -2547,7 +2549,8 @@ void CompanionIdentityReplay()
     Require(router.Dispatch(mode, packet) && g_session.m_merGID == 0xf2000022u
         && g_session.GetMercSkillItems().empty(), "mercenary init did not set identity and clear the previous skills");
     const auto& ms = g_session.m_merStatus;
-    Require(ms.alive && ms.name == "M" && ms.combat.attack == -7 && ms.combat.hp == 0x10023
+    Require(ms.alive && ms.name == "M" && ms.combat.attack == -7 && ms.combat.magicAttack == 0x8022
+        && ms.combat.hp == 0x10023
         && ms.combat.attackRange == 256, "mercenary init field layout differed");
     Require(TryReadPacket(parameter.data(), 8, packet, consumed) && router.Dispatch(mode, packet)
         && ms.combat.sp == -1, "mercenary parameter lost the signed 32-bit value");
@@ -3437,7 +3440,7 @@ void CompanionTargetReplay()
         "Alt+Shift ground click did not clear an existing selection first");
     Require(session.ApplyCompanionGroundClick(9, 11, true, true)
         && session.m_homunTarget.gid == 18 && !session.m_homunTarget.moving,
-        "Alt+Shift changed local target without an active AI VM");
+        "reserved Alt+Shift move replaced the current target");
     Require(session.ApplyCompanionGroundClick(9, 11, true, false)
         && session.m_homunTarget.moving && session.m_homunTarget.cellX == 9 && session.m_homunTarget.cellY == 11
         && session.m_merTarget.moving && session.m_merTarget.cellX == 5 && session.m_merTarget.cellY == 8,
@@ -3460,7 +3463,7 @@ void CompanionTargetReplay()
     session.ApplyCompanionActorClick(24, true);
     Require(session.m_homunTarget.selected && session.m_homunTarget.gid == 23
         && session.m_merTarget.gid == 23 && !session.m_merTarget.attacking,
-        "Alt+Shift actor click rewrote the target with the VM inactive");
+        "reserved Alt+Shift actor click replaced the current target");
     session.m_merStatus.alive = false;
     session.ApplyCompanionActorClick(25, false);
     Require(session.m_homunTarget.gid == 25 && session.m_merTarget.gid == 23,

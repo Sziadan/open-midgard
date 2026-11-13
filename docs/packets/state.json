@@ -1134,7 +1134,7 @@
         "docs/packets/evidence/PK28-pending-companion-actor-skills.md",
         "docs/packets/evidence/PK19-map-properties.md"
       ],
-      "commit_subject": "packet(PK29.02): retire dismissed mercenaries and owner-death contracts"
+      "commit_subject": "packet(PK29.02): validate native companion baseline and mercenary stats"
     },
     "PK29.03": {
       "status": "NOT_STARTED",

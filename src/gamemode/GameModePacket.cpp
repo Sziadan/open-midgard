@@ -2116,6 +2116,7 @@ void HandleMercenaryInit(CGameMode& mode, const PacketView& packet)
     if (const auto* actor = mode.m_world ? mode.m_world->GetGameActorByAID(g_session.m_merGID) : nullptr)
         status.job = actor->m_job;
     ReadCompanionCombat(status.combat, data + 6);
+    status.combat.magicAttack = ReadLE16(data + 8);
     status.name = ExtractFixedPacketString(packet, 22, 24);
     CacheOwnedCompanionActorName(mode, g_session.m_merGID, status.name);
     status.level = static_cast<s16>(ReadLE16(data + 46));

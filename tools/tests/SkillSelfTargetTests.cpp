@@ -7,11 +7,16 @@
 #include "world/CursorSnap.h"
 struct { float m_screenXFactor=1; } g_renderer;
 struct matrix {};
-struct CGameActor { virtual ~CGameActor()=default; bool m_isVisible=true; };
+struct CGameActor {
+    virtual ~CGameActor() = default;
+    bool m_isVisible = true;
+    bool m_isPc = false;
+    int m_job = 0;
+    int m_objectType = 0;
+};
 struct CPc : CGameActor { bool dead=false, monster=false; };
 struct Ground { float m_zoom=5; };
 struct Attr { int m_zoom=5; };
-constexpr int kActorLabelBaseYOffset=4;
 constexpr float kEnemyHoverStickyPadding=3;
 struct CWorld {
     struct BillboardScreenEntry {

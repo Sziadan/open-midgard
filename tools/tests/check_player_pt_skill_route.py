@@ -111,7 +111,8 @@ assert "return TryRequestSourceSkillOnActor(mode,actor," in input_route, \
 assert "BeginSkillChase" not in input_route, "pending actor targeting must not bypass the source actor helper"
 source_actor_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "bool TryRequestSourceSkillOnActor(")
 assert "if(mode.m_skillUseInfo.useType!=2 && mode.m_skillUseInfo.useType!=4)return false" in source_actor_route
-assert "BeginSkillChase(mode,target->m_gid,mode.m_skillUseInfo.id,mode.m_skillUseInfo.level,mode.m_skillUseInfo.attackRange)" in source_actor_route, \
+assert "const u32 chaseGid = selfTarget ? ResolveSelfSkillTargetId() : target->m_gid;" in source_actor_route
+assert "BeginSkillChase(mode,chaseGid,mode.m_skillUseInfo.id,mode.m_skillUseInfo.level,mode.m_skillUseInfo.attackRange)" in source_actor_route, \
     "source actor helper must forward stored raw ID, level, and learned pending range"
 assert "const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId))" not in input_route
 assert "const int skillRange = skillInfo ? skillInfo->attackRange : 0" not in input_route

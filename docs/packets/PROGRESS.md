@@ -3871,3 +3871,7 @@ PK19.04 verifies the active `0199` and `01D6` paths and records the selected-pro
 ## 2026-11-11 Mercenary contract retirement
 
 PK29.02 now handles confirmed dismissal and the selected owner-death packet sequence. The replay checks wire bytes, failed-send retention, and complete local retirement. Six application checks and 473 standalone checks passed. [Evidence](evidence/PK29.02-mercenary-contract-end.md)
+
+## 2026-11-13 Native companion baseline
+
+Adopted `a40a4c01` as the companion baseline. It completes selected `02A2` stat coverage. The follow-up preserves unsigned `029B` MATK and keeps the current target when Alt+Shift reserves a ground move. Six focused application checks and 473 standalone checks passed. The handoff records the missing native actor skill producer. [Evidence](evidence/PK29.02-mercenary-contract-end.md)
