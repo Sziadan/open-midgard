@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK42.03 connects the native and Qt Memorial Dungeon window, Alt+B toggle, and absolute countdowns. Continue the selected `02CF` destroy command and confirmation. Trace whether the displayed snapshot matches the server's `instance_mode` after refresh and replacement, and verify silent rejection. [Instance window](evidence/PK42.03-instance-window.md) · [Instance contract](evidence/PK42.01-selected-instance-contract.md)
+PK42.03 connects the native and Qt Memorial Dungeon window, Alt+B toggle, and absolute countdowns. PK42.04 finds that the server can broadcast a replacement snapshot without updating the recipient's `02CF` destroy target. Keep the window read-only until an authoritative target contract or a single-instance deployment invariant is established. [Instance window](evidence/PK42.03-instance-window.md) · [Destroy target evidence](evidence/PK42.04-instance-target-ownership.md)
 
 PK41.04 classifies the selected `02DB` request and ten inactive queue identities. Continue live verification of the five active receive rows. Check the PK19 `01D6` battleground map type during entry, opposing-camp bitmap visibility with Gravity AIDs, minimap colors, team chat, and scripted same-map leave. [Selected verification](evidence/PK41.04-selected-battleground-verification.md) · [Battleground chat](evidence/PK41.03-battleground-chat.md) · [Battleground state](evidence/PK41.02-battleground-state.md)
 
