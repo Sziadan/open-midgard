@@ -1389,9 +1389,9 @@
       "commit_subject": null
     },
     "PK40.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK40.01-selected-commerce-inventory.md"],
+      "commit_subject": "packet(PK40.04): classify banking outside the selected profile"
     },
     "PK40.05": {
       "status": "NOT_STARTED",

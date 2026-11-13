@@ -4093,3 +4093,5 @@ PK39.02 receives PvP rank updates, applies rank state and badges, and clears reu
 PK39.04 classifies the five selected requests and five inactive identities. Focused notice replay now includes every PK39 receive fixture and verifies that a hiding transition removes the existing remote rank badge. [Evidence](evidence/PK39.04-selected-verification.md)
 
 PK40.01 traces legacy auction and NPC cash-shop packets, the direction-specific `025D` close collision, and the later bank and cash-sale gates. [Evidence](evidence/PK40.01-selected-commerce-inventory.md)
+
+PK40.04 classifies all ten bank request and reply rows as inactive for MAIN 20080910 based on the 20130717 guards. [Evidence](evidence/PK40.01-selected-commerce-inventory.md)
