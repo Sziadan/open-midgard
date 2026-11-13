@@ -4147,3 +4147,5 @@ PK46.03 corrects the selected immediate character-deletion request and adds conf
 PK46.03 adds scheduled deletion framing and login-mode transport for reservation, confirmation and cancellation. Character-selection integration remains open. [Evidence](evidence/PK46.03-scheduled-deletion-wire.md)
 
 PK46.03 connects scheduled deletion to the PacketVer23 character-selection action, including the birth-date prompt, explicit final confirmation and unknown deadline recovery. [Evidence](evidence/PK46.03-scheduled-deletion-controls.md)
+
+PK28.04 and PK29.04 give armed skills priority over manual companion movement and keep companion casts in their own C++ controller across actor removal. The handoff records the remaining live input and binding checks. [Evidence](evidence/PK28-PK29-native-companion-ai.md)

@@ -3949,13 +3949,14 @@ void PendingCompanionActorSkillReplay()
     Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false)
         && player.commands.empty(), "inactive homunculus skill fell through to the player");
     Require(ReplayTrySourceSkillOnActor(mode, &target, false, true, false)
-        && g_session.m_homunTarget.gid == target.m_gid && g_session.m_homunTarget.attacking
+        && !g_session.m_homunTarget.gid && !g_session.m_homunTarget.attacking
         && g_session.m_merTarget.gid == 17 && !g_session.m_merTarget.selected,
-        "pending homunculus skill did not stop after its own actor target branch");
+        "pending homunculus skill changed a basic attack selection");
     mode.m_skillUseInfo = {8201, 1, 10, 2};
     Require(ReplayTrySourceSkillOnActor(mode, &target, false, true, false)
-        && player.commands.empty() && g_session.m_merTarget.gid == target.m_gid,
-        "inactive mercenary skill fell through to the player");
+        && player.commands.empty() && !g_session.m_homunTarget.selected
+        && g_session.m_merTarget.gid == 17 && !g_session.m_merTarget.selected,
+        "inactive mercenary skill fell through or changed a basic attack selection");
     target.m_isPc = 1;
     target.m_job = 0;
     mode.m_skillUseInfo = {8004, 1, 10, 2};
@@ -3994,8 +3995,16 @@ void PendingCompanionActorSkillReplay()
 
     const auto requireCompanionSkill = [&](CGameActor& caster, int skill, u8 skillLow, u8 skillHigh, bool reserved) {
         mode.m_skillUseInfo = {skill, 3, 1, 2};
-        Require(ReplayTrySourceSkillOnActor(mode, &target, reserved, false, false) && player.commands.empty(),
+        Require(ReplayTrySourceSkillOnActor(mode, &target, reserved, true, false) && player.commands.empty(),
             "active companion skill fell through to the player");
+        const bool homunculusCast = &caster == &homunculus;
+        const auto& other = homunculusCast ? mercenary : homunculus;
+        const auto& otherImmediate = homunculusCast ? other.m_merMsg : other.m_homunMsg;
+        const auto& otherReserved = homunculusCast ? other.m_merResMsg : other.m_homunResMsg;
+        Require(!g_session.m_homunTarget.selected && !g_session.m_merTarget.selected
+            && otherImmediate.command == companion_ai::NONE_CMD
+            && otherReserved.command == companion_ai::NONE_CMD,
+            "Alt with a companion skill changed basic attack selection or queued an order for the other family");
         Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
             "companion skill bypassed the native controller");
         mode.m_skillUseInfo = {};
@@ -4463,8 +4472,18 @@ void PendingCompanionActorSkillReplay()
 
     player.commands.clear();
     mode.m_skillUseInfo = {8210, 2, 1, 1};
+    Require(ReplayRequestPendingGroundSkill(mode, 11, 10, false) && player.commands.empty(),
+        "missing mercenary actor routed its ground skill through the player");
+    g_session.m_merStatus.alive = false;
+    mode.m_skillUseInfo = {8201, 1, 10, 2};
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false) && player.commands.empty(),
+        "dismissed mercenary routed its armed actor skill through the player");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "unavailable companions emitted a skill request");
+
+    mode.m_skillUseInfo = {5, 1, 10, 1};
     Require(ReplayRequestPendingGroundSkill(mode, 11, 10, false) && player.commands == std::vector<int>{65, 90},
-        "missing mercenary actor did not preserve the ground skill fallback");
+        "ordinary player ground skill lost its existing dispatch");
 
     connection->Disconnect();
     g_session.m_homunStatus = oldHomun;

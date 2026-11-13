@@ -6263,8 +6263,8 @@ void BeginTouchSkillChase(CGameMode& mode, u32 targetAid, int skillId, int skill
 bool RequestPendingGroundSkill(CGameMode& mode, int x, int y, bool shift)
 {
     const auto pending = mode.m_skillUseInfo;
-    const bool homunculus = g_session.m_homunStatus.alive && pending.id > 8000 && pending.id < 8017;
-    const bool mercenary = g_session.m_merStatus.alive && pending.id > 8200 && pending.id < 8238;
+    const bool homunculus = pending.id >= 8000 && pending.id < 8017;
+    const bool mercenary = SKILL_INFO::IsMercenarySkill(pending.id);
     if (homunculus || mercenary) {
         companion_ai::Msg2Ai command;
         command.command = companion_ai::SKILL_AREA_CMD;
@@ -6273,9 +6273,8 @@ bool RequestPendingGroundSkill(CGameMode& mode, int x, int y, bool shift)
         command.x = x;
         command.y = y;
         const auto kind = homunculus ? companion_ai::Kind::Homunculus : companion_ai::Kind::Mercenary;
-        if (companion_ai::Runtime::QueueCommand(kind, command, shift)) {
-            return true;
-        }
+        companion_ai::Runtime::QueueCommand(kind, command, shift);
+        return true;
     }
 
     mode.m_world->m_player->SendMsg(nullptr, 65, pending.id, x, y);
@@ -7361,6 +7360,13 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
     if(mode.m_skillUseInfo.useType!=2 && mode.m_skillUseInfo.useType!=4)return false;
     if(!mode.m_world || !mode.m_world->m_player || !target)return false;
     auto* player=mode.m_world->m_player;const auto kind=ClassifyPetCaptureActor(target);
+    const int skillId = mode.m_skillUseInfo.id;
+    const bool homunculusSkill = skillId >= 8000 && skillId < 8017;
+    const bool mercenarySkill = SKILL_INFO::IsMercenarySkill(skillId);
+    if ((homunculusSkill || mercenarySkill)
+        && kind != PetCaptureActorKind::Monster && kind != PetCaptureActorKind::Pc) {
+        return true;
+    }
     if(kind==PetCaptureActorKind::Npc){
         if(player->m_stateId!=0 && player->m_stateId!=6)return false;
         TurnPlayerTowardCaptureNpc(mode,*target);RequestNpcContact(target->m_gid);return true;
@@ -7368,19 +7374,12 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
     const bool good=SKILL_INFO::IsGoodSkillForActor(mode.m_skillUseInfo.id);
     const bool all=mode.m_skillUseInfo.useType==4;
     if (kind == PetCaptureActorKind::Monster || kind == PetCaptureActorKind::Pc) {
-        const int skillId = mode.m_skillUseInfo.id;
-        const bool homunculusSkill = g_session.m_homunStatus.alive && skillId >= 8000 && skillId < 8017;
         const bool attackEligible = kind == PetCaptureActorKind::Monster
             ? IsMonsterAttackEligibleForMap(mode, *target, good ? shift : !shift)
             : IsPcAttackEligibleForMap(mode, *target, good ? !shift : shift)
                 || g_session.m_isNoShift == 1 || mode.m_world->m_isSiegeMode;
-        const bool mercenarySkill = g_session.m_merStatus.alive && SKILL_INFO::IsMercenarySkill(skillId) && attackEligible;
-        if (kind == PetCaptureActorKind::Monster && alt) {
-            if (g_session.m_homunStatus.alive) g_session.m_homunTarget.SelectActor(target->m_gid, shift);
-            if (!homunculusSkill && g_session.m_merStatus.alive)
-                g_session.m_merTarget.SelectActor(target->m_gid, shift);
-        }
         if (homunculusSkill || mercenarySkill) {
+            if (mercenarySkill && !attackEligible) return true;
             companion_ai::Msg2Ai command;
             command.command = companion_ai::SKILL_OBJECT_CMD;
             command.skillId = skillId;
@@ -7389,6 +7388,10 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
             companion_ai::Runtime::QueueCommand(homunculusSkill ? companion_ai::Kind::Homunculus
                 : companion_ai::Kind::Mercenary, command, shift);
             return true;
+        }
+        if (kind == PetCaptureActorKind::Monster && alt) {
+            if (g_session.m_homunStatus.alive) g_session.m_homunTarget.SelectActor(target->m_gid, shift);
+            if (g_session.m_merStatus.alive) g_session.m_merTarget.SelectActor(target->m_gid, shift);
         }
     }
     bool eligible=false;
@@ -12580,10 +12583,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const int mouseY = static_cast<int>(lparam);
         if(m_skillUseInfo.useType!=0){
             if(!m_isOnQuest && !m_isPlayerDead && !g_windowMgr.HasActiveNpcDialog()) {
-                const bool companionGroundClick = m_skillUseInfo.useType == 1
-                    && TryHandleCompanionGroundClick(*this, mouseX, mouseY);
-                if (!companionGroundClick)
-                    TryRequestPendingSkillFromScreenPoint(*this,mouseX,mouseY);
+                TryRequestPendingSkillFromScreenPoint(*this,mouseX,mouseY);
             }
             // Source ProcessInput sends mode78 after actor/ground picking,
             // including a miss. Character targeting never starts ground move.
