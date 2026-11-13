@@ -3899,3 +3899,7 @@ PK28.04 verifies the initial manual attack, the zero-target cancellation, and su
 ## 2026-11-13 Selected elemental snapshot
 
 PK29.03 verifies that a saved elemental can produce `081D` on MAIN 20080910. The receiver handles the fixed frame, preserves the following map packet, and clears the snapshot at map reset. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.03-elemental-snapshot.md)
+
+## 2026-11-13 Selected elemental lifecycle
+
+PK29.03 verifies type `0x0A` spawn and movement, ordinary actor removal, and snapshot retirement on local owner death. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.03-elemental-snapshot.md)

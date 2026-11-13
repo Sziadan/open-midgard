@@ -2815,6 +2815,33 @@ void CompanionIdentityReplay()
     owner.m_gid = 0xf1000033;
     auto* oldPlayer = g_world.m_player;
     g_world.m_player = &owner;
+    constexpr u32 reentryElemental = 0xf3000043;
+    // MAIN 20080910 non-player spawn and walk carry object type 10 for BL_ELEM.
+    npcEntry[2] = 10;
+    putGid(npcEntry.data() + 3, reentryElemental);
+    npcEntry[21] = 0x42;
+    npcEntry[22] = 0x08; // EL_AGNI_S, job 2114.
+    dispatchActor(npcEntry);
+    auto* elemental = g_world.GetGameActorByAID(reentryElemental);
+    Require(elemental && elemental->m_objectType == 10 && elemental->m_job == 2114 && !elemental->m_isPc,
+        "selected elemental spawn did not create the expected non-player actor");
+    std::array<u8, 67> elementalWalk{0xec, 0x02, 10};
+    putGid(elementalWalk.data() + 3, reentryElemental);
+    elementalWalk[7] = 150;
+    elementalWalk[17] = 0x42;
+    elementalWalk[18] = 0x08;
+    elementalWalk[56] = 0x40; // Source (1, 0), destination (2, 0).
+    elementalWalk[58] = 0x08;
+    dispatchActor(elementalWalk);
+    Require(g_world.GetGameActorByAID(reentryElemental) == elemental && elemental->m_objectType == 10
+        && mode.m_actorPosList.at(reentryElemental).x == 1,
+        "selected elemental walk did not update the same actor at its path start");
+    std::array<u8, 22> elementalSnapshot{0x1d, 0x08};
+    putGid(elementalSnapshot.data() + 2, reentryElemental);
+    dispatchActor(elementalSnapshot);
+    vanish(reentryElemental, 0);
+    Require(g_session.m_elementalStatus.gid == reentryElemental && !g_world.GetGameActorByAID(reentryElemental),
+        "ordinary visibility removal retired the elemental snapshot");
     vanish(reentryMerc, 0);
     Require(ms.alive && g_session.m_merGID == reentryMerc,
         "mercenary removal preceding owner death retired the contract early");
@@ -2824,8 +2851,9 @@ void CompanionIdentityReplay()
     Require(mode.m_isPlayerDead && !ms.alive && ms.job == -1 && g_session.m_merGID == 0
         && g_session.m_merTarget.gid == 0 && g_session.GetMercSkillItems().empty()
         && mode.m_skillUseInfo.id == 0 && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd
-        && hs.alive && g_session.m_homunGID == reentryHomun,
-        "local owner death did not retire only the mercenary contract");
+        && hs.alive && g_session.m_homunGID == reentryHomun && g_session.m_elementalStatus.gid == 0,
+        "local owner death did not retire the mercenary and elemental independently of the homunculus");
+    g_session.m_elementalStatus = oldElemental;
 
     vanish(reentryHomun, 0);
     mode.m_world = nullptr;

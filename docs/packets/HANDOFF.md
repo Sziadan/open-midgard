@@ -2,7 +2,7 @@
 
 **Current companion checkpoint (2026-11-13)**. PK28.04 now verifies the manual Alt-click attack toggle through the native controller. The first click sends `0233` with the target GID, and the second sends `0233` with a zero target and supersedes reserved orders. Continue PK28.04 with applicable companion UI lifecycle checks and a source review of the remaining control branches. PK29.03 separately covers elemental and newer companion variant classification. Preserve the player skill tree window. [Actor control evidence](evidence/PK28-companion-actor-targets.md)
 
-PK29.03 now frames and stores selected-server `081D` for saved elementals. Check elemental dismissal and visibility semantics before adding any per-actor retirement rule, and audit the other newer companion variants for direct sends outside their registration gates. [Elemental snapshot evidence](evidence/PK29.03-elemental-snapshot.md)
+PK29.03 frames selected-server `081D` for saved elementals. Replay covers type `0x0A` spawn and movement, preserves the snapshot on visibility removal, and clears it on owner death or map reset. Expiry uses the same removal reason as visibility, so the snapshot alone cannot establish that the elemental remains active. Continue the newer companion variant audit, then use PK29.04 to verify the implemented lifecycle against the selected source. [Elemental snapshot evidence](evidence/PK29.03-elemental-snapshot.md)
 
 **Current map property checkpoint (2026-11-11)**. The variable `02E7` receiver now applies bounded updates to the map property table. The selected server source registers the frame, and the receiver is verified with synthetic replay. [Evidence](evidence/PK19-map-property-row-updates.md)
 

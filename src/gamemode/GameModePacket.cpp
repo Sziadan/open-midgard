@@ -9063,9 +9063,10 @@ void HandleActorVanish(CGameMode& mode, const PacketView& packet)
         if (CGameActor* actor = FindRuntimeActorForVanish(mode, gid)) {
             BeginActorDeath(mode, *actor, gid);
             if (IsLocalPlayerActor(mode, gid)) {
-                // Selected pc_dead ends the owner's mercenary contract
-                // without emitting a localized terminal notice.
+                // Selected pc_dead deletes the mercenary and elemental before
+                // the owner death packet, with only visibility removals for them.
                 mode.RetireMercenaryContract();
+                g_session.m_elementalStatus = {};
                 mode.m_isOnQuest = 1;
                 mode.m_isPlayerDead = 1;
                 for (auto it = mode.m_compassPosList.begin(); it != mode.m_compassPosList.end();) {
