@@ -61,6 +61,7 @@
 #include "ui/UIPetInfoWnd.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
+#include "ui/UIAuctionWnd.h"
 #include "world/RagEffect.h"
 #include "world/World.h"
 
@@ -4078,6 +4079,7 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
 {
     mode.m_pvpRankStartTick = 0;
     mode.CloseAuctionSearch();
+    g_windowMgr.DeleteWindow(g_windowMgr.m_auctionWnd);
     mode.m_recallPartnerName.clear();
     mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
@@ -8778,9 +8780,11 @@ void HandleAuctionWindow(CGameMode& mode, const PacketView& packet)
     if (type == 1) {
         mode.CancelAuctionStaging();
         mode.CloseAuctionSearch();
+        g_windowMgr.DeleteWindow(g_windowMgr.m_auctionWnd);
     } else if (!mode.m_auctionSearch.open) {
         mode.m_auctionSearch.open = true;
         mode.RequestAuctionSearch({});
+        g_windowMgr.MakeWindow(UIWindowMgr::WID_AUCTIONWND);
     }
 }
 
@@ -8828,6 +8832,7 @@ void HandleAuctionSearchResults(CGameMode& mode, const PacketView& packet)
 
     search.pages = ReadLE32(packet.data + 4);
     search.rows = std::move(rows);
+    if (g_windowMgr.m_auctionWnd) g_windowMgr.m_auctionWnd->Invalidate();
 }
 
 void HandleAuctionStageResult(CGameMode& mode, const PacketView& packet)
@@ -8836,6 +8841,7 @@ void HandleAuctionStageResult(CGameMode& mode, const PacketView& packet)
     if (mode.ApplyAuctionStageResult(ReadLE16(packet.data + 2), packet.data[4])) {
         RefreshInventoryDependentWindows();
     }
+    if (g_windowMgr.m_auctionWnd) g_windowMgr.m_auctionWnd->Invalidate();
 }
 
 void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
@@ -8886,6 +8892,7 @@ void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
         const auto query = mode.m_auctionSearch.query;
         mode.RequestAuctionSearch(query);
     }
+    if (g_windowMgr.m_auctionWnd) g_windowMgr.m_auctionWnd->Invalidate();
 }
 
 void HandlePvpRank(CGameMode& mode, const PacketView& packet)

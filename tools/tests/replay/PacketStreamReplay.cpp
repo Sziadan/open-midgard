@@ -7319,6 +7319,7 @@ void GlobalChatProductionSendReplay()
 #include "CorpsePacketReplay.inc"
 #include "ChatWindowStateReplay.inc"
 #include "ChatNoticeRoutingReplay.inc"
+#include "ui/UIAuctionWnd.h"
 #include "ChatNoticeProducerReplay.inc"
 #include "ChatPrimaryViewReplay.inc"
 #include "ChatPrimarySpeechReplay.inc"

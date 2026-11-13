@@ -4105,3 +4105,5 @@ PK40.02 sends the selected initial browse, price and own-list requests and drain
 PK40.02 stages one auction item and correlates the `0256` reply, including the raw-index failure branch and a late reply after search. [Evidence](evidence/PK40.02-auction-item-staging.md)
 
 PK40.02 sends registration, bid, cancel, and stop requests and receives their selected replies and server-pushed own lists. [Evidence](evidence/PK40.02-auction-transactions.md)
+
+PK40.02 connects auction browsing, staging, registration and listing actions to a native window, including confirmation and managed teardown. [Evidence](evidence/PK40.02-auction-window.md)

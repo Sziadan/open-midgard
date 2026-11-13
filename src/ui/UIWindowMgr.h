@@ -82,6 +82,7 @@ class UINpcMenuWnd;
 class UIPlayerContextMenuWnd;
 class UIPetInfoWnd;
 class UICompanionStatusWnd;
+class UIAuctionWnd;
 class UICompanionSkillListWnd;
 class UIPetTamingDeceiveWnd;
 class UIJoinPartyAcceptWnd;
@@ -160,6 +161,7 @@ public:
         WID_COMMANDLISTWND    = 112,
         WID_PETINFOWND        = 88,
         WID_HOMUNINFOWND      = 113,
+        WID_AUCTIONWND        = 120,
         WID_HOMUNSKILLLISTWND = 114,
         WID_MERINFOWND        = 132,
         WID_MERSKILLLISTWND   = 133,
@@ -253,6 +255,7 @@ public:
     UIWindow* m_commandListWnd=nullptr;
     UIPetInfoWnd* m_petInfoWnd=nullptr;
     UICompanionStatusWnd* m_homunInfoWnd = nullptr;
+    UIAuctionWnd* m_auctionWnd = nullptr;
     UICompanionStatusWnd* m_merInfoWnd = nullptr;
     UICompanionSkillListWnd* m_homunSkillListWnd = nullptr;
     UICompanionSkillListWnd* m_merSkillListWnd = nullptr;

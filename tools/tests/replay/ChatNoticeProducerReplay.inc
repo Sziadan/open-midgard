@@ -51,6 +51,9 @@ void AuctionSearchSnapshotReplay()
 {
     SetCase("auction_search_snapshot", "PK40.02", "selected-0252-025f-auction-search", "map packet loop -> auction page");
     CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
     auto* outgoing = CRagConnection::instance();
     outgoing->Disconnect();
     LoopbackPeer server(*outgoing);
@@ -79,6 +82,14 @@ void AuctionSearchSnapshotReplay()
     Require(mode.m_auctionSearch.rows.empty(), "auction results opened a closed search session");
     dispatch({0x5f,2,0,0,0,0});
     Require(mode.m_auctionSearch.open, "server open did not establish auction search ownership");
+    const auto clickAuction = [](int x, int y) {
+        const auto* window = g_windowMgr.m_auctionWnd;
+        Require(window && window->m_show, "server auction command did not open a visible window");
+        const int screenX = window->m_x + x;
+        const int screenY = window->m_y + y;
+        g_windowMgr.OnLBtnDown(screenX, screenY);
+        g_windowMgr.OnLBtnUp(screenX, screenY);
+    };
     std::vector<u8> browse(34);
     browse[0] = 0x51;
     browse[1] = 2;
@@ -96,8 +107,9 @@ void AuctionSearchSnapshotReplay()
         && row.buyNow == 0x87654321u && row.expiresAt == 0x80000000u, "auction row fields or widths differ");
 
     using Kind = CGameMode::AuctionSearchKind;
-    Require(mode.RequestAuctionSearch({Kind::OwnBids, 1, 0, {}})
-        && server.ReceiveExact(4) == std::vector<u8>{0x5c, 2, 1, 0}, "own bids did not use the selected request");
+    clickAuction(190, 35);
+    Require(server.ReceiveExact(4) == std::vector<u8>{0x5c, 2, 1, 0},
+        "the auction window's own-bids control did not send the selected request");
     auto malformed = page;
     malformed[8] = 2;
     dispatch(malformed);
@@ -147,7 +159,10 @@ void AuctionSearchSnapshotReplay()
         const auto sent = server.ReceiveExact(stage.size());
         Require(sent == stage, "auction stage request bytes differed: " + Hex(sent));
     };
-    requestStage();
+    clickAuction(260, 35);
+    clickAuction(120, 110);
+    clickAuction(290, 215);
+    Require(server.ReceiveExact(stage.size()) == stage, "the registration controls did not stage the selected item");
     dispatch({0x56,2,40,0,0});
     Require(mode.m_auctionStaging.pendingIndex == 42, "raw-index success claimed the pending item");
     dispatch({0x56,2,40,0,1});
@@ -231,10 +246,12 @@ void AuctionSearchSnapshotReplay()
     g_session.ClearInventoryItems();
     for (const auto& item : inventory) g_session.SetInventoryItem(item);
     g_windowMgr.ClearChatEvents();
-    dispatch({0x5f,2,1,0,0,0});
+    clickAuction(461, 10);
     dispatch(page);
-    Require(!state.open && !state.pages && state.rows.empty(), "auction close retained or accepted late results");
+    Require(!state.open && !state.pages && state.rows.empty() && !g_windowMgr.m_auctionWnd,
+        "auction close retained the window or accepted late results");
     outgoing->Disconnect();
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
 void AuctionResultNoticeReplay()

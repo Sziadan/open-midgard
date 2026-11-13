@@ -13,6 +13,7 @@
 #include "UICommandListWnd.h"
 #include "UIPetInfoWnd.h"
 #include "UICompanionStatusWnd.h"
+#include "UIAuctionWnd.h"
 #include "UICompanionSkillListWnd.h"
 #include "UIPetEggListWnd.h"
 #include "UIPetTamingDeceiveWnd.h"
@@ -1383,6 +1384,19 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             m_children.push_back(m_petInfoWnd);m_petInfoWnd->SendMsg(nullptr,34,reinterpret_cast<msgparam_t>(&m_petInfoWindowInfo),0,0);
         }
         m_petInfoWnd->SetShow(1);return m_petInfoWnd;
+    case WID_AUCTIONWND: {
+        if (!m_auctionWnd) {
+            m_auctionWnd = new UIAuctionWnd(windowId);
+            const auto viewport = GetChatClientRect();
+            const int width = viewport.right - viewport.left;
+            const int height = viewport.bottom - viewport.top;
+            m_auctionWnd->Move(viewport.left + (std::max)(0, (width - m_auctionWnd->m_w) / 2),
+                viewport.top + (std::max)(0, (height - m_auctionWnd->m_h) / 2));
+            m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), m_auctionWnd);
+        }
+        m_auctionWnd->SetShow(1);
+        return m_auctionWnd;
+    }
     case WID_HOMUNINFOWND:
     case WID_MERINFOWND: {
         const bool homunculus = windowId == WID_HOMUNINFOWND;
@@ -2060,6 +2074,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if(window==m_tipOfTheDayWnd)m_tipOfTheDayWnd=nullptr;
     if(window==m_petInfoWnd){m_petInfoWnd->StoreInfo();m_petInfoWnd=nullptr;}
     if (window == m_homunInfoWnd) m_homunInfoWnd = nullptr;
+    if (window == m_auctionWnd) m_auctionWnd = nullptr;
     if (window == m_merInfoWnd) m_merInfoWnd = nullptr;
     if (window == m_homunSkillListWnd) m_homunSkillListWnd = nullptr;
     if (window == m_merSkillListWnd) m_merSkillListWnd = nullptr;
@@ -3290,9 +3305,9 @@ bool UIWindowMgr::HasNativePopupAtPoint(int x,int y) const
         && HitTestWindow(x, y) == m_skillSelectWnd) return true;
     const UIWindow* windows[]={m_itemInfoWnd,m_cardInfoWnd,m_skillDescribeWnd,m_chatRoomMenuWnd};
     for(const auto* w:windows)if(w&&w->m_show&&x>=w->m_x&&y>=w->m_y&&x<w->m_x+w->m_w&&y<w->m_y+w->m_h)return true;
-    if (m_homunInfoWnd || m_merInfoWnd || m_homunSkillListWnd || m_merSkillListWnd) {
+    if (m_auctionWnd || m_homunInfoWnd || m_merInfoWnd || m_homunSkillListWnd || m_merSkillListWnd) {
         for (const auto* hit = HitTestWindow(x, y); hit; hit = hit->m_parent) {
-            if (hit == m_homunInfoWnd || hit == m_merInfoWnd
+            if (hit == m_auctionWnd || hit == m_homunInfoWnd || hit == m_merInfoWnd
                 || hit == m_homunSkillListWnd || hit == m_merSkillListWnd) return true;
         }
     }
