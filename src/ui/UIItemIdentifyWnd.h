@@ -92,7 +92,11 @@ private:
     const shopui::BitmapPixels* GetItemIcon(const ITEM_INFO& item);
     bool HasValidSelection() const;
 
-    std::vector<unsigned int> m_itemIndices;
+    struct Candidate {
+        unsigned int index;
+        unsigned int itemId;
+    };
+    std::vector<Candidate> m_candidates;
     bool m_closeHovered;
     bool m_closePressed;
     bool m_okHovered;

@@ -39,7 +39,7 @@ unsigned long long BuildItemIconKey(const ITEM_INFO& item)
 }
 
 UIItemIdentifyWnd::UIItemIdentifyWnd()
-    : m_itemIndices(),
+    : m_candidates(),
       m_closeHovered(false),
       m_closePressed(false),
       m_okHovered(false),
@@ -155,10 +155,10 @@ void UIItemIdentifyWnd::UpdateScrollFromThumbPosition(int globalY, int itemCount
 std::vector<const ITEM_INFO*> UIItemIdentifyWnd::GetAvailableItems() const
 {
     std::vector<const ITEM_INFO*> items;
-    items.reserve(m_itemIndices.size());
-    for (unsigned int itemIndex : m_itemIndices) {
-        const ITEM_INFO* item = g_session.GetInventoryItemByIndex(itemIndex);
-        if (!item || item->m_itemIndex == 0 || item->m_num <= 0 || item->m_isIdentified != 0) {
+    items.reserve(m_candidates.size());
+    for (const auto& candidate : m_candidates) {
+        const ITEM_INFO* item = g_session.GetInventoryItemByIndex(candidate.index);
+        if (!item || item->GetItemId() != candidate.itemId || item->m_num <= 0 || item->m_isIdentified != 0) {
             continue;
         }
         items.push_back(item);
@@ -186,8 +186,10 @@ bool UIItemIdentifyWnd::HasValidSelection() const
         return false;
     }
 
-    const ITEM_INFO* item = g_session.GetInventoryItemByIndex(static_cast<unsigned int>(m_selectedItemIndex));
-    return item && item->m_itemIndex != 0 && item->m_num > 0 && item->m_isIdentified == 0;
+    const auto items = GetAvailableItems();
+    return std::any_of(items.begin(), items.end(), [&](const ITEM_INFO* item) {
+        return item->m_itemIndex == static_cast<unsigned int>(m_selectedItemIndex);
+    });
 }
 
 int UIItemIdentifyWnd::HitTestVisibleRow(int x, int y) const
@@ -225,7 +227,14 @@ void UIItemIdentifyWnd::UpdateInteraction(int x, int y)
 
 void UIItemIdentifyWnd::SetIdentifyItemIndices(const std::vector<unsigned int>& itemIndices)
 {
-    m_itemIndices = itemIndices;
+    m_candidates.clear();
+    m_candidates.reserve(itemIndices.size());
+    for (const auto index : itemIndices) {
+        const auto* item = g_session.GetInventoryItemByIndex(index);
+        if (item && item->GetItemId() && item->m_num > 0 && !item->m_isIdentified) {
+            m_candidates.push_back({index, item->GetItemId()});
+        }
+    }
     m_hoveredItemIndex = 0;
     m_selectedItemIndex = 0;
     m_viewOffset = 0;
@@ -240,14 +249,16 @@ void UIItemIdentifyWnd::SubmitSelection()
         return;
     }
 
-    g_modeMgr.SendMsg(CGameMode::GameMsg_RequestIdentifyInventoryItem, m_selectedItemIndex, 0, 0);
-    g_windowMgr.DeleteWindow(this);
+    if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestIdentifyInventoryItem, m_selectedItemIndex, 0, 0)) {
+        g_windowMgr.DeleteWindow(this);
+    }
 }
 
 void UIItemIdentifyWnd::CancelSelection()
 {
-    g_modeMgr.SendMsg(CGameMode::GameMsg_RequestIdentifyInventoryItem, static_cast<msgparam_t>(-1), 0, 0);
-    g_windowMgr.DeleteWindow(this);
+    if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestIdentifyInventoryItem, static_cast<msgparam_t>(-1), 0, 0)) {
+        g_windowMgr.DeleteWindow(this);
+    }
 }
 
 void UIItemIdentifyWnd::OnDraw()

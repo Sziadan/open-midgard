@@ -19,7 +19,9 @@
 #include "network/MapSendProfile.h"
 #include "CursorRenderer.h"
 #include "GameMode.h"
+#include "ItemSnapshot.h"
 #include "ui/UIItemCompositionWnd.h"
+#include "ui/UIItemIdentifyWnd.h"
 #include "core/MannerFilter.h"
 #include "core/SourceTextCodec.h"
 #include "ui/UIChatRoomWnd.h"
@@ -6405,11 +6407,16 @@ bool RequestUseInventoryItem(u16 itemIndex)
 
 bool RequestIdentifyInventoryItem(s16 itemIndex)
 {
+    auto* mode = g_modeMgr.GetCurrentGameMode();
+    if (itemIndex < -1 || (mode && mode->m_pendingIdentifyIndex)) return false;
+    unsigned itemId = 0;
     if (itemIndex >= 0) {
         const ITEM_INFO* item = g_session.GetInventoryItemByIndex(static_cast<unsigned int>(itemIndex));
-        if (!item || item->m_itemIndex == 0 || item->m_isIdentified != 0) {
+        if (static_cast<unsigned>(itemIndex) - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+            || !item || !item->GetItemId() || item->m_num <= 0 || item->m_isIdentified != 0) {
             return false;
         }
+        itemId = item->GetItemId();
     }
 
     const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
@@ -6420,6 +6427,10 @@ bool RequestIdentifyInventoryItem(s16 itemIndex)
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
+    if (sent && mode && itemId) {
+        mode->m_pendingIdentifyIndex = static_cast<unsigned>(itemIndex);
+        mode->m_pendingIdentifyItemId = itemId;
+    }
     DbgLog("[GameMode] item identify request index=%d sent=%d\n",
         static_cast<int>(itemIndex),
         sent ? 1 : 0);
@@ -10582,6 +10593,12 @@ void CGameMode::ClearItemComposition()
     if (auto* window = g_windowMgr.m_itemCompositionWnd) g_windowMgr.DeleteWindow(window);
 }
 
+void CGameMode::ClearItemIdentification()
+{
+    m_pendingIdentifyIndex = m_pendingIdentifyItemId = 0;
+    if (auto* window = g_windowMgr.m_itemIdentifyWnd) g_windowMgr.DeleteWindow(window);
+}
+
 bool CGameMode::SendTimeSyncRequest(bool syncNow)
 {
     return ::SendTimeSyncRequest(*this, syncNow);
@@ -11068,6 +11085,7 @@ void CGameMode::OnExit() {
     ClearAdoptionInvitation();
     ClearCraftingSelection();
     ClearItemComposition();
+    ClearItemIdentification();
     ro::commerce::CloseTransactions();
     g_session.m_showEquipmentToOthers = false;
     g_session.m_refuseRecall = false;

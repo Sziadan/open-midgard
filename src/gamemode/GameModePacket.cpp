@@ -1256,41 +1256,52 @@ void ShowIdentifyWindow(const std::vector<unsigned int>& itemIndices)
     window->SetIdentifyItemIndices(itemIndices);
 }
 
-void HandleItemIdentifyList(CGameMode&, const PacketView& packet)
+void HandleItemIdentifyList(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 4 || ((packet.packetLength - 4) % 2) != 0) {
+    if (!packet.data || packet.packetLength < 6 || ReadLE16(packet.data + 2) != packet.packetLength
+        || ((packet.packetLength - 4) % 2) != 0) {
         return;
     }
 
     std::vector<unsigned int> itemIndices;
     const int count = (packet.packetLength - 4) / 2;
+    if (count > ro::item_snapshot::kInventorySlots) return;
+    std::array<bool, ro::item_snapshot::kInventorySlots> seen{};
     itemIndices.reserve(static_cast<size_t>(count));
     for (int index = 0; index < count; ++index) {
         const unsigned int itemIndex = static_cast<unsigned int>(ReadLE16(packet.data + 4 + index * 2));
-        if (itemIndex == 0) {
-            continue;
-        }
+        const auto slot = itemIndex - ro::item_snapshot::kFirstInventoryIndex;
+        if (slot >= seen.size() || seen[slot]) return;
+        seen[slot] = true;
         itemIndices.push_back(itemIndex);
     }
 
+    // A new server menu follows any previous identification result on this stream.
+    mode.ClearItemIdentification();
     ShowIdentifyWindow(itemIndices);
     DbgLog("[GameMode] item identify list count=%d\n", static_cast<int>(itemIndices.size()));
 }
 
-void HandleItemIdentifyAck(CGameMode&, const PacketView& packet)
+void HandleItemIdentifyAck(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 5) {
+    if (!packet.data || packet.packetLength != 5) {
         return;
     }
 
     const unsigned int itemIndex = static_cast<unsigned int>(ReadLE16(packet.data + 2));
     const unsigned int result = static_cast<unsigned int>(packet.data[4]);
+    if (itemIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots || result > 1) return;
+    const auto* existing = g_session.GetInventoryItemByIndex(itemIndex);
+    if (mode.m_pendingIdentifyIndex == itemIndex) {
+        const auto expectedId = mode.m_pendingIdentifyItemId;
+        mode.m_pendingIdentifyIndex = mode.m_pendingIdentifyItemId = 0;
+        if (!existing || existing->GetItemId() != expectedId) return;
+    }
     if (result == 0) {
-        if (const ITEM_INFO* existing = g_session.GetInventoryItemByIndex(itemIndex)) {
-            ITEM_INFO updated = *existing;
-            updated.m_isIdentified = 1;
-            g_session.SetInventoryItem(updated);
-        }
+        if (!existing || existing->m_isIdentified) return;
+        ITEM_INFO updated = *existing;
+        updated.m_isIdentified = 1;
+        g_session.SetInventoryItem(updated);
         RefreshInventoryDependentWindows();
         g_windowMgr.PushChatEvent("Item has been identified.", kSystemNoticeColor, 6);
     } else {
@@ -9083,6 +9094,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     mode.ClearAdoptionInvitation();
     mode.ClearCraftingSelection();
     mode.ClearItemComposition();
+    mode.ClearItemIdentification();
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",

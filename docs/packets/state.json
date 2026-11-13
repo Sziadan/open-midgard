@@ -1345,8 +1345,8 @@
     },
     "PK38.03": {
       "status": "IN_PROGRESS",
-      "evidence": ["docs/packets/evidence/PK38.03-card-composition.md"],
-      "commit_subject": "packet(PK38.03): bind card composition results to requests"
+      "evidence": ["docs/packets/evidence/PK38.03-card-composition.md", "docs/packets/evidence/PK38.03-item-identification.md"],
+      "commit_subject": "packet(PK38.03): validate item identification ownership"
     },
     "PK38.04": {
       "status": "NOT_STARTED",

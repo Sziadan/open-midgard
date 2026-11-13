@@ -4049,3 +4049,7 @@ PK38.03 verifies the actual inventory action and chooser submission through the 
 PK38.03 captures the card composition chooser in native and Qt and verifies cancellation through the window manager. [Evidence](evidence/PK38.03-card-composition.md)
 
 PK38.03 uses a time reply ordered after card submission to release a silently rejected request. [Evidence](evidence/PK38.03-card-composition.md)
+
+PK28.04 and PK29.04 verify that the C++ companion controller can restart a canceled basic attack before the old attack interval expires. Repeated requests still follow the interval. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+PK38.03 validates identification lists and results, revalidates chooser rows against inventory, and handles both solicited and unsolicited results. [Evidence](evidence/PK38.03-item-identification.md)

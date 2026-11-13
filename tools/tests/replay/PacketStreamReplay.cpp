@@ -30,6 +30,7 @@
 #include "ui/UISayDialogWnd.h"
 #include "ui/UIItemShopWnd.h"
 #include "ui/UIItemCompositionWnd.h"
+#include "ui/UIItemIdentifyWnd.h"
 #include "ui/UIItemPurchaseWnd.h"
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIWindowMgr.h"
@@ -5423,34 +5424,70 @@ void IdentifyItemSelectionProductionSendReplay()
 {
     SetCase("identify_item_selection_production_send", "PK46.02", "PK01.02-final-0178-item-identify",
         "UIItemIdentifyWnd::SubmitSelection -> GameMsg_RequestIdentifyInventoryItem -> production sender");
-    constexpr unsigned int itemIndex = 30000;
+    constexpr unsigned int itemIndex = 101;
     Require(g_session.GetInventoryItemByIndex(itemIndex) == nullptr,
         "identify replay fixture item index is already present");
     ITEM_INFO item{};
     item.m_itemIndex = itemIndex;
     item.m_num = 1;
+    item.SetItemId(1201);
     g_session.SetInventoryItem(item);
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), bytes.size(), view, consumed)
+            && consumed == bytes.size() && router.Dispatch(mode, view), "identify packet did not frame and dispatch");
+    };
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
-    Require(!ReplayRequestIdentifyInventoryItem(static_cast<s16>(itemIndex)),
-        "identify sender reported success without an open connection");
+    dispatch({0x77, 0x01, 6, 0, 0x65, 0});
+    auto* chooser = g_windowMgr.m_itemIdentifyWnd;
+    UIItemIdentifyWnd::DisplayData display;
+    Require(chooser && chooser->GetDisplayDataForQt(&display) && display.rows.size() == 1,
+        "valid identify list did not create the chooser and its row");
+    const auto row = display.rows.front();
+    chooser->OnLBtnDblClk(row.x + 1, row.y + 1);
+    Require(g_windowMgr.m_itemIdentifyWnd == chooser, "identify send failure closed the chooser");
 
     {
         LoopbackPeer peer(*connection);
-        Require(ReplayRequestIdentifyInventoryItem(static_cast<s16>(itemIndex)),
-            "valid un-identified inventory item was rejected by the production sender");
-        const std::vector<u8> expected{0x78, 0x01, 0x30, 0x75};
+        item.SetItemId(1202);
+        g_session.SetInventoryItem(item);
+        chooser->OnLBtnDblClk(row.x + 1, row.y + 1);
+        Require(g_windowMgr.m_itemIdentifyWnd == chooser
+            && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+            "stale identify chooser row submitted a replacement item");
+        dispatch({0x77, 0x01, 6, 0, 0x65, 0});
+        g_windowMgr.m_itemIdentifyWnd->OnLBtnDblClk(row.x + 1, row.y + 1);
+        Require(!g_windowMgr.m_itemIdentifyWnd, "identify chooser stayed open after submission");
+        const std::vector<u8> expected{0x78, 0x01, 0x65, 0x00};
         Require(peer.ReceiveExact(expected.size()) == expected,
             "item-identify selection did not emit the selected four-byte frame");
+        dispatch({0x79, 0x01, 0x65, 0, 2});
+        dispatch({0x77, 0x01, 8, 0, 0x65, 0, 0x65, 0});
+        Require(!ReplayRequestIdentifyInventoryItem(itemIndex), "invalid identify packet cleared the outstanding request");
+        item.SetItemId(1203);
+        g_session.SetInventoryItem(item);
+        dispatch({0x79, 0x01, 0x65, 0, 0});
+        Require(!g_session.GetInventoryItemByIndex(itemIndex)->m_isIdentified,
+            "delayed identify result marked a different item in the submitted slot");
+        dispatch({0x79, 0x01, 0x65, 0, 1});
+        Require(!g_session.GetInventoryItemByIndex(itemIndex)->m_isIdentified, "identify failure changed inventory");
+        dispatch({0x79, 0x01, 0x65, 0, 0});
+        Require(g_session.GetInventoryItemByIndex(itemIndex)->m_isIdentified, "unsolicited identify result was lost");
+        Require(!ReplayRequestIdentifyInventoryItem(itemIndex), "identified item emitted a selection request");
     }
 
-    item.m_isIdentified = 1;
-    g_session.SetInventoryItem(item);
-    Require(!ReplayRequestIdentifyInventoryItem(static_cast<s16>(itemIndex)),
-        "already-identified inventory item was accepted for identification");
     connection->Disconnect();
     g_session.RemoveInventoryItem(itemIndex, item.m_num);
-    std::cout << "{\"case_id\":\"identify_item_selection_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0178-item-identify\",\"outcome\":\"PASS\",\"assertions\":\"send failure and identified-item guard; valid item emits four-byte frame\"}" << std::endl;
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    std::cout << "{\"case_id\":\"identify_item_selection_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0178-item-identify\",\"outcome\":\"PASS\",\"assertions\":\"valid send, malformed replies, slot reuse, failure and unsolicited success\"}" << std::endl;
 }
 
 bool ReplayRequestShortcutSlotUse(int slot);

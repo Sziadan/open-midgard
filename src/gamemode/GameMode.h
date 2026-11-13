@@ -108,6 +108,7 @@ public:
     bool SendItemRepairSelection(const std::array<u8, 13>& row);
     void ClearCraftingSelection();
     void ClearItemComposition();
+    void ClearItemIdentification();
     bool SendTimeSyncRequest(bool syncNow);
     bool SendAutoSpellSelection(u32 skillId, const std::vector<unsigned int>& offeredSkillIds);
     bool SendStarPlaceAcceptance(u8 which);
@@ -374,6 +375,8 @@ public:
     int m_numNotifyTime;
     int m_isCheckGndAlpha;
     int m_lastCardItemIndex;
+    unsigned m_pendingIdentifyIndex = 0;
+    unsigned m_pendingIdentifyItemId = 0;
     struct ItemCompositionRequest {
         unsigned cardIndex=0, equipmentIndex=0, cardId=0, equipmentId=0;
         std::array<int,4> equipmentCards{};
