@@ -111,6 +111,8 @@ public:
     void ResetCompanionMapState();
     void DeactivateHomunculus();
     void RetireMercenaryContract();
+    void UpdateFriendInvitation();
+    void CloseFriendInvitation();
 
     enum MapLoadingStage {
         MapLoading_None = 0,

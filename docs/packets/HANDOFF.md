@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK16.03 now verifies the friend invitation reply and replacement lifecycle through the Qt commerce prompt, plus same-map teardown and the reference auto-decline condition. Continue with `0097/0098` whisper outcomes and the native friend invitation control. Coordinate `0201` atomic replacement with PK34. PK16 gates PK30 alongside completed PK25. [Social packet evidence](evidence/PK16.03-social-wire.md)
+PK16.03 now uses a shared native confirmation for friend invitations, projected into Qt through the existing message-box adapter. Continue with `0097/0098` whisper outcomes. Start with selected `clif_parse_WisMessage` and `clif_wis_end` and compare their success, offline, named-block and global-block branches with `HandleAckWhisper`. Coordinate `0201` atomic replacement with PK34. PK16 gates PK30 alongside completed PK25. [Social packet evidence](evidence/PK16.03-social-wire.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 

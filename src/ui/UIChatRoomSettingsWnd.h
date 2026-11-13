@@ -71,6 +71,7 @@ public:
     const RoomSettingsButton& GetButton() const { return m_ok; }
     bool IsPressed() const { return m_pressed; }
     void Dismiss(bool accepted=true);
+    void Close();
     void ConfigureConfirmation(UIWindow* owner,std::function<void(bool)> completion);
     UIWindow* GetSourceOwner() const {return m_sourceOwner;}
     void SetSourceOwner(UIWindow* owner){m_sourceOwner=owner;}

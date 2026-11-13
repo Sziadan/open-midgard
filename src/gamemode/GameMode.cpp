@@ -10866,7 +10866,52 @@ bool CGameMode::CanRequestStandingResurrection() const
     });
 }
 
+namespace {
+constexpr int kFriendInvitationMessageId = 818;
+}
+
+void CGameMode::CloseFriendInvitation()
+{
+    if (auto* box = g_windowMgr.m_roomMessageBox;
+        box && box->GetMessageId() == kFriendInvitationMessageId && box->HasCancel()) {
+        box->Close();
+    }
+}
+
+void CGameMode::UpdateFriendInvitation()
+{
+    const auto& prompt = ro::commerce::state;
+    if (prompt.promptKind != "friend" || g_windowMgr.m_modalWindow) return;
+
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto message = strings.Get(kFriendInvitationMessageId, "(%s) wishes to be friends with you. Would you like to accept?");
+    const auto placeholder = message.find("%s");
+    if (placeholder != std::string::npos) {
+        message.replace(placeholder, 2, prompt.promptName);
+    } else {
+        message = "(" + prompt.promptName + ") wishes to be friends with you. Would you like to accept?";
+    }
+    auto* box = new UIChatRoomMessageBox(std::move(message), kFriendInvitationMessageId);
+    ro::commerce::Command reply{};
+    reply.action = "prompt";
+    reply.from = "friend";
+    reply.promptAid = prompt.promptId;
+    reply.promptCid = prompt.promptChar;
+    const auto generation = g_modeMgr.GetOperationGeneration();
+    box->ConfigureConfirmation(nullptr, [reply = std::move(reply), generation](bool accepted) mutable {
+        if (g_modeMgr.GetOperationGeneration() != generation) return;
+        reply.amount = accepted ? 1 : 0;
+        ro::commerce::Action(reply);
+    });
+    g_windowMgr.m_roomMessageBox = box;
+    g_windowMgr.m_children.push_back(box);
+    g_windowMgr.m_modalWindow = box;
+    g_windowMgr.m_editWindow = nullptr;
+}
+
 void CGameMode::OnExit() {
+    CloseFriendInvitation();
     ro::commerce::CloseTransactions();
     g_session.m_showEquipmentToOthers = false;
     g_session.m_refuseRecall = false;
@@ -11285,6 +11330,7 @@ void CGameMode::OnUpdate() {
     const int packetsProcessed = packetLoop.packetsProcessed;
 
     UpdateStarSkillNotice(timeGetTime());
+    UpdateFriendInvitation();
     UpdateNpcProgress(*conn, timeGetTime());
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);

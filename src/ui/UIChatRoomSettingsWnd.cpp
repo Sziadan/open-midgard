@@ -206,9 +206,13 @@ void UIChatRoomMessageBox::ConfigureConfirmation(UIWindow* owner,std::function<v
 void UIChatRoomMessageBox::Dismiss(bool accepted)
 {
     auto completion=std::move(m_completion);
+    Close();
+    if(completion)completion(accepted);
+}
+void UIChatRoomMessageBox::Close()
+{
     const auto previous=m_previousEdit;g_windowMgr.DeleteWindow(this);
     if(g_windowMgr.ContainsWindow(previous))g_windowMgr.m_editWindow=previous;
-    if(completion)completion(accepted);
 }
 void UIChatRoomMessageBox::CancelPointerCapture(){m_pressed=m_cancelPressed=m_dragging=false;if(g_windowMgr.m_captureWindow==this)g_windowMgr.m_captureWindow=nullptr;Invalidate();}
 void UIChatRoomMessageBox::OnLBtnDown(int x,int y)

@@ -6374,6 +6374,9 @@ void FriendReplyProductionSendReplay()
         const auto noTrade = g_session.m_isNoTrade;
         g_session.m_isNoTrade = 0;
         deliver();
+        Require(g_windowMgr.m_roomMessageBox && g_windowMgr.m_roomMessageBox->HasCancel()
+            && g_windowMgr.m_roomMessageBox->GetText().find("(A)") != std::string::npos,
+            "friend invitation did not open the shared confirmation");
         reply.promptAid = 9;
         reply.promptCid = 10;
         invitation[2] = 0;
@@ -6389,11 +6392,20 @@ void FriendReplyProductionSendReplay()
         Require(peer.ReceiveExact(14) == std::vector<u8>{8, 2, 12, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0}
             && ro::commerce::state.promptId == 11, "no-trade invitation did not decline independently");
         g_session.m_isNoTrade = noTrade;
+        g_windowMgr.m_roomMessageBox->Dismiss(true);
+        Require(peer.ReceiveExact(14) == std::vector<u8>{8, 2, 11, 0, 0, 0, 10, 0, 0, 0, 1, 0, 0, 0}
+            && ro::commerce::state.promptKind.empty(), "shared prompt did not accept the replacement invitation");
+        invitation[2] = 13;
+        deliver();
+        connection->Disconnect();
+        g_windowMgr.m_roomMessageBox->Dismiss(false);
+        Require(ro::commerce::state.promptId == 13, "failed shared prompt reply lost the invitation");
+        mode.UpdateFriendInvitation();
+        Require(g_windowMgr.m_roomMessageBox, "failed shared prompt reply could not be retried");
+        mode.CloseFriendInvitation();
         ro::commerce::CloseTransactions();
-        reply.promptAid = 11;
+        reply.promptAid = 13;
         Require(!ro::commerce::Action(reply), "a closed invitation remained actionable");
-        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
-            "stale friend invitation emitted a reply");
         connection->Disconnect();
         g_windowMgr.ClearChatEvents();
     }

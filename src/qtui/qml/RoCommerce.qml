@@ -326,38 +326,17 @@ Item {
         Button { x:126; y:116; label:"Cancel"; onClicked:hub.pending=null }
     }
     RoFrame { property bool nativeInteractive:true; visible:!!hub.view.promptKind; z:2003; width:280; height:132; anchors.centerIn:parent
-        id: invitationPrompt
         focus:visible
-        function replyArgs(amount) {
-            return {amount: amount, from: hub.view.promptKind, promptAid: hub.view.promptAid, promptCid: hub.view.promptCid}
-        }
-        Keys.onEscapePressed: hub.send("prompt", replyArgs(0))
+        Keys.onEscapePressed:hub.send("prompt",{amount:0})
         Rectangle { x:14; y:28; width:parent.width-28; height:52; radius:2; color:theme.fieldFill; border.width:1; border.color:theme.buttonBorder }
         Text { x:12; y:2; text:hub.view.promptKind==="guild"?"Guild Invitation":hub.view.promptKind==="alliance"?"Guild Alliance":"Friend Request"; color:theme.titleText; font.family:theme.fontFamily; font.pixelSize:theme.titleSize; font.weight:Font.DemiBold }
-        Text { x:20; y:34; width:parent.width-40; height:42; text:hub.view.promptName||""; textFormat: Text.PlainText; color:theme.ink; font.family:theme.fontFamily; font.pixelSize:11; wrapMode:Text.WordWrap; horizontalAlignment:Text.AlignHCenter; verticalAlignment:Text.AlignVCenter }
+        Text { x:20; y:34; width:parent.width-40; height:42; text:hub.view.promptName||""; color:theme.ink; font.family:theme.fontFamily; font.pixelSize:11; wrapMode:Text.WordWrap; horizontalAlignment:Text.AlignHCenter; verticalAlignment:Text.AlignVCenter }
         RoChromeButton { x:parent.width-18; y:3; width:14; height:12; label:"X"; titleControl:true
-            MouseArea {
-                anchors.fill: parent
-                property var reply
-                onPressed: reply = invitationPrompt.replyArgs(0)
-                onClicked: hub.send("prompt", reply)
-            }
+            MouseArea { anchors.fill:parent; onClicked:hub.send("prompt",{amount:0}) }
         }
         Repeater { model:["Accept","Decline"]
             RoChromeButton { required property string modelData; required property int index; objectName:index===0?"commercePromptAccept":"commercePromptDecline"; x:index===0?26:162; y:96; width:92; height:24; label:modelData; labelSize:10; labelBold:true
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    property var reply
-                    onEntered: parent.hovered = true
-                    onExited: { parent.hovered = false; parent.pressed = false }
-                    onPressed: {
-                        parent.pressed = true
-                        reply = invitationPrompt.replyArgs(parent.index === 0 ? 1 : 0)
-                    }
-                    onReleased: parent.pressed = false
-                    onClicked: hub.send("prompt", reply)
-                }
+                MouseArea { anchors.fill:parent; hoverEnabled:true; onEntered:parent.hovered=true; onExited:{parent.hovered=false;parent.pressed=false} onPressed:parent.pressed=true; onReleased:parent.pressed=false; onClicked:hub.send("prompt",{amount:parent.index===0?1:0}) }
             }
         }
     }

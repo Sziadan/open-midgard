@@ -8558,6 +8558,8 @@ void HandleFriendRequest(CGameMode& mode, const PacketView& packet)
         return;
     }
     if (ro::commerce::Receive(mode, packet)) {
+        mode.CloseFriendInvitation();
+        mode.UpdateFriendInvitation();
         RecordChat(mode, std::string("Friend request from ") + friendName + ".", 0x00FFFF00, kChatChannelSystem);
     }
 }
@@ -8847,6 +8849,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     mode.m_compassPosList.clear();
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
     ro::commerce::CloseTransactions();
+    mode.CloseFriendInvitation();
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",
