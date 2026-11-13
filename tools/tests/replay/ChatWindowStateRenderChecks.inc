@@ -1,5 +1,6 @@
 #include "ChatScrollTrimRenderChecks.inc"
 #include "ui/UIQuestWnd.h"
+#include "ui/UIBasicInfoWnd.h"
 #include "ChatRoomRenderChecks.inc"
 #include "ChatRoomEntryRenderChecks.inc"
 #include "ChatRoomSettingsRenderChecks.inc"
@@ -410,8 +411,27 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     auto& mission = g_session.m_questJournal.missions[123];
     mission.objectiveCount = 1;
     mission.objectives[0] = {1002, 3, "Poring", 8};
-    auto* quest = static_cast<UIQuestWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_QUESTWND));
-    Require(quest != nullptr, "quest journal did not open for rendering");
+    auto* basicInfo = static_cast<UIBasicInfoWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_BASICINFOWND));
+    Require(basicInfo != nullptr, "basic info window did not open for quest launch");
+    basicInfo->Move(30, 40);
+    for (auto* window : g_windowMgr.m_children) {
+        if (window != basicInfo) window->SetShow(0);
+    }
+    SetRuntimeUiScalePercent(100);
+    UIBasicInfoWnd::QtButtonDisplay questButton{};
+    Require(basicInfo->GetQtMenuButtonDisplayForQt(basicInfo->GetQtMenuButtonCount() - 1, &questButton)
+        && questButton.label == "Quest" && questButton.visible, "quest launcher is missing from the gameplay panel");
+    const int launcherX = questButton.x + questButton.width / 2;
+    const int launcherY = questButton.y + questButton.height / 2;
+    const auto launcherClick = MAKELPARAM(UiScaleLogicalToRawCoordinate(launcherX), UiScaleLogicalToRawCoordinate(launcherY));
+    WindowProc(g_hMainWnd, WM_LBUTTONDOWN, MK_LBUTTON, launcherClick);
+    const auto captureError = "quest launcher did not capture in Basic Info: width=" + std::to_string(basicInfo->m_w)
+        + " height=" + std::to_string(basicInfo->m_h)
+        + " capture=" + std::to_string(g_windowMgr.m_captureWindow ? g_windowMgr.m_captureWindow->m_id : -1);
+    Require(g_windowMgr.m_captureWindow == basicInfo, captureError.c_str());
+    WindowProc(g_hMainWnd, WM_LBUTTONUP, 0, launcherClick);
+    auto* quest = g_windowMgr.m_questWnd;
+    Require(quest && quest->m_show, "quest launcher did not open the managed journal");
     quest->Move(100, 75);
     adapter.syncChat();
     Frames(app, view);

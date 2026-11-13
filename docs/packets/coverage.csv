@@ -579,7 +579,7 @@ AUDIT-0x02B2,0x02B2,map,S2C,PK50,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ign
 AUDIT-0x02B3,0x02B3,map,S2C,PK50,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02B4,0x02B4,map,S2C,PK50,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02B5,0x02B5,map,S2C,PK50,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x02B6,0x02B6,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x02B6,0x02B6,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Selected quest activation from journal captured,C2S_ONLY,PK50.03-quest-window
 AUDIT-0x02B7,0x02B7,map,S2C,PK50,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02B8,0x02B8,map,S2C,PK15,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x02B9,0x02B9,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-shortcut-key-list.md: selected 191-byte 2008 SAK snapshot with 27 seven-byte hotkey records matches client decoder and full session replacement. UI slot mapping persistence semantics and replay remain open.,UNREVIEWED,

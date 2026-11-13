@@ -94,7 +94,7 @@ private:
     void ReleaseAssets();
 
     bool m_controlsCreated;
-    std::array<UIBitmapButton*, 8> m_menuButtons;
+    std::array<UIBitmapButton*, 9> m_menuButtons;
     UIBitmapButton* m_baseButton;
     UIBitmapButton* m_miniButton;
     shopui::BitmapPixels m_backgroundFull;

@@ -56,8 +56,9 @@ constexpr int kButtonIdBase = 134;
 constexpr int kButtonIdMini = 136;
 constexpr int kButtonIdComm = 148;
 constexpr int kButtonIdMap = 153;
+constexpr int kButtonIdQuest = 154;
 
-constexpr std::array<int, 8> kMenuButtonIds = {
+constexpr std::array<int, 9> kMenuButtonIds = {
     kButtonIdStatus,
     kButtonIdOption,
     kButtonIdItems,
@@ -66,9 +67,10 @@ constexpr std::array<int, 8> kMenuButtonIds = {
     kButtonIdMap,
     kButtonIdComm,
     kButtonIdFriend,
+    kButtonIdQuest,
 };
 
-constexpr std::array<const char*, 8> kMenuButtonNames = {
+constexpr std::array<const char*, 9> kMenuButtonNames = {
     "status",
     "option",
     "items",
@@ -77,9 +79,10 @@ constexpr std::array<const char*, 8> kMenuButtonNames = {
     "map",
     "comm",
     "friend",
+    "quest",
 };
 
-constexpr std::array<const char*, 8> kMenuButtonTooltips = {
+constexpr std::array<const char*, 9> kMenuButtonTooltips = {
     "Alt+A",
     "Alt+O",
     "Alt+E",
@@ -88,6 +91,21 @@ constexpr std::array<const char*, 8> kMenuButtonTooltips = {
     "Ctrl+Tab",
     "Alt+C",
     "Alt+Z",
+    "Quest Journal (Q)",
+};
+
+class QuestMenuButton final : public UIBitmapButton {
+public:
+    void OnDraw() override
+    {
+        HDC dc = AcquireDrawTarget();
+        if (!dc) return;
+        const RECT bounds{m_x, m_y, m_x + m_w, m_y + m_h};
+        shopui::FillRectColor(dc, bounds, m_state == 1 ? RGB(192, 208, 225) : RGB(222, 230, 241));
+        shopui::DrawWindowTextRect(dc, bounds, "Quest", RGB(28, 35, 46),
+            DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+        ReleaseDrawTarget(dc);
+    }
 };
 
 #if RO_ENABLE_QT6_UI
@@ -378,7 +396,7 @@ int ClampPercent(int value)
 
 UIBasicInfoWnd::UIBasicInfoWnd()
     : m_controlsCreated(false),
-      m_menuButtons{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr },
+      m_menuButtons{},
       m_baseButton(nullptr),
       m_miniButton(nullptr),
       m_backgroundFull(),
@@ -481,6 +499,9 @@ msgresult_t UIBasicInfoWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam
     case kButtonIdFriend:
         g_windowMgr.ToggleWindow(UIWindowMgr::WID_MESSENGERGROUPWND);
         return 1;
+    case kButtonIdQuest:
+        g_windowMgr.ToggleWindow(UIWindowMgr::WID_QUESTWND);
+        return 1;
     default:
         return 1;
     }
@@ -503,6 +524,15 @@ void UIBasicInfoWnd::OnCreate(int x, int y)
     }
 
     for (size_t index = 0; index < kMenuButtonNames.size(); ++index) {
+        if (kMenuButtonIds[index] == kButtonIdQuest) {
+            auto* button = new QuestMenuButton();
+            button->Create(42, 14);
+            button->m_id = kButtonIdQuest;
+            button->SetToolTip(kMenuButtonTooltips[index]);
+            AddChild(button);
+            m_menuButtons[index] = button;
+            continue;
+        }
         auto* button = new UIBitmapButton();
         const std::string offName = std::string("btn_") + kMenuButtonNames[index] + "_off.bmp";
         const std::string onName = std::string("btn_") + kMenuButtonNames[index] + "_on.bmp";
@@ -749,9 +779,10 @@ bool UIBasicInfoWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* info) const
         info->anchorRect = RECT{m_x + 12, m_y + 25, m_x + 220, m_y + 60};
         return info->IsValid();
     }
-    static const std::array<const char*, 8> labels = {
+    static const std::array<const char*, kMenuButtonIds.size()> labels = {
         "Character status - Alt+A", "Options - Alt+O", "Inventory - Alt+E", "Equipment - Alt+Q",
-        "Skills - Alt+S", "World map - Ctrl+Tab", "Chat - Alt+C", "Friends / messenger - Alt+Z"
+        "Skills - Alt+S", "World map - Ctrl+Tab", "Chat - Alt+C", "Friends / messenger - Alt+Z",
+        "Quest Journal - Q"
     };
     for (int index = 0; index < GetQtMenuButtonCount(); ++index) {
         QtButtonDisplay button{};
@@ -843,8 +874,8 @@ bool UIBasicInfoWnd::GetQtMenuButtonDisplayForQt(int index, QtButtonDisplay* out
         return false;
     }
 
-    static const std::array<const char*, 8> kMenuLabels = {
-        "ST", "OP", "IT", "EQ", "SK", "MP", "CM", "FR"
+    static const std::array<const char*, 9> kMenuLabels = {
+        "ST", "OP", "IT", "EQ", "SK", "MP", "CM", "FR", "Quest"
     };
 
     out->id = kMenuButtonIds[static_cast<size_t>(index)];
@@ -854,7 +885,7 @@ bool UIBasicInfoWnd::GetQtMenuButtonDisplayForQt(int index, QtButtonDisplay* out
     out->width = kQtMenuButtonWidth;
     out->height = kQtMenuButtonHeight;
     out->label = kMenuLabels[static_cast<size_t>(index)];
-    out->icon = kMenuButtonNames[static_cast<size_t>(index)];
+    out->icon = out->id == kButtonIdQuest ? "" : kMenuButtonNames[static_cast<size_t>(index)];
     out->visible = !IsMiniMode();
     out->hovered = out->visible && m_hotButtonId == out->id;
     out->pressed = out->visible && m_pressedButtonId == out->id;
@@ -878,7 +909,11 @@ void UIBasicInfoWnd::LayoutChildren()
         if (!m_menuButtons[index]) {
             continue;
         }
-        m_menuButtons[index]->Move(m_x + 207 + static_cast<int>(36 * (index % 2)), m_y + 22 + static_cast<int>(24 * (index / 2)));
+        if (kMenuButtonIds[index] == kButtonIdQuest) {
+            m_menuButtons[index]->Move(m_x + 210, m_y + 2);
+        } else {
+            m_menuButtons[index]->Move(m_x + 207 + static_cast<int>(36 * (index % 2)), m_y + 22 + static_cast<int>(24 * (index / 2)));
+        }
         m_menuButtons[index]->SetShow(m_h == BasicFullHeight() ? 1 : 0);
     }
 

@@ -9,6 +9,6 @@ inline constexpr int menuHeight = 28;
 struct ButtonRect { int x, y, width, height; };
 constexpr ButtonRect menuButton(int index)
 {
-    return {236 + 36 * (index % 2), 28 + 36 * (index / 2), menuWidth, menuHeight};
+    return {236 + 36 * (index % 2), index == 8 ? 164 : 28 + 36 * (index / 2), menuWidth, menuHeight};
 }
 }
