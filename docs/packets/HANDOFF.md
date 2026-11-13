@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK39.02 verifies `/pvpinfo` and applies `019A` actor rank updates and badges. Continue PK39.04 with the selected-profile row dispositions and live boss rewards, rankings, PvP and mute transitions. Verify rank badge rendering and sound against a live rank change, including hide and zero reset. [Selected inventory](evidence/PK39.01-selected-inventory.md) · [PvP points evidence](evidence/PK39.02-pvp-points.md) · [PvP rank evidence](evidence/PK39.02-pvp-rank.md) · [MVP evidence](evidence/PK39.02-mvp-rewards.md) · [Ranking evidence](evidence/PK39.02-legacy-ranking.md) · [Manner evidence](evidence/PK39.03-manner-notices.md)
+PK39.04 records five verified request identities and five inactive identities for MAIN 20080910. Continue live boss rewards, rankings, PvP and mute transitions. Verify rank badge rendering and sound against a live rank change, including hide and zero reset. PK48 owns independent review. [Selected verification](evidence/PK39.04-selected-verification.md) · [Selected inventory](evidence/PK39.01-selected-inventory.md)
 
 PK38.04 traces shared packet owners and selected-profile inactive variants. Continue live item-action verification and retain the separate PK48 review. [Item action verification](evidence/PK38.04-item-action-verification.md)
 

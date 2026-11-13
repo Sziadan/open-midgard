@@ -7396,7 +7396,17 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--chat-options-read") {ChatBattleOptionsSettingsProcess(false);CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--chat-detached-only") { ChatDetachedViewReplay(); CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--chat-primary-only") { ChatPrimaryViewReplay(); ChatPrimarySpeechReplay(); CConnection::Cleanup();return 0; }
-    if(argc>1 && std::string(argv[1])=="--chat-notice-only") { ChatNoticeRoutingReplay(); ChatNoticeProducerReplay(); MannerAndColoredNoticeReplay(); PvpPointsReplay(); CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--chat-notice-only") {
+        ChatNoticeRoutingReplay();
+        ChatNoticeProducerReplay();
+        MvpRewardReplay();
+        LegacyRankingReplay();
+        PvpRankReplay();
+        PvpPointsReplay();
+        MannerAndColoredNoticeReplay();
+        CConnection::Cleanup();
+        return 0;
+    }
     if(argc>1 && std::string(argv[1])=="--chat-state-only") { ChatWindowStateReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--corpse-only") { CorpsePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-class-change-only") { NpcClassChangeReplay();CConnection::Cleanup();return 0; }

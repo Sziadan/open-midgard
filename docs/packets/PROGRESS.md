@@ -4089,3 +4089,5 @@ PK39.01 inventories all 27 primary rows, identifies active PvP rank and points p
 PK39.02 receives the signed PvP points reply and verifies the existing `/pvpinfo` producer through the selected wire frames. [Evidence](evidence/PK39.02-pvp-points.md)
 
 PK39.02 receives PvP rank updates, applies rank state and badges, and clears reused-player rank state on same-map warp. [Evidence](evidence/PK39.02-pvp-rank.md)
+
+PK39.04 classifies the five selected requests and five inactive identities. Focused notice replay now includes every PK39 receive fixture and verifies that a hiding transition removes the existing remote rank badge. [Evidence](evidence/PK39.04-selected-verification.md)

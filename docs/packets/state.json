@@ -1369,9 +1369,9 @@
       "commit_subject": "packet(PK39.03): receive manner updates and verify colored notices"
     },
     "PK39.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK39.04-selected-verification.md"],
+      "commit_subject": "packet(PK39.04): verify selected request and ranking coverage"
     },
     "PK40.01": {
       "status": "NOT_STARTED",

@@ -58,6 +58,7 @@ void PvpRankReplay()
     mode.m_world = &world;
     remote.m_gid = 0x55;
     world.RegisterActor(&remote);
+    mode.m_runtimeActors.emplace(remote.m_gid, &remote);
     const auto oldAid = g_session.m_aid;
     const auto oldEffects = g_session.m_isEffectOn;
     auto* oldMode = SkillPacketReplayAccess::Current();
@@ -104,10 +105,19 @@ void PvpRankReplay()
     update(0x55, 4, 12);
     Require(remote.m_pk_rank == 4 && remote.m_pk_total == 12 && badges(remote) == 1,
         "visible remote rank did not apply its state and badge");
+    const u16 stateOpcode = ro::net::GetActiveMapReceiveProfile().actorStateChangeBasic;
+    Require(connection.QueueBytes({static_cast<u8>(stateOpcode), static_cast<u8>(stateOpcode >> 8),
+        0x55,0,0,0, 0,0, 0,0, 4,0, 0}), "could not queue the ranked actor's hiding transition");
+    Require(ProcessGameModePacketLoop(mode, connection, router, 1).packetsDispatched == 1
+        && !connection.BufferedBytes() && remote.m_effectState == 4 && badges(remote) == 0,
+        "hiding left the remote actor's old rank badge visible");
+    remote.m_effectState = 0;
+    update(0x55, 4, 12);
     update(0x55, 0xffffffffu, 12);
     Require(remote.m_pk_rank == -1 && badges(remote) == 0, "hidden-rank sentinel left a badge");
     Require(g_windowMgr.GetChatEvents().size() == 2, "remote or reset rank emitted a local notice");
     g_windowMgr.ClearChatEvents();
+    mode.m_runtimeActors.clear();
     world.UnregisterActor(&remote);
     world.m_player = nullptr;
     mode.m_world = nullptr;
