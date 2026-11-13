@@ -3903,3 +3903,7 @@ PK29.03 verifies that a saved elemental can produce `081D` on MAIN 20080910. The
 ## 2026-11-13 Selected elemental lifecycle
 
 PK29.03 verifies type `0x0A` spawn and movement, ordinary actor removal, and snapshot retirement on local owner death. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.03-elemental-snapshot.md)
+
+## Mercenary identity refresh
+
+PK29.04 preserves an active mercenary's controls on refresh and retires them when the server changes its GID. Replay verifies both paths, job resolution after identity, and the zero-GID guard. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.04-mercenary-refresh.md)

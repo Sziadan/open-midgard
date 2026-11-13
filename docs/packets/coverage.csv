@@ -557,7 +557,7 @@ AUDIT-0x0299,0x0299,map,S2C,PK33,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x029B,0x029B,map,S2C,PK29,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x029C,0x029C,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x029D,0x029D,map,S2C,PK29,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x029E,0x029E,map,unresolved,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x029E,0x029E,map,S2C,PK29,PK01;PK02;PK23;PK47;PK48;PK45,Selected server registers the 11-byte mercenary update but uses full 029D lists at its refresh sites,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK29.04-MERCENARY-REFRESH
 AUDIT-0x029F,0x029F,map,C2S,PK29,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x02A0,0x02A0,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02A1,0x02A1,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -824,7 +824,7 @@ AUDIT-0x06C8,0x06C8,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x06C9,0x06C9,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x06CA,0x06CA,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x06CE,0x06CE,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x07DB,0x07DB,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x07DB,0x07DB,map,S2C,PK28,PK01;PK02;PK29;PK47;PK48,Homunculus HP/SP delta sender requires PACKETVER 20090610,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK29.03-ELEMENTAL-SNAPSHOT
 AUDIT-0x07E1,0x07E1,map,S2C,PK23,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x07E2,0x07E2,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x07E6,0x07E6,map,S2C,PK23,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -856,7 +856,7 @@ AUDIT-0x081A,0x081A,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol f
 AUDIT-0x081B,0x081B,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x081C,0x081C,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x081D,0x081D,map,S2C,PK29,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x081E,0x081E,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x081E,0x081E,map,S2C,PK29,PK01;PK02;PK47;PK48,Elemental status delta sender requires PACKETVER 20100309,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK29.03-ELEMENTAL-SNAPSHOT
 AUDIT-0x0824,0x0824,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0825,0x0825,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,UNREVIEWED,PK44.LOGIN.0825-C2S-SSO-VARIABLE
 AUDIT-0x0827,0x0827,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Character deletion identity/layout and server result branches traced in PK44.CHAR-DELETE.md; current client parity and/or scheduled reachability remain open.,UNREVIEWED,PK44.CHAR-DELETE

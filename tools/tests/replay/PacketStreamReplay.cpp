@@ -2779,6 +2779,36 @@ void CompanionIdentityReplay()
     Require(ms.alive && g_session.m_merGID == reentryMerc,
         "out-of-sight removal retired the active mercenary contract");
 
+    g_session.SetMercSkillItem(skill);
+    g_session.m_merTarget = {reentryHomun, 8, 9, false, true, true};
+    mode.m_skillUseInfo = {8201, 1, 5, 2};
+    Require(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND), "could not open mercenary status before refresh");
+    auto* refreshedWindow = g_windowMgr.m_merInfoWnd;
+    auto replacement = reentryMercIdentity;
+    putGid(replacement.data() + 2, 0);
+    dispatchActor(replacement);
+    Require(g_session.m_merGID == reentryMerc && g_session.GetMercSkillItems().size() == 1,
+        "zero-GID snapshot changed the active mercenary");
+    dispatchActor(reentryMercIdentity);
+    Require(ms.job == 6017 && g_session.m_merTarget.gid == reentryHomun && mode.m_skillUseInfo.id == 8201
+        && g_windowMgr.m_merInfoWnd == refreshedWindow && g_session.GetMercSkillItems().empty(),
+        "same-GID refresh discarded actor identity or controls before the refreshed list");
+
+    constexpr u32 replacementMerc = 0xf2000044u;
+    putGid(replacement.data() + 2, replacementMerc);
+    dispatchActor(replacement);
+    Require(ms.alive && g_session.m_merGID == replacementMerc && ms.job == -1
+        && g_session.m_merTarget.gid == 0 && mode.m_skillUseInfo.id == 0 && !g_windowMgr.m_merInfoWnd
+        && hs.alive && g_session.m_homunGID == reentryHomun,
+        "replacement mercenary inherited the previous actor's job, target, or controls");
+    auto replacementEntry = npcEntry;
+    putGid(replacementEntry.data() + 3, replacementMerc);
+    replacementEntry[21] = 0x82; // 6018.
+    dispatchActor(replacementEntry);
+    Require(ms.job == 6018 && g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND),
+        "mercenary entry did not fill the job after identity arrived first");
+    vanish(replacementMerc, 0);
+
     for (u16 messageId : {u16{1266}, u16{1267}}) {
         dispatchActor(npcEntry);
         dispatchActor(reentryMercIdentity);

@@ -2108,10 +2108,15 @@ void HandleLocalizedSystemNotice(CGameMode& mode, const PacketView& packet)
 void HandleMercenaryInit(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 80) return;
-    auto& status = g_session.m_merStatus;
     const auto* data = packet.data;
+    const u32 gid = ReadLE32(data + 2);
+    if (gid == 0) return;
+    if (gid != g_session.m_merGID) {
+        mode.RetireMercenaryContract();
+    }
+    auto& status = g_session.m_merStatus;
     g_session.ClearMercSkillItems();
-    g_session.m_merGID = ReadLE32(data + 2);
+    g_session.m_merGID = gid;
     status.alive = true;
     if (const auto* actor = mode.m_world ? mode.m_world->GetGameActorByAID(g_session.m_merGID) : nullptr)
         status.job = actor->m_job;
@@ -6371,6 +6376,9 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
 
     actor->m_speed = state.speed;
     actor->m_job = state.job;
+    if (state.objectType == 9 && state.gid == g_session.m_merGID && g_session.m_merStatus.alive) {
+        g_session.m_merStatus.job = state.job;
+    }
     actor->m_sex = state.sex;
     actor->m_bodyState = state.bodyState;
     actor->m_healthState = state.healthState;

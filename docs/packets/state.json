@@ -1142,9 +1142,9 @@
       "commit_subject": "packet(PK29.03): retire elemental snapshots on owner death"
     },
     "PK29.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK29.04-mercenary-refresh.md"],
+      "commit_subject": "packet(PK29.04): isolate mercenary state across identity refresh"
     },
     "PK30.01": {
       "status": "NOT_STARTED",
