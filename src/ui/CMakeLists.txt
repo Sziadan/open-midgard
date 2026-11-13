@@ -16,6 +16,8 @@ add_library(ro_ui STATIC
     UICompanionStatusWnd.h
     UIAuctionWnd.h
     UIAuctionWnd.cpp
+    UIInstanceWnd.h
+    UIInstanceWnd.cpp
     UICompanionStatusWnd.cpp
     UICompanionSkillListWnd.h
     UICompanionSkillListWnd.cpp

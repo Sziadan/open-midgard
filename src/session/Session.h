@@ -328,6 +328,7 @@ public:
         s16 queuePosition = 0;
         u32 expiration = 0;
         u32 idleDeadline = 0;
+        bool showWindow = false;
     } m_instanceStatus;
     ro::pet::Status m_petStatus;
     bool m_amIPartyMaster = false;

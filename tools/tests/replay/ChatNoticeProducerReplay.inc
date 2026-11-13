@@ -266,6 +266,8 @@ void BattlegroundChatReplay()
     g_windowMgr.ClearChatEvents();
 }
 
+#include "ui/UIInstanceWnd.h"
+
 void InstanceStatusReplay()
 {
     SetCase("instance_status", "PK42.02", "selected-02cb-02ce", "map packets -> instance state and notices");
@@ -291,8 +293,12 @@ void InstanceStatusReplay()
     dispatch(stream, 2);
     Require(status.phase == Phase::Waiting && status.queuePosition == 7 && status.name == std::string(61, 'X'),
         "reservation or queue position used the obsolete wire layout");
+    Require(g_windowMgr.m_instanceWnd && g_windowMgr.m_instanceWnd->m_show && status.showWindow
+        && g_windowMgr.m_instanceWnd->GetDisplay(0).details.front().find("7") != std::string::npos,
+        "reservation did not open the managed window with its updated queue position");
     dispatch({0xcc, 2, 0xff, 0xff});
-    Require(status.phase == Phase::None && g_windowMgr.GetChatEvents().size() == 1, "queue cancellation retained the reservation");
+    Require(status.phase == Phase::None && !g_windowMgr.m_instanceWnd && g_windowMgr.GetChatEvents().size() == 1,
+        "queue cancellation retained the reservation or window");
     std::vector<u8> active(71, 0);
     active[0] = 0xcd; active[1] = 2;
     std::memcpy(active.data() + 2, "Instance", 8);
@@ -301,9 +307,21 @@ void InstanceStatusReplay()
     dispatch(active);
     Require(status.phase == Phase::Ready && status.name == "Instance" && status.expiration == 0xf1001234u
         && status.idleDeadline == 0xe2005678u, "instance snapshot changed unsigned absolute deadlines");
+    Require(g_windowMgr.m_instanceWnd->GetDisplay(status.idleDeadline - 61).details.front().find("0:01:01")
+        != std::string::npos, "ready countdown used a relative or truncated deadline");
     dispatch({0xce, 2, 0, 0, 0, 0, 0, 0, 0, 0});
     Require(status.phase == Phase::Active && !status.idleDeadline && status.expiration == 0xf1001234u,
         "idle timer stop replaced the lifetime deadline");
+    auto* instanceWindow = g_windowMgr.m_instanceWnd;
+    Require(instanceWindow->GetDisplay(static_cast<u64>(status.expiration) + 1).details.back() == "0:00:00"
+        && status.phase == Phase::Active, "countdown expiry changed server-owned status");
+    instanceWindow->OnLBtnDown(instanceWindow->m_x + 190, instanceWindow->m_y + 5);
+    instanceWindow->OnLBtnUp(instanceWindow->m_x + 190, instanceWindow->m_y + 5);
+    Require(!status.showWindow && !instanceWindow->m_show, "close button did not hide the managed window");
+    dispatch({0xce, 2, 0, 0, 0, 0, 0, 0, 0, 0});
+    Require(!instanceWindow->m_show, "repeated active update reopened a hidden window");
+    Require(g_windowMgr.OnQtKeyDown('B', true, false, false) && instanceWindow->m_show,
+        "Alt+B did not reopen the active instance window");
     dispatch({0xce, 2, 0, 0, 0, 0, 1, 2, 3, 4});
     Require(status.phase == Phase::Ready && status.idleDeadline == 0x04030201, "idle timer update did not restore ready phase");
     dispatch({0xce, 2, 1, 1, 0, 0, 0, 0, 0, 0});
@@ -311,7 +329,8 @@ void InstanceStatusReplay()
     for (u8 result = 1; result <= 4; ++result) {
         dispatch(active);
         dispatch({0xce, 2, result, 0, 0, 0, 0, 0, 0, 0});
-        Require(status.phase == Phase::None && status.name.empty(), "terminal notification retained instance state");
+        Require(status.phase == Phase::None && status.name.empty() && !g_windowMgr.m_instanceWnd,
+            "terminal notification retained instance state or window");
     }
     Require(g_windowMgr.GetChatEvents().size() == 4, "terminal notifications did not produce three notices and one silent failure");
     status = previous;

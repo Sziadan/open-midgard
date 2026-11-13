@@ -7,6 +7,8 @@
 #include "ui/UICommandListWnd.h"
 #include "ui/UIPetInfoWnd.h"
 #include "ui/UICompanionStatusWnd.h"
+#include "ui/UIInstanceWnd.h"
+#include <ctime>
 #include "ui/UICompanionSkillListWnd.h"
 #include "ui/UIPetEggListWnd.h"
 #include "ui/UIPetTamingDeceiveWnd.h"
@@ -2134,6 +2136,16 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
             {"texts", texts}, {"gauges", gauges}, {"buttons", buttons}, {"nameEdit", nameEdit}});
     }
     chatUi.insert("companionStatus", companionStatus);
+    QVariantMap instance;
+    if (const auto* window = g_windowMgr.m_instanceWnd; window && IsGameplayWindowVisible(state, window)) {
+        const auto display = window->GetDisplay(static_cast<u64>(std::time(nullptr)));
+        QVariantList details;
+        for (const auto& row : display.details) details.push_back(ToQString(row));
+        instance = {{"layer", SourceManagedWindowLayer(window)}, {"x", window->m_x}, {"y", window->m_y},
+            {"width", window->m_w}, {"height", window->m_h}, {"title", ToQString(display.title)},
+            {"status", ToQString(display.status)}, {"details", details}};
+    }
+    chatUi.insert("instance", instance);
     QVariantList companionSkillLists;
     for (auto* window : {g_windowMgr.m_homunSkillListWnd, g_windowMgr.m_merSkillListWnd}) {
         if (!window || !IsGameplayWindowVisible(state, window)) continue;

@@ -35,6 +35,7 @@
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "core/UiMessageStrings.h"
+#include "ui/UIInstanceWnd.h"
 #include "core/SourceWeight.h"
 #include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UISayDialogWnd.h"
@@ -9254,6 +9255,7 @@ void HandleInstanceReservation(CGameMode&, const PacketView& packet)
     }
     g_session.m_instanceStatus = {CSession::InstanceStatus::Phase::Waiting,
         ExtractFixedPacketString(packet, 2, 61), static_cast<s16>(ReadLE16(packet.data + 63))};
+    g_windowMgr.SetInstanceWindowVisible(true);
 }
 
 void HandleInstanceQueuePosition(CGameMode& mode, const PacketView& packet)
@@ -9265,11 +9267,13 @@ void HandleInstanceQueuePosition(CGameMode& mode, const PacketView& packet)
     const s16 position = static_cast<s16>(ReadLE16(packet.data + 2));
     if (position < 0) {
         status = {};
+        g_windowMgr.DeleteWindow(g_windowMgr.m_instanceWnd);
         RecordInstanceNotice(mode, 1345, "The Memorial Dungeon reservation has been canceled.");
     } else if (!status.name.empty()) {
         status.phase = CSession::InstanceStatus::Phase::Waiting;
         status.queuePosition = position;
         status.expiration = status.idleDeadline = 0;
+        g_windowMgr.SetInstanceWindowVisible(true);
     }
 }
 
@@ -9280,8 +9284,12 @@ void HandleInstanceStatus(CGameMode&, const PacketView& packet)
     }
     const u32 idleDeadline = ReadLE32(packet.data + 67);
     using Phase = CSession::InstanceStatus::Phase;
-    g_session.m_instanceStatus = {idleDeadline ? Phase::Ready : Phase::Active,
+    const auto phase = idleDeadline ? Phase::Ready : Phase::Active;
+    const auto& previous = g_session.m_instanceStatus;
+    const bool show = previous.phase != phase || phase != Phase::Active || previous.showWindow;
+    g_session.m_instanceStatus = {phase,
         ExtractFixedPacketString(packet, 2, 61), 0, ReadLE32(packet.data + 63), idleDeadline};
+    g_windowMgr.SetInstanceWindowVisible(show);
 }
 
 void HandleInstanceNotification(CGameMode& mode, const PacketView& packet)
@@ -9294,8 +9302,10 @@ void HandleInstanceNotification(CGameMode& mode, const PacketView& packet)
     const u32 type = ReadLE32(packet.data + 2);
     if (type == 0) {
         if (status.phase == Phase::Ready || status.phase == Phase::Active) {
+            const auto previous = status.phase;
             status.idleDeadline = ReadLE32(packet.data + 6);
             status.phase = status.idleDeadline ? Phase::Ready : Phase::Active;
+            g_windowMgr.SetInstanceWindowVisible(previous != status.phase || status.phase != Phase::Active || status.showWindow);
         }
         return;
     }
@@ -9303,6 +9313,7 @@ void HandleInstanceNotification(CGameMode& mode, const PacketView& packet)
         return;
     }
     status = {};
+    g_windowMgr.DeleteWindow(g_windowMgr.m_instanceWnd);
     constexpr const char* notices[] = {
         "The Memorial Dungeon duration expired; it has been destroyed.",
         "The Memorial Dungeon's entry time limit expired; it has been destroyed.",
@@ -9774,6 +9785,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     if (info.hasServerMove) {
         ClearPendingDisconnectAction();
         g_session.m_instanceStatus = {};
+        g_windowMgr.DeleteWindow(g_windowMgr.m_instanceWnd);
     }
     const bool reconnected = !info.hasServerMove
         || (services && services->reconnect

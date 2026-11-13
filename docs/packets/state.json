@@ -1429,9 +1429,9 @@
       "commit_subject": "packet(PK42.02): receive selected instance state"
     },
     "PK42.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK42.03-instance-window.md"],
+      "commit_subject": "packet(PK42.03): show memorial dungeon status and countdowns"
     },
     "PK42.04": {
       "status": "NOT_STARTED",

@@ -15,6 +15,7 @@
     <file>qml/RoChatRoomSettings.qml</file>
     <file>qml/RoPetInfo.qml</file>
         <file>qml/RoCompanionStatus.qml</file>
+        <file>qml/RoInstance.qml</file>
         <file>qml/RoCompanionSkillList.qml</file>
     <file>qml/RoPetEggList.qml</file>
     <file>qml/RoPetTaming.qml</file>

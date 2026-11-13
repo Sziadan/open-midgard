@@ -14,6 +14,7 @@
 #include "UIPetInfoWnd.h"
 #include "UICompanionStatusWnd.h"
 #include "UIAuctionWnd.h"
+#include "UIInstanceWnd.h"
 #include "UICompanionSkillListWnd.h"
 #include "UIPetEggListWnd.h"
 #include "UIPetTamingDeceiveWnd.h"
@@ -1388,6 +1389,15 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             m_children.push_back(m_petInfoWnd);m_petInfoWnd->SendMsg(nullptr,34,reinterpret_cast<msgparam_t>(&m_petInfoWindowInfo),0,0);
         }
         m_petInfoWnd->SetShow(1);return m_petInfoWnd;
+    case WID_INSTANCWND:
+        if (g_session.m_instanceStatus.name.empty()) return nullptr;
+        if (!m_instanceWnd) {
+            m_instanceWnd = new UIInstanceWnd(windowId);
+            m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), m_instanceWnd);
+        }
+        m_instanceWnd->SetShow(1);
+        m_instanceWnd->Invalidate();
+        return m_instanceWnd;
     case WID_AUCTIONWND: {
         if (!m_auctionWnd) {
             m_auctionWnd = new UIAuctionWnd(windowId);
@@ -2079,6 +2089,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if(window==m_petInfoWnd){m_petInfoWnd->StoreInfo();m_petInfoWnd=nullptr;}
     if (window == m_homunInfoWnd) m_homunInfoWnd = nullptr;
     if (window == m_auctionWnd) m_auctionWnd = nullptr;
+    if (window == m_instanceWnd) m_instanceWnd = nullptr;
     if (window == m_merInfoWnd) m_merInfoWnd = nullptr;
     if (window == m_homunSkillListWnd) m_homunSkillListWnd = nullptr;
     if (window == m_merSkillListWnd) m_merSkillListWnd = nullptr;
@@ -3397,6 +3408,16 @@ bool UIWindowMgr::HasFrontMenuUiVisible() const
         || (m_makeCharWnd && m_makeCharWnd->m_show != 0);
 }
 
+void UIWindowMgr::SetInstanceWindowVisible(bool visible)
+{
+    g_session.m_instanceStatus.showWindow = visible && !g_session.m_instanceStatus.name.empty();
+    if (g_session.m_instanceStatus.showWindow) {
+        MakeWindow(WID_INSTANCWND);
+    } else if (m_instanceWnd) {
+        m_instanceWnd->SetShow(0);
+    }
+}
+
 bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi)
 {
     if (virtualKey == 'R' && (isAltDown || isCtrlDown) && !hasFrontMenuUi && m_basicInfoWnd
@@ -3427,6 +3448,10 @@ bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bo
 
     if (isAltDown && !hasFrontMenuUi) {
         switch (virtualKey) {
+        case 'B':
+            if (HasGameplayInputModal()) return false;
+            SetInstanceWindowVisible(!g_session.m_instanceStatus.showWindow);
+            return true;
         case 'O':
             ToggleWindow(WID_OPTIONWND);
             return true;

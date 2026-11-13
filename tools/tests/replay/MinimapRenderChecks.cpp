@@ -7,6 +7,7 @@
 #include "render/DC.h"
 #include "session/Session.h"
 #include "ui/UIMinimapWnd.h"
+#include "ui/UIInstanceWnd.h"
 #include "ui/UIWindowMgr.h"
 #include "world/World.h"
 #include <QGuiApplication>
@@ -192,6 +193,30 @@ int main(int argc, char** argv) {
         view.setSource(QUrl::fromLocalFile(QString::fromUtf8(RO_PACKET_SOURCE_DIR)+"/src/qtui/qml/GameOverlay.qml"));
         Require(view.status()!=QQuickView::Error,"production GameOverlay QML did not load");
         view.show();
+        std::vector<u8> reservation(65, 0);
+        reservation[0] = 0xcb; reservation[1] = 2; reservation[63] = 7;
+        std::memcpy(reservation.data() + 2, "Fixture Dungeon", 15);
+        Dispatch(mode, reservation);
+        auto* instance = g_windowMgr.m_instanceWnd;
+        Require(instance && instance->m_show, "reservation did not open the instance window");
+        instance->Move(0, 0);
+        adapter.syncChat();
+        auto* instanceItem = view.rootObject()->findChild<QQuickItem*>("memorialDungeonWindow");
+        Require(instanceItem && instanceItem->isVisible() && instanceItem->width() == 200
+            && instanceItem->height() == 150, "Qt instance window did not use the managed geometry");
+        const auto model = state->chatWindowUi().value("instance").toMap();
+        Require(model.value("status").toString() == "Fixture Dungeon in Standby"
+            && model.value("details").toList().front().toString().contains('7'),
+            "Qt instance model omitted the reservation");
+        ArgbDibSurface instanceSurface;
+        Require(instanceSurface.EnsureSize(200, 150), "instance DIB allocation failed");
+        instance->DrawToHdc(instanceSurface.GetDC());
+        Require((instanceSurface.GetPixels()[120 * 200 + 190] & 0xffffffu) == 0xffffffu,
+            "native instance window did not draw its body");
+        Dispatch(mode, {0xcc, 2, 0xff, 0xff});
+        adapter.syncChat();
+        Require(!instanceItem->isVisible() && !g_windowMgr.m_instanceWnd,
+            "queue cancellation did not remove the native and Qt windows");
         std::cerr << "minimap-render: QML ready\n";
         QJsonArray cases;
         std::vector<QImage> nativeContacts, qtContacts;
