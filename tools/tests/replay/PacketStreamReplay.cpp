@@ -6687,8 +6687,28 @@ void VendingPurchaseProductionSendReplay()
         };
         Require(peer.ReceiveExact(expected.size()) == expected,
             "vending purchase did not emit the selected 12-byte transaction frame");
-        Require(ro::commerce::state.shopItems.front().amount == 7,
-            "vending purchase optimistically changed local stock before a server response");
+        Require(!ro::commerce::state.shop.visible && ro::commerce::state.shopItems.empty()
+            && !ro::commerce::Action(buy), "vending purchase left the submitted quote reusable");
+        auto replacement = listing;
+        replacement[4] = 0x55;
+        dispatch(replacement);
+        dispatch({0x35,1,101,0,2,0,4});
+        dispatch({0x35,1,101,0,2,0,0});
+        Require(ro::commerce::state.shop.visible && ro::commerce::state.sellerId==0x11223355
+            && ro::commerce::state.shopItems.front().amount==7, "buyer result changed a replacement quote");
+
+        auto ownerListing = listing;
+        ownerListing[0] = 0x36;
+        std::swap(ownerListing[12],ownerListing[14]);
+        dispatch(ownerListing);
+        dispatch({0x37,1,101,0,8,0});
+        Require(ro::commerce::state.draft.front().amount==7, "oversized seller report changed stock");
+        dispatch({0x37,1,101,0,2,0});
+        Require(ro::commerce::state.draft.front().amount==5 && ro::commerce::state.draft.front().item.m_num==5,
+            "seller report did not update both displayed counts");
+        dispatch({0x37,1,101,0,5,0});
+        Require(ro::commerce::state.draft.empty() && !ro::commerce::state.vendingActive
+            && peer.ReceiveExact(2)==std::vector<u8>({0x2e,1}), "sold-out report did not close the seller shop");
     }
     connection->Disconnect();
     ro::commerce::state = savedState;

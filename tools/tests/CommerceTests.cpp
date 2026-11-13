@@ -7,6 +7,7 @@
 #include <limits>
 void ITEM_INFO::SetItemId(unsigned int id){m_itemName=std::to_string(id);}
 unsigned int ITEM_INFO::GetItemId()const{return m_itemName.empty()?0:unsigned(std::stoul(m_itemName));}
+std::string ITEM_INFO::GetDisplayName(bool) const{return m_itemName;}
 struct CGameMode {
     enum {PlayerContext_CheckEquipmentInfo,PlayerContext_RequestDeal,PlayerContext_AskJoinParty,PlayerContext_InviteJoinGuild,PlayerContext_SendWhisper,PlayerContext_RegisterFriend,PlayerContext_SendMail,PlayerContext_RejectWhispering,PlayerContext_AllowWhispering=9};
     enum {GameMsg_RequestUseInventoryItem=10,GameMsg_RequestEquipInventoryItem=11,GameMsg_RequestUnequipInventoryItem=12};

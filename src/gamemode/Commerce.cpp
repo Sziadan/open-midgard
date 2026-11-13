@@ -186,8 +186,42 @@ bool Receive(CGameMode&,const PacketView& v){
         }
         return true;
     }
-    case 0x137:if(n<6)return false;for(auto& o:state.draft)if(o.item.m_itemIndex==read(p+2))o.amount=o.amount>read(p+4)?o.amount-read(p+4):0;state.draft.erase(std::remove_if(state.draft.begin(),state.draft.end(),[](const auto& o){return !o.amount;}),state.draft.end());return true;
-    case 0x135:if(n<7)return false;if(!p[6])for(auto& o:state.shopItems)if(o.item.m_itemIndex==read(p+2))o.amount=o.amount>read(p+4)?o.amount-read(p+4):0;state.status=p[6]?"Purchase failed: funds, weight, stock or shop changed.":"Purchase confirmed.";return true;
+    case 0x137:{
+        if(n!=6)return false;
+        if(!state.vendingActive)return true;
+        const auto index=read(p+2), amount=read(p+4);
+        const auto sold=std::find_if(state.draft.begin(),state.draft.end(),[&](const auto& row){
+            return row.item.m_itemIndex==index;
+        });
+        if(sold==state.draft.end() || !amount || amount>sold->amount)return true;
+        note("Sold " + std::to_string(amount) + " × " + sold->item.GetDisplayName() + ".");
+        sold->amount-=amount;
+        sold->item.m_num=static_cast<int>(sold->amount);
+        if(!sold->amount)state.draft.erase(sold);
+        if(state.draft.empty()){
+            note("Your shop is sold out.");
+            if(simple(0x12e)){
+                state.vendingActive=false;
+                state.vending.visible=false;
+            }
+        }
+        return true;
+    }
+    case 0x135:{
+        if(n!=7)return false;
+        // Selected rAthena sends failures here and updates inventory directly on success.
+        // The result contains no seller identity and cannot revise the current quote.
+        const char* message=nullptr;
+        switch(p[6]){
+        case 1:message="Purchase failed: not enough Zeny.";break;
+        case 2:message="Purchase failed: the items are too heavy.";break;
+        case 4:message="Purchase failed: the shop has insufficient stock.";break;
+        case 5:message="Purchase failed: another trade is in progress.";break;
+        case 6:case 7:message="Purchase failed: the shop listing is no longer available.";break;
+        }
+        if(message)g_windowMgr.PushChatEvent(message,0x006464FFu,6);
+        return true;
+    }
     case 0x138:if(n<3)return false;state.vendingPending=false;if(p[2]){state.vendingActive=false;state.status="The server could not open your shop.";}return true;
     case 0x131:if(n<86)return false;state.shopBoards[read(p+2,4)]=text(p+6,80);return true;
     case 0x132:if(n<6)return false;state.shopBoards.erase(read(p+2,4));if(read(p+2,4)==g_session.m_aid){state.vendingActive=false;state.vendingPending=false;}return true;
@@ -395,7 +429,20 @@ bool Action(const Command& c){
     }
     if(c.action=="lockTrade"){if(tradeCancelPending()||!state.tradeActive||state.localLocked||state.lockPending||state.tradeAddPending)return false;if(!simple(0xeb))return false;state.lockPending=true;return true;}
     if(c.action=="commitTrade"){if(tradeCancelPending()||!state.tradeActive||!state.localLocked||!state.remoteLocked||state.commitPending)return false;if(!simple(0xef))return false;state.commitPending=true;state.status="Final confirmation sent; waiting for the server.";return true;}
-    if(c.action=="buy"){auto found=std::find_if(state.shopItems.begin(),state.shopItems.end(),[&](const auto& o){return o.item.m_itemIndex==c.index;});if(found==state.shopItems.end()||!c.amount||c.amount>found->amount||busy())return false;auto p=packet(0x134,12);put(p,2,12);put(p,4,state.sellerId,4);put(p,8,c.amount);put(p,10,c.index);return send(p);}
+    if(c.action=="buy"){
+        if(!state.shop.visible || !state.sellerId || busy())return false;
+        const auto found=std::find_if(state.shopItems.begin(),state.shopItems.end(),[&](const auto& row){
+            return row.item.m_itemIndex==c.index;
+        });
+        if(found==state.shopItems.end() || !c.amount || c.amount>found->amount)return false;
+        auto p=packet(0x134,12);
+        put(p,2,12);put(p,4,state.sellerId,4);put(p,8,c.amount);put(p,10,c.index);
+        if(!send(p))return false;
+        state.shop.visible=false;
+        state.shopItems.clear();
+        state.sellerId=0;
+        return true;
+    }
     if(c.action=="prompt"){
         if (c.from == "friend" || state.promptKind == "friend") {
             if (c.from != state.promptKind || !c.promptAid || !c.promptCid

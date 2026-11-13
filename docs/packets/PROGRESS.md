@@ -4033,3 +4033,5 @@ PK37.03 preserves the reference's ten remote offer rows and applies final result
 PK37.03 verifies the remote offers, Zeny, and lock labels in Qt and captures the window before and after a matching trade result. [Evidence](evidence/PK37.03-trade-cancellation.md)
 
 PK37.02 validates the buyer and owner vending snapshots before replacing their current rows. [Evidence](evidence/PK37.02-vending-snapshots.md)
+
+PK37.02 retires submitted buyer quotes, preserves replacement listings on purchase replies, and verifies seller reports through sold-out closure. [Evidence](evidence/PK37.02-vending-snapshots.md)
