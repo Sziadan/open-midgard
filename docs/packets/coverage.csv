@@ -177,7 +177,7 @@ AUDIT-0x0114,0x0114,map,unresolved,PK23,PK01;PK02;PK47;PK48;PK45,Provisional sou
 AUDIT-0x0115,0x0115,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0116,0x0116,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected inventory drop and item lifecycle captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x0117,0x0117,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0118,0x0118,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0118,0x0118,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected stop request before locked monster attack captured,C2S_ONLY,PK46.02-stop-attack-0118
 AUDIT-0x0119,0x0119,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-state-change traces legacy 13-byte S2C 0x0119 branch; pinned 20080910 selects 15-byte 0x0229; runtime state replay remains open,UNREVIEWED,
 AUDIT-0x011A,0x011A,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x011B,0x011B,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

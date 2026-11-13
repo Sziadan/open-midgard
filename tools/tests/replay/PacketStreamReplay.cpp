@@ -4045,6 +4045,52 @@ void LocalizedSystemNoticeReplay()
 }
 
 bool ReplayTrySourceSkillOnActor(CGameMode& mode, CGameActor* target, bool shift, bool alt, bool control);
+bool ReplayTryRequestAttackOnActor(CGameMode& mode, CGameActor* actor, bool shift, bool alt, bool control);
+
+void LockedAttackStopProductionReplay()
+{
+    SetCase("locked_attack_stop", "PK46.02", "PK46.02-stop-attack-0118",
+        "gameplay actor click -> stop attack followed by selected action request");
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    CGameMode mode;
+    CWorld world;
+    mode.m_world = &world;
+    CGameActor target;
+    target.m_gid = 0x11223344;
+    target.m_job = 1002;
+    const auto savedNoCtrl = g_session.m_isNoCtrl;
+    const auto savedNoShift = g_session.m_isNoShift;
+    g_session.m_isNoCtrl = 0;
+    g_session.m_isNoShift = 0;
+
+    mode.m_lastLockOnMonGid = 0x55;
+    Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, true)
+            && mode.m_lastLockOnMonGid == 0x55, "offline stop replaced the previous target");
+    LoopbackPeer peer(*connection);
+    const std::vector<u8> attack{0x37, 0x04, 0x44, 0x33, 0x22, 0x11, 0x07};
+    std::vector<u8> stopThenAttack{0x18, 0x01};
+    stopThenAttack.insert(stopThenAttack.end(), attack.begin(), attack.end());
+    Require(ReplayTryRequestAttackOnActor(mode, &target, false, true, true)
+            && ReplayTryRequestAttackOnActor(mode, &target, true, false, true)
+            && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "companion modifier or ineligible attack emitted a player attack");
+    Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, false)
+            && peer.ReceiveExact(attack.size()) == attack, "ordinary click changed the attack frame");
+    Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, true)
+            && peer.ReceiveExact(stopThenAttack.size()) == stopThenAttack
+            && mode.m_lastLockOnMonGid == target.m_gid, "Ctrl repeat did not stop before attacking");
+    g_session.m_isNoCtrl = 1;
+    Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, false)
+            && peer.ReceiveExact(stopThenAttack.size()) == stopThenAttack, "no-control repeat omitted the stop frame");
+    world.m_isSiegeMode = true;
+    Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, true)
+            && peer.ReceiveExact(attack.size()) == attack, "siege click did not preserve the ordinary attack path");
+    connection->Disconnect();
+    mode.m_world = nullptr;
+    g_session.m_isNoCtrl = savedNoCtrl;
+    g_session.m_isNoShift = savedNoShift;
+}
 bool ReplayRequestPendingGroundSkill(CGameMode& mode, int x, int y, bool shift);
 
 void PendingCompanionActorSkillReplay()
@@ -8734,6 +8780,7 @@ int main(int argc,char** argv){try{
     OutboundTransportCapture(fixed);
     GroundSkillTextRequestReplay();
     ActionRequestBuilderReplay();
+    LockedAttackStopProductionReplay();
     DisconnectAckDecisionReplay();
     LoginStatusPrecedenceReplay();
     DisconnectTimeoutFallbackReplay();

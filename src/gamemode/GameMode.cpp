@@ -7457,6 +7457,46 @@ bool TryRequestPetCaptureOnActor(CGameMode& mode,CGameActor* target,bool shift,b
     return TryRequestSourceSkillOnActor(mode,target,shift,alt,control);
 }
 
+bool TryRequestAttackOnActor(CGameMode& mode, CGameActor* actor, bool shift, bool alt, bool control)
+{
+    if (!mode.m_world || !IsMonsterLikeHoverActor(actor) || !actor->m_gid) {
+        return false;
+    }
+    if (alt || !IsMonsterAttackEligibleForMap(mode, *actor, !shift)) {
+        return true;
+    }
+
+    const bool locked = !mode.m_world->m_isSiegeMode && (control || g_session.m_isNoCtrl == 1);
+    if (locked) {
+        const char stopPacket[] = {0x18, 0x01};
+        if (!CRagConnection::instance()->SendPacket(stopPacket, sizeof(stopPacket))) {
+            return true;
+        }
+        mode.m_lastMonGid = 0;
+        mode.m_lastLockOnMonGid = 0;
+        mode.m_lastAttackRequestTick = 0;
+        ClearAttackChaseHint(mode);
+    }
+    if (!SendAttackRequestPacket(actor->m_gid, kActionRequestContinuousAttack)) {
+        return true;
+    }
+
+    mode.m_lastMonGid = actor->m_gid;
+    mode.m_lastLockOnMonGid = actor->m_gid;
+    mode.m_isAutoMoveClickOn = 0;
+    ClearPickupIntent(mode);
+    mode.m_lastMoveRequestCellX = -1;
+    mode.m_lastMoveRequestCellY = -1;
+    mode.m_heldMoveTargetCellX = -1;
+    mode.m_heldMoveTargetCellY = -1;
+    mode.m_hasHeldMoveTarget = 0;
+    mode.m_lastMoveRequestTick = 0;
+    mode.m_lastAttackRequestTick = 0;
+    ClearAttackChaseHint(mode);
+    ClearSkillChase(mode);
+    return true;
+}
+
 bool TryRequestAttackFromScreenPoint(CGameMode& mode, int screenX, int screenY)
 {
     if (!mode.m_world || !mode.m_view || mode.m_canRotateView) {
@@ -7474,32 +7514,8 @@ bool TryRequestAttackFromScreenPoint(CGameMode& mode, int screenX, int screenY)
         return false;
     }
 
-    if (!IsMonsterLikeHoverActor(hoveredActor)) {
-        return false;
-    }
-
-    const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
-    if ((GetKeyState(VK_MENU) & 0x8000)
-        || !IsMonsterAttackEligibleForMap(mode, *hoveredActor, !shift)) return true;
-
-    if (!SendAttackRequestPacket(hoveredActor->m_gid, kActionRequestContinuousAttack)) {
-        return false;
-    }
-
-    mode.m_lastMonGid = hoveredActor->m_gid;
-    mode.m_lastLockOnMonGid = hoveredActor->m_gid;
-    mode.m_isAutoMoveClickOn = 0;
-    ClearPickupIntent(mode);
-    mode.m_lastMoveRequestCellX = -1;
-    mode.m_lastMoveRequestCellY = -1;
-    mode.m_heldMoveTargetCellX = -1;
-    mode.m_heldMoveTargetCellY = -1;
-    mode.m_hasHeldMoveTarget = 0;
-    mode.m_lastMoveRequestTick = 0;
-    mode.m_lastAttackRequestTick = 0;
-    ClearAttackChaseHint(mode);
-    ClearSkillChase(mode);
-    return true;
+    return TryRequestAttackOnActor(mode, hoveredActor, (GetKeyState(VK_SHIFT) & 0x8000) != 0,
+        (GetKeyState(VK_MENU) & 0x8000) != 0, (GetKeyState(VK_CONTROL) & 0x8000) != 0);
 }
 
 void UpdateHeldMoveTargetFromScreenPoint(CGameMode& mode, int screenX, int screenY)
@@ -10729,6 +10745,11 @@ void CGameMode::SynchronizePlayerSkillProceed(CPlayer* player,bool retire)
 }
 
 #if defined(RO_PACKET_REPLAY_TESTS)
+bool ReplayTryRequestAttackOnActor(CGameMode& mode, CGameActor* actor, bool shift, bool alt, bool control)
+{
+    return TryRequestAttackOnActor(mode, actor, shift, alt, control);
+}
+
 bool ReplayTryPetCaptureOnActor(CGameMode& mode,CGameActor* target,bool shift,bool alt,bool control)
 {
     return TryRequestPetCaptureOnActor(mode,target,shift,alt,control);

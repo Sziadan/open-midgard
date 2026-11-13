@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK46.02 reconciles previously stale entries for party, adoption, ranking, privacy, progress, memo, user count and doridori. Continue with selected stop-attack `0118` and Super Novice prayer `01ED`. Match the original input triggers to the selected server and keep companion input ownership intact. [Outbound reconciliation](evidence/PK46.02-request-reconciliation.md)
+PK46.02 connects selected stop-attack `0118` before a Ctrl or no-control repeat attack outside siege maps. Verify switching targets live. Continue tracing Super Novice prayer `01ED` and the distinct attack interruption producers for skills. [Stop-attack evidence](evidence/PK46.02-map-stop-attack-0118.md) · [Outbound reconciliation](evidence/PK46.02-request-reconciliation.md)
 
 PK50.04 covers quest expiry, completion during a click, and journal teardown and rebuild across connections in replay. Continue live verification and independent PK48 review. The [quest verification](evidence/PK50.04-quest-verification.md) records newer quest packet gates.
 
