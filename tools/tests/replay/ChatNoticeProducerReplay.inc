@@ -51,6 +51,9 @@ void AuctionSearchSnapshotReplay()
 {
     SetCase("auction_search_snapshot", "PK40.02", "selected-0252-025f-auction-search", "map packet loop -> auction page");
     CGameMode mode;
+    auto* outgoing = CRagConnection::instance();
+    outgoing->Disconnect();
+    LoopbackPeer server(*outgoing);
     TestConnection connection;
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
@@ -76,6 +79,13 @@ void AuctionSearchSnapshotReplay()
     Require(mode.m_auctionSearch.rows.empty(), "auction results opened a closed search session");
     dispatch({0x5f,2,0,0,0,0});
     Require(mode.m_auctionSearch.open, "server open did not establish auction search ownership");
+    std::vector<u8> browse(34);
+    browse[0] = 0x51;
+    browse[1] = 2;
+    browse[2] = 4;
+    browse[32] = 1;
+    Require(server.ReceiveExact(browse.size()) == browse, "initial auction search did not request all names");
+    Require(!mode.RequestAuctionSearch({}), "auction search allowed two uncorrelated requests in flight");
     dispatch(page);
     const auto& state = mode.m_auctionSearch;
     Require(state.pages == 3 && state.rows.size() == 1, "auction snapshot lost its row count or pages");
@@ -85,6 +95,9 @@ void AuctionSearchSnapshotReplay()
         && row.cards == std::array<u16,4>{1,2,3,4} && row.price == 0x12345678u
         && row.buyNow == 0x87654321u && row.expiresAt == 0x80000000u, "auction row fields or widths differ");
 
+    using Kind = CGameMode::AuctionSearchKind;
+    Require(mode.RequestAuctionSearch({Kind::OwnBids, 1, 0, {}})
+        && server.ReceiveExact(4) == std::vector<u8>{0x5c, 2, 1, 0}, "own bids did not use the selected request");
     auto malformed = page;
     malformed[8] = 2;
     dispatch(malformed);
@@ -96,10 +109,34 @@ void AuctionSearchSnapshotReplay()
         "malformed auction pages replaced the previous snapshot");
     dispatch({0x52,2,12,0, 1,0,0,0, 0,0,0,0});
     Require(state.pages == 1 && state.rows.empty(), "empty auction page retained old rows");
+    Require(mode.RequestAuctionSearch({Kind::Price, 2, 0x12345678, {}}), "could not request a price-filtered auction page");
+    auto priceSearch = browse;
+    priceSearch[2] = 5;
+    priceSearch[4] = 0x78;
+    priceSearch[5] = 0x56;
+    priceSearch[6] = 0x34;
+    priceSearch[7] = 0x12;
+    priceSearch[32] = 2;
+    Require(server.ReceiveExact(priceSearch.size()) == priceSearch, "auction price or page was encoded incorrectly");
+    dispatch({0x5f,2,1,0,0,0});
+    dispatch({0x5f,2,0,0,0,0});
+    Require(state.open && state.awaitingReply && state.discardReply
+        && !mode.RequestAuctionSearch({}), "auction reopen sent a query before the old reply drained");
     dispatch(page);
+    Require(state.open && state.awaitingReply && !state.discardReply && state.rows.empty()
+        && server.ReceiveExact(browse.size()) == browse, "late auction page replaced the reopened session");
+    dispatch(page);
+    Require(state.rows.size() == 1, "fresh auction page did not reach the reopened session");
+    g_windowMgr.ClearChatEvents();
+    dispatch({0x50,2,6});
+    Require(state.awaitingReply && server.ReceiveExact(browse.size()) == browse,
+        "auction win did not refresh the active search");
+    dispatch(page);
+    g_windowMgr.ClearChatEvents();
     dispatch({0x5f,2,1,0,0,0});
     dispatch(page);
     Require(!state.open && !state.pages && state.rows.empty(), "auction close retained or accepted late results");
+    outgoing->Disconnect();
 }
 
 void AuctionResultNoticeReplay()

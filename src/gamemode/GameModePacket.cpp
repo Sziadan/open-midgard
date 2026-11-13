@@ -4077,7 +4077,7 @@ bool IsSameMapAlreadyLoaded(const CGameMode& mode, const MapChangeInfo& info)
 void PrepareSameMapWarpReuse(CGameMode& mode)
 {
     mode.m_pvpRankStartTick = 0;
-    mode.m_auctionSearch = {};
+    mode.CloseAuctionSearch();
     mode.m_recallPartnerName.clear();
     mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
@@ -8775,20 +8775,32 @@ void HandleAuctionWindow(CGameMode& mode, const PacketView& packet)
     if (!packet.data || packet.packetLength != 6) return;
     const u32 type = ReadLE32(packet.data + 2);
     if (type > 1) return;
-    mode.m_auctionSearch = {};
-    mode.m_auctionSearch.open = type == 0;
+    if (type == 1) {
+        mode.CloseAuctionSearch();
+    } else if (!mode.m_auctionSearch.open) {
+        mode.m_auctionSearch.open = true;
+        mode.RequestAuctionSearch({});
+    }
 }
 
 void HandleAuctionSearchResults(CGameMode& mode, const PacketView& packet)
 {
     constexpr std::size_t headerSize = 12;
     constexpr std::size_t rowSize = 83;
-    if (!mode.m_auctionSearch.open || !packet.data || packet.packetLength < headerSize
+    auto& search = mode.m_auctionSearch;
+    if (!search.awaitingReply || !packet.data || packet.packetLength < headerSize
         || ReadLE16(packet.data + 2) != packet.packetLength) return;
 
     const std::size_t payloadSize = packet.packetLength - headerSize;
     const u32 count = ReadLE32(packet.data + 8);
     if (payloadSize % rowSize != 0 || count != payloadSize / rowSize) return;
+
+    search.awaitingReply = false;
+    if (search.discardReply) {
+        search.discardReply = false;
+        if (search.open) mode.RequestAuctionSearch({});
+        return;
+    }
 
     std::vector<CGameMode::AuctionSearchRow> rows;
     rows.reserve(count);
@@ -8813,8 +8825,8 @@ void HandleAuctionSearchResults(CGameMode& mode, const PacketView& packet)
         row.expiresAt = ReadLE32(data + 79);
     }
 
-    mode.m_auctionSearch.pages = ReadLE32(packet.data + 4);
-    mode.m_auctionSearch.rows = std::move(rows);
+    search.pages = ReadLE32(packet.data + 4);
+    search.rows = std::move(rows);
 }
 
 void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
@@ -8859,6 +8871,10 @@ void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
     ro::UiMessageStrings strings;
     strings.Load();
     RecordChat(mode, strings.Get(notice->messageId, notice->fallback), notice->color, kChatChannelSystem);
+    if (packet.packetId == 0x0250 && packet.data[2] == 6) {
+        const auto query = mode.m_auctionSearch.query;
+        mode.RequestAuctionSearch(query);
+    }
 }
 
 void HandlePvpRank(CGameMode& mode, const PacketView& packet)

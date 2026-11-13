@@ -10345,6 +10345,49 @@ void ResetCompanionActorOrders(CWorld* world, u32 gid, companion_ai::Kind kind)
 }
 }
 
+bool CGameMode::RequestAuctionSearch(const AuctionSearchQuery& query)
+{
+    if (!m_auctionSearch.open || m_auctionSearch.awaitingReply) return false;
+
+    const auto type = static_cast<u16>(query.kind);
+    const bool ownList = query.kind == AuctionSearchKind::OwnSales || query.kind == AuctionSearchKind::OwnBids;
+    if (type > static_cast<u16>(AuctionSearchKind::OwnBids) || query.page == 0 || query.page > 32767
+        || (ownList && query.page != 1) || query.name.size() > 23 || query.name.find('\0') != std::string::npos
+        || query.maximumPrice > 0x7fffffffu) return false;
+
+    auto* connection = CRagConnection::instance();
+    if (ownList) {
+        const u8 packet[] = {0x5c, 0x02, static_cast<u8>(query.kind == AuctionSearchKind::OwnBids), 0};
+        if (!connection->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet))) return false;
+    } else {
+        std::array<u8, 34> packet{0x51, 0x02, static_cast<u8>(type), 0};
+        if (query.kind == AuctionSearchKind::Price) {
+            for (std::size_t i = 0; i < 4; ++i) {
+                packet[4 + i] = static_cast<u8>(query.maximumPrice >> (8 * i));
+            }
+        }
+        if (query.kind == AuctionSearchKind::Name) {
+            std::copy(query.name.begin(), query.name.end(), packet.begin() + 8);
+        }
+        packet[32] = static_cast<u8>(query.page);
+        packet[33] = static_cast<u8>(query.page >> 8);
+        if (!connection->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size())) return false;
+    }
+
+    m_auctionSearch.query = query;
+    m_auctionSearch.awaitingReply = true;
+    return true;
+}
+
+void CGameMode::CloseAuctionSearch()
+{
+    // The search reply has no request ID, so drain any outstanding page before reuse.
+    const bool awaitingReply = m_auctionSearch.awaitingReply;
+    m_auctionSearch = {};
+    m_auctionSearch.awaitingReply = awaitingReply;
+    m_auctionSearch.discardReply = awaitingReply;
+}
+
 void CGameMode::ResetCompanionMapState()
 {
     ResetCompanionActorOrders(m_world, g_session.m_homunGID, companion_ai::Kind::Homunculus);

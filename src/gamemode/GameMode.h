@@ -352,9 +352,21 @@ public:
         u32 buyNow = 0;
         u32 expiresAt = 0;
     };
+    enum class AuctionSearchKind : u16 { Armor, Weapon, Card, Etc, Name, Price, OwnSales, OwnBids };
+    struct AuctionSearchQuery {
+        AuctionSearchKind kind = AuctionSearchKind::Name;
+        u16 page = 1;
+        u32 maximumPrice = 0;
+        std::string name;
+    };
+    bool RequestAuctionSearch(const AuctionSearchQuery& query);
+    void CloseAuctionSearch();
     struct AuctionSearchState {
         bool open = false;
+        bool awaitingReply = false;
+        bool discardReply = false;
         u32 pages = 0;
+        AuctionSearchQuery query;
         std::vector<AuctionSearchRow> rows;
     } m_auctionSearch;
     struct AdoptionInvitation {
