@@ -7532,6 +7532,52 @@ void ChangeCartProductionSendReplay()
     std::cout << "{\"case_id\":\"change_cart_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-01af-change-cart\",\"outcome\":\"PASS\",\"assertions\":\"closed connection fails; types 0 and 6 rejected; types 1 through 5 emit four-byte frames\"}" << std::endl;
 }
 
+void GuildReplyProductionSendReplay()
+{
+    SetCase("guild_reply_production_send", "PK46.02", "PK01.02-final-016b-guild-reply",
+        "016A receive -> Commerce::Action(prompt) -> production socket");
+    const auto savedCommerce = ro::commerce::state;
+    ro::commerce::Reset();
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const std::array<u8, 30> invitation{0x6a, 1, 0x44, 0x33, 0x22, 0x11, 'G'};
+    const auto receiveInvitation = [&] {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(invitation.data(), invitation.size(), packet, consumed)
+                && consumed == invitation.size() && router.Dispatch(mode, packet)
+                && ro::commerce::state.promptKind == "guild"
+                && ro::commerce::state.promptId == 0x11223344,
+            "guild invitation did not establish the reply owner");
+    };
+
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    ro::commerce::Command reply{};
+    reply.action = "prompt";
+    reply.amount = 1;
+    receiveInvitation();
+    Require(!ro::commerce::Action(reply) && ro::commerce::state.promptKind == "guild",
+        "failed guild reply discarded its prompt");
+    {
+        LoopbackPeer peer(*connection);
+        Require(ro::commerce::Action(reply) && ro::commerce::state.promptKind.empty()
+                && peer.ReceiveExact(10) == std::vector<u8>{0x6b, 1, 0x44, 0x33, 0x22, 0x11, 1, 0, 0, 0},
+            "guild acceptance did not send the selected frame");
+        Require(!ro::commerce::Action(reply), "duplicate guild reply was accepted");
+        receiveInvitation();
+        reply.amount = 0;
+        Require(ro::commerce::Action(reply) && ro::commerce::state.promptKind.empty()
+                && peer.ReceiveExact(10) == std::vector<u8>{0x6b, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 0, 0},
+            "guild decline did not send the selected frame");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
+            "guild reply emitted extra bytes");
+    }
+    connection->Disconnect();
+    ro::commerce::state = savedCommerce;
+}
+
 void FriendReplyProductionSendReplay()
 {
     SetCase("friend_reply_production_send", "PK46.02", "PK01.02-final-0208-friend-reply",
@@ -7857,6 +7903,7 @@ int main(int argc,char** argv){try{
     ExitToWindowsProductionSendReplay();
     CartTransferProductionSendReplay();
     ChangeCartProductionSendReplay();
+    GuildReplyProductionSendReplay();
     FriendReplyProductionSendReplay();
     GlobalChatProductionSendReplay();
     MailComposerProductionSendReplay();

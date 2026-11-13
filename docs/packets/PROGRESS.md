@@ -4167,3 +4167,5 @@ PK46.02 reconciles three personal-storage and six item request identities, inclu
 PK46.02 captures PacketVer22 item use through the production sender and reconciles the production, repair, weapon-refine, and cooking requests. [Crafting evidence](evidence/PK46.02-crafting-request-crosswalk.md)
 
 PK46.02 reconciles four chat, six room, and three friend requests against the selected registry and production loopback captures. [Chat and social evidence](evidence/PK46.02-chat-social-crosswalk.md)
+
+PK46.02 reconciles five party and four guild requests. The new guild reply fixture checks accept and decline from the production invitation path. [Party and guild evidence](evidence/PK46.02-party-guild-crosswalk.md)

@@ -1836,6 +1836,7 @@
         "docs/packets/evidence/PK46.02-storage-item-crosswalk.md",
         "docs/packets/evidence/PK46.02-crafting-request-crosswalk.md",
         "docs/packets/evidence/PK46.02-chat-social-crosswalk.md",
+        "docs/packets/evidence/PK46.02-party-guild-crosswalk.md",
         "docs/packets/evidence/PK46.02-map-card-composition-request.md",
         "docs/packets/evidence/PK46.02-map-cart-off-request-012A.md",
         "docs/packets/evidence/PK46.02-map-change-cart-request.md",
@@ -1963,7 +1964,7 @@
         "docs/packets/evidence/PK27-prompt-skin-zip.md",
         "docs/packets/evidence/PK27-prompt-picker.md"
       ],
-      "commit_subject": "packet(PK46.02): reconcile selected chat and social requests"
+      "commit_subject": "packet(PK46.02): verify selected party and guild requests"
     },
     "PK46.03": {
       "status": "IN_PROGRESS",

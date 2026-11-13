@@ -146,17 +146,17 @@ AUDIT-0x00F5,0x00F5,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected floor pickup 
 AUDIT-0x00F6,0x00F6,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00F7,0x00F7,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Storage withdrawal and rejection recovery captured,C2S_ONLY,PK46.02-PERSONAL-STORAGE-REQUESTS
 AUDIT-0x00F8,0x00F8,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-storage-lifecycle traces two-byte S2C ZC_CLOSE_STORE to SELF and client window closure; empty/reopen ordering remains open,UNREVIEWED,
-AUDIT-0x00F9,0x00F9,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x00F9,0x00F9,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party creation name captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x00FA,0x00FA,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00FB,0x00FB,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00FC,0x00FC,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x00FC,0x00FC,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party invitation target captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x00FD,0x00FD,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00FE,0x00FE,map,unresolved,PK50,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00FF,0x00FF,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0100,0x0100,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x00FF,0x00FF,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party invitation accept and decline captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
+AUDIT-0x0100,0x0100,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46;PK45,Selected party leave captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x0101,0x0101,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0102,0x0102,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0103,0x0103,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0103,0x0103,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party member removal captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x0104,0x0104,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0105,0x0105,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0106,0x0106,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -230,9 +230,9 @@ AUDIT-0x0149,0x0149,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/versio
 AUDIT-0x014A,0x014A,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x014B,0x014B,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x014C,0x014C,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x014D,0x014D,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x014D,0x014D,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected guild permissions request captured,C2S_ONLY,PK46.02-GUILD-MEMBERSHIP-REQUESTS
 AUDIT-0x014E,0x014E,map,S2C,PK11,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x014F,0x014F,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-info-request.md: guild-window opening sends five six-byte subtype requests after the permissions request; selected registry identifies clif_parse_GuildRequestInfo. Reply mapping and replay remain open.,UNREVIEWED,
+AUDIT-0x014F,0x014F,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Selected guild refresh subtypes captured,C2S_ONLY,PK46.02-GUILD-MEMBERSHIP-REQUESTS
 AUDIT-0x0150,0x0150,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0151,0x0151,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-emblem-request.md: both client resolvers send the six-byte guild-ID request with a shared five-second per-guild throttle; selected registry identifies clif_parse_GuildRequestEmblem. Response/cache lifecycle remains open.,UNREVIEWED,
 AUDIT-0x0152,0x0152,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -257,10 +257,10 @@ AUDIT-0x0164,0x0164,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x0165,0x0165,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0166,0x0166,map,S2C,PK11,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0167,0x0167,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0168,0x0168,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-invite-request.md: player-context guild invite requires guild permission and sends a 14-byte target/inviter ID frame; selected registry identifies clif_parse_GuildInvite. Server response lifecycle remains open.,UNREVIEWED,
+AUDIT-0x0168,0x0168,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected guild invitation and permission gates captured,C2S_ONLY,PK46.02-GUILD-MEMBERSHIP-REQUESTS
 AUDIT-0x0169,0x0169,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x016A,0x016A,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x016B,0x016B,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-invite-reply-request.md: pending guild prompt sends a 10-byte prompt-ID/answer frame and clears only after send success; selected registry identifies clif_parse_GuildReplyInvite. Prompt correlation and membership result remain open.,UNREVIEWED,
+AUDIT-0x016B,0x016B,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected guild invitation accept and decline captured,C2S_ONLY,PK46.02-GUILD-MEMBERSHIP-REQUESTS
 AUDIT-0x016C,0x016C,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x016D,0x016D,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x016E,0x016E,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,PK46.02-map-guild-notice-request.md: guild-master update serializes 186 bytes with guild ID and UTF-8 subject/body limits matching selected clif_parse_GuildChangeNotice. Server update behavior and replay remain open.,UNREVIEWED,
