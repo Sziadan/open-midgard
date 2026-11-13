@@ -4109,3 +4109,5 @@ PK40.02 sends registration, bid, cancel, and stop requests and receives their se
 PK40.02 connects auction browsing, staging, registration and listing actions to a native window, including confirmation and managed teardown. [Evidence](evidence/PK40.02-auction-window.md)
 
 PK40.03 connects the selected NPC cash-shop catalog, purchase and result to the existing shop windows. Replay checks split payment and quote-owned balances. [Evidence](evidence/PK40.03-npc-cash-shop.md)
+
+PK40.03 adds explicit Kafra contribution input and split confirmation. Replacement catalogs retire stale confirmations. [Evidence](evidence/PK40.03-npc-cash-shop.md)

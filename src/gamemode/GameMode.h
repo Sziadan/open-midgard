@@ -181,6 +181,7 @@ public:
                 GameMsg_RequestPartyInvite = 20037,
                 GameMsg_RequestPartyInviteReply = 20038,
         GameMsg_RequestStandingResurrection = 20043,
+        GameMsg_ConfirmCashShopContribution = 20044,
     };
 
     enum PlayerContextAction {

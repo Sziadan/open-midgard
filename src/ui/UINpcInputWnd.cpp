@@ -375,13 +375,14 @@ void UINpcInputWnd::OpenString(u32 npcId)
 }
 
 void UINpcInputWnd::OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue,
-    u32 maxValue, const char* placeholder, msgparam_t extra)
+    u32 maxValue, const char* placeholder, msgparam_t extra, bool allowZero)
 {
     OpenForMode(0, InputMode::Number, SubmitAction::GameMessage, label && *label ? label : "Enter amount");
     m_submitGameMessage = gameMessage;
     m_submitWparam = wparam;
     m_submitExtra = extra;
     m_maxNumberValue = maxValue;
+    m_allowZero = allowZero;
     m_inputPlaceholder = placeholder ? placeholder : "";
 
     if (!m_inputPlaceholder.empty()) {
@@ -390,7 +391,7 @@ void UINpcInputWnd::OpenGameNumberPrompt(const char* label, int gameMessage, msg
     }
 
     char valueText[32]{};
-    const u32 clampedInitialValue = maxValue > 0 ? (std::max)(1u, (std::min)(initialValue, maxValue)) : initialValue;
+    const u32 clampedInitialValue = maxValue > 0 ? (std::max)(allowZero ? 0u : 1u, (std::min)(initialValue, maxValue)) : initialValue;
     std::snprintf(valueText, sizeof(valueText), "%u", static_cast<unsigned int>(clampedInitialValue));
     m_editCtrl->SetText(valueText);
 }
@@ -403,6 +404,7 @@ void UINpcInputWnd::HideInput()
     m_submitWparam = 0;
     m_submitExtra = 0;
     m_maxNumberValue = 0;
+    m_allowZero = false;
     m_dialogLabel = "Enter text";
     m_inputPlaceholder.clear();
     m_editCtrl->SetText("");
@@ -427,7 +429,7 @@ bool UINpcInputWnd::SubmitCurrentText()
     u32 numericValue = 0;
     if (m_submitAction == SubmitAction::GameMessage) {
         numericValue = std::strtoul(text, nullptr, 10);
-        if (numericValue == 0) {
+        if (numericValue == 0 && !m_allowZero) {
             return false;
         }
         if (m_maxNumberValue > 0) {

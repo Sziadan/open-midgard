@@ -1232,8 +1232,12 @@ void UIWindowMgr::CloseNpcShopWindows()
 
 void UIWindowMgr::CloseNpcShopQuantityPrompt()
 {
-    if (m_npcInputWnd && m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestShopAdjustDeal))
+    if (m_npcInputWnd && (m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestShopAdjustDeal)
+        || m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_ConfirmCashShopContribution)))
         m_npcInputWnd->HideInput();
+    if (m_itemPurchaseWnd && m_roomMessageBox && m_roomMessageBox->GetSourceOwner() == m_itemPurchaseWnd) {
+        m_roomMessageBox->Dismiss(false);
+    }
 }
 
 void UIWindowMgr::CloseStorageWindows()

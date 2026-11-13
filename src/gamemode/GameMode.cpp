@@ -26,6 +26,8 @@
 #include "core/SourceTextCodec.h"
 #include "ui/UIChatRoomWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
+#include "ui/UINpcInputWnd.h"
+#include "ui/UIItemPurchaseWnd.h"
 #include "ui/UICompanionStatusWnd.h"
 #include "ui/UIWhisperWnd.h"
 #include "ui/UIPetInfoWnd.h"
@@ -6886,34 +6888,96 @@ void FinishNpcShopInteraction(NpcShopMode pendingResult)
     }
 }
 
+bool RequestNpcCashShopPurchase(u32 kafra)
+{
+    if (!g_session.m_shopUsesCash || g_session.m_cashShopPending || !ValidateNpcShopDeal(NpcShopMode::Buy)
+        || g_session.m_shopDealRows.size() != 1) return false;
+    const auto& row = g_session.m_shopDealRows.front();
+    const auto total = static_cast<u64>(row.unitPrice) * row.quantity;
+    if (!total || total > 0x7fffffffu || kafra > total || kafra > g_session.m_kafraShopPoints
+        || total - kafra > g_session.m_cashShopPoints) return false;
+
+    const auto item = row.itemInfo.GetItemId();
+    const auto quantity = static_cast<u16>(row.quantity);
+    const u8 packet[] = {0x88, 2, static_cast<u8>(item), static_cast<u8>(item >> 8),
+        static_cast<u8>(quantity), static_cast<u8>(quantity >> 8), static_cast<u8>(kafra),
+        static_cast<u8>(kafra >> 8), static_cast<u8>(kafra >> 16), static_cast<u8>(kafra >> 24)};
+    if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet))) return false;
+    g_session.m_cashShopPending = true;
+    g_session.m_cashShopPendingQuote = g_session.m_cashShopQuote;
+    g_session.m_shopDealRows.clear();
+    g_session.m_shopSelectedDealRow = -1;
+    g_session.m_shopDealTotal = 0;
+    return true;
+}
+
+u32 CashShopDealIdentity()
+{
+    if (!g_session.m_shopUsesCash || g_session.m_cashShopPending || !ValidateNpcShopDeal(NpcShopMode::Buy)
+        || g_session.m_shopDealRows.size() != 1) return 0;
+    const auto& row = g_session.m_shopDealRows.front();
+    return (static_cast<u32>(row.quantity) << 16) | row.itemInfo.GetItemId();
+}
+
+bool ConfirmCashShopContribution(u32 quote, u32 requested, u32 identity)
+{
+    auto* owner = g_windowMgr.m_itemPurchaseWnd;
+    if (!identity || identity != CashShopDealIdentity() || quote != g_session.m_cashShopQuote
+        || !owner || !owner->m_show || g_windowMgr.m_modalWindow) return false;
+
+    const auto& row = g_session.m_shopDealRows.front();
+    const auto total = static_cast<u64>(row.unitPrice) * row.quantity;
+    if (!total || total > 0x7fffffffu) return false;
+    const auto rounded = (std::min)(requested, g_session.m_kafraShopPoints) / 100 * 100;
+    const auto kafra = static_cast<u32>((std::min)(total, static_cast<u64>(rounded)));
+    const auto cash = total - kafra;
+    if (cash > g_session.m_cashShopPoints) {
+        g_windowMgr.PushChatEvent("You do not have enough cash points for that split.", 0x00ff0000u, 6);
+        return false;
+    }
+    const auto text = "Buy " + std::to_string(row.quantity) + " × " + row.itemInfo.GetDisplayName()
+        + " for " + std::to_string(cash) + " cash points and " + std::to_string(kafra) + " Kafra points?";
+    auto* box = new UIChatRoomMessageBox(text, 0);
+    const auto generation = g_modeMgr.GetOperationGeneration();
+    box->ConfigureConfirmation(owner, [quote, identity, kafra, generation](bool accepted) {
+        if (accepted && g_modeMgr.GetOperationGeneration() == generation
+            && quote == g_session.m_cashShopQuote && identity == CashShopDealIdentity()) {
+            RequestNpcCashShopPurchase(kafra);
+        }
+    });
+    g_windowMgr.m_roomMessageBox = box;
+    g_windowMgr.m_children.push_back(box);
+    g_windowMgr.m_modalWindow = box;
+    g_windowMgr.m_editWindow = nullptr;
+    return true;
+}
+
+bool BeginCashShopPurchase()
+{
+    const auto identity = CashShopDealIdentity();
+    if (!identity || g_windowMgr.m_modalWindow) return false;
+    const auto& row = g_session.m_shopDealRows.front();
+    const auto total = static_cast<u64>(row.unitPrice) * row.quantity;
+    if (!total || total > 0x7fffffffu) return false;
+    const auto quote = g_session.m_cashShopQuote;
+    const auto available = g_session.m_kafraShopPoints;
+    if (available < 100) return ConfirmCashShopContribution(quote, 0, identity);
+    const auto cash = g_session.m_cashShopPoints;
+    const auto minimum = total > cash ? static_cast<u32>((total - cash + 99) / 100 * 100) : 0;
+    auto* input = static_cast<UINpcInputWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_NPCINPUTWND));
+    if (!input) return false;
+    input->OpenGameNumberPrompt("Kafra points to use (multiples of 100)",
+        CGameMode::GameMsg_ConfirmCashShopContribution, quote, minimum, available, nullptr, identity, true);
+    return true;
+}
+
 bool RequestNpcShopPurchaseList()
 {
     if (!ValidateNpcShopDeal(NpcShopMode::Buy)) {
         return false;
     }
 
-    if (g_session.m_shopUsesCash) {
-        if (g_session.m_cashShopPending || g_session.m_shopDealRows.size() != 1) return false;
-        const auto& row = g_session.m_shopDealRows.front();
-        const auto total = static_cast<u64>(row.unitPrice) * row.quantity;
-        if (!total || total > 0x7fffffffu) return false;
-        const auto kafra = total > g_session.m_cashShopPoints
-            ? static_cast<u32>(total - g_session.m_cashShopPoints) : 0u;
-        if (kafra > g_session.m_kafraShopPoints) return false;
-
-        const auto item = row.itemInfo.GetItemId();
-        const auto quantity = static_cast<u16>(row.quantity);
-        const u8 packet[] = {0x88, 2, static_cast<u8>(item), static_cast<u8>(item >> 8),
-            static_cast<u8>(quantity), static_cast<u8>(quantity >> 8), static_cast<u8>(kafra),
-            static_cast<u8>(kafra >> 8), static_cast<u8>(kafra >> 16), static_cast<u8>(kafra >> 24)};
-        if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet))) return false;
-        g_session.m_cashShopPending = true;
-        g_session.m_cashShopPendingQuote = g_session.m_cashShopQuote;
-        g_session.m_shopDealRows.clear();
-        g_session.m_shopSelectedDealRow = -1;
-        g_session.m_shopDealTotal = 0;
-        return true;
-    }
+    if (g_session.m_shopUsesCash) return BeginCashShopPurchase();
 
     const size_t rowCount = g_session.m_shopDealRows.size();
     const size_t packetLen = sizeof(PACKET_CZ_PC_PURCHASE_ITEMLIST) + rowCount * 4;
@@ -12757,6 +12821,9 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
 
     case GameMsg_RequestShopBuyList:
         return RequestNpcShopPurchaseList() ? 1 : 0;
+
+    case GameMsg_ConfirmCashShopContribution:
+        return ConfirmCashShopContribution(static_cast<u32>(wparam), static_cast<u32>(lparam), static_cast<u32>(extra)) ? 1 : 0;
 
     case GameMsg_RequestShopSellList:
         return RequestNpcShopSellList() ? 1 : 0;

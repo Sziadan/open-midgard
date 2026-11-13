@@ -27,7 +27,7 @@ public:
     void OpenNumber(u32 npcId);
     void OpenString(u32 npcId);
     void OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue, u32 maxValue,
-        const char* placeholder = nullptr, msgparam_t extra = 0);
+        const char* placeholder = nullptr, msgparam_t extra = 0, bool allowZero = false);
     void HideInput();
     bool IsGameNumberPromptFor(int gameMessage) const;
     bool HandleKeyDown(int virtualKey);
@@ -76,6 +76,7 @@ private:
     msgparam_t m_submitWparam;
     msgparam_t m_submitExtra = 0;
     u32 m_maxNumberValue;
+    bool m_allowZero = false;
     std::string m_dialogLabel;
     std::string m_inputPlaceholder;
 };
