@@ -117,6 +117,9 @@ public:
     int m_nSelectedAccountNo2;
     std::string m_strErrorInfo;
 
+protected:
+    virtual bool ConfirmCharacterDeletion(const CHARACTER_INFO& character);
+
 private:
     friend struct LoginModeReplayAccess;
     void SetLoginStatus(const char* status);

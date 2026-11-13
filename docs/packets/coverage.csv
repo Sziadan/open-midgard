@@ -403,7 +403,7 @@ AUDIT-0x01F7,0x01F7,map,C2S,PK30,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x01F8,0x01F8,map,unresolved,PK30,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01F9,0x01F9,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01FA,0x01FA,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Selected-source 48-byte login3 registration and production current-client challenge/send capture are verified under explicit AccountLoginPacket=login3; deployed profile intent remains open,C2S_ONLY,PK44.LOGIN.01FA-C2S-MD5-CLIENTINFO
-AUDIT-0x01FB,0x01FB,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Character deletion identity/layout and server result branches traced in PK44.CHAR-DELETE.md; current client parity and/or scheduled reachability remain open.,UNREVIEWED,PK44.CHAR-DELETE
+AUDIT-0x01FB,0x01FB,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Selected 56-byte immediate character deletion captured from the confirmed action,C2S_ONLY,PK44.CHAR-DELETE
 AUDIT-0x01FC,0x01FC,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01FD,0x01FD,map,C2S,PK35,PK01;PK02;PK47;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x01FE,0x01FE,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

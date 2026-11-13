@@ -396,6 +396,14 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     target_include_directories(source_chat_routing_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME source_chat_routing_checks COMMAND source_chat_routing_checks)
     add_test(NAME packet_chat_submission_checks COMMAND packet_stream_replay_checks --chat-submission-only)
+    foreach(delete_profile IN ITEMS 23 22)
+        set(delete_settings "${CMAKE_CURRENT_BINARY_DIR}/packet-character-delete-${delete_profile}-settings")
+        file(GENERATE OUTPUT "${delete_settings}/open-midgard.ini" CONTENT "[Packets]\nMapSendProfile=packetver${delete_profile}\n")
+        add_test(NAME packet_character_delete_${delete_profile}_checks
+            COMMAND packet_stream_replay_checks --character-delete-${delete_profile})
+        set_tests_properties(packet_character_delete_${delete_profile}_checks PROPERTIES TIMEOUT 30
+            ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${delete_settings}")
+    endforeach()
     add_test(NAME packet_pet_lifecycle_checks COMMAND packet_stream_replay_checks --pet-lifecycle-only)
     set_tests_properties(packet_pet_lifecycle_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-pet-lifecycle-settings")

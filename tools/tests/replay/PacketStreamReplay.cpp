@@ -99,6 +99,18 @@ struct PacketStreamReplayAccess {
 };
 
 struct LoginModeReplayAccess : CLoginMode {
+    bool confirmDelete = false;
+    bool ConfirmCharacterDeletion(const CHARACTER_INFO&) override { return confirmDelete; }
+    void EnterCharacterSelectionForReplay() {
+        m_subMode = LoginSubMode_CharSelect;
+        m_nextSubMode = -1;
+        m_isConnected = 1;
+    }
+    void SendPendingDeletionForReplay() {
+        m_subMode = m_nextSubMode;
+        m_nextSubMode = -1;
+        OnChangeState(m_subMode);
+    }
     int NextSubMode() const { return m_nextSubMode; }
     static void SeedCharServerForConnect(LoginModeReplayAccess& mode, u32 ip, s16 port) {
         mode.m_numServer = 1;
@@ -2218,6 +2230,63 @@ void LoginZoneServerNotificationReplay()
     g_session.m_guildWindow = oldGuildWindow;
     g_windowMgr.RemoveAllWindows();
     std::cout << "{\"case_id\":\"login_zone_server_notification\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0071-zonesvr-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnNotifyZonesvr\",\"input_frame_hex\":\"" << Hex(packet) << "\",\"frame_length\":28,\"character_id\":270544960,\"map_wire_name\":\"prontera.gat\",\"map_result\":\"prontera\",\"ip_wire_bytes_hex\":\"0a000001\",\"zone_ip\":\"10.0.0.1\",\"port_wire_bytes_hex\":\"e917\",\"zone_port\":6121,\"stale_guild_state_cleared\":true,\"zone_connect_transition\":true,\"char_connection_closed\":true,\"production_framing_dispatch\":true,\"visible_zone_ui_not_exercised\":true,\"outcome\":\"PASS\"}\n";
+}
+
+void LoginCharacterDeletionReplay()
+{
+    SetCase("login_character_deletion", "PK44.CHAR-DELETE", "selected-delete-loopback", "confirmation -> login sender -> result");
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    LoginModeReplayAccess mode;
+    LoginModeReplayAccess::SeedCharacterForSelection(mode, 2);
+    mode.GetCharInfo()[1] = mode.GetCharInfo()[0];
+    mode.GetCharInfo()[1].GID = 0x87654321;
+    mode.GetCharInfo()[1].CharNum = 7;
+    mode.m_numChar = 2;
+    mode.EnterCharacterSelectionForReplay();
+    const auto request = [&] { return mode.SendMsg(CLoginMode::LoginMsg_RequestDeleteCharacter, 2, 0, 0); };
+    const auto deliver = [&](const std::vector<u8>& bytes, int nextSubMode) {
+        peer.Send(bytes);
+        const auto deadline = Clock::now() + (nextSubMode == -1 ? std::chrono::milliseconds(30) : kTimeout);
+        do {
+            LoginModeReplayAccess::RunPollNetwork(mode);
+            if (mode.NextSubMode() == nextSubMode && nextSubMode != -1) return;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        } while (Clock::now() < deadline);
+    };
+    Require(!request() && mode.NextSubMode() == -1 && !mode.m_pendingDeleteCharGid,
+        "canceling confirmation queued a delete request");
+    deliver({0x6f, 0, 0x70, 0, 2}, -1);
+    Require(mode.GetCharCount() == 2 && mode.NextSubMode() == -1, "orphan deletion results changed selection");
+    mode.confirmDelete = true;
+    const std::string key = "account@example.test";
+    mode.SendMsg(CLoginMode::LoginMsg_SetEmail, reinterpret_cast<msgparam_t>(key.c_str()), 0, 0);
+    const bool selected = ro::net::GetActiveCharacterPacketProfile().id == ro::net::PacketVersionId::PacketVer23;
+    std::vector<u8> expected = {u8(selected ? 0xfb : 0x68), u8(selected ? 1 : 0), 0x78, 0x56, 0x34, 0x12};
+    expected.insert(expected.end(), key.begin(), key.end());
+    expected.resize(selected ? 56 : 46, 0);
+    Require(request() && !request(), "duplicate deletion was not suppressed");
+    mode.SendPendingDeletionForReplay();
+    Require(peer.ReceiveExact(expected.size()) == expected, "character deletion opcode, CID, or fixed key bytes differ");
+    deliver({0x70, 0, 2}, CLoginMode::LoginSubMode_CharSelect);
+    Require(!mode.m_pendingDeleteCharGid && mode.GetCharCount() == 2
+        && mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect
+        && g_windowMgr.GetLoginStatus().find("party or guild") != std::string::npos,
+        "deletion refusal did not preserve characters and report the restriction");
+    mode.OnChangeState(CLoginMode::LoginSubMode_CharSelect);
+    Require(g_windowMgr.GetLoginStatus().find("party or guild") != std::string::npos,
+        "character selection discarded the deletion outcome");
+    mode.EnterCharacterSelectionForReplay();
+    Require(request(), "refusal prevented a subsequent confirmed request");
+    mode.SendPendingDeletionForReplay();
+    Require(peer.ReceiveExact(expected.size()) == expected, "retry changed the pending character");
+    deliver({0x6f, 0, 0x6f, 0}, CLoginMode::LoginSubMode_CharSelect);
+    Require(!mode.m_pendingDeleteCharGid && mode.GetCharCount() == 1 && mode.GetCharInfo()[0].GID == 0x87654321
+        && mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
+        "deletion success did not remove exactly the confirmed character");
+    g_windowMgr.RemoveAllWindows();
+    connection->Disconnect();
 }
 
 void LoginCharacterCreationRefusalReplay()
@@ -7373,6 +7442,15 @@ int main(int argc,char** argv){try{
     (void)argc;(void)argv;
 #endif
     Require(CConnection::Startup(),"socket startup failed");
+    if (argc > 1 && (std::string(argv[1]) == "--character-delete-23" || std::string(argv[1]) == "--character-delete-22")) {
+        const bool selected = std::string(argv[1]) == "--character-delete-23";
+        Require(ro::net::GetActiveCharacterPacketProfile().id ==
+            (selected ? ro::net::PacketVersionId::PacketVer23 : ro::net::PacketVersionId::PacketVer22),
+            "character deletion fixture did not select its profile");
+        LoginCharacterDeletionReplay();
+        CConnection::Cleanup();
+        return 0;
+    }
     if(argc>1 && std::string(argv[1])=="--pet-lifecycle-only") {PetLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--world-entry-handoff-only") {ModeLoopHandoffReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--map-cell-load-only") {MapCellLoadLifecycleReplay();CConnection::Cleanup();return 0;}
@@ -7553,6 +7631,7 @@ int main(int argc,char** argv){try{
     LoginCharacterRefusalReplay();
     LoginZoneServerNotificationReplay();
     LoginCharacterCreationRefusalReplay();
+    LoginCharacterDeletionReplay();
     LoginPasswordHashChallengeReplay();
     LoginPollTransientStatusReplay();
     LoginCharConnectionFailureReplay();

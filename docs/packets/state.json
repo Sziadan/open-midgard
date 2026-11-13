@@ -1963,6 +1963,7 @@
       "evidence": [
         "docs/packets/evidence/PK46.03-login-character-crosswalk.md",
         "docs/packets/evidence/PK46.03-character-delete-ui-mismatch.md",
+        "docs/packets/evidence/PK46.03-character-delete-selected-replay.md",
         "docs/packets/evidence/PK46.03-account-login-send-gates.md",
         "docs/packets/evidence/PK46.03-account-login-variant-layouts.md",
         "docs/packets/evidence/PK46.03-loginmode-character-send-paths.md",

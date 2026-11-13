@@ -1452,6 +1452,8 @@ void CLoginMode::OnUpdate() {
             SetLoginStatus(message);
             ShowLoginErrorDialog(message);
             m_isConnected = 0;
+            m_pendingDeleteCharGid = 0;
+            m_pendingDeleteCharSlot = -1;
             m_nextSubMode = LoginSubMode_Login;
             return;
         }
@@ -1534,6 +1536,8 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
 
     case LoginMsg_ReturnToLogin:
     case LoginMsg_Disconnect:
+        m_pendingDeleteCharGid = 0;
+        m_pendingDeleteCharSlot = -1;
         CRagConnection::instance()->Disconnect();
         m_isConnected = 0;
         m_nextSubMode = LoginSubMode_Login;
@@ -1608,20 +1612,23 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
             return 0;
         }
 
-        const int requestedSlot = static_cast<int>(wparam);
-        int deleteIndex = static_cast<int>(lparam);
-        if (deleteIndex < 0 || deleteIndex >= m_numChar || static_cast<int>(m_charInfo[deleteIndex].CharNum) != requestedSlot) {
-            deleteIndex = -1;
-            for (int index = 0; index < m_numChar; ++index) {
-                if (static_cast<int>(m_charInfo[index].CharNum) == requestedSlot) {
-                    deleteIndex = index;
-                    break;
-                }
-            }
+        if (m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1 || m_pendingDeleteCharGid) {
+            return 0;
         }
-
-        if (deleteIndex < 0 || deleteIndex >= m_numChar) {
+        const int requestedSlot = static_cast<int>(wparam);
+        const int deleteIndex = static_cast<int>(lparam);
+        if (deleteIndex < 0 || deleteIndex >= m_numChar || m_charInfo[deleteIndex].CharNum != requestedSlot
+            || !m_charInfo[deleteIndex].GID) {
             SetLoginStatus("Login: no character in the selected slot to delete.");
+            return 0;
+        }
+        const u32 gid = m_charInfo[deleteIndex].GID;
+        if (!ConfirmCharacterDeletion(m_charInfo[deleteIndex])) {
+            return 0;
+        }
+        if (!m_isConnected || m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1
+            || deleteIndex >= m_numChar || m_charInfo[deleteIndex].CharNum != requestedSlot
+            || m_charInfo[deleteIndex].GID != gid) {
             return 0;
         }
 
@@ -1676,6 +1683,19 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
     }
 
     return 0;
+}
+
+bool CLoginMode::ConfirmCharacterDeletion(const CHARACTER_INFO& character)
+{
+    const char* name = reinterpret_cast<const char*>(character.name);
+    char message[128]{};
+    std::snprintf(message, sizeof(message), "Permanently delete %.*s?",
+        static_cast<int>(sizeof(character.name)), name);
+#if RO_PLATFORM_WINDOWS
+    return MessageBoxA(g_hMainWnd, message, "Delete character", MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) == IDYES;
+#else
+    return MessageBoxA(g_hMainWnd, message, "Delete character", MB_YESNO) == IDYES;
+#endif
 }
 
 void CLoginMode::OnChangeState(int newState) {
@@ -1870,27 +1890,31 @@ void CLoginMode::OnChangeState(int newState) {
             m_wndWait->SetMsg("Deleting character...", 16, 1);
         }
 
-        PACKET_CH_DELETE_CHAR pkt{};
-        pkt.PacketType = ro::net::GetActiveCharacterPacketProfile().deleteCharacter;
-        pkt.GID = m_pendingDeleteCharGid;
-        CopyCString(pkt.key, sizeof(pkt.key), m_emaiAddress);
-
-        const bool sent = CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)));
+        const auto& profile = ro::net::GetActiveCharacterPacketProfile();
+        const auto send = [&](auto pkt) {
+            pkt.PacketType = profile.deleteCharacter;
+            pkt.GID = m_pendingDeleteCharGid;
+            CopyCString(pkt.key, sizeof(pkt.key), m_emaiAddress);
+            return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)));
+        };
+        const bool sent = profile.id == ro::net::PacketVersionId::PacketVer23
+            ? send(PACKET_CH_DELETE_CHAR_01FB{}) : send(PACKET_CH_DELETE_CHAR{});
         DbgLog("[Login] CH_DELETE_CHAR sent: gid=%u slot=%d keyProvided=%d sent=%d\n",
-               pkt.GID,
+               m_pendingDeleteCharGid,
                m_pendingDeleteCharSlot,
-               pkt.key[0] != '\0' ? 1 : 0,
+               m_emaiAddress[0] != '\0' ? 1 : 0,
                sent ? 1 : 0);
 
         if (!sent) {
             m_pendingDeleteCharGid = 0;
             m_pendingDeleteCharSlot = -1;
-            SetLoginStatus("Login: failed to send delete-character request.");
+            m_deferredLoginStatus = "Login: failed to send delete-character request.";
+            SetLoginStatus(m_deferredLoginStatus.c_str());
             m_nextSubMode = LoginSubMode_CharSelect;
             break;
         }
 
-        if (pkt.key[0] != '\0') {
+        if (m_emaiAddress[0] != '\0') {
             SetLoginStatus("Login: waiting for delete-character response...");
         } else {
             SetLoginStatus("Login: delete request sent without an email/delete key; server may refuse it.");
@@ -2026,6 +2050,9 @@ void CLoginMode::PollNetwork()
         if (pkt.size() < 2) continue;
 
         const u16 id = static_cast<u16>(pkt[0]) | (static_cast<u16>(pkt[1]) << 8);
+        if ((id == 0x006F || id == 0x0070) && (m_subMode != LoginSubMode_DeleteChar || !m_pendingDeleteCharGid)) {
+            continue;
+        }
         const ro::net::AccountLoginPacketProfile& loginProfile = ro::net::GetActiveAccountLoginPacketProfile();
         const ro::net::MapReceiveProfile& mapReceiveProfile = ro::net::GetActiveMapReceiveProfile();
         char status[96];
@@ -2686,9 +2713,7 @@ void CLoginMode::OnRefuseMakeChar(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
 {
-    if (raw.size() < 2) {
-        SetLoginStatus("Login error: HC_ACCEPT_DELETECHAR too short.");
-        m_nextSubMode = LoginSubMode_CharSelect;
+    if (raw.size() != 2 || m_subMode != LoginSubMode_DeleteChar || !m_pendingDeleteCharGid) {
         return;
     }
 
@@ -2726,7 +2751,9 @@ void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
            deletedSlot,
            removed ? 1 : 0,
            m_numChar);
-    SetLoginStatus(removed ? "Login: character deleted successfully." : "Login: delete acknowledged, but the character was not found locally.");
+    m_deferredLoginStatus = removed ? "Login: character deleted successfully."
+        : "Login: delete acknowledged, but the character was not found locally.";
+    SetLoginStatus(m_deferredLoginStatus.c_str());
     m_nextSubMode = LoginSubMode_CharSelect;
 }
 
@@ -2735,7 +2762,10 @@ void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnRefuseDeleteChar(const std::vector<u8>& raw)
 {
-    const u8 code = (raw.size() > 2) ? raw[2] : 0;
+    if (raw.size() != 3 || m_subMode != LoginSubMode_DeleteChar || !m_pendingDeleteCharGid) {
+        return;
+    }
+    const u8 code = raw[2];
     char msg[128];
     switch (code) {
     case 0:
@@ -2748,6 +2778,9 @@ void CLoginMode::OnRefuseDeleteChar(const std::vector<u8>& raw)
     case 1:
         std::snprintf(msg, sizeof(msg), "Login: character deletion failed because the slot is no longer valid.");
         break;
+    case 2:
+        std::snprintf(msg, sizeof(msg), "Login: character deletion is restricted by party or guild membership.");
+        break;
     default:
         std::snprintf(msg, sizeof(msg), "Login: character deletion failed (code %u).", static_cast<unsigned int>(code));
         break;
@@ -2759,8 +2792,8 @@ void CLoginMode::OnRefuseDeleteChar(const std::vector<u8>& raw)
            static_cast<unsigned int>(code));
     m_pendingDeleteCharGid = 0;
     m_pendingDeleteCharSlot = -1;
-    SetLoginStatus(msg);
-    ShowLoginErrorDialog(msg);
+    m_deferredLoginStatus = msg;
+    SetLoginStatus(m_deferredLoginStatus.c_str());
     m_nextSubMode = LoginSubMode_CharSelect;
 }
 

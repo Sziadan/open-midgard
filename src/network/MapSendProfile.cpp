@@ -49,7 +49,9 @@ CharacterPacketProfile MakeCharacterProfile(PacketVersionId id, const char* name
         PacketProfile::PacketVer23LoginChain::kCharServerEnter,
         PacketProfile::PacketVer23LoginChain::kSelectCharacter,
         PacketProfile::PacketVer23LoginChain::kMakeCharacter,
-        PacketProfile::PacketVer23LoginChain::kDeleteCharacter,
+        id == PacketVersionId::PacketVer23
+            ? PacketProfile::PacketVer23LoginChain::kDeleteCharacter
+            : static_cast<u16>(PACKETID_CH_DELETE_CHAR),
     };
 }
 

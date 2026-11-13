@@ -59,7 +59,7 @@ constexpr u16 kPasswordHashLoginClientInfo = PACKETID_CA_LOGIN_HASH_CLIENTINFO;
 constexpr u16 kCharServerEnter = PACKETID_CA_ENTER;
 constexpr u16 kSelectCharacter = 0x0066;
 constexpr u16 kMakeCharacter = PACKETID_CH_MAKE_CHAR;
-constexpr u16 kDeleteCharacter = PACKETID_CH_DELETE_CHAR;
+constexpr u16 kDeleteCharacter = 0x01FB;
 constexpr u16 kNotifyError = PACKETID_AC_NOTIFY_ERROR;
 }
 
@@ -321,6 +321,13 @@ struct PACKET_CH_DELETE_CHAR {
     u32 GID;
     char key[40];
 };
+
+struct PACKET_CH_DELETE_CHAR_01FB {
+    u16 PacketType;
+    u32 GID;
+    char key[50];
+};
+static_assert(sizeof(PACKET_CH_DELETE_CHAR_01FB) == 56);
 
 // CZ_ENTER: sent to zone/map server  [19 bytes]
 struct PACKET_CZ_ENTER {
