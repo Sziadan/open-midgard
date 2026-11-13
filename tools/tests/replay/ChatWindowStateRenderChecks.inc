@@ -2,6 +2,7 @@
 #include "ChatRoomRenderChecks.inc"
 #include "ChatRoomEntryRenderChecks.inc"
 #include "ChatRoomSettingsRenderChecks.inc"
+#include "CraftingChoiceRenderChecks.inc"
 #include "ChatRoomActionsRenderChecks.inc"
 #include "WhisperRenderChecks.inc"
 #include "AutoMessageRenderChecks.inc"
@@ -399,5 +400,6 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     CheckAutoMessageUi(app,view,state,mode,adapter,output);
     CheckFriendOptionsUi(app,view,state,mode,adapter,output);
     CheckAdoptionParentMenu(app,view,state,mode,output);
+    CheckCraftingChoices(app,view,state,mode,adapter,output);
 
 }

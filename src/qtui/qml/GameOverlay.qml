@@ -3254,6 +3254,7 @@ Item {
     }
 
     RoFrame {
+        objectName: "skillChoiceWindow"
         x: uiState.skillSelectX
         y: uiState.skillSelectY
         width: uiState.skillSelectWidth
@@ -3308,6 +3309,8 @@ Item {
 
                 delegate: Rectangle {
                     required property var modelData
+                    required property int index
+                    objectName: "skillChoiceRow" + index
                     x: (modelData.x || 0) - uiState.skillSelectX - skillSelectList.x
                     y: (modelData.y || 0) - uiState.skillSelectY - skillSelectList.y
                     width: modelData.width || 0
@@ -3337,6 +3340,7 @@ Item {
                     }
 
                     Text {
+                        objectName: "skillChoiceLabel"
                         x: (modelData.showIcon || false) ? 34 : 8
                         y: 5
                         width: parent.width - ((modelData.showIcon || false) ? 70 : 44)

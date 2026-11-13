@@ -4009,3 +4009,5 @@ PK35.02 handles weapon-refine lists, 32-bit selection and cancellation, and the 
 PK35.03 handles repair choices, full row echo, cancel, and notices while the target equipment refresh owns the broken flag. [Evidence](evidence/PK35.01-crafting-wire.md)
 
 PK35.04 handles the selected cooking recipe list, selection, and cancel packets. [Evidence](evidence/PK35.01-crafting-wire.md)
+
+PK35.05 adds native and Qt render coverage for the four crafting lists and the production confirmation. [Evidence](evidence/PK35.01-crafting-wire.md)
