@@ -25,6 +25,7 @@ struct ITEM_INFO {
 
     void SetItemId(unsigned int itemId);
     unsigned int GetItemId() const;
+    bool IsCard() const;
     // Primary Ref CSession::GetItemDisColor: packed AARRGGBB, for hover names.
     u32 GetNameColorArgb() const {
         if (!m_isIdentified) return 0xffaaaaaau;

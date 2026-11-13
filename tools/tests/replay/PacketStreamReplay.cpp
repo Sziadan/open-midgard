@@ -29,6 +29,7 @@
 #include "ui/UINpcMenuWnd.h"
 #include "ui/UISayDialogWnd.h"
 #include "ui/UIItemShopWnd.h"
+#include "ui/UIItemCompositionWnd.h"
 #include "ui/UIItemPurchaseWnd.h"
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIWindowMgr.h"

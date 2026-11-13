@@ -1205,7 +1205,7 @@ void HandleUseItemAck(CGameMode& mode, const PacketView& packet)
     const ITEM_INFO* item = g_session.GetInventoryItemByIndex(itemIndex);
 
     mode.m_waitingUseItemAck = 0;
-    mode.m_lastCardItemIndex = ok && item && g_ttemmgr.IsCardItem(item->GetItemId()) ? static_cast<int>(itemIndex) : 0;
+    mode.m_lastCardItemIndex = ok && item && item->IsCard() ? static_cast<int>(itemIndex) : 0;
 
     if (ok) {
         const bool recovery=item&&item->m_itemIndex!=0&&item->GetItemId()>500&&item->GetItemId()<600;
@@ -1309,7 +1309,7 @@ void HandleItemCompositionList(CGameMode& mode, const PacketView& packet)
     if (mode.m_lastCardItemIndex < static_cast<int>(ro::item_snapshot::kFirstInventoryIndex)) return;
     const auto cardIndex = static_cast<unsigned>(mode.m_lastCardItemIndex);
     const auto* card = g_session.GetInventoryItemByIndex(cardIndex);
-    if (!card || card->m_num <= 0 || !g_ttemmgr.IsCardItem(card->GetItemId())) return;
+    if (!card || card->m_num <= 0 || !card->IsCard()) return;
 
     std::vector<unsigned int> itemIndices;
     const int count = (packet.packetLength - 4) / 2;

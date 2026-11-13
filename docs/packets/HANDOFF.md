@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK38.03 validates the card composition list and applies `017D` only to the matching submitted request. Continue with the selection send and chooser replay, silent server rejection recovery, and live carding. [Card composition evidence](evidence/PK38.03-card-composition.md)
+PK38.03 replays card use, list receipt, and chooser submission through the selected packet bytes and applies `017D` only to the matching submitted request. Continue with rendered chooser verification, silent server rejection recovery, and live carding. [Card composition evidence](evidence/PK38.03-card-composition.md)
 
 PK37.02 validates vending snapshots, matches buyer stock to the requested board, protects replacement quotes from late replies, and handles sale reports and sold-out closure. Replay covers cancellation during opening, a late owner list, and board removal. Continue with live buyer and seller verification, including server rejection branches, and independent review. [Vending evidence](evidence/PK37.02-vending-snapshots.md)
 

@@ -166,6 +166,9 @@ void InventoryItemFieldsReplay()
 void ItemCompositionResultReplay()
 {
     CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
     TestConnection input;
@@ -177,16 +180,41 @@ void ItemCompositionResultReplay()
     card.m_itemIndex=100;
     card.SetItemId(4001);
     card.m_num=2;
+    card.m_itemType=6;
     ITEM_INFO equipment{};
     equipment.m_itemIndex=101;
     equipment.SetItemId(1201);
     equipment.m_num=1;
+    equipment.m_isIdentified=1;
+    equipment.m_itemType=5;
     g_session.SetInventoryItem(card);
     g_session.SetInventoryItem(equipment);
     const std::vector<u8> success{0x7d,1,101,0,100,0,0};
     dispatch(success);
     Require(g_session.GetInventoryItemByIndex(100)->m_num==2, "unowned result consumed a card");
-    mode.m_pendingItemComposition={100,101,4001,1201,{}};
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestUseInventoryItem,100,0,0)
+        && peer.ReceiveExact(4)==std::vector<u8>({0x7a,1,100,0}), "card use did not request the selected composition list");
+    dispatch({0x7b,1,6,0,101,0});
+    auto* chooser=g_windowMgr.m_itemCompositionWnd;
+    UIItemCompositionWnd::DisplayData display;
+    Require(chooser && chooser->GetDisplayDataForQt(&display) && display.rows.size()==1
+        && display.rows.front().itemIndex==101, "composition list did not display its equipment choice");
+    dispatch({0x7b,1,8,0,101,0,101,0});
+    Require(g_windowMgr.m_itemCompositionWnd==chooser && chooser->GetDisplayDataForQt(&display)
+        && display.rows.size()==1, "duplicate list replaced the composition chooser");
+    equipment.m_wearLocation=2;
+    g_session.SetInventoryItem(equipment);
+    chooser->OnLBtnDblClk(display.rows.front().x+8,display.rows.front().y+8);
+    Require(g_windowMgr.m_itemCompositionWnd==chooser && !mode.m_pendingItemComposition.cardIndex,
+        "rejected equipment selection closed the chooser");
+    equipment.m_wearLocation=0;
+    g_session.SetInventoryItem(equipment);
+    chooser->OnLBtnDblClk(display.rows.front().x+8,display.rows.front().y+8);
+    Require(!g_windowMgr.m_itemCompositionWnd && mode.m_pendingItemComposition.cardIndex==100
+        && peer.ReceiveExact(6)==std::vector<u8>({0x7c,1,100,0,101,0}), "composition selection did not send card then equipment");
     dispatch({0x7d,1,99,0,100,0,0});
     dispatch({0x7d,1,101,0,100,0,2});
     Require(mode.m_pendingItemComposition.cardIndex==100, "unrelated result consumed the pending request");
@@ -203,6 +231,8 @@ void ItemCompositionResultReplay()
     g_session.RemoveInventoryItem(100,1);
     g_session.RemoveInventoryItem(101,1);
     g_windowMgr.ClearChatEvents();
+    connection->Disconnect();
+    SkillPacketReplayAccess::Restore(oldMode,oldModeType);
 }
 
 void ItemRefineResultReplay()

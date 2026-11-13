@@ -6343,7 +6343,7 @@ bool RequestUseInventoryItem(u16 itemIndex)
         return RequestEquipInventoryItem(itemIndex, static_cast<u16>(item->m_location));
     }
 
-    if (g_ttemmgr.IsCardItem(item->GetItemId())) {
+    if (item->IsCard()) {
         if (const auto* mode = g_modeMgr.GetCurrentGameMode(); mode && mode->m_pendingItemComposition.cardIndex) return false;
         const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
         PACKET_CZ_ITEM_COMPOSITION_LIST packet{};
@@ -6434,7 +6434,7 @@ bool RequestComposeCardIntoEquipment(s16 cardItemIndex, s16 equipItemIndex)
         || equipItem->m_wearLocation || !equipItem->m_isIdentified || cardItem->m_num <= 0) {
         return false;
     }
-    if (!g_ttemmgr.IsCardItem(cardItem->GetItemId())) {
+    if (!cardItem->IsCard()) {
         return false;
     }
 

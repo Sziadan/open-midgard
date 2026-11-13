@@ -335,6 +335,11 @@ int ITEM_INFO::GetSlotCount() const
 	return g_ttemmgr.GetSlotCount(GetItemId());
 }
 
+bool ITEM_INFO::IsCard() const
+{
+    return GetItemId() != 0 && (m_itemType == 6 || g_ttemmgr.IsCardItem(GetItemId()));
+}
+
 std::string ITEM_INFO::GetCardIllustName() const
 {
 	return g_ttemmgr.GetCardIllustName(GetItemId());

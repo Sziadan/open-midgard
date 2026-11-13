@@ -4043,3 +4043,5 @@ PK37.02 matches buyer stock to the requested vendor and retires a quote or reque
 PK37.02 verifies rendered board browsing and buying through actual Qt mouse input and a loopback peer, then captures board and quote removal. [Evidence](evidence/PK37.02-vending-snapshots.md)
 
 PK38.03 validates card composition lists and binds each result to the submitted card and equipment before changing inventory. [Evidence](evidence/PK38.03-card-composition.md)
+
+PK38.03 verifies the actual inventory action and chooser submission through the selected `017A` and `017C` frames. [Evidence](evidence/PK38.03-card-composition.md)
