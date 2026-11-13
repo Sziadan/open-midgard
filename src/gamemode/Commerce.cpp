@@ -82,7 +82,7 @@ void ResetForMapEntry()
     }
     state.inventoryTab = inventoryTab;
 }
-void CloseTransactions(){state.cart.visible=state.vending.visible=state.trade.visible=state.shop.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=false;state.shopBoards.clear();state.cartItems.clear();}
+void CloseTransactions(){state.cart.visible=state.vending.visible=state.trade.visible=state.shop.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=state.vendingOpenCanceled=false;state.shopBoards.clear();state.cartItems.clear();}
 void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
     state.clock=now;state.tradePeers=std::move(peers);
     if(tradeCancelPending() || (!state.tradeWaiting&&!state.tradeIncoming))return;
@@ -119,7 +119,7 @@ bool Receive(CGameMode&,const PacketView& v){
         return true;
     }
     switch(op){
-    case 0x110:if(n<10)return false;if(read(p+2)==41 && p[8]==0){state.vendingPending=false;state.vendingActive=false;state.status="Vending was rejected by the server. Check the skill, cart and selected items.";}return true;
+    case 0x110:if(n<10)return false;if(state.vendingPending && read(p+2)==41 && p[8]==0){state.vendingPending=false;state.status="Vending was rejected by the server. Check the skill, cart and selected items.";}return true;
     case 0x121:if(n<14)return false;state.hasCart=true;state.cartCount=read(p+2);state.cartCapacity=read(p+4);state.cartWeight=read(p+6,4);state.cartMaxWeight=read(p+10,4);return true;
     // ZC_CARTOFF clears the contents/window, not cart entitlement or status counters.
     case 0x12b:state.cartItems.clear();state.cart.visible=state.vending.visible=false;state.draft.clear();state.vendingActive=state.vendingPending=false;return true;
@@ -139,7 +139,7 @@ bool Receive(CGameMode&,const PacketView& v){
     }
     case 0x125:if(n<8)return false;remove(state.cartItems,read(p+2),read(p+4,4));return true;
     case 0x12c:if(n<3||p[2]>1)return false;note(p[2]==0?"Cart transfer failed: cart weight limit.":"Cart transfer failed: cart item capacity limit.");return true;
-    case 0x12d:if(n<4)return false;state.vendingSlots=std::min<u32>(12,read(p+2));state.vending.visible=state.cart.visible=true;state.draft.clear();state.vendingActive=state.vendingPending=false;state.status="Drag cart items here, then set quantities and prices.";return true;
+    case 0x12d:if(n!=4)return false;state.vendingSlots=std::min<u32>(12,read(p+2));state.vending.visible=state.cart.visible=true;state.draft.clear();state.vendingActive=state.vendingPending=state.vendingOpenCanceled=false;state.status="Drag cart items here, then set quantities and prices.";return true;
     case 0x136:case 0x133:{
         constexpr int headerSize = 8;
         constexpr int rowSize = 22;
@@ -173,6 +173,7 @@ bool Receive(CGameMode&,const PacketView& v){
             offers.push_back(std::move(offer));
         }
         if(ownShop){
+            if(state.vendingOpenCanceled)return true;
             state.draft=std::move(offers);
             state.vendingActive=true;
             state.vendingPending=false;
@@ -222,7 +223,7 @@ bool Receive(CGameMode&,const PacketView& v){
         if(message)g_windowMgr.PushChatEvent(message,0x006464FFu,6);
         return true;
     }
-    case 0x138:if(n<3)return false;state.vendingPending=false;if(p[2]){state.vendingActive=false;state.status="The server could not open your shop.";}return true;
+    case 0x138:return n==3; // Framed for compatibility. The selected server uses 0136 or skill failure.
     case 0x131:if(n<86)return false;state.shopBoards[read(p+2,4)]=text(p+6,80);return true;
     case 0x132:if(n<6)return false;state.shopBoards.erase(read(p+2,4));if(read(p+2,4)==g_session.m_aid){state.vendingActive=false;state.vendingPending=false;}return true;
     case 0xe5:case 0x1f4:if(n<(op==0xe5?26:32))return false;if(tradeCancelPending())return true;tradeReset();state.partnerId=0;state.tradeRequestTick=state.clock;state.partner=text(p+2,24);if(op==0x1f4)state.partnerId=read(p+26,4);state.tradeIncoming=true;state.trade.visible=true;state.status="Trade invitation. Review the player name before accepting.";return true;
@@ -362,7 +363,24 @@ bool Action(const Command& c){
     if(c.action=="close"){
         if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.CloseInventoryWindow();return true;}
         if(c.to=="trade")return requestTradeCancellation("Waiting for the server to cancel trade.");
-        if(c.to=="vending"){if(state.vendingActive){if(!simple(0x12e))return false;state.vendingActive=false;}else{auto p=packet(0x1b2,85);put(p,2,85);if(!send(p))return false;}state.draft.clear();state.vendingPending=false;}
+        if(c.to=="vending"){
+            if(state.vendingActive){
+                if(!simple(0x12e))return false;
+                state.vendingOpenCanceled=true;
+            }else{
+                if(!state.vending.visible)return false;
+                auto frames=packet(0x1b2,85);
+                put(frames,2,85);
+                if(state.vendingPending){
+                    // The server processes close after open on the same stream. Clear setup too if open failed silently.
+                    frames.insert(frames.begin(),{0x2e,0x01});
+                }
+                if(!send(frames))return false;
+                state.vendingOpenCanceled=state.vendingPending;
+            }
+            state.vendingActive=state.vendingPending=false;
+            state.draft.clear();
+        }
         if(auto* w=window(c.to)){w->visible=false;return true;}return false;
     }
     if(c.action=="use"){if(busy())return false;const auto* i=g_session.GetInventoryItemByIndex(c.index);if(!i)return false;return g_modeMgr.SendMsg(i->m_wearLocation?CGameMode::GameMsg_RequestUnequipInventoryItem:i->m_location?CGameMode::GameMsg_RequestEquipInventoryItem:CGameMode::GameMsg_RequestUseInventoryItem,c.index,i->m_location,0)!=0;}
@@ -385,7 +403,7 @@ bool Action(const Command& c){
         if(item==state.cartItems.end()||!c.amount||c.amount>u32(item->second.m_num)||c.amount>32767||!c.price||c.price>1000000000)return false;found->amount=c.amount;found->price=c.price;return true;
     }
     if(c.action=="openVend"){
-        if(state.vendingActive||state.vendingPending||state.draft.empty()||c.text.empty()||c.text.size()>79)return false;
+        if(!state.vending.visible||busy()||state.draft.empty()||state.draft.size()>state.vendingSlots||c.text.empty()||c.text.size()>79)return false;
         auto p=packet(0x1b2,85+int(state.draft.size())*8);put(p,2,u32(p.size()));std::copy(c.text.begin(),c.text.end(),p.begin()+4);p[84]=1;
         for(size_t k=0;k<state.draft.size();++k){const auto& o=state.draft[k];const auto i=state.cartItems.find(o.item.m_itemIndex);if(i==state.cartItems.end()||!o.amount||o.amount>u32(i->second.m_num)||!o.price)return false;put(p,85+int(k)*8,o.item.m_itemIndex);put(p,87+int(k)*8,o.amount);put(p,89+int(k)*8,o.price,4);}
         if(!send(p))return false;state.vendingPending=true;state.shopTitle=c.text;state.status="Opening shop; waiting for server confirmation.";return true;

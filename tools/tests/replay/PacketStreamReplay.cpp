@@ -6630,6 +6630,34 @@ void CloseVendingProductionSendReplay()
             "successful vending close did not reset the local shop state");
         Require(peer.ReceiveExact(2) == std::vector<u8>({0x2e, 0x01}),
             "vending close did not emit the selected two-byte 0x012E frame");
+
+        auto& shop = ro::commerce::state;
+        shop.vending.visible = true;
+        shop.vendingPending = true;
+        Require(ro::commerce::Action(close) && !shop.vendingPending && !shop.vending.visible,
+            "closing a pending open left the setup visible");
+        std::vector<u8> cancelFrames(87);
+        cancelFrames[0]=0x2e; cancelFrames[1]=1;
+        cancelFrames[2]=0xb2; cancelFrames[3]=1; cancelFrames[4]=85;
+        Require(peer.ReceiveExact(cancelFrames.size())==cancelFrames,
+            "pending open did not send ordered close and setup cancellation");
+
+        CGameMode mode;
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        TestConnection input;
+        const auto dispatch = [&](const std::vector<u8>& frame) {
+            Require(input.QueueBytes(frame) && ProcessGameModePacketLoop(mode,input,router,1).packetsDispatched==1,
+                "vending lifecycle packet did not dispatch");
+        };
+        const std::vector<u8> listing{0x36,1,30,0,77,0,0,0,
+            1,0,0,0,2,0,1,0,3,0xf5,1,1,0,0,0,0,0,0,0,0,0,0};
+        dispatch(listing);
+        Require(!shop.vendingActive && !shop.vending.visible, "late vending list reopened a canceled shop");
+        dispatch({0x2d,1,4,0});
+        dispatch(listing);
+        dispatch({0x38,1,1});
+        Require(shop.vendingActive && shop.vending.visible, "legacy ack changed the newly active shop");
     }
     connection->Disconnect();
     ro::commerce::state = savedState;

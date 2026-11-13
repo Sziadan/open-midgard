@@ -19,6 +19,7 @@ struct State {
     Window cart,vending,trade,shop,mail,equipment;
     bool hasCart=false,vendingActive=false,vendingPending=false,tradeIncoming=false,tradeActive=false,tradeWaiting=false;
     bool localLocked=false,remoteLocked=false,lockPending=false,commitPending=false,mailPending=false;
+    bool vendingOpenCanceled=false;
     TradeCancellation tradeCancellation=TradeCancellation::None;
     u32 cartCount=0,cartCapacity=100,cartWeight=0,cartMaxWeight=0,vendingSlots=0,partnerId=0,sellerId=0;
     u32 localZeny=0,remoteZeny=0;
