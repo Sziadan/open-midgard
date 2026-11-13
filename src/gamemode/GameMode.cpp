@@ -3799,6 +3799,20 @@ std::vector<PlayerContextMenuEntry> BuildPlayerContextMenuEntries(const std::str
     };
 }
 
+bool CanRequestGuildRelation(const CGameMode& mode, u32 targetAid, bool hostile)
+{
+    const auto& guild = g_session.m_localGuild;
+    if (!guild.guildId || !guild.isMaster || !mode.m_world
+        || !targetAid || targetAid == g_session.m_aid || targetAid == g_session.m_gid) return false;
+    const auto* actor = mode.m_world->GetGameActorByAID(targetAid);
+    if (!actor || !IsPcLikeHoverActor(actor) || actor == mode.m_world->m_player
+        || actor->m_gdid <= 0 || static_cast<u32>(actor->m_gdid) == guild.guildId) return false;
+    const auto& relations = g_session.m_guildWindow.relations;
+    return std::none_of(relations.begin(), relations.end(), [&](const auto& relation) {
+        return relation.id == static_cast<u32>(actor->m_gdid) && relation.hostile == hostile;
+    });
+}
+
 bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
 {
     if (!mode.m_world || !mode.m_view) {
@@ -11279,6 +11293,10 @@ bool CGameMode::OpenPlayerContextMenu(u32 targetAid, const std::string& targetNa
     m_menuTargetAID = targetAid;
     m_lastWhisperMenuCharacterName = targetName;
     auto entries = BuildPlayerContextMenuEntries(targetName);
+    if (CanRequestGuildRelation(*this, targetAid, false))
+        entries.push_back({PlayerContext_RequestGuildAlliance, "Request guild alliance"});
+    if (CanRequestGuildRelation(*this, targetAid, true))
+        entries.push_back({PlayerContext_DeclareGuildOpposition, "Declare guild opposition"});
     if (CanRequestAdoption(targetAid)) {
         ro::UiMessageStrings strings;
         strings.Load();
@@ -12930,6 +12948,18 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case GameMsg_RequestPlayerContextAction: {
         const PlayerContextAction action = static_cast<PlayerContextAction>(lparam);
         const u32 targetAid = static_cast<u32>(wparam);
+        if (action == PlayerContext_RequestGuildAlliance || action == PlayerContext_DeclareGuildOpposition) {
+            const bool hostile = action == PlayerContext_DeclareGuildOpposition;
+            if (!CanRequestGuildRelation(*this, targetAid, hostile)) return 0;
+            std::array<u8, 14> packet{static_cast<u8>(hostile ? 0x80 : 0x70), 1};
+            for (unsigned i = 0; i < 4; ++i) {
+                packet[2 + i] = static_cast<u8>(targetAid >> (8 * i));
+                packet[6 + i] = static_cast<u8>(g_session.m_aid >> (8 * i));
+                packet[10 + i] = static_cast<u8>(g_session.m_gid >> (8 * i));
+            }
+            return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
+                hostile ? 6 : static_cast<int>(packet.size()));
+        }
         if (action == PlayerContext_RequestAdoption) {
             return CanRequestAdoption(targetAid) && SendAdoptionPacket(0xf9, targetAid);
         }

@@ -178,7 +178,28 @@ RoFrame {
                     visible: panel.guildData.tab === 4; width: parent.width; spacing: 6
                     Text { text: "Alliances and opposition"; font.bold: true; color: theme.ink; font.pixelSize: 14; height: 26 }
                     Repeater { model: panel.guildData.relations || []
-                        Text { required property var modelData; text: (modelData.hostile ? "Opposition   ·   " : "Ally   ·   ") + modelData.name; color: modelData.hostile ? theme.warning : theme.ink; font.pixelSize: 13; height: 28 }
+                        Row {
+                            id: relationRow
+                            required property var modelData
+                            width: parent.width
+                            height: 28
+                            spacing: 8
+                            Text {
+                                width: parent.width - 90
+                                text: (relationRow.modelData.hostile ? "Opposition   ·   " : "Ally   ·   ") + relationRow.modelData.name
+                                color: relationRow.modelData.hostile ? theme.warning : theme.ink
+                                font.pixelSize: 13
+                                elide: Text.ElideRight
+                            }
+                            GuildButton {
+                                width: 80
+                                label: "Remove"
+                                visible: !!panel.guildData.isMaster
+                                onClicked: uiState.guildAction("removeRelation", {
+                                    id: relationRow.modelData.id, hostile: relationRow.modelData.hostile
+                                })
+                            }
+                        }
                     }
                     Text { visible: !(panel.guildData.relations || []).length; text: "No alliances or hostile guilds."; color: theme.muted }
                 }

@@ -4173,3 +4173,5 @@ PK46.02 reconciles five party and four guild requests. The new guild reply fixtu
 PK46.02 verifies the Qt guild administration sends and alliance invitation replies in production replay. [Guild administration evidence](evidence/PK46.02-guild-admin-crosswalk.md)
 
 PK46.02 captures guild emblem download and upload requests and verifies the version and payload checks for upload confirmation. [Guild emblem evidence](evidence/PK46.02-guild-admin-crosswalk.md#pk4602-guild-emblem-requests)
+
+PK46.02 connects guild alliance and opposition through the player context menu and relation removal through the guild window. [Guild relation evidence](evidence/PK46.02-guild-admin-crosswalk.md#pk4602-guild-relation-requests)

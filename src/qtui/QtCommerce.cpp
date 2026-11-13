@@ -95,7 +95,9 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
         const char* labels[]={"View equipment","Request trade","Invite to party","Invite to guild","Whisper","Add friend","Send mail","Block whispers"};QVariantList actions;
         for(int i=0;i<8;++i){bool enabled=true;if(i==3)enabled=g_session.m_localGuild.guildId && (g_session.m_localGuild.isMaster||(g_session.m_localGuild.permissions&1));actions.push_back(QVariantMap{{"id",i},{"label",QString::fromUtf8(labels[i])},{"enabled",enabled}});}
         for (const auto& entry : w->GetEntries()) {
-            if (entry.actionId == CGameMode::PlayerContext_RequestAdoption) {
+            if (entry.actionId == CGameMode::PlayerContext_RequestAdoption
+                || entry.actionId == CGameMode::PlayerContext_RequestGuildAlliance
+                || entry.actionId == CGameMode::PlayerContext_DeclareGuildOpposition) {
                 actions.push_back(QVariantMap{{"id", entry.actionId}, {"label", str(entry.label)}, {"enabled", true}});
             }
         }
@@ -139,7 +141,9 @@ void BindCommerceUi(QtUiState* ui){
             auto* menu=g_windowMgr.m_playerContextMenuWnd;if(!menu||!menu->m_show)return;
             const auto id=menu->GetTargetAid();const auto name=menu->GetTargetName();const int command=args.value("id").toInt();menu->HideMenu();
             if(command==CGameMode::PlayerContext_AskJoinParty)g_modeMgr.SendMsg(CGameMode::GameMsg_RequestPartyInvite,id,0,0);
-            else if(command==CGameMode::PlayerContext_RequestAdoption)
+            else if(command==CGameMode::PlayerContext_RequestAdoption
+                    || command==CGameMode::PlayerContext_RequestGuildAlliance
+                    || command==CGameMode::PlayerContext_DeclareGuildOpposition)
                 g_modeMgr.SendMsg(CGameMode::GameMsg_RequestPlayerContextAction,id,command,0);
             else if(!PlayerAction(command,id,name)&&state.status.empty())g_windowMgr.PushChatEvent("That player action is unavailable right now.",0x00FF8080u,6);return;
         }

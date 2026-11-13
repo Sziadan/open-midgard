@@ -4419,7 +4419,7 @@ static void PopulateGuildWindow(QtUiState* state,CGameMode& mode)
         QVariantMap row;row["id"]=skill.SKID;row["name"]=skill.SKID>=10000&&skill.SKID<10016?ToQString(skillNames[skill.SKID-10000]):ToQString(skill.skillName);
         row["level"]=skill.level;row["upgrade"]=skill.upgradable!=0;skills.push_back(row);
     }
-    for(const auto& r:info.relations){QVariantMap row;row["name"]=ToQString(r.name);row["hostile"]=r.hostile;relations.push_back(row);}
+    for(const auto& r:info.relations){QVariantMap row;row["id"]=r.id;row["name"]=ToQString(r.name);row["hostile"]=r.hostile;relations.push_back(row);}
     for(const auto& ban:info.bans){QVariantMap row;row["name"]=ToQString(ban.name);row["reason"]=ToQString(ban.reason);bans.push_back(row);}
     data["members"]=members;data["positions"]=positions;data["skills"]=skills;data["relations"]=relations;data["bans"]=bans;
     state->setGuildWindow(data);
@@ -4461,6 +4461,14 @@ QtUiStateAdapter::QtUiStateAdapter()
             if(position>=20)return;
             const auto& members=g_session.m_guildWindow.members;const auto found=std::find_if(members.begin(),members.end(),[&](const auto& m){return m.character==cid;});
             if(found==members.end())return;begin(0x155,16);packet[2]=16;put(4,found->account);put(8,cid);put(12,position);
+        } else if(action=="removeRelation" && guild.isMaster){
+            const auto id = args.value("id").toUInt();
+            const bool hostile = args.value("hostile").toBool();
+            const auto& relations = g_session.m_guildWindow.relations;
+            if (!id || std::none_of(relations.begin(), relations.end(), [&](const auto& relation) {
+                return relation.id == id && relation.hostile == hostile;
+            })) return;
+            begin(0x183, 10);put(2, id);put(6, hostile ? 1 : 0);
         } else if(action=="leave" && !guild.isMaster && args.value("confirmed").toBool()){
             begin(0x159,54);put(2,guild.guildId);put(6,g_session.m_aid);put(10,g_session.m_gid);if(!text(14,40,args.value("reason").toString()))return;
         } else return;

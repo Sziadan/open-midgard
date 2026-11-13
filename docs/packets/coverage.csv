@@ -265,7 +265,7 @@ AUDIT-0x016C,0x016C,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x016D,0x016D,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x016E,0x016E,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected Qt guild notice update captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x016F,0x016F,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0170,0x0170,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0170,0x0170,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected player-context alliance request captured,C2S_ONLY,PK46.02-GUILD-RELATION-REQUESTS
 AUDIT-0x0171,0x0171,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0172,0x0172,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected alliance acceptance and decline captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x0173,0x0173,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -281,10 +281,10 @@ AUDIT-0x017C,0x017C,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected card composit
 AUDIT-0x017D,0x017D,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x017E,0x017E,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected guild chat captured,C2S_ONLY,PK46.02-CHAT-REQUESTS
 AUDIT-0x017F,0x017F,map,S2C,PK17,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0180,0x0180,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0180,0x0180,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected player-context opposition request captured,C2S_ONLY,PK46.02-GUILD-RELATION-REQUESTS
 AUDIT-0x0181,0x0181,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0182,0x0182,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0183,0x0183,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0183,0x0183,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected guild-window relation removal captured,C2S_ONLY,PK46.02-GUILD-RELATION-REQUESTS
 AUDIT-0x0184,0x0184,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0185,0x0185,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0187,0x0187,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,

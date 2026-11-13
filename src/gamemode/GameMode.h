@@ -195,6 +195,8 @@ public:
         PlayerContext_RejectWhispering,
         PlayerContext_AllowWhispering=9, // 8 is an existing commerce request action.
         PlayerContext_RequestAdoption = 10,
+        PlayerContext_RequestGuildAlliance,
+        PlayerContext_DeclareGuildOpposition,
     };
 
     CGameMode();

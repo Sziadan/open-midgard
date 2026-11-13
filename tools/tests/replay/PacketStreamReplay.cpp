@@ -27,6 +27,7 @@
 #include "world/Gr2Monster.h"
 #endif
 #include "ui/UIChooseWnd.h"
+#include "ui/UIPlayerContextMenuWnd.h"
 #include "ui/UIGroundSkillTextWnd.h"
 #include "core/MannerFilter.h"
 #include "ui/UIChooseSellBuyWnd.h"
@@ -7663,6 +7664,93 @@ void GuildAdminProductionSendReplay()
 }
 #endif
 
+void GuildRelationProductionSendReplay()
+{
+    SetCase("guild_relation_production_send", "PK46.02", "selected-0170-0180-0183",
+        "player context and guild relation actions -> production socket");
+    const auto savedGuild = g_session.m_localGuild;
+    const auto savedWindow = g_session.m_guildWindow;
+    const auto savedAid = g_session.m_aid;
+    const auto savedCid = g_session.m_gid;
+    g_session.m_localGuild.guildId = 7;
+    g_session.m_localGuild.isMaster = true;
+    g_session.m_guildWindow.relations = {};
+    g_session.m_aid = 17;
+    g_session.m_gid = 19;
+    CGameMode mode;
+    CWorld world;
+    mode.m_world = &world;
+    CGameActor target;
+    target.m_gid = 23;
+    target.m_gdid = 29;
+    target.m_isPc = true;
+    world.RegisterActor(&target);
+    Require(mode.OpenPlayerContextMenu(23, "Guild member", 0, 0), "could not open guild relation context menu");
+    const auto& entries = g_windowMgr.m_playerContextMenuWnd->GetEntries();
+    const auto has = [&](int action) {
+        return std::any_of(entries.begin(), entries.end(), [&](const auto& entry) { return entry.actionId == action; });
+    };
+    Require(has(CGameMode::PlayerContext_RequestGuildAlliance) && has(CGameMode::PlayerContext_DeclareGuildOpposition),
+        "guild master did not see relations actions for the other guild");
+    g_windowMgr.ClosePlayerContextMenu();
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    {
+        LoopbackPeer peer(*connection);
+        const auto send = [&](int action) {
+            return mode.SendMsg(CGameMode::GameMsg_RequestPlayerContextAction, 23, action, 0);
+        };
+        Require(send(CGameMode::PlayerContext_RequestGuildAlliance)
+                && peer.ReceiveExact(14) == std::vector<u8>{0x70, 1, 23, 0, 0, 0, 17, 0, 0, 0, 19, 0, 0, 0},
+            "alliance request did not carry the target account ID");
+        Require(send(CGameMode::PlayerContext_DeclareGuildOpposition)
+                && peer.ReceiveExact(6) == std::vector<u8>{0x80, 1, 23, 0, 0, 0},
+            "opposition request did not carry the target account ID");
+        Require(g_session.m_guildWindow.relations.empty(), "relation request changed the local guild list");
+        g_session.m_guildWindow.relations.push_back({29, true, "Other Guild"});
+        Require(!send(CGameMode::PlayerContext_DeclareGuildOpposition), "existing opposition was requested again");
+        g_session.m_localGuild.isMaster = false;
+        Require(!send(CGameMode::PlayerContext_RequestGuildAlliance), "non-master sent a relation request");
+        g_session.m_localGuild.isMaster = true;
+        world.UnregisterActor(&target);
+        Require(!send(CGameMode::PlayerContext_RequestGuildAlliance), "vanished actor still owned a relation request");
+#if RO_ENABLE_QT6_UI
+        auto* window = g_windowMgr.MakeWindow(UIWindowMgr::WID_GUILDWND);
+        Require(window, "could not create guild relation window");
+        std::vector<u8> refresh{0x4d, 1};
+        for (u8 type = 0; type <= 4; ++type) refresh.insert(refresh.end(), {0x4f, 1, type, 0, 0, 0});
+        Require(peer.ReceiveExact(refresh.size()) == refresh, "guild window did not send its initial refresh");
+        QtUiStateAdapter adapter;
+        auto* ui = qobject_cast<QtUiState*>(adapter.stateObject());
+        Require(ui, "guild relation fixture could not access the Qt adapter");
+        ui->guildAction("removeRelation", {{"id", 29}, {"hostile", false}});
+        ui->guildAction("removeRelation", {{"id", 29}, {"hostile", true}});
+        Require(peer.ReceiveExact(10) == std::vector<u8>{0x83, 1, 29, 0, 0, 0, 1, 0, 0, 0}
+                && g_session.m_guildWindow.relations.size() == 1,
+            "relation removal used the wrong guild or changed the list before a reply");
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        const std::array<u8, 10> removed{0x84, 1, 29, 0, 0, 0, 1, 0, 0, 0};
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(removed.data(), removed.size(), packet, consumed)
+                && consumed == static_cast<int>(removed.size()) && router.Dispatch(mode, packet)
+                && g_session.m_guildWindow.relations.empty(),
+            "server removal did not retire the matching relation");
+        ui->guildAction("removeRelation", {{"id", 29}, {"hostile", true}});
+        g_windowMgr.DeleteWindow(window);
+#endif
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
+            "guild relation actions emitted extra bytes");
+    }
+    connection->Disconnect();
+    mode.m_world = nullptr;
+    g_session.m_localGuild = savedGuild;
+    g_session.m_guildWindow = savedWindow;
+    g_session.m_aid = savedAid;
+    g_session.m_gid = savedCid;
+}
+
 void GuildReplyProductionSendReplay(bool alliance = false)
 {
     SetCase("guild_reply_production_send", "PK46.02",
@@ -8041,6 +8129,7 @@ int main(int argc,char** argv){try{
     GuildEmblemProductionReplay();
     GuildAdminProductionSendReplay();
 #endif
+    GuildRelationProductionSendReplay();
     GuildReplyProductionSendReplay();
     GuildReplyProductionSendReplay(true);
     FriendReplyProductionSendReplay();
