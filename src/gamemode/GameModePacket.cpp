@@ -2139,6 +2139,7 @@ void HandleLocalizedSystemNotice(CGameMode& mode, const PacketView& packet)
     case 1267: fallback = "The mercenary has died."; break;
     case 1268: fallback = "You have released the mercenary."; break;
     case 1269: fallback = "The mercenary has run away."; break;
+    case 1357: fallback = "This character's equipment information is not open to the public."; break;
     default: break;
     }
     // Selected mercenary_delete sends these owner-only notices before the

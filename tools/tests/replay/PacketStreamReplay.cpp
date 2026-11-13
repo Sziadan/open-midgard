@@ -2735,6 +2735,13 @@ void PrivacyConfigurationReplay()
         && equipment.GetQtSystemButtonDisplayForQt(5, &visibility) && visibility.label == "Private gear",
         "reconnect snapshots did not restore all settings independently");
     g_windowMgr.ClearChatEvents();
+    receive({0x91, 2, 0x4d, 5}, 1);
+    const auto& denial = g_windowMgr.GetChatEvents();
+    Require(denial.size() == 2 && !denial.front().text.empty()
+        && denial.front().text == denial.back().text
+        && !g_session.m_showEquipmentToOthers && !g_session.m_refuseRecall && !g_session.m_refusePartyInvites,
+        "equipment lookup refusal was silent or changed local privacy");
+    g_windowMgr.ClearChatEvents();
     connection->Disconnect();
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }

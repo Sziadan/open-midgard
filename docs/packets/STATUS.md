@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Social packets**. PK16.03 verifies user counts, friend actions, and the selected whisper delivery and acknowledgement branches. PK34 now validates and replaces friend snapshots atomically. PK16.04 review remains open. [Social evidence](evidence/PK16.03-social-wire.md) and [snapshot evidence](evidence/PK34.02-friend-snapshot.md)
+**Social packets**. PK16.04 reviews the selected privacy and social paths and verifies equipment lookup refusal. PK34 validates and replaces friend snapshots atomically. Independent review and live verification remain open. [Verification evidence](evidence/PK16.04-verification-boundary.md)
 
 **Privacy configuration**. PK16.02 wires the equipment control and privacy commands to selected server-confirmed settings. PK16.03 still owns the social packet audit. [Evidence](evidence/PK16.01-privacy-wire.md)
 

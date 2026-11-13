@@ -565,9 +565,9 @@
       "commit_subject": "packet(PK16.03): validate whisper delivery framing"
     },
     "PK16.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK16.04-verification-boundary.md"],
+      "commit_subject": "packet(PK16.04): verify privacy and social paths"
     },
     "PK17.01": {
       "status": "NOT_STARTED",

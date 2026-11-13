@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK34's `0201` friend snapshot slice validates the full roster before publishing it. Continue PK16.04 by auditing the implemented privacy and social paths against the selected server and updating the superseded work-item evidence. Review replay coverage for privacy rejection, reconnect snapshots, messenger removal, invitations, and whispers. PK16 gates PK30 alongside completed PK25. PK34 still owns the inventory, equipment, cart, and storage slices. [Friend snapshot evidence](evidence/PK34.02-friend-snapshot.md) and [social packet evidence](evidence/PK16.03-social-wire.md)
+PK16.04 records the selected privacy and social review, including the equipment lookup refusal and the result-only whisper acknowledgement limitation. Continue PK30.01 source research for relationship events. Start with `clif_divorced` and `clif_Adopt_reply`, then trace `01F6/01F7/01F9` through the parent and child identity fields and the consent lifecycle. PK34 still owns the inventory, equipment, cart, and storage slices. [Privacy and social verification](evidence/PK16.04-verification-boundary.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 

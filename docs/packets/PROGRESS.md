@@ -3967,3 +3967,5 @@ PK16.03 moves friend invitation input to the shared native confirmation and its 
 PK16.03 verifies selected whisper outcomes and rejects malformed delivery before it reaches chat. [Evidence](evidence/PK16.03-social-wire.md)
 
 PK34.02 and PK34.03 validate and replace the selected friend roster snapshot. [Evidence](evidence/PK34.02-friend-snapshot.md)
+
+PK16.04 verifies privacy and social behavior for the selected version, including the equipment lookup refusal notice. [Evidence](evidence/PK16.04-verification-boundary.md)
