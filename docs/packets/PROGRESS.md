@@ -4107,3 +4107,5 @@ PK40.02 stages one auction item and correlates the `0256` reply, including the r
 PK40.02 sends registration, bid, cancel, and stop requests and receives their selected replies and server-pushed own lists. [Evidence](evidence/PK40.02-auction-transactions.md)
 
 PK40.02 connects auction browsing, staging, registration and listing actions to a native window, including confirmation and managed teardown. [Evidence](evidence/PK40.02-auction-window.md)
+
+PK40.03 connects the selected NPC cash-shop catalog, purchase and result to the existing shop windows. Replay checks split payment and quote-owned balances. [Evidence](evidence/PK40.03-npc-cash-shop.md)

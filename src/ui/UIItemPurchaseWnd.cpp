@@ -258,6 +258,12 @@ void UIItemPurchaseWnd::DrawNativeToHdc(HDC hdc)
     const RECT totalValueRect = shopui::MakeRect(m_x + 90, m_y + m_h - 75, 138, 16);
     shopui::DrawWindowTextRect(hdc, totalLabelRect, "Total", RGB(36, 36, 36), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
     shopui::DrawWindowTextRect(hdc, totalValueRect, FormatNumber(g_session.m_shopDealTotal), RGB(28, 60, 98), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+    if (g_session.m_shopUsesCash) {
+        const RECT balanceRect = shopui::MakeRect(m_x + 10, m_y + m_h - 57, m_w - 20, 16);
+        const auto balance = "Cash " + FormatNumber(g_session.m_cashShopPoints)
+            + "   Kafra " + FormatNumber(g_session.m_kafraShopPoints);
+        shopui::DrawWindowTextRect(hdc, balanceRect, balance, RGB(28, 60, 98), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+    }
 
     DrawButton(hdc, GetButtonRect(ButtonAdd), "Add", m_hoverButton == ButtonAdd, m_pressedButton == ButtonAdd);
     DrawButton(hdc, GetButtonRect(ButtonRemove), "Remove", m_hoverButton == ButtonRemove, m_pressedButton == ButtonRemove);
@@ -476,6 +482,9 @@ unsigned long long UIItemPurchaseWnd::BuildDisplayStateToken() const
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(g_session.m_shopSelectedDealRow + 1));
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(g_session.m_shopSelectedSourceRow + 1));
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(g_session.m_shopDealTotal));
+    shopui::HashTokenValue(&hash, g_session.m_shopUsesCash);
+    shopui::HashTokenValue(&hash, g_session.m_cashShopPoints);
+    shopui::HashTokenValue(&hash, g_session.m_kafraShopPoints);
     shopui::HashTokenValue(&hash, static_cast<unsigned long long>(g_session.m_shopDealRows.size()));
     for (const NPC_SHOP_DEAL_ROW& row : g_session.m_shopDealRows) {
         shopui::HashTokenValue(&hash, static_cast<unsigned long long>(row.itemInfo.GetItemId()));

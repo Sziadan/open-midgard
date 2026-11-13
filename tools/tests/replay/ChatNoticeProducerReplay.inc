@@ -47,6 +47,57 @@ void MannerAndColoredNoticeReplay()
     world.UnregisterActor(&actor);
 }
 
+void CashShopReplay()
+{
+    SetCase("npc_cash_shop", "PK40.03", "selected-0287-0289", "NPC shop purchase and balance update");
+    CGameMode mode;
+    TestConnection input;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    auto* outgoing = CRagConnection::instance();
+    outgoing->Disconnect();
+    LoopbackPeer server(*outgoing);
+    g_session.ClearNpcShopState();
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        Require(input.QueueBytes(bytes), "could not queue cash shop frame");
+        Require(ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1
+            && !input.BufferedBytes(), "cash shop frame did not dispatch");
+    };
+    const std::vector<u8> list{0x87,2,23,0, 120,0,0,0, 80,0,0,0, 110,0,0,0, 100,0,0,0, 0,0xf5,1};
+    dispatch(list);
+    Require(g_session.m_shopUsesCash && g_session.m_cashShopPoints == 120 && g_session.m_kafraShopPoints == 80
+        && g_session.m_shopRows.size() == 1 && g_session.m_shopRows.front().secondaryPrice == 100,
+        "cash shop catalog lost balances or discounted price");
+    auto malformed = list;
+    malformed.push_back(0);
+    ++malformed[2];
+    dispatch(malformed);
+    Require(g_session.m_shopRows.size() == 1 && g_session.AdjustNpcShopDealBySourceRow(0, 2),
+        "partial cash catalog replaced the active quote");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestShopBuyList,0,0,0)
+        && server.ReceiveExact(10) == std::vector<u8>{0x88,2,0xf5,1,2,0,80,0,0,0},
+        "cash purchase did not send the selected item, quantity and contribution");
+    Require(!mode.SendMsg(CGameMode::GameMsg_RequestShopBuyList,0,0,0), "duplicate cash purchase was allowed");
+    dispatch({0x89,2,110,0,0,0, 70,0,0,0, 6,0});
+    Require(!g_session.m_cashShopPending && g_session.m_cashShopPoints == 110 && g_session.m_kafraShopPoints == 70,
+        "cash shop rejection did not refresh both balances");
+    dispatch({0x89,2,0,0,0,0, 0,0,0,0, 0,0});
+    Require(g_session.m_cashShopPoints == 110 && g_session.m_kafraShopPoints == 70,
+        "duplicate cash result mutated balances");
+    Require(g_session.AdjustNpcShopDealBySourceRow(0,1) && mode.SendMsg(CGameMode::GameMsg_RequestShopBuyList,0,0,0),
+        "cash shop did not allow a subsequent purchase");
+    Require(server.ReceiveExact(10) == std::vector<u8>{0x88,2,0xf5,1,1,0,0,0,0,0},
+        "cash-only purchase encoded an unexpected Kafra contribution");
+    dispatch(list);
+    dispatch({0x89,2,10,0,0,0, 70,0,0,0, 0,0});
+    Require(!g_session.m_cashShopPending && g_session.m_cashShopPoints == 120 && g_session.m_kafraShopPoints == 80,
+        "a late cash result changed the replacement quote");
+    g_windowMgr.CloseNpcShopWindows();
+    g_windowMgr.ClearChatEvents();
+    g_session.ClearNpcShopState();
+    outgoing->Disconnect();
+}
+
 void AuctionSearchSnapshotReplay()
 {
     SetCase("auction_search_snapshot", "PK40.02", "selected-0252-025f-auction-search", "map packet loop -> auction page");

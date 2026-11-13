@@ -1550,6 +1550,10 @@ void PopulateItemPurchaseState(QtUiState* state)
     purchaseData.insert(QStringLiteral("quantityLabel"), QStringLiteral("Qty"));
     purchaseData.insert(QStringLiteral("amountLabel"), QStringLiteral("Cost"));
     purchaseData.insert(QStringLiteral("totalLabel"), QStringLiteral("Total"));
+    if (g_session.m_shopUsesCash) {
+        purchaseData.insert(QStringLiteral("balanceLabel"),
+            QStringLiteral("Cash %1  Kafra %2").arg(g_session.m_cashShopPoints).arg(g_session.m_kafraShopPoints));
+    }
     state->setItemPurchaseData(purchaseData);
 
     QVariantList rows;

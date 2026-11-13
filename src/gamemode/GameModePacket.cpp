@@ -77,6 +77,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 #include <zlib.h>
 
@@ -3777,6 +3778,67 @@ void HandleNpcShopBuyList(CGameMode& mode, const PacketView& packet)
     }
     g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMSHOPWND);
     g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMPURCHASEWND);
+}
+
+void HandleNpcCashShopList(CGameMode& mode, const PacketView& packet)
+{
+    constexpr size_t headerSize = 12;
+    constexpr size_t rowSize = 11;
+    if (!packet.data || packet.packetLength < headerSize || ReadLE16(packet.data + 2) != packet.packetLength
+        || (packet.packetLength - headerSize) % rowSize != 0) return;
+
+    std::vector<NPC_SHOP_ROW> rows;
+    rows.reserve((packet.packetLength - headerSize) / rowSize);
+    std::unordered_set<u16> itemIds;
+    for (size_t offset = headerSize; offset < packet.packetLength; offset += rowSize) {
+        const u8* data = packet.data + offset;
+        const auto id = ReadLE16(data + 9);
+        const auto price = ReadLE32(data);
+        const auto discount = ReadLE32(data + 4);
+        if (!id || !price || !discount || price > 0x7fffffffu || discount > price || !itemIds.insert(id).second) return;
+        auto& row = rows.emplace_back();
+        row.price = price;
+        row.secondaryPrice = discount;
+        row.itemInfo.m_itemType = data[8];
+        row.itemInfo.SetItemId(id);
+        row.itemInfo.m_isIdentified = 1;
+    }
+
+    mode.m_isOnQuest = 1;
+    g_windowMgr.CloseNpcShopQuantityPrompt();
+    g_session.SetNpcShopRows(g_session.m_shopNpcId, NpcShopMode::Buy, rows);
+    g_session.m_shopUsesCash = true;
+    ++g_session.m_cashShopQuote;
+    g_session.m_cashShopPoints = ReadLE32(packet.data + 4);
+    g_session.m_kafraShopPoints = ReadLE32(packet.data + 8);
+    g_windowMgr.CloseNpcShopWindows();
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMSHOPWND);
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMPURCHASEWND);
+}
+
+void HandleNpcCashShopResult(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 12 || !g_session.m_cashShopPending) return;
+    g_session.m_cashShopPending = false;
+    if (g_session.m_shopUsesCash && g_session.m_cashShopPendingQuote == g_session.m_cashShopQuote) {
+        g_session.m_cashShopPoints = ReadLE32(packet.data + 2);
+        g_session.m_kafraShopPoints = ReadLE32(packet.data + 6);
+        if (g_windowMgr.m_itemShopWnd) g_windowMgr.m_itemShopWnd->Invalidate();
+        if (g_windowMgr.m_itemPurchaseWnd) g_windowMgr.m_itemPurchaseWnd->Invalidate();
+    }
+    constexpr unsigned messageIds[] = {54, 1227, 1228, 56, 1229, 1230, 1254, 0, 0};
+    constexpr const char* fallback[] = {"The deal has successfully completed.",
+        "The cash shop is unavailable.", "The cash shop could not complete the purchase.",
+        "You cannot carry more items.", "You cannot purchase items while trading.",
+        "The item information is incorrect.", "You do not have enough points.",
+        "The purchase exceeds the item limit.", "Some items could not be purchased."};
+    const auto result = ReadLE16(packet.data + 10);
+    if (result >= std::size(fallback)) return;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const auto text = messageIds[result] ? strings.Get(messageIds[result], fallback[result]) : fallback[result];
+    if (result != 5) g_windowMgr.SendMsg(3, 0, 0);
+    PushShopResultMessage(text.c_str(), result == 0 ? 0x0000ffffu : 0x00ff0000u);
 }
 
 void HandleNpcShopSellList(CGameMode& mode, const PacketView& packet)
@@ -10362,6 +10424,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00C2, HandleUserCount);
     router.Register(0x00C4, HandleNpcShopDealType);
     router.Register(0x00C6, HandleNpcShopBuyList);
+    router.Register(0x0287, HandleNpcCashShopList);
+    router.Register(0x0289, HandleNpcCashShopResult);
     router.Register(0x00C7, HandleNpcShopSellList);
     router.Register(0x00CA, HandleNpcShopBuyResult);
     router.Register(0x00CB, HandleNpcShopSellResult);

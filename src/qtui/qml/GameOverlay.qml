@@ -869,6 +869,16 @@ Item {
             horizontalAlignment: Text.AlignRight
         }
 
+        Text {
+            x: 10
+            y: parent.height - 57
+            text: uiState.itemPurchaseData.balanceLabel || ""
+            visible: text.length > 0
+            color: theme.titleBottom
+            font.family: theme.fontFamily
+            font.pixelSize: 11
+        }
+
         Repeater {
             model: uiState.itemPurchaseButtons
 

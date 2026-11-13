@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK40.03 frames the selected NPC cash-shop catalog and result and sends single-item purchases through the existing shop windows. Continue with explicit Kafra contribution and split confirmation, rendered acceptance, and live balance and inventory verification. [Cash-shop evidence](evidence/PK40.03-npc-cash-shop.md)
+
 PK40.02 connects the selected auction requests to a native window. Continue with installed-skin and rendered comparison, live confirmation and refund checks, and recovery for requests the server drops silently. PK40.03 uses the selected single-item cash-shop exchange. PK40.04 classifies the ten banking rows as inactive in MAIN 20080910. [Financial packet inventory](evidence/PK40.01-selected-commerce-inventory.md) · [Auction window evidence](evidence/PK40.02-auction-window.md)
 
 PK39.04 records five verified request identities and five inactive identities for MAIN 20080910. Continue live boss rewards, rankings, PvP and mute transitions. Verify rank badge rendering and sound against a live rank change, including hide and zero reset. PK48 owns independent review. [Selected verification](evidence/PK39.04-selected-verification.md) · [Selected inventory](evidence/PK39.01-selected-inventory.md)

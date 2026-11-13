@@ -2269,6 +2269,10 @@ void CSession::ClearNpcShopState(bool clearPendingResults)
 {
     m_shopChoicePending = false;
     if (clearPendingResults) m_shopPendingResults.clear();
+    if (clearPendingResults) m_cashShopPending = false;
+    m_shopUsesCash = false;
+    m_cashShopPoints = 0;
+    m_kafraShopPoints = 0;
     m_shopNpcId = 0;
     m_shopMode = NpcShopMode::None;
     m_shopSelectedSourceRow = -1;
@@ -2286,6 +2290,7 @@ void CSession::SetNpcShopChoice(u32 npcId)
 
 void CSession::SetNpcShopRows(u32 npcId, NpcShopMode mode, const std::vector<NPC_SHOP_ROW>& rows)
 {
+    m_shopUsesCash = false;
     m_shopChoicePending = false;
     m_shopNpcId = npcId;
     m_shopMode = mode;
@@ -2681,6 +2686,8 @@ bool CSession::AdjustNpcShopDealBySourceRow(size_t sourceRowIndex, int deltaQuan
     }
 
     const NPC_SHOP_ROW& row = m_shopRows[sourceRowIndex];
+    if (m_shopUsesCash && (m_cashShopPending || (deltaQuantity > 0 && !m_shopDealRows.empty()
+        && m_shopDealRows.front().itemInfo.GetItemId() != row.itemInfo.GetItemId()))) return false;
     const int typeLimit = NpcShopItemIsStackable(row.itemInfo.m_itemType) ? 30000 : 1;
     const int maxQuantity = m_shopMode == NpcShopMode::Sell
         ? (std::max)(0, (std::min)(row.availableCount, typeLimit))

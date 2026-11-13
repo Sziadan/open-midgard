@@ -1384,9 +1384,9 @@
       "commit_subject": "packet(PK40.02): expose auction controls in the native window"
     },
     "PK40.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK40.03-npc-cash-shop.md"],
+      "commit_subject": "packet(PK40.03): connect selected NPC cash shop purchases"
     },
     "PK40.04": {
       "status": "COMPLETED",

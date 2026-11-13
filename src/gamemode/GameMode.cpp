@@ -6892,6 +6892,29 @@ bool RequestNpcShopPurchaseList()
         return false;
     }
 
+    if (g_session.m_shopUsesCash) {
+        if (g_session.m_cashShopPending || g_session.m_shopDealRows.size() != 1) return false;
+        const auto& row = g_session.m_shopDealRows.front();
+        const auto total = static_cast<u64>(row.unitPrice) * row.quantity;
+        if (!total || total > 0x7fffffffu) return false;
+        const auto kafra = total > g_session.m_cashShopPoints
+            ? static_cast<u32>(total - g_session.m_cashShopPoints) : 0u;
+        if (kafra > g_session.m_kafraShopPoints) return false;
+
+        const auto item = row.itemInfo.GetItemId();
+        const auto quantity = static_cast<u16>(row.quantity);
+        const u8 packet[] = {0x88, 2, static_cast<u8>(item), static_cast<u8>(item >> 8),
+            static_cast<u8>(quantity), static_cast<u8>(quantity >> 8), static_cast<u8>(kafra),
+            static_cast<u8>(kafra >> 8), static_cast<u8>(kafra >> 16), static_cast<u8>(kafra >> 24)};
+        if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet))) return false;
+        g_session.m_cashShopPending = true;
+        g_session.m_cashShopPendingQuote = g_session.m_cashShopQuote;
+        g_session.m_shopDealRows.clear();
+        g_session.m_shopSelectedDealRow = -1;
+        g_session.m_shopDealTotal = 0;
+        return true;
+    }
+
     const size_t rowCount = g_session.m_shopDealRows.size();
     const size_t packetLen = sizeof(PACKET_CZ_PC_PURCHASE_ITEMLIST) + rowCount * 4;
     if (packetLen > kNpcShopRequestMaxLength) {

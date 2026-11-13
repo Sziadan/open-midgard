@@ -304,6 +304,12 @@ public:
     int m_plusAspd = 0;
     u32 m_shopNpcId = 0;
     NpcShopMode m_shopMode = NpcShopMode::None;
+    bool m_shopUsesCash = false;
+    bool m_cashShopPending = false;
+    u32 m_cashShopPoints = 0;
+    u32 m_kafraShopPoints = 0;
+    u32 m_cashShopQuote = 0;
+    u32 m_cashShopPendingQuote = 0;
     bool m_shopChoicePending = false;
     int m_shopSelectedSourceRow = -1;
     int m_shopSelectedDealRow = -1;
