@@ -1409,9 +1409,9 @@
       "commit_subject": "packet(PK41.02): render the original opposing-camp marker"
     },
     "PK41.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK41.03-battleground-chat.md"],
+      "commit_subject": "packet(PK41.03): connect selected battleground chat"
     },
     "PK41.04": {
       "status": "NOT_STARTED",

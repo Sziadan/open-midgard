@@ -4119,3 +4119,5 @@ PK41.01 traces the selected camp, score, marker, HP and team-chat contracts and 
 PK41.02 implements the four selected battleground state receivers and connects teammate markers to both minimaps. Continue opposing-camp marker presentation and live verification. [Evidence](evidence/PK41.02-battleground-state.md)
 
 PK41.02 identifies the original opposing-camp bitmap in the selected executable and installed GRF, then queues it in the shared renderer using each visible actor's projected position. Continue PK41.03 with team chat. [Evidence](evidence/PK41.02-battleground-state.md)
+
+PK41.03 connects the battlefield chat command to the selected sender and applies receive filters, bubble dispatch, autosave and map cleanup. Continue selected-profile disposition and live acceptance in PK41.04. [Evidence](evidence/PK41.03-battleground-chat.md)

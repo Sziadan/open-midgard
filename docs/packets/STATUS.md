@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Battleground chat**. PK41.03 verifies the command, selected send and receive paths, autosave and same-map reset in replay. Live team acceptance remains open. [Evidence](evidence/PK41.03-battleground-chat.md)
+
 **Battleground state**. PK41.02 receives camp identity, scores, team HP and teammate minimap markers. The shared world renderer queues the original opposing-camp bitmap. Installed-client capture and live acceptance remain open. [Evidence](evidence/PK41.02-battleground-state.md)
 
 **Storage password packets**. PK36.01 records the registered layouts and classifies the challenge flow as inactive in the selected server source. PK46 and PK47 carry that finding while review of other profiles remains open. [Evidence](evidence/PK36.01-storage-password-applicability.md)

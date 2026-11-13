@@ -181,6 +181,15 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
     }
     case 184: // /eqopen
         return SendMsg(270, !g_session.m_showEquipmentToOthers, 0, 0);
+    case 185: // /battlechat
+        g_session.m_isBattleChat = !g_session.m_isBattleChat;
+        g_windowMgr.SendMsg(3, 0, 0, 0);
+        if (g_session.m_isBattleChat) {
+            SourceChatNotice(1365, "Battlefield Chat has been activated.", 6619135);
+        } else {
+            SourceChatNotice(1366, "Battlefield Chat has been deactivated.", 6619135);
+        }
+        return 1;
     case 9: {
         if(!m_world || !m_world->m_player || !m_world->m_attr)return 0;
         const auto* attr=m_world->m_attr;const auto& position=m_world->m_player->m_pos;

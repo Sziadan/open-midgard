@@ -542,6 +542,7 @@ void MapTransitionLifetimeReplay()
         player.m_pk_total = 12;
         mode.m_pvpRankStartTick = 100;
         mode.m_battlegroundCamp = player.m_camp = 0x123;
+        g_session.m_isBattleChat = true;
         mode.m_battlegroundScoreA = 5;
         mode.m_battlegroundScoreB = 8;
         mode.m_battlegroundPosList.emplace(123, ColorCellPos{4, 5, 0x6edbff});
@@ -693,7 +694,7 @@ void MapTransitionLifetimeReplay()
         Require(!mode.m_isPlayerDead && !mode.m_isOnQuest,
             "same-map reuse retained the previous death state");
         Require(mode.m_compassPosList.empty(), "same-map reuse retained a compass marker");
-        Require(!player.m_camp && !mode.m_battlegroundCamp && !mode.m_battlegroundScoreA
+        Require(!g_session.m_isBattleChat && !player.m_camp && !mode.m_battlegroundCamp && !mode.m_battlegroundScoreA
             && !mode.m_battlegroundScoreB && mode.m_battlegroundPosList.empty(),
             "same-map reuse retained battleground scene state");
         Require(!g_session.m_petStatus.valid && g_session.m_petStatus.actorId == 0

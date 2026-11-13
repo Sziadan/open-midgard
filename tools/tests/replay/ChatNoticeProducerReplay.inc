@@ -178,6 +178,94 @@ void BattlegroundStateReplay()
     g_windowMgr.ClearChatEvents();
 }
 
+void BattlegroundChatReplay()
+{
+    SetCase("battleground_chat", "PK41.03", "selected-02dc", "map packet -> notice, bubble and chat log");
+    CGameMode mode;
+    CWorld world;
+    CPc speaker;
+    speaker.m_gid = 100001;
+    world.RegisterActor(&speaker);
+    mode.m_runtimeActors.emplace(speaker.m_gid, &speaker);
+    mode.m_world = &world;
+    TestConnection input;
+    auto& router = GetProductionGameModePacketRouter();
+    const auto oldService = g_serviceType;
+    const auto oldExclusions = g_session.m_exAidList;
+    const auto oldAdmins = s_dwAdminAID;
+    const auto oldSaveChat = g_session.m_isSaveChat;
+    const int oldNoTalk = g_session.m_isNoTalkMsg, oldNoTalk2 = g_session.m_isNoTalkMsg2;
+    g_serviceType = ServiceAmerica;
+    g_session.m_exAidList.clear();
+    g_session.m_isNoTalkMsg = g_session.m_isNoTalkMsg2 = 0;
+    s_dwAdminAID = {g_session.m_aid};
+    g_session.m_isSaveChat = false;
+    Require(mode.ToggleSourceChatAutoSave(), "could not enable team chat autosave");
+    const auto log = std::filesystem::u8path(mode.GetSourceAutoSaveChatPath());
+    g_windowMgr.ClearChatEvents();
+    const auto incoming = [&](u32 aid, const std::string& message, bool terminated = true) {
+        const size_t length = 32 + message.size() + size_t(terminated);
+        std::vector<u8> bytes(length, 0);
+        bytes[0] = 0xdc; bytes[1] = 2; bytes[2] = u8(length); bytes[3] = u8(length >> 8);
+        for (size_t i = 0; i < 4; ++i) bytes[4 + i] = u8(aid >> (8 * i));
+        std::fill(bytes.begin() + 8, bytes.begin() + 32, 'X');
+        std::copy(message.begin(), message.end(), bytes.begin() + 32);
+        Require(input.QueueBytes(bytes)
+            && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1
+            && !input.BufferedBytes(), "team chat frame did not drain");
+    };
+    const auto& chat = g_windowMgr.GetChatEvents();
+    incoming(speaker.m_gid, "Peer : Rally");
+    Require(chat.size() == 1 && chat.back().text == "Peer : Rally" && chat.back().color == 0xff009b
+        && chat.back().channel == 5 && chat.back().source.route == ro::chat::NoticeRoute::Normal
+        && chat.back().source.type == ro::chat::NoticeType::Chat && speaker.GetChatBubbleText() == "Rally",
+        "ordinary team chat lost source routing or actor speech");
+    g_session.m_exAidList = {speaker.m_gid};
+    incoming(speaker.m_gid, "Peer : Ignore");
+    Require(chat.size() == 1 && speaker.GetChatBubbleText() == "Rally" && mode.m_sourceAutoSaveChatCount == 1,
+        "excluded team sender reached the notice, bubble, or log");
+    g_session.m_exAidList.clear();
+    incoming(0, "Battle begins");
+    Require(chat.size() == 2 && chat.back().text == "Battle begins" && !mode.m_aidList.count(0),
+        "team server notice was dropped or treated as an actor");
+    g_session.m_isNoTalkMsg = 1;
+    incoming(speaker.m_gid, "Peer : Silent one");
+    Require(chat.size() == 2 && speaker.GetChatBubbleText() == "Silent one", "first no-talk option changed team speech");
+    g_session.m_isNoTalkMsg = 0;
+    g_session.m_isNoTalkMsg2 = 1;
+    incoming(speaker.m_gid, "Peer : Silent two");
+    Require(chat.size() == 2 && speaker.GetChatBubbleText() == "Silent two", "second no-talk option changed team speech");
+    g_serviceType = ServiceIndonesia;
+    incoming(speaker.m_gid, "Peer : Highlighted");
+    Require(chat.size() == 3 && chat.back().color == 0xff0000 && chat.back().source.type == ro::chat::NoticeType::None
+        && speaker.GetChatBubbleText() == "Highlighted" && mode.m_sourceAutoSaveChatCount == 5,
+        "special speaker lost its no-talk bypass, color, or independent logging");
+    incoming(speaker.m_gid, "Peer : Unterminated", false);
+    incoming(speaker.m_gid, std::string(256, 'x'));
+    Require(chat.size() == 3 && mode.m_sourceAutoSaveChatCount == 5
+        && speaker.GetChatBubbleText() == "Highlighted", "invalid text reached a team chat consumer");
+    std::ifstream logFile(log, std::ios::binary);
+    const std::string saved((std::istreambuf_iterator<char>(logFile)), {});
+    logFile.close();
+    std::string expected;
+    for (const char* line : {"Peer : Rally", "Battle begins", "Peer : Silent one", "Peer : Silent two", "Peer : Highlighted"}) {
+        expected += line;
+        expected.append("\0\r\n", 3);
+    }
+    Require(saved == expected, "team chat autosave changed the formatted messages");
+    std::filesystem::remove(log);
+    mode.m_runtimeActors.clear();
+    world.UnregisterActor(&speaker);
+    mode.m_world = nullptr;
+    g_serviceType = oldService;
+    g_session.m_exAidList = oldExclusions;
+    s_dwAdminAID = oldAdmins;
+    g_session.m_isSaveChat = oldSaveChat;
+    g_session.m_isNoTalkMsg = oldNoTalk;
+    g_session.m_isNoTalkMsg2 = oldNoTalk2;
+    g_windowMgr.ClearChatEvents();
+}
+
 void CashShopReplay()
 {
     SetCase("npc_cash_shop", "PK40.03", "selected-0287-0289", "NPC shop purchase and balance update");

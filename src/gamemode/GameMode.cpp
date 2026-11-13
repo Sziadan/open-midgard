@@ -10639,6 +10639,7 @@ void CGameMode::ApplyAuctionTransactionResult(u16 opcode, u16 result)
 
 void CGameMode::ResetBattlegroundMapState()
 {
+    g_session.m_isBattleChat = false;
     m_battlegroundCamp = 0;
     m_battlegroundScoreA = 0;
     m_battlegroundScoreB = 0;

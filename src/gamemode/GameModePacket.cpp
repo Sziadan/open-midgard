@@ -9241,17 +9241,36 @@ void HandleFriendRequest(CGameMode& mode, const PacketView& packet)
 
 void HandleBattlefieldChat(CGameMode& mode, const PacketView& packet)
 {
-    // Ref: Zc_Battlefield_Chat (0x02DC)
-    if (!packet.data || packet.packetLength < 32) {
+    constexpr size_t textOffset = 32;
+    constexpr size_t maxTextBytes = 256; // Selected server CHAT_SIZE_MAX, including NUL.
+    if (!packet.data || packet.packetLength <= textOffset || packet.packetLength > textOffset + maxTextBytes
+        || ReadLE16(packet.data + 2) != packet.packetLength || packet.data[packet.packetLength - 1] != 0) {
         return;
     }
 
     const u32 aid = ReadLE32(packet.data + 4);
-    mode.m_aidList[aid] = GetTickCount();
+    if (std::find(g_session.m_exAidList.begin(), g_session.m_exAidList.end(), aid)
+        != g_session.m_exAidList.end()) {
+        return;
+    }
 
-    const std::string msg = ExtractPacketString(packet, 32);
-    if (!msg.empty()) {
-        RecordChat(mode, msg, 0x009B07FF, kChatChannelBattlefield);
+    const auto message = ExtractPacketString(packet, textOffset);
+    if (message.empty()) {
+        return;
+    }
+    if (aid) {
+        mode.m_aidList[aid] = GetTickCount();
+    }
+    if (const u32 colorRef = GetSpecificNameColorRef(aid)) {
+        RecordChat(mode, message, ro::chat::ColorRefToUiRgb(colorRef), kChatChannelBattlefield,
+            {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None, {}});
+    } else if (g_session.m_isNoTalkMsg != 1 && g_session.m_isNoTalkMsg2 != 1) {
+        RecordChat(mode, message, ro::chat::ColorRefToUiRgb(10158335u), kChatChannelBattlefield,
+            {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Chat, {}});
+    }
+    ApplyActorChatBubble(mode, aid, message);
+    if (g_session.m_isSaveChat) {
+        mode.WriteSourceChat(message);
     }
 }
 

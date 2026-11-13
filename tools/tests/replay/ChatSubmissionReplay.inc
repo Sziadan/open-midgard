@@ -100,8 +100,9 @@ void ChatSubmissionReplay()
         {407,"Name"},{408,"Level"},{584,"Pet Info"},{585,"Hunger"},{586,"Intimacy"},
         {592,"Feed"},{593,"Performance"},{594,"Return Egg"},{595,"Accessory Off"},{596,"Pet Info"},{597,"Accessory"},{598,"Equipped"},{600,"Unequipped"},{601,"Feed now?"},
         {667,"Very hungry"},{668,"Hungry"},{669,"Normal"},{670,"Full"},{671,"Very full"},{672,"Very awkward"},{673,"Awkward"},{674,"Friendly"},{675,"Very friendly"},{676,"Unknown"},
-        {682,"Name too long"},{683,"Rename to %s once?"},{1021,"Hate"},{1022,"Very hate"}};
-        for(int i=0;i<=1191;++i){const auto found=labels.find(i);if(found!=labels.end())file<<found->second;
+        {682,"Name too long"},{683,"Rename to %s once?"},{1021,"Hate"},{1022,"Very hate"},
+        {1365,"BATTLE CHAT ON"},{1366,"BATTLE CHAT OFF"}};
+        for(int i=0;i<=1366;++i){const auto found=labels.find(i);if(found!=labels.end())file<<found->second;
             else if(std::find(std::begin(expectedSourceHelpIds),std::end(expectedSourceHelpIds),i)!=std::end(expectedSourceHelpIds)
                     || i==921 || i==922 || i==760 || i==789)file<<"HELP-"<<i;
             file<<"#\r\n";}}
@@ -169,10 +170,15 @@ void ChatSubmissionReplay()
     g_session.m_guildWindow.id=42;Require(submit("$guild"),"dollar guild route failed");named(profile.guildMessage,"guild");
     g_session.m_talkType=2;submissionKeys={true,false};Require(submit("guild priority"),"guild mode priority failed");named(profile.guildMessage,"guild priority");
     submissionKeys={false,true};Require(submit("alt public"),"guild Alt override failed");named(profile.globalMessage,"alt public");
-    submissionKeys={};g_session.m_talkType=0;g_session.m_isBattleChat=true;Require(submit("battle"),"battle source route failed");named(profile.battleMessage,"battle");
+    submissionKeys={};g_session.m_talkType=0;
+    Require(submit("/battlechat") && g_session.m_isBattleChat
+        && g_windowMgr.GetChatEvents().back().text == "BATTLE CHAT ON", "battle chat command did not enable the route");
+    Require(submit("battle"),"battle source route failed");named(0x02db,"battle");
     auto* room=static_cast<UIChatRoomWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_CHATROOMWND));room->ClearMembers();room->SetInputText("room world");
     Require(room->SubmitInput(),"room ordinary source dispatch failed");named(profile.globalMessage,"room world");
-    g_session.m_isBattleChat=false;g_session.m_talkType=0;
+    Require(submit("/battlechat") && !g_session.m_isBattleChat
+        && g_windowMgr.GetChatEvents().back().text == "BATTLE CHAT OFF", "battle chat command did not disable the route");
+    g_session.m_talkType=0;
     mode.m_sourceLastSubmittedChat.clear();mode.m_sourceSameChatRepeatCount=0;
     Require(submit("repeat"),"first shared-repeat send failed");named(profile.globalMessage,"repeat");
     Require(submit("repeat","Peer"),"second shared-repeat send failed");whispered("Peer","repeat");
