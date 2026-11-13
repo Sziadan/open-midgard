@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <string_view>
 
 // Forward declarations
@@ -147,7 +148,9 @@ private:
     void FailAccountLogin(const char* message);
     void UpdateAccountHashTimeout(u32 now);
     void UpdateCharacterRequestTimeout(u32 now);
-    void RecoverCharacterRequest(const char* message);
+    void ReturnToSignIn(const char* message);
+    void UpdateZoneEntryTimeout(u32 now);
+    std::optional<u32> m_zoneEntrySentAt;
     enum class CharacterRequest { None, Select, Create };
     CharacterRequest m_characterRequest = CharacterRequest::None;
     u32 m_characterRequestSentAt = 0;

@@ -132,6 +132,16 @@ struct LoginModeReplayAccess : CLoginMode {
     void AdvanceCharacterRequestTimeout(u32 elapsed) {
         UpdateCharacterRequestTimeout(m_characterRequestSentAt + elapsed);
     }
+    void AdvanceZoneEntryTimeout(u32 elapsed) {
+        UpdateZoneEntryTimeout(*m_zoneEntrySentAt + elapsed);
+    }
+    bool WaitingForZoneEntry() const { return m_zoneEntrySentAt.has_value(); }
+    void ConnectToZoneForReplay(u16 port) {
+        std::strcpy(m_zoneAddr, "127.0.0.1");
+        m_zonePort = port;
+        m_nextSubMode = LoginSubMode_ZoneConnect;
+        EnterPendingSubModeForReplay();
+    }
     void ExpectCreationReplyForReplay(int slot) {
         m_characterRequest = CharacterRequest::Create;
         m_selectedCharSlot = slot;
@@ -2351,10 +2361,48 @@ void LoginZoneServerNotificationReplay(bool packetVer22 = false)
     }
     Require(g_modeMgr.GetOperationGeneration() != oldModeManager.GetOperationGeneration()
         && g_modeMgr.GetRequestedModeType() == 1 && g_session.m_playerPosX == 156
-        && g_session.m_playerPosY == 184 && g_session.m_playerDir == 6 && connection->IsOpen(),
+        && g_session.m_playerPosY == 184 && g_session.m_playerDir == 6 && connection->IsOpen()
+        && !mode.WaitingForZoneEntry(),
         "selected zone acceptance did not schedule GameMode with the accepted position");
     connection->Disconnect();
     g_modeMgr = oldModeManager;
+    for (const u8 refusalOpcode : {0x81, 0x6a, 0}) {
+        LoginModeReplayAccess attempt;
+        attempt.ConnectToZoneForReplay(zonePort);
+        Require(attempt.WaitingForZoneEntry() && connection->IsOpen(), "zone failure fixture did not start entry");
+        Require(SelectSocket(zoneListener.value, true, false, std::chrono::milliseconds(2000)) > 0,
+            "zone failure fixture did not connect to the listener");
+        SocketOwner failedPeer(accept(zoneListener.value, nullptr, nullptr));
+        Require(failedPeer.value != INVALID_SOCKET, "zone failure fixture could not accept connection");
+        ReceiveExactSocket(failedPeer.value, request.size());
+        if (refusalOpcode != 0) {
+            std::vector<u8> refusal(refusalOpcode == 0x6a ? 23 : 3, 0);
+            refusal[0] = refusalOpcode;
+            refusal[2] = 3;
+            Require(::send(failedPeer.value, reinterpret_cast<const char*>(refusal.data()),
+                static_cast<int>(refusal.size()), 0) == static_cast<int>(refusal.size()),
+                "mock zone peer could not send refusal");
+            const auto deadline = Clock::now() + kTimeout;
+            while (attempt.WaitingForZoneEntry() && Clock::now() < deadline) {
+                LoginModeReplayAccess::RunPollNetwork(attempt);
+                if (attempt.WaitingForZoneEntry()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        } else {
+            attempt.AdvanceZoneEntryTimeout(14999);
+            Require(attempt.WaitingForZoneEntry() && connection->IsOpen(), "zone timeout fired early");
+            attempt.AdvanceZoneEntryTimeout(15000);
+        }
+        const std::string_view expected = refusalOpcode == 0x81 ? "denied world authentication (code 3)"
+            : refusalOpcode == 0x6a ? "rejected the world-entry request (code 3)" : "did not confirm world entry";
+        Require(!connection->IsOpen() && !attempt.WaitingForZoneEntry()
+            && attempt.NextSubMode() == CLoginMode::LoginSubMode_Login
+            && g_windowMgr.GetLoginStatus().find(expected) != std::string::npos
+            && g_modeMgr.GetOperationGeneration() == oldModeManager.GetOperationGeneration(),
+            "unsuccessful zone entry did not return to sign-in with a map-specific status");
+        attempt.EnterPendingSubModeForReplay();
+        Require(g_windowMgr.GetLoginStatus().find(expected) != std::string::npos,
+            "entering sign-in discarded the world-entry failure status");
+    }
     g_session.m_aid = oldAid;
     g_session.m_authCode = oldAuth;
     g_session.m_sex = oldSex;
