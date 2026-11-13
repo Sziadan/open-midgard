@@ -164,6 +164,7 @@ public:
         WID_HOMUNINFOWND      = 113,
         WID_AUCTIONWND        = 120,
         WID_INSTANCWND        = 144,
+        WID_QUESTWND          = 145,
         WID_HOMUNSKILLLISTWND = 114,
         WID_MERINFOWND        = 132,
         WID_MERSKILLLISTWND   = 133,

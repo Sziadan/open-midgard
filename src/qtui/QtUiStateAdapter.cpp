@@ -8,6 +8,7 @@
 #include "ui/UIPetInfoWnd.h"
 #include "ui/UICompanionStatusWnd.h"
 #include "ui/UIInstanceWnd.h"
+#include "ui/UIQuestWnd.h"
 #include <ctime>
 #include "ui/UICompanionSkillListWnd.h"
 #include "ui/UIPetEggListWnd.h"
@@ -2161,6 +2162,23 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
             {"status", ToQString(display.status)}, {"details", details}};
     }
     chatUi.insert("instance", instance);
+    QVariantMap questJournal;
+    if (const auto* window = g_windowMgr.m_questWnd; window && IsGameplayWindowVisible(state, window)) {
+        const auto display = window->GetDisplay();
+        QVariantList rows;
+        for (const auto& row : display.rows) {
+            rows.push_back(QVariantMap{{"title", ToQString(row.title)}, {"active", row.active},
+                {"selected", row.selected}});
+        }
+        QVariantList objectives;
+        for (const auto& row : display.objectives) objectives.push_back(ToQString(row));
+        questJournal = {{"layer", SourceManagedWindowLayer(window)}, {"x", window->m_x}, {"y", window->m_y},
+            {"width", window->m_w}, {"height", window->m_h}, {"rows", rows}, {"title", ToQString(display.title)},
+            {"description", ToQString(display.description)}, {"expiry", ToQString(display.expiry)},
+            {"objectives", objectives}, {"action", ToQString(display.action)},
+            {"previous", display.previous}, {"next", display.next}};
+    }
+    chatUi.insert("questJournal", questJournal);
     QVariantList companionSkillLists;
     for (auto* window : {g_windowMgr.m_homunSkillListWnd, g_windowMgr.m_merSkillListWnd}) {
         if (!window || !IsGameplayWindowVisible(state, window)) continue;

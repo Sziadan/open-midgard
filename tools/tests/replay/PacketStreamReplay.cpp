@@ -29,6 +29,7 @@
 #include "ui/UIChooseWnd.h"
 #include "ui/UIPlayerContextMenuWnd.h"
 #include "ui/UIPartyOptionWnd.h"
+#include "ui/UIQuestWnd.h"
 #include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UIGroundSkillTextWnd.h"
 #include "core/MannerFilter.h"
@@ -6846,6 +6847,55 @@ void QuestIncrementalProductionReplay()
     journal = std::move(saved);
 }
 
+void QuestWindowProductionReplay()
+{
+    SetCase("quest_window_production", "PK50.03", "PK50.03-quest-window",
+        "gameplay hotkey -> quest journal -> activation request -> server status");
+    ro::QuestDisplayCatalog catalog;
+    Require(catalog.Parse("// header\r\n999#Title#Icon#Art#Summary\r\ncontinued#Objective#\r\n1000#Other###Detail##")
+            && catalog.Find(999) && catalog.Find(999)->summary == "Summary\r\ncontinued"
+            && catalog.Find(999)->objective == "Objective" && catalog.Find(1000)->title == "Other",
+        "quest resource field order or multiline text was lost");
+    auto saved = std::move(g_session.m_questJournal);
+    auto& journal = g_session.m_questJournal;
+    constexpr u32 id = 0x11223344;
+    journal.states[id] = ro::quest::State::Active;
+    auto& mission = journal.missions[id];
+    mission.objectiveCount = 1;
+    mission.objectives[0] = {1001, 3, "Poring", 9};
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const int oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    Require(g_windowMgr.OnQtKeyDown('Q', false, false, false) && g_windowMgr.m_questWnd
+            && g_windowMgr.m_questWnd->m_show, "Q did not open the managed journal");
+    auto* window = g_windowMgr.m_questWnd;
+    const auto initial = window->GetDisplay();
+    Require(initial.rows.size() == 1 && initial.rows[0].selected && initial.rows[0].active
+            && initial.action == "Deactivate" && initial.objectives == std::vector<std::string>{"Poring  3 / 9"},
+        "journal did not display selected quest and progress");
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    const int x = window->m_x + 240;
+    const int y = window->m_y + 280;
+    g_windowMgr.OnLBtnDown(x, y);
+    g_windowMgr.OnLBtnUp(x, y);
+    Require(peer.ReceiveExact(7) == std::vector<u8>{0xB6, 2, 0x44, 0x33, 0x22, 0x11, 0}
+            && window->GetDisplay().action == "Deactivate", "journal click sent wrong bytes or changed state before confirmation");
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const std::array<u8, 7> response{0xB7, 2, 0x44, 0x33, 0x22, 0x11, 0};
+    Require(router.Dispatch(mode, {0x02B7, 7, response.data()})
+            && window->GetDisplay().action == "Activate", "server confirmation did not update journal action");
+    Require(g_windowMgr.OnQtKeyDown('Q', false, false, false) && !window->m_show,
+        "Q did not close the journal");
+    g_windowMgr.DeleteWindow(window);
+    connection->Disconnect();
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    journal = std::move(saved);
+}
+
 void PartyInviteChatProductionReplay()
 {
     SetCase("party_invite_chat_production", "PK46.02", "PK46.02-party-invite-chat",
@@ -8577,6 +8627,7 @@ int main(int argc,char** argv){try{
     PartyInviteChatProductionReplay();
     QuestSnapshotProductionReplay();
     QuestIncrementalProductionReplay();
+    QuestWindowProductionReplay();
     PartyCreateProductionSendReplay();
     PartyOptionChangeProductionSendReplay();
     PartyDisbandProductionSendReplay();

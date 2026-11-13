@@ -4467,6 +4467,7 @@ Item {
     RoChatRoomSettings { parent: uiLayer; settings: (uiState.chatWindowUi || {}).roomSettings || []; message: (uiState.chatWindowUi || {}).roomMessage || ({}); menu: (uiState.chatWindowUi || {}).roomMenu || ({}) }
     RoPetInfo { parent: uiLayer; petData: (uiState.chatWindowUi || {}).petInfo || ({}) }
     RoInstance { parent: uiLayer; dungeon: (uiState.chatWindowUi || {}).instance || ({}) }
+    RoQuestJournal { parent: uiLayer; journal: (uiState.chatWindowUi || {}).questJournal || ({}) }
     Repeater {
         parent: uiLayer
         model: (uiState.chatWindowUi || {}).companionStatus || []

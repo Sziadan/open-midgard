@@ -1,4 +1,5 @@
 #include "ChatScrollTrimRenderChecks.inc"
+#include "ui/UIQuestWnd.h"
 #include "ChatRoomRenderChecks.inc"
 #include "ChatRoomEntryRenderChecks.inc"
 #include "ChatRoomSettingsRenderChecks.inc"
@@ -402,4 +403,37 @@ void CheckChatWindowStateUi(QGuiApplication& app, QQuickView& view, QtUiState* s
     CheckAdoptionParentMenu(app,view,state,mode,output);
     CheckCraftingChoices(app,view,state,mode,adapter,output);
 
+    g_windowMgr.RemoveAllWindows();
+    auto savedJournal = std::move(g_session.m_questJournal);
+    g_session.m_questJournal.states[123] = ro::quest::State::Active;
+    g_session.m_questJournal.states[124] = ro::quest::State::Inactive;
+    auto& mission = g_session.m_questJournal.missions[123];
+    mission.objectiveCount = 1;
+    mission.objectives[0] = {1002, 3, "Poring", 8};
+    auto* quest = static_cast<UIQuestWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_QUESTWND));
+    Require(quest != nullptr, "quest journal did not open for rendering");
+    quest->Move(100, 75);
+    adapter.syncChat();
+    Frames(app, view);
+    auto* panel = Find(view.rootObject(), "questJournalWindow");
+    const auto objectives = state->chatWindowUi().value("questJournal").toMap().value("objectives").toList();
+    Require(panel && panel->isVisible() && panel->width() == quest->m_w
+        && objectives.size() == 1 && objectives.front().toString() == QStringLiteral("Poring  3 / 8"),
+        "quest journal projection did not reach the gameplay QML panel");
+    Require(view.grabWindow().save(output + "/quest-journal.qml.png"), "quest journal capture failed");
+    ArgbDibSurface dib;
+    Require(dib.EnsureSize(view.width(), view.height()), "quest native DIB allocation failed");
+    std::fill_n(dib.GetPixels(), view.width() * view.height(), 0xff181b20u);
+    quest->DrawToHdc(dib.GetDC());
+    const QImage native(reinterpret_cast<uchar*>(dib.GetPixels()), view.width(), view.height(),
+        view.width() * 4, QImage::Format_RGB32);
+    Require(native.pixelColor(105, 111) == QColor("#d7e6f5")
+        && native.save(output + "/quest-journal.native.png"), "quest native panel did not paint the selected row");
+    const auto rowClick = MAKELPARAM(UiScaleLogicalToRawCoordinate(112), UiScaleLogicalToRawCoordinate(137));
+    WindowProc(g_hMainWnd, WM_LBUTTONDOWN, MK_LBUTTON, rowClick);
+    WindowProc(g_hMainWnd, WM_LBUTTONUP, 0, rowClick);
+    Require(quest->GetDisplay().rows[1].selected && quest->GetDisplay().action == "Activate",
+        "gameplay pointer did not select the inactive quest beneath QML");
+    g_windowMgr.DeleteWindow(quest);
+    g_session.m_questJournal = std::move(savedJournal);
 }

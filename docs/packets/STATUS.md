@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Quest journal snapshots**. PK50.02 receives character quest membership and mission details with atomic validation. PK50.03 owns incremental updates and journal controls. [Evidence](evidence/PK50.02-snapshot-model-boundary.md)
+**Quest journal**. PK50.02 receives character quest membership and mission details with atomic validation. PK50.03 applies incremental updates and opens the journal with Q in native and Qt gameplay. The reference bottom-bar and task-list entry points and live verification remain open. [Quest updates and UI evidence](evidence/PK50.03-quest-incremental.md)
 
 **Battleground chat**. PK41.03 verifies the command, selected send and receive paths, autosave and same-map reset in replay. Live team acceptance remains open. [Evidence](evidence/PK41.03-battleground-chat.md)
 

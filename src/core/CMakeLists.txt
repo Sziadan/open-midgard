@@ -6,6 +6,7 @@ add_library(ro_core STATIC
     Hash.h      Hash.cpp
     SettingsIni.h SettingsIni.cpp
     UiMessageStrings.h UiMessageStrings.cpp
+    QuestDisplayCatalog.h QuestDisplayCatalog.cpp
     TipOfTheDay.h TipOfTheDay.cpp
     SourceMapNames.h SourceMapNames.cpp
     SourceMapTypeTable.h SourceMapTypeTable.cpp

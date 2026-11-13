@@ -18,6 +18,8 @@ add_library(ro_ui STATIC
     UIAuctionWnd.cpp
     UIInstanceWnd.h
     UIInstanceWnd.cpp
+    UIQuestWnd.h
+    UIQuestWnd.cpp
     UICompanionStatusWnd.cpp
     UICompanionSkillListWnd.h
     UICompanionSkillListWnd.cpp

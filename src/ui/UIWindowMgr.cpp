@@ -15,6 +15,7 @@
 #include "UICompanionStatusWnd.h"
 #include "UIAuctionWnd.h"
 #include "UIInstanceWnd.h"
+#include "UIQuestWnd.h"
 #include "UICompanionSkillListWnd.h"
 #include "UIPetEggListWnd.h"
 #include "UIPetTamingDeceiveWnd.h"
@@ -1389,6 +1390,13 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             m_children.push_back(m_petInfoWnd);m_petInfoWnd->SendMsg(nullptr,34,reinterpret_cast<msgparam_t>(&m_petInfoWindowInfo),0,0);
         }
         m_petInfoWnd->SetShow(1);return m_petInfoWnd;
+    case WID_QUESTWND:
+        if (!m_questWnd) {
+            m_questWnd = new UIQuestWnd(windowId);
+            m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), m_questWnd);
+        }
+        m_questWnd->SetShow(1);
+        return m_questWnd;
     case WID_INSTANCWND:
         if (g_session.m_instanceStatus.name.empty()) return nullptr;
         if (!m_instanceWnd) {
@@ -1934,6 +1942,9 @@ bool UIWindowMgr::ToggleWindow(int windowId)
     }
     UIWindow* window = nullptr;
     switch (windowId) {
+    case WID_QUESTWND:
+        window = m_questWnd;
+        break;
     case WID_STATUSWND:
         window = m_statusWnd;
         break;
@@ -2090,6 +2101,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if (window == m_homunInfoWnd) m_homunInfoWnd = nullptr;
     if (window == m_auctionWnd) m_auctionWnd = nullptr;
     if (window == m_instanceWnd) m_instanceWnd = nullptr;
+    if (window == m_questWnd) m_questWnd = nullptr;
     if (window == m_merInfoWnd) m_merInfoWnd = nullptr;
     if (window == m_homunSkillListWnd) m_homunSkillListWnd = nullptr;
     if (window == m_merSkillListWnd) m_merSkillListWnd = nullptr;
@@ -3499,6 +3511,11 @@ bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool isAltDown, boo
             g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUse, slot, 0, 0);
             return true;
         }
+    }
+
+    if (virtualKey == 'Q' && !isAltDown && !isCtrlDown && !isShiftDown && !hasFrontMenuUi && !m_editWindow) {
+        ToggleWindow(WID_QUESTWND);
+        return true;
     }
 
     if (virtualKey == VK_ESCAPE && !hasFrontMenuUi && !(m_autoMessageWnd && m_autoMessageWnd->m_show)) {
