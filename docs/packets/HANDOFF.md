@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 now records six selected companion requests with production replay. Continue the outbound crosswalk with the existing pet-control senders and capture evidence in PK27. Preserve the existing discovery owners and retain live and independent verification for each feature. [Companion crosswalk](evidence/PK46.02-companion-request-crosswalk.md) · [Pet control contract](contracts/PK27.PET-CONTROL.md)
+
 PK46.03 connects scheduled character deletion to the PacketVer23 Delete action. Verify the Windows dialog visually and use a disposable test character to check scheduling, reconnect, cancellation, birth-date refusal and confirmation after the deadline. The selected list omits the deadline and an already-queued reply carries zero. [Scheduled deletion controls](evidence/PK46.03-scheduled-deletion-controls.md)
 
 PK46.03 handles failed account authentication sends and the password-hash challenge deadline. Character selection and creation now return to sign-in after a failed send or 15 seconds without a usable reply. Verify live selection, creation, and unavailable-map-server refusal. Use a disposable character for live deletion checks. Continue PK46.02's remaining per-request traces while deployment verification is pending. [Character request recovery](evidence/PK46.03-loginmode-character-send-paths.md) · [Account failure recovery](evidence/PK46.03-account-login-send-gates.md) · [Outbound crosswalk](evidence/PK46.02-commerce-battleground-booking-crosswalk.md)

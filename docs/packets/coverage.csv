@@ -450,14 +450,14 @@ AUDIT-0x0229,0x0229,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-state-change.
 AUDIT-0x022A,0x022A,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x022B,0x022B,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x022C,0x022C,map,unresolved,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-walking-decoder.md: profile maps 0x022C to shared walking decoder and selected server has only packet-database registrations with 64/65-byte branches. Direction and alternate-profile identity need capture reconciliation.,UNREVIEWED,
-AUDIT-0x022D,0x022D,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x022D,0x022D,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected five-byte homunculus menu command captured through confirmed status actions,C2S_ONLY,PK46.02-COMPANION-STATUS-REQUESTS
 AUDIT-0x022E,0x022E,map,unresolved,PK28,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x022F,0x022F,map,S2C,PK28,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0230,0x0230,map,S2C,PK28,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0231,0x0231,map,C2S,PK28,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0232,0x0232,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0233,0x0233,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0234,0x0234,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,PK45.03-c2s-owner-scope-review.md: selected registry identifies a 6-byte clif_parse_HomMoveToMaster request; no client sender found in network or gamemode. Feature owner and profile identity remain unresolved.,UNREVIEWED,
+AUDIT-0x0231,0x0231,map,C2S,PK28,PK01;PK02;PK47;PK48;PK46,Selected 26-byte homunculus rename captured from the mode and confirmed status action,C2S_ONLY,PK46.02-COMPANION-STATUS-REQUESTS
+AUDIT-0x0232,0x0232,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Selected nine-byte companion movement captured through the C++ controller,C2S_ONLY,PK46.02-COMPANION-MOVEMENT-REQUESTS
+AUDIT-0x0233,0x0233,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected 11-byte companion attack and stop captured through the C++ controller,C2S_ONLY,PK46.02-COMPANION-MOVEMENT-REQUESTS
+AUDIT-0x0234,0x0234,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,Selected six-byte follow request captured for both companion families,C2S_ONLY,PK46.02-COMPANION-MOVEMENT-REQUESTS
 AUDIT-0x0235,0x0235,map,S2C,PK28,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0236,0x0236,map,S2C,PK39,PK01;PK02;PK47;PK48,Selected Killer point emitter branch has no reachable rank type from its only caller pc_addfame,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK39.04-SELECTED-VERIFICATION
 AUDIT-0x0237,0x0237,map,C2S,PK39,PK01;PK02;PK47;PK48;PK46,Selected two-byte Killer rank request verified through slash submission,C2S_ONLY,PK39.04-SELECTED-VERIFICATION
@@ -558,7 +558,7 @@ AUDIT-0x029B,0x029B,map,S2C,PK29,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x029C,0x029C,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x029D,0x029D,map,S2C,PK29,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x029E,0x029E,map,S2C,PK29,PK01;PK02;PK23;PK47;PK48;PK45,Selected server registers the 11-byte mercenary update but uses full 029D lists at its refresh sites,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK29.04-MERCENARY-REFRESH
-AUDIT-0x029F,0x029F,map,C2S,PK29,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x029F,0x029F,map,C2S,PK29,PK01;PK02;PK47;PK48;PK46,Selected three-byte mercenary dismissal captured through the confirmed status action,C2S_ONLY,PK46.02-COMPANION-STATUS-REQUESTS
 AUDIT-0x02A0,0x02A0,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02A1,0x02A1,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02A2,0x02A2,map,S2C,PK29,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

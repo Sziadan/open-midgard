@@ -1829,6 +1829,7 @@
         "docs/packets/evidence/PK46.02-map-add-friend-request.md",
         "docs/packets/evidence/PK46.02-map-auction-feeling-cooking-gaps.md",
         "docs/packets/evidence/PK46.02-commerce-battleground-booking-crosswalk.md",
+        "docs/packets/evidence/PK46.02-companion-request-crosswalk.md",
         "docs/packets/evidence/PK46.02-map-card-composition-request.md",
         "docs/packets/evidence/PK46.02-map-cart-off-request-012A.md",
         "docs/packets/evidence/PK46.02-map-change-cart-request.md",
@@ -1956,7 +1957,7 @@
         "docs/packets/evidence/PK27-prompt-skin-zip.md",
         "docs/packets/evidence/PK27-prompt-picker.md"
       ],
-      "commit_subject": "packet(PK46.02): record direction layout mismatch"
+      "commit_subject": "packet(PK46.02): reconcile selected companion requests"
     },
     "PK46.03": {
       "status": "IN_PROGRESS",
