@@ -835,16 +835,16 @@ AUDIT-0x07FA,0x07FA,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Reason-bearing removal
 AUDIT-0x07FC,0x07FC,map,S2C,PK15,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x07FD,0x07FD,map,S2C,PK38,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0801,0x0801,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Later vending purchase registration starts at 20100105,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.01-ITEM-ACTION-INVENTORY
-AUDIT-0x0802,0x0802,map,C2S,PK43,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0802,0x0802,map,C2S,PK43,PK01;PK02;PK47;PK48;PK46,Selected 18-byte registration request captured through chat command,C2S_ONLY,PK43.03-SELECTED-PARTY-BOOKING
 AUDIT-0x0803,0x0803,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0804,0x0804,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0805,0x0805,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0806,0x0806,map,C2S,PK43,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0807,0x0807,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0808,0x0808,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0809,0x0809,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x080A,0x080A,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x080B,0x080B,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0804,0x0804,map,C2S,PK43,PK01;PK02;PK47;PK48;PK46,Eight-byte entry has no selected search parser,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
+AUDIT-0x0805,0x0805,map,S2C,PK43,PK01;PK02;PK47;PK48,Selected length entry has no reachable search caller,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
+AUDIT-0x0806,0x0806,map,C2S,PK43,PK01;PK02;PK47;PK48;PK46,Selected four-byte deletion request captured through chat command,C2S_ONLY,PK43.03-SELECTED-PARTY-BOOKING
+AUDIT-0x0807,0x0807,map,S2C,PK43,PK01;PK02;PK47;PK48,Delete acknowledgement has zero selected packet length,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
+AUDIT-0x0808,0x0808,map,C2S,PK43,PK01;PK02;PK47;PK48;PK46,Four-byte entry has no selected update parser,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
+AUDIT-0x0809,0x0809,map,S2C,PK43,PK01;PK02;PK47;PK48,Insert notification has zero selected packet length,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
+AUDIT-0x080A,0x080A,map,S2C,PK43,PK01;PK02;PK47;PK48,Update parser and broadcast are absent in the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
+AUDIT-0x080B,0x080B,map,S2C,PK43,PK01;PK02;PK47;PK48,Delete notification has zero selected packet length,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
 AUDIT-0x080E,0x080E,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0810,0x0810,map,S2C,PK43,PK01;PK02;PK47;PK48,Buying-store notification unavailable under selected registry and feature gates,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.01-SELECTED-STORE-BOOKING-INVENTORY
 AUDIT-0x0812,0x0812,map,S2C,PK43,PK01;PK02;PK47;PK48,Buying-store notification unavailable under selected registry and feature gates,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.01-SELECTED-STORE-BOOKING-INVENTORY
@@ -866,8 +866,8 @@ AUDIT-0x082A,0x082A,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Character deletion i
 AUDIT-0x082B,0x082B,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Character deletion identity/layout and server result branches traced in PK44.CHAR-DELETE.md; current client parity and/or scheduled reachability remain open.,UNREVIEWED,PK44.CHAR-DELETE
 AUDIT-0x082C,0x082C,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Character deletion identity/layout and server result branches traced in PK44.CHAR-DELETE.md; current client parity and/or scheduled reachability remain open.,UNREVIEWED,PK44.CHAR-DELETE
 AUDIT-0x082D,0x082D,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
-AUDIT-0x0837,0x0837,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x083A,0x083A,map,S2C,PK43,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0837,0x0837,map,S2C,PK43,PK01;PK02;PK47;PK48,Store search disabled below PACKETVER 20100803,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
+AUDIT-0x083A,0x083A,map,S2C,PK43,PK01;PK02;PK47;PK48,Store search disabled below PACKETVER 20100803,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK43.03-SELECTED-PARTY-BOOKING
 AUDIT-0x083C,0x083C,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Store-search parser gated from 20100608 and later shuffled aliases absent from selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x083D,0x083D,map,S2C,PK38,PK01;PK02;PK47;PK48,Store-search click reply emitter gated from MAIN 20100608,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x0840,0x0840,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY

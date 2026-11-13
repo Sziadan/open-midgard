@@ -836,7 +836,7 @@
 0x07FD,map,S2C,item_drop_announceType; package_item_announceType,,0,,,,,clif_broadcast_obtain_special_item,missing receive handler; missing framing,sender/reference exists; wire/reachability needs review,
 0x0801,map,C2S,HEADER_CZ_PC_PURCHASE_ITEMLIST_FROMMC2,-1,0,,,,,,no receive handler; direction/activity needs review,declared/registered; runtime emission not established,
 0x0802,map,C2S,,18,0,,,clif_parse_PartyBookingRegisterReq,"2,4,6,0",,no receive handler; direction/activity needs review; outbound route not proven by literal constructor scan,declared/registered; runtime emission not established,
-0x0803,map,S2C,,4,0,,,,0,clif_PartyBookingRegisterAck,missing receive handler; missing framing,active sender/reference plus known wire layout,
+0x0803,map,S2C,,4,4,HandlePartyBookingRegistration,10794,,0,clif_PartyBookingRegisterAck,handler present; semantics not certified,active sender/reference plus known wire layout,
 0x0804,map,unresolved,,8,0,,,,0,,no receive handler; direction/activity needs review,declared/registered; runtime emission not established,
 0x0805,map,S2C,,-1,0,,,,0,clif_PartyBookingSearchAck,missing receive handler; missing framing,active sender/reference plus known wire layout,
 0x0806,map,C2S,,4,0,,,clif_parse_PartyBookingDeleteReq,"2,0",,no receive handler; direction/activity needs review; outbound route not proven by literal constructor scan,declared/registered; runtime emission not established,

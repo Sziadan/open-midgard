@@ -330,6 +330,7 @@ public:
         u32 idleDeadline = 0;
         bool showWindow = false;
     } m_instanceStatus;
+    bool m_partyBookingRegistrationPending = false;
     ro::pet::Status m_petStatus;
     bool m_amIPartyMaster = false;
     bool m_partyExpShare = false;

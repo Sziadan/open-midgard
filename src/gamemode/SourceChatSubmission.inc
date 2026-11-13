@@ -1,6 +1,8 @@
 // Original caller47/11 and ProcessTalkType578F10 ownership. Included in
 // GameMode.cpp after the existing request helpers, inside the same translation unit.
 #include "core/SourceLanguageCharset.h"
+#include <charconv>
+#include <sstream>
 namespace {
 struct SourceEmotionRoute {int type,emotion;};
 #include "core/SourceChatEmotions.generated.inc"
@@ -40,6 +42,74 @@ bool SendPrivacyConfiguration(u8 type, bool enabled)
     const u8 packet[] = {0xd8, 0x02, type, 0, 0, 0, static_cast<u8>(enabled), 0, 0, 0};
     return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
 }
+
+bool SubmitPartyBooking(const std::string& text)
+{
+    const auto notice = [](const char* message) {
+        g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(message), 6619135);
+    };
+    if (ro::net::GetActiveMapGameplaySendProfile().id != ro::net::MapGameplaySendProfileId::PacketVer23) {
+        notice("Party booking is unavailable on this packet profile.");
+        return false;
+    }
+    std::istringstream input(text);
+    std::string command, action, extra;
+    input >> command >> action;
+    const auto send = [](const auto& packet) {
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
+            static_cast<int>(packet.size()));
+    };
+    if (action == "register") {
+        const auto parse = [](const std::string& token, int& value) {
+            const auto result = std::from_chars(token.data(), token.data() + token.size(), value);
+            return result.ec == std::errc{} && result.ptr == token.data() + token.size();
+        };
+        std::string levelText, mapText;
+        int level = 0, map = 0;
+        if (input >> levelText >> mapText && parse(levelText, level) && parse(mapText, map)
+            && level > 0 && level <= 32767 && map >= 0 && map <= 32767) {
+            std::array<u8, 18> packet{0x02, 0x08, u8(level), u8(level >> 8), u8(map), u8(map >> 8)};
+            for (size_t offset = 6; offset < packet.size(); offset += 2) {
+                packet[offset] = packet[offset + 1] = 0xff;
+            }
+            size_t offset = 6;
+            bool valid = true;
+            while (input >> extra) {
+                int job = 0;
+                if (offset == packet.size() || !parse(extra, job) || job < -1 || job > 254) {
+                    valid = false;
+                    break;
+                }
+                packet[offset] = u8(job);
+                packet[offset + 1] = job < 0 ? 0xff : 0;
+                offset += 2;
+            }
+            if (valid) {
+                if (g_session.m_partyBookingRegistrationPending) {
+                    notice("Party booking is waiting for the registration result.");
+                    return false;
+                }
+                if (!send(packet)) {
+                    notice("Could not send the party booking registration.");
+                    return false;
+                }
+                g_session.m_partyBookingRegistrationPending = true;
+                return true;
+            }
+        }
+    } else if (action == "delete" && !(input >> extra)) {
+        if (g_session.m_partyBookingRegistrationPending) {
+            notice("Party booking is waiting for the registration result.");
+            return false;
+        }
+        const bool sent = send(std::array<u8, 4>{0x06, 0x08, 0, 0});
+        notice(sent ? "Party booking deletion requested. The server sends no confirmation."
+            : "Could not send the party booking deletion.");
+        return sent;
+    }
+    notice("Use /partybooking register <level> <map ID> [up to six job IDs] or /partybooking delete.");
+    return false;
+}
 }
 
 u32 CGameMode::GetSourceChatTick() const
@@ -70,6 +140,10 @@ bool CGameMode::SubmitSourceChat(const std::string& input,const std::string& tar
     }
     if (text == "/refuserecall" || text == "/acceptrecall") {
         return SendPrivacyConfiguration(1, text == "/refuserecall");
+    }
+    if (text == "/partybooking" || text.rfind("/partybooking ", 0) == 0) {
+        if (m_mapLoadingStage != MapLoading_None) return false;
+        return SubmitPartyBooking(text);
     }
     ro::UiMessageStrings messages;if(text[0]=='/')messages.Load();
     ro::chat::SourceChatParseContext context;

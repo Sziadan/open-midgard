@@ -404,7 +404,6 @@ Each row below is unimplemented at dispatch, but not every row is proven reachab
 - **0x07E6 · HEADER_ZC_MSG_SKILL** — server size 8; client size 0; no sender established by scan. declared/registered; runtime emission not established.
 - **0x07FC · partyleaderchangedType** — server size None; client size 0; clif_party_leaderchanged. sender/reference exists; wire/reachability needs review.
 - **0x07FD · item_drop_announceType, package_item_announceType** — server size None; client size 0; clif_broadcast_obtain_special_item. sender/reference exists; wire/reachability needs review.
-- **0x0803 · legacy numeric opcode** — server size 4; client size 0; clif_PartyBookingRegisterAck. active sender/reference plus known wire layout.
 - **0x0805 · legacy numeric opcode** — server size -1; client size 0; clif_PartyBookingSearchAck. active sender/reference plus known wire layout.
 - **0x0807 · legacy numeric opcode** — server size None; client size 0; clif_PartyBookingDeleteAck. sender/reference exists; wire/reachability needs review.
 - **0x0809 · legacy numeric opcode** — server size None; client size 0; clif_PartyBookingInsertNotify. sender/reference exists; wire/reachability needs review.

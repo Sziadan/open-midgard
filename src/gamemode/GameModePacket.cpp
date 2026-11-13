@@ -9240,6 +9240,22 @@ void HandleFriendRequest(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandlePartyBookingRegistration(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 4 || !g_session.m_partyBookingRegistrationPending) {
+        return;
+    }
+    g_session.m_partyBookingRegistrationPending = false;
+    const char* notice = "Party booking returned an unknown registration result.";
+    switch (ReadLE16(packet.data + 2)) {
+    case 0: notice = "Party booking registered."; break;
+    case 1: notice = "Party booking registration failed."; break;
+    case 2: notice = "A party booking is already registered."; break;
+    }
+    RecordChat(mode, notice, ro::chat::ColorRefToUiRgb(6619135u), kChatChannelSystem,
+        {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None, {}});
+}
+
 void RecordInstanceNotice(CGameMode& mode, int id, const char* fallback)
 {
     ro::UiMessageStrings strings;
@@ -9785,6 +9801,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     if (info.hasServerMove) {
         ClearPendingDisconnectAction();
         g_session.m_instanceStatus = {};
+        g_session.m_partyBookingRegistrationPending = false;
         g_windowMgr.DeleteWindow(g_windowMgr.m_instanceWnd);
     }
     const bool reconnected = !info.hasServerMove
@@ -10774,6 +10791,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02CC, HandleInstanceQueuePosition);
     router.Register(0x02CD, HandleInstanceStatus);
     router.Register(0x02CE, HandleInstanceNotification);
+    router.Register(0x0803, HandlePartyBookingRegistration);
     router.Register(0x02B1, HandleIgnorePacket);
     router.Register(0x02B2, HandleIgnorePacket);
     router.Register(0x02B9, HandleShortcutKeyList);

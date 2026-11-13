@@ -156,6 +156,48 @@ void ChatSubmissionReplay()
         && profile.partyMessage==0x0108 && profile.guildMessage==0x017e && profile.battleMessage==0x02db
         && profile.characterNameRequest==0x00a2 && profile.characterNameRequestLength==15 && profile.characterNameRequestIdOffset==11,
         "selected source chat profile IDs or preserved name-request layout differ from primary/server registration");
+    const bool previousBookingPending = g_session.m_partyBookingRegistrationPending;
+    g_session.m_partyBookingRegistrationPending = false;
+    TestConnection bookingInput;
+    CGameModePacketRouter bookingRouter;
+    RegisterDefaultGameModePacketHandlers(bookingRouter);
+    const auto bookingResult = [&](u16 result) {
+        Require(bookingInput.QueueBytes({3, 8, u8(result), u8(result >> 8)})
+            && ProcessGameModePacketLoop(mode, bookingInput, bookingRouter, 1).packetsDispatched == 1
+            && !bookingInput.BufferedBytes(), "booking registration result did not frame and dispatch");
+    };
+    const auto chatCount = g_windowMgr.GetChatEvents().size();
+    bookingResult(0);
+    Require(g_windowMgr.GetChatEvents().size() == chatCount, "unsolicited booking result produced a notice");
+    mode.m_mapLoadingStage = CGameMode::MapLoading_PresentScreen;
+    Require(!submit("/partybooking register 90 513") && !g_session.m_partyBookingRegistrationPending,
+        "booking registration was sent while the server could still discard gameplay requests");
+    mode.m_mapLoadingStage = CGameMode::MapLoading_None;
+    Require(!submit("/partybooking register 90 5 0 1 2 3 4 5 6")
+        && !submit("/partybooking register 90 5 255") && !submit("/partybooking delete extra"),
+        "invalid booking command passed local validation");
+    Require(submit("/partybooking register 90 513 0 254 -1") && g_session.m_partyBookingRegistrationPending,
+        "booking registration did not enter the pending state");
+    Require(peer.ReceiveExact(18) == std::vector<u8>({2, 8, 90, 0, 1, 2, 0, 0, 254, 0,
+        255, 255, 255, 255, 255, 255, 255, 255}), "booking registration fields differ");
+    Require(!submit("/partybooking register 90 513") && !submit("/partybooking delete")
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(20)) == 0,
+        "another booking operation overlapped an outstanding registration");
+    bookingResult(0);
+    Require(!g_session.m_partyBookingRegistrationPending && g_windowMgr.GetChatEvents().back().text == "Party booking registered.",
+        "booking success did not resolve registration");
+    Require(submit("/partybooking register 90 513"), "booking did not allow a subsequent registration");
+    Require(peer.ReceiveExact(18) == std::vector<u8>({2, 8, 90, 0, 1, 2, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255}), "booking omitted default wildcard jobs");
+    bookingResult(2);
+    Require(!g_session.m_partyBookingRegistrationPending
+        && g_windowMgr.GetChatEvents().back().text == "A party booking is already registered.",
+        "duplicate booking result did not resolve registration");
+    Require(submit("/partybooking delete") && peer.ReceiveExact(4) == std::vector<u8>({6, 8, 0, 0})
+        && !g_session.m_partyBookingRegistrationPending
+        && g_windowMgr.GetChatEvents().back().text == "Party booking deletion requested. The server sends no confirmation.",
+        "booking deletion used the later layout or reported unconfirmed success");
+    g_session.m_partyBookingRegistrationPending = previousBookingPending;
     const auto named=[&](u16 opcode,const std::string& body){const auto payload="SourceLocal : "+body;std::vector<u8> expected(payload.size()+5,0);
         expected[0]=u8(opcode);expected[1]=u8(opcode>>8);expected[2]=u8(expected.size());expected[3]=u8(expected.size()>>8);std::copy(payload.begin(),payload.end(),expected.begin()+4);
         Require(peer.ReceiveExact(expected.size())==expected,"actual named source channel frame differs");};

@@ -1449,9 +1449,9 @@
       "commit_subject": "packet(PK43.02): classify inactive buying store packets"
     },
     "PK43.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK43.03-selected-party-booking.md"],
+      "commit_subject": "packet(PK43.03): connect selected early party booking"
     },
     "PK43.04": {
       "status": "NOT_STARTED",

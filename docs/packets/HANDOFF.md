@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK43.02 classifies the ten buying-store discovery rows as inactive for MAIN 20080910. For PK43.03, disposition store search separately and preserve the selected 18-byte `0802` registration and 4-byte `0806` deletion. The server emits `0803` registration results and has no selected `0807` acknowledgement length. Booking search and update have length-only entries. [Store and booking inventory](evidence/PK43.01-selected-store-booking-inventory.md)
+PK43.03 connects the selected booking register and delete commands and the `0803` registration result. Continue live registration, duplicate, deletion, and re-registration on the same character. Verify that the selected deployment emits no `0807` and that reconnect clears an outstanding registration. Buying-store and store-search discovery rows are inactive for MAIN 20080910. [Selected booking](evidence/PK43.03-selected-party-booking.md) · [Store and booking inventory](evidence/PK43.01-selected-store-booking-inventory.md)
 
 PK42.03 connects the native and Qt Memorial Dungeon window, Alt+B toggle, and absolute countdowns. PK42.04 finds that the server can broadcast a replacement snapshot without updating the recipient's `02CF` destroy target. Keep the window read-only until an authoritative target contract or a single-instance deployment invariant is established. [Instance window](evidence/PK42.03-instance-window.md) · [Destroy target evidence](evidence/PK42.04-instance-target-ownership.md)
 

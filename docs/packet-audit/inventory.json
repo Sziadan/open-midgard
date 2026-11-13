@@ -20030,8 +20030,8 @@
       "stage": "map",
       "names": [],
       "server_size": 4,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 4,
+      "client_handler": "HandlePartyBookingRegistration",
       "server_parser": "",
       "server_emitters": [
         {
@@ -20044,11 +20044,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 10794,
       "review": ""
     },
     {
