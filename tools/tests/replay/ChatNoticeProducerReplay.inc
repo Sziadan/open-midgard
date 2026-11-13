@@ -1,3 +1,45 @@
+void MvpRewardReplay()
+{
+    SetCase("mvp_reward", "PK39.02", "selected-010a-010d-mvp", "map packet loop -> chat and actor message 36");
+    struct Winner : CPlayer {
+        int effects = 0;
+        void SendMsg(CGameObject*, int message, msgparam_t, msgparam_t, msgparam_t) override
+        {
+            if (message == 36) ++effects;
+        }
+    } local, remote;
+    CWorld world;
+    CGameMode mode;
+    const auto oldAid = g_session.m_aid;
+    g_session.m_aid = local.m_gid = 0x11223344;
+    remote.m_gid = 0x55667788;
+    world.m_player = &local;
+    world.RegisterActor(&remote);
+    mode.m_world = &world;
+    TestConnection connection;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    g_windowMgr.ClearChatEvents();
+    const auto inventorySize = g_session.GetInventoryItems().size();
+    Require(connection.QueueBytes({0x0a,1,0xf5,1, 0x0b,1,0xff,0xff,0xff,0x7f,
+        0x0c,1,0x44,0x33,0x22,0x11, 0x0c,1,0x88,0x77,0x66,0x55,
+        0x0c,1,1,0,0,0, 0x0d,1, 0x9a,0,9,0,'n','e','x','t',0}), "could not queue MVP frames");
+    Require(ProcessGameModePacketLoop(mode, connection, router, 7).packetsDispatched == 7
+        && !connection.BufferedBytes(), "MVP packets did not preserve stream alignment");
+    const auto& chat = g_windowMgr.GetChatEvents();
+    Require(chat.size() == 4 && chat[0].text.find(g_ttemmgr.GetDisplayName(501, false)) != std::string::npos
+        && chat[0].color == 0x0000ffff && chat[1].text.find("2147483647") != std::string::npos
+        && chat[1].color == 0x0000ffff && chat[2].color == 0x00ff0000 && chat[3].text == "next",
+        "MVP reward notices differ");
+    Require(local.effects == 1 && remote.effects == 1 && g_session.GetInventoryItems().size() == inventorySize,
+        "MVP notices changed inventory or routed the effect incorrectly");
+    g_windowMgr.ClearChatEvents();
+    mode.m_world = nullptr;
+    world.UnregisterActor(&remote);
+    world.m_player = nullptr;
+    g_session.m_aid = oldAid;
+}
+
 void SpecialItemObtainReplay()
 {
     SetCase("special_item_obtain", "PK38.01", "selected-07fd-monster-npc",

@@ -8685,6 +8685,42 @@ void HandleWeddingEffect(CGameMode& mode, const PacketView& packet)
     if (actor) actor->LaunchEffect(347);
 }
 
+void HandleMvpReward(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data) return;
+    if (packet.packetId == 0x010C) {
+        if (packet.packetLength != 6) return;
+        const u32 aid = ReadLE32(packet.data + 2);
+        if (auto* actor = aid ? ResolveSkillPacketActor(mode, aid) : nullptr) {
+            actor->SendMsg(actor, 36, 0, 0, 0);
+        }
+        return;
+    }
+
+    ro::UiMessageStrings strings;
+    std::string message;
+    const bool dropped = packet.packetId == 0x010D;
+    if (packet.packetId == 0x010A && packet.packetLength == 4) {
+        const auto itemId = ReadLE16(packet.data + 2);
+        if (!itemId) return;
+        strings.Load();
+        message = strings.Get(143, "Congratulations! You are the MVP! Your reward item is ")
+            + g_ttemmgr.GetDisplayName(itemId, false);
+    } else if (packet.packetId == 0x010B && packet.packetLength == 6) {
+        strings.Load();
+        message = strings.Get(145, "Congratulations! You are the MVP! Your reward EXP Points are ")
+            + std::to_string(ReadLE32(packet.data + 2)) + strings.Get(146, "!");
+    } else if (dropped && packet.packetLength == 2) {
+        strings.Load();
+        message = strings.Get(147, "You are the MVP, but you can't take the reward because you are over your weight limit.");
+    } else {
+        return;
+    }
+
+    g_windowMgr.SendMsg(3, 0, 0);
+    RecordChat(mode, message, dropped ? 0x00FF0000u : 0x0000FFFFu, kChatChannelSystem);
+}
+
 void HandleDivorceNotice(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 26) return;
@@ -10151,6 +10187,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0205, HandleDivorceNotice);
     router.Register(0x01E6, HandleRecallPartnerName);
     router.Register(0x01EA, HandleWeddingEffect);
+    for (const u16 opcode : {0x010A, 0x010B, 0x010C, 0x010D}) router.Register(opcode, HandleMvpReward);
     router.Register(0x01F6, HandleAdoptionInvitation);
     router.Register(0x0216, HandleAdoptionResult);
     router.Register(0x0206, HandleFriendState);

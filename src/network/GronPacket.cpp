@@ -180,6 +180,10 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x080E, 14);
     SetPacketSize(0x0107, 10);              // ZC_NOTIFY_POSITION_TO_GROUPM (party minimap dot)
     SetPacketSize(0x0109, kVariablePacketSize);
+    SetPacketSize(0x010A, 4);
+    SetPacketSize(0x010B, 6);
+    SetPacketSize(0x010C, 6);
+    SetPacketSize(0x010D, 2);
     SetPacketSize(0x010E, 11);
     SetPacketSize(0x010F, kVariablePacketSize);
     SetPacketSize(0x0110, 10);

@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK39.02 implements MVP reward notices and winner effect routing for `010A` through `010D`. Continue with the ranking families and live boss reward verification. [MVP evidence](evidence/PK39.02-mvp-rewards.md)
+
 PK38.04 traces shared packet owners and selected-profile inactive variants. Continue live item-action verification and retain the separate PK48 review. [Item action verification](evidence/PK38.04-item-action-verification.md)
 
 PK38.01 traces the selected item-action registry and emitters. `07FD` now frames the selected monster and NPC announcements and presents them in broadcast chat. The extracted OldRO tables do not contain the later message IDs. Floor-item replay verifies `009D`, `009E`, and `00A1` state transitions. Verify deployed emission and continue PK38.04 and the remaining discovery dispositions. [Item action inventory](evidence/PK38.01-item-action-inventory.md)

@@ -4075,3 +4075,5 @@ PK38.01 adds selected `07FD` monster and NPC announcement framing and broadcast 
 PK38.02 verifies the floor item entry, drop, and disappearance layouts and rejects invalid entries before mutating pickup state. [Evidence](evidence/PK38.01-item-action-inventory.md)
 
 PK38.04 verifies twelve inactive forms against the selected profile and assigns eleven shared rows to their feature owners. Eight focused checks passed. Live and independent verification remain open. [Evidence](evidence/PK38.04-item-action-verification.md)
+
+PK39.02 frames MVP rewards and routes the notices and winner effect. [Evidence](evidence/PK39.02-mvp-rewards.md)
