@@ -213,7 +213,7 @@ constexpr u16 kRemovePartyMember = 0x0103;
 namespace ActivePartySend {
 constexpr u16 kInviteParty = LegacyPartySend::kInviteParty;
 constexpr u16 kReplyPartyInvite = LegacyPartySend::kReplyPartyInvite;
-constexpr u16 kCreateParty = LegacyPartySend::kCreateParty;
+constexpr u16 kCreateParty = 0x01E8;
 constexpr u16 kLeaveParty = LegacyPartySend::kLeaveParty;
 constexpr u16 kChangePartyOption = LegacyPartySend::kChangePartyOption;
 constexpr u16 kRemovePartyMember = LegacyPartySend::kRemovePartyMember;
@@ -640,9 +640,11 @@ struct PACKET_CZ_PC_SELL_ITEMLIST {
     // Followed by repeated { index.W, amount.W } rows.
 };
 
-struct PACKET_CZ_CREATE_GROUP {
-    u16 PacketType;    // 0x00F9
+struct PACKET_CZ_MAKE_GROUP2 {
+    u16 PacketType;    // 0x01E8
     char PartyName[24];
+    u8 ItemPickup;
+    u8 ItemShare;
 };
 
 struct PACKET_CZ_REQ_JOIN_GROUP {
@@ -660,10 +662,9 @@ struct PACKET_CZ_REQ_LEAVE_GROUP {
     u16 PacketType;    // 0x0100
 };
 
-struct PACKET_CZ_CHANGE_GROUP_MASTER {
+struct PACKET_CZ_CHANGE_GROUPEXPOPTION {
     u16 PacketType;    // 0x0102
-    u16 ExpOption;
-    u16 ItemOption;
+    u32 ExpOption;
 };
 
 struct PACKET_CZ_REQ_EXPEL_GROUP_MEMBER {
@@ -810,11 +811,11 @@ static_assert(sizeof(PACKET_CZ_NPC_CLOSE_DIALOG) == 6, "PACKET_CZ_NPC_CLOSE_DIAL
 static_assert(sizeof(PACKET_CZ_ACK_SELECT_DEALTYPE) == 7, "PACKET_CZ_ACK_SELECT_DEALTYPE size mismatch");
 static_assert(sizeof(PACKET_CZ_PC_PURCHASE_ITEMLIST) == 4, "PACKET_CZ_PC_PURCHASE_ITEMLIST size mismatch");
 static_assert(sizeof(PACKET_CZ_PC_SELL_ITEMLIST) == 4, "PACKET_CZ_PC_SELL_ITEMLIST size mismatch");
-static_assert(sizeof(PACKET_CZ_CREATE_GROUP) == 26, "PACKET_CZ_CREATE_GROUP size mismatch");
+static_assert(sizeof(PACKET_CZ_MAKE_GROUP2) == 28, "PACKET_CZ_MAKE_GROUP2 size mismatch");
 static_assert(sizeof(PACKET_CZ_REQ_JOIN_GROUP) == 6, "PACKET_CZ_REQ_JOIN_GROUP size mismatch");
 static_assert(sizeof(PACKET_CZ_JOIN_GROUP) == 10, "PACKET_CZ_JOIN_GROUP size mismatch");
 static_assert(sizeof(PACKET_CZ_REQ_LEAVE_GROUP) == 2, "PACKET_CZ_REQ_LEAVE_GROUP size mismatch");
-static_assert(sizeof(PACKET_CZ_CHANGE_GROUP_MASTER) == 6, "PACKET_CZ_CHANGE_GROUP_MASTER size mismatch");
+static_assert(sizeof(PACKET_CZ_CHANGE_GROUPEXPOPTION) == 6, "PACKET_CZ_CHANGE_GROUPEXPOPTION size mismatch");
 static_assert(sizeof(PACKET_CZ_REQ_EXPEL_GROUP_MEMBER) == 30, "PACKET_CZ_REQ_EXPEL_GROUP_MEMBER size mismatch");
 static_assert(sizeof(PACKET_CZ_MOVE_ITEM_TO_STORE) == 14, "PACKET_CZ_MOVE_ITEM_TO_STORE size mismatch");
 static_assert(sizeof(PACKET_CZ_MOVE_ITEM_FROM_STORE) == 22, "PACKET_CZ_MOVE_ITEM_FROM_STORE size mismatch");

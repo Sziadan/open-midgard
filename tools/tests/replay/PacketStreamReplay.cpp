@@ -28,6 +28,7 @@
 #endif
 #include "ui/UIChooseWnd.h"
 #include "ui/UIPlayerContextMenuWnd.h"
+#include "ui/UIPartyOptionWnd.h"
 #include "ui/UIGroundSkillTextWnd.h"
 #include "core/MannerFilter.h"
 #include "ui/UIChooseSellBuyWnd.h"
@@ -6639,7 +6640,17 @@ void PartyCreateProductionSendReplay()
     SetCase("party_create_production_send", "PK46.02", "PK46.02-map-party-create-request",
         "UIPartyOptionWnd submit -> CGameMode::SendMsg -> RequestCreateParty -> CRagConnection::SendPacket");
     const auto savedPartyList = g_session.m_partyList;
+    const std::string savedPartyName = g_session.m_partyName;
+    const bool savedMaster = g_session.m_amIPartyMaster;
+    const bool savedExpShare = g_session.m_partyExpShare;
+    const bool savedItemCollectType = g_session.m_itemCollectType;
+    const bool savedItemDivType = g_session.m_itemDivType;
+    const u32 savedAid = g_session.m_aid;
     g_session.m_partyList.clear();
+    g_session.m_aid = 0x11223344;
+    g_session.m_partyExpShare = false;
+    g_session.m_itemCollectType = false;
+    g_session.m_itemDivType = false;
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
     CGameMode mode;
@@ -6661,22 +6672,66 @@ void PartyCreateProductionSendReplay()
     Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyCreate,
             reinterpret_cast<msgparam_t>(const_cast<char*>(overlongName.c_str())), 0x07, 0) != 0,
         "party creation rejected a valid name after normalization");
-    const std::vector<u8> captured = peer.ReceiveExact(26);
-    std::vector<u8> expected(26, 0);
-    expected[0] = 0xF9;
-    expected[1] = 0x00;
+    const std::vector<u8> captured = peer.ReceiveExact(28);
+    std::vector<u8> expected(28, 0);
+    expected[0] = 0xE8;
+    expected[1] = 0x01;
     std::fill(expected.begin() + 2, expected.begin() + 25, static_cast<u8>('P'));
+    expected[26] = 1;
+    expected[27] = 1;
     Require(captured == expected,
-        "party-create packet differs in opcode, truncation, padding, or terminator");
+        "party-create packet differs in opcode, name, or loot rules");
     Require(mode.m_pendingPartyCreateName == std::string(23, 'P')
-        && mode.m_hasPendingPartyCreateOptions
-        && mode.m_pendingPartyCreateExpShare
-        && mode.m_pendingPartyCreateItemShare
-        && mode.m_pendingPartyCreateItemSharingType,
-        "successful party-create send did not retain normalized name and option state");
+        && mode.m_pendingPartyCreateExpShare && !g_session.m_partyExpShare
+        && !g_session.m_itemCollectType && !g_session.m_itemDivType,
+        "party-create send did not retain pending EXP or changed options before the server reply");
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), bytes.size(), view, consumed)
+                && consumed == bytes.size() && router.Dispatch(mode, view),
+            "party-create response did not frame and dispatch");
+    };
+    dispatch({0xFA, 0x00, 1});
+    Require(mode.m_pendingPartyCreateName.empty() && !mode.m_pendingPartyCreateExpShare
+            && g_session.GetNumParty() == 0
+            && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "party creation rejection retained pending state or sent an EXP change");
+
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyCreate,
+            reinterpret_cast<msgparam_t>(const_cast<char*>(overlongName.c_str())), 0x03, 0) != 0,
+        "party creation retry failed");
+    expected[27] = 0;
+    Require(peer.ReceiveExact(28) == expected, "party creation did not keep loot rules independent");
+    std::vector<u8> member(81, 0);
+    member[0] = 0xE9;
+    member[1] = 0x01;
+    member[2] = 0x44;
+    member[3] = 0x33;
+    member[4] = 0x22;
+    member[5] = 0x11;
+    std::fill(member.begin() + 15, member.begin() + 38, static_cast<u8>('P'));
+    member[39] = 'L';
+    member[79] = 1;
+    dispatch(member);
+    dispatch({0xFA, 0x00, 0});
+    Require(peer.ReceiveExact(6) == std::vector<u8>({0x02, 0x01, 1, 0, 0, 0}),
+        "successful party-create ACK did not send a separate EXP-only request");
+    Require(mode.m_pendingPartyCreateName.empty() && !mode.m_pendingPartyCreateExpShare
+            && !g_session.m_partyExpShare && g_session.m_itemCollectType && !g_session.m_itemDivType,
+        "successful party-create ACK changed the server-provided options");
     connection->Disconnect();
     g_session.m_partyList = savedPartyList;
-    std::cout << "{\"case_id\":\"party_create_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-create-request\",\"captured_length\":26,\"name_truncated_to_23\":true,\"empty_name_rejected\":true,\"options_pending_after_send\":true,\"outcome\":\"PASS\"}" << std::endl;
+    g_session.m_partyName = savedPartyName;
+    g_session.m_amIPartyMaster = savedMaster;
+    g_session.m_partyExpShare = savedExpShare;
+    g_session.m_itemCollectType = savedItemCollectType;
+    g_session.m_itemDivType = savedItemDivType;
+    g_session.m_aid = savedAid;
+    std::cout << "{\"case_id\":\"party_create_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-create-request\",\"captured_length\":28,\"loot_rules_sent_at_creation\":true,\"exp_request_after_ack\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
 void PartyOptionChangeProductionSendReplay()
@@ -6686,9 +6741,29 @@ void PartyOptionChangeProductionSendReplay()
     const bool savedExpShare = g_session.m_partyExpShare;
     const bool savedItemCollectType = g_session.m_itemCollectType;
     const bool savedItemDivType = g_session.m_itemDivType;
+    const auto savedPartyList = g_session.m_partyList;
+    const bool savedMaster = g_session.m_amIPartyMaster;
+    g_session.m_partyList.clear();
+    g_session.m_partyList.push_back(FRIEND_INFO{});
+    g_session.m_amIPartyMaster = true;
     g_session.m_partyExpShare = true;
     g_session.m_itemCollectType = false;
     g_session.m_itemDivType = true;
+    UIPartyOptionWnd options;
+    options.OpenCreateDialog();
+    UIPartyOptionWnd::DisplayData createDisplay;
+    Require(options.GetDisplayDataForQt(&createDisplay) && createDisplay.choices.size() == 6
+            && std::all_of(createDisplay.choices.begin(), createDisplay.choices.end(),
+                [](const UIPartyOptionWnd::DisplayChoice& choice) { return choice.enabled; }),
+        "party creation did not expose all three settings");
+    options.OpenConfigureDialog();
+    UIPartyOptionWnd::DisplayData configureDisplay;
+    Require(options.GetDisplayDataForQt(&configureDisplay) && configureDisplay.choices.size() == 6
+            && std::all_of(configureDisplay.choices.begin(), configureDisplay.choices.end(),
+                [](const UIPartyOptionWnd::DisplayChoice& choice) {
+                    return choice.enabled == (choice.groupId == UIPartyOptionWnd::GroupExpShare);
+                }),
+        "configure party did not limit editing to EXP sharing");
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
     CGameMode mode;
@@ -6698,30 +6773,44 @@ void PartyOptionChangeProductionSendReplay()
         "failed party-option send optimistically changed local option state");
 
     LoopbackPeer peer(*connection);
-    for (unsigned int bits = 0; bits < 8; ++bits) {
-        const bool expShare = (bits & 0x01u) != 0;
-        const bool itemShare = (bits & 0x02u) != 0;
-        const bool shared = (bits & 0x04u) != 0;
-        const u16 itemOption = static_cast<u16>((itemShare ? 1u : 0u) | (shared ? 2u : 0u));
+    g_session.m_amIPartyMaster = false;
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyChangeOptions, 0, 0, 0) == 0
+            && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "a non-leader sent an EXP sharing request");
+    g_session.m_amIPartyMaster = true;
+    for (u8 exp = 0; exp < 2; ++exp) {
         Require(mode.SendMsg(CGameMode::GameMsg_RequestPartyChangeOptions,
-                static_cast<msgparam_t>(bits), 0, 0) != 0,
-            "production party-option sender rejected one of the eight option combinations");
+                static_cast<msgparam_t>(exp | 0x06), 0, 0) != 0,
+            "production party-option sender rejected a valid EXP sharing value");
         const std::vector<u8> captured = peer.ReceiveExact(6);
-        const std::vector<u8> expected{0x02, 0x01,
-            static_cast<u8>(expShare ? 1 : 0), 0x00,
-            static_cast<u8>(itemOption & 0xFF), static_cast<u8>(itemOption >> 8)};
+        const std::vector<u8> expected{0x02, 0x01, exp, 0, 0, 0};
         Require(captured == expected,
-            "party-option production frame differs from the independent field-combination fixture");
-        Require(g_session.m_partyExpShare == expShare
-            && g_session.m_itemCollectType == itemShare
-            && g_session.m_itemDivType == shared,
-            "successful party-option send did not update the local option cache");
+            "party-option request did not encode only the four-byte EXP value");
+        Require(g_session.m_partyExpShare && !g_session.m_itemCollectType && g_session.m_itemDivType,
+            "successful party-option send changed local options before the server reply");
     }
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](u8 exp) {
+        const std::vector<u8> bytes{0x01, 0x01, exp, 0, 0, 0};
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), bytes.size(), view, consumed)
+                && consumed == bytes.size() && router.Dispatch(mode, view),
+            "party-option reply did not frame and dispatch");
+    };
+    dispatch(2);
+    Require(g_session.m_partyExpShare, "server EXP refusal overwrote the current setting");
+    dispatch(0);
+    Require(!g_session.m_partyExpShare && !g_session.m_itemCollectType && g_session.m_itemDivType,
+        "server EXP change did not update only the EXP setting");
     connection->Disconnect();
+    g_session.m_partyList = savedPartyList;
+    g_session.m_amIPartyMaster = savedMaster;
     g_session.m_partyExpShare = savedExpShare;
     g_session.m_itemCollectType = savedItemCollectType;
     g_session.m_itemDivType = savedItemDivType;
-    std::cout << "{\"case_id\":\"party_option_change_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-option-change-request\",\"option_combinations_checked\":8,\"failed_send_kept_prior_cache\":true,\"successful_send_updates_cache\":true,\"outcome\":\"PASS\"}" << std::endl;
+    std::cout << "{\"case_id\":\"party_option_change_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-option-change-request\",\"exp_only\":true,\"server_reply_owns_exp_cache\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
 void PartyDisbandProductionSendReplay()

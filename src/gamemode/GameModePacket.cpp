@@ -8445,9 +8445,6 @@ void HandlePartyCreateAck(CGameMode& mode, const PacketView& packet)
             g_session.ClearParty();
             g_session.m_partyName = mode.m_pendingPartyCreateName;
             g_session.m_amIPartyMaster = true;
-            g_session.m_partyExpShare = mode.m_pendingPartyCreateExpShare != 0;
-            g_session.m_itemCollectType = mode.m_pendingPartyCreateItemShare != 0;
-            g_session.m_itemDivType = mode.m_pendingPartyCreateItemSharingType != 0;
             g_session.AddMemberToParty(info);
             g_session.RefreshPartyUI();
 
@@ -8456,14 +8453,8 @@ void HandlePartyCreateAck(CGameMode& mode, const PacketView& packet)
                 static_cast<unsigned int>(g_session.m_aid));
         }
         g_windowMgr.MakeWindow(UIWindowMgr::WID_MESSENGERGROUPWND);
-        if (mode.m_hasPendingPartyCreateOptions != 0) {
-            const unsigned int optionBits =
-                (mode.m_pendingPartyCreateExpShare != 0 ? 0x01u : 0x00u)
-                | (mode.m_pendingPartyCreateItemShare != 0 ? 0x02u : 0x00u)
-                | (mode.m_pendingPartyCreateItemSharingType != 0 ? 0x04u : 0x00u);
-            if (optionBits != 0) {
-                mode.SendMsg(CGameMode::GameMsg_RequestPartyChangeOptions, optionBits, 0, 0);
-            }
+        if (mode.m_pendingPartyCreateExpShare) {
+            mode.SendMsg(CGameMode::GameMsg_RequestPartyChangeOptions, 1, 0, 0);
         }
         break;
     case 1:
@@ -8479,10 +8470,7 @@ void HandlePartyCreateAck(CGameMode& mode, const PacketView& packet)
         break;
     }
 
-    mode.m_hasPendingPartyCreateOptions = 0;
-    mode.m_pendingPartyCreateExpShare = 0;
-    mode.m_pendingPartyCreateItemShare = 0;
-    mode.m_pendingPartyCreateItemSharingType = 0;
+    mode.m_pendingPartyCreateExpShare = false;
     mode.m_pendingPartyCreateName.clear();
 }
 
@@ -8650,11 +8638,6 @@ void HandlePartyOptionChanged(CGameMode& mode, const PacketView& packet)
         RecordChat(mode, "Cannot change EXP sharing right now.", 0x00FF4040, kChatChannelSystem);
     } else {
         g_session.m_partyExpShare = expOption != 0;
-    }
-
-    if (packet.packetLength >= 8) {
-        g_session.m_itemCollectType = packet.data[6] != 0;
-        g_session.m_itemDivType = packet.data[7] != 0;
     }
 
     g_session.RefreshPartyUI();

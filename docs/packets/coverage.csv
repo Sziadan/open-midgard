@@ -146,7 +146,7 @@ AUDIT-0x00F5,0x00F5,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected floor pickup 
 AUDIT-0x00F6,0x00F6,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00F7,0x00F7,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Storage withdrawal and rejection recovery captured,C2S_ONLY,PK46.02-PERSONAL-STORAGE-REQUESTS
 AUDIT-0x00F8,0x00F8,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-storage-lifecycle traces two-byte S2C ZC_CLOSE_STORE to SELF and client window closure; empty/reopen ordering remains open,UNREVIEWED,
-AUDIT-0x00F9,0x00F9,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party creation name captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
+AUDIT-0x00F9,0x00F9,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Legacy party creation parser with default loot rules,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x00FA,0x00FA,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00FB,0x00FB,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00FC,0x00FC,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party invitation target captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
@@ -155,7 +155,7 @@ AUDIT-0x00FE,0x00FE,map,unresolved,PK50,PK01;PK02;PK47;PK48;PK45,Provisional sou
 AUDIT-0x00FF,0x00FF,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party invitation accept and decline captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x0100,0x0100,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46;PK45,Selected party leave captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x0101,0x0101,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0102,0x0102,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0102,0x0102,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected leader EXP sharing request captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x0103,0x0103,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party member removal captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x0104,0x0104,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0105,0x0105,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -384,7 +384,7 @@ AUDIT-0x01E4,0x01E4,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x01E5,0x01E5,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01E6,0x01E6,map,S2C,PK30,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01E7,0x01E7,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01E8,0x01E8,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x01E8,0x01E8,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party creation name and loot rules captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x01E9,0x01E9,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01EA,0x01EA,map,S2C,PK30,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01EB,0x01EB,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

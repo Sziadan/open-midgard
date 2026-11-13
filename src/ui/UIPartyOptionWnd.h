@@ -110,6 +110,7 @@ private:
     };
 
     void LayoutControls();
+    bool CanEditChoice(int groupId) const;
     void ResetCreateDefaults();
     void LoadCurrentPartyOptions();
     void ClearEditFocus();

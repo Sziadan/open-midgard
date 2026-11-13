@@ -484,6 +484,11 @@ void UIPartyOptionWnd::OpenConfigureDialog()
 
 bool UIPartyOptionWnd::CanEditSettings() const {return g_session.GetNumParty()==0 || g_session.m_amIPartyMaster;}
 
+bool UIPartyOptionWnd::CanEditChoice(int groupId) const
+{
+    return CanEditSettings() && (m_mode == ModeCreate || groupId == GroupExpShare);
+}
+
 bool UIPartyOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
 {
     if (!outData) {
@@ -550,7 +555,7 @@ bool UIPartyOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
             choice.height = choiceRect.bottom - choiceRect.top;
             choice.label = GetChoiceLabel(groupId, optionId);
             choice.selected = GetSelectedChoice(groupId) == optionId;
-            choice.enabled = CanEditSettings();
+            choice.enabled = CanEditChoice(groupId);
             outData->choices.push_back(choice);
         }
     }
@@ -634,7 +639,7 @@ bool UIPartyOptionWnd::Submit()
         }
     } else {
         if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestPartyChangeOptions,
-                static_cast<msgparam_t>(BuildOptionBits()),
+                static_cast<msgparam_t>(m_expShareOption != 0),
                 0,
                 0) == 0) {
             return false;
@@ -658,8 +663,14 @@ std::string UIPartyOptionWnd::GetTooltipText(int groupId) const
     case GroupExpShare:
         return "Each take - Party members only gain EXP for monsters they damage.\n\nEven Share - Monsters' EXP is shared evenly among members in range.";
     case GroupItemShare:
+        if (m_mode == ModeConfigure) {
+            return "The party leader sets the item pickup rule when creating the party.";
+        }
         return "Each take - Only the player who killed the monster can pick up the item.\n\nParty share - Any party member can pick up items dropped by monsters, regardless of who killed it.";
     case GroupItemSharingType:
+        if (m_mode == ModeConfigure) {
+            return "The party leader sets the loot distribution rule when creating the party.";
+        }
         return "Individual - Items picked up are kept by the player that picked it up.\n\nShared - Items are automatically distributed to members randomly when picked up.";
     default:
         return std::string();
@@ -726,6 +737,9 @@ void UIPartyOptionWnd::SetSelectedChoice(int groupId, int optionId)
     if(!CanEditSettings()){
         g_windowMgr.SendMsg(3,0,0,0);ro::UiMessageStrings strings;strings.Load();const auto text=strings.Get(294,"");
         g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text.c_str()),16777060,9,0);return;
+    }
+    if (!CanEditChoice(groupId)) {
+        return;
     }
     switch (groupId) {
     case GroupExpShare:

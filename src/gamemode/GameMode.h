@@ -491,10 +491,7 @@ public:
     float m_worldProcessCarryMs;
     u32 m_lastHoverRefreshTick;
     std::string m_loadingWallpaperName;
-    int m_hasPendingPartyCreateOptions;
-    int m_pendingPartyCreateExpShare;
-    int m_pendingPartyCreateItemShare;
-    int m_pendingPartyCreateItemSharingType;
+    bool m_pendingPartyCreateExpShare;
     std::string m_pendingPartyCreateName;
     std::vector<CGameActor*> m_deferredActorDeletes;
 

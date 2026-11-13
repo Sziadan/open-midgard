@@ -7150,26 +7150,21 @@ std::string NormalizePartyNameForPacket(const char* rawName)
     return partyName;
 }
 
-u16 BuildPartyItemOption(bool itemShareParty, bool itemSharingTypeShared)
-{
-    return static_cast<u16>((itemShareParty ? 0x01u : 0x00u)
-        | (itemSharingTypeShared ? 0x02u : 0x00u));
-}
-
-bool RequestCreateParty(const char* rawPartyName)
+bool RequestCreateParty(const std::string& partyName, bool itemShareParty, bool itemSharingTypeShared)
 {
     if (g_session.GetNumParty() > 0) {
         return false;
     }
 
-    const std::string partyName = NormalizePartyNameForPacket(rawPartyName);
     if (partyName.empty()) {
         return false;
     }
 
-    PACKET_CZ_CREATE_GROUP packet{};
+    PACKET_CZ_MAKE_GROUP2 packet{};
     packet.PacketType = PacketProfile::ActivePartySend::kCreateParty;
     std::memcpy(packet.PartyName, partyName.c_str(), partyName.size());
+    packet.ItemPickup = itemShareParty ? 1 : 0;
+    packet.ItemShare = itemSharingTypeShared ? 1 : 0;
 
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
@@ -7218,26 +7213,22 @@ bool ReplyPartyInvite(u32 partyId, bool accept)
     return sent;
 }
 
-bool RequestChangePartyOptions(bool expShare, bool itemShareParty, bool itemSharingTypeShared)
+bool RequestChangePartyOptions(bool expShare)
 {
-    PACKET_CZ_CHANGE_GROUP_MASTER packet{};
+    if (g_session.GetNumParty() == 0 || !g_session.m_amIPartyMaster) {
+        return false;
+    }
+
+    PACKET_CZ_CHANGE_GROUPEXPOPTION packet{};
     packet.PacketType = PacketProfile::ActivePartySend::kChangePartyOption;
     packet.ExpOption = expShare ? 1 : 0;
-    packet.ItemOption = BuildPartyItemOption(itemShareParty, itemSharingTypeShared);
 
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
-    DbgLog("[GameMode] change party options exp=%u items=%u sent=%d\n",
+    DbgLog("[GameMode] change party EXP sharing exp=%u sent=%d\n",
         static_cast<unsigned int>(packet.ExpOption),
-        static_cast<unsigned int>(packet.ItemOption),
         sent ? 1 : 0);
-
-    if (sent) {
-        g_session.m_partyExpShare = expShare;
-        g_session.m_itemCollectType = itemShareParty;
-        g_session.m_itemDivType = itemSharingTypeShared;
-    }
     return sent;
 }
 
@@ -11039,7 +11030,7 @@ CGameMode::CGameMode()
         m_touchSkillTargetAid(0), m_touchSkillId(0), m_touchSkillLevel(0), m_touchSkillRange(0), m_hasTouchSkillChase(0),
         m_mapLoadingStage(MapLoading_None), m_mapLoadingStartTick(0), m_mapLoadingAckTick(0), m_lastActorBootstrapPacketTick(0),
         m_worldProcessTick(GetTickCount()), m_worldProcessCarryMs(kWorldProcessTickMs), m_lastHoverRefreshTick(0),
-        m_hasPendingPartyCreateOptions(0), m_pendingPartyCreateExpShare(0), m_pendingPartyCreateItemShare(0), m_pendingPartyCreateItemSharingType(0),
+        m_pendingPartyCreateExpShare(false),
         m_pendingPartyCreateName()
 {
     m_networkModeOperationGeneration = g_modeMgr.GetOperationGeneration();
@@ -11158,10 +11149,7 @@ void CGameMode::OnInit(const char* worldName) {
     m_worldProcessCarryMs = kWorldProcessTickMs;
     m_lastHoverRefreshTick = 0;
     m_selectedPcTargetGid = 0;
-    m_hasPendingPartyCreateOptions = 0;
-    m_pendingPartyCreateExpShare = 0;
-    m_pendingPartyCreateItemShare = 0;
-    m_pendingPartyCreateItemSharingType = 0;
+    m_pendingPartyCreateExpShare = false;
     m_pendingPartyCreateName.clear();
     ClearPendingSkillUse(*this);
 
@@ -12911,25 +12899,18 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const bool expShare = (optionBits & 0x01u) != 0;
         const bool itemShareParty = (optionBits & 0x02u) != 0;
         const bool itemSharingTypeShared = (optionBits & 0x04u) != 0;
-        m_pendingPartyCreateName = NormalizePartyNameForPacket(partyName);
-        const bool sent = RequestCreateParty(partyName);
-        if (!sent) {
-            m_pendingPartyCreateName.clear();
+        std::string name = NormalizePartyNameForPacket(partyName);
+        if (!RequestCreateParty(name, itemShareParty, itemSharingTypeShared)) {
             return 0;
         }
-        m_hasPendingPartyCreateOptions = 1;
-        m_pendingPartyCreateExpShare = expShare ? 1 : 0;
-        m_pendingPartyCreateItemShare = itemShareParty ? 1 : 0;
-        m_pendingPartyCreateItemSharingType = itemSharingTypeShared ? 1 : 0;
+        m_pendingPartyCreateName = std::move(name);
+        m_pendingPartyCreateExpShare = expShare;
         return 1;
     }
 
     case GameMsg_RequestPartyChangeOptions: {
         const unsigned int optionBits = static_cast<unsigned int>(wparam);
-        return RequestChangePartyOptions(
-            (optionBits & 0x01u) != 0,
-            (optionBits & 0x02u) != 0,
-            (optionBits & 0x04u) != 0) ? 1 : 0;
+        return RequestChangePartyOptions((optionBits & 0x01u) != 0) ? 1 : 0;
     }
 
     case GameMsg_RequestPartyDisband:
