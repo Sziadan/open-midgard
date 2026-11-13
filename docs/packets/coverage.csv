@@ -303,7 +303,7 @@ AUDIT-0x0193,0x0193,map,C2S,PK47,PK01;PK02;PK48;PK46,Storage-open guard and clos
 AUDIT-0x0194,0x0194,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.05 verifies selected CID reply/request/cache; PK09.09 verifies producer-name native/Qt refresh; broader actor/historical/discovery and independent acceptance remain open,UNREVIEWED,
 AUDIT-0x0195,0x0195,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.02-actor-name-ack traces selected 102-byte S2C full name/party/guild/position response; cache lifecycle and replay remain open,UNREVIEWED,
 AUDIT-0x0196,0x0196,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0197,0x0197,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0197,0x0197,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected stat and skill reset requests captured via source commands,C2S_ONLY,PK46.02-CHARACTER-RESET
 AUDIT-0x0198,0x0198,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0199,0x0199,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Selected four-byte map property emitter, lifecycle and gameplay gates verified through production replay and native and Qt rendering; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK19.MAP-PROPERTIES
 AUDIT-0x019A,0x019A,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -434,7 +434,7 @@ AUDIT-0x0219,0x0219,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x021A,0x021A,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x021B,0x021B,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x021C,0x021C,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x021D,0x021D,map,C2S,PK47,PK01;PK02;PK48;PK46,Registered six-byte server less-effects preference. The selected client command changes only local state.,C2S_ONLY,PK46.02-MINIMUM-EFFECTS
+AUDIT-0x021D,0x021D,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected six-byte effects toggle captured. Minimum effects is a separate local preference.,C2S_ONLY,PK46.02-MINIMUM-EFFECTS
 AUDIT-0x021E,0x021E,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x021F,0x021F,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0220,0x0220,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,

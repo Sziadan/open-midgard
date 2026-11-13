@@ -251,6 +251,13 @@ void ChatSubmissionReplay()
     Require(submit("/tiny") && g_session.m_isMinEffect == previousMinEffect
         && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "minimum effects sent a packet or failed to restore the preference");
+    Require(!mode.SendMsg(155, 2, 0, 0)
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "invalid character reset selector emitted bytes");
+    Require(submit("/resetstate") && peer.ReceiveExact(4) == std::vector<u8>{0x97, 1, 0, 0},
+        "resetstate did not send the selected stat reset");
+    Require(submit("/resetskill") && peer.ReceiveExact(4) == std::vector<u8>{0x97, 1, 1, 0},
+        "resetskill did not send the selected skill reset");
     mode.m_reqEmotionTick=0;mode.m_isReqEmotion=0;Require(submit("/!"),"registered source emotion did not route47->33");
     Require(peer.ReceiveExact(3)==std::vector<u8>({0xbf,0,0}) && mode.m_isReqEmotion && mode.m_reqEmotionTick==10000,"source emotion0/pending/time/frame differs");
     Require(!submit("/?"),"pending source emotion was not guarded");mode.m_isReqEmotion=0;submissionTick=12500;Require(!submit("/?"),"source emotion exact2500 boundary changed");
@@ -478,6 +485,7 @@ void ChatSubmissionReplay()
 #include "PetCaptureTargetReplay.inc"
 #include "PlayerSkillProceedReplay.inc"
     connection->Disconnect();
+    Require(!submit("/resetstate"), "character reset reported success on a closed connection");
 #include "PlayerAutoRunFailedSendReplay.inc"
 #include "PetWindowFailedSendReplay.inc"
 #include "PetEggFailedSendReplay.inc"

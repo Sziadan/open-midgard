@@ -411,6 +411,8 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return 1;
     }
     case 2: case 20: case 136:return 1; // Selected jump table returns without an action.
+    case 61: case 62:
+        return SendMsg(155, type - 61, 0, 0);
     case 3:SourceChatNotice(95,"Invalid command.",65535);return 0;
     case 12: case 13: {
         const int value=(std::max)(0,(std::min)(127,static_cast<int>(ro::chat::SourceChatAtoi(parameters[0]))));

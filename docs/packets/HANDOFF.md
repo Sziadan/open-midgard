@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-The selected server registers `021D` for its own less-effects flag, while the selected client's minimum-effects command is local. The selected Memorial Dungeon `02CF` carries a command with no target field and needs authoritative target ownership before the client can use it. Both are classified in the outbound inventory. [Minimum-effects evidence](evidence/PK46.02-map-pvp-ranking-refine-hom-gaps.md) · [Instance target evidence](evidence/PK42.04-instance-target-ownership.md)
+PK46.02 connects the selected stat and skill reset commands to `0197`. The server owns permission and resulting stats and skills. Verify allowed and denied commands live. [Character reset evidence](evidence/PK46.02-map-production-reset-gm-gaps.md)
+
+The selected `/effect` command sends `021D`. The separate minimum-effects command is local. The selected Memorial Dungeon `02CF` carries a command with no target field and needs authoritative target ownership before the client can use it. [Effects evidence](evidence/PK46.02-map-pvp-ranking-refine-hom-gaps.md) · [Instance target evidence](evidence/PK42.04-instance-target-ownership.md)
 
 PK46.02 classifies legacy vending `012F` as a registered C2S request. The selected client uses `01B2` for opening and setup cancellation. The owner-list handler verifies the seller account ID before updating the local shop. Verify live open, refusal and cancellation. [Vending profile evidence](evidence/PK46.02-map-open-vending-alternate-012F.md)
 
