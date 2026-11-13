@@ -3949,3 +3949,7 @@ PK28.04 and PK29.04 clear both actor mailboxes and the C++ controller on lifecyc
 ## Companion movement recovery
 
 PK28.04 and PK29.04 bound stalled manual movement and pace automatic and manual follow requests. Replay covers reserved order release, a missing owner, and a return to automatic follow. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+## Selected privacy configuration
+
+PK16.01 traced `02D8/02D9`, `02DA`, and `02C8/02C9` to the selected server's independent state fields, request handlers, and restore calls. [Evidence](evidence/PK16.01-privacy-wire.md)

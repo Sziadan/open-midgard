@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-PK28.04 and PK29.04 now recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. Continue the packet plan with PK16.01, which gates PK30 alongside completed PK25. Start with the selected server's `clif_parse_configuration`, `clif_configuration`, and map-entry call sites. Record active types, accepted and rejected requests, and reconnect restoration before replacing the `02D9` and `02DA` ignore handlers. Trace the separate `02DA` sender before assigning its semantics. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
+PK16.01 records the selected server contract for equipment visibility, recall refusal, and party-invite refusal. Implement those confirmed settings in PK16.02, including the separate `02DA` and `02C9` map-entry snapshots. Continue the whisper, blocklist, user-count, and friends contract audit in PK16.03. PK16 gates PK30 alongside completed PK25. [Privacy packet evidence](evidence/PK16.01-privacy-wire.md)
+
+PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 PK28.04 covers companion skill level controls and the native/Qt bitmap frame. Replay verifies cast and drag levels, both bounds, SP display, and release outside. Installed-skin comparison and live UI verification remain open. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
 
