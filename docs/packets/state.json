@@ -1162,7 +1162,7 @@
     "PK30.02": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK30.01-relationship-wire.md"],
-      "commit_subject": "packet(PK30.01/PK30.02): receive relationship notices"
+      "commit_subject": "packet(PK30.02): receive partner recall and wedding effects"
     },
     "PK30.03": {
       "status": "NOT_STARTED",

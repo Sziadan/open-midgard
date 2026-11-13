@@ -312,6 +312,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x01DE, 33);
     SetPacketSize(0x01E1, 8);
     SetPacketSize(0x01EE, kVariablePacketSize);
+    SetPacketSize(0x01E6, 26);              // ZC_COUPLENAME
+    SetPacketSize(0x01EA, 6);               // ZC_CONGRATULATION
     SetPacketSize(0x01EF, kVariablePacketSize);
     SetPacketSize(0x01F0, kVariablePacketSize);
     SetPacketSize(0x01F3, 10);

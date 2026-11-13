@@ -321,7 +321,7 @@ public:
     float m_fixedLongitude;
     u32 m_lastCouplePacketAid;
     u32 m_lastCouplePacketGid;
-    char m_CoupleName[24];
+    std::string m_recallPartnerName;
     
     UINameBalloonText* m_nameBalloon;
     UINameBalloonText* m_targetNameBalloon;

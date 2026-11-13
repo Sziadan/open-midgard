@@ -2497,10 +2497,29 @@ void ElementalSnapshotReplay()
 void RelationshipNoticeReplay()
 {
     CGameMode mode;
+    CWorld world;
+    CPlayer player;
+    CGameActor remote;
+    world.m_player = &player;
+    mode.m_world = &world;
+    const auto oldAid = g_session.m_aid;
+    const auto oldEffects = g_session.m_isEffectOn;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    player.m_gid = g_session.m_aid = 0x44;
+    remote.m_gid = 0x55;
+    world.RegisterActor(&remote);
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
     TestConnection input;
     LoopbackPeer server(input);
+    const auto receive = [&](const std::vector<u8>& frames, int count) {
+        server.Send(frames);
+        WaitKernelPending(input, static_cast<int>(frames.size()));
+        Require(ProcessGameModePacketLoop(mode, input, router, count).packetsDispatched == count,
+            "relationship packet did not frame and dispatch");
+    };
     char savedName[sizeof(g_session.m_playerName)];
     std::memcpy(savedName, g_session.m_playerName, sizeof(savedName));
     std::memset(g_session.m_playerName, 0, sizeof(savedName));
@@ -2526,6 +2545,37 @@ void RelationshipNoticeReplay()
         && notices.front().text.find(std::string(24, '%')) != std::string::npos
         && notices[1].text != notices[2].text && notices[2].text != notices[3].text
         && notices[1].text != notices[3].text, "relationship notices lost a name or result branch");
+
+    std::vector<u8> recall(26, '%');
+    recall[0] = 0xe6;
+    recall[1] = 1;
+    const std::vector<u8> skill{0x1a, 1, 0x50, 1, 1, 0, 0x44, 0, 0, 0, 0x44, 0, 0, 0, 1};
+    auto recallAndSkill = recall;
+    recallAndSkill.insert(recallAndSkill.end(), skill.begin(), skill.end());
+    receive(recallAndSkill, 2);
+    Require(player.GetChatBubbleText().find(std::string(24, '%')) == 0,
+        "recall skill did not show the full literal partner name");
+    recallAndSkill[2] = 0;
+    receive(recallAndSkill, 2);
+    Require(mode.m_recallPartnerName.empty() && player.GetChatBubbleText().find('%') == std::string::npos,
+        "empty recall name retained the previous partner");
+
+    const auto countWeddingEffects = [](const CGameActor& actor) {
+        return std::count_if(actor.m_effectList.begin(), actor.m_effectList.end(), [](const CRagEffect* effect) {
+            return effect && effect->GetEffectType() == 347;
+        });
+    };
+    g_session.m_isEffectOn = false;
+    receive({0xea, 1, 0x44, 0, 0, 0}, 1);
+    Require(countWeddingEffects(player) == 0, "disabled effects allowed a wedding effect");
+    g_session.m_isEffectOn = true;
+    receive({0xea, 1, 0x44, 0, 0, 0, 0xea, 1, 0x55, 0, 0, 0, 0xea, 1, 0x66, 0, 0, 0}, 3);
+    Require(countWeddingEffects(player) == 1 && countWeddingEffects(remote) == 1,
+        "wedding effect did not resolve local and remote actors");
+    world.UnregisterActor(&remote);
+    g_session.m_aid = oldAid;
+    g_session.m_isEffectOn = oldEffects;
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
     std::memcpy(g_session.m_playerName, savedName, sizeof(savedName));
     g_windowMgr.ClearChatEvents();
 }

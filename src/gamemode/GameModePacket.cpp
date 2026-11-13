@@ -4036,6 +4036,7 @@ bool IsSameMapAlreadyLoaded(const CGameMode& mode, const MapChangeInfo& info)
 
 void PrepareSameMapWarpReuse(CGameMode& mode)
 {
+    mode.m_recallPartnerName.clear();
     mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
     mode.ResetCompanionMapState();
@@ -8495,12 +8496,29 @@ void HandleFriendState(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleDivorceNotice(CGameMode&, const PacketView& packet)
+void HandleRecallPartnerName(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 26) return;
+    mode.m_recallPartnerName = ExtractFixedPacketString(packet, 2, 24);
+}
+
+void HandleWeddingEffect(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 6 || !g_session.m_isEffectOn) return;
+    const u32 gid = ReadLE32(packet.data + 2);
+    if (!gid || !mode.m_world) return;
+    auto* actor = gid == g_session.m_aid
+        ? mode.m_world->m_player : mode.m_world->GetGameActorByAID(gid);
+    if (actor) actor->LaunchEffect(347);
+}
+
+void HandleDivorceNotice(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 26) return;
     const auto partner = ExtractFixedPacketString(packet, 2, 24);
     const std::string_view player = g_session.GetPlayerName();
     if (player.empty() || partner.empty()) return;
+    if (mode.m_recallPartnerName == partner) mode.m_recallPartnerName.clear();
 
     constexpr const char* fallback = "%s and %s have divorced from each other.";
     const NoticeArguments names{{'s', player}, {'s', partner}};
@@ -9875,6 +9893,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     RegisterHandlerIfValid(router, receiveProfile.notifyEffectDirect, HandleNotifyEffect2);
     router.Register(0x0201, HandleFriendsList);
     router.Register(0x0205, HandleDivorceNotice);
+    router.Register(0x01E6, HandleRecallPartnerName);
+    router.Register(0x01EA, HandleWeddingEffect);
     router.Register(0x0216, HandleAdoptionResult);
     router.Register(0x0206, HandleFriendState);
     router.Register(0x0207, HandleFriendRequest);

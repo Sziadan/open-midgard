@@ -8002,6 +8002,7 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 
 void ClearRuntimeActors(CGameMode& mode)
 {
+    mode.m_recallPartnerName.clear();
     mode.ResetCompanionMapState();
     g_Weather.Reset();
     mode.ClearNpcProgress();
@@ -10642,7 +10643,6 @@ CGameMode::CGameMode()
     std::memset(m_rswName, 0, sizeof(m_rswName));
     std::memset(m_minimapBmpName, 0, sizeof(m_minimapBmpName));
     std::memset(ViewPointData, 0, sizeof(ViewPointData));
-    std::memset(m_CoupleName, 0, sizeof(m_CoupleName));
     std::memset(&m_skillUseInfo, 0, sizeof(m_skillUseInfo));
     std::memset(m_recordChatTime, 0, sizeof(m_recordChatTime));
     std::memset(m_strikeTime, 0, sizeof(m_strikeTime));
@@ -11645,7 +11645,7 @@ void ShowSkillHeadBubble(CGameMode& mode, int skillId, CGameActor* actor, int ex
         }
         text += "I love you.";
     } else if (skillId == 336) {
-        text = mode.m_CoupleName;
+        text = mode.m_recallPartnerName;
         const std::string skillName = SkillHeadBubbleName(skillId);
         if (!text.empty()) {
             text += " !!  ";

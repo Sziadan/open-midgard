@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK30.02 now receives divorce and adoption failure notices. Continue with the reachable `01E6` recall-name and `01EA` wedding-effect paths, then pair `01F6` adoption invitation receive with `01F7` consent and `01F9` initiation. Both parent fields are account IDs. Review the selected actor/skill context before wiring the name consumer. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
+PK30.02 receives divorce, adoption failures, the partner recall name, and the wedding effect. Continue with `01F6` adoption invitation receive, `01F7` consent, and `01F9` initiation. Both parent fields are account IDs. Use the shared confirmation window, capture both IDs, and verify accept, decline, replacement, and map teardown through production replay. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
