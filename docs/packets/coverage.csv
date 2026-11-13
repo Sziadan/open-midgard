@@ -613,7 +613,7 @@ AUDIT-0x02D7,0x02D7,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45;PK38,Source identity t
 AUDIT-0x02D8,0x02D8,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02D9,0x02D9,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02DA,0x02DA,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x02DB,0x02DB,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x02DB,0x02DB,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Selected variable team chat request captured through the battlechat command,C2S_ONLY,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x02DC,0x02DC,map,S2C,PK41,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x02DD,0x02DD,map,S2C,PK41,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02DE,0x02DE,map,S2C,PK41,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
@@ -890,20 +890,20 @@ AUDIT-0x08D2,0x08D2,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/fam
 AUDIT-0x08D4,0x08D4,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Server transaction/layout traced in PK44.CHAR-SLOT-MOVE.md; no current-client path; 0x08D4 invalid-source-slot branch reads char_moves[from] before bounds-safe reply.,UNREVIEWED,PK44.CHAR-SLOT-MOVE
 AUDIT-0x08D5,0x08D5,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Server transaction/layout traced in PK44.CHAR-SLOT-MOVE.md; no current-client path; 0x08D4 invalid-source-slot branch reads char_moves[from] before bounds-safe reply.,UNREVIEWED,PK44.CHAR-SLOT-MOVE
 AUDIT-0x08D6,0x08D6,map,S2C,PK25,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x08D7,0x08D7,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x08D8,0x08D8,map,S2C,PK41,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x08D9,0x08D9,map,S2C,PK41,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x08DA,0x08DA,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x08DB,0x08DB,map,S2C,PK41,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x08DF,0x08DF,map,S2C,PK41,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x08E0,0x08E0,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x08E1,0x08E1,map,S2C,PK41,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x08D7,0x08D7,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Queue application requires the later queue registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
+AUDIT-0x08D8,0x08D8,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
+AUDIT-0x08D9,0x08D9,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
+AUDIT-0x08DA,0x08DA,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Queue cancellation requires the later queue registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
+AUDIT-0x08DB,0x08DB,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
+AUDIT-0x08DF,0x08DF,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
+AUDIT-0x08E0,0x08E0,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Lobby reply requires the later queue registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
+AUDIT-0x08E1,0x08E1,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x08FE,0x08FE,map,unresolved,PK50,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x08FF,0x08FF,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0907,0x0907,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0908,0x0908,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x090A,0x090A,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x090E,0x090E,map,S2C,PK41,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x090A,0x090A,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Queue number request requires the later queue registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
+AUDIT-0x090E,0x090E,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x0916,0x0916,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x096E,0x096E,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Later merge parser absent from effective 20080910 registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x0977,0x0977,map,unresolved,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
