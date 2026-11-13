@@ -7050,6 +7050,7 @@ int main(int argc,char** argv){try{
     InventoryItemFieldsReplay();
     ItemRefineResultReplay();
     ProductionResultReplay();
+    ProductionSelectionReplay();
     CartStackDeltaReplay();
     CartClearContentsReplay();
     CartActorPresenceReplay();

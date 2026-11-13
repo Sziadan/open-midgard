@@ -395,6 +395,42 @@ void UISkillSelectWnd::SetMakingArrowItems(const std::vector<unsigned int>& item
     Invalidate();
 }
 
+void UISkillSelectWnd::SetProductionItems(const std::vector<unsigned int>& itemIds, std::string title)
+{
+    SetMakingArrowItems(itemIds);
+    m_kind = Kind::Production;
+    m_productionItem = 0;
+    m_productionMaterials.fill(0);
+    m_title = std::move(title);
+    m_emptyText.clear();
+    for (auto& entry : m_entries) entry.count = 0;
+}
+
+void UISkillSelectWnd::RefreshProductionMaterials()
+{
+    m_kind = Kind::ProductionMaterials;
+    m_title = g_ttemmgr.GetDisplayName(m_productionItem, true);
+    m_entries = {{"Create", {}, 0}};
+    const auto filled = std::count_if(m_productionMaterials.begin(), m_productionMaterials.end(), [](u16 id) { return id != 0; });
+    if (filled) {
+        m_entries[0].label += " (" + std::to_string(filled) + "/3 materials)";
+        m_entries.push_back({"Clear materials", {}, 0x10000});
+    }
+    if (filled < 3 && (m_productionItem < 994 || m_productionItem > 1000)) {
+        const bool hasElement = std::any_of(m_productionMaterials.begin(), m_productionMaterials.end(),
+            [](u16 id) { return id >= 994 && id <= 997; });
+        for (u16 id : {994, 995, 996, 997, 1000}) {
+            if (id != 1000 && hasElement) continue;
+            const int available = InventoryCountForItem(id) - static_cast<int>(
+                std::count(m_productionMaterials.begin(), m_productionMaterials.end(), id));
+            if (available > 0) m_entries.push_back({g_ttemmgr.GetDisplayName(id, true), {}, id, available, true});
+        }
+    }
+    ResetInteraction();
+    m_selectedIndex = 0;
+    Invalidate();
+}
+
 void UISkillSelectWnd::SetAutoSpellSkills(const std::vector<unsigned int>& skillIds)
 {
     m_kind = Kind::AutoSpell;
@@ -502,6 +538,27 @@ void UISkillSelectWnd::SubmitSelection()
         sent = gameMode->SendWarpMapSelection(entry.mapName);
     } else if (m_kind == Kind::Arrow && entry.itemId != 0 && entry.itemId <= 0xFFFFu) {
         sent = gameMode->SendMakingArrowSelection(static_cast<unsigned short>(entry.itemId));
+    } else if (m_kind == Kind::Production) {
+        m_productionItem = static_cast<u16>(entry.itemId);
+        RefreshProductionMaterials();
+    } else if (m_kind == Kind::ProductionMaterials) {
+        if (entry.itemId == 0) {
+            for (const auto id : m_productionMaterials) {
+                if (id && InventoryCountForItem(id) < std::count(m_productionMaterials.begin(), m_productionMaterials.end(), id)) {
+                    m_productionMaterials.fill(0);
+                    RefreshProductionMaterials();
+                    return;
+                }
+            }
+            sent = gameMode->SendProductionSelection(m_productionItem, m_productionMaterials);
+        } else if (entry.itemId == 0x10000) {
+            m_productionMaterials.fill(0);
+            RefreshProductionMaterials();
+        } else if (auto slot = std::find(m_productionMaterials.begin(), m_productionMaterials.end(), 0);
+            slot != m_productionMaterials.end()) {
+            *slot = static_cast<u16>(entry.itemId);
+            RefreshProductionMaterials();
+        }
     } else if (m_kind == Kind::AutoSpell && entry.itemId != 0 && entry.itemId <= 0xFFFFu) {
         std::vector<unsigned int> offeredSkillIds;
         offeredSkillIds.reserve(m_entries.size());
@@ -528,6 +585,8 @@ void UISkillSelectWnd::CancelSelection()
         if (!gameMode || !gameMode->SendMakingArrowSelection(0)) {
             return;
         }
+    } else if (IsProductionSelection()) {
+        if (!gameMode || !gameMode->SendProductionSelection(0, {})) return;
     }
     g_windowMgr.DeleteWindow(this);
 }

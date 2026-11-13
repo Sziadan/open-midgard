@@ -247,3 +247,63 @@ void ProductionResultReplay()
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
     mode.m_world = nullptr;
 }
+
+void ProductionSelectionReplay()
+{
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    const std::vector<u8> list{0x8d, 1, 12, 0, 0xb1, 4, 0, 0, 0, 0, 0, 0};
+    const auto receive = [&](const std::vector<u8>& bytes) {
+        Require(input.QueueBytes(bytes) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "crafting list did not dispatch");
+    };
+    receive(list);
+    auto* window = g_windowMgr.m_skillSelectWnd;
+    Require(window && window->IsProductionSelection(), "crafting list did not open its chooser");
+    receive({0x8d, 1, 5, 0, 0});
+    Require(g_windowMgr.m_skillSelectWnd == window, "malformed crafting list replaced the chooser");
+    window->HandleKeyDown(VK_DOWN);
+    window->HandleKeyDown(VK_RETURN);
+    Require(g_windowMgr.m_skillSelectWnd == window
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "choosing a recipe sent a request before confirmation");
+    window->HandleKeyDown(VK_RETURN);
+    Require(!g_windowMgr.m_skillSelectWnd
+        && peer.ReceiveExact(10) == std::vector<u8>{0x8e, 1, 0xb1, 4, 0, 0, 0, 0, 0, 0},
+        "crafting confirmation did not send the selected recipe");
+    ITEM_INFO material{};
+    material.m_itemIndex = 99;
+    material.SetItemId(1000);
+    material.m_num = 1;
+    g_session.SetInventoryItem(material);
+    receive(list);
+    window = g_windowMgr.m_skillSelectWnd;
+    window->HandleKeyDown(VK_DOWN);
+    window->HandleKeyDown(VK_RETURN);
+    window->HandleKeyDown(VK_DOWN);
+    window->HandleKeyDown(VK_RETURN);
+    window->HandleKeyDown(VK_RETURN);
+    Require(!g_windowMgr.m_skillSelectWnd && g_session.GetInventoryItemByIndex(99)->m_num == 1
+        && peer.ReceiveExact(10) == std::vector<u8>{0x8e, 1, 0xb1, 4, 0xe8, 3, 0, 0, 0, 0},
+        "optional crafting material did not send without an optimistic decrement");
+    g_session.RemoveInventoryItem(99, 1);
+    receive(list);
+    g_windowMgr.m_skillSelectWnd->HandleKeyDown(VK_ESCAPE);
+    Require(!g_windowMgr.m_skillSelectWnd
+        && peer.ReceiveExact(10) == std::vector<u8>{0x8e, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+        "crafting cancellation did not send a zero recipe");
+    receive({0x8d, 1, 4, 0});
+    Require(g_windowMgr.m_roomMessageBox && g_windowMgr.m_roomMessageBox->GetMessageId() == 424,
+        "empty crafting list did not show the reference notice");
+    g_windowMgr.m_roomMessageBox->Close();
+    connection->Disconnect();
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+}

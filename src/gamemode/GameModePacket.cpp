@@ -5485,6 +5485,38 @@ void HandleMonsterEstimate(CGameMode&, const PacketView& packet)
     if (window) window->SetEstimate(estimate);
 }
 
+void HandleProductionList(CGameMode& mode, const PacketView& packet)
+{
+    constexpr int maxProducts = 300;
+    if (!packet.data || packet.packetLength < 4 || ReadLE16(packet.data + 2) != packet.packetLength
+        || (packet.packetLength - 4) % 8 != 0 || (packet.packetLength - 4) / 8 > maxProducts) return;
+
+    std::vector<unsigned int> products;
+    for (int at = 4; at < packet.packetLength; at += 8) {
+        const auto id = ReadLE16(packet.data + at);
+        if (!id) return;
+        products.push_back(id);
+    }
+    ro::UiMessageStrings strings;
+    strings.Load();
+    if (products.empty()) {
+        mode.ClearProductionSelection();
+        if (!g_windowMgr.m_modalWindow) {
+            auto* box = new UIChatRoomMessageBox(strings.Get(424, "You can't create items yet."), 424);
+            g_windowMgr.m_roomMessageBox = box;
+            g_windowMgr.m_children.push_back(box);
+            g_windowMgr.m_modalWindow = box;
+            g_windowMgr.m_editWindow = nullptr;
+        }
+        return;
+    }
+    mode.ClearProductionSelection();
+    mode.m_warpSkillId = 0;
+    mode.m_warpMapDestinations.clear();
+    auto* window = static_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
+    if (window) window->SetProductionItems(products, strings.Get(425, "Item List you can craft"));
+}
+
 void HandleMakingArrowList(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetId != 0x01AD || packet.packetLength < 4 || ((packet.packetLength - 4) % 2) != 0) {
@@ -8912,6 +8944,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     ro::commerce::CloseTransactions();
     mode.CloseFriendInvitation();
     mode.ClearAdoptionInvitation();
+    mode.ClearProductionSelection();
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",
@@ -9804,6 +9837,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x017D, HandleItemCompositionAck);
     router.Register(0x0179, HandleItemIdentifyAck);
     router.Register(0x0188, HandleItemRefineResult);
+    router.Register(0x018D, HandleProductionList);
     router.Register(0x018F, HandleProductionResult);
     router.Register(0x00F2, HandleStorageStatus);
     RegisterHandlerIfValid(router, receiveProfile.storageItemAddedBasic, HandleStorageItemAdded);

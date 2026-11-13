@@ -10521,6 +10521,20 @@ bool CGameMode::SendMakingArrowSelection(u16 itemId)
     return sent;
 }
 
+bool CGameMode::SendProductionSelection(u16 itemId, const std::array<u16, 3>& materials)
+{
+    const std::array<u16, 5> packet{0x018e, itemId, materials[0], materials[1], materials[2]};
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), sizeof(packet));
+}
+
+void CGameMode::ClearProductionSelection()
+{
+    if (g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsProductionSelection()) {
+        g_windowMgr.DeleteWindow(g_windowMgr.m_skillSelectWnd);
+    }
+    if (auto* box = g_windowMgr.m_roomMessageBox; box && box->GetMessageId() == 424) box->Close();
+}
+
 bool CGameMode::SendStarPlaceAcceptance(u8 which)
 {
     const auto* window = g_windowMgr.m_skillSelectWnd;
@@ -11002,6 +11016,7 @@ void CGameMode::UpdateFriendInvitation()
 void CGameMode::OnExit() {
     CloseFriendInvitation();
     ClearAdoptionInvitation();
+    ClearProductionSelection();
     ro::commerce::CloseTransactions();
     g_session.m_showEquipmentToOthers = false;
     g_session.m_refuseRecall = false;

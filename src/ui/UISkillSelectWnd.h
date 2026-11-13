@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIFrameWnd.h"
+#include <array>
 #include "UIShopCommon.h"
 
 #include <string>
@@ -75,6 +76,8 @@ public:
 
     void SetWarpDestinations(unsigned short skillId, const std::vector<std::string>& mapNames);
     void SetMakingArrowItems(const std::vector<unsigned int>& itemIds);
+    void SetProductionItems(const std::vector<unsigned int>& itemIds, std::string title);
+    bool IsProductionSelection() const { return m_kind == Kind::Production || m_kind == Kind::ProductionMaterials; }
     void SetAutoSpellSkills(const std::vector<unsigned int>& skillIds);
     void SetStarPlaceConfirmation(u8 which, std::string prompt);
     bool IsStarPlaceConfirmation(u8 which) const;
@@ -90,6 +93,8 @@ private:
         Arrow,
         AutoSpell,
         StarPlace,
+        Production,
+        ProductionMaterials,
     };
 
     struct Entry {
@@ -117,9 +122,12 @@ private:
     void SubmitSelection();
     void CancelSelection();
     void ResetInteraction();
+    void RefreshProductionMaterials();
     const shopui::BitmapPixels* GetItemIcon(unsigned int itemId);
 
     Kind m_kind;
+    u16 m_productionItem = 0;
+    std::array<u16, 3> m_productionMaterials{};
     unsigned short m_skillId;
     std::string m_title;
     std::string m_emptyText;

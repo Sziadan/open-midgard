@@ -1276,7 +1276,7 @@
     "PK35.02": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK35.01-crafting-wire.md"],
-      "commit_subject": "packet(PK35.02): receive item production results"
+      "commit_subject": "packet(PK35.02): wire item production selection"
     },
     "PK35.03": {
       "status": "NOT_STARTED",

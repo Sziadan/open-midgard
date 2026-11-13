@@ -259,6 +259,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0178, 4);
     SetPacketSize(0x0179, 5);
     SetPacketSize(0x0188, 8);               // ZC_ACK_ITEMREFINING
+    SetPacketSize(0x018D, kVariablePacketSize); // ZC_MAKABLEITEMLIST
+    SetPacketSize(0x018E, 10);              // CZ_REQMAKINGITEM
     SetPacketSize(0x018F, 6);               // ZC_ACK_REQMAKINGITEM
     SetPacketSize(0x0193, 2);
     SetPacketSize(0x0194, 30);

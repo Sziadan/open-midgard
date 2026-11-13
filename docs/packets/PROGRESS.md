@@ -4001,3 +4001,5 @@ PK35.01 traces the selected NPC refine, weapon-refine, production, repair, and c
 PK35.02 handles the selected NPC refine result and verifies its interaction with authoritative inventory removal and add packets. [Evidence](evidence/PK35.01-crafting-wire.md)
 
 PK35.02 receives `018F` and applies the reference production result effects. [Evidence](evidence/PK35.01-crafting-wire.md)
+
+PK35.02 validates `018D` production lists and sends `018E` confirmation, optional materials, and cancellation through the shared chooser. [Evidence](evidence/PK35.01-crafting-wire.md)

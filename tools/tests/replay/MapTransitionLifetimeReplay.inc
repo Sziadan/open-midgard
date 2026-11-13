@@ -628,6 +628,12 @@ void MapTransitionLifetimeReplay()
         ro::commerce::state.promptId = 9;
         ro::commerce::state.promptChar = 10;
         mode.ReceiveAdoptionInvitation(9, 10, "Parent");
+        const std::vector<u8> productionList{0x8d, 1, 12, 0, 0xb1, 4, 0, 0, 0, 0, 0, 0};
+        inputPeer.Send(productionList);
+        WaitKernelPending(mapInput, static_cast<int>(productionList.size()));
+        Require(ProcessGameModePacketLoop(mode, mapInput, router, 1).packetsDispatched == 1
+            && g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsProductionSelection(),
+            "could not stage a production chooser before same-map warp");
         auto cellThenWarp = MapCellUpdateFrame(1, 1, 5, "prontera.gat");
         g_session.m_mapTypeInfo.Clear();
         g_session.m_isMinEffectOld = false;
@@ -641,6 +647,7 @@ void MapTransitionLifetimeReplay()
         Require(ro::commerce::state.promptKind.empty() && !ro::commerce::state.promptId,
             "same-map warp kept a friend invitation actionable");
         mode.UpdateAdoptionInvitation();
+        Require(!g_windowMgr.m_skillSelectWnd, "same-map warp retained the production chooser");
         Require(!g_windowMgr.m_roomMessageBox, "same-map warp kept an adoption invitation actionable");
         Require(presentations == 0 && handoffs == 0, "loaded same-map warp selected external orchestration");
         const std::vector<u8> ack = ackPeer.ReceiveExact(2);

@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK35.02 handles `0188` NPC refine and `018F` production results. Next implement the `018D/018E` production selection flow. The reference opens `WID_MAKETARGETLISTWND` for a nonempty list and shows the can't-craft message for an empty list. Then continue the separate weapon-refine skill flow `0221/0222/0223`. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
+PK35.02 handles `0188` NPC refine and the `018D/018E/018F` production flow. The production chooser uses the shared native/Qt selection window. Reference material-slot presentation and live verification remain open. Continue with the weapon-refine skill flow `0221/0222/0223`. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
 
 PK34.04 verifies storage reopen after a same-map refresh when the server omits one category. Inventory, cart, storage, and friend snapshot validation are implemented. Live capture and independent PK48 review remain open. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)
 
