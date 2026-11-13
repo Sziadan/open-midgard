@@ -146,6 +146,12 @@ private:
     void ResetAccountLoginHandshake();
     void FailAccountLogin(const char* message);
     void UpdateAccountHashTimeout(u32 now);
+    void UpdateCharacterRequestTimeout(u32 now);
+    void RecoverCharacterRequest(const char* message);
+    enum class CharacterRequest { None, Select, Create };
+    CharacterRequest m_characterRequest = CharacterRequest::None;
+    u32 m_characterRequestSentAt = 0;
+    u32 m_characterRequestGid = 0;
     void SendConnectInfoChanged();
     void SendExeHashCheck();
     void SendPasswordHashRequest();

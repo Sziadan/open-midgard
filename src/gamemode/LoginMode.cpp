@@ -44,6 +44,7 @@
 namespace {
 
 constexpr u32 kPasswordHashFallbackDelayMs = 1500;
+constexpr u32 kCharacterRequestTimeoutMs = 15000;
 constexpr size_t kCompactCharListHeaderSize = 4;
 constexpr size_t kLegacyCharListHeaderSize = 24;
 constexpr size_t kExpandedCharListHeaderSize = 27;
@@ -1368,6 +1369,7 @@ void CLoginMode::OnInit(const char* worldName) {
     m_loopCond = 1;
     m_isConnected = 0;
     m_nextSubMode = -1;
+    m_characterRequest = CharacterRequest::None;
     m_subModeCnt = 0;
 
     if (!LoadClientInfoCandidates()) {
@@ -1447,13 +1449,19 @@ void CLoginMode::OnUpdate() {
                     : (m_plainAccountLoginSent
                         ? "Login server closed the connection after the account login request. The server likely rejected the login packet shape, client type, or password mode without returning a RO error packet."
                         : "Login server closed the connection before authentication completed."))
+                : m_characterRequest == CharacterRequest::Create
+                    ? "Login: char server disconnected during creation. Sign in again to check whether the character was created."
+                : m_characterRequest == CharacterRequest::Select
+                    ? "Login: char server disconnected during selection. Sign in again to retry."
                 : (m_subMode == LoginSubMode_ConnectChar)
                     ? "Char server closed the connection before returning the character list."
                     : "Server closed the connection.";
             DbgLog("[Login] connection dropped in submode %d\n", m_subMode);
             SetLoginStatus(message);
             ShowLoginErrorDialog(message);
+            m_deferredLoginStatus = message;
             m_isConnected = 0;
+            m_characterRequest = CharacterRequest::None;
             m_pendingDeleteCharGid = 0;
             m_pendingDeleteCharSlot = -1;
             ResetScheduledDeletion();
@@ -1461,6 +1469,7 @@ void CLoginMode::OnUpdate() {
             return;
         }
         UpdateAccountHashTimeout(GetTickCount());
+        UpdateCharacterRequestTimeout(GetTickCount());
     }
 
     MainLoopWatchdogSetStage("Login:UIWindowMgr::OnProcess");
@@ -1533,6 +1542,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
     case LoginMsg_ReturnToLogin:
     case LoginMsg_Disconnect:
         ResetScheduledDeletion();
+        m_characterRequest = CharacterRequest::None;
         m_pendingDeleteCharGid = 0;
         m_pendingDeleteCharSlot = -1;
         CRagConnection::instance()->Disconnect();
@@ -1587,6 +1597,8 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
         return m_numChar;
 
     case LoginMsg_SelectCharacter:
+        if (!m_isConnected || m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1
+            || m_characterRequest != CharacterRequest::None) return 0;
         if (wparam >= 0 && wparam < m_numChar) {
             const int selectedIndex = static_cast<int>(wparam);
             if (m_pendingScheduledDeleteReply || m_scheduledDeletions.count(m_charInfo[selectedIndex].GID)) {
@@ -1595,14 +1607,17 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
             }
             m_selectedCharIndex = selectedIndex;
             m_selectedCharSlot = static_cast<int>(m_charInfo[selectedIndex].CharNum);
-            g_session.SetSelectedCharacterAppearance(m_charInfo[selectedIndex]);
             m_nextSubMode = LoginSubMode_SelectChar;
             return 1;
         }
         return 0;
 
     case LoginMsg_RequestMakeCharacter: {
-        if (m_pendingScheduledDeleteReply) return 0;
+        if (!m_isConnected || m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1
+            || m_characterRequest != CharacterRequest::None || m_pendingScheduledDeleteReply
+            || wparam < 0 || wparam >= static_cast<msgparam_t>(std::size(m_charInfo))) return 0;
+        if (std::any_of(m_charInfo, m_charInfo + m_numChar,
+                [wparam](const CHARACTER_INFO& entry) { return entry.CharNum == wparam; })) return 0;
         m_selectedCharSlot = static_cast<int>(wparam);
         m_nextSubMode = LoginSubMode_MakeChar;
         return 1;
@@ -1665,6 +1680,8 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
             SetLoginStatus("Login: not connected to the char server.");
             return 0;
         }
+        if (m_subMode != LoginSubMode_MakeChar || m_nextSubMode != -1
+            || m_characterRequest != CharacterRequest::None) return 0;
 
         PACKET_CZ_MAKE_CHAR pkt{};
         pkt.PacketType = ro::net::GetActiveCharacterPacketProfile().makeCharacter;
@@ -1679,7 +1696,12 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
         pkt.hairColor = static_cast<u16>(m_charParam[6]);
         pkt.hairStyle = static_cast<u16>(m_charParam[7]);
 
-        CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)));
+        if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
+            RecoverCharacterRequest("Login: failed to send character creation. Sign in again to refresh the character list.");
+            return 0;
+        }
+        m_characterRequest = CharacterRequest::Create;
+        m_characterRequestSentAt = GetTickCount();
         DbgLog("[Login] CH_MAKE_CHAR sent: name='%.24s' stats=%d/%d/%d/%d/%d/%d slot=%d hairColor=%d hairStyle=%d\n",
                pkt.name,
                (int)pkt.Str, (int)pkt.Agi, (int)pkt.Vit, (int)pkt.Int, (int)pkt.Dex, (int)pkt.Luk,
@@ -1695,6 +1717,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
     }
 
     case LoginMsg_ReturnToCharSelect:
+        if (m_characterRequest != CharacterRequest::None) return 0;
         m_nextSubMode = LoginSubMode_CharSelect;
         return 1;
 
@@ -1988,15 +2011,19 @@ void CLoginMode::OnChangeState(int newState) {
         }
 
         const u8 charNum = m_charInfo[m_selectedCharIndex].CharNum;
-        g_session.SetSelectedCharacterAppearance(m_charInfo[m_selectedCharIndex]);
-        g_session.LoadSkillUseLevels(charNum);
         DbgLog("[Login] Selecting char slot %d (name='%.24s')\n",
                (int)charNum, reinterpret_cast<const char*>(m_charInfo[m_selectedCharIndex].name));
 
         PACKET_CZ_SELECT_CHAR selPkt{};
         selPkt.PacketType = ro::net::GetActiveCharacterPacketProfile().selectCharacter;
         selPkt.CharNum    = charNum;
-        CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&selPkt), static_cast<int>(sizeof(selPkt)));
+        if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&selPkt), static_cast<int>(sizeof(selPkt)))) {
+            RecoverCharacterRequest("Login: failed to send character selection. Sign in again to retry.");
+            break;
+        }
+        m_characterRequest = CharacterRequest::Select;
+        m_characterRequestGid = m_charInfo[m_selectedCharIndex].GID;
+        m_characterRequestSentAt = GetTickCount();
         SetLoginStatus("Login: selecting character...");
         break;
     }
@@ -2187,6 +2214,8 @@ void CLoginMode::PollNetwork()
         if ((id == 0x006F || id == 0x0070) && (m_subMode != LoginSubMode_DeleteChar || !m_pendingDeleteCharGid)) {
             continue;
         }
+        if ((id == 0x006D || id == 0x006E) && m_characterRequest != CharacterRequest::Create) continue;
+        if (id == 0x0071 && m_characterRequest != CharacterRequest::Select) continue;
         const ro::net::AccountLoginPacketProfile& loginProfile = ro::net::GetActiveAccountLoginPacketProfile();
         if (id == loginProfile.passwordHashChallenge && !m_waitingForPasswordHash) {
             continue;
@@ -2256,6 +2285,27 @@ void CLoginMode::UpdateAccountHashTimeout(u32 now)
     DbgLog("[Login] password hash challenge timed out, sending configured direct login\n");
     ResetAccountLoginHandshake();
     SendPlainAccountLogin();
+}
+
+void CLoginMode::RecoverCharacterRequest(const char* message)
+{
+    m_characterRequest = CharacterRequest::None;
+    ResetScheduledDeletion();
+    CRagConnection::instance()->Disconnect();
+    m_isConnected = 0;
+    m_nextSubMode = LoginSubMode_Login;
+    m_deferredLoginStatus = message;
+    SetLoginStatus(message);
+}
+
+void CLoginMode::UpdateCharacterRequestTimeout(u32 now)
+{
+    if (m_characterRequest == CharacterRequest::None || now - m_characterRequestSentAt < kCharacterRequestTimeoutMs) {
+        return;
+    }
+    RecoverCharacterRequest(m_characterRequest == CharacterRequest::Create
+        ? "Login: no character creation result. Sign in again to check whether the character was created."
+        : "Login: no character selection result. Sign in again to retry.");
 }
 
 void CLoginMode::SendExeHashCheck()
@@ -2793,6 +2843,7 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnRefuseChar(const std::vector<u8>& raw)
 {
+    m_characterRequest = CharacterRequest::None;
     const u8 code = (raw.size() > 2) ? raw[2] : 0;
     char msg[64];
     std::snprintf(msg, sizeof(msg), "Char server refused entry (code %d).", (int)code);
@@ -2811,8 +2862,7 @@ void CLoginMode::OnRefuseChar(const std::vector<u8>& raw)
 void CLoginMode::OnAcceptMakeChar(const std::vector<u8>& raw)
 {
     if (raw.size() < sizeof(PACKET_HC_ACCEPT_MAKECHAR)) {
-        SetLoginStatus("Login error: HC_ACCEPT_MAKECHAR too short.");
-        m_nextSubMode = LoginSubMode_CharSelect;
+        RecoverCharacterRequest("Login: incomplete character creation result. Sign in again to refresh the character list.");
         return;
     }
 
@@ -2824,6 +2874,11 @@ void CLoginMode::OnAcceptMakeChar(const std::vector<u8>& raw)
     } else {
         std::memcpy(&created, raw.data() + sizeof(u16), sizeof(created));
     }
+    if (!created.GID || created.CharNum != m_selectedCharSlot) {
+        RecoverCharacterRequest("Login: unexpected character creation result. Sign in again to refresh the character list.");
+        return;
+    }
+    m_characterRequest = CharacterRequest::None;
 
     if (m_numChar >= 0 && m_numChar < static_cast<int>(std::size(m_charInfo))) {
         m_charInfo[m_numChar] = created;
@@ -2832,7 +2887,8 @@ void CLoginMode::OnAcceptMakeChar(const std::vector<u8>& raw)
 
     DbgLog("[Login] HC_ACCEPT_MAKECHAR: name='%.24s' gid=%u slot=%d totalChars=%d\n",
            reinterpret_cast<const char*>(created.name), created.GID, (int)created.CharNum, m_numChar);
-    SetLoginStatus("Login: character created successfully.");
+    m_deferredLoginStatus = "Login: character created successfully.";
+    SetLoginStatus(m_deferredLoginStatus.c_str());
     m_nextSubMode = LoginSubMode_CharSelect;
 }
 
@@ -2841,6 +2897,7 @@ void CLoginMode::OnAcceptMakeChar(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnRefuseMakeChar(const std::vector<u8>& raw)
 {
+    m_characterRequest = CharacterRequest::None;
     const u8 code = (raw.size() > 2) ? raw[2] : 0;
     const char* reason = nullptr;
     switch (code) {
@@ -2865,6 +2922,7 @@ void CLoginMode::OnRefuseMakeChar(const std::vector<u8>& raw)
     std::snprintf(msg, sizeof(msg), "Login: character creation failed (%s, code %d).", reason, (int)code);
     DbgLog("[Login] HC_REFUSE_MAKECHAR: code=%d (%s)\n", (int)code, reason);
     SetLoginStatus(msg);
+    m_deferredLoginStatus = msg;
     ShowLoginErrorDialog(msg);
     m_nextSubMode = LoginSubMode_CharSelect;
 }
@@ -3064,10 +3122,19 @@ void CLoginMode::OnNotifyZonesvr(const std::vector<u8>& raw)
 {
     if (raw.size() < 28) return;
     const u8* p = raw.data();
+    const u32 gid = u32(p[2])|(u32(p[3])<<8)|(u32(p[4])<<16)|(u32(p[5])<<24);
+    if (!gid || gid != m_characterRequestGid || m_selectedCharIndex < 0 || m_selectedCharIndex >= m_numChar
+        || m_charInfo[m_selectedCharIndex].GID != gid) {
+        RecoverCharacterRequest("Login: the map server reply names a different character. Sign in again to retry.");
+        return;
+    }
+    m_characterRequest = CharacterRequest::None;
+    g_session.SetSelectedCharacterAppearance(m_charInfo[m_selectedCharIndex]);
+    g_session.LoadSkillUseLevels(m_charInfo[m_selectedCharIndex].CharNum);
 
     // Character/map identity changes here, before zone traffic or mode exit.
     g_session.InvalidatePartyPositions();
-    g_session.m_gid = u32(p[2])|(u32(p[3])<<8)|(u32(p[4])<<16)|(u32(p[5])<<24);
+    g_session.m_gid = gid;
     g_session.m_localGuild={}; // A character login starts a fresh membership session.
     g_session.m_guildWindow={};
 
@@ -3133,9 +3200,11 @@ void CLoginMode::OnZcAcceptEnter(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnDisconnectMsg(const std::vector<u8>& raw)
 {
+    m_characterRequest = CharacterRequest::None;
     ResetScheduledDeletion();
     ResetAccountLoginHandshake();
     const std::string message = FormatLoginDisconnectMessage(raw);
+    m_deferredLoginStatus = message;
     const u8 code = (raw.size() > 2) ? raw[2] : 0;
     DbgLog("[Login] SC_NOTIFY_BAN: code=%d\n", (int)code);
     SetLoginStatus(message.c_str());

@@ -113,12 +113,19 @@ struct LoginModeReplayAccess : CLoginMode {
         m_nextSubMode = -1;
         m_isConnected = 1;
     }
-    void SendPendingDeletionForReplay() {
+    void EnterPendingSubModeForReplay() {
         m_subMode = m_nextSubMode;
         m_nextSubMode = -1;
         OnChangeState(m_subMode);
     }
     int NextSubMode() const { return m_nextSubMode; }
+    void AdvanceCharacterRequestTimeout(u32 elapsed) {
+        UpdateCharacterRequestTimeout(m_characterRequestSentAt + elapsed);
+    }
+    void ExpectCreationReplyForReplay(int slot) {
+        m_characterRequest = CharacterRequest::Create;
+        m_selectedCharSlot = slot;
+    }
     static void SeedCharServerForConnect(LoginModeReplayAccess& mode, u32 ip, s16 port) {
         mode.m_numServer = 1;
         mode.m_serverSelected = 0;
@@ -1471,6 +1478,7 @@ void LoginAcceptCharacterListReplay()
     makePacket[0] = 0x6d;
     std::memcpy(makePacket.data() + sizeof(u16), record, kCharacterRecordLength);
     LoginModeReplayAccess createMode;
+    createMode.ExpectCreationReplyForReplay(7);
     receiveThroughPollNetwork(createMode, makePacket, "Login: character created successfully.");
     Require(LoginModeReplayAccess::AcceptedCharacterFieldsMatch(createMode),
         "selected-source 0x006D slot/hair-color values were not translated into the client character record");
@@ -1493,17 +1501,24 @@ void LoginSelectCharacterRequestReplay()
     connection->Disconnect();
     LoopbackPeer peer(*connection);
     LoginModeReplayAccess mode;
+    mode.EnterCharacterSelectionForReplay();
     LoginModeReplayAccess::SeedCharacterForSelection(mode, 7);
     const msgresult_t accepted = mode.SendMsg(CLoginMode::LoginMsg_SelectCharacter, 0, 0, 0);
     Require(accepted != 0 && mode.NextSubMode() == CLoginMode::LoginSubMode_SelectChar,
         "character selection message did not select the valid local record");
-    mode.OnChangeState(CLoginMode::LoginSubMode_SelectChar);
+    mode.EnterPendingSubModeForReplay();
     const std::vector<u8> expected{0x66, 0x00, 0x07};
     const std::vector<u8> captured = peer.ReceiveExact(expected.size());
     Require(captured == expected,
         "selected-source 0x0066 outbound request did not encode the selected character slot");
     Require(g_windowMgr.GetLoginStatus() == "Login: selecting character...",
         "character selection request did not report its production status");
+    mode.AdvanceCharacterRequestTimeout(14999);
+    Require(connection->IsOpen(), "character selection timed out before the deadline");
+    mode.AdvanceCharacterRequestTimeout(15000);
+    Require(!connection->IsOpen() && mode.NextSubMode() == CLoginMode::LoginSubMode_Login
+            && LoginModeReplayAccess::DeferredStatus(mode).find("no character selection result") != std::string::npos,
+        "unanswered character selection did not return to login");
     std::cout << "{\"case_id\":\"login_select_character_request\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-0066-select-character-selected-source\",\"production_entry\":\"CLoginMode::SendMsg(LoginMsg_SelectCharacter) -> OnChangeState(SelectChar) -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"660007\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":3,\"opcode\":\"0x0066\",\"selected_slot\":7,\"selection_message_accepted\":true,\"next_submode_select_char\":true,\"production_framing_dispatch\":true,\"onrun_state_dispatch_not_exercised\":true,\"qt_click_lifecycle_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
 
@@ -1515,6 +1530,7 @@ void LoginSelectCharacterRejectInvalidIndexReplay()
     connection->Disconnect();
     LoopbackPeer peer(*connection);
     LoginModeReplayAccess mode;
+    mode.EnterCharacterSelectionForReplay();
     LoginModeReplayAccess::SeedCharacterForSelection(mode, 7);
     const int priorSubMode = mode.NextSubMode();
     Require(mode.SendMsg(CLoginMode::LoginMsg_SelectCharacter, 1, 0, 0) == 0,
@@ -1534,9 +1550,10 @@ void LoginCreateCharacterRequestReplay()
     connection->Disconnect();
     LoopbackPeer peer(*connection);
     LoginModeReplayAccess mode;
-    LoginModeReplayAccess::SetConnected(mode, true);
+    mode.EnterCharacterSelectionForReplay();
     Require(mode.SendMsg(CLoginMode::LoginMsg_RequestMakeCharacter, 7, 0, 0) != 0,
         "character creation slot selection was rejected");
+    mode.EnterPendingSubModeForReplay();
     const std::array<int, 8> params{1, 2, 3, 4, 5, 6, 18, 42};
     const char name[] = "RuneA";
     Require(mode.SendMsg(CLoginMode::LoginMsg_SetCharParam,
@@ -1562,6 +1579,23 @@ void LoginCreateCharacterRequestReplay()
         "selected-source 0x0067 outbound request differs from independent field-offset fixture");
     Require(g_windowMgr.GetLoginStatus() == "Login: requesting character creation...",
         "character creation sender did not publish its production status");
+    Require(!mode.SendMsg(CLoginMode::LoginMsg_CreateCharacter, 0, 0, 0)
+            && !mode.SendMsg(CLoginMode::LoginMsg_ReturnToCharSelect, 0, 0, 0),
+        "an outstanding creation request allowed a second send or abandoned the reply owner");
+    mode.AdvanceCharacterRequestTimeout(14999);
+    Require(connection->IsOpen(), "character creation timed out before the deadline");
+    mode.AdvanceCharacterRequestTimeout(15000);
+    Require(!connection->IsOpen() && mode.NextSubMode() == CLoginMode::LoginSubMode_Login
+            && LoginModeReplayAccess::DeferredStatus(mode).find("whether the character was created") != std::string::npos,
+        "unanswered character creation did not return to login with an uncertain result");
+    mode.EnterCharacterSelectionForReplay();
+    Require(mode.SendMsg(CLoginMode::LoginMsg_RequestMakeCharacter, 7, 0, 0),
+        "character creation send-failure fixture could not choose a slot");
+    mode.EnterPendingSubModeForReplay();
+    Require(!mode.SendMsg(CLoginMode::LoginMsg_CreateCharacter, 0, 0, 0)
+            && mode.NextSubMode() == CLoginMode::LoginSubMode_Login
+            && LoginModeReplayAccess::DeferredStatus(mode).find("failed to send character creation") != std::string::npos,
+        "failed character creation send entered the wait state");
     g_windowMgr.RemoveAllWindows();
     std::cout << "{\"case_id\":\"login_create_character_request\",\"contract_id\":\"PK44.CHAR-CREATE\",\"fixture_id\":\"PK44-0067-make-character-selected-source\",\"production_entry\":\"CLoginMode::SendMsg(LoginMsg_RequestMakeCharacter/SetCharParam/SetMakingCharName/CreateCharacter) -> CRagConnection::SendPacket\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"frame_length\":37,\"opcode\":\"0x0067\",\"name\":\"RuneA\",\"stats\":[1,2,3,4,5,6],\"slot\":7,\"hair_color_u16\":18,\"hair_style_u16\":42,\"production_send_capture\":true,\"qt_click_lifecycle_not_exercised\":true,\"outcome\":\"PASS\"}\n";
 }
@@ -2195,7 +2229,13 @@ void LoginZoneServerNotificationReplay()
     connection->Disconnect();
     LoopbackPeer peer(*connection);
     LoginModeReplayAccess mode;
-    LoginModeReplayAccess::SetConnected(mode, true);
+    mode.EnterCharacterSelectionForReplay();
+    LoginModeReplayAccess::SeedCharacterForSelection(mode, 7);
+    mode.GetCharInfo()[0].GID = 0x10203040u;
+    Require(mode.SendMsg(CLoginMode::LoginMsg_SelectCharacter, 0, 0, 0), "zone reply fixture could not select the character");
+    mode.EnterPendingSubModeForReplay();
+    Require(peer.ReceiveExact(3) == std::vector<u8>{0x66, 0x00, 0x07},
+        "zone reply fixture did not send its selection request");
     std::vector<u8> packet(28, 0);
     packet[0] = 0x71;
     packet[1] = 0x00;
@@ -2243,6 +2283,26 @@ void LoginZoneServerNotificationReplay()
     Require(!LoginModeReplayAccess::IsConnected(mode) && !connection->IsOpen(),
         "0x0071 did not clear char-server connection state");
 
+    {
+        LoopbackPeer wrongCharacter(*connection);
+        LoginModeReplayAccess retry;
+        retry.EnterCharacterSelectionForReplay();
+        LoginModeReplayAccess::SeedCharacterForSelection(retry, 7);
+        Require(retry.SendMsg(CLoginMode::LoginMsg_SelectCharacter, 0, 0, 0),
+            "mismatched zone reply fixture could not select its character");
+        retry.EnterPendingSubModeForReplay();
+        wrongCharacter.ReceiveExact(3);
+        wrongCharacter.Send(packet);
+        const auto deadline = Clock::now() + kTimeout;
+        while (connection->IsOpen() && Clock::now() < deadline) {
+            LoginModeReplayAccess::RunPollNetwork(retry);
+            if (connection->IsOpen()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        Require(!connection->IsOpen() && retry.NextSubMode() == CLoginMode::LoginSubMode_Login
+                && LoginModeReplayAccess::DeferredStatus(retry).find("different character") != std::string::npos,
+            "mismatched zone reply opened a map connection");
+    }
+
     g_session.m_gid = oldGid;
     std::memcpy(g_session.m_curMap, oldMap, sizeof(oldMap));
     g_session.m_localGuild = oldLocalGuild;
@@ -2286,7 +2346,7 @@ void LoginCharacterDeletionReplay()
     expected.insert(expected.end(), key.begin(), key.end());
     expected.resize(selected ? 56 : 46, 0);
     Require(request() && !request(), "duplicate deletion was not suppressed");
-    mode.SendPendingDeletionForReplay();
+    mode.EnterPendingSubModeForReplay();
     Require(peer.ReceiveExact(expected.size()) == expected, "character deletion opcode, CID, or fixed key bytes differ");
     deliver({0x70, 0, 2}, CLoginMode::LoginSubMode_CharSelect);
     Require(!mode.m_pendingDeleteCharGid && mode.GetCharCount() == 2
@@ -2298,7 +2358,7 @@ void LoginCharacterDeletionReplay()
         "character selection discarded the deletion outcome");
     mode.EnterCharacterSelectionForReplay();
     Require(request(), "refusal prevented a subsequent confirmed request");
-    mode.SendPendingDeletionForReplay();
+    mode.EnterPendingSubModeForReplay();
     Require(peer.ReceiveExact(expected.size()) == expected, "retry changed the pending character");
     deliver({0x6f, 0, 0x6f, 0}, CLoginMode::LoginSubMode_CharSelect);
     Require(!mode.m_pendingDeleteCharGid && mode.GetCharCount() == 1 && mode.GetCharInfo()[0].GID == 0x87654321
@@ -2385,6 +2445,7 @@ void LoginCharacterCreationRefusalReplay()
         LoopbackPeer peer(*connection);
         const std::vector<u8> packet{0x6e, 0x00, sample.code};
         LoginModeReplayAccess mode;
+        mode.ExpectCreationReplyForReplay(7);
         LoginModeReplayAccess::SetStatus(mode, "Login: awaiting replay packet.");
         peer.Send(packet);
         const auto receiveDeadline = Clock::now() + kTimeout;

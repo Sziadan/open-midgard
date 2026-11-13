@@ -932,7 +932,14 @@ void MapTransitionLifetimeReplay()
         singleton->Disconnect();
         LoopbackPeer charPeer(*singleton);
         LoginModeReplayAccess mode;
-        LoginModeReplayAccess::SetConnected(mode, true);
+        mode.EnterCharacterSelectionForReplay();
+        LoginModeReplayAccess::SeedCharacterForSelection(mode, 7);
+        mode.GetCharInfo()[0].GID = 0x50607080u;
+        Require(mode.SendMsg(CLoginMode::LoginMsg_SelectCharacter, 0, 0, 0),
+            "character transition fixture could not select its character");
+        mode.EnterPendingSubModeForReplay();
+        Require(charPeer.ReceiveExact(3) == std::vector<u8>{0x66, 0x00, 0x07},
+            "character transition fixture did not send its selection request");
         auto frame = characterChange;
         const std::string expectedMap = sameMap ? "prontera" : "geffen";
         std::fill(frame.begin() + 6, frame.begin() + 22, 0);

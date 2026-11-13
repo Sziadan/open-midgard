@@ -4151,3 +4151,5 @@ PK46.03 connects scheduled deletion to the PacketVer23 character-selection actio
 PK28.04 and PK29.04 give armed skills priority over manual companion movement and keep companion casts in their own C++ controller across actor removal. The handoff records the remaining live input and binding checks. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 PK46.03 returns to login after failed account authentication sends or a missing required hash challenge. Optional challenge fallback sends the configured direct request once. [Evidence](evidence/PK46.03-account-login-send-gates.md)
+
+PK46.03 tracks character selection and creation through the reply or a bounded wait, with sign-in recovery after an unanswered or failed request. [Evidence](evidence/PK46.03-loginmode-character-send-paths.md)
