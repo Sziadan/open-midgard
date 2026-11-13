@@ -7615,7 +7615,8 @@ void GuildAdminProductionSendReplay()
     g_session.m_localGuild.guildId = 7;
     g_session.m_localGuild.isMaster = true;
     g_session.m_guildWindow.menuFlags = 0x82;
-    g_session.m_guildWindow.members = {{11, 13}};
+    g_session.m_guildWindow.members = {{11, 13, 0, 3, 0, 0, false, "Member"}};
+    g_session.m_guildWindow.master = "Master";
     g_session.m_aid = 17;
     g_session.m_gid = 19;
     auto* window = g_windowMgr.MakeWindow(UIWindowMgr::WID_GUILDWND);
@@ -7644,6 +7645,34 @@ void GuildAdminProductionSendReplay()
         ui->guildAction("memberPosition", {{"character", 13}, {"position", 3}});
         Require(peer.ReceiveExact(16) == std::vector<u8>{0x55, 1, 16, 0, 11, 0, 0, 0, 13, 0, 0, 0, 3, 0, 0, 0},
             "guild member rank wire fields differ");
+        const auto expel = [&](u32 guildId, u32 account, bool confirmed) {
+            ui->guildAction("expel", {{"guildId", guildId}, {"account", account},
+                {"character", 13}, {"confirmed", confirmed}, {"reason", "Bye"}});
+        };
+        expel(8, 11, true);
+        expel(7, 12, true);
+        expel(7, 11, false);
+        g_session.m_localGuild.isMaster = false;
+        g_session.m_localGuild.permissions = 0;
+        expel(7, 11, true);
+        g_session.m_localGuild.permissions = 0x10;
+        expel(7, 11, true);
+        std::vector<u8> expelled{0x5b, 1, 7, 0, 0, 0, 11, 0, 0, 0, 13, 0, 0, 0, 'B', 'y', 'e'};
+        expelled.resize(54);
+        Require(peer.ReceiveExact(expelled.size()) == expelled && g_session.m_guildWindow.members.size() == 1,
+            "guild expulsion did not preserve the selected identity or wait for the server");
+        CGameMode mode;
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        std::array<u8, 90> noticeExpelled{0x5c, 1, 'M', 'e', 'm', 'b', 'e', 'r'};
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(noticeExpelled.data(), noticeExpelled.size(), view, consumed)
+                && consumed == static_cast<int>(noticeExpelled.size()) && router.Dispatch(mode, view)
+                && g_session.m_guildWindow.members.empty(),
+            "guild expulsion notice did not remove the matching roster entry");
+        expel(7, 11, true);
+        g_session.m_localGuild.isMaster = true;
         ui->guildAction("leave", {{"confirmed", true}});
         g_session.m_localGuild.isMaster = false;
         ui->guildAction("leave", {{"confirmed", false}});

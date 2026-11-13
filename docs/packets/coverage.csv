@@ -244,7 +244,7 @@ AUDIT-0x0157,0x0157,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x0158,0x0158,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0159,0x0159,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected confirmed Qt guild leave captured,C2S_ONLY,PK46.02-GUILD-ADMIN-REQUESTS
 AUDIT-0x015A,0x015A,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x015B,0x015B,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x015B,0x015B,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Selected confirmed guild expulsion captured through the Qt member action,C2S_ONLY,PK46.02-GUILD-EXPULSION-REQUEST
 AUDIT-0x015C,0x015C,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x015D,0x015D,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x015E,0x015E,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

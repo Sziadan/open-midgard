@@ -4401,7 +4401,7 @@ static void PopulateGuildWindow(QtUiState* state,CGameMode& mode)
     if(!data["visible"].toBool()){state->setGuildWindow(data);return;}
     const auto& guild=g_session.m_localGuild;const auto& info=g_session.m_guildWindow;
     data["x"]=window->m_x;data["y"]=window->m_y;data["width"]=window->m_w;data["height"]=window->m_h;data["tab"]=window->tab;
-    data["joined"]=guild.guildId!=0;data["name"]=ToQString(guild.name);data["master"]=ToQString(info.master);data["isMaster"]=guild.isMaster;data["menuFlags"]=info.menuFlags;data["permissions"]=guild.permissions;
+    data["joined"]=guild.guildId!=0;data["guildId"]=guild.guildId;data["name"]=ToQString(guild.name);data["master"]=ToQString(info.master);data["isMaster"]=guild.isMaster;data["menuFlags"]=info.menuFlags;data["permissions"]=guild.permissions;
     data["loaded"]=info.loaded;data["level"]=info.level;data["online"]=info.online;data["capacity"]=info.capacity;data["averageLevel"]=info.averageLevel;
     data["exp"]=info.exp;data["nextExp"]=info.nextExp;data["territory"]=ToQString(info.territory);
     data["subject"]=ToQString(info.noticeTitle);data["notice"]=ToQString(info.notice);data["skillPoints"]=g_session.GetGuildSkillPoint();
@@ -4461,6 +4461,18 @@ QtUiStateAdapter::QtUiStateAdapter()
             if(position>=20)return;
             const auto& members=g_session.m_guildWindow.members;const auto found=std::find_if(members.begin(),members.end(),[&](const auto& m){return m.character==cid;});
             if(found==members.end())return;begin(0x155,16);packet[2]=16;put(4,found->account);put(8,cid);put(12,position);
+        } else if(action=="expel" && (guild.isMaster || (guild.permissions & 0x10u))){
+            const auto account = args.value("account").toUInt();
+            const auto character = args.value("character").toUInt();
+            const auto& info = g_session.m_guildWindow;
+            if (!args.value("confirmed").toBool() || args.value("guildId").toUInt() != guild.guildId
+                || !account || !character || character == g_session.m_gid) return;
+            const auto member = std::find_if(info.members.begin(), info.members.end(), [&](const auto& entry) {
+                return entry.account == account && entry.character == character;
+            });
+            if (member == info.members.end() || member->name == info.master) return;
+            begin(0x15b, 54);put(2, guild.guildId);put(6, account);put(10, character);
+            if (!text(14, 40, args.value("reason").toString())) return;
         } else if(action=="removeRelation" && guild.isMaster){
             const auto id = args.value("id").toUInt();
             const bool hostile = args.value("hostile").toBool();
