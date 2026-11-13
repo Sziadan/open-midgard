@@ -4163,3 +4163,5 @@ PK46.02 reconciles six trade and four vending requests, including the seller ope
 PK46.02 reconciles four cart and three NPC shop requests. Production replay now captures both inventory/cart transfer directions. [Evidence](evidence/PK46.02-cart-npc-shop-crosswalk.md)
 
 PK46.02 reconciles three personal-storage and six item request identities, including the two registered item-use layouts. [Evidence](evidence/PK46.02-storage-item-crosswalk.md)
+
+PK46.02 captures PacketVer22 item use through the production sender and reconciles the production, repair, weapon-refine, and cooking requests. [Crafting evidence](evidence/PK46.02-crafting-request-crosswalk.md)

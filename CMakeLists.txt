@@ -404,6 +404,11 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
         set_tests_properties(packet_character_delete_${delete_profile}_checks PROPERTIES TIMEOUT 30
             ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${delete_settings}")
     endforeach()
+    set(item_use_22_settings "${CMAKE_CURRENT_BINARY_DIR}/packet-item-use-22-settings")
+    file(GENERATE OUTPUT "${item_use_22_settings}/open-midgard.ini" CONTENT "[Packets]\nMapSendProfile=packetver22\n")
+    add_test(NAME packet_item_use_22_checks COMMAND packet_stream_replay_checks --item-use-22)
+    set_tests_properties(packet_item_use_22_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${item_use_22_settings}")
     add_test(NAME packet_pet_lifecycle_checks COMMAND packet_stream_replay_checks --pet-lifecycle-only)
     set_tests_properties(packet_pet_lifecycle_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-pet-lifecycle-settings")

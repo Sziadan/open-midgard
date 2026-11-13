@@ -1834,6 +1834,7 @@
         "docs/packets/evidence/PK46.02-trade-vending-crosswalk.md",
         "docs/packets/evidence/PK46.02-cart-npc-shop-crosswalk.md",
         "docs/packets/evidence/PK46.02-storage-item-crosswalk.md",
+        "docs/packets/evidence/PK46.02-crafting-request-crosswalk.md",
         "docs/packets/evidence/PK46.02-map-card-composition-request.md",
         "docs/packets/evidence/PK46.02-map-cart-off-request-012A.md",
         "docs/packets/evidence/PK46.02-map-change-cart-request.md",
@@ -1961,7 +1962,7 @@
         "docs/packets/evidence/PK27-prompt-skin-zip.md",
         "docs/packets/evidence/PK27-prompt-picker.md"
       ],
-      "commit_subject": "packet(PK46.02): reconcile selected storage and item requests"
+      "commit_subject": "packet(PK46.02): verify crafting and PacketVer22 item use"
     },
     "PK46.03": {
       "status": "IN_PROGRESS",

@@ -57,7 +57,7 @@ AUDIT-0x009B,0x009B,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/versio
 AUDIT-0x009C,0x009C,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-direction traces fixed 9-byte S2C GID/head/body fields and pinned 20080910 emitter; replay remains open,UNREVIEWED,
 AUDIT-0x009D,0x009D,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x009E,0x009E,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x009F,0x009F,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,PacketVer22 builder matches selected registry; dedicated capture open,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
+AUDIT-0x009F,0x009F,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,PacketVer22 item-use frame and reply lifecycle captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x00A0,0x00A0,map,unresolved,PK38,PK01;PK02;PK47;PK48;PK45,Selected clif_additem uses 02D4,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x00A1,0x00A1,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00A2,0x00A2,map,C2S,PK47,PK01;PK02;PK48;PK46,"PK45.05 verifies selected 20080910 C2S SolveCharName 00A2/15/CID@11; original discovery profile/historical identity remains PK47, broader request audit PK46",UNREVIEWED,
@@ -294,7 +294,7 @@ AUDIT-0x018A,0x018A,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/versio
 AUDIT-0x018B,0x018B,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x018C,0x018C,map,S2C,PK26,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x018D,0x018D,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x018E,0x018E,map,C2S,PK35,PK01;PK02;PK47;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
+AUDIT-0x018E,0x018E,map,C2S,PK35,PK01;PK02;PK47;PK48;PK46;PK38,Selected production recipe and material fields captured,C2S_ONLY,PK46.02-CRAFTING-REQUESTS;PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x018F,0x018F,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0190,0x0190,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0191,0x0191,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-talkbox-chat-contents traces fixed 86-byte S2C unit ID and 80-byte message field with pinned emitter; text semantics/replay remain open,UNREVIEWED,
@@ -405,7 +405,7 @@ AUDIT-0x01F9,0x01F9,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x01FA,0x01FA,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Selected-source 48-byte login3 registration and production current-client challenge/send capture are verified under explicit AccountLoginPacket=login3; deployed profile intent remains open,C2S_ONLY,PK44.LOGIN.01FA-C2S-MD5-CLIENTINFO
 AUDIT-0x01FB,0x01FB,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Selected 56-byte immediate character deletion captured from the confirmed action,C2S_ONLY,PK44.CHAR-DELETE
 AUDIT-0x01FC,0x01FC,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x01FD,0x01FD,map,C2S,PK35,PK01;PK02;PK47;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
+AUDIT-0x01FD,0x01FD,map,C2S,PK35,PK01;PK02;PK47;PK48;PK46;PK38,Selected repair row and cancel sentinel captured,C2S_ONLY,PK46.02-CRAFTING-REQUESTS;PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x01FE,0x01FE,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01FF,0x01FF,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-position-correction.md: selected 10-byte ZC_HIGHJUMP source ID and x/y fields with AREA route; clif_blown emits it before 0x0088 fix-position. Movement interpolation and paired-event replay remain open.,UNREVIEWED,
 AUDIT-0x0200,0x0200,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,LoginPacketDatabase source-confirmed C2S schema/parser is registered without PACKETVER guard; client send/negotiation evidence is partial and recorded in PK44.LOGIN-REQUESTS.md,C2S_ONLY,PK44.LOGIN.0200-C2S-CONNECT-INFO
@@ -439,7 +439,7 @@ AUDIT-0x021E,0x021E,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x021F,0x021F,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0220,0x0220,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0221,0x0221,map,S2C,PK35,PK01;PK02;PK47;PK48;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
-AUDIT-0x0222,0x0222,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0222,0x0222,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected weapon-refine index and cancel sentinel captured,C2S_ONLY,PK46.02-CRAFTING-REQUESTS
 AUDIT-0x0223,0x0223,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0224,0x0224,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0225,0x0225,map,C2S,PK39,PK01;PK02;PK47;PK48;PK46,Selected two-byte Taekwon rank request verified through slash submission,C2S_ONLY,PK39.04-SELECTED-VERIFICATION
@@ -496,7 +496,7 @@ AUDIT-0x0257,0x0257,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x0258,0x0258,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0259,0x0259,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x025A,0x025A,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x025B,0x025B,map,C2S,PK35,PK01;PK02;PK47;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
+AUDIT-0x025B,0x025B,map,C2S,PK35,PK01;PK02;PK47;PK48;PK46;PK38,Selected cooking type and product captured,C2S_ONLY,PK46.02-CRAFTING-REQUESTS;PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x025C,0x025C,map,C2S,PK40,PK01;PK02;PK47;PK48;PK46,Selected own-list request captured through native auction input and refresh,C2S_ONLY,PK40.05-SELECTED-VERIFICATION
 AUDIT-0x025D,0x025D,map,both/reused,PK40,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x025E,0x025E,map,S2C,PK40,PK01;PK02;PK47;PK48,Registered length key for the emitted 025D close result with no independent wire sender,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK40.05-SELECTED-VERIFICATION

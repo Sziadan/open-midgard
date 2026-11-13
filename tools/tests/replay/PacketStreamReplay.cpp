@@ -5352,13 +5352,14 @@ void MapMovementProductionSendReplay()
     std::cout << "{\"case_id\":\"map_movement_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-00a7-walktoxy\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"length\":8,\"destination_offset\":5,\"closed_connection_rejected\":true,\"outcome\":\"PASS\"}\n";
 }
 
-void UseItemProductionSendReplay()
+void UseItemProductionSendReplay(bool packetVer22 = false)
 {
-    SetCase("use_item_production_send", "PK46.02", "PK46.02-0439-packetver23-use-item",
+    const char* const fixtureId = packetVer22 ? "PK46.02-009f-packetver22-use-item" : "PK46.02-0439-packetver23-use-item";
+    SetCase("use_item_production_send", "PK46.02", fixtureId,
         "RequestUseInventoryItem -> BuildActiveUseItemPacket -> CRagConnection::SendPacket");
     const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
-    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.useItem == 0x0439,
-        "replay fixture requires the PacketVer23 0x0439 item-use profile");
+    Require(profile.id == (packetVer22 ? ro::net::MapGameplaySendProfileId::PacketVer22 : ro::net::MapGameplaySendProfileId::PacketVer23)
+        && profile.useItem == (packetVer22 ? 0x009f : 0x0439), "replay fixture did not select its item-use profile");
 
     constexpr u16 itemIndex = 101;
     constexpr u32 targetAid = 0x11223344;
@@ -5393,10 +5394,23 @@ void UseItemProductionSendReplay()
         LoopbackPeer peer(*connection);
         Require(ReplayRequestUseInventoryItem(itemIndex),
             "production item-use sender rejected an open loopback connection");
-        const std::vector<u8> expected{0x39, 0x04, 0x65, 0x00, 0x44, 0x33, 0x22, 0x11};
+        const std::vector<u8> expected = packetVer22
+            ? std::vector<u8>{0x9f, 0, 0, 0, 0x65, 0, 0, 0, 0, 0, 0x44, 0x33, 0x22, 0x11}
+            : std::vector<u8>{0x39, 0x04, 0x65, 0x00, 0x44, 0x33, 0x22, 0x11};
         const std::vector<u8> captured = peer.ReceiveExact(expected.size());
-        Require(captured == expected,
-            "production item-use sender did not emit the selected eight-byte 0x0439 frame");
+        auto fixedFields = captured;
+        if (packetVer22) {
+            for (const auto offset : {2, 6, 7, 8}) {
+                const auto byte = captured[offset];
+                Require((byte >= '0' && byte <= '9') || (byte >= 'a' && byte <= 'f'),
+                    "PacketVer22 item use did not emit hexadecimal padding");
+                fixedFields[offset] = 0;
+            }
+        }
+        Require(fixedFields == expected,
+            "production item-use sender did not emit the selected frame");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
+            "production item-use sender emitted extra bytes");
         dispatch({0xc8, 0x01, 101, 0, 0xf5, 1, 0x45, 0x33, 0x22, 0x11, 0, 0, 1});
         dispatch({0xc8, 0x01, 101, 0, 0xf5, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 2});
         dispatch({0xc8, 0x01, 101, 0, 0xf6, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 1});
@@ -5411,7 +5425,8 @@ void UseItemProductionSendReplay()
         dispatch({0xc8, 0x01, 101, 0, 0xf5, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 1});
         Require(!g_session.GetInventoryItemByIndex(itemIndex) && mode.m_lastCardItemIndex == 100,
             "final use did not remove the stack or cleared the card chooser context");
-        std::cout << "{\"case_id\":\"use_item_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-0439-packetver23-use-item\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}\n";
+        std::cout << "{\"case_id\":\"use_item_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"" << fixtureId
+            << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}\n";
     }
     connection->Disconnect();
     g_session.m_aid = savedAid;
@@ -7725,6 +7740,11 @@ int main(int argc,char** argv){try{
     (void)argc;(void)argv;
 #endif
     Require(CConnection::Startup(),"socket startup failed");
+    if (argc > 1 && std::string_view(argv[1]) == "--item-use-22") {
+        UseItemProductionSendReplay(true);
+        CConnection::Cleanup();
+        return 0;
+    }
     if (argc > 1 && (std::string(argv[1]) == "--character-delete-23" || std::string(argv[1]) == "--character-delete-22")) {
         const bool selected = std::string(argv[1]) == "--character-delete-23";
         Require(ro::net::GetActiveCharacterPacketProfile().id ==
