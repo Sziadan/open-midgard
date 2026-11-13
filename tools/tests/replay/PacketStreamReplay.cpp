@@ -5502,6 +5502,25 @@ void IdentifyItemSelectionProductionSendReplay()
         dispatch({0x79, 0x01, 0x65, 0, 0});
         Require(g_session.GetInventoryItemByIndex(itemIndex)->m_isIdentified, "unsolicited identify result was lost");
         Require(!ReplayRequestIdentifyInventoryItem(itemIndex), "identified item emitted a selection request");
+
+        g_session.SetInventoryItem(item);
+        dispatch({0x77, 0x01, 6, 0, 0x65, 0});
+        chooser = g_windowMgr.m_itemIdentifyWnd;
+        Require(chooser, "identify chooser did not reopen");
+        chooser->OnLBtnDblClk(row.x + 1, row.y + 1);
+        Require(peer.ReceiveExact(expected.size()) == expected && !g_windowMgr.m_itemIdentifyWnd,
+            "identify request before silent rejection did not send and close");
+        Require(!ReplayRequestIdentifyInventoryItem(itemIndex), "outstanding identify request allowed a second send");
+
+        dispatch({0x77, 0x01, 6, 0, 0x65, 0});
+        chooser = g_windowMgr.m_itemIdentifyWnd;
+        Require(chooser, "new identify menu did not reopen after silent rejection");
+        chooser->OnLBtnDblClk(row.x + 1, row.y + 1);
+        Require(peer.ReceiveExact(expected.size()) == expected && !g_windowMgr.m_itemIdentifyWnd,
+            "new identify menu could not submit after silent rejection");
+        dispatch({0x79, 0x01, 0x65, 0, 0});
+        Require(g_session.GetInventoryItemByIndex(itemIndex)->m_isIdentified,
+            "identify result for the replacement menu did not update inventory");
     }
 
     connection->Disconnect();
