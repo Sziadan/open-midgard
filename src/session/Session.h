@@ -525,7 +525,7 @@ private:
     std::list<PLAYER_SKILL_INFO> m_homunSkillItems;
     std::list<PLAYER_SKILL_INFO> m_mercSkillItems;
     std::array<int, 17> m_homunSkillUseLevelList{};
-    std::array<int, 38> m_merSkillUseLevelList{};
+    std::array<int, SKILL_INFO::kMercenarySkillEnd - SKILL_INFO::kMercenarySkillFirst> m_merSkillUseLevelList{};
     mutable std::mutex m_jobDisplayNameMutex;
     mutable std::unordered_map<int, std::string> m_jobDisplayNameCache;
     std::vector<ACTIVE_STATUS_ICON> m_activeStatusIcons;

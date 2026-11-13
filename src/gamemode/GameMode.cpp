@@ -6122,7 +6122,7 @@ bool DispatchSourcePlayerSkill(CGameMode& mode,int skillId,u32 targetGid,int req
         return special(0x01f9);
     }
     if(ro::commerce::state.vendingActive || !mode.m_world || !mode.m_world->m_player)return false;
-    const bool homun=skillId>=8000 && skillId<8017,merc=skillId>=8200 && skillId<8238;
+    const bool homun=skillId>=8000 && skillId<8017,merc=SKILL_INFO::IsMercenarySkill(skillId);
     int level=requestedLevel;
     if(!level){
         const auto* skill=homun?g_session.GetHomunSkillItemBySkillId(skillId)
@@ -6539,7 +6539,7 @@ bool RequestShortcutSlotUse(int absoluteSlot)
 
     const int id=static_cast<int>(slot->id);
     const auto* skill=id>=8000 && id<8017?g_session.GetHomunSkillItemBySkillId(id)
-        :id>=8200 && id<8238?g_session.GetMercSkillItemBySkillId(id):g_session.GetSkillItemBySkillId(id);
+        :SKILL_INFO::IsMercenarySkill(id)?g_session.GetMercSkillItemBySkillId(id):g_session.GetSkillItemBySkillId(id);
     if(!skill || !skill->m_isValid || !skill->level)return false;
     auto* mode=g_modeMgr.GetCurrentGameMode();if(!mode)return false;
     const PLAYER_SKILL_INFO snapshot=*skill;
@@ -7259,7 +7259,7 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
             ? IsMonsterAttackEligibleForMap(mode, *target, good ? shift : !shift)
             : IsPcAttackEligibleForMap(mode, *target, good ? !shift : shift)
                 || g_session.m_isNoShift == 1 || mode.m_world->m_isSiegeMode;
-        const bool mercenarySkill = g_session.m_merStatus.alive && skillId >= 8200 && skillId < 8238 && attackEligible;
+        const bool mercenarySkill = g_session.m_merStatus.alive && SKILL_INFO::IsMercenarySkill(skillId) && attackEligible;
         if (kind == PetCaptureActorKind::Monster && alt) {
             if (g_session.m_homunStatus.alive) g_session.m_homunTarget.SelectActor(target->m_gid, shift);
             if (!homunculusSkill && g_session.m_merStatus.alive)
@@ -10313,7 +10313,7 @@ void CGameMode::RetireMercenaryContract()
     g_session.m_merTarget = {};
     g_session.ClearMercSkillItems();
     g_windowMgr.CloseCompanionWindows(false);
-    if (m_skillUseInfo.id >= 8200 && m_skillUseInfo.id < 8238) {
+    if (SKILL_INFO::IsMercenarySkill(m_skillUseInfo.id)) {
         SendMsg(78, 0, 0, 0);
     }
 }
@@ -11859,7 +11859,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         if(g_skillMgr.IsLevelUseSkill(row.SKID))m_skillUseInfo.level=static_cast<int>(extra);
         else{
             const auto* learned=row.SKID>=8000 && row.SKID<8017?g_session.GetHomunSkillItemBySkillId(row.SKID)
-                :row.SKID>=8200 && row.SKID<8238?g_session.GetMercSkillItemBySkillId(row.SKID):g_session.GetSkillItemBySkillId(row.SKID);
+                :SKILL_INFO::IsMercenarySkill(row.SKID)?g_session.GetMercSkillItemBySkillId(row.SKID):g_session.GetSkillItemBySkillId(row.SKID);
             m_skillUseInfo.level=learned && learned->m_isValid?learned->level:0;
         }
         g_isGoodSkillHanging=SKILL_INFO::IsGoodSkillForActor(row.SKID);
@@ -11873,7 +11873,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         case 2:SendMsg(79,1,wparam,lparam);break;
         case 4:{
             const u32 target=row.SKID>=8000 && row.SKID<8017?g_session.m_homunGID
-                :row.SKID>=8200 && row.SKID<8238?g_session.m_merGID:g_session.m_aid;
+                :SKILL_INFO::IsMercenarySkill(row.SKID)?g_session.m_merGID:g_session.m_aid;
             SendMsg(76,row.SKID,target,lparam);SendMsg(79,0,0,0);break;
         }
         case 8:SendMsg(79,3,wparam,lparam);break;

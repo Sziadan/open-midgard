@@ -423,7 +423,7 @@ bool Runtime::SkillObject(u32 id, int level, int skillId, u32 targetId) const
         return false;
     }
     const bool homunSkill = skillId > 8000 && skillId < 8017;
-    const bool mercSkill = skillId > 8200 && skillId < 8238;
+    const bool mercSkill = skillId > SKILL_INFO::kMercenarySkillFirst && SKILL_INFO::IsMercenarySkill(skillId);
     if ((m_kind == Kind::Homunculus && !homunSkill) || (m_kind == Kind::Mercenary && !mercSkill)) {
         return false;
     }

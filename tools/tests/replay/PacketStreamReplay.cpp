@@ -3168,6 +3168,8 @@ void PendingCompanionActorSkillReplay()
     const auto oldModeType = SkillPacketReplayAccess::CurrentType();
     const auto oldHomunGid = g_session.m_homunGID;
     const auto oldMercGid = g_session.m_merGID;
+    const auto oldAid = g_session.m_aid;
+    const auto oldMercSkills = g_session.GetMercSkillItems();
     SkillPacketReplayAccess::SetCurrent(&mode);
     CGameActor homunculus;
     homunculus.m_gid = 0xf1000041;
@@ -3199,6 +3201,45 @@ void PendingCompanionActorSkillReplay()
     requireCompanionSkill(homunculus, 8004, 0x44, 0x1f, true);
     requireCompanionSkill(mercenary, 8201, 0x09, 0x20, false);
 
+    g_session.m_aid = 0x11223344;
+    player.m_gid = g_session.m_aid;
+    player.m_isPc = 1;
+    const std::array<const char*, 3> supportNames{"MER_KYRIE", "MER_BLESSING", "MER_INCAGI"};
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    std::array<u8, 4 + 37 * 4> supportList{0x9d, 0x02, 152, 0};
+    for (int index = 0; index < 4; ++index) {
+        auto* row = supportList.data() + 4 + 37 * index;
+        row[0] = static_cast<u8>(8238 + index);
+        row[1] = 0x20;
+        row[2] = 16;
+        row[6] = 3;
+        row[10] = 9;
+    }
+    PacketView view{};
+    int consumed = 0;
+    Require(TryReadPacket(supportList.data(), supportList.size(), view, consumed)
+        && consumed == supportList.size() && router.Dispatch(mode, view)
+        && !g_session.GetMercSkillItemBySkillId(8241),
+        "selected mercenary list did not frame or accepted an unusable skill");
+    for (int skill = 8238; skill <= 8240; ++skill) {
+        Require(std::string_view(SKILL_INFO::GetSkillIdNameBySkillId(skill)) == supportNames[skill - 8238],
+            "mercenary support skill name did not match its selected ID");
+        const auto* row = g_session.GetMercSkillItemBySkillId(skill);
+        Require(row && row->m_isValid && row->level == 3 && row->attackRange == 9,
+            "mercenary support skill was dropped from the selected skill list");
+        mode.SendMsg(126, reinterpret_cast<msgparam_t>(row), 3, 0);
+        Require(mode.m_skillUseInfo.id == skill && mode.m_skillUseInfo.level == 3 && mode.m_skillUseInfo.useType == 4,
+            "mercenary support skill did not arm owner targeting from its skill row");
+        Require(ReplayTrySourceSkillOnActor(mode, &player, false, false, false) && player.commands.empty(),
+            "mercenary support skill entered the player route");
+        mode.m_skillUseInfo = {};
+        companion_ai::TickOwnedCompanionActor(mercenary);
+        companion_ai::TickOwnedCompanionActor(mercenary);
+        Require(peer.ReceiveExact(10) == std::vector<u8>{0x38, 0x04, 3, 0, static_cast<u8>(skill), 0x20,
+            0x44, 0x33, 0x22, 0x11}, "mercenary support skill sent the wrong owner target");
+    }
+
     C3dAttr attr;
     attr.m_width = attr.m_height = 20;
     attr.m_zoom = 5;
@@ -3228,6 +3269,9 @@ void PendingCompanionActorSkillReplay()
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
     g_session.m_homunGID = oldHomunGid;
     g_session.m_merGID = oldMercGid;
+    g_session.m_aid = oldAid;
+    g_session.ClearMercSkillItems();
+    for (const auto& row : oldMercSkills) g_session.SetMercSkillItem(row);
     mode.m_skillUseInfo = {5, 1, 10, 2};
     Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false)
         && player.commands == std::vector<int>{41, 90},

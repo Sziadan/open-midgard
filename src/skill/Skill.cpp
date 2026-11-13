@@ -124,8 +124,7 @@ const SkillMetadata* CSkillMgr::GetSkillMetadata(int skillId) const
 
 bool CSkillMgr::IsLevelUseSkill(int skillId) const
 {
-    constexpr int kSourceLevelUseSkillTableSize = 8238;
-    if (skillId < 0 || skillId >= kSourceLevelUseSkillTableSize) {
+    if (skillId < 0 || skillId >= SKILL_INFO::kMercenarySkillEnd) {
         return false;
     }
 
@@ -283,7 +282,8 @@ void CSkillMgr::LoadSourceLevelUseFlags()
         if(hint>=0 && hint<1039 && name==kSourcePlayerSkillNames[hint])return hint;
         for(int i=0;i<16;++i)if(name==kSourceGuildSkillNames[i])return i+10000;
         for(int i=0;i<17;++i)if(name==kSourceHomunSkillNames[i])return i+8000;
-        for(int i=0;i<38;++i)if(name==kSourceMercSkillNames[i])return i+8200;
+        for (int id = SKILL_INFO::kMercenarySkillFirst; id < SKILL_INFO::kMercenarySkillEnd; ++id)
+            if (name == kSourceMercSkillNames[id - SKILL_INFO::kMercenarySkillFirst]) return id;
         for(int i=1;i<1039;++i)if(name==kSourcePlayerSkillNames[i])return i;
         return 0;
     };
@@ -326,7 +326,7 @@ const char* GetSkillIdNameBySkillId(int id)
     if(id>=1 && id<1039)return kSourcePlayerSkillNames[id];
     if(id>=10000 && id<10016)return kSourceGuildSkillNames[id-10000];
     if(id>=8000 && id<8017)return kSourceHomunSkillNames[id-8000];
-    if(id>=8200 && id<8238)return kSourceMercSkillNames[id-8200];
+    if (IsMercenarySkill(id)) return kSourceMercSkillNames[id - kMercenarySkillFirst];
     return kSourcePlayerSkillNames[0];
 }
 
@@ -364,6 +364,9 @@ bool IsSkillNotDelayed(int skillId)
 
 bool IsGoodSkillForActor(int skillId)
 {
+    if (skillId == 8238 || skillId == 8239 || skillId == 8240) {
+        return true;
+    }
     if (skillId <= 465) {
         if (skillId < 460) {
             if (skillId > 139) {

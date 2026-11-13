@@ -5,6 +5,19 @@
 #include <unordered_map>
 #include <vector>
 
+namespace SKILL_INFO {
+constexpr int kMercenarySkillFirst = 8200;
+constexpr int kMercenarySkillEnd = 8241;
+constexpr bool IsMercenarySkill(int id)
+{
+    return id >= kMercenarySkillFirst && id < kMercenarySkillEnd;
+}
+const char* GetSkillIdNameBySkillId(int skillId);
+// Ref HighPriest.exe.c:263510.
+bool IsSkillNotDelayed(int skillId);
+bool IsGoodSkillForActor(int skillId);
+}
+
 struct SkillMetadata {
     int skillId = 0;
     std::string skillIdName;
@@ -35,14 +48,7 @@ private:
     std::unordered_map<int, SkillMetadata> m_byId;
     std::unordered_map<std::string, int> m_idBySkillName;
     bool m_loaded;
-    std::array<bool,8238> m_sourceLevelUseFlags{};
+    std::array<bool, SKILL_INFO::kMercenarySkillEnd> m_sourceLevelUseFlags{};
 };
 
 extern CSkillMgr g_skillMgr;
-
-// Ref SKILL_INFO::IsSkillNotDelayed, HighPriest.exe.c:263510.
-namespace SKILL_INFO {
-const char* GetSkillIdNameBySkillId(int skillId);
-bool IsSkillNotDelayed(int skillId);
-bool IsGoodSkillForActor(int skillId);
-}

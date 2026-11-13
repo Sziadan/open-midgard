@@ -1790,7 +1790,7 @@ static bool IsHomunSkillTreeSkid(int skid)
 
 static bool IsMercSkillTreeSkid(int skid)
 {
-    return skid >= 0x2008 && skid < 0x202E;
+    return SKILL_INFO::IsMercenarySkill(skid);
 }
 
 enum class SkillInfoListTarget {
@@ -2228,6 +2228,10 @@ void HandleMercSkillUpdate(CGameMode&, const PacketView& packet)
     if (!packet.data || packet.packetLength < 11) {
         return;
     }
+    const int skid = ReadLE16(packet.data + 2);
+    if (!SKILL_INFO::IsMercenarySkill(skid)) {
+        return;
+    }
 
     if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         gameMode->m_isReqUpgradeSkillLevel = 0;
@@ -2238,10 +2242,10 @@ void HandleMercSkillUpdate(CGameMode&, const PacketView& packet)
         static_cast<unsigned int>(ReadLE16(packet.data + 2)),
         static_cast<unsigned int>(ReadLE16(packet.data + 4)));
     PLAYER_SKILL_INFO skillInfo;
-    skillInfo.SKID = static_cast<int>(ReadLE16(packet.data + 2));
+    skillInfo.SKID = skid;
     if (!TryGetExistingMercSkillInfo(skillInfo.SKID, skillInfo)) {
         skillInfo = {};
-        skillInfo.SKID = static_cast<int>(ReadLE16(packet.data + 2));
+        skillInfo.SKID = skid;
         skillInfo.m_isValid = 1;
     }
 

@@ -2229,18 +2229,18 @@ void CSession::SetHomunSkillUseLevel(int skillId, int level)
 
 int CSession::GetMerSkillUseLevel(int skillId) const
 {
-    if (skillId < 8200 || skillId > 8237) {
+    if (!SKILL_INFO::IsMercenarySkill(skillId)) {
         return 0;
     }
-    return m_merSkillUseLevelList[static_cast<size_t>(skillId - 8200)];
+    return m_merSkillUseLevelList[static_cast<size_t>(skillId - SKILL_INFO::kMercenarySkillFirst)];
 }
 
 void CSession::SetMerSkillUseLevel(int skillId, int level)
 {
-    if (skillId < 8200 || skillId > 8237) {
+    if (!SKILL_INFO::IsMercenarySkill(skillId)) {
         return;
     }
-    m_merSkillUseLevelList[static_cast<size_t>(skillId - 8200)] = level;
+    m_merSkillUseLevelList[static_cast<size_t>(skillId - SKILL_INFO::kMercenarySkillFirst)] = level;
 }
 
 bool CSession::LoadSkillUseLevels(int characterSlot)
@@ -2250,13 +2250,13 @@ bool CSession::LoadSkillUseLevels(int characterSlot)
     const auto add=[&](int id){values.emplace_back(std::string(SKILL_INFO::GetSkillIdNameBySkillId(id))+std::to_string(characterSlot),0);};
     for(int id=1;id<1039;++id)add(id);
     for(int id=8000;id<8017;++id)add(id);
-    for(int id=8200;id<8238;++id)add(id);
+    for (int id = SKILL_INFO::kMercenarySkillFirst; id < SKILL_INFO::kMercenarySkillEnd; ++id) add(id);
     if(!LoadSettingsIniIntValues("SkillUseLevelInfo",values))return false;
     g_skillMgr.EnsureLoaded();std::size_t index=0;
     const auto read=[&](int id){const int value=values[index++].second;return g_skillMgr.IsLevelUseSkill(id)?value:0;};
     for(int id=1;id<1039;++id)SetSkillUseLevel(id,read(id));
     for(int id=8000;id<8017;++id)SetHomunSkillUseLevel(id,read(id));
-    for(int id=8200;id<8238;++id)SetMerSkillUseLevel(id,read(id));
+    for (int id = SKILL_INFO::kMercenarySkillFirst; id < SKILL_INFO::kMercenarySkillEnd; ++id) SetMerSkillUseLevel(id,read(id));
     return true;
 }
 
@@ -2267,7 +2267,7 @@ bool CSession::SaveSkillUseLevels(int characterSlot) const
     const auto add=[&](int id,int level){values.emplace_back(std::string(SKILL_INFO::GetSkillIdNameBySkillId(id))+std::to_string(characterSlot),level);};
     for(int id=1;id<1039;++id)add(id,GetSkillUseLevel(id));
     for(int id=8000;id<8017;++id)add(id,GetHomunSkillUseLevel(id));
-    for(int id=8200;id<8238;++id)add(id,GetMerSkillUseLevel(id));
+    for (int id = SKILL_INFO::kMercenarySkillFirst; id < SKILL_INFO::kMercenarySkillEnd; ++id) add(id,GetMerSkillUseLevel(id));
     return SaveSettingsIniIntValues("SkillUseLevelInfo",values);
 }
 

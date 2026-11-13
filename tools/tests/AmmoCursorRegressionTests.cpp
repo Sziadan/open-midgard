@@ -7,6 +7,7 @@
 #include <list>
 #include <vector>
 #include "ItemTab.h"
+#include "../../src/skill/Skill.h"
 using s16=std::int16_t; using u8=std::uint8_t; using u16=std::uint16_t; using u32=std::uint32_t;
 using msgparam_t=std::intptr_t;
 void DbgLog(const char*,...) {}
@@ -122,7 +123,7 @@ CGameActor* ResolveSkillPacketActor(CGameMode&,u32){return &player;}
 void GetSkillActionInfo2(int,int& effect,int& motion,int,int){effect=16;motion=8;}
 bool IsMonsterSkillActor(CGameActor*){return false;}
 void FaceActorTowardPosition(CGameActor*,vector3d){}
-struct SKILL_INFO {static bool IsGoodSkillForActor(u16){return false;}};
+bool SKILL_INFO::IsGoodSkillForActor(int) { return false; }
 #include "InstantCastBody.inc"
 struct EquipSlotDefLocal {int wearMask,iconX,iconY;};
 struct UIEquipWnd {std::vector<const ITEM_INFO*> BuildSlotAssignments()const;};

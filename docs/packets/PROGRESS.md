@@ -3883,3 +3883,7 @@ PK28.03 queues pending actor skills to the C++ companion controller. Replay chec
 ## 2026-11-13 Native companion ground skills
 
 PK28.03 queues pending ground skills to the C++ companion controller when the owned actor is available. The replay verifies the selected `007E` bytes and the missing-actor fallback. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-ground-targets.md)
+
+## 2026-11-13 Selected mercenary support skills
+
+PK29.02 routes `MER_KYRIE`, `MER_BLESSING`, and `MER_INCAGI` from the selected skill list to owner-targeted `0438` requests. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-pending-companion-actor-skills.md)

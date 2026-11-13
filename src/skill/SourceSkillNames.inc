@@ -1117,4 +1117,7 @@ static constexpr const char* kSourceMercSkillNames[] = {
     "MER_SCAPEGOAT",
     "MER_LEXDIVINA",
     "MER_ESTIMATION",
+    "MER_KYRIE",
+    "MER_BLESSING",
+    "MER_INCAGI",
 };
