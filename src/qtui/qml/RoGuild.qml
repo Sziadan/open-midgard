@@ -236,24 +236,47 @@ RoFrame {
     }
     Text { x: 14; y: parent.height - 36; width: parent.width - 240; text: panel.feedback; color: theme.muted; font.pixelSize: 11; elide: Text.ElideRight }
     property var expelGuildId: 0
+    property var disbandGuildId: 0
+    property string disbandGuildName: ""
     GuildButton { x: parent.width - 214; y: parent.height - 36; label: "Leave guild"; visible: !!panel.guildData.joined && !panel.guildData.isMaster; onClicked: { departureReason.text = "Leaving the guild"; panel.confirmation = "leave" } }
     GuildButton { x: parent.width - 108; y: parent.height - 36; label: "Refresh"; onClicked: uiState.guildAction("refresh", {}) }
+    GuildButton {
+        x: parent.width - 214; y: parent.height - 36
+        label: "Disband guild"
+        visible: !!panel.guildData.joined && !!panel.guildData.isMaster
+        enabled: !!panel.guildData.name
+        onClicked: {
+            panel.disbandGuildId = panel.guildData.guildId
+            panel.disbandGuildName = panel.guildData.name
+            departureReason.text = ""
+            panel.confirmation = "disband"
+        }
+    }
     Rectangle {
         visible: panel.confirmation !== ""; anchors.fill: parent; color: "#b0f1f0ec"; radius: 7
         MouseArea { anchors.fill: parent }
         RoFrame { width: 360; height: 158; anchors.centerIn: parent; showTitle: false
-            Text { x: 18; y: 16; width: 324; elide: Text.ElideRight; text: panel.confirmation === "expel" && panel.expelTarget ? "Expel " + panel.expelTarget.name + "?" : "Leave this guild?"; color: theme.ink; font.pixelSize: 16; font.bold: true }
+            Text { x: 18; y: 16; width: 324; elide: Text.ElideRight
+                text: panel.confirmation === "disband" ? "Type the guild name to disband it"
+                    : panel.confirmation === "expel" && panel.expelTarget ? "Expel " + panel.expelTarget.name + "?" : "Leave this guild?"
+                color: theme.ink; font.pixelSize: 16; font.bold: true }
             RoField { x: 18; y: 52; width: 324; height: 28
                 TextInput { id: departureReason; anchors.fill: parent; anchors.margins: 6; maximumLength: 39; color: theme.ink; selectByMouse: true }
             }
             GuildButton { x: 142; y: 110; label: "Cancel"; onClicked: panel.confirmation = "" }
             GuildButton {
-                x: 248; y: 110; label: panel.confirmation === "expel" ? "Expel" : "Leave"; primary: true
+                x: 248; y: 110
+                label: panel.confirmation === "disband" ? "Disband" : panel.confirmation === "expel" ? "Expel" : "Leave"
+                enabled: panel.confirmation !== "disband" || departureReason.text === panel.disbandGuildName
+                primary: true
                 onClicked: {
                     if (panel.confirmation === "expel" && panel.expelTarget) {
                         uiState.guildAction("expel", {confirmed: true, guildId: panel.expelGuildId,
                             account: panel.expelTarget.account, character: panel.expelTarget.character,
                             reason: departureReason.text})
+                    } else if (panel.confirmation === "disband") {
+                        uiState.guildAction("disband", {confirmed: true, guildId: panel.disbandGuildId,
+                            name: departureReason.text})
                     } else if (panel.confirmation === "leave") {
                         uiState.guildAction("leave", {confirmed: true, reason: departureReason.text})
                         panel.feedback = "Leave requested; waiting for the server."

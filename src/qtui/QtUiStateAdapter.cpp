@@ -4461,6 +4461,13 @@ QtUiStateAdapter::QtUiStateAdapter()
             if(position>=20)return;
             const auto& members=g_session.m_guildWindow.members;const auto found=std::find_if(members.begin(),members.end(),[&](const auto& m){return m.character==cid;});
             if(found==members.end())return;begin(0x155,16);packet[2]=16;put(4,found->account);put(8,cid);put(12,position);
+        } else if(action=="disband" && guild.isMaster){
+            if (!args.value("confirmed").toBool() || args.value("guildId").toUInt() != guild.guildId
+                || guild.name.empty() || args.value("name").toString() != ToQString(guild.name)) return;
+            begin(0x15d, 42);
+            // The server compares the key with the guild's original wire name.
+            if (guild.name.size() >= 40) return;
+            std::copy(guild.name.begin(), guild.name.end(), packet.begin() + 2);
         } else if(action=="expel" && (guild.isMaster || (guild.permissions & 0x10u))){
             const auto account = args.value("account").toUInt();
             const auto character = args.value("character").toUInt();

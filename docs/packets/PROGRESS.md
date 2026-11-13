@@ -4177,3 +4177,5 @@ PK46.02 captures guild emblem download and upload requests and verifies the vers
 PK46.02 connects guild alliance and opposition through the player context menu and relation removal through the guild window. [Guild relation evidence](evidence/PK46.02-guild-admin-crosswalk.md#pk4602-guild-relation-requests)
 
 PK46.02 connects confirmed guild expulsion from the Qt member list through the selected request and roster update. [Guild expulsion evidence](evidence/PK46.02-guild-admin-crosswalk.md#pk4602-guild-expulsion-request)
+
+PK46.02 restores `/guild` creation and connects typed guild dissolution confirmation. [Guild creation and dissolution evidence](evidence/PK46.02-guild-admin-crosswalk.md#pk4602-guild-creation-dissolution)

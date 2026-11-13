@@ -4,12 +4,11 @@ from pathlib import Path
 import subprocess
 
 root = Path(__file__).resolve().parents[2]
-mode_source = (root / 'src/gamemode/GameMode.cpp').read_text(encoding='utf-8')
+mode_source = (root / 'src/gamemode/SourceChatSubmission.inc').read_text(encoding='utf-8')
 packet_source = (root / 'src/gamemode/GameModePacket.cpp').read_text(encoding='utf-8')
-start = mode_source.index('        std::string guildName;', mode_source.index('case GameMsg_SubmitChat:'))
-end = mode_source.index('        std::string command = text;', start)
+start = mode_source.index('    std::string guildName;', mode_source.index('bool CGameMode::SubmitSourceChat('))
+end = mode_source.index('    ro::UiMessageStrings messages;', start)
 route = mode_source[start:end]
-assert end < mode_source.index('const bool sent = SendGlobalChatMessage', end)
 start = packet_source.index('void HandleGuildCreateAck(')
 end = packet_source.index('void HandlePartyCreateAck(', start)
 ack = packet_source[start:end]
@@ -25,7 +24,7 @@ cpp.write_text(r'''
 #include <map>
 #include <vector>
 using u8=std::uint8_t;using u32=std::uint32_t;
-struct {u32 m_gid=0x12345678;} g_session;
+struct {u32 m_gid=0x12345678;struct {u32 guildId=0;} m_localGuild;} g_session;
 struct {std::vector<std::string> messages;
     void PushChatEvent(const char* text,u32,int){messages.emplace_back(text);}
 } g_windowMgr;
@@ -36,7 +35,12 @@ struct CRagConnection {
     bool SendPacket(const char* data,int len){if(!accept)return false;last.assign(data,data+len);return true;}
 };
 struct World {void* m_player=this;} world;
-struct CGameMode {World* m_world=&world;std::map<u32,int> m_actorNameListByGID,m_actorNameByGIDReqTimer;};
+struct CGameMode {
+    enum { MapLoading_None };
+    int m_mapLoadingStage=MapLoading_None;
+    World* m_world=&world;
+    std::map<u32,int> m_actorNameListByGID,m_actorNameByGIDReqTimer;
+};
 struct PacketView {int packetId=0,packetLength=0;const u8* data=nullptr;};
 constexpr u8 kChatChannelSystem=6;
 void RecordChat(CGameMode&,const std::string& text,u32,u8 channel){assert(channel==6);g_windowMgr.messages.push_back(text);}

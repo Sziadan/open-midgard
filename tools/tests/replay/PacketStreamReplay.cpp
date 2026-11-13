@@ -7681,6 +7681,21 @@ void GuildAdminProductionSendReplay()
         leave.resize(54);
         Require(peer.ReceiveExact(leave.size()) == leave && g_session.m_localGuild.guildId == 7,
             "guild leave wire fields or server-owned membership differ");
+        g_session.m_localGuild.isMaster = true;
+        g_session.m_localGuild.name = "Test Guild";
+        ui->guildAction("disband", {{"confirmed", true}, {"guildId", 8}, {"name", "Test Guild"}});
+        ui->guildAction("disband", {{"confirmed", true}, {"guildId", 7}, {"name", "Wrong"}});
+        ui->guildAction("disband", {{"confirmed", true}, {"guildId", 7}, {"name", "Test Guild"}});
+        std::vector<u8> disband{0x5d, 1, 'T','e','s','t',' ','G','u','i','l','d'};
+        disband.resize(42);
+        Require(peer.ReceiveExact(42) == disband && g_session.m_localGuild.guildId == 7,
+            "guild disband sent the wrong key or cleared membership before a reply");
+        const std::array<u8, 6> refused{0x5e, 1, 2, 0, 0, 0};
+        const std::array<u8, 6> accepted{0x5e, 1, 0, 0, 0, 0};
+        Require(router.Dispatch(mode, {0x015e, 6, refused.data()}) && g_session.m_localGuild.guildId == 7,
+            "guild disband refusal cleared membership");
+        Require(router.Dispatch(mode, {0x015e, 6, accepted.data()}) && !g_session.m_localGuild.guildId,
+            "guild disband success did not clear membership");
         Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
             "guild admin actions emitted extra bytes");
     }
@@ -7692,6 +7707,46 @@ void GuildAdminProductionSendReplay()
     g_session.m_gid = savedCid;
 }
 #endif
+
+void GuildCreationProductionSendReplay()
+{
+    SetCase("guild_create_production_send", "PK46.02", "selected-0165", "chat submission -> production socket");
+    const auto savedGuild = g_session.m_localGuild;
+    const auto savedCid = g_session.m_gid;
+    g_session.m_localGuild = {};
+    g_session.m_gid = 0x11223344;
+    CGameMode mode;
+    CWorld world;
+    CPlayer player;
+    world.m_player = &player;
+    mode.m_world = &world;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!mode.SubmitSourceChat("/guild Test", ""), "offline guild creation reported success");
+    {
+        LoopbackPeer peer(*connection);
+        Require(!mode.SubmitSourceChat("/guild \"Bad\" extra", ""), "guild creation accepted trailing arguments");
+        Require(mode.SubmitSourceChat("/guild \"Test Guild\"", ""), "guild creation did not dispatch");
+        std::vector<u8> expected{0x65, 1, 0x44, 0x33, 0x22, 0x11, 'T','e','s','t',' ','G','u','i','l','d'};
+        expected.resize(30);
+        Require(peer.ReceiveExact(30) == expected && !g_session.m_localGuild.guildId,
+            "guild creation sent wrong fields or assigned membership early");
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        const std::array<u8, 3> ack{0x67, 1, 0};
+        Require(router.Dispatch(mode, {0x0167, 3, ack.data()}) && !g_session.m_localGuild.guildId,
+            "creation acknowledgment assigned a guild before membership arrived");
+        g_session.m_localGuild.guildId = 7;
+        Require(!mode.SubmitSourceChat("/guild Another", ""), "guild member could request creation");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
+            "guild creation emitted extra bytes");
+    }
+    connection->Disconnect();
+    world.m_player = nullptr;
+    mode.m_world = nullptr;
+    g_session.m_localGuild = savedGuild;
+    g_session.m_gid = savedCid;
+}
 
 void GuildRelationProductionSendReplay()
 {
@@ -8158,6 +8213,7 @@ int main(int argc,char** argv){try{
     GuildEmblemProductionReplay();
     GuildAdminProductionSendReplay();
 #endif
+    GuildCreationProductionSendReplay();
     GuildRelationProductionSendReplay();
     GuildReplyProductionSendReplay();
     GuildReplyProductionSendReplay(true);

@@ -145,6 +145,27 @@ bool CGameMode::SubmitSourceChat(const std::string& input,const std::string& tar
         if (m_mapLoadingStage != MapLoading_None) return false;
         return SubmitPartyBooking(text);
     }
+    std::string guildName;
+    const auto guildCommand = ro::guild::ParseCreateCommand(text, guildName);
+    if (guildCommand != ro::guild::CommandResult::NotCommand) {
+        if (guildCommand == ro::guild::CommandResult::Invalid) {
+            g_windowMgr.PushChatEvent("Use /guild \"Guild Name\" with a name of up to 23 bytes.", 0x00FF4040u, 6);
+            return false;
+        }
+        if (m_mapLoadingStage != MapLoading_None || !m_world || !m_world->m_player || !g_session.m_gid)
+            return false;
+        if (g_session.m_localGuild.guildId) {
+            g_windowMgr.PushChatEvent("You are already in a guild.", 0x00FF4040u, 6);
+            return false;
+        }
+        const auto packet = ro::guild::CreatePacket(g_session.m_gid, guildName);
+        if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
+                static_cast<int>(packet.size()))) {
+            g_windowMgr.PushChatEvent("Unable to send the guild creation request.", 0x00FF4040u, 6);
+            return false;
+        }
+        return true;
+    }
     ro::UiMessageStrings messages;if(text[0]=='/')messages.Load();
     ro::chat::SourceChatParseContext context;
     if(const auto alias=messages.Find(698))context.minEffectAlias=*alias;
