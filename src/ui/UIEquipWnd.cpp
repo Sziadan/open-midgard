@@ -1588,7 +1588,7 @@ void UIEquipWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
             CGameMode::GameMsg_RequestEquipInventoryItem,
             static_cast<int>(dragInfo->itemIndex),
             dragInfo->itemEquipLocation,
-            0) != 0) {
+            dragInfo->itemId) != 0) {
         Invalidate();
         if (g_windowMgr.m_itemWnd) {
             g_windowMgr.m_itemWnd->Invalidate();

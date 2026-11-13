@@ -228,50 +228,65 @@ void InventoryMutationAckReplay()
     Require(find(useIndex)==nullptr && mode.m_waitingUseItemAck==0,"basic zero remainder did not remove stack/clear pending");
 
     // Equip result 1 succeeds; result 0/2 fail and result 3 is quiet. Correlation is index-specific.
-    seed(); ITEM_INFO other{}; other.m_itemIndex=0x2222; other.m_num=1; other.m_wearLocation=0x0040; g_session.SetInventoryItem(other);
+    constexpr u16 equipSlot = 70;
+    constexpr u16 otherSlot = 71;
+    seed();
+    ITEM_INFO equipment = *find(0x1234);
+    equipment.m_itemIndex = equipSlot;
+    g_session.SetInventoryItem(equipment);
+    ITEM_INFO other{}; other.m_itemIndex=otherSlot; other.m_num=1; other.m_wearLocation=0x0040; g_session.SetInventoryItem(other);
     g_windowMgr.ClearChatEvents();
-    mode.m_waitingWearEquipAck=0x1234;
-    auto equip=frame(0x00AA,7); put16(equip,2,0x1234); put16(equip,4,0x0040); equip[6]=1;
+    mode.m_waitingWearEquipAck=equipSlot;
+    auto equip=frame(0x00AA,7); put16(equip,2,equipSlot); put16(equip,4,0x0040); equip[6]=1;
     dispatch(equip,"equip success");
-    Require(find(0x1234)->m_wearLocation==0x0040 && find(0x2222)->m_wearLocation==0 && mode.m_waitingWearEquipAck==0,
+    Require(find(equipSlot)->m_wearLocation==0x0040 && find(otherSlot)->m_wearLocation==0 && mode.m_waitingWearEquipAck==0,
         "equip success did not move mask/clear matching pending");
-    g_session.SetInventoryItemWearLocation(0x2222,0x0040);
-    mode.m_waitingWearEquipAck=0x2222; put16(equip,2,0x1234); equip[6]=0; dispatch(equip,"equip failure result zero");
-    Require(find(0x1234)->m_wearLocation==0x0040 && find(0x2222)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==0x2222,
+    g_session.SetInventoryItemWearLocation(otherSlot,0x0040);
+    mode.m_waitingWearEquipAck=otherSlot; put16(equip,2,equipSlot); equip[6]=0; dispatch(equip,"equip failure result zero");
+    Require(find(equipSlot)->m_wearLocation==0x0040 && find(otherSlot)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==otherSlot,
         "equip failure mutated masks or cleared unrelated pending");
     const auto& equipEvents0=g_windowMgr.GetChatEvents();
     Require(equipEvents0.size()==1 && equipEvents0.back().text=="You can't put this item on."
         && equipEvents0.back().color==0x00ff0000u && equipEvents0.back().channel==6,"equip result-zero notice differs from reference");
-    g_windowMgr.ClearChatEvents(); mode.m_waitingWearEquipAck=0x1234; put16(equip,2,0x1234); equip[6]=2;
+    g_windowMgr.ClearChatEvents(); mode.m_waitingWearEquipAck=equipSlot; put16(equip,2,equipSlot); equip[6]=2;
     dispatch(equip,"equip failure result two");
-    Require(find(0x1234)->m_wearLocation==0x0040 && find(0x2222)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==0,
+    Require(find(equipSlot)->m_wearLocation==0x0040 && find(otherSlot)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==0,
         "known result-two equip failure mutated masks or retained matching pending");
     const auto& equipEvents2=g_windowMgr.GetChatEvents();
     Require(equipEvents2.size()==1 && equipEvents2.back().text=="You can't put this item on."
         && equipEvents2.back().color==0x00ff0000u && equipEvents2.back().channel==6,"equip result-two notice differs from reference");
-    mode.m_waitingWearEquipAck=0x2222; put16(equip,2,0); equip[6]=2; dispatch(equip,"zero-index equip failure");
-    Require(mode.m_waitingWearEquipAck==0x2222,"zero-index equip failure cleared unrelated pending");
+    mode.m_waitingWearEquipAck=otherSlot; put16(equip,2,0); equip[6]=2; dispatch(equip,"zero-index equip failure");
+    Require(mode.m_waitingWearEquipAck==otherSlot,"zero-index equip failure cleared unrelated pending");
     put16(equip,2,0x9999); put16(equip,4,0x0040); equip[6]=1; dispatch(equip,"equip unknown success");
-    Require(find(0x2222)->m_wearLocation==0x0040,"unknown equip success cleared an occupant mask");
-    g_windowMgr.ClearChatEvents(); put16(equip,2,0x1234); equip[6]=3; dispatch(equip,"equip unknown result");
-    Require(find(0x1234)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==0x2222
+    Require(find(otherSlot)->m_wearLocation==0x0040,"unknown equip success cleared an occupant mask");
+    g_windowMgr.ClearChatEvents(); put16(equip,2,equipSlot); equip[6]=3; dispatch(equip,"equip unknown result");
+    Require(find(equipSlot)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==otherSlot
         && g_windowMgr.GetChatEvents().empty(),"unknown equip result mutated state, emitted notice, or cleared unrelated pending");
 
-    // Ammo ack selects or clears the ammo mask and clears pending; unequip failure/success are correlated.
-    auto ammo=frame(0x013C,4); put16(ammo,2,0x1234); mode.m_waitingWearEquipAck=0x2222;
+    constexpr u16 ammoSlot = 72;
+    ITEM_INFO arrows{};
+    arrows.SetItemId(1750);
+    arrows.m_itemIndex = ammoSlot;
+    arrows.m_num = 10;
+    arrows.m_location = 0x8000;
+    g_session.SetInventoryItem(arrows);
+    // Ammo notifications can arrive while an unrelated equipment request is pending.
+    auto ammo=frame(0x013C,4); put16(ammo,2,ammoSlot); mode.m_waitingWearEquipAck=otherSlot;
     dispatch(ammo,"ammo equip");
-    Require(find(0x1234)->m_wearLocation==0x8000 && find(0x2222)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==0,
-        "ammo equip did not move ammo mask/clear pending");
-    put16(ammo,2,0); mode.m_waitingWearEquipAck=0x2222; dispatch(ammo,"ammo clear");
-    Require(find(0x1234)->m_wearLocation==0 && find(0x2222)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==0,
-        "zero ammo ack did not clear mask/pending while preserving other slots");
+    Require(find(ammoSlot)->m_wearLocation==0x8000 && find(otherSlot)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==otherSlot,
+        "ammo equip did not move the ammo mask or cleared unrelated pending");
+    put16(ammo,2,73); dispatch(ammo,"missing ammo slot");
+    Require(find(ammoSlot)->m_wearLocation==0x8000, "missing ammo slot cleared equipped arrows");
+    put16(ammo,2,1); dispatch(ammo,"selected ammo clear sentinel");
+    Require(find(ammoSlot)->m_wearLocation==0 && find(otherSlot)->m_wearLocation==0x0040 && mode.m_waitingWearEquipAck==otherSlot,
+        "empty ammo sentinel did not clear only the ammo mask");
 
-    g_session.SetInventoryItemWearLocation(0x1234,0x0040);
-    mode.m_waitingTakeoffEquipAck=0x1234;
-    auto off=frame(0x00AC,7); put16(off,2,0x1234); put16(off,4,0x0040); off[6]=0; dispatch(off,"unequip failure");
-    Require(find(0x1234)->m_wearLocation==0x0040 && mode.m_waitingTakeoffEquipAck==0,"unequip failure changed row or retained matching pending");
-    mode.m_waitingTakeoffEquipAck=0x1234; off[6]=1; dispatch(off,"unequip success");
-    Require(find(0x1234)->m_wearLocation==0 && mode.m_waitingTakeoffEquipAck==0,"unequip success did not clear wear state/pending");
+    g_session.SetInventoryItemWearLocation(equipSlot,0x0040);
+    mode.m_waitingTakeoffEquipAck=equipSlot;
+    auto off=frame(0x00AC,7); put16(off,2,equipSlot); put16(off,4,0x0040); off[6]=0; dispatch(off,"unequip failure");
+    Require(find(equipSlot)->m_wearLocation==0x0040 && mode.m_waitingTakeoffEquipAck==0,"unequip failure changed row or retained matching pending");
+    mode.m_waitingTakeoffEquipAck=equipSlot; off[6]=1; dispatch(off,"unequip success");
+    Require(find(equipSlot)->m_wearLocation==0 && mode.m_waitingTakeoffEquipAck==0,"unequip success did not clear wear state/pending");
 
     std::cout << "{\"case_id\":\"inventory_mutation_ack_lifecycle\",\"contract_id\":\"PK09.17\",\"fixture_id\":\"PK09.17-literal-inventory-mutation-acks\",\"outcome\":\"PASS\",\"assertions\":\"pickup additive metadata and cleanup; drop rejection/partial/full; basic/extended use counts, failure, unknown and remote isolation; equip/ammo/unequip state and pending correlation\"}" << std::endl;
 }

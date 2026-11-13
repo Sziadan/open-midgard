@@ -1161,7 +1161,7 @@ void UIItemWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
                 CGameMode::GameMsg_RequestUnequipInventoryItem,
                 static_cast<int>(dragInfo->itemIndex),
                 0,
-                0) != 0) {
+                dragInfo->itemId) != 0) {
             Invalidate();
             if (g_windowMgr.m_equipWnd) {
                 g_windowMgr.m_equipWnd->Invalidate();

@@ -5105,6 +5105,47 @@ void UseItemProductionSendReplay()
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
+void EquipmentProductionSendReplay()
+{
+    SetCase("equipment_production_send", "PK38.02", "selected-00a9-00ab",
+        "CGameMode::SendMsg -> equipment sender -> map connection");
+    constexpr u16 slot = 101;
+    Require(!g_session.GetInventoryItemByIndex(slot), "equipment replay slot is occupied");
+    ITEM_INFO item{};
+    item.m_itemIndex = slot;
+    item.m_num = 1;
+    item.SetItemId(1201);
+    item.m_location = 2;
+    g_session.SetInventoryItem(item);
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const int oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    Require(!mode.SendMsg(CGameMode::GameMsg_RequestEquipInventoryItem, slot, 2, 1201)
+        && !mode.m_waitingWearEquipAck, "failed equip send recorded a pending request");
+    LoopbackPeer peer(*connection);
+    Require(!mode.SendMsg(CGameMode::GameMsg_RequestEquipInventoryItem, slot, 2, 1202)
+        && !mode.SendMsg(CGameMode::GameMsg_RequestUnequipInventoryItem, slot, 0, 1201)
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "stale drag or unworn item sent an equipment request");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestEquipInventoryItem, slot, 2, 1201)
+        && peer.ReceiveExact(6) == std::vector<u8>{0xa9, 0, 101, 0, 2, 0}
+        && mode.m_waitingWearEquipAck == slot && !g_session.GetInventoryItemByIndex(slot)->m_wearLocation,
+        "equip request bytes, pending state, or pre-reply wear mask differ");
+    g_session.SetInventoryItemWearLocation(slot, 2);
+    Require(!mode.SendMsg(CGameMode::GameMsg_RequestUnequipInventoryItem, slot, 0, 1202),
+        "stale unequip drag sent a request");
+    Require(mode.SendMsg(CGameMode::GameMsg_RequestUnequipInventoryItem, slot, 0, 1201)
+        && peer.ReceiveExact(4) == std::vector<u8>{0xab, 0, 101, 0}
+        && mode.m_waitingTakeoffEquipAck == slot && g_session.GetInventoryItemByIndex(slot)->m_wearLocation == 2,
+        "unequip request bytes, pending state, or pre-reply wear mask differ");
+    connection->Disconnect();
+    g_session.RemoveInventoryItem(slot, 0);
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+}
+
 void DropItemProductionReplay()
 {
     SetCase("drop_item_production_replay", "PK38.02", "PK46.02-0116-item-drop",
@@ -7269,6 +7310,7 @@ int main(int argc,char** argv){try{
     MapMovementProductionSendReplay();
     UseItemProductionSendReplay();
     DropItemProductionReplay();
+    EquipmentProductionSendReplay();
     SkillTargetProductionSendReplay();
     TakeItemProductionSendReplay();
     ChangeDirectionProductionSendReplay();

@@ -5985,9 +5985,11 @@ bool TryRequestGroundItemFromScreenPoint(CGameMode& mode, int screenX, int scree
     return TryBeginGroundItemPickup(mode, hoveredItem->m_aid);
 }
 
-bool RequestEquipInventoryItem(u16 itemIndex, u16 equipLocation)
+bool RequestEquipInventoryItem(u16 itemIndex, u16 equipLocation, unsigned expectedItemId = 0)
 {
-    if (itemIndex == 0 || equipLocation == 0) {
+    const auto* item = g_session.GetInventoryItemByIndex(itemIndex);
+    if (static_cast<unsigned>(itemIndex) - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || !item || item->m_num <= 0 || !equipLocation || (expectedItemId && item->GetItemId() != expectedItemId)) {
         return false;
     }
 
@@ -6013,9 +6015,11 @@ bool RequestEquipInventoryItem(u16 itemIndex, u16 equipLocation)
     return sent;
 }
 
-bool RequestUnequipInventoryItem(u16 itemIndex)
+bool RequestUnequipInventoryItem(u16 itemIndex, unsigned expectedItemId = 0)
 {
-    if (itemIndex == 0) {
+    const auto* item = g_session.GetInventoryItemByIndex(itemIndex);
+    if (static_cast<unsigned>(itemIndex) - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || !item || !item->m_wearLocation || (expectedItemId && item->GetItemId() != expectedItemId)) {
         return false;
     }
 
@@ -12479,10 +12483,10 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case GameMsg_RequestEquipInventoryItem:
         return RequestEquipInventoryItem(
             static_cast<u16>(wparam),
-            static_cast<u16>(lparam)) ? 1 : 0;
+            static_cast<u16>(lparam), static_cast<unsigned>(extra)) ? 1 : 0;
 
     case GameMsg_RequestUnequipInventoryItem:
-        return RequestUnequipInventoryItem(static_cast<u16>(wparam)) ? 1 : 0;
+        return RequestUnequipInventoryItem(static_cast<u16>(wparam), static_cast<unsigned>(extra)) ? 1 : 0;
 
     case GameMsg_RequestUseInventoryItem:
         return RequestUseInventoryItem(static_cast<u16>(wparam)) ? 1 : 0;

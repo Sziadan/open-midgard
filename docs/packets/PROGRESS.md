@@ -4063,3 +4063,5 @@ PK38.02 validates item-use requests and replies, applies remaining quantities to
 PK38.02 binds a drop prompt to the dragged item, validates inventory removal frames, and retires pending drops on map change. [Evidence](evidence/PK46.02-map-drop-item-request.md)
 
 PK38.02 validates inventory awards and uses the floor GID in the actor action to animate pickup and retire the matching local intent. [Evidence](evidence/PK46.02-map-take-item-request.md)
+
+PK38.02 validates equipment drag identity and preserves unrelated requests through ammunition updates. [Evidence](evidence/PK38.02-equipment.md)

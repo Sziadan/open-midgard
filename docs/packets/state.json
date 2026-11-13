@@ -1340,8 +1340,8 @@
     },
     "PK38.02": {
       "status": "IN_PROGRESS",
-      "evidence": ["docs/packets/evidence/PK38.02-item-use.md", "docs/packets/evidence/PK46.02-map-drop-item-request.md", "docs/packets/evidence/PK46.02-map-take-item-request.md"],
-      "commit_subject": "packet(PK38.02): correlate pickup through the floor action"
+      "evidence": ["docs/packets/evidence/PK38.02-item-use.md", "docs/packets/evidence/PK46.02-map-drop-item-request.md", "docs/packets/evidence/PK46.02-map-take-item-request.md", "docs/packets/evidence/PK38.02-equipment.md"],
+      "commit_subject": "packet(PK38.02): validate equipment and ammunition ownership"
     },
     "PK38.03": {
       "status": "IN_PROGRESS",

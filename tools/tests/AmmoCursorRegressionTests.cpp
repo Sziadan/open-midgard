@@ -89,6 +89,7 @@ struct {
     void SendMsg(int,msgparam_t text,int value){last=reinterpret_cast<const char*>(text);color=value;++count;}
 } g_windowMgr;
 constexpr int kUiChatEventMsg=1;
+void RefreshInventoryDependentWindows() {}
 struct PacketView {const u8* data;int packetLength;u16 packetId=0;};
 u16 ReadLE16(const u8* p){return p[0]|(p[1]<<8);}
 u32 ReadLE32(const u8* p){return ReadLE16(p)|(u32(ReadLE16(p+2))<<16);}

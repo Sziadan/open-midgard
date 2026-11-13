@@ -2905,18 +2905,20 @@ void HandleItemRemove(CGameMode& mode, const PacketView& packet)
 
 void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 7) {
+    if (!packet.data || packet.packetLength != 7) {
         return;
     }
 
     const unsigned int itemIndex = ReadLE16(packet.data + 2);
     const int wearLocation = static_cast<int>(ReadLE16(packet.data + 4));
     const int result = packet.data[6];
+    if (result > 2) return;
     if (mode.m_waitingWearEquipAck == itemIndex) {
         mode.m_waitingWearEquipAck = 0;
     }
 
-    if (result != 1 || itemIndex == 0 || wearLocation == 0) {
+    if (result != 1 || itemIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || wearLocation == 0) {
         if (result==0 || result==2) {
             const auto notice=g_ttemmgr.GetEquipFailureNotice();
             g_windowMgr.PushSourceChatEvent(notice.c_str(),0x00ff0000u,6, ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::Equip);
@@ -2934,6 +2936,7 @@ void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
     g_session.SetInventoryItemWearLocation(itemIndex, wearLocation);
     g_session.RebuildPlayerEquipmentAppearanceFromInventory();
     SyncSessionAppearanceToLocalPlayer(mode);
+    RefreshInventoryDependentWindows();
     DbgLog("[GameMode] equip ack index=%u wear=0x%04X ok=%d\n",
         itemIndex,
         static_cast<unsigned int>(wearLocation),
@@ -2942,11 +2945,18 @@ void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
 
 void HandleEquipAmmo(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 4) return;
+    if (!packet.data || packet.packetLength != 4) return;
     const unsigned int itemIndex = ReadLE16(packet.data + 2);
+    // The selected server converts its empty index (-1) to wire index 1.
+    if (itemIndex >= ro::item_snapshot::kFirstInventoryIndex) {
+        const auto* item = g_session.GetInventoryItemByIndex(itemIndex);
+        if (itemIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+            || !item || (item->m_location & 0x8000) == 0) return;
+        g_session.SetInventoryItemWearLocation(itemIndex, 0x8000);
+        if (mode.m_waitingWearEquipAck == itemIndex) mode.m_waitingWearEquipAck = 0;
+    }
     g_session.ClearInventoryWearLocationMask(0x8000, itemIndex);
-    if (itemIndex != 0) g_session.SetInventoryItemWearLocation(itemIndex, 0x8000);
-    mode.m_waitingWearEquipAck = 0;
+    RefreshInventoryDependentWindows();
     DbgLog("[GameMode] ammunition equip ack index=%u\n", itemIndex);
 }
 
@@ -3016,18 +3026,20 @@ void HandleActionFailure(CGameMode& mode, const PacketView& packet)
 
 void HandleUnequipItemAck(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 7) {
+    if (!packet.data || packet.packetLength != 7) {
         return;
     }
 
     const unsigned int itemIndex = ReadLE16(packet.data + 2);
     const int wearLocation = static_cast<int>(ReadLE16(packet.data + 4));
     const int result = packet.data[6];
+    if (result > 1) return;
     if (mode.m_waitingTakeoffEquipAck == itemIndex) {
         mode.m_waitingTakeoffEquipAck = 0;
     }
 
-    if (result == 0 || itemIndex == 0) {
+    if (result == 0 || itemIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || !wearLocation) {
         DbgLog("[GameMode] unequip ack index=%u wear=0x%04X ok=%d\n",
             itemIndex,
             static_cast<unsigned int>(wearLocation),
@@ -3035,9 +3047,12 @@ void HandleUnequipItemAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    const auto* item = g_session.GetInventoryItemByIndex(itemIndex);
+    if (!item || item->m_wearLocation != wearLocation) return;
     g_session.SetInventoryItemWearLocation(itemIndex, 0);
     g_session.RebuildPlayerEquipmentAppearanceFromInventory();
     SyncSessionAppearanceToLocalPlayer(mode);
+    RefreshInventoryDependentWindows();
     DbgLog("[GameMode] unequip ack index=%u wear=0x%04X ok=%d\n",
         itemIndex,
         static_cast<unsigned int>(wearLocation),
@@ -9118,6 +9133,8 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     mode.ClearItemComposition();
     mode.ClearItemIdentification();
     mode.m_waitingItemThrowAck = 0;
+    mode.m_waitingWearEquipAck = 0;
+    mode.m_waitingTakeoffEquipAck = 0;
     if (auto* input = g_windowMgr.m_npcInputWnd;
         input && input->IsGameNumberPromptFor(CGameMode::GameMsg_RequestDropInventoryItem)) {
         input->HideInput();
