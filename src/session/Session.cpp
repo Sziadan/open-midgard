@@ -1651,36 +1651,27 @@ void CSession::ResetCompanionMapState()
     m_merTarget = {};
 }
 
-bool CSession::ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool shift)
+bool CSession::ApplyCompanionGroundClick(companion_ai::Kind kind, int cellX, int cellY, bool alt, bool shift)
 {
+    const bool homunculus = kind == companion_ai::Kind::Homunculus;
+    if (!(homunculus ? m_homunStatus.alive : m_merStatus.alive)) return false;
+    auto& target = homunculus ? m_homunTarget : m_merTarget;
     if (!alt) {
-        if (m_homunStatus.alive) m_homunTarget = {};
-        if (m_merStatus.alive) m_merTarget = {};
+        target = {};
         return false;
     }
 
-    CompanionTargetState* target = nullptr;
-    companion_ai::Kind kind = companion_ai::Kind::Homunculus;
-    if (m_homunStatus.alive) {
-        target = &m_homunTarget;
-        kind = companion_ai::Kind::Homunculus;
-    } else if (m_merStatus.alive) {
-        target = &m_merTarget;
-        kind = companion_ai::Kind::Mercenary;
-    }
-    if (!target) return false;
-
-    if (target->selected) {
-        target->selected = false;
+    if (target.selected) {
+        target.selected = false;
         return true;
     }
 
     if (!shift) {
-        target->gid = 0;
-        target->cellX = cellX;
-        target->cellY = cellY;
-        target->moving = true;
-        target->attacking = false;
+        target.gid = 0;
+        target.cellX = cellX;
+        target.cellY = cellY;
+        target.moving = true;
+        target.attacking = false;
     }
 
     companion_ai::Msg2Ai msg;
@@ -1704,27 +1695,21 @@ void CompanionTargetState::SelectActor(u32 actorGid, bool shift)
     selected = true;
 }
 
-void CSession::ApplyCompanionActorClick(u32 gid, bool shift)
+bool CSession::ApplyCompanionActorClick(companion_ai::Kind kind, u32 gid, bool shift)
 {
-    if (!gid) return;
-    auto queueAttack = [&](bool alive, CompanionTargetState& target, companion_ai::Kind kind) {
-        if (!alive) return;
-        // Ref uses a select-then-confirm cursor for non-shift attacks. Rebuild keeps
-        // CompanionTargetState for UI and issues ATTACK_OBJECT_CMD immediately so
-        // the native AI receives the order on the same click.
-        target.SelectActor(gid, shift);
-        companion_ai::Msg2Ai msg;
-        if (shift || target.attacking) {
-            msg.command = companion_ai::ATTACK_OBJECT_CMD;
-            msg.targetId = gid;
-        } else {
-            msg.command = companion_ai::STOP_CMD;
-        }
-        companion_ai::Runtime::QueueCommand(kind, msg, shift);
-    };
-
-    queueAttack(m_homunStatus.alive, m_homunTarget, companion_ai::Kind::Homunculus);
-    queueAttack(m_merStatus.alive, m_merTarget, companion_ai::Kind::Mercenary);
+    const bool homunculus = kind == companion_ai::Kind::Homunculus;
+    if (!gid || !(homunculus ? m_homunStatus.alive : m_merStatus.alive)) return false;
+    auto& target = homunculus ? m_homunTarget : m_merTarget;
+    target.SelectActor(gid, shift);
+    companion_ai::Msg2Ai msg;
+    if (shift || target.attacking) {
+        msg.command = companion_ai::ATTACK_OBJECT_CMD;
+        msg.targetId = gid;
+    } else {
+        msg.command = companion_ai::STOP_CMD;
+    }
+    companion_ai::Runtime::QueueCommand(kind, msg, shift);
+    return true;
 }
 
 void CSession::ClearDefeatedCompanionTarget(u32 gid)

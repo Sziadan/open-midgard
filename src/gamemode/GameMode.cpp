@@ -4957,7 +4957,7 @@ bool ShouldUseTurnOnlyGroundClick(const CGameMode& mode)
     return looksSeated || isShiftHeld || hasChatRoomContext;
 }
 
-bool TryHandleCompanionGroundClick(CGameMode& mode, int screenX, int screenY)
+bool TryHandleCompanionGroundClick(CGameMode& mode, companion_ai::Kind kind, int screenX, int screenY)
 {
     if ((!g_session.m_homunStatus.alive && !g_session.m_merStatus.alive)
         || !mode.m_world || !mode.m_view || mode.m_canRotateView || mode.m_isPlayerDead) return false;
@@ -4974,7 +4974,7 @@ bool TryHandleCompanionGroundClick(CGameMode& mode, int screenX, int screenY)
     if (!mode.m_view->ScreenToHoveredAttrCell(screenX, screenY, &x, &y)) return false;
     const bool alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
     const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
-    return g_session.ApplyCompanionGroundClick(x, y, alt, shift);
+    return g_session.ApplyCompanionGroundClick(kind, x, y, alt, shift);
 }
 
 bool IsPcAttackEligibleForMap(const CGameMode& mode, const CGameActor& target, bool baseEligible)
@@ -5011,7 +5011,7 @@ bool IsMonsterAttackEligibleForMap(const CGameMode& mode, const CGameActor& targ
     return (baseEligible && !(sameGuild && (guildAllies || siege))) || g_session.m_isNoShift == 1;
 }
 
-bool TryHandleCompanionActorClick(CGameMode& mode, int screenX, int screenY)
+bool TryHandleCompanionActorClick(CGameMode& mode, companion_ai::Kind kind, int screenX, int screenY)
 {
     if (!(GetKeyState(VK_MENU) & 0x8000)
         || (!g_session.m_homunStatus.alive && !g_session.m_merStatus.alive)
@@ -5020,18 +5020,18 @@ bool TryHandleCompanionActorClick(CGameMode& mode, int screenX, int screenY)
     CGameActor* actor = nullptr;
     if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
             mode.m_view->GetCameraLongitude(), screenX, screenY, &actor, nullptr, nullptr)
-        || !actor || !actor->m_gid || actor == mode.m_world->m_player) return false;
+        || !actor || !actor->m_gid || actor == mode.m_world->m_player || actor->m_stateId == 3
+        || actor->m_gid == g_session.m_homunGID || actor->m_gid == g_session.m_merGID) return false;
 
     const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
     if (IsPcLikeHoverActor(actor)) {
-        if (actor->m_stateId == 3 || (!IsPcAttackEligibleForMap(mode, *actor, shift)
-            && g_session.m_isNoShift != 1 && !mode.m_world->m_isSiegeMode)) return false;
+        if (!IsPcAttackEligibleForMap(mode, *actor, shift)
+            && g_session.m_isNoShift != 1 && !mode.m_world->m_isSiegeMode) return false;
     } else if (!IsMonsterLikeHoverActor(actor) || IsNpcLikeHoverActor(actor)) {
         return false;
     }
 
-    g_session.ApplyCompanionActorClick(actor->m_gid, shift);
-    return true;
+    return g_session.ApplyCompanionActorClick(kind, actor->m_gid, shift);
 }
 
 bool WorldToAttrCell(const CWorld* world, float worldX, float worldZ, int* outTileX, int* outTileY);
@@ -12665,8 +12665,8 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         }
 
         if (m_world && m_world->m_player) {
-            if (TryHandleCompanionActorClick(*this, mouseX, mouseY)
-                || TryHandleCompanionGroundClick(*this, mouseX, mouseY)) {
+            if (TryHandleCompanionActorClick(*this, companion_ai::Kind::Mercenary, mouseX, mouseY)
+                || TryHandleCompanionGroundClick(*this, companion_ai::Kind::Mercenary, mouseX, mouseY)) {
                 m_isLeftButtonHeld = 0;
                 m_hasHeldMoveTarget = 0;
                 return 1;
@@ -12775,6 +12775,12 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         }
         const int mouseX = static_cast<int>(wparam);
         const int mouseY = static_cast<int>(lparam);
+        if (TryHandleCompanionActorClick(*this, companion_ai::Kind::Homunculus, mouseX, mouseY)
+            || TryHandleCompanionGroundClick(*this, companion_ai::Kind::Homunculus, mouseX, mouseY)) {
+            // Suppress context-menu opening on release just as for a consumed camera drag.
+            m_rButtonDragged = 1;
+            return 1;
+        }
         const u32 now = GetTickCount();
         const int doubleClickWidth = (std::max)(4, GetSystemMetrics(SM_CXDOUBLECLK));
         const int doubleClickHeight = (std::max)(4, GetSystemMetrics(SM_CYDOUBLECLK));

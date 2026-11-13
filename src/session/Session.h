@@ -19,6 +19,7 @@
 #include "skill/Skill.h"
 
 class CGameActor;
+namespace companion_ai { enum class Kind : int; }
 
 struct accountInfo {
     std::string display;
@@ -224,8 +225,8 @@ public:
     CompanionTargetState m_homunTarget;
     CompanionTargetState m_merTarget;
     void ResetCompanionMapState();
-    bool ApplyCompanionGroundClick(int cellX, int cellY, bool alt, bool shift);
-    void ApplyCompanionActorClick(u32 gid, bool shift);
+    bool ApplyCompanionGroundClick(companion_ai::Kind kind, int cellX, int cellY, bool alt, bool shift);
+    bool ApplyCompanionActorClick(companion_ai::Kind kind, u32 gid, bool shift);
     void ClearDefeatedCompanionTarget(u32 gid);
     // Selected 0x00B0 decodes signed wire dword/10; source initialization zeros both.
     int m_weight=0,m_maxWeight=0;

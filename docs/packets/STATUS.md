@@ -14,7 +14,7 @@
 
 **Privacy configuration**. PK16.02 wires the equipment control and privacy commands to selected server-confirmed settings. PK16.03 still owns the social packet audit. [Evidence](evidence/PK16.01-privacy-wire.md)
 
-**Companion movement recovery**. PK28.04 and PK29.04 verify that stalled basic attack pursuit releases queued orders and delays automatic reacquisition. Manual movement has bounded recovery. Forced follow retries during attack animations and uses the same interval as automatic follow. Live verification remains open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+**Companion input and movement**. PK28.04 and PK29.04 route Alt+right to the homunculus and Alt+left to the mercenary. Replay verifies independent orders and cancellation, recovery from stalled pursuit, and paced follow during an attack animation. Physical input and live server movement remain open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 **Native companion lifecycle orders**. PK28.04 and PK29.04 cover order cleanup on death, vaporize, deletion, identity replacement, and same-map reuse. Same-GID mercenary refresh preserves orders. Live verification remains open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 

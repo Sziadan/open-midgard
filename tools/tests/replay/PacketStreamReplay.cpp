@@ -4331,11 +4331,14 @@ void PendingCompanionActorSkillReplay()
     manualMove.command = companion_ai::MOVE_CMD;
     manualMove.x = 16;
     manualMove.y = 10;
-    Require(companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, manualMove, false),
+    g_session.m_merTarget = {};
+    Require(g_session.ApplyCompanionGroundClick(companion_ai::Kind::Mercenary, 16, 10, true, false)
+        && homunculus.m_homunMsg.command == companion_ai::NONE_CMD,
         "could not queue manual companion movement");
     tickCompanion(mercenary);
     Require(peer.ReceiveExact(9) == approachRequest, "manual move sent the wrong packet");
-    Require(companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, manualMove, true),
+    Require(g_session.ApplyCompanionGroundClick(companion_ai::Kind::Mercenary, 16, 10, true, true)
+        && homunculus.m_homunResMsg.command == companion_ai::NONE_CMD,
         "could not reserve another manual move");
     tickCompanion(mercenary, 1200);
     Require(peer.ReceiveExact(9) == approachRequest, "manual move did not retry after a stall");
@@ -4356,18 +4359,28 @@ void PendingCompanionActorSkillReplay()
     g_session.m_merStatus.combat.attackSpeed = 2000;
     g_session.m_homunTarget = {};
     g_session.m_merTarget = {};
-    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    const auto clickCompanionTarget = [&](bool shift) {
+        Require(g_session.ApplyCompanionActorClick(companion_ai::Kind::Homunculus, target.m_gid, shift)
+            && g_session.ApplyCompanionActorClick(companion_ai::Kind::Mercenary, target.m_gid, shift),
+            "companion actor order was not consumed");
+    };
+    g_session.ApplyCompanionActorClick(companion_ai::Kind::Homunculus, target.m_gid, false);
+    tickCompanion(mercenary);
+    Require(!g_session.m_merTarget.attacking
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "homunculus actor order also started a mercenary attack");
+    g_session.ApplyCompanionActorClick(companion_ai::Kind::Mercenary, target.m_gid, false);
     for (CGameActor* caster : {&homunculus, &mercenary}) {
         tickCompanion(*caster);
         tickCompanion(*caster);
         Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
             0, 0, 0xf1, 0x78, 0x56, 0x34, 0x12, 0}, "Alt click did not send a companion attack");
     }
-    g_session.ApplyCompanionActorClick(target.m_gid, true);
+    clickCompanionTarget(true);
     Require(homunculus.m_homunResMsg.command == companion_ai::ATTACK_OBJECT_CMD
         && mercenary.m_merResMsg.command == companion_ai::ATTACK_OBJECT_CMD,
         "Alt+Shift did not reserve a companion attack");
-    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    clickCompanionTarget(false);
     Require(!g_session.m_homunTarget.attacking && !g_session.m_merTarget.attacking,
         "second Alt click did not clear both manual attacks");
     Require(homunculus.m_homunMsg.command == companion_ai::STOP_CMD
@@ -4384,7 +4397,7 @@ void PendingCompanionActorSkillReplay()
     if (SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) != 0) {
         throw std::runtime_error("cancelling a manual attack emitted extra opcode " + Hex(peer.ReceiveExact(2)));
     }
-    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    clickCompanionTarget(false);
     for (CGameActor* caster : {&homunculus, &mercenary}) {
         tickCompanion(*caster);
         tickCompanion(*caster);
@@ -4394,7 +4407,7 @@ void PendingCompanionActorSkillReplay()
     }
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "repeated attacks bypassed the cooldown");
-    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    clickCompanionTarget(false);
     for (CGameActor* caster : {&homunculus, &mercenary}) {
         tickCompanion(*caster);
         Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
@@ -4404,14 +4417,14 @@ void PendingCompanionActorSkillReplay()
     g_session.m_merStatus.combat.attackSpeed = 1;
 
     mode.GetClientCoor(20, 10, target.m_pos.x, target.m_pos.z);
-    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    clickCompanionTarget(false);
     for (CGameActor* caster : {&homunculus, &mercenary}) {
         tickCompanion(*caster);
         Require(peer.ReceiveExact(9) == std::vector<u8>{0x32, 0x02, static_cast<u8>(caster->m_gid),
             0, 0, 0xf1, 5, 0, 0xa0}, "manual attack did not start companion pursuit");
         caster->m_stateId = companion_ai::MOTION_MOVE;
     }
-    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    clickCompanionTarget(false);
     for (CGameActor* caster : {&homunculus, &mercenary}) {
         tickCompanion(*caster);
         Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
@@ -4460,9 +4473,8 @@ void PendingCompanionActorSkillReplay()
         "automatic companion targeting emitted an extra request");
 
     const auto clickMercenaryTarget = [&] {
-        g_session.m_homunStatus.alive = false;
-        g_session.ApplyCompanionActorClick(target.m_gid, false);
-        g_session.m_homunStatus.alive = true;
+        Require(g_session.ApplyCompanionActorClick(companion_ai::Kind::Mercenary, target.m_gid, false),
+            "mercenary actor order was not consumed");
     };
     clickMercenaryTarget();
     Require(g_session.m_merTarget.attacking, "manual mercenary attack did not select its target");
@@ -4939,47 +4951,64 @@ void MapTypePropertyReplay()
 
 void CompanionTargetReplay()
 {
+    using companion_ai::Kind;
     CSession session;
-    Require(!session.ApplyCompanionGroundClick(5, 8, true, false), "Alt ground click without a companion was consumed");
+    Require(!session.ApplyCompanionGroundClick(Kind::Mercenary, 5, 8, true, false),
+        "Alt ground click without a companion was consumed");
     session.m_merStatus.alive = true;
     session.m_merTarget = {17, 1, 2, false, false, true};
-    Require(session.ApplyCompanionGroundClick(5, 8, true, false)
+    Require(!session.ApplyCompanionGroundClick(Kind::Homunculus, 5, 8, true, false)
+        && session.m_merTarget.gid == 17, "homunculus ground click fell back to the mercenary");
+    Require(session.ApplyCompanionGroundClick(Kind::Mercenary, 5, 8, true, false)
         && session.m_merTarget.moving && !session.m_merTarget.attacking
         && session.m_merTarget.gid == 0 && session.m_merTarget.cellX == 5 && session.m_merTarget.cellY == 8,
         "mercenary Alt ground click did not replace its target with a cell");
     session.m_homunStatus.alive = true;
     session.m_homunTarget = {18, 2, 3, false, true, true};
-    Require(session.ApplyCompanionGroundClick(9, 11, true, true)
+    Require(session.ApplyCompanionGroundClick(Kind::Homunculus, 9, 11, true, true)
         && !session.m_homunTarget.selected && session.m_homunTarget.attacking && session.m_homunTarget.gid == 18,
         "Alt+Shift ground click did not clear an existing selection first");
-    Require(session.ApplyCompanionGroundClick(9, 11, true, true)
+    Require(session.ApplyCompanionGroundClick(Kind::Homunculus, 9, 11, true, true)
         && session.m_homunTarget.gid == 18 && !session.m_homunTarget.moving,
         "reserved Alt+Shift move replaced the current target");
-    Require(session.ApplyCompanionGroundClick(9, 11, true, false)
+    Require(session.ApplyCompanionGroundClick(Kind::Homunculus, 9, 11, true, false)
         && session.m_homunTarget.moving && session.m_homunTarget.cellX == 9 && session.m_homunTarget.cellY == 11
         && session.m_merTarget.moving && session.m_merTarget.cellX == 5 && session.m_merTarget.cellY == 8,
-        "homunculus ground click did not take precedence over the mercenary");
-    Require(!session.ApplyCompanionGroundClick(1, 1, false, false)
+        "homunculus ground click changed the mercenary target");
+    Require(session.ApplyCompanionGroundClick(Kind::Mercenary, 4, 7, true, false)
+        && session.m_merTarget.cellX == 4 && session.m_homunTarget.cellX == 9,
+        "mercenary ground click did not stay with the mercenary while both were active");
+    Require(!session.ApplyCompanionGroundClick(Kind::Mercenary, 1, 1, false, false)
+        && !session.m_merTarget.moving && session.m_homunTarget.moving,
+        "ordinary left ground click reset the homunculus target");
+    Require(!session.ApplyCompanionGroundClick(Kind::Homunculus, 1, 1, false, false)
         && !session.m_homunTarget.moving && !session.m_merTarget.moving
         && !session.m_homunTarget.cellX && !session.m_merTarget.cellX,
         "ordinary ground click did not reset companion targets and continue");
 
-    session.ApplyCompanionActorClick(23, false);
+    session.ApplyCompanionActorClick(Kind::Homunculus, 23, false);
+    Require(!session.m_merTarget.selected && !session.m_merTarget.attacking,
+        "homunculus actor click selected an attack for the mercenary");
+    session.ApplyCompanionActorClick(Kind::Mercenary, 23, false);
     Require(session.m_homunTarget.gid == 23 && session.m_merTarget.gid == 23
         && session.m_homunTarget.selected && session.m_merTarget.selected
         && session.m_homunTarget.attacking && session.m_merTarget.attacking,
-        "Alt actor click did not mark both live companions");
-    session.ApplyCompanionActorClick(23, false);
+        "each companion did not acquire its own attack target");
+    session.ApplyCompanionActorClick(Kind::Homunculus, 23, false);
+    Require(session.m_merTarget.attacking, "homunculus cancellation stopped the mercenary");
+    session.ApplyCompanionActorClick(Kind::Mercenary, 23, false);
     Require(!session.m_homunTarget.attacking && !session.m_merTarget.attacking
         && session.m_homunTarget.selected && session.m_merTarget.selected,
         "same-actor click did not toggle attack while keeping selection");
     session.m_homunTarget.selected = false;
-    session.ApplyCompanionActorClick(24, true);
+    session.ApplyCompanionActorClick(Kind::Homunculus, 24, true);
     Require(session.m_homunTarget.selected && session.m_homunTarget.gid == 23
         && session.m_merTarget.gid == 23 && !session.m_merTarget.attacking,
         "reserved Alt+Shift actor click replaced the current target");
     session.m_merStatus.alive = false;
-    session.ApplyCompanionActorClick(25, false);
+    Require(!session.ApplyCompanionActorClick(Kind::Mercenary, 25, false)
+        && session.m_homunTarget.gid == 23, "dismissed mercenary click fell back to the homunculus");
+    session.ApplyCompanionActorClick(Kind::Homunculus, 25, false);
     Require(session.m_homunTarget.gid == 25 && session.m_merTarget.gid == 23,
         "actor click selected a target for a dismissed mercenary");
     session.ClearDefeatedCompanionTarget(25);
