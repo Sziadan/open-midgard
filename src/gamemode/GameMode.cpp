@@ -11427,6 +11427,7 @@ void CGameMode::UpdateFriendInvitation()
 void CGameMode::OnExit() {
     if (g_modeMgr.GetRequestedModeType() != 1) {
         g_session.m_instanceStatus = {};
+        g_session.m_questJournal = {};
         g_session.m_partyBookingRegistrationPending = false;
     }
     CloseFriendInvitation();

@@ -2197,6 +2197,70 @@ void HandleEquipmentVisibility(CGameMode&, const PacketView& packet)
     }
 }
 
+bool ReadQuestSnapshotCount(const PacketView& packet, int stride, u32& count)
+{
+    constexpr int headerSize = 8;
+    if (!packet.data || packet.packetLength < headerSize
+        || ReadLE16(packet.data + 2) != packet.packetLength) {
+        return false;
+    }
+    const int payloadSize = packet.packetLength - headerSize;
+    count = ReadLE32(packet.data + 4);
+    return payloadSize % stride == 0 && count == static_cast<u32>(payloadSize / stride);
+}
+
+void HandleQuestList(CGameMode&, const PacketView& packet)
+{
+    constexpr int stride = 5;
+    u32 count = 0;
+    if (!ReadQuestSnapshotCount(packet, stride, count)) {
+        return;
+    }
+
+    std::map<u32, ro::quest::State> states;
+    const u8* row = packet.data + 8;
+    for (u32 index = 0; index < count; ++index, row += stride) {
+        const u32 id = ReadLE32(row);
+        if (id == 0 || row[4] > static_cast<u8>(ro::quest::State::Active)
+            || !states.emplace(id, static_cast<ro::quest::State>(row[4])).second) {
+            return;
+        }
+    }
+    g_session.m_questJournal.states.swap(states);
+}
+
+void HandleQuestMissions(CGameMode&, const PacketView& packet)
+{
+    constexpr int stride = 104;
+    u32 count = 0;
+    if (!ReadQuestSnapshotCount(packet, stride, count)) {
+        return;
+    }
+
+    std::map<u32, ro::quest::Mission> missions;
+    const u8* row = packet.data + 8;
+    for (u32 index = 0; index < count; ++index, row += stride) {
+        const u32 id = ReadLE32(row);
+        ro::quest::Mission mission;
+        mission.startedAt = ReadLE32(row + 4);
+        mission.expiresAt = ReadLE32(row + 8);
+        mission.objectiveCount = ReadLE16(row + 12);
+        if (id == 0 || mission.objectiveCount > mission.objectives.size()) {
+            return;
+        }
+        const u8* objective = row + 14;
+        for (u16 slot = 0; slot < mission.objectiveCount; ++slot, objective += 30) {
+            mission.objectives[slot] = {
+                ReadLE32(objective), ReadLE16(objective + 4),
+                ExtractFixedPacketString(packet, static_cast<size_t>(objective - packet.data) + 6, 24)};
+        }
+        if (!missions.emplace(id, std::move(mission)).second) {
+            return;
+        }
+    }
+    g_session.m_questJournal.missions.swap(missions);
+}
+
 void HandlePartyInvitePrivacy(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 3 || packet.data[2] > 1) return;
@@ -9785,6 +9849,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     if (info.hasServerMove) {
         ClearPendingDisconnectAction();
         g_session.m_instanceStatus = {};
+        g_session.m_questJournal = {};
         g_session.m_partyBookingRegistrationPending = false;
         g_windowMgr.DeleteWindow(g_windowMgr.m_instanceWnd);
     }
@@ -10776,8 +10841,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02CD, HandleInstanceStatus);
     router.Register(0x02CE, HandleInstanceNotification);
     router.Register(0x0803, HandlePartyBookingRegistration);
-    router.Register(0x02B1, HandleIgnorePacket);
-    router.Register(0x02B2, HandleIgnorePacket);
+    router.Register(0x02B1, HandleQuestList);
+    router.Register(0x02B2, HandleQuestMissions);
     router.Register(0x02B9, HandleShortcutKeyList);
     router.Register(0x02D3, HandleIgnorePacket);
     router.Register(0x02D5, HandleIgnorePacket);

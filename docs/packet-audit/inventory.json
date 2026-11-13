@@ -14320,7 +14320,7 @@
       ],
       "server_size": -1,
       "client_size": -1,
-      "client_handler": "HandleIgnorePacket",
+      "client_handler": "HandleQuestList",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14333,12 +14333,11 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "ignored/stubbed"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": 1054,
-      "review": "",
-      "ignored_behavior_required": "Quest list snapshot."
+      "client_handler_line": 2212,
+      "review": ""
     },
     {
       "opcode": "0x02B2",
@@ -14346,7 +14345,7 @@
       "names": [],
       "server_size": -1,
       "client_size": -1,
-      "client_handler": "HandleIgnorePacket",
+      "client_handler": "HandleQuestMissions",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14359,12 +14358,11 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "ignored/stubbed"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": 1054,
-      "review": "",
-      "ignored_behavior_required": "Quest mission/objective information."
+      "client_handler_line": 2232,
+      "review": ""
     },
     {
       "opcode": "0x02B3",

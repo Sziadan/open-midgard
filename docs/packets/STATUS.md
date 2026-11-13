@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Quest journal snapshots**. PK50.02 receives character quest membership and mission details with atomic validation. PK50.03 owns incremental updates and journal controls. [Evidence](evidence/PK50.02-snapshot-model-boundary.md)
+
 **Battleground chat**. PK41.03 verifies the command, selected send and receive paths, autosave and same-map reset in replay. Live team acceptance remains open. [Evidence](evidence/PK41.03-battleground-chat.md)
 
 **Battleground state**. PK41.02 receives camp identity, scores, team HP and teammate minimap markers. The shared world renderer queues the original opposing-camp bitmap. Installed-client capture and live acceptance remain open. [Evidence](evidence/PK41.02-battleground-state.md)

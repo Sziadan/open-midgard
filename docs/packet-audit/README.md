@@ -283,8 +283,6 @@ Sources: [trade.cpp:108](C:/Users/sziad/source/repos/rathena-master/src/map/trad
 - **0x01D6** — Map type/property restrictions. Client length: 4; server: 4.
 - **0x01F8** — Ref arms the adoption skill; implement adoption flow and verify server version. Client length: 2; server: 2.
 - **0x0283** — Map connection account-ID confirmation: decode/validate identity. Client length: 6; server: 6.
-- **0x02B1** — Quest list snapshot. Client length: -1; server: -1.
-- **0x02B2** — Quest mission/objective information. Client length: -1; server: -1.
 - **0x02C9** — Party invitation refusal setting. Client length: 3; server: 3.
 - **0x02D3** — Bind-on-equip notification. Client length: 4; server: 4.
 - **0x02D5** — Inter-server disconnect/transition. Client length: 2; server: 2.

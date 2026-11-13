@@ -27,6 +27,7 @@ struct MapTransitionLifetimeSnapshot {
     bool minEffectPreference = g_session.m_isMinEffectOld;
     ro::SourceMapTypeTable mapTypeTable = g_session.m_mapTypeInfo;
     CSession::InstanceStatus instanceStatus = g_session.m_instanceStatus;
+    ro::quest::Journal questJournal = g_session.m_questJournal;
     bool bookingPending = g_session.m_partyBookingRegistrationPending;
     std::string map = g_session.m_curMap;
     LocalGuildInfo localGuild = g_session.m_localGuild;
@@ -59,6 +60,7 @@ struct MapTransitionLifetimeSnapshot {
         g_session.m_isMinEffectOld = minEffectPreference;
         g_session.m_mapTypeInfo = mapTypeTable;
         g_session.m_instanceStatus = instanceStatus;
+        g_session.m_questJournal = questJournal;
         g_session.m_partyBookingRegistrationPending = bookingPending;
         std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", map.c_str());
         g_session.m_localGuild = localGuild;
@@ -475,6 +477,8 @@ void MapTransitionLifetimeReplay()
     {
         SeedMapTransitionMarker("prontera");
         g_session.m_instanceStatus = {CSession::InstanceStatus::Phase::Ready, "Dungeon", 0, 200, 100};
+        g_session.m_questJournal.states[123] = ro::quest::State::Active;
+        g_session.m_questJournal.missions[123].expiresAt = 200;
         g_session.m_partyBookingRegistrationPending = true;
         const u64 revision = g_session.GetPartyPositionRevision();
         UIRoMapWnd minimap;
@@ -515,6 +519,9 @@ void MapTransitionLifetimeReplay()
         Require(g_session.m_instanceStatus.name == "Dungeon" && g_session.m_instanceStatus.idleDeadline == 100,
             "ordinary map transition retired the instance reservation");
         Require(g_session.m_partyBookingRegistrationPending, "same connection lost an outstanding booking reply");
+        Require(g_session.m_questJournal.states.count(123) == 1
+                && g_session.m_questJournal.missions.at(123).expiresAt == 200,
+            "ordinary map transition retired the quest journal");
     }
 
     // An already-loaded same-map warp takes production reuse, invalidates old dots,
@@ -826,6 +833,8 @@ void MapTransitionLifetimeReplay()
     for (const bool reconnectSucceeds : {true, false}) {
         SeedMapTransitionMarker("prontera");
         g_session.m_instanceStatus = {CSession::InstanceStatus::Phase::Waiting, "Dungeon", 4};
+        g_session.m_questJournal.states[123] = ro::quest::State::Active;
+        g_session.m_questJournal.missions[123].expiresAt = 200;
         g_session.m_partyBookingRegistrationPending = true;
         g_session.m_pendingReturnToCharSelect = reconnectSucceeds ? 0 : 1;
         Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),
@@ -850,6 +859,8 @@ void MapTransitionLifetimeReplay()
             Require(g_session.m_instanceStatus.phase == CSession::InstanceStatus::Phase::None,
                 "old instance metadata survived into the next connection");
             Require(!g_session.m_partyBookingRegistrationPending, "booking reply remained pending across reconnect");
+            Require(g_session.m_questJournal.states.empty() && g_session.m_questJournal.missions.empty(),
+                "old quest journal survived into the next connection");
             const auto* member = g_session.FindPartyMemberByAid(0x30303030u);
             Require(member && !member->partyPositionValid && g_session.m_curMap == std::string("geffen")
                 && GetPendingDisconnectAction() == PendingDisconnectAction::None,

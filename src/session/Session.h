@@ -4,6 +4,7 @@
 #include "core/PetState.h"
 #include "core/SourceMapNames.h"
 #include "core/SourceMapTypeTable.h"
+#include "QuestJournal.h"
 #include <algorithm>
 #include <array>
 #include <deque>
@@ -330,6 +331,7 @@ public:
         u32 idleDeadline = 0;
         bool showWindow = false;
     } m_instanceStatus;
+    ro::quest::Journal m_questJournal;
     bool m_partyBookingRegistrationPending = false;
     ro::pet::Status m_petStatus;
     bool m_amIPartyMaster = false;

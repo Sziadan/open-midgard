@@ -2075,12 +2075,12 @@
       "commit_subject": "packet(PK50.01): scope quest mission lifecycle"
     },
     "PK50.02": {
-      "status": "IN_PROGRESS",
+      "status": "COMPLETED",
       "evidence": [
         "docs/packets/evidence/PK50.02-snapshot-model-boundary.md",
         "docs/packets/evidence/REVIEW-2026-11-05.md"
       ],
-      "commit_subject": "packet(PK50.02): defer quest snapshot model"
+      "commit_subject": "packet(PK50.02): receive selected quest journal snapshots"
     },
     "PK50.03": {
       "status": "NOT_STARTED",

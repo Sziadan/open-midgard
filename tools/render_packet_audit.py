@@ -118,7 +118,6 @@ def main():
         '0x0199': 'Map property/mode state.', '0x01B0': 'NPC sprite/class change.',
         '0x01D6': 'Map type/property restrictions.', '0x01F8': 'Ref arms the adoption skill; implement adoption flow and verify server version.',
         '0x0283': 'Map connection account-ID confirmation: decode/validate identity.',
-        '0x02B1': 'Quest list snapshot.', '0x02B2': 'Quest mission/objective information.',
         '0x02C9': 'Party invitation refusal setting.', '0x02D3': 'Bind-on-equip notification.',
         '0x02D5': 'Inter-server disconnect/transition.', '0x02D9': 'Server configuration result/state.',
         '0x02DA': 'Equipment-sharing/config notification.', '0x02DD': 'Battleground team/emblem identity.',

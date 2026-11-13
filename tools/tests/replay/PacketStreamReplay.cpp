@@ -6666,6 +6666,100 @@ void PartyInviteReplyProductionSendReplay()
     std::cout << "{\"case_id\":\"party_invite_reply_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-invite-reply-request\",\"accept_packet_hex\":\"ff004433221101000000\",\"reject_packet_hex\":\"ff004433221100000000\",\"zero_party_id_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
+void QuestSnapshotProductionReplay()
+{
+    SetCase("quest_snapshot_production", "PK50.02", "PK50.02-legacy-quest-snapshots",
+        "quest packet framing -> production routing -> character session journal");
+    constexpr u32 questId = 0x12345678;
+    auto saved = std::move(g_session.m_questJournal);
+    auto& journal = g_session.m_questJournal;
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), bytes.size(), packet, consumed)
+                && consumed == static_cast<int>(bytes.size()) && router.Dispatch(mode, packet),
+            "quest frame did not dispatch");
+    };
+
+    const std::vector<u8> list{0xB1, 2, 13, 0, 1, 0, 0, 0, 0x78, 0x56, 0x34, 0x12, 1};
+    std::vector<u8> mission(112, 0);
+    const std::array<u8, 28> missionHeader{
+        0xB2, 2, 112, 0, 1, 0, 0, 0, 0x78, 0x56, 0x34, 0x12,
+        0x04, 0x03, 0x02, 0x81, 0x08, 0x07, 0x06, 0x82, 1, 0, 0xE9, 3, 0, 0, 6, 0};
+    std::copy(missionHeader.begin(), missionHeader.end(), mission.begin());
+    std::fill_n(mission.begin() + 28, 24, 'M');
+    dispatch(mission);
+    Require(journal.states.empty() && journal.missions.size() == 1,
+        "mission snapshot invented membership or was discarded before the list");
+    dispatch(list);
+    const auto check = [&] {
+        Require(journal.states.size() == 1 && journal.states.at(questId) == ro::quest::State::Active
+                && journal.missions.size() == 1, "quest snapshots lost their independent ID correlation");
+        const auto& detail = journal.missions.at(questId);
+        Require(detail.startedAt == 0x81020304 && detail.expiresAt == 0x82060708
+                && detail.objectiveCount == 1 && detail.objectives[0].monsterId == 1001
+                && detail.objectives[0].currentCount == 6 && detail.objectives[0].name == std::string(24, 'M'),
+            "mission timestamps, current count, or bounded name were decoded incorrectly");
+    };
+    check();
+
+    auto badList = list;
+    badList[4] = 255;
+    dispatch(badList);
+    badList = list;
+    badList.insert(badList.end(), list.begin() + 8, list.end());
+    badList[2] = 18;
+    badList[4] = 2;
+    dispatch(badList);
+    badList.push_back(0);
+    badList[2] = 19;
+    dispatch(badList);
+    auto badMission = mission;
+    badMission[20] = 4;
+    dispatch(badMission);
+    badMission = mission;
+    badMission.pop_back();
+    badMission[2] = 111;
+    dispatch(badMission);
+    check();
+
+    dispatch({0xB2, 2, 8, 0, 0, 0, 0, 0});
+    Require(journal.missions.empty() && journal.states.count(questId) == 1,
+        "empty mission snapshot removed quest membership");
+    dispatch(mission);
+    dispatch({0xB1, 2, 8, 0, 0, 0, 0, 0});
+    Require(journal.states.empty() && journal.missions.count(questId) == 1,
+        "empty quest list erased independently supplied mission details");
+
+    const auto maximumSnapshot = [&](u8 opcode, int stride) {
+        const int count = (0x7FFF - 8) / stride;
+        const int size = 8 + count * stride;
+        std::vector<u8> bytes(size, 0);
+        bytes[0] = opcode;
+        bytes[1] = 2;
+        bytes[2] = static_cast<u8>(size);
+        bytes[3] = static_cast<u8>(size >> 8);
+        bytes[4] = static_cast<u8>(count);
+        bytes[5] = static_cast<u8>(count >> 8);
+        for (int id = 1; id <= count; ++id) {
+            const int offset = 8 + (id - 1) * stride;
+            bytes[offset] = static_cast<u8>(id);
+            bytes[offset + 1] = static_cast<u8>(id >> 8);
+        }
+        dispatch(bytes);
+        return static_cast<size_t>(count);
+    };
+    const auto maximumStates = maximumSnapshot(0xB1, 5);
+    const auto maximumMissions = maximumSnapshot(0xB2, 104);
+    Require(journal.states.size() == maximumStates && journal.missions.size() == maximumMissions
+            && journal.states.count(questId) == 0 && journal.missions.count(questId) == 0,
+        "maximum legal snapshots did not replace the previous state");
+    journal = std::move(saved);
+}
+
 void PartyInviteChatProductionReplay()
 {
     SetCase("party_invite_chat_production", "PK46.02", "PK46.02-party-invite-chat",
@@ -8395,6 +8489,7 @@ int main(int argc,char** argv){try{
     PartyInviteProductionSendReplay();
     PartyInviteReplyProductionSendReplay();
     PartyInviteChatProductionReplay();
+    QuestSnapshotProductionReplay();
     PartyCreateProductionSendReplay();
     PartyOptionChangeProductionSendReplay();
     PartyDisbandProductionSendReplay();
