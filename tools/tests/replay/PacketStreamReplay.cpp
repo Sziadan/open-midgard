@@ -2493,6 +2493,57 @@ void ElementalSnapshotReplay()
     g_session.m_elementalStatus = oldElemental;
 }
 
+void SocialNoticeReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    LoopbackPeer server(input);
+    const auto receive = [&](const std::vector<u8>& frames, int count) {
+        server.Send(frames);
+        WaitKernelPending(input, static_cast<int>(frames.size()));
+        Require(ProcessGameModePacketLoop(mode, input, router, count).packetsDispatched == count,
+            "social notice did not frame and dispatch");
+    };
+    const auto savedService = g_serviceType;
+    g_windowMgr.ClearChatEvents();
+    g_serviceType = ServiceAmerica;
+    receive({0xc2, 0, 0x70, 0x11, 1, 0}, 1);
+    Require(g_windowMgr.GetChatEvents().size() == 1
+        && g_windowMgr.GetChatEvents().back().text.find("70000") != std::string::npos,
+        "user count notice truncated the four-byte count");
+    g_serviceType = ServiceChina;
+    receive({0xc2, 0, 0xe8, 3, 1, 0}, 1);
+    const auto low = g_windowMgr.GetChatEvents().back().text;
+    receive({0xc2, 0, 0xe9, 3, 1, 0}, 1);
+    Require(!low.empty() && g_windowMgr.GetChatEvents().back().text != low,
+        "China user-count notice missed the 1000-player boundary");
+    g_serviceType = savedService;
+
+    const auto friendCount = g_session.GetFriendList().size();
+    std::vector<u8> result(36, 0);
+    result[0] = 9;
+    result[1] = 2;
+    result[2] = 1;
+    const std::string name = "Friend%s";
+    std::copy(name.begin(), name.end(), result.begin() + 12);
+    g_windowMgr.ClearChatEvents();
+    receive(result, 1);
+    Require(g_windowMgr.GetChatEvents().size() == 1
+        && g_windowMgr.GetChatEvents().back().text.find(name) != std::string::npos
+        && g_windowMgr.GetChatEvents().back().color == 0xff0000u,
+        "friend refusal did not display a red notice with the literal character name");
+    result[2] = 2;
+    receive(result, 1);
+    Require(g_windowMgr.GetChatEvents().size() == 2 && g_session.GetFriendList().size() == friendCount,
+        "friend list full did not display a notice or mutated the friend list");
+    result[2] = 4;
+    receive(result, 1);
+    Require(g_windowMgr.GetChatEvents().size() == 2, "unknown friend result produced a notice");
+    g_windowMgr.ClearChatEvents();
+}
+
 void PrivacyConfigurationReplay()
 {
     CGameMode mode;
@@ -6505,6 +6556,7 @@ int main(int argc,char** argv){try{
     LoginCharConnectionFailureReplay();
     Login3ClientInfoHashRequestReplay();
     ElementalSnapshotReplay();
+    SocialNoticeReplay();
     PrivacyConfigurationReplay();
     CompanionIdentityReplay();
     CompanionCommandReplay();

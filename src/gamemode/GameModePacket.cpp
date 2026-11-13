@@ -7937,9 +7937,9 @@ std::string ExtractFixedPacketString(const u8* data, size_t length)
     return value;
 }
 
-using StarNoticeArguments = std::initializer_list<std::pair<char, std::string_view>>;
+using NoticeArguments = std::initializer_list<std::pair<char, std::string_view>>;
 
-std::optional<std::string> FormatStarNotice(std::string_view format, StarNoticeArguments arguments)
+std::optional<std::string> FormatLocalizedNotice(std::string_view format, NoticeArguments arguments)
 {
     std::string message;
     auto argument = arguments.begin();
@@ -7969,17 +7969,17 @@ std::optional<std::string> FormatStarNotice(std::string_view format, StarNoticeA
 }
 
 void ShowLocalizedStarNotice(CGameMode& mode, unsigned id, const std::string& fallback,
-    StarNoticeArguments arguments)
+    NoticeArguments arguments)
 {
     ro::UiMessageStrings strings;
     strings.Load();
     if (const auto localized = strings.Find(id)) {
-        if (const auto message = FormatStarNotice(*localized, arguments)) {
+        if (const auto message = FormatLocalizedNotice(*localized, arguments)) {
             mode.ShowStarSkillNotice(*message, timeGetTime());
             return;
         }
     }
-    if (const auto message = FormatStarNotice(fallback, arguments)) {
+    if (const auto message = FormatLocalizedNotice(fallback, arguments)) {
         mode.ShowStarSkillNotice(*message, timeGetTime());
     }
 }
@@ -8476,22 +8476,59 @@ void HandleFriendState(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleFriendAdd(CGameMode& mode, const PacketView& packet)
+void HandleUserCount(CGameMode&, const PacketView& packet)
 {
-    ro::commerce::Receive(mode,packet);
-    if (!packet.data || packet.packetLength < 36) {
-        return;
+    if (!packet.data || packet.packetLength != 6) return;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    std::string message;
+    if (g_serviceType == ServiceChina && !IsGravityAid(g_session.m_aid)) {
+        const u16 count = ReadLE16(packet.data + 2);
+        const unsigned index = count <= 1000 ? 0 : count <= 3000 ? 1
+            : count <= 6000 ? 2 : count <= 10000 ? 3 : 4;
+        constexpr const char* populations[] = {"Very low population.", "Low population.",
+            "Normal population.", "High population.", "Very high population."};
+        message = strings.Get(825 + index, populations[index]);
+        if (message.empty()) message = populations[index];
+    } else {
+        const auto count = std::to_string(ReadLE32(packet.data + 2));
+        const auto formatted = FormatLocalizedNotice(strings.Get(178, "There are %d Players Currently Connected."),
+            {{'d', count}});
+        message = formatted.value_or("There are " + count + " Players Currently Connected.");
     }
+    g_windowMgr.SendMsg(3, 0, 0, 0, 0);
+    g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(message.c_str()), 0xffff);
+}
 
-    if (ReadLE16(packet.data + 2) != 0) {
+void HandleFriendAdd(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 36) {
         return;
     }
+    const auto result = ReadLE16(packet.data + 2);
+    if (result > 3) return;
+    const auto name = ExtractFixedPacketString(packet.data + 12, 24);
+    static constexpr unsigned ids[] = {821, 822, 819, 820};
+    static constexpr const char* fallback[] = {"You have become friends with (%s).",
+        "(%s) does not want to be friends with you.", "Your Friend List is full.",
+        "(%s)'s Friend List is full."};
+    const NoticeArguments namedArguments{{'s', name}};
+    const auto args = result == 2 ? NoticeArguments{} : namedArguments;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto notice = FormatLocalizedNotice(strings.Get(ids[result], fallback[result]), args);
+    if (!notice) notice = FormatLocalizedNotice(fallback[result], args);
+    if (notice) {
+        g_windowMgr.SendMsg(3, 0, 0, 0, 0);
+        g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice->c_str()), result == 0 ? 16776960 : 255);
+    }
+    if (result != 0) return;
 
     FRIEND_INFO info{};
     info.isValid = 1;
     info.AID = ReadLE32(packet.data + 4);
     info.GID = ReadLE32(packet.data + 8);
-    info.characterName = ExtractFixedPacketString(packet.data + 12, 24);
+    info.characterName = name;
     info.state = 0;
     g_session.AddFriendToList(info);
     g_session.RefreshFriendUI();
@@ -9654,6 +9691,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00B5, HandleNpcDialogNext);
     router.Register(0x00B6, HandleNpcDialogClose);
     router.Register(0x00B7, HandleNpcDialogMenu);
+    router.Register(0x00C2, HandleUserCount);
     router.Register(0x00C4, HandleNpcShopDealType);
     router.Register(0x00C6, HandleNpcShopBuyList);
     router.Register(0x00C7, HandleNpcShopSellList);

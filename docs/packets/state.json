@@ -560,9 +560,9 @@
       "commit_subject": "packet(PK16.02): apply server-confirmed privacy settings"
     },
     "PK16.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK16.03-social-wire.md"],
+      "commit_subject": "packet(PK16.03): display user count and friend results"
     },
     "PK16.04": {
       "status": "NOT_STARTED",

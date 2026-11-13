@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK16.02 wires server-confirmed equipment visibility, recall refusal, and party invitation refusal. Continue PK16.03 with `00C1/00C2` user count and `00CF–00D4` whisper blocks, then audit the existing whisper and friend receivers against their selected emitters. Trace `clif_parse_HowManyConnections` and `clif_parse_PMIgnore` first. Replay request and failure variants through the production packet loop. PK16 gates PK30 alongside completed PK25. [Privacy packet evidence](evidence/PK16.01-privacy-wire.md)
+PK16.03 adds user-count and friend-result notices and records the selected whisper-block contract. Continue with `0203/020A`: trace the messenger delete control, match both identity fields, and replay a successful delete and a mismatched identity. Then verify the `0097/0098` whisper outcomes and the `0207/0208` prompt lifetime. Coordinate `0201` atomic replacement with PK34. PK16 gates PK30 alongside completed PK25. [Social packet evidence](evidence/PK16.03-social-wire.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 

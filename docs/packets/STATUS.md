@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Social notices**. PK16.03 receives user counts and reports friend request results. Friend removal, prompt lifetime, and whisper outcome verification remain open. [Evidence](evidence/PK16.03-social-wire.md)
+
 **Privacy configuration**. PK16.02 wires the equipment control and privacy commands to selected server-confirmed settings. PK16.03 still owns the social packet audit. [Evidence](evidence/PK16.01-privacy-wire.md)
 
 **Companion movement recovery**. PK28.04 and PK29.04 verify that a stalled manual move releases its queue and that automatic and manual follow share a retry interval. Live verification remains open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
