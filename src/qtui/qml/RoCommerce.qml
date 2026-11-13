@@ -49,7 +49,7 @@ Item {
     function icon(item) { return "image://openmidgard/item/" + item.id + "?identified=" + (item.identified ? "1" : "0") }
     function transfer(from, to, item) {
         if (item.count > 1) { pending = {from:from, to:to, item:item}; quantity.text = "1"; Qt.callLater(function(){quantity.forceActiveFocus();quantity.selectAll()}) }
-        else send(to === "trade" ? "offerTrade" : "transfer", {from:from, to:to, index:item.index, amount:1})
+        else send(to === "trade" ? "offerTrade" : "transfer", {from:from, to:to, index:item.index, id:item.id, amount:1})
     }
     function drop(to) {
         if (dragFrom === "cart" && to === "vending") send("offerVend", {index:dragItem.index})
@@ -65,6 +65,12 @@ Item {
         var target=null
         for(var i=0;i<children.length;++i){var panel=children[i];if(panel.kind && panel.visible && panel.body){var p=panel.mapFromItem(hub,x,y);if(panel.contains(p) && (!target || panel.z>=target.z))target=panel}}
         if(target){var local=target.body.mapFromItem(hub,x,y);if(target.body.contains(local) && (target.kind!=="trade" || local.x<target.body.width/2))drop(target.kind);return true}
+        if (dragFrom === "cart" && uiState.storageVisible && uiState.storageHeight > 34
+            && x >= uiState.storageX && x < uiState.storageX + uiState.storageWidth
+            && y >= uiState.storageY + 17 && y < uiState.storageY + uiState.storageHeight) {
+            transfer("cart", "storage", dragItem)
+            return true
+        }
         if(dragFrom==="vending"){send("removeVend",{index:dragItem.index});return true}
         return false
     }
@@ -330,7 +336,7 @@ Item {
         Text { x:16; y:12; text:"Move items"; font.bold:true; font.pixelSize:14; color:theme.titleText }
         Text { x:16; y:42; width:288; text:hub.pending?hub.pending.item.name+" · up to "+hub.pending.item.count:""; color:theme.ink; font.pixelSize:12; elide:Text.ElideRight }
         TextInput { id:quantity; objectName:"commerceQuantity"; x:20; y:72; width:100; height:26; color:theme.ink; font.pixelSize:16; selectByMouse:true; validator:IntValidator { bottom:1; top:hub.pending?Math.min(32767,hub.pending.item.count):1 } }
-        Button { objectName:"commerceQuantityConfirm"; x:16; y:116; label:"Move"; primary:true; enabled:quantity.acceptableInput; onClicked:{var request=hub.pending;hub.pending=null;hub.send(request.to==="trade"?"offerTrade":"transfer",{from:request.from,to:request.to,index:request.item.index,amount:Number(quantity.text)})} }
+        Button { objectName:"commerceQuantityConfirm"; x:16; y:116; label:"Move"; primary:true; enabled:quantity.acceptableInput; onClicked:{var request=hub.pending;hub.pending=null;hub.send(request.to==="trade"?"offerTrade":"transfer",{from:request.from,to:request.to,index:request.item.index,id:request.item.id,amount:Number(quantity.text)})} }
         Button { x:126; y:116; label:"Cancel"; onClicked:hub.pending=null }
     }
     RoFrame { property bool nativeInteractive:true; visible:!!hub.view.promptKind; z:2003; width:280; height:132; anchors.centerIn:parent

@@ -14,6 +14,7 @@ struct Command {
     u32 index=0,amount=0,price=0,target=0;
     int x=0,y=0,tab=0;
     u32 promptAid=0,promptCid=0;
+    u32 itemId=0;
 };
 struct State {
     Window cart,vending,trade,shop,mail,equipment;

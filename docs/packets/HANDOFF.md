@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK37 and PK46.02 connect direct cart and storage transfers through the existing windows. Production replay captures `0128` and `0129`, and verifies separate cart and storage source slots. Verify physical drops and quantity prompts in both directions, overlapping windows, and live destination refresh and refusal. [Cart request evidence](evidence/PK46.02-cart-npc-shop-crosswalk.md)
+
 PK46.02 verifies the stat increase and skill upgrade requests and replays the server's successful stat, cost, and point updates. Stat refusal preserves the current values. Ineligible skill upgrades are silent in the selected server. Live upgrade eligibility and the UI's response to a silent skill rejection remain open. [Upgrade evidence](evidence/PK46.02-request-reconciliation.md)
 
 PK46.02 links the current whisper block and list commands and the equipment lookup request to their production replays. The six-byte auction stop request is verified in the outbound inventory. Its shared `025D` reply identity stays open for PK40 live verification. [Whisper settings](evidence/PK46.02-map-private-message-ignore-requests.md) · [Equipment lookup](evidence/PK16.04-verification-boundary.md) · [Auction verification](evidence/PK40.05-selected-verification.md)

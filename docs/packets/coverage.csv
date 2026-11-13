@@ -193,8 +193,8 @@ AUDIT-0x0124,0x0124,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-commerce-cart-delta
 AUDIT-0x0125,0x0125,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0126,0x0126,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected inventory-to-cart request captured,C2S_ONLY,PK46.02-CART-REQUESTS
 AUDIT-0x0127,0x0127,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected cart-to-inventory request captured,C2S_ONLY,PK46.02-CART-REQUESTS
-AUDIT-0x0128,0x0128,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0129,0x0129,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0128,0x0128,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected storage-to-cart request captured with the storage source index,C2S_ONLY,PK46.02-CART-REQUESTS
+AUDIT-0x0129,0x0129,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected cart-to-storage request captured with the cart source index,C2S_ONLY,PK46.02-CART-REQUESTS
 AUDIT-0x012A,0x012A,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,Selected remove-option request captured through Cart Off,C2S_ONLY,PK46.02-CART-REQUESTS
 AUDIT-0x012B,0x012B,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x012C,0x012C,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

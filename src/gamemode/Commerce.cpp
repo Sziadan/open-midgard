@@ -410,11 +410,33 @@ bool Action(const Command& c){
     }
     if(c.action=="use"){if(busy())return false;const auto* i=g_session.GetInventoryItemByIndex(c.index);if(!i)return false;return g_modeMgr.SendMsg(i->m_wearLocation?CGameMode::GameMsg_RequestUnequipInventoryItem:i->m_location?CGameMode::GameMsg_RequestEquipInventoryItem:CGameMode::GameMsg_RequestUseInventoryItem,c.index,i->m_location,0)!=0;}
     if(c.action=="transfer"){
-        if(!state.hasCart||busy()||!c.amount||c.amount>32767)return false;
-        const ITEM_INFO* i=nullptr;if(c.from=="inventory")i=g_session.GetInventoryItemByIndex(c.index);else{auto it=state.cartItems.find(c.index);if(it!=state.cartItems.end())i=&it->second;}
-        if(!i||i->m_wearLocation||c.amount>u32(i->m_num))return false;
-        if(c.from=="cart")for(const auto& o:state.draft)if(o.item.m_itemIndex==c.index){state.status="Remove this item from the vending list first.";return false;}
-        auto p=packet(c.from=="inventory"?0x126:0x127,8);put(p,2,c.index);put(p,4,c.amount,4);return send(p);
+        if (!state.hasCart || busy() || !c.index || c.index > 65535 || !c.amount || c.amount > 32767) return false;
+        const bool usesStorage = c.from == "storage" || c.to == "storage";
+        if (usesStorage && !g_session.IsStorageOpen()) return false;
+        const ITEM_INFO* item = nullptr;
+        u16 opcode = 0;
+        if (c.from == "inventory" && c.to == "cart") {
+            item = g_session.GetInventoryItemByIndex(c.index);
+            opcode = 0x0126;
+        } else if (c.from == "storage" && c.to == "cart") {
+            item = g_session.GetStorageItemByIndex(c.index);
+            opcode = 0x0128;
+        } else if (c.from == "cart" && (c.to == "inventory" || c.to == "storage")) {
+            const auto found = state.cartItems.find(c.index);
+            if (found != state.cartItems.end()) item = &found->second;
+            if (std::any_of(state.draft.begin(), state.draft.end(),
+                    [&](const Offer& offer) { return offer.item.m_itemIndex == c.index; })) {
+                state.status = "Remove this item from the vending list first.";
+                return false;
+            }
+            opcode = c.to == "storage" ? 0x0129 : 0x0127;
+        }
+        if (!item || item->m_wearLocation || item->m_num <= 0 || c.amount > u32(item->m_num)
+            || (c.itemId && c.itemId != item->GetItemId())) return false;
+        auto request = packet(opcode, 8);
+        put(request, 2, c.index);
+        put(request, 4, c.amount, 4);
+        return send(request);
     }
     if(c.action=="offerVend"){
         if(!state.vending.visible||state.vendingActive||state.vendingPending)return false;const auto found=state.cartItems.find(c.index);if(found==state.cartItems.end()||found->second.m_deleteTime)return false;

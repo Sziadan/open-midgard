@@ -6200,7 +6200,11 @@ void SkillUpgradeProductionSendReplay()
     skill.m_isValid = 1;
     g_session.SetSkillItem(skill);
     auto* character = g_session.GetMutableSelectedCharacterInfo();
-    Require(character != nullptr, "skill upgrade replay requires a selected character");
+    if (!character) {
+        g_session.SetSelectedCharacterAppearance({});
+        character = g_session.GetMutableSelectedCharacterInfo();
+    }
+    Require(character != nullptr, "skill upgrade replay could not select its fixture character");
     const auto previousPoints = character->jobpoint;
     character->jobpoint = 2;
     Require(mode.SendMsg(CGameMode::GameMsg_RequestUpgradeSkillLevel, 28, 0, 0)
@@ -8329,6 +8333,10 @@ void CartTransferProductionSendReplay()
     inventoryItem.m_itemIndex = 61;
     inventoryItem.m_num = 8;
     const auto inventory = g_session.GetInventoryItems();
+    const auto storage = g_session.GetStorageItems();
+    const bool storageWasOpen = g_session.IsStorageOpen();
+    const int storageCount = g_session.GetStorageCurrentCount();
+    const int storageCapacity = g_session.GetStorageMaxCount();
     g_session.SetInventoryItem(inventoryItem);
     ITEM_INFO cartItem{};
     cartItem.m_itemIndex = 37;
@@ -8359,12 +8367,50 @@ void CartTransferProductionSendReplay()
             "cart-to-inventory transfer emitted the wrong request");
         Require(g_session.GetInventoryItemByIndex(61)->m_num == 8 && shop.cartItems.at(37).m_num == 5,
             "cart transfer mutated local item counts before a server update");
+
+        transfer.to = "storage";
+        g_session.CloseStorage();
+        Require(!ro::commerce::Action(transfer), "cart transfer accepted closed storage");
+        g_session.OpenStorage(1, 100);
+        ITEM_INFO stored{};
+        stored.m_itemIndex = 37;
+        stored.SetItemId(501);
+        stored.m_num = 8;
+        g_session.SetStorageItem(stored);
+        Require(ro::commerce::Action(transfer)
+            && peer.ReceiveExact(8) == std::vector<u8>{0x29, 1, 37, 0, 2, 0, 0, 0},
+            "cart-to-storage transfer emitted the wrong request");
+        CGameMode mode;
+        Require(!mode.SendMsg(CGameMode::GameMsg_RequestStorageToCart, 37, 3, 502),
+            "storage transfer accepted a replaced source item");
+        Require(mode.SendMsg(CGameMode::GameMsg_RequestStorageToCart, 37, 3, 501)
+            && peer.ReceiveExact(8) == std::vector<u8>{0x28, 1, 37, 0, 3, 0, 0, 0},
+            "storage-to-cart transfer did not use the storage slot and amount");
+        Require(g_session.GetStorageItemByIndex(37)->m_num == 8 && shop.cartItems.at(37).m_num == 5,
+            "cart and storage counts changed before the server updates");
+        TestConnection input;
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        const auto dispatch = [&](const std::vector<u8>& frame) {
+            Require(input.QueueBytes(frame)
+                && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+                "cart or storage delta did not reach the production router");
+        };
+        dispatch({0xf6, 0, 37, 0, 0, 0, 0, 0});
+        Require(g_session.GetStorageItemByIndex(37)->m_num == 8, "failed transfer correction altered storage");
+        dispatch({0x25, 1, 37, 0, 2, 0, 0, 0});
+        dispatch({0xf6, 0, 37, 0, 3, 0, 0, 0});
+        Require(g_session.GetStorageItemByIndex(37)->m_num == 5 && shop.cartItems.at(37).m_num == 3,
+            "authoritative cart and storage deltas did not update their own slots");
         Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
             "cart transfer emitted extra bytes");
     }
     connection->Disconnect();
     g_session.ClearInventoryItems();
     for (const auto& item : inventory) g_session.SetInventoryItem(item);
+    g_session.CloseStorage();
+    for (const auto& item : storage) g_session.SetStorageItem(item);
+    if (storageWasOpen) g_session.OpenStorage(storageCount, storageCapacity);
     ro::commerce::state = savedCommerce;
 }
 
@@ -9052,7 +9098,6 @@ int main(int argc,char** argv){try{
     NpcContactProductionSendReplay();
     NpcMenuSelectionProductionSendReplay();
     ReturnToSavePointProductionSendReplay();
-    SkillUpgradeProductionSendReplay();
     IdentifyItemCancelProductionSendReplay();
     IdentifyItemSelectionProductionSendReplay();
     ShortcutSlotUpdateProductionSendReplay();
@@ -9250,5 +9295,6 @@ int main(int argc,char** argv){try{
     FriendOptionsReplay();
     ChatSubmissionReplay();
     MapCellLoadLifecycleReplay();
+    SkillUpgradeProductionSendReplay();
     CConnection::Cleanup();std::cout<<"PASS packet stream replay: framing, production router/update loop, disconnect acknowledgement, request bytes, timeout boundaries, EOF drain and reconnect\n";return 0;
 }catch(const std::exception& e){CConnection::Cleanup();std::cerr<<"{\"case_id\":\""<<JsonEscape(g_currentCase)<<"\",\"stage\":\""<<JsonEscape(g_currentStage)<<"\",\"fixture_id\":\""<<JsonEscape(g_currentFixture)<<"\",\"production_entry\":\""<<JsonEscape(g_currentProductionEntry)<<"\","<<ConfiguredSourceProvenanceJson()<<",\"invocation_count\":"<<g_recvInvocations<<",\"expected_packet_hex\":null,\"actual_packet_hex\":null,\"expected_queue_remainder\":null,\"actual_queue_remainder\":null,\"outcome\":\"FAIL\",\"error\":\""<<JsonEscape(e.what())<<"\"}\n";return 1;}}

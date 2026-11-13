@@ -12963,6 +12963,16 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case GameMsg_RequestComposeCardIntoEquipment:
         return RequestComposeCardIntoEquipment(static_cast<s16>(wparam), static_cast<s16>(lparam)) ? 1 : 0;
 
+    case GameMsg_RequestStorageToCart: {
+        ro::commerce::Command transfer;
+        transfer.action = "transfer";
+        transfer.from = "storage";
+        transfer.to = "cart";
+        transfer.index = static_cast<u32>(wparam);
+        transfer.amount = static_cast<u32>(lparam);
+        transfer.itemId = static_cast<u32>(extra);
+        return ro::commerce::Action(transfer) ? 1 : 0;
+    }
     case GameMsg_RequestCartOff:
         return RequestCartOff() ? 1 : 0;
 

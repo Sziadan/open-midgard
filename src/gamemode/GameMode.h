@@ -183,6 +183,7 @@ public:
         GameMsg_RequestStandingResurrection = 20043,
         GameMsg_ConfirmCashShopContribution = 20044,
         GameMsg_RequestQuestActive = 20045,
+        GameMsg_RequestStorageToCart = 20046,
     };
 
     enum PlayerContextAction {

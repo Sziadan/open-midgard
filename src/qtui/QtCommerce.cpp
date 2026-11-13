@@ -157,6 +157,7 @@ void BindCommerceUi(QtUiState* ui){
             g_windowMgr.OnLBtnUp(c.x,c.y);return;
         }
         if(action=="describe"){DescribeCommerceItem(args);return;}
+        if (action == "transfer") c.itemId = args.value("id").toUInt();
         if(!Action(c) && state.status.empty())state.status="Action unavailable. Check the quantity and current transaction state.";
     });
 }

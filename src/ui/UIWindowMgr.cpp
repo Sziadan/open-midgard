@@ -1245,7 +1245,8 @@ void UIWindowMgr::CloseNpcShopQuantityPrompt()
 void UIWindowMgr::CloseStorageWindows()
 {
     if (m_npcInputWnd && (m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestStorageStoreItem)
-        || m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestStorageWithdrawItem))) {
+        || m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestStorageWithdrawItem)
+        || m_npcInputWnd->IsGameNumberPromptFor(CGameMode::GameMsg_RequestStorageToCart))) {
         m_npcInputWnd->HideInput();
     }
     if (m_storageWnd) {
@@ -3100,8 +3101,31 @@ void UIWindowMgr::OnLBtnUp(int x, int y)
     if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         if (gameMode->m_dragType != static_cast<int>(DragType::None)) {
             UIWindow* dropTarget = HitTestWindow(x, y);
+            const auto& cart = ro::commerce::state.cart;
+            bool dropOnCart = false;
+            if (!dropTarget && !m_modalWindow && cart.visible && IsQtUiRuntimeEnabled()
+                && gameMode->m_dragInfo.source == static_cast<int>(DragSource::StorageWindow)) {
+                RECT client{};
+                GetUiLogicalClientRectForScale(GetConfiguredUiScaleFactor(), &client);
+                const int cartX = (std::min)(cart.x, (std::max)(0, static_cast<int>(client.right) - cart.width));
+                const int cartY = (std::min)(cart.y, (std::max)(0, static_cast<int>(client.bottom) - cart.height));
+                dropOnCart = x >= cartX && x < cartX + cart.width
+                    && y >= cartY + 30 && y < cartY + cart.height;
+            }
             if (gameMode->m_dragInfo.source == static_cast<int>(DragSource::ProductionMaterial)) {
                 if (m_skillSelectWnd) m_skillSelectWnd->FinishMaterialDrag(x, y, gameMode->m_dragInfo.itemIndex);
+            } else if (dropOnCart) {
+                const auto& drag = gameMode->m_dragInfo;
+                const int amount = (std::min)(32767, drag.itemCount);
+                if (amount > 1) {
+                    if (auto* input = static_cast<UINpcInputWnd*>(MakeWindow(WID_NPCINPUTWND))) {
+                        input->OpenGameNumberPrompt("Enter amount to move to cart",
+                            CGameMode::GameMsg_RequestStorageToCart, drag.itemIndex,
+                            1, static_cast<u32>(amount), nullptr, drag.itemId);
+                    }
+                } else if (amount == 1) {
+                    gameMode->SendMsg(CGameMode::GameMsg_RequestStorageToCart, drag.itemIndex, 1, drag.itemId);
+                }
             } else if (dropTarget) {
                 dropTarget->DragAndDrop(x, y, &gameMode->m_dragInfo);
             } else if (gameMode->m_dragInfo.type == static_cast<int>(DragType::ShortcutItem)
