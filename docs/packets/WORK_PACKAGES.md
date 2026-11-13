@@ -831,9 +831,9 @@ Tier: **S**. Dependencies: PK25, PK34.
 ### Bounded steps
 
 - **PK35.01 [S]** Establish the exact source-backed contract and bounded leaf specification for this package; enumerate all applicable packet variants and branch checks. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK35.02 [S]** Implement0188/018F refine and018D selection contracts. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK35.03 [S]** Implement01FC/01FE repair item choices/results. **Checkpoint: evidence + tracker + separate commit + user progress update.**
-- **PK35.04 [S]** Implement025A cooking and remaining active crafting branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK35.02 [S]** Implement `0188` NPC refine results, `018D/018E/018F` production selection and results, and `0221/0222/0223` weapon-refine selection and results. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK35.03 [S]** Implement `01FC/01FD/01FE` repair item choices, selection, cancellation, and results. **Checkpoint: evidence + tracker + separate commit + user progress update.**
+- **PK35.04 [S]** Implement `025A/025B` cooking and remaining active crafting branches. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 - **PK35.05 [S]** Self-review source/field/branch parity, run production replay and applicable UI lifecycle checks, close only evidence-backed rows, and commit the implementation-verification checkpoint. PK48 performs the later independent review. **Checkpoint: evidence + tracker + separate commit + user progress update.**
 
 ### Required acceptance and traps

@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK35.01 establishes the selected crafting layouts. Start PK35.02 with `0188` NPC refine results and test the following inventory delta sequence. The production and weapon-refine selection contracts are distinct and use `018D/018E/018F` and `0221/0222/0223`, respectively. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
+
 PK34.04 verifies storage reopen after a same-map refresh when the server omits one category. Inventory, cart, storage, and friend snapshot validation are implemented. Live capture and independent PK48 review remain open. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)
 
 Continue PK28.04 and PK29.04 using `src/companion_ai` as the implementation for both families. Use Ref's Lua and input call sites to check expected behavior. Start with a live pass for each family covering idle acquisition or owner defense, manual attack and cancellation, blocked pursuit with a queued order, manual movement and follow, dismissal, and map re-entry. Record the observed input, packet, and actor or UI result for each case. Use replay for deterministic stall and timing cases. Keep installed-skin comparison and independent review open until verified. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
