@@ -1,10 +1,10 @@
 # Packet continuation handoff
 
-PK28.04 now covers the companion skill level controls and native/Qt bitmap frame. Replay verifies cast and drag levels, both bounds, SP display, and release outside. Installed-skin comparison and live UI verification remain open. Continue the packet plan with the remaining selected-source relationship contracts when their dependencies are ready. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
+Continue PK28.04 and PK29.04 from the C++ companion controller. The next bounded check is movement failure recovery. Trace `Runtime::Move` and the actor and ground skill approach states in `CompanionAiBrain.cpp`. Replay an accepted move followed by a standing companion still out of range, then verify bounded recovery and that a replacement or reserved order can proceed. Keep the packet layout and cast level checks in the existing production replay. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+PK28.04 covers companion skill level controls and the native/Qt bitmap frame. Replay verifies cast and drag levels, both bounds, SP display, and release outside. Installed-skin comparison and live UI verification remain open. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
 
 PK29.04 replay verifies same-GID mercenary refresh, replacement cleanup, actor entry after identity, and companion window cleanup on same-map warp. The selected server uses `029D` for refresh. `029E` is registered without an active sender. Live re-entry and independent review remain open. [Mercenary refresh evidence](evidence/PK29.04-mercenary-refresh.md) and [map reset evidence](evidence/PK28.03-companion-map-reset.md)
-
-**Current companion checkpoint**. PK28.04 adds the source-localized skill list captions and independent saved positions for the four companion windows. Continue with the companion-only list layout modes and scrollbar controls in `Ref/UIItemWnd.cpp`, including the row-count calculation in `UISkillListWnd::OnCreate` and the view offset used by draw and hit testing. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
 
 PK29.03 frames selected-server `081D` for saved elementals. Replay covers type `0x0A` spawn and movement, preserves the snapshot on visibility removal, and clears it on owner death or map reset. Expiry uses the same removal reason as visibility, so the snapshot alone cannot establish that the elemental remains active. Continue the newer companion variant audit, then use PK29.04 to verify the implemented lifecycle against the selected source. [Elemental snapshot evidence](evidence/PK29.03-elemental-snapshot.md)
 

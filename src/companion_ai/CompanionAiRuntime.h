@@ -40,6 +40,7 @@ public:
 
     std::vector<u32> GetActors() const;
     bool IsMonster(u32 id) const;
+    bool CanTargetForAttack(u32 id) const;
     u32 GetTick() const;
 
     Msg2Ai ConsumeMsg(u32 myId);

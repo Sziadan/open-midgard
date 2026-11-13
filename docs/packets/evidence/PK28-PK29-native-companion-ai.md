@@ -1,0 +1,7 @@
+# Native homunculus and mercenary AI
+
+Commit `a40a4c01` introduced the C++ companion controller. `TickOwnedCompanionActor` activates the controller for the matching owned actor GID while its session status is alive. `CompanionAiBrain.cpp` manages command order, movement, and target selection. `CompanionAiRuntime.cpp` reads actor state and sends the selected map-server requests.
+
+The selected rAthena `src/map/clif.cpp` routes `0233` through `clif_parse_HomAttack`. It resolves the actor as the sender's active homunculus or mercenary before passing the target GID to `unit_attack`. The client now excludes dead, hidden, and owned actors from basic attack selection and uses the chase sight limit during automatic scans. Skill targeting still allows support skills to select the owner. `PendingCompanionActorSkillReplay` checks the 11-byte attack request for an aggressive homunculus and for mercenary owner defense with a closer corpse present.
+
+PK28.04 and PK29.04 stay in progress. Next verify how actor and ground approaches recover when the companion stops short or the server cannot move it. Check that a failed approach releases the pending command and that reserved commands and manual follow can proceed. Then audit queued-order cleanup on death, dismissal, and re-entry alongside the existing packet snapshots and window tests. The remaining live checks cover both companion families across combat, follow, dismissal, and map changes. Installed skin comparison remains a separate UI check.

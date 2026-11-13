@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Native companion targeting**. PK28.04 and PK29.04 verify that an aggressive homunculus and a mercenary defending its owner pick living targets when a closer corpse is present. Six focused application checks and 473 standalone checks passed. Movement failure recovery and live verification remain open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
 **Companion skill use levels**. PK28.04 verifies level controls, family-specific saved levels, SP cost, and cast and drag payloads. The production replay, native/Qt render fixture, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
 
 **Companion list skin**. PK28.04 verifies the frame, Mini button, scrollbar, and resize grip with paired native and Qt captures using synthetic bitmap fixtures. The production packet replay also passed. Live comparison with the installed skin remains open. [Evidence](evidence/PK28-companion-skill-lists.md)

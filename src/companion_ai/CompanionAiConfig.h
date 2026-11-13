@@ -95,7 +95,6 @@ constexpr int kLongMoveManhattan = 15;      // OnMOVE_CMD split waypoint
 constexpr int kServerPathLimitManhattan = 24; // MercLuaFunc l_Move gate
 constexpr int kReservedCmdQueueCap = 10;
 constexpr int kDefaultAttackRange = 1;
-constexpr int kMinEnemyScanDistance = 100;
 
 // Attack packet throttle when combat.attackSpeed is missing (ms).
 constexpr int kDefaultAttackIntervalMs = 500;

@@ -3933,3 +3933,7 @@ The render replay samples matching native and Qt pixels for the frame, Mini butt
 ## Companion skill use levels
 
 PK28.04 adds bounded level controls for companion skills with level-use metadata. Replay verifies release outside, level bounds, Heal SP cost, and the cast and shortcut drag level. The production replay, native/Qt render fixture, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+
+## Native companion targeting
+
+PK28.04 and PK29.04 now use the C++ controller as the implementation baseline. The production replay verifies that both companion families select a living target when a corpse is closer. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-PK29-native-companion-ai.md)

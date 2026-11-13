@@ -3497,6 +3497,30 @@ void PendingCompanionActorSkillReplay()
     if (SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) != 0) {
         throw std::runtime_error("cancelling a manual attack emitted extra opcode " + Hex(peer.ReceiveExact(2)));
     }
+
+    CGameActor corpse;
+    corpse.m_gid = 0x12345679;
+    corpse.m_job = target.m_job;
+    corpse.m_stateId = companion_ai::MOTION_DEAD;
+    corpse.m_pos = homunculus.m_pos;
+    world.RegisterActor(&corpse);
+    homunculus.m_job = 6003; // Filir acquires nearby monsters without an existing attacker.
+    for (int tick = 0; tick < 3; ++tick) {
+        companion_ai::TickOwnedCompanionActor(homunculus);
+    }
+    Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, 0x41, 0, 0, 0xf1,
+        0x78, 0x56, 0x34, 0x12, 0}, "aggressive homunculus picked a corpse over a living monster");
+
+    corpse.m_targetGid = player.m_gid;
+    target.m_targetGid = player.m_gid;
+    for (int tick = 0; tick < 3; ++tick) {
+        companion_ai::TickOwnedCompanionActor(mercenary);
+    }
+    Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, 0x42, 0, 0, 0xf1,
+        0x78, 0x56, 0x34, 0x12, 0}, "mercenary owner defense picked a corpse over a living attacker");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "automatic companion targeting emitted an extra request");
+    world.UnregisterActor(&corpse);
     world.m_attr = nullptr;
 
     world.UnregisterActor(&target);

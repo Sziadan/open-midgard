@@ -1107,9 +1107,10 @@
       "evidence": [
         "docs/packets/evidence/PK28-companion-actor-targets.md",
         "docs/packets/evidence/PK28.03-companion-map-reset.md",
-        "docs/packets/evidence/PK28-companion-skill-lists.md"
+        "docs/packets/evidence/PK28-companion-skill-lists.md",
+        "docs/packets/evidence/PK28-PK29-native-companion-ai.md"
       ],
-      "commit_subject": "packet(PK28.04): select companion skill cast levels"
+      "commit_subject": "packet(PK28.04/PK29.04): reject stale companion attack targets"
     },
     "PK29.01": {
       "status": "IN_PROGRESS",
@@ -1147,8 +1148,11 @@
     },
     "PK29.04": {
       "status": "IN_PROGRESS",
-      "evidence": ["docs/packets/evidence/PK29.04-mercenary-refresh.md"],
-      "commit_subject": "packet(PK29.04): isolate mercenary state across identity refresh"
+      "evidence": [
+        "docs/packets/evidence/PK29.04-mercenary-refresh.md",
+        "docs/packets/evidence/PK28-PK29-native-companion-ai.md"
+      ],
+      "commit_subject": "packet(PK28.04/PK29.04): reject stale companion attack targets"
     },
     "PK30.01": {
       "status": "NOT_STARTED",

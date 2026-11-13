@@ -389,21 +389,18 @@ void Runtime::MoveToOwner(u32 id) const
     CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
 }
 
+bool Runtime::CanTargetForAttack(u32 id) const
+{
+    if (id == OwnerId() || id == g_session.m_homunGID || id == g_session.m_merGID) {
+        return false;
+    }
+    const CGameActor* target = FindActor(id);
+    return target && target->m_stateId != MOTION_DEAD && !IsHiddenFromAi(*target, id);
+}
+
 void Runtime::Attack(u32 id, u32 enemyId) const
 {
-    if (!IsOwnedCompanion(id) || enemyId == 0) {
-        return;
-    }
-    if (m_kind == Kind::Homunculus && g_session.m_merGID && enemyId == g_session.m_merGID) {
-        return;
-    }
-    if (m_kind == Kind::Mercenary && g_session.m_homunGID && enemyId == g_session.m_homunGID) {
-        return;
-    }
-
-    CGameActor* self = FindActor(id);
-    CGameActor* enemy = FindActor(enemyId);
-    if (!self || !enemy || IsHiddenFromAi(*enemy, enemyId)) {
+    if (!IsOwnedCompanion(id) || !FindActor(id) || !CanTargetForAttack(enemyId)) {
         return;
     }
 

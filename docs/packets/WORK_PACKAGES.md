@@ -689,6 +689,8 @@ Tier: **S**. Dependencies: PK23, PK24.
 
 Enumerate actual active family from server rather than assuming listed seeds exhaustive. Test owner/companion IDs and HP/SP ordering.
 
+The homunculus and mercenary controllers run in C++ under `src/companion_ai`. Use the legacy scripts as behavior evidence when needed. Verify commands through the native controller and the selected server packet layouts. Keep player skill tree changes outside these packages. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
+
 ### Discovery ownership
 
 6 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.
@@ -707,6 +709,8 @@ Tier: **S**. Dependencies: PK23, PK24.
 ### Required acceptance and traps
 
 No blanket exclusion based on feature age; prove guards/call sites. Different companions cannot share guessed status layouts.
+
+Use the same C++ controller acceptance checks for mercenaries, with mercenary-specific skill, contract, and lifecycle coverage. Apply the elemental lifecycle contract separately. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 ### Discovery ownership
 
