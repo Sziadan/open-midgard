@@ -43,7 +43,7 @@ public:
     void OnKeyDown(int virtualKey) override;
     bool HandleKeyDown(int virtualKey);
 
-    void OpenInvite(u32 partyId, const char* partyName);
+    void OpenInvite(u32 partyId, const char* partyName, bool extended);
     bool GetDisplayDataForQt(DisplayData* outData) const;
 
 private:
@@ -55,6 +55,7 @@ private:
     unsigned long long BuildVisualStateToken() const;
 
     u32 m_partyId;
+    bool m_extendedReply = false;
     std::string m_partyName;
     int m_hoverButtonId;
     int m_pressedButtonId;

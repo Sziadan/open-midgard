@@ -8548,7 +8548,8 @@ void HandlePartyInviteRequest(CGameMode&, const PacketView& packet)
         return;
     }
 
-    inviteWnd->OpenInvite(partyId, ExtractFixedPacketString(packet.data + 6, 24).c_str());
+    const bool extended = packet.packetId == ro::net::GetActiveMapReceiveProfile().partyInviteRequestExtended;
+    inviteWnd->OpenInvite(partyId, ExtractFixedPacketString(packet.data + 6, 24).c_str(), extended);
 }
 
 void HandlePartyList(CGameMode& mode, const PacketView& packet)

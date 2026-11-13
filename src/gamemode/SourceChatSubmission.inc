@@ -274,6 +274,8 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         const u8 packet[] = {0xc8, 0x02, static_cast<u8>(type == 182)};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet));
     }
+    case 183: // /invite
+        return m_mapLoadingStage == MapLoading_None && RequestPartyInviteByName(parameters[0]);
     case 184: // /eqopen
         return SendMsg(270, !g_session.m_showEquipmentToOthers, 0, 0);
     case 185: // /battlechat

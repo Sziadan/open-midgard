@@ -29,6 +29,7 @@
 #include "ui/UIChooseWnd.h"
 #include "ui/UIPlayerContextMenuWnd.h"
 #include "ui/UIPartyOptionWnd.h"
+#include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UIGroundSkillTextWnd.h"
 #include "core/MannerFilter.h"
 #include "ui/UIChooseSellBuyWnd.h"
@@ -6632,7 +6633,84 @@ void PartyInviteReplyProductionSendReplay()
     Require(rejected == expectedReject,
         "party-invite rejection reply differs from the independent ten-byte fixture");
     connection->Disconnect();
+
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const int oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const std::array<u8, 30> invitation{0xC6, 0x02, 0x44, 0x33, 0x22, 0x11, 'P'};
+    PacketView view{};
+    int consumed = 0;
+    Require(TryReadPacket(invitation.data(), invitation.size(), view, consumed)
+            && consumed == invitation.size() && router.Dispatch(mode, view),
+        "selected party invitation did not frame and dispatch");
+    auto* prompt = g_windowMgr.m_joinPartyAcceptWnd;
+    Require(prompt && prompt->m_show, "selected party invitation did not open a prompt");
+    prompt->HandleKeyDown(VK_RETURN);
+    Require(prompt->m_show, "failed party invitation reply closed the prompt");
+    LoopbackPeer retry(*connection);
+    prompt->HandleKeyDown(VK_RETURN);
+    Require(retry.ReceiveExact(7) == std::vector<u8>{0xC7, 0x02, 0x44, 0x33, 0x22, 0x11, 1}
+            && !prompt->m_show, "selected party invitation acceptance did not use the seven-byte reply");
+    Require(router.Dispatch(mode, view), "second selected party invitation did not dispatch");
+    prompt->HandleKeyDown(VK_ESCAPE);
+    Require(retry.ReceiveExact(7) == std::vector<u8>{0xC7, 0x02, 0x44, 0x33, 0x22, 0x11, 0},
+        "selected party invitation decline did not use the seven-byte reply");
+    prompt->HandleKeyDown(VK_RETURN);
+    Require(SelectSocket(retry.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "a dismissed party invitation emitted another reply");
+    g_windowMgr.DeleteWindow(prompt);
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    connection->Disconnect();
     std::cout << "{\"case_id\":\"party_invite_reply_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-map-party-invite-reply-request\",\"accept_packet_hex\":\"ff004433221101000000\",\"reject_packet_hex\":\"ff004433221100000000\",\"zero_party_id_rejected\":true,\"outcome\":\"PASS\"}" << std::endl;
+}
+
+void PartyInviteChatProductionReplay()
+{
+    SetCase("party_invite_chat_production", "PK46.02", "PK46.02-party-invite-chat",
+        "SubmitSourceChat -> ProcessSourceTalk -> selected party invite and privacy packets");
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    CGameMode mode;
+    const bool savedRefuse = g_session.m_refusePartyInvites;
+    const auto savedParty = g_session.m_partyList;
+    g_session.m_refusePartyInvites = false;
+    g_session.m_partyList.clear();
+    LoopbackPeer peer(*connection);
+    Require(!mode.SubmitSourceChat("/invite Bob", "", nullptr), "party invite was sent without a party");
+    g_session.m_partyList.emplace_back();
+    Require(!mode.SubmitSourceChat("/invite 123456789012345678901234", "", nullptr)
+            && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "a 24-byte player name emitted an invitation");
+    Require(mode.SubmitSourceChat("/invite \"Bob Smith\"", "", nullptr), "named party invite failed");
+    std::vector<u8> expected(26, 0);
+    expected[0] = 0xC4;
+    expected[1] = 0x02;
+    const std::string name = "Bob Smith";
+    std::copy(name.begin(), name.end(), expected.begin() + 2);
+    Require(peer.ReceiveExact(26) == expected, "named invite differed from the selected frame");
+    Require(mode.SubmitSourceChat("/refuse", "", nullptr)
+            && peer.ReceiveExact(3) == std::vector<u8>{0xC8, 0x02, 1}
+            && !g_session.m_refusePartyInvites, "party refusal request changed local state before confirmation");
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const std::array<u8, 3> refused{0xC9, 0x02, 1};
+    PacketView view{};
+    int consumed = 0;
+    Require(TryReadPacket(refused.data(), refused.size(), view, consumed)
+            && consumed == refused.size() && router.Dispatch(mode, view) && g_session.m_refusePartyInvites,
+        "server did not confirm party invitation refusal");
+    Require(mode.SubmitSourceChat("/accept", "", nullptr)
+            && peer.ReceiveExact(3) == std::vector<u8>{0xC8, 0x02, 0}
+            && g_session.m_refusePartyInvites, "party allow request changed local state before confirmation");
+    const std::array<u8, 3> allowed{0xC9, 0x02, 0};
+    Require(TryReadPacket(allowed.data(), allowed.size(), view, consumed)
+            && consumed == allowed.size() && router.Dispatch(mode, view) && !g_session.m_refusePartyInvites,
+        "server did not confirm party invitations were allowed");
+    connection->Disconnect();
+    g_session.m_refusePartyInvites = savedRefuse;
+    g_session.m_partyList = savedParty;
 }
 
 void PartyCreateProductionSendReplay()
@@ -8316,6 +8394,7 @@ int main(int argc,char** argv){try{
     ActionFailureProductionReceiveReplay();
     PartyInviteProductionSendReplay();
     PartyInviteReplyProductionSendReplay();
+    PartyInviteChatProductionReplay();
     PartyCreateProductionSendReplay();
     PartyOptionChangeProductionSendReplay();
     PartyDisbandProductionSendReplay();

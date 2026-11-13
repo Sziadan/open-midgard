@@ -213,6 +213,8 @@ constexpr u16 kRemovePartyMember = 0x0103;
 namespace ActivePartySend {
 constexpr u16 kInviteParty = LegacyPartySend::kInviteParty;
 constexpr u16 kReplyPartyInvite = LegacyPartySend::kReplyPartyInvite;
+constexpr u16 kInvitePartyByName = 0x02C4;
+constexpr u16 kReplyPartyInviteExtended = 0x02C7;
 constexpr u16 kCreateParty = 0x01E8;
 constexpr u16 kLeaveParty = LegacyPartySend::kLeaveParty;
 constexpr u16 kChangePartyOption = LegacyPartySend::kChangePartyOption;
@@ -657,6 +659,20 @@ struct PACKET_CZ_JOIN_GROUP {
     u32 PartyId;
     u32 Flag;
 };
+
+struct PACKET_CZ_PARTY_JOIN_REQ {
+    u16 PacketType;
+    char CharacterName[24];
+};
+
+struct PACKET_CZ_PARTY_JOIN_REQ_ACK {
+    u16 PacketType;
+    u32 PartyId;
+    u8 Flag;
+};
+
+static_assert(sizeof(PACKET_CZ_PARTY_JOIN_REQ) == 26);
+static_assert(sizeof(PACKET_CZ_PARTY_JOIN_REQ_ACK) == 7);
 
 struct PACKET_CZ_REQ_LEAVE_GROUP {
     u16 PacketType;    // 0x0100

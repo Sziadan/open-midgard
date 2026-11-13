@@ -7192,10 +7192,28 @@ bool RequestPartyInvite(u32 targetAid)
     return sent;
 }
 
-bool ReplyPartyInvite(u32 partyId, bool accept)
+bool RequestPartyInviteByName(const std::string& name)
+{
+    PACKET_CZ_PARTY_JOIN_REQ packet{};
+    if (g_session.GetNumParty() == 0 || name.empty() || name.size() >= sizeof(packet.CharacterName)) {
+        return false;
+    }
+
+    packet.PacketType = PacketProfile::ActivePartySend::kInvitePartyByName;
+    std::memcpy(packet.CharacterName, name.data(), name.size());
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
+}
+
+bool ReplyPartyInvite(u32 partyId, bool accept, bool extended)
 {
     if (partyId == 0) {
         return false;
+    }
+
+    if (extended) {
+        const PACKET_CZ_PARTY_JOIN_REQ_ACK packet{
+            PacketProfile::ActivePartySend::kReplyPartyInviteExtended, partyId, static_cast<u8>(accept)};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
     }
 
     PACKET_CZ_JOIN_GROUP packet{};
@@ -12924,7 +12942,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         return RequestPartyInvite(static_cast<u32>(wparam)) ? 1 : 0;
 
     case GameMsg_RequestPartyInviteReply:
-        return ReplyPartyInvite(static_cast<u32>(wparam), static_cast<unsigned int>(lparam) != 0u) ? 1 : 0;
+        return ReplyPartyInvite(static_cast<u32>(wparam), lparam != 0, extra != 0) ? 1 : 0;
 
     case GameMsg_RequestPlayerContextAction: {
         const PlayerContextAction action = static_cast<PlayerContextAction>(lparam);

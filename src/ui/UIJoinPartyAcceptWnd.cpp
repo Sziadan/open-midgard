@@ -208,13 +208,14 @@ bool UIJoinPartyAcceptWnd::HandleKeyDown(int virtualKey)
     return true;
 }
 
-void UIJoinPartyAcceptWnd::OpenInvite(u32 partyId, const char* partyName)
+void UIJoinPartyAcceptWnd::OpenInvite(u32 partyId, const char* partyName, bool extended)
 {
     if (!m_controlsCreated) {
         OnCreate(0, 0);
     }
 
     m_partyId = partyId;
+    m_extendedReply = extended;
     m_partyName = partyName ? partyName : "";
     if (g_hMainWnd) {
         RECT clientRect{};
@@ -289,6 +290,7 @@ int UIJoinPartyAcceptWnd::HitTestButton(int x, int y) const
 void UIJoinPartyAcceptWnd::ClearState()
 {
     m_partyId = 0;
+    m_extendedReply = false;
     m_partyName.clear();
     m_hoverButtonId = 0;
     m_pressedButtonId = 0;
@@ -296,16 +298,14 @@ void UIJoinPartyAcceptWnd::ClearState()
 
 bool UIJoinPartyAcceptWnd::SubmitReply(bool accept)
 {
-    const u32 partyId = m_partyId;
+    if (m_partyId == 0 || g_modeMgr.SendMsg(CGameMode::GameMsg_RequestPartyInviteReply,
+            m_partyId, accept ? 1 : 0, m_extendedReply ? 1 : 0) == 0) {
+        return false;
+    }
     ClearState();
     SetShow(0);
     Invalidate();
-
-    if (partyId == 0) {
-        return false;
-    }
-
-    return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestPartyInviteReply, partyId, accept ? 1 : 0, 0) != 0;
+    return true;
 }
 
 unsigned long long UIJoinPartyAcceptWnd::BuildVisualStateToken() const
