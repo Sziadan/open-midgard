@@ -9239,6 +9239,80 @@ void HandleFriendRequest(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void RecordInstanceNotice(CGameMode& mode, int id, const char* fallback)
+{
+    ro::UiMessageStrings strings;
+    strings.Load();
+    RecordChat(mode, strings.Get(id, fallback), ro::chat::ColorRefToUiRgb(6619135u), kChatChannelSystem,
+        {ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None, {}});
+}
+
+void HandleInstanceReservation(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 65) {
+        return;
+    }
+    g_session.m_instanceStatus = {CSession::InstanceStatus::Phase::Waiting,
+        ExtractFixedPacketString(packet, 2, 61), static_cast<s16>(ReadLE16(packet.data + 63))};
+}
+
+void HandleInstanceQueuePosition(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 4) {
+        return;
+    }
+    auto& status = g_session.m_instanceStatus;
+    const s16 position = static_cast<s16>(ReadLE16(packet.data + 2));
+    if (position < 0) {
+        status = {};
+        RecordInstanceNotice(mode, 1345, "The Memorial Dungeon reservation has been canceled.");
+    } else if (!status.name.empty()) {
+        status.phase = CSession::InstanceStatus::Phase::Waiting;
+        status.queuePosition = position;
+        status.expiration = status.idleDeadline = 0;
+    }
+}
+
+void HandleInstanceStatus(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 71) {
+        return;
+    }
+    const u32 idleDeadline = ReadLE32(packet.data + 67);
+    using Phase = CSession::InstanceStatus::Phase;
+    g_session.m_instanceStatus = {idleDeadline ? Phase::Ready : Phase::Active,
+        ExtractFixedPacketString(packet, 2, 61), 0, ReadLE32(packet.data + 63), idleDeadline};
+}
+
+void HandleInstanceNotification(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 10) {
+        return;
+    }
+    auto& status = g_session.m_instanceStatus;
+    using Phase = CSession::InstanceStatus::Phase;
+    const u32 type = ReadLE32(packet.data + 2);
+    if (type == 0) {
+        if (status.phase == Phase::Ready || status.phase == Phase::Active) {
+            status.idleDeadline = ReadLE32(packet.data + 6);
+            status.phase = status.idleDeadline ? Phase::Ready : Phase::Active;
+        }
+        return;
+    }
+    if (type > 4) {
+        return;
+    }
+    status = {};
+    constexpr const char* notices[] = {
+        "The Memorial Dungeon duration expired; it has been destroyed.",
+        "The Memorial Dungeon's entry time limit expired; it has been destroyed.",
+        "The Memorial Dungeon has been removed."
+    };
+    if (type <= 3) {
+        RecordInstanceNotice(mode, 1345 + static_cast<int>(type), notices[type - 1]);
+    }
+}
+
 void HandleBattlefieldChat(CGameMode& mode, const PacketView& packet)
 {
     constexpr size_t textOffset = 32;
@@ -9697,7 +9771,10 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     }
 
     // Pending request state belongs to the real transition, not the injected transport.
-    if (info.hasServerMove) ClearPendingDisconnectAction();
+    if (info.hasServerMove) {
+        ClearPendingDisconnectAction();
+        g_session.m_instanceStatus = {};
+    }
     const bool reconnected = !info.hasServerMove
         || (services && services->reconnect
             ? services->reconnect(info.ip, info.port)
@@ -10681,6 +10758,10 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0283, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.partyInviteRequestExtended, HandlePartyInviteRequest);
     router.Register(0x02C9, HandlePartyInvitePrivacy);
+    router.Register(0x02CB, HandleInstanceReservation);
+    router.Register(0x02CC, HandleInstanceQueuePosition);
+    router.Register(0x02CD, HandleInstanceStatus);
+    router.Register(0x02CE, HandleInstanceNotification);
     router.Register(0x02B1, HandleIgnorePacket);
     router.Register(0x02B2, HandleIgnorePacket);
     router.Register(0x02B9, HandleShortcutKeyList);

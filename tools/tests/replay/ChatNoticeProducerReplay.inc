@@ -266,6 +266,58 @@ void BattlegroundChatReplay()
     g_windowMgr.ClearChatEvents();
 }
 
+void InstanceStatusReplay()
+{
+    SetCase("instance_status", "PK42.02", "selected-02cb-02ce", "map packets -> instance state and notices");
+    using Phase = CSession::InstanceStatus::Phase;
+    CGameMode mode;
+    TestConnection input;
+    auto& router = GetProductionGameModePacketRouter();
+    auto& status = g_session.m_instanceStatus;
+    const auto previous = status;
+    status = {};
+    g_windowMgr.ClearChatEvents();
+    const auto dispatch = [&](const std::vector<u8>& bytes, int count = 1) {
+        Require(input.QueueBytes(bytes) && ProcessGameModePacketLoop(mode, input, router, count).packetsDispatched == count
+            && !input.BufferedBytes(), "instance stream lost framing");
+    };
+    dispatch({0xce, 2, 0, 0, 0, 0, 1, 0, 0, 0});
+    Require(status.phase == Phase::None, "unnamed notification created an instance");
+    std::vector<u8> reservation(65, 'X');
+    reservation[0] = 0xcb; reservation[1] = 2;
+    reservation[63] = 9; reservation[64] = 0;
+    auto stream = reservation;
+    stream.insert(stream.end(), {0xcc, 2, 7, 0});
+    dispatch(stream, 2);
+    Require(status.phase == Phase::Waiting && status.queuePosition == 7 && status.name == std::string(61, 'X'),
+        "reservation or queue position used the obsolete wire layout");
+    dispatch({0xcc, 2, 0xff, 0xff});
+    Require(status.phase == Phase::None && g_windowMgr.GetChatEvents().size() == 1, "queue cancellation retained the reservation");
+    std::vector<u8> active(71, 0);
+    active[0] = 0xcd; active[1] = 2;
+    std::memcpy(active.data() + 2, "Instance", 8);
+    active[63] = 0x34; active[64] = 0x12; active[66] = 0xf1;
+    active[67] = 0x78; active[68] = 0x56; active[70] = 0xe2;
+    dispatch(active);
+    Require(status.phase == Phase::Ready && status.name == "Instance" && status.expiration == 0xf1001234u
+        && status.idleDeadline == 0xe2005678u, "instance snapshot changed unsigned absolute deadlines");
+    dispatch({0xce, 2, 0, 0, 0, 0, 0, 0, 0, 0});
+    Require(status.phase == Phase::Active && !status.idleDeadline && status.expiration == 0xf1001234u,
+        "idle timer stop replaced the lifetime deadline");
+    dispatch({0xce, 2, 0, 0, 0, 0, 1, 2, 3, 4});
+    Require(status.phase == Phase::Ready && status.idleDeadline == 0x04030201, "idle timer update did not restore ready phase");
+    dispatch({0xce, 2, 1, 1, 0, 0, 0, 0, 0, 0});
+    Require(status.phase == Phase::Ready, "unknown 32-bit notification closed the snapshot");
+    for (u8 result = 1; result <= 4; ++result) {
+        dispatch(active);
+        dispatch({0xce, 2, result, 0, 0, 0, 0, 0, 0, 0});
+        Require(status.phase == Phase::None && status.name.empty(), "terminal notification retained instance state");
+    }
+    Require(g_windowMgr.GetChatEvents().size() == 4, "terminal notifications did not produce three notices and one silent failure");
+    status = previous;
+    g_windowMgr.ClearChatEvents();
+}
+
 void CashShopReplay()
 {
     SetCase("npc_cash_shop", "PK40.03", "selected-0287-0289", "NPC shop purchase and balance update");

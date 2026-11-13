@@ -4125,3 +4125,5 @@ PK41.03 connects the battlefield chat command to the selected sender and applies
 PK41.04 classifies the selected team chat request and ten inactive queue identities against the effective registry. The five active receive rows await live acceptance. [Evidence](evidence/PK41.04-selected-battleground-verification.md)
 
 PK42.01 pins the selected instance frames, absolute deadlines, owner scopes and the server's destroy-command value. [Evidence](evidence/PK42.01-selected-instance-contract.md)
+
+PK42.02 receives the four instance state frames, handles cancellation and terminal notices, and preserves the snapshot across ordinary map changes. Continue the instance window and command in PK42.03. [Evidence](evidence/PK42.02-instance-state.md)

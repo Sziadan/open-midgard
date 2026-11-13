@@ -597,10 +597,10 @@
 0x02C8,map,C2S,HEADER_CZ_PARTY_CONFIG,3,0,,,clif_parse_PartyTick,"0,0",,no receive handler; direction/activity needs review; outbound route not proven by literal constructor scan,declared/registered; runtime emission not established,P11 Equipment/privacy and party-invite settings are discarded
 0x02C9,map,S2C,HEADER_ZC_PARTY_CONFIG,3,3,HandleIgnorePacket,1054,,,clif_partyinvitationstate,ignored/stubbed,active sender/reference plus known wire layout,P11 Equipment/privacy and party-invite settings are discarded
 0x02CA,map,unresolved,,3,0,,,,0,,no receive handler; direction/activity needs review,declared/registered; runtime emission not established,
-0x02CB,map,S2C,,65,0,,,,0,clif_instance_create,missing receive handler; missing framing,active sender/reference plus known wire layout,
-0x02CC,map,S2C,,4,0,,,,0,clif_instance_changewait,missing receive handler; missing framing,active sender/reference plus known wire layout,
-0x02CD,map,S2C,,71,0,,,,0,clif_instance_status,missing receive handler; missing framing,active sender/reference plus known wire layout,
-0x02CE,map,S2C,,10,0,,,,0,clif_instance_changestatus,missing receive handler; missing framing,active sender/reference plus known wire layout,
+0x02CB,map,S2C,,65,65,HandleInstanceReservation,10761,,0,clif_instance_create,handler present; semantics not certified,active sender/reference plus known wire layout,
+0x02CC,map,S2C,,4,4,HandleInstanceQueuePosition,10762,,0,clif_instance_changewait,handler present; semantics not certified,active sender/reference plus known wire layout,
+0x02CD,map,S2C,,71,71,HandleInstanceStatus,10763,,0,clif_instance_status,handler present; semantics not certified,active sender/reference plus known wire layout,
+0x02CE,map,S2C,,10,10,HandleInstanceNotification,10764,,0,clif_instance_changestatus,handler present; semantics not certified,active sender/reference plus known wire layout,
 0x02CF,map,C2S,,6,0,,,clif_parse_MemorialDungeonCommand,"2,0",,no receive handler; direction/activity needs review; outbound route not proven by literal constructor scan,declared/registered; runtime emission not established,
 0x02D0,map,S2C,inventorylistequipType,-1,-1,HandleEquipInventoryList,2242,,0,clif_inventorylist,handler present; semantics not certified,active sender/reference plus known wire layout,P20 Snapshot parsers accept partial record arrays
 0x02D1,map,S2C,storageListEquipType,-1,-1,HandleEquipStorageList,2354,,0,clif_storagelist,handler present; semantics not certified,active sender/reference plus known wire layout,P20 Snapshot parsers accept partial record arrays

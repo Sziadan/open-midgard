@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK42.02 connects selected instance framing and reservation, deadline and terminal state. Continue PK42.03 with the 200×150 Memorial Dungeon window, Alt+B toggle, and absolute countdowns. The reference uses selector 144 and defaults to (0, 310). Trace refresh and close behavior from `Ref/UIWindowMgr.cpp` and `Ref/UIFrameWnd3.cpp`. Resolve recipient ambiguity and silent rejection before wiring the selected `02CF` destroy command. [Instance contract](evidence/PK42.01-selected-instance-contract.md) · [Instance state](evidence/PK42.02-instance-state.md)
+
 PK41.04 classifies the selected `02DB` request and ten inactive queue identities. Continue live verification of the five active receive rows. Check the PK19 `01D6` battleground map type during entry, opposing-camp bitmap visibility with Gravity AIDs, minimap colors, team chat, and scripted same-map leave. [Selected verification](evidence/PK41.04-selected-battleground-verification.md) · [Battleground chat](evidence/PK41.03-battleground-chat.md) · [Battleground state](evidence/PK41.02-battleground-state.md)
 
 PK40.05 records the selected request and inactive identities. Continue with dedicated auction and cash-shop render comparisons, live acceptance, and PK48 review. The selected server's four-byte close reply uses `025D`. Its registered `025E` only supplies the server's length. [Commerce verification](evidence/PK40.05-selected-verification.md)

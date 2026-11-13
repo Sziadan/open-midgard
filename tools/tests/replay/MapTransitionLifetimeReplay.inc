@@ -26,6 +26,7 @@ struct MapTransitionLifetimeSnapshot {
     bool minEffect = g_session.m_isMinEffect;
     bool minEffectPreference = g_session.m_isMinEffectOld;
     ro::SourceMapTypeTable mapTypeTable = g_session.m_mapTypeInfo;
+    CSession::InstanceStatus instanceStatus = g_session.m_instanceStatus;
     std::string map = g_session.m_curMap;
     LocalGuildInfo localGuild = g_session.m_localGuild;
     ro::guild::WindowState guildWindow = g_session.m_guildWindow;
@@ -56,6 +57,7 @@ struct MapTransitionLifetimeSnapshot {
         g_session.m_isMinEffect = minEffect;
         g_session.m_isMinEffectOld = minEffectPreference;
         g_session.m_mapTypeInfo = mapTypeTable;
+        g_session.m_instanceStatus = instanceStatus;
         std::snprintf(g_session.m_curMap, sizeof(g_session.m_curMap), "%s", map.c_str());
         g_session.m_localGuild = localGuild;
         g_session.m_guildWindow = guildWindow;
@@ -470,6 +472,7 @@ void MapTransitionLifetimeReplay()
     // A literal 0x0091 map A -> B frame takes the production non-reconnect branch.
     {
         SeedMapTransitionMarker("prontera");
+        g_session.m_instanceStatus = {CSession::InstanceStatus::Phase::Ready, "Dungeon", 0, 200, 100};
         const u64 revision = g_session.GetPartyPositionRevision();
         UIRoMapWnd minimap;
         UIRoMapWnd::DisplayData before{};
@@ -506,6 +509,8 @@ void MapTransitionLifetimeReplay()
         Require(g_modeMgr.GetLastOperation() == ModeOperationKind::Switch && g_modeMgr.GetRequestedModeType() == 1,
             "0x0091 request callback did not schedule a production game-mode switch");
         RequirePartyInvalidated(revision, before.imageRevision, "map A to B");
+        Require(g_session.m_instanceStatus.name == "Dungeon" && g_session.m_instanceStatus.idleDeadline == 100,
+            "ordinary map transition retired the instance reservation");
     }
 
     // An already-loaded same-map warp takes production reuse, invalidates old dots,
@@ -816,6 +821,7 @@ void MapTransitionLifetimeReplay()
     // only network reconnect and loading presentation are replaced by callbacks.
     for (const bool reconnectSucceeds : {true, false}) {
         SeedMapTransitionMarker("prontera");
+        g_session.m_instanceStatus = {CSession::InstanceStatus::Phase::Waiting, "Dungeon", 4};
         g_session.m_pendingReturnToCharSelect = reconnectSucceeds ? 0 : 1;
         Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),
             "could not seed pending action before server move");
@@ -836,6 +842,8 @@ void MapTransitionLifetimeReplay()
         services.presentLoading = [&](const char*, float) { ++presentations; };
         services.reconnect = [&](u32 ip, u16 port) {
             ++reconnects;
+            Require(g_session.m_instanceStatus.phase == CSession::InstanceStatus::Phase::None,
+                "old instance metadata survived into the next connection");
             const auto* member = g_session.FindPartyMemberByAid(0x30303030u);
             Require(member && !member->partyPositionValid && g_session.m_curMap == std::string("geffen")
                 && GetPendingDisconnectAction() == PendingDisconnectAction::None,

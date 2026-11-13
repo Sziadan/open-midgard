@@ -14895,8 +14895,8 @@
       "stage": "map",
       "names": [],
       "server_size": 65,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 65,
+      "client_handler": "HandleInstanceReservation",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14909,11 +14909,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 10761,
       "review": ""
     },
     {
@@ -14921,8 +14920,8 @@
       "stage": "map",
       "names": [],
       "server_size": 4,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 4,
+      "client_handler": "HandleInstanceQueuePosition",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14935,11 +14934,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 10762,
       "review": ""
     },
     {
@@ -14947,8 +14945,8 @@
       "stage": "map",
       "names": [],
       "server_size": 71,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 71,
+      "client_handler": "HandleInstanceStatus",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14961,11 +14959,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 10763,
       "review": ""
     },
     {
@@ -14973,8 +14970,8 @@
       "stage": "map",
       "names": [],
       "server_size": 10,
-      "client_size": 0,
-      "client_handler": "",
+      "client_size": 10,
+      "client_handler": "HandleInstanceNotification",
       "server_parser": "",
       "server_emitters": [
         {
@@ -14987,11 +14984,10 @@
       "direction": "S2C",
       "available_declaration": true,
       "status": [
-        "missing receive handler",
-        "missing framing"
+        "handler present; semantics not certified"
       ],
       "reachability": "active sender/reference plus known wire layout",
-      "client_handler_line": null,
+      "client_handler_line": 10764,
       "review": ""
     },
     {

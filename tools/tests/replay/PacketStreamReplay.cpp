@@ -7410,6 +7410,7 @@ int main(int argc,char** argv){try{
         MannerAndColoredNoticeReplay();
         BattlegroundStateReplay();
         BattlegroundChatReplay();
+        InstanceStatusReplay();
         CConnection::Cleanup();
         return 0;
     }
@@ -7615,6 +7616,7 @@ int main(int argc,char** argv){try{
     MannerAndColoredNoticeReplay();
     BattlegroundStateReplay();
     BattlegroundChatReplay();
+    InstanceStatusReplay();
     ChatPrimaryViewReplay();
     ChatPrimarySpeechReplay();
     ChatDetachedViewReplay();

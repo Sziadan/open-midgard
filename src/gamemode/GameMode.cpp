@@ -11397,6 +11397,9 @@ void CGameMode::UpdateFriendInvitation()
 }
 
 void CGameMode::OnExit() {
+    if (g_modeMgr.GetRequestedModeType() != 1) {
+        g_session.m_instanceStatus = {};
+    }
     CloseFriendInvitation();
     ClearAdoptionInvitation();
     ClearCraftingSelection();

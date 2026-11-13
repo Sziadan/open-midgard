@@ -321,6 +321,14 @@ public:
     std::string m_partyName;
     LocalGuildInfo m_localGuild;
     ro::guild::WindowState m_guildWindow;
+    struct InstanceStatus {
+        enum class Phase { None, Waiting, Ready, Active };
+        Phase phase = Phase::None;
+        std::string name;
+        s16 queuePosition = 0;
+        u32 expiration = 0;
+        u32 idleDeadline = 0;
+    } m_instanceStatus;
     ro::pet::Status m_petStatus;
     bool m_amIPartyMaster = false;
     bool m_partyExpShare = false;
