@@ -22,6 +22,7 @@ struct State {
     bool vendingOpenCanceled=false;
     TradeCancellation tradeCancellation=TradeCancellation::None;
     u32 cartCount=0,cartCapacity=100,cartWeight=0,cartMaxWeight=0,vendingSlots=0,partnerId=0,sellerId=0;
+    u32 requestedSellerId=0;
     u32 localZeny=0,remoteZeny=0;
     u32 clock=0,tradeRequestTick=0;
     std::map<u32,TradePeer> tradePeers;

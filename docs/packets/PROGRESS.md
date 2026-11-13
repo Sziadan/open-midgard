@@ -4037,3 +4037,5 @@ PK37.02 validates the buyer and owner vending snapshots before replacing their c
 PK37.02 retires submitted buyer quotes, preserves replacement listings on purchase replies, and verifies seller reports through sold-out closure. [Evidence](evidence/PK37.02-vending-snapshots.md)
 
 PK37.02 sends ordered shop-close and setup-cancel frames when closing a pending open and prevents a late owner list from reopening the canceled shop. [Evidence](evidence/PK37.02-vending-snapshots.md)
+
+PK37.02 matches buyer stock to the requested vendor and retires a quote or request when the board is removed. [Evidence](evidence/PK37.02-vending-snapshots.md)

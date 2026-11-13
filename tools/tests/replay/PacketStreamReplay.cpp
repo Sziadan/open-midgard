@@ -6680,15 +6680,17 @@ void VendingPurchaseProductionSendReplay()
         Require(input.QueueBytes(frame) && ProcessGameModePacketLoop(mode,input,router,1).packetsDispatched==1
             && !input.BufferedBytes(), "vending snapshot did not dispatch");
     };
+    constexpr u32 seller = 0x11223344;
+    constexpr u32 replacementSeller = 0x11223355;
+    ro::commerce::state.requestedSellerId = seller;
     dispatch(listing);
     auto duplicate = listing;
     duplicate.insert(duplicate.end(),listing.begin()+8,listing.end());
     duplicate[2] = static_cast<u8>(duplicate.size());
-    duplicate[4] = 0x55;
+    ro::commerce::state.requestedSellerId = seller;
     dispatch(duplicate);
     auto outOfRange = listing;
     outOfRange[14] = 102;
-    outOfRange[4] = 0x66;
     dispatch(outOfRange);
     Require(ro::commerce::state.sellerId==0x11223344 && ro::commerce::state.shopItems.size()==1
         && ro::commerce::state.shopItems.front().price==0, "invalid vending snapshot replaced the valid quote");
@@ -6719,11 +6721,30 @@ void VendingPurchaseProductionSendReplay()
             && !ro::commerce::Action(buy), "vending purchase left the submitted quote reusable");
         auto replacement = listing;
         replacement[4] = 0x55;
+        auto& shop = ro::commerce::state;
+        std::vector<u8> board(86);
+        board[0]=0x31;board[1]=1;
+        std::copy(listing.begin()+4,listing.begin()+8,board.begin()+2);
+        board[6]='A';
+        dispatch(board);
+        board[2]=0x55;
+        board[6]='B';
+        dispatch(board);
+        Require(ro::commerce::PlayerAction(8,seller,"First vendor")
+            && peer.ReceiveExact(6)==std::vector<u8>({0x30,1,0x44,0x33,0x22,0x11}), "first board request did not send");
+        Require(ro::commerce::PlayerAction(8,replacementSeller,"Second vendor")
+            && peer.ReceiveExact(6)==std::vector<u8>({0x30,1,0x55,0x33,0x22,0x11}), "second board request did not send");
+        dispatch(listing);
+        Require(!shop.shop.visible && shop.requestedSellerId==replacementSeller, "older listing displaced the latest board request");
         dispatch(replacement);
         dispatch({0x35,1,101,0,2,0,4});
         dispatch({0x35,1,101,0,2,0,0});
         Require(ro::commerce::state.shop.visible && ro::commerce::state.sellerId==0x11223355
             && ro::commerce::state.shopItems.front().amount==7, "buyer result changed a replacement quote");
+        dispatch({0x32,1,0x55,0x33,0x22,0x11});
+        dispatch(replacement);
+        Require(!shop.shop.visible && shop.shopItems.empty() && !ro::commerce::Action(buy),
+            "removed board retained a purchasable quote or accepted a late listing");
 
         auto ownerListing = listing;
         ownerListing[0] = 0x36;

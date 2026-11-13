@@ -89,7 +89,7 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     hidePanels();Dispatch(mode,offerPacket(0x136,1202,91,2,true));
     state.vending.visible=true;state.cart.visible=false;sync();
     rightClick("commerceTile_vending_91",1202,true,"vending");
-    hidePanels();Dispatch(mode,offerPacket(0x133,1201,91,4,false));state.shop.visible=true;sync();
+    hidePanels();state.requestedSellerId=0x12345678;Dispatch(mode,offerPacket(0x133,1201,91,4,false));sync();
     rightClick("commerceDetail_shop_91",1201,false,"shop");
     SetRuntimeUiScalePercent(125);rightClick("commerceDetail_shop_91",1201,false,"scaled-shop");
     SetRuntimeUiScalePercent(100);
@@ -112,7 +112,7 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     state.equipment.visible=true;sync();rightClick("commerceDetail_equipment_291",1202,true,"viewed-equipment");
 
     // Snapshot details remain the selected item after their source panel/list changes.
-    hidePanels();Dispatch(mode,offerPacket(0x133,1202,91,1,true));state.shop.visible=true;sync();
+    hidePanels();state.requestedSellerId=0x12345678;Dispatch(mode,offerPacket(0x133,1202,91,1,true));sync();
     rightClick("commerceDetail_shop_91",1202,true,"shop-snapshot");
     state.shopItems.clear();state.shop.visible=false;state.cartItems.erase(3);sync();
     Dispatch(mode,{0xaf,0,3,0,1,0});sync();

@@ -27,6 +27,14 @@ void tradeReset(){state.trade.width=380;state.trade.height=170;state.tradeIncomi
 bool tradeCancelPending(){return state.tradeCancellation != TradeCancellation::None;}
 bool busy(){return tradeCancelPending()||state.tradeActive||state.tradeWaiting||state.tradeIncoming||state.vendingActive||state.vendingPending;}
 
+void closeShopQuote()
+{
+    state.shop.visible=false;
+    state.shopItems.clear();
+    state.sellerId=0;
+    state.requestedSellerId=0;
+}
+
 bool requestTradeCancellation(const char* message)
 {
     if (tradeCancelPending() || (!state.tradeIncoming && !state.tradeWaiting && !state.tradeActive)) return false;
@@ -82,7 +90,7 @@ void ResetForMapEntry()
     }
     state.inventoryTab = inventoryTab;
 }
-void CloseTransactions(){state.cart.visible=state.vending.visible=state.trade.visible=state.shop.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=state.vendingOpenCanceled=false;state.shopBoards.clear();state.cartItems.clear();}
+void CloseTransactions(){closeShopQuote();state.cart.visible=state.vending.visible=state.trade.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=state.vendingOpenCanceled=false;state.shopBoards.clear();state.cartItems.clear();}
 void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
     state.clock=now;state.tradePeers=std::move(peers);
     if(tradeCancelPending() || (!state.tradeWaiting&&!state.tradeIncoming))return;
@@ -148,6 +156,7 @@ bool Receive(CGameMode&,const PacketView& v){
         const u32 owner = read(p+4,4);
         if(!owner)return false;
         const bool ownShop = op==0x136;
+        if(!ownShop && owner!=state.requestedSellerId)return true;
         std::array<bool,item_snapshot::kInventorySlots> seen{};
         std::vector<Offer> offers;
         offers.reserve((n-headerSize)/rowSize);
@@ -180,6 +189,7 @@ bool Receive(CGameMode&,const PacketView& v){
             state.vending.visible=true;
             state.status="Shop is open.";
         }else{
+            state.requestedSellerId=0;
             state.shopItems=std::move(offers);
             state.sellerId=owner;
             state.shop.visible=true;
@@ -224,8 +234,22 @@ bool Receive(CGameMode&,const PacketView& v){
         return true;
     }
     case 0x138:return n==3; // Framed for compatibility. The selected server uses 0136 or skill failure.
-    case 0x131:if(n<86)return false;state.shopBoards[read(p+2,4)]=text(p+6,80);return true;
-    case 0x132:if(n<6)return false;state.shopBoards.erase(read(p+2,4));if(read(p+2,4)==g_session.m_aid){state.vendingActive=false;state.vendingPending=false;}return true;
+    case 0x131:{
+        if(n!=86)return false;
+        const auto seller=read(p+2,4);
+        if(!seller)return false;
+        state.shopBoards[seller]=text(p+6,80);
+        return true;
+    }
+    case 0x132:{
+        if(n!=6)return false;
+        const auto seller=read(p+2,4);
+        if(!seller)return false;
+        state.shopBoards.erase(seller);
+        if(seller==state.sellerId || seller==state.requestedSellerId)closeShopQuote();
+        if(seller==g_session.m_aid){state.vendingActive=false;state.vendingPending=false;}
+        return true;
+    }
     case 0xe5:case 0x1f4:if(n<(op==0xe5?26:32))return false;if(tradeCancelPending())return true;tradeReset();state.partnerId=0;state.tradeRequestTick=state.clock;state.partner=text(p+2,24);if(op==0x1f4)state.partnerId=read(p+26,4);state.tradeIncoming=true;state.trade.visible=true;state.status="Trade invitation. Review the player name before accepting.";return true;
     case 0xe7:case 0x1f5:{
         if(n!=(op==0xe7?3:9))return false;
@@ -363,6 +387,7 @@ bool Action(const Command& c){
     if(c.action=="close"){
         if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.CloseInventoryWindow();return true;}
         if(c.to=="trade")return requestTradeCancellation("Waiting for the server to cancel trade.");
+        if(c.to=="shop"){closeShopQuote();return true;}
         if(c.to=="vending"){
             if(state.vendingActive){
                 if(!simple(0x12e))return false;
@@ -456,9 +481,7 @@ bool Action(const Command& c){
         auto p=packet(0x134,12);
         put(p,2,12);put(p,4,state.sellerId,4);put(p,8,c.amount);put(p,10,c.index);
         if(!send(p))return false;
-        state.shop.visible=false;
-        state.shopItems.clear();
-        state.sellerId=0;
+        closeShopQuote();
         return true;
     }
     if(c.action=="prompt"){
@@ -515,7 +538,15 @@ bool PlayerAction(int action,u32 target,const std::string& name){
         return sent;
     }
     case CGameMode::PlayerContext_SendMail:{if(busy())return false;state.mailTo=name;state.mail.visible=true;state.mailPending=false;auto p=packet(0x246,4);return send(p);}
-    case 8:{auto p=packet(0x130,6);put(p,2,target,4);return send(p);}
+    case 8:{
+        if(!target || !state.shopBoards.count(target) || busy())return false;
+        auto p=packet(0x130,6);
+        put(p,2,target,4);
+        if(!send(p))return false;
+        closeShopQuote();
+        state.requestedSellerId=target;
+        return true;
+    }
     default:return false;
     }
 }
