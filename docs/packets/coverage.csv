@@ -90,7 +90,7 @@ AUDIT-0x00BD,0x00BD,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x00BE,0x00BE,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00BF,0x00BF,map,C2S,PK47,PK01;PK02;PK48;PK46,PK46.02-map-emotion-request.md: recognized slash emotion commands send a fixed three-byte ID request with a one-second successful-send throttle; selected registry identifies clif_parse_Emotion. Server ID semantics and replay remain open.,UNREVIEWED,
 AUDIT-0x00C0,0x00C0,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-emotion-request-ack traces selected 0x00BF validation and 7-byte S2C 0x00C0 AREA broadcast; rendering/replay remain open,UNREVIEWED,
-AUDIT-0x00C1,0x00C1,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x00C1,0x00C1,map,C2S,PK47,PK01;PK02;PK48;PK46,"WHO command and recipient 34 capture the two-byte request, including service gates",C2S_ONLY,PK16.03-who
 AUDIT-0x00C2,0x00C2,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00C3,0x00C3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00C4,0x00C4,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -182,7 +182,7 @@ AUDIT-0x0119,0x0119,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-state-change 
 AUDIT-0x011A,0x011A,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x011B,0x011B,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x011C,0x011C,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x011D,0x011D,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x011D,0x011D,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Memo chat command and two-byte request captured; 011E result replay is separate,C2S_ONLY,PK26.04
 AUDIT-0x011E,0x011E,map,S2C,PK26,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x011F,0x011F,map,unresolved,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0120,0x0120,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -383,7 +383,7 @@ AUDIT-0x01E3,0x01E3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x01E4,0x01E4,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01E5,0x01E5,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01E6,0x01E6,map,S2C,PK30,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x01E7,0x01E7,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01E7,0x01E7,map,C2S,PK47,PK01;PK02;PK48;PK46,Seated head-turn streak captures the two-byte doridori request,C2S_ONLY,PK09.21-doridori
 AUDIT-0x01E8,0x01E8,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Selected party creation name and loot rules captured,C2S_ONLY,PK46.02-PARTY-MEMBERSHIP-REQUESTS
 AUDIT-0x01E9,0x01E9,map,unresolved,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01EA,0x01EA,map,S2C,PK30,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
@@ -399,9 +399,9 @@ AUDIT-0x01F3,0x01F3,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x01F4,0x01F4,map,S2C,PK50,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01F5,0x01F5,map,S2C,PK13,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01F6,0x01F6,map,S2C,PK30,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x01F7,0x01F7,map,C2S,PK30,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x01F7,0x01F7,map,C2S,PK30,PK01;PK02;PK47;PK48;PK46,Consent and refusal capture both parent account IDs and the four-byte answer,C2S_ONLY,PK30.03
 AUDIT-0x01F8,0x01F8,map,unresolved,PK30,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x01F9,0x01F9,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x01F9,0x01F9,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Eligible party context action captures the candidate account ID,C2S_ONLY,PK30.03
 AUDIT-0x01FA,0x01FA,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Selected-source 48-byte login3 registration and production current-client challenge/send capture are verified under explicit AccountLoginPacket=login3; deployed profile intent remains open,C2S_ONLY,PK44.LOGIN.01FA-C2S-MD5-CLIENTINFO
 AUDIT-0x01FB,0x01FB,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Selected 56-byte immediate character deletion captured from the confirmed action,C2S_ONLY,PK44.CHAR-DELETE
 AUDIT-0x01FC,0x01FC,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
@@ -610,7 +610,7 @@ AUDIT-0x02D4,0x02D4,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x02D5,0x02D5,map,unresolved,PK10,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02D6,0x02D6,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x02D7,0x02D7,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
-AUDIT-0x02D8,0x02D8,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x02D8,0x02D8,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Equipment visibility and recall preference request fields captured,C2S_ONLY,PK16.02
 AUDIT-0x02D9,0x02D9,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02DA,0x02DA,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02DB,0x02DB,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Selected variable team chat request captured through the battlechat command,C2S_ONLY,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
@@ -635,7 +635,7 @@ AUDIT-0x02ED,0x02ED,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x02EE,0x02EE,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x02EF,0x02EF,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-appearance-font.md: selected 8-byte clif_font emitter sends account ID and font ID to AREA; client stores font state for the actor. Resource lookup and visible refresh parity remain open.,UNREVIEWED,
 AUDIT-0x02F0,0x02F0,map,S2C,PK21,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x02F1,0x02F1,map,C2S,PK21,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x02F1,0x02F1,map,C2S,PK21,PK01;PK02;PK47;PK48;PK46,Completion and abort capture the two-byte NPC progress acknowledgement,C2S_ONLY,PK21.04
 AUDIT-0x02F2,0x02F2,map,S2C,PK21,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02F3,0x02F3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x02F4,0x02F4,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
