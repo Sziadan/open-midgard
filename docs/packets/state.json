@@ -1832,6 +1832,7 @@
         "docs/packets/evidence/PK46.02-companion-request-crosswalk.md",
         "docs/packets/evidence/PK46.02-pet-request-crosswalk.md",
         "docs/packets/evidence/PK46.02-trade-vending-crosswalk.md",
+        "docs/packets/evidence/PK46.02-cart-npc-shop-crosswalk.md",
         "docs/packets/evidence/PK46.02-map-card-composition-request.md",
         "docs/packets/evidence/PK46.02-map-cart-off-request-012A.md",
         "docs/packets/evidence/PK46.02-map-change-cart-request.md",
@@ -1959,7 +1960,7 @@
         "docs/packets/evidence/PK27-prompt-skin-zip.md",
         "docs/packets/evidence/PK27-prompt-picker.md"
       ],
-      "commit_subject": "packet(PK46.02): reconcile selected trade and vending requests"
+      "commit_subject": "packet(PK46.02): reconcile selected cart and NPC shop requests"
     },
     "PK46.03": {
       "status": "IN_PROGRESS",

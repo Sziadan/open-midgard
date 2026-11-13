@@ -7439,6 +7439,57 @@ void ExitToWindowsProductionSendReplay()
     std::cout << "{\"case_id\":\"exit_to_windows_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-018a-quit-game\",\"outcome\":\"PASS\",\"assertions\":\"failed send clears pending action; successful send emits four-byte frame; duplicate while pending suppressed\"}" << std::endl;
 }
 
+void CartTransferProductionSendReplay()
+{
+    SetCase("cart_transfer_production_send", "PK46.02", "PK01.02-final-0126-0127",
+        "Commerce::Action(transfer) -> production socket");
+    const auto savedCommerce = ro::commerce::state;
+    auto& shop = ro::commerce::state;
+    ro::commerce::Reset();
+    shop.hasCart = true;
+    ITEM_INFO inventoryItem{};
+    inventoryItem.m_itemIndex = 61;
+    inventoryItem.m_num = 8;
+    const auto inventory = g_session.GetInventoryItems();
+    g_session.SetInventoryItem(inventoryItem);
+    ITEM_INFO cartItem{};
+    cartItem.m_itemIndex = 37;
+    cartItem.m_num = 5;
+    shop.cartItems.emplace(cartItem.m_itemIndex, cartItem);
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    {
+        LoopbackPeer peer(*connection);
+        ro::commerce::Command transfer{};
+        transfer.action = "transfer";
+        transfer.from = "inventory";
+        transfer.to = "cart";
+        transfer.index = 61;
+        transfer.amount = 3;
+        Require(ro::commerce::Action(transfer)
+                && peer.ReceiveExact(8) == std::vector<u8>{0x26, 1, 61, 0, 3, 0, 0, 0},
+            "inventory-to-cart transfer emitted the wrong request");
+
+        transfer.from = "cart";
+        transfer.to = "inventory";
+        transfer.index = 37;
+        transfer.amount = 6;
+        Require(!ro::commerce::Action(transfer), "cart transfer accepted more than its available stock");
+        transfer.amount = 2;
+        Require(ro::commerce::Action(transfer)
+                && peer.ReceiveExact(8) == std::vector<u8>{0x27, 1, 37, 0, 2, 0, 0, 0},
+            "cart-to-inventory transfer emitted the wrong request");
+        Require(g_session.GetInventoryItemByIndex(61)->m_num == 8 && shop.cartItems.at(37).m_num == 5,
+            "cart transfer mutated local item counts before a server update");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
+            "cart transfer emitted extra bytes");
+    }
+    connection->Disconnect();
+    g_session.ClearInventoryItems();
+    for (const auto& item : inventory) g_session.SetInventoryItem(item);
+    ro::commerce::state = savedCommerce;
+}
+
 void ChangeCartProductionSendReplay()
 {
     SetCase("change_cart_production_send", "PK46.02", "PK01.02-final-01af-change-cart",
@@ -7784,6 +7835,7 @@ int main(int argc,char** argv){try{
     CloseVendingProductionSendReplay();
     VendingPurchaseProductionSendReplay();
     ExitToWindowsProductionSendReplay();
+    CartTransferProductionSendReplay();
     ChangeCartProductionSendReplay();
     FriendReplyProductionSendReplay();
     GlobalChatProductionSendReplay();

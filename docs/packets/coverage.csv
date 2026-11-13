@@ -94,11 +94,11 @@ AUDIT-0x00C1,0x00C1,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/versio
 AUDIT-0x00C2,0x00C2,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00C3,0x00C3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00C4,0x00C4,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00C5,0x00C5,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x00C5,0x00C5,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected NPC and buy or sell choice captured,C2S_ONLY,PK46.02-NPC-SHOP-REQUESTS
 AUDIT-0x00C6,0x00C6,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00C7,0x00C7,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00C8,0x00C8,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00C9,0x00C9,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
+AUDIT-0x00C8,0x00C8,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected NPC purchase rows and result ownership captured,C2S_ONLY,PK46.02-NPC-SHOP-REQUESTS
+AUDIT-0x00C9,0x00C9,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46;PK38,Selected NPC sale rows and result ownership captured,C2S_ONLY,PK46.02-NPC-SHOP-REQUESTS;PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x00CA,0x00CA,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00CB,0x00CB,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00CC,0x00CC,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -191,11 +191,11 @@ AUDIT-0x0122,0x0122,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-commerce-cart-item-
 AUDIT-0x0123,0x0123,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-commerce-cart-item-lists identifies legacy normal-cart 0x0123; pinned 20080910 uses 0x02E9; historical row schema remains provisional,UNREVIEWED,
 AUDIT-0x0124,0x0124,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-commerce-cart-deltas traces legacy 21-byte S2C 0x0124 add-item form; pinned 20080910 uses typed 0x01C5; historical replay remains open,UNREVIEWED,
 AUDIT-0x0125,0x0125,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0126,0x0126,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0127,0x0127,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0126,0x0126,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected inventory-to-cart request captured,C2S_ONLY,PK46.02-CART-REQUESTS
+AUDIT-0x0127,0x0127,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected cart-to-inventory request captured,C2S_ONLY,PK46.02-CART-REQUESTS
 AUDIT-0x0128,0x0128,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0129,0x0129,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x012A,0x012A,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,PK45.03-c2s-owner-scope-review.md: selected 20080910 registry maps 0x012A length 2 to clif_parse_RemoveOption while PacketVer22/23 client profile assigns the same ID to kCartOff. Profile/date semantics and owner require adjudication.,UNREVIEWED,
+AUDIT-0x012A,0x012A,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,Selected remove-option request captured through Cart Off,C2S_ONLY,PK46.02-CART-REQUESTS
 AUDIT-0x012B,0x012B,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x012C,0x012C,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x012D,0x012D,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -327,7 +327,7 @@ AUDIT-0x01AB,0x01AB,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x01AC,0x01AC,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01AD,0x01AD,map,S2C,PK29,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01AE,0x01AE,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01AF,0x01AF,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-change-cart-request.md: cart selector maps menu indices to types 1–5 in a four-byte opcode/type frame; selected registry matches clif_parse_ChangeCart. Server confirmation and replay remain open.,UNREVIEWED,
+AUDIT-0x01AF,0x01AF,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected four-byte cart appearance request captured,C2S_ONLY,PK46.02-CART-REQUESTS
 AUDIT-0x01B0,0x01B0,map,S2C,PK20,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01B1,0x01B1,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01B2,0x01B2,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected shop open and setup cancellation captured,C2S_ONLY,PK46.02-VENDING-REQUESTS

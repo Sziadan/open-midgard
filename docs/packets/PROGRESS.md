@@ -4159,3 +4159,5 @@ PK46.02 reconciles six selected companion requests with the registry and product
 PK46.02 reconciles five selected pet requests with the registry and production replay, including the pet-emotion frames produced by a successful feed result. [Evidence](evidence/PK46.02-pet-request-crosswalk.md)
 
 PK46.02 reconciles six trade and four vending requests, including the seller open and cancel sequence. [Evidence](evidence/PK46.02-trade-vending-crosswalk.md)
+
+PK46.02 reconciles four cart and three NPC shop requests. Production replay now captures both inventory/cart transfer directions. [Evidence](evidence/PK46.02-cart-npc-shop-crosswalk.md)
