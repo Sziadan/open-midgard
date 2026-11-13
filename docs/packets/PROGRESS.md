@@ -3907,3 +3907,7 @@ PK29.03 verifies type `0x0A` spawn and movement, ordinary actor removal, and sna
 ## Mercenary identity refresh
 
 PK29.04 preserves an active mercenary's controls on refresh and retires them when the server changes its GID. Replay verifies both paths, job resolution after identity, and the zero-GID guard. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.04-mercenary-refresh.md)
+
+## Companion windows on map transition
+
+PK28.04 closes companion controls and invalidates learned skill rows and job identity on map reuse. The production same-map replay covers both families and a companion skill drag. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28.03-companion-map-reset.md)

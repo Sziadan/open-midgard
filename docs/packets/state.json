@@ -1104,8 +1104,11 @@
     },
     "PK28.04": {
       "status": "IN_PROGRESS",
-      "evidence": ["docs/packets/evidence/PK28-companion-actor-targets.md"],
-      "commit_subject": "packet(PK28.04): cancel manual companion attacks on repeat Alt click"
+      "evidence": [
+        "docs/packets/evidence/PK28-companion-actor-targets.md",
+        "docs/packets/evidence/PK28.03-companion-map-reset.md"
+      ],
+      "commit_subject": "packet(PK28.04): clear outgoing companion controls on map reuse"
     },
     "PK29.01": {
       "status": "IN_PROGRESS",

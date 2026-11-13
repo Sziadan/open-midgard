@@ -1636,6 +1636,10 @@ void CSession::ResetCompanionMapState()
     m_merGID = 0;
     m_homunStatus.alive = false;
     m_merStatus.alive = false;
+    m_homunStatus.job = -1;
+    m_merStatus.job = -1;
+    ClearHomunSkillItems();
+    ClearMercSkillItems();
     m_homunTarget = {};
     m_merTarget = {};
 }

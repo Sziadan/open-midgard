@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Companion windows on map transition**. PK28.04 replay verifies that same-map reuse closes both companion families' controls, clears learned rows and actor jobs, and cancels a companion skill drag. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28.03-companion-map-reset.md)
+
 **Mercenary identity refresh**. PK29.04 verifies same-GID refresh, replacement cleanup, and job resolution after identity. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.04-mercenary-refresh.md)
 
 **Selected elemental lifecycle (2026-11-13)**. PK29.03 replay covers the `081D` snapshot, type `0x0A` spawn and movement, ordinary visibility removal, and snapshot retirement on owner death and map reset. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK29.03-elemental-snapshot.md)

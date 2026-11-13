@@ -3985,6 +3985,14 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
     mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
     g_session.ResetCompanionMapState();
+    g_windowMgr.CloseCompanionWindows(true);
+    g_windowMgr.CloseCompanionWindows(false);
+    const int draggedSkill = mode.m_dragInfo.skillId;
+    if (mode.m_dragType == static_cast<int>(DragType::ShortcutSkill)
+        && ((draggedSkill >= 8000 && draggedSkill < 8017) || SKILL_INFO::IsMercenarySkill(draggedSkill))) {
+        mode.m_dragType = 0;
+        mode.m_dragInfo = {};
+    }
     if (auto* box = g_windowMgr.m_roomMessageBox; box && box->GetMessageId() == 601 && box->HasCancel())
         box->Dismiss(false);
     if (g_windowMgr.m_petInfoWnd) g_windowMgr.DeleteWindow(g_windowMgr.m_petInfoWnd);

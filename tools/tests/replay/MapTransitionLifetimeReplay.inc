@@ -575,14 +575,30 @@ void MapTransitionLifetimeReplay()
         const auto savedMer = g_session.m_merStatus;
         const auto savedHomunTarget = g_session.m_homunTarget;
         const auto savedMerTarget = g_session.m_merTarget;
+        const auto savedHomunSkills = g_session.GetHomunSkillItems();
+        const auto savedMerSkills = g_session.GetMercSkillItems();
         g_session.m_homunGID = 0x66550010;
         g_session.m_merGID = 0x66550011;
         g_session.m_homunStatus.alive = true;
+        g_session.m_homunStatus.job = 6001;
         g_session.m_homunStatus.hunger = 45;
         g_session.m_merStatus.alive = true;
+        g_session.m_merStatus.job = 6017;
         g_session.m_merStatus.calls = 12;
         g_session.m_homunTarget = {0x66550012, 9, 10, true, true, true};
         g_session.m_merTarget = {0x66550013, 11, 12, true, true, true};
+        PLAYER_SKILL_INFO companionSkill{};
+        companionSkill.SKID = 8004;
+        g_session.SetHomunSkillItem(companionSkill);
+        companionSkill.SKID = 8201;
+        g_session.SetMercSkillItem(companionSkill);
+        Require(g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND)
+            && g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNSKILLLISTWND)
+            && g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND)
+            && g_windowMgr.MakeWindow(UIWindowMgr::WID_MERSKILLLISTWND),
+            "could not open companion controls before same-map warp");
+        mode.m_dragType = static_cast<int>(DragType::ShortcutSkill);
+        mode.m_dragInfo.skillId = 8201;
         g_session.m_petStatus.valid = true;
         g_session.m_petStatus.actorId = 0x66550002;
         g_session.m_petStatus.job = 1002;
@@ -644,6 +660,13 @@ void MapTransitionLifetimeReplay()
             "same-map warp retained an outgoing companion identity or target order");
         Require(g_session.m_homunStatus.hunger == 45 && g_session.m_merStatus.calls == 12,
             "same-map warp discarded companion properties unrelated to actor identity");
+        Require(!g_windowMgr.m_homunInfoWnd && !g_windowMgr.m_homunSkillListWnd
+            && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd
+            && !g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND)
+            && !g_windowMgr.MakeWindow(UIWindowMgr::WID_MERINFOWND)
+            && g_session.GetHomunSkillItems().empty() && g_session.GetMercSkillItems().empty()
+            && mode.m_dragType == 0 && mode.m_dragInfo.skillId == 0,
+            "same-map warp retained outgoing companion controls, skill rows, or drag");
         Require(player.m_proceedType.type == 0 && player.m_proceedTargetGid == 0
             && !mode.m_hasSkillChase && mode.m_skillChaseTargetGid == 0
             && mode.m_skillUseInfo.id == 0 && mode.m_skillUseInfo.useType == 0,
@@ -655,6 +678,8 @@ void MapTransitionLifetimeReplay()
         g_session.m_merStatus = savedMer;
         g_session.m_homunTarget = savedHomunTarget;
         g_session.m_merTarget = savedMerTarget;
+        for (const auto& row : savedHomunSkills) g_session.SetHomunSkillItem(row);
+        for (const auto& row : savedMerSkills) g_session.SetMercSkillItem(row);
         Require(world.GetMapCellType(1, 1) == 5 && attr.GetCell(1, 1)->flag == 0,
             "same-map reuse lost the active map cell update");
         Require(world.m_isPKZone && world.m_isSiegeMode && world.m_isBattleFieldMode
