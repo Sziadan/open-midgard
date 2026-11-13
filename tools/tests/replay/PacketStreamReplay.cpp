@@ -6958,12 +6958,27 @@ void MailDraftAttachmentProductionReplay()
     Command clear;
     clear.action = "clearMailItem";
     const std::vector<u8> reset{0x46, 0x02, 0, 0};
-    Require(Action(clear) && peer.ReceiveExact(4) == reset && !state.mailAttachment.staged
-        && state.mail.visible, "attachment reset failed or closed the composer");
-    Require(Action(stage) && peer.ReceiveExact(8) == request, "could not restage after reset");
+    const std::vector<u8> clearRequest{0x47, 0x02, 7, 0, 0, 0, 0, 0};
+    Require(Action(clear) && peer.ReceiveExact(8) == clearRequest && state.mailAttachment.staged
+        && state.mailAttachment.pending, "clear request did not retain ownership through its acknowledgement");
     dispatch({0x55, 0x02, 7, 0, 0});
-    Require(Action(close) && peer.ReceiveExact(4) == reset && !state.mailAttachment.staged
-        && !state.mail.visible, "composer close did not reset the server draft");
+    Require(!state.mailAttachment.staged && !state.mailAttachment.pending && state.mail.visible,
+        "attachment clear acknowledgement did not free the composer");
+    Require(Action(stage) && peer.ReceiveExact(8) == request, "could not restage after reset");
+    state.mailAttachment.sentAt -= 15000;
+    Require(MailStageTimedOut(GetTickCount()) && Action(close) && !state.mail.visible
+        && state.mailAttachment.pending, "timed-out composer close discarded reply ownership");
+    dispatch({0x55, 0x02, 7, 0, 0});
+    Require(state.mailAttachment.staged && state.mailAttachment.needsReset,
+        "late staging reply allowed a hidden attachment to be sent");
+    const u32 target = g_session.m_aid == 24 ? 25 : 24;
+    Require(PlayerAction(CGameMode::PlayerContext_SendMail, target, "Other") && state.mail.visible
+        && state.mailTo != "Other" && !Action(mail),
+        "opening another composer reassigned a hidden attachment");
+    Require(Action(clear) && peer.ReceiveExact(8) == clearRequest, "could not clear the recovered draft");
+    dispatch({0x55, 0x02, 7, 0, 0});
+    Require(Action(close) && peer.ReceiveExact(4) == reset && !state.mail.visible,
+        "cleared composer could not close");
     connection->Disconnect();
     g_session.ClearInventoryItems();
     for (const auto& old : oldItems) g_session.SetInventoryItem(old);

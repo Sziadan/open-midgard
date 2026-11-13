@@ -467,7 +467,8 @@ Item {
                     width: parent.width - 100
                     height: 28
                     verticalAlignment: Text.AlignVCenter
-                    text: hub.view.mailAttachmentPending ? "Waiting for attachment…"
+                    text: hub.view.mailAttachmentTimedOut ? "Attachment status unconfirmed. You can close this draft."
+                        : hub.view.mailAttachmentPending ? "Waiting for attachment…"
                         : hub.view.mailAttachmentNeedsReset ? "Remove attachment before resending"
                         : hub.view.mailAttachment || "Drop an inventory item here"
                     textFormat: Text.PlainText

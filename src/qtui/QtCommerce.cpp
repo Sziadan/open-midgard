@@ -91,6 +91,7 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     data["shop"]=geometry(s.shop,suppressed);data["shopItems"]=offers(s.shopItems);data["mail"]=geometry(s.mail,suppressed);data["mailTo"]=str(s.mailTo);data["mailPending"]=s.mailPending;data["equipment"]=geometry(s.equipment,suppressed);data["equipmentItems"]=equipment;
     data["mailInbox"] = geometry(s.mailInbox, suppressed);
     data["mailAttachmentPending"] = s.mailAttachment.pending.has_value();
+    data["mailAttachmentTimedOut"] = MailStageTimedOut(GetTickCount());
     data["mailAttachmentNeedsReset"] = s.mailAttachment.needsReset;
     if (const auto& attachment = s.mailAttachment.staged) {
         data["mailAttachment"] = QString::number(attachment->amount) + QStringLiteral(" × ")

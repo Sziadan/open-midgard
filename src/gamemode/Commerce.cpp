@@ -18,6 +18,7 @@ State state;
 namespace {
 constexpr u32 kMailClaimWaitMs = 15000;
 constexpr u32 kMailRemovalWaitMs = 15000;
+constexpr u32 kMailStageWaitMs = 15000;
 u32 read(const u8* p,int bytes=2){u32 v=0;for(int i=0;i<bytes;++i)v|=u32(p[i])<<(8*i);return v;}
 void put(std::vector<u8>& p,int at,u32 v,int bytes=2){for(int i=0;i<bytes;++i)p[at+i]=u8(v>>(8*i));}
 std::vector<u8> packet(u16 op,int size){std::vector<u8> p(size);put(p,0,op);return p;}
@@ -99,8 +100,10 @@ bool send(const std::vector<u8>& p){if(CRagConnection::instance()->SendPacket(re
 bool simple(u16 op){return send(packet(op,2));}
 bool resetMailDraft()
 {
+    // Selected legacy 0246 passes a zero-based index to a helper expecting +2.
+    // Sending it cannot establish that an item was cleared.
+    if (state.mailAttachment.pending || state.mailAttachment.staged) return false;
     if (!send(packet(0x246, 4))) return false;
-    state.mailAttachment = {};
     return true;
 }
 bool busy();
@@ -209,9 +212,15 @@ void ResetForMapEntry()
     const bool mailPending = state.mailPending && CRagConnection::instance()->IsOpen();
     MailInbox inbox;
     MailDraftAttachment attachment;
+    std::string mailRecipient;
     if (CRagConnection::instance()->IsOpen()) {
         inbox = std::move(state.inbox);
         attachment = std::move(state.mailAttachment);
+        if (attachment.pending || attachment.staged) {
+            mailRecipient = std::move(state.mailTo);
+            attachment.abandoned = attachment.pending.has_value();
+            attachment.needsReset = attachment.staged.has_value();
+        }
     }
     const int inventoryTab = g_windowMgr.m_itemWnd
         ? g_windowMgr.m_itemWnd->GetCurrentTab() : g_windowMgr.GetInventoryTabSelection();
@@ -226,6 +235,7 @@ void ResetForMapEntry()
     state.mailPending = mailPending;
     state.inbox = std::move(inbox);
     state.mailAttachment = std::move(attachment);
+    state.mailTo = std::move(mailRecipient);
 }
 void CloseTransactions(){closeShopQuote();state.cart.visible=state.vending.visible=state.trade.visible=state.mail.visible=state.equipment.visible=state.mailInbox.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=state.vendingOpenCanceled=false;state.shopBoards.clear();state.cartItems.clear();}
 void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
@@ -506,14 +516,23 @@ bool Receive(CGameMode&,const PacketView& v){
     case 0x255: {
         if (n != 5) return false;
         auto& attachment = state.mailAttachment;
-        if (!attachment.pending || attachment.pending->item.m_itemIndex != read(p + 2)) return true;
+        const u32 slot = read(p + 2);
+        if (!attachment.pending || attachment.pending->item.m_itemIndex != slot) return true;
         if (p[4] == 0) {
-            attachment.staged = std::move(attachment.pending);
-            state.status = "Item attached.";
+            if (attachment.pending->amount == 0) {
+                attachment.staged.reset();
+                attachment.needsReset = false;
+                state.status = "Attachment removed.";
+            } else {
+                attachment.staged = std::move(attachment.pending);
+                attachment.needsReset = attachment.abandoned;
+                state.status = "Item attached.";
+            }
         } else {
             state.status = "The server refused the attachment.";
         }
         attachment.pending.reset();
+        attachment.abandoned = false;
         return true;
     }
     case 0x260: {
@@ -549,7 +568,10 @@ bool Receive(CGameMode&,const PacketView& v){
         if (!state.mailPending) return true;
         state.mailPending = false;
         if (p[2] && state.mailAttachment.staged) state.mailAttachment.needsReset = true;
-        else state.mailAttachment = {};
+        else {
+            state.mailAttachment.staged.reset();
+            state.mailAttachment.needsReset = false;
+        }
         note(p[2] ? "Mail could not be sent." : "Mail sent.");
         if (!p[2]) state.mail.visible = false;
         return true;
@@ -590,11 +612,15 @@ bool Action(const Command& c){
         if(c.to=="trade")return requestTradeCancellation("Waiting for the server to cancel trade.");
         if(c.to=="shop"){closeShopQuote();return true;}
         if (c.to == "mail") {
-            if (state.mailPending || state.mailAttachment.pending) {
+            if (state.mailPending || (state.mailAttachment.pending && !MailStageTimedOut(GetTickCount()))) {
                 state.status = "Waiting for the mail server.";
                 return false;
             }
-            if (!state.mail.visible || !resetMailDraft()) return false;
+            if (!state.mail.visible) return false;
+            auto& attachment = state.mailAttachment;
+            if (attachment.pending) attachment.abandoned = true;
+            else if (attachment.staged) attachment.needsReset = true;
+            else if (!resetMailDraft()) return false;
         }
         if(c.to=="vending"){
             if(state.vendingActive){
@@ -782,21 +808,30 @@ bool Action(const Command& c){
     }
     if (c.action == "stageMailItem" || c.action == "clearMailItem") {
         auto& attachment = state.mailAttachment;
-        if (!state.mail.visible || state.mailPending || attachment.pending || busy()) return false;
-        if (c.action == "clearMailItem") return attachment.staged && resetMailDraft();
+        if (!state.mail.visible || state.mailPending || busy()) return false;
+        if (attachment.pending) return false;
+        const bool clearing = c.action == "clearMailItem";
+        if (clearing != attachment.staged.has_value()) return false;
+        const u32 index = clearing ? attachment.staged->item.m_itemIndex : c.index;
+        const u32 itemId = clearing ? attachment.staged->item.GetItemId() : c.itemId;
+        const u32 amount = clearing ? 0 : c.amount;
         // The selected pre-RODEX parser checks the inventory index before the
         // index-zero Zeny branch. It silently rejects that branch.
-        if (attachment.staged || c.index < item_snapshot::kFirstInventoryIndex
-            || c.index >= item_snapshot::kFirstInventoryIndex + item_snapshot::kInventorySlots
-            || !c.amount || !c.itemId) return false;
-        const auto* item = g_session.GetInventoryItemByIndex(c.index);
-        if (!item || item->GetItemId() != c.itemId || item->m_wearLocation
-            || item->m_num <= 0 || c.amount > static_cast<u32>(item->m_num)) return false;
+        if (index < item_snapshot::kFirstInventoryIndex
+            || index >= item_snapshot::kFirstInventoryIndex + item_snapshot::kInventorySlots
+            || (!clearing && !amount) || !itemId) return false;
+        const auto* item = g_session.GetInventoryItemByIndex(index);
+        if (!item || item->GetItemId() != itemId || item->m_wearLocation
+            || item->m_num <= 0 || amount > static_cast<u32>(item->m_num)) {
+            state.status = "The attachment slot changed. Reconnect to clear the server draft.";
+            return false;
+        }
         auto p = packet(0x247, 8);
-        put(p, 2, c.index);
-        put(p, 4, c.amount, 4);
+        put(p, 2, index);
+        put(p, 4, amount, 4);
         if (!send(p)) return false;
-        attachment.pending = Offer{*item, c.amount};
+        attachment.pending = Offer{*item, amount};
+        attachment.sentAt = GetTickCount();
         return true;
     }
     if (c.action == "mail") {
@@ -852,6 +887,12 @@ bool MailRemovalTimedOut(u32 now)
     return removal && now - removal->sentAt >= kMailRemovalWaitMs;
 }
 
+bool MailStageTimedOut(u32 now)
+{
+    const auto& attachment = state.mailAttachment;
+    return attachment.pending && now - attachment.sentAt >= kMailStageWaitMs;
+}
+
 bool SendFriendInvitationReply(u32 aid, u32 cid, bool accept)
 {
     if (!aid || !cid) return false;
@@ -890,7 +931,15 @@ bool PlayerAction(int action,u32 target,const std::string& name){
             state.status = "Sending mail; waiting for the server.";
             return false;
         }
-        if (busy() || state.mailAttachment.pending || !resetMailDraft()) return false;
+        if (busy()) return false;
+        if (state.mailAttachment.pending || state.mailAttachment.staged) {
+            if (!state.mail.visible) {
+                state.mail.visible = true;
+                return true;
+            }
+            return false;
+        }
+        if (!resetMailDraft()) return false;
         state.mailTo = name;
         state.mail.visible = true;
         return true;

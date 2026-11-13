@@ -12,6 +12,8 @@ struct Offer {ITEM_INFO item;u32 amount=0,price=0;};
 struct MailDraftAttachment {
     std::optional<Offer> pending;
     std::optional<Offer> staged;
+    u32 sentAt = 0;
+    bool abandoned = false;
     bool needsReset = false;
 };
 struct TradePeer {std::string name;int distance=0;};
@@ -94,6 +96,7 @@ bool Receive(CGameMode&,const PacketView&);
 bool Action(const Command&);
 bool MailClaimCanCheck(u32 now);
 bool MailRemovalTimedOut(u32 now);
+bool MailStageTimedOut(u32 now);
 bool SendFriendInvitationReply(u32 aid, u32 cid, bool accept);
 bool PlayerAction(int action,u32 target,const std::string& name);
 bool HasInput();
