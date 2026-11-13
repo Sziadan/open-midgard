@@ -10,21 +10,25 @@ void CheckItemCategoryUi(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     std::vector<Fixture> selectedFixtures,fixtures;int ordinal=0;
     for(const auto value:sourceDoc.object().value("fixtures").toArray()) {
         const auto row=value.toObject();Fixture f;f.id=row.value("id").toInt();f.aegis=row.value("aegis_name").toString();
-        f.name=row.value("name").toString();f.wireType=row.value("emitted_type").toInt(-1);f.index=200+ordinal++;
+        f.name=row.value("name").toString();f.wireType=row.value("emitted_type").toInt(-1);f.index=2+ordinal++;
         Require(f.id>0 && f.wireType>=0 && !f.aegis.isEmpty(),"source item fixture is missing its emitted type or identity");
         selectedFixtures.push_back(f);fixtures.push_back(f);
     }
     const auto historical=sourceDoc.object().value("historical_only_tab_branch_probes").toArray();
     for(const auto value:historical) {
         const int type=value.toObject().value("type_id").toInt(-1);Require(type>=0,"historical item type probe is invalid");
-        Fixture f;f.id=1201;f.name=QStringLiteral("Knife");f.aegis=QStringLiteral("Knife");f.wireType=type;f.index=200+ordinal++;f.historical=true;
+        Fixture f;f.id=1201;f.name=QStringLiteral("Knife");f.aegis=QStringLiteral("Knife");f.wireType=type;f.index=2+ordinal++;f.historical=true;
         fixtures.push_back(f);
     }
     // Historical client branch with raw Petegg type in the Other tab, plus
     // out-of-map values. These are synthetic client branch probes, not DB rows.
-    fixtures.push_back({7007,QStringLiteral("synthetic_petegg_wire"),QStringLiteral("Pet egg wire probe"),7,200+ordinal++,true});
-    fixtures.push_back({7019,QStringLiteral("synthetic_unknown_19"),QStringLiteral("Unknown 19"),19,200+ordinal++,true});
-    fixtures.push_back({7255,QStringLiteral("synthetic_unknown_255"),QStringLiteral("Unknown 255"),255,200+ordinal++,true});
+    fixtures.push_back({7007,QStringLiteral("synthetic_petegg_wire"),QStringLiteral("Pet egg wire probe"),7,2+ordinal++,true});
+    fixtures.push_back({7019,QStringLiteral("synthetic_unknown_19"),QStringLiteral("Unknown 19"),19,2+ordinal++,true});
+    fixtures.push_back({7255,QStringLiteral("synthetic_unknown_255"),QStringLiteral("Unknown 255"),255,2+ordinal++,true});
+    Require(ordinal<=100,"selected inventory category fixtures exceed valid indices 2..101");
+    std::set<int> uniqueFixtureIndices;
+    for(const auto& f:fixtures)Require(f.index>=2&&f.index<=101&&uniqueFixtureIndices.insert(f.index).second,
+        "selected inventory category fixture index is outside 2..101 or duplicated");
 
     // Only source-derived selected fixtures use this wire grouping. Pet eggs
     // and shadowgear have already normalized to4/5; historical aliases below
@@ -40,6 +44,9 @@ void CheckItemCategoryUi(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     };
     auto write16=[](std::vector<u8>& bytes,size_t at,u16 value) {bytes[at]=u8(value&0xff);bytes[at+1]=u8(value>>8);};
     auto makeList=[&](u16 opcode,const std::vector<Fixture>& rows,bool equipment) {
+        std::set<int> frameIndices;
+        for(const auto& row:rows)Require(row.index>=2&&row.index<=101&&frameIndices.insert(row.index).second,
+            "selected inventory packet frame has an invalid or duplicate item index");
         const size_t rowSize=equipment?26u:22u;std::vector<u8> bytes(4+rowSize*rows.size(),0);
         bytes[0]=u8(opcode&0xff);bytes[1]=u8(opcode>>8);write16(bytes,2,static_cast<u16>(bytes.size()));
         for(size_t i=0;i<rows.size();++i) {
@@ -174,48 +181,48 @@ void CheckItemCategoryUi(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
 
     // Replacing a normal item at the same index with an unknown type then Cash
     // exercises a category move on production refresh, without changing the raw ID.
-    Fixture changed{19019,QStringLiteral("refresh_type_change"),QStringLiteral("Refresh type change"),19,1200,true};
+    Fixture changed{19019,QStringLiteral("refresh_type_change"),QStringLiteral("Refresh type change"),19,26,true};
     Dispatch(mode,makeList(0x02e8,{changed},false));
     for(int tab=0;tab<3;++tab) {
         SelectInventoryFixtureTab(tab);PopulateCommerceUi(uiState,mode,false);
         for(const auto& value:uiState->commerceData().value("inventoryItems").toList())
-            Require(value.toMap().value("index").toUInt()!=1200,"unknown item type appeared in a Qt inventory tab");
+            Require(value.toMap().value("index").toUInt()!=26,"unknown item type appeared in a Qt inventory tab");
     }
-    Require(g_session.GetInventoryItemByIndex(1200) && g_session.GetInventoryItemByIndex(1200)->m_itemType==19,
+    Require(g_session.GetInventoryItemByIndex(26) && g_session.GetInventoryItemByIndex(26)->m_itemType==19,
         "filtering removed or rewrote authoritative unknown item state");
     changed.wireType=18;Dispatch(mode,makeList(0x02e8,{changed},false));SelectInventoryFixtureTab(0);PopulateCommerceUi(uiState,mode,false);
     auto changedRows=uiState->commerceData().value("inventoryItems").toList();
-    Require(changedRows.size()==1&&changedRows[0].toMap().value("index").toUInt()==1200
+    Require(changedRows.size()==1&&changedRows[0].toMap().value("index").toUInt()==26
         &&changedRows[0].toMap().value("id").toUInt()==19019,"raw-type replacement did not move item into usable tab on refresh");
     outcomes.push_back(QJsonObject{{"case","raw type changes across normal snapshot refresh"},{"outcome","PASS"}});
     Require(adapter.syncGameplay(mode,RenderBackendType::LegacyDirect3D7,RenderBackendType::LegacyDirect3D7,0,0),"category refresh sync failed");
     Frames(app,view);
-    auto* changedTile=Find(view.rootObject(),"commerceTile_inventory_1200");Require(changedTile,"refreshed Cash tile missing");
+    auto* changedTile=Find(view.rootObject(),"commerceTile_inventory_26");Require(changedTile,"refreshed Cash tile missing");
     Mouse(app,view,changedTile->mapToScene(QPointF(changedTile->width()/2,changedTile->height()/2)));
     Require(Find(view.rootObject(),"commerceItemTooltip")->isVisible(),"refreshed Cash hover missing");
     changed.wireType=3;Dispatch(mode,makeList(0x02e8,{changed},false));
     Require(adapter.syncGameplay(mode,RenderBackendType::LegacyDirect3D7,RenderBackendType::LegacyDirect3D7,0,0),"category move sync failed");
     Frames(app,view);
-    Require(!Find(view.rootObject(),"commerceTile_inventory_1200") && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),
+    Require(!Find(view.rootObject(),"commerceTile_inventory_26") && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),
         "stationary hover or delegate survived moving out of the selected category");
     Click(app,view,Find(view.rootObject(),"commerceInventoryTab_2"));
     Require(adapter.syncGameplay(mode,RenderBackendType::LegacyDirect3D7,RenderBackendType::LegacyDirect3D7,0,0),"moved item tab sync failed");
-    Frames(app,view);Require(Find(view.rootObject(),"commerceTile_inventory_1200"),"authoritative changed type did not appear in Other");
+    Frames(app,view);Require(Find(view.rootObject(),"commerceTile_inventory_26"),"authoritative changed type did not appear in Other");
     Require(view.grabWindow().save(output+"/item-category-moved-other-qt.png"),"save category move frame failed");
     outcomes.push_back(QJsonObject{{"case","stationary hover cleanup on type move"},{"outcome","PASS"}});
 
     g_session.ClearInventoryItems();
-    Fixture lifeNormal{19018,QStringLiteral("lifecycle_normal"),QStringLiteral("Lifecycle normal"),18,1300,true};
-    Fixture lifeEquip{19004,QStringLiteral("lifecycle_equip"),QStringLiteral("Lifecycle equipment"),4,1301,true};
+    Fixture lifeNormal{19018,QStringLiteral("lifecycle_normal"),QStringLiteral("Lifecycle normal"),18,27,true};
+    Fixture lifeEquip{19004,QStringLiteral("lifecycle_equip"),QStringLiteral("Lifecycle equipment"),4,28,true};
     Dispatch(mode,makeList(0x02e8,{lifeNormal},false));Dispatch(mode,makeList(0x02d0,{lifeEquip},true));
     Dispatch(mode,{0xe8,0x02,0x04,0x00});
-    Require(!g_session.GetInventoryItemByIndex(1300)&&g_session.GetInventoryItemByIndex(1301),
+    Require(!g_session.GetInventoryItemByIndex(27)&&g_session.GetInventoryItemByIndex(28),
         "empty normal snapshot did not clear only normal inventory rows");
     Dispatch(mode,makeList(0x02e8,{lifeNormal},false));
-    Require(g_session.GetInventoryItemByIndex(1300)&&g_session.GetInventoryItemByIndex(1301),
+    Require(g_session.GetInventoryItemByIndex(27)&&g_session.GetInventoryItemByIndex(28),
         "replacement normal snapshot did not restore the normal row");
     Dispatch(mode,{0xd0,0x02,0x04,0x00});
-    Require(g_session.GetInventoryItemByIndex(1300)&&!g_session.GetInventoryItemByIndex(1301),
+    Require(g_session.GetInventoryItemByIndex(27)&&!g_session.GetInventoryItemByIndex(28),
         "empty equipment snapshot did not clear only equipment rows");
     outcomes.push_back(QJsonObject{{"case","empty and replacement snapshots"},{"outcome","PASS"}});
 

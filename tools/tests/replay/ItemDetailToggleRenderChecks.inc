@@ -81,60 +81,60 @@ void CheckItemDetailToggleUi(QGuiApplication& app,QQuickView& view,QtUiState* ui
     g_session.ClearInventoryItems();g_session.ClearStorageItems();g_session.OpenStorage(1,600);
     if(g_windowMgr.m_itemWnd)g_windowMgr.m_itemWnd->SetShow(1);inventory.SetShow(1);storage.SetShow(1);
     Dispatch(mode,Equipment(0xd0,true,0));
-    const ITEM_INFO* inventoryItem=g_session.GetInventoryItemByIndex(291);Require(inventoryItem&&inventoryItem->GetItemId()==1201,"literal inventory context row missing");
+    const ITEM_INFO* inventoryItem=g_session.GetInventoryItemByIndex(3);Require(inventoryItem&&inventoryItem->GetItemId()==1201,"literal inventory context row missing");
     ITEM_INFO storageItem=*inventoryItem;storageItem.m_itemIndex=777;g_session.SetStorageItem(storageItem);
     chooseNativeTab(inventory,1);chooseNativeTab(storage,1);
-    ITEM_INFO cartItem=*inventoryItem;cartItem.m_itemIndex=292;cartItem.m_itemType=9;cartItem.m_isIdentified=0;
+    ITEM_INFO cartItem=*inventoryItem;cartItem.m_itemIndex=4;cartItem.m_itemType=9;cartItem.m_isIdentified=0;
     cartItem.m_isDamaged=1;cartItem.m_isYours=2;cartItem.m_location=0x8000;cartItem.m_wearLocation=2;
     cartItem.m_price=99;cartItem.m_realPrice=77;
-    cartItem.m_num=7;cartItem.m_deleteTime=123456;ro::commerce::state.cartItems[292]=cartItem;
+    cartItem.m_num=7;cartItem.m_deleteTime=123456;ro::commerce::state.cartItems[4]=cartItem;
     ro::commerce::state.hasCart=true;ro::commerce::state.cart.visible=true;
     auto& state=ro::commerce::state;
     PopulateCommerceUi(uiState,mode,false);sync();
 
     // Actual QML inventory right-click opens, and repeating the same source key
     // closes and deletes the owned window.
-    rightClick("commerceTile_inventory_291",1201,"inventory-open");
+    rightClick("commerceTile_inventory_3",1201,"inventory-open");
     inspect(1201,true);capture("item-detail-inventory-selected");
     g_windowMgr.m_itemInfoWnd->Move(100,70);sync();
-    rightClick("commerceTile_inventory_291",1201,"inventory-repeat");assertClosed("same QML inventory key toggles closed");
+    rightClick("commerceTile_inventory_3",1201,"inventory-repeat");assertClosed("same QML inventory key toggles closed");
     Require(view.grabWindow().save(output+"/item-detail-toggle-closed-qt.png"),"save closed detail frame failed");++renderedFrames;
 
     // A retained hidden window is reopened by Select instead of being toggled.
-    rightClick("commerceTile_inventory_291",1201,"inventory-hidden-reopen");
+    rightClick("commerceTile_inventory_3",1201,"inventory-hidden-reopen");
     UIItemInfoWnd* retained=g_windowMgr.m_itemInfoWnd;Require(retained,"hidden reopen setup failed");
     retained->SetShow(0);sync();Require(!uiState->itemInfoVisible(),"hidden retained item detail remained visible");
-    rightClick("commerceTile_inventory_291",1201,"inventory-hidden-reopen-again");
+    rightClick("commerceTile_inventory_3",1201,"inventory-hidden-reopen-again");
     Require(g_windowMgr.m_itemInfoWnd==retained&&uiState->itemInfoVisible(),"same-key selection failed to reopen hidden retained detail");
     inspect(1201,true);outcomes.push_back(QJsonObject{{"case","hidden retained same-key selection reopens"},{"outcome","PASS"}});
 
     // Owner, index, type, amount, expiry and identification are not the source
     // key. A cross-owner same-key QML selection therefore toggles the window.
-    rightClick("commerceTile_cart_292",1201,"cart-owner-index-identification");assertClosed("cross-owner/index/type/identified same key toggles closed");
-    rightClick("commerceTile_cart_292",1201,"cart-reopen");inspect(1201,false);
+    rightClick("commerceTile_cart_4",1201,"cart-owner-index-identification");assertClosed("cross-owner/index/type/identified same key toggles closed");
+    rightClick("commerceTile_cart_4",1201,"cart-reopen");inspect(1201,false);
     outcomes.push_back(QJsonObject{{"case","cart context opens after same-key toggle"},{"outcome","PASS"}});
 
     // Textual item-name matching uses the complete raw name; its decimal parse
     // may still resolve to the same numeric item ID.
     forceUpdate(*inventoryItem,ItemInfoSource::Snapshot);
-    UIItemInfoWnd* detail=g_windowMgr.m_itemInfoWnd;cartItem.m_itemName="01201";state.cartItems[292]=cartItem;PopulateCommerceUi(uiState,mode,false);
-    rightClick("commerceTile_cart_292",1201,"raw-name-leading-zero");
+    UIItemInfoWnd* detail=g_windowMgr.m_itemInfoWnd;cartItem.m_itemName="01201";state.cartItems[4]=cartItem;PopulateCommerceUi(uiState,mode,false);
+    rightClick("commerceTile_cart_4",1201,"raw-name-leading-zero");
     Require(g_windowMgr.m_itemInfoWnd==detail&&uiState->itemInfoVisible(),"raw item-name difference incorrectly toggled detail closed");
     inspect(1201,false);outcomes.push_back(QJsonObject{{"case","raw item name participates in source key"},{"outcome","PASS"}});
 
     // Refine and every card word independently change the selection key.
     ITEM_INFO keyBaseline=*inventoryItem;forceUpdate(keyBaseline,ItemInfoSource::Snapshot);
-    cartItem=keyBaseline;cartItem.m_itemIndex=292;cartItem.m_itemType=9;cartItem.m_isIdentified=0;cartItem.m_num=7;cartItem.m_deleteTime=123456;
-    cartItem.m_refiningLevel=3;state.cartItems[292]=cartItem;PopulateCommerceUi(uiState,mode,false);
-    rightClick("commerceTile_cart_292",1201,"refine-key");
+    cartItem=keyBaseline;cartItem.m_itemIndex=4;cartItem.m_itemType=9;cartItem.m_isIdentified=0;cartItem.m_num=7;cartItem.m_deleteTime=123456;
+    cartItem.m_refiningLevel=3;state.cartItems[4]=cartItem;PopulateCommerceUi(uiState,mode,false);
+    rightClick("commerceTile_cart_4",1201,"refine-key");
     Require(g_windowMgr.m_itemInfoWnd==detail&&uiState->itemInfoVisible(),"refine change incorrectly toggled detail closed");
     inspect(1201,false);outcomes.push_back(QJsonObject{{"case","refine participates in source key"},{"outcome","PASS"}});
     for(int word=0;word<4;++word) {
         forceUpdate(keyBaseline,ItemInfoSource::Snapshot);
-        ITEM_INFO changed=keyBaseline;changed.m_itemIndex=292;changed.m_itemType=9;changed.m_isIdentified=0;
+        ITEM_INFO changed=keyBaseline;changed.m_itemIndex=4;changed.m_itemType=9;changed.m_isIdentified=0;
         changed.m_num=7;changed.m_deleteTime=123456;changed.m_slot[word]=4001+word;
-        state.cartItems[292]=changed;PopulateCommerceUi(uiState,mode,false);
-        rightClick("commerceTile_cart_292",1201,"card-key");
+        state.cartItems[4]=changed;PopulateCommerceUi(uiState,mode,false);
+        rightClick("commerceTile_cart_4",1201,"card-key");
         Require(g_windowMgr.m_itemInfoWnd==detail&&uiState->itemInfoVisible(),"card word change incorrectly toggled detail closed");
         inspect(1201,false);
         outcomes.push_back(QJsonObject{{"case",QString("card word %1 participates in source key").arg(word)},{"outcome","PASS"}});
@@ -151,27 +151,27 @@ void CheckItemDetailToggleUi(QGuiApplication& app,QQuickView& view,QtUiState* ui
 
     // A snapshot is isolated from same-index inventory/cart mutations.
     const QString snapshotName=QString::fromUtf8(forcedData.name.c_str());
-    ITEM_INFO changedInventory=*g_session.GetInventoryItemByIndex(291);changedInventory.m_isIdentified=0;changedInventory.m_refiningLevel=7;
-    g_session.SetInventoryItem(changedInventory);ITEM_INFO changedCart=state.cartItems.at(292);changedCart.m_isIdentified=0;changedCart.m_refiningLevel=6;state.cartItems[292]=changedCart;
+    ITEM_INFO changedInventory=*g_session.GetInventoryItemByIndex(3);changedInventory.m_isIdentified=0;changedInventory.m_refiningLevel=7;
+    g_session.SetInventoryItem(changedInventory);ITEM_INFO changedCart=state.cartItems.at(4);changedCart.m_isIdentified=0;changedCart.m_refiningLevel=6;state.cartItems[4]=changedCart;
     sync();auto isolated=inspect(1201,true,snapshotName);
     Require(QString::fromUtf8(isolated.name.c_str())==snapshotName,"snapshot item detail bound to a same-index owner row");
     outcomes.push_back(QJsonObject{{"case","snapshot binding isolation"},{"outcome","PASS"}});
 
     // Bound owner sources refresh from their current rows instead of a colliding
     // row belonging to another source.
-    ITEM_INFO cartBound=state.cartItems.at(292);forceUpdate(cartBound,ItemInfoSource::Cart);
+    ITEM_INFO cartBound=state.cartItems.at(4);forceUpdate(cartBound,ItemInfoSource::Cart);
     Require(g_windowMgr.m_itemInfoWnd==detail&&inspect(1201,false).identified==false,"cart ForceUpdate failed to rebind source");
-    cartBound.m_isIdentified=1;cartBound.m_refiningLevel=4;state.cartItems[292]=cartBound;sync();
+    cartBound.m_isIdentified=1;cartBound.m_refiningLevel=4;state.cartItems[4]=cartBound;sync();
     auto cartRefreshed=inspect(1201,true);Require(QString::fromUtf8(cartRefreshed.name.c_str()).contains("+4"),"cart-bound detail did not refresh source refinement");
     outcomes.push_back(QJsonObject{{"case","cart source binding refresh"},{"outcome","PASS"}});
-    ITEM_INFO inventoryBound=*g_session.GetInventoryItemByIndex(291);forceUpdate(inventoryBound,ItemInfoSource::Inventory);
+    ITEM_INFO inventoryBound=*g_session.GetInventoryItemByIndex(3);forceUpdate(inventoryBound,ItemInfoSource::Inventory);
     inventoryBound.m_isIdentified=0;inventoryBound.m_refiningLevel=5;g_session.SetInventoryItem(inventoryBound);sync();
     auto inventoryRefreshed=inspect(1201,false);Require(!QString::fromUtf8(inventoryRefreshed.name.c_str()).contains("+5"),
         "unidentified inventory detail leaked refinement after owner refresh");
     outcomes.push_back(QJsonObject{{"case","inventory source binding refresh"},{"outcome","PASS"}});
 
     // Native inventory and storage right-clicks use the same Select toggle.
-    forceUpdate(*g_session.GetInventoryItemByIndex(291),ItemInfoSource::Inventory);
+    forceUpdate(*g_session.GetInventoryItemByIndex(3),ItemInfoSource::Inventory);
     nativeRightClick(inventory,"native-inventory-toggle");assertClosed("native inventory repeat selection toggles closed");
     nativeRightClick(storage,"native-storage-open");inspect(1201,true);capture("item-detail-native-storage");
     nativeRightClick(storage,"native-storage-repeat");

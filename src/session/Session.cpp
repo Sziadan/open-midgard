@@ -1527,30 +1527,24 @@ void CSession::ClearInventoryItems()
     m_inventoryItems.clear();
 }
 
-void CSession::ClearNormalInventoryItems()
+bool CSession::ReplaceInventoryCategory(bool equipment, std::list<ITEM_INFO> items)
 {
+    bool replacedWornEquipment = false;
     for (auto it = m_inventoryItems.begin(); it != m_inventoryItems.end(); ) {
-        const bool equipment = it->m_itemType == 4 || it->m_itemType == 5
+        const bool wasEquipment = it->m_itemType == 4 || it->m_itemType == 5
             || it->m_itemType == 7 || it->m_itemType == 8;
-        if (!equipment) {
+        const bool reusedIndex = std::any_of(items.begin(), items.end(), [&](const ITEM_INFO& item) {
+            return item.m_itemIndex == it->m_itemIndex;
+        });
+        if (wasEquipment == equipment || reusedIndex) {
+            replacedWornEquipment |= wasEquipment && it->m_wearLocation != 0;
             it = m_inventoryItems.erase(it);
         } else {
             ++it;
         }
     }
-}
-
-void CSession::ClearEquipmentInventoryItems()
-{
-    for (auto it = m_inventoryItems.begin(); it != m_inventoryItems.end(); ) {
-        const bool equipment = it->m_itemType == 4 || it->m_itemType == 5
-            || it->m_itemType == 7 || it->m_itemType == 8;
-        if (equipment) {
-            it = m_inventoryItems.erase(it);
-        } else {
-            ++it;
-        }
-    }
+    m_inventoryItems.splice(m_inventoryItems.end(), items);
+    return replacedWornEquipment;
 }
 
 void CSession::ClearStorageItems()

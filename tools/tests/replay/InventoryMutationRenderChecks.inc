@@ -193,13 +193,13 @@ void CheckInventoryMutationUi(QGuiApplication& app,QQuickView& view,QtUiState* u
     SelectInventoryFixtureTab(1);inventory.SetCurrentTab(1);sync();
     auto* equipment=static_cast<UIEquipWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_EQUIPWND));
     Require(equipment,"local equipment window did not open");equipment->Move(640,100);sync();
-    auto equipFail=std::vector<u8>{0xaa,0,0x23,1,2,0,2};Dispatch(mode,equipFail);sync();
-    auto* knife=g_session.GetInventoryItemByIndex(291);Require(knife&&knife->m_wearLocation==0,"failed equip ack changed wear state");
+    auto equipFail=std::vector<u8>{0xaa,0,3,0,2,0,2};Dispatch(mode,equipFail);sync();
+    auto* knife=g_session.GetInventoryItemByIndex(3);Require(knife&&knife->m_wearLocation==0,"failed equip ack changed wear state");
     g_windowMgr.EnsureChatWindowVisible();sync();checkNotice(QStringLiteral("You can't put this item on."),ro::chat::NoticeType::Equip,true);
     auto equipOk=equipFail;equipOk[6]=1;Dispatch(mode,equipOk);sync();
-    knife=g_session.GetInventoryItemByIndex(291);Require(knife&&knife->m_wearLocation==2,"successful equip ack did not set wear mask");
-    const auto wearRow=[&]()->QVariantMap {for(const auto& v:uiState->commerceData().value("inventoryItems").toList())if(v.toMap().value("index").toUInt()==291)return v.toMap();return {};};
-    Require(wearRow().isEmpty()&&!Find(view.rootObject(),"commerceTile_inventory_291"),
+    knife=g_session.GetInventoryItemByIndex(3);Require(knife&&knife->m_wearLocation==2,"successful equip ack did not set wear mask");
+    const auto wearRow=[&]()->QVariantMap {for(const auto& v:uiState->commerceData().value("inventoryItems").toList())if(v.toMap().value("index").toUInt()==3)return v.toMap();return {};};
+    Require(wearRow().isEmpty()&&!Find(view.rootObject(),"commerceTile_inventory_3"),
         "worn equipment remained in the actual Qt bag");
     UIItemWnd::DisplayData nativeBag{};
     Require(inventory.GetDisplayDataForQt(&nativeBag),"native bag projection missing after equip");
@@ -215,11 +215,11 @@ void CheckInventoryMutationUi(QGuiApplication& app,QQuickView& view,QtUiState* u
     }
     Require(equippedName,"actual equipment pane did not show the acknowledged Knife");
     Require(view.grabWindow().save(output+"/inventory-mutation-equipped.qml.png"),"save equipped frame failed");++frames;
-    auto off=std::vector<u8>{0xac,0,0x23,1,2,0,0};Dispatch(mode,off);sync();
-    Require(g_session.GetInventoryItemByIndex(291)->m_wearLocation==2,"failed unequip ack cleared wear state");
-    off[6]=1;Dispatch(mode,off);sync();Require(g_session.GetInventoryItemByIndex(291)->m_wearLocation==0,"successful unequip ack retained wear state");
+    auto off=std::vector<u8>{0xac,0,3,0,2,0,0};Dispatch(mode,off);sync();
+    Require(g_session.GetInventoryItemByIndex(3)->m_wearLocation==2,"failed unequip ack cleared wear state");
+    off[6]=1;Dispatch(mode,off);sync();Require(g_session.GetInventoryItemByIndex(3)->m_wearLocation==0,"successful unequip ack retained wear state");
     Require(wearRow().value("equipped").toBool()==false,"unequipped Qt row did not clear equipped state");
-    Require(Find(view.rootObject(),"commerceTile_inventory_291")&&wearRow().value("id").toUInt()==1201,
+    Require(Find(view.rootObject(),"commerceTile_inventory_3")&&wearRow().value("id").toUInt()==1201,
         "unequipped item did not return to the actual Qt bag");
     for(const auto& v:uiState->equipData().value("slots").toList())
         Require(!v.toMap().value("occupied").toBool()||v.toMap().value("itemId").toUInt()!=1201,

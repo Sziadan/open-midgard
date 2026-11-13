@@ -64,7 +64,7 @@ void InventoryTabStartupFixture(CGameMode& mode)
     const auto put16=[](std::vector<u8>& bytes,size_t at,u16 value){bytes[at]=u8(value);bytes[at+1]=u8(value>>8);};
     for(int ordinal=0;ordinal<2;++ordinal) {
         const size_t at=4+22*size_t(ordinal);
-        put16(normal,at,u16(2+ordinal));put16(normal,at+2,ordinal==0?501:4001);
+        put16(normal,at,u16(2+2*ordinal));put16(normal,at+2,ordinal==0?501:4001);
         normal[at+4]=ordinal==0?0:6;normal[at+5]=1;put16(normal,at+6,1);
     }
     Dispatch(mode,normal);Dispatch(mode,Equipment(0xd0,true,0));

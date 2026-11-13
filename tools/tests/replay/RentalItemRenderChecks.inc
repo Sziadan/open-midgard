@@ -28,7 +28,7 @@ void CheckRentalItemUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     };
     const auto openQt=[&](const QString& kind) {
         if(g_windowMgr.m_itemInfoWnd)g_windowMgr.m_itemInfoWnd->SetShow(0);
-        sync();auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_291");Require(tile,"rental tile missing");
+        sync();auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_3");Require(tile,"rental tile missing");
         const auto p=tile->mapToScene(QPointF(tile->width()/2,tile->height()/2));Mouse(app,view,p);
         QMouseEvent press(QEvent::MouseButtonPress,p,view.mapToGlobal(p.toPoint()),Qt::RightButton,Qt::RightButton,Qt::NoModifier);
         QMouseEvent release(QEvent::MouseButtonRelease,p,view.mapToGlobal(p.toPoint()),Qt::RightButton,Qt::NoButton,Qt::NoModifier);
@@ -81,15 +81,15 @@ void CheckRentalItemUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     Dispatch(mode,equip(0xd0,1704067200,1201,false));capture("unidentified-rental","01/01 00:00");
     Dispatch(mode,equip(0xd0,0x80000000));capture("unsigned-2038-date","01/19 03:14");
     Dispatch(mode,equip(0xd0,0xffffffff));capture("unsigned-2106-date","02/07 06:28");
-    Require(g_session.GetInventoryItemByIndex(291),"local date display predicted item removal");
+    Require(g_session.GetInventoryItemByIndex(3),"local date display predicted item removal");
     SetRentalTestZone("UTC-2");
     Require(g_ttemmgr.GetExpiryDisplayText(1704067200).find("01/01 02:00")!=std::string::npos,"expiry formatter ignored local timezone");
     SetRentalTestZone("UTC0");
 
     // Same numeric index in another owner must not follow inventory deletion.
     Dispatch(mode,equip(0xd0,1704067200));PopulateCommerceUi(state,mode,false);openQt("cart");capture("cart-date","01/04 00:00");
-    Dispatch(mode,{0x99,2,0x23,1,0xb1,4});capture("cart-survives-inventory-expiry","01/04 00:00");
-    Dispatch(mode,{0xaf,0,0x23,1,1,0});sync();Require(state->itemInfoVisible(),"inventory follow-up closed cart detail");
+    Dispatch(mode,{0x99,2,3,0,0xb1,4});capture("cart-survives-inventory-expiry","01/04 00:00");
+    Dispatch(mode,{0xaf,0,3,0,1,0});sync();Require(state->itemInfoVisible(),"inventory follow-up closed cart detail");
     Dispatch(mode,{0xd2,2,4,0});sync();Require(!state->itemInfoVisible() && !g_windowMgr.m_itemInfoWnd->HasItem(),"cart snapshot removal left stale detail");
 
     // Open the storage owner through its real native right-click entry.
@@ -102,28 +102,28 @@ void CheckRentalItemUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     Dispatch(mode,{0xf8,0});sync();Require(!state->itemInfoVisible(),"closed storage retained bound expiry detail");
 
     // Selected NORMALITEM_INFO also carries HireExpireDate at row+18.
-    std::vector<u8> normal={0xe8,2,26,0,0x23,1,0xf5,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0x80,0,0x92,0x65};
+    std::vector<u8> normal={0xe8,2,26,0,3,0,0xf5,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0x80,0,0x92,0x65};
     Dispatch(mode,normal);SelectInventoryFixtureTab(0);PopulateCommerceUi(state,mode,false);
     openQt("inventory");capture("normal-stack-rental","01/01 00:00");
-    Require(g_session.GetInventoryItemByIndex(291)->m_num==2,"normal rental amount lost");
-    Dispatch(mode,{0x99,2,0x23,1,0xf5,1});sync();
-    Require(state->itemInfoVisible() && g_session.GetInventoryItemByIndex(291)->m_num==1,
+    Require(g_session.GetInventoryItemByIndex(3)->m_num==2,"normal rental amount lost");
+    Dispatch(mode,{0x99,2,3,0,0xf5,1});sync();
+    Require(state->itemInfoVisible() && g_session.GetInventoryItemByIndex(3)->m_num==1,
         "partial rental decrement closed surviving stack detail");
-    Dispatch(mode,{0xaf,0,0x23,1,2,0});sync();Require(!state->itemInfoVisible(),"full normal rental removal retained detail");
+    Dispatch(mode,{0xaf,0,3,0,2,0});sync();Require(!state->itemInfoVisible(),"full normal rental removal retained detail");
     SelectInventoryFixtureTab(1);
     Dispatch(mode,equip(0xd0,1704067200));PopulateCommerceUi(state,mode,false);openQt("inventory");
     Dispatch(mode,equip(0xd0,0,1202));sync();Require(!state->itemInfoVisible(),"reused inventory index retargeted an old detail");
     Dispatch(mode,equip(0xd0,1704067200));PopulateCommerceUi(state,mode,false);openQt("inventory");
-    auto* tile=Find(view.rootObject(),"commerceTile_inventory_291");Require(tile,"expiring tile missing");
+    auto* tile=Find(view.rootObject(),"commerceTile_inventory_3");Require(tile,"expiring tile missing");
     Mouse(app,view,tile->mapToScene(QPointF(tile->width()/2,tile->height()/2)));
-    Dispatch(mode,{0x99,2,0x23,1,0xb1,4});sync();
-    Require(!g_session.GetInventoryItemByIndex(291) && !state->itemInfoVisible()
-        && !Find(view.rootObject(),"commerceTile_inventory_291") && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),
+    Dispatch(mode,{0x99,2,3,0,0xb1,4});sync();
+    Require(!g_session.GetInventoryItemByIndex(3) && !state->itemInfoVisible()
+        && !Find(view.rootObject(),"commerceTile_inventory_3") && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),
         "actual expiry left inventory/delegate/tooltip/detail state");
     Require(g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->m_show,"rental notification did not reveal chat");
     const auto& notice=g_windowMgr.GetChatEvents().back();
     Require(notice.color==0xffff00 && notice.text.find("deleted from the Inventory")!=std::string::npos,"expiry notice missing/wrong colour");
-    Dispatch(mode,{0xaf,0,0x23,1,1,0});sync();Require(g_session.GetInventoryItems().empty(),"expiry follow-up resurrected row");
+    Dispatch(mode,{0xaf,0,3,0,1,0});sync();Require(g_session.GetInventoryItems().empty(),"expiry follow-up resurrected row");
     Require(view.grabWindow().save(output+"/expiry-removed-qt.png"),"save expiry removal frame failed");++frames;
 
     // Positional message probes distinguish real loaded values from fallbacks.

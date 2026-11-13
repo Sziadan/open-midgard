@@ -78,7 +78,7 @@ void CheckCardNameCases(QGuiApplication& app,QQuickView& view,QtUiState* state,
         Require(view.grabWindow().save(output+"/card-"+test.id+"-qt-storage.png"),"save QML storage card frame failed");
         storage.OnMouseMove(-100,-100);state->setAnchors({});
         for(const QString& kind:{QString("inventory"),QString("cart")}) {
-            auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_291");Require(tile,"card item tile missing");
+            auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_3");Require(tile,"card item tile missing");
             Mouse(app,view,tile->mapToScene(QPointF(tile->width()/2,tile->height()/2)));
             auto* label=Find(view.rootObject(),"commerceItemTooltipText");
             if(!label || !label->isVisible() || label->property("text").toString()!=expectedHover)
@@ -89,11 +89,11 @@ void CheckCardNameCases(QGuiApplication& app,QQuickView& view,QtUiState* state,
         outcomes.push_back(QJsonObject{{"case",test.id},{"expected_hover",expectedHover},{"expected_row",expectedRow},{"outcome","PASS"}});
     }
     // Replacement must clear all card-derived names and a currently visible tooltip.
-    auto* tile=Find(view.rootObject(),"commerceTile_cart_291");Require(tile,"card removal tile missing");
+    auto* tile=Find(view.rootObject(),"commerceTile_cart_3");Require(tile,"card removal tile missing");
     Mouse(app,view,tile->mapToScene(QPointF(tile->width()/2,tile->height()/2)));
     Dispatch(mode,{0xd0,2,4,0});Dispatch(mode,{0xd2,2,4,0});Dispatch(mode,{0xd1,2,4,0});
     PopulateCommerceUi(state,mode,false);Frames(app,view);
-    Require(!Find(view.rootObject(),"commerceTile_cart_291") && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),
+    Require(!Find(view.rootObject(),"commerceTile_cart_3") && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),
         "card-derived hover survived row removal");
     QFile file(output+"/card-name-results.json");Require(file.open(QIODevice::WriteOnly),"open card name results failed");
     file.write(QJsonDocument(QJsonObject{{"cases",outcomes},{"outcome","PASS"}}).toJson());

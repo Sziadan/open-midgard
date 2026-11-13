@@ -85,14 +85,14 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     // Collision fixtures: NPC catalog/deal snapshots share an index with a
     // different local inventory/cart ID. This does not claim 00C6 carries an index.
     Dispatch(mode,Equipment(0xd0,true,0));
-    ITEM_INFO bagItem=*g_session.GetInventoryItemByIndex(291);ITEM_INFO cartItem=bagItem;cartItem.SetItemId(1202);
-    ro::commerce::state.cartItems[291]=cartItem;ro::commerce::state.hasCart=true;ro::commerce::state.cart.visible=false;
+    ITEM_INFO bagItem=*g_session.GetInventoryItemByIndex(3);ITEM_INFO cartItem=bagItem;cartItem.SetItemId(1202);
+    ro::commerce::state.cartItems[3]=cartItem;ro::commerce::state.hasCart=true;ro::commerce::state.cart.visible=false;
     openShop(0x12345678);Dispatch(mode,buyList({{0,501}}));
     Require(g_windowMgr.m_itemShopWnd&&g_windowMgr.m_itemPurchaseWnd,"production 00C6 did not open NPC buy shop windows");
     g_windowMgr.m_itemShopWnd->Move(20,100);g_windowMgr.m_itemPurchaseWnd->Move(450,100);
     // Synthetic source-index collision for the catalog row only; 00C6 wire rows
     // contain prices/type/item ID and no inventory index.
-    g_session.m_shopRows[0].sourceItemIndex=291;sync();
+    g_session.m_shopRows[0].sourceItemIndex=3;sync();
     QQuickItem* catalog=rowTarget("npcShopSourceRow_0");Require(catalog&&catalog->isVisible(),"NPC catalog row missing from Qt projection");
     const int selectedSourceBefore=g_session.m_shopSelectedSourceRow;const size_t buyDealsBefore=g_session.m_shopDealRows.size();
     const int totalBefore=g_session.m_shopDealTotal;UIItemPurchaseWnd* purchaseBefore=g_windowMgr.m_itemPurchaseWnd;
@@ -107,7 +107,7 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
 
     clickSource(0,501);catalogDetail=g_windowMgr.m_itemInfoWnd;
     // Replacing the catalog closes source windows but must preserve the selected snapshot.
-    openShop(0x12345679);Dispatch(mode,buyList({{5,1201}}));g_session.m_shopRows[0].sourceItemIndex=291;
+    openShop(0x12345679);Dispatch(mode,buyList({{5,1201}}));g_session.m_shopRows[0].sourceItemIndex=3;
     g_windowMgr.m_itemShopWnd->Move(20,100);g_windowMgr.m_itemPurchaseWnd->Move(450,100);sync();
     Require(g_windowMgr.m_itemInfoWnd==catalogDetail,"NPC buy catalog replacement deleted the item detail window");
     expectDetail(501,true,"buy catalog replacement changed retained snapshot");
@@ -127,7 +127,7 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
 
     // Named synthetic deal contexts check same-index/different-owner collisions;
     // they are not represented as 00C6/00C7 source rows.
-    g_session.m_shopDealRows={createDeal(1202,5,291,2,75)};g_session.m_shopSelectedDealRow=0;g_session.m_shopDealTotal=150;
+    g_session.m_shopDealRows={createDeal(1202,5,3,2,75)};g_session.m_shopSelectedDealRow=0;g_session.m_shopDealTotal=150;
     sync();const int buySelectedBefore=g_session.m_shopSelectedDealRow;const int buyQuantityBefore=g_session.m_shopDealRows[0].quantity;
     clickBuyDeal(0,1202);capture("npc-buy-deal-snapshot",1202,true);
     Require(g_session.m_shopSelectedDealRow==buySelectedBefore&&g_session.m_shopDealRows[0].quantity==buyQuantityBefore
@@ -142,7 +142,7 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     // Sell catalog rows come from literal 00C7 and resolve the 00C7 index against
     // inventory once. Subsequent detail actions are detached snapshots.
     auto unidentified=Equipment(0xd0,false,0);unidentified[15]=7;write16(unidentified,16,4001);
-    Dispatch(mode,unidentified);openShop(0x12345680);Dispatch(mode,sellList(291,44,55));
+    Dispatch(mode,unidentified);openShop(0x12345680);Dispatch(mode,sellList(3,44,55));
     Require(g_windowMgr.m_itemShopWnd&&g_windowMgr.m_itemSellWnd,"production 00C7 did not open NPC sell windows");
     g_windowMgr.m_itemShopWnd->Move(20,100);g_windowMgr.m_itemSellWnd->Move(450,100);sync();
     const int sellSourceBefore=g_session.m_shopSelectedSourceRow;const size_t sellDealsBefore=g_session.m_shopDealRows.size();
@@ -162,7 +162,7 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     Require(g_session.m_shopDealRows[0].quantity==1,"NPC sell deal right-click changed production deal quantity");
     cases.push_back(QJsonObject{{"case","sell deal projected from C7 source row"},{"item_id",1201},{"outcome","PASS"}});clearDetail();
 
-    g_session.m_shopDealRows={createDeal(501,0,291,3,12)};g_session.m_shopSelectedDealRow=0;g_session.m_shopDealTotal=36;
+    g_session.m_shopDealRows={createDeal(501,0,3,3,12)};g_session.m_shopSelectedDealRow=0;g_session.m_shopDealTotal=36;
     sync();const int sellSelectedBefore=g_session.m_shopSelectedDealRow;const int sellQuantityBefore=g_session.m_shopDealRows[0].quantity;
     clickSellDeal(0,501);capture("npc-sell-deal-snapshot",501,true);
     Require(g_session.m_shopSelectedDealRow==sellSelectedBefore&&g_session.m_shopDealRows[0].quantity==sellQuantityBefore
@@ -235,7 +235,7 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     };
     checkDealScroll(g_windowMgr.m_itemPurchaseWnd,"npcShopBuyDealRow_","buy deal scroll/header/shrink");
     // Open a genuine sell phase, then inject explicitly synthetic deal records.
-    Dispatch(mode,Equipment(0xd0,true,0));openShop(0x12345690);Dispatch(mode,sellList(291,44,55));
+    Dispatch(mode,Equipment(0xd0,true,0));openShop(0x12345690);Dispatch(mode,sellList(3,44,55));
     g_windowMgr.m_itemShopWnd->Move(20,100);g_windowMgr.m_itemSellWnd->Move(450,100);sync();
     checkDealScroll(g_windowMgr.m_itemSellWnd,"npcShopSellDealRow_","sell deal scroll/header/shrink");
 
@@ -252,10 +252,10 @@ void CheckNpcShopDetails(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
 
     // An inventory-shaped ID/index collision must not affect the catalog snapshot.
     g_session.ClearInventoryItems();Dispatch(mode,Equipment(0xd0,true,0));
-    g_session.m_shopRows[0].itemInfo.SetItemId(501);g_session.m_shopRows[0].sourceItemIndex=291;sync();
+    g_session.m_shopRows[0].itemInfo.SetItemId(501);g_session.m_shopRows[0].sourceItemIndex=3;sync();
     QQuickItem* finalRow=rowTarget("npcShopSourceRow_0");sendRightClick(finalRow,"final source snapshot");expectDetail(501,true,"collision source did not open detail");
     UIItemInfoWnd* finalDetail=g_windowMgr.m_itemInfoWnd;g_session.ClearInventoryItems();
-    ro::commerce::state.cartItems.erase(291);sync();Require(g_windowMgr.m_itemInfoWnd==finalDetail,"inventory/cart ID collision invalidated NPC snapshot");
+    ro::commerce::state.cartItems.erase(3);sync();Require(g_windowMgr.m_itemInfoWnd==finalDetail,"inventory/cart ID collision invalidated NPC snapshot");
     expectDetail(501,true,"NPC snapshot resolved through colliding inventory/cart owner");
     Require(view.grabWindow().save(output+"/npc-shop-retained-snapshot-qt.png"),"save NPC retained snapshot QML failed");
     UIItemInfoWnd::DisplayData finalData{};Require(finalDetail->GetDisplayDataForQt(&finalData),"NPC retained detail native data missing");

@@ -2364,81 +2364,59 @@ void HandleShortcutKeyList(CGameMode&, const PacketView& packet)
     DbgLog("[GameMode] shortcut key list synced slots=%d\n", kShortcutSlotCount);
 }
 
-void HandleNormalInventoryList(CGameMode&, const PacketView& packet)
+void ApplyInventoryList(CGameMode& mode, const PacketView& packet, bool equipment)
 {
-    if (!packet.data || packet.packetLength < 4) {
+    constexpr size_t kInventorySlots = 100;
+    constexpr unsigned kFirstInventoryIndex = 2;
+    constexpr unsigned kMaxStackAmount = 30000;
+    if (!packet.data || packet.packetLength < 4 || ReadLE16(packet.data + 2) != packet.packetLength) {
+        return;
+    }
+    const int stride = equipment ? ro::net::GetActiveEquipmentItemListEntrySize(packet.packetId)
+        : ro::net::GetActiveStackableItemListEntrySize(packet.packetId);
+    const size_t payload = packet.packetLength - 4;
+    if (stride <= 0 || payload % stride != 0 || payload / stride > kInventorySlots) {
         return;
     }
 
-    if (!ro::net::IsActiveNormalInventoryListPacket(packet.packetId)) {
-        return;
-    }
-
-    const int entrySizeValue = ro::net::GetActiveStackableItemListEntrySize(packet.packetId);
-    if (entrySizeValue <= 0) {
-        return;
-    }
-    const size_t entrySize = static_cast<size_t>(entrySizeValue);
-
-    const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
-    if (entrySize == 0) {
-        return;
-    }
-    if (payloadSize % entrySize != 0) {
-        return;
-    }
-    // A character with no stackables is a 4-byte list. Leaving the previous
-    // character's items in place is what shows them on the next login.
-    if (payloadSize < entrySize) {
-        if (payloadSize == 0) {
-            g_session.ClearNormalInventoryItems();
+    std::array<bool, kFirstInventoryIndex + kInventorySlots> seen{};
+    std::list<ITEM_INFO> items;
+    unsigned int eggIndex = 0;
+    for (size_t offset = 4; offset < packet.packetLength; offset += stride) {
+        const auto* row = packet.data + offset;
+        const auto index = ReadLE16(row);
+        const auto quantity = equipment ? 1u : ReadLE16(row + 6);
+        if (index < kFirstInventoryIndex || index >= seen.size() || seen[index]
+            || ReadLE16(row + 2) == 0 || quantity == 0 || quantity > kMaxStackAmount) {
+            return;
         }
-        return;
+        seen[index] = true;
+        ITEM_INFO item;
+        if (!(equipment ? BuildEquipInventoryItem(packet, row, item) : BuildNormalInventoryItem(packet, row, item))) {
+            return;
+        }
+        if (equipment && item.GetItemId() >= 9001 && item.GetItemId() < 9050 && item.m_isDamaged) {
+            eggIndex = index;
+        }
+        items.push_back(std::move(item));
     }
 
-    g_session.ClearNormalInventoryItems();
-    for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
-        ITEM_INFO itemInfo;
-        if (BuildNormalInventoryItem(packet, packet.data + offset, itemInfo)) {
-            g_session.SetInventoryItem(itemInfo);
-        }
+    const bool replacedWornEquipment = g_session.ReplaceInventoryCategory(equipment, std::move(items));
+    if (eggIndex) g_session.m_petStatus.eggIndex = eggIndex;
+    if (equipment || replacedWornEquipment) {
+        g_session.RebuildPlayerEquipmentAppearanceFromInventory();
+        SyncSessionAppearanceToLocalPlayer(mode);
     }
+}
+
+void HandleNormalInventoryList(CGameMode& mode, const PacketView& packet)
+{
+    if (ro::net::IsActiveNormalInventoryListPacket(packet.packetId)) ApplyInventoryList(mode, packet, false);
 }
 
 void HandleEquipInventoryList(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 4) {
-        return;
-    }
-
-    if (!ro::net::IsActiveEquipInventoryListPacket(packet.packetId)) {
-        return;
-    }
-
-    const int entrySizeValue = ro::net::GetActiveEquipmentItemListEntrySize(packet.packetId);
-    if (entrySizeValue <= 0) {
-        return;
-    }
-    const size_t entrySize = static_cast<size_t>(entrySizeValue);
-    const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
-    if (payloadSize % entrySize != 0) {
-        return;
-    }
-
-    g_session.ClearEquipmentInventoryItems();
-    for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
-        ITEM_INFO itemInfo;
-        if (!BuildEquipInventoryItem(packet, packet.data + offset, itemInfo)) {
-            continue;
-        }
-        // Source list handlers remember each eligible wire row, including
-        // equipped/unidentified eggs. No eligible row leaves the old index.
-        if(itemInfo.GetItemId()>=9001 && itemInfo.GetItemId()<9050 && itemInfo.m_isDamaged)
-            g_session.m_petStatus.eggIndex=itemInfo.m_itemIndex;
-        g_session.AddInventoryItem(itemInfo);
-    }
-    g_session.RebuildPlayerEquipmentAppearanceFromInventory();
-    SyncSessionAppearanceToLocalPlayer(mode);
+    if (ro::net::IsActiveEquipInventoryListPacket(packet.packetId)) ApplyInventoryList(mode, packet, true);
 }
 
 bool BuildStorageItemFromAddPacket(const PacketView& packet, ITEM_INFO& outItem)

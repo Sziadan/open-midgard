@@ -348,8 +348,7 @@ public:
     bool TryGetBaseExpPercent(int* outPercent) const;
     bool TryGetJobExpPercent(int* outPercent) const;
     void ClearInventoryItems();
-    void ClearNormalInventoryItems();
-    void ClearEquipmentInventoryItems();
+    bool ReplaceInventoryCategory(bool equipment, std::list<ITEM_INFO> items);
     void ClearStorageItems();
     void ClearSkillItems();
     void ClearGuildSkillItems();

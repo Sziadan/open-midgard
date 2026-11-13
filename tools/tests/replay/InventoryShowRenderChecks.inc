@@ -120,7 +120,7 @@ void CheckInventoryShowChild(QGuiApplication& app,QQuickView& view,QtUiState* st
     InventoryGeometryCheckQml(view,100,80,280,166);
     InventoryShowRequire(InventoryTabStartupIdsEqual(InventoryTabStartupRows(state),{4001}),
         "UI teardown lost the selected decoded inventory row or restored the wrong tab");
-    auto* cardTile=Find(view.rootObject(),"commerceTile_inventory_3");
+    auto* cardTile=Find(view.rootObject(),"commerceTile_inventory_4");
     InventoryShowRequire(cardTile&&cardTile->isVisible()&&cardTile->property("item").toMap().value("id").toUInt()==4001,
         "actual QML restored inventory row is absent or has the wrong identity");
     InventoryShowRequire(view.grabWindow().save(output+"/inventory-show-restored.qml.png"),"save restored inventory show frame failed");

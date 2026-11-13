@@ -31,7 +31,7 @@ void CheckSpecialItemNames(QGuiApplication& app,QQuickView& view,QtUiState* stat
     const auto frameFor=[&](const Case& test,u8 lowOpcode) {
         const bool normal=test.type==0;
         std::vector<u8> frame=normal
-            ? std::vector<u8>{lowOpcode,2,26,0,0x23,1,u8(test.itemId),u8(test.itemId>>8),test.type,u8(test.identified),3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+            ? std::vector<u8>{lowOpcode,2,26,0,3,0,u8(test.itemId),u8(test.itemId>>8),test.type,u8(test.identified),3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
             : Equipment(lowOpcode,test.identified,0);
         frame[6]=u8(test.itemId);frame[7]=u8(test.itemId>>8);frame[8]=test.type;
         if(!normal) { frame[15]=test.refine;if(test.itemId==9001)frame[10]=frame[11]=0; }
@@ -58,7 +58,7 @@ void CheckSpecialItemNames(QGuiApplication& app,QQuickView& view,QtUiState* stat
         QString expectedRow=fullName;
         if(test.itemId==1202)expectedRow.replace("Knife","Knife [4]").replace("Dagger","Dagger [4]");
         UIItemInfoWnd detail;
-        detail.SetItemInfo(*g_session.GetInventoryItemByIndex(291),0,0);detail.SetShow(1);
+        detail.SetItemInfo(*g_session.GetInventoryItemByIndex(3),0,0);detail.SetShow(1);
         UIItemInfoWnd::DisplayData detailData;
         Require(detail.GetDisplayDataForQt(&detailData) && QString::fromStdString(detailData.name)==expectedRow,
             "detailed item name differs from shared special composition");
@@ -82,7 +82,7 @@ void CheckSpecialItemNames(QGuiApplication& app,QQuickView& view,QtUiState* stat
         Require(view.grabWindow().save(output+"/"+prefix+"-qt-storage.png"),"save special Qt storage frame failed");
         storage.OnMouseMove(-100,-100);state->setAnchors({});
         for(const QString& kind:{QString("inventory"),QString("cart")}) {
-            auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_291");Require(tile,"special item tile missing");
+            auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_3");Require(tile,"special item tile missing");
             Mouse(app,view,tile->mapToScene(QPointF(tile->width()/2,tile->height()/2)));
             label=Find(view.rootObject(),"commerceItemTooltipText");
             Require(label && label->isVisible() && label->property("text").toString()==expectedHover,"actual Qt special hover name mismatch");
@@ -98,12 +98,12 @@ void CheckSpecialItemNames(QGuiApplication& app,QQuickView& view,QtUiState* stat
     Case delayed={"delayed-producer",1202,5,{255,0,0x5678,0x1234},"'s Knife"};
     mode.m_characterNameCache.erase(0x12345678);seed(delayed);check(delayed,"'s Knife","producer-pending");
     UIItemInfoWnd pendingDetail;
-    pendingDetail.SetItemInfo(*g_session.GetInventoryItemByIndex(291),0,0);pendingDetail.SetShow(0);
+    pendingDetail.SetItemInfo(*g_session.GetInventoryItemByIndex(3),0,0);pendingDetail.SetShow(0);
     struct DetachDetail { ~DetachDetail(){g_windowMgr.m_itemInfoWnd=nullptr;} } detachDetail;
     g_windowMgr.m_itemInfoWnd=&pendingDetail;pendingDetail.m_isDirty=0;
     Hover(inventory);
     Require(Native(inventory,0xffffffffu).save(output+"/producer-pending-native-inventory.png"),"save pending producer native frame failed");
-    auto* pendingTile=Find(view.rootObject(),"commerceTile_cart_291");Require(pendingTile,"pending producer tile missing");
+    auto* pendingTile=Find(view.rootObject(),"commerceTile_cart_3");Require(pendingTile,"pending producer tile missing");
     Mouse(app,view,pendingTile->mapToScene(QPointF(pendingTile->width()/2,pendingTile->height()/2)));
     inventory.m_isDirty=0;storage.m_isDirty=0;
     std::vector<u8> reply(30,0);
@@ -129,7 +129,7 @@ void CheckSpecialItemNames(QGuiApplication& app,QQuickView& view,QtUiState* stat
     PopulateCommerceUi(state,mode,false);Frames(app,view);check(delayed,"New's Knife","producer-renamed");
     Dispatch(mode,{0xd0,2,4,0});Dispatch(mode,{0xd2,2,4,0});Dispatch(mode,{0xd1,2,4,0});
     PopulateCommerceUi(state,mode,false);Frames(app,view);
-    Require(!Find(view.rootObject(),"commerceTile_cart_291"),"special name survived item removal");
+    Require(!Find(view.rootObject(),"commerceTile_cart_3"),"special name survived item removal");
     // A configured empty marker differs from the English fallback. This proves
     // the positional table is used and an intentional empty message is retained.
     QFile messages(output+"/data/msgstringtable.txt");Require(messages.open(QIODevice::ReadOnly),"open message override probe failed");

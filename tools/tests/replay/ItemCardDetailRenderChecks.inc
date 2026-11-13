@@ -46,7 +46,7 @@ ITEM_INFO ItemCardDetailParentItem(CGameMode& mode,bool identified,const std::ar
         packet[16+i*2]=u8(cards[i]);packet[17+i*2]=u8(cards[i]>>8);
     }
     Dispatch(mode,packet);
-    const ITEM_INFO* row=g_session.GetInventoryItemByIndex(291);
+    const ITEM_INFO* row=g_session.GetInventoryItemByIndex(3);
     ItemCardDetailRequire(row&&row->GetItemId()==itemId,"slotted card parent fixture was not decoded");
     ITEM_INFO item=*row;item.m_isIdentified=identified?1:0;
     std::copy(cards.begin(),cards.end(),std::begin(item.m_slot));
@@ -176,7 +176,7 @@ void CheckItemCardDetailChild(QGuiApplication& app,QQuickView& view,QtUiState* u
         UIItemInfoWnd::DisplayData mainData{};
         ItemCardDetailRequire(g_windowMgr.m_itemInfoWnd==&parent&&parent.GetDisplayDataForQt(&mainData)
             &&mainData.itemId==1202,"opening a card changed or replaced its main parent snapshot");
-        const ITEM_INFO* live=g_session.GetInventoryItemByIndex(291);
+        const ITEM_INFO* live=g_session.GetInventoryItemByIndex(3);
         ItemCardDetailRequire(live&&live->GetItemId()==1202,"card selection changed the live inventory row");
     };
     const auto noCard=[&](const char* message) {

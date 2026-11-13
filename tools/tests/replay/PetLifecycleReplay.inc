@@ -192,14 +192,14 @@ void PetLifecycleReplay()
         const int size=ro::net::GetActiveEquipmentItemListEntrySize(opcode);Require(size==20 || size==26,"unexpected selected equipment size");
         std::vector<u8> p(4+size*4);set16(p,0,opcode);set16(p,2,static_cast<u16>(p.size()));
         const u16 ids[]={9001,9049,9050,9002};
-        for(int i=0;i<4;++i){const auto at=4+size*i;set16(p,at,101+i);set16(p,at+2,ids[i]);p[at+4]=7;p[at+5]=0;p[at+10]=i==3?0:1;set16(p,at+8,i==1?1:0);}
+        for(int i=0;i<4;++i){const auto at=4+size*i;set16(p,at,98+i);set16(p,at+2,ids[i]);p[at+4]=7;p[at+5]=0;p[at+10]=i==3?0:1;set16(p,at+8,i==1?1:0);}
         return p;
     };
     for(u16 opcode:{u16{0x00a4},u16{0x02d0}}){
-        dispatch(inventory(opcode));Require(pet.eggIndex==102,"pet egg linkage did not select last eligible wire row before wear split");
+        dispatch(inventory(opcode));Require(pet.eggIndex==99,"pet egg linkage did not select last eligible wire row before wear split");
         std::vector<u8> empty(4);set16(empty,0,opcode);set16(empty,2,4);dispatch(empty);
-        Require(pet.eggIndex==102,"empty equipment list cleared source remembered egg");
+        Require(pet.eggIndex==99,"empty equipment list cleared source remembered egg");
     }
-    g_session.ClearInventoryItems();Require(pet.eggIndex==102,"inventory clear invented pet egg reset");
+    g_session.ClearInventoryItems();Require(pet.eggIndex==99,"inventory clear invented pet egg reset");
     std::cout<<"{\"case_id\":\"pet_live_state_receive\",\"contract_id\":\"PK27.PET-CONTROL\",\"source01a4\":true,\"actual_actor_act_resource\":true,\"property_widths\":true,\"egg_wire_order\":true,\"alternate_shared_detail_owner\":true,\"outcome\":\"PASS\"}\n";
 }

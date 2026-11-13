@@ -3989,3 +3989,5 @@ PK30.04 renders both candidate prompts in native and Qt and verifies the full En
 PK30.04 verifies the eligible adoption action and its omission for an ineligible baby character in the native and Qt player menus. [Evidence](evidence/PK30.01-relationship-wire.md)
 
 PK34.01 establishes the selected inventory, cart, and storage snapshot wire contracts and reset boundaries. The compiled server-header probe passed. [Evidence](evidence/PK34.01-item-snapshot-contract.md)
+
+PK34.02 and PK34.03 validate and replace normal and equipment inventory lists atomically, including reuse of an index by a different category. [Evidence](evidence/PK34.01-item-snapshot-contract.md)

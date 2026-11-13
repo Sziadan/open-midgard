@@ -79,11 +79,11 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     hidePanels();
     // Deliberate same-index collision: inventory is Knife; cart is Dagger.
     Dispatch(mode,Equipment(0xd0,true,0));
-    ITEM_INFO cartItem;cartItem.m_itemIndex=291;cartItem.SetItemId(1202);cartItem.m_itemType=5;cartItem.m_isIdentified=0;cartItem.m_num=1;
-    state.cartItems[291]=cartItem;state.hasCart=true;state.cart.visible=true;
+    ITEM_INFO cartItem;cartItem.m_itemIndex=3;cartItem.SetItemId(1202);cartItem.m_itemType=5;cartItem.m_isIdentified=0;cartItem.m_num=1;
+    state.cartItems[3]=cartItem;state.hasCart=true;state.cart.visible=true;
     sync();
-    rightClick("commerceTile_inventory_291",1201,true,"inventory");
-    rightClick("commerceTile_cart_291",1202,false,"cart-collision");
+    rightClick("commerceTile_inventory_3",1201,true,"inventory");
+    rightClick("commerceTile_cart_3",1202,false,"cart-collision");
 
     // Literal server snapshots exercise both offer layouts and their itemIndex identity.
     hidePanels();Dispatch(mode,offerPacket(0x136,1202,291,2,true));
@@ -114,21 +114,21 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     // Snapshot details remain the selected item after their source panel/list changes.
     hidePanels();Dispatch(mode,offerPacket(0x133,1202,291,1,true));state.shop.visible=true;sync();
     rightClick("commerceDetail_shop_291",1202,true,"shop-snapshot");
-    state.shopItems.clear();state.shop.visible=false;state.cartItems.erase(291);sync();
-    Dispatch(mode,{0xaf,0,0x23,1,1,0});sync();
+    state.shopItems.clear();state.shop.visible=false;state.cartItems.erase(3);sync();
+    Dispatch(mode,{0xaf,0,3,0,1,0});sync();
     UIItemInfoWnd::DisplayData retained;Require(g_windowMgr.m_itemInfoWnd->GetDisplayDataForQt(&retained)
         &&retained.itemId==1202&&uiState->itemInfoVisible(),"closed/removed commerce source invalidated snapshot detail");
     cases.push_back(QJsonObject{{"case","snapshot-after-source-close"},{"outcome","PASS"}});
 
     // Invalid callbacks are rejected even when a colliding cart row exists.
-    state.cartItems[291]=cartItem;state.cart.visible=true;
+    state.cartItems[3]=cartItem;state.cart.visible=true;
     state.draft={{cartItem,1,1}};state.vending.visible=true;
-    noOpen(QVariantMap{{"from","vending"},{"index",291},{"id",1201}},"stale-expected-id");
+    noOpen(QVariantMap{{"from","vending"},{"index",3},{"id",1201}},"stale-expected-id");
     noOpen(QVariantMap{{"from","vending"},{"index",9999},{"id",1202}},"unknown-row");
     noOpen(QVariantMap{{"from","unknown"},{"index",291},{"id",1202}},"unknown-source");
-    noOpen(QVariantMap{{"from","cart"},{"index",291}},"missing-expected-id");
+    noOpen(QVariantMap{{"from","cart"},{"index",3}},"missing-expected-id");
     state.draft={{cartItem,0,1}};state.vending.visible=true;
-    noOpen(QVariantMap{{"from","vending"},{"index",291},{"id",1202}},"zero-amount");
+    noOpen(QVariantMap{{"from","vending"},{"index",3},{"id",1202}},"zero-amount");
     state.draft.clear();state.vending.visible=true;
     noOpen(QVariantMap{{"from","vending"},{"index",291},{"id",1202}},"missing-vending-row-with-cart-collision");
     state.shopItems={{cartItem,1,1}};state.shop.visible=false;

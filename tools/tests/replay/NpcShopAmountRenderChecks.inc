@@ -21,7 +21,7 @@ void CheckNpcShopAmounts(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     const auto open=[&](u32 id){Dispatch(mode,{0xc4,0,u8(id),u8(id>>8),u8(id>>16),u8(id>>24)});};
     const auto stock=[&](u16 quantity) {
         std::vector<u8> b(26,0);write16(b,0,0x02e8);write16(b,2,26);
-        write16(b,4,291);write16(b,6,501);b[9]=1;write16(b,10,quantity);Dispatch(mode,b);
+        write16(b,4,3);write16(b,6,501);b[9]=1;write16(b,10,quantity);Dispatch(mode,b);
     };
     const auto find=[&](const QString& n){return Find(view.rootObject(),n);};
     const auto label=[&](const QString& name,const QString& expected) {
@@ -58,7 +58,7 @@ void CheckNpcShopAmounts(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
 
     // A literal C7 inventory fixture verifies that a zero secondary price stays zero.
     g_session.ClearNpcShopState();g_session.ClearInventoryItems();Dispatch(mode,Equipment(0xd0,true,0));
-    open(0x12345a02);Dispatch(mode,sellList(291,0xffffffffu,0));sync();
+    open(0x12345a02);Dispatch(mode,sellList(3,0xffffffffu,0));sync();
     Require(!g_session.m_shopRows.empty()&&g_session.m_shopRows[0].price==0xffffffffu&&g_session.GetNpcShopUnitPrice(g_session.m_shopRows[0])==0,"literal C7 UINT32_MAX/zero-secondary source price differs");
     label("npcShopSourcePrice_0",QStringLiteral("0"));
     Require(g_session.AdjustNpcShopDealBySourceRow(0,1),"C7 zero-price deal insertion failed");sync();
@@ -75,7 +75,7 @@ void CheckNpcShopAmounts(QGuiApplication& app,QQuickView& view,QtUiState* uiStat
     // Rebuild as a C7 source with a 1.5B unit amount; production adjustment
     // multiplies and accumulates in the session, including values above int.
     g_session.ClearNpcShopState();g_session.ClearInventoryItems();stock(3);
-    open(0x12345a03);Dispatch(mode,sellList(291,0,1500000000u));sync();
+    open(0x12345a03);Dispatch(mode,sellList(3,0,1500000000u));sync();
     Require(g_session.AdjustNpcShopDealBySourceRow(0,3),"1.5B source adjustment failed");sync();
     Require(g_session.m_shopDealTotal==4500000000ull,"1.5B times three did not total exactly 4500000000");
     label("npcShopSellAmount_0",QStringLiteral("4500000000"));label("npcShopSellTotal",QStringLiteral("4500000000"));

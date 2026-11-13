@@ -86,7 +86,7 @@ void CheckItemDetailGeometryChild(QGuiApplication& app,QQuickView& view,QtUiStat
         SaveSettingsIniInt("UIWindows","ItemInfoWndWidth",280);
         SaveSettingsIniInt("UIWindows","ItemInfoWndHeight",120);
     }
-    auto& detail=(stage=="slots")?open(291,1201,true):open(2,501,true);
+    auto& detail=(stage=="slots")?open(3,1201,true):open(2,501,true);
     auto verifyWindow=[&](int x,int y,int height,const char* message) {
         UIItemInfoWnd::DisplayData data{};
         ItemDetailGeometryRequire(detail.GetDisplayDataForQt(&data),message);
@@ -107,7 +107,7 @@ void CheckItemDetailGeometryChild(QGuiApplication& app,QQuickView& view,QtUiStat
         ItemDetailGeometryRequire(view.grabWindow().save(output+"/item-detail-geometry-persisted.qml.png"),"save persisted item detail QML frame failed");
         g_windowMgr.DeleteWindow(g_windowMgr.m_itemInfoWnd);
         g_windowMgr.StoreItemDetailWindowInfo({1000,600,280,120});
-        auto& edge=open(291,1201,true);
+        auto& edge=open(3,1201,true);
         ItemDetailGeometryRequire(edge.m_x==1000&&edge.m_y==600&&edge.m_h==149,
             "valid boundary placement was clamped after socket-row expansion");
         auto* edgeQml=Find(view.rootObject(),"itemInfoWindow");
@@ -134,7 +134,7 @@ void CheckItemDetailGeometryChild(QGuiApplication& app,QQuickView& view,QtUiStat
             "shared colored viewer layout stalled or double-counted carriage returns");
         verifyWindow(280,126,120,"initial item detail dimensions differ from source");
         const int oldX=detail.m_x,oldY=detail.m_y;
-        ITEM_INFO resized=*g_session.GetInventoryItemByIndex(291);resized.m_slot[0]=4001;
+        ITEM_INFO resized=*g_session.GetInventoryItemByIndex(3);resized.m_slot[0]=4001;
         detail.SetItemInfo(resized,700,400,ItemInfoSource::Snapshot);
         ItemDetailGeometryRequire(detail.m_x==oldX&&detail.m_y==oldY&&detail.m_h==149,
             "identified socket update moved the window or missed source height");
@@ -199,13 +199,13 @@ void CheckItemDetailGeometryChild(QGuiApplication& app,QQuickView& view,QtUiStat
         ItemDetailGeometryRequire(detail.m_x==dragX+32&&detail.m_y==dragY+16,"native source title area did not move the detail window");
         // Force an identified item, then confirm its three declared entries
         // share the fixed bottom anchored row at either supported height.
-        auto& socketDetail=open(291,1201,true,{4001,4002,4003,4004});
+        auto& socketDetail=open(3,1201,true,{4001,4002,4003,4004});
         UIItemInfoWnd::DisplayData slotData{};ItemDetailGeometryRequire(socketDetail.GetDisplayDataForQt(&slotData),"identified slot display missing");
         ItemDetailGeometryRequire(slotData.slotEntries.size()==3,
             "item1201 must project exactly its three source-declared sockets");
         for(size_t i=0;i<slotData.slotEntries.size();++i)ItemDetailGeometryRequire(slotData.slotEntries[i].x==socketDetail.m_x+4+25*int(i)
             &&slotData.slotEntries[i].y==socketDetail.m_y+socketDetail.m_h-26,"item detail slot geometry differs from source");
-        auto& noCards=open(291,1201,true,{});UIItemInfoWnd::DisplayData noCardData{};
+        auto& noCards=open(3,1201,true,{});UIItemInfoWnd::DisplayData noCardData{};
         ItemDetailGeometryRequire(noCards.GetDisplayDataForQt(&noCardData)
             &&noCardData.slotEntries.size()==slotData.slotEntries.size(),"item detail projected slots beyond its declared slot count");
 
@@ -228,7 +228,7 @@ void CheckItemDetailGeometryChild(QGuiApplication& app,QQuickView& view,QtUiStat
         ItemDetailGeometryRequire(g_windowMgr.m_itemInfoWnd&&g_windowMgr.m_itemInfoWnd->m_x==15
             &&g_windowMgr.m_itemInfoWnd->m_y==55&&g_windowMgr.m_itemInfoWnd->m_h==120,
             "managed item detail recreation did not restore valid 120-high placement");
-        ITEM_INFO socketItem=*g_session.GetInventoryItemByIndex(291);socketItem.m_slot[0]=4001;
+        ITEM_INFO socketItem=*g_session.GetInventoryItemByIndex(3);socketItem.m_slot[0]=4001;
         g_windowMgr.ShowItemInfoWindow(socketItem,900,500,ItemInfoSource::Snapshot,ItemInfoAction::ForceUpdate);
         ItemDetailGeometryRequire(g_windowMgr.m_itemInfoWnd->m_h==149,"managed socket detail did not expand to149 pixels");
         g_windowMgr.m_itemInfoWnd->Move(40,70);g_windowMgr.m_itemInfoWnd->StoreInfo();
@@ -241,40 +241,40 @@ void CheckItemDetailGeometryChild(QGuiApplication& app,QQuickView& view,QtUiStat
             &&g_windowMgr.m_itemInfoWnd->m_y==252&&g_windowMgr.m_itemInfoWnd->m_h==149,
             "managed recreation did not reject persisted 149-high record before socket expansion");
     } else if(stage=="slots") {
-        auto& slotted=open(291,1201,true,{4001,0,4003,0});UIItemInfoWnd::DisplayData data{};
+        auto& slotted=open(3,1201,true,{4001,0,4003,0});UIItemInfoWnd::DisplayData data{};
         ItemDetailGeometryRequire(slotted.GetDisplayDataForQt(&data)&&data.slotEntries.size()==3
             &&data.slotEntries[0].occupied&&!data.slotEntries[1].occupied&&data.slotEntries[2].occupied,"declared socket painting did not retain visible holes");
         ItemDetailGeometryRequire(view.grabWindow().save(output+"/item-detail-geometry-sockets.qml.png"),"save socket item detail frame failed");
-        auto& hidden=open(291,1201,false,{4001,4002,0,0});
+        auto& hidden=open(3,1201,false,{4001,4002,0,0});
         ItemDetailGeometryRequire(hidden.m_h==120,"unidentified item expanded for hidden slot metadata");
-        auto& sentinel=open(291,1201,true,{255,4002,0,0});
+        auto& sentinel=open(3,1201,true,{255,4002,0,0});
         ItemDetailGeometryRequire(sentinel.m_h==120,"slot sentinel expanded item detail window");
         ItemDetailGeometryRequire(sentinel.GetDisplayDataForQt(&data)&&data.slotEntries.empty(),"manufactured marker became a painted card row");
         ItemDetailGeometryRequire(view.grabWindow().save(output+"/item-detail-geometry-marker.qml.png"),"save marker item detail frame failed");
-        auto& created=open(291,1201,true,{254,0,0,0});
+        auto& created=open(3,1201,true,{254,0,0,0});
         ItemDetailGeometryRequire(created.m_h==149&&created.GetDisplayDataForQt(&data)&&data.slotEntries.empty(),
             "created marker254 was conflated with manufactured255 or painted as a card");
-        auto& unknown=open(291,1201,true,{501,0,0,0});
+        auto& unknown=open(3,1201,true,{501,0,0,0});
         ItemDetailGeometryRequire(unknown.m_h==149&&unknown.GetDisplayDataForQt(&data)&&data.slotEntries.empty(),
             "non-card first word was painted as a socket row");
-        auto& manual=open(291,1201,true,{4001,0,0,0});
+        auto& manual=open(3,1201,true,{4001,0,0,0});
         manual.Resize(280,120);
         ItemDetailGeometryRequire(manual.GetDisplayDataForQt(&data)&&data.slotEntries.empty(),"socket painting ignored current outer height");
         manual.Resize(280,149);
         ItemDetailGeometryRequire(manual.GetDisplayDataForQt(&data)&&data.slotEntries.size()==3&&data.slotEntries[0].itemId==4001,
             "geometry-only expansion lost cached source card words");
-        auto& manualUnidentified=open(291,1201,false,{4001,0,0,0});
+        auto& manualUnidentified=open(3,1201,false,{4001,0,0,0});
         manualUnidentified.Resize(280,149);
         ItemDetailGeometryRequire(manualUnidentified.GetDisplayDataForQt(&data)&&data.slotEntries.size()==3&&data.slotEntries[0].itemId==4001,
             "painting incorrectly reused the identification-based expansion predicate");
-        auto& guard=open(291,1201,true,{});
+        auto& guard=open(3,1201,true,{});
         guard.Resize(280,144);
-        ITEM_INFO guarded=*g_session.GetInventoryItemByIndex(291);
+        ITEM_INFO guarded=*g_session.GetInventoryItemByIndex(3);
         guard.SetItemInfo(guarded,900,500,ItemInfoSource::Snapshot);
         ItemDetailGeometryRequire(guard.m_h==144,"primary144 height guard was normalized into149");
         open(2,501,true); // Isolate the ordinary149 branch from the synthetic144 guard.
         auto fourPacket=Equipment(0xd0,true,0);fourPacket[6]=0xb2;fourPacket[7]=4;Dispatch(mode,fourPacket);
-        auto& four=open(291,1202,true,{4001,4002,4003,4004});
+        auto& four=open(3,1202,true,{4001,4002,4003,4004});
         ItemDetailGeometryRequire(four.GetDisplayDataForQt(&data)&&data.slotEntries.size()==4,
             "item1202 lost its four declared sockets");
         ItemDetailGeometryRequire(view.grabWindow().save(output+"/item-detail-geometry-four-sockets.qml.png"),"save four-socket detail frame failed");

@@ -129,10 +129,10 @@ void Dispatch(CGameMode& mode,const std::vector<u8>& bytes) {
     Require(GetProductionGameModePacketRouter().Dispatch(mode,packet),"item colour fixture missed real router");
 }
 std::vector<u8> Equipment(u8 lowOpcode,bool identified,u8 bind) {
-    // Independent selected EQUIPITEM_INFO[26]: index291, Knife1201, type5,
+    // Independent selected EQUIPITEM_INFO[26]: index3, Knife1201, type5,
     // location2/wear0 (visible in the native bag), expiry0, raw bind word at
     // row+24. No client serializer.
-    std::vector<u8> bytes={lowOpcode,2,30,0, 0x23,1,0xb1,4,5,1,2,0,0,0,0,0,
+    std::vector<u8> bytes={lowOpcode,2,30,0, 3,0,0xb1,4,5,1,2,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     bytes[9]=identified?1:0;bytes[28]=bind;return bytes;
 }
@@ -511,8 +511,8 @@ int main(int argc,char** argv) {
             Mouse(app,view,QPointF(Width-1,Height-1));
             Dispatch(mode,Equipment(0xd0,identified,bind));Dispatch(mode,Equipment(0xd2,identified,bind));
             g_session.OpenStorage(1,600);Dispatch(mode,Equipment(0xd1,identified,bind));
-            Require(g_session.GetInventoryItemByIndex(291) && g_session.GetInventoryItemByIndex(291)->m_isYours==bind,"inventory raw bind was not retained");
-            Require(ro::commerce::state.cartItems.at(291).m_isYours==bind,"cart raw bind was not retained");
+            Require(g_session.GetInventoryItemByIndex(3) && g_session.GetInventoryItemByIndex(3)->m_isYours==bind,"inventory raw bind was not retained");
+            Require(ro::commerce::state.cartItems.at(3).m_isYours==bind,"cart raw bind was not retained");
             PopulateCommerceUi(state,mode,false);
             const auto invRows=state->commerceData().value("inventoryItems").toList();
             const auto cartRows=state->commerceData().value("cartItems").toList();
@@ -545,7 +545,7 @@ int main(int argc,char** argv) {
             storage.OnMouseMove(-100,-100);state->setAnchors({});
             for(const QString& kind:{QString("inventory"),QString("cart")}) {
                 PopulateCommerceUi(state,mode,false);Frames(app,view);
-                auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_291");Require(tile,"actual item tile missing");
+                auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_3");Require(tile,"actual item tile missing");
                 Mouse(app,view,tile->mapToScene(QPointF(tile->width()/2,tile->height()/2)));
                 auto* tip=Find(view.rootObject(),"commerceItemTooltip");Require(tip && tip->isVisible(),"real QML item hover tooltip missing");
                 auto* label=Find(tip,"commerceItemTooltipText");Require(label,"QML hover name text missing");
@@ -577,37 +577,37 @@ int main(int argc,char** argv) {
         };
         auto worn=Equipment(0xd0,true,2);worn[12]=2;
         Dispatch(mode,worn);checkBag(false,"worn snapshot");
-        Require(g_session.GetInventoryItemByIndex(291)->m_wearLocation==2,"bag filtering erased authoritative worn state");
+        Require(g_session.GetInventoryItemByIndex(3)->m_wearLocation==2,"bag filtering erased authoritative worn state");
         Require(view.grabWindow().save(output+"/bag-worn-snapshot.png"),"save worn bag frame failed");
-        mode.m_waitingTakeoffEquipAck=291;
-        Dispatch(mode,{0xac,0,0x23,1,2,0,0});checkBag(false,"failed unequip");
+        mode.m_waitingTakeoffEquipAck=3;
+        Dispatch(mode,{0xac,0,3,0,2,0,0});checkBag(false,"failed unequip");
         Require(mode.m_waitingTakeoffEquipAck==0,"unequip failure did not release pending request");
-        Dispatch(mode,{0xac,0,0x23,1,2,0,1});checkBag(true,"successful unequip");
-        Require(g_session.GetInventoryItemByIndex(291)->m_wearLocation==0,"successful unequip lost inventory row/wear update");
+        Dispatch(mode,{0xac,0,3,0,2,0,1});checkBag(true,"successful unequip");
+        Require(g_session.GetInventoryItemByIndex(3)->m_wearLocation==0,"successful unequip lost inventory row/wear update");
         Require(view.grabWindow().save(output+"/bag-unequipped.png"),"save unequipped bag frame failed");
-        mode.m_waitingWearEquipAck=291;
-        Dispatch(mode,{0xaa,0,0x23,1,2,0,0});checkBag(true,"failed equip");
+        mode.m_waitingWearEquipAck=3;
+        Dispatch(mode,{0xaa,0,3,0,2,0,0});checkBag(true,"failed equip");
         Require(mode.m_waitingWearEquipAck==0,"equip failure did not release pending request");
-        Dispatch(mode,{0xaa,0,0x23,1,2,0,1});checkBag(false,"successful equip");
-        Require(g_session.GetInventoryItemByIndex(291)->m_wearLocation==2,"successful equip erased authoritative row");
+        Dispatch(mode,{0xaa,0,3,0,2,0,1});checkBag(false,"successful equip");
+        Require(g_session.GetInventoryItemByIndex(3)->m_wearLocation==2,"successful equip erased authoritative row");
         Require(view.grabWindow().save(output+"/bag-equipped.png"),"save equipped bag frame failed");
         // Empty equipment snapshot clears worn item while normal ammunition
         // remains present and visible, even after its real equip notification.
-        Dispatch(mode,{0xe8,2,26,0,0x24,1,0xd6,6,10,1,9,0,0,0x80,0,0,0,0,0,0,0,0,0,0,0,0});
+        Dispatch(mode,{0xe8,2,26,0,4,0,0xd6,6,10,1,9,0,0,0x80,0,0,0,0,0,0,0,0,0,0,0,0});
         Dispatch(mode,{0xd0,2,4,0});SelectInventoryFixtureTab(2);
         inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+88);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+88);
         checkBag(true,"normal ammunition snapshot");
-        Require(g_session.GetInventoryItemByIndex(292)->m_wearLocation==0,"normal allowed ammunition slot set actual wear");
-        Dispatch(mode,{0x3c,1,0x24,1});checkBag(true,"equipped ammunition exception");
-        Require(g_session.GetInventoryItemByIndex(292)->m_wearLocation==0x8000,"ammo equip did not retain wear mask");
+        Require(g_session.GetInventoryItemByIndex(4)->m_wearLocation==0,"normal allowed ammunition slot set actual wear");
+        Dispatch(mode,{0x3c,1,4,0});checkBag(true,"equipped ammunition exception");
+        Require(g_session.GetInventoryItemByIndex(4)->m_wearLocation==0x8000,"ammo equip did not retain wear mask");
         Require(view.grabWindow().save(output+"/bag-equipped-ammunition.png"),"save ammunition bag frame failed");
         // Return the inventory fixture for the independent cart-hover lifetime check.
         Dispatch(mode,Equipment(0xd0,false,2));
-        auto* cartTile=Find(view.rootObject(),"commerceTile_cart_291");Require(cartTile,"cart lifetime fixture tile missing");
+        auto* cartTile=Find(view.rootObject(),"commerceTile_cart_3");Require(cartTile,"cart lifetime fixture tile missing");
         Mouse(app,view,cartTile->mapToScene(QPointF(cartTile->width()/2,cartTile->height()/2)));
         auto* tip=Find(view.rootObject(),"commerceItemTooltip");Require(tip && tip->isVisible(),"cart lifetime hover did not open");
         Dispatch(mode,{0xd2,2,4,0});PopulateCommerceUi(state,mode,false);Frames(app,view);
-        Require(!tip->isVisible() && g_session.GetInventoryItemByIndex(291),"cart row removal retained stale hover or changed inventory");
+        Require(!tip->isVisible() && g_session.GetInventoryItemByIndex(3),"cart row removal retained stale hover or changed inventory");
         // Status owns count/weight independently of rows; 012B closes contents,
         // and the actual QML Cart button must still reopen an empty cart.
         Dispatch(mode,{0x21,1,1,0,100,0,0x34,0x30,0,0,0xa0,0x86,1,0});
@@ -659,7 +659,7 @@ int main(int argc,char** argv) {
                 "native inventory hover name differs from primary GetItemName");
             inventory.OnMouseMove(-100,-100);
             for(const QString& kind:{QString("inventory"),QString("cart")}) {
-                auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_291");Require(tile,"refined item tile missing");
+                auto* tile=Find(view.rootObject(),"commerceTile_"+kind+"_3");Require(tile,"refined item tile missing");
                 Mouse(app,view,tile->mapToScene(QPointF(tile->width()/2,tile->height()/2)));
                 auto* label=Find(view.rootObject(),"commerceItemTooltipText");
                 Require(label && label->isVisible() && label->property("text").toString()==expectedHover,
@@ -673,23 +673,23 @@ int main(int argc,char** argv) {
         SelectInventoryFixtureTab(2);
         inventory.OnLBtnDown(inventory.m_x+5,inventory.m_y+88);inventory.OnLBtnUp(inventory.m_x+5,inventory.m_y+88);
         for(const u8 amount:{u8(9),u8(1)}) {
-            std::vector<u8> normal={0xe8,2,26,0,0x24,1,0xd6,6,10,1,amount,0,0,0x80,0,0,0,0,0,0,0,0,0,0,0,0};
+            std::vector<u8> normal={0xe8,2,26,0,4,0,0xd6,6,10,1,amount,0,0,0x80,0,0,0,0,0,0,0,0,0,0,0,0};
             Dispatch(mode,normal);normal[0]=0xe9;Dispatch(mode,normal);
             PopulateCommerceUi(state,mode,false);Frames(app,view);
             UIItemWnd::DisplayData nativeData;Require(inventory.GetDisplayDataForQt(&nativeData),"quantity native projection failed");
             auto slot=std::find_if(nativeData.displaySlots.begin(),nativeData.displaySlots.end(),[](const auto& s){return s.occupied;});
             Require(slot!=nativeData.displaySlots.end() && slot->count==amount,"native quantity did not follow replacement snapshot");
             for(const QString& kind:{QString("inventory"),QString("cart")}) {
-                auto* count=Find(view.rootObject(),"commerceStackLabel_"+kind+"_292");
+                auto* count=Find(view.rootObject(),"commerceStackLabel_"+kind+"_4");
                 Require(count && count->property("text").toString()==QString::number(amount)
                     && count->isVisible()==(amount>1),"actual QML quantity badge text/visibility is stale");
             }
             Require(view.grabWindow().save(output+QString("/quantity-%1.png").arg(amount)),"save quantity frame failed");
         }
-        auto* quantityTile=Find(view.rootObject(),"commerceTile_cart_292");Require(quantityTile,"quantity tile missing");
+        auto* quantityTile=Find(view.rootObject(),"commerceTile_cart_4");Require(quantityTile,"quantity tile missing");
         Mouse(app,view,quantityTile->mapToScene(QPointF(quantityTile->width()/2,quantityTile->height()/2)));
         Dispatch(mode,{0xe8,2,4,0});Dispatch(mode,{0xe9,2,4,0});PopulateCommerceUi(state,mode,false);Frames(app,view);
-        Require(!Find(view.rootObject(),"commerceTile_inventory_292") && !Find(view.rootObject(),"commerceTile_cart_292")
+        Require(!Find(view.rootObject(),"commerceTile_inventory_4") && !Find(view.rootObject(),"commerceTile_cart_4")
             && !Find(view.rootObject(),"commerceItemTooltip")->isVisible(),"quantity snapshot removal left stale delegates/hover");
         Require(view.grabWindow().save(output+"/quantity-empty.png"),"save empty quantity frame failed");
         CheckCardNameCases(app,view,state,mode,inventory,storage,adapter,output);

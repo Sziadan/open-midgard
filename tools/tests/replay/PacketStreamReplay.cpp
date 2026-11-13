@@ -464,11 +464,11 @@ void SelectedInventoryCartRouteIsolationReplay()
         Require(router.Dispatch(mode, packet), std::string(label) + " had no production handler");
     };
 
-    dispatch(makePacket(0x02E8, 22, 8201, 9201, 3, 5), "normal inventory");
+    dispatch(makePacket(0x02E8, 22, 81, 9201, 3, 5), "normal inventory");
     Require(g_session.GetInventoryItemByIndex(8001) == nullptr && g_session.GetInventoryItemByIndex(8002) != nullptr,
             "normal inventory replacement changed the equipment category");
-    dispatch(makePacket(0x02D0, 26, 8202, 9202, 4, 1), "equipment inventory");
-    Require(g_session.GetInventoryItemByIndex(8201) != nullptr && g_session.GetInventoryItemByIndex(8002) == nullptr,
+    dispatch(makePacket(0x02D0, 26, 82, 9202, 4, 1), "equipment inventory");
+    Require(g_session.GetInventoryItemByIndex(81) != nullptr && g_session.GetInventoryItemByIndex(8002) == nullptr,
             "equipment inventory replacement changed the normal category");
 
     dispatch(makePacket(0x02E9, 22, 8301, 9301, 3, 6), "normal cart");
@@ -477,7 +477,7 @@ void SelectedInventoryCartRouteIsolationReplay()
     dispatch(makePacket(0x02D2, 26, 8302, 9302, 4, 1), "equipment cart");
     Require(ro::commerce::state.cartItems.count(8302) == 1 && ro::commerce::state.cartItems.count(8301) == 1
             && ro::commerce::state.cartItems.count(8102) == 0, "equipment cart replacement changed the normal-cart category");
-    Require(g_session.GetInventoryItemByIndex(8201) != nullptr && g_session.GetInventoryItemByIndex(8202) != nullptr,
+    Require(g_session.GetInventoryItemByIndex(81) != nullptr && g_session.GetInventoryItemByIndex(82) != nullptr,
             "cart list dispatch modified inventory state");
 
     // Historical normal-cart compatibility bytes have an 18-byte row, not an
@@ -487,20 +487,20 @@ void SelectedInventoryCartRouteIsolationReplay()
         0xa1,0xa1,0xb2,0xb2,0xc3,0xc3,0xd4,0xd4
     };
     dispatch(historicalCart, "historical 0x01EF normal cart compatibility");
-    Require(g_session.GetInventoryItems().size()==2 && g_session.GetInventoryItemByIndex(8202)
-            && g_session.GetInventoryItemByIndex(8202)->m_wearLocation==1,
+    Require(g_session.GetInventoryItems().size()==2 && g_session.GetInventoryItemByIndex(82)
+            && g_session.GetInventoryItemByIndex(82)->m_wearLocation==1,
             "historical 0x01EF changed selected equipment inventory");
     Require(ro::commerce::state.cartItems.count(0x206f)==1
             && ro::commerce::state.cartItems.at(0x206f).m_num==2
             && ro::commerce::state.cartItems.count(8302)==1,
             "historical 0x01EF did not dispatch uniquely to normal cart compatibility");
 
-    dispatch(makePacket(0x02E8, 22, 8203, 9203, 3, 4), "normal inventory after equipment");
-    Require(g_session.GetInventoryItemByIndex(8202) != nullptr, "normal list after equipment list removed equipment state");
+    dispatch(makePacket(0x02E8, 22, 83, 9203, 3, 4), "normal inventory after equipment");
+    Require(g_session.GetInventoryItemByIndex(82) != nullptr, "normal list after equipment list removed equipment state");
     dispatch(makePacket(0x02E8, 1, 0, 0, 0, 0), "malformed normal inventory");
-    Require(g_session.GetInventoryItemByIndex(8203) != nullptr, "malformed list changed existing inventory state");
+    Require(g_session.GetInventoryItemByIndex(83) != nullptr, "malformed list changed existing inventory state");
     dispatch(makePacket(0x02E8, 0, 0, 0, 0, 0), "empty normal inventory");
-    Require(g_session.GetInventoryItemByIndex(8203) == nullptr && g_session.GetInventoryItemByIndex(8202) != nullptr,
+    Require(g_session.GetInventoryItemByIndex(83) == nullptr && g_session.GetInventoryItemByIndex(82) != nullptr,
             "empty normal list did not preserve equipment state");
 
     g_session.ClearInventoryItems();
