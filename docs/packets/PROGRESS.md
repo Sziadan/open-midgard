@@ -3979,3 +3979,5 @@ PK30.03 adds the eligible player menu request and shared two-stage adoption conf
 PK30.04 verifies the selected post-adoption job transition and retains Cheer Up across full skill snapshots. [Evidence](evidence/PK30.01-relationship-wire.md)
 
 PK28.04 and PK29.04 verify bounded recovery from a stalled basic attack chase, including reserved movement and delayed automatic reacquisition. The handoff prioritizes live companion verification using the C++ controller. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+PK28.04 and PK29.04 distinguish monster sprites from actual monster actors during native acquisition. The reference input audit found no producer for attack-area, patrol, or hold. [Evidence](evidence/PK28-PK29-native-companion-ai.md)

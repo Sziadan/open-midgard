@@ -22,6 +22,12 @@ namespace {
 constexpr int kEffectStateHidingMask = 0x0004;
 constexpr int kEffectStateSpecialHidingMask = 0x0040;
 constexpr int kEffectStateBurrowMask = 0x0002;
+constexpr int kNpcObjectType = 1;
+constexpr int kEventNpcObjectType = 6;
+constexpr int kPetObjectType = 7;
+constexpr int kHomunculusObjectType = 8;
+constexpr int kMercenaryObjectType = 9;
+constexpr int kElementalObjectType = 10;
 
 bool EncodeDest(int dstX, int dstY, u8 outDest[3])
 {
@@ -289,19 +295,22 @@ std::vector<u32> Runtime::GetActors() const
 
 bool Runtime::IsMonster(u32 id) const
 {
-    CGameActor* actor = FindActor(id);
-    if (!actor) {
+    const CGameActor* actor = FindActor(id);
+    if (!actor || actor->m_isPc) {
+        return false;
+    }
+    // NPCs and companions can use the same sprite jobs as monsters.
+    switch (actor->m_objectType) {
+    case kNpcObjectType:
+    case kEventNpcObjectType:
+    case kPetObjectType:
+    case kHomunculusObjectType:
+    case kMercenaryObjectType:
+    case kElementalObjectType:
         return false;
     }
     const int job = actor->m_job;
-    if (job > kMonsterJobMin && job < kHomunJobMin) {
-        return true;
-    }
-    // Exclude mercenary/homunculus jobs from monster classification.
-    if (job >= kHomunJobMin && job <= kMerJobMax) {
-        return false;
-    }
-    return job >= kMonsterJobMin && actor->m_isPc == 0;
+    return job >= kMonsterJobMin && (job < kHomunJobMin || job > kMerJobMax);
 }
 
 u32 Runtime::GetWalkCellDuration(u32 id) const

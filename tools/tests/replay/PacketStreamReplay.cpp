@@ -4046,12 +4046,25 @@ void PendingCompanionActorSkillReplay()
     corpse.m_stateId = companion_ai::MOTION_DEAD;
     corpse.m_pos = homunculus.m_pos;
     world.RegisterActor(&corpse);
+    // These object types can use a monster sprite, but none is a wild monster.
+    std::array<CGameActor, 4> monsterLookalikes;
+    const std::array<u8, 4> objectTypes{6, 7, 9, 10};
+    target.m_objectType = 5;
+    for (size_t i = 0; i < monsterLookalikes.size(); ++i) {
+        auto& actor = monsterLookalikes[i];
+        actor.m_gid = corpse.m_gid + 1 + static_cast<u32>(i);
+        actor.m_job = target.m_job;
+        actor.m_objectType = objectTypes[i];
+        actor.m_pos = homunculus.m_pos;
+        world.RegisterActor(&actor);
+    }
     homunculus.m_job = 6003; // Filir acquires nearby monsters without an existing attacker.
     for (int tick = 0; tick < 3; ++tick) {
         tickCompanion(homunculus);
     }
     Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, 0x41, 0, 0, 0xf1,
-        0x78, 0x56, 0x34, 0x12, 0}, "aggressive homunculus picked a corpse over a living monster");
+        0x78, 0x56, 0x34, 0x12, 0}, "aggressive homunculus selected a corpse or a monster lookalike");
+    for (auto& actor : monsterLookalikes) world.UnregisterActor(&actor);
 
     corpse.m_targetGid = player.m_gid;
     target.m_targetGid = player.m_gid;
