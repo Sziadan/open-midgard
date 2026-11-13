@@ -1155,14 +1155,14 @@
       "commit_subject": "packet(PK28.04/PK29.04): recover companion movement and pace follow"
     },
     "PK30.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK30.01-relationship-wire.md"],
+      "commit_subject": "packet(PK30.01/PK30.02): receive relationship notices"
     },
     "PK30.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK30.01-relationship-wire.md"],
+      "commit_subject": "packet(PK30.01/PK30.02): receive relationship notices"
     },
     "PK30.03": {
       "status": "NOT_STARTED",

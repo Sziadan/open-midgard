@@ -318,12 +318,14 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x01F8, 2);
     SetPacketSize(0x01FF, 10);              // ZC_HIGHJUMP (clif_slide)
     SetPacketSize(0x0201, kVariablePacketSize);
+    SetPacketSize(0x0205, 26);              // ZC_DIVORCE
     SetPacketSize(0x0206, 11);
     SetPacketSize(0x0207, 34);
     SetPacketSize(0x0209, 36);
     SetPacketSize(0x020A, 10);
     SetPacketSize(0x0214, 42);
     SetPacketSize(0x0215, 6);               // ZC_SKILLMSG
+    SetPacketSize(0x0216, 6);               // Adoption result
     SetPacketSize(0x020E, 32);              // ZC_STARSKILL, effective 20080910 size
     SetPacketSize(0x0253, 3);               // ZC_STARPLACE
     SetPacketSize(0x0220, 10);

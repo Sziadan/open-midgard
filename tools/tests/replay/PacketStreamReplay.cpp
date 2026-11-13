@@ -2494,6 +2494,42 @@ void ElementalSnapshotReplay()
     g_session.m_elementalStatus = oldElemental;
 }
 
+void RelationshipNoticeReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    LoopbackPeer server(input);
+    char savedName[sizeof(g_session.m_playerName)];
+    std::memcpy(savedName, g_session.m_playerName, sizeof(savedName));
+    std::memset(g_session.m_playerName, 0, sizeof(savedName));
+    std::memcpy(g_session.m_playerName, "Local%s", 7);
+    g_windowMgr.ClearChatEvents();
+
+    std::vector<u8> divorce(26, '%');
+    divorce[0] = 5;
+    divorce[1] = 2;
+    server.Send(std::vector<u8>(divorce.begin(), divorce.begin() + 13));
+    PumpUntilBuffered(input, 13);
+    Require(g_windowMgr.GetChatEvents().empty(), "partial divorce emitted a notice");
+    std::vector<u8> tail(divorce.begin() + 13, divorce.end());
+    for (u8 result : {0, 1, 2, 0xff}) {
+        tail.insert(tail.end(), {0x16, 2, result, 0, 0, 0});
+    }
+    server.Send(tail);
+    WaitKernelPending(input, static_cast<int>(tail.size()));
+    Require(ProcessGameModePacketLoop(mode, input, router, 5).packetsDispatched == 5,
+        "relationship notices did not frame across fragmentation and coalescing");
+    const auto& notices = g_windowMgr.GetChatEvents();
+    Require(notices.size() == 4 && notices.front().text.find("Local%s") != std::string::npos
+        && notices.front().text.find(std::string(24, '%')) != std::string::npos
+        && notices[1].text != notices[2].text && notices[2].text != notices[3].text
+        && notices[1].text != notices[3].text, "relationship notices lost a name or result branch");
+    std::memcpy(g_session.m_playerName, savedName, sizeof(savedName));
+    g_windowMgr.ClearChatEvents();
+}
+
 void SocialNoticeReplay()
 {
     CGameMode mode;
@@ -6747,6 +6783,7 @@ int main(int argc,char** argv){try{
     LoginCharConnectionFailureReplay();
     Login3ClientInfoHashRequestReplay();
     ElementalSnapshotReplay();
+    RelationshipNoticeReplay();
     SocialNoticeReplay();
     FriendRemovalReplay();
     PrivacyConfigurationReplay();

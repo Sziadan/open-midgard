@@ -8495,6 +8495,41 @@ void HandleFriendState(CGameMode&, const PacketView& packet)
     }
 }
 
+void HandleDivorceNotice(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 26) return;
+    const auto partner = ExtractFixedPacketString(packet, 2, 24);
+    const std::string_view player = g_session.GetPlayerName();
+    if (player.empty() || partner.empty()) return;
+
+    constexpr const char* fallback = "%s and %s have divorced from each other.";
+    const NoticeArguments names{{'s', player}, {'s', partner}};
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto notice = FormatLocalizedNotice(strings.Get(836, fallback), names);
+    if (!notice) notice = FormatLocalizedNotice(fallback, names);
+    if (!notice) return;
+    g_windowMgr.SendMsg(3, 0, 0, 0, 0);
+    g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice->c_str()), 16776960);
+}
+
+void HandleAdoptionResult(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 6) return;
+    const auto result = ReadLE32(packet.data + 2);
+    constexpr unsigned ids[] = {899, 900, 916};
+    constexpr const char* fallback[] = {
+        "You cannot adopt more than 1 child.",
+        "You must be at least character level 70 in order to adopt someone.",
+        "You cannot adopt a married person."
+    };
+    if (result >= std::size(ids)) return;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const auto notice = strings.Get(ids[result], fallback[result]);
+    g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice.c_str()), 10198015);
+}
+
 void HandleUserCount(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 6) return;
@@ -9839,6 +9874,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01E1, HandleSpirits2);
     RegisterHandlerIfValid(router, receiveProfile.notifyEffectDirect, HandleNotifyEffect2);
     router.Register(0x0201, HandleFriendsList);
+    router.Register(0x0205, HandleDivorceNotice);
+    router.Register(0x0216, HandleAdoptionResult);
     router.Register(0x0206, HandleFriendState);
     router.Register(0x0207, HandleFriendRequest);
     router.Register(0x0209, HandleFriendAdd);

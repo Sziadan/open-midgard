@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Relationship packets**. PK30.01 records the selected relationship senders. PK30.02 receives divorce and adoption failure notices. Recall, wedding effects, and adoption consent remain open. [Evidence](evidence/PK30.01-relationship-wire.md)
+
 **Social packets**. PK16.04 reviews the selected privacy and social paths and verifies equipment lookup refusal. PK34 validates and replaces friend snapshots atomically. Independent review and live verification remain open. [Verification evidence](evidence/PK16.04-verification-boundary.md)
 
 **Privacy configuration**. PK16.02 wires the equipment control and privacy commands to selected server-confirmed settings. PK16.03 still owns the social packet audit. [Evidence](evidence/PK16.01-privacy-wire.md)

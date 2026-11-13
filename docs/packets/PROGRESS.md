@@ -3969,3 +3969,5 @@ PK16.03 verifies selected whisper outcomes and rejects malformed delivery before
 PK34.02 and PK34.03 validate and replace the selected friend roster snapshot. [Evidence](evidence/PK34.02-friend-snapshot.md)
 
 PK16.04 verifies privacy and social behavior for the selected version, including the equipment lookup refusal notice. [Evidence](evidence/PK16.04-verification-boundary.md)
+
+PK30.01 traces the selected relationship packets, and PK30.02 adds divorce and adoption failure notices. [Evidence](evidence/PK30.01-relationship-wire.md)

@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK16.04 records the selected privacy and social review, including the equipment lookup refusal and the result-only whisper acknowledgement limitation. Continue PK30.01 source research for relationship events. Start with `clif_divorced` and `clif_Adopt_reply`, then trace `01F6/01F7/01F9` through the parent and child identity fields and the consent lifecycle. PK34 still owns the inventory, equipment, cart, and storage slices. [Privacy and social verification](evidence/PK16.04-verification-boundary.md)
+PK30.02 now receives divorce and adoption failure notices. Continue with the reachable `01E6` recall-name and `01EA` wedding-effect paths, then pair `01F6` adoption invitation receive with `01F7` consent and `01F9` initiation. Both parent fields are account IDs. Review the selected actor/skill context before wiring the name consumer. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
