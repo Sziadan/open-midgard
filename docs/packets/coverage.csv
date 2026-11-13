@@ -358,7 +358,7 @@ AUDIT-0x01CA,0x01CA,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x01CB,0x01CB,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01CC,0x01CC,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01CD,0x01CD,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01CE,0x01CE,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x01CE,0x01CE,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Six-byte AutoSpell selection from the active offer verified on the production socket,C2S_ONLY,PK26.SPECIAL-SKILL-CHOICES
 AUDIT-0x01CF,0x01CF,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-devotion-list traces 28-byte S2C devoter/five-link/range layout and SELF/AREA routing; client effect payload semantics need stronger review,UNREVIEWED,
 AUDIT-0x01D0,0x01D0,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01D1,0x01D1,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-blade-stop.md: selected 14-byte ZC_BLADESTOP layout and AREA route; client handler flag branches traced at GameModePacket.cpp:1027. Actor lookup mapping animation meaning cleanup and replay remain open.,UNREVIEWED,
@@ -489,7 +489,7 @@ AUDIT-0x0250,0x0250,map,S2C,PK40,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x0251,0x0251,map,C2S,PK40,PK01;PK02;PK47;PK48;PK46,Selected 34-byte browse and price requests captured in production replay,C2S_ONLY,PK40.05-SELECTED-VERIFICATION
 AUDIT-0x0252,0x0252,map,S2C,PK40,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0253,0x0253,map,S2C,PK26,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0254,0x0254,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0254,0x0254,map,C2S,PK47,PK01;PK02;PK48;PK46,Three-byte Star Place acceptance from the active offer verified on the production socket,C2S_ONLY,PK26.SPECIAL-SKILL-CHOICES
 AUDIT-0x0255,0x0255,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0256,0x0256,map,S2C,PK40,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0257,0x0257,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
