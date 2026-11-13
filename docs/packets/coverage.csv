@@ -51,7 +51,7 @@ AUDIT-0x0095,0x0095,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x0096,0x0096,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected whisper recipient and text captured,C2S_ONLY,PK46.02-CHAT-REQUESTS
 AUDIT-0x0097,0x0097,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0098,0x0098,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0099,0x0099,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0099,0x0099,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Selected GM broadcast request captured with original scope and text framing,C2S_ONLY,PK46.02-GM-BROADCAST
 AUDIT-0x009A,0x009A,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x009B,0x009B,map,C2S,PK47,PK01;PK02;PK48;PK46,PacketVer22 padded zone entry captured from login with selected acceptance and GameMode handoff,C2S_ONLY,PK46.02-map-zone-entry-request
 AUDIT-0x009C,0x009C,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-direction traces fixed 9-byte S2C GID/head/body fields and pinned 20080910 emitter; replay remains open,UNREVIEWED,
@@ -308,7 +308,7 @@ AUDIT-0x0198,0x0198,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM map-cell reques
 AUDIT-0x0199,0x0199,map,S2C,PK19,PK01;PK02;PK47;PK48;PK45,"Selected four-byte map property emitter, lifecycle and gameplay gates verified through production replay and native and Qt rendering; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK19.MAP-PROPERTIES
 AUDIT-0x019A,0x019A,map,S2C,PK39,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x019B,0x019B,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-notify-effect-019b traces selected 10-byte S2C ZC_NOTIFY_EFFECT and AREA route with client mapping; unsupported codes and replay remain open,UNREVIEWED,
-AUDIT-0x019C,0x019C,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x019C,0x019C,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Selected GM broadcast request captured with original scope and text framing,C2S_ONLY,PK46.02-GM-BROADCAST
 AUDIT-0x019D,0x019D,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected six-byte GM visibility toggle captured. Server permission and visibility remain authoritative.,C2S_ONLY,PK46.02-GM-HIDE
 AUDIT-0x019E,0x019E,map,S2C,PK27,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x019F,0x019F,map,C2S,PK27,PK01;PK02;PK47;PK48;PK46,Selected six-byte taming request captured from the target and taming window flow,C2S_ONLY,PK46.02-PET-CONTROL-REQUESTS

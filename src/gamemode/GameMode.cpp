@@ -12406,6 +12406,24 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     }
     case 6: case 72: case 142: case 271:
         return SendBufferedSourceChat(msg)?1:0;
+    case 7: {
+        if (wparam < 0 || wparam > 5) return 0;
+        std::string text(g_windowMgr.GetChatMsg());
+        g_windowMgr.ClearChatMsg();
+        if (text.empty()) return 0;
+        if (wparam < 2) text = std::string(g_session.GetPlayerName()) + ": " + text;
+        else if (wparam >= 4) text.insert(0, "blue");
+        // The selected server builds a command within its 256-byte chat buffer.
+        const bool local = (wparam & 1) != 0;
+        const size_t maxTextBytes = local ? 248 : 249;
+        if (text.size() > maxTextBytes) return 0;
+        const auto length = static_cast<u16>(text.size() + 5);
+        std::vector<u8> packet{static_cast<u8>(local ? 0x9c : 0x99), static_cast<u8>(local),
+            static_cast<u8>(length), static_cast<u8>(length >> 8)};
+        packet.insert(packet.end(), text.begin(), text.end());
+        packet.push_back(0);
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), length) ? 1 : 0;
+    }
     case 11:
         return wparam && SendBufferedSourceChat(11,reinterpret_cast<const char*>(wparam))?1:0;
     case 33: {

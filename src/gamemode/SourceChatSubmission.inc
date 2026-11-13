@@ -307,6 +307,12 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return SendMsg(33,route.emotion>=0?route.emotion:std::rand()%6+58,0,0);
     }
     switch(type){
+    case 1: return SendMsg(7, 0, 0, 0);
+    case 87: return SendMsg(7, 1, 0, 0);
+    case 90: return SendMsg(7, 2, 0, 0);
+    case 91: return SendMsg(7, 3, 0, 0);
+    case 102: return SendMsg(7, 4, 0, 0);
+    case 103: return SendMsg(7, 5, 0, 0);
     case 181: // /accept
     case 182: { // /refuse
         const u8 packet[] = {0xc8, 0x02, static_cast<u8>(type == 182)};

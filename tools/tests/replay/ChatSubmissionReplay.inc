@@ -280,6 +280,21 @@ void ChatSubmissionReplay()
     std::fill(defaultMapMove.begin() + 18, defaultMapMove.end(), 0);
     Require(submit("/mm geffen") && peer.ReceiveExact(22) == defaultMapMove,
         "mm did not default absent coordinates to zero");
+    for (const auto& sample : std::array<std::tuple<const char*, bool, const char*>, 6>{{
+        {"/b notice", false, "SourceLocal: notice"}, {"/lb notice", true, "SourceLocal: notice"},
+        {"/nb notice", false, "notice"}, {"/nlb notice", true, "notice"},
+        {"/bb notice", false, "bluenotice"}, {"/mb notice", true, "bluenotice"}}}) {
+        const auto& [command, local, payload] = sample;
+        const auto length = std::strlen(payload) + 5;
+        std::vector<u8> expected{static_cast<u8>(local ? 0x9c : 0x99), static_cast<u8>(local),
+            static_cast<u8>(length), 0};
+        expected.insert(expected.end(), payload, payload + std::strlen(payload) + 1);
+        Require(submit(command) && peer.ReceiveExact(length) == expected && !*g_windowMgr.GetChatMsg(),
+            "broadcast request did not preserve scope, text or terminator");
+    }
+    Require(!submit("/b") && !submit("/nlb " + std::string(249, 'a'))
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "empty or oversized broadcast emitted bytes");
     {
         CPlayer player;
         CWorld world;
@@ -536,6 +551,8 @@ void ChatSubmissionReplay()
     Require(!submit("/resetstate"), "character reset reported success on a closed connection");
     Require(!submit("/cmt 1 2 0"), "map-cell command reported success on a closed connection");
     Require(!submit("/mm geffen"), "map-move command reported success on a closed connection");
+    Require(!submit("/b offline") && !*g_windowMgr.GetChatMsg(),
+        "broadcast reported success or retained its buffer after failed transport");
     Require(!submit("/hide"), "hide reported success on a closed connection");
 #include "PlayerAutoRunFailedSendReplay.inc"
 #include "PetWindowFailedSendReplay.inc"
