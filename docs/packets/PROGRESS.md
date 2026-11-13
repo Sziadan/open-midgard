@@ -3987,3 +3987,5 @@ PK16.04 verifies that the equipment preview, remove-option control, and privacy 
 PK30.04 renders both candidate prompts in native and Qt and verifies the full English warning, both controls, and invitation cleanup. [Evidence](evidence/PK30.01-relationship-wire.md)
 
 PK30.04 verifies the eligible adoption action and its omission for an ineligible baby character in the native and Qt player menus. [Evidence](evidence/PK30.01-relationship-wire.md)
+
+PK34.01 establishes the selected inventory, cart, and storage snapshot wire contracts and reset boundaries. The compiled server-header probe passed. [Evidence](evidence/PK34.01-item-snapshot-contract.md)
