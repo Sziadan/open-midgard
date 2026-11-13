@@ -144,6 +144,8 @@ private:
     // Network polling — called each frame while connected
     void PollNetwork();
     void ResetAccountLoginHandshake();
+    void FailAccountLogin(const char* message);
+    void UpdateAccountHashTimeout(u32 now);
     void SendConnectInfoChanged();
     void SendExeHashCheck();
     void SendPasswordHashRequest();

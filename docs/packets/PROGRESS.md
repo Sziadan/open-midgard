@@ -4149,3 +4149,5 @@ PK46.03 adds scheduled deletion framing and login-mode transport for reservation
 PK46.03 connects scheduled deletion to the PacketVer23 character-selection action, including the birth-date prompt, explicit final confirmation and unknown deadline recovery. [Evidence](evidence/PK46.03-scheduled-deletion-controls.md)
 
 PK28.04 and PK29.04 give armed skills priority over manual companion movement and keep companion casts in their own C++ controller across actor removal. The handoff records the remaining live input and binding checks. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+PK46.03 returns to login after failed account authentication sends or a missing required hash challenge. Optional challenge fallback sends the configured direct request once. [Evidence](evidence/PK46.03-account-login-send-gates.md)

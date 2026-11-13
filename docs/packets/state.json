@@ -1972,7 +1972,7 @@
         "docs/packets/evidence/PK46.03-character-server-entry-path.md",
         "docs/packets/evidence/REVIEW-2026-11-05.md"
       ],
-      "commit_subject": "packet(PK46.03): audit login character send gates"
+      "commit_subject": "packet(PK46.03): recover failed account authentication"
     },
     "PK46.04": {
       "status": "IN_PROGRESS",

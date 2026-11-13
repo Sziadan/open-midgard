@@ -1460,14 +1460,7 @@ void CLoginMode::OnUpdate() {
             m_nextSubMode = LoginSubMode_Login;
             return;
         }
-        if (m_isConnected
-            && m_subMode == LoginSubMode_ConnectAccount
-            && m_waitingForPasswordHash
-            && !m_plainAccountLoginSent
-            && GetTickCount() - m_syncRequestTime >= kPasswordHashFallbackDelayMs) {
-            DbgLog("[Login] password hash challenge timed out, falling back to CA_LOGIN\n");
-            SendPlainAccountLogin();
-        }
+        UpdateAccountHashTimeout(GetTickCount());
     }
 
     MainLoopWatchdogSetStage("Login:UIWindowMgr::OnProcess");
@@ -2195,6 +2188,9 @@ void CLoginMode::PollNetwork()
             continue;
         }
         const ro::net::AccountLoginPacketProfile& loginProfile = ro::net::GetActiveAccountLoginPacketProfile();
+        if (id == loginProfile.passwordHashChallenge && !m_waitingForPasswordHash) {
+            continue;
+        }
         const ro::net::MapReceiveProfile& mapReceiveProfile = ro::net::GetActiveMapReceiveProfile();
         char status[96];
         std::snprintf(status, sizeof(status), "Login: received packet 0x%04X (%d bytes)", id, static_cast<int>(pkt.size()));
@@ -2235,6 +2231,31 @@ void CLoginMode::ResetAccountLoginHandshake()
     m_syncRequestTime = 0;
     m_waitingForPasswordHash = false;
     m_plainAccountLoginSent = false;
+}
+
+void CLoginMode::FailAccountLogin(const char* message)
+{
+    ResetAccountLoginHandshake();
+    CRagConnection::instance()->Disconnect();
+    m_isConnected = 0;
+    m_nextSubMode = LoginSubMode_Login;
+    m_deferredLoginStatus = message;
+    SetLoginStatus(message);
+}
+
+void CLoginMode::UpdateAccountHashTimeout(u32 now)
+{
+    if (!m_isConnected || m_subMode != LoginSubMode_ConnectAccount
+        || !m_waitingForPasswordHash || now - m_syncRequestTime < kPasswordHashFallbackDelayMs) {
+        return;
+    }
+    if (ResolveAccountLoginPacketKind() == AccountLoginPacketKind::Login3) {
+        FailAccountLogin("Login: account server did not return the required hash challenge.");
+        return;
+    }
+    DbgLog("[Login] password hash challenge timed out, sending configured direct login\n");
+    ResetAccountLoginHandshake();
+    SendPlainAccountLogin();
 }
 
 void CLoginMode::SendExeHashCheck()
@@ -2287,6 +2308,7 @@ void CLoginMode::SendPasswordHashRequest()
     pkt.PacketType = ro::net::GetActiveAccountLoginPacketProfile().requestPasswordHash;
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
         DbgLog("[Login] CA_REQ_HASH send failed\n");
+        FailAccountLogin("Login: failed to send the password-hash challenge request.");
         return;
     }
     m_syncRequestTime = GetTickCount();
@@ -2328,6 +2350,7 @@ void CLoginMode::SendPlainAccountLogin()
                pkt.Version,
                static_cast<unsigned int>(pkt.clienttype),
                g_version);
+        FailAccountLogin("Login: failed to send the account login request.");
         return;
     }
     m_plainAccountLoginSent = true;
@@ -2356,6 +2379,7 @@ void CLoginMode::SendLoginPcBang()
                pkt.Version,
                static_cast<unsigned int>(pkt.clienttype),
                pkt.IP);
+        FailAccountLogin("Login: failed to send the account login request.");
         return;
     }
 
@@ -2384,6 +2408,7 @@ void CLoginMode::SendLogin4()
                pkt.ID,
                pkt.Version,
                static_cast<unsigned int>(pkt.clienttype));
+        FailAccountLogin("Login: failed to send the account login request.");
         return;
     }
 
@@ -2413,6 +2438,7 @@ void CLoginMode::SendLoginChannel()
                pkt.Version,
                static_cast<unsigned int>(pkt.clienttype),
                pkt.IP);
+        FailAccountLogin("Login: failed to send the account login request.");
         return;
     }
 
@@ -2427,26 +2453,22 @@ void CLoginMode::SendLoginChannel()
 
 void CLoginMode::OnAckHash(const std::vector<u8>& raw)
 {
-    if (raw.size() < 4) {
-        DbgLog("[Login] AC_ACK_HASH too short (%d bytes)\n", static_cast<int>(raw.size()));
-        if (!m_plainAccountLoginSent) {
-            SendPlainAccountLogin();
-        }
+    constexpr size_t headerLength = 4;
+    if (raw.size() <= headerLength) {
+        DbgLog("[Login] AC_ACK_HASH has no challenge payload (%d bytes)\n", static_cast<int>(raw.size()));
+        FailAccountLogin("Login: account server returned an invalid hash challenge.");
         return;
     }
 
-    const u16 packetLength = static_cast<u16>(raw[2]) | (static_cast<u16>(raw[3]) << 8);
-    const size_t payloadLength = packetLength >= 4 && packetLength <= raw.size()
-        ? static_cast<size_t>(packetLength - 4)
-        : raw.size() - 4;
+    const size_t payloadLength = raw.size() - headerLength;
 
     std::vector<u8> digestInput;
     digestInput.reserve(payloadLength + std::strlen(m_userPassword));
     if (g_passwordEncrypt2 != 0) {
         digestInput.insert(digestInput.end(), m_userPassword, m_userPassword + std::strlen(m_userPassword));
-        digestInput.insert(digestInput.end(), raw.begin() + 4, raw.begin() + 4 + payloadLength);
+        digestInput.insert(digestInput.end(), raw.begin() + headerLength, raw.end());
     } else {
-        digestInput.insert(digestInput.end(), raw.begin() + 4, raw.begin() + 4 + payloadLength);
+        digestInput.insert(digestInput.end(), raw.begin() + headerLength, raw.end());
         digestInput.insert(digestInput.end(), m_userPassword, m_userPassword + std::strlen(m_userPassword));
     }
     const std::array<u8, 16> digest = ro::cipher::ComputeMd5(digestInput.data(), digestInput.size());
@@ -2457,11 +2479,7 @@ void CLoginMode::OnAckHash(const std::vector<u8>& raw)
     if (packetKind == AccountLoginPacketKind::Login3) {
         const int clientInfo = GetSelectedClientInfoIndex();
         if (clientInfo < 0 || clientInfo > 255) {
-            ResetAccountLoginHandshake();
-            CRagConnection::instance()->Disconnect();
-            m_isConnected = 0;
-            m_nextSubMode = LoginSubMode_Login;
-            SetLoginStatus("Login error: selected client-info index cannot be encoded in login3.");
+            FailAccountLogin("Login error: selected client-info index cannot be encoded in login3.");
             DbgLog("[Login] CA_LOGIN3 send skipped: clientinfo index=%d is outside the packet byte range\n", clientInfo);
             return;
         }
@@ -2478,6 +2496,7 @@ void CLoginMode::OnAckHash(const std::vector<u8>& raw)
             DbgLog("[Login] CA_LOGIN3 send failed: user='%s' version=%u challengeBytes=%d clienttype=%u clientinfo=%u\n",
                    pkt.ID, pkt.Version, static_cast<int>(payloadLength),
                    static_cast<unsigned int>(pkt.clienttype), static_cast<unsigned int>(pkt.clientinfo));
+            FailAccountLogin("Login: failed to send the account hash response.");
             return;
         }
     } else {
@@ -2493,6 +2512,7 @@ void CLoginMode::OnAckHash(const std::vector<u8>& raw)
             DbgLog("[Login] CA_LOGIN_HASH send failed: user='%s' version=%u challengeBytes=%d clienttype=%u\n",
                    pkt.ID, pkt.Version, static_cast<int>(payloadLength),
                    static_cast<unsigned int>(pkt.clienttype));
+            FailAccountLogin("Login: failed to send the account hash response.");
             return;
         }
     }

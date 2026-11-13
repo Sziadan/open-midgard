@@ -144,6 +144,10 @@ struct LoginModeReplayAccess : CLoginMode {
     static void RunAckHash(LoginModeReplayAccess& mode, const std::vector<u8>& packet) {
         mode.OnAckHash(packet);
     }
+    void AdvanceAccountHashTimeout(u32 elapsed) {
+        m_subMode = LoginSubMode_ConnectAccount;
+        UpdateAccountHashTimeout(m_syncRequestTime + elapsed);
+    }
     static std::string FormatRefusal(const std::vector<u8>& packet) {
         return FormatLoginRefusalMessage(packet);
     }
@@ -1946,6 +1950,14 @@ void LoginConnectInfoGateReplay()
             "ConnectAccount production flow did not enter the expected account-response wait state");
         Require(SelectSocket(accepted.value, true, false, std::chrono::milliseconds(20)) == 0,
             "ConnectAccount emitted an unexpected extra packet after its expected request sequence");
+        if (forcePasswordHash) {
+            mode.AdvanceAccountHashTimeout(1500);
+            Require(ReceiveExactSocket(accepted.value, expectedLogin.size()) == expectedLogin,
+                "optional hash timeout did not send the configured direct login");
+            mode.AdvanceAccountHashTimeout(1500);
+            Require(SelectSocket(accepted.value, true, false, std::chrono::milliseconds(20)) == 0,
+                "optional hash timeout sent a second direct login");
+        }
         connection->Disconnect();
         g_windowMgr.RemoveAllWindows();
         return Hex(captured);
@@ -2589,7 +2601,61 @@ void Login3ClientInfoHashRequestReplay()
     Require(LoginModeReplayAccess::HandshakeCleared(mode)
             && g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
         "login3 response did not clear challenge state and wait for account reply");
+    Require(send(accepted.value, reinterpret_cast<const char*>(challenge.data()),
+            static_cast<int>(challenge.size()), 0) == static_cast<int>(challenge.size()),
+        "login3 mock could not repeat its challenge");
+    LoginModeReplayAccess::RunPollNetwork(mode);
+    Require(SelectSocket(accepted.value, true, false, std::chrono::milliseconds(50)) == 0,
+        "a duplicate challenge sent a second login request");
+    Require(g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
+        "a duplicate challenge replaced the account-response status");
+
     connection->Disconnect();
+    {
+        LoopbackPeer silentAccount(*connection);
+        LoginModeReplayAccess retry;
+        LoginModeReplayAccess::SetConnected(retry, true);
+        LoginModeReplayAccess::SendHashRequest(retry);
+        Require(silentAccount.ReceiveExact(2) == expectedHashRequest, "silent account did not receive the hash request");
+        retry.AdvanceAccountHashTimeout(1499);
+        Require(connection->IsOpen() && !LoginModeReplayAccess::HandshakeCleared(retry),
+            "login3 stopped waiting before its challenge deadline");
+        retry.AdvanceAccountHashTimeout(1500);
+        Require(!connection->IsOpen() && LoginModeReplayAccess::DisconnectStateCleared(retry)
+                && retry.NextSubMode() == CLoginMode::LoginSubMode_Login
+                && LoginModeReplayAccess::DeferredStatus(retry).find("required hash challenge") != std::string::npos,
+            "login3 did not return to login after the required challenge timed out");
+        char unexpected{};
+        Require(SelectSocket(silentAccount.peer.value, true, false,
+                    std::chrono::duration_cast<std::chrono::milliseconds>(kTimeout)) > 0
+                && recv(silentAccount.peer.value, &unexpected, 1, 0) == 0,
+            "login3 timeout sent another request before closing the connection");
+    }
+    LoginModeReplayAccess failedSend;
+    LoginModeReplayAccess::SetConnected(failedSend, true);
+    LoginModeReplayAccess::SendHashRequest(failedSend);
+    Require(LoginModeReplayAccess::DisconnectStateCleared(failedSend)
+            && failedSend.NextSubMode() == CLoginMode::LoginSubMode_Login
+            && LoginModeReplayAccess::DeferredStatus(failedSend).find("failed to send") != std::string::npos,
+        "failed hash request did not return to login with a retryable status");
+
+    {
+        LoopbackPeer emptyChallenge(*connection);
+        LoginModeReplayAccess retry;
+        LoginModeReplayAccess::SetConnected(retry, true);
+        LoginModeReplayAccess::SendHashRequest(retry);
+        Require(emptyChallenge.ReceiveExact(2) == expectedHashRequest, "empty challenge fixture did not receive the hash request");
+        emptyChallenge.Send({0xdc, 0x01, 0x04, 0x00});
+        const auto deadline = Clock::now() + kTimeout;
+        while (connection->IsOpen() && Clock::now() < deadline) {
+            LoginModeReplayAccess::RunPollNetwork(retry);
+            if (connection->IsOpen()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        Require(!connection->IsOpen() && LoginModeReplayAccess::DisconnectStateCleared(retry)
+                && retry.NextSubMode() == CLoginMode::LoginSubMode_Login
+                && LoginModeReplayAccess::DeferredStatus(retry).find("invalid hash challenge") != std::string::npos,
+            "empty challenge did not terminate account authentication");
+    }
     std::cout << "{\"case_id\":\"login3_clientinfo_hash_request\",\"contract_id\":\"PK44.LOGIN-REQUESTS\",\"fixture_id\":\"PK44-01fa-md5-clientinfo-selected-source\",\"production_entry\":\"ConnectAccount -> 0x01DB -> 0x01DC -> OnAckHash -> 0x01FA\",\"request_01db_hex\":\"" << Hex(capturedHashRequest) << "\",\"challenge_hex\":\"" << Hex(challenge) << "\",\"expected_01fa_hex\":\"" << Hex(expectedLogin) << "\",\"captured_01fa_hex\":\"" << Hex(capturedLogin) << "\",\"clientinfo_from_selected_profile\":1,\"challenge_digest_matches_independent_vector\":true,\"challenge_request_automatic_for_login3\":true,\"handshake_cleared\":true,\"network_scope\":\"loopback mock account server only\",\"outcome\":\"PASS\"}\n";
 }
 
