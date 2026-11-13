@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Relationship packets**. PK30.04 replays the job and skill updates after adoption. Rendered UI checks, independent review, and live verification remain open. [Evidence](evidence/PK30.01-relationship-wire.md)
+**Relationship packets**. PK30.04 replays the job and skill updates after adoption and verifies both candidate prompts in native and Qt. Parent-menu rendering, independent review, and live verification remain open. [Evidence](evidence/PK30.01-relationship-wire.md)
 
 **Social packets**. PK16.04 reviews the selected privacy and social paths and verifies equipment lookup refusal. PK34 validates and replaces friend snapshots atomically. Independent review and live verification remain open. [Verification evidence](evidence/PK16.04-verification-boundary.md)
 

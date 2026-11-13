@@ -1172,7 +1172,7 @@
     "PK30.04": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK30.01-relationship-wire.md"],
-      "commit_subject": "packet(PK30.04): verify post-adoption state updates"
+      "commit_subject": "packet(PK30.04): verify rendered adoption consent prompts"
     },
     "PK31.01": {
       "status": "NOT_STARTED",

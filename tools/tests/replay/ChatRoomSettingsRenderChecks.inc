@@ -15,7 +15,14 @@ void CheckChatRoomSettingsUi(QGuiApplication& app,QQuickView& view,QtUiState* st
     const auto assets=std::filesystem::path(output.toStdString())/"entry-assets";
     std::filesystem::current_path(assets);g_readFolderFirst=1;SetRuntimeUiScalePercent(100);ro::commerce::state={};
     ro::GetMannerFilter().Clear();ro::GetMannerFilter().AppendEncodedFile("BAD\r\n",65001);
-    {std::ofstream f("msgstringtable.txt",std::ios::binary);for(int i=0;i<=661;++i)f<<(i==14?"#\r\n":"Settings label#\r\n");}
+    const std::string invitation = " wishes to adopt you. Do you accept?";
+    const std::string warning = "When you become a child, you will be unable to become a Transcendent Class character, all stats will be limited to a maximum of 80, and Max HP/SP will be reduced. Are you sure that you want to be adopted?";
+    {
+        std::ofstream f("msgstringtable.txt", std::ios::binary);
+        for (int i = 0; i <= 888; ++i) {
+            f << (i == 14 ? "" : i == 794 ? invitation : i == 888 ? warning : "Settings label") << "#\r\n";
+        }
+    }
     const auto pointer=[&](UINT message,int x,int y){WindowProc(g_hMainWnd,message,message==WM_LBUTTONUP?0:MK_LBUTTON,
         MAKELPARAM(UiScaleLogicalToRawCoordinate(x),UiScaleLogicalToRawCoordinate(y)));};
     const auto tap=[&](int x,int y){pointer(WM_LBUTTONDOWN,x,y);pointer(WM_LBUTTONUP,x,y);};
@@ -80,4 +87,60 @@ void CheckChatRoomSettingsUi(QGuiApplication& app,QQuickView& view,QtUiState* st
     QFile result(output+"/chat-settings-results.json");Require(result.open(QIODevice::WriteOnly),"settings result open failed");
     result.write(QJsonDocument(QJsonObject{{"native_qml_frames",10},{"radio_down",true},{"combo",true},{"masked_native_input",true},
         {"capture_cancel_release",true},{"known_empty_modal",true},{"prefill",true},{"scale_125",true},{"deleted_editor",true},{"outcome","PASS"}}).toJson());
+
+    SetRuntimeUiScalePercent(100);
+    QImage cancelBitmap(40, 20, QImage::Format_RGB32);
+    cancelBitmap.fill(QColor("#a0c080"));
+    Require(cancelBitmap.save(QString::fromStdString((assets / "btn_cancel.bmp").string())),
+        "adoption cancel fixture missing");
+    const auto captureConsent = [&](int id, const std::string& expected, const QString& name) {
+        auto* dialog = g_windowMgr.m_roomMessageBox;
+        Require(dialog && dialog == g_windowMgr.m_modalWindow && dialog->HasCancel()
+            && dialog->GetMessageId() == id && dialog->GetText() == expected,
+            "adoption prompt did not retain its full localized text");
+        state->setUiScale(GetConfiguredUiScaleFactor());
+        adapter.syncChat();
+        Frames(app, view);
+        auto* box = Find(view.rootObject(), "sourceRoomValidation");
+        auto* label = Find(view.rootObject(), "sourceRoomValidationText");
+        Require(box && box->isVisible() && label && label->isVisible()
+            && label->property("text").toString() == QString::fromStdString(expected)
+            && label->property("contentHeight").toReal() <= label->height(),
+            "Qt adoption prompt lost or clipped its text");
+        const auto& ok = dialog->GetButton();
+        const auto& cancel = dialog->GetCancelButton();
+        Require(22 + dialog->GetMessageBodyHeight() <= std::min(ok.y, cancel.y),
+            "adoption buttons overlap the message body");
+        ArgbDibSurface dib;
+        Require(dib.EnsureSize(view.width(), view.height()), "adoption native DIB failed");
+        std::fill_n(dib.GetPixels(), view.width() * view.height(), 0xff181b20u);
+        QFont font("Segoe UI");
+        font.setPixelSize(12);
+        Require(QFontMetrics(font).boundingRect(QRect(0, 0, 260, 1000), Qt::TextWordWrap,
+            QString::fromStdString(expected)).height() <= dialog->GetMessageBodyHeight(),
+            "native adoption prompt clips its text");
+        dialog->DrawToHdc(dib.GetDC());
+        const auto native = QImage(reinterpret_cast<uchar*>(dib.GetPixels()), view.width(), view.height(),
+            view.width() * 4, QImage::Format_RGB32).copy();
+        const auto qt = view.grabWindow().convertToFormat(QImage::Format_RGB32);
+        for (const auto& image : {native, qt}) {
+            Require(image.pixelColor(dialog->m_x + ok.x + 5, dialog->m_y + ok.y + 5) == QColor("#c0a080")
+                && image.pixelColor(dialog->m_x + cancel.x + 5, dialog->m_y + cancel.y + 5) == QColor("#a0c080"),
+                "adoption confirmation buttons did not render");
+        }
+        Require(native.save(output + "/" + name + ".native.png")
+            && qt.save(output + "/" + name + ".qml.png"), "could not save adoption frames");
+    };
+    mode.ReceiveAdoptionInvitation(100, 200, "Parent");
+    captureConsent(794, "Parent" + invitation, "adoption-invitation");
+    auto* dialog = g_windowMgr.m_roomMessageBox;
+    tap(dialog->m_x + dialog->GetButton().x + 5, dialog->m_y + dialog->GetButton().y + 5);
+    captureConsent(888, warning, "adoption-consequences");
+    mode.ClearAdoptionInvitation();
+    mode.UpdateAdoptionInvitation();
+    adapter.syncChat();
+    Frames(app, view);
+    Require(!g_windowMgr.m_roomMessageBox && !g_windowMgr.m_modalWindow
+        && !Find(view.rootObject(), "sourceRoomValidation")->isVisible(),
+        "adoption teardown retained the warning");
 }
