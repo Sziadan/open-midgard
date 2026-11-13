@@ -1395,6 +1395,23 @@ void HandleItemRefineResult(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleProductionResult(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 6 || !mode.m_world || !mode.m_world->m_player) return;
+    const auto result = ReadLE16(packet.data + 2);
+    const auto itemId = ReadLE16(packet.data + 4);
+    if (!itemId || result > 7) return;
+
+    // Ref formats a result string without publishing it. The visible result is the effect.
+    constexpr std::array<int, 8> effects{154, 155, 305, 306, 306, 306, 306, 306};
+    const int effect = effects[result];
+    auto* player = mode.m_world->m_player;
+    if (g_session.m_isEffectOn) {
+        if (effect == 305 || effect == 306) player->RemoveEffectById(effect);
+        player->LaunchEffect(effect);
+    }
+}
+
 void HandleRecovery(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6) return;
@@ -9787,6 +9804,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x017D, HandleItemCompositionAck);
     router.Register(0x0179, HandleItemIdentifyAck);
     router.Register(0x0188, HandleItemRefineResult);
+    router.Register(0x018F, HandleProductionResult);
     router.Register(0x00F2, HandleStorageStatus);
     RegisterHandlerIfValid(router, receiveProfile.storageItemAddedBasic, HandleStorageItemAdded);
     router.Register(0x00F6, HandleStorageItemRemoved);

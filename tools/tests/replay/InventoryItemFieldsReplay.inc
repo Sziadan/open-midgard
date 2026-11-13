@@ -203,3 +203,47 @@ void ItemRefineResultReplay()
     g_session.RemoveInventoryItem(87, 1);
     g_windowMgr.ClearChatEvents();
 }
+
+void ProductionResultReplay()
+{
+    CGameMode mode;
+    CWorld world;
+    CPlayer player;
+    mode.m_world = &world;
+    world.m_player = &player;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    const auto oldEffects = g_session.m_isEffectOn;
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    g_session.m_isEffectOn = true;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection connection;
+    const auto receive = [&](u8 result) {
+        Require(connection.QueueBytes({0x8f, 1, result, 0, 0xb1, 4})
+            && ProcessGameModePacketLoop(mode, connection, router, 1).packetsDispatched == 1
+            && !connection.BufferedBytes(), "production result did not frame and dispatch");
+    };
+    const auto effectCount = [&](int id) {
+        return std::count_if(player.m_effectList.begin(), player.m_effectList.end(), [=](const CRagEffect* effect) {
+            return effect && effect->GetEffectType() == id;
+        });
+    };
+    const auto inventorySize = g_session.GetInventoryItems().size();
+    const auto noticeCount = g_windowMgr.GetChatEvents().size();
+    for (u8 result = 0; result < 8; ++result) receive(result);
+    receive(2);
+    receive(8);
+    Require(player.m_effectList.size() == 4 && effectCount(154) == 1 && effectCount(155) == 1
+        && effectCount(305) == 1 && effectCount(306) == 1,
+        "production result effects did not match reference selection and replacement");
+    g_session.m_isEffectOn = false;
+    receive(0);
+    receive(2);
+    Require(player.m_effectList.size() == 4 && effectCount(305) == 1
+        && g_session.GetInventoryItems().size() == inventorySize && g_windowMgr.GetChatEvents().size() == noticeCount,
+        "production result altered effects while disabled, inventory, or chat");
+    g_session.m_isEffectOn = oldEffects;
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    mode.m_world = nullptr;
+}

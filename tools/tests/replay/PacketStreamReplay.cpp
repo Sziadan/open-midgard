@@ -7049,6 +7049,7 @@ int main(int argc,char** argv){try{
     RecoveryDeltaReplay();
     InventoryItemFieldsReplay();
     ItemRefineResultReplay();
+    ProductionResultReplay();
     CartStackDeltaReplay();
     CartClearContentsReplay();
     CartActorPresenceReplay();

@@ -3999,3 +3999,5 @@ PK34.04 replays the storage window reopening after a same-map reset with one pop
 PK35.01 traces the selected NPC refine, weapon-refine, production, repair, and cooking contracts. The packed server-header probe passed. [Evidence](evidence/PK35.01-crafting-wire.md)
 
 PK35.02 handles the selected NPC refine result and verifies its interaction with authoritative inventory removal and add packets. [Evidence](evidence/PK35.01-crafting-wire.md)
+
+PK35.02 receives `018F` and applies the reference production result effects. [Evidence](evidence/PK35.01-crafting-wire.md)
