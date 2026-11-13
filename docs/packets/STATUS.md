@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Battleground state**. PK41.02 receives camp identity, scores, team HP and teammate minimap markers. Opposing-camp head marker presentation and live acceptance remain open. [Evidence](evidence/PK41.02-battleground-state.md)
+**Battleground state**. PK41.02 receives camp identity, scores, team HP and teammate minimap markers. The shared world renderer queues the original opposing-camp bitmap. Installed-client capture and live acceptance remain open. [Evidence](evidence/PK41.02-battleground-state.md)
 
 **Storage password packets**. PK36.01 records the registered layouts and classifies the challenge flow as inactive in the selected server source. PK46 and PK47 carry that finding while review of other profiles remains open. [Evidence](evidence/PK36.01-storage-password-applicability.md)
 

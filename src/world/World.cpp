@@ -20,6 +20,7 @@
 #include "render3d/Device.h"
 #include "render3d/RenderDevice.h"
 #include "core/File.h"
+#include "core/ClientInfoLocale.h"
 #include "core/GuildFlagTexture.h"
 #include "core/Timer.h"
 #include "res/ActRes.h"
@@ -6851,9 +6852,57 @@ void CWorld::RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, floa
     m_skyActor->Render(viewMatrix);
 }
 
+void CWorld::QueueBattlegroundCampMarkers(const matrix& viewMatrix, u16 localCamp)
+{
+    if (!localCamp) {
+        return;
+    }
+
+    // HighPriest.exe 0x6F291C: the CP949 path for the opposing-camp bitmap.
+    constexpr char bitmap[] =
+        "\xc0\xaf\xc0\xfa\xc0\xce\xc5\xcd\xc6\xe4\xc0\xcc\xbd\xba\\"
+        "\xc0\xfc\xc0\xe5\xc0\xfb\xc7\xa5\xbd\xc3.bmp";
+    constexpr int hiddenStates = 0x0002 | 0x0004 | 0x0040;
+    const bool viewerIsGravity = IsGravityAid(g_session.m_aid);
+    const float averagePixelRatio = g_renderer.m_height * 0.0017447917f;
+    if (averagePixelRatio <= 0.0f) {
+        return;
+    }
+
+    CTexture* texture = nullptr;
+    for (const auto* actor : m_actorList) {
+        if (!actor || actor == m_player || !actor->m_isVisible || !actor->m_camp
+            || actor->m_camp == localCamp || IsGravityAid(actor->m_gid)
+            || (!viewerIsGravity && (actor->m_effectState & hiddenStates))) {
+            continue;
+        }
+        tlvertex3d point{};
+        if (!ProjectPoint(g_renderer, viewMatrix, actor->m_pos, &point)) {
+            continue;
+        }
+        if (!texture) {
+            texture = g_texMgr.GetMaskedTexture(bitmap);
+            if (!texture || !texture->m_updateWidth || !texture->m_updateHeight) {
+                return;
+            }
+        }
+
+        const float pixelRatio = point.oow * g_renderer.m_hpc * 0.14285715f / averagePixelRatio;
+        const float x = static_cast<int>(static_cast<int>(point.x) - (5 * g_renderer.m_width / 640) * pixelRatio);
+        const float y = static_cast<int>(static_cast<int>(point.y) - (100 * g_renderer.m_height / 480) * pixelRatio);
+        const float width = static_cast<float>(texture->m_updateWidth) / texture->m_upscaleFactor;
+        const float height = static_cast<float>(texture->m_updateHeight) / texture->m_upscaleFactor;
+        SubmitScreenSpacePerspectiveSprite(x, y, x + width, y + height,
+            point.oow, point.oow, 0.0f, texture, 0xFFFFFFFFu, D3DBLEND_INVSRCALPHA, 1 | 8);
+    }
+}
+
 void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
 {
     ProcessActorChatRoomTitles(viewMatrix);
+    if (const auto* mode = g_modeMgr.GetCurrentGameMode(); mode && mode->m_world == this) {
+        QueueBattlegroundCampMarkers(viewMatrix, mode->m_battlegroundCamp);
+    }
     m_lastRenderStats = RenderDebugStats{};
 
     u32 renderedObjects = 0;

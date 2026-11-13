@@ -327,6 +327,7 @@ public:
     void UpdateBackgroundObjects(const matrix* viewMatrix);
     void UpdateActors();
     void ProcessActorChatRoomTitles(const matrix& viewMatrix);
+    void QueueBattlegroundCampMarkers(const matrix& viewMatrix, u16 localCamp);
     void ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude,
         UIRechargeGage* npcProgressGauge = nullptr);
     void RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, float cameraLongitude, float cameraLatitude);

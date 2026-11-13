@@ -89,6 +89,54 @@ void BattlegroundStateReplay()
     Require(mode.m_battlegroundCamp == 0x142 && local.m_camp == 0x142 && remote.m_camp == 0x242,
         "camp packets lost the upper byte or used character GID for the local AID");
 
+    const int oldWidth = g_renderer.m_width, oldHeight = g_renderer.m_height;
+    const float oldHpc = g_renderer.m_hpc, oldVpc = g_renderer.m_vpc;
+    const float oldXOffset = g_renderer.m_xoffset, oldYOffset = g_renderer.m_yoffset;
+    g_renderer.m_width = 640; g_renderer.m_height = 480;
+    g_renderer.m_hpc = g_renderer.m_vpc = 400;
+    g_renderer.m_xoffset = 320; g_renderer.m_yoffset = 240;
+    g_renderer.DiscardRenderList();
+    constexpr char markerKey[] =
+        "@mk:\xc0\xaf\xc0\xfa\xc0\xce\xc5\xcd\xc6\xe4\xc0\xcc\xbd\xba\\"
+        "\xc0\xfc\xc0\xe5\xc0\xfb\xc7\xa5\xbd\xc3.bmp";
+    CTexture fixtureTexture(64, 64);
+    fixtureTexture.m_updateWidth = fixtureTexture.m_surfaceUpdateWidth = 48;
+    fixtureTexture.m_updateHeight = fixtureTexture.m_surfaceUpdateHeight = 48;
+    fixtureTexture.m_upscaleFactor = 2;
+    const auto cached = g_texMgr.m_texTable.emplace(markerKey, &fixtureTexture);
+    Require(cached.second, "unexpected existing battleground marker texture");
+    matrix view{};
+    view.m[0][0] = view.m[1][1] = view.m[2][2] = view.m[3][3] = 1;
+    view.m[3][2] = 100;
+    remote.m_pos = {0, 0, 0};
+    world.QueueBattlegroundCampMarkers(view, mode.m_battlegroundCamp);
+    const auto& quads = g_renderer.m_rpAlphaNoDepthList;
+    Require(quads.size() == 1 && quads.front().second->tex == &fixtureTexture,
+        "opposing high-byte camp did not queue the original bitmap overlay");
+    const auto* vertices = quads.front().second->verts;
+    Require(vertices[0].x == 316.5f && vertices[0].y == 171.5f
+        && vertices[3].x - vertices[0].x == 24 && vertices[3].y - vertices[0].y == 24
+        && vertices[3].tu == 0.75f && vertices[3].tv == 0.75f,
+        "camp marker did not use the source anchor, logical size and texture bounds");
+    g_renderer.DiscardRenderList();
+    for (const int hidden : {2, 4, 64}) {
+        remote.m_effectState = hidden;
+        world.QueueBattlegroundCampMarkers(view, mode.m_battlegroundCamp);
+        Require(quads.empty(), "hidden opponent still showed a camp marker");
+    }
+    remote.m_effectState = 0;
+    world.QueueBattlegroundCampMarkers(view, remote.m_camp);
+    world.QueueBattlegroundCampMarkers(view, 0);
+    Require(quads.empty(), "allied or unknown local camp showed a marker");
+    world.UnregisterActor(&remote);
+    world.QueueBattlegroundCampMarkers(view, mode.m_battlegroundCamp);
+    Require(quads.empty(), "actor leaving sight retained a camp marker");
+    world.RegisterActor(&remote);
+    g_texMgr.m_texTable.erase(cached.first);
+    g_renderer.m_width = oldWidth; g_renderer.m_height = oldHeight;
+    g_renderer.m_hpc = oldHpc; g_renderer.m_vpc = oldVpc;
+    g_renderer.m_xoffset = oldXOffset; g_renderer.m_yoffset = oldYOffset;
+
     std::vector<u8> position(36);
     position[0] = 0xdf; position[1] = 2; position[2] = 0x40;
     position[32] = 0x2c; position[33] = 1; position[34] = 45;

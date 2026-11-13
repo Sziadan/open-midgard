@@ -1406,7 +1406,7 @@
     "PK41.02": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK41.02-battleground-state.md"],
-      "commit_subject": "packet(PK41.02): receive selected battleground state"
+      "commit_subject": "packet(PK41.02): render the original opposing-camp marker"
     },
     "PK41.03": {
       "status": "NOT_STARTED",
