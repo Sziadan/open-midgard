@@ -4113,3 +4113,5 @@ PK40.03 connects the selected NPC cash-shop catalog, purchase and result to the 
 PK40.03 adds explicit Kafra contribution input and split confirmation. Replacement catalogs retire stale confirmations. [Evidence](evidence/PK40.03-npc-cash-shop.md)
 
 PK40.05 adjudicates eight client-to-server requests and seven inactive auction and cash-shop identities. Active receive acceptance remains open. [Evidence](evidence/PK40.05-selected-verification.md)
+
+PK41.01 traces the selected camp, score, marker, HP and team-chat contracts and the later queue gates. [Evidence](evidence/PK41.01-selected-battleground-inventory.md)

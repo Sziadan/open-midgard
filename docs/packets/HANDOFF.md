@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK41.01 establishes the selected battleground contracts. Continue PK41.02 with camp identity, scores, team HP and minimap markers. PK41.03 owns team chat and teardown. The selected server disables the later queue system at startup. [Battleground inventory](evidence/PK41.01-selected-battleground-inventory.md)
+
 PK40.05 records the selected request and inactive identities. Continue with dedicated auction and cash-shop render comparisons, live acceptance, and PK48 review. The selected server's four-byte close reply uses `025D`. Its registered `025E` only supplies the server's length. [Commerce verification](evidence/PK40.05-selected-verification.md)
 
 PK40.03 frames the NPC cash-shop catalog and result and sends single-item purchases after Kafra contribution entry and split confirmation. Continue with rendered acceptance and live balance and inventory verification. [Cash-shop evidence](evidence/PK40.03-npc-cash-shop.md)
