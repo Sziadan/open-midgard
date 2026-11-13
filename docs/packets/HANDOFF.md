@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK46.02 now records the PacketVer22 item-use capture and four selected crafting request identities. Continue the outbound audit with the existing chat and social request fixtures. PK37 still owns direct storage/cart transfers `0128` and `0129`. Keep `012F` open for profile and producer review. [Storage and item crosswalk](evidence/PK46.02-storage-item-crosswalk.md) · [Crafting crosswalk](evidence/PK46.02-crafting-request-crosswalk.md)
+PK46.02 now records the selected chat, room, and friend requests. Continue the outbound audit with party and guild membership controls. PK37 still owns direct storage/cart transfers `0128` and `0129`. Keep `012F` open for profile and producer review. [Chat and social crosswalk](evidence/PK46.02-chat-social-crosswalk.md)
 
 PK46.03 connects scheduled character deletion to the PacketVer23 Delete action. Verify the Windows dialog visually and use a disposable test character to check scheduling, reconnect, cancellation, birth-date refusal and confirmation after the deadline. The selected list omits the deadline and an already-queued reply carries zero. [Scheduled deletion controls](evidence/PK46.03-scheduled-deletion-controls.md)
 
