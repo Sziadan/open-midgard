@@ -47,7 +47,7 @@ public:
     Msg2Ai ConsumeResMsg(u32 myId);
 
     bool Move(u32 id, int x, int y) const;
-    void MoveToOwner(u32 id) const;
+    bool MoveToOwner(u32 id) const;
     void Attack(u32 id, u32 enemyId, u32 now);
     void StopAttack(u32 id);
     void ClearAttackSelection(u32 enemyId) const;

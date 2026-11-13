@@ -478,8 +478,8 @@ void Brain::OnFOLLOW_CMD_ST()
 void Brain::RequestFollow(const Position& owner)
 {
     // A rejected 0234 has no reply. Keep following, with at most one request per interval.
-    if (!m_lastFollowRequest || m_now - *m_lastFollowRequest >= MovementStallDelay()) {
-        m_runtime.MoveToOwner(m_myId);
+    if ((!m_lastFollowRequest || m_now - *m_lastFollowRequest >= MovementStallDelay())
+        && m_runtime.MoveToOwner(m_myId)) {
         m_lastFollowRequest = m_now;
         m_followDestination = owner;
     }

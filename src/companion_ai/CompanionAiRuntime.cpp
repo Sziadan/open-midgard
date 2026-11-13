@@ -391,15 +391,15 @@ bool Runtime::Move(u32 id, int x, int y) const
     return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
 }
 
-void Runtime::MoveToOwner(u32 id) const
+bool Runtime::MoveToOwner(u32 id) const
 {
     if (!IsOwnedCompanion(id)) {
-        return;
+        return false;
     }
     PACKET_CZ_REQUEST_MOVETOOWNER packet{};
     packet.PacketType = kPacketRequestMoveToOwner;
     packet.GID = id;
-    CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
 }
 
 bool Runtime::CanTargetForAttack(u32 id) const

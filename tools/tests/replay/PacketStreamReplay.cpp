@@ -4827,6 +4827,18 @@ void PendingCompanionActorSkillReplay()
     groundRequest[12] = groundRequest[20] = 16;
     Require(peer.ReceiveExact(groundRequest.size()) == groundRequest,
         "ground skill did not cast after advancing through a waypoint");
+
+    mercenary.ResetCompanionOrders(companion_ai::Kind::Mercenary);
+    connection->Disconnect();
+    orderFollow(companion_ai::Kind::Mercenary, false);
+    tickCompanion(mercenary);
+    LoopbackPeer recoveredPeer(*connection);
+    tickCompanion(mercenary);
+    Require(recoveredPeer.ReceiveExact(6) == followRequest,
+        "a failed follow send delayed retry after the socket reopened");
+    tickCompanion(mercenary);
+    Require(SelectSocket(recoveredPeer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "successful follow retry did not start the pacing interval");
     world.m_attr = nullptr;
 
     world.UnregisterActor(&target);
@@ -4851,7 +4863,7 @@ void PendingCompanionActorSkillReplay()
     mode.m_skillUseInfo = {8201, 1, 10, 2};
     Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false) && player.commands.empty(),
         "dismissed mercenary routed its armed actor skill through the player");
-    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+    Require(SelectSocket(recoveredPeer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "unavailable companions emitted a skill request");
 
     mode.m_skillUseInfo = {5, 1, 10, 1};
