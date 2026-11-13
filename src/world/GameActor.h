@@ -259,6 +259,7 @@ class CGameActor : public CAbleToMakeEffect {
 public:
     CGameActor();
     virtual ~CGameActor();
+    void ResetCompanionOrders(companion_ai::Kind kind);
 
     void SetChatBubbleText(const std::string& text, u32 untilTick);
     void ClearChatBubbleText();

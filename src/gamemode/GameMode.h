@@ -108,6 +108,8 @@ public:
     void UpdateStarSkillNotice(u32 now);
     void HelpBalloonDeleted(UITransBalloonText* window) override;
     void SynchronizePlayerSkillProceed(CPlayer* player,bool retire=false);
+    void ResetCompanionMapState();
+    void DeactivateHomunculus();
     void RetireMercenaryContract();
 
     enum MapLoadingStage {

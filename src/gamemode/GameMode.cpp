@@ -8002,7 +8002,7 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 
 void ClearRuntimeActors(CGameMode& mode)
 {
-    g_session.ResetCompanionMapState();
+    mode.ResetCompanionMapState();
     g_Weather.Reset();
     mode.ClearNpcProgress();
     mode.m_compassPosList.clear();
@@ -10306,8 +10306,33 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
 }
 }
 
+namespace {
+void ResetCompanionActorOrders(CWorld* world, u32 gid, companion_ai::Kind kind)
+{
+    if (world && gid) {
+        if (auto* actor = world->GetGameActorByAID(gid)) actor->ResetCompanionOrders(kind);
+    }
+}
+}
+
+void CGameMode::ResetCompanionMapState()
+{
+    ResetCompanionActorOrders(m_world, g_session.m_homunGID, companion_ai::Kind::Homunculus);
+    ResetCompanionActorOrders(m_world, g_session.m_merGID, companion_ai::Kind::Mercenary);
+    g_session.ResetCompanionMapState();
+}
+
+void CGameMode::DeactivateHomunculus()
+{
+    ResetCompanionActorOrders(m_world, g_session.m_homunGID, companion_ai::Kind::Homunculus);
+    g_session.m_homunTarget = {};
+    g_session.m_homunStatus.alive = false;
+    g_windowMgr.CloseCompanionWindows(true);
+}
+
 void CGameMode::RetireMercenaryContract()
 {
+    ResetCompanionActorOrders(m_world, g_session.m_merGID, companion_ai::Kind::Mercenary);
     g_session.m_merGID = 0;
     g_session.m_merStatus = {};
     g_session.m_merTarget = {};

@@ -3941,3 +3941,7 @@ PK28.04 and PK29.04 now use the C++ controller as the implementation baseline. T
 ## Companion skill approach recovery
 
 PK28.04 and PK29.04 give actor and ground casts a bounded retry when a companion stalls before reaching range. The production replay drives the stall clock, verifies the selected move packet, and exercises release of a reserved cast. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+## Companion order cleanup
+
+PK28.04 and PK29.04 clear both actor mailboxes and the C++ controller on lifecycle reset. Replay covers death and reactivation, the owner rest and deletion snapshots, mercenary replacement and refresh, and same-map reuse. [Evidence](evidence/PK28-PK29-native-companion-ai.md)

@@ -1941,6 +1941,10 @@ void HandleHomunProperty(CGameMode& mode, const PacketView& packet)
     const auto name = ExtractFixedPacketString(packet, 2, 24);
     // Ref only uses bit0 of the flags byte as the rename lock.
     const u8 renameFlag = static_cast<u8>(data[26] & 0x1);
+    // Selected server flags report rest at bit 1 and positive HP at bit 2.
+    if ((data[26] & 0x2) != 0 || (data[26] & 0x4) == 0) {
+        mode.DeactivateHomunculus();
+    }
     const bool nameChanged = status.name != name || status.nameModified != renameFlag;
     status.name = name;
     status.nameModified = renameFlag;
@@ -2003,10 +2007,14 @@ void HandleHomunStatus(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 12) return;
     const auto gid = ReadLE32(packet.data + 4);
-    const auto* actor = mode.m_world ? mode.m_world->GetGameActorByAID(gid) : nullptr;
+    const auto* actor = mode.m_world && gid ? mode.m_world->GetGameActorByAID(gid) : nullptr;
     auto& status = g_session.m_homunStatus;
     switch (packet.data[3]) {
     case 0:
+        if (gid != g_session.m_homunGID) {
+            mode.DeactivateHomunculus();
+            status.job = -1;
+        }
         g_session.m_homunGID = gid;
         if (actor) status.alive = true;
         CacheOwnedCompanionActorName(mode, gid, status.name);
@@ -3984,7 +3992,7 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
 {
     mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
-    g_session.ResetCompanionMapState();
+    mode.ResetCompanionMapState();
     g_windowMgr.CloseCompanionWindows(true);
     g_windowMgr.CloseCompanionWindows(false);
     const int draggedSkill = mode.m_dragInfo.skillId;
@@ -5208,9 +5216,7 @@ void HandleSkillNoDamageNotify(CGameMode& mode, const PacketView& packet)
     const u8 result = packet.data[14];
 
     if (skillId == 244 && srcGid == g_session.m_aid) {
-        g_windowMgr.CloseCompanionWindows(true);
-        g_session.m_homunTarget = {};
-        g_session.m_homunStatus.alive = false;
+        mode.DeactivateHomunculus();
     }
 
     DeliverUseSkill(mode, srcGid, dstGid, skillId, rawLevel, result != 0);
@@ -9102,6 +9108,7 @@ void HandleActorVanish(CGameMode& mode, const PacketView& packet)
                 IsLocalPlayerActor(mode, gid) ? 1 : 0,
                 static_cast<unsigned int>(actor->m_vanishTime));
         } else {
+            if (gid && gid == g_session.m_homunGID) mode.DeactivateHomunculus();
             RemoveRuntimeActor(mode, gid);
         }
     } else {

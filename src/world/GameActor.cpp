@@ -5032,6 +5032,16 @@ CGameActor::~CGameActor()
     }
 }
 
+void CGameActor::ResetCompanionOrders(companion_ai::Kind kind)
+{
+    const bool homunculus = kind == companion_ai::Kind::Homunculus;
+    auto*& controller = homunculus ? m_homunAI : m_merAI;
+    delete controller;
+    controller = nullptr;
+    (homunculus ? m_homunMsg : m_merMsg).Clear();
+    (homunculus ? m_homunResMsg : m_merResMsg).Clear();
+}
+
 void CGameActor::SetChatBubbleText(const std::string& text, u32 untilTick)
 {
     if (text.empty() || untilTick == 0) {
@@ -6442,15 +6452,13 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             g_windowMgr.CloseCompanionWindows(true);
             g_session.m_homunTarget = {};
             g_session.m_homunStatus.alive = false;
-            delete m_homunAI;
-            m_homunAI = nullptr;
+            ResetCompanionOrders(companion_ai::Kind::Homunculus);
         }
         if (m_gid != 0 && m_gid == g_session.m_merGID) {
             g_windowMgr.CloseCompanionWindows(false);
             g_session.m_merTarget = {};
             g_session.m_merStatus.alive = false;
-            delete m_merAI;
-            m_merAI = nullptr;
+            ResetCompanionOrders(companion_ai::Kind::Mercenary);
         }
         // An in-progress flinch with an empty queue does not hold the death
         // pose; holding it there is what pushes the death cry past the fall.

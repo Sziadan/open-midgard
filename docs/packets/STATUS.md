@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Native companion lifecycle orders**. PK28.04 and PK29.04 cover order cleanup on death, vaporize, deletion, identity replacement, and same-map reuse. Same-GID mercenary refresh preserves orders. Live verification remains open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
 **Companion skill approach recovery**. PK28.04 and PK29.04 verify stalled actor and ground approaches, movement progress, and the release of a reserved cast after a failed approach. Queued-order cleanup across lifecycle transitions and live verification remain open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 **Native companion targeting**. PK28.04 and PK29.04 verify that an aggressive homunculus and a mercenary defending its owner pick living targets when a closer corpse is present. Six focused application checks and 473 standalone checks passed. Movement failure recovery and live verification remain open. [Evidence](evidence/PK28-PK29-native-companion-ai.md)

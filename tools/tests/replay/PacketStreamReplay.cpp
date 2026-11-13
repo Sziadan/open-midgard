@@ -2546,7 +2546,7 @@ void CompanionIdentityReplay()
     homun[0] = 0x2e;
     homun[1] = 0x02;
     std::fill_n(homun.begin() + 2, 24, '%');
-    homun[26] = 1;
+    homun[26] = 5;
     homun[27] = 7;
     homun[29] = 10;
     homun[34] = 0xf0;
@@ -3029,6 +3029,15 @@ void CompanionCommandReplay()
         && g_session.m_merTarget.gid == 0xf1000035 && g_session.GetMercSkillItems().size() == 1
         && mode.m_skillUseInfo.id == 8201 && g_windowMgr.m_merInfoWnd == merc && g_windowMgr.m_merSkillListWnd,
         "failed dismissal send retired the mercenary contract");
+    g_session.m_homunStatus.alive = true;
+    homun = static_cast<UICompanionStatusWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNINFOWND));
+    Require(homun, "could not reopen homunculus status after disconnect");
+    Require(homun->SendMsg(nullptr, 6, 225, 0, 0) && g_windowMgr.m_roomMessageBox,
+        "could not open homunculus dismissal after disconnect");
+    g_windowMgr.m_roomMessageBox->Dismiss(true);
+    Require(g_session.m_homunStatus.alive && g_windowMgr.m_homunInfoWnd == homun,
+        "failed dismissal send deactivated the homunculus");
+    g_windowMgr.CloseCompanionWindows(true);
     g_windowMgr.CloseCompanionWindows(false);
     g_session.ClearMercSkillItems();
 
@@ -3189,7 +3198,8 @@ void CompanionSkillListReplay()
         && homun->GetRows().front().level == 5 && homun->GetRows().front().spCost == 11
         && !homun->GetRows().front().upgrade && !mode.m_isReqUpgradeSkillLevel
         && merc->GetRows().front().level == 4, "companion update did not acknowledge only the matching row");
-    const std::array<u8, 71> property{0x2e, 0x02};
+    std::array<u8, 71> property{0x2e, 0x02};
+    property[26] = 0x04; // Active homunculus with positive HP.
     Require(TryReadPacket(property.data(), static_cast<int>(property.size()), updated, consumed)
         && consumed == 71 && router.Dispatch(mode, updated)
         && g_session.m_homunStatus.skillPoints == 0, "homunculus property did not refresh skill points");
@@ -3566,6 +3576,82 @@ void PendingCompanionActorSkillReplay()
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "automatic companion targeting emitted an extra request");
     world.UnregisterActor(&corpse);
+    target.m_targetGid = 0;
+    homunculus.m_job = 6001;
+    const auto orderFollow = [](companion_ai::Kind kind, bool reserved) {
+        companion_ai::Msg2Ai order;
+        order.command = companion_ai::FOLLOW_CMD;
+        Require(companion_ai::Runtime::QueueCommand(kind, order, reserved),
+            "could not stage companion order before lifecycle change");
+    };
+    const auto dispatch = [&](const auto& frame) {
+        Require(TryReadPacket(frame.data(), static_cast<int>(frame.size()), view, consumed)
+            && consumed == static_cast<int>(frame.size()) && router.Dispatch(mode, view),
+            "companion lifecycle fixture did not frame and dispatch");
+    };
+
+    orderFollow(companion_ai::Kind::Homunculus, false);
+    orderFollow(companion_ai::Kind::Homunculus, true);
+    homunculus.SendMsg(nullptr, 28, 0, 0, 0);
+    Require(!g_session.m_homunStatus.alive && !homunculus.m_homunAI
+        && homunculus.m_homunMsg.command == companion_ai::NONE_CMD
+        && homunculus.m_homunResMsg.command == companion_ai::NONE_CMD,
+        "owned homunculus death retained a pending controller order");
+    const std::array<u8, 12> homunIdentity{0x30, 0x02, 0, 0, 0x41, 0, 0, 0xf1};
+    homunculus.m_stateId = companion_ai::MOTION_STAND;
+    dispatch(homunIdentity);
+    tickCompanion(homunculus);
+    orderFollow(companion_ai::Kind::Homunculus, true);
+    tickCompanion(homunculus);
+    Require(peer.ReceiveExact(6) == std::vector<u8>{0x34, 0x02, 0x41, 0, 0, 0xf1},
+        "fresh homunculus order did not run after death and reactivation");
+    orderFollow(companion_ai::Kind::Homunculus, true);
+    tickCompanion(homunculus); // Follow state keeps this reserved order pending.
+    orderFollow(companion_ai::Kind::Homunculus, false);
+    std::array<u8, 71> resting{0x2e, 0x02};
+    resting[26] = 0x06;
+    dispatch(resting);
+    Require(!g_session.m_homunStatus.alive && !homunculus.m_homunAI
+        && homunculus.m_homunMsg.command == companion_ai::NONE_CMD,
+        "vaporize snapshot retained the homunculus controller or order");
+    companion_ai::Msg2Ai follow;
+    follow.command = companion_ai::FOLLOW_CMD;
+    Require(!companion_ai::Runtime::QueueCommand(companion_ai::Kind::Homunculus, follow, false),
+        "inactive homunculus accepted an order before reactivation");
+    dispatch(homunIdentity);
+    tickCompanion(homunculus);
+    tickCompanion(homunculus);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "homunculus reactivation ran a stale order");
+    orderFollow(companion_ai::Kind::Homunculus, false);
+    resting[26] = 0;
+    dispatch(resting);
+    Require(!g_session.m_homunStatus.alive && !homunculus.m_homunAI
+        && homunculus.m_homunMsg.command == companion_ai::NONE_CMD,
+        "homunculus deletion snapshot retained its queued order");
+
+    orderFollow(companion_ai::Kind::Mercenary, false);
+    orderFollow(companion_ai::Kind::Mercenary, true);
+    std::array<u8, 80> mercIdentity{0x9b, 0x02, 0x42, 0, 0, 0xf1};
+    auto replacementIdentity = mercIdentity;
+    replacementIdentity[2] = 0x43;
+    dispatch(mercIdentity);
+    Require(mercenary.m_merAI && mercenary.m_merMsg.command == companion_ai::FOLLOW_CMD
+        && mercenary.m_merResMsg.command == companion_ai::FOLLOW_CMD,
+        "same-GID mercenary refresh discarded active controller orders");
+    dispatch(replacementIdentity);
+    Require(!mercenary.m_merAI && mercenary.m_merMsg.command == companion_ai::NONE_CMD
+        && mercenary.m_merResMsg.command == companion_ai::NONE_CMD,
+        "mercenary replacement retained the previous controller or orders");
+    dispatch(mercIdentity);
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "reactivated mercenary emitted a stale request");
+    orderFollow(companion_ai::Kind::Mercenary, false);
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(6) == std::vector<u8>{0x34, 0x02, 0x42, 0, 0, 0xf1},
+        "reactivated mercenary ignored a fresh order");
     world.m_attr = nullptr;
 
     world.UnregisterActor(&target);

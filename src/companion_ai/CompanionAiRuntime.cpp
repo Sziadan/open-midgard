@@ -344,6 +344,10 @@ Msg2Ai Runtime::ConsumeResMsg(u32 myId)
 
 bool Runtime::QueueCommand(Kind kind, const Msg2Ai& msg, bool reserved)
 {
+    const bool alive = kind == Kind::Homunculus ? g_session.m_homunStatus.alive : g_session.m_merStatus.alive;
+    if (!alive) {
+        return false;
+    }
     CGameActor* actor = FindCompanionActor(kind);
     if (!actor) {
         return false;

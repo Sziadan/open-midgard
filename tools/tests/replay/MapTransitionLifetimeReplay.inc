@@ -585,6 +585,16 @@ void MapTransitionLifetimeReplay()
         g_session.m_merStatus.alive = true;
         g_session.m_merStatus.job = 6017;
         g_session.m_merStatus.calls = 12;
+        CGameActor homunActor;
+        CGameActor merActor;
+        homunActor.m_gid = g_session.m_homunGID;
+        merActor.m_gid = g_session.m_merGID;
+        world.RegisterActor(&homunActor);
+        world.RegisterActor(&merActor);
+        homunActor.m_homunMsg.command = companion_ai::FOLLOW_CMD;
+        homunActor.m_homunResMsg.command = companion_ai::MOVE_CMD;
+        merActor.m_merMsg.command = companion_ai::FOLLOW_CMD;
+        merActor.m_merResMsg.command = companion_ai::MOVE_CMD;
         g_session.m_homunTarget = {0x66550012, 9, 10, true, true, true};
         g_session.m_merTarget = {0x66550013, 11, 12, true, true, true};
         PLAYER_SKILL_INFO companionSkill{};
@@ -658,6 +668,13 @@ void MapTransitionLifetimeReplay()
             && !g_session.m_homunStatus.alive && !g_session.m_merStatus.alive
             && emptyCompanionTarget(g_session.m_homunTarget) && emptyCompanionTarget(g_session.m_merTarget),
             "same-map warp retained an outgoing companion identity or target order");
+        Require(homunActor.m_homunMsg.command == companion_ai::NONE_CMD
+            && homunActor.m_homunResMsg.command == companion_ai::NONE_CMD
+            && merActor.m_merMsg.command == companion_ai::NONE_CMD
+            && merActor.m_merResMsg.command == companion_ai::NONE_CMD,
+            "same-map warp retained outgoing companion mailboxes");
+        world.UnregisterActor(&homunActor);
+        world.UnregisterActor(&merActor);
         Require(g_session.m_homunStatus.hunger == 45 && g_session.m_merStatus.calls == 12,
             "same-map warp discarded companion properties unrelated to actor identity");
         Require(!g_windowMgr.m_homunInfoWnd && !g_windowMgr.m_homunSkillListWnd
