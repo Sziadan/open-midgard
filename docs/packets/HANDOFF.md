@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK16.03 now uses a shared native confirmation for friend invitations, projected into Qt through the existing message-box adapter. Continue with `0097/0098` whisper outcomes. Start with selected `clif_parse_WisMessage` and `clif_wis_end` and compare their success, offline, named-block and global-block branches with `HandleAckWhisper`. Coordinate `0201` atomic replacement with PK34. PK16 gates PK30 alongside completed PK25. [Social packet evidence](evidence/PK16.03-social-wire.md)
+PK16.03 verifies the selected whisper outcomes and rejects malformed `0097` delivery. Continue with PK34's `0201` friend snapshot slice. Trace `clif_friendslist_send` and the selected 32-byte row, then validate the complete snapshot before changing the roster or refreshing the UI. Replay valid, empty, and malformed replacement. Use the result in PK16.04 alongside privacy and invitation checks. PK16 gates PK30 alongside completed PK25. [Social packet evidence](evidence/PK16.03-social-wire.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 

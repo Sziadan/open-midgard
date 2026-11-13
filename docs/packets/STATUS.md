@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Social packets**. PK16.03 receives user counts and friend results, removes matching messenger rows, and uses a shared native and Qt invitation confirmation. Whisper outcome verification remains open. [Evidence](evidence/PK16.03-social-wire.md)
+**Social packets**. PK16.03 verifies user counts, friend actions, and the selected whisper delivery and acknowledgement branches. Atomic friend snapshot replacement and PK16.04 review remain open. [Evidence](evidence/PK16.03-social-wire.md)
 
 **Privacy configuration**. PK16.02 wires the equipment control and privacy commands to selected server-confirmed settings. PK16.03 still owns the social packet audit. [Evidence](evidence/PK16.01-privacy-wire.md)
 

@@ -75,6 +75,22 @@ void WhisperReplay()
         std::copy(text.begin(),text.end(),packet.begin()+28);dispatch(packet);};
     const auto last=[&]()->const UIChatEvent&{Require(!g_windowMgr.GetChatEvents().empty(),"missing whisper fallback event");return g_windowMgr.GetChatEvents().back();};
     mode.m_lastWhisperName="Pending";mode.m_lastWhisper="sentinel";g_windowMgr.m_whisperWindowInfo={-1,-1,270,119};
+    std::vector<u8> malformed(31, 0);
+    malformed[0] = 0x97;
+    malformed[2] = static_cast<u8>(malformed.size());
+    malformed[4] = 'X';
+    malformed[28] = 'a';
+    malformed[29] = 'b';
+    malformed[30] = 'c';
+    dispatch(malformed);
+    malformed[29] = malformed[30] = 0;
+    dispatch(malformed);
+    malformed[4] = 0;
+    malformed[29] = 'b';
+    dispatch(malformed);
+    Require(g_windowMgr.m_whisperWindows.empty() && g_windowMgr.GetChatEvents().empty()
+        && mode.m_lastWhisperName == "Pending" && mode.m_lastWhisper == "sentinel",
+        "malformed whisper delivery changed chat or outgoing metadata");
     incoming("Peer","literal <body> ^FF0000");auto* peerWindow=g_windowMgr.m_whisperWindows.at("Peer");
     Require(peerWindow->m_x==0 && peerWindow->m_y==347 && peerWindow->m_w==280 && peerWindow->m_h==120
         && peerWindow->GetRows().back().text=="Peer : literal <body> ^FF0000" && peerWindow->GetRows().back().color==0x222222,

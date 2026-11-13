@@ -3963,3 +3963,5 @@ PK16.03 adds the messenger delete confirmation, the selected `0203` request, and
 PK16.03 binds friend replies to the displayed invitation and restores the reference auto-decline branch. [Evidence](evidence/PK16.03-social-wire.md)
 
 PK16.03 moves friend invitation input to the shared native confirmation and its existing Qt projection. [Evidence](evidence/PK16.03-social-wire.md)
+
+PK16.03 verifies selected whisper outcomes and rejects malformed delivery before it reaches chat. [Evidence](evidence/PK16.03-social-wire.md)

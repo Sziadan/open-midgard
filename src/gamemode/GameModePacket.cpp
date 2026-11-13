@@ -7878,10 +7878,18 @@ void HandleNotifyPlayerChat(CGameMode& mode, const PacketView& packet)
 
 void HandleWhisper(CGameMode& mode, const PacketView& packet)
 {
-    if(!packet.data || packet.packetLength<29)return;
-    std::string name(reinterpret_cast<const char*>(packet.data+4),24);name.resize(name.find('\0')==std::string::npos?name.size():name.find('\0'));
+    constexpr int kNameOffset = 4;
+    constexpr int kNameSize = 24;
+    constexpr int kTextOffset = kNameOffset + kNameSize;
+    if (!packet.data || packet.packetLength <= kTextOffset
+        || ReadLE16(packet.data + 2) != packet.packetLength) return;
+    const auto* body = reinterpret_cast<const char*>(packet.data + kTextOffset);
+    const auto* terminator = reinterpret_cast<const char*>(packet.data + packet.packetLength - 1);
+    if (*terminator != '\0' || std::find(body, terminator, '\0') != terminator) return;
+    const auto name = ExtractFixedPacketString(packet, kNameOffset, kNameSize);
+    if (name.empty()) return;
     if(g_session.IsExName(name.c_str()))return;
-    std::string text=ExtractPacketString(packet,28);if(text.size()>255)text.resize(255);
+    const std::string text(body, (std::min)(packet.packetLength - kTextOffset - 1, 255));
     const bool delivered=g_windowMgr.AddWhisperChatToWhisperWnd(name,name+" : "+text,0x222222);
     if(!delivered){
         const bool friendName=g_session.IsFriendName(name.c_str()),guild=g_session.IsGuildMember(name.c_str());

@@ -562,7 +562,7 @@
     "PK16.03": {
       "status": "IN_PROGRESS",
       "evidence": ["docs/packets/evidence/PK16.03-social-wire.md"],
-      "commit_subject": "packet(PK16.03): share friend invitation confirmation"
+      "commit_subject": "packet(PK16.03): validate whisper delivery framing"
     },
     "PK16.04": {
       "status": "NOT_STARTED",
