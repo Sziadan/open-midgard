@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK46.02 now records selected cart and NPC shop requests alongside the companion, pet, trade, and vending crosswalks. Continue with personal storage and item actions. PK37 still owns direct storage/cart transfers `0128` and `0129`. Keep `012F` open for profile and producer review. [Cart and NPC shop crosswalk](evidence/PK46.02-cart-npc-shop-crosswalk.md) · [Trade and vending crosswalk](evidence/PK46.02-trade-vending-crosswalk.md)
+PK46.02 now records selected personal storage and item actions alongside cart, NPC shop, and vending requests. Continue with a PacketVer22 item-use capture for `009F` and the remaining crafting request traces. PK37 still owns direct storage/cart transfers `0128` and `0129`. Keep `012F` open for profile and producer review. [Storage and item crosswalk](evidence/PK46.02-storage-item-crosswalk.md) · [Cart and NPC shop crosswalk](evidence/PK46.02-cart-npc-shop-crosswalk.md)
 
 PK46.03 connects scheduled character deletion to the PacketVer23 Delete action. Verify the Windows dialog visually and use a disposable test character to check scheduling, reconnect, cancellation, birth-date refusal and confirmation after the deadline. The selected list omits the deadline and an already-queued reply carries zero. [Scheduled deletion controls](evidence/PK46.03-scheduled-deletion-controls.md)
 

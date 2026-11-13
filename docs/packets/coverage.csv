@@ -46,7 +46,7 @@ AUDIT-0x0090,0x0090,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x0091,0x0091,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0092,0x0092,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0093,0x0093,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0094,0x0094,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Selected client storage sender and exact 20080910 server parser registration/field offsets traced in PK46.02-storage-transfer-requests.,UNREVIEWED,
+AUDIT-0x0094,0x0094,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Inventory deposit and ordered storage updates captured,C2S_ONLY,PK46.02-PERSONAL-STORAGE-REQUESTS
 AUDIT-0x0095,0x0095,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0096,0x0096,map,C2S,PK47,PK01;PK02;PK48;PK46,PK46.02-map-whisper-request.md: variable-length frame uses a zero-padded 24-byte target field and NUL-terminated message; profile opcode is 0x0096. Selected registry identifies clif_parse_WisMessage; server validation and replay remain open.,UNREVIEWED,
 AUDIT-0x0097,0x0097,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -57,7 +57,7 @@ AUDIT-0x009B,0x009B,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/versio
 AUDIT-0x009C,0x009C,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-direction traces fixed 9-byte S2C GID/head/body fields and pinned 20080910 emitter; replay remains open,UNREVIEWED,
 AUDIT-0x009D,0x009D,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x009E,0x009E,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x009F,0x009F,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected registration is use-item at offsets 4 and 10,C2S_ONLY,PK38.01-ITEM-ACTION-INVENTORY
+AUDIT-0x009F,0x009F,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,PacketVer22 builder matches selected registry; dedicated capture open,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x00A0,0x00A0,map,unresolved,PK38,PK01;PK02;PK47;PK48;PK45,Selected clif_additem uses 02D4,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x00A1,0x00A1,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00A2,0x00A2,map,C2S,PK47,PK01;PK02;PK48;PK46,"PK45.05 verifies selected 20080910 C2S SolveCharName 00A2/15/CID@11; original discovery profile/historical identity remains PK47, broader request audit PK46",UNREVIEWED,
@@ -67,9 +67,9 @@ AUDIT-0x00A5,0x00A5,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit findi
 AUDIT-0x00A6,0x00A6,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x00A7,0x00A7,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Selected 20080910 server registration clif_parse_WalkToXY and client movement request are traced in PK46.02-map-movement; outbound parser parity belongs to PK46.,UNREVIEWED,
 AUDIT-0x00A8,0x00A8,map,unresolved,PK38,PK01;PK02;PK47;PK48;PK45,Selected clif_useitemack uses 01C8,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
-AUDIT-0x00A9,0x00A9,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected equip request,C2S_ONLY,PK38.01-ITEM-ACTION-INVENTORY
+AUDIT-0x00A9,0x00A9,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected equip request and result captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x00AA,0x00AA,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00AB,0x00AB,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected unequip request,C2S_ONLY,PK38.01-ITEM-ACTION-INVENTORY
+AUDIT-0x00AB,0x00AB,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected unequip request and result captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x00AC,0x00AC,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00AE,0x00AE,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00AF,0x00AF,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -142,9 +142,9 @@ AUDIT-0x00F1,0x00F1,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x00F2,0x00F2,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00F3,0x00F3,map,C2S,PK47,PK01;PK02;PK48;PK46,PK46.02-map-global-chat-request.md: sender serializes profile-selected variable-length name and text with length prefix and NUL terminator; selected inventory identifies clif_parse_GlobalMessage. Profile/server validation and text constraints remain open.,UNREVIEWED,
 AUDIT-0x00F4,0x00F4,map,unresolved,PK38,PK01;PK02;PK47;PK48;PK45,Selected storage delta emitter uses 01C4,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
-AUDIT-0x00F5,0x00F5,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected ground pickup with object GID at offset 4,C2S_ONLY,PK38.01-ITEM-ACTION-INVENTORY
+AUDIT-0x00F5,0x00F5,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected floor pickup and item lifecycle captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x00F6,0x00F6,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00F7,0x00F7,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Selected client storage sender and exact 20080910 server parser registration/field offsets traced in PK46.02-storage-transfer-requests.,UNREVIEWED,
+AUDIT-0x00F7,0x00F7,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Storage withdrawal and rejection recovery captured,C2S_ONLY,PK46.02-PERSONAL-STORAGE-REQUESTS
 AUDIT-0x00F8,0x00F8,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-storage-lifecycle traces two-byte S2C ZC_CLOSE_STORE to SELF and client window closure; empty/reopen ordering remains open,UNREVIEWED,
 AUDIT-0x00F9,0x00F9,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00FA,0x00FA,map,S2C,PK15,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -175,7 +175,7 @@ AUDIT-0x0112,0x0112,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-sym
 AUDIT-0x0113,0x0113,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,PK46.02-map-ground-skill-request.md: 22-byte serializer offsets match selected clif_parse_UseSkillToPos registry row; client ground-skill path applies range and value guards. Server semantics and replay remain open.,UNREVIEWED,
 AUDIT-0x0114,0x0114,map,unresolved,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0115,0x0115,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0116,0x0116,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected inventory drop request,C2S_ONLY,PK38.01-ITEM-ACTION-INVENTORY
+AUDIT-0x0116,0x0116,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected inventory drop and item lifecycle captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x0117,0x0117,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0118,0x0118,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0119,0x0119,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-state-change traces legacy 13-byte S2C 0x0119 branch; pinned 20080910 selects 15-byte 0x0229; runtime state replay remains open,UNREVIEWED,
@@ -299,7 +299,7 @@ AUDIT-0x018F,0x018F,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x0190,0x0190,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0191,0x0191,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-talkbox-chat-contents traces fixed 86-byte S2C unit ID and 80-byte message field with pinned emitter; text semantics/replay remain open,UNREVIEWED,
 AUDIT-0x0192,0x0192,map,S2C,PK18,PK01;PK02;PK47;PK48;PK45,"Selected 20080910 map-cell emitter and client GAT mutation verified through production framing, pathfinding, map lifecycle replay and native Prontera captures; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK18.MAP-CELLS
-AUDIT-0x0193,0x0193,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0193,0x0193,map,C2S,PK47,PK01;PK02;PK48;PK46,Storage-open guard and close request captured,C2S_ONLY,PK46.02-PERSONAL-STORAGE-REQUESTS
 AUDIT-0x0194,0x0194,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.05 verifies selected CID reply/request/cache; PK09.09 verifies producer-name native/Qt refresh; broader actor/historical/discovery and independent acceptance remain open,UNREVIEWED,
 AUDIT-0x0195,0x0195,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.02-actor-name-ack traces selected 102-byte S2C full name/party/guild/position response; cache lifecycle and replay remain open,UNREVIEWED,
 AUDIT-0x0196,0x0196,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -792,7 +792,7 @@ AUDIT-0x0435,0x0435,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x0436,0x0436,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0437,0x0437,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0438,0x0438,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,PK46.02-map-skill-target-request-0438.md: PacketVer23 emits a 10-byte skill-level/skill-ID/target frame matching selected parser; PacketVer22 instead uses 0x0072 and 25 bytes. Full caller/profile matrix and replay need stronger review.,UNREVIEWED,
-AUDIT-0x0439,0x0439,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected compact use-item registration,C2S_ONLY,PK38.01-ITEM-ACTION-INVENTORY
+AUDIT-0x0439,0x0439,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,PacketVer23 item use and result ownership captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x043F,0x043F,map,unresolved,PK22,PK01;PK02;PK47;PK48;PK45,Selected 20080910 emits 0196; timed 043f emitter gated at 20090121; alternate type is declaration only; selected registry absent,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK22.TIMED-STATUS-043F
 AUDIT-0x0440,0x0440,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0441,0x0441,map,S2C,PK23,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
