@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK39.02 implements MVP rewards and legacy rankings. PK39.03 verifies manner notices, signed actor honor, and colored chat routing. Continue the PK39 source inventory and verification, including live boss rewards, rankings, and mute transitions. [MVP evidence](evidence/PK39.02-mvp-rewards.md) · [Ranking evidence](evidence/PK39.02-legacy-ranking.md) · [Manner evidence](evidence/PK39.03-manner-notices.md)
+PK39.01 identifies three active PvP packets alongside the MVP, legacy ranking and manner paths. Continue PK39.02 with `/pvpinfo` request `020F` and reply `0210`, then trace `019A` rank transitions and actor effect 159. Live boss rewards, rankings, PvP and mute transitions remain open. [Selected inventory](evidence/PK39.01-selected-inventory.md) · [MVP evidence](evidence/PK39.02-mvp-rewards.md) · [Ranking evidence](evidence/PK39.02-legacy-ranking.md) · [Manner evidence](evidence/PK39.03-manner-notices.md)
 
 PK38.04 traces shared packet owners and selected-profile inactive variants. Continue live item-action verification and retain the separate PK48 review. [Item action verification](evidence/PK38.04-item-action-verification.md)
 
