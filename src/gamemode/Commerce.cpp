@@ -79,6 +79,8 @@ void ResetForMapEntry()
     g_windowMgr.CloseStorageWindows();
     const Window previous[] = {state.cart, state.vending, state.trade,
         state.shop, state.mail, state.equipment};
+    // A same-connection warp can be followed by the outstanding unkeyed mail result.
+    const bool mailPending = state.mailPending && CRagConnection::instance()->IsOpen();
     const int inventoryTab = g_windowMgr.m_itemWnd
         ? g_windowMgr.m_itemWnd->GetCurrentTab() : g_windowMgr.GetInventoryTabSelection();
     Reset();
@@ -89,6 +91,7 @@ void ResetForMapEntry()
         windows[i]->y = previous[i].y;
     }
     state.inventoryTab = inventoryTab;
+    state.mailPending = mailPending;
 }
 void CloseTransactions(){closeShopQuote();state.cart.visible=state.vending.visible=state.trade.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=state.vendingOpenCanceled=false;state.shopBoards.clear();state.cartItems.clear();}
 void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
@@ -351,7 +354,13 @@ bool Receive(CGameMode&,const PacketView& v){
     }
     case 0x169:if(n<3)return false;note(p[2]==2?"Guild invitation accepted.":p[2]==3?"Guild invitation failed: guild is full.":p[2]==0?"Player already belongs to a guild.":"Guild invitation declined.");return true;
     case 0x2d7:{if(n<43||(n-43)%26)return false;std::vector<ITEM_INFO> items;for(int at=43;at<n;at+=26)items.push_back(item(p+at,true,26));state.viewedEquipment=std::move(items);state.equipment.visible=true;state.partner=text(p+4,24);state.status="Equipment shared by this player.";return true;}
-    case 0x249:if(n<3)return false;state.mailPending=false;note(p[2]?"Mail could not be sent.":"Mail sent.");if(!p[2])state.mail.visible=false;return true;
+    case 0x249:
+        if (n < 3) return false;
+        if (!state.mailPending) return true;
+        state.mailPending = false;
+        note(p[2] ? "Mail could not be sent." : "Mail sent.");
+        if (!p[2]) state.mail.visible = false;
+        return true;
     default:return false;
     }
 }
@@ -388,6 +397,10 @@ bool Action(const Command& c){
         if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.CloseInventoryWindow();return true;}
         if(c.to=="trade")return requestTradeCancellation("Waiting for the server to cancel trade.");
         if(c.to=="shop"){closeShopQuote();return true;}
+        if (c.to == "mail" && state.mailPending) {
+            state.status = "Sending mail; waiting for the server.";
+            return false;
+        }
         if(c.to=="vending"){
             if(state.vendingActive){
                 if(!simple(0x12e))return false;
@@ -519,10 +532,31 @@ bool Action(const Command& c){
         std::vector<u8> p;if(state.promptKind=="guild"){p=packet(0x16b,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else if(state.promptKind=="alliance"){p=packet(0x172,10);put(p,2,state.promptId,4);put(p,6,c.amount?1:0,4);}else return false;
         if(!send(p))return false;state.promptKind.clear();return true;
     }
-    if(c.action=="mail"){
-        if(state.mailPending||c.text.empty()||c.text.size()>23||c.subject.empty()||c.subject.size()>39||c.body.size()>254)return false;
-        auto p=packet(0x248,69+int(c.body.size())+1);put(p,2,u32(p.size()));std::copy(c.text.begin(),c.text.end(),p.begin()+4);std::copy(c.subject.begin(),c.subject.end(),p.begin()+28);p[68]=u8(c.body.size()+1);std::copy(c.body.begin(),c.body.end(),p.begin()+69);
-        if(!send(p))return false;state.mailPending=true;state.status="Sending mail; waiting for the server.";return true;
+    if (c.action == "mail") {
+        if (state.mailPending) {
+            state.status = "Sending mail; waiting for the server.";
+            return false;
+        }
+        if (!state.mail.visible || busy()) return false;
+        if (c.text.empty() || c.text.size() > 23 || c.subject.empty() || c.subject.size() > 39
+            || c.body.size() > 199 || c.text.find('\0') != std::string::npos
+            || c.subject.find('\0') != std::string::npos || c.body.find('\0') != std::string::npos) {
+            state.status = "Use 1–23 bytes for the recipient, 1–39 for the subject, and up to 199 for the message.";
+            return false;
+        }
+        auto p = packet(0x248, 70 + static_cast<int>(c.body.size()));
+        put(p, 2, static_cast<u32>(p.size()));
+        std::copy(c.text.begin(), c.text.end(), p.begin() + 4);
+        std::copy(c.subject.begin(), c.subject.end(), p.begin() + 28);
+        p[68] = static_cast<u8>(c.body.size() + 1);
+        std::copy(c.body.begin(), c.body.end(), p.begin() + 69);
+        if (!send(p)) {
+            state.status = "Mail could not be submitted.";
+            return false;
+        }
+        state.mailPending = true;
+        state.status = "Sending mail; waiting for the server.";
+        return true;
     }
     state.status="That action is unavailable in the current state.";return false;
 }
@@ -559,7 +593,15 @@ bool PlayerAction(int action,u32 target,const std::string& name){
             if(aid!=g_session.m_exAidList.end())g_session.m_exAidList.erase(aid);}
         return sent;
     }
-    case CGameMode::PlayerContext_SendMail:{if(busy())return false;state.mailTo=name;state.mail.visible=true;state.mailPending=false;auto p=packet(0x246,4);return send(p);}
+    case CGameMode::PlayerContext_SendMail:
+        if (state.mailPending) {
+            state.status = "Sending mail; waiting for the server.";
+            return false;
+        }
+        if (busy() || !send(packet(0x246, 4))) return false;
+        state.mailTo = name;
+        state.mail.visible = true;
+        return true;
     case 8:{
         if(!target || !state.shopBoards.count(target) || busy())return false;
         auto p=packet(0x130,6);

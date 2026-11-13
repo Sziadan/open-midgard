@@ -475,9 +475,9 @@ AUDIT-0x0242,0x0242,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x0243,0x0243,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0244,0x0244,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0245,0x0245,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0246,0x0246,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,PK46.02-map-mail-window-request.md: player-context request opens composer and stores recipient before four-byte send; failed send does not roll back local state. Server open/result semantics remain open.,UNREVIEWED,
+AUDIT-0x0246,0x0246,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy combined draft reset from the composer. Production replay verifies type 0 and pending-send protection.,C2S_ONLY,PK46.02-MAIL-DRAFT-RESET
 AUDIT-0x0247,0x0247,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0248,0x0248,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,PK46.02-map-mail-send-request.md: variable frame guards recipient/subject/body lengths and sets pending only after send success; selected registry matches clif_parse_Mail_send. Server result semantics remain open.,UNREVIEWED,
+AUDIT-0x0248,0x0248,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy mail send. Production replay covers exact frame and selected body limit plus pending ownership through the result.,C2S_ONLY,PK46.02-MAIL-SEND
 AUDIT-0x0249,0x0249,map,S2C,PK32,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x024A,0x024A,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x024B,0x024B,map,C2S,PK40,PK01;PK02;PK47;PK48;PK46,Selected four-byte staging cancellation captured through the auction lifecycle,C2S_ONLY,PK40.05-SELECTED-VERIFICATION

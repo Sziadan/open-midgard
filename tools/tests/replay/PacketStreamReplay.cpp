@@ -6619,9 +6619,9 @@ void MailComposerProductionSendReplay()
     connection->Disconnect();
     Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_SendMail, targetAid, "Target"),
         "mail composer sender reported success without an open connection");
-    Require(ro::commerce::state.mail.visible && ro::commerce::state.mailTo == "Target"
+    Require(!ro::commerce::state.mail.visible && ro::commerce::state.mailTo.empty()
         && !ro::commerce::state.mailPending,
-        "mail composer local state differs after failed open request");
+        "failed draft reset opened or changed the composer");
     LoopbackPeer peer(*connection);
     ro::commerce::state.tradeWaiting = true;
     Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_SendMail, targetAid, "Target"),
@@ -6637,10 +6637,16 @@ void MailComposerProductionSendReplay()
         "production mail composer bytes differ from the selected four-byte server frame");
     Require(ro::commerce::state.mail.visible && ro::commerce::state.mailTo == "Target",
         "successful mail composer request did not retain its local draft state");
+    ro::commerce::state.mailPending = true;
+    Require(!ro::commerce::PlayerAction(CGameMode::PlayerContext_SendMail, targetAid, "Other")
+        && ro::commerce::state.mailPending && ro::commerce::state.mailTo == "Target",
+        "opening a second composer replaced the pending draft");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "opening a second composer sent a draft reset while mail was pending");
     connection->Disconnect();
     ro::commerce::state = savedCommerceState;
     g_session.m_aid = savedAid;
-    std::cout << "{\"case_id\":\"mail_composer_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0246-mail-window-open\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"busy_guard_checked\":true,\"draft_retained_on_failure\":true,\"outcome\":\"PASS\"}" << std::endl;
+    std::cout << "{\"case_id\":\"mail_composer_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0246-mail-window-open\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"busy_guard_checked\":true,\"failed_reset_leaves_composer_closed\":true,\"pending_reset_blocked\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
 bool ReplayRequestCloseStorage();
@@ -6766,6 +6772,7 @@ void MailSendProductionReplay()
         return command;
     };
     const ro::commerce::Command shortMail = makeMail("Recipient", "Subject", "Hi");
+    ro::commerce::state.mail.visible = true;
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
     Require(!ro::commerce::Action(shortMail), "mail sender reported success without an open connection");
@@ -6776,8 +6783,9 @@ void MailSendProductionReplay()
         && !ro::commerce::Action(makeMail(std::string(24, 'R'), "Subject", "Body"))
         && !ro::commerce::Action(makeMail("Recipient", "", "Body"))
         && !ro::commerce::Action(makeMail("Recipient", std::string(40, 'S'), "Body"))
-        && !ro::commerce::Action(makeMail("Recipient", "Subject", std::string(255, 'B'))),
-        "mail sender accepted empty or over-limit recipient/subject/body");
+        && !ro::commerce::Action(makeMail("Recipient", "Subject", std::string(200, 'B')))
+        && !ro::commerce::Action(makeMail("Recipient", "Subject", std::string("a\0b", 3))),
+        "mail sender accepted an invalid length or embedded NUL");
     ro::commerce::state.mailPending = true;
     Require(!ro::commerce::Action(shortMail), "mail sender accepted a second request while one was pending");
     ro::commerce::state.mailPending = false;
@@ -6786,19 +6794,19 @@ void MailSendProductionReplay()
 
     const std::string recipient(23, 'R');
     const std::string subject(39, 'S');
-    const std::string body(254, 'B');
+    const std::string body(199, 'B');
     Require(ro::commerce::Action(makeMail(recipient, subject, body)),
         "production mail sender rejected the maximum accepted field sizes");
-    const std::vector<u8> captured = peer.ReceiveExact(324);
-    std::vector<u8> expected(324, 0);
+    const std::vector<u8> captured = peer.ReceiveExact(269);
+    std::vector<u8> expected(269, 0);
     expected[0] = 0x48;
     expected[1] = 0x02;
-    expected[2] = 0x44;
+    expected[2] = 0x0d;
     expected[3] = 0x01;
     std::fill(expected.begin() + 4, expected.begin() + 27, static_cast<u8>('R'));
     std::fill(expected.begin() + 28, expected.begin() + 67, static_cast<u8>('S'));
-    expected[68] = 255;
-    std::fill(expected.begin() + 69, expected.begin() + 323, static_cast<u8>('B'));
+    expected[68] = 200;
+    std::fill(expected.begin() + 69, expected.begin() + 268, static_cast<u8>('B'));
     Require(captured == expected,
         "production mail sender bytes differ from the independent maximum-size frame fixture");
     Require(ro::commerce::state.mailPending,
@@ -6822,7 +6830,7 @@ void MailSendProductionReplay()
         "successful short mail send did not enter the pending-result state");
     connection->Disconnect();
     ro::commerce::state = savedCommerceState;
-    std::cout << "{\"case_id\":\"mail_send_production_replay\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0248-mail-send\",\"captured_lengths\":[324,72],\"recipient_subject_body_limits_checked\":true,\"short_field_padding_and_body_terminator_checked\":true,\"pending_after_success\":true,\"outcome\":\"PASS\"}" << std::endl;
+    std::cout << "{\"case_id\":\"mail_send_production_replay\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0248-mail-send\",\"captured_lengths\":[269,72],\"recipient_subject_body_limits_checked\":true,\"short_field_padding_and_body_terminator_checked\":true,\"pending_after_success\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
 bool ReplaySendMapLoadEndAckPacket();
@@ -6842,6 +6850,11 @@ void MailResultProductionReceiveReplay()
 
     ro::commerce::state.mail.visible = true;
     ro::commerce::state.mailPending = true;
+    ro::commerce::Command close;
+    close.action = "close";
+    close.to = "mail";
+    Require(!ro::commerce::Action(close) && ro::commerce::state.mail.visible,
+        "closing the composer hid a pending submission");
     const std::vector<u8> failure{0x49, 0x02, 0x01};
     Require(connection.QueueBytes(std::vector<u8>(failure.begin(), failure.begin() + 2)),
         "could not queue partial mail-result frame");
@@ -6865,6 +6878,12 @@ void MailResultProductionReceiveReplay()
         && !ro::commerce::state.mailPending && !ro::commerce::state.mail.visible
         && ro::commerce::state.status == "Mail sent.",
         "production mail success result did not clear pending state and close the composer");
+    ro::commerce::state.mail.visible = true;
+    ro::commerce::state.status.clear();
+    Require(connection.QueueBytes(success)
+        && ProcessGameModePacketLoop(mode, connection, router, 1).packetsDispatched == 1
+        && ro::commerce::state.mail.visible && ro::commerce::state.status.empty(),
+        "unsolicited mail result closed a fresh composer");
     ro::commerce::state = savedCommerceState;
     std::cout << "{\"case_id\":\"mail_result_production_receive\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0249-mail-result\",\"partial_frame_buffered\":true,\"failure_retained_composer\":true,\"success_closed_composer\":true,\"outcome\":\"PASS\"}" << std::endl;
 }

@@ -666,6 +666,8 @@ void MapTransitionLifetimeReplay()
         dropPrompt->OpenGameNumberPrompt("Enter amount to drop", CGameMode::GameMsg_RequestDropInventoryItem,
             101, 2, 2, nullptr, 501);
         mode.m_waitingItemThrowAck = 101;
+        ro::commerce::state.mail.visible = true;
+        ro::commerce::state.mailPending = true;
         auto cellThenWarp = MapCellUpdateFrame(1, 1, 5, "prontera.gat");
         g_session.m_mapTypeInfo.Clear();
         g_session.m_isMinEffectOld = false;
@@ -676,6 +678,12 @@ void MapTransitionLifetimeReplay()
         const GameModePacketLoopResult loop = ProcessGameModePacketLoop(mode, mapInput, router, 8);
         Require(loop.packetsDispatched == 5 && !loop.modeOperationRequested,
             "same-map warp did not stay on the loaded map");
+        Require(ro::commerce::state.mailPending && !ro::commerce::state.mail.visible,
+            "same-map warp discarded ownership of the unkeyed mail reply");
+        Require(mapInput.QueueBytes({0x49, 0x02, 0})
+            && ProcessGameModePacketLoop(mode, mapInput, router, 1).packetsDispatched == 1
+            && !ro::commerce::state.mailPending,
+            "mail result after same-map warp did not settle the existing submission");
         Require(!player.m_pk_rank && !player.m_pk_total && !mode.m_pvpRankStartTick,
             "same-map warp retained the previous PvP rank or timer");
         Require(!mode.m_auctionSearch.open && !mode.m_auctionSearch.pages && mode.m_auctionSearch.rows.empty(),
@@ -853,6 +861,7 @@ void MapTransitionLifetimeReplay()
         Require(g_windowMgr.MakeWindow(UIWindowMgr::WID_QUESTWND),
             "could not open quest journal before map-server transfer");
         g_session.m_partyBookingRegistrationPending = true;
+        ro::commerce::state.mailPending = true;
         g_session.m_pendingReturnToCharSelect = reconnectSucceeds ? 0 : 1;
         Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),
             "could not seed pending action before server move");
@@ -876,6 +885,7 @@ void MapTransitionLifetimeReplay()
             Require(g_session.m_instanceStatus.phase == CSession::InstanceStatus::Phase::None,
                 "old instance metadata survived into the next connection");
             Require(!g_session.m_partyBookingRegistrationPending, "booking reply remained pending across reconnect");
+            Require(!ro::commerce::state.mailPending, "mail reply remained pending across reconnect");
             Require(g_session.m_questJournal.states.empty() && g_session.m_questJournal.missions.empty()
                     && !g_windowMgr.m_questWnd, "old quest journal or window survived into the next connection");
             const auto* member = g_session.FindPartyMemberByAid(0x30303030u);

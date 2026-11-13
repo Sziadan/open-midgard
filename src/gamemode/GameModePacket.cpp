@@ -9946,6 +9946,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     // Pending request state belongs to the real transition, not the injected transport.
     if (info.hasServerMove) {
         ClearPendingDisconnectAction();
+        ro::commerce::state.mailPending = false;
         g_session.m_instanceStatus = {};
         g_session.m_questJournal = {};
         g_session.m_partyBookingRegistrationPending = false;

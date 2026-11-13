@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK32 and PK46.02 now reconcile the legacy mail composer reset and send. The composer preserves ownership of an unkeyed send result during a same-connection warp, blocks another draft reset while the result is pending, and uses the selected server's 199-byte body limit. Continue PK32 with the inbox list, read and notification model described in the [mail state contract](contracts/PK32.LEGACY-MAIL-STATE.md). Verify non-ASCII text and actual delivery against the deployed character server. [Draft reset evidence](evidence/PK46.02-map-mail-window-request.md) · [Send evidence](evidence/PK46.02-map-mail-send-request.md)
+
 PK37 and PK46.02 connect direct cart and storage transfers through the existing windows. Production replay captures `0128` and `0129`, and verifies separate cart and storage source slots. Verify physical drops and quantity prompts in both directions, overlapping windows, and live destination refresh and refusal. [Cart request evidence](evidence/PK46.02-cart-npc-shop-crosswalk.md)
 
 PK46.02 verifies the stat increase and skill upgrade requests and replays the server's successful stat, cost, and point updates. Stat refusal preserves the current values. Ineligible skill upgrades are silent in the selected server. Live upgrade eligibility and the UI's response to a silent skill rejection remain open. [Upgrade evidence](evidence/PK46.02-request-reconciliation.md)
