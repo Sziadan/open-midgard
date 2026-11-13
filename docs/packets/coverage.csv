@@ -24,7 +24,7 @@ AUDIT-0x0079,0x0079,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional sou
 AUDIT-0x007A,0x007A,map,unresolved,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x007B,0x007B,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03 actor-move-update evidence identifies a pre-version-4 movement variant; pinned 20080910 selects 0x02EC; historical standalone wire layout remains uncataloged,UNREVIEWED,
 AUDIT-0x007C,0x007C,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x007D,0x007D,map,C2S,PK47,PK01;PK02;PK48;PK46,PK46.02-map-load-end-ack.md: profile-selected two-byte opcode is sent after scene preparation and retried after 900 ms while sync is absent; selected registry identifies clif_parse_LoadEndAck. Server transition and replay remain open.,UNREVIEWED,
+AUDIT-0x007D,0x007D,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected two-byte load acknowledgment captured with initial-send recovery and same-map retry,C2S_ONLY,PK46.02-map-load-end-ack
 AUDIT-0x007E,0x007E,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,Selected 102-byte ground skill request captured with coordinates and reserved text field,C2S_ONLY,PK08.GROUND-SKILL-TEXT
 AUDIT-0x007F,0x007F,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-server-time-notification traces request-driven u32 tick reply and SELF route; client interval/retry traced; build-specific clock units and replay remain open,UNREVIEWED,
 AUDIT-0x0080,0x0080,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.02-actor-vanish traces fixed 7-byte S2C GID/reason layout and selected emitters; replay and canonical link remain open,UNREVIEWED,

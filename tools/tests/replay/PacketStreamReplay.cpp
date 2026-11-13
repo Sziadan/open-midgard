@@ -6706,6 +6706,7 @@ void MailSendProductionReplay()
 }
 
 bool ReplaySendMapLoadEndAckPacket();
+void ReplayAdvanceMapLoading(CGameMode& mode, u32 now);
 
 void MailResultProductionReceiveReplay()
 {
@@ -6761,6 +6762,43 @@ void MapLoadEndAckProductionSendReplay()
     const std::vector<u8> captured = peer.ReceiveExact(expected.size());
     Require(captured == expected, "production load-end acknowledgement differs from the selected server literal 0x007D frame");
     connection->Disconnect();
+
+    CGameMode retry;
+    retry.m_mapLoadingStage = CGameMode::MapLoading_SendLoadAck;
+    retry.m_mapLoadingStartTick = 100;
+    ReplayAdvanceMapLoading(retry, 100);
+    Require(retry.m_mapLoadingStage == CGameMode::MapLoading_AwaitActors && !retry.m_sentLoadEndAck
+        && !retry.SendTimeSyncRequest(true), "offline load acknowledgment let gameplay or time sync proceed");
+    {
+        LoopbackPeer recovered(*connection);
+        ReplayAdvanceMapLoading(retry, 999);
+        Require(SelectSocket(recovered.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+            "load acknowledgment retry fired early");
+        ReplayAdvanceMapLoading(retry, 1000);
+        Require(recovered.ReceiveExact(2) == expected && retry.m_sentLoadEndAck == 2
+            && retry.m_mapLoadingAckTick == 1000 && retry.m_mapLoadingStage == CGameMode::MapLoading_AwaitActors,
+            "load acknowledgment retry did not send before restarting actor wait");
+        ReplayAdvanceMapLoading(retry, 1449);
+        Require(retry.m_mapLoadingStage == CGameMode::MapLoading_AwaitActors
+            && SelectSocket(recovered.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+            "load acknowledgment retry skipped actor settling or emitted a third packet");
+        connection->Disconnect();
+    }
+
+    const CModeMgr manager = g_modeMgr;
+    std::string previousStatus;
+    AdoptPendingLoginStatus(previousStatus);
+    CGameMode rejected;
+    rejected.m_mapLoadingStage = CGameMode::MapLoading_SendLoadAck;
+    ReplayAdvanceMapLoading(rejected, 100);
+    ReplayAdvanceMapLoading(rejected, 1000);
+    std::string failureStatus;
+    AdoptPendingLoginStatus(failureStatus);
+    Require(g_modeMgr.GetOperationGeneration() != manager.GetOperationGeneration()
+        && g_modeMgr.GetRequestedModeType() == 0 && failureStatus.find("map load acknowledgment") != std::string::npos,
+        "repeated load acknowledgment failure did not return to sign-in");
+    g_modeMgr = manager;
+    SetPendingLoginStatus(previousStatus.c_str());
     std::cout << "{\"case_id\":\"map_load_end_ack_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-007d-selected-server-literal\",\"expected_packet_hex\":\"7d00\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"closed_connection_rejected\":true,\"outcome\":\"PASS\"}\n";
 }
 

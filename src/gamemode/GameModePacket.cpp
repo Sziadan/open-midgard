@@ -9916,6 +9916,10 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
         mode.m_sentLoadEndAck = sentLoadAck ? 1 : 0;
         mode.m_mapLoadingAckTick = GetTickCount();
         mode.m_lastActorBootstrapPacketTick = mode.m_mapLoadingAckTick;
+        if (!sentLoadAck) {
+            mode.m_mapLoadingStartTick = mode.m_mapLoadingAckTick;
+            mode.m_mapLoadingStage = CGameMode::MapLoading_AwaitActors;
+        }
         DbgLog("[GameMode] reused loaded map='%s' pos=%d,%d sentLoadAck=%d\n",
             g_session.m_curMap,
             info.x,

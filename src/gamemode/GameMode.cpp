@@ -4623,9 +4623,8 @@ void FinishMapLoading(CGameMode& mode)
     mode.m_mapLoadingStage = CGameMode::MapLoading_None;
 }
 
-void AdvanceMapLoading(CGameMode& mode)
+void AdvanceMapLoading(CGameMode& mode, u32 now)
 {
-    const DWORD now = GetTickCount();
     switch (mode.m_mapLoadingStage) {
     case CGameMode::MapLoading_PresentScreen:
         UpdateMapLoadingUi(mode, "Preparing loading screen...", 0.08f);
@@ -4672,18 +4671,31 @@ void AdvanceMapLoading(CGameMode& mode)
         const u32 sinceAck = now - mode.m_mapLoadingAckTick;
         const u32 sinceActor = now - mode.m_lastActorBootstrapPacketTick;
 
-        if (mode.m_sentLoadEndAck == 1 && sinceAck >= kLoadingAckRetryDelayMs && mode.m_receiveSyneRequestTime == 0) {
+        const bool needsRetry = !mode.m_sentLoadEndAck
+            || (mode.m_sentLoadEndAck == 1 && mode.m_receiveSyneRequestTime == 0);
+        if (needsRetry && sinceAck >= kLoadingAckRetryDelayMs) {
             const bool resent = SendLoadEndAckPacket();
             DbgLog("[GameMode] retry load end ack sent=%d runtime=%zu pos=%zu waitingForSync=%d\n",
                 resent ? 1 : 0,
                 mode.m_runtimeActors.size(),
                 mode.m_actorPosList.size(),
                 mode.m_receiveSyneRequestTime == 0 ? 1 : 0);
-            mode.m_sentLoadEndAck = resent ? 2 : 1;
             if (resent) {
+                mode.m_sentLoadEndAck = 2;
                 mode.m_mapLoadingAckTick = now;
                 mode.m_lastActorBootstrapPacketTick = now;
+                return;
             }
+            if (!mode.m_sentLoadEndAck) {
+                ReturnToLoginModeWithStatus("Login: could not send the map load acknowledgment. Sign in again to retry.");
+                return;
+            }
+            // The initial acknowledgment was queued. This optional resend is one-shot.
+            mode.m_sentLoadEndAck = 2;
+        }
+        if (!mode.m_sentLoadEndAck) {
+            UpdateMapLoadingUi(mode, "Sending map load acknowledgment...", 0.86f);
+            return;
         }
 
         const float settleProgress = (std::min)(1.0f, static_cast<float>(sinceAck) / static_cast<float>(kLoadingPostAckWaitMs));
@@ -10752,6 +10764,11 @@ void CGameMode::SynchronizePlayerSkillProceed(CPlayer* player,bool retire)
 }
 
 #if defined(RO_PACKET_REPLAY_TESTS)
+void ReplayAdvanceMapLoading(CGameMode& mode, u32 now)
+{
+    AdvanceMapLoading(mode, now);
+}
+
 bool ReplayTryRequestAttackOnActor(CGameMode& mode, CGameActor* actor, bool shift, bool alt, bool control)
 {
     return TryRequestAttackOnActor(mode, actor, shift, alt, control);
@@ -11914,7 +11931,7 @@ void CGameMode::OnUpdate() {
     const int actorSteps = worldStepCount > 0 ? worldStepCount : 1;
 
     if (IsMapLoadingActive(*this)) {
-        AdvanceMapLoading(*this);
+        AdvanceMapLoading(*this, worldNow);
         if (m_world) {
             SetRuntimeActorCameraLongitude(m_view ? m_view->GetCameraLongitude() : 0.0f);
             for (int step = 0; step < actorSteps; ++step) {

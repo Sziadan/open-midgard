@@ -783,6 +783,21 @@ void MapTransitionLifetimeReplay()
         g_session.CloseStorage();
         g_windowMgr.CloseStorageWindows();
 
+        CRagConnection::instance()->Disconnect();
+        inputPeer.Send(frame);
+        WaitKernelPending(mapInput, static_cast<int>(frame.size()));
+        Require(ProcessGameModePacketLoop(mode, mapInput, router, 8).packetsDispatched == 1
+            && mode.m_mapLoadingStage == CGameMode::MapLoading_AwaitActors && !mode.m_sentLoadEndAck
+            && mode.m_world == &world && mode.m_view == &view,
+            "failed same-map acknowledgment did not retain the world and schedule a retry");
+        {
+            LoopbackPeer retryPeer(*CRagConnection::instance());
+            ReplayAdvanceMapLoading(mode, mode.m_mapLoadingAckTick + 900);
+            Require(retryPeer.ReceiveExact(2) == ack && mode.m_sentLoadEndAck == 2,
+                "same-map warp did not send its pending load acknowledgment");
+            CRagConnection::instance()->Disconnect();
+        }
+
         // The same name alone must not select reuse while map loading is active.
         SeedMapTransitionMarker("prontera");
         const u64 loadingRevision = g_session.GetPartyPositionRevision();

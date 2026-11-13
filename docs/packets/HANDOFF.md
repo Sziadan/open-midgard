@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 keeps map loading active if `007D` fails to send, retries once, and returns to sign-in if the retry also fails. Same-map reuse retains its world while waiting for that retry. Verify load completion and actor bootstrap against the deployed server. [Load-end evidence](evidence/PK46.02-map-load-end-ack.md)
+
 PK46.03 returns to sign-in when the map server refuses world entry or leaves a sent request unanswered for 15 seconds. PacketVer22 and PacketVer23 login replays exercise the timeout and selected refusal frames. Live world entry and rejection still need a deployed check. [Zone-entry evidence](evidence/PK46.02-map-zone-entry-request.md)
 
 PK46.02 reconciles six NPC send rows with the production contact and dialogue replays. Shortcut moves now send their destination before clearing the source, and rejected socket sends preserve the affected local slots. Verify NPC subtype and script outcomes and shortcut persistence after relog against the selected server. [Request reconciliation](evidence/PK46.02-request-reconciliation.md) · [Shortcut evidence](evidence/PK46.02-map-shortcut-slot-update-request.md)
