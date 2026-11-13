@@ -103,7 +103,8 @@ public:
     bool CancelWarpMapSelection();
     bool SendMakingArrowSelection(u16 itemId);
     bool SendProductionSelection(u16 itemId, const std::array<u16, 3>& materials);
-    void ClearProductionSelection();
+    bool SendWeaponRefineSelection(u32 itemIndex);
+    void ClearCraftingSelection();
     bool SendAutoSpellSelection(u32 skillId, const std::vector<unsigned int>& offeredSkillIds);
     bool SendStarPlaceAcceptance(u8 which);
     void ShowStarSkillNotice(const std::string& text, u32 now);

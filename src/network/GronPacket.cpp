@@ -262,6 +262,9 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x018D, kVariablePacketSize); // ZC_MAKABLEITEMLIST
     SetPacketSize(0x018E, 10);              // CZ_REQMAKINGITEM
     SetPacketSize(0x018F, 6);               // ZC_ACK_REQMAKINGITEM
+    SetPacketSize(0x0221, kVariablePacketSize); // ZC_NOTIFY_WEAPONITEMLIST
+    SetPacketSize(0x0222, 6);               // CZ_REQ_WEAPONREFINE
+    SetPacketSize(0x0223, 8);               // ZC_ACK_WEAPONREFINE
     SetPacketSize(0x0193, 2);
     SetPacketSize(0x0194, 30);
     SetPacketSize(0x0298, 8);               // selected rental: item ID + seconds

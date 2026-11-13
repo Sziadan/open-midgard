@@ -10527,9 +10527,16 @@ bool CGameMode::SendProductionSelection(u16 itemId, const std::array<u16, 3>& ma
     return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), sizeof(packet));
 }
 
-void CGameMode::ClearProductionSelection()
+bool CGameMode::SendWeaponRefineSelection(u32 itemIndex)
 {
-    if (g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsProductionSelection()) {
+    const std::array<u8, 6> packet{0x22, 0x02, static_cast<u8>(itemIndex), static_cast<u8>(itemIndex >> 8),
+        static_cast<u8>(itemIndex >> 16), static_cast<u8>(itemIndex >> 24)};
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
+}
+
+void CGameMode::ClearCraftingSelection()
+{
+    if (g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsCraftingSelection()) {
         g_windowMgr.DeleteWindow(g_windowMgr.m_skillSelectWnd);
     }
     if (auto* box = g_windowMgr.m_roomMessageBox; box && box->GetMessageId() == 424) box->Close();
@@ -11016,7 +11023,7 @@ void CGameMode::UpdateFriendInvitation()
 void CGameMode::OnExit() {
     CloseFriendInvitation();
     ClearAdoptionInvitation();
-    ClearProductionSelection();
+    ClearCraftingSelection();
     ro::commerce::CloseTransactions();
     g_session.m_showEquipmentToOthers = false;
     g_session.m_refuseRecall = false;

@@ -431,6 +431,22 @@ void UISkillSelectWnd::RefreshProductionMaterials()
     Invalidate();
 }
 
+void UISkillSelectWnd::SetWeaponRefineItems(const std::vector<std::pair<u16, u16>>& items, std::string title)
+{
+    m_kind = Kind::WeaponRefine;
+    m_skillId = 0;
+    m_title = std::move(title);
+    m_emptyText.clear();
+    m_entries.clear();
+    for (const auto& [index, id] : items) {
+        auto label = g_ttemmgr.GetDisplayName(id, true);
+        if (label.empty()) label = std::to_string(id);
+        m_entries.push_back({std::move(label), {}, id, 0, true, index});
+    }
+    ResetInteraction();
+    Invalidate();
+}
+
 void UISkillSelectWnd::SetAutoSpellSkills(const std::vector<unsigned int>& skillIds)
 {
     m_kind = Kind::AutoSpell;
@@ -538,6 +554,11 @@ void UISkillSelectWnd::SubmitSelection()
         sent = gameMode->SendWarpMapSelection(entry.mapName);
     } else if (m_kind == Kind::Arrow && entry.itemId != 0 && entry.itemId <= 0xFFFFu) {
         sent = gameMode->SendMakingArrowSelection(static_cast<unsigned short>(entry.itemId));
+    } else if (m_kind == Kind::WeaponRefine) {
+        const auto* item = g_session.GetInventoryItemByIndex(entry.inventoryIndex);
+        if (item && item->GetItemId() == entry.itemId && item->m_wearLocation == 0) {
+            sent = gameMode->SendWeaponRefineSelection(entry.inventoryIndex);
+        }
     } else if (m_kind == Kind::Production) {
         m_productionItem = static_cast<u16>(entry.itemId);
         RefreshProductionMaterials();
@@ -587,6 +608,8 @@ void UISkillSelectWnd::CancelSelection()
         }
     } else if (IsProductionSelection()) {
         if (!gameMode || !gameMode->SendProductionSelection(0, {})) return;
+    } else if (m_kind == Kind::WeaponRefine) {
+        if (!gameMode || !gameMode->SendWeaponRefineSelection(0xffffffffu)) return;
     }
     g_windowMgr.DeleteWindow(this);
 }

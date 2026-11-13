@@ -78,6 +78,8 @@ public:
     void SetMakingArrowItems(const std::vector<unsigned int>& itemIds);
     void SetProductionItems(const std::vector<unsigned int>& itemIds, std::string title);
     bool IsProductionSelection() const { return m_kind == Kind::Production || m_kind == Kind::ProductionMaterials; }
+    void SetWeaponRefineItems(const std::vector<std::pair<u16, u16>>& items, std::string title);
+    bool IsCraftingSelection() const { return IsProductionSelection() || m_kind == Kind::WeaponRefine; }
     void SetAutoSpellSkills(const std::vector<unsigned int>& skillIds);
     void SetStarPlaceConfirmation(u8 which, std::string prompt);
     bool IsStarPlaceConfirmation(u8 which) const;
@@ -95,6 +97,7 @@ private:
         StarPlace,
         Production,
         ProductionMaterials,
+        WeaponRefine,
     };
 
     struct Entry {
@@ -103,6 +106,7 @@ private:
         unsigned int itemId = 0;
         int count = 0;
         bool showIcon = false;
+        u16 inventoryIndex = 0;
     };
 
     RECT GetCloseButtonRect() const;

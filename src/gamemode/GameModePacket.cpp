@@ -5485,6 +5485,46 @@ void HandleMonsterEstimate(CGameMode&, const PacketView& packet)
     if (window) window->SetEstimate(estimate);
 }
 
+void ShowEmptyCraftingList()
+{
+    if (g_windowMgr.m_modalWindow) return;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto* box = new UIChatRoomMessageBox(strings.Get(424, "You can't create items yet."), 424);
+    g_windowMgr.m_roomMessageBox = box;
+    g_windowMgr.m_children.push_back(box);
+    g_windowMgr.m_modalWindow = box;
+    g_windowMgr.m_editWindow = nullptr;
+}
+
+void HandleWeaponRefineList(CGameMode& mode, const PacketView& packet)
+{
+    constexpr unsigned inventorySlots = ro::item_snapshot::kInventorySlots;
+    constexpr unsigned firstIndex = ro::item_snapshot::kFirstInventoryIndex;
+    if (!packet.data || packet.packetLength < 4 || ReadLE16(packet.data + 2) != packet.packetLength
+        || (packet.packetLength - 4) % 13 != 0 || (packet.packetLength - 4) / 13 > inventorySlots) return;
+    std::vector<std::pair<u16, u16>> choices;
+    std::array<bool, inventorySlots + firstIndex> seen{};
+    for (int at = 4; at < packet.packetLength; at += 13) {
+        const auto index = ReadLE16(packet.data + at);
+        const auto id = ReadLE16(packet.data + at + 2);
+        if (index < firstIndex || index >= seen.size() || seen[index] || !id) return;
+        seen[index] = true;
+        choices.emplace_back(index, id);
+    }
+    mode.ClearCraftingSelection();
+    if (choices.empty()) {
+        ShowEmptyCraftingList();
+        return;
+    }
+    mode.m_warpSkillId = 0;
+    mode.m_warpMapDestinations.clear();
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto* window = static_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
+    if (window) window->SetWeaponRefineItems(choices, strings.Get(910, "Upgradable Weapons"));
+}
+
 void HandleProductionList(CGameMode& mode, const PacketView& packet)
 {
     constexpr int maxProducts = 300;
@@ -5500,17 +5540,11 @@ void HandleProductionList(CGameMode& mode, const PacketView& packet)
     ro::UiMessageStrings strings;
     strings.Load();
     if (products.empty()) {
-        mode.ClearProductionSelection();
-        if (!g_windowMgr.m_modalWindow) {
-            auto* box = new UIChatRoomMessageBox(strings.Get(424, "You can't create items yet."), 424);
-            g_windowMgr.m_roomMessageBox = box;
-            g_windowMgr.m_children.push_back(box);
-            g_windowMgr.m_modalWindow = box;
-            g_windowMgr.m_editWindow = nullptr;
-        }
+        mode.ClearCraftingSelection();
+        ShowEmptyCraftingList();
         return;
     }
-    mode.ClearProductionSelection();
+    mode.ClearCraftingSelection();
     mode.m_warpSkillId = 0;
     mode.m_warpMapDestinations.clear();
     auto* window = static_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
@@ -8594,6 +8628,29 @@ void HandleUserCount(CGameMode&, const PacketView& packet)
     g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(message.c_str()), 0xffff);
 }
 
+void HandleWeaponRefineResult(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 8) return;
+    const auto result = ReadLE32(packet.data + 2);
+    const auto id = ReadLE16(packet.data + 6);
+    if (result > 3 || !id) return;
+    constexpr const char* fallback[] = {"Weapons upgraded: %s", "Weapon upgrade failed: %s",
+        "You cannot upgrade %s until you level up your Upgrade Weapon skill.",
+        "You lack a necessary item %s to upgrade this weapon."};
+    constexpr u32 colors[] = {0x00ffff00, 0x00cdcd00, 0x00c8c8ff, 0x00c8c8ff};
+    ITEM_INFO item{};
+    item.SetItemId(id);
+    item.m_isIdentified = 1;
+    const std::string name = item.GetItemName();
+    const NoticeArguments args{{'s', name}};
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto notice = FormatLocalizedNotice(strings.Get(911 + result, fallback[result]), args);
+    if (!notice) notice = FormatLocalizedNotice(fallback[result], args);
+    if (notice) g_windowMgr.PushSourceChatEvent(notice->c_str(), colors[result], 6,
+        ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None);
+}
+
 void HandleFriendAdd(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 36) {
@@ -8944,7 +9001,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     ro::commerce::CloseTransactions();
     mode.CloseFriendInvitation();
     mode.ClearAdoptionInvitation();
-    mode.ClearProductionSelection();
+    mode.ClearCraftingSelection();
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",
@@ -9839,6 +9896,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0188, HandleItemRefineResult);
     router.Register(0x018D, HandleProductionList);
     router.Register(0x018F, HandleProductionResult);
+    router.Register(0x0221, HandleWeaponRefineList);
+    router.Register(0x0223, HandleWeaponRefineResult);
     router.Register(0x00F2, HandleStorageStatus);
     RegisterHandlerIfValid(router, receiveProfile.storageItemAddedBasic, HandleStorageItemAdded);
     router.Register(0x00F6, HandleStorageItemRemoved);

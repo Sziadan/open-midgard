@@ -307,3 +307,60 @@ void ProductionSelectionReplay()
     connection->Disconnect();
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
+
+void WeaponRefineSelectionReplay()
+{
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    const auto receive = [&](const std::vector<u8>& bytes) {
+        Require(input.QueueBytes(bytes) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "weapon refine frame did not dispatch");
+    };
+    ITEM_INFO weapon{};
+    weapon.SetItemId(1201);
+    weapon.m_itemIndex = 101;
+    weapon.m_refiningLevel = 4;
+    weapon.m_num = 1;
+    g_session.SetInventoryItem(weapon);
+    const std::vector<u8> list{0x21, 2, 17, 0, 101, 0, 0xb1, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0};
+    receive(list);
+    auto* menu = g_windowMgr.m_skillSelectWnd;
+    Require(menu && menu->IsCraftingSelection(), "weapon refine list did not open a chooser");
+    auto malformed = list;
+    malformed[4] = 102;
+    receive(malformed);
+    Require(g_windowMgr.m_skillSelectWnd == menu, "invalid refine index replaced the chooser");
+    menu->HandleKeyDown(VK_DOWN);
+    menu->HandleKeyDown(VK_RETURN);
+    Require(!g_windowMgr.m_skillSelectWnd
+        && peer.ReceiveExact(6) == std::vector<u8>{0x22, 2, 101, 0, 0, 0},
+        "weapon refine selection did not send the full inventory index");
+    receive(list);
+    g_windowMgr.m_skillSelectWnd->HandleKeyDown(VK_ESCAPE);
+    Require(!g_windowMgr.m_skillSelectWnd
+        && peer.ReceiveExact(6) == std::vector<u8>{0x22, 2, 255, 255, 255, 255},
+        "weapon refine cancellation did not send index -1");
+    g_windowMgr.ClearChatEvents();
+    for (u8 result : {0, 1, 2, 3, 4}) receive({0x23, 2, result, 0, 0, 0, 0xb1, 4});
+    const auto& notices = g_windowMgr.GetChatEvents();
+    Require(notices.size() == 4 && notices[0].color == 0x00ffff00
+        && notices[1].color == 0x00cdcd00 && notices[2].color == 0x00c8c8ff
+        && notices[2].text != notices[3].text && g_session.GetInventoryItemByIndex(101)->m_refiningLevel == 4,
+        "weapon refine notices differed or changed the item without an inventory packet");
+    receive({0x21, 2, 4, 0});
+    Require(g_windowMgr.m_roomMessageBox && g_windowMgr.m_roomMessageBox->GetMessageId() == 424,
+        "empty weapon refine list did not show the reference notice");
+    mode.ClearCraftingSelection();
+    g_windowMgr.ClearChatEvents();
+    g_session.RemoveInventoryItem(101, 1);
+    connection->Disconnect();
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+}

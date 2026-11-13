@@ -7051,6 +7051,7 @@ int main(int argc,char** argv){try{
     ItemRefineResultReplay();
     ProductionResultReplay();
     ProductionSelectionReplay();
+    WeaponRefineSelectionReplay();
     CartStackDeltaReplay();
     CartClearContentsReplay();
     CartActorPresenceReplay();
