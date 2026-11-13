@@ -33,7 +33,7 @@ void CheckItemUseFeedbackUi(QGuiApplication& app,QQuickView& view,QtUiState* uiS
     };
     const auto packet=[&](u32 actor,u16 item,bool success=true) {
         std::vector<u8> bytes(13,0);bytes[0]=0xc8;bytes[1]=1;
-        bytes[2]=1; // Inventory index; use-notice behavior is independent of it.
+        bytes[2]=2; // First valid inventory slot. The notice also works without a local row.
         bytes[4]=u8(item);bytes[5]=u8(item>>8);
         for(int i=0;i<4;++i)bytes[6+i]=u8(actor>>(8*i));
         bytes[10]=0;bytes[11]=0;bytes[12]=success?1:0;

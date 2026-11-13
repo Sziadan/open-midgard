@@ -72,7 +72,15 @@ def main():
         slots_end = equip.index('}};', slots_start) + 3
         (build / 'AmmoSlotBodies.inc').write_text(equip[slots_start:slots_end] + '\n' + equipment_filter + '\n'
             + function(equip, 'std::vector<const ITEM_INFO*> UIEquipWnd::BuildSlotAssignments()'), encoding='utf-8')
-        (build / 'AmmoRefreshBody.inc').write_text(function(session, 'void CSession::ClearEquipmentInventoryItems()'), encoding='utf-8')
+        snapshots = (ROOT / 'src/gamemode/ItemSnapshot.h').read_text(encoding='utf-8')
+        (build / 'AmmoSnapshotRules.inc').write_text('\n'.join([
+            line for line in snapshots.splitlines()
+            if line.startswith(('constexpr unsigned kFirstInventoryIndex', 'constexpr unsigned kInventorySlots'))
+        ]) + '\n' + function(snapshots, 'inline bool IsEquipmentType('), encoding='utf-8')
+        (build / 'AmmoRefreshBody.inc').write_text('\n'.join([
+            function(session, 'bool ReplaceItemCategory('),
+            function(session, 'bool CSession::ReplaceInventoryCategory('),
+        ]), encoding='utf-8')
         (build / 'EquipmentOptionLabelBodies.inc').write_text('\n'.join(function(equip, name) for name in [
             'bool IsLocalPlayerPushCartEquipped()', 'const char* GetLocalPlayerRemoveOptionLabel()']), encoding='utf-8')
         (build / 'ItemTab.h').write_text(item_tab, encoding='utf-8')

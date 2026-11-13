@@ -147,39 +147,47 @@ void InventoryMutationAckReplay()
     put16(drop,4,3); dispatch(drop,"full drop"); Require(find(0x1234)==nullptr,"full drop did not remove row");
 
     // Basic and extended use acknowledgements carry the authoritative remainder; failures and unknown rows are harmless.
-    seed(); mode.m_waitingUseItemAck=1;
-    auto use=frame(0x00A8,7); put16(use,2,0x1234); put16(use,4,8); use[6]=1; dispatch(use,"basic use success count increase");
-    Require(find(0x1234) && find(0x1234)->m_num==8 && mode.m_waitingUseItemAck==0,"basic success did not apply authoritative remainder/clear pending");
-    mode.m_waitingUseItemAck=1; put16(use,4,2); use[6]=0; dispatch(use,"basic use failure");
-    Require(preserved(find(0x1234),8) && mode.m_waitingUseItemAck==0,"basic failure changed inventory or retained pending state");
-    auto use2=frame(0x01C8,13); put16(use2,2,0x1234); put16(use2,4,0x4567); put32(use2,6,0xDEADBEEF); put16(use2,10,3); use2[12]=1;
-    mode.m_waitingUseItemAck=1; const u32 oldGid=g_session.m_gid; g_session.m_gid=0x10101010;
+    constexpr u16 useIndex = 65;
+    const auto seedUseItem = [&]() {
+        seed();
+        ITEM_INFO item = *find(0x1234);
+        g_session.RemoveInventoryItem(0x1234, 0);
+        item.m_itemIndex = useIndex;
+        g_session.SetInventoryItem(item);
+    };
+    seedUseItem(); mode.m_waitingUseItemAck=useIndex;
+    auto use=frame(0x00A8,7); put16(use,2,useIndex); put16(use,4,8); use[6]=1; dispatch(use,"basic use success count increase");
+    Require(find(useIndex) && find(useIndex)->m_num==8 && mode.m_waitingUseItemAck==0,"basic success did not apply authoritative remainder/clear pending");
+    mode.m_waitingUseItemAck=useIndex; put16(use,4,2); use[6]=0; dispatch(use,"basic use failure");
+    Require(preserved(find(useIndex),8) && mode.m_waitingUseItemAck==0,"basic failure changed inventory or retained pending state");
+    auto use2=frame(0x01C8,13); put16(use2,2,useIndex); put16(use2,4,0x4567); put32(use2,6,0xDEADBEEF); put16(use2,10,3); use2[12]=1;
+    mode.m_waitingUseItemAck=useIndex; const u32 oldGid=g_session.m_gid; g_session.m_gid=0x10101010;
     dispatch(use2,"extended remote use success");
-    Require(preserved(find(0x1234),8) && mode.m_waitingUseItemAck==1 && otherMode.m_waitingUseItemAck==77,
+    Require(preserved(find(useIndex),8) && mode.m_waitingUseItemAck==useIndex && otherMode.m_waitingUseItemAck==77,
         "remote extended use ack mutated local item or either pending state");
     g_session.m_gid=oldGid;
-    put16(use2,10,3); put32(use2,6,g_session.m_gid); mode.m_waitingUseItemAck=1;
+    put16(use2,10,3); put32(use2,6,g_session.m_gid); mode.m_waitingUseItemAck=useIndex;
     dispatch(use2,"extended local use decrease");
-    Require(find(0x1234) && find(0x1234)->m_num==3 && mode.m_waitingUseItemAck==0
+    Require(find(useIndex) && find(useIndex)->m_num==3 && mode.m_waitingUseItemAck==0
         && otherMode.m_waitingUseItemAck==77,"extended local success did not apply smaller remainder to passed mode");
-    put16(use2,10,9); mode.m_waitingUseItemAck=1;
+    put16(use2,10,9); mode.m_waitingUseItemAck=useIndex;
     dispatch(use2,"extended local use increase");
-    Require(find(0x1234) && find(0x1234)->m_num==9 && mode.m_waitingUseItemAck==0,"extended local success did not apply larger remainder");
-    put16(use2,10,0); mode.m_waitingUseItemAck=1;
+    Require(find(useIndex) && find(useIndex)->m_num==9 && mode.m_waitingUseItemAck==0,"extended local success did not apply larger remainder");
+    put16(use2,10,0); mode.m_waitingUseItemAck=useIndex;
     dispatch(use2,"extended local use zero remainder");
-    Require(find(0x1234)==nullptr && mode.m_waitingUseItemAck==0,"extended local success did not remove zero-remainder stack");
-    seed(); put16(use2,10,1); use2[12]=0; mode.m_waitingUseItemAck=1;
+    Require(find(useIndex)==nullptr && mode.m_waitingUseItemAck==0,"extended local success did not remove zero-remainder stack");
+    seedUseItem(); put16(use2,10,1); use2[12]=0; mode.m_waitingUseItemAck=useIndex;
     dispatch(use2,"extended local use failure");
-    Require(preserved(find(0x1234),5) && mode.m_waitingUseItemAck==0,"extended local failure changed inventory or retained passed-mode pending state");
-    put16(use2,2,0x9999); use2[12]=1; mode.m_waitingUseItemAck=1;
+    Require(preserved(find(useIndex),5) && mode.m_waitingUseItemAck==0,"extended local failure changed inventory or retained passed-mode pending state");
+    put16(use2,2,0x9999); use2[12]=1; mode.m_waitingUseItemAck=useIndex;
     dispatch(use2,"extended local unknown item");
-    Require(preserved(find(0x1234),5) && mode.m_waitingUseItemAck==0,"unknown extended use item mutated row or retained local pending state");
-    put16(use,2,0x9999); put16(use,4,0); use[6]=1; mode.m_waitingUseItemAck=1;
+    Require(preserved(find(useIndex),5) && mode.m_waitingUseItemAck==useIndex,"unknown extended use item mutated row or cleared unrelated pending state");
+    put16(use,2,0x9999); put16(use,4,0); use[6]=1; mode.m_waitingUseItemAck=useIndex;
     dispatch(use,"basic unknown use item");
-    Require(preserved(find(0x1234),5) && mode.m_waitingUseItemAck==0,"unknown basic use item changed inventory or retained pending state");
-    put16(use,2,0x1234); use[6]=1; mode.m_waitingUseItemAck=1;
+    Require(preserved(find(useIndex),5) && mode.m_waitingUseItemAck==useIndex,"unknown basic use item changed inventory or cleared unrelated pending state");
+    put16(use,2,useIndex); use[6]=1; mode.m_waitingUseItemAck=useIndex;
     dispatch(use,"basic zero remainder");
-    Require(find(0x1234)==nullptr && mode.m_waitingUseItemAck==0,"basic zero remainder did not remove stack/clear pending");
+    Require(find(useIndex)==nullptr && mode.m_waitingUseItemAck==0,"basic zero remainder did not remove stack/clear pending");
 
     // Equip result 1 succeeds; result 0/2 fail and result 3 is quiet. Correlation is index-specific.
     seed(); ITEM_INFO other{}; other.m_itemIndex=0x2222; other.m_num=1; other.m_wearLocation=0x0040; g_session.SetInventoryItem(other);

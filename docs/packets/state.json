@@ -1339,9 +1339,9 @@
       "commit_subject": null
     },
     "PK38.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK38.02-item-use.md"],
+      "commit_subject": "packet(PK38.02): validate inventory item use replies"
     },
     "PK38.03": {
       "status": "IN_PROGRESS",

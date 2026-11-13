@@ -1154,9 +1154,11 @@ void ApplyInventoryRemainingAmount(unsigned int itemIndex,int remainingAmount)
     g_session.SetInventoryItem(updated);
 }
 
+void RefreshInventoryDependentWindows();
+
 void HandleUseItemAck2(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 13) {
+    if (!packet.data || packet.packetLength != 13) {
         return;
     }
 
@@ -1168,12 +1170,21 @@ void HandleUseItemAck2(CGameMode& mode, const PacketView& packet)
     const unsigned int itemId = static_cast<unsigned int>(ReadLE16(packet.data + 4));
     const unsigned int actorId = ReadLE32(packet.data + 6);
     const int remainingAmount = static_cast<int>(ReadLE16(packet.data + 10));
+    if (itemIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || !itemId || !actorId || remainingAmount > ro::item_snapshot::kMaxStackAmount || packet.data[12] > 1) {
+        return;
+    }
     const bool ok = packet.data[12] != 0;
 
     if (IsLocalActorId(actorId)) {
-        mode.m_waitingUseItemAck = 0;
-        mode.m_lastCardItemIndex = ok && g_ttemmgr.IsCardItem(itemId) ? static_cast<int>(itemIndex) : 0;
-        if (ok) ApplyInventoryRemainingAmount(itemIndex,remainingAmount);
+        const auto* item = g_session.GetInventoryItemByIndex(itemIndex);
+        if (item && item->GetItemId() == itemId) {
+            if (mode.m_waitingUseItemAck == itemIndex) mode.m_waitingUseItemAck = 0;
+            if (ok) {
+                ApplyInventoryRemainingAmount(itemIndex, remainingAmount);
+                RefreshInventoryDependentWindows();
+            }
+        }
     }
 
     if (ok) {
@@ -1191,7 +1202,7 @@ void HandleUseItemAck2(CGameMode& mode, const PacketView& packet)
 
 void HandleUseItemAck(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 7) {
+    if (!packet.data || packet.packetLength != 7) {
         return;
     }
 
@@ -1201,15 +1212,19 @@ void HandleUseItemAck(CGameMode& mode, const PacketView& packet)
 
     const unsigned int itemIndex = static_cast<unsigned int>(ReadLE16(packet.data + 2));
     const int remainingAmount = static_cast<int>(ReadLE16(packet.data + 4));
+    if (itemIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || remainingAmount > ro::item_snapshot::kMaxStackAmount || packet.data[6] > 1) {
+        return;
+    }
     const bool ok = packet.data[6] != 0;
     const ITEM_INFO* item = g_session.GetInventoryItemByIndex(itemIndex);
 
-    mode.m_waitingUseItemAck = 0;
-    mode.m_lastCardItemIndex = ok && item && item->IsCard() ? static_cast<int>(itemIndex) : 0;
+    if (mode.m_waitingUseItemAck == itemIndex) mode.m_waitingUseItemAck = 0;
 
     if (ok) {
         const bool recovery=item&&item->m_itemIndex!=0&&item->GetItemId()>500&&item->GetItemId()<600;
         ApplyInventoryRemainingAmount(itemIndex,remainingAmount);
+        RefreshInventoryDependentWindows();
         if(recovery&&mode.m_world&&mode.m_world->m_player)
             mode.m_world->m_player->SendMsg(mode.m_world->m_player,20,0,0,0);
     }

@@ -113,7 +113,7 @@ void ItemUseFeedbackReplay()
         std::vector<u8> p(7);set16(p,0,0x00a8);set16(p,2,static_cast<u16>(itemIndex));set16(p,4,static_cast<u16>(remaining));p[6]=ok?1:0;return p;
     };
 
-    putItem(31,607,4); mode.m_waitingUseItemAck=9;
+    putItem(31,607,4); mode.m_waitingUseItemAck=31;
     dispatch(extended(31,607,localAid,true,3),"local Yggdrasilberry");
     Require(effectCount(player,211)==1&&itemAt(31)&&itemAt(31)->m_num==3&&mode.m_waitingUseItemAck==0,
         "local item 607 feedback/count/pending state differs");

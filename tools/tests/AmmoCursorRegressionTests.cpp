@@ -17,6 +17,7 @@ struct ITEM_INFO {
     int m_slot[4]{};
     void SetItemId(unsigned value){id=value;}
     unsigned GetItemId()const{return id;}
+    bool IsCard()const{return m_itemType==6;}
 };
 struct SHORTCUT_SLOT { unsigned id=1750; int isSkill=0,count=1; } shortcut;
 struct PLAYER_SKILL_INFO {int level=10,m_isValid=1;};
@@ -66,6 +67,7 @@ struct CGameMode {
     enum { GameMsg_LButtonUp = 20001 };
     World* m_world=&world;
     int m_waitingWearEquipAck=0,m_waitingTakeoffEquipAck=0,m_waitingUseItemAck=0,m_lastCardItemIndex=0;
+    struct {unsigned cardIndex=0;} m_pendingItemComposition;
     u32 m_lastMonGid=0,m_lastLockOnMonGid=0,m_attackChaseTargetGid=0;
     int m_hasAttackChaseHint=0,m_hasSkillChase=0,m_hasGroundSkillChase=0;
     struct {int id=0,level=0;} m_skillUseInfo;
@@ -82,7 +84,6 @@ struct {CGameMode* GetCurrentGameMode(){return &mode;}} g_modeMgr;
 bool knownCartActive=false;
 bool IsKnownLocalCartActive(){return knownCartActive;}
 #include "EquipmentOptionLabelBodies.inc"
-struct {bool IsCardItem(unsigned){return false;}} g_ttemmgr;
 struct {
     std::string last; int color=0,count=0;
     void SendMsg(int,msgparam_t text,int value){last=reinterpret_cast<const char*>(text);color=value;++count;}
@@ -97,6 +98,9 @@ struct PACKET_CZ_REQ_TAKEOFF_EQUIP {u16 PacketType=0,ItemIndex=0;};
 struct PACKET_CZ_ITEM_COMPOSITION_LIST {u16 PacketType=0,CardItemIndex=0;};
 struct PACKET_CZ_USEITEM_PACKETVER22 {u8 bytes[20];};
 #pragma pack(pop)
+namespace ro::item_snapshot {
+#include "AmmoSnapshotRules.inc"
+}
 namespace ro::net {
 struct MapGameplaySendProfile {u16 equipItem=0xA9,unequipItem=0xAB,itemCompositionList=0x17A;};
 const MapGameplaySendProfile& GetActiveMapGameplaySendProfile(){static MapGameplaySendProfile profile;return profile;}
@@ -131,7 +135,7 @@ struct UIEquipWnd {std::vector<const ITEM_INFO*> BuildSlotAssignments()const;};
 namespace inventory_refresh {
 struct CSession {
     std::list<ITEM_INFO> m_inventoryItems;
-    void ClearEquipmentInventoryItems();
+    bool ReplaceInventoryCategory(bool equipment, std::list<ITEM_INFO> items);
 };
 #include "AmmoRefreshBody.inc"
 }
@@ -200,7 +204,7 @@ int main(){
     inventory_refresh::CSession refreshed;
     ITEM_INFO staleWeapon;staleWeapon.m_itemIndex=3;staleWeapon.m_itemType=4;staleWeapon.m_location=2;
     refreshed.m_inventoryItems={g_session.items[0],staleWeapon};
-    refreshed.ClearEquipmentInventoryItems();
+    refreshed.ReplaceInventoryCategory(true, {});
     assert(refreshed.m_inventoryItems.size()==1);
     const auto& restoredAmmo=refreshed.m_inventoryItems.front();
     assert(restoredAmmo.m_itemIndex==7&&restoredAmmo.m_num==100&&restoredAmmo.m_wearLocation==0x8000);

@@ -4057,3 +4057,5 @@ PK38.03 validates identification lists and results, revalidates chooser rows aga
 PK28.04 and PK29.04 replay cancellation while both companion families are moving in pursuit. Each sends the attack reset and drops its scheduled movement retry. The selected server source leaves an already-issued walk active. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 PK38.03 replays a new identification menu after a silently rejected request and verifies the next request and inventory update. The application replay, corpse lifecycle, skill-choice lifecycle, and world-entry handoff checks passed. [Evidence](evidence/PK38.03-item-identification.md)
+
+PK38.02 validates item-use requests and replies, applies remaining quantities to the matching inventory row, and preserves card selection across item use. The standalone ammunition fixture now uses the current inventory-category replacement routine. [Evidence](evidence/PK38.02-item-use.md)

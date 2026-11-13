@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK38.02 validates item-use replies and preserves card selection during unrelated use. Continue with production replay of drop rejection and positive inventory removal, then pickup, equip and unequip, and storage transfers. Match `009F` legacy pickup to its own server profile before changing it. [Item-use evidence](evidence/PK38.02-item-use.md)
+
 PK38.03 replays card use, list receipt, and chooser submission through the selected packet bytes and applies `017D` only to the matching submitted request. Native and Qt capture verify the chooser and its cancellation. Ordered time replies allow recovery after a silent rejection. Continue with live carding and map-entry timing verification. Identification replay also verifies reopening and submitting from a new `0177` after an unanswered request. Repeat that sequence live alongside Item Appraisal, Magnifier, cancellation, and rendered chooser comparison. [Card composition evidence](evidence/PK38.03-card-composition.md) · [Identification evidence](evidence/PK38.03-item-identification.md)
 
 PK37.02 validates vending snapshots, matches buyer stock to the requested board, protects replacement quotes from late replies, and handles sale reports and sold-out closure. Replay covers cancellation during opening, a late owner list, and board removal. Continue with live buyer and seller verification, including server rejection branches, and independent review. [Vending evidence](evidence/PK37.02-vending-snapshots.md)

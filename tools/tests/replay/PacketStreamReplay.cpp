@@ -4616,7 +4616,7 @@ void CompanionSummonReplay()
         "companion summon replay requires the selected map send profile");
 
     constexpr int callSkillId = 243;
-    constexpr u16 scrollIndex = 64998;
+    constexpr u16 scrollIndex = 100;
     constexpr int shortcutIndex = 5;
     const auto oldSkills = g_session.GetSkillItems();
     const auto oldSlot = *g_session.GetShortcutSlotByAbsoluteIndex(shortcutIndex);
@@ -4659,7 +4659,7 @@ void CompanionSummonReplay()
     g_session.SetInventoryItem(scroll);
     g_session.SetShortcutSlotByAbsoluteIndex(shortcutIndex, 0, 12153, 1);
     Require(mode.SendMsg(CGameMode::GameMsg_RequestShortcutUse, shortcutIndex, 0, 0)
-        && peer.ReceiveExact(8) == std::vector<u8>{0x39, 0x04, 0xe6, 0xfd, 0x44, 0x33, 0x22, 0x11},
+        && peer.ReceiveExact(8) == std::vector<u8>{0x39, 0x04, 0x64, 0x00, 0x44, 0x33, 0x22, 0x11},
         "mercenary scroll did not send the selected inventory use request");
     Require(g_session.m_homunGID == homunculusGid && g_session.m_merGID == mercenaryGid,
         "companion request changed ownership before a server packet");
@@ -5047,20 +5047,31 @@ void UseItemProductionSendReplay()
     Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.useItem == 0x0439,
         "replay fixture requires the PacketVer23 0x0439 item-use profile");
 
-    constexpr u16 itemIndex = 64999;
+    constexpr u16 itemIndex = 101;
     constexpr u32 targetAid = 0x11223344;
     Require(g_session.GetInventoryItemByIndex(itemIndex) == nullptr,
         "item-use replay fixture index is already present");
     ITEM_INFO item{};
     item.m_itemIndex = itemIndex;
-    item.m_num = 1;
+    item.m_num = 3;
+    item.SetItemId(501);
     g_session.SetInventoryItem(item);
     const u32 savedAid = g_session.m_aid;
     g_session.m_aid = targetAid;
 
-    CGameMode* const currentMode = g_modeMgr.GetCurrentGameMode();
-    const int savedWaitingAck = currentMode ? currentMode->m_waitingUseItemAck : 0;
-    const int savedLastCardIndex = currentMode ? currentMode->m_lastCardItemIndex : 0;
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const int oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    mode.m_lastCardItemIndex = 100;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(bytes.data(), bytes.size(), view, consumed)
+            && consumed == bytes.size() && router.Dispatch(mode, view), "item-use reply did not frame and dispatch");
+    };
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
     Require(!ReplayRequestUseInventoryItem(itemIndex),
@@ -5069,19 +5080,29 @@ void UseItemProductionSendReplay()
         LoopbackPeer peer(*connection);
         Require(ReplayRequestUseInventoryItem(itemIndex),
             "production item-use sender rejected an open loopback connection");
-        const std::vector<u8> expected{0x39, 0x04, 0xE7, 0xFD, 0x44, 0x33, 0x22, 0x11};
+        const std::vector<u8> expected{0x39, 0x04, 0x65, 0x00, 0x44, 0x33, 0x22, 0x11};
         const std::vector<u8> captured = peer.ReceiveExact(expected.size());
         Require(captured == expected,
             "production item-use sender did not emit the selected eight-byte 0x0439 frame");
+        dispatch({0xc8, 0x01, 101, 0, 0xf5, 1, 0x45, 0x33, 0x22, 0x11, 0, 0, 1});
+        dispatch({0xc8, 0x01, 101, 0, 0xf5, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 2});
+        dispatch({0xc8, 0x01, 101, 0, 0xf6, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 1});
+        Require(g_session.GetInventoryItemByIndex(itemIndex)->m_num == 3
+            && mode.m_waitingUseItemAck == itemIndex && mode.m_lastCardItemIndex == 100,
+            "remote, malformed, or stale item-use reply changed local use or card state");
+        dispatch({0xc8, 0x01, 101, 0, 0xf5, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 0});
+        Require(g_session.GetInventoryItemByIndex(itemIndex)->m_num == 3 && !mode.m_waitingUseItemAck,
+            "item-use rejection changed quantity or left its request waiting");
+        dispatch({0xc8, 0x01, 101, 0, 0xf5, 1, 0x44, 0x33, 0x22, 0x11, 2, 0, 1});
+        Require(g_session.GetInventoryItemByIndex(itemIndex)->m_num == 2, "item-use reply did not apply remaining quantity");
+        dispatch({0xc8, 0x01, 101, 0, 0xf5, 1, 0x44, 0x33, 0x22, 0x11, 0, 0, 1});
+        Require(!g_session.GetInventoryItemByIndex(itemIndex) && mode.m_lastCardItemIndex == 100,
+            "final use did not remove the stack or cleared the card chooser context");
         std::cout << "{\"case_id\":\"use_item_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-0439-packetver23-use-item\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}\n";
     }
     connection->Disconnect();
     g_session.m_aid = savedAid;
-    if (currentMode) {
-        currentMode->m_waitingUseItemAck = savedWaitingAck;
-        currentMode->m_lastCardItemIndex = savedLastCardIndex;
-    }
-    g_session.RemoveInventoryItem(itemIndex, item.m_num);
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
 void SkillTargetProductionSendReplay()

@@ -6336,12 +6336,12 @@ bool RequestShortcutSlotUpdate(int absoluteSlotIndex)
 
 bool RequestUseInventoryItem(u16 itemIndex)
 {
-    if (itemIndex == 0) {
+    if (static_cast<unsigned>(itemIndex) - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots) {
         return false;
     }
 
     const ITEM_INFO* item = g_session.GetInventoryItemByIndex(itemIndex);
-    if (!item || item->m_itemIndex == 0) {
+    if (!item || !item->GetItemId() || item->m_num <= 0) {
         return false;
     }
 
@@ -6365,7 +6365,6 @@ bool RequestUseInventoryItem(u16 itemIndex)
             static_cast<int>(sizeof(packet)));
         if (sent) {
             if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-                gameMode->m_waitingUseItemAck = 0;
                 gameMode->m_lastCardItemIndex = static_cast<int>(item->m_itemIndex);
             }
         }
@@ -6394,7 +6393,6 @@ bool RequestUseInventoryItem(u16 itemIndex)
     if (sent) {
         if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
             gameMode->m_waitingUseItemAck = static_cast<int>(item->m_itemIndex);
-            gameMode->m_lastCardItemIndex = 0;
         }
     }
 
