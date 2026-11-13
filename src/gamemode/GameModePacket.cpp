@@ -8455,23 +8455,32 @@ void HandlePartyPosition(CGameMode&,const PacketView& packet)
 
 void HandleFriendsList(CGameMode&, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 4) {
+    constexpr int kHeaderSize = 4;
+    constexpr int kEntrySize = 32;
+    constexpr int kMaxFriends = 40;
+    if (!packet.data || packet.packetLength < kHeaderSize
+        || ReadLE16(packet.data + 2) != packet.packetLength) {
         return;
     }
+    const int payloadSize = packet.packetLength - kHeaderSize;
+    if (payloadSize % kEntrySize || payloadSize / kEntrySize > kMaxFriends) return;
 
-    g_session.ClearFriend();
-    const int entryCount = (packet.packetLength - 4) / 32;
-    for (int index = 0; index < entryCount; ++index) {
-        const u8* entry = packet.data + 4 + index * 32;
+    std::list<FRIEND_INFO> friends;
+    for (int offset = kHeaderSize; offset < packet.packetLength; offset += kEntrySize) {
+        const u8* entry = packet.data + offset;
         FRIEND_INFO info{};
         info.isValid = 1;
         info.AID = ReadLE32(entry + 0);
         info.GID = ReadLE32(entry + 4);
         info.characterName = ExtractFixedPacketString(entry + 8, 24);
         info.state = 1;
-        g_session.AddFriendToList(info);
+        if (!info.AID || !info.GID || info.characterName.empty()
+            || std::any_of(friends.begin(), friends.end(), [&](const FRIEND_INFO& existing) {
+                return existing.GID == info.GID || existing.characterName == info.characterName;
+            })) return;
+        friends.push_back(std::move(info));
     }
-    g_session.RefreshFriendUI();
+    g_session.ReplaceFriendList(std::move(friends));
 }
 
 void HandleFriendState(CGameMode&, const PacketView& packet)
@@ -8550,7 +8559,7 @@ void HandleFriendDelete(CGameMode&, const PacketView& packet)
     }
 
     if (g_session.DeleteFriendFromList(ReadLE32(packet.data + 2), ReadLE32(packet.data + 6))) {
-        g_session.RefreshFriendUI();
+        g_session.RefreshFriendUI(true);
     }
 }
 

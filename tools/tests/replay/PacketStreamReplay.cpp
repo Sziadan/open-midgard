@@ -2605,10 +2605,69 @@ void FriendRemovalReplay()
     notice[2] ^= 1;
     receive(notice);
     Require(g_session.GetNumFriend() == 1, "wrong account ID removed a friend");
+    std::vector<u8> snapshot(36, 0);
+    snapshot[0] = 1;
+    snapshot[1] = 2;
+    snapshot[2] = static_cast<u8>(snapshot.size());
+    std::copy(request.begin() + 2, request.end(), snapshot.begin() + 4);
+    snapshot[12] = 'N';
+    auto partial = snapshot;
+    partial.push_back(0);
+    partial[2]++;
+    receive(partial);
+    Require(g_session.GetFriendList().front().characterName == "DeleteReplay",
+        "partial friend snapshot replaced the current roster");
+    auto invalidRow = snapshot;
+    invalidRow.resize(68);
+    invalidRow[2] = 68;
+    receive(invalidRow);
+    Require(g_session.GetNumFriend() == 1 && g_session.GetFriendList().front().characterName == "DeleteReplay",
+        "invalid trailing friend row partially replaced the current roster");
+    std::copy(snapshot.begin() + 4, snapshot.end(), invalidRow.begin() + 36);
+    receive(invalidRow);
+    Require(g_session.GetFriendList().front().characterName == "DeleteReplay",
+        "duplicate character identity replaced the current roster");
+    receive(snapshot);
+    display = {};
+    Require(g_session.GetNumFriend() == 1 && g_session.GetFriendList().front().characterName == "N"
+        && g_session.GetFriendList().front().state == 1
+        && messenger->GetDisplayDataForQt(&display) && display.selectedIndex == -1
+        && display.rows.size() == 1 && display.rows.front().name == "N",
+        "complete snapshot failed to replace the roster and reset selection");
+    auto presence = request;
+    presence[0] = 6;
+    presence.push_back(0);
+    receive(presence);
+    Require(g_session.GetFriendList().front().state == 0, "following presence frame did not mark a friend online");
     notice[2] ^= 1;
     receive(notice);
     Require(g_session.GetNumFriend() == 0, "matching account and character did not remove the friend");
+    receive(snapshot);
+    receive({1, 2, 4, 0});
+    Require(g_session.GetNumFriend() == 0, "empty friend snapshot did not clear the roster");
+    std::vector<u8> fullRoster(4 + 41 * 32, 0);
+    fullRoster[0] = 1;
+    fullRoster[1] = 2;
+    for (int i = 0; i < 41; ++i) {
+        auto row = fullRoster.begin() + 4 + i * 32;
+        row[0] = 1; // Multiple characters can share the same account.
+        row[4] = static_cast<u8>(i + 1);
+        row[8] = static_cast<u8>('A' + i / 10);
+        row[9] = static_cast<u8>('0' + i % 10);
+    }
+    const auto setLength = [](std::vector<u8>& frame) {
+        frame[2] = static_cast<u8>(frame.size());
+        frame[3] = static_cast<u8>(frame.size() >> 8);
+    };
+    setLength(fullRoster);
+    receive(fullRoster);
+    Require(g_session.GetNumFriend() == 0, "over-capacity friend snapshot changed the roster");
+    fullRoster.resize(4 + 40 * 32);
+    setLength(fullRoster);
+    receive(fullRoster);
+    Require(g_session.GetNumFriend() == 40, "selected maximum friend count was not accepted");
     g_windowMgr.DeleteWindow(messenger);
+    g_session.ClearFriend();
     for (const auto& friendInfo : oldFriends) g_session.AddFriendToList(friendInfo);
     connection->Disconnect();
     SkillPacketReplayAccess::Restore(previous, previousType);

@@ -214,6 +214,7 @@ msgresult_t UIMessengerGroupWnd::SendMsg(UIWindow* sender, int msg, msgparam_t w
     }
 
     if (msg == 23) {
+        if (wparam && m_currentTab == TabFriend) m_selectedIndex = -1;
         NormalizeStateForData();
         Invalidate();
         return 1;
@@ -660,7 +661,7 @@ void UIMessengerGroupWnd::NormalizeStateForData()
         m_selectedIndex = -1;
         return;
     }
-    m_selectedIndex = std::clamp(m_selectedIndex, 0, entryCount - 1);
+    m_selectedIndex = std::clamp(m_selectedIndex, -1, entryCount - 1);
 }
 
 void UIMessengerGroupWnd::SetCurrentTab(int tabId)

@@ -1254,14 +1254,14 @@
       "commit_subject": null
     },
     "PK34.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK34.02-friend-snapshot.md"],
+      "commit_subject": "packet(PK34.02/PK34.03): replace friend snapshots atomically"
     },
     "PK34.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK34.02-friend-snapshot.md"],
+      "commit_subject": "packet(PK34.02/PK34.03): replace friend snapshots atomically"
     },
     "PK34.04": {
       "status": "NOT_STARTED",

@@ -3965,3 +3965,5 @@ PK16.03 binds friend replies to the displayed invitation and restores the refere
 PK16.03 moves friend invitation input to the shared native confirmation and its existing Qt projection. [Evidence](evidence/PK16.03-social-wire.md)
 
 PK16.03 verifies selected whisper outcomes and rejects malformed delivery before it reaches chat. [Evidence](evidence/PK16.03-social-wire.md)
+
+PK34.02 and PK34.03 validate and replace the selected friend roster snapshot. [Evidence](evidence/PK34.02-friend-snapshot.md)

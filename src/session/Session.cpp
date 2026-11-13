@@ -11,6 +11,7 @@
 #include "../lua/LuaBridge.h"
 #include "DebugLog.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UIMessengerGroupWnd.h"
 
 #include <algorithm>
 #include <cctype>
@@ -2508,6 +2509,16 @@ void CSession::ClearFriend()
     m_friendList.clear();
 }
 
+void CSession::ReplaceFriendList(std::list<FRIEND_INFO> entries)
+{
+    int index = 0;
+    for (auto& entry : entries) {
+        entry.color = ResolveRosterAccentColor(index++);
+    }
+    m_friendList.swap(entries);
+    RefreshFriendUI(true);
+}
+
 unsigned int CSession::GetNumFriend() const
 {
     return static_cast<unsigned int>(m_friendList.size());
@@ -2562,8 +2573,11 @@ bool CSession::SetFriendState(unsigned int aid, unsigned int gid, unsigned char 
     return false;
 }
 
-void CSession::RefreshFriendUI()
+void CSession::RefreshFriendUI(bool rosterChanged)
 {
+    if (auto* messenger = g_windowMgr.m_messengerGroupWnd) {
+        messenger->SendMsg(nullptr, 23, rosterChanged, 0, 0);
+    }
 }
 
 const std::list<FRIEND_INFO>& CSession::GetFriendList() const
