@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK28.04 now has companion scrollbar input and shared native/Qt geometry. Continue with the companion-only resize path in `Ref/UIItemWnd.cpp` message 14 and geometry restore message 34. Verify the title mini control separately before implementing it. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
+PK28.04 verifies companion list resizing and geometry restoration, including row and scrollbar updates. Continue with the companion-only skin and verify how the title mini control is routed before implementing it. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
 
 PK29.04 replay verifies same-GID mercenary refresh, replacement cleanup, actor entry after identity, and companion window cleanup on same-map warp. The selected server uses `029D` for refresh. `029E` is registered without an active sender. Live re-entry and independent review remain open. [Mercenary refresh evidence](evidence/PK29.04-mercenary-refresh.md) and [map reset evidence](evidence/PK28.03-companion-map-reset.md)
 

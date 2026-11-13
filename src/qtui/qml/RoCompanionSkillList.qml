@@ -64,7 +64,7 @@ Rectangle {
             Text {
                 x: 110
                 y: 4
-                width: 164
+                width: window.width - 127
                 text: row.modelData.name
                 elide: Text.ElideRight
                 font.pixelSize: 12
@@ -129,5 +129,17 @@ Rectangle {
         y: window.height - 20
         text: window.list.footer
         font.pixelSize: 12
+    }
+
+    Repeater {
+        model: [4, 8, 12]
+        delegate: Rectangle {
+            required property int modelData
+            x: window.width - modelData
+            y: window.height - 3
+            width: 2
+            height: 2
+            color: "#a4adbd"
+        }
     }
 }

@@ -17,6 +17,7 @@ constexpr int kTitleHeight = 17;
 constexpr int kRowHeight = 32;
 constexpr int kScrollWidth = 15;
 constexpr int kScrollTop = 14;
+constexpr int kResizeGrip = 15;
 constexpr int kClose = 135;
 constexpr int kUpgradeX = 78;
 constexpr int kUpgradeYOffset = 4;
@@ -158,6 +159,15 @@ void UICompanionSkillListWnd::Move(int x, int y)
     UIFrameWnd::Move(x, y);
 }
 
+void UICompanionSkillListWnd::Resize(int width, int height)
+{
+    const int snappedWidth = 280 + 32 * ((std::clamp(width, 232, 320) - 280) / 32);
+    const int snappedHeight = 120 + 32 * ((std::clamp(height, 120, 288) - 120) / 32);
+    UIFrameWnd::Resize(snappedWidth, snappedHeight);
+    m_close->Move(m_x + m_w - 14, m_y + 3);
+    m_offset = std::min(m_offset, MaxOffset());
+}
+
 void UICompanionSkillListWnd::OnDraw()
 {
     HDC dc = AcquireDrawTarget();
@@ -177,9 +187,9 @@ void UICompanionSkillListWnd::OnDraw()
         const auto& pixels = row.icon->pixels;
         shopui::DrawBitmapPixelsTransparent(dc, pixels,
             {m_x + 44, m_y + row.y + 4, m_x + 68, m_y + row.y + 28});
-        text(112, row.y + 4, 164, row.name);
+        text(112, row.y + 4, m_w - kScrollWidth - 112, row.name);
         text(112, row.y + 17, 58, "Lv " + std::to_string(row.level));
-        text(175, row.y + 17, 83, "SP " + std::to_string(row.spCost));
+        text(175, row.y + 17, m_w - kScrollWidth - 175, "SP " + std::to_string(row.spCost));
         if (row.upgrade) {
             const int x = m_x + row.upgradeX;
             const int y = m_y + row.y + row.upgradeY;
@@ -203,6 +213,10 @@ void UICompanionSkillListWnd::OnDraw()
         text(thumb.left + 3, kScrollTop, 12, "^");
         text(thumb.left + 3, bottom - m_y - kScrollWidth, 12, "v");
     }
+    for (int inset : {4, 8, 12}) {
+        shopui::FillRectColor(dc, {m_x + m_w - inset, m_y + m_h - 3, m_x + m_w - inset + 2, m_y + m_h - 1},
+            RGB(164, 173, 189));
+    }
     DrawChildrenToHdc(dc);
     ReleaseDrawTarget(dc);
 }
@@ -212,6 +226,14 @@ void UICompanionSkillListWnd::OnLBtnDown(int x, int y)
     m_dragSkill = 0;
     m_pressedUpgradeSkill = 0;
     m_thumbGrab = -1;
+    if (x >= m_x + m_w - kResizeGrip && x < m_x + m_w
+        && y >= m_y + m_h - kResizeGrip && y < m_y + m_h) {
+        m_resizing = true;
+        m_resizeStart = {x, y};
+        m_resizeWidth = m_w;
+        m_resizeHeight = m_h;
+        return;
+    }
     const RECT thumb = GetScrollThumb();
     const int localY = y - m_y;
     if (thumb.bottom > thumb.top && x >= m_x + thumb.left && x < m_x + thumb.right
@@ -258,6 +280,10 @@ void UICompanionSkillListWnd::OnLBtnDblClk(int x, int y)
 
 void UICompanionSkillListWnd::OnLBtnUp(int x, int y)
 {
+    if (m_resizing) {
+        m_resizing = false;
+        return;
+    }
     if (m_thumbGrab >= 0) {
         m_thumbGrab = -1;
         return;
@@ -278,6 +304,10 @@ void UICompanionSkillListWnd::OnLBtnUp(int x, int y)
 
 void UICompanionSkillListWnd::OnMouseMove(int x, int y)
 {
+    if (m_resizing) {
+        Resize(m_resizeWidth + x - m_resizeStart.x, m_resizeHeight + y - m_resizeStart.y);
+        return;
+    }
     if (m_thumbGrab >= 0) {
         const RECT thumb = GetScrollThumb();
         const int travel = m_h - 38 - 2 * kScrollWidth - (thumb.bottom - thumb.top);

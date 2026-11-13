@@ -1109,7 +1109,7 @@
         "docs/packets/evidence/PK28.03-companion-map-reset.md",
         "docs/packets/evidence/PK28-companion-skill-lists.md"
       ],
-      "commit_subject": "packet(PK28.04): add companion skill list scroll controls"
+      "commit_subject": "packet(PK28.04): resize companion skill lists and restore geometry"
     },
     "PK29.01": {
       "status": "IN_PROGRESS",

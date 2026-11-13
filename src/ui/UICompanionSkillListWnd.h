@@ -36,6 +36,7 @@ public:
     RECT GetScrollThumb() const;
     const UIFriendOptionButton& GetCloseButton() const { return *m_close; }
     void Move(int x, int y) override;
+    void Resize(int width, int height) override;
     void OnDraw() override;
     void OnLBtnDown(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;
@@ -64,6 +65,10 @@ private:
     std::array<Icon, 2> m_upgradeArt;
     int m_offset = 0;
     int m_thumbGrab = -1;
+    bool m_resizing = false;
+    POINT m_resizeStart{};
+    int m_resizeWidth = 0;
+    int m_resizeHeight = 0;
     int m_selectedSkill = 0;
     int m_dragSkill = 0;
     int m_pressedUpgradeSkill = 0;

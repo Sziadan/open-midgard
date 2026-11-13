@@ -1404,6 +1404,9 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             const auto viewport = GetChatClientRect();
             const int width = viewport.right - viewport.left;
             const int height = viewport.bottom - viewport.top;
+            const std::string key = CompanionPlacementKey(windowId);
+            window->Resize(LoadSettingsIniInt("UIWindows", (key + "Width").c_str(), 280),
+                LoadSettingsIniInt("UIWindows", (key + "Height").c_str(), 120));
             RestoreCompanionPlacement(*window, viewport, (width - 640) / 2 + 200, (height - 480) / 2 + 200);
             m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), window);
         }
@@ -2040,7 +2043,12 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         || window == m_homunSkillListWnd || window == m_merSkillListWnd;
     if (deletingCompanion) {
         const std::string key = CompanionPlacementKey(window->m_id);
-        SaveSettingsIniIntValues("UIWindows", {{key + "X", window->m_x}, {key + "Y", window->m_y}});
+        std::vector<std::pair<std::string, int>> placement{{key + "X", window->m_x}, {key + "Y", window->m_y}};
+        if (window == m_homunSkillListWnd || window == m_merSkillListWnd) {
+            placement.emplace_back(key + "Width", window->m_w);
+            placement.emplace_back(key + "Height", window->m_h);
+        }
+        SaveSettingsIniIntValues("UIWindows", placement);
     }
     const bool deletingGroundText=GroundSkillTextOwner(window)!=nullptr;
     for(auto*& owner:m_groundSkillTextWindows)if(owner==window)owner=nullptr;

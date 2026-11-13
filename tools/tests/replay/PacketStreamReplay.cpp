@@ -3079,6 +3079,8 @@ void CompanionSkillListReplay()
     listPacket(0x029d, 8200, 1);
     auto* homun = static_cast<UICompanionSkillListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNSKILLLISTWND));
     auto* merc = static_cast<UICompanionSkillListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERSKILLLISTWND));
+    if (homun) homun->Resize(280, 120);
+    if (merc) merc->Resize(280, 120);
     Require(homun && merc && homun->GetRows().size() == 2 && merc->GetRows().size() == 1
         && homun->GetRows().front().id == 8000 && merc->GetRows().front().id == 8200,
         "companion list mixed caches or rendered the wrong rows");
@@ -3103,6 +3105,14 @@ void CompanionSkillListReplay()
     g_windowMgr.OnMouseMove(scrollX, homun->m_y + 14);
     g_windowMgr.OnLBtnUp(scrollX, homun->m_y + 14);
     Require(homun->GetRows().front().id == 8000, "dragging the companion scrollbar did not return to the first row");
+    const int gripX = homun->m_x + homun->m_w - 3;
+    const int gripY = homun->m_y + homun->m_h - 3;
+    g_windowMgr.OnLBtnDown(gripX, gripY);
+    g_windowMgr.OnMouseMove(gripX + 40, gripY + 40);
+    g_windowMgr.OnLBtnUp(gripX + 40, gripY + 40);
+    Require(homun->m_w == 312 && homun->m_h == 152 && homun->GetRows().size() == 3
+        && homun->GetScrollThumb().bottom == 0 && merc->m_w == 280 && merc->m_h == 120,
+        "companion resize did not snap geometry or expose the extra row");
     g_session.SetHomunSkillUseLevel(8000, 2);
     g_session.SetMerSkillUseLevel(8200, 3);
     homun->OnLBtnDown(homun->m_x + 10, homun->m_y + 22);
@@ -3168,6 +3178,9 @@ void CompanionSkillListReplay()
     merc = static_cast<UICompanionSkillListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERSKILLLISTWND));
     Require(homun && merc && homun->m_x == 19 && homun->m_y == 26 && merc->m_x == 47 && merc->m_y == 58,
         "companion skill windows did not restore separate saved positions");
+    Require(homun->m_w == 312 && homun->m_h == 152 && merc->m_w == 280 && merc->m_h == 120,
+        "companion skill windows did not restore separate saved sizes");
+    homun->Resize(280, 120);
 
     g_windowMgr.CloseCompanionWindows(true);
     g_windowMgr.CloseCompanionWindows(false);

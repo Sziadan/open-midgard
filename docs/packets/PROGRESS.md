@@ -3919,3 +3919,7 @@ PK28.04 uses the selected caption and footer entries and persists the four compa
 ## Companion skill scrolling
 
 PK28.04 adds the companion list scrollbar and verifies wheel, arrow, and thumb input through replay. Six focused application checks, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+
+## Companion skill list resizing
+
+PK28.04 adds the companion resize grip and persists separate list dimensions. Replay verifies snapping, row count, scrollbar changes, and close/reopen geometry. Six focused application checks, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
