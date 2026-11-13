@@ -4133,3 +4133,5 @@ PK42.03 adds the native and Qt Memorial Dungeon window and deadline display. Con
 PK42.04 traces a concrete mismatch between the instance displayed in a broadcast snapshot and the target selected by `02CF`. The action remains open. [Evidence](evidence/PK42.04-instance-target-ownership.md)
 
 PK43.01 distinguishes disabled buying stores and store search from the reachable early party booking parsers. It records the registration result and the missing delete acknowledgement length. [Evidence](evidence/PK43.01-selected-store-booking-inventory.md)
+
+PK43.02 classifies ten buying-store discovery rows as inactive for MAIN 20080910, including the later `0814` and `0816` board notifications. The compatibility framing remains available in the client. [Evidence](evidence/PK43.01-selected-store-booking-inventory.md)
