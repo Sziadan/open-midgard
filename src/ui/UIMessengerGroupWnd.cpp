@@ -4,8 +4,10 @@
 #include "UIPartyOptionWnd.h"
 #include "UIWindowMgr.h"
 #include "UIFriendOptionWnd.h"
+#include "UIChatRoomSettingsWnd.h"
 #include "core/UiMessageStrings.h"
 #include "gamemode/GameMode.h"
+#include "gamemode/Mode.h"
 #include "render/DC.h"
 #include "session/Session.h"
 
@@ -14,6 +16,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <iterator>
 #include <string>
 
 namespace {
@@ -43,6 +46,8 @@ constexpr int kButtonIdClose = 1;
 constexpr int kButtonIdCreateParty = 100;
 constexpr int kButtonIdConfigureParty = 101;
 constexpr int kButtonIdDisbandParty = 102;
+constexpr int kButtonIdDeleteFriend = 169;
+constexpr int kDeleteFriendConfirmation = 356;
 
 void HashTokenValue(unsigned long long* hash, unsigned long long value)
 {
@@ -180,6 +185,32 @@ msgresult_t UIMessengerGroupWnd::SendMsg(UIWindow* sender, int msg, msgparam_t w
         if(g_windowMgr.m_friendOptionWnd)g_windowMgr.DeleteWindow(g_windowMgr.m_friendOptionWnd);
         else g_windowMgr.MakeWindow(UIWindowMgr::WID_FRIENDOPTIONWND);
         return 0;
+    }
+    if (msg == 6 && wparam == kButtonIdDeleteFriend && m_currentTab == TabFriend) {
+        const auto& friends = g_session.GetFriendList();
+        if (g_windowMgr.m_modalWindow || m_selectedIndex < 0
+            || static_cast<size_t>(m_selectedIndex) >= friends.size()) return 0;
+        const auto& entry = *std::next(friends.begin(), m_selectedIndex);
+        if (!entry.isValid || !entry.AID || !entry.GID) return 0;
+        const auto aid = entry.AID;
+        const auto cid = entry.GID;
+        const auto generation = g_modeMgr.GetOperationGeneration();
+        ro::UiMessageStrings strings;
+        strings.Load();
+        auto* box = new UIChatRoomMessageBox(
+            strings.Get(kDeleteFriendConfirmation, "Are you sure that you want to delete?"),
+            kDeleteFriendConfirmation);
+        box->ConfigureConfirmation(this, [this, aid, cid, generation](bool accepted) {
+            if (accepted && g_windowMgr.ContainsWindow(this) && m_show
+                && g_modeMgr.GetOperationGeneration() == generation) {
+                g_modeMgr.SendMsg(190, aid, cid, 0);
+            }
+        });
+        g_windowMgr.m_roomMessageBox = box;
+        g_windowMgr.m_children.push_back(box);
+        g_windowMgr.m_modalWindow = box;
+        g_windowMgr.m_editWindow = nullptr;
+        return 1;
     }
 
     if (msg == 23) {
@@ -330,6 +361,9 @@ void UIMessengerGroupWnd::OnDraw()
 
 void UIMessengerGroupWnd::OnLBtnDown(int x, int y)
 {
+    if (m_currentTab == TabFriend && IsPointInRect(GetActionButtonRect(0), x, y)) {
+        return;
+    }
     if (IsPointInRect(GetCloseButtonRect(), x, y)) {
         return;
     }
@@ -368,6 +402,10 @@ void UIMessengerGroupWnd::OnLBtnUp(int x, int y)
         }
     }
 
+    if (m_currentTab == TabFriend && IsPointInRect(GetActionButtonRect(0), x, y)) {
+        SendMsg(this, 6, kButtonIdDeleteFriend, 0, 0);
+        return;
+    }
     if (m_currentTab == TabParty) {
         const bool showCreateButton = g_session.GetNumParty() == 0;
         const bool showLeaderButtons = g_session.GetNumParty() > 0 && g_session.m_amIPartyMaster;
@@ -440,6 +478,19 @@ bool UIMessengerGroupWnd::GetDisplayDataForQt(DisplayData* outData) const
         std::snprintf(summary, sizeof(summary), "%u registered", g_session.GetNumFriend());
         outData->summaryValue = summary;
         outData->summarySecondaryValue.clear();
+        if (m_selectedIndex >= 0 && m_selectedIndex < GetEntryCount()) {
+            const RECT rect = GetActionButtonRect(0);
+            QtButtonDisplay button{};
+            button.id = kButtonIdDeleteFriend;
+            button.x = rect.left;
+            button.y = rect.top;
+            button.width = rect.right - rect.left;
+            button.height = rect.bottom - rect.top;
+            ro::UiMessageStrings strings;
+            strings.Load();
+            button.label = strings.Get(351, "Delete");
+            outData->actionButtons.push_back(std::move(button));
+        }
 
         int absoluteIndex = 0;
         int visibleIndex = 0;
@@ -685,7 +736,7 @@ RECT UIMessengerGroupWnd::GetActionButtonRect(int slot) const
 {
     const int footerTop = m_y + m_h - (kFooterHeight + kFooterBottomMargin);
     const int top = footerTop - kFooterButtonGap - kActionButtonHeight;
-    if (g_session.GetNumParty() == 0 || !g_session.m_amIPartyMaster) {
+    if (m_currentTab == TabFriend || g_session.GetNumParty() == 0 || !g_session.m_amIPartyMaster) {
         const int left = m_x + (m_w - kActionButtonWidth) / 2;
         return RECT{ left, top, left + kActionButtonWidth, top + kActionButtonHeight };
     }

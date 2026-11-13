@@ -2520,10 +2520,10 @@ bool CSession::IsFriendName(const char* characterName) const
     });
 }
 
-bool CSession::DeleteFriendFromList(unsigned int gid)
+bool CSession::DeleteFriendFromList(unsigned int aid, unsigned int gid)
 {
     auto it = std::find_if(m_friendList.begin(), m_friendList.end(), [&](const FRIEND_INFO& info) {
-        return info.GID == gid;
+        return info.AID == aid && info.GID == gid;
     });
     if (it == m_friendList.end()) {
         return false;

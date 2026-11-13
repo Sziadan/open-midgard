@@ -4046,7 +4046,8 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
         mode.m_dragType = 0;
         mode.m_dragInfo = {};
     }
-    if (auto* box = g_windowMgr.m_roomMessageBox; box && box->GetMessageId() == 601 && box->HasCancel())
+    if (auto* box = g_windowMgr.m_roomMessageBox; box && box->HasCancel()
+        && (box->GetMessageId() == 601 || box->GetMessageId() == 356))
         box->Dismiss(false);
     if (g_windowMgr.m_petInfoWnd) g_windowMgr.DeleteWindow(g_windowMgr.m_petInfoWnd);
     if (g_windowMgr.m_petTamingDeceiveWnd) g_windowMgr.DeleteWindow(g_windowMgr.m_petTamingDeceiveWnd);
@@ -8540,7 +8541,7 @@ void HandleFriendDelete(CGameMode&, const PacketView& packet)
         return;
     }
 
-    if (g_session.DeleteFriendFromList(ReadLE32(packet.data + 6))) {
+    if (g_session.DeleteFriendFromList(ReadLE32(packet.data + 2), ReadLE32(packet.data + 6))) {
         g_session.RefreshFriendUI();
     }
 }

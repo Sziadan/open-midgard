@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK16.03 adds user-count and friend-result notices and records the selected whisper-block contract. Continue with `0203/020A`: trace the messenger delete control, match both identity fields, and replay a successful delete and a mismatched identity. Then verify the `0097/0098` whisper outcomes and the `0207/0208` prompt lifetime. Coordinate `0201` atomic replacement with PK34. PK16 gates PK30 alongside completed PK25. [Social packet evidence](evidence/PK16.03-social-wire.md)
+PK16.03 now covers messenger deletion through `0203/020A`, user counts, and friend result notices. Next trace `0207/0208` invitation lifetime from the prompt in `Commerce.cpp` through map reuse, mode exit, replacement, and the selected server's silent branches. Then verify the `0097/0098` whisper outcomes. Coordinate `0201` atomic replacement with PK34. PK16 gates PK30 alongside completed PK25. [Social packet evidence](evidence/PK16.03-social-wire.md)
 
 PK28.04 and PK29.04 recover stalled manual moves and pace follow requests. The remaining companion checks include live combat, movement, and re-entry for both families and installed skin comparison. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 

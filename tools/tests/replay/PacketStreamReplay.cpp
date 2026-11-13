@@ -35,6 +35,7 @@
 #include "ui/UIRechargeGage.h"
 #include "ui/UICompanionStatusWnd.h"
 #include "ui/UIEquipWnd.h"
+#include "ui/UIMessengerGroupWnd.h"
 #include "ui/UICompanionSkillListWnd.h"
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "ui/UIFriendOptionWnd.h"
@@ -2542,6 +2543,75 @@ void SocialNoticeReplay()
     receive(result, 1);
     Require(g_windowMgr.GetChatEvents().size() == 2, "unknown friend result produced a notice");
     g_windowMgr.ClearChatEvents();
+}
+
+void FriendRemovalReplay()
+{
+    CGameMode mode;
+    auto* previous = SkillPacketReplayAccess::Current();
+    const auto previousType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    const auto oldFriends = g_session.GetFriendList();
+    g_session.ClearFriend();
+    FRIEND_INFO entry{};
+    entry.isValid = 1;
+    entry.AID = 0x12345678;
+    entry.GID = 0x90abcdef;
+    entry.characterName = "DeleteReplay";
+    g_session.AddFriendToList(entry);
+    auto* messenger = static_cast<UIMessengerGroupWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MESSENGERGROUPWND));
+    Require(messenger, "messenger did not open for friend removal");
+    messenger->SetShow(1);
+    UIMessengerGroupWnd::DisplayData display;
+    Require(messenger->GetDisplayDataForQt(&display) && display.rows.size() == 1,
+        "messenger did not show the friend fixture");
+    messenger->OnLBtnUp(display.rows[0].x + 1, display.rows[0].y + 1);
+    display = {};
+    Require(messenger->GetDisplayDataForQt(&display) && display.actionButtons.size() == 1,
+        "selected friend did not expose its delete action");
+    const auto button = display.actionButtons.front();
+    const auto prompt = [&] {
+        messenger->OnLBtnDown(button.x + 1, button.y + 1);
+        messenger->OnLBtnUp(button.x + 1, button.y + 1);
+        Require(g_windowMgr.m_roomMessageBox && g_windowMgr.m_roomMessageBox->HasCancel()
+            && g_windowMgr.m_roomMessageBox->GetSourceOwner() == messenger,
+            "friend removal did not open a messenger-owned confirmation");
+    };
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    prompt();
+    g_windowMgr.m_roomMessageBox->Dismiss(false);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "cancelled friend removal sent a request");
+    prompt();
+    g_windowMgr.m_roomMessageBox->Dismiss(true);
+    const std::vector<u8> request{3, 2, 0x78, 0x56, 0x34, 0x12, 0xef, 0xcd, 0xab, 0x90};
+    Require(peer.ReceiveExact(10) == request && g_session.GetNumFriend() == 1,
+        "friend removal request changed the row before confirmation or emitted incorrect bytes");
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    LoopbackPeer server(input);
+    const auto receive = [&](const std::vector<u8>& frame) {
+        server.Send(frame);
+        WaitKernelPending(input, static_cast<int>(frame.size()));
+        Require(ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "friend removal notice did not frame and dispatch");
+    };
+    auto notice = request;
+    notice[0] = 0x0a;
+    notice[2] ^= 1;
+    receive(notice);
+    Require(g_session.GetNumFriend() == 1, "wrong account ID removed a friend");
+    notice[2] ^= 1;
+    receive(notice);
+    Require(g_session.GetNumFriend() == 0, "matching account and character did not remove the friend");
+    g_windowMgr.DeleteWindow(messenger);
+    for (const auto& friendInfo : oldFriends) g_session.AddFriendToList(friendInfo);
+    connection->Disconnect();
+    SkillPacketReplayAccess::Restore(previous, previousType);
 }
 
 void PrivacyConfigurationReplay()
@@ -6557,6 +6627,7 @@ int main(int argc,char** argv){try{
     Login3ClientInfoHashRequestReplay();
     ElementalSnapshotReplay();
     SocialNoticeReplay();
+    FriendRemovalReplay();
     PrivacyConfigurationReplay();
     CompanionIdentityReplay();
     CompanionCommandReplay();

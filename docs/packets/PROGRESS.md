@@ -3957,3 +3957,5 @@ PK16.01 traced `02D8/02D9`, `02DA`, and `02C8/02C9` to the selected server's ind
 PK16.02 adds the confirmed equipment, recall, and party invitation settings and production loopback replay for outgoing commands and restored state. [Evidence](evidence/PK16.01-privacy-wire.md)
 
 PK16.03 adds user-count and friend-result notices and documents the selected whisper-block branches. [Evidence](evidence/PK16.03-social-wire.md)
+
+PK16.03 adds the messenger delete confirmation, the selected `0203` request, and exact AID/CID matching for `020A`. [Evidence](evidence/PK16.03-social-wire.md)

@@ -436,7 +436,7 @@ public:
     void ClearFriend();
     unsigned int GetNumFriend() const;
     bool IsFriendName(const char* characterName) const;
-    bool DeleteFriendFromList(unsigned int gid);
+    bool DeleteFriendFromList(unsigned int aid, unsigned int gid);
     void AddFriendToList(const FRIEND_INFO& info);
     bool SetFriendState(unsigned int aid, unsigned int gid, unsigned char state);
     void RefreshFriendUI();

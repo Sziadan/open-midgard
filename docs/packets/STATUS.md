@@ -1,6 +1,6 @@
 # Packet implementation status
 
-**Social notices**. PK16.03 receives user counts and reports friend request results. Friend removal, prompt lifetime, and whisper outcome verification remain open. [Evidence](evidence/PK16.03-social-wire.md)
+**Social packets**. PK16.03 receives user counts, reports friend request results, and removes messenger rows after a matching server notice. Invitation prompt lifetime and whisper outcome verification remain open. [Evidence](evidence/PK16.03-social-wire.md)
 
 **Privacy configuration**. PK16.02 wires the equipment control and privacy commands to selected server-confirmed settings. PK16.03 still owns the social packet audit. [Evidence](evidence/PK16.01-privacy-wire.md)
 

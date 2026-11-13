@@ -11838,6 +11838,20 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     }
     case 270:
         return SendPrivacyConfiguration(0, wparam != 0);
+    case 190: {
+        const auto aid = static_cast<u32>(wparam);
+        const auto cid = static_cast<u32>(lparam);
+        const auto& friends = g_session.GetFriendList();
+        if (!aid || !cid || std::none_of(friends.begin(), friends.end(), [&](const FRIEND_INFO& entry) {
+            return entry.isValid && entry.AID == aid && entry.GID == cid;
+        })) return 0;
+        std::array<u8, 10> packet{0x03, 0x02};
+        for (unsigned i = 0; i < 4; ++i) {
+            packet[2 + i] = static_cast<u8>(aid >> (8 * i));
+            packet[6 + i] = static_cast<u8>(cid >> (8 * i));
+        }
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
+    }
     case 198: {
         // CZ_COMMAND_HOMUN carries a zero type and a one-byte command.
         const u8 packet[] = {0x2d, 0x02, 0, 0, static_cast<u8>(wparam)};
