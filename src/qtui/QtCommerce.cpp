@@ -146,7 +146,8 @@ void BindCommerceUi(QtUiState* ui){
         Command c;c.action=action.toStdString();c.from=args.value("from").toString().toStdString();c.to=args.value("to").toString().toStdString();c.index=args.value("index").toUInt();c.amount=args.value("amount").toUInt();c.price=args.value("price").toUInt();c.text=args.value("text").toString().toUtf8().toStdString();c.subject=args.value("subject").toString().toUtf8().toStdString();c.body=args.value("body").toString().toUtf8().toStdString();c.x=args.value("x").toInt();c.y=args.value("y").toInt();c.tab=args.value("tab").toInt();
         if(action=="externalDrop"){
             const auto* item=g_session.GetInventoryItemByIndex(c.index);auto* mode=g_modeMgr.GetCurrentGameMode();
-            if(!item||!mode||state.tradeActive||state.vendingActive)return;
+            if(!item||!mode||state.tradeActive||state.vendingActive
+                || (args.contains("id") && item->GetItemId()!=args.value("id").toUInt()))return;
             mode->m_dragType=static_cast<int>(DragType::ShortcutItem);mode->m_dragInfo={};mode->m_dragInfo.type=static_cast<int>(DragType::ShortcutItem);mode->m_dragInfo.source=static_cast<int>(DragSource::InventoryWindow);
             mode->m_dragInfo.itemId=item->GetItemId();mode->m_dragInfo.itemIndex=item->m_itemIndex;mode->m_dragInfo.itemCount=item->m_num;mode->m_dragInfo.itemEquipLocation=item->m_location;
             g_windowMgr.OnLBtnUp(c.x,c.y);return;

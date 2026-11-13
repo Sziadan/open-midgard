@@ -138,6 +138,7 @@ enum class DragSource : int {
     ShopList = 6,
     PurchaseCart = 7,
     SellCart = 8,
+    ProductionMaterial = 9,
 };
 
 struct DRAG_INFO {

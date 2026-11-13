@@ -282,19 +282,66 @@ void ProductionSelectionReplay()
     ITEM_INFO material{};
     material.m_itemIndex = 99;
     material.SetItemId(1000);
+    material.m_num = 2;
+    g_session.SetInventoryItem(material);
+    material.m_itemIndex = 98;
+    material.SetItemId(994);
     material.m_num = 1;
+    g_session.SetInventoryItem(material);
+    material.m_itemIndex = 97;
+    material.SetItemId(995);
     g_session.SetInventoryItem(material);
     receive(list);
     window = g_windowMgr.m_skillSelectWnd;
     window->HandleKeyDown(VK_DOWN);
     window->HandleKeyDown(VK_RETURN);
-    window->HandleKeyDown(VK_DOWN);
+    UISkillSelectWnd::DisplayData display;
+    Require(window->GetDisplayDataForQt(&display) && display.materialSlots.size() == 3,
+        "weapon production confirmation did not show three material slots");
+    const auto drop = [&](unsigned int index, unsigned int id) {
+        mode.m_dragType = static_cast<int>(DragType::ShortcutItem);
+        mode.m_dragInfo = {};
+        mode.m_dragInfo.type = mode.m_dragType;
+        mode.m_dragInfo.source = static_cast<int>(DragSource::InventoryWindow);
+        mode.m_dragInfo.itemIndex = index;
+        mode.m_dragInfo.itemId = id;
+        g_windowMgr.OnLBtnUp(display.materialSlots[0].x + 8, display.materialSlots[0].y + 8);
+    };
+    drop(98, 994);
+    drop(97, 995);
+    drop(99, 994);
+    drop(99, 1000);
+    drop(99, 1000);
+    Require(window->GetDisplayDataForQt(&display) && display.materialSlots[0].itemId == 994
+        && display.materialSlots[1].itemId == 1000 && display.materialSlots[2].itemId == 1000,
+        "optional slots did not reject the second element and stale item while accepting duplicate crumbs");
+    g_session.RemoveInventoryItem(99, 1);
     window->HandleKeyDown(VK_RETURN);
+    Require(g_windowMgr.m_skillSelectWnd == window && window->GetDisplayDataForQt(&display)
+        && display.materialSlots[1].itemId == 1000 && display.materialSlots[2].itemId == 0
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "confirmation did not clear an unavailable material and wait for a fresh confirmation");
+    g_windowMgr.OnLBtnDown(display.materialSlots[0].x + 8, display.materialSlots[0].y + 8);
+    g_windowMgr.OnLBtnUp(window->m_x + window->m_w + 1, window->m_y);
+    Require(window->GetDisplayDataForQt(&display) && display.materialSlots[0].itemId == 0
+        && display.materialSlots[1].itemId == 1000 && g_session.GetInventoryItemByIndex(98)->m_num == 1,
+        "dragging out a material did not clear only its slot");
     window->HandleKeyDown(VK_RETURN);
     Require(!g_windowMgr.m_skillSelectWnd && g_session.GetInventoryItemByIndex(99)->m_num == 1
-        && peer.ReceiveExact(10) == std::vector<u8>{0x8e, 1, 0xb1, 4, 0xe8, 3, 0, 0, 0, 0},
-        "optional crafting material did not send without an optimistic decrement");
+        && peer.ReceiveExact(10) == std::vector<u8>{0x8e, 1, 0xb1, 4, 0, 0, 0xe8, 3, 0, 0},
+        "optional crafting materials did not preserve slot order and inventory counts");
     g_session.RemoveInventoryItem(99, 1);
+    g_session.RemoveInventoryItem(98, 1);
+    g_session.RemoveInventoryItem(97, 1);
+    receive({0x8d, 1, 12, 0, 0xe6, 3, 0, 0, 0, 0, 0, 0});
+    window = g_windowMgr.m_skillSelectWnd;
+    window->HandleKeyDown(VK_DOWN);
+    window->HandleKeyDown(VK_RETURN);
+    Require(window->GetDisplayDataForQt(&display) && display.productionConfirmation && display.materialSlots.empty(),
+        "ore processing displayed optional weapon materials");
+    window->HandleKeyDown(VK_ESCAPE);
+    Require(peer.ReceiveExact(10) == std::vector<u8>{0x8e, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+        "production confirmation cancellation did not send a zero recipe");
     receive(list);
     g_windowMgr.m_skillSelectWnd->HandleKeyDown(VK_ESCAPE);
     Require(!g_windowMgr.m_skillSelectWnd

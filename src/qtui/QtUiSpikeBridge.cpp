@@ -25,6 +25,7 @@
 #include "ui/UISelectServerWnd.h"
 #include "ui/UIShopCommon.h"
 #include "ui/UIWindowMgr.h"
+#include "ui/UISkillSelectWnd.h"
 #include "ui/UIGuildWnd.h"
 #include "world/GameActor.h"
 #include "world/World.h"
@@ -1208,7 +1209,10 @@ public:
         }
 
         const bool chatEnabled=!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal() && g_windowMgr.CanRouteQtChatInput() && g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->m_show!=0;
-        const bool commerceEnabled=!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal() && ro::commerce::HasInput();
+        const auto* skillChoice = g_windowMgr.m_skillSelectWnd;
+        const bool productionConfirmation = skillChoice && skillChoice->m_show && skillChoice->IsProductionConfirmation();
+        const bool pointerMessage=msg==WM_MOUSEMOVE || msg==WM_LBUTTONDOWN || msg==WM_LBUTTONUP || msg==WM_LBUTTONDBLCLK || msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP || msg==WM_MOUSEWHEEL;
+        const bool commerceEnabled=!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal(pointerMessage) && ro::commerce::HasInput();
         const bool guildEnabled=commerceEnabled || (!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal() && g_windowMgr.CanRouteQtChatInput() && g_windowMgr.m_guildWnd && g_windowMgr.m_guildWnd->m_show!=0);
         if(g_windowMgr.m_guildWnd && guildEnabled && (msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK) && g_windowMgr.m_chatWnd) {
             const auto* guild=g_windowMgr.m_guildWnd;
@@ -1242,8 +1246,8 @@ public:
                 return true;
             }
         }
-        const bool nativePointerCapture=chatEnabled && (g_windowMgr.m_chatWnd->IsQtPointerCaptured() || g_windowMgr.m_captureWindow);
-        const bool pointerMessage=msg==WM_MOUSEMOVE || msg==WM_LBUTTONDOWN || msg==WM_LBUTTONUP || msg==WM_LBUTTONDBLCLK || msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP || msg==WM_MOUSEWHEEL;
+        const bool nativePointerCapture=(chatEnabled && (g_windowMgr.m_chatWnd->IsQtPointerCaptured() || g_windowMgr.m_captureWindow))
+            || (productionConfirmation && g_windowMgr.m_captureWindow == skillChoice);
         const bool nativePopup=pointerMessage && g_windowMgr.HasNativePopupAtPoint(GetUiLogicalX(lParam),GetUiLogicalY(lParam));
         if(!(nativePopup && !m_chatInput.pointerCaptured()) && !(nativePointerCapture && pointerMessage) && m_chatInput.handle(m_mainWindow,msg,wParam,lParam,chatEnabled,guildEnabled)) {
             if(m_stateAdapter)m_stateAdapter->syncChat();
@@ -1258,7 +1262,7 @@ public:
                     GetUiLogicalY(lParam));
                 return true;
             }
-            if (!HasFrontMenuUiVisible() && !nativePopup
+            if (!HasFrontMenuUiVisible() && !nativePopup && !(productionConfirmation && nativePointerCapture)
                 && g_windowMgr.m_chatWnd
                 && g_windowMgr.m_chatWnd->m_show != 0
                 && (!g_windowMgr.m_captureWindow || g_windowMgr.m_chatWnd->IsQtPointerCaptured())
@@ -1336,7 +1340,7 @@ public:
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::NotifyJobLevelUp;
                 return true;
             }
-            if (!HasFrontMenuUiVisible()
+            if (!HasFrontMenuUiVisible() && !(productionConfirmation && nativePopup)
                 && g_windowMgr.m_chatWnd
                 && g_windowMgr.m_chatWnd->m_show != 0) {
                 const int logicalX = GetUiLogicalX(lParam);
@@ -1400,7 +1404,7 @@ public:
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
             }
-            if (!HasFrontMenuUiVisible()
+            if (!HasFrontMenuUiVisible() && !(productionConfirmation && (nativePopup || nativePointerCapture))
                 && g_windowMgr.m_chatWnd
                 && g_windowMgr.m_chatWnd->m_show != 0
                 && (g_windowMgr.m_chatWnd->IsQtPointerCaptured()

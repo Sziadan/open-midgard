@@ -3299,6 +3299,7 @@ Item {
 
         Rectangle {
             id: skillSelectList
+            visible: !uiState.skillSelectData.productionConfirmation
             x: 8
             y: 27 + (uiState.skillSelectData.recipeHeight || 0)
             width: Math.max(0, parent.width - 30)
@@ -3378,6 +3379,39 @@ Item {
                         font.family: theme.fontFamily
                         font.pixelSize: 10
                     }
+                }
+            }
+        }
+
+        Repeater {
+            model: uiState.skillSelectData.materialSlots || []
+            delegate: Rectangle {
+                required property var modelData
+                required property int index
+                objectName: "skillChoiceMaterial" + index
+                x: modelData.x - uiState.skillSelectX
+                y: modelData.y - uiState.skillSelectY
+                width: modelData.width
+                height: modelData.height
+                color: theme.fieldFill
+                border.color: theme.buttonBorder
+
+                Image {
+                    id: materialIcon
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    fillMode: Image.PreserveAspectFit
+                    smooth: false
+                    cache: false
+                    source: modelData.itemId ? root.itemIconSource(modelData.itemId, true) : ""
+                }
+                Text {
+                    anchors.centerIn: parent
+                    visible: modelData.itemId > 0 && materialIcon.status !== Image.Ready
+                    text: modelData.itemId || ""
+                    color: theme.ink
+                    font.family: theme.fontFamily
+                    font.pixelSize: 12
                 }
             }
         }

@@ -57,6 +57,9 @@ Item {
         else if ((dragFrom === "inventory" && (to === "cart" || to === "trade")) || (dragFrom === "cart" && to === "inventory")) transfer(dragFrom,to,dragItem)
     }
     function dropAt(x,y) {
+        if (uiState.skillSelectVisible && uiState.skillSelectData.productionConfirmation
+            && x >= uiState.skillSelectX && x < uiState.skillSelectX + uiState.skillSelectWidth
+            && y >= uiState.skillSelectY && y < uiState.skillSelectY + uiState.skillSelectHeight) return false
         // The scene is rendered offscreen, so resolve internal drops directly
         // against its panels rather than relying on a native drag service.
         var target=null
@@ -110,7 +113,12 @@ Item {
                 }
             }
             onReleased: function(event) {
-                if (hub.dragging) { var p=mapToItem(hub,event.x,event.y);if(!hub.dropAt(p.x,p.y) && tile.sourceKind==="inventory")hub.send("externalDrop",{index:tile.item.index,x:p.x,y:p.y});hub.dragging=false }
+                if (hub.dragging) {
+                    var p=mapToItem(hub,event.x,event.y)
+                    if (!hub.dropAt(p.x,p.y) && hub.dragFrom==="inventory")
+                        hub.send("externalDrop",{index:hub.dragItem.index,id:hub.dragItem.id,x:p.x,y:p.y})
+                    hub.dragging=false
+                }
                 else if (event.button===Qt.RightButton) { var p=mapToItem(hub,event.x,event.y);hub.hoverTile=null;hub.send("describe",{from:tile.sourceKind,index:tile.item.index,id:tile.item.id,x:p.x+12,y:p.y+12}) }
             }
             onCanceled: hub.dragging=false

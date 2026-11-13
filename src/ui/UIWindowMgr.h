@@ -292,7 +292,7 @@ public:
     bool SetShortcutKeyBinding(int slotIndex, const ShortcutKeyBinding& binding);
     bool IsCapturingShortcutKeyBinding() const;
     bool HasWindowAtPoint(int x, int y) const;
-    bool HasGameplayInputModal() const;
+    bool HasGameplayInputModal(bool allowProductionInventory = false) const;
     bool HasNativePopupAtPoint(int x,int y) const;
     void ClampWindowToClient(int* x, int* y, int w, int h) const;
     void RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent);

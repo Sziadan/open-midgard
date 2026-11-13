@@ -56,6 +56,8 @@ public:
         std::string emptyText;
         std::string recipeDescription;
         int recipeHeight = 0;
+        bool productionConfirmation = false;
+        std::vector<DisplayRow> materialSlots;
         DisplayButton closeButton;
         DisplayButton okButton;
         DisplayButton cancelButton;
@@ -73,6 +75,9 @@ public:
     void OnMouseMove(int x, int y) override;
     void OnMouseHover(int x, int y) override;
     void OnWheel(int delta) override;
+    void DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo) override;
+    void FinishMaterialDrag(int x, int y, unsigned int slot);
+    void CancelMaterialDrag();
     void StoreInfo() override;
     bool HandleKeyDown(int virtualKey);
 
@@ -81,6 +86,7 @@ public:
     void SetProductionItems(const std::vector<unsigned int>& itemIds, std::string title);
     void SetCookingItems(const std::vector<unsigned int>& itemIds, std::string title);
     bool IsProductionSelection() const { return m_kind == Kind::Production || m_kind == Kind::ProductionMaterials; }
+    bool IsProductionConfirmation() const { return m_kind == Kind::ProductionMaterials; }
     void SetWeaponRefineItems(const std::vector<std::pair<u16, u16>>& items, std::string title);
     void SetRepairItems(const std::vector<std::array<u8, 13>>& rows, std::string title);
     bool IsCraftingSelection() const { return IsProductionSelection() || m_kind == Kind::Cooking || m_kind == Kind::WeaponRefine || m_kind == Kind::Repair; }
@@ -118,6 +124,8 @@ private:
     RECT GetCloseButtonRect() const;
     RECT GetListRect() const;
     int GetRecipeHeight() const;
+    bool HasProductionMaterialSlots() const;
+    RECT GetProductionMaterialRect(size_t slot) const;
     RECT GetRowRect(int visibleRow) const;
     RECT GetScrollTrackRect() const;
     RECT GetScrollThumbRect(int entryCount) const;
@@ -133,7 +141,7 @@ private:
     void SubmitSelection();
     void CancelSelection();
     void ResetInteraction();
-    void RefreshProductionMaterials();
+    void OpenProductionConfirmation();
     const shopui::BitmapPixels* GetItemIcon(unsigned int itemId);
 
     Kind m_kind;

@@ -2211,6 +2211,7 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
         m_itemIdentifyWnd = nullptr;
     }
     if (window == m_skillSelectWnd) {
+        m_skillSelectWnd->CancelMaterialDrag();
         m_skillSelectWnd = nullptr;
     }
     if (window == m_monsterInfoWnd) {
@@ -3053,7 +3054,9 @@ void UIWindowMgr::OnLBtnUp(int x, int y)
     if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         if (gameMode->m_dragType != static_cast<int>(DragType::None)) {
             UIWindow* dropTarget = HitTestWindow(x, y);
-            if (dropTarget) {
+            if (gameMode->m_dragInfo.source == static_cast<int>(DragSource::ProductionMaterial)) {
+                if (m_skillSelectWnd) m_skillSelectWnd->FinishMaterialDrag(x, y, gameMode->m_dragInfo.itemIndex);
+            } else if (dropTarget) {
                 dropTarget->DragAndDrop(x, y, &gameMode->m_dragInfo);
             } else if (gameMode->m_dragInfo.type == static_cast<int>(DragType::ShortcutItem)
                 && gameMode->m_dragInfo.source == static_cast<int>(DragSource::InventoryWindow)
@@ -3266,15 +3269,19 @@ bool UIWindowMgr::HasWindowAtPoint(int x, int y) const
     return (m_modalWindow && m_modalWindow->m_show) || ro::commerce::HitTest(x,y) || HitTestWindow(x, y) != nullptr;
 }
 
-bool UIWindowMgr::HasGameplayInputModal() const
+bool UIWindowMgr::HasGameplayInputModal(bool allowProductionInventory) const
 {
     if((m_modalWindow && m_modalWindow->m_show) || HasActiveNpcDialog()||IsCapturingShortcutKeyBinding())return true;
-    const UIWindow* windows[]={m_optionWnd,m_waitWnd,m_loadingWnd,m_joinPartyAcceptWnd,m_skillSelectWnd,m_chooseSellBuyWnd};
+    if (m_skillSelectWnd && m_skillSelectWnd->m_show
+        && !(allowProductionInventory && m_skillSelectWnd->IsProductionConfirmation())) return true;
+    const UIWindow* windows[]={m_optionWnd,m_waitWnd,m_loadingWnd,m_joinPartyAcceptWnd,m_chooseSellBuyWnd};
     for(const auto* w:windows)if(w&&w->m_show)return true;
     return false;
 }
 bool UIWindowMgr::HasNativePopupAtPoint(int x,int y) const
 {
+    if (m_skillSelectWnd && m_skillSelectWnd->IsProductionConfirmation()
+        && HitTestWindow(x, y) == m_skillSelectWnd) return true;
     const UIWindow* windows[]={m_itemInfoWnd,m_cardInfoWnd,m_skillDescribeWnd,m_chatRoomMenuWnd};
     for(const auto* w:windows)if(w&&w->m_show&&x>=w->m_x&&y>=w->m_y&&x<w->m_x+w->m_w&&y<w->m_y+w->m_h)return true;
     if (m_homunInfoWnd || m_merInfoWnd || m_homunSkillListWnd || m_merSkillListWnd) {

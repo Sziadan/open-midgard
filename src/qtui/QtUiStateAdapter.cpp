@@ -3512,6 +3512,16 @@ void PopulateSkillSelectState(QtUiState* state)
         data.insert(QStringLiteral("emptyText"), ToQString(display.emptyText));
         data.insert(QStringLiteral("recipeDescription"), ToQString(display.recipeDescription));
         data.insert(QStringLiteral("recipeHeight"), display.recipeHeight);
+        data.insert(QStringLiteral("productionConfirmation"), display.productionConfirmation);
+        QVariantList materialSlots;
+        for (const auto& slot : display.materialSlots) {
+            materialSlots.push_back(QVariantMap{
+                {QStringLiteral("itemId"), slot.itemId}, {QStringLiteral("x"), slot.x},
+                {QStringLiteral("y"), slot.y}, {QStringLiteral("width"), slot.width},
+                {QStringLiteral("height"), slot.height},
+            });
+        }
+        data.insert(QStringLiteral("materialSlots"), materialSlots);
 
         QVariantMap closeButton;
         closeButton.insert(QStringLiteral("x"), display.closeButton.x);

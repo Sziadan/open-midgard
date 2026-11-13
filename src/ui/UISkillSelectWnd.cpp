@@ -25,6 +25,7 @@ constexpr int kCloseButtonSize = 12;
 constexpr int kPadding = 8;
 constexpr int kListTop = 27;
 constexpr int kRecipeHeight = 112;
+constexpr int kMaterialSlotSize = 32;
 constexpr int kRowHeight = 32;
 constexpr int kVisibleRows = 4;
 constexpr int kIconBoxSize = 24;
@@ -268,6 +269,17 @@ int UISkillSelectWnd::GetRecipeHeight() const
         ? kRecipeHeight : 0;
 }
 
+bool UISkillSelectWnd::HasProductionMaterialSlots() const
+{
+    return m_kind == Kind::ProductionMaterials && (m_productionItem < 994 || m_productionItem > 1000);
+}
+
+RECT UISkillSelectWnd::GetProductionMaterialRect(size_t slot) const
+{
+    return shopui::MakeRect(m_x + 4 + static_cast<int>(slot) * kMaterialSlotSize,
+        GetOkButtonRect().top - kMaterialSlotSize - 2, kMaterialSlotSize, kMaterialSlotSize);
+}
+
 RECT UISkillSelectWnd::GetRowRect(int visibleRow) const
 {
     const RECT listRect = GetListRect();
@@ -345,7 +357,18 @@ void UISkillSelectWnd::UpdateScrollFromThumbPosition(int globalY, int entryCount
 
 void UISkillSelectWnd::ResetInteraction()
 {
-    Resize(m_w, kWindowHeight + GetRecipeHeight());
+    CancelMaterialDrag();
+    const int height = m_kind == Kind::ProductionMaterials
+        ? kListTop + GetRecipeHeight() + (HasProductionMaterialSlots() ? kMaterialSlotSize : 0)
+            + kButtonHeight + kPadding + 8
+        : kWindowHeight;
+    Resize(m_w, height);
+    if (m_kind == Kind::ProductionMaterials) {
+        int x = m_x;
+        int y = m_y;
+        g_windowMgr.ClampWindowToClient(&x, &y, m_w, m_h);
+        Move(x, y);
+    }
     m_hoveredIndex = -1;
     m_selectedIndex = -1;
     m_viewOffset = 0;
@@ -420,30 +443,54 @@ void UISkillSelectWnd::SetCookingItems(const std::vector<unsigned int>& itemIds,
     m_kind = Kind::Cooking;
 }
 
-void UISkillSelectWnd::RefreshProductionMaterials()
+void UISkillSelectWnd::OpenProductionConfirmation()
 {
     m_kind = Kind::ProductionMaterials;
     m_title = g_ttemmgr.GetDisplayName(m_productionItem, true);
     m_recipeDescription = g_ttemmgr.GetRecipeDescription(m_productionItem);
-    m_entries = {{"Create", {}, 0}};
-    const auto filled = std::count_if(m_productionMaterials.begin(), m_productionMaterials.end(), [](u16 id) { return id != 0; });
-    if (filled) {
-        m_entries[0].label += " (" + std::to_string(filled) + "/3 materials)";
-        m_entries.push_back({"Clear materials", {}, 0x10000});
-    }
-    if (filled < 3 && (m_productionItem < 994 || m_productionItem > 1000)) {
-        const bool hasElement = std::any_of(m_productionMaterials.begin(), m_productionMaterials.end(),
-            [](u16 id) { return id >= 994 && id <= 997; });
-        for (u16 id : {994, 995, 996, 997, 1000}) {
-            if (id != 1000 && hasElement) continue;
-            const int available = InventoryCountForItem(id) - static_cast<int>(
-                std::count(m_productionMaterials.begin(), m_productionMaterials.end(), id));
-            if (available > 0) m_entries.push_back({g_ttemmgr.GetDisplayName(id, true), {}, id, available, true});
-        }
-    }
+    m_entries.clear();
     ResetInteraction();
-    m_selectedIndex = 0;
     Invalidate();
+}
+
+void UISkillSelectWnd::DragAndDrop(int, int, const DRAG_INFO* const dragInfo)
+{
+    if (!HasProductionMaterialSlots() || !dragInfo || dragInfo->type != static_cast<int>(DragType::ShortcutItem)
+        || dragInfo->source != static_cast<int>(DragSource::InventoryWindow)) {
+        return;
+    }
+    const auto* item = g_session.GetInventoryItemByIndex(dragInfo->itemIndex);
+    if (!item || item->GetItemId() != dragInfo->itemId || item->m_num <= 0 || item->m_wearLocation != 0) {
+        return;
+    }
+    const auto id = item->GetItemId();
+    const auto isElement = [](u16 value) { return value >= 994 && value <= 997; };
+    const auto empty = std::find(m_productionMaterials.begin(), m_productionMaterials.end(), 0);
+    if ((id != 1000 && (id < 994 || id > 997)) || empty == m_productionMaterials.end()
+        || (id != 1000 && std::any_of(m_productionMaterials.begin(), m_productionMaterials.end(), isElement))
+        || InventoryCountForItem(id) <= std::count(m_productionMaterials.begin(), m_productionMaterials.end(), id)) {
+        return;
+    }
+    *empty = static_cast<u16>(id);
+    Invalidate();
+}
+
+void UISkillSelectWnd::FinishMaterialDrag(int x, int y, unsigned int slot)
+{
+    if (HasProductionMaterialSlots() && slot < m_productionMaterials.size()
+        && !IsInsideRect(shopui::MakeRect(m_x, m_y, m_w, m_h), x, y)) {
+        m_productionMaterials[slot] = 0;
+        Invalidate();
+    }
+}
+
+void UISkillSelectWnd::CancelMaterialDrag()
+{
+    auto* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_dragInfo.source == static_cast<int>(DragSource::ProductionMaterial)) {
+        mode->m_dragType = static_cast<int>(DragType::None);
+        mode->m_dragInfo = {};
+    }
 }
 
 void UISkillSelectWnd::SetWeaponRefineItems(const std::vector<std::pair<u16, u16>>& items, std::string title)
@@ -527,7 +574,8 @@ bool UISkillSelectWnd::IsStarPlaceConfirmation(u8 which) const
 
 bool UISkillSelectWnd::HasValidSelection() const
 {
-    return m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_entries.size());
+    return m_kind == Kind::ProductionMaterials
+        || (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_entries.size()));
 }
 
 int UISkillSelectWnd::HitTestVisibleRow(int x, int y) const
@@ -581,6 +629,22 @@ void UISkillSelectWnd::SubmitSelection()
         return;
     }
 
+    if (m_kind == Kind::ProductionMaterials) {
+        bool missing = false;
+        for (auto slot = m_productionMaterials.rbegin(); slot != m_productionMaterials.rend(); ++slot) {
+            if (*slot && InventoryCountForItem(*slot) < std::count(m_productionMaterials.begin(), m_productionMaterials.end(), *slot)) {
+                *slot = 0;
+                missing = true;
+            }
+        }
+        if (missing) {
+            Invalidate();
+        } else if (gameMode->SendProductionSelection(m_productionItem, m_productionMaterials)) {
+            g_windowMgr.DeleteWindow(this);
+        }
+        return;
+    }
+
     const Entry& entry = m_entries[static_cast<size_t>(m_selectedIndex)];
     bool sent = false;
     if (m_kind == Kind::Warp) {
@@ -598,25 +662,7 @@ void UISkillSelectWnd::SubmitSelection()
         }
     } else if (m_kind == Kind::Production) {
         m_productionItem = static_cast<u16>(entry.itemId);
-        RefreshProductionMaterials();
-    } else if (m_kind == Kind::ProductionMaterials) {
-        if (entry.itemId == 0) {
-            for (const auto id : m_productionMaterials) {
-                if (id && InventoryCountForItem(id) < std::count(m_productionMaterials.begin(), m_productionMaterials.end(), id)) {
-                    m_productionMaterials.fill(0);
-                    RefreshProductionMaterials();
-                    return;
-                }
-            }
-            sent = gameMode->SendProductionSelection(m_productionItem, m_productionMaterials);
-        } else if (entry.itemId == 0x10000) {
-            m_productionMaterials.fill(0);
-            RefreshProductionMaterials();
-        } else if (auto slot = std::find(m_productionMaterials.begin(), m_productionMaterials.end(), 0);
-            slot != m_productionMaterials.end()) {
-            *slot = static_cast<u16>(entry.itemId);
-            RefreshProductionMaterials();
-        }
+        OpenProductionConfirmation();
     } else if (m_kind == Kind::AutoSpell && entry.itemId != 0 && entry.itemId <= 0xFFFFu) {
         std::vector<unsigned int> offeredSkillIds;
         offeredSkillIds.reserve(m_entries.size());
@@ -674,6 +720,22 @@ void UISkillSelectWnd::OnDraw()
         shopui::DrawWindowTextRect(hdc, recipeRect, m_recipeDescription,
             RGB(0, 0, 0), DT_LEFT | DT_TOP | DT_WORDBREAK | DT_NOPREFIX);
     }
+    if (HasProductionMaterialSlots()) {
+        for (size_t i = 0; i < m_productionMaterials.size(); ++i) {
+            const auto rect = GetProductionMaterialRect(i);
+            shopui::FillRectColor(hdc, rect, RGB(245, 242, 234));
+            shopui::FrameRectColor(hdc, rect, RGB(166, 159, 145));
+            if (const auto id = m_productionMaterials[i]) {
+                if (const auto* icon = GetItemIcon(id)) {
+                    shopui::DrawBitmapPixelsTransparent(hdc, *icon,
+                        shopui::MakeRect(rect.left + 4, rect.top + 4, kIconBoxSize, kIconBoxSize));
+                } else {
+                    shopui::DrawWindowTextRect(hdc, rect, std::to_string(id), RGB(0, 0, 0),
+                        DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                }
+            }
+        }
+    }
 
     const RECT closeRect = GetCloseButtonRect();
     const RECT listRect = GetListRect();
@@ -687,14 +749,16 @@ void UISkillSelectWnd::OnDraw()
     shopui::FrameRectColor(hdc, closeRect, RGB(127, 122, 112));
     shopui::DrawWindowTextRect(hdc, closeRect, "X", RGB(0, 0, 0), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
-    shopui::FillRectColor(hdc, listRect, RGB(255, 255, 255));
-    shopui::FrameRectColor(hdc, listRect, RGB(196, 192, 181));
+    if (m_kind != Kind::ProductionMaterials) {
+        shopui::FillRectColor(hdc, listRect, RGB(255, 255, 255));
+        shopui::FrameRectColor(hdc, listRect, RGB(196, 192, 181));
+    }
 
     if (m_kind == Kind::StarPlace) {
         RECT promptRect = listRect;
         InflateRect(&promptRect, -8, -8);
         shopui::DrawWindowTextRect(hdc, promptRect, m_emptyText, RGB(0, 0, 0), DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
-    } else if (entryCount <= 0) {
+    } else if (entryCount <= 0 && m_kind != Kind::ProductionMaterials) {
         shopui::DrawWindowTextRect(hdc, listRect, m_emptyText.c_str(), RGB(80, 80, 80), DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
     } else {
         const int firstIndex = m_viewOffset;
@@ -776,6 +840,21 @@ void UISkillSelectWnd::OnLBtnDown(int x, int y)
         m_cancelPressed = true;
         Invalidate();
         return;
+    }
+
+    if (HasProductionMaterialSlots()) {
+        for (size_t i = 0; i < m_productionMaterials.size(); ++i) {
+            if (!m_productionMaterials[i] || !IsInsideRect(GetProductionMaterialRect(i), x, y)) continue;
+            if (auto* mode = g_modeMgr.GetCurrentGameMode()) {
+                mode->m_dragInfo = {};
+                mode->m_dragInfo.type = static_cast<int>(DragType::ShortcutItem);
+                mode->m_dragInfo.source = static_cast<int>(DragSource::ProductionMaterial);
+                mode->m_dragInfo.itemId = m_productionMaterials[i];
+                mode->m_dragInfo.itemIndex = static_cast<unsigned int>(i);
+                mode->m_dragType = mode->m_dragInfo.type;
+            }
+            return;
+        }
     }
 
     const int entryCount = static_cast<int>(m_entries.size());
@@ -917,6 +996,19 @@ bool UISkillSelectWnd::GetDisplayDataForQt(DisplayData* outData) const
     data.emptyText = m_emptyText;
     data.recipeHeight = GetRecipeHeight();
     if (data.recipeHeight) data.recipeDescription = m_recipeDescription;
+    data.productionConfirmation = m_kind == Kind::ProductionMaterials;
+    if (HasProductionMaterialSlots()) {
+        for (size_t i = 0; i < m_productionMaterials.size(); ++i) {
+            const auto rect = GetProductionMaterialRect(i);
+            DisplayRow slot{};
+            slot.itemId = m_productionMaterials[i];
+            slot.x = rect.left;
+            slot.y = rect.top;
+            slot.width = kMaterialSlotSize;
+            slot.height = kMaterialSlotSize;
+            data.materialSlots.push_back(std::move(slot));
+        }
+    }
 
     const RECT closeRect = GetCloseButtonRect();
     data.closeButton.x = closeRect.left;
