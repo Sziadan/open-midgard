@@ -4067,3 +4067,5 @@ PK38.02 validates inventory awards and uses the floor GID in the actor action to
 PK38.02 validates equipment drag identity and preserves unrelated requests through ammunition updates. [Evidence](evidence/PK38.02-equipment.md)
 
 PK38.02 validates storage transfer identity and applies slot counts from the server in the observed packet order. [Evidence](evidence/PK46.02-storage-transfer-requests.md)
+
+PK38.01 inventories selected item actions and identifies the missing `07FD` monster and NPC obtain announcement receive path. [Evidence](evidence/PK38.01-item-action-inventory.md)

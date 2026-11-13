@@ -1334,9 +1334,9 @@
       "commit_subject": null
     },
     "PK38.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK38.01-item-action-inventory.md"],
+      "commit_subject": "packet(PK38.01): trace selected item action identities"
     },
     "PK38.02": {
       "status": "IN_PROGRESS",
