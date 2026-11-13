@@ -4,6 +4,8 @@ PK35.05 captures the shared native and Qt choice window for production, weapon r
 
 PK34.04 verifies storage reopen after a same-map refresh when the server omits one category. Inventory, cart, storage, and friend snapshot validation are implemented. Live capture and independent PK48 review remain open. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)
 
+PK36.01 traces the registered storage password family. The selected server has no challenge callers and its credential parser is a stub. Keep the frames recognized and carry the inactive classification into PK46 and PK47. [Storage password applicability](evidence/PK36.01-storage-password-applicability.md)
+
 Continue PK28.04 and PK29.04 using `src/companion_ai` as the implementation for both families. Use Ref's Lua and input call sites to check expected behavior. Start with a live pass for each family covering idle acquisition or owner defense, manual attack and cancellation, blocked pursuit with a queued order, manual movement and follow, dismissal, and map re-entry. Record the observed input, packet, and actor or UI result for each case. Use replay for deterministic stall and timing cases. Keep installed-skin comparison and independent review open until verified. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 Native acquisition distinguishes monsters from NPCs and companions with monster sprites. The checked reference input call sites issue move, attack-object, skill, and follow commands. Attack-area, patrol, and hold have handlers without a known input producer. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
