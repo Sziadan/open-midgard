@@ -100,7 +100,7 @@ void ChatNoticeProducerReplay()
     Require(chatWnd->GetExpansionState() == 0, "managed chat could not enter collapsed state");
 
     auto pickup = frame(0x00A0, 23);
-    put16(pickup, 2, 0x4567);
+    put16(pickup, 2, 69);
     put16(pickup, 4, 2);
     put16(pickup, 6, 501); // Red Potion has a selected item-name fixture.
     pickup[8] = 1;

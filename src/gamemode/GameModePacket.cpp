@@ -153,7 +153,6 @@ void SendActorNameRequestIfNeeded(CGameMode& mode, u32 gid)
     }
 }
 
-void StartLocalPickupAnimation(CGameMode& mode, u32 objectAid);
 bool EffectExists(CAbleToMakeEffect* actor, int effectId);
 
 constexpr u32 kStatusSpeed = 0;
@@ -2657,22 +2656,20 @@ void AnnouncePickedUpItem(const ITEM_INFO& itemInfo)
 
 void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 23) {
-        return;
-    }
-
     if (!ro::net::IsActiveItemPickupAckPacket(packet.packetId)) {
         return;
     }
+    const bool extended = packet.packetId == ro::net::GetActiveMapReceiveProfile().itemPickupAckExtended;
+    if (!packet.data || packet.packetLength != (extended ? 29 : 23)) return;
 
     const int result = packet.data[22];
-    const u32 pickedObjectAid = mode.m_pickupReqItemNaidList.empty()
+    const u32 pickedObjectAid = !mode.m_lastPickupRequestTick || mode.m_pickupReqItemNaidList.empty()
         ? 0 : mode.m_pickupReqItemNaidList.front();
-    // Ref clears the intent before examining the result. Rejection must stop
-    // PumpPendingPickupRequest from retrying until the user asks again.
-    mode.m_pickupReqItemNaidList.clear();
-    mode.m_lastPickupRequestTick = 0;
     if (result != 0) {
+        if (pickedObjectAid) {
+            mode.m_pickupReqItemNaidList.clear();
+            mode.m_lastPickupRequestTick = 0;
+        }
         // Source message3 shows chat for these known failures even when the
         // selected language resource deliberately contains an empty message.
         if(result==1 || result==2 || result==4 || result==5 || result==6)
@@ -2688,6 +2685,12 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
     itemInfo.m_itemIndex = ReadLE16(packet.data + 2);
     itemInfo.m_num = ReadLE16(packet.data + 4);
     itemInfo.SetItemId(ReadLE16(packet.data + 6));
+    if (itemInfo.m_itemIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots
+        || !itemInfo.GetItemId() || itemInfo.m_num <= 0 || itemInfo.m_num > ro::item_snapshot::kMaxStackAmount
+        || packet.data[8] > 1 || packet.data[9] > 1) return;
+    if (const auto* existing = g_session.GetInventoryItemByIndex(itemInfo.m_itemIndex);
+        existing && (existing->GetItemId() != itemInfo.GetItemId()
+            || existing->m_num > static_cast<int>(ro::item_snapshot::kMaxStackAmount) - itemInfo.m_num)) return;
     itemInfo.m_isIdentified = packet.data[8];
     itemInfo.m_isDamaged = packet.data[9];
     itemInfo.m_refiningLevel = packet.data[10];
@@ -2720,11 +2723,8 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
         itemInfo.m_deleteTime,
         static_cast<unsigned int>(itemInfo.m_isYours));
 
-    if (pickedObjectAid != 0) {
-        StartLocalPickupAnimation(mode, pickedObjectAid);
-    }
-
     g_session.AddInventoryItem(itemInfo);
+    RefreshInventoryDependentWindows();
     AnnouncePickedUpItem(itemInfo);
     g_windowMgr.ShowItemObtainNotification(itemInfo);
 }
@@ -4281,13 +4281,6 @@ void StartPickupAnimation(CGameMode& mode, CGameActor* actor, u32 objectAid)
     }
 }
 
-void StartLocalPickupAnimation(CGameMode& mode, u32 objectAid)
-{
-    StartPickupAnimation(mode,
-        mode.m_world ? static_cast<CGameActor*>(mode.m_world->m_player) : nullptr,
-        objectAid);
-}
-
 int ResolveWorldActionDirFromRotation(float rotationDegrees)
 {
     const int roundedDir = static_cast<int>(std::floor((rotationDegrees + 22.5f) / 45.0f));
@@ -4591,6 +4584,14 @@ void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
     CGameActor* actor = srcGid == g_session.m_aid
         ? static_cast<CGameActor*>(mode.m_world->m_player)
         : FindActorByPacketGid(*mode.m_world, srcGid);
+    if (action == 1) { // DMG_PICKUP_ITEM carries the floor object's GID.
+        if (actor && actor == mode.m_world->m_player) {
+            mode.m_pickupReqItemNaidList.remove(targetGid);
+            if (mode.m_pickupReqItemNaidList.empty()) mode.m_lastPickupRequestTick = 0;
+        }
+        StartPickupAnimation(mode, actor, targetGid);
+        return;
+    }
     if (actor != nullptr) {
         actor->SendMsg(actor, 11, reinterpret_cast<msgparam_t>(actionBlock), 0, 0);
     }

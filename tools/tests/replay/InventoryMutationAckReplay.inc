@@ -76,22 +76,55 @@ void InventoryMutationAckReplay()
     };
 
     // Additive pickup stack preserves the existing item's raw metadata; valid failures clean pending state.
-    seed(); mode.m_pickupReqItemNaidList={0x11112222,0x33334444}; mode.m_lastPickupRequestTick=99;
-    auto pick=frame(0x02D4,29); put16(pick,2,0x1234); put16(pick,4,2); put16(pick,6,0x9999);
+    constexpr u16 pickupSlot = 66;
+    seed();
+    ITEM_INFO pickupStack = *find(0x1234);
+    pickupStack.m_itemIndex = pickupSlot;
+    g_session.SetInventoryItem(pickupStack);
+    mode.m_pickupReqItemNaidList={0x11112222,0x33334444}; mode.m_lastPickupRequestTick=99;
+    auto pick=frame(0x02D4,29); put16(pick,2,pickupSlot); put16(pick,4,2); put16(pick,6,0x9999);
     pick[8]=0; pick[9]=0; pick[10]=0; put16(pick,11,0); put16(pick,13,0); put16(pick,15,0); put16(pick,17,0);
     put16(pick,19,0x7777); pick[21]=3; pick[22]=0; put32(pick,23,0xAABBCCDD); put16(pick,27,2);
+    dispatch(pick,"conflicting pickup item ID");
+    Require(preserved(find(pickupSlot),5), "pickup with a conflicting ID changed the stack");
+    put16(pick,6,0x4567);
     dispatch(pick,"extended pickup success");
-    Require(preserved(find(0x1234),7),"same-index pickup failed to add count while retaining item metadata");
-    Require(mode.m_pickupReqItemNaidList.empty() && mode.m_lastPickupRequestTick==0,"pickup success did not clear pending queue and tick");
-    put16(pick,2,0x5678); put16(pick,4,4); put16(pick,6,0x1357); pick[8]=1; pick[9]=1; pick[10]=3;
+    Require(preserved(find(pickupSlot),7),"same-index pickup failed to add count while retaining item metadata");
+    Require(mode.m_pickupReqItemNaidList.size()==2 && mode.m_lastPickupRequestTick==99,"inventory award cleared floor pickup intent");
+    CWorld pickupWorld;
+    CPlayer pickupPlayer;
+    pickupPlayer.m_gid = g_session.m_aid;
+    pickupPlayer.m_isPc = 1;
+    pickupWorld.m_player = &pickupPlayer;
+    mode.m_world = &pickupWorld;
+    auto pickupAction = frame(0x02E1,33);
+    put32(pickupAction,2,g_session.m_aid);
+    put32(pickupAction,6,0x11112222);
+    pickupAction[28] = 1;
+    dispatch(pickupAction,"ground pickup action");
+    Require(mode.m_pickupReqItemNaidList == std::list<u32>{0x33334444}
+        && pickupPlayer.m_stateId == kGameActorPickupStateId,
+        "floor action did not animate the picker or retired an unrelated pickup");
+    put32(pickupAction,6,0x33334444);
+    dispatch(pickupAction,"matching ground pickup action");
+    Require(mode.m_pickupReqItemNaidList.empty() && !mode.m_lastPickupRequestTick,
+        "matching floor action did not retire pickup intent");
+    mode.m_world = nullptr;
+    mode.m_pickupReqItemNaidList = {0x11112222};
+    auto unrelatedFailure = frame(0x02D4,29);
+    unrelatedFailure[22] = 3;
+    dispatch(unrelatedFailure,"inventory failure before the ground request is sent");
+    Require(mode.m_pickupReqItemNaidList == std::list<u32>{0x11112222} && !mode.m_lastPickupRequestTick,
+        "inventory failure canceled an approach that had not sent a take request");
+    put16(pick,2,67); put16(pick,4,4); put16(pick,6,0x1357); pick[8]=1; pick[9]=1; pick[10]=3;
     put16(pick,11,0x2211); put16(pick,19,0x3456); pick[21]=10; put32(pick,23,0xAABBCCDD); put16(pick,27,2);
     mode.m_pickupReqItemNaidList={0x11112222}; mode.m_lastPickupRequestTick=98;
     dispatch(pick,"extended pickup literal fields");
-    const ITEM_INFO* added=find(0x5678);
+    const ITEM_INFO* added=find(67);
     Require(added && added->m_num==4 && added->GetItemId()==0x1357 && added->m_isIdentified==1
         && added->m_isDamaged==1 && added->m_refiningLevel==3 && added->m_slot[0]==0x2211
         && added->m_location==0x8000 && added->m_deleteTime==static_cast<int>(0xAABBCCDDu)
-        && added->m_isYours==2 && mode.m_pickupReqItemNaidList.empty() && mode.m_lastPickupRequestTick==0,
+        && added->m_isYours==2 && mode.m_pickupReqItemNaidList.size()==1 && mode.m_lastPickupRequestTick==98,
         "extended pickup fields or pending cleanup differ from literal bytes");
 
     seed(); mode.m_pickupReqItemNaidList={0x11112222}; mode.m_lastPickupRequestTick=100;
@@ -103,15 +136,15 @@ void InventoryMutationAckReplay()
     Require(preserved(find(0x1234),5) && mode.m_pickupReqItemNaidList.empty() && mode.m_lastPickupRequestTick==0,
         "basic pickup failure changed inventory or retained pending state");
     seed();
-    pick=frame(0x00A0,23); put16(pick,2,0x5679); put16(pick,4,3); put16(pick,6,0x2468);
+    pick=frame(0x00A0,23); put16(pick,2,68); put16(pick,4,3); put16(pick,6,0x2468);
     pick[8]=1; pick[9]=0; pick[10]=2; put16(pick,11,0x3344); put16(pick,19,0x1357); pick[21]=3;
     mode.m_pickupReqItemNaidList={0x11112222}; mode.m_lastPickupRequestTick=103;
     dispatch(pick,"basic pickup success literal fields");
-    const ITEM_INFO* legacy=find(0x5679);
+    const ITEM_INFO* legacy=find(68);
     Require(legacy && legacy->GetItemId()==0x2468 && legacy->m_num==3 && legacy->m_isIdentified==1
         && legacy->m_isDamaged==0 && legacy->m_refiningLevel==2 && legacy->m_slot[0]==0x3344
         && legacy->m_location==0x1357 && legacy->m_deleteTime==0 && legacy->m_isYours==0
-        && mode.m_pickupReqItemNaidList.empty() && mode.m_lastPickupRequestTick==0,
+        && mode.m_pickupReqItemNaidList.size()==1 && mode.m_lastPickupRequestTick==103,
         "basic pickup fields or pending cleanup differ from literal bytes");
     mode.m_pickupReqItemNaidList={0x11112222}; mode.m_lastPickupRequestTick=102;
     pick=frame(0x02D4,29); pick[22]=7; dispatch(pick,"unknown pickup failure");

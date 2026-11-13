@@ -4061,3 +4061,5 @@ PK38.03 replays a new identification menu after a silently rejected request and 
 PK38.02 validates item-use requests and replies, applies remaining quantities to the matching inventory row, and preserves card selection across item use. The standalone ammunition fixture now uses the current inventory-category replacement routine. [Evidence](evidence/PK38.02-item-use.md)
 
 PK38.02 binds a drop prompt to the dragged item, validates inventory removal frames, and retires pending drops on map change. [Evidence](evidence/PK46.02-map-drop-item-request.md)
+
+PK38.02 validates inventory awards and uses the floor GID in the actor action to animate pickup and retire the matching local intent. [Evidence](evidence/PK46.02-map-take-item-request.md)

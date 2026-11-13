@@ -30,7 +30,7 @@ void CheckItemObtainUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     SelectInventoryFixtureTab(1);inventory.SetCurrentTab(1);inventory.Move(10,10);sync();
 
     // Successful 02D4 snapshots the raw server quantity and descriptor fields before inventory ownership changes.
-    auto award=pickup(0x1234,3,1202,1,7,{255,0x0f03,0x5678,0x1234});
+    auto award=pickup(77,3,1202,1,7,{255,0x0f03,0x5678,0x1234});
     Dispatch(mode,award);sync();
     auto* notice=g_windowMgr.m_itemObtainWnd;
     Require(notice,"successful pickup did not create the independent item-obtain window");
@@ -38,9 +38,9 @@ void CheckItemObtainUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     Require(snap.m_num==3&&snap.GetItemId()==1202&&snap.m_isIdentified==1&&snap.m_refiningLevel==7
         &&snap.m_slot[0]==255&&snap.m_slot[1]==0x0f03&&snap.m_slot[2]==0x5678&&snap.m_slot[3]==0x1234,
         "item-obtain popup did not preserve raw pickup snapshot fields");
-    Require(g_session.GetInventoryItemByIndex(0x1234)&&g_session.GetInventoryItemByIndex(0x1234)->m_num==3,
+    Require(g_session.GetInventoryItemByIndex(77)&&g_session.GetInventoryItemByIndex(77)->m_num==3,
         "pickup acknowledgement failed to update inventory alongside independent popup");
-    g_session.RemoveInventoryItem(0x1234,3);
+    g_session.RemoveInventoryItem(77,3);
     Require(notice->GetItemSnapshot().m_num==3,"popup quantity followed later inventory mutation instead of snapshot");
     g_session.AddInventoryItem(snap);
 
@@ -122,7 +122,7 @@ void CheckItemObtainUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     cases.push_back(QJsonObject{{"case","missing producer fallback refreshes to named producer without extending lifetime"},{"outcome","PASS"}});
 
     // Badge is an independent overlay and should coexist with the source inventory and item detail.
-    g_windowMgr.ShowItemInfoWindow(*g_session.GetInventoryItemByIndex(0x1234),0,0);
+    g_windowMgr.ShowItemInfoWindow(*g_session.GetInventoryItemByIndex(77),0,0);
     auto* detail=g_windowMgr.m_itemInfoWnd;Require(detail,"owned detail creation failed");
     detail->Move(400,120);sync();checkData("with-detail");
     Require(state->itemInfoData().value("layer").toInt()>state->itemObtainData().value("layer").toInt(),
@@ -132,10 +132,10 @@ void CheckItemObtainUi(QGuiApplication& app,QQuickView& view,QtUiState* state,CG
     cases.push_back(QJsonObject{{"case","notification coexists with regular item detail"},{"outcome","PASS"}});
 
     notice->SetItem(snap,123);const u32 firstTick=notice->GetMadeTick();
-    award=pickup(0x1234,2,1202,1,7,{255,0x0f03,0x5678,0x1234});Dispatch(mode,award);sync();
+    award=pickup(77,2,1202,1,7,{255,0x0f03,0x5678,0x1234});Dispatch(mode,award);sync();
     notice=g_windowMgr.m_itemObtainWnd;Require(notice&&notice->GetMadeTick()!=firstTick,
         "same-item award did not replace popup and reset its lifetime");
-    Require(notice->GetItemSnapshot().m_num==2&&g_session.GetInventoryItemByIndex(0x1234)->m_num==5,
+    Require(notice->GetItemSnapshot().m_num==2&&g_session.GetInventoryItemByIndex(77)->m_num==5,
         "same-item award accumulated quantity instead of displaying raw delta");
     checkData("same-item-replaced",2);cases.push_back(QJsonObject{{"case","same-item repeated award replaces delta and resets popup lifetime"},{"outcome","PASS"}});
 

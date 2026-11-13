@@ -5911,8 +5911,11 @@ bool TryBeginGroundItemPickup(CGameMode& mode, u32 objectAid)
     }
 
     const GroundItemState& groundItem = groundItemIt->second;
+    if (!mode.m_pickupReqItemNaidList.empty() && mode.m_pickupReqItemNaidList.front() == objectAid
+        && mode.m_lastPickupRequestTick != 0) return true;
     mode.m_pickupReqItemNaidList.clear();
     mode.m_pickupReqItemNaidList.push_back(objectAid);
+    mode.m_lastPickupRequestTick = 0;
     mode.m_lastMonGid = 0;
     mode.m_lastLockOnMonGid = 0;
     mode.m_isAutoMoveClickOn = 0;
