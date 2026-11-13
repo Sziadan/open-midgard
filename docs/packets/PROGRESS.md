@@ -4007,3 +4007,5 @@ PK35.02 validates `018D` production lists and sends `018E` confirmation, optiona
 PK35.02 handles weapon-refine lists, 32-bit selection and cancellation, and the localized result notices through `0221/0222/0223`. [Evidence](evidence/PK35.01-crafting-wire.md)
 
 PK35.03 handles repair choices, full row echo, cancel, and notices while the target equipment refresh owns the broken flag. [Evidence](evidence/PK35.01-crafting-wire.md)
+
+PK35.04 handles the selected cooking recipe list, selection, and cancel packets. [Evidence](evidence/PK35.01-crafting-wire.md)

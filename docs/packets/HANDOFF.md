@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK35.03 handles repair `01FC/01FD/01FE`. The result is a notice for the caster or target. The target's equipment list owns the broken flag. Continue with PK35.04 cooking `025A/025B`. Reference material-slot presentation, rendered crafting checks, and live verification remain open. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
+PK35.04 handles the selected type-1 cooking flow `025A/025B`. Continue with the PK35.05 crafting review and native/Qt render checks. Reference material-slot presentation, applicability of other make types, and live verification remain open. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
 
 PK34.04 verifies storage reopen after a same-map refresh when the server omits one category. Inventory, cart, storage, and friend snapshot validation are implemented. Live capture and independent PK48 review remain open. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)
 

@@ -10527,6 +10527,12 @@ bool CGameMode::SendProductionSelection(u16 itemId, const std::array<u16, 3>& ma
     return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), sizeof(packet));
 }
 
+bool CGameMode::SendCookingSelection(u16 itemId)
+{
+    const std::array<u8, 6> packet{0x5b, 0x02, 1, 0, static_cast<u8>(itemId), static_cast<u8>(itemId >> 8)};
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
+}
+
 bool CGameMode::SendWeaponRefineSelection(u32 itemIndex)
 {
     const std::array<u8, 6> packet{0x22, 0x02, static_cast<u8>(itemIndex), static_cast<u8>(itemIndex >> 8),

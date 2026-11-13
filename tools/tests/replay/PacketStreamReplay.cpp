@@ -7053,6 +7053,7 @@ int main(int argc,char** argv){try{
     ProductionSelectionReplay();
     WeaponRefineSelectionReplay();
     ItemRepairSelectionReplay();
+    CookingSelectionReplay();
     CartStackDeltaReplay();
     CartClearContentsReplay();
     CartActorPresenceReplay();

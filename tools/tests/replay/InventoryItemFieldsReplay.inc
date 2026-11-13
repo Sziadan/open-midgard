@@ -422,3 +422,45 @@ void ItemRepairSelectionReplay()
     connection->Disconnect();
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
+
+void CookingSelectionReplay()
+{
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    const auto receive = [&](const std::vector<u8>& bytes) {
+        Require(input.QueueBytes(bytes) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1
+            && !input.BufferedBytes(), "cooking list did not frame and dispatch");
+    };
+    const std::vector<u8> list{0x5a, 2, 10, 0, 1, 0, 0xad, 0x2e, 0xae, 0x2e};
+    receive(list);
+    auto* menu = g_windowMgr.m_skillSelectWnd;
+    Require(menu && menu->IsCraftingSelection(), "cooking list did not open its chooser");
+    receive({0x5a, 2, 7, 0, 1, 0, 0xad});
+    receive({0x5a, 2, 8, 0, 6, 0, 0xad, 0x2e});
+    Require(g_windowMgr.m_skillSelectWnd == menu, "partial row or unsupported cooking type replaced the chooser");
+    menu->HandleKeyDown(VK_DOWN);
+    menu->HandleKeyDown(VK_DOWN);
+    menu->HandleKeyDown(VK_RETURN);
+    Require(!g_windowMgr.m_skillSelectWnd && peer.ReceiveExact(6) == std::vector<u8>{0x5b, 2, 1, 0, 0xae, 0x2e},
+        "cooking selection did not send the selected product and make type");
+    receive({0x5a, 2, 6, 0, 1, 0});
+    menu = g_windowMgr.m_skillSelectWnd;
+    Require(menu, "empty cooking list did not open the reference chooser");
+    menu->HandleKeyDown(VK_RETURN);
+    Require(g_windowMgr.m_skillSelectWnd == menu
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "empty cooking list sent a product on confirmation");
+    menu->HandleKeyDown(VK_ESCAPE);
+    Require(!g_windowMgr.m_skillSelectWnd && peer.ReceiveExact(6) == std::vector<u8>{0x5b, 2, 1, 0, 0xff, 0xff},
+        "cooking cancel did not send the reference sentinel");
+    connection->Disconnect();
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+}

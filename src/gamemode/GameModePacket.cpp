@@ -5593,6 +5593,28 @@ void HandleProductionList(CGameMode& mode, const PacketView& packet)
     if (window) window->SetProductionItems(products, strings.Get(425, "Item List you can craft"));
 }
 
+void HandleCookingList(CGameMode& mode, const PacketView& packet)
+{
+    constexpr int maxProducts = 300;
+    if (!packet.data || packet.packetLength < 6 || ReadLE16(packet.data + 2) != packet.packetLength
+        || (packet.packetLength - 6) % 2 != 0 || (packet.packetLength - 6) / 2 > maxProducts
+        || ReadLE16(packet.data + 4) != 1) return;
+
+    std::vector<unsigned int> products;
+    for (int at = 6; at < packet.packetLength; at += 2) {
+        const auto id = ReadLE16(packet.data + at);
+        if (!id || id == 0xffff) return;
+        products.push_back(id);
+    }
+    mode.ClearCraftingSelection();
+    mode.m_warpSkillId = 0;
+    mode.m_warpMapDestinations.clear();
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto* window = static_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
+    if (window) window->SetCookingItems(products, strings.Get(425, "Item List you can craft"));
+}
+
 void HandleMakingArrowList(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetId != 0x01AD || packet.packetLength < 4 || ((packet.packetLength - 4) % 2) != 0) {
@@ -9938,6 +9960,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0188, HandleItemRefineResult);
     router.Register(0x018D, HandleProductionList);
     router.Register(0x018F, HandleProductionResult);
+    router.Register(0x025A, HandleCookingList);
     router.Register(0x01FC, HandleItemRepairList);
     router.Register(0x01FE, HandleItemRepairResult);
     router.Register(0x0221, HandleWeaponRefineList);

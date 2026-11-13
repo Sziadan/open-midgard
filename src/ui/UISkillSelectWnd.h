@@ -77,10 +77,11 @@ public:
     void SetWarpDestinations(unsigned short skillId, const std::vector<std::string>& mapNames);
     void SetMakingArrowItems(const std::vector<unsigned int>& itemIds);
     void SetProductionItems(const std::vector<unsigned int>& itemIds, std::string title);
+    void SetCookingItems(const std::vector<unsigned int>& itemIds, std::string title);
     bool IsProductionSelection() const { return m_kind == Kind::Production || m_kind == Kind::ProductionMaterials; }
     void SetWeaponRefineItems(const std::vector<std::pair<u16, u16>>& items, std::string title);
     void SetRepairItems(const std::vector<std::array<u8, 13>>& rows, std::string title);
-    bool IsCraftingSelection() const { return IsProductionSelection() || m_kind == Kind::WeaponRefine || m_kind == Kind::Repair; }
+    bool IsCraftingSelection() const { return IsProductionSelection() || m_kind == Kind::Cooking || m_kind == Kind::WeaponRefine || m_kind == Kind::Repair; }
     void SetAutoSpellSkills(const std::vector<unsigned int>& skillIds);
     void SetStarPlaceConfirmation(u8 which, std::string prompt);
     bool IsStarPlaceConfirmation(u8 which) const;
@@ -100,6 +101,7 @@ private:
         ProductionMaterials,
         WeaponRefine,
         Repair,
+        Cooking,
     };
 
     struct Entry {
