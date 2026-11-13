@@ -107,6 +107,7 @@ public:
     bool SendWeaponRefineSelection(u32 itemIndex);
     bool SendItemRepairSelection(const std::array<u8, 13>& row);
     void ClearCraftingSelection();
+    void ClearItemComposition();
     bool SendAutoSpellSelection(u32 skillId, const std::vector<unsigned int>& offeredSkillIds);
     bool SendStarPlaceAcceptance(u8 which);
     void ShowStarSkillNotice(const std::string& text, u32 now);
@@ -372,6 +373,10 @@ public:
     int m_numNotifyTime;
     int m_isCheckGndAlpha;
     int m_lastCardItemIndex;
+    struct ItemCompositionRequest {
+        unsigned cardIndex=0, equipmentIndex=0, cardId=0, equipmentId=0;
+        std::array<int,4> equipmentCards{};
+    } m_pendingItemComposition;
     int m_SkillBallonSkillId;
     u32 m_nameBalloonType;
     u32 m_showTimeStartTick;

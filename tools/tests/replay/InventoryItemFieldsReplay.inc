@@ -163,6 +163,48 @@ void InventoryItemFieldsReplay()
     std::cout << "{\"case_id\":\"inventory_item_wire_fields_20080910\",\"contract_id\":\"PK09.04\",\"routes\":[\"02E8\",\"02D0\",\"013C\",\"00AC\"],\"normal_and_equip_fields\":true,\"category_replacement_both_orders\":true,\"malformed_atomicity\":true,\"empty_categories\":true,\"ammo_wear_refresh\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
+void ItemCompositionResultReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    const auto dispatch = [&](const std::vector<u8>& bytes) {
+        Require(input.QueueBytes(bytes) && ProcessGameModePacketLoop(mode,input,router,1).packetsDispatched==1,
+            "composition result did not dispatch");
+    };
+    ITEM_INFO card{};
+    card.m_itemIndex=100;
+    card.SetItemId(4001);
+    card.m_num=2;
+    ITEM_INFO equipment{};
+    equipment.m_itemIndex=101;
+    equipment.SetItemId(1201);
+    equipment.m_num=1;
+    g_session.SetInventoryItem(card);
+    g_session.SetInventoryItem(equipment);
+    const std::vector<u8> success{0x7d,1,101,0,100,0,0};
+    dispatch(success);
+    Require(g_session.GetInventoryItemByIndex(100)->m_num==2, "unowned result consumed a card");
+    mode.m_pendingItemComposition={100,101,4001,1201,{}};
+    dispatch({0x7d,1,99,0,100,0,0});
+    dispatch({0x7d,1,101,0,100,0,2});
+    Require(mode.m_pendingItemComposition.cardIndex==100, "unrelated result consumed the pending request");
+    dispatch(success);
+    dispatch(success);
+    Require(!mode.m_pendingItemComposition.cardIndex && g_session.GetInventoryItemByIndex(100)->m_num==1
+        && g_session.GetInventoryItemByIndex(101)->m_slot[0]==4001, "successful result was not applied exactly once");
+    mode.m_pendingItemComposition={100,101,4001,1201,{4001,0,0,0}};
+    equipment.SetItemId(1202);
+    g_session.SetInventoryItem(equipment);
+    dispatch(success);
+    Require(g_session.GetInventoryItemByIndex(100)->m_num==1 && g_session.GetInventoryItemByIndex(101)->m_slot[0]==0,
+        "composition result changed a replacement equipment row");
+    g_session.RemoveInventoryItem(100,1);
+    g_session.RemoveInventoryItem(101,1);
+    g_windowMgr.ClearChatEvents();
+}
+
 void ItemRefineResultReplay()
 {
     CGameMode mode;

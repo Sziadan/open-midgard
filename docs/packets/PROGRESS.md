@@ -4041,3 +4041,5 @@ PK37.02 sends ordered shop-close and setup-cancel frames when closing a pending 
 PK37.02 matches buyer stock to the requested vendor and retires a quote or request when the board is removed. [Evidence](evidence/PK37.02-vending-snapshots.md)
 
 PK37.02 verifies rendered board browsing and buying through actual Qt mouse input and a loopback peer, then captures board and quote removal. [Evidence](evidence/PK37.02-vending-snapshots.md)
+
+PK38.03 validates card composition lists and binds each result to the submitted card and equipment before changing inventory. [Evidence](evidence/PK38.03-card-composition.md)

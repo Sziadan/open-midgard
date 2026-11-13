@@ -7223,6 +7223,7 @@ int main(int argc,char** argv){try{
     ItemUseFeedbackReplay();
     RecoveryDeltaReplay();
     InventoryItemFieldsReplay();
+    ItemCompositionResultReplay();
     ItemRefineResultReplay();
     ProductionResultReplay();
     ProductionSelectionReplay();

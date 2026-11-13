@@ -19,6 +19,7 @@
 #include "network/MapSendProfile.h"
 #include "CursorRenderer.h"
 #include "GameMode.h"
+#include "ui/UIItemCompositionWnd.h"
 #include "core/MannerFilter.h"
 #include "core/SourceTextCodec.h"
 #include "ui/UIChatRoomWnd.h"
@@ -6343,6 +6344,7 @@ bool RequestUseInventoryItem(u16 itemIndex)
     }
 
     if (g_ttemmgr.IsCardItem(item->GetItemId())) {
+        if (const auto* mode = g_modeMgr.GetCurrentGameMode(); mode && mode->m_pendingItemComposition.cardIndex) return false;
         const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
         PACKET_CZ_ITEM_COMPOSITION_LIST packet{};
         packet.PacketType = profile.itemCompositionList;
@@ -6418,16 +6420,18 @@ bool RequestIdentifyInventoryItem(s16 itemIndex)
 
 bool RequestComposeCardIntoEquipment(s16 cardItemIndex, s16 equipItemIndex)
 {
+    auto* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || mode->m_pendingItemComposition.cardIndex) return false;
     if (cardItemIndex < 0 || equipItemIndex < 0) {
-        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-            gameMode->m_lastCardItemIndex = 0;
-        }
+        mode->m_lastCardItemIndex = 0;
         return false;
     }
 
     const ITEM_INFO* cardItem = g_session.GetInventoryItemByIndex(static_cast<unsigned int>(cardItemIndex));
     const ITEM_INFO* equipItem = g_session.GetInventoryItemByIndex(static_cast<unsigned int>(equipItemIndex));
-    if (!cardItem || !equipItem || cardItem->m_itemIndex == 0 || equipItem->m_itemIndex == 0) {
+    if (!cardItem || !equipItem || cardItemIndex != mode->m_lastCardItemIndex || cardItemIndex == equipItemIndex
+        || cardItemIndex < 2 || cardItemIndex > 101 || equipItemIndex < 2 || equipItemIndex > 101
+        || equipItem->m_wearLocation || !equipItem->m_isIdentified || cardItem->m_num <= 0) {
         return false;
     }
     if (!g_ttemmgr.IsCardItem(cardItem->GetItemId())) {
@@ -6443,6 +6447,14 @@ bool RequestComposeCardIntoEquipment(s16 cardItemIndex, s16 equipItemIndex)
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
+    if (sent) {
+        auto& pending = mode->m_pendingItemComposition;
+        pending.cardIndex = cardItem->m_itemIndex;
+        pending.equipmentIndex = equipItem->m_itemIndex;
+        pending.cardId = cardItem->GetItemId();
+        pending.equipmentId = equipItem->GetItemId();
+        std::copy_n(equipItem->m_slot, pending.equipmentCards.size(), pending.equipmentCards.begin());
+    }
     DbgLog("[GameMode] item composition request cardIndex=%d equipIndex=%d sent=%d\n",
         static_cast<int>(cardItemIndex),
         static_cast<int>(equipItemIndex),
@@ -10555,6 +10567,13 @@ void CGameMode::ClearCraftingSelection()
     if (auto* box = g_windowMgr.m_roomMessageBox; box && box->GetMessageId() == 424) box->Close();
 }
 
+void CGameMode::ClearItemComposition()
+{
+    m_lastCardItemIndex = 0;
+    m_pendingItemComposition = {};
+    if (auto* window = g_windowMgr.m_itemCompositionWnd) g_windowMgr.DeleteWindow(window);
+}
+
 bool CGameMode::SendStarPlaceAcceptance(u8 which)
 {
     const auto* window = g_windowMgr.m_skillSelectWnd;
@@ -11037,6 +11056,7 @@ void CGameMode::OnExit() {
     CloseFriendInvitation();
     ClearAdoptionInvitation();
     ClearCraftingSelection();
+    ClearItemComposition();
     ro::commerce::CloseTransactions();
     g_session.m_showEquipmentToOthers = false;
     g_session.m_refuseRecall = false;

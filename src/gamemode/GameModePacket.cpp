@@ -1236,17 +1236,13 @@ void RefreshInventoryDependentWindows()
     }
 }
 
-void ShowItemCompositionWindow(const std::vector<unsigned int>& itemIndices)
+void ShowItemCompositionWindow(unsigned int cardItemIndex, const std::vector<unsigned int>& itemIndices)
 {
     UIItemCompositionWnd* const window = dynamic_cast<UIItemCompositionWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMCOMPOSITIONWND));
     if (!window) {
         return;
     }
 
-    unsigned int cardItemIndex = 0;
-    if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-        cardItemIndex = static_cast<unsigned int>((std::max)(0, gameMode->m_lastCardItemIndex));
-    }
     window->SetCardItemIndex(cardItemIndex);
     window->SetEquipmentItemIndices(itemIndices);
 }
@@ -1304,32 +1300,39 @@ void HandleItemIdentifyAck(CGameMode&, const PacketView& packet)
     DbgLog("[GameMode] item identify ack index=%u result=%u\n", itemIndex, result);
 }
 
-void HandleItemCompositionList(CGameMode&, const PacketView& packet)
+void HandleItemCompositionList(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 4 || ((packet.packetLength - 4) % 2) != 0) {
+    if (!packet.data || packet.packetLength < 4 || ReadLE16(packet.data+2)!=packet.packetLength
+        || ((packet.packetLength - 4) % 2) != 0 || mode.m_pendingItemComposition.cardIndex) {
         return;
     }
+    if (mode.m_lastCardItemIndex < static_cast<int>(ro::item_snapshot::kFirstInventoryIndex)) return;
+    const auto cardIndex = static_cast<unsigned>(mode.m_lastCardItemIndex);
+    const auto* card = g_session.GetInventoryItemByIndex(cardIndex);
+    if (!card || card->m_num <= 0 || !g_ttemmgr.IsCardItem(card->GetItemId())) return;
 
     std::vector<unsigned int> itemIndices;
     const int count = (packet.packetLength - 4) / 2;
+    if (count > ro::item_snapshot::kInventorySlots) return;
+    std::array<bool,ro::item_snapshot::kInventorySlots> seen{};
     itemIndices.reserve(static_cast<size_t>(count));
     for (int index = 0; index < count; ++index) {
         const unsigned int itemIndex = static_cast<unsigned int>(ReadLE16(packet.data + 4 + index * 2));
-        if (itemIndex == 0) {
-            continue;
-        }
+        const auto slot = itemIndex - ro::item_snapshot::kFirstInventoryIndex;
+        if (slot >= seen.size() || seen[slot] || itemIndex == cardIndex) return;
+        seen[slot] = true;
         itemIndices.push_back(itemIndex);
     }
 
-    ShowItemCompositionWindow(itemIndices);
+    ShowItemCompositionWindow(cardIndex, itemIndices);
     DbgLog("[GameMode] item composition list count=%d cardIndex=%d\n",
         static_cast<int>(itemIndices.size()),
         g_modeMgr.GetCurrentGameMode() ? g_modeMgr.GetCurrentGameMode()->m_lastCardItemIndex : 0);
 }
 
-void HandleItemCompositionAck(CGameMode&, const PacketView& packet)
+void HandleItemCompositionAck(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 7) {
+    if (!packet.data || packet.packetLength != 7) {
         return;
     }
 
@@ -1337,23 +1340,26 @@ void HandleItemCompositionAck(CGameMode&, const PacketView& packet)
     const unsigned int cardItemIndex = static_cast<unsigned int>(ReadLE16(packet.data + 4));
     const unsigned int result = static_cast<unsigned int>(packet.data[6]);
 
-    if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-        gameMode->m_lastCardItemIndex = 0;
-    }
+    const auto pending = mode.m_pendingItemComposition;
+    if (!pending.cardIndex || cardItemIndex != pending.cardIndex || equipItemIndex != pending.equipmentIndex || result > 1) return;
+    mode.ClearItemComposition();
 
     if (result == 0) {
         const ITEM_INFO* cardItem = g_session.GetInventoryItemByIndex(cardItemIndex);
         const ITEM_INFO* equipItem = g_session.GetInventoryItemByIndex(equipItemIndex);
-        if (cardItem && equipItem && cardItem->m_itemIndex != 0 && equipItem->m_itemIndex != 0) {
+        if (cardItem && equipItem && cardItem->GetItemId() == pending.cardId && cardItem->m_num > 0
+            && equipItem->GetItemId() == pending.equipmentId
+            && std::equal(pending.equipmentCards.begin(),pending.equipmentCards.end(),equipItem->m_slot)) {
             ITEM_INFO updatedEquipItem = *equipItem;
-            for (int slotIndex = 0; slotIndex < 4; ++slotIndex) {
+            const int slotCount = std::clamp(equipItem->GetSlotCount(), 0, 4);
+            for (int slotIndex = 0; slotIndex < (slotCount > 0 ? slotCount : 4); ++slotIndex) {
                 if (updatedEquipItem.m_slot[slotIndex] == 0) {
                     updatedEquipItem.m_slot[slotIndex] = static_cast<int>(cardItem->GetItemId());
+                    g_session.RemoveInventoryItem(cardItemIndex, 1);
+                    g_session.SetInventoryItem(updatedEquipItem);
                     break;
                 }
             }
-            g_session.RemoveInventoryItem(cardItemIndex, 1);
-            g_session.SetInventoryItem(updatedEquipItem);
         }
         RefreshInventoryDependentWindows();
         g_windowMgr.PushChatEvent("Item compounding succeeded.", kSystemNoticeColor, 6);
@@ -9071,6 +9077,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     mode.CloseFriendInvitation();
     mode.ClearAdoptionInvitation();
     mode.ClearCraftingSelection();
+    mode.ClearItemComposition();
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",

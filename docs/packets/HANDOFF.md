@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK38.03 validates the card composition list and applies `017D` only to the matching submitted request. Continue with the selection send and chooser replay, silent server rejection recovery, and live carding. [Card composition evidence](evidence/PK38.03-card-composition.md)
+
 PK37.02 validates vending snapshots, matches buyer stock to the requested board, protects replacement quotes from late replies, and handles sale reports and sold-out closure. Replay covers cancellation during opening, a late owner list, and board removal. Continue with live buyer and seller verification, including server rejection branches, and independent review. [Vending evidence](evidence/PK37.02-vending-snapshots.md)
 
 PK37.03 verifies trade cancellation ownership through the selected server reply, including acceptance that crosses cancel. Replay also verifies local offer increments at capacity, matching add and lock acknowledgments, ten remote display rows, and commit result ownership. Qt capture verifies the remote offer, Zeny, lock labels, and window closure after the matching result. Live two-peer verification and independent review remain open. [Trade evidence](evidence/PK37.03-trade-cancellation.md)

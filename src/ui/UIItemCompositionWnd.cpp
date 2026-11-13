@@ -259,11 +259,10 @@ void UIItemCompositionWnd::SubmitSelection()
         return;
     }
 
-    g_modeMgr.SendMsg(CGameMode::GameMsg_RequestComposeCardIntoEquipment,
+    if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestComposeCardIntoEquipment,
         static_cast<msgparam_t>(m_cardItemIndex),
         static_cast<msgparam_t>(m_selectedItemIndex),
-        0);
-    g_windowMgr.DeleteWindow(this);
+        0)) g_windowMgr.DeleteWindow(this);
 }
 
 void UIItemCompositionWnd::CancelSelection()
