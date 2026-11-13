@@ -5495,7 +5495,7 @@ u8 CGameActor::ProcessState() {
     }
 
     // Ref CNpc::OnProcess: owned homunculus / mercenary AI tick.
-    companion_ai::TickOwnedCompanionActor(*this);
+    companion_ai::TickOwnedCompanionActor(*this, m_lastProcessStateTime);
 
     return 1;
 }

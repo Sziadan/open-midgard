@@ -1,6 +1,7 @@
 #include "CompanionAiBrain.h"
 #include "skill/Skill.h"
 
+#include <algorithm>
 #include <cstdlib>
 
 namespace companion_ai {
@@ -10,9 +11,10 @@ Brain::Brain(Kind kind)
 {
 }
 
-void Brain::Tick(u32 myId)
+void Brain::Tick(u32 myId, u32 now)
 {
     m_myId = myId;
+    m_now = now;
     const Msg2Ai msg = m_runtime.ConsumeMsg(myId);
     const Msg2Ai rmsg = m_runtime.ConsumeResMsg(myId);
 
@@ -45,6 +47,7 @@ void Brain::Tick(u32 myId)
 
 void Brain::ProcessCommand(const Msg2Ai& msg)
 {
+    m_approach = {};
     switch (msg.command) {
     case MOVE_CMD: OnMOVE_CMD(msg.x, msg.y); break;
     case STOP_CMD: OnSTOP_CMD(); break;
@@ -57,6 +60,52 @@ void Brain::ProcessCommand(const Msg2Ai& msg)
     case FOLLOW_CMD: OnFOLLOW_CMD(); break;
     default: break;
     }
+}
+
+bool Brain::ContinueApproach(const Position& destination)
+{
+    const Position current = m_runtime.GetPosition(m_myId);
+    if (!current.valid() || !destination.valid()) {
+        return false;
+    }
+
+    auto& approach = m_approach;
+    const bool firstRequest = !approach.destination.valid();
+    if (firstRequest || current.x != approach.lastPosition.x || current.y != approach.lastPosition.y) {
+        approach.lastPosition = current;
+        approach.lastProgress = m_now;
+        approach.retried = false;
+    }
+
+    // 0232 has no dedicated reply. Allow time for several cells plus network delay.
+    const u32 stallDelay = std::max(1000u, 3u * m_runtime.GetWalkCellDuration(m_myId));
+    const bool stalled = m_now - approach.lastProgress >= stallDelay;
+    if (stalled && approach.retried) {
+        return false;
+    }
+    const bool changed = destination.x != approach.destination.x || destination.y != approach.destination.y;
+    if (firstRequest || stalled || (changed && m_now - approach.lastRequest >= stallDelay / 2)) {
+        if (!m_runtime.Move(m_myId, destination.x, destination.y)) {
+            return false;
+        }
+        approach.destination = destination;
+        approach.lastRequest = m_now;
+        if (stalled) {
+            approach.retried = true;
+            approach.lastProgress = m_now;
+        }
+    }
+    return true;
+}
+
+void Brain::CancelApproach()
+{
+    m_state = IDLE_ST;
+    m_enemy = 0;
+    m_skill = 0;
+    m_destX = 0;
+    m_destY = 0;
+    m_approach = {};
 }
 
 void Brain::OnMOVE_CMD(int x, int y)
@@ -149,11 +198,6 @@ void Brain::OnSKILL_OBJECT_CMD(int level, int skill, u32 id)
 void Brain::OnSKILL_AREA_CMD(int level, int skill, int x, int y)
 {
     m_runtime.Trace("OnSKILL_AREA_CMD");
-    const Position current = m_runtime.GetPosition(m_myId);
-    if (current.valid() && m_runtime.GetDistance(current.x, current.y, x, y)
-        > m_runtime.GetSkillAttackRange(m_myId, skill)) {
-        m_runtime.Move(m_myId, x, y);
-    }
     m_destX = x;
     m_destY = y;
     m_skillLevel = level;
@@ -230,21 +274,24 @@ void Brain::OnCHASE_ST()
     m_runtime.Trace("OnCHASE_ST");
     if (m_runtime.IsOutOfSight(m_myId, m_enemy) || m_runtime.GetMotion(m_enemy) == MOTION_DEAD
         || (m_skill == 0 && !m_runtime.CanTargetForAttack(m_enemy))) {
-        m_state = IDLE_ST;
-        m_enemy = 0;
-        m_skill = 0;
-        m_destX = 0;
-        m_destY = 0;
+        CancelApproach();
         m_runtime.Trace("CHASE_ST -> IDLE_ST : ENEMY_OUTSIGHT_IN");
         return;
     }
     if (m_runtime.IsInAttackSight(m_myId, m_enemy, m_skill)) {
         m_state = ATTACK_ST;
+        m_approach = {};
         m_runtime.Trace("CHASE_ST -> ATTACK_ST : ENEMY_INATTACKSIGHT_IN");
         return;
     }
 
     const Position enemyPos = m_runtime.GetPosition(m_enemy);
+    if (m_skill != 0) {
+        if (!ContinueApproach(enemyPos)) {
+            CancelApproach();
+        }
+        return;
+    }
     if (enemyPos.valid() && (m_destX != enemyPos.x || m_destY != enemyPos.y)) {
         m_destX = enemyPos.x;
         m_destY = enemyPos.y;
@@ -258,18 +305,20 @@ void Brain::OnATTACK_ST()
     m_runtime.Trace("OnATTACK_ST");
     if (m_runtime.IsOutOfSight(m_myId, m_enemy) || m_runtime.GetMotion(m_enemy) == MOTION_DEAD
         || (m_skill == 0 && !m_runtime.CanTargetForAttack(m_enemy))) {
-        m_state = IDLE_ST;
-        m_enemy = 0;
-        m_skill = 0;
+        CancelApproach();
         m_runtime.Trace("ATTACK_ST -> IDLE_ST");
         return;
     }
     if (!m_runtime.IsInAttackSight(m_myId, m_enemy, m_skill)) {
         m_state = CHASE_ST;
-        const Position enemyPos = m_runtime.GetPosition(m_enemy);
-        m_destX = enemyPos.x;
-        m_destY = enemyPos.y;
-        m_runtime.Move(m_myId, m_destX, m_destY);
+        if (m_skill != 0) {
+            OnCHASE_ST();
+        } else {
+            const Position enemyPos = m_runtime.GetPosition(m_enemy);
+            m_destX = enemyPos.x;
+            m_destY = enemyPos.y;
+            m_runtime.Move(m_myId, m_destX, m_destY);
+        }
         m_runtime.Trace("ATTACK_ST -> CHASE_ST  : ENEMY_OUTATTACKSIGHT_IN");
         return;
     }
@@ -373,15 +422,18 @@ void Brain::OnSKILL_AREA_CMD_ST()
     m_runtime.Trace("OnSKILL_AREA_CMD_ST");
     const Position cur = m_runtime.GetPosition(m_myId);
     if (!cur.valid()) {
+        CancelApproach();
         return;
     }
     if (m_runtime.GetDistance(cur.x, cur.y, m_destX, m_destY)
         <= m_runtime.GetSkillAttackRange(m_myId, m_skill)) {
+        m_approach = {};
         if (m_runtime.SkillGround(m_myId, m_skillLevel, m_skill, m_destX, m_destY) == SkillSendResult::Retry) {
             return;
         }
-        m_state = IDLE_ST;
-        m_skill = 0;
+        CancelApproach();
+    } else if (!ContinueApproach({m_destX, m_destY})) {
+        CancelApproach();
     }
 }
 

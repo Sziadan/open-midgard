@@ -3937,3 +3937,7 @@ PK28.04 adds bounded level controls for companion skills with level-use metadata
 ## Native companion targeting
 
 PK28.04 and PK29.04 now use the C++ controller as the implementation baseline. The production replay verifies that both companion families select a living target when a corpse is closer. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+## Companion skill approach recovery
+
+PK28.04 and PK29.04 give actor and ground casts a bounded retry when a companion stalls before reaching range. The production replay drives the stall clock, verifies the selected move packet, and exercises release of a reserved cast. [Evidence](evidence/PK28-PK29-native-companion-ai.md)

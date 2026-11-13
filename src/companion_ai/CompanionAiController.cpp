@@ -16,15 +16,15 @@ void Controller::Open()
     m_opened = true;
 }
 
-void Controller::Proc(u32 gid)
+void Controller::Proc(u32 gid, u32 now)
 {
     if (!m_opened || gid == 0) {
         return;
     }
-    m_brain.Tick(gid);
+    m_brain.Tick(gid, now);
 }
 
-void TickOwnedCompanionActor(CGameActor& actor)
+void TickOwnedCompanionActor(CGameActor& actor, u32 now)
 {
     if (actor.m_gid == 0) {
         return;
@@ -38,7 +38,7 @@ void TickOwnedCompanionActor(CGameActor& actor)
         if (!slot->IsOpened()) {
             slot->Open();
         }
-        slot->Proc(actor.m_gid);
+        slot->Proc(actor.m_gid, now);
     }
 
     if (g_session.m_merGID != 0 && actor.m_gid == g_session.m_merGID && g_session.m_merStatus.alive) {
@@ -49,7 +49,7 @@ void TickOwnedCompanionActor(CGameActor& actor)
         if (!slot->IsOpened()) {
             slot->Open();
         }
-        slot->Proc(actor.m_gid);
+        slot->Proc(actor.m_gid, now);
     }
 }
 

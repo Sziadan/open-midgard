@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-Continue PK28.04 and PK29.04 from the C++ companion controller. The next bounded check is movement failure recovery. Trace `Runtime::Move` and the actor and ground skill approach states in `CompanionAiBrain.cpp`. Replay an accepted move followed by a standing companion still out of range, then verify bounded recovery and that a replacement or reserved order can proceed. Keep the packet layout and cast level checks in the existing production replay. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
+Continue PK28.04 and PK29.04 from the C++ companion controller. Actor and ground skill approaches now retry after a stall and release the queue after a second stalled interval. Next trace queued-order cleanup on death, dismissal, and map reuse. Start with the controller and mailbox fields in `GameActor.cpp`, the map reset in `Session.cpp`, and the mercenary refresh handlers in `GameModePacket.cpp`. In production replay, queue an immediate and a reserved order before a lifecycle transition, restore or replace the actor, and check that only fresh input can produce companion packets. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 PK28.04 covers companion skill level controls and the native/Qt bitmap frame. Replay verifies cast and drag levels, both bounds, SP display, and release outside. Installed-skin comparison and live UI verification remain open. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
 

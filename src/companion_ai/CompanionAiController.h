@@ -16,7 +16,7 @@ public:
     Controller& operator=(const Controller&) = delete;
 
     void Open();
-    void Proc(u32 gid);
+    void Proc(u32 gid, u32 now);
     bool IsOpened() const { return m_opened; }
     Kind kind() const { return m_kind; }
 
@@ -27,6 +27,6 @@ private:
 };
 
 // Called once per companion actor ProcessState tick.
-void TickOwnedCompanionActor(CGameActor& actor);
+void TickOwnedCompanionActor(CGameActor& actor, u32 now);
 
 } // namespace companion_ai

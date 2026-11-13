@@ -3353,6 +3353,12 @@ void PendingCompanionActorSkillReplay()
     world.RegisterActor(&homunculus);
     world.RegisterActor(&mercenary);
 
+    u32 companionTime = 100;
+    const auto tickCompanion = [&](CGameActor& caster, u32 elapsed = 16) {
+        companionTime += elapsed;
+        companion_ai::TickOwnedCompanionActor(caster, companionTime);
+    };
+
     const auto requireCompanionSkill = [&](CGameActor& caster, int skill, u8 skillLow, u8 skillHigh, bool reserved) {
         mode.m_skillUseInfo = {skill, 3, 1, 2};
         Require(ReplayTrySourceSkillOnActor(mode, &target, reserved, false, false) && player.commands.empty(),
@@ -3360,9 +3366,9 @@ void PendingCompanionActorSkillReplay()
         Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
             "companion skill bypassed the native controller");
         mode.m_skillUseInfo = {};
-        companion_ai::TickOwnedCompanionActor(caster);
-        companion_ai::TickOwnedCompanionActor(caster);
-        if (reserved) companion_ai::TickOwnedCompanionActor(caster);
+        tickCompanion(caster);
+        tickCompanion(caster);
+        if (reserved) tickCompanion(caster);
         Require(peer.ReceiveExact(10) == std::vector<u8>{0x38, 0x04, 3, 0, skillLow, skillHigh,
             0x78, 0x56, 0x34, 0x12}, "native companion skill emitted an unexpected target request");
         Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
@@ -3405,12 +3411,12 @@ void PendingCompanionActorSkillReplay()
             "mercenary support skill entered the player route");
         mode.m_skillUseInfo = {};
         mercenary.m_stateId = kGameActorCastingStateId;
-        companion_ai::TickOwnedCompanionActor(mercenary);
-        companion_ai::TickOwnedCompanionActor(mercenary);
+        tickCompanion(mercenary);
+        tickCompanion(mercenary);
         Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
             "busy mercenary sent a support skill before it could act");
         mercenary.m_stateId = companion_ai::MOTION_STAND;
-        companion_ai::TickOwnedCompanionActor(mercenary);
+        tickCompanion(mercenary);
         Require(peer.ReceiveExact(10) == std::vector<u8>{0x38, 0x04, 3, 0, static_cast<u8>(skill), 0x20,
             0x44, 0x33, 0x22, 0x11}, "mercenary support skill sent the wrong owner target");
     }
@@ -3424,7 +3430,7 @@ void PendingCompanionActorSkillReplay()
     Require(ReplayRequestPendingGroundSkill(mode, 11, 10, false) && player.commands.empty(),
         "active mercenary ground skill entered the player route");
     mode.m_skillUseInfo = {};
-    companion_ai::TickOwnedCompanionActor(mercenary);
+    tickCompanion(mercenary);
     std::vector<u8> groundRequest(102, 0);
     groundRequest[0] = 0x7e;
     groundRequest[5] = 2;
@@ -3441,24 +3447,63 @@ void PendingCompanionActorSkillReplay()
     Require(ReplayRequestPendingGroundSkill(mode, 16, 10, false) && player.commands.empty(),
         "out-of-range mercenary ground skill entered the player route");
     mode.m_skillUseInfo = {};
-    companion_ai::TickOwnedCompanionActor(mercenary);
+    tickCompanion(mercenary);
     Require(peer.ReceiveExact(9) == std::vector<u8>{0x32, 0x02, 0x42, 0x00, 0x00, 0xf1, 4, 0, 0xa0},
         "out-of-range ground skill sent an unexpected companion approach request");
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "out-of-range mercenary sent a ground skill before approaching");
     mode.GetClientCoor(15, 10, mercenary.m_pos.x, mercenary.m_pos.z);
     mercenary.m_stateId = kGameActorCastingStateId;
-    companion_ai::TickOwnedCompanionActor(mercenary);
+    tickCompanion(mercenary);
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "busy mercenary sent a ground skill after approaching");
     mercenary.m_stateId = companion_ai::MOTION_STAND;
-    companion_ai::TickOwnedCompanionActor(mercenary);
+    tickCompanion(mercenary);
     groundRequest[12] = 16;
     Require(peer.ReceiveExact(groundRequest.size()) == groundRequest,
         "mercenary dropped the ground skill before it could act");
-    companion_ai::TickOwnedCompanionActor(mercenary);
+    tickCompanion(mercenary);
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "mercenary repeated the completed ground skill");
+
+    // The server can silently discard a move. Simulate a short walk and a stalled actor.
+    mercenary.m_speed = 400;
+    mode.GetClientCoor(10, 10, mercenary.m_pos.x, mercenary.m_pos.z);
+    const std::vector<u8> approachRequest{0x32, 0x02, 0x42, 0, 0, 0xf1, 4, 0, 0xa0};
+    mode.m_skillUseInfo = {8210, 2, 1, 1};
+    Require(ReplayRequestPendingGroundSkill(mode, 16, 10, false), "failed to arm the ground approach");
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == approachRequest, "ground approach did not send its initial move");
+    mode.GetClientCoor(11, 10, mercenary.m_pos.x, mercenary.m_pos.z);
+    tickCompanion(mercenary, 800);
+    mode.m_skillUseInfo = {8210, 2, 1, 1};
+    Require(ReplayRequestPendingGroundSkill(mode, 12, 10, true), "failed to reserve a ground cast");
+    mode.m_skillUseInfo = {};
+    tickCompanion(mercenary, 1100);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "observed progress did not defer the retry");
+    tickCompanion(mercenary, 100);
+    Require(peer.ReceiveExact(9) == approachRequest, "stalled ground approach did not retry once");
+    tickCompanion(mercenary, 1200);
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    groundRequest[12] = 12;
+    Require(peer.ReceiveExact(groundRequest.size()) == groundRequest,
+        "failed ground approach blocked the reserved cast");
+
+    mode.GetClientCoor(16, 10, target.m_pos.x, target.m_pos.z);
+    mode.m_skillUseInfo = {8201, 3, 1, 2};
+    Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false), "failed to arm the actor approach");
+    mode.m_skillUseInfo = {};
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == approachRequest, "actor approach did not send its initial move");
+    tickCompanion(mercenary, 1200);
+    Require(peer.ReceiveExact(9) == approachRequest, "stalled actor approach did not retry once");
+    tickCompanion(mercenary, 1200);
+    tickCompanion(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "expired actor approach continued to emit requests");
+    mode.GetClientCoor(15, 10, mercenary.m_pos.x, mercenary.m_pos.z);
 
     mode.GetClientCoor(15, 10, homunculus.m_pos.x, homunculus.m_pos.z);
     mode.GetClientCoor(15, 10, player.m_pos.x, player.m_pos.z);
@@ -3471,8 +3516,8 @@ void PendingCompanionActorSkillReplay()
     g_session.m_merTarget = {};
     g_session.ApplyCompanionActorClick(target.m_gid, false);
     for (CGameActor* caster : {&homunculus, &mercenary}) {
-        companion_ai::TickOwnedCompanionActor(*caster);
-        companion_ai::TickOwnedCompanionActor(*caster);
+        tickCompanion(*caster);
+        tickCompanion(*caster);
         Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
             0, 0, 0xf1, 0x78, 0x56, 0x34, 0x12, 0}, "Alt click did not send a companion attack");
     }
@@ -3489,8 +3534,8 @@ void PendingCompanionActorSkillReplay()
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "stopping a companion attack bypassed the native controller");
     for (CGameActor* caster : {&homunculus, &mercenary}) {
-        companion_ai::TickOwnedCompanionActor(*caster);
-        companion_ai::TickOwnedCompanionActor(*caster);
+        tickCompanion(*caster);
+        tickCompanion(*caster);
         Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
             0, 0, 0xf1, 0, 0, 0, 0, 0}, "Alt click cancellation did not clear the companion's server target");
     }
@@ -3506,7 +3551,7 @@ void PendingCompanionActorSkillReplay()
     world.RegisterActor(&corpse);
     homunculus.m_job = 6003; // Filir acquires nearby monsters without an existing attacker.
     for (int tick = 0; tick < 3; ++tick) {
-        companion_ai::TickOwnedCompanionActor(homunculus);
+        tickCompanion(homunculus);
     }
     Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, 0x41, 0, 0, 0xf1,
         0x78, 0x56, 0x34, 0x12, 0}, "aggressive homunculus picked a corpse over a living monster");
@@ -3514,7 +3559,7 @@ void PendingCompanionActorSkillReplay()
     corpse.m_targetGid = player.m_gid;
     target.m_targetGid = player.m_gid;
     for (int tick = 0; tick < 3; ++tick) {
-        companion_ai::TickOwnedCompanionActor(mercenary);
+        tickCompanion(mercenary);
     }
     Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, 0x42, 0, 0, 0xf1,
         0x78, 0x56, 0x34, 0x12, 0}, "mercenary owner defense picked a corpse over a living attacker");

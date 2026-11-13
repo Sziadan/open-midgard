@@ -13,13 +13,15 @@ class Brain {
 public:
     explicit Brain(Kind kind);
 
-    void Tick(u32 myId);
+    void Tick(u32 myId, u32 now);
 
     Kind kind() const { return m_runtime.kind(); }
     int state() const { return m_state; }
 
 private:
     void ProcessCommand(const Msg2Ai& msg);
+    bool ContinueApproach(const Position& destination);
+    void CancelApproach();
 
     void OnMOVE_CMD(int x, int y);
     void OnSTOP_CMD();
@@ -62,6 +64,14 @@ private:
     u32 m_myId = 0;
     int m_skill = 0;
     int m_skillLevel = 0;
+    u32 m_now = 0;
+    struct Approach {
+        Position destination;
+        Position lastPosition;
+        u32 lastProgress = 0;
+        u32 lastRequest = 0;
+        bool retried = false;
+    } m_approach;
     std::deque<Msg2Ai> m_resCmdList;
 };
 

@@ -41,12 +41,12 @@ public:
     std::vector<u32> GetActors() const;
     bool IsMonster(u32 id) const;
     bool CanTargetForAttack(u32 id) const;
-    u32 GetTick() const;
+    u32 GetWalkCellDuration(u32 id) const;
 
     Msg2Ai ConsumeMsg(u32 myId);
     Msg2Ai ConsumeResMsg(u32 myId);
 
-    void Move(u32 id, int x, int y) const;
+    bool Move(u32 id, int x, int y) const;
     void MoveToOwner(u32 id) const;
     void Attack(u32 id, u32 enemyId) const;
     void StopAttack(u32 id) const;

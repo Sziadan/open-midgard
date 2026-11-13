@@ -304,9 +304,10 @@ bool Runtime::IsMonster(u32 id) const
     return job >= kMonsterJobMin && actor->m_isPc == 0;
 }
 
-u32 Runtime::GetTick() const
+u32 Runtime::GetWalkCellDuration(u32 id) const
 {
-    return timeGetTime();
+    const auto* actor = FindActor(id);
+    return actor && actor->m_speed != 0 ? actor->m_speed : 150u;
 }
 
 Msg2Ai Runtime::ConsumeMsg(u32 myId)
@@ -351,31 +352,31 @@ bool Runtime::QueueCommand(Kind kind, const Msg2Ai& msg, bool reserved)
     return true;
 }
 
-void Runtime::Move(u32 id, int x, int y) const
+bool Runtime::Move(u32 id, int x, int y) const
 {
     if (!IsOwnedCompanion(id)) {
-        return;
+        return false;
     }
     CGameActor* actor = FindActor(id);
     CGameMode* mode = CurrentGameMode();
     if (!actor || !mode) {
-        return;
+        return false;
     }
 
     int sx = 0;
     int sy = 0;
     mode->GetServerCoor(actor->m_pos.x, actor->m_pos.z, sx, sy);
     if (std::abs(x - sx) + std::abs(y - sy) > kServerPathLimitManhattan) {
-        return;
+        return false;
     }
 
     PACKET_CZ_REQUEST_MOVENPC packet{};
     packet.PacketType = kPacketRequestMoveNpc;
     packet.GID = id;
     if (!EncodeDest(x, y, packet.dest)) {
-        return;
+        return false;
     }
-    CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
 }
 
 void Runtime::MoveToOwner(u32 id) const
