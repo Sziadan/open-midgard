@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK37.03 verifies trade cancellation ownership through the selected server reply, including acceptance that crosses cancel. Continue with local and remote offer acknowledgments, lock and commit results, and the live two-peer flow. [Trade cancellation evidence](evidence/PK37.03-trade-cancellation.md)
+
 PK35.05 captures the shared native and Qt choice window for production, weapon refine, repair, and cooking. Production confirmation uses the reference recipe descriptions and three optional material slots. Replay verifies drag input, quantity revalidation, and the three `018E` fields. Cooking preserves emitted make types 1 and 5–8. Compare with the installed skin and verify live crafting, including which later skills and recipes the deployment exposes. [Crafting wire contracts](evidence/PK35.01-crafting-wire.md)
 
 PK34.04 verifies storage reopen after a same-map refresh when the server omits one category. Inventory, cart, storage, and friend snapshot validation are implemented. Live capture and independent PK48 review remain open. [Item snapshot contract](evidence/PK34.01-item-snapshot-contract.md)

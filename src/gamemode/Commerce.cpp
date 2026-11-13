@@ -23,8 +23,26 @@ bool send(const std::vector<u8>& p){if(CRagConnection::instance()->SendPacket(re
 bool simple(u16 op){return send(packet(op,2));}
 void note(const std::string& message){state.status=message;g_windowMgr.PushChatEvent(message.c_str(),0x0080C0FFu,6);}
 bool named(u16 op,const std::string& name,int size=26){if(name.empty()||name.size()>23)return false;auto p=packet(op,size);std::copy(name.begin(),name.end(),p.begin()+2);return send(p);}
-void tradeReset(){state.trade.width=380;state.trade.height=170;state.tradeIncoming=state.tradeActive=state.tradeWaiting=state.localLocked=state.remoteLocked=state.lockPending=state.commitPending=state.tradeAddPending=false;state.localOffer.clear();state.remoteOffer.clear();state.localZeny=state.remoteZeny=0;}
-bool busy(){return state.tradeActive||state.tradeWaiting||state.tradeIncoming||state.vendingActive||state.vendingPending;}
+void tradeReset(){state.trade.width=380;state.trade.height=170;state.tradeIncoming=state.tradeActive=state.tradeWaiting=state.localLocked=state.remoteLocked=state.lockPending=state.commitPending=state.tradeAddPending=false;state.tradeCancellation=TradeCancellation::None;state.localOffer.clear();state.remoteOffer.clear();state.localZeny=state.remoteZeny=0;}
+bool tradeCancelPending(){return state.tradeCancellation != TradeCancellation::None;}
+bool busy(){return tradeCancelPending()||state.tradeActive||state.tradeWaiting||state.tradeIncoming||state.vendingActive||state.vendingPending;}
+
+bool requestTradeCancellation(const char* message)
+{
+    if (tradeCancelPending() || (!state.tradeIncoming && !state.tradeWaiting && !state.tradeActive)) return false;
+    if (state.tradeIncoming) {
+        auto reply = packet(0xe6, 3);
+        reply[2] = 4;
+        if (!send(reply)) return false;
+        state.tradeCancellation = TradeCancellation::Decline;
+    } else {
+        if (!simple(0xed)) return false;
+        state.tradeCancellation = TradeCancellation::Cancel;
+    }
+    state.trade.visible = false;
+    note(message);
+    return true;
+}
 ITEM_INFO item(const u8* p,bool equip,int size){
     ITEM_INFO i;i.m_itemIndex=read(p);i.SetItemId(read(p+2));i.m_itemType=p[4];i.m_isIdentified=p[5];
     if(equip){
@@ -67,16 +85,15 @@ void ResetForMapEntry()
 void CloseTransactions(){state.cart.visible=state.vending.visible=state.trade.visible=state.shop.visible=state.mail.visible=state.equipment.visible=false;state.promptKind.clear();state.promptName.clear();state.promptId=state.promptChar=0;tradeReset();state.draft.clear();state.vendingActive=state.vendingPending=false;state.shopBoards.clear();state.cartItems.clear();}
 void UpdateTradeContext(u32 now,std::map<u32,TradePeer> peers){
     state.clock=now;state.tradePeers=std::move(peers);
-    if(!state.tradeWaiting&&!state.tradeIncoming)return;
+    if(tradeCancelPending() || (!state.tradeWaiting&&!state.tradeIncoming))return;
     if(!state.partnerId)for(const auto& peer:state.tradePeers)if(peer.second.name==state.partner){state.partnerId=peer.first;break;}
     auto peer=state.tradePeers.find(state.partnerId);
     const bool expired=now-state.tradeRequestTick>=30000u;
     if(!state.partnerId&&!expired)return; // Old invitations carry a name without an AID; wait for identity resolution.
     if(peer!=state.tradePeers.end()&&peer->second.distance<=2&&!expired)return;
-    if(state.tradeIncoming){auto p=packet(0xe6,3);p[2]=4;send(p);}else simple(0xed);
     const bool tooDistant=peer!=state.tradePeers.end()&&peer->second.distance>2;
-    tradeReset();state.trade.visible=false;
-    note(tooDistant?"Trade failed: the other player is too far away.":expired?"Trade request expired without a server reply. Please try again.":"Trade canceled: the other player is no longer nearby.");
+    requestTradeCancellation(tooDistant?"The other player is too far away. Canceling trade."
+        :expired?"Trade request expired. Canceling trade.":"The other player is no longer nearby. Canceling trade.");
 }
 bool HasInput(){return !state.shopBoards.empty()||state.cart.visible||state.vending.visible||state.trade.visible||state.shop.visible||state.mail.visible||state.equipment.visible||!state.promptKind.empty()||(g_windowMgr.m_itemWnd && g_windowMgr.m_itemWnd->m_show)||(g_windowMgr.m_playerContextMenuWnd&&g_windowMgr.m_playerContextMenuWnd->m_show);}
 bool HitTest(int x,int y){for(const auto* w:{&state.cart,&state.vending,&state.trade,&state.shop,&state.mail,&state.equipment})if(w->visible && x>=w->x && y>=w->y && x<w->x+w->width && y<w->y+w->height)return true;return !state.promptKind.empty();}
@@ -129,13 +146,42 @@ bool Receive(CGameMode&,const PacketView& v){
     case 0x138:if(n<3)return false;state.vendingPending=false;if(p[2]){state.vendingActive=false;state.status="The server could not open your shop.";}return true;
     case 0x131:if(n<86)return false;state.shopBoards[read(p+2,4)]=text(p+6,80);return true;
     case 0x132:if(n<6)return false;state.shopBoards.erase(read(p+2,4));if(read(p+2,4)==g_session.m_aid){state.vendingActive=false;state.vendingPending=false;}return true;
-    case 0xe5:case 0x1f4:if(n<(op==0xe5?26:32))return false;tradeReset();state.partnerId=0;state.tradeRequestTick=state.clock;state.partner=text(p+2,24);if(op==0x1f4)state.partnerId=read(p+26,4);state.tradeIncoming=true;state.trade.visible=true;state.status="Trade invitation. Review the player name before accepting.";return true;
-    case 0xe7:case 0x1f5:if(n<3)return false;if(p[2]==3){tradeReset();state.tradeActive=true;state.trade.visible=true;state.trade.width=660;state.trade.height=420;if(op==0x1f5 && n>=9)state.partnerId=read(p+3,4);state.status="Drag inventory items into your offer. Lock, then confirm after both players lock.";}else{tradeReset();state.trade.visible=false;const char* reasons[]={"Trade failed: the other player is too far away.","Trade failed: the other player is unavailable.","Trade request failed.","", "Trade request declined or canceled.","Trade failed: the other player is busy."};note(p[2]<6?reasons[p[2]]:"Trade request failed.");}return true;
+    case 0xe5:case 0x1f4:if(n<(op==0xe5?26:32))return false;if(tradeCancelPending())return true;tradeReset();state.partnerId=0;state.tradeRequestTick=state.clock;state.partner=text(p+2,24);if(op==0x1f4)state.partnerId=read(p+26,4);state.tradeIncoming=true;state.trade.visible=true;state.status="Trade invitation. Review the player name before accepting.";return true;
+    case 0xe7:case 0x1f5:{
+        if(n!=(op==0xe7?3:9))return false;
+        const auto result = p[2];
+        if(state.tradeCancellation==TradeCancellation::Cancel){
+            if(result==3){state.tradeActive=true;state.tradeWaiting=false;}
+            return true;
+        }
+        if(state.tradeCancellation==TradeCancellation::Decline && result==3)return true;
+        tradeReset();
+        state.trade.visible = result==3;
+        if(result==3){
+            state.tradeActive=true;
+            state.trade.width=660;
+            state.trade.height=420;
+            if(op==0x1f5)state.partnerId=read(p+3,4);
+            state.status="Drag inventory items into your offer. Lock, then confirm after both players lock.";
+        }else{
+            const char* reasons[]={"Trade failed: the other player is too far away.","Trade failed: the other player is unavailable.","Trade request failed.","", "Trade request declined or canceled.","Trade failed: the other player is busy."};
+            note(result<6?reasons[result]:"Trade request failed.");
+        }
+        return true;
+    }
     case 0xe9:{if(n<19||!state.tradeActive)return false;const u32 amount=read(p+2,4),id=read(p+6);if(!id)state.remoteZeny=amount;else{Offer o;o.amount=amount;o.item.SetItemId(id);o.item.m_num=int(amount);o.item.m_isIdentified=p[8];o.item.m_isDamaged=p[9];o.item.m_refiningLevel=p[10];for(int k=0;k<4;++k)o.item.m_slot[k]=read(p+11+2*k);state.remoteOffer.push_back(o);}return true;}
     case 0xea:if(n<5)return false;if(state.tradeAddPending && read(p+2)==state.pendingTrade.item.m_itemIndex){if(p[4]==0){auto old=std::find_if(state.localOffer.begin(),state.localOffer.end(),[&](const auto& o){return o.item.m_itemIndex==state.pendingTrade.item.m_itemIndex;});if(old==state.localOffer.end())state.localOffer.push_back(state.pendingTrade);else old->amount+=state.pendingTrade.amount;}else state.status="Server rejected the offered item or amount.";state.tradeAddPending=false;}return true;
     case 0xec:if(n<3||!state.tradeActive)return false;if(p[2]==0){state.localLocked=true;state.lockPending=false;}else state.remoteLocked=true;return true;
-    case 0xee:tradeReset();state.trade.visible=false;note("Trade canceled. No exchange was completed.");return true;
-    case 0xf0:if(n<3)return false;tradeReset();state.trade.visible=false;note(p[2]?"Trade failed.":"Trade completed.");return true;
+    case 0xee:{
+        if(n!=2)return false;
+        const bool hadTrade = state.tradeActive || state.tradeWaiting || state.tradeIncoming;
+        if(!hadTrade && !tradeCancelPending())return true;
+        tradeReset();
+        state.trade.visible=false;
+        if(hadTrade)note("Trade canceled. No exchange was completed.");
+        return true;
+    }
+    case 0xf0:if(n<3)return false;if(!state.tradeActive)return true;if(state.tradeCancellation==TradeCancellation::Cancel){note(p[2]?"Trade failed.":"Trade completed.");state.tradeActive=false;return true;}tradeReset();state.trade.visible=false;note(p[2]?"Trade failed.":"Trade completed.");return true;
     case 0xf1:state.localOffer.clear();state.localZeny=0;state.localLocked=state.lockPending=false;return true;
     case 0x16a:if(n<30)return false;state.promptKind="guild";state.promptId=read(p+2,4);state.promptName=text(p+6,24);return true;
     case 0x207: {
@@ -186,7 +232,7 @@ bool Action(const Command& c){
     if(c.action=="cart"){if(state.hasCart){state.cart.visible=!state.cart.visible;return true;}return false;}
     if(c.action=="close"){
         if(c.to=="inventory" && g_windowMgr.m_itemWnd){g_windowMgr.CloseInventoryWindow();return true;}
-        if(c.to=="trade"){bool sent=false;if(state.tradeIncoming){auto p=packet(0xe6,3);p[2]=4;sent=send(p);}else sent=simple(0xed);if(!sent)return false;tradeReset();state.trade.visible=false;note("Trade canceled. No exchange was completed.");return true;}
+        if(c.to=="trade")return requestTradeCancellation("Waiting for the server to cancel trade.");
         if(c.to=="vending"){if(state.vendingActive){if(!simple(0x12e))return false;state.vendingActive=false;}else{auto p=packet(0x1b2,85);put(p,2,85);if(!send(p))return false;}state.draft.clear();state.vendingPending=false;}
         if(auto* w=window(c.to)){w->visible=false;return true;}return false;
     }
@@ -215,9 +261,25 @@ bool Action(const Command& c){
         for(size_t k=0;k<state.draft.size();++k){const auto& o=state.draft[k];const auto i=state.cartItems.find(o.item.m_itemIndex);if(i==state.cartItems.end()||!o.amount||o.amount>u32(i->second.m_num)||!o.price)return false;put(p,85+int(k)*8,o.item.m_itemIndex);put(p,87+int(k)*8,o.amount);put(p,89+int(k)*8,o.price,4);}
         if(!send(p))return false;state.vendingPending=true;state.shopTitle=c.text;state.status="Opening shop; waiting for server confirmation.";return true;
     }
-    if(c.action=="tradeReply"){if(!state.tradeIncoming)return false;if(c.amount){auto peer=state.tradePeers.find(state.partnerId);if(peer==state.tradePeers.end()||peer->second.distance>2){auto decline=packet(0xe6,3);decline[2]=4;send(decline);tradeReset();state.trade.visible=false;note("Trade failed: the other player is too far away or unavailable.");return false;}}auto p=packet(0xe6,3);p[2]=c.amount?3:4;if(!send(p))return false;if(!c.amount){tradeReset();state.trade.visible=false;note("Trade invitation declined.");}else{state.tradeIncoming=false;state.tradeWaiting=true;state.tradeRequestTick=state.clock;state.status="Acceptance sent; waiting for the server.";}return true;}
+    if(c.action=="tradeReply"){
+        if(!state.tradeIncoming || tradeCancelPending()) return false;
+        if(!c.amount) return requestTradeCancellation("Waiting for the server to decline trade.");
+        const auto peer = state.tradePeers.find(state.partnerId);
+        if(peer==state.tradePeers.end() || peer->second.distance>2) {
+            requestTradeCancellation("The other player is too far away or unavailable. Declining trade.");
+            return false;
+        }
+        auto reply = packet(0xe6,3);
+        reply[2] = 3;
+        if(!send(reply)) return false;
+        state.tradeIncoming = false;
+        state.tradeWaiting = true;
+        state.tradeRequestTick = state.clock;
+        state.status = "Acceptance sent; waiting for the server.";
+        return true;
+    }
     if(c.action=="offerTrade"||c.action=="tradeZeny"){
-        if(!state.tradeActive||state.localLocked||state.lockPending||state.tradeAddPending||(!c.amount && c.action!="tradeZeny"))return false;Offer o;
+        if(tradeCancelPending()||!state.tradeActive||state.localLocked||state.lockPending||state.tradeAddPending||(!c.amount && c.action!="tradeZeny"))return false;Offer o;
         if(c.action=="tradeZeny"){const auto* player=g_session.GetSelectedCharacterInfo();if(!player||c.amount>u32(std::max(0,player->money)))return false;o.amount=c.amount;}
         else{const auto* i=g_session.GetInventoryItemByIndex(c.index);if(!i||i->m_wearLocation||i->m_deleteTime||c.amount>32767)return false;u32 offered=0;for(const auto& old:state.localOffer)if(old.item.m_itemIndex==c.index)offered+=old.amount;if(offered+c.amount>u32(i->m_num)||state.localOffer.size()>=10)return false;o={*i,c.amount,0};}
         auto p=packet(0xe8,8);put(p,2,o.item.m_itemIndex);put(p,4,c.amount,4);if(!send(p))return false;
@@ -226,8 +288,8 @@ bool Action(const Command& c){
         if(c.action=="tradeZeny"){state.localZeny=c.amount;return true;}
         state.pendingTrade=o;state.tradeAddPending=true;return true;
     }
-    if(c.action=="lockTrade"){if(!state.tradeActive||state.localLocked||state.lockPending||state.tradeAddPending)return false;if(!simple(0xeb))return false;state.lockPending=true;return true;}
-    if(c.action=="commitTrade"){if(!state.tradeActive||!state.localLocked||!state.remoteLocked||state.commitPending)return false;if(!simple(0xef))return false;state.commitPending=true;state.status="Final confirmation sent; waiting for the server.";return true;}
+    if(c.action=="lockTrade"){if(tradeCancelPending()||!state.tradeActive||state.localLocked||state.lockPending||state.tradeAddPending)return false;if(!simple(0xeb))return false;state.lockPending=true;return true;}
+    if(c.action=="commitTrade"){if(tradeCancelPending()||!state.tradeActive||!state.localLocked||!state.remoteLocked||state.commitPending)return false;if(!simple(0xef))return false;state.commitPending=true;state.status="Final confirmation sent; waiting for the server.";return true;}
     if(c.action=="buy"){auto found=std::find_if(state.shopItems.begin(),state.shopItems.end(),[&](const auto& o){return o.item.m_itemIndex==c.index;});if(found==state.shopItems.end()||!c.amount||c.amount>found->amount||busy())return false;auto p=packet(0x134,12);put(p,2,12);put(p,4,state.sellerId,4);put(p,8,c.amount);put(p,10,c.index);return send(p);}
     if(c.action=="prompt"){
         if (c.from == "friend" || state.promptKind == "friend") {

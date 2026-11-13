@@ -6384,8 +6384,9 @@ void TradeAcceptDeclineProductionSendReplay()
     reply.amount = 0;
     {
         LoopbackPeer peer(*connection);
-        Require(ro::commerce::Action(reply) && !ro::commerce::state.tradeIncoming,
-            "successful trade decline did not clear the incoming invitation");
+        Require(ro::commerce::Action(reply)
+            && ro::commerce::state.tradeCancellation == ro::commerce::TradeCancellation::Decline,
+            "successful trade decline did not wait for the server");
         Require(peer.ReceiveExact(3) == std::vector<u8>({0xe6, 0x00, 0x04}),
             "trade decline did not emit the selected three-byte 0x00E6 frame");
     }
@@ -6446,11 +6447,26 @@ void TradeCancelProductionSendReplay()
 
     {
         LoopbackPeer peer(*connection);
-        Require(ro::commerce::Action(close) && !ro::commerce::state.tradeWaiting
-            && !ro::commerce::state.tradeActive,
-            "successful trade cancellation did not reset outgoing trade state");
+        Require(ro::commerce::Action(close) && !ro::commerce::state.trade.visible
+            && ro::commerce::state.tradeCancellation == ro::commerce::TradeCancellation::Cancel,
+            "successful trade cancellation did not enter the pending state");
         Require(peer.ReceiveExact(2) == std::vector<u8>({0xed, 0x00}),
             "outgoing trade cancellation did not emit the selected two-byte 0x00ED frame");
+        Require(!ro::commerce::Action(close), "repeated cancel sent another request");
+        CGameMode mode;
+        CGameModePacketRouter router;
+        RegisterDefaultGameModePacketHandlers(router);
+        TestConnection input;
+        Require(input.QueueBytes({0xf5, 1, 3, 77, 0, 0, 0, 0, 0}), "could not queue crossed acceptance");
+        const auto acceptance = ProcessGameModePacketLoop(mode, input, router, 1);
+        Require(acceptance.packetsDispatched == 1 && !input.BufferedBytes(), "crossed acceptance did not dispatch");
+        Require(!ro::commerce::state.trade.visible
+            && ro::commerce::state.tradeCancellation == ro::commerce::TradeCancellation::Cancel,
+            "crossed acceptance reopened a canceled trade");
+        Require(input.QueueBytes({0xee, 0}) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1
+            && !ro::commerce::state.tradeWaiting
+            && ro::commerce::state.tradeCancellation == ro::commerce::TradeCancellation::None,
+            "cancel acknowledgment did not release the pending trade");
     }
     connection->Disconnect();
     ro::commerce::state = savedState;

@@ -4023,3 +4023,5 @@ PK35.04 traces the additional cooking list emitters in the selected server and e
 PK36.01 traces the three storage password frames, the registered parser stub, and the ordinary storage open path. The selected server source has no active challenge flow. [Evidence](evidence/PK36.01-storage-password-applicability.md)
 
 PK36.04 verifies that the inactive storage password frames drain through production framing without opening storage or emitting a reply. PK36.02 and PK36.03 await an active server contract. [Evidence](evidence/PK36.01-storage-password-applicability.md)
+
+PK37.03 keeps trade cancellation pending until the server responds and handles acceptance that crosses the cancel request. [Evidence](evidence/PK37.03-trade-cancellation.md)

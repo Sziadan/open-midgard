@@ -1324,9 +1324,9 @@
       "commit_subject": null
     },
     "PK37.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK37.03-trade-cancellation.md"],
+      "commit_subject": "packet(PK37.03): retain ownership until trade cancellation reply"
     },
     "PK37.04": {
       "status": "NOT_STARTED",

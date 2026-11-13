@@ -1,22 +1,28 @@
 #include "gamemode/Commerce.h"
+#include "gamemode/ItemSnapshot.h"
 #include <cassert>
 #include <algorithm>
 #include <cstring>
 #include <iostream>
 void ITEM_INFO::SetItemId(unsigned int id){m_itemName=std::to_string(id);}
 unsigned int ITEM_INFO::GetItemId()const{return m_itemName.empty()?0:unsigned(std::stoul(m_itemName));}
-struct PacketView {u16 packetId,packetLength;const u8* data;};
 struct CGameMode {
-    enum {PlayerContext_CheckEquipmentInfo,PlayerContext_RequestDeal,PlayerContext_AskJoinParty,PlayerContext_InviteJoinGuild,PlayerContext_SendWhisper,PlayerContext_RegisterFriend,PlayerContext_SendMail,PlayerContext_RejectWhispering};
+    enum {PlayerContext_CheckEquipmentInfo,PlayerContext_RequestDeal,PlayerContext_AskJoinParty,PlayerContext_InviteJoinGuild,PlayerContext_SendWhisper,PlayerContext_RegisterFriend,PlayerContext_SendMail,PlayerContext_RejectWhispering,PlayerContext_AllowWhispering=9};
     enum {GameMsg_RequestUseInventoryItem=10,GameMsg_RequestEquipInventoryItem=11,GameMsg_RequestUnequipInventoryItem=12};
 };
 struct {bool SendMsg(int,unsigned int,int,int){return true;}} g_modeMgr;
-struct Window {int m_show=0;void Move(int,int){}void SetShow(int n){m_show=n;}void SetQtInputText(int,const std::string&){}void FocusQtInput(int){}};
-struct {Window* m_itemWnd=nullptr;Window* m_chatWnd=nullptr;Window* m_playerContextMenuWnd=nullptr;std::string lastChat;void PushChatEvent(const char* text,u32,int){lastChat=text;}} g_windowMgr;
+struct Window {int m_show=0,tab=0;void Move(int,int){}void SetShow(int n){m_show=n;}void SetQtInputText(int,const std::string&){}void FocusQtInput(int){}
+    int GetCurrentTab() const{return tab;}void SetCurrentTab(int n){tab=n;}void ResizeInventory(int,int){}void StoreInfo(){}int SendMsg(void*,int,int,int,int){return 1;}};
+struct {Window* m_itemWnd=nullptr;Window* m_chatWnd=nullptr;Window* m_playerContextMenuWnd=nullptr;std::string lastChat;int tab=0;
+    void PushChatEvent(const char* text,u32,int){lastChat=text;}void CloseStorageWindows(){}void CloseInventoryWindow(){m_itemWnd->SetShow(0);}
+    int GetInventoryTabSelection()const{return tab;}void SetInventoryTabSelection(int n){tab=n;}} g_windowMgr;
 struct Session {
     struct {u32 guildId=1;bool isMaster=true;int permissions=0;}m_localGuild;
     struct {int money=100000;} character;
     u32 m_aid=101,m_gid=202;std::map<u32,ITEM_INFO> inventory;
+    std::vector<std::string> m_exNameList;
+    std::vector<u32> m_exAidList;
+    void ClearInventoryItems(){inventory.clear();}void CloseStorage(){}
     const ITEM_INFO* GetInventoryItemByIndex(u32 id){auto it=inventory.find(id);return it==inventory.end()?nullptr:&it->second;}
     const auto* GetSelectedCharacterInfo(){return &character;}
 } g_session;
@@ -67,14 +73,14 @@ int main(){
     UpdateTradeContext(200,{{999,{"Trader",5}}});
     const auto before=socket->sent.size();assert(!PlayerAction(CGameMode::PlayerContext_RequestDeal,999,"Trader")&&!state.tradeWaiting&&socket->sent.size()==before&&g_windowMgr.lastChat.find("too far")!=std::string::npos);
     UpdateTradeContext(300,{{999,{"Trader",1}}});assert(PlayerAction(CGameMode::PlayerContext_RequestDeal,999,"Trader"));
-    UpdateTradeContext(400,{{999,{"Trader",5}}});assert(!state.tradeWaiting&&!state.trade.visible&&socket->sent.back()==std::vector<u8>({0xed,0}));
+    UpdateTradeContext(400,{{999,{"Trader",5}}});assert(state.tradeWaiting&&!state.trade.visible&&socket->sent.back()==std::vector<u8>({0xed,0}));assert(receive({0xee,0})&&!state.tradeWaiting);
     UpdateTradeContext(500,{{999,{"Trader",1}}});assert(PlayerAction(CGameMode::PlayerContext_RequestDeal,999,"Trader"));
-    UpdateTradeContext(30501,{{999,{"Trader",1}}});assert(!state.tradeWaiting&&!state.trade.visible&&g_windowMgr.lastChat.find("expired")!=std::string::npos);
+    UpdateTradeContext(30501,{{999,{"Trader",1}}});assert(state.tradeWaiting&&!state.trade.visible&&g_windowMgr.lastChat.find("expired")!=std::string::npos);assert(receive({0xee,0})&&!state.tradeWaiting);
     std::vector<u8> invite(32);invite[0]=0xf4;invite[1]=1;std::memcpy(invite.data()+2,"Trader",6);invite[26]=0xe7;invite[27]=3;
-    assert(receive(invite));state.tradePeers[999].distance=8;c={};c.action="tradeReply";c.amount=1;assert(!Action(c)&&!state.tradeIncoming&&!state.trade.visible&&socket->sent.back()==std::vector<u8>({0xe6,0,4}));
-    assert(receive(invite));c.amount=0;assert(Action(c)&&!state.tradeIncoming&&!state.trade.visible);
+    assert(receive(invite));state.tradePeers[999].distance=8;c={};c.action="tradeReply";c.amount=1;assert(!Action(c)&&state.tradeIncoming&&!state.trade.visible&&socket->sent.back()==std::vector<u8>({0xe6,0,4}));assert(receive({0xe7,0,4})&&!state.tradeIncoming);
+    assert(receive(invite));c.amount=0;assert(Action(c)&&state.tradeIncoming&&!state.trade.visible);assert(receive({0xe7,0,4})&&!state.tradeIncoming);
     UpdateTradeContext(30600,{{999,{"Trader",1}}});assert(PlayerAction(CGameMode::PlayerContext_RequestDeal,999,"Trader"));
-    c={};c.action="close";c.to="trade";assert(Action(c)&&!state.tradeWaiting&&!state.trade.visible);
+    c={};c.action="close";c.to="trade";assert(Action(c)&&state.tradeWaiting&&!state.trade.visible);assert(receive({0xee,0})&&!state.tradeWaiting);
     state.promptKind="alliance";state.promptId=77;c={};c.action="prompt";c.amount=1;assert(Action(c)&&socket->sent.back()==std::vector<u8>({0x72,1,77,0,0,0,1,0,0,0}));
     socket->success=false;c={};c.action="transfer";c.from="inventory";c.index=2;c.amount=1;assert(!Action(c));
     std::cout<<"PASS: cart snapshots/transfers, malformed arrays, vending stock/price packets, trade acknowledgements/locks/commit, no optimistic item or Zeny mutation, social permissions, mail limits and connection failures\n";
