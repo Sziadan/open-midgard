@@ -1100,7 +1100,7 @@
         "docs/packets/evidence/PK28-pending-companion-actor-skills.md",
         "docs/packets/evidence/PK19-map-properties.md"
       ],
-      "commit_subject": "packet(PK28.03): reset companion actor ownership at map handoff"
+      "commit_subject": "packet(PK28.03): dispatch pending companion actor skills in native AI"
     },
     "PK28.04": {
       "status": "NOT_STARTED",

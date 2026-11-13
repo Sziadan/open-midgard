@@ -3875,3 +3875,7 @@ PK29.02 now handles confirmed dismissal and the selected owner-death packet sequ
 ## 2026-11-13 Native companion baseline
 
 Adopted `a40a4c01` as the companion baseline. It completes selected `02A2` stat coverage. The follow-up preserves unsigned `029B` MATK and keeps the current target when Alt+Shift reserves a ground move. Six focused application checks and 473 standalone checks passed. The handoff records the missing native actor skill producer. [Evidence](evidence/PK29.02-mercenary-contract-end.md)
+
+## 2026-11-13 Native companion actor skills
+
+PK28.03 queues pending actor skills to the C++ companion controller. Replay checks both companion families, including a reserved order, and the selected `0438` bytes. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-pending-companion-actor-skills.md)

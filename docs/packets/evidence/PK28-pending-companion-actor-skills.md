@@ -1,6 +1,8 @@
 # Pending companion actor skills
 
-The current baseline uses the native C++ controller introduced by `a40a4c01`. The branch and tests below predate that controller. The pending actor input still consumes the click without producing `SKILL_OBJECT_CMD`. Add a native command producer and verify it through the controller and wire sender, keeping the no-actor path and the player route covered.
+With the C++ controller introduced by `a40a4c01`, the pending actor input queues `SKILL_OBJECT_CMD` on the owned companion. Shift uses the reserved command queue. The command carries the selected level and actor GID independently of the player's pending cursor state. If the companion actor is unavailable, the click is still consumed.
+
+`PendingCompanionActorSkillReplay` verifies an immediate mercenary command and a reserved homunculus command through the production controller, each producing one 10-byte `0438` request. It also checks the no-actor and ordinary player paths. Six focused application checks and 473 standalone checks passed. The selected rAthena packet registration is `clif_packetdb.hpp:1146-1152`. Native ground commands and the selected mercenary skill IDs 8238 through 8241 remain open.
 
 The selected `Ref/GameMode.cpp` actor pick handlers intercept homunculus skill IDs 8000 through 8016 when the homunculus is alive, and mercenary skill IDs 8200 through 8237 when the mercenary is alive and the actor attack gate permits the branch. They send AI command 7 only when the companion actor and Lua VM are available. The branch consumes the click even when either is unavailable. See object pick around 6277 and 6370, monster pick around 14368 and 14458, and PC pick around 15153 and 15249. The selected executable uses the inactive VM described in the companion identity evidence.
 

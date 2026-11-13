@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Native companion actor skills (2026-11-13)**. PK28.03 replay covers immediate and reserved actor skill commands through the C++ controller and selected `0438` sender. Ground commands and live validation remain open. [Evidence](evidence/PK28-pending-companion-actor-skills.md)
+
 **Native companion checkpoint (2026-11-13)**. PK29.02 replay covers contract retirement and selected `029B` and `02A2` stat updates. Reserved ground orders preserve the current target. Six focused application checks and 473 standalone checks passed. Native pending skill dispatch and live contract verification remain open. [Evidence](evidence/PK29.02-mercenary-contract-end.md)
 
 **Selected map property verification (2026-11-11)**. PK19 covers the active `0199` and `01D6` layouts, world lifetime, gameplay rules, and recovery and siege presentation. The `02E7` compatibility receiver has synthetic replay, and the newer `099B` layout is inactive for the selected profile. Independent review and live verification remain open. [Evidence](evidence/PK19.04-map-properties-verification.md)

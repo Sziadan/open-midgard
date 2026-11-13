@@ -2,6 +2,7 @@
 #include "GronPacket.h"
 #include "MapSendProfile.h"
 #include "Packet.h"
+#include "companion_ai/CompanionAiController.h"
 #include "core/ClientInfoLocale.h"
 #include "core/Globals.h"
 #include "core/SettingsIni.h"
@@ -3161,6 +3162,48 @@ void PendingCompanionActorSkillReplay()
 
     target.m_isPc = 0;
     target.m_job = 1002;
+    target.m_stateId = companion_ai::MOTION_STAND;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    const auto oldHomunGid = g_session.m_homunGID;
+    const auto oldMercGid = g_session.m_merGID;
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameActor homunculus;
+    homunculus.m_gid = 0xf1000041;
+    homunculus.m_stateId = companion_ai::MOTION_STAND;
+    CGameActor mercenary;
+    mercenary.m_gid = 0xf1000042;
+    mercenary.m_stateId = companion_ai::MOTION_STAND;
+    g_session.m_homunGID = homunculus.m_gid;
+    g_session.m_merGID = mercenary.m_gid;
+    world.RegisterActor(&target);
+    world.RegisterActor(&homunculus);
+    world.RegisterActor(&mercenary);
+
+    const auto requireCompanionSkill = [&](CGameActor& caster, int skill, u8 skillLow, u8 skillHigh, bool reserved) {
+        mode.m_skillUseInfo = {skill, 3, 1, 2};
+        Require(ReplayTrySourceSkillOnActor(mode, &target, reserved, false, false) && player.commands.empty(),
+            "active companion skill fell through to the player");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+            "companion skill bypassed the native controller");
+        mode.m_skillUseInfo = {};
+        companion_ai::TickOwnedCompanionActor(caster);
+        companion_ai::TickOwnedCompanionActor(caster);
+        if (reserved) companion_ai::TickOwnedCompanionActor(caster);
+        Require(peer.ReceiveExact(10) == std::vector<u8>{0x38, 0x04, 3, 0, skillLow, skillHigh,
+            0x78, 0x56, 0x34, 0x12}, "native companion skill emitted an unexpected target request");
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+            "companion skill dispatch emitted an extra request");
+    };
+    requireCompanionSkill(homunculus, 8004, 0x44, 0x1f, true);
+    requireCompanionSkill(mercenary, 8201, 0x09, 0x20, false);
+
+    world.UnregisterActor(&target);
+    world.UnregisterActor(&homunculus);
+    world.UnregisterActor(&mercenary);
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    g_session.m_homunGID = oldHomunGid;
+    g_session.m_merGID = oldMercGid;
     mode.m_skillUseInfo = {5, 1, 10, 2};
     Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false)
         && player.commands == std::vector<int>{41, 90},

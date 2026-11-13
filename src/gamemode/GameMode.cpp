@@ -7245,9 +7245,16 @@ bool TryRequestSourceSkillOnActor(CGameMode& mode,CGameActor* target,bool shift,
             if (!homunculusSkill && g_session.m_merStatus.alive)
                 g_session.m_merTarget.SelectActor(target->m_gid, shift);
         }
-        // Selected companion actor-skill branches consume the click even
-        // when their AI actor or Lua VM is unavailable.
-        if (homunculusSkill || mercenarySkill) return true;
+        if (homunculusSkill || mercenarySkill) {
+            companion_ai::Msg2Ai command;
+            command.command = companion_ai::SKILL_OBJECT_CMD;
+            command.skillId = skillId;
+            command.skillLevel = mode.m_skillUseInfo.level;
+            command.targetId = target == player ? ResolveSelfSkillTargetId() : target->m_gid;
+            companion_ai::Runtime::QueueCommand(homunculusSkill ? companion_ai::Kind::Homunculus
+                : companion_ai::Kind::Mercenary, command, shift);
+            return true;
+        }
     }
     bool eligible=false;
     switch(kind){
