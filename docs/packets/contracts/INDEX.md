@@ -1,5 +1,7 @@
 # Packet contract index
 
+[PK36.STORAGE-PASSWORD](../evidence/PK36.01-storage-password-applicability.md) records the selected map packet layouts and the inactive server challenge flow. Historical variants and independent review remain open.
+
 [PK09 room extension](../evidence/PK09.21-room.md) records reviewed reception, manager5, room controls/geometry and server-echo bubble ownership. [Visible title/join/password](../evidence/PK09.21-entry.md) now has managed/native/Qt evidence. Management and whisper flows remain open under PK09.21.
 
 [PK37.NPC-TRANSACTIONS](PK37.NPC-TRANSACTIONS.md) records strict selected sends, signed lengths, quote/stock identity, local cancel, FIFO receipts and native/Qt count lifetimes under PK37.09. Broader server eligibility and independent PK48 remain open.

@@ -1294,9 +1294,9 @@
       "commit_subject": "packet(PK35.05): verify rendered crafting choices"
     },
     "PK36.01": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK36.01-storage-password-applicability.md"],
+      "commit_subject": "packet(PK36.01): trace inactive storage password flow"
     },
     "PK36.02": {
       "status": "NOT_STARTED",

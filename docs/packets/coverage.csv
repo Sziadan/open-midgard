@@ -463,9 +463,9 @@ AUDIT-0x0236,0x0236,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x0237,0x0237,map,C2S,PK39,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0238,0x0238,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0239,0x0239,map,S2C,PK28,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x023A,0x023A,map,S2C,PK36,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x023B,0x023B,map,C2S,PK36,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x023C,0x023C,map,S2C,PK36,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x023A,0x023A,map,S2C,PK36,PK01;PK02;PK47;PK48;PK45,Challenge emitter has no caller in the selected source. See PK36.01-storage-password-applicability.md.,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK36.STORAGE-PASSWORD
+AUDIT-0x023B,0x023B,map,C2S,PK36,PK01;PK02;PK47;PK48;PK46,Registered clif_parse_StoragePassword parser has an empty body. See PK36.01-storage-password-applicability.md.,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK36.STORAGE-PASSWORD
+AUDIT-0x023C,0x023C,map,S2C,PK36,PK01;PK02;PK47;PK48;PK45,Result emitter has no caller in the selected source. See PK36.01-storage-password-applicability.md.,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK36.STORAGE-PASSWORD
 AUDIT-0x023D,0x023D,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x023E,0x023E,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x023F,0x023F,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

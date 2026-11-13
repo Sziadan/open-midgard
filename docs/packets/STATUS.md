@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Storage password packets**. PK36.01 records the registered layouts and classifies the challenge flow as inactive in the selected server source. PK46 and PK47 carry that finding while review of other profiles remains open. [Evidence](evidence/PK36.01-storage-password-applicability.md)
+
 **Relationship packets**. PK30.04 replays the job and skill updates after adoption and verifies both candidate prompts and parent-menu eligibility in native and Qt. Independent review and live verification remain open. [Evidence](evidence/PK30.01-relationship-wire.md)
 
 **Social packets**. PK16.04 reviews the selected privacy and social paths and verifies equipment lookup refusal. PK34 validates and replaces friend snapshots atomically. Independent review and live verification remain open. [Verification evidence](evidence/PK16.04-verification-boundary.md)
