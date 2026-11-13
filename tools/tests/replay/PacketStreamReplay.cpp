@@ -4584,6 +4584,19 @@ void PendingCompanionActorSkillReplay()
     tickCompanion(mercenary, 1200);
     Require(peer.ReceiveExact(6) == followRequest, "manual follow did not retry after its interval");
 
+    mercenary.m_stateId = companion_ai::MOTION_ATTACK;
+    tickCompanion(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "forced follow bypassed throttling during an attack animation");
+    tickCompanion(mercenary, 1200);
+    Require(peer.ReceiveExact(6) == followRequest,
+        "forced follow stopped retrying when the companion was attacking instead of walking");
+    mercenary.m_stateId = companion_ai::MOTION_MOVE;
+    tickCompanion(mercenary, 1200);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "forced follow resent while walking toward the unchanged owner position");
+    mercenary.m_stateId = companion_ai::MOTION_STAND;
+
     world.m_player = nullptr;
     orderFollow(companion_ai::Kind::Mercenary, false); // Toggle off.
     tickCompanion(mercenary);

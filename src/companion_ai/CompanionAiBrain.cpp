@@ -469,7 +469,7 @@ void Brain::OnFOLLOW_CMD_ST()
         return;
     }
 
-    if (m_runtime.GetMotion(m_myId) == MOTION_STAND || !m_followDestination.valid()
+    if (m_runtime.GetMotion(m_myId) != MOTION_MOVE || !m_followDestination.valid()
         || m_runtime.GetDistance(owner.x, owner.y, m_followDestination.x, m_followDestination.y) > kFollowDistance) {
         RequestFollow(owner);
     }
