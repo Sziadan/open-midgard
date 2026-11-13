@@ -871,7 +871,6 @@ bool BuildActiveUseSkillToIdPacket(u16 skillId,
         FillPacketPadding(packet.padding1, static_cast<int>(sizeof(packet.padding1)));
         FillPacketPadding(packet.padding2, static_cast<int>(sizeof(packet.padding2)));
         packet.TargetGID = targetGid;
-        FillPacketPadding(&packet.padding3, 1);
         std::memcpy(outBuffer, &packet, sizeof(packet));
         *outPacketLength = static_cast<int>(sizeof(packet));
         return true;

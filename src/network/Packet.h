@@ -435,13 +435,12 @@ struct PACKET_CZ_ACTION_REQUEST2 {
 
 struct PACKET_CZ_USESKILLTOID_PACKETVER22 {
     u16 PacketType;    // 0x0072 for packet_ver 22
-    u8  padding0[3];
+    u8  padding0[4];
     u16 SkillLevel;
     u8  padding1[2];
     u16 SkillId;
     u8  padding2[9];
     u32 TargetGID;
-    u8  padding3;
 };
 
 struct PACKET_CZ_USESKILLTOID2 {
@@ -798,6 +797,9 @@ static_assert(sizeof(PACKET_CZ_REQNAME_LEGACY) == 6, "PACKET_CZ_REQNAME_LEGACY s
 static_assert(sizeof(PACKET_CZ_ACTION_REQUEST_PACKETVER22) == 19, "PACKET_CZ_ACTION_REQUEST_PACKETVER22 size mismatch");
 static_assert(sizeof(PACKET_CZ_ACTION_REQUEST2) == 7, "PACKET_CZ_ACTION_REQUEST2 size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOID_PACKETVER22) == 25, "PACKET_CZ_USESKILLTOID_PACKETVER22 size mismatch");
+static_assert(offsetof(PACKET_CZ_USESKILLTOID_PACKETVER22, SkillLevel) == 6, "0x0072 skill level offset mismatch");
+static_assert(offsetof(PACKET_CZ_USESKILLTOID_PACKETVER22, SkillId) == 10, "0x0072 skill ID offset mismatch");
+static_assert(offsetof(PACKET_CZ_USESKILLTOID_PACKETVER22, TargetGID) == 21, "0x0072 skill target offset mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOID2) == 10, "PACKET_CZ_USESKILLTOID2 size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOPOS) == 22, "PACKET_CZ_USESKILLTOPOS size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOPOSINFO) == 102, "PACKET_CZ_USESKILLTOPOSINFO size mismatch");

@@ -4120,7 +4120,7 @@ void LocalizedSystemNoticeReplay()
 bool ReplayTrySourceSkillOnActor(CGameMode& mode, CGameActor* target, bool shift, bool alt, bool control);
 bool ReplayTryRequestAttackOnActor(CGameMode& mode, CGameActor* actor, bool shift, bool alt, bool control);
 
-void LockedAttackStopProductionReplay()
+void LockedAttackStopProductionReplay(bool packetVer22 = false)
 {
     SetCase("locked_attack_stop", "PK46.02", "PK46.02-stop-attack-0118",
         "gameplay actor click -> stop attack followed by selected action request");
@@ -4141,24 +4141,34 @@ void LockedAttackStopProductionReplay()
     Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, true)
             && mode.m_lastLockOnMonGid == 0x55, "offline stop replaced the previous target");
     LoopbackPeer peer(*connection);
-    const std::vector<u8> attack{0x37, 0x04, 0x44, 0x33, 0x22, 0x11, 0x07};
+    const std::vector<u8> attack = packetVer22
+        ? std::vector<u8>{0x90, 0x01, 0, 0, 0, 0x44, 0x33, 0x22, 0x11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x07}
+        : std::vector<u8>{0x37, 0x04, 0x44, 0x33, 0x22, 0x11, 0x07};
     std::vector<u8> stopThenAttack{0x18, 0x01};
     stopThenAttack.insert(stopThenAttack.end(), attack.begin(), attack.end());
+    const auto matchesAttack = [&](std::vector<u8> captured, bool stopped) {
+        const size_t offset = stopped ? 2 : 0;
+        if (packetVer22) {
+            std::fill_n(captured.begin() + offset + 2, 3, 0);
+            std::fill_n(captured.begin() + offset + 9, 9, 0);
+        }
+        return captured == (stopped ? stopThenAttack : attack);
+    };
     Require(ReplayTryRequestAttackOnActor(mode, &target, false, true, true)
             && ReplayTryRequestAttackOnActor(mode, &target, true, false, true)
             && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "companion modifier or ineligible attack emitted a player attack");
     Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, false)
-            && peer.ReceiveExact(attack.size()) == attack, "ordinary click changed the attack frame");
+            && matchesAttack(peer.ReceiveExact(attack.size()), false), "ordinary click changed the attack frame");
     Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, true)
-            && peer.ReceiveExact(stopThenAttack.size()) == stopThenAttack
+            && matchesAttack(peer.ReceiveExact(stopThenAttack.size()), true)
             && mode.m_lastLockOnMonGid == target.m_gid, "Ctrl repeat did not stop before attacking");
     g_session.m_isNoCtrl = 1;
     Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, false)
-            && peer.ReceiveExact(stopThenAttack.size()) == stopThenAttack, "no-control repeat omitted the stop frame");
+            && matchesAttack(peer.ReceiveExact(stopThenAttack.size()), true), "no-control repeat omitted the stop frame");
     world.m_isSiegeMode = true;
     Require(ReplayTryRequestAttackOnActor(mode, &target, false, false, true)
-            && peer.ReceiveExact(attack.size()) == attack, "siege click did not preserve the ordinary attack path");
+            && matchesAttack(peer.ReceiveExact(attack.size()), false), "siege click did not preserve the ordinary attack path");
     connection->Disconnect();
     mode.m_world = nullptr;
     g_session.m_isNoCtrl = savedNoCtrl;
@@ -5718,13 +5728,15 @@ void DropItemProductionReplay()
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
-void SkillTargetProductionSendReplay()
+void SkillTargetProductionSendReplay(bool packetVer22 = false)
 {
-    SetCase("skill_target_production_send", "PK46.02", "PK46.02-0438-packetver23-skill-target",
+    const char* fixture = packetVer22 ? "PK46.02-0072-packetver22-skill-target" : "PK46.02-0438-packetver23-skill-target";
+    SetCase("skill_target_production_send", "PK46.02", fixture,
         "SendUseSkillToIdPacket -> BuildActiveUseSkillToIdPacket -> CRagConnection::SendPacket");
     const ro::net::MapGameplaySendProfile& profile = ro::net::GetActiveMapGameplaySendProfile();
-    Require(profile.id == ro::net::MapGameplaySendProfileId::PacketVer23 && profile.useSkillToId == 0x0438,
-        "replay fixture requires the PacketVer23 0x0438 targeted-skill profile");
+    Require(profile.id == (packetVer22 ? ro::net::MapGameplaySendProfileId::PacketVer22
+                                      : ro::net::MapGameplaySendProfileId::PacketVer23)
+        && profile.useSkillToId == (packetVer22 ? 0x0072 : 0x0438), "wrong targeted-skill profile");
 
     CRagConnection* const connection = CRagConnection::instance();
     connection->Disconnect();
@@ -5732,13 +5744,22 @@ void SkillTargetProductionSendReplay()
         "targeted-skill sender reported success without an open connection");
     {
         LoopbackPeer peer(*connection);
-        Require(ReplaySendUseSkillToIdPacket(0x1234, 7, 0x55667788),
+        Require(ReplaySendUseSkillToIdPacket(0x1234, 0x0107, 0x55667788),
             "production targeted-skill sender rejected an open loopback connection");
-        const std::vector<u8> expected{0x38, 0x04, 0x07, 0x00, 0x34, 0x12, 0x88, 0x77, 0x66, 0x55};
+        const std::vector<u8> expected = packetVer22
+            ? std::vector<u8>{0x72, 0, 0, 0, 0, 0, 0x07, 0x01, 0, 0, 0x34, 0x12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x88, 0x77, 0x66, 0x55}
+            : std::vector<u8>{0x38, 0x04, 0x07, 0x01, 0x34, 0x12, 0x88, 0x77, 0x66, 0x55};
         const std::vector<u8> captured = peer.ReceiveExact(expected.size());
-        Require(captured == expected,
-            "production targeted-skill sender did not emit the selected ten-byte 0x0438 frame");
-        std::cout << "{\"case_id\":\"skill_target_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK46.02-0438-packetver23-skill-target\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}\n";
+        auto normalized = captured;
+        if (packetVer22) {
+            std::fill_n(normalized.begin() + 2, 4, 0);
+            std::fill_n(normalized.begin() + 8, 2, 0);
+            std::fill_n(normalized.begin() + 12, 9, 0);
+        }
+        Require(normalized == expected && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+            "production targeted-skill frame differs from selected parser offsets or length");
+        std::cout << "{\"case_id\":\"skill_target_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\""
+            << fixture << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"outcome\":\"PASS\"}\n";
     }
     connection->Disconnect();
 }
@@ -8729,6 +8750,12 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--pet-lifecycle-only") {PetLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--world-entry-handoff-only") {ModeLoopHandoffReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--zone-entry-22") {LoginZoneServerNotificationReplay(true);CConnection::Cleanup();return 0;}
+    if (argc > 1 && std::string_view(argv[1]) == "--combat-send-22") {
+        LockedAttackStopProductionReplay(true);
+        SkillTargetProductionSendReplay(true);
+        CConnection::Cleanup();
+        return 0;
+    }
     if(argc>1 && std::string(argv[1])=="--map-cell-load-only") {MapCellLoadLifecycleReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--standing-resurrection-only") {StandingResurrectionReplay();CConnection::Cleanup();return 0;}
     if(argc>1 && std::string(argv[1])=="--siege-emblem-only") {SiegeActorEmblemReplay();CConnection::Cleanup();return 0;}

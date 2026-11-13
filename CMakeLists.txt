@@ -412,6 +412,9 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     add_test(NAME packet_zone_entry_22_checks COMMAND packet_stream_replay_checks --zone-entry-22)
     set_tests_properties(packet_zone_entry_22_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${item_use_22_settings}")
+    add_test(NAME packet_combat_send_22_checks COMMAND packet_stream_replay_checks --combat-send-22)
+    set_tests_properties(packet_combat_send_22_checks PROPERTIES TIMEOUT 30
+        ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${item_use_22_settings}")
     add_test(NAME packet_pet_lifecycle_checks COMMAND packet_stream_replay_checks --pet-lifecycle-only)
     set_tests_properties(packet_pet_lifecycle_checks PROPERTIES TIMEOUT 30
         ENVIRONMENT "OPEN_MIDGARD_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/packet-pet-lifecycle-settings")

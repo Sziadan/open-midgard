@@ -13,7 +13,7 @@ AUDIT-0x006E,0x006E,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Legacy characte
 AUDIT-0x006F,0x006F,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Character deletion identity/layout and server result branches traced in PK44.CHAR-DELETE.md; current client parity and/or scheduled reachability remain open.,UNREVIEWED,PK44.CHAR-DELETE
 AUDIT-0x0070,0x0070,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Character deletion identity/layout and server result branches traced in PK44.CHAR-DELETE.md; current client parity and/or scheduled reachability remain open.,UNREVIEWED,PK44.CHAR-DELETE
 AUDIT-0x0071,0x0071,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
-AUDIT-0x0072,0x0072,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x0072,0x0072,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,PacketVer22 targeted skill captured at selected offsets 6 10 and 21; legacy zone layouts require a different registry,C2S_ONLY,PK46.02-map-skill-target-request-0438
 AUDIT-0x0073,0x0073,map,S2C,PK45,PK01;PK02;PK47;PK48,Client receive handler and packetver23 map-send profile identify 0x0073 as legacy accept-enter; pinned server 20080910 selects 0x02EB,UNREVIEWED,
 AUDIT-0x0074,0x0074,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0075,0x0075,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -32,11 +32,11 @@ AUDIT-0x0081,0x0081,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Login-server se
 AUDIT-0x0082,0x0082,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0083,0x0083,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0084,0x0084,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0085,0x0085,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,Selected eleven-byte direction frame captured with head and body direction at offsets 7 and 10,C2S_ONLY,PK46.02-map-change-direction
+AUDIT-0x0085,0x0085,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected eleven-byte direction frame captured with head and body direction at offsets 7 and 10,C2S_ONLY,PK46.02-map-change-direction
 AUDIT-0x0086,0x0086,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-move-update traces 16-byte S2C client compatibility path; pinned 20080910 server emits 0x02EC instead; historical server mapping open,UNREVIEWED,
 AUDIT-0x0087,0x0087,map,S2C,PK45,PK01;PK02;PK47;PK48,Pinned clif_walkok emits packed 12-byte 0x0087 to SELF; distinct from 0x02EC area movement; replay remains open,UNREVIEWED,
 AUDIT-0x0088,0x0088,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-position-correction traces 10-byte S2C 0x0088 stop-move emitter and AREA route; paired 0x01FF/0x0088 sequence replay remains open,UNREVIEWED,
-AUDIT-0x0089,0x0089,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,Selected eight-byte time request and ordered reply continuation verified in card composition recovery replay,C2S_ONLY,PK46.02-map-time-sync-request
+AUDIT-0x0089,0x0089,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected eight-byte time request and ordered reply continuation verified in card composition recovery replay,C2S_ONLY,PK46.02-map-time-sync-request
 AUDIT-0x008A,0x008A,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.02-actor-action-notify traces legacy 29-byte 0x008A branch below PACKETVER 20071113; pinned 20080910 uses 0x02E1; legacy replay remains open,UNREVIEWED,
 AUDIT-0x008B,0x008B,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x008C,0x008C,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,PK46.02-map-actor-name-request.md: selected modern 11-byte actor-name request carries GID at offset 7 and matches final registry; legacy profile reuses 0x008C for global chat. Name-response lifecycle and replay remain open.,UNREVIEWED,
@@ -53,7 +53,7 @@ AUDIT-0x0097,0x0097,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x0098,0x0098,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0099,0x0099,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x009A,0x009A,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x009B,0x009B,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,PacketVer22 padded zone entry captured from login with selected acceptance and GameMode handoff,C2S_ONLY,PK46.02-map-zone-entry-request
+AUDIT-0x009B,0x009B,map,C2S,PK47,PK01;PK02;PK48;PK46,PacketVer22 padded zone entry captured from login with selected acceptance and GameMode handoff,C2S_ONLY,PK46.02-map-zone-entry-request
 AUDIT-0x009C,0x009C,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-direction traces fixed 9-byte S2C GID/head/body fields and pinned 20080910 emitter; replay remains open,UNREVIEWED,
 AUDIT-0x009D,0x009D,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x009E,0x009E,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -65,7 +65,7 @@ AUDIT-0x00A3,0x00A3,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit findi
 AUDIT-0x00A4,0x00A4,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x00A5,0x00A5,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x00A6,0x00A6,map,unresolved,PK34,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x00A7,0x00A7,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Selected 20080910 server registration clif_parse_WalkToXY and client movement request are traced in PK46.02-map-movement; outbound parser parity belongs to PK46.,Selected eight-byte movement frame captured with packed destination at offset 5,C2S_ONLY,PK46.02-map-movement
+AUDIT-0x00A7,0x00A7,map,C2S,PK46,PK01;PK02;PK47;PK48;PK45,Selected eight-byte movement frame captured with packed destination at offset 5,C2S_ONLY,PK46.02-map-movement
 AUDIT-0x00A8,0x00A8,map,unresolved,PK38,PK01;PK02;PK47;PK48;PK45,Selected clif_useitemack uses 01C8,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x00A9,0x00A9,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected equip request and result captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x00AA,0x00AA,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -172,7 +172,7 @@ AUDIT-0x010F,0x010F,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x0110,0x0110,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0111,0x0111,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0112,0x0112,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0113,0x0113,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,PK46.02-map-ground-skill-request.md: 22-byte serializer offsets match selected clif_parse_UseSkillToPos registry row; client ground-skill path applies range and value guards. Server semantics and replay remain open.,UNREVIEWED,
+AUDIT-0x0113,0x0113,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Selected 22-byte ground skill request captured from player proceed; live skill effects remain open,C2S_ONLY,PK27-ground-proceed
 AUDIT-0x0114,0x0114,map,unresolved,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0115,0x0115,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0116,0x0116,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Selected inventory drop and item lifecycle captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
@@ -296,7 +296,7 @@ AUDIT-0x018C,0x018C,map,S2C,PK26,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x018D,0x018D,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x018E,0x018E,map,C2S,PK35,PK01;PK02;PK47;PK48;PK46;PK38,Selected production recipe and material fields captured,C2S_ONLY,PK46.02-CRAFTING-REQUESTS;PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x018F,0x018F,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x0190,0x0190,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0190,0x0190,map,C2S,PK08,PK01;PK02;PK47;PK48;PK46,PacketVer22 continuous attack captured at selected offsets 5 and 18 with stop-before-repeat ordering,C2S_ONLY,PK46.02-map-action-request
 AUDIT-0x0191,0x0191,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-talkbox-chat-contents traces fixed 86-byte S2C unit ID and 80-byte message field with pinned emitter; text semantics/replay remain open,UNREVIEWED,
 AUDIT-0x0192,0x0192,map,S2C,PK18,PK01;PK02;PK47;PK48;PK45,"Selected 20080910 map-cell emitter and client GAT mutation verified through production framing, pathfinding, map lifecycle replay and native Prontera captures; independent PK48 remains pending",APPLICABLE_AND_FULLY_IMPLEMENTED_VERIFIED,PK18.MAP-CELLS
 AUDIT-0x0193,0x0193,map,C2S,PK47,PK01;PK02;PK48;PK46,Storage-open guard and close request captured,C2S_ONLY,PK46.02-PERSONAL-STORAGE-REQUESTS
@@ -789,9 +789,9 @@ AUDIT-0x0432,0x0432,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x0433,0x0433,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0434,0x0434,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0435,0x0435,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0436,0x0436,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,PacketVer23 compact zone entry captured from login with selected acceptance and GameMode handoff,C2S_ONLY,PK46.02-map-zone-entry-request
-AUDIT-0x0437,0x0437,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,Selected seven-byte attack frame captured from gameplay actor click; sit and stand use the same layout,C2S_ONLY,PK46.02-map-action-request
-AUDIT-0x0438,0x0438,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,PK46.02-map-skill-target-request-0438.md: PacketVer23 emits a 10-byte skill-level/skill-ID/target frame matching selected parser; PacketVer22 instead uses 0x0072 and 25 bytes. Full caller/profile matrix and replay need stronger review.,Selected ten-byte actor skill frame captured with level skill ID and target,C2S_ONLY,PK46.02-map-skill-target-request-0438
+AUDIT-0x0436,0x0436,map,C2S,PK47,PK01;PK02;PK48;PK46,PacketVer23 compact zone entry captured from login with selected acceptance and GameMode handoff,C2S_ONLY,PK46.02-map-zone-entry-request
+AUDIT-0x0437,0x0437,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Selected seven-byte attack frame captured from gameplay actor click; sit and stand use the same layout,C2S_ONLY,PK46.02-map-action-request
+AUDIT-0x0438,0x0438,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Selected ten-byte actor skill frame captured with level skill ID and target,C2S_ONLY,PK46.02-map-skill-target-request-0438
 AUDIT-0x0439,0x0439,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,PacketVer23 item use and result ownership captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x043F,0x043F,map,unresolved,PK22,PK01;PK02;PK47;PK48;PK45,Selected 20080910 emits 0196; timed 043f emitter gated at 20090121; alternate type is declaration only; selected registry absent,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK22.TIMED-STATUS-043F
 AUDIT-0x0440,0x0440,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
