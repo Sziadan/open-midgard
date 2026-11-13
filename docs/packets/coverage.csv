@@ -200,7 +200,7 @@ AUDIT-0x012B,0x012B,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x012C,0x012C,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x012D,0x012D,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x012E,0x012E,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Active and sold-out vending closure captured,C2S_ONLY,PK46.02-VENDING-REQUESTS
-AUDIT-0x012F,0x012F,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x012F,0x012F,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Registered legacy 84-byte vending header. The selected client uses 01B2.,C2S_ONLY,PK46.02-LEGACY-VENDING-OPEN
 AUDIT-0x0130,0x0130,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Vendor board browse and seller ownership captured,C2S_ONLY,PK46.02-VENDING-REQUESTS
 AUDIT-0x0131,0x0131,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0132,0x0132,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

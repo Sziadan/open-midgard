@@ -8465,6 +8465,8 @@ void CloseVendingProductionSendReplay()
     SetCase("close_vending_production_send", "PK46.02", "PK01.02-final-012e-close-vending",
         "Commerce::Action(close vending) -> production CRagConnection::SendPacket");
     const ro::commerce::State savedState = ro::commerce::state;
+    const u32 savedAid = g_session.m_aid;
+    g_session.m_aid = 77;
     ro::commerce::Reset();
     ro::commerce::state.vendingActive = true;
     ro::commerce::state.vendingPending = true;
@@ -8510,6 +8512,9 @@ void CloseVendingProductionSendReplay()
         Require(ro::commerce::Action(offer), "vending setup rejected a valid quantity and price");
         ro::commerce::Command open{};
         open.action = "openVend";
+        open.text = std::string("Shop\0Other", 10);
+        Require(!ro::commerce::Action(open) && !shop.vendingPending,
+            "vending accepted a title that the server would truncate");
         open.text = "Shop";
         Require(ro::commerce::Action(open) && shop.vendingPending && !shop.vendingActive,
             "vending open did not await server confirmation");
@@ -8532,12 +8537,18 @@ void CloseVendingProductionSendReplay()
         dispatch(listing);
         Require(!shop.vendingActive && !shop.vending.visible, "late vending list reopened a canceled shop");
         dispatch({0x2d,1,4,0});
+        auto otherOwner = listing;
+        otherOwner[4] = 78;
+        dispatch(otherOwner);
+        Require(!shop.vendingActive && shop.draft.empty(),
+            "another actor's owner list activated the local shop");
         dispatch(listing);
         dispatch({0x38,1,1});
         Require(shop.vendingActive && shop.vending.visible, "legacy ack changed the newly active shop");
     }
     connection->Disconnect();
     ro::commerce::state = savedState;
+    g_session.m_aid = savedAid;
     std::cout << "{\"case_id\":\"close_vending_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-012e-close-vending\",\"outcome\":\"PASS\",\"assertions\":\"failed send preserves active shop; successful close emits two-byte request and clears local state\"}" << std::endl;
 }
 
@@ -8546,6 +8557,8 @@ void VendingPurchaseProductionSendReplay()
     SetCase("vending_purchase_production_send", "PK46.02", "PK01.02-final-0134-vending-buy",
         "Commerce::Action(buy) -> production CRagConnection::SendPacket");
     const ro::commerce::State savedState = ro::commerce::state;
+    const u32 savedAid = g_session.m_aid;
+    g_session.m_aid = 0x11223346;
     ro::commerce::Reset();
     CGameMode mode;
     CGameModePacketRouter router;
@@ -8625,8 +8638,10 @@ void VendingPurchaseProductionSendReplay()
 
         auto ownerListing = listing;
         ownerListing[0] = 0x36;
+        ownerListing[4] = 0x46;
         std::swap(ownerListing[12],ownerListing[14]);
         dispatch(ownerListing);
+        Require(shop.draft.size() == 1, "local owner list did not populate vending stock");
         dispatch({0x37,1,101,0,8,0});
         Require(ro::commerce::state.draft.front().amount==7, "oversized seller report changed stock");
         dispatch({0x37,1,101,0,2,0});
@@ -8638,6 +8653,7 @@ void VendingPurchaseProductionSendReplay()
     }
     connection->Disconnect();
     ro::commerce::state = savedState;
+    g_session.m_aid = savedAid;
     std::cout << "{\"case_id\":\"vending_purchase_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0134-vending-buy\",\"outcome\":\"PASS\",\"assertions\":\"stock guard enforced; failed send preserves stock; valid purchase emits 12-byte frame without optimistic decrement\"}" << std::endl;
 }
 

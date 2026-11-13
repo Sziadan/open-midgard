@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 classifies legacy vending `012F` as a registered C2S request. The selected client uses `01B2` for opening and setup cancellation. The owner-list handler verifies the seller account ID before updating the local shop. Verify live open, refusal and cancellation. [Vending profile evidence](evidence/PK46.02-map-open-vending-alternate-012F.md)
+
 PK46.02 verifies player emotion `00BF`, local `00C0`, and the matching skill-failure reply. A failed socket send leaves the cooldown available, and player input recovers after an unanswered request. Check visible sprite effects and server skill, dice and rate-limit policy live. [Player emotion evidence](evidence/PK46.02-map-emotion-request.md)
 
 PK32.05 maps the six selected legacy mail requests to production replay and adds a focused Vulkan/Qt composer check for item drag, quantity entry and removal. Continue deployed inbox interaction and character-server verification, including capacity and refunds. [Mail verification](work-items/PK32.05.md)

@@ -3,6 +3,8 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
 {
     using namespace ro::commerce;
     struct ScaleRestore { int value=GetConfiguredUiScalePercent();~ScaleRestore(){SetRuntimeUiScalePercent(value);} } scaleRestore;
+    struct AidRestore { u32 value=g_session.m_aid; ~AidRestore(){g_session.m_aid=value;} } aidRestore;
+    g_session.m_aid=0x12345679;
     SetRuntimeUiScalePercent(100);
     Require(QDir().mkpath(output),"create commerce detail output directory failed");
     if(g_windowMgr.m_itemWnd)g_windowMgr.m_itemWnd->SetShow(1);
@@ -20,7 +22,8 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     const auto write16=[](std::vector<u8>& p,int at,u32 v){p[at]=u8(v);p[at+1]=u8(v>>8);};
     const auto write32=[](std::vector<u8>& p,int at,u32 v){for(int k=0;k<4;++k)p[at+k]=u8(v>>(8*k));};
     const auto offerPacket=[&](u16 opcode,u16 id,u16 index,u32 amount,bool identified) {
-        std::vector<u8> p(30);write16(p,0,opcode);write16(p,2,u32(p.size()));write32(p,4,0x12345678);
+        std::vector<u8> p(30);write16(p,0,opcode);write16(p,2,u32(p.size()));
+        write32(p,4,opcode==0x136 ? g_session.m_aid : 0x12345678);
         write32(p,8,900); // unit price
         if(opcode==0x136){write16(p,12,index);write16(p,14,amount);}
         else {write16(p,12,amount);write16(p,14,index);}
@@ -148,7 +151,7 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     sync();
     const auto item = [&](const QString& name) {
         auto* target = Find(view.rootObject(),name);
-        Require(target && target->isVisible(), "expected a visible trade item");
+        Require(target && target->isVisible(), ("expected visible trade item: " + name.toStdString()).c_str());
         return target;
     };
     auto* firstOffer = item("commerceTradeItem_remote_0");

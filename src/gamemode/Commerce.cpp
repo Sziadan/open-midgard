@@ -303,6 +303,7 @@ bool Receive(CGameMode&,const PacketView& v){
         const u32 owner = read(p+4,4);
         if(!owner)return false;
         const bool ownShop = op==0x136;
+        if (ownShop && owner != g_session.m_aid) return true;
         if(!ownShop && owner!=state.requestedSellerId)return true;
         std::array<bool,item_snapshot::kInventorySlots> seen{};
         std::vector<Offer> offers;
@@ -684,7 +685,8 @@ bool Action(const Command& c){
         if(item==state.cartItems.end()||!c.amount||c.amount>u32(item->second.m_num)||c.amount>32767||!c.price||c.price>1000000000)return false;found->amount=c.amount;found->price=c.price;return true;
     }
     if(c.action=="openVend"){
-        if(!state.vending.visible||busy()||state.draft.empty()||state.draft.size()>state.vendingSlots||c.text.empty()||c.text.size()>79)return false;
+        if(!state.vending.visible||busy()||state.draft.empty()||state.draft.size()>state.vendingSlots
+            ||c.text.empty()||c.text.size()>79||c.text.find('\0')!=std::string::npos)return false;
         auto p=packet(0x1b2,85+int(state.draft.size())*8);put(p,2,u32(p.size()));std::copy(c.text.begin(),c.text.end(),p.begin()+4);p[84]=1;
         for(size_t k=0;k<state.draft.size();++k){const auto& o=state.draft[k];const auto i=state.cartItems.find(o.item.m_itemIndex);if(i==state.cartItems.end()||!o.amount||o.amount>u32(i->second.m_num)||!o.price)return false;put(p,85+int(k)*8,o.item.m_itemIndex);put(p,87+int(k)*8,o.amount);put(p,89+int(k)*8,o.price,4);}
         if(!send(p))return false;state.vendingPending=true;state.shopTitle=c.text;state.status="Opening shop; waiting for server confirmation.";return true;
