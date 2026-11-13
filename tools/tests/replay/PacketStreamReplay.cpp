@@ -7400,6 +7400,7 @@ int main(int argc,char** argv){try{
         ChatNoticeRoutingReplay();
         ChatNoticeProducerReplay();
         AuctionResultNoticeReplay();
+        AuctionSearchSnapshotReplay();
         MvpRewardReplay();
         LegacyRankingReplay();
         PvpRankReplay();
@@ -7600,6 +7601,7 @@ int main(int argc,char** argv){try{
     ChatNoticeRoutingReplay();
     ChatNoticeProducerReplay();
     AuctionResultNoticeReplay();
+    AuctionSearchSnapshotReplay();
     SpecialItemObtainReplay();
     MvpRewardReplay();
     LegacyRankingReplay();

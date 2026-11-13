@@ -278,7 +278,9 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     for (const u16 opcode : {0x021B, 0x021C, 0x0224, 0x0236}) SetPacketSize(opcode, 10);
     SetPacketSize(0x0223, 8);               // ZC_ACK_WEAPONREFINE
     SetPacketSize(0x0250, 3);               // ZC_AUCTION_RESULT
+    SetPacketSize(0x0252, kVariablePacketSize); // ZC_AUCTION_ITEM_REQ_SEARCH
     SetPacketSize(0x025D, 4);               // Selected server emits close ACK under the request opcode.
+    SetPacketSize(0x025F, 6);               // ZC_AUCTION_WINDOWS
     SetPacketSize(0x025A, kVariablePacketSize); // ZC_MAKINGITEM_LIST
     SetPacketSize(0x025B, 6);               // CZ_REQ_MAKINGITEM
     SetPacketSize(0x0193, 2);

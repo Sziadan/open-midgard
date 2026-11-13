@@ -4077,6 +4077,7 @@ bool IsSameMapAlreadyLoaded(const CGameMode& mode, const MapChangeInfo& info)
 void PrepareSameMapWarpReuse(CGameMode& mode)
 {
     mode.m_pvpRankStartTick = 0;
+    mode.m_auctionSearch = {};
     mode.m_recallPartnerName.clear();
     mode.SendMsg(78, 0, 0, 0);
     g_session.m_petStatus.ResetMapState();
@@ -8769,6 +8770,53 @@ void HandleMvpReward(CGameMode& mode, const PacketView& packet)
     RecordChat(mode, message, dropped ? 0x00FF0000u : 0x0000FFFFu, kChatChannelSystem);
 }
 
+void HandleAuctionWindow(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 6) return;
+    const u32 type = ReadLE32(packet.data + 2);
+    if (type > 1) return;
+    mode.m_auctionSearch = {};
+    mode.m_auctionSearch.open = type == 0;
+}
+
+void HandleAuctionSearchResults(CGameMode& mode, const PacketView& packet)
+{
+    constexpr std::size_t headerSize = 12;
+    constexpr std::size_t rowSize = 83;
+    if (!mode.m_auctionSearch.open || !packet.data || packet.packetLength < headerSize
+        || ReadLE16(packet.data + 2) != packet.packetLength) return;
+
+    const std::size_t payloadSize = packet.packetLength - headerSize;
+    const u32 count = ReadLE32(packet.data + 8);
+    if (payloadSize % rowSize != 0 || count != payloadSize / rowSize) return;
+
+    std::vector<CGameMode::AuctionSearchRow> rows;
+    rows.reserve(count);
+    for (std::size_t i = 0; i < count; ++i) {
+        const std::size_t offset = headerSize + i * rowSize;
+        const u8* data = packet.data + offset;
+        auto& row = rows.emplace_back();
+        row.auctionId = ReadLE32(data);
+        row.seller = ExtractFixedPacketString(packet, offset + 4, 24);
+        row.itemId = ReadLE16(data + 28);
+        row.itemType = ReadLE32(data + 30);
+        row.amount = ReadLE16(data + 34);
+        row.identified = data[36] != 0;
+        row.damaged = data[37] != 0;
+        row.refine = data[38];
+        for (std::size_t card = 0; card < row.cards.size(); ++card) {
+            row.cards[card] = ReadLE16(data + 39 + 2 * card);
+        }
+        row.price = ReadLE32(data + 47);
+        row.buyNow = ReadLE32(data + 51);
+        row.buyer = ExtractFixedPacketString(packet, offset + 55, 24);
+        row.expiresAt = ReadLE32(data + 79);
+    }
+
+    mode.m_auctionSearch.pages = ReadLE32(packet.data + 4);
+    mode.m_auctionSearch.rows = std::move(rows);
+}
+
 void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data) return;
@@ -10414,7 +10462,9 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     for (const u16 opcode : {0x010A, 0x010B, 0x010C, 0x010D}) router.Register(opcode, HandleMvpReward);
     router.Register(0x019A, HandlePvpRank);
     router.Register(0x0250, HandleAuctionResultNotice);
+    router.Register(0x0252, HandleAuctionSearchResults);
     router.Register(0x025D, HandleAuctionResultNotice);
+    router.Register(0x025F, HandleAuctionWindow);
     router.Register(0x0210, HandlePvpPoints);
     for (const u16 opcode : {0x0219, 0x021A, 0x021B, 0x021C, 0x0224, 0x0226, 0x0236, 0x0238}) {
         router.Register(opcode, HandleLegacyRanking);

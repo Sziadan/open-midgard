@@ -337,6 +337,26 @@ public:
     u32 m_lastCouplePacketGid;
     std::string m_recallPartnerName;
     u32 m_pvpRankStartTick = 0;
+    struct AuctionSearchRow {
+        u32 auctionId = 0;
+        std::string seller;
+        std::string buyer;
+        u16 itemId = 0;
+        u32 itemType = 0;
+        u16 amount = 0;
+        bool identified = false;
+        bool damaged = false;
+        u8 refine = 0;
+        std::array<u16, 4> cards{};
+        u32 price = 0;
+        u32 buyNow = 0;
+        u32 expiresAt = 0;
+    };
+    struct AuctionSearchState {
+        bool open = false;
+        u32 pages = 0;
+        std::vector<AuctionSearchRow> rows;
+    } m_auctionSearch;
     struct AdoptionInvitation {
         u32 parent = 0;
         u32 partner = 0;

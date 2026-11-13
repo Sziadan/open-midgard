@@ -1380,8 +1380,8 @@
     },
     "PK40.02": {
       "status": "IN_PROGRESS",
-      "evidence": ["docs/packets/evidence/PK40.01-selected-commerce-inventory.md", "docs/packets/evidence/PK40.02-auction-result-notices.md"],
-      "commit_subject": "packet(PK40.02): receive auction results and four-byte close replies"
+      "evidence": ["docs/packets/evidence/PK40.01-selected-commerce-inventory.md", "docs/packets/evidence/PK40.02-auction-result-notices.md", "docs/packets/evidence/PK40.02-auction-search-snapshot.md"],
+      "commit_subject": "packet(PK40.02): validate auction search snapshots"
     },
     "PK40.03": {
       "status": "NOT_STARTED",

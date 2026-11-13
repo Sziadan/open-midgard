@@ -4097,3 +4097,5 @@ PK40.01 traces legacy auction and NPC cash-shop packets, the direction-specific 
 PK40.04 classifies all ten bank request and reply rows as inactive for MAIN 20080910 based on the 20130717 guards. [Evidence](evidence/PK40.01-selected-commerce-inventory.md)
 
 PK40.02 adds `0250` and inbound `025D` framing and source result notices. Production replay checks all 13 recognized results and alignment into the following frame. [Evidence](evidence/PK40.02-auction-result-notices.md)
+
+PK40.02 validates auction search pages and retires them on server close or map change. The selected source uses search type 6 for own sales, which affects how the initial general browse should be wired. [Evidence](evidence/PK40.02-auction-search-snapshot.md)

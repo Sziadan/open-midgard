@@ -47,6 +47,61 @@ void MannerAndColoredNoticeReplay()
     world.UnregisterActor(&actor);
 }
 
+void AuctionSearchSnapshotReplay()
+{
+    SetCase("auction_search_snapshot", "PK40.02", "selected-0252-025f-auction-search", "map packet loop -> auction page");
+    CGameMode mode;
+    TestConnection connection;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes, int count = 1) {
+        Require(connection.QueueBytes(bytes), "could not queue auction page fixture");
+        Require(ProcessGameModePacketLoop(mode, connection, router, count).packetsDispatched == count
+            && !connection.BufferedBytes(), "auction page fixture lost packet alignment");
+    };
+    std::vector<u8> page(95);
+    const std::array<u8, 12> header{0x52,2,95,0, 3,0,0,0, 1,0,0,0};
+    std::copy(header.begin(), header.end(), page.begin());
+    const std::string seller = "ABCDEFGHIJKLMNOPQRSTUVWX";
+    std::copy(seller.begin(), seller.end(), page.begin() + 16);
+    const std::array<u8, 27> item{0xf5,1, 4,3,2,1, 1,0, 1,1,7,
+        1,0,2,0,3,0,4,0, 0x78,0x56,0x34,0x12, 0x21,0x43,0x65,0x87};
+    std::copy(item.begin(), item.end(), page.begin() + 40);
+    const std::string buyer = "buyer";
+    std::copy(buyer.begin(), buyer.end(), page.begin() + 67);
+    page[12] = 0x42;
+    page[94] = 0x80;
+
+    dispatch(page);
+    Require(mode.m_auctionSearch.rows.empty(), "auction results opened a closed search session");
+    dispatch({0x5f,2,0,0,0,0});
+    Require(mode.m_auctionSearch.open, "server open did not establish auction search ownership");
+    dispatch(page);
+    const auto& state = mode.m_auctionSearch;
+    Require(state.pages == 3 && state.rows.size() == 1, "auction snapshot lost its row count or pages");
+    const auto& row = state.rows.front();
+    Require(row.auctionId == 0x42 && row.seller == seller && row.buyer == buyer && row.itemId == 501
+        && row.itemType == 0x01020304 && row.amount == 1 && row.identified && row.damaged && row.refine == 7
+        && row.cards == std::array<u16,4>{1,2,3,4} && row.price == 0x12345678u
+        && row.buyNow == 0x87654321u && row.expiresAt == 0x80000000u, "auction row fields or widths differ");
+
+    auto malformed = page;
+    malformed[8] = 2;
+    dispatch(malformed);
+    malformed = page;
+    malformed.pop_back();
+    --malformed[2];
+    dispatch(malformed);
+    Require(state.pages == 3 && state.rows.size() == 1 && state.rows.front().auctionId == 0x42,
+        "malformed auction pages replaced the previous snapshot");
+    dispatch({0x52,2,12,0, 1,0,0,0, 0,0,0,0});
+    Require(state.pages == 1 && state.rows.empty(), "empty auction page retained old rows");
+    dispatch(page);
+    dispatch({0x5f,2,1,0,0,0});
+    dispatch(page);
+    Require(!state.open && !state.pages && state.rows.empty(), "auction close retained or accepted late results");
+}
+
 void AuctionResultNoticeReplay()
 {
     SetCase("auction_results", "PK40.02", "selected-0250-025d-auction-notices", "map packet loop -> auction chat");
