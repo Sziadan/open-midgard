@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK28.04 verifies companion list resizing and geometry restoration, including row and scrollbar updates. Continue with the companion-only skin and verify how the title mini control is routed before implementing it. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
+PK28.04 now uses shared bitmap geometry for the native and Qt companion list skin. The reference Mini and Base buttons have no list action, while Close still deletes the window. Paired synthetic bitmap captures passed. Continue with the companion skill row level controls in `Ref/UIItemWnd.cpp` actions `0xBB–0xC8`, including family-specific saved use level and bounds. Preserve the player skill tree window. [Companion list evidence](evidence/PK28-companion-skill-lists.md)
 
 PK29.04 replay verifies same-GID mercenary refresh, replacement cleanup, actor entry after identity, and companion window cleanup on same-map warp. The selected server uses `029D` for refresh. `029E` is registered without an active sender. Live re-entry and independent review remain open. [Mercenary refresh evidence](evidence/PK29.04-mercenary-refresh.md) and [map reset evidence](evidence/PK28.03-companion-map-reset.md)
 

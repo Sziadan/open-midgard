@@ -18,12 +18,44 @@ Rectangle {
         color: "#dee6f1"
     }
 
+    Repeater {
+        model: window.list.skin
+        delegate: Image {
+            required property var modelData
+            x: modelData.x
+            y: modelData.y
+            width: modelData.width
+            height: modelData.height
+            z: modelData.control ? 1 : 0
+            source: modelData.art
+            smooth: false
+        }
+    }
+
     Text {
         x: 16
         y: 2
         text: window.list.title
         font.pixelSize: 12
         textFormat: Text.PlainText
+    }
+
+    Image {
+        x: 3
+        y: 3
+        width: 11
+        height: 11
+        source: window.list.base
+        smooth: false
+    }
+
+    Image {
+        x: window.width - 28
+        y: 3
+        width: 11
+        height: 11
+        source: window.list.mini
+        smooth: false
     }
 
     Image {
@@ -52,7 +84,14 @@ Rectangle {
             y: modelData.y
             width: window.width - 4
             height: 32
-            color: modelData.selected ? "#e1ebfc" : "white"
+            color: "transparent"
+            Rectangle {
+                visible: row.modelData.selected
+                x: 18
+                width: window.width - 35
+                height: parent.height
+                color: "#e1ebfc"
+            }
             Image {
                 x: 42
                 y: 4
@@ -142,4 +181,5 @@ Rectangle {
             color: "#a4adbd"
         }
     }
+
 }

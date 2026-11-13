@@ -3094,6 +3094,12 @@ void CompanionSkillListReplay()
     homun->OnWheel(1);
     homun->Move(10, 10);
     merc->Move(310, 10);
+    const int miniX = homun->m_x + homun->m_w - 25;
+    const int miniY = homun->m_y + 5;
+    g_windowMgr.OnLBtnDown(miniX, miniY);
+    g_windowMgr.OnLBtnUp(miniX, miniY);
+    Require(g_windowMgr.m_homunSkillListWnd == homun && homun->m_h == 120,
+        "companion list mini button changed the window despite having no reference action");
     const int scrollX = homun->m_x + homun->m_w - 8;
     const int scrollDown = homun->m_y + homun->m_h - 29;
     g_windowMgr.OnLBtnDown(scrollX, scrollDown);

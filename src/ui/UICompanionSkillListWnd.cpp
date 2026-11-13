@@ -19,6 +19,8 @@ constexpr int kScrollWidth = 15;
 constexpr int kScrollTop = 14;
 constexpr int kResizeGrip = 15;
 constexpr int kClose = 135;
+constexpr int kBase = 134;
+constexpr int kMini = 136;
 constexpr int kUpgradeX = 78;
 constexpr int kUpgradeYOffset = 4;
 constexpr int kUpgradeSize = 24;
@@ -27,7 +29,11 @@ constexpr int kUpgradeSize = 24;
 UICompanionSkillListWnd::UICompanionSkillListWnd(int windowId)
     : m_family(windowId == UIWindowMgr::WID_HOMUNSKILLLISTWND ? 1 : 2),
       m_close(new UIFriendOptionButton(kClose, "basic_interface\\sys_close_off.bmp",
-          "basic_interface\\sys_close_on.bmp", "basic_interface\\sys_close_on.bmp", 11, 11))
+          "basic_interface\\sys_close_on.bmp", "basic_interface\\sys_close_on.bmp", 11, 11)),
+      m_base(new UIFriendOptionButton(kBase, "basic_interface\\sys_base_off.bmp",
+          "basic_interface\\sys_base_on.bmp", "basic_interface\\sys_base_on.bmp", 11, 11)),
+      m_mini(new UIFriendOptionButton(kMini, "basic_interface\\sys_mini_off.bmp",
+          "basic_interface\\sys_mini_on.bmp", "basic_interface\\sys_mini_on.bmp", 11, 11))
 {
     m_id = windowId;
     ro::UiMessageStrings strings;
@@ -37,8 +43,23 @@ UICompanionSkillListWnd::UICompanionSkillListWnd(int windowId)
     m_pointsFormat = strings.Get(284, "Skill Point: %d");
     Create(280, 120);
     m_close->Move(m_w - 14, 3);
+    m_base->Move(3, 3);
+    m_mini->Move(m_w - 28, 3);
     m_close->SetToolTip("Close");
     AddChild(m_close);
+    AddChild(m_base);
+    AddChild(m_mini);
+    const std::array<const char*, SkinAssetCount> skinPaths{
+        "basic_interface\\titlebar_left.bmp", "basic_interface\\titlebar_mid.bmp", "basic_interface\\titlebar_right.bmp",
+        "basic_interface\\itemwin_left.bmp", "basic_interface\\itemwin_right.bmp",
+        "basic_interface\\btnbar_left.bmp", "basic_interface\\btnbar_mid.bmp", "basic_interface\\btnbar_right.bmp",
+        "scroll0up.bmp", "scroll0mid.bmp", "scroll0down.bmp",
+        "scroll0bar_up.bmp", "scroll0bar_mid.bmp", "scroll0bar_down.bmp", "btn_resize.bmp"
+    };
+    for (std::size_t i = 0; i < skinPaths.size(); ++i) {
+        m_skin[i].pixels = LoadChatRoomSkinBitmap(skinPaths[i], i >= ScrollUp);
+        m_skin[i].uri = ChatRoomBitmapUri(m_skin[i].pixels);
+    }
     if (m_family == 1) {
         const char* paths[] = {"basic_interface\\skill_up_a.bmp", "basic_interface\\skill_up_c.bmp"};
         for (std::size_t i = 0; i < m_upgradeArt.size(); ++i) {
@@ -78,6 +99,48 @@ void UICompanionSkillListWnd::ScrollBy(int rows)
     const int maxOffset = MaxOffset();
     m_offset = std::clamp(std::min(m_offset, maxOffset) + rows, 0, maxOffset);
     Invalidate();
+}
+
+std::vector<UICompanionSkillListWnd::SkinPiece> UICompanionSkillListWnd::GetSkinPieces() const
+{
+    std::vector<SkinPiece> pieces;
+    const auto add = [&](SkinAsset asset, int x, int y, int width, int height) {
+        if (m_skin[asset].pixels.IsValid() && width > 0 && height > 0)
+            pieces.push_back({{x, y, x + width, y + height}, &m_skin[asset], asset >= ScrollUp});
+    };
+    const auto addBar = [&](SkinAsset left, SkinAsset middle, SkinAsset right, int y, int height) {
+        if (!m_skin[left].pixels.IsValid() || !m_skin[middle].pixels.IsValid() || !m_skin[right].pixels.IsValid()) return;
+        const int start = m_skin[left].pixels.width;
+        const int end = m_w - m_skin[right].pixels.width;
+        add(left, 0, y, start, height);
+        const int step = m_skin[middle].pixels.width;
+        for (int x = start; x < end; x += step) add(middle, x, y, std::min(step, end - x), height);
+        add(right, end, y, m_w - end, height);
+    };
+    addBar(TitleLeft, TitleMiddle, TitleRight, 0, kTitleHeight);
+    for (const SkinAsset side : {SideLeft, SideRight}) {
+        const auto& art = m_skin[side].pixels;
+        if (!art.IsValid()) continue;
+        const int x = side == SideLeft ? 0 : m_w - art.width;
+        const int end = m_h - 21;
+        for (int y = kTitleHeight; y < end; y += art.height)
+            add(side, x, y, art.width, std::min(art.height, end - y));
+    }
+    addBar(FooterLeft, FooterMiddle, FooterRight, m_h - 21, 21);
+    const RECT thumb = GetScrollThumb();
+    if (thumb.bottom > thumb.top) {
+        const int x = m_w - kScrollWidth;
+        const int trackHeight = m_h - 38 - 2 * kScrollWidth;
+        add(ScrollUp, x, kScrollTop, kScrollWidth, kScrollWidth);
+        add(ScrollTrack, x, kScrollTop + kScrollWidth, kScrollWidth, trackHeight);
+        add(ScrollDown, x, kScrollTop + kScrollWidth + trackHeight, kScrollWidth, kScrollWidth);
+        const int cap = std::min(4, static_cast<int>(thumb.bottom - thumb.top) / 2);
+        add(ThumbTop, x, thumb.top, kScrollWidth, cap);
+        add(ThumbMiddle, x, thumb.top + cap, kScrollWidth, thumb.bottom - thumb.top - 2 * cap);
+        add(ThumbBottom, x, thumb.bottom - cap, kScrollWidth, cap);
+    }
+    add(ResizeGrip, m_w - kResizeGrip, m_h - kResizeGrip, kResizeGrip, kResizeGrip);
+    return pieces;
 }
 
 const PLAYER_SKILL_INFO* UICompanionSkillListWnd::SkillAt(int x, int y) const
@@ -156,6 +219,8 @@ std::string UICompanionSkillListWnd::GetFooter() const
 void UICompanionSkillListWnd::Move(int x, int y)
 {
     m_close->Move(x + m_w - 14, y + 3);
+    m_base->Move(x + 3, y + 3);
+    m_mini->Move(x + m_w - 28, y + 3);
     UIFrameWnd::Move(x, y);
 }
 
@@ -165,6 +230,7 @@ void UICompanionSkillListWnd::Resize(int width, int height)
     const int snappedHeight = 120 + 32 * ((std::clamp(height, 120, 288) - 120) / 32);
     UIFrameWnd::Resize(snappedWidth, snappedHeight);
     m_close->Move(m_x + m_w - 14, m_y + 3);
+    m_mini->Move(m_x + m_w - 28, m_y + 3);
     m_offset = std::min(m_offset, MaxOffset());
 }
 
@@ -174,6 +240,16 @@ void UICompanionSkillListWnd::OnDraw()
     if (!dc) return;
     shopui::FillRectColor(dc, {m_x, m_y, m_x + m_w, m_y + m_h}, RGB(255, 255, 255));
     shopui::FillRectColor(dc, {m_x, m_y, m_x + m_w, m_y + kTitleHeight}, RGB(222, 230, 241));
+    const auto skin = GetSkinPieces();
+    const auto paintSkin = [&](bool controls) {
+        for (const auto& piece : skin) {
+            if (piece.control != controls) continue;
+            RECT bounds = piece.bounds;
+            OffsetRect(&bounds, m_x, m_y);
+            shopui::DrawBitmapPixelsTransparent(dc, piece.art->pixels, bounds);
+        }
+    };
+    paintSkin(false);
     const auto text = [&](int x, int y, int width, const std::string& value) {
         shopui::DrawWindowTextRect(dc, {m_x + x, m_y + y, m_x + x + width, m_y + y + 18},
             value, RGB(0, 0, 0), DT_TOP | DT_SINGLELINE | DT_NOPREFIX);
@@ -182,7 +258,7 @@ void UICompanionSkillListWnd::OnDraw()
     text(16, m_h - 20, m_w - 32, GetFooter());
     for (const auto& row : GetRows()) {
         if (row.selected)
-            shopui::FillRectColor(dc, {m_x + 2, m_y + row.y, m_x + m_w - 2, m_y + row.y + kRowHeight},
+            shopui::FillRectColor(dc, {m_x + 20, m_y + row.y, m_x + m_w - kScrollWidth, m_y + row.y + kRowHeight},
                 RGB(225, 235, 252));
         const auto& pixels = row.icon->pixels;
         shopui::DrawBitmapPixelsTransparent(dc, pixels,
@@ -217,6 +293,7 @@ void UICompanionSkillListWnd::OnDraw()
         shopui::FillRectColor(dc, {m_x + m_w - inset, m_y + m_h - 3, m_x + m_w - inset + 2, m_y + m_h - 1},
             RGB(164, 173, 189));
     }
+    paintSkin(true);
     DrawChildrenToHdc(dc);
     ReleaseDrawTarget(dc);
 }
@@ -355,6 +432,8 @@ void UICompanionSkillListWnd::OnWheel(int delta)
 
 msgresult_t UICompanionSkillListWnd::SendMsg(UIWindow* sender, int msg, msgparam_t action, msgparam_t lparam, msgparam_t extra)
 {
+    // The reference draws both system buttons without an action for this list.
+    if (msg == 6 && (action == kBase || action == kMini)) return 0;
     if (msg == 6 && action == kClose) {
         g_windowMgr.DeleteWindow(this);
         return 1;

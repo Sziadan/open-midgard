@@ -1,4 +1,5 @@
 #include "ui/UICommandListWnd.h"
+#include "ui/UICompanionSkillListWnd.h"
 #include "ui/UITransBalloonText.h"
 #include "core/SourceCommandListTables.h"
 #include "ui/UiScale.h"
@@ -45,9 +46,10 @@ void CheckCommandWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state
     std::replace(legacy.begin(),legacy.end(),'\\','/');std::filesystem::create_directories(legacy);
 #endif
     struct BitmapFixture {const char* name;int width,height;const char* color;};
-    const std::array<BitmapFixture,17> bitmaps{{
+    const std::array<BitmapFixture,19> bitmaps{{
         {"tab_cmd_01.bmp",20,132,"#ac342c"},{"tab_cmd_02.bmp",20,132,"#286c9c"},{"tab_cmd_03.bmp",20,132,"#7c5820"},
         {"sys_base_off.bmp",11,11,"#9c3030"},{"sys_base_on.bmp",11,11,"#d05050"},
+        {"sys_mini_off.bmp",11,11,"#207c90"},{"sys_mini_on.bmp",11,11,"#40a0c0"},
         {"sys_close_off.bmp",11,11,"#308040"},{"sys_close_on.bmp",11,11,"#50b060"},
         {"grp_offline.bmp",8,8,"#b040a0"},{"grp_online.bmp",8,8,"#40b0c0"},
         {"titlebar_left.bmp",12,17,"#d24240"},{"titlebar_mid.bmp",12,17,"#42d240"},{"titlebar_right.bmp",12,17,"#4042d2"},
@@ -198,6 +200,60 @@ void CheckCommandWindowUi(QGuiApplication& app,QQuickView& view,QtUiState* state
     pointer(WM_LBUTTONDOWN,thumbX,scroll->m_y+bar.ThumbStart()+1);window->SendMsg(nullptr,6,135,0,0);
     Require(!g_windowMgr.m_commandListWnd && !g_windowMgr.m_captureWindow && GetCapture()!=g_hMainWnd,"captured command owner deletion retained native capture");
     adapter.syncChat();Require(state->chatWindowUi().value("commandList").toMap().isEmpty(),"deleted command owner retained Qt projection");
+
+    SetRuntimeUiScalePercent(100);
+    state->setUiScale(1.0);
+    const auto savedSkills = g_session.GetHomunSkillItems();
+    g_session.ClearHomunSkillItems();
+    for (int id : {8001, 8002, 8003}) {
+        PLAYER_SKILL_INFO skill{};
+        skill.SKID = id;
+        skill.level = 1;
+        skill.m_isValid = true;
+        skill.skillName = "Companion skill";
+        g_session.SetHomunSkillItem(skill);
+    }
+    const std::array<BitmapFixture, 3> controls{{
+        {"scroll0up.bmp", 13, 13, "#705010"},
+        {"scroll0bar_mid.bmp", 13, 4, "#108070"},
+        {"btn_resize.bmp", 13, 13, "#704080"}
+    }};
+    for (const auto& spec : controls) {
+        QImage bitmap(spec.width, spec.height, QImage::Format_RGB32);
+        bitmap.fill(QColor(spec.color));
+        Require(bitmap.save(QString::fromStdString((assets / spec.name).string())), "companion control bitmap fixture failed");
+    }
+    auto* companion = static_cast<UICompanionSkillListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNSKILLLISTWND));
+    Require(companion && companion->GetSkinPieces().size() > 20, "companion list did not load the source-key frame");
+    companion->Resize(280, 120);
+    companion->Move(30, 40);
+    adapter.syncChat();
+    view.requestUpdate();
+    for (int i = 0; i < 6; ++i) { app.processEvents(); QThread::msleep(20); }
+    ArgbDibSurface companionDib;
+    Require(companionDib.EnsureSize(view.width(), view.height()), "companion native DIB allocation failed");
+    std::fill_n(companionDib.GetPixels(), view.width() * view.height(), 0xff181b20u);
+    g_windowMgr.DrawVisibleWindowsToHdc(companionDib.GetDC(), true);
+    const QImage nativeCompanion = QImage(reinterpret_cast<uchar*>(companionDib.GetPixels()), view.width(),
+        view.height(), view.width() * 4, QImage::Format_RGB32).copy();
+    const QImage qtCompanion = view.grabWindow().convertToFormat(QImage::Format_RGB32);
+    const auto checkCompanionPixel = [&](int x, int y, const char* color) {
+        const QPoint point(companion->m_x + x, companion->m_y + y);
+        Require(nativeCompanion.pixelColor(point) == QColor(color) && qtCompanion.pixelColor(point) == QColor(color),
+            "companion native/Qt frame or control bitmap differs");
+    };
+    checkCompanionPixel(1, 1, "#d24240");
+    checkCompanionPixel(1, 30, "#d2d240");
+    checkCompanionPixel(2, 115, "#c040c0");
+    checkCompanionPixel(254, 5, "#207c90");
+    checkCompanionPixel(271, 18, "#705010");
+    checkCompanionPixel(271, 45, "#108070");
+    checkCompanionPixel(271, 110, "#704080");
+    Require(nativeCompanion.save(output + "/companion-list.native.png")
+        && qtCompanion.save(output + "/companion-list.qml.png"), "companion frame save failed");
+    g_windowMgr.CloseCompanionWindows(true);
+    g_session.ClearHomunSkillItems();
+    for (const auto& skill : savedSkills) g_session.SetHomunSkillItem(skill);
     QFile results(output+"/command-window-render-results.json");
     Require(results.open(QIODevice::WriteOnly),"command render result file open failed");
     results.write(QJsonDocument(QJsonObject{{"frames",frames},{"source_key_synthetic_bitmaps",true},

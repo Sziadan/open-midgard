@@ -3923,3 +3923,9 @@ PK28.04 adds the companion list scrollbar and verifies wheel, arrow, and thumb i
 ## Companion skill list resizing
 
 PK28.04 adds the companion resize grip and persists separate list dimensions. Replay verifies snapping, row count, scrollbar changes, and close/reopen geometry. Six focused application checks, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+
+## Companion list skin
+
+PK28.04 uses the game-data frame and control bitmaps in the companion list. Replay verifies the reference Mini behavior. Six focused application checks, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
+
+The render replay samples matching native and Qt pixels for the frame, Mini button, scrollbar arrow and thumb, and resize grip. It uses synthetic bitmaps loaded through the production resolver. The frame loader preserves opaque frame pixels. [Evidence](evidence/PK28-companion-skill-lists.md)

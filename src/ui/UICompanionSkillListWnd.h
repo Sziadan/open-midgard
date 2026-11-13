@@ -15,6 +15,11 @@ public:
         shopui::BitmapPixels pixels;
         std::string uri;
     };
+    struct SkinPiece {
+        RECT bounds;
+        const Icon* art;
+        bool control;
+    };
     struct Row {
         int id;
         int y;
@@ -34,7 +39,10 @@ public:
     std::string GetTitle() const;
     std::string GetFooter() const;
     RECT GetScrollThumb() const;
+    std::vector<SkinPiece> GetSkinPieces() const;
     const UIFriendOptionButton& GetCloseButton() const { return *m_close; }
+    const UIFriendOptionButton& GetBaseButton() const { return *m_base; }
+    const UIFriendOptionButton& GetMiniButton() const { return *m_mini; }
     void Move(int x, int y) override;
     void Resize(int width, int height) override;
     void OnDraw() override;
@@ -61,8 +69,16 @@ private:
     std::string m_title;
     std::string m_pointsFormat;
     UIFriendOptionButton* m_close;
+    UIFriendOptionButton* m_base;
+    UIFriendOptionButton* m_mini;
     std::map<int, Icon> m_icons;
     std::array<Icon, 2> m_upgradeArt;
+    enum SkinAsset {
+        TitleLeft, TitleMiddle, TitleRight, SideLeft, SideRight,
+        FooterLeft, FooterMiddle, FooterRight, ScrollUp, ScrollTrack, ScrollDown,
+        ThumbTop, ThumbMiddle, ThumbBottom, ResizeGrip, SkinAssetCount
+    };
+    std::array<Icon, SkinAssetCount> m_skin;
     int m_offset = 0;
     int m_thumbGrab = -1;
     bool m_resizing = false;

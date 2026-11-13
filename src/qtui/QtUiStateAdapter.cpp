@@ -2143,12 +2143,23 @@ void PopulateChatAuxiliaryState(QtUiState* state, QVariantMap& chatUi)
         }
         const auto& close = window->GetCloseButton();
         const RECT scrollThumb = window->GetScrollThumb();
+        const auto& base = window->GetBaseButton();
+        const auto& mini = window->GetMiniButton();
+        QVariantList skin;
+        for (const auto& piece : window->GetSkinPieces()) {
+            skin.push_back(QVariantMap{{"x", static_cast<int>(piece.bounds.left)},
+                {"y", static_cast<int>(piece.bounds.top)}, {"width", static_cast<int>(piece.bounds.right - piece.bounds.left)},
+                {"height", static_cast<int>(piece.bounds.bottom - piece.bounds.top)},
+                {"control", piece.control}, {"art", ToQString(piece.art->uri)}});
+        }
         companionSkillLists.push_back(QVariantMap{{"layer", SourceManagedWindowLayer(window)},
             {"x", window->m_x}, {"y", window->m_y}, {"width", window->m_w}, {"height", window->m_h},
             {"title", ToQString(window->GetTitle())}, {"footer", ToQString(window->GetFooter())},
             {"close", ToQString(close.GetButton().uris[close.GetVisualState()])}, {"rows", rows},
             {"scrollX", static_cast<int>(scrollThumb.left)}, {"scrollY", static_cast<int>(scrollThumb.top)},
-            {"scrollHeight", static_cast<int>(scrollThumb.bottom - scrollThumb.top)}});
+            {"scrollHeight", static_cast<int>(scrollThumb.bottom - scrollThumb.top)}, {"skin", skin},
+            {"base", ToQString(base.GetButton().uris[base.GetVisualState()])},
+            {"mini", ToQString(mini.GetButton().uris[mini.GetVisualState()])}});
     }
     chatUi.insert("companionSkillLists", companionSkillLists);
     const auto roomButton=[](const RoomSettingsButton& button,int status){

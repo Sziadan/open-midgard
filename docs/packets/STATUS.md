@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Companion list skin**. PK28.04 verifies the frame, Mini button, scrollbar, and resize grip with paired native and Qt captures using synthetic bitmap fixtures. The production packet replay also passed. Live comparison with the installed skin remains open. [Evidence](evidence/PK28-companion-skill-lists.md)
+
 **Companion skill list resizing**. PK28.04 verifies resize snapping, visible row updates, and independent geometry restore. Six focused application checks, 473 standalone checks, and Qt lint passed. [Evidence](evidence/PK28-companion-skill-lists.md)
 
 **Companion window captions and placement**. PK28.04 uses the selected message entries and restores separate positions for both families. Six focused application checks and 473 standalone checks passed. Layout modes, scrollbar parity, and live UI verification remain open. [Evidence](evidence/PK28-companion-skill-lists.md)
