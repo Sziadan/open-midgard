@@ -9812,6 +9812,14 @@ void HandleDisconnectCharacterAck(CGameMode&, const PacketView& packet)
     }
 
     const PendingDisconnectAction pendingAction = GetPendingDisconnectAction();
+    if (pendingAction == PendingDisconnectAction::ReturnToCharSelect && packet.data[2] == 0) {
+        ClearPendingDisconnectAction();
+        g_windowMgr.PushChatEvent(
+            "The character server refused the character-select request.",
+            0x00FF4040u,
+            kChatChannelSystem);
+        return;
+    }
     if (!IsReturnToCharSelectAck(pendingAction, packet.data[2])) {
         DbgLog("[GameMode] ignored 0x00B3 type=%u pending=%d\n",
             static_cast<unsigned int>(packet.data[2]),

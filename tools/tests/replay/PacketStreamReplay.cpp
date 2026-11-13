@@ -698,10 +698,44 @@ void DisconnectChooserActivationReplay()
     const bool successfulReturnClosed=chooser.m_show==0&&GetPendingDisconnectAction()==PendingDisconnectAction::ReturnToCharSelect;
     Require(successfulReturnClosed,
         "successful character-select send did not close chooser and retain pending action");
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto generation = g_modeMgr.GetOperationGeneration();
+    const std::vector<u8> refusedReturn{0xb3, 0, 0};
+    returnPeer.Send(refusedReturn);
+    const auto deadline = Clock::now() + kTimeout;
+    while (GetPendingDisconnectAction() != PendingDisconnectAction::None && Clock::now() < deadline) {
+        ProcessGameModePacketLoop(gameMode, *connection, router, 1);
+        if (GetPendingDisconnectAction() != PendingDisconnectAction::None) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    Require(GetPendingDisconnectAction() == PendingDisconnectAction::None
+        && connection->IsOpen() && g_modeMgr.GetOperationGeneration() == generation,
+        "character-server refusal did not release the request while keeping the map active");
+    const auto& events = g_windowMgr.GetChatEvents();
+    Require(!events.empty() && events.back().text == "The character server refused the character-select request.",
+        "character-server refusal did not report why the player stayed on the map");
+    chooser.SetShow(1);
+    chooser.OnKeyDown(VK_RETURN);
+    Require(returnPeer.ReceiveExact(3) == returnRequest
+        && GetPendingDisconnectAction() == PendingDisconnectAction::ReturnToCharSelect,
+        "character-server refusal prevented a fresh return request");
     std::cout<<"{\"case_id\":\"disconnect_chooser_activation\",\"contract_id\":\"PK03.04.DISCONNECT-ACK\",\"fixture_id\":\"PK03.04-chooser-production-options\","<<ConfiguredSourceProvenanceJson()
         <<",\"expected_return_fixture_sha256\":\"9d28c69c5f71e98ec1faefd86fd4ea400703a7cd710340f588fcba01c5f1b1c7\",\"expected_exit_fixture_sha256\":\"8d2f50703af28decdd8e9f407c074d71c12c059f9259a780a1697ca64e526b4b\",\"build_preset\":\"mingw-qt-x64-ci; deploy OFF\",\"production_entry\":\"UIChooseWnd::OnKeyDown -> UIChooseWnd::ActivateSelection -> CModeMgr::SendMsg -> CGameMode::SendMsg\",\"stage\":\"headless_chooser_activation\",\"assertion_scope\":\"production chooser activation and send-result visibility; Qt rendering not exercised\",\"expected_visible_options\":[\"Character Select\",\"Exit To Windows\"],\"actual_visible_options\":[\""<<JsonEscape(chooser.GetEntryLabelForQt(0))<<"\",\""<<JsonEscape(chooser.GetEntryLabelForQt(2))<<"\"],\"failed_exit_kept_open\":"<<(failedExitKeptOpen?"true":"false")<<",\"successful_exit_closed\":"<<(successfulExitClosed?"true":"false")<<",\"failed_return_kept_open\":"<<(failedReturnKeptOpen?"true":"false")<<",\"successful_return_closed\":"<<(successfulReturnClosed?"true":"false")<<",\"return_request_hex\":\""<<Hex(returnRequest)<<"\",\"exit_request_hex\":\""<<Hex(exitRequest)<<"\",\"outcome\":\"PASS\"}\n";
     connection->Disconnect();
     ClearPendingDisconnectAction();
+    chooser.SetShow(1);
+    chooser.OnKeyDown(VK_UP); // Character Select -> Return To Save Point.
+    chooser.OnKeyDown(VK_RETURN);
+    Require(chooser.m_show && GetPendingDisconnectAction() == PendingDisconnectAction::None,
+        "offline save-point request closed the chooser");
+    LoopbackPeer savePeer(*connection);
+    chooser.OnKeyDown(VK_RETURN);
+    Require(savePeer.ReceiveExact(3) == std::vector<u8>{0xb2, 0, 0}
+        && !chooser.m_show && GetPendingDisconnectAction() == PendingDisconnectAction::None,
+        "save-point request did not close the chooser or used disconnect state");
+    connection->Disconnect();
     SkillPacketReplayAccess::Restore(oldMode,oldModeType);
 }
 

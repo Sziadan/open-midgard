@@ -75,7 +75,7 @@ AUDIT-0x00AE,0x00AE,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/vers
 AUDIT-0x00AF,0x00AF,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00B0,0x00B0,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00B1,0x00B1,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00B2,0x00B2,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x00B2,0x00B2,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected save-point and character-select requests captured through the production chooser,C2S_ONLY,PK03.04.DISCONNECT-ACK;PK46.02-map-return-save-point-request
 AUDIT-0x00B3,0x00B3,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-return-character-select-ack traces 3-byte S2C result and current chrif forwarding; lifecycle replay and source pinning remain open,UNREVIEWED,
 AUDIT-0x00B4,0x00B4,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00B5,0x00B5,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -290,7 +290,7 @@ AUDIT-0x0185,0x0185,map,unresolved,PK12,PK01;PK02;PK47;PK48;PK45,Provisional sou
 AUDIT-0x0187,0x0187,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0188,0x0188,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0189,0x0189,map,S2C,PK25,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x018A,0x018A,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x018A,0x018A,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected quit request captured through the production chooser with refusal and timeout coverage,C2S_ONLY,PK03.04.DISCONNECT-ACK
 AUDIT-0x018B,0x018B,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x018C,0x018C,map,S2C,PK26,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x018D,0x018D,map,S2C,PK35,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

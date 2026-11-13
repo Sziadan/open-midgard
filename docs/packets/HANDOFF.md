@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 verifies the selected save-point and quit requests through the chooser. A `00B3` result 0 now releases a pending character-select request and reports the refusal without leaving the map. Live save-point respawn, character-server refusal, and quit remain open. [Character-select reply](evidence/PK45.03-return-character-select-ack.md) · [Disconnect contract](contracts/PK03.04.DISCONNECT-ACK.md)
+
 PK46.02 keeps map loading active if `007D` fails to send, retries once, and returns to sign-in if the retry also fails. Same-map reuse retains its world while waiting for that retry. Verify load completion and actor bootstrap against the deployed server. [Load-end evidence](evidence/PK46.02-map-load-end-ack.md)
 
 PK46.03 returns to sign-in when the map server refuses world entry or leaves a sent request unanswered for 15 seconds. PacketVer22 and PacketVer23 login replays exercise the timeout and selected refusal frames. Live world entry and rejection still need a deployed check. [Zone-entry evidence](evidence/PK46.02-map-zone-entry-request.md)
