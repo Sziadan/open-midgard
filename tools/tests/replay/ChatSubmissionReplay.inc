@@ -303,6 +303,19 @@ void ChatSubmissionReplay()
     rcFrame[0] = 0x12;
     Require(submit("/rc Target") && peer.ReceiveExact(26) == rcFrame,
         "rc did not send the selected frame");
+    Require(!submit("/item") && !submit("/monster abcdefghijklmnopqrstuvwx")
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "empty or oversized item/monster request emitted bytes");
+    std::vector<u8> itemFrame{0x3f, 1, 'P', 'o', 't', 'i', 'o', 'n'};
+    itemFrame.resize(26);
+    Require(submit("/item Potion") && peer.ReceiveExact(26) == itemFrame,
+        "item did not send the selected frame");
+    std::vector<u8> monsterFrame{0x3f, 1, 'P', 'o', 'r', 'i', 'n', 'g'};
+    monsterFrame.resize(26);
+    Require(submit("/monster Poring") && peer.ReceiveExact(26) == monsterFrame,
+        "monster did not use the shared selected frame");
+    Require(submit("/killall") && peer.ReceiveExact(2) == std::vector<u8>{0xce, 0},
+        "killall did not send the selected disconnect-all request");
     for (const auto& sample : std::array<std::tuple<const char*, bool, const char*>, 6>{{
         {"/b notice", false, "SourceLocal: notice"}, {"/lb notice", true, "SourceLocal: notice"},
         {"/nb notice", false, "notice"}, {"/nlb notice", true, "notice"},
@@ -577,6 +590,8 @@ void ChatSubmissionReplay()
     Require(!submit("/shift Target"), "GM player warp reported success on a closed connection");
     Require(!submit("/check Target") && !submit("/rc Target"),
         "GM command reported success on a closed connection");
+    Require(!submit("/item Potion") && !submit("/killall"),
+        "item or disconnect-all command reported success on a closed connection");
     Require(!submit("/b offline") && !*g_windowMgr.GetChatMsg(),
         "broadcast reported success or retained its buffer after failed transport");
     Require(!submit("/hide"), "hide reported success on a closed connection");

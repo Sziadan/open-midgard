@@ -308,6 +308,7 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
     }
     switch(type){
     case 1: return SendMsg(7, 0, 0, 0);
+    case 5: return SendMsg(15, 0, 0, 0);
     case 87: return SendMsg(7, 1, 0, 0);
     case 90: return SendMsg(7, 2, 0, 0);
     case 91: return SendMsg(7, 3, 0, 0);
@@ -417,6 +418,9 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         return 1;
     }
     case 2: case 20: case 136:return 1; // Selected jump table returns without an action.
+    case 48:
+        if (parameters[0].find('\0') != std::string::npos) return 0;
+        return SendMsg(104, reinterpret_cast<msgparam_t>(parameters[0].c_str()), 0, 0);
     case 49: {
         std::array<int, 2> coordinates{};
         for (size_t i = 0; i < coordinates.size(); ++i) {

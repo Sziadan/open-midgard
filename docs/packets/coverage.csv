@@ -103,7 +103,7 @@ AUDIT-0x00CA,0x00CA,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x00CB,0x00CB,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00CC,0x00CC,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00CD,0x00CD,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x00CE,0x00CE,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x00CE,0x00CE,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM disconnect-all request captured from source chat,C2S_ONLY,PK46.02-GM-DISCONNECT-ALL
 AUDIT-0x00CF,0x00CF,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Selected per-name deny and allow captured from context and chat commands with reply notices,C2S_ONLY,PK46.02-map-reject-whisper-request
 AUDIT-0x00D0,0x00D0,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Selected three-byte global deny and allow captured from source chat commands with reply notices,C2S_ONLY,PK46.02-map-private-message-ignore-requests
 AUDIT-0x00D1,0x00D1,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -216,7 +216,7 @@ AUDIT-0x013B,0x013B,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-action-failure trac
 AUDIT-0x013C,0x013C,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x013D,0x013D,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-recovery-notification traces 6-byte S2C HP/SP wire contract and pinned emitter; AP caller is unpinned and runtime behavior remains open,UNREVIEWED,
 AUDIT-0x013E,0x013E,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x013F,0x013F,map,C2S,PK47,PK01;PK02;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
+AUDIT-0x013F,0x013F,map,C2S,PK47,PK01;PK02;PK48;PK46;PK38,Selected GM item and monster request captured from source chat,C2S_ONLY,PK46.02-GM-ITEM-MONSTER
 AUDIT-0x0140,0x0140,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,Selected GM map-move command captured through source chat and map handoff,C2S_ONLY,PK46.02-GM-MAP-MOVE
 AUDIT-0x0141,0x0141,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0142,0x0142,map,S2C,PK25,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

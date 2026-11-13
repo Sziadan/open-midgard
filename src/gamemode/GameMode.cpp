@@ -12426,6 +12426,10 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     }
     case 11:
         return wparam && SendBufferedSourceChat(11,reinterpret_cast<const char*>(wparam))?1:0;
+    case 15: {
+        const u8 packet[]{0xce, 0x00};
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet)) ? 1 : 0;
+    }
     case 33: {
         constexpr u32 cooldownMs = 2500;
         constexpr u32 replyTimeoutMs = 5000;
@@ -12484,11 +12488,11 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         const u8 packet[]{0x9d, 0x01, 0x40, 0, 0, 0};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet)) ? 1 : 0;
     }
-    case 169: case 170: case 171: case 172: case 191: case 192: {
+    case 104: case 169: case 170: case 171: case 172: case 191: case 192: {
         if (!wparam) return 0;
         const std::string_view name(reinterpret_cast<const char*>(wparam));
         if (name.empty() || name.size() > 23) return 0;
-        const u16 opcode = msg == 191 ? 0x0213 : msg == 192 ? 0x0212 : 0x01ba + msg - 169;
+        const u16 opcode = msg == 104 ? 0x013f : msg == 191 ? 0x0213 : msg == 192 ? 0x0212 : 0x01ba + msg - 169;
         std::array<u8, 26> packet{static_cast<u8>(opcode), static_cast<u8>(opcode >> 8)};
         std::copy(name.begin(), name.end(), packet.begin() + 2);
         if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
