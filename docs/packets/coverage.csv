@@ -88,7 +88,7 @@ AUDIT-0x00BB,0x00BB,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Selected stat request 
 AUDIT-0x00BC,0x00BC,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00BD,0x00BD,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00BE,0x00BE,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00BF,0x00BF,map,C2S,PK47,PK01;PK02;PK48;PK46,PK46.02-map-emotion-request.md: recognized slash emotion commands send a fixed three-byte ID request with a one-second successful-send throttle; selected registry identifies clif_parse_Emotion. Server ID semantics and replay remain open.,UNREVIEWED,
+AUDIT-0x00BF,0x00BF,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected three-byte player emotion request with production sender and reply replay,C2S_ONLY,PK46.02-PLAYER-EMOTION
 AUDIT-0x00C0,0x00C0,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-emotion-request-ack traces selected 0x00BF validation and 7-byte S2C 0x00C0 AREA broadcast; rendering/replay remain open,UNREVIEWED,
 AUDIT-0x00C1,0x00C1,map,C2S,PK47,PK01;PK02;PK48;PK46,"WHO command and recipient 34 capture the two-byte request, including service gates",C2S_ONLY,PK16.03-who
 AUDIT-0x00C2,0x00C2,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,

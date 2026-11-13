@@ -12409,11 +12409,18 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case 11:
         return wparam && SendBufferedSourceChat(11,reinterpret_cast<const char*>(wparam))?1:0;
     case 33: {
-        const DWORD now=GetSourceChatTick();
-        if(m_isReqEmotion || now<=m_reqEmotionTick+2500u)return 0;
-        m_reqEmotionTick=GetSourceChatTick();m_isReqEmotion=1;
+        constexpr u32 cooldownMs = 2500;
+        constexpr u32 replyTimeoutMs = 5000;
+        if (wparam < 0 || wparam > 80) return 0;
+        const u32 now = GetSourceChatTick();
+        const u32 elapsed = now - m_reqEmotionTick;
+        if (elapsed <= cooldownMs || (m_isReqEmotion && elapsed < replyTimeoutMs)) return 0;
+        m_isReqEmotion = 0;
         const u8 packet[]={0xbf,0,static_cast<u8>(wparam)};
-        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet))?1:0;
+        if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet), sizeof(packet))) return 0;
+        m_reqEmotionTick = now;
+        m_isReqEmotion = 1;
+        return 1;
     }
     case 67: {
         const u8 packet[]={0x00,0x01};

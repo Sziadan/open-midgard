@@ -248,6 +248,47 @@ void ChatSubmissionReplay()
     Require(peer.ReceiveExact(3)==std::vector<u8>({0xbf,0,0}) && mode.m_isReqEmotion && mode.m_reqEmotionTick==10000,"source emotion0/pending/time/frame differs");
     Require(!submit("/?"),"pending source emotion was not guarded");mode.m_isReqEmotion=0;submissionTick=12500;Require(!submit("/?"),"source emotion exact2500 boundary changed");
     submissionTick=12501;Require(submit("/?"),"source emotion after2500 was blocked");Require(peer.ReceiveExact(3)==std::vector<u8>({0xbf,0,1}),"source question emotion argument was shifted");
+    {
+        struct EmotionPlayer : CPlayer {
+            int emotion = -1;
+            void SendMsg(CGameObject*, int message, msgparam_t val, msgparam_t, msgparam_t) override
+            {
+                if (message == 21) emotion = static_cast<int>(val);
+            }
+        } player;
+        CWorld world;
+        player.m_gid = 0xf2000041;
+        world.m_player = &player;
+        auto* previousWorld = mode.m_world;
+        mode.m_world = &world;
+        CGameModePacketRouter emotionRouter;
+        RegisterDefaultGameModePacketHandlers(emotionRouter);
+        TestConnection input;
+        const auto dispatch = [&](std::vector<u8> frame) {
+            Require(input.QueueBytes(frame)
+                && ProcessGameModePacketLoop(mode, input, emotionRouter, 1).packetsDispatched == 1,
+                "emotion reply did not reach the production router");
+        };
+        dispatch({0xc0, 0, 0x42, 0, 0, 0xf2, 1});
+        Require(mode.m_isReqEmotion && player.emotion == -1, "unrelated emotion cleared local pending state");
+        dispatch({0xc0, 0, 0x41, 0, 0, 0xf2, 81});
+        Require(mode.m_isReqEmotion && player.emotion == -1, "unsupported emotion reached actor action");
+        dispatch({0xc0, 0, 0x41, 0, 0, 0xf2, 1});
+        Require(!mode.m_isReqEmotion && player.emotion == 1, "local 00C0 did not clear and dispatch");
+        submissionTick = 15002;
+        Require(submit("/!") && peer.ReceiveExact(3) == std::vector<u8>({0xbf,0,0}),
+            "acknowledged emotion could not send after cooldown");
+        submissionTick = 20001;
+        Require(!submit("/!"), "missing reply released before timeout");
+        submissionTick = 20002;
+        Require(submit("/!") && peer.ReceiveExact(3) == std::vector<u8>({0xbf,0,0}),
+            "missing reply prevented a fresh emotion after timeout");
+        dispatch({0x10, 0x01, 1, 0, 1, 0, 0, 0, 0, 0});
+        Require(!mode.m_isReqEmotion, "selected emotion rejection did not clear pending");
+        world.m_player = nullptr;
+        mode.m_world = previousWorld;
+        submissionTick = 12501;
+    }
     Require(submit("/leave"),"source leave-party command failed");Require(peer.ReceiveExact(2)==std::vector<u8>({0,1}),"source leave-party command used disband/kick semantics");
     // Source51 exports BOTH complete histories, independently of the visible tab/filter.
     {
@@ -436,7 +477,9 @@ void ChatSubmissionReplay()
     Require(!mode.SendMsg(162,0x12345678,0,0),"disconnected pet capture request reported success");
 #include "PetTamingFailedSendReplay.inc"
     Require(!mode.SendMsg(163,1,0,0) && !mode.SendMsg(158,reinterpret_cast<msgparam_t>("Poring"),0,0),"disconnected pet requests reported success");
-    mode.m_isReqEmotion=0;submissionTick=16000;Require(!submit("/!") && mode.m_isReqEmotion && mode.m_reqEmotionTick==16000,"failed emotion send rolled back source pending state");
+    mode.m_isReqEmotion=0;mode.m_reqEmotionTick=12501;submissionTick=16000;
+    Require(!submit("/!") && !mode.m_isReqEmotion && mode.m_reqEmotionTick==12501,
+        "failed emotion send left a pending reply or consumed the cooldown");
 #include "ChatIgnoreReplay.inc"
 #include "FriendGreetingReplay.inc"
 #include "CommandToggleReplay.inc"

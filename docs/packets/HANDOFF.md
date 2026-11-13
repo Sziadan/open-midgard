@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.02 verifies player emotion `00BF`, local `00C0`, and the matching skill-failure reply. A failed socket send leaves the cooldown available, and player input recovers after an unanswered request. Check visible sprite effects and server skill, dice and rate-limit policy live. [Player emotion evidence](evidence/PK46.02-map-emotion-request.md)
+
 PK32.05 maps the six selected legacy mail requests to production replay and adds a focused Vulkan/Qt composer check for item drag, quantity entry and removal. Continue deployed inbox interaction and character-server verification, including capacity and refunds. [Mail verification](work-items/PK32.05.md)
 
 PK32.04 adds confirmed delete and return to the legacy Qt inbox and item staging to the composer. The selected server silently rejects outgoing Zeny staging before its index-zero handler. Verify live mail, inventory consumption and refunds, physical attachment drag, and system-mail refusal. [Mail delete, return and staging](work-items/PK32.04.md)
