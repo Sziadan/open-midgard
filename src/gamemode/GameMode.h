@@ -184,6 +184,7 @@ public:
         GameMsg_ConfirmCashShopContribution = 20044,
         GameMsg_RequestQuestActive = 20045,
         GameMsg_RequestStorageToCart = 20046,
+        GameMsg_ConfirmMannerAdjustment = 20047,
     };
 
     enum PlayerContextAction {
@@ -199,6 +200,9 @@ public:
         PlayerContext_RequestAdoption = 10,
         PlayerContext_RequestGuildAlliance,
         PlayerContext_DeclareGuildOpposition,
+        PlayerContext_DisconnectCharacter,
+        PlayerContext_GivePositiveManner,
+        PlayerContext_GiveNegativeManner,
     };
 
     CGameMode();

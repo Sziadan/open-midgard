@@ -120,6 +120,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x00C9, kVariablePacketSize);
     SetPacketSize(0x00CA, 3);
     SetPacketSize(0x00CB, 3);
+    SetPacketSize(0x00CD, 3);               // ZC_ACK_DISCONNECT_CHARACTER
     SetPacketSize(0x00CF, 27);
     SetPacketSize(0x00D0, 3);
     SetPacketSize(0x00D1, 4);

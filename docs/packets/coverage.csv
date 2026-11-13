@@ -101,8 +101,8 @@ AUDIT-0x00C8,0x00C8,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected NPC purchase 
 AUDIT-0x00C9,0x00C9,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46;PK38,Selected NPC sale rows and result ownership captured,C2S_ONLY,PK46.02-NPC-SHOP-REQUESTS;PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x00CA,0x00CA,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00CB,0x00CB,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00CC,0x00CC,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x00CD,0x00CD,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x00CC,0x00CC,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM context kick carries the picked actor ID,C2S_ONLY,PK46.02-GM-PLAYER-CONTEXT
+AUDIT-0x00CD,0x00CD,map,S2C,PK47,PK01;PK02;PK48,Selected GM kick acknowledgement implemented and replayed; live server branches pending,UNREVIEWED,PK46.02-GM-PLAYER-CONTEXT
 AUDIT-0x00CE,0x00CE,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM disconnect-all request captured from source chat,C2S_ONLY,PK46.02-GM-DISCONNECT-ALL
 AUDIT-0x00CF,0x00CF,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Selected per-name deny and allow captured from context and chat commands with reply notices,C2S_ONLY,PK46.02-map-reject-whisper-request
 AUDIT-0x00D0,0x00D0,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Selected three-byte global deny and allow captured from source chat commands with reply notices,C2S_ONLY,PK46.02-map-private-message-ignore-requests
@@ -226,7 +226,7 @@ AUDIT-0x0145,0x0145,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-show-image traces l
 AUDIT-0x0146,0x0146,map,C2S,PK25,PK01;PK02;PK47;PK48;PK46,Selected close action captured after offline retry from production dialogue UI,C2S_ONLY,PK46.02-map-npc-dialog-close-request
 AUDIT-0x0147,0x0147,map,S2C,PK45,PK01;PK02;PK47;PK48;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x0148,0x0148,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-actor-resurrection traces pinned 8-byte S2C emitter with ignored type and AREA route; broader lifecycle replay remains open,UNREVIEWED,
-AUDIT-0x0149,0x0149,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0149,0x0149,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected GM player context manner prompt carries captured AID type and amount,C2S_ONLY,PK46.02-GM-PLAYER-CONTEXT
 AUDIT-0x014A,0x014A,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x014B,0x014B,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x014C,0x014C,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

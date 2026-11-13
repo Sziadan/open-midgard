@@ -6470,6 +6470,110 @@ void ShortcutSlotUpdateProductionSendReplay()
     std::cout << "{\"case_id\":\"shortcut_slot_update_production_send\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-02ba-hotkey\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"slot_restored\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
+void GmPlayerContextReplay()
+{
+    SetCase("gm_player_context", "PK46.02", "PK46.02-gm-player-context",
+        "player context and numeric prompt -> selected map requests -> kick acknowledgement");
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    CGameMode mode;
+    CWorld world;
+    CGameActor target;
+    target.m_gid = 0x11223344;
+    target.m_isPc = 1;
+    world.RegisterActor(&target);
+    mode.m_world = &world;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    const auto oldAid = g_session.m_aid;
+    const auto oldServerType = g_serverType;
+    const auto oldAdmins = s_dwAdminAID;
+    const auto oldYellow = s_dwYellowAID;
+    g_session.m_aid = 0x10203040;
+    g_serverType = ServerNormal;
+    s_dwAdminAID.clear();
+    s_dwYellowAID.clear();
+
+    const auto choose = [&](CGameMode::PlayerContextAction action) {
+        return mode.SendMsg(CGameMode::GameMsg_RequestPlayerContextAction, target.m_gid, action, 0);
+    };
+    Require(mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10), "could not open player menu");
+    const auto contains = [](CGameMode::PlayerContextAction action) {
+        const auto& entries = g_windowMgr.m_playerContextMenuWnd->GetEntries();
+        return std::any_of(entries.begin(), entries.end(), [action](const auto& entry) {
+            return entry.actionId == action;
+        });
+    };
+    Require(!contains(CGameMode::PlayerContext_DisconnectCharacter)
+        && !choose(CGameMode::PlayerContext_DisconnectCharacter), "ordinary account could kick from the context menu");
+    s_dwAdminAID = {g_session.m_aid};
+    Require(mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10)
+        && contains(CGameMode::PlayerContext_DisconnectCharacter)
+        && contains(CGameMode::PlayerContext_GivePositiveManner)
+        && contains(CGameMode::PlayerContext_GiveNegativeManner), "administrator menu omitted moderation options");
+    Require(!choose(CGameMode::PlayerContext_GivePositiveManner), "positive manner skipped the yellow-AID check");
+    g_serverType = ServerInstantEvent;
+    Require(mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10)
+        && contains(CGameMode::PlayerContext_DisconnectCharacter)
+        && !contains(CGameMode::PlayerContext_GiveNegativeManner)
+        && !choose(CGameMode::PlayerContext_GiveNegativeManner), "instant-event server exposed manner adjustment");
+    g_serverType = ServerNormal;
+    s_dwYellowAID = {g_session.m_aid};
+    Require(choose(CGameMode::PlayerContext_DisconnectCharacter)
+        && peer.ReceiveExact(6) == std::vector<u8>{0xcc, 0, 0x44, 0x33, 0x22, 0x11}, "kick request differs");
+    Require(choose(CGameMode::PlayerContext_GivePositiveManner), "positive manner prompt did not open");
+    auto* input = g_windowMgr.m_npcInputWnd;
+    Require(input && input->IsGameNumberPromptFor(CGameMode::GameMsg_ConfirmMannerAdjustment), "wrong manner prompt owner");
+    mode.m_menuTargetAID = 0;
+    input->HandleKeyDown(VK_RETURN);
+    Require(peer.ReceiveExact(9) == std::vector<u8>{0x49, 1, 0x44, 0x33, 0x22, 0x11, 0, 1, 0},
+        "positive manner lost its captured target or type");
+    Require(choose(CGameMode::PlayerContext_GiveNegativeManner), "negative manner prompt did not open");
+    input->GetEditCtrl()->SetText("30000");
+    input->HandleKeyDown(VK_RETURN);
+    Require(peer.ReceiveExact(9) == std::vector<u8>{0x49, 1, 0x44, 0x33, 0x22, 0x11, 1, 0x30, 0x75},
+        "negative manner lost its type or maximum amount");
+    target.m_isPc = 0;
+    target.m_job = 1002;
+    Require(mode.OpenPlayerContextMenu(target.m_gid, "Monster", 10, 10)
+        && g_windowMgr.m_playerContextMenuWnd->GetEntries().size() == 1
+        && contains(CGameMode::PlayerContext_DisconnectCharacter)
+        && !choose(CGameMode::PlayerContext_GiveNegativeManner), "GM monster context allowed a player-only action");
+    Require(choose(CGameMode::PlayerContext_DisconnectCharacter)
+        && peer.ReceiveExact(6) == std::vector<u8>{0xcc, 0, 0x44, 0x33, 0x22, 0x11},
+        "monster kick request lost its actor GID");
+    world.UnregisterActor(&target);
+    Require(!choose(CGameMode::PlayerContext_DisconnectCharacter)
+        && !mode.SendMsg(CGameMode::GameMsg_ConfirmMannerAdjustment, target.m_gid, 1, 1)
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "stale context target emitted an action");
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    g_windowMgr.ClearChatEvents();
+    for (u8 result : {u8{0}, u8{1}}) {
+        const std::array<u8, 3> ack{0xcd, 0, result};
+        PacketView view{};
+        int consumed = 0;
+        Require(TryReadPacket(ack.data(), ack.size(), view, consumed) && consumed == 3 && router.Dispatch(mode, view),
+            "kick acknowledgement failed to frame or dispatch");
+    }
+    const auto& events = g_windowMgr.GetChatEvents();
+    Require(events.size() == 2 && !events[0].text.empty() && events[0].text != events[1].text,
+        "kick acknowledgement did not report distinct failure and success");
+    g_windowMgr.ClearChatEvents();
+    g_windowMgr.ClosePlayerContextMenu();
+    s_dwAdminAID = oldAdmins;
+    s_dwYellowAID = oldYellow;
+    g_session.m_aid = oldAid;
+    g_serverType = oldServerType;
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    mode.m_world = nullptr;
+    connection->Disconnect();
+}
+
 void InspectPlayerEquipmentProductionSendReplay()
 {
     SetCase("inspect_player_equipment_production_send", "PK46.02", "PK01.02-final-02d6-view-player-equip",
@@ -9527,6 +9631,7 @@ int main(int argc,char** argv){try{
     IdentifyItemSelectionProductionSendReplay();
     ShortcutSlotUpdateProductionSendReplay();
     InspectPlayerEquipmentProductionSendReplay();
+    GmPlayerContextReplay();
     AddFriendRequestProductionSendReplay();
     GuildInfoRefreshProductionSendReplay();
     GuildInviteProductionSendReplay();

@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-PK46.02 connects the selected `/item`, `/monster`, and `/killall` commands. Verify permissions and resulting server updates live. The remaining outbound requests are GM actor kick `00CC` and manner adjustment `0149`. [Item and monster request](evidence/PK46.02-map-gm-item-monster-013F.md) · [Disconnect-all request](evidence/PK46.02-unmatched-registered-request-paths.md#pk4602-gm-disconnect-all)
+PK46.02 connects GM actor kick `00CC` and player manner adjustment `0149`. Verify the real client menu, prompts, permissions, and resulting server updates with two accounts. Check actor kick permissions for players, monsters, and NPCs independently. The 177-row selected map request inventory now has no `UNREVIEWED` classifications. Continue the pending profile, live outcome, and PK46 self-review checks. [Context request evidence](evidence/PK46.02-gm-player-context.md)
+
+PK46.02 connects the selected `/item`, `/monster`, and `/killall` commands. Verify permissions and resulting server updates live. [Item and monster request](evidence/PK46.02-map-gm-item-monster-013F.md) · [Disconnect-all request](evidence/PK46.02-unmatched-registered-request-paths.md#pk4602-gm-disconnect-all)
 
 PK46.02 connects `/check` and `/rc` to the selected GM name requests. `/check` uses the existing server status display, and the server owns the `/rc` mute. Verify allowed and denied operations live. [GM commands and packet layout](evidence/PK46.02-map-gm-novice-adopt-repair-friend-gaps.md#pk4602-gm-check-rc)
 

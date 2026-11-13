@@ -8205,6 +8205,17 @@ void HandleGuildNotification(CGameMode& mode,const PacketView& packet){
 
 #include "ChatRoomPacketHandlers.inc"
 
+void HandleGmKickAck(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 3) return;
+    const bool success = packet.data[2] != 0;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    RecordChat(mode, success ? strings.Get(151, "The character was disconnected.")
+        : strings.Get(152, "Failed to disconnect the character."),
+        ro::chat::ColorRefToUiRgb(13055), kChatChannelSystem);
+}
+
 void HandleMannerNotice(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data) return;
@@ -9908,9 +9919,11 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     mode.m_waitingWearEquipAck = 0;
     mode.m_waitingTakeoffEquipAck = 0;
     if (auto* input = g_windowMgr.m_npcInputWnd;
-        input && input->IsGameNumberPromptFor(CGameMode::GameMsg_RequestDropInventoryItem)) {
+        input && (input->IsGameNumberPromptFor(CGameMode::GameMsg_RequestDropInventoryItem)
+            || input->IsGameNumberPromptFor(CGameMode::GameMsg_ConfirmMannerAdjustment))) {
         input->HideInput();
     }
+    g_windowMgr.ClosePlayerContextMenu();
     ApplyMapChangeSessionState(info);
 
     DbgLog("[GameMode] map change packet=0x%04X map='%s' pos=%d,%d serverMove=%d\n",
@@ -10790,6 +10803,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00C7, HandleNpcShopSellList);
     router.Register(0x00CA, HandleNpcShopBuyResult);
     router.Register(0x00CB, HandleNpcShopSellResult);
+    router.Register(0x00CD, HandleGmKickAck);
     router.Register(0x0142, HandleNpcDialogNumberInput);
     router.Register(0x01D4, HandleNpcDialogStringInput);
     router.Register(0x0144, HandleCompass);

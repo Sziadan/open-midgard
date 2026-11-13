@@ -174,7 +174,10 @@ void BindCommerceUi(QtUiState* ui){
             if(command==CGameMode::PlayerContext_AskJoinParty)g_modeMgr.SendMsg(CGameMode::GameMsg_RequestPartyInvite,id,0,0);
             else if(command==CGameMode::PlayerContext_RequestAdoption
                     || command==CGameMode::PlayerContext_RequestGuildAlliance
-                    || command==CGameMode::PlayerContext_DeclareGuildOpposition)
+                    || command==CGameMode::PlayerContext_DeclareGuildOpposition
+                    || command==CGameMode::PlayerContext_DisconnectCharacter
+                    || command==CGameMode::PlayerContext_GivePositiveManner
+                    || command==CGameMode::PlayerContext_GiveNegativeManner)
                 g_modeMgr.SendMsg(CGameMode::GameMsg_RequestPlayerContextAction,id,command,0);
             else if(!PlayerAction(command,id,name)&&state.status.empty())g_windowMgr.PushChatEvent("That player action is unavailable right now.",0x00FF8080u,6);return;
         }

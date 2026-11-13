@@ -3831,7 +3831,7 @@ bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
         return false;
     }
 
-    if (!IsPcLikeHoverActor(hoveredActor) || IsMonsterLikeHoverActor(hoveredActor) || IsNpcLikeHoverActor(hoveredActor)) {
+    if (!hoveredActor || (!IsPcLikeHoverActor(hoveredActor) && !IsGravityAid(g_session.m_aid))) {
         return false;
     }
 
@@ -3845,6 +3845,23 @@ bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
     const int menuX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(screenX) : screenX;
     const int menuY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(screenY) : screenY;
     return mode.OpenPlayerContextMenu(hoveredActor->m_gid, ResolveHoveredActorName(mode, hoveredActor), menuX, menuY);
+}
+
+constexpr u32 kMaxMannerAdjustment = 30000;
+
+bool CanKickContextActor(const CGameMode& mode, u32 targetAid)
+{
+    if (!targetAid || targetAid == g_session.m_aid || targetAid == g_session.m_gid
+        || !mode.m_world || !IsGravityAid(g_session.m_aid)) return false;
+    const auto* actor = mode.m_world->GetGameActorByAID(targetAid);
+    return actor && actor != mode.m_world->m_player;
+}
+
+bool CanAdjustContextManner(const CGameMode& mode, u32 targetAid, bool negative)
+{
+    return CanKickContextActor(mode, targetAid) && g_serverType != ServerInstantEvent
+        && IsPcLikeHoverActor(mode.m_world->GetGameActorByAID(targetAid))
+        && (negative || IsNameYellow(g_session.m_aid));
 }
 
 const char* GetPlayerContextActionName(CGameMode::PlayerContextAction action)
@@ -11343,12 +11360,32 @@ bool SendAdoptionPacket(u8 opcode, u32 first, u32 second = 0, bool accepted = fa
 
 bool CGameMode::OpenPlayerContextMenu(u32 targetAid, const std::string& targetName, int x, int y)
 {
+    const auto* actor = m_world ? m_world->GetGameActorByAID(targetAid) : nullptr;
+    const bool kickOnly = actor && !IsPcLikeHoverActor(actor);
+    const bool canKick = CanKickContextActor(*this, targetAid);
+    if (kickOnly && !canKick) return false;
     auto* menu = static_cast<UIPlayerContextMenuWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_PLAYERCONTEXTMENUWND));
     if (!menu) return false;
 
     m_menuTargetAID = targetAid;
     m_lastWhisperMenuCharacterName = targetName;
-    auto entries = BuildPlayerContextMenuEntries(targetName);
+    auto entries = kickOnly ? std::vector<PlayerContextMenuEntry>{} : BuildPlayerContextMenuEntries(targetName);
+    if (canKick) {
+        ro::UiMessageStrings strings;
+        strings.Load();
+        auto label = strings.Get(458, "Force %s to quit");
+        if (const auto placeholder = label.find("%s"); placeholder != std::string::npos)
+            label.replace(placeholder, 2, targetName);
+        entries.push_back({PlayerContext_DisconnectCharacter, std::move(label)});
+        if (!kickOnly && g_serverType != ServerInstantEvent) {
+            entries.push_back({PlayerContext_GivePositiveManner, strings.Get(389, "Give positive manner points")});
+            entries.push_back({PlayerContext_GiveNegativeManner, strings.Get(390, "Give negative manner points")});
+        }
+    }
+    if (kickOnly) {
+        menu->SetMenu(targetAid, targetName, entries, x, y);
+        return true;
+    }
     if (CanRequestGuildRelation(*this, targetAid, false))
         entries.push_back({PlayerContext_RequestGuildAlliance, "Request guild alliance"});
     if (CanRequestGuildRelation(*this, targetAid, true))
@@ -13098,9 +13135,42 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case GameMsg_RequestPartyInviteReply:
         return ReplyPartyInvite(static_cast<u32>(wparam), lparam != 0, extra != 0) ? 1 : 0;
 
+    case GameMsg_ConfirmMannerAdjustment: {
+        const auto targetAid = static_cast<u32>(wparam);
+        if ((extra != 0 && extra != 1) || lparam < 0 || lparam > kMaxMannerAdjustment
+            || !CanAdjustContextManner(*this, targetAid, extra == 1)) return 0;
+        std::array<u8, 9> packet{0x49, 0x01};
+        for (unsigned i = 0; i < 4; ++i)
+            packet[2 + i] = static_cast<u8>(targetAid >> (8 * i));
+        packet[6] = static_cast<u8>(extra);
+        packet[7] = static_cast<u8>(lparam);
+        packet[8] = static_cast<u8>(lparam >> 8);
+        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
+    }
+
     case GameMsg_RequestPlayerContextAction: {
         const PlayerContextAction action = static_cast<PlayerContextAction>(lparam);
         const u32 targetAid = static_cast<u32>(wparam);
+        if (action == PlayerContext_DisconnectCharacter) {
+            if (!CanKickContextActor(*this, targetAid)) return 0;
+            std::array<u8, 6> packet{0xcc, 0};
+            for (unsigned i = 0; i < 4; ++i)
+                packet[2 + i] = static_cast<u8>(targetAid >> (8 * i));
+            return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
+        }
+        if (action == PlayerContext_GivePositiveManner || action == PlayerContext_GiveNegativeManner) {
+            const bool negative = action == PlayerContext_GiveNegativeManner;
+            if (!CanAdjustContextManner(*this, targetAid, negative)) return 0;
+            auto* input = static_cast<UINpcInputWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_NPCINPUTWND));
+            if (!input) return 0;
+            ro::UiMessageStrings strings;
+            strings.Load();
+            const auto label = negative ? strings.Get(390, "Give negative manner points")
+                : strings.Get(389, "Give positive manner points");
+            input->OpenGameNumberPrompt(label.c_str(), GameMsg_ConfirmMannerAdjustment, targetAid,
+                1, kMaxMannerAdjustment, nullptr, negative ? 1 : 0, true);
+            return 1;
+        }
         if (action == PlayerContext_RequestGuildAlliance || action == PlayerContext_DeclareGuildOpposition) {
             const bool hostile = action == PlayerContext_DeclareGuildOpposition;
             if (!CanRequestGuildRelation(*this, targetAid, hostile)) return 0;

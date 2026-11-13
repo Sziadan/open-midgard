@@ -1,5 +1,7 @@
 # Packet implementation status
 
+**Selected map request inventory**. PK46.02 classifies all 177 rows as 176 C2S requests and one inactive registration. The last requests traced were GM player kick and manner adjustment. Live outcomes, additional profiles, and PK46 self-review remain open. [Evidence](evidence/PK46.02-gm-player-context.md)
+
 **Quest journal**. PK50.02 receives character quest membership and mission details with atomic validation. PK50.03 applies incremental updates and opens the journal with Q or the Quest button in Basic Info in native and Qt gameplay. Installed-skin and live verification remain open. [Quest updates and UI evidence](evidence/PK50.03-quest-incremental.md)
 
 **Battleground chat**. PK41.03 verifies the command, selected send and receive paths, autosave and same-map reset in replay. Live team acceptance remains open. [Evidence](evidence/PK41.03-battleground-chat.md)
