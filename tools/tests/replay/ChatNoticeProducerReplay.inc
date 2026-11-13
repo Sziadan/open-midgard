@@ -1,3 +1,52 @@
+void MannerAndColoredNoticeReplay()
+{
+    SetCase("manner_and_colored_notice", "PK39.03", "selected-014a-014b-01ab-02c1", "map packet loop -> actor and chat");
+    CGameMode mode;
+    CWorld world;
+    CPc actor;
+    actor.m_gid = 0x11223344;
+    world.RegisterActor(&actor);
+    mode.m_runtimeActors.emplace(actor.m_gid, &actor);
+    mode.m_world = &world;
+    TestConnection connection;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const auto dispatch = [&](const std::vector<u8>& bytes, int count) {
+        Require(connection.QueueBytes(bytes), "could not queue manner stream");
+        Require(ProcessGameModePacketLoop(mode, connection, router, count).packetsDispatched == count
+            && !connection.BufferedBytes(), "manner stream did not frame and dispatch");
+    };
+    g_windowMgr.ClearChatEvents();
+    dispatch({0x4a,1,0,0,0,0, 0x4a,1,3,0,0,0, 0x4a,1,4,0,0,0, 0x4a,1,5,0,0,0,
+        0xab,1,0x44,0x33,0x22,0x11,4,0,0xf9,0xff,0xff,0xff,
+        0xab,1,0x44,0x33,0x22,0x11,3,0,99,0,0,0}, 6);
+    Require(actor.m_honor == -7 && g_windowMgr.GetChatEvents().size() == 3,
+        "manner result branches or signed actor state differ");
+    std::vector<u8> giver(27, 'X');
+    giver[0] = 0x4b; giver[1] = 1; giver[2] = 1;
+    dispatch(giver, 1);
+    giver[2] = 0;
+    dispatch(giver, 1);
+    const auto& chat = g_windowMgr.GetChatEvents();
+    Require(chat.size() == 4 && chat.back().text.find(std::string(24, 'X')) != std::string::npos,
+        "manner notification did not preserve the bounded giver name");
+    const std::vector<u8> colored{0xc1,2,15,0,0x44,0x33,0x22,0x11,0x12,0x34,0x56,0,'h','i',0};
+    const auto previousExclusions = g_session.m_exAidList;
+    g_session.m_exAidList = {actor.m_gid};
+    dispatch(colored, 1);
+    Require(chat.size() == 4 && actor.GetChatBubbleText().empty(), "ignored colored speaker reached chat or bubble");
+    g_session.m_exAidList.clear();
+    dispatch(colored, 1);
+    g_session.m_exAidList = previousExclusions;
+    Require(chat.size() == 5 && chat.back().text == "hi", "colored chat text differs");
+    Require(chat.back().color == 0x00123456, "colored chat RGB differs: " + std::to_string(chat.back().color));
+    Require(actor.GetChatBubbleText() == "hi", "colored chat actor bubble differs");
+    g_windowMgr.ClearChatEvents();
+    mode.m_runtimeActors.clear();
+    mode.m_world = nullptr;
+    world.UnregisterActor(&actor);
+}
+
 void LegacyRankingReplay()
 {
     SetCase("legacy_ranking", "PK39.02", "selected-legacy-rank-list-and-points", "map packet loop -> ranking chat");

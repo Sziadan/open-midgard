@@ -214,6 +214,8 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x012B, 2);              // ZC_CLEAR_CART
     SetPacketSize(0x012F, kVariablePacketSize);
     SetPacketSize(0x0147, 39);              // ZC_AUTORUN_SKILL (e.g. Magnifier -> MC_IDENTIFY)
+    SetPacketSize(0x014A, 6);               // ZC_ACK_GIVE_MANNER_POINT
+    SetPacketSize(0x014B, 27);              // ZC_NOTIFY_MANNER_POINT_GIVEN
     SetPacketSize(0x0130, 6);
     SetPacketSize(0x0131, 86);
     SetPacketSize(0x0132, 6);

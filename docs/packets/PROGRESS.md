@@ -4079,3 +4079,5 @@ PK38.04 verifies twelve inactive forms against the selected profile and assigns 
 PK39.02 frames MVP rewards and routes the notices and winner effect. [Evidence](evidence/PK39.02-mvp-rewards.md)
 
 PK39.02 frames legacy ranking lists and signed point changes and restores `/pk` submission. [Evidence](evidence/PK39.02-legacy-ranking.md)
+
+PK39.03 adds manner notices and signed actor honor and verifies colored chat and ignore filtering. [Evidence](evidence/PK39.03-manner-notices.md)

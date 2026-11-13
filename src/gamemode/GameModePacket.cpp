@@ -6844,7 +6844,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
             state.headType = state.hairStyle;
             state.guildId = static_cast<int>(ReadLE32(packet.data + 34 + shift));
             state.emblemVersion = ReadLE16(packet.data + 38 + shift);
-            state.manner = ReadLE16(packet.data + 40 + shift);
+            state.manner = static_cast<s16>(ReadLE16(packet.data + 40 + shift));
             state.karma = packet.data[44 + shift];
             state.pkState = packet.data[44 + shift];
             state.sex = packet.data[45 + shift];
@@ -6932,7 +6932,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
         outState.headType = outState.hairStyle;
         outState.guildId = static_cast<int>(ReadLE32(packet.data + guildOffset));
         outState.emblemVersion = ReadLE16(packet.data + emblemOffset);
-        outState.manner = ReadLE16(packet.data + mannerOffset);
+        outState.manner = static_cast<s16>(ReadLE16(packet.data + mannerOffset));
         outState.karma = packet.data[karmaOffset];
         outState.pkState = packet.data[karmaOffset];
         outState.sex = packet.data[sexOffset];
@@ -7018,7 +7018,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
     outState.sex = packet.data[sexOffset];
     outState.guildId = static_cast<int>(ReadLE32(packet.data + guildOffset));
     outState.emblemVersion = ReadLE16(packet.data + emblemOffset);
-    outState.manner = ReadLE16(packet.data + mannerOffset);
+    outState.manner = static_cast<s16>(ReadLE16(packet.data + mannerOffset));
     outState.karma = packet.data[karmaOffset];
     outState.clevel = ReadLE16(packet.data + levelOffset);
     outState.state = isIdle ? packet.data[stateOffset] : 0;
@@ -7069,7 +7069,7 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
             state.headType = state.hairStyle;
             state.guildId = static_cast<int>(ReadLE32(packet.data + 38 + shift));
             state.emblemVersion = ReadLE16(packet.data + 42 + shift);
-            state.manner = ReadLE16(packet.data + 44 + shift);
+            state.manner = static_cast<s16>(ReadLE16(packet.data + 44 + shift));
             state.karma = packet.data[48 + shift];
             state.pkState = packet.data[48 + shift];
             state.sex = packet.data[49 + shift];
@@ -7165,7 +7165,7 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
         outState.headType = outState.hairStyle;
         outState.guildId = static_cast<int>(ReadLE32(packet.data + guildOffset));
         outState.emblemVersion = ReadLE16(packet.data + emblemOffset);
-        outState.manner = ReadLE16(packet.data + mannerOffset);
+        outState.manner = static_cast<s16>(ReadLE16(packet.data + mannerOffset));
         outState.karma = packet.data[karmaOffset];
         outState.pkState = packet.data[karmaOffset];
         outState.sex = packet.data[sexOffset];
@@ -7231,7 +7231,7 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
     outState.headType = outState.hairStyle;
     outState.guildId = static_cast<int>(ReadLE32(packet.data + 41));
     outState.emblemVersion = ReadLE16(packet.data + 45);
-    outState.manner = ReadLE16(packet.data + 47);
+    outState.manner = static_cast<s16>(ReadLE16(packet.data + 47));
     outState.karma = packet.data[53];
     outState.pkState = packet.data[53];
     outState.sex = packet.data[54];
@@ -7977,11 +7977,50 @@ void HandleGuildNotification(CGameMode& mode,const PacketView& packet){
 
 #include "ChatRoomPacketHandlers.inc"
 
+void HandleMannerNotice(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data) return;
+    if (packet.packetId == 0x014B) {
+        if (packet.packetLength != 27 || packet.data[2] != 0) return;
+        const auto name = ExtractFixedPacketString(packet, 3, 24);
+        if (!name.empty()) RecordChat(mode, "You got a good point from " + name + ".", 0x0000ffff, kChatChannelSystem);
+        return;
+    }
+
+    if (packet.packetLength != 6) return;
+    switch (ReadLE32(packet.data + 2)) {
+    case 0: {
+        ro::UiMessageStrings strings;
+        strings.Load();
+        RecordChat(mode, strings.Get(854, "A manner point has been successfully aligned."), 0x0000ffff, kChatChannelSystem);
+        break;
+    }
+    case 3:
+        RecordChat(mode, "Chat Block has been applied by GM due to your ill-mannerous action.", 0x00ffff00, kChatChannelSystem);
+        break;
+    case 4:
+        RecordChat(mode, "Automated Chat Block has been applied due to Anti-Spam System.", 0x00ffff00, kChatChannelSystem);
+        break;
+    }
+}
+
+void HandleUserParameterChange(CGameMode& mode, const PacketView& packet)
+{
+    constexpr u16 mannerParameter = 4;
+    if (!packet.data || packet.packetLength != 12 || ReadLE16(packet.data + 6) != mannerParameter) return;
+    const auto aid = ReadLE32(packet.data + 2);
+    if (!aid) return;
+    const auto honor = static_cast<s32>(ReadLE32(packet.data + 8));
+    auto* actor = ResolveSkillPacketActor(mode, aid);
+    if (auto* pc = dynamic_cast<CPc*>(actor)) pc->m_honor = honor;
+    else if (auto* granny = dynamic_cast<CGrannyPc*>(actor)) granny->m_honor = honor;
+}
+
 void HandleNpcChat(CGameMode& mode, const PacketView& packet)
 {
     // Ref: Zc_Npc_Chat (0x02C1) / rAthena ZC_NPC_CHAT
     // Layout: <len>.W <id>.L <color>.L <message>.?B
-    if (!packet.data || packet.packetLength < 13) {
+    if (!packet.data || packet.packetLength < 13 || ReadLE16(packet.data + 2) != packet.packetLength) {
         return;
     }
 
@@ -10102,6 +10141,9 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00D2, HandleWhisperSettingState);
     router.Register(0x00D4, HandleWhisperExclusionList);
     router.Register(0x02C1, HandleNpcChat);
+    router.Register(0x014A, HandleMannerNotice);
+    router.Register(0x014B, HandleMannerNotice);
+    router.Register(0x01AB, HandleUserParameterChange);
     RegisterHandlerIfValid(router, receiveProfile.broadcastBasic, HandleBroadcast);
     router.Register(0x07FD, HandleSpecialItemObtain);
     router.Register(0x00B4, HandleNpcDialogText);
