@@ -1,5 +1,9 @@
 # Companion skill lists
 
+`Ref/UIItemWnd.cpp:16080` uses message IDs 937 and 1262 for the two companion captions and 284 for the skill-point footer. Both native and Qt use the same localized strings. The selected server sends homunculus skill points in `022E`. The mercenary footer displays zero because the selected mercenary packets supply no skill-point total.
+
+The four companion windows restore independent saved positions. `Ref/UIWindowMgr.cpp` passes separate placement records on window creation. The port stores position in `UIWindows` settings when the window closes, checks the saved coordinates against the current viewport, and keeps the existing default placement and window dimensions. Replay verifies localization lookup and independent skill-list positions across close and reopen.
+
 The selected status callbacks 223 and 283 in `Ref/UIFrameWnd.cpp` toggle the companion skill lists. `Ref/UIWindowMgr.cpp` selectors 114 and 133 create 280 by 120 instances with separate family selectors. The new native and Qt views use the existing homunculus and mercenary packet caches. The base layout shows two rows with skill icon, learned level, and SP cost. The homunculus footer reads the current skill point count.
 
 `Ref/UIItemWnd.cpp` around 16274 routes valid, learned skills with an SP cost through mode message 126 on double-click. Around 16304, the source starts the family drag for valid learned active skills with the corresponding use level. The port uses the existing family-aware mode dispatch and shared shortcut drag payload. Right-click uses the existing description window. Dismissal closes both windows for the matching companion. The homunculus death and local skill 244 reset close both homunculus windows.

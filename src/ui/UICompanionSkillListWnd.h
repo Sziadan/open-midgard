@@ -54,6 +54,8 @@ private:
     const Icon* GetIcon(int skillId);
 
     const int m_family;
+    std::string m_title;
+    std::string m_pointsFormat;
     UIFriendOptionButton* m_close;
     std::map<int, Icon> m_icons;
     std::array<Icon, 2> m_upgradeArt;

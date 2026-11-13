@@ -85,6 +85,31 @@
 #include <vector>
 
 namespace {
+const char* CompanionPlacementKey(int id)
+{
+    switch (id) {
+    case UIWindowMgr::WID_HOMUNINFOWND: return "HomunInfoWnd";
+    case UIWindowMgr::WID_MERINFOWND: return "MerInfoWnd";
+    case UIWindowMgr::WID_HOMUNSKILLLISTWND: return "HomunSkillListWnd";
+    case UIWindowMgr::WID_MERSKILLLISTWND: return "MerSkillListWnd";
+    default: return nullptr;
+    }
+}
+
+void RestoreCompanionPlacement(UIWindow& window, const RECT& viewport, int defaultX, int defaultY)
+{
+    const std::string key = CompanionPlacementKey(window.m_id);
+    const int maxX = std::max(0L, viewport.right - viewport.left - window.m_w);
+    const int maxY = std::max(0L, viewport.bottom - viewport.top - window.m_h);
+    const int x = LoadSettingsIniInt("UIWindows", (key + "X").c_str(), defaultX);
+    const int y = LoadSettingsIniInt("UIWindows", (key + "Y").c_str(), defaultY);
+    if (x >= 0 && x <= maxX && y >= 0 && y <= maxY) {
+        window.Move(x, y);
+    } else {
+        window.Move(std::clamp(defaultX, 0, maxX), std::clamp(defaultY, 0, maxY));
+    }
+}
+
 UIGroundSkillTextWnd* GroundSkillTextOwner(UIWindow* window)
 {
     for(auto* current=window;current;current=current->m_parent)
@@ -1365,8 +1390,7 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             const auto viewport = GetChatClientRect();
             const int width = viewport.right - viewport.left;
             const int height = viewport.bottom - viewport.top;
-            window->Move(std::clamp((width - 640) / 2 + 185, 0, std::max(0, width - window->m_w)),
-                std::clamp((height - 480) / 2 + 340, 0, std::max(0, height - window->m_h)));
+            RestoreCompanionPlacement(*window, viewport, (width - 640) / 2 + 185, (height - 480) / 2 + 340);
             m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), window);
         }
         window->SetShow(1);
@@ -1380,8 +1404,7 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
             const auto viewport = GetChatClientRect();
             const int width = viewport.right - viewport.left;
             const int height = viewport.bottom - viewport.top;
-            window->Move(std::clamp((width - 640) / 2 + 200, 0, std::max(0, width - window->m_w)),
-                std::clamp((height - 480) / 2 + 200, 0, std::max(0, height - window->m_h)));
+            RestoreCompanionPlacement(*window, viewport, (width - 640) / 2 + 200, (height - 480) / 2 + 200);
             m_children.insert(std::find(m_children.begin(), m_children.end(), m_modalWindow), window);
         }
         window->SetShow(1);
@@ -2015,6 +2038,10 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     const bool deletingPetTaming=window==m_petTamingDeceiveWnd;
     const bool deletingCompanion = window == m_homunInfoWnd || window == m_merInfoWnd
         || window == m_homunSkillListWnd || window == m_merSkillListWnd;
+    if (deletingCompanion) {
+        const std::string key = CompanionPlacementKey(window->m_id);
+        SaveSettingsIniIntValues("UIWindows", {{key + "X", window->m_x}, {key + "Y", window->m_y}});
+    }
     const bool deletingGroundText=GroundSkillTextOwner(window)!=nullptr;
     for(auto*& owner:m_groundSkillTextWindows)if(owner==window)owner=nullptr;
     if(window==m_commandListWnd)m_commandListWnd=nullptr;

@@ -3082,6 +3082,11 @@ void CompanionSkillListReplay()
     Require(homun && merc && homun->GetRows().size() == 2 && merc->GetRows().size() == 1
         && homun->GetRows().front().id == 8000 && merc->GetRows().front().id == 8200,
         "companion list mixed caches or rendered the wrong rows");
+    ro::UiMessageStrings messages;
+    messages.Load();
+    Require(homun->GetTitle() == messages.Get(937, "Homunculus Skill List")
+        && merc->GetTitle() == messages.Get(1262, "Mercenary Skill List"),
+        "companion lists did not use their localized message entries");
     homun->OnWheel(-1);
     Require(homun->GetRows().front().id == 8001, "companion list did not scroll to the next row");
     homun->OnWheel(1);
@@ -3141,6 +3146,15 @@ void CompanionSkillListReplay()
     listPacket(0x0235, 8000, 0);
     Require(homun->GetRows().empty() && merc->GetRows().size() == 1,
         "empty homunculus list packet did not refresh only its family");
+
+    homun->Move(19, 26);
+    merc->Move(47, 58);
+    g_windowMgr.CloseCompanionWindows(true);
+    g_windowMgr.CloseCompanionWindows(false);
+    homun = static_cast<UICompanionSkillListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_HOMUNSKILLLISTWND));
+    merc = static_cast<UICompanionSkillListWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_MERSKILLLISTWND));
+    Require(homun && merc && homun->m_x == 19 && homun->m_y == 26 && merc->m_x == 47 && merc->m_y == 58,
+        "companion skill windows did not restore separate saved positions");
 
     g_windowMgr.CloseCompanionWindows(true);
     g_windowMgr.CloseCompanionWindows(false);

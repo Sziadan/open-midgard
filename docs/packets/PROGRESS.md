@@ -3911,3 +3911,7 @@ PK29.04 preserves an active mercenary's controls on refresh and retires them whe
 ## Companion windows on map transition
 
 PK28.04 closes companion controls and invalidates learned skill rows and job identity on map reuse. The production same-map replay covers both families and a companion skill drag. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28.03-companion-map-reset.md)
+
+## Companion window captions and placement
+
+PK28.04 uses the selected caption and footer entries and persists the four companion window positions independently. The replay covers skill list localization and close/reopen placement. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-skill-lists.md)

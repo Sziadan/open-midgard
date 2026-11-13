@@ -3,6 +3,7 @@
 #include "UIFriendOptionWnd.h"
 #include "UIShopCommon.h"
 #include "UIWindowMgr.h"
+#include "core/UiMessageStrings.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "session/Session.h"
@@ -27,6 +28,11 @@ UICompanionSkillListWnd::UICompanionSkillListWnd(int windowId)
           "basic_interface\\sys_close_on.bmp", "basic_interface\\sys_close_on.bmp", 11, 11))
 {
     m_id = windowId;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    m_title = m_family == 1 ? strings.Get(937, "Homunculus Skill List")
+                           : strings.Get(1262, "Mercenary Skill List");
+    m_pointsFormat = strings.Get(284, "Skill Point: %d");
     Create(280, 120);
     m_close->Move(m_w - 14, 3);
     m_close->SetToolTip("Close");
@@ -109,13 +115,18 @@ std::vector<UICompanionSkillListWnd::Row> UICompanionSkillListWnd::GetRows()
 
 std::string UICompanionSkillListWnd::GetTitle() const
 {
-    return m_family == 1 ? "Homunculus Skill List" : "Mercenary Skill List";
+    return m_title;
 }
 
 std::string UICompanionSkillListWnd::GetFooter() const
 {
-    if (m_family == 1) return "Skill points " + std::to_string(g_session.m_homunStatus.skillPoints);
-    return {};
+    auto caption = m_pointsFormat;
+    const auto placeholder = caption.find("%d");
+    if (placeholder != std::string::npos) {
+        const int points = m_family == 1 ? g_session.m_homunStatus.skillPoints : 0;
+        caption.replace(placeholder, 2, std::to_string(points));
+    }
+    return caption;
 }
 
 void UICompanionSkillListWnd::Move(int x, int y)
