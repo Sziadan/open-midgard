@@ -3887,3 +3887,7 @@ PK28.03 queues pending ground skills to the C++ companion controller when the ow
 ## 2026-11-13 Selected mercenary support skills
 
 PK29.02 routes `MER_KYRIE`, `MER_BLESSING`, and `MER_INCAGI` from the selected skill list to owner-targeted `0438` requests. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-pending-companion-actor-skills.md)
+
+## 2026-11-13 Native companion cast progress
+
+PK28.03 retains actor and ground casts through a busy animation. The mercenary ground replay verifies the approach request, a simulated position update, and one cast after the actor becomes ready. Six focused application checks and 473 standalone checks passed. [Evidence](evidence/PK28-companion-ground-targets.md)

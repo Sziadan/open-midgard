@@ -1100,7 +1100,7 @@
         "docs/packets/evidence/PK28-pending-companion-actor-skills.md",
         "docs/packets/evidence/PK19-map-properties.md"
       ],
-      "commit_subject": "packet(PK28.03): dispatch pending companion ground skills in native AI"
+      "commit_subject": "packet(PK28.03): retain companion casts while actors are busy"
     },
     "PK28.04": {
       "status": "NOT_STARTED",

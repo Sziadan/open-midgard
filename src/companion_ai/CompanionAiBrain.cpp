@@ -1,4 +1,5 @@
 #include "CompanionAiBrain.h"
+#include "skill/Skill.h"
 
 #include <cstdlib>
 
@@ -235,6 +236,7 @@ void Brain::OnCHASE_ST()
     if (m_runtime.IsOutOfSight(m_myId, m_enemy)) {
         m_state = IDLE_ST;
         m_enemy = 0;
+        m_skill = 0;
         m_destX = 0;
         m_destY = 0;
         m_runtime.Trace("CHASE_ST -> IDLE_ST : ENEMY_OUTSIGHT_IN");
@@ -258,13 +260,10 @@ void Brain::OnCHASE_ST()
 void Brain::OnATTACK_ST()
 {
     m_runtime.Trace("OnATTACK_ST");
-    if (m_runtime.IsOutOfSight(m_myId, m_enemy)) {
+    if (m_runtime.IsOutOfSight(m_myId, m_enemy) || m_runtime.GetMotion(m_enemy) == MOTION_DEAD) {
         m_state = IDLE_ST;
-        m_runtime.Trace("ATTACK_ST -> IDLE_ST");
-        return;
-    }
-    if (m_runtime.GetMotion(m_enemy) == MOTION_DEAD) {
-        m_state = IDLE_ST;
+        m_enemy = 0;
+        m_skill = 0;
         m_runtime.Trace("ATTACK_ST -> IDLE_ST");
         return;
     }
@@ -281,9 +280,13 @@ void Brain::OnATTACK_ST()
     if (m_skill == 0) {
         m_runtime.Attack(m_myId, m_enemy);
     } else {
-        const bool goodSkill = m_runtime.SkillObject(m_myId, m_skillLevel, m_skill, m_enemy);
-        if (m_runtime.kind() == Kind::Mercenary && goodSkill) {
+        const auto result = m_runtime.SkillObject(m_myId, m_skillLevel, m_skill, m_enemy);
+        if (result == SkillSendResult::Retry) {
+            return;
+        }
+        if (result == SkillSendResult::Invalid || SKILL_INFO::IsGoodSkillForActor(m_skill)) {
             m_enemy = 0;
+            m_state = IDLE_ST;
         }
         m_skill = 0;
     }
@@ -377,7 +380,9 @@ void Brain::OnSKILL_AREA_CMD_ST()
     }
     if (m_runtime.GetDistance(cur.x, cur.y, m_destX, m_destY)
         <= m_runtime.GetSkillAttackRange(m_myId, m_skill)) {
-        m_runtime.SkillGround(m_myId, m_skillLevel, m_skill, m_destX, m_destY);
+        if (m_runtime.SkillGround(m_myId, m_skillLevel, m_skill, m_destX, m_destY) == SkillSendResult::Retry) {
+            return;
+        }
         m_state = IDLE_ST;
         m_skill = 0;
     }

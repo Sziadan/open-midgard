@@ -15,6 +15,8 @@ struct Position {
     bool valid() const { return x >= 0 && y >= 0; }
 };
 
+enum class SkillSendResult { Invalid, Retry, Sent };
+
 class Runtime {
 public:
     explicit Runtime(Kind kind);
@@ -46,9 +48,8 @@ public:
     void Move(u32 id, int x, int y) const;
     void MoveToOwner(u32 id) const;
     void Attack(u32 id, u32 enemyId) const;
-    // Returns true when the skill is a "good"/support skill (Lua SkillObject return 1).
-    bool SkillObject(u32 id, int level, int skillId, u32 targetId) const;
-    void SkillGround(u32 id, int level, int skillId, int x, int y) const;
+    SkillSendResult SkillObject(u32 id, int level, int skillId, u32 targetId) const;
+    SkillSendResult SkillGround(u32 id, int level, int skillId, int x, int y) const;
 
     int GetDistance(int x1, int y1, int x2, int y2) const;
     int GetDistance2(u32 id1, u32 id2) const;

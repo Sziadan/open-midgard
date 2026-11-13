@@ -3234,7 +3234,12 @@ void PendingCompanionActorSkillReplay()
         Require(ReplayTrySourceSkillOnActor(mode, &player, false, false, false) && player.commands.empty(),
             "mercenary support skill entered the player route");
         mode.m_skillUseInfo = {};
+        mercenary.m_stateId = kGameActorCastingStateId;
         companion_ai::TickOwnedCompanionActor(mercenary);
+        companion_ai::TickOwnedCompanionActor(mercenary);
+        Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+            "busy mercenary sent a support skill before it could act");
+        mercenary.m_stateId = companion_ai::MOTION_STAND;
         companion_ai::TickOwnedCompanionActor(mercenary);
         Require(peer.ReceiveExact(10) == std::vector<u8>{0x38, 0x04, 3, 0, static_cast<u8>(skill), 0x20,
             0x44, 0x33, 0x22, 0x11}, "mercenary support skill sent the wrong owner target");
@@ -3261,6 +3266,29 @@ void PendingCompanionActorSkillReplay()
         "in-range ground skill emitted a move or the wrong skill request");
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "mercenary ground skill emitted an extra request");
+
+    mode.m_skillUseInfo = {8210, 2, 1, 1};
+    Require(ReplayRequestPendingGroundSkill(mode, 16, 10, false) && player.commands.empty(),
+        "out-of-range mercenary ground skill entered the player route");
+    mode.m_skillUseInfo = {};
+    companion_ai::TickOwnedCompanionActor(mercenary);
+    Require(peer.ReceiveExact(9) == std::vector<u8>{0x32, 0x02, 0x42, 0x00, 0x00, 0xf1, 4, 0, 0xa0},
+        "out-of-range ground skill sent an unexpected companion approach request");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "out-of-range mercenary sent a ground skill before approaching");
+    mode.GetClientCoor(15, 10, mercenary.m_pos.x, mercenary.m_pos.z);
+    mercenary.m_stateId = kGameActorCastingStateId;
+    companion_ai::TickOwnedCompanionActor(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "busy mercenary sent a ground skill after approaching");
+    mercenary.m_stateId = companion_ai::MOTION_STAND;
+    companion_ai::TickOwnedCompanionActor(mercenary);
+    groundRequest[12] = 16;
+    Require(peer.ReceiveExact(groundRequest.size()) == groundRequest,
+        "mercenary dropped the ground skill before it could act");
+    companion_ai::TickOwnedCompanionActor(mercenary);
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "mercenary repeated the completed ground skill");
     world.m_attr = nullptr;
 
     world.UnregisterActor(&target);

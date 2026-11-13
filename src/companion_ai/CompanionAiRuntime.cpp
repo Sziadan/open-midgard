@@ -55,6 +55,11 @@ Msg2Ai& MsgSlot(CGameActor& actor, Kind kind, bool reserved)
     return reserved ? actor.m_merResMsg : actor.m_merMsg;
 }
 
+bool CanSendSkill(const CGameActor& actor)
+{
+    return actor.m_stateId == MOTION_MOVE || actor.m_stateId == MOTION_STAND || actor.m_stateId == 4;
+}
+
 } // namespace
 
 Runtime::Runtime(Kind kind)
@@ -417,65 +422,62 @@ void Runtime::Attack(u32 id, u32 enemyId) const
     }
 }
 
-bool Runtime::SkillObject(u32 id, int level, int skillId, u32 targetId) const
+SkillSendResult Runtime::SkillObject(u32 id, int level, int skillId, u32 targetId) const
 {
     if (!IsOwnedCompanion(id) || level <= 0 || skillId <= 0 || targetId == 0) {
-        return false;
+        return SkillSendResult::Invalid;
     }
     const bool homunSkill = skillId > 8000 && skillId < 8017;
     const bool mercSkill = skillId > SKILL_INFO::kMercenarySkillFirst && SKILL_INFO::IsMercenarySkill(skillId);
     if ((m_kind == Kind::Homunculus && !homunSkill) || (m_kind == Kind::Mercenary && !mercSkill)) {
-        return false;
+        return SkillSendResult::Invalid;
     }
 
     CGameActor* self = FindActor(id);
     CGameActor* target = FindActor(targetId);
-    if (!self || !target) {
-        return false;
+    if (!self || !target || self->m_stateId == MOTION_DEAD) {
+        return SkillSendResult::Invalid;
     }
-    if (self->m_stateId != MOTION_MOVE && self->m_stateId != MOTION_STAND && self->m_stateId != 4) {
-        // Lua also allows ST_DAMAGE (often 4). Keep stand/move/damage.
-        if (self->m_stateId != 4) {
-            return SKILL_INFO::IsGoodSkillForActor(skillId);
-        }
+    if (!CanSendSkill(*self)) {
+        return SkillSendResult::Retry;
     }
 
     std::array<u8, 32> packetBuffer{};
     int packetLength = 0;
-    if (ro::net::BuildActiveUseSkillToIdPacket(
+    if (!ro::net::BuildActiveUseSkillToIdPacket(
             static_cast<u16>(skillId),
             static_cast<u16>(level),
             targetId,
             packetBuffer.data(),
             static_cast<int>(packetBuffer.size()),
             &packetLength)) {
-        CRagConnection::instance()->SendPacket(
-            reinterpret_cast<const char*>(packetBuffer.data()), packetLength);
+        return SkillSendResult::Invalid;
     }
-    return SKILL_INFO::IsGoodSkillForActor(skillId);
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packetBuffer.data()), packetLength)
+        ? SkillSendResult::Sent : SkillSendResult::Invalid;
 }
 
-void Runtime::SkillGround(u32 id, int level, int skillId, int x, int y) const
+SkillSendResult Runtime::SkillGround(u32 id, int level, int skillId, int x, int y) const
 {
     if (!IsOwnedCompanion(id) || level <= 0 || skillId <= 0) {
-        return;
+        return SkillSendResult::Invalid;
     }
     const bool homunSkill = skillId > 8000 && skillId < 8017;
     const bool mercSkill = skillId > 8200 && skillId < 8238;
     if ((m_kind == Kind::Homunculus && !homunSkill) || (m_kind == Kind::Mercenary && !mercSkill)) {
-        return;
+        return SkillSendResult::Invalid;
     }
     CGameActor* self = FindActor(id);
-    if (!self) {
-        return;
+    if (!self || self->m_stateId == MOTION_DEAD) {
+        return SkillSendResult::Invalid;
     }
-    if (self->m_stateId != MOTION_MOVE && self->m_stateId != MOTION_STAND && self->m_stateId != 4) {
-        return;
+    if (!CanSendSkill(*self)) {
+        return SkillSendResult::Retry;
     }
 
     std::array<u8, 128> packetBuffer{};
     int packetLength = 0;
-    if (ro::net::BuildActiveUseSkillToPosInfoPacket(
+    if (!ro::net::BuildActiveUseSkillToPosInfoPacket(
             static_cast<u16>(skillId),
             static_cast<u16>(level),
             static_cast<s16>(x),
@@ -484,9 +486,10 @@ void Runtime::SkillGround(u32 id, int level, int skillId, int x, int y) const
             packetBuffer.data(),
             static_cast<int>(packetBuffer.size()),
             &packetLength)) {
-        CRagConnection::instance()->SendPacket(
-            reinterpret_cast<const char*>(packetBuffer.data()), packetLength);
+        return SkillSendResult::Invalid;
     }
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packetBuffer.data()), packetLength)
+        ? SkillSendResult::Sent : SkillSendResult::Invalid;
 }
 
 int Runtime::GetDistance(int x1, int y1, int x2, int y2) const
