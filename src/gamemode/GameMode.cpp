@@ -10534,6 +10534,13 @@ bool CGameMode::SendWeaponRefineSelection(u32 itemIndex)
     return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
 }
 
+bool CGameMode::SendItemRepairSelection(const std::array<u8, 13>& row)
+{
+    std::array<u8, 15> packet{0xfd, 0x01};
+    std::copy(row.begin(), row.end(), packet.begin() + 2);
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
+}
+
 void CGameMode::ClearCraftingSelection()
 {
     if (g_windowMgr.m_skillSelectWnd && g_windowMgr.m_skillSelectWnd->IsCraftingSelection()) {

@@ -79,7 +79,8 @@ public:
     void SetProductionItems(const std::vector<unsigned int>& itemIds, std::string title);
     bool IsProductionSelection() const { return m_kind == Kind::Production || m_kind == Kind::ProductionMaterials; }
     void SetWeaponRefineItems(const std::vector<std::pair<u16, u16>>& items, std::string title);
-    bool IsCraftingSelection() const { return IsProductionSelection() || m_kind == Kind::WeaponRefine; }
+    void SetRepairItems(const std::vector<std::array<u8, 13>>& rows, std::string title);
+    bool IsCraftingSelection() const { return IsProductionSelection() || m_kind == Kind::WeaponRefine || m_kind == Kind::Repair; }
     void SetAutoSpellSkills(const std::vector<unsigned int>& skillIds);
     void SetStarPlaceConfirmation(u8 which, std::string prompt);
     bool IsStarPlaceConfirmation(u8 which) const;
@@ -98,6 +99,7 @@ private:
         Production,
         ProductionMaterials,
         WeaponRefine,
+        Repair,
     };
 
     struct Entry {
@@ -132,6 +134,7 @@ private:
     Kind m_kind;
     u16 m_productionItem = 0;
     std::array<u16, 3> m_productionMaterials{};
+    std::vector<std::array<u8, 13>> m_repairRows;
     unsigned short m_skillId;
     std::string m_title;
     std::string m_emptyText;

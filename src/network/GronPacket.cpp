@@ -262,6 +262,9 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x018D, kVariablePacketSize); // ZC_MAKABLEITEMLIST
     SetPacketSize(0x018E, 10);              // CZ_REQMAKINGITEM
     SetPacketSize(0x018F, 6);               // ZC_ACK_REQMAKINGITEM
+    SetPacketSize(0x01FC, kVariablePacketSize); // ZC_REPAIRITEMLIST
+    SetPacketSize(0x01FD, 15);              // CZ_REQ_ITEMREPAIR
+    SetPacketSize(0x01FE, 5);               // ZC_ACK_ITEMREPAIR
     SetPacketSize(0x0221, kVariablePacketSize); // ZC_NOTIFY_WEAPONITEMLIST
     SetPacketSize(0x0222, 6);               // CZ_REQ_WEAPONREFINE
     SetPacketSize(0x0223, 8);               // ZC_ACK_WEAPONREFINE

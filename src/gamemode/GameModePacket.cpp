@@ -5497,6 +5497,48 @@ void ShowEmptyCraftingList()
     g_windowMgr.m_editWindow = nullptr;
 }
 
+void HandleItemRepairList(CGameMode& mode, const PacketView& packet)
+{
+    constexpr int stride = 13;
+    constexpr unsigned inventorySlots = ro::item_snapshot::kInventorySlots;
+    if (!packet.data || packet.packetLength < 4 || ReadLE16(packet.data + 2) != packet.packetLength
+        || (packet.packetLength - 4) % stride != 0 || (packet.packetLength - 4) / stride > inventorySlots) return;
+
+    std::vector<std::array<u8, stride>> choices;
+    std::array<bool, inventorySlots> seen{};
+    for (int at = 4; at < packet.packetLength; at += stride) {
+        const auto index = ReadLE16(packet.data + at);
+        if (index >= seen.size() || seen[index] || !ReadLE16(packet.data + at + 2)) return;
+        seen[index] = true;
+        auto& row = choices.emplace_back();
+        std::copy_n(packet.data + at, stride, row.begin());
+    }
+    mode.ClearCraftingSelection();
+    if (choices.empty()) {
+        ShowEmptyCraftingList();
+        return;
+    }
+    mode.m_warpSkillId = 0;
+    mode.m_warpMapDestinations.clear();
+    ro::UiMessageStrings strings;
+    strings.Load();
+    auto* window = static_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
+    if (window) window->SetRepairItems(choices, strings.Get(812, "Repairable items"));
+}
+
+void HandleItemRepairResult(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 5 || packet.data[4] > 1) return;
+    const bool success = packet.data[4] == 0;
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const auto message = success ? strings.Get(813, "Item has been successfully repaired.")
+        : strings.Get(814, "You have failed to repair this item. Please check the distance between you and opponent.");
+    // The index can refer to another character's item. Only their equipment list updates it.
+    g_windowMgr.PushSourceChatEvent(message.c_str(), success ? 0x00ffff00u : 0x000000ffu, 6,
+        ro::chat::NoticeRoute::Normal, ro::chat::NoticeType::None);
+}
+
 void HandleWeaponRefineList(CGameMode& mode, const PacketView& packet)
 {
     constexpr unsigned inventorySlots = ro::item_snapshot::kInventorySlots;
@@ -9896,6 +9938,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0188, HandleItemRefineResult);
     router.Register(0x018D, HandleProductionList);
     router.Register(0x018F, HandleProductionResult);
+    router.Register(0x01FC, HandleItemRepairList);
+    router.Register(0x01FE, HandleItemRepairResult);
     router.Register(0x0221, HandleWeaponRefineList);
     router.Register(0x0223, HandleWeaponRefineResult);
     router.Register(0x00F2, HandleStorageStatus);

@@ -364,3 +364,61 @@ void WeaponRefineSelectionReplay()
     connection->Disconnect();
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
+
+void ItemRepairSelectionReplay()
+{
+    CGameMode mode;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const auto oldModeType = SkillPacketReplayAccess::CurrentType();
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    const auto receive = [&](const std::vector<u8>& bytes) {
+        Require(input.QueueBytes(bytes) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "item repair frame did not dispatch");
+    };
+    const std::vector<u8> list{0xfc, 1, 17, 0, 0, 0, 0xb1, 4, 4, 0x11, 0x22, 0x33, 0x44, 0, 0, 0, 0};
+    receive(list);
+    auto* menu = g_windowMgr.m_skillSelectWnd;
+    Require(menu && menu->IsCraftingSelection(), "repair list rejected raw slot zero");
+    auto malformed = list;
+    malformed[4] = 100;
+    receive(malformed);
+    Require(g_windowMgr.m_skillSelectWnd == menu, "bad repair slot replaced the active chooser");
+    menu->HandleKeyDown(VK_DOWN);
+    menu->HandleKeyDown(VK_RETURN);
+    Require(!g_windowMgr.m_skillSelectWnd && peer.ReceiveExact(15) == std::vector<u8>{
+        0xfd, 1, 0, 0, 0xb1, 4, 4, 0x11, 0x22, 0x33, 0x44, 0, 0, 0, 0},
+        "repair selection did not echo the full offered target row");
+    receive(list);
+    g_windowMgr.m_skillSelectWnd->HandleKeyDown(VK_ESCAPE);
+    Require(!g_windowMgr.m_skillSelectWnd && peer.ReceiveExact(15) == std::vector<u8>{
+        0xfd, 1, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        "repair cancel did not send the selected sentinel");
+
+    g_session.ClearInventoryItems();
+    const std::vector<u8> equipment{0xd0, 2, 30, 0, 2, 0, 0xb1, 4, 5, 1, 2, 0, 0, 0,
+        1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    receive(equipment);
+    g_windowMgr.ClearChatEvents();
+    receive({0xfe, 1, 2, 0, 0});
+    receive({0xfe, 1, 2, 0, 1});
+    receive({0xfe, 1, 2, 0, 2});
+    const auto& notices = g_windowMgr.GetChatEvents();
+    Require(notices.size() == 2 && notices[0].color == 0x00ffff00 && notices[1].color == 0xff
+        && g_session.GetInventoryItemByIndex(2) && g_session.GetInventoryItemByIndex(2)->m_isDamaged,
+        "repair result changed a potentially unrelated local item or produced incorrect notices");
+    auto repaired = equipment;
+    repaired[14] = 0;
+    receive(repaired);
+    Require(g_session.GetInventoryItemByIndex(2) && !g_session.GetInventoryItemByIndex(2)->m_isDamaged,
+        "authoritative equipment refresh did not clear the broken flag");
+    g_session.RemoveInventoryItem(2, 1);
+    g_windowMgr.ClearChatEvents();
+    connection->Disconnect();
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+}

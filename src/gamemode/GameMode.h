@@ -104,6 +104,7 @@ public:
     bool SendMakingArrowSelection(u16 itemId);
     bool SendProductionSelection(u16 itemId, const std::array<u16, 3>& materials);
     bool SendWeaponRefineSelection(u32 itemIndex);
+    bool SendItemRepairSelection(const std::array<u8, 13>& row);
     void ClearCraftingSelection();
     bool SendAutoSpellSelection(u32 skillId, const std::vector<unsigned int>& offeredSkillIds);
     bool SendStarPlaceAcceptance(u8 which);
