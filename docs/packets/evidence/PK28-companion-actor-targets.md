@@ -1,5 +1,7 @@
 # Companion actor targeting
 
+In the native C++ controller, repeating Alt-click on the same manually attacked actor queues `STOP_CMD` for each companion whose attack toggles off. The stop supersedes reserved orders. The selected rAthena `clif_parse_HomAttack` passes target GID zero to `unit_attack`, which clears the target and continuation flags via `unit_unattackable`. The native stop sends that `0233` request. The legacy same-cell `0232` move is ignored by the selected server before it can change attack state.
+
 `Ref/GameMode.cpp` writes companion target fields outside the Lua VM check in `ProcessObjClick` at 6260 and 6355, `ProcessMonsterPick` at 14357 and 14448, and `ProcessPcPick` at 15141 and 15239. Plain Alt on a new actor records the GID and attack selection and clears the ground move. Repeating the active target clears its attack flag. Alt+Shift marks selection with the existing target intact when the VM is inactive. Ordinary Alt actor clicks can update both live companions. The source suppresses ordinary attack on that click.
 
 The Win32 ordinary click path uses the current actor picker, excludes NPCs and self, and uses the represented PvP, siege, party, Shift, and no-Shift state for PC eligibility. The original map-type ally-party and ally-guild gates at `Ref/Session2.cpp:1813` and `:1823` still need a port owner. Pending skill targeting keeps its existing route. The source also has family-specific branches for pending companion skills, which remain a separate check. The inactive Lua VM produces no AI dispatch.

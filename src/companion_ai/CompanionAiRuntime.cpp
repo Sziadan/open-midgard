@@ -422,6 +422,16 @@ void Runtime::Attack(u32 id, u32 enemyId) const
     }
 }
 
+void Runtime::StopAttack(u32 id) const
+{
+    if (!IsOwnedCompanion(id)) {
+        return;
+    }
+    // The selected server clears the attack target when it resolves GID zero.
+    const PACKET_CZ_REQUEST_ACTNPC packet{kPacketRequestActNpc, id, 0, kActionAttack};
+    CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
+}
+
 SkillSendResult Runtime::SkillObject(u32 id, int level, int skillId, u32 targetId) const
 {
     if (!IsOwnedCompanion(id) || level <= 0 || skillId <= 0 || targetId == 0) {

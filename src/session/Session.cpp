@@ -1694,6 +1694,7 @@ void CompanionTargetState::SelectActor(u32 actorGid, bool shift)
 
 void CSession::ApplyCompanionActorClick(u32 gid, bool shift)
 {
+    if (!gid) return;
     auto queueAttack = [&](bool alive, CompanionTargetState& target, companion_ai::Kind kind) {
         if (!alive) return;
         // Ref uses a select-then-confirm cursor for non-shift attacks. Rebuild keeps
@@ -1701,8 +1702,12 @@ void CSession::ApplyCompanionActorClick(u32 gid, bool shift)
         // the native AI receives the order on the same click.
         target.SelectActor(gid, shift);
         companion_ai::Msg2Ai msg;
-        msg.command = companion_ai::ATTACK_OBJECT_CMD;
-        msg.targetId = gid;
+        if (shift || target.attacking) {
+            msg.command = companion_ai::ATTACK_OBJECT_CMD;
+            msg.targetId = gid;
+        } else {
+            msg.command = companion_ai::STOP_CMD;
+        }
         companion_ai::Runtime::QueueCommand(kind, msg, shift);
     };
 

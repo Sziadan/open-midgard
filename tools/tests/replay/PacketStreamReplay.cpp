@@ -3289,6 +3289,44 @@ void PendingCompanionActorSkillReplay()
     companion_ai::TickOwnedCompanionActor(mercenary);
     Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "mercenary repeated the completed ground skill");
+
+    mode.GetClientCoor(15, 10, homunculus.m_pos.x, homunculus.m_pos.z);
+    mode.GetClientCoor(15, 10, player.m_pos.x, player.m_pos.z);
+    mode.GetClientCoor(16, 10, target.m_pos.x, target.m_pos.z);
+    homunculus.m_job = 6001;
+    mercenary.m_job = 6017;
+    g_session.m_homunStatus.combat.attackSpeed = 1;
+    g_session.m_merStatus.combat.attackSpeed = 1;
+    g_session.m_homunTarget = {};
+    g_session.m_merTarget = {};
+    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    for (CGameActor* caster : {&homunculus, &mercenary}) {
+        companion_ai::TickOwnedCompanionActor(*caster);
+        companion_ai::TickOwnedCompanionActor(*caster);
+        Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
+            0, 0, 0xf1, 0x78, 0x56, 0x34, 0x12, 0}, "Alt click did not send a companion attack");
+    }
+    g_session.ApplyCompanionActorClick(target.m_gid, true);
+    Require(homunculus.m_homunResMsg.command == companion_ai::ATTACK_OBJECT_CMD
+        && mercenary.m_merResMsg.command == companion_ai::ATTACK_OBJECT_CMD,
+        "Alt+Shift did not reserve a companion attack");
+    g_session.ApplyCompanionActorClick(target.m_gid, false);
+    Require(!g_session.m_homunTarget.attacking && !g_session.m_merTarget.attacking,
+        "second Alt click did not clear both manual attacks");
+    Require(homunculus.m_homunMsg.command == companion_ai::STOP_CMD
+        && mercenary.m_merMsg.command == companion_ai::STOP_CMD,
+        "second Alt click did not replace the attack with a stop command");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "stopping a companion attack bypassed the native controller");
+    for (CGameActor* caster : {&homunculus, &mercenary}) {
+        companion_ai::TickOwnedCompanionActor(*caster);
+        companion_ai::TickOwnedCompanionActor(*caster);
+        Require(peer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, static_cast<u8>(caster->m_gid),
+            0, 0, 0xf1, 0, 0, 0, 0, 0}, "Alt click cancellation did not clear the companion's server target");
+    }
+    if (SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) != 0) {
+        throw std::runtime_error("cancelling a manual attack emitted extra opcode " + Hex(peer.ReceiveExact(2)));
+    }
     world.m_attr = nullptr;
 
     world.UnregisterActor(&target);

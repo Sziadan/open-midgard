@@ -88,12 +88,7 @@ void Brain::OnMOVE_CMD(int x, int y)
 void Brain::OnSTOP_CMD()
 {
     m_runtime.Trace("OnSTOP_CMD");
-    if (m_runtime.GetMotion(m_myId) != MOTION_STAND) {
-        const Position cur = m_runtime.GetPosition(m_myId);
-        if (cur.valid()) {
-            m_runtime.Move(m_myId, cur.x, cur.y);
-        }
-    }
+    m_runtime.StopAttack(m_myId);
     m_state = IDLE_ST;
     m_destX = 0;
     m_destY = 0;

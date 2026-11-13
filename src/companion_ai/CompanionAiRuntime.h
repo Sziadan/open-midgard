@@ -48,6 +48,7 @@ public:
     void Move(u32 id, int x, int y) const;
     void MoveToOwner(u32 id) const;
     void Attack(u32 id, u32 enemyId) const;
+    void StopAttack(u32 id) const;
     SkillSendResult SkillObject(u32 id, int level, int skillId, u32 targetId) const;
     SkillSendResult SkillGround(u32 id, int level, int skillId, int x, int y) const;
 

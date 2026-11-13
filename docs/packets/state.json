@@ -1103,9 +1103,9 @@
       "commit_subject": "packet(PK28.03): retain companion casts while actors are busy"
     },
     "PK28.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "IN_PROGRESS",
+      "evidence": ["docs/packets/evidence/PK28-companion-actor-targets.md"],
+      "commit_subject": "packet(PK28.04): cancel manual companion attacks on repeat Alt click"
     },
     "PK29.01": {
       "status": "IN_PROGRESS",
