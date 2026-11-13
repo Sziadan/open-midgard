@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK46.02 now records six selected companion requests and five pet requests with production replay. Continue the outbound crosswalk with the implemented trade and vending requests in PK37. Preserve the existing discovery owners and retain live and independent verification for each feature. [Companion crosswalk](evidence/PK46.02-companion-request-crosswalk.md) · [Pet crosswalk](evidence/PK46.02-pet-request-crosswalk.md)
+PK46.02 now records selected companion, pet, trade, and vending requests with production replay. Continue the outbound crosswalk with cart transfers and NPC shop requests. Keep the registered `012F` alternate open for profile and producer review, and retain live and independent verification. [Trade and vending crosswalk](evidence/PK46.02-trade-vending-crosswalk.md) · [Companion crosswalk](evidence/PK46.02-companion-request-crosswalk.md) · [Pet crosswalk](evidence/PK46.02-pet-request-crosswalk.md)
 
 PK46.03 connects scheduled character deletion to the PacketVer23 Delete action. Verify the Windows dialog visually and use a disposable test character to check scheduling, reconnect, cancellation, birth-date refusal and confirmation after the deadline. The selected list omits the deadline and an already-queued reply carries zero. [Scheduled deletion controls](evidence/PK46.03-scheduled-deletion-controls.md)
 

@@ -4157,3 +4157,5 @@ PK46.03 tracks character selection and creation through the reply or a bounded w
 PK46.02 reconciles six selected companion requests with the registry and production replay. Status actions and C++ movement, attack, stop, and follow now have current outbound evidence in the inventory. [Evidence](evidence/PK46.02-companion-request-crosswalk.md)
 
 PK46.02 reconciles five selected pet requests with the registry and production replay, including the pet-emotion frames produced by a successful feed result. [Evidence](evidence/PK46.02-pet-request-crosswalk.md)
+
+PK46.02 reconciles six trade and four vending requests, including the seller open and cancel sequence. [Evidence](evidence/PK46.02-trade-vending-crosswalk.md)

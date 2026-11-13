@@ -125,18 +125,18 @@ AUDIT-0x00E0,0x00E0,map,C2S,PK31,PK01;PK02;PK47;PK48;PK46,Legacy chat-room seed 
 AUDIT-0x00E1,0x00E1,map,S2C,PK31,PK01;PK02;PK47;PK48,Legacy chat-room seed range; confirm active contract,UNREVIEWED,
 AUDIT-0x00E2,0x00E2,map,C2S,PK31,PK01;PK02;PK47;PK48;PK46,Legacy chat-room seed range; confirm active contract,UNREVIEWED,
 AUDIT-0x00E3,0x00E3,map,C2S,PK31,PK01;PK02;PK47;PK48;PK46,Legacy chat-room seed range; confirm active contract,UNREVIEWED,
-AUDIT-0x00E4,0x00E4,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,PK46.02-map-trade-request.md: player context emits fixed 6-byte target-ID request guarded by nearby trade peer and busy state; selected registry identifies clif_parse_TradeRequest. Parser semantics and response lifecycle remain open.,UNREVIEWED,
+AUDIT-0x00E4,0x00E4,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Six-byte trade invitation and peer AID captured,C2S_ONLY,PK46.02-TRADE-REQUESTS
 AUDIT-0x00E5,0x00E5,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-commerce-trade-lifecycle traces 26-byte inviter-name request and pinned SELF emitter; lifecycle semantics and replay remain open,UNREVIEWED,
-AUDIT-0x00E6,0x00E6,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-trade-ack-request.md: three-byte action request uses code 3 to accept and 4 to decline including close and timeout paths; selected registry identifies clif_parse_TradeAck. Server results and replay remain open.,UNREVIEWED,
+AUDIT-0x00E6,0x00E6,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Three-byte accept and decline captured,C2S_ONLY,PK46.02-TRADE-REQUESTS
 AUDIT-0x00E7,0x00E7,map,unresolved,PK13,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x00E8,0x00E8,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-trade-add-item-request.md: 8-byte item-index/amount request has guarded item and currency offer branches with distinct optimistic state updates; selected registry identifies clif_parse_TradeAddItem. Server field meaning and replay remain open.,UNREVIEWED,
+AUDIT-0x00E8,0x00E8,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Eight-byte item and Zeny offers captured,C2S_ONLY,PK46.02-TRADE-REQUESTS
 AUDIT-0x00E9,0x00E9,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00EA,0x00EA,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00EB,0x00EB,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-trade-lock-request.md: opcode-only two-byte request requires active trade and no local lock or item-add pending; successful send marks lockPending. Parser results remain open.,UNREVIEWED,
+AUDIT-0x00EB,0x00EB,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Opcode-only trade lock captured,C2S_ONLY,PK46.02-TRADE-REQUESTS
 AUDIT-0x00EC,0x00EC,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00ED,0x00ED,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-trade-cancel-request.md: opcode-only two-byte request cancels outgoing trade on close timeout or target disappearance; incoming invitations instead use 0x00E6 decline. Server lifecycle remains open.,UNREVIEWED,
+AUDIT-0x00ED,0x00ED,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Opcode-only trade cancel captured,C2S_ONLY,PK46.02-TRADE-REQUESTS
 AUDIT-0x00EE,0x00EE,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00EF,0x00EF,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-trade-commit-request.md: opcode-only two-byte final confirmation requires both lock flags and no prior pending commit; response and rollback behavior remain open.,UNREVIEWED,
+AUDIT-0x00EF,0x00EF,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Opcode-only trade commit captured,C2S_ONLY,PK46.02-TRADE-REQUESTS
 AUDIT-0x00F0,0x00F0,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00F1,0x00F1,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00F2,0x00F2,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -199,13 +199,13 @@ AUDIT-0x012A,0x012A,map,C2S,PK45,PK01;PK02;PK47;PK48;PK46,PK45.03-c2s-owner-scop
 AUDIT-0x012B,0x012B,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x012C,0x012C,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x012D,0x012D,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x012E,0x012E,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-close-vending-request.md: active-vending close sends opcode-only two-byte request and changes local state only on send success; selected registry identifies clif_parse_CloseVending. Server result and replay remain open.,UNREVIEWED,
+AUDIT-0x012E,0x012E,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Active and sold-out vending closure captured,C2S_ONLY,PK46.02-VENDING-REQUESTS
 AUDIT-0x012F,0x012F,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0130,0x0130,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-vending-list-request.md: unnamed action case 8 serializes a six-byte target-ID request matching clif_parse_VendingListReq; no current player-context menu entry reaches it. Server path and UI reachability remain open.,UNREVIEWED,
+AUDIT-0x0130,0x0130,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Vendor board browse and seller ownership captured,C2S_ONLY,PK46.02-VENDING-REQUESTS
 AUDIT-0x0131,0x0131,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0132,0x0132,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0133,0x0133,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0134,0x0134,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
+AUDIT-0x0134,0x0134,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46;PK38,Selected single-row vendor purchase captured,C2S_ONLY,PK46.02-VENDING-REQUESTS;PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x0135,0x0135,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0136,0x0136,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0137,0x0137,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -330,7 +330,7 @@ AUDIT-0x01AE,0x01AE,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/versio
 AUDIT-0x01AF,0x01AF,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-change-cart-request.md: cart selector maps menu indices to types 1–5 in a four-byte opcode/type frame; selected registry matches clif_parse_ChangeCart. Server confirmation and replay remain open.,UNREVIEWED,
 AUDIT-0x01B0,0x01B0,map,S2C,PK20,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01B1,0x01B1,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01B2,0x01B2,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,PK46.02-map-open-vending-request.md: primary openVend path serializes title and 8-byte item offers into variable frame; inactive close branch emits an unexplained empty frame. Stronger review and replay remain open.,UNREVIEWED,
+AUDIT-0x01B2,0x01B2,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected shop open and setup cancellation captured,C2S_ONLY,PK46.02-VENDING-REQUESTS
 AUDIT-0x01B3,0x01B3,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-show-image2 traces selected 67-byte S2C cutin with 64-byte image field and SELF route; asset behavior and replay remain open,UNREVIEWED,
 AUDIT-0x01B4,0x01B4,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01B5,0x01B5,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
