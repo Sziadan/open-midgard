@@ -104,11 +104,11 @@ AUDIT-0x00CB,0x00CB,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x00CC,0x00CC,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00CD,0x00CD,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x00CE,0x00CE,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x00CF,0x00CF,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,PK46.02-map-reject-whisper-request.md: player-context rejection sends a 27-byte fixed-name request with a 23-byte client guard; selected registry identifies clif_parse_PMIgnore. Persistence/result semantics and replay remain open.,UNREVIEWED,
-AUDIT-0x00D0,0x00D0,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,PK46.02-map-private-message-ignore-requests.md: selected registry lists a three-byte clif_parse_PMIgnoreAll request but focused client search found no sender. Profile and feature path remain unresolved.,UNREVIEWED,
+AUDIT-0x00CF,0x00CF,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Selected per-name deny and allow captured from context and chat commands with reply notices,C2S_ONLY,PK46.02-map-reject-whisper-request
+AUDIT-0x00D0,0x00D0,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Selected three-byte global deny and allow captured from source chat commands with reply notices,C2S_ONLY,PK46.02-map-private-message-ignore-requests
 AUDIT-0x00D1,0x00D1,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00D2,0x00D2,map,S2C,PK16,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x00D3,0x00D3,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,PK46.02-map-private-message-ignore-requests.md: selected registry lists a two-byte clif_parse_PMIgnoreList request but focused client search found no sender; receive-size registration alone does not prove outbound use.,UNREVIEWED,
+AUDIT-0x00D3,0x00D3,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Selected two-byte exclusion list query captured from source chat and reply displayed,C2S_ONLY,PK46.02-map-private-message-ignore-requests
 AUDIT-0x00D4,0x00D4,map,S2C,PK16,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x00D5,0x00D5,map,C2S,PK31,PK01;PK02;PK47;PK48;PK46,Selected room creation captured,C2S_ONLY,PK46.02-CHAT-ROOM-REQUESTS
 AUDIT-0x00D6,0x00D6,map,S2C,PK31,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -608,7 +608,7 @@ AUDIT-0x02D2,0x02D2,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x02D3,0x02D3,map,S2C,PK33,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x02D4,0x02D4,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x02D5,0x02D5,map,unresolved,PK10,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x02D6,0x02D6,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
+AUDIT-0x02D6,0x02D6,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46;PK38,Selected equipment lookup with target AID captured from player context and privacy refusal replay verified,C2S_ONLY,PK16.04-verification-boundary
 AUDIT-0x02D7,0x02D7,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x02D8,0x02D8,map,C2S,PK16,PK01;PK02;PK47;PK48;PK46,Equipment visibility and recall preference request fields captured,C2S_ONLY,PK16.02
 AUDIT-0x02D9,0x02D9,map,S2C,PK16,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
