@@ -77,6 +77,7 @@ private:
     u32 m_now = 0;
     struct Approach {
         Position destination;
+        Position waypoint;
         Position lastPosition;
         u32 lastProgress = 0;
         u32 lastRequest = 0;

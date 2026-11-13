@@ -5,6 +5,23 @@
 #include <cstdlib>
 
 namespace companion_ai {
+namespace {
+
+int ManhattanDistance(const Position& first, const Position& second)
+{
+    return std::abs(first.x - second.x) + std::abs(first.y - second.y);
+}
+
+Position ApproachWaypoint(const Position& current, Position destination)
+{
+    while (ManhattanDistance(current, destination) > kLongMoveManhattan) {
+        destination.x = (destination.x + current.x) / 2;
+        destination.y = (destination.y + current.y) / 2;
+    }
+    return destination;
+}
+
+} // namespace
 
 Brain::Brain(Kind kind)
     : m_runtime(kind)
@@ -84,11 +101,15 @@ bool Brain::ContinueApproach(const Position& destination)
         return false;
     }
     const bool changed = destination.x != approach.destination.x || destination.y != approach.destination.y;
-    if (firstRequest || stalled || (changed && m_now - approach.lastRequest >= stallDelay / 2)) {
-        if (!m_runtime.Move(m_myId, destination.x, destination.y)) {
+    const bool reachedWaypoint = ManhattanDistance(current, approach.waypoint) == 0;
+    if (firstRequest || stalled || reachedWaypoint || (changed && m_now - approach.lastRequest >= stallDelay / 2)) {
+        const Position waypoint = ManhattanDistance(current, destination) > kServerPathLimitManhattan
+            ? ApproachWaypoint(current, destination) : destination;
+        if (!m_runtime.Move(m_myId, waypoint.x, waypoint.y)) {
             return false;
         }
         approach.destination = destination;
+        approach.waypoint = waypoint;
         approach.lastRequest = m_now;
         if (stalled) {
             approach.retried = true;
@@ -339,11 +360,7 @@ void Brain::OnMOVE_CMD_ST()
     Position waypoint = m_approach.destination;
     if (!waypoint.valid() || (cur.x == waypoint.x && cur.y == waypoint.y)) {
         m_approach = {};
-        waypoint = m_moveDestination;
-        while (std::abs(waypoint.x - cur.x) + std::abs(waypoint.y - cur.y) > kLongMoveManhattan) {
-            waypoint.x = (waypoint.x + cur.x) / 2;
-            waypoint.y = (waypoint.y + cur.y) / 2;
-        }
+        waypoint = ApproachWaypoint(cur, m_moveDestination);
     }
     if (!ContinueApproach(waypoint)) {
         CancelApproach();

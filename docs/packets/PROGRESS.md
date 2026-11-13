@@ -4081,3 +4081,5 @@ PK39.02 frames MVP rewards and routes the notices and winner effect. [Evidence](
 PK39.02 frames legacy ranking lists and signed point changes and restores `/pk` submission. [Evidence](evidence/PK39.02-legacy-ranking.md)
 
 PK39.03 adds manner notices and signed actor honor and verifies colored chat and ignore filtering. [Evidence](evidence/PK39.03-manner-notices.md)
+
+PK28.04 and PK29.04 use bounded waypoints when the native approach exceeds the companion move sender's range. Replay covers diagonal pursuit and a mercenary ground cast across two move requests. The handoff records the dual-companion input checks and the MinGW runtime needed for CTest. [Evidence](evidence/PK28-PK29-native-companion-ai.md)

@@ -4278,6 +4278,40 @@ void PendingCompanionActorSkillReplay()
         "automatic follow bypassed the shared interval after a toggle");
     tickCompanion(mercenary, 1200);
     Require(peer.ReceiveExact(6) == followRequest, "automatic follow did not retry after its interval");
+
+    // Both long approaches start inside the AI's sight radius or at a picked
+    // ground cell, but exceed the move sender's Manhattan distance limit.
+    attr.m_width = attr.m_height = 64;
+    mercenary.ResetCompanionOrders(companion_ai::Kind::Mercenary);
+    mode.GetClientCoor(2, 2, mercenary.m_pos.x, mercenary.m_pos.z);
+    mode.GetClientCoor(16, 16, target.m_pos.x, target.m_pos.z);
+    clickMercenaryTarget();
+    tickCompanion(mercenary);
+    const std::vector<u8> firstWaypoint{0x32, 0x02, 0x42, 0, 0, 0xf1, 2, 0x40, 0x90};
+    Require(peer.ReceiveExact(9) == firstWaypoint,
+        "a diagonal target in sight did not start pursuit through a waypoint");
+    mode.GetClientCoor(9, 9, mercenary.m_pos.x, mercenary.m_pos.z);
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == std::vector<u8>{0x32, 0x02, 0x42, 0, 0, 0xf1, 4, 1, 0},
+        "pursuit did not advance when the first waypoint was reached");
+
+    mercenary.ResetCompanionOrders(companion_ai::Kind::Mercenary);
+    mode.GetClientCoor(2, 2, mercenary.m_pos.x, mercenary.m_pos.z);
+    mode.m_skillUseInfo = {8210, 2, 1, 1};
+    Require(ReplayRequestPendingGroundSkill(mode, 16, 16, false) && player.commands.empty(),
+        "long ground skill entered the player route");
+    mode.m_skillUseInfo = {};
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == firstWaypoint, "long ground skill skipped its first waypoint");
+    mode.GetClientCoor(9, 9, mercenary.m_pos.x, mercenary.m_pos.z);
+    tickCompanion(mercenary);
+    Require(peer.ReceiveExact(9) == std::vector<u8>{0x32, 0x02, 0x42, 0, 0, 0xf1, 4, 1, 0},
+        "ground skill approach did not advance when the first waypoint was reached");
+    mode.GetClientCoor(15, 16, mercenary.m_pos.x, mercenary.m_pos.z);
+    tickCompanion(mercenary);
+    groundRequest[12] = groundRequest[20] = 16;
+    Require(peer.ReceiveExact(groundRequest.size()) == groundRequest,
+        "ground skill did not cast after advancing through a waypoint");
     world.m_attr = nullptr;
 
     world.UnregisterActor(&target);
