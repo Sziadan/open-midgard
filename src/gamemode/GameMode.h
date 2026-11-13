@@ -103,7 +103,7 @@ public:
     bool CancelWarpMapSelection();
     bool SendMakingArrowSelection(u16 itemId);
     bool SendProductionSelection(u16 itemId, const std::array<u16, 3>& materials);
-    bool SendCookingSelection(u16 itemId);
+    bool SendCookingSelection(u16 makeType, u16 itemId);
     bool SendWeaponRefineSelection(u32 itemIndex);
     bool SendItemRepairSelection(const std::array<u8, 13>& row);
     void ClearCraftingSelection();

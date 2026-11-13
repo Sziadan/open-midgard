@@ -491,7 +491,7 @@ void CookingSelectionReplay()
     auto* menu = g_windowMgr.m_skillSelectWnd;
     Require(menu && menu->IsCraftingSelection(), "cooking list did not open its chooser");
     receive({0x5a, 2, 7, 0, 1, 0, 0xad});
-    receive({0x5a, 2, 8, 0, 6, 0, 0xad, 0x2e});
+    receive({0x5a, 2, 8, 0, 4, 0, 0xad, 0x2e});
     Require(g_windowMgr.m_skillSelectWnd == menu, "partial row or unsupported cooking type replaced the chooser");
     menu->HandleKeyDown(VK_DOWN);
     menu->HandleKeyDown(VK_DOWN);
@@ -508,6 +508,22 @@ void CookingSelectionReplay()
     menu->HandleKeyDown(VK_ESCAPE);
     Require(!g_windowMgr.m_skillSelectWnd && peer.ReceiveExact(6) == std::vector<u8>{0x5b, 2, 1, 0, 0xff, 0xff},
         "cooking cancel did not send the reference sentinel");
+    for (const u8 type : {5, 6, 7, 8}) {
+        receive({0x5a, 2, 8, 0, 1, 0, 0xad, 0x2e});
+        receive({0x5a, 2, 8, 0, type, 0, 0xae, 0x2e});
+        menu = g_windowMgr.m_skillSelectWnd;
+        Require(menu && menu->IsCraftingSelection(), "server cooking variant did not open its chooser");
+        menu->HandleKeyDown(VK_DOWN);
+        menu->HandleKeyDown(VK_RETURN);
+        Require(!g_windowMgr.m_skillSelectWnd && peer.ReceiveExact(6) == std::vector<u8>{0x5b, 2, type, 0, 0xae, 0x2e},
+            "cooking variant selection did not echo the latest type and product");
+        receive({0x5a, 2, 6, 0, type, 0});
+        menu = g_windowMgr.m_skillSelectWnd;
+        Require(menu, "empty server cooking variant did not open its chooser");
+        menu->HandleKeyDown(VK_ESCAPE);
+        Require(!g_windowMgr.m_skillSelectWnd && peer.ReceiveExact(6) == std::vector<u8>{0x5b, 2, type, 0, 0xff, 0xff},
+            "cooking variant cancel did not preserve its make type");
+    }
     connection->Disconnect();
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }

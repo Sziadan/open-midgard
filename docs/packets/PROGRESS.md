@@ -4017,3 +4017,5 @@ PK35.05 loads and displays the reference production recipe descriptions. Native 
 PK28.04 and PK29.04 clear stale attack selections when the C++ controller abandons pursuit. Production replay verifies manual retry and reserved movement after a stall. Corpse lifecycle, world-entry handoff, and skill-choice lifecycle also passed. [Evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 PK35.05 verifies optional production slots through Qt inventory drag, native and Qt rendering, and production replay. The client revalidates inventory before sending the three material IDs in slot order. [Evidence](evidence/PK35.01-crafting-wire.md)
+
+PK35.04 traces the additional cooking list emitters in the selected server and echoes types 5–8 on confirmation and cancellation. It also records the `018F` result pairs used by those skills. [Evidence](evidence/PK35.01-crafting-wire.md)

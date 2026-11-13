@@ -84,7 +84,7 @@ public:
     void SetWarpDestinations(unsigned short skillId, const std::vector<std::string>& mapNames);
     void SetMakingArrowItems(const std::vector<unsigned int>& itemIds);
     void SetProductionItems(const std::vector<unsigned int>& itemIds, std::string title);
-    void SetCookingItems(const std::vector<unsigned int>& itemIds, std::string title);
+    void SetCookingItems(u16 makeType, const std::vector<unsigned int>& itemIds, std::string title);
     bool IsProductionSelection() const { return m_kind == Kind::Production || m_kind == Kind::ProductionMaterials; }
     bool IsProductionConfirmation() const { return m_kind == Kind::ProductionMaterials; }
     void SetWeaponRefineItems(const std::vector<std::pair<u16, u16>>& items, std::string title);
@@ -146,6 +146,7 @@ private:
 
     Kind m_kind;
     u16 m_productionItem = 0;
+    u16 m_cookingMakeType = 0;
     std::array<u16, 3> m_productionMaterials{};
     std::string m_recipeDescription;
     std::vector<std::array<u8, 13>> m_repairRows;

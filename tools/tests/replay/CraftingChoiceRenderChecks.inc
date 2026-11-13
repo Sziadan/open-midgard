@@ -78,6 +78,10 @@ void CheckCraftingChoices(QGuiApplication& app, QQuickView& view, QtUiState* sta
     material.m_itemType = 3;
     g_session.SetInventoryItem(material);
     auto* inventory = g_windowMgr.m_itemWnd;
+    const bool createdInventory = inventory == nullptr;
+    if (createdInventory) {
+        inventory = static_cast<UIItemWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMWND));
+    }
     Require(inventory != nullptr, "production render fixture could not open inventory");
     const int oldTab = inventory->GetCurrentTab();
     const QRect oldBounds(inventory->m_x, inventory->m_y, inventory->m_w, inventory->m_h);
@@ -106,10 +110,14 @@ void CheckCraftingChoices(QGuiApplication& app, QQuickView& view, QtUiState* sta
     Require(state->skillSelectData().value("materialSlots").toList().front().toMap().value("itemId").toUInt() == 1000,
         "Qt inventory drop did not fill the production slot");
     capture("craft-production-material", 0);
-    inventory->SetShow(0);
-    inventory->SetCurrentTab(oldTab);
-    inventory->Resize(oldBounds.width(), oldBounds.height());
-    inventory->Move(oldBounds.x(), oldBounds.y());
+    if (createdInventory) {
+        g_windowMgr.DeleteWindow(inventory);
+    } else {
+        inventory->SetShow(0);
+        inventory->SetCurrentTab(oldTab);
+        inventory->Resize(oldBounds.width(), oldBounds.height());
+        inventory->Move(oldBounds.x(), oldBounds.y());
+    }
     g_session.RemoveInventoryItem(99, 1);
     Dispatch(mode, {0x21, 2, 17, 0, 2, 0, 0xb1, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0});
     capture("craft-weapon-refine", 1201);

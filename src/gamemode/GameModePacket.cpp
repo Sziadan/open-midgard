@@ -5597,8 +5597,11 @@ void HandleCookingList(CGameMode& mode, const PacketView& packet)
 {
     constexpr int maxProducts = 300;
     if (!packet.data || packet.packetLength < 6 || ReadLE16(packet.data + 2) != packet.packetLength
-        || (packet.packetLength - 6) % 2 != 0 || (packet.packetLength - 6) / 2 > maxProducts
-        || ReadLE16(packet.data + 4) != 1) return;
+        || (packet.packetLength - 6) % 2 != 0 || (packet.packetLength - 6) / 2 > maxProducts) return;
+
+    const auto makeType = ReadLE16(packet.data + 4);
+    // These are the values emitted by the selected server's clif_cooking_list callers.
+    if (makeType != 1 && (makeType < 5 || makeType > 8)) return;
 
     std::vector<unsigned int> products;
     for (int at = 6; at < packet.packetLength; at += 2) {
@@ -5612,7 +5615,7 @@ void HandleCookingList(CGameMode& mode, const PacketView& packet)
     ro::UiMessageStrings strings;
     strings.Load();
     auto* window = static_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
-    if (window) window->SetCookingItems(products, strings.Get(425, "Item List you can craft"));
+    if (window) window->SetCookingItems(makeType, products, strings.Get(425, "Item List you can craft"));
 }
 
 void HandleMakingArrowList(CGameMode& mode, const PacketView& packet)

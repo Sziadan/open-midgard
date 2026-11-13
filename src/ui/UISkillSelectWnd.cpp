@@ -437,9 +437,10 @@ void UISkillSelectWnd::SetProductionItems(const std::vector<unsigned int>& itemI
     for (auto& entry : m_entries) entry.count = 0;
 }
 
-void UISkillSelectWnd::SetCookingItems(const std::vector<unsigned int>& itemIds, std::string title)
+void UISkillSelectWnd::SetCookingItems(u16 makeType, const std::vector<unsigned int>& itemIds, std::string title)
 {
     SetProductionItems(itemIds, std::move(title));
+    m_cookingMakeType = makeType;
     m_kind = Kind::Cooking;
 }
 
@@ -652,7 +653,7 @@ void UISkillSelectWnd::SubmitSelection()
     } else if (m_kind == Kind::Arrow && entry.itemId != 0 && entry.itemId <= 0xFFFFu) {
         sent = gameMode->SendMakingArrowSelection(static_cast<unsigned short>(entry.itemId));
     } else if (m_kind == Kind::Cooking) {
-        sent = gameMode->SendCookingSelection(static_cast<u16>(entry.itemId));
+        sent = gameMode->SendCookingSelection(m_cookingMakeType, static_cast<u16>(entry.itemId));
     } else if (m_kind == Kind::Repair) {
         sent = gameMode->SendItemRepairSelection(m_repairRows[static_cast<size_t>(m_selectedIndex)]);
     } else if (m_kind == Kind::WeaponRefine) {
@@ -696,7 +697,7 @@ void UISkillSelectWnd::CancelSelection()
     } else if (m_kind == Kind::Repair) {
         if (!gameMode || !gameMode->SendItemRepairSelection({0xff, 0xff})) return;
     } else if (m_kind == Kind::Cooking) {
-        if (!gameMode || !gameMode->SendCookingSelection(0xffff)) return;
+        if (!gameMode || !gameMode->SendCookingSelection(m_cookingMakeType, 0xffff)) return;
     }
     g_windowMgr.DeleteWindow(this);
 }
