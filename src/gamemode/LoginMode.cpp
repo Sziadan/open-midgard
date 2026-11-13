@@ -2758,57 +2758,60 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
                pktLen,
                sizeof(CHARACTER_INFO),
                sizeof(LEGACY_CHARACTER_INFO_106));
-        SetLoginStatus("Login error: unsupported char-list packet layout.");
         m_numChar = 0;
-        m_nextSubMode = LoginSubMode_Login;
+        m_selectedCharIndex = 0;
+        ReturnToSignIn("Login error: unsupported char-list packet layout.");
         return;
     }
 
     const size_t characterRecordCount = (static_cast<size_t>(pktLen) - headerSize) / charInfoSize;
     if (characterRecordCount > std::size(m_charInfo)) {
-        SetLoginStatus("Login error: too many character records in char-list response.");
         std::memset(m_charInfo, 0, sizeof(m_charInfo));
         m_numChar = 0;
         m_selectedCharIndex = 0;
-        m_nextSubMode = LoginSubMode_Login;
+        ReturnToSignIn("Login error: too many character records in char-list response.");
         return;
     }
 
-    const int charAreaLen = static_cast<int>(pktLen - static_cast<u16>(headerSize));
-    m_numChar = 0;
-    if (charAreaLen >= static_cast<int>(charInfoSize)) {
-        const int count = charAreaLen / static_cast<int>(charInfoSize);
-        const int toRead = (count < static_cast<int>(std::size(m_charInfo)))
-            ? count
-            : static_cast<int>(std::size(m_charInfo));
-        if (static_cast<size_t>(raw.size()) >= headerSize + static_cast<size_t>(toRead) * charInfoSize) {
-            std::memset(m_charInfo, 0, sizeof(m_charInfo));
-            if (layout == CharListLayout::CompactLegacy) {
-                for (int index = 0; index < toRead; ++index) {
-                    LEGACY_CHARACTER_INFO_106 legacy{};
-                    std::memcpy(&legacy,
-                                p + headerSize + static_cast<size_t>(index) * sizeof(legacy),
-                                sizeof(legacy));
-                    m_charInfo[index] = ExpandLegacyCharacterInfo(legacy);
-                }
-            } else if (layout == CharListLayout::Legacy && ResolveAccountLoginVersion() < 20090225u) {
-                for (int index = 0; index < toRead; ++index) {
-                    LEGACY_CHARACTER_INFO_108 legacy{};
-                    std::memcpy(&legacy,
-                                p + headerSize + static_cast<size_t>(index) * sizeof(legacy),
-                                sizeof(legacy));
-                    m_charInfo[index] = ExpandLegacyCharacterInfo(legacy);
-                }
-            } else {
-                std::memcpy(m_charInfo,
-                            p + headerSize,
-                            static_cast<size_t>(toRead) * sizeof(CHARACTER_INFO));
-            }
-            m_numChar = toRead;
-        }
-    } else if (charAreaLen == 0) {
+    if (raw.size() != pktLen) {
         m_numChar = 0;
+        m_selectedCharIndex = 0;
+        ReturnToSignIn("Login error: incomplete character list.");
+        return;
     }
+    const bool legacy108 = layout == CharListLayout::Legacy && ResolveAccountLoginVersion() < 20090225u;
+    decltype(m_charInfo) decoded{};
+    for (size_t index = 0; index < characterRecordCount; ++index) {
+        const auto* record = p + headerSize + index * charInfoSize;
+        auto& character = decoded[index];
+        int slot = 0;
+        if (layout == CharListLayout::CompactLegacy) {
+            LEGACY_CHARACTER_INFO_106 legacy{};
+            std::memcpy(&legacy, record, sizeof(legacy));
+            slot = legacy.CharNum;
+            character = ExpandLegacyCharacterInfo(legacy);
+        } else if (legacy108) {
+            LEGACY_CHARACTER_INFO_108 legacy{};
+            std::memcpy(&legacy, record, sizeof(legacy));
+            slot = legacy.CharNum;
+            character = ExpandLegacyCharacterInfo(legacy);
+        } else {
+            std::memcpy(&character, record, sizeof(character));
+            slot = character.CharNum;
+        }
+        if (slot < 0 || slot >= static_cast<int>(std::size(m_charInfo)) || !character.GID
+            || std::any_of(decoded, decoded + index, [&](const CHARACTER_INFO& previous) {
+                return previous.CharNum == slot || previous.GID == character.GID;
+            })) {
+            std::memset(m_charInfo, 0, sizeof(m_charInfo));
+            m_numChar = 0;
+            m_selectedCharIndex = 0;
+            ReturnToSignIn("Login error: invalid character identity or slot in character list.");
+            return;
+        }
+    }
+    std::copy(std::begin(decoded), std::end(decoded), m_charInfo);
+    m_numChar = static_cast<int>(characterRecordCount);
 
     if (layout == CharListLayout::Expanded) {
         DbgLog("[Login] HC_ACCEPT_ENTER: numChar=%d (pktLen=%u header=%zu total=%u premium_start=%u premium_end=%u)\n",
@@ -2898,23 +2901,27 @@ void CLoginMode::OnAcceptMakeChar(const std::vector<u8>& raw)
     }
 
     CHARACTER_INFO created{};
+    int slot = 0;
     if (ResolveAccountLoginVersion() < 20090225u) {
         LEGACY_CHARACTER_INFO_108 legacy{};
         std::memcpy(&legacy, raw.data() + sizeof(u16), sizeof(legacy));
+        slot = legacy.CharNum;
         created = ExpandLegacyCharacterInfo(legacy);
     } else {
         std::memcpy(&created, raw.data() + sizeof(u16), sizeof(created));
+        slot = created.CharNum;
     }
-    if (!created.GID || created.CharNum != m_selectedCharSlot) {
+    if (!created.GID || slot != m_selectedCharSlot || slot < 0 || slot >= static_cast<int>(std::size(m_charInfo))
+        || m_numChar < 0 || m_numChar >= static_cast<int>(std::size(m_charInfo))
+        || std::any_of(m_charInfo, m_charInfo + m_numChar, [&](const CHARACTER_INFO& previous) {
+            return previous.CharNum == created.CharNum || previous.GID == created.GID;
+        })) {
         ReturnToSignIn("Login: unexpected character creation result. Sign in again to refresh the character list.");
         return;
     }
     m_characterRequest = CharacterRequest::None;
 
-    if (m_numChar >= 0 && m_numChar < static_cast<int>(std::size(m_charInfo))) {
-        m_charInfo[m_numChar] = created;
-        ++m_numChar;
-    }
+    m_charInfo[m_numChar++] = created;
 
     DbgLog("[Login] HC_ACCEPT_MAKECHAR: name='%.24s' gid=%u slot=%d totalChars=%d\n",
            reinterpret_cast<const char*>(created.name), created.GID, (int)created.CharNum, m_numChar);

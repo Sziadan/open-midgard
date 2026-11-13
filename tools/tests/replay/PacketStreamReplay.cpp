@@ -1466,7 +1466,8 @@ void LoginAcceptCharacterListReplay()
     CRagConnection* const connection = CRagConnection::instance();
     const auto receiveThroughPollNetwork = [connection](LoginModeReplayAccess& replayMode,
                                                          const std::vector<u8>& frame,
-                                                         const char* expectedStatus) {
+                                                         const char* expectedStatus,
+                                                         bool expectDisconnect = false) {
         connection->Disconnect();
         LoopbackPeer peer(*connection);
         LoginModeReplayAccess::SetStatus(replayMode, "Login: awaiting replay packet.");
@@ -1480,6 +1481,7 @@ void LoginAcceptCharacterListReplay()
         }
         Require(g_windowMgr.GetLoginStatus() == expectedStatus,
             "production PollNetwork did not frame and dispatch the expected login response");
+        if (expectDisconnect) Require(!connection->IsOpen(), "invalid character reply left the socket open");
         connection->Disconnect();
     };
 
@@ -1528,6 +1530,19 @@ void LoginAcceptCharacterListReplay()
             && overCapacityMode.NextSubMode() == CLoginMode::LoginSubMode_Login,
         "0x006B record count beyond client capacity was not rejected and cleared");
 
+    const auto rejectListRecord = [&](size_t offset, u8 value) {
+        auto invalid = packet;
+        invalid[offset] = value;
+        LoginModeReplayAccess invalidMode;
+        receiveThroughPollNetwork(invalidMode, invalid,
+            "Login error: invalid character identity or slot in character list.", true);
+        Require(invalidMode.GetCharCount() == 0
+            && invalidMode.NextSubMode() == CLoginMode::LoginSubMode_Login, "invalid 0x006B record published a partial list");
+    };
+    rejectListRecord(kHeaderLength + kCharacterRecordLength + 104, 7); // Duplicate slot.
+    rejectListRecord(kHeaderLength + 104, 12); // Outside the representable slot range.
+    rejectListRecord(kHeaderLength + 105, 1); // Wire slot 263 must not alias slot 7.
+
     std::vector<u8> makePacket(sizeof(PACKET_HC_ACCEPT_MAKECHAR), 0);
     makePacket[0] = 0x6d;
     std::memcpy(makePacket.data() + sizeof(u16), record, kCharacterRecordLength);
@@ -1540,6 +1555,32 @@ void LoginAcceptCharacterListReplay()
         "0x006D character creation response did not transition to CharSelect");
     Require(g_windowMgr.GetLoginStatus() == "Login: character created successfully.",
         "0x006D character creation status differs from expected");
+
+    auto aliasedResult = makePacket;
+    aliasedResult[sizeof(u16) + 105] = 1;
+    LoginModeReplayAccess aliasedMode;
+    aliasedMode.ExpectCreationReplyForReplay(7);
+    receiveThroughPollNetwork(aliasedMode, aliasedResult,
+        "Login: unexpected character creation result. Sign in again to refresh the character list.", true);
+    Require(aliasedMode.GetCharCount() == 0 && aliasedMode.NextSubMode() == CLoginMode::LoginSubMode_Login,
+        "0x006D aliased a wide legacy slot onto the requested slot");
+
+    LoginModeReplayAccess duplicateMode;
+    receiveThroughPollNetwork(duplicateMode, packet, "Login: character list received from char server.");
+    duplicateMode.ExpectCreationReplyForReplay(7);
+    receiveThroughPollNetwork(duplicateMode, makePacket,
+        "Login: unexpected character creation result. Sign in again to refresh the character list.", true);
+    Require(duplicateMode.GetCharCount() == 2 && duplicateMode.NextSubMode() == CLoginMode::LoginSubMode_Login,
+        "duplicate 0x006D appended a second copy or claimed local creation success");
+
+    LoginModeReplayAccess fullMode;
+    fullMode.m_numChar = static_cast<int>(std::size(fullMode.m_charInfo));
+    fullMode.ExpectCreationReplyForReplay(7);
+    receiveThroughPollNetwork(fullMode, makePacket,
+        "Login: unexpected character creation result. Sign in again to refresh the character list.", true);
+    Require(fullMode.GetCharCount() == static_cast<int>(std::size(fullMode.m_charInfo))
+        && fullMode.NextSubMode() == CLoginMode::LoginSubMode_Login,
+        "full character list silently dropped a creation reply and returned to character selection");
 
     std::cout << "{\"case_id\":\"login_accept_character_list\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-two-character-records-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":" << packet.size() << ",\"opcode\":\"0x006B\",\"header_length\":24,\"record_length\":108,\"record_count\":2,\"input_frame_hex\":\"" << Hex(packet) << "\",\"records\":[{\"gid\":305419896,\"name\":\"RuneA\",\"job\":7,\"headpalette\":18,\"wire_slot_u16\":7,\"wire_hair_color_u16\":18,\"parsed_slot\":7,\"parsed_hair_color\":18,\"rename_flag_default\":1},{\"gid\":2271560481,\"name\":\"RuneB\",\"job\":8,\"headpalette\":9,\"wire_slot_u16\":3,\"wire_hair_color_u16\":7,\"parsed_slot\":3,\"parsed_hair_color\":7,\"rename_flag_default\":1}],\"first_character_selected\":true,\"char_select_transition\":true,\"visible_character_window_not_exercised\":true,\"outcome\":\"PASS\"}\n";
     std::cout << "{\"case_id\":\"login_accept_character_list_empty\",\"contract_id\":\"PK44.CHAR-LIST-ENTRY\",\"fixture_id\":\"PK44-006b-empty-list-selected-source\",\"production_entry\":\"CRagConnection::RecvPacket -> CLoginMode::PollNetwork -> OnAcceptChar\",\"frame_length\":24,\"opcode\":\"0x006B\",\"header_length\":24,\"record_count\":0,\"input_frame_hex\":\"" << Hex(emptyPacket) << "\",\"empty_list_status\":\"Login: no characters on account.\",\"char_select_transition\":true,\"outcome\":\"PASS\"}\n";
