@@ -1299,19 +1299,19 @@
       "commit_subject": "packet(PK36.01): trace inactive storage password flow"
     },
     "PK36.02": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "BLOCKED",
+      "evidence": ["docs/packets/evidence/PK36.01-storage-password-applicability.md"],
       "commit_subject": null
     },
     "PK36.03": {
-      "status": "NOT_STARTED",
-      "evidence": [],
+      "status": "BLOCKED",
+      "evidence": ["docs/packets/evidence/PK36.01-storage-password-applicability.md"],
       "commit_subject": null
     },
     "PK36.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK36.01-storage-password-applicability.md"],
+      "commit_subject": "packet(PK36.04): verify inactive storage password handling"
     },
     "PK37.01": {
       "status": "NOT_STARTED",

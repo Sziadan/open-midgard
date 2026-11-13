@@ -2588,22 +2588,24 @@ void HandleStorageClose(CGameMode&, const PacketView&)
 
 void HandleStoragePasswordRequest(CGameMode&, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 4) {
+    if (!packet.data || packet.packetLength != 4) {
         return;
     }
 
     const u16 info = ReadLE16(packet.data + 2);
+    if (info != 0 && info != 1 && info != 8) return;
     DbgLog("[GameMode] storage password request info=%u\n", static_cast<unsigned int>(info));
-    g_windowMgr.PushChatEvent("Storage password flow is not implemented yet.", 0x000000FFu, 6);
+    g_windowMgr.PushChatEvent("Storage password prompts are unavailable on this client.", 0x000000FFu, 6);
 }
 
 void HandleStoragePasswordResult(CGameMode&, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 6) {
+    if (!packet.data || packet.packetLength != 6) {
         return;
     }
 
     const u16 result = ReadLE16(packet.data + 2);
+    if (result < 4 || result > 8) return;
     const u16 errorCount = ReadLE16(packet.data + 4);
     DbgLog("[GameMode] storage password result=%u errors=%u\n",
         static_cast<unsigned int>(result),

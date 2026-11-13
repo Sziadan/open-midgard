@@ -470,6 +470,34 @@ void ItemRepairSelectionReplay()
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }
 
+void InactiveStoragePasswordReplay()
+{
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    auto* connection = CRagConnection::instance();
+    connection->Disconnect();
+    LoopbackPeer peer(*connection);
+    g_session.CloseStorage();
+    g_windowMgr.ClearChatEvents();
+
+    const std::vector<u8> frames{
+        0x3a, 2, 2, 0,       // Unknown challenge.
+        0x3a, 2, 1, 0,       // Protected challenge.
+        0x3c, 2, 6, 0, 0, 0, // Unsolicited successful check.
+        0x3c, 2, 8, 0, 2, 0, // Penalty result.
+    };
+    Require(input.QueueBytes(frames) && ProcessGameModePacketLoop(mode, input, router, 4).packetsDispatched == 4
+        && !input.BufferedBytes(), "inactive storage password frames did not drain in order");
+    Require(g_windowMgr.GetChatEvents().size() == 1 && !g_session.IsStorageOpen()
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "inactive storage password frames changed storage state or emitted a reply");
+
+    g_windowMgr.ClearChatEvents();
+    connection->Disconnect();
+}
+
 void CookingSelectionReplay()
 {
     CGameMode mode;

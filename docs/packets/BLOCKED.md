@@ -1,5 +1,7 @@
 # Open decisions and external gates
 
+**PK36.02 and PK36.03** need a server profile with an active storage password challenge, a working parser, and evidence of its credential transform. The selected profile's parser is empty. Ordinary storage and selected-profile replay can proceed independently. [Evidence](evidence/PK36.01-storage-password-applicability.md)
+
 **PK14 rendered acceptance resolved — 2026-11-05:** [actual native/QML capture and integrated checks](evidence/PK14.04-rendered-acceptance.md) close PK14.04 at its selected-source scope. Marker rendering is no longer blocked on a missing harness. Active PK23.05 has exact Ref cast-ACK arguments and a production runtime fixture; implement it rather than repeating a generic stronger-review deferral. Historical entries below do not override current HANDOFF/STATUS/state.
 
 **PK14.06 caller boundary resolved — 2026-11-05:** [production transition replay](evidence/PK14.06-transition-caller-replay.md) replaces the historical map/warp/character caller deferrals below. Remaining rendered/integrated acceptance is PK14.04; no generic stronger-review or caller-seam gate remains for this implemented checkpoint.

@@ -4021,3 +4021,5 @@ PK35.05 verifies optional production slots through Qt inventory drag, native and
 PK35.04 traces the additional cooking list emitters in the selected server and echoes types 5–8 on confirmation and cancellation. It also records the `018F` result pairs used by those skills. [Evidence](evidence/PK35.01-crafting-wire.md)
 
 PK36.01 traces the three storage password frames, the registered parser stub, and the ordinary storage open path. The selected server source has no active challenge flow. [Evidence](evidence/PK36.01-storage-password-applicability.md)
+
+PK36.04 verifies that the inactive storage password frames drain through production framing without opening storage or emitting a reply. PK36.02 and PK36.03 await an active server contract. [Evidence](evidence/PK36.01-storage-password-applicability.md)

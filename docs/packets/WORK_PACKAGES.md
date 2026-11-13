@@ -859,6 +859,8 @@ Tier: **S**. Dependencies: PK03, PK10, PK34.
 
 P10: no guessed encryption, plaintext shortcut, logged passwords or UI-only pretend unlock. Unresolved source questions block only the affected work; record the evidence and continue independent steps.
 
+The selected server's challenge and result emitters have no callers, and its credential parser is empty. PK36.02 and PK36.03 require a source-backed active profile with a documented credential transform. For the selected profile, PK36.04 verifies that received frames leave storage unchanged and emit no credential reply. [Selected source evidence](evidence/PK36.01-storage-password-applicability.md)
+
 ### Discovery ownership
 
 3 provisional primary rows. Also review secondary assignments; zero primary rows does not waive a cross-cutting package. All applicable packets found while tracing the family must be added, even if absent from the seed list.

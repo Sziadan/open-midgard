@@ -7058,6 +7058,7 @@ int main(int argc,char** argv){try{
     ModeLoopHandoffReplay();
     CartItemWireFieldsReplay();
     StorageSnapshotReplay();
+    InactiveStoragePasswordReplay();
     InventoryMapEntryReplay();
     InventoryMutationAckReplay();
     ItemUseFeedbackReplay();
