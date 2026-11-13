@@ -187,6 +187,98 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     captureTrade("completed");
     cases.push_back(QJsonObject{{"case","trade-offer-lock-commit"},{"outcome","PASS"}});
 
+    Reset();
+    hideDetail();
+    constexpr u32 boardSeller = 0x12345678;
+    CGameActor vendor;
+    vendor.m_gid = boardSeller;
+    vendor.m_isVisible = 1;
+    vendor.m_pos = {0.0f,0.0f,0.0f};
+    mode.m_world->RegisterActor(&vendor);
+    mode.m_view->SetInitialCamera(0,-45,500);
+    mode.m_view->OnCalcViewInfo();
+    g_renderer.m_xoffset=1100;
+    g_renderer.m_yoffset=370;
+    g_renderer.m_hpc=300.0f;
+    g_renderer.m_vpc=300.0f;
+
+    Require(CConnection::Startup(), "vending render socket startup failed");
+    struct SocketCleanup {
+        SOCKET listener=INVALID_SOCKET;
+        SOCKET peer=INVALID_SOCKET;
+        ~SocketCleanup(){
+            CRagConnection::instance()->Disconnect();
+            if(peer!=INVALID_SOCKET)closesocket(peer);
+            if(listener!=INVALID_SOCKET)closesocket(listener);
+            CConnection::Cleanup();
+        }
+    } sockets;
+    sockets.listener=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+    sockaddr_in address{};
+    address.sin_family=AF_INET;
+    address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
+    int addressLength=sizeof(address);
+    Require(sockets.listener!=INVALID_SOCKET && bind(sockets.listener,reinterpret_cast<sockaddr*>(&address),sizeof(address))==0
+        && listen(sockets.listener,1)==0 && getsockname(sockets.listener,reinterpret_cast<sockaddr*>(&address),&addressLength)==0,
+        "vending render listener failed");
+    auto* connection=CRagConnection::instance();
+    Require(connection->Connect("127.0.0.1",ntohs(address.sin_port)),"vending render loopback connect failed");
+    sockets.peer=accept(sockets.listener,nullptr,nullptr);
+    const DWORD timeout=1000;
+    Require(sockets.peer!=INVALID_SOCKET && setsockopt(sockets.peer,SOL_SOCKET,SO_RCVTIMEO,
+        reinterpret_cast<const char*>(&timeout),sizeof(timeout))==0,"vending render accept failed");
+    const auto expectRequest = [&](const std::vector<u8>& expected) {
+        std::vector<u8> actual(expected.size());
+        size_t received=0;
+        while(received<actual.size()){
+            const int count=recv(sockets.peer,reinterpret_cast<char*>(actual.data()+received),
+                static_cast<int>(actual.size()-received),0);
+            Require(count>0,"vending render did not send request");
+            received+=static_cast<size_t>(count);
+        }
+        Require(actual==expected,"vending render sent an unexpected request");
+    };
+    std::vector<u8> board(86);
+    write16(board,0,0x131);write32(board,2,boardSeller);
+    std::memcpy(board.data()+6,"Board vendor",12);
+    Dispatch(mode,board);
+    sync();
+    const QString boardName=QStringLiteral("commerceShopBoard_%1").arg(boardSeller);
+    const auto browse = [&] {
+        auto* boardItem=item(boardName);
+        const auto center=boardItem->mapToScene(QPointF(boardItem->width()/2,boardItem->height()/2));
+        Require(QRectF(0,0,view.width(),view.height()).contains(center),"vendor board is outside the fixture viewport");
+        Click(app,view,boardItem);
+        Require(state.requestedSellerId==boardSeller,"board click did not select the displayed seller");
+        expectRequest({0x30,1,0x78,0x56,0x34,0x12});
+    };
+    browse();
+    const auto listing=offerPacket(0x133,1202,91,2,true);
+    Dispatch(mode,listing);
+    sync();
+    Require(item("commerceDetail_shop_91")->property("item").toMap().value("count").toUInt()==2,
+        "board stock did not display the listed quantity");
+    Require(view.grabWindow().save(output+"/vending-board-stock.png"),"save board stock frame failed");
+    ++frames;
+    Click(app,view,item("commerceBuy_91"));
+    expectRequest({0x34,1,12,0,0x78,0x56,0x34,0x12,1,0,91,0});
+    sync();
+    auto* shopPanel=Find(view.rootObject(),"commerce_shop");
+    Require(shopPanel && !shopPanel->isVisible(),"submitted quote stayed visible");
+
+    browse();
+    Dispatch(mode,listing);
+    sync();
+    item("commerce_shop");
+    Dispatch(mode,{0x32,1,0x78,0x56,0x34,0x12});
+    Dispatch(mode,listing);
+    sync();
+    Require(!shopPanel->isVisible() && !Find(view.rootObject(),boardName),"removed board or quote stayed visible");
+    Require(view.grabWindow().save(output+"/vending-board-removed.png"),"save board removal frame failed");
+    ++frames;
+    mode.m_world->UnregisterActor(&vendor);
+    cases.push_back(QJsonObject{{"case","vending-board-browse-purchase-remove"},{"outcome","PASS"}});
+
     QFile results(output+"/commerce-detail-results.json");Require(results.open(QIODevice::WriteOnly),"open commerce detail results failed");
     results.write(QJsonDocument(QJsonObject{{"cases",cases},{"frames",frames},{"wire_shop_snapshot",true},
         {"wire_vending_snapshot",true},{"wire_trade_accept_and_remote_rows",true},{"wire_equipment_routed",true}}).toJson(QJsonDocument::Indented));
