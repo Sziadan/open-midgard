@@ -476,7 +476,7 @@ AUDIT-0x0243,0x0243,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy mail d
 AUDIT-0x0244,0x0244,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy attachment claim captured with the requested mail ID,C2S_ONLY,PK32.03-LEGACY-MAIL-CLAIM
 AUDIT-0x0245,0x0245,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x0246,0x0246,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy combined draft reset from the composer. Production replay verifies type 0 and pending-send protection.,C2S_ONLY,PK46.02-MAIL-DRAFT-RESET
-AUDIT-0x0247,0x0247,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
+AUDIT-0x0247,0x0247,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected item staging captured. The server rejects the index-zero Zeny variant.,C2S_ONLY,PK32.04-LEGACY-MAIL-STAGING
 AUDIT-0x0248,0x0248,map,C2S,PK32,PK01;PK02;PK47;PK48;PK46,Selected legacy mail send. Production replay covers exact frame and selected body limit plus pending ownership through the result.,C2S_ONLY,PK46.02-MAIL-SEND
 AUDIT-0x0249,0x0249,map,S2C,PK32,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x024A,0x024A,map,S2C,PK32,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

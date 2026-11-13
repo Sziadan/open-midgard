@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK32.04 adds confirmed delete and return actions to the legacy Qt inbox. Matching server results settle the original message. Continue the compose attachment and Zeny staging flow using the selected `0247`, `0255`, and `0246` contracts. Verify live delete, return, system-mail refusal and character-server silence. [Mail delete and return](work-items/PK32.04.md)
+PK32.04 adds confirmed delete and return to the legacy Qt inbox and item staging to the composer. The selected server silently rejects outgoing Zeny staging before its index-zero handler. Verify live mail, inventory consumption and refunds, physical attachment drag, and system-mail refusal. [Mail delete, return and staging](work-items/PK32.04.md)
 
 PK32.03 connects the inbox attachment claim to the selected `0244` request and unkeyed `0245` replies. Claims remain tied to their original mail across selection changes and local warps. Verify live delivery, including item capacity rejection on combined item/Zeny mail and a silent character-service refusal. Continue PK32.04 with delete and return and keep an unresolved claim protected from conflicting operations. [Attachment claim implementation](work-items/PK32.03.md)
 

@@ -47,13 +47,22 @@ Item {
         }
     }
     function icon(item) { return "image://openmidgard/item/" + item.id + "?identified=" + (item.identified ? "1" : "0") }
+    function transferAction(to) {
+        if (to === "trade") return "offerTrade"
+        if (to === "mail") return "stageMailItem"
+        return "transfer"
+    }
     function transfer(from, to, item) {
         if (item.count > 1) { pending = {from:from, to:to, item:item}; quantity.text = "1"; Qt.callLater(function(){quantity.forceActiveFocus();quantity.selectAll()}) }
-        else send(to === "trade" ? "offerTrade" : "transfer", {from:from, to:to, index:item.index, id:item.id, amount:1})
+        else send(transferAction(to), {from:from, to:to, index:item.index, id:item.id, amount:1})
     }
     function drop(to) {
         if (dragFrom === "cart" && to === "vending") send("offerVend", {index:dragItem.index})
         else if (dragFrom === "vending" && to !== "vending") send("removeVend", {index:dragItem.index})
+        else if (dragFrom === "inventory" && to === "mail") {
+            if (!view.mailPending && !view.mailAttachmentPending && !view.mailAttachment)
+                transfer(dragFrom, to, dragItem)
+        }
         else if ((dragFrom === "inventory" && (to === "cart" || to === "trade")) || (dragFrom === "cart" && to === "inventory")) transfer(dragFrom,to,dragItem)
     }
     function dropAt(x,y) {
@@ -451,7 +460,28 @@ Item {
             RoField { width:parent.width; height:150
                 TextEdit { id:mailBody; anchors.fill:parent; anchors.margins:8; color:theme.ink; font.pixelSize:12; wrapMode:TextEdit.Wrap; selectByMouse:true; clip:true }
             }
-            Button { label:hub.view.mailPending?"Sending…":"Send mail"; primary:true; enabled:!hub.view.mailPending; onClicked:hub.send("mail",{text:recipient.text,subject:mailSubject.text,body:mailBody.text}) }
+            Row {
+                width: parent.width
+                spacing: 8
+                Text {
+                    width: parent.width - 100
+                    height: 28
+                    verticalAlignment: Text.AlignVCenter
+                    text: hub.view.mailAttachmentPending ? "Waiting for attachment…"
+                        : hub.view.mailAttachmentNeedsReset ? "Remove attachment before resending"
+                        : hub.view.mailAttachment || "Drop an inventory item here"
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                    color: theme.muted
+                }
+                Button {
+                    width: 92
+                    label: "Remove item"
+                    enabled: !!hub.view.mailAttachment && !hub.view.mailPending && !hub.view.mailAttachmentPending
+                    onClicked: hub.send("clearMailItem")
+                }
+            }
+            Button { label:hub.view.mailPending?"Sending…":"Send mail"; primary:true; enabled:!hub.view.mailPending && !hub.view.mailAttachmentPending && !hub.view.mailAttachmentNeedsReset; onClicked:hub.send("mail",{text:recipient.text,subject:mailSubject.text,body:mailBody.text}) }
             Status { width:parent.width; height:32 }
         }
     }
@@ -491,7 +521,7 @@ Item {
         Text { x:16; y:12; text:"Move items"; font.bold:true; font.pixelSize:14; color:theme.titleText }
         Text { x:16; y:42; width:288; text:hub.pending?hub.pending.item.name+" · up to "+hub.pending.item.count:""; color:theme.ink; font.pixelSize:12; elide:Text.ElideRight }
         TextInput { id:quantity; objectName:"commerceQuantity"; x:20; y:72; width:100; height:26; color:theme.ink; font.pixelSize:16; selectByMouse:true; validator:IntValidator { bottom:1; top:hub.pending?Math.min(32767,hub.pending.item.count):1 } }
-        Button { objectName:"commerceQuantityConfirm"; x:16; y:116; label:"Move"; primary:true; enabled:quantity.acceptableInput; onClicked:{var request=hub.pending;hub.pending=null;hub.send(request.to==="trade"?"offerTrade":"transfer",{from:request.from,to:request.to,index:request.item.index,id:request.item.id,amount:Number(quantity.text)})} }
+        Button { objectName:"commerceQuantityConfirm"; x:16; y:116; label:hub.pending && hub.pending.to==="mail"?"Attach":"Move"; primary:true; enabled:quantity.acceptableInput; onClicked:{var request=hub.pending;hub.pending=null;hub.send(hub.transferAction(request.to),{from:request.from,to:request.to,index:request.item.index,id:request.item.id,amount:Number(quantity.text)})} }
         Button { x:126; y:116; label:"Cancel"; onClicked:hub.pending=null }
     }
     RoFrame { property bool nativeInteractive:true; visible:!!hub.view.promptKind; z:2003; width:280; height:132; anchors.centerIn:parent

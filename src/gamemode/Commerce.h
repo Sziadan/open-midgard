@@ -9,6 +9,11 @@ struct PacketView;
 namespace ro::commerce {
 struct Window {bool visible=false;int x=380,y=130,width=400,height=420;};
 struct Offer {ITEM_INFO item;u32 amount=0,price=0;};
+struct MailDraftAttachment {
+    std::optional<Offer> pending;
+    std::optional<Offer> staged;
+    bool needsReset = false;
+};
 struct TradePeer {std::string name;int distance=0;};
 enum class TradeCancellation { None, Decline, Cancel };
 struct MailHeader {
@@ -71,6 +76,7 @@ struct State {
     int inventoryTab=0;
     std::string partner,shopTitle,mailTo,status;
     MailInbox inbox;
+    MailDraftAttachment mailAttachment;
     std::map<u32,ITEM_INFO> cartItems;
     std::vector<Offer> draft,localOffer,remoteOffer,shopItems;
     std::map<u32,std::string> shopBoards;

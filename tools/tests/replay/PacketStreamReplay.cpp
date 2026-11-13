@@ -6888,6 +6888,89 @@ void MailResultProductionReceiveReplay()
     std::cout << "{\"case_id\":\"mail_result_production_receive\",\"contract_id\":\"PK46.02\",\"fixture_id\":\"PK01.02-final-0249-mail-result\",\"partial_frame_buffered\":true,\"failure_retained_composer\":true,\"success_closed_composer\":true,\"outcome\":\"PASS\"}" << std::endl;
 }
 
+void MailDraftAttachmentProductionReplay()
+{
+    SetCase("mail_draft_attachment_production", "PK32.04", "selected-legacy-0247-0255",
+        "Commerce composer actions and production receive router");
+    using namespace ro::commerce;
+    const State saved = state;
+    const auto oldItems = g_session.GetInventoryItems();
+    Reset();
+    g_session.ClearInventoryItems();
+    ITEM_INFO item;
+    item.m_itemIndex = 7;
+    item.SetItemId(501);
+    item.m_num = 5;
+    g_session.SetInventoryItem(item);
+    state.mail.visible = true;
+    CRagConnection* connection = CRagConnection::instance();
+    connection->Disconnect();
+    Command stage;
+    stage.action = "stageMailItem";
+    stage.index = 7;
+    stage.itemId = 501;
+    stage.amount = 2;
+    Require(!Action(stage) && !state.mailAttachment.pending, "failed send staged an attachment");
+    LoopbackPeer peer(*connection);
+
+    auto zeny = stage;
+    zeny.index = 0;
+    Require(!Action(zeny), "selected profile accepted the rejected index-zero staging path");
+    auto invalid = stage;
+    invalid.itemId = 502;
+    Require(!Action(invalid), "changed inventory item was accepted");
+    const std::vector<u8> request{0x47, 0x02, 7, 0, 2, 0, 0, 0};
+    Require(Action(stage) && peer.ReceiveExact(8) == request && state.mailAttachment.pending
+        && !state.mailAttachment.staged, "mail staging did not wait for its acknowledgement");
+    Command close;
+    close.action = "close";
+    close.to = "mail";
+    Require(!Action(close) && !Action(stage), "pending staging allowed a close or another unkeyed request");
+    CGameMode mode;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    TestConnection input;
+    const auto dispatch = [&](const std::vector<u8>& frame) {
+        Require(input.QueueBytes(frame) && ProcessGameModePacketLoop(mode, input, router, 1).packetsDispatched == 1,
+            "mail attachment packet did not reach production router");
+    };
+    dispatch({0x55, 0x02, 8, 0, 0});
+    Require(state.mailAttachment.pending && !state.mailAttachment.staged, "wrong slot settled the attachment");
+    dispatch({0x55, 0x02, 7, 0, 1});
+    Require(!state.mailAttachment.pending && !state.mailAttachment.staged, "refusal displayed a staged item");
+    Require(Action(stage) && peer.ReceiveExact(8) == request, "retry after refusal failed");
+    dispatch({0x55, 0x02, 7, 0, 0});
+    Require(state.mailAttachment.staged && state.mailAttachment.staged->amount == 2
+        && g_session.GetInventoryItemByIndex(7)->m_num == 5, "acknowledgement mutated inventory or lost the draft");
+    Command mail;
+    mail.action = "mail";
+    mail.text = "Recipient";
+    mail.subject = "Subject";
+    item.m_num = 1;
+    g_session.SetInventoryItem(item);
+    Require(!Action(mail), "mail submitted an attachment with insufficient stock");
+    item.m_num = 5;
+    g_session.SetInventoryItem(item);
+    Require(Action(mail) && peer.ReceiveExact(70)[0] == 0x48, "staged mail did not enter send");
+    dispatch({0x49, 0x02, 1});
+    Require(state.mail.visible && state.mailAttachment.needsReset && !Action(mail),
+        "ambiguous send refusal allowed replay with stale attachments");
+    Command clear;
+    clear.action = "clearMailItem";
+    const std::vector<u8> reset{0x46, 0x02, 0, 0};
+    Require(Action(clear) && peer.ReceiveExact(4) == reset && !state.mailAttachment.staged
+        && state.mail.visible, "attachment reset failed or closed the composer");
+    Require(Action(stage) && peer.ReceiveExact(8) == request, "could not restage after reset");
+    dispatch({0x55, 0x02, 7, 0, 0});
+    Require(Action(close) && peer.ReceiveExact(4) == reset && !state.mailAttachment.staged
+        && !state.mail.visible, "composer close did not reset the server draft");
+    connection->Disconnect();
+    g_session.ClearInventoryItems();
+    for (const auto& old : oldItems) g_session.SetInventoryItem(old);
+    state = saved;
+    std::cout << "{\"case_id\":\"mail_draft_attachment_production\",\"contract_id\":\"PK32.04\",\"outcome\":\"PASS\"}\n";
+}
+
 void MailInboxProductionReplay()
 {
     SetCase("mail_inbox_production", "PK32.02", "selected-legacy-mail",
@@ -9382,6 +9465,7 @@ int main(int argc,char** argv){try{
     MailComposerProductionSendReplay();
     MailSendProductionReplay();
     MailResultProductionReceiveReplay();
+    MailDraftAttachmentProductionReplay();
     MailInboxProductionReplay();
     StorageCloseProductionSendReplay();
     StorageTransferProductionReplay();

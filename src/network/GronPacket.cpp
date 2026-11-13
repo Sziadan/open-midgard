@@ -222,6 +222,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0242, kVariablePacketSize); // Legacy mail detail
     SetPacketSize(0x0245, 3);                  // Legacy attachment claim result
     SetPacketSize(0x024A, 70);                 // Legacy new-mail notification
+    SetPacketSize(0x0255, 5);                  // Legacy mail attachment staging result
     SetPacketSize(0x0257, 8);                  // Legacy delete mail result
     SetPacketSize(0x0260, 6);                  // Legacy inbox open / close
     SetPacketSize(0x0274, 8);                  // Legacy return / missing read result

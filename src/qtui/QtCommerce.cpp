@@ -90,6 +90,12 @@ void PopulateCommerceUi(QtUiState* ui,CGameMode& gameMode,bool suppressed){
     data["localOffer"]=offers(s.localOffer);data["remoteOffer"]=offers(s.remoteOffer);data["localZeny"]=s.localZeny;data["remoteZeny"]=s.remoteZeny;data["partner"]=str(s.partner);
     data["shop"]=geometry(s.shop,suppressed);data["shopItems"]=offers(s.shopItems);data["mail"]=geometry(s.mail,suppressed);data["mailTo"]=str(s.mailTo);data["mailPending"]=s.mailPending;data["equipment"]=geometry(s.equipment,suppressed);data["equipmentItems"]=equipment;
     data["mailInbox"] = geometry(s.mailInbox, suppressed);
+    data["mailAttachmentPending"] = s.mailAttachment.pending.has_value();
+    data["mailAttachmentNeedsReset"] = s.mailAttachment.needsReset;
+    if (const auto& attachment = s.mailAttachment.staged) {
+        data["mailAttachment"] = QString::number(attachment->amount) + QStringLiteral(" × ")
+            + str(attachment->item.GetDisplayName());
+    }
     data["mailSelected"] = s.inbox.selectedId;
     data["mailReadPending"] = s.inbox.pendingReadId != 0;
     data["mailClaimPending"] = s.inbox.claim.has_value();
@@ -181,7 +187,7 @@ void BindCommerceUi(QtUiState* ui){
             g_windowMgr.OnLBtnUp(c.x,c.y);return;
         }
         if(action=="describe"){DescribeCommerceItem(args);return;}
-        if (action == "transfer") c.itemId = args.value("id").toUInt();
+        if (action == "transfer" || action == "stageMailItem") c.itemId = args.value("id").toUInt();
         if (action == "readMail" || action == "claimMail" || action == "deleteMail" || action == "returnMail")
             c.target = args.value("id").toUInt();
         if(!Action(c) && state.status.empty())state.status="Action unavailable. Check the quantity and current transaction state.";
