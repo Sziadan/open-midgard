@@ -2088,9 +2088,9 @@
       "commit_subject": "packet(PK50.03): connect the quest journal launcher"
     },
     "PK50.04": {
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "commit_subject": null
+      "status": "COMPLETED",
+      "evidence": ["docs/packets/evidence/PK50.04-quest-verification.md"],
+      "commit_subject": "packet(PK50.04): verify selected quest expiry and reconnect"
     },
     "PK47.02.001": {
       "status": "COMPLETED",

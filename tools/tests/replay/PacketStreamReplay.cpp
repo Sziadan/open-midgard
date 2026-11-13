@@ -6863,6 +6863,7 @@ void QuestWindowProductionReplay()
     auto& mission = journal.missions[id];
     mission.objectiveCount = 1;
     mission.objectives[0] = {1001, 3, "Poring", 9};
+    mission.expiresAt = 0x82060708;
     CGameMode mode;
     auto* oldMode = SkillPacketReplayAccess::Current();
     const int oldModeType = SkillPacketReplayAccess::CurrentType();
@@ -6874,6 +6875,12 @@ void QuestWindowProductionReplay()
     Require(initial.rows.size() == 1 && initial.rows[0].selected && initial.rows[0].active
             && initial.action == "Deactivate" && initial.objectives == std::vector<std::string>{"Poring  3 / 9"},
         "journal did not display selected quest and progress");
+    const auto beforeExpiry = window->GetDisplay(mission.expiresAt - 1);
+    const auto atExpiry = window->GetDisplay(mission.expiresAt);
+    Require(beforeExpiry.expiry.rfind("Expires ", 0) == 0 && atExpiry.expiry.rfind("Expired ", 0) == 0
+            && beforeExpiry.expiry.substr(8) == atExpiry.expiry.substr(8)
+            && atExpiry.expiry.substr(8, 4) == "2039" && atExpiry.action == "Deactivate",
+        "quest expiry truncated the unsigned timestamp or changed server-owned activation");
     auto* connection = CRagConnection::instance();
     connection->Disconnect();
     LoopbackPeer peer(*connection);
@@ -6888,12 +6895,66 @@ void QuestWindowProductionReplay()
     const std::array<u8, 7> response{0xB7, 2, 0x44, 0x33, 0x22, 0x11, 0};
     Require(router.Dispatch(mode, {0x02B7, 7, response.data()})
             && window->GetDisplay().action == "Activate", "server confirmation did not update journal action");
+    const std::array<u8, 6> completion{0xB4, 2, 0x44, 0x33, 0x22, 0x11};
+    g_windowMgr.OnLBtnDown(x, y);
+    Require(router.Dispatch(mode, {0x02B4, 6, completion.data()}), "quest removal did not dispatch");
+    g_windowMgr.OnLBtnUp(x, y);
+    Require(window->GetDisplay().rows.empty() && window->GetDisplay().action.empty()
+            && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "completed quest retained visible controls or emitted a stale activation");
     Require(g_windowMgr.OnQtKeyDown('Q', false, false, false) && !window->m_show,
         "Q did not close the journal");
     g_windowMgr.DeleteWindow(window);
     connection->Disconnect();
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
     journal = std::move(saved);
+}
+
+void QuestReconnectProductionReplay()
+{
+    SetCase("quest_reconnect_production", "PK50.04", "PK50.04-quest-reconnect",
+        "map socket termination -> game mode exit -> new character quest snapshot");
+    auto saved = std::move(g_session.m_questJournal);
+    auto& journal = g_session.m_questJournal;
+    const int requestedMode = g_modeMgr.GetRequestedModeType();
+    const int pendingReturn = g_session.m_pendingReturnToCharSelect;
+    auto* oldMode = SkillPacketReplayAccess::Current();
+    const int oldModeType = SkillPacketReplayAccess::CurrentType();
+    CGameMode mode;
+    SkillPacketReplayAccess::SetCurrent(&mode);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    journal.states[1] = ro::quest::State::Active;
+    journal.missions[1].expiresAt = 500;
+    Require(g_windowMgr.MakeWindow(UIWindowMgr::WID_QUESTWND), "old character could not open quest journal");
+    TestConnection connection;
+    Require(!mode.ProcessNetworkUpdate(connection, router, 8, GetTickCount())
+            && g_modeMgr.GetRequestedModeType() == 0, "terminal map socket did not request login");
+    mode.OnExit();
+    Require(journal.states.empty() && journal.missions.empty() && !g_windowMgr.m_questWnd,
+        "game-mode exit retained the old character's journal or window");
+
+    CGameMode fresh;
+    SkillPacketReplayAccess::SetCurrent(&fresh);
+    LoopbackPeer peer(connection);
+    const std::vector<u8> list{0xB1, 2, 13, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0};
+    peer.Send(list);
+    WaitKernelPending(connection, static_cast<int>(list.size()));
+    Require(fresh.ProcessNetworkUpdate(connection, router, 8, GetTickCount()),
+        "new character did not process its quest snapshot");
+    auto* window = static_cast<UIQuestWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_QUESTWND));
+    Require(window != nullptr, "new character could not reopen the journal");
+    const auto display = window->GetDisplay();
+    Require(display.rows.size() == 1 && display.rows.front().id == 2 && display.action == "Activate"
+            && display.expiry.empty(), "new character journal retained an old quest or expiry");
+    g_windowMgr.DeleteWindow(window);
+    connection.Disconnect();
+    journal = std::move(saved);
+    g_session.m_pendingReturnToCharSelect = pendingReturn;
+    SetPendingLoginStatus("");
+    RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    g_modeMgr.Switch(requestedMode, "");
 }
 
 void PartyInviteChatProductionReplay()
@@ -8628,6 +8689,7 @@ int main(int argc,char** argv){try{
     QuestSnapshotProductionReplay();
     QuestIncrementalProductionReplay();
     QuestWindowProductionReplay();
+    QuestReconnectProductionReplay();
     PartyCreateProductionSendReplay();
     PartyOptionChangeProductionSendReplay();
     PartyDisbandProductionSendReplay();

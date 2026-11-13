@@ -898,7 +898,7 @@ AUDIT-0x08DB,0x08DB,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent
 AUDIT-0x08DF,0x08DF,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x08E0,0x08E0,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Lobby reply requires the later queue registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x08E1,0x08E1,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
-AUDIT-0x08FE,0x08FE,map,unresolved,PK50,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
+AUDIT-0x08FE,0x08FE,map,unresolved,PK50,PK01;PK02;PK47;PK48,Newer hunting quest info is absent from MAIN 20080910,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK50.04
 AUDIT-0x08FF,0x08FF,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0907,0x0907,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0908,0x0908,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,

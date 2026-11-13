@@ -835,6 +835,8 @@ void MapTransitionLifetimeReplay()
         g_session.m_instanceStatus = {CSession::InstanceStatus::Phase::Waiting, "Dungeon", 4};
         g_session.m_questJournal.states[123] = ro::quest::State::Active;
         g_session.m_questJournal.missions[123].expiresAt = 200;
+        Require(g_windowMgr.MakeWindow(UIWindowMgr::WID_QUESTWND),
+            "could not open quest journal before map-server transfer");
         g_session.m_partyBookingRegistrationPending = true;
         g_session.m_pendingReturnToCharSelect = reconnectSucceeds ? 0 : 1;
         Require(BeginPendingDisconnectAction(PendingDisconnectAction::ExitToWindows),
@@ -859,8 +861,8 @@ void MapTransitionLifetimeReplay()
             Require(g_session.m_instanceStatus.phase == CSession::InstanceStatus::Phase::None,
                 "old instance metadata survived into the next connection");
             Require(!g_session.m_partyBookingRegistrationPending, "booking reply remained pending across reconnect");
-            Require(g_session.m_questJournal.states.empty() && g_session.m_questJournal.missions.empty(),
-                "old quest journal survived into the next connection");
+            Require(g_session.m_questJournal.states.empty() && g_session.m_questJournal.missions.empty()
+                    && !g_windowMgr.m_questWnd, "old quest journal or window survived into the next connection");
             const auto* member = g_session.FindPartyMemberByAid(0x30303030u);
             Require(member && !member->partyPositionValid && g_session.m_curMap == std::string("geffen")
                 && GetPendingDisconnectAction() == PendingDisconnectAction::None,

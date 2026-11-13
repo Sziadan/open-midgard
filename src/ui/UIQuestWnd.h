@@ -28,6 +28,7 @@ public:
 
     explicit UIQuestWnd(int windowId);
     Display GetDisplay() const;
+    Display GetDisplay(u64 now) const;
     void OnDraw() override;
     bool IsUpdateNeed() override;
     void OnLBtnDown(int x, int y) override;

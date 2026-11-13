@@ -36,6 +36,7 @@
 #include "ui/UIChatRoomSettingsWnd.h"
 #include "core/UiMessageStrings.h"
 #include "ui/UIInstanceWnd.h"
+#include "ui/UIQuestWnd.h"
 #include "core/SourceWeight.h"
 #include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UISayDialogWnd.h"
@@ -9937,6 +9938,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
         g_session.m_questJournal = {};
         g_session.m_partyBookingRegistrationPending = false;
         g_windowMgr.DeleteWindow(g_windowMgr.m_instanceWnd);
+        g_windowMgr.DeleteWindow(g_windowMgr.m_questWnd);
     }
     const bool reconnected = !info.hasServerMove
         || (services && services->reconnect

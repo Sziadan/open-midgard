@@ -29,14 +29,14 @@ std::string QuestText(const std::string& text)
     return ro::DecodeSourceText(text, ro::SelectedSourceTextCodePage()).value_or(text);
 }
 
-std::string QuestExpiry(u32 seconds)
+std::string QuestExpiry(u32 seconds, u64 now)
 {
     if (!seconds) return {};
     const auto timestamp = static_cast<std::time_t>(seconds);
     const auto* local = std::localtime(&timestamp);
     char buffer[64]{};
     if (!local || !std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", local)) return {};
-    return std::string(timestamp <= std::time(nullptr) ? "Expired " : "Expires ") + buffer;
+    return std::string(seconds <= now ? "Expired " : "Expires ") + buffer;
 }
 }
 
@@ -71,6 +71,11 @@ std::string UIQuestWnd::Title(u32 id) const
 
 UIQuestWnd::Display UIQuestWnd::GetDisplay() const
 {
+    return GetDisplay(static_cast<u64>(std::time(nullptr)));
+}
+
+UIQuestWnd::Display UIQuestWnd::GetDisplay(u64 now) const
+{
     const auto& journal = g_session.m_questJournal;
     const auto offset = PageOffset();
     const u32 selected = SelectedId();
@@ -97,7 +102,7 @@ UIQuestWnd::Display UIQuestWnd::GetDisplay() const
     }
     if (const auto it = journal.missions.find(selected); it != journal.missions.end()) {
         const auto& mission = it->second;
-        display.expiry = QuestExpiry(mission.expiresAt);
+        display.expiry = QuestExpiry(mission.expiresAt, now);
         for (u16 i = 0; i < mission.objectiveCount; ++i) {
             const auto& objective = mission.objectives[i];
             std::string row = objective.name.empty() ? "Objective " + std::to_string(i + 1) : QuestText(objective.name);
