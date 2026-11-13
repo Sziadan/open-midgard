@@ -234,19 +234,19 @@ Item {
                 Repeater { model:["local","remote"]
                     Rectangle { id:side; required property string modelData; width:(tradeSides.width-12)/2; height:tradeSides.height; color:theme.rowAlt; radius:6
                         property bool mine:modelData==="local"
-                        Text { x:10; y:8; text:side.mine ? "Your offer"+(hub.view.localLocked?" · Locked":"") : hub.view.partner+(hub.view.remoteLocked?" · Locked":""); color:theme.ink; font.bold:true; font.pixelSize:12 }
+                        Text { objectName: "commerceTradeHeading_" + side.modelData; x:10; y:8; text:side.mine ? "Your offer"+(hub.view.localLocked?" · Locked":"") : hub.view.partner+(hub.view.remoteLocked?" · Locked":""); color:theme.ink; font.bold:true; font.pixelSize:12 }
                         Flickable { x:8; y:32; width:parent.width-16; height:parent.height-66; contentHeight:Math.max(height,offerRows.height); clip:true
                             Column { id:offerRows; width:parent.width; spacing:5
                                 Repeater { model:side.mine ? hub.view.localOffer||[] : hub.view.remoteOffer||[]
                                     Row { required property var modelData; required property int index; width:offerRows.width; spacing:6
                                         DetailIcon { item:modelData; sourceKind:side.mine ? "trade-local" : "trade-remote"; offerRow:side.mine ? -1 : index }
-                                        Text { width:parent.width-38; anchors.verticalCenter:parent.verticalCenter; text:modelData.count+" × "+modelData.name; wrapMode:Text.WordWrap; color:theme.ink; font.pixelSize:11 }
+                                        Text { objectName: "commerceTradeItem_" + side.modelData + "_" + index; width:parent.width-38; anchors.verticalCenter:parent.verticalCenter; text:modelData.count+" × "+modelData.name; wrapMode:Text.WordWrap; color:theme.ink; font.pixelSize:11 }
                                     }
                                 }
                             }
                             DropArea { anchors.fill:parent; keys:["commerce-item"]; enabled:side.mine&&!hub.view.localLocked&&!hub.view.lockPending&&!hub.view.addPending; onDropped:function(drop){hub.drop("trade");drop.acceptProposedAction()} }
                         }
-                        Text { x:10; anchors.bottom:parent.bottom; anchors.bottomMargin:10; text:(side.mine?hub.view.localZeny||0:hub.view.remoteZeny||0)+" Zeny"; color:theme.ink; font.pixelSize:12 }
+                        Text { objectName: "commerceTradeZeny_" + side.modelData; x:10; anchors.bottom:parent.bottom; anchors.bottomMargin:10; text:(side.mine?hub.view.localZeny||0:hub.view.remoteZeny||0)+" Zeny"; color:theme.ink; font.pixelSize:12 }
                     }
                 }
             }

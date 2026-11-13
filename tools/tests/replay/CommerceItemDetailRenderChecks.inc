@@ -137,6 +137,56 @@ void CheckCommerceItemDetails(QGuiApplication& app,QQuickView& view,QtUiState* u
     noOpen(QVariantMap{{"from","trade-remote"},{"index",0},{"row",8},{"id",1202}},"missing-remote-row");
     noOpen(QVariantMap{{"from","trade-remote"},{"index",0},{"row",-1},{"id",1202}},"negative-remote-row");
     noOpen(QVariantMap{{"from","trade-remote"},{"index",0},{"id",1202}},"omitted-remote-row");
+
+    hidePanels();
+    Dispatch(mode,{0xf5,1,3,77,0,0,0,10,0});
+    state.partner = "DetailPeer";
+    const std::vector<u8> repeatOffer{0xe9,0,2,0,0,0,0xb2,4,1,0,2,0,0,0,0,0,0,0,0};
+    for(int i=0;i<11;++i)Dispatch(mode,repeatOffer);
+    Dispatch(mode,{0xe9,0,42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0});
+    Dispatch(mode,{0xec,0,1});
+    sync();
+    const auto item = [&](const QString& name) {
+        auto* target = Find(view.rootObject(),name);
+        Require(target && target->isVisible(), "expected a visible trade item");
+        return target;
+    };
+    auto* firstOffer = item("commerceTradeItem_remote_0");
+    Require(firstOffer->property("text").toString().startsWith(QStringLiteral("2 × "))
+        && item("commerceTradeItem_remote_1")->property("text") == firstOffer->property("text")
+        && Find(view.rootObject(),"commerceTradeItem_remote_9")
+        && !Find(view.rootObject(),"commerceTradeItem_remote_10"), "Qt lost separate remote offer rows");
+    Require(item("commerceTradeZeny_remote")->property("text").toString()=="42 Zeny"
+        && item("commerceTradeHeading_remote")->property("text").toString().startsWith("DetailPeer")
+        && item("commerceTradeHeading_remote")->property("text").toString().endsWith("Locked")
+        && !item("commerceTradeHeading_local")->property("text").toString().endsWith("Locked")
+        && !item("commerceCommitTrade")->isEnabled(), "remote lock did not update the correct trade controls");
+    Dispatch(mode,{0xec,0,0});
+    Dispatch(mode,{0xf0,0,0});
+    sync();
+    Require(item("commerceCommitTrade")->isEnabled(), "unowned result hid a ready trade");
+    const auto captureTrade = [&](const QString& suffix) {
+        const auto image = view.grabWindow().convertToFormat(QImage::Format_RGB32);
+        Require(!image.isNull() && image.save(output+"/trade-"+suffix+".png"), "save trade frame failed");
+        ++frames;
+        return image;
+    };
+    const auto lockedFrame = captureTrade("offers-locked");
+    for(auto* label : {item("commerceTradeItem_remote_0"), item("commerceTradeZeny_remote"), item("commerceTradeHeading_remote")}) {
+        const auto rect = label->mapRectToScene(label->boundingRect()).toAlignedRect().intersected(lockedFrame.rect());
+        Require(PixelsNear(lockedFrame,rect,0xff25313cu)>5, "remote trade label did not paint");
+    }
+    // The production send path is covered by the packet replay. Seed only its pending flag here.
+    state.commitPending = true;
+    sync();
+    Require(!item("commerceCommitTrade")->isEnabled(), "pending trade confirmation remained enabled");
+    Dispatch(mode,{0xf0,0,0});
+    sync();
+    auto* tradePanel = Find(view.rootObject(),"commerce_trade");
+    Require(tradePanel && !tradePanel->isVisible() && state.remoteOffer.empty(), "owned result left the trade window visible");
+    captureTrade("completed");
+    cases.push_back(QJsonObject{{"case","trade-offer-lock-commit"},{"outcome","PASS"}});
+
     QFile results(output+"/commerce-detail-results.json");Require(results.open(QIODevice::WriteOnly),"open commerce detail results failed");
     results.write(QJsonDocument(QJsonObject{{"cases",cases},{"frames",frames},{"wire_shop_snapshot",true},
         {"wire_vending_snapshot",true},{"wire_trade_accept_and_remote_rows",true},{"wire_equipment_routed",true}}).toJson(QJsonDocument::Indented));
