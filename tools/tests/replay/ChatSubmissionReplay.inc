@@ -151,13 +151,17 @@ void ChatSubmissionReplay()
         "main caller restored common focus after synchronous auto-editor creation");
     auto* autoEditor=g_windowMgr.m_autoMessageWnd;Require(submit("/am") && !g_session.m_onAutoMSG,"auto toggle-off failed through general dispatch");
     g_windowMgr.DeleteWindow(autoEditor);
-    auto* connection=CRagConnection::instance();connection->Disconnect();LoopbackPeer peer(*connection);const auto& profile=ro::net::GetActiveMapGameplaySendProfile();
+    auto* connection=CRagConnection::instance();connection->Disconnect();
+    const bool previousBookingPending = g_session.m_partyBookingRegistrationPending;
+    g_session.m_partyBookingRegistrationPending = false;
+    Require(!submit("/partybooking register 90 513") && !g_session.m_partyBookingRegistrationPending
+        && g_windowMgr.GetChatEvents().back().text == "Could not send the party booking registration.",
+        "local booking send failure left a pending request");
+    LoopbackPeer peer(*connection);const auto& profile=ro::net::GetActiveMapGameplaySendProfile();
     Require(profile.id==ro::net::MapGameplaySendProfileId::PacketVer23 && profile.globalMessage==0x00f3 && profile.whisper==0x0096
         && profile.partyMessage==0x0108 && profile.guildMessage==0x017e && profile.battleMessage==0x02db
         && profile.characterNameRequest==0x00a2 && profile.characterNameRequestLength==15 && profile.characterNameRequestIdOffset==11,
         "selected source chat profile IDs or preserved name-request layout differ from primary/server registration");
-    const bool previousBookingPending = g_session.m_partyBookingRegistrationPending;
-    g_session.m_partyBookingRegistrationPending = false;
     TestConnection bookingInput;
     CGameModePacketRouter bookingRouter;
     RegisterDefaultGameModePacketHandlers(bookingRouter);
@@ -193,6 +197,15 @@ void ChatSubmissionReplay()
     Require(!g_session.m_partyBookingRegistrationPending
         && g_windowMgr.GetChatEvents().back().text == "A party booking is already registered.",
         "duplicate booking result did not resolve registration");
+    for (const auto& [result, expected] : std::array<std::pair<u16, const char*>, 2>{
+            {{1, "Party booking registration failed."}, {0x101, "Party booking returned an unknown registration result."}}}) {
+        Require(submit("/partybooking register 90 513"), "booking could not send after a terminal result");
+        Require(peer.ReceiveExact(18) == std::vector<u8>({2, 8, 90, 0, 1, 2, 255, 255, 255, 255,
+            255, 255, 255, 255, 255, 255, 255, 255}), "retry changed the booking frame");
+        bookingResult(result);
+        Require(!g_session.m_partyBookingRegistrationPending && g_windowMgr.GetChatEvents().back().text == expected,
+            "booking failure or unknown 16-bit result did not resolve registration");
+    }
     Require(submit("/partybooking delete") && peer.ReceiveExact(4) == std::vector<u8>({6, 8, 0, 0})
         && !g_session.m_partyBookingRegistrationPending
         && g_windowMgr.GetChatEvents().back().text == "Party booking deletion requested. The server sends no confirmation.",

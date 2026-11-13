@@ -4137,3 +4137,5 @@ PK43.01 distinguishes disabled buying stores and store search from the reachable
 PK43.02 classifies ten buying-store discovery rows as inactive for MAIN 20080910, including the later `0814` and `0816` board notifications. The compatibility framing remains available in the client. [Evidence](evidence/PK43.01-selected-store-booking-inventory.md)
 
 PK43.03 connects selected booking registration, deletion and registration results, and dispositions the inactive booking and store-search identities. [Evidence](evidence/PK43.03-selected-party-booking.md)
+
+PK43.04 checks booking result branches, local send failure and selected zero-length delete replies. Live receive acceptance remains open. [Evidence](evidence/PK43.04-booking-self-review.md)
