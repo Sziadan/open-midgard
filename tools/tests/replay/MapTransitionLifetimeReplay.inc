@@ -582,7 +582,7 @@ void MapTransitionLifetimeReplay()
         mode.m_auctionSearch.pages = 3;
         mode.m_auctionSearch.rows.emplace_back();
         mode.m_auctionStaging.stagedIndex = 42;
-        mode.m_auctionStaging.stagedItemId = 1201;
+        mode.m_auctionStaging.stagedItemId = 985;
         mode.StartNpcProgress(3, timeGetTime());
         UIRechargeGage* const progressGauge = mode.GetNpcProgressGauge();
         Require(progressGauge != nullptr && g_windowMgr.ContainsWindow(progressGauge),
@@ -713,8 +713,8 @@ void MapTransitionLifetimeReplay()
             "same-map warp retained the previous PvP rank or timer");
         Require(!mode.m_auctionSearch.open && !mode.m_auctionSearch.pages && mode.m_auctionSearch.rows.empty(),
             "same-map warp retained the previous auction snapshot");
-        Require(!mode.m_auctionStaging.stagedIndex && !mode.m_auctionStaging.stagedItemId,
-            "same-map warp retained staging after retiring the old inventory snapshot");
+        Require(mode.m_auctionStaging.stagedIndex == 42 && mode.m_auctionStaging.stagedItemId == 985,
+            "same-map warp dropped the reservation on the still-open map connection");
         Require(ro::commerce::state.promptKind.empty() && !ro::commerce::state.promptId,
             "same-map warp kept a friend invitation actionable");
         mode.UpdateAdoptionInvitation();
@@ -817,6 +817,48 @@ void MapTransitionLifetimeReplay()
             "same-map storage restoration did not reopen with only the fresh category");
         g_session.CloseStorage();
         g_windowMgr.CloseStorageWindows();
+
+        // Load-end inventory includes the unit reserved on the server. The
+        // auction search releases it using a normal pickup acknowledgement.
+        std::vector<u8> inventorySnapshot(26, 0);
+        inventorySnapshot[0] = 0xe8;
+        inventorySnapshot[1] = 2;
+        inventorySnapshot[2] = 26;
+        inventorySnapshot[4] = 42;
+        inventorySnapshot[6] = 0xd9;
+        inventorySnapshot[7] = 3;
+        inventorySnapshot[8] = 3;
+        inventorySnapshot[9] = 1;
+        inventorySnapshot[10] = 2;
+        Require(mapInput.QueueBytes(inventorySnapshot)
+            && ProcessGameModePacketLoop(mode, mapInput, router, 1).packetsDispatched == 1,
+            "post-warp auction inventory did not dispatch");
+        const auto stagedCount = g_session.GetInventoryItemByIndex(42);
+        Require(stagedCount && stagedCount->m_num == 1, "post-warp snapshot made the reserved unit available twice");
+        Require(mapInput.QueueBytes({0x5f, 2, 0, 0, 0, 0})
+            && ProcessGameModePacketLoop(mode, mapInput, router, 1).packetsDispatched == 1,
+            "auction window could not reopen after the warp");
+        Require(ackPeer.ReceiveExact(34)[0] == 0x51 && !mode.m_auctionStaging.stagedIndex,
+            "post-warp auction search did not release the old reservation");
+        std::vector<u8> pickup(29, 0);
+        const auto pickupOpcode = ro::net::GetActiveMapReceiveProfile().itemPickupAckExtended;
+        pickup[0] = static_cast<u8>(pickupOpcode);
+        pickup[1] = static_cast<u8>(pickupOpcode >> 8);
+        pickup[2] = 42;
+        pickup[4] = 1;
+        pickup[6] = 0xd9;
+        pickup[7] = 3;
+        pickup[8] = 1;
+        pickup[21] = 3;
+        Require(mapInput.QueueBytes(pickup)
+            && ProcessGameModePacketLoop(mode, mapInput, router, 1).packetsDispatched == 1,
+            "post-warp auction return did not dispatch");
+        const auto returnedStack = g_session.GetInventoryItemByIndex(42);
+        Require(returnedStack && returnedStack->m_num == 2,
+            "post-warp auction return did not restore exactly the snapshot's full count");
+        Require(mapInput.QueueBytes({0x52, 2, 12, 0, 1, 0, 0, 0, 0, 0, 0, 0})
+            && ProcessGameModePacketLoop(mode, mapInput, router, 1).packetsDispatched == 1
+            && !mode.m_auctionSearch.awaitingReply, "post-warp auction search did not settle");
 
         CRagConnection::instance()->Disconnect();
         inputPeer.Send(frame);

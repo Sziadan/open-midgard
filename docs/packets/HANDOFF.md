@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-Auction window close now retains staging if cancellation fails. Same-map warp still needs inventory reconciliation: rAthena sends the staged unit in the load-end inventory snapshot and a later cancellation can report it again as a pickup. Verify the ordered server frames before changing pickup accounting. [Auction staging evidence](evidence/PK40.05-selected-verification.md#auction-staging-on-close-and-same-map-warp)
+Auction window close retains staging if cancellation fails. Same-map warp preserves a confirmed reservation and accounts for it in the inventory snapshot before an ordinary cancellation pickup restores the unit. Continue with cross-map mode replacement and warps during registration, where the server can consume the item before sending its result. [Auction staging evidence](evidence/PK40.05-selected-verification.md#auction-staging-on-close-and-same-map-warp)
 
 PK40.05 and PK46.04 cover unanswered auction requests. Verify the overdue status and re-entry guidance in the auction window, including late reply recovery. The selected repeated-request and inventory rules remain tied to the original connection. [Auction recovery evidence](evidence/PK40.05-selected-verification.md#unanswered-auction-requests)
 

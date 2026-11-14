@@ -2617,6 +2617,14 @@ void ApplyInventoryList(CGameMode& mode, const PacketView& packet, bool equipmen
 {
     std::list<ITEM_INFO> items;
     if (!StageSessionItemList(packet, equipment, false, items)) return;
+    const auto& staged = mode.m_auctionStaging;
+    if (staged.stagedIndex && mode.m_auctionTransaction != CGameMode::AuctionTransaction::Register) {
+        // The server still counts the reserved unit in its inventory snapshot.
+        const auto row = std::find_if(items.begin(), items.end(), [&](const ITEM_INFO& item) {
+            return item.m_itemIndex == staged.stagedIndex && item.GetItemId() == staged.stagedItemId;
+        });
+        if (row != items.end() && --row->m_num == 0) items.erase(row);
+    }
     unsigned int eggIndex = 0;
     if (equipment) {
         for (const auto& item : items) {
@@ -4291,9 +4299,6 @@ bool IsSameMapAlreadyLoaded(const CGameMode& mode, const MapChangeInfo& info)
 void PrepareSameMapWarpReuse(CGameMode& mode)
 {
     mode.m_pvpRankStartTick = 0;
-    mode.m_auctionStaging.stagedIndex = 0;
-    mode.m_auctionStaging.stagedItemId = 0;
-    mode.m_auctionStaging.discardReply = mode.m_auctionStaging.pendingIndex != 0;
     mode.CloseAuctionSearch();
     g_windowMgr.DeleteWindow(g_windowMgr.m_auctionWnd);
     mode.m_recallPartnerName.clear();
