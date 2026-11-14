@@ -11411,6 +11411,10 @@ bool CGameMode::OpenPlayerContextMenu(u32 targetAid, const std::string& targetNa
         if (!kickOnly && g_serverType != ServerInstantEvent) {
             entries.push_back({PlayerContext_GivePositiveManner, strings.Get(389, "Give positive manner points")});
             entries.push_back({PlayerContext_GiveNegativeManner, strings.Get(390, "Give negative manner points")});
+            if (!FindGmAccountName(targetAid) && !m_pendingGmAccountNames.count(targetAid)
+                && SendGmAccountNameRequest(targetAid)) {
+                m_pendingGmAccountNames.emplace(targetAid, timeGetTime());
+            }
         }
     }
     if (kickOnly) {
@@ -12032,6 +12036,48 @@ bool CGameMode::ProcessNetworkUpdate(CRagConnection& connection, CGameModePacket
     return true;
 }
 
+bool CGameMode::SendGmAccountNameRequest(u32 aid)
+{
+    std::array<u8, 6> packet{0xdf, 0x01};
+    for (unsigned i = 0; i < 4; ++i)
+        packet[2 + i] = static_cast<u8>(aid >> (8 * i));
+    return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
+}
+
+void CGameMode::UpdateGmAccountNameRequests(u32 now)
+{
+    if (!IsGravityAid(g_session.m_aid) || g_serverType == ServerInstantEvent) {
+        ClearGmAccountNameRequests();
+        return;
+    }
+    for (auto& [aid, lastSent] : m_pendingGmAccountNames) {
+        if (now - lastSent > 1000u) {
+            SendGmAccountNameRequest(aid);
+            lastSent = now;
+        }
+    }
+}
+
+void CGameMode::ClearGmAccountNameRequests()
+{
+    m_pendingGmAccountNames.clear();
+    m_receivedGmAccountNames.clear();
+}
+
+bool CGameMode::ApplyGmAccountNameReply(u32 aid, std::string name)
+{
+    if (!IsGravityAid(g_session.m_aid) || g_serverType == ServerInstantEvent) return false;
+    if (!m_pendingGmAccountNames.erase(aid)) return false;
+    m_receivedGmAccountNames.emplace(aid, std::move(name));
+    return true;
+}
+
+const std::string* CGameMode::FindGmAccountName(u32 aid) const
+{
+    const auto name = m_receivedGmAccountNames.find(aid);
+    return name == m_receivedGmAccountNames.end() ? nullptr : &name->second;
+}
+
 void CGameMode::OnUpdate() {
     // Receive and decide handoffs before any actor, world or audio processing.
     CRagConnection* conn = CRagConnection::instance();
@@ -12046,6 +12092,7 @@ void CGameMode::OnUpdate() {
     UpdateStarSkillNotice(timeGetTime());
     UpdateFriendInvitation();
     UpdateAdoptionInvitation();
+    UpdateGmAccountNameRequests(timeGetTime());
     UpdateNpcProgress(*conn, timeGetTime());
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);

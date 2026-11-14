@@ -8229,6 +8229,12 @@ void HandleGmKickAck(CGameMode& mode, const PacketView& packet)
         ro::chat::ColorRefToUiRgb(13055), kChatChannelSystem);
 }
 
+void HandleGmAccountNameReply(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 30) return;
+    mode.ApplyGmAccountNameReply(ReadLE32(packet.data + 2), ExtractFixedPacketString(packet, 6, 24));
+}
+
 void HandleMannerNotice(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data) return;
@@ -9963,6 +9969,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     mode.m_compassPosList.clear();
     mode.m_bossMapPosition = {-1, -1};
     mode.ResetBattlegroundMapState();
+    mode.ClearGmAccountNameRequests();
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
     ro::commerce::CloseTransactions();
     g_session.ClearNpcShopState(info.hasServerMove);
@@ -10850,6 +10857,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02C1, HandleNpcChat);
     router.Register(0x014A, HandleMannerNotice);
     router.Register(0x014B, HandleMannerNotice);
+    router.Register(0x01E0, HandleGmAccountNameReply);
     router.Register(0x01AB, HandleUserParameterChange);
     RegisterHandlerIfValid(router, receiveProfile.broadcastBasic, HandleBroadcast);
     router.Register(0x07FD, HandleSpecialItemObtain);

@@ -6657,11 +6657,54 @@ void GmPlayerContextReplay()
     };
     Require(!contains(CGameMode::PlayerContext_DisconnectCharacter)
         && !choose(CGameMode::PlayerContext_DisconnectCharacter), "ordinary account could kick from the context menu");
+    Require(SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "ordinary player menu requested an account name");
     s_dwAdminAID = {g_session.m_aid};
     Require(mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10)
         && contains(CGameMode::PlayerContext_DisconnectCharacter)
         && contains(CGameMode::PlayerContext_GivePositiveManner)
         && contains(CGameMode::PlayerContext_GiveNegativeManner), "administrator menu omitted moderation options");
+    const std::vector<u8> accountRequest{0xdf, 1, 0x44, 0x33, 0x22, 0x11};
+    Require(peer.ReceiveExact(accountRequest.size()) == accountRequest, "GM account-name request differs");
+    Require(mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10)
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "pending account-name request was duplicated on reopening the menu");
+    const auto retryTime = timeGetTime() + 2000;
+    mode.UpdateGmAccountNameRequests(retryTime);
+    Require(peer.ReceiveExact(accountRequest.size()) == accountRequest, "pending lookup did not retry");
+    std::array<u8, 30> accountReply{0xe0, 1, 0x45, 0x33, 0x22, 0x11};
+    CGameModePacketRouter accountRouter;
+    RegisterDefaultGameModePacketHandlers(accountRouter);
+    const auto dispatchAccountReply = [&] {
+        PacketView frame{};
+        int size = 0;
+        Require(TryReadPacket(accountReply.data(), accountReply.size(), frame, size)
+            && size == accountReply.size() && accountRouter.Dispatch(mode, frame),
+            "account-name reply did not frame and route");
+    };
+    dispatchAccountReply();
+    Require(!mode.FindGmAccountName(0x11223345) && !mode.FindGmAccountName(target.m_gid),
+        "unsolicited reply changed the lookup results");
+    accountReply[2] = 0x44;
+    dispatchAccountReply();
+    const auto* name = mode.FindGmAccountName(target.m_gid);
+    Require(name && name->empty(), "blank selected-server reply did not complete its lookup");
+    accountReply[6] = 'X';
+    dispatchAccountReply();
+    Require(mode.FindGmAccountName(target.m_gid)->empty(), "duplicate reply replaced a completed lookup");
+    mode.UpdateGmAccountNameRequests(retryTime + 1001);
+    Require(mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10)
+        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        "blank reply was retried as a missing lookup");
+    mode.ClearGmAccountNameRequests();
+    Require(!mode.FindGmAccountName(target.m_gid)
+        && mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10)
+        && peer.ReceiveExact(accountRequest.size()) == accountRequest,
+        "reset retained the previous lookup");
+    std::fill(accountReply.begin() + 6, accountReply.end(), 'N');
+    dispatchAccountReply();
+    name = mode.FindGmAccountName(target.m_gid);
+    Require(name && *name == std::string(24, 'N'), "fixed-width account name was not read within its field");
     Require(!choose(CGameMode::PlayerContext_GivePositiveManner), "positive manner skipped the yellow-AID check");
     g_serverType = ServerInstantEvent;
     Require(mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10)
@@ -9741,6 +9784,11 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--corpse-only") { CorpsePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-class-change-only") { NpcClassChangeReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--compass-only") { CompassMarkerReplay();CConnection::Cleanup();return 0; }
+    if (argc > 1 && std::string_view(argv[1]) == "--gm-player-context-only") {
+        GmPlayerContextReplay();
+        CConnection::Cleanup();
+        return 0;
+    }
     if(argc>1 && std::string(argv[1])=="--digit-clock-only") { DigitClockReplay();CConnection::Cleanup();return 0; }
     if (argc > 1 && std::string_view(argv[1]) == "--digit-clock-render") {
         Require(argc == 3, "digit clock render requires the path to data.grf");

@@ -128,6 +128,10 @@ public:
     void ClearAdoptionInvitation();
     bool CanRequestAdoption(u32 candidate) const;
     bool OpenPlayerContextMenu(u32 targetAid, const std::string& targetName, int x, int y);
+    void UpdateGmAccountNameRequests(u32 now);
+    void ClearGmAccountNameRequests();
+    bool ApplyGmAccountNameReply(u32 aid, std::string name);
+    const std::string* FindGmAccountName(u32 aid) const;
 
     enum MapLoadingStage {
         MapLoading_None = 0,
@@ -517,6 +521,9 @@ public:
     std::vector<CGameActor*> m_deferredActorDeletes;
 
 private:
+    bool SendGmAccountNameRequest(u32 aid);
+    std::map<u32, u32> m_pendingGmAccountNames;
+    std::map<u32, std::string> m_receivedGmAccountNames;
     friend struct DigitClockReplayAccess;
     void QueueDigitClock(u32 now);
     std::unique_ptr<CTexture> m_digitClockTexture;
