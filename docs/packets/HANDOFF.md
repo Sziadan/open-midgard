@@ -4,7 +4,9 @@ PK47 restores the selected `0293` boss-map feed, its static `bossmonster.bmp` ma
 
 PK47 now routes all four `01B1` digit clock modes into the gameplay HUD. Use a live `showdigit` script to check presentation and map-transition behavior. [Digit clock evidence](evidence/PK47.04-digit-clock.md)
 
-PK47 now sends `01DF` from the GM player menu and matches `01E0` by AID. The selected server's blank name completes the lookup. Continue the separate prohibition history, persistence, and viewer from the selected client action at `HighPriest.exe.c:353806`, `CSession::AppendProhibit` at line 511326, and `UIProhibitListWnd::OnDraw` at line 154954. The source displays the placeholder before assignment and a blank field after a matching empty reply. Verify the flow on a GM test character. [GM account-name evidence](evidence/PK47.04-gm-account-name.md)
+PK47 now sends `01DF` from the GM player menu, matches `01E0` by AID and shows the saved prohibition history. Verify the menu, blank assignment, positive and negative moderation actions, and reload on a GM test character. For original viewer details, use `UIProhibitListWnd::OnDraw` at `HighPriest.exe.c:154954` and the auxiliary command in `SendMsg`. [GM account-name evidence](evidence/PK47.04-gm-account-name.md)
+
+The selected server comments out the legacy couple prompt emitters `01E2` and `01E4`. Continue with source adjudication of `01E3`, `01E5`, and `01EC`, then separate any active marriage notifications from historical UI. [Legacy couple evidence](evidence/PK47.04-legacy-couple.md)
 
 Cash and ordinary NPC shop replies retain their pending ownership through a same-connection warp while the old shop quote closes. A server move clears the old ownership. Verify a delayed purchase result after warp and a fresh quote on the selected deployment. [Commerce verification](evidence/PK40.05-selected-verification.md#shop-replies-on-map-change)
 

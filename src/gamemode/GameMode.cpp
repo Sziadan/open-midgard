@@ -63,6 +63,7 @@
 #include "ui/UiScale.h"
 #include "ui/UINpcMenuWnd.h"
 #include "ui/UIPlayerContextMenuWnd.h"
+#include "ui/UIProhibitionHistoryWnd.h"
 #include "ui/UIRechargeGage.h"
 #include "ui/UISayDialogWnd.h"
 #include "ui/UIWindow.h"
@@ -1033,7 +1034,7 @@ bool QueueGroundSkillPromptOverlayQuad(RECT client, bool scaled)
     static ArgbDibSurface surface;
     RECT bounds{};
     if (!g_windowMgr.BuildGroundSkillPromptOverlay(surface, GroundPromptLogicalViewport(client, scaled),
-            timeGetTime(), bounds)) return false;
+            timeGetTime(), bounds, scaled)) return false;
     const int width = bounds.right - bounds.left;
     const int height = bounds.bottom - bounds.top;
     if (width <= 0 || height <= 0) return true;
@@ -2647,7 +2648,7 @@ void DrawGameplayFallbackToWindow(
                 static ArgbDibSurface surface;
                 RECT bounds{};
                 if (g_windowMgr.BuildGroundSkillPromptOverlay(surface, GroundPromptLogicalViewport(client, true),
-                        timeGetTime(), bounds) && bounds.right > bounds.left && bounds.bottom > bounds.top) {
+                        timeGetTime(), bounds, true) && bounds.right > bounds.left && bounds.bottom > bounds.top) {
                     const auto screen = GroundPromptScreenBounds(bounds, true);
                     AlphaBlendArgbToHdc(windowDc, screen.left, screen.top, screen.right-screen.left,
                         screen.bottom-screen.top, surface.GetPixels(), surface.GetWidth(), surface.GetHeight());
@@ -3848,6 +3849,17 @@ bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
 }
 
 constexpr u32 kMaxMannerAdjustment = 30000;
+
+bool LoadProhibitionHistory()
+{
+    return g_session.m_prohibitionHistory.Load(GetOpenMidgardIniPath().parent_path() / "ProhibitionLog.gd");
+}
+
+void SaveProhibitionHistory()
+{
+    if (!g_session.m_prohibitionHistory.Save()) DbgLog("[GM] Could not save prohibition history\n");
+    if (g_windowMgr.m_prohibitionHistoryWnd) g_windowMgr.m_prohibitionHistoryWnd->Invalidate();
+}
 
 bool CanKickContextActor(const CGameMode& mode, u32 targetAid)
 {
@@ -11411,6 +11423,15 @@ bool CGameMode::OpenPlayerContextMenu(u32 targetAid, const std::string& targetNa
         if (!kickOnly && g_serverType != ServerInstantEvent) {
             entries.push_back({PlayerContext_GivePositiveManner, strings.Get(389, "Give positive manner points")});
             entries.push_back({PlayerContext_GiveNegativeManner, strings.Get(390, "Give negative manner points")});
+            LoadProhibitionHistory();
+            const auto& rows = g_session.m_prohibitionHistory.Rows();
+            const auto count = std::count_if(rows.begin(), rows.end(), [targetAid](const auto& row) {
+                return row.aid == targetAid && row.server == g_session.m_charServerName;
+            });
+            auto label = strings.Get(713, "Prohibition Log (%d)");
+            if (const auto placeholder = label.find("%d"); placeholder != std::string::npos)
+                label.replace(placeholder, 2, std::to_string(count));
+            entries.push_back({PlayerContext_ViewProhibitionHistory, std::move(label)});
             if (!FindGmAccountName(targetAid) && !m_pendingGmAccountNames.count(targetAid)
                 && SendGmAccountNameRequest(targetAid)) {
                 m_pendingGmAccountNames.emplace(targetAid, timeGetTime());
@@ -11547,6 +11568,7 @@ void CGameMode::UpdateFriendInvitation()
 }
 
 void CGameMode::OnExit() {
+    g_windowMgr.DeleteWindow(g_windowMgr.m_prohibitionHistoryWnd);
     if (g_modeMgr.GetRequestedModeType() != 1) {
         g_session.m_instanceStatus = {};
         g_session.m_questJournal = {};
@@ -12062,12 +12084,15 @@ void CGameMode::ClearGmAccountNameRequests()
 {
     m_pendingGmAccountNames.clear();
     m_receivedGmAccountNames.clear();
+    if (g_windowMgr.m_prohibitionHistoryWnd) g_windowMgr.DeleteWindow(g_windowMgr.m_prohibitionHistoryWnd);
 }
 
 bool CGameMode::ApplyGmAccountNameReply(u32 aid, std::string name)
 {
     if (!IsGravityAid(g_session.m_aid) || g_serverType == ServerInstantEvent) return false;
     if (!m_pendingGmAccountNames.erase(aid)) return false;
+    if (LoadProhibitionHistory()
+        && g_session.m_prohibitionHistory.Assign(aid, g_session.m_charServerName, name)) SaveProhibitionHistory();
     m_receivedGmAccountNames.emplace(aid, std::move(name));
     return true;
 }
@@ -13296,12 +13321,35 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         packet[6] = static_cast<u8>(extra);
         packet[7] = static_cast<u8>(lparam);
         packet[8] = static_cast<u8>(lparam >> 8);
-        return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size());
+        if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size())) return 0;
+        if (LoadProhibitionHistory()) {
+            if (extra == 1) {
+                auto* actor = m_world->GetGameActorByAID(targetAid);
+                const auto cached = m_actorNameListByGID.find(actor->m_gid);
+                const auto character = cached != m_actorNameListByGID.end() && !cached->second.name.empty()
+                    ? cached->second.name : (m_menuTargetAID == targetAid ? m_lastWhisperMenuCharacterName : "");
+                g_session.m_prohibitionHistory.Append(targetAid, actor->m_gid, static_cast<u32>(lparam),
+                    g_session.m_charServerName, character, FindGmAccountName(targetAid));
+                SaveProhibitionHistory();
+            } else if (g_session.m_prohibitionHistory.RemoveLatest(targetAid, g_session.m_charServerName,
+                           static_cast<u32>(lparam))) {
+                SaveProhibitionHistory();
+            }
+        }
+        return 1;
     }
 
     case GameMsg_RequestPlayerContextAction: {
         const PlayerContextAction action = static_cast<PlayerContextAction>(lparam);
         const u32 targetAid = static_cast<u32>(wparam);
+        if (action == PlayerContext_ViewProhibitionHistory) {
+            if (!CanAdjustContextManner(*this, targetAid, true) || !LoadProhibitionHistory()) return 0;
+            auto* window = static_cast<UIProhibitionHistoryWnd*>(
+                g_windowMgr.MakeWindow(UIWindowMgr::WID_PROHIBITIONHISTORYWND));
+            if (!window) return 0;
+            window->SetTarget(targetAid, g_session.m_charServerName);
+            return 1;
+        }
         if (action == PlayerContext_DisconnectCharacter) {
             if (!CanKickContextActor(*this, targetAid)) return 0;
             std::array<u8, 6> packet{0xcc, 0};

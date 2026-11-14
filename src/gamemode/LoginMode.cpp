@@ -1936,6 +1936,8 @@ void CLoginMode::OnChangeState(int newState) {
         int charPort = 0;
         if (m_serverSelected >= 0 && m_serverSelected < m_numServer) {
             const SERVER_ADDR& sv = m_serverInfo[m_serverSelected];
+            const auto* name = reinterpret_cast<const char*>(sv.name);
+            g_session.m_charServerName.assign(name, std::find(name, name + sizeof(sv.name), '\0'));
             in_addr addrIn{};
             addrIn.s_addr = sv.ip;
             charIp = inet_ntoa(addrIn);

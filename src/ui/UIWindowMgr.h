@@ -67,6 +67,7 @@ class UIItemCompositionWnd;
 class UIItemIdentifyWnd;
 class UISkillSelectWnd;
 class UIMonsterInfoWnd;
+class UIProhibitionHistoryWnd;
 class UIQuestWnd;
 class UIBasicInfoWnd;
 class UINotifyLevelUpWnd;
@@ -183,6 +184,7 @@ public:
         WID_SELECTCARTWND     = 0x5F,
         WID_SKILLSELECTWND    = 0x60,
         WID_MONSTERINFOWND    = 77,
+        WID_PROHIBITIONHISTORYWND = 103,
         WID_STORAGEWND        = 50,
         WID_CHOOSEWND         = 17,
         WID_ROMAPWND          = 0x93,
@@ -222,7 +224,8 @@ public:
     void InvalidateUpdateNeededUI();
     void DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap, bool includeGroundPrompts = true);
 #if RO_PLATFORM_WINDOWS
-    bool BuildGroundSkillPromptOverlay(ArgbDibSurface& surface, RECT client, u32 tick, RECT& bounds);
+    bool BuildGroundSkillPromptOverlay(ArgbDibSurface& surface, RECT client, u32 tick, RECT& bounds,
+        bool includeNativeHistory = false);
 #endif
     bool HasDirtyVisualState() const;
     bool HasDirtyVisualStateExcludingRoMap() const;
@@ -404,6 +407,7 @@ public:
     UIItemIdentifyWnd* m_itemIdentifyWnd;
     UISkillSelectWnd* m_skillSelectWnd;
     UIMonsterInfoWnd* m_monsterInfoWnd = nullptr;
+    UIProhibitionHistoryWnd* m_prohibitionHistoryWnd = nullptr;
     UIQuestWnd* m_questWnd;
     UIBasicInfoWnd* m_basicInfoWnd;
     UINotifyLevelUpWnd* m_notifyLevelUpWnd;

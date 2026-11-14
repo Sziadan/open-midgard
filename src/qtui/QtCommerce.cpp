@@ -177,7 +177,8 @@ void BindCommerceUi(QtUiState* ui){
                     || command==CGameMode::PlayerContext_DeclareGuildOpposition
                     || command==CGameMode::PlayerContext_DisconnectCharacter
                     || command==CGameMode::PlayerContext_GivePositiveManner
-                    || command==CGameMode::PlayerContext_GiveNegativeManner)
+                    || command==CGameMode::PlayerContext_GiveNegativeManner
+                    || command==CGameMode::PlayerContext_ViewProhibitionHistory)
                 g_modeMgr.SendMsg(CGameMode::GameMsg_RequestPlayerContextAction,id,command,0);
             else if(!PlayerAction(command,id,name)&&state.status.empty())g_windowMgr.PushChatEvent("That player action is unavailable right now.",0x00FF8080u,6);return;
         }

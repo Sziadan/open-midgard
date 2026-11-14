@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 add_library(ro_session STATIC
     Session.h
     Session.cpp
+    ProhibitionHistory.cpp
     SkillActionInfo.h
     SkillActionInfo.cpp
     SkillActionInfo2.h

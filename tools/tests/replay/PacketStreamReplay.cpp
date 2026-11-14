@@ -18,6 +18,7 @@
 #include "item/Item.h"
 #include "pathfinder/PathFinder.h"
 #include "res/Texture.h"
+#include "render/DC.h"
 #include "render/Renderer.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
@@ -29,6 +30,7 @@
 #endif
 #include "ui/UIChooseWnd.h"
 #include "ui/UIPlayerContextMenuWnd.h"
+#include "ui/UIProhibitionHistoryWnd.h"
 #include "ui/UIPartyOptionWnd.h"
 #include "ui/UIQuestWnd.h"
 #include "ui/UIJoinPartyAcceptWnd.h"
@@ -6624,6 +6626,37 @@ void GmPlayerContextReplay()
     SetCase("gm_player_context", "PK46.02", "PK46.02-gm-player-context",
         "player context and numeric prompt -> selected map requests -> kick acknowledgement");
     auto* connection = CRagConnection::instance();
+    const auto testDirectory = std::filesystem::temp_directory_path()
+        / ("midgard-prohibition-" + std::to_string(Clock::now().time_since_epoch().count()));
+    const char* dataOverride = std::getenv("OPEN_MIDGARD_DATA_DIR");
+    struct RestoreHistory {
+        std::filesystem::path directory;
+        std::string dataOverride;
+        ProhibitionHistory history;
+        std::string server;
+        ~RestoreHistory() {
+#if RO_PLATFORM_WINDOWS
+            _putenv_s("OPEN_MIDGARD_DATA_DIR", dataOverride.c_str());
+#else
+            if (dataOverride.empty()) unsetenv("OPEN_MIDGARD_DATA_DIR");
+            else setenv("OPEN_MIDGARD_DATA_DIR", dataOverride.c_str(), 1);
+#endif
+            g_session.m_prohibitionHistory = std::move(history);
+            g_session.m_charServerName = std::move(server);
+            std::error_code error;
+            std::filesystem::remove(directory / "ProhibitionLog.gd", error);
+            std::filesystem::remove(directory / "ProhibitionLog.gd.tmp", error);
+            std::filesystem::remove(directory, error);
+        }
+    } restoreHistory{testDirectory, dataOverride ? dataOverride : "",
+        std::move(g_session.m_prohibitionHistory), g_session.m_charServerName};
+#if RO_PLATFORM_WINDOWS
+    Require(_putenv_s("OPEN_MIDGARD_DATA_DIR", testDirectory.string().c_str()) == 0, "history test directory");
+#else
+    Require(setenv("OPEN_MIDGARD_DATA_DIR", testDirectory.string().c_str(), 1) == 0, "history test directory");
+#endif
+    g_session.m_prohibitionHistory = {};
+    g_session.m_charServerName = "Test World";
     connection->Disconnect();
     LoopbackPeer peer(*connection);
     CGameMode mode;
@@ -6727,6 +6760,44 @@ void GmPlayerContextReplay()
     input->HandleKeyDown(VK_RETURN);
     Require(peer.ReceiveExact(9) == std::vector<u8>{0x49, 1, 0x44, 0x33, 0x22, 0x11, 1, 0x30, 0x75},
         "negative manner lost its type or maximum amount");
+    const auto logFile = testDirectory / "ProhibitionLog.gd";
+    ProhibitionHistory disk;
+    Require(disk.Load(logFile) && disk.Rows().size() == 1
+        && disk.Rows().front().duration == 30000 && disk.Rows().front().account == std::string(24, 'N')
+        && disk.Rows().front().server == "Test World", "prohibition record did not persist the captured lookup");
+    Require(mode.OpenPlayerContextMenu(target.m_gid, "Target", 10, 10)
+        && contains(CGameMode::PlayerContext_ViewProhibitionHistory)
+        && choose(CGameMode::PlayerContext_ViewProhibitionHistory)
+        && g_windowMgr.m_prohibitionHistoryWnd, "GM history viewer did not open for the selected actor");
+#if RO_PLATFORM_WINDOWS
+    ArgbDibSurface historySurface;
+    RECT historyBounds{};
+    Require(g_windowMgr.BuildGroundSkillPromptOverlay(historySurface, {0, 0, 800, 600}, timeGetTime(),
+                historyBounds, true)
+        && historyBounds.left == 100 && historyBounds.top == 100
+        && historyBounds.right == 600 && historyBounds.bottom == 500
+        && (historySurface.GetPixels()[10] >> 24) == 255,
+        "GM history viewer did not enter the Qt gameplay overlay");
+#endif
+    g_windowMgr.m_prohibitionHistoryWnd->OnKeyDown(VK_ESCAPE);
+    Require(!g_windowMgr.m_prohibitionHistoryWnd, "history viewer remained managed after close");
+    disk.Append(target.m_gid, target.m_gid, 10, "Other World", "Target", nullptr);
+    Require(disk.Assign(target.m_gid, "Other World", "")
+        && disk.Rows().front().account == std::string(24, 'N') && disk.Rows().back().account.empty()
+        && !disk.RemoveLatest(target.m_gid, "Test World", 29999)
+        && disk.RemoveLatest(target.m_gid, "Test World", 30000) && disk.Save(),
+        "history update or erase crossed server ownership or duration guard");
+    ProhibitionHistory reloaded;
+    Require(reloaded.Load(logFile) && reloaded.Rows().size() == 1 && reloaded.Rows().front().account.empty(),
+        "blank assigned name did not survive reload");
+    const auto malformedLog = testDirectory / "malformed.gd";
+    {
+        std::ofstream file(malformedLog, std::ios::binary);
+        file.write("\x01\0\0\0\x20\0\0\0", 8);
+    }
+    Require(!reloaded.Load(malformedLog) && reloaded.Rows().size() == 1,
+        "truncated legacy log replaced the previous snapshot");
+    std::filesystem::remove(malformedLog);
     target.m_isPc = 0;
     target.m_job = 1002;
     Require(mode.OpenPlayerContextMenu(target.m_gid, "Monster", 10, 10)
@@ -6736,10 +6807,16 @@ void GmPlayerContextReplay()
     Require(choose(CGameMode::PlayerContext_DisconnectCharacter)
         && peer.ReceiveExact(6) == std::vector<u8>{0xcc, 0, 0x44, 0x33, 0x22, 0x11},
         "monster kick request lost its actor GID");
+    target.m_isPc = 1;
+    target.m_job = 0;
+    connection->Disconnect();
+    Require(!mode.SendMsg(CGameMode::GameMsg_ConfirmMannerAdjustment, target.m_gid, 1, 1)
+        && g_session.m_prohibitionHistory.Rows().size() == 1, "failed send changed local history");
+    LoopbackPeer recoveredPeer(*connection);
     world.UnregisterActor(&target);
     Require(!choose(CGameMode::PlayerContext_DisconnectCharacter)
         && !mode.SendMsg(CGameMode::GameMsg_ConfirmMannerAdjustment, target.m_gid, 1, 1)
-        && SelectSocket(peer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+        && SelectSocket(recoveredPeer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "stale context target emitted an action");
 
     CGameModePacketRouter router;

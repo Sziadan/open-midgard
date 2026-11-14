@@ -376,11 +376,11 @@ AUDIT-0x01DC,0x01DC,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Selected 200809
 AUDIT-0x01DD,0x01DD,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Login-server C2S parser and current-client production challenge-response sender are source/replay-confirmed; real-server negotiation and profile intent remain open,C2S_ONLY,PK44.LOGIN.01DD-C2S-MD5
 AUDIT-0x01DE,0x01DE,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01DF,0x01DF,map,C2S,PK47,PK01;PK02;PK48;PK46,GM player menu sends the selected account-name request; selected server echoes the ID and returns a blank name,C2S_ONLY,PK46.02-GM-ACCOUNT-NAME
-AUDIT-0x01E0,0x01E0,map,S2C,PK47,PK01;PK02;PK48,Selected reply completes the matching GM account-name request; prohibition history and live verification pending,UNREVIEWED,PK47.04-GM-ACCOUNT-NAME-REPLY
+AUDIT-0x01E0,0x01E0,map,S2C,PK47,PK01;PK02;PK48,Selected reply completes the matching GM lookup and updates saved prohibition history; live verification pending,UNREVIEWED,PK47.04-GM-ACCOUNT-NAME-REPLY
 AUDIT-0x01E1,0x01E1,map,S2C,PK24,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01E2,0x01E2,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01E2,0x01E2,map,S2C,PK47,PK01;PK02;PK48,Selected source comments out the legacy proposal emitter,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LEGACY-COUPLE-PROMPTS
 AUDIT-0x01E3,0x01E3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01E4,0x01E4,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01E4,0x01E4,map,S2C,PK47,PK01;PK02;PK48,Selected source comments out the legacy partner targeting emitter,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LEGACY-COUPLE-PROMPTS
 AUDIT-0x01E5,0x01E5,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x01E6,0x01E6,map,S2C,PK30,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x01E7,0x01E7,map,C2S,PK47,PK01;PK02;PK48;PK46,Seated head-turn streak captures the two-byte doridori request,C2S_ONLY,PK09.21-doridori

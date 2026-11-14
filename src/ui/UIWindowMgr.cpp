@@ -42,6 +42,7 @@
 #include "UIItemIdentifyWnd.h"
 #include "UISkillSelectWnd.h"
 #include "UIMonsterInfoWnd.h"
+#include "UIProhibitionHistoryWnd.h"
 #include "UIItemInfoWnd.h"
 #include "UINotifyItemObtainWnd.h"
 #include "UIItemWnd.h"
@@ -1754,6 +1755,12 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_children.push_back(m_monsterInfoWnd);
         m_monsterInfoWnd->SetShow(1);
         return m_monsterInfoWnd;
+    case WID_PROHIBITIONHISTORYWND:
+        if (!m_prohibitionHistoryWnd) m_prohibitionHistoryWnd = new UIProhibitionHistoryWnd();
+        m_children.remove(m_prohibitionHistoryWnd);
+        m_children.push_back(m_prohibitionHistoryWnd);
+        m_prohibitionHistoryWnd->SetShow(1);
+        return m_prohibitionHistoryWnd;
     case WID_SKILLSELECTWND:
         if (!m_skillSelectWnd) {
             m_skillSelectWnd = new UISkillSelectWnd();
@@ -2264,6 +2271,9 @@ void UIWindowMgr::DeleteWindowImpl(UIWindow* window, bool preserveInventoryShow)
     if (window == m_monsterInfoWnd) {
         m_monsterInfoWnd = nullptr;
     }
+    if (window == m_prohibitionHistoryWnd) {
+        m_prohibitionHistoryWnd = nullptr;
+    }
     if (window == m_equipWnd) {
         m_equipWnd = nullptr;
     }
@@ -2446,11 +2456,19 @@ void UIWindowMgr::ClearDirtyVisualStateExcludingRoMap()
 }
 
 #if RO_PLATFORM_WINDOWS
-bool UIWindowMgr::BuildGroundSkillPromptOverlay(ArgbDibSurface& surface, RECT client, u32 tick, RECT& bounds)
+bool UIWindowMgr::BuildGroundSkillPromptOverlay(ArgbDibSurface& surface, RECT client, u32 tick, RECT& bounds,
+    bool includeNativeHistory)
 {
     bounds = {};
     auto* focused = GetFocusedGroundSkillText();
     const bool hasPopup = focused && focused->HasImePopup();
+    auto* history = includeNativeHistory ? m_prohibitionHistoryWnd : nullptr;
+    RECT historyFrame{};
+    if (history && history->m_show) {
+        historyFrame = {history->m_x, history->m_y, history->m_x + history->m_w, history->m_y + history->m_h};
+    }
+    RECT visibleHistory{};
+    IntersectRect(&visibleHistory, &historyFrame, &client);
     if (hasPopup) {
         bounds = client;
     } else {
@@ -2461,6 +2479,7 @@ bool UIWindowMgr::BuildGroundSkillPromptOverlay(ArgbDibSurface& surface, RECT cl
             if (IntersectRect(&visible, &frame, &client)) UnionRect(&bounds, &bounds, &visible);
         }
     }
+    UnionRect(&bounds, &bounds, &visibleHistory);
     const int width = bounds.right - bounds.left;
     const int height = bounds.bottom - bounds.top;
     if (width <= 0 || height <= 0) return true;
@@ -2469,6 +2488,20 @@ bool UIWindowMgr::BuildGroundSkillPromptOverlay(ArgbDibSurface& surface, RECT cl
     GdiFlush();
     std::fill_n(surface.GetPixels(), static_cast<std::size_t>(width) * height, 0u);
     const auto dc = surface.GetDC();
+    if (visibleHistory.right > visibleHistory.left && visibleHistory.bottom > visibleHistory.top) {
+        const int saved = SaveDC(dc);
+        if (!saved) return false;
+        SetViewportOrgEx(dc, -bounds.left, -bounds.top, nullptr);
+        history->DrawToHdc(dc);
+        RestoreDC(dc, saved);
+        GdiFlush();
+        const int offsetX = visibleHistory.left - bounds.left;
+        const int offsetY = visibleHistory.top - bounds.top;
+        for (int y = 0; y < visibleHistory.bottom - visibleHistory.top; ++y) {
+            auto* row = surface.GetPixels() + (offsetY + y) * width + offsetX;
+            for (int x = 0; x < visibleHistory.right - visibleHistory.left; ++x) row[x] |= 0xff000000u;
+        }
+    }
     for (auto* child : m_children) {
         auto* prompt = dynamic_cast<UIGroundSkillTextWnd*>(child);
         if (prompt && prompt->m_show && !prompt->DrawFrameToOverlay(dc, {bounds.left,bounds.top}, tick))

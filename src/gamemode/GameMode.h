@@ -209,6 +209,7 @@ public:
         PlayerContext_DisconnectCharacter,
         PlayerContext_GivePositiveManner,
         PlayerContext_GiveNegativeManner,
+        PlayerContext_ViewProhibitionHistory,
     };
 
     CGameMode();

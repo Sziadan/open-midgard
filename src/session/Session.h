@@ -5,6 +5,7 @@
 #include "core/SourceMapNames.h"
 #include "core/SourceMapTypeTable.h"
 #include "QuestJournal.h"
+#include "ProhibitionHistory.h"
 #include <algorithm>
 #include <array>
 #include <deque>
@@ -265,6 +266,8 @@ public:
     int m_isAura = 1;
     bool m_fogOn;
     char m_charServerAddr[64];
+    std::string m_charServerName;
+    ProhibitionHistory m_prohibitionHistory;
     int  m_charServerPort;
     int  m_pendingReturnToCharSelect;
     
