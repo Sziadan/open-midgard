@@ -15,6 +15,7 @@
 #endif
 #include "ui/UITransBalloonText.h"
 #include "main/WinMain.h"
+#include "network/Connection.h"
 #include <cstring>
 #include <windows.h>
 
@@ -305,6 +306,19 @@ void CModeMgr::Run(int startMode, const char* worldName,const ModeRunServices* s
                 MainLoopWatchdogSetStage("ModeSwitch");
                 DbgLog("[Mode] applying switch generation=%llu type=%d world='%s'\n",
                     static_cast<unsigned long long>(m_operationGeneration),m_nextModeType,m_nextModeName);
+                CGameMode::AuctionStagingState auctionStaging;
+                CGameMode::AuctionSearchState auctionSearch;
+                auto auctionTransaction = CGameMode::AuctionTransaction::None;
+                u32 auctionTransactionSentAt = 0;
+                auto* leaving = GetCurrentGameMode();
+                const bool transferAuction = leaving && leaving->m_transferAuctionOnMapReload
+                    && m_nextModeType == 1 && CRagConnection::instance()->IsOpen();
+                if (transferAuction) {
+                    auctionStaging = leaving->m_auctionStaging;
+                    auctionSearch = std::move(leaving->m_auctionSearch);
+                    auctionTransaction = leaving->m_auctionTransaction;
+                    auctionTransactionSentAt = leaving->m_auctionTransactionSentAt;
+                }
                 if (m_curMode) {
                     if(services && services->presentLoading)services->presentLoading("Loading new map...",0.01f);
                     else DrawLoadingScreenFrame("Loading new map...", 0.01f);
@@ -328,6 +342,14 @@ void CModeMgr::Run(int startMode, const char* worldName,const ModeRunServices* s
                 if (m_curMode) {
                     MainLoopWatchdogSetStage("Mode::OnInit");
                     m_curMode->OnInit(m_curModeName);
+                }
+                if (transferAuction) {
+                    if (auto* entering = GetCurrentGameMode()) {
+                        entering->m_auctionStaging = auctionStaging;
+                        entering->m_auctionSearch = std::move(auctionSearch);
+                        entering->m_auctionTransaction = auctionTransaction;
+                        entering->m_auctionTransactionSentAt = auctionTransactionSentAt;
+                    }
                 }
             }
 

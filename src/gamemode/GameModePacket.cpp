@@ -9991,6 +9991,10 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
 
     char worldName[40] = {};
     std::snprintf(worldName, sizeof(worldName), "%s.rsw", g_session.m_curMap);
+    if (!info.hasServerMove) {
+        mode.CloseAuctionSearch();
+        mode.m_transferAuctionOnMapReload = true;
+    }
     RequestTransitionMode(services, 1, worldName);
 }
 

@@ -20,6 +20,7 @@ void ModeLoopHandoffReplay()
     bool oldModeRepeated=false;
     router.Register(0x007f,[&](CGameMode&,const PacketView&){++tailPackets;});
     std::vector<u8> packet(22);packet[0]=0x91;std::copy_n("prontera",8,packet.begin()+2);packet[18]=156;packet[20]=184;
+    packet.insert(packet.end(), {0x52, 2, 12, 0, 1, 0, 0, 0, 0, 0, 0, 0});
     packet.insert(packet.end(),{0x7f,0,0x12,0x34,0x56,0x78});peer.Send(packet);
     MapTransitionServices mapServices;mapServices.presentLoading=[&](const char*,float){++presented;};
     struct ProbeMode : CGameMode {
@@ -30,6 +31,14 @@ void ModeLoopHandoffReplay()
         void OnInit(const char* name) override {
             Require(std::string(name)=="prontera.rsw","same-world handoff changed requested world");
             std::snprintf(m_rswName,sizeof(m_rswName),"%s",name);m_mapLoadingStage=MapLoading_PresentScreen;++initialized;
+            if (ordinal == 1) {
+                m_auctionStaging.stagedIndex = 42;
+                m_auctionStaging.stagedItemId = 985;
+                m_auctionSearch.open = true;
+                m_auctionSearch.awaitingReply = true;
+                m_auctionSearch.sentAt = 100;
+                m_auctionSearch.rows.emplace_back();
+            }
         }
         void OnExit() override {++exited;}
         int OnRun() override {
@@ -39,7 +48,15 @@ void ModeLoopHandoffReplay()
                 Require(!ProcessNetworkUpdate(connection,router,128,GetTickCount(),&result)
                     && result.modeOperationRequested && tailPackets==0,"real0091 failed to stop old mode before queued tail");
             }else {
+                Require(connection.IsOpen() && m_auctionStaging.stagedIndex == 42
+                    && m_auctionStaging.stagedItemId == 985 && !m_auctionSearch.open
+                    && m_auctionSearch.awaitingReply == (replacementRuns == 0)
+                    && m_auctionSearch.discardReply == (replacementRuns == 0)
+                    && m_auctionSearch.sentAt == 100 && m_auctionSearch.rows.empty(),
+                    "replacement mode lost auction reply ownership or kept stale auction UI state");
                 Require(ProcessNetworkUpdate(connection,router,128,GetTickCount(),&result),"replacement mode inherited terminal generation latch");
+                Require(!m_auctionSearch.awaitingReply && m_auctionSearch.rows.empty(),
+                    "replacement mode did not drain the old auction page");
                 Require(tailPackets==1,"replacement mode lost or repeated queued tail");
                 if(++replacementRuns==2)g_modeMgr.Quit();
             }
