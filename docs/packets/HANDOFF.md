@@ -1,6 +1,8 @@
 # Packet continuation handoff
 
-PK47 now handles the selected server's `07E2` item cooldown notice and consumes `0294` book notices without opening a viewer, matching the selected receive branch. Verify cooldown wording and stream continuity live. Continue with stage reconciliation of `01C6` and `01C7`, whose reply appears in the original login and gameplay loops. [Map notice evidence](evidence/PK47.04-map-notice-continuation.md)
+PK47 now handles the selected server's `07E2` item cooldown notice and consumes `0294` book notices without opening a viewer, matching the selected receive branch. Verify cooldown wording and stream continuity live. [Map notice evidence](evidence/PK47.04-map-notice-continuation.md)
+
+The selected server has no legacy `01C6` negotiation parser or `01C7` sender. The original handles the acknowledgement in both receive loops and displays an unsupported-encryption error. Thirteen later map notices have selected-profile dispositions, including zero-length `08D2` sends. The legacy reduced-effects reply and PK notices `021E`–`0220` also have no selected sender. Continue with the remaining unresolved identities and keep cross-stage variants separate. [Applicability evidence](evidence/PK47.04-later-map-notices.md)
 
 PK47 restores the selected `0293` boss-map feed, its static `bossmonster.bmp` marker in both minimaps, and the reference's normal and command chat notices. Verify the installed bitmap and notices with a Convex Mirror on a live map. [Boss-map evidence](evidence/PK47.04-boss-map-info.md)
 

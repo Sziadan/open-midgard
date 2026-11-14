@@ -350,8 +350,8 @@ AUDIT-0x01C2,0x01C2,map,S2C,PK47,PK01;PK02;PK48,Historical remaining-time notice
 AUDIT-0x01C3,0x01C3,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01C4,0x01C4,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01C5,0x01C5,map,S2C,PK37,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x01C6,0x01C6,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x01C7,0x01C7,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01C6,0x01C6,map,C2S,PK47,PK01;PK02;PK48,Historical encryption request has no selected parser,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LEGACY-ENCRYPTION
+AUDIT-0x01C7,0x01C7,map,S2C,PK47,PK01;PK02;PK48,Historical encryption acknowledgement has no selected emitter,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LEGACY-ENCRYPTION
 AUDIT-0x01C8,0x01C8,map,S2C,PK38,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01C9,0x01C9,map,S2C,PK23,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x01CA,0x01CA,map,C2S,PK47,PK01;PK02;PK48,Historical homunculus creation decision has no selected parser,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LEGACY-HOMUNCULUS-CREATION
@@ -435,9 +435,9 @@ AUDIT-0x021A,0x021A,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-
 AUDIT-0x021B,0x021B,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x021C,0x021C,map,S2C,PK39,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
 AUDIT-0x021D,0x021D,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected six-byte effects toggle captured. Minimum effects is a separate local preference.,C2S_ONLY,PK46.02-MINIMUM-EFFECTS
-AUDIT-0x021E,0x021E,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x021F,0x021F,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0220,0x0220,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x021E,0x021E,map,S2C,PK47,PK01;PK02;PK48,Historical reduced-effects reply has no selected sender; 021D stores the flag,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LEGACY-EFFECTS-AND-PK
+AUDIT-0x021F,0x021F,map,S2C,PK47,PK01;PK02;PK48,Historical PK information has no selected sender,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LEGACY-EFFECTS-AND-PK
+AUDIT-0x0220,0x0220,map,S2C,PK47,PK01;PK02;PK48,Historical killer flag has no selected sender,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LEGACY-EFFECTS-AND-PK
 AUDIT-0x0221,0x0221,map,S2C,PK35,PK01;PK02;PK47;PK48;PK38,Source identity traced in PK38.04; retain PK38 for item-action integration,UNREVIEWED,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x0222,0x0222,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected weapon-refine index and cancel sentinel captured,C2S_ONLY,PK46.02-CRAFTING-REQUESTS
 AUDIT-0x0223,0x0223,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -794,7 +794,7 @@ AUDIT-0x0437,0x0437,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Selected seven-byte at
 AUDIT-0x0438,0x0438,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Selected ten-byte actor skill frame captured with level skill ID and target,C2S_ONLY,PK46.02-map-skill-target-request-0438
 AUDIT-0x0439,0x0439,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,PacketVer23 item use and result ownership captured,C2S_ONLY,PK46.02-ITEM-ACTION-REQUESTS;PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x043F,0x043F,map,unresolved,PK22,PK01;PK02;PK47;PK48;PK45,Selected 20080910 emits 0196; timed 043f emitter gated at 20090121; alternate type is declaration only; selected registry absent,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK22.TIMED-STATUS-043F
-AUDIT-0x0440,0x0440,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0440,0x0440,map,S2C,PK47,PK01;PK02;PK48,Millennium Shield senders require PACKETVER 20081126,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x0441,0x0441,map,S2C,PK23,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0442,0x0442,map,S2C,PK50,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0443,0x0443,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -886,7 +886,7 @@ AUDIT-0x08C0,0x08C0,map,S2C,PK40,PK01;PK02;PK47;PK48,Cash tab list emitter addit
 AUDIT-0x08C5,0x08C5,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,"PIN handlers, registrations and dispatch gate are under PACKETVER_SUPPORTS_PINCODE (PACKETVER >= 20110309); selected 20080910 compiles them out. See PK44.CHAR-PINCODE.md.",INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.CHAR-PINCODE
 AUDIT-0x08CA,0x08CA,map,S2C,PK40,PK01;PK02;PK47;PK48,Scheduler list emitter only reachable through later 08C9 parser,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK40.05-SELECTED-VERIFICATION
 AUDIT-0x08CF,0x08CF,map,S2C,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x08D2,0x08D2,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x08D2,0x08D2,map,S2C,PK47,PK01;PK02;PK48,Selected Snap uses 0117 and all 08D2 sends have zero registered length,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-FASTMOVE
 AUDIT-0x08D4,0x08D4,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,Server transaction/layout traced in PK44.CHAR-SLOT-MOVE.md; no current-client path; 0x08D4 invalid-source-slot branch reads char_moves[from] before bounds-safe reply.,UNREVIEWED,PK44.CHAR-SLOT-MOVE
 AUDIT-0x08D5,0x08D5,login/char,S2C,PK44,PK01;PK02;PK47;PK48,Server transaction/layout traced in PK44.CHAR-SLOT-MOVE.md; no current-client path; 0x08D4 invalid-source-slot branch reads char_moves[from] before bounds-safe reply.,UNREVIEWED,PK44.CHAR-SLOT-MOVE
 AUDIT-0x08D6,0x08D6,map,S2C,PK25,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -899,15 +899,15 @@ AUDIT-0x08DF,0x08DF,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent
 AUDIT-0x08E0,0x08E0,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Lobby reply requires the later queue registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x08E1,0x08E1,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x08FE,0x08FE,map,unresolved,PK50,PK01;PK02;PK47;PK48,Newer hunting quest info is absent from MAIN 20080910,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK50.04
-AUDIT-0x08FF,0x08FF,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x08FF,0x08FF,map,S2C,PK47,PK01;PK02;PK48,EFST entry sender requires PACKETVER 20111108,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x0907,0x0907,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0908,0x0908,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0908,0x0908,map,S2C,PK47,PK01;PK02;PK48,Inventory favorite sender requires PACKETVER 20111122,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x090A,0x090A,map,C2S,PK41,PK01;PK02;PK47;PK48;PK46,Queue number request requires the later queue registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x090E,0x090E,map,S2C,PK41,PK01;PK02;PK47;PK48,Queue reply or reset absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK41.04-SELECTED-BATTLEGROUND-VERIFICATION
 AUDIT-0x0916,0x0916,map,C2S,PK12,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x096E,0x096E,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Later merge parser absent from effective 20080910 registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x0977,0x0977,map,unresolved,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x0979,0x0979,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0979,0x0979,map,S2C,PK47,PK01;PK02;PK48,World info request parser is absent from the selected registry,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x097C,0x097C,map,C2S,PK39,PK01;PK02;PK47;PK48;PK46,Unified ranking request requires MAIN 20120503 or RE 20120502,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK39.04-SELECTED-VERIFICATION
 AUDIT-0x097D,0x097D,map,S2C,PK39,PK01;PK02;PK47;PK48,Unified name list requires MAIN 20130605 or RE 20130529 or Zero,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK39.04-SELECTED-VERIFICATION
 AUDIT-0x097E,0x097E,map,S2C,PK39,PK01;PK02;PK47;PK48,Unified point emitter requires MAIN 20120503 or RE 20120502,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK39.04-SELECTED-VERIFICATION
@@ -928,15 +928,15 @@ AUDIT-0x09AC,0x09AC,map,C2S,PK40,PK01;PK02;PK47;PK48;PK46,Bargain-sale lookup re
 AUDIT-0x09AD,0x09AD,map,S2C,PK40,PK01;PK02;PK47;PK48,Bargain-sale lookup reply requires PACKETVER_SUPPORTS_SALES,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK40.05-SELECTED-VERIFICATION
 AUDIT-0x09AE,0x09AE,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Sale request registration starts at 20131223,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x09B0,0x09B0,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Sale removal registration starts at 20131223,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
-AUDIT-0x09B2,0x09B2,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x09B3,0x09B3,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x09B2,0x09B2,map,S2C,PK47,PK01;PK02;PK48,Bargain sale start requires PACKETVER 20131223,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
+AUDIT-0x09B3,0x09B3,map,S2C,PK47,PK01;PK02;PK48,Bargain sale close requires PACKETVER 20131223,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x09B6,0x09B6,map,C2S,PK40,PK01;PK02;PK47;PK48;PK46,Banking parser or reply body requires PACKETVER 20130717,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK40.01-SELECTED-COMMERCE-INVENTORY
 AUDIT-0x09B7,0x09B7,map,S2C,PK40,PK01;PK02;PK47;PK48,Banking parser or reply body requires PACKETVER 20130717,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK40.01-SELECTED-COMMERCE-INVENTORY
 AUDIT-0x09B8,0x09B8,map,C2S,PK40,PK01;PK02;PK47;PK48;PK46,Banking parser or reply body requires PACKETVER 20130717,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK40.01-SELECTED-COMMERCE-INVENTORY
 AUDIT-0x09B9,0x09B9,map,S2C,PK40,PK01;PK02;PK47;PK48,Banking parser or reply body requires PACKETVER 20130717,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK40.01-SELECTED-COMMERCE-INVENTORY
 AUDIT-0x09C4,0x09C4,map,S2C,PK38,PK01;PK02;PK47;PK48,Sale count emitter requires PACKETVER_SUPPORTS_SALES,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x09CA,0x09CA,map,S2C,PK23,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
-AUDIT-0x09CD,0x09CD,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x09CD,0x09CD,map,S2C,PK47,PK01;PK02;PK48,Localized color notice sender requires PACKETVER 20130807,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x09DA,0x09DA,map,S2C,PK12,PK01;PK02;PK47;PK48;PK44,PK12 primary guild-storage owner; PK44 source-confirmed cross-review identifies guarded 0x09DA S2C usage-log response and layout variants,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.GSTORAGE.09DA-S2C-USAGE-LOG
 AUDIT-0x09E7,0x09E7,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x09ED,0x09ED,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -954,12 +954,12 @@ AUDIT-0x0A22,0x0A22,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.002 source-
 AUDIT-0x0A23,0x0A23,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.003 source-confirmed reused C2S/S2C identity and selected-config feature disable,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ACH.0A23-C2S-INPUT;PK44.ACH.0A23-S2C-LIST
 AUDIT-0x0A24,0x0A24,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.003 source-confirmed reused C2S/S2C identity and selected-config feature disable,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ACH.0A24-C2S-INPUT;PK44.ACH.0A24-S2C-UPDATE
 AUDIT-0x0A26,0x0A26,map,both/reused,PK44,PK01;PK02;PK47;PK48,PK44.02.003 source-confirmed reused C2S/S2C identity and selected-config feature disable,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.ACH.0A26-C2S-INPUT;PK44.ACH.0A26-S2C-REWARD-RESULT
-AUDIT-0x0A28,0x0A28,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0A28,0x0A28,map,S2C,PK47,PK01;PK02;PK48,Vending open acknowledgement sender requires PACKETVER 20141022,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x0A3D,0x0A3D,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Sale registration variant starts at 20150520,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.04-ITEM-ACTION-VERIFICATION
 AUDIT-0x0A46,0x0A46,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0A47,0x0A47,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0A47,0x0A47,map,S2C,PK47,PK01;PK02;PK48,Stylist result sender requires PACKETVER 20151104,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x0A48,0x0A48,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0AB2,0x0AB2,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0AB2,0x0AB2,map,S2C,PK47,PK01;PK02;PK48,Party life-state notice requires later main renewal or zero profile,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x0ACF,0x0ACF,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0AE3,0x0AE3,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0AE6,0x0AE6,map,C2S,PK15,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
@@ -978,14 +978,14 @@ AUDIT-0x0B6B,0x0B6B,map,S2C,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol f
 AUDIT-0x0B6C,0x0B6C,map,S2C,PK24,PK01;PK02;PK47;PK48,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0B8D,0x0B8D,map,S2C,PK47,PK01;PK02;PK48;PK44,PK47 primary reputation owner; PK44 source-confirmed cross-review finds 0B8D reused for list and single-update S2C shapes under modern MAIN/RE guards,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK44.REPUTE.0B8D-S2C-LIST;PK44.REPUTE.0B8D-S2C-UPDATE
 AUDIT-0x0B98,0x0B98,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0B9A,0x0B9A,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0B9A,0x0B9A,map,S2C,PK47,PK01;PK02;PK48,Enchant UI open sender requires later main or renewal profile,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x0BB1,0x0BB1,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0BDD,0x0BDD,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0BE2,0x0BE2,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0BE9,0x0BE9,map,C2S,PK24,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0BF3,0x0BF3,map,C2S,PK50,PK01;PK02;PK47;PK48;PK46,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,
 AUDIT-0x0C0B,0x0C0B,map,C2S,PK47,PK01;PK02;PK48;PK46,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
-AUDIT-0x0C0C,0x0C0C,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0C0C,0x0C0C,map,S2C,PK47,PK01;PK02;PK48,GM checker result sender requires PACKETVER_MAIN_NUM 20240502,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-LATER-MAP-NOTICES
 AUDIT-0x0C22,0x0C22,map,C2S,PK38,PK01;PK02;PK47;PK48;PK46,Favorite storage request starts at MAIN 20250122,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK38.01-ITEM-ACTION-INVENTORY
 AUDIT-0x8482,0x8482,login/char handshake,S2C raw prefix,PK04,PK01;PK02;PK47;PK48,Fake receive-size identity: this value can only be the raw AID's low word; no server opcode 0x8482 is emitted. Mapped to the independently verified non-opcode handshake contract.,ALIAS,PK04.RAW-AID
 AUDIT-0x8483,0x8483,login/char handshake,S2C raw prefix,PK04,PK01;PK02;PK47;PK48,Fake receive-size identity: this value can only be the raw AID's low word; no server opcode 0x8483 is emitted. Mapped to the independently verified non-opcode handshake contract.,ALIAS,PK04.RAW-AID
