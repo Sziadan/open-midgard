@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.03 bounds immediate and scheduled character deletion waits. A send failure or missing reply returns to sign-in so the next session fetches the authoritative list. Verify live using a disposable character. [Deletion recovery evidence](evidence/PK46.03-scheduled-deletion-controls.md#reply-recovery)
+
 PK46.03 uses a 15-second deadline after direct or hash account login sends. Verify the configured login profile against the selected deployment and check that successful login advances to character-server entry. [Account response evidence](evidence/PK46.03-account-login-send-gates.md#account-response-deadline)
 
 PK46.03 now recovers from a failed character-server entry send or a character server that never returns the list. The 15-second deadline stays active after the raw account ID echo. Check the successful account-to-character-server handoff and refusal messages on the selected deployment. [Character-server entry evidence](evidence/PK46.03-character-server-entry-path.md#current-recovery)

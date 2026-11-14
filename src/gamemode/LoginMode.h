@@ -155,7 +155,7 @@ private:
     void UpdateZoneEntryTimeout(u32 now);
     std::optional<u32> m_zoneEntrySentAt;
     std::optional<u32> m_characterListRequestedAt;
-    enum class CharacterRequest { None, Select, Create };
+    enum class CharacterRequest { None, Select, Create, Delete, ScheduledDelete };
     CharacterRequest m_characterRequest = CharacterRequest::None;
     u32 m_characterRequestSentAt = 0;
     u32 m_characterRequestGid = 0;

@@ -2613,6 +2613,30 @@ void LoginCharacterDeletionReplay()
     Require(!mode.m_pendingDeleteCharGid && mode.GetCharCount() == 1 && mode.GetCharInfo()[0].GID == 0x87654321
         && mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
         "deletion success did not remove exactly the confirmed character");
+    mode.EnterCharacterSelectionForReplay();
+    const auto deleteRemaining = [&] {
+        return mode.SendMsg(CLoginMode::LoginMsg_RequestDeleteCharacter, 7, 0, 0);
+    };
+    Require(deleteRemaining(), "remaining character could not be selected for deletion");
+    mode.AdvanceCharacterRequestTimeout(15000);
+    Require(connection->IsOpen(), "deletion timer started before the send");
+    mode.EnterPendingSubModeForReplay();
+    peer.ReceiveExact(expected.size());
+    mode.AdvanceCharacterRequestTimeout(14999);
+    Require(connection->IsOpen() && mode.m_pendingDeleteCharGid == 0x87654321,
+        "immediate deletion expired before the reply deadline");
+    mode.AdvanceCharacterRequestTimeout(15000);
+    Require(!connection->IsOpen() && mode.NextSubMode() == CLoginMode::LoginSubMode_Login
+        && !mode.m_pendingDeleteCharGid && mode.GetCharCount() == 1,
+        "missing delete acknowledgement did not require a fresh list without removing the character");
+
+    mode.EnterCharacterSelectionForReplay();
+    Require(deleteRemaining(), "could not stage the offline deletion fixture");
+    mode.EnterPendingSubModeForReplay();
+    Require(mode.NextSubMode() == CLoginMode::LoginSubMode_Login
+        && !mode.m_pendingDeleteCharGid && mode.GetCharCount() == 1
+        && g_windowMgr.GetLoginStatus().find("failed to send delete-character") != std::string::npos,
+        "failed immediate delete send left pending state or returned to a stale selector");
     g_windowMgr.RemoveAllWindows();
     connection->Disconnect();
 }
@@ -2671,7 +2695,20 @@ void LoginScheduledDeletionReplay()
     Require(peer.ReceiveExact(12) == confirmation, "confirmation retry changed bytes");
     reply({0x2a, 8, 0x78, 0x56, 0x34, 0x12, 1, 0, 0, 0}, "Login: character deleted successfully.");
     Require(!mode.GetCharCount() && mode.GetScheduledDeletions().empty(), "scheduled success did not retire both character and deadline");
-    connection->Disconnect();
+    mode.EnterPendingSubModeForReplay();
+    LoginModeReplayAccess::SeedCharacterForSelection(mode, 2);
+    Require(request(Action::Reserve), "could not send an unanswered reservation");
+    peer.ReceiveExact(6);
+    mode.AdvanceCharacterRequestTimeout(14999);
+    Require(connection->IsOpen() && !request(Action::Cancel), "scheduled delete wait ended early");
+    mode.AdvanceCharacterRequestTimeout(15000);
+    Require(!connection->IsOpen() && mode.NextSubMode() == CLoginMode::LoginSubMode_Login
+        && mode.GetCharCount() == 1 && mode.GetScheduledDeletions().empty(),
+        "unanswered scheduled deletion did not require a fresh list");
+    mode.EnterCharacterSelectionForReplay();
+    Require(!request(Action::Reserve) && mode.NextSubMode() == CLoginMode::LoginSubMode_Login
+        && g_windowMgr.GetLoginStatus().find("failed to send scheduled deletion") != std::string::npos,
+        "failed scheduled deletion send returned to a stale selector");
 }
 
 void LoginCharacterCreationRefusalReplay()

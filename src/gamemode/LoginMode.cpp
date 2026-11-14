@@ -1460,6 +1460,8 @@ void CLoginMode::OnUpdate() {
                     ? "Login: char server disconnected during creation. Sign in again to check whether the character was created."
                 : m_characterRequest == CharacterRequest::Select
                     ? "Login: char server disconnected during selection. Sign in again to retry."
+                : (m_characterRequest == CharacterRequest::Delete || m_characterRequest == CharacterRequest::ScheduledDelete)
+                    ? "Login: char server disconnected during deletion. Sign in again to check the character list."
                 : (m_subMode == LoginSubMode_ConnectChar)
                     ? "Char server closed the connection before returning the character list."
                 : m_zoneEntrySentAt
@@ -1619,7 +1621,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
             || m_characterRequest != CharacterRequest::None) return 0;
         if (wparam >= 0 && wparam < m_numChar) {
             const int selectedIndex = static_cast<int>(wparam);
-            if (m_pendingScheduledDeleteReply || m_scheduledDeletions.count(m_charInfo[selectedIndex].GID)) {
+            if (m_scheduledDeletions.count(m_charInfo[selectedIndex].GID)) {
                 SetLoginStatus("Login: this character is awaiting a deletion result or is queued for deletion.");
                 return 0;
             }
@@ -1632,7 +1634,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
 
     case LoginMsg_RequestMakeCharacter: {
         if (!m_isConnected || m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1
-            || m_characterRequest != CharacterRequest::None || m_pendingScheduledDeleteReply
+            || m_characterRequest != CharacterRequest::None
             || wparam < 0 || wparam >= static_cast<msgparam_t>(std::size(m_charInfo))) return 0;
         if (std::any_of(m_charInfo, m_charInfo + m_numChar,
                 [wparam](const CHARACTER_INFO& entry) { return entry.CharNum == wparam; })) return 0;
@@ -1648,7 +1650,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
         }
 
         if (m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1 || m_pendingDeleteCharGid
-            || m_pendingScheduledDeleteReply) {
+            || m_characterRequest != CharacterRequest::None) {
             return 0;
         }
         const int requestedSlot = static_cast<int>(wparam);
@@ -1661,7 +1663,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
         const u32 gid = m_charInfo[deleteIndex].GID;
         const auto stillSelected = [&] {
             return m_isConnected && m_subMode == LoginSubMode_CharSelect && m_nextSubMode == -1
-                && !m_pendingDeleteCharGid && !m_pendingScheduledDeleteReply && deleteIndex < m_numChar
+                && m_characterRequest == CharacterRequest::None && !m_pendingDeleteCharGid && deleteIndex < m_numChar
                 && m_charInfo[deleteIndex].CharNum == requestedSlot && m_charInfo[deleteIndex].GID == gid;
         };
         std::string birthDate;
@@ -2085,13 +2087,11 @@ void CLoginMode::OnChangeState(int newState) {
                sent ? 1 : 0);
 
         if (!sent) {
-            m_pendingDeleteCharGid = 0;
-            m_pendingDeleteCharSlot = -1;
-            m_deferredLoginStatus = "Login: failed to send delete-character request.";
-            SetLoginStatus(m_deferredLoginStatus.c_str());
-            m_nextSubMode = LoginSubMode_CharSelect;
+            ReturnToSignIn("Login: failed to send delete-character request. Sign in again to refresh the character list.");
             break;
         }
+        m_characterRequest = CharacterRequest::Delete;
+        m_characterRequestSentAt = GetTickCount();
 
         if (m_emaiAddress[0] != '\0') {
             SetLoginStatus("Login: waiting for delete-character response...");
@@ -2234,7 +2234,7 @@ void CLoginMode::PollNetwork()
             HandleScheduledDeletionReply(id, pkt);
             continue;
         }
-        if ((id == 0x006F || id == 0x0070) && (m_subMode != LoginSubMode_DeleteChar || !m_pendingDeleteCharGid)) {
+        if ((id == 0x006F || id == 0x0070) && m_characterRequest != CharacterRequest::Delete) {
             continue;
         }
         if ((id == 0x006D || id == 0x006E) && m_characterRequest != CharacterRequest::Create) continue;
@@ -2340,6 +2340,8 @@ void CLoginMode::ReturnToSignIn(const char* message)
     m_zoneEntrySentAt.reset();
     m_characterListRequestedAt.reset();
     m_characterRequest = CharacterRequest::None;
+    m_pendingDeleteCharGid = 0;
+    m_pendingDeleteCharSlot = -1;
     ResetScheduledDeletion();
     CRagConnection::instance()->Disconnect();
     m_isConnected = 0;
@@ -2360,9 +2362,20 @@ void CLoginMode::UpdateCharacterRequestTimeout(u32 now)
     if (m_characterRequest == CharacterRequest::None || now - m_characterRequestSentAt < kCharacterRequestTimeoutMs) {
         return;
     }
-    ReturnToSignIn(m_characterRequest == CharacterRequest::Create
-        ? "Login: no character creation result. Sign in again to check whether the character was created."
-        : "Login: no character selection result. Sign in again to retry.");
+    switch (m_characterRequest) {
+    case CharacterRequest::Create:
+        ReturnToSignIn("Login: no character creation result. Sign in again to check whether the character was created.");
+        break;
+    case CharacterRequest::Select:
+        ReturnToSignIn("Login: no character selection result. Sign in again to retry.");
+        break;
+    case CharacterRequest::Delete:
+    case CharacterRequest::ScheduledDelete:
+        ReturnToSignIn("Login: no character deletion result. Sign in again to check the character list.");
+        break;
+    case CharacterRequest::None:
+        break;
+    }
 }
 
 void CLoginMode::UpdateZoneEntryTimeout(u32 now)
@@ -2904,17 +2917,12 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnRefuseChar(const std::vector<u8>& raw)
 {
-    m_characterListRequestedAt.reset();
-    m_characterRequest = CharacterRequest::None;
     const u8 code = (raw.size() > 2) ? raw[2] : 0;
     char msg[64];
     std::snprintf(msg, sizeof(msg), "Char server refused entry (code %d).", (int)code);
     DbgLog("[Login] HC_REFUSE_ENTER: code=%d\n", (int)code);
-    SetLoginStatus(msg);
+    ReturnToSignIn(msg);
     ShowLoginErrorDialog(msg);
-    CRagConnection::instance()->Disconnect();
-    m_isConnected = 0;
-    m_nextSubMode = LoginSubMode_Login;
 }
 
 // ---------------------------------------------------------------------------
@@ -3003,7 +3011,7 @@ void CLoginMode::ResetScheduledDeletion()
 bool CLoginMode::RequestScheduledDeletion(ScheduledDeleteAction action, u32 gid, std::string_view birthDate)
 {
     if (!m_isConnected || m_subMode != LoginSubMode_CharSelect || m_nextSubMode != -1
-        || m_pendingDeleteCharGid || m_pendingScheduledDeleteReply || !gid
+        || m_characterRequest != CharacterRequest::None || m_pendingDeleteCharGid || !gid
         || ro::net::GetActiveCharacterPacketProfile().id != ro::net::PacketVersionId::PacketVer23) {
         return false;
     }
@@ -3032,18 +3040,21 @@ bool CLoginMode::RequestScheduledDeletion(ScheduledDeleteAction action, u32 gid,
     bytes[1] = static_cast<u8>(opcode >> 8);
     for (unsigned i = 0; i < 4; ++i) bytes[2 + i] = static_cast<u8>(gid >> (8 * i));
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(bytes.data()), static_cast<int>(size))) {
-        SetLoginStatus("Login: failed to send scheduled deletion request.");
+        ReturnToSignIn("Login: failed to send scheduled deletion request. Sign in again to refresh the character list.");
         return false;
     }
     m_pendingScheduledDeleteGid = gid;
     m_pendingScheduledDeleteReply = opcode + 1;
+    m_characterRequest = CharacterRequest::ScheduledDelete;
+    m_characterRequestSentAt = GetTickCount();
     SetLoginStatus("Login: waiting for scheduled deletion response...");
     return true;
 }
 
 void CLoginMode::HandleScheduledDeletionReply(u16 opcode, const std::vector<u8>& packet)
 {
-    if (m_subMode != LoginSubMode_CharSelect || opcode != m_pendingScheduledDeleteReply
+    if (m_characterRequest != CharacterRequest::ScheduledDelete || m_subMode != LoginSubMode_CharSelect
+        || opcode != m_pendingScheduledDeleteReply
         || packet.size() != (opcode == 0x0828 ? 14u : 10u)) return;
     const auto readWord = [&](size_t offset) {
         return u32(packet[offset]) | (u32(packet[offset + 1]) << 8)
@@ -3051,6 +3062,7 @@ void CLoginMode::HandleScheduledDeletionReply(u16 opcode, const std::vector<u8>&
     };
     const u32 gid = readWord(2);
     if (gid != m_pendingScheduledDeleteGid) return;
+    m_characterRequest = CharacterRequest::None;
     m_pendingScheduledDeleteGid = 0;
     m_pendingScheduledDeleteReply = 0;
     const auto* character = std::find_if(m_charInfo, m_charInfo + m_numChar,
@@ -3098,6 +3110,7 @@ void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
 
     const u32 deletedGid = m_pendingDeleteCharGid;
     const int deletedSlot = m_pendingDeleteCharSlot;
+    m_characterRequest = CharacterRequest::None;
     m_pendingDeleteCharGid = 0;
     m_pendingDeleteCharSlot = -1;
     ApplyCharacterDeletion(deletedGid, deletedSlot);
@@ -3173,6 +3186,7 @@ void CLoginMode::OnRefuseDeleteChar(const std::vector<u8>& raw)
            m_pendingDeleteCharGid,
            m_pendingDeleteCharSlot,
            static_cast<unsigned int>(code));
+    m_characterRequest = CharacterRequest::None;
     m_pendingDeleteCharGid = 0;
     m_pendingDeleteCharSlot = -1;
     m_deferredLoginStatus = msg;
@@ -3266,19 +3280,12 @@ void CLoginMode::OnZcAcceptEnter(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnDisconnectMsg(const std::vector<u8>& raw)
 {
-    m_characterListRequestedAt.reset();
-    m_characterRequest = CharacterRequest::None;
-    ResetScheduledDeletion();
     ResetAccountLoginHandshake();
     const std::string message = FormatLoginDisconnectMessage(raw);
-    m_deferredLoginStatus = message;
     const u8 code = (raw.size() > 2) ? raw[2] : 0;
     DbgLog("[Login] SC_NOTIFY_BAN: code=%d\n", (int)code);
-    SetLoginStatus(message.c_str());
+    ReturnToSignIn(message.c_str());
     ShowLoginErrorDialog(message.c_str());
-    CRagConnection::instance()->Disconnect();
-    m_isConnected = 0;
-    m_nextSubMode = LoginSubMode_Login;
 }
 
 std::string CLoginMode::FormatLoginDisconnectMessage(const std::vector<u8>& packet)
