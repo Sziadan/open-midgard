@@ -4993,6 +4993,28 @@ void PendingCompanionActorSkillReplay()
     tickCompanion(mercenary);
     Require(SelectSocket(recoveredPeer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "successful follow retry did not start the pacing interval");
+
+    mercenary.ResetCompanionOrders(companion_ai::Kind::Mercenary);
+    g_session.m_merTarget = {};
+    mode.GetClientCoor(15, 16, player.m_pos.x, player.m_pos.z);
+    clickMercenaryTarget();
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    const std::vector<u8> mercenaryAttack{0x33, 0x02, 0x42, 0, 0, 0xf1, 0x78, 0x56, 0x34, 0x12, 0};
+    Require(recoveredPeer.ReceiveExact(11) == mercenaryAttack, "attack before the stop retry did not send");
+    connection->Disconnect();
+    clickMercenaryTarget();
+    Require(mercenary.m_merMsg.command == companion_ai::STOP_CMD, "stop retry fixture did not queue cancellation");
+    tickCompanion(mercenary);
+    LoopbackPeer stopRetryPeer(*connection);
+    tickCompanion(mercenary);
+    Require(stopRetryPeer.ReceiveExact(11) == std::vector<u8>{0x33, 0x02, 0x42, 0, 0, 0xf1, 0, 0, 0, 0, 0},
+        "a failed cancellation lost the stop request before the next successful send");
+    clickMercenaryTarget();
+    tickCompanion(mercenary);
+    tickCompanion(mercenary);
+    Require(stopRetryPeer.ReceiveExact(11) == mercenaryAttack,
+        "successful cancellation retry left a stale stop or attack cooldown");
     world.m_attr = nullptr;
 
     world.UnregisterActor(&target);
@@ -5017,7 +5039,7 @@ void PendingCompanionActorSkillReplay()
     mode.m_skillUseInfo = {8201, 1, 10, 2};
     Require(ReplayTrySourceSkillOnActor(mode, &target, false, false, false) && player.commands.empty(),
         "dismissed mercenary routed its armed actor skill through the player");
-    Require(SelectSocket(recoveredPeer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
+    Require(SelectSocket(stopRetryPeer.peer.value, true, false, std::chrono::milliseconds(30)) == 0,
         "unavailable companions emitted a skill request");
 
     mode.m_skillUseInfo = {5, 1, 10, 1};

@@ -154,8 +154,7 @@ void Brain::OnMOVE_CMD(int x, int y)
 void Brain::OnSTOP_CMD()
 {
     m_runtime.Trace("OnSTOP_CMD");
-    m_runtime.StopAttack(m_myId);
-    m_state = IDLE_ST;
+    m_state = STOP_CMD_ST;
     m_destX = 0;
     m_destY = 0;
     m_enemy = 0;
@@ -367,7 +366,13 @@ void Brain::OnMOVE_CMD_ST()
     }
 }
 
-void Brain::OnSTOP_CMD_ST() {}
+void Brain::OnSTOP_CMD_ST()
+{
+    if (m_runtime.StopAttack(m_myId)) {
+        m_state = IDLE_ST;
+        OnIDLE_ST();
+    }
+}
 void Brain::OnATTACK_OBJECT_CMD_ST() {}
 void Brain::OnSKILL_OBJECT_CMD_ST() {}
 

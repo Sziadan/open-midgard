@@ -432,16 +432,18 @@ void Runtime::Attack(u32 id, u32 enemyId, u32 now)
     }
 }
 
-void Runtime::StopAttack(u32 id)
+bool Runtime::StopAttack(u32 id)
 {
     if (!IsOwnedCompanion(id)) {
-        return;
+        return false;
     }
     // The selected server clears the attack target when it resolves GID zero.
     const PACKET_CZ_REQUEST_ACTNPC packet{kPacketRequestActNpc, id, 0, kActionAttack};
-    if (CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet))) {
-        m_lastAttackTarget = 0;
+    if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet))) {
+        return false;
     }
+    m_lastAttackTarget = 0;
+    return true;
 }
 
 void Runtime::ClearAttackSelection(u32 enemyId) const

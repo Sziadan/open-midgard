@@ -2,6 +2,8 @@
 
 PK47 restores the selected `0293` boss-map feed, its static `bossmonster.bmp` marker in both minimaps, and the reference's normal and command chat notices. Verify the installed bitmap and notices with a Convex Mirror on a live map. [Boss-map evidence](evidence/PK47.04-boss-map-info.md)
 
+The next PK47 identity is map S2C `01B1`, the seven-byte digit clock. Start with rAthena `clif_showdigit` and `BUILDIN_FUNC(showdigit)`, the selected `Zc_ShowDigit` and `DrawTime` in `Ref/GameModePacket.cpp` and `Ref/GameMode.cpp`, and the readable draw loop in `Ref/dhxj/GameMode.cpp`. Verify all four modes through the production router, including the five-second first-draw timer for type 0 and the render-call countdown for type 3. Verify the selected asset path and HUD placement on the gameplay render path before closing the row.
+
 Cash and ordinary NPC shop replies retain their pending ownership through a same-connection warp while the old shop quote closes. A server move clears the old ownership. Verify a delayed purchase result after warp and a fresh quote on the selected deployment. [Commerce verification](evidence/PK40.05-selected-verification.md#shop-replies-on-map-change)
 
 Auction window close retains staging if cancellation fails. Same-map reuse and mode replacement on the same server preserve auction request ownership. Registration fee refusal `5` accounts for a refreshed inventory before releasing the reservation. Results `2` and `4` still need reconciliation for invalid staging and an ambiguous debit or refund. Verify warps live. [Auction staging evidence](evidence/PK40.05-selected-verification.md#auction-staging-on-close-and-same-map-warp)
@@ -129,6 +131,8 @@ For Windows MinGW verification, put the configured compiler's `bin` directory an
 Native acquisition distinguishes monsters from NPCs and companions with monster sprites. The checked reference input call sites issue move, attack-object, skill, and follow commands. Attack-area, patrol, and hold have handlers without a known input producer. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
 
 The production replay verifies immediate manual retry after a stalled chase or a successful stop. It also verifies that canceling while already moving clears the attack target and emits no pursuit retry for either family. During live verification, record how far the companion travels on its existing server path after the stop and whether idle AI acquires a new target. The selected server's `0233` handler discards the stop-walking return flags, and `0232` ignores a move to the current server cell. [Native AI evidence](evidence/PK28-PK29-native-companion-ai.md)
+
+While a zero-target `0233` awaits a successful local send, the C++ controller holds idle acquisition and reserved commands. A new immediate command can supersede it, and the companion's existing lifecycle resets discard it. During live verification, distinguish local send success from server-side attack cancellation and the remainder of any server walk.
 
 PK30.04 replays post-adoption job, experience and skill changes and captures both candidate prompts and parent-menu eligibility in native and Qt. The selected live adoption flow and independent review remain open. PK34 still owns the inventory, equipment, cart, and storage slices. [Relationship contract](evidence/PK30.01-relationship-wire.md)
 
