@@ -4330,6 +4330,18 @@ void LocalizedSystemNoticeReplay()
     Require(events[0].text != events[2].text && !g_session.m_merStatus.alive && g_session.m_merGID == 0
         && !g_windowMgr.m_merInfoWnd && !g_windowMgr.m_merSkillListWnd,
         "mercenary system notices failed to retire the contract or shared a message");
+    const std::array<u8, 8> cooldown{0xe2, 7, 0x46, 7, 0xfe, 0xff, 0xff, 0xff};
+    Require(!TryReadPacket(cooldown.data(), 7, view, consumed), "short value notice framed");
+    TestConnection bookStream;
+    std::vector<u8> bookThenCooldown{0x94, 2, 0x4b, 0x1e, 0, 0, 1, 0, 0, 0};
+    bookThenCooldown.insert(bookThenCooldown.end(), cooldown.begin(), cooldown.end());
+    Require(bookStream.QueueBytes(bookThenCooldown)
+        && ProcessGameModePacketLoop(mode, bookStream, router, 2).packetsDispatched == 2
+        && bookStream.BufferedBytes() == 0, "book notice disrupted the following value notice");
+    Require(events.size() == 8 && events[6].text.find("-2") != std::string::npos
+        && events[6].text == events[7].text && events[6].source.route == ro::chat::NoticeRoute::Normal
+        && events[7].source.route == ro::chat::NoticeRoute::Command,
+        "item cooldown notice lost the signed value or chat destinations");
     g_session.m_merStatus = oldMerc;
     g_session.m_merGID = oldGid;
     g_session.m_merTarget = oldTarget;

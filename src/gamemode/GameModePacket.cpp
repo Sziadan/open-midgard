@@ -8449,6 +8449,24 @@ std::optional<std::string> FormatLocalizedNotice(std::string_view format, Notice
     return message;
 }
 
+void HandleLocalizedValueNotice(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 8) return;
+    const u16 id = ReadLE16(packet.data + 2);
+    const auto value = std::to_string(static_cast<s32>(ReadLE32(packet.data + 4)));
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const NoticeArguments args{{'d', value}};
+    auto notice = FormatLocalizedNotice(strings.Get(id, ""), args);
+    if (!notice && id == 1862) {
+        notice = FormatLocalizedNotice("%d seconds left until you can use this item.", args);
+    }
+    if (!notice) return;
+    g_windowMgr.SendMsg(3, 0, 0);
+    g_windowMgr.SendMsg(1, reinterpret_cast<msgparam_t>(notice->c_str()), 0x00ffffffu);
+    g_windowMgr.SendMsg(20, reinterpret_cast<msgparam_t>(notice->c_str()), 0x00ffffffu);
+}
+
 void ShowLocalizedStarNotice(CGameMode& mode, unsigned id, const std::string& fallback,
     NoticeArguments arguments)
 {
@@ -10817,6 +10835,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);
     router.Register(0x0291, HandleLocalizedSystemNotice);
+    router.Register(0x07E2, HandleLocalizedValueNotice);
     router.Register(0x029B, HandleMercenaryInit);
     router.Register(0x029D, HandleMercSkillList);
     router.Register(0x029E, HandleMercSkillUpdate);
@@ -11008,6 +11027,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01EA, HandleWeddingEffect);
     for (const u16 opcode : {0x010A, 0x010B, 0x010C, 0x010D}) router.Register(opcode, HandleMvpReward);
     router.Register(0x0293, HandleBossInfo);
+    router.Register(0x0294, HandleIgnorePacket); // The selected client consumes the book notice.
     router.Register(0x019A, HandlePvpRank);
     router.Register(0x0250, HandleAuctionResultNotice);
     router.Register(0x0252, HandleAuctionSearchResults);
