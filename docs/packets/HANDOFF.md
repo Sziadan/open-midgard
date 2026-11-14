@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+Cash and ordinary NPC shop replies retain their pending ownership through a same-connection warp while the old shop quote closes. A server move clears the old ownership. Verify a delayed purchase result after warp and a fresh quote on the selected deployment. [Commerce verification](evidence/PK40.05-selected-verification.md#shop-replies-on-map-change)
+
 Auction window close retains staging if cancellation fails. Same-map reuse and mode replacement on the same server preserve auction request ownership. Registration fee refusal `5` accounts for a refreshed inventory before releasing the reservation. Results `2` and `4` still need reconciliation for invalid staging and an ambiguous debit or refund. Verify warps live. [Auction staging evidence](evidence/PK40.05-selected-verification.md#auction-staging-on-close-and-same-map-warp)
 
 PK40.05 and PK46.04 cover unanswered auction requests. Verify the overdue status and re-entry guidance in the auction window, including late reply recovery. The selected repeated-request and inventory rules remain tied to the original connection. [Auction recovery evidence](evidence/PK40.05-selected-verification.md#unanswered-auction-requests)

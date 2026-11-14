@@ -311,9 +311,10 @@ void CModeMgr::Run(int startMode, const char* worldName,const ModeRunServices* s
                 auto auctionTransaction = CGameMode::AuctionTransaction::None;
                 u32 auctionTransactionSentAt = 0;
                 auto* leaving = GetCurrentGameMode();
-                const bool transferAuction = leaving && leaving->m_transferAuctionOnMapReload
+                const bool preserveCommerceReplies = leaving && leaving->m_preserveCommerceRepliesOnMapReload
                     && m_nextModeType == 1 && CRagConnection::instance()->IsOpen();
-                if (transferAuction) {
+                if (leaving) leaving->m_preserveCommerceRepliesOnMapReload = preserveCommerceReplies;
+                if (preserveCommerceReplies) {
                     auctionStaging = leaving->m_auctionStaging;
                     auctionSearch = std::move(leaving->m_auctionSearch);
                     auctionTransaction = leaving->m_auctionTransaction;
@@ -339,12 +340,16 @@ void CModeMgr::Run(int startMode, const char* worldName,const ModeRunServices* s
                 // initialization remains pending for the next iteration.
                 m_switchPending = false;
                 m_curMode = services && services->createMode?services->createMode(m_curModeType):CreateModeInstance(m_curModeType);
+                if (auto* entering = GetCurrentGameMode()) {
+                    entering->m_preserveCommerceRepliesOnMapReload = preserveCommerceReplies;
+                }
                 if (m_curMode) {
                     MainLoopWatchdogSetStage("Mode::OnInit");
                     m_curMode->OnInit(m_curModeName);
                 }
-                if (transferAuction) {
-                    if (auto* entering = GetCurrentGameMode()) {
+                if (auto* entering = GetCurrentGameMode()) {
+                    entering->m_preserveCommerceRepliesOnMapReload = false;
+                    if (preserveCommerceReplies) {
                         entering->m_auctionStaging = auctionStaging;
                         entering->m_auctionSearch = std::move(auctionSearch);
                         entering->m_auctionTransaction = auctionTransaction;

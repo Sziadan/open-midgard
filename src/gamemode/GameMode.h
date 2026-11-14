@@ -409,7 +409,7 @@ public:
         std::vector<AuctionSearchRow> rows;
     } m_auctionSearch;
     // Set only when a map-change packet replaces this mode on the existing socket.
-    bool m_transferAuctionOnMapReload = false;
+    bool m_preserveCommerceRepliesOnMapReload = false;
     struct AdoptionInvitation {
         u32 parent = 0;
         u32 partner = 0;

@@ -9925,6 +9925,8 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     mode.ResetBattlegroundMapState();
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
     ro::commerce::CloseTransactions();
+    g_session.ClearNpcShopState(info.hasServerMove);
+    g_windowMgr.CloseNpcShopWindows();
     mode.CloseFriendInvitation();
     mode.ClearAdoptionInvitation();
     mode.ClearCraftingSelection();
@@ -10000,7 +10002,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
     std::snprintf(worldName, sizeof(worldName), "%s.rsw", g_session.m_curMap);
     if (!info.hasServerMove) {
         mode.CloseAuctionSearch();
-        mode.m_transferAuctionOnMapReload = true;
+        mode.m_preserveCommerceRepliesOnMapReload = true;
     }
     RequestTransitionMode(services, 1, worldName);
 }

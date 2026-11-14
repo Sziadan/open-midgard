@@ -11251,7 +11251,7 @@ void CGameMode::OnInit(const char* worldName) {
     m_terminalNetworkHandled = false;
     m_networkModeOperationGeneration = g_modeMgr.GetOperationGeneration();
     g_session.InvalidatePartyPositions();
-    g_session.ClearNpcShopState();
+    g_session.ClearNpcShopState(!m_preserveCommerceRepliesOnMapReload);
     ClearPendingDisconnectAction();
     RegisterDefaultGameModePacketHandlers(GetProductionGameModePacketRouter());
     ClearRuntimeActors(*this);
@@ -11557,7 +11557,7 @@ void CGameMode::OnExit() {
     g_session.m_refusePartyInvites = false;
     g_session.m_petStatus.ResetMapState();
     g_session.InvalidatePartyPositions();
-    g_session.ClearNpcShopState();
+    g_session.ClearNpcShopState(!m_preserveCommerceRepliesOnMapReload);
     ClearPendingDisconnectAction();
     g_renderer.FogSwitch(0);
     GetProductionGameModePacketRouter().Clear();
