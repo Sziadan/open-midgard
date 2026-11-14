@@ -2617,13 +2617,18 @@ void ApplyInventoryList(CGameMode& mode, const PacketView& packet, bool equipmen
 {
     std::list<ITEM_INFO> items;
     if (!StageSessionItemList(packet, equipment, false, items)) return;
-    const auto& staged = mode.m_auctionStaging;
-    if (staged.stagedIndex && mode.m_auctionTransaction != CGameMode::AuctionTransaction::Register) {
-        // The server still counts the reserved unit in its inventory snapshot.
+    auto& staged = mode.m_auctionStaging;
+    if (staged.stagedIndex) {
         const auto row = std::find_if(items.begin(), items.end(), [&](const ITEM_INFO& item) {
             return item.m_itemIndex == staged.stagedIndex && item.GetItemId() == staged.stagedItemId;
         });
-        if (row != items.end() && --row->m_num == 0) items.erase(row);
+        if (row != items.end() && row->m_num > 0) {
+            if (mode.m_auctionTransaction == CGameMode::AuctionTransaction::Register) {
+                staged.registrationSnapshotIncludesSlot = true;
+            } else if (--row->m_num == 0) {
+                items.erase(row);
+            }
+        }
     }
     unsigned int eggIndex = 0;
     if (equipment) {
@@ -9102,8 +9107,10 @@ void HandleAuctionResultNotice(CGameMode& mode, const PacketView& packet)
     }
     if (!notice) return;
 
-    mode.ApplyAuctionTransactionResult(packet.packetId,
-        packet.packetId == 0x0250 ? packet.data[2] : ReadLE16(packet.data + 2));
+    if (mode.ApplyAuctionTransactionResult(packet.packetId,
+        packet.packetId == 0x0250 ? packet.data[2] : ReadLE16(packet.data + 2))) {
+        RefreshInventoryDependentWindows();
+    }
     ro::UiMessageStrings strings;
     strings.Load();
     RecordChat(mode, strings.Get(notice->messageId, notice->fallback), notice->color, kChatChannelSystem);

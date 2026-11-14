@@ -386,7 +386,7 @@ public:
     enum class AuctionTransaction { None, Register, Bid, Cancel, Stop };
     bool RequestAuctionRegistration(u32 startingPrice, u32 buyNow, u16 hours);
     bool RequestAuctionTransaction(AuctionTransaction action, const AuctionSearchRow& quote, u32 bid = 0);
-    void ApplyAuctionTransactionResult(u16 opcode, u16 result);
+    bool ApplyAuctionTransactionResult(u16 opcode, u16 result);
     bool HasOverdueAuctionReply(u32 now) const;
     AuctionTransaction m_auctionTransaction = AuctionTransaction::None;
     u32 m_auctionTransactionSentAt = 0;
@@ -396,6 +396,7 @@ public:
         u16 stagedIndex = 0;
         u32 stagedItemId = 0;
         bool discardReply = false;
+        bool registrationSnapshotIncludesSlot = false;
         u32 sentAt = 0;
     } m_auctionStaging;
     struct AuctionSearchState {

@@ -10587,6 +10587,7 @@ bool CGameMode::RequestAuctionStageItem(u16 inventoryIndex)
 
 bool CGameMode::CancelAuctionStaging()
 {
+    if (m_auctionTransaction == AuctionTransaction::Register) return true;
     auto& staging = m_auctionStaging;
     if (!staging.stagedIndex && (!staging.pendingIndex || staging.discardReply)) return true;
 
@@ -10642,6 +10643,7 @@ bool CGameMode::RequestAuctionRegistration(u32 startingPrice, u32 buyNow, u16 ho
     packet[10] = static_cast<u8>(hours);
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size())) return false;
     m_auctionTransaction = AuctionTransaction::Register;
+    m_auctionStaging.registrationSnapshotIncludesSlot = false;
     m_auctionTransactionSentAt = GetTickCount();
     return true;
 }
@@ -10688,26 +10690,39 @@ bool CGameMode::RequestAuctionTransaction(AuctionTransaction action, const Aucti
     return true;
 }
 
-void CGameMode::ApplyAuctionTransactionResult(u16 opcode, u16 result)
+bool CGameMode::ApplyAuctionTransactionResult(u16 opcode, u16 result)
 {
     using Transaction = AuctionTransaction;
     const auto action = m_auctionTransaction;
     const bool closeReply = opcode == 0x025D;
     if (closeReply) {
-        if (action != Transaction::Cancel && action != Transaction::Stop) return;
+        if (action != Transaction::Cancel && action != Transaction::Stop) return false;
     } else {
         switch (action) {
-        case Transaction::Register: if (result != 1 && result != 2 && result != 4 && result != 5) return; break;
-        case Transaction::Bid: if (result != 0 && result != 1 && result != 8 && result != 9) return; break;
-        case Transaction::Cancel: if (result != 2 && result != 3) return; break;
-        default: return;
+        case Transaction::Register: if (result != 1 && result != 2 && result != 4 && result != 5) return false; break;
+        case Transaction::Bid: if (result != 0 && result != 1 && result != 8 && result != 9) return false; break;
+        case Transaction::Cancel: if (result != 2 && result != 3) return false; break;
+        default: return false;
         }
     }
 
     m_auctionTransaction = Transaction::None;
+    bool inventoryChanged = false;
     if (action == Transaction::Register) {
         if (result == 1) m_auctionStaging = {};
-        else CancelAuctionStaging();
+        else {
+            // The fee refusal keeps the server's staged unit in inventory.
+            auto& staged = m_auctionStaging;
+            if (staged.registrationSnapshotIncludesSlot && result == 5) {
+                const auto* item = g_session.GetInventoryItemByIndex(staged.stagedIndex);
+                if (item && item->GetItemId() == staged.stagedItemId && item->m_num > 0) {
+                    g_session.RemoveInventoryItem(staged.stagedIndex, 1);
+                    inventoryChanged = true;
+                }
+            }
+            staged.registrationSnapshotIncludesSlot = false;
+            CancelAuctionStaging();
+        }
     }
     // The selected map server pushes a fresh own list after a successful bid or stop.
     if ((action == Transaction::Bid && result == 1) || (action == Transaction::Stop && result == 0)) {
@@ -10719,6 +10734,7 @@ void CGameMode::ApplyAuctionTransactionResult(u16 opcode, u16 result)
         || (action == Transaction::Cancel && !closeReply && result == 2))) {
         RequestAuctionSearch({AuctionSearchKind::OwnSales});
     }
+    return inventoryChanged;
 }
 
 bool CGameMode::HasOverdueAuctionReply(u32 now) const

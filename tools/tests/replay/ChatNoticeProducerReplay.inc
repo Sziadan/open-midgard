@@ -588,6 +588,9 @@ void AuctionSearchSnapshotReplay()
         && server.ReceiveExact(12) == std::vector<u8>{0x4d,2,100,0,0,0,200,0,0,0,48,0},
         "registration did not serialize the staged item prices and duration");
     Require(!mode.RequestAuctionRegistration(100, 200, 48), "duplicate registration reached the server");
+    Require(mode.CancelAuctionStaging() && mode.m_auctionStaging.stagedIndex == 42
+        && SelectSocket(server.peer.value, true, false, std::chrono::milliseconds(25)) == 0,
+        "canceling staging during registration cleared ownership or emitted a cancel");
     const auto registerSentAt = mode.m_auctionTransactionSentAt;
     Require(!mode.HasOverdueAuctionReply(registerSentAt + 14999)
         && mode.HasOverdueAuctionReply(registerSentAt + 15000)
@@ -597,6 +600,30 @@ void AuctionSearchSnapshotReplay()
     Require(!mode.m_auctionStaging.stagedIndex && g_session.GetInventoryItemByIndex(42)->m_num == 1
         && server.ReceiveExact(4) == std::vector<u8>{0x5c,2,0,0},
         "registration success did not consume the reservation or refresh own sales");
+    dispatch(page);
+    requestStage();
+    dispatch({0x56,2,42,0,0});
+    Require(mode.RequestAuctionRegistration(100, 200, 1), "could not stage registration refusal fixture");
+    server.ReceiveExact(12);
+    std::vector<u8> inventorySnapshot(30);
+    inventorySnapshot[0] = 0xd0;
+    inventorySnapshot[1] = 2;
+    inventorySnapshot[2] = 30;
+    inventorySnapshot[4] = 42;
+    inventorySnapshot[6] = 0xb1;
+    inventorySnapshot[7] = 4;
+    inventorySnapshot[8] = 4;
+    inventorySnapshot[9] = 1;
+    dispatch(inventorySnapshot);
+    Require(g_session.GetInventoryItemByIndex(42) && g_session.GetInventoryItemByIndex(42)->m_num == 1,
+        "snapshot hid an item before registration settled");
+    dispatch({0x50,2,5});
+    Require(server.ReceiveExact(4) == std::vector<u8>{0x4b,2,1,0}
+        && server.ReceiveExact(4) == std::vector<u8>{0x5c,2,0,0}
+        && !g_session.GetInventoryItemByIndex(42), "fee refusal left the reserved unit in available inventory");
+    dispatch(returnedItem);
+    Require(g_session.GetInventoryItemByIndex(42) && g_session.GetInventoryItemByIndex(42)->m_num == 1,
+        "fee refusal and ordinary return counted the reserved item twice");
     dispatch(page);
     const auto bidQuote = state.rows.front();
     auto staleQuote = bidQuote;
