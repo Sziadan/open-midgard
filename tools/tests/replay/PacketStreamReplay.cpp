@@ -5501,6 +5501,21 @@ void GuildMemberLoginNoticeReplay(){
     const std::vector<u8> mapPosition{0xeb,0x01,0x44,0x33,0x22,0x11,0x05,0x00,0x06,0x00};
     peer.Send(mapPosition);const auto positionResult=ProcessGameModePacketLoop(mode,connection,router,4);
     Require(positionResult.packetsProcessed==1&&positionResult.packetsDispatched==1&&mode.m_guildPosList.count(0x11223344)==1,"production 0x01EB did not add the guild map-position marker");
+    auto removePosition = mapPosition;
+    std::fill(removePosition.begin() + 6, removePosition.end(), 0xff);
+    auto otherPosition = mapPosition;
+    otherPosition[2] = 0x45;
+    std::vector<u8> mapTransition = otherPosition;
+    mapTransition.insert(mapTransition.end(), removePosition.begin(), removePosition.end());
+    peer.Send(mapTransition);
+    WaitKernelPending(connection, static_cast<int>(mapTransition.size()));
+    Require(ProcessGameModePacketLoop(mode, connection, router, 2).packetsDispatched == 2
+        && !mode.m_guildPosList.count(0x11223344) && mode.m_guildPosList.count(0x11223345),
+        "selected guild marker removal affected the wrong member");
+    peer.Send(mapPosition);
+    WaitKernelPending(connection, static_cast<int>(mapPosition.size()));
+    Require(ProcessGameModePacketLoop(mode, connection, router, 1).packetsDispatched == 1
+        && mode.m_guildPosList.count(0x11223344), "guild position update did not restore the marker");
     const std::vector<u8> offline{0xf2,0x01,0x44,0x33,0x22,0x11,0x88,0x77,0x66,0x55,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
     peer.Send(offline);const auto logoutResult=ProcessGameModePacketLoop(mode,connection,router,4);
     const auto& offlineMember=g_session.m_guildWindow.members[0];

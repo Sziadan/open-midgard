@@ -360,8 +360,6 @@ public:
     u32 m_reqTickMerchantShop;
     int m_isReqEmotion;
     float m_fixedLongitude;
-    u32 m_lastCouplePacketAid;
-    u32 m_lastCouplePacketGid;
     std::string m_recallPartnerName;
     u32 m_pvpRankStartTick = 0;
     struct AuctionSearchRow {

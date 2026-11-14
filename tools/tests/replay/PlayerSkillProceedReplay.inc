@@ -98,7 +98,9 @@
         ro::commerce::state.vendingActive=false;
         {UIChatRoomWnd room;g_windowMgr.m_chatRoomWnd=&room;mode.SendMsg(76,28,target.m_gid,3);
             Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"chat-room owner did not block ordinary skill");g_windowMgr.m_chatRoomWnd=nullptr;}
-        mode.SendMsg(76,20000,target.m_gid,0);Require(peer.ReceiveExact(6)==std::vector<u8>({0xe5,1,1,0,0,0x77}),"source special20000 frame mismatch");
+        mode.SendMsg(76,20000,target.m_gid,0);
+        Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,
+            "dormant couple skill sent a request with no selected parser");
         mode.SendMsg(76,20001,target.m_gid,0);Require(peer.ReceiveExact(6)==std::vector<u8>({0xf9,1,1,0,0,0x77}),"source special20001 frame mismatch");
         g_session.UpdateCharacterVital(7,39);mode.SendMsg(76,154,target.m_gid,1);
         Require(SelectSocket(peer.peer.value,true,false,std::chrono::milliseconds(20))==0,"cart source76 ignored SP40 guard");

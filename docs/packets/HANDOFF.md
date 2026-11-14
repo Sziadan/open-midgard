@@ -6,7 +6,9 @@ PK47 now routes all four `01B1` digit clock modes into the gameplay HUD. Use a l
 
 PK47 now sends `01DF` from the GM player menu, matches `01E0` by AID and shows the saved prohibition history. Verify the menu, blank assignment, positive and negative moderation actions, and reload on a GM test character. For original viewer details, use `UIProhibitListWnd::OnDraw` at `HighPriest.exe.c:154954` and the auxiliary command in `SendMsg`. [GM account-name evidence](evidence/PK47.04-gm-account-name.md)
 
-The selected server comments out the legacy couple prompt emitters `01E2` and `01E4`. Continue with source adjudication of `01E3`, `01E5`, and `01EC`, then separate any active marriage notifications from historical UI. [Legacy couple evidence](evidence/PK47.04-legacy-couple.md)
+The legacy couple flow `01E2`–`01E5` is dormant on the selected server. `01EC` is a historical guild map-change notice. The selected server uses `01EB` with negative coordinates for guild marker removal. Active relationship notifications remain under PK30. [Legacy couple and guild evidence](evidence/PK47.04-legacy-couple.md)
+
+The historical look notifications `0075`–`0077`, quit flow `0082`–`0084`, and action position `008B` are inactive in the selected server. Keep the exact historical `008B` layout open. The old handler reads beyond the two-byte registry entry. [Legacy map packet evidence](evidence/PK47.04-legacy-character-look.md)
 
 Cash and ordinary NPC shop replies retain their pending ownership through a same-connection warp while the old shop quote closes. A server move clears the old ownership. Verify a delayed purchase result after warp and a fresh quote on the selected deployment. [Commerce verification](evidence/PK40.05-selected-verification.md#shop-replies-on-map-change)
 

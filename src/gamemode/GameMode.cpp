@@ -6177,7 +6177,8 @@ bool DispatchSourcePlayerSkill(CGameMode& mode,int skillId,u32 targetGid,int req
             static_cast<u8>(targetGid>>8),static_cast<u8>(targetGid>>16),static_cast<u8>(targetGid>>24)};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet),sizeof(packet));
     };
-    if(skillId==20000)return special(0x01e5);
+    // Legacy couple targeting has no request parser in the selected profiles.
+    if(skillId==20000)return false;
     if(skillId==20001){
         const char* text="[ (val1 == 20001) ]";
         g_windowMgr.SendMsg(1,reinterpret_cast<msgparam_t>(text),0x6e96ff,0,0);
@@ -11138,7 +11139,7 @@ CGameMode::CGameMode()
       m_canRotateView(0), m_hasViewPoint(0), m_receiveSyneRequestTime(0),
       m_syncRequestTime(0), m_usedCachesUnloadTick(0), m_reqEmotionTick(0),
       m_reqTickChatRoom(0), m_reqTickMerchantShop(0), m_isReqEmotion(0),
-      m_fixedLongitude(0.0f), m_lastCouplePacketAid(0), m_lastCouplePacketGid(0),
+      m_fixedLongitude(0.0f),
       m_nameBalloon(nullptr), m_targetNameBalloon(nullptr), m_starSkillNotice(nullptr), m_starSkillNoticeTick(0),
       m_playerGage(nullptr), m_skillNameBalloon(nullptr), m_skillMsgBalloon(nullptr), m_skillUsedMsgBalloon(nullptr),
       m_skillUsedTick(0), m_broadCastTick(0), m_nameDisplayed(0), m_nameDisplayed2(0),
