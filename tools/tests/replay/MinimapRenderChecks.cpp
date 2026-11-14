@@ -153,6 +153,9 @@ int main(int argc, char** argv) {
         Require(QDir::setCurrent(output), "render fixture working directory failed");
         QImage bitmap(64,64,QImage::Format_RGB32); bitmap.fill(QColor("#324d65"));
         Require(bitmap.save("pk14_fixture.bmp"), "synthetic minimap BMP save failed");
+        QImage bossBitmap(11, 11, QImage::Format_RGB32);
+        bossBitmap.fill(QColor("#f04731"));
+        Require(bossBitmap.save("bossmonster.bmp"), "synthetic boss marker BMP save failed");
         std::cerr << "minimap-render: bitmap ready\n";
 
         CWorld world;
@@ -321,6 +324,21 @@ int main(int argc, char** argv) {
         Dispatch(mode,CompassRecord(2,0,0,9,0));
         Require(mode.m_compassPosList.empty(),"production 0144 type-2 packet did not remove the compass marker");
         capture("compass-removed",compassX,compassY,false,1);
+        std::vector<u8> boss(70);
+        boss[0] = 0x93;
+        boss[1] = 2;
+        boss[2] = 1;
+        boss[3] = 75;
+        boss[7] = 65;
+        Dispatch(mode, boss);
+        UIRoMapWnd::DisplayData bossDisplay;
+        Require(map.GetDisplayDataForQt(&bossDisplay), "boss map display did not build");
+        const auto rect = bossDisplay.bossMarkerRect;
+        Require(rect.right - rect.left == 12 && rect.bottom - rect.top == 12, "boss marker is not 12×12");
+        capture("boss-bitmap", compassX, compassY, true, 1, 0x00f04731u, 0x00f04731u);
+        boss[2] = 0;
+        Dispatch(mode, boss);
+        capture("boss-removed", compassX, compassY, false, 1);
         Dispatch(mode,PositionRecord(25,35));
         MapTransitionServices services;
         services.presentLoading = [](const char*,float) {};

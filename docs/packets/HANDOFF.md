@@ -1,6 +1,6 @@
 # Packet continuation handoff
 
-PK47 restores the selected `0293` boss-map feed. Verify the notice and minimap marker with a Convex Mirror on a live map. The original `bossmonster.bmp` and its marker animation still need visual parity. [Boss-map evidence](evidence/PK47.04-boss-map-info.md)
+PK47 restores the selected `0293` boss-map feed and its static `bossmonster.bmp` marker in both minimaps. Verify the bitmap and notice with a Convex Mirror on a live map. Reference notice overlay placement remains open. [Boss-map evidence](evidence/PK47.04-boss-map-info.md)
 
 Cash and ordinary NPC shop replies retain their pending ownership through a same-connection warp while the old shop quote closes. A server move clears the old ownership. Verify a delayed purchase result after warp and a fresh quote on the selected deployment. [Commerce verification](evidence/PK40.05-selected-verification.md#shop-replies-on-map-change)
 

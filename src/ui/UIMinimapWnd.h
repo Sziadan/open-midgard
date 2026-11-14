@@ -27,6 +27,7 @@ public:
         int mapY = 0;
         int mapWidth = 0;
         int mapHeight = 0;
+        RECT bossMarkerRect{};
         bool playerVisible = false;
         int playerX = 0;
         int playerY = 0;
@@ -86,6 +87,7 @@ private:
     UIBitmapButton* m_closeButton;
     shopui::BitmapPixels m_titleBarBitmap;
     shopui::BitmapPixels m_bodyBitmap;
+    shopui::BitmapPixels m_bossMarkerBitmap;
     ArgbDibSurface m_renderCacheSurface;
     bool m_renderCacheDirty;
     int m_mapBitmapWidth;

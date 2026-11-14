@@ -360,6 +360,19 @@ bool BuildMarkerPoint(const RECT& attrArea,
     return true;
 }
 
+RECT BuildBossMarkerRect(const RECT& attrArea, const RECT& drawRect, bool zoomedView,
+    const RECT& srcRect, int bitmapWidth, int bitmapHeight, const CellPos& boss)
+{
+    constexpr LONG radius = 6;
+    POINT point{};
+    if (drawRect.right - drawRect.left < 2 * radius || drawRect.bottom - drawRect.top < 2 * radius
+        || !BuildMarkerPoint(attrArea, drawRect, zoomedView, srcRect, bitmapWidth, bitmapHeight,
+            boss.x, boss.y, &point, true)) return {};
+    point.x = std::clamp(point.x, drawRect.left + radius, drawRect.right - radius);
+    point.y = std::clamp(point.y, drawRect.top + radius, drawRect.bottom - radius);
+    return {point.x - radius, point.y - radius, point.x + radius, point.y + radius};
+}
+
 void FillSolidRect(HDC hdc, const RECT& rect, COLORREF color)
 {
     HBRUSH brush = CreateSolidBrush(color);
@@ -854,7 +867,14 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY, u32 now)
 
     if (gameMode) {
         const auto boss = gameMode->m_bossMapPosition;
-        if (boss.x >= 0 && boss.y >= 0) drawWorldPoint(boss.x, boss.y, 0xffffff, RGB(24, 24, 24), 4);
+        if (boss.x >= 0 && boss.y >= 0) {
+            if (m_bossMarkerBitmap.IsValid()) {
+                DrawBitmapPixelsAlphaBlended(hdc, m_bossMarkerBitmap, BuildBossMarkerRect(attrArea,
+                    drawRect, zoomedView, srcRect, m_mapBitmapWidth, m_mapBitmapHeight, boss));
+            } else {
+                drawWorldPoint(boss.x, boss.y, 0xffffff, RGB(24, 24, 24), 4);
+            }
+        }
         for (const FRIEND_INFO& member : g_session.GetPartyList()) {
             if (g_session.IsPartyMarkerEligible(member, mapName)) {
                 drawWorldPoint(member.partyX, member.partyY, member.color & 0x00FFFFFFu, RGB(24, 24, 24), 2);
@@ -1095,7 +1115,14 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
 
     if (gameMode) {
         const auto boss = gameMode->m_bossMapPosition;
-        if (boss.x >= 0 && boss.y >= 0) appendMarker(boss.x, boss.y, 0xffffff, 4);
+        if (boss.x >= 0 && boss.y >= 0) {
+            if (m_bossMarkerBitmap.IsValid() && !m_mapPixels.empty()) {
+                data.bossMarkerRect = BuildBossMarkerRect(attrArea, drawRect, zoomedView, srcRect,
+                    m_mapBitmapWidth, m_mapBitmapHeight, boss);
+            } else {
+                appendMarker(boss.x, boss.y, 0xffffff, 4);
+            }
+        }
         for (const FRIEND_INFO& member : g_session.GetPartyList()) {
             if (g_session.IsPartyMarkerEligible(member, data.mapName)) {
                 appendMarker(member.partyX, member.partyY, member.color & 0x00FFFFFFu, 2);
@@ -1219,6 +1246,14 @@ bool UIRoMapWnd::BuildQtMinimapImage(QImage* outImage) const
         QPainter painter(&composed);
         painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
         painter.drawImage(targetRect, sourceImage, sourceRect);
+        if (m_bossMarkerBitmap.IsValid()) {
+            DisplayData display;
+            if (GetDisplayDataForQt(&display) && display.bossMarkerRect.right > display.bossMarkerRect.left) {
+                const auto& rect = display.bossMarkerRect;
+                painter.drawImage(QRect(rect.left - display.mapX, rect.top - display.mapY,
+                    rect.right - rect.left, rect.bottom - rect.top), BitmapPixelsToQImage(m_bossMarkerBitmap));
+            }
+        }
     }
 
     *outImage = composed;
@@ -1372,6 +1407,12 @@ void UIRoMapWnd::LoadAssets()
     if (!m_bodyBitmap.IsValid()) {
         m_bodyBitmap = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("itemwin_mid.bmp"));
     }
+    if (!m_bossMarkerBitmap.IsValid()) {
+        for (const auto& path : BuildMinimapCandidates("bossmonster.bmp")) {
+            m_bossMarkerBitmap = LoadBitmapPixelsFromGameData(path);
+            if (m_bossMarkerBitmap.IsValid()) break;
+        }
+    }
     InvalidateRenderCache();
 }
 
@@ -1417,6 +1458,7 @@ void UIRoMapWnd::ReleaseAssets()
     ReleaseRenderCache();
     m_titleBarBitmap.Clear();
     m_bodyBitmap.Clear();
+    m_bossMarkerBitmap.Clear();
     m_mapBitmapWidth = 0;
     m_mapBitmapHeight = 0;
     m_mapPixels.clear();
