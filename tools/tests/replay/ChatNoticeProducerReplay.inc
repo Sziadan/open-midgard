@@ -503,15 +503,19 @@ void AuctionSearchSnapshotReplay()
     priceSearch[7] = 0x12;
     priceSearch[32] = 2;
     Require(server.ReceiveExact(priceSearch.size()) == priceSearch, "auction price or page was encoded incorrectly");
+    Require(!mode.HasOverdueAuctionReply(state.sentAt + 14999)
+        && mode.HasOverdueAuctionReply(state.sentAt + 15000), "auction search reply deadline differs");
+    mode.m_auctionSearch.sentAt = GetTickCount() - 15000;
     dispatch({0x5f,2,1,0,0,0});
     dispatch({0x5f,2,0,0,0,0});
-    Require(state.open && state.awaitingReply && state.discardReply
+    Require(state.open && state.awaitingReply && state.discardReply && mode.HasOverdueAuctionReply(GetTickCount())
         && !mode.RequestAuctionSearch({}), "auction reopen sent a query before the old reply drained");
     dispatch(page);
     Require(state.open && state.awaitingReply && !state.discardReply && state.rows.empty()
         && server.ReceiveExact(browse.size()) == browse, "late auction page replaced the reopened session");
     dispatch(page);
     Require(state.rows.size() == 1, "fresh auction page did not reach the reopened session");
+    Require(!mode.HasOverdueAuctionReply(GetTickCount()), "completed auction search still appeared overdue");
     g_windowMgr.ClearChatEvents();
     dispatch({0x50,2,6});
     Require(state.awaitingReply && server.ReceiveExact(browse.size()) == browse,
@@ -536,11 +540,17 @@ void AuctionSearchSnapshotReplay()
     clickAuction(120, 110);
     clickAuction(290, 215);
     Require(server.ReceiveExact(stage.size()) == stage, "the registration controls did not stage the selected item");
+    const auto stageSentAt = mode.m_auctionStaging.sentAt;
+    Require(!mode.HasOverdueAuctionReply(stageSentAt + 14999) && mode.HasOverdueAuctionReply(stageSentAt + 15000),
+        "auction staging reply deadline differs");
+    mode.m_auctionStaging.sentAt = GetTickCount() - 15000;
+    Require(!mode.RequestAuctionSearch({}), "missing stage reply allowed an overlapping auction search");
     dispatch({0x56,2,40,0,0});
     Require(mode.m_auctionStaging.pendingIndex == 42, "raw-index success claimed the pending item");
     dispatch({0x56,2,40,0,1});
     Require(!mode.m_auctionStaging.pendingIndex && !mode.m_auctionStaging.stagedIndex,
         "raw-index rejection left the staging request active");
+    Require(!mode.HasOverdueAuctionReply(GetTickCount()), "late stage refusal left the wait overdue");
     requestStage();
     dispatch({0x56,2,42,0,0});
     dispatch({0x56,2,42,0,0});
@@ -578,6 +588,11 @@ void AuctionSearchSnapshotReplay()
         && server.ReceiveExact(12) == std::vector<u8>{0x4d,2,100,0,0,0,200,0,0,0,48,0},
         "registration did not serialize the staged item prices and duration");
     Require(!mode.RequestAuctionRegistration(100, 200, 48), "duplicate registration reached the server");
+    const auto registerSentAt = mode.m_auctionTransactionSentAt;
+    Require(!mode.HasOverdueAuctionReply(registerSentAt + 14999)
+        && mode.HasOverdueAuctionReply(registerSentAt + 15000)
+        && mode.m_auctionStaging.stagedIndex == 42,
+        "registration delay changed the staged item or its reply deadline");
     dispatch({0x50,2,1});
     Require(!mode.m_auctionStaging.stagedIndex && g_session.GetInventoryItemByIndex(42)->m_num == 1
         && server.ReceiveExact(4) == std::vector<u8>{0x5c,2,0,0},

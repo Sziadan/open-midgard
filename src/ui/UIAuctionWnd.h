@@ -9,6 +9,7 @@ public:
     explicit UIAuctionWnd(int windowId);
     void Move(int x, int y) override;
     void OnDraw() override;
+    void OnProcess() override;
     void OnLBtnDown(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnWheel(int delta) override;
@@ -30,6 +31,7 @@ private:
     UIEditCtrl* m_buyNow = nullptr;
     UIEditCtrl* m_hours = nullptr;
     bool m_sell = false;
+    bool m_replyOverdue = false;
     std::size_t m_inventoryOffset = 0;
     u16 m_inventoryIndex = 0;
     CGameMode::AuctionSearchRow m_quote;

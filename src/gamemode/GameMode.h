@@ -387,18 +387,22 @@ public:
     bool RequestAuctionRegistration(u32 startingPrice, u32 buyNow, u16 hours);
     bool RequestAuctionTransaction(AuctionTransaction action, const AuctionSearchRow& quote, u32 bid = 0);
     void ApplyAuctionTransactionResult(u16 opcode, u16 result);
+    bool HasOverdueAuctionReply(u32 now) const;
     AuctionTransaction m_auctionTransaction = AuctionTransaction::None;
+    u32 m_auctionTransactionSentAt = 0;
     struct AuctionStagingState {
         u16 pendingIndex = 0;
         u32 pendingItemId = 0;
         u16 stagedIndex = 0;
         u32 stagedItemId = 0;
         bool discardReply = false;
+        u32 sentAt = 0;
     } m_auctionStaging;
     struct AuctionSearchState {
         bool open = false;
         bool awaitingReply = false;
         bool discardReply = false;
+        u32 sentAt = 0;
         u32 pages = 0;
         AuctionSearchQuery query;
         std::vector<AuctionSearchRow> rows;

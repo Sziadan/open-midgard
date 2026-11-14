@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK40.05 and PK46.04 cover unanswered auction requests. Verify the overdue status and re-entry guidance in the auction window, including late reply recovery. The selected repeated-request and inventory rules remain tied to the original connection. [Auction recovery evidence](evidence/PK40.05-selected-verification.md#unanswered-auction-requests)
+
 PK46.03 bounds immediate and scheduled character deletion waits. A send failure or missing reply returns to sign-in so the next session fetches the authoritative list. Verify live using a disposable character. [Deletion recovery evidence](evidence/PK46.03-scheduled-deletion-controls.md#reply-recovery)
 
 PK46.03 uses a 15-second deadline after direct or hash account login sends. Verify the configured login profile against the selected deployment and check that successful login advances to character-server entry. [Account response evidence](evidence/PK46.03-account-login-send-gates.md#account-response-deadline)

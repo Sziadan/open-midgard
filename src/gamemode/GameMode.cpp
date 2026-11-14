@@ -10516,7 +10516,7 @@ void ResetCompanionActorOrders(CWorld* world, u32 gid, companion_ai::Kind kind)
 
 bool CGameMode::RequestAuctionSearch(const AuctionSearchQuery& query)
 {
-    if (!m_auctionSearch.open || m_auctionSearch.awaitingReply
+    if (!m_auctionSearch.open || m_auctionSearch.awaitingReply || HasOverdueAuctionReply(GetTickCount())
         || m_auctionTransaction != AuctionTransaction::None) return false;
 
     const auto type = static_cast<u16>(query.kind);
@@ -10546,6 +10546,7 @@ bool CGameMode::RequestAuctionSearch(const AuctionSearchQuery& query)
 
     m_auctionSearch.query = query;
     m_auctionSearch.awaitingReply = true;
+    m_auctionSearch.sentAt = GetTickCount();
     // Both selected search parsers cancel the server's staged item.
     m_auctionStaging.stagedIndex = 0;
     m_auctionStaging.stagedItemId = 0;
@@ -10560,14 +10561,17 @@ void CGameMode::CloseAuctionSearch()
     m_auctionStaging.discardReply = m_auctionStaging.pendingIndex != 0;
     // The search reply has no request ID, so drain any outstanding page before reuse.
     const bool awaitingReply = m_auctionSearch.awaitingReply;
+    const u32 sentAt = m_auctionSearch.sentAt;
     m_auctionSearch = {};
     m_auctionSearch.awaitingReply = awaitingReply;
     m_auctionSearch.discardReply = awaitingReply;
+    m_auctionSearch.sentAt = sentAt;
 }
 
 bool CGameMode::RequestAuctionStageItem(u16 inventoryIndex)
 {
     if (!m_auctionSearch.open || m_auctionStaging.pendingIndex || m_auctionStaging.stagedIndex
+        || HasOverdueAuctionReply(GetTickCount())
         || m_auctionTransaction != AuctionTransaction::None
         || inventoryIndex - ro::item_snapshot::kFirstInventoryIndex >= ro::item_snapshot::kInventorySlots) return false;
 
@@ -10580,6 +10584,7 @@ bool CGameMode::RequestAuctionStageItem(u16 inventoryIndex)
 
     m_auctionStaging.pendingIndex = inventoryIndex;
     m_auctionStaging.pendingItemId = item->GetItemId();
+    m_auctionStaging.sentAt = GetTickCount();
     return true;
 }
 
@@ -10640,6 +10645,7 @@ bool CGameMode::RequestAuctionRegistration(u32 startingPrice, u32 buyNow, u16 ho
     packet[10] = static_cast<u8>(hours);
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), packet.size())) return false;
     m_auctionTransaction = AuctionTransaction::Register;
+    m_auctionTransactionSentAt = GetTickCount();
     return true;
 }
 
@@ -10681,6 +10687,7 @@ bool CGameMode::RequestAuctionTransaction(AuctionTransaction action, const Aucti
     }
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()), length)) return false;
     m_auctionTransaction = action;
+    m_auctionTransactionSentAt = GetTickCount();
     return true;
 }
 
@@ -10708,12 +10715,21 @@ void CGameMode::ApplyAuctionTransactionResult(u16 opcode, u16 result)
     // The selected map server pushes a fresh own list after a successful bid or stop.
     if ((action == Transaction::Bid && result == 1) || (action == Transaction::Stop && result == 0)) {
         m_auctionSearch.awaitingReply = true;
+        m_auctionSearch.sentAt = GetTickCount();
         m_auctionSearch.discardReply = !m_auctionSearch.open;
         m_auctionSearch.query = {action == Transaction::Bid ? AuctionSearchKind::OwnBids : AuctionSearchKind::OwnSales};
     } else if (m_auctionSearch.open && (action == Transaction::Register
         || (action == Transaction::Cancel && !closeReply && result == 2))) {
         RequestAuctionSearch({AuctionSearchKind::OwnSales});
     }
+}
+
+bool CGameMode::HasOverdueAuctionReply(u32 now) const
+{
+    constexpr u32 replyTimeoutMs = 15000;
+    return (m_auctionSearch.awaitingReply && now - m_auctionSearch.sentAt >= replyTimeoutMs)
+        || (m_auctionStaging.pendingIndex && now - m_auctionStaging.sentAt >= replyTimeoutMs)
+        || (m_auctionTransaction != AuctionTransaction::None && now - m_auctionTransactionSentAt >= replyTimeoutMs);
 }
 
 void CGameMode::ResetBattlegroundMapState()

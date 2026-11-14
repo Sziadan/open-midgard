@@ -108,6 +108,17 @@ std::vector<const ITEM_INFO*> UIAuctionWnd::InventoryPage() const
     return page;
 }
 
+void UIAuctionWnd::OnProcess()
+{
+    UIFrameWnd::OnProcess();
+    const auto* mode = g_modeMgr.GetCurrentGameMode();
+    const bool overdue = mode && mode->HasOverdueAuctionReply(GetTickCount());
+    if (overdue != m_replyOverdue) {
+        m_replyOverdue = overdue;
+        Invalidate();
+    }
+}
+
 void UIAuctionWnd::OnDraw()
 {
     auto* mode = g_modeMgr.GetCurrentGameMode();
@@ -163,7 +174,8 @@ void UIAuctionWnd::OnDraw()
         label({93,205,111,225}, "Bid");
     }
     std::string status = m_status;
-    if (search.awaitingReply || mode->m_auctionStaging.pendingIndex
+    if (m_replyOverdue) status = "No auction reply yet. Re-enter the world to refresh.";
+    else if (search.awaitingReply || mode->m_auctionStaging.pendingIndex
         || mode->m_auctionTransaction != CGameMode::AuctionTransaction::None) status = "Waiting for the auction server.";
     else if (m_sell && mode->m_auctionStaging.stagedItemId) {
         status = "Staged: " + g_ttemmgr.GetDisplayName(mode->m_auctionStaging.stagedItemId, true);
