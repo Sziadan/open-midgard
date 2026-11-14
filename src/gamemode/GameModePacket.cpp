@@ -8459,6 +8459,39 @@ void ShowLocalizedStarNotice(CGameMode& mode, unsigned id, const std::string& fa
     }
 }
 
+void HandleBossInfo(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 70 || packet.data[2] > 3) return;
+    const auto type = packet.data[2];
+    if (type == 1 || type == 2) {
+        const auto x = static_cast<s32>(ReadLE32(packet.data + 3));
+        const auto y = static_cast<s32>(ReadLE32(packet.data + 7));
+        if (x < 0 || y < 0 || x > 65535 || y > 65535) return;
+        mode.m_bossMapPosition = {x, y};
+        if (type == 1) return;
+    } else {
+        mode.m_bossMapPosition = {-1, -1};
+    }
+
+    ro::UiMessageStrings strings;
+    strings.Load();
+    const auto name = ExtractFixedPacketString(packet, 19, 51);
+    const auto hours = std::to_string(ReadLE16(packet.data + 11));
+    const auto minutes = std::to_string(ReadLE16(packet.data + 13));
+    std::string notice;
+    const auto format = [&](unsigned id, const char* fallback, NoticeArguments args) {
+        auto result = FormatLocalizedNotice(strings.Get(id, fallback), args);
+        return result ? *result : FormatLocalizedNotice(fallback, args).value_or(std::string{});
+    };
+    if (type == 0) notice = strings.Get(1223, "There is no boss on this map.");
+    else if (type == 2) notice = format(1225, "%s is marked on the minimap.", {{'s', name}});
+    else if (hours == "0" && minutes == "1") notice = format(1261, "%s will appear in less than a minute.", {{'s', name}});
+    else notice = format(1224, "%s will appear in %d hour(s) and %d minute(s).", {{'s', name}, {'d', hours}, {'d', minutes}});
+    g_windowMgr.SendMsg(3, 0, 0);
+    RecordChat(mode, notice, 0x00ffffff, kChatChannelSystem,
+        {ro::chat::NoticeRoute::NormalAndCommand, ro::chat::NoticeType::None, {}});
+}
+
 void HandleStarSkill(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 32) {
@@ -9922,6 +9955,7 @@ void HandleMapChange(CGameMode& mode, const PacketView& packet)
 
     mode.ClearNpcProgress();
     mode.m_compassPosList.clear();
+    mode.m_bossMapPosition = {-1, -1};
     mode.ResetBattlegroundMapState();
     const bool sameMapAlreadyLoaded = !info.hasServerMove && IsSameMapAlreadyLoaded(mode, info);
     ro::commerce::CloseTransactions();
@@ -10958,6 +10992,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01E6, HandleRecallPartnerName);
     router.Register(0x01EA, HandleWeddingEffect);
     for (const u16 opcode : {0x010A, 0x010B, 0x010C, 0x010D}) router.Register(opcode, HandleMvpReward);
+    router.Register(0x0293, HandleBossInfo);
     router.Register(0x019A, HandlePvpRank);
     router.Register(0x0250, HandleAuctionResultNotice);
     router.Register(0x0252, HandleAuctionSearchResults);

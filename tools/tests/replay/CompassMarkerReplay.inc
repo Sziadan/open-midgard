@@ -86,6 +86,38 @@ void CompassMarkerReplay()
     mode.PruneCompassMarkers(16001u);
     Require(mode.m_compassPosList.empty(), "PruneCompassMarkers retained an expired timed marker");
 
+    std::vector<u8> boss(70);
+    boss[0] = 0x93;
+    boss[1] = 2;
+    boss[2] = 2;
+    boss[3] = 0x21;
+    boss[4] = 1;
+    boss[7] = 0x34;
+    std::memcpy(boss.data() + 19, "Golden Thief Bug", 16);
+    FeedCompassReplayPacket(mode, boss);
+    Require(mode.m_bossMapPosition.x == 289 && mode.m_bossMapPosition.y == 52
+        && !g_windowMgr.GetChatEvents().empty(), "0293 initial notice lost the named boss position or message");
+    const auto initialNotices = g_windowMgr.GetChatEvents().size();
+    boss[2] = 1;
+    boss[7] = 53;
+    FeedCompassReplayPacket(mode, boss);
+    Require(mode.m_bossMapPosition.y == 53 && g_windowMgr.GetChatEvents().size() == initialNotices,
+        "0293 periodic update did not move the marker silently");
+    boss[2] = 4;
+    FeedCompassReplayPacket(mode, boss);
+    Require(mode.m_bossMapPosition.y == 53, "unknown 0293 type cleared the boss marker");
+    boss[2] = 3;
+    boss[13] = 1;
+    FeedCompassReplayPacket(mode, boss);
+    Require(mode.m_bossMapPosition.x == -1 && mode.m_bossMapPosition.y == -1
+        && g_windowMgr.GetChatEvents().size() > initialNotices, "0293 death did not clear the marker and announce respawn");
+    boss[2] = 1;
+    FeedCompassReplayPacket(mode, boss);
+    boss[2] = 0;
+    FeedCompassReplayPacket(mode, boss);
+    Require(mode.m_bossMapPosition.x == -1 && mode.m_bossMapPosition.y == -1,
+        "0293 no-boss notification left a stale marker");
+
     mode.m_waitingUseItemAck = 1;
     g_windowMgr.EnsureChatWindowVisible();
     auto* chat = g_windowMgr.m_chatWnd;

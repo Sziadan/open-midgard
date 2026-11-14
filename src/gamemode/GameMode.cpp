@@ -8195,6 +8195,7 @@ void DestroyDeferredRuntimeActors(CGameMode& mode);
 
 void ClearRuntimeActors(CGameMode& mode)
 {
+    mode.m_bossMapPosition = {-1, -1};
     mode.m_pvpRankStartTick = 0;
     mode.m_auctionSearch = {};
     mode.m_auctionStaging = {};

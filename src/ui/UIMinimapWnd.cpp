@@ -853,6 +853,8 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY, u32 now)
     };
 
     if (gameMode) {
+        const auto boss = gameMode->m_bossMapPosition;
+        if (boss.x >= 0 && boss.y >= 0) drawWorldPoint(boss.x, boss.y, 0xffffff, RGB(24, 24, 24), 4);
         for (const FRIEND_INFO& member : g_session.GetPartyList()) {
             if (g_session.IsPartyMarkerEligible(member, mapName)) {
                 drawWorldPoint(member.partyX, member.partyY, member.color & 0x00FFFFFFu, RGB(24, 24, 24), 2);
@@ -1092,6 +1094,8 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
     };
 
     if (gameMode) {
+        const auto boss = gameMode->m_bossMapPosition;
+        if (boss.x >= 0 && boss.y >= 0) appendMarker(boss.x, boss.y, 0xffffff, 4);
         for (const FRIEND_INFO& member : g_session.GetPartyList()) {
             if (g_session.IsPartyMarkerEligible(member, data.mapName)) {
                 appendMarker(member.partyX, member.partyY, member.color & 0x00FFFFFFu, 2);
@@ -1550,6 +1554,8 @@ unsigned long long UIRoMapWnd::BuildVisualStateToken(u32 now) const
     }
 
     if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        mixValue(static_cast<u32>(gameMode->m_bossMapPosition.x));
+        mixValue(static_cast<u32>(gameMode->m_bossMapPosition.y));
         mixValue(gameMode->m_battlegroundPosList.size());
         for (const auto& entry : gameMode->m_battlegroundPosList) {
             mixValue(entry.first);

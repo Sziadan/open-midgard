@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK47 restores the selected `0293` boss-map feed. Verify the notice and minimap marker with a Convex Mirror on a live map. The original `bossmonster.bmp` and its marker animation still need visual parity. [Boss-map evidence](evidence/PK47.04-boss-map-info.md)
+
 Cash and ordinary NPC shop replies retain their pending ownership through a same-connection warp while the old shop quote closes. A server move clears the old ownership. Verify a delayed purchase result after warp and a fresh quote on the selected deployment. [Commerce verification](evidence/PK40.05-selected-verification.md#shop-replies-on-map-change)
 
 Auction window close retains staging if cancellation fails. Same-map reuse and mode replacement on the same server preserve auction request ownership. Registration fee refusal `5` accounts for a refreshed inventory before releasing the reservation. Results `2` and `4` still need reconciliation for invalid staging and an ambiguous debit or refund. Verify warps live. [Auction staging evidence](evidence/PK40.05-selected-verification.md#auction-staging-on-close-and-same-map-warp)

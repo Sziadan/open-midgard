@@ -408,6 +408,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x02D4, 29);
     SetPacketSize(0x02D5, 2);
     SetPacketSize(0x0291, 4);                // ZC_MSG localized system notice
+    SetPacketSize(0x0293, 70);               // ZC_BOSS_INFO
     SetPacketSize(0x029B, 80);               // Selected mercenary initialization
     SetPacketSize(0x029D, kVariablePacketSize);
     SetPacketSize(0x029E, 11);
