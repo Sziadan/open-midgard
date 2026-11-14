@@ -15,7 +15,7 @@ AUDIT-0x0070,0x0070,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Character delet
 AUDIT-0x0071,0x0071,login/char,S2C,PK44,PK01;PK02;PK47;PK48;PK45,Character-stage source identity/guard and current-client path traced in PK44.CHAR-LIST-ENTRY.md; historical/profile reachability remains open.,UNREVIEWED,PK44.CHAR-LIST-ENTRY
 AUDIT-0x0072,0x0072,map,C2S,PK23,PK01;PK02;PK47;PK48;PK46,PacketVer22 targeted skill captured at selected offsets 6 10 and 21; legacy zone layouts require a different registry,C2S_ONLY,PK46.02-map-skill-target-request-0438
 AUDIT-0x0073,0x0073,map,S2C,PK45,PK01;PK02;PK47;PK48,Client receive handler and packetver23 map-send profile identify 0x0073 as legacy accept-enter; pinned server 20080910 selects 0x02EB,UNREVIEWED,
-AUDIT-0x0074,0x0074,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x0074,0x0074,map,S2C,PK47,PK01;PK02;PK48,Selected source has an unused ZC_REFUSE_ENTER emitter; active map authentication uses 006A and 0081,INACTIVE_FOR_SELECTED_SOURCE_CONFIG,PK47.04-MAP-ENTRY-REFUSAL
 AUDIT-0x0075,0x0075,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0076,0x0076,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0077,0x0077,map,unresolved,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
@@ -549,7 +549,7 @@ AUDIT-0x028F,0x028F,login/char,C2S,PK44,PK01;PK02;PK47;PK48;PK46,"Selected serve
 AUDIT-0x0290,0x0290,login/char,S2C,PK44,PK01;PK02;PK47;PK48,"Selected server legacy rename forms, two-step state and result branches traced in PK44.CHAR-RENAME.md; client path unconfirmed.",UNREVIEWED,PK44.CHAR-RENAME
 AUDIT-0x0291,0x0291,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0292,0x0292,map,C2S,PK47,PK01;PK02;PK48;PK46;PK19,Selected 20080910 two-byte standing resurrection request with source-backed recovery action and loopback wire verification,C2S_ONLY,PK19.STANDING-RESURRECTION
-AUDIT-0x0293,0x0293,map,S2C,PK47,PK01;PK02;PK48,Selected boss-map feed implemented and replayed; reference marker and live verification pending,UNREVIEWED,PK47.04-BOSS-MAP-INFO
+AUDIT-0x0293,0x0293,map,S2C,PK47,PK01;PK02;PK48,Selected boss-map feed and reference chat routes replayed; native and Qt marker rendering checked; live verification pending,UNREVIEWED,PK47.04-BOSS-MAP-INFO
 AUDIT-0x0294,0x0294,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
 AUDIT-0x0297,0x0297,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-commerce-cart-item-lists.md: variable-length client cart-list route and replacement behavior traced; selected 20080910 uses 0x02E9 normal and 0x02D2 equipment lists while 0x0297 is another profile branch. Server field schema and replay remain open.,UNREVIEWED,
 AUDIT-0x0298,0x0298,map,S2C,PK33,PK01;PK02;PK47;PK48,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,

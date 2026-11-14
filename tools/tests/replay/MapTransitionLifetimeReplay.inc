@@ -581,6 +581,7 @@ void MapTransitionLifetimeReplay()
         mode.m_auctionSearch.open = true;
         mode.m_auctionSearch.pages = 3;
         mode.m_auctionSearch.rows.emplace_back();
+        mode.m_bossMapPosition = {1, 1};
         mode.m_auctionStaging.stagedIndex = 42;
         mode.m_auctionStaging.stagedItemId = 985;
         mode.StartNpcProgress(3, timeGetTime());
@@ -713,6 +714,8 @@ void MapTransitionLifetimeReplay()
             "same-map warp retained the previous PvP rank or timer");
         Require(!mode.m_auctionSearch.open && !mode.m_auctionSearch.pages && mode.m_auctionSearch.rows.empty(),
             "same-map warp retained the previous auction snapshot");
+        Require(mode.m_bossMapPosition.x == -1 && mode.m_bossMapPosition.y == -1,
+            "same-map warp retained a boss marker from before the warp");
         Require(mode.m_auctionStaging.stagedIndex == 42 && mode.m_auctionStaging.stagedItemId == 985,
             "same-map warp dropped the reservation on the still-open map connection");
         Require(ro::commerce::state.promptKind.empty() && !ro::commerce::state.promptId,
