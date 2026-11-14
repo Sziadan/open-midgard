@@ -44,6 +44,7 @@
 namespace {
 
 constexpr u32 kPasswordHashFallbackDelayMs = 1500;
+constexpr u32 kAccountLoginTimeoutMs = 15000;
 constexpr u32 kCharacterRequestTimeoutMs = 15000;
 constexpr u32 kZoneEntryTimeoutMs = 15000;
 constexpr size_t kCompactCharListHeaderSize = 4;
@@ -1344,7 +1345,7 @@ std::string ConsumeDeferredLoginStatus(std::string& deferredStatus, const char* 
 CLoginMode::CLoginMode() 
         : m_numServer(0), m_serverSelected(0), m_numChar(0),
             m_selectedCharIndex(0), m_selectedCharSlot(0), m_pendingDeleteCharGid(0), m_pendingDeleteCharSlot(-1), m_subModeStartTime(0),
-    m_syncRequestTime(0), m_waitingForPasswordHash(false), m_plainAccountLoginSent(false), m_wndWait(nullptr), m_multiLang(0), 
+    m_syncRequestTime(0), m_waitingForPasswordHash(false), m_wndWait(nullptr), m_multiLang(0),
       m_nSelectedAccountNo(0), m_nSelectedAccountNo2(0),
     m_zonePort(0)
 {
@@ -1372,6 +1373,7 @@ void CLoginMode::OnInit(const char* worldName) {
     m_nextSubMode = -1;
     m_characterRequest = CharacterRequest::None;
     m_characterListRequestedAt.reset();
+    ResetAccountLoginHandshake();
     m_subModeCnt = 0;
 
     if (!LoadClientInfoCandidates()) {
@@ -1411,6 +1413,7 @@ void CLoginMode::OnInit(const char* worldName) {
 }
 
 void CLoginMode::OnExit() {
+    ResetAccountLoginHandshake();
     m_zoneEntrySentAt.reset();
     m_characterListRequestedAt.reset();
     ResetScheduledDeletion();
@@ -1450,7 +1453,7 @@ void CLoginMode::OnUpdate() {
                     : (m_subMode == LoginSubMode_ConnectAccount)
                 ? (m_waitingForPasswordHash
                     ? "Login server closed the connection while waiting for the password-hash challenge response."
-                    : (m_plainAccountLoginSent
+                    : (m_accountLoginSentAt
                         ? "Login server closed the connection after the account login request. The server likely rejected the login packet shape, client type, or password mode without returning a RO error packet."
                         : "Login server closed the connection before authentication completed."))
                 : m_characterRequest == CharacterRequest::Create
@@ -1473,10 +1476,12 @@ void CLoginMode::OnUpdate() {
             m_pendingDeleteCharGid = 0;
             m_pendingDeleteCharSlot = -1;
             ResetScheduledDeletion();
+            ResetAccountLoginHandshake();
             m_nextSubMode = LoginSubMode_Login;
             return;
         }
         UpdateAccountHashTimeout(GetTickCount());
+        UpdateAccountLoginTimeout(GetTickCount());
         UpdateCharacterListTimeout(GetTickCount());
         UpdateCharacterRequestTimeout(GetTickCount());
         UpdateZoneEntryTimeout(GetTickCount());
@@ -1551,6 +1556,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
 
     case LoginMsg_ReturnToLogin:
     case LoginMsg_Disconnect:
+        ResetAccountLoginHandshake();
         m_zoneEntrySentAt.reset();
         m_characterListRequestedAt.reset();
         ResetScheduledDeletion();
@@ -2288,7 +2294,7 @@ void CLoginMode::ResetAccountLoginHandshake()
 {
     m_syncRequestTime = 0;
     m_waitingForPasswordHash = false;
-    m_plainAccountLoginSent = false;
+    m_accountLoginSentAt.reset();
 }
 
 void CLoginMode::FailAccountLogin(const char* message)
@@ -2314,6 +2320,19 @@ void CLoginMode::UpdateAccountHashTimeout(u32 now)
     DbgLog("[Login] password hash challenge timed out, sending configured direct login\n");
     ResetAccountLoginHandshake();
     SendPlainAccountLogin();
+}
+
+void CLoginMode::WaitForAccountLoginReply()
+{
+    m_accountLoginSentAt = GetTickCount();
+    SetLoginStatus("Login: waiting for account server response...");
+}
+
+void CLoginMode::UpdateAccountLoginTimeout(u32 now)
+{
+    if (m_accountLoginSentAt && now - *m_accountLoginSentAt >= kAccountLoginTimeoutMs) {
+        FailAccountLogin("Login: no account server response. Sign in again to retry.");
+    }
 }
 
 void CLoginMode::ReturnToSignIn(const char* message)
@@ -2410,7 +2429,7 @@ void CLoginMode::SendPasswordHashRequest()
     }
     m_syncRequestTime = GetTickCount();
     m_waitingForPasswordHash = true;
-    m_plainAccountLoginSent = false;
+    m_accountLoginSentAt.reset();
     DbgLog("[Login] CA_REQ_HASH sent\n");
     SetLoginStatus("Login: waiting for account hash challenge...");
 }
@@ -2450,13 +2469,12 @@ void CLoginMode::SendPlainAccountLogin()
         FailAccountLogin("Login: failed to send the account login request.");
         return;
     }
-    m_plainAccountLoginSent = true;
     DbgLog("[Login] CA_LOGIN sent: user='%s' version=%u clienttype=%u (clientinfo=%d)\n",
            pkt.ID,
            pkt.Version,
            static_cast<unsigned int>(pkt.clienttype),
            g_version);
-    SetLoginStatus("Login: waiting for account server response...");
+    WaitForAccountLoginReply();
 }
 
 void CLoginMode::SendLoginPcBang()
@@ -2480,13 +2498,12 @@ void CLoginMode::SendLoginPcBang()
         return;
     }
 
-    m_plainAccountLoginSent = true;
     DbgLog("[Login] CA_LOGIN_PCBANG sent: user='%s' version=%u clienttype=%u ip=%s\n",
            pkt.ID,
            pkt.Version,
            static_cast<unsigned int>(pkt.clienttype),
            pkt.IP);
-    SetLoginStatus("Login: waiting for account server response...");
+    WaitForAccountLoginReply();
 }
 
 void CLoginMode::SendLogin4()
@@ -2509,12 +2526,11 @@ void CLoginMode::SendLogin4()
         return;
     }
 
-    m_plainAccountLoginSent = true;
     DbgLog("[Login] CA_LOGIN4 sent: user='%s' version=%u clienttype=%u\n",
            pkt.ID,
            pkt.Version,
            static_cast<unsigned int>(pkt.clienttype));
-    SetLoginStatus("Login: waiting for account server response...");
+    WaitForAccountLoginReply();
 }
 
 void CLoginMode::SendLoginChannel()
@@ -2539,13 +2555,12 @@ void CLoginMode::SendLoginChannel()
         return;
     }
 
-    m_plainAccountLoginSent = true;
     DbgLog("[Login] CA_LOGIN_CHANNEL sent: user='%s' version=%u clienttype=%u ip=%s\n",
            pkt.ID,
            pkt.Version,
            static_cast<unsigned int>(pkt.clienttype),
            pkt.IP);
-    SetLoginStatus("Login: waiting for account server response...");
+    WaitForAccountLoginReply();
 }
 
 void CLoginMode::OnAckHash(const std::vector<u8>& raw)
@@ -2618,7 +2633,7 @@ void CLoginMode::OnAckHash(const std::vector<u8>& raw)
            packetKind == AccountLoginPacketKind::Login3 ? "CA_LOGIN3" : "CA_LOGIN_HASH",
            static_cast<int>(payloadLength), static_cast<unsigned int>(clientType),
            g_passwordEncrypt2 != 0 ? "password+challenge" : "challenge+password");
-    SetLoginStatus("Login: waiting for account server response...");
+    WaitForAccountLoginReply();
 }
 
 // ---------------------------------------------------------------------------
@@ -2630,8 +2645,7 @@ void CLoginMode::OnAcceptLogin(const std::vector<u8>& raw)
 {
     ResetAccountLoginHandshake();
     if (raw.size() < 47) {
-        SetLoginStatus("Login error: AC_ACCEPT_LOGIN too short.");
-        m_nextSubMode = LoginSubMode_Login;
+        FailAccountLogin("Login error: AC_ACCEPT_LOGIN too short.");
         return;
     }
     const u8* p = raw.data();
@@ -2646,16 +2660,14 @@ void CLoginMode::OnAcceptLogin(const std::vector<u8>& raw)
         m_numServer = 0;
         m_serverSelected = -1;
         std::memset(m_serverInfo, 0, sizeof(m_serverInfo));
-        SetLoginStatus("Login error: malformed AC_ACCEPT_LOGIN server list.");
-        m_nextSubMode = LoginSubMode_Login;
+        FailAccountLogin("Login error: malformed AC_ACCEPT_LOGIN server list.");
         return;
     }
     if ((static_cast<size_t>(packetLen) - kAcceptLoginPrefixLength) / kServerRecordLength > kServerRecordCapacity) {
         m_numServer = 0;
         m_serverSelected = -1;
         std::memset(m_serverInfo, 0, sizeof(m_serverInfo));
-        SetLoginStatus("Login error: too many AC_ACCEPT_LOGIN server records.");
-        m_nextSubMode = LoginSubMode_Login;
+        FailAccountLogin("Login error: too many AC_ACCEPT_LOGIN server records.");
         return;
     }
 
@@ -2681,14 +2693,12 @@ void CLoginMode::OnAcceptLogin(const std::vector<u8>& raw)
         m_numServer = toRead;
     }
 
-    DbgLog("[Login] AC_ACCEPT_LOGIN: aid=%u authCode=%u userLevel=%u sex=%d servers=%d\n",
-           g_session.m_aid, g_session.m_authCode, g_session.m_userLevel,
-           (int)g_session.m_sex, m_numServer);
+    DbgLog("[Login] AC_ACCEPT_LOGIN: aid=%u sex=%d servers=%d\n",
+           g_session.m_aid, (int)g_session.m_sex, m_numServer);
     SetLoginStatus("Login: account accepted by server.");
 
     if (m_numServer == 0) {
-        SetLoginStatus("Login error: no char servers in login response.");
-        m_nextSubMode = LoginSubMode_Login;
+        FailAccountLogin("Login error: no char servers in login response.");
         return;
     }
 

@@ -132,6 +132,12 @@ struct LoginModeReplayAccess : CLoginMode {
     void AdvanceCharacterRequestTimeout(u32 elapsed) {
         UpdateCharacterRequestTimeout(m_characterRequestSentAt + elapsed);
     }
+    void AdvanceAccountLoginTimeout(u32 elapsed) {
+        UpdateAccountLoginTimeout(m_accountLoginSentAt.value() + elapsed);
+    }
+    bool WaitingForAccountLoginReply() const {
+        return m_accountLoginSentAt.has_value() && !m_waitingForPasswordHash && m_syncRequestTime == 0;
+    }
     void AdvanceCharacterListTimeout(u32 elapsed) {
         UpdateCharacterListTimeout(m_characterListRequestedAt.value() + elapsed);
     }
@@ -160,11 +166,11 @@ struct LoginModeReplayAccess : CLoginMode {
     static void PrepareHandshakeOnly(LoginModeReplayAccess& mode) {
         mode.m_syncRequestTime = 123;
         mode.m_waitingForPasswordHash = true;
-        mode.m_plainAccountLoginSent = true;
+        mode.m_accountLoginSentAt = 123;
     }
     static bool HandshakeCleared(const LoginModeReplayAccess& mode) {
         return mode.m_syncRequestTime == 0 && !mode.m_waitingForPasswordHash
-            && !mode.m_plainAccountLoginSent;
+            && !mode.m_accountLoginSentAt;
     }
     static void SendHashRequest(LoginModeReplayAccess& mode) {
         mode.SendPasswordHashRequest();
@@ -274,12 +280,12 @@ struct LoginModeReplayAccess : CLoginMode {
     static void PrepareDisconnectState(LoginModeReplayAccess& mode) {
         mode.m_syncRequestTime = 123;
         mode.m_waitingForPasswordHash = true;
-        mode.m_plainAccountLoginSent = true;
+        mode.m_accountLoginSentAt = 123;
         mode.m_isConnected = 1;
     }
     static bool DisconnectStateCleared(const LoginModeReplayAccess& mode) {
         return mode.m_syncRequestTime == 0 && !mode.m_waitingForPasswordHash
-            && !mode.m_plainAccountLoginSent && mode.m_isConnected == 0;
+            && !mode.m_accountLoginSentAt && mode.m_isConnected == 0;
     }
     static void AdoptDeferredStatus(LoginModeReplayAccess& mode, const char* status) {
         SetPendingLoginStatus(status);
@@ -1383,6 +1389,7 @@ void LoginAcceptReplyReplay()
         }
     }
     Require(g_windowMgr.GetLoginStatus() == malformedStatus
+            && !connection->IsOpen()
             && malformedMode.NextSubMode() == CLoginMode::LoginSubMode_Login
             && LoginModeReplayAccess::MalformedAcceptLoginClearedList(malformedMode)
             && LoginModeReplayAccess::HandshakeCleared(malformedMode),
@@ -1415,6 +1422,7 @@ void LoginAcceptReplyReplay()
         }
     }
     Require(g_windowMgr.GetLoginStatus() == oversizedStatus
+            && !connection->IsOpen()
             && oversizedMode.NextSubMode() == CLoginMode::LoginSubMode_Login
             && LoginModeReplayAccess::MalformedAcceptLoginClearedList(oversizedMode)
             && LoginModeReplayAccess::HandshakeCleared(oversizedMode),
@@ -2091,7 +2099,14 @@ void LoginConnectInfoGateReplay()
             Require(SelectSocket(accepted.value, true, false, std::chrono::milliseconds(20)) == 0,
                 "optional hash timeout sent a second direct login");
         }
-        connection->Disconnect();
+        Require(mode.WaitingForAccountLoginReply(), "direct account request did not arm its reply deadline");
+        mode.AdvanceAccountLoginTimeout(14999);
+        Require(connection->IsOpen(), "direct account request expired before its reply deadline");
+        mode.AdvanceAccountLoginTimeout(15000);
+        Require(!connection->IsOpen() && LoginModeReplayAccess::DisconnectStateCleared(mode)
+            && mode.NextSubMode() == CLoginMode::LoginSubMode_Login
+            && LoginModeReplayAccess::DeferredStatus(mode) == "Login: no account server response. Sign in again to retry.",
+            "silent account server did not return direct login to sign-in");
         g_windowMgr.RemoveAllWindows();
         return Hex(captured);
     };
@@ -2877,9 +2892,9 @@ void Login3ClientInfoHashRequestReplay()
     Require(challengeBytes == static_cast<int>(challenge.size()),
         "login3 mock account server did not send the full selected-source challenge");
     const auto responseDeadline = Clock::now() + kTimeout;
-    while (!LoginModeReplayAccess::HandshakeCleared(mode) && Clock::now() < responseDeadline) {
+    while (!mode.WaitingForAccountLoginReply() && Clock::now() < responseDeadline) {
         LoginModeReplayAccess::RunPollNetwork(mode);
-        if (!LoginModeReplayAccess::HandshakeCleared(mode)) {
+        if (!mode.WaitingForAccountLoginReply()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
@@ -2893,7 +2908,7 @@ void Login3ClientInfoHashRequestReplay()
     const std::vector<u8> capturedLogin = ReceiveExactSocket(accepted.value, expectedLogin.size());
     Require(capturedLogin == expectedLogin,
         "production login3 sender differs from the 48-byte selected-source fixture");
-    Require(LoginModeReplayAccess::HandshakeCleared(mode)
+    Require(mode.WaitingForAccountLoginReply()
             && g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
         "login3 response did not clear challenge state and wait for account reply");
     Require(send(accepted.value, reinterpret_cast<const char*>(challenge.data()),
@@ -2905,7 +2920,12 @@ void Login3ClientInfoHashRequestReplay()
     Require(g_windowMgr.GetLoginStatus() == "Login: waiting for account server response...",
         "a duplicate challenge replaced the account-response status");
 
-    connection->Disconnect();
+    mode.AdvanceAccountLoginTimeout(14999);
+    Require(connection->IsOpen(), "login3 response expired before its reply deadline");
+    mode.AdvanceAccountLoginTimeout(15000);
+    Require(!connection->IsOpen() && LoginModeReplayAccess::DisconnectStateCleared(mode)
+        && mode.NextSubMode() == CLoginMode::LoginSubMode_Login,
+        "silent account server did not return login3 to sign-in after the hash response");
     {
         LoopbackPeer silentAccount(*connection);
         LoginModeReplayAccess retry;

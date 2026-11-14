@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.03 uses a 15-second deadline after direct or hash account login sends. Verify the configured login profile against the selected deployment and check that successful login advances to character-server entry. [Account response evidence](evidence/PK46.03-account-login-send-gates.md#account-response-deadline)
+
 PK46.03 now recovers from a failed character-server entry send or a character server that never returns the list. The 15-second deadline stays active after the raw account ID echo. Check the successful account-to-character-server handoff and refusal messages on the selected deployment. [Character-server entry evidence](evidence/PK46.03-character-server-entry-path.md#current-recovery)
 
 PK46.03 validates character-list and creation-reply slots before decoding them into the selector's byte-sized field. Duplicate or invalid records require a fresh sign-in. For live verification, use a disposable character to create in a free slot, relog and verify the same slot, and check the selected server's refusal for a slot outside the account's creation allowance. The selected `006B` list supplies occupied slot IDs and has no account-capacity field. [Character request evidence](evidence/PK46.03-loginmode-character-send-paths.md#character-slot-identity-validation)

@@ -114,7 +114,7 @@ public:
     BILLING_INFO m_billingInfo;
     u32 m_syncRequestTime;
     bool m_waitingForPasswordHash;
-    bool m_plainAccountLoginSent;
+    std::optional<u32> m_accountLoginSentAt;
     UIWaitWnd* m_wndWait;
     std::vector<LoginAccountInfo> m_accountInfo;
     std::vector<LoginAccountInfo> m_accountInfo2;
@@ -147,6 +147,8 @@ private:
     void ResetAccountLoginHandshake();
     void FailAccountLogin(const char* message);
     void UpdateAccountHashTimeout(u32 now);
+    void UpdateAccountLoginTimeout(u32 now);
+    void WaitForAccountLoginReply();
     void UpdateCharacterListTimeout(u32 now);
     void UpdateCharacterRequestTimeout(u32 now);
     void ReturnToSignIn(const char* message);
