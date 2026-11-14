@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK46.03 now recovers from a failed character-server entry send or a character server that never returns the list. The 15-second deadline stays active after the raw account ID echo. Check the successful account-to-character-server handoff and refusal messages on the selected deployment. [Character-server entry evidence](evidence/PK46.03-character-server-entry-path.md#current-recovery)
+
 PK46.03 validates character-list and creation-reply slots before decoding them into the selector's byte-sized field. Duplicate or invalid records require a fresh sign-in. For live verification, use a disposable character to create in a free slot, relog and verify the same slot, and check the selected server's refusal for a slot outside the account's creation allowance. The selected `006B` list supplies occupied slot IDs and has no account-capacity field. [Character request evidence](evidence/PK46.03-loginmode-character-send-paths.md#character-slot-identity-validation)
 
 PK46.02 connects GM actor kick `00CC` and player manner adjustment `0149`. Verify the real client menu, prompts, permissions, and resulting server updates with two accounts. Check actor kick permissions for players, monsters, and NPCs independently. The 177-row selected map request inventory now has no `UNREVIEWED` classifications. Continue the pending profile, live outcome, and PK46 self-review checks. [Context request evidence](evidence/PK46.02-gm-player-context.md)

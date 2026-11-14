@@ -132,6 +132,10 @@ struct LoginModeReplayAccess : CLoginMode {
     void AdvanceCharacterRequestTimeout(u32 elapsed) {
         UpdateCharacterRequestTimeout(m_characterRequestSentAt + elapsed);
     }
+    void AdvanceCharacterListTimeout(u32 elapsed) {
+        UpdateCharacterListTimeout(m_characterListRequestedAt.value() + elapsed);
+    }
+    bool WaitingForCharacterList() const { return m_characterListRequestedAt.has_value(); }
     void AdvanceZoneEntryTimeout(u32 elapsed) {
         UpdateZoneEntryTimeout(*m_zoneEntrySentAt + elapsed);
     }
@@ -2173,9 +2177,33 @@ void LoginCharacterServerEntryRequestReplay()
         "mock char-server reply did not become readable");
     LoginModeReplayAccess::RunPollNetwork(mode);
     Require(g_windowMgr.GetLoginStatus() == "Login: no characters on account."
-            && mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect,
+            && mode.NextSubMode() == CLoginMode::LoginSubMode_CharSelect && !mode.WaitingForCharacterList(),
         "ConnectChar did not consume the raw AID and dispatch the following framed character list");
     connection->Disconnect();
+
+    LoginModeReplayAccess silentMode;
+    LoginModeReplayAccess::SeedCharServerForConnect(
+        silentMode, inet_addr("127.0.0.1"), static_cast<s16>(charPort));
+    silentMode.OnChangeState(CLoginMode::LoginSubMode_ConnectChar);
+    Require(SelectSocket(listener.value, true, false,
+            std::chrono::duration_cast<std::chrono::milliseconds>(kTimeout)) > 0,
+        "silent char-server listener did not receive the second connection");
+    SocketOwner silentPeer(accept(listener.value, nullptr, nullptr));
+    Require(silentPeer.value != INVALID_SOCKET && ReceiveExactSocket(silentPeer.value, expected.size()) == expected,
+        "silent char-server did not receive the entry packet");
+    Require(send(silentPeer.value, reinterpret_cast<const char*>(charServerReply.data()), 4, 0) == 4,
+        "silent char-server could not send the raw account echo");
+    Require(SelectSocket(PacketStreamReplayAccess::Native(*connection), true, false,
+            std::chrono::duration_cast<std::chrono::milliseconds>(kTimeout)) > 0,
+        "silent char-server account echo did not become readable");
+    LoginModeReplayAccess::RunPollNetwork(silentMode);
+    silentMode.AdvanceCharacterListTimeout(14999);
+    Require(connection->IsOpen() && silentMode.WaitingForCharacterList(), "character-list wait ended early");
+    silentMode.AdvanceCharacterListTimeout(15000);
+    Require(!connection->IsOpen() && !silentMode.WaitingForCharacterList()
+        && silentMode.NextSubMode() == CLoginMode::LoginSubMode_Login
+        && g_windowMgr.GetLoginStatus() == "Login: no character list received. Sign in again to retry.",
+        "silent char-server did not return to sign-in at the deadline");
     g_windowMgr.RemoveAllWindows();
     std::cout << "{\"case_id\":\"login_character_server_entry_request\",\"contract_id\":\"PK44.CHAR-RAW-AID-HANDSHAKE\",\"fixture_id\":\"PK44-0065-connect-char-entry-request-and-raw-aid\",\"production_entry\":\"CLoginMode::OnChangeState(ConnectChar) -> CRagConnection::Connect/ExpectRawAccountIdEcho/SendPacket -> RecvPacket -> PollNetwork\",\"expected_packet_hex\":\"" << Hex(expected) << "\",\"captured_packet_hex\":\"" << Hex(captured) << "\",\"char_server_reply_hex\":\"" << Hex(charServerReply) << "\",\"frame_length\":17,\"opcode\":\"0x0065\",\"account_id\":287454020,\"raw_echo_hex\":\"44332211\",\"following_frame_hex\":\"6b0018000000000000000000000000000000000000000000\",\"empty_character_list_dispatched\":true,\"next_submode_char_select\":true,\"network_scope\":\"loopback mock char server only\",\"outcome\":\"PASS\"}\n";
 }

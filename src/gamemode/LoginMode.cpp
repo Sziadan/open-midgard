@@ -1371,6 +1371,7 @@ void CLoginMode::OnInit(const char* worldName) {
     m_isConnected = 0;
     m_nextSubMode = -1;
     m_characterRequest = CharacterRequest::None;
+    m_characterListRequestedAt.reset();
     m_subModeCnt = 0;
 
     if (!LoadClientInfoCandidates()) {
@@ -1411,6 +1412,7 @@ void CLoginMode::OnInit(const char* worldName) {
 
 void CLoginMode::OnExit() {
     m_zoneEntrySentAt.reset();
+    m_characterListRequestedAt.reset();
     ResetScheduledDeletion();
     g_session.InvalidatePartyPositions();
     RefreshMainWindowTitle();
@@ -1466,6 +1468,7 @@ void CLoginMode::OnUpdate() {
             m_deferredLoginStatus = message;
             m_isConnected = 0;
             m_zoneEntrySentAt.reset();
+            m_characterListRequestedAt.reset();
             m_characterRequest = CharacterRequest::None;
             m_pendingDeleteCharGid = 0;
             m_pendingDeleteCharSlot = -1;
@@ -1474,6 +1477,7 @@ void CLoginMode::OnUpdate() {
             return;
         }
         UpdateAccountHashTimeout(GetTickCount());
+        UpdateCharacterListTimeout(GetTickCount());
         UpdateCharacterRequestTimeout(GetTickCount());
         UpdateZoneEntryTimeout(GetTickCount());
     }
@@ -1548,6 +1552,7 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
     case LoginMsg_ReturnToLogin:
     case LoginMsg_Disconnect:
         m_zoneEntrySentAt.reset();
+        m_characterListRequestedAt.reset();
         ResetScheduledDeletion();
         m_characterRequest = CharacterRequest::None;
         m_pendingDeleteCharGid = 0;
@@ -1980,9 +1985,12 @@ void CLoginMode::OnChangeState(int newState) {
         ePkt.UserLevel  = g_session.m_userLevel;
         ePkt.unused     = 0;
         ePkt.Sex        = g_session.m_sex;
-        CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&ePkt), static_cast<int>(sizeof(ePkt)));
-        DbgLog("[Login] CA_ENTER sent: aid=%u authCode=%u userLevel=%u sex=%d\n",
-               ePkt.AID, ePkt.AuthCode, ePkt.UserLevel, (int)ePkt.Sex);
+        if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&ePkt), static_cast<int>(sizeof(ePkt)))) {
+            ReturnToSignIn("Login: failed to send the character-server entry request. Sign in again to retry.");
+            break;
+        }
+        m_characterListRequestedAt = GetTickCount();
+        DbgLog("[Login] CA_ENTER sent: aid=%u sex=%d\n", ePkt.AID, static_cast<int>(ePkt.Sex));
         SetLoginStatus("Login: waiting for character list...");
         break;
     }
@@ -2311,6 +2319,7 @@ void CLoginMode::UpdateAccountHashTimeout(u32 now)
 void CLoginMode::ReturnToSignIn(const char* message)
 {
     m_zoneEntrySentAt.reset();
+    m_characterListRequestedAt.reset();
     m_characterRequest = CharacterRequest::None;
     ResetScheduledDeletion();
     CRagConnection::instance()->Disconnect();
@@ -2318,6 +2327,13 @@ void CLoginMode::ReturnToSignIn(const char* message)
     m_nextSubMode = LoginSubMode_Login;
     m_deferredLoginStatus = message;
     SetLoginStatus(message);
+}
+
+void CLoginMode::UpdateCharacterListTimeout(u32 now)
+{
+    if (m_characterListRequestedAt && now - *m_characterListRequestedAt >= kCharacterRequestTimeoutMs) {
+        ReturnToSignIn("Login: no character list received. Sign in again to retry.");
+    }
 }
 
 void CLoginMode::UpdateCharacterRequestTimeout(u32 now)
@@ -2812,6 +2828,7 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
     }
     std::copy(std::begin(decoded), std::end(decoded), m_charInfo);
     m_numChar = static_cast<int>(characterRecordCount);
+    m_characterListRequestedAt.reset();
 
     if (layout == CharListLayout::Expanded) {
         DbgLog("[Login] HC_ACCEPT_ENTER: numChar=%d (pktLen=%u header=%zu total=%u premium_start=%u premium_end=%u)\n",
@@ -2877,6 +2894,7 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnRefuseChar(const std::vector<u8>& raw)
 {
+    m_characterListRequestedAt.reset();
     m_characterRequest = CharacterRequest::None;
     const u8 code = (raw.size() > 2) ? raw[2] : 0;
     char msg[64];
@@ -3238,6 +3256,7 @@ void CLoginMode::OnZcAcceptEnter(const std::vector<u8>& raw)
 // ---------------------------------------------------------------------------
 void CLoginMode::OnDisconnectMsg(const std::vector<u8>& raw)
 {
+    m_characterListRequestedAt.reset();
     m_characterRequest = CharacterRequest::None;
     ResetScheduledDeletion();
     ResetAccountLoginHandshake();

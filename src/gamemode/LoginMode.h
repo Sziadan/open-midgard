@@ -147,10 +147,12 @@ private:
     void ResetAccountLoginHandshake();
     void FailAccountLogin(const char* message);
     void UpdateAccountHashTimeout(u32 now);
+    void UpdateCharacterListTimeout(u32 now);
     void UpdateCharacterRequestTimeout(u32 now);
     void ReturnToSignIn(const char* message);
     void UpdateZoneEntryTimeout(u32 now);
     std::optional<u32> m_zoneEntrySentAt;
+    std::optional<u32> m_characterListRequestedAt;
     enum class CharacterRequest { None, Select, Create };
     CharacterRequest m_characterRequest = CharacterRequest::None;
     u32 m_characterRequestSentAt = 0;
