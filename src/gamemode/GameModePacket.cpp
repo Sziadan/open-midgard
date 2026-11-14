@@ -4291,6 +4291,9 @@ bool IsSameMapAlreadyLoaded(const CGameMode& mode, const MapChangeInfo& info)
 void PrepareSameMapWarpReuse(CGameMode& mode)
 {
     mode.m_pvpRankStartTick = 0;
+    mode.m_auctionStaging.stagedIndex = 0;
+    mode.m_auctionStaging.stagedItemId = 0;
+    mode.m_auctionStaging.discardReply = mode.m_auctionStaging.pendingIndex != 0;
     mode.CloseAuctionSearch();
     g_windowMgr.DeleteWindow(g_windowMgr.m_auctionWnd);
     mode.m_recallPartnerName.clear();

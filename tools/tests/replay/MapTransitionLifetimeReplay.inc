@@ -581,6 +581,8 @@ void MapTransitionLifetimeReplay()
         mode.m_auctionSearch.open = true;
         mode.m_auctionSearch.pages = 3;
         mode.m_auctionSearch.rows.emplace_back();
+        mode.m_auctionStaging.stagedIndex = 42;
+        mode.m_auctionStaging.stagedItemId = 1201;
         mode.StartNpcProgress(3, timeGetTime());
         UIRechargeGage* const progressGauge = mode.GetNpcProgressGauge();
         Require(progressGauge != nullptr && g_windowMgr.ContainsWindow(progressGauge),
@@ -711,6 +713,8 @@ void MapTransitionLifetimeReplay()
             "same-map warp retained the previous PvP rank or timer");
         Require(!mode.m_auctionSearch.open && !mode.m_auctionSearch.pages && mode.m_auctionSearch.rows.empty(),
             "same-map warp retained the previous auction snapshot");
+        Require(!mode.m_auctionStaging.stagedIndex && !mode.m_auctionStaging.stagedItemId,
+            "same-map warp retained staging after retiring the old inventory snapshot");
         Require(ro::commerce::state.promptKind.empty() && !ro::commerce::state.promptId,
             "same-map warp kept a friend invitation actionable");
         mode.UpdateAdoptionInvitation();

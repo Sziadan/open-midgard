@@ -638,6 +638,17 @@ void AuctionSearchSnapshotReplay()
     dispatch(page);
     Require(!state.open && !state.pages && state.rows.empty() && !g_windowMgr.m_auctionWnd,
         "auction close retained the window or accepted late results");
+    // Server-driven close cannot depend on a successful cancellation send.
+    dispatch({0x5f,2,0,0,0,0});
+    server.ReceiveExact(browse.size());
+    dispatch(page);
+    outgoing->Disconnect();
+    mode.m_auctionStaging.stagedIndex = 42;
+    mode.m_auctionStaging.stagedItemId = 1201;
+    dispatch({0x5f,2,1,0,0,0});
+    Require(!state.open && !g_windowMgr.m_auctionWnd && mode.m_auctionStaging.stagedIndex == 42
+        && mode.m_auctionStaging.stagedItemId == 1201,
+        "server-driven auction close discarded the reservation after a failed cancellation send");
     outgoing->Disconnect();
     SkillPacketReplayAccess::Restore(oldMode, oldModeType);
 }

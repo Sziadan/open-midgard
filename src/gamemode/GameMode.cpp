@@ -10556,9 +10556,6 @@ bool CGameMode::RequestAuctionSearch(const AuctionSearchQuery& query)
 
 void CGameMode::CloseAuctionSearch()
 {
-    m_auctionStaging.stagedIndex = 0;
-    m_auctionStaging.stagedItemId = 0;
-    m_auctionStaging.discardReply = m_auctionStaging.pendingIndex != 0;
     // The search reply has no request ID, so drain any outstanding page before reuse.
     const bool awaitingReply = m_auctionSearch.awaitingReply;
     const u32 sentAt = m_auctionSearch.sentAt;
@@ -10613,7 +10610,7 @@ bool CGameMode::ApplyAuctionStageResult(u16 index, u8 result)
     if (result == 0) {
         const auto* item = g_session.GetInventoryItemByIndex(staging.pendingIndex);
         if (item && item->GetItemId() == staging.pendingItemId && item->m_num > 0) {
-            if (m_auctionSearch.open && !staging.discardReply) {
+            if (!staging.discardReply) {
                 staging.stagedIndex = staging.pendingIndex;
                 staging.stagedItemId = staging.pendingItemId;
             }
@@ -10621,7 +10618,7 @@ bool CGameMode::ApplyAuctionStageResult(u16 index, u8 result)
             // the reserved unit with the ordinary item pickup acknowledgement.
             g_session.RemoveInventoryItem(staging.pendingIndex, 1);
             inventoryChanged = true;
-        } else if (m_auctionSearch.open && !staging.discardReply) {
+        } else if (!staging.discardReply) {
             CancelAuctionStaging();
         }
     }

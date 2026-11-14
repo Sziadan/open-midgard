@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+Auction window close now retains staging if cancellation fails. Same-map warp still needs inventory reconciliation: rAthena sends the staged unit in the load-end inventory snapshot and a later cancellation can report it again as a pickup. Verify the ordered server frames before changing pickup accounting. [Auction staging evidence](evidence/PK40.05-selected-verification.md#auction-staging-on-close-and-same-map-warp)
+
 PK40.05 and PK46.04 cover unanswered auction requests. Verify the overdue status and re-entry guidance in the auction window, including late reply recovery. The selected repeated-request and inventory rules remain tied to the original connection. [Auction recovery evidence](evidence/PK40.05-selected-verification.md#unanswered-auction-requests)
 
 PK46.03 bounds immediate and scheduled character deletion waits. A send failure or missing reply returns to sign-in so the next session fetches the authoritative list. Verify live using a disposable character. [Deletion recovery evidence](evidence/PK46.03-scheduled-deletion-controls.md#reply-recovery)
