@@ -329,7 +329,7 @@ AUDIT-0x01AD,0x01AD,map,S2C,PK29,PK01;PK02;PK47;PK48;PK45,Provisional source-sym
 AUDIT-0x01AE,0x01AE,map,C2S,PK47,PK01;PK02;PK48;PK46,Selected four-byte Making Arrow material and cancellation captured on the production socket,C2S_ONLY,PK26.SPECIAL-SKILL-CHOICES
 AUDIT-0x01AF,0x01AF,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected four-byte cart appearance request captured,C2S_ONLY,PK46.02-CART-REQUESTS
 AUDIT-0x01B0,0x01B0,map,S2C,PK20,PK01;PK02;PK47;PK48;PK45,"Explicit finding, ignored-registration or family seed owner; source verification still required",UNREVIEWED,
-AUDIT-0x01B1,0x01B1,map,S2C,PK47,PK01;PK02;PK48,Unresolved direction/version/family: authoritative source adjudication required,UNREVIEWED,
+AUDIT-0x01B1,0x01B1,map,S2C,PK47,PK01;PK02;PK48,Selected showdigit modes implemented and replayed; live verification pending,UNREVIEWED,PK47.04-DIGIT-CLOCK
 AUDIT-0x01B2,0x01B2,map,C2S,PK37,PK01;PK02;PK47;PK48;PK46,Selected shop open and setup cancellation captured,C2S_ONLY,PK46.02-VENDING-REQUESTS
 AUDIT-0x01B3,0x01B3,map,S2C,PK45,PK01;PK02;PK47;PK48,PK45.03-show-image2 traces selected 67-byte S2C cutin with 64-byte image field and SELF route; asset behavior and replay remain open,UNREVIEWED,
 AUDIT-0x01B4,0x01B4,map,S2C,PK12,PK01;PK02;PK47;PK48;PK45,Provisional source-symbol family routing; manually confirm canonical identity,UNREVIEWED,

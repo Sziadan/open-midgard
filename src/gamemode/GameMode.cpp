@@ -11248,6 +11248,7 @@ void CGameMode::UpdateNpcProgress(CRagConnection& connection, u32 now)
 }
 
 void CGameMode::OnInit(const char* worldName) {
+    g_session.m_digitClock.ResetStaticLifetime();
     g_session.SetTextType(static_cast<u8>(g_session.m_isShowNameTypeOld),static_cast<u8>(g_session.m_isShowNameTypeOld));
     m_terminalNetworkHandled = false;
     m_networkModeOperationGeneration = g_modeMgr.GetOperationGeneration();
@@ -11613,6 +11614,78 @@ void CGameMode::PruneCompassMarkers(u32 now)
     }
 }
 
+void CGameMode::QueueDigitClock(u32 now)
+{
+    const std::string text = g_session.m_digitClock.AdvanceFrame(now);
+    if (text.empty()) return;
+
+    constexpr int spacing = 40;
+    if (text != m_digitClockTextureText) {
+        constexpr char assetPath[] = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\TimeFont.";
+        auto* sprite = g_resMgr.GetAs<CSprRes>((std::string(assetPath) + "spr").c_str());
+        const auto* act = g_resMgr.GetAs<CActRes>((std::string(assetPath) + "act").c_str());
+        if (!act || !sprite) return;
+
+        std::array<const CMotion*, 11> glyphs{};
+        RECT bounds{};
+        for (size_t i = 0; i < text.size(); ++i) {
+            glyphs[i] = act->GetMotion(text[i] == ':' ? 10 : text[i] - '0', 0);
+            RECT glyphBounds{};
+            if (!ComputeMotionClipBounds(sprite, glyphs[i], &glyphBounds)) return;
+            const int x = static_cast<int>(i) * spacing;
+            glyphBounds.left += x;
+            glyphBounds.right += x;
+            if (i == 0) bounds = glyphBounds;
+            else UnionRect(&bounds, &bounds, &glyphBounds);
+        }
+
+        const int width = bounds.right - bounds.left;
+        const int height = bounds.bottom - bounds.top;
+        std::vector<u32> pixels(static_cast<size_t>(width) * height);
+        for (size_t i = 0; i < text.size(); ++i) {
+            BlitMotionToArgb(pixels.data(), width, height, static_cast<int>(i) * spacing - bounds.left,
+                -bounds.top, sprite, glyphs[i], sprite->m_pal);
+        }
+
+        auto texture = std::make_unique<CTexture>();
+        SetTextureDebugName(texture.get(), "__overlay_digit_clock__");
+        if (!texture->Create(width, height, PF_A8R8G8B8, false)
+            || !GetRenderDevice().UpdateTextureResource(texture.get(), 0, 0, width, height, pixels.data(),
+                true, width * static_cast<int>(sizeof(u32)))) return;
+        m_digitClockTexture = std::move(texture);
+        m_digitClockTextureText = text;
+        m_digitClockTextureBounds = bounds;
+    }
+
+    auto* face = g_renderer.BorrowNullRP();
+    if (!face) return;
+    const int x = g_renderer.m_width / 2 - static_cast<int>(text.size()) * spacing / 2;
+    const auto& bounds = m_digitClockTextureBounds;
+    const float left = OverlayScreenEdge(x + bounds.left);
+    const float top = OverlayScreenEdge(40 + bounds.top);
+    const float right = OverlayScreenEdge(x + bounds.right);
+    const float bottom = OverlayScreenEdge(40 + bounds.bottom);
+    auto* texture = m_digitClockTexture.get();
+    const float u = static_cast<float>(bounds.right - bounds.left) / texture->m_w;
+    const float v = static_cast<float>(bounds.bottom - bounds.top) / texture->m_h;
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = texture;
+    face->mtPreset = 3;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_ONE;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 0.9f;
+    face->m_verts[0] = {left, top, 0, 1, 0xFFFFFFFFu, 0xFF000000u, 0, 0};
+    face->m_verts[1] = {right, top, 0, 1, 0xFFFFFFFFu, 0xFF000000u, u, 0};
+    face->m_verts[2] = {left, bottom, 0, 1, 0xFFFFFFFFu, 0xFF000000u, 0, v};
+    face->m_verts[3] = {right, bottom, 0, 1, 0xFFFFFFFFu, 0xFF000000u, u, v};
+    g_renderer.AddRP(face, 1 | 8);
+}
+
 int  CGameMode::OnRun() {
     if (!m_compassPosList.empty()) {
         PruneCompassMarkers(timeGetTime());
@@ -11728,6 +11801,7 @@ int  CGameMode::OnRun() {
     // only after that work has finished. Render queues still put UI last.
     const DWORD renderPrepStart = GetTickCount();
     m_view->OnRender();
+    QueueDigitClock(timeGetTime());
     // World rendering produces healing/damage digits and Miss sprite draws.
     // Flush them in this frame, after production and before DrawScene; the next
     // OnRun deliberately clears leftover queues before rendering.

@@ -1386,6 +1386,7 @@ void CLoginMode::OnInit(const char* worldName) {
 
     m_wallPaperBmpName = ChooseLoginWallpaperName();
     g_session.m_petStatus = {};
+    g_session.m_digitClock = {};
     g_session.ClearInventoryItems();
     ro::commerce::Reset();
     g_windowMgr.ClearChatEvents();

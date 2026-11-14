@@ -8459,6 +8459,12 @@ void ShowLocalizedStarNotice(CGameMode& mode, unsigned id, const std::string& fa
     }
 }
 
+void HandleShowDigit(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength != 7) return;
+    g_session.m_digitClock.Start(packet.data[2], ReadLE32(packet.data + 3), timeGetTime());
+}
+
 void HandleBossInfo(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength != 70 || packet.data[2] > 3) return;
@@ -10790,6 +10796,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x011E, HandleMemoResult);
     router.Register(0x018C, HandleMonsterEstimate);
     router.Register(0x01AD, HandleMakingArrowList);
+    router.Register(0x01B1, HandleShowDigit);
     router.Register(0x01A2, HandlePetStatus);
     router.Register(0x01A0, HandlePetCaptureResult);
     router.Register(0x019E, HandlePetCaptureArm);

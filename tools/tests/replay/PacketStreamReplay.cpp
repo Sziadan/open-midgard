@@ -4,6 +4,7 @@
 #include "Packet.h"
 #include "companion_ai/CompanionAiController.h"
 #include "core/ClientInfoLocale.h"
+#include "core/File.h"
 #include "core/Globals.h"
 #include "core/SettingsIni.h"
 #include "core/UiMessageStrings.h"
@@ -9643,6 +9644,7 @@ void GlobalChatProductionSendReplay()
 #include "NpcShopTransactionReplay.inc"
 #include "NpcClassChangeReplay.inc"
 #include "CompassMarkerReplay.inc"
+#include "DigitClockReplay.inc"
 #include "NpcDialogueActionsReplay.inc"
 #include "NpcProgressReplay.inc"
 #include "NpcShowEfstReplay.inc"
@@ -9739,6 +9741,13 @@ int main(int argc,char** argv){try{
     if(argc>1 && std::string(argv[1])=="--corpse-only") { CorpsePacketReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-class-change-only") { NpcClassChangeReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--compass-only") { CompassMarkerReplay();CConnection::Cleanup();return 0; }
+    if(argc>1 && std::string(argv[1])=="--digit-clock-only") { DigitClockReplay();CConnection::Cleanup();return 0; }
+    if (argc > 1 && std::string_view(argv[1]) == "--digit-clock-render") {
+        Require(argc == 3, "digit clock render requires the path to data.grf");
+        DigitClockRenderReplay(argv[2]);
+        CConnection::Cleanup();
+        return 0;
+    }
     if(argc>1 && std::string(argv[1])=="--npc-dialogue-actions-only") { NpcDialogueActionsReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-progress-only") { NpcProgressReplay();CConnection::Cleanup();return 0; }
     if(argc>1 && std::string(argv[1])=="--npc-show-efst-only") { NpcShowEfstReplay();CConnection::Cleanup();return 0; }
@@ -9946,6 +9955,7 @@ int main(int argc,char** argv){try{
     ChatWindowStateReplay();
     ChatNoticeRoutingReplay();
     ChatNoticeProducerReplay();
+    DigitClockReplay();
     AuctionResultNoticeReplay();
     CashShopReplay();
     AuctionSearchSnapshotReplay();

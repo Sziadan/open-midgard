@@ -2,7 +2,9 @@
 
 PK47 restores the selected `0293` boss-map feed, its static `bossmonster.bmp` marker in both minimaps, and the reference's normal and command chat notices. Verify the installed bitmap and notices with a Convex Mirror on a live map. [Boss-map evidence](evidence/PK47.04-boss-map-info.md)
 
-The next PK47 identity is map S2C `01B1`, the seven-byte digit clock. Start with rAthena `clif_showdigit` and `BUILDIN_FUNC(showdigit)`, the selected `Zc_ShowDigit` and `DrawTime` in `Ref/GameModePacket.cpp` and `Ref/GameMode.cpp`, and the readable draw loop in `Ref/dhxj/GameMode.cpp`. Verify all four modes through the production router, including the five-second first-draw timer for type 0 and the render-call countdown for type 3. Verify the selected asset path and HUD placement on the gameplay render path before closing the row.
+PK47 now routes all four `01B1` digit clock modes into the gameplay HUD. Use a live `showdigit` script to check presentation and map-transition behavior. [Digit clock evidence](evidence/PK47.04-digit-clock.md)
+
+Next, trace the GM `01DF` account-name request and `01E0` reply through the chat prohibition log. Start with the selected client moderation action at `HighPriest.exe.c:353806` and `CSession::AppendProhibit` at line 511326. The selected rAthena handler `clif_parse_GMReqAccountName` calls `clif_account_name` with an empty name. The selected client `Zc_Ack_AccountName` stores that reply by AID and retires its assignment. In `Ref/GameMode.cpp`, `ProcessAssignAID` retries pending requests and copies received names to matching log rows. Verify how an empty field appears in the log before adding UI behavior.
 
 Cash and ordinary NPC shop replies retain their pending ownership through a same-connection warp while the old shop quote closes. A server move clears the old ownership. Verify a delayed purchase result after warp and a fresh quote on the selected deployment. [Commerce verification](evidence/PK40.05-selected-verification.md#shop-replies-on-map-change)
 

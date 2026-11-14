@@ -9,6 +9,7 @@
 #include <array>
 #include <deque>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <string>
 #include <list>
@@ -20,6 +21,19 @@
 
 class CGameActor;
 namespace companion_ai { enum class Kind : int; }
+
+class DigitClock {
+public:
+    void Start(u8 type, u32 wireValue, u32 now);
+    std::string AdvanceFrame(u32 now);
+    void ResetStaticLifetime() { m_staticStart.reset(); }
+
+private:
+    bool m_active = false;
+    u8 m_type = 0;
+    u32 m_tick = 0;
+    std::optional<u32> m_staticStart;
+};
 
 struct accountInfo {
     std::string display;
@@ -335,6 +349,7 @@ public:
     ro::quest::Journal m_questJournal;
     bool m_partyBookingRegistrationPending = false;
     ro::pet::Status m_petStatus;
+    DigitClock m_digitClock;
     bool m_amIPartyMaster = false;
     bool m_partyExpShare = false;
     bool m_itemDivType = false;

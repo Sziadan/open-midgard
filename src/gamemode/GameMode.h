@@ -7,6 +7,7 @@
 #include <array>
 #include <map>
 #include <list>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,7 @@
 class CView;
 class CMousePointer;
 class CGameActor;
+class CTexture;
 class CPlayer;
 class UINameBalloonText;
 class UIPlayerGage;
@@ -515,6 +517,11 @@ public:
     std::vector<CGameActor*> m_deferredActorDeletes;
 
 private:
+    friend struct DigitClockReplayAccess;
+    void QueueDigitClock(u32 now);
+    std::unique_ptr<CTexture> m_digitClockTexture;
+    std::string m_digitClockTextureText;
+    RECT m_digitClockTextureBounds{};
     UIRechargeGage* m_npcProgressGauge = nullptr;
     u32 m_npcProgressStartTick = 0;
     u32 m_npcProgressDuration = 0;

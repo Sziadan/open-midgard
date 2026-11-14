@@ -1329,6 +1329,62 @@ bool CSession::GetFogParameter(const char* rswName, SessionFogParameter* outPara
     return true;
 }
 
+void DigitClock::Start(u8 type, u32 wireValue, u32 now)
+{
+    // The selected client uses 32-bit modular arithmetic for each tick.
+    switch (type) {
+    case 0: m_tick = 1000u * wireValue; break;
+    case 1: m_tick = now + 1000u * wireValue; break;
+    case 2: m_tick = now - 1000u * wireValue; break;
+    case 3: m_tick = 30u * wireValue + 29u; break;
+    default: return;
+    }
+    m_type = type;
+    m_active = true;
+}
+
+std::string DigitClock::AdvanceFrame(u32 now)
+{
+    if (!m_active) return {};
+
+    u32 milliseconds = m_tick;
+    switch (m_type) {
+    case 0:
+        if (!m_staticStart) m_staticStart = now;
+        if (now - *m_staticStart > 5000u) {
+            m_staticStart.reset();
+            m_active = false;
+        }
+        break;
+    case 1:
+        milliseconds = now - m_tick;
+        if (m_tick == 0) m_active = false;
+        break;
+    case 2:
+        milliseconds = m_tick - now;
+        if (milliseconds == 0) m_active = false;
+        break;
+    case 3: {
+        const u32 count = m_tick-- / 30u;
+        if (count == 0) m_active = false;
+        const u32 digits = (std::min)(count, 9999u) % 100u;
+        return {static_cast<char>('0' + digits / 10u), static_cast<char>('0' + digits % 10u)};
+    }
+    }
+
+    const u32 seconds = milliseconds / 1000u;
+    const std::array<u32, 4> groups{seconds / 86400u, seconds / 3600u % 24u,
+                                  seconds / 60u % 60u, seconds % 60u};
+    std::string result;
+    for (size_t i = 0; i < groups.size(); ++i) {
+        if (result.empty() && groups[i] == 0 && i + 1 < groups.size()) continue;
+        if (!result.empty()) result += ':';
+        result += static_cast<char>('0' + groups[i] / 10u % 10u);
+        result += static_cast<char>('0' + groups[i] % 10u);
+    }
+    return result;
+}
+
 void CSession::SetServerTime(u32 time) 
 { 
     m_numLatePacket = 0;
