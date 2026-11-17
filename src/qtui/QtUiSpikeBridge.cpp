@@ -77,8 +77,10 @@ void EnsureQtUiResourcesInitialized()
         Q_INIT_RESOURCE(QtUiSpikeAssets);
         QFontDatabase::addApplicationFont(QStringLiteral(":/qtui/fonts/NotoSans.ttf"));
         QFontDatabase::addApplicationFont(QStringLiteral(":/qtui/fonts/NotoSansJP.ttf"));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
         for(auto script:{QChar::Script_Han,QChar::Script_Hiragana,QChar::Script_Katakana})
             QFontDatabase::addApplicationFallbackFontFamily(script,QStringLiteral("Noto Sans JP"));
+#endif
         initialized = true;
     }
 }
@@ -95,7 +97,10 @@ constexpr RoWindowMessage WM_LBUTTONDOWN = 0x0201u;
 constexpr RoWindowMessage WM_LBUTTONUP = 0x0202u;
 constexpr RoWindowMessage WM_LBUTTONDBLCLK = 0x0203u;
 constexpr RoWindowMessage WM_RBUTTONDOWN = 0x0204u;
+constexpr RoWindowMessage WM_RBUTTONUP = 0x0205u;
 constexpr RoWindowMessage WM_MOUSEWHEEL = 0x020Au;
+constexpr RoWindowMessage WM_CANCELMODE = 0x001Fu;
+constexpr RoWindowMessage WM_CAPTURECHANGED = 0x0215u;
 constexpr RoWindowMessage WM_CHAR = 0x0102u;
 constexpr RoWindowMessage WM_KEYDOWN = 0x0100u;
 constexpr RoWindowMessage WM_SYSKEYDOWN = 0x0104u;

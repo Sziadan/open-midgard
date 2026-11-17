@@ -810,7 +810,17 @@ void UIItemWnd::DrawNativeToHdc(HDC hdc)
         std::snprintf(footerText, sizeof(footerText), "%d / %d", itemCount, totalSlotCount);
         DrawWindowText(hdc, m_x + m_w - 74, footerRect.top + 5, footerText, RGB(74, 74, 74));
         RECT grip{m_x+m_w-15,m_y+m_h-15,m_x+m_w,m_y+m_h};
+#if RO_PLATFORM_WINDOWS
         DrawFrameControl(hdc,&grip,DFC_SCROLL,DFCS_SCROLLSIZEGRIP);
+#else
+        for (int offset = 3; offset <= 9; offset += 3) {
+            for (int i = 0; i < offset; ++i) {
+                RECT dot{grip.right - 3 - i, grip.bottom - 3 - offset + i,
+                    grip.right - 2 - i, grip.bottom - 2 - offset + i};
+                FillRectColor(hdc, dot, RGB(129, 146, 199));
+            }
+        }
+#endif
     }
 
     DrawChildrenToHdc(hdc);

@@ -68,6 +68,10 @@
 #include "gamemode/LoginMode.h"
 #include "gamemode/Mode.h"
 #include "qtui/QtUiRuntime.h"
+#if !RO_PLATFORM_WINDOWS && RO_ENABLE_QT6_UI
+#include "qtui/QtPlatformWindow.h"
+#include <QWindow>
+#endif
 
 #include "core/File.h"
 #include "core/SettingsIni.h"
@@ -103,8 +107,8 @@ const char* CompanionPlacementKey(int id)
 void RestoreCompanionPlacement(UIWindow& window, const RECT& viewport, int defaultX, int defaultY)
 {
     const std::string key = CompanionPlacementKey(window.m_id);
-    const int maxX = std::max(0L, viewport.right - viewport.left - window.m_w);
-    const int maxY = std::max(0L, viewport.bottom - viewport.top - window.m_h);
+    const int maxX = std::max(0, static_cast<int>(viewport.right - viewport.left) - window.m_w);
+    const int maxY = std::max(0, static_cast<int>(viewport.bottom - viewport.top) - window.m_h);
     const int x = LoadSettingsIniInt("UIWindows", (key + "X").c_str(), defaultX);
     const int y = LoadSettingsIniInt("UIWindows", (key + "Y").c_str(), defaultY);
     if (x >= 0 && x <= maxX && y >= 0 && y <= maxY) {
@@ -2401,7 +2405,15 @@ void UIWindowMgr::OnProcess() {
     // The original mode polls hover every frame. Refresh the live native
     // pointer even when Windows emits no new movement, so the shared100ms help
     // deadline measures leaving a help target rather than stopping the mouse.
-    if(g_hMainWnd && IsWindowVisible(g_hMainWnd) && GetForegroundWindow()==g_hMainWnd && !m_captureWindow){
+#if RO_PLATFORM_WINDOWS
+    const bool mainWindowActive = g_hMainWnd && IsWindowVisible(g_hMainWnd) && GetForegroundWindow()==g_hMainWnd;
+#elif RO_ENABLE_QT6_UI
+    QWindow* mainWindow = g_hMainWnd ? RoQtGetQWindow(g_hMainWnd) : nullptr;
+    const bool mainWindowActive = mainWindow && mainWindow->isVisible() && mainWindow->isActive();
+#else
+    const bool mainWindowActive = false;
+#endif
+    if(mainWindowActive && !m_captureWindow){
         POINT point{};if(GetCursorPos(&point) && ScreenToClient(g_hMainWnd,&point)){
             const int x=UiScaleRawToLogicalCoordinate(point.x),y=UiScaleRawToLogicalCoordinate(point.y);
             ProcessSourceHoverFrame(x,y);

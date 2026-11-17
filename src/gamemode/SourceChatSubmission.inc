@@ -297,7 +297,7 @@ msgresult_t CGameMode::ProcessSourceTalk(int type,const std::array<std::string,3
         auto text=std::string(g_windowMgr.GetChatMsg());
         const auto keys=m_sourceChatInputServices && m_sourceChatInputServices->readModifiers
             ?m_sourceChatInputServices->readModifiers()
-            :ro::chat::SourceChatModifiers{(GetAsyncKeyState(VK_CONTROL)&0x8000)!=0,(GetAsyncKeyState(VK_MENU)&0x8000)!=0};
+            :ro::chat::SourceChatModifiers{IsSourceModifierDown(VK_CONTROL),IsSourceModifierDown(VK_MENU)};
         const int operation=ro::chat::SourceChatRoute(type,text,g_session.m_talkType,g_session.m_isBattleChat,
             g_session.GetNumParty()!=0,g_session.m_guildWindow.id!=0,keys);
         g_windowMgr.SetChatMsg(text);

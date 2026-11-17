@@ -9,10 +9,15 @@
 #include "gamemode/Commerce.h"
 #include "core/SourcePetSummaryText.generated.inc"
 #include "core/Globals.h"
+#include "UiScale.h"
 
 #include <algorithm>
 #include <cctype>
 #include <tuple>
+#if !RO_PLATFORM_WINDOWS && RO_ENABLE_QT6_UI
+#include <QGuiApplication>
+#include <QStyleHints>
+#endif
 
 namespace {
 constexpr int kWindowWidth = 280;
@@ -144,7 +149,14 @@ void DrawSlotTooltip(HDC hdc, const RECT& anchorRect, const std::string& text)
     const int paddingY = 4;
     const int tooltipWidth = textSize.cx + paddingX * 2;
     const int tooltipHeight = textSize.cy + paddingY * 2;
-    RECT viewport{};GetClipBox(hdc,&viewport);
+    RECT viewport{};
+#if RO_PLATFORM_WINDOWS
+    GetClipBox(hdc,&viewport);
+#else
+    if (!g_hMainWnd || !GetClientRect(g_hMainWnd, &viewport)) return;
+    viewport.right = UiScaleRawToLogicalCoordinate(viewport.right);
+    viewport.bottom = UiScaleRawToLogicalCoordinate(viewport.bottom);
+#endif
     int left=(std::max)(int(viewport.left)-3,int(anchorRect.left));
     int top=(std::max)(int(viewport.top)-3,int(anchorRect.top));
     if (left+tooltipWidth>viewport.right+3) left=viewport.right-tooltipWidth+3;
@@ -426,7 +438,7 @@ void UIItemInfoWnd::SetPetSummary(const ro::pet::Status& wireStatus)
     m_petSummaryRelationship = static_cast<std::int16_t>(wireStatus.relationship);
     m_petSummaryAccessory = static_cast<std::uint16_t>(wireStatus.accessoryItemId);
     m_petSummaryModified = static_cast<std::uint8_t>(wireStatus.modified);
-    m_petSummaryName = SummaryUtf8(wireStatus.name.substr(0,24),g_codePage>0?g_codePage:CP_ACP);
+    m_petSummaryName = SummaryUtf8(wireStatus.name.substr(0,24),g_codePage>0?g_codePage:0);
     // Message29 keeps the source's existing copied ITEM_INFO and artwork.
     // The summary is a snapshot, not a new inventory binding.
     m_source = ItemInfoSource::Snapshot;
@@ -652,7 +664,7 @@ std::string UIItemInfoWnd::BuildDescriptionText() const
     const std::string description = m_item.m_isIdentified == 0 ? kUnknownItemDescription : NormalizeDescriptionText(m_item.GetDescription());
     if (!text.empty() && !description.empty()) text += "\n\n";
     const std::string itemText=text+description;
-    return summary + (HasPetSummary() ? SummaryUtf8(itemText,g_codePage>0?g_codePage:CP_ACP) : itemText);
+    return summary + (HasPetSummary() ? SummaryUtf8(itemText,g_codePage>0?g_codePage:0) : itemText);
 }
 
 std::string UIItemInfoWnd::BuildPetSummaryText() const
@@ -710,8 +722,16 @@ void UIItemInfoWnd::ScrollDescriptionWheel(int delta)
     const int64_t notches=total/WHEEL_DELTA;
     m_descriptionWheelRemainder=static_cast<int>(total%WHEEL_DELTA);
     UINT lines=3;
+#if RO_PLATFORM_WINDOWS
     SystemParametersInfoA(SPI_GETWHEELSCROLLLINES,0,&lines,0);
     const int64_t step=lines==WHEEL_PAGESCROLL ? 80 : int64_t(lines)*lineHeight;
+#else
+#if RO_ENABLE_QT6_UI
+    if (QGuiApplication::instance())
+        lines = static_cast<UINT>((std::max)(0, QGuiApplication::styleHints()->wheelScrollLines()));
+#endif
+    const int64_t step=int64_t(lines)*lineHeight;
+#endif
     const int maximum=(std::max)(0,height-80);
     m_descriptionScrollOffset=static_cast<int>((std::clamp)(int64_t(m_descriptionScrollOffset)-int64_t(notches)*step,int64_t(0),int64_t(maximum)));
     Invalidate();

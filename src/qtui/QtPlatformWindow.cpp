@@ -39,6 +39,7 @@ constexpr unsigned int kWmKeyDown = 0x0100u;
 constexpr unsigned int kWmSysKeyDown = 0x0104u;
 constexpr unsigned int kWmActivate = 0x0006u;
 constexpr unsigned int kWmClose = 0x0010u;
+constexpr unsigned int kWmCancelMode = 0x001Fu;
 
 constexpr std::uintptr_t kMkLButton = 0x0001u;
 constexpr std::uintptr_t kMkRButton = 0x0002u;
@@ -158,6 +159,7 @@ protected:
             prompt->ClearImeKeystrokes();
         }
         QWindow::focusOutEvent(event);
+        sendMessage(kWmCancelMode, 0, 0);
         sendMessage(kWmActivate, kWaInactive, 0);
     }
 

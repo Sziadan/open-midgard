@@ -26,7 +26,7 @@ unsigned Page(int charset)
 {
     switch(charset){case 128:return 932;case 129:return 949;case 134:return 936;case 136:return 950;case 161:return 1253;case 162:return 1254;
     case 163:return 1258;case 177:return 1255;case 178:return 1256;case 186:return 1257;case 204:return 1251;case 222:return 874;case 238:return 1250;
-    default:return g_codePage>0?static_cast<unsigned>(g_codePage):CP_ACP;}
+    default:return g_codePage>0?static_cast<unsigned>(g_codePage):0;}
 }
 std::string Utf8(const std::string& bytes,unsigned page)
 {
@@ -42,7 +42,7 @@ std::string Utf8(const std::string& bytes,unsigned page)
 }
 std::string Display(const std::string& raw)
 {
-    std::string out;std::size_t start=0;unsigned page=g_codePage>0?static_cast<unsigned>(g_codePage):CP_ACP;
+    std::string out;std::size_t start=0;unsigned page=g_codePage>0?static_cast<unsigned>(g_codePage):0;
     for(std::size_t i=0;i<raw.size();){if(Marker(raw,i)){
             out+=Utf8(raw.substr(start,i-start),page);page=Page(Hex(raw[i+1])*16+Hex(raw[i+2]));i+=3;start=i;
         }else i=Next(raw,i);}

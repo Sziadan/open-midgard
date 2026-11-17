@@ -104,6 +104,9 @@
 #include <QImage>
 #include <QPainter>
 #include <QString>
+#if !RO_PLATFORM_WINDOWS
+#include <QGuiApplication>
+#endif
 #endif
 
 #if RO_PLATFORM_WINDOWS
@@ -188,6 +191,22 @@ int ResolvePlayerStyleVitalsNameOffsetY(const CView* view)
 }
 
 namespace {
+bool IsSourceModifierDown(int key)
+{
+#if RO_PLATFORM_WINDOWS
+    return (GetAsyncKeyState(key) & 0x8000) != 0;
+#elif RO_ENABLE_QT6_UI
+    const auto modifiers = QGuiApplication::queryKeyboardModifiers();
+    switch (key) {
+    case VK_SHIFT: return modifiers.testFlag(Qt::ShiftModifier);
+    case VK_CONTROL: return modifiers.testFlag(Qt::ControlModifier);
+    case VK_MENU: return modifiers.testFlag(Qt::AltModifier);
+    default: return false;
+    }
+#else
+    return (GetKeyState(key) & 0x8000) != 0;
+#endif
+}
 CGameModePacketRouter g_gameModePacketRouter;
 
 void SetTextureDebugName(CTexture* texture, const char* name)
@@ -3831,7 +3850,7 @@ bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
     if (!mode.m_world || !mode.m_view) {
         return false;
     }
-    if(GetAsyncKeyState(VK_SHIFT)&0x8000)return false;
+    if(IsSourceModifierDown(VK_SHIFT))return false;
 
     CGameActor* hoveredActor = nullptr;
     if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
@@ -13461,7 +13480,7 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             const int screenX = static_cast<int>(wparam);
             const int screenY = static_cast<int>(lparam);
             bool openedCompanionMenu = false;
-            if (m_world && m_view && !(GetAsyncKeyState(VK_SHIFT) & 0x8000)) {
+            if (m_world && m_view && !IsSourceModifierDown(VK_SHIFT)) {
                 CGameActor* hoveredActor = nullptr;
                 if (m_world->FindHoveredActorScreen(m_view->GetViewMatrix(),
                         m_view->GetCameraLongitude(),
