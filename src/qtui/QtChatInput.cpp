@@ -48,7 +48,7 @@ QString Composition(HIMC context,DWORD kind) {
 }
 #endif
 
-bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,RoWindowWParam wParam,RoWindowLParam lParam,bool enabled,bool guildEnabled)
+bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,RoWindowWParam wParam,RoWindowLParam lParam,bool enabled,bool guildEnabled,bool chatPointerEnabled)
 {
 #if RO_PLATFORM_WINDOWS
     if(!m_window || !m_root)return false;
@@ -75,7 +75,7 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
     const QPointF point(static_cast<short>(lParam&0xFFFF),static_cast<short>((lParam>>16)&0xFFFF));
     const std::array<const char*,2> regions={"chatWhisperField","chatMessageField"};
     int hit=-1;
-    if(enabled)for(int i=0;i<2;++i)if(auto* item=m_root->findChild<QQuickItem*>(regions[i]);item && item->isVisible() && item->contains(item->mapFromScene(point)))hit=i;
+    if(enabled && chatPointerEnabled)for(int i=0;i<2;++i)if(auto* item=m_root->findChild<QQuickItem*>(regions[i]);item && item->isVisible() && item->contains(item->mapFromScene(point)))hit=i;
     auto* guild=guildEnabled?panelAt(point):nullptr;
     if(guild)hit=2;
     if(msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK || msg==WM_LBUTTONUP || msg==WM_MOUSEMOVE || msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP) {
@@ -86,7 +86,7 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
             // Clicks outside the chat panel relinquish keyboard focus.
             auto* panel=m_root->findChild<QQuickItem*>("chatWindowPanel");
             if(!panel)panel=m_root;
-            if(panel->isVisible() && panel->contains(panel->mapFromScene(point)))return false;
+            if(chatPointerEnabled && panel->isVisible() && panel->contains(panel->mapFromScene(point)))return false;
             for(int i=0;i<2;++i)if(auto* item=editor(i))item->setFocus(false);
             m_highSurrogate={};return false;
         }
@@ -170,7 +170,7 @@ bool QtChatInput::handle(RoNativeWindowHandle nativeWindow,RoWindowMessage msg,R
     }
     if(msg==WM_KILLFOCUS) {QInputMethodEvent event;QCoreApplication::sendEvent(m_window,&event);m_composing=false;m_highSurrogate={};}
 #else
-    (void)nativeWindow;(void)msg;(void)wParam;(void)lParam;(void)enabled;(void)guildEnabled;
+    (void)nativeWindow;(void)msg;(void)wParam;(void)lParam;(void)enabled;(void)guildEnabled;(void)chatPointerEnabled;
 #endif
     return false;
 }

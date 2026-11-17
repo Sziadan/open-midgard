@@ -52,8 +52,8 @@ for token in ("m_falconIsAttackTarget", "m_falconStateCnt <= 10 || m_falconState
 if "m_falconMotionSpeed(4.0f)" not in msg_effect or "m_falconIsAnimation(1)" not in msg_effect:
     raise SystemExit("Falcon source SetAction speed 4 was not preserved")
 game_mode = (ROOT / "src/gamemode/GameMode.cpp").read_text(encoding="utf-8")
-if "constexpr float kWorldProcessTickMs = 24.0f;" not in game_mode or "m_worldProcessCarryMs / kWorldProcessTickMs" not in game_mode:
-    raise SystemExit("Falcon process cadence must follow the 24ms world simulation step")
+if "constexpr float kWorldProcessTickMs = 24.0f;" not in game_mode or "m_worldProcessCarryMs / m_worldProcessTickMs" not in game_mode:
+    raise SystemExit("Falcon process cadence must follow the selected world simulation step")
 if "if (m_falconStateCnt > 35)" not in on_process or "m_falconIsAttackTarget = 0;" not in on_process:
     raise SystemExit("Falcon attack recovery does not resume owner follow")
 if "Get8Dir2(this, this->m_roty, 1)" not in ref_msg_effect:

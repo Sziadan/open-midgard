@@ -1,4 +1,5 @@
 #include "Types.h"
+#include "DebugLog.h"
 #include "core/Timer.h"
 #include "core/File.h"
 #include "gamemode/GameMode.h"
@@ -2882,6 +2883,7 @@ bool IsTalkieBoxTriggerScenario(const std::string& path)
 
 int main(int argc, char** argv)
 {
+    SetDebugLogFlags(DebugLogInfo);
     try {
         const bool trapModelResourceReplay = argc == 3 && std::string(argv[1]) == "--trap-model-resource";
         const bool castAnnouncementReplay = argc == 3 && std::string(argv[1]) == "--cast-announcements";

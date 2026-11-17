@@ -61,7 +61,7 @@ bool ShouldTraceDataSource(const char* fileName)
 
 void LogDataSourceOnce(const char* fileName, const char* source, int size)
 {
-    if (!ShouldTraceDataSource(fileName) || !fileName || !source) {
+    if (!DebugLogEnabled(DebugLogInfo) || !ShouldTraceDataSource(fileName) || !fileName || !source) {
         return;
     }
 
@@ -283,7 +283,7 @@ void CFileMgr::AddPak(const char* pakName)
 
     if (!memFile->open(pakName))
     {
-        DbgLog("[AddPak] FAIL: CMemMapFile::open failed for '%s' (last error: %lu)\n",
+        DbgError("[AddPak] FAIL: CMemMapFile::open failed for '%s' (last error: %lu)\n",
                pakName, GetLastError());
         delete pak;
         delete memFile;
@@ -293,7 +293,7 @@ void CFileMgr::AddPak(const char* pakName)
 
     if (!pak->Open(memFile))
     {
-        DbgLog("[AddPak] FAIL: CGPak::Open failed for '%s'\n", pakName);
+        DbgError("[AddPak] FAIL: CGPak::Open failed for '%s'\n", pakName);
         delete pak;
         delete memFile;
         return;

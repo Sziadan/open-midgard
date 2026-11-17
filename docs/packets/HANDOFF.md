@@ -1,5 +1,7 @@
 # Packet continuation handoff
 
+PK47 reconciles the legacy PT account prompts, billing, event result, character-password request and map authentication exchange with their original stages. The selected server keeps placeholder sizes in the map table. Continue with `0258` and `0259`, whose historical identities remain open, then the `0278` onward family. [Cross-stage evidence](evidence/PK47.04-cross-stage-legacy.md)
+
 PK47 now handles the selected server's `07E2` item cooldown notice and consumes `0294` book notices without opening a viewer, matching the selected receive branch. Verify cooldown wording and stream continuity live. [Map notice evidence](evidence/PK47.04-map-notice-continuation.md)
 
 The selected server has no legacy `01C6` negotiation parser or `01C7` sender. The original handles the acknowledgement in both receive loops and displays an unsupported-encryption error. Thirteen later map notices have selected-profile dispositions, including zero-length `08D2` sends. The legacy reduced-effects reply and PK notices `021E`–`0220` also have no selected sender. Continue with the remaining unresolved identities and keep cross-stage variants separate. [Applicability evidence](evidence/PK47.04-later-map-notices.md)

@@ -211,7 +211,7 @@ void ApplyRuntimeRoot(const std::filesystem::path& runtimeRoot)
     std::filesystem::current_path(runtimeRoot, ec);
     const std::string runtimeRootString = runtimeRoot.string();
     if (ec) {
-        DbgLog("[Runtime] Failed to switch runtime root to '%s' (%s).\n",
+        DbgError("[Runtime] Failed to switch runtime root to '%s' (%s).\n",
             runtimeRootString.c_str(),
             ec.message().c_str());
         return;
@@ -289,7 +289,7 @@ bool InitClientSystems()
     };
     for (const char* scriptPath : kBootstrapLuaScripts) {
         if (!g_buabridge.LoadRagnarokScriptOnce(scriptPath)) {
-            DbgLog("[Lua] Bootstrap preload failed for '%s': %s\n",
+            DbgError("[Lua] Bootstrap preload failed for '%s': %s\n",
                 scriptPath,
                 g_buabridge.GetLastError().c_str());
         }
@@ -368,6 +368,7 @@ bool InitApp(HINSTANCE, int)
 int ReadRegistry()
 {
     EnsureOpenMidgardIniDefaults();
+    ConfigureDebugLoggingFromIni();
     ApplyConfiguredWindowSize();
     (void)GetConfiguredRenderBackend();
     return 1;

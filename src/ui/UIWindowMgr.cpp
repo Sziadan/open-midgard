@@ -2834,7 +2834,7 @@ void UIWindowMgr::SetWallpaper(CBitmapRes* bitmap) {
     }
 
     if (!m_wallpaperSurface) {
-        DbgLog("[SetWallpaper] FAIL: surface is null after CreateWallPaper\n");
+        DbgError("[SetWallpaper] FAIL: surface is null after CreateWallPaper\n");
         return;
     }
 
@@ -3369,6 +3369,19 @@ UIWindow* UIWindowMgr::HitTestWindow(int x, int y) const
 bool UIWindowMgr::HasWindowAtPoint(int x, int y) const
 {
     return (m_modalWindow && m_modalWindow->m_show) || ro::commerce::HitTest(x,y) || HitTestWindow(x, y) != nullptr;
+}
+
+bool UIWindowMgr::IsQtChatPointerTarget(int x, int y) const
+{
+    if (!m_chatWnd || !m_chatWnd->IsQtInteractionPoint(x, y)
+        || (m_modalWindow && m_modalWindow->m_show)) {
+        return false;
+    }
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        if (*it == m_chatWnd) return true;
+        if (*it && (*it)->HitTestDeep(x, y)) return false;
+    }
+    return false;
 }
 
 bool UIWindowMgr::HasGameplayInputModal(bool allowProductionInventory) const

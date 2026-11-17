@@ -4,6 +4,7 @@
 #include "DebugLog.h"
 #include "audio/Audio.h"
 #include "core/File.h"
+#include "core/AssetLoadPerf.h"
 #include "core/Timer.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/View.h"
@@ -1764,6 +1765,7 @@ const BakedEffectSpriteFrame* GetBakedEffectSpriteFrame(const std::string& actPa
         return it->second.isValid ? &it->second : nullptr;
     }
 
+    AssetLoadPerf perf("effect-sprite-bake", actPath.c_str());
     BakedEffectSpriteFrame baked;
     CActRes* actRes = g_resMgr.GetAs<CActRes>(actPath.c_str());
     CSprRes* sprRes = g_resMgr.GetAs<CSprRes>(sprPath.c_str());
@@ -14383,7 +14385,7 @@ void CRagEffect::LoadEzEffect(const char* fName)
 
     m_ezEffectRes = g_resMgr.GetAs<CEZeffectRes>(fName);
     if (!m_ezEffectRes) {
-        DbgLog("[RagEffect] missing STR '%s' for effect %d\n", fName, m_type);
+        DbgError("[RagEffect] missing STR '%s' for effect %d\n", fName, m_type);
         return;
     }
 
@@ -26983,7 +26985,7 @@ bool CRagEffect::OnProcess2()
     switch (m_type) {
 #include "RagEffectOnProcess2Cases.generated.inc"
     default:
-        DbgLog("[RagEffect] Invalid Effect Id %d\n", m_type);
+        DbgError("[RagEffect] Invalid Effect Id %d\n", m_type);
         return false;
     }
 }
@@ -26993,7 +26995,7 @@ bool CRagEffect::OnProcess3()
     switch (m_type) {
 #include "RagEffectOnProcess3Cases.generated.inc"
     default:
-        DbgLog("[RagEffect] Invalid Effect Id %d\n", m_type);
+        DbgError("[RagEffect] Invalid Effect Id %d\n", m_type);
         return false;
     }
 }
@@ -27483,7 +27485,7 @@ bool CRagEffect::ProcessEffectFrame()
     switch (m_type) {
 #include "RagEffectOnProcessCases.generated.inc"
     default:
-        DbgLog("[RagEffect] Invalid Effect Id %d\n", m_type);
+        DbgError("[RagEffect] Invalid Effect Id %d\n", m_type);
         return false;
     }
 }

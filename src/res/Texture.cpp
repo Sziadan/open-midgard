@@ -761,7 +761,7 @@ bool CTexture::Create(unsigned int w, unsigned int h, PixelFormat format, bool a
     unsigned int textureH = 0;
     if (!GetRenderDevice().CreateTextureResource(this, scaledWidth, scaledHeight, static_cast<int>(format), &textureW, &textureH)) {
         if constexpr (kLogTexture) {
-            DbgLog("[Texture] CreateTextureResource failed name='%s' requested=%ux%u\n", m_texName, w, h);
+            DbgError("[Texture] CreateTextureResource failed name='%s' requested=%ux%u\n", m_texName, w, h);
         }
         return false;
     }

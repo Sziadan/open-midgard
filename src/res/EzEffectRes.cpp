@@ -125,7 +125,7 @@ bool CEZeffectRes::LoadFromBuffer(const char* fName, const unsigned char* buffer
     Reset();
 
     if (!buffer || size < 28) {
-        DbgLog("[EZeffect] invalid buffer file='%s' size=%d\n", fName ? fName : "(null)", size);
+        DbgError("[EZeffect] invalid buffer file='%s' size=%d\n", fName ? fName : "(null)", size);
         return false;
     }
 
@@ -137,13 +137,13 @@ bool CEZeffectRes::LoadFromBuffer(const char* fName, const unsigned char* buffer
         || !ReadBytes(buffer, size, &offset, &m_aniClips.cFrame, sizeof(m_aniClips.cFrame))
         || !ReadBytes(buffer, size, &offset, &m_aniClips.nFPS, sizeof(m_aniClips.nFPS))
         || !ReadBytes(buffer, size, &offset, &m_aniClips.cLayer, sizeof(m_aniClips.cLayer))) {
-        DbgLog("[EZeffect] truncated header file='%s'\n", fName ? fName : "(null)");
+        DbgError("[EZeffect] truncated header file='%s'\n", fName ? fName : "(null)");
         Reset();
         return false;
     }
 
     if (version != kAniClipVersion) {
-        DbgLog("[EZeffect] unsupported version file='%s' version=%u\n",
+        DbgError("[EZeffect] unsupported version file='%s' version=%u\n",
             fName ? fName : "(null)",
             static_cast<unsigned>(version));
         Reset();
@@ -151,7 +151,7 @@ bool CEZeffectRes::LoadFromBuffer(const char* fName, const unsigned char* buffer
     }
 
     if (m_aniClips.cLayer < 0 || m_aniClips.cLayer > static_cast<int>(m_aniClips.aLayer.size())) {
-        DbgLog("[EZeffect] invalid layer count file='%s' layers=%d\n",
+        DbgError("[EZeffect] invalid layer count file='%s' layers=%d\n",
             fName ? fName : "(null)",
             m_aniClips.cLayer);
         Reset();
@@ -172,7 +172,7 @@ bool CEZeffectRes::LoadFromBuffer(const char* fName, const unsigned char* buffer
         }
 
         if (layer.cTex < 0 || layer.cTex > static_cast<int>(layer.m_tex.size())) {
-            DbgLog("[EZeffect] invalid texture count file='%s' layer=%d texCount=%d\n",
+            DbgError("[EZeffect] invalid texture count file='%s' layer=%d texCount=%d\n",
                 fName ? fName : "(null)",
                 layerIndex,
                 layer.cTex);

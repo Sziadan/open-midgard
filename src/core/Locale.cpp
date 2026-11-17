@@ -379,7 +379,7 @@ static void SetOption(XMLElement* element) {
 bool InitClientInfo(const char* fileName) {
     std::vector<char> buffer;
     if (!LoadClientInfoBytes(fileName, &buffer) || buffer.empty()) {
-        DbgLog("[ClientInfo] Failed to load candidate: %s\n", fileName ? fileName : "(null)");
+        DbgError("[ClientInfo] Failed to load candidate: %s\n", fileName ? fileName : "(null)");
         return false;
     }
 

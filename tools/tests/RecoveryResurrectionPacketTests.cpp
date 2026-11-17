@@ -59,6 +59,7 @@ u32 ReadLE32(const u8* data) {
         | (static_cast<u32>(data[2])<<16) | (static_cast<u32>(data[3])<<24);
 }
 void DbgLog(const char*,...) {}
+void DbgError(const char*,...) {}
 
 struct StatusUpdate { u32 status=0,value=0; };
 std::vector<StatusUpdate> statusUpdates;

@@ -88,7 +88,7 @@ double QpcNowMs()
 
 bool IsMovePerfActive(const CWorld* world)
 {
-    return world && world->m_player && world->m_player->m_isMoving;
+    return DebugLogEnabled(DebugLogPerformance) && world && world->m_player && world->m_player->m_isMoving;
 }
 
 void LogViewMovePerfIfNeeded()
@@ -953,15 +953,16 @@ void CView::OnRender()
 
     m_world->RenderSky(m_viewMatrix, m_from, m_cur.longitude, m_cur.latitude);
 
+    const bool trackPerf = DebugLogEnabled(DebugLogPerformance);
     const bool trackMovePerf = IsMovePerfActive(m_world);
     if (trackMovePerf) {
         g_viewMovePerfStats.frames += 1;
     }
-    g_viewHiResStats.frames += 1;
+    if (trackPerf) g_viewHiResStats.frames += 1;
 
-    const DWORD groundStart = GetTickCount();
+    const DWORD groundStart = trackPerf ? GetTickCount() : 0;
     const double groundStartMs = trackMovePerf ? QpcNowMs() : 0.0;
-    const double groundHiResStartMs = QpcNowMs();
+    const double groundHiResStartMs = trackPerf ? QpcNowMs() : 0.0;
     static bool loggedGroundStageStart = false;
     if (!loggedGroundStageStart) {
         loggedGroundStageStart = true;
@@ -977,23 +978,23 @@ void CView::OnRender()
         loggedGroundStageDone = true;
         DbgLog("[View] ground stage complete\n");
     }
-    const DWORD groundEnd = GetTickCount();
-    g_viewHiResStats.groundMs += QpcNowMs() - groundHiResStartMs;
+    const DWORD groundEnd = trackPerf ? GetTickCount() : 0;
+    if (trackPerf) g_viewHiResStats.groundMs += QpcNowMs() - groundHiResStartMs;
     if (trackMovePerf) {
         g_viewMovePerfStats.groundMs += QpcNowMs() - groundStartMs;
     }
 
     const DWORD hoverStart = groundEnd;
-    const double hoverHiResStartMs = QpcNowMs();
+    const double hoverHiResStartMs = trackPerf ? QpcNowMs() : 0.0;
     if (m_world->IsMapCellWalkable(m_hoverAttrX, m_hoverAttrY)) {
         m_world->m_ground->RenderAttrTile(m_viewMatrix, m_hoverAttrX, m_hoverAttrY, 0x70FFFFFFu);
     }
-    const DWORD hoverEnd = GetTickCount();
-    g_viewHiResStats.hoverMs += QpcNowMs() - hoverHiResStartMs;
+    const DWORD hoverEnd = trackPerf ? GetTickCount() : 0;
+    if (trackPerf) g_viewHiResStats.hoverMs += QpcNowMs() - hoverHiResStartMs;
 
     const DWORD actorStart = hoverEnd;
     const double actorStartMs = trackMovePerf ? QpcNowMs() : 0.0;
-    const double actorHiResStartMs = QpcNowMs();
+    const double actorHiResStartMs = trackPerf ? QpcNowMs() : 0.0;
     static bool loggedActorStageStart = false;
     if (!loggedActorStageStart) {
         loggedActorStageStart = true;
@@ -1012,26 +1013,28 @@ void CView::OnRender()
             static_cast<unsigned int>(m_world->m_lastRenderStats.renderedItems),
             static_cast<unsigned int>(m_world->m_lastRenderStats.renderedFixedEffects));
     }
-    const DWORD actorEnd = GetTickCount();
-    g_viewHiResStats.actorMs += QpcNowMs() - actorHiResStartMs;
-    g_viewHiResStats.renderedGameObjects += m_world->m_lastRenderStats.renderedGameObjects;
-    g_viewHiResStats.renderedFixedEffects += m_world->m_lastRenderStats.renderedFixedEffects;
-    g_viewHiResStats.renderedItems += m_world->m_lastRenderStats.renderedItems;
-    g_viewHiResStats.renderedBillboards += m_world->m_lastRenderStats.renderedBillboards;
-    g_viewHiResStats.portalBootstrapActors += m_world->m_lastRenderStats.portalBootstrapActors;
-    g_viewHiResStats.actorGameObjectMs += m_world->m_lastRenderStats.gameObjectRenderMs;
-    g_viewHiResStats.actorItemMs += m_world->m_lastRenderStats.itemRenderMs;
-    g_viewHiResStats.actorPortalMs += m_world->m_lastRenderStats.portalBootstrapMs;
-    g_viewHiResStats.actorBillboardBuildMs += m_world->m_lastRenderStats.billboardBuildMs;
-    g_viewHiResStats.actorBillboardSortMs += m_world->m_lastRenderStats.billboardSortMs;
-    g_viewHiResStats.actorBillboardRenderMs += m_world->m_lastRenderStats.billboardRenderMs;
+    const DWORD actorEnd = trackPerf ? GetTickCount() : 0;
+    if (trackPerf) {
+        g_viewHiResStats.actorMs += QpcNowMs() - actorHiResStartMs;
+        g_viewHiResStats.renderedGameObjects += m_world->m_lastRenderStats.renderedGameObjects;
+        g_viewHiResStats.renderedFixedEffects += m_world->m_lastRenderStats.renderedFixedEffects;
+        g_viewHiResStats.renderedItems += m_world->m_lastRenderStats.renderedItems;
+        g_viewHiResStats.renderedBillboards += m_world->m_lastRenderStats.renderedBillboards;
+        g_viewHiResStats.portalBootstrapActors += m_world->m_lastRenderStats.portalBootstrapActors;
+        g_viewHiResStats.actorGameObjectMs += m_world->m_lastRenderStats.gameObjectRenderMs;
+        g_viewHiResStats.actorItemMs += m_world->m_lastRenderStats.itemRenderMs;
+        g_viewHiResStats.actorPortalMs += m_world->m_lastRenderStats.portalBootstrapMs;
+        g_viewHiResStats.actorBillboardBuildMs += m_world->m_lastRenderStats.billboardBuildMs;
+        g_viewHiResStats.actorBillboardSortMs += m_world->m_lastRenderStats.billboardSortMs;
+        g_viewHiResStats.actorBillboardRenderMs += m_world->m_lastRenderStats.billboardRenderMs;
+    }
     if (trackMovePerf) {
         g_viewMovePerfStats.actorMs += QpcNowMs() - actorStartMs;
     }
 
     const DWORD backgroundStart = actorEnd;
     const double backgroundStartMs = trackMovePerf ? QpcNowMs() : 0.0;
-    const double backgroundHiResStartMs = QpcNowMs();
+    const double backgroundHiResStartMs = trackPerf ? QpcNowMs() : 0.0;
     static bool loggedBackgroundStageStart = false;
     if (!loggedBackgroundStageStart) {
         loggedBackgroundStageStart = true;
@@ -1045,32 +1048,36 @@ void CView::OnRender()
             static_cast<unsigned int>(m_world->m_lastRenderStats.renderedBackgroundObjects),
             static_cast<unsigned int>(m_world->m_lastRenderStats.skippedTinyBackgroundObjects));
     }
-    const DWORD backgroundEnd = GetTickCount();
-    g_viewHiResStats.backgroundMs += QpcNowMs() - backgroundHiResStartMs;
-    g_viewHiResStats.renderedBackgroundObjects += m_world->m_lastRenderStats.renderedBackgroundObjects;
-    g_viewHiResStats.skippedTinyBackgroundObjects += m_world->m_lastRenderStats.skippedTinyBackgroundObjects;
-    g_viewHiResStats.backgroundDrawMs += m_world->m_lastRenderStats.backgroundRenderMs;
+    const DWORD backgroundEnd = trackPerf ? GetTickCount() : 0;
+    if (trackPerf) {
+        g_viewHiResStats.backgroundMs += QpcNowMs() - backgroundHiResStartMs;
+        g_viewHiResStats.renderedBackgroundObjects += m_world->m_lastRenderStats.renderedBackgroundObjects;
+        g_viewHiResStats.skippedTinyBackgroundObjects += m_world->m_lastRenderStats.skippedTinyBackgroundObjects;
+        g_viewHiResStats.backgroundDrawMs += m_world->m_lastRenderStats.backgroundRenderMs;
+    }
     if (trackMovePerf) {
         g_viewMovePerfStats.backgroundMs += QpcNowMs() - backgroundStartMs;
     }
 
-    g_viewPerfStats.frames += 1;
-    g_viewPerfStats.groundMs += static_cast<u64>(groundEnd - groundStart);
-    g_viewPerfStats.hoverMs += static_cast<u64>(hoverEnd - hoverStart);
-    g_viewPerfStats.actorMs += static_cast<u64>(actorEnd - actorStart);
-    g_viewPerfStats.backgroundMs += static_cast<u64>(backgroundEnd - backgroundStart);
+    if (trackPerf) {
+        g_viewPerfStats.frames += 1;
+        g_viewPerfStats.groundMs += static_cast<u64>(groundEnd - groundStart);
+        g_viewPerfStats.hoverMs += static_cast<u64>(hoverEnd - hoverStart);
+        g_viewPerfStats.actorMs += static_cast<u64>(actorEnd - actorStart);
+        g_viewPerfStats.backgroundMs += static_cast<u64>(backgroundEnd - backgroundStart);
 
-    if (g_viewPerfStats.frames <= 20 || (g_viewPerfStats.frames % kPerfLogIntervalFrames) == 0) {
-        DbgLog("[View] frame=%llu ground=%lums hover=%lums actors=%lums background=%lums\n",
-            static_cast<unsigned long long>(g_viewPerfStats.frames),
-            static_cast<unsigned long>(groundEnd - groundStart),
-            static_cast<unsigned long>(hoverEnd - hoverStart),
-            static_cast<unsigned long>(actorEnd - actorStart),
-            static_cast<unsigned long>(backgroundEnd - backgroundStart));
+        if (g_viewPerfStats.frames <= 20 || (g_viewPerfStats.frames % kPerfLogIntervalFrames) == 0) {
+            DbgLog("[View] frame=%llu ground=%lums hover=%lums actors=%lums background=%lums\n",
+                static_cast<unsigned long long>(g_viewPerfStats.frames),
+                static_cast<unsigned long>(groundEnd - groundStart),
+                static_cast<unsigned long>(hoverEnd - hoverStart),
+                static_cast<unsigned long>(actorEnd - actorStart),
+                static_cast<unsigned long>(backgroundEnd - backgroundStart));
+        }
     }
 
     if (trackMovePerf) {
         LogViewMovePerfIfNeeded();
     }
-    LogViewHiResPerfIfNeeded(m_world);
+    if (trackPerf) LogViewHiResPerfIfNeeded(m_world);
 }

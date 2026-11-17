@@ -130,7 +130,7 @@ bool LoadMakeCharQtButtonBitmap(int index, bool pressed, shopui::BitmapPixels* o
     *out = LoadBitmapPixelsFromGameData(resolvedPath.c_str());
     if (!out->IsValid()) {
         if (!loggedMiss[index][pressedIndex]) {
-            DbgLog("[MakeCharQt] BUTTON LOAD FAIL index=%d pressed=%d asset=%s path=%s\n",
+            DbgError("[MakeCharQt] BUTTON LOAD FAIL index=%d pressed=%d asset=%s path=%s\n",
                 index,
                 pressed ? 1 : 0,
                 assetName,

@@ -119,10 +119,10 @@ CursorResCache ResolveCursorResources()
             DbgLog("[Cursor] RESOLVED: spr=%s act=%s\n", kCandidates[i].spr, kCandidates[i].act);
             return cache;
         }
-        DbgLog("[Cursor] Not found: spr=%s act=%s\n", kCandidates[i].spr, kCandidates[i].act);
+        DbgError("[Cursor] Not found: spr=%s act=%s\n", kCandidates[i].spr, kCandidates[i].act);
     }
 
-    DbgLog("[Cursor] FAILED to resolve cursor assets (using fallback arrow).\n");
+    DbgError("[Cursor] FAILED to resolve cursor assets (using fallback arrow).\n");
     return cache;
 }
 

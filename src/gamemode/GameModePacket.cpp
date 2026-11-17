@@ -678,7 +678,7 @@ void HandleNotifyEffect(CGameMode& mode, const PacketView& packet)
         effectId = kEffectIdJobLevelUpSuperNovice;
         break;
     default:
-        DbgLog("[GameMode] unhandled notify effect type=%u actor=%u\n",
+        DbgError("[GameMode] unhandled notify effect type=%u actor=%u\n",
             static_cast<unsigned int>(effectType),
             static_cast<unsigned int>(actorId));
         return;
@@ -731,7 +731,7 @@ void HandleNotifyEffect2(CGameMode& mode, const PacketView& packet)
         actor == (mode.m_world ? static_cast<CGameActor*>(mode.m_world->m_player) : nullptr));
 
     if (!actor->LaunchEffect(static_cast<int>(effectId), vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f)) {
-        DbgLog("[GameMode] notify effect2 launch failed actor=%u effect=%u\n",
+        DbgError("[GameMode] notify effect2 launch failed actor=%u effect=%u\n",
             static_cast<unsigned int>(actorId),
             static_cast<unsigned int>(effectId));
     }
@@ -1142,7 +1142,7 @@ void MakePotionEffect(CGameMode& mode, unsigned int itemId, u32 actorId)
         return effect&&effect->GetEffectType()==feedback.effectId;
     }))actor->SendMsg(actor,109,feedback.effectId,0,0);
     if(!actor->LaunchEffect(feedback.effectId,vector3d{},0.0f))
-        DbgLog("[GameMode] potion effect launch failed itemId=%u actor=%u effect=%d\n",itemId,actorId,feedback.effectId);
+        DbgError("[GameMode] potion effect launch failed itemId=%u actor=%u effect=%d\n",itemId,actorId,feedback.effectId);
 }
 
 void ApplyInventoryRemainingAmount(unsigned int itemIndex,int remainingAmount)
@@ -1472,7 +1472,7 @@ void HandleRecovery(CGameMode& mode, const PacketView& packet)
         // existing Am_Make_Number path clamps a negative display value to zero.
         EmitRecoveryNumber(actor,actor,amount,ResolveRecoveryNumberColor(statusType));
         if(!actor->LaunchEffect(effectId,vector3d{},0.0f))
-            DbgLog("[GameMode] recovery effect launch failed status=%u amount=%d\n",unsigned(statusType),amount);
+            DbgError("[GameMode] recovery effect launch failed status=%u amount=%d\n",unsigned(statusType),amount);
     }
     DbgLog("[GameMode] recovery status=%u amount=%d\n",unsigned(statusType),amount);
 }
@@ -3184,7 +3184,7 @@ void HandleActionFailure(CGameMode& mode, const PacketView& packet)
         }
     }
     if (message) g_windowMgr.SendMsg(kUiChatEventMsg, reinterpret_cast<msgparam_t>(message), color);
-    DbgLog("[GameMode] action failure type=%u message='%s'\n", type, message ? message : "");
+    DbgError("[GameMode] action failure type=%u message='%s'\n", type, message ? message : "");
 }
 
 void HandleUnequipItemAck(CGameMode& mode, const PacketView& packet)
@@ -4876,7 +4876,7 @@ bool ReconnectForServerMove(const MapChangeInfo& info)
 
     CRagConnection::instance()->Disconnect();
     if (!CRagConnection::instance()->Connect(serverHost, static_cast<int>(info.port))) {
-        DbgLog("[GameMode] map change reconnect failed zone=%s:%u map='%s'\n",
+        DbgError("[GameMode] map change reconnect failed zone=%s:%u map='%s'\n",
             serverHost,
             static_cast<unsigned int>(info.port),
             info.mapName.c_str());
@@ -4894,7 +4894,7 @@ bool ReconnectForServerMove(const MapChangeInfo& info)
             enterPacket.data(),
             static_cast<int>(enterPacket.size()),
             &enterPacketLength)) {
-        DbgLog("[GameMode] map change reconnect failed to build wanttoconnection packet map='%s'\n",
+        DbgError("[GameMode] map change reconnect failed to build wanttoconnection packet map='%s'\n",
             info.mapName.c_str());
         return false;
     }
@@ -7750,9 +7750,9 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
 
     actor->m_isVisible = 1;
 
-    const bool traceRemoteMove = actor->m_isPc == 0;
-    const u32 clientTickNow = GetTickCount();
-    const u32 serverTickNow = g_session.GetServerTime();
+    const bool traceRemoteMove = DebugLogEnabled(DebugLogActors) && actor->m_isPc == 0;
+    const u32 clientTickNow = traceRemoteMove ? GetTickCount() : 0;
+    const u32 serverTickNow = traceRemoteMove ? g_session.GetServerTime() : 0;
     const int prevSrcX = actor->m_moveSrcX;
     const int prevSrcY = actor->m_moveSrcY;
     const int prevDstX = actor->m_moveDestX;
@@ -9927,7 +9927,7 @@ void HandleDisconnectCharacterAck(CGameMode&, const PacketView& packet)
 void HandleDisconnectAck(CGameMode&, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 4) {
-        DbgLog("[GameMode] ignored truncated 0x018B packet len=%u\n",
+        DbgError("[GameMode] ignored truncated 0x018B packet len=%u\n",
             static_cast<unsigned int>(packet.packetLength));
         return;
     }

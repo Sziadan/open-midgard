@@ -90,7 +90,7 @@ bool ReadBytes(const unsigned char* buffer, size_t size, size_t* offset, void* o
 
 bool FailWorldLoad(const char* fName, const char* stage, size_t offset, int size, u8 major, u8 minor)
 {
-    DbgLog("[WorldRes] load failed file='%s' stage=%s offset=%u size=%d ver=%u.%u\n",
+    DbgError("[WorldRes] load failed file='%s' stage=%s offset=%u size=%d ver=%u.%u\n",
         fName ? fName : "(null)",
         stage ? stage : "(unknown)",
         static_cast<unsigned>(offset),
@@ -370,7 +370,7 @@ bool C3dWorldRes::LoadFromBuffer(const char* fName, const unsigned char* buffer,
             break;
         }
         default:
-            DbgLog("[WorldRes] unexpected object type file='%s' index=%d/%d type=%d offset=%u ver=%u.%u\n",
+            DbgError("[WorldRes] unexpected object type file='%s' index=%d/%d type=%d offset=%u ver=%u.%u\n",
                 fName ? fName : "(null)",
                 objectIndex + 1,
                 objectCount,

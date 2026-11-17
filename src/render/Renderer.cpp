@@ -127,7 +127,7 @@ void LogUploadedTerrainSurfaceSamples(CTexture* tex, const char* name)
     desc.dwSize = sizeof(desc);
     if (FAILED(tex->m_pddsSurface->Lock(nullptr, &desc, DDLOCK_WAIT | DDLOCK_READONLY, nullptr))) {
         if constexpr (kLogTexture) {
-            DbgLog("[Texture] readback failed name='%s'\n", name ? name : "(null)");
+            DbgError("[Texture] readback failed name='%s'\n", name ? name : "(null)");
         }
         return;
     }
@@ -161,7 +161,7 @@ void LogUploadedTerrainSurfaceSamples(CTexture* tex, const char* name)
         }
     } else {
         if constexpr (kLogTexture) {
-            DbgLog("[Texture] terrain-readback unsupported name='%s' bits=%lu pitch=%ld\n",
+            DbgError("[Texture] terrain-readback unsupported name='%s' bits=%lu pitch=%ld\n",
                 name ? name : "(null)",
                 desc.ddpfPixelFormat.dwRGBBitCount,
                 desc.lPitch);
@@ -581,7 +581,7 @@ CTexture* LoadManagedTexture(CTexMgr& texMgr, const char* name, TextureLoadMode 
         static std::map<std::string, bool> loggedMissingTextures;
         const std::string logKey = std::string(modeName) + ":" + baseName;
         if (loggedMissingTextures.size() < 24 && loggedMissingTextures.emplace(logKey, true).second) {
-            DbgLog("[Texture] unresolved name='%s' mode=%s\n", name ? name : "(null)", modeName);
+            DbgError("[Texture] unresolved name='%s' mode=%s\n", name ? name : "(null)", modeName);
         }
         texMgr.m_missingTexTable.insert(cacheKey);
         return &CTexMgr::s_dummy_texture;
@@ -593,7 +593,7 @@ CTexture* LoadManagedTexture(CTexMgr& texMgr, const char* name, TextureLoadMode 
         if (failedTextureLoadLogCount < 16) {
             ++failedTextureLoadLogCount;
             if constexpr (kLogTexture) {
-                DbgLog("[Texture] load failed name='%s' resolved='%s' mode=%s\n",
+                DbgError("[Texture] load failed name='%s' resolved='%s' mode=%s\n",
                     name ? name : "(null)",
                     texturePath.c_str(),
                     modeName);
@@ -665,7 +665,7 @@ CTexture* LoadManagedTexture(CTexMgr& texMgr, const char* name, TextureLoadMode 
         if (failedTextureCreateLogCount < 16) {
             ++failedTextureCreateLogCount;
             if constexpr (kLogTexture) {
-                DbgLog("[Texture] create failed name='%s' resolved='%s' size=%dx%d mode=%s\n",
+                DbgError("[Texture] create failed name='%s' resolved='%s' size=%dx%d mode=%s\n",
                     name ? name : "(null)",
                     texturePath.c_str(),
                     bitmap->m_width,

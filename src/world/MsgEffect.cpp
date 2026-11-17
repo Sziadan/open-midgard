@@ -219,7 +219,7 @@ CSprRes* GetDamageCountSprite()
         attemptedLoad = true;
         sprite = g_resMgr.GetAs<CSprRes>(kDamageNumberSpritePath);
         if (!sprite) {
-            DbgLog("[MsgEffect] Failed to load damage number sprite '%s'\n", kDamageNumberSpritePath);
+            DbgError("[MsgEffect] Failed to load damage number sprite '%s'\n", kDamageNumberSpritePath);
         }
     }
     return sprite;
@@ -233,7 +233,7 @@ CActRes* GetDamageCountAct()
         attemptedLoad = true;
         act = g_resMgr.GetAs<CActRes>(kDamageNumberActPath);
         if (!act) {
-            DbgLog("[MsgEffect] Failed to load damage number act '%s'\n", kDamageNumberActPath);
+            DbgError("[MsgEffect] Failed to load damage number act '%s'\n", kDamageNumberActPath);
         }
     }
     return act;
@@ -247,7 +247,7 @@ CSprRes* GetMissEffectSprite()
         attemptedLoad = true;
         sprite = g_resMgr.GetAs<CSprRes>(kMissEffectSpritePath);
         if (!sprite) {
-            DbgLog("[MsgEffect] Failed to load miss effect sprite '%s'\n", kMissEffectSpritePath);
+            DbgError("[MsgEffect] Failed to load miss effect sprite '%s'\n", kMissEffectSpritePath);
         }
     }
     return sprite;
@@ -261,7 +261,7 @@ CActRes* GetMissEffectAct()
         attemptedLoad = true;
         act = g_resMgr.GetAs<CActRes>(kMissEffectActPath);
         if (!act) {
-            DbgLog("[MsgEffect] Failed to load miss effect act '%s'\n", kMissEffectActPath);
+            DbgError("[MsgEffect] Failed to load miss effect act '%s'\n", kMissEffectActPath);
         }
     }
     return act;

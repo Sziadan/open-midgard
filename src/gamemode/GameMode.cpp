@@ -213,6 +213,7 @@ constexpr size_t kBootstrapTextureBatch = 2;
 constexpr size_t kBootstrapBackgroundActorBatch = 6;
 constexpr size_t kBootstrapFixedEffectBatch = 12;
 constexpr float kWorldProcessTickMs = 24.0f;
+constexpr float kExperimentalWorldProcessTickMs = 16.0f;
 constexpr u32 kMovingCameraHoverRefreshMs = 100;
 constexpr int kMaxWorldProcessStepsPerUpdate = 8;
 constexpr int kHoverNameFontHeight = 20;
@@ -2723,7 +2724,7 @@ bool RequestReturnToCharSelect()
             "Unable to send the character-select request.",
             0x00FF4040u,
             6);
-        DbgLog("[GameMode] failed to send return-to-character-select request\n");
+        DbgError("[GameMode] failed to send return-to-character-select request\n");
         return false;
     }
 
@@ -2765,7 +2766,7 @@ bool RequestExitToWindows()
             "Unable to send the exit request.",
             0x00FF4040u,
             6);
-        DbgLog("[GameMode] failed to send exit-to-Windows request\n");
+        DbgError("[GameMode] failed to send exit-to-Windows request\n");
         return false;
     }
 
@@ -3172,6 +3173,17 @@ struct UpdatePerfStats {
 };
 
 UpdatePerfStats g_updatePerfStats;
+
+struct WorldTickPerfStats {
+    u64 frames = 0;
+    u64 elapsedMs = 0;
+    u64 logicSteps = 0;
+    u64 actorPasses = 0;
+    u64 clampedFrames = 0;
+    double actorUpdateMs = 0.0;
+};
+
+WorldTickPerfStats g_worldTickPerfStats;
 
 struct GameModeMovePerfStats {
     u64 frames = 0;
@@ -3857,7 +3869,7 @@ bool LoadProhibitionHistory()
 
 void SaveProhibitionHistory()
 {
-    if (!g_session.m_prohibitionHistory.Save()) DbgLog("[GM] Could not save prohibition history\n");
+    if (!g_session.m_prohibitionHistory.Save())     DbgError("[GM] Could not save prohibition history\n");
     if (g_windowMgr.m_prohibitionHistoryWnd) g_windowMgr.m_prohibitionHistoryWnd->Invalidate();
 }
 
@@ -4185,11 +4197,11 @@ void DrawLockedTargetArrow(CGameMode& mode, HDC hdc)
                     s_height);
             } else {
                 delete[] pixels;
-                DbgLog("[GameMode] locked target arrow bitmap decode failed path='%s'\n",
+                DbgError("[GameMode] locked target arrow bitmap decode failed path='%s'\n",
                     s_bitmapPath.c_str());
             }
         } else {
-            DbgLog("[GameMode] locked target arrow asset not found name='%s'\n",
+            DbgError("[GameMode] locked target arrow asset not found name='%s'\n",
                 kLockedTargetArrowBitmapName);
         }
     }
@@ -4268,7 +4280,7 @@ CTexture* GetLockedTargetMarkerTexture()
     CTexture* texture = g_texMgr.GetTexture(kLockedTargetTexturePath, false);
     if ((!texture || texture == &CTexMgr::s_dummy_texture) && !s_loggedFailure) {
         s_loggedFailure = true;
-        DbgLog("[GameMode] failed to load locked target texture '%s'\n", kLockedTargetTexturePath);
+        DbgError("[GameMode] failed to load locked target texture '%s'\n", kLockedTargetTexturePath);
     }
     return (!texture || texture == &CTexMgr::s_dummy_texture) ? nullptr : texture;
 }
@@ -4735,7 +4747,7 @@ void AdvanceMapLoading(CGameMode& mode, u32 now)
         const bool fallbackWaitSatisfied = sinceAck >= kLoadingActorFallbackMs;
         if (quietWindowSatisfied || fallbackWaitSatisfied) {
             if (!quietWindowSatisfied && fallbackWaitSatisfied) {
-                DbgLog("[GameMode] finishing map loading after actor wait timeout world='%s' sinceAck=%u sinceActor=%u runtime=%zu pos=%zu\n",
+                DbgError("[GameMode] finishing map loading after actor wait timeout world='%s' sinceAck=%u sinceActor=%u runtime=%zu pos=%zu\n",
                     mode.m_rswName,
                     static_cast<unsigned int>(sinceAck),
                     static_cast<unsigned int>(sinceActor),
@@ -4754,6 +4766,7 @@ void AdvanceMapLoading(CGameMode& mode, u32 now)
 
 void LogRuntimeActorSummary(const CGameMode& mode)
 {
+    if (!DebugLogEnabled(DebugLogGameplay)) return;
     static size_t s_lastActorPosCount = static_cast<size_t>(-1);
     static size_t s_lastRuntimeActorCount = static_cast<size_t>(-1);
     static size_t s_lastPcCount = static_cast<size_t>(-1);
@@ -4786,7 +4799,7 @@ void LogFirstSeenUnhandledGamePacket(u16 packetId, int packetLength)
 {
     static std::map<u16, bool> loggedPacketIds;
     if (loggedPacketIds.insert(std::make_pair(packetId, true)).second) {
-        DbgLog("[GameMode] unhandled packet id=0x%04X len=%d\n", packetId, packetLength);
+        DbgError("[GameMode] unhandled packet id=0x%04X len=%d\n", packetId, packetLength);
     }
 }
 
@@ -5242,7 +5255,7 @@ bool SendMoveRequestPacket(int dstX, int dstY)
         PACKET_CZ_REQUEST_MOVE_LEGACY packet{};
         packet.PacketType = profile.walkToXY;
         if (!EncodeMoveDestination(dstX, dstY, packet.Dest)) {
-            DbgLog("[GameMode] move request encode failed dst=%d,%d\n", dstX, dstY);
+            DbgError("[GameMode] move request encode failed dst=%d,%d\n", dstX, dstY);
             return false;
         }
         sent = CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
@@ -5251,7 +5264,7 @@ bool SendMoveRequestPacket(int dstX, int dstY)
         packet.PacketType = profile.walkToXY;
         FillPacketPadding(packet.padding, static_cast<int>(sizeof(packet.padding)));
         if (!EncodeMoveDestination(dstX, dstY, packet.Dest)) {
-            DbgLog("[GameMode] move request encode failed dst=%d,%d\n", dstX, dstY);
+            DbgError("[GameMode] move request encode failed dst=%d,%d\n", dstX, dstY);
             return false;
         }
         sent = CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&packet), sizeof(packet));
@@ -10084,11 +10097,11 @@ void EnsureBootstrapWorldAssets(const CGameMode& mode)
             if (!cache.rswPath.empty()) {
                 cache.worldRes = g_resMgr.GetAs<C3dWorldRes>(cache.rswPath.c_str());
                 if (!LoadRswWorldInfo(cache.rswPath, &cache.worldInfo)) {
-                    DbgLog("[GameMode] failed to load RSW world info path='%s'; using default world lighting\n",
+                    DbgError("[GameMode] failed to load RSW world info path='%s'; using default world lighting\n",
                         cache.rswPath.c_str());
                 }
             } else {
-                DbgLog("[GameMode] no RSW found for map='%s'; using default world lighting\n", cache.mapName.c_str());
+                DbgError("[GameMode] no RSW found for map='%s'; using default world lighting\n", cache.mapName.c_str());
             }
             ApplyBootstrapWorldLighting(cache);
             cache.loadStage = BootstrapLoadStage::LoadAttr;
@@ -11157,7 +11170,8 @@ CGameMode::CGameMode()
         m_groundSkillCellX(0), m_groundSkillCellY(0), m_groundSkillId(0), m_groundSkillLevel(0), m_groundSkillRange(0), m_hasGroundSkillChase(0),
         m_touchSkillTargetAid(0), m_touchSkillId(0), m_touchSkillLevel(0), m_touchSkillRange(0), m_hasTouchSkillChase(0),
         m_mapLoadingStage(MapLoading_None), m_mapLoadingStartTick(0), m_mapLoadingAckTick(0), m_lastActorBootstrapPacketTick(0),
-        m_worldProcessTick(GetTickCount()), m_worldProcessCarryMs(kWorldProcessTickMs), m_lastHoverRefreshTick(0),
+        m_worldProcessTick(GetTickCount()), m_worldProcessCarryMs(kWorldProcessTickMs),
+        m_worldProcessTickMs(kWorldProcessTickMs), m_worldTickPerfEnabled(false), m_lastHoverRefreshTick(0),
         m_pendingPartyCreateExpShare(false),
         m_pendingPartyCreateName()
 {
@@ -11275,7 +11289,12 @@ void CGameMode::OnInit(const char* worldName) {
     m_playWaveList.clear();
     m_ambientWaveList.clear();
     m_worldProcessTick = GetTickCount();
-    m_worldProcessCarryMs = kWorldProcessTickMs;
+    m_worldProcessTickMs = LoadSettingsIniInt("Debug", "ExperimentalWorldTick16", 0) != 0
+        ? kExperimentalWorldProcessTickMs : kWorldProcessTickMs;
+    m_worldTickPerfEnabled = LoadSettingsIniInt("Debug", "WorldTickPerf", 0) != 0;
+    m_worldProcessCarryMs = m_worldProcessTickMs;
+    g_worldTickPerfStats = {};
+    DbgLog("[WorldClock] step=%.0fms perf=%d\n", m_worldProcessTickMs, m_worldTickPerfEnabled ? 1 : 0);
     m_lastHoverRefreshTick = 0;
     m_selectedPcTargetGid = 0;
     m_pendingPartyCreateExpShare = false;
@@ -11779,7 +11798,8 @@ int  CGameMode::OnRun() {
 
     const bool hasLegacyDevice = GetRenderDevice().GetLegacyDevice() != nullptr;
     const bool isVulkanBackend = GetRenderDevice().GetBackendType() == RenderBackendType::Vulkan;
-    const bool trackMovePerfFrame = m_world && m_world->m_player && m_world->m_player->m_isMoving;
+    const bool trackMovePerfFrame = DebugLogEnabled(DebugLogPerformance)
+        && m_world && m_world->m_player && m_world->m_player->m_isMoving;
     if (trackMovePerfFrame) {
         g_overlayMovePerfStats.frames += 1;
     }
@@ -12123,7 +12143,7 @@ void CGameMode::OnUpdate() {
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);
     SendTimeSyncRequest(false);
-    const bool trackMovePerfFrame = IsMovePerfActive(*this);
+    const bool trackMovePerfFrame = DebugLogEnabled(DebugLogPerformance) && IsMovePerfActive(*this);
     if (trackMovePerfFrame) {
         g_gameModeMovePerfStats.frames += 1;
     }
@@ -12138,11 +12158,12 @@ void CGameMode::OnUpdate() {
     const DWORD worldElapsedMs = worldNow - m_worldProcessTick;
     m_worldProcessTick = worldNow;
     m_worldProcessCarryMs += static_cast<float>(worldElapsedMs);
-    int worldStepCount = static_cast<int>(m_worldProcessCarryMs / kWorldProcessTickMs);
+    int worldStepCount = static_cast<int>(m_worldProcessCarryMs / m_worldProcessTickMs);
     if (worldStepCount > 0) {
-        m_worldProcessCarryMs -= static_cast<float>(worldStepCount) * kWorldProcessTickMs;
+        m_worldProcessCarryMs -= static_cast<float>(worldStepCount) * m_worldProcessTickMs;
     }
-    if (worldStepCount > kMaxWorldProcessStepsPerUpdate) {
+    const bool worldStepClamped = worldStepCount > kMaxWorldProcessStepsPerUpdate;
+    if (worldStepClamped) {
         worldStepCount = kMaxWorldProcessStepsPerUpdate;
         m_worldProcessCarryMs = 0.0f;
     }
@@ -12180,6 +12201,7 @@ void CGameMode::OnUpdate() {
     DWORD backgroundUpdateEnd = bootstrapEnd;
     if (m_world) {
         const DWORD actorUpdateStart = GetTickCount();
+        const double worldTickPerfStart = m_worldTickPerfEnabled ? QpcNowMs() : 0.0;
         SetRuntimeActorCameraLongitude(m_view ? m_view->GetCameraLongitude() : 0.0f);
         for (int step = 0; step < actorSteps; ++step) {
             m_world->UpdateActors();
@@ -12195,6 +12217,21 @@ void CGameMode::OnUpdate() {
             // self actor now bypasses the shared billboard helper cache, so this
             // no longer drags cached UI/billboard data around with it.
             m_world->m_player->ProcessState();
+        }
+        if (m_worldTickPerfEnabled) {
+            WorldTickPerfStats& stats = g_worldTickPerfStats;
+            ++stats.frames;
+            stats.elapsedMs += worldElapsedMs;
+            stats.logicSteps += static_cast<u64>(worldStepCount);
+            stats.actorPasses += static_cast<u64>(actorSteps);
+            stats.clampedFrames += worldStepClamped ? 1u : 0u;
+            stats.actorUpdateMs += QpcNowMs() - worldTickPerfStart;
+            if (stats.frames >= kFramePerfLogIntervalFrames) {
+                DbgAlways("[WorldTickPerf] step=%.0fms frames=%llu elapsed=%llums logicSteps=%llu actorPasses=%llu clamped=%llu actorUpdateAvg=%.3fms\n",
+                    m_worldProcessTickMs, stats.frames, stats.elapsedMs, stats.logicSteps,
+                    stats.actorPasses, stats.clampedFrames, stats.actorUpdateMs / stats.frames);
+                stats = {};
+            }
         }
         actorUpdateEnd = GetTickCount();
 
@@ -12675,13 +12712,16 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),
             static_cast<int>(packet.size())) ? 1 : 0;
     }
+    case 262:
+        // The selected server retains the 0279 length without a hunting-list parser.
+        return 0;
     case 34:
         if(g_serviceType==ServiceChina || g_serviceType==ServiceMalaysia || g_serviceType==ServiceSingapore)return 0;
         [[fallthrough]];
-    case 83:case 194:case 195:case 197:case 201:case 262: {
+    case 83:case 194:case 195:case 197:case 201: {
         // Selected mode recipients, not TALKTYPE numbers. These requests are
         // fixed two-byte source opcodes, independent of movement profiles.
-        const u16 opcode=msg==34?193:msg==83?285:msg==194?535:msg==195?536:msg==197?549:msg==201?567:633;
+        const u16 opcode=msg==34?193:msg==83?285:msg==194?535:msg==195?536:msg==197?549:567;
         const std::array<u8,2> packet{{static_cast<u8>(opcode),static_cast<u8>(opcode>>8)}};
         return CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(packet.data()),static_cast<int>(packet.size()))?1:0;
     }
@@ -12897,7 +12937,9 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         case 39: { // MENUID_HOMUN_FOLLOW
             companion_ai::Msg2Ai msg;
             msg.command = companion_ai::FOLLOW_CMD;
-            companion_ai::Runtime::QueueCommand(companion_ai::Kind::Homunculus, msg, false);
+            if (companion_ai::Runtime::QueueCommand(companion_ai::Kind::Homunculus, msg, false)) {
+                g_session.m_homunTarget = {};
+            }
             break;
         }
         case 40: // MENUID_MER_SHOWINFO
@@ -12911,7 +12953,9 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         case 41: { // MENUID_MER_FOLLOW
             companion_ai::Msg2Ai msg;
             msg.command = companion_ai::FOLLOW_CMD;
-            companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, msg, false);
+            if (companion_ai::Runtime::QueueCommand(companion_ai::Kind::Mercenary, msg, false)) {
+                g_session.m_merTarget = {};
+            }
             break;
         }
         }

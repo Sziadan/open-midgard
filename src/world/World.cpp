@@ -53,6 +53,7 @@ CWorld g_world;
 namespace {
 double WorldNowMs()
 {
+    if (!DebugLogEnabled(DebugLogPerformance)) return 0.0;
     static LARGE_INTEGER freq = [] {
         LARGE_INTEGER value{};
         QueryPerformanceFrequency(&value);
@@ -520,7 +521,7 @@ CTexture* GetEffectTexture(const char* path)
         texture = nullptr;
     }
     if (!texture && !loggedMissing[key]) {
-        DbgLog("[World] missing effect texture '%s'\n", path);
+        DbgError("[World] missing effect texture '%s'\n", path);
         loggedMissing[key] = true;
     }
     cache.emplace(key, texture);
@@ -4026,7 +4027,7 @@ bool RenderSkyFallbackFaces(const matrix& viewMatrix, const vector3d& cameraPos,
 
     if (!loggedFallbackMissing) {
         loggedFallbackMissing = true;
-        DbgLog("[World] skybox fallback textures unresolved\n");
+        DbgError("[World] skybox fallback textures unresolved\n");
     }
     return false;
 }
@@ -4795,7 +4796,7 @@ bool C3dGround::AssignGnd(const CGndRes& gnd, const vector3d& lightDir, const ve
                 continue;
             }
 
-            DbgLog("[GND] unresolved terrain texture id=%d name='%s'\n",
+            DbgError("[GND] unresolved terrain texture id=%d name='%s'\n",
                 surface.textureId,
                 m_textureNames[static_cast<size_t>(surface.textureId)].c_str());
             ++loggedMissingTerrainNames;
@@ -5925,13 +5926,13 @@ bool CWorld::EnsureSkyActor()
         "data\\model\\"
     });
     if (skyModelPath.empty()) {
-        DbgLog("[World] skybox model unresolved name='skybox.rsm'\n");
+        DbgError("[World] skybox model unresolved name='skybox.rsm'\n");
         return false;
     }
 
     C3dModelRes* modelRes = g_resMgr.GetAs<C3dModelRes>(skyModelPath.c_str());
     if (!modelRes) {
-        DbgLog("[World] skybox model load failed path='%s'\n", skyModelPath.c_str());
+        DbgError("[World] skybox model load failed path='%s'\n", skyModelPath.c_str());
         return false;
     }
 
@@ -5940,7 +5941,7 @@ bool CWorld::EnsureSkyActor()
         return false;
     }
     if (!skyActor->AssignModel(*modelRes)) {
-        DbgLog("[World] skybox assign failed path='%s'\n", skyModelPath.c_str());
+        DbgError("[World] skybox assign failed path='%s'\n", skyModelPath.c_str());
         delete skyActor;
         return false;
     }
@@ -6369,7 +6370,7 @@ bool CWorld::AppendBackgroundObjects(const C3dWorldRes& worldRes,
         });
         if (modelPath.empty()) {
             if (unresolvedModelNames.emplace(actorInfo->modelName, true).second) {
-                DbgLog("[World] background object model unresolved raw='%s' name='%s'\n", actorInfo->modelName, actorInfo->name);
+                DbgError("[World] background object model unresolved raw='%s' name='%s'\n", actorInfo->modelName, actorInfo->name);
             }
             continue;
         }
@@ -6381,7 +6382,7 @@ bool CWorld::AppendBackgroundObjects(const C3dWorldRes& worldRes,
         C3dModelRes* modelRes = g_resMgr.GetAs<C3dModelRes>(modelPath.c_str());
         if (!modelRes) {
             if (failedModelLoads.emplace(modelPath, true).second) {
-                DbgLog("[World] background object model load failed raw='%s' resolved='%s'\n", actorInfo->modelName, modelPath.c_str());
+                DbgError("[World] background object model load failed raw='%s' resolved='%s'\n", actorInfo->modelName, modelPath.c_str());
             }
             continue;
         }
@@ -6390,7 +6391,7 @@ bool CWorld::AppendBackgroundObjects(const C3dWorldRes& worldRes,
         const C3dNodeRes* rootNode = modelRes->FindNode(actorInfo->nodeName);
         if (!rootNode && modelRes->m_objectList.empty()) {
             if (failedModelRoots.emplace(modelRootKey, true).second) {
-                DbgLog("[World] background object root missing model='%s' node='%s'\n", modelPath.c_str(), actorInfo->nodeName);
+                DbgError("[World] background object root missing model='%s' node='%s'\n", modelPath.c_str(), actorInfo->nodeName);
             }
             continue;
         }
@@ -6415,7 +6416,7 @@ bool CWorld::AppendBackgroundObjects(const C3dWorldRes& worldRes,
             : actor->AssignModel(*modelRes);
         if (!assigned) {
             if (failedModelAssigns.emplace(modelRootKey, true).second) {
-                DbgLog("[World] background object assign failed model='%s' node='%s'\n", modelPath.c_str(), actorInfo->nodeName);
+                DbgError("[World] background object assign failed model='%s' node='%s'\n", modelPath.c_str(), actorInfo->nodeName);
             }
             delete actor;
             continue;
@@ -7045,6 +7046,11 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
         CBlurPC* blur = dynamic_cast<CBlurPC*>(object);
         if (blur != nullptr) {
             enqueueRenderActor(blur);
+        }
+    }
+    for (const BillboardScreenEntry& entry : renderEntries) {
+        if (entry.actor && entry.actor->WarmupNonPcBillboardCache()) {
+            break;
         }
     }
     m_lastRenderStats.billboardBuildMs = WorldNowMs() - billboardBuildStartMs;

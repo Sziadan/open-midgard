@@ -94,7 +94,7 @@ void LogFirstSeenUnknownRecvPacket(u16 packetId, int bufferedBytes, CPacketQueue
         char history[8 * 16 + 1] = {};
         FormatQueueSample(queue, sample, sizeof(sample));
         FormatRecentPacketHistory(history, sizeof(history));
-        DbgLog("[Net] unknown recv packet; disconnecting id=0x%04X buffered=%d recent=%s sample=%s\n",
+        DbgError("[Net] unknown recv packet; disconnecting id=0x%04X buffered=%d recent=%s sample=%s\n",
             packetId,
             bufferedBytes,
             history,
@@ -130,7 +130,7 @@ void LogFirstSeenInvalidVariablePacket(u16 packetId, int packetSize, CPacketQueu
         char history[8 * 16 + 1] = {};
         FormatQueueSample(queue, sample, sizeof(sample));
         FormatRecentPacketHistory(history, sizeof(history));
-        DbgLog("[Net] invalid variable recv packet; disconnecting id=0x%04X size=%d recent=%s sample=%s\n",
+        DbgError("[Net] invalid variable recv packet; disconnecting id=0x%04X size=%d recent=%s sample=%s\n",
             packetId,
             packetSize,
             history,
@@ -234,7 +234,7 @@ int CloseSocketHandle(SOCKET socketHandle)
 
 void LogSocketClosure(const char* phase, int errorCode)
 {
-    DbgLog("[Net] socket closed during %s error=%d\n", phase ? phase : "recv", errorCode);
+    DbgError("[Net] socket closed during %s error=%d\n", phase ? phase : "recv", errorCode);
 }
 
 int SelectForSocket(SOCKET socketHandle, fd_set* readSet, fd_set* writeSet, fd_set* errorSet, timeval* timeout)
@@ -293,7 +293,7 @@ bool CConnection::Connect(const char* ip, int port)
     auto fail = [&](const char* phase, int errorCode) {
         std::snprintf(m_lastConnectError, sizeof(m_lastConnectError),
             "%s:%d - %s (%s)", hostText, port, phase, DescribeSocketError(errorCode).c_str());
-        DbgLog("[Net] connect failed %s\n", m_lastConnectError);
+        DbgError("[Net] connect failed %s\n", m_lastConnectError);
         Disconnect();
         return false;
     };
@@ -515,8 +515,15 @@ bool CRagConnection::ExpectRawAccountIdEcho(u32 expectedAccountId)
 
 bool CRagConnection::SendPacket(const char* data, int len)
 {
-    if (!data || len <= 0) return false;
-    return Send(data, len) >= 0;
+    if (!data || len <= 0) {
+        DbgError("[Net] invalid outgoing packet size=%d\n", len);
+        return false;
+    }
+    if (Send(data, len) < 0) {
+        DbgError("[Net] failed to queue or send packet size=%d\n", len);
+        return false;
+    }
+    return true;
 }
 
 bool CRagConnection::SendPetCaptureRequest(u32 targetGid)
@@ -559,7 +566,7 @@ bool CRagConnection::RecvPacket(std::vector<u8>& outPacket)
                 m_waitingForRawAccountIdEcho = false;
                 m_expectedRawAccountIdEcho = 0;
                 if (receivedAccountId != expectedAccountId) {
-                    DbgLog("[Net] raw character-server account echo mismatch: expected=%u received=%u\n",
+                    DbgError("[Net] raw character-server account echo mismatch: expected=%u received=%u\n",
                            expectedAccountId, receivedAccountId);
                     Disconnect();
                     return false;

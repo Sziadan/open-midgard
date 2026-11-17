@@ -76,7 +76,7 @@ void LogBitmapSamples(const char* fName, const char* decodePath, const CBitmapRe
     }
 
     if (!bitmapRes.m_data || bitmapRes.m_width <= 0 || bitmapRes.m_height <= 0) {
-        DbgLog("[Bitmap] terrain name='%s' decode=%s invalid-data\n",
+        DbgError("[Bitmap] terrain name='%s' decode=%s invalid-data\n",
             fName ? fName : "(null)",
             decodePath ? decodePath : "(unknown)");
         return;

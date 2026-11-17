@@ -392,13 +392,13 @@ bool LoadVulkanLoader()
 #endif
     }
     if (!g_vulkanModule) {
-        DbgLog("[Render] Vulkan loader not found.\n");
+        DbgError("[Render] Vulkan loader not found.\n");
         return false;
     }
 
     vkGetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(GetProcAddress(g_vulkanModule, "vkGetInstanceProcAddr"));
     if (!vkGetInstanceProcAddr) {
-        DbgLog("[Render] Vulkan loader missing vkGetInstanceProcAddr.\n");
+        DbgError("[Render] Vulkan loader missing vkGetInstanceProcAddr.\n");
         return false;
     }
 
@@ -901,7 +901,7 @@ bool ShouldEnableD3D12DebugLayer()
 
 void LogD3D12InitFailure(const char* stage, HRESULT hr, int width, int height)
 {
-    DbgLog("[Render] D3D12 init failed at %s hr=0x%08X size=%dx%d.\n",
+    DbgError("[Render] D3D12 init failed at %s hr=0x%08X size=%dx%d.\n",
         stage ? stage : "(unknown)",
         static_cast<unsigned int>(hr),
         width,
@@ -910,7 +910,7 @@ void LogD3D12InitFailure(const char* stage, HRESULT hr, int width, int height)
 
 void LogD3D12ResizeFailure(HRESULT hr, int width, int height)
 {
-    DbgLog("[Render] D3D12 swap-chain resize failed hr=0x%08X size=%dx%d.\n",
+    DbgError("[Render] D3D12 swap-chain resize failed hr=0x%08X size=%dx%d.\n",
         static_cast<unsigned int>(hr),
         width,
         height);
@@ -919,7 +919,7 @@ void LogD3D12ResizeFailure(HRESULT hr, int width, int height)
 void LogD3D12PresentFailure(ID3D12Device* device, HRESULT hr, bool vertSync)
 {
     const HRESULT removedReason = device ? device->GetDeviceRemovedReason() : S_OK;
-    DbgLog("[Render] D3D12 present failed hr=0x%08X vsync=%d removedReason=0x%08X.\n",
+    DbgError("[Render] D3D12 present failed hr=0x%08X vsync=%d removedReason=0x%08X.\n",
         static_cast<unsigned int>(hr),
         vertSync ? 1 : 0,
         static_cast<unsigned int>(removedReason));
@@ -1364,12 +1364,12 @@ bool CompileShaderBlob(const char* source, const char* entryPoint, const char* t
         &errorBlob);
     if (FAILED(hr) || !shaderBlob) {
         if (errorBlob && errorBlob->GetBufferPointer()) {
-            DbgLog("[Render] D3D11 shader compile failed (%s/%s): %s\n",
+            DbgError("[Render] D3D11 shader compile failed (%s/%s): %s\n",
                 entryPoint,
                 target,
                 static_cast<const char*>(errorBlob->GetBufferPointer()));
         } else {
-            DbgLog("[Render] D3D11 shader compile failed (%s/%s) hr=0x%08X.\n",
+            DbgError("[Render] D3D11 shader compile failed (%s/%s) hr=0x%08X.\n",
                 entryPoint,
                 target,
                 static_cast<unsigned int>(hr));
@@ -2899,7 +2899,7 @@ private:
             DXGI_FORMAT_UNKNOWN,
             0);
         if (FAILED(hr)) {
-            DbgLog("[Render] D3D11 swap-chain resize failed hr=0x%08X.\n", static_cast<unsigned int>(hr));
+            DbgError("[Render] D3D11 swap-chain resize failed hr=0x%08X.\n", static_cast<unsigned int>(hr));
             return;
         }
         RefreshRenderTarget();
@@ -4101,7 +4101,7 @@ private:
         HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, &errorBlob);
         if (FAILED(hr) || !rootSignatureBlob) {
             if (errorBlob && errorBlob->GetBufferPointer()) {
-                DbgLog("[Render] D3D12 root-signature serialize failed: %s\n", static_cast<const char*>(errorBlob->GetBufferPointer()));
+                DbgError("[Render] D3D12 root-signature serialize failed: %s\n", static_cast<const char*>(errorBlob->GetBufferPointer()));
             }
             SafeRelease(errorBlob);
             SafeRelease(rootSignatureBlob);
@@ -5570,7 +5570,7 @@ public:
         const VkResult endResult = vkEndCommandBuffer(GetCurrentCommandBuffer());
         if (endResult != VK_SUCCESS) {
             releaseCapture();
-            DbgLog("[Render][Vulkan] vkEndCommandBuffer failed: %d\n", static_cast<int>(endResult));
+            DbgError("[Render][Vulkan] vkEndCommandBuffer failed: %d\n", static_cast<int>(endResult));
             m_bootstrap.initHr = static_cast<int>(endResult);
             m_frameBegun = false;
             return -1;
@@ -5593,7 +5593,7 @@ public:
         g_vulkanPerfStats.presentSubmitMs += VulkanNowMs() - submitStartMs;
         if (result != VK_SUCCESS) {
             releaseCapture();
-            DbgLog("[Render][Vulkan] vkQueueSubmit failed: %d\n", static_cast<int>(result));
+            DbgError("[Render][Vulkan] vkQueueSubmit failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             m_frameBegun = false;
             return -1;
@@ -5640,7 +5640,7 @@ public:
             return 0;
         }
         if (result != VK_SUCCESS) {
-            DbgLog("[Render][Vulkan] vkQueuePresentKHR failed: %d\n", static_cast<int>(result));
+            DbgError("[Render][Vulkan] vkQueuePresentKHR failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return -1;
         }
@@ -6085,7 +6085,7 @@ public:
         const char* textureName = (texture && texture->m_texName[0] != '\0') ? texture->m_texName : nullptr;
         if (!UploadTextureRegion(textureHandle, x, y, w, h, data, skipColorKey, pitch, immediate, textureName)) {
 #if RO_LOG_VULKAN_STATS
-            DbgLog("[Render][Vulkan] UploadTextureRegion failed tex=%p update=%d,%d %dx%d immediate=%d frameBegun=%d renderPass=%d hr=%d\n",
+            DbgError("[Render][Vulkan] UploadTextureRegion failed tex=%p update=%d,%d %dx%d immediate=%d frameBegun=%d renderPass=%d hr=%d\n",
                 static_cast<void*>(texture),
                 x,
                 y,
@@ -7526,7 +7526,7 @@ private:
         VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
         const VkResult result = vkAllocateDescriptorSets(m_device, &allocInfo, &descriptorSet);
         if (result != VK_SUCCESS) {
-            DbgLog("[Render][Vulkan] vkAllocateDescriptorSets failed: %d\n", static_cast<int>(result));
+            DbgError("[Render][Vulkan] vkAllocateDescriptorSets failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return VK_NULL_HANDLE;
         }
@@ -8066,13 +8066,13 @@ private:
         const VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan vkCreateInstance failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan vkCreateInstance failed (vk=%d).\n", static_cast<int>(result));
             return false;
         }
 
         if (!LoadVulkanInstanceFunctions(m_instance)) {
             m_bootstrap.initHr = static_cast<int>(E_NOINTERFACE);
-            DbgLog("[Render] Vulkan instance function resolution failed.\n");
+            DbgError("[Render] Vulkan instance function resolution failed.\n");
             return false;
         }
         return true;
@@ -8096,7 +8096,7 @@ private:
         const VkResult result = vkCreateWin32SurfaceKHR(m_instance, &createInfo, nullptr, &m_surface);
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan vkCreateWin32SurfaceKHR failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan vkCreateWin32SurfaceKHR failed (vk=%d).\n", static_cast<int>(result));
             return false;
         }
         return true;
@@ -8111,7 +8111,7 @@ private:
         m_qtVulkanInstance->setVkInstance(m_instance);
         if (!m_qtVulkanInstance->create()) {
             m_bootstrap.initHr = static_cast<int>(VK_ERROR_INITIALIZATION_FAILED);
-            DbgLog("[Render] Qt failed to wrap the Vulkan instance for the host window.\n");
+            DbgError("[Render] Qt failed to wrap the Vulkan instance for the host window.\n");
             return false;
         }
 
@@ -8119,7 +8119,7 @@ private:
         m_surface = m_qtVulkanInstance->surfaceForWindow(window);
         if (m_surface == VK_NULL_HANDLE) {
             m_bootstrap.initHr = static_cast<int>(VK_ERROR_INITIALIZATION_FAILED);
-            DbgLog("[Render] Qt failed to create a Vulkan surface for the host window.\n");
+            DbgError("[Render] Qt failed to create a Vulkan surface for the host window.\n");
             return false;
         }
         return true;
@@ -8132,7 +8132,7 @@ private:
         VkResult result = vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
         if (result != VK_SUCCESS || deviceCount == 0) {
             m_bootstrap.initHr = static_cast<int>(result != VK_SUCCESS ? result : VK_ERROR_INITIALIZATION_FAILED);
-            DbgLog("[Render] Vulkan physical device enumeration failed (vk=%d, count=%u).\n",
+            DbgError("[Render] Vulkan physical device enumeration failed (vk=%d, count=%u).\n",
                 static_cast<int>(result), static_cast<unsigned int>(deviceCount));
             return false;
         }
@@ -8310,13 +8310,13 @@ private:
         const VkResult result = vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device);
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan vkCreateDevice failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan vkCreateDevice failed (vk=%d).\n", static_cast<int>(result));
             return false;
         }
 
         if (!LoadVulkanDeviceFunctions(m_device)) {
             m_bootstrap.initHr = static_cast<int>(E_NOINTERFACE);
-            DbgLog("[Render] Vulkan device function resolution failed.\n");
+            DbgError("[Render] Vulkan device function resolution failed.\n");
             return false;
         }
 
@@ -8335,7 +8335,7 @@ private:
         VkResult result = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool);
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan vkCreateCommandPool failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan vkCreateCommandPool failed (vk=%d).\n", static_cast<int>(result));
             return false;
         }
 
@@ -8343,7 +8343,7 @@ private:
         result = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_immediateCommandPool);
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan vkCreateCommandPool(immediate) failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan vkCreateCommandPool(immediate) failed (vk=%d).\n", static_cast<int>(result));
             return false;
         }
         return true;
@@ -8370,7 +8370,7 @@ private:
         }
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan sync object creation failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan sync object creation failed (vk=%d).\n", static_cast<int>(result));
             return false;
         }
         return true;
@@ -8504,7 +8504,7 @@ private:
         VkResult result = vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &newSwapChain);
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan vkCreateSwapchainKHR failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan vkCreateSwapchainKHR failed (vk=%d).\n", static_cast<int>(result));
             return false;
         }
 
@@ -8954,7 +8954,7 @@ private:
         const VkResult result = vkCreateRenderPass(m_device, &renderPassInfo, nullptr, outRenderPass);
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan vkCreateRenderPass failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan vkCreateRenderPass failed (vk=%d).\n", static_cast<int>(result));
             return false;
         }
         return true;
@@ -9055,7 +9055,7 @@ private:
             const VkResult result = vkCreateImageView(m_device, &viewInfo, nullptr, &imageView);
             if (result != VK_SUCCESS) {
                 m_bootstrap.initHr = static_cast<int>(result);
-                DbgLog("[Render] Vulkan vkCreateImageView failed (vk=%d).\n", static_cast<int>(result));
+                DbgError("[Render] Vulkan vkCreateImageView failed (vk=%d).\n", static_cast<int>(result));
                 DestroyImageViews(*outViews);
                 return false;
             }
@@ -9092,7 +9092,7 @@ private:
             const VkResult result = vkCreateFramebuffer(m_device, &framebufferInfo, nullptr, &framebuffer);
             if (result != VK_SUCCESS) {
                 m_bootstrap.initHr = static_cast<int>(result);
-                DbgLog("[Render] Vulkan vkCreateFramebuffer failed (vk=%d).\n", static_cast<int>(result));
+                DbgError("[Render] Vulkan vkCreateFramebuffer failed (vk=%d).\n", static_cast<int>(result));
                 DestroyFramebuffers(*outFramebuffers);
                 return false;
             }
@@ -9117,7 +9117,7 @@ private:
         const VkResult result = vkAllocateCommandBuffers(m_device, &allocInfo, outCommandBuffers->data());
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
-            DbgLog("[Render] Vulkan vkAllocateCommandBuffers failed (vk=%d).\n", static_cast<int>(result));
+            DbgError("[Render] Vulkan vkAllocateCommandBuffers failed (vk=%d).\n", static_cast<int>(result));
             outCommandBuffers->clear();
             return false;
         }
@@ -9435,7 +9435,7 @@ private:
         VkResult result = vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
         g_vulkanPerfStats.frameFenceWaitMs += VulkanNowMs() - frameFenceWaitStartMs;
         if (result != VK_SUCCESS) {
-            DbgLog("[Render][Vulkan] vkWaitForFences(frame) failed: %d\n", static_cast<int>(result));
+            DbgError("[Render][Vulkan] vkWaitForFences(frame) failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return result;
         }
@@ -9446,7 +9446,7 @@ private:
         result = vkResetFences(m_device, 1, &m_inFlightFence);
         g_vulkanPerfStats.frameResetFenceMs += VulkanNowMs() - resetFenceStartMs;
         if (result != VK_SUCCESS) {
-            DbgLog("[Render][Vulkan] vkResetFences(frame) failed: %d\n", static_cast<int>(result));
+            DbgError("[Render][Vulkan] vkResetFences(frame) failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return result;
         }
@@ -9455,7 +9455,7 @@ private:
             result = vkResetDescriptorPool(m_device, m_descriptorPool, 0);
             g_vulkanPerfStats.frameResetDescriptorPoolMs += VulkanNowMs() - resetDescriptorPoolStartMs;
             if (result != VK_SUCCESS) {
-                DbgLog("[Render][Vulkan] vkResetDescriptorPool failed: %d\n", static_cast<int>(result));
+                DbgError("[Render][Vulkan] vkResetDescriptorPool failed: %d\n", static_cast<int>(result));
                 m_bootstrap.initHr = static_cast<int>(result);
                 return result;
             }
@@ -9473,7 +9473,7 @@ private:
             return result;
         }
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-            DbgLog("[Render][Vulkan] vkAcquireNextImageKHR failed: %d\n", static_cast<int>(result));
+            DbgError("[Render][Vulkan] vkAcquireNextImageKHR failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return result;
         }
@@ -9483,7 +9483,7 @@ private:
         result = vkResetCommandBuffer(commandBuffer, 0);
         g_vulkanPerfStats.frameResetCommandBufferMs += VulkanNowMs() - resetCommandBufferStartMs;
         if (result != VK_SUCCESS) {
-            DbgLog("[Render][Vulkan] vkResetCommandBuffer failed: %d\n", static_cast<int>(result));
+            DbgError("[Render][Vulkan] vkResetCommandBuffer failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return result;
         }
@@ -9494,7 +9494,7 @@ private:
         result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
         g_vulkanPerfStats.frameBeginCommandBufferMs += VulkanNowMs() - beginCommandBufferStartMs;
         if (result != VK_SUCCESS) {
-            DbgLog("[Render][Vulkan] vkBeginCommandBuffer failed: %d\n", static_cast<int>(result));
+            DbgError("[Render][Vulkan] vkBeginCommandBuffer failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return result;
         }
@@ -9822,7 +9822,7 @@ public:
             if (m_d3d11.Initialize(hwnd, &result)) {
                 m_active = &m_d3d11;
             } else {
-                DbgLog("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D7.\n",
+                DbgError("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D7.\n",
                     GetRenderBackendName(requestedBackend),
                     static_cast<unsigned int>(result.initHr));
                 m_active = &m_legacy;
@@ -9839,12 +9839,12 @@ public:
             if (m_d3d12.Initialize(hwnd, &result)) {
                 m_active = &m_d3d12;
             } else {
-                DbgLog("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D11.\n",
+                DbgError("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D11.\n",
                     GetRenderBackendName(requestedBackend),
                     static_cast<unsigned int>(result.initHr));
                 m_active = &m_d3d11;
                 if (!m_d3d11.Initialize(hwnd, &result)) {
-                    DbgLog("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D7.\n",
+                    DbgError("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D7.\n",
                         GetRenderBackendName(RenderBackendType::Direct3D11),
                         static_cast<unsigned int>(result.initHr));
                     m_active = &m_legacy;
@@ -9862,12 +9862,12 @@ public:
             if (m_vulkan.Initialize(hwnd, &result)) {
                 m_active = &m_vulkan;
             } else {
-                DbgLog("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D11.\n",
+                DbgError("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D11.\n",
                     GetRenderBackendName(requestedBackend),
                     static_cast<unsigned int>(result.initHr));
                 m_active = &m_d3d11;
                 if (!m_d3d11.Initialize(hwnd, &result)) {
-                    DbgLog("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D7.\n",
+                    DbgError("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D7.\n",
                         GetRenderBackendName(RenderBackendType::Direct3D11),
                         static_cast<unsigned int>(result.initHr));
                     m_active = &m_legacy;

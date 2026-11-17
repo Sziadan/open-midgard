@@ -713,7 +713,7 @@ bool CLuaBridge::Initialize()
 	m_state = luaL_newstate();
 	if (!m_state) {
 		m_lastError = "luaL_newstate failed";
-		DbgLog("[Lua] Failed to create Lua 5.1 state.\n");
+		DbgError("[Lua] Failed to create Lua 5.1 state.\n");
 		return false;
 	}
 
@@ -856,7 +856,7 @@ bool CLuaBridge::ExecuteBuffer(const unsigned char* bytes, size_t size, const ch
 	if (loadResult != 0) {
 		const char* errorText = lua_tostring(m_state, -1);
 		m_lastError = errorText ? errorText : "luaL_loadbuffer failed";
-		DbgLog("[Lua] Load failed for '%s': %s\n", chunkName ? chunkName : "(buffer)", m_lastError.c_str());
+		DbgError("[Lua] Load failed for '%s': %s\n", chunkName ? chunkName : "(buffer)", m_lastError.c_str());
 		lua_settop(m_state, 0);
 		return false;
 	}
@@ -865,7 +865,7 @@ bool CLuaBridge::ExecuteBuffer(const unsigned char* bytes, size_t size, const ch
 	if (callResult != 0) {
 		const char* errorText = lua_tostring(m_state, -1);
 		m_lastError = errorText ? errorText : "lua_pcall failed";
-		DbgLog("[Lua] Execution failed for '%s': %s\n", chunkName ? chunkName : "(buffer)", m_lastError.c_str());
+		DbgError("[Lua] Execution failed for '%s': %s\n", chunkName ? chunkName : "(buffer)", m_lastError.c_str());
 		lua_settop(m_state, 0);
 		return false;
 	}
@@ -939,7 +939,7 @@ bool CLuaBridge::LoadRagnarokScript(const char* relativePath)
 	bool loadedFromLocal = false;
 	if (!ReadRagnarokScriptBytes(relativePath, &bytes, &sourcePath, &loadedFromLocal)) {
 		m_lastError = "unable to resolve Lua/LUB script";
-		DbgLog("[Lua] Failed to resolve script '%s'.\n", relativePath ? relativePath : "(null)");
+		DbgError("[Lua] Failed to resolve script '%s'.\n", relativePath ? relativePath : "(null)");
 		return false;
 	}
 

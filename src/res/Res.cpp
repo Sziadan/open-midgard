@@ -1,5 +1,6 @@
 #include "Res.h"
 #include "core/File.h"
+#include "core/AssetLoadPerf.h"
 #include "DebugLog.h"
 #include <algorithm>
 #include <cstring>
@@ -59,9 +60,11 @@ bool CRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int si
 
 bool CRes::Load(const char* fName)
 {
+    AssetLoadPerf perf("resource", fName);
     int size = 0;
     LOG_CRES("[CRes] Load('%s')\n", fName ? fName : "(null)");
     unsigned char* buf = g_fileMgr.GetData(fName, &size);
+    perf.MarkRead();
     LOG_CRES("[CRes] GetData returned buf=%p size=%d\n", (void*)buf, size);
     if (!buf) return false;
 
@@ -162,15 +165,11 @@ CRes* CResMgr::Get(const char* fNameInput, bool bRefresh)
 
     // Check if already loaded
     auto& resMap = m_fileList[extIndex];
-    for (auto& pair : resMap) {
-        if (std::strcmp(pair.first->m_String, normalizedPath.m_String) == 0) {
-            if (!bRefresh) {
-                pair.second->m_timeStamp = GetTickCount();
-                LeaveCriticalSection(&m_GetResSection);
-                return pair.second;
-            }
-            break;
-        }
+    const auto cached = resMap.find(normalizedPath);
+    if (cached != resMap.end() && !bRefresh) {
+        cached->second->m_timeStamp = GetTickCount();
+        LeaveCriticalSection(&m_GetResSection);
+        return cached->second;
     }
 
     // Load new
@@ -186,7 +185,7 @@ CRes* CResMgr::Get(const char* fNameInput, bool bRefresh)
             newRes->m_extIndex = extIndex;
             newRes->m_fName.SetString(fullPath);
             newRes->m_timeStamp = GetTickCount();
-            resMap[&newRes->m_fName] = newRes;
+            resMap.emplace(newRes->m_fName, newRes);
         } else {
             newRes->OnLoadError(fullPath);
             delete newRes;
@@ -220,7 +219,13 @@ void CResMgr::Unload(CRes* res)
     EnterCriticalSection(&m_GetResSection);
     
     auto& resMap = m_fileList[res->m_extIndex];
-    resMap.erase(&res->m_fName);
+    const auto matches = resMap.equal_range(res->m_fName);
+    for (auto it = matches.first; it != matches.second; ++it) {
+        if (it->second == res) {
+            resMap.erase(it);
+            break;
+        }
+    }
     delete res;
     
     LeaveCriticalSection(&m_GetResSection);

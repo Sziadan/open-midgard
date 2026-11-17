@@ -375,7 +375,7 @@ LONG WINAPI WriteUnhandledCrashDump(EXCEPTION_POINTERS* exceptionInfo)
     }
 
     WriteCrashReportText(reportPath, exceptionCode, exceptionAddress, dumpPath, dumpWritten, dumpError, dbghelpPath, dumpTypeUsed);
-    DbgLog("[Crash] Unhandled exception code=0x%08lX address=%p dump='%s' report='%s' wroteDump=%d dumpError=%lu dumpType=0x%X dbghelp='%s'\n",
+    DbgError("[Crash] Unhandled exception code=0x%08lX address=%p dump='%s' report='%s' wroteDump=%d dumpError=%lu dumpType=0x%X dbghelp='%s'\n",
         static_cast<unsigned long>(exceptionCode),
         exceptionAddress,
         dumpPath.c_str(),
@@ -515,6 +515,7 @@ bool RelaunchCurrentApplication()
 int ReadRegistry()
 {
     EnsureOpenMidgardIniDefaults();
+    ConfigureDebugLoggingFromIni();
     g_session.LoadBattleMessageOptions();
     g_session.LoadWhisperOptions();
     g_session.LoadSourceCommandOptions();
@@ -916,7 +917,7 @@ static bool InitClientSystems()
     };
     for (const char* scriptPath : kBootstrapLuaScripts) {
         if (!g_buabridge.LoadRagnarokScriptOnce(scriptPath)) {
-            DbgLog("[Lua] Bootstrap preload failed for '%s': %s\n",
+            DbgError("[Lua] Bootstrap preload failed for '%s': %s\n",
                 scriptPath,
                 g_buabridge.GetLastError().c_str());
         }
@@ -993,6 +994,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     CreateTrigonometricTable();
 
     if (std::getenv("RO_HEAL_PREVIEW_OUT")) {
+        EnableDebugLogFlags(DebugLogInfo);
         nCmdShow=SW_HIDE;
         if (const char* assets=std::getenv("RO_HEAL_PREVIEW_ASSETS")) SetCurrentDirectoryA(assets);
     }

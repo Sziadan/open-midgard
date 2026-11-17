@@ -737,7 +737,7 @@ std::string CItemMgr::GetVisibleHeadgearResourceNameByViewId(int viewId)
 	if (g_buabridge.LoadRagnarokScriptOnce(kAccessoryNameTableScript)
 		&& g_buabridge.GetGlobalTableStringByIntegerKey(kAccessoryNameTableName, viewId, &resolved)) {
 		if (!HasAccessorySpriteResource(resolved)) {
-			DbgLog("[Item] accessory sprite missing view=%d resource='%s'\n", viewId, resolved.c_str());
+			DbgError("[Item] accessory sprite missing view=%d resource='%s'\n", viewId, resolved.c_str());
 		}
 	} else {
 		resolved.clear();

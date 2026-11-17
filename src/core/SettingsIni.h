@@ -7,6 +7,7 @@
 
 std::filesystem::path GetOpenMidgardIniPath();
 void EnsureOpenMidgardIniDefaults();
+void ConfigureDebugLoggingFromIni();
 bool HasSettingsIniSection(const char* section);
 bool TryLoadSettingsIniInt(const char* section, const char* key, int* value);
 bool TryLoadSettingsIniString(const char* section, const char* key, std::string* value);

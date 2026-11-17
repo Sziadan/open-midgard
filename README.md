@@ -25,6 +25,55 @@ Feature coverage and compatibility are still evolving; this is not yet a complet
 
 For detailed skill/effect implementation status and remaining work, see the [skill status tracker](docs/skill/STATUS.md).
 
+Settings are stored in `open-midgard.ini` beside the executable (or in
+`OPEN_MIDGARD_DATA_DIR`, when set). The client uses a persistent
+`open-midgard.ini.lock` file to coordinate overlapping processes; do not
+delete it while any client is running. Failed reads or replacements are
+logged as errors instead of overwriting the existing settings.
+
+### Debug logging
+
+By default, the client logs errors and warnings, but not routine diagnostics.
+Set any of these values to `1` under `[Debug]` in `open-midgard.ini` and restart:
+
+- `LogInfo`: all informational diagnostics, including the categories below.
+- `ActorTrace`: actor movement and billboard diagnostics, including the costly
+  local-player palette comparison.
+- `EffectTrace`: world-effect spawns and sound playback.
+- `GameplayTrace`: gameplay and network traces.
+- `RenderPerf`: view, overlay, game-mode and Qt rendering performance samples.
+- `ReplayTrace`: skill replay traces, if the client was built with
+  `RO_BUILD_SKILL_REPLAY_TESTS=ON`.
+
+All default to `0`. These diagnostics can generate substantial file I/O;
+`LogInfo` and gameplay tracing can also record chat text. Enable only what is
+needed. `AssetLoadPerf` and `WorldTickPerf` are independently controlled by
+their settings below.
+
+### Investigating asset-loading hitches
+
+Set `AssetLoadPerf=1` under `[Debug]` in `open-midgard.ini` and restart the
+client to log resource loads, non-player billboard composition, and effect-sprite
+baking taking at least 2 ms to the process debug log. Set it to `0` to disable
+logging. The legacy `RO_ASSET_LOAD_PERF=1` environment variable also enables it.
+Resource entries include the read time; billboard and effect timings include
+any nested resource loads. Vulkan upload and fence statistics require a build
+configured with `RO_LOG_VULKAN_STATS=ON`. Logging itself performs file I/O and
+can affect frame times.
+
+### Experimental world timing
+
+Set `ExperimentalWorldTick16=1` under `[Debug]` in `open-midgard.ini` and
+restart the client to try a 16 ms world step. The default is `0` (24 ms).
+This changes step-driven effects and other world behavior and may affect
+performance or synchronization. Set it back to `0` and restart to revert.
+
+For comparison, set `WorldTickPerf=1` under `[Debug]` to log
+`[WorldTickPerf]` samples every 120 gameplay updates, including the selected
+step, logic steps, actor passes, catch-up clamps, and average actor update
+time. Set it to `0` to disable the samples. Compare similar scenes with each
+clock; logging itself can affect timings.
+
 ## Protocol target
 
 The default client-originating map-server packet target is **`packet_ver 23` (`2008-09-10aSakexe`)**. Receive-side parsing also needs to match the packets actually sent by the server; this does not imply compatibility with every server configuration.

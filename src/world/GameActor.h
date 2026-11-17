@@ -511,6 +511,7 @@ public:
     void InvalidateBillboard();
     void ReplaceNpcClass(int job);
     bool EnsureBillboardTexture(float cameraLongitude);
+    bool WarmupNonPcBillboardCache();
     void WarmupCommonBillboardCache();
 
     std::string m_imfName;

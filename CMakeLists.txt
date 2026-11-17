@@ -273,6 +273,17 @@ if(RO_BUILD_PACKET_REPLAY_TESTS)
     find_package(Threads REQUIRED)
     find_package(Git QUIET)
 
+    if(WIN32 AND RO_ENABLE_QT6_UI)
+        add_executable(qt_chat_input_routing_checks
+            tools/tests/QtChatInputRoutingTests.cpp src/qtui/QtChatInput.cpp)
+        target_compile_features(qt_chat_input_routing_checks PRIVATE cxx_std_17)
+        target_compile_definitions(qt_chat_input_routing_checks PRIVATE RO_PLATFORM_WINDOWS=1 RO_ENABLE_QT6_UI=1)
+        target_include_directories(qt_chat_input_routing_checks PRIVATE src)
+        target_link_libraries(qt_chat_input_routing_checks PRIVATE Qt6::Quick imm32)
+        add_test(NAME qt_chat_input_routing_checks COMMAND qt_chat_input_routing_checks)
+        set_tests_properties(qt_chat_input_routing_checks PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=windows")
+    endif()
+
     set(RO_PACKET_REPLAY_SOURCE_COMMIT_AT_CONFIGURE "unknown")
     set(RO_PACKET_REPLAY_SOURCE_TREE_STATUS_AT_CONFIGURE "unknown")
     if(GIT_FOUND)

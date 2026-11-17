@@ -92,7 +92,7 @@ bool CGPak::Open(CMemFile* memFile)
     }
     else
     {
-        DbgLog("[GPak::Open] FAIL: unknown GRF version 0x%X\n", m_FileVer);
+        DbgError("[GPak::Open] FAIL: unknown GRF version 0x%X\n", m_FileVer);
     }
 
     if (!ok)

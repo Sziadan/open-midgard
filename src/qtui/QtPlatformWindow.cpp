@@ -362,7 +362,7 @@ bool RoQtCreateMainWindow(const char* title,
     }
 
     if (!EnsureApplication()) {
-        DbgLog("[QtHost] Failed to create QGuiApplication.\n");
+        DbgError("[QtHost] Failed to create QGuiApplication.\n");
         return false;
     }
 

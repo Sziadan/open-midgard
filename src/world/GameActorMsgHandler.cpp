@@ -279,7 +279,7 @@ void CGameActor::Am_Action(const int* arg1)
         SetState(0);
         return;
     default:
-        DbgLog("Unknown Action Type == %d\n", action);
+        DbgError("Unknown Action Type == %d\n", action);
         return;
     }
 
@@ -481,7 +481,7 @@ void CGameActor::Am_Skill(const int* arg1)
     case 9:
         break;
     default:
-        DbgLog("Unknown Action Type == %d\n", action);
+        DbgError("Unknown Action Type == %d\n", action);
         return;
     }
 

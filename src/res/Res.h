@@ -52,7 +52,7 @@ private:
     std::map<std::string, int> m_resExt;
     std::vector<std::string> m_typeDir;
     std::vector<CRes*> m_objTypes;
-    std::vector<std::map<CHash*, CRes*>> m_fileList;
+    std::vector<std::multimap<CHash, CRes*>> m_fileList;
     CRITICAL_SECTION m_GetResSection;
     u8 gap58[16];
     u32 m_usedForSprTexture;

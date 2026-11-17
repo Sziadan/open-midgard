@@ -515,7 +515,7 @@ u32 ResolveAccountLoginVersion()
             return static_cast<u32>(configuredVersionOverride);
         }
 
-        DbgLog("[Login] Ignoring invalid ClientVersionOverride=%d; expected a positive integer\n",
+        DbgError("[Login] Ignoring invalid ClientVersionOverride=%d; expected a positive integer\n",
                configuredVersionOverride);
     }
 
@@ -526,7 +526,7 @@ u32 ResolveAccountLoginVersion()
             return overrideVersion;
         }
 
-        DbgLog("[Login] Ignoring invalid ClientDateOverride=%d; expected yyyymmdd-style date\n",
+        DbgError("[Login] Ignoring invalid ClientDateOverride=%d; expected yyyymmdd-style date\n",
                configuredOverride);
     }
 
@@ -594,7 +594,7 @@ AccountLoginPacketKind ResolveAccountLoginPacketKind()
             return AccountLoginPacketKind::Login4;
         }
 
-        DbgLog("[Login] Ignoring invalid AccountLoginPacket override '%s'\n", overrideValue.c_str());
+        DbgError("[Login] Ignoring invalid AccountLoginPacket override '%s'\n", overrideValue.c_str());
     }
 
     return UsesLoginChannelPacket() ? AccountLoginPacketKind::LoginChannel : AccountLoginPacketKind::Legacy;
@@ -747,7 +747,7 @@ bool TryResolveConfiguredClientHash(std::array<u8, 16>* digest)
         return true;
     }
     if (!overrideMd5.empty()) {
-        DbgLog("[Login] Ignoring invalid ClientHashOverrideMd5 value: '%s'\n", overrideMd5.c_str());
+        DbgError("[Login] Ignoring invalid ClientHashOverrideMd5 value: '%s'\n", overrideMd5.c_str());
     }
 
     const std::string overrideExe = LoadSettingsIniString("Login", "ClientHashSourceExe", "");
@@ -760,7 +760,7 @@ bool TryResolveConfiguredClientHash(std::array<u8, 16>* digest)
         sourcePath = GetOpenMidgardIniPath().parent_path() / sourcePath;
     }
     if (!TryComputeFileMd5(sourcePath, digest)) {
-        DbgLog("[Login] Failed to compute MD5 from ClientHashSourceExe='%s'\n", sourcePath.string().c_str());
+        DbgError("[Login] Failed to compute MD5 from ClientHashSourceExe='%s'\n", sourcePath.string().c_str());
         return false;
     }
 
@@ -2287,7 +2287,7 @@ void CLoginMode::PollNetwork()
         case 0x0081: OnDisconnectMsg(pkt);  break;
         case 0x0283: break;
         default:
-            DbgLog("[Login] Unknown packet 0x%04X (%d bytes)\n", id, (int)pkt.size());
+            DbgError("[Login] Unknown packet 0x%04X (%d bytes)\n", id, (int)pkt.size());
             break;
         }
     }
@@ -2400,7 +2400,7 @@ void CLoginMode::SendExeHashCheck()
     pkt.PacketType = ro::net::GetActiveAccountLoginPacketProfile().exeHashCheck;
     std::array<u8, 16> digest{};
     if (!TryResolveExecutableHashPayload(&digest)) {
-        DbgLog("[Login] CA_EXE_HASHCHECK skipped: no valid hash payload for serviceType=%d serverType=%d\n",
+        DbgError("[Login] CA_EXE_HASHCHECK skipped: no valid hash payload for serviceType=%d serverType=%d\n",
                static_cast<int>(g_serviceType),
                static_cast<int>(g_serverType));
         return;
@@ -2408,7 +2408,7 @@ void CLoginMode::SendExeHashCheck()
     std::memcpy(pkt.HashValue, digest.data(), digest.size());
 
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
-        DbgLog("[Login] CA_EXE_HASHCHECK send failed\n");
+        DbgError("[Login] CA_EXE_HASHCHECK send failed\n");
         return;
     }
 
@@ -2427,7 +2427,7 @@ void CLoginMode::SendConnectInfoChanged()
     CopyCString(pkt.ID, sizeof(pkt.ID), m_userId);
 
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
-        DbgLog("[Login] CA_CONNECT_INFO_CHANGED send failed: user='%s'\n", pkt.ID);
+        DbgError("[Login] CA_CONNECT_INFO_CHANGED send failed: user='%s'\n", pkt.ID);
         return;
     }
 
@@ -2439,7 +2439,7 @@ void CLoginMode::SendPasswordHashRequest()
     PACKET_CA_REQ_HASH pkt{};
     pkt.PacketType = ro::net::GetActiveAccountLoginPacketProfile().requestPasswordHash;
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
-        DbgLog("[Login] CA_REQ_HASH send failed\n");
+        DbgError("[Login] CA_REQ_HASH send failed\n");
         FailAccountLogin("Login: failed to send the password-hash challenge request.");
         return;
     }
@@ -2477,7 +2477,7 @@ void CLoginMode::SendPlainAccountLogin()
     CopyCString(pkt.Passwd, sizeof(pkt.Passwd), m_userPassword);
     pkt.clienttype = ResolveAccountClientType();
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
-        DbgLog("[Login] CA_LOGIN send failed: user='%s' version=%u clienttype=%u (clientinfo=%d)\n",
+        DbgError("[Login] CA_LOGIN send failed: user='%s' version=%u clienttype=%u (clientinfo=%d)\n",
                pkt.ID,
                pkt.Version,
                static_cast<unsigned int>(pkt.clienttype),
@@ -2505,7 +2505,7 @@ void CLoginMode::SendLoginPcBang()
     FillMacString(pkt.Mac, sizeof(pkt.Mac));
 
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
-        DbgLog("[Login] CA_LOGIN_PCBANG send failed: user='%s' version=%u clienttype=%u ip=%s\n",
+        DbgError("[Login] CA_LOGIN_PCBANG send failed: user='%s' version=%u clienttype=%u ip=%s\n",
                pkt.ID,
                pkt.Version,
                static_cast<unsigned int>(pkt.clienttype),
@@ -2534,7 +2534,7 @@ void CLoginMode::SendLogin4()
     FillMacString(pkt.Mac, sizeof(pkt.Mac));
 
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
-        DbgLog("[Login] CA_LOGIN4 send failed: user='%s' version=%u clienttype=%u\n",
+        DbgError("[Login] CA_LOGIN4 send failed: user='%s' version=%u clienttype=%u\n",
                pkt.ID,
                pkt.Version,
                static_cast<unsigned int>(pkt.clienttype));
@@ -2562,7 +2562,7 @@ void CLoginMode::SendLoginChannel()
     pkt.IsGravity = 0;
 
     if (!CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)))) {
-        DbgLog("[Login] CA_LOGIN_CHANNEL send failed: user='%s' version=%u clienttype=%u ip=%s\n",
+        DbgError("[Login] CA_LOGIN_CHANNEL send failed: user='%s' version=%u clienttype=%u ip=%s\n",
                pkt.ID,
                pkt.Version,
                static_cast<unsigned int>(pkt.clienttype),
@@ -2608,7 +2608,7 @@ void CLoginMode::OnAckHash(const std::vector<u8>& raw)
         const int clientInfo = GetSelectedClientInfoIndex();
         if (clientInfo < 0 || clientInfo > 255) {
             FailAccountLogin("Login error: selected client-info index cannot be encoded in login3.");
-            DbgLog("[Login] CA_LOGIN3 send skipped: clientinfo index=%d is outside the packet byte range\n", clientInfo);
+            DbgError("[Login] CA_LOGIN3 send skipped: clientinfo index=%d is outside the packet byte range\n", clientInfo);
             return;
         }
         PACKET_CA_LOGIN_HASH_CLIENTINFO pkt{};
@@ -2621,7 +2621,7 @@ void CLoginMode::OnAckHash(const std::vector<u8>& raw)
         sent = CRagConnection::instance()->SendPacket(
             reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)));
         if (!sent) {
-            DbgLog("[Login] CA_LOGIN3 send failed: user='%s' version=%u challengeBytes=%d clienttype=%u clientinfo=%u\n",
+            DbgError("[Login] CA_LOGIN3 send failed: user='%s' version=%u challengeBytes=%d clienttype=%u clientinfo=%u\n",
                    pkt.ID, pkt.Version, static_cast<int>(payloadLength),
                    static_cast<unsigned int>(pkt.clienttype), static_cast<unsigned int>(pkt.clientinfo));
             FailAccountLogin("Login: failed to send the account hash response.");
@@ -2637,7 +2637,7 @@ void CLoginMode::OnAckHash(const std::vector<u8>& raw)
         sent = CRagConnection::instance()->SendPacket(
             reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)));
         if (!sent) {
-            DbgLog("[Login] CA_LOGIN_HASH send failed: user='%s' version=%u challengeBytes=%d clienttype=%u\n",
+            DbgError("[Login] CA_LOGIN_HASH send failed: user='%s' version=%u challengeBytes=%d clienttype=%u\n",
                    pkt.ID, pkt.Version, static_cast<int>(payloadLength),
                    static_cast<unsigned int>(pkt.clienttype));
             FailAccountLogin("Login: failed to send the account hash response.");
@@ -2796,7 +2796,7 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
     size_t headerSize = 0;
     size_t charInfoSize = 0;
     if (!TryResolveCharListLayout(pktLen, &layout, &headerSize, &charInfoSize)) {
-        DbgLog("[Login] HC_ACCEPT_ENTER: unsupported packet length=%u for CHARACTER_INFO sizes=%zu/%zu\n",
+        DbgError("[Login] HC_ACCEPT_ENTER: unsupported packet length=%u for CHARACTER_INFO sizes=%zu/%zu\n",
                pktLen,
                sizeof(CHARACTER_INFO),
                sizeof(LEGACY_CHARACTER_INFO_106));
@@ -3307,7 +3307,7 @@ void CLoginMode::OnNotifyError(const std::vector<u8>& raw)
     const std::string message = ExtractPacketText(raw, 4);
     const char* dialogText = message.empty() ? "Login failed: server returned an empty error message." : message.c_str();
 
-    DbgLog("[Login] AC_NOTIFY_ERROR: len=%d message='%s'\n",
+    DbgError("[Login] AC_NOTIFY_ERROR: len=%d message='%s'\n",
            static_cast<int>(raw.size()),
            dialogText);
 

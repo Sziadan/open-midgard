@@ -168,6 +168,89 @@ target_compile_features(wave_dispatch_checks PRIVATE cxx_std_17)
 target_include_directories(wave_dispatch_checks PRIVATE ../../src "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME wave_dispatch_checks COMMAND wave_dispatch_checks)
 file(READ "../../src/world/GameActor.cpp" actor_source)
+extract_body(launch_effect_body "${actor_source}"
+    "CRagEffect* CAbleToMakeEffect::LaunchEffect(int effectId, vector3d deltaPos, float fRot)"
+    "u8 CDummyEffectLauncher::OnProcess()")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LaunchEffectBody.inc" "${launch_effect_body}")
+add_executable(effect_launch_checks EffectLaunchTests.cpp)
+target_compile_features(effect_launch_checks PRIVATE cxx_std_17)
+target_include_directories(effect_launch_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME effect_launch_checks COMMAND effect_launch_checks)
+file(READ "../../src/ui/UIWindowMgr.cpp" window_manager_source)
+extract_body(qt_chat_pointer_target "${window_manager_source}"
+    "bool UIWindowMgr::IsQtChatPointerTarget(int x, int y) const"
+    "bool UIWindowMgr::HasGameplayInputModal(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/QtChatPointerTarget.inc" "${qt_chat_pointer_target}")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ../../src/ui/UIWindowMgr.cpp)
+add_executable(qt_chat_pointer_target_checks QtChatPointerTargetTests.cpp)
+target_compile_features(qt_chat_pointer_target_checks PRIVATE cxx_std_17)
+target_include_directories(qt_chat_pointer_target_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME qt_chat_pointer_target_checks COMMAND qt_chat_pointer_target_checks)
+extract_body(non_pc_billboard_warmup "${actor_source}"
+    "bool PrimeNonPcBillboardStrip(CPc& actor, int displayJob, int bodyAction, int currentMotion)"
+    "bool FindOpaqueBounds(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/NonPcBillboardWarmup.inc" "${non_pc_billboard_warmup}")
+extract_body(non_pc_billboard_actor_warmup "${actor_source}"
+    "bool CPc::WarmupNonPcBillboardCache()" "void CPc::WarmupCommonBillboardCache()")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/NonPcBillboardWarmup.inc" "\n${non_pc_billboard_actor_warmup}")
+add_executable(non_pc_billboard_warmup_checks NonPcBillboardWarmupTests.cpp)
+target_compile_features(non_pc_billboard_warmup_checks PRIVATE cxx_std_17)
+target_include_directories(non_pc_billboard_warmup_checks PRIVATE "../../src" "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME non_pc_billboard_warmup_checks COMMAND non_pc_billboard_warmup_checks)
+add_executable(settings_ini_concurrency_worker SettingsIniConcurrencyTests.cpp ../../src/core/SettingsIni.cpp)
+target_compile_features(settings_ini_concurrency_worker PRIVATE cxx_std_17)
+target_include_directories(settings_ini_concurrency_worker PRIVATE ../../src)
+if(WIN32)
+    target_compile_definitions(settings_ini_concurrency_worker PRIVATE RO_PLATFORM_WINDOWS=1)
+endif()
+add_test(NAME settings_ini_concurrency_checks
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_settings_ini_concurrency.py"
+        $<TARGET_FILE:settings_ini_concurrency_worker> "${CMAKE_CURRENT_BINARY_DIR}")
+set_tests_properties(settings_ini_concurrency_checks PROPERTIES TIMEOUT 150)
+if(WIN32)
+    add_executable(resource_cache_checks ResourceCacheTests.cpp
+        ../../src/res/Res.cpp ../../src/core/Hash.cpp ../../src/core/SettingsIni.cpp)
+    target_compile_features(resource_cache_checks PRIVATE cxx_std_17)
+    target_compile_definitions(resource_cache_checks PRIVATE RO_PLATFORM_WINDOWS=1)
+    target_include_directories(resource_cache_checks PRIVATE ../../src)
+    target_link_libraries(resource_cache_checks PRIVATE winmm)
+    add_test(NAME resource_cache_checks COMMAND resource_cache_checks)
+
+    add_executable(asset_load_perf_checks AssetLoadPerfTests.cpp ../../src/core/SettingsIni.cpp)
+    target_compile_features(asset_load_perf_checks PRIVATE cxx_std_17)
+    target_compile_definitions(asset_load_perf_checks PRIVATE RO_PLATFORM_WINDOWS=1)
+    target_include_directories(asset_load_perf_checks PRIVATE ../../src)
+    add_executable(debug_log_checks DebugLogTests.cpp ../../src/core/SettingsIni.cpp)
+    target_compile_features(debug_log_checks PRIVATE cxx_std_17)
+    target_compile_definitions(debug_log_checks PRIVATE RO_PLATFORM_WINDOWS=1)
+    target_include_directories(debug_log_checks PRIVATE ../../src)
+    add_test(NAME debug_log_checks COMMAND debug_log_checks
+        "${CMAKE_CURRENT_BINARY_DIR}/debug-log-settings")
+    foreach(mode default enabled disabled environment)
+        add_test(NAME asset_load_perf_${mode}_checks COMMAND asset_load_perf_checks
+            "${mode}" "${CMAKE_CURRENT_BINARY_DIR}/asset-load-perf-${mode}")
+    endforeach()
+
+    file(READ "../../src/gamemode/GameMode.cpp" world_clock_source)
+    extract_body(world_clock_constants "${world_clock_source}"
+        "constexpr float kWorldProcessTickMs" "constexpr u32 kMovingCameraHoverRefreshMs")
+    extract_body(world_clock_limit "${world_clock_source}"
+        "constexpr int kMaxWorldProcessStepsPerUpdate" "constexpr int kHoverNameFontHeight")
+    extract_body(world_clock_init "${world_clock_source}"
+        "    m_worldProcessTick = GetTickCount();" "\n    m_lastHoverRefreshTick")
+    extract_body(world_clock_update "${world_clock_source}"
+        "    const DWORD worldNow = GetTickCount();" "\n    if (IsMapLoadingActive(*this))")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WorldClockConstants.inc" "${world_clock_constants}${world_clock_limit}")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WorldClockInit.inc" "${world_clock_init}")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WorldClockUpdate.inc" "${world_clock_update}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ../../src/gamemode/GameMode.cpp)
+    add_executable(world_clock_checks WorldClockTests.cpp ../../src/core/SettingsIni.cpp)
+    target_compile_features(world_clock_checks PRIVATE cxx_std_17)
+    target_compile_definitions(world_clock_checks PRIVATE RO_PLATFORM_WINDOWS=1)
+    target_include_directories(world_clock_checks PRIVATE ../../src "${CMAKE_CURRENT_BINARY_DIR}")
+    add_test(NAME world_clock_checks COMMAND world_clock_checks
+        "${CMAKE_CURRENT_BINARY_DIR}/world-clock-tests")
+endif()
 extract_body(motion_body "${actor_source}" "void CRenderObject::ProcessForcedMotion()" "void CRenderObject::SetRenderInfo(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ForcedMotionBody.inc" "${motion_body}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ../../src/world/GameActor.cpp)

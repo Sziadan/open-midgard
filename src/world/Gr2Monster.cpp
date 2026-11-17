@@ -96,7 +96,7 @@ void StartAsset(int job)
     const char* modelPath=Gr2MonsterModel(job);
     if(!modelPath || assets.count(modelPath) || pending.count(modelPath))return;
     auto model=ReadBytes(modelPath);
-    if(model.empty()) {DbgLog("[Gr2Monster] missing model %s\n",modelPath);assets.emplace(modelPath,nullptr);return;}
+    if(model.empty()) {DbgError("[Gr2Monster] missing model %s\n",modelPath);assets.emplace(modelPath,nullptr);return;}
     const int type=std::atoi(std::strrchr(modelPath,'_')+1);
     std::map<int,std::vector<unsigned char>> animationBytes;
     // Guardians (7–9) ship move/attack/dead/damage. Emperium (0) is idle-only.
@@ -134,7 +134,7 @@ Asset* GetAsset(int job)
     }
     pending.erase(loading);
     if(!cpu || !cpu->error.empty()) {
-        DbgLog("[Gr2Monster] independent decode failed path=%s error=%s\n",path,cpu?cpu->error.c_str():"no data");
+        DbgError("[Gr2Monster] independent decode failed path=%s error=%s\n",path,cpu?cpu->error.c_str():"no data");
         assets.emplace(path,nullptr);return nullptr;
     }
     auto asset=std::make_shared<Asset>();asset->cpu=std::move(cpu);

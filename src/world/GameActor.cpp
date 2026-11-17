@@ -4,6 +4,7 @@
 #include "CorpseState.h"
 #include "Gr2Monster.h"
 #include "ActorTint.h"
+#include "BillboardWarmup.h"
 #include "Emotion.h"
 #include "MsgEffect.h"
 #include "RagEffect.h"
@@ -11,6 +12,7 @@
 #include "Weather.h"
 #include "audio/Audio.h"
 #include "core/ClientInfoLocale.h"
+#include "core/AssetLoadPerf.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
@@ -976,7 +978,7 @@ void SpawnCartEffect(CGameActor& actor, int effectType)
     CActRes* actRes = g_resMgr.GetAs<CActRes>(actPath.c_str());
     CSprRes* sprRes = g_resMgr.GetAs<CSprRes>(sprPath.c_str());
     if (!actRes || !sprRes) {
-        DbgLog("[CartEffect] resource load failed gid=%u effectType=%d spr='%s' act='%s'\n",
+        DbgError("[CartEffect] resource load failed gid=%u effectType=%d spr='%s' act='%s'\n",
             static_cast<unsigned int>(actor.m_gid),
             effectType,
             sprPath.c_str(),
@@ -1136,10 +1138,11 @@ struct SharedNonPcBillboardValue {
 
 struct SharedNonPcBillboardStripKey {
     int job = 0;
+    int action = 0;
 
     bool operator<(const SharedNonPcBillboardStripKey& other) const
     {
-        return job < other.job;
+        return job != other.job ? job < other.job : action < other.action;
     }
 };
 
@@ -1149,10 +1152,10 @@ std::map<SharedNonPcBillboardKey, SharedNonPcBillboardValue>& GetSharedNonPcBill
     return cache;
 }
 
-std::set<SharedNonPcBillboardStripKey>& GetPrimedNonPcBillboardStrips()
+std::map<SharedNonPcBillboardStripKey, BillboardWarmupProgress>& GetNonPcBillboardWarmupProgress()
 {
-    static std::set<SharedNonPcBillboardStripKey> strips;
-    return strips;
+    static std::map<SharedNonPcBillboardStripKey, BillboardWarmupProgress> progress;
+    return progress;
 }
 
 struct SharedPlayerBillboardKey {
@@ -2888,7 +2891,7 @@ bool DrawPlayerLayer(BillboardComposeSurface& bitmap,
         static std::map<std::string, bool> loggedMissingResources;
         const std::string key = actName + "|" + sprName + "|" + imfName;
         if (loggedMissingResources.insert(std::make_pair(key, true)).second) {
-            DbgLog("[Actor] player layer resources missing act='%s' actExists=%d actRes=%p spr='%s' sprExists=%d sprRes=%p imf='%s' imfExists=%d imfRes=%p\n",
+            DbgError("[Actor] player layer resources missing act='%s' actExists=%d actRes=%p spr='%s' sprExists=%d sprRes=%p imf='%s' imfExists=%d imfRes=%p\n",
                 actName.c_str(),
                 g_resMgr.IsExist(actName.c_str()) ? 1 : 0,
                 actRes,
@@ -2913,7 +2916,7 @@ bool DrawPlayerLayer(BillboardComposeSurface& bitmap,
         char key[512] = {};
         std::sprintf(key, "%s|layer=%d|action=%d|motion=%d|resolved=%d", actName.c_str(), layerIndex, curAction, curMotion, resolvedLayer);
         if (loggedMotionFailures.insert(std::make_pair(key, true)).second) {
-            DbgLog("[Actor] player layer motion missing act='%s' layer=%d action=%d motion=%d resolvedLayer=%d clipCount=%d\n",
+            DbgError("[Actor] player layer motion missing act='%s' layer=%d action=%d motion=%d resolvedLayer=%d clipCount=%d\n",
                 actName.c_str(),
                 layerIndex,
                 curAction,
@@ -3014,7 +3017,7 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
 
     const bool isLocalPlayer = actor.m_gid != 0
         && (actor.m_gid == g_session.m_gid || actor.m_gid == g_session.m_aid);
-    if (isLocalPlayer) {
+    if (isLocalPlayer && DebugLogEnabled(DebugLogActors)) {
         static std::map<u32, std::string> loggedBillboardResources;
         char logKey[2048] = {};
         std::snprintf(logKey,
@@ -3240,7 +3243,7 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
     if (!bodyOk && !headOk && !accessoryBottomOk && !accessoryMidOk && !accessoryTopOk && !weaponOk && !weaponLayer6Ok && !shieldOk) {
         static std::map<int, bool> loggedBillboardFailures;
         if (loggedBillboardFailures.insert(std::make_pair(displayJob, true)).second) {
-            DbgLog("[Actor] player billboard draw failed job=%d bodyAct='%s' bodySpr='%s' headAct='%s' headSpr='%s' weaponAct='%s' weaponLayer6Act='%s' shieldAct='%s' imf='%s' bodyPal='%s' headPal='%s' action=%d motion=%d head=%d sex=%d weaponValue=%d weapon=%d shield=%d\n",
+            DbgError("[Actor] player billboard draw failed job=%d bodyAct='%s' bodySpr='%s' headAct='%s' headSpr='%s' weaponAct='%s' weaponLayer6Act='%s' shieldAct='%s' imf='%s' bodyPal='%s' headPal='%s' action=%d motion=%d head=%d sex=%d weaponValue=%d weapon=%d shield=%d\n",
                 displayJob,
                 bodyActName.c_str(),
                 bodySprName.c_str(),
@@ -3431,7 +3434,7 @@ void LogNonPcResourceMissingOnce(int job, const char* jobName, const char* actPa
         return;
     }
 
-    DbgLog("[Actor] nonpc resources missing job=%d name='%s' act='%s' actRes=%p spr='%s' sprRes=%p\n",
+    DbgError("[Actor] nonpc resources missing job=%d name='%s' act='%s' actRes=%p spr='%s' sprRes=%p\n",
         job,
         jobName ? jobName : "",
         actPath ? actPath : "",
@@ -3447,7 +3450,7 @@ void LogNonPcBillboardFailureOnce(int job, const char* jobName, int bodyAction, 
         return;
     }
 
-    DbgLog("[Actor] nonpc billboard draw failed job=%d name='%s' bodyAction=%d motion=%d\n",
+    DbgError("[Actor] nonpc billboard draw failed job=%d name='%s' bodyAction=%d motion=%d\n",
         job,
         jobName ? jobName : "",
         bodyAction,
@@ -3729,6 +3732,9 @@ bool PopulateSharedNonPcBillboardFrame(CPc& actor, int displayJob, int bodyActio
         return true;
     }
 
+    char perfName[96];
+    std::snprintf(perfName, sizeof(perfName), "job=%d action=%d motion=%d", displayJob, bodyAction, motion);
+    AssetLoadPerf perf("non-pc-billboard", perfName);
     NonPcBillboardComposeConfig composeConfig{};
     if (!ResolveNonPcBillboardComposeConfig(actor, bodyAction, motion, &composeConfig)) {
         composeConfig.width = kPlayerBillboardComposeWidth;
@@ -3797,32 +3803,35 @@ bool PopulateSharedNonPcBillboardFrame(CPc& actor, int displayJob, int bodyActio
     return true;
 }
 
-void PrimeNonPcBillboardStrip(CPc& actor, int displayJob, int bodyAction)
+bool PrimeNonPcBillboardStrip(CPc& actor, int displayJob, int bodyAction, int currentMotion)
 {
     CActRes* actRes = nullptr;
     CSprRes* sprRes = nullptr;
     if (!ResolveCachedNonPcResourcesForActor(actor, &actRes, &sprRes) || !actRes || !sprRes) {
-        return;
+        return false;
     }
 
-    SharedNonPcBillboardStripKey stripKey{ displayJob };
-    std::set<SharedNonPcBillboardStripKey>& primedStrips = GetPrimedNonPcBillboardStrips();
-    const bool inserted = primedStrips.insert(stripKey).second;
-    if (!inserted) {
-        return;
+    const int motionCount = actRes->GetMotionCount(bodyAction);
+    if (motionCount <= 1 || motionCount > kSharedNonPcWarmupMotionLimit
+        || currentMotion < -1 || currentMotion >= motionCount) {
+        return false;
     }
 
-    const int actionCount = static_cast<int>(actRes->actions.size());
-    for (int actionIndex = 0; actionIndex < actionCount; ++actionIndex) {
-        const int motionCount = actRes->GetMotionCount(actionIndex);
-        if (motionCount <= 1 || motionCount > kSharedNonPcWarmupMotionLimit) {
+    auto& progress = GetNonPcBillboardWarmupProgress()[SharedNonPcBillboardStripKey{ displayJob, bodyAction }];
+    if (progress.motionCount != motionCount) {
+        progress.Start(motionCount, currentMotion);
+    }
+    const auto& cache = GetSharedNonPcBillboardCache();
+    for (int motion = progress.Next(); motion >= 0; motion = progress.Next()) {
+        if (cache.find(SharedNonPcBillboardKey{ displayJob, bodyAction, motion }) != cache.end()) {
             continue;
         }
-
-        for (int motion = 0; motion < motionCount; ++motion) {
-            PopulateSharedNonPcBillboardFrame(actor, displayJob, actionIndex, motion);
+        if (!PopulateSharedNonPcBillboardFrame(actor, displayJob, bodyAction, motion)) {
+            DbgError("[BillboardWarmup] failed job=%d action=%d motion=%d\n", displayJob, bodyAction, motion);
         }
+        return true;
     }
+    return false;
 }
 
 bool FindOpaqueBounds(const unsigned int* pixels, int width, int height, tagRECT* outBounds)
@@ -4688,7 +4697,7 @@ CAbleToMakeEffect::~CAbleToMakeEffect()
 
 CRagEffect* CAbleToMakeEffect::LaunchEffect(int effectId, vector3d deltaPos, float fRot)
 {
-    if (!g_session.m_isEffectOn) {
+    if (!g_session.m_isEffectOn || effectId < 0) {
         return nullptr;
     }
 
@@ -8063,7 +8072,7 @@ bool ResolveItemResources(CItem& item)
         ? std::string("item:") + std::to_string(item.m_itemId)
         : item.m_resourceName;
     if (loggedMissingItems.insert(std::make_pair(key, true)).second) {
-        DbgLog("[Item] missing floor item resources itemId=%u resource='%s'\n",
+        DbgError("[Item] missing floor item resources itemId=%u resource='%s'\n",
             static_cast<unsigned int>(item.m_itemId),
             item.m_resourceName.c_str());
     }
@@ -8995,7 +9004,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
             && m_assumptioAuraWidth == m_billboardTextureWidth
             && m_assumptioAuraHeight == m_billboardTextureHeight
             && m_assumptioAuraTextures[0] != nullptr))) {
-        if (isLocalPlayer) {
+        if (isLocalPlayer && DebugLogEnabled(DebugLogActors)) {
             static std::map<u32, u32> loggedBillboardCacheHits;
             const u32 cacheKey = (static_cast<u32>(displayJob & 0xFFFF) << 16)
                 ^ (static_cast<u32>(bodyAction & 0xFF) << 8)
@@ -9022,11 +9031,13 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     const bool isTransientBillboard = bodyAction < baseBodyAction || bodyAction >= baseBodyAction + 8;
 
     if (isVulkanBackend && !wantsAssumptioAura && !usePlayerStyleBillboard) {
-        PrimeNonPcBillboardStrip(*this, displayJob, bodyAction);
-
         const SharedNonPcBillboardKey sharedKey{ displayJob, bodyAction, headMotion };
-        const auto& sharedCache = GetSharedNonPcBillboardCache();
-        const auto sharedIt = sharedCache.find(sharedKey);
+        auto& sharedCache = GetSharedNonPcBillboardCache();
+        auto sharedIt = sharedCache.find(sharedKey);
+        if (sharedIt == sharedCache.end()
+            && PopulateSharedNonPcBillboardFrame(*this, displayJob, bodyAction, headMotion)) {
+            sharedIt = sharedCache.find(sharedKey);
+        }
         if (sharedIt != sharedCache.end() && sharedIt->second.texture) {
             if (m_billboardTexture != sharedIt->second.texture) {
                 ReleaseActorBillboardTexture(*this);
@@ -9178,7 +9189,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
         m_assumptioAuraHeadMotion = headMotion;
     }
 
-    if (isLocalPlayer) {
+    if (isLocalPlayer && DebugLogEnabled(DebugLogActors)) {
         static std::map<u32, u32> loggedBillboardCompose;
         const u32 composeKey = (static_cast<u32>(displayJob & 0xFFFF) << 16)
             ^ (static_cast<u32>(bodyAction & 0xFF) << 8)
@@ -9312,6 +9323,33 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     }
 
     return true;
+}
+
+bool CPc::WarmupNonPcBillboardCache()
+{
+    if (m_isPc || !m_billboardTexture || m_billboardTextureOwned
+        || GetRenderDevice().GetBackendType() != RenderBackendType::Vulkan) {
+        return false;
+    }
+    if (PrimeNonPcBillboardStrip(*this, m_cachedBillboardJob,
+            m_cachedBillboardBodyAction, m_cachedBillboardHeadMotion)) {
+        return true;
+    }
+
+    CActRes* actRes = nullptr;
+    CSprRes* sprRes = nullptr;
+    if (!ResolveCachedNonPcResourcesForActor(*this, &actRes, &sprRes) || !actRes) {
+        return false;
+    }
+    static std::map<int, size_t> nextActionByJob;
+    size_t& nextAction = nextActionByJob[m_cachedBillboardJob];
+    while (nextAction < actRes->actions.size()) {
+        if (PrimeNonPcBillboardStrip(*this, m_cachedBillboardJob, static_cast<int>(nextAction), -1)) {
+            return true;
+        }
+        ++nextAction;
+    }
+    return false;
 }
 
 void CPc::WarmupCommonBillboardCache()

@@ -513,6 +513,8 @@ public:
     u32 m_lastActorBootstrapPacketTick;
     u32 m_worldProcessTick;
     float m_worldProcessCarryMs;
+    float m_worldProcessTickMs;
+    bool m_worldTickPerfEnabled;
     u32 m_lastHoverRefreshTick;
     std::string m_loadingWallpaperName;
     bool m_pendingPartyCreateExpShare;

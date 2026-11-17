@@ -127,12 +127,9 @@ unsigned char* CSprRes::ZeroDecompression(unsigned char* src, int w, int h) {
 }
 
 bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int size) {
-    DbgLog("[SprLoad] LoadFromBuffer: '%s' size=%d\n", fName ? fName : "(null)", size);
-    (void)fName;
-
     Reset();
     if (!buffer || size < 6) {
-        DbgLog("[SprLoad] FAIL: null buffer or size<6\n");
+        DbgError("[SprLoad] FAIL: null buffer or size<6 file='%s'\n", fName ? fName : "(null)");
         return false;
     }
 
@@ -141,43 +138,38 @@ bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
 
     SprHeader header{};
     if (!ReadValue(cursor, end, header)) {
-        DbgLog("[SprLoad] FAIL: could not read header\n");
+        DbgError("[SprLoad] FAIL: could not read header file='%s'\n", fName ? fName : "(null)");
         return false;
     }
-    DbgLog("[SprLoad] id=0x%04X ver=0x%04X count=%d\n", header.id, header.ver, header.count);
     if (header.id != 20563 || header.ver > 0x201u) {
-        DbgLog("[SprLoad] FAIL: bad id or ver\n");
+        DbgError("[SprLoad] FAIL: bad id or ver file='%s'\n", fName ? fName : "(null)");
         return false;
     }
 
     unsigned short rgbaCount = 0;
     if (header.ver >= 0x200u && !ReadValue(cursor, end, rgbaCount)) {
-        DbgLog("[SprLoad] FAIL: could not read rgbaCount\n");
+        DbgError("[SprLoad] FAIL: could not read rgbaCount file='%s'\n", fName ? fName : "(null)");
         return false;
     }
-    DbgLog("[SprLoad] rgbaCount=%d\n", (int)rgbaCount);
 
     const unsigned char* palettePos = nullptr;
     if (header.ver >= 0x101u) {
-        DbgLog("[SprLoad] Reading palette (ver>=0x101), size=%d\n", size);
         if (size < 1024) {
-            DbgLog("[SprLoad] FAIL: size<1024 for palette\n");
+            DbgError("[SprLoad] FAIL: size<1024 for palette file='%s'\n", fName ? fName : "(null)");
             return false;
         }
         palettePos = end - 1024;
         unsigned char paletteBytes[1024];
         std::memcpy(paletteBytes, palettePos, sizeof(paletteBytes));
-        DbgLog("[SprLoad] Calling ConvertPalette m_pal=%p\n", (void*)m_pal);
         g_3dDevice.ConvertPalette(m_pal, reinterpret_cast<const PALETTEENTRY*>(paletteBytes), 256);
-        DbgLog("[SprLoad] ConvertPalette done\n");
         end = palettePos;
     }
 
     m_count = header.count;
-    DbgLog("[SprLoad] Reading %d indexed sprites...\n", m_count);
     for (int i = 0; i < m_count; ++i) {
         SprChunk chunk{};
         if (!ReadValue(cursor, end, chunk)) {
+            DbgError("[SprLoad] FAIL: indexed sprite header file='%s' index=%d\n", fName ? fName : "(null)", i);
             Reset();
             return false;
         }
@@ -193,6 +185,7 @@ bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
         if (header.ver < 0x201u) {
             image->indices.resize(pixelCount);
             if (!ReadBytes(cursor, end, image->indices.data(), pixelCount)) {
+                DbgError("[SprLoad] FAIL: indexed sprite data file='%s' index=%d\n", fName ? fName : "(null)", i);
                 delete image;
                 Reset();
                 return false;
@@ -200,6 +193,7 @@ bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
         } else {
             unsigned short compressedSize = 0;
             if (!ReadValue(cursor, end, compressedSize) || cursor + compressedSize > end) {
+                DbgError("[SprLoad] FAIL: compressed sprite data file='%s' index=%d\n", fName ? fName : "(null)", i);
                 delete image;
                 Reset();
                 return false;
@@ -207,6 +201,7 @@ bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
             unsigned char* decoded = ZeroDecompression(const_cast<unsigned char*>(cursor), image->width, image->height);
             cursor += compressedSize;
             if (!decoded) {
+                DbgError("[SprLoad] FAIL: sprite decode file='%s' index=%d\n", fName ? fName : "(null)", i);
                 delete image;
                 Reset();
                 return false;
@@ -221,6 +216,7 @@ bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
     for (unsigned short i = 0; i < rgbaCount; ++i) {
         SprChunk chunk{};
         if (!ReadValue(cursor, end, chunk)) {
+            DbgError("[SprLoad] FAIL: RGBA sprite header file='%s' index=%u\n", fName ? fName : "(null)", static_cast<unsigned int>(i));
             Reset();
             return false;
         }
@@ -238,6 +234,7 @@ bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
             for (int x = 0; x < image->width; ++x) {
                 unsigned char rgba[4];
                 if (!ReadBytes(cursor, end, rgba, sizeof(rgba))) {
+                    DbgError("[SprLoad] FAIL: RGBA sprite data file='%s' index=%u\n", fName ? fName : "(null)", static_cast<unsigned int>(i));
                     delete image;
                     Reset();
                     return false;
@@ -253,8 +250,6 @@ bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
         m_sprites[1].push_back(image);
     }
 
-    DbgLog("[SprLoad] LoadFromBuffer SUCCESS: %d indexed, %d rgba sprites\n",
-           (int)m_sprites[0].size(), (int)m_sprites[1].size());
     return true;
 }
 

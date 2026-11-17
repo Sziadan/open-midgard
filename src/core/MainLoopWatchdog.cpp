@@ -59,7 +59,7 @@ DWORD WINAPI WatchdogThreadMain(LPVOID)
 
         if (frames == lastSeenFrames && lastFrameTick != 0 && now - lastFrameTick >= kStallThresholdMs) {
             if (!stalled || now - lastStallLogTick >= kStallRepeatMs) {
-                DbgLog("[Watchdog] main loop stalled %lu ms at stage='%s' frame=%llu mode=%d\n",
+                DbgError("[Watchdog] main loop stalled %lu ms at stage='%s' frame=%llu mode=%d\n",
                     static_cast<unsigned long>(now - lastFrameTick), stage, frames, mode);
                 lastStallLogTick = now;
                 stalled = true;
@@ -107,7 +107,7 @@ void MainLoopWatchdogStart()
         g_thread = std::thread([] { WatchdogThreadMain(nullptr); });
     } catch (const std::system_error& error) {
         g_running = false;
-        DbgLog("[Watchdog] failed to start: %s\n", error.what());
+        DbgError("[Watchdog] failed to start: %s\n", error.what());
         return;
     }
 #endif

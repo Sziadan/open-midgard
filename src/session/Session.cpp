@@ -644,7 +644,7 @@ bool TryGetLuaPlayerIdentityToken(int job, std::string* outValue)
     auto acceptCandidate = [&](const std::string& value) {
         if (!LooksLikeLuaIdentityToken(value)) {
             if (traceLookup) {
-                DbgLog("[Session] JobIdentity invalid token job=%d value='%s'\n",
+                DbgError("[Session] JobIdentity invalid token job=%d value='%s'\n",
                     job,
                     value.c_str());
             }
@@ -674,7 +674,7 @@ bool TryGetLuaPlayerIdentityToken(int job, std::string* outValue)
         }
 
         if (traceLookup) {
-            DbgLog("[Session] JobIdentity['%s'] job=%d lookup failed error='%s'\n",
+            DbgError("[Session] JobIdentity['%s'] job=%d lookup failed error='%s'\n",
                 keyCandidate.c_str(),
                 job,
                 g_buabridge.GetLastError().c_str());
@@ -1275,7 +1275,7 @@ void CSession::EnsureFogParameterTableLoaded()
 
     std::string fogTableText;
     if (!LoadTextFileFromGameData(kFogParameterTableFile, fogTableText)) {
-        DbgLog("[Session] Failed to load fog parameter table '%s'.\n", kFogParameterTableFile);
+        DbgError("[Session] Failed to load fog parameter table '%s'.\n", kFogParameterTableFile);
         return;
     }
 
@@ -3029,7 +3029,7 @@ void CSession::EnsureAccessoryNameTableLoaded()
         / std::filesystem::path(L"\x00BE\x00C7\x00BC\x00BC\x00BB\x00E7\x00B8\x00AE")
         / std::filesystem::path(L"\x00B3\x00B2");
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory)) {
-        DbgLog("[Session] accessory directory missing\n");
+        DbgError("[Session] accessory directory missing\n");
         return;
     }
 
@@ -3074,7 +3074,7 @@ char* CSession::GetAccessoryActName(int job, int* head, int sex, int accessory, 
 
     const std::string resourceName = g_ttemmgr.GetVisibleHeadgearResourceNameByViewId(accessory);
     if (resourceName.empty()) {
-        DbgLog("[Session] accessory act lookup failed accessory=%d tableSize=%u job=%d sex=%d head=%d\n",
+        DbgError("[Session] accessory act lookup failed accessory=%d tableSize=%u job=%d sex=%d head=%d\n",
             accessory,
             static_cast<unsigned int>(m_accessoryNameTable.size()),
             job,
@@ -3105,7 +3105,7 @@ char* CSession::GetAccessorySprName(int job, int* head, int sex, int accessory, 
 
     const std::string resourceName = g_ttemmgr.GetVisibleHeadgearResourceNameByViewId(accessory);
     if (resourceName.empty()) {
-        DbgLog("[Session] accessory spr lookup failed accessory=%d tableSize=%u job=%d sex=%d head=%d\n",
+        DbgError("[Session] accessory spr lookup failed accessory=%d tableSize=%u job=%d sex=%d head=%d\n",
             accessory,
             static_cast<unsigned int>(m_accessoryNameTable.size()),
             job,

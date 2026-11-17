@@ -135,6 +135,7 @@ constexpr std::uint64_t kQtUiPerfLogIntervalFrames = 120ull;
 
 double QtUiNowMs()
 {
+    if (!DebugLogEnabled(DebugLogPerformance)) return 0.0;
     using Clock = std::chrono::steady_clock;
     const Clock::time_point now = Clock::now();
     return std::chrono::duration<double, std::milli>(now.time_since_epoch()).count();
@@ -254,6 +255,7 @@ const char* GetStatusIconDebugLabel(int statusType)
 
 void RecordQtUiImageRequest(QtUiImageRequestKind kind, double elapsedMs)
 {
+    if (!DebugLogEnabled(DebugLogPerformance)) return;
     const size_t index = static_cast<size_t>(kind);
     if (index >= g_qtUiPerfStats.imageRequestCounts.size()) {
         return;
@@ -332,6 +334,7 @@ void MaybeLogQtUiPerfStats()
 
 void RecordQtUiOverlayPerf(bool gameplay, bool nativePath, double updateMs, double renderMs, double blendMs)
 {
+    if (!DebugLogEnabled(DebugLogPerformance)) return;
     g_qtUiPerfStats.totalFrames += 1;
     if (gameplay) {
         if (nativePath) {
@@ -601,7 +604,7 @@ bool TryBuildCutinImage(const std::string& imageName, QImage* outImage)
     if (!g_fileMgr.IsDataExist(path.c_str())) {
         path = localeTexture + "cardbmp\\" + imageName;
         if (!g_fileMgr.IsDataExist(path.c_str())) {
-            DbgLog("[QtUiCutin] image asset missing name='%s' paths='%s' and '%s'\n",
+            DbgError("[QtUiCutin] image asset missing name='%s' paths='%s' and '%s'\n",
                 imageName.c_str(),
                 (localeTexture + "Illust\\" + imageName).c_str(),
                 path.c_str());
@@ -610,7 +613,7 @@ bool TryBuildCutinImage(const std::string& imageName, QImage* outImage)
     }
 
     if (!TryBuildGameImageWithBitmapRes(path, true, outImage)) {
-        DbgLog("[QtUiCutin] image decode failed name='%s' path='%s'\n", imageName.c_str(), path.c_str());
+        DbgError("[QtUiCutin] image decode failed name='%s' path='%s'\n", imageName.c_str(), path.c_str());
         return false;
     }
     DbgLog("[QtUiCutin] image loaded name='%s' path='%s' size=%dx%d\n",
@@ -780,7 +783,8 @@ public:
         if (queryPos >= 0) {
             baseId.truncate(queryPos);
         }
-        const QtUiImageRequestKind requestKind = CategorizeQtUiImageRequest(baseId);
+        const QtUiImageRequestKind requestKind = DebugLogEnabled(DebugLogPerformance)
+            ? CategorizeQtUiImageRequest(baseId) : QtUiImageRequestKind::Other;
 
         QImage image;
         if (baseId == QStringLiteral("cutin")) {
@@ -1212,6 +1216,21 @@ public:
         const auto* skillChoice = g_windowMgr.m_skillSelectWnd;
         const bool productionConfirmation = skillChoice && skillChoice->m_show && skillChoice->IsProductionConfirmation();
         const bool pointerMessage=msg==WM_MOUSEMOVE || msg==WM_LBUTTONDOWN || msg==WM_LBUTTONUP || msg==WM_LBUTTONDBLCLK || msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP || msg==WM_MOUSEWHEEL;
+        int pointerX = GetUiLogicalX(lParam), pointerY = GetUiLogicalY(lParam);
+#if RO_PLATFORM_WINDOWS
+        if (msg == WM_MOUSEWHEEL) {
+            POINT point{GetLParamX(lParam), GetLParamY(lParam)};
+            if (!ScreenToClient(reinterpret_cast<HWND>(m_mainWindow), &point)) {
+                DbgError("[QtUi] cannot convert wheel coordinates (error %lu)\n", GetLastError());
+                return false;
+            }
+            pointerX = UiScaleRawToLogicalCoordinate(point.x);
+            pointerY = UiScaleRawToLogicalCoordinate(point.y);
+        }
+#endif
+        const bool chatTarget = pointerMessage && g_windowMgr.IsQtChatPointerTarget(pointerX, pointerY);
+        const bool chatCaptured = g_windowMgr.m_chatWnd && g_windowMgr.m_chatWnd->IsQtPointerCaptured();
+        const bool chatPointerEnabled = !g_windowMgr.m_captureWindow && chatTarget;
         const bool commerceEnabled=!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal(pointerMessage) && ro::commerce::HasInput();
         const bool guildEnabled=commerceEnabled || (!HasFrontMenuUiVisible() && !g_windowMgr.HasGameplayInputModal() && g_windowMgr.CanRouteQtChatInput() && g_windowMgr.m_guildWnd && g_windowMgr.m_guildWnd->m_show!=0);
         if(g_windowMgr.m_guildWnd && guildEnabled && (msg==WM_LBUTTONDOWN || msg==WM_LBUTTONDBLCLK) && g_windowMgr.m_chatWnd) {
@@ -1246,10 +1265,9 @@ public:
                 return true;
             }
         }
-        const bool nativePointerCapture=(chatEnabled && (g_windowMgr.m_chatWnd->IsQtPointerCaptured() || g_windowMgr.m_captureWindow))
-            || (productionConfirmation && g_windowMgr.m_captureWindow == skillChoice);
-        const bool nativePopup=pointerMessage && g_windowMgr.HasNativePopupAtPoint(GetUiLogicalX(lParam),GetUiLogicalY(lParam));
-        if(!(nativePopup && !m_chatInput.pointerCaptured()) && !(nativePointerCapture && pointerMessage) && m_chatInput.handle(m_mainWindow,msg,wParam,lParam,chatEnabled,guildEnabled)) {
+        const bool nativePointerCapture=chatCaptured || g_windowMgr.m_captureWindow;
+        const bool nativePopup=pointerMessage && g_windowMgr.HasNativePopupAtPoint(pointerX,pointerY);
+        if(!(nativePopup && !m_chatInput.pointerCaptured()) && !(nativePointerCapture && pointerMessage) && m_chatInput.handle(m_mainWindow,msg,wParam,lParam,chatEnabled,guildEnabled,chatPointerEnabled)) {
             if(m_stateAdapter)m_stateAdapter->syncChat();
             return true;
         }
@@ -1262,12 +1280,10 @@ public:
                     GetUiLogicalY(lParam));
                 return true;
             }
-            if (!HasFrontMenuUiVisible() && !nativePopup && !(productionConfirmation && nativePointerCapture)
+            if (!HasFrontMenuUiVisible() && (!nativePopup || chatCaptured)
                 && g_windowMgr.m_chatWnd
                 && g_windowMgr.m_chatWnd->m_show != 0
-                && (!g_windowMgr.m_captureWindow || g_windowMgr.m_chatWnd->IsQtPointerCaptured())
-                && (g_windowMgr.m_chatWnd->IsQtPointerCaptured()
-                    || g_windowMgr.m_chatWnd->IsQtInteractionPoint(GetUiLogicalX(lParam), GetUiLogicalY(lParam)))) {
+                && (chatCaptured || chatPointerEnabled)) {
                 return g_windowMgr.m_chatWnd->HandleQtMouseMove(
                     GetUiLogicalX(lParam),
                     GetUiLogicalY(lParam));
@@ -1345,14 +1361,14 @@ public:
                 && g_windowMgr.m_chatWnd->m_show != 0) {
                 const int logicalX = GetUiLogicalX(lParam);
                 const int logicalY = GetUiLogicalY(lParam);
-                if (!g_windowMgr.m_chatWnd->IsQtInteractionPoint(logicalX, logicalY)) {
+                if (!chatPointerEnabled) {
                     g_windowMgr.m_chatWnd->SetWindowFocused(false);
                 }
                 if (g_windowMgr.m_chatWnd->IsInputActive()
-                    && !g_windowMgr.m_chatWnd->IsQtMainPanelPoint(logicalX, logicalY)) {
+                    && (!chatPointerEnabled || !g_windowMgr.m_chatWnd->IsQtMainPanelPoint(logicalX, logicalY))) {
                     g_windowMgr.m_chatWnd->ClearInputFocus();
                 }
-                if (g_windowMgr.m_chatWnd->HandleQtMouseDown(logicalX, logicalY)) {
+                if (chatPointerEnabled && g_windowMgr.m_chatWnd->HandleQtMouseDown(logicalX, logicalY)) {
                     if (g_windowMgr.m_chatWnd->IsQtPointerCaptured()) SetCapture(reinterpret_cast<HWND>(m_mainWindow));
                     return true;
                 }
@@ -1404,11 +1420,10 @@ public:
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
             }
-            if (!HasFrontMenuUiVisible() && !(productionConfirmation && (nativePopup || nativePointerCapture))
+            if (!HasFrontMenuUiVisible() && (!nativePopup || chatCaptured)
                 && g_windowMgr.m_chatWnd
                 && g_windowMgr.m_chatWnd->m_show != 0
-                && (g_windowMgr.m_chatWnd->IsQtPointerCaptured()
-                    || g_windowMgr.m_chatWnd->IsQtInteractionPoint(GetUiLogicalX(lParam), GetUiLogicalY(lParam)))
+                && (chatCaptured || chatPointerEnabled)
                 && g_windowMgr.m_chatWnd->HandleQtMouseUp(
                     GetUiLogicalX(lParam),
                     GetUiLogicalY(lParam))) {
@@ -1418,13 +1433,13 @@ public:
             return false;
 
         case WM_MOUSEWHEEL:
-            if (!HasFrontMenuUiVisible() && !nativePopup
+            if (!HasFrontMenuUiVisible() && !nativePopup && chatPointerEnabled
                 && g_windowMgr.m_chatWnd
                 && g_windowMgr.m_chatWnd->m_show != 0
                 && g_windowMgr.m_chatWnd->HandleQtWheel(
                     GetWheelDelta(wParam),
-                    GetUiLogicalX(lParam),
-                    GetUiLogicalY(lParam))) {
+                    pointerX,
+                    pointerY)) {
                 return true;
             }
             return false;
@@ -1536,7 +1551,7 @@ public:
 
         if (!rendered) {
             if (!m_loggedNativeOverlayFailure) {
-                DbgLog("[QtUi] Failed to render to native %s overlay texture target.\n",
+                DbgError("[QtUi] Failed to render to native %s overlay texture target.\n",
                     GetRenderBackendName(targetInfo.backend));
                 m_loggedNativeOverlayFailure = true;
             }
@@ -1640,7 +1655,7 @@ public:
 
         if (!rendered) {
             if (!m_loggedNativeOverlayFailure) {
-                DbgLog("[QtUi] Failed to render to native %s overlay texture target.\n",
+                DbgError("[QtUi] Failed to render to native %s overlay texture target.\n",
                     GetRenderBackendName(targetInfo.backend));
                 m_loggedNativeOverlayFailure = true;
             }
@@ -1726,7 +1741,7 @@ private:
         if (component.isError()) {
             const QList<QQmlError> errors = component.errors();
             for (const QQmlError& error : errors) {
-                DbgLog("[QtUi] QML error: %s\n", error.toString().toLocal8Bit().constData());
+                DbgError("[QtUi] QML error: %s\n", error.toString().toLocal8Bit().constData());
             }
             return false;
         }
@@ -1735,7 +1750,7 @@ private:
         m_rootItem = qobject_cast<QQuickItem*>(createdObject);
         if (!m_rootItem) {
             delete createdObject;
-            DbgLog("[QtUi] Failed to create QML root item.\n");
+            DbgError("[QtUi] Failed to create QML root item.\n");
             return false;
         }
 
@@ -1809,7 +1824,7 @@ private:
         m_vulkanInstance = new QVulkanInstance();
         m_vulkanInstance->setVkInstance(reinterpret_cast<VkInstance>(targetInfo.graphicsInstance));
         if (!m_vulkanInstance->create()) {
-            DbgLog("[QtUi] QVulkanInstance::create failed for imported renderer instance.\n");
+            DbgError("[QtUi] QVulkanInstance::create failed for imported renderer instance.\n");
             delete m_vulkanInstance;
             m_vulkanInstance = nullptr;
             return false;
@@ -1822,7 +1837,7 @@ private:
             static_cast<int>(targetInfo.queueFamilyIndex),
             0));
         if (!m_renderControl->initialize()) {
-            DbgLog("[QtUi] QQuickRenderControl::initialize failed for Vulkan.\n");
+            DbgError("[QtUi] QQuickRenderControl::initialize failed for Vulkan.\n");
             return false;
         }
 
@@ -1848,7 +1863,7 @@ private:
             targetInfo.graphicsDevice,
             targetInfo.graphicsQueueOrContext));
         if (!m_renderControl->initialize()) {
-            DbgLog("[QtUi] QQuickRenderControl::initialize failed for D3D11.\n");
+            DbgError("[QtUi] QQuickRenderControl::initialize failed for D3D11.\n");
             return false;
         }
 
@@ -1879,13 +1894,13 @@ private:
         importDevice.adapterLuidHigh = targetInfo.adapterLuidHigh;
         m_qtRhi = QRhi::create(QRhi::D3D12, &params, {}, &importDevice);
         if (!m_qtRhi) {
-            DbgLog("[QtUi] QRhi::create failed for imported D3D12 device.\n");
+            DbgError("[QtUi] QRhi::create failed for imported D3D12 device.\n");
             return false;
         }
 
         m_quickWindow->setGraphicsDevice(QQuickGraphicsDevice::fromRhi(m_qtRhi));
         if (!m_renderControl->initialize()) {
-            DbgLog("[QtUi] QQuickRenderControl::initialize failed for D3D12.\n");
+            DbgError("[QtUi] QQuickRenderControl::initialize failed for D3D12.\n");
             return false;
         }
 
